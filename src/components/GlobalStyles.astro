@@ -1,0 +1,18 @@
+---
+// Global styles: variables, reset, base. Delivered unscoped per Astro docs.
+// https://docs.astro.build/en/guides/styling/#global-styles
+---
+<style is:global>
+	@import "../styles/variables.css";
+	@import "../styles/reset.css";
+	@import "../styles/base.css";
+
+	html,
+	body {
+		margin: 0;
+		width: 100%;
+		min-height: 100%;
+		background-color: var(--color-gray-1);
+		color: var(--color-gray-12);
+	}
+</style>

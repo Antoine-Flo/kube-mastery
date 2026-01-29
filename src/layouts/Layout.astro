@@ -1,21 +1,11 @@
 ---
+import { ClientRouter } from "astro:transitions";
 import { getLocale } from "../paraglide/runtime.js";
 import Footer from "../components/Footer.astro";
-
-import "../styles/variables.css";
-import "../styles/reset.css";
-import "../styles/base.css";
-import "../styles/components/navbar.css";
-import "../styles/components/footer.css";
+import GlobalStyles from "../components/GlobalStyles.astro";
+import Navbar from "../components/Navbar.astro";
 
 const locale = getLocale();
-
-function localePath(path: string): string {
-	if (locale === "fr") {
-		return path === "/" ? "/fr" : `/fr${path}`;
-	}
-	return path;
-}
 ---
 <!doctype html>
 <html lang={locale}>
@@ -26,24 +16,12 @@ function localePath(path: string): string {
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="generator" content={Astro.generator} />
 		<title>Kube Mastery</title>
+		<ClientRouter />
 	</head>
 	<body>
-		<nav class="navbar">
-			<div class="navbar__nav">
-				<a href="/" class="navbar__link">EN</a>
-				<span aria-hidden="true"> · </span>
-				<a href="/fr" class="navbar__link">FR</a>
-			</div>
-		</nav>
+		<GlobalStyles />
+		<Navbar locale={locale} />
 		<slot />
 		<Footer locale={locale} />
 	</body>
 </html>
-
-<style is:global>
-	html, body {
-		margin: 0;
-		width: 100%;
-		min-height: 100%;
-	}
-</style>

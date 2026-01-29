@@ -14,15 +14,51 @@ function localePath(path: string): string {
 	return path;
 }
 ---
-<footer class="footer">
-	<nav class="footer__nav">
-		<a href={localePath("/terms-of-service")} class="footer__link">{m.footer_termsOfService()}</a>
-		<a href={localePath("/privacy-policy")} class="footer__link">{m.footer_privacyPolicy()}</a>
-		<a href={localePath("/contact")} class="footer__link">{m.footer_contact()}</a>
+<footer>
+	<nav>
+		<a href={localePath("/terms-of-service")}>{m.footer_termsOfService()}</a>
+		<a href={localePath("/privacy-policy")}>{m.footer_privacyPolicy()}</a>
+		<a href={localePath("/contact")}>{m.footer_contact()}</a>
 	</nav>
-	<div class="footer__language-container">
-		<a href="/" class="footer__link">EN</a>
+	<div class="lang">
+		<a href="/">EN</a>
 		<span aria-hidden="true"> · </span>
-		<a href="/fr" class="footer__link">FR</a>
+		<a href="/fr">FR</a>
 	</div>
 </footer>
+
+<style>
+	footer {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		gap: 1.5rem;
+		padding: 0.8rem;
+		border-top: 1px solid var(--color-gray-6);
+		background-color: var(--color-gray-1);
+	}
+	nav {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 1.5rem;
+	}
+	footer a {
+		color: var(--color-gray-11);
+		font-size: var(--text-sm);
+		text-decoration: none;
+		transition: color 0.2s;
+	}
+	footer a:hover {
+		color: var(--color-gray-12);
+	}
+	.lang {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+	.lang :global(.select) {
+		width: auto;
+	}
+</style>

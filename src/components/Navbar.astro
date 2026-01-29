@@ -1,0 +1,150 @@
+---
+import { Moon, Sun } from "@lucide/astro";
+import Logo from "./Logo.astro";
+import * as m from "../paraglide/messages.js";
+
+interface Props {
+	locale: string;
+}
+
+const { locale } = Astro.props;
+
+function localePath(path: string): string {
+	if (locale === "fr") {
+		return path === "/" ? "/fr" : `/fr${path}`;
+	}
+	return path;
+}
+---
+<header>
+	<a href={localePath("/")} class="logo">
+		<Logo size={40} class="logo-icon" />
+		<span>{m.nav_appName()}</span>
+	</a>
+
+	<nav>
+		<a href={localePath("/courses")}>{m.nav_courses()}</a>
+		<a href={localePath("/pricing")}>{m.nav_pricing()}</a>
+		<span aria-hidden="true" class="sep">·</span>
+		<a href="/">EN</a>
+		<a href="/fr">FR</a>
+	</nav>
+
+	<div class="acts">
+		<button
+			type="button"
+			class="btn"
+			data-theme-toggle
+			aria-label={m.nav_toggleTheme()}
+			title={m.nav_toggleTheme()}
+		>
+			<Moon size={18} class="moon" />
+			<Sun size={18} class="sun" />
+		</button>
+	</div>
+</header>
+
+<style>
+	header {
+		border-color: var(--color-gray-6);
+		background-color: var(--color-gray-1);
+		border-bottom: 1px solid var(--color-gray-6);
+		padding: 1rem 2rem;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.logo {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		font-size: var(--text-lg);
+		font-weight: var(--font-weight-bold);
+		color: var(--color-gray-12);
+		text-decoration: none;
+	}
+	.logo-icon {
+		flex-shrink: 0;
+	}
+	nav {
+		display: flex;
+		align-items: center;
+		gap: 1.5rem;
+		margin-left: auto;
+	}
+	nav a {
+		color: var(--color-gray-11);
+		text-decoration: none;
+		transition: color 0.2s;
+	}
+	nav a:hover {
+		color: var(--color-gray-12);
+	}
+	.sep {
+		color: var(--color-gray-9);
+		pointer-events: none;
+	}
+	.acts {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-left: 12px;
+	}
+	.btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.25rem;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--color-gray-11);
+		border-radius: var(--radius-sm);
+		transition: color 0.2s, background-color 0.2s;
+		margin-left: 12px;
+	}
+	.btn:hover {
+		color: var(--color-gray-12);
+		background-color: var(--color-gray-a3);
+	}
+	[data-theme="dark"] .moon {
+		display: none;
+	}
+	.sun {
+		display: none;
+	}
+	[data-theme="dark"] .sun {
+		display: block;
+	}
+</style>
+
+<script>
+	/** Aligné sur old/src/theme.tsx : clé kube-simulator-theme, data-theme="light" | "dark" */
+	const THEME_KEY = "kube-simulator-theme";
+
+	function applyTheme(theme: string) {
+		document.documentElement.setAttribute("data-theme", theme);
+		localStorage.setItem(THEME_KEY, theme);
+	}
+
+	function initTheme() {
+		const saved = localStorage.getItem(THEME_KEY);
+		const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+		const initial = saved || (prefersDark ? "dark" : "light");
+		applyTheme(initial);
+	}
+
+	function toggleTheme() {
+		const current = document.documentElement.getAttribute("data-theme");
+		const next = current === "dark" ? "light" : "dark";
+		applyTheme(next);
+	}
+
+	function setupThemeToggle() {
+		initTheme();
+		document.querySelector("[data-theme-toggle]")?.addEventListener("click", toggleTheme);
+	}
+
+	setupThemeToggle();
+	document.addEventListener("astro:page-load", setupThemeToggle);
+</script>

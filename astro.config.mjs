@@ -3,8 +3,13 @@ import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import node from "@astrojs/node";
 
 export default defineConfig({
-    // ... other
     vite: {
+        css: {
+            transformer: "lightningcss",
+        },
+        build: {
+            cssMinify: "lightningcss",
+        },
         plugins: [
             paraglideVitePlugin({
                 project: "./project.inlang",
@@ -25,6 +30,7 @@ export default defineConfig({
     },
     output: "server",
     adapter: node({
-      mode: "standalone",
+        mode: "standalone",
     }),
+    prefetch: false
 });

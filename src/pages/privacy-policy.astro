@@ -1,58 +1,87 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import * as m from "../paraglide/messages.js";
-
-import "../styles/routes/privacy-policy.css";
 ---
 <Layout>
-	<div class="privacy-policy">
-		<h1 class="privacy-policy__title">{m.privacyPolicy_title()}</h1>
-		<p class="privacy-policy__last-updated">{m.privacyPolicy_lastUpdated()}</p>
-		<p class="privacy-policy__intro">{m.privacyPolicy_intro()}</p>
+	<div class="doc">
+		<h1>{m.privacyPolicy_title()}</h1>
+		<p class="meta">{m.privacyPolicy_lastUpdated()}</p>
+		<p class="lead">{m.privacyPolicy_intro()}</p>
 
-		<section class="privacy-policy__section">
-			<h2 class="privacy-policy__section-title">{m.privacyPolicy_collection_title()}</h2>
-			<p class="privacy-policy__section-content">{m.privacyPolicy_collection_content()}</p>
+		<section>
+			<h2>{m.privacyPolicy_collection_title()}</h2>
+			<p set:html={m.privacyPolicy_collection_content()} />
 		</section>
-
-		<section class="privacy-policy__section">
-			<h2 class="privacy-policy__section-title">{m.privacyPolicy_use_title()}</h2>
-			<p class="privacy-policy__section-content">{m.privacyPolicy_use_content()}</p>
+		<section>
+			<h2>{m.privacyPolicy_use_title()}</h2>
+			<p set:html={m.privacyPolicy_use_content()} />
 		</section>
-
-		<section class="privacy-policy__section">
-			<h2 class="privacy-policy__section-title">{m.privacyPolicy_security_title()}</h2>
-			<p class="privacy-policy__section-content">{m.privacyPolicy_security_content()}</p>
+		<section>
+			<h2>{m.privacyPolicy_security_title()}</h2>
+			<p set:html={m.privacyPolicy_security_content()} />
 		</section>
-
-		<section class="privacy-policy__section">
-			<h2 class="privacy-policy__section-title">{m.privacyPolicy_storage_title()}</h2>
-			<p class="privacy-policy__section-content">{m.privacyPolicy_storage_content()}</p>
+		<section>
+			<h2>{m.privacyPolicy_storage_title()}</h2>
+			<p set:html={m.privacyPolicy_storage_content()} />
 		</section>
-
-		<section class="privacy-policy__section">
-			<h2 class="privacy-policy__section-title">{m.privacyPolicy_sharing_title()}</h2>
-			<p class="privacy-policy__section-content">{m.privacyPolicy_sharing_content()}</p>
+		<section>
+			<h2>{m.privacyPolicy_sharing_title()}</h2>
+			<p set:html={m.privacyPolicy_sharing_content()} />
 		</section>
-
-		<section class="privacy-policy__section">
-			<h2 class="privacy-policy__section-title">{m.privacyPolicy_rights_title()}</h2>
-			<p class="privacy-policy__section-content">{m.privacyPolicy_rights_content()}</p>
+		<section>
+			<h2>{m.privacyPolicy_rights_title()}</h2>
+			<p set:html={m.privacyPolicy_rights_content()} />
 		</section>
-
-		<section class="privacy-policy__section">
-			<h2 class="privacy-policy__section-title">{m.privacyPolicy_retention_title()}</h2>
-			<p class="privacy-policy__section-content">{m.privacyPolicy_retention_content()}</p>
+		<section>
+			<h2>{m.privacyPolicy_retention_title()}</h2>
+			<p set:html={m.privacyPolicy_retention_content()} />
 		</section>
-
-		<section class="privacy-policy__section">
-			<h2 class="privacy-policy__section-title">{m.privacyPolicy_changes_title()}</h2>
-			<p class="privacy-policy__section-content">{m.privacyPolicy_changes_content()}</p>
+		<section>
+			<h2>{m.privacyPolicy_changes_title()}</h2>
+			<p set:html={m.privacyPolicy_changes_content()} />
 		</section>
-
-		<section class="privacy-policy__section">
-			<h2 class="privacy-policy__section-title">{m.privacyPolicy_contact_title()}</h2>
-			<p class="privacy-policy__section-content">{m.privacyPolicy_contact_content()}</p>
+		<section>
+			<h2>{m.privacyPolicy_contact_title()}</h2>
+			<p set:html={m.privacyPolicy_contact_content()} />
 		</section>
 	</div>
 </Layout>
+
+<style>
+	.doc {
+		max-width: 800px;
+		margin: 0 auto;
+		padding: 4rem 2rem;
+	}
+	.doc h1 {
+		font-size: 1.875rem;
+		font-weight: var(--font-weight-bold);
+		color: var(--color-gray-12);
+		margin-bottom: 2rem;
+	}
+	.meta {
+		color: var(--color-gray-9);
+		font-size: 0.875rem;
+		margin-bottom: 1.5rem;
+	}
+	.lead {
+		color: var(--color-gray-11);
+		line-height: 1.6;
+		margin-bottom: 2rem;
+		font-size: 1.125rem;
+	}
+	.doc section {
+		margin-bottom: 2.5rem;
+	}
+	.doc section h2 {
+		font-size: 1.25rem;
+		font-weight: var(--font-weight-semibold);
+		color: var(--color-gray-12);
+		margin-bottom: 1rem;
+	}
+	.doc section p {
+		color: var(--color-gray-11);
+		line-height: 1.7;
+		margin-bottom: 0;
+	}
+</style>
