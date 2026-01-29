@@ -1,0 +1,35 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignoreExportsUsedInFile": {
+    "interface": true,
+    "type": true
+  },
+  "tags": [
+    "-lintignore"
+  ],
+  "entry": [
+    "src/app.tsx",
+    "src/entry-client.tsx",
+    "src/entry-server.tsx",
+    "app.config.ts",
+    "src/routes/**/*.{ts,tsx}",
+    "seeds/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "project": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "ignore": [
+    "src/db/index.ts",
+    "src/instrument.server.ts",
+    "src/middleware.ts",
+    "src/courses/**/*.tsx",
+    "src/courses/**/*.ts",
+    "refs"
+  ],
+  "ignoreBinaries": [
+    "ts-prune",
+    "eslint"
+  ]
+}
