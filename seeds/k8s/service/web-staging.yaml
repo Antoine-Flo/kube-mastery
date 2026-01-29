@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: staging
+  labels:
+    app: nginx
+    env: staging
+spec:
+  type: ClusterIP
+  selector:
+    app: nginx
+    env: staging
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP

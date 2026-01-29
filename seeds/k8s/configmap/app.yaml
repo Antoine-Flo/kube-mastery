@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: default
+  labels:
+    app: web
+data:
+  database.host: postgres.default.svc.cluster.local
+  database.port: "5432"
+  log.level: info
+  app.properties: |
+    server.port=8080
+    server.host=0.0.0.0

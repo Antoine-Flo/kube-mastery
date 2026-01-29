@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: Node
+metadata:
+  name: default-worker-1
+  labels:
+    beta.kubernetes.io/arch: amd64
+    beta.kubernetes.io/os: linux
+    kubernetes.io/arch: amd64
+    kubernetes.io/hostname: default-worker-1
+    kubernetes.io/os: linux
+    node-role.kubernetes.io/worker: ""
+  annotations:
+    node.alpha.kubernetes.io/ttl: "0"
+    volumes.kubernetes.io/controller-managed-attach-detach: "true"
+spec:
+  podCIDR: 10.244.1.0/24
+  podCIDRs:
+    - 10.244.1.0/24
+  providerID: kind://docker/default/default-worker-1
+status:
+  addresses:
+    - address: 172.18.0.3
+      type: InternalIP
+    - address: default-worker-1
+      type: Hostname
+  allocatable:
+    cpu: "16"
+    ephemeral-storage: 1055762868Ki
+    hugepages-1Gi: "0"
+    hugepages-2Mi: "0"
+    memory: 7973056Ki
+    pods: "110"
+  capacity:
+    cpu: "16"
+    ephemeral-storage: 1055762868Ki
+    hugepages-1Gi: "0"
+    hugepages-2Mi: "0"
+    memory: 7973056Ki
+    pods: "110"
+  conditions:
+    - lastHeartbeatTime: "2024-01-16T18:03:00Z"
+      lastTransitionTime: "2024-01-16T18:03:00Z"
+      message: kubelet has sufficient memory available
+      reason: KubeletHasSufficientMemory
+      status: "False"
+      type: MemoryPressure
+    - lastHeartbeatTime: "2024-01-16T18:03:00Z"
+      lastTransitionTime: "2024-01-16T18:03:00Z"
+      message: kubelet has no disk pressure
+      reason: KubeletHasNoDiskPressure
+      status: "False"
+      type: DiskPressure
+    - lastHeartbeatTime: "2024-01-16T18:03:00Z"
+      lastTransitionTime: "2024-01-16T18:03:00Z"
+      message: kubelet has sufficient PID available
+      reason: KubeletHasSufficientPID
+      status: "False"
+      type: PIDPressure
+    - lastHeartbeatTime: "2024-01-16T18:03:00Z"
+      lastTransitionTime: "2024-01-16T18:03:00Z"
+      message: kubelet is posting ready status
+      reason: KubeletReady
+      status: "True"
+      type: Ready
+  daemonEndpoints:
+    kubeletEndpoint:
+      Port: 10250
+  nodeInfo:
+    architecture: amd64
+    bootID: ea4755d6-4d06-4fca-8988-942dcabb6948
+    containerRuntimeVersion: containerd://2.2.0
+    kernelVersion: 6.6.87.2-microsoft-standard-WSL2
+    kubeletVersion: v1.35.0
+    machineID: 27210592cedb4197babf9c1f64345b14
+    operatingSystem: linux
+    osImage: Debian GNU/Linux 12 (bookworm)
+    systemUUID: 27210592cedb4197babf9c1f64345b14
