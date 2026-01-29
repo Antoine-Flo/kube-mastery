@@ -1,0 +1,574 @@
+:root {
+  /* Couleurs - Gray (Slate) */
+  --color-gray-1: #fcfcfd;
+  --color-gray-2: #f9f9fb;
+  --color-gray-3: #f0f0f3;
+  --color-gray-4: #e8e8ec;
+  --color-gray-5: #e0e1e6;
+  --color-gray-6: #d9d9e0;
+  --color-gray-7: #cdced6;
+  --color-gray-8: #b9bbc6;
+  --color-gray-9: #8b8d98;
+  --color-gray-10: #80838d;
+  --color-gray-11: #60646c;
+  --color-gray-12: #1c2024;
+
+  --color-gray-a1: rgba(0, 0, 0, 0.019);
+  --color-gray-a2: rgba(0, 0, 0, 0.024);
+  --color-gray-a3: rgba(0, 0, 0, 0.059);
+  --color-gray-a4: rgba(0, 0, 0, 0.090);
+  --color-gray-a5: rgba(0, 0, 0, 0.125);
+  --color-gray-a6: rgba(0, 0, 0, 0.149);
+  --color-gray-a7: rgba(0, 0, 0, 0.196);
+  --color-gray-a8: rgba(0, 0, 0, 0.275);
+  --color-gray-a9: rgba(0, 0, 0, 0.455);
+  --color-gray-a10: rgba(0, 0, 0, 0.498);
+  --color-gray-a11: rgba(0, 0, 0, 0.624);
+  --color-gray-a12: rgba(0, 0, 0, 0.890);
+
+  /* Couleurs - Cyan */
+  --color-cyan-1: #fafdfe;
+  --color-cyan-2: #f2fafb;
+  --color-cyan-3: #def7f9;
+  --color-cyan-4: #caf1f6;
+  --color-cyan-5: #b5e9f0;
+  --color-cyan-6: #9ddde7;
+  --color-cyan-7: #7dcedc;
+  --color-cyan-8: #3db9cf;
+  --color-cyan-9: #00a2c7;
+  --color-cyan-10: #0797b9;
+  --color-cyan-11: #107d98;
+  --color-cyan-12: #0d3c48;
+
+  --color-cyan-a1: rgba(0, 153, 204, 0.020);
+  --color-cyan-a2: rgba(0, 157, 177, 0.051);
+  --color-cyan-a3: rgba(0, 194, 209, 0.129);
+  --color-cyan-a4: rgba(0, 188, 212, 0.212);
+  --color-cyan-a5: rgba(1, 180, 204, 0.290);
+  --color-cyan-a6: rgba(0, 167, 193, 0.384);
+  --color-cyan-a7: rgba(0, 159, 187, 0.510);
+  --color-cyan-a8: rgba(0, 163, 192, 0.761);
+  --color-cyan-a9: #00a2c7;
+  --color-cyan-a10: rgba(0, 148, 183, 0.969);
+  --color-cyan-a11: rgba(0, 116, 152, 0.937);
+  --color-cyan-a12: rgba(0, 50, 62, 0.949);
+
+  /* Couleurs - Ruby */
+  --color-ruby-1: #fffcfd;
+  --color-ruby-2: #fff7f8;
+  --color-ruby-3: #feeaed;
+  --color-ruby-4: #ffdce1;
+  --color-ruby-5: #ffced6;
+  --color-ruby-6: #f8bfc8;
+  --color-ruby-7: #efacb8;
+  --color-ruby-8: #e592a3;
+  --color-ruby-9: #e54666;
+  --color-ruby-10: #dc3b5d;
+  --color-ruby-11: #ca244d;
+  --color-ruby-12: #64172b;
+
+  --color-ruby-a1: rgba(255, 0, 85, 0.012);
+  --color-ruby-a2: rgba(255, 0, 32, 0.031);
+  --color-ruby-a3: rgba(243, 0, 37, 0.082);
+  --color-ruby-a4: rgba(255, 0, 37, 0.137);
+  --color-ruby-a5: rgba(255, 0, 42, 0.192);
+  --color-ruby-a6: rgba(228, 0, 36, 0.251);
+  --color-ruby-a7: rgba(206, 0, 37, 0.325);
+  --color-ruby-a8: rgba(195, 0, 40, 0.427);
+  --color-ruby-a9: rgba(219, 0, 44, 0.725);
+  --color-ruby-a10: rgba(210, 0, 44, 0.761);
+  --color-ruby-a11: rgba(193, 0, 48, 0.859);
+  --color-ruby-a12: rgba(85, 0, 22, 0.910);
+
+  /* Couleurs - Green */
+  --color-green-1: #fbfefc;
+  --color-green-2: #f4fbf6;
+  --color-green-3: #e6f6eb;
+  --color-green-4: #d6f1df;
+  --color-green-5: #c4e8d1;
+  --color-green-6: #adddc0;
+  --color-green-7: #8eceaa;
+  --color-green-8: #5bb98b;
+  --color-green-9: #30a46c;
+  --color-green-10: #2b9a66;
+  --color-green-11: #218358;
+  --color-green-12: #193b2d;
+
+  --color-green-a1: rgba(0, 192, 64, 0.016);
+  --color-green-a2: rgba(0, 163, 47, 0.043);
+  --color-green-a3: rgba(0, 164, 51, 0.098);
+  --color-green-a4: rgba(0, 168, 56, 0.161);
+  --color-green-a5: rgba(1, 156, 57, 0.231);
+  --color-green-a6: rgba(0, 150, 60, 0.322);
+  --color-green-a7: rgba(0, 145, 64, 0.443);
+  --color-green-a8: rgba(0, 146, 75, 0.643);
+  --color-green-a9: rgba(0, 143, 74, 0.812);
+  --color-green-a10: rgba(0, 134, 71, 0.831);
+  --color-green-a11: rgba(0, 113, 63, 0.871);
+  --color-green-a12: rgba(0, 38, 22, 0.902);
+
+  /* Couleurs - Amber */
+  --color-amber-1: #fefdfb;
+  --color-amber-2: #fefbe9;
+  --color-amber-3: #fff7c2;
+  --color-amber-4: #ffee9c;
+  --color-amber-5: #fbe577;
+  --color-amber-6: #f3d673;
+  --color-amber-7: #e9c162;
+  --color-amber-8: #e2a336;
+  --color-amber-9: #ffc53d;
+  --color-amber-10: #ffba18;
+  --color-amber-11: #ab6400;
+  --color-amber-12: #4f3422;
+
+  --color-amber-a1: rgba(192, 128, 0, 0.016);
+  --color-amber-a2: rgba(244, 209, 0, 0.086);
+  --color-amber-a3: rgba(255, 222, 0, 0.239);
+  --color-amber-a4: rgba(255, 212, 0, 0.388);
+  --color-amber-a5: rgba(248, 207, 0, 0.533);
+  --color-amber-a6: rgba(234, 181, 0, 0.549);
+  --color-amber-a7: rgba(220, 155, 0, 0.616);
+  --color-amber-a8: rgba(218, 138, 0, 0.788);
+  --color-amber-a9: rgba(255, 179, 0, 0.761);
+  --color-amber-a10: rgba(255, 179, 0, 0.906);
+  --color-amber-a11: #ab6400;
+  --color-amber-a12: rgba(52, 21, 0, 0.867);
+
+  /* Couleurs - Black & White */
+  --color-black: #000000;
+  --color-white: #ffffff;
+  --color-black-a1: rgba(0, 0, 0, 0.05);
+  --color-black-a2: rgba(0, 0, 0, 0.1);
+  --color-black-a3: rgba(0, 0, 0, 0.15);
+  --color-black-a4: rgba(0, 0, 0, 0.2);
+  --color-black-a5: rgba(0, 0, 0, 0.3);
+  --color-black-a6: rgba(0, 0, 0, 0.4);
+  --color-black-a7: rgba(0, 0, 0, 0.5);
+  --color-black-a8: rgba(0, 0, 0, 0.6);
+  --color-black-a9: rgba(0, 0, 0, 0.7);
+  --color-black-a10: rgba(0, 0, 0, 0.8);
+  --color-black-a11: rgba(0, 0, 0, 0.9);
+  --color-black-a12: rgba(0, 0, 0, 0.95);
+  --color-white-a1: rgba(255, 255, 255, 0.05);
+  --color-white-a2: rgba(255, 255, 255, 0.1);
+  --color-white-a3: rgba(255, 255, 255, 0.15);
+  --color-white-a4: rgba(255, 255, 255, 0.2);
+  --color-white-a5: rgba(255, 255, 255, 0.3);
+  --color-white-a6: rgba(255, 255, 255, 0.4);
+  --color-white-a7: rgba(255, 255, 255, 0.5);
+  --color-white-a8: rgba(255, 255, 255, 0.6);
+  --color-white-a9: rgba(255, 255, 255, 0.7);
+  --color-white-a10: rgba(255, 255, 255, 0.8);
+  --color-white-a11: rgba(255, 255, 255, 0.9);
+  --color-white-a12: rgba(255, 255, 255, 0.95);
+
+  /* Semantic tokens - Foreground */
+  --color-fg-default: var(--color-gray-12);
+  --color-fg-muted: var(--color-gray-11);
+  --color-fg-subtle: var(--color-gray-10);
+  --color-border: var(--color-gray-4);
+  --color-error: var(--color-ruby-9);
+
+  /* Semantic tokens - Gray palette variants */
+  --color-palette-gray-solid-bg: var(--color-black);
+  --color-palette-gray-solid-bg-hover: var(--color-gray-12);
+  --color-palette-gray-solid-fg: var(--color-white);
+
+  --color-palette-gray-subtle-bg: var(--color-gray-a3);
+  --color-palette-gray-subtle-bg-hover: var(--color-gray-a4);
+  --color-palette-gray-subtle-bg-active: var(--color-gray-a5);
+  --color-palette-gray-subtle-fg: var(--color-gray-12);
+
+  --color-palette-gray-surface-bg: var(--color-white);
+  --color-palette-gray-surface-bg-hover: var(--color-gray-2);
+  --color-palette-gray-surface-bg-active: var(--color-gray-3);
+  --color-palette-gray-surface-border: var(--color-gray-6);
+  --color-palette-gray-surface-border-hover: var(--color-gray-7);
+  --color-palette-gray-surface-fg: var(--color-gray-12);
+
+  --color-palette-gray-outline-border: var(--color-gray-6);
+  --color-palette-gray-outline-bg-hover: var(--color-gray-a2);
+  --color-palette-gray-outline-bg-active: var(--color-gray-a3);
+  --color-palette-gray-outline-fg: var(--color-gray-12);
+
+  --color-palette-gray-plain-fg: var(--color-gray-12);
+  --color-palette-gray-plain-bg-hover: var(--color-gray-a3);
+  --color-palette-gray-plain-bg-active: var(--color-gray-a4);
+
+  /* Semantic tokens - Cyan palette variants */
+  --color-palette-cyan-solid-bg: var(--color-cyan-9);
+  --color-palette-cyan-solid-bg-hover: var(--color-cyan-10);
+  --color-palette-cyan-solid-fg: var(--color-white);
+
+  --color-palette-cyan-subtle-bg: var(--color-cyan-a3);
+  --color-palette-cyan-subtle-bg-hover: var(--color-cyan-a4);
+  --color-palette-cyan-subtle-bg-active: var(--color-cyan-a5);
+  --color-palette-cyan-subtle-fg: var(--color-cyan-a11);
+
+  --color-palette-cyan-surface-bg: var(--color-cyan-a2);
+  --color-palette-cyan-surface-bg-active: var(--color-cyan-a3);
+  --color-palette-cyan-surface-border: var(--color-cyan-a6);
+  --color-palette-cyan-surface-border-hover: var(--color-cyan-a7);
+  --color-palette-cyan-surface-fg: var(--color-cyan-a11);
+
+  --color-palette-cyan-outline-border: var(--color-cyan-a7);
+  --color-palette-cyan-outline-bg-hover: var(--color-cyan-a2);
+  --color-palette-cyan-outline-bg-active: var(--color-cyan-a3);
+  --color-palette-cyan-outline-fg: var(--color-cyan-a11);
+
+  --color-palette-cyan-plain-fg: var(--color-cyan-a11);
+  --color-palette-cyan-plain-bg-hover: var(--color-cyan-a3);
+  --color-palette-cyan-plain-bg-active: var(--color-cyan-a4);
+
+  /* Semantic tokens - Ruby palette variants */
+  --color-palette-ruby-solid-bg: var(--color-ruby-9);
+  --color-palette-ruby-solid-bg-hover: var(--color-ruby-10);
+  --color-palette-ruby-solid-fg: var(--color-white);
+
+  --color-palette-ruby-subtle-bg: var(--color-ruby-a3);
+  --color-palette-ruby-subtle-bg-hover: var(--color-ruby-a4);
+  --color-palette-ruby-subtle-bg-active: var(--color-ruby-a5);
+  --color-palette-ruby-subtle-fg: var(--color-ruby-a11);
+
+  --color-palette-ruby-surface-bg: var(--color-ruby-a2);
+  --color-palette-ruby-surface-bg-active: var(--color-ruby-a3);
+  --color-palette-ruby-surface-border: var(--color-ruby-a6);
+  --color-palette-ruby-surface-border-hover: var(--color-ruby-a7);
+  --color-palette-ruby-surface-fg: var(--color-ruby-a11);
+
+  --color-palette-ruby-outline-border: var(--color-ruby-a7);
+  --color-palette-ruby-outline-bg-hover: var(--color-ruby-a2);
+  --color-palette-ruby-outline-bg-active: var(--color-ruby-a3);
+  --color-palette-ruby-outline-fg: var(--color-ruby-a11);
+
+  --color-palette-ruby-plain-fg: var(--color-ruby-a11);
+  --color-palette-ruby-plain-bg-hover: var(--color-ruby-a3);
+  --color-palette-ruby-plain-bg-active: var(--color-ruby-a4);
+
+  /* Semantic tokens - Green palette variants */
+  --color-palette-green-solid-bg: var(--color-green-9);
+  --color-palette-green-solid-bg-hover: var(--color-green-10);
+  --color-palette-green-solid-fg: var(--color-white);
+
+  --color-palette-green-subtle-bg: var(--color-green-a3);
+  --color-palette-green-subtle-bg-hover: var(--color-green-a4);
+  --color-palette-green-subtle-bg-active: var(--color-green-a5);
+  --color-palette-green-subtle-fg: var(--color-green-a11);
+
+  --color-palette-green-surface-bg: var(--color-green-a2);
+  --color-palette-green-surface-bg-active: var(--color-green-a3);
+  --color-palette-green-surface-border: var(--color-green-a6);
+  --color-palette-green-surface-border-hover: var(--color-green-a7);
+  --color-palette-green-surface-fg: var(--color-green-a11);
+
+  --color-palette-green-outline-border: var(--color-green-a7);
+  --color-palette-green-outline-bg-hover: var(--color-green-a2);
+  --color-palette-green-outline-bg-active: var(--color-green-a3);
+  --color-palette-green-outline-fg: var(--color-green-a11);
+
+  --color-palette-green-plain-fg: var(--color-green-a11);
+  --color-palette-green-plain-bg-hover: var(--color-green-a3);
+  --color-palette-green-plain-bg-active: var(--color-green-a4);
+
+  /* Semantic tokens - Amber palette variants */
+  --color-palette-amber-solid-bg: var(--color-amber-9);
+  --color-palette-amber-solid-bg-hover: var(--color-amber-10);
+  --color-palette-amber-solid-fg: var(--color-gray-12);
+
+  --color-palette-amber-subtle-bg: var(--color-amber-a3);
+  --color-palette-amber-subtle-bg-hover: var(--color-amber-a4);
+  --color-palette-amber-subtle-bg-active: var(--color-amber-a5);
+  --color-palette-amber-subtle-fg: var(--color-amber-a11);
+
+  --color-palette-amber-surface-bg: var(--color-amber-a2);
+  --color-palette-amber-surface-bg-active: var(--color-amber-a3);
+  --color-palette-amber-surface-border: var(--color-amber-a6);
+  --color-palette-amber-surface-border-hover: var(--color-amber-a7);
+  --color-palette-amber-surface-fg: var(--color-amber-a11);
+
+  --color-palette-amber-outline-border: var(--color-amber-a7);
+  --color-palette-amber-outline-bg-hover: var(--color-amber-a2);
+  --color-palette-amber-outline-bg-active: var(--color-amber-a3);
+  --color-palette-amber-outline-fg: var(--color-amber-a11);
+
+  --color-palette-amber-plain-fg: var(--color-amber-a11);
+  --color-palette-amber-plain-bg-hover: var(--color-amber-a3);
+  --color-palette-amber-plain-bg-active: var(--color-amber-a4);
+
+  /* Spacing */
+  --spacing-0: 0rem;
+  --spacing-1: .25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-3-5: 0.875rem;
+  --spacing-4: 1rem;
+  --spacing-4-5: 1.125rem;
+  --spacing-6: 1.5rem;
+  --spacing-7: 1.75rem;
+  --spacing-8: 2rem;
+  --spacing-9: 2.25rem;
+  --spacing-10: 2.5rem;
+  --spacing-11: 2.75rem;
+  --spacing-12: 3rem;
+  --spacing-14: 3.5rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+  --spacing-28: 7rem;
+  --spacing-32: 8rem;
+  --spacing-36: 9rem;
+  --spacing-40: 10rem;
+  --spacing-44: 11rem;
+  --spacing-48: 12rem;
+  --spacing-52: 13rem;
+  --spacing-56: 14rem;
+  --spacing-60: 15rem;
+  --spacing-64: 16rem;
+  --spacing-72: 18rem;
+  --spacing-80: 20rem;
+  --spacing-96: 24rem;
+
+  /* Border radius */
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-l1: var(--radius-xs);
+  --radius-l2: var(--radius-sm);
+  --radius-l3: var(--radius-md);
+
+  /* Shadows */
+  --shadow-xs: 0px 1px 2px var(--color-gray-a6), 0px 0px 1px var(--color-gray-a7);
+  --shadow-sm: 0px 2px 4px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
+  --shadow-md: 0px 4px 8px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
+  --shadow-lg: 0px 8px 16px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
+  --shadow-xl: 0px 16px 24px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
+  --shadow-2xl: 0px 24px 40px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
+  --shadow-inset: inset 8px 0 12px -8px var(--color-gray-a4);
+
+  /* Z-index */
+  --z-index-hide: -1;
+  --z-index-base: 0;
+  --z-index-docked: 10;
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1100;
+  --z-index-banner: 1200;
+  --z-index-overlay: 1300;
+  --z-index-modal: 1400;
+  --z-index-popover: 1500;
+  --z-index-skip-link: 1600;
+  --z-index-toast: 1700;
+  --z-index-tooltip: 1800;
+
+  /* Durations */
+  --duration-fastest: 50ms;
+  --duration-faster: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 250ms;
+  --duration-slower: 300ms;
+  --duration-slowest: 400ms;
+
+  /* Text styles */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+  --text-7xl: 4.5rem;
+
+  --line-height-xs: 1.125rem;
+  --line-height-sm: 1.25rem;
+  --line-height-md: 1.5rem;
+  --line-height-lg: 1.75rem;
+  --line-height-xl: 1.875rem;
+  --line-height-2xl: 2rem;
+  --line-height-3xl: 2.375rem;
+  --line-height-4xl: 2.75rem;
+  --line-height-5xl: 3.75rem;
+  --line-height-6xl: 4.5rem;
+  --line-height-7xl: 5.75rem;
+
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}
+
+[data-theme="dark"] {
+  /* Couleurs - Gray (Slate) - Dark */
+  --color-gray-1: #111113;
+  --color-gray-2: #18191b;
+  --color-gray-3: #212225;
+  --color-gray-4: #272a2d;
+  --color-gray-5: #2e3135;
+  --color-gray-6: #363a3f;
+  --color-gray-7: #43484e;
+  --color-gray-8: #5a6169;
+  --color-gray-9: #696e77;
+  --color-gray-10: #777b84;
+  --color-gray-11: #b0b4ba;
+  --color-gray-12: #edeef0;
+
+  --color-gray-a1: rgba(0, 0, 0, 0);
+  --color-gray-a2: rgba(216, 244, 246, 0.035);
+  --color-gray-a3: rgba(221, 234, 248, 0.078);
+  --color-gray-a4: rgba(211, 237, 248, 0.114);
+  --color-gray-a5: rgba(217, 237, 254, 0.145);
+  --color-gray-a6: rgba(214, 235, 253, 0.188);
+  --color-gray-a7: rgba(217, 237, 255, 0.251);
+  --color-gray-a8: rgba(217, 237, 255, 0.365);
+  --color-gray-a9: rgba(223, 235, 253, 0.427);
+  --color-gray-a10: rgba(229, 237, 253, 0.482);
+  --color-gray-a11: rgba(241, 247, 254, 0.710);
+  --color-gray-a12: rgba(252, 253, 255, 0.937);
+
+  /* Couleurs - Cyan - Dark */
+  --color-cyan-1: #0b161a;
+  --color-cyan-2: #101b20;
+  --color-cyan-3: #082c36;
+  --color-cyan-4: #003848;
+  --color-cyan-5: #004558;
+  --color-cyan-6: #045468;
+  --color-cyan-7: #12677e;
+  --color-cyan-8: #11809c;
+  --color-cyan-9: #00a2c7;
+  --color-cyan-10: #23afd0;
+  --color-cyan-11: #4ccce6;
+  --color-cyan-12: #b6ecf7;
+
+  --color-cyan-a1: rgba(0, 145, 247, 0.039);
+  --color-cyan-a2: rgba(2, 167, 242, 0.067);
+  --color-cyan-a3: rgba(0, 190, 253, 0.157);
+  --color-cyan-a4: rgba(0, 186, 255, 0.231);
+  --color-cyan-a5: rgba(0, 190, 253, 0.302);
+  --color-cyan-a6: rgba(0, 199, 253, 0.369);
+  --color-cyan-a7: rgba(20, 205, 255, 0.459);
+  --color-cyan-a8: rgba(17, 207, 255, 0.584);
+  --color-cyan-a9: rgba(0, 207, 255, 0.765);
+  --color-cyan-a10: rgba(40, 214, 255, 0.804);
+  --color-cyan-a11: rgba(82, 225, 254, 0.898);
+  --color-cyan-a12: rgba(187, 243, 254, 0.969);
+
+  /* Couleurs - Ruby - Dark */
+  --color-ruby-1: #191113;
+  --color-ruby-2: #1e1517;
+  --color-ruby-3: #3a141e;
+  --color-ruby-4: #4e1325;
+  --color-ruby-5: #5e1a2e;
+  --color-ruby-6: #6f2539;
+  --color-ruby-7: #883447;
+  --color-ruby-8: #b3445a;
+  --color-ruby-9: #e54666;
+  --color-ruby-10: #ec5a72;
+  --color-ruby-11: #ff949d;
+  --color-ruby-12: #fed2e1;
+
+  --color-ruby-a1: rgba(244, 18, 74, 0.035);
+  --color-ruby-a2: rgba(254, 90, 127, 0.055);
+  --color-ruby-a3: rgba(255, 35, 93, 0.173);
+  --color-ruby-a4: rgba(253, 25, 94, 0.259);
+  --color-ruby-a5: rgba(254, 45, 107, 0.325);
+  --color-ruby-a6: rgba(255, 68, 118, 0.396);
+  --color-ruby-a7: rgba(255, 87, 125, 0.502);
+  --color-ruby-a8: rgba(255, 92, 124, 0.682);
+  --color-ruby-a9: rgba(254, 76, 112, 0.894);
+  --color-ruby-a10: rgba(255, 97, 123, 0.922);
+  --color-ruby-a11: #ff949d;
+  --color-ruby-a12: rgba(255, 211, 226, 0.996);
+
+  /* Couleurs - Green - Dark */
+  --color-green-1: #0e1512;
+  --color-green-2: #121b17;
+  --color-green-3: #132d21;
+  --color-green-4: #113b29;
+  --color-green-5: #174933;
+  --color-green-6: #20573e;
+  --color-green-7: #28684a;
+  --color-green-8: #2f7c57;
+  --color-green-9: #30a46c;
+  --color-green-10: #33b074;
+  --color-green-11: #3dd68c;
+  --color-green-12: #b1f1cb;
+
+  --color-green-a1: rgba(0, 222, 69, 0.020);
+  --color-green-a2: rgba(41, 249, 157, 0.043);
+  --color-green-a3: rgba(34, 255, 153, 0.118);
+  --color-green-a4: rgba(17, 255, 153, 0.176);
+  --color-green-a5: rgba(43, 255, 162, 0.251);
+  --color-green-a6: rgba(68, 255, 170, 0.314);
+  --color-green-a7: rgba(80, 253, 172, 0.404);
+  --color-green-a8: rgba(84, 255, 173, 0.451);
+  --color-green-a9: rgba(68, 255, 164, 0.620);
+  --color-green-a10: rgba(67, 254, 164, 0.671);
+  --color-green-a11: rgba(70, 254, 165, 0.831);
+  --color-green-a12: rgba(177, 241, 203, 0.941);
+
+  /* Couleurs - Amber - Dark */
+  --color-amber-1: #16120c;
+  --color-amber-2: #1d180f;
+  --color-amber-3: #302008;
+  --color-amber-4: #3f2700;
+  --color-amber-5: #4d3000;
+  --color-amber-6: #5c3d05;
+  --color-amber-7: #714f19;
+  --color-amber-8: #8f6424;
+  --color-amber-9: #ffc53d;
+  --color-amber-10: #ffd60a;
+  --color-amber-11: #ffca16;
+  --color-amber-12: #ffe7b3;
+
+  --color-amber-a1: rgba(230, 60, 0, 0.024);
+  --color-amber-a2: rgba(253, 155, 0, 0.051);
+  --color-amber-a3: rgba(250, 130, 0, 0.133);
+  --color-amber-a4: rgba(252, 130, 0, 0.196);
+  --color-amber-a5: rgba(253, 139, 0, 0.255);
+  --color-amber-a6: rgba(253, 155, 0, 0.318);
+  --color-amber-a7: rgba(255, 171, 37, 0.404);
+  --color-amber-a8: rgba(255, 174, 53, 0.529);
+  --color-amber-a9: #ffc53d;
+  --color-amber-a10: #ffd60a;
+  --color-amber-a11: #ffca16;
+  --color-amber-a12: rgba(255, 231, 179, 1);
+
+  /* Semantic tokens - Gray palette variants - Dark */
+  --color-palette-gray-solid-bg: var(--color-white);
+  --color-palette-gray-solid-bg-hover: var(--color-gray-12);
+  --color-palette-gray-solid-fg: var(--color-black);
+
+  --color-palette-gray-subtle-bg: var(--color-gray-a3);
+  --color-palette-gray-subtle-bg-hover: var(--color-gray-a4);
+  --color-palette-gray-subtle-bg-active: var(--color-gray-a5);
+  --color-palette-gray-subtle-fg: var(--color-gray-12);
+
+  --color-palette-gray-surface-bg: var(--color-gray-1);
+  --color-palette-gray-surface-bg-hover: var(--color-gray-2);
+  --color-palette-gray-surface-bg-active: var(--color-gray-3);
+  --color-palette-gray-surface-border: var(--color-gray-6);
+  --color-palette-gray-surface-border-hover: var(--color-gray-7);
+  --color-palette-gray-surface-fg: var(--color-gray-12);
+
+  --color-palette-gray-outline-border: var(--color-gray-6);
+  --color-palette-gray-outline-bg-hover: var(--color-gray-a2);
+  --color-palette-gray-outline-bg-active: var(--color-gray-a3);
+  --color-palette-gray-outline-fg: var(--color-gray-12);
+
+  --color-palette-gray-plain-fg: var(--color-gray-12);
+  --color-palette-gray-plain-bg-hover: var(--color-gray-a3);
+  --color-palette-gray-plain-bg-active: var(--color-gray-a4);
+
+  /* Shadows - Dark */
+  --shadow-xs: 0px 1px 1px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
+  --shadow-sm: 0px 2px 4px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
+  --shadow-md: 0px 4px 8px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
+  --shadow-lg: 0px 8px 16px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
+  --shadow-xl: 0px 16px 24px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
+  --shadow-2xl: 0px 24px 40px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
+  --shadow-inset: inset 8px 0 12px -8px var(--color-black-a6);
+}

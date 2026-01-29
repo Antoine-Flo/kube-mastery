@@ -1,0 +1,119 @@
+/* Input Group Root */
+.input-group {
+  position: relative;
+  width: 100%;
+}
+
+/* Input Group Element (start/end) */
+.input-group__element {
+  align-items: center;
+  color: var(--color-fg-muted);
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  position: absolute;
+  z-index: 2;
+}
+
+.input-group__element .icon {
+  color: var(--color-fg-subtle);
+}
+
+/* Input Group Element - Start */
+.input-group__element--start {
+  left: 0;
+  top: 0;
+}
+
+/* Input Group Element - End */
+.input-group__element--end {
+  right: 0;
+  top: 0;
+}
+
+/* Input padding adjustments based on size */
+.input-group--size-xs .input-group__element {
+  min-width: 2rem;
+}
+
+.input-group--size-xs .input-group__element .icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.input-group--size-xs > input:not(:first-child) {
+  padding-inline-start: 1.75rem !important;
+}
+
+.input-group--size-xs > input:not(:last-child) {
+  padding-inline-end: 1.75rem !important;
+}
+
+.input-group--size-sm .input-group__element {
+  min-width: 2.25rem;
+}
+
+.input-group--size-sm .input-group__element .icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.input-group--size-sm > input:not(:first-child) {
+  padding-inline-start: 2rem !important;
+}
+
+.input-group--size-sm > input:not(:last-child) {
+  padding-inline-end: 2rem !important;
+}
+
+.input-group--size-md .input-group__element {
+  min-width: 2.5rem;
+}
+
+.input-group--size-md .input-group__element .icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.input-group--size-md > input:not(:first-child) {
+  padding-inline-start: 2.25rem !important;
+}
+
+.input-group--size-md > input:not(:last-child) {
+  padding-inline-end: 2.25rem !important;
+}
+
+.input-group--size-lg .input-group__element {
+  min-width: 2.75rem;
+}
+
+.input-group--size-lg .input-group__element .icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.input-group--size-lg > input:not(:first-child) {
+  padding-inline-start: 2.5rem !important;
+}
+
+.input-group--size-lg > input:not(:last-child) {
+  padding-inline-end: 2.5rem !important;
+}
+
+.input-group--size-xl .input-group__element {
+  min-width: 2.75rem;
+}
+
+.input-group--size-xl .input-group__element .icon {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.input-group--size-xl > input:not(:first-child) {
+  padding-inline-start: 2.75rem !important;
+}
+
+.input-group--size-xl > input:not(:last-child) {
+  padding-inline-end: 2.75rem !important;
+}
+

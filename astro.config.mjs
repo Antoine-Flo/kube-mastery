@@ -9,6 +9,17 @@ export default defineConfig({
             paraglideVitePlugin({
                 project: "./project.inlang",
                 outdir: "./src/paraglide",
+                strategy: ["url", "baseLocale"],
+                urlPatterns: [
+                    { pattern: "/", localized: [["en", "/"], ["fr", "/fr"]] },
+                    {
+                        pattern: "/:path(.*)?",
+                        localized: [
+                            ["fr", "/fr/:path(.*)?"],
+                            ["en", "/:path(.*)?"],
+                        ],
+                    },
+                ],
             }),
         ],
     },

@@ -1,0 +1,28 @@
+---
+import * as m from "../paraglide/messages.js";
+
+interface Props {
+	locale: string;
+}
+
+const { locale } = Astro.props;
+
+function localePath(path: string): string {
+	if (locale === "fr") {
+		return path === "/" ? "/fr" : `/fr${path}`;
+	}
+	return path;
+}
+---
+<footer class="footer">
+	<nav class="footer__nav">
+		<a href={localePath("/terms-of-service")} class="footer__link">{m.footer_termsOfService()}</a>
+		<a href={localePath("/privacy-policy")} class="footer__link">{m.footer_privacyPolicy()}</a>
+		<a href={localePath("/contact")} class="footer__link">{m.footer_contact()}</a>
+	</nav>
+	<div class="footer__language-container">
+		<a href="/" class="footer__link">EN</a>
+		<span aria-hidden="true"> · </span>
+		<a href="/fr" class="footer__link">FR</a>
+	</div>
+</footer>

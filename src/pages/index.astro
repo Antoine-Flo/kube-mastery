@@ -1,11 +1,35 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import Layout from "../layouts/Layout.astro";
+import * as m from "../paraglide/messages.js";
+import { getLocale } from "../paraglide/runtime.js";
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import "../styles/routes/home.css";
+
+const locale = getLocale();
+
+function localePath(path: string): string {
+	if (locale === "fr") {
+		return path === "/" ? "/fr" : `/fr${path}`;
+	}
+	return path;
+}
 ---
-
 <Layout>
-	<Welcome />
+	<main class="home">
+		<section class="home__hero">
+			<div class="home__hero-content">
+				<div class="home__hero-left">
+					<h1 class="home__hero-title">{m.home_title()}</h1>
+					<p class="home__hero-subtitle">{m.home_subtitle()}</p>
+					<div class="home__cta">
+						<a href={localePath("/courses")} class="link--primary">{m.home_viewCourses()}</a>
+						{" · "}
+						<a href={localePath("/learn")} class="link--primary">{m.home_startNow()}</a>
+					</div>
+					<p>{m.home_description_text()}</p>
+					<p>{m.home_cta_question()}</p>
+				</div>
+			</div>
+		</section>
+	</main>
 </Layout>

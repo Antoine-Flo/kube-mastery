@@ -1,0 +1,427 @@
+/* Dialog Root (native <dialog> element) */
+.dialog {
+  border: none;
+  padding: 0;
+  background: transparent;
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.dialog::backdrop {
+  background: var(--color-black-a7);
+  animation: fade-in var(--duration-normal) ease-out;
+}
+
+.dialog:not([open])::backdrop {
+  animation: fade-out var(--duration-fast) ease-in;
+  opacity: 0;
+}
+
+/* Dialog Positioner */
+.dialog__positioner {
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  overscroll-behavior-y: none;
+  width: 100%;
+}
+
+.dialog__positioner--placement-center {
+  align-items: center;
+}
+
+.dialog__positioner--placement-top {
+  align-items: flex-start;
+}
+
+.dialog__positioner--placement-bottom {
+  align-items: flex-end;
+}
+
+.dialog__positioner--scroll-outside {
+  overflow: auto;
+  pointer-events: auto;
+}
+
+.dialog__positioner--scroll-inside {
+  overflow: hidden;
+}
+
+/* Dialog Content */
+.dialog__content {
+  --dialog-z-index: var(--z-index-modal);
+  background-color: var(--color-palette-gray-surface-bg);
+  border-radius: var(--radius-l3);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  margin: var(--dialog-margin, var(--dialog-base-margin));
+  outline: 0;
+  position: relative;
+  font-size: var(--text-sm);
+  line-height: var(--line-height-sm);
+  width: 100%;
+  z-index: calc(var(--dialog-z-index) + var(--layer-index, 0));
+  padding-top: var(--spacing-4);
+  padding-bottom: var(--spacing-4);
+  gap: var(--spacing-4);
+}
+
+@media (min-width: 768px) {
+  .dialog__content {
+    padding-top: var(--spacing-6);
+    padding-bottom: var(--spacing-6);
+    gap: var(--spacing-6);
+  }
+}
+
+.dialog[open] .dialog__content {
+  animation-duration: var(--duration-slowest);
+}
+
+.dialog:not([open]) .dialog__content {
+  animation-duration: var(--duration-normal);
+}
+
+/* Dialog Content - Motion Presets */
+.dialog[open] .dialog__content--motion-scale {
+  animation-name: scale-in, fade-in;
+}
+
+.dialog:not([open]) .dialog__content--motion-scale {
+  animation-name: scale-out, fade-out;
+}
+
+.dialog[open] .dialog__content--motion-slide-in-bottom {
+  animation-name: slide-from-bottom, fade-in;
+}
+
+.dialog:not([open]) .dialog__content--motion-slide-in-bottom {
+  animation-name: slide-to-bottom, fade-out;
+}
+
+.dialog[open] .dialog__content--motion-slide-in-top {
+  animation-name: slide-from-top, fade-in;
+}
+
+.dialog:not([open]) .dialog__content--motion-slide-in-top {
+  animation-name: slide-to-top, fade-out;
+}
+
+.dialog[open] .dialog__content--motion-slide-in-left {
+  animation-name: slide-from-left, fade-in;
+}
+
+.dialog:not([open]) .dialog__content--motion-slide-in-left {
+  animation-name: slide-to-left, fade-out;
+}
+
+.dialog[open] .dialog__content--motion-slide-in-right {
+  animation-name: slide-from-right, fade-in;
+}
+
+.dialog:not([open]) .dialog__content--motion-slide-in-right {
+  animation-name: slide-to-right, fade-out;
+}
+
+/* Dialog Content - Sizes */
+.dialog__content--size-xs {
+  max-width: 20rem;
+}
+
+.dialog__content--size-sm {
+  max-width: 24rem;
+}
+
+.dialog__content--size-md {
+  max-width: 28rem;
+}
+
+.dialog__content--size-lg {
+  max-width: 32rem;
+}
+
+.dialog__content--size-xl {
+  max-width: 36rem;
+}
+
+.dialog__content--size-cover {
+  width: 100%;
+  height: 100%;
+  --dialog-margin: 0;
+}
+
+.dialog__positioner--size-cover {
+  padding: 2rem;
+}
+
+.dialog__content--size-full {
+  max-width: 100dvw;
+  min-height: 100dvh;
+  --dialog-margin: 0;
+  border-radius: 0;
+}
+
+/* Dialog Content - Placement */
+.dialog__content--placement-center {
+  --dialog-base-margin: auto;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.dialog__content--placement-top {
+  --dialog-base-margin: 4rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.dialog__content--placement-bottom {
+  --dialog-base-margin: 4rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Dialog Content - Scroll Behavior */
+.dialog__content--scroll-inside {
+  max-height: calc(100% - 7.5rem);
+}
+
+/* Dialog Header */
+.dialog__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding-left: var(--spacing-4);
+  padding-right: var(--spacing-4);
+  flex: 0;
+}
+
+@media (min-width: 768px) {
+  .dialog__header {
+    padding-left: var(--spacing-6);
+    padding-right: var(--spacing-6);
+  }
+}
+
+/* Dialog Body */
+.dialog__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-left: var(--spacing-4);
+  padding-right: var(--spacing-4);
+}
+
+@media (min-width: 768px) {
+  .dialog__body {
+    padding-left: var(--spacing-6);
+    padding-right: var(--spacing-6);
+  }
+}
+
+.dialog__body--scroll-inside {
+  overflow: auto;
+}
+
+/* Dialog Footer */
+.dialog__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0;
+  gap: var(--spacing-3);
+  padding-left: var(--spacing-4);
+  padding-right: var(--spacing-4);
+}
+
+@media (min-width: 768px) {
+  .dialog__footer {
+    padding-left: var(--spacing-6);
+    padding-right: var(--spacing-6);
+  }
+}
+
+/* Dialog Title */
+.dialog__title {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--text-lg);
+  line-height: var(--line-height-lg);
+  margin: 0;
+  color: var(--color-fg-default);
+}
+
+/* Dialog Description */
+.dialog__description {
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+  line-height: var(--line-height-sm);
+}
+
+/* Dialog Close Trigger (single button with icon, no nested button) */
+.dialog__close-trigger {
+  position: absolute;
+  top: var(--spacing-3);
+  inset-inline-end: var(--spacing-3);
+  width: auto;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-palette-gray-plain-fg);
+  cursor: pointer;
+  border-radius: var(--radius-l2);
+}
+
+.dialog__close-trigger:hover {
+  background-color: var(--color-palette-gray-plain-bg-hover);
+}
+
+.dialog__close-trigger:focus-visible {
+  outline: 2px solid var(--color-cyan-9);
+  outline-offset: 2px;
+}
+
+/* Dialog Trigger */
+.dialog__trigger {
+  /* No specific styles, inherits from parent */
+}
+
+/* Keyframes - will be in animations/keyframes.css later */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes slide-from-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-to-bottom {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes slide-from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-to-top {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes slide-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-to-left {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+}
+
+@keyframes slide-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-to-right {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+}
+

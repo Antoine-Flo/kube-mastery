@@ -1,0 +1,470 @@
+/* Button Base Styles */
+.button {
+  align-items: center;
+  appearance: none;
+  border-radius: var(--radius-l2);
+  cursor: pointer;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-weight: var(--font-weight-semibold);
+  gap: var(--spacing-2);
+  isolation: isolate;
+  justify-content: center;
+  outline: 0;
+  position: relative;
+  transition: background-color var(--duration-normal), border-color var(--duration-normal), color var(--duration-normal), box-shadow var(--duration-normal);
+  user-select: none;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-cyan-9);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-cyan-9);
+}
+
+.button ._icon {
+  flex-shrink: 0;
+}
+
+/* Button Variants - Solid */
+.button--solid {
+  background-color: var(--color-palette-gray-solid-bg);
+  color: var(--color-palette-gray-solid-fg);
+  border: none;
+}
+
+.button--solid:hover:not(:disabled) {
+  background-color: var(--color-palette-gray-solid-bg-hover);
+}
+
+.button--solid.button--cyan {
+  background-color: var(--color-palette-cyan-solid-bg);
+  color: var(--color-palette-cyan-solid-fg);
+}
+
+.button--solid.button--cyan:hover:not(:disabled) {
+  background-color: var(--color-palette-cyan-solid-bg-hover);
+}
+
+.button--solid.button--ruby {
+  background-color: var(--color-palette-ruby-solid-bg);
+  color: var(--color-palette-ruby-solid-fg);
+}
+
+.button--solid.button--ruby:hover:not(:disabled) {
+  background-color: var(--color-palette-ruby-solid-bg-hover);
+}
+
+.button--solid.button--green {
+  background-color: var(--color-palette-green-solid-bg);
+  color: var(--color-palette-green-solid-fg);
+}
+
+.button--solid.button--green:hover:not(:disabled) {
+  background-color: var(--color-palette-green-solid-bg-hover);
+}
+
+.button--solid.button--amber {
+  background-color: var(--color-palette-amber-solid-bg);
+  color: var(--color-palette-amber-solid-fg);
+}
+
+.button--solid.button--amber:hover:not(:disabled) {
+  background-color: var(--color-palette-amber-solid-bg-hover);
+}
+
+/* Button Variants - Surface */
+.button--surface {
+  background-color: var(--color-palette-gray-surface-bg);
+  border: 1px solid var(--color-palette-gray-surface-border);
+  color: var(--color-palette-gray-surface-fg);
+}
+
+.button--surface:hover:not(:disabled) {
+  border-color: var(--color-palette-gray-surface-border-hover);
+}
+
+.button--surface:active:not(:disabled),
+.button--surface[data-on] {
+  background-color: var(--color-palette-gray-surface-bg-active);
+}
+
+.button--surface.button--cyan {
+  background-color: var(--color-palette-cyan-surface-bg);
+  border-color: var(--color-palette-cyan-surface-border);
+  color: var(--color-palette-cyan-surface-fg);
+}
+
+.button--surface.button--cyan:hover:not(:disabled) {
+  border-color: var(--color-palette-cyan-surface-border-hover);
+}
+
+.button--surface.button--cyan:active:not(:disabled),
+.button--surface.button--cyan[data-on] {
+  background-color: var(--color-palette-cyan-surface-bg-active);
+}
+
+.button--surface.button--ruby {
+  background-color: var(--color-palette-ruby-surface-bg);
+  border-color: var(--color-palette-ruby-surface-border);
+  color: var(--color-palette-ruby-surface-fg);
+}
+
+.button--surface.button--ruby:hover:not(:disabled) {
+  border-color: var(--color-palette-ruby-surface-border-hover);
+}
+
+.button--surface.button--ruby:active:not(:disabled),
+.button--surface.button--ruby[data-on] {
+  background-color: var(--color-palette-ruby-surface-bg-active);
+}
+
+.button--surface.button--green {
+  background-color: var(--color-palette-green-surface-bg);
+  border-color: var(--color-palette-green-surface-border);
+  color: var(--color-palette-green-surface-fg);
+}
+
+.button--surface.button--green:hover:not(:disabled) {
+  border-color: var(--color-palette-green-surface-border-hover);
+}
+
+.button--surface.button--green:active:not(:disabled),
+.button--surface.button--green[data-on] {
+  background-color: var(--color-palette-green-surface-bg-active);
+}
+
+.button--surface.button--amber {
+  background-color: var(--color-palette-amber-surface-bg);
+  border-color: var(--color-palette-amber-surface-border);
+  color: var(--color-palette-amber-surface-fg);
+}
+
+.button--surface.button--amber:hover:not(:disabled) {
+  border-color: var(--color-palette-amber-surface-border-hover);
+}
+
+.button--surface.button--amber:active:not(:disabled),
+.button--surface.button--amber[data-on] {
+  background-color: var(--color-palette-amber-surface-bg-active);
+}
+
+/* Button Variants - Subtle */
+.button--subtle {
+  background-color: var(--color-palette-gray-subtle-bg);
+  color: var(--color-palette-gray-subtle-fg);
+  border: none;
+}
+
+.button--subtle:hover:not(:disabled) {
+  background-color: var(--color-palette-gray-subtle-bg-hover);
+}
+
+.button--subtle:active:not(:disabled),
+.button--subtle[data-on] {
+  background-color: var(--color-palette-gray-subtle-bg-active);
+}
+
+.button--subtle.button--cyan {
+  background-color: var(--color-palette-cyan-subtle-bg);
+  color: var(--color-palette-cyan-subtle-fg);
+}
+
+.button--subtle.button--cyan:hover:not(:disabled) {
+  background-color: var(--color-palette-cyan-subtle-bg-hover);
+}
+
+.button--subtle.button--cyan:active:not(:disabled),
+.button--subtle.button--cyan[data-on] {
+  background-color: var(--color-palette-cyan-subtle-bg-active);
+}
+
+.button--subtle.button--ruby {
+  background-color: var(--color-palette-ruby-subtle-bg);
+  color: var(--color-palette-ruby-subtle-fg);
+}
+
+.button--subtle.button--ruby:hover:not(:disabled) {
+  background-color: var(--color-palette-ruby-subtle-bg-hover);
+}
+
+.button--subtle.button--ruby:active:not(:disabled),
+.button--subtle.button--ruby[data-on] {
+  background-color: var(--color-palette-ruby-subtle-bg-active);
+}
+
+.button--subtle.button--green {
+  background-color: var(--color-palette-green-subtle-bg);
+  color: var(--color-palette-green-subtle-fg);
+}
+
+.button--subtle.button--green:hover:not(:disabled) {
+  background-color: var(--color-palette-green-subtle-bg-hover);
+}
+
+.button--subtle.button--green:active:not(:disabled),
+.button--subtle.button--green[data-on] {
+  background-color: var(--color-palette-green-subtle-bg-active);
+}
+
+.button--subtle.button--amber {
+  background-color: var(--color-palette-amber-subtle-bg);
+  color: var(--color-palette-amber-subtle-fg);
+}
+
+.button--subtle.button--amber:hover:not(:disabled) {
+  background-color: var(--color-palette-amber-subtle-bg-hover);
+}
+
+.button--subtle.button--amber:active:not(:disabled),
+.button--subtle.button--amber[data-on] {
+  background-color: var(--color-palette-amber-subtle-bg-active);
+}
+
+/* Button Variants - Outline */
+.button--outline {
+  border: 1px solid var(--color-palette-gray-outline-border);
+  color: var(--color-palette-gray-outline-fg);
+  background-color: transparent;
+}
+
+.button--outline:hover:not(:disabled) {
+  background-color: var(--color-palette-gray-outline-bg-hover);
+}
+
+.button--outline:active:not(:disabled),
+.button--outline[data-on] {
+  background-color: var(--color-palette-gray-outline-bg-active);
+}
+
+.button--outline.button--cyan {
+  border-color: var(--color-palette-cyan-outline-border);
+  color: var(--color-palette-cyan-outline-fg);
+}
+
+.button--outline.button--cyan:hover:not(:disabled) {
+  background-color: var(--color-palette-cyan-outline-bg-hover);
+}
+
+.button--outline.button--cyan:active:not(:disabled),
+.button--outline.button--cyan[data-on] {
+  background-color: var(--color-palette-cyan-outline-bg-active);
+}
+
+.button--outline.button--ruby {
+  border-color: var(--color-palette-ruby-outline-border);
+  color: var(--color-palette-ruby-outline-fg);
+}
+
+.button--outline.button--ruby:hover:not(:disabled) {
+  background-color: var(--color-palette-ruby-outline-bg-hover);
+}
+
+.button--outline.button--ruby:active:not(:disabled),
+.button--outline.button--ruby[data-on] {
+  background-color: var(--color-palette-ruby-outline-bg-active);
+}
+
+.button--outline.button--green {
+  border-color: var(--color-palette-green-outline-border);
+  color: var(--color-palette-green-outline-fg);
+}
+
+.button--outline.button--green:hover:not(:disabled) {
+  background-color: var(--color-palette-green-outline-bg-hover);
+}
+
+.button--outline.button--green:active:not(:disabled),
+.button--outline.button--green[data-on] {
+  background-color: var(--color-palette-green-outline-bg-active);
+}
+
+.button--outline.button--amber {
+  border-color: var(--color-palette-amber-outline-border);
+  color: var(--color-palette-amber-outline-fg);
+}
+
+.button--outline.button--amber:hover:not(:disabled) {
+  background-color: var(--color-palette-amber-outline-bg-hover);
+}
+
+.button--outline.button--amber:active:not(:disabled),
+.button--outline.button--amber[data-on] {
+  background-color: var(--color-palette-amber-outline-bg-active);
+}
+
+/* Button Variants - Plain */
+.button--plain {
+  color: var(--color-palette-gray-plain-fg);
+  background-color: transparent;
+  border: none;
+}
+
+.button--plain:hover:not(:disabled) {
+  background-color: var(--color-palette-gray-plain-bg-hover);
+}
+
+.button--plain:active:not(:disabled),
+.button--plain[data-on] {
+  background-color: var(--color-palette-gray-plain-bg-active);
+}
+
+.button--plain.button--cyan {
+  color: var(--color-palette-cyan-plain-fg);
+}
+
+.button--plain.button--cyan:hover:not(:disabled) {
+  background-color: var(--color-palette-cyan-plain-bg-hover);
+}
+
+.button--plain.button--cyan:active:not(:disabled),
+.button--plain.button--cyan[data-on] {
+  background-color: var(--color-palette-cyan-plain-bg-active);
+}
+
+.button--plain.button--ruby {
+  color: var(--color-palette-ruby-plain-fg);
+}
+
+.button--plain.button--ruby:hover:not(:disabled) {
+  background-color: var(--color-palette-ruby-plain-bg-hover);
+}
+
+.button--plain.button--ruby:active:not(:disabled),
+.button--plain.button--ruby[data-on] {
+  background-color: var(--color-palette-ruby-plain-bg-active);
+}
+
+.button--plain.button--green {
+  color: var(--color-palette-green-plain-fg);
+}
+
+.button--plain.button--green:hover:not(:disabled) {
+  background-color: var(--color-palette-green-plain-bg-hover);
+}
+
+.button--plain.button--green:active:not(:disabled),
+.button--plain.button--green[data-on] {
+  background-color: var(--color-palette-green-plain-bg-active);
+}
+
+.button--plain.button--amber {
+  color: var(--color-palette-amber-plain-fg);
+}
+
+.button--plain.button--amber:hover:not(:disabled) {
+  background-color: var(--color-palette-amber-plain-bg-hover);
+}
+
+.button--plain.button--amber:active:not(:disabled),
+.button--plain.button--amber[data-on] {
+  background-color: var(--color-palette-amber-plain-bg-active);
+}
+
+/* Button Sizes */
+.button--size-2xs {
+  height: 1.5rem;
+  min-width: 1.5rem;
+  padding-inline: 0.5rem;
+  font-size: var(--text-xs);
+  line-height: var(--line-height-xs);
+}
+
+.button--size-2xs ._icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.button--size-xs {
+  height: 2rem;
+  min-width: 2rem;
+  padding-inline: 0.625rem;
+  font-size: var(--text-sm);
+  line-height: var(--line-height-sm);
+}
+
+.button--size-xs ._icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.button--size-sm {
+  height: 2.25rem;
+  min-width: 2.25rem;
+  padding-inline: 0.75rem;
+  font-size: var(--text-sm);
+  line-height: var(--line-height-sm);
+}
+
+.button--size-sm ._icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.button--size-md {
+  height: 2.5rem;
+  min-width: 2.5rem;
+  padding-inline: var(--spacing-3-5);
+  font-size: var(--text-sm);
+  line-height: var(--line-height-sm);
+}
+
+.button--size-md ._icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.button--size-lg {
+  height: 2.75rem;
+  min-width: 2.75rem;
+  padding-inline: var(--spacing-4);
+  font-size: var(--text-md);
+  line-height: var(--line-height-md);
+}
+
+.button--size-lg ._icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.button--size-xl {
+  height: 3rem;
+  min-width: 3rem;
+  padding-inline: var(--spacing-4-5);
+  font-size: var(--text-md);
+  line-height: var(--line-height-md);
+}
+
+.button--size-xl ._icon {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.button--size-2xl {
+  height: 4rem;
+  min-width: 4rem;
+  padding-inline: var(--spacing-6);
+  font-size: var(--text-xl);
+  line-height: var(--line-height-xl);
+}
+
+.button--size-2xl ._icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* Loading State */
+.button[data-loading] {
+  cursor: wait;
+}
+
+.icon-button {
+  padding: 0;
+}

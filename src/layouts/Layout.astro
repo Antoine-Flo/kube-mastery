@@ -1,23 +1,49 @@
+---
+import { getLocale } from "../paraglide/runtime.js";
+import Footer from "../components/Footer.astro";
+
+import "../styles/variables.css";
+import "../styles/reset.css";
+import "../styles/base.css";
+import "../styles/components/navbar.css";
+import "../styles/components/footer.css";
+
+const locale = getLocale();
+
+function localePath(path: string): string {
+	if (locale === "fr") {
+		return path === "/" ? "/fr" : `/fr${path}`;
+	}
+	return path;
+}
+---
 <!doctype html>
-<html lang="en">
+<html lang={locale}>
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<title>Kube Mastery</title>
 	</head>
 	<body>
+		<nav class="navbar">
+			<div class="navbar__nav">
+				<a href="/" class="navbar__link">EN</a>
+				<span aria-hidden="true"> · </span>
+				<a href="/fr" class="navbar__link">FR</a>
+			</div>
+		</nav>
 		<slot />
+		<Footer locale={locale} />
 	</body>
 </html>
 
-<style>
-	html,
-	body {
+<style is:global>
+	html, body {
 		margin: 0;
 		width: 100%;
-		height: 100%;
+		min-height: 100%;
 	}
 </style>

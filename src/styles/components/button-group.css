@@ -1,0 +1,70 @@
+/* Button Group Base */
+.button-group {
+  display: inline-flex;
+  position: relative;
+  gap: var(--spacing-2);
+}
+
+.button-group > * {
+  position: relative;
+}
+
+.button-group > *:focus-visible {
+  z-index: var(--z-index-docked);
+}
+
+/* Button Group Orientation */
+.button-group--horizontal {
+  flex-direction: row;
+}
+
+.button-group--vertical {
+  flex-direction: column;
+}
+
+/* Button Group Attached */
+.button-group--attached {
+  gap: 0;
+}
+
+.button-group--attached.button-group--horizontal > *:first-child {
+  border-end-end-radius: 0;
+  border-start-end-radius: 0;
+  margin-inline-end: -1px;
+}
+
+.button-group--attached.button-group--horizontal > *:last-child {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+
+.button-group--attached.button-group--horizontal > *:not(:first-child):not(:last-child) {
+  border-radius: 0;
+  margin-inline-end: -1px;
+}
+
+.button-group--attached.button-group--vertical > *:first-child {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  margin-bottom: -1px;
+}
+
+.button-group--attached.button-group--vertical > *:last-child {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.button-group--attached.button-group--vertical > *:not(:first-child):not(:last-child) {
+  border-radius: 0;
+  margin-bottom: -1px;
+}
+
+/* Button Group Grow */
+.button-group--grow {
+  display: flex;
+}
+
+.button-group--grow > * {
+  flex: 1;
+}
+

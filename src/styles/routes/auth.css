@@ -1,0 +1,99 @@
+/* Auth Page Container */
+.auth {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+}
+
+/* Auth Title */
+.auth__title {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-12);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* Auth Form */
+.auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+/* Auth Error */
+.auth__error {
+  padding: var(--spacing-3);
+  border-radius: var(--radius-md);
+  background-color: var(--color-ruby-3);
+  color: var(--color-ruby-11);
+  font-size: var(--text-sm);
+}
+
+/* Auth Card Body – padding top (card__body has none) */
+.auth__card-body {
+  padding-top: var(--spacing-6);
+}
+
+/* Auth Buttons (initial view) */
+.auth__buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.auth__provider-button {
+  width: 100%;
+}
+
+.auth__provider-button .auth__provider-btn-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+}
+
+.auth__provider-button--github {
+  background-color: var(--color-gray-3);
+}
+
+.auth__provider-button--github:hover {
+  background-color: var(--color-gray-4);
+}
+
+.auth__provider-button--mail {
+  background-color: var(--color-gray-2);
+}
+
+.auth__provider-button--mail:hover {
+  background-color: var(--color-gray-3);
+}
+
+/* Auth Submit Button */
+.auth__submit-button {
+  width: 100%;
+  margin-top: var(--spacing-2);
+}
+
+.auth__back {
+  display: block;
+  width: 100%;
+  margin-top: var(--spacing-4);
+  padding: var(--spacing-2);
+  background: none;
+  border: none;
+  font-size: var(--text-sm);
+  color: var(--color-gray-10);
+  cursor: pointer;
+  text-align: center;
+}
+
+.auth__back:hover {
+  color: var(--color-gray-12);
+}
+
+/* Auth Confirm Message */
+.auth__confirm-message {
+  color: var(--color-gray-11);
+}
+

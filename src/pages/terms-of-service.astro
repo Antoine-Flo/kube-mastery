@@ -1,0 +1,53 @@
+---
+import Layout from "../layouts/Layout.astro";
+import * as m from "../paraglide/messages.js";
+
+import "../styles/routes/terms-of-service.css";
+---
+<Layout>
+	<div class="terms-of-service">
+		<h1 class="terms-of-service__title">{m.termsOfService_title()}</h1>
+		<p class="terms-of-service__last-updated">{m.termsOfService_lastUpdated()}</p>
+		<p class="terms-of-service__intro">{m.termsOfService_intro()}</p>
+
+		<section class="terms-of-service__section">
+			<h2 class="terms-of-service__section-title">{m.termsOfService_acceptance_title()}</h2>
+			<p class="terms-of-service__section-content">{m.termsOfService_acceptance_content()}</p>
+		</section>
+
+		<section class="terms-of-service__section">
+			<h2 class="terms-of-service__section-title">{m.termsOfService_description_title()}</h2>
+			<p class="terms-of-service__section-content">{m.termsOfService_description_content()}</p>
+		</section>
+
+		<section class="terms-of-service__section">
+			<h2 class="terms-of-service__section-title">{m.termsOfService_account_title()}</h2>
+			<p class="terms-of-service__section-content">{m.termsOfService_account_content()}</p>
+		</section>
+
+		<section class="terms-of-service__section">
+			<h2 class="terms-of-service__section-title">{m.termsOfService_use_title()}</h2>
+			<p class="terms-of-service__section-content">{m.termsOfService_use_content()}</p>
+		</section>
+
+		<section class="terms-of-service__section">
+			<h2 class="terms-of-service__section-title">{m.termsOfService_intellectual_title()}</h2>
+			<p class="terms-of-service__section-content">{m.termsOfService_intellectual_content()}</p>
+		</section>
+
+		<section class="terms-of-service__section">
+			<h2 class="terms-of-service__section-title">{m.termsOfService_limitation_title()}</h2>
+			<p class="terms-of-service__section-content">{m.termsOfService_limitation_content()}</p>
+		</section>
+
+		<section class="terms-of-service__section">
+			<h2 class="terms-of-service__section-title">{m.termsOfService_changes_title()}</h2>
+			<p class="terms-of-service__section-content">{m.termsOfService_changes_content()}</p>
+		</section>
+
+		<section class="terms-of-service__section">
+			<h2 class="terms-of-service__section-title">{m.termsOfService_contact_title()}</h2>
+			<p class="terms-of-service__section-content">{m.termsOfService_contact_content()}</p>
+		</section>
+	</div>
+</Layout>

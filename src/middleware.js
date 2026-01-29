@@ -1,5 +1,6 @@
+import { defineMiddleware } from "astro:middleware";
 import { paraglideMiddleware } from "./paraglide/server.js";
 
-export function onRequest (context, next) {
-    return paraglideMiddleware(context.request, ({ request }) => next(request));
-};
+export const onRequest = defineMiddleware((context, next) => {
+	return paraglideMiddleware(context.request, ({ request }) => next(request));
+});

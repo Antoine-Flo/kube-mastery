@@ -1,0 +1,244 @@
+/* Lesson Page */
+.lesson {
+  background-color: var(--color-gray-1);
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.lesson__loading {
+  padding: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+}
+
+.lesson__error {
+  padding: 4rem;
+  text-align: center;
+}
+
+.lesson__error-title {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  margin-bottom: 1rem;
+}
+
+.lesson__error-message {
+  color: var(--color-gray-11);
+  margin-bottom: 2rem;
+}
+
+.lesson__container {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.lesson__sidebar {
+  height: 100%;
+  flex-shrink: 0;
+  border-right: 1px solid var(--color-gray-6);
+  background-color: var(--color-gray-1);
+  overflow: hidden;
+  transition: width var(--duration-normal) ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+.lesson__sidebar-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  width: 250px;
+  min-width: 250px;
+  opacity: 1;
+  transition: opacity var(--duration-normal) ease-out;
+}
+
+.lesson__sidebar--collapsed .lesson__sidebar-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lesson__sidebar-footer {
+  margin-top: auto;
+  padding: var(--spacing-1);
+  display: flex;
+  flex-shrink: 0;
+  opacity: 0.2;
+  transition: opacity var(--duration-normal);
+}
+
+.lesson__sidebar-footer button {
+  padding-inline: 0.6rem;
+  min-width: 2rem;
+}
+
+.lesson__sidebar-footer:hover {
+  opacity: 0.8;
+}
+
+@media (max-width: 1365px) {
+  .lesson__sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 10;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.lesson__left-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-gray-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.lesson__scroll-area {
+  height: 100%;
+  width: 100%;
+}
+
+.lesson__navigation {
+  display: flex;
+  justify-content: space-between;
+  margin: 1rem auto 0;
+  padding-block: 1.2rem;
+  width: 100%;
+  max-width: 80ch;
+  padding-inline: var(--spacing-4);
+  box-sizing: border-box;
+}
+
+.lesson__right-panel {
+  border-left: 1px solid var(--color-gray-6);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-gray-1);
+  flex: 0 0 46%;
+  min-width: 0;
+  transition: flex var(--duration-normal);
+}
+
+.lesson__right-panel--expanded {
+  flex: 0 0 50%;
+}
+
+.lesson__terminal-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-12);
+  margin-bottom: 1rem;
+}
+
+.lesson__terminal-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding-top: var(--spacing-8);
+  padding-bottom: var(--spacing-4);
+  padding-left: var(--spacing-4);
+  padding-right: var(--spacing-4);
+  position: relative;
+}
+
+.lesson__terminal-window-controls {
+  position: absolute;
+  top: var(--spacing-2);
+  right: var(--spacing-2);
+  display: flex;
+  gap: var(--spacing-2);
+  z-index: 1;
+}
+
+.lesson__terminal-window-control {
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity var(--duration-fast);
+}
+
+.lesson__terminal-window-control:hover {
+  opacity: 1;
+}
+
+.lesson__terminal-window-control--close {
+  color: var(--color-ruby-11);
+}
+
+.lesson__terminal-window-control--maximize {
+  color: var(--color-green-11);
+}
+
+.lesson__terminal-window-control--minimize {
+  color: var(--color-amber-11);
+}
+
+.lesson__visualization-container {
+  display: block;
+}
+
+.lesson__terminal-error {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-ruby-11);
+}
+
+.lesson__terminal-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-gray-11);
+}
+
+.lesson__terminal-initializing {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-gray-11);
+}
+
+.lesson__content-loading {
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20vh;
+}
+
+.lesson__content-wrapper {
+  animation: lessonContentFadeIn var(--duration-normal) ease-out;
+}
+
+.lesson__suggest-textarea {
+  width: 100%;
+  min-height: 15rem;
+  padding: var(--spacing-2);
+  font: inherit;
+  border: 1px solid var(--color-gray-7);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+  color: var(--color-gray-12)
+}
+
+.lesson__suggest-error {
+  margin-top: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-ruby-11);
+}
+
+@keyframes lessonContentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
