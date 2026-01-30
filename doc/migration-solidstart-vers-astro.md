@@ -8,6 +8,7 @@
 
 ## Principes
 
+- **Pas de `:global`** : ne pas utiliser `:global()` dans les styles Astro. C’est moche, difficile à lire et souvent inutile (on met les styles au bon endroit : là où les classes sont définies, pas dans un composant parent qui reçoit du slot).
 - **Petit à petit** : une étape à la fois, validée avant la suivante.
 - **Améliorer en migrant** : simplifier, renommer, supprimer le mort (pas de copier-coller aveugle).
 - **Ne pas garder de legacy** : pas de code de compatibilité SolidStart dans Astro.
@@ -17,17 +18,17 @@
 
 ## Vue d’ensemble des étapes
 
-| Phase | Contenu | Risque |
-|-------|--------|--------|
-| 0 | Préparation & structure | Faible |
-| 1 | Pages statiques / marketing | Faible |
-| 2 | Layout, UI de base, thème | Faible |
-| 3 | i18n & routing par langue | Moyen |
-| 4 | Contenu cours (markdown) | Moyen |
-| 5 | Routes learn (type/id/lessons) | Moyen |
-| 6 | Terminal + cluster (îlots interactifs) | Élevé |
-| 7 | Quiz, auth, API | Élevé |
-| 8 | Tests, CI, nettoyage | Moyen |
+| Phase | Contenu | Risque | État |
+|-------|--------|--------|------|
+| 0 | Préparation & structure | Faible | Fait |
+| 1 | Pages statiques / marketing | Faible | Fait (partiel) |
+| 2 | Layout, UI de base, thème | Faible | Fait |
+| 3 | i18n & routing par langue | Moyen | Fait |
+| 4 | Contenu cours (markdown) | Moyen | Fait |
+| 5 | Routes learn (type/id/lessons) | Moyen | Fait |
+| 6 | Terminal + cluster (îlots interactifs) | Élevé | À faire |
+| 7 | Quiz, auth, API | Élevé | À faire |
+| 8 | Tests, CI, nettoyage | Moyen | À faire |
 
 ---
 
@@ -121,39 +122,48 @@
 
 **But** : Servir les leçons et modules comme dans l’ancien projet, en s’appuyant sur le contenu dans `old/src/courses/`.
 
+**État : Fait.**
+
 1. **Données**
-   - Les cours vivent dans `old/src/courses/` (structure par module, `course-structure.ts`, fichiers `.md`).
-   - Décider : soit copier `courses/` dans le nouveau projet (puis nettoyer), soit garder un seul source et y pointer depuis Astro (monore ou chemin partagé).
-   - **Amélioration** : simplifier la structure (ex. moins de fichiers ts pour la structure, plus de données déclaratives).
+   - Les cours vivent dans `src/courses/` (structure par module : `course.ts`, `course-structure.ts`, `src/courses/modules/{moduleId}/{chapterDir}/{lessonDir}/{lang}/content.md`).
+   - Données build-time : `src/data/courses.ts` (getCourses, getModules), `src/data/overview.ts` (getCourseOverview, getModuleOverview, getLessonLocation, getLessonContent).
 
 2. **Rendu markdown**
-   - Utiliser `marked` (ou l’intégration Astro) pour le contenu des leçons.
-   - Reproduire les blocs de code, les titres, et les éventuelles extensions (mermaid, etc.) si utilisées dans l’ancien projet.
+   - Pas de `marked` : Astro charge les `.md` via `import.meta.glob` et fournit le composant `Content` (markdown compilé).
+   - Mermaid : intégration `astro-mermaid` dans `astro.config.mjs` ; les blocs mermaid dans le markdown sont transformés au build.
 
 3. **Pages “structure”**
-   - Une page “liste des modules” et une “liste des leçons d’un module” peuvent être générées en SSG (getStaticPaths) à partir des fichiers/données de cours.
-   - Ne pas encore brancher le terminal ni le quiz ; uniquement afficher le contenu.
+   - Liste cours/modules : `src/pages/[lang]/courses.astro`.
+   - Overview d’un cours ou module : `src/pages/[lang]/[type]/[id]/index.astro` (type = `courses` | `modules`).
+   - Terminal et quiz non branchés ; uniquement contenu markdown.
 
-**Validation** : On peut naviguer dans la structure des cours et lire une leçon en markdown avec le bon rendu.
+**Validation** : Navigation dans la structure des cours ; lecture d’une leçon en markdown avec rendu et mermaid.
 
 ---
 
 ## Phase 5 : Routes learn (type, id, lessons)
 
-**But** : URLs du type `/[lang]/learn/[type]/[id]/` et `/[lang]/learn/[type]/[id]/lessons/[lessonId]` comme dans `old/src/routes/[[lang]]/learn/`.
+**But** : URLs pour overview et leçon, cohérentes avec la structure des cours.
+
+**État : Fait.**
+
+**Décision** : Pas de segment `learn` ni `lessons` dans l’URL. Routes actuelles :
+- `/[lang]/[type]/[id]` : overview d’un cours ou module (type = `courses` | `modules`).
+- `/[lang]/[type]/[id]/[lessonId]` : page d’une leçon (ex. `/fr/modules/overview/comment-utiliser`).
 
 1. **Routing**
-   - Créer `src/pages/[lang]/learn/[type]/[id]/index.astro` et `.../lessons/[lessonId].astro` (ou équivalent selon la structure choisie).
-   - Récupérer les données (module, leçon) depuis la même source que en phase 4.
+   - Overview : `src/pages/[lang]/[type]/[id]/index.astro`.
+   - Leçon : `src/pages/[lang]/[type]/[id]/[lessonId]/index.astro`.
+   - Données : `getLessonContent(type, id, lessonId, lang)` dans `src/data/overview.ts` (glob des `content.md` compilés par Astro).
 
 2. **Composants**
-   - Équivalent de `LessonContent` : affichage titre, contenu markdown, éventuellement sidebar “plan du cours”.
-   - S’inspirer de `old/src/components/lesson-content.tsx` et de la structure learnable sans encore le terminal ni le quiz.
+   - Contenu leçon : `<Content />` (instance Markdown d’Astro), pas de sidebar “plan du cours” pour l’instant.
+   - Styles : `src/styles/components/lesson-content.css`.
 
 3. **Navigation**
-   - Liens “leçon suivante / précédente”, “retour au module”, cohérents avec la structure des cours.
+   - Liens “retour au cours/module”, “leçon précédente”, “leçon suivante” sur la page leçon ; liens depuis l’overview vers chaque leçon (`lessonBaseUrl` = `/${type}/${id}`).
 
-**Validation** : Navigation complète dans les leçons par URL ; pas de régression sur le contenu.
+**Validation** : Navigation complète overview ↔ leçon par URL ; contenu markdown + mermaid correct.
 
 ---
 
@@ -238,14 +248,16 @@ Respecter l’ordre des phases ; valider chaque phase avant de passer à la suiv
 | Besoin | Ancien (old/) | Nouveau (racine) |
 |--------|----------------|-------------------|
 | Routing i18n | `src/routes/[[lang]]/` | `src/pages/[lang]/` + middleware |
-| Layout | `src/app.tsx`, navbar, footer | `src/layouts/MainLayout.astro` |
+| Layout | `src/app.tsx`, navbar, footer | `src/layouts/Layout.astro` |
 | Styles | `src/styles/` | `src/styles/` |
-| i18n | `src/lang/core.tsx`, Paraglide | Paraglide + middleware |
+| i18n | `src/lang/core.tsx`, Paraglide | Paraglide + `src/i18n/utils.ts` |
 | Core (terminal, cluster) | `src/core/` | `src/core/` (copie adaptée) |
-| Cours | `src/courses/` | À définir (copie ou partagé) |
-| Auth | `src/account/`, `src/lib/auth.tsx` | Endpoints + store client |
-| API | `src/routes/api/` | `src/pages/api/` |
+| Cours (données) | `src/courses/` | `src/courses/` (structure identique) |
+| Overview / leçons (data) | — | `src/data/overview.ts`, `src/data/courses.ts` |
+| Pages cours / leçons | `learn/[type]/[id]/lessons/[lessonId]` | `[lang]/[type]/[id]/index.astro`, `[lang]/[type]/[id]/[lessonId]/index.astro` |
+| Auth | `src/account/`, `src/lib/auth.tsx` | Endpoints + store client (à faire) |
+| API | `src/routes/api/` | `src/pages/api/` (à faire) |
 
 ---
 
-*Document à mettre à jour au fil de la migration (cocher les étapes, noter les décisions prises).*
+*Document mis à jour au fil de la migration. Dernière mise à jour : phases 4 et 5 (contenu markdown, routes overview/leçon sans segment learn/lessons).*

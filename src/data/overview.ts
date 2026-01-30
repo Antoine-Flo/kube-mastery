@@ -2,6 +2,7 @@
  * Build-time data for course/module overview pages (chapters + lessons from markdown).
  */
 
+import type { MarkdownInstance } from "astro";
 import type { LocalCourse, CourseStructure, LocalModule } from "../courses/types.js";
 import type { UiLang } from "./courses.js";
 
@@ -40,7 +41,9 @@ function stripNumericPrefix(name: string): string {
 /** Parse first H1 from markdown content: "# Title" -> "Title" */
 function parseH1(content: string): string {
   const line = content.split("\n").find((l) => l.startsWith("#"));
-  if (!line) return "";
+  if (!line) {
+    return "";
+  }
   return line.replace(/^#\s*/, "").trim();
 }
 
@@ -52,15 +55,19 @@ function buildLessonTitleIndex(): Map<string, string> {
     { eager: true, as: "raw" }
   );
   for (const [path, content] of Object.entries(glob)) {
-    const text = typeof content === "string" ? content : "";
+    const text = content ?? "";
     const parts = path.split("/");
     const modulesIdx = parts.indexOf("modules");
-    if (modulesIdx === -1 || parts.length < modulesIdx + 5) continue;
+    if (modulesIdx === -1 || parts.length < modulesIdx + 5) {
+      continue;
+    }
     const moduleId = parts[modulesIdx + 1];
     const chapterDir = parts[modulesIdx + 2];
     const lessonDir = parts[modulesIdx + 3];
     const lang = parts[modulesIdx + 4];
-    if (lang !== "en" && lang !== "fr") continue;
+    if (lang !== "en" && lang !== "fr") {
+      continue;
+    }
     const chapterId = stripNumericPrefix(chapterDir);
     const lessonId = stripNumericPrefix(lessonDir);
     const title = parseH1(text);
@@ -83,7 +90,9 @@ function buildChapterMetaIndex(): Map<
   for (const [path, data] of Object.entries(glob)) {
     const parts = path.split("/");
     const modulesIdx = parts.indexOf("modules");
-    if (modulesIdx === -1 || parts.length < modulesIdx + 3) continue;
+    if (modulesIdx === -1 || parts.length < modulesIdx + 3) {
+      continue;
+    }
     const moduleId = parts[modulesIdx + 1];
     const chapterDir = parts[modulesIdx + 2];
     const chapterId = stripNumericPrefix(chapterDir);
@@ -129,11 +138,15 @@ function getChapterDirsByModule(): Map<string, Array<{ chapterDir: string; chapt
     for (const path of Object.keys(glob)) {
       const parts = path.split("/");
       const modulesIdx = parts.indexOf("modules");
-      if (modulesIdx === -1 || parts.length < modulesIdx + 4) continue;
+      if (modulesIdx === -1 || parts.length < modulesIdx + 4) {
+        continue;
+      }
       const moduleId = parts[modulesIdx + 1];
       const chapterDir = parts[modulesIdx + 2];
       const chapterId = stripNumericPrefix(chapterDir);
-      if (!seen.has(moduleId)) seen.set(moduleId, new Set());
+      if (!seen.has(moduleId)) {
+        seen.set(moduleId, new Set());
+      }
       seen.get(moduleId)!.add(JSON.stringify({ chapterDir, chapterId }));
     }
     const out = new Map<string, Array<{ chapterDir: string; chapterId: string }>>();
@@ -155,13 +168,17 @@ function getLessonDirsByChapter(): Map<string, string[]> {
     for (const path of Object.keys(glob)) {
       const parts = path.split("/");
       const modulesIdx = parts.indexOf("modules");
-      if (modulesIdx === -1 || parts.length < modulesIdx + 4) continue;
+      if (modulesIdx === -1 || parts.length < modulesIdx + 4) {
+        continue;
+      }
       const moduleId = parts[modulesIdx + 1];
       const chapterDir = parts[modulesIdx + 2];
       const lessonDir = parts[modulesIdx + 3];
       const chapterId = stripNumericPrefix(chapterDir);
       const key = `${moduleId}:${chapterId}`;
-      if (!seen.has(key)) seen.set(key, new Set());
+      if (!seen.has(key)) {
+        seen.set(key, new Set());
+      }
       seen.get(key)!.add(lessonDir);
     }
     const out = new Map<string, string[]>();
@@ -188,10 +205,14 @@ const modulesGlob = import.meta.glob("../courses/modules/*/module.ts", { eager: 
 >;
 
 export function getCourseOverview(courseId: string, lang: UiLang): CourseOverview | null {
-  const pathKey = Object.keys(coursesGlob).find((p) => p.includes(`/${courseId}/course.ts`) && !p.includes("modules"));
-  if (!pathKey) return null;
+  const pathKey = Object.keys(coursesGlob).find((p) => p.includes(`/${courseId}/course.ts`));
+  if (!pathKey) {
+    return null;
+  }
   const course = coursesGlob[pathKey].course;
-  if (!course.isActive) return null;
+  if (!course.isActive) {
+    return null;
+  }
   const structurePath = pathKey.replace("course.ts", "course-structure.ts");
   const structure = structuresGlob[structurePath]?.courseStructure ?? { chapters: [] };
   const lessonTitles = getLessonTitleIndex();
@@ -259,10 +280,14 @@ export function getCourseOverview(courseId: string, lang: UiLang): CourseOvervie
 
 export function getModuleOverview(moduleId: string, lang: UiLang): CourseOverview | null {
   const pathKey = Object.keys(modulesGlob).find((p) => p.endsWith(`/${moduleId}/module.ts`));
-  if (!pathKey) return null;
+  if (!pathKey) {
+    return null;
+  }
   const mod = modulesGlob[pathKey].module;
   const chapterDirs = getChapterDirsByModule().get(moduleId) ?? [];
-  if (chapterDirs.length === 0) return null;
+  if (chapterDirs.length === 0) {
+    return null;
+  }
   const lessonTitles = getLessonTitleIndex();
   const chapterMeta = getChapterMetaIndex();
   const lessonDirsMap = getLessonDirsByChapter();
@@ -295,4 +320,93 @@ export function getModuleOverview(moduleId: string, lang: UiLang): CourseOvervie
     comingSoon: false,
     content: { chapters },
   };
+}
+
+export type OverviewType = "courses" | "modules";
+
+export interface LessonLocation {
+  moduleId: string;
+  chapterDir: string;
+  lessonDir: string;
+}
+
+/** Resolve (type, id, lessonId) to filesystem location for content.md. */
+export function getLessonLocation(
+  type: OverviewType,
+  id: string,
+  lessonId: string
+): LessonLocation | null {
+  const lang: UiLang = "en";
+  const overview =
+    type === "courses" ? getCourseOverview(id, lang) : getModuleOverview(id, lang);
+  if (!overview) {
+    return null;
+  }
+  for (const chapter of overview.content.chapters) {
+    const lesson = chapter.lessons.find((l) => l.id === lessonId);
+    if (!lesson) {
+      continue;
+    }
+    const moduleId = chapter.moduleId ?? overview.id;
+    const chapterId = chapter.id;
+    const chapterDirs = getChapterDirsByModule().get(moduleId) ?? [];
+    const chapterEntry = chapterDirs.find((c) => c.chapterId === chapterId);
+    if (!chapterEntry) {
+      return null;
+    }
+    const lessonDirs = getLessonDirsByChapter().get(`${moduleId}:${chapterId}`) ?? [];
+    const lessonDir = lessonDirs.find((d) => stripNumericPrefix(d) === lessonId);
+    if (!lessonDir) {
+      return null;
+    }
+    return { moduleId, chapterDir: chapterEntry.chapterDir, lessonDir };
+  }
+  return null;
+}
+
+const contentGlob = import.meta.glob<string>("../courses/modules/**/content.md", {
+  eager: true,
+  query: "?raw",
+  import: "default",
+});
+
+function contentPath(loc: LessonLocation, lang: UiLang): string {
+  return `modules/${loc.moduleId}/${loc.chapterDir}/${loc.lessonDir}/${lang}/content.md`;
+}
+
+/** Load raw markdown for a lesson. Returns null if not found. */
+export function getLessonMarkdown(
+  type: OverviewType,
+  id: string,
+  lessonId: string,
+  lang: UiLang
+): string | null {
+  const loc = getLessonLocation(type, id, lessonId);
+  if (!loc) {
+    return null;
+  }
+  const suffix = contentPath(loc, lang);
+  const found = Object.keys(contentGlob).find((k) => k.endsWith(suffix));
+  return found ? (contentGlob[found] ?? null) : null;
+}
+
+// Glob that loads .md as Astro Markdown (compiled to Content component)
+const contentAsMarkdownGlob = import.meta.glob<MarkdownInstance<Record<string, unknown>>>(
+  "../courses/modules/**/content.md",
+  { eager: true }
+);
+
+/** Load lesson as Astro Markdown instance (Content component). Returns null if not found. */
+export function getLessonContent(
+  type: OverviewType,
+  id: string,
+  lessonId: string,
+  lang: UiLang
+): MarkdownInstance<Record<string, unknown>> | null {
+  const loc = getLessonLocation(type, id, lessonId);
+  if (!loc) {
+    return null;
+  }
+  const found = Object.keys(contentAsMarkdownGlob).find((k) => k.endsWith(contentPath(loc, lang)));
+  return found ? (contentAsMarkdownGlob[found] ?? null) : null;
 }

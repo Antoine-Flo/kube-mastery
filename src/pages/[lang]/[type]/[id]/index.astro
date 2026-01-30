@@ -1,0 +1,81 @@
+---
+import Layout from "../../../../layouts/Layout.astro";
+import OverviewLayout from "../../../../components/overview/OverviewLayout.astro";
+import OverviewHeader from "../../../../components/overview/OverviewHeader.astro";
+import OverviewStructure from "../../../../components/overview/OverviewStructure.astro";
+import { useTranslations, useLocalePath } from "../../../../i18n/utils.js";
+import { getCourses, getModules, type ModuleListItem } from "../../../../data/courses.js";
+import { getCourseOverview, getModuleOverview } from "../../../../data/overview.js";
+
+const TYPE_COURSES = "courses";
+const TYPE_MODULES = "modules";
+type OverviewType = typeof TYPE_COURSES | typeof TYPE_MODULES;
+
+export function getStaticPaths() {
+	const paths: { params: { lang: string; type: OverviewType; id: string } }[] = [];
+	for (const lang of ["en", "fr"] as const) {
+		const courses = getCourses(lang);
+		for (const c of courses) {
+			paths.push({ params: { lang, type: "courses", id: c.id } });
+		}
+		const modules = getModules(lang);
+		for (const m of modules) {
+			paths.push({ params: { lang, type: "modules", id: m.id } });
+		}
+	}
+	return paths;
+}
+
+const lang = Astro.params.lang as "en" | "fr";
+const type = Astro.params.type as OverviewType;
+const id = Astro.params.id!;
+const t = useTranslations(lang);
+const localePath = useLocalePath(lang);
+
+const overview =
+	type === TYPE_COURSES ? getCourseOverview(id, lang) : getModuleOverview(id, lang);
+if (!overview) {
+	return Astro.redirect(localePath("/courses"));
+}
+
+const lessonBasePath = `/${type}/${id}`;
+const startHref = overview.content.chapters[0]?.lessons[0]?.id
+	? localePath(`${lessonBasePath}/${overview.content.chapters[0].lessons[0].id}`)
+	: "#";
+const lessonBaseUrl = localePath(lessonBasePath);
+
+const modules = type === TYPE_COURSES ? getModules(lang) : null;
+const moduleTitles = modules ? new Map(modules.map((m: ModuleListItem) => [m.id, m.title])) : undefined;
+---
+<Layout>
+	<OverviewLayout>
+		<div class="ol">
+			<OverviewHeader overview={overview} t={t} startHref={startHref} />
+		</div>
+		<div class="or">
+			<OverviewStructure
+				chapters={overview.content.chapters}
+				groupByModule={type === TYPE_COURSES}
+				moduleTitles={moduleTitles}
+				lessonBaseUrl={lessonBaseUrl}
+				t={t}
+			/>
+		</div>
+	</OverviewLayout>
+</Layout>
+
+<style>
+	.ol {
+		flex: 1;
+		min-width: 0;
+	}
+	.or {
+		flex: 1;
+		min-width: 0;
+	}
+	@media (min-width: 1024px) {
+		.or {
+			flex: 0 0 450px;
+		}
+	}
+</style>

@@ -22,7 +22,9 @@ const groups: ChapterGroup[] = groupByModule
 			const map = new Map<string, OverviewChapter[]>();
 			for (const ch of chapters) {
 				const mid = ch.moduleId ?? "";
-				if (!map.has(mid)) map.set(mid, []);
+				if (!map.has(mid)) {
+				map.set(mid, []);
+			}
 				map.get(mid)!.push(ch);
 			}
 			return Array.from(map.entries()).map(([moduleId, chs]) => ({ moduleId, chapters: chs }));

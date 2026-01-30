@@ -38,15 +38,21 @@ function buildLessonIndex(): Map<string, Map<string, Set<string>>> {
   for (const path of Object.keys(glob)) {
     const parts = path.split("/");
     const modulesIdx = parts.indexOf("modules");
-    if (modulesIdx === -1 || parts.length < modulesIdx + 4) continue;
+    if (modulesIdx === -1 || parts.length < modulesIdx + 4) {
+      continue;
+    }
     const moduleId = parts[modulesIdx + 1];
     const chapterDir = parts[modulesIdx + 2];
     const lessonDir = parts[modulesIdx + 3];
     const chapterId = stripNumericPrefix(chapterDir);
     const lessonId = stripNumericPrefix(lessonDir);
-    if (!index.has(moduleId)) index.set(moduleId, new Map());
+    if (!index.has(moduleId)) {
+      index.set(moduleId, new Map());
+    }
     const mod = index.get(moduleId)!;
-    if (!mod.has(chapterId)) mod.set(chapterId, new Set());
+    if (!mod.has(chapterId)) {
+      mod.set(chapterId, new Set());
+    }
     mod.get(chapterId)!.add(lessonId);
   }
   return index;
@@ -62,7 +68,9 @@ function getLessonIndex(): Map<string, Map<string, Set<string>>> {
 function countLessonsForModule(moduleId: string): number {
   const index = getLessonIndex();
   const mod = index.get(moduleId);
-  if (!mod) return 0;
+  if (!mod) {
+    return 0;
+  }
   let n = 0;
   for (const set of mod.values()) n += set.size;
   return n;
@@ -75,7 +83,9 @@ function countLessonsForChapters(
   let n = 0;
   for (const ch of structure.chapters) {
     const mod = index.get(ch.moduleId);
-    if (!mod) continue;
+    if (!mod) {
+      continue;
+    }
     if (ch.chapterId === "all") {
       for (const set of mod.values()) n += set.size;
     } else {
@@ -102,10 +112,11 @@ export function getCourses(lang: UiLang): CourseListItem[] {
   const index = getLessonIndex();
   const list: CourseListItem[] = [];
   for (const path of Object.keys(coursesGlob)) {
-    if (path.includes("modules")) continue;
     const courseId = path.split("/").slice(-2)[0];
     const course = coursesGlob[path].course;
-    if (!course.isActive) continue;
+    if (!course.isActive) {
+      continue;
+    }
     const structurePath = path.replace("course.ts", "course-structure.ts");
     const structure = structuresGlob[structurePath]?.courseStructure ?? { chapters: [] };
     const totalLessons = countLessonsForChapters(structure, index);
@@ -132,7 +143,9 @@ export function getModules(lang: UiLang): ModuleListItem[] {
     const moduleId = parts[parts.length - 2];
     const mod = modulesGlob[path].module;
     const totalLessons = countLessonsForModule(moduleId);
-    if (totalLessons === 0) continue;
+    if (totalLessons === 0) {
+      continue;
+    }
     list.push({
       id: moduleId,
       title: mod.title[lang] ?? mod.title.en,
