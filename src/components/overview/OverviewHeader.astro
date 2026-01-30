@@ -1,0 +1,104 @@
+---
+import Button from "../ui/Button.astro";
+import { BookOpen, Circle, Layers, Terminal } from "@lucide/astro";
+import type { CourseOverview } from "../../data/overview.js";
+
+interface Props {
+	overview: CourseOverview;
+	t: (key: string) => string;
+	startHref: string;
+}
+
+const { overview, t, startHref } = Astro.props;
+
+const totalLessons = overview.content.chapters.reduce(
+	(sum, ch) => sum + ch.lessons.length,
+	0
+);
+const totalChapters = overview.content.chapters.length;
+const totalEnvironments = overview.content.chapters.reduce(
+	(sum, ch) => sum + ch.lessons.filter((l) => l.hasEnvironment).length,
+	0
+);
+
+const lessonsLabel =
+	totalLessons === 1
+		? `1 ${t("courses_lesson")}`
+		: `${totalLessons} ${t("courses_lessons")}`;
+const chaptersLabel =
+	totalChapters === 1
+		? `1 ${t("courses_chapter")}`
+		: `${totalChapters} ${t("courses_chapters")}`;
+const environmentsLabel =
+	totalEnvironments === 1
+		? `1 ${t("courses_environment")} ${t("courses_practice")}`
+		: `${totalEnvironments} ${t("courses_environments")} ${t("courses_practices")}`;
+---
+<div class="oh">
+	<h1>{overview.title}</h1>
+	<div class="row">
+		<div class="i"><BookOpen size={18} aria-hidden="true" /><span>{lessonsLabel}</span></div>
+		<div class="i"><Layers size={18} aria-hidden="true" /><span>{chaptersLabel}</span></div>
+		{overview.level && (
+			<div class="i"><Circle size={18} aria-hidden="true" /><span>{t("courses_level")} {overview.level.toLowerCase()}</span></div>
+		)}
+		{totalEnvironments > 0 && (
+			<div class="i"><Terminal size={18} aria-hidden="true" /><span>{environmentsLabel}</span></div>
+		)}
+	</div>
+	{overview.description && (
+		<div class="d">
+			{overview.description.split(/\n\n+/).map((p) => (
+				<p>{p}</p>
+			))}
+		</div>
+	)}
+	<Button href={startHref} variant="solid" size="lg" color="cyan" class="cta">
+		{t("courseOverview_startCourse")}
+	</Button>
+</div>
+
+<style>
+	.oh { margin-bottom: 0; }
+	.oh h1 {
+		font-size: 1.875rem;
+		font-weight: var(--font-weight-bold);
+		color: var(--color-gray-12);
+		margin: 0 0 0.75rem;
+	}
+	@media (min-width: 768px) { .oh h1 { font-size: 2.25rem; } }
+	.oh .row {
+		margin: 1.5rem 0;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 1.5rem;
+	}
+	.oh .row .i {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.oh .row .i :global(svg) {
+		flex-shrink: 0;
+		color: var(--color-gray-9);
+	}
+	.oh .row .i span {
+		font-size: var(--text-sm);
+		color: var(--color-gray-11);
+		line-height: 1.5;
+	}
+	.oh .d {
+		color: var(--color-gray-11);
+		margin-bottom: 1.5rem;
+		line-height: 1.7;
+		font-size: var(--text-base);
+	}
+	.oh .d :global(p) { margin: 0 0 1rem; }
+	.oh .d :global(p:last-child) { margin-bottom: 0; }
+	.oh .d :global(strong) {
+		color: var(--color-gray-12);
+		font-weight: var(--font-weight-semibold);
+	}
+	.oh .cta { min-width: 200px; }
+</style>

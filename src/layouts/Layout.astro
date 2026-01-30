@@ -21,7 +21,23 @@ const lang = getLangFromUrl(Astro.url);
 	<body>
 		<GlobalStyles />
 		<Navbar />
-		<slot />
+		<main class="layout-main">
+			<slot />
+		</main>
 		<Footer />
 	</body>
 </html>
+
+<style is:global>
+	html,
+	body {
+		min-height: 100vh;
+	}
+	body {
+		display: flex;
+		flex-direction: column;
+	}
+	.layout-main {
+		flex: 1;
+	}
+</style>

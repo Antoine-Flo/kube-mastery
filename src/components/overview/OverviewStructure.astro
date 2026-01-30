@@ -1,0 +1,158 @@
+---
+import { ChevronDown, LockOpen } from "@lucide/astro";
+import type { OverviewChapter, OverviewLesson } from "../../data/overview.js";
+
+interface Props {
+	chapters: OverviewChapter[];
+	/** When true, group chapters by moduleId and show module section titles */
+	groupByModule?: boolean;
+	/** Map moduleId -> title (used when groupByModule) */
+	moduleTitles?: Map<string, string>;
+	/** Base URL for lesson links, e.g. /en/courses/onboarding/lessons. Lesson link = base + "/" + lesson.id */
+	lessonBaseUrl: string;
+	t: (key: string) => string;
+}
+
+const { chapters, groupByModule = false, moduleTitles, lessonBaseUrl, t } = Astro.props;
+
+type ChapterGroup = { moduleId: string; chapters: OverviewChapter[] };
+
+const groups: ChapterGroup[] = groupByModule
+	? (() => {
+			const map = new Map<string, OverviewChapter[]>();
+			for (const ch of chapters) {
+				const mid = ch.moduleId ?? "";
+				if (!map.has(mid)) map.set(mid, []);
+				map.get(mid)!.push(ch);
+			}
+			return Array.from(map.entries()).map(([moduleId, chs]) => ({ moduleId, chapters: chs }));
+	  })()
+	: [{ moduleId: "", chapters }];
+
+function getModuleTitle(moduleId: string): string {
+	return moduleTitles?.get(moduleId) ?? moduleId;
+}
+---
+<div class="os">
+	<h2>{t("courseOverview_courseStructure")}</h2>
+	<div class="box">
+		{groups.map((group, groupIndex) => (
+			<div class="g">
+				{groupByModule && groupIndex > 0 && <div class="div" />}
+				{groupByModule && group.moduleId && (
+					<div class="mod">
+						<h3>{getModuleTitle(group.moduleId)}</h3>
+					</div>
+				)}
+				<div class="acc">
+					{group.chapters.map((chapter) => (
+						<details>
+							<summary>
+								<span class="tit">
+									{chapter.title}
+									{chapter.isFree && (
+										<span class="free" title={t("courseOverview_chapterFree")} aria-label={t("courseOverview_chapterFree")}>
+											<LockOpen size={14} aria-hidden="true" />
+										</span>
+									)}
+								</span>
+								<span class="n">{chapter.lessons.length} {chapter.lessons.length === 1 ? t("courses_lesson") : t("courses_lessons")}</span>
+								<ChevronDown size={20} class="arr" aria-hidden="true" />
+							</summary>
+							<div class="bd">
+								<div class="lst">
+									{chapter.lessons.map((lesson: OverviewLesson) => (
+										<a href={`${lessonBaseUrl}/${lesson.id}`}>{lesson.title}</a>
+									))}
+								</div>
+							</div>
+						</details>
+					))}
+				</div>
+			</div>
+		))}
+	</div>
+</div>
+
+<style>
+	.os h2 {
+		font-size: var(--text-2xl);
+		font-weight: var(--font-weight-semibold);
+		color: var(--color-gray-12);
+		margin: 0 0 1rem;
+	}
+	.os .box {
+		margin-top: 1.5rem;
+		padding: var(--spacing-6);
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--color-gray-6);
+	}
+	.os .g .mod { margin: var(--spacing-4) 0 var(--spacing-2); }
+	.os .g .mod:first-child { margin-top: 0; }
+	.os .g .mod h3 {
+		font-size: var(--text-lg);
+		font-weight: var(--font-weight-semibold);
+		color: var(--color-gray-12);
+		margin: 0;
+	}
+	.os .div {
+		height: 1px;
+		background: var(--color-gray-4);
+		margin: var(--spacing-6) 0;
+	}
+	.os .acc {
+		width: 100%;
+		margin-left: var(--spacing-2);
+	}
+	.os details { border: none; }
+	.os summary {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-2);
+		padding: var(--spacing-1) 0;
+		cursor: pointer;
+		list-style: none;
+		color: var(--color-gray-12);
+	}
+	.os summary::-webkit-details-marker,
+	.os summary::marker { display: none; }
+	.os summary .tit {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: var(--text-sm);
+		text-align: left;
+	}
+	.os summary .free {
+		flex-shrink: 0;
+		display: inline-flex;
+		color: var(--color-gray-8);
+		opacity: 0.7;
+	}
+	.os summary .n {
+		font-size: var(--text-sm);
+		color: var(--color-gray-9);
+	}
+	.os summary .arr {
+		flex-shrink: 0;
+		color: var(--color-gray-8);
+		transition: transform 0.2s ease;
+	}
+	.os details[open] .arr { transform: rotate(180deg); }
+	.os .bd { padding: 0; }
+	.os .lst { display: flex; flex-direction: column; }
+	.os .lst a {
+		display: block;
+		padding: 0.4rem 0.75rem;
+		border-radius: var(--radius-md);
+		text-decoration: none;
+		color: var(--color-gray-11);
+		font-size: var(--text-sm);
+		transition: background-color 0.15s ease;
+	}
+	.os .lst a:hover {
+		background: var(--color-gray-2);
+		color: var(--color-gray-12);
+	}
+</style>
