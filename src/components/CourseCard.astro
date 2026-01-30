@@ -1,4 +1,6 @@
 ---
+import { BookOpen } from "@lucide/astro";
+
 interface Props {
   title: string;
   description: string | null;
@@ -12,7 +14,7 @@ interface Props {
   comingSoonLabel?: string;
 }
 
-const { title, description, totalLessons, href, isFree = false, comingSoon = false, level = null, lessonsLabel, freeBadgeLabel = "Free", comingSoonLabel = "Coming soon" } = Astro.props;
+const { title, description, totalLessons, href, isFree = false, comingSoon = false, lessonsLabel, freeBadgeLabel = "Free", comingSoonLabel = "Coming soon" } = Astro.props;
 const descriptionText = description ?? "";
 ---
 
@@ -21,41 +23,123 @@ const descriptionText = description ?? "";
   class:list={[
     "card",
     "card--outline",
-    "courses__card--clickable",
-    isFree && "courses__card--free",
-    comingSoon && "courses__card--coming-soon",
+    "link",
+    isFree && "free",
+    comingSoon && "soon",
   ]}
 >
   {isFree && (
-    <div class="courses__card-free-banner">
+    <div class="banner">
       {freeBadgeLabel}
     </div>
   )}
   <div class="card__header">
-    <h3 class="card__title courses__card-title">{title}</h3>
-    {level && <span class="course-card__level">{level}</span>}
+    <h3 class="card__title">{title}</h3>
+    <span class="lessons">
+      <BookOpen size={16} aria-hidden="true" />
+      {lessonsLabel}
+    </span>
   </div>
   <div class="card__body">
     {descriptionText && <p class="card__description">{descriptionText}</p>}
-    <div class="courses__card-features">
-      <span class="courses__card-feature-item">
-        <span class="courses__card-feature-text">{lessonsLabel}</span>
-      </span>
-    </div>
   </div>
   {comingSoon && (
-    <div class="course-card__coming-soon">{comingSoonLabel}</div>
+    <div class="soon-badge">{comingSoonLabel}</div>
   )}
 </a>
 
 <style>
-  .course-card__level {
+  a.card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--radius-l3);
+    position: relative;
+  }
+  .card--outline {
+    background-color: var(--color-palette-gray-surface-bg);
+    border: 1px solid var(--color-border);
+  }
+  .card__header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: var(--spacing-6);
+  }
+  .card__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding-bottom: var(--spacing-6);
+    padding-left: var(--spacing-6);
+    padding-right: var(--spacing-6);
+  }
+  .card__title {
+    font-size: var(--text-lg);
+    line-height: var(--line-height-lg);
+    font-weight: var(--font-weight-semibold);
+    margin: 0;
+  }
+  .card__description {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    line-height: var(--line-height-sm);
+  }
+  .link {
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+  }
+  .link:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  .free.card--outline {
+    border-color: var(--color-green-7) !important;
+  }
+  .banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.375rem 0.75rem;
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-green-11);
+    background-color: var(--color-green-2);
+    border-bottom: 1px solid var(--color-green-4);
+    text-align: center;
+    width: 100%;
+  }
+  h3 {
+    font-size: var(--text-xl);
+  }
+  .level {
     display: block;
     font-size: var(--text-xs);
     color: var(--color-fg-muted);
     margin-top: 0.25rem;
   }
-  .course-card__coming-soon {
+  .lessons {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: var(--text-xs);
+    color: var(--color-gray-11);
+    line-height: 1.5;
+    margin-top: 0.25rem;
+  }
+  .lessons :global(svg) {
+    flex-shrink: 0;
+    color: var(--color-gray-9);
+  }
+  a.soon {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  a.soon * {
+    color: var(--color-gray-9);
+  }
+  .soon-badge {
     padding: 0.375rem 0.75rem;
     font-size: var(--text-xs);
     font-weight: var(--font-weight-medium);
