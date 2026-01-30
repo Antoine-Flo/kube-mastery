@@ -1,7 +1,7 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import Layout from "../../layouts/Layout.astro";
 import { Zap, Shield, Euro, FileCheck, BookOpen, Code, CheckCircle2 } from "@lucide/astro";
-import { getLangFromUrl, useTranslations, useTranslatedPath } from "../i18n/utils.js";
+import { getLangFromUrl, useTranslations, useTranslatedPath } from "../../i18n/utils.js";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);

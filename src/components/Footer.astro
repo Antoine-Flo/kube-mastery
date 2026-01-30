@@ -1,29 +1,21 @@
 ---
-import * as m from "../paraglide/messages.js";
+import { getLangFromUrl, getPathWithoutLocale, useTranslations, useTranslatedPath } from "../i18n/utils.js";
 
-interface Props {
-	locale: string;
-}
-
-const { locale } = Astro.props;
-
-function localePath(path: string): string {
-	if (locale === "fr") {
-		return path === "/" ? "/fr" : `/fr${path}`;
-	}
-	return path;
-}
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
+const currentPath = getPathWithoutLocale(Astro.url);
 ---
 <footer>
 	<nav>
-		<a href={localePath("/terms-of-service")}>{m.footer_termsOfService()}</a>
-		<a href={localePath("/privacy-policy")}>{m.footer_privacyPolicy()}</a>
-		<a href={localePath("/contact")}>{m.footer_contact()}</a>
+		<a href={translatePath("/terms-of-service")}>{t("footer_termsOfService")}</a>
+		<a href={translatePath("/privacy-policy")}>{t("footer_privacyPolicy")}</a>
+		<a href={translatePath("/contact")}>{t("footer_contact")}</a>
 	</nav>
 	<div class="lang">
-		<a href="/">EN</a>
+		<a href={translatePath(currentPath, "en")}>EN</a>
 		<span aria-hidden="true"> · </span>
-		<a href="/fr">FR</a>
+		<a href={translatePath(currentPath, "fr")}>FR</a>
 	</div>
 </footer>
 

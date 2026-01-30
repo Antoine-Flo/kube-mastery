@@ -1,14 +1,14 @@
 ---
 import { ClientRouter } from "astro:transitions";
-import { getLocale } from "../paraglide/runtime.js";
+import { getLangFromUrl } from "../i18n/utils.js";
 import Footer from "../components/Footer.astro";
 import GlobalStyles from "../components/GlobalStyles.astro";
 import Navbar from "../components/Navbar.astro";
 
-const locale = getLocale();
+const lang = getLangFromUrl(Astro.url);
 ---
 <!doctype html>
-<html lang={locale}>
+<html lang={lang}>
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
@@ -20,8 +20,8 @@ const locale = getLocale();
 	</head>
 	<body>
 		<GlobalStyles />
-		<Navbar locale={locale} />
+		<Navbar />
 		<slot />
-		<Footer locale={locale} />
+		<Footer />
 	</body>
 </html>

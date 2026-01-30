@@ -1,33 +1,25 @@
 ---
 import { Moon, Sun } from "@lucide/astro";
 import Logo from "./Logo.astro";
-import * as m from "../paraglide/messages.js";
+import { getLangFromUrl, getPathWithoutLocale, useTranslations, useTranslatedPath } from "../i18n/utils.js";
 
-interface Props {
-	locale: string;
-}
-
-const { locale } = Astro.props;
-
-function localePath(path: string): string {
-	if (locale === "fr") {
-		return path === "/" ? "/fr" : `/fr${path}`;
-	}
-	return path;
-}
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
+const currentPath = getPathWithoutLocale(Astro.url);
 ---
 <header>
-	<a href={localePath("/")} class="logo">
+	<a href={translatePath("/")} class="logo">
 		<Logo size={40} class="logo-icon" />
-		<span>{m.nav_appName()}</span>
+		<span>{t("nav_appName")}</span>
 	</a>
 
 	<nav>
-		<a href={localePath("/courses")}>{m.nav_courses()}</a>
-		<a href={localePath("/pricing")}>{m.nav_pricing()}</a>
+		<a href={translatePath("/courses")}>{t("nav_courses")}</a>
+		<a href={translatePath("/pricing")}>{t("nav_pricing")}</a>
 		<span aria-hidden="true" class="sep">·</span>
-		<a href="/">EN</a>
-		<a href="/fr">FR</a>
+		<a href={translatePath(currentPath, "en")}>EN</a>
+		<a href={translatePath(currentPath, "fr")}>FR</a>
 	</nav>
 
 	<div class="acts">
@@ -35,8 +27,8 @@ function localePath(path: string): string {
 			type="button"
 			class="btn"
 			data-theme-toggle
-			aria-label={m.nav_toggleTheme()}
-			title={m.nav_toggleTheme()}
+			aria-label={t("nav_toggleTheme")}
+			title={t("nav_toggleTheme")}
 		>
 			<Moon size={18} class="moon" />
 			<Sun size={18} class="sun" />
