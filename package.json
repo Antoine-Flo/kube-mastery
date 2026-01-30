@@ -17,6 +17,7 @@
     "@codemirror/theme-one-dark": "^6.1.3",
     "@codemirror/view": "^6.39.12",
     "@lucide/astro": "^0.563.0",
+    "@supabase/supabase-js": "^2.93.3",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "astro": "^5.17.1",
