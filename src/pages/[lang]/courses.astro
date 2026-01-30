@@ -1,0 +1,74 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import CourseCard from "../../components/CourseCard.astro";
+import { useTranslations, useLocalePath } from "../../i18n/utils.js";
+import { getCourses, getModules } from "../../data/courses.js";
+
+export function getStaticPaths() {
+	return [
+		{ params: { lang: "en" } },
+		{ params: { lang: "fr" } },
+	];
+}
+
+const locale = Astro.params.lang as "en" | "fr";
+const t = useTranslations(locale);
+const localePath = useLocalePath(locale);
+
+const courses = getCourses(locale);
+const modules = getModules(locale);
+---
+<Layout>
+  <main class="courses">
+    <h1 class="courses__title">{t("courses_title")}</h1>
+    <p class="courses__subtitle">{t("courses_subtitle")}</p>
+
+    {courses.length === 0 ? (
+      <div class="courses__empty">{t("coursesList_noCoursesYet")}</div>
+    ) : (
+      <div class="courses__grid">
+        {courses.map((course) => (
+          <CourseCard
+            title={course.title}
+            description={course.shortDescription ?? course.description}
+            totalLessons={course.totalLessons}
+            href={localePath(`/courses/${course.id}`)}
+            isFree={course.isFree}
+            comingSoon={course.comingSoon}
+            level={course.level}
+            lessonsLabel={`${course.totalLessons} ${t("courses_lessons")}`}
+            freeBadgeLabel={t("courses_freeBadge")}
+            comingSoonLabel={t("courses_comingSoon")}
+          />
+        ))}
+      </div>
+    )}
+
+    <div style="margin-top: 4rem;">
+      <h2 class="courses__title">{t("modules_title")}</h2>
+      <p class="courses__subtitle" style="margin-bottom: 2rem;">
+        {t("modules_subtitle")}
+      </p>
+
+      {modules.length === 0 ? (
+        <div class="courses__empty">{t("modulesList_noModulesYet")}</div>
+      ) : (
+        <div class="courses__grid">
+          {modules.map((mod) => (
+            <CourseCard
+              title={mod.title}
+              description={mod.description}
+              totalLessons={mod.totalLessons}
+              href={localePath(`/modules/${mod.id}`)}
+              lessonsLabel={`${mod.totalLessons} ${t("courses_lessons")}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  </main>
+</Layout>
+
+<style>
+  @import "../../styles/routes/courses.css";
+</style>

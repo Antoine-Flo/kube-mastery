@@ -29,9 +29,13 @@ export function useTranslations(lang: UiLang) {
 export function useTranslatedPath(lang: UiLang) {
 	return function translatePath(path: string, l: UiLang = lang): string {
 		const effectiveLang = l ?? lang;
-		if (!showDefaultLang && effectiveLang === defaultLang) {
-			return path;
-		}
-		return `/${effectiveLang}${path}`;
+		return path === "/" ? `/${effectiveLang}` : `/${effectiveLang}${path}`;
+	};
+}
+
+/** Path with locale prefix: /en for en, /fr for fr (single [lang] segment, no duplicate pages). */
+export function useLocalePath(locale: UiLang) {
+	return function localePath(path: string): string {
+		return path === "/" ? `/${locale}` : `/${locale}${path}`;
 	};
 }

@@ -1,0 +1,12 @@
+{
+  "title": {
+    "en": "Service Types",
+    "fr": "Types de Services"
+  },
+  "description": {
+    "en": "Learn about different Service types: NodePort, LoadBalancer, and ExternalName",
+    "fr": "Apprenez les différents types de Services : NodePort, LoadBalancer et ExternalName"
+  },
+  "isFree": true,
+  "environment": "minimal"
+}

@@ -1,0 +1,9 @@
+stateDiagram-v2
+    [*] --> Pending: Creation
+    Pending --> Running: Scheduled and started
+    Running --> Succeeded: Containers terminated successfully
+    Running --> Failed: At least one container failed
+    Running --> Unknown: Communication lost
+    Failed --> [*]
+    Succeeded --> [*]
+    Unknown --> [*]

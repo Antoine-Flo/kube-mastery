@@ -1,22 +1,23 @@
 ---
 import { Moon, Sun } from "@lucide/astro";
 import Logo from "./Logo.astro";
-import { getLangFromUrl, getPathWithoutLocale, useTranslations, useTranslatedPath } from "../i18n/utils.js";
+import { getLangFromUrl, getPathWithoutLocale, useTranslations, useTranslatedPath, useLocalePath } from "../i18n/utils.js";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const translatePath = useTranslatedPath(lang);
+const localePath = useLocalePath(lang);
 const currentPath = getPathWithoutLocale(Astro.url);
 ---
 <header>
-	<a href={translatePath("/")} class="logo">
+	<a href={localePath("/")} class="logo">
 		<Logo size={40} class="logo-icon" />
 		<span>{t("nav_appName")}</span>
 	</a>
 
 	<nav>
-		<a href={translatePath("/courses")}>{t("nav_courses")}</a>
-		<a href={translatePath("/pricing")}>{t("nav_pricing")}</a>
+		<a href={localePath("/courses")}>{t("nav_courses")}</a>
+		<a href={localePath("/pricing")}>{t("nav_pricing")}</a>
 		<span aria-hidden="true" class="sep">·</span>
 		<a href={translatePath(currentPath, "en")}>EN</a>
 		<a href={translatePath(currentPath, "fr")}>FR</a>

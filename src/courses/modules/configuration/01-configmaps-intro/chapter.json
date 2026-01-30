@@ -1,0 +1,10 @@
+{
+  "title": {
+    "en": "Introduction to ConfigMaps",
+    "fr": "Introduction aux ConfigMaps"
+  },
+  "description": {
+    "en": "Learn about ConfigMaps and how to externalize configuration from application code",
+    "fr": "Apprenez les ConfigMaps et comment externaliser la configuration du code applicatif"
+  }
+}

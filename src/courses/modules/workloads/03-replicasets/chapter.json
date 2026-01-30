@@ -1,0 +1,10 @@
+{
+  "title": {
+    "en": "ReplicaSets",
+    "fr": "ReplicaSets"
+  },
+  "description": {
+    "en": "Learn about ReplicaSets and how they maintain a stable set of replica Pods",
+    "fr": "Apprenez les ReplicaSets et comment ils maintiennent un ensemble stable de Pods répliqués"
+  }
+}

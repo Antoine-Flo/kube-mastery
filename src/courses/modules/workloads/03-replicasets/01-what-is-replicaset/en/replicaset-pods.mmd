@@ -1,0 +1,11 @@
+flowchart TD
+    ReplicaSet[ReplicaSet]
+    ReplicaSet -->|Manages| Pod1[Pod 1]
+    ReplicaSet -->|Manages| Pod2[Pod 2]
+    ReplicaSet -->|Manages| Pod3[Pod 3]
+    
+    Pod1 -->|Labels: app=nginx| Labels[Common Labels]
+    Pod2 -->|Labels: app=nginx| Labels
+    Pod3 -->|Labels: app=nginx| Labels
+    
+    ReplicaSet -->|Selects by| Labels

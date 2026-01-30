@@ -1,0 +1,12 @@
+{
+  "title": {
+    "en": "Kubernetes Fundamentals",
+    "fr": "Concepts fondamentaux"
+  },
+  "description": {
+    "en": "Learn what Kubernetes is, why to use it, and understand the cluster architecture",
+    "fr": "Apprenez ce qu'est Kubernetes, pourquoi l'utiliser, et comprenez l'architecture du cluster"
+  },
+  "isFree": true,
+  "environment": "minimal"
+}
