@@ -1,5 +1,6 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import Button from "../../components/ui/Button.astro";
 import { Zap, Shield, Euro, FileCheck, BookOpen, Code, CheckCircle2 } from "@lucide/astro";
 import { getLangFromUrl, useTranslations, useTranslatedPath } from "../../i18n/utils.js";
 
@@ -15,12 +16,10 @@ const translatePath = useTranslatedPath(lang);
 					<h1>{t("home_title")}</h1>
 					<p class="sub">{t("home_subtitle")}</p>
 					<div class="cta">
-						<a href={translatePath("/courses")} class="link--primary">{t("home_viewCourses")}</a>
-						{" · "}
-						<a href={translatePath("/learn")} class="link--primary">{t("home_startNow")}</a>
+						<Button href={translatePath("/courses")} variant="solid" color="cyan" size="lg" sublabel={t("home_freeCourse")}>
+							{t("home_startNow")}
+						</Button>
 					</div>
-					<p>{t("home_description_text")}</p>
-					<p>{t("home_cta_question")}</p>
 				</div>
 			</div>
 		</section>
@@ -110,7 +109,7 @@ const translatePath = useTranslatedPath(lang);
 				</div>
 			</div>
 			<div class="cta">
-				<a href={translatePath("/courses")} class="link--primary">{t("home_startNow")}</a>
+				<Button href={translatePath("/courses")} variant="solid" color="cyan" size="md">{t("home_startNow")}</Button>
 			</div>
 		</div>
 	</main>

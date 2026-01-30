@@ -1,0 +1,166 @@
+---
+interface Props {
+	href?: string;
+	variant?: "solid" | "outline" | "plain";
+	size?: "sm" | "md" | "lg";
+	color?: "gray" | "cyan";
+	type?: "button" | "submit";
+	disabled?: boolean;
+	class?: string;
+	/** Optional secondary line below main label (e.g. "No sign-up required") */
+	sublabel?: string;
+}
+
+const {
+	href,
+	variant = "solid",
+	size = "md",
+	color = "gray",
+	type = "button",
+	disabled = false,
+	class: className = "",
+	sublabel,
+} = Astro.props;
+
+const El = href ? "a" : "button";
+const base = "btn";
+const attrs = href
+	? { href, class: `${base} ${className}`.trim() }
+	: { type, disabled, class: `${base} ${className}`.trim() };
+---
+<El
+	{...attrs}
+	data-variant={variant}
+	data-size={size}
+	data-color={color}
+	data-has-sublabel={sublabel ? "" : undefined}
+>
+	{sublabel ? (
+		<span class="btn-inner">
+			<span class="btn-label"><slot /></span>
+			<span class="btn-sublabel">{sublabel}</span>
+		</span>
+	) : (
+		<slot />
+	)}
+</El>
+
+<style>
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		border-radius: var(--radius-l2);
+		font-weight: var(--font-weight-semibold);
+		cursor: pointer;
+		transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+		text-decoration: none;
+		border: none;
+		appearance: none;
+	}
+	.btn-inner {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0;
+	}
+	.btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	.btn:focus-visible {
+		outline: 2px solid var(--color-palette-cyan-solid-bg);
+		outline-offset: 2px;
+	}
+
+	/* solid */
+	.btn[data-variant="solid"][data-color="gray"] {
+		background: var(--color-palette-gray-solid-bg);
+		color: var(--color-palette-gray-solid-fg);
+	}
+	.btn[data-variant="solid"][data-color="gray"]:hover:not(:disabled) {
+		background: var(--color-palette-gray-solid-bg-hover);
+	}
+	.btn[data-variant="solid"][data-color="cyan"] {
+		background: var(--color-palette-cyan-solid-bg);
+		color: var(--color-palette-cyan-solid-fg);
+	}
+	.btn[data-variant="solid"][data-color="cyan"]:hover:not(:disabled) {
+		background: var(--color-palette-cyan-solid-bg-hover);
+	}
+
+	/* outline */
+	.btn[data-variant="outline"][data-color="gray"] {
+		background: transparent;
+		border: 1px solid var(--color-palette-gray-surface-border);
+		color: var(--color-palette-gray-outline-fg);
+	}
+	.btn[data-variant="outline"][data-color="gray"]:hover:not(:disabled) {
+		background: var(--color-palette-gray-outline-bg-hover);
+	}
+	.btn[data-variant="outline"][data-color="cyan"] {
+		background: transparent;
+		border: 1px solid var(--color-palette-cyan-surface-border);
+		color: var(--color-palette-cyan-outline-fg);
+	}
+	.btn[data-variant="outline"][data-color="cyan"]:hover:not(:disabled) {
+		background: var(--color-palette-cyan-outline-bg-hover);
+	}
+
+	/* plain */
+	.btn[data-variant="plain"][data-color="gray"] {
+		background: transparent;
+		color: var(--color-palette-gray-plain-fg);
+	}
+	.btn[data-variant="plain"][data-color="gray"]:hover:not(:disabled) {
+		background: var(--color-palette-gray-plain-bg-hover);
+	}
+	.btn[data-variant="plain"][data-color="cyan"] {
+		background: transparent;
+		color: var(--color-palette-cyan-plain-fg);
+	}
+	.btn[data-variant="plain"][data-color="cyan"]:hover:not(:disabled) {
+		background: var(--color-palette-cyan-plain-bg-hover);
+	}
+
+	/* size */
+	.btn[data-size="sm"] {
+		height: 2.25rem;
+		padding-inline: var(--spacing-3);
+		padding-block: 0.25rem;
+		font-size: var(--text-sm);
+		line-height: var(--line-height-sm);
+	}
+	.btn[data-size="md"] {
+		height: 2.5rem;
+		padding-inline: var(--spacing-3-5);
+		padding-block: 0.25rem;
+		font-size: var(--text-sm);
+		line-height: var(--line-height-sm);
+	}
+	.btn[data-size="lg"] {
+		height: 2.75rem;
+		min-width: 2.75rem;
+		padding-inline: var(--spacing-4);
+		padding-block: 0.3rem;
+		font-size: var(--text-md);
+		line-height: var(--line-height-md);
+	}
+	/* with sublabel: height auto, more padding (ref) */
+	.btn[data-has-sublabel] {
+		height: auto;
+		min-height: 2.75rem;
+		padding-block: 0.3rem;
+		padding-inline: var(--spacing-4);
+		flex-direction: column;
+		gap: 0;
+	}
+	.btn-sublabel {
+		font-size: var(--text-xs);
+		line-height: var(--line-height-xs);
+		font-weight: var(--font-weight-normal);
+		font-style: italic;
+		opacity: 0.95;
+	}
+</style>

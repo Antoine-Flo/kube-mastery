@@ -13,11 +13,3 @@ a {
   text-decoration: none;
 }
 
-/* Lien d’accent (cyan) */
-.link--primary {
-  color: var(--color-cyan-9);
-}
-
-.link--primary:hover {
-  text-decoration: underline;
-}
