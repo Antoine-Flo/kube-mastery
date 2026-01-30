@@ -1,12 +1,15 @@
 import { defineConfig } from "astro/config";
 import mermaid from "astro-mermaid";
 
+import sitemap from "@astrojs/sitemap";
+
 export default defineConfig({
     integrations: [
         mermaid({
             theme: 'forest',
             autoTheme: true
-        })
+        }),
+        sitemap()
     ],
     vite: {
         css: {
