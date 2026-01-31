@@ -1,6 +1,7 @@
 ---
 import Layout from "../../../../../layouts/Layout.astro";
 import CourseOutline from "../../../../../components/CourseOutline.astro";
+import ScrollArea from "../../../../../components/ui/ScrollArea.astro";
 import { ArrowLeftToLine, ArrowRightToLine } from "@lucide/astro";
 import { useLocalePath } from "../../../../../i18n/utils.js";
 import { getCourses, getModules } from "../../../../../data/courses.js";
@@ -67,8 +68,9 @@ const overviewHref = localePath(`/${type}/${id}`);
 const lessonBaseUrl = localePath(`/${type}/${id}`);
 const { Content } = lessonEntry;
 ---
-<Layout>
-	<div class="lp">
+<Layout bodyClass="lp-fill" showFooter={false}>
+	<div class="lp-root">
+		<div class="lp">
 		<aside
 			id="lesson-sidebar"
 			class="lp__sb"
@@ -98,28 +100,29 @@ const { Content } = lessonEntry;
 			</div>
 		</aside>
 		<div class="lp__bd">
-			<div class="lp__scroll">
+			<ScrollArea>
 				<main class="lp__main">
-					<nav class="lp__nav">
-						<a href={overviewHref} class="lp__lnk">← {type === "courses" ? "Cours" : "Module"}</a>
-						{prevLesson && (
-							<a href={localePath(`/${type}/${id}/${prevLesson.id}`)} class="lp__lnk">← {prevLesson.title}</a>
-						)}
-						{nextLesson && (
-							<a href={localePath(`/${type}/${id}/${nextLesson.id}`)} class="lp__lnk">{nextLesson.title} →</a>
-						)}
-					</nav>
-					<article class="lesson-content">
-						<Content />
-					</article>
-					{nextLesson && (
-						<nav class="lp__nav lp__nav--bt">
-							<a href={localePath(`/${type}/${id}/${nextLesson.id}`)} class="lp__lnk">Leçon suivante : {nextLesson.title} →</a>
+						<nav class="lp__nav">
+							<a href={overviewHref} class="lp__lnk">← {type === "courses" ? "Cours" : "Module"}</a>
+							{prevLesson && (
+								<a href={localePath(`/${type}/${id}/${prevLesson.id}`)} class="lp__lnk">← {prevLesson.title}</a>
+							)}
+							{nextLesson && (
+								<a href={localePath(`/${type}/${id}/${nextLesson.id}`)} class="lp__lnk">{nextLesson.title} →</a>
+							)}
 						</nav>
-					)}
-				</main>
-			</div>
+						<article class="lesson-content">
+							<Content />
+						</article>
+						{nextLesson && (
+							<nav class="lp__nav lp__nav--bt">
+								<a href={localePath(`/${type}/${id}/${nextLesson.id}`)} class="lp__lnk">Leçon suivante : {nextLesson.title} →</a>
+							</nav>
+						)}
+					</main>
+			</ScrollArea>
 		</div>
+	</div>
 	</div>
 </Layout>
 
@@ -158,6 +161,14 @@ const { Content } = lessonEntry;
 </script>
 
 <style>
+	.lp-root {
+		height: 100%;
+		min-height: 0;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+	}
+
 	.lp {
 		background-color: var(--color-gray-1);
 		flex: 1;
@@ -233,18 +244,12 @@ const { Content } = lessonEntry;
 	}
 
 	.lp__bd {
-		height: 100%;
 		display: flex;
 		flex-direction: column;
-		background-color: var(--color-gray-1);
 		flex: 1;
+		min-height: 0;
 		min-width: 0;
-	}
-
-	.lp__scroll {
-		height: 100%;
-		width: 100%;
-		overflow-y: auto;
+		background-color: var(--color-gray-1);
 	}
 
 	.lp__main {

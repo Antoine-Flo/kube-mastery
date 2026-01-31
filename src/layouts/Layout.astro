@@ -1,4 +1,9 @@
 ---
+interface Props {
+	bodyClass?: string;
+	showFooter?: boolean;
+}
+
 import { ClientRouter } from "astro:transitions";
 import { getLangFromUrl } from "../i18n/utils.js";
 import Footer from "../components/Footer.astro";
@@ -6,6 +11,8 @@ import GlobalStyles from "../components/GlobalStyles.astro";
 import Navbar from "../components/Navbar.astro";
 
 const lang = getLangFromUrl(Astro.url);
+const bodyClass = Astro.props.bodyClass;
+const showFooter = Astro.props.showFooter ?? true;
 ---
 <!doctype html>
 <html lang={lang}>
@@ -18,13 +25,13 @@ const lang = getLangFromUrl(Astro.url);
 		<title>Kube Mastery</title>
 		<ClientRouter />
 	</head>
-	<body>
+	<body class={bodyClass}>
 		<GlobalStyles />
 		<Navbar />
 		<main class="layout-main">
 			<slot />
 		</main>
-		<Footer />
+		{showFooter && <Footer />}
 	</body>
 </html>
 
@@ -42,5 +49,14 @@ const lang = getLangFromUrl(Astro.url);
 		min-height: 0;
 		display: flex;
 		flex-direction: column;
+	}
+
+	body.lp-fill {
+		height: 100vh;
+		overflow: hidden;
+	}
+
+	body.lp-fill .layout-main {
+		overflow: auto;
 	}
 </style>

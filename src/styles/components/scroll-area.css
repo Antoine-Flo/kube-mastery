@@ -1,9 +1,10 @@
-/* Scroll Area Root */
 .scroll-area {
     display: flex;
     flex-direction: column;
     width: 100%;
     height: 100%;
+    flex: 1;
+    min-height: 0;
     position: relative;
     overflow: hidden;
     --scrollbar-margin: 0px;
@@ -11,11 +12,10 @@
     --scrollbar-size: calc(var(--thumb-size) + calc(var(--scrollbar-margin) * 2));
 }
 
-/* Scroll Area Viewport */
 .scroll-area__viewport {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    display: block;
+    flex: 1;
+    min-height: 0;
     width: 100%;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
@@ -52,24 +52,14 @@
     background-color: var(--color-gray-a6);
 }
 
-/* Scroll Area Content */
 .scroll-area__content {
-    /* Content styles handled by user */
 }
 
-/* Scroll Area Scrollbar (for custom scrollbars if needed) */
-.scroll-area__scrollbar {
-    display: none;
-    /* Using native scrollbars for simplicity */
-}
-
-/* Scroll Area Thumb */
+.scroll-area__scrollbar,
 .scroll-area__thumb {
     display: none;
-    /* Using native scrollbars for simplicity */
 }
 
-/* Scroll Area Sizes */
 .scroll-area--size-xs {
     --thumb-size: 0.25rem;
 }
@@ -86,7 +76,6 @@
     --thumb-size: 0.625rem;
 }
 
-/* Scrollbar visibility variants */
 .scroll-area--scrollbar-visible .scroll-area__viewport {
     scrollbar-width: auto;
 }
