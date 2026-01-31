@@ -1,13 +1,15 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // TERMINAL MOUNT
 // ═══════════════════════════════════════════════════════════════════════════
-// Mounts xterm with minimal EmulatedEnvironment. CommandDispatcher on first command.
+// Mounts xterm with seed-based EmulatedEnvironment. CommandDispatcher on first command.
 
 import {
-	createEmulatedEnvironmentLazy,
-	destroyEmulatedEnvironmentLazy,
-	type EmulatedEnvironment,
-} from "../core/emulatedEnvironment/lazy";
+	createEmulatedEnvironment,
+	destroyEmulatedEnvironment,
+} from "../core/emulatedEnvironment/EmulatedEnvironmentManager";
+import type { EmulatedEnvironment } from "../core/emulatedEnvironment/EmulatedEnvironment";
+import { clusterStateData as demoClusterStateData, fsConfig as demoFsConfig } from "../courses/seeds/demo";
+import { createFilesystemFromConfig } from "../core/filesystem/debianFileSystem";
 import { createFileSystem } from "../core/filesystem/FileSystem";
 import { createCommandDispatcher } from "../core/terminal/core/CommandDispatcher";
 import {
@@ -19,8 +21,10 @@ import {
 } from "../core/terminal/TerminalManager";
 import { createLogger } from "../logger/Logger";
 
-const DEFAULT_WELCOME =
-	"\x1b[36m☸ Kube Mastery\x1b[0m - Learn Kubernetes hands-on\r\nTry: \x1b[33mkubectl get pods\x1b[0m or \x1b[33mkubectl describe pod <pod-name>\x1b[0m\r\n\r\n";
+const WELCOME_BY_LANG: Record<"en" | "fr", string> = {
+	en: "\x1b[36m☸ Kube Mastery\x1b[0m - Learn Kubernetes hands-on\r\nTry: \x1b[33mkubectl get pods\x1b[0m or \x1b[33mkubectl describe pod <pod-name>\x1b[0m\r\n\r\n",
+	fr: "\x1b[36m☸ Kube Mastery\x1b[0m - Apprendre Kubernetes en pratique\r\nEssayez : \x1b[33mkubectl get pods\x1b[0m ou \x1b[33mkubectl describe pod <nom-du-pod>\x1b[0m\r\n\r\n",
+};
 
 function getTheme(): "dark" | "light" {
 	return document.documentElement.getAttribute("data-theme") === "light"
@@ -31,18 +35,27 @@ function getTheme(): "dark" | "light" {
 export interface MountTerminalOptions {
 	rows?: number;
 	scrollback?: number;
+	/** Language for welcome message (en/fr). Default en. */
+	lang?: "en" | "fr";
 	welcomeMessage?: string;
 }
 
 /** Mounts xterm, returns cleanup (detach + destroy env). */
-export async function mountTerminal(
+export function mountTerminal(
 	container: HTMLElement,
 	options: MountTerminalOptions = {},
-): Promise<() => void> {
-	const { rows = 20, scrollback = 1000, welcomeMessage = DEFAULT_WELCOME } =
-		options;
+): () => void {
+	const {
+		rows = 20,
+		scrollback = 1000,
+		lang = "en",
+		welcomeMessage = WELCOME_BY_LANG[lang],
+	} = options;
 
-	const env: EmulatedEnvironment = await createEmulatedEnvironmentLazy({});
+	const env: EmulatedEnvironment = createEmulatedEnvironment({
+		clusterStateData: demoClusterStateData,
+		filesystemState: createFilesystemFromConfig(demoFsConfig ?? {}),
+	});
 	const logger = createLogger({ mirrorToConsole: false });
 
 	initTerminalManager({
@@ -97,6 +110,6 @@ export async function mountTerminal(
 		observer.disconnect();
 		detachTerminal(attachId);
 		dispatcher = null;
-		destroyEmulatedEnvironmentLazy(env);
+		destroyEmulatedEnvironment(env);
 	};
 }

@@ -2,15 +2,16 @@
 interface Props {
 	class?: string;
 	rows?: number;
+	lang?: "en" | "fr";
 }
 
 import { Minus, Square, X } from "@lucide/astro";
 import "@xterm/xterm/css/xterm.css";
 
-const { class: className = "", rows = 20 } = Astro.props;
+const { class: className = "", rows = 20, lang = "en" } = Astro.props;
 ---
 
-<div class={`t-win ${className}`.trim()} data-terminal data-rows={rows}>
+<div class={`t-win ${className}`.trim()} data-terminal data-rows={rows} data-lang={lang}>
 	<div class="t-ctrl" aria-hidden="true">
 		<span class="t-btn t-btn--min"><Minus size={12} /></span>
 		<span class="t-btn t-btn--max"><Square size={12} /></span>
@@ -42,17 +43,17 @@ const { class: className = "", rows = 20 } = Astro.props;
 				return;
 			}
 			const rows = Number(el.dataset.rows) || 20;
+			const lang = (el.dataset.lang === "fr" ? "fr" : "en") as "en" | "fr";
 
-			mountTerminal(box, { rows })
-				.then((cleanup) => {
-					cleanups.set(root, cleanup);
-					loader.style.display = "none";
-					wrapper.style.display = "block";
-				})
-				.catch((err) => {
-					console.error("[Terminal] Mount failed:", err);
-					loader.textContent = "Terminal unavailable.";
-				});
+			try {
+				const cleanup = mountTerminal(box, { rows, lang });
+				cleanups.set(root, cleanup);
+				loader.style.display = "none";
+				wrapper.style.display = "block";
+			} catch (err) {
+				console.error("[Terminal] Mount failed:", err);
+				loader.textContent = "Terminal unavailable.";
+			}
 		});
 	}
 
