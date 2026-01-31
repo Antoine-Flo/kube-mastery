@@ -23,7 +23,8 @@ export interface TerminalManagerOptions {
 export interface AttachOptions {
   container: HTMLElement;
   environment: EmulatedEnvironment;
-  welcomeMessage?: string;
+  /** Optional text written at top when terminal loads (e.g. home banner). Omitted = none. */
+  topPrompt?: string;
   onCommand?: (command: string) => void;
 }
 
@@ -97,7 +98,7 @@ const cleanup = () => {
   state.renderer = null;
 };
 
-const setupTerminal = (container: HTMLElement, welcomeMessage?: string) => {
+const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
   if (!state.options || !state.currentEnvironment) return;
 
   // Create terminal instance
@@ -145,10 +146,10 @@ const setupTerminal = (container: HTMLElement, welcomeMessage?: string) => {
     state.controller.onCommand(state.onCommandCallback);
   }
 
-  // Display welcome message + prompt
+  // Display optional top prompt + shell prompt
   state.terminal.clear();
-  if (welcomeMessage) {
-    state.renderer.write(welcomeMessage);
+  if (topPrompt) {
+    state.renderer.write(topPrompt);
   }
   state.controller.showPrompt();
 
@@ -210,7 +211,7 @@ export const initTerminalManager = (options: TerminalManagerOptions): void => {
 };
 
 export const attachTerminal = (options: AttachOptions): number => {
-  const { container, environment, welcomeMessage, onCommand } = options;
+  const { container, environment, topPrompt, onCommand } = options;
 
   // Increment attach ID to track this attachment
   state.attachId++;
@@ -234,7 +235,7 @@ export const attachTerminal = (options: AttachOptions): number => {
     if (state.attachId !== currentAttachId) return;
 
     // Container already has dimensions, setup terminal immediately
-    setupTerminal(container, welcomeMessage);
+    setupTerminal(container, topPrompt);
     // Create ResizeObserver to handle future resizes
     createResizeObserver(container, currentAttachId);
 

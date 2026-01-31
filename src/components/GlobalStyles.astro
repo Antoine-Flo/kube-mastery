@@ -2,6 +2,7 @@
 // Global styles: variables, reset, base. Delivered unscoped per Astro docs.
 // https://docs.astro.build/en/guides/styling/#global-styles
 ---
+
 <style is:global>
 	@import "../styles/variables.css";
 	@import "../styles/reset.css";
@@ -14,5 +15,10 @@
 		min-height: 100%;
 		background-color: var(--color-gray-1);
 		color: var(--color-gray-12);
+	}
+
+	.xterm .xterm-scrollable-element > .scrollbar > .slider {
+		border-radius: 9999px; 
+		width: 8px !important; 
 	}
 </style>

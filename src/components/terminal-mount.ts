@@ -9,6 +9,7 @@ import {
 } from "../core/emulatedEnvironment/EmulatedEnvironmentManager";
 import type { EmulatedEnvironment } from "../core/emulatedEnvironment/EmulatedEnvironment";
 import { clusterStateData as demoClusterStateData, fsConfig as demoFsConfig } from "../courses/seeds/demo";
+import { getSeed } from "../courses/seeds/getSeed";
 import { createFilesystemFromConfig } from "../core/filesystem/debianFileSystem";
 import { createFileSystem } from "../core/filesystem/FileSystem";
 import { createCommandDispatcher } from "../core/terminal/core/CommandDispatcher";
@@ -21,11 +22,6 @@ import {
 } from "../core/terminal/TerminalManager";
 import { createLogger } from "../logger/Logger";
 
-const WELCOME_BY_LANG: Record<"en" | "fr", string> = {
-	en: "\x1b[36m☸ Kube Mastery\x1b[0m - Learn Kubernetes hands-on\r\nTry: \x1b[33mkubectl get pods\x1b[0m or \x1b[33mkubectl describe pod <pod-name>\x1b[0m\r\n\r\n",
-	fr: "\x1b[36m☸ Kube Mastery\x1b[0m - Apprendre Kubernetes en pratique\r\nEssayez : \x1b[33mkubectl get pods\x1b[0m ou \x1b[33mkubectl describe pod <nom-du-pod>\x1b[0m\r\n\r\n",
-};
-
 function getTheme(): "dark" | "light" {
 	return document.documentElement.getAttribute("data-theme") === "light"
 		? "light"
@@ -35,9 +31,12 @@ function getTheme(): "dark" | "light" {
 export interface MountTerminalOptions {
 	rows?: number;
 	scrollback?: number;
-	/** Language for welcome message (en/fr). Default en. */
+	/** Language (en/fr). Default en. */
 	lang?: "en" | "fr";
-	welcomeMessage?: string;
+	/** Seed name for lesson pages (uses getSeed). If omitted, uses demo seed (home page). */
+	seedName?: string;
+	/** Optional text written at top when terminal loads (e.g. home banner). Omitted = none. */
+	topPrompt?: string;
 }
 
 /** Mounts xterm, returns cleanup (detach + destroy env). */
@@ -49,12 +48,16 @@ export function mountTerminal(
 		rows = 20,
 		scrollback = 1000,
 		lang = "en",
-		welcomeMessage = WELCOME_BY_LANG[lang],
+		seedName,
+		topPrompt,
 	} = options;
 
+	const seed = seedName
+		? getSeed(seedName)
+		: { clusterStateData: demoClusterStateData, fsConfig: demoFsConfig };
 	const env: EmulatedEnvironment = createEmulatedEnvironment({
-		clusterStateData: demoClusterStateData,
-		filesystemState: createFilesystemFromConfig(demoFsConfig ?? {}),
+		clusterStateData: seed.clusterStateData,
+		filesystemState: createFilesystemFromConfig(seed.fsConfig ?? {}),
 	});
 	const logger = createLogger({ mirrorToConsole: false });
 
@@ -69,7 +72,7 @@ export function mountTerminal(
 	const attachId = attachTerminal({
 		container,
 		environment: env,
-		welcomeMessage,
+		topPrompt,
 		onCommand(command: string) {
 			if (!dispatcher) {
 				const controller = getTerminalController();

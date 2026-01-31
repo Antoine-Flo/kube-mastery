@@ -1,6 +1,7 @@
 ---
 import Layout from "../../../../../layouts/Layout.astro";
 import CourseOutline from "../../../../../components/CourseOutline.astro";
+import LessonTerminal from "../../../../../components/LessonTerminal.astro";
 import ScrollArea from "../../../../../components/ui/ScrollArea.astro";
 import { ArrowLeftToLine, ArrowRightToLine } from "@lucide/astro";
 import { useLocalePath } from "../../../../../i18n/utils.js";
@@ -67,6 +68,10 @@ const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentInde
 const overviewHref = localePath(`/${type}/${id}`);
 const lessonBaseUrl = localePath(`/${type}/${id}`);
 const { Content } = lessonEntry;
+
+const currentChapter = overview.content.chapters.find((ch) => ch.lessons.some((l) => l.id === lessonId));
+const env = currentChapter?.environment?.trim().toLowerCase();
+const seedName = env && env !== "empty" ? env : "minimal";
 ---
 <Layout bodyClass="lp-fill" showFooter={false}>
 	<div class="lp-root">
@@ -100,8 +105,9 @@ const { Content } = lessonEntry;
 			</div>
 		</aside>
 		<div class="lp__bd">
-			<ScrollArea>
-				<main class="lp__main">
+			<div class="lp__content">
+				<ScrollArea>
+					<main class="lp__main">
 						<nav class="lp__nav">
 							<a href={overviewHref} class="lp__lnk">← {type === "courses" ? "Cours" : "Module"}</a>
 							{prevLesson && (
@@ -120,7 +126,11 @@ const { Content } = lessonEntry;
 							</nav>
 						)}
 					</main>
-			</ScrollArea>
+				</ScrollArea>
+			</div>
+			<div class="lp__term">
+				<LessonTerminal seedName={seedName} lang={lang} />
+			</div>
 		</div>
 	</div>
 	</div>
@@ -245,11 +255,30 @@ const { Content } = lessonEntry;
 
 	.lp__bd {
 		display: flex;
-		flex-direction: column;
+		flex-direction: row;
 		flex: 1;
 		min-height: 0;
 		min-width: 0;
 		background-color: var(--color-gray-1);
+	}
+
+	.lp__content {
+		flex: 1;
+		min-width: 0;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+	}
+
+	.lp__term {
+		flex: 1;
+		min-width: 320px;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		border-left: 1px solid var(--color-gray-6);
 	}
 
 	.lp__main {
@@ -277,6 +306,9 @@ const { Content } = lessonEntry;
 
 	@media (max-width: 1024px) {
 		.lp__sb {
+			display: none;
+		}
+		.lp__term {
 			display: none;
 		}
 	}

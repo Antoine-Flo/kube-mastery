@@ -1,0 +1,19 @@
+---
+interface Props {
+	seedName: string;
+	lang?: "en" | "fr";
+}
+
+import TerminalWindow from "./TerminalWindow.astro";
+
+const { seedName, lang = "en" } = Astro.props;
+const persistId = `terminal-${seedName}`;
+---
+
+<TerminalWindow
+	seedName={seedName}
+	lang={lang}
+	fullHeight
+	persistId={persistId}
+	rows={24}
+/>

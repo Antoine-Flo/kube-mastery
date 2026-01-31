@@ -26,7 +26,7 @@
 | 3 | i18n & routing par langue | Moyen | Fait |
 | 4 | Contenu cours (markdown) | Moyen | Fait |
 | 5 | Routes learn (type/id/lessons) | Moyen | Fait |
-| 6 | Terminal + cluster (îlots interactifs) | Élevé | À faire |
+| 6 | Terminal + cluster (îlots interactifs) | Élevé | Fait (terminal) ; cluster viewer à faire |
 | 7 | Quiz, auth, API | Élevé | À faire |
 | 8 | Tests, CI, nettoyage | Moyen | À faire |
 
@@ -171,28 +171,31 @@
 
 **But** : Réutiliser la logique métier (core) et avoir un terminal interactif + visualisation cluster dans Astro.
 
-**Difficulté** : Le terminal et le cluster sont fortement interactifs (état client, xterm, événements). En Astro, il faut des “îlots” (framework client).
+**État : Terminal fait ; cluster viewer (visualisation) à faire.**
 
-1. **Stratégie**
-   - **Option A** : Garder le “core” en TS pur (sans Solid) : `old/src/core/` est déjà surtout du TS. Le copier dans `src/core/`, adapter les imports, supprimer toute dépendance à Solid.
-   - **Option B** : Réécrire le terminal en Web Component ou en petit framework (ex. Preact/React) pour limiter la taille du bundle.
-   - Recommandation : Option A pour aller plus vite ; le core est déjà testé et découplé.
+### Réalisé
+
+1. **Core**
+   - Le core (`src/core/`) est en TS pur : terminal, cluster, kubectl, filesystem, emulated environment. Pas d’îlot framework : le terminal est monté via script client dans des composants Astro.
 
 2. **Terminal**
-   - Créer un composant “îlot” (ex. Solid ou React) qui :
-     - Monte xterm, le CommandDispatcher, l’EmulatedEnvironment, etc.
-     - Utilise le core importé depuis `src/core/`.
-   - Ce composant est utilisé dans une page Astro avec `client:load` (ou équivalent).
+   - **Page d’accueil** : `Terminal.astro` → `TerminalWindow.astro`, bandeau (top prompt) via `messages` (`terminal_topPrompt`), seed démo (sans API).
+   - **Page de leçon** : `LessonTerminal.astro` → `TerminalWindow.astro` en pleine hauteur, seed par chapitre (`chapter.json` → `environment`), pas de top prompt.
+   - **Montage** : `src/components/terminal-mount.ts` — `mountTerminal(container, { rows, lang, seedName?, topPrompt? })`, synchrone, `createEmulatedEnvironment` + seed (pas de lazy, pas d’API).
+   - **Persistance** : même seed entre leçons/chapitres → `transition:persist` (id `terminal-${seedName}`), pas de remontage ; changement de seed → cleanup puis nouveau terminal.
 
-3. **Cluster viewer**
-   - Idem : composant îlot qui consomme l’état du cluster (EventBus ou équivalent) et affiche les nodes/pods.
-   - S’inspirer de `old/src/components/cluster-visualization.tsx`.
+3. **Seeds**
+   - `src/courses/seeds/` : pas de barrel. Fichiers `minimal.ts` (défaut), `demo.ts`, `getSeed.ts` (registry : nom → `{ clusterStateData, fsConfig }`). Seed = `chapter.environment` dans `chapter.json` (ex. `"minimal"`, `"demo"`), défaut `"minimal"` si absent ou `"empty"`.
+   - Aucun appel API : tout en statique, import direct.
 
-4. **Intégration**
-   - Page “learn/…/lessons/[lessonId]” : afficher à côté du contenu le terminal + cluster (comme en mode “learning” actuel).
-   - État : soit tout dans le composant îlot (terminal + cluster), soit un store client partagé (à définir sans Solid si possible, ex. nanostores ou simple module state).
+4. **Layout page leçon**
+   - `src/pages/[lang]/[type]/[id]/[lessonId]/index.astro` : deux colonnes (contenu scrollable | terminal pleine hauteur), `LessonTerminal` avec `seedName` dérivé du chapitre courant.
 
-**Validation** : Sur une leçon, le terminal répond aux commandes kubectl/shell et le cluster se met à jour ; persistence (localStorage) si déjà en place dans le core.
+### À faire
+
+- **Cluster viewer** : composant qui consomme l’état du cluster (EventBus ou équivalent) et affiche nodes/pods ; s’inspirer de `old/src/components/cluster-visualization.tsx` si besoin.
+
+**Validation** : Sur la home et sur une leçon, le terminal répond aux commandes kubectl/shell ; pas de visualisation cluster pour l’instant.
 
 ---
 
@@ -255,9 +258,12 @@ Respecter l’ordre des phases ; valider chaque phase avant de passer à la suiv
 | Cours (données) | `src/courses/` | `src/courses/` (structure identique) |
 | Overview / leçons (data) | — | `src/data/overview.ts`, `src/data/courses.ts` |
 | Pages cours / leçons | `learn/[type]/[id]/lessons/[lessonId]` | `[lang]/[type]/[id]/index.astro`, `[lang]/[type]/[id]/[lessonId]/index.astro` |
+| Terminal (home) | `old/` + fetch seeds API | `Terminal.astro` → `TerminalWindow.astro`, `terminal-mount.ts`, seed demo, top prompt dans `messages` |
+| Terminal (leçon) | — | `LessonTerminal.astro` → `TerminalWindow.astro`, seed par chapitre (`chapter.json` environment), `transition:persist` par seed |
+| Seeds | `old/seeds/`, API `/api/seeds/[name]` | `src/courses/seeds/` (minimal, demo, getSeed), pas d’API |
 | Auth | `src/account/`, `src/lib/auth.tsx` | Endpoints + store client (à faire) |
 | API | `src/routes/api/` | `src/pages/api/` (à faire) |
 
 ---
 
-*Document mis à jour au fil de la migration. Dernière mise à jour : phases 4 et 5 (contenu markdown, routes overview/leçon sans segment learn/lessons).*
+*Document mis à jour au fil de la migration. Dernière mise à jour : phase 6 (terminal home + leçon, seeds statiques par chapitre, persistance par seed, top prompt dans messages).*

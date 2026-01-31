@@ -1,0 +1,194 @@
+---
+interface Props {
+	class?: string;
+	rows?: number;
+	lang?: "en" | "fr";
+	/** Seed name for lesson page; omitted = home (demo). */
+	seedName?: string;
+	/** Full height layout (lesson page). */
+	fullHeight?: boolean;
+	/** Persist id for view transitions (lesson page). */
+	persistId?: string;
+	/** Optional text written at top when terminal loads (e.g. home banner). Omitted = none. */
+	topPrompt?: string;
+}
+
+import { Minus, Square, X } from "@lucide/astro";
+import "@xterm/xterm/css/xterm.css";
+
+const {
+	class: className = "",
+	rows = 20,
+	lang = "en",
+	seedName,
+	fullHeight = false,
+	persistId,
+	topPrompt,
+} = Astro.props;
+const rootClass = ["t-win", fullHeight && "t-win--full", className].filter(Boolean).join(" ");
+---
+
+<div
+	class={rootClass}
+	id={persistId ?? undefined}
+	transition:persist={persistId ?? undefined}
+	data-terminal-window
+	data-rows={rows}
+	data-lang={lang}
+	data-seed-name={seedName ?? undefined}
+	data-persist-id={persistId ?? undefined}
+	data-top-prompt={topPrompt != null ? JSON.stringify(topPrompt) : undefined}
+>
+	<div class="t-ctrl" aria-hidden="true">
+		<span class="t-btn t-btn--min"><Minus size={12} /></span>
+		<span class="t-btn t-btn--max"><Square size={12} /></span>
+		<span class="t-btn t-btn--close"><X size={12} /></span>
+	</div>
+	<div class="t-load">
+		<span class="t-load-txt">Loading terminal…</span>
+	</div>
+	<div class="t-wrap" style="display: none;">
+		<div class="t-box"></div>
+	</div>
+</div>
+
+<script>
+	import { mountTerminal } from "./terminal-mount";
+
+	const cleanups = new Map<Element, () => void>();
+	const persistIdByRoot = new Map<Element, string>();
+
+	function init() {
+		document.querySelectorAll("[data-terminal-window]").forEach((root) => {
+			const el = root as HTMLElement;
+			const box = el.querySelector(".t-box") as HTMLElement;
+			const loader = el.querySelector(".t-load") as HTMLElement;
+			const wrapper = el.querySelector(".t-wrap") as HTMLElement;
+			if (!box || !loader || !wrapper) return;
+
+			const pid = el.dataset.persistId;
+			if (pid && box.querySelector(".xterm")) {
+				loader.style.display = "none";
+				wrapper.style.display = "block";
+				return;
+			}
+			if (cleanups.has(root)) return;
+
+			const rows = Number(el.dataset.rows) || 20;
+			const lang = (el.dataset.lang === "fr" ? "fr" : "en") as "en" | "fr";
+			const seedName = el.dataset.seedName;
+			const topPromptRaw = el.dataset.topPrompt;
+			const topPrompt = topPromptRaw ? (JSON.parse(topPromptRaw) as string) : undefined;
+
+			try {
+				const cleanup = mountTerminal(box, {
+					rows,
+					lang,
+					...(seedName && { seedName }),
+					...(topPrompt !== undefined && { topPrompt }),
+				});
+				cleanups.set(root, cleanup);
+				if (pid) persistIdByRoot.set(root, pid);
+				loader.style.display = "none";
+				wrapper.style.display = "block";
+			} catch (err) {
+				console.error("[TerminalWindow] Mount failed:", err);
+				loader.textContent = "Terminal unavailable.";
+			}
+		});
+	}
+
+	init();
+	document.addEventListener("astro:page-load", init);
+
+	document.addEventListener("astro:before-swap", (ev: Event) => {
+		const newDoc = (ev as { newDocument?: Document }).newDocument;
+		cleanups.forEach((cleanup, root) => {
+			const pid = persistIdByRoot.get(root);
+			if (newDoc) {
+				if (pid && newDoc.getElementById(pid)) return;
+			}
+			cleanup();
+			cleanups.delete(root);
+			if (pid) persistIdByRoot.delete(root);
+		});
+	});
+</script>
+
+<style>
+	.t-win {
+		border-radius: var(--radius-md);
+		border: 1px solid var(--color-gray-6);
+		padding-top: var(--spacing-8);
+		padding-bottom: var(--spacing-4);
+		padding-left: var(--spacing-4);
+		padding-right: var(--spacing-4);
+		position: relative;
+		background-color: var(--color-gray-1);
+	}
+	.t-win:not(.t-win--full) {
+		height: 490px;
+	}
+	.t-win--full {
+		height: 100%;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+	}
+	.t-ctrl {
+		position: absolute;
+		top: var(--spacing-2);
+		right: var(--spacing-2);
+		display: flex;
+		gap: var(--spacing-2);
+		z-index: 1;
+	}
+	.t-btn {
+		flex-shrink: 0;
+		opacity: 0.6;
+		transition: opacity var(--duration-fast);
+	}
+	.t-btn:hover {
+		opacity: 1;
+	}
+	.t-btn--close { color: var(--color-ruby-11); }
+	.t-btn--max { color: var(--color-green-11); }
+	.t-btn--min { color: var(--color-amber-11); }
+	.t-load {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+	}
+	.t-win:not(.t-win--full) .t-load {
+		height: 450px;
+	}
+	.t-win--full .t-load {
+		flex: 1;
+		min-height: 0;
+	}
+	.t-load-txt {
+		color: var(--color-gray-11);
+	}
+	.t-wrap {
+		position: relative;
+		width: 100%;
+		height: 100%;
+	}
+	.t-win--full .t-wrap {
+		flex: 1;
+		min-height: 0;
+	}
+	.t-box {
+		width: 100%;
+		min-height: 200px;
+		background-color: var(--color-gray-1);
+		text-align: left;
+	}
+	.t-win:not(.t-win--full) .t-box {
+		height: 450px;
+	}
+	.t-win--full .t-box {
+		height: 100%;
+	}
+</style>
