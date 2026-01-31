@@ -1,0 +1,195 @@
+---
+import { ChevronDown, Circle } from "@lucide/astro";
+import type { CourseOverview, OverviewChapter, OverviewLesson } from "../data/overview.js";
+
+interface Props {
+	overview: CourseOverview;
+	currentLessonId: string;
+	lessonBaseUrl: string;
+}
+
+const { overview, currentLessonId, lessonBaseUrl } = Astro.props;
+
+const currentChapterIndex = overview.content.chapters.findIndex((ch) =>
+	ch.lessons.some((l) => l.id === currentLessonId)
+);
+---
+<div class="out">
+	<h2 class="out__ttl">{overview.title}</h2>
+	<div class="out__list">
+		{overview.content.chapters.map((chapter: OverviewChapter, chapterIndex: number) => {
+			const isCurrentChapter = chapterIndex === currentChapterIndex;
+			return (
+				<details class="out__ch" open={isCurrentChapter}>
+					<summary class="out__ch-hd">
+						<span class="out__ch-ttl">{chapter.title}</span>
+						<span class="out__ch-ico" aria-hidden="true">
+							<ChevronDown size={16} aria-hidden="true" />
+						</span>
+					</summary>
+					<div class="out__ch-bd">
+						{chapter.lessons.map((lesson: OverviewLesson) => {
+							const isActive = lesson.id === currentLessonId;
+							return (
+								<a
+									href={`${lessonBaseUrl}/${lesson.id}`}
+									class:list={["out__it", { "out__it--on": isActive }]}
+								>
+									<span class="out__it-ico">
+										<Circle size={16} aria-hidden="true" />
+									</span>
+									<span class="out__it-ttl">{lesson.title}</span>
+								</a>
+							);
+						})}
+					</div>
+				</details>
+			);
+		})}
+	</div>
+</div>
+
+<style>
+	.out {
+		height: 100%;
+		overflow-y: auto;
+		background-color: var(--color-gray-1);
+		padding: var(--spacing-2);
+		padding-top: var(--spacing-4);
+		scrollbar-gutter: stable;
+		scrollbar-width: thin;
+		scrollbar-color: var(--color-gray-a6) transparent;
+	}
+
+	.out::-webkit-scrollbar {
+		width: 0.5rem;
+	}
+
+	.out::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.out::-webkit-scrollbar-thumb {
+		background-color: var(--color-gray-a6);
+		border-radius: 9999px;
+		border: 2px solid transparent;
+		background-clip: padding-box;
+		transition: background-color var(--duration-normal);
+	}
+
+	.out::-webkit-scrollbar-thumb:hover {
+		background-color: var(--color-gray-a8);
+	}
+
+	.out__ttl {
+		font-size: var(--text-xl);
+		font-weight: var(--font-weight-semibold);
+		color: var(--color-gray-12);
+		padding-bottom: var(--spacing-2);
+		border-bottom: 1px solid var(--color-gray-6);
+	}
+
+	.out__list {
+		width: 100%;
+		--out-pad: var(--spacing-3);
+	}
+
+	.out__ch {
+		border-bottom: 1px solid var(--color-gray-6);
+	}
+
+	.out__ch-hd {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-2);
+		padding: var(--out-pad) 0;
+		cursor: pointer;
+		list-style: none;
+		font-weight: var(--font-weight-semibold);
+		color: var(--color-gray-12);
+		background: none;
+		border: none;
+		width: 100%;
+		text-align: left;
+		font-size: var(--text-sm);
+		font-family: inherit;
+	}
+
+	.out__ch-hd::-webkit-details-marker,
+	.out__ch-hd::marker {
+		display: none;
+	}
+
+	.out__ch-hd:focus-visible {
+		outline: 2px solid var(--color-cyan-9);
+		outline-offset: 2px;
+	}
+
+	.out__ch-ttl {
+		flex: 1;
+	}
+
+	.out__ch-ico {
+		flex-shrink: 0;
+		color: var(--color-gray-9);
+		transition: transform var(--duration-normal);
+	}
+
+	.out__ch[open] .out__ch-ico {
+		transform: rotate(180deg);
+	}
+
+	.out__ch-bd {
+		padding: 0;
+		padding-bottom: var(--out-pad);
+	}
+
+	.out__it {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-2);
+		width: 100%;
+		padding: var(--spacing-2);
+		background: none;
+		border: none;
+		text-align: left;
+		cursor: pointer;
+		color: var(--color-gray-11);
+		text-decoration: none;
+		transition: background-color var(--duration-normal) ease-out,
+			color var(--duration-normal) ease-out,
+			font-weight var(--duration-normal) ease-out;
+		font-family: inherit;
+		font-size: inherit;
+	}
+
+	.out__it:hover {
+		background-color: var(--color-gray-3);
+	}
+
+	.out__it--on {
+		background-color: var(--color-cyan-3);
+		color: var(--color-gray-12);
+		font-weight: var(--font-weight-semibold);
+	}
+
+	.out__it--on .out__it-ico {
+		color: var(--color-cyan-11);
+	}
+
+	.out__it-ico {
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		color: var(--color-gray-9);
+		transition: color var(--duration-normal) ease-out;
+	}
+
+	.out__it-ttl {
+		flex: 1;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: var(--text-xs);
+	}
+</style>

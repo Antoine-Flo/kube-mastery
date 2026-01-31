@@ -1,5 +1,7 @@
 ---
 import Layout from "../../../../../layouts/Layout.astro";
+import CourseOutline from "../../../../../components/CourseOutline.astro";
+import { ArrowLeftToLine, ArrowRightToLine } from "@lucide/astro";
 import { useLocalePath } from "../../../../../i18n/utils.js";
 import { getCourses, getModules } from "../../../../../data/courses.js";
 import {
@@ -62,48 +64,215 @@ const currentIndex = allLessons.findIndex((l) => l.id === lessonId);
 const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
 const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
 const overviewHref = localePath(`/${type}/${id}`);
+const lessonBaseUrl = localePath(`/${type}/${id}`);
 const { Content } = lessonEntry;
 ---
 <Layout>
-	<main class="lp">
-		<nav class="nv">
-			<a href={overviewHref} class="bk">← {type === "courses" ? "Cours" : "Module"}</a>
-			{prevLesson && (
-				<a href={localePath(`/${type}/${id}/${prevLesson.id}`)} class="pv">← {prevLesson.title}</a>
-			)}
-			{nextLesson && (
-				<a href={localePath(`/${type}/${id}/${nextLesson.id}`)} class="nx">{nextLesson.title} →</a>
-			)}
-		</nav>
-		<article class="lesson-content">
-			<Content />
-		</article>
-		{nextLesson && (
-			<nav class="nv bt">
-				<a href={localePath(`/${type}/${id}/${nextLesson.id}`)}>Leçon suivante : {nextLesson.title} →</a>
-			</nav>
-		)}
-	</main>
+	<div class="lp">
+		<aside
+			id="lesson-sidebar"
+			class="lp__sb"
+			aria-label="Plan du cours"
+		>
+			<div class="lp__sb-ct">
+				<CourseOutline
+					overview={overview}
+					currentLessonId={lessonId}
+					lessonBaseUrl={lessonBaseUrl}
+				/>
+			</div>
+			<div class="lp__sb-ft">
+				<button
+					id="lesson-sidebar-toggle"
+					type="button"
+					aria-label="Réduire le plan du cours"
+					aria-expanded="true"
+				>
+					<span class="lp__sb-ico lp__sb-ico--exp" aria-hidden="true">
+						<ArrowRightToLine size={18} />
+					</span>
+					<span class="lp__sb-ico lp__sb-ico--col" aria-hidden="true">
+						<ArrowLeftToLine size={18} />
+					</span>
+				</button>
+			</div>
+		</aside>
+		<div class="lp__bd">
+			<div class="lp__scroll">
+				<main class="lp__main">
+					<nav class="lp__nav">
+						<a href={overviewHref} class="lp__lnk">← {type === "courses" ? "Cours" : "Module"}</a>
+						{prevLesson && (
+							<a href={localePath(`/${type}/${id}/${prevLesson.id}`)} class="lp__lnk">← {prevLesson.title}</a>
+						)}
+						{nextLesson && (
+							<a href={localePath(`/${type}/${id}/${nextLesson.id}`)} class="lp__lnk">{nextLesson.title} →</a>
+						)}
+					</nav>
+					<article class="lesson-content">
+						<Content />
+					</article>
+					{nextLesson && (
+						<nav class="lp__nav lp__nav--bt">
+							<a href={localePath(`/${type}/${id}/${nextLesson.id}`)} class="lp__lnk">Leçon suivante : {nextLesson.title} →</a>
+						</nav>
+					)}
+				</main>
+			</div>
+		</div>
+	</div>
 </Layout>
+
+<script>
+	const STORAGE_KEY = "lesson-sidebar-collapsed";
+
+	function setupSidebarToggle() {
+		const sidebar = document.getElementById("lesson-sidebar");
+		const toggle = document.getElementById("lesson-sidebar-toggle");
+		if (!sidebar || !toggle) return;
+
+		const updateUi = () => {
+			const collapsed = sidebar.classList.contains("lp__sb--col");
+			toggle.setAttribute("aria-label", collapsed ? "Afficher le plan du cours" : "Réduire le plan du cours");
+			toggle.setAttribute("aria-expanded", String(!collapsed));
+		};
+
+		const init = () => {
+			const collapsed = localStorage.getItem(STORAGE_KEY) === "true";
+			sidebar.classList.toggle("lp__sb--col", collapsed);
+			updateUi();
+		};
+
+		init();
+
+		toggle.onclick = () => {
+			const collapsed = !sidebar.classList.contains("lp__sb--col");
+			sidebar.classList.toggle("lp__sb--col", collapsed);
+			localStorage.setItem(STORAGE_KEY, String(collapsed));
+			updateUi();
+		};
+	}
+
+	setupSidebarToggle();
+	document.addEventListener("astro:page-load", setupSidebarToggle);
+</script>
 
 <style>
 	.lp {
+		background-color: var(--color-gray-1);
+		flex: 1;
+		min-height: 0;
+		display: flex;
+		overflow: hidden;
+	}
+
+	.lp__sb {
+		flex-shrink: 0;
+		border-right: 1px solid var(--color-gray-6);
+		background-color: var(--color-gray-1);
+		overflow: hidden;
+		transition: width var(--duration-normal) ease-out;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.lp__sb--col {
+		width: 41px;
+	}
+
+	.lp__sb-ico {
+		display: none;
+	}
+
+	.lp__sb:not(.lp__sb--col) .lp__sb-ico--col {
+		display: inline-flex;
+	}
+
+	.lp__sb--col .lp__sb-ico--exp {
+		display: inline-flex;
+	}
+
+	.lp__sb-ct {
+		flex: 1;
+		min-height: 0;
+		overflow: hidden;
+		width: 250px;
+		min-width: 250px;
+		opacity: 1;
+		transition: opacity var(--duration-normal) ease-out;
+	}
+
+	.lp__sb--col .lp__sb-ct {
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.lp__sb-ft {
+		margin-top: auto;
+		padding: var(--spacing-1);
+		display: flex;
+		flex-shrink: 0;
+		opacity: 0.2;
+		transition: opacity var(--duration-normal);
+	}
+
+	.lp__sb-ft:hover {
+		opacity: 0.8;
+	}
+
+	.lp__sb-ft button {
+		padding-inline: 0.6rem;
+		min-width: 2rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--color-gray-11);
+	}
+
+	.lp__bd {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		background-color: var(--color-gray-1);
+		flex: 1;
+		min-width: 0;
+	}
+
+	.lp__scroll {
+		height: 100%;
+		width: 100%;
+		overflow-y: auto;
+	}
+
+	.lp__main {
 		max-width: 80ch;
 		margin: 0 auto;
 		padding: var(--spacing-4);
 	}
-	.nv {
+
+	.lp__nav {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.75rem 1rem;
 		margin-bottom: 1rem;
 	}
-	.nv.bt {
+
+	.lp__nav--bt {
 		margin-top: 1.5rem;
 		margin-bottom: 0;
 	}
-	.lp .nv a {
+
+	.lp__lnk {
 		color: var(--color-primary-5);
 		text-decoration: underline;
+	}
+
+	@media (max-width: 1024px) {
+		.lp__sb {
+			display: none;
+		}
 	}
 </style>
