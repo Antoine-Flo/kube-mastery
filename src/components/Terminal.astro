@@ -1,0 +1,124 @@
+---
+interface Props {
+	class?: string;
+	rows?: number;
+}
+
+import { Minus, Square, X } from "@lucide/astro";
+import "@xterm/xterm/css/xterm.css";
+
+const { class: className = "", rows = 20 } = Astro.props;
+---
+
+<div class={`t-win ${className}`.trim()} data-terminal data-rows={rows}>
+	<div class="t-ctrl" aria-hidden="true">
+		<span class="t-btn t-btn--min"><Minus size={12} /></span>
+		<span class="t-btn t-btn--max"><Square size={12} /></span>
+		<span class="t-btn t-btn--close"><X size={12} /></span>
+	</div>
+	<div class="t-load">
+		<span class="t-load-txt">Loading terminal…</span>
+	</div>
+	<div class="t-wrap" style="display: none;">
+		<div class="t-box"></div>
+	</div>
+</div>
+
+<script>
+	import { mountTerminal } from "./terminal-mount";
+
+	const cleanups = new Map<Element, () => void>();
+
+	function init() {
+		document.querySelectorAll("[data-terminal]").forEach((root) => {
+			if (cleanups.has(root)) {
+				return;
+			}
+			const el = root as HTMLElement;
+			const loader = root.querySelector(".t-load") as HTMLElement;
+			const wrapper = root.querySelector(".t-wrap") as HTMLElement;
+			const box = root.querySelector(".t-box") as HTMLElement;
+			if (!box || !loader || !wrapper) {
+				return;
+			}
+			const rows = Number(el.dataset.rows) || 20;
+
+			mountTerminal(box, { rows })
+				.then((cleanup) => {
+					cleanups.set(root, cleanup);
+					loader.style.display = "none";
+					wrapper.style.display = "block";
+				})
+				.catch((err) => {
+					console.error("[Terminal] Mount failed:", err);
+					loader.textContent = "Terminal unavailable.";
+				});
+		});
+	}
+
+	init();
+	document.addEventListener("astro:page-load", init);
+	document.addEventListener("astro:before-swap", () => {
+		cleanups.forEach((fn) => fn());
+		cleanups.clear();
+	});
+</script>
+
+<style>
+	.t-win {
+		height: 490px;
+		border-radius: var(--radius-md);
+		border: 1px solid var(--color-gray-6);
+		padding-top: var(--spacing-8);
+		padding-bottom: var(--spacing-4);
+		padding-left: var(--spacing-4);
+		padding-right: var(--spacing-4);
+		position: relative;
+		background-color: var(--color-gray-1);
+	}
+	.t-ctrl {
+		position: absolute;
+		top: var(--spacing-2);
+		right: var(--spacing-2);
+		display: flex;
+		gap: var(--spacing-2);
+		z-index: 1;
+	}
+	.t-btn {
+		flex-shrink: 0;
+		opacity: 0.6;
+		transition: opacity var(--duration-fast);
+	}
+	.t-btn:hover {
+		opacity: 1;
+	}
+	.t-btn--close { color: var(--color-ruby-11); }
+	.t-btn--max { color: var(--color-green-11); }
+	.t-btn--min { color: var(--color-amber-11); }
+	.t-load {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 450px;
+		width: 100%;
+	}
+	.t-load-txt {
+		color: var(--color-gray-11);
+	}
+	.t-wrap {
+		position: relative;
+		width: 100%;
+		height: 100%;
+	}
+	.t-box {
+		width: 100%;
+		height: 450px;
+		min-height: 200px;
+		background-color: var(--color-gray-1);
+		text-align: left;
+	}
+</style>
+
+<style is:global>
+	.t-box .xterm .xterm-scrollable-element > .scrollbar > .slider { border-radius: 9999px; width: 8px; }
+</style>

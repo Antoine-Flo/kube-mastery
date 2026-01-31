@@ -1,20 +1,27 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import Button from "../../components/ui/Button.astro";
-import { Zap, Shield, Euro, FileCheck, BookOpen, Code, CheckCircle2 } from "@lucide/astro";
+import Terminal from "../../components/Terminal.astro";
+import {
+	Zap,
+	Shield,
+	Euro,
+	FileCheck,
+	BookOpen,
+	Code,
+	CircleCheck,
+} from "@lucide/astro";
 import { useTranslations, useLocalePath } from "../../i18n/utils.js";
 
 export function getStaticPaths() {
-	return [
-		{ params: { lang: "en" } },
-		{ params: { lang: "fr" } },
-	];
+	return [{ params: { lang: "en" } }, { params: { lang: "fr" } }];
 }
 
 const locale = Astro.params.lang as "en" | "fr";
 const t = useTranslations(locale);
 const localePath = useLocalePath(locale);
 ---
+
 <Layout>
 	<main>
 		<section class="hero">
@@ -23,10 +30,19 @@ const localePath = useLocalePath(locale);
 					<h1>{t("home_title")}</h1>
 					<p class="sub">{t("home_subtitle")}</p>
 					<div class="cta">
-						<Button href={localePath("/courses")} variant="solid" color="cyan" size="lg" sublabel={t("home_freeCourse")}>
+						<Button
+							href={localePath("/courses")}
+							variant="solid"
+							color="cyan"
+							size="lg"
+							sublabel={t("home_freeCourse")}
+						>
 							{t("home_startNow")}
 						</Button>
 					</div>
+				</div>
+				<div class="terminal-container">
+					<Terminal rows={20} />
 				</div>
 			</div>
 		</section>
@@ -64,7 +80,11 @@ const localePath = useLocalePath(locale);
 						<FileCheck size={24} class="icon c" />
 						<div>
 							<h3>{t("home_concerns_openapi_title")}</h3>
-							<p set:html={t("home_concerns_openapi_description")} />
+							<p
+								set:html={t(
+									"home_concerns_openapi_description",
+								)}
+							/>
 						</div>
 					</div>
 					<div class="item anim">
@@ -82,10 +102,14 @@ const localePath = useLocalePath(locale);
 						</div>
 					</div>
 					<div class="item anim">
-						<CheckCircle2 size={24} class="icon g" />
+						<CircleCheck size={24} class="icon g" />
 						<div>
 							<h3>{t("home_concerns_comparison_title")}</h3>
-							<p set:html={t("home_concerns_comparison_description")} />
+							<p
+								set:html={t(
+									"home_concerns_comparison_description",
+								)}
+							/>
 						</div>
 					</div>
 				</div>
@@ -116,7 +140,12 @@ const localePath = useLocalePath(locale);
 				</div>
 			</div>
 			<div class="cta">
-				<Button href={localePath("/courses")} variant="solid" color="cyan" size="md">{t("home_startNow")}</Button>
+				<Button
+					href={localePath("/courses")}
+					variant="solid"
+					color="cyan"
+					size="md">{t("home_startNow")}</Button
+				>
 			</div>
 		</div>
 	</main>
@@ -124,13 +153,21 @@ const localePath = useLocalePath(locale);
 
 <style>
 	@keyframes fadeInUp {
-		from { opacity: 0; transform: translateY(20px); }
-		to { opacity: 1; transform: translateY(0); }
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 	.anim {
 		opacity: 0;
 		transform: translateY(30px);
-		transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+		transition:
+			opacity 0.6s ease-out,
+			transform 0.6s ease-out;
 	}
 	.anim.visible {
 		opacity: 1;
@@ -156,7 +193,11 @@ const localePath = useLocalePath(locale);
 		max-width: 1500px;
 	}
 	@media (min-width: 1024px) {
-		.hero .content { flex-direction: row; align-items: center; gap: 4rem; }
+		.hero .content {
+			flex-direction: row;
+			align-items: center;
+			gap: 4rem;
+		}
 	}
 	.left {
 		display: flex;
@@ -166,7 +207,11 @@ const localePath = useLocalePath(locale);
 		flex: 1;
 	}
 	@media (min-width: 1024px) {
-		.left { align-items: flex-start; min-width: 0; flex-shrink: 1; }
+		.left {
+			align-items: flex-start;
+			min-width: 0;
+			flex-shrink: 1;
+		}
 	}
 	.hero h1 {
 		font-family: "Zalando Sans SemiExpanded", sans-serif;
@@ -179,10 +224,15 @@ const localePath = useLocalePath(locale);
 		min-width: 100%;
 	}
 	@media (min-width: 768px) {
-		.hero h1 { font-size: 3.7rem; min-width: auto; }
+		.hero h1 {
+			font-size: 3.7rem;
+			min-width: auto;
+		}
 	}
 	@media (min-width: 1024px) {
-		.hero h1 { text-align: left; }
+		.hero h1 {
+			text-align: left;
+		}
 	}
 	.sub {
 		font-size: var(--text-lg);
@@ -193,10 +243,14 @@ const localePath = useLocalePath(locale);
 		animation: fadeInUp 0.8s ease-out 0.2s both;
 	}
 	@media (min-width: 768px) {
-		.sub { font-size: var(--text-xl); }
+		.sub {
+			font-size: var(--text-xl);
+		}
 	}
 	@media (min-width: 1024px) {
-		.sub { text-align: left; }
+		.sub {
+			text-align: left;
+		}
 	}
 	.cta {
 		margin-top: 1rem;
@@ -224,7 +278,9 @@ const localePath = useLocalePath(locale);
 		gap: 1rem;
 	}
 	@media (min-width: 768px) {
-		.features .content { padding: 0 2rem; }
+		.features .content {
+			padding: 0 2rem;
+		}
 	}
 	.features h2 {
 		font-size: 1.5rem;
@@ -233,7 +289,9 @@ const localePath = useLocalePath(locale);
 		text-align: center;
 	}
 	@media (min-width: 768px) {
-		.features h2 { font-size: 1.875rem; }
+		.features h2 {
+			font-size: 1.875rem;
+		}
 	}
 	.features .content > p {
 		font-size: var(--text-base);
@@ -244,7 +302,9 @@ const localePath = useLocalePath(locale);
 		margin: 0 auto;
 	}
 	@media (min-width: 768px) {
-		.features .content > p { font-size: var(--text-lg); }
+		.features .content > p {
+			font-size: var(--text-lg);
+		}
 	}
 	.features .grid {
 		display: grid;
@@ -254,7 +314,9 @@ const localePath = useLocalePath(locale);
 		width: 100%;
 	}
 	@media (min-width: 768px) {
-		.features .grid { grid-template-columns: repeat(3, 1fr); }
+		.features .grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
 	}
 	.features .card {
 		display: flex;
@@ -266,14 +328,32 @@ const localePath = useLocalePath(locale);
 		background-color: var(--color-gray-2);
 		border: 1px solid var(--color-gray-6);
 	}
-	.features .card:nth-child(1) { transition-delay: 0.1s; }
-	.features .card:nth-child(2) { transition-delay: 0.2s; }
-	.features .card:nth-child(3) { transition-delay: 0.3s; }
-	.icon { margin-bottom: 0.5rem; align-self: center; flex-shrink: 0; }
-	.icon.a { color: var(--color-amber-9); }
-	.icon.c { color: var(--color-cyan-9); }
-	.icon.p { color: var(--color-ruby-9); }
-	.icon.g { color: var(--color-green-9); }
+	.features .card:nth-child(1) {
+		transition-delay: 0.1s;
+	}
+	.features .card:nth-child(2) {
+		transition-delay: 0.2s;
+	}
+	.features .card:nth-child(3) {
+		transition-delay: 0.3s;
+	}
+	.icon {
+		margin-bottom: 0.5rem;
+		align-self: center;
+		flex-shrink: 0;
+	}
+	.icon.a {
+		color: var(--color-amber-9);
+	}
+	.icon.c {
+		color: var(--color-cyan-9);
+	}
+	.icon.p {
+		color: var(--color-ruby-9);
+	}
+	.icon.g {
+		color: var(--color-green-9);
+	}
 	.features .card h3 {
 		font-size: var(--text-xl);
 		font-weight: var(--font-weight-semibold);
@@ -301,7 +381,9 @@ const localePath = useLocalePath(locale);
 		gap: 3rem;
 	}
 	@media (min-width: 768px) {
-		.concerns .content { padding: 0 2rem; }
+		.concerns .content {
+			padding: 0 2rem;
+		}
 	}
 	.concerns h2 {
 		font-size: 1.5rem;
@@ -310,7 +392,9 @@ const localePath = useLocalePath(locale);
 		text-align: center;
 	}
 	@media (min-width: 768px) {
-		.concerns h2 { font-size: 1.875rem; }
+		.concerns h2 {
+			font-size: 1.875rem;
+		}
 	}
 	.concerns .content > p {
 		font-size: var(--text-base);
@@ -321,7 +405,9 @@ const localePath = useLocalePath(locale);
 		margin: 0 auto;
 	}
 	@media (min-width: 768px) {
-		.concerns .content > p { font-size: var(--text-lg); }
+		.concerns .content > p {
+			font-size: var(--text-lg);
+		}
 	}
 	.items {
 		display: flex;
@@ -334,9 +420,13 @@ const localePath = useLocalePath(locale);
 		align-items: flex-start;
 	}
 	@media (min-width: 768px) {
-		.item { gap: 2rem; }
+		.item {
+			gap: 2rem;
+		}
 	}
-	.item .icon { margin-top: 0.25rem; }
+	.item .icon {
+		margin-top: 0.25rem;
+	}
 	.item > div {
 		display: flex;
 		flex-direction: column;
@@ -350,7 +440,9 @@ const localePath = useLocalePath(locale);
 		line-height: 1.4;
 	}
 	@media (min-width: 768px) {
-		.item h3 { font-size: var(--text-xl); }
+		.item h3 {
+			font-size: var(--text-xl);
+		}
 	}
 	.item p {
 		font-size: var(--text-base);
@@ -358,7 +450,9 @@ const localePath = useLocalePath(locale);
 		line-height: 1.7;
 	}
 	@media (min-width: 768px) {
-		.item p { font-size: var(--text-lg); }
+		.item p {
+			font-size: var(--text-lg);
+		}
 	}
 	.item p :global(strong) {
 		font-weight: var(--font-weight-semibold);
@@ -375,7 +469,9 @@ const localePath = useLocalePath(locale);
 		border-bottom: 1px solid var(--color-gray-6);
 	}
 	@media (min-width: 768px) {
-		.stats { padding: 8rem 2rem; }
+		.stats {
+			padding: 8rem 2rem;
+		}
 	}
 	.stats h2 {
 		font-size: 1.5rem;
@@ -384,7 +480,9 @@ const localePath = useLocalePath(locale);
 		text-align: center;
 	}
 	@media (min-width: 768px) {
-		.stats h2 { font-size: 1.875rem; }
+		.stats h2 {
+			font-size: 1.875rem;
+		}
 	}
 	.stats > p {
 		font-size: var(--text-base);
@@ -395,7 +493,9 @@ const localePath = useLocalePath(locale);
 		margin: 0 auto;
 	}
 	@media (min-width: 768px) {
-		.stats > p { font-size: var(--text-lg); }
+		.stats > p {
+			font-size: var(--text-lg);
+		}
 	}
 	.stats .grid {
 		display: grid;
@@ -407,10 +507,14 @@ const localePath = useLocalePath(locale);
 		width: 100%;
 	}
 	@media (min-width: 768px) {
-		.stats .grid { grid-template-columns: repeat(2, 1fr); }
+		.stats .grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
 	}
 	@media (min-width: 1024px) {
-		.stats .grid { grid-template-columns: repeat(3, 1fr); }
+		.stats .grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
 	}
 	.stats .card {
 		display: flex;
@@ -423,9 +527,15 @@ const localePath = useLocalePath(locale);
 		border: 1px solid var(--color-gray-6);
 		text-align: center;
 	}
-	.stats .card:nth-child(1) { transition-delay: 0.1s; }
-	.stats .card:nth-child(2) { transition-delay: 0.2s; }
-	.stats .card:nth-child(3) { transition-delay: 0.3s; }
+	.stats .card:nth-child(1) {
+		transition-delay: 0.1s;
+	}
+	.stats .card:nth-child(2) {
+		transition-delay: 0.2s;
+	}
+	.stats .card:nth-child(3) {
+		transition-delay: 0.3s;
+	}
 	.val {
 		font-size: 2rem;
 		font-weight: var(--font-weight-bold);
@@ -433,7 +543,9 @@ const localePath = useLocalePath(locale);
 		line-height: 1.2;
 	}
 	@media (min-width: 768px) {
-		.val { font-size: 2.5rem; }
+		.val {
+			font-size: 2.5rem;
+		}
 	}
 	.stats .card h3 {
 		font-size: var(--text-lg);
@@ -452,6 +564,23 @@ const localePath = useLocalePath(locale);
 		margin-top: 0.5rem;
 		font-style: italic;
 	}
+
+	/* Hero Terminal Container */
+	.terminal-container {
+		flex: 1;
+		width: 100%;
+		max-width: 600px;
+		min-width: 0;
+		animation: fadeInUp 0.8s ease-out 0.6s both;
+	}
+
+	@media (min-width: 1024px) {
+		.terminal-container {
+			flex: 0 0 50%;
+			max-width: none;
+			min-width: 500px;
+		}
+	}
 </style>
 
 <script>
@@ -465,7 +594,7 @@ const localePath = useLocalePath(locale);
 						}
 					});
 				},
-				{ threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+				{ threshold: 0.1, rootMargin: "0px 0px -50px 0px" },
 			);
 			observer.observe(el);
 		});

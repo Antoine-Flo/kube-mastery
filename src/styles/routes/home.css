@@ -191,22 +191,7 @@
   font-size: var(--text-xs);
 }
 
-/* Hero Terminal Container */
-.home__hero-terminal-container {
-  flex: 1;
-  width: 100%;
-  max-width: 600px;
-  min-width: 0;
-  animation: fadeInUp 0.8s ease-out 0.6s both;
-}
 
-@media (min-width: 1024px) {
-  .home__hero-terminal-container {
-    flex: 0 0 50%;
-    max-width: none;
-    min-width: 500px;
-  }
-}
 
 .home__terminal-window {
   height: 490px;
