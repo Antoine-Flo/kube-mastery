@@ -75,7 +75,9 @@ const rootClass = ["t-win", fullHeight && "t-win--full", className].filter(Boole
 			const box = el.querySelector(".t-box") as HTMLElement;
 			const loader = el.querySelector(".t-load") as HTMLElement;
 			const wrapper = el.querySelector(".t-wrap") as HTMLElement;
-			if (!box || !loader || !wrapper) return;
+			if (!box || !loader || !wrapper) {
+				return;
+			}
 
 			// Déjà monté (évite double xterm après astro:page-load / view transitions)
 			if (box.querySelector(".xterm")) {
@@ -86,7 +88,9 @@ const rootClass = ["t-win", fullHeight && "t-win--full", className].filter(Boole
 
 			const isLesson = el.dataset.lessonTerminal === "true";
 			const pid = el.dataset.persistId;
-			if (cleanups.has(root)) return;
+			if (cleanups.has(root)) {
+				return;
+			}
 
 			const rows = Number(el.dataset.rows) || 20;
 			const lang = (el.dataset.lang === "fr" ? "fr" : "en") as "en" | "fr";
@@ -107,26 +111,30 @@ const rootClass = ["t-win", fullHeight && "t-win--full", className].filter(Boole
 				}
 			};
 
-			if (isLesson) {
-				if (lessonPending.has(root)) return;
-				lessonPending.add(root);
-				const g = globalThis as unknown as { __lessonEnv?: import("../core/emulatedEnvironment/EmulatedEnvironment").EmulatedEnvironment };
-				const withEnv = (env: typeof g.__lessonEnv) => {
-					if (env) doMount({ env, rows, lang });
-				};
-				if (g.__lessonEnv) {
-					withEnv(g.__lessonEnv);
-				} else {
-					document.addEventListener("lesson-env-ready", (ev: Event) => withEnv((ev as CustomEvent).detail?.env), { once: true });
-				}
-			} else {
+			if (!isLesson) {
 				doMount({
 					rows,
 					lang,
 					...(seedName && { seedName }),
 					...(topPrompt !== undefined && { topPrompt }),
 				});
+				return;
 			}
+			if (lessonPending.has(root)) {
+				return;
+			}
+			lessonPending.add(root);
+			const g = globalThis as unknown as { __lessonEnv?: import("../core/emulatedEnvironment/EmulatedEnvironment").EmulatedEnvironment };
+			const withEnv = (env: typeof g.__lessonEnv) => {
+				if (env) {
+					doMount({ env, rows, lang });
+				}
+			};
+			if (g.__lessonEnv) {
+				withEnv(g.__lessonEnv);
+				return;
+			}
+			document.addEventListener("lesson-env-ready", (ev: Event) => withEnv((ev as CustomEvent).detail?.env), { once: true });
 		});
 	}
 
@@ -138,7 +146,9 @@ const rootClass = ["t-win", fullHeight && "t-win--full", className].filter(Boole
 		cleanups.forEach((cleanup, root) => {
 			const pid = persistIdByRoot.get(root);
 			if (newDoc) {
-				if (pid && newDoc.getElementById(pid)) return;
+				if (pid && newDoc.getElementById(pid)) {
+					return;
+				}
 			}
 			cleanup();
 			cleanups.delete(root);

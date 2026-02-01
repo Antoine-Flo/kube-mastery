@@ -49,7 +49,9 @@ export const createWorkQueue = (options: WorkQueueOptions = {}): WorkQueue => {
      * Schedule next processing tick
      */
     const scheduleProcess = (): void => {
-        if (!running || queue.size === 0) return
+        if (!running || queue.size === 0) {
+            return;
+        }
 
         if (useRAF && typeof requestAnimationFrame !== 'undefined') {
             rafId = requestAnimationFrame(processNext)
@@ -62,7 +64,9 @@ export const createWorkQueue = (options: WorkQueueOptions = {}): WorkQueue => {
      * Process the next item in the queue
      */
     const processNext = (): void => {
-        if (!running || !handler || queue.size === 0) return
+        if (!running || !handler || queue.size === 0) {
+            return;
+        }
 
         // Get first key from queue (FIFO)
         const key = queue.values().next().value

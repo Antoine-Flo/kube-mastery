@@ -11,6 +11,7 @@ import { createPodCreatedEvent, createPodDeletedEvent, createReplicaSetUpdatedEv
 import type { Container, Pod } from '../ressources/Pod'
 import { createPod } from '../ressources/Pod'
 import type { ReplicaSet, ReplicaSetStatus } from '../ressources/ReplicaSet'
+import { selectorMatchesLabels } from '../ressources/ReplicaSet'
 import {
     createOwnerRef,
     findOwnerByRef,
@@ -227,9 +228,11 @@ export class ReplicaSetController implements Controller {
 
         const rs = rsResult.value
 
-        // Get all pods in namespace and filter to owned ones
+        // Get all pods in namespace: owned by this ReplicaSet and matching its selector
         const allPods = state.getPods(namespace)
-        const ownedPods = getOwnedResources(rs, allPods)
+        const ownedPods = getOwnedResources(rs, allPods).filter(pod =>
+            selectorMatchesLabels(rs.spec.selector, pod.metadata.labels)
+        )
 
         // Reconcile replica count
         const desiredReplicas = rs.spec.replicas ?? 1

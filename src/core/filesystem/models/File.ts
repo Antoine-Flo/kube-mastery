@@ -16,7 +16,9 @@ const getFileExtension = (filename: string): string => {
     const name = parts[parts.length - 1]
 
     const lastDot = name.lastIndexOf('.')
-    if (lastDot === -1 || lastDot === 0) return ''
+    if (lastDot === -1 || lastDot === 0) {
+        return '';
+    }
 
     return name.substring(lastDot)
 }

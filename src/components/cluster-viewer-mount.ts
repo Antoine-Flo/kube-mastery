@@ -196,7 +196,9 @@ export function mountClusterViewer(
 
 	function showTooltip(el: Element): void {
 		const text = el.getAttribute("data-tooltip");
-		if (!text) return;
+		if (!text) {
+			return;
+		}
 		if (hideTimeout !== null) {
 			clearTimeout(hideTimeout);
 			hideTimeout = null;

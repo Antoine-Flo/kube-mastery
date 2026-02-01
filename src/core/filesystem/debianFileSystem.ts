@@ -124,7 +124,9 @@ const createFileSystemFromConfig = (config: FileSystemConfig, basePath: string =
  * Ensure a directory exists, creating parents as needed
  */
 const ensureDirectory = (root: DirectoryNode, path: string): DirectoryNode => {
-  if (path === '/') return root
+  if (path === '/') {
+    return root;
+  }
 
   const parts = path.split('/').filter(p => p.length > 0)
   let current = root

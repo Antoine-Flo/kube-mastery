@@ -14,7 +14,9 @@
 	function setup() {
 		const panel = document.querySelector("[data-cluster-panel]");
 		const content = document.querySelector("[data-cluster-panel-content]");
-		if (!panel || !content) return;
+		if (!panel || !content) {
+			return;
+		}
 
 		document.addEventListener("cluster-panel-open", () => {
 			panel.classList.add("lp__cluster-panel--open");

@@ -322,7 +322,9 @@ export class DeploymentController implements Controller {
      */
     private reconcileExistingReplicaSet(deploy: Deployment, currentRs: ReplicaSet): void {
         const desiredReplicas = deploy.spec.replicas ?? 1
-        if (currentRs.spec.replicas === desiredReplicas) return
+        if (currentRs.spec.replicas === desiredReplicas) {
+            return;
+        }
 
         const updatedRs: ReplicaSet = {
             ...currentRs,

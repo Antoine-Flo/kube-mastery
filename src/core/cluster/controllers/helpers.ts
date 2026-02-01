@@ -23,11 +23,15 @@ export const findOwnerByRef = <TOwner extends OwnerResource>(
     getOwners: () => TOwner[]
 ): TOwner | undefined => {
     const ownerRefs = child.metadata.ownerReferences
-    if (!ownerRefs) return undefined
+    if (!ownerRefs) {
+        return undefined;
+    }
 
     // Find the ownerReference matching the kind
     const ownerRef = ownerRefs.find(ref => ref.kind === ownerKind)
-    if (!ownerRef) return undefined
+    if (!ownerRef) {
+        return undefined;
+    }
 
     // Find the actual owner resource
     const owners = getOwners()
@@ -50,7 +54,9 @@ export const getOwnedResources = <TChild extends OwnedResource>(
 ): TChild[] => {
     return children.filter(child => {
         const ownerRefs = child.metadata.ownerReferences
-        if (!ownerRefs) return false
+        if (!ownerRefs) {
+            return false;
+        }
 
         return ownerRefs.some(ref =>
             ref.kind === owner.kind &&

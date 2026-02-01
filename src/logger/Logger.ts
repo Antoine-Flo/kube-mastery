@@ -41,7 +41,9 @@ const createConsoleObserver = (): LogObserver => {
 		info: console.log,
 	};
 	return (entry: LogEntry) => {
-		if (entry.category === "COMMAND") return;
+		if (entry.category === "COMMAND") {
+			return;
+		}
 		const prefix = `[${entry.level.toUpperCase()}] [${entry.category}]`;
 		consoleMap[entry.level](`${prefix} ${entry.message}`);
 	};
@@ -51,8 +53,12 @@ const matchesFilter = (
 	entry: LogEntry,
 	filter: { level?: LogLevel; category?: LogCategory },
 ): boolean => {
-	if (filter.level && entry.level !== filter.level) return false;
-	if (filter.category && entry.category !== filter.category) return false;
+	if (filter.level && entry.level !== filter.level) {
+		return false;
+	}
+	if (filter.category && entry.category !== filter.category) {
+		return false;
+	}
 	return true;
 };
 

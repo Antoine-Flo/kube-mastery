@@ -34,7 +34,9 @@ const formatServiceLine = (name: string, url: string): string => {
  */
 const getOutputFormat = (parsed: ParsedCommand): 'json' | 'yaml' => {
     const outputFlag = parsed.flags.output || parsed.flags['o']
-    if (outputFlag === 'yaml') return 'yaml'
+    if (outputFlag === 'yaml') {
+        return 'yaml';
+    }
     // Default is JSON (matching kubectl cluster-info dump default)
     return 'json'
 }

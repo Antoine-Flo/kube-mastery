@@ -148,7 +148,9 @@ const formatPermissions = (type: 'file' | 'directory'): string => {
  * // => [5, 3]  (max width of each column)
  */
 const calculateColumnWidths = (rows: string[][]): number[] => {
-    if (rows.length === 0) return []
+    if (rows.length === 0) {
+        return [];
+    }
 
     const colCount = Math.max(...rows.map(row => row.length))
     const widths: number[] = new Array(colCount).fill(0)

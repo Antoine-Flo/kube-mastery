@@ -35,9 +35,13 @@ export interface FileSystemState {
  * Example: '/path/to/file' -> '/path/to', '/file' -> '/', '/' -> '/'
  */
 const dirname = (path: string): string => {
-    if (path === '/') return '/'
+    if (path === '/') {
+        return '/';
+    }
     const parts = path.split('/').filter(p => p.length > 0)
-    if (parts.length <= 1) return '/'
+    if (parts.length <= 1) {
+        return '/';
+    }
     return '/' + parts.slice(0, -1).join('/')
 }
 
@@ -77,7 +81,9 @@ const normalizePath = (path: string): string => {
  * Forbidden: spaces, *, ?, <, >, |
  */
 const validateFilename = (name: string): boolean => {
-    if (!name || name.length === 0) return false
+    if (!name || name.length === 0) {
+        return false;
+    }
 
     const forbidden = /[\s*?<>|]/
     return !forbidden.test(name)
@@ -93,16 +99,22 @@ const findNode = (
     tree: DirectoryNode,
     path: string
 ): FileSystemNode | undefined => {
-    if (path === '/') return tree
+    if (path === '/') {
+        return tree;
+    }
 
     const parts = path.split('/').filter(p => p.length > 0)
     let current: FileSystemNode = tree
 
     for (const part of parts) {
-        if (current.type !== 'directory') return undefined
+        if (current.type !== 'directory') {
+            return undefined;
+        }
 
         const child = current.children.get(part)
-        if (!child) return undefined
+        if (!child) {
+            return undefined;
+        }
 
         current = child
     }
@@ -124,14 +136,18 @@ const insertNode = (
     path: string,
     node: FileSystemNode
 ): DirectoryNode => {
-    if (path === '/') return tree
+    if (path === '/') {
+        return tree;
+    }
 
     const parts = path.split('/').filter(p => p.length > 0)
     const name = parts[parts.length - 1]
     const parentPath = '/' + parts.slice(0, -1).join('/')
 
     const parent = findNode(tree, parentPath)
-    if (!parent || parent.type !== 'directory') return tree
+    if (!parent || parent.type !== 'directory') {
+        return tree;
+    }
 
     // Side effect: mutates parent.children Map
     parent.children.set(name, node)
@@ -145,14 +161,18 @@ const removeNode = (
     tree: DirectoryNode,
     path: string
 ): DirectoryNode => {
-    if (path === '/') return tree
+    if (path === '/') {
+        return tree;
+    }
 
     const parts = path.split('/').filter(p => p.length > 0)
     const name = parts[parts.length - 1]
     const parentPath = '/' + parts.slice(0, -1).join('/')
 
     const parent = findNode(tree, parentPath)
-    if (!parent || parent.type !== 'directory') return tree
+    if (!parent || parent.type !== 'directory') {
+        return tree;
+    }
 
     parent.children.delete(name)
     return tree

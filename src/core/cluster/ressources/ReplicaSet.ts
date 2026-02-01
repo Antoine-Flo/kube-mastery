@@ -247,6 +247,13 @@ export const getReplicaSetReadyDisplay = (rs: ReplicaSet): string => {
     return `${ready}/${desired}`
 }
 
+const matchExprByOperator: Record<LabelSelectorRequirement['operator'], (expr: LabelSelectorRequirement, lbl: Record<string, string>) => boolean> = {
+    In: (expr, lbl) => (expr.values?.includes(lbl[expr.key]) ?? false),
+    NotIn: (expr, lbl) => !(expr.values?.includes(lbl[expr.key]) ?? false),
+    Exists: (expr, lbl) => expr.key in lbl,
+    DoesNotExist: (expr, lbl) => !(expr.key in lbl),
+};
+
 /**
  * Check if selector matches pod labels
  */
@@ -254,13 +261,15 @@ export const selectorMatchesLabels = (
     selector: LabelSelector,
     labels: Record<string, string> | undefined
 ): boolean => {
-    if (!labels) return false
+    if (!labels) {
+        return false;
+    }
 
     // Check matchLabels
     if (selector.matchLabels) {
         for (const [key, value] of Object.entries(selector.matchLabels)) {
             if (labels[key] !== value) {
-                return false
+                return false;
             }
         }
     }
@@ -268,23 +277,11 @@ export const selectorMatchesLabels = (
     // Check matchExpressions (simplified)
     if (selector.matchExpressions) {
         for (const expr of selector.matchExpressions) {
-            const labelValue = labels[expr.key]
-            switch (expr.operator) {
-                case 'In':
-                    if (!expr.values?.includes(labelValue)) return false
-                    break
-                case 'NotIn':
-                    if (expr.values?.includes(labelValue)) return false
-                    break
-                case 'Exists':
-                    if (!(expr.key in labels)) return false
-                    break
-                case 'DoesNotExist':
-                    if (expr.key in labels) return false
-                    break
+            if (!matchExprByOperator[expr.operator](expr, labels)) {
+                return false;
             }
         }
     }
 
-    return true
+    return true;
 }

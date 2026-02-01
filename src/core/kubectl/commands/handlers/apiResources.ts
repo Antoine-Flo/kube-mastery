@@ -128,7 +128,9 @@ const sortResources = (resources: APIResource[], sortBy?: string): APIResource[]
     } else if (sortBy === 'kind') {
         sorted.sort((a, b) => {
             const kindCompare = a.kind.localeCompare(b.kind)
-            if (kindCompare !== 0) return kindCompare
+            if (kindCompare !== 0) {
+                return kindCompare;
+            }
             // Secondary sort by name if kinds are equal
             return a.name.localeCompare(b.name)
         })
@@ -138,7 +140,9 @@ const sortResources = (resources: APIResource[], sortBy?: string): APIResource[]
             const groupA = extractAPIGroup(a.apiversion)
             const groupB = extractAPIGroup(b.apiversion)
             const groupCompare = groupA.localeCompare(groupB)
-            if (groupCompare !== 0) return groupCompare
+            if (groupCompare !== 0) {
+                return groupCompare;
+            }
             return a.name.localeCompare(b.name)
         })
     }

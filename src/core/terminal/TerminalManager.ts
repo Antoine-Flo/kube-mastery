@@ -99,7 +99,9 @@ const cleanup = () => {
 };
 
 const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
-  if (!state.options || !state.currentEnvironment) return;
+  if (!state.options || !state.currentEnvironment) {
+    return;
+  }
 
   // Create terminal instance
   const colors = getThemeColors(state.options.theme());
@@ -232,7 +234,9 @@ export const attachTerminal = (options: AttachOptions): number => {
   // Setup terminal - use RAF to ensure container is in DOM after render
   requestAnimationFrame(() => {
     // Verify attachment is still valid (prevents race conditions)
-    if (state.attachId !== currentAttachId) return;
+    if (state.attachId !== currentAttachId) {
+      return;
+    }
 
     // Container already has dimensions, setup terminal immediately
     setupTerminal(container, topPrompt);
@@ -255,7 +259,9 @@ export const detachTerminal = (attachId?: number): void => {
 };
 
 export const updateTerminalTheme = (): void => {
-  if (!state.terminal || !state.options) return;
+  if (!state.terminal || !state.options) {
+    return;
+  }
   state.terminal.options.theme = getThemeColors(state.options.theme());
 };
 
