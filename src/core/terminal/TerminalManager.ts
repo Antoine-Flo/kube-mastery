@@ -136,13 +136,51 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
   let imeComposing = false;
   let lastCompositionEvent: 'start' | 'update' | 'end' | null = null;
   const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-  // Chrome Android / GBoard: use keydown as source of truth for Space/Enter/Backspace, inject once and ignore IME output (CodeMirror-style workaround).
+  // Chrome Android / GBoard: use keydown + beforeinput as source of truth for Space/Enter/Backspace,
+  // inject once in rAF and ignore IME onData (CodeMirror domobserver-style, see xtermjs/xterm.js#3600).
   let pendingKey: { char: string; time: number } | null = null;
   let pendingKeyTimeout: ReturnType<typeof setTimeout> | null = null;
+  let pendingKeyRaf: number | null = null;
   let injectedKey: { char: string; time: number } | null = null;
   const ANDROID_KEY_MS = 180;
-  const INJECTED_IGNORE_MS = 120;
+  const INJECTED_IGNORE_MS = 150;
   const textarea = state.terminal.textarea;
+
+  const setPendingKey = (char: string) => {
+    if (pendingKeyTimeout) {
+      clearTimeout(pendingKeyTimeout);
+    }
+    pendingKey = { char, time: typeof performance !== 'undefined' ? performance.now() : 0 };
+    pendingKeyTimeout = setTimeout(() => {
+      pendingKey = null;
+      pendingKeyTimeout = null;
+    }, ANDROID_KEY_MS);
+  };
+
+  const scheduleInjectKey = () => {
+    if (pendingKeyRaf !== null) {
+      return;
+    }
+    pendingKeyRaf = requestAnimationFrame(() => {
+      pendingKeyRaf = null;
+      if (pendingKey === null) {
+        return;
+      }
+      const char = pendingKey.char;
+      pendingKey = null;
+      if (pendingKeyTimeout) {
+        clearTimeout(pendingKeyTimeout);
+        pendingKeyTimeout = null;
+      }
+      const now = typeof performance !== 'undefined' ? performance.now() : 0;
+      injectedKey = { char, time: now };
+      lastData = char;
+      lastDataTime = now;
+      recentProcessed = (recentProcessed + char).slice(-RECENT_MAX);
+      state.controller?.handleInput(char);
+    });
+  };
+
   const debugCleanups: (() => void)[] = [];
   if (textarea) {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -156,7 +194,7 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
       if (lastKeyEvents.length > maxKeyEvents) {
         lastKeyEvents.pop();
       }
-      if (isMobile && e.type === 'keydown') {
+      if (isMobile) {
         let char: string | null = null;
         if (e.key === ' ') {
           char = ' ';
@@ -166,32 +204,52 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
           char = '\x7f';
         }
         if (char !== null) {
-          if (pendingKeyTimeout) {
-            clearTimeout(pendingKeyTimeout);
-          }
-          pendingKey = { char, time: typeof performance !== 'undefined' ? performance.now() : 0 };
-          pendingKeyTimeout = setTimeout(() => {
-            pendingKey = null;
-            pendingKeyTimeout = null;
-          }, ANDROID_KEY_MS);
+          setPendingKey(char);
+          scheduleInjectKey();
         }
+      }
+    };
+    const onBeforeInput = (e: InputEvent) => {
+      if (!isMobile) {
+        return;
+      }
+      let char: string | null = null;
+      if (e.inputType === 'insertText' && e.data != null) {
+        if (e.data === ' ') {
+          char = ' ';
+        }
+        // Only Space is problematic as single-char insertText; other chars use normal path
+      } else if (e.inputType === 'insertLineBreak' || e.inputType === 'insertParagraph') {
+        char = '\r';
+      } else if (e.inputType === 'deleteContentBackward') {
+        char = '\x7f';
+      }
+      if (char !== null) {
+        setPendingKey(char);
+        scheduleInjectKey();
       }
     };
     const onCompStart = () => { imeComposing = true; lastCompositionEvent = 'start'; };
     const onCompUpdate = () => { lastCompositionEvent = 'update'; };
     const onCompEnd = () => { imeComposing = false; lastCompositionEvent = 'end'; };
     textarea.addEventListener('keydown', onKeyDown);
+    textarea.addEventListener('beforeinput', onBeforeInput);
     textarea.addEventListener('compositionstart', onCompStart);
     textarea.addEventListener('compositionupdate', onCompUpdate);
     textarea.addEventListener('compositionend', onCompEnd);
     debugCleanups.push(
       () => textarea.removeEventListener('keydown', onKeyDown),
+      () => textarea.removeEventListener('beforeinput', onBeforeInput),
       () => textarea.removeEventListener('compositionstart', onCompStart),
       () => textarea.removeEventListener('compositionupdate', onCompUpdate),
       () => textarea.removeEventListener('compositionend', onCompEnd),
     );
   }
   state.debugCleanup = () => {
+    if (pendingKeyRaf !== null) {
+      cancelAnimationFrame(pendingKeyRaf);
+      pendingKeyRaf = null;
+    }
     if (pendingKeyTimeout) {
       clearTimeout(pendingKeyTimeout);
       pendingKeyTimeout = null;
@@ -280,20 +338,8 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
     if (isMobile && injectedKey !== null && data === injectedKey.char && now - injectedKey.time < INJECTED_IGNORE_MS) {
       return;
     }
-    // Mobile: keydown-as-source-of-truth (CodeMirror-style). When we saw Space/Enter/Backspace in keydown,
-    // inject that char once and ignore whatever the IME sent in onData (avoids duplication/corruption).
+    // Mobile: we already scheduled inject in rAF from keydown/beforeinput; ignore this onData to avoid duplicate.
     if (isMobile && pendingKey !== null && now - pendingKey.time < ANDROID_KEY_MS) {
-      const char = pendingKey.char;
-      pendingKey = null;
-      if (pendingKeyTimeout) {
-        clearTimeout(pendingKeyTimeout);
-        pendingKeyTimeout = null;
-      }
-      injectedKey = { char, time: now };
-      lastData = char;
-      lastDataTime = now;
-      recentProcessed = (recentProcessed + char).slice(-RECENT_MAX);
-      state.controller?.handleInput(char);
       return;
     }
     // Mobile: IME sends same single char twice → skip duplicate.
