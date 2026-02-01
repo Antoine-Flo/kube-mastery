@@ -1,6 +1,6 @@
 ---
 import Button from "../ui/Button.astro";
-import { BookOpen, Circle, Layers, Terminal } from "@lucide/astro";
+import { BookOpen, Circle, Layers } from "@lucide/astro";
 import type { CourseOverview } from "../../data/overview.js";
 
 interface Props {
@@ -10,17 +10,13 @@ interface Props {
 }
 
 const { overview, t, startHref } = Astro.props;
+const DescriptionContent = overview.descriptionContent?.Content;
 
 const totalLessons = overview.content.chapters.reduce(
 	(sum, ch) => sum + ch.lessons.length,
 	0
 );
 const totalChapters = overview.content.chapters.length;
-const totalEnvironments = overview.content.chapters.reduce(
-	(sum, ch) => sum + ch.lessons.filter((l) => l.hasEnvironment).length,
-	0
-);
-
 const lessonsLabel =
 	totalLessons === 1
 		? `1 ${t("courses_lesson")}`
@@ -29,10 +25,6 @@ const chaptersLabel =
 	totalChapters === 1
 		? `1 ${t("courses_chapter")}`
 		: `${totalChapters} ${t("courses_chapters")}`;
-const environmentsLabel =
-	totalEnvironments === 1
-		? `1 ${t("courses_environment")} ${t("courses_practice")}`
-		: `${totalEnvironments} ${t("courses_environments")} ${t("courses_practices")}`;
 ---
 <div class="oh">
 	<h1>{overview.title}</h1>
@@ -42,13 +34,10 @@ const environmentsLabel =
 		{overview.level && (
 			<div class="i"><Circle size={18} aria-hidden="true" /><span>{t("courses_level")} {overview.level.toLowerCase()}</span></div>
 		)}
-		{totalEnvironments > 0 && (
-			<div class="i"><Terminal size={18} aria-hidden="true" /><span>{environmentsLabel}</span></div>
-		)}
 	</div>
-	{overview.description && (
+	{(DescriptionContent || overview.description) && (
 		<div class="d">
-			{overview.description.split(/\n\n+/).map((p) => (
+			{DescriptionContent ? <DescriptionContent /> : overview.description?.split(/\n\n+/).map((p) => (
 				<p>{p}</p>
 			))}
 		</div>

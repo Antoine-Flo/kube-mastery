@@ -3,9 +3,21 @@
  * Uses import.meta.glob; all data is resolved at build time.
  */
 
-import type { LocalCourse, CourseStructure, LocalModule } from "../courses/types.js";
+import type { MarkdownInstance } from "astro";
+import type { CourseStructure, LocalModule } from "../courses/types.js";
 
 export type UiLang = "en" | "fr";
+
+export interface CourseFrontmatter {
+  title: string;
+  shortDescription: string;
+  isActive?: boolean;
+  price?: number;
+  isFree?: boolean;
+  comingSoon?: boolean;
+  order?: number;
+  level?: string;
+}
 
 export interface CourseListItem {
   id: string;
@@ -95,10 +107,10 @@ function countLessonsForChapters(
   return n;
 }
 
-const coursesGlob = import.meta.glob("../courses/*/course.ts", { eager: true }) as Record<
-  string,
-  { course: LocalCourse }
->;
+const courseMdGlob = import.meta.glob<MarkdownInstance<CourseFrontmatter>>(
+  "../courses/*/{en,fr}.md",
+  { eager: true }
+);
 const structuresGlob = import.meta.glob("../courses/*/course-structure.ts", { eager: true }) as Record<
   string,
   { courseStructure: CourseStructure }
@@ -108,27 +120,53 @@ const modulesGlob = import.meta.glob("../courses/modules/*/module.ts", { eager: 
   { module: LocalModule }
 >;
 
+function getCourseIds(): string[] {
+  const ids = new Set<string>();
+  for (const path of Object.keys(courseMdGlob)) {
+    const parts = path.split("/");
+    const courseId = parts[parts.length - 2];
+    ids.add(courseId);
+  }
+  return Array.from(ids);
+}
+
+export function getCourseMarkdown(
+  courseId: string,
+  lang: UiLang
+): (typeof courseMdGlob)[string] | null {
+  for (const [path, entry] of Object.entries(courseMdGlob)) {
+    const parts = path.replace(/\\/g, "/").split("/");
+    const pathCourseId = parts[parts.length - 2];
+    const pathLang = parts[parts.length - 1]?.replace(".md", "") ?? "";
+    if (pathCourseId === courseId && pathLang === lang) return entry;
+  }
+  if (lang !== "en") {
+    return getCourseMarkdown(courseId, "en");
+  }
+  return null;
+}
+
 export function getCourses(lang: UiLang): CourseListItem[] {
   const index = getLessonIndex();
   const list: CourseListItem[] = [];
-  for (const path of Object.keys(coursesGlob)) {
-    const courseId = path.split("/").slice(-2)[0];
-    const course = coursesGlob[path].course;
-    if (!course.isActive) {
-      continue;
-    }
-    const structurePath = path.replace("course.ts", "course-structure.ts");
-    const structure = structuresGlob[structurePath]?.courseStructure ?? { chapters: [] };
-    const totalLessons = countLessonsForChapters(structure, index);
+  for (const courseId of getCourseIds()) {
+    const entry = getCourseMarkdown(courseId, lang);
+    if (!entry) continue;
+    const fm = entry.frontmatter;
+    if (fm.isActive === false) continue;
+    const structurePath = Object.keys(structuresGlob).find((p) => p.includes(`/${courseId}/`));
+    const structure = structurePath ? structuresGlob[structurePath]?.courseStructure : undefined;
+    const structureOrEmpty = structure ?? { chapters: [] };
+    const totalLessons = countLessonsForChapters(structureOrEmpty, index);
     list.push({
       id: courseId,
-      title: course.title[lang] ?? course.title.en,
-      description: course.description?.[lang] ?? course.description?.en ?? null,
-      shortDescription: course.shortDescription?.[lang] ?? course.shortDescription?.en ?? null,
-      level: course.level?.[lang] ?? course.level?.en ?? null,
-      isFree: course.isFree ?? (course.price == null || course.price === 0),
-      comingSoon: course.comingSoon ?? false,
-      order: course.order ?? 999,
+      title: fm.title,
+      description: fm.shortDescription,
+      shortDescription: fm.shortDescription,
+      level: fm.level ?? null,
+      isFree: fm.isFree ?? (fm.price == null || fm.price === 0),
+      comingSoon: fm.comingSoon ?? false,
+      order: fm.order ?? 999,
       totalLessons,
     });
   }

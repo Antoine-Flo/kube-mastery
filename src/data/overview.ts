@@ -3,8 +3,9 @@
  */
 
 import type { MarkdownInstance } from "astro";
-import type { LocalCourse, CourseStructure, LocalModule } from "../courses/types.js";
+import type { CourseStructure, LocalModule } from "../courses/types.js";
 import type { UiLang } from "./courses.js";
+import { getCourseMarkdown } from "./courses.js";
 
 export interface OverviewLesson {
   id: string;
@@ -25,12 +26,15 @@ export interface OverviewChapter {
 export interface CourseOverview {
   id: string;
   title: string;
-  description: string | null;
   shortDescription: string | null;
   level: string | null;
   isFree: boolean;
   comingSoon: boolean;
   content: { chapters: OverviewChapter[] };
+  /** Markdown instance for the long description (courses). Use Content component to render. */
+  descriptionContent: MarkdownInstance<Record<string, unknown>> | null;
+  /** Fallback plain description (modules only, when descriptionContent is null). */
+  description: string | null;
 }
 
 // Re-export stripNumericPrefix for use in this file (courses.ts exports it but we need it here)
@@ -191,10 +195,6 @@ function getLessonDirsByChapter(): Map<string, string[]> {
   return (globalThis as any).__overview_lesson_dirs;
 }
 
-const coursesGlob = import.meta.glob("../courses/*/course.ts", { eager: true }) as Record<
-  string,
-  { course: LocalCourse }
->;
 const structuresGlob = import.meta.glob("../courses/*/course-structure.ts", { eager: true }) as Record<
   string,
   { courseStructure: CourseStructure }
@@ -205,22 +205,23 @@ const modulesGlob = import.meta.glob("../courses/modules/*/module.ts", { eager: 
 >;
 
 export function getCourseOverview(courseId: string, lang: UiLang): CourseOverview | null {
-  const pathKey = Object.keys(coursesGlob).find((p) => p.includes(`/${courseId}/course.ts`));
-  if (!pathKey) {
+  const entry = getCourseMarkdown(courseId, lang);
+  if (!entry) {
     return null;
   }
-  const course = coursesGlob[pathKey].course;
-  if (!course.isActive) {
+  const fm = entry.frontmatter;
+  if (fm.isActive === false) {
     return null;
   }
-  const structurePath = pathKey.replace("course.ts", "course-structure.ts");
-  const structure = structuresGlob[structurePath]?.courseStructure ?? { chapters: [] };
+  const structurePath = Object.keys(structuresGlob).find((p) => p.includes(`/${courseId}/`));
+  const structure = structurePath ? structuresGlob[structurePath]?.courseStructure : undefined;
+  const structureOrEmpty = structure ?? { chapters: [] };
   const lessonTitles = getLessonTitleIndex();
   const chapterMeta = getChapterMetaIndex();
   const lessonDirsMap = getLessonDirsByChapter();
   const chapters: OverviewChapter[] = [];
-  for (const entry of structure.chapters) {
-    const { moduleId, chapterId } = entry;
+  for (const chEntry of structureOrEmpty.chapters) {
+    const { moduleId, chapterId } = chEntry;
     const metaKey = `${moduleId}:${chapterId}`;
     const meta = chapterMeta.get(metaKey);
     const lessonDirs = chapterId === "all"
@@ -268,13 +269,14 @@ export function getCourseOverview(courseId: string, lang: UiLang): CourseOvervie
   }
   return {
     id: courseId,
-    title: course.title[lang] ?? course.title.en,
-    description: course.description?.[lang] ?? course.description?.en ?? null,
-    shortDescription: course.shortDescription?.[lang] ?? course.shortDescription?.en ?? null,
-    level: course.level?.[lang] ?? course.level?.en ?? null,
-    isFree: course.isFree ?? (course.price == null || course.price === 0),
-    comingSoon: course.comingSoon ?? false,
+    title: fm.title,
+    shortDescription: fm.shortDescription ?? null,
+    level: fm.level ?? null,
+    isFree: fm.isFree ?? (fm.price == null || fm.price === 0),
+    comingSoon: fm.comingSoon ?? false,
     content: { chapters },
+    descriptionContent: entry as unknown as MarkdownInstance<Record<string, unknown>>,
+    description: null,
   };
 }
 
@@ -313,12 +315,13 @@ export function getModuleOverview(moduleId: string, lang: UiLang): CourseOvervie
   return {
     id: moduleId,
     title: mod.title[lang] ?? mod.title.en,
-    description: mod.description?.[lang] ?? mod.description?.en ?? null,
     shortDescription: mod.description?.[lang] ?? mod.description?.en ?? null,
     level: null,
     isFree: false,
     comingSoon: false,
     content: { chapters },
+    descriptionContent: null,
+    description: mod.description?.[lang] ?? mod.description?.en ?? null,
   };
 }
 
