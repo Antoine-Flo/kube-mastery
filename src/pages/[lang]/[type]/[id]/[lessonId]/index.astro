@@ -79,6 +79,10 @@ const t = useTranslations(lang);
 ---
 <Layout bodyClass="lp-fill" showFooter={false}>
 	<div class="lp-root" data-seed-name={seedName} data-lang={lang} data-terminal-open="true">
+		<div class="lp-term-debug" data-term-debug aria-hidden="true">
+			<span data-term-debug-mobile></span>
+			<span data-term-debug-last></span>
+		</div>
 		<div class="lp">
 		<aside
 			id="lesson-sidebar"
@@ -264,12 +268,45 @@ const t = useTranslations(lang);
 		});
 	}
 
+	function setupTerminalDebugBar() {
+		const bar = document.querySelector("[data-term-debug]");
+		const mobileEl = document.querySelector("[data-term-debug-mobile]");
+		const lastEl = document.querySelector("[data-term-debug-last]");
+		if (!bar || !mobileEl || !lastEl) {
+			return;
+		}
+		const isMobileViewport = () => window.matchMedia("(max-width: 768px)").matches;
+		const isMobileUA = () => /Android|webOS|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+		const updateVisibility = () => {
+			if (isMobileViewport()) {
+				bar.removeAttribute("aria-hidden");
+				mobileEl.textContent = `UA mobile: ${isMobileUA() ? "yes" : "no"}`;
+			} else {
+				bar.setAttribute("aria-hidden", "true");
+			}
+		};
+		document.addEventListener("terminal-debug-input", (e: Event) => {
+			const d = (e as CustomEvent<{ data: string; readable: string; dataLength: number }>).detail;
+			if (!d) {
+				return;
+			}
+			const raw = d.data ?? "";
+			const codes = raw.split("").map((c) => c.charCodeAt(0)).join(", ");
+			lastEl.textContent = `[${d.dataLength}] "${d.readable ?? ""}" → codes: ${codes || "—"}`;
+		});
+		window.matchMedia("(max-width: 768px)").addEventListener("change", updateVisibility);
+		lastEl.textContent = "Last: —";
+		updateVisibility();
+	}
+
 	setupSidebarToggle();
 	setupTerminalToggle();
+	setupTerminalDebugBar();
 	requestAnimationFrame(setupLessonEnv);
 	document.addEventListener("astro:page-load", () => {
 		setupSidebarToggle();
 		setupTerminalToggle();
+		setupTerminalDebugBar();
 		requestAnimationFrame(setupLessonEnv);
 	});
 	document.addEventListener("astro:before-swap", () => {
@@ -278,6 +315,27 @@ const t = useTranslations(lang);
 </script>
 
 <style>
+	.lp-term-debug {
+		display: none;
+	}
+	@media (max-width: 768px) {
+		.lp-term-debug {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.5rem;
+			align-items: center;
+			position: sticky;
+			top: 0;
+			z-index: 999;
+			padding: 0.25rem 0.5rem;
+			font-size: 0.7rem;
+			font-family: ui-monospace, monospace;
+			background: var(--color-gray-3);
+			color: var(--color-gray-11);
+			border-bottom: 1px solid var(--color-gray-6);
+		}
+	}
+
 	.lp-root {
 		height: 100%;
 		min-height: 0;
@@ -442,9 +500,9 @@ const t = useTranslations(lang);
 			flex-direction: column;
 		}
 		.lp__term-wrap {
-			flex: 0 0 30vh;
+			flex: 0 0 40vh;
 			min-width: unset;
-			min-height: 200px;
+			/* min-height: 280px; */
 			border-left: none;
 			border-top: 1px solid var(--color-gray-6);
 		}
@@ -453,6 +511,12 @@ const t = useTranslations(lang);
 		}
 		.lp-root[data-terminal-open="false"] .lp__show-term {
 			display: flex;
+		}
+	}
+	@media (max-width: 640px) {
+		.lp__term-wrap {
+			flex: 0 0 40vh;
+			min-height: 320px;
 		}
 	}
 </style>

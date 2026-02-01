@@ -136,6 +136,23 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
     });
   });
 
+  // Observe container size (e.g. terminal opened on mobile after being collapsed)
+  let fitTimeout: ReturnType<typeof setTimeout> | null = null;
+  state.resizeObserver = new ResizeObserver(() => {
+    if (fitTimeout) {
+      clearTimeout(fitTimeout);
+    }
+    fitTimeout = setTimeout(() => {
+      if (state.fitAddon && state.terminal && container.offsetWidth > 0 && container.offsetHeight > 0) {
+        try {
+          state.fitAddon.fit();
+        } catch { /* ignore */ }
+      }
+      fitTimeout = null;
+    }, 50);
+  });
+  state.resizeObserver.observe(container);
+
   // Create controller
   state.controller = createTerminalController({
     renderer: state.renderer,
@@ -157,6 +174,12 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
 
   // Connect input handlers
   state.dataDisposable = state.terminal.onData((data: string) => {
+    if (typeof document !== 'undefined') {
+      const readable = data.replace(/\x1b/g, 'ESC').replace(/ /g, '·');
+      document.dispatchEvent(new CustomEvent('terminal-debug-input', {
+        detail: { data, dataLength: data.length, readable },
+      }));
+    }
     state.controller?.handleInput(data);
   });
 
