@@ -415,15 +415,22 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
     } else if (isMobile && data.length === 1 && data === lastData && now - lastDataTime < DEDUP_MS) {
       ignored = true;
       ignoreReason = 'dedup';
-    } else if (
-      isMobile &&
-      data.length > 1 &&
-      recentProcessed.length >= data.length &&
-      recentProcessed.endsWith(data) &&
-      now - lastDataTime < 400
-    ) {
-      ignored = true;
-      ignoreReason = 'commit';
+    } else if (isMobile && data.length > 1 && now - lastDataTime < 400) {
+      // IME commit re-sends what we already typed (mot ou lettres). On ignore si la fin de
+      // recentProcessed (sans espaces finaux, ex. espace injecté) contient déjà ce commit.
+      const trimmed = recentProcessed.replace(/\s+$/, '');
+      if (trimmed.endsWith(data)) {
+        ignored = true;
+        ignoreReason = 'commit';
+      } else if (
+        trimmed.length >= data.length - 1 &&
+        data === data[0].repeat(data.length) &&
+        trimmed.endsWith(data.slice(0, -1))
+      ) {
+        // même lettre répétée : on a "aa", l'IME envoie "aaa" (espace injecté entre les deux)
+        ignored = true;
+        ignoreReason = 'commit';
+      }
     }
 
     dispatchDebug({
