@@ -298,6 +298,9 @@ const t = useTranslations(lang);
 			lastKeyEvents: KeyEv[];
 			imeComposing: boolean;
 			lastCompositionEvent: string | null;
+			injected?: boolean;
+			ignored?: boolean;
+			ignoreReason?: string;
 		};
 		const maxEvents = 10;
 		const events: DebugEv[] = [];
@@ -312,13 +315,16 @@ const t = useTranslations(lang);
 				lastKeyEvents: KeyEv[];
 				imeComposing: boolean;
 				lastCompositionEvent: string | null;
+				injected?: boolean;
+				ignored?: boolean;
+				ignoreReason?: string;
 			}>).detail;
 			if (!d) {
 				return;
 			}
 			events.unshift({
 				seq: d.seq,
-				dataLength: d.dataLength,
+				dataLength: d.dataLength ?? 0,
 				readable: d.readable ?? "",
 				codes: d.codes ?? "",
 				hex: d.hex ?? "",
@@ -326,6 +332,9 @@ const t = useTranslations(lang);
 				lastKeyEvents: d.lastKeyEvents ?? [],
 				imeComposing: d.imeComposing ?? false,
 				lastCompositionEvent: d.lastCompositionEvent ?? null,
+				injected: d.injected,
+				ignored: d.ignored,
+				ignoreReason: d.ignoreReason,
 			});
 			if (events.length > maxEvents) {
 				events.pop();
@@ -339,16 +348,18 @@ const t = useTranslations(lang);
 				`key=${esc(k.key)} code=${esc(k.code)} keyCode=${k.keyCode} isComp=${k.isComposing} repeat=${k.repeat}`;
 			eventsEl.innerHTML = events
 				.map(
-					(ev) =>
-						`<div class="lp-term-debug__row">
-  <span class="lp-term-debug__seq">#${ev.seq}</span>
+					(ev) => {
+						const tag = ev.injected ? " inj" : ev.ignored ? ` ign:${esc(ev.ignoreReason ?? "")}` : "";
+						return `<div class="lp-term-debug__row">
+  <span class="lp-term-debug__seq">#${ev.seq}${tag}</span>
   <span class="lp-term-debug__len">len=${ev.dataLength}</span>
   <span class="lp-term-debug__readable" title="${esc(ev.raw)}">"${esc(ev.readable)}"</span>
   <span class="lp-term-debug__codes">dec: ${esc(ev.codes || "—")}</span>
   <span class="lp-term-debug__hex">hex: ${esc(ev.hex || "—")}</span>
   <span class="lp-term-debug__ime">IME: ${ev.imeComposing ? "composing" : "idle"}${ev.lastCompositionEvent ? ` compEv: ${esc(ev.lastCompositionEvent)}` : ""}</span>
   <span class="lp-term-debug__keys" title="${ev.lastKeyEvents.map(keyEvStr).join(" | ")}">keyEv: ${ev.lastKeyEvents.length ? ev.lastKeyEvents.map((k) => `${esc(k.key)}(${k.code})${k.isComposing ? "ⓘ" : ""}`).join(" ") : "—"}</span>
-</div>`,
+</div>`;
+					},
 				)
 				.join("");
 		});

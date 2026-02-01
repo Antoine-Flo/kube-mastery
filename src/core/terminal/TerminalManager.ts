@@ -136,6 +136,27 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
   let imeComposing = false;
   let lastCompositionEvent: 'start' | 'update' | 'end' | null = null;
   const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+  let debugSeq = 0;
+  const dispatchDebug = (detail: {
+    seq: number;
+    data: string;
+    dataLength: number;
+    readable: string;
+    codes: string;
+    hex: string;
+    lastKeyEvents: KeyEv[];
+    imeComposing: boolean;
+    lastCompositionEvent: 'start' | 'update' | 'end' | null;
+    injected?: boolean;
+    ignored?: boolean;
+    ignoreReason?: string;
+  }) => {
+    if (typeof document !== 'undefined') {
+      document.dispatchEvent(new CustomEvent('terminal-debug-input', { detail }));
+    }
+  };
+
   // Chrome Android / GBoard: use keydown + beforeinput as source of truth for Space/Enter/Backspace,
   // inject once in rAF and ignore IME onData (CodeMirror domobserver-style, see xtermjs/xterm.js#3600).
   let pendingKey: { char: string; time: number } | null = null;
@@ -178,6 +199,22 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
       lastData = char;
       lastDataTime = now;
       recentProcessed = (recentProcessed + char).slice(-RECENT_MAX);
+      const readable =
+        char === ' ' ? '·' : char === '\r' ? '↵' : char === '\x7f' ? 'BS' : char;
+      const codes = char.split('').map((c) => c.charCodeAt(0)).join(', ');
+      const hex = char.split('').map((c) => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' ');
+      dispatchDebug({
+        seq: 0,
+        data: char,
+        dataLength: char.length,
+        readable,
+        codes,
+        hex,
+        lastKeyEvents: lastKeyEvents.slice(0),
+        imeComposing,
+        lastCompositionEvent,
+        injected: true,
+      });
       state.controller?.handleInput(char);
     });
   };
@@ -331,6 +368,22 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
         lastData = char;
         lastDataTime = now;
         recentProcessed = (recentProcessed + char).slice(-RECENT_MAX);
+        const readable =
+          char === ' ' ? '·' : char === '\r' ? '↵' : char === '\x7f' ? 'BS' : char;
+        const codes = char.split('').map((c) => c.charCodeAt(0)).join(', ');
+        const hex = char.split('').map((c) => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' ');
+        dispatchDebug({
+          seq: 0,
+          data: char,
+          dataLength: char.length,
+          readable,
+          codes,
+          hex,
+          lastKeyEvents: lastKeyEvents.slice(0),
+          imeComposing,
+          lastCompositionEvent,
+          injected: true,
+        });
         state.controller?.handleInput(char);
       }
     };
@@ -338,55 +391,59 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
     debugCleanups.push(() => container.removeEventListener('keydown', captureKeydown, true));
   }
 
-  let debugSeq = 0;
   let lastData = '';
   let lastDataTime = 0;
   const DEDUP_MS = 120;
   const RECENT_MAX = 30;
   let recentProcessed = '';
   state.dataDisposable = state.terminal.onData((data: string) => {
-    if (typeof document !== 'undefined') {
-      debugSeq += 1;
-      const readable = data.replace(/\x1b/g, 'ESC').replace(/ /g, '·');
-      const codes = data.split('').map((c) => c.charCodeAt(0));
-      document.dispatchEvent(new CustomEvent('terminal-debug-input', {
-        detail: {
-          seq: debugSeq,
-          data,
-          dataLength: data.length,
-          readable,
-          codes: codes.join(', '),
-          hex: codes.map((n) => n.toString(16).padStart(2, '0')).join(' '),
-          lastKeyEvents: lastKeyEvents.slice(0),
-          imeComposing,
-          lastCompositionEvent,
-        },
-      }));
-    }
+    debugSeq += 1;
     const now = typeof performance !== 'undefined' ? performance.now() : 0;
-    // Mobile: ignore onData that matches a char we just injected (IME often sends it again).
+    const readable = data.replace(/\x1b/g, 'ESC').replace(/ /g, '·');
+    const codesArr = data.split('').map((c) => c.charCodeAt(0));
+    const codesStr = codesArr.join(', ');
+    const hexStr = codesArr.map((n) => n.toString(16).padStart(2, '0')).join(' ');
+
+    let ignored = false;
+    let ignoreReason: string | undefined;
     if (isMobile && injectedKey !== null && data === injectedKey.char && now - injectedKey.time < INJECTED_IGNORE_MS) {
-      return;
-    }
-    // Mobile: we already scheduled inject in rAF from keydown/beforeinput; ignore this onData to avoid duplicate.
-    if (isMobile && pendingKey !== null && now - pendingKey.time < ANDROID_KEY_MS) {
-      return;
-    }
-    // Mobile: IME sends same single char twice → skip duplicate.
-    if (isMobile && data.length === 1 && data === lastData && now - lastDataTime < DEDUP_MS) {
-      lastData = data;
-      lastDataTime = now;
-      return;
-    }
-    // Mobile: IME commit re-sends same char repeated (e.g. "aaa") or whole word (e.g. "salut")
-    // after we already got each char. Skip when recentProcessed ends with this data.
-    if (
+      ignored = true;
+      ignoreReason = 'injectedKey';
+    } else if (isMobile && pendingKey !== null && now - pendingKey.time < ANDROID_KEY_MS) {
+      ignored = true;
+      ignoreReason = 'pendingKey';
+    } else if (isMobile && data.length === 1 && data === lastData && now - lastDataTime < DEDUP_MS) {
+      ignored = true;
+      ignoreReason = 'dedup';
+    } else if (
       isMobile &&
       data.length > 1 &&
       recentProcessed.length >= data.length &&
       recentProcessed.endsWith(data) &&
       now - lastDataTime < 400
     ) {
+      ignored = true;
+      ignoreReason = 'commit';
+    }
+
+    dispatchDebug({
+      seq: debugSeq,
+      data,
+      dataLength: data.length,
+      readable,
+      codes: codesStr,
+      hex: hexStr,
+      lastKeyEvents: lastKeyEvents.slice(0),
+      imeComposing,
+      lastCompositionEvent,
+      ...(ignored && { ignored: true, ignoreReason }),
+    });
+
+    if (ignored) {
+      if (ignoreReason === 'dedup') {
+        lastData = data;
+        lastDataTime = now;
+      }
       return;
     }
     lastData = data;
