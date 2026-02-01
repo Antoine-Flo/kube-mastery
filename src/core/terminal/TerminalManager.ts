@@ -222,6 +222,8 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
   let lastData = '';
   let lastDataTime = 0;
   const DEDUP_MS = 120;
+  const RECENT_MAX = 30;
+  let recentProcessed = '';
   state.dataDisposable = state.terminal.onData((data: string) => {
     if (typeof document !== 'undefined') {
       debugSeq += 1;
@@ -241,15 +243,38 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
         },
       }));
     }
-    // Mobile: IME often sends the same character twice (e.g. "a" then "a" then " "). Skip duplicate.
     const now = typeof performance !== 'undefined' ? performance.now() : 0;
+    // Mobile: IME sends same single char twice → skip duplicate.
     if (isMobile && data.length === 1 && data === lastData && now - lastDataTime < DEDUP_MS) {
       lastData = data;
       lastDataTime = now;
       return;
     }
+    // Mobile: IME commit re-sends same char repeated (e.g. "aaa") after we already got each → skip.
+    if (
+      isMobile &&
+      data.length > 1 &&
+      lastCompositionEvent === 'end' &&
+      lastData.length === 1 &&
+      data === lastData.repeat(data.length) &&
+      now - lastDataTime < 300
+    ) {
+      return;
+    }
+    // Mobile: IME commit re-sends whole word (e.g. "salut") after we already got s,a,l,u,t → skip.
+    if (
+      isMobile &&
+      data.length > 1 &&
+      lastCompositionEvent === 'end' &&
+      recentProcessed.length >= data.length &&
+      recentProcessed.endsWith(data) &&
+      now - lastDataTime < 300
+    ) {
+      return;
+    }
     lastData = data;
     lastDataTime = now;
+    recentProcessed = (recentProcessed + data).slice(-RECENT_MAX);
     state.controller?.handleInput(data);
   });
 
