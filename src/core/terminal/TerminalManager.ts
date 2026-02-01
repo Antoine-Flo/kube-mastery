@@ -250,25 +250,15 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
       lastDataTime = now;
       return;
     }
-    // Mobile: IME commit re-sends same char repeated (e.g. "aaa") after we already got each → skip.
+    // Mobile: IME commit re-sends same char repeated (e.g. "aaa") or whole word (e.g. "salut")
+    // after we already got each char. Skip when recentProcessed ends with this data (event order
+    // can put compositionend after onData, so we don't rely on lastCompositionEvent).
     if (
       isMobile &&
       data.length > 1 &&
-      lastCompositionEvent === 'end' &&
-      lastData.length === 1 &&
-      data === lastData.repeat(data.length) &&
-      now - lastDataTime < 300
-    ) {
-      return;
-    }
-    // Mobile: IME commit re-sends whole word (e.g. "salut") after we already got s,a,l,u,t → skip.
-    if (
-      isMobile &&
-      data.length > 1 &&
-      lastCompositionEvent === 'end' &&
       recentProcessed.length >= data.length &&
       recentProcessed.endsWith(data) &&
-      now - lastDataTime < 300
+      now - lastDataTime < 400
     ) {
       return;
     }
