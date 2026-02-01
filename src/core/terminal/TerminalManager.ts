@@ -145,6 +145,7 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
   const ANDROID_KEY_MS = 180;
   const INJECTED_IGNORE_MS = 150;
   const textarea = state.terminal.textarea;
+  const debugCleanups: (() => void)[] = [];
 
   const setPendingKey = (char: string) => {
     if (pendingKeyTimeout) {
@@ -181,7 +182,6 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
     });
   };
 
-  const debugCleanups: (() => void)[] = [];
   if (textarea) {
     const onKeyDown = (e: KeyboardEvent) => {
       lastKeyEvents.unshift({
@@ -307,6 +307,36 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
     state.renderer.write(topPrompt);
   }
   state.controller.showPrompt();
+
+  // Mobile: intercept Space/Enter/Backspace on container (capture) so the key never reaches
+  // the textarea → no onData from xterm → we inject once (avoids GBoard/IME duplication).
+  if (isMobile && textarea) {
+    const captureKeydown = (e: KeyboardEvent) => {
+      if (e.target !== textarea) {
+        return;
+      }
+      let char: string | null = null;
+      if (e.key === ' ') {
+        char = ' ';
+      } else if (e.key === 'Enter') {
+        char = '\r';
+      } else if (e.key === 'Backspace' || e.keyCode === 8) {
+        char = '\x7f';
+      }
+      if (char !== null) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const now = typeof performance !== 'undefined' ? performance.now() : 0;
+        injectedKey = { char, time: now };
+        lastData = char;
+        lastDataTime = now;
+        recentProcessed = (recentProcessed + char).slice(-RECENT_MAX);
+        state.controller?.handleInput(char);
+      }
+    };
+    container.addEventListener('keydown', captureKeydown, true);
+    debugCleanups.push(() => container.removeEventListener('keydown', captureKeydown, true));
+  }
 
   let debugSeq = 0;
   let lastData = '';
