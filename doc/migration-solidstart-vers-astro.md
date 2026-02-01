@@ -125,19 +125,20 @@
 **État : Fait.**
 
 1. **Données**
-   - Les cours vivent dans `src/courses/` (structure par module : `course.ts`, `course-structure.ts`, `src/courses/modules/{moduleId}/{chapterDir}/{lessonDir}/{lang}/content.md`).
-   - Données build-time : `src/data/courses.ts` (getCourses, getModules), `src/data/overview.ts` (getCourseOverview, getModuleOverview, getLessonLocation, getLessonContent).
+   - Les cours vivent dans `src/courses/` : `en.md` et `fr.md` par cours (frontmatter + description markdown), `course-structure.ts`, `src/courses/modules/{moduleId}/{chapterDir}/{lessonDir}/{lang}/content.md`.
+   - Données build-time : `src/data/courses.ts` (getCourses, getModules, getCourseMarkdown), `src/data/overview.ts` (getCourseOverview, getModuleOverview, getLessonLocation, getLessonContent).
 
 2. **Rendu markdown**
    - Pas de `marked` : Astro charge les `.md` via `import.meta.glob` et fournit le composant `Content` (markdown compilé).
    - Mermaid : intégration `astro-mermaid` dans `astro.config.mjs` ; les blocs mermaid dans le markdown sont transformés au build.
+   - Callouts : plugin remark `src/plugins/remark-callout-colons.ts` pour la syntaxe `:::info`, `:::warning`, `:::important`, `:::command` (équivalent de l'ancien `local-course-loader.ts` avec marked).
 
 3. **Pages “structure”**
    - Liste cours/modules : `src/pages/[lang]/courses.astro`.
    - Overview d’un cours ou module : `src/pages/[lang]/[type]/[id]/index.astro` (type = `courses` | `modules`).
    - Terminal et quiz non branchés ; uniquement contenu markdown.
 
-**Validation** : Navigation dans la structure des cours ; lecture d’une leçon en markdown avec rendu et mermaid.
+**Validation** : Navigation dans la structure des cours ; lecture d’une leçon en markdown avec rendu, mermaid et callouts.
 
 ---
 
@@ -255,7 +256,7 @@ Respecter l’ordre des phases ; valider chaque phase avant de passer à la suiv
 | Styles | `src/styles/` | `src/styles/` |
 | i18n | `src/lang/core.tsx`, Paraglide | Paraglide + `src/i18n/utils.ts` |
 | Core (terminal, cluster) | `src/core/` | `src/core/` (copie adaptée) |
-| Cours (données) | `src/courses/` | `src/courses/` (structure identique) |
+| Cours (données) | `src/courses/` | `src/courses/` (en.md/fr.md par cours, course-structure.ts) |
 | Overview / leçons (data) | — | `src/data/overview.ts`, `src/data/courses.ts` |
 | Pages cours / leçons | `learn/[type]/[id]/lessons/[lessonId]` | `[lang]/[type]/[id]/index.astro`, `[lang]/[type]/[id]/[lessonId]/index.astro` |
 | Terminal (home) | `old/` + fetch seeds API | `Terminal.astro` → `TerminalWindow.astro`, `terminal-mount.ts`, seed demo, top prompt dans `messages` |
@@ -266,4 +267,4 @@ Respecter l’ordre des phases ; valider chaque phase avant de passer à la suiv
 
 ---
 
-*Document mis à jour au fil de la migration. Dernière mise à jour : phase 6 (terminal home + leçon, seeds statiques par chapitre, persistance par seed, top prompt dans messages).*
+*Document mis à jour au fil de la migration. Dernière mise à jour : phase 4 (cours en markdown en.md/fr.md, plugin remark callouts :::info etc., description longue parsée).*
