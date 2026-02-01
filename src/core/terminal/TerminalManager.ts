@@ -406,7 +406,10 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
 
     let ignored = false;
     let ignoreReason: string | undefined;
-    if (isMobile && injectedKey !== null && data === injectedKey.char && now - injectedKey.time < INJECTED_IGNORE_MS) {
+    if (isMobile && data === '') {
+      ignored = true;
+      ignoreReason = 'empty';
+    } else if (isMobile && injectedKey !== null && data === injectedKey.char && now - injectedKey.time < INJECTED_IGNORE_MS) {
       ignored = true;
       ignoreReason = 'injectedKey';
     } else if (isMobile && pendingKey !== null && now - pendingKey.time < ANDROID_KEY_MS) {
@@ -423,8 +426,9 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
         ignored = true;
         ignoreReason = 'commit';
       } else if (
-        trimmed.length >= data.length - 1 &&
+        data.length > 1 &&
         data === data[0].repeat(data.length) &&
+        trimmed.length >= data.length - 1 &&
         trimmed.endsWith(data.slice(0, -1))
       ) {
         // même lettre répétée : on a "aa", l'IME envoie "aaa" (espace injecté entre les deux)
