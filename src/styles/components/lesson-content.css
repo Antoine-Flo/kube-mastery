@@ -55,7 +55,6 @@
 .lesson-content pre {
   background-color: var(--color-gray-3);
   border-radius: var(--radius-xs);
-  overflow-x: auto;
   margin-bottom: 1rem;
 }
 
