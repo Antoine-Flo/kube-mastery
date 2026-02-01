@@ -43,7 +43,8 @@ interface TerminalManagerState {
   fitAddon: FitAddon | null;
   options: TerminalManagerOptions | null;
   onCommandCallback: ((command: string) => void) | null;
-  attachId: number; // Pour éviter les race conditions mount/unmount
+  attachId: number;
+  debugCleanup: (() => void) | null;
 }
 
 const state: TerminalManagerState = {
@@ -58,6 +59,7 @@ const state: TerminalManagerState = {
   options: null,
   onCommandCallback: null,
   attachId: 0,
+  debugCleanup: null,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -91,6 +93,10 @@ const cleanup = () => {
     state.controller.dispose();
     state.controller = null;
   }
+  if (state.debugCleanup) {
+    state.debugCleanup();
+    state.debugCleanup = null;
+  }
   if (state.terminal) {
     try { state.terminal.dispose(); } catch { /* ignore */ }
     state.terminal = null;
@@ -122,6 +128,45 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
 
   // Open terminal in container
   state.terminal.open(container);
+
+  // Debug: capture key + IME/composition so we can correlate with onData
+  type KeyEv = { key: string; code: string; keyCode: number; isComposing: boolean; repeat: boolean };
+  const lastKeyEvents: KeyEv[] = [];
+  const maxKeyEvents = 5;
+  let imeComposing = false;
+  let lastCompositionEvent: 'start' | 'update' | 'end' | null = null;
+  const textarea = state.terminal.textarea;
+  const debugCleanups: (() => void)[] = [];
+  if (textarea) {
+    const onKeyDown = (e: KeyboardEvent) => {
+      lastKeyEvents.unshift({
+        key: e.key,
+        code: e.code,
+        keyCode: e.keyCode,
+        isComposing: e.isComposing,
+        repeat: e.repeat,
+      });
+      if (lastKeyEvents.length > maxKeyEvents) {
+        lastKeyEvents.pop();
+      }
+    };
+    const onCompStart = () => { imeComposing = true; lastCompositionEvent = 'start'; };
+    const onCompUpdate = () => { lastCompositionEvent = 'update'; };
+    const onCompEnd = () => { imeComposing = false; lastCompositionEvent = 'end'; };
+    textarea.addEventListener('keydown', onKeyDown);
+    textarea.addEventListener('compositionstart', onCompStart);
+    textarea.addEventListener('compositionupdate', onCompUpdate);
+    textarea.addEventListener('compositionend', onCompEnd);
+    debugCleanups.push(
+      () => textarea.removeEventListener('keydown', onKeyDown),
+      () => textarea.removeEventListener('compositionstart', onCompStart),
+      () => textarea.removeEventListener('compositionupdate', onCompUpdate),
+      () => textarea.removeEventListener('compositionend', onCompEnd),
+    );
+  }
+  state.debugCleanup = () => {
+    debugCleanups.forEach((f) => f());
+  };
 
   // Fit terminal to container dimensions - use double RAF to ensure terminal is fully initialized
   requestAnimationFrame(() => {
@@ -172,12 +217,24 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
   }
   state.controller.showPrompt();
 
-  // Connect input handlers
+  let debugSeq = 0;
   state.dataDisposable = state.terminal.onData((data: string) => {
     if (typeof document !== 'undefined') {
+      debugSeq += 1;
       const readable = data.replace(/\x1b/g, 'ESC').replace(/ /g, '·');
+      const codes = data.split('').map((c) => c.charCodeAt(0));
       document.dispatchEvent(new CustomEvent('terminal-debug-input', {
-        detail: { data, dataLength: data.length, readable },
+        detail: {
+          seq: debugSeq,
+          data,
+          dataLength: data.length,
+          readable,
+          codes: codes.join(', '),
+          hex: codes.map((n) => n.toString(16).padStart(2, '0')).join(' '),
+          lastKeyEvents: lastKeyEvents.slice(0),
+          imeComposing,
+          lastCompositionEvent,
+        },
       }));
     }
     state.controller?.handleInput(data);
