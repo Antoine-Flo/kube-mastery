@@ -135,6 +135,13 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
   const maxKeyEvents = 5;
   let imeComposing = false;
   let lastCompositionEvent: 'start' | 'update' | 'end' | null = null;
+  const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  // Chrome Android / GBoard: use keydown as source of truth for Space/Enter/Backspace, inject once and ignore IME output (CodeMirror-style workaround).
+  let pendingKey: { char: string; time: number } | null = null;
+  let pendingKeyTimeout: ReturnType<typeof setTimeout> | null = null;
+  let injectedKey: { char: string; time: number } | null = null;
+  const ANDROID_KEY_MS = 180;
+  const INJECTED_IGNORE_MS = 120;
   const textarea = state.terminal.textarea;
   const debugCleanups: (() => void)[] = [];
   if (textarea) {
@@ -148,6 +155,26 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
       });
       if (lastKeyEvents.length > maxKeyEvents) {
         lastKeyEvents.pop();
+      }
+      if (isMobile && e.type === 'keydown') {
+        let char: string | null = null;
+        if (e.key === ' ') {
+          char = ' ';
+        } else if (e.key === 'Enter') {
+          char = '\r';
+        } else if (e.key === 'Backspace' || e.keyCode === 8) {
+          char = '\x7f';
+        }
+        if (char !== null) {
+          if (pendingKeyTimeout) {
+            clearTimeout(pendingKeyTimeout);
+          }
+          pendingKey = { char, time: typeof performance !== 'undefined' ? performance.now() : 0 };
+          pendingKeyTimeout = setTimeout(() => {
+            pendingKey = null;
+            pendingKeyTimeout = null;
+          }, ANDROID_KEY_MS);
+        }
       }
     };
     const onCompStart = () => { imeComposing = true; lastCompositionEvent = 'start'; };
@@ -165,6 +192,12 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
     );
   }
   state.debugCleanup = () => {
+    if (pendingKeyTimeout) {
+      clearTimeout(pendingKeyTimeout);
+      pendingKeyTimeout = null;
+    }
+    pendingKey = null;
+    injectedKey = null;
     debugCleanups.forEach((f) => f());
   };
 
@@ -218,7 +251,6 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
   state.controller.showPrompt();
 
   let debugSeq = 0;
-  const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
   let lastData = '';
   let lastDataTime = 0;
   const DEDUP_MS = 120;
@@ -244,6 +276,26 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
       }));
     }
     const now = typeof performance !== 'undefined' ? performance.now() : 0;
+    // Mobile: ignore onData that matches a char we just injected (IME often sends it again).
+    if (isMobile && injectedKey !== null && data === injectedKey.char && now - injectedKey.time < INJECTED_IGNORE_MS) {
+      return;
+    }
+    // Mobile: keydown-as-source-of-truth (CodeMirror-style). When we saw Space/Enter/Backspace in keydown,
+    // inject that char once and ignore whatever the IME sent in onData (avoids duplication/corruption).
+    if (isMobile && pendingKey !== null && now - pendingKey.time < ANDROID_KEY_MS) {
+      const char = pendingKey.char;
+      pendingKey = null;
+      if (pendingKeyTimeout) {
+        clearTimeout(pendingKeyTimeout);
+        pendingKeyTimeout = null;
+      }
+      injectedKey = { char, time: now };
+      lastData = char;
+      lastDataTime = now;
+      recentProcessed = (recentProcessed + char).slice(-RECENT_MAX);
+      state.controller?.handleInput(char);
+      return;
+    }
     // Mobile: IME sends same single char twice → skip duplicate.
     if (isMobile && data.length === 1 && data === lastData && now - lastDataTime < DEDUP_MS) {
       lastData = data;
@@ -251,8 +303,7 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
       return;
     }
     // Mobile: IME commit re-sends same char repeated (e.g. "aaa") or whole word (e.g. "salut")
-    // after we already got each char. Skip when recentProcessed ends with this data (event order
-    // can put compositionend after onData, so we don't rely on lastCompositionEvent).
+    // after we already got each char. Skip when recentProcessed ends with this data.
     if (
       isMobile &&
       data.length > 1 &&
