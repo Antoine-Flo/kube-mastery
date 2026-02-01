@@ -1,0 +1,129 @@
+---
+import Button from "../ui/Button.astro";
+import { Telescope, Terminal } from "@lucide/astro";
+
+interface Props {
+	labelVisualizer: string;
+	labelCourse: string;
+	labelShowTerminal: string;
+	labelHideTerminal: string;
+	/** "show" = barre dans lp__show-term (bouton affiche le terminal), "hide" = barre dans lp__term-wrap (bouton masque le terminal) */
+	terminalAction: "show" | "hide";
+}
+const {
+	labelVisualizer,
+	labelCourse,
+	labelShowTerminal,
+	labelHideTerminal,
+	terminalAction,
+} = Astro.props;
+const labelTerminal =
+	terminalAction === "show" ? labelShowTerminal : labelHideTerminal;
+---
+
+<div class="lp__content-bar">
+	<Button
+		type="button"
+		variant="plain"
+		size="sm"
+		color="gray"
+		class="lp__content-bar-btn lp__content-bar-btn--viz"
+		data-cluster-trigger
+		data-label-visualizer={labelVisualizer}
+		data-label-course={labelCourse}
+		aria-expanded="false"
+		aria-label={labelVisualizer}
+	>
+		<Telescope size={18} />
+	</Button>
+	<span class="lp__term-toggle-wrap">
+		<Button
+			type="button"
+			variant="plain"
+			size="sm"
+			color="gray"
+			class="lp__content-bar-btn lp__content-bar-btn--term-toggle"
+			data-lesson-term-toggle
+			aria-label={labelTerminal}
+		>
+			<Terminal size={18} />
+		</Button>
+	</span>
+</div>
+
+<script>
+	function setVizState(btn: Element, expanded: boolean) {
+		const labelV = btn.getAttribute("data-label-visualizer");
+		const labelC = btn.getAttribute("data-label-course");
+		const label = expanded ? labelC : labelV;
+		btn.setAttribute("aria-expanded", String(expanded));
+		btn.setAttribute("aria-label", label ?? "");
+		if (btn instanceof HTMLElement) {
+			btn.setAttribute("title", label ?? "");
+		}
+	}
+
+	document.addEventListener("cluster-panel-close", () => {
+		const btn = document.querySelector("[data-cluster-trigger]");
+		if (btn) {
+			setVizState(btn, false);
+		}
+	});
+
+	document.addEventListener("click", (e) => {
+		const btn = (e.target as Element).closest("[data-cluster-trigger]");
+		if (btn) {
+			e.preventDefault();
+			const expanded = btn.getAttribute("aria-expanded") === "true";
+			setVizState(btn, !expanded);
+			document.dispatchEvent(
+				new CustomEvent(
+					expanded ? "cluster-panel-close" : "cluster-panel-open",
+				),
+			);
+			return;
+		}
+		const termBtn = (e.target as Element).closest(
+			"[data-lesson-term-toggle]",
+		);
+		if (termBtn) {
+			e.preventDefault();
+			document.dispatchEvent(new CustomEvent("lesson-terminal-toggle"));
+		}
+	});
+
+	document.addEventListener("astro:page-load", () => {
+		const btn = document.querySelector("[data-cluster-trigger]");
+		if (btn) {
+			setVizState(btn, false);
+		}
+	});
+</script>
+
+<style>
+	.lp__content-bar {
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-2);
+		padding: var(--spacing-2) var(--spacing-3);
+		background: var(--color-gray-1);
+	}
+
+	.lp__content-bar-btn--viz,
+	.lp__content-bar-btn--term-toggle {
+		background: transparent;
+		border: none;
+	}
+
+	/* Wrapper masqué en grand écran (le bouton Button ne reçoit pas le scope Astro). */
+	.lp__term-toggle-wrap {
+		display: none;
+	}
+
+	@media (max-width: 1024px) {
+		.lp__term-toggle-wrap {
+			display: inline-flex;
+		}
+	}
+</style>

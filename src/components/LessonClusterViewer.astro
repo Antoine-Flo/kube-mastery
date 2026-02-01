@@ -1,0 +1,28 @@
+---
+// Shell for cluster viewer: bar + overlay. Mount logic and env are provided by the lesson page script.
+import { ArrowLeftToLine, ArrowRightToLine } from "@lucide/astro";
+---
+
+<div class="lcv" data-cluster-viewer id="lesson-cluster-viewer-root">
+	<div
+		class="lcv__bar"
+		data-cluster-viewer-bar
+		role="button"
+		tabindex="0"
+		aria-label="Afficher la vue cluster"
+		aria-expanded="false"
+	>
+		<span class="lcv__bar-ico lcv__bar-ico--col" aria-hidden="true">
+			<ArrowLeftToLine size={18} />
+		</span>
+		<span class="lcv__bar-ico lcv__bar-ico--exp" aria-hidden="true">
+			<ArrowRightToLine size={18} />
+		</span>
+		<span class="lcv__bar-label">Cluster</span>
+	</div>
+	<div class="lcv__overlay" data-cluster-viewer-overlay>
+		<div class="lcv__overlay-inner">
+			<div class="lcv__overlay-content" data-cluster-viewer-content></div>
+		</div>
+	</div>
+</div>

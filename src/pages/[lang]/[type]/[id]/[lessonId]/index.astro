@@ -2,9 +2,11 @@
 import Layout from "../../../../../layouts/Layout.astro";
 import CourseOutline from "../../../../../components/CourseOutline.astro";
 import LessonTerminal from "../../../../../components/LessonTerminal.astro";
+import LessonContentBar from "../../../../../components/lesson/LessonContentBar.astro";
+import LessonClusterPanel from "../../../../../components/lesson/LessonClusterPanel.astro";
 import ScrollArea from "../../../../../components/ui/ScrollArea.astro";
 import { ArrowLeftToLine, ArrowRightToLine } from "@lucide/astro";
-import { useLocalePath } from "../../../../../i18n/utils.js";
+import { useLocalePath, useTranslations } from "../../../../../i18n/utils.js";
 import { getCourses, getModules } from "../../../../../data/courses.js";
 import {
 	getCourseOverview,
@@ -13,6 +15,7 @@ import {
 	type OverviewType,
 } from "../../../../../data/overview.js";
 import "../../../../../styles/components/lesson-content.css";
+import "../../../../../styles/components/cluster-visualization.css";
 
 export function getStaticPaths() {
 	const paths: { params: { lang: string; type: OverviewType; id: string; lessonId: string } }[] = [];
@@ -72,9 +75,10 @@ const { Content } = lessonEntry;
 const currentChapter = overview.content.chapters.find((ch) => ch.lessons.some((l) => l.id === lessonId));
 const env = currentChapter?.environment?.trim().toLowerCase();
 const seedName = env && env !== "empty" ? env : "minimal";
+const t = useTranslations(lang);
 ---
 <Layout bodyClass="lp-fill" showFooter={false}>
-	<div class="lp-root">
+	<div class="lp-root" data-seed-name={seedName} data-lang={lang} data-terminal-open="true">
 		<div class="lp">
 		<aside
 			id="lesson-sidebar"
@@ -106,30 +110,42 @@ const seedName = env && env !== "empty" ? env : "minimal";
 		</aside>
 		<div class="lp__bd">
 			<div class="lp__content">
-				<ScrollArea>
-					<main class="lp__main">
-						<nav class="lp__nav">
-							<a href={overviewHref} class="lp__lnk">← {type === "courses" ? "Cours" : "Module"}</a>
-							{prevLesson && (
-								<a href={localePath(`/${type}/${id}/${prevLesson.id}`)} class="lp__lnk">← {prevLesson.title}</a>
-							)}
+				<div class="lp__content-body">
+					<ScrollArea>
+						<main class="lp__main">
+							<article class="lesson-content">
+								<Content />
+							</article>
 							{nextLesson && (
-								<a href={localePath(`/${type}/${id}/${nextLesson.id}`)} class="lp__lnk">{nextLesson.title} →</a>
+								<nav class="lp__nav lp__nav--bt">
+									<a href={localePath(`/${type}/${id}/${nextLesson.id}`)} class="lp__lnk">Leçon suivante : {nextLesson.title} →</a>
+								</nav>
 							)}
-						</nav>
-						<article class="lesson-content">
-							<Content />
-						</article>
-						{nextLesson && (
-							<nav class="lp__nav lp__nav--bt">
-								<a href={localePath(`/${type}/${id}/${nextLesson.id}`)} class="lp__lnk">Leçon suivante : {nextLesson.title} →</a>
-							</nav>
-						)}
-					</main>
-				</ScrollArea>
+						</main>
+					</ScrollArea>
+					<LessonClusterPanel />
+				</div>
+				<div class="lp__show-term" data-lesson-show-term aria-hidden="true">
+					<LessonContentBar
+						labelVisualizer={t("lesson_visualizer")}
+						labelCourse={t("lesson_viewCourse")}
+						labelShowTerminal={t("lesson_showTerminal")}
+						labelHideTerminal={t("lesson_hideTerminal")}
+						terminalAction="show"
+					/>
+				</div>
 			</div>
-			<div class="lp__term">
-				<LessonTerminal seedName={seedName} lang={lang} />
+			<div class="lp__term-wrap" data-lesson-term-wrap>
+				<div class="lp__term">
+					<LessonTerminal seedName={seedName} lang={lang} />
+				</div>
+				<LessonContentBar
+					labelVisualizer={t("lesson_visualizer")}
+					labelCourse={t("lesson_viewCourse")}
+					labelShowTerminal={t("lesson_showTerminal")}
+					labelHideTerminal={t("lesson_hideTerminal")}
+					terminalAction="hide"
+				/>
 			</div>
 		</div>
 	</div>
@@ -137,7 +153,32 @@ const seedName = env && env !== "empty" ? env : "minimal";
 </Layout>
 
 <script>
+	import { createEmulatedEnvironment, destroyEmulatedEnvironment } from "../../../../../core/emulatedEnvironment/EmulatedEnvironmentManager";
+	import { getSeed } from "../../../../../courses/seeds/getSeed";
+	import { createFilesystemFromConfig } from "../../../../../core/filesystem/debianFileSystem";
+
 	const STORAGE_KEY = "lesson-sidebar-collapsed";
+	let lessonEnv: import("../../../../../core/emulatedEnvironment/EmulatedEnvironment").EmulatedEnvironment | null = null;
+
+	function setupLessonEnv() {
+		cleanupLessonEnv();
+		const root = document.querySelector(".lp-root");
+		if (!root) return;
+		const seedName = root.getAttribute("data-seed-name") ?? "minimal";
+		const seed = getSeed(seedName);
+		lessonEnv = createEmulatedEnvironment({
+			clusterStateData: seed.clusterStateData,
+			filesystemState: createFilesystemFromConfig(seed.fsConfig ?? {}),
+		});
+		document.dispatchEvent(new CustomEvent("cluster-env-ready", { detail: { env: lessonEnv } }));
+	}
+
+	function cleanupLessonEnv() {
+		if (lessonEnv) {
+			destroyEmulatedEnvironment(lessonEnv);
+			lessonEnv = null;
+		}
+	}
 
 	function setupSidebarToggle() {
 		const sidebar = document.getElementById("lesson-sidebar");
@@ -166,8 +207,46 @@ const seedName = env && env !== "empty" ? env : "minimal";
 		};
 	}
 
+	let terminalToggleBound = false;
+
+	function setupTerminalToggle() {
+		if (terminalToggleBound) return;
+		terminalToggleBound = true;
+
+		document.addEventListener("lesson-terminal-toggle", () => {
+			const root = document.querySelector(".lp-root");
+			const termWrap = document.querySelector("[data-lesson-term-wrap]");
+			const showTerm = document.querySelector("[data-lesson-show-term]");
+			if (!root || !termWrap || !showTerm) return;
+			const open = root.getAttribute("data-terminal-open") !== "false";
+			root.setAttribute("data-terminal-open", (!open) ? "true" : "false");
+			termWrap.classList.toggle("lp__term-wrap--hidden", open);
+			showTerm.setAttribute("aria-hidden", (!open) ? "true" : "false");
+		});
+
+		document.addEventListener("click", (e) => {
+			if (!(e.target as Element).closest("[data-lesson-show-term-btn]")) return;
+			const root = document.querySelector(".lp-root");
+			const termWrap = document.querySelector("[data-lesson-term-wrap]");
+			const showTerm = document.querySelector("[data-lesson-show-term]");
+			if (!root || !termWrap || !showTerm) return;
+			root.setAttribute("data-terminal-open", "true");
+			termWrap.classList.remove("lp__term-wrap--hidden");
+			showTerm.setAttribute("aria-hidden", "true");
+		});
+	}
+
 	setupSidebarToggle();
-	document.addEventListener("astro:page-load", setupSidebarToggle);
+	setupTerminalToggle();
+	requestAnimationFrame(setupLessonEnv);
+	document.addEventListener("astro:page-load", () => {
+		setupSidebarToggle();
+		setupTerminalToggle();
+		requestAnimationFrame(setupLessonEnv);
+	});
+	document.addEventListener("astro:before-swap", () => {
+		cleanupLessonEnv();
+	});
 </script>
 
 <style>
@@ -271,7 +350,16 @@ const seedName = env && env !== "empty" ? env : "minimal";
 		overflow: hidden;
 	}
 
-	.lp__term {
+	.lp__content-body {
+		position: relative;
+		flex: 1;
+		min-height: 0;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.lp__term-wrap {
 		flex: 1;
 		min-width: 320px;
 		min-height: 0;
@@ -281,17 +369,24 @@ const seedName = env && env !== "empty" ? env : "minimal";
 		border-left: 1px solid var(--color-gray-6);
 	}
 
+	.lp__term {
+		flex: 1;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+	}
+
 	.lp__main {
 		max-width: 80ch;
 		margin: 0 auto;
 		padding: var(--spacing-4);
 	}
 
-	.lp__nav {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.75rem 1rem;
-		margin-bottom: 1rem;
+	@media (max-width: 640px) {
+		.lp__main {
+			padding: var(--spacing-2);
+		}
 	}
 
 	.lp__nav--bt {
@@ -304,12 +399,32 @@ const seedName = env && env !== "empty" ? env : "minimal";
 		text-decoration: underline;
 	}
 
+	.lp__show-term {
+		display: none;
+		flex-shrink: 0;
+		border-top: 1px solid var(--color-gray-6);
+
+	}
+
 	@media (max-width: 1024px) {
 		.lp__sb {
 			display: none;
 		}
-		.lp__term {
+		.lp__bd {
+			flex-direction: column;
+		}
+		.lp__term-wrap {
+			flex: 0 0 30vh;
+			min-width: unset;
+			min-height: 200px;
+			border-left: none;
+			border-top: 1px solid var(--color-gray-6);
+		}
+		.lp__term-wrap.lp__term-wrap--hidden {
 			display: none;
+		}
+		.lp-root[data-terminal-open="false"] .lp__show-term {
+			display: flex;
 		}
 	}
 </style>

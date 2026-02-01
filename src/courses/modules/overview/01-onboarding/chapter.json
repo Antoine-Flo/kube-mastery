@@ -8,5 +8,5 @@
         "fr": "Apprenez à utiliser la plateforme et choisissez votre parcours d'apprentissage"
     },
     "isFree": true,
-    "environment": "minimal"
+    "environment": "demo"
 }

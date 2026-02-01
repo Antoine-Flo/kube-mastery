@@ -20,13 +20,14 @@ const {
 	disabled = false,
 	class: className = "",
 	sublabel,
+	...rest
 } = Astro.props;
 
 const El = href ? "a" : "button";
 const base = "btn";
 const attrs = href
-	? { href, class: `${base} ${className}`.trim() }
-	: { type, disabled, class: `${base} ${className}`.trim() };
+	? { href, class: `${base} ${className}`.trim(), ...rest }
+	: { type, disabled, class: `${base} ${className}`.trim(), ...rest };
 ---
 <El
 	{...attrs}

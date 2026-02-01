@@ -161,37 +161,6 @@
   position: relative;
 }
 
-.lesson__terminal-window-controls {
-  position: absolute;
-  top: var(--spacing-2);
-  right: var(--spacing-2);
-  display: flex;
-  gap: var(--spacing-2);
-  z-index: 1;
-}
-
-.lesson__terminal-window-control {
-  flex-shrink: 0;
-  opacity: 0.6;
-  transition: opacity var(--duration-fast);
-}
-
-.lesson__terminal-window-control:hover {
-  opacity: 1;
-}
-
-.lesson__terminal-window-control--close {
-  color: var(--color-ruby-11);
-}
-
-.lesson__terminal-window-control--maximize {
-  color: var(--color-green-11);
-}
-
-.lesson__terminal-window-control--minimize {
-  color: var(--color-amber-11);
-}
-
 .lesson__visualization-container {
   display: block;
 }

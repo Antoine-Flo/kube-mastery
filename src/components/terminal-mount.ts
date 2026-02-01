@@ -33,10 +33,12 @@ export interface MountTerminalOptions {
 	scrollback?: number;
 	/** Language (en/fr). Default en. */
 	lang?: "en" | "fr";
-	/** Seed name for lesson pages (uses getSeed). If omitted, uses demo seed (home page). */
+	/** Seed name for lesson pages (uses getSeed). If omitted, uses demo seed (home page). Ignored if env is set. */
 	seedName?: string;
 	/** Optional text written at top when terminal loads (e.g. home banner). Omitted = none. */
 	topPrompt?: string;
+	/** Shared environment (e.g. from lesson page). If set, it is used and not destroyed on cleanup. */
+	env?: EmulatedEnvironment;
 }
 
 /** Mounts xterm, returns cleanup (detach + destroy env). */
@@ -50,15 +52,20 @@ export function mountTerminal(
 		lang = "en",
 		seedName,
 		topPrompt,
+		env: providedEnv,
 	} = options;
 
-	const seed = seedName
-		? getSeed(seedName)
-		: { clusterStateData: demoClusterStateData, fsConfig: demoFsConfig };
-	const env: EmulatedEnvironment = createEmulatedEnvironment({
-		clusterStateData: seed.clusterStateData,
-		filesystemState: createFilesystemFromConfig(seed.fsConfig ?? {}),
-	});
+	const env: EmulatedEnvironment =
+		providedEnv ??
+		(() => {
+			const seed = seedName
+				? getSeed(seedName)
+				: { clusterStateData: demoClusterStateData, fsConfig: demoFsConfig };
+			return createEmulatedEnvironment({
+				clusterStateData: seed.clusterStateData,
+				filesystemState: createFilesystemFromConfig(seed.fsConfig ?? {}),
+			});
+		})();
 	const logger = createLogger({ mirrorToConsole: false });
 
 	initTerminalManager({
@@ -113,6 +120,6 @@ export function mountTerminal(
 		observer.disconnect();
 		detachTerminal(attachId);
 		dispatcher = null;
-		destroyEmulatedEnvironment(env);
+		if (!providedEnv) destroyEmulatedEnvironment(env);
 	};
 }

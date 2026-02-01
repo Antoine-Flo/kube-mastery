@@ -1,0 +1,101 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   LESSON CLUSTER VIEWER (bar + overlay)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@import "./cluster-visualization.css";
+
+.lcv {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+}
+
+/* ─── Bar (collapsed state, like sidebar footer) ─────────────────────────── */
+
+.lcv__bar {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	padding: var(--spacing-1) var(--spacing-2);
+	min-height: 40px;
+	background-color: var(--color-gray-2);
+	border-top: 1px solid var(--color-gray-6);
+	cursor: pointer;
+	transition: background-color var(--duration-fast);
+	user-select: none;
+}
+
+.lcv__bar:hover {
+	background-color: var(--color-gray-3);
+}
+
+.lcv__bar:focus-visible {
+	outline: 2px solid var(--color-primary-6);
+	outline-offset: 2px;
+}
+
+.lcv__bar-ico {
+	display: none;
+	flex-shrink: 0;
+	color: var(--color-gray-11);
+}
+
+.lcv__bar-ico--col {
+	display: inline-flex;
+}
+
+.lcv.lcv--expanded .lcv__bar-ico--col {
+	display: none;
+}
+
+.lcv.lcv--expanded .lcv__bar-ico--exp {
+	display: inline-flex;
+}
+
+.lcv__bar-label {
+	font-size: var(--text-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--color-gray-11);
+}
+
+/* ─── Overlay (expanded state) ──────────────────────────────────────────── */
+
+.lcv__overlay {
+	display: none;
+	position: absolute;
+	inset: 0;
+	z-index: 10;
+	background-color: var(--color-gray-1);
+	border-top: 1px solid var(--color-gray-6);
+	overflow: hidden;
+	flex-direction: column;
+}
+
+.lcv.lcv--expanded .lcv__overlay {
+	display: flex;
+}
+
+.lcv__overlay-inner {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	padding: var(--spacing-3);
+}
+
+.lcv__overlay-content {
+	min-height: 0;
+}
+
+/* Reuse cluster-viz nodes/pods/containers (imported where this is used) */
+.lcv__overlay-content .cluster-viz__nodes {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: var(--spacing-3);
+}
+
+.lcv__overlay-content .cluster-viz__empty {
+	color: var(--color-gray-10);
+	font-size: var(--text-sm);
+	text-align: center;
+	padding: var(--spacing-4);
+}
