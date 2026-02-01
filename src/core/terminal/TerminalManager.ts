@@ -218,6 +218,10 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
   state.controller.showPrompt();
 
   let debugSeq = 0;
+  const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  let lastData = '';
+  let lastDataTime = 0;
+  const DEDUP_MS = 120;
   state.dataDisposable = state.terminal.onData((data: string) => {
     if (typeof document !== 'undefined') {
       debugSeq += 1;
@@ -237,6 +241,15 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
         },
       }));
     }
+    // Mobile: IME often sends the same character twice (e.g. "a" then "a" then " "). Skip duplicate.
+    const now = typeof performance !== 'undefined' ? performance.now() : 0;
+    if (isMobile && data.length === 1 && data === lastData && now - lastDataTime < DEDUP_MS) {
+      lastData = data;
+      lastDataTime = now;
+      return;
+    }
+    lastData = data;
+    lastDataTime = now;
     state.controller?.handleInput(data);
   });
 
