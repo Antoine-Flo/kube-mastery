@@ -8,13 +8,6 @@ import type { TabCompletionCallbacks } from '../autocomplete/types'
 import type { InputHandlerContext } from './InputHandlerContext'
 import { LineRenderer } from './LineRenderer'
 
-function isMobile(): boolean {
-	if (typeof navigator === 'undefined') {
-		return false;
-	}
-	return /Android|webOS|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-}
-
 export class InputHandler {
     private lineRenderer: LineRenderer
 
@@ -60,17 +53,6 @@ export class InputHandler {
         // Ignore other control characters
         if (charCode < 32) {
             return
-        }
-
-        // Mobile IME fix: keyboard often sends "lastChar space suggestion"
-        // instead of just " "; normalize to a single space to avoid duplicate chars
-        if (
-            isMobile() &&
-            data.length > 1 &&
-            data.includes(' ') &&
-            !data.startsWith('\x1b')
-        ) {
-            data = ' '
         }
 
         // Insert character at cursor position

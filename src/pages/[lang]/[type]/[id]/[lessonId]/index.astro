@@ -79,12 +79,6 @@ const t = useTranslations(lang);
 ---
 <Layout bodyClass="lp-fill" showFooter={false}>
 	<div class="lp-root" data-seed-name={seedName} data-lang={lang} data-terminal-open="true">
-		<div class="lp-term-debug" data-term-debug aria-hidden="true">
-			<div class="lp-term-debug__head">
-				<span data-term-debug-mobile></span>
-			</div>
-			<div class="lp-term-debug__events" data-term-debug-events></div>
-		</div>
 		<div class="lp">
 		<aside
 			id="lesson-sidebar"
@@ -270,112 +264,12 @@ const t = useTranslations(lang);
 		});
 	}
 
-	function setupTerminalDebugBar() {
-		const bar = document.querySelector("[data-term-debug]");
-		const mobileEl = document.querySelector("[data-term-debug-mobile]");
-		const eventsEl = document.querySelector("[data-term-debug-events]");
-		if (!bar || !mobileEl || !eventsEl) {
-			return;
-		}
-		const isMobileViewport = () => window.matchMedia("(max-width: 768px)").matches;
-		const isMobileUA = () => /Android|webOS|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-		const updateVisibility = () => {
-			if (isMobileViewport()) {
-				bar.removeAttribute("aria-hidden");
-				mobileEl.textContent = `UA mobile: ${isMobileUA() ? "yes" : "no"}`;
-			} else {
-				bar.setAttribute("aria-hidden", "true");
-			}
-		};
-		type KeyEv = { key: string; code: string; keyCode: number; isComposing: boolean; repeat: boolean };
-		type DebugEv = {
-			seq: number;
-			dataLength: number;
-			readable: string;
-			codes: string;
-			hex: string;
-			raw: string;
-			lastKeyEvents: KeyEv[];
-			imeComposing: boolean;
-			lastCompositionEvent: string | null;
-			injected?: boolean;
-			ignored?: boolean;
-			ignoreReason?: string;
-		};
-		const maxEvents = 10;
-		const events: DebugEv[] = [];
-		document.addEventListener("terminal-debug-input", (e: Event) => {
-			const d = (e as CustomEvent<{
-				seq: number;
-				data: string;
-				dataLength: number;
-				readable: string;
-				codes: string;
-				hex: string;
-				lastKeyEvents: KeyEv[];
-				imeComposing: boolean;
-				lastCompositionEvent: string | null;
-				injected?: boolean;
-				ignored?: boolean;
-				ignoreReason?: string;
-			}>).detail;
-			if (!d) {
-				return;
-			}
-			events.unshift({
-				seq: d.seq,
-				dataLength: d.dataLength ?? 0,
-				readable: d.readable ?? "",
-				codes: d.codes ?? "",
-				hex: d.hex ?? "",
-				raw: JSON.stringify(d.data ?? ""),
-				lastKeyEvents: d.lastKeyEvents ?? [],
-				imeComposing: d.imeComposing ?? false,
-				lastCompositionEvent: d.lastCompositionEvent ?? null,
-				injected: d.injected,
-				ignored: d.ignored,
-				ignoreReason: d.ignoreReason,
-			});
-			if (events.length > maxEvents) {
-				events.pop();
-			}
-			const esc = (s: string) =>
-				String(s)
-					.replace(/&/g, "&amp;")
-					.replace(/</g, "&lt;")
-					.replace(/"/g, "&quot;");
-			const keyEvStr = (k: KeyEv) =>
-				`key=${esc(k.key)} code=${esc(k.code)} keyCode=${k.keyCode} isComp=${k.isComposing} repeat=${k.repeat}`;
-			eventsEl.innerHTML = events
-				.map(
-					(ev) => {
-						const tag = ev.injected ? " inj" : ev.ignored ? ` ign:${esc(ev.ignoreReason ?? "")}` : "";
-						return `<div class="lp-term-debug__row">
-  <span class="lp-term-debug__seq">#${ev.seq}${tag}</span>
-  <span class="lp-term-debug__len">len=${ev.dataLength}</span>
-  <span class="lp-term-debug__readable" title="${esc(ev.raw)}">"${esc(ev.readable)}"</span>
-  <span class="lp-term-debug__codes">dec: ${esc(ev.codes || "—")}</span>
-  <span class="lp-term-debug__hex">hex: ${esc(ev.hex || "—")}</span>
-  <span class="lp-term-debug__ime">IME: ${ev.imeComposing ? "composing" : "idle"}${ev.lastCompositionEvent ? ` compEv: ${esc(ev.lastCompositionEvent)}` : ""}</span>
-  <span class="lp-term-debug__keys" title="${ev.lastKeyEvents.map(keyEvStr).join(" | ")}">keyEv: ${ev.lastKeyEvents.length ? ev.lastKeyEvents.map((k) => `${esc(k.key)}(${k.code})${k.isComposing ? "ⓘ" : ""}`).join(" ") : "—"}</span>
-</div>`;
-					},
-				)
-				.join("");
-		});
-		window.matchMedia("(max-width: 768px)").addEventListener("change", updateVisibility);
-		eventsEl.innerHTML = "<div class=\"lp-term-debug__row lp-term-debug__row--empty\">Aucun événement encore (tape dans le terminal)</div>";
-		updateVisibility();
-	}
-
 	setupSidebarToggle();
 	setupTerminalToggle();
-	setupTerminalDebugBar();
 	requestAnimationFrame(setupLessonEnv);
 	document.addEventListener("astro:page-load", () => {
 		setupSidebarToggle();
 		setupTerminalToggle();
-		setupTerminalDebugBar();
 		requestAnimationFrame(setupLessonEnv);
 	});
 	document.addEventListener("astro:before-swap", () => {
@@ -384,70 +278,6 @@ const t = useTranslations(lang);
 </script>
 
 <style>
-	.lp-term-debug {
-		display: none;
-	}
-	@media (max-width: 768px) {
-		.lp-term-debug {
-			display: flex;
-			flex-direction: column;
-			gap: 0.25rem;
-			position: sticky;
-			top: 0;
-			z-index: 999;
-			padding: 0.25rem 0.5rem;
-			font-size: 0.65rem;
-			font-family: ui-monospace, monospace;
-			background: var(--color-gray-3);
-			color: var(--color-gray-11);
-			border-bottom: 1px solid var(--color-gray-6);
-			max-height: 35vh;
-			overflow: hidden;
-		}
-		.lp-term-debug__head {
-			flex-shrink: 0;
-		}
-		.lp-term-debug__events {
-			flex: 1;
-			min-height: 0;
-			overflow: auto;
-			display: flex;
-			flex-direction: column;
-			gap: 2px;
-		}
-		.lp-term-debug__row {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 0.35rem 0.75rem;
-			align-items: baseline;
-			padding: 2px 0;
-			border-bottom: 1px solid var(--color-gray-5);
-		}
-		.lp-term-debug__row--empty {
-			border: none;
-			color: var(--color-gray-9);
-		}
-		.lp-term-debug__seq {
-			font-weight: 600;
-			color: var(--color-gray-12);
-		}
-		.lp-term-debug__readable {
-			word-break: break-all;
-		}
-		.lp-term-debug__codes,
-		.lp-term-debug__hex {
-			word-break: break-all;
-			color: var(--color-gray-10);
-		}
-		.lp-term-debug__ime {
-			color: var(--color-amber-11);
-		}
-		.lp-term-debug__keys {
-			color: var(--color-green-11);
-			word-break: break-all;
-		}
-	}
-
 	.lp-root {
 		height: 100%;
 		min-height: 0;
