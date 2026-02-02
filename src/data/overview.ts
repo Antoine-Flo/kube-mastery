@@ -4,6 +4,7 @@
 
 import type { MarkdownInstance } from "astro";
 import type { CourseStructure, LocalModule } from "../courses/types.js";
+import type { Quiz } from "../types/quiz.js";
 import type { UiLang } from "./courses.js";
 import { getCourseMarkdown } from "./courses.js";
 
@@ -412,4 +413,32 @@ export function getLessonContent(
   }
   const found = Object.keys(contentAsMarkdownGlob).find((k) => k.endsWith(contentPath(loc, lang)));
   return found ? (contentAsMarkdownGlob[found] ?? null) : null;
+}
+
+const quizGlob = import.meta.glob<{ quiz?: Quiz }>("../courses/modules/**/quiz.ts", {
+  eager: true,
+});
+
+function quizPath(loc: LessonLocation, lang: UiLang): string {
+  return `modules/${loc.moduleId}/${loc.chapterDir}/${loc.lessonDir}/${lang}/quiz.ts`;
+}
+
+/** Load quiz for a lesson. Returns null if not found. */
+export function getLessonQuiz(
+  type: OverviewType,
+  id: string,
+  lessonId: string,
+  lang: UiLang
+): Quiz | null {
+  const loc = getLessonLocation(type, id, lessonId);
+  if (!loc) {
+    return null;
+  }
+  const suffix = quizPath(loc, lang);
+  const found = Object.keys(quizGlob).find((k) => k.endsWith(suffix));
+  if (!found) {
+    return null;
+  }
+  const entry = quizGlob[found];
+  return entry?.quiz ?? null;
 }

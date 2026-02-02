@@ -4,6 +4,7 @@ import CourseOutline from "../../../../../components/CourseOutline.astro";
 import LessonTerminal from "../../../../../components/LessonTerminal.astro";
 import LessonContentBar from "../../../../../components/lesson/LessonContentBar.astro";
 import LessonClusterPanel from "../../../../../components/lesson/LessonClusterPanel.astro";
+import LessonQuizNav from "../../../../../components/lesson/LessonQuizNav.astro";
 import ScrollArea from "../../../../../components/ui/ScrollArea.astro";
 import { ArrowLeftToLine, ArrowRightToLine } from "@lucide/astro";
 import { useLocalePath, useTranslations } from "../../../../../i18n/utils.js";
@@ -12,13 +13,21 @@ import {
 	getCourseOverview,
 	getModuleOverview,
 	getLessonContent,
+	getLessonQuiz,
 	type OverviewType,
 } from "../../../../../data/overview.js";
 import "../../../../../styles/components/lesson-content.css";
 import "../../../../../styles/components/cluster-visualization.css";
 
 export function getStaticPaths() {
-	const paths: { params: { lang: string; type: OverviewType; id: string; lessonId: string } }[] = [];
+	const paths: {
+		params: {
+			lang: string;
+			type: OverviewType;
+			id: string;
+			lessonId: string;
+		};
+	}[] = [];
 	for (const lang of ["en", "fr"] as const) {
 		for (const c of getCourses(lang)) {
 			const overview = getCourseOverview(c.id, lang);
@@ -30,7 +39,14 @@ export function getStaticPaths() {
 					if (!getLessonContent("courses", c.id, lesson.id, lang)) {
 						continue;
 					}
-					paths.push({ params: { lang, type: "courses", id: c.id, lessonId: lesson.id } });
+					paths.push({
+						params: {
+							lang,
+							type: "courses",
+							id: c.id,
+							lessonId: lesson.id,
+						},
+					});
 				}
 			}
 		}
@@ -44,7 +60,14 @@ export function getStaticPaths() {
 					if (!getLessonContent("modules", m.id, lesson.id, lang)) {
 						continue;
 					}
-					paths.push({ params: { lang, type: "modules", id: m.id, lessonId: lesson.id } });
+					paths.push({
+						params: {
+							lang,
+							type: "modules",
+							id: m.id,
+							lessonId: lesson.id,
+						},
+					});
 				}
 			}
 		}
@@ -63,102 +86,151 @@ if (!lessonEntry) {
 	return Astro.redirect(localePath(`/${type}/${id}`));
 }
 
-const overview = (type === "courses" ? getCourseOverview(id, lang) : getModuleOverview(id, lang))!;
+const overview = (
+	type === "courses"
+		? getCourseOverview(id, lang)
+		: getModuleOverview(id, lang)
+)!;
 const allLessons = overview.content.chapters.flatMap((ch) => ch.lessons);
 const currentIndex = allLessons.findIndex((l) => l.id === lessonId);
 const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
-const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
+const nextLesson =
+	currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
 const overviewHref = localePath(`/${type}/${id}`);
 const lessonBaseUrl = localePath(`/${type}/${id}`);
 const { Content } = lessonEntry;
 
-const currentChapter = overview.content.chapters.find((ch) => ch.lessons.some((l) => l.id === lessonId));
+const currentChapter = overview.content.chapters.find((ch) =>
+	ch.lessons.some((l) => l.id === lessonId),
+);
 const env = currentChapter?.environment?.trim().toLowerCase();
 const seedName = env && env !== "empty" ? env : "minimal";
 const t = useTranslations(lang);
+const quiz = getLessonQuiz(type, id, lessonId, lang);
+const prevLessonHref = prevLesson
+	? localePath(`/${type}/${id}/${prevLesson.id}`)
+	: "";
+const nextLessonHref = nextLesson
+	? localePath(`/${type}/${id}/${nextLesson.id}`)
+	: "";
+const isFirstLesson = currentIndex === 0;
+const isLastLesson = currentIndex >= allLessons.length - 1;
+const quizNavLabels = {
+	quizTitle: t("quiz_title"),
+	questionInfo: t("quiz_questionInfo"),
+	hint: t("quiz_hint"),
+	previous: t("courseLesson_previousLesson"),
+	nextLesson: t("courseLesson_nextLesson"),
+	courseComplete: t("courseLesson_courseComplete"),
+	nextQuestion: t("courseLesson_nextQuestion"),
+};
 ---
+
 <Layout bodyClass="lp-fill" showFooter={false}>
-	<div class="lp-root" data-seed-name={seedName} data-lang={lang} data-terminal-open="true">
+	<div
+		class="lp-root"
+		data-seed-name={seedName}
+		data-lang={lang}
+		data-terminal-open="true"
+	>
 		<div class="lp">
-		<aside
-			id="lesson-sidebar"
-			class="lp__sb"
-			aria-label="Plan du cours"
-		>
-			<div class="lp__sb-ct">
-				<CourseOutline
-					overview={overview}
-					currentLessonId={lessonId}
-					lessonBaseUrl={lessonBaseUrl}
-				/>
-			</div>
-			<div class="lp__sb-ft">
-				<button
-					id="lesson-sidebar-toggle"
-					type="button"
-					aria-label="Réduire le plan du cours"
-					aria-expanded="true"
-				>
-					<span class="lp__sb-ico lp__sb-ico--exp" aria-hidden="true">
-						<ArrowRightToLine size={18} />
-					</span>
-					<span class="lp__sb-ico lp__sb-ico--col" aria-hidden="true">
-						<ArrowLeftToLine size={18} />
-					</span>
-				</button>
-			</div>
-		</aside>
-		<div class="lp__bd">
-			<div class="lp__content">
-				<div class="lp__content-body">
-					<ScrollArea>
-						<main class="lp__main">
-							<article class="lesson-content">
-								<Content />
-							</article>
-							{nextLesson && (
-								<nav class="lp__nav lp__nav--bt">
-									<a href={localePath(`/${type}/${id}/${nextLesson.id}`)} class="lp__lnk">Leçon suivante : {nextLesson.title} →</a>
-								</nav>
-							)}
-						</main>
-					</ScrollArea>
-					<LessonClusterPanel />
+			<aside
+				id="lesson-sidebar"
+				class="lp__sb"
+				aria-label="Plan du cours"
+			>
+				<div class="lp__sb-ct">
+					<CourseOutline
+						overview={overview}
+						currentLessonId={lessonId}
+						lessonBaseUrl={lessonBaseUrl}
+					/>
 				</div>
-				<div class="lp__show-term" data-lesson-show-term aria-hidden="true">
+				<div class="lp__sb-ft">
+					<button
+						id="lesson-sidebar-toggle"
+						type="button"
+						aria-label="Réduire le plan du cours"
+						aria-expanded="true"
+					>
+						<span
+							class="lp__sb-ico lp__sb-ico--exp"
+							aria-hidden="true"
+						>
+							<ArrowRightToLine size={18} />
+						</span>
+						<span
+							class="lp__sb-ico lp__sb-ico--col"
+							aria-hidden="true"
+						>
+							<ArrowLeftToLine size={18} />
+						</span>
+					</button>
+				</div>
+			</aside>
+			<div class="lp__bd">
+				<div class="lp__content">
+					<div class="lp__content-body">
+						<ScrollArea>
+							<main class="lp__main">
+								<article class="lesson-content">
+									<Content />
+								</article>
+								<LessonQuizNav
+									quiz={quiz}
+									prevHref={prevLessonHref}
+									nextHref={nextLessonHref}
+									isFirst={isFirstLesson}
+									isLast={isLastLesson}
+									labels={quizNavLabels}
+								/>
+							</main>
+						</ScrollArea>
+						<LessonClusterPanel />
+					</div>
+					<div
+						class="lp__show-term"
+						data-lesson-show-term
+						aria-hidden="true"
+					>
+						<LessonContentBar
+							labelVisualizer={t("lesson_visualizer")}
+							labelCourse={t("lesson_viewCourse")}
+							labelShowTerminal={t("lesson_showTerminal")}
+							labelHideTerminal={t("lesson_hideTerminal")}
+							terminalAction="show"
+						/>
+					</div>
+				</div>
+				<div class="lp__term-wrap" data-lesson-term-wrap>
+					<div class="lp__term">
+						<LessonTerminal seedName={seedName} lang={lang} />
+					</div>
 					<LessonContentBar
 						labelVisualizer={t("lesson_visualizer")}
 						labelCourse={t("lesson_viewCourse")}
 						labelShowTerminal={t("lesson_showTerminal")}
 						labelHideTerminal={t("lesson_hideTerminal")}
-						terminalAction="show"
+						terminalAction="hide"
 					/>
 				</div>
 			</div>
-			<div class="lp__term-wrap" data-lesson-term-wrap>
-				<div class="lp__term">
-					<LessonTerminal seedName={seedName} lang={lang} />
-				</div>
-				<LessonContentBar
-					labelVisualizer={t("lesson_visualizer")}
-					labelCourse={t("lesson_viewCourse")}
-					labelShowTerminal={t("lesson_showTerminal")}
-					labelHideTerminal={t("lesson_hideTerminal")}
-					terminalAction="hide"
-				/>
-			</div>
 		</div>
-	</div>
 	</div>
 </Layout>
 
 <script>
-	import { createEmulatedEnvironment, destroyEmulatedEnvironment } from "../../../../../core/emulatedEnvironment/EmulatedEnvironmentManager";
+	import {
+		createEmulatedEnvironment,
+		destroyEmulatedEnvironment,
+	} from "../../../../../core/emulatedEnvironment/EmulatedEnvironmentManager";
 	import { getSeed } from "../../../../../courses/seeds/getSeed";
 	import { createFilesystemFromConfig } from "../../../../../core/filesystem/debianFileSystem";
 
 	const STORAGE_KEY = "lesson-sidebar-collapsed";
-	let lessonEnv: import("../../../../../core/emulatedEnvironment/EmulatedEnvironment").EmulatedEnvironment | null = null;
+	let lessonEnv:
+		| import("../../../../../core/emulatedEnvironment/EmulatedEnvironment").EmulatedEnvironment
+		| null = null;
 
 	function setupLessonEnv() {
 		cleanupLessonEnv();
@@ -172,7 +244,11 @@ const t = useTranslations(lang);
 			clusterStateData: seed.clusterStateData,
 			filesystemState: createFilesystemFromConfig(seed.fsConfig ?? {}),
 		});
-		document.dispatchEvent(new CustomEvent("cluster-env-ready", { detail: { env: lessonEnv } }));
+		document.dispatchEvent(
+			new CustomEvent("cluster-env-ready", {
+				detail: { env: lessonEnv },
+			}),
+		);
 	}
 
 	function cleanupLessonEnv() {
@@ -191,7 +267,12 @@ const t = useTranslations(lang);
 
 		const updateUi = () => {
 			const collapsed = sidebar.classList.contains("lp__sb--col");
-			toggle.setAttribute("aria-label", collapsed ? "Afficher le plan du cours" : "Réduire le plan du cours");
+			toggle.setAttribute(
+				"aria-label",
+				collapsed
+					? "Afficher le plan du cours"
+					: "Réduire le plan du cours",
+			);
 			toggle.setAttribute("aria-expanded", String(!collapsed));
 		};
 
@@ -243,9 +324,9 @@ const t = useTranslations(lang);
 				return;
 			}
 			const open = root.getAttribute("data-terminal-open") !== "false";
-			root.setAttribute("data-terminal-open", (!open) ? "true" : "false");
+			root.setAttribute("data-terminal-open", !open ? "true" : "false");
 			termWrap.classList.toggle("lp__term-wrap--hidden", open);
-			showTerm.setAttribute("aria-hidden", (!open) ? "true" : "false");
+			showTerm.setAttribute("aria-hidden", !open ? "true" : "false");
 		});
 
 		document.addEventListener("click", (e) => {

@@ -27,7 +27,7 @@
 | 4     | Contenu cours (markdown)               | Moyen  | Fait                                           |
 | 5     | Routes learn (type/id/lessons)         | Moyen  | Fait                                           |
 | 6     | Terminal + cluster (îlots interactifs) | Élevé  | Fait (terminal) ; cluster viewer à faire       |
-| 7     | Quiz, auth, API                        | Élevé  | Fait (auth) ; Quiz, API, user progress à faire |
+| 7     | Quiz, auth, API                        | Élevé  | Fait (auth, quiz) ; API, user progress à faire |
 | 8     | Tests, CI, nettoyage                   | Moyen  | À faire                                        |
 
 ---
@@ -133,7 +133,7 @@
 2. **Rendu markdown**
    - Pas de `marked` : Astro charge les `.md` via `import.meta.glob` et fournit le composant `Content` (markdown compilé).
    - Mermaid : intégration `astro-mermaid` dans `astro.config.mjs` ; les blocs mermaid dans le markdown sont transformés au build.
-   - Callouts : plugin remark `src/plugins/remark-callout-colons.ts` pour la syntaxe `:::info`, `:::warning`, `:::important`, `:::command` (équivalent de l'ancien `local-course-loader.ts` avec marked).
+   - Callouts : plugin remark `src/plugins/remark-callout-colons.ts` pour la syntaxe `:::info`, `:::warning`, `:::important` (équivalent de l'ancien `local-course-loader.ts` avec marked). Les commandes sont en blocs de code normaux pour le syntax highlighting (astro-expressive-code).
 
 3. **Pages “structure”**
    - Liste cours/modules : `src/pages/[lang]/courses.astro`.
@@ -221,10 +221,12 @@
    - Page auth : `src/pages/[lang]/auth/index.astro` (login/signup toggle + GitHub, formulaires avec `data-astro-reload`).
    - Navbar : lien Connexion / Déconnexion selon cookies ; bouton thème (Button plain sm).
 
-3. **Quiz**
-   - Les types et la logique sont dans `old/src/lib/quiz-types.ts`, `quiz-loader`, et `old/src/components/quiz/`.
-   - Recréer en composant îlot (Solid ou React) : affichage des questions, validation, passage “question suivante” / “leçon suivante”.
-   - Intégration avec le terminal : si une question “terminal” doit vérifier une commande, le composant quiz doit pouvoir interroger l’état du terminal (ex. via un callback ou un store partagé).
+3. **Quiz — fait**
+   - Types : `src/types/quiz.ts` (MultipleChoiceQuestion, TerminalCommandQuestion, CommandQuestion, OrderQuestion).
+   - Données : `src/data/overview.ts` → `getLessonQuiz(type, id, lessonId, lang)` charge les `quiz.ts` par leçon via `import.meta.glob`.
+   - Composant : `src/components/lesson/lesson-quiz-nav.ts` — script client vanilla TS (pas d'îlot React/Solid). Gère quiz multiple-choice + navigation prev/next lesson.
+   - Styles : `src/styles/components/quiz.css`.
+   - Intégration terminal (questions command/terminal-command) : **non implémentée** (laissée de côté volontairement).
 
 
 4. **API**
@@ -280,4 +282,4 @@ Respecter l’ordre des phases ; valider chaque phase avant de passer à la suiv
 
 ---
 
-*Document mis à jour au fil de la migration. Dernière mise à jour : phase 7 auth fait (Supabase, API routes, page auth, Navbar login/logout) ; user progress à migrer.*
+*Document mis à jour au fil de la migration. Dernière mise à jour : phase 7 auth + quiz fait (Supabase, API routes, page auth, Navbar login/logout, quiz multiple-choice avec navigation) ; user progress et API à migrer.*
