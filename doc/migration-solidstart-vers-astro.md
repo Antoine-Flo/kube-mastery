@@ -166,6 +166,10 @@
 3. **Navigation**
    - Liens “retour au cours/module”, “leçon précédente”, “leçon suivante” sur la page leçon ; liens depuis l’overview vers chaque leçon (`lessonBaseUrl` = `/${type}/${id}`).
 
+4. **User progress (principe)**
+   - La page overview (`[type]/[id]/index.astro`) reste en **SSG** : structure du cours, chapitres, leçons sont dans le HTML au build.
+   - Le **progress** utilisateur (leçons complétées, "Continue", leçon courante) ne fait pas partie du prerender. Il sera chargé **côté client** via un appel au back (API ou Supabase), puis l'UI sera adaptée (checkmarks, bouton Continue, etc.). Détail en phase 7.
+
 **Validation** : Navigation complète overview ↔ leçon par URL ; contenu markdown + mermaid correct.
 
 ---
@@ -206,17 +210,22 @@
 
 **But** : Quiz en fin de leçon, compte utilisateur (Supabase), et routes API si nécessaires.
 
-1. **Quiz**
+1. **User progress (overview cours)**
+   - **Principe** : les pages overview cours/module restent en **SSG**. Le contenu (structure, titres, liens) est identique pour tous ; seul l’affichage du progress (leçons complétées, "Continue", leçon courante) dépend de l’utilisateur.
+   - **Mise en œuvre** : au chargement de la page, un script ou un îlot côté client vérifie si l’utilisateur est connecté, appelle le back pour récupérer le progress du cours, puis met à jour l’UI (checkmarks, bouton Continue, etc.). Pas de rendu serveur pour le progress : tout est HTML statique + enrichissement client.
+   - **Back** : à définir (endpoints Astro, Supabase Edge Functions, ou appel direct Supabase avec RLS depuis le client). On verra au moment de la mise en place.
+
+2. **Quiz**
    - Les types et la logique sont dans `old/src/lib/quiz-types.ts`, `quiz-loader`, et `old/src/components/quiz/`.
    - Recréer en composant îlot (Solid ou React) : affichage des questions, validation, passage “question suivante” / “leçon suivante”.
    - Intégration avec le terminal : si une question “terminal” doit vérifier une commande, le composant quiz doit pouvoir interroger l’état du terminal (ex. via un callback ou un store partagé).
 
-2. **Auth**
+3. **Auth**
    - Supabase : `old/src/account/`, `old/src/lib/auth.tsx`, `old/src/db/`.
    - En Astro : pas de React/Solid context. Options : cookie de session + vérification côté server (Astro endpoints ou middleware), ou un petit store client pour l’état “user” affiché dans la navbar.
    - Migrer les appels Supabase (login, logout, subscription) en fonctions appelables depuis les îlots ou depuis des endpoints Astro.
 
-3. **API**
+4. **API**
    - Les routes API sont dans `old/src/routes/api/` (ab-test, seeds, suggestions, survey).
    - Les recréer en `src/pages/api/` (Astro endpoints) avec la même signature si besoin pour le front.
 
@@ -269,4 +278,4 @@ Respecter l’ordre des phases ; valider chaque phase avant de passer à la suiv
 
 ---
 
-*Document mis à jour au fil de la migration. Dernière mise à jour : phase 4 (cours en markdown en.md/fr.md, plugin remark callouts :::info etc., description longue parsée).*
+*Document mis à jour au fil de la migration. Dernière mise à jour : phase 5 + phase 7 (user progress en SSG + chargement client, principe documenté ; back à définir).*
