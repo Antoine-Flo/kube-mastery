@@ -42,17 +42,13 @@ graph LR
 
 Kubernetes fournit une mise à l'échelle horizontale, mettez à l'échelle votre application de haut en bas avec une simple commande ou automatiquement basé sur l'utilisation du CPU. Il prend en charge l'exécution par lots pour les charges de travail CI et est conçu pour l'extensibilité sans modifier le code source principal.
 
-:::command
 Pour vérifier les capacités de votre cluster, exécutez :
 
 ```bash
 kubectl api-resources
 ```
 
-Cette commande vous montre tous les différents types de choses que Kubernetes peut gérer dans votre cluster. Ne vous inquiétez pas de comprendre ce que chacun signifie pour l'instant, nous les couvrirons tout au long du cours. Cliquez sur 'en savoir plus' et essayez d'expérimenter avec les flags pour voir les différents formats de sortie.
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_api-resources/">En savoir plus</a>
-:::
+Cette commande vous montre tous les différents types de choses que Kubernetes peut gérer dans votre cluster. Ne vous inquiétez pas de comprendre ce que chacun signifie pour l'instant, nous les couvrirons tout au long du cours.
 
 ## Ce que Kubernetes n'est pas
 

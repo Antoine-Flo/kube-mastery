@@ -42,7 +42,6 @@ La relation entre spec et status est au cœur du fonctionnement de Kubernetes. V
 
 Cette comparaison et correction continues s'appelle la **boucle de réconciliation**. C'est comme avoir un thermostat qui vérifie constamment la température et ajuste le chauffage pour correspondre à votre réglage souhaité.
 
-:::command
 Pour voir le spec et le status d'un Deployment, exécutez :
 
 ```bash
@@ -50,9 +49,6 @@ kubectl get deployment <name> -o yaml
 ```
 
 Remplacez `<name>` par un nom de deployment réel pour voir les champs spec et status côte à côte.
-
-<a target="_blank" href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/">En savoir plus</a>
-:::
 
 :::info
 Le modèle spec/status est fondamental pour Kubernetes. Vous déclarez ce que vous voulez (spec), et Kubernetes travaille sans relâche pour le réaliser, mettant continuellement à jour le status pour refléter la réalité. C'est ce qui rend Kubernetes auto-guérissant et fiable.
@@ -87,7 +83,6 @@ status:
 
 Si un Pod plante, le status change pour montrer `readyReplicas: 2`. Kubernetes détecte cette inadéquation avec votre spec (qui dit toujours `replicas: 3`) et démarre automatiquement un nouveau Pod pour restaurer l'état souhaité.
 
-:::command
 Pour observer le changement de status en temps réel, vous pouvez utiliser :
 
 ```bash
@@ -95,6 +90,3 @@ kubectl get deployment <name> -w
 ```
 
 Remplacez `<name>` par un nom de deployment réel. Appuyez sur Ctrl+C pour arrêter l'observation.
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/kubectl-commands#get">En savoir plus</a>
-:::

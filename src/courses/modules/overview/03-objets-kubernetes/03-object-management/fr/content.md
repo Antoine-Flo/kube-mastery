@@ -22,7 +22,6 @@ Cette approche est comme donner des instructions directes : "Créez ceci mainten
 
 **Limitations** : Les commandes ne laissent pas de trace de ce que vous avez fait. Il n'y a pas de fichier de configuration à examiner, de contrôle de version ou à partager avec les coéquipiers. Si vous devez recréer quelque chose plus tard, vous devrez vous souvenir des commandes exactes que vous avez exécutées.
 
-:::command
 Pour voir quels objets vous avez créés, exécutez :
 
 ```bash
@@ -30,9 +29,6 @@ kubectl get all
 ```
 
 Cela liste toutes les ressources dans le namespace par défaut.
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/kubectl-commands#get">En savoir plus</a>
-:::
 
 ## Configuration d'objet impérative
 
@@ -69,7 +65,6 @@ C'est comme montrer à Kubernetes une image de ce que vous voulez et dire : "Fai
 La configuration déclarative utilise l'opération API `patch`, qui ne met à jour que les différences entre votre état souhaité et l'état actuel. Cela signifie que les modifications apportées par d'autres processus ou par Kubernetes lui-même sont préservées, ce qui la rend plus sûre pour les environnements collaboratifs.
 :::
 
-:::command
 Avant d'appliquer des modifications, vous pouvez les prévisualiser avec :
 
 ```bash
@@ -77,9 +72,6 @@ kubectl diff -f <file>
 ```
 
 Remplacez `<file>` par le chemin de votre fichier YAML pour voir ce qui changerait sans faire de modifications.
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/kubectl-commands#diff">En savoir plus</a>
-:::
 
 ## Choisir la bonne approche
 

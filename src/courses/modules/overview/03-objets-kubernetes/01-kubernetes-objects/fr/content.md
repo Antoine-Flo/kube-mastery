@@ -24,7 +24,6 @@ Pour créer, modifier ou supprimer des objets Kubernetes, vous utilisez l'API Ku
 
 Le plus souvent, vous décrirez les objets dans des fichiers YAML appelés **manifests**. Ces fichiers sont comme des recettes qui indiquent exactement à Kubernetes quoi créer.
 
-:::command
 Pour voir tous les objets dans votre cluster, essayez :
 
 ```bash
@@ -32,9 +31,6 @@ kubectl get all
 ```
 
 Cela liste les pods, services et deployments dans le namespace par défaut.
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/kubectl-commands#get">En savoir plus</a>
-:::
 
 ## Champs requis
 
@@ -47,7 +43,6 @@ Chaque manifest d'objet Kubernetes doit inclure quatre champs essentiels :
 
 Le format du `spec` est différent pour chaque type d'objet. Un spec de Pod décrit les conteneurs et leurs images, tandis qu'un spec de Service décrit comment exposer les Pods au réseau. La référence de l'API Kubernetes documente la structure exacte pour chaque type d'objet.
 
-:::command
 Pour voir la structure d'un objet existant, exécutez :
 
 ```bash
@@ -55,9 +50,6 @@ kubectl get pod <pod-name> -o yaml
 ```
 
 Remplacez `<pod-name>` par un nom de pod réel pour voir son manifest complet avec tous les champs.
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/kubectl-commands#get">En savoir plus</a>
-:::
 
 :::info
 Lorsque vous créez un objet, Kubernetes lui assigne automatiquement un identifiant unique (UID) qui ne change jamais, même si vous supprimez et recréez un objet avec le même nom. Cela aide Kubernetes à suivre les objets tout au long de leur cycle de vie.

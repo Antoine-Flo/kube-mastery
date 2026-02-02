@@ -42,17 +42,13 @@ graph LR
 
 Kubernetes provides horizontal scaling, scale your application up and down with a simple command or automatically based on CPU usage. It supports batch execution for CI workloads and is designed for extensibility without changing core source code.
 
-:::command
 To check your cluster's capabilities, run:
 
 ```bash
 kubectl api-resources
 ```
 
-This command shows you all the different types of things Kubernetes can manage in your cluster. Don't worry about understanding what each one means yet, we'll cover them throughout the course. Click on 'learn more' and try to experiment with the flags to see the different output formats.
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_api-resources/">Learn more</a>
-:::
+This command shows you all the different types of things Kubernetes can manage in your cluster. Don't worry about understanding what each one means yet, we'll cover them throughout the course.
 
 ## What Kubernetes is Not
 

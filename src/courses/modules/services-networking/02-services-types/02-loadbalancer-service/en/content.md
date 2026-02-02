@@ -36,7 +36,6 @@ In this example:
 - The `status.loadBalancer.ingress` field shows the external IP address assigned by the cloud provider
 - Once provisioned, you can access your Service using this external IP
 
-:::command
 Check if the external IP has been assigned:
 
 ```bash
@@ -44,9 +43,6 @@ kubectl get service my-service
 ```
 
 The `EXTERNAL-IP` column shows `<pending>` until the cloud provider provisions the load balancer, then displays the external IP address.
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_get/">Learn more about kubectl get</a>
-:::
 
 ## Implementation Details
 

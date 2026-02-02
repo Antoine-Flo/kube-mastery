@@ -43,15 +43,11 @@ Vous pouvez contacter le Service NodePort depuis l'extérieur du cluster en vous
 
 Le Service est visible comme `<NodeIP>:spec.ports[*].nodePort` et `.spec.clusterIP:spec.ports[*].port`. Cela signifie que vous pouvez y accéder soit via le port de nœud, soit via l'IP du cluster depuis l'intérieur du cluster.
 
-:::command
 Visualisez le port de nœud assigné pour votre Service :
 
 ```bash
 kubectl get service my-service -o wide
 ```
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_get/">En savoir plus sur kubectl get</a>
-:::
 
 ## Cas d'utilisation
 

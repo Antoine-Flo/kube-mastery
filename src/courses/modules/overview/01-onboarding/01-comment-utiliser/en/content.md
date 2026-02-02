@@ -25,17 +25,13 @@ On the left side, you'll find an **overview panel** that lets you jump between l
 
 Let's make sure everything is working. Try this command in the terminal:
 
-:::command
 To verify kubectl is working, run:
 
 ```bash
 kubectl version
 ```
 
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_version/">Learn more</a>
-:::
-
-Throughout this course, you'll find many links to the official Kubernetes documentation (like the "Learn more"). Everything we explain here is based on this documentation, and it's essential that you learn to navigate it effectively. The Kubernetes documentation is an indispensable tool, especially when preparing for certification exams like the CKA or CKAD, where you'll need to quickly find information.
+Throughout this course, everything we explain here is based on the official Kubernetes documentation. It's essential that you learn to navigate it effectively—it's an indispensable tool, especially when preparing for certification exams like the CKA or CKAD.
 
 ## Practice with quizzes
 

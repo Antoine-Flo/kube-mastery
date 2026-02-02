@@ -60,7 +60,6 @@ Voici un arbre de décision simple :
 
 Rappelez-vous : Vous pouvez également combiner ClusterIP avec Ingress ou Gateway API pour un routage plus avancé et une terminaison TLS.
 
-:::command
 Visualisez tous les Services et leurs types :
 
 ```bash
@@ -68,9 +67,6 @@ kubectl get services
 ```
 
 La colonne `TYPE` montre si chaque Service est ClusterIP, NodePort, LoadBalancer ou ExternalName.
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_get/">En savoir plus sur kubectl get</a>
-:::
 
 :::info
 Le champ type de Service est conçu comme une fonctionnalité imbriquée, chaque niveau s'ajoute au précédent. LoadBalancer inclut la fonctionnalité NodePort, qui inclut la fonctionnalité ClusterIP. <a target="_blank" href="https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types">En savoir plus sur les types de Service</a>

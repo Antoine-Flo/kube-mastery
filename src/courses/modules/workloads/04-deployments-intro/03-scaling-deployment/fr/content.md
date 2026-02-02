@@ -31,15 +31,11 @@ flowchart LR
 
 Le moyen le plus rapide de mettre à l'échelle est d'utiliser la commande `kubectl scale` :
 
-:::command
 Mettez à l'échelle votre Deployment à 5 répliques :
 
 ```bash
 kubectl scale deployment/nginx-deployment --replicas=5
 ```
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_scale/">En savoir plus sur kubectl scale</a>
-:::
 
 Vous pouvez également utiliser différentes variations de syntaxe :
 - `kubectl scale deployment nginx-deployment --replicas=5`
@@ -56,13 +52,11 @@ Lorsque vous mettez à l'échelle un Deployment :
 
 Le processus est progressif pour maintenir la disponibilité du service. Kubernetes ne termine pas tous les Pods en même temps lors de la mise à l'échelle vers le bas.
 
-:::command
 Vérifiez l'état actuel de votre Deployment après la mise à l'échelle :
 
 ```bash
 kubectl get deployment nginx-deployment
 ```
-:::
 
 La colonne `READY` affiche `5/5` une fois que toutes les nouvelles répliques fonctionnent.
 

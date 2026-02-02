@@ -66,27 +66,21 @@ When you apply the manifest, Kubernetes:
 4. The scheduler assigns each Pod to a node
 5. The kubelet on each node pulls the image and starts the container
 
-:::command
 Create the Deployment by applying your manifest:
 
 ```bash
 kubectl apply -f nginx-deployment.yaml
 ```
 
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_apply/">Learn more about kubectl apply</a>
-:::
-
 ## Verifying Your Deployment
 
 After creating the Deployment, check its status:
 
-:::command
 View your Deployments and their status:
 
 ```bash
 kubectl get deployments
 ```
-:::
 
 The output shows important columns:
 - **READY** - How many replicas are ready vs desired (e.g., `3/3`)
@@ -94,12 +88,10 @@ The output shows important columns:
 - **AVAILABLE** - Replicas available to serve traffic
 - **AGE** - How long the Deployment has existed
 
-:::command
 See the ReplicaSet created by your Deployment:
 
 ```bash
 kubectl get rs
 ```
-:::
 
 Notice the ReplicaSet name follows the pattern `[DEPLOYMENT-NAME]-[HASH]`. This hash comes from the Pod template and ensures each ReplicaSet manages only Pods matching its specific configuration.

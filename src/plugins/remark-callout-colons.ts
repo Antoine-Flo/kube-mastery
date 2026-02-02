@@ -1,5 +1,5 @@
 /**
- * Remark plugin to parse :::(info|warning|important|command) ... ::: blocks
+ * Remark plugin to parse :::(info|warning|important) ... ::: blocks
  * and render them as callout divs with icons.
  */
 
@@ -12,15 +12,14 @@ import rehypeRaw from "rehype-raw";
 import rehypeStringify from "rehype-stringify";
 import { VFile } from "vfile";
 
-const CALLOUT_SINGLE_REGEX = /^:::(info|warning|important|command)\n([\s\S]*?)\n:::\s*$/;
-const CALLOUT_OPEN_REGEX = /^:::(info|warning|important|command)(?:\n([\s\S]*))?$/;
+const CALLOUT_SINGLE_REGEX = /^:::(info|warning|important)\n([\s\S]*?)\n:::\s*$/;
+const CALLOUT_OPEN_REGEX = /^:::(info|warning|important)(?:\n([\s\S]*))?$/;
 const CALLOUT_CLOSE_REGEX = /^:::$/;
 
 const CALLOUT_ICONS: Record<string, string> = {
   info: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
   warning: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>`,
   important: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`,
-  command: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" x2="20" y1="19" y2="19"></line></svg>`,
 };
 
 function getParagraphText(node: Paragraph): string {

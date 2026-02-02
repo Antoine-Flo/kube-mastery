@@ -22,7 +22,6 @@ This approach is like giving direct instructions: "Create this now," "Scale to t
 
 **Limitations**: Commands don't leave a record of what you did. There's no configuration file to review, version control, or share with teammates. If you need to recreate something later, you'll have to remember the exact commands you ran.
 
-:::command
 To see what objects you've created, run:
 
 ```bash
@@ -30,9 +29,6 @@ kubectl get all
 ```
 
 This lists all resources in the default namespace.
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/kubectl-commands#get">Learn more</a>
-:::
 
 ## Imperative Object Configuration
 
@@ -69,7 +65,6 @@ This is like showing Kubernetes a picture of what you want and saying: "Make it 
 Declarative configuration uses the `patch` API operation, which only updates the differences between your desired state and the current state. This means changes made by other processes or by Kubernetes itself are preserved, making it safer for collaborative environments.
 :::
 
-:::command
 Before applying changes, you can preview them with:
 
 ```bash
@@ -77,9 +72,6 @@ kubectl diff -f <file>
 ```
 
 Replace `<file>` with your YAML file path to see what would change without making modifications.
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/kubectl-commands#diff">Learn more</a>
-:::
 
 ## Choosing the Right Approach
 

@@ -39,16 +39,12 @@ Par exemple, si vous avez trois Pods avec le label `app.kubernetes.io/name: MyAp
 
 Un Service peut cibler plusieurs Pods. Le trafic envoyé à l'IP du cluster du Service est automatiquement équilibré entre tous les Pods qui correspondent au selector. Si un Pod devient malsain ou est supprimé, le Service arrête automatiquement d'envoyer du trafic vers lui et continue de router vers les Pods sains restants.
 
-:::command
 Listez les Pods qui correspondent au selector de votre Service :
 
 ```bash
 kubectl get pods -l app.kubernetes.io/name=MyApp,tier=backend
 ```
 
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_get/">En savoir plus sur les selectors de labels</a>
-:::
-
 :::info
-L'ensemble des Pods ciblés par un Service est généralement déterminé par un selector. <a target="_blank" href="https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service">En savoir plus sur les selectors de Service</a>
+L'ensemble des Pods ciblés par un Service est généralement déterminé par un selector.
 :::

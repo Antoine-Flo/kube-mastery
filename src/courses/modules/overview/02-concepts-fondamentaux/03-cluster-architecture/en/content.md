@@ -78,14 +78,11 @@ Worker nodes run components that maintain Pods and provide the Kubernetes runtim
 
 **container runtime** is the software that runs containers (e.g., <a target="_blank" href="https://containerd.io/">containerd</a>, <a target="_blank" href="https://cri-o.io/">CRI-O</a>). Kubernetes supports any runtime that implements the Container Runtime Interface (CRI).
 
-:::command
 To view the nodes in your cluster, run:
 
 ```bash
 kubectl get nodes
 ```
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/kubectl/">Learn more</a>
-:::
 
 ```mermaid
 flowchart TD
@@ -118,7 +115,6 @@ Other common addons include:
 - Container resource monitoring tools
 - Cluster-level logging solutions
 
-:::command
 To see cluster addons, try:
 
 ```bash
@@ -126,9 +122,6 @@ kubectl get pods -n kube-system
 ```
 
 This shows system pods including DNS and other addons.
-
-<a target="_blank" href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/">Learn more</a>
-:::
 
 :::info
 Addons are optional but can make managing and monitoring your cluster much easier.

@@ -25,17 +25,13 @@ Sur le côté gauche, vous trouverez un **panneau de vue d'ensemble** qui vous p
 
 Assurons-nous que tout fonctionne. Essayez cette commande dans le terminal :
 
-:::command
 Pour vérifier que kubectl fonctionne, exécutez :
 
 ```bash
 kubectl version
 ```
 
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_version/">En savoir plus</a>
-:::
-
-Tout au long de ce cours, vous trouverez de nombreux liens vers la documentation officielle de Kubernetes (comme le "En savoir plus"). Tout ce que nous expliquons ici est basé sur cette documentation, et il est essentiel que vous appreniez à la naviguer efficacement. La documentation Kubernetes est un outil indispensable, surtout lors de la préparation aux examens de certification comme le CKA ou le CKAD, où vous devrez trouver rapidement des informations.
+Tout au long de ce cours, tout ce que nous expliquons ici est basé sur la documentation officielle de Kubernetes. Il est essentiel que vous appreniez à la naviguer efficacement—c'est un outil indispensable, surtout lors de la préparation aux examens de certification comme le CKA ou le CKAD.
 
 ## S'exercer avec les quiz
 

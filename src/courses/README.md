@@ -301,30 +301,16 @@ Point crucial à retenir.
 - **`:::info`** : Pour des informations générales (icône bleue)
 - **`:::warning`** : Pour des avertissements (icône jaune/orange)
 - **`:::important`** : Pour des points importants (icône rouge)
-- **`:::command`** : Pour suggérer des commandes à exécuter dans le terminal (icône terminal, fond gris)
 
-### Callout `:::command` pour les commandes
-
-Le callout `:::command` est spécialement conçu pour encourager les apprenants à exécuter des commandes dans le terminal. Il affiche un fond gris avec une icône de terminal.
-
-**Format recommandé** :
+Pour les commandes à exécuter dans le terminal, utilisez un **bloc de code normal** (triple backticks avec langue `bash`) afin de bénéficier du syntax highlighting (astro-expressive-code). Exemple :
 
 ```markdown
-:::command
-To view the nodes in your cluster, run:
+Pour voir les nœuds dans votre cluster, exécutez :
 
-```bash
+\`\`\`bash
 kubectl get nodes
+\`\`\`
 ```
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/kubectl/">Learn more about kubectl</a>
-:::
-```
-
-**Règles importantes** :
-- Utilisez des **blocs de code avec triple backticks** (```bash) pour la commande, pas de code inline
-- Utilisez des **balises HTML `<a target="_blank" href="...">`** pour les liens vers la documentation, pas la syntaxe markdown `[texte](url)`
-- Le lien est optionnel mais recommandé pour pointer vers la documentation officielle
 
 ### Contenu des callouts
 

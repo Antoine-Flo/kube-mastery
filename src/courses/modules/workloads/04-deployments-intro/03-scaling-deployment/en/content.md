@@ -31,15 +31,11 @@ flowchart LR
 
 The fastest way to scale is using the `kubectl scale` command:
 
-:::command
 Scale your Deployment to 5 replicas:
 
 ```bash
 kubectl scale deployment/nginx-deployment --replicas=5
 ```
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_scale/">Learn more about kubectl scale</a>
-:::
 
 You can also use different syntax variations:
 - `kubectl scale deployment nginx-deployment --replicas=5`
@@ -56,13 +52,11 @@ When you scale a Deployment:
 
 The process is gradual to maintain service availability. Kubernetes doesn't terminate all Pods at once when scaling down.
 
-:::command
 Check the current state of your Deployment after scaling:
 
 ```bash
 kubectl get deployment nginx-deployment
 ```
-:::
 
 The `READY` column shows `5/5` once all new replicas are running.
 

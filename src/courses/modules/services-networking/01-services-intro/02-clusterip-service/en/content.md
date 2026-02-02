@@ -60,15 +60,11 @@ In this example:
 - It forwards traffic to port 9376 on the Pods (the target port)
 - By default, `targetPort` equals `port` if not specified
 
-:::command
 View the cluster IP assigned to your Service:
 
 ```bash
 kubectl describe service my-service
 ```
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_describe/">Learn more about kubectl describe</a>
-:::
 
 ## Virtual IP Mechanism
 

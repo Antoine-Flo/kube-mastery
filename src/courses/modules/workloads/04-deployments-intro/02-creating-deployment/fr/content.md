@@ -66,27 +66,21 @@ Lorsque vous appliquez le manifest, Kubernetes :
 4. Le scheduler assigne chaque Pod à un nœud
 5. Le kubelet sur chaque nœud récupère l'image et démarre le conteneur
 
-:::command
 Créez le Deployment en appliquant votre manifest :
 
 ```bash
 kubectl apply -f nginx-deployment.yaml
 ```
 
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_apply/">En savoir plus sur kubectl apply</a>
-:::
-
 ## Vérifier votre Deployment
 
 Après avoir créé le Deployment, vérifiez son statut :
 
-:::command
 Visualisez vos Deployments et leur statut :
 
 ```bash
 kubectl get deployments
 ```
-:::
 
 La sortie montre des colonnes importantes :
 - **READY** - Combien de répliques sont prêtes vs souhaitées (par ex., `3/3`)
@@ -94,12 +88,10 @@ La sortie montre des colonnes importantes :
 - **AVAILABLE** - Répliques disponibles pour servir le trafic
 - **AGE** - Depuis combien de temps le Deployment existe
 
-:::command
 Voyez le ReplicaSet créé par votre Deployment :
 
 ```bash
 kubectl get rs
 ```
-:::
 
 Remarquez que le nom du ReplicaSet suit le modèle `[DEPLOYMENT-NAME]-[HASH]`. Ce hash vient du modèle de Pod et garantit que chaque ReplicaSet gère uniquement les Pods correspondant à sa configuration spécifique.

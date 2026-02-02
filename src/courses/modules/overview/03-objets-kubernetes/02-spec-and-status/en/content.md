@@ -42,7 +42,6 @@ The relationship between spec and status is the heart of how Kubernetes operates
 
 This continuous comparison and correction is called the **reconciliation loop**. It's like having a thermostat that constantly checks the temperature and adjusts the heating to match your desired setting.
 
-:::command
 To see the spec and status of a Deployment, run:
 
 ```bash
@@ -50,9 +49,6 @@ kubectl get deployment <name> -o yaml
 ```
 
 Replace `<name>` with an actual deployment name to view both spec and status fields side by side.
-
-<a target="_blank" href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/">Learn more</a>
-:::
 
 :::info
 The spec/status pattern is fundamental to Kubernetes. You declare what you want (spec), and Kubernetes works tirelessly to make it happen, continuously updating the status to reflect reality. This is what makes Kubernetes self-healing and reliable.
@@ -87,7 +83,6 @@ status:
 
 If one Pod crashes, the status changes to show `readyReplicas: 2`. Kubernetes detects this mismatch with your spec (which still says `replicas: 3`) and automatically starts a new Pod to restore the desired state.
 
-:::command
 To watch the status change in real-time, you can use:
 
 ```bash
@@ -95,6 +90,3 @@ kubectl get deployment <name> -w
 ```
 
 Replace `<name>` with an actual deployment name. Press Ctrl+C to stop watching.
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/kubectl-commands#get">Learn more</a>
-:::

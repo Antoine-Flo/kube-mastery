@@ -32,13 +32,11 @@ Le modèle "un conteneur par Pod" est de loin la façon la plus courante d'utili
 
 Lorsque vous déployez une application web, vous créez généralement un Pod avec un conteneur exécutant votre application. Si vous avez besoin de plus d'instances, vous créez plusieurs Pods, un pour chaque instance. C'est ce qu'on appelle la réplication, et c'est généralement géré par des ressources de charge de travail comme les Deployments.
 
-:::command
 Pour lister tous les Pods dans votre cluster, essayez :
 
 ```bash
 kubectl get pods
 ```
-:::
 
 ## Caractéristiques des Pods
 

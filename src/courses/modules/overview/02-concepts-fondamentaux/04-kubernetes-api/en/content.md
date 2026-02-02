@@ -50,7 +50,6 @@ Each cluster publishes API specifications so tools can discover what's available
 The kubectl tool fetches and caches the API specification for command-line completion and validation. When you type `kubectl get`, it shows available resources based on the API specification.
 :::
 
-:::command
 To explore the API versions available, you can run:
 
 ```bash
@@ -58,8 +57,5 @@ kubectl api-versions
 ```
 
 This shows all API groups and versions supported by your cluster.
-
-<a target="_blank" href="https://kubernetes.io/docs/reference/using-api/api-overview/#api-versioning">Learn more</a>
-:::
 
 This discovery mechanism makes Kubernetes flexible. When new resources are added (like through CustomResourceDefinitions), they automatically appear in API discovery, and tools like kubectl can work with them without updates.

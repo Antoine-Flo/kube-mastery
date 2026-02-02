@@ -10,13 +10,11 @@ A Pod is a Kubernetes object, which means it follows the standard Kubernetes obj
 - **Spec**: The desired state you want for the Pod (which containers to run, what resources they need, etc.)
 - **Status**: The current state of the Pod (which containers are running, their health, etc.)
 
-:::command
 To see a Pod's complete structure with all three sections (metadata, spec, status), try:
 
 ```bash
 kubectl get pod web -o yaml
 ```
-:::
 
 When you create a Pod, you define both the **metadata** (to identify it) and the **spec** (to describe what you want). The **status** is automatically maintained by Kubernetes as it works to make your desired state a reality.
 

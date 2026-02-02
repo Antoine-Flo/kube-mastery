@@ -39,16 +39,12 @@ For example, if you have three Pods with the label `app.kubernetes.io/name: MyAp
 
 A Service can target multiple Pods. Traffic sent to the Service's cluster IP is automatically load-balanced across all Pods that match the selector. If one Pod becomes unhealthy or is deleted, the Service automatically stops sending traffic to it and continues routing to the remaining healthy Pods.
 
-:::command
 List Pods that match your Service's selector:
 
 ```bash
 kubectl get pods -l app.kubernetes.io/name=MyApp,tier=backend
 ```
 
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_get/">Learn more about label selectors</a>
-:::
-
 :::info
-The set of Pods targeted by a Service is usually determined by a selector. <a target="_blank" href="https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service">Learn more about Service selectors</a>
+The set of Pods targeted by a Service is usually determined by a selector.
 :::

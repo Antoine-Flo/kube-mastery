@@ -78,14 +78,11 @@ Les nœuds de travail exécutent des composants qui maintiennent les Pods et fou
 
 **container runtime** est le logiciel qui exécute les conteneurs (par exemple, <a target="_blank" href="https://containerd.io/">containerd</a>, <a target="_blank" href="https://cri-o.io/">CRI-O</a>). Kubernetes prend en charge tout runtime qui implémente l'interface Container Runtime Interface (CRI).
 
-:::command
 Pour voir les nœuds dans votre cluster, exécutez :
 
 ```bash
 kubectl get nodes
 ```
-<a target="_blank" href="https://kubernetes.io/docs/reference/kubectl/kubectl/">En savoir plus</a>
-:::
 
 ```mermaid
 flowchart TD
@@ -118,7 +115,6 @@ D'autres modules complémentaires courants incluent :
 - Outils de surveillance des ressources de conteneurs
 - Solutions de journalisation au niveau du cluster
 
-:::command
 Pour voir les modules complémentaires du cluster, essayez :
 
 ```bash
@@ -126,9 +122,6 @@ kubectl get pods -n kube-system
 ```
 
 Cela montre les pods système incluant DNS et d'autres modules complémentaires.
-
-<a target="_blank" href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/">En savoir plus</a>
-:::
 
 :::info
 Les modules complémentaires sont optionnels mais peuvent rendre la gestion et la surveillance de votre cluster beaucoup plus faciles.

@@ -32,13 +32,11 @@ The "one-container-per-Pod" model is by far the most common way to use Pods in K
 
 When you deploy a web application, you typically create one Pod with one container running your application. If you need more instances, you create multiple Pods,one for each instance. This is called replication, and it's usually handled by workload resources like Deployments.
 
-:::command
 To list all Pods in your cluster, try:
 
 ```bash
 kubectl get pods
 ```
-:::
 
 ## Pod Characteristics
 
