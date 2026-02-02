@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getSupabaseFromLocals } from "../../../lib/supabase";
+import { getSupabaseServer } from "../../../lib/supabase";
 import type { Provider } from "@supabase/supabase-js";
 
 const json = (body: { error: string; message: string }, status: number) =>
@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({
 }) => {
 	let supabase;
 	try {
-		supabase = getSupabaseFromLocals(locals);
+		supabase = getSupabaseServer(locals, request, cookies);
 	} catch (e) {
 		return json(
 			{

@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getSupabaseFromLocals } from "../../../lib/supabase";
+import { getSupabaseServer } from "../../../lib/supabase";
 
 const json = (body: { error: string; message: string }, status: number) =>
 	new Response(JSON.stringify(body), {
@@ -9,12 +9,13 @@ const json = (body: { error: string; message: string }, status: number) =>
 
 export const POST: APIRoute = async ({
 	request,
+	cookies,
 	redirect,
 	locals,
 }) => {
 	let supabase;
 	try {
-		supabase = getSupabaseFromLocals(locals);
+		supabase = getSupabaseServer(locals, request, cookies);
 	} catch (e) {
 		return json(
 			{

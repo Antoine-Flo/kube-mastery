@@ -1,20 +1,54 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import {
+	createBrowserClient,
+	createServerClient,
+	parseCookieHeader,
+} from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type SupabaseEnv = {
 	SUPABASE_URL?: string;
 	SUPABASE_PUBLISHABLE_DEFAULT_KEY?: string;
 };
 
-export function getSupabase(env: SupabaseEnv): SupabaseClient {
-	if (!env?.SUPABASE_URL || !env?.SUPABASE_PUBLISHABLE_DEFAULT_KEY) {
-		throw new Error("Supabase env vars missing.");
-	}
-	return createClient(env.SUPABASE_URL, env.SUPABASE_PUBLISHABLE_DEFAULT_KEY, {
-		auth: { flowType: "pkce" },
-	});
+/** Browser client – use in <script> in .astro pages. Needs PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_PUBLISHABLE_KEY in .env. */
+export function createSupabaseBrowserClient(): SupabaseClient {
+	return createBrowserClient(
+		import.meta.env.PUBLIC_SUPABASE_URL,
+		import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+	);
 }
 
-/** Use in API routes: getSupabaseFromLocals(locals) for runtime env from Cloudflare. */
-export function getSupabaseFromLocals(locals: unknown): SupabaseClient {
-	return getSupabase((locals as any).runtime?.env ?? {});
+type AstroCookies = {
+	set: (name: string, value: string, options?: { path?: string }) => void;
+};
+
+/** Server client – use in API routes and server-rendered pages. Cookies = PKCE verifier + session. */
+export function getSupabaseServer(
+	locals: unknown,
+	request: Request,
+	cookies: AstroCookies,
+): SupabaseClient {
+	const env = (locals as any).runtime?.env ?? {};
+	const url = env?.SUPABASE_URL;
+	const key = env?.SUPABASE_PUBLISHABLE_DEFAULT_KEY;
+	if (!url || !key) {
+		throw new Error("Supabase env vars missing.");
+	}
+	const cookieHeader = request.headers.get("Cookie") ?? "";
+
+	return createServerClient(url, key, {
+		cookies: {
+			getAll() {
+				return parseCookieHeader(cookieHeader).map((c) => ({
+					name: c.name,
+					value: c.value ?? "",
+				}));
+			},
+			setAll(cookiesToSet) {
+				cookiesToSet.forEach(({ name, value }) =>
+					cookies.set(name, value, { path: "/" }),
+				);
+			},
+		},
+	});
 }
