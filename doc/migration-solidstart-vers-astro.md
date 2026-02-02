@@ -18,17 +18,17 @@
 
 ## Vue d’ensemble des étapes
 
-| Phase | Contenu | Risque | État |
-|-------|--------|--------|------|
-| 0 | Préparation & structure | Faible | Fait |
-| 1 | Pages statiques / marketing | Faible | Fait (partiel) |
-| 2 | Layout, UI de base, thème | Faible | Fait |
-| 3 | i18n & routing par langue | Moyen | Fait |
-| 4 | Contenu cours (markdown) | Moyen | Fait |
-| 5 | Routes learn (type/id/lessons) | Moyen | Fait |
-| 6 | Terminal + cluster (îlots interactifs) | Élevé | Fait (terminal) ; cluster viewer à faire |
-| 7 | Quiz, auth, API | Élevé | À faire |
-| 8 | Tests, CI, nettoyage | Moyen | À faire |
+| Phase | Contenu                                | Risque | État                                     |
+| ----- | -------------------------------------- | ------ | ---------------------------------------- |
+| 0     | Préparation & structure                | Faible | Fait                                     |
+| 1     | Pages statiques / marketing            | Faible | Fait (partiel : pricing, privacy, terms) |
+| 2     | Layout, UI de base, thème              | Faible | Fait                                     |
+| 3     | i18n & routing par langue              | Moyen  | Fait                                     |
+| 4     | Contenu cours (markdown)               | Moyen  | Fait                                     |
+| 5     | Routes learn (type/id/lessons)         | Moyen  | Fait                                     |
+| 6     | Terminal + cluster (îlots interactifs) | Élevé  | Fait (terminal) ; cluster viewer à faire |
+| 7     | Quiz, auth, API                        | Élevé  | À faire                                  |
+| 8     | Tests, CI, nettoyage                   | Moyen  | À faire                                  |
 
 ---
 
@@ -61,6 +61,8 @@
 **Pages cibles (dans `old/src/routes/[[lang]]/`)** :
 - `index.tsx` → `src/pages/[lang]/index.astro` (ou `src/pages/index.astro` + redirection i18n selon choix phase 3).
 - `contact.tsx`, `pricing.tsx`, `privacy-policy.tsx`, `terms-of-service.tsx`, `survey.tsx`.
+
+**Pricing** : Migrée dans `src/pages/[lang]/pricing.astro`. Politique mise à jour : **one-time full access** (paiement unique, accès à vie), toujours « coming soon » ; section « Coming Soon » (liste de fonctionnalités à venir) et ses traductions supprimées.
 
 **Étapes :**
 
@@ -135,7 +137,7 @@
 
 3. **Pages “structure”**
    - Liste cours/modules : `src/pages/[lang]/courses.astro`.
-   - Overview d’un cours ou module : `src/pages/[lang]/[type]/[id]/index.astro` (type = `courses` | `modules`).
+   - Overview d’un cours ou module : `src/pages/[lang]/[type]/[id]/index.astro` (type = `courses` | `modules`). Description longue parsée en markdown via `<Content />`.
    - Terminal et quiz non branchés ; uniquement contenu markdown.
 
 **Validation** : Navigation dans la structure des cours ; lecture d’une leçon en markdown avec rendu, mermaid et callouts.
@@ -249,21 +251,21 @@ Respecter l’ordre des phases ; valider chaque phase avant de passer à la suiv
 
 ## Fichiers de référence rapide
 
-| Besoin | Ancien (old/) | Nouveau (racine) |
-|--------|----------------|-------------------|
-| Routing i18n | `src/routes/[[lang]]/` | `src/pages/[lang]/` + middleware |
-| Layout | `src/app.tsx`, navbar, footer | `src/layouts/Layout.astro` |
-| Styles | `src/styles/` | `src/styles/` |
-| i18n | `src/lang/core.tsx`, Paraglide | Paraglide + `src/i18n/utils.ts` |
-| Core (terminal, cluster) | `src/core/` | `src/core/` (copie adaptée) |
-| Cours (données) | `src/courses/` | `src/courses/` (en.md/fr.md par cours, course-structure.ts) |
-| Overview / leçons (data) | — | `src/data/overview.ts`, `src/data/courses.ts` |
-| Pages cours / leçons | `learn/[type]/[id]/lessons/[lessonId]` | `[lang]/[type]/[id]/index.astro`, `[lang]/[type]/[id]/[lessonId]/index.astro` |
-| Terminal (home) | `old/` + fetch seeds API | `Terminal.astro` → `TerminalWindow.astro`, `terminal-mount.ts`, seed demo, top prompt dans `messages` |
-| Terminal (leçon) | — | `LessonTerminal.astro` → `TerminalWindow.astro`, seed par chapitre (`chapter.json` environment), `transition:persist` par seed |
-| Seeds | `old/seeds/`, API `/api/seeds/[name]` | `src/courses/seeds/` (minimal, demo, getSeed), pas d’API |
-| Auth | `src/account/`, `src/lib/auth.tsx` | Endpoints + store client (à faire) |
-| API | `src/routes/api/` | `src/pages/api/` (à faire) |
+| Besoin                   | Ancien (old/)                          | Nouveau (racine)                                                                                                               |
+| ------------------------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Routing i18n             | `src/routes/[[lang]]/`                 | `src/pages/[lang]/` + middleware                                                                                               |
+| Layout                   | `src/app.tsx`, navbar, footer          | `src/layouts/Layout.astro`                                                                                                     |
+| Styles                   | `src/styles/`                          | `src/styles/`                                                                                                                  |
+| i18n                     | `src/lang/core.tsx`, Paraglide         | Paraglide + `src/i18n/utils.ts`                                                                                                |
+| Core (terminal, cluster) | `src/core/`                            | `src/core/` (copie adaptée)                                                                                                    |
+| Cours (données)          | `src/courses/`                         | `src/courses/` (en.md/fr.md par cours, course-structure.ts)                                                                    |
+| Overview / leçons (data) | —                                      | `src/data/overview.ts`, `src/data/courses.ts`                                                                                  |
+| Pages cours / leçons     | `learn/[type]/[id]/lessons/[lessonId]` | `[lang]/[type]/[id]/index.astro`, `[lang]/[type]/[id]/[lessonId]/index.astro`                                                  |
+| Terminal (home)          | `old/` + fetch seeds API               | `Terminal.astro` → `TerminalWindow.astro`, `terminal-mount.ts`, seed demo, top prompt dans `messages`                          |
+| Terminal (leçon)         | —                                      | `LessonTerminal.astro` → `TerminalWindow.astro`, seed par chapitre (`chapter.json` environment), `transition:persist` par seed |
+| Seeds                    | `old/seeds/`, API `/api/seeds/[name]`  | `src/courses/seeds/` (minimal, demo, getSeed), pas d’API                                                                       |
+| Auth                     | `src/account/`, `src/lib/auth.tsx`     | Endpoints + store client (à faire)                                                                                             |
+| API                      | `src/routes/api/`                      | `src/pages/api/` (à faire)                                                                                                     |
 
 ---
 

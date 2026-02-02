@@ -10,7 +10,7 @@
 
 - **Bêta** : Tout gratuit
 - **Après bêta** : Quelques leçons gratuites pour découvrir, reste payant
-- **Revenus** : Abonnement Pro 16€/mois tout inclus
+- **Revenus** : Accès payant one-time via Paddle, voir `marketing.md`
 
 ## 🔥 À faire maintenant
 
@@ -105,7 +105,7 @@
   - Interfaces d'extension (CNI, CSI, CRI) - compréhension théorique
   - CRDs et opérateurs (installation et configuration)
 - **Exercices pratiques** : Commandes kubeadm, etcd backup/restore
-- **Note** : Pratique complète nécessite vrai cluster (Sprint 18)
+- **Note** : Focus sur la théorie et les commandes dans le simulateur
 
 ### Sprint 14: Real Registry + Chaos Hooks
 - Fetch from Docker Hub API
@@ -167,19 +167,6 @@
   3. V3 : Stats avancées, rappels, gamification
 - Voir `doc/spaced-repetition-cards.md` pour l'architecture détaillée
 
-### Sprint 18: Real K8s Sessions (Payant) - CKA Critical
-- Intégration AWS/GCP pour vrais clusters
-- Sessions pay-as-you-go (2h, 30min)
-- Auto-destruction après inactivité
-- Environnement isolé par utilisateur
-- **Sessions CKA dédiées** :
-  - Pratique kubeadm (installation, upgrade)
-  - Pratique etcd (backup, restore)
-  - Pratique HA control plane
-  - Pratique troubleshooting réel (composants cluster, nœuds)
-  - Pratique networking réel (CoreDNS, Services, Ingress)
-- **Note** : Essentiel pour compléter la préparation CKA (55% de l'examen nécessite vrai cluster)
-
 ### Sprint 19: Layout Manager & Integration
 - Mode switcher: Terminal Only, Learning, Challenge
 - Responsive layouts
@@ -193,8 +180,8 @@
 
 ## Phase 4: B2B & Monetization
 
-### Sprint 21: Certification Badge
-- Examen chronométré sur vrai K8s
+### Sprint 21: Certification Badge (optionnel)
+- Examen chronométré dans le simulateur
 - Badge vérifiable (lien unique)
 - Intégration LinkedIn
 - Prix : 10-20€
@@ -204,7 +191,6 @@
 - Suivi progression étudiants
 - Export des résultats
 - Exercices assignables
-- **Sauvegarde cluster Supabase** (uniquement pour comptes B2B)
 
 ### Sprint 23: Abonnements B2B
 - Plans Starter/Pro/Enterprise
@@ -240,8 +226,8 @@
 
 | Domaine                    | Poids | Sprints concernés | Statut     |
 | -------------------------- | ----- | ----------------- | ---------- |
-| **Troubleshooting**        | 30%   | 10, 15, 17, 18    | 🔴 CRITIQUE |
-| **Cluster Architecture**   | 25%   | 13b, 17, 18       | 🔴 CRITIQUE |
+| **Troubleshooting**        | 30%   | 10, 15, 17        | 🔴 CRITIQUE |
+| **Cluster Architecture**   | 25%   | 13b, 17           | 🔴 CRITIQUE |
 | **Servicing & Networking** | 20%   | 11, 17, 25        | 🟠 Haute    |
 | **Workloads & Scheduling** | 15%   | 8, 9, 10, 12      | 🟡 Moyenne  |
 | **Storage**                | 10%   | 8                 | 🟡 Moyenne  |
@@ -253,13 +239,12 @@
 3. **Sprint 13b** : Leçons Cluster Architecture (kubeadm, etcd, HA)
 4. **Sprint 15** : Scénarios de troubleshooting CKA
 5. **Sprint 17** : Leçons CKA spécifiques
-6. **Sprint 18** : Sessions sur vrai cluster (pratique kubeadm, etcd)
-7. **Sprint 25** : CoreDNS avancé
+6. **Sprint 25** : CoreDNS avancé
 
 ### Focus immédiat pour CKA
 
 - **55% de l'examen** = Troubleshooting (30%) + Cluster Architecture (25%)
-- **Priorité** : Sprints 10, 13b, 15, 17, 18
+- **Priorité** : Sprints 10, 13b, 15, 17
 
 Voir `doc/cka-coverage.md` pour le détail complet de la couverture CKA.
 
@@ -269,7 +254,7 @@ Voir `doc/cka-coverage.md` pour le détail complet de la couverture CKA.
 | ----------------- | -------------- | ------------------------------------------ | -------- |
 | **MVP (Phase 1)** | 1-6            | Core features (Terminal, kubectl, Storage) | ⭐⭐⭐      |
 | **Phase 2**       | 7-14           | Advanced K8s resources + CKA prep          | ⭐⭐⭐      |
-| **Phase 3**       | 15-20          | Learning platform + Real K8s + CKA         | ⭐⭐⭐      |
+| **Phase 3**       | 15-20          | Learning platform + CKA prep               | ⭐⭐⭐      |
 | **Phase 4**       | 21-26          | B2B & Monetization                         | ⭐        |
 | **TOTAL**         | **26 sprints** | Full K8s learning platform + CKA ready     | -        |
 
@@ -278,14 +263,13 @@ Voir `doc/cka-coverage.md` pour le détail complet de la couverture CKA.
 Pour rivaliser avec KodeKloud/Killer.sh:
 - ✅ Phase 1: Terminal complet, kubectl core, Filesystem, Persistence
 - 🎯 Phase 2 (Sprint 7-14): Multi-container, Init containers, Nodes, ReplicaSets, Deployments, kubectl scale, [ ] PV/PVC, [ ] Jobs, [ ] kubectl avancé (rollout, events, port-forward), **CKA prep**
-- 🎯 Phase 3 (Sprint 15-20): [ ] Chaos engineering, [ ] Challenges, Lessons (partiel), [ ] **Real K8s**, [ ] **CKA scenarios**
+- 🎯 Phase 3 (Sprint 15-20): [ ] Chaos engineering, [ ] Challenges, Lessons (partiel), [ ] **CKA scenarios**
 
 ### CKA Preparation Features
 
 - ✅ Terminal complet (comme l'examen CKA)
 - [ ] Troubleshooting scenarios (Sprint 15)
 - [ ] Cluster Architecture lessons (Sprint 13b)
-- [ ] Real K8s sessions pour pratique (Sprint 18)
 - [ ] Scénarios d'examen similaires (Sprint 17)
 
 ## Unique Differentiators

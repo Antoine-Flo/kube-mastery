@@ -20,15 +20,15 @@
 
 #### Inscription (gratuite)
 - Sauvegarde de la progression dans le cloud
-- Accès aux cours payants (achat individuel ou abonnement)
+- Accès aux cours payants (one-time payment)
 
 #### Achat Individuel
 - Cours individuels payants
 
-#### Abonnement Pro
-- Lab persistant (synchronisé avec compte)
+#### Accès payant (contenu)
 - Accès à tous les cours
-- Support prioritaire
+- Progression sauvegardée dans le cloud (Supabase)
+- Support (optionnel)
 
 ### Stratégie d'acquisition
 
@@ -49,31 +49,16 @@
 
 ### Sources de Revenus
 
-#### 1. Abonnement Pro
-- Lab persistant + accès tous cours
-- Revenus récurrents
+#### 1. Accès payant (one-time payment)
+- Accès à tous les cours, lifetime
+- Paiement unique via **Paddle** (Merchant of Record : TVA, factures, litiges gérés par Paddle)
+- Revenus ponctuels, pas d’abonnement → moins de pression support / remboursements
 
 #### 2. Achat de Cours Individuels
 - Cours à l'unité
 - Revenus ponctuels
 
-#### 3. Sessions K8s Réel (Pay-as-you-go)
-
-Pour la pratique sur vrai cluster Kubernetes :
-
-| Option          | Prix | Description          |
-| --------------- | ---- | -------------------- |
-| Session 30min   | 2€   | Pratique libre       |
-| Session 2h      | 5€   | Examen blanc         |
-| Pack 5 sessions | 15€  | Préparation complète |
-
-#### 4. Certification Badge Maison
-
-- Examen chronométré sur vrai K8s
-- Badge vérifiable (lien unique pour LinkedIn)
-- Prix : 10-20€
-
-#### 5. Abonnement Centres de Formation (B2B)
+#### 3. Abonnement Centres de Formation (B2B)
 
 Pour bootcamps, écoles, entreprises :
 
@@ -85,12 +70,12 @@ Pour bootcamps, écoles, entreprises :
 
 **Cibles** : Le Wagon, OpenClassrooms, Orsys, écoles d'ingé, AFPA
 
-#### 6. Sponsoring Cloud Providers
+#### 4. Sponsoring Cloud Providers
 
 - Programmes startup : AWS Activate, GCP for Startups, Azure for Startups
 - Jusqu'à 100k$ de crédits pour réduire les coûts infra
 
-#### 7. Affiliation
+#### 5. Affiliation
 
 - Linux Foundation (CKA/CKAD) : 10-15% sur inscriptions
 - Hébergeurs (DigitalOcean, Linode) : 25-100$ par nouveau client
@@ -107,6 +92,12 @@ Pour bootcamps, écoles, entreprises :
 - Formulaire pour Bug/Feature/Question
 - Notifications email à chaque soumission
 
+### Paiement : Paddle (Merchant of Record)
+
+- **One-time payment** : Paddle gère checkout, TVA, factures, litiges
+- Pas d’abonnement → pas de relances, moins de charge support et remboursements
+- Frais typiques : ~5 % + 0,50 € par vente (tout inclus)
+
 ### Hébergement
 
 - **Frontend** : Cloudflare Pages
@@ -117,14 +108,14 @@ Pour bootcamps, écoles, entreprises :
 ### Hypothèses conservatrices
 
 - 1000 inscrits/mois (SEO + bouche-à-oreille)
-- 5% convertissent vers sessions payantes
-- Pack moyen à 15€
+- 5% convertissent (achat accès / cours)
+- Panier moyen à définir (ex. 17–25€ one-time)
 
-| Mois | Inscrits cumulés | Conversions (5%) | Revenus |
-| ---- | ---------------- | ---------------- | ------- |
-| 3    | 3000             | 150              | 2250€   |
-| 6    | 6000             | 300              | 4500€   |
-| 12   | 12000            | 600              | 9000€   |
+| Mois | Inscrits cumulés | Conversions (5%) | Revenus (ex. 20€/user) |
+| ---- | ---------------- | ---------------- | ---------------------- |
+| 3    | 3000             | 150              | 3000€                  |
+| 6    | 6000             | 300              | 6000€                  |
+| 12   | 12000            | 600              | 12000€                 |
 
 ### Coûts
 
@@ -132,18 +123,27 @@ Pour bootcamps, écoles, entreprises :
 | ----------------------- | ------------ |
 | Cloudflare              | 0€           |
 | Supabase (< 100k users) | 25€          |
-| AWS (sessions K8s)      | ~2€/session  |
 | Brevo (> 500 users)     | 16€          |
+
+### Objectif : une paye (ordre de grandeur)
+
+Hypothèse : ~1500€ net/mois visés, coûts fixes ~40€, Paddle ~5 % + 0,50 € par vente.
+
+| Prix one-time | Net après frais Paddle (~) | Ventes/mois pour ~1500€ |
+| ------------- | -------------------------- | ----------------------- |
+| 17€           | ~16€                       | ~95                     |
+| 25€           | ~23€                       | ~65                     |
+| 30€           | ~28€                       | ~55                     |
+
+Donc pour te faire une paye avec du one-time : compter **environ 60–100 ventes/mois** selon le prix. 17€ c’est peu par vente mais plus facile à vendre ; 25–30€ réduit le nombre de ventes nécessaires. Partir plus bas (ex. 17€) et monter progressivement une fois que tu as du trafic et des avis est une stratégie classique : les premiers acheteurs gardent l’accès, tu augmentes le prix pour les nouveaux.
 
 ## Différenciation vs Concurrence
 
-| Aspect            | Kube Mastery        | Killer.sh     | KodeKloud |
-| ----------------- | ------------------- | ------------- | --------- |
-| Essai sans compte | ✅ 1er cours complet | ❌             | ❌         |
-| Simulateur        | Local (rapide)      | N/A           | Payant    |
-| Lab persistant    | Abonnement          | Inclus        | Payant    |
-| Vrai K8s          | Pay-as-you-go       | Inclus examen | Payant    |
-| Points forts      | Zéro friction       | Officiel      | Contenu   |
+| Aspect            | Kube Mastery           | Killer.sh | KodeKloud |
+| ----------------- | ---------------------- | --------- | --------- |
+| Essai sans compte | ✅ 1er cours complet    | ❌         | ❌         |
+| Simulateur        | Local (rapide)         | N/A       | Payant    |
+| Points forts      | Zéro friction, contenu | Officiel  | Contenu   |
 
 ## Principes Directeurs
 

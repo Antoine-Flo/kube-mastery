@@ -164,10 +164,7 @@ Ingress resources
 
 **Priorité** : **CRITIQUE** (25% de l'examen - deuxième plus important)
 
-**Note** : Ces sujets nécessitent un vrai cluster Kubernetes. Pour la formation, on peut :
-1. Créer des leçons théoriques détaillées
-2. Proposer des sessions sur vrai cluster (pay-as-you-go - Sprint 18)
-3. Simuler certains aspects (kubeadm init, etcd backup/restore commands)
+**Note** : Pour la formation, on se concentre sur les leçons théoriques détaillées et la simulation des commandes (kubeadm init, etcd backup/restore) dans le simulateur.
 
 ---
 
@@ -194,10 +191,7 @@ Ingress resources
 
 **Priorité** : Haute (20% de l'examen)
 
-**Note** : La simulation réseau est complexe. Pour la formation CKA, on peut :
-1. Expliquer les concepts théoriques en détail
-2. Simuler les commandes (`kubectl get endpoints`, `kubectl get svc`)
-3. Proposer des sessions sur vrai cluster pour la pratique réseau
+**Note** : Pour la formation CKA, on explique les concepts théoriques et on simule les commandes (`kubectl get endpoints`, `kubectl get svc`) dans le simulateur.
 
 ---
 
@@ -226,7 +220,6 @@ Ingress resources
    - [ ] Leçons sur etcd backup/restore (théorie + commandes)
    - [ ] Leçons sur upgrade de cluster
    - [ ] Leçons sur HA control plane
-   - [ ] Sessions sur vrai cluster (Sprint 18)
 
 3. **Networking (20%)**
    - [ ] Implémenter Services fonctionnels (Sprint 11)
@@ -253,7 +246,5 @@ Ingress resources
 
 ### Notes importantes
 
-- Certains sujets (kubeadm, etcd, CoreDNS) nécessitent un vrai cluster pour une pratique complète
-- Le simulateur peut couvrir la théorie et les commandes, mais la pratique réelle nécessite un cluster
-- Les sessions sur vrai cluster (Sprint 18) seront essentielles pour compléter la préparation CKA
+- Le simulateur couvre la théorie et les commandes ; focus sur le contenu et la préparation CKA
 - Focus immédiat : Troubleshooting (30%) et Cluster Architecture (25%) = 55% de l'examen

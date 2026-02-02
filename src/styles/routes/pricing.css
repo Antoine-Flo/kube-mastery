@@ -82,6 +82,14 @@
     text-align: center;
 }
 
+/* Pricing plan subline (e.g. "One-time, access forever") */
+.pricing__plan-subline {
+    text-align: center;
+    font-size: var(--text-sm);
+    color: var(--color-gray-11);
+    margin: var(--spacing-1) 0 0;
+}
+
 /* Pricing Plan Price */
 .pricing__plan-price {
     text-align: center;
@@ -168,46 +176,6 @@
 .pricing__feature-card-description {
     color: var(--color-gray-11);
     font-size: var(--text-sm);
-}
-
-/* Pricing Coming Soon Section */
-.pricing__coming-section {
-    margin-top: 4rem;
-    padding: var(--spacing-6);
-    border-radius: var(--radius-xl);
-    background-color: var(--color-gray-2);
-    border: 1px dashed var(--color-gray-6);
-}
-
-.pricing__coming-title {
-    font-size: var(--text-xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-gray-12);
-    text-align: center;
-    margin-bottom: 1.5rem;
-}
-
-.pricing__coming-list {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-}
-
-@media (min-width: 768px) {
-    .pricing__coming-list {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-.pricing__coming-item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2);
-    color: var(--color-gray-11);
-}
-
-.pricing__coming-item-icon {
-    color: var(--color-cyan-9);
 }
 
 /* Pricing FAQ Section */
