@@ -18,17 +18,17 @@
 
 ## Vue d’ensemble des étapes
 
-| Phase | Contenu                                | Risque | État                                     |
-| ----- | -------------------------------------- | ------ | ---------------------------------------- |
-| 0     | Préparation & structure                | Faible | Fait                                     |
-| 1     | Pages statiques / marketing            | Faible | Fait (partiel : pricing, privacy, terms) |
-| 2     | Layout, UI de base, thème              | Faible | Fait                                     |
-| 3     | i18n & routing par langue              | Moyen  | Fait                                     |
-| 4     | Contenu cours (markdown)               | Moyen  | Fait                                     |
-| 5     | Routes learn (type/id/lessons)         | Moyen  | Fait                                     |
-| 6     | Terminal + cluster (îlots interactifs) | Élevé  | Fait (terminal) ; cluster viewer à faire |
+| Phase | Contenu                                | Risque | État                                           |
+| ----- | -------------------------------------- | ------ | ---------------------------------------------- |
+| 0     | Préparation & structure                | Faible | Fait                                           |
+| 1     | Pages statiques / marketing            | Faible | Fait (partiel : pricing, privacy, terms)       |
+| 2     | Layout, UI de base, thème              | Faible | Fait                                           |
+| 3     | i18n & routing par langue              | Moyen  | Fait                                           |
+| 4     | Contenu cours (markdown)               | Moyen  | Fait                                           |
+| 5     | Routes learn (type/id/lessons)         | Moyen  | Fait                                           |
+| 6     | Terminal + cluster (îlots interactifs) | Élevé  | Fait (terminal) ; cluster viewer à faire       |
 | 7     | Quiz, auth, API                        | Élevé  | Fait (auth) ; Quiz, API, user progress à faire |
-| 8     | Tests, CI, nettoyage                   | Moyen  | À faire                                  |
+| 8     | Tests, CI, nettoyage                   | Moyen  | À faire                                        |
 
 ---
 
