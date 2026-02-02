@@ -1,43 +1,90 @@
 import type { APIRoute } from "astro";
-import { supabase } from "../../../lib/supabase";
+import { getSupabaseFromLocals } from "../../../lib/supabase";
 import type { Provider } from "@supabase/supabase-js";
 
-export const POST: APIRoute = async ({ request, cookies, redirect }) => {
-  const formData = await request.formData();
-  const email = formData.get("email")?.toString();
-  const password = formData.get("password")?.toString();
-  const provider = formData.get("provider")?.toString();
-  const lang = (formData.get("lang")?.toString() || "en") as string;
+const json = (body: { error: string; message: string }, status: number) =>
+	new Response(JSON.stringify(body), {
+		status,
+		headers: { "Content-Type": "application/json" },
+	});
 
-  if (provider === "github") {
-    const callbackUrl = new URL("/api/auth/callback", request.url);
-    callbackUrl.searchParams.set("lang", lang);
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "github" as Provider,
-      options: { redirectTo: callbackUrl.toString() },
-    });
-    if (error) {
-      return new Response(error.message, { status: 500 });
-    }
-    return redirect(data.url);
-  }
+export const POST: APIRoute = async ({
+	request,
+	cookies,
+	redirect,
+	locals,
+}) => {
+	let supabase;
+	try {
+		supabase = getSupabaseFromLocals(locals);
+	} catch (e) {
+		return json(
+			{
+				error: "auth/config",
+				message: e instanceof Error ? e.message : "Missing Supabase env.",
+			},
+			500,
+		);
+	}
 
-  if (!email || !password) {
-    return new Response("Email and password are required", { status: 400 });
-  }
+	const formData = await request.formData();
+	const email = formData.get("email")?.toString();
+	const password = formData.get("password")?.toString();
+	const provider = formData.get("provider")?.toString();
+	const lang = (formData.get("lang")?.toString() || "en") as string;
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+	if (provider === "github") {
+		const callbackUrl = new URL("/api/auth/callback", request.url);
+		callbackUrl.searchParams.set("lang", lang);
+		const { data, error } = await supabase.auth.signInWithOAuth({
+			provider: "github" as Provider,
+			options: { redirectTo: callbackUrl.toString() },
+		});
+		if (error) {
+			return json(
+				{ error: "auth/oauth", message: error.message },
+				500,
+			);
+		}
+		if (!data?.url) {
+			return json(
+				{
+					error: "auth/oauth",
+					message: "No redirect URL returned by Supabase.",
+				},
+				500,
+			);
+		}
+		return redirect(data.url);
+	}
 
-  if (error) {
-    return new Response(error.message, { status: 500 });
-  }
+	if (!email || !password) {
+		return new Response("Email and password are required", { status: 400 });
+	}
 
-  const { access_token, refresh_token } = data.session;
-  cookies.set("sb-access-token", access_token, { path: "/" });
-  cookies.set("sb-refresh-token", refresh_token, { path: "/" });
+	const { data, error } = await supabase.auth.signInWithPassword({
+		email,
+		password,
+	});
 
-  return redirect(`/${lang}/courses`);
+	if (error) {
+		return json({ error: "auth/signin", message: error.message }, 500);
+	}
+
+	const session = data?.session;
+	if (!session?.access_token || !session?.refresh_token) {
+		return json(
+			{
+				error: "auth/session-missing",
+				message:
+					"No session returned (e.g. email not confirmed). Check Supabase auth settings.",
+			},
+			500,
+		);
+	}
+
+	cookies.set("sb-access-token", session.access_token, { path: "/" });
+	cookies.set("sb-refresh-token", session.refresh_token, { path: "/" });
+
+	return redirect(`/${lang}/courses`);
 };

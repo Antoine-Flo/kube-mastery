@@ -1,21 +1,44 @@
 import type { APIRoute } from "astro";
-import { supabase } from "../../../lib/supabase";
+import { getSupabaseFromLocals } from "../../../lib/supabase";
 
-export const POST: APIRoute = async ({ request, redirect }) => {
-  const formData = await request.formData();
-  const email = formData.get("email")?.toString();
-  const password = formData.get("password")?.toString();
-  const lang = (formData.get("lang")?.toString() || "en") as string;
+const json = (body: { error: string; message: string }, status: number) =>
+	new Response(JSON.stringify(body), {
+		status,
+		headers: { "Content-Type": "application/json" },
+	});
 
-  if (!email || !password) {
-    return new Response("Email and password are required", { status: 400 });
-  }
+export const POST: APIRoute = async ({
+	request,
+	redirect,
+	locals,
+}) => {
+	let supabase;
+	try {
+		supabase = getSupabaseFromLocals(locals);
+	} catch (e) {
+		return json(
+			{
+				error: "auth/config",
+				message: e instanceof Error ? e.message : "Missing Supabase env.",
+			},
+			500,
+		);
+	}
 
-  const { error } = await supabase.auth.signUp({ email, password });
+	const formData = await request.formData();
+	const email = formData.get("email")?.toString();
+	const password = formData.get("password")?.toString();
+	const lang = (formData.get("lang")?.toString() || "en") as string;
 
-  if (error) {
-    return new Response(error.message, { status: 500 });
-  }
+	if (!email || !password) {
+		return new Response("Email and password are required", { status: 400 });
+	}
 
-  return redirect(`/${lang}/auth`);
+	const { error } = await supabase.auth.signUp({ email, password });
+
+	if (error) {
+		return json({ error: "auth/register", message: error.message }, 500);
+	}
+
+	return redirect(`/${lang}/auth`);
 };

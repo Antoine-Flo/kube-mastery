@@ -1,23 +1,59 @@
 import type { APIRoute } from "astro";
-import { supabase } from "../../../lib/supabase";
+import { getSupabaseFromLocals } from "../../../lib/supabase";
 
-export const GET: APIRoute = async ({ url, cookies, redirect }) => {
-  const authCode = url.searchParams.get("code");
-  const lang = url.searchParams.get("lang") || "en";
+const json = (body: { error: string; message: string }, status: number) =>
+	new Response(JSON.stringify(body), {
+		status,
+		headers: { "Content-Type": "application/json" },
+	});
 
-  if (!authCode) {
-    return new Response("No code provided", { status: 400 });
-  }
+export const GET: APIRoute = async ({ url, cookies, redirect, locals }) => {
+	const authCode = url.searchParams.get("code");
+	const lang = url.searchParams.get("lang") || "en";
 
-  const { data, error } = await supabase.auth.exchangeCodeForSession(authCode);
+	if (!authCode) {
+		return json(
+			{ error: "auth/callback", message: "No code provided in OAuth callback." },
+			400,
+		);
+	}
 
-  if (error) {
-    return new Response(error.message, { status: 500 });
-  }
+	let supabase;
+	try {
+		supabase = getSupabaseFromLocals(locals);
+	} catch (e) {
+		return json(
+			{
+				error: "auth/config",
+				message: e instanceof Error ? e.message : "Missing Supabase env.",
+			},
+			500,
+		);
+	}
 
-  const { access_token, refresh_token } = data.session;
-  cookies.set("sb-access-token", access_token, { path: "/" });
-  cookies.set("sb-refresh-token", refresh_token, { path: "/" });
+	const { data, error } = await supabase.auth.exchangeCodeForSession(authCode);
 
-  return redirect(`/${lang}/courses`);
+	if (error) {
+		return json(
+			{ error: "auth/callback", message: error.message },
+			500,
+		);
+	}
+
+	const session = data?.session;
+	if (!session?.access_token || !session?.refresh_token) {
+		return json(
+			{
+				error: "auth/session-missing",
+				message:
+					"No session after code exchange. Check Supabase OAuth and PKCE settings.",
+			},
+			500,
+		);
+	}
+
+	cookies.set("sb-access-token", session.access_token, { path: "/" });
+	cookies.set("sb-refresh-token", session.refresh_token, { path: "/" });
+
+	return redirect(`/${lang}/courses`);
 };
