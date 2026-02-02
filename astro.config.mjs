@@ -12,7 +12,7 @@ export default defineConfig({
 
   integrations: [
       mermaid({
-          theme: 'forest',
+          theme: 'dark',
           autoTheme: true
       }),
       sitemap()

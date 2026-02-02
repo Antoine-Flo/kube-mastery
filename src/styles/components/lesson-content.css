@@ -53,18 +53,15 @@
 }
 
 .lesson-content pre {
-  background-color: var(--color-gray-3);
   border-radius: var(--radius-xs);
   margin-bottom: 1rem;
+  border: 1px solid var(--color-gray-6);
+  border-radius: var(--radius-sm);
 }
 
 .lesson-content pre.astro-code {
   padding: 1rem;
   margin-bottom: 1rem;
-}
-
-.lesson-content pre code {
-  background-color: transparent;
 }
 
 .lesson-content pre.astro-code code {
@@ -80,6 +77,15 @@
 
 .lesson-content .mermaid-card-body {
   text-align: center;
+}
+
+.lesson-content pre.mermaid {
+  padding: 0;
+  background-color: transparent !important;
+}
+
+.lesson-content pre.mermaid .nodeLabel p {
+  font-size: 15px;
 }
 
 .lesson-content .mermaid svg {
@@ -165,9 +171,7 @@
 
 .lesson-content .callout-command pre code {
   background-color: transparent;
-  padding: 1rem;
-  border: 1px solid var(--color-gray-6);
-  border-radius: var(--radius-sm);
+
 }
 
 .lesson-content .callout-command a {
