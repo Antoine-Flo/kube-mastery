@@ -27,7 +27,7 @@
 | 4     | Contenu cours (markdown)               | Moyen  | Fait                                     |
 | 5     | Routes learn (type/id/lessons)         | Moyen  | Fait                                     |
 | 6     | Terminal + cluster (îlots interactifs) | Élevé  | Fait (terminal) ; cluster viewer à faire |
-| 7     | Quiz, auth, API                        | Élevé  | À faire                                  |
+| 7     | Quiz, auth, API                        | Élevé  | Fait (auth) ; Quiz, API, user progress à faire |
 | 8     | Tests, CI, nettoyage                   | Moyen  | À faire                                  |
 
 ---
@@ -210,20 +210,22 @@
 
 **But** : Quiz en fin de leçon, compte utilisateur (Supabase), et routes API si nécessaires.
 
-1. **User progress (overview cours)**
+1. **User progress (overview cours) — à migrer**
    - **Principe** : les pages overview cours/module restent en **SSG**. Le contenu (structure, titres, liens) est identique pour tous ; seul l’affichage du progress (leçons complétées, "Continue", leçon courante) dépend de l’utilisateur.
    - **Mise en œuvre** : au chargement de la page, un script ou un îlot côté client vérifie si l’utilisateur est connecté, appelle le back pour récupérer le progress du cours, puis met à jour l’UI (checkmarks, bouton Continue, etc.). Pas de rendu serveur pour le progress : tout est HTML statique + enrichissement client.
    - **Back** : à définir (endpoints Astro, Supabase Edge Functions, ou appel direct Supabase avec RLS depuis le client). On verra au moment de la mise en place.
 
-2. **Quiz**
+2. **Auth — fait**
+   - Supabase : client `src/lib/supabase.ts` (PKCE pour OAuth).
+   - API routes : `src/pages/api/auth/register.ts`, `signin.ts`, `signout.ts`, `callback.ts` (email/password + GitHub, cookies sb-access-token / sb-refresh-token, redirect `/${lang}/courses` ou `/${lang}/auth`).
+   - Page auth : `src/pages/[lang]/auth/index.astro` (login/signup toggle + GitHub, formulaires avec `data-astro-reload`).
+   - Navbar : lien Connexion / Déconnexion selon cookies ; bouton thème (Button plain sm).
+
+3. **Quiz**
    - Les types et la logique sont dans `old/src/lib/quiz-types.ts`, `quiz-loader`, et `old/src/components/quiz/`.
    - Recréer en composant îlot (Solid ou React) : affichage des questions, validation, passage “question suivante” / “leçon suivante”.
    - Intégration avec le terminal : si une question “terminal” doit vérifier une commande, le composant quiz doit pouvoir interroger l’état du terminal (ex. via un callback ou un store partagé).
 
-3. **Auth**
-   - Supabase : `old/src/account/`, `old/src/lib/auth.tsx`, `old/src/db/`.
-   - En Astro : pas de React/Solid context. Options : cookie de session + vérification côté server (Astro endpoints ou middleware), ou un petit store client pour l’état “user” affiché dans la navbar.
-   - Migrer les appels Supabase (login, logout, subscription) en fonctions appelables depuis les îlots ou depuis des endpoints Astro.
 
 4. **API**
    - Les routes API sont dans `old/src/routes/api/` (ab-test, seeds, suggestions, survey).
@@ -273,9 +275,9 @@ Respecter l’ordre des phases ; valider chaque phase avant de passer à la suiv
 | Terminal (home)          | `old/` + fetch seeds API               | `Terminal.astro` → `TerminalWindow.astro`, `terminal-mount.ts`, seed demo, top prompt dans `messages`                          |
 | Terminal (leçon)         | —                                      | `LessonTerminal.astro` → `TerminalWindow.astro`, seed par chapitre (`chapter.json` environment), `transition:persist` par seed |
 | Seeds                    | `old/seeds/`, API `/api/seeds/[name]`  | `src/courses/seeds/` (minimal, demo, getSeed), pas d’API                                                                       |
-| Auth                     | `src/account/`, `src/lib/auth.tsx`     | Endpoints + store client (à faire)                                                                                             |
+| Auth                     | `src/account/`, `src/lib/auth.tsx`     | `src/lib/supabase.ts`, `src/pages/api/auth/`, `[lang]/auth/index.astro`, Navbar ; user progress à migrer                       |
 | API                      | `src/routes/api/`                      | `src/pages/api/` (à faire)                                                                                                     |
 
 ---
 
-*Document mis à jour au fil de la migration. Dernière mise à jour : phase 5 + phase 7 (user progress en SSG + chargement client, principe documenté ; back à définir).*
+*Document mis à jour au fil de la migration. Dernière mise à jour : phase 7 auth fait (Supabase, API routes, page auth, Navbar login/logout) ; user progress à migrer.*

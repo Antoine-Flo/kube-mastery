@@ -31,7 +31,9 @@ const {
 	lessonTerminal = false,
 	showControls = true,
 } = Astro.props;
-const rootClass = ["t-win", fullHeight && "t-win--full", className].filter(Boolean).join(" ");
+const rootClass = ["t-win", fullHeight && "t-win--full", className]
+	.filter(Boolean)
+	.join(" ");
 ---
 
 <div
@@ -42,17 +44,25 @@ const rootClass = ["t-win", fullHeight && "t-win--full", className].filter(Boole
 	data-rows={rows}
 	data-lang={lang}
 	data-seed-name={seedName ?? undefined}
-	data-persist-id={lessonTerminal ? undefined : persistId ?? undefined}
+	data-persist-id={lessonTerminal ? undefined : (persistId ?? undefined)}
 	data-top-prompt={topPrompt != null ? JSON.stringify(topPrompt) : undefined}
 	data-lesson-terminal={lessonTerminal ? "true" : undefined}
 >
-	{showControls && (
-		<div class="t-ctrl" aria-hidden="true">
-			<span class="t-btn t-btn--min"><Minus size={12} /></span>
-			<span class="t-btn t-btn--max"><Square size={12} /></span>
-			<span class="t-btn t-btn--close"><X size={12} /></span>
-		</div>
-	)}
+	{
+		showControls && (
+			<div class="t-ctrl" aria-hidden="true">
+				<span class="t-btn t-btn--min">
+					<Minus size={14} />
+				</span>
+				<span class="t-btn t-btn--max">
+					<Square size={14} />
+				</span>
+				<span class="t-btn t-btn--close">
+					<X size={14} />
+				</span>
+			</div>
+		)
+	}
 	<div class="t-load">
 		<span class="t-load-txt">Loading terminal…</span>
 	</div>
@@ -93,10 +103,14 @@ const rootClass = ["t-win", fullHeight && "t-win--full", className].filter(Boole
 			}
 
 			const rows = Number(el.dataset.rows) || 20;
-			const lang = (el.dataset.lang === "fr" ? "fr" : "en") as "en" | "fr";
+			const lang = (el.dataset.lang === "fr" ? "fr" : "en") as
+				| "en"
+				| "fr";
 			const seedName = el.dataset.seedName;
 			const topPromptRaw = el.dataset.topPrompt;
-			const topPrompt = topPromptRaw ? (JSON.parse(topPromptRaw) as string) : undefined;
+			const topPrompt = topPromptRaw
+				? (JSON.parse(topPromptRaw) as string)
+				: undefined;
 
 			const doMount = (opts: Parameters<typeof mountTerminal>[1]) => {
 				try {
@@ -124,7 +138,9 @@ const rootClass = ["t-win", fullHeight && "t-win--full", className].filter(Boole
 				return;
 			}
 			lessonPending.add(root);
-			const g = globalThis as unknown as { __lessonEnv?: import("../core/emulatedEnvironment/EmulatedEnvironment").EmulatedEnvironment };
+			const g = globalThis as unknown as {
+				__lessonEnv?: import("../core/emulatedEnvironment/EmulatedEnvironment").EmulatedEnvironment;
+			};
 			const withEnv = (env: typeof g.__lessonEnv) => {
 				if (env) {
 					doMount({ env, rows, lang });
@@ -134,7 +150,11 @@ const rootClass = ["t-win", fullHeight && "t-win--full", className].filter(Boole
 				withEnv(g.__lessonEnv);
 				return;
 			}
-			document.addEventListener("lesson-env-ready", (ev: Event) => withEnv((ev as CustomEvent).detail?.env), { once: true });
+			document.addEventListener(
+				"lesson-env-ready",
+				(ev: Event) => withEnv((ev as CustomEvent).detail?.env),
+				{ once: true },
+			);
 		});
 	}
 
@@ -159,12 +179,9 @@ const rootClass = ["t-win", fullHeight && "t-win--full", className].filter(Boole
 
 <style>
 	.t-win {
-		padding-top: var(--spacing-4);
-		padding-bottom: var(--spacing-4);
-		padding-left: var(--spacing-4);
-		padding-right: var(--spacing-4);
+		padding: var(--spacing-4);
 		position: relative;
-		background-color: var(--color-gray-1);
+		/* background-color: var(--color-gray-1); */
 	}
 	.t-win:not(.t-win--full) {
 		height: 490px;
@@ -191,9 +208,15 @@ const rootClass = ["t-win", fullHeight && "t-win--full", className].filter(Boole
 	.t-btn:hover {
 		opacity: 1;
 	}
-	.t-btn--close { color: var(--color-ruby-11); }
-	.t-btn--max { color: var(--color-green-11); }
-	.t-btn--min { color: var(--color-amber-11); }
+	.t-btn--close {
+		color: var(--color-ruby-11);
+	}
+	.t-btn--max {
+		color: var(--color-green-11);
+	}
+	.t-btn--min {
+		color: var(--color-amber-11);
+	}
 	.t-load {
 		display: flex;
 		align-items: center;
