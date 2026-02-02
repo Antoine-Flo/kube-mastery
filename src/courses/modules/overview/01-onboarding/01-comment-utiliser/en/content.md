@@ -31,7 +31,7 @@ To verify kubectl is working, run:
 kubectl version
 ```
 
-Throughout this course, everything we explain here is based on the official Kubernetes documentation. It's essential that you learn to navigate it effectively—it's an indispensable tool, especially when preparing for certification exams like the CKA or CKAD.
+Throughout this course, everything we explain here is based on the official Kubernetes documentation. It's essential that you learn to navigate it effectively, it's an indispensable tool, especially when preparing for certification exams like the CKA or CKAD.
 
 ## Practice with quizzes
 

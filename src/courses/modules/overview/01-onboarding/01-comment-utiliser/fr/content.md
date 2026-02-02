@@ -31,7 +31,7 @@ Pour vérifier que kubectl fonctionne, exécutez :
 kubectl version
 ```
 
-Tout au long de ce cours, tout ce que nous expliquons ici est basé sur la documentation officielle de Kubernetes. Il est essentiel que vous appreniez à la naviguer efficacement—c'est un outil indispensable, surtout lors de la préparation aux examens de certification comme le CKA ou le CKAD.
+Tout au long de ce cours, tout ce que nous expliquons ici est basé sur la documentation officielle de Kubernetes. Il est essentiel que vous appreniez à la naviguer efficacement, c'est un outil indispensable, surtout lors de la préparation aux examens de certification comme le CKA ou le CKAD.
 
 ## S'exercer avec les quiz
 
