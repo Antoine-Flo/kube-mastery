@@ -2,13 +2,6 @@
 import Layout from "../../layouts/Layout.astro";
 import { useTranslations } from "../../i18n/utils.js";
 
-export function getStaticPaths() {
-	return [
-		{ params: { lang: "en" } },
-		{ params: { lang: "fr" } },
-	];
-}
-
 const locale = Astro.params.lang as "en" | "fr";
 const t = useTranslations(locale);
 ---
