@@ -15,7 +15,7 @@ export function createSupabaseBrowserClient(): SupabaseClient {
 	const url =
 		import.meta.env.PUBLIC_SUPABASE_URL
 	const key =
-		import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY 
+		import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
 	if (!url || !key) {
 		throw new Error(
 			"Supabase client: set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_PUBLISHABLE_KEY (or PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY) in .env.",
@@ -26,6 +26,7 @@ export function createSupabaseBrowserClient(): SupabaseClient {
 
 type AstroCookies = {
 	set: (name: string, value: string, options?: { path?: string }) => void;
+	delete?: (name: string, options?: { path?: string }) => void;
 };
 
 /** Server client – use in API routes and server-rendered pages. Cookies = PKCE verifier + session. */
@@ -51,9 +52,13 @@ export function getSupabaseServer(
 				}));
 			},
 			setAll(cookiesToSet) {
-				cookiesToSet.forEach(({ name, value }) =>
-					cookies.set(name, value, { path: "/" }),
-				);
+				cookiesToSet.forEach(({ name, value }) => {
+					if (value === "" && cookies.delete) {
+						cookies.delete(name, { path: "/" });
+					} else {
+						cookies.set(name, value, { path: "/" });
+					}
+				});
 			},
 		},
 	});

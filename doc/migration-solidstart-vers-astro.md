@@ -217,9 +217,9 @@
 
 2. **Auth — fait**
    - Supabase : client `src/lib/supabase.ts` (PKCE pour OAuth).
-   - API routes : `src/pages/api/auth/register.ts`, `signin.ts`, `signout.ts`, `callback.ts` (email/password + GitHub, cookies sb-access-token / sb-refresh-token, redirect `/${lang}/courses` ou `/${lang}/auth`).
+   - API routes : `src/pages/api/auth/register.ts`, `signin.ts`, `signout.ts`, `callback.ts` (email/password + GitHub, session gérée par @supabase/ssr via cookies, redirect `/${lang}/courses` ou page d’accueil après signout).
    - Page auth : `src/pages/[lang]/auth/index.astro` (login/signup toggle + GitHub, formulaires avec `data-astro-reload`).
-   - Navbar : lien Connexion / Déconnexion selon cookies ; bouton thème (Button plain sm).
+   - Navbar : lien Connexion / Déconnexion selon session Supabase (getUser) ; bouton thème (Button plain sm).
 
 3. **Quiz — fait**
    - Types : `src/types/quiz.ts` (MultipleChoiceQuestion, TerminalCommandQuestion, CommandQuestion, OrderQuestion).

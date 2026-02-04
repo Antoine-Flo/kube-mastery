@@ -52,8 +52,5 @@ export const GET: APIRoute = async ({ url, request, cookies, redirect, locals })
 		);
 	}
 
-	cookies.set("sb-access-token", session.access_token, { path: "/" });
-	cookies.set("sb-refresh-token", session.refresh_token, { path: "/" });
-
 	return redirect(`/${lang}/courses`);
 };

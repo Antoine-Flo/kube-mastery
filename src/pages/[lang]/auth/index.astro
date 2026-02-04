@@ -1,16 +1,28 @@
 ---
 import Layout from "../../../layouts/Layout.astro";
+
 import Button from "../../../components/ui/Button.astro";
 import { useTranslations, useLocalePath } from "../../../i18n/utils";
+import { getSupabaseServer } from "../../../lib/supabase";
 
 const lang = (Astro.params.lang || "en") as "en" | "fr";
 const t = useTranslations(lang);
 const localePath = useLocalePath(lang);
 
-const accessToken = Astro.cookies.get("sb-access-token");
-const refreshToken = Astro.cookies.get("sb-refresh-token");
-if (accessToken?.value && refreshToken?.value) {
-  return Astro.redirect(localePath("/courses"));
+try {
+  const supabase = getSupabaseServer(
+    Astro.locals,
+    Astro.request,
+    Astro.cookies,
+  );
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    return Astro.redirect(localePath("/courses"));
+  }
+} catch {
+  // Missing Supabase env or other error → show login page
 }
 ---
 

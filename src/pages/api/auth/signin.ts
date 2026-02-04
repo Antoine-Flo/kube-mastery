@@ -83,8 +83,5 @@ export const POST: APIRoute = async ({
 		);
 	}
 
-	cookies.set("sb-access-token", session.access_token, { path: "/" });
-	cookies.set("sb-refresh-token", session.refresh_token, { path: "/" });
-
 	return redirect(`/${lang}/courses`);
 };
