@@ -28,7 +28,8 @@ export function getPathWithoutLocale(url: URL): string {
 
 export function useTranslations(lang: UiLang) {
 	return function t(key: keyof (typeof ui)[typeof defaultLang]) {
-		return ui[lang][key as string] ?? ui[defaultLang][key as string] ?? key;
+		const dict = lang && lang in ui ? ui[lang] : ui[defaultLang];
+		return dict[key as string] ?? ui[defaultLang][key as string] ?? key;
 	};
 }
 
