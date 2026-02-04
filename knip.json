@@ -6,5 +6,8 @@
   },
   "tags": [
     "-lintignore"
+  ],
+  "ignore": [
+    "src/courses/**/*.ts"
   ]
 }

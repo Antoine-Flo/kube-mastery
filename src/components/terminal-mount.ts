@@ -12,6 +12,7 @@ import { clusterStateData as demoClusterStateData, fsConfig as demoFsConfig } fr
 import { getSeed } from "../courses/seeds/getSeed";
 import { createFilesystemFromConfig } from "../core/filesystem/debianFileSystem";
 import { createFileSystem } from "../core/filesystem/FileSystem";
+import type { EditorModal } from "../core/shell/commands";
 import { createCommandDispatcher } from "../core/terminal/core/CommandDispatcher";
 import {
 	attachTerminal,
@@ -39,6 +40,8 @@ export interface MountTerminalOptions {
 	topPrompt?: string;
 	/** Shared environment (e.g. from lesson page). If set, it is used and not destroyed on cleanup. */
 	env?: EmulatedEnvironment;
+	/** Editor overlay for vim/nano. If set, nano/vi/vim open this modal. */
+	editorModal?: EditorModal & { close?(): void };
 }
 
 /** Mounts xterm, returns cleanup (detach + destroy env). */
@@ -53,6 +56,7 @@ export function mountTerminal(
 		seedName,
 		topPrompt,
 		env: providedEnv,
+		editorModal,
 	} = options;
 
 	const env: EmulatedEnvironment =
@@ -94,6 +98,7 @@ export function mountTerminal(
 					);
 					dispatcher = createCommandDispatcher({
 						fileSystem,
+						editorModal,
 						renderer: controller.getRenderer(),
 						shellContextStack: env.shellContextStack,
 						clusterState: env.clusterState,
@@ -118,6 +123,7 @@ export function mountTerminal(
 
 	return function cleanup() {
 		observer.disconnect();
+		editorModal?.close?.();
 		detachTerminal(attachId);
 		dispatcher = null;
 		if (!providedEnv) destroyEmulatedEnvironment(env);
