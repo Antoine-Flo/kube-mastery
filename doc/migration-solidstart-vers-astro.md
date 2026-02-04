@@ -26,8 +26,8 @@
 | 3     | i18n & routing par langue              | Moyen  | Fait                                           |
 | 4     | Contenu cours (markdown)               | Moyen  | Fait                                           |
 | 5     | Routes learn (type/id/lessons)         | Moyen  | Fait                                           |
-| 6     | Terminal + cluster (îlots interactifs) | Élevé  | Fait (terminal) ; cluster viewer à faire       |
-| 7     | Quiz, auth, API                        | Élevé  | Fait (auth, quiz) ; API, user progress à faire |
+| 6     | Terminal + cluster (îlots interactifs) | Élevé  | Fait (terminal + cluster viewer)               |
+| 7     | Quiz, auth, API                        | Élevé  | Fait (auth, quiz, user progress) ; API à faire |
 | 8     | Tests, CI, nettoyage                   | Moyen  | À faire                                        |
 
 ---
@@ -166,9 +166,8 @@
 3. **Navigation**
    - Liens “retour au cours/module”, “leçon précédente”, “leçon suivante” sur la page leçon ; liens depuis l’overview vers chaque leçon (`lessonBaseUrl` = `/${type}/${id}`).
 
-4. **User progress (principe)**
-   - La page overview (`[type]/[id]/index.astro`) reste en **SSG** : structure du cours, chapitres, leçons sont dans le HTML au build.
-   - Le **progress** utilisateur (leçons complétées, "Continue", leçon courante) ne fait pas partie du prerender. Il sera chargé **côté client** via un appel au back (API ou Supabase), puis l'UI sera adaptée (checkmarks, bouton Continue, etc.). Détail en phase 7.
+4. **User progress — fait (détail en phase 7)**
+   - La page overview reste en SSG ; le progress (leçons complétées, "Continue", leçon courante) est résolu côté serveur via `getProgressContext` + Supabase, puis passé aux composants (OverviewStructure, CourseOutline) pour checkmarks et CTA.
 
 **Validation** : Navigation complète overview ↔ leçon par URL ; contenu markdown + mermaid correct.
 
@@ -178,7 +177,7 @@
 
 **But** : Réutiliser la logique métier (core) et avoir un terminal interactif + visualisation cluster dans Astro.
 
-**État : Terminal fait ; cluster viewer (visualisation) à faire.**
+**État : Fait (terminal + cluster viewer).**
 
 ### Réalisé
 
@@ -198,11 +197,10 @@
 4. **Layout page leçon**
    - `src/pages/[lang]/[type]/[id]/[lessonId]/index.astro` : deux colonnes (contenu scrollable | terminal pleine hauteur), `LessonTerminal` avec `seedName` dérivé du chapitre courant.
 
-### À faire
+5. **Cluster viewer**
+   - Composant : `LessonClusterViewer.astro` + `LessonClusterPanel.astro` ; montage client via `src/components/cluster-viewer-mount.ts` — `mountClusterViewer(container, { env })` consomme l’`EmulatedEnvironment`, s’abonne à l’event bus du cluster et affiche nodes → pods → containers (vue imbriquée, tooltips). Styles : `cluster-visualization.css`, `lesson-cluster-viewer.css`.
 
-- **Cluster viewer** : composant qui consomme l’état du cluster (EventBus ou équivalent) et affiche nodes/pods ; s’inspirer de `old/src/components/cluster-visualization.tsx` si besoin.
-
-**Validation** : Sur la home et sur une leçon, le terminal répond aux commandes kubectl/shell ; pas de visualisation cluster pour l’instant.
+**Validation** : Sur la home et sur une leçon, le terminal répond aux commandes kubectl/shell ; sur une leçon, le panneau cluster viewer affiche l’état du cluster (nodes, pods, containers).
 
 ---
 
@@ -210,10 +208,9 @@
 
 **But** : Quiz en fin de leçon, compte utilisateur (Supabase), et routes API si nécessaires.
 
-1. **User progress (overview cours) — à migrer**
-   - **Principe** : les pages overview cours/module restent en **SSG**. Le contenu (structure, titres, liens) est identique pour tous ; seul l’affichage du progress (leçons complétées, "Continue", leçon courante) dépend de l’utilisateur.
-   - **Mise en œuvre** : au chargement de la page, un script ou un îlot côté client vérifie si l’utilisateur est connecté, appelle le back pour récupérer le progress du cours, puis met à jour l’UI (checkmarks, bouton Continue, etc.). Pas de rendu serveur pour le progress : tout est HTML statique + enrichissement client.
-   - **Back** : à définir (endpoints Astro, Supabase Edge Functions, ou appel direct Supabase avec RLS depuis le client). On verra au moment de la mise en place.
+1. **User progress (overview cours) — fait**
+   - **Principe** : les pages overview cours/module restent en SSG ; le progress (leçons complétées, "Continue", leçon courante) est résolu côté serveur pour l’utilisateur connecté.
+   - **Mise en œuvre** : `src/lib/progress/server.ts` — `getProgressContext(locals, request, cookies)` récupère la session Supabase et les leçons complétées via `createSupabaseProgressRepository` (table `user_progress`). `src/lib/progress/domain.ts` — `computeProgress` / `computeProgressMap` pour currentLessonId, hasStarted, CTA. Pages overview : `[lang]/[type]/[id]/index.astro` et `[lang]/courses.astro` appellent `getProgressContext` puis passent `completed` et `progress` à `OverviewStructure.astro` / `CourseOutline.astro` (classes `progress-completed`, `progress-current`, bouton Continue). Marquer une leçon complétée : `LessonQuizNav.astro` redirige vers `GET /api/progress/complete?lessonId=...&redirect=...` ; `src/pages/api/progress/complete.ts` enregistre en Supabase puis redirige.
 
 2. **Auth — fait**
    - Supabase : client `src/lib/supabase.ts` (PKCE pour OAuth).
@@ -264,22 +261,22 @@ Respecter l’ordre des phases ; valider chaque phase avant de passer à la suiv
 
 ## Fichiers de référence rapide
 
-| Besoin                   | Ancien (old/)                          | Nouveau (racine)                                                                                                               |
-| ------------------------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Routing i18n             | `src/routes/[[lang]]/`                 | `src/pages/[lang]/` + middleware                                                                                               |
-| Layout                   | `src/app.tsx`, navbar, footer          | `src/layouts/Layout.astro`                                                                                                     |
-| Styles                   | `src/styles/`                          | `src/styles/`                                                                                                                  |
-| i18n                     | `src/lang/core.tsx`, Paraglide         | Paraglide + `src/i18n/utils.ts`                                                                                                |
-| Core (terminal, cluster) | `src/core/`                            | `src/core/` (copie adaptée)                                                                                                    |
-| Cours (données)          | `src/courses/`                         | `src/courses/` (en.md/fr.md par cours, course-structure.ts)                                                                    |
-| Overview / leçons (data) | —                                      | `src/data/overview.ts`, `src/data/courses.ts`                                                                                  |
-| Pages cours / leçons     | `learn/[type]/[id]/lessons/[lessonId]` | `[lang]/[type]/[id]/index.astro`, `[lang]/[type]/[id]/[lessonId]/index.astro`                                                  |
-| Terminal (home)          | `old/` + fetch seeds API               | `Terminal.astro` → `TerminalWindow.astro`, `terminal-mount.ts`, seed demo, top prompt dans `messages`                          |
-| Terminal (leçon)         | —                                      | `LessonTerminal.astro` → `TerminalWindow.astro`, seed par chapitre (`chapter.json` environment), `transition:persist` par seed |
-| Seeds                    | `old/seeds/`, API `/api/seeds/[name]`  | `src/courses/seeds/` (minimal, demo, getSeed), pas d’API                                                                       |
-| Auth                     | `src/account/`, `src/lib/auth.tsx`     | `src/lib/supabase.ts`, `src/pages/api/auth/`, `[lang]/auth/index.astro`, Navbar ; user progress à migrer                       |
-| API                      | `src/routes/api/`                      | `src/pages/api/` (à faire)                                                                                                     |
+| Besoin                   | Ancien (old/)                          | Nouveau (racine)                                                                                                                                                      |
+| ------------------------ | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Routing i18n             | `src/routes/[[lang]]/`                 | `src/pages/[lang]/` + middleware                                                                                                                                      |
+| Layout                   | `src/app.tsx`, navbar, footer          | `src/layouts/Layout.astro`                                                                                                                                            |
+| Styles                   | `src/styles/`                          | `src/styles/`                                                                                                                                                         |
+| i18n                     | `src/lang/core.tsx`, Paraglide         | Paraglide + `src/i18n/utils.ts`                                                                                                                                       |
+| Core (terminal, cluster) | `src/core/`                            | `src/core/` (copie adaptée)                                                                                                                                           |
+| Cours (données)          | `src/courses/`                         | `src/courses/` (en.md/fr.md par cours, course-structure.ts)                                                                                                           |
+| Overview / leçons (data) | —                                      | `src/data/overview.ts`, `src/data/courses.ts`                                                                                                                         |
+| Pages cours / leçons     | `learn/[type]/[id]/lessons/[lessonId]` | `[lang]/[type]/[id]/index.astro`, `[lang]/[type]/[id]/[lessonId]/index.astro`                                                                                         |
+| Terminal (home)          | `old/` + fetch seeds API               | `Terminal.astro` → `TerminalWindow.astro`, `terminal-mount.ts`, seed demo, top prompt dans `messages`                                                                 |
+| Terminal (leçon)         | —                                      | `LessonTerminal.astro` → `TerminalWindow.astro`, seed par chapitre (`chapter.json` environment), `transition:persist` par seed                                        |
+| Seeds                    | `old/seeds/`, API `/api/seeds/[name]`  | `src/courses/seeds/` (minimal, demo, getSeed), pas d’API                                                                                                              |
+| Auth                     | `src/account/`, `src/lib/auth.tsx`     | `src/lib/supabase.ts`, `src/pages/api/auth/`, `[lang]/auth/index.astro`, Navbar ; user progress : `src/lib/progress/`, `getProgressContext`, `/api/progress/complete` |
+| API                      | `src/routes/api/`                      | `src/pages/api/` (à faire)                                                                                                                                            |
 
 ---
 
-*Document mis à jour au fil de la migration. Dernière mise à jour : phase 7 auth + quiz fait (Supabase, API routes, page auth, Navbar login/logout, quiz multiple-choice avec navigation) ; user progress et API à migrer.*
+*Document mis à jour au fil de la migration. Dernière mise à jour : phase 6 cluster viewer et phase 7 user progress marqués comme faits ; il reste API (phase 7) et phase 8 (tests, CI, nettoyage).*

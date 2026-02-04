@@ -9,6 +9,8 @@ import cloudflare from "@astrojs/cloudflare";
 import astroExpressiveCode from "astro-expressive-code";
 
 export default defineConfig({
+    site: "https://kubemastery.com",
+
     markdown: {
         remarkPlugins: [remarkCalloutColons],
     },
