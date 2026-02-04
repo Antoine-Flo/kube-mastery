@@ -52,13 +52,32 @@ export function getSupabaseServer(
 				}));
 			},
 			setAll(cookiesToSet) {
-				cookiesToSet.forEach(({ name, value }) => {
-					if (value === "" && cookies.delete) {
-						cookies.delete(name, { path: "/" });
-					} else {
-						cookies.set(name, value, { path: "/" });
+				// Supabase may call setAll from an async callback after the response has started.
+				// Astro then warns and throws. Avoid spamming the console with the known warning.
+				const astroCookiesWarning =	"Astro.cookies.set() was called after the cookies had already been sent";
+				const origWarn = console.warn;
+				console.warn = (...args: unknown[]) => {
+					const msg = args[0]?.toString?.() ?? "";
+					if (msg.includes(astroCookiesWarning)) {
+						return;
 					}
-				});
+					origWarn.apply(console, args);
+				};
+				try {
+					cookiesToSet.forEach(({ name, value }) => {
+						if (value === "" && cookies.delete) {
+							cookies.delete(name, { path: "/" });
+						} else {
+							cookies.set(name, value, { path: "/" });
+						}
+					});
+				} catch (err) {
+					if (err == null || (err as Error).name !== "ResponseSentError") {
+						throw err;
+					}
+				} finally {
+					console.warn = origWarn;
+				}
 			},
 		},
 	});

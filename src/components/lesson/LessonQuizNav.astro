@@ -247,15 +247,26 @@ const completeUrl =
 				return;
 			}
 
-			const quizDone = isQuizCompleted() || allQuestionsCorrect();
+			const currentAnswered =
+				getCurrentQuestion()?.dataset.answered === "true";
+			const isLastQuestion = currentIndex >= questionCount - 1;
 
-			if (quizDone) {
-				nextQuestionBtn.hidden = true;
-				nextLessonLink.hidden = false;
+			// On last question: always show "Next lesson" (triggered when we arrive here via "Next question")
+			// Greyed/disabled until answered, then clickable.
+			if (isLastQuestion || isQuizCompleted() || allQuestionsCorrect()) {
+				nextQuestionBtn.setAttribute("hidden", "");
+				nextLessonLink.removeAttribute("hidden");
+				if (isLastQuestion && !currentAnswered) {
+					nextLessonLink.setAttribute("data-disabled", "true");
+					nextLessonLink.setAttribute("aria-disabled", "true");
+				} else {
+					nextLessonLink.removeAttribute("data-disabled");
+					nextLessonLink.removeAttribute("aria-disabled");
+				}
 			} else {
-				nextQuestionBtn.hidden = false;
-				nextLessonLink.hidden = true;
-				nextQuestionBtn.disabled = !isCurrentAnsweredCorrectly();
+				nextLessonLink.setAttribute("hidden", "");
+				nextQuestionBtn.removeAttribute("hidden");
+				nextQuestionBtn.disabled = !currentAnswered;
 			}
 		}
 
@@ -290,6 +301,23 @@ const completeUrl =
 				}
 			}
 
+			// Disable all options so only "Next question" / "Next lesson" is clickable
+			question
+				.querySelectorAll<HTMLButtonElement>(".quiz__option")
+				.forEach((b) => {
+					b.disabled = true;
+				});
+
+			if (
+				parseInt(
+					question.getAttribute("data-question-index") ?? "-1",
+					10,
+				) >=
+				questionCount - 1
+			) {
+				container.dataset.quizCompleted = "true";
+			}
+
 			updateNextButton();
 		}
 
@@ -306,7 +334,8 @@ const completeUrl =
 		}
 
 		function handleNextQuestion() {
-			if (!isCurrentAnsweredCorrectly()) {
+			const question = getCurrentQuestion();
+			if (!question || question.dataset.answered !== "true") {
 				return;
 			}
 			if (currentIndex >= questionCount - 1) {
@@ -321,6 +350,16 @@ const completeUrl =
 		container.addEventListener("click", (e) => {
 			handleOptionClick(e);
 			handleHintToggle(e);
+			// Prevent "Next lesson" link from navigating when still disabled (last Q not answered)
+			const target = e.target as HTMLElement;
+			if (
+				nextLessonLink &&
+				(nextLessonLink === target ||
+					nextLessonLink.contains(target)) &&
+				nextLessonLink.getAttribute("data-disabled") === "true"
+			) {
+				e.preventDefault();
+			}
 		});
 
 		nextQuestionBtn?.addEventListener("click", handleNextQuestion);
@@ -410,9 +449,13 @@ const completeUrl =
 			background-color 0.15s;
 	}
 
-	.quiz__option:hover:not([data-selected]) {
+	.quiz__option:hover:not([data-selected]):not(:disabled) {
 		border-color: var(--color-palette-cyan-surface-border);
 		background: var(--color-palette-gray-surface-bg-hover);
+	}
+
+	.quiz__option:disabled {
+		cursor: default;
 	}
 
 	.quiz__option[data-result="correct"] {
@@ -425,10 +468,10 @@ const completeUrl =
 	}
 
 	.quiz__option[data-result="incorrect"][data-selected="true"] {
-		border-color: var(--color-palette-red-solid-bg);
+		border-color: var(--color-palette-ruby-solid-bg);
 		background: color-mix(
 			in srgb,
-			var(--color-palette-red-solid-bg) 15%,
+			var(--color-palette-ruby-solid-bg) 15%,
 			transparent
 		);
 	}
@@ -524,5 +567,11 @@ const completeUrl =
 
 	.lesson-nav__btn-lesson:hover {
 		background: var(--color-palette-cyan-solid-bg-hover);
+	}
+
+	.lesson-nav__btn-lesson[data-disabled="true"] {
+		opacity: 0.6;
+		cursor: not-allowed;
+		pointer-events: none;
 	}
 </style>

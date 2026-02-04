@@ -9,10 +9,26 @@ import { getLangFromUrl } from "../i18n/utils";
 import Footer from "../components/Footer.astro";
 import GlobalStyles from "../components/GlobalStyles.astro";
 import Navbar from "../components/Navbar.astro";
+import { getSupabaseServer } from "../lib/supabase";
 
 const lang = getLangFromUrl(Astro.url);
 const bodyClass = Astro.props.bodyClass;
 const showFooter = Astro.props.showFooter ?? true;
+
+let isLoggedIn = false;
+try {
+	const supabase = getSupabaseServer(
+		Astro.locals,
+		Astro.request,
+		Astro.cookies,
+	);
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+	isLoggedIn = Boolean(user);
+} catch {
+	// Missing Supabase env or other error → treat as not logged in
+}
 ---
 
 <!doctype html>
@@ -28,7 +44,7 @@ const showFooter = Astro.props.showFooter ?? true;
 	</head>
 	<body class={bodyClass}>
 		<GlobalStyles />
-		<Navbar />
+		<Navbar isLoggedIn={isLoggedIn} />
 		<main class="layout-main">
 			<slot />
 		</main>

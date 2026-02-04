@@ -3,26 +3,16 @@ import { Moon, Sun } from "@lucide/astro";
 import Logo from "./Logo.astro";
 import Button from "./ui/Button.astro";
 import { getLangFromUrl, useTranslations, useLocalePath } from "../i18n/utils";
-import { getSupabaseServer } from "../lib/supabase";
 
+interface Props {
+	/** Auth state from Layout (centralized to avoid cookies set in component). */
+	isLoggedIn?: boolean;
+}
+
+const { isLoggedIn = false } = Astro.props;
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const localePath = useLocalePath(lang);
-
-let isLoggedIn = false;
-try {
-	const supabase = getSupabaseServer(
-		Astro.locals,
-		Astro.request,
-		Astro.cookies,
-	);
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-	isLoggedIn = Boolean(user);
-} catch {
-	// Missing Supabase env or other error → treat as not logged in
-}
 ---
 
 <header>
