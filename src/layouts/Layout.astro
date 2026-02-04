@@ -5,7 +5,7 @@ interface Props {
 }
 
 import { ClientRouter } from "astro:transitions";
-import { getLangFromUrl } from "../i18n/utils.js";
+import { getLangFromUrl } from "../i18n/utils";
 import Footer from "../components/Footer.astro";
 import GlobalStyles from "../components/GlobalStyles.astro";
 import Navbar from "../components/Navbar.astro";
@@ -14,6 +14,7 @@ const lang = getLangFromUrl(Astro.url);
 const bodyClass = Astro.props.bodyClass;
 const showFooter = Astro.props.showFooter ?? true;
 ---
+
 <!doctype html>
 <html lang={lang}>
 	<head>

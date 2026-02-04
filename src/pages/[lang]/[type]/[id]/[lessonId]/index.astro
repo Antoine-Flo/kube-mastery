@@ -7,73 +7,18 @@ import LessonClusterPanel from "../../../../../components/lesson/LessonClusterPa
 import LessonQuizNav from "../../../../../components/lesson/LessonQuizNav.astro";
 import ScrollArea from "../../../../../components/ui/ScrollArea.astro";
 import { ArrowLeftToLine, ArrowRightToLine } from "@lucide/astro";
-import { useLocalePath, useTranslations } from "../../../../../i18n/utils.js";
-import { getCourses, getModules } from "../../../../../data/courses.js";
+import { useLocalePath, useTranslations } from "../../../../../i18n/utils";
+import { getCourses, getModules } from "../../../../../content/courses/facade";
 import {
 	getCourseOverview,
 	getModuleOverview,
 	getLessonContent,
 	getLessonQuiz,
 	type OverviewType,
-} from "../../../../../data/overview.js";
+} from "../../../../../content/overview/facade";
+import { getProgressContext } from "../../../../../lib/progress/server";
 import "../../../../../styles/components/lesson-content.css";
 import "../../../../../styles/components/cluster-visualization.css";
-
-export function getStaticPaths() {
-	const paths: {
-		params: {
-			lang: string;
-			type: OverviewType;
-			id: string;
-			lessonId: string;
-		};
-	}[] = [];
-	for (const lang of ["en", "fr"] as const) {
-		for (const c of getCourses(lang)) {
-			const overview = getCourseOverview(c.id, lang);
-			if (!overview) {
-				continue;
-			}
-			for (const chapter of overview.content.chapters) {
-				for (const lesson of chapter.lessons) {
-					if (!getLessonContent("courses", c.id, lesson.id, lang)) {
-						continue;
-					}
-					paths.push({
-						params: {
-							lang,
-							type: "courses",
-							id: c.id,
-							lessonId: lesson.id,
-						},
-					});
-				}
-			}
-		}
-		for (const m of getModules(lang)) {
-			const overview = getModuleOverview(m.id, lang);
-			if (!overview) {
-				continue;
-			}
-			for (const chapter of overview.content.chapters) {
-				for (const lesson of chapter.lessons) {
-					if (!getLessonContent("modules", m.id, lesson.id, lang)) {
-						continue;
-					}
-					paths.push({
-						params: {
-							lang,
-							type: "modules",
-							id: m.id,
-							lessonId: lesson.id,
-						},
-					});
-				}
-			}
-		}
-	}
-	return paths;
-}
 
 const lang = Astro.params.lang as "en" | "fr";
 const type = Astro.params.type as OverviewType;
@@ -91,6 +36,11 @@ const overview = (
 		? getCourseOverview(id, lang)
 		: getModuleOverview(id, lang)
 )!;
+const { completed } = await getProgressContext(
+	Astro.locals,
+	Astro.request,
+	Astro.cookies,
+);
 const allLessons = overview.content.chapters.flatMap((ch) => ch.lessons);
 const currentIndex = allLessons.findIndex((l) => l.id === lessonId);
 const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
@@ -112,7 +62,7 @@ const prevLessonHref = prevLesson
 	: "";
 const nextLessonHref = nextLesson
 	? localePath(`/${type}/${id}/${nextLesson.id}`)
-	: "";
+	: overviewHref;
 const isFirstLesson = currentIndex === 0;
 const isLastLesson = currentIndex >= allLessons.length - 1;
 const quizNavLabels = {
@@ -144,6 +94,7 @@ const quizNavLabels = {
 						overview={overview}
 						currentLessonId={lessonId}
 						lessonBaseUrl={lessonBaseUrl}
+						completedLessonIds={completed}
 					/>
 				</div>
 				<div class="lp__sb-ft">
@@ -183,6 +134,7 @@ const quizNavLabels = {
 									isFirst={isFirstLesson}
 									isLast={isLastLesson}
 									labels={quizNavLabels}
+									lessonId={lessonId}
 								/>
 							</main>
 						</ScrollArea>

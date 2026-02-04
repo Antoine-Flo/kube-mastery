@@ -1,6 +1,15 @@
 ---
-import { ChevronDown, LockOpen } from "@lucide/astro";
-import type { OverviewChapter, OverviewLesson } from "../../data/overview.js";
+import {
+	ChevronDown,
+	LockOpen,
+	Circle,
+	CircleCheck,
+	CirclePlay,
+} from "@lucide/astro";
+import type {
+	OverviewChapter,
+	OverviewLesson,
+} from "../../content/overview/facade";
 
 interface Props {
 	chapters: OverviewChapter[];
@@ -11,9 +20,21 @@ interface Props {
 	/** Base URL for lesson links, e.g. /en/courses/onboarding/lessons. Lesson link = base + "/" + lesson.id */
 	lessonBaseUrl: string;
 	t: (key: string) => string;
+	/** Lesson IDs the user has completed (server-side progress). */
+	completedLessonIds?: Set<string>;
+	/** Lesson ID to highlight as current (server-side progress). */
+	currentLessonId?: string | null;
 }
 
-const { chapters, groupByModule = false, moduleTitles, lessonBaseUrl, t } = Astro.props;
+const {
+	chapters,
+	groupByModule = false,
+	moduleTitles,
+	lessonBaseUrl,
+	t,
+	completedLessonIds = new Set<string>(),
+	currentLessonId = null,
+} = Astro.props;
 
 type ChapterGroup = { moduleId: string; chapters: OverviewChapter[] };
 
@@ -23,56 +44,124 @@ const groups: ChapterGroup[] = groupByModule
 			for (const ch of chapters) {
 				const mid = ch.moduleId ?? "";
 				if (!map.has(mid)) {
-				map.set(mid, []);
-			}
+					map.set(mid, []);
+				}
 				map.get(mid)!.push(ch);
 			}
-			return Array.from(map.entries()).map(([moduleId, chs]) => ({ moduleId, chapters: chs }));
-	  })()
+			return Array.from(map.entries()).map(([moduleId, chs]) => ({
+				moduleId,
+				chapters: chs,
+			}));
+		})()
 	: [{ moduleId: "", chapters }];
 
 function getModuleTitle(moduleId: string): string {
 	return moduleTitles?.get(moduleId) ?? moduleId;
 }
 ---
+
 <div class="os">
 	<h2>{t("courseOverview_courseStructure")}</h2>
 	<div class="box">
-		{groups.map((group, groupIndex) => (
-			<div class="g">
-				{groupByModule && groupIndex > 0 && <div class="div" />}
-				{groupByModule && group.moduleId && (
-					<div class="mod">
-						<h3>{getModuleTitle(group.moduleId)}</h3>
-					</div>
-				)}
-				<div class="acc">
-					{group.chapters.map((chapter) => (
-						<details>
-							<summary>
-								<span class="tit">
-									{chapter.title}
-									{chapter.isFree && (
-										<span class="free" title={t("courseOverview_chapterFree")} aria-label={t("courseOverview_chapterFree")}>
-											<LockOpen size={14} aria-hidden="true" />
-										</span>
-									)}
-								</span>
-								<span class="n">{chapter.lessons.length} {chapter.lessons.length === 1 ? t("courses_lesson") : t("courses_lessons")}</span>
-								<ChevronDown size={20} class="arr" aria-hidden="true" />
-							</summary>
-							<div class="bd">
-								<div class="lst">
-									{chapter.lessons.map((lesson: OverviewLesson) => (
-										<a href={`${lessonBaseUrl}/${lesson.id}`}>{lesson.title}</a>
-									))}
+		{
+			groups.map((group, groupIndex) => (
+				<div class="g">
+					{groupByModule && groupIndex > 0 && <div class="div" />}
+					{groupByModule && group.moduleId && (
+						<div class="mod">
+							<h3>{getModuleTitle(group.moduleId)}</h3>
+						</div>
+					)}
+					<div class="acc">
+						{group.chapters.map((chapter) => (
+							<details
+								open={chapter.lessons.some(
+									(l) => l.id === currentLessonId,
+								)}
+							>
+								<summary>
+									<span class="tit">
+										{chapter.title}
+										{chapter.isFree && (
+											<span
+												class="free"
+												title={t(
+													"courseOverview_chapterFree",
+												)}
+												aria-label={t(
+													"courseOverview_chapterFree",
+												)}
+											>
+												<LockOpen
+													size={14}
+													aria-hidden="true"
+												/>
+											</span>
+										)}
+									</span>
+									<span class="n">
+										{chapter.lessons.length}{" "}
+										{chapter.lessons.length === 1
+											? t("courses_lesson")
+											: t("courses_lessons")}
+									</span>
+									<ChevronDown
+										size={20}
+										class="arr"
+										aria-hidden="true"
+									/>
+								</summary>
+								<div class="bd">
+									<div class="lst">
+										{chapter.lessons.map(
+											(lesson: OverviewLesson) => (
+												<a
+													href={`${lessonBaseUrl}/${lesson.id}`}
+													class:list={{
+														os__lesson: true,
+														"progress-completed":
+															completedLessonIds.has(
+																lesson.id,
+															),
+														"progress-current":
+															lesson.id ===
+															currentLessonId,
+													}}
+												>
+													<span
+														class="os__lesson-icon os__lesson-icon--pending"
+														aria-hidden="true"
+													>
+														<Circle size={16} />
+													</span>
+													<span
+														class="os__lesson-icon os__lesson-icon--current"
+														aria-hidden="true"
+													>
+														<CirclePlay size={16} />
+													</span>
+													<span
+														class="os__lesson-icon os__lesson-icon--completed"
+														aria-hidden="true"
+													>
+														<CircleCheck
+															size={16}
+														/>
+													</span>
+													<span class="os__lesson-title">
+														{lesson.title}
+													</span>
+												</a>
+											),
+										)}
+									</div>
 								</div>
-							</div>
-						</details>
-					))}
+							</details>
+						))}
+					</div>
 				</div>
-			</div>
-		))}
+			))
+		}
 	</div>
 </div>
 
@@ -89,8 +178,12 @@ function getModuleTitle(moduleId: string): string {
 		border-radius: var(--radius-sm);
 		border: 1px solid var(--color-gray-6);
 	}
-	.os .g .mod { margin: var(--spacing-4) 0 var(--spacing-2); }
-	.os .g .mod:first-child { margin-top: 0; }
+	.os .g .mod {
+		margin: var(--spacing-4) 0 var(--spacing-2);
+	}
+	.os .g .mod:first-child {
+		margin-top: 0;
+	}
 	.os .g .mod h3 {
 		font-size: var(--text-lg);
 		font-weight: var(--font-weight-semibold);
@@ -106,7 +199,9 @@ function getModuleTitle(moduleId: string): string {
 		width: 100%;
 		margin-left: var(--spacing-2);
 	}
-	.os details { border: none; }
+	.os details {
+		border: none;
+	}
 	.os summary {
 		display: flex;
 		align-items: center;
@@ -117,7 +212,9 @@ function getModuleTitle(moduleId: string): string {
 		color: var(--color-gray-12);
 	}
 	.os summary::-webkit-details-marker,
-	.os summary::marker { display: none; }
+	.os summary::marker {
+		display: none;
+	}
 	.os summary .tit {
 		flex: 1;
 		display: flex;
@@ -141,11 +238,22 @@ function getModuleTitle(moduleId: string): string {
 		color: var(--color-gray-8);
 		transition: transform 0.2s ease;
 	}
-	.os details[open] .arr { transform: rotate(180deg); }
-	.os .bd { padding: 0; }
-	.os .lst { display: flex; flex-direction: column; }
-	.os .lst a {
-		display: block;
+	.os details[open] .arr {
+		transform: rotate(180deg);
+	}
+	.os .bd {
+		padding: 0;
+	}
+	.os .lst {
+		display: flex;
+		flex-direction: column;
+	}
+
+	/* Lesson link */
+	.os .lst a.os__lesson {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
 		padding: 0.4rem 0.75rem;
 		border-radius: var(--radius-md);
 		text-decoration: none;
@@ -153,8 +261,51 @@ function getModuleTitle(moduleId: string): string {
 		font-size: var(--text-sm);
 		transition: background-color 0.15s ease;
 	}
-	.os .lst a:hover {
+	.os .lst a.os__lesson:hover {
 		background: var(--color-gray-2);
 		color: var(--color-gray-12);
+	}
+	.os .lst a.os__lesson .os__lesson-title {
+		flex: 1;
+	}
+
+	/* Icons: one visible per state */
+	.os .lst a.os__lesson .os__lesson-icon {
+		flex-shrink: 0;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--color-gray-7);
+	}
+	.os .lst a.os__lesson .os__lesson-icon--current,
+	.os .lst a.os__lesson .os__lesson-icon--completed {
+		display: none;
+	}
+
+	.os .lst a.os__lesson.progress-completed {
+		opacity: 0.85;
+	}
+	.os .lst a.os__lesson.progress-completed .os__lesson-icon--pending,
+	.os .lst a.os__lesson.progress-completed .os__lesson-icon--current {
+		display: none;
+	}
+	.os .lst a.os__lesson.progress-completed .os__lesson-icon--completed {
+		display: inline-flex;
+		color: var(--color-green-9);
+	}
+
+	.os .lst a.os__lesson.progress-current .os__lesson-icon--pending,
+	.os .lst a.os__lesson.progress-current .os__lesson-icon--completed {
+		display: none;
+	}
+	.os .lst a.os__lesson.progress-current .os__lesson-icon--current {
+		display: inline-flex;
+		color: var(--color-cyan-9);
+	}
+	.os .lst a.os__lesson.progress-current {
+		background: var(--color-cyan-1);
+	}
+	.os .lst a.os__lesson.progress-current:hover {
+		background: var(--color-cyan-2);
 	}
 </style>

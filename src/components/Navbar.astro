@@ -2,11 +2,7 @@
 import { Moon, Sun } from "@lucide/astro";
 import Logo from "./Logo.astro";
 import Button from "./ui/Button.astro";
-import {
-	getLangFromUrl,
-	useTranslations,
-	useLocalePath,
-} from "../i18n/utils.js";
+import { getLangFromUrl, useTranslations, useLocalePath } from "../i18n/utils";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);

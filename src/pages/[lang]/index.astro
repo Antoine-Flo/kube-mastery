@@ -11,7 +11,7 @@ import {
 	Code,
 	CircleCheck,
 } from "@lucide/astro";
-import { useTranslations, useLocalePath } from "../../i18n/utils.js";
+import { useTranslations, useLocalePath } from "../../i18n/utils";
 
 const locale = Astro.params.lang as "en" | "fr";
 const t = useTranslations(locale);

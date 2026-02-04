@@ -1,14 +1,16 @@
 ---
-interface Props {
+export interface Props {
 	href?: string;
-	variant?: "solid" | "outline" | "plain";
-	size?: "sm" | "md" | "lg";
-	color?: "gray" | "cyan";
+	variant?: "solid" | "surface" | "subtle" | "outline" | "plain";
+	size?: "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+	color?: "gray" | "cyan" | "ruby" | "green" | "amber";
 	type?: "button" | "submit";
 	disabled?: boolean;
 	class?: string;
 	/** Optional secondary line below main label (e.g. "No sign-up required") */
 	sublabel?: string;
+	/** When "span", render a span (same look, for use inside a parent link) */
+	as?: "a" | "button" | "span";
 }
 
 const {
@@ -20,15 +22,23 @@ const {
 	disabled = false,
 	class: className = "",
 	sublabel,
+	as: asProp,
 	...rest
-} = Astro.props;
+} = Astro.props as Props;
 
-const El = href ? "a" : "button";
+const El = asProp ?? (href ? "a" : "button");
 const base = "btn";
-const attrs = href
-	? { href, class: `${base} ${className}`.trim(), ...rest }
-	: { type, disabled, class: `${base} ${className}`.trim(), ...rest };
+const attrs =
+	El === "a"
+		? { href, class: `${base} ${className}`.trim(), ...rest }
+		: {
+				type: El === "button" ? type : undefined,
+				disabled: El === "button" ? disabled : undefined,
+				class: `${base} ${className}`.trim(),
+				...rest,
+			};
 ---
+
 <El
 	{...attrs}
 	data-variant={variant}
@@ -36,14 +46,18 @@ const attrs = href
 	data-color={color}
 	data-has-sublabel={sublabel ? "" : undefined}
 >
-	{sublabel ? (
-		<span class="btn-inner">
-			<span class="btn-label"><slot /></span>
-			<span class="btn-sublabel">{sublabel}</span>
-		</span>
-	) : (
-		<slot />
-	)}
+	{
+		sublabel ? (
+			<span class="btn-inner">
+				<span class="btn-label">
+					<slot />
+				</span>
+				<span class="btn-sublabel">{sublabel}</span>
+			</span>
+		) : (
+			<slot />
+		)
+	}
 </El>
 
 <style>
@@ -51,14 +65,29 @@ const attrs = href
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		gap: 0.5rem;
+		gap: var(--spacing-2);
 		border-radius: var(--radius-l2);
 		font-weight: var(--font-weight-semibold);
 		cursor: pointer;
-		transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+		transition:
+			background-color 0.2s,
+			border-color 0.2s,
+			color 0.2s;
 		text-decoration: none;
 		border: none;
 		appearance: none;
+		--btn-height: 2.5rem;
+		--btn-min-width: auto;
+		--btn-padding-inline: var(--spacing-3-5);
+		--btn-padding-block: var(--spacing-1);
+		--btn-font-size: var(--text-sm);
+		--btn-line-height: var(--line-height-sm);
+		height: var(--btn-height);
+		min-width: var(--btn-min-width);
+		padding-inline: var(--btn-padding-inline);
+		padding-block: var(--btn-padding-block);
+		font-size: var(--btn-font-size);
+		line-height: var(--btn-line-height);
 	}
 	.btn-inner {
 		display: flex;
@@ -75,78 +104,293 @@ const attrs = href
 		outline-offset: 2px;
 	}
 
-	/* solid */
-	.btn[data-variant="solid"][data-color="gray"] {
-		background: var(--color-palette-gray-solid-bg);
-		color: var(--color-palette-gray-solid-fg);
-	}
-	.btn[data-variant="solid"][data-color="gray"]:hover:not(:disabled) {
-		background: var(--color-palette-gray-solid-bg-hover);
-	}
-	.btn[data-variant="solid"][data-color="cyan"] {
-		background: var(--color-palette-cyan-solid-bg);
-		color: var(--color-palette-cyan-solid-fg);
-	}
-	.btn[data-variant="solid"][data-color="cyan"]:hover:not(:disabled) {
-		background: var(--color-palette-cyan-solid-bg-hover);
+	/* palette variables (default: gray) */
+	.btn {
+		--btn-solid-bg: var(--color-palette-gray-solid-bg);
+		--btn-solid-bg-hover: var(--color-palette-gray-solid-bg-hover);
+		--btn-solid-bg-active: var(
+			--color-palette-gray-solid-bg-active,
+			var(--color-palette-gray-solid-bg-hover)
+		);
+		--btn-solid-fg: var(--color-palette-gray-solid-fg);
+
+		--btn-surface-bg: var(--color-palette-gray-surface-bg);
+		--btn-surface-bg-hover: var(--color-palette-gray-surface-bg-hover);
+		--btn-surface-bg-active: var(--color-palette-gray-surface-bg-active);
+		--btn-surface-border: var(--color-palette-gray-surface-border);
+		--btn-surface-border-hover: var(
+			--color-palette-gray-surface-border-hover
+		);
+		--btn-surface-fg: var(--color-palette-gray-surface-fg);
+
+		--btn-subtle-bg: var(--color-palette-gray-subtle-bg);
+		--btn-subtle-bg-hover: var(--color-palette-gray-subtle-bg-hover);
+		--btn-subtle-bg-active: var(--color-palette-gray-subtle-bg-active);
+		--btn-subtle-fg: var(--color-palette-gray-subtle-fg);
+
+		--btn-outline-border: var(--color-palette-gray-outline-border);
+		--btn-outline-bg-hover: var(--color-palette-gray-outline-bg-hover);
+		--btn-outline-bg-active: var(--color-palette-gray-outline-bg-active);
+		--btn-outline-fg: var(--color-palette-gray-outline-fg);
+
+		--btn-plain-fg: var(--color-palette-gray-plain-fg);
+		--btn-plain-bg-hover: var(--color-palette-gray-plain-bg-hover);
+		--btn-plain-bg-active: var(--color-palette-gray-plain-bg-active);
 	}
 
-	/* outline */
-	.btn[data-variant="outline"][data-color="gray"] {
-		background: transparent;
-		border: 1px solid var(--color-palette-gray-surface-border);
-		color: var(--color-palette-gray-outline-fg);
-	}
-	.btn[data-variant="outline"][data-color="gray"]:hover:not(:disabled) {
-		background: var(--color-palette-gray-outline-bg-hover);
-	}
-	.btn[data-variant="outline"][data-color="cyan"] {
-		background: transparent;
-		border: 1px solid var(--color-palette-cyan-surface-border);
-		color: var(--color-palette-cyan-outline-fg);
-	}
-	.btn[data-variant="outline"][data-color="cyan"]:hover:not(:disabled) {
-		background: var(--color-palette-cyan-outline-bg-hover);
+	.btn[data-color="cyan"] {
+		--btn-solid-bg: var(--color-palette-cyan-solid-bg);
+		--btn-solid-bg-hover: var(--color-palette-cyan-solid-bg-hover);
+		--btn-solid-bg-active: var(
+			--color-palette-cyan-solid-bg-active,
+			var(--color-palette-cyan-solid-bg-hover)
+		);
+		--btn-solid-fg: var(--color-palette-cyan-solid-fg);
+
+		--btn-surface-bg: var(--color-palette-cyan-surface-bg);
+		--btn-surface-bg-hover: var(
+			--color-palette-cyan-surface-bg-hover,
+			var(--color-palette-cyan-surface-bg-active)
+		);
+		--btn-surface-bg-active: var(--color-palette-cyan-surface-bg-active);
+		--btn-surface-border: var(--color-palette-cyan-surface-border);
+		--btn-surface-border-hover: var(
+			--color-palette-cyan-surface-border-hover
+		);
+		--btn-surface-fg: var(--color-palette-cyan-surface-fg);
+
+		--btn-subtle-bg: var(--color-palette-cyan-subtle-bg);
+		--btn-subtle-bg-hover: var(--color-palette-cyan-subtle-bg-hover);
+		--btn-subtle-bg-active: var(--color-palette-cyan-subtle-bg-active);
+		--btn-subtle-fg: var(--color-palette-cyan-subtle-fg);
+
+		--btn-outline-border: var(--color-palette-cyan-outline-border);
+		--btn-outline-bg-hover: var(--color-palette-cyan-outline-bg-hover);
+		--btn-outline-bg-active: var(--color-palette-cyan-outline-bg-active);
+		--btn-outline-fg: var(--color-palette-cyan-outline-fg);
+
+		--btn-plain-fg: var(--color-palette-cyan-plain-fg);
+		--btn-plain-bg-hover: var(--color-palette-cyan-plain-bg-hover);
+		--btn-plain-bg-active: var(--color-palette-cyan-plain-bg-active);
 	}
 
-	/* plain */
-	.btn[data-variant="plain"][data-color="gray"] {
+	.btn[data-color="ruby"] {
+		--btn-solid-bg: var(--color-palette-ruby-solid-bg);
+		--btn-solid-bg-hover: var(--color-palette-ruby-solid-bg-hover);
+		--btn-solid-bg-active: var(
+			--color-palette-ruby-solid-bg-active,
+			var(--color-palette-ruby-solid-bg-hover)
+		);
+		--btn-solid-fg: var(--color-palette-ruby-solid-fg);
+
+		--btn-surface-bg: var(--color-palette-ruby-surface-bg);
+		--btn-surface-bg-hover: var(
+			--color-palette-ruby-surface-bg-hover,
+			var(--color-palette-ruby-surface-bg-active)
+		);
+		--btn-surface-bg-active: var(--color-palette-ruby-surface-bg-active);
+		--btn-surface-border: var(--color-palette-ruby-surface-border);
+		--btn-surface-border-hover: var(
+			--color-palette-ruby-surface-border-hover
+		);
+		--btn-surface-fg: var(--color-palette-ruby-surface-fg);
+
+		--btn-subtle-bg: var(--color-palette-ruby-subtle-bg);
+		--btn-subtle-bg-hover: var(--color-palette-ruby-subtle-bg-hover);
+		--btn-subtle-bg-active: var(--color-palette-ruby-subtle-bg-active);
+		--btn-subtle-fg: var(--color-palette-ruby-subtle-fg);
+
+		--btn-outline-border: var(--color-palette-ruby-outline-border);
+		--btn-outline-bg-hover: var(--color-palette-ruby-outline-bg-hover);
+		--btn-outline-bg-active: var(--color-palette-ruby-outline-bg-active);
+		--btn-outline-fg: var(--color-palette-ruby-outline-fg);
+
+		--btn-plain-fg: var(--color-palette-ruby-plain-fg);
+		--btn-plain-bg-hover: var(--color-palette-ruby-plain-bg-hover);
+		--btn-plain-bg-active: var(--color-palette-ruby-plain-bg-active);
+	}
+
+	.btn[data-color="green"] {
+		--btn-solid-bg: var(--color-palette-green-solid-bg);
+		--btn-solid-bg-hover: var(--color-palette-green-solid-bg-hover);
+		--btn-solid-bg-active: var(
+			--color-palette-green-solid-bg-active,
+			var(--color-palette-green-solid-bg-hover)
+		);
+		--btn-solid-fg: var(--color-palette-green-solid-fg);
+
+		--btn-surface-bg: var(--color-palette-green-surface-bg);
+		--btn-surface-bg-hover: var(
+			--color-palette-green-surface-bg-hover,
+			var(--color-palette-green-surface-bg-active)
+		);
+		--btn-surface-bg-active: var(--color-palette-green-surface-bg-active);
+		--btn-surface-border: var(--color-palette-green-surface-border);
+		--btn-surface-border-hover: var(
+			--color-palette-green-surface-border-hover
+		);
+		--btn-surface-fg: var(--color-palette-green-surface-fg);
+
+		--btn-subtle-bg: var(--color-palette-green-subtle-bg);
+		--btn-subtle-bg-hover: var(--color-palette-green-subtle-bg-hover);
+		--btn-subtle-bg-active: var(--color-palette-green-subtle-bg-active);
+		--btn-subtle-fg: var(--color-palette-green-subtle-fg);
+
+		--btn-outline-border: var(--color-palette-green-outline-border);
+		--btn-outline-bg-hover: var(--color-palette-green-outline-bg-hover);
+		--btn-outline-bg-active: var(--color-palette-green-outline-bg-active);
+		--btn-outline-fg: var(--color-palette-green-outline-fg);
+
+		--btn-plain-fg: var(--color-palette-green-plain-fg);
+		--btn-plain-bg-hover: var(--color-palette-green-plain-bg-hover);
+		--btn-plain-bg-active: var(--color-palette-green-plain-bg-active);
+	}
+
+	.btn[data-color="amber"] {
+		--btn-solid-bg: var(--color-palette-amber-solid-bg);
+		--btn-solid-bg-hover: var(--color-palette-amber-solid-bg-hover);
+		--btn-solid-bg-active: var(
+			--color-palette-amber-solid-bg-active,
+			var(--color-palette-amber-solid-bg-hover)
+		);
+		--btn-solid-fg: var(--color-palette-amber-solid-fg);
+
+		--btn-surface-bg: var(--color-palette-amber-surface-bg);
+		--btn-surface-bg-hover: var(
+			--color-palette-amber-surface-bg-hover,
+			var(--color-palette-amber-surface-bg-active)
+		);
+		--btn-surface-bg-active: var(--color-palette-amber-surface-bg-active);
+		--btn-surface-border: var(--color-palette-amber-surface-border);
+		--btn-surface-border-hover: var(
+			--color-palette-amber-surface-border-hover
+		);
+		--btn-surface-fg: var(--color-palette-amber-surface-fg);
+
+		--btn-subtle-bg: var(--color-palette-amber-subtle-bg);
+		--btn-subtle-bg-hover: var(--color-palette-amber-subtle-bg-hover);
+		--btn-subtle-bg-active: var(--color-palette-amber-subtle-bg-active);
+		--btn-subtle-fg: var(--color-palette-amber-subtle-fg);
+
+		--btn-outline-border: var(--color-palette-amber-outline-border);
+		--btn-outline-bg-hover: var(--color-palette-amber-outline-bg-hover);
+		--btn-outline-bg-active: var(--color-palette-amber-outline-bg-active);
+		--btn-outline-fg: var(--color-palette-amber-outline-fg);
+
+		--btn-plain-fg: var(--color-palette-amber-plain-fg);
+		--btn-plain-bg-hover: var(--color-palette-amber-plain-bg-hover);
+		--btn-plain-bg-active: var(--color-palette-amber-plain-bg-active);
+	}
+
+	/* variants */
+	.btn[data-variant="solid"] {
+		background: var(--btn-solid-bg);
+		color: var(--btn-solid-fg);
+	}
+	.btn[data-variant="solid"]:hover:not(:disabled) {
+		background: var(--btn-solid-bg-hover);
+	}
+	.btn[data-variant="solid"]:active:not(:disabled) {
+		background: var(--btn-solid-bg-active);
+	}
+
+	.btn[data-variant="surface"] {
+		background: var(--btn-surface-bg);
+		border: 1px solid var(--btn-surface-border);
+		color: var(--btn-surface-fg);
+	}
+	.btn[data-variant="surface"]:hover:not(:disabled) {
+		background: var(--btn-surface-bg-hover);
+		border-color: var(--btn-surface-border-hover);
+	}
+	.btn[data-variant="surface"]:active:not(:disabled) {
+		background: var(--btn-surface-bg-active);
+	}
+
+	.btn[data-variant="subtle"] {
+		background: var(--btn-subtle-bg);
+		color: var(--btn-subtle-fg);
+	}
+	.btn[data-variant="subtle"]:hover:not(:disabled) {
+		background: var(--btn-subtle-bg-hover);
+	}
+	.btn[data-variant="subtle"]:active:not(:disabled) {
+		background: var(--btn-subtle-bg-active);
+	}
+
+	.btn[data-variant="outline"] {
 		background: transparent;
-		color: var(--color-palette-gray-plain-fg);
+		border: 1px solid var(--btn-outline-border);
+		color: var(--btn-outline-fg);
 	}
-	.btn[data-variant="plain"][data-color="gray"]:hover:not(:disabled) {
-		background: var(--color-palette-gray-plain-bg-hover);
+	.btn[data-variant="outline"]:hover:not(:disabled) {
+		background: var(--btn-outline-bg-hover);
 	}
-	.btn[data-variant="plain"][data-color="cyan"] {
+	.btn[data-variant="outline"]:active:not(:disabled) {
+		background: var(--btn-outline-bg-active);
+	}
+
+	.btn[data-variant="plain"] {
 		background: transparent;
-		color: var(--color-palette-cyan-plain-fg);
+		color: var(--btn-plain-fg);
 	}
-	.btn[data-variant="plain"][data-color="cyan"]:hover:not(:disabled) {
-		background: var(--color-palette-cyan-plain-bg-hover);
+	.btn[data-variant="plain"]:hover:not(:disabled) {
+		background: var(--btn-plain-bg-hover);
+	}
+	.btn[data-variant="plain"]:active:not(:disabled) {
+		background: var(--btn-plain-bg-active);
 	}
 
 	/* size */
+	.btn[data-size="2xs"] {
+		--btn-height: var(--spacing-7);
+		--btn-padding-inline: var(--spacing-2);
+		--btn-padding-block: calc(var(--spacing-1) / 2);
+		--btn-font-size: var(--text-xs);
+		--btn-line-height: var(--line-height-xs);
+	}
+	.btn[data-size="xs"] {
+		--btn-height: var(--spacing-8);
+		--btn-padding-inline: var(--spacing-2);
+		--btn-padding-block: var(--spacing-1);
+		--btn-font-size: var(--text-xs);
+		--btn-line-height: var(--line-height-xs);
+	}
 	.btn[data-size="sm"] {
-		height: 2.25rem;
-		padding-inline: var(--spacing-3);
-		padding-block: 0.25rem;
-		font-size: var(--text-sm);
-		line-height: var(--line-height-sm);
+		--btn-height: var(--spacing-9);
+		--btn-padding-inline: var(--spacing-3);
+		--btn-font-size: var(--text-sm);
+		--btn-line-height: var(--line-height-sm);
 	}
 	.btn[data-size="md"] {
-		height: 2.5rem;
-		padding-inline: var(--spacing-3-5);
-		padding-block: 0.25rem;
-		font-size: var(--text-sm);
-		line-height: var(--line-height-sm);
+		--btn-height: var(--spacing-10);
+		--btn-padding-inline: var(--spacing-3-5);
+		--btn-font-size: var(--text-sm);
+		--btn-line-height: var(--line-height-sm);
 	}
 	.btn[data-size="lg"] {
-		height: 2.75rem;
-		min-width: 2.75rem;
-		padding-inline: var(--spacing-4);
-		padding-block: 0.3rem;
-		font-size: var(--text-md);
-		line-height: var(--line-height-md);
+		--btn-height: var(--spacing-11);
+		--btn-min-width: var(--spacing-11);
+		--btn-padding-inline: var(--spacing-4);
+		--btn-padding-block: 0.3rem;
+		--btn-font-size: var(--text-md);
+		--btn-line-height: var(--line-height-md);
+	}
+	.btn[data-size="xl"] {
+		--btn-height: var(--spacing-12);
+		--btn-min-width: var(--spacing-12);
+		--btn-padding-inline: var(--spacing-4-5);
+		--btn-padding-block: 0.35rem;
+		--btn-font-size: var(--text-md);
+		--btn-line-height: var(--line-height-md);
+	}
+	.btn[data-size="2xl"] {
+		--btn-height: var(--spacing-14);
+		--btn-min-width: var(--spacing-14);
+		--btn-padding-inline: var(--spacing-6);
+		--btn-padding-block: 0.45rem;
+		--btn-font-size: var(--text-lg);
+		--btn-line-height: var(--line-height-lg);
 	}
 	/* with sublabel: height auto, more padding (ref) */
 	.btn[data-has-sublabel] {

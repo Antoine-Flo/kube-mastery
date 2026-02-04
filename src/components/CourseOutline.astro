@@ -1,51 +1,92 @@
 ---
-import { ChevronDown, Circle } from "@lucide/astro";
-import type { CourseOverview, OverviewChapter, OverviewLesson } from "../data/overview.js";
+import { ChevronDown, Circle, CircleCheck, CirclePlay } from "@lucide/astro";
+import type {
+	CourseOverview,
+	OverviewChapter,
+	OverviewLesson,
+} from "../content/overview/facade";
 
 interface Props {
 	overview: CourseOverview;
 	currentLessonId: string;
 	lessonBaseUrl: string;
+	completedLessonIds?: Set<string>;
 }
 
-const { overview, currentLessonId, lessonBaseUrl } = Astro.props;
+const {
+	overview,
+	currentLessonId,
+	lessonBaseUrl,
+	completedLessonIds = new Set<string>(),
+} = Astro.props;
 
 const currentChapterIndex = overview.content.chapters.findIndex((ch) =>
-	ch.lessons.some((l) => l.id === currentLessonId)
+	ch.lessons.some((l) => l.id === currentLessonId),
 );
 ---
+
 <div class="out">
 	<h2 class="out__ttl">{overview.title}</h2>
 	<div class="out__list">
-		{overview.content.chapters.map((chapter: OverviewChapter, chapterIndex: number) => {
-			const isCurrentChapter = chapterIndex === currentChapterIndex;
-			return (
-				<details class="out__ch" open={isCurrentChapter}>
-					<summary class="out__ch-hd">
-						<span class="out__ch-ttl">{chapter.title}</span>
-						<span class="out__ch-ico" aria-hidden="true">
-							<ChevronDown size={16} aria-hidden="true" />
-						</span>
-					</summary>
-					<div class="out__ch-bd">
-						{chapter.lessons.map((lesson: OverviewLesson) => {
-							const isActive = lesson.id === currentLessonId;
-							return (
-								<a
-									href={`${lessonBaseUrl}/${lesson.id}`}
-									class:list={["out__it", { "out__it--on": isActive }]}
-								>
-									<span class="out__it-ico">
-										<Circle size={16} aria-hidden="true" />
-									</span>
-									<span class="out__it-ttl">{lesson.title}</span>
-								</a>
-							);
-						})}
-					</div>
-				</details>
-			);
-		})}
+		{
+			overview.content.chapters.map(
+				(chapter: OverviewChapter, chapterIndex: number) => {
+					const isCurrentChapter =
+						chapterIndex === currentChapterIndex;
+					return (
+						<details class="out__ch" open={isCurrentChapter}>
+							<summary class="out__ch-hd">
+								<span class="out__ch-ttl">{chapter.title}</span>
+								<span class="out__ch-ico" aria-hidden="true">
+									<ChevronDown size={16} aria-hidden="true" />
+								</span>
+							</summary>
+							<div class="out__ch-bd">
+								{chapter.lessons.map(
+									(lesson: OverviewLesson) => (
+										<a
+											href={`${lessonBaseUrl}/${lesson.id}`}
+											class:list={{
+												out__it: true,
+												"progress-completed":
+													completedLessonIds.has(
+														lesson.id,
+													),
+												"progress-current":
+													lesson.id ===
+													currentLessonId,
+											}}
+										>
+											<span
+												class="out__it-ico out__it-ico--pending"
+												aria-hidden="true"
+											>
+												<Circle size={16} />
+											</span>
+											<span
+												class="out__it-ico out__it-ico--current"
+												aria-hidden="true"
+											>
+												<CirclePlay size={16} />
+											</span>
+											<span
+												class="out__it-ico out__it-ico--completed"
+												aria-hidden="true"
+											>
+												<CircleCheck size={16} />
+											</span>
+											<span class="out__it-ttl">
+												{lesson.title}
+											</span>
+										</a>
+									),
+								)}
+							</div>
+						</details>
+					);
+				},
+			)
+		}
 	</div>
 </div>
 
@@ -156,7 +197,8 @@ const currentChapterIndex = overview.content.chapters.findIndex((ch) =>
 		cursor: pointer;
 		color: var(--color-gray-11);
 		text-decoration: none;
-		transition: background-color var(--duration-normal) ease-out,
+		transition:
+			background-color var(--duration-normal) ease-out,
 			color var(--duration-normal) ease-out,
 			font-weight var(--duration-normal) ease-out;
 		font-family: inherit;
@@ -167,22 +209,46 @@ const currentChapterIndex = overview.content.chapters.findIndex((ch) =>
 		background-color: var(--color-gray-3);
 	}
 
-	.out__it--on {
+	.out__it-ico {
+		flex-shrink: 0;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--color-gray-9);
+		transition: color var(--duration-normal) ease-out;
+	}
+	.out__it .out__it-ico--current,
+	.out__it .out__it-ico--completed {
+		display: none;
+	}
+
+	.out__it.progress-completed {
+		opacity: 0.85;
+	}
+	.out__it.progress-completed .out__it-ico--pending,
+	.out__it.progress-completed .out__it-ico--current {
+		display: none;
+	}
+	.out__it.progress-completed .out__it-ico--completed {
+		display: inline-flex;
+		color: var(--color-green-9);
+	}
+
+	.out__it.progress-current .out__it-ico--pending,
+	.out__it.progress-current .out__it-ico--completed {
+		display: none;
+	}
+	.out__it.progress-current .out__it-ico--current {
+		display: inline-flex;
+		color: var(--color-cyan-11);
+	}
+	.out__it.progress-current {
 		background-color: var(--color-cyan-3);
 		color: var(--color-gray-12);
 		font-weight: var(--font-weight-semibold);
 	}
-
-	.out__it--on .out__it-ico {
-		color: var(--color-cyan-11);
-	}
-
-	.out__it-ico {
-		flex-shrink: 0;
-		display: flex;
-		align-items: center;
-		color: var(--color-gray-9);
-		transition: color var(--duration-normal) ease-out;
+	.out__it.progress-current:hover {
+		background-color: var(--color-cyan-4);
 	}
 
 	.out__it-ttl {

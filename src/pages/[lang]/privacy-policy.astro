@@ -1,10 +1,11 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { useTranslations } from "../../i18n/utils.js";
+import { useTranslations } from "../../i18n/utils";
 
 const locale = Astro.params.lang as "en" | "fr";
 const t = useTranslations(locale);
 ---
+
 <Layout>
 	<div class="doc">
 		<h1>{t("privacyPolicy_title")}</h1>

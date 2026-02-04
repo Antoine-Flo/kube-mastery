@@ -1,4 +1,4 @@
-import { ui, defaultLang, showDefaultLang } from "./ui.js";
+import { ui, defaultLang } from "./ui";
 
 export type UiLang = keyof typeof ui;
 

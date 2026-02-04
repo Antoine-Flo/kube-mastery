@@ -1,5 +1,11 @@
 ---
-import { getLangFromUrl, getPathWithoutLocale, useTranslations, useTranslatedPath, useLocalePath } from "../i18n/utils.js";
+import {
+	getLangFromUrl,
+	getPathWithoutLocale,
+	useTranslations,
+	useTranslatedPath,
+	useLocalePath,
+} from "../i18n/utils";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -7,9 +13,12 @@ const translatePath = useTranslatedPath(lang);
 const localePath = useLocalePath(lang);
 const currentPath = getPathWithoutLocale(Astro.url);
 ---
+
 <footer>
 	<nav>
-		<a href={localePath("/terms-of-service")}>{t("footer_termsOfService")}</a>
+		<a href={localePath("/terms-of-service")}
+			>{t("footer_termsOfService")}</a
+		>
 		<a href={localePath("/privacy-policy")}>{t("footer_privacyPolicy")}</a>
 		<a href={localePath("/contact")}>{t("footer_contact")}</a>
 	</nav>

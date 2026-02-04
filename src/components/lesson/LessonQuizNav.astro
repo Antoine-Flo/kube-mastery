@@ -1,6 +1,6 @@
 ---
 import Button from "../ui/Button.astro";
-import type { Quiz, MultipleChoiceQuestion } from "../../types/quiz.js";
+import type { Quiz, MultipleChoiceQuestion } from "../../types/quiz";
 
 interface Props {
 	quiz: Quiz | null;
@@ -17,9 +17,12 @@ interface Props {
 		courseComplete: string;
 		nextQuestion: string;
 	};
+	/** Current lesson id: used to build "mark complete" API URL. */
+	lessonId?: string;
 }
 
-const { quiz, prevHref, nextHref, isFirst, isLast, labels } = Astro.props;
+const { quiz, prevHref, nextHref, isFirst, isLast, labels, lessonId } =
+	Astro.props;
 
 // Filter to only multiple-choice questions
 const mcQuestions = (quiz?.questions ?? []).filter(
@@ -27,6 +30,10 @@ const mcQuestions = (quiz?.questions ?? []).filter(
 );
 
 const hasQuiz = mcQuestions.length > 0;
+const completeUrl =
+	lessonId && nextHref
+		? `/api/progress/complete?lessonId=${encodeURIComponent(lessonId)}&redirect=${encodeURIComponent(nextHref)}`
+		: nextHref;
 ---
 
 <div
@@ -112,14 +119,17 @@ const hasQuiz = mcQuestions.length > 0;
 		}
 
 		<div class="lesson-nav__next" data-nav-next>
-			{/* No quiz or quiz done: direct link */}
+			{
+				/* No quiz or quiz done: link via API (mark complete + redirect) */
+			}
 			{
 				!hasQuiz && !isLast && (
 					<Button
-						href={nextHref}
+						href={completeUrl}
 						variant="solid"
 						color="cyan"
 						size="sm"
+						data-nav-next-lesson
 					>
 						{labels.nextLesson}
 					</Button>
@@ -132,7 +142,7 @@ const hasQuiz = mcQuestions.length > 0;
 					</span>
 				)
 			}
-			{/* Quiz: button controlled by JS */}
+			{/* Quiz: button controlled by JS; link shown when quiz done */}
 			{
 				hasQuiz && (
 					<>
@@ -147,7 +157,7 @@ const hasQuiz = mcQuestions.length > 0;
 							{labels.nextQuestion}
 						</Button>
 						<a
-							href={nextHref}
+							href={completeUrl}
 							class="btn lesson-nav__btn-lesson"
 							data-variant="solid"
 							data-size="sm"
@@ -167,7 +177,9 @@ const hasQuiz = mcQuestions.length > 0;
 <script>
 	function initQuizNav(container: HTMLElement) {
 		const hasQuiz = container.dataset.hasQuiz === "true";
-		if (!hasQuiz) return;
+		if (!hasQuiz) {
+			return;
+		}
 
 		const questionCount = parseInt(
 			container.dataset.questionCount ?? "0",
@@ -231,13 +243,15 @@ const hasQuiz = mcQuestions.length > 0;
 		}
 
 		function updateNextButton() {
-			if (!nextQuestionBtn || !nextLessonLink) return;
+			if (!nextQuestionBtn || !nextLessonLink) {
+				return;
+			}
 
 			const quizDone = isQuizCompleted() || allQuestionsCorrect();
 
 			if (quizDone) {
 				nextQuestionBtn.hidden = true;
-				nextLessonLink.hidden = isLast;
+				nextLessonLink.hidden = false;
 			} else {
 				nextQuestionBtn.hidden = false;
 				nextLessonLink.hidden = true;
@@ -250,7 +264,9 @@ const hasQuiz = mcQuestions.length > 0;
 			if (!btn.matches(".quiz__option")) return;
 
 			const question = btn.closest<HTMLElement>("[data-question-index]");
-			if (!question || question.dataset.answered === "true") return;
+			if (!question || question.dataset.answered === "true") {
+				return;
+			}
 
 			const correctAnswer = parseInt(
 				question.dataset.correctAnswer ?? "0",
@@ -290,8 +306,9 @@ const hasQuiz = mcQuestions.length > 0;
 		}
 
 		function handleNextQuestion() {
-			if (!isCurrentAnsweredCorrectly()) return;
-
+			if (!isCurrentAnsweredCorrectly()) {
+				return;
+			}
 			if (currentIndex >= questionCount - 1) {
 				container.dataset.quizCompleted = "true";
 				updateNextButton();
