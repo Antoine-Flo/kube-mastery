@@ -32,10 +32,18 @@ export const POST: APIRoute = async ({
 	const password = formData.get("password")?.toString();
 	const provider = formData.get("provider")?.toString();
 	const lang = (formData.get("lang")?.toString() || "en") as string;
+	const rawRedirect = formData.get("redirect")?.toString() ?? "";
+	const redirectTo =
+		rawRedirect.startsWith("/") && !rawRedirect.includes("//")
+			? rawRedirect
+			: "";
 
 	if (provider === "github") {
 		const callbackUrl = new URL("/api/auth/callback", request.url);
 		callbackUrl.searchParams.set("lang", lang);
+		if (redirectTo) {
+			callbackUrl.searchParams.set("redirect", redirectTo);
+		}
 		const { data, error } = await supabase.auth.signInWithOAuth({
 			provider: "github" as Provider,
 			options: { redirectTo: callbackUrl.toString() },
@@ -83,5 +91,5 @@ export const POST: APIRoute = async ({
 		);
 	}
 
-	return redirect(`/${lang}/courses`);
+	return redirect(redirectTo || `/${lang}/courses`);
 };

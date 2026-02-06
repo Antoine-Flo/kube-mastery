@@ -1,6 +1,5 @@
 ---
 import { BookOpen } from "@lucide/astro";
-import Button from "./ui/Button.astro";
 
 interface Props {
   title: string;
@@ -13,23 +12,17 @@ interface Props {
   lessonsLabel: string;
   freeBadgeLabel?: string;
   comingSoonLabel?: string;
-  ctaLabel?: string;
-  /** Lesson URL for CTA (first or resume). Omit when comingSoon. */
-  ctaHref?: string;
 }
 
 const {
   title,
   description,
-  totalLessons,
   href,
   isFree = false,
   comingSoon = false,
   lessonsLabel,
-  freeBadgeLabel = "Free",
+  freeBadgeLabel = "Free course",
   comingSoonLabel = "Coming soon",
-  ctaLabel,
-  ctaHref,
 } = Astro.props;
 const descriptionText = description ?? "";
 ---
@@ -45,6 +38,7 @@ const descriptionText = description ?? "";
 >
   <a href={comingSoon ? "#" : href} class="card__link">
     {isFree && <div class="banner">{freeBadgeLabel}</div>}
+    {comingSoon && <div class="banner banner--soon">{comingSoonLabel}</div>}
     <div class="card__header">
       <h3 class="card__title">{title}</h3>
       <span class="lessons">
@@ -56,20 +50,6 @@ const descriptionText = description ?? "";
       {descriptionText && <p class="card__description">{descriptionText}</p>}
     </div>
   </a>
-  {
-    !comingSoon && ctaHref && (
-      <Button
-        href={ctaHref}
-        variant="outline"
-        color="gray"
-        size="sm"
-        class="card__cta"
-      >
-        {ctaLabel ?? ""}
-      </Button>
-    )
-  }
-  {comingSoon && <div class="soon-badge">{comingSoonLabel}</div>}
 </div>
 
 <style>
@@ -136,11 +116,18 @@ const descriptionText = description ?? "";
     padding: 0.375rem 0.75rem;
     font-size: var(--text-xs);
     font-weight: var(--font-weight-medium);
+    text-align: center;
+    width: 100%;
+  }
+  .banner:not(.banner--soon) {
     color: var(--color-green-11);
     background-color: var(--color-green-2);
     border-bottom: 1px solid var(--color-green-4);
-    text-align: center;
-    width: 100%;
+  }
+  .banner--soon {
+    color: var(--color-amber-11);
+    background-color: var(--color-amber-2);
+    border-bottom: 1px solid var(--color-amber-4);
   }
   h3 {
     font-size: var(--text-xl);
@@ -171,19 +158,5 @@ const descriptionText = description ?? "";
   }
   .card.soon * {
     color: var(--color-gray-9);
-  }
-  .card__cta {
-    align-self: flex-end;
-    margin: 0 var(--spacing-6) var(--spacing-6);
-  }
-  .soon-badge {
-    padding: 0.375rem 0.75rem;
-    font-size: var(--text-xs);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-gray-11);
-    background-color: var(--color-gray-2);
-    text-align: center;
-    margin: 0 var(--spacing-6) var(--spacing-6);
-    border-radius: var(--radius-sm);
   }
 </style>

@@ -10,6 +10,11 @@ const json = (body: { error: string; message: string }, status: number) =>
 export const GET: APIRoute = async ({ url, request, cookies, redirect, locals }) => {
 	const authCode = url.searchParams.get("code");
 	const lang = url.searchParams.get("lang") || "en";
+	const rawRedirect = url.searchParams.get("redirect") ?? "";
+	const redirectTo =
+		rawRedirect.startsWith("/") && !rawRedirect.includes("//")
+			? rawRedirect
+			: "";
 
 	if (!authCode) {
 		return json(
@@ -52,5 +57,5 @@ export const GET: APIRoute = async ({ url, request, cookies, redirect, locals })
 		);
 	}
 
-	return redirect(`/${lang}/courses`);
+	return redirect(redirectTo || `/${lang}/courses`);
 };

@@ -3,72 +3,13 @@ import Layout from "../../layouts/Layout.astro";
 import CourseCard from "../../components/CourseCard.astro";
 import { useTranslations, useLocalePath } from "../../i18n/utils";
 import { getCourses, getModules } from "../../content/courses/facade";
-import {
-  getCourseOverview,
-  getModuleOverview,
-} from "../../content/overview/facade";
-import { getProgressContext } from "../../lib/progress/server";
-import { computeProgressMap } from "../../lib/progress/domain";
 
 const locale = Astro.params.lang as "en" | "fr";
 const t = useTranslations(locale);
 const localePath = useLocalePath(locale);
 
-const { completed } = await getProgressContext(
-  Astro.locals,
-  Astro.request,
-  Astro.cookies,
-);
-
 const courses = getCourses(locale);
 const modules = getModules(locale);
-
-const coursesWithLessonIds = courses.map((course) => {
-  const overview = getCourseOverview(course.id, locale);
-  const lessonIds = overview
-    ? overview.content.chapters.flatMap((ch) => ch.lessons.map((l) => l.id))
-    : [];
-  return { id: course.id, lessonIds };
-});
-const modulesWithLessonIds = modules.map((mod) => {
-  const overview = getModuleOverview(mod.id, locale);
-  const lessonIds = overview
-    ? overview.content.chapters.flatMap((ch) => ch.lessons.map((l) => l.id))
-    : [];
-  return { id: mod.id, lessonIds };
-});
-
-const courseProgressMap = computeProgressMap(coursesWithLessonIds, completed);
-const moduleProgressMap = computeProgressMap(modulesWithLessonIds, completed);
-
-const courseCards = courses.map((course) => {
-  const entry = coursesWithLessonIds.find((e) => e.id === course.id);
-  const progress = courseProgressMap.get(course.id);
-  const lessonIds = entry?.lessonIds ?? [];
-  const targetLessonId = progress?.currentLessonId ?? lessonIds[0];
-  const ctaLabel = progress?.hasStarted
-    ? t("courses_resume")
-    : t("courses_startNow");
-  const ctaHref =
-    !course.comingSoon && targetLessonId
-      ? localePath(`/courses/${course.id}/${targetLessonId}`)
-      : undefined;
-  return { course, ctaLabel, ctaHref };
-});
-
-const moduleCards = modules.map((mod) => {
-  const entry = modulesWithLessonIds.find((e) => e.id === mod.id);
-  const progress = moduleProgressMap.get(mod.id);
-  const lessonIds = entry?.lessonIds ?? [];
-  const targetLessonId = progress?.currentLessonId ?? lessonIds[0];
-  const ctaLabel = progress?.hasStarted
-    ? t("courses_resume")
-    : t("courses_startNow");
-  const ctaHref = targetLessonId
-    ? localePath(`/modules/${mod.id}/${targetLessonId}`)
-    : undefined;
-  return { mod, ctaLabel, ctaHref };
-});
 ---
 
 <Layout>
@@ -81,7 +22,7 @@ const moduleCards = modules.map((mod) => {
         <div class="empty">{t("coursesList_noCoursesYet")}</div>
       ) : (
         <div class="grid">
-          {courseCards.map(({ course, ctaLabel, ctaHref }) => (
+          {courses.map((course) => (
             <CourseCard
               title={course.title}
               description={course.shortDescription ?? course.description}
@@ -93,8 +34,6 @@ const moduleCards = modules.map((mod) => {
               lessonsLabel={`${course.totalLessons} ${t("courses_lessons")}`}
               freeBadgeLabel={t("courses_freeBadge")}
               comingSoonLabel={t("courses_comingSoon")}
-              ctaLabel={ctaLabel}
-              ctaHref={ctaHref}
             />
           ))}
         </div>
@@ -110,15 +49,14 @@ const moduleCards = modules.map((mod) => {
           <div class="empty">{t("modulesList_noModulesYet")}</div>
         ) : (
           <div class="grid">
-            {moduleCards.map(({ mod, ctaLabel, ctaHref }) => (
+            {modules.map((mod) => (
               <CourseCard
                 title={mod.title}
                 description={mod.description}
                 totalLessons={mod.totalLessons}
                 href={localePath(`/modules/${mod.id}`)}
                 lessonsLabel={`${mod.totalLessons} ${t("courses_lessons")}`}
-                ctaLabel={ctaLabel}
-                ctaHref={ctaHref}
+                comingSoonLabel={t("courses_comingSoon")}
               />
             ))}
           </div>

@@ -1,7 +1,6 @@
 ---
 import {
 	ChevronDown,
-	LockOpen,
 	Circle,
 	CircleCheck,
 	CirclePlay,
@@ -82,22 +81,6 @@ function getModuleTitle(moduleId: string): string {
 								<summary>
 									<span class="tit">
 										{chapter.title}
-										{chapter.isFree && (
-											<span
-												class="free"
-												title={t(
-													"courseOverview_chapterFree",
-												)}
-												aria-label={t(
-													"courseOverview_chapterFree",
-												)}
-											>
-												<LockOpen
-													size={14}
-													aria-hidden="true"
-												/>
-											</span>
-										)}
 									</span>
 									<span class="n">
 										{chapter.lessons.length}{" "}
@@ -201,6 +184,7 @@ function getModuleTitle(moduleId: string): string {
 	}
 	.os details {
 		border: none;
+		margin-top: var(--spacing-2);
 	}
 	.os summary {
 		display: flex;
@@ -222,12 +206,6 @@ function getModuleTitle(moduleId: string): string {
 		gap: 0.5rem;
 		font-size: var(--text-sm);
 		text-align: left;
-	}
-	.os summary .free {
-		flex-shrink: 0;
-		display: inline-flex;
-		color: var(--color-gray-8);
-		opacity: 0.7;
 	}
 	.os summary .n {
 		font-size: var(--text-sm);

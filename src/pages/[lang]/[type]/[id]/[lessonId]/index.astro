@@ -36,11 +36,18 @@ const overview = (
 		? getCourseOverview(id, lang)
 		: getModuleOverview(id, lang)
 )!;
-const { completed } = await getProgressContext(
+const { completed, userId } = await getProgressContext(
 	Astro.locals,
 	Astro.request,
 	Astro.cookies,
 );
+if (!userId) {
+	return Astro.redirect(
+		localePath("/auth") +
+			"?redirect=" +
+			encodeURIComponent(Astro.url.pathname),
+	);
+}
 const allLessons = overview.content.chapters.flatMap((ch) => ch.lessons);
 const currentIndex = allLessons.findIndex((l) => l.id === lessonId);
 const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;

@@ -36,6 +36,18 @@ export default defineConfig({
         build: {
             cssMinify: "lightningcss",
         },
+        optimizeDeps: {
+            include: [
+                "@codemirror/state",
+                "@codemirror/view",
+                "@codemirror/commands",
+                "@codemirror/language",
+                "@codemirror/lang-yaml",
+                "@codemirror/theme-one-dark",
+                "@xterm/xterm",
+                "@xterm/addon-fit",
+            ],
+        },
     },
 
     output: "server",

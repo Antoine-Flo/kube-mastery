@@ -9,6 +9,12 @@ const lang = (Astro.params.lang || "en") as "en" | "fr";
 const t = useTranslations(lang);
 const localePath = useLocalePath(lang);
 
+const rawRedirect = Astro.url.searchParams.get("redirect") ?? "";
+const redirect =
+  rawRedirect.startsWith("/") && !rawRedirect.includes("//")
+    ? rawRedirect
+    : "";
+
 try {
   const supabase = getSupabaseServer(
     Astro.locals,
@@ -19,7 +25,7 @@ try {
     data: { user },
   } = await supabase.auth.getUser();
   if (user) {
-    return Astro.redirect(localePath("/courses"));
+    return Astro.redirect(redirect || localePath("/courses"));
   }
 } catch {
   // Missing Supabase env or other error → show login page
@@ -40,6 +46,7 @@ try {
         >
           <input type="hidden" name="provider" value="github" />
           <input type="hidden" name="lang" value={lang} />
+          <input type="hidden" name="redirect" value={redirect} />
           <Button
             type="submit"
             variant="outline"
@@ -122,6 +129,7 @@ try {
           data-astro-reload
         >
           <input type="hidden" name="lang" value={lang} />
+          <input type="hidden" name="redirect" value={redirect} />
           <div class="auth__field">
             <label for="auth-email-login" class="auth__label"
               >{t("auth_email")}</label
@@ -168,6 +176,7 @@ try {
           data-password-mismatch={t("auth_passwordMismatch")}
         >
           <input type="hidden" name="lang" value={lang} />
+          <input type="hidden" name="redirect" value={redirect} />
           <div class="auth__field">
             <label for="auth-email-signup" class="auth__label"
               >{t("auth_email")}</label

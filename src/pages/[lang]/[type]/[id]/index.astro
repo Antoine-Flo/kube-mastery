@@ -33,23 +33,37 @@ if (!overview) {
 	return Astro.redirect(localePath("/courses"));
 }
 
-const { completed } = await getProgressContext(
+const { completed, userId } = await getProgressContext(
 	Astro.locals,
 	Astro.request,
 	Astro.cookies,
 );
+const isLoggedIn = !!userId;
 
 const lessonIds = overview.content.chapters.flatMap((ch) =>
 	ch.lessons.map((l) => l.id),
 );
 const progress = computeProgress(lessonIds, completed);
 const targetLessonId = progress.currentLessonId ?? lessonIds[0];
-const ctaHref = targetLessonId
+const firstLessonUrl = targetLessonId
 	? localePath(`/${type}/${id}/${targetLessonId}`)
-	: "#";
-const ctaLabel = progress.hasStarted
-	? t("courses_resume")
-	: t("courseOverview_startCourse");
+	: null;
+const authPath = localePath("/auth");
+
+let ctaHref: string;
+let ctaLabel: string;
+if (!isLoggedIn) {
+	ctaLabel = t("auth_loginButton");
+	ctaHref =
+		firstLessonUrl !== null
+			? `${authPath}?redirect=${encodeURIComponent(firstLessonUrl)}`
+			: authPath;
+} else {
+	ctaHref = firstLessonUrl ?? "#";
+	ctaLabel = progress.hasStarted
+		? t("courses_resume")
+		: t("courseOverview_startCourse");
+}
 
 const lessonBaseUrl = localePath(`/${type}/${id}`);
 const modules = type === TYPE_COURSES ? getModules(lang) : null;

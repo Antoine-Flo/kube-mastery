@@ -9,10 +9,6 @@ flowchart LR
 
 Welcome to KubeMastery! We're excited to have you here. This platform allows you to learn Kubernetes in a fast and secure environment, all from your browser.
 
-:::info
-You can follow the course without logging in, but we recommend creating an account to save your progress.
-:::
-
 ## The interface
 
 On the right side of your screen, you'll find an **emulated terminal**. This terminal allows you to run commands and manipulate a simulated Kubernetes cluster, exactly like in production. It's your playground to experiment and learn.
