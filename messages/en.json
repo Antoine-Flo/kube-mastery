@@ -79,7 +79,7 @@
   "home_features_price_title": "Affordable",
   "home_features_price_description": "No cloud costs to cover - learn without breaking the bank",
   "home_terminalTitle": "Try it now",
-  "terminal_topPrompt": "\u001b[36m☸ Kube Mastery\u001b[0m - Learn Kubernetes hands-on\r\nTry: \u001b[33mkubectl get pods\u001b[0m or \u001b[33mkubectl describe pod web\u001b[0m\r\nYou can even create and update files: \u001b[33mnano server.yaml\u001b[0m\r\n\r\n",
+  "terminal_topPrompt": "\u001b[36m☸ Kube Mastery — Learn Kubernetes hands-on\u001b[0m\r\nTry: \u001b[33mkubectl get pods\u001b[0m, \u001b[33mkubectl describe pod web\u001b[0m\r\nEdit files: \u001b[33mnano deploy.yaml\u001b[0m or \u001b[33mvim service.yaml\u001b[0m\r\n\r\n",
   "home_description_text": "Kube Mastery is a learning platform that simulates a complete Kubernetes cluster directly in your browser. You can practice kubectl commands, create and manage pods, deployments, services, and more.",
   "home_cta_question": "Ready to try?",
   "footer_language": "Language",

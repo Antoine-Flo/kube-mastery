@@ -79,7 +79,7 @@
   "home_features_price_title": "Abordable",
   "home_features_price_description": "Pas de coûts cloud à couvrir - apprenez sans vous ruiner",
   "home_terminalTitle": "Essayez maintenant",
-  "terminal_topPrompt": "\u001b[36m☸ Kube Mastery\u001b[0m - Apprendre Kubernetes en pratique\r\nEssayez : \u001b[33mkubectl get pods\u001b[0m ou \u001b[33mkubectl describe pod web\u001b[0m\r\nVous pouvez même créer et modifier des fichiers : \u001b[33mnano server.yaml\u001b[0m\r\n\r\n",
+  "terminal_topPrompt": "\u001b[36m☸ Kube Mastery — Apprendre Kubernetes en pratique\u001b[0m\r\nEssayez : \u001b[33mkubectl get pods\u001b[0m, \u001b[33mkubectl describe pod web\u001b[0m\r\nÉditer des fichiers : \u001b[33mnano deploy.yaml\u001b[0m ou \u001b[33mvim service.yaml\u001b[0m\r\n\r\n",
   "home_description_text": "Kube Mastery est une plateforme d'apprentissage qui simule un cluster Kubernetes complet directement dans votre navigateur. Vous pouvez pratiquer les commandes kubectl, créer et gérer des pods, des déploiements, des services et plus encore.",
   "home_cta_question": "Prêt à essayer ?",
   "footer_language": "Langue",
