@@ -7,6 +7,5 @@
     "en": "Learn about Kubernetes objects, their structure, and how to work with them",
     "fr": "Apprenez les objets Kubernetes, leur structure, et comment travailler avec eux"
   },
-  "isFree": true,
   "environment": "minimal"
 }
