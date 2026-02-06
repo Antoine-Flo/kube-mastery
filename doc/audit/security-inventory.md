@@ -34,7 +34,7 @@ Inventaire des variables d’environnement, des routes API et de Supabase pour g
 ## Supabase : tables et RLS (résumé)
 
 - **user_progress** : RLS — authenticated uniquement, accès limité à sa propre ligne (`userId = auth.uid()`). Select, insert, update, delete.
-- **À migrer / à définir** : user_preferences, ab_test_events, ab_test_assignments, subscription_plans, subscriptions, survey, suggestions, tables cours (courses, modules, chapters, lessons, course_chapters) — garder dans la doc avec mention « à migrer » ou selon schéma réel déployé.
+- **À migrer / à définir** : user_preferences, ab_test_events, ab_test_assignments, subscriptions, survey, suggestions, tables cours (courses, modules, chapters, lessons, course_chapters) — garder dans la doc avec mention « à migrer » ou selon schéma réel déployé. **subscription_plans** : plus en base ; plans définis en config locale (`src/lib/subscription-plans.ts`), la table `subscriptions` référence le plan par `plan_tier` (text).
 
 Détail des policies : à vérifier dans le schéma Supabase (migrations) ou `src/db/schema.ts` quand Drizzle sera migré.
 

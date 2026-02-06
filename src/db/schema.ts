@@ -86,40 +86,13 @@ export type InsertUserPreferences = typeof userPreferences.$inferInsert
 export type SelectUserPreferences = typeof userPreferences.$inferSelect
 
 /**
- * Subscription plans table - Defines available subscription plans
- */
-export const subscriptionPlans = pgTable('subscription_plans', {
-    id: uuid('id').primaryKey().defaultRandom(),
-    name: text('name').notNull().unique(),
-    tier: text('tier').notNull(), // "free", "individual", "enterprise"
-    isActive: boolean('is_active').default(true).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-}, (table) => [
-    index('subscription_plans_name_idx').on(table.name),
-    index('subscription_plans_tier_idx').on(table.tier),
-    pgPolicy('Allow public read on subscription_plans', {
-        for: 'select',
-        to: anonRole,
-        using: sql`true`,
-    }),
-    pgPolicy('Allow authenticated read on subscription_plans', {
-        for: 'select',
-        to: authenticatedRole,
-        using: sql`true`,
-    }),
-])
-
-export type InsertSubscriptionPlan = typeof subscriptionPlans.$inferInsert
-export type SelectSubscriptionPlan = typeof subscriptionPlans.$inferSelect
-
-/**
- * Subscriptions table - Stores user subscriptions
+ * Subscriptions table - Stores user subscriptions.
+ * plan_tier references plans defined in src/lib/subscription-plans.ts (free, individual, enterprise).
  */
 export const subscriptions = pgTable('subscriptions', {
     id: uuid('id').primaryKey().defaultRandom(),
     userId: uuid('user_id').notNull().references(() => authUsers.id, { onDelete: 'cascade' }),
-    planId: uuid('plan_id').notNull().references(() => subscriptionPlans.id, { onDelete: 'restrict' }),
+    planTier: text('plan_tier').notNull(),
     status: text('status').notNull(), // "active", "canceled", "past_due", "trialing", "paused"
     paddleSubscriptionId: text('paddle_subscription_id').unique(),
     paddleCustomerId: text('paddle_customer_id'),
@@ -167,7 +140,7 @@ export type SelectSubscription = typeof subscriptions.$inferSelect
  * Survey table - Stores survey responses with name
  * Simple structure: one row per response, with name and responses in JSONB
  */
-export const survey = pgTable('survey', {
+export const survey = pgTable('surveys', {
     id: uuid('id').primaryKey().defaultRandom(),
     name: text('name').notNull(), // Name of the survey (e.g., "beta-testers")
     responses: jsonb('responses').notNull(), // Flexible JSON structure for all responses
