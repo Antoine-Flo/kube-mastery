@@ -8,52 +8,41 @@ Inventaire des variables d’environnement, des routes API et de Supabase pour g
 
 | Variable | Fichier(s) où lue | Sensible | Ne doit pas être en repo |
 |----------|-------------------|----------|---------------------------|
-| `VITE_SUPABASE_URL` | `src/db/supabase.ts`, `src/account/context.tsx` | Non (URL publique) | Optionnel (souvent en .env.example) |
-| `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY` | `src/db/supabase.ts`, `src/account/context.tsx` | Oui (clé anon, exposée côté client) | Oui (ne pas committer en dur) |
-| `VITE_SENTRY_DSN` | `src/entry-client.tsx`, `src/instrument.server.ts` | Oui (DSN peut exposer projet) | Oui |
-| `DATABASE_URL` | `src/db/index.ts` | Oui (secret connexion Postgres) | Oui |
+| `PUBLIC_SUPABASE_URL` | `src/lib/supabase.ts` (browser client) | Non (URL publique) | Optionnel (souvent en .env.example) |
+| `PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` (ou `PUBLIC_SUPABASE_PUBLISHABLE_KEY`) | `src/lib/supabase.ts` (browser client) | Oui (clé anon, exposée côté client) | Oui (ne pas committer en dur) |
+| `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_DEFAULT_KEY` | Runtime Cloudflare (server, `locals.runtime.env`) ; utilisés dans `src/lib/supabase.ts` (getSupabaseServer) | Oui (côté serveur) | Oui |
+| **À migrer (prévu)** `DATABASE_URL` | `src/db/index.ts` (Drizzle, quand migré) | Oui (secret connexion Postgres) | Oui |
 
-**Lecture** : `process.env` côté serveur (`instrument.server.ts`, `db/index.ts`) ; `import.meta.env` ou `process.env` côté client (`entry-client.tsx`, `supabase.ts`, `account/context.tsx`). Vérifier qu’aucune valeur sensible n’est hardcodée et que `.env` est dans `.gitignore`.
+**Lecture** : `import.meta.env` côté client (browser Supabase) ; `locals.runtime.env` côté serveur (Cloudflare). Vérifier qu’aucune valeur sensible n’est hardcodée et que `.env` est dans `.gitignore`.
 
 ---
 
 ## Routes API (résumé pour l’audit)
 
-| Route | Méthode | Paramètres / body | Usage DB / Supabase | Rate-limit / auth |
-|-------|---------|-------------------|----------------------|-------------------|
-| `/api/seeds/[name]` | GET | `name` (path) | Aucun (charge scénario depuis `seeds/scenarios`) | Aucun |
-| `/api/suggestions/submit` | POST | `text`, `lessonId`, `userId?`, `visitorId?` | Supabase `suggestions` (insert) | Aucun |
-| `/api/survey/submit` | POST | `name`, `responses`, `userId?`, `visitorId?`, `metadata?` | Supabase `survey` (insert) | Oui : 1 réponse par (visitorId ou userId) par `name` (429 si doublon) |
-| `/api/ab-test/track` | POST | `testName`, `variant`, `eventType`, `visitorId`, `userId?`, `metadata?`, `timestamp?` | Supabase `ab_test_events`, `ab_test_assignments` (insert/upsert) | Aucun (retourne toujours 200 pour ne pas bloquer l’UI) |
+| Route | Méthode | Paramètres / body | Usage Supabase | Auth |
+|-------|---------|-------------------|----------------|------|
+| `/api/auth/callback` | GET | Query (code, etc.) | Session OAuth | - |
+| `/api/auth/register` | POST | Body (email, password, etc.) | Inscription | - |
+| `/api/auth/signin` | POST | Body | Connexion | - |
+| `/api/auth/signout` | POST | - | Déconnexion | - |
+| `/api/progress/complete` | GET | Query `lessonId`, `redirect` | user_progress (insert/update) | Session (cookies) |
 
-**Points à analyser** : validation des entrées (taille, type, injection), exposition d’erreurs (messages 500), usage du client Supabase (anon key côté serveur pour insert), éventuel rate-limit global (suggestions, ab-test).
+**Points à analyser** : validation des entrées, exposition d’erreurs (500), usage du client Supabase (anon key / server client).
 
 ---
 
 ## Supabase : tables et RLS (résumé)
 
 - **user_progress** : RLS — authenticated uniquement, accès limité à sa propre ligne (`userId = auth.uid()`). Select, insert, update, delete.
-- **user_preferences** : idem (authenticated, propre ligne).
-- **ab_test_events** : RLS — `anon` peut **insert** uniquement. Pas de select/update/delete pour anon.
-- **ab_test_assignments** : RLS — `anon` peut **select**, **insert**, **update**. Pas de delete pour anon.
-- **subscription_plans** : RLS — `anon` et `authenticated` peuvent **select** uniquement.
-- **subscriptions** : RLS — `authenticated` uniquement, accès limité à sa propre ligne.
-- **courses, modules, chapters, lessons, course_chapters** : RLS — `anon` et `authenticated` peuvent **select**. `service_role` peut tout faire.
-- **survey** : RLS — `anon` et `authenticated` peuvent **insert**. `authenticated` peut **select** sur ses propres lignes. `service_role` peut tout faire.
-- **suggestions** : RLS — `anon` et `authenticated` peuvent **insert** uniquement. Pas de select/update/delete pour anon/auth (lecture réservée au backend / service_role).
+- **À migrer / à définir** : user_preferences, ab_test_events, ab_test_assignments, subscription_plans, subscriptions, survey, suggestions, tables cours (courses, modules, chapters, lessons, course_chapters) — garder dans la doc avec mention « à migrer » ou selon schéma réel déployé.
 
-Détail des policies dans `src/db/schema.ts` (pgPolicy). Vérifier en base que les policies déployées (migrations Supabase) correspondent à ce schéma.
+Détail des policies : à vérifier dans le schéma Supabase (migrations) ou `src/db/schema.ts` quand Drizzle sera migré.
 
 ---
 
 ## Edge functions Supabase
 
-| Function | Rôle | Auth |
-|----------|------|------|
-| `create-subscription` | Création / gestion d’abonnement utilisateur | Header `Authorization` requis (401 si absent). Client créé avec le token utilisateur. |
-| `delete-account` | Suppression de compte utilisateur | Idem (Authorization requise). |
-
-Les deux utilisent `Deno.env.get('SUPABASE_URL')` et `Deno.env.get('SUPABASE_ANON_KEY')` (configurés côté Supabase, pas dans le repo). À vérifier : pas de log d’identifiants, pas d’exposition de données d’autres utilisateurs.
+**À migrer (prévu)** : create-subscription, delete-account. Quand en place : vérifier auth (Authorization), pas de log d’identifiants, pas d’exposition de données d’autres utilisateurs.
 
 ---
 

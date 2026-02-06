@@ -1,8 +1,17 @@
 # Plan de migration : SolidStart → Astro
 
+## État de la migration
+
+- **Fait** : Stack Astro, pages `[lang]`, `[type]/[id]/[lessonId]`, API auth et progress/complete, core (terminal, cluster, kubectl), seeds dans `src/courses/seeds/` (sans API), layout, i18n (`messages/*.json` + `src/i18n/`), contenu cours (content collections, facades).
+- **À migrer** : Drizzle / `src/db/` (schéma, client Postgres) ; tests (Vitest, `tests/unit/`, `tests/conformance/`, golden files dans `bin/`).
+
+Référence structure actuelle : `doc/context/architecture.md`, `doc/audit/entry-points.md`.
+
+---
+
 **Objectif** : Migrer Kube Mastery de SolidStart (SolidJS) vers Astro, de façon incrémentale, en profitant pour améliorer l’existant.
 
-**Contexte** : L’ancien projet est dans `old/`. Le nouveau projet Astro est à la racine, avec Paraglide déjà configuré.
+**Contexte** : Le nouveau projet Astro est à la racine. i18n via `messages/*.json` et `src/i18n/` (sans Paraglide).
 
 ---
 

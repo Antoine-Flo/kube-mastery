@@ -2,15 +2,15 @@
 
 ## Problème actuel
 
-Actuellement, le calcul de progression se fait entièrement côté client, ce qui est inefficace et complexe.
+Ce doc décrit un flux où le calcul de progression se faisait côté client. **État actuel (Astro)** : la progression est résolue côté serveur via `getProgressContext` et `src/lib/progress/` (domain, server, supabase-adapter) ; les pages overview appellent `getProgressContext` et passent `completed` / `progress` aux composants. L’optimisation ci‑dessous (fonction PostgreSQL ou vue) reste pertinente si on veut réduire encore les appels ou déplacer du calcul en base.
 
-### Flux actuel
+### Ancien flux (référence)
 
-1. **Chargement de toutes les lesson IDs** : On charge toutes les leçons de tous les modules et chapitres depuis la base de données (`loadAllLessonIds`)
-2. **Chargement des relations cours/chapitres** : On charge `course_chapters` et `chapters` pour savoir quelles leçons appartiennent à quels cours/modules
-3. **Calcul côté client** : On mappe manuellement les lesson IDs par cours/module en JavaScript
-4. **Comparaison avec progression** : On compare les lesson IDs avec les leçons complétées par l'utilisateur (stockées dans `user_progress.completed_lessons` en JSONB)
-5. **Calcul du pourcentage** : On calcule le pourcentage de complétion pour chaque cours/module
+1. **Chargement de toutes les lesson IDs** : `loadAllLessonIds` depuis la base
+2. **Chargement des relations cours/chapitres** : `course_chapters`, `chapters`
+3. **Calcul côté client** : mapping des lesson IDs par cours/module en JavaScript
+4. **Comparaison avec progression** : comparaison avec `user_progress.completed_lessons` (JSONB)
+5. **Calcul du pourcentage** : pourcentage de complétion par cours/module
 
 ### Inconvénients
 
@@ -169,7 +169,7 @@ const [userProgress] = createResource(
 ### Étape 3 : Supprimer le code obsolète
 
 - Supprimer `src/lib/lesson-ids-loader.ts` (plus nécessaire)
-- Simplifier `src/routes/[[lang]]/courses/index.tsx` en supprimant tous les `createMemo` de calcul de progression
+- Simplifier les pages overview (`src/pages/[lang]/courses.astro`, `[type]/[id]/index.astro`) en déléguant le calcul à une fonction PostgreSQL (ou vue) au lieu de le faire en JS
 - Garder juste l'appel à la fonction PostgreSQL
 
 ## Notes

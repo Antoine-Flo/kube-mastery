@@ -132,21 +132,22 @@ npm run coverage      # Coverage report
 
 ### Usage
 ```typescript
-import { useLang, useLangNavigate } from '~/lang/core'
+import { useTranslations, useLocalePath } from '~/i18n/utils'
 
-const { messages, locale } = useLang()
-messages().home_title()  // Format: section_key
+const locale = Astro.params.lang as 'en' | 'fr'  // ou getLangFromUrl(Astro.url)
+const t = useTranslations(locale)
+const localePath = useLocalePath(locale)
 
-const navigate = useLangNavigate()  // Préserve la langue
-navigate('/courses/...')
+t('home_title')           // Clés dans messages/*.json, exposées via src/i18n/ui.ts
+localePath('/courses')    // Préfixe langue : /en/courses, /fr/courses
 ```
 
 ### Rules
-- Type `AvailableLanguage` (pas `Locale`)
-- Clés avec underscores: `courses_title` (pas `courses.title`)
-- Toujours `useLangNavigate()` dans routes `[[lang]]`
+- Toujours passer `lang` depuis la page (param `[lang]`).
+- Clés avec underscores : `courses_title` (pas `courses.title`).
+- Liens internes : utiliser `localePath(...)` dans les pages `[lang]`.
 
 ## References
 
-- `architecture.md` - Structure technique
-- `spec.md` - Requirements
+- `architecture.md` — structure technique
+- `spec.md` — requirements

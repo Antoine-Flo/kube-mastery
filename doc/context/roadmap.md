@@ -1,8 +1,10 @@
 # Roadmap - Kube Mastery
 
+**Stack** : Astro 5, Cloudflare. Détails : `architecture.md`.
+
 ## Current Status
 
-**1311 tests passing** | **~94% coverage** | **Phase 1 MVP Complete** ✅
+**Phase 1 MVP Complete** ✅ — Tests à migrer (Vitest, objectif ~94% coverage).
 
 > Pour les détails de ce qui est implémenté, voir `spec.md` et `architecture.md`
 

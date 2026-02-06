@@ -19,52 +19,21 @@ Interactive web application for learning `kubectl` commands through a simulated 
 
 > For Phase 2 and Phase 3 objectives, see [roadmap.md](roadmap.md)
 
+## Routing
+
+- **Overview** : `/[lang]/[type]/[id]` (type = courses | modules).
+- **Leçon** : `/[lang]/[type]/[id]/[lessonId]`.
+- **Autres** : `/[lang]/courses`, `/[lang]/auth`, `/[lang]/pricing`, etc.
+
 ## Core Features
 
-### kubectl Commands (Phase 1 - Implemented)
+### kubectl (Phase 1)
 
-| Command                                        | Description                                  |
-| ---------------------------------------------- | -------------------------------------------- |
-| `kubectl get pods`                             | List pods                                    |
-| `kubectl get pods -n <ns>`                     | List pods by namespace                       |
-| `kubectl get deployments` / `deploy`           | List deployments                             |
-| `kubectl get replicasets` / `rs`               | List replicasets                             |
-| `kubectl get services/configmaps/secrets`      | List resources                               |
-| `kubectl describe <type> <name>`               | Show resource details                        |
-| `kubectl delete <type> <name>`                 | Delete resource                              |
-| `kubectl create -f <file>`                     | Create from YAML                             |
-| `kubectl apply -f <file>`                      | Apply YAML manifest                          |
-| `kubectl logs <pod>`                           | Show pod logs                                |
-| `kubectl logs <pod> -n <ns>`                   | Logs with namespace                          |
-| `kubectl exec -it <pod> -- <cmd>`              | Execute command in pod                       |
-| `kubectl label <type> <name> <key>=<value>`    | Add/update labels                            |
-| `kubectl annotate <type> <name> <key>=<value>` | Add/update annotations                       |
-| `kubectl version`                              | Show client and server version               |
-| `kubectl version --client`                     | Show client version only                     |
-| `kubectl version --output json`                | Show version in JSON format                  |
-| `kubectl version --output yaml`                | Show version in YAML format                  |
-| `kubectl cluster-info`                         | Display cluster information                  |
-| `kubectl cluster-info dump`                    | Dump cluster information                     |
-| `kubectl api-resources`                        | List API resources                           |
-| `kubectl api-resources --output wide`          | List API resources with VERBS and CATEGORIES |
-| `kubectl api-resources --namespaced=true`      | Filter namespaced resources                  |
-| `kubectl api-resources --sort-by=name`         | Sort resources by name                       |
+get (pods, deploy, rs, services, configmaps, secrets, nodes), describe, delete, create -f, apply -f, logs, exec -it, label, annotate, version (--client, --output json/yaml), cluster-info, cluster-info dump, api-resources (--output wide, --namespaced, --sort-by). Détail : voir `src/core/kubectl/commands/handlers/`.
 
-### Shell Commands (Phase 1 - Implemented)
+### Shell
 
-| Command                                  | Description                       |
-| ---------------------------------------- | --------------------------------- |
-| `pwd`                                    | Show current directory            |
-| `ls`, `ls -l`                            | List files/directories            |
-| `cd <path>`                              | Change directory                  |
-| `mkdir <dir>`, `mkdir -p <path>`         | Create directory                  |
-| `touch <file>`                           | Create empty file                 |
-| `cat <file>`                             | Display file content              |
-| `rm <file>`, `rm -r <dir>`               | Remove files/directories          |
-| `nano <file>`, `vi <file>`, `vim <file>` | Edit files in terminal (emulated) |
-| `clear`                                  | Clear terminal                    |
-| `help`                                   | Show help                         |
-| `debug`                                  | Show application logs             |
+pwd, ls, cd, mkdir (-p), touch, cat, rm (-r), nano/vi/vim, clear, help, debug. Détail : voir `src/core/shell/`.
 
 ### Terminal Features
 
@@ -221,13 +190,7 @@ interface FileSystemState {
 
 ## Seed System
 
-Les environnements (cluster + filesystem) sont définis par des scénarios dans `seeds/`.
-
-Scénarios disponibles : `empty`, `default`, `troubleshooting`, `multi-namespace`.
-
-Défini dans `chapter.json` avec `"environment": "minimal"`. Si omis, `empty` est utilisé.
-
-Voir [seeds/readme.md](/seeds/readme.md) pour les détails.
+Environnements (cluster + filesystem) dans `src/courses/seeds/` : `minimal.ts`, `demo.ts`, registry dans `getSeed.ts`. Pas d’API ; chargement build-time / client. Seed par chapitre : `chapter.json` → `"environment": "minimal"` (ou `"demo"`, etc.) ; défaut `minimal` si absent. Voir `src/courses/seeds/README.md`.
 
 ## UI Layout
 
@@ -280,13 +243,15 @@ All MVP criteria have been met:
 - ✅ In-terminal editor (nano/vim emulation)
 - ✅ Quiz system with multiple question types
 - ✅ Terminal command validation in quizzes
-- ✅ Test coverage ~94%
+- ✅ Tests à migrer (Vitest, coverage cible ~94%)
 - ✅ TypeScript strict mode
 - ✅ Modular architecture
 
+Contenu cours : `src/content/` (facades), `src/courses/` (structure, markdown leçons). Quiz et overview : données build-time, `getLessonContent` / facades.
+
 ## References
 
-- See `architecture.md` for technical structure
-- See `conventions.md` for coding standards
-- See `roadmap.md` for development phases and future features
-- See `marketing.md` for business model
+- `architecture.md` — structure technique
+- `conventions.md` — standards de code
+- `roadmap.md` — phases et features futures
+- `marketing.md` — business (business/)

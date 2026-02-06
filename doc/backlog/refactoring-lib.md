@@ -10,11 +10,11 @@ Chantier de refactoring de `src/lib` (et de l’organisation des domaines) pour 
 
 | Couche | Rôle | Peut importer | Ne fait pas |
 |--------|------|----------------|-------------|
-| **IO (adapters)** | Appels externes uniquement (Supabase, fetch). Retourne `{ data, error }` ou promesse brute. | `~/db/supabase` | Pas de règle métier, pas de cache, pas de mapping métier |
+| **IO (adapters)** | Appels externes uniquement (Supabase, fetch). Retourne `{ data, error }` ou promesse brute. | `~/lib/supabase` (ou `src/db/` quand Drizzle migré) | Pas de règle métier, pas de cache, pas de mapping métier |
 | **Domain** | Logique métier pure. Entrées/sorties en types métier. | `~/types/*` ou types du domaine | Jamais d’appel Supabase/fetch |
-| **Application** | Orchestration : appelle l’IO, mappe (DB → métier), cache, gestion d’erreur. Expose les cas d’usage. | `~/supabase/*`, domain, types | Pas de JSX (sauf si contexte dédié UI) |
+| **Application** | Orchestration : appelle l’IO, mappe (DB → métier), cache, gestion d’erreur. Expose les cas d’usage. | `~/lib/*` (supabase, progress), domain, types | Pas de JSX (sauf si contexte dédié UI) |
 
-Les composants et hooks importent l’application (ou les contextes), pas directement `~/supabase/*`.
+Les composants et pages importent l’application (ou les contextes), pas directement `~/lib/supabase` ou adapters.
 
 ### 1.2 Organisation par domaine
 
@@ -24,7 +24,7 @@ Les composants et hooks importent l’application (ou les contextes), pas direct
   - **`theme/`** : préférence thème (localStorage, système).
 - Chaque domaine peut contenir : `types.ts`, logique pure (ex. `access.ts`, `mappers.ts`), orchestration (ex. `loaders.ts`, `progress.ts`), `context.tsx`, `hooks/`.
 - **Pas de barrel** : pas de `index.ts` qui ne fait qu’exporter. Importer directement depuis le fichier concerné (ex. `~/learnable/hooks/useLearnable`, pas `~/learnable/hooks`).
-- `src/supabase/` reste la couche IO unique pour Supabase. `src/errors/` pour le partagé (AppError, catalogue).
+- Couche IO Supabase : actuellement `src/lib/supabase.ts` et `src/lib/progress/` (supabase-adapter). Option future : `src/db/` ou `src/supabase/` si refacto. `src/errors/` pour le partagé (AppError, catalogue).
 - Éviter les noms vagues : pas de `*-utils.ts`, `*-service.ts`, `*-queries.ts` sans préciser le rôle. Préférer des noms par concept : `lesson-status.ts`, `access.ts`, `mappers.ts`, `loaders.ts`.
 
 ### 1.3 Get vs Set (IO / adapters Supabase)
@@ -32,7 +32,7 @@ Les composants et hooks importent l’application (ou les contextes), pas direct
 - **Distinction nette** entre opérations de **lecture** (get) et d’**écriture** (set : insert, upsert, update, delete).
 - **Get** : `select*`, `get*`. Retour = état tel que retourné par la DB (snake_case, types DB). Le mapping vers le type métier (camelCase, modèle code) se fait dans la couche **application**, pas dans l’adapter.
 - **Set** : `insert*`, `upsert*`, `update*`. Paramètres = payload **explicitement typé** pour l’écriture (souvent snake_case pour Supabase). L’interface d’écriture peut différer de l’interface de lecture (ex. champs optionnels, valeurs par défaut, contraintes).
-- Dans `src/supabase/`, un même fichier par ressource peut exporter à la fois des get et des set, mais **séparer clairement** les fonctions (ex. `selectX`, `insertX`, `upsertX`) et **documenter** le format attendu pour les set (payload = état “écriture”, pas forcément identique à l’état “lecture”).
+- Dans la couche IO (ex. `src/lib/progress/` ou futur `src/supabase/`), un même fichier par ressource peut exporter get et set, mais **séparer clairement** les fonctions (ex. `selectX`, `insertX`, `upsertX`) et **documenter** le format attendu pour les set (payload = état “écriture”, pas forcément identique à l’état “lecture”).
 - Le **parsing** (validation, transformation) des payloads d’écriture peut être différent du parsing des réponses de lecture : à faire dans l’application si besoin, ou dans l’adapter si c’est uniquement format DB (snake_case, dates, etc.).
 
 ### 1.4 Tests
@@ -44,7 +44,9 @@ Les composants et hooks importent l’application (ou les contextes), pas direct
 
 ## 2. Conventions de nommage
 
-### 2.1 Couche IO (`src/supabase/`)
+### 2.1 Couche IO (Supabase)
+
+Actuellement : `src/lib/supabase.ts`, `src/lib/progress/` (supabase-adapter). Cible possible : `src/supabase/` ou par ressource.
 
 - Fichier par ressource ou API : `courses.ts`, `user-progress.ts`, `auth.ts`, `edge-functions.ts`.
 - **Lecture** : `select*`, `get*` (ex. `selectAllActive()`, `selectById(id)`, `selectCompletedLessonsByUserId(userId)`).
