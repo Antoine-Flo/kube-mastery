@@ -2,15 +2,15 @@
 
 Définition des zones à parcourir et des types d’analyse, sans exécuter l’audit.
 
-| Zone | Fichiers / chemins | Ce qu’on peut analyser |
-|------|--------------------|------------------------|
-| **Env & secrets** | Tout `process.env`, `import.meta.env`, `.env*` | Fuites de secrets, DSN, URLs, clés Supabase |
-| **API routes** | `src/pages/api/**/*.ts` | Validation des entrées, erreurs exposées, usage Supabase |
-| **Auth** | `src/lib/supabase.ts`, `src/pages/[lang]/auth/`, `src/pages/api/auth/` | Flux auth, RLS, exposition de données utilisateur |
-| **DB / serveur** (à migrer) | `src/db/` (Drizzle, prévu), `drizzle.config.ts`, `supabase/migrations/` | Connexions, schéma, migrations |
-| **Front / XSS** | `src/components/lesson/`, pages leçon (contenu markdown), quiz | Échappement, sanitization |
-| **Dépendances** | `package.json`, lockfile | Vulnérabilités (npm audit), licences |
-| **Conventions** | `src/**/*.ts`, `src/**/*.astro` | Respect conventions.md (indentation, Result types, pas de throw) |
+| Zone                        | Fichiers / chemins                                                      | Ce qu’on peut analyser                                           |
+| --------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| **Env & secrets**           | Tout `process.env`, `import.meta.env`, `.env*`                          | Fuites de secrets, DSN, URLs, clés Supabase                      |
+| **API routes**              | `src/pages/api/**/*.ts`                                                 | Validation des entrées, erreurs exposées, usage Supabase         |
+| **Auth**                    | `src/lib/supabase.ts`, `src/pages/[lang]/auth/`, `src/pages/api/auth/`  | Flux auth, RLS, exposition de données utilisateur                |
+| **DB / serveur** (à migrer) | `src/db/` (Drizzle, prévu), `drizzle.config.ts`, `supabase/migrations/` | Connexions, schéma, migrations                                   |
+| **Front / XSS**             | `src/components/lesson/`, pages leçon (contenu markdown), quiz          | Échappement, sanitization                                        |
+| **Dépendances**             | `package.json`, lockfile                                                | Vulnérabilités (npm audit), licences                             |
+| **Conventions**             | `src/**/*.ts`, `src/**/*.astro`                                         | Respect conventions.md (indentation, Result types, pas de throw) |
 
 ## Chemins détaillés
 

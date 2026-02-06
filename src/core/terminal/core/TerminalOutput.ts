@@ -106,7 +106,7 @@ export const createTerminalOutput = (renderer: TerminalRenderer): TerminalOutput
 
     showCursor(): void {
       renderer.write(CURSOR_SHOW)
-    },
+    }
   }
 }
 

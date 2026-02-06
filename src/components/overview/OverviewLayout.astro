@@ -1,28 +1,34 @@
 ---
+
 ---
+
 <div class="ov">
-	<div class="c">
-		<slot />
-	</div>
+  <div class="c">
+    <slot />
+  </div>
 </div>
 
 <style>
-	.ov {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 2rem 1rem;
-	}
-	@media (min-width: 768px) { .ov { padding: 3rem 2rem; } }
-	.ov .c {
-		display: flex;
-		flex-direction: column;
-		gap: 2rem;
-	}
-	@media (min-width: 1024px) {
-		.ov .c {
-			flex-direction: row;
-			gap: 3rem;
-			align-items: flex-start;
-		}
-	}
+  .ov {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+  @media (min-width: 768px) {
+    .ov {
+      padding: 3rem 2rem;
+    }
+  }
+  .ov .c {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  @media (min-width: 1024px) {
+    .ov .c {
+      flex-direction: row;
+      gap: 3rem;
+      align-items: flex-start;
+    }
+  }
 </style>

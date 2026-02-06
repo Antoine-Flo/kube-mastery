@@ -18,27 +18,27 @@ import type { TerminalOutput } from './TerminalOutput'
  * Contient toutes les dépendances nécessaires aux handlers
  */
 export interface CommandContext {
-    /** Filesystem complet pour les opérations sur fichiers */
-    fileSystem: FileSystem
+  /** Filesystem complet pour les opérations sur fichiers */
+  fileSystem: FileSystem
 
-    /** Modal d'édition pour les commandes comme nano */
-    editorModal?: EditorModal
+  /** Modal d'édition pour les commandes comme nano */
+  editorModal?: EditorModal
 
-    /** Renderer pour afficher les résultats dans le terminal */
-    renderer: TerminalRenderer
+  /** Renderer pour afficher les résultats dans le terminal */
+  renderer: TerminalRenderer
 
-    /** Sortie terminal avec gestion automatique des sauts de ligne */
-    output: TerminalOutput
+  /** Sortie terminal avec gestion automatique des sauts de ligne */
+  output: TerminalOutput
 
-    /** Stack de contextes shell pour gérer le prompt et le filesystem */
-    shellContextStack: ShellContextStack
+  /** Stack de contextes shell pour gérer le prompt et le filesystem */
+  shellContextStack: ShellContextStack
 
-    /** État du cluster Kubernetes */
-    clusterState: ClusterState
+  /** État du cluster Kubernetes */
+  clusterState: ClusterState
 
-    /** Bus d'événements pour l'architecture event-driven */
-    eventBus: EventBus
+  /** Bus d'événements pour l'architecture event-driven */
+  eventBus: EventBus
 
-    /** Logger pour le suivi des commandes */
-    logger: Logger
+  /** Logger pour le suivi des commandes */
+  logger: Logger
 }

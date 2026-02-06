@@ -11,11 +11,11 @@ Comme il s'agit d'une simulation basée sur le navigateur, certaines fonctionnal
 Au-delà du cluster Kubernetes lui-même, vous avez accès à un **système de fichiers virtuel**, vous pouvez créer et gérer des fichiers exactement comme vous le feriez sur un système réel. Vous pouvez créer des répertoires, écrire des fichiers YAML et naviguer en utilisant des commandes familières.
 
 Voici quelques-unes des commandes disponibles (d'autres arrivent) :
+
 - **Navigation** : `cd`, `ls`, `pwd`, `mkdir`
 - **Opérations sur les fichiers** : `cat`, `touch`, `rm`
 - **Éditeurs** : `nano`
 - **Utilitaires de terminal** : `clear`, `help`
-
 
 Comme dans tout terminal, vous pouvez utiliser la **touche flèche vers le haut** pour parcourir votre historique de commandes. L'autocomplétion arrive bientôt.
 

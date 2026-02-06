@@ -8,9 +8,9 @@ import { success } from '../../../../shared/result'
 import type { ShellCommandHandler } from '../../core/ShellCommandHandler'
 
 export const createHelpHandler = (): ShellCommandHandler => {
-    return {
-        execute: (): ExecutionResult => {
-            const helpText = `Available shell commands:
+  return {
+    execute: (): ExecutionResult => {
+      const helpText = `Available shell commands:
   cd <path>       Change directory
   ls [path]       List directory contents
   ls -l [path]    List with details
@@ -29,7 +29,7 @@ export const createHelpHandler = (): ShellCommandHandler => {
 Use 'kubectl' prefix for Kubernetes commands
 See available images in the Registry panel below`
 
-            return success(helpText)
-        }
+      return success(helpText)
     }
+  }
 }

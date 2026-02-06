@@ -1,17 +1,17 @@
 ---
-import { BookOpen } from "@lucide/astro";
+import { BookOpen } from '@lucide/astro'
 
 interface Props {
-  title: string;
-  description: string | null;
-  totalLessons: number;
-  href: string;
-  isFree?: boolean;
-  comingSoon?: boolean;
-  level?: string | null;
-  lessonsLabel: string;
-  freeBadgeLabel?: string;
-  comingSoonLabel?: string;
+  title: string
+  description: string | null
+  totalLessons: number
+  href: string
+  isFree?: boolean
+  comingSoon?: boolean
+  level?: string | null
+  lessonsLabel: string
+  freeBadgeLabel?: string
+  comingSoonLabel?: string
 }
 
 const {
@@ -21,22 +21,14 @@ const {
   isFree = false,
   comingSoon = false,
   lessonsLabel,
-  freeBadgeLabel = "Free course",
-  comingSoonLabel = "Coming soon",
-} = Astro.props;
-const descriptionText = description ?? "";
+  freeBadgeLabel = 'Free course',
+  comingSoonLabel = 'Coming soon'
+} = Astro.props
+const descriptionText = description ?? ''
 ---
 
-<div
-  class:list={[
-    "card",
-    "card--outline",
-    isFree && "free",
-    comingSoon && "soon",
-    !comingSoon && "link",
-  ]}
->
-  <a href={comingSoon ? "#" : href} class="card__link">
+<div class:list={['card', 'card--outline', isFree && 'free', comingSoon && 'soon', !comingSoon && 'link']}>
+  <a href={comingSoon ? '#' : href} class="card__link">
     {isFree && <div class="banner">{freeBadgeLabel}</div>}
     {comingSoon && <div class="banner banner--soon">{comingSoonLabel}</div>}
     <div class="card__header">

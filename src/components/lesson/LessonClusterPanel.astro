@@ -1,70 +1,66 @@
-<div
-	class="lp__cluster-panel"
-	data-cluster-panel
-	aria-hidden="true"
->
-	<div class="lp__cluster-panel-bd" data-cluster-panel-content></div>
+<div class="lp__cluster-panel" data-cluster-panel aria-hidden="true">
+  <div class="lp__cluster-panel-bd" data-cluster-panel-content></div>
 </div>
 
 <script>
-	import { mountClusterViewer } from "../cluster-viewer-mount";
+  import { mountClusterViewer } from '../cluster-viewer-mount'
 
-	let cleanup: (() => void) | null = null;
+  let cleanup: (() => void) | null = null
 
-	function setup() {
-		const panel = document.querySelector("[data-cluster-panel]");
-		const content = document.querySelector("[data-cluster-panel-content]");
-		if (!panel || !content) {
-			return;
-		}
+  function setup() {
+    const panel = document.querySelector('[data-cluster-panel]')
+    const content = document.querySelector('[data-cluster-panel-content]')
+    if (!panel || !content) {
+      return
+    }
 
-		document.addEventListener("cluster-panel-open", () => {
-			panel.classList.add("lp__cluster-panel--open");
-			panel.setAttribute("aria-hidden", "false");
-		});
+    document.addEventListener('cluster-panel-open', () => {
+      panel.classList.add('lp__cluster-panel--open')
+      panel.setAttribute('aria-hidden', 'false')
+    })
 
-		document.addEventListener("cluster-panel-close", () => {
-			panel.classList.remove("lp__cluster-panel--open");
-			panel.setAttribute("aria-hidden", "true");
-		});
+    document.addEventListener('cluster-panel-close', () => {
+      panel.classList.remove('lp__cluster-panel--open')
+      panel.setAttribute('aria-hidden', 'true')
+    })
 
-		document.addEventListener("cluster-env-ready", ((e: CustomEvent) => {
-			if (cleanup) cleanup();
-			const env = e.detail?.env;
-			if (env && content instanceof HTMLElement) {
-				cleanup = mountClusterViewer(content, { env });
-			}
-		}) as EventListener);
-	}
+    document.addEventListener('cluster-env-ready', ((e: CustomEvent) => {
+      if (cleanup) cleanup()
+      const env = e.detail?.env
+      if (env && content instanceof HTMLElement) {
+        cleanup = mountClusterViewer(content, { env })
+      }
+    }) as EventListener)
+  }
 
-	setup();
-	document.addEventListener("astro:page-load", setup);
+  setup()
+  document.addEventListener('astro:page-load', setup)
 
-	document.addEventListener("astro:before-swap", () => {
-		if (cleanup) {
-			cleanup();
-			cleanup = null;
-		}
-	});
+  document.addEventListener('astro:before-swap', () => {
+    if (cleanup) {
+      cleanup()
+      cleanup = null
+    }
+  })
 </script>
 
 <style>
-	.lp__cluster-panel {
-		z-index: 2;
-		display: none;
-		position: absolute;
-		inset: 0;
-		flex-direction: column;
-		background: var(--color-gray-1);
-		overflow: hidden;
-	}
-	.lp__cluster-panel.lp__cluster-panel--open {
-		display: flex;
-	}
-	.lp__cluster-panel-bd {
-		flex: 1;
-		min-height: 0;
-		overflow: auto;
-		padding: var(--spacing-4);
-	}
+  .lp__cluster-panel {
+    z-index: 2;
+    display: none;
+    position: absolute;
+    inset: 0;
+    flex-direction: column;
+    background: var(--color-gray-1);
+    overflow: hidden;
+  }
+  .lp__cluster-panel.lp__cluster-panel--open {
+    display: flex;
+  }
+  .lp__cluster-panel-bd {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: var(--spacing-4);
+  }
 </style>

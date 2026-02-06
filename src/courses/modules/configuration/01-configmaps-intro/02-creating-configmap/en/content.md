@@ -10,8 +10,8 @@ kind: ConfigMap
 metadata:
   name: game-demo
 data:
-  player_initial_lives: "3"
-  ui_properties_file_name: "user-interface.properties"
+  player_initial_lives: '3'
+  ui_properties_file_name: 'user-interface.properties'
   game.properties: |
     enemy.types=aliens,monsters
     player.maximum-lives=5
@@ -20,16 +20,19 @@ data:
 ## Creating with kubectl
 
 **From literal values:**
+
 ```bash
 kubectl create configmap my-config --from-literal=key1=value1 --from-literal=key2=value2
 ```
 
 **From a file:**
+
 ```bash
 kubectl create configmap my-config --from-file=path/to/file
 ```
 
 **From a directory:**
+
 ```bash
 kubectl create configmap my-config --from-file=path/to/dir
 ```

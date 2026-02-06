@@ -1,252 +1,234 @@
 ---
-import Dialog from "../ui/Dialog.astro";
-import Button from "../ui/Button.astro";
-import "../../styles/routes/lesson.css";
+import Dialog from '../ui/Dialog.astro'
+import Button from '../ui/Button.astro'
+import '../../styles/routes/lesson.css'
 
-export const CONTACT_SUPPORT_DIALOG_ID = "contact-support-dialog";
+export const CONTACT_SUPPORT_DIALOG_ID = 'contact-support-dialog'
 
 interface Props {
-	title: string;
-	placeholder: string;
-	submitLabel: string;
-	cancelLabel: string;
-	successToastTitle: string;
-	typeSupport: string;
-	typeSuggestion: string;
-	typeOther: string;
-	lessonId: string;
+  title: string
+  placeholder: string
+  submitLabel: string
+  cancelLabel: string
+  successToastTitle: string
+  typeSupport: string
+  typeSuggestion: string
+  typeOther: string
+  lessonId: string
 }
 const {
-	title,
-	placeholder,
-	submitLabel,
-	cancelLabel,
-	successToastTitle,
-	typeSupport,
-	typeSuggestion,
-	typeOther,
-	lessonId,
-} = Astro.props;
+  title,
+  placeholder,
+  submitLabel,
+  cancelLabel,
+  successToastTitle,
+  typeSupport,
+  typeSuggestion,
+  typeOther,
+  lessonId
+} = Astro.props
 ---
 
 <Dialog id={CONTACT_SUPPORT_DIALOG_ID} title={title} size="lg">
-	<form
-		id="contact-support-form"
-		class="contact-support-form"
-		data-lesson-id={lessonId}
-	>
-		<div class="contact-support-form__types">
-			<label class="contact-support-form__type">
-				<input
-					type="radio"
-					name="contactType"
-					value="support"
-					checked
-				/>
-				<span>{typeSupport}</span>
-			</label>
-			<label class="contact-support-form__type">
-				<input type="radio" name="contactType" value="suggestion" />
-				<span>{typeSuggestion}</span>
-			</label>
-			<label class="contact-support-form__type">
-				<input type="radio" name="contactType" value="other" />
-				<span>{typeOther}</span>
-			</label>
-		</div>
-		<textarea
-			name="message"
-			class="lesson__suggest-textarea contact-support-form__message"
-			placeholder={placeholder}
-			rows={5}
-			required></textarea>
-		<p
-			id="contact-support-error"
-			class="lesson__suggest-error contact-support-form__error"
-			aria-live="polite"
-			hidden
-		>
-		</p>
-		<footer class="dialog__footer contact-support-form__footer">
-			<Button
-				type="button"
-				variant="subtle"
-				color="gray"
-				data-dialog-close
-			>
-				{cancelLabel}
-			</Button>
-			<Button type="submit" variant="solid" color="gray">
-				{submitLabel}
-			</Button>
-		</footer>
-	</form>
+  <form id="contact-support-form" class="contact-support-form" data-lesson-id={lessonId}>
+    <div class="contact-support-form__types">
+      <label class="contact-support-form__type">
+        <input type="radio" name="contactType" value="support" checked />
+        <span>{typeSupport}</span>
+      </label>
+      <label class="contact-support-form__type">
+        <input type="radio" name="contactType" value="suggestion" />
+        <span>{typeSuggestion}</span>
+      </label>
+      <label class="contact-support-form__type">
+        <input type="radio" name="contactType" value="other" />
+        <span>{typeOther}</span>
+      </label>
+    </div>
+    <textarea
+      name="message"
+      class="lesson__suggest-textarea contact-support-form__message"
+      placeholder={placeholder}
+      rows={5}
+      required></textarea>
+    <p id="contact-support-error" class="lesson__suggest-error contact-support-form__error" aria-live="polite" hidden>
+    </p>
+    <footer class="dialog__footer contact-support-form__footer">
+      <Button type="button" variant="subtle" color="gray" data-dialog-close>
+        {cancelLabel}
+      </Button>
+      <Button type="submit" variant="solid" color="gray">
+        {submitLabel}
+      </Button>
+    </footer>
+  </form>
 </Dialog>
 
 <script define:vars={{ dialogId: CONTACT_SUPPORT_DIALOG_ID, successToastTitle }}>
-	function openContactDialog(id) {
-		const dialog = document.getElementById(id);
-		if (!dialog || typeof dialog.showModal !== "function") {
-			return;
-		}
-		dialog.showModal();
-		const errorEl = document.getElementById("contact-support-error");
-		if (errorEl) {
-			errorEl.setAttribute("hidden", "");
-			errorEl.textContent = "";
-		}
-		const textarea = dialog.querySelector("textarea[name='message']");
-		if (textarea) {
-			textarea.value = "";
-		}
-	}
+  function openContactDialog(id) {
+    const dialog = document.getElementById(id)
+    if (!dialog || typeof dialog.showModal !== 'function') {
+      return
+    }
+    dialog.showModal()
+    const errorEl = document.getElementById('contact-support-error')
+    if (errorEl) {
+      errorEl.setAttribute('hidden', '')
+      errorEl.textContent = ''
+    }
+    const textarea = dialog.querySelector("textarea[name='message']")
+    if (textarea) {
+      textarea.value = ''
+    }
+  }
 
-	function getFormPayload(formEl) {
-		const typeInput = formEl.querySelector("input[name='contactType']:checked");
-		const type = typeInput && "value" in typeInput ? typeInput.value : "support";
-		const messageEl = formEl.querySelector("textarea[name='message']");
-		const message = (messageEl && "value" in messageEl ? messageEl.value : "").trim();
-		const lessonId = formEl.getAttribute("data-lesson-id") ?? "";
-		return { type, message, lessonId: lessonId || undefined };
-	}
+  function getFormPayload(formEl) {
+    const typeInput = formEl.querySelector("input[name='contactType']:checked")
+    const type = typeInput && 'value' in typeInput ? typeInput.value : 'support'
+    const messageEl = formEl.querySelector("textarea[name='message']")
+    const message = (messageEl && 'value' in messageEl ? messageEl.value : '').trim()
+    const lessonId = formEl.getAttribute('data-lesson-id') ?? ''
+    return { type, message, lessonId: lessonId || undefined }
+  }
 
-	async function sendContactMessage(payload) {
-		const res = await fetch("/api/contact", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(payload),
-		});
-		if (!res.ok) {
-			const data = await res.json().catch(() => ({}));
-			throw new Error(data.error ?? res.statusText);
-		}
-		return res;
-	}
+  async function sendContactMessage(payload) {
+    const res = await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error ?? res.statusText)
+    }
+    return res
+  }
 
-	function hideError(errorEl) {
-		errorEl.setAttribute("hidden", "");
-		errorEl.textContent = "";
-	}
+  function hideError(errorEl) {
+    errorEl.setAttribute('hidden', '')
+    errorEl.textContent = ''
+  }
 
-	function showError(errorEl, text) {
-		errorEl.textContent = text;
-		errorEl.removeAttribute("hidden");
-	}
+  function showError(errorEl, text) {
+    errorEl.textContent = text
+    errorEl.removeAttribute('hidden')
+  }
 
-	function closeContactDialog(id) {
-		const dialog = document.getElementById(id);
-		if (dialog && typeof dialog.close === "function") {
-			dialog.close();
-		}
-	}
+  function closeContactDialog(id) {
+    const dialog = document.getElementById(id)
+    if (dialog && typeof dialog.close === 'function') {
+      dialog.close()
+    }
+  }
 
-	function showSuccessToast(title) {
-		document.dispatchEvent(
-			new CustomEvent("toast-show", {
-				detail: { title, type: "success" },
-			}),
-		);
-	}
+  function showSuccessToast(title) {
+    document.dispatchEvent(
+      new CustomEvent('toast-show', {
+        detail: { title, type: 'success' }
+      })
+    )
+  }
 
-	async function handleContactSubmit(e, id, toastTitle) {
-		e.preventDefault();
-		const formEl = e.target;
-		if (!(formEl instanceof HTMLFormElement)) {
-			return;
-		}
-		const errorEl = document.getElementById("contact-support-error");
-		if (!errorEl) {
-			return;
-		}
-		hideError(errorEl);
-		const payload = getFormPayload(formEl);
-		try {
-			await sendContactMessage(payload);
-			closeContactDialog(id);
-			showSuccessToast(toastTitle);
-		} catch (err) {
-			showError(errorEl, err instanceof Error ? err.message : "Erreur");
-		}
-	}
+  async function handleContactSubmit(e, id, toastTitle) {
+    e.preventDefault()
+    const formEl = e.target
+    if (!(formEl instanceof HTMLFormElement)) {
+      return
+    }
+    const errorEl = document.getElementById('contact-support-error')
+    if (!errorEl) {
+      return
+    }
+    hideError(errorEl)
+    const payload = getFormPayload(formEl)
+    try {
+      await sendContactMessage(payload)
+      closeContactDialog(id)
+      showSuccessToast(toastTitle)
+    } catch (err) {
+      showError(errorEl, err instanceof Error ? err.message : 'Erreur')
+    }
+  }
 
-	document.addEventListener("contact-support-open", () => {
-		openContactDialog(dialogId);
-	});
+  document.addEventListener('contact-support-open', () => {
+    openContactDialog(dialogId)
+  })
 
-	const form = document.getElementById("contact-support-form");
-	if (form) {
-		form.addEventListener("submit", (e) => {
-			handleContactSubmit(e, dialogId, successToastTitle);
-		});
-	}
+  const form = document.getElementById('contact-support-form')
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      handleContactSubmit(e, dialogId, successToastTitle)
+    })
+  }
 </script>
 
 <style>
-	.contact-support-form {
-		width: 100%;
-		box-sizing: border-box;
-	}
-	.contact-support-form__types {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--spacing-3);
-		margin-bottom: var(--spacing-4);
-	}
-	.contact-support-form__type {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--spacing-2);
-		cursor: pointer;
-		font-size: var(--text-sm);
-		line-height: var(--line-height-sm);
-		color: var(--color-fg-default);
-	}
-	.contact-support-form__type input[type="radio"] {
-		appearance: none;
-		width: 1rem;
-		height: 1rem;
-		margin: 0;
-		border: 2px solid var(--color-gray-8);
-		border-radius: 50%;
-		background: var(--color-gray-1);
-		cursor: pointer;
-		flex-shrink: 0;
-		transition: border-color var(--duration-fast), background-color var(--duration-fast), box-shadow var(--duration-fast);
-	}
-	.contact-support-form__type input[type="radio"]:hover {
-		border-color: var(--color-cyan-8);
-	}
-	.contact-support-form__type input[type="radio"]:focus-visible {
-		outline: none;
-		box-shadow: 0 0 0 2px var(--color-gray-1), 0 0 0 4px var(--color-cyan-9);
-	}
-	.contact-support-form__type input[type="radio"]:checked {
-		border-color: var(--color-cyan-9);
-		background-color: var(--color-cyan-3);
-		background-image: radial-gradient(
-			circle at center,
-			var(--color-cyan-9) 35%,
-			transparent 40%
-		);
-	}
-	.contact-support-form__message {
-		display: block;
-		width: 100%;
-		box-sizing: border-box;
-		margin-bottom: var(--spacing-2);
-	}
-	.contact-support-form__error {
-		margin-bottom: var(--spacing-2);
-	}
-	.contact-support-form__footer {
-		display: flex;
-		justify-content: flex-end;
-		gap: var(--spacing-2);
-		margin-top: var(--spacing-6);
-		padding-left: 0;
-		padding-right: 0;
-	}
-	:global(#contact-support-dialog .dialog__content) {
-		min-height: 28rem;
-	}
+  .contact-support-form {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .contact-support-form__types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-4);
+  }
+  .contact-support-form__type {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    line-height: var(--line-height-sm);
+    color: var(--color-fg-default);
+  }
+  .contact-support-form__type input[type='radio'] {
+    appearance: none;
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    border: 2px solid var(--color-gray-8);
+    border-radius: 50%;
+    background: var(--color-gray-1);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition:
+      border-color var(--duration-fast),
+      background-color var(--duration-fast),
+      box-shadow var(--duration-fast);
+  }
+  .contact-support-form__type input[type='radio']:hover {
+    border-color: var(--color-cyan-8);
+  }
+  .contact-support-form__type input[type='radio']:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--color-gray-1),
+      0 0 0 4px var(--color-cyan-9);
+  }
+  .contact-support-form__type input[type='radio']:checked {
+    border-color: var(--color-cyan-9);
+    background-color: var(--color-cyan-3);
+    background-image: radial-gradient(circle at center, var(--color-cyan-9) 35%, transparent 40%);
+  }
+  .contact-support-form__message {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: var(--spacing-2);
+  }
+  .contact-support-form__error {
+    margin-bottom: var(--spacing-2);
+  }
+  .contact-support-form__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-2);
+    margin-top: var(--spacing-6);
+    padding-left: 0;
+    padding-right: 0;
+  }
+  :global(#contact-support-dialog .dialog__content) {
+    min-height: 28rem;
+  }
 </style>

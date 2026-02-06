@@ -8,11 +8,11 @@ flowchart TD
     Container[Container]
     Network[Shared Network<br/>Same IP Address]
     Storage[Shared Storage<br/>Volumes]
-    
+
     Pod --> Container
     Pod --> Network
     Pod --> Storage
-    
+
     Kubernetes[Kubernetes Cluster] -->|Schedules & Manages| Pod
     Node[Worker Node] -->|Runs| Pod
 ```
@@ -22,6 +22,7 @@ flowchart TD
 A Pod (like a pod of whales or a pea pod) is a group of one or more containers that share storage and network resources. The containers in a Pod are always placed together on the same node and scheduled together, they're like roommates sharing the same apartment.
 
 The key idea is that containers in a Pod share:
+
 - **The same network**: They have the same IP address and can talk to each other using `localhost`
 - **The same storage**: They can access shared volumes to exchange files
 - **The same lifecycle**: They start and stop together

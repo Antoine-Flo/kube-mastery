@@ -9,13 +9,13 @@ You can use ConfigMap data as environment variables:
 ```yaml
 spec:
   containers:
-  - name: my-container
-    env:
-    - name: PLAYER_LIVES
-      valueFrom:
-        configMapKeyRef:
-          name: game-demo
-          key: player_initial_lives
+    - name: my-container
+      env:
+        - name: PLAYER_LIVES
+          valueFrom:
+            configMapKeyRef:
+              name: game-demo
+              key: player_initial_lives
 ```
 
 Or use `envFrom` to import all keys:
@@ -23,10 +23,10 @@ Or use `envFrom` to import all keys:
 ```yaml
 spec:
   containers:
-  - name: my-container
-    envFrom:
-    - configMapRef:
-        name: game-demo
+    - name: my-container
+      envFrom:
+        - configMapRef:
+            name: game-demo
 ```
 
 ## As Volume Mounts
@@ -36,14 +36,14 @@ You can mount a ConfigMap as a volume, making each key a file:
 ```yaml
 spec:
   containers:
-  - name: my-container
-    volumeMounts:
-    - name: config-volume
-      mountPath: /etc/config
+    - name: my-container
+      volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
   volumes:
-  - name: config-volume
-    configMap:
-      name: game-demo
+    - name: config-volume
+      configMap:
+        name: game-demo
 ```
 
 ## Important Notes

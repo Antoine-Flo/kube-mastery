@@ -1,457 +1,440 @@
 ---
 interface Props {
-	class?: string;
-	rows?: number;
-	lang?: "en" | "fr";
-	/** Seed name for lesson page; omitted = home (demo). */
-	seedName?: string;
-	/** Full height layout (lesson page). */
-	fullHeight?: boolean;
-	/** Persist id for view transitions (lesson page). */
-	persistId?: string;
-	/** Optional text written at top when terminal loads (e.g. home banner). Omitted = none. */
-	topPrompt?: string;
-	/** Lesson page: use shared env from page script (no persist). */
-	lessonTerminal?: boolean;
-	/** Show min/max/close controls (home only; hidden on lesson). */
-	showControls?: boolean;
+  class?: string
+  rows?: number
+  lang?: 'en' | 'fr'
+  /** Seed name for lesson page; omitted = home (demo). */
+  seedName?: string
+  /** Full height layout (lesson page). */
+  fullHeight?: boolean
+  /** Persist id for view transitions (lesson page). */
+  persistId?: string
+  /** Optional text written at top when terminal loads (e.g. home banner). Omitted = none. */
+  topPrompt?: string
+  /** Lesson page: use shared env from page script (no persist). */
+  lessonTerminal?: boolean
+  /** Show min/max/close controls (home only; hidden on lesson). */
+  showControls?: boolean
 }
 
-import { Minus, Save, Square, X } from "@lucide/astro";
-import "@xterm/xterm/css/xterm.css";
-import Button from "./ui/Button.astro";
+import { Minus, Save, Square, X } from '@lucide/astro'
+import '@xterm/xterm/css/xterm.css'
+import Button from './ui/Button.astro'
 
 const {
-	class: className = "",
-	rows = 20,
-	lang = "en",
-	seedName,
-	fullHeight = false,
-	persistId,
-	topPrompt,
-	lessonTerminal = false,
-	showControls = true,
-} = Astro.props;
-const rootClass = ["t-win", fullHeight && "t-win--full", className]
-	.filter(Boolean)
-	.join(" ");
+  class: className = '',
+  rows = 20,
+  lang = 'en',
+  seedName,
+  fullHeight = false,
+  persistId,
+  topPrompt,
+  lessonTerminal = false,
+  showControls = true
+} = Astro.props
+const rootClass = ['t-win', fullHeight && 't-win--full', className].filter(Boolean).join(' ')
 ---
 
 <div
-	class={rootClass}
-	id={persistId ?? undefined}
-	transition:persist={persistId ?? undefined}
-	data-terminal-window
-	data-rows={rows}
-	data-lang={lang}
-	data-seed-name={seedName ?? undefined}
-	data-persist-id={lessonTerminal ? undefined : (persistId ?? undefined)}
-	data-top-prompt={topPrompt != null ? JSON.stringify(topPrompt) : undefined}
-	data-lesson-terminal={lessonTerminal ? "true" : undefined}
+  class={rootClass}
+  id={persistId ?? undefined}
+  transition:persist={persistId ?? undefined}
+  data-terminal-window
+  data-rows={rows}
+  data-lang={lang}
+  data-seed-name={seedName ?? undefined}
+  data-persist-id={lessonTerminal ? undefined : (persistId ?? undefined)}
+  data-top-prompt={topPrompt != null ? JSON.stringify(topPrompt) : undefined}
+  data-lesson-terminal={lessonTerminal ? 'true' : undefined}
 >
-	{
-		showControls && (
-			<div class="t-ctrl" aria-hidden="true">
-				<span class="t-btn t-btn--min">
-					<Minus size={14} />
-				</span>
-				<span class="t-btn t-btn--max">
-					<Square size={14} />
-				</span>
-				<span class="t-btn t-btn--close">
-					<X size={14} />
-				</span>
-			</div>
-		)
-	}
-	<div class="t-load">
-		<span class="t-load-txt">Loading terminal…</span>
-	</div>
-	<div class="t-editor-overlay" hidden>
-		<div class="t-editor-box"></div>
-		<div class="t-editor-footer">
-			<span class="t-editor-filename" aria-live="polite"></span>
-			<div class="t-editor-actions">
-				<Button
-					variant="outline"
-					size="xs"
-					color="ruby"
-					type="button"
-					class="t-editor-btn-close"
-					aria-label="Fermer (Esc)"
-				>
-					<X size={14} />
-				</Button>
-				<Button
-					variant="subtle"
-					size="xs"
-					color="cyan"
-					type="button"
-					class="t-editor-btn-save"
-					aria-label="Sauver (Ctrl+S)"
-				>
-					<Save size={14} />
-				</Button>
-			</div>
-		</div>
-	</div>
-	<div class="t-wrap" style="display: none;">
-		<div class="t-box"></div>
-	</div>
+  {
+    showControls && (
+      <div class="t-ctrl" aria-hidden="true">
+        <span class="t-btn t-btn--min">
+          <Minus size={14} />
+        </span>
+        <span class="t-btn t-btn--max">
+          <Square size={14} />
+        </span>
+        <span class="t-btn t-btn--close">
+          <X size={14} />
+        </span>
+      </div>
+    )
+  }
+  <div class="t-load">
+    <span class="t-load-txt">Loading terminal…</span>
+  </div>
+  <div class="t-editor-overlay" hidden>
+    <div class="t-editor-box"></div>
+    <div class="t-editor-footer">
+      <span class="t-editor-filename" aria-live="polite"></span>
+      <div class="t-editor-actions">
+        <Button
+          variant="outline"
+          size="xs"
+          color="ruby"
+          type="button"
+          class="t-editor-btn-close"
+          aria-label="Fermer (Esc)"
+        >
+          <X size={14} />
+        </Button>
+        <Button
+          variant="subtle"
+          size="xs"
+          color="cyan"
+          type="button"
+          class="t-editor-btn-save"
+          aria-label="Sauver (Ctrl+S)"
+        >
+          <Save size={14} />
+        </Button>
+      </div>
+    </div>
+  </div>
+  <div class="t-wrap" style="display: none;">
+    <div class="t-box"></div>
+  </div>
 </div>
 
 <script>
-	import { createCodeMirrorEditor } from "../core/editor/CodeMirrorEditor";
-	import type { CodeMirrorEditor } from "../core/editor/CodeMirrorEditor";
-	import type { EditorModal } from "../core/shell/commands";
-	import { focusTerminal } from "../core/terminal/TerminalManager";
-	import { mountTerminal } from "./terminal-mount";
+  import { createCodeMirrorEditor } from '../core/editor/CodeMirrorEditor'
+  import type { CodeMirrorEditor } from '../core/editor/CodeMirrorEditor'
+  import type { EditorModal } from '../core/shell/commands'
+  import { focusTerminal } from '../core/terminal/TerminalManager'
+  import { mountTerminal } from './terminal-mount'
 
-	type EditorModalWithLifecycle = EditorModal & {
-		close(): void;
-		updateThemeIfOpen?(): void;
-	};
+  type EditorModalWithLifecycle = EditorModal & {
+    close(): void
+    updateThemeIfOpen?(): void
+  }
 
-	const cleanups = new Map<Element, () => void>();
-	const persistIdByRoot = new Map<Element, string>();
-	const editorModalByRoot = new Map<Element, EditorModalWithLifecycle>();
-	/** Évite d'enregistrer deux listeners "lesson-env-ready" pour le même root (init + astro:page-load). */
-	const lessonPending = new WeakSet<Element>();
+  const cleanups = new Map<Element, () => void>()
+  const persistIdByRoot = new Map<Element, string>()
+  const editorModalByRoot = new Map<Element, EditorModalWithLifecycle>()
+  /** Évite d'enregistrer deux listeners "lesson-env-ready" pour le même root (init + astro:page-load). */
+  const lessonPending = new WeakSet<Element>()
 
-	const themeObserver = new MutationObserver(() => {
-		editorModalByRoot.forEach((modal) => modal.updateThemeIfOpen?.());
-	});
-	themeObserver.observe(document.documentElement, {
-		attributes: true,
-		attributeFilter: ["data-theme"],
-	});
+  const themeObserver = new MutationObserver(() => {
+    editorModalByRoot.forEach((modal) => modal.updateThemeIfOpen?.())
+  })
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme']
+  })
 
-	function getTheme(): "dark" | "light" {
-		return document.documentElement.getAttribute("data-theme") === "light"
-			? "light"
-			: "dark";
-	}
+  function getTheme(): 'dark' | 'light' {
+    return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'
+  }
 
-	function createEditorModal(
-		overlayEl: HTMLElement,
-		editorBoxEl: HTMLElement,
-	): EditorModalWithLifecycle {
-		let currentEditor: CodeMirrorEditor | null = null;
-		let currentOnSave: ((content: string) => void) | null = null;
-		const filenameEl = overlayEl.querySelector(".t-editor-filename");
-		const closeBtn = overlayEl.querySelector(".t-editor-btn-close");
-		const saveBtn = overlayEl.querySelector(".t-editor-btn-save");
+  function createEditorModal(overlayEl: HTMLElement, editorBoxEl: HTMLElement): EditorModalWithLifecycle {
+    let currentEditor: CodeMirrorEditor | null = null
+    let currentOnSave: ((content: string) => void) | null = null
+    const filenameEl = overlayEl.querySelector('.t-editor-filename')
+    const closeBtn = overlayEl.querySelector('.t-editor-btn-close')
+    const saveBtn = overlayEl.querySelector('.t-editor-btn-save')
 
-		const handleKeydown = (e: KeyboardEvent) => {
-			if (e.key === "Escape") {
-				e.preventDefault();
-				close();
-			}
-		};
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        close()
+      }
+    }
 
-		const close = () => {
-			overlayEl.removeEventListener("keydown", handleKeydown, true);
-			if (currentEditor) {
-				currentEditor.destroy();
-				currentEditor = null;
-			}
-			currentOnSave = null;
-			overlayEl.hidden = true;
-			focusTerminal();
-		};
+    const close = () => {
+      overlayEl.removeEventListener('keydown', handleKeydown, true)
+      if (currentEditor) {
+        currentEditor.destroy()
+        currentEditor = null
+      }
+      currentOnSave = null
+      overlayEl.hidden = true
+      focusTerminal()
+    }
 
-		const updateThemeIfOpen = () => {
-			if (!overlayEl.hidden && currentEditor) {
-				currentEditor.updateTheme(getTheme());
-			}
-		};
+    const updateThemeIfOpen = () => {
+      if (!overlayEl.hidden && currentEditor) {
+        currentEditor.updateTheme(getTheme())
+      }
+    }
 
-		const open: EditorModal["open"] = (filename, content, onSave) => {
-			if (currentEditor) {
-				currentEditor.destroy();
-				currentEditor = null;
-			}
-			currentOnSave = onSave;
-			if (filenameEl) {
-				filenameEl.textContent = filename;
-			}
-			overlayEl.hidden = false;
-			overlayEl.addEventListener("keydown", handleKeydown, true);
+    const open: EditorModal['open'] = (filename, content, onSave) => {
+      if (currentEditor) {
+        currentEditor.destroy()
+        currentEditor = null
+      }
+      currentOnSave = onSave
+      if (filenameEl) {
+        filenameEl.textContent = filename
+      }
+      overlayEl.hidden = false
+      overlayEl.addEventListener('keydown', handleKeydown, true)
 
-			const theme = getTheme();
-			const editor = createCodeMirrorEditor({
-				theme,
-				filename,
-				onSave: () => {
-					if (currentEditor) {
-						const value = currentEditor.getValue();
-						onSave(value);
-					}
-					close();
-				},
-			});
-			currentEditor = editor;
-			editor.mount(editorBoxEl);
-			editor.setValue(content);
-			editor.focus();
-		};
+      const theme = getTheme()
+      const editor = createCodeMirrorEditor({
+        theme,
+        filename,
+        onSave: () => {
+          if (currentEditor) {
+            const value = currentEditor.getValue()
+            onSave(value)
+          }
+          close()
+        }
+      })
+      currentEditor = editor
+      editor.mount(editorBoxEl)
+      editor.setValue(content)
+      editor.focus()
+    }
 
-		closeBtn?.addEventListener("click", () => {
-			close();
-		});
+    closeBtn?.addEventListener('click', () => {
+      close()
+    })
 
-		saveBtn?.addEventListener("click", () => {
-			if (currentEditor) {
-				currentOnSave?.(currentEditor.getValue());
-			}
-			close();
-		});
+    saveBtn?.addEventListener('click', () => {
+      if (currentEditor) {
+        currentOnSave?.(currentEditor.getValue())
+      }
+      close()
+    })
 
-		return { open, close, updateThemeIfOpen };
-	}
+    return { open, close, updateThemeIfOpen }
+  }
 
-	function init() {
-		document.querySelectorAll("[data-terminal-window]").forEach((root) => {
-			const el = root as HTMLElement;
-			const box = el.querySelector(".t-box") as HTMLElement;
-			const loader = el.querySelector(".t-load") as HTMLElement;
-			const wrapper = el.querySelector(".t-wrap") as HTMLElement;
-			const overlayEl = el.querySelector(
-				".t-editor-overlay",
-			) as HTMLElement;
-			const editorBoxEl = el.querySelector(
-				".t-editor-box",
-			) as HTMLElement;
-			if (!box || !loader || !wrapper || !overlayEl || !editorBoxEl) {
-				return;
-			}
+  function init() {
+    document.querySelectorAll('[data-terminal-window]').forEach((root) => {
+      const el = root as HTMLElement
+      const box = el.querySelector('.t-box') as HTMLElement
+      const loader = el.querySelector('.t-load') as HTMLElement
+      const wrapper = el.querySelector('.t-wrap') as HTMLElement
+      const overlayEl = el.querySelector('.t-editor-overlay') as HTMLElement
+      const editorBoxEl = el.querySelector('.t-editor-box') as HTMLElement
+      if (!box || !loader || !wrapper || !overlayEl || !editorBoxEl) {
+        return
+      }
 
-			// Déjà monté (évite double xterm après astro:page-load / view transitions)
-			if (box.querySelector(".xterm")) {
-				loader.style.display = "none";
-				wrapper.style.display = "block";
-				return;
-			}
+      // Déjà monté (évite double xterm après astro:page-load / view transitions)
+      if (box.querySelector('.xterm')) {
+        loader.style.display = 'none'
+        wrapper.style.display = 'block'
+        return
+      }
 
-			const isLesson = el.dataset.lessonTerminal === "true";
-			const pid = el.dataset.persistId;
-			if (cleanups.has(root)) {
-				return;
-			}
+      const isLesson = el.dataset.lessonTerminal === 'true'
+      const pid = el.dataset.persistId
+      if (cleanups.has(root)) {
+        return
+      }
 
-			const rows = Number(el.dataset.rows) || 20;
-			const lang = (el.dataset.lang === "fr" ? "fr" : "en") as
-				| "en"
-				| "fr";
-			const seedName = el.dataset.seedName;
-			const topPromptRaw = el.dataset.topPrompt;
-			const topPrompt = topPromptRaw
-				? (JSON.parse(topPromptRaw) as string)
-				: undefined;
+      const rows = Number(el.dataset.rows) || 20
+      const lang = (el.dataset.lang === 'fr' ? 'fr' : 'en') as 'en' | 'fr'
+      const seedName = el.dataset.seedName
+      const topPromptRaw = el.dataset.topPrompt
+      const topPrompt = topPromptRaw ? (JSON.parse(topPromptRaw) as string) : undefined
 
-			const editorModal = createEditorModal(overlayEl, editorBoxEl);
-			editorModalByRoot.set(root, editorModal);
+      const editorModal = createEditorModal(overlayEl, editorBoxEl)
+      editorModalByRoot.set(root, editorModal)
 
-			const doMount = (opts: Parameters<typeof mountTerminal>[1]) => {
-				try {
-					const cleanup = mountTerminal(box, {
-						...opts,
-						editorModal,
-					});
-					cleanups.set(root, () => {
-						editorModalByRoot.delete(root);
-						cleanup();
-					});
-					if (pid) persistIdByRoot.set(root, pid);
-					loader.style.display = "none";
-					wrapper.style.display = "block";
-				} catch (err) {
-					console.error("[TerminalWindow] Mount failed:", err);
-					loader.textContent = "Terminal unavailable.";
-				}
-			};
+      const doMount = (opts: Parameters<typeof mountTerminal>[1]) => {
+        try {
+          const cleanup = mountTerminal(box, {
+            ...opts,
+            editorModal
+          })
+          cleanups.set(root, () => {
+            editorModalByRoot.delete(root)
+            cleanup()
+          })
+          if (pid) persistIdByRoot.set(root, pid)
+          loader.style.display = 'none'
+          wrapper.style.display = 'block'
+        } catch (err) {
+          console.error('[TerminalWindow] Mount failed:', err)
+          loader.textContent = 'Terminal unavailable.'
+        }
+      }
 
-			if (!isLesson) {
-				doMount({
-					rows,
-					lang,
-					...(seedName && { seedName }),
-					...(topPrompt !== undefined && { topPrompt }),
-				});
-				return;
-			}
-			if (lessonPending.has(root)) {
-				return;
-			}
-			lessonPending.add(root);
-			const g = globalThis as unknown as {
-				__lessonEnv?: import("../core/emulatedEnvironment/EmulatedEnvironment").EmulatedEnvironment;
-			};
-			const withEnv = (env: typeof g.__lessonEnv) => {
-				if (env) {
-					doMount({ env, rows, lang });
-				}
-			};
-			if (g.__lessonEnv) {
-				withEnv(g.__lessonEnv);
-				return;
-			}
-			document.addEventListener(
-				"lesson-env-ready",
-				(ev: Event) => withEnv((ev as CustomEvent).detail?.env),
-				{ once: true },
-			);
-		});
-	}
+      if (!isLesson) {
+        doMount({
+          rows,
+          lang,
+          ...(seedName && { seedName }),
+          ...(topPrompt !== undefined && { topPrompt })
+        })
+        return
+      }
+      if (lessonPending.has(root)) {
+        return
+      }
+      lessonPending.add(root)
+      const g = globalThis as unknown as {
+        __lessonEnv?: import('../core/emulatedEnvironment/EmulatedEnvironment').EmulatedEnvironment
+      }
+      const withEnv = (env: typeof g.__lessonEnv) => {
+        if (env) {
+          doMount({ env, rows, lang })
+        }
+      }
+      if (g.__lessonEnv) {
+        withEnv(g.__lessonEnv)
+        return
+      }
+      document.addEventListener('lesson-env-ready', (ev: Event) => withEnv((ev as CustomEvent).detail?.env), {
+        once: true
+      })
+    })
+  }
 
-	init();
-	document.addEventListener("astro:page-load", init);
+  init()
+  document.addEventListener('astro:page-load', init)
 
-	document.addEventListener("astro:before-swap", (ev: Event) => {
-		const newDoc = (ev as { newDocument?: Document }).newDocument;
-		cleanups.forEach((cleanup, root) => {
-			const pid = persistIdByRoot.get(root);
-			if (newDoc) {
-				if (pid && newDoc.getElementById(pid)) {
-					return;
-				}
-			}
-			cleanup();
-			cleanups.delete(root);
-			if (pid) persistIdByRoot.delete(root);
-		});
-	});
+  document.addEventListener('astro:before-swap', (ev: Event) => {
+    const newDoc = (ev as { newDocument?: Document }).newDocument
+    cleanups.forEach((cleanup, root) => {
+      const pid = persistIdByRoot.get(root)
+      if (newDoc) {
+        if (pid && newDoc.getElementById(pid)) {
+          return
+        }
+      }
+      cleanup()
+      cleanups.delete(root)
+      if (pid) persistIdByRoot.delete(root)
+    })
+  })
 </script>
 
 <style>
-	.t-win {
-		padding: var(--spacing-4);
-		position: relative;
-		/* background-color: var(--color-gray-1); */
-	}
-	.t-win:not(.t-win--full) {
-		height: 490px;
-	}
-	.t-win--full {
-		height: 100%;
-		min-height: 0;
-		display: flex;
-		flex-direction: column;
-	}
-	.t-ctrl {
-		position: absolute;
-		top: var(--spacing-2);
-		right: var(--spacing-2);
-		display: flex;
-		gap: var(--spacing-2);
-		z-index: 20;
-	}
-	.t-btn {
-		flex-shrink: 0;
-		opacity: 0.6;
-		transition: opacity var(--duration-fast);
-	}
-	.t-btn:hover {
-		opacity: 1;
-	}
-	.t-btn--close {
-		color: var(--color-ruby-11);
-	}
-	.t-btn--max {
-		color: var(--color-green-11);
-	}
-	.t-btn--min {
-		color: var(--color-amber-11);
-	}
-	.t-load {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 100%;
-	}
-	.t-win:not(.t-win--full) .t-load {
-		height: 450px;
-	}
-	.t-win--full .t-load {
-		flex: 1;
-		min-height: 0;
-	}
-	.t-load-txt {
-		color: var(--color-gray-11);
-	}
-	.t-wrap {
-		position: relative;
-		width: 100%;
-		height: 100%;
-	}
-	.t-win--full .t-wrap {
-		flex: 1;
-		min-height: 0;
-	}
-	.t-box {
-		width: 100%;
-		min-height: 200px;
-		background-color: var(--color-gray-1);
-		text-align: left;
-	}
-	.t-win:not(.t-win--full) .t-box {
-		height: 450px;
-	}
-	.t-win--full .t-box {
-		height: 100%;
-	}
-	.t-editor-overlay {
-		position: absolute;
-		inset: 0;
-		z-index: 10;
-		display: grid;
-		grid-template-rows: 1fr auto;
-		height: 100%;
-		min-height: 0;
-		background-color: var(--color-gray-1);
-	}
-	.t-editor-overlay[hidden] {
-		display: none;
-	}
-	.t-editor-box {
-		min-height: 0;
-		overflow: hidden;
-		border-radius: var(--radius-xs);
-		display: flex;
-		flex-direction: column;
-	}
-	.t-editor-box .cm-editor {
-		flex: 1;
-		min-height: 0;
-		overflow: hidden;
-	}
-	.t-editor-box .cm-scroller {
-		overflow: auto;
-		min-height: 0;
-	}
-	.t-editor-footer {
-		position: absolute;
-		bottom: var(--spacing-2);
-		right: var(--spacing-2);
-		left: var(--spacing-2);
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--spacing-2);
-		z-index: 2;
-		opacity: 0.7;
-		transition: opacity var(--duration-fast);
-	}
-	.t-editor-footer:hover {
-		opacity: 1;
-	}
-	.t-editor-filename {
-		font-family: var(--font-mono);
-		font-size: var(--font-size-2);
-		color: var(--color-gray-11);
-	}
-	.t-editor-actions {
-		display: flex;
-		gap: var(--spacing-2);
-	}
+  .t-win {
+    padding: var(--spacing-4);
+    position: relative;
+    /* background-color: var(--color-gray-1); */
+  }
+  .t-win:not(.t-win--full) {
+    height: 490px;
+  }
+  .t-win--full {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .t-ctrl {
+    position: absolute;
+    top: var(--spacing-2);
+    right: var(--spacing-2);
+    display: flex;
+    gap: var(--spacing-2);
+    z-index: 20;
+  }
+  .t-btn {
+    flex-shrink: 0;
+    opacity: 0.6;
+    transition: opacity var(--duration-fast);
+  }
+  .t-btn:hover {
+    opacity: 1;
+  }
+  .t-btn--close {
+    color: var(--color-ruby-11);
+  }
+  .t-btn--max {
+    color: var(--color-green-11);
+  }
+  .t-btn--min {
+    color: var(--color-amber-11);
+  }
+  .t-load {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+  .t-win:not(.t-win--full) .t-load {
+    height: 450px;
+  }
+  .t-win--full .t-load {
+    flex: 1;
+    min-height: 0;
+  }
+  .t-load-txt {
+    color: var(--color-gray-11);
+  }
+  .t-wrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .t-win--full .t-wrap {
+    flex: 1;
+    min-height: 0;
+  }
+  .t-box {
+    width: 100%;
+    min-height: 200px;
+    background-color: var(--color-gray-1);
+    text-align: left;
+  }
+  .t-win:not(.t-win--full) .t-box {
+    height: 450px;
+  }
+  .t-win--full .t-box {
+    height: 100%;
+  }
+  .t-editor-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    height: 100%;
+    min-height: 0;
+    background-color: var(--color-gray-1);
+  }
+  .t-editor-overlay[hidden] {
+    display: none;
+  }
+  .t-editor-box {
+    min-height: 0;
+    overflow: hidden;
+    border-radius: var(--radius-xs);
+    display: flex;
+    flex-direction: column;
+  }
+  .t-editor-box .cm-editor {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .t-editor-box .cm-scroller {
+    overflow: auto;
+    min-height: 0;
+  }
+  .t-editor-footer {
+    position: absolute;
+    bottom: var(--spacing-2);
+    right: var(--spacing-2);
+    left: var(--spacing-2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-2);
+    z-index: 2;
+    opacity: 0.7;
+    transition: opacity var(--duration-fast);
+  }
+  .t-editor-footer:hover {
+    opacity: 1;
+  }
+  .t-editor-filename {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-2);
+    color: var(--color-gray-11);
+  }
+  .t-editor-actions {
+    display: flex;
+    gap: var(--spacing-2);
+  }
 </style>

@@ -66,10 +66,10 @@ metadata:
   name: nginx-demo
 spec:
   containers:
-  - name: nginx
-    image: nginx:1.14.2
-    ports:
-    - containerPort: 80
+    - name: nginx
+      image: nginx:1.14.2
+      ports:
+        - containerPort: 80
 ```
 
 This manifest tells Kubernetes to create a Pod named `nginx-demo` running the nginx web server. Once you apply this with `kubectl apply -f nginx-demo.yaml`, Kubernetes will work to make it happen.

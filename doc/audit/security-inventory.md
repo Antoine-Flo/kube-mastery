@@ -6,12 +6,12 @@ Inventaire des variables d’environnement, des routes API et de Supabase pour g
 
 ## Variables d’environnement
 
-| Variable | Fichier(s) où lue | Sensible | Ne doit pas être en repo |
-|----------|-------------------|----------|---------------------------|
-| `PUBLIC_SUPABASE_URL` | `src/lib/supabase.ts` (browser client) | Non (URL publique) | Optionnel (souvent en .env.example) |
-| `PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` (ou `PUBLIC_SUPABASE_PUBLISHABLE_KEY`) | `src/lib/supabase.ts` (browser client) | Oui (clé anon, exposée côté client) | Oui (ne pas committer en dur) |
-| `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_DEFAULT_KEY` | Runtime Cloudflare (server, `locals.runtime.env`) ; utilisés dans `src/lib/supabase.ts` (getSupabaseServer) | Oui (côté serveur) | Oui |
-| **À migrer (prévu)** `DATABASE_URL` | `src/db/index.ts` (Drizzle, quand migré) | Oui (secret connexion Postgres) | Oui |
+| Variable                                                                         | Fichier(s) où lue                                                                                           | Sensible                            | Ne doit pas être en repo            |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------- | ----------------------------------- |
+| `PUBLIC_SUPABASE_URL`                                                            | `src/lib/supabase.ts` (browser client)                                                                      | Non (URL publique)                  | Optionnel (souvent en .env.example) |
+| `PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` (ou `PUBLIC_SUPABASE_PUBLISHABLE_KEY`) | `src/lib/supabase.ts` (browser client)                                                                      | Oui (clé anon, exposée côté client) | Oui (ne pas committer en dur)       |
+| `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_DEFAULT_KEY`                               | Runtime Cloudflare (server, `locals.runtime.env`) ; utilisés dans `src/lib/supabase.ts` (getSupabaseServer) | Oui (côté serveur)                  | Oui                                 |
+| **À migrer (prévu)** `DATABASE_URL`                                              | `src/db/index.ts` (Drizzle, quand migré)                                                                    | Oui (secret connexion Postgres)     | Oui                                 |
 
 **Lecture** : `import.meta.env` côté client (browser Supabase) ; `locals.runtime.env` côté serveur (Cloudflare). Vérifier qu’aucune valeur sensible n’est hardcodée et que `.env` est dans `.gitignore`.
 
@@ -19,13 +19,13 @@ Inventaire des variables d’environnement, des routes API et de Supabase pour g
 
 ## Routes API (résumé pour l’audit)
 
-| Route | Méthode | Paramètres / body | Usage Supabase | Auth |
-|-------|---------|-------------------|----------------|------|
-| `/api/auth/callback` | GET | Query (code, etc.) | Session OAuth | - |
-| `/api/auth/register` | POST | Body (email, password, etc.) | Inscription | - |
-| `/api/auth/signin` | POST | Body | Connexion | - |
-| `/api/auth/signout` | POST | - | Déconnexion | - |
-| `/api/progress/complete` | GET | Query `lessonId`, `redirect` | user_progress (insert/update) | Session (cookies) |
+| Route                    | Méthode | Paramètres / body            | Usage Supabase                | Auth              |
+| ------------------------ | ------- | ---------------------------- | ----------------------------- | ----------------- |
+| `/api/auth/callback`     | GET     | Query (code, etc.)           | Session OAuth                 | -                 |
+| `/api/auth/register`     | POST    | Body (email, password, etc.) | Inscription                   | -                 |
+| `/api/auth/signin`       | POST    | Body                         | Connexion                     | -                 |
+| `/api/auth/signout`      | POST    | -                            | Déconnexion                   | -                 |
+| `/api/progress/complete` | GET     | Query `lessonId`, `redirect` | user_progress (insert/update) | Session (cookies) |
 
 **Points à analyser** : validation des entrées, exposition d’erreurs (500), usage du client Supabase (anon key / server client).
 

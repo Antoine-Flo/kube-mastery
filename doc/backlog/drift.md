@@ -72,7 +72,7 @@
 ## À implémenter (priorité)
 
 1. [ ] Container status détaillé (reason, exitCode)
-2. [ ] Phase `ContainerCreating` 
+2. [ ] Phase `ContainerCreating`
 3. [ ] Retry sur échec init container
 4. [ ] Exécution des probes (simulation)
 5. [ ] Montage volumes `emptyDir`

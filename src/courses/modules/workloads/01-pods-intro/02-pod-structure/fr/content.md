@@ -65,14 +65,14 @@ flowchart LR
         C2[Container 2]
         Network[Shared Network<br/>Same IP Address]
         Storage[Shared Storage<br/>Volumes]
-        
+
         C1 <-->|localhost| C2
         C1 --> Network
         C2 --> Network
         C1 --> Storage
         C2 --> Storage
     end
-    
+
     style Pod fill:#e1f5ff,stroke:#333,stroke-width:2px
     style C1 fill:#fff4e1
     style C2 fill:#fff4e1

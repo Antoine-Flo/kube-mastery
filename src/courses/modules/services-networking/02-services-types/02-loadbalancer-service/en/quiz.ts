@@ -2,7 +2,7 @@
 // QUIZ - LoadBalancer Service
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -14,9 +14,9 @@ export const quiz: Quiz = {
         'Internal cluster IP only',
         'External load balancer for accessing the Service',
         'DNS CNAME record',
-        'Only NodePort functionality',
+        'Only NodePort functionality'
       ],
-      correctAnswer: 1,
+      correctAnswer: 1
     },
     {
       id: 'q2',
@@ -26,9 +26,9 @@ export const quiz: Quiz = {
         'In the Service spec',
         'In the Service status.loadBalancer field',
         'In Pod annotations',
-        'In ConfigMaps',
+        'In ConfigMaps'
       ],
-      correctAnswer: 1,
-    },
-  ],
-};
+      correctAnswer: 1
+    }
+  ]
+}

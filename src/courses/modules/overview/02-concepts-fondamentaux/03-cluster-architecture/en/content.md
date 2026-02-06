@@ -10,19 +10,19 @@ flowchart TD
         SCHED[Scheduler]
         CM[Controller Manager]
     end
-    
+
     subgraph WN["Worker Node"]
         KUBELET[kubelet]
         KUBEPROXY[kube-proxy]
         CR[Container Runtime]
     end
-    
+
     API --> ETCD
     API --> SCHED
     API --> CM
     API -->|Manages| KUBELET
     KUBELET --> CR
-    
+
     style CP fill:#e1f5ff
     style WN fill:#fff4e1
 ```
@@ -49,17 +49,18 @@ flowchart TD
     ETCD[etcd]
     SCHED[Scheduler]
     CM[Controller Manager]
-    
+
     API -->|Stores state| ETCD
     API -->|Sends pods to| SCHED
     API -->|Notifies| CM
     CM -->|Watches| API
-    
+
     style API fill:#e1f5ff
     style ETCD fill:#e1f5ff
     style SCHED fill:#e1f5ff
     style CM fill:#e1f5ff
 ```
+
 :::info
 In high-availability setups, the etcd database should be isolated elsewhere to avoid consistency issues and improve performance.
 :::
@@ -91,12 +92,12 @@ flowchart TD
     KUBEPROXY[kube-proxy]
     CR[Container Runtime]
     POD[Pod]
-    
+
     API -->|Sends PodSpecs| KUBELET
     KUBELET -->|Manages| POD
     KUBELET -->|Uses| CR
     KUBEPROXY -->|Routes to| POD
-    
+
     style API fill:#e1f5ff
     style KUBELET fill:#fff4e1
     style KUBEPROXY fill:#fff4e1
@@ -111,6 +112,7 @@ Addons extend Kubernetes functionality using Kubernetes resources. They belong i
 All clusters should have **cluster DNS**, which serves DNS records for Kubernetes services. Containers automatically include this DNS server in their searches.
 
 Other common addons include:
+
 - Web UI (Dashboard) for cluster management
 - Container resource monitoring tools
 - Cluster-level logging solutions

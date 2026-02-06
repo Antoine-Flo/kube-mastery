@@ -29,6 +29,7 @@ kubectl rollout undo deployment/nginx-deployment --to-revision=2
 ## How Rollback Works
 
 When you rollback, Kubernetes:
+
 - Creates a new ReplicaSet based on the previous revision
 - Performs a rolling update to replace current Pods with Pods from the previous revision
 - Updates the Deployment's revision number

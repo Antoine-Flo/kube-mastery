@@ -21,14 +21,15 @@ Ce doc est pour moi, ne le modifie pas
 
 - fly health check, strategy canary
 - Protéger instrument.server.mjs + put dsn in env variable
-- Régle d'accés sur les cours 
+- Régle d'accés sur les cours
 - Refacto Terminal component
 - File system dans cluster state ?
 - Setup SMTP pour les mails avec Brevo
 - Choisir un nom, acheter un domaine et penser à le changer dans le mail de confirmation
 - User can read all clusters ?
-- Refacto cluster-service, transaction dans index pour création de l'emulatedEnvironnment, regroupement des services, des appels API 
-  
+- Refacto cluster-service, transaction dans index pour création de l'emulatedEnvironnment, regroupement des services, des appels API
+
 Refactor :
+
 - applyResourceWithEvents
 - createEmulatedEnvironment

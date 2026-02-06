@@ -16,7 +16,7 @@
   --color-gray-a1: rgba(0, 0, 0, 0.019);
   --color-gray-a2: rgba(0, 0, 0, 0.024);
   --color-gray-a3: rgba(0, 0, 0, 0.059);
-  --color-gray-a4: rgba(0, 0, 0, 0.090);
+  --color-gray-a4: rgba(0, 0, 0, 0.09);
   --color-gray-a5: rgba(0, 0, 0, 0.125);
   --color-gray-a6: rgba(0, 0, 0, 0.149);
   --color-gray-a7: rgba(0, 0, 0, 0.196);
@@ -24,7 +24,7 @@
   --color-gray-a9: rgba(0, 0, 0, 0.455);
   --color-gray-a10: rgba(0, 0, 0, 0.498);
   --color-gray-a11: rgba(0, 0, 0, 0.624);
-  --color-gray-a12: rgba(0, 0, 0, 0.890);
+  --color-gray-a12: rgba(0, 0, 0, 0.89);
 
   /* Couleurs - Cyan */
   --color-cyan-1: #fafdfe;
@@ -40,13 +40,13 @@
   --color-cyan-11: #107d98;
   --color-cyan-12: #0d3c48;
 
-  --color-cyan-a1: rgba(0, 153, 204, 0.020);
+  --color-cyan-a1: rgba(0, 153, 204, 0.02);
   --color-cyan-a2: rgba(0, 157, 177, 0.051);
   --color-cyan-a3: rgba(0, 194, 209, 0.129);
   --color-cyan-a4: rgba(0, 188, 212, 0.212);
-  --color-cyan-a5: rgba(1, 180, 204, 0.290);
+  --color-cyan-a5: rgba(1, 180, 204, 0.29);
   --color-cyan-a6: rgba(0, 167, 193, 0.384);
-  --color-cyan-a7: rgba(0, 159, 187, 0.510);
+  --color-cyan-a7: rgba(0, 159, 187, 0.51);
   --color-cyan-a8: rgba(0, 163, 192, 0.761);
   --color-cyan-a9: #00a2c7;
   --color-cyan-a10: rgba(0, 148, 183, 0.969);
@@ -78,7 +78,7 @@
   --color-ruby-a9: rgba(219, 0, 44, 0.725);
   --color-ruby-a10: rgba(210, 0, 44, 0.761);
   --color-ruby-a11: rgba(193, 0, 48, 0.859);
-  --color-ruby-a12: rgba(85, 0, 22, 0.910);
+  --color-ruby-a12: rgba(85, 0, 22, 0.91);
 
   /* Couleurs - Green */
   --color-green-1: #fbfefc;
@@ -297,7 +297,7 @@
 
   /* Spacing */
   --spacing-0: 0rem;
-  --spacing-1: .25rem;
+  --spacing-1: 0.25rem;
   --spacing-2: 0.5rem;
   --spacing-3: 0.75rem;
   --spacing-3-5: 0.875rem;
@@ -404,7 +404,7 @@
   --font-weight-bold: 700;
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   /* Couleurs - Gray (Slate) - Dark */
   --color-gray-1: #111113;
   --color-gray-2: #18191b;
@@ -429,7 +429,7 @@
   --color-gray-a8: rgba(217, 237, 255, 0.365);
   --color-gray-a9: rgba(223, 235, 253, 0.427);
   --color-gray-a10: rgba(229, 237, 253, 0.482);
-  --color-gray-a11: rgba(241, 247, 254, 0.710);
+  --color-gray-a11: rgba(241, 247, 254, 0.71);
   --color-gray-a12: rgba(252, 253, 255, 0.937);
 
   /* Couleurs - Cyan - Dark */
@@ -500,7 +500,7 @@
   --color-green-11: #3dd68c;
   --color-green-12: #b1f1cb;
 
-  --color-green-a1: rgba(0, 222, 69, 0.020);
+  --color-green-a1: rgba(0, 222, 69, 0.02);
   --color-green-a2: rgba(41, 249, 157, 0.043);
   --color-green-a3: rgba(34, 255, 153, 0.118);
   --color-green-a4: rgba(17, 255, 153, 0.176);
@@ -508,7 +508,7 @@
   --color-green-a6: rgba(68, 255, 170, 0.314);
   --color-green-a7: rgba(80, 253, 172, 0.404);
   --color-green-a8: rgba(84, 255, 173, 0.451);
-  --color-green-a9: rgba(68, 255, 164, 0.620);
+  --color-green-a9: rgba(68, 255, 164, 0.62);
   --color-green-a10: rgba(67, 254, 164, 0.671);
   --color-green-a11: rgba(70, 254, 165, 0.831);
   --color-green-a12: rgba(177, 241, 203, 0.941);

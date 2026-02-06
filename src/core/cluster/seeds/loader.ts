@@ -27,8 +27,8 @@ import { loadK8sComponentsForScenario, type Scenario } from '../../../../seeds/S
  * Split multi-document YAML by `---` separator
  */
 const splitYamlDocuments = (yamlContent: string): string[] => {
-    const documents = yamlContent.split(/^---\s*$/m)
-    return documents.filter(doc => doc.trim().length > 0)
+  const documents = yamlContent.split(/^---\s*$/m)
+  return documents.filter((doc) => doc.trim().length > 0)
 }
 
 /**
@@ -37,29 +37,29 @@ const splitYamlDocuments = (yamlContent: string): string[] => {
 type ParsedResource = Pod | ConfigMap | Secret | Node | ReplicaSet | Deployment | Service
 
 const parseYamlDocument = (yamlContent: string): Result<ParsedResource> => {
-    const result = parseKubernetesYaml(yamlContent)
-    if (!result.ok) {
-        return error(result.error)
-    }
-    return success(result.value)
+  const result = parseKubernetesYaml(yamlContent)
+  if (!result.ok) {
+    return error(result.error)
+  }
+  return success(result.value)
 }
 
 /**
  * Parse multi-document YAML
  */
 const parseMultiDocumentYaml = (yamlContent: string): Result<Array<ParsedResource>> => {
-    const documents = splitYamlDocuments(yamlContent)
-    const resources: Array<ParsedResource> = []
+  const documents = splitYamlDocuments(yamlContent)
+  const resources: Array<ParsedResource> = []
 
-    for (const doc of documents) {
-        const result = parseYamlDocument(doc.trim())
-        if (!result.ok) {
-            return error(`Failed to parse YAML document: ${result.error}`)
-        }
-        resources.push(result.value)
+  for (const doc of documents) {
+    const result = parseYamlDocument(doc.trim())
+    if (!result.ok) {
+      return error(`Failed to parse YAML document: ${result.error}`)
     }
+    resources.push(result.value)
+  }
 
-    return success(resources)
+  return success(resources)
 }
 
 // ─── Scenario Loading ──────────────────────────────────────────────────────
@@ -67,43 +67,40 @@ const parseMultiDocumentYaml = (yamlContent: string): Result<Array<ParsedResourc
 /**
  * Load a scenario and create ClusterState
  */
-const loadScenario = async (
-    scenario: Scenario,
-    eventBus?: EventBus
-): Promise<Result<ClusterState>> => {
-    const bus = eventBus || createEventBus()
-    const clusterState = createClusterState(bus)
+const loadScenario = async (scenario: Scenario, eventBus?: EventBus): Promise<Result<ClusterState>> => {
+  const bus = eventBus || createEventBus()
+  const clusterState = createClusterState(bus)
 
-    // Load all K8s components
-    const yamlResult = await loadK8sComponentsForScenario(scenario)
-    if (!yamlResult.ok) {
-        return error(yamlResult.error)
+  // Load all K8s components
+  const yamlResult = await loadK8sComponentsForScenario(scenario)
+  if (!yamlResult.ok) {
+    return error(yamlResult.error)
+  }
+
+  // Parse the combined YAML
+  const parseResult = parseMultiDocumentYaml(yamlResult.value)
+  if (!parseResult.ok) {
+    return error(parseResult.error)
+  }
+
+  // Apply each resource to the cluster state
+  for (const resource of parseResult.value) {
+    const applyResult = applyResourceWithEvents(resource, clusterState, bus)
+    if (!applyResult.ok) {
+      return error(`Failed to apply resource: ${applyResult.error}`)
     }
+  }
 
-    // Parse the combined YAML
-    const parseResult = parseMultiDocumentYaml(yamlResult.value)
-    if (!parseResult.ok) {
-        return error(parseResult.error)
-    }
-
-    // Apply each resource to the cluster state
-    for (const resource of parseResult.value) {
-        const applyResult = applyResourceWithEvents(resource, clusterState, bus)
-        if (!applyResult.ok) {
-            return error(`Failed to apply resource: ${applyResult.error}`)
-        }
-    }
-
-    return success(clusterState)
+  return success(clusterState)
 }
 
 /**
  * Load a scenario and return ClusterStateData
  */
 export const loadScenarioData = async (scenario: Scenario): Promise<ClusterStateData> => {
-    const result = await loadScenario(scenario)
-    if (!result.ok) {
-        throw new Error(result.error)
-    }
-    return result.value.toJSON()
+  const result = await loadScenario(scenario)
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.value.toJSON()
 }

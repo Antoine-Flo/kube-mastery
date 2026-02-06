@@ -13,10 +13,10 @@
  * Example: "Name:         nginx-pod" (Name: = 5 chars, needs 7 spaces to reach 12)
  */
 export const kv = (key: string, value: string): string => {
-    // If key already contains colon, use as-is, otherwise add it
-    const keyWithColon = key.includes(':') ? key : `${key}:`
-    // Pad to 12 characters total (key + colon + spaces)
-    return `${keyWithColon.padEnd(12)}${value}`
+  // If key already contains colon, use as-is, otherwise add it
+  const keyWithColon = key.includes(':') ? key : `${key}:`
+  // Pad to 12 characters total (key + colon + spaces)
+  return `${keyWithColon.padEnd(12)}${value}`
 }
 
 // ─── Section Formatting ────────────────────────────────────────────────────
@@ -26,13 +26,10 @@ export const kv = (key: string, value: string): string => {
  * Items are indented by 2 spaces
  */
 export const section = (title: string, items: string[]): string[] => {
-    if (items.length === 0) {
-        return [`${title}:  <none>`]
-    }
-    return [
-        `${title}:`,
-        ...items.map(item => `  ${item}`)
-    ]
+  if (items.length === 0) {
+    return [`${title}:  <none>`]
+  }
+  return [`${title}:`, ...items.map((item) => `  ${item}`)]
 }
 
 // ─── Utility Functions ─────────────────────────────────────────────────────
@@ -41,13 +38,13 @@ export const section = (title: string, items: string[]): string[] => {
  * Return blank line
  */
 export const blank = (): string => {
-    return ''
+  return ''
 }
 
 /**
  * Indent text by specified level (each level = 2 spaces)
  */
 export const indent = (text: string, level: number): string => {
-    const spaces = ' '.repeat(level * 2)
-    return `${spaces}${text}`
+  const spaces = ' '.repeat(level * 2)
+  return `${spaces}${text}`
 }

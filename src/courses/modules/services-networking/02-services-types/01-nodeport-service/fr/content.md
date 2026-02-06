@@ -5,6 +5,7 @@ Un Service NodePort expose votre Service sur l'adresse IP de chaque Nœud à un 
 ## Comment fonctionne NodePort
 
 Lorsque vous définissez `type: NodePort`, Kubernetes :
+
 - Alloue un port depuis une plage spécifiée par le flag `--service-node-port-range` (par défaut : 30000-32767)
 - Chaque nœud du cluster se configure pour écouter sur ce port assigné
 - Chaque nœud proxy le trafic de ce port vers l'un des points de terminaison prêts associés au Service
@@ -28,10 +29,11 @@ spec:
       protocol: TCP
       port: 80
       targetPort: 80
-      nodePort: 30007  # Optionnel : spécifier un port personnalisé
+      nodePort: 30007 # Optionnel : spécifier un port personnalisé
 ```
 
 Dans cet exemple :
+
 - Le Service écoute sur le port 80 en interne (le port du Service)
 - Il transfère vers le port 80 sur les Pods (le port cible)
 - Il est exposé sur le port 30007 sur chaque nœud (le port de nœud)
@@ -52,6 +54,7 @@ kubectl get service my-service -o wide
 ## Cas d'utilisation
 
 NodePort est utile lorsque vous voulez :
+
 - Configurer votre propre solution d'équilibrage de charge devant les nœuds
 - Configurer des environnements qui ne sont pas entièrement supportés par Kubernetes
 - Exposer une ou plusieurs adresses IP de nœuds directement

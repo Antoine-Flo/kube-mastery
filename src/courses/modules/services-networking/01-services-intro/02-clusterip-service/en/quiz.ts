@@ -2,7 +2,7 @@
 // QUIZ - ClusterIP Service
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -10,13 +10,8 @@ export const quiz: Quiz = {
       id: 'q1',
       type: 'multiple-choice',
       question: 'What is the default Service type in Kubernetes?',
-      options: [
-        'NodePort',
-        'LoadBalancer',
-        'ClusterIP',
-        'ExternalName',
-      ],
-      correctAnswer: 2,
+      options: ['NodePort', 'LoadBalancer', 'ClusterIP', 'ExternalName'],
+      correctAnswer: 2
     },
     {
       id: 'q2',
@@ -26,9 +21,9 @@ export const quiz: Quiz = {
         'Only from outside the cluster',
         'Only from within the cluster',
         'From anywhere',
-        'Only from the control plane',
+        'Only from the control plane'
       ],
-      correctAnswer: 1,
-    },
-  ],
-};
+      correctAnswer: 1
+    }
+  ]
+}

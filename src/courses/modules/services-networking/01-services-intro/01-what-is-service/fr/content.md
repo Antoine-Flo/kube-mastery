@@ -6,16 +6,16 @@ Un Service dans Kubernetes est une abstraction qui vous aide à exposer des grou
 flowchart TD
     Client[Client]
     Service[Service<br/>app=myapp]
-    
+
     Pod1[Pod 1<br/>10.0.1.5]
     Pod2[Pod 2<br/>10.0.1.6]
     Pod3[Pod 3<br/>10.0.1.7]
-    
+
     Client -->|Stable IP| Service
     Service -->|Load balances| Pod1
     Service -->|Load balances| Pod2
     Service -->|Load balances| Pod3
-    
+
     style Service fill:#e1f5ff
     style Pod1 fill:#fff4e1
     style Pod2 fill:#fff4e1
@@ -31,6 +31,7 @@ Cela crée un vrai problème : si les Pods frontend doivent se connecter aux Pod
 ## Solution des Services
 
 Les Services résolvent ce problème élégamment en fournissant :
+
 - **Une adresse IP stable** qui ne change jamais, même lorsque les Pods sont recréés
 - **Un nom DNS** qui facilite la recherche du Service
 - **Un équilibrage de charge automatique** sur tous les Pods sains

@@ -7,7 +7,7 @@ graph LR
     A[Physical Servers] --> B[Virtual Machines]
     B --> C[Containers]
     C --> D[Kubernetes]
-    
+
     A --> A1[Resource Issues]
     B --> B1[Heavy Weight]
     C --> C1[Need Orchestration]

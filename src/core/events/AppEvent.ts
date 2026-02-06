@@ -16,4 +16,3 @@ import type { FileSystemEvent } from '../filesystem/events/types'
 export type AppEvent = ClusterEvent | FileSystemEvent
 
 export type AppEventType = AppEvent['type']
-

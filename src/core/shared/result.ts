@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Centralized discriminated unions and helper functions for error handling.
 // Follows functional programming principles with pure factory functions.
-// 
+//
 // Philosophy: Unix-like - success = stdout, error = stderr
 
 // ─── Core Result Types ───────────────────────────────────────────────────
@@ -13,9 +13,7 @@
  * @template T - Success value type
  * @template E - Error message type (defaults to string)
  */
-export type Result<T, E = string> =
-    | { ok: true; value: T }
-    | { ok: false; error: E }
+export type Result<T, E = string> = { ok: true; value: T } | { ok: false; error: E }
 
 /**
  * Result type for command execution (stdout/stderr)
@@ -29,15 +27,14 @@ export type ExecutionResult = Result<string>
  * Create a success result
  */
 export const success = <T>(value: T): Result<T> => ({
-    ok: true,
-    value
+  ok: true,
+  value
 })
 
 /**
  * Create an error result
  */
 export const error = (message: string): Result<never> => ({
-    ok: false,
-    error: message
+  ok: false,
+  error: message
 })
-

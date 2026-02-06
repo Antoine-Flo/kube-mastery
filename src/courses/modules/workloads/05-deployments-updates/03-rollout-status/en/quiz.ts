@@ -2,7 +2,7 @@
 // QUIZ - Rollout Status
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -12,7 +12,7 @@ export const quiz: Quiz = {
       question: 'Check the rollout status of the nginx-deployment',
       expectedCommand: 'kubectl rollout status deployment nginx-deployment',
       validationMode: 'contains',
-      normalizeCommand: true,
+      normalizeCommand: true
     },
     {
       id: 'q2',
@@ -22,9 +22,9 @@ export const quiz: Quiz = {
         'Total number of replicas',
         'Number of replicas updated to the desired state',
         'Number of failed replicas',
-        'Age of the Deployment',
+        'Age of the Deployment'
       ],
-      correctAnswer: 1,
-    },
-  ],
-};
+      correctAnswer: 1
+    }
+  ]
+}

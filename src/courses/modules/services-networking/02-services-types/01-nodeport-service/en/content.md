@@ -5,6 +5,7 @@ A NodePort Service exposes your Service on each Node's IP address at a static po
 ## How NodePort Works
 
 When you set `type: NodePort`, Kubernetes:
+
 - Allocates a port from a range specified by `--service-node-port-range` flag (default: 30000-32767)
 - Each node in the cluster configures itself to listen on that assigned port
 - Every node proxies traffic from that port to one of the ready endpoints associated with the Service
@@ -28,10 +29,11 @@ spec:
       protocol: TCP
       port: 80
       targetPort: 80
-      nodePort: 30007  # Optional: specify a custom port
+      nodePort: 30007 # Optional: specify a custom port
 ```
 
 In this example:
+
 - The Service listens on port 80 internally (the Service port)
 - It forwards to port 80 on Pods (the target port)
 - It's exposed on port 30007 on every node (the node port)
@@ -52,6 +54,7 @@ kubectl get service my-service -o wide
 ## Use Cases
 
 NodePort is useful when you want to:
+
 - Set up your own load balancing solution in front of the nodes
 - Configure environments that are not fully supported by Kubernetes
 - Expose one or more nodes' IP addresses directly

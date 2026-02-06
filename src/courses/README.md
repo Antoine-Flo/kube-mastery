@@ -5,6 +5,7 @@ Ce guide explique comment créer des modules et des cours pour la plateforme kub
 ## Architecture modulaire
 
 Le système utilise une architecture modulaire où :
+
 - **Modules** = Concepts techniques réutilisables (ex: Pods, Deployments, Services)
 - **Cours** = Collections de chapitres sélectionnés depuis différents modules
 
@@ -17,18 +18,21 @@ Pour garantir l'exactitude et l'exhaustivité, suivez ce workflow basé sur la d
 **Référence principale** : https://kubernetes.io/docs/
 
 **Sections utiles** :
+
 - **Concepts** : https://kubernetes.io/docs/concepts/ (Pods, Deployments, Services, etc.)
 - **Tasks** : https://kubernetes.io/docs/tasks/ (Guides pratiques)
 - **Reference** : https://kubernetes.io/docs/reference/ (API, kubectl)
 - **Tutorials** : https://kubernetes.io/docs/tutorials/
 
 **Pour créer un module sur un concept** :
+
 - Consultez la page correspondante sur kubernetes.io/docs/concepts/
 - Utilisez cette documentation comme référence principale
 
 ### 2. Générer le plan structuré
 
 Consultez la documentation officielle et utilisez l'IA pour générer un plan de module avec :
+
 - 3-5 chapitres logiques
 - 3-5 leçons par chapitre (25-30 lignes chacune)
 - Ordre pédagogique optimal
@@ -38,6 +42,7 @@ Consultez la documentation officielle et utilisez l'IA pour générer un plan de
 ### 3. Générer la structure de fichiers
 
 Demandez à l'IA de générer :
+
 - `module.ts` avec métadonnées
 - `chapter.json` pour chaque chapitre
 - Structure de dossiers complète
@@ -45,6 +50,7 @@ Demandez à l'IA de générer :
 ### 4. Générer le contenu des leçons
 
 Pour chaque leçon, générez le `content.md` avec l'IA :
+
 - Format : 25-30 lignes, micro-learning
 - Structure : H1 titre + introduction + concept + points clés + exemple
 - Référence : Basé sur la section pertinente de la doc officielle
@@ -52,6 +58,7 @@ Pour chaque leçon, générez le `content.md` avec l'IA :
 ### 5. Générer les quiz
 
 Générez `quiz.ts` avec 3-5 questions :
+
 - Questions multiple-choice basées sur le contenu
 - Questions terminal-command si applicable
 - Validation contre la doc officielle
@@ -59,12 +66,14 @@ Générez `quiz.ts` avec 3-5 questions :
 ### 6. Validation finale
 
 Vérifiez avec l'IA que :
+
 - Le contenu est conforme à la doc officielle
 - Les commandes kubectl sont correctes
 - Les exemples YAML sont valides
 - Pas d'informations obsolètes
 
 **Ressources** :
+
 - Documentation officielle : https://kubernetes.io/docs/
 - Concepts : https://kubernetes.io/docs/concepts/
 - API Reference : https://kubernetes.io/docs/reference/kubernetes-api/
@@ -110,19 +119,19 @@ src/courses/
 Créez `module.ts` à la racine du module :
 
 ```typescript
-import type { LocalModule } from '../../types';
+import type { LocalModule } from '../../types'
 
 export const module: LocalModule = {
-    title: {
-        en: 'Pods',
-        fr: 'Les Pods',
-    },
-    description: {
-        en: 'Learn about Pods, the smallest deployable unit in Kubernetes',
-        fr: 'Apprenez à utiliser les Pods, la plus petite unité déployable dans Kubernetes',
-    },
-    tags: ['CKA', 'CKAD', 'fondamental'],  // Optionnel
-};
+  title: {
+    en: 'Pods',
+    fr: 'Les Pods'
+  },
+  description: {
+    en: 'Learn about Pods, the smallest deployable unit in Kubernetes',
+    fr: 'Apprenez à utiliser les Pods, la plus petite unité déployable dans Kubernetes'
+  },
+  tags: ['CKA', 'CKAD', 'fondamental'] // Optionnel
+}
 ```
 
 ### 1.2 Créer les chapitres
@@ -131,20 +140,21 @@ Chaque chapitre est directement dans le module `{NN-chapter-name}/` avec un `cha
 
 ```json
 {
-    "title": {
-        "en": "Understanding Pods",
-        "fr": "Comprendre les Pods"
-    },
-    "description": {
-        "en": "Learn the fundamentals of Pods",
-        "fr": "Apprenez les fondamentaux des Pods"
-    },
-    "isFree": true,
-    "environment": "minimal"
+  "title": {
+    "en": "Understanding Pods",
+    "fr": "Comprendre les Pods"
+  },
+  "description": {
+    "en": "Learn the fundamentals of Pods",
+    "fr": "Apprenez les fondamentaux des Pods"
+  },
+  "isFree": true,
+  "environment": "minimal"
 }
 ```
 
 **Propriétés** :
+
 - `title` / `description` : Métadonnées multilingues
 - `isFree` : Accès gratuit sans inscription
 - `environment` : Nom du scénario à charger (optionnel, défaut : `"empty"`)
@@ -166,22 +176,22 @@ Chaque leçon est directement dans le chapitre `{NN-chapter-name}/{NN-lesson-nam
 Créez `course.ts` dans le dossier du cours :
 
 ```typescript
-import type { LocalCourse } from '~/learnable/local-course-loader';
+import type { LocalCourse } from '~/learnable/local-course-loader'
 
 export const course: LocalCourse = {
-    title: {
-        en: 'Kubernetes Introduction',
-        fr: 'Introduction à Kubernetes',
-    },
-    description: {
-        en: 'Course description',
-        fr: 'Description du cours',
-    },
-    isActive: true,
-    isFree: true,    // Optionnel : affiche un badge "Free" sur la carte du cours
-    price: 0,        // 0 = gratuit
-    order: 1,        // Ordre d'affichage
-};
+  title: {
+    en: 'Kubernetes Introduction',
+    fr: 'Introduction à Kubernetes'
+  },
+  description: {
+    en: 'Course description',
+    fr: 'Description du cours'
+  },
+  isActive: true,
+  isFree: true, // Optionnel : affiche un badge "Free" sur la carte du cours
+  price: 0, // 0 = gratuit
+  order: 1 // Ordre d'affichage
+}
 ```
 
 ### 2.2 Créer course-structure.ts
@@ -189,19 +199,20 @@ export const course: LocalCourse = {
 Référencez les chapitres de modules que vous voulez inclure :
 
 ```typescript
-import type { CourseStructure } from '../types';
+import type { CourseStructure } from '../types'
 
 export const courseStructure: CourseStructure = {
-    chapters: [
-        { moduleId: 'decouverte', chapterId: 'all' },      // Tous les chapitres du module
-        { moduleId: 'kubectl', chapterId: 'all' },
-        { moduleId: 'pod', chapterId: 'bases' },          // Seulement le chapitre "bases"
-        { moduleId: 'deployment', chapterId: 'all' },
-    ],
-};
+  chapters: [
+    { moduleId: 'decouverte', chapterId: 'all' }, // Tous les chapitres du module
+    { moduleId: 'kubectl', chapterId: 'all' },
+    { moduleId: 'pod', chapterId: 'bases' }, // Seulement le chapitre "bases"
+    { moduleId: 'deployment', chapterId: 'all' }
+  ]
+}
 ```
 
 **Options** :
+
 - `chapterId: 'all'` : Inclut tous les chapitres du module
 - `chapterId: 'bases'` : Inclut uniquement le chapitre avec l'ID "bases"
 - `order?: number` : Optionnel, pour réordonner dans le cours
@@ -221,7 +232,7 @@ Le contenu est en Markdown standard. Respectez les règles suivantes :
 
 ### Exemple
 
-```markdown
+````markdown
 # Titre de la leçon
 
 Introduction courte qui contextualise le concept.
@@ -241,9 +252,11 @@ Explication du concept avec des exemples si nécessaire.
 ```bash
 kubectl get pods
 ```
+````
 
 Cette commande fait...
-```
+
+````
 
 **Important** : Le titre H1 (`# Titre de la leçon`) sera automatiquement extrait et utilisé comme titre de la leçon dans l'interface. Assurez-vous qu'il soit présent et cohérent entre les versions `fr/` et `en/`.
 
@@ -261,11 +274,12 @@ flowchart LR
     A[Welcome] --> B[Kubernetes Course]
     B --> C[Interactive Terminal]
     C --> D[Learn & Practice]
-```
+````
 
 Le système détectera automatiquement les blocs de code avec le langage `mermaid` et les rendra comme des diagrammes interactifs.
 
 **Avantages** :
+
 - Plus simple : tout est dans un seul fichier
 - Plus facile à maintenir : pas de fichiers séparés
 - Support complet de la syntaxe Mermaid
@@ -362,24 +376,19 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'Qu\'est-ce qu\'un Pod dans Kubernetes ?',
-      options: [
-        'Un conteneur',
-        'La plus petite unité déployable dans Kubernetes',
-        'Un service',
-        'Un namespace',
-      ],
-      correctAnswer: 1,  // Index de la bonne réponse (0-based)
+      question: "Qu'est-ce qu'un Pod dans Kubernetes ?",
+      options: ['Un conteneur', 'La plus petite unité déployable dans Kubernetes', 'Un service', 'Un namespace'],
+      correctAnswer: 1 // Index de la bonne réponse (0-based)
     },
     {
       id: 'q2',
       type: 'terminal-command',
       question: 'Liste tous les pods dans le namespace default',
       expectedCommand: 'kubectl get pods',
-      validationMode: 'exact',  // 'exact' | 'contains' | 'regex'
-      normalizeCommand: true,    // Normalise la commande (trim, lowercase)
-    },
-  ],
+      validationMode: 'exact', // 'exact' | 'contains' | 'regex'
+      normalizeCommand: true // Normalise la commande (trim, lowercase)
+    }
+  ]
 }
 ```
 
@@ -416,6 +425,7 @@ export const quiz: Quiz = {
 ```
 
 **Modes de validation** :
+
 - `exact` : La commande doit correspondre exactement
 - `contains` : La commande doit contenir la chaîne attendue
 - `regex` : Validation par expression régulière (à venir)
@@ -457,6 +467,7 @@ just sync-courses
 ```
 
 Cette commande synchronise :
+
 - Les métadonnées des cours
 - Les métadonnées des modules
 - Les chapitres et leurs environnements

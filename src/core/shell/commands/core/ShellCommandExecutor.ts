@@ -12,54 +12,52 @@ import { parseShellCommand } from './ShellCommandParser'
 import type { ParsedShellCommand } from './types'
 
 interface ShellCommandExecutorOptions {
-    handlers: Map<string, ShellCommandHandler>
+  handlers: Map<string, ShellCommandHandler>
 }
 
 export class ShellCommandExecutor {
-    private handlers: Map<string, ShellCommandHandler>
+  private handlers: Map<string, ShellCommandHandler>
 
-    constructor(options: ShellCommandExecutorOptions) {
-        this.handlers = options.handlers
+  constructor(options: ShellCommandExecutorOptions) {
+    this.handlers = options.handlers
+  }
+
+  /**
+   * Execute a shell command string
+   * @param input - Raw command string (e.g., "ls -l", "cd /manifests")
+   * @returns ExecutionResult with output or error
+   */
+  execute(input: string): ExecutionResult {
+    const parseResult = parseShellCommand(input)
+
+    if (!parseResult.ok) {
+      // Enrich error message with full input for "Unknown command" errors
+      const errorMessage = parseResult.error.startsWith('Unknown command')
+        ? `Unknown command: ${input}`
+        : parseResult.error
+      return error(errorMessage)
     }
 
-    /**
-     * Execute a shell command string
-     * @param input - Raw command string (e.g., "ls -l", "cd /manifests")
-     * @returns ExecutionResult with output or error
-     */
-    execute(input: string): ExecutionResult {
-        const parseResult = parseShellCommand(input)
+    return this.routeCommand(parseResult.value)
+  }
 
-        if (!parseResult.ok) {
-            // Enrich error message with full input for "Unknown command" errors
-            const errorMessage = parseResult.error.startsWith('Unknown command')
-                ? `Unknown command: ${input}`
-                : parseResult.error
-            return error(errorMessage)
-        }
+  /**
+   * Route parsed command to appropriate handler
+   */
+  private routeCommand(parsed: ParsedShellCommand): ExecutionResult {
+    const { command, args, flags } = parsed
+    const handler = this.handlers.get(command)
 
-        return this.routeCommand(parseResult.value)
+    if (!handler) {
+      // This should never happen since parser validates commands
+      return error(`Handler not found for command: ${command}`)
     }
 
-    /**
-     * Route parsed command to appropriate handler
-     */
-    private routeCommand(parsed: ParsedShellCommand): ExecutionResult {
-        const { command, args, flags } = parsed
-        const handler = this.handlers.get(command)
-
-        if (!handler) {
-            // This should never happen since parser validates commands
-            return error(`Handler not found for command: ${command}`)
-        }
-
-        return handler.execute(args, flags)
-    }
+    return handler.execute(args, flags)
+  }
 }
 
 // Factory function pour simplifier l'usage
-export const createShellCommandExecutor = (
-    handlers: Map<string, ShellCommandHandler>
-): ShellCommandExecutor => {
-    return new ShellCommandExecutor({ handlers })
+export const createShellCommandExecutor = (handlers: Map<string, ShellCommandHandler>): ShellCommandExecutor => {
+  return new ShellCommandExecutor({ handlers })
 }

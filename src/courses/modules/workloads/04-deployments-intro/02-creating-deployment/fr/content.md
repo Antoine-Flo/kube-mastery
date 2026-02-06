@@ -24,10 +24,10 @@ spec:
         app: nginx
     spec:
       containers:
-      - name: nginx
-        image: nginx:1.14.2
-        ports:
-        - containerPort: 80
+        - name: nginx
+          image: nginx:1.14.2
+          ports:
+            - containerPort: 80
 ```
 
 ## Comprendre chaque champ
@@ -60,6 +60,7 @@ flowchart LR
 ```
 
 Lorsque vous appliquez le manifest, Kubernetes :
+
 1. Valide votre YAML et stocke le Deployment dans etcd
 2. Le contrôleur de Deployment remarque le nouveau Deployment et crée un ReplicaSet
 3. Le contrôleur de ReplicaSet crée le nombre spécifié de Pods
@@ -83,6 +84,7 @@ kubectl get deployments
 ```
 
 La sortie montre des colonnes importantes :
+
 - **READY** - Combien de répliques sont prêtes vs souhaitées (par ex., `3/3`)
 - **UP-TO-DATE** - Répliques mises à jour vers le dernier modèle de Pod
 - **AVAILABLE** - Répliques disponibles pour servir le trafic

@@ -34,68 +34,78 @@ type ResourceKind = 'Pod' | 'ConfigMap' | 'Secret' | 'Node' | 'ReplicaSet' | 'De
  * Parse YAML string with error handling
  */
 const parseYaml = (yamlContent: string): Result<unknown> => {
-    try {
-        const parsed = parse(yamlContent)
-        if (!parsed || typeof parsed !== 'object') {
-            return error('YAML content is empty or invalid')
-        }
-        return success(parsed)
-    } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown YAML parse error'
-        return error(`YAML parse error: ${message}`)
+  try {
+    const parsed = parse(yamlContent)
+    if (!parsed || typeof parsed !== 'object') {
+      return error('YAML content is empty or invalid')
     }
+    return success(parsed)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown YAML parse error'
+    return error(`YAML parse error: ${message}`)
+  }
 }
 
 /**
  * Check if kind is supported
  */
 const isSupportedKind = (kind: string): kind is ResourceKind => {
-    return kind === 'Pod' || kind === 'ConfigMap' || kind === 'Secret' || kind === 'Node' || kind === 'ReplicaSet' || kind === 'Deployment' || kind === 'Service'
+  return (
+    kind === 'Pod' ||
+    kind === 'ConfigMap' ||
+    kind === 'Secret' ||
+    kind === 'Node' ||
+    kind === 'ReplicaSet' ||
+    kind === 'Deployment' ||
+    kind === 'Service'
+  )
 }
 
 /**
  * Manifest parser lookup table (object lookup pattern)
  */
 const MANIFEST_PARSERS: Record<ResourceKind, (obj: any) => Result<ParsedResource>> = {
-    Pod: parsePodManifest,
-    ConfigMap: parseConfigMapManifest,
-    Secret: parseSecretManifest,
-    Node: parseNodeManifest,
-    ReplicaSet: parseReplicaSetManifest,
-    Deployment: parseDeploymentManifest,
-    Service: parseServiceManifest,
+  Pod: parsePodManifest,
+  ConfigMap: parseConfigMapManifest,
+  Secret: parseSecretManifest,
+  Node: parseNodeManifest,
+  ReplicaSet: parseReplicaSetManifest,
+  Deployment: parseDeploymentManifest,
+  Service: parseServiceManifest
 }
 
 /**
  * Route validation to resource-specific parser
  */
 const validateResource = (obj: any): Result<ParsedResource> => {
-    // Basic structure validation
-    if (!obj.kind || typeof obj.kind !== 'string') {
-        return error('Missing or invalid kind')
-    }
+  // Basic structure validation
+  if (!obj.kind || typeof obj.kind !== 'string') {
+    return error('Missing or invalid kind')
+  }
 
-    if (!isSupportedKind(obj.kind)) {
-        return error(`Unsupported resource kind: ${obj.kind} (supported: Pod, ConfigMap, Secret, Node, ReplicaSet, Deployment, Service)`)
-    }
+  if (!isSupportedKind(obj.kind)) {
+    return error(
+      `Unsupported resource kind: ${obj.kind} (supported: Pod, ConfigMap, Secret, Node, ReplicaSet, Deployment, Service)`
+    )
+  }
 
-    const parser = MANIFEST_PARSERS[obj.kind as ResourceKind]
-    return parser(obj)
+  const parser = MANIFEST_PARSERS[obj.kind as ResourceKind]
+  return parser(obj)
 }
 
 // ─── Public API ──────────────────────────────────────────────────────────
 
 /**
  * Parse and validate YAML manifest
- * 
+ *
  * @param yamlContent - YAML string to parse
  * @returns Result with validated resource or error message
  */
 export const parseKubernetesYaml = (yamlContent: string): Result<ParsedResource> => {
-    const parseResult = parseYaml(yamlContent)
-    if (!parseResult.ok) {
-        return parseResult
-    }
+  const parseResult = parseYaml(yamlContent)
+  if (!parseResult.ok) {
+    return parseResult
+  }
 
-    return validateResource(parseResult.value)
+  return validateResource(parseResult.value)
 }

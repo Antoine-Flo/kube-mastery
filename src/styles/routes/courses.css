@@ -111,7 +111,9 @@
 
 .courses__card--clickable {
   cursor: pointer;
-  transition: transform 0.10s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.15s ease;
 }
 
 .courses__card--clickable:hover {
@@ -276,7 +278,6 @@
   height: 1px;
   background-color: var(--color-gray-4);
   margin: var(--spacing-6) 0;
-  
 }
 
 .course-overview__chapter {

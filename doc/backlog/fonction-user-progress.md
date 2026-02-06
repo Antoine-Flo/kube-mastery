@@ -26,16 +26,19 @@ Ce doc décrit un flux où le calcul de progression se faisait côté client. **
 Créer une fonction PostgreSQL qui prend un `user_id` en paramètre et retourne directement les progressions pour cet utilisateur.
 
 **Avantages :**
+
 - Calcul côté serveur, beaucoup plus rapide
 - Moins de données transférées (juste le résultat final)
 - Logique centralisée en base de données
 - Simple côté client : un seul appel de fonction
 
 **Inconvénients :**
+
 - Nécessite d'appeler une fonction plutôt qu'une table simple
 - Moins flexible si on veut changer la logique de calcul
 
 **Structure de retour :**
+
 ```sql
 RETURNS TABLE (
     learnable_id TEXT,        -- course_id ou module_id
@@ -48,8 +51,9 @@ RETURNS TABLE (
 ```
 
 **Utilisation côté client :**
+
 ```typescript
-const { data } = await supabase.rpc('get_user_progress', { user_id: userId });
+const { data } = await supabase.rpc('get_user_progress', { user_id: userId })
 ```
 
 ### Solution 2 : View matérialisée avec filtre
@@ -57,10 +61,12 @@ const { data } = await supabase.rpc('get_user_progress', { user_id: userId });
 Créer une view qui calcule la progression pour tous les utilisateurs, puis filtrer côté client avec `WHERE user_id = ?`.
 
 **Avantages :**
+
 - Simple à utiliser (requête SQL classique)
 - Peut être matérialisée pour de meilleures performances
 
 **Inconvénients :**
+
 - Calcule pour tous les utilisateurs même si on n'en a besoin que d'un
 - Peut être lourd si beaucoup d'utilisateurs
 - Nécessite un refresh périodique si matérialisée
@@ -70,10 +76,12 @@ Créer une view qui calcule la progression pour tous les utilisateurs, puis filt
 Créer une table `user_progress_cache` qui stocke les progressions calculées, avec des triggers pour la mettre à jour automatiquement.
 
 **Avantages :**
+
 - Très rapide à lire (table simple)
 - Mise à jour automatique via triggers
 
 **Inconvénients :**
+
 - Plus complexe à maintenir
 - Nécessite des triggers sur plusieurs tables
 - Risque de désynchronisation si les triggers échouent
@@ -81,6 +89,7 @@ Créer une table `user_progress_cache` qui stocke les progressions calculées, a
 ## Recommandation
 
 **Solution 1 (Fonction PostgreSQL)** semble être le meilleur compromis :
+
 - Performant (calcul côté serveur)
 - Simple à utiliser côté client
 - Flexible (on peut facilement modifier la logique SQL)
@@ -103,12 +112,12 @@ RETURNS TABLE (
 BEGIN
     -- Calcul pour les cours
     RETURN QUERY
-    SELECT 
+    SELECT
         c.id as learnable_id,
         'course'::TEXT as learnable_type,
         COUNT(DISTINCT l.id)::INTEGER as total_lessons,
         COUNT(DISTINCT CASE WHEN up.completed_lessons ? l.id THEN l.id END)::INTEGER as completed_lessons,
-        CASE 
+        CASE
             WHEN COUNT(DISTINCT l.id) = 0 THEN 0
             ELSE ROUND((COUNT(DISTINCT CASE WHEN up.completed_lessons ? l.id THEN l.id END)::NUMERIC / COUNT(DISTINCT l.id)::NUMERIC) * 100)::INTEGER
         END as percentage,
@@ -122,12 +131,12 @@ BEGIN
 
     -- Calcul pour les modules
     RETURN QUERY
-    SELECT 
+    SELECT
         m.id as learnable_id,
         'module'::TEXT as learnable_type,
         COUNT(DISTINCT l.id)::INTEGER as total_lessons,
         COUNT(DISTINCT CASE WHEN up.completed_lessons ? l.id THEN l.id END)::INTEGER as completed_lessons,
-        CASE 
+        CASE
             WHEN COUNT(DISTINCT l.id) = 0 THEN 0
             ELSE ROUND((COUNT(DISTINCT CASE WHEN up.completed_lessons ? l.id THEN l.id END)::NUMERIC / COUNT(DISTINCT l.id)::NUMERIC) * 100)::INTEGER
         END as percentage,
@@ -147,23 +156,23 @@ Remplacer toute la logique de `loadAllLessonIds`, `getCoursesLessonIds`, `getMod
 
 ```typescript
 const [userProgress] = createResource(
-    () => user()?.id,
-    async (userId) => {
-        if (!userId) return new Map();
-        const { data, error } = await supabase.rpc('get_user_progress', { user_id: userId });
-        if (error) return new Map();
-        
-        // Convertir en Map pour compatibilité avec le code existant
-        const progressMap = new Map();
-        for (const row of data || []) {
-            progressMap.set(row.learnable_id, {
-                percentage: row.percentage,
-                hasStarted: row.has_started
-            });
-        }
-        return progressMap;
+  () => user()?.id,
+  async (userId) => {
+    if (!userId) return new Map()
+    const { data, error } = await supabase.rpc('get_user_progress', { user_id: userId })
+    if (error) return new Map()
+
+    // Convertir en Map pour compatibilité avec le code existant
+    const progressMap = new Map()
+    for (const row of data || []) {
+      progressMap.set(row.learnable_id, {
+        percentage: row.percentage,
+        hasStarted: row.has_started
+      })
     }
-);
+    return progressMap
+  }
+)
 ```
 
 ### Étape 3 : Supprimer le code obsolète

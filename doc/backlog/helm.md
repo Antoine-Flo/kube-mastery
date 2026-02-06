@@ -22,17 +22,17 @@ Documentation pour l'implémentation d'un Helm éducatif dans le simulateur.
 
 ### Complexité par fonctionnalité
 
-| Fonctionnalité                           | Difficulté    | Utilité pédagogique |
-| ---------------------------------------- | ------------- | ------------------- |
-| Templating basique (`{{ .Values.x }}`)   | ⭐ Facile      | Très haute          |
-| Fonctions (`default`, `quote`, `toYaml`) | ⭐⭐ Moyen      | Haute               |
-| Conditionnels (`if`, `range`)            | ⭐⭐ Moyen      | Haute               |
-| `helm install/upgrade/uninstall`         | ⭐ Facile      | Très haute          |
-| `helm template` (dry-run)                | ⭐ Facile      | Très haute          |
-| Values merging (values.yaml + --set)     | ⭐⭐ Moyen      | Haute               |
-| Release history/rollback                 | ⭐⭐ Moyen      | Moyenne             |
-| Hooks (pre-install, post-upgrade)        | ⭐⭐⭐ Difficile | Moyenne             |
-| Dependencies (subcharts)                 | ⭐⭐⭐ Difficile | Moyenne             |
+| Fonctionnalité                           | Difficulté        | Utilité pédagogique |
+| ---------------------------------------- | ----------------- | ------------------- |
+| Templating basique (`{{ .Values.x }}`)   | ⭐ Facile         | Très haute          |
+| Fonctions (`default`, `quote`, `toYaml`) | ⭐⭐ Moyen        | Haute               |
+| Conditionnels (`if`, `range`)            | ⭐⭐ Moyen        | Haute               |
+| `helm install/upgrade/uninstall`         | ⭐ Facile         | Très haute          |
+| `helm template` (dry-run)                | ⭐ Facile         | Très haute          |
+| Values merging (values.yaml + --set)     | ⭐⭐ Moyen        | Haute               |
+| Release history/rollback                 | ⭐⭐ Moyen        | Moyenne             |
+| Hooks (pre-install, post-upgrade)        | ⭐⭐⭐ Difficile  | Moyenne             |
+| Dependencies (subcharts)                 | ⭐⭐⭐ Difficile  | Moyenne             |
 | Repositories                             | ⭐⭐⭐⭐ Complexe | Basse               |
 
 ---
@@ -53,6 +53,7 @@ helm get manifest <release>         # Afficher le manifest généré
 ### Templating basique
 
 Variables supportées :
+
 - `{{ .Values.xxx }}` : Valeurs du fichier values.yaml
 - `{{ .Release.Name }}` : Nom de la release
 - `{{ .Release.Namespace }}` : Namespace de la release
@@ -60,6 +61,7 @@ Variables supportées :
 - `{{ .Chart.Version }}` : Version du chart
 
 Fonctions essentielles :
+
 - `default` : Valeur par défaut
 - `quote` : Entoure de guillemets
 - `| indent N` : Indentation
@@ -99,9 +101,9 @@ interface HelmRelease {
   name: string
   namespace: string
   chart: string
-  version: number        // Revision number
+  version: number // Revision number
   values: Record<string, any>
-  manifest: string       // YAML généré
+  manifest: string // YAML généré
   status: 'deployed' | 'uninstalled' | 'failed'
   installedAt: Date
 }
@@ -223,6 +225,7 @@ Avantage : Un seul chart nginx réutilisable avec différentes values pour chaqu
 Implémenter un parser custom qui supporte les cas d'usage courants (80/20).
 
 Raisons :
+
 - Contrôle total sur le comportement
 - Pas de dépendance externe
 - Permet des messages d'erreur pédagogiques
@@ -260,6 +263,7 @@ for (const resource of resources) {
 ## 📋 Priorisation
 
 ### Phase 1 - MVP
+
 1. ✅ Structure de base (HelmEngine, ChartLoader)
 2. ✅ Templating basique (Values, Release, Chart)
 3. ✅ `helm template`
@@ -267,18 +271,21 @@ for (const resource of resources) {
 5. ✅ `helm list`
 
 ### Phase 2 - Templating avancé
+
 6. ✅ Fonctions : `default`, `quote`, `toYaml`, `indent`
 7. ✅ Conditionnels `if/else`
 8. ✅ Boucles `range`
 9. ✅ `helm upgrade` / `helm rollback`
 
 ### Phase 3 - Cours
+
 10. ✅ Module 1 : Introduction
 11. ✅ Module 2 : Templating basique
 12. ✅ Module 3 : Templating avancé
 13. ✅ Module 4 : Créer un chart
 
 ### Phase 4 - Avancé (optionnel)
+
 14. ✅ Helpers `_helpers.tpl` et `include`
 15. ✅ Hooks
 16. ✅ Subcharts / dependencies

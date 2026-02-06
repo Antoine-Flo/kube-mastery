@@ -24,6 +24,7 @@ Dans cet exemple, le Service `my-service` dans le namespace `prod` mappe vers le
 Lors de la recherche de l'hôte `my-service.prod.svc.cluster.local`, le Service DNS du cluster retourne un enregistrement CNAME avec la valeur `my.database.example.com`. Accéder à `my-service` fonctionne de la même manière que les autres Services, mais la redirection se produit au niveau DNS plutôt que via un proxy ou un transfert.
 
 Cela signifie :
+
 - Aucun proxy ou transfert n'est configuré
 - Le serveur DNS gère la redirection
 - Les clients se connectent directement au service externe
@@ -32,6 +33,7 @@ Cela signifie :
 ## Cas d'utilisation
 
 Les Services ExternalName sont utiles pour :
+
 - **Bases de données externes** : Pointer vers un cluster de base de données externe en production tout en utilisant des bases de données locales dans les environnements de test
 - **Services inter-clusters** : Référencer des Services dans différents namespaces ou sur un autre cluster
 - **Migration progressive** : Migrer des charges de travail vers Kubernetes progressivement, où seule une partie des backends fonctionne dans Kubernetes
@@ -42,6 +44,7 @@ Les Services ExternalName sont utiles pour :
 Les Services ExternalName peuvent avoir des problèmes avec certains protocoles courants comme HTTP et HTTPS. C'est parce que le nom d'hôte utilisé par les clients à l'intérieur de votre cluster (par ex., `my-service.prod.svc.cluster.local`) est différent du nom que l'ExternalName référence (par ex., `my.database.example.com`).
 
 Pour les requêtes HTTP, cela signifie :
+
 - L'en-tête `Host:` contiendra le nom du Service, que le serveur d'origine peut ne pas reconnaître
 - Les serveurs TLS peuvent ne pas être en mesure de fournir un certificat correspondant au nom d'hôte auquel le client s'est connecté
 

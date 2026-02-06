@@ -7,6 +7,7 @@
 - **Hybrid** : Combiner selon les besoins
 
 ### Core Principles
+
 - Pure functions pour la logique métier
 - Immutability avec `Object.freeze()` quand approprié
 - Discriminated unions (Result types) pour gestion d'erreurs
@@ -15,6 +16,7 @@
 ## Code Structure
 
 ### Indentation & Control Flow
+
 - **Max indentation**: 3 levels
 - **No switch**: Object lookup ou if/else
 - **No nested ifs**: Early returns (guard clauses)
@@ -22,11 +24,11 @@
 
 ```typescript
 // good: Early returns with braces
-if (!value) { 
-  return error('Null') 
+if (!value) {
+  return error('Null')
 }
-if (value.length === 0) { 
-  return error('Empty') 
+if (value.length === 0) {
+  return error('Empty')
 }
 return process(value)
 
@@ -37,6 +39,7 @@ return process(value)
 ```
 
 ### Function Length
+
 - **Ideal**: 20-30 lines
 - **Max**: 50 lines
 
@@ -50,6 +53,7 @@ return process(value)
 ## Comment Conventions
 
 ### Structural Comments
+
 ```typescript
 // ═══════════════════════════════════════════════════════════════════════════
 // MODULE NAME
@@ -57,6 +61,7 @@ return process(value)
 ```
 
 ### What to Comment
+
 - JSDoc for public exports
 - Kubernetes behaviors
 - Spec constraints
@@ -64,18 +69,19 @@ return process(value)
 - TODOs with context
 
 ### What NOT to Comment
+
 - Obvious code
 - Commented-out code
 
 ## SOLID Principles
 
-| Principle | Functional | OOP |
-|-----------|------------|-----|
-| **SRP** | Factories spécialisées | Classes séparées |
-| **OCP** | Object lookup + handlers | Interface + classes |
-| **LSP** | Discriminated unions | Interfaces |
-| **ISP** | Types séparés | Interfaces séparées |
-| **DIP** | Injection via paramètres | Constructor injection |
+| Principle | Functional               | OOP                   |
+| --------- | ------------------------ | --------------------- |
+| **SRP**   | Factories spécialisées   | Classes séparées      |
+| **OCP**   | Object lookup + handlers | Interface + classes   |
+| **LSP**   | Discriminated unions     | Interfaces            |
+| **ISP**   | Types séparés            | Interfaces séparées   |
+| **DIP**   | Injection via paramètres | Constructor injection |
 
 ## Error Handling
 
@@ -120,29 +126,31 @@ npm run coverage      # Coverage report
 
 ### Color System (`src/styles/variables.css`)
 
-| Couleur | Usage |
-|---------|-------|
-| **cyan** | Actions, liens, interactif |
-| **ruby** | Erreurs, suppressions |
-| **green** | Succès, validations |
+| Couleur   | Usage                      |
+| --------- | -------------------------- |
+| **cyan**  | Actions, liens, interactif |
+| **ruby**  | Erreurs, suppressions      |
+| **green** | Succès, validations        |
 
 Échelle 1-12 + alpha (a1-a12). Tokens: `solid`, `subtle`, `surface`, `outline`, `plain`.
 
 ## Internationalization
 
 ### Usage
+
 ```typescript
 import { useTranslations, useLocalePath } from '~/i18n/utils'
 
-const locale = Astro.params.lang as 'en' | 'fr'  // ou getLangFromUrl(Astro.url)
+const locale = Astro.params.lang as 'en' | 'fr' // ou getLangFromUrl(Astro.url)
 const t = useTranslations(locale)
 const localePath = useLocalePath(locale)
 
-t('home_title')           // Clés dans messages/*.json, exposées via src/i18n/ui.ts
-localePath('/courses')    // Préfixe langue : /en/courses, /fr/courses
+t('home_title') // Clés dans messages/*.json, exposées via src/i18n/ui.ts
+localePath('/courses') // Préfixe langue : /en/courses, /fr/courses
 ```
 
 ### Rules
+
 - Toujours passer `lang` depuis la page (param `[lang]`).
 - Clés avec underscores : `courses_title` (pas `courses.title`).
 - Liens internes : utiliser `localePath(...)` dans les pages `[lang]`.

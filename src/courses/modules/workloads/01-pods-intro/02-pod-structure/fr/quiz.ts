@@ -2,7 +2,7 @@
 // QUIZ - Structure d'un Pod
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -14,9 +14,9 @@ export const quiz: Quiz = {
         'En utilisant des adresses IP externes',
         'En utilisant localhost',
         'Ils ne peuvent pas communiquer',
-        'En utilisant des IP de Service',
+        'En utilisant des IP de Service'
       ],
-      correctAnswer: 1,
+      correctAnswer: 1
     },
     {
       id: 'q2',
@@ -26,9 +26,9 @@ export const quiz: Quiz = {
         'Seulement le réseau',
         'Seulement le stockage',
         'Le réseau et le stockage',
-        'Ni le réseau ni le stockage',
+        'Ni le réseau ni le stockage'
       ],
-      correctAnswer: 2,
-    },
-  ],
-};
+      correctAnswer: 2
+    }
+  ]
+}

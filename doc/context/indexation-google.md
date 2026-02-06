@@ -9,7 +9,7 @@
 
 Pour que le sitemap contienne les bonnes URLs en production, définis la variable d’environnement **`SITE`** à l’URL de ton site (sans slash final) :
 
-- **Cloudflare Pages** : *Settings → Environment variables* → `SITE` = `https://kubemastery.com` (ou ton domaine personnalisé).
+- **Cloudflare Pages** : _Settings → Environment variables_ → `SITE` = `https://kubemastery.com` (ou ton domaine personnalisé).
 - **En local** : dans un fichier `.env` à la racine : `SITE=https://kubemastery.com`.
 
 Si `SITE` n’est pas défini, la config utilise par défaut `https://kubemastery.com`.

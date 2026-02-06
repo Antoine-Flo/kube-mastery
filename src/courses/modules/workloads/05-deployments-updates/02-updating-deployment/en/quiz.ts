@@ -2,7 +2,7 @@
 // QUIZ - Updating a Deployment
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -12,7 +12,7 @@ export const quiz: Quiz = {
       question: 'Update the nginx container image in nginx-deployment to nginx:1.16.1',
       expectedCommand: 'kubectl set image deployment nginx-deployment nginx=nginx:1.16.1',
       validationMode: 'contains',
-      normalizeCommand: true,
+      normalizeCommand: true
     },
     {
       id: 'q2',
@@ -22,9 +22,9 @@ export const quiz: Quiz = {
         'Changing the number of replicas',
         'Changing the Pod template',
         'Adding a label',
-        'Changing the namespace',
+        'Changing the namespace'
       ],
-      correctAnswer: 1,
-    },
-  ],
-};
+      correctAnswer: 1
+    }
+  ]
+}

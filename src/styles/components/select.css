@@ -30,7 +30,19 @@
   min-width: fit-content;
   outline: 0;
   text-align: start;
-  transition: color 0.15s, background-color 0.15s, border-color 0.15s, outline-color 0.15s, text-decoration-color 0.15s, fill 0.15s, stroke 0.15s, opacity 0.15s, box-shadow 0.15s, transform 0.15s, filter 0.15s, backdrop-filter 0.15s;
+  transition:
+    color 0.15s,
+    background-color 0.15s,
+    border-color 0.15s,
+    outline-color 0.15s,
+    text-decoration-color 0.15s,
+    fill 0.15s,
+    stroke 0.15s,
+    opacity 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s,
+    filter 0.15s,
+    backdrop-filter 0.15s;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
   width: 100%;
@@ -162,11 +174,11 @@
   width: 100%;
 }
 
-.select__content[data-state="open"] {
+.select__content[data-state='open'] {
   animation: slide-fade-in var(--duration-slow) ease-out;
 }
 
-.select__content[data-state="closed"] {
+.select__content[data-state='closed'] {
   animation: slide-fade-out var(--duration-fastest) ease-out;
 }
 

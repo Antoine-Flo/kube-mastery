@@ -7,19 +7,19 @@ flowchart TD
     subgraph Cluster["Kubernetes Cluster"]
         ClientPod[Client Pod]
         Service[ClusterIP Service<br/>10.96.0.1]
-        
+
         Pod1[Pod 1]
         Pod2[Pod 2]
         Pod3[Pod 3]
-        
+
         ClientPod -->|Internal access| Service
         Service -->|Load balances| Pod1
         Service -->|Load balances| Pod2
         Service -->|Load balances| Pod3
     end
-    
+
     External[Internet] -.->|Not accessible| Service
-    
+
     style Service fill:#e1f5ff
     style Pod1 fill:#fff4e1
     style Pod2 fill:#fff4e1
@@ -29,6 +29,7 @@ flowchart TD
 ## Vue d'ensemble de ClusterIP
 
 Lorsque vous créez un Service sans spécifier de type, Kubernetes le définit automatiquement sur ClusterIP. Ce type de Service :
+
 - Assigne une adresse IP depuis un pool réservé pour les Services (l'IP du cluster)
 - Rend le Service accessible uniquement depuis le cluster
 - Fournit une IP virtuelle stable qui ne change jamais, même lorsque les Pods sont recréés
@@ -55,6 +56,7 @@ spec:
 ```
 
 Dans cet exemple :
+
 - Le Service cible les Pods avec le label `app.kubernetes.io/name: MyApp`
 - Il écoute sur le port 80 (le port du Service)
 - Il transfère le trafic vers le port 9376 sur les Pods (le port cible)

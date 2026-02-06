@@ -2,7 +2,7 @@
 // QUIZ - What is a ConfigMap?
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -14,21 +14,16 @@ export const quiz: Quiz = {
         'Storing secrets and passwords',
         'Storing configuration data separately from application code',
         'Storing container images',
-        'Storing Pod definitions',
+        'Storing Pod definitions'
       ],
-      correctAnswer: 1,
+      correctAnswer: 1
     },
     {
       id: 'q2',
       type: 'multiple-choice',
       question: 'What should you use instead of ConfigMap for confidential data?',
-      options: [
-        'Another ConfigMap',
-        'A Secret',
-        'Environment variables',
-        'A Deployment',
-      ],
-      correctAnswer: 1,
-    },
-  ],
-};
+      options: ['Another ConfigMap', 'A Secret', 'Environment variables', 'A Deployment'],
+      correctAnswer: 1
+    }
+  ]
+}

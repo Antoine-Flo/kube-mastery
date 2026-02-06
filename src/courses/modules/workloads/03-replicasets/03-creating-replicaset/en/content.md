@@ -20,8 +20,8 @@ spec:
         tier: frontend
     spec:
       containers:
-      - name: php-redis
-        image: nginx:1.14.2
+        - name: php-redis
+          image: nginx:1.14.2
 ```
 
 ## Key Fields

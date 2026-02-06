@@ -25,7 +25,9 @@
 .home__animate-on-scroll {
   opacity: 0;
   transform: translateY(30px);
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  transition:
+    opacity 0.6s ease-out,
+    transform 0.6s ease-out;
 }
 
 .home__animate-on-scroll.visible {
@@ -111,7 +113,7 @@
 
 /* Hero Title */
 .home__hero-title {
-  font-family: "Zalando Sans SemiExpanded", sans-serif;
+  font-family: 'Zalando Sans SemiExpanded', sans-serif;
   font-optical-sizing: auto;
   /* font-size: 2.5rem; */
   font-weight: var(--font-weight-bold);
@@ -191,8 +193,6 @@
   font-size: var(--text-xs);
 }
 
-
-
 .home__terminal-window {
   height: 490px;
   border-radius: var(--radius-md);
@@ -208,7 +208,6 @@
 .home__terminal-window .terminal__container {
   height: 450px;
 }
-
 
 .home__terminal-window-controls {
   position: absolute;
@@ -646,7 +645,6 @@
   margin-top: 0.5rem;
   font-style: italic;
 }
-
 
 /* Terminal Loading */
 .home__terminal-loading {

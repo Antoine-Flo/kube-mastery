@@ -2,7 +2,7 @@
 // QUIZ - What is Kubernetes?
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -14,9 +14,9 @@ export const quiz: Quiz = {
         'Managing virtual machines',
         'Managing containerized workloads and services',
         'Building container images',
-        'Providing a complete PaaS solution',
+        'Providing a complete PaaS solution'
       ],
-      correctAnswer: 1,
+      correctAnswer: 1
     },
     {
       id: 'q2',
@@ -26,9 +26,9 @@ export const quiz: Quiz = {
         'Service discovery and load balancing',
         'Automated rollouts and rollbacks',
         'Building and compiling source code',
-        'Self-healing containers',
+        'Self-healing containers'
       ],
-      correctAnswer: 2,
+      correctAnswer: 2
     },
     {
       id: 'q3',
@@ -38,9 +38,9 @@ export const quiz: Quiz = {
         'A traditional all-inclusive PaaS system',
         'A set of building blocks for building developer platforms',
         'A monolithic orchestration system',
-        'A source code deployment tool',
+        'A source code deployment tool'
       ],
-      correctAnswer: 1,
-    },
-  ],
-};
+      correctAnswer: 1
+    }
+  ]
+}

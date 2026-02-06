@@ -68,6 +68,7 @@ Référence structure actuelle : `doc/context/architecture.md`, `doc/audit/entry
 **But** : Avoir en Astro les pages sans logique métier lourde.
 
 **Pages cibles (dans `old/src/routes/[[lang]]/`)** :
+
 - `index.tsx` → `src/pages/[lang]/index.astro` (ou `src/pages/index.astro` + redirection i18n selon choix phase 3).
 - `contact.tsx`, `pricing.tsx`, `privacy-policy.tsx`, `terms-of-service.tsx`, `survey.tsx`.
 
@@ -160,6 +161,7 @@ Référence structure actuelle : `doc/context/architecture.md`, `doc/audit/entry
 **État : Fait.**
 
 **Décision** : Pas de segment `learn` ni `lessons` dans l’URL. Routes actuelles :
+
 - `/[lang]/[type]/[id]` : overview d’un cours ou module (type = `courses` | `modules`).
 - `/[lang]/[type]/[id]/[lessonId]` : page d’une leçon (ex. `/fr/modules/overview/comment-utiliser`).
 
@@ -234,7 +236,6 @@ Référence structure actuelle : `doc/context/architecture.md`, `doc/audit/entry
    - Styles : `src/styles/components/quiz.css`.
    - Intégration terminal (questions command/terminal-command) : **non implémentée** (laissée de côté volontairement).
 
-
 4. **API**
    - Les routes API sont dans `old/src/routes/api/` (ab-test, seeds, suggestions, survey).
    - Les recréer en `src/pages/api/` (Astro endpoints) avec la même signature si besoin pour le front.
@@ -288,4 +289,4 @@ Respecter l’ordre des phases ; valider chaque phase avant de passer à la suiv
 
 ---
 
-*Document mis à jour au fil de la migration. Dernière mise à jour : phase 6 cluster viewer et phase 7 user progress marqués comme faits ; il reste API (phase 7) et phase 8 (tests, CI, nettoyage).*
+_Document mis à jour au fil de la migration. Dernière mise à jour : phase 6 cluster viewer et phase 7 user progress marqués comme faits ; il reste API (phase 7) et phase 8 (tests, CI, nettoyage)._

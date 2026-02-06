@@ -11,6 +11,7 @@ This lets you use the same container image in different environments by changing
 ## ConfigMap Structure
 
 Unlike most Kubernetes objects that have a `spec`, a ConfigMap has `data` and `binaryData` fields. These fields accept key-value pairs:
+
 - **data**: Designed to contain UTF-8 strings
 - **binaryData**: Designed to contain binary data as base64-encoded strings
 

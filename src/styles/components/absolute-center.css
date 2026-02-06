@@ -12,7 +12,7 @@
   transform: translateX(-50%);
 }
 
-[dir="rtl"] .absolute-center--axis-horizontal {
+[dir='rtl'] .absolute-center--axis-horizontal {
   transform: translateX(50%);
 }
 
@@ -27,7 +27,6 @@
   transform: translate(-50%, -50%);
 }
 
-[dir="rtl"] .absolute-center--axis-both {
+[dir='rtl'] .absolute-center--axis-both {
   transform: translate(50%, -50%);
 }
-

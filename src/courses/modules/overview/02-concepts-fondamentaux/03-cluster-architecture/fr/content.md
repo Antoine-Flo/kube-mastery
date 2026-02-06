@@ -10,19 +10,19 @@ flowchart TD
         SCHED[Scheduler]
         CM[Controller Manager]
     end
-    
+
     subgraph WN["Worker Node"]
         KUBELET[kubelet]
         KUBEPROXY[kube-proxy]
         CR[Container Runtime]
     end
-    
+
     API --> ETCD
     API --> SCHED
     API --> CM
     API -->|Manages| KUBELET
     KUBELET --> CR
-    
+
     style CP fill:#e1f5ff
     style WN fill:#fff4e1
 ```
@@ -49,17 +49,18 @@ flowchart TD
     ETCD[etcd]
     SCHED[Scheduler]
     CM[Controller Manager]
-    
+
     API -->|Stores state| ETCD
     API -->|Sends pods to| SCHED
     API -->|Notifies| CM
     CM -->|Watches| API
-    
+
     style API fill:#e1f5ff
     style ETCD fill:#e1f5ff
     style SCHED fill:#e1f5ff
     style CM fill:#e1f5ff
 ```
+
 :::info
 Dans les configurations haute disponibilité, la base de données etcd devrait être isolée ailleurs pour éviter les problèmes de cohérence et améliorer les performances.
 :::
@@ -91,12 +92,12 @@ flowchart TD
     KUBEPROXY[kube-proxy]
     CR[Container Runtime]
     POD[Pod]
-    
+
     API -->|Sends PodSpecs| KUBELET
     KUBELET -->|Manages| POD
     KUBELET -->|Uses| CR
     KUBEPROXY -->|Routes to| POD
-    
+
     style API fill:#e1f5ff
     style KUBELET fill:#fff4e1
     style KUBEPROXY fill:#fff4e1
@@ -111,6 +112,7 @@ Les modules complémentaires étendent la fonctionnalité de Kubernetes en utili
 Tous les clusters devraient avoir **cluster DNS**, qui sert les enregistrements DNS pour les services Kubernetes. Les conteneurs incluent automatiquement ce serveur DNS dans leurs recherches.
 
 D'autres modules complémentaires courants incluent :
+
 - Interface Web (Dashboard) pour la gestion du cluster
 - Outils de surveillance des ressources de conteneurs
 - Solutions de journalisation au niveau du cluster

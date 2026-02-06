@@ -7,6 +7,7 @@ Almost every Kubernetes object has two important nested fields that work togethe
 The `spec` (short for "specification") describes the **desired state** of your object. This is what you want, the goal you're aiming for. When you create an object, you define the spec to tell Kubernetes what characteristics you want the resource to have.
 
 For example, a Deployment spec might specify:
+
 - Three replicas of your application
 - Which container image to use
 - Resource limits for each container
@@ -19,6 +20,7 @@ Think of the spec as your wish list. You're telling Kubernetes: "I want my appli
 The `status` describes the **current state** of your object, what's actually happening right now. Unlike the spec, you don't set the status yourself. Kubernetes and its components automatically populate and update this field as they work to make your desired state a reality.
 
 The status might show:
+
 - How many replicas are currently running
 - Which Pods are ready to serve traffic
 - Any errors or warnings that occurred
@@ -68,8 +70,8 @@ spec:
   template:
     spec:
       containers:
-      - name: web
-        image: nginx:latest
+        - name: web
+          image: nginx:latest
 ```
 
 Kubernetes reads this and starts three Pods. The status might look like:

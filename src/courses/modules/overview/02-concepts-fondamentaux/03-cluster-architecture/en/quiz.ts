@@ -2,7 +2,7 @@
 // QUIZ - Cluster Architecture
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -14,21 +14,16 @@ export const quiz: Quiz = {
         'Schedules Pods to nodes',
         'Stores all API server data as a key-value store',
         'Runs containers',
-        'Manages network rules',
+        'Manages network rules'
       ],
-      correctAnswer: 1,
+      correctAnswer: 1
     },
     {
       id: 'q2',
       type: 'multiple-choice',
       question: 'Which component is responsible for assigning Pods to nodes?',
-      options: [
-        'kubelet',
-        'kube-scheduler',
-        'kube-apiserver',
-        'kube-proxy',
-      ],
-      correctAnswer: 1,
+      options: ['kubelet', 'kube-scheduler', 'kube-apiserver', 'kube-proxy'],
+      correctAnswer: 1
     },
     {
       id: 'q3',
@@ -38,9 +33,9 @@ export const quiz: Quiz = {
         'Exposes the Kubernetes API',
         'Ensures that Pods and their containers are running',
         'Schedules Pods',
-        'Stores cluster state',
+        'Stores cluster state'
       ],
-      correctAnswer: 1,
-    },
-  ],
-};
+      correctAnswer: 1
+    }
+  ]
+}

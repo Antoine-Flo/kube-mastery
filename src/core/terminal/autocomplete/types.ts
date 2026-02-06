@@ -9,13 +9,13 @@ import type { FileSystem } from '../core/ShellContext'
 type ClusterState = any // TODO: Migrer depuis cluster/ClusterState
 
 export interface AutocompleteContext {
-    clusterState: ClusterState
-    fileSystem: FileSystem
+  clusterState: ClusterState
+  fileSystem: FileSystem
 }
 
 export interface CompletionResult {
-    text: string
-    suffix: string // ' ' for commands/files, '/' for directories
+  text: string
+  suffix: string // ' ' for commands/files, '/' for directories
 }
 
 /**
@@ -23,11 +23,10 @@ export interface CompletionResult {
  * Permet à AutocompleteEngine d'effectuer des actions sans dépendre directement de TerminalController
  */
 export interface TabCompletionCallbacks {
-    write(text: string): void
-    showPrompt(): void
-    updateLineAndRender(newLine: string, textToRender: string): void
-    getCurrentToken(): string
-    getCurrentLine(): string
-    updateCurrentLine(line: string, cursorPos: number): void
+  write(text: string): void
+  showPrompt(): void
+  updateLineAndRender(newLine: string, textToRender: string): void
+  getCurrentToken(): string
+  getCurrentLine(): string
+  updateCurrentLine(line: string, cursorPos: number): void
 }
-

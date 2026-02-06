@@ -17,7 +17,7 @@ flowchart TD
     ReplicaSet -->|Creates and maintains| Pod1[Pod 1]
     ReplicaSet -->|Creates and maintains| Pod2[Pod 2]
     ReplicaSet -->|Creates and maintains| Pod3[Pod 3]
-    
+
     Controller[Deployment Controller] -->|Watches and reconciles| Deployment
 ```
 

@@ -27,6 +27,7 @@ Si vous utilisez des variables d'environnement pour la découverte de services, 
 Le DNS est la méthode recommandée et plus flexible pour la découverte de services. Un serveur DNS conscient du cluster (comme CoreDNS) surveille l'API Kubernetes pour les nouveaux Services et crée automatiquement des enregistrements DNS pour chacun.
 
 Pour un Service nommé `my-service` dans le namespace `my-ns` :
+
 - Les Pods dans le même namespace (`my-ns`) peuvent le résoudre simplement comme `my-service`
 - Les Pods dans d'autres namespaces doivent utiliser le nom complet : `my-service.my-ns`
 - Le nom DNS se résout en l'adresse IP du cluster du Service

@@ -9,6 +9,7 @@ Système de cartes de révision avec répétition espacée pour mémoriser les c
 **FSRS** (Free Spaced Repetition Scheduler) - algorithme moderne plus précis que SM-2 (Anki).
 
 Librairie : `ts-fsrs`
+
 - Support TypeScript natif
 - Léger (~10kb)
 - Calcul des intervalles basé sur : stabilité, difficulté, temps écoulé
@@ -16,6 +17,7 @@ Librairie : `ts-fsrs`
 ### Ratings
 
 L'utilisateur évalue sa réponse avec 4 niveaux :
+
 - **Again** : Je ne savais pas → révision immédiate
 - **Hard** : Difficile → intervalle court
 - **Good** : Correct → intervalle normal
@@ -26,6 +28,7 @@ L'utilisateur évalue sa réponse avec 4 niveaux :
 ### 1. Cartes générées automatiquement
 
 Générées à partir des cours/quiz complétés :
+
 - Chaque question de quiz devient une carte potentielle
 - Extraction des concepts clés des leçons (titres, définitions)
 - Tags automatiques basés sur le chapitre/leçon
@@ -33,6 +36,7 @@ Générées à partir des cours/quiz complétés :
 ### 2. Deck Kubernetes dédié
 
 Cartes prédéfinies couvrant :
+
 - Commandes kubectl essentielles
 - Concepts K8s (Pods, Deployments, Services, etc.)
 - Flags et options courantes
@@ -47,14 +51,14 @@ Cartes prédéfinies couvrant :
 CREATE TABLE flashcards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  
+
   -- Contenu
   front TEXT NOT NULL,           -- Question/Prompt
   back TEXT NOT NULL,            -- Réponse
   tags TEXT[],                   -- ['pods', 'kubectl', 'chapter-1']
   source_type TEXT,              -- 'quiz' | 'lesson' | 'deck'
   source_id TEXT,                -- ID du quiz/leçon d'origine
-  
+
   -- FSRS state
   due TIMESTAMPTZ NOT NULL,      -- Prochaine révision
   stability FLOAT DEFAULT 0,
@@ -65,7 +69,7 @@ CREATE TABLE flashcards (
   lapses INT DEFAULT 0,
   state INT DEFAULT 0,           -- New=0, Learning=1, Review=2, Relearning=3
   last_review TIMESTAMPTZ,
-  
+
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -94,6 +98,7 @@ CREATE TABLE flashcard_reviews (
 ### 1. Dashboard (après login)
 
 Section dédiée "Révisions du jour" :
+
 - Nombre de cartes à réviser
 - Bouton "Commencer la révision"
 - Stats rapides (streak, cartes maîtrisées)
@@ -101,6 +106,7 @@ Section dédiée "Révisions du jour" :
 ### 2. Avant une leçon
 
 Rappel contextuel :
+
 - Afficher 3-5 cartes liées au chapitre avant de commencer
 - "Rafraîchissez vos connaissances avant de continuer"
 - Optionnel (skip possible)
@@ -164,4 +170,3 @@ src/
 
 - [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs) - Librairie FSRS
 - [FSRS Algorithm](https://github.com/open-spaced-repetition/fsrs4anki/wiki/Algorithm-Overview) - Détails de l'algorithme
-

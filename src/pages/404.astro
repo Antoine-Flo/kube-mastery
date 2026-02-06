@@ -1,50 +1,50 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import { getLangFromUrl } from "../i18n/utils";
-import { useTranslations, useLocalePath } from "../i18n/utils";
+import Layout from '../layouts/Layout.astro'
+import { getLangFromUrl } from '../i18n/utils'
+import { useTranslations, useLocalePath } from '../i18n/utils'
 
-Astro.response.status = 404;
+Astro.response.status = 404
 
-const lang = getLangFromUrl(Astro.url);
-const t = useTranslations(lang);
-const localePath = useLocalePath(lang);
+const lang = getLangFromUrl(Astro.url)
+const t = useTranslations(lang)
+const localePath = useLocalePath(lang)
 ---
 
 <Layout>
-	<div class="notfound">
-		<h1 class="notfound__title">{t("notfound_title")}</h1>
-		<p class="notfound__message">{t("notfound_message")}</p>
-		<a class="notfound__link" href={localePath("/")}>
-			{t("notfound_backHome")}
-		</a>
-	</div>
+  <div class="notfound">
+    <h1 class="notfound__title">{t('notfound_title')}</h1>
+    <p class="notfound__message">{t('notfound_message')}</p>
+    <a class="notfound__link" href={localePath('/')}>
+      {t('notfound_backHome')}
+    </a>
+  </div>
 </Layout>
 
 <style>
-	.notfound {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		min-height: 50vh;
-		padding: 2rem;
-		text-align: center;
-	}
-	.notfound__title {
-		font-size: 1.75rem;
-		font-weight: 700;
-		margin: 0 0 0.5rem;
-	}
-	.notfound__message {
-		color: var(--color-text-muted, #666);
-		margin: 0 0 1.5rem;
-	}
-	.notfound__link {
-		color: var(--color-accent, #0ea5e9);
-		text-decoration: none;
-		font-weight: 500;
-	}
-	.notfound__link:hover {
-		text-decoration: underline;
-	}
+  .notfound {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    padding: 2rem;
+    text-align: center;
+  }
+  .notfound__title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+  }
+  .notfound__message {
+    color: var(--color-text-muted, #666);
+    margin: 0 0 1.5rem;
+  }
+  .notfound__link {
+    color: var(--color-accent, #0ea5e9);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .notfound__link:hover {
+    text-decoration: underline;
+  }
 </style>

@@ -16,15 +16,19 @@ import { handleMetadataChange } from './metadataHelpers'
  * Uses event-driven architecture
  */
 export const handleAnnotate = (
-    state: ClusterStateData,
-    parsed: ParsedCommand,
-    eventBus: EventBus
+  state: ClusterStateData,
+  parsed: ParsedCommand,
+  eventBus: EventBus
 ): ExecutionResult & { state?: ClusterStateData } => {
-    return handleMetadataChange(state, parsed, {
-        metadataType: 'annotations',
-        commandName: 'annotate',
-        changesKey: 'annotationChanges',
-        actionPastTense: 'annotated',
-    }, eventBus)
+  return handleMetadataChange(
+    state,
+    parsed,
+    {
+      metadataType: 'annotations',
+      commandName: 'annotate',
+      changesKey: 'annotationChanges',
+      actionPastTense: 'annotated'
+    },
+    eventBus
+  )
 }
-

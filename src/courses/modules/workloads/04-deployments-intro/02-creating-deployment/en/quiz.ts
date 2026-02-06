@@ -2,7 +2,7 @@
 // QUIZ - Creating a Deployment
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -10,13 +10,8 @@ export const quiz: Quiz = {
       id: 'q1',
       type: 'multiple-choice',
       question: 'What is the correct apiVersion for a Deployment object?',
-      options: [
-        'v1',
-        'apps/v1',
-        'v1beta1',
-        'batch/v1',
-      ],
-      correctAnswer: 1,
+      options: ['v1', 'apps/v1', 'v1beta1', 'batch/v1'],
+      correctAnswer: 1
     },
     {
       id: 'q2',
@@ -24,7 +19,7 @@ export const quiz: Quiz = {
       question: 'Create a Deployment from a YAML file named deployment.yaml',
       expectedCommand: 'kubectl apply -f deployment.yaml',
       validationMode: 'contains',
-      normalizeCommand: true,
-    },
-  ],
-};
+      normalizeCommand: true
+    }
+  ]
+}

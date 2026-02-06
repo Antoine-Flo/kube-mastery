@@ -30,37 +30,37 @@ import type { FileSystem } from '../../filesystem/FileSystem'
 export type { FileSystem }
 
 export type EditorModal = {
-    open: (filename: string, content: string, onSave: (newContent: string) => void) => void
+  open: (filename: string, content: string, onSave: (newContent: string) => void) => void
 }
 
 /**
  * Create all shell command handlers
  */
 const createHandlers = (fileSystem: FileSystem, editorModal?: EditorModal): Map<string, ShellCommandHandler> => {
-    const handlers = new Map<string, ShellCommandHandler>()
+  const handlers = new Map<string, ShellCommandHandler>()
 
-    // Navigation
-    handlers.set('pwd', createPwdHandler(fileSystem))
-    handlers.set('cd', createCdHandler(fileSystem))
-    handlers.set('ls', createLsHandler(fileSystem))
+  // Navigation
+  handlers.set('pwd', createPwdHandler(fileSystem))
+  handlers.set('cd', createCdHandler(fileSystem))
+  handlers.set('ls', createLsHandler(fileSystem))
 
-    // File operations
-    handlers.set('touch', createTouchHandler(fileSystem))
-    handlers.set('cat', createCatHandler(fileSystem))
-    handlers.set('rm', createRmHandler(fileSystem))
-    handlers.set('mkdir', createMkdirHandler(fileSystem))
+  // File operations
+  handlers.set('touch', createTouchHandler(fileSystem))
+  handlers.set('cat', createCatHandler(fileSystem))
+  handlers.set('rm', createRmHandler(fileSystem))
+  handlers.set('mkdir', createMkdirHandler(fileSystem))
 
-    // Editor
-    handlers.set('nano', createNanoHandler(fileSystem, editorModal))
-    handlers.set('vi', createNanoHandler(fileSystem, editorModal))    // Alias for nano
-    handlers.set('vim', createNanoHandler(fileSystem, editorModal))   // Alias for nano
+  // Editor
+  handlers.set('nano', createNanoHandler(fileSystem, editorModal))
+  handlers.set('vi', createNanoHandler(fileSystem, editorModal)) // Alias for nano
+  handlers.set('vim', createNanoHandler(fileSystem, editorModal)) // Alias for nano
 
-    // System
-    handlers.set('clear', createClearHandler())
-    handlers.set('help', createHelpHandler())
-    handlers.set('debug', createDebugHandler())
+  // System
+  handlers.set('clear', createClearHandler())
+  handlers.set('help', createHelpHandler())
+  handlers.set('debug', createDebugHandler())
 
-    return handlers
+  return handlers
 }
 
 /**
@@ -70,6 +70,6 @@ const createHandlers = (fileSystem: FileSystem, editorModal?: EditorModal): Map<
  * @returns ShellCommandExecutor instance
  */
 export const createShellExecutor = (fileSystem: FileSystem, editorModal?: EditorModal): ShellCommandExecutor => {
-    const handlers = createHandlers(fileSystem, editorModal)
-    return createShellCommandExecutor(handlers)
+  const handlers = createHandlers(fileSystem, editorModal)
+  return createShellCommandExecutor(handlers)
 }

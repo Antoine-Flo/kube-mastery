@@ -24,27 +24,27 @@
 }
 
 /* Toast by type (like button color palettes) */
-.toast[data-type="success"] {
+.toast[data-type='success'] {
   background-color: var(--color-green-2);
   border-inline-start-color: var(--color-green-9);
 }
 
-.toast[data-type="error"] {
+.toast[data-type='error'] {
   background-color: var(--color-ruby-2);
   border-inline-start-color: var(--color-ruby-9);
 }
 
-.toast[data-type="warning"] {
+.toast[data-type='warning'] {
   background-color: var(--color-amber-2);
   border-inline-start-color: var(--color-amber-9);
 }
 
-.toast[data-type="info"] {
+.toast[data-type='info'] {
   background-color: var(--color-cyan-2);
   border-inline-start-color: var(--color-cyan-9);
 }
 
-.toast[data-type="loading"] {
+.toast[data-type='loading'] {
   background-color: var(--color-gray-2);
   border-inline-start-color: var(--color-gray-8);
 }
@@ -83,23 +83,23 @@
   flex-shrink: 0;
 }
 
-.toast[data-type="success"] .toast__indicator {
+.toast[data-type='success'] .toast__indicator {
   color: var(--color-green-9);
 }
 
-.toast[data-type="error"] .toast__indicator {
+.toast[data-type='error'] .toast__indicator {
   color: var(--color-ruby-9);
 }
 
-.toast[data-type="warning"] .toast__indicator {
+.toast[data-type='warning'] .toast__indicator {
   color: var(--color-amber-9);
 }
 
-.toast[data-type="info"] .toast__indicator {
+.toast[data-type='info'] .toast__indicator {
   color: var(--color-cyan-9);
 }
 
-.toast[data-type="loading"] .toast__indicator {
+.toast[data-type='loading'] .toast__indicator {
   color: var(--color-gray-9);
 }
 
@@ -177,11 +177,11 @@
   }
 }
 
-.toast[data-state="open"] {
+.toast[data-state='open'] {
   animation: toast-slide-in var(--duration-slow) ease-out;
 }
 
-.toast[data-state="closed"] {
+.toast[data-state='closed'] {
   animation: toast-slide-out var(--duration-fast) ease-in;
 }
 
@@ -194,4 +194,3 @@
     inset-inline: var(--spacing-4);
   }
 }
-

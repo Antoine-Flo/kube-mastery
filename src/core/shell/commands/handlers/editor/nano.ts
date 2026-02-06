@@ -9,49 +9,49 @@ import { error, success } from '../../../../shared/result'
 import type { ShellCommandHandler } from '../../core/ShellCommandHandler'
 
 export type EditorModal = {
-    open: (filename: string, content: string, onSave: (newContent: string) => void) => void
+  open: (filename: string, content: string, onSave: (newContent: string) => void) => void
 }
 
 export const createNanoHandler = (fileSystem: FileSystem, editorModal?: EditorModal): ShellCommandHandler => {
-    return {
-        execute: (args: string[]): ExecutionResult => {
-            if (args.length === 0) {
-                return error('nano: missing file operand')
-            }
+  return {
+    execute: (args: string[]): ExecutionResult => {
+      if (args.length === 0) {
+        return error('nano: missing file operand')
+      }
 
-            if (!editorModal) {
-                return error('Editor not available')
-            }
+      if (!editorModal) {
+        return error('Editor not available')
+      }
 
-            const filename = args[0]
+      const filename = args[0]
 
-            // Try to read existing file
-            const readResult = fileSystem.readFile(filename)
-            let content = ''
+      // Try to read existing file
+      const readResult = fileSystem.readFile(filename)
+      let content = ''
 
-            if (readResult.ok) {
-                content = readResult.value
-            }
+      if (readResult.ok) {
+        content = readResult.value
+      }
 
-            // Open editor modal
-            editorModal.open(filename, content, (newContent: string) => {
-                // Save callback - create file if it doesn't exist
-                if (!readResult.ok) {
-                    const createResult = fileSystem.createFile(filename)
-                    if (!createResult.ok) {
-                        // Error creating file - could log here later
-                        return
-                    }
-                }
-
-                const writeResult = fileSystem.writeFile(filename, newContent)
-                if (!writeResult.ok) {
-                    // Error writing file - could log here later
-                }
-            })
-
-            // Return success immediately - modal handles UI
-            return success('')
+      // Open editor modal
+      editorModal.open(filename, content, (newContent: string) => {
+        // Save callback - create file if it doesn't exist
+        if (!readResult.ok) {
+          const createResult = fileSystem.createFile(filename)
+          if (!createResult.ok) {
+            // Error creating file - could log here later
+            return
+          }
         }
+
+        const writeResult = fileSystem.writeFile(filename, newContent)
+        if (!writeResult.ok) {
+          // Error writing file - could log here later
+        }
+      })
+
+      // Return success immediately - modal handles UI
+      return success('')
     }
+  }
 }

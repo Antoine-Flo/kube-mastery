@@ -2,7 +2,7 @@
 // QUIZ - What is a ReplicaSet?
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -14,9 +14,9 @@ export const quiz: Quiz = {
         'To schedule Pods to nodes',
         'To maintain a stable set of replica Pods running',
         'To provide load balancing',
-        'To store configuration data',
+        'To store configuration data'
       ],
-      correctAnswer: 1,
+      correctAnswer: 1
     },
     {
       id: 'q2',
@@ -26,9 +26,9 @@ export const quiz: Quiz = {
         'Directly create and manage ReplicaSets',
         'Use Deployments which manage ReplicaSets',
         'Use Services instead',
-        'Use ConfigMaps',
+        'Use ConfigMaps'
       ],
-      correctAnswer: 1,
-    },
-  ],
-};
+      correctAnswer: 1
+    }
+  ]
+}

@@ -1,181 +1,174 @@
 ---
-import { Moon, Sun } from "@lucide/astro";
-import Logo from "./Logo.astro";
-import Button from "./ui/Button.astro";
-import { getLangFromUrl, useTranslations, useLocalePath } from "../i18n/utils";
+import { Moon, Sun } from '@lucide/astro'
+import Logo from './Logo.astro'
+import Button from './ui/Button.astro'
+import { getLangFromUrl, useTranslations, useLocalePath } from '../i18n/utils'
 
 interface Props {
-	/** Auth state from Layout (centralized to avoid cookies set in component). */
-	isLoggedIn?: boolean;
+  /** Auth state from Layout (centralized to avoid cookies set in component). */
+  isLoggedIn?: boolean
 }
 
-const { isLoggedIn = false } = Astro.props;
-const lang = getLangFromUrl(Astro.url);
-const t = useTranslations(lang);
-const localePath = useLocalePath(lang);
+const { isLoggedIn = false } = Astro.props
+const lang = getLangFromUrl(Astro.url)
+const t = useTranslations(lang)
+const localePath = useLocalePath(lang)
 ---
 
 <header>
-	<a href={localePath("/")} class="logo">
-		<Logo size={27} class="logo-icon" />
-		<span>{t("nav_appName")}</span>
-	</a>
+  <a href={localePath('/')} class="logo">
+    <Logo size={27} class="logo-icon" />
+    <span>{t('nav_appName')}</span>
+  </a>
 
-	<div class="right">
-		<nav>
-			<a href={localePath("/courses")}>{t("nav_courses")}</a>
-			<a href={localePath("/pricing")}>{t("nav_pricing")}</a>
-			{
-				isLoggedIn ? (
-					<a
-						href={`/api/auth/signout?lang=${lang}`}
-						data-astro-reload
-					>
-						{t("nav_logout")}
-					</a>
-				) : (
-					<a href={localePath("/auth")}>{t("nav_login")}</a>
-				)
-			}
-		</nav>
-		<div class="acts">
-			<Button
-				type="button"
-				variant="plain"
-				size="sm"
-				class="theme-toggle-btn"
-				data-theme-toggle
-				aria-label={t("nav_toggleTheme")}
-			>
-				<Moon size={18} class="moon" />
-				<Sun size={18} class="sun" />
-			</Button>
-		</div>
-	</div>
+  <div class="right">
+    <nav>
+      <a href={localePath('/courses')}>{t('nav_courses')}</a>
+      <a href={localePath('/pricing')}>{t('nav_pricing')}</a>
+      {
+        isLoggedIn ? (
+          <a href={`/api/auth/signout?lang=${lang}`} data-astro-reload>
+            {t('nav_logout')}
+          </a>
+        ) : (
+          <a href={localePath('/auth')}>{t('nav_login')}</a>
+        )
+      }
+    </nav>
+    <div class="acts">
+      <Button
+        type="button"
+        variant="plain"
+        size="sm"
+        class="theme-toggle-btn"
+        data-theme-toggle
+        aria-label={t('nav_toggleTheme')}
+      >
+        <Moon size={18} class="moon" />
+        <Sun size={18} class="sun" />
+      </Button>
+    </div>
+  </div>
 </header>
 
 <style>
-	header {
-		border-color: var(--color-gray-6);
-		background-color: var(--color-gray-1);
-		border-bottom: 1px solid var(--color-gray-6);
-		padding: 0.7rem 2rem;
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		flex-wrap: wrap;
-	}
-	.right {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		margin-left: auto;
-		flex-shrink: 0;
-	}
-	.logo {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		font-size: var(--text-lg);
-		font-weight: var(--font-weight-bold);
-		color: var(--color-gray-12);
-		text-decoration: none;
-		flex-shrink: 0;
-	}
-	.logo-icon {
-		flex-shrink: 0;
-	}
-	nav {
-		display: flex;
-		align-items: center;
-		gap: 1.5rem;
-		flex-wrap: wrap;
-	}
-	nav a {
-		color: var(--color-gray-11);
-		text-decoration: none;
-		transition: color 0.2s;
-		white-space: nowrap;
-	}
-	nav a:hover {
-		color: var(--color-gray-12);
-	}
+  header {
+    border-color: var(--color-gray-6);
+    background-color: var(--color-gray-1);
+    border-bottom: 1px solid var(--color-gray-6);
+    padding: 0.7rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-12);
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .logo-icon {
+    flex-shrink: 0;
+  }
+  nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  nav a {
+    color: var(--color-gray-11);
+    text-decoration: none;
+    transition: color 0.2s;
+    white-space: nowrap;
+  }
+  nav a:hover {
+    color: var(--color-gray-12);
+  }
 
-	.acts {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		flex-shrink: 0;
-	}
-	.theme-toggle-btn :global(.moon) {
-		display: block;
-	}
-	.theme-toggle-btn :global(.sun) {
-		display: none;
-	}
-	:global([data-theme="dark"]) .theme-toggle-btn :global(.moon) {
-		display: none;
-	}
-	:global([data-theme="dark"]) .theme-toggle-btn :global(.sun) {
-		display: block;
-	}
+  .acts {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+  .theme-toggle-btn :global(.moon) {
+    display: block;
+  }
+  .theme-toggle-btn :global(.sun) {
+    display: none;
+  }
+  :global([data-theme='dark']) .theme-toggle-btn :global(.moon) {
+    display: none;
+  }
+  :global([data-theme='dark']) .theme-toggle-btn :global(.sun) {
+    display: block;
+  }
 
-	@media (max-width: 768px) {
-		header {
-			padding: 0.6rem 1rem;
-		}
-		.logo {
-			font-size: var(--text-md);
-		}
-		nav {
-			gap: 0.75rem 1rem;
-		}
-		nav a {
-			font-size: var(--text-sm);
-		}
-	}
+  @media (max-width: 768px) {
+    header {
+      padding: 0.6rem 1rem;
+    }
+    .logo {
+      font-size: var(--text-md);
+    }
+    nav {
+      gap: 0.75rem 1rem;
+    }
+    nav a {
+      font-size: var(--text-sm);
+    }
+  }
 
-	@media (max-width: 480px) {
-		header {
-			padding: 0.5rem 0.75rem;
-		}
-		nav {
-			gap: 0.5rem 0.75rem;
-		}
-	}
+  @media (max-width: 480px) {
+    header {
+      padding: 0.5rem 0.75rem;
+    }
+    nav {
+      gap: 0.5rem 0.75rem;
+    }
+  }
 </style>
 
 <script>
-	/** Aligné sur old/src/theme.tsx : clé kube-simulator-theme, data-theme="light" | "dark" */
-	const THEME_KEY = "kube-simulator-theme";
+  /** Aligné sur old/src/theme.tsx : clé kube-simulator-theme, data-theme="light" | "dark" */
+  const THEME_KEY = 'kube-simulator-theme'
 
-	function applyTheme(theme: string) {
-		document.documentElement.setAttribute("data-theme", theme);
-		localStorage.setItem(THEME_KEY, theme);
-	}
+  function applyTheme(theme: string) {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem(THEME_KEY, theme)
+  }
 
-	function initTheme() {
-		const saved = localStorage.getItem(THEME_KEY);
-		const prefersDark = window.matchMedia(
-			"(prefers-color-scheme: dark)",
-		).matches;
-		const initial = saved || (prefersDark ? "dark" : "light");
-		applyTheme(initial);
-	}
+  function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY)
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const initial = saved || (prefersDark ? 'dark' : 'light')
+    applyTheme(initial)
+  }
 
-	function toggleTheme() {
-		const current = document.documentElement.getAttribute("data-theme");
-		const next = current === "dark" ? "light" : "dark";
-		applyTheme(next);
-	}
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme')
+    const next = current === 'dark' ? 'light' : 'dark'
+    applyTheme(next)
+  }
 
-	function setupThemeToggle() {
-		initTheme();
-		document
-			.querySelector("[data-theme-toggle]")
-			?.addEventListener("click", toggleTheme);
-	}
+  function setupThemeToggle() {
+    initTheme()
+    document.querySelector('[data-theme-toggle]')?.addEventListener('click', toggleTheme)
+  }
 
-	setupThemeToggle();
-	document.addEventListener("astro:page-load", setupThemeToggle);
+  setupThemeToggle()
+  document.addEventListener('astro:page-load', setupThemeToggle)
 </script>

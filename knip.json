@@ -4,10 +4,6 @@
     "interface": true,
     "type": true
   },
-  "tags": [
-    "-lintignore"
-  ],
-  "ignore": [
-    "src/courses/**/*.ts"
-  ]
+  "tags": ["-lintignore"],
+  "ignore": ["src/courses/**/*.ts"]
 }

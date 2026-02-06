@@ -8,11 +8,11 @@ Chantier de refactoring de `src/lib` (et de l’organisation des domaines) pour 
 
 ### 1.1 Trois couches
 
-| Couche | Rôle | Peut importer | Ne fait pas |
-|--------|------|----------------|-------------|
-| **IO (adapters)** | Appels externes uniquement (Supabase, fetch). Retourne `{ data, error }` ou promesse brute. | `~/lib/supabase` (ou `src/db/` quand Drizzle migré) | Pas de règle métier, pas de cache, pas de mapping métier |
-| **Domain** | Logique métier pure. Entrées/sorties en types métier. | `~/types/*` ou types du domaine | Jamais d’appel Supabase/fetch |
-| **Application** | Orchestration : appelle l’IO, mappe (DB → métier), cache, gestion d’erreur. Expose les cas d’usage. | `~/lib/*` (supabase, progress), domain, types | Pas de JSX (sauf si contexte dédié UI) |
+| Couche            | Rôle                                                                                                | Peut importer                                       | Ne fait pas                                              |
+| ----------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------- |
+| **IO (adapters)** | Appels externes uniquement (Supabase, fetch). Retourne `{ data, error }` ou promesse brute.         | `~/lib/supabase` (ou `src/db/` quand Drizzle migré) | Pas de règle métier, pas de cache, pas de mapping métier |
+| **Domain**        | Logique métier pure. Entrées/sorties en types métier.                                               | `~/types/*` ou types du domaine                     | Jamais d’appel Supabase/fetch                            |
+| **Application**   | Orchestration : appelle l’IO, mappe (DB → métier), cache, gestion d’erreur. Expose les cas d’usage. | `~/lib/*` (supabase, progress), domain, types       | Pas de JSX (sauf si contexte dédié UI)                   |
 
 Les composants et pages importent l’application (ou les contextes), pas directement `~/lib/supabase` ou adapters.
 
@@ -76,21 +76,21 @@ Actuellement : `src/lib/supabase.ts`, `src/lib/progress/` (supabase-adapter). Ci
 
 ### 3.1 Racine lib
 
-| Fichier | Rôle actuel | Cible / remarque |
-|---------|-------------|------------------|
-| ~~`auth.tsx`~~ | — | Fait : `account/context.tsx`. Lib supprimé. |
-| ~~`theme.tsx`~~ | — | Fait ou à la racine : `theme/context.tsx` ou `src/theme.tsx`. Lib supprimé. |
-| `course-queries.ts` | Lecture courses + mapping + logique “current lesson” | Domaine **`learnable/`** : IO dans supabase ; logique "current lesson" en pur ; orchestration loaders. |
-| ~~`course-service.ts`~~ | — | Fait : `src/types/course.ts`. Lib supprimé. |
-| `module-queries.ts` | Lecture modules/chapters/lessons + mapping + cache + “current lesson” | Domaine **`learnable/`** : IO dans supabase ; logique + orchestration loaders. |
-| ~~`module-loader.ts`~~ | — | Fait : `learnable/module-loader.ts`. Lib supprimé. |
-| ~~`lesson-ids-loader.ts`~~ | — | Fait : `learnable/lesson-ids-loader.ts`. Lib supprimé. |
-| ~~`local-course-loader.ts`~~ | — | Fait : `learnable/local-course-loader.ts`. Lib supprimé. |
-| ~~`learnable-utils.tsx`~~ | — | Fait : learnable/format-description, mappers, lesson-status. Lib supprimé. |
-| ~~`progress-service.ts`~~ | — | Fait : `learnable/progress.ts`. Lib supprimé. |
-| ~~`subscription-service.ts`~~ | — | Fait : `account/get-user-subscription.ts`, `access.ts`, `types.ts`. Lib supprimé. |
-| ~~`routes.ts`~~ | — | Fait : `learnable/routes`. Lib supprimé. |
-| ~~`quiz-types.ts`~~ | — | Fait : `src/types/quiz.ts`. Lib supprimé. |
+| Fichier                       | Rôle actuel                                                           | Cible / remarque                                                                                       |
+| ----------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| ~~`auth.tsx`~~                | —                                                                     | Fait : `account/context.tsx`. Lib supprimé.                                                            |
+| ~~`theme.tsx`~~               | —                                                                     | Fait ou à la racine : `theme/context.tsx` ou `src/theme.tsx`. Lib supprimé.                            |
+| `course-queries.ts`           | Lecture courses + mapping + logique “current lesson”                  | Domaine **`learnable/`** : IO dans supabase ; logique "current lesson" en pur ; orchestration loaders. |
+| ~~`course-service.ts`~~       | —                                                                     | Fait : `src/types/course.ts`. Lib supprimé.                                                            |
+| `module-queries.ts`           | Lecture modules/chapters/lessons + mapping + cache + “current lesson” | Domaine **`learnable/`** : IO dans supabase ; logique + orchestration loaders.                         |
+| ~~`module-loader.ts`~~        | —                                                                     | Fait : `learnable/module-loader.ts`. Lib supprimé.                                                     |
+| ~~`lesson-ids-loader.ts`~~    | —                                                                     | Fait : `learnable/lesson-ids-loader.ts`. Lib supprimé.                                                 |
+| ~~`local-course-loader.ts`~~  | —                                                                     | Fait : `learnable/local-course-loader.ts`. Lib supprimé.                                               |
+| ~~`learnable-utils.tsx`~~     | —                                                                     | Fait : learnable/format-description, mappers, lesson-status. Lib supprimé.                             |
+| ~~`progress-service.ts`~~     | —                                                                     | Fait : `learnable/progress.ts`. Lib supprimé.                                                          |
+| ~~`subscription-service.ts`~~ | —                                                                     | Fait : `account/get-user-subscription.ts`, `access.ts`, `types.ts`. Lib supprimé.                      |
+| ~~`routes.ts`~~               | —                                                                     | Fait : `learnable/routes`. Lib supprimé.                                                               |
+| ~~`quiz-types.ts`~~           | —                                                                     | Fait : `src/types/quiz.ts`. Lib supprimé.                                                              |
 
 ### 3.2 errors/
 

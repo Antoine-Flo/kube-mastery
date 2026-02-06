@@ -25,6 +25,7 @@
 **État actuel** : MVP complète (modèle, CRUD, `kubectl get nodes`, tests conformance). Score de complétude : ~60%.
 
 **Recommandations prioritaires** :
+
 - [ ] **Événements Node** (Priorité 1 - 2-3h) : Créer `NodeCreatedEvent`, `NodeUpdatedEvent`, `NodeDeletedEvent` + handlers pour cohérence architecturale. Actuellement : placeholders (`createSecretCreatedEvent`)
 - [ ] **kubectl describe node** (Priorité 2 - 1-2h) : Implémenter la commande `kubectl describe node <name>` - **Note** : Mentionné dans Sprint 10
 - [ ] **Conditions dynamiques** (Priorité 3 - 3-4h) : Système de heartbeat simulé pour mettre à jour les conditions (Ready, MemoryPressure, etc.). Actuellement : conditions statiques dans le seed
@@ -32,6 +33,7 @@
 - [ ] **kubectl cordon/uncordon/drain** (Priorité 4) : Commandes pour gérer la schedulabilité des nodes
 
 **Notes** :
+
 - Les nodes sont actuellement créés statiquement depuis YAML (vs kubelet qui s'enregistre dans Kubernetes réel)
 - Pas de node controller pour gérer le lifecycle
 - Pas de logique de scheduling basée sur les nodes (taints, tolerations, node conditions)
@@ -46,9 +48,11 @@
 ## 🚀 Phase 2: Advanced Kubernetes (Sprints 7-14)
 
 ### ✅ Sprint 7: Multi-Container Pods & Init Containers (COMPLETED)
+
 - ⏳ Shared volumes (emptyDir) - DEFERRED to Sprint 8
 
 ### Sprint 8: Storage (PV/PVC) & StatefulSets
+
 - PersistentVolume and PersistentVolumeClaim
 - Binding logic (match PV to PVC)
 - StorageClasses and dynamic volume provisioning
@@ -58,11 +62,13 @@
 - Stable network identities
 
 ### Sprint 9: Workloads - Jobs, CronJobs, DaemonSets
+
 - Jobs with completions tracking
 - CronJobs with schedule parsing
 - DaemonSets (one pod per node)
 
 ### Sprint 10: kubectl Advanced Commands & Troubleshooting
+
 - [ ] kubectl rollout (status, history, undo, pause/resume)
 - [ ] kubectl port-forward (simulation)
 - [ ] kubectl top (CPU/memory metrics)
@@ -73,6 +79,7 @@
 - [ ] **kubectl describe node** (amélioration Nodes - voir "À faire maintenant")
 
 ### Sprint 11: Security & Networking (CKA Critical - 20%)
+
 - [ ] RBAC (Roles, ClusterRoles, Bindings)
 - [ ] kubectl auth can-i
 - [x] Services fonctionnels (ClusterIP, NodePort, LoadBalancer, ExternalName) - **✅ Implémenté** : Modèle, ClusterState, kubectl get, apply/create, événements, parsing YAML
@@ -82,11 +89,13 @@
 - [ ] CoreDNS (compréhension et simulation de base)
 
 ### Sprint 12: Autoscaling & Resource Quotas
+
 - HorizontalPodAutoscaler (HPA)
 - ResourceQuotas per namespace
 - LimitRanges with defaults
 
 ### Sprint 13: Terminal Enhancements & Documentation
+
 - Syntax highlighting (real-time)
 - Enhanced prompt (contextual)
 - **Page Documentation utilisateur**
@@ -96,6 +105,7 @@
   - Accessible depuis le menu
 
 ### Sprint 13b: CKA Cluster Architecture Lessons (CRITIQUE - 25%)
+
 - **Leçons théoriques détaillées** :
   - Installation avec kubeadm (théorie + commandes)
   - Préparation infrastructure pour cluster Kubernetes
@@ -110,6 +120,7 @@
 - **Note** : Focus sur la théorie et les commandes dans le simulateur
 
 ### Sprint 14: Real Registry + Chaos Hooks
+
 - Fetch from Docker Hub API
 - Fallback to hardcoded registry
 - Chaos infrastructure in models
@@ -117,6 +128,7 @@
 ## Phase 3: Learning Platform
 
 ### Sprint 15: Chaos Engineering & Troubleshooting Scenarios (CKA Critical - 30%)
+
 - Chaos GUI panel
 - **Scénarios de troubleshooting CKA** :
   - Pods en CrashLoopBackOff (diagnostic et résolution)
@@ -136,12 +148,14 @@
 - **Note** : Conditions dynamiques des nodes (voir "À faire maintenant") amélioreront le réalisme des scénarios de troubleshooting
 
 ### Sprint 16: Challenges System
+
 - Pre-configured challenge scenarios
 - Automatic validation
 - Progressive hints (3-5 per challenge)
 - Challenge UI with objectives panel
 
 ### Sprint 17: Lessons System & CKA Preparation
+
 - [ ] Lessons: Storage, Troubleshooting
 - **Leçons CKA spécifiques** :
   - [ ] Troubleshooting approfondi (composants cluster, nœuds, réseau)
@@ -152,10 +166,12 @@
 - [ ] **Exercices pratiques de debugging CKA** : Scénarios similaires à l'examen
 
 ### ✅ Sprint 17b: Courses System (COMPLETED)
+
 - ⏳ **Cours en MDX** : (Déféré - approche déclarative actuelle suffit pour MVP)
 - ⏳ **Stockage Supabase** : (Déféré - pas nécessaire pour MVP, localStorage suffit)
 
 ### Sprint 17c: Spaced Repetition System (Cartes de révisions)
+
 - **Algorithme** : FSRS via [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs)
 - **Source des cartes** : Hybride (deck Kubernetes de base + génération auto depuis quiz)
 - **Stockage** : Supabase (tables flashcards, flashcard_reviews)
@@ -170,11 +186,13 @@
 - Voir `doc/spaced-repetition-cards.md` pour l'architecture détaillée
 
 ### Sprint 19: Layout Manager & Integration
+
 - Mode switcher: Terminal Only, Learning, Challenge
 - Responsive layouts
 - Gamification (optional): Achievements, XP, badges
 
 ### Sprint 20: Polish & Documentation
+
 - UI polish (animations, loading, empty states)
 - User guide and onboarding
 - Coverage >85%
@@ -183,24 +201,28 @@
 ## Phase 4: B2B & Monetization
 
 ### Sprint 21: Certification Badge (optionnel)
+
 - Examen chronométré dans le simulateur
 - Badge vérifiable (lien unique)
 - Intégration LinkedIn
 - Prix : 10-20€
 
 ### Sprint 22: Dashboard Centres de Formation
+
 - Gestion des classes/groupes
 - Suivi progression étudiants
 - Export des résultats
 - Exercices assignables
 
 ### Sprint 23: Abonnements B2B
+
 - Plans Starter/Pro/Enterprise
 - SSO pour entreprises
 - Facturation récurrente
 - Support dédié
 
 ### Sprint 24: Advanced Features
+
 - Multi-node simulation (3-5 nodes)
 - Taints & tolerations
 - Node affinity/anti-affinity
@@ -208,6 +230,7 @@
 - **Note** : Certaines fonctionnalités nodes (kubectl label/annotate/taint, cordon/uncordon) peuvent être implémentées plus tôt (voir "À faire maintenant")
 
 ### Sprint 25: CoreDNS & Service Discovery (CKA - 20%)
+
 - DNS resolver simulation
 - nslookup/dig in kubectl exec
 - Service discovery patterns
@@ -215,6 +238,7 @@
 - Résolution DNS inter-pods (`service.namespace.svc.cluster.local`)
 
 ### Sprint 26: Advanced Differentiators
+
 - Scenario recording/replay
 - Time-travel debugging (undo/redo)
 - YAML diff viewer
@@ -226,8 +250,8 @@
 
 ### Couverture par domaine CKA
 
-| Domaine                    | Poids | Sprints concernés | Statut     |
-| -------------------------- | ----- | ----------------- | ---------- |
+| Domaine                    | Poids | Sprints concernés | Statut      |
+| -------------------------- | ----- | ----------------- | ----------- |
 | **Troubleshooting**        | 30%   | 10, 15, 17        | 🔴 CRITIQUE |
 | **Cluster Architecture**   | 25%   | 13b, 17           | 🔴 CRITIQUE |
 | **Servicing & Networking** | 20%   | 11, 17, 25        | 🟠 Haute    |
@@ -254,15 +278,16 @@ Voir `doc/cka-coverage.md` pour le détail complet de la couverture CKA.
 
 | Phase             | Sprints        | Focus                                      | Priority |
 | ----------------- | -------------- | ------------------------------------------ | -------- |
-| **MVP (Phase 1)** | 1-6            | Core features (Terminal, kubectl, Storage) | ⭐⭐⭐      |
-| **Phase 2**       | 7-14           | Advanced K8s resources + CKA prep          | ⭐⭐⭐      |
-| **Phase 3**       | 15-20          | Learning platform + CKA prep               | ⭐⭐⭐      |
-| **Phase 4**       | 21-26          | B2B & Monetization                         | ⭐        |
+| **MVP (Phase 1)** | 1-6            | Core features (Terminal, kubectl, Storage) | ⭐⭐⭐   |
+| **Phase 2**       | 7-14           | Advanced K8s resources + CKA prep          | ⭐⭐⭐   |
+| **Phase 3**       | 15-20          | Learning platform + CKA prep               | ⭐⭐⭐   |
+| **Phase 4**       | 21-26          | B2B & Monetization                         | ⭐       |
 | **TOTAL**         | **26 sprints** | Full K8s learning platform + CKA ready     | -        |
 
 ## Must-Have Features
 
 Pour rivaliser avec KodeKloud/Killer.sh:
+
 - ✅ Phase 1: Terminal complet, kubectl core, Filesystem, Persistence
 - 🎯 Phase 2 (Sprint 7-14): Multi-container, Init containers, Nodes, ReplicaSets, Deployments, kubectl scale, [ ] PV/PVC, [ ] Jobs, [ ] kubectl avancé (rollout, events, port-forward), **CKA prep**
 - 🎯 Phase 3 (Sprint 15-20): [ ] Chaos engineering, [ ] Challenges, Lessons (partiel), [ ] **CKA scenarios**

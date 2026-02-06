@@ -23,24 +23,31 @@
 ## Core Patterns
 
 ### Result Types
+
 `src/core/shared/result.ts` — `Result<T, E>`, `success()`, `error()`.
 
 ### Event-Driven
+
 `src/core/cluster/events/EventBus.ts` — `emit`, `subscribe`, `subscribeAll`. Events: `AppEvent = ClusterEvent | FileSystemEvent` (PodCreated, FileCreated, etc.). Fichiers: `src/core/events/`, `src/core/cluster/events/`, `src/core/filesystem/events/`.
 
 ### Kubernetes Controllers
+
 `src/core/cluster/controllers/` — `Controller` (start, stop, reconcile), `WorkQueue`. DeploymentController → ReplicaSets ; ReplicaSetController → Pods. Level-triggered, idempotent.
 
 ### Scheduler
+
 `src/core/cluster/scheduler/` — séparé des controllers. Watch PodCreated (sans nodeName), filter nodes Ready, round-robin, bind. Init dans `EmulatedEnvironmentManager.ts`.
 
 ### Autocomplete
+
 `src/core/terminal/autocomplete/` — `AutocompleteProvider`, `AutocompleteEngine`. Providers: kubectl, shell, filesystem.
 
 ### Command Dispatcher
+
 `src/core/terminal/core/CommandDispatcher.ts` — `CommandHandler` (canHandle, execute). Handlers: ShellCommandHandler, KubectlCommandHandler dans `handlers/`.
 
 ### Terminal
+
 `src/core/terminal/core/` — TerminalController, InputHandler, LineRenderer. Montage client : `src/components/terminal-mount.ts`, `LessonTerminal.astro`.
 
 ## Module Structure

@@ -2,7 +2,7 @@
 // QUIZ - Creating Your First Pod
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -10,13 +10,8 @@ export const quiz: Quiz = {
       id: 'q1',
       type: 'multiple-choice',
       question: 'What is the correct apiVersion for a Pod object?',
-      options: [
-        'apps/v1',
-        'v1',
-        'v1beta1',
-        'batch/v1',
-      ],
-      correctAnswer: 1,
+      options: ['apps/v1', 'v1', 'v1beta1', 'batch/v1'],
+      correctAnswer: 1
     },
     {
       id: 'q2',
@@ -26,9 +21,9 @@ export const quiz: Quiz = {
         'Pulling the container image',
         'Scheduling the Pod to a node',
         'Validation of the manifest',
-        'Starting the container',
+        'Starting the container'
       ],
-      correctAnswer: 2,
+      correctAnswer: 2
     },
     {
       id: 'q3',
@@ -38,9 +33,9 @@ export const quiz: Quiz = {
         'The existing Pod is replaced',
         'A new Pod is created with a suffix',
         'Kubernetes rejects the request',
-        'The Pods are merged together',
+        'The Pods are merged together'
       ],
-      correctAnswer: 2,
-    },
-  ],
-};
+      correctAnswer: 2
+    }
+  ]
+}

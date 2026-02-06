@@ -8,6 +8,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "knip": "knip",
+    "format": "prettier --write .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -44,6 +45,8 @@
     "drizzle-kit": "^0.31.8",
     "knip": "^5.82.1",
     "lightningcss": "^1.31.1",
+    "prettier": "3.8.1",
+    "prettier-plugin-astro": "0.14.1",
     "typescript": "^5.9.3"
   }
 }

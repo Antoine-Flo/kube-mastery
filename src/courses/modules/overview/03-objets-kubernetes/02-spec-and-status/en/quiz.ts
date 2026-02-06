@@ -2,7 +2,7 @@
 // QUIZ - Spec and Status
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -13,10 +13,10 @@ export const quiz: Quiz = {
       options: [
         'The current state of the object',
         'The desired state of the object',
-        'The object\'s metadata',
-        'The object\'s status',
+        "The object's metadata",
+        "The object's status"
       ],
-      correctAnswer: 1,
+      correctAnswer: 1
     },
     {
       id: 'q2',
@@ -26,9 +26,9 @@ export const quiz: Quiz = {
         'The user who created the object',
         'The Kubernetes system and its components',
         'The container runtime',
-        'The kubectl tool',
+        'The kubectl tool'
       ],
-      correctAnswer: 1,
-    },
-  ],
-};
+      correctAnswer: 1
+    }
+  ]
+}

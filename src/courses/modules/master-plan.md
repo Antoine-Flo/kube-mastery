@@ -24,7 +24,7 @@
 | Field validation                  | Overview            | avancé | Strict, warn, ignore              |
 | Finalizers                        | Overview            | avancé | Contrôle suppression              |
 | Owners/dependents                 | Overview            | avancé | ownerReferences, cascade          |
-| Common labels                     | Overview            | intro  | app.kubernetes.io/*               |
+| Common labels                     | Overview            | intro  | app.kubernetes.io/\*              |
 | Operations                        | Overview            | intro  | kubectl get/describe/edit         |
 | **ARCHITECTURE**                  |                     |        |                                   |
 | Nodes (kubelet, kube-proxy)       | Architecture        | intro  | Détails techniques                |
@@ -166,6 +166,7 @@
 ## Sujets pour cours d'introduction
 
 Chapitres marqués "intro" qui peuvent être assemblés pour un parcours débutant :
+
 - Overview : onboarding, kubernetes-overview, evolution-deployment, components-intro, objects-intro, object-management, namespaces-intro, labels-intro, annotations, names-uids, api-intro, common-labels, operations
 - Workloads : pods-intro, pod-lifecycle, replicasets, deployments-intro, deployments-updates, statefulsets-intro, jobs-intro, cronjobs, hpa-intro
 - Services-Networking : services-intro, services-types, dns-intro, ingress-intro, network-policies-intro
@@ -206,153 +207,153 @@ Prérequis : Avoir suivi le Cours 1 ou avoir des bases solides.
 
 #### Partie 1 : Fondations et Architecture (10 chapitres)
 
-| #   | Module     | Chapitre                    | Objectif                                           |
-| --- | ---------- | --------------------------- | -------------------------------------------------- |
-| 1   | Overview   | onboarding                  | Utiliser la plateforme, environnement              |
-| 2   | Overview   | concepts-fondamentaux       | Qu'est-ce que K8s, pourquoi l'utiliser             |
-| 3   | Overview   | evolution-deployment        | Physique → VMs → Containers, contexte historique  |
-| 4   | Overview   | objets-kubernetes           | Structure YAML, apiVersion, kind, metadata         |
-| 5   | Overview   | object-management           | Impératif vs déclaratif, kubectl apply             |
-| 6   | Overview   | namespaces                  | Isolation logique, organisation                    |
-| 7   | Overview   | labels-intro                | Clé/valeur, sélecteurs, organisation              |
-| 8   | Overview   | annotations                 | Métadonnées non identifiantes                      |
-| 9   | Overview   | common-labels               | Standards app.kubernetes.io/*                      |
-| 10  | Overview   | operations                  | kubectl get/describe/edit, bonnes pratiques        |
+| #   | Module   | Chapitre              | Objectif                                         |
+| --- | -------- | --------------------- | ------------------------------------------------ |
+| 1   | Overview | onboarding            | Utiliser la plateforme, environnement            |
+| 2   | Overview | concepts-fondamentaux | Qu'est-ce que K8s, pourquoi l'utiliser           |
+| 3   | Overview | evolution-deployment  | Physique → VMs → Containers, contexte historique |
+| 4   | Overview | objets-kubernetes     | Structure YAML, apiVersion, kind, metadata       |
+| 5   | Overview | object-management     | Impératif vs déclaratif, kubectl apply           |
+| 6   | Overview | namespaces            | Isolation logique, organisation                  |
+| 7   | Overview | labels-intro          | Clé/valeur, sélecteurs, organisation             |
+| 8   | Overview | annotations           | Métadonnées non identifiantes                    |
+| 9   | Overview | common-labels         | Standards app.kubernetes.io/\*                   |
+| 10  | Overview | operations            | kubectl get/describe/edit, bonnes pratiques      |
 
 #### Partie 2 : Architecture Interne (6 chapitres)
 
-| #   | Module      | Chapitre                        | Objectif                                    |
-| --- | ----------- | ------------------------------- | ------------------------------------------- |
-| 11  | Architecture | components-intro                | Control plane, nodes, composants            |
-| 12  | Architecture | nodes                           | kubelet, kube-proxy, fonctionnement         |
-| 13  | Architecture | control-plane-components        | kube-apiserver, etcd, scheduler, controller |
-| 14  | Overview     | api-intro                       | REST API, kubectl, clients                  |
-| 15  | Overview     | api-versioning                  | Groupes API, alpha/beta/stable               |
-| 16  | Architecture | controllers-pattern             | Boucles de contrôle, réconciliation         |
+| #   | Module       | Chapitre                 | Objectif                                    |
+| --- | ------------ | ------------------------ | ------------------------------------------- |
+| 11  | Architecture | components-intro         | Control plane, nodes, composants            |
+| 12  | Architecture | nodes                    | kubelet, kube-proxy, fonctionnement         |
+| 13  | Architecture | control-plane-components | kube-apiserver, etcd, scheduler, controller |
+| 14  | Overview     | api-intro                | REST API, kubectl, clients                  |
+| 15  | Overview     | api-versioning           | Groupes API, alpha/beta/stable              |
+| 16  | Architecture | controllers-pattern      | Boucles de contrôle, réconciliation         |
 
 #### Partie 3 : Containers et Pods (10 chapitres)
 
-| #   | Module     | Chapitre              | Objectif                                    |
-| --- | ---------- | --------------------- | ------------------------------------------- |
-| 17  | Containers | images-container      | Registries, pull policy, imagePullSecrets   |
-| 18  | Containers | container-environment | Filesystem, variables d'environnement       |
-| 19  | Workloads  | pods-intro            | Premier Pod, anatomie de base               |
-| 20  | Workloads  | pod-lifecycle         | Phases, conditions, transitions             |
-| 21  | Workloads  | pods-multi-containers | Patterns de communication inter-containers  |
-| 22  | Workloads  | init-containers       | Initialisation, séquençage                  |
-| 23  | Workloads  | sidecar-containers    | Pattern sidecar, use cases                  |
-| 24  | Workloads  | ephemeral-containers  | Debugging avec containers éphémères         |
-| 25  | Containers | lifecycle-hooks       | PostStart, PreStop                          |
-| 26  | Workloads  | pod-qos               | Guaranteed, Burstable, BestEffort           |
+| #   | Module     | Chapitre              | Objectif                                   |
+| --- | ---------- | --------------------- | ------------------------------------------ |
+| 17  | Containers | images-container      | Registries, pull policy, imagePullSecrets  |
+| 18  | Containers | container-environment | Filesystem, variables d'environnement      |
+| 19  | Workloads  | pods-intro            | Premier Pod, anatomie de base              |
+| 20  | Workloads  | pod-lifecycle         | Phases, conditions, transitions            |
+| 21  | Workloads  | pods-multi-containers | Patterns de communication inter-containers |
+| 22  | Workloads  | init-containers       | Initialisation, séquençage                 |
+| 23  | Workloads  | sidecar-containers    | Pattern sidecar, use cases                 |
+| 24  | Workloads  | ephemeral-containers  | Debugging avec containers éphémères        |
+| 25  | Containers | lifecycle-hooks       | PostStart, PreStop                         |
+| 26  | Workloads  | pod-qos               | Guaranteed, Burstable, BestEffort          |
 
 #### Partie 4 : Controllers de Workloads (12 chapitres)
 
-| #   | Module    | Chapitre              | Objectif                                    |
-| --- | --------- | --------------------- | ------------------------------------------- |
-| 27  | Workloads | replicasets           | Concept de réplication, sélecteurs          |
-| 28  | Workloads | deployments-intro     | Création, scaling basique                   |
-| 29  | Workloads | deployments-updates   | Rolling updates basiques                    |
-| 30  | Workloads | deployments-avance    | Stratégies, rollback, pause, maxSurge      |
-| 31  | Workloads | statefulsets-intro    | Concept, identité stable, ordre            |
-| 32  | Workloads | statefulsets-avance   | Storage, headless services, updates         |
-| 33  | Workloads | daemonsets            | Un pod par node, use cases                  |
-| 34  | Workloads | jobs-intro            | Job one-shot basique                        |
-| 35  | Workloads | jobs-avance           | Parallélisme, backoff, retries              |
-| 36  | Workloads | cronjobs              | Tâches planifiées, timezones                |
-| 37  | Workloads | pod-disruptions       | PodDisruptionBudgets, maintenance           |
-| 38  | Workloads | downward-api          | Métadonnées Pod dans containers             |
+| #   | Module    | Chapitre            | Objectif                              |
+| --- | --------- | ------------------- | ------------------------------------- |
+| 27  | Workloads | replicasets         | Concept de réplication, sélecteurs    |
+| 28  | Workloads | deployments-intro   | Création, scaling basique             |
+| 29  | Workloads | deployments-updates | Rolling updates basiques              |
+| 30  | Workloads | deployments-avance  | Stratégies, rollback, pause, maxSurge |
+| 31  | Workloads | statefulsets-intro  | Concept, identité stable, ordre       |
+| 32  | Workloads | statefulsets-avance | Storage, headless services, updates   |
+| 33  | Workloads | daemonsets          | Un pod par node, use cases            |
+| 34  | Workloads | jobs-intro          | Job one-shot basique                  |
+| 35  | Workloads | jobs-avance         | Parallélisme, backoff, retries        |
+| 36  | Workloads | cronjobs            | Tâches planifiées, timezones          |
+| 37  | Workloads | pod-disruptions     | PodDisruptionBudgets, maintenance     |
+| 38  | Workloads | downward-api        | Métadonnées Pod dans containers       |
 
 #### Partie 5 : Autoscaling (3 chapitres)
 
-| #   | Module    | Chapitre     | Objectif                                    |
-| --- | --------- | ------------ | ------------------------------------------- |
-| 39  | Workloads | hpa-intro    | Scaling CPU/mémoire basique                 |
-| 40  | Workloads | hpa-avance   | Métriques custom, behavior, scaling policies |
-| 41  | Workloads | vpa          | Scaling vertical, recommandations           |
+| #   | Module    | Chapitre   | Objectif                                     |
+| --- | --------- | ---------- | -------------------------------------------- |
+| 39  | Workloads | hpa-intro  | Scaling CPU/mémoire basique                  |
+| 40  | Workloads | hpa-avance | Métriques custom, behavior, scaling policies |
+| 41  | Workloads | vpa        | Scaling vertical, recommandations            |
 
 #### Partie 6 : Networking et Services (12 chapitres)
 
-| #   | Module              | Chapitre              | Objectif                                    |
-| --- | ------------------- | --------------------- | ------------------------------------------- |
-| 42  | Services-Networking | services-intro        | Concept, ClusterIP, sélecteurs              |
-| 43  | Services-Networking | services-types        | NodePort, LoadBalancer, ExternalName        |
-| 44  | Services-Networking | services-avance       | Affinity, headless, external IPs            |
-| 45  | Services-Networking | endpoints             | EndpointSlices, internals, watch             |
-| 46  | Services-Networking | dns-intro             | Découverte par DNS, FQDN                    |
-| 47  | Services-Networking | dns-avance            | Pods DNS policy, config, custom DNS         |
-| 48  | Services-Networking | ingress-intro         | Règles basiques, path routing               |
-| 49  | Services-Networking | ingress-avance        | TLS, annotations, rewrite, canary            |
-| 50  | Services-Networking | ingress-controllers   | NGINX, Traefik, configuration               |
-| 51  | Services-Networking | gateway-api           | Nouvelle API, HTTPRoute, Gateway            |
-| 52  | Services-Networking | network-policies-intro | Concept, ingress basique, isolation         |
+| #   | Module              | Chapitre                | Objectif                                     |
+| --- | ------------------- | ----------------------- | -------------------------------------------- |
+| 42  | Services-Networking | services-intro          | Concept, ClusterIP, sélecteurs               |
+| 43  | Services-Networking | services-types          | NodePort, LoadBalancer, ExternalName         |
+| 44  | Services-Networking | services-avance         | Affinity, headless, external IPs             |
+| 45  | Services-Networking | endpoints               | EndpointSlices, internals, watch             |
+| 46  | Services-Networking | dns-intro               | Découverte par DNS, FQDN                     |
+| 47  | Services-Networking | dns-avance              | Pods DNS policy, config, custom DNS          |
+| 48  | Services-Networking | ingress-intro           | Règles basiques, path routing                |
+| 49  | Services-Networking | ingress-avance          | TLS, annotations, rewrite, canary            |
+| 50  | Services-Networking | ingress-controllers     | NGINX, Traefik, configuration                |
+| 51  | Services-Networking | gateway-api             | Nouvelle API, HTTPRoute, Gateway             |
+| 52  | Services-Networking | network-policies-intro  | Concept, ingress basique, isolation          |
 | 53  | Services-Networking | network-policies-avance | Egress, CIDR, complex rules, multi-namespace |
 
 #### Partie 7 : Storage (10 chapitres)
 
-| #   | Module  | Chapitre              | Objectif                                    |
-| --- | ------- | --------------------- | ------------------------------------------- |
-| 54  | Storage | volumes-intro         | emptyDir, partage entre containers          |
-| 55  | Storage | volumes-types         | hostPath, configMap, secret volumes         |
-| 56  | Storage | pv-pvc-intro          | Concept, binding basique, statique          |
-| 57  | Storage | pv-pvc-avance         | Access modes, reclaim policy, binding      |
-| 58  | Storage | storage-class-intro   | Dynamic provisioning basique                |
-| 59  | Storage | storage-class-avance  | Paramètres, binding modes, defaults         |
-| 60  | Storage | ephemeral-volumes     | Volumes éphémères, CSI ephemeral            |
-| 61  | Storage | projected-volumes     | Projection de plusieurs sources             |
-| 62  | Storage | volume-snapshots      | Snapshots, backup/restore                   |
-| 63  | Storage | csi                   | Plugins de stockage, concepts               |
+| #   | Module  | Chapitre             | Objectif                              |
+| --- | ------- | -------------------- | ------------------------------------- |
+| 54  | Storage | volumes-intro        | emptyDir, partage entre containers    |
+| 55  | Storage | volumes-types        | hostPath, configMap, secret volumes   |
+| 56  | Storage | pv-pvc-intro         | Concept, binding basique, statique    |
+| 57  | Storage | pv-pvc-avance        | Access modes, reclaim policy, binding |
+| 58  | Storage | storage-class-intro  | Dynamic provisioning basique          |
+| 59  | Storage | storage-class-avance | Paramètres, binding modes, defaults   |
+| 60  | Storage | ephemeral-volumes    | Volumes éphémères, CSI ephemeral      |
+| 61  | Storage | projected-volumes    | Projection de plusieurs sources       |
+| 62  | Storage | volume-snapshots     | Snapshots, backup/restore             |
+| 63  | Storage | csi                  | Plugins de stockage, concepts         |
 
 #### Partie 8 : Configuration (8 chapitres)
 
-| #   | Module        | Chapitre                    | Objectif                                    |
-| --- | ------------- | --------------------------- | ------------------------------------------- |
-| 64  | Configuration | configmaps-intro            | Création, env vars, utilisation             |
-| 65  | Configuration | configmaps-avance           | Volumes, immutabilité, hot reload           |
-| 66  | Configuration | secrets-intro               | Création, utilisation basique              |
-| 67  | Configuration | secrets-avance              | Types, volumes, rotation                    |
-| 68  | Configuration | resource-management-intro   | Requests, limits basiques                   |
-| 69  | Configuration | resource-management-avance | QoS, OOM, scheduling, overcommit            |
-| 70  | Configuration | probes-intro                | Liveness, readiness basiques                |
-| 71  | Configuration | probes-avance               | Startup, timing, gRPC, exec/http/tcp        |
+| #   | Module        | Chapitre                   | Objectif                             |
+| --- | ------------- | -------------------------- | ------------------------------------ |
+| 64  | Configuration | configmaps-intro           | Création, env vars, utilisation      |
+| 65  | Configuration | configmaps-avance          | Volumes, immutabilité, hot reload    |
+| 66  | Configuration | secrets-intro              | Création, utilisation basique        |
+| 67  | Configuration | secrets-avance             | Types, volumes, rotation             |
+| 68  | Configuration | resource-management-intro  | Requests, limits basiques            |
+| 69  | Configuration | resource-management-avance | QoS, OOM, scheduling, overcommit     |
+| 70  | Configuration | probes-intro               | Liveness, readiness basiques         |
+| 71  | Configuration | probes-avance              | Startup, timing, gRPC, exec/http/tcp |
 
 #### Partie 9 : Sécurité (10 chapitres)
 
-| #   | Module   | Chapitre                  | Objectif                                    |
-| --- | -------- | ------------------------- | ------------------------------------------- |
-| 72  | Security | cloud-native-security     | Modèle 4C (Cloud, Cluster, Container, Code) |
-| 73  | Security | controlling-api-access    | Vue d'ensemble AuthN/AuthZ                  |
-| 74  | Security | service-accounts-intro     | Concept, utilisation basique                |
-| 75  | Security | service-accounts-avance    | Tokens projetés, bonnes pratiques            |
-| 76  | Security | rbac-intro                | Roles, RoleBindings, permissions            |
-| 77  | Security | rbac-avance               | ClusterRoles, aggregation, best practices  |
-| 78  | Security | pod-security-standards    | Privileged, Baseline, Restricted           |
-| 79  | Security | pod-security-admission    | Enforcement par namespace, audit            |
-| 80  | Security | linux-security-intro      | runAsUser, runAsNonRoot, fsGroup            |
-| 81  | Security | linux-security-avance     | Capabilities, seccomp, AppArmor, SELinux   |
+| #   | Module   | Chapitre                | Objectif                                    |
+| --- | -------- | ----------------------- | ------------------------------------------- |
+| 72  | Security | cloud-native-security   | Modèle 4C (Cloud, Cluster, Container, Code) |
+| 73  | Security | controlling-api-access  | Vue d'ensemble AuthN/AuthZ                  |
+| 74  | Security | service-accounts-intro  | Concept, utilisation basique                |
+| 75  | Security | service-accounts-avance | Tokens projetés, bonnes pratiques           |
+| 76  | Security | rbac-intro              | Roles, RoleBindings, permissions            |
+| 77  | Security | rbac-avance             | ClusterRoles, aggregation, best practices   |
+| 78  | Security | pod-security-standards  | Privileged, Baseline, Restricted            |
+| 79  | Security | pod-security-admission  | Enforcement par namespace, audit            |
+| 80  | Security | linux-security-intro    | runAsUser, runAsNonRoot, fsGroup            |
+| 81  | Security | linux-security-avance   | Capabilities, seccomp, AppArmor, SELinux    |
 
 #### Partie 10 : Policies et Administration (8 chapitres)
 
-| #   | Module        | Chapitre              | Objectif                                    |
-| --- | ------------- | --------------------- | ------------------------------------------- |
-| 82  | Policy        | resource-quotas       | Quotas namespace, limites                   |
-| 83  | Policy        | limit-ranges          | Defaults, min/max par container             |
-| 84  | Administration | logging               | Architecture logging, collecte            |
-| 85  | Administration | observability         | Metrics, tracing, monitoring                |
-| 86  | Administration | node-autoscaling      | Cluster Autoscaler, scaling horizontal      |
-| 87  | Administration | certificates          | PKI, rotation, CA                           |
-| 88  | Administration | admission-webhooks    | Validation, mutation, bonnes pratiques     |
-| 89  | Administration | flow-control          | API Priority, fairness                      |
+| #   | Module         | Chapitre           | Objectif                               |
+| --- | -------------- | ------------------ | -------------------------------------- |
+| 82  | Policy         | resource-quotas    | Quotas namespace, limites              |
+| 83  | Policy         | limit-ranges       | Defaults, min/max par container        |
+| 84  | Administration | logging            | Architecture logging, collecte         |
+| 85  | Administration | observability      | Metrics, tracing, monitoring           |
+| 86  | Administration | node-autoscaling   | Cluster Autoscaler, scaling horizontal |
+| 87  | Administration | certificates       | PKI, rotation, CA                      |
+| 88  | Administration | admission-webhooks | Validation, mutation, bonnes pratiques |
+| 89  | Administration | flow-control       | API Priority, fairness                 |
 
 #### Partie 11 : Avancé - Extensions (6 chapitres)
 
-| #   | Module           | Chapitre              | Objectif                                    |
-| --- | ---------------- | --------------------- | ------------------------------------------- |
-| 90  | Extend-Kubernetes | custom-resources      | CRDs, définition, validation                |
-| 91  | Extend-Kubernetes | admission-webhooks-dev | Création, développement                     |
-| 92  | Extend-Kubernetes | operators             | Pattern, frameworks, controllers           |
-| 93  | Extend-Kubernetes | api-aggregation       | Extension API server                        |
-| 94  | Extend-Kubernetes | kubectl-plugins       | Création de plugins kubectl                 |
-| 95  | Overview         | labels-avance         | matchExpressions, nodeSelector avancé       |
+| #   | Module            | Chapitre               | Objectif                              |
+| --- | ----------------- | ---------------------- | ------------------------------------- |
+| 90  | Extend-Kubernetes | custom-resources       | CRDs, définition, validation          |
+| 91  | Extend-Kubernetes | admission-webhooks-dev | Création, développement               |
+| 92  | Extend-Kubernetes | operators              | Pattern, frameworks, controllers      |
+| 93  | Extend-Kubernetes | api-aggregation        | Extension API server                  |
+| 94  | Extend-Kubernetes | kubectl-plugins        | Création de plugins kubectl           |
+| 95  | Overview          | labels-avance          | matchExpressions, nodeSelector avancé |
 
 **Total : 95 chapitres**
 

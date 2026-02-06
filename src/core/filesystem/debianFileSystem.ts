@@ -40,25 +40,25 @@ const DEBIAN_FILESYSTEM_CONFIG: FileSystemConfig = {
     passwd: 'root:x:0:0:root:/root:/bin/bash\nkube:x:1000:1000:kube:/home/kube:/bin/bash',
     group: 'root:x:0:\nkube:x:1000:',
     'resolv.conf': 'nameserver 8.8.8.8\nnameserver 8.8.4.4',
-    'os-release': 'PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"\nNAME="Debian GNU/Linux"\nVERSION_ID="12"\nVERSION="12 (bookworm)"\nID=debian',
-    'fstab': '# /etc/fstab: static file system information.',
-    'issue': 'Debian GNU/Linux 12 \\n \\l',
-    'motd': 'Welcome to Debian GNU/Linux 12 (bookworm)'
+    'os-release':
+      'PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"\nNAME="Debian GNU/Linux"\nVERSION_ID="12"\nVERSION="12 (bookworm)"\nID=debian',
+    fstab: '# /etc/fstab: static file system information.',
+    issue: 'Debian GNU/Linux 12 \\n \\l',
+    motd: 'Welcome to Debian GNU/Linux 12 (bookworm)'
   },
   home: {
-    kube: {
-
-    }
+    kube: {}
   },
   root: {
-    '.bashrc': '# root .bashrc\n# Source global definitions\nif [ -f /etc/bash.bashrc ]; then\n  . /etc/bash.bashrc\nfi',
+    '.bashrc':
+      '# root .bashrc\n# Source global definitions\nif [ -f /etc/bash.bashrc ]; then\n  . /etc/bash.bashrc\nfi',
     '.profile': '# root .profile'
   },
   tmp: {},
   var: {
     log: {
-      'syslog': '# System log file',
-      'messages': '# System messages'
+      syslog: '# System log file',
+      messages: '# System messages'
     },
     run: {},
     cache: {},
@@ -125,10 +125,10 @@ const createFileSystemFromConfig = (config: FileSystemConfig, basePath: string =
  */
 const ensureDirectory = (root: DirectoryNode, path: string): DirectoryNode => {
   if (path === '/') {
-    return root;
+    return root
   }
 
-  const parts = path.split('/').filter(p => p.length > 0)
+  const parts = path.split('/').filter((p) => p.length > 0)
   let current = root
   let currentPath = ''
 
@@ -144,8 +144,6 @@ const ensureDirectory = (root: DirectoryNode, path: string): DirectoryNode => {
 
   return current
 }
-
-
 
 // ─── File Presets ──────────────────────────────────────────────────────────
 
@@ -235,7 +233,7 @@ export const createDebianFileSystem = (): FileSystemState => {
  */
 const addFiles = (state: FileSystemState, files: FilesPreset): void => {
   for (const [path, content] of Object.entries(files)) {
-    const parts = path.split('/').filter(p => p.length > 0)
+    const parts = path.split('/').filter((p) => p.length > 0)
     const fileName = parts.pop()!
     const dirPath = '/' + parts.join('/')
 

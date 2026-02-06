@@ -15,35 +15,41 @@ import { anonRole, authUid, authUsers, authenticatedRole } from 'drizzle-orm/sup
 /**
  * User progress table - Stores all completed lessons per user in JSONB
  */
-export const userProgress = pgTable('progress', {
-    userId: uuid('user_id').primaryKey().references(() => authUsers.id, { onDelete: 'cascade' }),
+export const userProgress = pgTable(
+  'progress',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => authUsers.id, { onDelete: 'cascade' }),
     completedLessons: jsonb('completed_lessons').default('[]').notNull(), // Array of lesson IDs
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-}, (table) => [
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
     index('progress_user_id_idx').on(table.userId),
     pgPolicy('Users can view their own progress', {
-        for: 'select',
-        to: authenticatedRole,
-        using: sql`${table.userId} = ${authUid}`,
+      for: 'select',
+      to: authenticatedRole,
+      using: sql`${table.userId} = ${authUid}`
     }),
     pgPolicy('Users can insert their own progress', {
-        for: 'insert',
-        to: authenticatedRole,
-        withCheck: sql`${table.userId} = ${authUid}`,
+      for: 'insert',
+      to: authenticatedRole,
+      withCheck: sql`${table.userId} = ${authUid}`
     }),
     pgPolicy('Users can update their own progress', {
-        for: 'update',
-        to: authenticatedRole,
-        using: sql`${table.userId} = ${authUid}`,
-        withCheck: sql`${table.userId} = ${authUid}`,
+      for: 'update',
+      to: authenticatedRole,
+      using: sql`${table.userId} = ${authUid}`,
+      withCheck: sql`${table.userId} = ${authUid}`
     }),
     pgPolicy('Users can delete their own progress', {
-        for: 'delete',
-        to: authenticatedRole,
-        using: sql`${table.userId} = ${authUid}`,
-    }),
-])
+      for: 'delete',
+      to: authenticatedRole,
+      using: sql`${table.userId} = ${authUid}`
+    })
+  ]
+)
 
 export type InsertUserProgress = typeof userProgress.$inferInsert
 export type SelectUserProgress = typeof userProgress.$inferSelect
@@ -51,36 +57,42 @@ export type SelectUserProgress = typeof userProgress.$inferSelect
 /**
  * User preferences table - Stores user preferences (theme, locale, etc.)
  */
-export const userPreferences = pgTable('preferences', {
-    userId: uuid('user_id').primaryKey().references(() => authUsers.id, { onDelete: 'cascade' }),
+export const userPreferences = pgTable(
+  'preferences',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => authUsers.id, { onDelete: 'cascade' }),
     theme: text('theme'),
     locale: text('locale'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-}, (table) => [
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
     index('preferences_user_id_idx').on(table.userId),
     pgPolicy('Users can view their own preferences', {
-        for: 'select',
-        to: authenticatedRole,
-        using: sql`${table.userId} = ${authUid}`,
+      for: 'select',
+      to: authenticatedRole,
+      using: sql`${table.userId} = ${authUid}`
     }),
     pgPolicy('Users can insert their own preferences', {
-        for: 'insert',
-        to: authenticatedRole,
-        withCheck: sql`${table.userId} = ${authUid}`,
+      for: 'insert',
+      to: authenticatedRole,
+      withCheck: sql`${table.userId} = ${authUid}`
     }),
     pgPolicy('Users can update their own preferences', {
-        for: 'update',
-        to: authenticatedRole,
-        using: sql`${table.userId} = ${authUid}`,
-        withCheck: sql`${table.userId} = ${authUid}`,
+      for: 'update',
+      to: authenticatedRole,
+      using: sql`${table.userId} = ${authUid}`,
+      withCheck: sql`${table.userId} = ${authUid}`
     }),
     pgPolicy('Users can delete their own preferences', {
-        for: 'delete',
-        to: authenticatedRole,
-        using: sql`${table.userId} = ${authUid}`,
-    }),
-])
+      for: 'delete',
+      to: authenticatedRole,
+      using: sql`${table.userId} = ${authUid}`
+    })
+  ]
+)
 
 export type InsertUserPreferences = typeof userPreferences.$inferInsert
 export type SelectUserPreferences = typeof userPreferences.$inferSelect
@@ -89,9 +101,13 @@ export type SelectUserPreferences = typeof userPreferences.$inferSelect
  * Subscriptions table - Stores user subscriptions.
  * plan_tier references plans defined in src/lib/subscription-plans.ts (free, individual, enterprise).
  */
-export const subscriptions = pgTable('subscriptions', {
+export const subscriptions = pgTable(
+  'subscriptions',
+  {
     id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id').notNull().references(() => authUsers.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => authUsers.id, { onDelete: 'cascade' }),
     planTier: text('plan_tier').notNull(),
     status: text('status').notNull(), // "active", "canceled", "past_due", "trialing", "paused"
     paddleSubscriptionId: text('paddle_subscription_id').unique(),
@@ -101,33 +117,35 @@ export const subscriptions = pgTable('subscriptions', {
     canceledAt: timestamp('canceled_at', { withTimezone: true }),
     metadata: jsonb('metadata').default('{}').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-}, (table) => [
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
     index('subscriptions_user_id_idx').on(table.userId),
     index('subscriptions_status_idx').on(table.status),
     index('subscriptions_paddle_subscription_id_idx').on(table.paddleSubscriptionId),
     pgPolicy('Users can view their own subscriptions', {
-        for: 'select',
-        to: authenticatedRole,
-        using: sql`${table.userId} = ${authUid}`,
+      for: 'select',
+      to: authenticatedRole,
+      using: sql`${table.userId} = ${authUid}`
     }),
     pgPolicy('Users can insert their own subscriptions', {
-        for: 'insert',
-        to: authenticatedRole,
-        withCheck: sql`${table.userId} = ${authUid}`,
+      for: 'insert',
+      to: authenticatedRole,
+      withCheck: sql`${table.userId} = ${authUid}`
     }),
     pgPolicy('Users can update their own subscriptions', {
-        for: 'update',
-        to: authenticatedRole,
-        using: sql`${table.userId} = ${authUid}`,
-        withCheck: sql`${table.userId} = ${authUid}`,
+      for: 'update',
+      to: authenticatedRole,
+      using: sql`${table.userId} = ${authUid}`,
+      withCheck: sql`${table.userId} = ${authUid}`
     }),
     pgPolicy('Users can delete their own subscriptions', {
-        for: 'delete',
-        to: authenticatedRole,
-        using: sql`${table.userId} = ${authUid}`,
-    }),
-])
+      for: 'delete',
+      to: authenticatedRole,
+      using: sql`${table.userId} = ${authUid}`
+    })
+  ]
+)
 
 export type InsertSubscription = typeof subscriptions.$inferInsert
 export type SelectSubscription = typeof subscriptions.$inferSelect
@@ -145,36 +163,42 @@ export type UserMessageType = (typeof USER_MESSAGE_TYPES)[number]
  * - type 'support' | 'suggestion': content = { message: "..." }, lessonId = context; name optional
  * - type 'survey': name = survey name (e.g. "intro-feedback"), content = { responses: ... }
  */
-export const userMessages = pgTable('messages', {
+export const userMessages = pgTable(
+  'messages',
+  {
     id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id').notNull().references(() => authUsers.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => authUsers.id, { onDelete: 'cascade' }),
     lessonId: text('lesson_id'), // Optional context for support/suggestion
     type: text('type').notNull(), // 'support' | 'suggestion' | 'survey'
     name: text('name'), // Optional, e.g. survey name
     content: jsonb('content').default('{}').notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-}, (table) => [
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
     index('messages_type_idx').on(table.type),
     index('messages_lesson_id_idx').on(table.lessonId),
     index('messages_created_at_idx').on(table.createdAt),
     index('messages_user_id_idx').on(table.userId),
     pgPolicy('Allow authenticated insert on messages', {
-        for: 'insert',
-        to: authenticatedRole,
-        withCheck: sql`${table.userId} = ${authUid}`,
+      for: 'insert',
+      to: authenticatedRole,
+      withCheck: sql`${table.userId} = ${authUid}`
     }),
     pgPolicy('Users can view their own messages', {
-        for: 'select',
-        to: authenticatedRole,
-        using: sql`${table.userId} = ${authUid}`,
+      for: 'select',
+      to: authenticatedRole,
+      using: sql`${table.userId} = ${authUid}`
     }),
     pgPolicy('Allow service role to manage messages', {
-        for: 'all',
-        to: 'service_role',
-        using: sql`true`,
-        withCheck: sql`true`,
-    }),
-])
+      for: 'all',
+      to: 'service_role',
+      using: sql`true`,
+      withCheck: sql`true`
+    })
+  ]
+)
 
 export type InsertUserMessage = typeof userMessages.$inferInsert
 export type SelectUserMessage = typeof userMessages.$inferSelect

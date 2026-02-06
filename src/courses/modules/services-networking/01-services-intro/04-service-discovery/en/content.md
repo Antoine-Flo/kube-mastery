@@ -27,6 +27,7 @@ If you use environment variables for service discovery, you must create the Serv
 DNS is the recommended and more flexible method for service discovery. A cluster-aware DNS server (like CoreDNS) watches the Kubernetes API for new Services and automatically creates DNS records for each one.
 
 For a Service named `my-service` in namespace `my-ns`:
+
 - Pods in the same namespace (`my-ns`) can resolve it simply as `my-service`
 - Pods in other namespaces must use the fully qualified name: `my-service.my-ns`
 - The DNS name resolves to the Service's cluster IP address

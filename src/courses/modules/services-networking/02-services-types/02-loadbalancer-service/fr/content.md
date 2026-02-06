@@ -27,10 +27,11 @@ spec:
 status:
   loadBalancer:
     ingress:
-    - ip: 192.0.2.127
+      - ip: 192.0.2.127
 ```
 
 Dans cet exemple :
+
 - Le type de Service est défini sur `LoadBalancer`
 - Il cible les Pods avec le label `app.kubernetes.io/name: MyApp`
 - Le champ `status.loadBalancer.ingress` montre l'adresse IP externe assignée par le fournisseur de cloud
@@ -53,6 +54,7 @@ Cela signifie qu'un Service LoadBalancer inclut toute la fonctionnalité d'un Se
 ## Intégration avec le fournisseur de cloud
 
 Le comportement des Services LoadBalancer dépend de votre fournisseur de cloud. Chaque fournisseur a sa propre implémentation pour créer et configurer l'équilibreur de charge externe :
+
 - **AWS** : Crée un Elastic Load Balancer (ELB)
 - **GCP** : Crée un Network Load Balancer
 - **Azure** : Crée un Azure Load Balancer

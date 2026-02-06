@@ -11,6 +11,7 @@ A ReplicaSet ensures that a specified number of pod replicas are running at any 
 ## How ReplicaSets Work
 
 A ReplicaSet is defined with:
+
 - A **selector** that specifies how to identify Pods it can acquire
 - A number of **replicas** indicating how many Pods it should maintain
 - A **pod template** specifying the data of new Pods it should create

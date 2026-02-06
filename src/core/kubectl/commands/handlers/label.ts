@@ -16,15 +16,19 @@ import { handleMetadataChange } from './metadataHelpers'
  * Uses event-driven architecture
  */
 export const handleLabel = (
-    state: ClusterStateData,
-    parsed: ParsedCommand,
-    eventBus: EventBus
+  state: ClusterStateData,
+  parsed: ParsedCommand,
+  eventBus: EventBus
 ): ExecutionResult & { state?: ClusterStateData } => {
-    return handleMetadataChange(state, parsed, {
-        metadataType: 'labels',
-        commandName: 'label',
-        changesKey: 'labelChanges',
-        actionPastTense: 'labeled',
-    }, eventBus)
+  return handleMetadataChange(
+    state,
+    parsed,
+    {
+      metadataType: 'labels',
+      commandName: 'label',
+      changesKey: 'labelChanges',
+      actionPastTense: 'labeled'
+    },
+    eventBus
+  )
 }
-

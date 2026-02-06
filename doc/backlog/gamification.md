@@ -23,12 +23,14 @@ Documentation des idées de gamification pour rendre la plateforme plus attracti
 ### 1. Progress Bars & Visual Feedback
 
 **Description** :
+
 - Barre de progression par cours (X leçons complétées / Y total)
 - Indicateur visuel sur chaque leçon (✓ complétée, 🔒 bloquée, 📖 disponible)
 - Pourcentage global affiché sur la page cours
 - Badge "100%" quand un cours est complété
 
 **Implémentation** :
+
 - Calcul simple depuis `lesson_progress` (COUNT + GROUP BY)
 - Composant ProgressBar réutilisable
 - Pas de changement DB nécessaire
@@ -40,12 +42,14 @@ Documentation des idées de gamification pour rendre la plateforme plus attracti
 ### 2. Points/XP Simples
 
 **Description** :
+
 - **10 XP** par leçon complétée
 - **5 XP bonus** si le quiz est complété sans erreur (si applicable)
 - Score total visible dans le profil/dashboard
 - Affichage "+10 XP" après complétion d'une leçon
 
 **Implémentation** :
+
 - Calcul depuis `lesson_progress` (pas de DB supplémentaire nécessaire)
 - Stockage optionnel : nouveau champ `xp` dans table `user_profile` (si créée) ou calcul dynamique
 - Fonction utilitaire : `calculateUserXP(userId)`
@@ -71,6 +75,7 @@ Basés sur des conditions simples, visibles dans le profil :
 - 🔧 **"Troubleshooter"** - Compléter toutes les leçons de troubleshooting (si existent)
 
 **Implémentation** :
+
 - Table `user_achievements` ou stockage dans `user_profile.achievements` (JSONB)
 - Fonction de vérification : `checkAchievements(userId)` appelée après chaque complétion
 - Notification/popup à l'obtention d'un badge
@@ -84,6 +89,7 @@ Basés sur des conditions simples, visibles dans le profil :
 
 **Description** :
 Mini-dashboard dans le profil avec :
+
 - Leçons complétées : aujourd'hui / cette semaine / total
 - Cours complétés
 - XP total
@@ -92,6 +98,7 @@ Mini-dashboard dans le profil avec :
 - Graphique simple (bar chart) : progression sur les 30 derniers jours
 
 **Implémentation** :
+
 - Agrégations SQL sur `lesson_progress` (COUNT, DATE_TRUNC)
 - Composant Dashboard réutilisable
 - Pas de DB supplémentaire nécessaire (calculs dynamiques)
@@ -105,12 +112,14 @@ Mini-dashboard dans le profil avec :
 ### 5. Streaks (Séries quotidiennes)
 
 **Description** :
+
 - Compteur de jours consécutifs avec au moins une leçon complétée
 - Affichage "🔥 7 jours d'affilée !"
 - Perdu si pas de leçon complétée un jour
 - Badges de milestones : 3, 7, 14, 30, 100 jours
 
 **Implémentation** :
+
 - Table `user_streaks` : `user_id`, `current_streak`, `longest_streak`, `last_activity_date`
 - Fonction de vérification : `updateStreak(userId)` appelée après chaque complétion
 - Requête SQL : vérifier si `completed_at` est dans les dernières 24h (avec timezone)
@@ -123,6 +132,7 @@ Mini-dashboard dans le profil avec :
 ### 6. Milestones Notifications
 
 **Description** :
+
 - Popup/notification à chaque milestone significatif
 - Exemples :
   - "🎉 Félicitations ! 10 leçons complétées"
@@ -132,6 +142,7 @@ Mini-dashboard dans le profil avec :
   - "💯 100% du cours complété !"
 
 **Implémentation** :
+
 - Vérification après chaque `markLessonCompleted()`
 - Système de notifications (toast/snackbar)
 - Liste de milestones configurables (10, 25, 50, 100, etc.)
@@ -143,17 +154,19 @@ Mini-dashboard dans le profil avec :
 ### 7. Quiz Perfect Score Tracking
 
 **Description** :
+
 - Tracker si le quiz est complété sans erreur
 - Badge "💯 Parfait !" affiché sur la leçon
 - Bonus XP pour quiz parfait
 - Stats : "X quiz parfaits sur Y tentatives"
 
 **Implémentation** :
+
 - Nouvelle table `quiz_attempts` :
   ```sql
-  user_id, lesson_id, course_id, 
-  score INT, max_score INT, 
-  perfect BOOLEAN, 
+  user_id, lesson_id, course_id,
+  score INT, max_score INT,
+  perfect BOOLEAN,
   completed_at TIMESTAMPTZ
   ```
 - Ou ajout de champ `perfect_score` à `lesson_progress` (moins flexible)
@@ -166,12 +179,14 @@ Mini-dashboard dans le profil avec :
 ### 8. Unlock System (Déblocage progressif)
 
 **Description** :
+
 - Les leçons se débloquent séquentiellement (déjà implémenté via navigation)
 - Message "🎉 Nouvelle leçon débloquée !" après complétion
 - Visual feedback : animation de déblocage
 - Indicateur "Nouveau" sur les leçons récemment débloquées
 
 **Implémentation** :
+
 - Logique de déblocage : vérifier si la leçon précédente est complétée
 - Composant d'animation (CSS ou lib légère)
 - State "newly_unlocked" stocké temporairement (localStorage ou DB)
@@ -183,12 +198,14 @@ Mini-dashboard dans le profil avec :
 ### 9. Challenge du Jour
 
 **Description** :
+
 - 1 leçon/quiz spécifique recommandée chaque jour
 - Badge "✅ Challenge du jour complété"
 - Bonus XP (15 au lieu de 10)
 - Rotation automatique basée sur la date
 
 **Implémentation** :
+
 - Algorithme simple : `lesson_id = hash(date + user_id) % total_lessons`
 - Ou sélection aléatoire depuis les leçons non complétées
 - Tracking : table `daily_challenges` ou champ `daily_challenge_lesson_id` dans user_profile
@@ -203,15 +220,17 @@ Mini-dashboard dans le profil avec :
 ### 10. Leaderboard
 
 **Description** :
+
 - Top 10/50 utilisateurs (par XP total ou leçons complétées)
 - Position de l'utilisateur : "Vous êtes #12 sur 150 utilisateurs"
 - Filtres : Global, Par cours, Par période (semaine/mois)
 - Privacy : Option pour masquer son nom du leaderboard
 
 **Implémentation** :
+
 - Table `user_stats` (cache) :
   ```sql
-  user_id, total_xp INT, total_lessons INT, 
+  user_id, total_xp INT, total_lessons INT,
   total_courses INT, current_streak INT,
   updated_at TIMESTAMPTZ
   ```
@@ -241,10 +260,11 @@ Badges liés aux compétences Kubernetes spécifiques :
 - 📝 **"YAML Ninja"** - Créer 30 ressources via YAML
 
 **Implémentation** :
+
 - Tracking des actions dans le terminal (kubectl commands)
 - Table `user_actions` :
   ```sql
-  user_id, action_type TEXT, 
+  user_id, action_type TEXT,
   resource_type TEXT, count INT,
   first_action_at TIMESTAMPTZ,
   last_action_at TIMESTAMPTZ
@@ -259,6 +279,7 @@ Badges liés aux compétences Kubernetes spécifiques :
 ### 12. Time Tracking & Learning Analytics
 
 **Description** :
+
 - Temps passé par leçon (start/end timestamps)
 - Temps total d'apprentissage
 - Stats : "Vous avez appris 2h30 cette semaine"
@@ -266,10 +287,11 @@ Badges liés aux compétences Kubernetes spécifiques :
 - Graphique : Temps par jour (heatmap style GitHub)
 
 **Implémentation** :
+
 - Table `learning_sessions` :
   ```sql
   user_id, lesson_id, course_id,
-  started_at TIMESTAMPTZ, 
+  started_at TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
   duration_seconds INT
   ```
@@ -283,11 +305,13 @@ Badges liés aux compétences Kubernetes spécifiques :
 ### 13. Comparison avec la Communauté
 
 **Description** :
+
 - "78% des utilisateurs ont complété cette leçon en 15 minutes"
 - "Vous êtes dans le top 20% des apprenants"
 - "Cette leçon est généralement complétée en 12 minutes (moyenne)"
 
 **Implémentation** :
+
 - Agrégations SQL sur `learning_sessions` ou `lesson_progress`
 - Calculs de percentiles
 - Cache pour performance (refresh quotidien)
@@ -299,6 +323,7 @@ Badges liés aux compétences Kubernetes spécifiques :
 ### 14. Personalized Recommendations
 
 **Description** :
+
 - Suggestions de leçons basées sur :
   - Leçons non complétées dans les cours en cours
   - Leçons similaires (même tag/concept)
@@ -306,6 +331,7 @@ Badges liés aux compétences Kubernetes spécifiques :
 - "Les utilisateurs qui ont complété X ont aussi aimé Y"
 
 **Implémentation** :
+
 - Algorithme de recommandation simple (collaborative filtering basique)
 - Ou règles basées sur les tags des leçons
 - Cache des recommandations
@@ -317,12 +343,14 @@ Badges liés aux compétences Kubernetes spécifiques :
 ### 15. Social Features (Phase future)
 
 **Description** :
+
 - Partage de badges/accomplissements (Twitter/LinkedIn)
 - Commentaires sur les leçons
 - Questions/réponses communautaires
 - Study groups
 
 **Implémentation** :
+
 - Tables supplémentaires pour comments, discussions
 - Intégration OAuth pour le partage social
 - Modération nécessaire
@@ -355,23 +383,27 @@ Badges liés aux compétences Kubernetes spécifiques :
 ## 📋 Priorisation Recommandée
 
 ### Phase 1 (Quick Wins - 1-2 semaines)
+
 1. ✅ Progress Bars (1-2h)
 2. ✅ Points/XP simples (2-3h)
 3. ✅ 5-7 badges basiques (3-4h)
 4. ✅ Completion Stats Dashboard (2-3h)
 
 ### Phase 2 (Medium Impact - 2-3 semaines)
+
 5. ✅ Streaks (3-4h)
 6. ✅ Milestones Notifications (2-3h)
 7. ✅ Quiz Perfect Score Tracking (3-4h)
 8. ✅ Challenge du Jour (2-3h)
 
 ### Phase 3 (Advanced - 1-2 mois)
+
 9. ✅ Leaderboard (4-6h)
 10. ✅ Badges Kubernetes spécialisés (6-8h)
 11. ✅ Time Tracking (4-6h)
 
 ### Phase 4 (Future)
+
 12. ✅ Comparison communautaire
 13. ✅ Recommendations
 14. ✅ Social features
@@ -385,23 +417,23 @@ Badges liés aux compétences Kubernetes spécifiques :
 ```sql
 CREATE TABLE user_profile (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  
+
   -- Stats
   total_xp INT DEFAULT 0,
   total_lessons_completed INT DEFAULT 0,
   total_courses_completed INT DEFAULT 0,
-  
+
   -- Streak
   current_streak INT DEFAULT 0,
   longest_streak INT DEFAULT 0,
   last_activity_date DATE,
-  
+
   -- Achievements
   achievements JSONB DEFAULT '[]', -- Array of achievement IDs
-  
+
   -- Preferences
   show_on_leaderboard BOOLEAN DEFAULT true,
-  
+
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );

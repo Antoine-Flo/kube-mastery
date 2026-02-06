@@ -14,7 +14,7 @@ flowchart LR
         RS1 --> P2[Pod 2]
         RS1 --> P3[Pod 3]
     end
-    
+
     subgraph After["After Scaling (5 replicas)"]
         D2[Deployment] --> RS2[ReplicaSet]
         RS2 --> P4[Pod 1]
@@ -23,7 +23,7 @@ flowchart LR
         RS2 --> P7[Pod 4]
         RS2 --> P8[Pod 5]
     end
-    
+
     Before --> |kubectl scale| After
 ```
 
@@ -38,6 +38,7 @@ kubectl scale deployment/nginx-deployment --replicas=5
 ```
 
 You can also use different syntax variations:
+
 - `kubectl scale deployment nginx-deployment --replicas=5`
 - `kubectl scale deploy/nginx-deployment --replicas=5`
 
@@ -65,9 +66,11 @@ The `READY` column shows `5/5` once all new replicas are running.
 Besides `kubectl scale`, you can also:
 
 **Edit the Deployment directly:**
+
 ```bash
 kubectl edit deployment nginx-deployment
 ```
+
 Then modify the `spec.replicas` field and save.
 
 **Update the manifest and reapply:**

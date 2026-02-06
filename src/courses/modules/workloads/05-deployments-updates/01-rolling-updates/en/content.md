@@ -5,6 +5,7 @@ A Deployment's rollout is triggered when the Deployment's Pod template is change
 ## Rolling Update Concept
 
 When you update a Deployment's Pod template, Kubernetes performs a rolling update:
+
 - A new ReplicaSet is created with the updated template
 - The new ReplicaSet is gradually scaled up
 - The old ReplicaSet is gradually scaled down
@@ -13,6 +14,7 @@ When you update a Deployment's Pod template, Kubernetes performs a rolling updat
 ## Update Strategy
 
 By default, Deployments use a RollingUpdate strategy that ensures:
+
 - At least 75% of desired Pods are up (25% max unavailable)
 - At most 125% of desired Pods are up (25% max surge)
 

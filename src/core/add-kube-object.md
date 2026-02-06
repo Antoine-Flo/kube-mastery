@@ -36,12 +36,14 @@ Checklist complète pour intégrer une nouvelle ressource Kubernetes dans le sys
 
 ## 3. Événements (optionnel si pas encore implémenté)
 
-**Fichiers:** 
+**Fichiers:**
+
 - `src/core/cluster/events/types.ts`
 - `src/core/cluster/events/handlers.ts`
 - `src/core/cluster/ClusterState.ts`
 
 Si événements pas encore créés:
+
 - Utiliser événements placeholder (ex: `createSecretCreatedEvent()`)
 - Ajouter directement au state dans `add{Resource}()` (bypass events)
 - Ajouter handlers dans `EVENT_HANDLERS` quand événements seront créés
@@ -135,6 +137,7 @@ Si événements pas encore créés:
 ## 11. Tests
 
 **Fichiers:**
+
 - `tests/unit/cluster/ressources/{Resource}.test.ts` - Modèle et helpers
 - `tests/unit/kubectl/commands/handlers/get.test.ts` - Handler get
 - `tests/unit/kubectl/autocomplete/KubectlAutocompleteProvider.test.ts` - Autocomplete
@@ -142,6 +145,7 @@ Si événements pas encore créés:
 ## 12. Golden Files (optionnel)
 
 **Fichiers:**
+
 - `bin/config/golden-tests.ts` - Ajouter catégorie `'{resources}'`
 - `bin/generate-golden-files.ts` - Valider catégorie
 - `refs/golden-files/{resources}/` - Générer fichiers de référence
@@ -156,12 +160,12 @@ Si la ressource gère d'autres ressources (ex: Deployment → ReplicaSet → Pod
 2. Importer et utiliser les helpers partagés:
    ```typescript
    import {
-       createOwnerRef,        // Crée un ownerReference pour un enfant
-       findOwnerByRef,        // Trouve le parent via ownerReferences
-       getOwnedResources,     // Trouve les enfants via ownerReferences
-       statusEquals,          // Compare deux status
-       subscribeToEvents,     // S'abonne à des événements spécifiques
-       generateSuffix,        // Génère un suffixe aléatoire
+     createOwnerRef, // Crée un ownerReference pour un enfant
+     findOwnerByRef, // Trouve le parent via ownerReferences
+     getOwnedResources, // Trouve les enfants via ownerReferences
+     statusEquals, // Compare deux status
+     subscribeToEvents, // S'abonne à des événements spécifiques
+     generateSuffix // Génère un suffixe aléatoire
    } from './helpers'
    import type { Controller, ControllerState } from './types'
    ```

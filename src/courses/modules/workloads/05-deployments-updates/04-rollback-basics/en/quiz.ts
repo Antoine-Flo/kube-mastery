@@ -2,7 +2,7 @@
 // QUIZ - Rollback Basics
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -12,7 +12,7 @@ export const quiz: Quiz = {
       question: 'Rollback the nginx-deployment to the previous revision',
       expectedCommand: 'kubectl rollout undo deployment nginx-deployment',
       validationMode: 'contains',
-      normalizeCommand: true,
+      normalizeCommand: true
     },
     {
       id: 'q2',
@@ -22,9 +22,9 @@ export const quiz: Quiz = {
         'When you scale the Deployment',
         'When the Pod template changes',
         'When you delete a Pod',
-        'When you create a Service',
+        'When you create a Service'
       ],
-      correctAnswer: 1,
-    },
-  ],
-};
+      correctAnswer: 1
+    }
+  ]
+}

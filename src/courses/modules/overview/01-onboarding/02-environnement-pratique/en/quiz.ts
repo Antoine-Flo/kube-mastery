@@ -2,7 +2,7 @@
 // QUIZ - Your practice environment (kubectl + cluster)
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -13,7 +13,7 @@ export const quiz: Quiz = {
       expectedCommand: 'touch test.txt',
       validationMode: 'contains',
       normalizeCommand: true,
-      hint: 'Type "touch test.txt" in the terminal on the right side of the screen.',
-    },
-  ],
-};
+      hint: 'Type "touch test.txt" in the terminal on the right side of the screen.'
+    }
+  ]
+}

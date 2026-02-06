@@ -2,7 +2,7 @@
 // QUIZ - Container States
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -14,21 +14,16 @@ export const quiz: Quiz = {
         'Pending, Running, Failed',
         'Waiting, Running, Terminated',
         'Starting, Active, Stopped',
-        'Init, Running, Complete',
+        'Init, Running, Complete'
       ],
-      correctAnswer: 1,
+      correctAnswer: 1
     },
     {
       id: 'q2',
       type: 'multiple-choice',
       question: 'A container is pulling its image. What state is it in?',
-      options: [
-        'Running',
-        'Terminated',
-        'Waiting',
-        'Pending',
-      ],
-      correctAnswer: 2,
-    },
-  ],
-};
+      options: ['Running', 'Terminated', 'Waiting', 'Pending'],
+      correctAnswer: 2
+    }
+  ]
+}

@@ -1,9 +1,11 @@
 @layer reset {
   /* Reset CSS - Basé sur Panda CSS reset layer */
-  
+
   html,
   :host {
-    --font-fallback: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-fallback:
+      ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+      'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     line-height: 1.5;
     -webkit-text-size-adjust: 100%;
     -webkit-font-smoothing: antialiased;
@@ -86,7 +88,7 @@
   }
 
   button,
-  input:where([type="button"], [type="reset"], [type="submit"]),
+  input:where([type='button'], [type='reset'], [type='submit']),
   ::file-selector-button {
     appearance: button;
     -webkit-appearance: button;
@@ -178,7 +180,8 @@
   kbd,
   samp,
   pre {
-    --font-mono-fallback: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --font-mono-fallback:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     font-family: var(--font-mono-fallback);
     font-size: 1em;
     font-feature-settings: normal;
@@ -207,8 +210,7 @@
     outline: auto;
   }
 
-  [hidden]:where(:not([hidden="until-found"])) {
+  [hidden]:where(:not([hidden='until-found'])) {
     display: none !important;
   }
 }
-

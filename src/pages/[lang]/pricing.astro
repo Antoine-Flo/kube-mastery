@@ -1,213 +1,160 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import { useTranslations, useLocalePath } from "../../i18n/utils";
-import Button from "../../components/ui/Button.astro";
-import "../../styles/components/card.css";
-import "../../styles/components/accordion.css";
-import "../../styles/routes/pricing.css";
+import Layout from '../../layouts/Layout.astro'
+import { useTranslations, useLocalePath } from '../../i18n/utils'
+import Button from '../../components/ui/Button.astro'
+import '../../styles/components/card.css'
+import '../../styles/components/accordion.css'
+import '../../styles/routes/pricing.css'
 
-const lang = Astro.params.lang as "en" | "fr";
-const t = useTranslations(lang);
-const localePath = useLocalePath(lang);
+const lang = Astro.params.lang as 'en' | 'fr'
+const t = useTranslations(lang)
+const localePath = useLocalePath(lang)
 
 const faqItems = [
-	{ id: "q1", q: t("pricing_faq_q1"), a: t("pricing_faq_a1") },
-	{ id: "q2", q: t("pricing_faq_q2"), a: t("pricing_faq_a2") },
-	{ id: "q3", q: t("pricing_faq_q3"), a: t("pricing_faq_a3") },
-	{ id: "q4", q: t("pricing_faq_q4"), a: t("pricing_faq_a4") },
-];
+  { id: 'q1', q: t('pricing_faq_q1'), a: t('pricing_faq_a1') },
+  { id: 'q2', q: t('pricing_faq_q2'), a: t('pricing_faq_a2') },
+  { id: 'q3', q: t('pricing_faq_q3'), a: t('pricing_faq_a3') },
+  { id: 'q4', q: t('pricing_faq_q4'), a: t('pricing_faq_a4') }
+]
 ---
 
 <Layout>
-	<div class="pricing">
-		<h1 class="pricing__title">{t("pricing_title")}</h1>
-		<p class="pricing__subtitle">{t("pricing_subtitle")}</p>
+  <div class="pricing">
+    <h1 class="pricing__title">{t('pricing_title')}</h1>
+    <p class="pricing__subtitle">{t('pricing_subtitle')}</p>
 
-		<div class="pricing__plans">
-			<!-- Free plan -->
-			<article
-				class="card card--outline pricing__plan-card pricing__plan-card--highlighted"
-			>
-				<div class="card__header">
-					<div class="pricing__badge">
-						<span
-							class="pricing__badge-text pricing__badge-text--green"
-							>{t("pricing_betaNote")}</span
-						>
-					</div>
-					<h2 class="card__title pricing__plan-title">
-						{t("pricing_free_name")}
-					</h2>
-					<div class="pricing__plan-price">
-						<span class="pricing__plan-price-amount"
-							>{t("pricing_free_price")}€</span
-						>
-					</div>
-				</div>
-				<div class="card__body">
-					<ul class="pricing__plan-features">
-						<li class="pricing__plan-feature">
-							<span class="pricing__plan-feature-check">✓</span>{
-								t("pricing_free_feature1")
-							}
-						</li>
-						<li class="pricing__plan-feature">
-							<span class="pricing__plan-feature-check">✓</span>{
-								t("pricing_free_feature2")
-							}
-						</li>
-						<li class="pricing__plan-feature">
-							<span class="pricing__plan-feature-check">✓</span>{
-								t("pricing_free_feature3")
-							}
-						</li>
-						<li class="pricing__plan-feature">
-							<span class="pricing__plan-feature-check">✓</span>{
-								t("pricing_free_feature4")
-							}
-						</li>
-					</ul>
-				</div>
-				<div class="card__footer pricing__plan-footer">
-					<Button
-						href={localePath("/courses")}
-						variant="solid"
-						size="lg"
-						color="cyan"
-						class="pricing__plan-button"
-					>
-						{t("pricing_free_cta")}
-					</Button>
-				</div>
-			</article>
+    <div class="pricing__plans">
+      <!-- Free plan -->
+      <article class="card card--outline pricing__plan-card pricing__plan-card--highlighted">
+        <div class="card__header">
+          <div class="pricing__badge">
+            <span class="pricing__badge-text pricing__badge-text--green">{t('pricing_betaNote')}</span>
+          </div>
+          <h2 class="card__title pricing__plan-title">
+            {t('pricing_free_name')}
+          </h2>
+          <div class="pricing__plan-price">
+            <span class="pricing__plan-price-amount">{t('pricing_free_price')}€</span>
+          </div>
+        </div>
+        <div class="card__body">
+          <ul class="pricing__plan-features">
+            <li class="pricing__plan-feature">
+              <span class="pricing__plan-feature-check">✓</span>{t('pricing_free_feature1')}
+            </li>
+            <li class="pricing__plan-feature">
+              <span class="pricing__plan-feature-check">✓</span>{t('pricing_free_feature2')}
+            </li>
+            <li class="pricing__plan-feature">
+              <span class="pricing__plan-feature-check">✓</span>{t('pricing_free_feature3')}
+            </li>
+            <li class="pricing__plan-feature">
+              <span class="pricing__plan-feature-check">✓</span>{t('pricing_free_feature4')}
+            </li>
+          </ul>
+        </div>
+        <div class="card__footer pricing__plan-footer">
+          <Button href={localePath('/courses')} variant="solid" size="lg" color="cyan" class="pricing__plan-button">
+            {t('pricing_free_cta')}
+          </Button>
+        </div>
+      </article>
 
-			<!-- Full Access (one-time, coming soon) -->
-			<article
-				class="card card--outline pricing__plan-card pricing__plan-card--coming-soon"
-			>
-				<div class="card__header">
-					<div class="pricing__badge">
-						<span
-							class="pricing__badge-text pricing__badge-text--cyan"
-							>{t("pricing_fullaccess_comingSoon")}</span
-						>
-					</div>
-					<h2 class="card__title pricing__plan-title">
-						{t("pricing_fullaccess_name")}
-					</h2>
-					<p class="pricing__plan-subline">
-						{t("pricing_fullaccess_subline")}
-					</p>
-					<div class="pricing__plan-price">
-						<span class="pricing__plan-price-amount"
-							>{t("pricing_fullaccess_price")}</span
-						>
-					</div>
-				</div>
-				<div class="card__body">
-					<ul class="pricing__plan-features">
-						<li class="pricing__plan-feature">
-							<span class="pricing__plan-feature-check">✓</span>{
-								t("pricing_fullaccess_feature1")
-							}
-						</li>
-						<li class="pricing__plan-feature">
-							<span class="pricing__plan-feature-check">✓</span>{
-								t("pricing_fullaccess_feature2")
-							}
-						</li>
-						<li class="pricing__plan-feature">
-							<span class="pricing__plan-feature-check">✓</span>{
-								t("pricing_fullaccess_feature3")
-							}
-						</li>
-						<li class="pricing__plan-feature">
-							<span class="pricing__plan-feature-check">✓</span>{
-								t("pricing_fullaccess_feature4")
-							}
-						</li>
-					</ul>
-				</div>
-				<div class="card__footer pricing__plan-footer">
-					<Button
-						variant="outline"
-						size="lg"
-						disabled
-						class="pricing__plan-button"
-					>
-						{t("pricing_fullaccess_cta")}
-					</Button>
-				</div>
-			</article>
-		</div>
+      <!-- Full Access (one-time, coming soon) -->
+      <article class="card card--outline pricing__plan-card pricing__plan-card--coming-soon">
+        <div class="card__header">
+          <div class="pricing__badge">
+            <span class="pricing__badge-text pricing__badge-text--cyan">{t('pricing_fullaccess_comingSoon')}</span>
+          </div>
+          <h2 class="card__title pricing__plan-title">
+            {t('pricing_fullaccess_name')}
+          </h2>
+          <p class="pricing__plan-subline">
+            {t('pricing_fullaccess_subline')}
+          </p>
+          <div class="pricing__plan-price">
+            <span class="pricing__plan-price-amount">{t('pricing_fullaccess_price')}</span>
+          </div>
+        </div>
+        <div class="card__body">
+          <ul class="pricing__plan-features">
+            <li class="pricing__plan-feature">
+              <span class="pricing__plan-feature-check">✓</span>{t('pricing_fullaccess_feature1')}
+            </li>
+            <li class="pricing__plan-feature">
+              <span class="pricing__plan-feature-check">✓</span>{t('pricing_fullaccess_feature2')}
+            </li>
+            <li class="pricing__plan-feature">
+              <span class="pricing__plan-feature-check">✓</span>{t('pricing_fullaccess_feature3')}
+            </li>
+            <li class="pricing__plan-feature">
+              <span class="pricing__plan-feature-check">✓</span>{t('pricing_fullaccess_feature4')}
+            </li>
+          </ul>
+        </div>
+        <div class="card__footer pricing__plan-footer">
+          <Button variant="outline" size="lg" disabled class="pricing__plan-button">
+            {t('pricing_fullaccess_cta')}
+          </Button>
+        </div>
+      </article>
+    </div>
 
-		<section class="pricing__features-section">
-			<h2 class="pricing__features-title">
-				{t("pricing_features_title")}
-			</h2>
-			<div class="pricing__features-grid">
-				<div class="pricing__feature-card">
-					<h3 class="pricing__feature-card-title">
-						{t("pricing_features_speed_title")}
-					</h3>
-					<p class="pricing__feature-card-description">
-						{t("pricing_features_speed_desc")}
-					</p>
-				</div>
-				<div class="pricing__feature-card">
-					<h3 class="pricing__feature-card-title">
-						{t("pricing_features_stability_title")}
-					</h3>
-					<p class="pricing__feature-card-description">
-						{t("pricing_features_stability_desc")}
-					</p>
-				</div>
-				<div class="pricing__feature-card">
-					<h3 class="pricing__feature-card-title">
-						{t("pricing_features_price_title")}
-					</h3>
-					<p class="pricing__feature-card-description">
-						{t("pricing_features_price_desc")}
-					</p>
-				</div>
-			</div>
-		</section>
+    <section class="pricing__features-section">
+      <h2 class="pricing__features-title">
+        {t('pricing_features_title')}
+      </h2>
+      <div class="pricing__features-grid">
+        <div class="pricing__feature-card">
+          <h3 class="pricing__feature-card-title">
+            {t('pricing_features_speed_title')}
+          </h3>
+          <p class="pricing__feature-card-description">
+            {t('pricing_features_speed_desc')}
+          </p>
+        </div>
+        <div class="pricing__feature-card">
+          <h3 class="pricing__feature-card-title">
+            {t('pricing_features_stability_title')}
+          </h3>
+          <p class="pricing__feature-card-description">
+            {t('pricing_features_stability_desc')}
+          </p>
+        </div>
+        <div class="pricing__feature-card">
+          <h3 class="pricing__feature-card-title">
+            {t('pricing_features_price_title')}
+          </h3>
+          <p class="pricing__feature-card-description">
+            {t('pricing_features_price_desc')}
+          </p>
+        </div>
+      </div>
+    </section>
 
-		<section class="pricing__faq-section">
-			<h2 class="pricing__faq-title">{t("pricing_faq_title")}</h2>
-			<div class="pricing__faq-container">
-				<div
-					class="accordion accordion--size-md pricing__faq-accordion"
-				>
-					{
-						faqItems.map((faq) => (
-							<details
-								class="accordion__item accordion__item--variant-outline"
-								id={faq.id}
-							>
-								<summary class="accordion__item-trigger">
-									<span class="pricing__faq-question">
-										{faq.q}
-									</span>
-									<span
-										class="accordion__item-indicator"
-										aria-hidden="true"
-									>
-										▼
-									</span>
-								</summary>
-								<div class="accordion__item-content">
-									<div class="accordion__item-body">
-										<p class="pricing__faq-answer">
-											{faq.a}
-										</p>
-									</div>
-								</div>
-							</details>
-						))
-					}
-				</div>
-			</div>
-		</section>
-	</div>
+    <section class="pricing__faq-section">
+      <h2 class="pricing__faq-title">{t('pricing_faq_title')}</h2>
+      <div class="pricing__faq-container">
+        <div class="accordion accordion--size-md pricing__faq-accordion">
+          {
+            faqItems.map((faq) => (
+              <details class="accordion__item accordion__item--variant-outline" id={faq.id}>
+                <summary class="accordion__item-trigger">
+                  <span class="pricing__faq-question">{faq.q}</span>
+                  <span class="accordion__item-indicator" aria-hidden="true">
+                    ▼
+                  </span>
+                </summary>
+                <div class="accordion__item-content">
+                  <div class="accordion__item-body">
+                    <p class="pricing__faq-answer">{faq.a}</p>
+                  </div>
+                </div>
+              </details>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+  </div>
 </Layout>

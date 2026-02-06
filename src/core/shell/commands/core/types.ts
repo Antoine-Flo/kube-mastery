@@ -5,22 +5,22 @@
 // Supports basic Unix commands (cd, ls, mkdir, touch, cat, rm, etc).
 
 export type ShellCommand =
-    | 'cd'
-    | 'ls'
-    | 'pwd'
-    | 'mkdir'
-    | 'touch'
-    | 'cat'
-    | 'rm'
-    | 'clear'
-    | 'help'
-    | 'debug'
-    | 'nano'
-    | 'vi'
-    | 'vim'
+  | 'cd'
+  | 'ls'
+  | 'pwd'
+  | 'mkdir'
+  | 'touch'
+  | 'cat'
+  | 'rm'
+  | 'clear'
+  | 'help'
+  | 'debug'
+  | 'nano'
+  | 'vi'
+  | 'vim'
 
 export interface ParsedShellCommand {
-    command: ShellCommand
-    args: string[]
-    flags: Record<string, boolean | string>
+  command: ShellCommand
+  args: string[]
+  flags: Record<string, boolean | string>
 }

@@ -8,10 +8,10 @@ import { success } from '../../../../shared/result'
 import type { ShellCommandHandler } from '../../core/ShellCommandHandler'
 
 export const createClearHandler = (): ShellCommandHandler => {
-    return {
-        execute: (): ExecutionResult => {
-            // Return empty output - terminal will handle clearing
-            return success('')
-        }
+  return {
+    execute: (): ExecutionResult => {
+      // Return empty output - terminal will handle clearing
+      return success('')
     }
+  }
 }

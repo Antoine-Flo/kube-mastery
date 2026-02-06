@@ -13,10 +13,10 @@ metadata:
   name: nginx-pod
 spec:
   containers:
-  - name: nginx
-    image: nginx:1.14.2
-    ports:
-    - containerPort: 80
+    - name: nginx
+      image: nginx:1.14.2
+      ports:
+        - containerPort: 80
 ```
 
 This manifest tells Kubernetes to create a Pod named `nginx-pod` with a single container running the nginx web server image.

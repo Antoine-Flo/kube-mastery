@@ -1,4 +1,4 @@
-# Your practice environment 
+# Your practice environment
 
 Kubernetes is massive, there are hundreds of resources, APIs, and features. What you're working with here is a **simplified version** that includes the essentials you need to learn and practice. We're continuously adding more features over time, and everything we implement follows the official Kubernetes OpenAPI specification to ensure it behaves correctly.
 
@@ -11,11 +11,11 @@ Since this is a browser-based simulation, some features might be limited or beha
 Beyond the Kubernetes cluster itself, you have access to a **virtual filesystem**, you can create and manage files just like you would on a real system. You can create directories, write YAML files, and navigate around using familiar commands.
 
 Here are some of the commands available to you (more to come):
+
 - **Navigation**: `cd`, `ls`, `pwd`, `mkdir`
 - **File operations**: `cat`, `touch`, `rm`
 - **Editors**: `nano`
 - **Terminal utilities**: `clear`, `help`
-
 
 Like any terminal, you can use the **up arrow key** to browse through your command history. The autocomplete is on it's way.
 

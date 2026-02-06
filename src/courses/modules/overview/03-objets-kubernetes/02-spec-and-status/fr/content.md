@@ -7,6 +7,7 @@ Presque tous les objets Kubernetes ont deux champs imbriqués importants qui fon
 Le `spec` (abréviation de "specification") décrit l'**état souhaité** de votre objet. C'est ce que vous voulez, l'objectif que vous visez. Lorsque vous créez un objet, vous définissez le spec pour indiquer à Kubernetes quelles caractéristiques vous voulez que la ressource ait.
 
 Par exemple, un spec de Deployment pourrait spécifier :
+
 - Trois répliques de votre application
 - Quelle image de conteneur utiliser
 - Les limites de ressources pour chaque conteneur
@@ -19,6 +20,7 @@ Pensez au spec comme à votre liste de souhaits. Vous dites à Kubernetes : "Je 
 Le `status` décrit l'**état actuel** de votre objet, ce qui se passe réellement en ce moment. Contrairement au spec, vous ne définissez pas le status vous-même. Kubernetes et ses composants remplissent et mettent à jour automatiquement ce champ pendant qu'ils travaillent pour rendre votre état souhaité réalité.
 
 Le status pourrait montrer :
+
 - Combien de répliques sont actuellement en cours d'exécution
 - Quels Pods sont prêts à servir le trafic
 - Toutes les erreurs ou avertissements qui se sont produits
@@ -68,8 +70,8 @@ spec:
   template:
     spec:
       containers:
-      - name: web
-        image: nginx:latest
+        - name: web
+          image: nginx:latest
 ```
 
 Kubernetes lit cela et démarre trois Pods. Le status pourrait ressembler à :

@@ -14,18 +14,22 @@
 ### Après Bêta
 
 #### Gratuit (sans inscription)
+
 - Premier cours complet accessible sans compte
 - Simulateur local
 - Progression sauvegardée en local (localStorage)
 
 #### Inscription (gratuite)
+
 - Sauvegarde de la progression dans le cloud
 - Accès aux cours payants (one-time payment)
 
 #### Achat Individuel
+
 - Cours individuels payants
 
 #### Accès payant (contenu)
+
 - Accès à tous les cours
 - Progression sauvegardée dans le cloud (Supabase)
 - Support (optionnel)
@@ -43,6 +47,7 @@
 ```
 
 **Avantages** :
+
 - Zéro friction à l'entrée
 - Leads qualifiés (ceux qui s'inscrivent sont engagés)
 - Démo de qualité avant de demander quoi que ce soit
@@ -50,11 +55,13 @@
 ### Sources de Revenus
 
 #### 1. Accès payant (one-time payment)
+
 - Accès à tous les cours, lifetime
 - Paiement unique via **Paddle** (Merchant of Record : TVA, factures, litiges gérés par Paddle)
 - Revenus ponctuels, pas d’abonnement → moins de pression support / remboursements
 
 #### 2. Achat de Cours Individuels
+
 - Cours à l'unité
 - Revenus ponctuels
 
@@ -141,7 +148,7 @@ Donc pour te faire une paye avec du one-time : compter **environ 60–100 ventes
 
 | Aspect            | Kube Mastery           | Killer.sh | KodeKloud |
 | ----------------- | ---------------------- | --------- | --------- |
-| Essai sans compte | ✅ 1er cours complet    | ❌         | ❌         |
+| Essai sans compte | ✅ 1er cours complet   | ❌        | ❌        |
 | Simulateur        | Local (rapide)         | N/A       | Payant    |
 | Points forts      | Zéro friction, contenu | Officiel  | Contenu   |
 

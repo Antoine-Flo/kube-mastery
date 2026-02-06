@@ -5,6 +5,7 @@ Each Service type in Kubernetes serves different purposes and has specific use c
 ## ClusterIP
 
 Use ClusterIP when:
+
 - You only need internal cluster access (communication between Pods)
 - You'll use an Ingress or Gateway for external access
 - Services communicate within the cluster
@@ -19,6 +20,7 @@ ClusterIP is the default Service type. If you don't specify a type, your Service
 ## NodePort
 
 Use NodePort when:
+
 - You need external access but don't have a cloud provider load balancer
 - You want to set up your own load balancing solution in front of nodes
 - You need to expose services in non-cloud environments (on-premises, bare metal)
@@ -29,6 +31,7 @@ NodePort exposes your Service on every node at a high-numbered port (30000-32767
 ## LoadBalancer
 
 Use LoadBalancer when:
+
 - You're running on a cloud provider that supports it (AWS, GCP, Azure, etc.)
 - You need a stable external IP address
 - You want automatic external load balancing managed by the cloud provider
@@ -43,6 +46,7 @@ LoadBalancer Services are the standard way to expose applications externally on 
 ## ExternalName
 
 Use ExternalName when:
+
 - You need to point to external services (databases, APIs outside the cluster)
 - You're migrating workloads gradually to Kubernetes
 - You want to abstract external dependencies behind a Service name
@@ -53,6 +57,7 @@ ExternalName provides DNS-level redirection without proxying, making it useful f
 ## Decision Guide
 
 Here's a simple decision tree:
+
 1. **Internal only?** → Use ClusterIP
 2. **External access on cloud?** → Use LoadBalancer
 3. **External access without cloud?** → Use NodePort (or Ingress)

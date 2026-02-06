@@ -1,31 +1,24 @@
 ---
-import Layout from "../../../layouts/Layout.astro";
+import Layout from '../../../layouts/Layout.astro'
 
-import Button from "../../../components/ui/Button.astro";
-import { useTranslations, useLocalePath } from "../../../i18n/utils";
-import { getSupabaseServer } from "../../../lib/supabase";
+import Button from '../../../components/ui/Button.astro'
+import { useTranslations, useLocalePath } from '../../../i18n/utils'
+import { getSupabaseServer } from '../../../lib/supabase'
 
-const lang = (Astro.params.lang || "en") as "en" | "fr";
-const t = useTranslations(lang);
-const localePath = useLocalePath(lang);
+const lang = (Astro.params.lang || 'en') as 'en' | 'fr'
+const t = useTranslations(lang)
+const localePath = useLocalePath(lang)
 
-const rawRedirect = Astro.url.searchParams.get("redirect") ?? "";
-const redirect =
-  rawRedirect.startsWith("/") && !rawRedirect.includes("//")
-    ? rawRedirect
-    : "";
+const rawRedirect = Astro.url.searchParams.get('redirect') ?? ''
+const redirect = rawRedirect.startsWith('/') && !rawRedirect.includes('//') ? rawRedirect : ''
 
 try {
-  const supabase = getSupabaseServer(
-    Astro.locals,
-    Astro.request,
-    Astro.cookies,
-  );
+  const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { user }
+  } = await supabase.auth.getUser()
   if (user) {
-    return Astro.redirect(redirect || localePath("/courses"));
+    return Astro.redirect(redirect || localePath('/courses'))
   }
 } catch {
   // Missing Supabase env or other error → show login page
@@ -34,25 +27,15 @@ try {
 
 <Layout>
   <div class="auth">
-    <h1 class="auth__title">{t("auth_loginTitle")}</h1>
+    <h1 class="auth__title">{t('auth_loginTitle')}</h1>
 
     <div class="auth__card-body">
       <div id="auth-providers" class="auth__buttons">
-        <form
-          action="/api/auth/signin"
-          method="post"
-          class="auth__provider-form"
-          data-astro-reload
-        >
+        <form action="/api/auth/signin" method="post" class="auth__provider-form" data-astro-reload>
           <input type="hidden" name="provider" value="github" />
           <input type="hidden" name="lang" value={lang} />
           <input type="hidden" name="redirect" value={redirect} />
-          <Button
-            type="submit"
-            variant="outline"
-            size="lg"
-            class="auth__provider-button auth__provider-button--github"
-          >
+          <Button type="submit" variant="outline" size="lg" class="auth__provider-button auth__provider-button--github">
             <span class="auth__provider-btn-inner">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -69,17 +52,12 @@ try {
                   d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"
                 ></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg
               >
-              {t("auth_continueWithGitHub")}
+              {t('auth_continueWithGitHub')}
             </span>
           </Button>
         </form>
         <div id="auth-show-email">
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            class="auth__provider-button auth__provider-button--mail"
-          >
+          <Button type="button" variant="outline" size="lg" class="auth__provider-button auth__provider-button--mail">
             <span class="auth__provider-btn-inner">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -95,7 +73,7 @@ try {
                 ><rect width="20" height="16" x="2" y="4" rx="2"></rect><path
                   d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg
               >
-              {t("auth_continueWithMail")}
+              {t('auth_continueWithMail')}
             </span>
           </Button>
         </div>
@@ -109,31 +87,18 @@ try {
             data-mode="login"
             aria-pressed="true"
           >
-            {t("auth_login")}
+            {t('auth_login')}
           </button>
-          <button
-            type="button"
-            class="auth__segment-btn"
-            data-mode="signup"
-            aria-pressed="false"
-          >
-            {t("auth_signup")}
+          <button type="button" class="auth__segment-btn" data-mode="signup" aria-pressed="false">
+            {t('auth_signup')}
           </button>
         </div>
 
-        <form
-          id="auth-form-login"
-          class="auth__form"
-          action="/api/auth/signin"
-          method="post"
-          data-astro-reload
-        >
+        <form id="auth-form-login" class="auth__form" action="/api/auth/signin" method="post" data-astro-reload>
           <input type="hidden" name="lang" value={lang} />
           <input type="hidden" name="redirect" value={redirect} />
           <div class="auth__field">
-            <label for="auth-email-login" class="auth__label"
-              >{t("auth_email")}</label
-            >
+            <label for="auth-email-login" class="auth__label">{t('auth_email')}</label>
             <input
               type="email"
               id="auth-email-login"
@@ -144,9 +109,7 @@ try {
             />
           </div>
           <div class="auth__field">
-            <label for="auth-password-login" class="auth__label"
-              >{t("auth_password")}</label
-            >
+            <label for="auth-password-login" class="auth__label">{t('auth_password')}</label>
             <input
               type="password"
               id="auth-password-login"
@@ -156,13 +119,8 @@ try {
               class="auth__input"
             />
           </div>
-          <Button
-            type="submit"
-            variant="solid"
-            size="lg"
-            class="auth__submit-button"
-          >
-            {t("auth_loginButton")}
+          <Button type="submit" variant="solid" size="lg" class="auth__submit-button">
+            {t('auth_loginButton')}
           </Button>
         </form>
 
@@ -173,14 +131,12 @@ try {
           method="post"
           data-astro-reload
           hidden
-          data-password-mismatch={t("auth_passwordMismatch")}
+          data-password-mismatch={t('auth_passwordMismatch')}
         >
           <input type="hidden" name="lang" value={lang} />
           <input type="hidden" name="redirect" value={redirect} />
           <div class="auth__field">
-            <label for="auth-email-signup" class="auth__label"
-              >{t("auth_email")}</label
-            >
+            <label for="auth-email-signup" class="auth__label">{t('auth_email')}</label>
             <input
               type="email"
               id="auth-email-signup"
@@ -191,9 +147,7 @@ try {
             />
           </div>
           <div class="auth__field">
-            <label for="auth-password-signup" class="auth__label"
-              >{t("auth_password")}</label
-            >
+            <label for="auth-password-signup" class="auth__label">{t('auth_password')}</label>
             <input
               type="password"
               id="auth-password-signup"
@@ -204,9 +158,7 @@ try {
             />
           </div>
           <div class="auth__field">
-            <label for="auth-confirm-password" class="auth__label"
-              >{t("auth_confirmPassword")}</label
-            >
+            <label for="auth-confirm-password" class="auth__label">{t('auth_confirmPassword')}</label>
             <input
               type="password"
               id="auth-confirm-password"
@@ -216,18 +168,13 @@ try {
               class="auth__input"
             />
           </div>
-          <Button
-            type="submit"
-            variant="solid"
-            size="lg"
-            class="auth__submit-button"
-          >
-            {t("auth_signupButton")}
+          <Button type="submit" variant="solid" size="lg" class="auth__submit-button">
+            {t('auth_signupButton')}
           </Button>
         </form>
 
         <button type="button" class="auth__back" id="auth-back">
-          ← {t("auth_back")}
+          ← {t('auth_back')}
         </button>
       </div>
     </div>
@@ -361,67 +308,56 @@ try {
 </style>
 
 <script>
-  const providers = document.getElementById("auth-providers");
-  const emailForm = document.getElementById("auth-email-form");
-  const showEmailBtn = document.getElementById("auth-show-email");
-  const backBtn = document.getElementById("auth-back");
-  const loginForm = document.getElementById("auth-form-login");
-  const signupForm = document.getElementById("auth-form-signup");
-  const segmentBtns = document.querySelectorAll(".auth__segment-btn");
+  const providers = document.getElementById('auth-providers')
+  const emailForm = document.getElementById('auth-email-form')
+  const showEmailBtn = document.getElementById('auth-show-email')
+  const backBtn = document.getElementById('auth-back')
+  const loginForm = document.getElementById('auth-form-login')
+  const signupForm = document.getElementById('auth-form-signup')
+  const segmentBtns = document.querySelectorAll('.auth__segment-btn')
 
-  showEmailBtn?.addEventListener("click", () => {
-    providers?.setAttribute("hidden", "");
-    emailForm?.removeAttribute("hidden");
-  });
+  showEmailBtn?.addEventListener('click', () => {
+    providers?.setAttribute('hidden', '')
+    emailForm?.removeAttribute('hidden')
+  })
 
-  backBtn?.addEventListener("click", () => {
-    emailForm?.setAttribute("hidden", "");
-    providers?.removeAttribute("hidden");
-  });
+  backBtn?.addEventListener('click', () => {
+    emailForm?.setAttribute('hidden', '')
+    providers?.removeAttribute('hidden')
+  })
 
   segmentBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const mode = btn.getAttribute("data-mode");
+    btn.addEventListener('click', () => {
+      const mode = btn.getAttribute('data-mode')
       segmentBtns.forEach((b) => {
-        b.classList.toggle(
-          "auth__segment-btn--active",
-          b.getAttribute("data-mode") === mode,
-        );
-        b.setAttribute(
-          "aria-pressed",
-          b.getAttribute("data-mode") === mode ? "true" : "false",
-        );
-      });
-      if (mode === "login") {
-        loginForm?.removeAttribute("hidden");
-        signupForm?.setAttribute("hidden", "");
+        b.classList.toggle('auth__segment-btn--active', b.getAttribute('data-mode') === mode)
+        b.setAttribute('aria-pressed', b.getAttribute('data-mode') === mode ? 'true' : 'false')
+      })
+      if (mode === 'login') {
+        loginForm?.removeAttribute('hidden')
+        signupForm?.setAttribute('hidden', '')
       } else {
-        loginForm?.setAttribute("hidden", "");
-        signupForm?.removeAttribute("hidden");
+        loginForm?.setAttribute('hidden', '')
+        signupForm?.removeAttribute('hidden')
       }
-    });
-  });
+    })
+  })
 
-  signupForm?.addEventListener("submit", (e) => {
-    const password = (
-      document.getElementById("auth-password-signup") as HTMLInputElement
-    )?.value;
-    const confirm = (
-      document.getElementById("auth-confirm-password") as HTMLInputElement
-    )?.value;
-    let errEl = signupForm?.querySelector(".auth__error");
+  signupForm?.addEventListener('submit', (e) => {
+    const password = (document.getElementById('auth-password-signup') as HTMLInputElement)?.value
+    const confirm = (document.getElementById('auth-confirm-password') as HTMLInputElement)?.value
+    let errEl = signupForm?.querySelector('.auth__error')
     if (password !== confirm) {
-      e.preventDefault();
+      e.preventDefault()
       if (!errEl) {
-        errEl = document.createElement("div");
-        errEl.className = "auth__error";
-        signupForm?.insertBefore(errEl, signupForm.firstChild);
+        errEl = document.createElement('div')
+        errEl.className = 'auth__error'
+        signupForm?.insertBefore(errEl, signupForm.firstChild)
       }
-      (errEl as HTMLElement).textContent =
-        signupForm?.getAttribute("data-password-mismatch") ??
-        "Passwords do not match";
+      ;(errEl as HTMLElement).textContent =
+        signupForm?.getAttribute('data-password-mismatch') ?? 'Passwords do not match'
     } else if (errEl) {
-      (errEl as HTMLElement).textContent = "";
+      ;(errEl as HTMLElement).textContent = ''
     }
-  });
+  })
 </script>

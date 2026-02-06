@@ -16,12 +16,12 @@ import { ShellAutocompleteProvider } from '../../shell/autocomplete/ShellAutocom
  * Chaque module (shell, kubectl, filesystem) gère son propre provider
  */
 export const createDefaultAutocompleteEngine = (): AutocompleteEngine => {
-    const engine = new AutocompleteEngine()
+  const engine = new AutocompleteEngine()
 
-    // Enregistrer les providers dans l'ordre de priorité
-    engine.registerProvider(new ShellAutocompleteProvider())
-    engine.registerProvider(new KubectlAutocompleteProvider())
-    engine.registerProvider(new FileAutocompleteProvider())
+  // Enregistrer les providers dans l'ordre de priorité
+  engine.registerProvider(new ShellAutocompleteProvider())
+  engine.registerProvider(new KubectlAutocompleteProvider())
+  engine.registerProvider(new FileAutocompleteProvider())
 
-    return engine
+  return engine
 }

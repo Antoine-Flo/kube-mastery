@@ -1,113 +1,84 @@
 ---
-import Layout from "../../../../layouts/Layout.astro";
-import OverviewLayout from "../../../../components/overview/OverviewLayout.astro";
-import OverviewHeader from "../../../../components/overview/OverviewHeader.astro";
-import OverviewStructure from "../../../../components/overview/OverviewStructure.astro";
-import { useTranslations, useLocalePath } from "../../../../i18n/utils";
-import {
-	getModules,
-	type ModuleListItem,
-} from "../../../../content/courses/facade";
-import {
-	getCourseOverview,
-	getModuleOverview,
-} from "../../../../content/overview/facade";
-import { getProgressContext } from "../../../../lib/progress/server";
-import { computeProgress } from "../../../../lib/progress/domain";
+import Layout from '../../../../layouts/Layout.astro'
+import OverviewLayout from '../../../../components/overview/OverviewLayout.astro'
+import OverviewHeader from '../../../../components/overview/OverviewHeader.astro'
+import OverviewStructure from '../../../../components/overview/OverviewStructure.astro'
+import { useTranslations, useLocalePath } from '../../../../i18n/utils'
+import { getModules, type ModuleListItem } from '../../../../content/courses/facade'
+import { getCourseOverview, getModuleOverview } from '../../../../content/overview/facade'
+import { getProgressContext } from '../../../../lib/progress/server'
+import { computeProgress } from '../../../../lib/progress/domain'
 
-const TYPE_COURSES = "courses";
-const TYPE_MODULES = "modules";
-type OverviewType = typeof TYPE_COURSES | typeof TYPE_MODULES;
+const TYPE_COURSES = 'courses'
+const TYPE_MODULES = 'modules'
+type OverviewType = typeof TYPE_COURSES | typeof TYPE_MODULES
 
-const lang = Astro.params.lang as "en" | "fr";
-const type = Astro.params.type as OverviewType;
-const id = Astro.params.id!;
-const t = useTranslations(lang);
-const localePath = useLocalePath(lang);
+const lang = Astro.params.lang as 'en' | 'fr'
+const type = Astro.params.type as OverviewType
+const id = Astro.params.id!
+const t = useTranslations(lang)
+const localePath = useLocalePath(lang)
 
-const overview =
-	type === TYPE_COURSES
-		? getCourseOverview(id, lang)
-		: getModuleOverview(id, lang);
+const overview = type === TYPE_COURSES ? getCourseOverview(id, lang) : getModuleOverview(id, lang)
 if (!overview) {
-	return Astro.redirect(localePath("/courses"));
+  return Astro.redirect(localePath('/courses'))
 }
 
-const { completed, userId } = await getProgressContext(
-	Astro.locals,
-	Astro.request,
-	Astro.cookies,
-);
-const isLoggedIn = !!userId;
+const { completed, userId } = await getProgressContext(Astro.locals, Astro.request, Astro.cookies)
+const isLoggedIn = !!userId
 
-const lessonIds = overview.content.chapters.flatMap((ch) =>
-	ch.lessons.map((l) => l.id),
-);
-const progress = computeProgress(lessonIds, completed);
-const targetLessonId = progress.currentLessonId ?? lessonIds[0];
-const firstLessonUrl = targetLessonId
-	? localePath(`/${type}/${id}/${targetLessonId}`)
-	: null;
-const authPath = localePath("/auth");
+const lessonIds = overview.content.chapters.flatMap((ch) => ch.lessons.map((l) => l.id))
+const progress = computeProgress(lessonIds, completed)
+const targetLessonId = progress.currentLessonId ?? lessonIds[0]
+const firstLessonUrl = targetLessonId ? localePath(`/${type}/${id}/${targetLessonId}`) : null
+const authPath = localePath('/auth')
 
-let ctaHref: string;
-let ctaLabel: string;
+let ctaHref: string
+let ctaLabel: string
 if (!isLoggedIn) {
-	ctaLabel = t("auth_loginButton");
-	ctaHref =
-		firstLessonUrl !== null
-			? `${authPath}?redirect=${encodeURIComponent(firstLessonUrl)}`
-			: authPath;
+  ctaLabel = t('auth_loginButton')
+  ctaHref = firstLessonUrl !== null ? `${authPath}?redirect=${encodeURIComponent(firstLessonUrl)}` : authPath
 } else {
-	ctaHref = firstLessonUrl ?? "#";
-	ctaLabel = progress.hasStarted
-		? t("courses_resume")
-		: t("courseOverview_startCourse");
+  ctaHref = firstLessonUrl ?? '#'
+  ctaLabel = progress.hasStarted ? t('courses_resume') : t('courseOverview_startCourse')
 }
 
-const lessonBaseUrl = localePath(`/${type}/${id}`);
-const modules = type === TYPE_COURSES ? getModules(lang) : null;
-const moduleTitles = modules
-	? new Map(modules.map((m: ModuleListItem) => [m.id, m.title]))
-	: undefined;
+const lessonBaseUrl = localePath(`/${type}/${id}`)
+const modules = type === TYPE_COURSES ? getModules(lang) : null
+const moduleTitles = modules ? new Map(modules.map((m: ModuleListItem) => [m.id, m.title])) : undefined
 ---
 
 <Layout>
-	<OverviewLayout>
-		<div class="ol">
-			<OverviewHeader
-				overview={overview}
-				t={t}
-				ctaHref={ctaHref}
-				ctaLabel={ctaLabel}
-			/>
-		</div>
-		<div class="or">
-			<OverviewStructure
-				chapters={overview.content.chapters}
-				groupByModule={type === TYPE_COURSES}
-				moduleTitles={moduleTitles}
-				lessonBaseUrl={lessonBaseUrl}
-				t={t}
-				completedLessonIds={completed}
-				currentLessonId={progress.currentLessonId}
-			/>
-		</div>
-	</OverviewLayout>
+  <OverviewLayout>
+    <div class="ol">
+      <OverviewHeader overview={overview} t={t} ctaHref={ctaHref} ctaLabel={ctaLabel} />
+    </div>
+    <div class="or">
+      <OverviewStructure
+        chapters={overview.content.chapters}
+        groupByModule={type === TYPE_COURSES}
+        moduleTitles={moduleTitles}
+        lessonBaseUrl={lessonBaseUrl}
+        t={t}
+        completedLessonIds={completed}
+        currentLessonId={progress.currentLessonId}
+      />
+    </div>
+  </OverviewLayout>
 </Layout>
 
 <style>
-	.ol {
-		flex: 1;
-		min-width: 0;
-	}
-	.or {
-		flex: 1;
-		min-width: 0;
-	}
-	@media (min-width: 1024px) {
-		.or {
-			flex: 0 0 450px;
-		}
-	}
+  .ol {
+    flex: 1;
+    min-width: 0;
+  }
+  .or {
+    flex: 1;
+    min-width: 0;
+  }
+  @media (min-width: 1024px) {
+    .or {
+      flex: 0 0 450px;
+    }
+  }
 </style>

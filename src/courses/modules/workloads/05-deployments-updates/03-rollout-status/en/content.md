@@ -20,6 +20,7 @@ deployment "nginx-deployment" successfully rolled out
 ## Deployment Status Fields
 
 When you run `kubectl get deployments`, you see:
+
 - **READY**: How many replicas are available (ready/desired)
 - **UP-TO-DATE**: Number of replicas updated to the desired state
 - **AVAILABLE**: How many replicas are available to users
@@ -28,6 +29,7 @@ When you run `kubectl get deployments`, you see:
 ## Rollout Completion
 
 A Deployment is marked as complete when:
+
 - All replicas are updated to the latest version
 - All replicas are available
 - No old replicas are running

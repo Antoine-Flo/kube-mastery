@@ -1,13 +1,34 @@
 // Action types supported by kubectl parser
-export type Action = 'get' | 'describe' | 'delete' | 'apply' | 'create' | 'logs' | 'exec' | 'label' | 'annotate' | 'version' | 'cluster-info' | 'api-resources' | 'scale'
+export type Action =
+  | 'get'
+  | 'describe'
+  | 'delete'
+  | 'apply'
+  | 'create'
+  | 'logs'
+  | 'exec'
+  | 'label'
+  | 'annotate'
+  | 'version'
+  | 'cluster-info'
+  | 'api-resources'
+  | 'scale'
 
 // Resource types (canonical names only)
-export type Resource = 'pods' | 'deployments' | 'services' | 'namespaces' | 'configmaps' | 'secrets' | 'nodes' | 'replicasets'
+export type Resource =
+  | 'pods'
+  | 'deployments'
+  | 'services'
+  | 'namespaces'
+  | 'configmaps'
+  | 'secrets'
+  | 'nodes'
+  | 'replicasets'
 
 // Parsed command structure
 export interface ParsedCommand {
   action: Action
-  resource?: Resource  // Optional for commands like 'version' that don't require a resource
+  resource?: Resource // Optional for commands like 'version' that don't require a resource
   name?: string
   namespace?: string
   output?: 'table' | 'yaml' | 'json'
@@ -18,4 +39,3 @@ export interface ParsedCommand {
   annotationChanges?: Record<string, string | null> // For kubectl annotate: key=value or key- (null = removal)
   replicas?: number // For kubectl scale: --replicas=N
 }
-

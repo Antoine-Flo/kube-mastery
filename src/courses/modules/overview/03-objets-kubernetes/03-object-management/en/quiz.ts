@@ -2,7 +2,7 @@
 // QUIZ - Object Management
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -14,9 +14,9 @@ export const quiz: Quiz = {
         'Imperative commands',
         'Imperative object configuration',
         'Declarative object configuration',
-        'All of the above',
+        'All of the above'
       ],
-      correctAnswer: 2,
+      correctAnswer: 2
     },
     {
       id: 'q2',
@@ -24,7 +24,7 @@ export const quiz: Quiz = {
       question: 'Create a deployment named nginx using the imperative command approach',
       expectedCommand: 'kubectl create deployment nginx --image nginx',
       validationMode: 'contains',
-      normalizeCommand: true,
+      normalizeCommand: true
     },
     {
       id: 'q3',
@@ -34,9 +34,9 @@ export const quiz: Quiz = {
         'Only imperative commands',
         'Only declarative object configuration',
         'Mix imperative and declarative approaches',
-        'Use only one technique per object',
+        'Use only one technique per object'
       ],
-      correctAnswer: 3,
-    },
-  ],
-};
+      correctAnswer: 3
+    }
+  ]
+}

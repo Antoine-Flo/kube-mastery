@@ -11,16 +11,16 @@ import type { AutocompleteContext } from '../autocomplete/types'
 import type { CommandCallback } from './types'
 
 export interface InputHandlerContext {
-    state: TerminalState
-    renderer: TerminalRenderer
-    getAutocompleteEngine: () => AutocompleteEngine | undefined
-    getCommandCallback: () => CommandCallback | undefined
-    createAutocompleteContext: () => AutocompleteContext
-    showPrompt: () => void
-    replaceLineWithCommand: (command: string) => void
-    updateLineAndRender: (newLine: string, textToRender: string) => void
-    /** Masque le curseur pour éviter les flashs visuels */
-    hideCursor: () => void
-    /** Affiche le curseur */
-    showCursor: () => void
+  state: TerminalState
+  renderer: TerminalRenderer
+  getAutocompleteEngine: () => AutocompleteEngine | undefined
+  getCommandCallback: () => CommandCallback | undefined
+  createAutocompleteContext: () => AutocompleteContext
+  showPrompt: () => void
+  replaceLineWithCommand: (command: string) => void
+  updateLineAndRender: (newLine: string, textToRender: string) => void
+  /** Masque le curseur pour éviter les flashs visuels */
+  hideCursor: () => void
+  /** Affiche le curseur */
+  showCursor: () => void
 }

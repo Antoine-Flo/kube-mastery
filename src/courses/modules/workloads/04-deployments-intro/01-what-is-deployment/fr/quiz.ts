@@ -2,7 +2,7 @@
 // QUIZ - Qu'est-ce qu'un Deployment ?
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -14,9 +14,9 @@ export const quiz: Quiz = {
         'Seulement les Pods directement',
         'Les ReplicaSets, qui gèrent les Pods',
         'Les Services',
-        'Les ConfigMaps',
+        'Les ConfigMaps'
       ],
-      correctAnswer: 1,
+      correctAnswer: 1
     },
     {
       id: 'q2',
@@ -26,9 +26,9 @@ export const quiz: Quiz = {
         'Applications avec état',
         'Applications sans état',
         'Applications de base de données',
-        'Seulement les jobs par lots',
+        'Seulement les jobs par lots'
       ],
-      correctAnswer: 1,
-    },
-  ],
-};
+      correctAnswer: 1
+    }
+  ]
+}

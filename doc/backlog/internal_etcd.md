@@ -24,6 +24,7 @@ ClusterState {
 ```
 
 **Problèmes** :
+
 - Accès spécifique par type de ressource (getPods, getConfigMaps, etc.)
 - Pas de requêtes génériques
 - Pas de support pour etcdctl (futur)
@@ -48,6 +49,7 @@ QueryAPI {
 ```
 
 **Avantages** :
+
 - Store générique (comme etcd)
 - API de requête flexible
 - Support futur pour etcdctl
@@ -65,6 +67,7 @@ Les clés suivent le format etcd de Kubernetes :
 ```
 
 **Exemples** :
+
 - `/registry/pods/default/nginx`
 - `/registry/configmaps/default/app-config`
 - `/registry/secrets/kube-system/default-token`
@@ -89,19 +92,19 @@ Les clés suivent le format etcd de Kubernetes :
 interface EtcdStore {
   // Get single resource by key
   get(key: string): Result<KubernetesResource>
-  
+
   // Put resource (create or update)
   put(key: string, resource: KubernetesResource): void
-  
+
   // List all resources with prefix
   list(prefix: string): KubernetesResource[]
-  
+
   // Delete resource by key
   delete(key: string): Result<KubernetesResource>
-  
+
   // Watch for changes (futur)
   watch(prefix: string, callback: (event: WatchEvent) => void): UnsubscribeFn
-  
+
   // Get all keys with prefix (utile pour debug)
   listKeys(prefix: string): string[]
 }
@@ -127,13 +130,13 @@ function resourceToKey(resource: KubernetesResource): string {
 }
 
 // Key → Resource info
-function keyToResourceInfo(key: string): {kind: string, namespace: string, name: string} {
+function keyToResourceInfo(key: string): { kind: string; namespace: string; name: string } {
   const parts = key.split('/')
   // /registry/pods/default/nginx
   return {
-    kind: parts[2],      // pods
+    kind: parts[2], // pods
     namespace: parts[3], // default
-    name: parts[4]       // nginx
+    name: parts[4] // nginx
   }
 }
 ```
@@ -144,20 +147,20 @@ function keyToResourceInfo(key: string): {kind: string, namespace: string, name:
 
 ```typescript
 interface QueryOptions {
-  kind?: string              // 'pods', 'configmaps', etc.
-  namespace?: string         // 'default', ou undefined pour tous
-  name?: string              // Nom spécifique
-  labelSelector?: Record<string, string>  // {app: 'nginx', env: 'prod'}
-  fieldSelector?: Record<string, string>  // {status.phase: 'Running'}
+  kind?: string // 'pods', 'configmaps', etc.
+  namespace?: string // 'default', ou undefined pour tous
+  name?: string // Nom spécifique
+  labelSelector?: Record<string, string> // {app: 'nginx', env: 'prod'}
+  fieldSelector?: Record<string, string> // {status.phase: 'Running'}
 }
 
 interface QueryAPI {
   // Get single resource
   getResource(kind: string, name: string, namespace: string): Result<KubernetesResource>
-  
+
   // List resources with options
   listResources(options: QueryOptions): KubernetesResource[]
-  
+
   // Generic query (flexible)
   query(options: QueryOptions): KubernetesResource[]
 }
@@ -170,33 +173,31 @@ La QueryAPI utilise le EtcdStore en interne :
 ```typescript
 function listResources(options: QueryOptions): KubernetesResource[] {
   // 1. Construire le préfixe de clé
-  const prefix = options.kind 
-    ? `/registry/${options.kind}/${options.namespace || ''}`
-    : `/registry/`
-  
+  const prefix = options.kind ? `/registry/${options.kind}/${options.namespace || ''}` : `/registry/`
+
   // 2. Lister depuis le store
   let resources = store.list(prefix)
-  
+
   // 3. Filtrer par namespace si spécifié
   if (options.namespace) {
-    resources = resources.filter(r => r.metadata.namespace === options.namespace)
+    resources = resources.filter((r) => r.metadata.namespace === options.namespace)
   }
-  
+
   // 4. Filtrer par name si spécifié
   if (options.name) {
-    resources = resources.filter(r => r.metadata.name === options.name)
+    resources = resources.filter((r) => r.metadata.name === options.name)
   }
-  
+
   // 5. Filtrer par labels
   if (options.labelSelector) {
     resources = filterByLabels(resources, options.labelSelector)
   }
-  
+
   // 6. Filtrer par fields
   if (options.fieldSelector) {
     resources = filterByFields(resources, options.fieldSelector)
   }
-  
+
   return resources
 }
 ```
@@ -258,11 +259,13 @@ getPods(namespace?: string): Pod[] {
 ### kubectl
 
 **Avant** :
+
 ```typescript
-const items = handler.getItems(state)  // Spécifique par ressource
+const items = handler.getItems(state) // Spécifique par ressource
 ```
 
 **Après** :
+
 ```typescript
 const items = queryAPI.listResources({
   kind: parsed.resource,
@@ -274,6 +277,7 @@ const items = queryAPI.listResources({
 ### etcdctl (futur)
 
 **Nouveau** :
+
 ```typescript
 // etcdctl get /registry/pods/default/nginx
 etcdStore.get('/registry/pods/default/nginx')
@@ -285,6 +289,7 @@ etcdStore.list('/registry/pods/default/')
 ### API directe (futur)
 
 **Nouveau** :
+
 ```typescript
 // Requête flexible
 const pods = queryAPI.query({
@@ -300,6 +305,7 @@ const pods = queryAPI.query({
 ### Format de stockage
 
 **Avant** :
+
 ```json
 {
   "pods": {"items": [...]},
@@ -309,6 +315,7 @@ const pods = queryAPI.query({
 ```
 
 **Après** :
+
 ```json
 {
   "store": {
@@ -421,4 +428,3 @@ const pods = queryAPI.query({
 - [etcd documentation](https://etcd.io/docs/)
 - [Kubernetes etcd keys](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/api-machinery/etcd-keys.md)
 - Architecture actuelle : `src/core/cluster/ClusterState.ts`
-

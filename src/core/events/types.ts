@@ -7,13 +7,13 @@
 // ─── Base Event Structure ────────────────────────────────────────────────
 
 export interface BaseEvent {
-    type: string
-    timestamp: string
-    metadata?: {
-        source?: string
-        correlationId?: string
-        [key: string]: unknown
-    }
+  type: string
+  timestamp: string
+  metadata?: {
+    source?: string
+    correlationId?: string
+    [key: string]: unknown
+  }
 }
 
 // ─── Event Subscriber Types ────────────────────────────────────────────────
@@ -21,4 +21,3 @@ export interface BaseEvent {
 export type EventSubscriber<T extends BaseEvent = BaseEvent> = (event: T) => void
 
 export type UnsubscribeFn = () => void
-

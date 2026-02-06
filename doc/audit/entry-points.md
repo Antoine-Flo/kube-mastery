@@ -6,33 +6,33 @@ Document préparatoire à l’audit : entry points, surfaces sensibles, référe
 
 ### Application (Astro)
 
-| Fichier / chemin | Rôle |
-|------------------|------|
-| `src/layouts/Layout.astro` | Layout commun (structure HTML, Navbar, main, Footer) |
-| `src/pages/[lang]/` | Pages i18n : index, courses, auth, pricing, privacy-policy, terms-of-service |
-| `src/pages/[lang]/[type]/[id]/` | Overview cours/module ; `[type]/[id]/[lessonId]` = page leçon |
-| `src/pages/api/` | Endpoints API (auth, progress) |
+| Fichier / chemin                | Rôle                                                                         |
+| ------------------------------- | ---------------------------------------------------------------------------- |
+| `src/layouts/Layout.astro`      | Layout commun (structure HTML, Navbar, main, Footer)                         |
+| `src/pages/[lang]/`             | Pages i18n : index, courses, auth, pricing, privacy-policy, terms-of-service |
+| `src/pages/[lang]/[type]/[id]/` | Overview cours/module ; `[type]/[id]/[lessonId]` = page leçon                |
+| `src/pages/api/`                | Endpoints API (auth, progress)                                               |
 
 Pas de `entry-client.tsx` / `entry-server.tsx` Vinxi. Middleware Astro : redirections (ex. `/` → `/en`) dans `astro.config.mjs` (redirects).
 
 ### Routes API (serveur)
 
-| Chemin | Fichier | Rôle |
-|--------|---------|------|
-| Auth callback | `src/pages/api/auth/callback.ts` | OAuth / session |
-| Auth register | `src/pages/api/auth/register.ts` | Inscription |
-| Auth signin | `src/pages/api/auth/signin.ts` | Connexion |
-| Auth signout | `src/pages/api/auth/signout.ts` | Déconnexion |
+| Chemin            | Fichier                              | Rôle                                             |
+| ----------------- | ------------------------------------ | ------------------------------------------------ |
+| Auth callback     | `src/pages/api/auth/callback.ts`     | OAuth / session                                  |
+| Auth register     | `src/pages/api/auth/register.ts`     | Inscription                                      |
+| Auth signin       | `src/pages/api/auth/signin.ts`       | Connexion                                        |
+| Auth signout      | `src/pages/api/auth/signout.ts`      | Déconnexion                                      |
 | Progress complete | `src/pages/api/progress/complete.ts` | Marquer leçon complétée (Supabase user_progress) |
 
 ### Base de données et backend
 
-| Chemin | Rôle |
-|--------|------|
-| `src/lib/supabase.ts` | Client Supabase (browser + server, @supabase/ssr, PKCE) |
-| `src/lib/progress/` | Progress (domain, server.ts, supabase-adapter), getProgressContext |
-| **À migrer (prévu)** | Drizzle, `src/db/` (schéma, client Postgres, `DATABASE_URL`) |
-| **À migrer (prévu)** | Edge functions Supabase (create-subscription, delete-account) |
+| Chemin                | Rôle                                                               |
+| --------------------- | ------------------------------------------------------------------ |
+| `src/lib/supabase.ts` | Client Supabase (browser + server, @supabase/ssr, PKCE)            |
+| `src/lib/progress/`   | Progress (domain, server.ts, supabase-adapter), getProgressContext |
+| **À migrer (prévu)**  | Drizzle, `src/db/` (schéma, client Postgres, `DATABASE_URL`)       |
+| **À migrer (prévu)**  | Edge functions Supabase (create-subscription, delete-account)      |
 
 ## Surfaces sensibles (priorité pour l’audit)
 

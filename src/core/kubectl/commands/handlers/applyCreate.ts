@@ -15,30 +15,27 @@ import { applyResourceWithEvents, createResourceWithEvents } from './resourceHel
 /**
  * Shared helper to load and parse YAML from filesystem
  */
-const loadAndParseYaml = (
-    fileSystem: FileSystem,
-    parsed: ParsedCommand
-): ExecutionResult & { resource?: any } => {
-    // Extract filename from flags
-    const filename = parsed.flags.f || parsed.flags.filename
+const loadAndParseYaml = (fileSystem: FileSystem, parsed: ParsedCommand): ExecutionResult & { resource?: any } => {
+  // Extract filename from flags
+  const filename = parsed.flags.f || parsed.flags.filename
 
-    if (!filename) {
-        return error('error: must specify one of -f or --filename')
-    }
+  if (!filename) {
+    return error('error: must specify one of -f or --filename')
+  }
 
-    // Read file from filesystem
-    const fileResult = fileSystem.readFile(filename as string)
-    if (!fileResult.ok) {
-        return error(`error: ${fileResult.error}`)
-    }
+  // Read file from filesystem
+  const fileResult = fileSystem.readFile(filename as string)
+  if (!fileResult.ok) {
+    return error(`error: ${fileResult.error}`)
+  }
 
-    // Parse and validate YAML
-    const parseResult = parseKubernetesYaml(fileResult.value)
-    if (!parseResult.ok) {
-        return error(`error: ${parseResult.error}`)
-    }
+  // Parse and validate YAML
+  const parseResult = parseKubernetesYaml(fileResult.value)
+  if (!parseResult.ok) {
+    return error(`error: ${parseResult.error}`)
+  }
 
-    return { ok: true, value: '', resource: parseResult.value }
+  return { ok: true, value: '', resource: parseResult.value }
 }
 
 /**
@@ -46,17 +43,17 @@ const loadAndParseYaml = (
  * Creates or updates resources from YAML files
  */
 export const handleApply = (
-    fileSystem: FileSystem,
-    clusterState: ClusterState,
-    parsed: ParsedCommand,
-    eventBus: EventBus
+  fileSystem: FileSystem,
+  clusterState: ClusterState,
+  parsed: ParsedCommand,
+  eventBus: EventBus
 ): ExecutionResult => {
-    const loadResult = loadAndParseYaml(fileSystem, parsed)
-    if (!loadResult.ok) {
-        return loadResult
-    }
+  const loadResult = loadAndParseYaml(fileSystem, parsed)
+  if (!loadResult.ok) {
+    return loadResult
+  }
 
-    return applyResourceWithEvents(loadResult.resource, clusterState, eventBus)
+  return applyResourceWithEvents(loadResult.resource, clusterState, eventBus)
 }
 
 /**
@@ -64,16 +61,15 @@ export const handleApply = (
  * Creates resources from YAML files (fails if resource already exists)
  */
 export const handleCreate = (
-    fileSystem: FileSystem,
-    clusterState: ClusterState,
-    parsed: ParsedCommand,
-    eventBus: EventBus
+  fileSystem: FileSystem,
+  clusterState: ClusterState,
+  parsed: ParsedCommand,
+  eventBus: EventBus
 ): ExecutionResult => {
-    const loadResult = loadAndParseYaml(fileSystem, parsed)
-    if (!loadResult.ok) {
-        return loadResult
-    }
+  const loadResult = loadAndParseYaml(fileSystem, parsed)
+  if (!loadResult.ok) {
+    return loadResult
+  }
 
-    return createResourceWithEvents(loadResult.resource, clusterState, eventBus)
+  return createResourceWithEvents(loadResult.resource, clusterState, eventBus)
 }
-

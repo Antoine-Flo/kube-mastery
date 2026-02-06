@@ -9,10 +9,10 @@ import { success } from '../../../../shared/result'
 import type { ShellCommandHandler } from '../../core/ShellCommandHandler'
 
 export const createPwdHandler = (fileSystem: FileSystem): ShellCommandHandler => {
-    return {
-        execute: (): ExecutionResult => {
-            const currentPath = fileSystem.getCurrentPath()
-            return success(currentPath)
-        }
+  return {
+    execute: (): ExecutionResult => {
+      const currentPath = fileSystem.getCurrentPath()
+      return success(currentPath)
     }
+  }
 }

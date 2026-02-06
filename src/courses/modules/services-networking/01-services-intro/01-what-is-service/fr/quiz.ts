@@ -2,7 +2,7 @@
 // QUIZ - Qu'est-ce qu'un Service ?
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -14,9 +14,9 @@ export const quiz: Quiz = {
         'Gestion des images de conteneurs',
         'Accès réseau stable aux Pods dynamiques',
         'Planification des Pods',
-        'Limites de ressources',
+        'Limites de ressources'
       ],
-      correctAnswer: 1,
+      correctAnswer: 1
     },
     {
       id: 'q2',
@@ -26,9 +26,9 @@ export const quiz: Quiz = {
         'Une adresse IP stable et un nom DNS pour un ensemble de Pods',
         'Runtime de conteneur',
         'Planification des Pods',
-        "Registre d'images",
+        "Registre d'images"
       ],
-      correctAnswer: 0,
-    },
-  ],
-};
+      correctAnswer: 0
+    }
+  ]
+}

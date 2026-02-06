@@ -2,7 +2,7 @@
 // QUIZ - Evolution of Deployment
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -13,10 +13,10 @@ export const quiz: Quiz = {
       options: [
         'Too expensive to maintain',
         'No way to define resource boundaries, causing allocation issues',
-        'Applications couldn\'t communicate',
-        'Too slow to deploy',
+        "Applications couldn't communicate",
+        'Too slow to deploy'
       ],
-      correctAnswer: 1,
+      correctAnswer: 1
     },
     {
       id: 'q2',
@@ -26,9 +26,9 @@ export const quiz: Quiz = {
         'Containers are more expensive',
         'Containers share the Operating System among applications',
         'VMs are lighter weight',
-        'Containers require more hardware',
+        'Containers require more hardware'
       ],
-      correctAnswer: 1,
-    },
-  ],
-};
+      correctAnswer: 1
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 // QUIZ - What is a Pod?
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { Quiz } from '~/types/quiz';
+import type { Quiz } from '~/types/quiz'
 
 export const quiz: Quiz = {
   questions: [
@@ -10,13 +10,8 @@ export const quiz: Quiz = {
       id: 'q1',
       type: 'multiple-choice',
       question: 'What is the smallest deployable unit in Kubernetes?',
-      options: [
-        'Container',
-        'Pod',
-        'Node',
-        'Service',
-      ],
-      correctAnswer: 1,
+      options: ['Container', 'Pod', 'Node', 'Service'],
+      correctAnswer: 1
     },
     {
       id: 'q2',
@@ -26,9 +21,9 @@ export const quiz: Quiz = {
         'Multiple containers per Pod',
         'One container per Pod',
         'No containers in Pods',
-        'Pods without containers',
+        'Pods without containers'
       ],
-      correctAnswer: 1,
-    },
-  ],
-};
+      correctAnswer: 1
+    }
+  ]
+}
