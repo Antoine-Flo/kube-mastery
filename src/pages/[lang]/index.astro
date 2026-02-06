@@ -159,7 +159,7 @@ const localePath = useLocalePath(locale)
     align-items: center;
     gap: 2rem;
     width: 100%;
-    max-width: 1500px;
+    max-width: var(--content-max-width);
   }
   @media (min-width: 1024px) {
     .hero .content {
@@ -235,7 +235,7 @@ const localePath = useLocalePath(locale)
     border-bottom: 1px solid var(--color-gray-6);
   }
   .features .content {
-    max-width: 1200px;
+    max-width: var(--content-max-width);
     margin: 0 auto;
     padding: 0 1rem;
     display: flex;
@@ -465,7 +465,7 @@ const localePath = useLocalePath(locale)
   .stats .grid {
     display: grid;
     padding: 0 2rem;
-    max-width: 1200px;
+    max-width: var(--content-max-width);
     margin: 2rem auto;
     grid-template-columns: 1fr;
     gap: 1.5rem;

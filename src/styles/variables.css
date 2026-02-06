@@ -1,4 +1,7 @@
 :root {
+  /* Layout - largeur max du contenu (hero, navbar, sections) */
+  --content-max-width: 1300px;
+
   /* Couleurs - Gray (Slate) */
   --color-gray-1: #fcfcfd;
   --color-gray-2: #f9f9fb;

@@ -6,6 +6,24 @@ export type SupabaseEnv = {
   SUPABASE_PUBLISHABLE_DEFAULT_KEY?: string
 }
 
+/**
+ * Returns the Supabase auth cookie name (storage key) from env, e.g. "sb-xxx-auth-token".
+ * Use to clear auth cookies when the refresh token is invalid.
+ */
+export function getSupabaseAuthStorageKey(locals: unknown): string | null {
+  const env = (locals as { runtime?: { env?: { SUPABASE_URL?: string } } })?.runtime?.env
+  const url = env?.SUPABASE_URL
+  if (!url) {
+    return null
+  }
+  try {
+    const hostname = new URL(url).hostname.split('.')[0]
+    return hostname ? `sb-${hostname}-auth-token` : null
+  } catch {
+    return null
+  }
+}
+
 /** Browser client – use in <script> in .astro pages. Needs PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_PUBLISHABLE_KEY in .env (same values as server vars for local dev). */
 export function createSupabaseBrowserClient(): SupabaseClient {
   const url = import.meta.env.PUBLIC_SUPABASE_URL

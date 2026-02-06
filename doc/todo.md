@@ -1,5 +1,6 @@
 Ce doc est pour moi, ne le modifie pas
 
+- https://yukaichou.com/gamification-examples/octalysis-gamification-framework/
 - hasEnvironment ?
 - createUserSubscription à chaque signin ?
 - clean magic strings

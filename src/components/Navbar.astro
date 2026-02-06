@@ -16,6 +16,7 @@ const localePath = useLocalePath(lang)
 ---
 
 <header>
+  <div class="navbar-inner">
   <a href={localePath('/')} class="logo">
     <Logo size={27} class="logo-icon" />
     <span class="logo-name">
@@ -34,7 +35,9 @@ const localePath = useLocalePath(lang)
             {t('nav_logout')}
           </a>
         ) : (
-          <a href={localePath('/auth')}>{t('nav_login')}</a>
+          <Button href={localePath('/auth')} variant="solid" color="cyan" size="sm">
+            {t('nav_login')}
+          </Button>
         )
       }
     </nav>
@@ -52,6 +55,7 @@ const localePath = useLocalePath(lang)
       </Button>
     </div>
   </div>
+  </div>
 </header>
 
 <style>
@@ -59,11 +63,18 @@ const localePath = useLocalePath(lang)
     border-color: var(--color-gray-6);
     background-color: var(--color-gray-1);
     border-bottom: 1px solid var(--color-gray-6);
-    padding: 0.7rem 2rem;
+    padding: 0.7rem 1rem;
+    display: flex;
+    justify-content: center;
+  }
+  .navbar-inner {
+    width: 100%;
+    max-width: var(--content-max-width);
     display: flex;
     align-items: center;
     gap: 1rem;
     flex-wrap: wrap;
+    padding: 0 1rem;
   }
   .right {
     display: flex;
@@ -139,7 +150,10 @@ const localePath = useLocalePath(lang)
 
   @media (max-width: 768px) {
     header {
-      padding: 0.6rem 1rem;
+      padding: 0.6rem 0.5rem;
+    }
+    .navbar-inner {
+      padding: 0 0.5rem;
     }
     .logo {
       font-size: var(--text-md);
@@ -157,7 +171,10 @@ const localePath = useLocalePath(lang)
 
   @media (max-width: 480px) {
     header {
-      padding: 0.5rem 0.75rem;
+      padding: 0.5rem 0.25rem;
+    }
+    .navbar-inner {
+      padding: 0 0.25rem;
     }
     nav {
       gap: 0.5rem 0.75rem;
