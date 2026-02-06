@@ -1,12 +1,13 @@
 ---
 import Button from "../ui/Button.astro";
-import { Telescope, Terminal } from "@lucide/astro";
+import { MessageCircle, Telescope, Terminal } from "@lucide/astro";
 
 interface Props {
 	labelVisualizer: string;
 	labelCourse: string;
 	labelShowTerminal: string;
 	labelHideTerminal: string;
+	labelContactSupport: string;
 	/** "show" = barre dans lp__show-term (bouton affiche le terminal), "hide" = barre dans lp__term-wrap (bouton masque le terminal) */
 	terminalAction: "show" | "hide";
 }
@@ -15,6 +16,7 @@ const {
 	labelCourse,
 	labelShowTerminal,
 	labelHideTerminal,
+	labelContactSupport,
 	terminalAction,
 } = Astro.props;
 const labelTerminal =
@@ -35,6 +37,18 @@ const labelTerminal =
 		aria-label={labelVisualizer}
 	>
 		<Telescope size={18} />
+	</Button>
+	<Button
+		type="button"
+		variant="plain"
+		size="sm"
+		color="gray"
+		class="lp__content-bar-btn lp__content-bar-btn--contact"
+		data-contact-support-trigger
+		aria-label={labelContactSupport}
+		title={labelContactSupport}
+	>
+		<MessageCircle size={18} />
 	</Button>
 	<span class="lp__term-toggle-wrap">
 		<Button
@@ -89,6 +103,14 @@ const labelTerminal =
 		if (termBtn) {
 			e.preventDefault();
 			document.dispatchEvent(new CustomEvent("lesson-terminal-toggle"));
+			return;
+		}
+		const contactBtn = (e.target as Element).closest(
+			"[data-contact-support-trigger]",
+		);
+		if (contactBtn) {
+			e.preventDefault();
+			document.dispatchEvent(new CustomEvent("contact-support-open"));
 		}
 	});
 
@@ -111,7 +133,8 @@ const labelTerminal =
 	}
 
 	.lp__content-bar-btn--viz,
-	.lp__content-bar-btn--term-toggle {
+	.lp__content-bar-btn--term-toggle,
+	.lp__content-bar-btn--contact {
 		background: transparent;
 		border: none;
 	}

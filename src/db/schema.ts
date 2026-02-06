@@ -15,13 +15,13 @@ import { anonRole, authUid, authUsers, authenticatedRole } from 'drizzle-orm/sup
 /**
  * User progress table - Stores all completed lessons per user in JSONB
  */
-export const userProgress = pgTable('user_progress', {
+export const userProgress = pgTable('progress', {
     userId: uuid('user_id').primaryKey().references(() => authUsers.id, { onDelete: 'cascade' }),
     completedLessons: jsonb('completed_lessons').default('[]').notNull(), // Array of lesson IDs
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
-    index('user_progress_user_id_idx').on(table.userId),
+    index('progress_user_id_idx').on(table.userId),
     pgPolicy('Users can view their own progress', {
         for: 'select',
         to: authenticatedRole,
@@ -51,14 +51,14 @@ export type SelectUserProgress = typeof userProgress.$inferSelect
 /**
  * User preferences table - Stores user preferences (theme, locale, etc.)
  */
-export const userPreferences = pgTable('user_preferences', {
+export const userPreferences = pgTable('preferences', {
     userId: uuid('user_id').primaryKey().references(() => authUsers.id, { onDelete: 'cascade' }),
     theme: text('theme'),
     locale: text('locale'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
-    index('user_preferences_user_id_idx').on(table.userId),
+    index('preferences_user_id_idx').on(table.userId),
     pgPolicy('Users can view their own preferences', {
         for: 'select',
         to: authenticatedRole,
@@ -133,42 +133,42 @@ export type InsertSubscription = typeof subscriptions.$inferInsert
 export type SelectSubscription = typeof subscriptions.$inferSelect
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SURVEY TABLE
+// USER MESSAGES TABLE
 // ═══════════════════════════════════════════════════════════════════════════
 
+/** Type of user message: support, suggestion, or survey response */
+export const USER_MESSAGE_TYPES = ['support', 'suggestion', 'survey'] as const
+export type UserMessageType = (typeof USER_MESSAGE_TYPES)[number]
+
 /**
- * Survey table - Stores survey responses with name
- * Simple structure: one row per response, with name and responses in JSONB
+ * User messages table - Unified storage for support, suggestions, and survey responses.
+ * - type 'support' | 'suggestion': content = { message: "..." }, lessonId = context; name optional
+ * - type 'survey': name = survey name (e.g. "intro-feedback"), content = { responses: ... }
  */
-export const survey = pgTable('surveys', {
+export const userMessages = pgTable('messages', {
     id: uuid('id').primaryKey().defaultRandom(),
-    name: text('name').notNull(), // Name of the survey (e.g., "beta-testers")
-    responses: jsonb('responses').notNull(), // Flexible JSON structure for all responses
-    userId: uuid('user_id').references(() => authUsers.id, { onDelete: 'set null' }),
-    visitorId: text('visitor_id'), // For anonymous responses
-    metadata: jsonb('metadata').default('{}').notNull(), // Additional metadata (IP, user agent, etc.)
+    userId: uuid('user_id').notNull().references(() => authUsers.id, { onDelete: 'cascade' }),
+    lessonId: text('lesson_id'), // Optional context for support/suggestion
+    type: text('type').notNull(), // 'support' | 'suggestion' | 'survey'
+    name: text('name'), // Optional, e.g. survey name
+    content: jsonb('content').default('{}').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
-    index('survey_name_idx').on(table.name),
-    index('survey_user_id_idx').on(table.userId),
-    index('survey_visitor_id_idx').on(table.visitorId),
-    index('survey_created_at_idx').on(table.createdAt),
-    pgPolicy('Allow public insert on survey', {
-        for: 'insert',
-        to: anonRole,
-        withCheck: sql`true`,
-    }),
-    pgPolicy('Allow authenticated insert on survey', {
+    index('messages_type_idx').on(table.type),
+    index('messages_lesson_id_idx').on(table.lessonId),
+    index('messages_created_at_idx').on(table.createdAt),
+    index('messages_user_id_idx').on(table.userId),
+    pgPolicy('Allow authenticated insert on messages', {
         for: 'insert',
         to: authenticatedRole,
-        withCheck: sql`true`,
+        withCheck: sql`${table.userId} = ${authUid}`,
     }),
-    pgPolicy('Users can view their own responses', {
+    pgPolicy('Users can view their own messages', {
         for: 'select',
         to: authenticatedRole,
         using: sql`${table.userId} = ${authUid}`,
     }),
-    pgPolicy('Allow service role to manage survey', {
+    pgPolicy('Allow service role to manage messages', {
         for: 'all',
         to: 'service_role',
         using: sql`true`,
@@ -176,37 +176,5 @@ export const survey = pgTable('surveys', {
     }),
 ])
 
-export type InsertSurvey = typeof survey.$inferInsert
-export type SelectSurvey = typeof survey.$inferSelect
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SUGGESTIONS TABLE
-// ═══════════════════════════════════════════════════════════════════════════
-
-/**
- * Suggestions table - User feedback for lesson content
- */
-export const suggestions = pgTable('suggestions', {
-    id: uuid('id').primaryKey().defaultRandom(),
-    text: text('text').notNull(),
-    lessonId: text('lesson_id').notNull(),
-    userId: uuid('user_id').references(() => authUsers.id, { onDelete: 'set null' }),
-    visitorId: text('visitor_id'),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-}, (table) => [
-    index('suggestions_lesson_id_idx').on(table.lessonId),
-    index('suggestions_created_at_idx').on(table.createdAt),
-    pgPolicy('Allow public insert on suggestions', {
-        for: 'insert',
-        to: anonRole,
-        withCheck: sql`true`,
-    }),
-    pgPolicy('Allow authenticated insert on suggestions', {
-        for: 'insert',
-        to: authenticatedRole,
-        withCheck: sql`true`,
-    }),
-])
-
-export type InsertSuggestion = typeof suggestions.$inferInsert
-export type SelectSuggestion = typeof suggestions.$inferSelect
+export type InsertUserMessage = typeof userMessages.$inferInsert
+export type SelectUserMessage = typeof userMessages.$inferSelect

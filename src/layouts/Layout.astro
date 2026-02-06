@@ -9,6 +9,7 @@ import { getLangFromUrl } from "../i18n/utils";
 import Footer from "../components/Footer.astro";
 import GlobalStyles from "../components/GlobalStyles.astro";
 import Navbar from "../components/Navbar.astro";
+import Toaster from "../components/ui/Toaster.astro";
 import { getSupabaseServer } from "../lib/supabase";
 
 const lang = getLangFromUrl(Astro.url);
@@ -50,6 +51,7 @@ try {
 			<slot />
 		</main>
 		{showFooter && <Footer />}
+		<Toaster />
 	</body>
 </html>
 

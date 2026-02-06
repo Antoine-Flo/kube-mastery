@@ -7,7 +7,7 @@ export function createSupabaseProgressRepository(
 	return {
 		async getCompletedLessons(userId: string): Promise<Set<string>> {
 			const { data, error } = await supabase
-				.from("user_progress")
+				.from("progress")
 				.select("completed_lessons")
 				.eq("user_id", userId)
 				.maybeSingle();
@@ -26,7 +26,7 @@ export function createSupabaseProgressRepository(
 			lessonId: string,
 		): Promise<void> {
 			const { data: existing, error: fetchError } = await supabase
-				.from("user_progress")
+				.from("progress")
 				.select("completed_lessons")
 				.eq("user_id", userId)
 				.maybeSingle();
@@ -43,7 +43,7 @@ export function createSupabaseProgressRepository(
 
 			const updatedLessons = [...currentLessons, lessonId];
 			const { error: upsertError } = await supabase
-				.from("user_progress")
+				.from("progress")
 				.upsert(
 					{
 						user_id: userId,

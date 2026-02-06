@@ -1,0 +1,75 @@
+---
+import "../../styles/components/dialog.css";
+import { X } from "@lucide/astro";
+
+type DialogSize = "sm" | "md" | "lg" | "xl";
+
+interface Props {
+	id: string;
+	title: string;
+	description?: string;
+	size?: DialogSize;
+}
+const { id, title, description, size = "sm" } = Astro.props;
+const sizeClass = `dialog__content--size-${size}`;
+---
+
+<dialog
+	id={id}
+	data-dialog-id={id}
+	class="dialog"
+	aria-labelledby={`${id}-title`}
+	aria-describedby={description ? `${id}-desc` : undefined}
+>
+	<div
+		class="dialog__positioner dialog__positioner--placement-center dialog__positioner--scroll-outside"
+	>
+		<div
+			class={`dialog__content ${sizeClass} dialog__content--motion-scale dialog__content--placement-center`}
+		>
+			<div class="dialog__header">
+				<h2 id={`${id}-title`} class="dialog__title">{title}</h2>
+				<button
+					type="button"
+					class="dialog__close-trigger"
+					aria-label="Fermer"
+					data-dialog-close
+				>
+					<X size={20} />
+				</button>
+			</div>
+			{
+				description ? (
+					<p id={`${id}-desc`} class="dialog__description">
+						{description}
+					</p>
+				) : null
+			}
+			<div class="dialog__body">
+				<slot />
+			</div>
+			<slot name="footer">
+				<!-- optional footer -->
+			</slot>
+		</div>
+	</div>
+</dialog>
+
+<script>
+	function setupDialog(dialogEl: HTMLDialogElement) {
+		dialogEl.querySelectorAll("[data-dialog-close]").forEach((btn) => {
+			btn.addEventListener("click", () => {
+				dialogEl.close();
+			});
+		});
+	}
+	function initDialogs() {
+		document.querySelectorAll("dialog[data-dialog-id]").forEach((el) => {
+			if (el instanceof HTMLDialogElement) {
+				setupDialog(el);
+			}
+		});
+	}
+	initDialogs();
+	document.addEventListener("astro:page-load", initDialogs);
+</script>

@@ -3,12 +3,12 @@ import Layout from "../../../../../layouts/Layout.astro";
 import CourseOutline from "../../../../../components/CourseOutline.astro";
 import LessonTerminal from "../../../../../components/LessonTerminal.astro";
 import LessonContentBar from "../../../../../components/lesson/LessonContentBar.astro";
+import ContactSupportModal from "../../../../../components/lesson/ContactSupportModal.astro";
 import LessonClusterPanel from "../../../../../components/lesson/LessonClusterPanel.astro";
 import LessonQuizNav from "../../../../../components/lesson/LessonQuizNav.astro";
 import ScrollArea from "../../../../../components/ui/ScrollArea.astro";
 import { ArrowLeftToLine, ArrowRightToLine } from "@lucide/astro";
 import { useLocalePath, useTranslations } from "../../../../../i18n/utils";
-import { getCourses, getModules } from "../../../../../content/courses/facade";
 import {
 	getCourseOverview,
 	getModuleOverview,
@@ -72,6 +72,7 @@ const nextLessonHref = nextLesson
 	: overviewHref;
 const isFirstLesson = currentIndex === 0;
 const isLastLesson = currentIndex >= allLessons.length - 1;
+
 const quizNavLabels = {
 	quizTitle: t("quiz_title"),
 	questionInfo: t("quiz_questionInfo"),
@@ -157,6 +158,7 @@ const quizNavLabels = {
 							labelCourse={t("lesson_viewCourse")}
 							labelShowTerminal={t("lesson_showTerminal")}
 							labelHideTerminal={t("lesson_hideTerminal")}
+							labelContactSupport={t("lesson_contactSupport")}
 							terminalAction="show"
 						/>
 					</div>
@@ -170,12 +172,24 @@ const quizNavLabels = {
 						labelCourse={t("lesson_viewCourse")}
 						labelShowTerminal={t("lesson_showTerminal")}
 						labelHideTerminal={t("lesson_hideTerminal")}
+						labelContactSupport={t("lesson_contactSupport")}
 						terminalAction="hide"
 					/>
 				</div>
 			</div>
 		</div>
 	</div>
+	<ContactSupportModal
+		title={t("lesson_contactTitle")}
+		placeholder={t("courseLesson_suggestPlaceholder")}
+		submitLabel={t("courseLesson_suggestSubmit")}
+		cancelLabel={t("courseLesson_suggestCancel")}
+		successToastTitle={t("toast_sendSuccess")}
+		typeSupport={t("lesson_contactTypeSupport")}
+		typeSuggestion={t("lesson_contactTypeSuggestion")}
+		typeOther={t("lesson_contactTypeOther")}
+		lessonId={lessonId}
+	/>
 </Layout>
 
 <script>

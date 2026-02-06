@@ -1,5 +1,5 @@
 {
-  "id": "8635df9e-6d5e-4b55-804a-4b3edfa5da3c",
+  "id": "4f2ae197-d21f-4e10-9020-2d1bc4e97257",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -200,8 +200,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.suggestions": {
-      "name": "suggestions",
+    "public.messages": {
+      "name": "messages",
       "schema": "",
       "columns": {
         "id": {
@@ -211,9 +211,9 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "text": {
-          "name": "text",
-          "type": "text",
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
@@ -221,138 +221,22 @@
           "name": "lesson_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
           "notNull": false
         },
-        "visitor_id": {
-          "name": "visitor_id",
+        "type": {
+          "name": "type",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "suggestions_lesson_id_idx": {
-          "name": "suggestions_lesson_id_idx",
-          "columns": [
-            {
-              "expression": "lesson_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "suggestions_created_at_idx": {
-          "name": "suggestions_created_at_idx",
-          "columns": [
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "suggestions_user_id_users_id_fk": {
-          "name": "suggestions_user_id_users_id_fk",
-          "tableFrom": "suggestions",
-          "tableTo": "users",
-          "schemaTo": "auth",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {
-        "Allow public insert on suggestions": {
-          "name": "Allow public insert on suggestions",
-          "as": "PERMISSIVE",
-          "for": "INSERT",
-          "to": [
-            "anon"
-          ],
-          "withCheck": "true"
-        },
-        "Allow authenticated insert on suggestions": {
-          "name": "Allow authenticated insert on suggestions",
-          "as": "PERMISSIVE",
-          "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
-          "withCheck": "true"
-        }
-      },
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.surveys": {
-      "name": "surveys",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "name": {
           "name": "name",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
-        },
-        "responses": {
-          "name": "responses",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
           "notNull": false
         },
-        "visitor_id": {
-          "name": "visitor_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "metadata": {
-          "name": "metadata",
+        "content": {
+          "name": "content",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true,
@@ -367,11 +251,11 @@
         }
       },
       "indexes": {
-        "survey_name_idx": {
-          "name": "survey_name_idx",
+        "messages_type_idx": {
+          "name": "messages_type_idx",
           "columns": [
             {
-              "expression": "name",
+              "expression": "type",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -382,11 +266,11 @@
           "method": "btree",
           "with": {}
         },
-        "survey_user_id_idx": {
-          "name": "survey_user_id_idx",
+        "messages_lesson_id_idx": {
+          "name": "messages_lesson_id_idx",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "lesson_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -397,23 +281,8 @@
           "method": "btree",
           "with": {}
         },
-        "survey_visitor_id_idx": {
-          "name": "survey_visitor_id_idx",
-          "columns": [
-            {
-              "expression": "visitor_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "survey_created_at_idx": {
-          "name": "survey_created_at_idx",
+        "messages_created_at_idx": {
+          "name": "messages_created_at_idx",
           "columns": [
             {
               "expression": "created_at",
@@ -426,12 +295,27 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "messages_user_id_idx": {
+          "name": "messages_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
-        "surveys_user_id_users_id_fk": {
-          "name": "surveys_user_id_users_id_fk",
-          "tableFrom": "surveys",
+        "messages_user_id_users_id_fk": {
+          "name": "messages_user_id_users_id_fk",
+          "tableFrom": "messages",
           "tableTo": "users",
           "schemaTo": "auth",
           "columnsFrom": [
@@ -440,42 +324,33 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {
-        "Allow public insert on survey": {
-          "name": "Allow public insert on survey",
-          "as": "PERMISSIVE",
-          "for": "INSERT",
-          "to": [
-            "anon"
-          ],
-          "withCheck": "true"
-        },
-        "Allow authenticated insert on survey": {
-          "name": "Allow authenticated insert on survey",
+        "Allow authenticated insert on messages": {
+          "name": "Allow authenticated insert on messages",
           "as": "PERMISSIVE",
           "for": "INSERT",
           "to": [
             "authenticated"
           ],
-          "withCheck": "true"
+          "withCheck": "\"messages\".\"user_id\" = (select auth.uid())"
         },
-        "Users can view their own responses": {
-          "name": "Users can view their own responses",
+        "Users can view their own messages": {
+          "name": "Users can view their own messages",
           "as": "PERMISSIVE",
           "for": "SELECT",
           "to": [
             "authenticated"
           ],
-          "using": "\"surveys\".\"user_id\" = (select auth.uid())"
+          "using": "\"messages\".\"user_id\" = (select auth.uid())"
         },
-        "Allow service role to manage survey": {
-          "name": "Allow service role to manage survey",
+        "Allow service role to manage messages": {
+          "name": "Allow service role to manage messages",
           "as": "PERMISSIVE",
           "for": "ALL",
           "to": [
@@ -488,8 +363,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.user_preferences": {
-      "name": "user_preferences",
+    "public.preferences": {
+      "name": "preferences",
       "schema": "",
       "columns": {
         "user_id": {
@@ -526,8 +401,8 @@
         }
       },
       "indexes": {
-        "user_preferences_user_id_idx": {
-          "name": "user_preferences_user_id_idx",
+        "preferences_user_id_idx": {
+          "name": "preferences_user_id_idx",
           "columns": [
             {
               "expression": "user_id",
@@ -543,9 +418,9 @@
         }
       },
       "foreignKeys": {
-        "user_preferences_user_id_users_id_fk": {
-          "name": "user_preferences_user_id_users_id_fk",
-          "tableFrom": "user_preferences",
+        "preferences_user_id_users_id_fk": {
+          "name": "preferences_user_id_users_id_fk",
+          "tableFrom": "preferences",
           "tableTo": "users",
           "schemaTo": "auth",
           "columnsFrom": [
@@ -568,7 +443,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "\"user_preferences\".\"user_id\" = (select auth.uid())"
+          "using": "\"preferences\".\"user_id\" = (select auth.uid())"
         },
         "Users can insert their own preferences": {
           "name": "Users can insert their own preferences",
@@ -577,7 +452,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "\"user_preferences\".\"user_id\" = (select auth.uid())"
+          "withCheck": "\"preferences\".\"user_id\" = (select auth.uid())"
         },
         "Users can update their own preferences": {
           "name": "Users can update their own preferences",
@@ -586,8 +461,8 @@
           "to": [
             "authenticated"
           ],
-          "using": "\"user_preferences\".\"user_id\" = (select auth.uid())",
-          "withCheck": "\"user_preferences\".\"user_id\" = (select auth.uid())"
+          "using": "\"preferences\".\"user_id\" = (select auth.uid())",
+          "withCheck": "\"preferences\".\"user_id\" = (select auth.uid())"
         },
         "Users can delete their own preferences": {
           "name": "Users can delete their own preferences",
@@ -596,14 +471,14 @@
           "to": [
             "authenticated"
           ],
-          "using": "\"user_preferences\".\"user_id\" = (select auth.uid())"
+          "using": "\"preferences\".\"user_id\" = (select auth.uid())"
         }
       },
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.user_progress": {
-      "name": "user_progress",
+    "public.progress": {
+      "name": "progress",
       "schema": "",
       "columns": {
         "user_id": {
@@ -635,8 +510,8 @@
         }
       },
       "indexes": {
-        "user_progress_user_id_idx": {
-          "name": "user_progress_user_id_idx",
+        "progress_user_id_idx": {
+          "name": "progress_user_id_idx",
           "columns": [
             {
               "expression": "user_id",
@@ -652,9 +527,9 @@
         }
       },
       "foreignKeys": {
-        "user_progress_user_id_users_id_fk": {
-          "name": "user_progress_user_id_users_id_fk",
-          "tableFrom": "user_progress",
+        "progress_user_id_users_id_fk": {
+          "name": "progress_user_id_users_id_fk",
+          "tableFrom": "progress",
           "tableTo": "users",
           "schemaTo": "auth",
           "columnsFrom": [
@@ -677,7 +552,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "\"user_progress\".\"user_id\" = (select auth.uid())"
+          "using": "\"progress\".\"user_id\" = (select auth.uid())"
         },
         "Users can insert their own progress": {
           "name": "Users can insert their own progress",
@@ -686,7 +561,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "\"user_progress\".\"user_id\" = (select auth.uid())"
+          "withCheck": "\"progress\".\"user_id\" = (select auth.uid())"
         },
         "Users can update their own progress": {
           "name": "Users can update their own progress",
@@ -695,8 +570,8 @@
           "to": [
             "authenticated"
           ],
-          "using": "\"user_progress\".\"user_id\" = (select auth.uid())",
-          "withCheck": "\"user_progress\".\"user_id\" = (select auth.uid())"
+          "using": "\"progress\".\"user_id\" = (select auth.uid())",
+          "withCheck": "\"progress\".\"user_id\" = (select auth.uid())"
         },
         "Users can delete their own progress": {
           "name": "Users can delete their own progress",
@@ -705,7 +580,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "\"user_progress\".\"user_id\" = (select auth.uid())"
+          "using": "\"progress\".\"user_id\" = (select auth.uid())"
         }
       },
       "checkConstraints": {},
