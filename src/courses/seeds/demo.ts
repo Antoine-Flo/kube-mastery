@@ -80,7 +80,7 @@ export const clusterStateData = createClusterStateData({
 
 export const fsConfig: FsConfig = {
   files: {
-    '/home/kube/pod-example.yaml': `apiVersion: v1
+    '/home/kube/server.yaml': `apiVersion: v1
 kind: Pod
 metadata:
   name: nginx-demo
