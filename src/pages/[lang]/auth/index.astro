@@ -12,6 +12,11 @@ const localePath = useLocalePath(lang)
 const rawRedirect = Astro.url.searchParams.get('redirect') ?? ''
 const redirect = rawRedirect.startsWith('/') && !rawRedirect.includes('//') ? rawRedirect : ''
 
+const authError = Astro.url.searchParams.get('auth_error') === '1'
+const authErrorMessageKey = Astro.url.searchParams.get('message_key') ?? ''
+const authErrorMessageRaw = Astro.url.searchParams.get('message') ?? ''
+const authErrorMessage = authErrorMessageKey ? t(authErrorMessageKey) : authErrorMessageRaw
+
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
   const {
@@ -28,6 +33,13 @@ try {
 <Layout>
   <div class="auth">
     <h1 class="auth__title">{t('auth_loginTitle')}</h1>
+
+    {authError && authErrorMessage && (
+      <div class="auth__error" role="alert">
+        <strong>{t('auth_oauthErrorTitle')}</strong>
+        <p>{authErrorMessage}</p>
+      </div>
+    )}
 
     <div class="auth__card-body">
       <div id="auth-providers" class="auth__buttons">
@@ -201,10 +213,14 @@ try {
   }
   .auth__error {
     padding: var(--spacing-3);
+    margin-bottom: var(--spacing-4);
     border-radius: var(--radius-md);
     background-color: var(--color-ruby-3);
     color: var(--color-ruby-11);
     font-size: var(--text-sm);
+  }
+  .auth__error p {
+    margin: 0.25rem 0 0;
   }
   .auth__card-body {
     padding-top: var(--spacing-6);

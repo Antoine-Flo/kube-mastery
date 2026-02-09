@@ -1,20 +1,53 @@
 import type { APIRoute } from 'astro'
 import { getSupabaseServer } from '../../../lib/supabase'
 
-const json = (body: { error: string; message: string }, status: number) =>
+const json = (body: Record<string, unknown>, status: number) =>
   new Response(JSON.stringify(body), {
     status,
     headers: { 'Content-Type': 'application/json' }
   })
 
+function authErrorRedirect(
+  lang: string,
+  opts: { message?: string; messageKey?: string },
+  redirectTo: string
+) {
+  const base = `/${lang}/auth`
+  const params = new URLSearchParams()
+  params.set('auth_error', '1')
+  if (opts.messageKey) {
+    params.set('message_key', opts.messageKey)
+  }
+  if (opts.message) {
+    params.set('message', opts.message)
+  }
+  if (redirectTo) {
+    params.set('redirect', redirectTo)
+  }
+  return `${base}?${params.toString()}`
+}
+
+const USER_FRIENDLY_MESSAGE_KEY = 'auth_oauthErrorTryLater'
+
 export const GET: APIRoute = async ({ url, request, cookies, redirect, locals }) => {
-  const authCode = url.searchParams.get('code')
   const lang = url.searchParams.get('lang') || 'en'
   const rawRedirect = url.searchParams.get('redirect') ?? ''
   const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.includes('//') ? rawRedirect : ''
 
+  const authCode = url.searchParams.get('code')
+  const oauthError = url.searchParams.get('error')
+  const oauthErrorDescription = url.searchParams.get('error_description')
+
+  if (oauthError || oauthErrorDescription) {
+    return redirect(
+      authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo)
+    )
+  }
+
   if (!authCode) {
-    return json({ error: 'auth/callback', message: 'No code provided in OAuth callback.' }, 400)
+    return redirect(
+      authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo)
+    )
   }
 
   let supabase
@@ -33,17 +66,15 @@ export const GET: APIRoute = async ({ url, request, cookies, redirect, locals })
   const { data, error } = await supabase.auth.exchangeCodeForSession(authCode)
 
   if (error) {
-    return json({ error: 'auth/callback', message: error.message }, 500)
+    return redirect(
+      authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo)
+    )
   }
 
   const session = data?.session
   if (!session?.access_token || !session?.refresh_token) {
-    return json(
-      {
-        error: 'auth/session-missing',
-        message: 'No session after code exchange. Check Supabase OAuth and PKCE settings.'
-      },
-      500
+    return redirect(
+      authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo)
     )
   }
 

@@ -1,0 +1,254 @@
+---
+import Layout from '../../../layouts/Layout.astro'
+import Button from '../../../components/ui/Button.astro'
+import Dialog from '../../../components/ui/Dialog.astro'
+import { useTranslations, useLocalePath } from '../../../i18n/utils'
+import { getSupabaseServer } from '../../../lib/supabase'
+
+const lang = (Astro.params.lang ?? 'en') as 'en' | 'fr'
+const t = useTranslations(lang)
+const localePath = useLocalePath(lang)
+const profilePath = localePath('/profile')
+const authPath = localePath('/auth')
+
+const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
+const {
+  data: { user }
+} = await supabase.auth.getUser()
+
+if (!user) {
+  return Astro.redirect(`${authPath}?redirect=${encodeURIComponent(profilePath)}`)
+}
+
+let preferredLocale: 'en' | 'fr' = lang
+const { data: prefs } = await supabase
+  .from('preferences')
+  .select('locale')
+  .eq('user_id', user.id)
+  .maybeSingle()
+if (prefs?.locale === 'en' || prefs?.locale === 'fr') {
+  preferredLocale = prefs.locale
+}
+
+const DELETE_DIALOG_ID = 'profile-delete-dialog'
+---
+
+<Layout>
+  <div class="profile" data-profile data-current-lang={lang}>
+    <h1 class="profile__title">{t('profile_title')}</h1>
+
+    <section class="profile__section">
+      <h2 class="profile__section-title">{t('profile_defaultLanguage')}</h2>
+      <div class="profile__locale-options" role="group" aria-label={t('profile_defaultLanguage')}>
+        <button
+          type="button"
+          class="profile__locale-opt"
+          data-locale="en"
+          aria-pressed={preferredLocale === 'en'}
+        >
+          English
+        </button>
+        <button
+          type="button"
+          class="profile__locale-opt"
+          data-locale="fr"
+          aria-pressed={preferredLocale === 'fr'}
+        >
+          Français
+        </button>
+      </div>
+      <p class="profile__hint" data-locale-hint hidden>
+        {t('common_save')}
+      </p>
+    </section>
+
+    <section class="profile__section profile__danger">
+      <h2 class="profile__section-title">{t('profile_dangerZone')}</h2>
+      <p class="profile__section-desc">{t('profile_deleteAccountDescription')}</p>
+      <Button
+        type="button"
+        variant="outline"
+        color="ruby"
+        size="sm"
+        data-dialog-open={DELETE_DIALOG_ID}
+      >
+        {t('profile_deleteAccount')}
+      </Button>
+    </section>
+  </div>
+
+  <Dialog
+    id={DELETE_DIALOG_ID}
+    title={t('profile_deleteConfirmTitle')}
+    description={t('profile_deleteConfirmMessage')}
+    size="md"
+  >
+    <form
+      slot="footer"
+      class="dialog__footer"
+      id="profile-delete-form"
+      method="post"
+      action={`/api/account/delete?redirect=${encodeURIComponent(localePath('/'))}`}
+      data-astro-reload
+    >
+      <Button type="button" variant="subtle" color="gray" data-dialog-close>
+        {t('profile_cancel')}
+      </Button>
+      <Button type="submit" variant="solid" color="ruby">
+        {t('profile_deleteConfirmButton')}
+      </Button>
+    </form>
+  </Dialog>
+</Layout>
+
+<style>
+  .profile {
+    max-width: 32rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+  .profile__title {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-12);
+    margin-bottom: 1.5rem;
+  }
+  .profile__section {
+    margin-bottom: 2rem;
+  }
+  .profile__section-title {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-12);
+    margin-bottom: 0.5rem;
+  }
+  .profile__section-desc {
+    font-size: var(--text-sm);
+    color: var(--color-gray-11);
+    margin-bottom: 0.75rem;
+  }
+  .profile__locale-options {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .profile__locale-opt {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--color-gray-6);
+    border-radius: var(--radius-md);
+    background: var(--color-gray-2);
+    color: var(--color-gray-11);
+    font-size: var(--text-sm);
+    cursor: pointer;
+  }
+  .profile__locale-opt:hover {
+    background: var(--color-gray-4);
+    color: var(--color-gray-12);
+  }
+  .profile__locale-opt[aria-pressed='true'] {
+    border-color: var(--color-cyan-8);
+    background: var(--color-cyan-3);
+    color: var(--color-cyan-11);
+  }
+  .profile__hint {
+    font-size: var(--text-xs);
+    color: var(--color-cyan-11);
+    margin-top: 0.35rem;
+  }
+  .profile__danger {
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-gray-6);
+  }
+</style>
+
+<script>
+  type UiLocale = 'en' | 'fr'
+
+  const PROFILE_CONTAINER_SELECTOR = '[data-profile]'
+  const LOCALE_OPT_SELECTOR = '.profile__locale-opt'
+  const SAVED_HINT_DURATION_MS = 2000
+
+  function getProfileContainer(): HTMLElement | null {
+    return document.querySelector(PROFILE_CONTAINER_SELECTOR)
+  }
+
+  function showSavedHint(hintEl: HTMLElement) {
+    hintEl.hidden = false
+    hintEl.textContent = 'Saved.'
+    setTimeout(() => {
+      hintEl.hidden = true
+    }, SAVED_HINT_DURATION_MS)
+  }
+
+  function updateLocaleButtonsActiveState(container: HTMLElement, selectedLocale: UiLocale) {
+    container.querySelectorAll<HTMLButtonElement>(LOCALE_OPT_SELECTOR).forEach((btn) => {
+      const btnLocale = btn.getAttribute('data-locale')
+      btn.setAttribute('aria-pressed', btnLocale === selectedLocale ? 'true' : 'false')
+    })
+  }
+
+  async function saveLocalePreference(locale: UiLocale): Promise<boolean> {
+    const res = await fetch('/api/account/preferences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ locale })
+    })
+    return res.ok
+  }
+
+  function setupLocaleButtons() {
+    const container = getProfileContainer()
+    const localeButtons = container?.querySelectorAll<HTMLButtonElement>(LOCALE_OPT_SELECTOR)
+    const hintEl = container?.querySelector<HTMLElement>('[data-locale-hint]')
+
+    if (!container || !localeButtons?.length) {
+      return
+    }
+
+    localeButtons.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const locale = btn.getAttribute('data-locale') as string | null
+        if (locale !== 'en' && locale !== 'fr') {
+          return
+        }
+
+        const saved = await saveLocalePreference(locale as UiLocale)
+        if (!saved) {
+          return
+        }
+
+        const currentLang = container.getAttribute('data-current-lang')
+        if (locale !== currentLang) {
+          window.location.href = `/${locale}/profile`
+          return
+        }
+
+        updateLocaleButtonsActiveState(container, locale as UiLocale)
+        if (hintEl) {
+          showSavedHint(hintEl)
+        }
+      })
+    })
+  }
+
+  function openDialogById(dialogId: string) {
+    const dialog = document.getElementById(dialogId)
+    if (dialog && typeof (dialog as HTMLDialogElement).showModal === 'function') {
+      (dialog as HTMLDialogElement).showModal()
+    }
+  }
+
+  function setupDialogTriggers() {
+    document.querySelectorAll('[data-dialog-open]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const dialogId = (el as HTMLElement).getAttribute('data-dialog-open')
+        if (dialogId) {
+          openDialogById(dialogId)
+        }
+      })
+    })
+  }
+
+  setupLocaleButtons()
+  setupDialogTriggers()
+  document.addEventListener('astro:page-load', setupDialogTriggers)
+</script>

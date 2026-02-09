@@ -10,55 +10,13 @@ import Footer from '../components/Footer.astro'
 import GlobalStyles from '../components/GlobalStyles.astro'
 import Navbar from '../components/Navbar.astro'
 import Toaster from '../components/ui/Toaster.astro'
-import { getSupabaseServer, getSupabaseAuthStorageKey } from '../lib/supabase'
+import { getLayoutAuthContext } from '../lib/auth/server'
 
 const lang = getLangFromUrl(Astro.url)
 const bodyClass = Astro.props.bodyClass
 const showFooter = Astro.props.showFooter ?? true
 
-let isLoggedIn = false
-try {
-  const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
-  const { data: { user }, error } = await supabase.auth.getUser()
-
-  if (error) {
-    const authErr = error as unknown as { __isAuthError?: boolean; code?: string }
-    if (authErr.__isAuthError === true && authErr.code === 'refresh_token_not_found') {
-      clearSupabaseAuthCookies(Astro.locals, Astro.request, Astro.response)
-    }
-  } else {
-    isLoggedIn = Boolean(user)
-  }
-} catch {
-  // Missing Supabase env or other error → treat as not logged in
-}
-
-function clearSupabaseAuthCookies(
-  locals: typeof Astro.locals,
-  request: typeof Astro.request,
-  response: typeof Astro.response
-) {
-  const storageKey = getSupabaseAuthStorageKey(locals)
-  if (!storageKey) {
-    return
-  }
-  const cookieHeader = request.headers.get('Cookie') ?? ''
-  const cookieNames = cookieHeader.split(';').map((part) => {
-    const trimmed = part.trim()
-    const eq = trimmed.indexOf('=')
-    return eq > 0 ? trimmed.slice(0, eq).trim() : trimmed
-  }).filter(Boolean)
-
-  for (const name of cookieNames) {
-    if (
-      name === storageKey ||
-      name.startsWith(`${storageKey}.`) ||
-      name === `${storageKey}-code-verifier`
-    ) {
-      response.headers.append('Set-Cookie', `${name}=; Path=/; Max-Age=0`)
-    }
-  }
-}
+const auth = await getLayoutAuthContext(Astro.locals, Astro.request, Astro.cookies)
 ---
 
 <!doctype html>
@@ -75,7 +33,11 @@ function clearSupabaseAuthCookies(
   </head>
   <body class={bodyClass}>
     <GlobalStyles />
-    <Navbar isLoggedIn={isLoggedIn} />
+    <Navbar
+      isLoggedIn={auth.isLoggedIn}
+      user={auth.user}
+      hasPaidSubscription={auth.hasPaidSubscription}
+    />
     <main class="layout-main">
       <slot />
     </main>

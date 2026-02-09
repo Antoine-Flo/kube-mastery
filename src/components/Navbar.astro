@@ -2,58 +2,80 @@
 import { Moon, Sun } from '@lucide/astro'
 import Logo from './Logo.astro'
 import Button from './ui/Button.astro'
+import NavbarUserMenu from './NavbarUserMenu.astro'
 import { getLangFromUrl, useTranslations, useLocalePath } from '../i18n/utils'
+
+interface NavbarUser {
+  id: string
+  email?: string
+  user_metadata?: { full_name?: string }
+}
 
 interface Props {
   /** Auth state from Layout (centralized to avoid cookies set in component). */
   isLoggedIn?: boolean
+  user?: NavbarUser | null
+  hasPaidSubscription?: boolean
 }
 
-const { isLoggedIn = false } = Astro.props
+const { isLoggedIn = false, user = null, hasPaidSubscription = false } = Astro.props
 const lang = getLangFromUrl(Astro.url)
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
+const userDisplayName = user?.user_metadata?.full_name ?? user?.email ?? ''
+const userEmail = user?.email ?? ''
 ---
 
-<header>
+<header class:list={{ 'navbar--logged-in': isLoggedIn }}>
   <div class="navbar-inner">
-  <a href={localePath('/')} class="logo">
+  <a href={isLoggedIn ? localePath('/courses') : localePath('/')} class="logo">
     <Logo size={27} class="logo-icon" />
-    <span class="logo-name">
-      {t('nav_appName')}
-      <span class="logo-beta">beta</span>
-    </span>
+    {!isLoggedIn && (
+      <span class="logo-name">
+        {t('nav_appName')}
+        <span class="logo-beta">beta</span>
+      </span>
+    )}
   </a>
 
   <div class="right">
     <nav>
       <a href={localePath('/courses')}>{t('nav_courses')}</a>
-      <a href={localePath('/pricing')}>{t('nav_pricing')}</a>
+      {!isLoggedIn && <a href={localePath('/pricing')}>{t('nav_pricing')}</a>}
+      {isLoggedIn && !hasPaidSubscription && (
+        <a href={localePath('/pricing')}>{t('nav_upgrade')}</a>
+      )}
       {
         isLoggedIn ? (
-          <a href={`/api/auth/signout?lang=${lang}`} data-astro-reload>
-            {t('nav_logout')}
-          </a>
+          <NavbarUserMenu
+            userDisplayName={userDisplayName}
+            userEmail={userEmail}
+            profileHref={localePath('/profile')}
+            signoutHref={`/api/auth/signout?lang=${lang}`}
+            lang={lang}
+          />
         ) : (
-          <Button href={localePath('/auth')} variant="solid" color="cyan" size="sm">
-            {t('nav_login')}
-          </Button>
+          <>
+            <Button href={localePath('/auth')} variant="solid" color="cyan" size="sm">
+              {t('nav_login')}
+            </Button>
+            <div class="acts">
+              <Button
+                type="button"
+                variant="plain"
+                size="sm"
+                class="theme-toggle-btn"
+                data-theme-toggle
+                aria-label={t('nav_toggleTheme')}
+              >
+                <Moon size={18} class="moon" />
+                <Sun size={18} class="sun" />
+              </Button>
+            </div>
+          </>
         )
       }
     </nav>
-    <div class="acts">
-      <Button
-        type="button"
-        variant="plain"
-        size="sm"
-        class="theme-toggle-btn"
-        data-theme-toggle
-        aria-label={t('nav_toggleTheme')}
-      >
-        <Moon size={18} class="moon" />
-        <Sun size={18} class="sun" />
-      </Button>
-    </div>
   </div>
   </div>
 </header>
@@ -67,6 +89,7 @@ const localePath = useLocalePath(lang)
     display: flex;
     justify-content: center;
   }
+
   .navbar-inner {
     width: 100%;
     max-width: var(--content-max-width);
@@ -75,6 +98,10 @@ const localePath = useLocalePath(lang)
     gap: 1rem;
     flex-wrap: wrap;
   }
+  header.navbar--logged-in .navbar-inner {
+    max-width: none;
+  }
+
   .right {
     display: flex;
     align-items: center;
@@ -82,6 +109,7 @@ const localePath = useLocalePath(lang)
     margin-left: auto;
     flex-shrink: 0;
   }
+
   .logo {
     display: flex;
     align-items: center;
@@ -92,12 +120,15 @@ const localePath = useLocalePath(lang)
     text-decoration: none;
     flex-shrink: 0;
   }
+
   .logo-icon {
     flex-shrink: 0;
   }
+
   .logo-name {
     position: relative;
   }
+
   .logo-beta {
     position: absolute;
     bottom: -2px;
@@ -134,9 +165,11 @@ const localePath = useLocalePath(lang)
     gap: 0.75rem;
     flex-shrink: 0;
   }
+
   .theme-toggle-btn :global(.moon) {
     display: block;
   }
+
   .theme-toggle-btn :global(.sun) {
     display: none;
   }
@@ -182,32 +215,25 @@ const localePath = useLocalePath(lang)
       gap: 0.1rem;
     }
   }
+
 </style>
 
 <script>
-  /** Aligné sur old/src/theme.tsx : clé kube-simulator-theme, data-theme="light" | "dark" */
-  const THEME_KEY = 'kube-simulator-theme'
+  import { initTheme, toggleTheme } from '../lib/theme-client'
 
-  function applyTheme(theme: string) {
-    document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem(THEME_KEY, theme)
-  }
-
-  function initTheme() {
-    const saved = localStorage.getItem(THEME_KEY)
-    const initial = saved ?? 'dark'
-    applyTheme(initial)
-  }
-
-  function toggleTheme() {
-    const current = document.documentElement.getAttribute('data-theme')
-    const next = current === 'dark' ? 'light' : 'dark'
-    applyTheme(next)
+  function handleDocumentClick(e: Event) {
+    const target = (e.target as HTMLElement).closest?.('[data-theme-toggle]')
+    if (target) {
+      e.preventDefault()
+      e.stopPropagation()
+      toggleTheme()
+    }
   }
 
   function setupThemeToggle() {
     initTheme()
-    document.querySelector('[data-theme-toggle]')?.addEventListener('click', toggleTheme)
+    document.removeEventListener('click', handleDocumentClick, true)
+    document.addEventListener('click', handleDocumentClick, true)
   }
 
   setupThemeToggle()

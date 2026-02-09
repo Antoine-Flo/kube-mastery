@@ -4,10 +4,21 @@ import Button from '../../components/ui/Button.astro'
 import Terminal from '../../components/Terminal.astro'
 import { Zap, Shield, Euro, FileCheck, BookOpen, Code, CircleCheck } from '@lucide/astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
+import { getSupabaseServer } from '../../lib/supabase'
 
 const locale = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(locale)
 const localePath = useLocalePath(locale)
+
+try {
+  const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    return Astro.redirect(localePath('/courses'))
+  }
+} catch {
+  // not logged in, show landing
+}
 ---
 
 <Layout>

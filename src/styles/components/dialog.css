@@ -215,6 +215,8 @@
   align-items: flex-start;
   padding-left: var(--spacing-4);
   padding-right: var(--spacing-4);
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 @media (min-width: 768px) {
@@ -235,12 +237,16 @@
   justify-content: flex-end;
   flex: 0;
   gap: var(--spacing-3);
+  padding-top: var(--spacing-4);
   padding-left: var(--spacing-4);
   padding-right: var(--spacing-4);
+  padding-bottom: 0;
+  border-top: 1px solid var(--color-gray-6);
 }
 
 @media (min-width: 768px) {
   .dialog__footer {
+    padding-top: var(--spacing-6);
     padding-left: var(--spacing-6);
     padding-right: var(--spacing-6);
   }
@@ -260,6 +266,16 @@
   color: var(--color-fg-muted);
   font-size: var(--text-sm);
   line-height: var(--line-height-sm);
+  padding-left: var(--spacing-4);
+  padding-right: var(--spacing-4);
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .dialog__description {
+    padding-left: var(--spacing-6);
+    padding-right: var(--spacing-6);
+  }
 }
 
 /* Dialog Close Trigger (single button with icon, no nested button) */
