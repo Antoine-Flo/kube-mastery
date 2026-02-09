@@ -5,45 +5,53 @@
 // Used only for migrations, queries use supabase-js directly.
 
 import { sql } from 'drizzle-orm'
-import { boolean, index, jsonb, pgPolicy, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
-import { anonRole, authUid, authUsers, authenticatedRole } from 'drizzle-orm/supabase'
+import { index, jsonb, pgPolicy, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core'
+import { authUid, authUsers, authenticatedRole } from 'drizzle-orm/supabase'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TABLES
 // ═══════════════════════════════════════════════════════════════════════════
 
+/** Completion types: lesson, chapter, module, course. target_id format depends on type (see plan). */
+export const COMPLETION_TYPES = ['lesson', 'chapter', 'module', 'course'] as const
+export type CompletionType = (typeof COMPLETION_TYPES)[number]
+
 /**
- * User progress table - Stores all completed lessons per user in JSONB
+ * Completions table - One row per completed item (lesson, chapter, module, or course).
+ * Enables granular progress and stats. For percentage by course/module, use type = 'lesson'.
  */
-export const userProgress = pgTable(
-  'progress',
+export const completions = pgTable(
+  'completions',
   {
+    id: uuid('id').primaryKey().defaultRandom(),
     userId: uuid('user_id')
-      .primaryKey()
+      .notNull()
       .references(() => authUsers.id, { onDelete: 'cascade' }),
-    completedLessons: jsonb('completed_lessons').default('[]').notNull(), // Array of lesson IDs
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+    type: text('type').notNull(), // 'lesson' | 'chapter' | 'module' | 'course'
+    targetId: text('target_id').notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }).defaultNow().notNull()
   },
   (table) => [
-    index('progress_user_id_idx').on(table.userId),
-    pgPolicy('Users can view their own progress', {
+    unique('completions_user_type_target_unique').on(table.userId, table.type, table.targetId),
+    index('completions_user_id_idx').on(table.userId),
+    index('completions_user_type_idx').on(table.userId, table.type),
+    pgPolicy('Users can view their own completions', {
       for: 'select',
       to: authenticatedRole,
       using: sql`${table.userId} = ${authUid}`
     }),
-    pgPolicy('Users can insert their own progress', {
+    pgPolicy('Users can insert their own completions', {
       for: 'insert',
       to: authenticatedRole,
       withCheck: sql`${table.userId} = ${authUid}`
     }),
-    pgPolicy('Users can update their own progress', {
+    pgPolicy('Users can update their own completions', {
       for: 'update',
       to: authenticatedRole,
       using: sql`${table.userId} = ${authUid}`,
       withCheck: sql`${table.userId} = ${authUid}`
     }),
-    pgPolicy('Users can delete their own progress', {
+    pgPolicy('Users can delete their own completions', {
       for: 'delete',
       to: authenticatedRole,
       using: sql`${table.userId} = ${authUid}`
@@ -51,8 +59,8 @@ export const userProgress = pgTable(
   ]
 )
 
-export type InsertUserProgress = typeof userProgress.$inferInsert
-export type SelectUserProgress = typeof userProgress.$inferSelect
+export type InsertCompletion = typeof completions.$inferInsert
+export type SelectCompletion = typeof completions.$inferSelect
 
 /**
  * User preferences table - Stores user preferences (theme, locale, etc.)

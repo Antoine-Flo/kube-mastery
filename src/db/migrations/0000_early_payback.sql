@@ -1,3 +1,13 @@
+CREATE TABLE "completions" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"type" text NOT NULL,
+	"target_id" text NOT NULL,
+	"completed_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "completions_user_type_target_unique" UNIQUE("user_id","type","target_id")
+);
+--> statement-breakpoint
+ALTER TABLE "completions" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
 CREATE TABLE "subscriptions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
@@ -35,18 +45,12 @@ CREATE TABLE "preferences" (
 );
 --> statement-breakpoint
 ALTER TABLE "preferences" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
-CREATE TABLE "progress" (
-	"user_id" uuid PRIMARY KEY NOT NULL,
-	"completed_lessons" jsonb DEFAULT '[]' NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-ALTER TABLE "progress" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "completions" ADD CONSTRAINT "completions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "messages" ADD CONSTRAINT "messages_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "preferences" ADD CONSTRAINT "preferences_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "progress" ADD CONSTRAINT "progress_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "completions_user_id_idx" ON "completions" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "completions_user_type_idx" ON "completions" USING btree ("user_id","type");--> statement-breakpoint
 CREATE INDEX "subscriptions_user_id_idx" ON "subscriptions" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "subscriptions_status_idx" ON "subscriptions" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "subscriptions_paddle_subscription_id_idx" ON "subscriptions" USING btree ("paddle_subscription_id");--> statement-breakpoint
@@ -55,7 +59,10 @@ CREATE INDEX "messages_lesson_id_idx" ON "messages" USING btree ("lesson_id");--
 CREATE INDEX "messages_created_at_idx" ON "messages" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "messages_user_id_idx" ON "messages" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "preferences_user_id_idx" ON "preferences" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "progress_user_id_idx" ON "progress" USING btree ("user_id");--> statement-breakpoint
+CREATE POLICY "Users can view their own completions" ON "completions" AS PERMISSIVE FOR SELECT TO "authenticated" USING ("completions"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "Users can insert their own completions" ON "completions" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ("completions"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "Users can update their own completions" ON "completions" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ("completions"."user_id" = (select auth.uid())) WITH CHECK ("completions"."user_id" = (select auth.uid()));--> statement-breakpoint
+CREATE POLICY "Users can delete their own completions" ON "completions" AS PERMISSIVE FOR DELETE TO "authenticated" USING ("completions"."user_id" = (select auth.uid()));--> statement-breakpoint
 CREATE POLICY "Users can view their own subscriptions" ON "subscriptions" AS PERMISSIVE FOR SELECT TO "authenticated" USING ("subscriptions"."user_id" = (select auth.uid()));--> statement-breakpoint
 CREATE POLICY "Users can insert their own subscriptions" ON "subscriptions" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ("subscriptions"."user_id" = (select auth.uid()));--> statement-breakpoint
 CREATE POLICY "Users can update their own subscriptions" ON "subscriptions" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ("subscriptions"."user_id" = (select auth.uid())) WITH CHECK ("subscriptions"."user_id" = (select auth.uid()));--> statement-breakpoint
@@ -66,8 +73,4 @@ CREATE POLICY "Allow service role to manage messages" ON "messages" AS PERMISSIV
 CREATE POLICY "Users can view their own preferences" ON "preferences" AS PERMISSIVE FOR SELECT TO "authenticated" USING ("preferences"."user_id" = (select auth.uid()));--> statement-breakpoint
 CREATE POLICY "Users can insert their own preferences" ON "preferences" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ("preferences"."user_id" = (select auth.uid()));--> statement-breakpoint
 CREATE POLICY "Users can update their own preferences" ON "preferences" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ("preferences"."user_id" = (select auth.uid())) WITH CHECK ("preferences"."user_id" = (select auth.uid()));--> statement-breakpoint
-CREATE POLICY "Users can delete their own preferences" ON "preferences" AS PERMISSIVE FOR DELETE TO "authenticated" USING ("preferences"."user_id" = (select auth.uid()));--> statement-breakpoint
-CREATE POLICY "Users can view their own progress" ON "progress" AS PERMISSIVE FOR SELECT TO "authenticated" USING ("progress"."user_id" = (select auth.uid()));--> statement-breakpoint
-CREATE POLICY "Users can insert their own progress" ON "progress" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ("progress"."user_id" = (select auth.uid()));--> statement-breakpoint
-CREATE POLICY "Users can update their own progress" ON "progress" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ("progress"."user_id" = (select auth.uid())) WITH CHECK ("progress"."user_id" = (select auth.uid()));--> statement-breakpoint
-CREATE POLICY "Users can delete their own progress" ON "progress" AS PERMISSIVE FOR DELETE TO "authenticated" USING ("progress"."user_id" = (select auth.uid()));
+CREATE POLICY "Users can delete their own preferences" ON "preferences" AS PERMISSIVE FOR DELETE TO "authenticated" USING ("preferences"."user_id" = (select auth.uid()));
