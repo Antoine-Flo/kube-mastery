@@ -222,3 +222,13 @@
     transform: translateY(0);
   }
 }
+
+/* Shared footer for lesson dialogs (survey, contact support): same line, align right */
+.lesson-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-6);
+  padding-left: 0;
+  padding-right: 0;
+}

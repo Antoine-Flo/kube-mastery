@@ -1,0 +1,253 @@
+---
+import Layout from '../../../../layouts/Layout.astro'
+import Button from '../../../../components/ui/Button.astro'
+import { Star } from '@lucide/astro'
+import { useTranslations, useLocalePath } from '../../../../i18n/utils'
+import { getProgressContext } from '../../../../lib/progress/server'
+
+const lang = Astro.params.lang as 'en' | 'fr'
+const t = useTranslations(lang)
+const localePath = useLocalePath(lang)
+
+const { userId } = await getProgressContext(Astro.locals, Astro.request, Astro.cookies)
+if (!userId) {
+  return Astro.redirect(localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname))
+}
+
+const coursesHref = localePath('/courses')
+---
+
+<Layout>
+  <main class="complete-page">
+    <h1 class="complete-page__title">{t('courseComplete_congrats')}</h1>
+    <form id="complete-survey-form" class="complete-survey-form">
+      <div class="complete-survey-form__field">
+        <textarea
+          id="complete-survey-comment"
+          name="comment"
+          class="complete-survey-form__comment"
+          placeholder={t('survey_placeholder')}
+          rows={6}
+          aria-label={t('survey_placeholder')}></textarea>
+      </div>
+      <div class="complete-survey-form__field">
+        <span class="complete-survey-form__label" id="complete-survey-rating-label">
+          {t('survey_ratingLabel')}
+        </span>
+        <input
+          type="hidden"
+          name="rating"
+          id="complete-survey-rating"
+          value=""
+          required
+          aria-required="true"
+          aria-describedby="complete-survey-rating-label" />
+        <div class="complete-survey-form__stars" role="group" aria-labelledby="complete-survey-rating-label">
+          {[1, 2, 3, 4, 5].map((value) => (
+            <button
+              type="button"
+              class="complete-survey-form__star"
+              data-value={value}
+              aria-label={`${value} ${value === 1 ? 'star' : 'stars'}`}
+              aria-pressed="false">
+              <Star size={32} stroke-width={1.5} />
+            </button>
+          ))}
+        </div>
+      </div>
+      <p id="complete-survey-error" class="complete-survey-form__error" aria-live="polite" hidden></p>
+      <div class="complete-survey-form__footer">
+        <Button href={coursesHref} variant="subtle" color="gray" size="sm">
+          {t('courseComplete_backToCourses')}
+        </Button>
+        <Button type="submit" variant="solid" color="cyan" size="sm">
+          {t('survey_submit')}
+        </Button>
+      </div>
+    </form>
+  </main>
+</Layout>
+
+<script define:vars={{ successToastTitle: t('survey_successToast'), errorRatingMessage: t('survey_errorRating'), coursesHref }}>
+  function getFormPayload(formEl) {
+    const ratingEl = formEl.querySelector('#complete-survey-rating')
+    const rating = ratingEl && 'value' in ratingEl && ratingEl.value ? Number(ratingEl.value) : 0
+    const commentEl = formEl.querySelector('textarea[name="comment"]')
+    const comment = commentEl && 'value' in commentEl ? commentEl.value.trim() : ''
+    return { name: 'small', rating, comment: comment || undefined }
+  }
+
+  function setupStars(formEl) {
+    const hidden = formEl.querySelector('#complete-survey-rating')
+    const stars = formEl.querySelectorAll('.complete-survey-form__star')
+    if (!hidden || !stars.length) {
+      return
+    }
+    function setRating(value) {
+      hidden.value = String(value)
+      stars.forEach((star, i) => {
+        const v = i + 1
+        const selected = v <= value
+        star.setAttribute('aria-pressed', selected ? 'true' : 'false')
+        star.classList.toggle('complete-survey-form__star--filled', selected)
+      })
+    }
+    stars.forEach((star, i) => {
+      star.addEventListener('click', () => {
+        setRating(i + 1)
+      })
+    })
+  }
+
+  function getErrorEl() {
+    return document.getElementById('complete-survey-error')
+  }
+
+  function hideError() {
+    const el = getErrorEl()
+    if (el) {
+      el.setAttribute('hidden', '')
+      el.textContent = ''
+    }
+  }
+
+  function showError(text) {
+    const el = getErrorEl()
+    if (el) {
+      el.textContent = text
+      el.removeAttribute('hidden')
+    }
+  }
+
+  function showSuccessToast(title) {
+    document.dispatchEvent(
+      new CustomEvent('toast-show', {
+        detail: { title, type: 'success' }
+      })
+    )
+  }
+
+  async function sendSurvey(payload) {
+    const res = await fetch('/api/survey', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error ?? res.statusText)
+    }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    const formEl = e.target
+    if (!(formEl instanceof HTMLFormElement)) {
+      return
+    }
+    hideError()
+    const payload = getFormPayload(formEl)
+    if (payload.rating < 1 || payload.rating > 5) {
+      showError(errorRatingMessage)
+      return
+    }
+    try {
+      await sendSurvey(payload)
+      showSuccessToast(successToastTitle)
+      window.location.href = coursesHref
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Erreur')
+    }
+  }
+
+  const form = document.getElementById('complete-survey-form')
+  if (form) {
+    form.addEventListener('submit', handleSubmit)
+    setupStars(form)
+  }
+</script>
+
+<style>
+  .complete-page {
+    max-width: 52rem;
+    margin: 0 auto;
+    padding: var(--spacing-10) var(--spacing-6);
+  }
+
+  .complete-page__title {
+    font-size: var(--text-3xl);
+    font-weight: 600;
+    color: var(--color-fg-default);
+    margin-bottom: var(--spacing-8);
+    line-height: var(--line-height-tight);
+  }
+
+  .complete-survey-form {
+    width: 100%;
+  }
+
+  .complete-survey-form__field {
+    margin-bottom: var(--spacing-8);
+  }
+
+  .complete-survey-form__label {
+    display: block;
+    font-size: var(--text-base);
+    font-weight: 500;
+    color: var(--color-fg-default);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .complete-survey-form__comment {
+    width: 100%;
+    min-height: 10rem;
+    padding: var(--spacing-4);
+    border: 1px solid var(--color-gray-7);
+    border-radius: var(--radius-2);
+    font-family: inherit;
+    font-size: var(--text-base);
+    line-height: var(--line-height-relaxed);
+    resize: vertical;
+  }
+
+  .complete-survey-form__comment::placeholder {
+    color: var(--color-gray-9);
+  }
+
+  .complete-survey-form__stars {
+    display: flex;
+    gap: var(--spacing-2);
+    align-items: center;
+  }
+
+  .complete-survey-form__star {
+    padding: var(--spacing-2);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-gray-7);
+    transition: color var(--duration-fast);
+  }
+
+  .complete-survey-form__star:hover {
+    color: var(--color-amber-9);
+  }
+
+  .complete-survey-form__star--filled {
+    color: var(--color-amber-9);
+  }
+
+  .complete-survey-form__error {
+    margin-bottom: var(--spacing-2);
+    font-size: var(--text-sm);
+    color: var(--color-ruby-11);
+  }
+
+  .complete-survey-form__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-6);
+  }
+</style>

@@ -50,7 +50,7 @@ const seedName = env && env !== 'empty' ? env : 'minimal'
 const t = useTranslations(lang)
 const quiz = getLessonQuiz(type, id, lessonId, lang)
 const prevLessonHref = prevLesson ? localePath(`/${type}/${id}/${prevLesson.id}`) : ''
-const nextLessonHref = nextLesson ? localePath(`/${type}/${id}/${nextLesson.id}`) : overviewHref
+const nextLessonHref = nextLesson ? localePath(`/${type}/${id}/${nextLesson.id}`) : localePath(`/${type}/${id}/complete`)
 const isFirstLesson = currentIndex === 0
 const isLastLesson = currentIndex >= allLessons.length - 1
 
@@ -137,7 +137,7 @@ const quizNavLabels = {
     </div>
   </div>
   <ContactSupportModal
-    title={t('lesson_contactTitle')}
+    title={t('lesson_contactSupport')}
     placeholder={t('courseLesson_suggestPlaceholder')}
     submitLabel={t('courseLesson_suggestSubmit')}
     cancelLabel={t('courseLesson_suggestCancel')}

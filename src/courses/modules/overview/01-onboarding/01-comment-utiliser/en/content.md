@@ -13,9 +13,11 @@ Welcome to KubeMastery! We're excited to have you here. This platform allows you
 
 On the right side of your screen, you'll find an **emulated terminal**. This terminal allows you to run commands and manipulate a simulated Kubernetes cluster, exactly like in production. It's your playground to experiment and learn.
 
-Below the terminal, there's a **cluster viewer** panel that displays your cluster as a visual diagram. You can expand or collapse it using the button at the bottom right. It shows nodes, pods, and containers in a nested view, helping you visualize the state of your cluster at a glance.
+Below the terminal, you'll find buttons: the **telescope icon** opens the **cluster visualizer**, which displays your cluster as a diagram (nodes, pods, containers); the **chat icon** lets you send feedback, suggestions, or report bugs.
 
-On the left side, you'll find an **overview panel** that lets you jump between lessons easily. You can show or hide it anytime with the button at the bottom left. It might not be visible if you're on a smaller screen.
+On the left side, you'll find an **overview panel** that lets you jump between lessons easily. You can show or hide it anytime with the button at the bottom left.
+
+**On smartphone**, the layout differs. Note that not all mobile keyboards work well with the terminal; we recommend **Gboard**, which has been tested.
 
 ## Test the environment
 

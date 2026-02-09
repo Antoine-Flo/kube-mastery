@@ -53,7 +53,7 @@ const {
       required></textarea>
     <p id="contact-support-error" class="lesson__suggest-error contact-support-form__error" aria-live="polite" hidden>
     </p>
-    <footer class="dialog__footer contact-support-form__footer">
+    <footer class="dialog__footer lesson-dialog__footer contact-support-form__footer">
       <Button type="button" variant="subtle" color="gray" data-dialog-close>
         {cancelLabel}
       </Button>
@@ -219,14 +219,6 @@ const {
   }
   .contact-support-form__error {
     margin-bottom: var(--spacing-2);
-  }
-  .contact-support-form__footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--spacing-2);
-    margin-top: var(--spacing-6);
-    padding-left: 0;
-    padding-right: 0;
   }
   :global(#contact-support-dialog .dialog__content) {
     min-height: 28rem;
