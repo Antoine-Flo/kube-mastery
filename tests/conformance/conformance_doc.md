@@ -9,6 +9,7 @@ Valider que les ressources Kubernetes créées par le simulateur sont conformes 
 Les specs sont téléchargées depuis : https://github.com/kubernetes/kubernetes/tree/master/api/openapi-spec/v3
 
 Fichiers utilisés :
+
 - `api__v1_openapi.json` - Core v1 (Pods, ConfigMaps, Secrets, Services, Namespaces)
 - `apis__apps__v1_openapi.json` - Apps v1 (Deployments, ReplicaSets, StatefulSets)
 
@@ -34,61 +35,68 @@ import { loadOpenAPISpec } from '../openapi/loader'
 import { createOpenAPIValidator } from '../openapi/validator'
 
 describe('Ressource OpenAPI Conformance', () => {
-    let validator: ReturnType<typeof createOpenAPIValidator>
+  let validator: ReturnType<typeof createOpenAPIValidator>
 
-    beforeAll(async () => {
-        const specResult = await loadOpenAPISpec('api__v1_openapi.json')
-        if (!specResult.ok) {
-            throw new Error(`Failed to load spec: ${specResult.error}`)
+  beforeAll(async () => {
+    const specResult = await loadOpenAPISpec('api__v1_openapi.json')
+    if (!specResult.ok) {
+      throw new Error(`Failed to load spec: ${specResult.error}`)
+    }
+    validator = createOpenAPIValidator(specResult.value)
+  })
+
+  describe('valid ressources', () => {
+    it('should validate minimal ressource', () => {
+      const ressource = createRessource({
+        /* ... */
+      })
+
+      // Convertir en objet simple (retirer champs internes)
+      const ressourceForValidation = {
+        apiVersion: ressource.apiVersion,
+        kind: ressource.kind,
+        metadata: {
+          /* ... */
+        },
+        spec: {
+          /* ... */
         }
-        validator = createOpenAPIValidator(specResult.value)
+      }
+
+      const result = validator.validateResource(ressourceForValidation, 'v1', 'Ressource')
+      if (!result.ok) {
+        throw new Error(`Validation failed: ${result.error}`)
+      }
+      expect(result.value.valid).toBe(true)
     })
+  })
 
-    describe('valid ressources', () => {
-        it('should validate minimal ressource', () => {
-            const ressource = createRessource({ /* ... */ })
-            
-            // Convertir en objet simple (retirer champs internes)
-            const ressourceForValidation = {
-                apiVersion: ressource.apiVersion,
-                kind: ressource.kind,
-                metadata: { /* ... */ },
-                spec: { /* ... */ }
-            }
+  describe('invalid ressources', () => {
+    it('should reject ressource with invalid type', () => {
+      const invalidRessource = {
+        apiVersion: 'v1',
+        kind: 'Ressource',
+        metadata: { name: 'test', namespace: 'default' },
+        spec: { field: 123 } // Invalid: should be string
+      }
 
-            const result = validator.validateResource(ressourceForValidation, 'v1', 'Ressource')
-            if (!result.ok) {
-                throw new Error(`Validation failed: ${result.error}`)
-            }
-            expect(result.value.valid).toBe(true)
-        })
+      const result = validator.validateResource(invalidRessource, 'v1', 'Ressource')
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        // Le test échoue si la ressource est valide
+        expect(result.value.valid).toBe(false)
+        expect(result.value.errors).toBeDefined()
+        expect(result.value.errors?.length).toBeGreaterThan(0)
+      }
     })
-
-    describe('invalid ressources', () => {
-        it('should reject ressource with invalid type', () => {
-            const invalidRessource = {
-                apiVersion: 'v1',
-                kind: 'Ressource',
-                metadata: { name: 'test', namespace: 'default' },
-                spec: { field: 123 } // Invalid: should be string
-            }
-
-            const result = validator.validateResource(invalidRessource, 'v1', 'Ressource')
-            expect(result.ok).toBe(true)
-            if (result.ok) {
-                // Le test échoue si la ressource est valide
-                expect(result.value.valid).toBe(false)
-                expect(result.value.errors).toBeDefined()
-                expect(result.value.errors?.length).toBeGreaterThan(0)
-            }
-        })
-    })
+  })
 })
 ```
 
 ### 2. Mapping API version → schéma
 
 Le validator mappe automatiquement :
+
 - `v1` → `io.k8s.api.core.v1.{Kind}`
 - `apps/v1` → `io.k8s.api.apps.v1.{Kind}`
 
@@ -101,8 +109,8 @@ Si votre modèle utilise des ADT (discriminated unions), convertir avant validat
 ```typescript
 // Exemple : Secret.type est un ADT, OpenAPI attend un string
 const secretForValidation = {
-    ...secret,
-    type: secret.type.type // Convertir ADT en string
+  ...secret,
+  type: secret.type.type // Convertir ADT en string
 }
 ```
 

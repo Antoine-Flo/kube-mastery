@@ -2,14 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createTerminalOutput, formatCommandOutput } from '../../../../src/core/terminal/core/TerminalOutput'
 import type { TerminalRenderer } from '../../../../src/core/terminal/renderer/TerminalRenderer'
 
-
 /**
  * Vérifie si une chaîne se termine par un saut de ligne
  */
 const hasTrailingNewline = (text: string): boolean => {
   return text.endsWith('\n') || text.endsWith('\r\n')
 }
-
 
 describe('TerminalOutput', () => {
   let mockRenderer: TerminalRenderer
@@ -28,7 +26,7 @@ describe('TerminalOutput', () => {
       moveCursorRight: vi.fn(),
       setCursorPosition: vi.fn(),
       focus: vi.fn(),
-      dispose: vi.fn(),
+      dispose: vi.fn()
     }
   })
 

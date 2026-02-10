@@ -13,20 +13,19 @@ import type { FileSystemState } from '../../../src/core/filesystem/FileSystem'
  * All methods can be overridden via the overrides parameter
  */
 export const createMockFileSystem = (overrides: Partial<FileSystem> = {}): FileSystem => ({
-    getCurrentPath: () => '/home/kube',
-    changeDirectory: () => success(''),
-    listDirectory: () => success([]),
-    createDirectory: () => success(''),
-    deleteDirectory: () => success(undefined),
-    createFile: () => success(createFileNode('test', '/home/kube/test')),
-    readFile: () => success(''),
-    writeFile: () => success(undefined),
-    deleteFile: () => success(undefined),
-    toJSON: (): FileSystemState => ({
-        currentPath: '/home/kube',
-        tree: createDirectory('root', '/')
-    }),
-    loadState: () => { },
-    ...overrides
+  getCurrentPath: () => '/home/kube',
+  changeDirectory: () => success(''),
+  listDirectory: () => success([]),
+  createDirectory: () => success(''),
+  deleteDirectory: () => success(undefined),
+  createFile: () => success(createFileNode('test', '/home/kube/test')),
+  readFile: () => success(''),
+  writeFile: () => success(undefined),
+  deleteFile: () => success(undefined),
+  toJSON: (): FileSystemState => ({
+    currentPath: '/home/kube',
+    tree: createDirectory('root', '/')
+  }),
+  loadState: () => {},
+  ...overrides
 })
-

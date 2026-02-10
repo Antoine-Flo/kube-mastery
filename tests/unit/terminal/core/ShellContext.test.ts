@@ -12,11 +12,11 @@ describe('ShellContextStack', () => {
       type: 'directory' as const,
       name: 'root',
       path: '/',
-      children: new Map(),
+      children: new Map()
     }
     fileSystemState = {
       currentPath: '/home/kube',
-      tree: root,
+      tree: root
     }
     shellContextStack = new ShellContextStack(fileSystemState)
   })
@@ -73,7 +73,7 @@ describe('ShellContextStack', () => {
     beforeEach(() => {
       const containerFs = {
         currentPath: '/',
-        tree: fileSystemState.tree,
+        tree: fileSystemState.tree
       }
       shellContextStack.pushContainerContext('nginx-pod', 'nginx', 'default', containerFs)
     })
@@ -91,7 +91,7 @@ describe('ShellContextStack', () => {
       const containerFs = shellContextStack.getCurrentFileSystem()
       // We need to modify the underlying state
       const context = shellContextStack.getCurrentContext()
-        ; (context.fileSystem as any).getCurrentPath = () => '/var/log'
+      ;(context.fileSystem as any).getCurrentPath = () => '/var/log'
       shellContextStack.updateCurrentPrompt()
       expect(shellContextStack.getCurrentPrompt()).toBe('☸ [nginx-pod:nginx] /var/log>')
     })
