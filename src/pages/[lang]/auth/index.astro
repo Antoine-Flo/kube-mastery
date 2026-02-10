@@ -16,6 +16,7 @@ const authError = Astro.url.searchParams.get('auth_error') === '1'
 const authErrorMessageKey = Astro.url.searchParams.get('message_key') ?? ''
 const authErrorMessageRaw = Astro.url.searchParams.get('message') ?? ''
 const authErrorMessage = authErrorMessageKey ? t(authErrorMessageKey) : authErrorMessageRaw
+const magicSent = Astro.url.searchParams.get('magic_sent') === '1'
 
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
@@ -38,6 +39,12 @@ try {
       <div class="auth__error" role="alert">
         <strong>{t('auth_oauthErrorTitle')}</strong>
         <p>{authErrorMessage}</p>
+      </div>
+    )}
+
+    {magicSent && (
+      <div class="auth__confirm-message" role="status">
+        <p>{t('auth_checkEmail')}</p>
       </div>
     )}
 
@@ -92,96 +99,23 @@ try {
       </div>
 
       <div id="auth-email-form" class="auth__form-wrapper" hidden>
-        <div class="auth__segment">
-          <button
-            type="button"
-            class="auth__segment-btn auth__segment-btn--active"
-            data-mode="login"
-            aria-pressed="true"
-          >
-            {t('auth_login')}
-          </button>
-          <button type="button" class="auth__segment-btn" data-mode="signup" aria-pressed="false">
-            {t('auth_signup')}
-          </button>
-        </div>
-
-        <form id="auth-form-login" class="auth__form" action="/api/auth/signin" method="post" data-astro-reload>
+        <form id="auth-form-magic" class="auth__form" action="/api/auth/signin" method="post" data-astro-reload>
+          <input type="hidden" name="magic" value="1" />
           <input type="hidden" name="lang" value={lang} />
           <input type="hidden" name="redirect" value={redirect} />
           <div class="auth__field">
-            <label for="auth-email-login" class="auth__label">{t('auth_email')}</label>
+            <label for="auth-email-magic" class="auth__label">{t('auth_email')}</label>
             <input
               type="email"
-              id="auth-email-login"
+              id="auth-email-magic"
               name="email"
               placeholder="email@example.com"
               required
               class="auth__input"
             />
           </div>
-          <div class="auth__field">
-            <label for="auth-password-login" class="auth__label">{t('auth_password')}</label>
-            <input
-              type="password"
-              id="auth-password-login"
-              name="password"
-              placeholder="••••••••"
-              required
-              class="auth__input"
-            />
-          </div>
           <Button type="submit" variant="solid" size="lg" class="auth__submit-button">
-            {t('auth_loginButton')}
-          </Button>
-        </form>
-
-        <form
-          id="auth-form-signup"
-          class="auth__form"
-          action="/api/auth/register"
-          method="post"
-          data-astro-reload
-          hidden
-          data-password-mismatch={t('auth_passwordMismatch')}
-        >
-          <input type="hidden" name="lang" value={lang} />
-          <input type="hidden" name="redirect" value={redirect} />
-          <div class="auth__field">
-            <label for="auth-email-signup" class="auth__label">{t('auth_email')}</label>
-            <input
-              type="email"
-              id="auth-email-signup"
-              name="email"
-              placeholder="email@example.com"
-              required
-              class="auth__input"
-            />
-          </div>
-          <div class="auth__field">
-            <label for="auth-password-signup" class="auth__label">{t('auth_password')}</label>
-            <input
-              type="password"
-              id="auth-password-signup"
-              name="password"
-              placeholder="••••••••"
-              required
-              class="auth__input"
-            />
-          </div>
-          <div class="auth__field">
-            <label for="auth-confirm-password" class="auth__label">{t('auth_confirmPassword')}</label>
-            <input
-              type="password"
-              id="auth-confirm-password"
-              name="confirmPassword"
-              placeholder="••••••••"
-              required
-              class="auth__input"
-            />
-          </div>
-          <Button type="submit" variant="solid" size="lg" class="auth__submit-button">
-            {t('auth_signupButton')}
+            {t('auth_sendLoginLink')}
           </Button>
         </form>
 
@@ -195,10 +129,12 @@ try {
 
 <style>
   .auth {
-    max-width: 400px;
+    max-width: 370px;
+    width: 100%;
     margin: 0 auto;
     padding: 4rem 2rem;
   }
+
   .auth__title {
     font-size: 1.5rem;
     font-weight: var(--font-weight-bold);
@@ -206,11 +142,13 @@ try {
     text-align: center;
     margin-bottom: 1rem;
   }
+
   .auth__form {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-4);
   }
+
   .auth__error {
     padding: var(--spacing-3);
     margin-bottom: var(--spacing-4);
@@ -219,25 +157,31 @@ try {
     color: var(--color-ruby-11);
     font-size: var(--text-sm);
   }
+
   .auth__error p {
     margin: 0.25rem 0 0;
   }
+
   .auth__card-body {
     padding-top: var(--spacing-6);
   }
+
   .auth__buttons {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-3);
   }
+
   .auth__provider-form {
     width: 100%;
   }
+
   .auth__form-wrapper {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-4);
   }
+
   .auth__segment {
     display: flex;
     gap: 0;
@@ -245,6 +189,7 @@ try {
     background-color: var(--color-gray-3);
     padding: 2px;
   }
+
   .auth__segment-btn {
     flex: 1;
     padding: var(--spacing-2) var(--spacing-3);
@@ -255,55 +200,68 @@ try {
     color: var(--color-gray-11);
     cursor: pointer;
   }
+
   .auth__segment-btn--active {
     background-color: var(--color-gray-1);
     color: var(--color-gray-12);
   }
+
   .auth__field {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-1);
   }
+
   .auth__label {
     font-size: var(--text-sm);
     font-weight: 500;
     color: var(--color-gray-11);
   }
+
   .auth__input {
     padding: var(--spacing-2) var(--spacing-3);
     border: 1px solid var(--color-gray-6);
     border-radius: var(--radius-md);
     font-size: var(--text-base);
   }
+
   .auth__input:focus {
     outline: none;
     border-color: var(--color-cyan-8);
   }
+
   .auth__provider-button {
     width: 100%;
   }
+
   .auth__provider-button .auth__provider-btn-inner {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: var(--spacing-2);
   }
+
   .auth__provider-button--github {
     background-color: var(--color-gray-3);
   }
+
   .auth__provider-button--github:hover {
     background-color: var(--color-gray-4);
   }
+
   .auth__provider-button--mail {
     background-color: var(--color-gray-2);
   }
+
   .auth__provider-button--mail:hover {
     background-color: var(--color-gray-3);
   }
+
   .auth__submit-button {
     width: 100%;
     margin-top: var(--spacing-2);
   }
+
   .auth__back {
     display: block;
     width: 100%;
@@ -315,9 +273,11 @@ try {
     cursor: pointer;
     text-align: center;
   }
+
   .auth__back:hover {
     color: var(--color-gray-12);
   }
+
   .auth__confirm-message {
     color: var(--color-gray-11);
   }
@@ -328,9 +288,6 @@ try {
   const emailForm = document.getElementById('auth-email-form')
   const showEmailBtn = document.getElementById('auth-show-email')
   const backBtn = document.getElementById('auth-back')
-  const loginForm = document.getElementById('auth-form-login')
-  const signupForm = document.getElementById('auth-form-signup')
-  const segmentBtns = document.querySelectorAll('.auth__segment-btn')
 
   showEmailBtn?.addEventListener('click', () => {
     providers?.setAttribute('hidden', '')
@@ -340,40 +297,5 @@ try {
   backBtn?.addEventListener('click', () => {
     emailForm?.setAttribute('hidden', '')
     providers?.removeAttribute('hidden')
-  })
-
-  segmentBtns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const mode = btn.getAttribute('data-mode')
-      segmentBtns.forEach((b) => {
-        b.classList.toggle('auth__segment-btn--active', b.getAttribute('data-mode') === mode)
-        b.setAttribute('aria-pressed', b.getAttribute('data-mode') === mode ? 'true' : 'false')
-      })
-      if (mode === 'login') {
-        loginForm?.removeAttribute('hidden')
-        signupForm?.setAttribute('hidden', '')
-      } else {
-        loginForm?.setAttribute('hidden', '')
-        signupForm?.removeAttribute('hidden')
-      }
-    })
-  })
-
-  signupForm?.addEventListener('submit', (e) => {
-    const password = (document.getElementById('auth-password-signup') as HTMLInputElement)?.value
-    const confirm = (document.getElementById('auth-confirm-password') as HTMLInputElement)?.value
-    let errEl = signupForm?.querySelector('.auth__error')
-    if (password !== confirm) {
-      e.preventDefault()
-      if (!errEl) {
-        errEl = document.createElement('div')
-        errEl.className = 'auth__error'
-        signupForm?.insertBefore(errEl, signupForm.firstChild)
-      }
-      ;(errEl as HTMLElement).textContent =
-        signupForm?.getAttribute('data-password-mismatch') ?? 'Passwords do not match'
-    } else if (errEl) {
-      ;(errEl as HTMLElement).textContent = ''
-    }
   })
 </script>

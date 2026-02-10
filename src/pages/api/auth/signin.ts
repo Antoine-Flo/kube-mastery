@@ -26,9 +26,35 @@ export const POST: APIRoute = async ({ request, cookies, redirect, locals }) => 
   const email = formData.get('email')?.toString()
   const password = formData.get('password')?.toString()
   const provider = formData.get('provider')?.toString()
+  const magic = formData.get('magic')?.toString() === '1'
   const lang = (formData.get('lang')?.toString() || 'en') as string
   const rawRedirect = formData.get('redirect')?.toString() ?? ''
   const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.includes('//') ? rawRedirect : ''
+
+  if (magic && email) {
+    const confirmUrl = new URL('/api/auth/confirm', request.url)
+    confirmUrl.searchParams.set('lang', lang)
+    if (redirectTo) {
+      confirmUrl.searchParams.set('redirect', redirectTo)
+    }
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: confirmUrl.toString(),
+        shouldCreateUser: true
+      }
+    })
+    if (error) {
+      const params = new URLSearchParams()
+      params.set('auth_error', '1')
+      params.set('message_key', 'auth_magicLinkError')
+      if (redirectTo) {
+        params.set('redirect', redirectTo)
+      }
+      return redirect(`/${lang}/auth?${params.toString()}`)
+    }
+    return redirect(`/${lang}/auth?magic_sent=1`)
+  }
 
   if (provider === 'github') {
     const callbackUrl = new URL('/api/auth/callback', request.url)
