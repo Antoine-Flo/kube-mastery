@@ -1,9 +1,11 @@
+import { createClient } from '@supabase/supabase-js'
 import { createBrowserClient, createServerClient, parseCookieHeader } from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type SupabaseEnv = {
   SUPABASE_URL?: string
   SUPABASE_PUBLISHABLE_DEFAULT_KEY?: string
+  SUPABASE_SERVICE_ROLE_KEY?: string
 }
 
 /** Browser client – use in <script> in .astro pages. Needs PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_PUBLISHABLE_KEY in .env (same values as server vars for local dev). */
@@ -21,6 +23,20 @@ export function createSupabaseBrowserClient(): SupabaseClient {
 type AstroCookies = {
   set: (name: string, value: string, options?: { path?: string }) => void
   delete?: (name: string, options?: { path?: string }) => void
+}
+
+/**
+ * Admin client – server only. Uses service_role key for auth.admin (e.g. deleteUser).
+ * Never expose this client or the service role key to the browser.
+ */
+export function getSupabaseAdmin(locals: unknown): SupabaseClient | null {
+  const env = (locals as { runtime?: { env?: SupabaseEnv } })?.runtime?.env ?? {}
+  const url = env?.SUPABASE_URL
+  const key = env?.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) {
+    return null
+  }
+  return createClient(url, key)
 }
 
 /** Server client – use in API routes and server-rendered pages. Cookies = PKCE verifier + session. */

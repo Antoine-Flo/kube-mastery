@@ -9,6 +9,8 @@ interface ImportMetaEnv {
 interface CloudflareEnv {
   SUPABASE_URL: string
   SUPABASE_PUBLISHABLE_DEFAULT_KEY: string
+  /** Required for account deletion (auth.admin.deleteUser). Server-only, never expose. */
+  SUPABASE_SERVICE_ROLE_KEY?: string
 }
 
 type AstroCloudflareRuntime = import('@astrojs/cloudflare').Runtime<CloudflareEnv>

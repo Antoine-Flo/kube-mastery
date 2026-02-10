@@ -1,12 +1,17 @@
 /**
- * Server-side auth context for layout: entry point that delegates to the port adapter.
+ * Server-side auth: layout context + delete account. Entry point for Layout and API routes.
  */
 
-import { createSupabaseLayoutAuthAdapter } from './supabase-adapter'
+import {
+  createSupabaseDeleteAccountAdapter,
+  createSupabaseLayoutAuthAdapter
+} from './supabase-adapter'
+import type { DeleteAccountPort } from './port'
 import type { LayoutAuthContext } from './types'
+import type { DeleteAccountRequest, DeleteAccountResult } from './types'
 
-export type { LayoutAuthContext, LayoutAuthUser } from './types'
-export type { LayoutAuthRequest, LayoutAuthContextPort } from './port'
+export type { LayoutAuthContext, LayoutAuthUser, DeleteAccountRequest, DeleteAccountResult } from './types'
+export type { LayoutAuthRequest, LayoutAuthContextPort, DeleteAccountPort } from './port'
 
 /**
  * Returns auth context for the current request (user, login state, paid subscription).
@@ -19,4 +24,15 @@ export async function getLayoutAuthContext(
 ): Promise<LayoutAuthContext> {
   const adapter = createSupabaseLayoutAuthAdapter()
   return adapter.getContext({ locals, request, cookies })
+}
+
+/**
+ * Deletes the current user account and signs out. Pass adapter for tests or alternate backend.
+ */
+export async function deleteCurrentUserAccount(
+  args: DeleteAccountRequest,
+  adapter?: DeleteAccountPort
+): Promise<DeleteAccountResult> {
+  const port = adapter ?? createSupabaseDeleteAccountAdapter()
+  return port.deleteCurrentUser(args)
 }
