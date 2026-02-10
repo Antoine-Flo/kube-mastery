@@ -21,11 +21,7 @@ if (!user) {
 }
 
 let preferredLocale: 'en' | 'fr' = lang
-const { data: prefs } = await supabase
-  .from('preferences')
-  .select('locale')
-  .eq('user_id', user.id)
-  .maybeSingle()
+const { data: prefs } = await supabase.from('preferences').select('locale').eq('user_id', user.id).maybeSingle()
 if (prefs?.locale === 'en' || prefs?.locale === 'fr') {
   preferredLocale = prefs.locale
 }
@@ -40,20 +36,10 @@ const DELETE_DIALOG_ID = 'profile-delete-dialog'
     <section class="profile__section">
       <h2 class="profile__section-title">{t('profile_defaultLanguage')}</h2>
       <div class="profile__locale-options" role="group" aria-label={t('profile_defaultLanguage')}>
-        <button
-          type="button"
-          class="profile__locale-opt"
-          data-locale="en"
-          aria-pressed={preferredLocale === 'en'}
-        >
+        <button type="button" class="profile__locale-opt" data-locale="en" aria-pressed={preferredLocale === 'en'}>
           English
         </button>
-        <button
-          type="button"
-          class="profile__locale-opt"
-          data-locale="fr"
-          aria-pressed={preferredLocale === 'fr'}
-        >
+        <button type="button" class="profile__locale-opt" data-locale="fr" aria-pressed={preferredLocale === 'fr'}>
           Français
         </button>
       </div>
@@ -65,13 +51,7 @@ const DELETE_DIALOG_ID = 'profile-delete-dialog'
     <section class="profile__section profile__danger">
       <h2 class="profile__section-title">{t('profile_dangerZone')}</h2>
       <p class="profile__section-desc">{t('profile_deleteAccountDescription')}</p>
-      <Button
-        type="button"
-        variant="outline"
-        color="ruby"
-        size="sm"
-        data-dialog-open={DELETE_DIALOG_ID}
-      >
+      <Button type="button" variant="outline" color="ruby" size="sm" data-dialog-open={DELETE_DIALOG_ID}>
         {t('profile_deleteAccount')}
       </Button>
     </section>
@@ -233,7 +213,7 @@ const DELETE_DIALOG_ID = 'profile-delete-dialog'
   function openDialogById(dialogId: string) {
     const dialog = document.getElementById(dialogId)
     if (dialog && typeof (dialog as HTMLDialogElement).showModal === 'function') {
-      (dialog as HTMLDialogElement).showModal()
+      ;(dialog as HTMLDialogElement).showModal()
     }
   }
 

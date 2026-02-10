@@ -36,16 +36,14 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     })
   }
 
-  const { error } = await supabase
-    .from('preferences')
-    .upsert(
-      {
-        user_id: user.id,
-        locale,
-        updated_at: new Date().toISOString()
-      },
-      { onConflict: 'user_id' }
-    )
+  const { error } = await supabase.from('preferences').upsert(
+    {
+      user_id: user.id,
+      locale,
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: 'user_id' }
+  )
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {

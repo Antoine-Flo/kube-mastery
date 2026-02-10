@@ -12,7 +12,9 @@ const localePath = useLocalePath(locale)
 
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
   if (user) {
     return Astro.redirect(localePath('/courses'))
   }
@@ -23,7 +25,7 @@ try {
 
 <Layout>
   <main class="landing">
-    <div class="bg-halo" aria-hidden="true" />
+    <div class="bg-halo" aria-hidden="true"></div>
     <section class="hero">
       <div class="content">
         <div class="left">
@@ -151,34 +153,17 @@ try {
     z-index: 0;
     pointer-events: none;
     /* Une tache, nombreuses étapes = transition très douce */
-    background:
-      radial-gradient(
-        ellipse 45% 20% at 75% 15%,
-        hsl(192, 74%, 10%) 0%,
-        var(--color-gray-1) 75%
-      );
+    background: radial-gradient(ellipse 45% 20% at 75% 15%, hsl(192, 74%, 10%) 0%, var(--color-gray-1) 75%);
   }
   :global([data-theme='light']) .bg-halo {
-    background: radial-gradient(
-      ellipse 45% 40% at 75% 15%,
-      hsl(194, 55%, 87%) 0%,
-      var(--color-gray-1) 65%
-    );
+    background: radial-gradient(ellipse 45% 40% at 75% 15%, hsl(194, 55%, 87%) 0%, var(--color-gray-1) 65%);
   }
   @media (max-width: 768px) {
     .bg-halo {
-      background: radial-gradient(
-        ellipse 65% 20% at 70% 10%,
-        hsl(192, 74%, 10%) 0%,
-        var(--color-gray-1) 65%
-      );
+      background: radial-gradient(ellipse 65% 20% at 70% 10%, hsl(192, 74%, 10%) 0%, var(--color-gray-1) 65%);
     }
     :global([data-theme='light']) .bg-halo {
-      background: radial-gradient(
-        ellipse 65% 30% at 70% 10%,
-        hsl(194, 55%, 87%) 0%,
-        var(--color-gray-1) 65%
-      );
+      background: radial-gradient(ellipse 65% 30% at 70% 10%, hsl(194, 55%, 87%) 0%, var(--color-gray-1) 65%);
     }
   }
   @keyframes fadeInUp {
