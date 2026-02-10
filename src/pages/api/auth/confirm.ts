@@ -1,9 +1,5 @@
 import type { APIRoute } from 'astro'
-import {
-  createServerClient,
-  parseCookieHeader,
-  serializeCookieHeader
-} from '@supabase/ssr'
+import { getSupabaseServer } from '../../../lib/supabase'
 
 const json = (body: Record<string, unknown>, status: number) =>
   new Response(JSON.stringify(body), {
@@ -33,21 +29,7 @@ function authErrorRedirect(
 
 const USER_FRIENDLY_MESSAGE_KEY = 'auth_magicLinkError'
 
-type CookieToSet = { name: string; value: string; options: Record<string, unknown> }
-
-function redirectWithCookies(
-  location: string,
-  cookiesToSet: CookieToSet[]
-): Response {
-  const response = Response.redirect(location, 302)
-  for (const { name, value, options } of cookiesToSet) {
-    const serialized = serializeCookieHeader(name, value, options as Parameters<typeof serializeCookieHeader>[2])
-    response.headers.append('Set-Cookie', serialized)
-  }
-  return response
-}
-
-export const GET: APIRoute = async ({ url, request, redirect, locals }) => {
+export const GET: APIRoute = async ({ url, request, cookies, redirect, locals }) => {
   const lang = url.searchParams.get('lang') || 'en'
   const rawRedirect = url.searchParams.get('redirect') ?? ''
   const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.includes('//') ? rawRedirect : ''
@@ -60,32 +42,18 @@ export const GET: APIRoute = async ({ url, request, redirect, locals }) => {
     )
   }
 
-  const env = (locals as { runtime?: { env?: Record<string, string | undefined> } })?.runtime?.env ?? {}
-  const supabaseUrl = env?.SUPABASE_URL
-  const supabaseKey = env?.SUPABASE_PUBLISHABLE_DEFAULT_KEY
-  if (!supabaseUrl || !supabaseKey) {
+  let supabase
+  try {
+    supabase = getSupabaseServer(locals, request, cookies)
+  } catch (e) {
     return json(
-      { error: 'auth/config', message: 'Missing Supabase env.' },
+      {
+        error: 'auth/config',
+        message: e instanceof Error ? e.message : 'Missing Supabase env.'
+      },
       500
     )
   }
-
-  const cookieHeader = request.headers.get('Cookie') ?? ''
-  const cookiesToSet: CookieToSet[] = []
-
-  const supabase = createServerClient(supabaseUrl, supabaseKey, {
-    cookies: {
-      getAll() {
-        return parseCookieHeader(cookieHeader).map((c) => ({
-          name: c.name,
-          value: c.value ?? ''
-        }))
-      },
-      setAll(cookies: CookieToSet[]) {
-        cookiesToSet.push(...cookies)
-      }
-    }
-  })
 
   const { data, error } = await supabase.auth.verifyOtp({
     token_hash: tokenHash,
@@ -105,6 +73,5 @@ export const GET: APIRoute = async ({ url, request, redirect, locals }) => {
     )
   }
 
-  const location = redirectTo || `/${lang}/courses`
-  return redirectWithCookies(location, cookiesToSet)
+  return redirect(redirectTo || `/${lang}/courses`)
 }
