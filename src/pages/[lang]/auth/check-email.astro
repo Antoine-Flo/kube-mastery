@@ -1,0 +1,85 @@
+---
+import Layout from '../../../layouts/Layout.astro'
+import { useTranslations, useLocalePath } from '../../../i18n/utils'
+import { getSupabaseServer } from '../../../lib/supabase'
+
+const lang = (Astro.params.lang || 'en') as 'en' | 'fr'
+const t = useTranslations(lang)
+const localePath = useLocalePath(lang)
+
+const redirect = Astro.url.searchParams.get('redirect') ?? ''
+const redirectTo = redirect.startsWith('/') && !redirect.includes('//') ? redirect : ''
+
+try {
+  const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+  if (user) {
+    return Astro.redirect(redirectTo || localePath('/courses'))
+  }
+} catch {
+  // Missing Supabase env or other error → show page
+}
+---
+
+<Layout>
+  <div class="check-email">
+    <div class="check-email__card">
+      <div class="check-email__icon" aria-hidden="true">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect width="20" height="16" x="2" y="4" rx="2" />
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+        </svg>
+      </div>
+      <h1 class="check-email__title">{t('auth_checkEmailTitle')}</h1>
+      <p class="check-email__text">{t('auth_checkEmail')}</p>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .check-email {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .check-email__card {
+    max-width: 400px;
+    text-align: center;
+  }
+
+  .check-email__icon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--spacing-6);
+    color: var(--color-cyan-9);
+  }
+
+  .check-email__title {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-12);
+    margin: 0 0 var(--spacing-4);
+  }
+
+  .check-email__text {
+    font-size: var(--text-base);
+    line-height: 1.6;
+    color: var(--color-gray-11);
+    margin: 0;
+  }
+</style>

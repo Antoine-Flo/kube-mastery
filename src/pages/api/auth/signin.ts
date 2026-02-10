@@ -53,7 +53,12 @@ export const POST: APIRoute = async ({ request, cookies, redirect, locals }) => 
       }
       return redirect(`/${lang}/auth?${params.toString()}`)
     }
-    return redirect(`/${lang}/auth?magic_sent=1`)
+    const checkEmailUrl = `/${lang}/auth/check-email`
+    const params = new URLSearchParams()
+    if (redirectTo) {
+      params.set('redirect', redirectTo)
+    }
+    return redirect(params.toString() ? `${checkEmailUrl}?${params.toString()}` : checkEmailUrl)
   }
 
   if (provider === 'github') {

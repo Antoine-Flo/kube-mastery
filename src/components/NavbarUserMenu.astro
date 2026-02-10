@@ -29,7 +29,7 @@ const t = useTranslations(lang)
   <div class="usermenu__panel" hidden data-usermenu-panel>
 
     <div class="usermenu__user-block">
-      <div class="usermenu__name">{userDisplayName || userEmail || '—'}</div>
+      {userDisplayName && <div class="usermenu__name">{userDisplayName}</div>}
       {userEmail && <div class="usermenu__email">{userEmail}</div>}
     </div>
 

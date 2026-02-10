@@ -16,7 +16,6 @@ const authError = Astro.url.searchParams.get('auth_error') === '1'
 const authErrorMessageKey = Astro.url.searchParams.get('message_key') ?? ''
 const authErrorMessageRaw = Astro.url.searchParams.get('message') ?? ''
 const authErrorMessage = authErrorMessageKey ? t(authErrorMessageKey) : authErrorMessageRaw
-const magicSent = Astro.url.searchParams.get('magic_sent') === '1'
 
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
@@ -39,12 +38,6 @@ try {
       <div class="auth__error" role="alert">
         <strong>{t('auth_oauthErrorTitle')}</strong>
         <p>{authErrorMessage}</p>
-      </div>
-    )}
-
-    {magicSent && (
-      <div class="auth__confirm-message" role="status">
-        <p>{t('auth_checkEmail')}</p>
       </div>
     )}
 
@@ -276,10 +269,6 @@ try {
 
   .auth__back:hover {
     color: var(--color-gray-12);
-  }
-
-  .auth__confirm-message {
-    color: var(--color-gray-11);
   }
 </style>
 

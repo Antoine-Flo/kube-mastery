@@ -22,7 +22,7 @@ const { isLoggedIn = false, user = null, hasPaidSubscription = false } = Astro.p
 const lang = getLangFromUrl(Astro.url)
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
-const userDisplayName = user?.user_metadata?.full_name ?? user?.email ?? ''
+const userDisplayName = user?.user_metadata?.full_name ?? ''
 const userEmail = user?.email ?? ''
 ---
 
