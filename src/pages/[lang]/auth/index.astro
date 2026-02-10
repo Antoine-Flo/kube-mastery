@@ -34,12 +34,14 @@ try {
   <div class="auth">
     <h1 class="auth__title">{t('auth_loginTitle')}</h1>
 
-    {authError && authErrorMessage && (
-      <div class="auth__error" role="alert">
-        <strong>{t('auth_oauthErrorTitle')}</strong>
-        <p>{authErrorMessage}</p>
-      </div>
-    )}
+    {
+      authError && authErrorMessage && (
+        <div class="auth__error" role="alert">
+          <strong>{t('auth_oauthErrorTitle')}</strong>
+          <p>{authErrorMessage}</p>
+        </div>
+      )
+    }
 
     <div class="auth__card-body">
       <div id="auth-providers" class="auth__buttons">

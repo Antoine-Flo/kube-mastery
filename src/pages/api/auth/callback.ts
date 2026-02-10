@@ -7,11 +7,7 @@ const json = (body: Record<string, unknown>, status: number) =>
     headers: { 'Content-Type': 'application/json' }
   })
 
-function authErrorRedirect(
-  lang: string,
-  opts: { message?: string; messageKey?: string },
-  redirectTo: string
-) {
+function authErrorRedirect(lang: string, opts: { message?: string; messageKey?: string }, redirectTo: string) {
   const base = `/${lang}/auth`
   const params = new URLSearchParams()
   params.set('auth_error', '1')
@@ -39,15 +35,11 @@ export const GET: APIRoute = async ({ url, request, cookies, redirect, locals })
   const oauthErrorDescription = url.searchParams.get('error_description')
 
   if (oauthError || oauthErrorDescription) {
-    return redirect(
-      authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo)
-    )
+    return redirect(authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo))
   }
 
   if (!authCode) {
-    return redirect(
-      authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo)
-    )
+    return redirect(authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo))
   }
 
   let supabase
@@ -66,16 +58,12 @@ export const GET: APIRoute = async ({ url, request, cookies, redirect, locals })
   const { data, error } = await supabase.auth.exchangeCodeForSession(authCode)
 
   if (error) {
-    return redirect(
-      authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo)
-    )
+    return redirect(authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo))
   }
 
   const session = data?.session
   if (!session?.access_token || !session?.refresh_token) {
-    return redirect(
-      authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo)
-    )
+    return redirect(authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo))
   }
 
   return redirect(redirectTo || `/${lang}/courses`)

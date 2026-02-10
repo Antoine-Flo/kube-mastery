@@ -5,12 +5,7 @@
 
 import { getSupabaseAdmin, getSupabaseServer } from '../supabase'
 import { isPaidSubscription } from './domain'
-import type {
-  DeleteAccountPort,
-  DeleteAccountRequest,
-  LayoutAuthContextPort,
-  LayoutAuthRequest
-} from './port'
+import type { DeleteAccountPort, DeleteAccountRequest, LayoutAuthContextPort, LayoutAuthRequest } from './port'
 import type { DeleteAccountResult, LayoutAuthContext, LayoutAuthUser } from './types'
 
 const EMPTY_CONTEXT: LayoutAuthContext = {
@@ -33,7 +28,10 @@ export function createSupabaseLayoutAuthAdapter(): LayoutAuthContextPort {
       const { locals, request, cookies } = args
       try {
         const supabase = getSupabaseServer(locals, request, cookies)
-        const { data: { user: authUser }, error } = await supabase.auth.getUser()
+        const {
+          data: { user: authUser },
+          error
+        } = await supabase.auth.getUser()
 
         if (error) {
           return EMPTY_CONTEXT
@@ -48,9 +46,7 @@ export function createSupabaseLayoutAuthAdapter(): LayoutAuthContextPort {
           .select('id, plan_tier, status')
           .eq('user_id', authUser.id)
 
-        const hasPaidSubscription = (subs ?? []).some((s) =>
-          isPaidSubscription(s.plan_tier, s.status)
-        )
+        const hasPaidSubscription = (subs ?? []).some((s) => isPaidSubscription(s.plan_tier, s.status))
 
         return {
           isLoggedIn: true,

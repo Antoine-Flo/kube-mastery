@@ -75,11 +75,11 @@
 
 ### Tiers & grille (résumé)
 
-| Tier / Offre   | Public              | Idée de prix / détail |
-|----------------|---------------------|------------------------|
-| **Individuel** | Devs, apprenants    | One-time ou abo mensuel/annuel (annuel = 2 mois offerts), 60 jours money-back |
-| **Business**   | Équipes, startups   | Accès multi-utilisateurs, facturation dédiée, pas de support 24/7 (à préciser) |
-| **Formation**  | Bootcamps, écoles   | Voir B2B ci-dessous (Starter / Pro / Enterprise) |
+| Tier / Offre   | Public            | Idée de prix / détail                                                          |
+| -------------- | ----------------- | ------------------------------------------------------------------------------ |
+| **Individuel** | Devs, apprenants  | One-time ou abo mensuel/annuel (annuel = 2 mois offerts), 60 jours money-back  |
+| **Business**   | Équipes, startups | Accès multi-utilisateurs, facturation dédiée, pas de support 24/7 (à préciser) |
+| **Formation**  | Bootcamps, écoles | Voir B2B ci-dessous (Starter / Pro / Enterprise)                               |
 
 ### Stratégie d'acquisition
 
@@ -116,9 +116,9 @@
 
 Pour équipes dev, startups, PME qui veulent former plusieurs personnes :
 
-| Offre     | Public           | Idée de prix / inclus |
-| --------- | ---------------- | ------------------------- |
-| Business  | 5–20 utilisateurs | Prix fixe mensuel ou annuel (ex. 99€/mois ou prépay annuel avec 2 mois offerts), accès complet pour l’équipe, facture unique, pas de SSO (ou en option). |
+| Offre    | Public            | Idée de prix / inclus                                                                                                                                    |
+| -------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Business | 5–20 utilisateurs | Prix fixe mensuel ou annuel (ex. 99€/mois ou prépay annuel avec 2 mois offerts), accès complet pour l’équipe, facture unique, pas de SSO (ou en option). |
 
 - **Différence avec Formation** : Business = usage interne (monter en compétence Kubernetes) ; Formation = centres de formation qui forment des étudiants (comptes dédiés, dashboard formateur).
 

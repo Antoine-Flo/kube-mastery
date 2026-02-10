@@ -29,10 +29,7 @@ export const POST: APIRoute = async ({ url, cookies, redirect, locals, request }
   }
 
   if (result.reason === 'admin_missing') {
-    return json(
-      { error: 'Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY not set.' },
-      500
-    )
+    return json({ error: 'Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY not set.' }, 500)
   }
 
   return json({ error: result.message }, 400)

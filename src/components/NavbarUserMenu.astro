@@ -27,37 +27,36 @@ const t = useTranslations(lang)
   </button>
 
   <div class="usermenu__panel" hidden data-usermenu-panel>
-
     <div class="usermenu__user-block">
       {userDisplayName && <div class="usermenu__name">{userDisplayName}</div>}
       {userEmail && <div class="usermenu__email">{userEmail}</div>}
     </div>
 
-    <div class="usermenu__sep" />
-  
+    <div class="usermenu__sep"></div>
+
     <a href={profileHref} class="usermenu__item">
       <Settings size={16} />
       <span>{t('menu_accountPreferences')}</span>
     </a>
 
-    <div class="usermenu__sep" />
+    <div class="usermenu__sep"></div>
 
     <div class="usermenu__section">
       <div class="usermenu__section-title">{t('menu_theme')}</div>
       <div class="usermenu__theme-options" role="group" aria-label={t('menu_theme')}>
         <button type="button" class="usermenu__theme-opt" data-theme-value="dark">
-          <span class="usermenu__theme-radio" aria-hidden="true" />
+          <span class="usermenu__theme-radio" aria-hidden="true"></span>
           <span>{t('theme_dark')}</span>
         </button>
-    
+
         <button type="button" class="usermenu__theme-opt" data-theme-value="light">
-          <span class="usermenu__theme-radio" aria-hidden="true" />
+          <span class="usermenu__theme-radio" aria-hidden="true"></span>
           <span>{t('theme_light')}</span>
         </button>
       </div>
     </div>
-  
-    <div class="usermenu__sep" />
+
+    <div class="usermenu__sep"></div>
 
     <a href={signoutHref} class="usermenu__item usermenu__item--logout" data-astro-reload>
       <LogOut size={16} />
@@ -84,7 +83,9 @@ const t = useTranslations(lang)
     background: var(--color-gray-2);
     color: var(--color-gray-11);
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
+    transition:
+      background 0.2s,
+      color 0.2s;
   }
 
   .usermenu__trigger:hover {
@@ -145,7 +146,9 @@ const t = useTranslations(lang)
     color: var(--color-gray-11);
     text-decoration: none;
     font-size: var(--text-sm);
-    transition: background 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s;
   }
 
   .usermenu__item:hover {
@@ -188,7 +191,9 @@ const t = useTranslations(lang)
     width: 100%;
     box-sizing: border-box;
     border-radius: 0;
-    transition: background 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s;
   }
 
   .usermenu__theme-opt:hover {

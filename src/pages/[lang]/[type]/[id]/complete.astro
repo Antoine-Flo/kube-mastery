@@ -41,18 +41,22 @@ const coursesHref = localePath('/courses')
           value=""
           required
           aria-required="true"
-          aria-describedby="complete-survey-rating-label" />
+          aria-describedby="complete-survey-rating-label"
+        />
         <div class="complete-survey-form__stars" role="group" aria-labelledby="complete-survey-rating-label">
-          {[1, 2, 3, 4, 5].map((value) => (
-            <button
-              type="button"
-              class="complete-survey-form__star"
-              data-value={value}
-              aria-label={`${value} ${value === 1 ? 'star' : 'stars'}`}
-              aria-pressed="false">
-              <Star size={32} stroke-width={1.5} />
-            </button>
-          ))}
+          {
+            [1, 2, 3, 4, 5].map((value) => (
+              <button
+                type="button"
+                class="complete-survey-form__star"
+                data-value={value}
+                aria-label={`${value} ${value === 1 ? 'star' : 'stars'}`}
+                aria-pressed="false"
+              >
+                <Star size={32} stroke-width={1.5} />
+              </button>
+            ))
+          }
         </div>
       </div>
       <p id="complete-survey-error" class="complete-survey-form__error" aria-live="polite" hidden></p>
@@ -68,7 +72,13 @@ const coursesHref = localePath('/courses')
   </main>
 </Layout>
 
-<script define:vars={{ successToastTitle: t('survey_successToast'), errorRatingMessage: t('survey_errorRating'), coursesHref }}>
+<script
+  define:vars={{
+    successToastTitle: t('survey_successToast'),
+    errorRatingMessage: t('survey_errorRating'),
+    coursesHref
+  }}
+>
   function getFormPayload(formEl) {
     const ratingEl = formEl.querySelector('#complete-survey-rating')
     const rating = ratingEl && 'value' in ratingEl && ratingEl.value ? Number(ratingEl.value) : 0

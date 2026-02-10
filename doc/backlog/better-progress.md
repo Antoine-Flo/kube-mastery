@@ -1,4 +1,4 @@
-on pourrai pas l'émiorer encore en faisant un truc qui s'auto appel, tu sais mettre des clé étrangére, genre  une lesson appartien a un cours et à un module, un chapitre appartien à un cours et à un module, à chaque fois que je met une leçon j'insére aussi une référence à son cours et son module, pas ocmplété et je met une clé qui référence ces ligne ? tu vois ce que je veux dire, pour faire comme un arbre
+on pourrai pas l'émiorer encore en faisant un truc qui s'auto appel, tu sais mettre des clé étrangére, genre une lesson appartien a un cours et à un module, un chapitre appartien à un cours et à un module, à chaque fois que je met une leçon j'insére aussi une référence à son cours et son module, pas ocmplété et je met une clé qui référence ces ligne ? tu vois ce que je veux dire, pour faire comme un arbre
 
 Ah oui je vois ! Tu veux créer une **structure hiérarchique auto-référencée**. C'est une approche très élégante ! Voici ce que je propose :
 
@@ -10,22 +10,22 @@ create table progress (
   user_id uuid references auth.users not null,
   item_id text not null,
   item_type text check (item_type in ('course', 'module', 'chapter', 'lesson')) not null,
-  
+
   -- Relations hiérarchiques
   parent_id uuid references progress(id) on delete cascade,
   course_id uuid references progress(id) on delete cascade,
-  
+
   -- Progression
   completed boolean default false,
   progress_percentage int default 0 check (progress_percentage between 0 and 100),
   completed_at timestamp,
   last_viewed_at timestamp default now(),
-  
+
   -- Métadonnées
   metadata jsonb default '{}'::jsonb,
-  
+
   unique(user_id, item_id),
-  
+
   -- Contrainte : un élément ne peut pas être son propre parent
   check (id != parent_id)
 );
@@ -44,61 +44,71 @@ Quand un user commence une leçon, tu créés automatiquement toute la hiérarch
 ```typescript
 async function initializeUserProgress(userId: string, lessonId: string) {
   // Récupère la structure depuis ton markdown
-  const lesson = await getLesson(lessonId);
-  const chapter = await getChapter(lesson.chapterId);
-  const module = await getModule(chapter.moduleId);
-  const course = await getCourse(module.courseId);
-  
+  const lesson = await getLesson(lessonId)
+  const chapter = await getChapter(lesson.chapterId)
+  const module = await getModule(chapter.moduleId)
+  const course = await getCourse(module.courseId)
+
   // 1. Créer/récupérer le cours
   const { data: courseProgress } = await supabase
     .from('progress')
-    .upsert({
-      user_id: userId,
-      item_id: course.id,
-      item_type: 'course',
-      parent_id: null,
-      course_id: null
-    }, { onConflict: 'user_id,item_id' })
+    .upsert(
+      {
+        user_id: userId,
+        item_id: course.id,
+        item_type: 'course',
+        parent_id: null,
+        course_id: null
+      },
+      { onConflict: 'user_id,item_id' }
+    )
     .select()
-    .single();
-  
+    .single()
+
   // 2. Créer/récupérer le module
   const { data: moduleProgress } = await supabase
     .from('progress')
-    .upsert({
-      user_id: userId,
-      item_id: module.id,
-      item_type: 'module',
-      parent_id: courseProgress.id,
-      course_id: courseProgress.id
-    }, { onConflict: 'user_id,item_id' })
+    .upsert(
+      {
+        user_id: userId,
+        item_id: module.id,
+        item_type: 'module',
+        parent_id: courseProgress.id,
+        course_id: courseProgress.id
+      },
+      { onConflict: 'user_id,item_id' }
+    )
     .select()
-    .single();
-  
+    .single()
+
   // 3. Créer/récupérer le chapitre
   const { data: chapterProgress } = await supabase
     .from('progress')
-    .upsert({
-      user_id: userId,
-      item_id: chapter.id,
-      item_type: 'chapter',
-      parent_id: moduleProgress.id,
-      course_id: courseProgress.id
-    }, { onConflict: 'user_id,item_id' })
+    .upsert(
+      {
+        user_id: userId,
+        item_id: chapter.id,
+        item_type: 'chapter',
+        parent_id: moduleProgress.id,
+        course_id: courseProgress.id
+      },
+      { onConflict: 'user_id,item_id' }
+    )
     .select()
-    .single();
-  
+    .single()
+
   // 4. Créer la leçon
-  await supabase
-    .from('progress')
-    .upsert({
+  await supabase.from('progress').upsert(
+    {
       user_id: userId,
       item_id: lessonId,
       item_type: 'lesson',
       parent_id: chapterProgress.id,
       course_id: courseProgress.id,
       last_viewed_at: new Date().toISOString()
-    }, { onConflict: 'user_id,item_id' });
+    },
+    { onConflict: 'user_id,item_id' }
+  )
 }
 ```
 
@@ -121,33 +131,33 @@ begin
     select count(*) into total_children
     from progress
     where parent_id = NEW.parent_id;
-    
+
     -- Compte ceux qui sont complétés
     select count(*) into completed_children
     from progress
     where parent_id = NEW.parent_id and completed = true;
-    
+
     -- Calcule le pourcentage
     new_percentage := (completed_children * 100) / total_children;
-    
+
     -- Met à jour le parent
     update progress
-    set 
+    set
       progress_percentage = new_percentage,
       completed = (new_percentage = 100),
-      completed_at = case 
+      completed_at = case
         when new_percentage = 100 then now()
         else null
       end
     where id = NEW.parent_id
     returning * into parent_record;
-    
+
     -- Récursion : met à jour le grand-parent
     if parent_record.parent_id is not null then
       perform update_parent_progress_recursive(parent_record.id);
     end if;
   end if;
-  
+
   return NEW;
 end;
 $$ language plpgsql;
@@ -170,9 +180,9 @@ with recursive progress_tree as (
   -- Point de départ : le cours
   select * from progress
   where user_id = $1 and item_type = 'course' and item_id = $2
-  
+
   union all
-  
+
   -- Récursion : tous les enfants
   select p.*
   from progress p
@@ -181,7 +191,7 @@ with recursive progress_tree as (
 select * from progress_tree;
 
 -- Tous les cours avec leur progression globale
-select 
+select
   p.*,
   count(l.id) filter (where l.completed = true) as lessons_completed,
   count(l.id) as total_lessons
@@ -207,7 +217,7 @@ group by p.id;
 
 ## Mon verdict
 
-**Si tu veux un système vraiment robuste et évolutif, c'est l'approche ultime !** 
+**Si tu veux un système vraiment robuste et évolutif, c'est l'approche ultime !**
 
 Par contre, si tu débutes ou que ton SaaS est encore en MVP, commence peut-être par la version simple (table unique sans relations) et migre vers ça quand tu auras validé ton produit.
 

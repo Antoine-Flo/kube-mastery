@@ -85,12 +85,8 @@
           "tableFrom": "completions",
           "tableTo": "users",
           "schemaTo": "auth",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -100,11 +96,7 @@
         "completions_user_type_target_unique": {
           "name": "completions_user_type_target_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "type",
-            "target_id"
-          ]
+          "columns": ["user_id", "type", "target_id"]
         }
       },
       "policies": {
@@ -112,27 +104,21 @@
           "name": "Users can view their own completions",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"completions\".\"user_id\" = (select auth.uid())"
         },
         "Users can insert their own completions": {
           "name": "Users can insert their own completions",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"completions\".\"user_id\" = (select auth.uid())"
         },
         "Users can update their own completions": {
           "name": "Users can update their own completions",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"completions\".\"user_id\" = (select auth.uid())",
           "withCheck": "\"completions\".\"user_id\" = (select auth.uid())"
         },
@@ -140,9 +126,7 @@
           "name": "Users can delete their own completions",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"completions\".\"user_id\" = (select auth.uid())"
         }
       },
@@ -283,12 +267,8 @@
           "tableFrom": "subscriptions",
           "tableTo": "users",
           "schemaTo": "auth",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -298,9 +278,7 @@
         "subscriptions_paddle_subscription_id_unique": {
           "name": "subscriptions_paddle_subscription_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "paddle_subscription_id"
-          ]
+          "columns": ["paddle_subscription_id"]
         }
       },
       "policies": {
@@ -308,27 +286,21 @@
           "name": "Users can view their own subscriptions",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"subscriptions\".\"user_id\" = (select auth.uid())"
         },
         "Users can insert their own subscriptions": {
           "name": "Users can insert their own subscriptions",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"subscriptions\".\"user_id\" = (select auth.uid())"
         },
         "Users can update their own subscriptions": {
           "name": "Users can update their own subscriptions",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"subscriptions\".\"user_id\" = (select auth.uid())",
           "withCheck": "\"subscriptions\".\"user_id\" = (select auth.uid())"
         },
@@ -336,9 +308,7 @@
           "name": "Users can delete their own subscriptions",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"subscriptions\".\"user_id\" = (select auth.uid())"
         }
       },
@@ -463,12 +433,8 @@
           "tableFrom": "messages",
           "tableTo": "users",
           "schemaTo": "auth",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -480,27 +446,21 @@
           "name": "Allow authenticated insert on messages",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"messages\".\"user_id\" = (select auth.uid())"
         },
         "Users can view their own messages": {
           "name": "Users can view their own messages",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"messages\".\"user_id\" = (select auth.uid())"
         },
         "Allow service role to manage messages": {
           "name": "Allow service role to manage messages",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "service_role"
-          ],
+          "to": ["service_role"],
           "using": "true",
           "withCheck": "true"
         }
@@ -568,12 +528,8 @@
           "tableFrom": "preferences",
           "tableTo": "users",
           "schemaTo": "auth",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -585,27 +541,21 @@
           "name": "Users can view their own preferences",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"preferences\".\"user_id\" = (select auth.uid())"
         },
         "Users can insert their own preferences": {
           "name": "Users can insert their own preferences",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"preferences\".\"user_id\" = (select auth.uid())"
         },
         "Users can update their own preferences": {
           "name": "Users can update their own preferences",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"preferences\".\"user_id\" = (select auth.uid())",
           "withCheck": "\"preferences\".\"user_id\" = (select auth.uid())"
         },
@@ -613,9 +563,7 @@
           "name": "Users can delete their own preferences",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"preferences\".\"user_id\" = (select auth.uid())"
         }
       },

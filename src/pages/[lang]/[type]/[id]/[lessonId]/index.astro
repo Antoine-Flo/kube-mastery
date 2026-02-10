@@ -50,7 +50,9 @@ const seedName = env && env !== 'empty' ? env : 'minimal'
 const t = useTranslations(lang)
 const quiz = getLessonQuiz(type, id, lessonId, lang)
 const prevLessonHref = prevLesson ? localePath(`/${type}/${id}/${prevLesson.id}`) : ''
-const nextLessonHref = nextLesson ? localePath(`/${type}/${id}/${nextLesson.id}`) : localePath(`/${type}/${id}/complete`)
+const nextLessonHref = nextLesson
+  ? localePath(`/${type}/${id}/${nextLesson.id}`)
+  : localePath(`/${type}/${id}/complete`)
 const isFirstLesson = currentIndex === 0
 const isLastLesson = currentIndex >= allLessons.length - 1
 
