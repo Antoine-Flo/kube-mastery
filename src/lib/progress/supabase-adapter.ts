@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { ProgressRepository } from './port'
+import type { CompletionType, ProgressRepository } from './port'
 
 const COMPLETION_TYPE_LESSON = 'lesson'
 
@@ -21,18 +21,40 @@ export function createSupabaseProgressRepository(supabase: SupabaseClient): Prog
       return new Set(list)
     },
 
-    async addCompletedLesson(userId: string, lessonId: string): Promise<void> {
+    async getCompletedItemIds(
+      userId: string,
+      type: CompletionType
+    ): Promise<Set<string>> {
+      const { data, error } = await supabase
+        .from('completions')
+        .select('target_id')
+        .eq('user_id', userId)
+        .eq('type', type)
+
+      if (error) {
+        console.error('Failed to get completed items:', error)
+        return new Set<string>()
+      }
+
+      return new Set((data ?? []).map((row) => row.target_id))
+    },
+
+    async addCompletedItem(
+      userId: string,
+      type: CompletionType,
+      targetId: string
+    ): Promise<void> {
       const { error: upsertError } = await supabase.from('completions').upsert(
         {
           user_id: userId,
-          type: COMPLETION_TYPE_LESSON,
-          target_id: lessonId
+          type,
+          target_id: targetId
         },
         { onConflict: 'user_id,type,target_id' }
       )
 
       if (upsertError) {
-        console.error('Failed to mark lesson as completed:', upsertError)
+        console.error('Failed to mark item as completed:', upsertError)
       }
     }
   }

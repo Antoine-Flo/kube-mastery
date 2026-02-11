@@ -18,6 +18,7 @@
   "survey_errorRating": "Please choose a rating between 1 and 5.",
   "courseComplete_congrats": "Congratulations, you've completed this course!",
   "courseComplete_backToCourses": "Back to courses",
+  "taskComplete_congrats": "Well done, you've completed this task!",
   "notfound_title": "Page not found",
   "notfound_message": "This page does not exist or has been moved.",
   "notfound_backHome": "Back to home",
@@ -248,7 +249,6 @@
   "courseOverview_courseStructure": "Course content",
   "courseOverview_chapterFree": "This chapter is free and accessible without registration",
   "coursesList_loadingCourses": "Loading courses...",
-  "coursesList_noCoursesYet": "No courses available yet.",
   "admin_manageCourses": "Manage Courses",
   "admin_createCourse": "Create Course",
   "admin_loadingCourses": "Loading courses...",
@@ -320,5 +320,10 @@
   "modulesList_noModulesYet": "No modules available yet.",
   "modules_title": "Modules",
   "modules_subtitle": "Learn at your own pace by choosing the topics that interest you",
-  "modules_completed": "completed"
+  "modules_completed": "completed",
+  "tasks_title": "Tasks",
+  "tasks_subtitle": "Step-by-step tasks with commands and YAML to practice specific topics",
+  "tasks_task": "task",
+  "tasks_tasks": "tasks",
+  "tasks_doneButton": "Done"
 }

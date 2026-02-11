@@ -1,17 +1,17 @@
 import type { APIRoute } from 'astro'
 import { getSupabaseServer } from '../../lib/supabase'
 
-const SURVEY_NAMES = ['small'] as const
+const SURVEY_NAMES = ['small', 'task'] as const
 const MIN_RATING = 1
 const MAX_RATING = 5
 
 /**
  * POST /api/survey
- * Body: { name: 'small', rating: number (1-5), comment?: string }
+ * Body: { name: 'small' | 'task', rating: number (1-5), comment?: string, taskId?: string (for name=task) }
  * Inserts into messages (type survey). User must be authenticated.
  */
 export const POST: APIRoute = async ({ request, cookies, locals }) => {
-  let body: { name?: string; rating?: number; comment?: string }
+  let body: { name?: string; rating?: number; comment?: string; taskId?: string }
   try {
     body = await request.json()
   } catch {
@@ -51,12 +51,17 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
   const comment = typeof body.comment === 'string' ? body.comment.trim() : undefined
   const content = comment !== undefined && comment !== '' ? { rating, comment } : { rating }
+  const lessonId =
+    name === 'task' && typeof body.taskId === 'string' && body.taskId.trim()
+      ? body.taskId.trim()
+      : null
 
   const { error: insertError } = await supabase.from('messages').insert({
     type: 'survey',
     name,
     content,
-    user_id: user.id
+    user_id: user.id,
+    lesson_id: lessonId
   })
 
   if (insertError) {

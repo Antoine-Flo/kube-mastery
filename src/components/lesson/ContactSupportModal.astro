@@ -30,7 +30,13 @@ const {
 ---
 
 <Dialog id={CONTACT_SUPPORT_DIALOG_ID} title={title} size="lg">
-  <form id="contact-support-form" class="contact-support-form" data-lesson-id={lessonId}>
+  <form
+    id="contact-support-form"
+    class="contact-support-form"
+    data-lesson-id={lessonId}
+    method="post"
+    action="#"
+  >
     <div class="contact-support-form__types">
       <label class="contact-support-form__type">
         <input type="radio" name="contactType" value="support" checked />
@@ -154,12 +160,20 @@ const {
     openContactDialog(dialogId)
   })
 
-  const form = document.getElementById('contact-support-form')
-  if (form) {
-    form.addEventListener('submit', (e) => {
+  // Delegation + capture: intercept submit before anything else so form never does a native GET
+  document.addEventListener(
+    'submit',
+    (e) => {
+      const form = e.target
+      if (!(form instanceof HTMLFormElement) || form.id !== 'contact-support-form') {
+        return
+      }
+      e.preventDefault()
+      e.stopImmediatePropagation()
       handleContactSubmit(e, dialogId, successToastTitle)
-    })
-  }
+    },
+    true
+  )
 </script>
 
 <style>

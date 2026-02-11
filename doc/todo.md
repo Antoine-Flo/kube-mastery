@@ -1,5 +1,7 @@
 Ce doc est pour moi, ne le modifie pas
 
+
+- plausible
 - https://yukaichou.com/gamification-examples/octalysis-gamification-framework/
 - hasEnvironment ?
 - createUserSubscription à chaque signin ?
@@ -9,10 +11,8 @@ Ce doc est pour moi, ne le modifie pas
 - Mettre pourquoi notre simulation respecte Kuberntes (utilisation de l'openAPI officiel pour les tests)
 - mettre en place tests avec golden files
 - tracesSampleRate
-- Sauver progression
-- Dev env fly https://fly.io/docs/blueprints/review-apps-guide/
-- Sécuriser les tables
-- Formulaire Tally
+
+
 - Faire les cours
 - Envrionnement de tests / staging fly.io
 - Vérifier GDPR conformité

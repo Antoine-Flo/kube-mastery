@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro'
 import CourseCard from '../../components/CourseCard.astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import { getCourses, getModules } from '../../content/courses/facade'
+import { getTaskGroups } from '../../content/tasks/facade'
 
 const locale = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(locale)
@@ -10,6 +11,7 @@ const localePath = useLocalePath(locale)
 
 const courses = getCourses(locale)
 const modules = getModules(locale)
+const taskGroups = getTaskGroups(locale)
 ---
 
 <Layout>
@@ -17,58 +19,70 @@ const modules = getModules(locale)
     <h1>{t('courses_title')}</h1>
     <p>{t('courses_subtitle')}</p>
 
-    {
-      courses.length === 0 ? (
-        <div class="empty">{t('coursesList_noCoursesYet')}</div>
-      ) : (
-        <div class="grid">
-          {courses.map((course) => (
+    <div class="grid">
+      {
+        courses.map((course) => (
+          <CourseCard
+            title={course.title}
+            description={course.shortDescription ?? course.description}
+            totalLessons={course.totalLessons}
+            href={localePath(`/courses/${course.id}`)}
+            isFree={course.isFree}
+            comingSoon={course.comingSoon}
+            level={course.level}
+            lessonsLabel={`${course.totalLessons} ${t('courses_lessons')}`}
+            freeBadgeLabel={t('courses_freeBadge')}
+            comingSoonLabel={t('courses_comingSoon')}
+          />
+        ))
+      }
+    </div>
+
+    <div class="section">
+      <h2>{t('tasks_title')}</h2>
+      <p>{t('tasks_subtitle')}</p>
+
+      <div class="grid">
+        {
+          taskGroups.map((group) => (
             <CourseCard
-              title={course.title}
-              description={course.shortDescription ?? course.description}
-              totalLessons={course.totalLessons}
-              href={localePath(`/courses/${course.id}`)}
-              isFree={course.isFree}
-              comingSoon={course.comingSoon}
-              level={course.level}
-              lessonsLabel={`${course.totalLessons} ${t('courses_lessons')}`}
-              freeBadgeLabel={t('courses_freeBadge')}
+              title={group.title}
+              description={group.description}
+              totalLessons={group.totalTasks}
+              href={localePath(`/tasks/${group.id}`)}
+              lessonsLabel={group.totalTasks === 1 ? `1 ${t('tasks_task')}` : `${group.totalTasks} ${t('tasks_tasks')}`}
               comingSoonLabel={t('courses_comingSoon')}
             />
-          ))}
-        </div>
-      )
-    }
+          ))
+        }
+      </div>
+    </div>
 
     <div class="section">
       <h2>{t('modules_title')}</h2>
       <p>{t('modules_subtitle')}</p>
 
-      {
-        modules.length === 0 ? (
-          <div class="empty">{t('modulesList_noModulesYet')}</div>
-        ) : (
-          <div class="grid">
-            {modules.map((mod) => (
-              <CourseCard
-                title={mod.title}
-                description={mod.description}
-                totalLessons={mod.totalLessons}
-                href={localePath(`/modules/${mod.id}`)}
-                lessonsLabel={`${mod.totalLessons} ${t('courses_lessons')}`}
-                comingSoonLabel={t('courses_comingSoon')}
-              />
-            ))}
-          </div>
-        )
-      }
+      <div class="grid">
+        {
+          modules.map((mod) => (
+            <CourseCard
+              title={mod.title}
+              description={mod.description}
+              totalLessons={mod.totalLessons}
+              href={localePath(`/modules/${mod.id}`)}
+              lessonsLabel={`${mod.totalLessons} ${t('courses_lessons')}`}
+              comingSoonLabel={t('courses_comingSoon')}
+            />
+          ))
+        }
+      </div>
     </div>
   </main>
 </Layout>
 
 <style>
   main {
-    max-width: 1200px;
+    max-width: var(--content-max-width);
     margin: 0 auto;
     padding: 4rem 2rem;
   }
@@ -95,11 +109,7 @@ const modules = getModules(locale)
     color: var(--color-gray-11);
     font-size: var(--text-lg);
   }
-  main .empty {
-    padding: 4rem;
-    text-align: center;
-    color: var(--color-gray-11);
-  }
+
   main .grid {
     display: grid;
     grid-template-columns: 1fr;

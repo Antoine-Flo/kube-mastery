@@ -1,13 +1,8 @@
 ---
 import Layout from '../../../../../layouts/Layout.astro'
 import CourseOutline from '../../../../../components/CourseOutline.astro'
-import LessonTerminal from '../../../../../components/LessonTerminal.astro'
-import LessonContentBar from '../../../../../components/lesson/LessonContentBar.astro'
-import ContactSupportModal from '../../../../../components/lesson/ContactSupportModal.astro'
-import LessonClusterPanel from '../../../../../components/lesson/LessonClusterPanel.astro'
+import ContentWithTerminalLayout from '../../../../../components/lesson/ContentWithTerminalLayout.astro'
 import LessonQuizNav from '../../../../../components/lesson/LessonQuizNav.astro'
-import ScrollArea from '../../../../../components/ui/ScrollArea.astro'
-import { ArrowLeftToLine, ArrowRightToLine } from '@lucide/astro'
 import { useLocalePath, useTranslations } from '../../../../../i18n/utils'
 import {
   getCourseOverview,
@@ -40,7 +35,6 @@ const allLessons = overview.content.chapters.flatMap((ch) => ch.lessons)
 const currentIndex = allLessons.findIndex((l) => l.id === lessonId)
 const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null
 const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null
-const overviewHref = localePath(`/${type}/${id}`)
 const lessonBaseUrl = localePath(`/${type}/${id}`)
 const { Content } = lessonEntry
 
@@ -65,414 +59,43 @@ const quizNavLabels = {
   courseComplete: t('courseLesson_courseComplete'),
   nextQuestion: t('courseLesson_nextQuestion')
 }
+
+const contentBarLabels = {
+  labelVisualizer: t('lesson_visualizer'),
+  labelCourse: t('lesson_viewCourse'),
+  labelShowTerminal: t('lesson_showTerminal'),
+  labelHideTerminal: t('lesson_hideTerminal'),
+  labelContactSupport: t('lesson_contactSupport')
+}
 ---
 
 <Layout bodyClass="lp-fill" showFooter={false}>
-  <div class="lp-root" data-seed-name={seedName} data-lang={lang} data-terminal-open="true">
-    <div class="lp">
-      <aside id="lesson-sidebar" class="lp__sb" aria-label="Plan du cours">
-        <div class="lp__sb-ct">
-          <CourseOutline
-            overview={overview}
-            currentLessonId={lessonId}
-            lessonBaseUrl={lessonBaseUrl}
-            completedLessonIds={completed}
-          />
-        </div>
-        <div class="lp__sb-ft">
-          <button id="lesson-sidebar-toggle" type="button" aria-label="Réduire le plan du cours" aria-expanded="true">
-            <span class="lp__sb-ico lp__sb-ico--exp" aria-hidden="true">
-              <ArrowRightToLine size={18} />
-            </span>
-            <span class="lp__sb-ico lp__sb-ico--col" aria-hidden="true">
-              <ArrowLeftToLine size={18} />
-            </span>
-          </button>
-        </div>
-      </aside>
-      <div class="lp__bd">
-        <div class="lp__content">
-          <div class="lp__content-body">
-            <ScrollArea>
-              <main class="lp__main">
-                <article class="lesson-content">
-                  <Content />
-                </article>
-                <LessonQuizNav
-                  quiz={quiz}
-                  prevHref={prevLessonHref}
-                  nextHref={nextLessonHref}
-                  isFirst={isFirstLesson}
-                  isLast={isLastLesson}
-                  labels={quizNavLabels}
-                  lessonId={lessonId}
-                />
-              </main>
-            </ScrollArea>
-            <LessonClusterPanel />
-          </div>
-          <div class="lp__show-term" data-lesson-show-term aria-hidden="true">
-            <LessonContentBar
-              labelVisualizer={t('lesson_visualizer')}
-              labelCourse={t('lesson_viewCourse')}
-              labelShowTerminal={t('lesson_showTerminal')}
-              labelHideTerminal={t('lesson_hideTerminal')}
-              labelContactSupport={t('lesson_contactSupport')}
-              terminalAction="show"
-            />
-          </div>
-        </div>
-        <div class="lp__term-wrap" data-lesson-term-wrap>
-          <div class="lp__term">
-            <LessonTerminal seedName={seedName} lang={lang} />
-          </div>
-          <LessonContentBar
-            labelVisualizer={t('lesson_visualizer')}
-            labelCourse={t('lesson_viewCourse')}
-            labelShowTerminal={t('lesson_showTerminal')}
-            labelHideTerminal={t('lesson_hideTerminal')}
-            labelContactSupport={t('lesson_contactSupport')}
-            terminalAction="hide"
-          />
-        </div>
-      </div>
+  <ContentWithTerminalLayout
+    seedName={seedName}
+    lang={lang}
+    showSidebar={true}
+    labels={contentBarLabels}
+    supportContextId={lessonId}
+  >
+    <div slot="sidebar">
+      <CourseOutline
+        overview={overview}
+        currentLessonId={lessonId}
+        lessonBaseUrl={lessonBaseUrl}
+        completedLessonIds={completed}
+      />
     </div>
-  </div>
-  <ContactSupportModal
-    title={t('lesson_contactSupport')}
-    placeholder={t('courseLesson_suggestPlaceholder')}
-    submitLabel={t('courseLesson_suggestSubmit')}
-    cancelLabel={t('courseLesson_suggestCancel')}
-    successToastTitle={t('toast_sendSuccess')}
-    typeSupport={t('lesson_contactTypeSupport')}
-    typeSuggestion={t('lesson_contactTypeSuggestion')}
-    typeOther={t('lesson_contactTypeOther')}
-    lessonId={lessonId}
-  />
+    <article class="lesson-content">
+      <Content />
+    </article>
+    <LessonQuizNav
+      quiz={quiz}
+      prevHref={prevLessonHref}
+      nextHref={nextLessonHref}
+      isFirst={isFirstLesson}
+      isLast={isLastLesson}
+      labels={quizNavLabels}
+      lessonId={lessonId}
+    />
+  </ContentWithTerminalLayout>
 </Layout>
-
-<script>
-  import {
-    createEmulatedEnvironment,
-    destroyEmulatedEnvironment
-  } from '../../../../../core/emulatedEnvironment/EmulatedEnvironmentManager'
-  import { getSeed } from '../../../../../courses/seeds/getSeed'
-  import { createFilesystemFromConfig } from '../../../../../core/filesystem/debianFileSystem'
-
-  const STORAGE_KEY = 'lesson-sidebar-collapsed'
-  let lessonEnv: import('../../../../../core/emulatedEnvironment/EmulatedEnvironment').EmulatedEnvironment | null = null
-
-  function setupLessonEnv() {
-    cleanupLessonEnv()
-    const root = document.querySelector('.lp-root')
-    if (!root) {
-      return
-    }
-    const seedName = root.getAttribute('data-seed-name') ?? 'minimal'
-    const seed = getSeed(seedName)
-    lessonEnv = createEmulatedEnvironment({
-      clusterStateData: seed.clusterStateData,
-      filesystemState: createFilesystemFromConfig(seed.fsConfig ?? {})
-    })
-    document.dispatchEvent(
-      new CustomEvent('cluster-env-ready', {
-        detail: { env: lessonEnv }
-      })
-    )
-  }
-
-  function cleanupLessonEnv() {
-    if (lessonEnv) {
-      destroyEmulatedEnvironment(lessonEnv)
-      lessonEnv = null
-    }
-  }
-
-  function setupSidebarToggle() {
-    const sidebar = document.getElementById('lesson-sidebar')
-    const toggle = document.getElementById('lesson-sidebar-toggle')
-    if (!sidebar || !toggle) {
-      return
-    }
-
-    const updateUi = () => {
-      const collapsed = sidebar.classList.contains('lp__sb--col')
-      toggle.setAttribute('aria-label', collapsed ? 'Afficher le plan du cours' : 'Réduire le plan du cours')
-      toggle.setAttribute('aria-expanded', String(!collapsed))
-    }
-
-    const init = () => {
-      const collapsed = localStorage.getItem(STORAGE_KEY) === 'true'
-      sidebar.classList.toggle('lp__sb--col', collapsed)
-      updateUi()
-    }
-
-    init()
-
-    toggle.onclick = () => {
-      const collapsed = !sidebar.classList.contains('lp__sb--col')
-      sidebar.classList.toggle('lp__sb--col', collapsed)
-      localStorage.setItem(STORAGE_KEY, String(collapsed))
-      updateUi()
-    }
-  }
-
-  let terminalToggleBound = false
-
-  function initTerminalStateForMobile() {
-    const root = document.querySelector('.lp-root')
-    const termWrap = document.querySelector('[data-lesson-term-wrap]')
-    const showTerm = document.querySelector('[data-lesson-show-term]')
-    if (!root || !termWrap || !showTerm) {
-      return
-    }
-    if (!window.matchMedia('(max-width: 768px)').matches) {
-      return
-    }
-    root.setAttribute('data-terminal-open', 'false')
-    termWrap.classList.add('lp__term-wrap--hidden')
-    showTerm.setAttribute('aria-hidden', 'false')
-  }
-
-  function setupTerminalToggle() {
-    initTerminalStateForMobile()
-    if (terminalToggleBound) {
-      return
-    }
-    terminalToggleBound = true
-
-    document.addEventListener('lesson-terminal-toggle', () => {
-      const root = document.querySelector('.lp-root')
-      const termWrap = document.querySelector('[data-lesson-term-wrap]')
-      const showTerm = document.querySelector('[data-lesson-show-term]')
-      if (!root || !termWrap || !showTerm) {
-        return
-      }
-      const open = root.getAttribute('data-terminal-open') !== 'false'
-      root.setAttribute('data-terminal-open', !open ? 'true' : 'false')
-      termWrap.classList.toggle('lp__term-wrap--hidden', open)
-      showTerm.setAttribute('aria-hidden', !open ? 'true' : 'false')
-    })
-
-    document.addEventListener('click', (e) => {
-      if (!(e.target as Element).closest('[data-lesson-show-term-btn]')) {
-        return
-      }
-      const root = document.querySelector('.lp-root')
-      const termWrap = document.querySelector('[data-lesson-term-wrap]')
-      const showTerm = document.querySelector('[data-lesson-show-term]')
-      if (!root || !termWrap || !showTerm) {
-        return
-      }
-      root.setAttribute('data-terminal-open', 'true')
-      termWrap.classList.remove('lp__term-wrap--hidden')
-      showTerm.setAttribute('aria-hidden', 'true')
-    })
-  }
-
-  setupSidebarToggle()
-  setupTerminalToggle()
-  requestAnimationFrame(setupLessonEnv)
-  document.addEventListener('astro:page-load', () => {
-    setupSidebarToggle()
-    setupTerminalToggle()
-    requestAnimationFrame(setupLessonEnv)
-  })
-  document.addEventListener('astro:before-swap', () => {
-    cleanupLessonEnv()
-  })
-</script>
-
-<style>
-  .lp-root {
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .lp {
-    background-color: var(--color-gray-1);
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    overflow: hidden;
-  }
-
-  .lp__sb {
-    flex-shrink: 0;
-    border-right: 1px solid var(--color-gray-6);
-    background-color: var(--color-gray-1);
-    overflow: hidden;
-    transition: width var(--duration-normal) ease-out;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .lp__sb--col {
-    width: 41px;
-  }
-
-  .lp__sb-ico {
-    display: none;
-  }
-
-  .lp__sb:not(.lp__sb--col) .lp__sb-ico--col {
-    display: inline-flex;
-  }
-
-  .lp__sb--col .lp__sb-ico--exp {
-    display: inline-flex;
-  }
-
-  .lp__sb-ct {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    width: 250px;
-    min-width: 250px;
-    opacity: 1;
-    transition: opacity var(--duration-normal) ease-out;
-  }
-
-  .lp__sb--col .lp__sb-ct {
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .lp__sb-ft {
-    margin-top: auto;
-    padding: var(--spacing-1);
-    display: flex;
-    flex-shrink: 0;
-    opacity: 0.2;
-    transition: opacity var(--duration-normal);
-  }
-
-  .lp__sb-ft:hover {
-    opacity: 0.8;
-  }
-
-  .lp__sb-ft button {
-    padding-inline: 0.6rem;
-    min-width: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--color-gray-11);
-  }
-
-  .lp__bd {
-    display: flex;
-    flex-direction: row;
-    flex: 1;
-    min-height: 0;
-    min-width: 0;
-    background-color: var(--color-gray-1);
-  }
-
-  .lp__content {
-    flex: 1;
-    min-width: 0;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .lp__content-body {
-    position: relative;
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .lp__term-wrap {
-    flex: 1;
-    min-width: 320px;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-left: 1px solid var(--color-gray-6);
-  }
-
-  .lp__term {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .lp__main {
-    max-width: 80ch;
-    margin: 0 auto;
-    padding: var(--spacing-4);
-  }
-
-  @media (max-width: 640px) {
-    .lp__main {
-      padding: var(--spacing-2);
-    }
-  }
-
-  .lp__nav--bt {
-    margin-top: 1.5rem;
-    margin-bottom: 0;
-  }
-
-  .lp__lnk {
-    color: var(--color-primary-5);
-    text-decoration: underline;
-  }
-
-  .lp__show-term {
-    display: none;
-    flex-shrink: 0;
-    border-top: 1px solid var(--color-gray-6);
-    background-color: var(--color-gray-1);
-  }
-
-  @media (max-width: 1024px) {
-    .lp__sb {
-      display: none;
-    }
-    .lp__bd {
-      flex-direction: column;
-    }
-    .lp__term-wrap {
-      flex: 0 0 40vh;
-      min-width: unset;
-      /* min-height: 280px; */
-      border-left: none;
-      border-top: 1px solid var(--color-gray-6);
-    }
-    .lp__term-wrap.lp__term-wrap--hidden {
-      display: none;
-    }
-    .lp-root[data-terminal-open='false'] .lp__show-term {
-      display: flex;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-    }
-    .lp-root[data-terminal-open='false'] .lp__content-body {
-      padding-bottom: 56px;
-    }
-  }
-  @media (max-width: 640px) {
-    .lp__term-wrap {
-      flex: 0 0 40vh;
-      min-height: 320px;
-    }
-  }
-</style>
