@@ -130,7 +130,11 @@ function resourceToKey(resource: KubernetesResource): string {
 }
 
 // Key → Resource info
-function keyToResourceInfo(key: string): { kind: string; namespace: string; name: string } {
+function keyToResourceInfo(key: string): {
+  kind: string
+  namespace: string
+  name: string
+} {
   const parts = key.split('/')
   // /registry/pods/default/nginx
   return {
@@ -156,7 +160,11 @@ interface QueryOptions {
 
 interface QueryAPI {
   // Get single resource
-  getResource(kind: string, name: string, namespace: string): Result<KubernetesResource>
+  getResource(
+    kind: string,
+    name: string,
+    namespace: string
+  ): Result<KubernetesResource>
 
   // List resources with options
   listResources(options: QueryOptions): KubernetesResource[]
@@ -173,14 +181,18 @@ La QueryAPI utilise le EtcdStore en interne :
 ```typescript
 function listResources(options: QueryOptions): KubernetesResource[] {
   // 1. Construire le préfixe de clé
-  const prefix = options.kind ? `/registry/${options.kind}/${options.namespace || ''}` : `/registry/`
+  const prefix = options.kind
+    ? `/registry/${options.kind}/${options.namespace || ''}`
+    : `/registry/`
 
   // 2. Lister depuis le store
   let resources = store.list(prefix)
 
   // 3. Filtrer par namespace si spécifié
   if (options.namespace) {
-    resources = resources.filter((r) => r.metadata.namespace === options.namespace)
+    resources = resources.filter(
+      (r) => r.metadata.namespace === options.namespace
+    )
   }
 
   // 4. Filtrer par name si spécifié

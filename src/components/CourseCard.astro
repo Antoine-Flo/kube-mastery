@@ -27,7 +27,15 @@ const {
 const descriptionText = description ?? ''
 ---
 
-<div class:list={['card', 'card--outline', isFree && 'free', comingSoon && 'soon', !comingSoon && 'link']}>
+<div
+  class:list={[
+    'card',
+    'card--outline',
+    isFree && 'free',
+    comingSoon && 'soon',
+    !comingSoon && 'link'
+  ]}
+>
   <a href={comingSoon ? '#' : href} class="card__link">
     {isFree && <div class="banner">{freeBadgeLabel}</div>}
     {comingSoon && <div class="banner banner--soon">{comingSoonLabel}</div>}

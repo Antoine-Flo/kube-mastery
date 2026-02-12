@@ -159,7 +159,9 @@ const [userProgress] = createResource(
   () => user()?.id,
   async (userId) => {
     if (!userId) return new Map()
-    const { data, error } = await supabase.rpc('get_user_progress', { user_id: userId })
+    const { data, error } = await supabase.rpc('get_user_progress', {
+      user_id: userId
+    })
     if (error) return new Map()
 
     // Convertir en Map pour compatibilité avec le code existant

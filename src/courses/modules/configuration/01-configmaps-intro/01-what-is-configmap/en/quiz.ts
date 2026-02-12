@@ -21,8 +21,14 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'What should you use instead of ConfigMap for confidential data?',
-      options: ['Another ConfigMap', 'A Secret', 'Environment variables', 'A Deployment'],
+      question:
+        'What should you use instead of ConfigMap for confidential data?',
+      options: [
+        'Another ConfigMap',
+        'A Secret',
+        'Environment variables',
+        'A Deployment'
+      ],
       correctAnswer: 1
     }
   ]

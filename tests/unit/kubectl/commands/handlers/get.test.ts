@@ -83,7 +83,9 @@ describe('kubectl get handler - nodes', () => {
     return createClusterStateData({ nodes: [controlPlaneNode, workerNode] })
   }
 
-  const createParsedCommand = (overrides: Partial<ParsedCommand> = {}): ParsedCommand => ({
+  const createParsedCommand = (
+    overrides: Partial<ParsedCommand> = {}
+  ): ParsedCommand => ({
     action: 'get',
     resource: 'nodes',
     flags: {},

@@ -1,11 +1,17 @@
 import type { APIRoute } from 'astro'
 import { deleteCurrentUserAccount } from '../../../lib/auth/server'
 
-function getSafeRedirectTarget(redirectParam: string | null, fallback: string): string {
+function getSafeRedirectTarget(
+  redirectParam: string | null,
+  fallback: string
+): string {
   if (!redirectParam) {
     return fallback
   }
-  const path = redirectParam.startsWith('/') && !redirectParam.includes('//') ? redirectParam : ''
+  const path =
+    redirectParam.startsWith('/') && !redirectParam.includes('//')
+      ? redirectParam
+      : ''
   return path || fallback
 }
 
@@ -15,8 +21,17 @@ const json = (body: { error: string }, status: number) =>
     headers: { 'Content-Type': 'application/json' }
   })
 
-export const POST: APIRoute = async ({ url, cookies, redirect, locals, request }) => {
-  const redirectTo = getSafeRedirectTarget(url.searchParams.get('redirect'), '/en')
+export const POST: APIRoute = async ({
+  url,
+  cookies,
+  redirect,
+  locals,
+  request
+}) => {
+  const redirectTo = getSafeRedirectTarget(
+    url.searchParams.get('redirect'),
+    '/en'
+  )
 
   const result = await deleteCurrentUserAccount({ locals, request, cookies })
 
@@ -29,7 +44,10 @@ export const POST: APIRoute = async ({ url, cookies, redirect, locals, request }
   }
 
   if (result.reason === 'admin_missing') {
-    return json({ error: 'Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY not set.' }, 500)
+    return json(
+      { error: 'Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY not set.' },
+      500
+    )
   }
 
   return json({ error: result.message }, 400)

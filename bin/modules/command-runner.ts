@@ -21,7 +21,8 @@ export const runKubectlCommand = (command: string): Result<string, string> => {
   } catch (err: any) {
     // kubectl commands return non-zero exit code on error
     // Capture stderr or stdout (kubectl sometimes uses stdout for errors)
-    const errorOutput = err.stderr || err.stdout || err.message || 'Unknown error'
+    const errorOutput =
+      err.stderr || err.stdout || err.message || 'Unknown error'
     return error(errorOutput)
   }
 }

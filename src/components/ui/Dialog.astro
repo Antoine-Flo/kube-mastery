@@ -21,11 +21,20 @@ const sizeClass = `dialog__content--size-${size}`
   aria-labelledby={`${id}-title`}
   aria-describedby={description ? `${id}-desc` : undefined}
 >
-  <div class="dialog__positioner dialog__positioner--placement-center dialog__positioner--scroll-outside">
-    <div class={`dialog__content ${sizeClass} dialog__content--motion-scale dialog__content--placement-center`}>
+  <div
+    class="dialog__positioner dialog__positioner--placement-center dialog__positioner--scroll-outside"
+  >
+    <div
+      class={`dialog__content ${sizeClass} dialog__content--motion-scale dialog__content--placement-center`}
+    >
       <div class="dialog__header">
         <h2 id={`${id}-title`} class="dialog__title">{title}</h2>
-        <button type="button" class="dialog__close-trigger" aria-label="Fermer" data-dialog-close>
+        <button
+          type="button"
+          class="dialog__close-trigger"
+          aria-label="Fermer"
+          data-dialog-close
+        >
           <X size={20} />
         </button>
       </div>

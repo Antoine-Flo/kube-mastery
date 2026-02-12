@@ -5,29 +5,39 @@ import type { OverviewIndexPort, LessonContentPort, ChapterMeta } from './port'
 import type { LessonLocation } from './types'
 import { stripNumericPrefix, parseH1 } from '../utils'
 
-const lessonTitleGlob = import.meta.glob<string>('../../courses/modules/**/content.md', {
-  eager: true,
-  query: '?raw',
-  import: 'default'
-})
+const lessonTitleGlob = import.meta.glob<string>(
+  '../../courses/modules/**/content.md',
+  {
+    eager: true,
+    query: '?raw',
+    import: 'default'
+  }
+)
 const chapterMetaGlob = import.meta.glob<{ default: Record<string, unknown> }>(
   '../../courses/modules/*/*/chapter.json',
   { eager: true, import: 'default' }
 )
-const contentMdPathsGlob = import.meta.glob('../../courses/modules/**/content.md')
+const contentMdPathsGlob = import.meta.glob(
+  '../../courses/modules/**/content.md'
+)
 
 const contentMdGlobKeys = Object.keys(contentMdPathsGlob)
 
-const contentRawGlob = import.meta.glob<string>('../../courses/modules/**/content.md', {
-  eager: true,
-  query: '?raw',
-  import: 'default'
-})
-const contentAsMarkdownGlob = import.meta.glob<MarkdownInstance<Record<string, unknown>>>(
+const contentRawGlob = import.meta.glob<string>(
   '../../courses/modules/**/content.md',
+  {
+    eager: true,
+    query: '?raw',
+    import: 'default'
+  }
+)
+const contentAsMarkdownGlob = import.meta.glob<
+  MarkdownInstance<Record<string, unknown>>
+>('../../courses/modules/**/content.md', { eager: true })
+const quizGlob = import.meta.glob<{ quiz?: Quiz }>(
+  '../../courses/modules/**/quiz.ts',
   { eager: true }
 )
-const quizGlob = import.meta.glob<{ quiz?: Quiz }>('../../courses/modules/**/quiz.ts', { eager: true })
 
 function buildLessonTitleIndex(): Map<string, string> {
   const index = new Map<string, string>()
@@ -80,7 +90,9 @@ function buildChapterMetaIndex(): Map<string, ChapterMeta> {
 
     index.set(`${moduleId}:${chapterId}`, {
       title: { en: raw.title?.en ?? '', fr: raw.title?.fr ?? '' },
-      description: raw.description ? { en: raw.description.en ?? '', fr: raw.description.fr ?? '' } : undefined,
+      description: raw.description
+        ? { en: raw.description.en ?? '', fr: raw.description.fr ?? '' }
+        : undefined,
       isFree: raw.isFree,
       environment: raw.environment
     })
@@ -88,7 +100,10 @@ function buildChapterMetaIndex(): Map<string, ChapterMeta> {
   return index
 }
 
-function buildChapterDirsByModule(): Map<string, Array<{ chapterDir: string; chapterId: string }>> {
+function buildChapterDirsByModule(): Map<
+  string,
+  Array<{ chapterDir: string; chapterId: string }>
+> {
   const seen = new Map<string, Set<string>>()
 
   for (const path of contentMdGlobKeys) {
@@ -107,10 +122,15 @@ function buildChapterDirsByModule(): Map<string, Array<{ chapterDir: string; cha
     seen.get(moduleId)!.add(JSON.stringify({ chapterDir, chapterId }))
   }
 
-  const out = new Map<string, Array<{ chapterDir: string; chapterId: string }>>()
+  const out = new Map<
+    string,
+    Array<{ chapterDir: string; chapterId: string }>
+  >()
 
   for (const [moduleId, set] of seen) {
-    const arr = Array.from(set).map((s) => JSON.parse(s) as { chapterDir: string; chapterId: string })
+    const arr = Array.from(set).map(
+      (s) => JSON.parse(s) as { chapterDir: string; chapterId: string }
+    )
     arr.sort((a, b) => a.chapterDir.localeCompare(b.chapterDir))
     out.set(moduleId, arr)
   }
@@ -151,7 +171,10 @@ function buildLessonDirsByChapter(): Map<string, string[]> {
 
 let lessonTitleIndex: Map<string, string> | null = null
 let chapterMetaIndex: Map<string, ChapterMeta> | null = null
-let chapterDirsByModule: Map<string, Array<{ chapterDir: string; chapterId: string }>> | null = null
+let chapterDirsByModule: Map<
+  string,
+  Array<{ chapterDir: string; chapterId: string }>
+> | null = null
 let lessonDirsByChapter: Map<string, string[]> | null = null
 
 const indexPort: OverviewIndexPort = {
@@ -196,8 +219,13 @@ const contentPort: LessonContentPort = {
     return found ? (contentRawGlob[found] ?? null) : null
   },
 
-  getLessonContent(loc: LessonLocation, lang: UiLang): MarkdownInstance<Record<string, unknown>> | null {
-    const found = Object.keys(contentAsMarkdownGlob).find((k) => k.endsWith(contentPath(loc, lang)))
+  getLessonContent(
+    loc: LessonLocation,
+    lang: UiLang
+  ): MarkdownInstance<Record<string, unknown>> | null {
+    const found = Object.keys(contentAsMarkdownGlob).find((k) =>
+      k.endsWith(contentPath(loc, lang))
+    )
     return found ? (contentAsMarkdownGlob[found] ?? null) : null
   },
 
@@ -211,7 +239,8 @@ const contentPort: LessonContentPort = {
   }
 }
 
-export function createOverviewGlobAdapter(): OverviewIndexPort & LessonContentPort {
+export function createOverviewGlobAdapter(): OverviewIndexPort &
+  LessonContentPort {
   return {
     ...indexPort,
     ...contentPort

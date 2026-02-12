@@ -87,7 +87,10 @@ describe('Logger', () => {
     })
 
     it('should return empty array when no matches', () => {
-      const entries = logger.getEntries({ level: 'error', category: 'EXECUTOR' })
+      const entries = logger.getEntries({
+        level: 'error',
+        category: 'EXECUTOR'
+      })
       expect(entries).toHaveLength(0)
     })
 
@@ -182,14 +185,20 @@ describe('Logger', () => {
 
   describe('console mirroring', () => {
     it('should mirror to console when enabled', () => {
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const consoleLogSpy = vi
+        .spyOn(console, 'log')
+        .mockImplementation(() => {})
 
       const mirrorLogger = createLogger({ mirrorToConsole: true })
       mirrorLogger.info('EXECUTOR', 'Console test')
 
       expect(consoleLogSpy).toHaveBeenCalled()
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('[INFO]'))
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('[EXECUTOR]'))
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[INFO]')
+      )
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[EXECUTOR]')
+      )
 
       consoleLogSpy.mockRestore()
     })
@@ -216,7 +225,9 @@ describe('Logger', () => {
     })
 
     it('should not mirror to console by default', () => {
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const consoleLogSpy = vi
+        .spyOn(console, 'log')
+        .mockImplementation(() => {})
 
       const normalLogger = createLogger()
       normalLogger.info('COMMAND', 'No mirror')

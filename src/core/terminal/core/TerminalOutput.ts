@@ -58,7 +58,9 @@ export interface TerminalOutput {
  * @param renderer - Le renderer de terminal sous-jacent
  * @returns Une instance de TerminalOutput
  */
-export const createTerminalOutput = (renderer: TerminalRenderer): TerminalOutput => {
+export const createTerminalOutput = (
+  renderer: TerminalRenderer
+): TerminalOutput => {
   return {
     write(text: string): void {
       if (text) {

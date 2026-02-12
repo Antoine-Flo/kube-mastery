@@ -20,7 +20,12 @@ export interface NodeAddress {
 // ─── Node Condition ────────────────────────────────────────────────────────
 
 export interface NodeCondition {
-  type: 'Ready' | 'MemoryPressure' | 'DiskPressure' | 'PIDPressure' | 'NetworkUnavailable'
+  type:
+    | 'Ready'
+    | 'MemoryPressure'
+    | 'DiskPressure'
+    | 'PIDPressure'
+    | 'NetworkUnavailable'
   status: 'True' | 'False' | 'Unknown'
   lastHeartbeatTime?: string
   lastTransitionTime?: string
@@ -235,7 +240,13 @@ const NodeManifestSchema = z.object({
     conditions: z
       .array(
         z.object({
-          type: z.enum(['Ready', 'MemoryPressure', 'DiskPressure', 'PIDPressure', 'NetworkUnavailable']),
+          type: z.enum([
+            'Ready',
+            'MemoryPressure',
+            'DiskPressure',
+            'PIDPressure',
+            'NetworkUnavailable'
+          ]),
           status: z.enum(['True', 'False', 'Unknown']),
           lastHeartbeatTime: z.string().optional(),
           lastTransitionTime: z.string().optional(),
@@ -300,7 +311,9 @@ export const parseNodeManifest = (data: unknown): Result<Node> => {
 
   if (!result.success) {
     const firstError = result.error.issues[0]
-    return error(`Invalid Node manifest: ${firstError.path.join('.')}: ${firstError.message}`)
+    return error(
+      `Invalid Node manifest: ${firstError.path.join('.')}: ${firstError.message}`
+    )
   }
 
   const manifest = result.data
@@ -308,8 +321,12 @@ export const parseNodeManifest = (data: unknown): Result<Node> => {
   const node = createNode({
     name: manifest.metadata.name,
     ...(manifest.metadata.labels && { labels: manifest.metadata.labels }),
-    ...(manifest.metadata.annotations && { annotations: manifest.metadata.annotations }),
-    ...(manifest.metadata.creationTimestamp && { creationTimestamp: manifest.metadata.creationTimestamp }),
+    ...(manifest.metadata.annotations && {
+      annotations: manifest.metadata.annotations
+    }),
+    ...(manifest.metadata.creationTimestamp && {
+      creationTimestamp: manifest.metadata.creationTimestamp
+    }),
     ...(manifest.spec && { spec: manifest.spec }),
     status: manifest.status
   })

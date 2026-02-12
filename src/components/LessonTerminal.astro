@@ -10,4 +10,11 @@ const { seedName, lang = 'en' } = Astro.props
 const persistId = `terminal-${seedName}`
 ---
 
-<TerminalWindow seedName={seedName} lang={lang} fullHeight persistId={persistId} rows={24} showControls={false} />
+<TerminalWindow
+  seedName={seedName}
+  lang={lang}
+  fullHeight
+  persistId={persistId}
+  rows={24}
+  showControls={false}
+/>

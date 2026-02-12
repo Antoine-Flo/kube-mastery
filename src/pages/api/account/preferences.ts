@@ -28,7 +28,8 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     })
   }
 
-  const locale = body.locale === 'fr' ? 'fr' : body.locale === 'en' ? 'en' : undefined
+  const locale =
+    body.locale === 'fr' ? 'fr' : body.locale === 'en' ? 'en' : undefined
   if (locale === undefined) {
     return new Response(JSON.stringify({ error: 'Invalid locale' }), {
       status: 400,

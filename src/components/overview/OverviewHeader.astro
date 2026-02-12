@@ -13,10 +13,19 @@ interface Props {
 const { overview, t, ctaHref, ctaLabel } = Astro.props
 const DescriptionContent = overview.descriptionContent?.Content
 
-const totalLessons = overview.content.chapters.reduce((sum, ch) => sum + ch.lessons.length, 0)
+const totalLessons = overview.content.chapters.reduce(
+  (sum, ch) => sum + ch.lessons.length,
+  0
+)
 const totalChapters = overview.content.chapters.length
-const lessonsLabel = totalLessons === 1 ? `1 ${t('courses_lesson')}` : `${totalLessons} ${t('courses_lessons')}`
-const chaptersLabel = totalChapters === 1 ? `1 ${t('courses_chapter')}` : `${totalChapters} ${t('courses_chapters')}`
+const lessonsLabel =
+  totalLessons === 1
+    ? `1 ${t('courses_lesson')}`
+    : `${totalLessons} ${t('courses_lessons')}`
+const chaptersLabel =
+  totalChapters === 1
+    ? `1 ${t('courses_chapter')}`
+    : `${totalChapters} ${t('courses_chapters')}`
 ---
 
 <div class="oh">
@@ -44,7 +53,11 @@ const chaptersLabel = totalChapters === 1 ? `1 ${t('courses_chapter')}` : `${tot
   {
     (DescriptionContent || overview.description) && (
       <div class="d">
-        {DescriptionContent ? <DescriptionContent /> : overview.description?.split(/\n\n+/).map((p) => <p>{p}</p>)}
+        {DescriptionContent ? (
+          <DescriptionContent />
+        ) : (
+          overview.description?.split(/\n\n+/).map((p) => <p>{p}</p>)
+        )}
       </div>
     )
   }

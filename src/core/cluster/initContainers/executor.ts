@@ -4,7 +4,10 @@
 // Simulates command execution for init containers
 // Supports basic commands: touch, mkdir, echo redirect, sh -c
 
-import { createFileSystem, type FileSystemState } from '../../filesystem/FileSystem'
+import {
+  createFileSystem,
+  type FileSystemState
+} from '../../filesystem/FileSystem'
 import { error, success, type Result } from '../../shared/result'
 import type { Container } from '../ressources/Pod'
 
@@ -51,7 +54,10 @@ const normalizePath = (path: string): string => {
 /**
  * Execute touch command - creates empty file
  */
-const executeTouchCommand = (fs: ReturnType<typeof createFileSystem>, path: string): Result<void> => {
+const executeTouchCommand = (
+  fs: ReturnType<typeof createFileSystem>,
+  path: string
+): Result<void> => {
   const normalizedPath = normalizePath(path)
   const result = fs.createFile(normalizedPath, '')
 
@@ -65,7 +71,10 @@ const executeTouchCommand = (fs: ReturnType<typeof createFileSystem>, path: stri
 /**
  * Execute mkdir command - creates directory
  */
-const executeMkdirCommand = (fs: ReturnType<typeof createFileSystem>, args: string[]): Result<void> => {
+const executeMkdirCommand = (
+  fs: ReturnType<typeof createFileSystem>,
+  args: string[]
+): Result<void> => {
   // Check for -p flag
   const hasParentFlag = args.includes('-p')
   const pathIndex = hasParentFlag ? args.indexOf('-p') + 1 : 0
@@ -107,9 +116,14 @@ const executeMkdirCommand = (fs: ReturnType<typeof createFileSystem>, args: stri
 /**
  * Execute echo redirect command - creates file with content
  */
-const executeEchoRedirect = (fs: ReturnType<typeof createFileSystem>, fullCommand: string): Result<void> => {
+const executeEchoRedirect = (
+  fs: ReturnType<typeof createFileSystem>,
+  fullCommand: string
+): Result<void> => {
   // Parse: echo "content" > /path/to/file
-  const redirectMatch = fullCommand.match(/echo\s+["']?([^"'>]+)["']?\s+>\s+(\S+)/)
+  const redirectMatch = fullCommand.match(
+    /echo\s+["']?([^"'>]+)["']?\s+>\s+(\S+)/
+  )
 
   if (!redirectMatch) {
     return error('Invalid echo redirect syntax')
@@ -131,7 +145,10 @@ const executeEchoRedirect = (fs: ReturnType<typeof createFileSystem>, fullComman
 /**
  * Execute chained commands (separated by &&)
  */
-const executeChainedCommands = (fs: ReturnType<typeof createFileSystem>, fullCommand: string): Result<void> => {
+const executeChainedCommands = (
+  fs: ReturnType<typeof createFileSystem>,
+  fullCommand: string
+): Result<void> => {
   const commands = fullCommand.split('&&').map((cmd) => cmd.trim())
 
   for (const cmd of commands) {
@@ -147,7 +164,10 @@ const executeChainedCommands = (fs: ReturnType<typeof createFileSystem>, fullCom
 /**
  * Execute a single command
  */
-const executeSingleCommand = (fs: ReturnType<typeof createFileSystem>, command: string): Result<void> => {
+const executeSingleCommand = (
+  fs: ReturnType<typeof createFileSystem>,
+  command: string
+): Result<void> => {
   const trimmedCommand = command.trim()
 
   // Echo redirect
@@ -176,7 +196,10 @@ const executeSingleCommand = (fs: ReturnType<typeof createFileSystem>, command: 
  * Execute init container commands and return modified filesystem
  * Pure function that simulates command execution
  */
-export const executeInitContainer = (container: Container, filesystem: FileSystemState): Result<FileSystemState> => {
+export const executeInitContainer = (
+  container: Container,
+  filesystem: FileSystemState
+): Result<FileSystemState> => {
   const commandStr = parseCommand(container)
 
   // No command = no-op (success)

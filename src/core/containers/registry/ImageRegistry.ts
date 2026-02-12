@@ -30,7 +30,11 @@ export const createImageRegistry = (): ImageRegistry => {
     const trimmed = imageString.trim()
 
     // Check for obviously invalid format
-    if (trimmed.includes('::') || trimmed.startsWith(':') || trimmed.endsWith(':')) {
+    if (
+      trimmed.includes('::') ||
+      trimmed.startsWith(':') ||
+      trimmed.endsWith(':')
+    ) {
       return error('Invalid image format')
     }
 
@@ -76,22 +80,31 @@ export const createImageRegistry = (): ImageRegistry => {
     const parsed = parseResult.value
 
     // Find image in registry
-    const image = images.find((img) => img.name === parsed.name && img.registry === parsed.registry)
+    const image = images.find(
+      (img) => img.name === parsed.name && img.registry === parsed.registry
+    )
 
     if (!image) {
-      return error(`Image not found in registry.\n\nRun 'debug images' to see available images.`)
+      return error(
+        `Image not found in registry.\n\nRun 'debug images' to see available images.`
+      )
     }
 
     // Check if tag exists
     if (!image.tags.includes(parsed.tag)) {
       const availableTags = image.tags.join(', ')
-      return error(`Tag '${parsed.tag}' not found for ${image.name}\n\nAvailable tags: ${availableTags}`)
+      return error(
+        `Tag '${parsed.tag}' not found for ${image.name}\n\nAvailable tags: ${availableTags}`
+      )
     }
 
     return success(image)
   }
 
-  const getImage = (name: string, tag: string = 'latest'): Result<ImageManifest> => {
+  const getImage = (
+    name: string,
+    tag: string = 'latest'
+  ): Result<ImageManifest> => {
     // Try to find in all registries
     const image = images.find((img) => img.name === name)
 
@@ -102,7 +115,9 @@ export const createImageRegistry = (): ImageRegistry => {
     // Check tag
     if (!image.tags.includes(tag)) {
       const availableTags = image.tags.join(', ')
-      return error(`Tag '${tag}' not found for ${name}\n\nAvailable tags: ${availableTags}`)
+      return error(
+        `Tag '${tag}' not found for ${name}\n\nAvailable tags: ${availableTags}`
+      )
     }
 
     return success(image)

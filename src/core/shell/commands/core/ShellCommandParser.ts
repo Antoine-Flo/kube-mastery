@@ -50,7 +50,9 @@ export const VALID_COMMANDS: ShellCommand[] = [
  * All flags are treated as boolean flags
  * Supports combined flags: -la becomes { l: true, a: true }
  */
-const parseShellFlags = (ctx: ParseContext): Result<ParseContext & { flags: ParsedFlags }> => {
+const parseShellFlags = (
+  ctx: ParseContext
+): Result<ParseContext & { flags: ParsedFlags }> => {
   if (!ctx.tokens) {
     return error('No tokens available')
   }
@@ -96,7 +98,9 @@ const parseShellFlags = (ctx: ParseContext): Result<ParseContext & { flags: Pars
  * Extract args for shell commands
  * Skips all flags (which are all boolean) and extracts remaining tokens as args
  */
-const extractShellArgs = (ctx: ParseContext): Result<ParseContext & { args: string[] }> => {
+const extractShellArgs = (
+  ctx: ParseContext
+): Result<ParseContext & { args: string[] }> => {
   if (!ctx.tokens) {
     return error('No tokens available')
   }
@@ -132,7 +136,9 @@ const extractShellArgs = (ctx: ParseContext): Result<ParseContext & { args: stri
  * @param input - Raw command string (e.g., "ls -l", "cd /manifests")
  * @returns Parsed command or error
  */
-export const parseShellCommand = (input: string): Result<ParsedShellCommand> => {
+export const parseShellCommand = (
+  input: string
+): Result<ParsedShellCommand> => {
   // Create the parsing pipeline
   const pipeline = pipeResult<ParseContext>(
     trim,

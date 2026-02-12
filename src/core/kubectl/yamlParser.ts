@@ -24,9 +24,23 @@ import { error, success } from '../shared/result'
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
-type ParsedResource = Pod | ConfigMap | Secret | Node | ReplicaSet | Deployment | Service
+type ParsedResource =
+  | Pod
+  | ConfigMap
+  | Secret
+  | Node
+  | ReplicaSet
+  | Deployment
+  | Service
 
-type ResourceKind = 'Pod' | 'ConfigMap' | 'Secret' | 'Node' | 'ReplicaSet' | 'Deployment' | 'Service'
+type ResourceKind =
+  | 'Pod'
+  | 'ConfigMap'
+  | 'Secret'
+  | 'Node'
+  | 'ReplicaSet'
+  | 'Deployment'
+  | 'Service'
 
 // ─── YAML Parsing ────────────────────────────────────────────────────────
 
@@ -41,7 +55,8 @@ const parseYaml = (yamlContent: string): Result<unknown> => {
     }
     return success(parsed)
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown YAML parse error'
+    const message =
+      err instanceof Error ? err.message : 'Unknown YAML parse error'
     return error(`YAML parse error: ${message}`)
   }
 }
@@ -64,7 +79,10 @@ const isSupportedKind = (kind: string): kind is ResourceKind => {
 /**
  * Manifest parser lookup table (object lookup pattern)
  */
-const MANIFEST_PARSERS: Record<ResourceKind, (obj: any) => Result<ParsedResource>> = {
+const MANIFEST_PARSERS: Record<
+  ResourceKind,
+  (obj: any) => Result<ParsedResource>
+> = {
   Pod: parsePodManifest,
   ConfigMap: parseConfigMapManifest,
   Secret: parseSecretManifest,
@@ -101,7 +119,9 @@ const validateResource = (obj: any): Result<ParsedResource> => {
  * @param yamlContent - YAML string to parse
  * @returns Result with validated resource or error message
  */
-export const parseKubernetesYaml = (yamlContent: string): Result<ParsedResource> => {
+export const parseKubernetesYaml = (
+  yamlContent: string
+): Result<ParsedResource> => {
   const parseResult = parseYaml(yamlContent)
   if (!parseResult.ok) {
     return parseResult

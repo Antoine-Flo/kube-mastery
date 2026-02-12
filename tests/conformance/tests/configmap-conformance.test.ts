@@ -4,9 +4,15 @@
 // Validates that ConfigMap resources created by the simulator conform to Kubernetes OpenAPI specs
 
 import { beforeAll, describe, expect, it } from 'vitest'
-import { createConfigMap, type ConfigMap } from '../../../src/core/cluster/ressources/ConfigMap'
+import {
+  createConfigMap,
+  type ConfigMap
+} from '../../../src/core/cluster/ressources/ConfigMap'
 import { loadOpenAPISpec } from '../openapi/loader'
-import { createOpenAPIValidator, removeSimulatorFields } from '../openapi/validator'
+import {
+  createOpenAPIValidator,
+  removeSimulatorFields
+} from '../openapi/validator'
 
 describe('ConfigMap OpenAPI Conformance', () => {
   let validator: ReturnType<typeof createOpenAPIValidator>
@@ -32,7 +38,11 @@ describe('ConfigMap OpenAPI Conformance', () => {
       })
 
       const cmForValidation = removeSimulatorFields(configMap) as ConfigMap
-      const result = validator.validateResource(cmForValidation, 'v1', 'ConfigMap')
+      const result = validator.validateResource(
+        cmForValidation,
+        'v1',
+        'ConfigMap'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -48,7 +58,11 @@ describe('ConfigMap OpenAPI Conformance', () => {
       })
 
       const cmForValidation = removeSimulatorFields(configMap) as ConfigMap
-      const result = validator.validateResource(cmForValidation, 'v1', 'ConfigMap')
+      const result = validator.validateResource(
+        cmForValidation,
+        'v1',
+        'ConfigMap'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -65,7 +79,11 @@ describe('ConfigMap OpenAPI Conformance', () => {
       })
 
       const cmForValidation = removeSimulatorFields(configMap) as ConfigMap
-      const result = validator.validateResource(cmForValidation, 'v1', 'ConfigMap')
+      const result = validator.validateResource(
+        cmForValidation,
+        'v1',
+        'ConfigMap'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -122,7 +140,11 @@ describe('ConfigMap OpenAPI Conformance', () => {
       })
 
       const cmForValidation = removeSimulatorFields(configMap) as ConfigMap
-      const result = validator.validateResource(cmForValidation, 'v1', 'ConfigMap')
+      const result = validator.validateResource(
+        cmForValidation,
+        'v1',
+        'ConfigMap'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -136,7 +158,11 @@ describe('ConfigMap OpenAPI Conformance', () => {
       })
 
       const cmForValidation = removeSimulatorFields(configMap) as ConfigMap
-      const result = validator.validateResource(cmForValidation, 'v1', 'ConfigMap')
+      const result = validator.validateResource(
+        cmForValidation,
+        'v1',
+        'ConfigMap'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }

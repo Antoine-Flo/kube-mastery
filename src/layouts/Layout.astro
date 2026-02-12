@@ -16,7 +16,11 @@ const lang = getLangFromUrl(Astro.url)
 const bodyClass = Astro.props.bodyClass
 const showFooter = Astro.props.showFooter ?? true
 
-const auth = await getLayoutAuthContext(Astro.locals, Astro.request, Astro.cookies)
+const auth = await getLayoutAuthContext(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
 ---
 
 <!doctype html>
@@ -33,7 +37,11 @@ const auth = await getLayoutAuthContext(Astro.locals, Astro.request, Astro.cooki
   </head>
   <body class={bodyClass}>
     <GlobalStyles />
-    <Navbar isLoggedIn={auth.isLoggedIn} user={auth.user} hasPaidSubscription={auth.hasPaidSubscription} />
+    <Navbar
+      isLoggedIn={auth.isLoggedIn}
+      user={auth.user}
+      hasPaidSubscription={auth.hasPaidSubscription}
+    />
     <main class="layout-main">
       <slot />
     </main>

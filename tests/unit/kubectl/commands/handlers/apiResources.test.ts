@@ -3,7 +3,9 @@ import { handleAPIResources } from '../../../../../src/core/kubectl/commands/han
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 
 describe('kubectl api-resources handler', () => {
-  const createParsedCommand = (overrides: Partial<ParsedCommand> = {}): ParsedCommand => ({
+  const createParsedCommand = (
+    overrides: Partial<ParsedCommand> = {}
+  ): ParsedCommand => ({
     action: 'api-resources',
     flags: {},
     ...overrides
@@ -90,7 +92,9 @@ describe('kubectl api-resources handler', () => {
       expect(result.ok).toBe(true)
       if (result.ok) {
         const lines = result.value.split('\n')
-        const podLine = lines.find((line) => line.includes('pods') && line.includes('po'))
+        const podLine = lines.find(
+          (line) => line.includes('pods') && line.includes('po')
+        )
         expect(podLine).toBeTruthy()
         if (podLine) {
           expect(podLine).toContain('get,list,create,update,patch,delete,watch')
@@ -329,7 +333,12 @@ describe('kubectl api-resources handler', () => {
       if (result.ok) {
         const lines = result.value
           .split('\n')
-          .filter((line) => line.trim() && !line.includes('NAME') && !line.includes('SHORTNAMES'))
+          .filter(
+            (line) =>
+              line.trim() &&
+              !line.includes('NAME') &&
+              !line.includes('SHORTNAMES')
+          )
         const resourceNames = lines.map((line) => line.trim().split(/\s+/)[0])
         const sorted = [...resourceNames].sort()
         expect(resourceNames).toEqual(sorted)
@@ -347,7 +356,12 @@ describe('kubectl api-resources handler', () => {
       if (result.ok) {
         const lines = result.value
           .split('\n')
-          .filter((line) => line.trim() && !line.includes('NAME') && !line.includes('SHORTNAMES'))
+          .filter(
+            (line) =>
+              line.trim() &&
+              !line.includes('NAME') &&
+              !line.includes('SHORTNAMES')
+          )
         const kinds = lines.map((line) => {
           const parts = line.trim().split(/\s+/)
           return parts[parts.length - 1] // Last column is KIND
@@ -381,7 +395,12 @@ describe('kubectl api-resources handler', () => {
       if (result.ok) {
         const lines = result.value
           .split('\n')
-          .filter((line) => line.trim() && !line.includes('NAME') && !line.includes('SHORTNAMES'))
+          .filter(
+            (line) =>
+              line.trim() &&
+              !line.includes('NAME') &&
+              !line.includes('SHORTNAMES')
+          )
         const resourceNames = lines.map((line) => line.trim().split(/\s+/)[0])
 
         // v1 resources should come before apps/v1 resources
@@ -405,14 +424,18 @@ describe('kubectl api-resources handler', () => {
       if (result.ok) {
         const lines = result.value.split('\n')
         // pods should have 'po' shortname
-        const podLine = lines.find((line) => line.includes('pods') && !line.includes('NAME'))
+        const podLine = lines.find(
+          (line) => line.includes('pods') && !line.includes('NAME')
+        )
         expect(podLine).toBeTruthy()
         if (podLine) {
           expect(podLine).toContain('po')
         }
 
         // secrets should appear (empty shortnames are handled by formatShortnames)
-        const secretLine = lines.find((line) => line.includes('secrets') && !line.includes('NAME'))
+        const secretLine = lines.find(
+          (line) => line.includes('secrets') && !line.includes('NAME')
+        )
         expect(secretLine).toBeTruthy()
       }
     })

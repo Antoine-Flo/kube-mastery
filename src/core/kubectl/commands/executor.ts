@@ -34,17 +34,37 @@ const createHandlers = (
   const handlers = new Map<string, ActionHandler>()
 
   // Direct handler mapping - logging is handled centrally by event system
-  handlers.set('get', (parsed) => success(handleGet(clusterState.toJSON(), parsed)))
-  handlers.set('describe', (parsed) => handleDescribe(clusterState.toJSON(), parsed))
-  handlers.set('delete', (parsed) => handleDelete(clusterState, parsed, eventBus))
-  handlers.set('apply', (parsed) => handleApply(fileSystem, clusterState, parsed, eventBus))
-  handlers.set('create', (parsed) => handleCreate(fileSystem, clusterState, parsed, eventBus))
-  handlers.set('logs', (parsed) => success(handleLogs(clusterState.toJSON(), parsed)))
-  handlers.set('exec', (parsed) => success(handleExec(clusterState.toJSON(), parsed)))
-  handlers.set('label', (parsed) => handleLabelAdapter(clusterState, fileSystem, eventBus, parsed))
-  handlers.set('annotate', (parsed) => handleAnnotateAdapter(clusterState, fileSystem, eventBus, parsed))
+  handlers.set('get', (parsed) =>
+    success(handleGet(clusterState.toJSON(), parsed))
+  )
+  handlers.set('describe', (parsed) =>
+    handleDescribe(clusterState.toJSON(), parsed)
+  )
+  handlers.set('delete', (parsed) =>
+    handleDelete(clusterState, parsed, eventBus)
+  )
+  handlers.set('apply', (parsed) =>
+    handleApply(fileSystem, clusterState, parsed, eventBus)
+  )
+  handlers.set('create', (parsed) =>
+    handleCreate(fileSystem, clusterState, parsed, eventBus)
+  )
+  handlers.set('logs', (parsed) =>
+    success(handleLogs(clusterState.toJSON(), parsed))
+  )
+  handlers.set('exec', (parsed) =>
+    success(handleExec(clusterState.toJSON(), parsed))
+  )
+  handlers.set('label', (parsed) =>
+    handleLabelAdapter(clusterState, fileSystem, eventBus, parsed)
+  )
+  handlers.set('annotate', (parsed) =>
+    handleAnnotateAdapter(clusterState, fileSystem, eventBus, parsed)
+  )
   handlers.set('version', (parsed) => handleVersion(parsed))
-  handlers.set('cluster-info', (parsed) => handleClusterInfo(clusterState.toJSON(), parsed))
+  handlers.set('cluster-info', (parsed) =>
+    handleClusterInfo(clusterState.toJSON(), parsed)
+  )
   handlers.set('api-resources', (parsed) => handleAPIResources(parsed))
   handlers.set('scale', (parsed) => handleScale(clusterState, parsed, eventBus))
 
@@ -83,7 +103,11 @@ const handleAnnotateAdapter = (
 /**
  * Route parsed command to handler from Map
  */
-const routeCommand = (handlers: Map<string, ActionHandler>, parsed: ParsedCommand, logger: Logger): ExecutionResult => {
+const routeCommand = (
+  handlers: Map<string, ActionHandler>,
+  parsed: ParsedCommand,
+  logger: Logger
+): ExecutionResult => {
   const handler = handlers.get(parsed.action)
 
   if (!handler) {

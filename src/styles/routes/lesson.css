@@ -49,7 +49,8 @@
   display: none;
 }
 
-.lesson__sidebar:not(.lesson__sidebar--collapsed) .lesson__sidebar-icon--collapse {
+.lesson__sidebar:not(.lesson__sidebar--collapsed)
+  .lesson__sidebar-icon--collapse {
   display: inline-flex;
 }
 

@@ -109,15 +109,26 @@ const formatYamlOutput = (version: Version): string => {
 export const handleVersion = (parsed: ParsedCommand): Result<string> => {
   // Get output format - check flags first (explicit), then parsed.output (may be default 'table')
   const explicitOutput = parsed.flags.output || parsed.flags['o']
-  const outputFormat = explicitOutput ? (explicitOutput as string) : parsed.output
+  const outputFormat = explicitOutput
+    ? (explicitOutput as string)
+    : parsed.output
 
   // Validate --output flag (following Go implementation: if Output != "" && != "yaml" && != "json" -> error)
   // parsed.output can be 'table' (default from parser) - we only validate if it's explicitly set to something else
-  if (parsed.output && parsed.output !== 'table' && parsed.output !== 'yaml' && parsed.output !== 'json') {
+  if (
+    parsed.output &&
+    parsed.output !== 'table' &&
+    parsed.output !== 'yaml' &&
+    parsed.output !== 'json'
+  ) {
     return error(`--output must be 'yaml' or 'json'`)
   }
   // Also validate explicit flags
-  if (explicitOutput && explicitOutput !== 'yaml' && explicitOutput !== 'json') {
+  if (
+    explicitOutput &&
+    explicitOutput !== 'yaml' &&
+    explicitOutput !== 'json'
+  ) {
     return error(`--output must be 'yaml' or 'json'`)
   }
 

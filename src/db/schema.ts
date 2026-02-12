@@ -5,7 +5,16 @@
 // Used only for migrations, queries use supabase-js directly.
 
 import { sql } from 'drizzle-orm'
-import { index, jsonb, pgPolicy, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core'
+import {
+  index,
+  jsonb,
+  pgPolicy,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uuid
+} from 'drizzle-orm/pg-core'
 import { authUid, authUsers, authenticatedRole } from 'drizzle-orm/supabase'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -13,7 +22,12 @@ import { authUid, authUsers, authenticatedRole } from 'drizzle-orm/supabase'
 // ═══════════════════════════════════════════════════════════════════════════
 
 /** Completion types: lesson, chapter, module, course. target_id format depends on type (see plan). */
-export const COMPLETION_TYPES = ['lesson', 'chapter', 'module', 'course'] as const
+export const COMPLETION_TYPES = [
+  'lesson',
+  'chapter',
+  'module',
+  'course'
+] as const
 export type CompletionType = (typeof COMPLETION_TYPES)[number]
 
 /**
@@ -29,10 +43,16 @@ export const completions = pgTable(
       .references(() => authUsers.id, { onDelete: 'cascade' }),
     type: text('type').notNull(), // 'lesson' | 'chapter' | 'module' | 'course'
     targetId: text('target_id').notNull(),
-    completedAt: timestamp('completed_at', { withTimezone: true }).defaultNow().notNull()
+    completedAt: timestamp('completed_at', { withTimezone: true })
+      .defaultNow()
+      .notNull()
   },
   (table) => [
-    unique('completions_user_type_target_unique').on(table.userId, table.type, table.targetId),
+    unique('completions_user_type_target_unique').on(
+      table.userId,
+      table.type,
+      table.targetId
+    ),
     index('completions_user_id_idx').on(table.userId),
     index('completions_user_type_idx').on(table.userId, table.type),
     pgPolicy('Users can view their own completions', {
@@ -73,8 +93,12 @@ export const userPreferences = pgTable(
       .references(() => authUsers.id, { onDelete: 'cascade' }),
     theme: text('theme'),
     locale: text('locale'),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull()
   },
   (table) => [
     index('preferences_user_id_idx').on(table.userId),
@@ -120,17 +144,25 @@ export const subscriptions = pgTable(
     status: text('status').notNull(), // "active", "canceled", "past_due", "trialing", "paused"
     paddleSubscriptionId: text('paddle_subscription_id').unique(),
     paddleCustomerId: text('paddle_customer_id'),
-    currentPeriodStart: timestamp('current_period_start', { withTimezone: true }),
+    currentPeriodStart: timestamp('current_period_start', {
+      withTimezone: true
+    }),
     currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
     canceledAt: timestamp('canceled_at', { withTimezone: true }),
     metadata: jsonb('metadata').default('{}').notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull()
   },
   (table) => [
     index('subscriptions_user_id_idx').on(table.userId),
     index('subscriptions_status_idx').on(table.status),
-    index('subscriptions_paddle_subscription_id_idx').on(table.paddleSubscriptionId),
+    index('subscriptions_paddle_subscription_id_idx').on(
+      table.paddleSubscriptionId
+    ),
     pgPolicy('Users can view their own subscriptions', {
       for: 'select',
       to: authenticatedRole,
@@ -182,7 +214,9 @@ export const userMessages = pgTable(
     type: text('type').notNull(), // 'support' | 'suggestion' | 'survey'
     name: text('name'), // Optional, e.g. survey name
     content: jsonb('content').default('{}').notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull()
   },
   (table) => [
     index('messages_type_idx').on(table.type),

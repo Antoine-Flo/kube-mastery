@@ -245,7 +245,11 @@ describe('yamlConverters', () => {
     })
 
     it('should convert service-account-token type', () => {
-      const result = convertYamlSecretType('kubernetes.io/service-account-token', 'default-token-abc123', {})
+      const result = convertYamlSecretType(
+        'kubernetes.io/service-account-token',
+        'default-token-abc123',
+        {}
+      )
 
       expect(result).toEqual({
         type: 'kubernetes.io/service-account-token',
@@ -255,10 +259,15 @@ describe('yamlConverters', () => {
 
     it('should convert dockerconfigjson type', () => {
       const data = {
-        '.dockerconfigjson': 'eyJhdXRocyI6eyJkb2NrZXIuaW8iOnsidXNlcm5hbWUiOiJ1c2VyIiwicGFzc3dvcmQiOiJwYXNzIn19fQ=='
+        '.dockerconfigjson':
+          'eyJhdXRocyI6eyJkb2NrZXIuaW8iOnsidXNlcm5hbWUiOiJ1c2VyIiwicGFzc3dvcmQiOiJwYXNzIn19fQ=='
       }
 
-      const result = convertYamlSecretType('kubernetes.io/dockerconfigjson', 'docker-secret', data)
+      const result = convertYamlSecretType(
+        'kubernetes.io/dockerconfigjson',
+        'docker-secret',
+        data
+      )
 
       expect(result).toEqual({
         type: 'kubernetes.io/dockerconfigjson',

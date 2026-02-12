@@ -1,6 +1,9 @@
 import type { ClusterState } from '../../../cluster/ClusterState'
 import type { EventBus } from '../../../cluster/events/EventBus'
-import { createDeploymentUpdatedEvent, createReplicaSetUpdatedEvent } from '../../../cluster/events/types'
+import {
+  createDeploymentUpdatedEvent,
+  createReplicaSetUpdatedEvent
+} from '../../../cluster/events/types'
 import type { Deployment } from '../../../cluster/ressources/Deployment'
 import type { ReplicaSet } from '../../../cluster/ressources/ReplicaSet'
 import type { ExecutionResult } from '../../../shared/result'
@@ -21,17 +24,25 @@ const SCALABLE_RESOURCES = ['deployments', 'replicasets'] as const
  * Supports: kubectl scale deployment/name --replicas=N
  *           kubectl scale deployment name --replicas=N
  */
-export const handleScale = (clusterState: ClusterState, parsed: ParsedCommand, eventBus: EventBus): ExecutionResult => {
+export const handleScale = (
+  clusterState: ClusterState,
+  parsed: ParsedCommand,
+  eventBus: EventBus
+): ExecutionResult => {
   const namespace = parsed.namespace || 'default'
   const { resource, name, replicas } = parsed
 
   // Validate replicas flag
   if (replicas === undefined) {
-    return error('The --replicas=COUNT flag is required, and COUNT must be greater than or equal to 0')
+    return error(
+      'The --replicas=COUNT flag is required, and COUNT must be greater than or equal to 0'
+    )
   }
 
   if (replicas < 0) {
-    return error('The --replicas=COUNT flag is required, and COUNT must be greater than or equal to 0')
+    return error(
+      'The --replicas=COUNT flag is required, and COUNT must be greater than or equal to 0'
+    )
   }
 
   // Validate resource name
@@ -40,7 +51,12 @@ export const handleScale = (clusterState: ClusterState, parsed: ParsedCommand, e
   }
 
   // Validate resource type is scalable
-  if (!resource || !SCALABLE_RESOURCES.includes(resource as (typeof SCALABLE_RESOURCES)[number])) {
+  if (
+    !resource ||
+    !SCALABLE_RESOURCES.includes(
+      resource as (typeof SCALABLE_RESOURCES)[number]
+    )
+  ) {
     return error(`error: the resource type "${resource}" is not scalable`)
   }
 
@@ -85,7 +101,15 @@ const scaleDeployment = (
   }
 
   // Emit update event - DeploymentController will handle ReplicaSet/Pod reconciliation
-  eventBus.emit(createDeploymentUpdatedEvent(name, namespace, updatedDeployment, previousDeployment, 'kubectl'))
+  eventBus.emit(
+    createDeploymentUpdatedEvent(
+      name,
+      namespace,
+      updatedDeployment,
+      previousDeployment,
+      'kubectl'
+    )
+  )
 
   return success(`deployment.apps/${name} scaled`)
 }
@@ -118,7 +142,15 @@ const scaleReplicaSet = (
   }
 
   // Emit update event - ReplicaSetController will handle Pod reconciliation
-  eventBus.emit(createReplicaSetUpdatedEvent(name, namespace, updatedReplicaSet, previousReplicaSet, 'kubectl'))
+  eventBus.emit(
+    createReplicaSetUpdatedEvent(
+      name,
+      namespace,
+      updatedReplicaSet,
+      previousReplicaSet,
+      'kubectl'
+    )
+  )
 
   return success(`replicaset.apps/${name} scaled`)
 }

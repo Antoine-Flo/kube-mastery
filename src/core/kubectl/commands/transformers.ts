@@ -59,7 +59,10 @@ const RESOURCE_ALIAS_MAP = buildResourceAliasMap()
 /**
  * Find name token skipping flags
  */
-const findNameSkippingFlags = (tokens: string[], startIndex: number): string | undefined => {
+const findNameSkippingFlags = (
+  tokens: string[],
+  startIndex: number
+): string | undefined => {
   for (let i = startIndex; i < tokens.length; i++) {
     const token = tokens[i]
     if (!token.startsWith('-')) {

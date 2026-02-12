@@ -8,7 +8,12 @@ const json = (body: { error: string; message: string }, status: number) =>
     headers: { 'Content-Type': 'application/json' }
   })
 
-export const POST: APIRoute = async ({ request, cookies, redirect, locals }) => {
+export const POST: APIRoute = async ({
+  request,
+  cookies,
+  redirect,
+  locals
+}) => {
   let supabase
   try {
     supabase = getSupabaseServer(locals, request, cookies)
@@ -29,7 +34,10 @@ export const POST: APIRoute = async ({ request, cookies, redirect, locals }) => 
   const magic = formData.get('magic')?.toString() === '1'
   const lang = (formData.get('lang')?.toString() || 'en') as string
   const rawRedirect = formData.get('redirect')?.toString() ?? ''
-  const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.includes('//') ? rawRedirect : ''
+  const redirectTo =
+    rawRedirect.startsWith('/') && !rawRedirect.includes('//')
+      ? rawRedirect
+      : ''
 
   if (magic && email) {
     const confirmUrl = new URL('/api/auth/confirm', request.url)
@@ -58,7 +66,11 @@ export const POST: APIRoute = async ({ request, cookies, redirect, locals }) => 
     if (redirectTo) {
       params.set('redirect', redirectTo)
     }
-    return redirect(params.toString() ? `${checkEmailUrl}?${params.toString()}` : checkEmailUrl)
+    return redirect(
+      params.toString()
+        ? `${checkEmailUrl}?${params.toString()}`
+        : checkEmailUrl
+    )
   }
 
   if (provider === 'github') {
@@ -104,7 +116,8 @@ export const POST: APIRoute = async ({ request, cookies, redirect, locals }) => 
     return json(
       {
         error: 'auth/session-missing',
-        message: 'No session returned (e.g. email not confirmed). Check Supabase auth settings.'
+        message:
+          'No session returned (e.g. email not confirmed). Check Supabase auth settings.'
       },
       500
     )

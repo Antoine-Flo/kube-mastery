@@ -10,7 +10,12 @@ export const quiz: Quiz = {
       id: 'q1',
       type: 'multiple-choice',
       question: 'Vers quoi un Service ExternalName mappe-t-il ?',
-      options: ['Un ensemble de Pods', 'Un nom DNS', 'Une IP de cluster', 'Un port de nœud'],
+      options: [
+        'Un ensemble de Pods',
+        'Un nom DNS',
+        'Une IP de cluster',
+        'Un port de nœud'
+      ],
       correctAnswer: 1
     },
     {

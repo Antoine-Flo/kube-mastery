@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'Which of the following is NOT a capability provided by Kubernetes?',
+      question:
+        'Which of the following is NOT a capability provided by Kubernetes?',
       options: [
         'Service discovery and load balancing',
         'Automated rollouts and rollbacks',

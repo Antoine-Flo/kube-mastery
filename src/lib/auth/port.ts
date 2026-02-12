@@ -3,7 +3,11 @@
  * Implementations live in adapters (e.g. supabase-adapter).
  */
 
-import type { DeleteAccountRequest, DeleteAccountResult, LayoutAuthContext } from './types'
+import type {
+  DeleteAccountRequest,
+  DeleteAccountResult,
+  LayoutAuthContext
+} from './types'
 
 export type LayoutAuthRequest = {
   locals: unknown

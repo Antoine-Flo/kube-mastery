@@ -24,7 +24,11 @@ export interface ValidationError {
 }
 
 export interface OpenAPIValidator {
-  validateResource(resource: unknown, apiVersion: string, kind: string): Result<ValidationResult>
+  validateResource(
+    resource: unknown,
+    apiVersion: string,
+    kind: string
+  ): Result<ValidationResult>
   getSchema(apiVersion: string, kind: string): Result<JSONSchema>
 }
 
@@ -49,12 +53,18 @@ const getSchemaName = (apiVersion: string, kind: string): string => {
  * Get schema for a Kubernetes resource
  * Note: $ref resolution is handled by Ajv automatically
  */
-const getSchemaForResource = (spec: OpenAPISpec, apiVersion: string, kind: string): Result<JSONSchema> => {
+const getSchemaForResource = (
+  spec: OpenAPISpec,
+  apiVersion: string,
+  kind: string
+): Result<JSONSchema> => {
   const schemaName = getSchemaName(apiVersion, kind)
   const schema = spec.components.schemas[schemaName]
 
   if (!schema) {
-    return error(`Schema not found: ${schemaName} (apiVersion: ${apiVersion}, kind: ${kind})`)
+    return error(
+      `Schema not found: ${schemaName} (apiVersion: ${apiVersion}, kind: ${kind})`
+    )
   }
 
   return success(schema)
@@ -70,7 +80,10 @@ export const removeSimulatorFields = (resource: unknown): unknown => {
   if (typeof resource !== 'object' || resource === null) {
     return resource
   }
-  const { _simulator, ...cleaned } = resource as { _simulator?: unknown; [key: string]: unknown }
+  const { _simulator, ...cleaned } = resource as {
+    _simulator?: unknown
+    [key: string]: unknown
+  }
   return cleaned
 }
 
@@ -79,7 +92,9 @@ export const removeSimulatorFields = (resource: unknown): unknown => {
 /**
  * Format Ajv validation errors into readable format
  */
-const formatValidationErrors = (ajvErrors: ErrorObject[]): ValidationError[] => {
+const formatValidationErrors = (
+  ajvErrors: ErrorObject[]
+): ValidationError[] => {
   return ajvErrors.map((err) => {
     const path = err.instancePath || err.schemaPath || 'root'
     let message = err.message || 'Validation failed'
@@ -139,7 +154,9 @@ export const createOpenAPIValidator = (spec: OpenAPISpec): OpenAPIValidator => {
       const schema = spec.components.schemas[schemaName]
 
       if (!schema) {
-        return error(`Schema not found: ${schemaName} (apiVersion: ${apiVersion}, kind: ${kind})`)
+        return error(
+          `Schema not found: ${schemaName} (apiVersion: ${apiVersion}, kind: ${kind})`
+        )
       }
 
       // Use schema ID for Ajv

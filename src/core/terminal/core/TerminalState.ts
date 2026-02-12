@@ -40,7 +40,9 @@ export class TerminalState {
 
   insertCharAtCursor(char: string): void {
     this.currentLine =
-      this.currentLine.slice(0, this.cursorPosition) + char + this.currentLine.slice(this.cursorPosition)
+      this.currentLine.slice(0, this.cursorPosition) +
+      char +
+      this.currentLine.slice(this.cursorPosition)
     this.cursorPosition++
   }
 
@@ -49,7 +51,9 @@ export class TerminalState {
       return false
     }
 
-    this.currentLine = this.currentLine.slice(0, this.cursorPosition - 1) + this.currentLine.slice(this.cursorPosition)
+    this.currentLine =
+      this.currentLine.slice(0, this.cursorPosition - 1) +
+      this.currentLine.slice(this.cursorPosition)
     this.cursorPosition--
     return true
   }
@@ -60,7 +64,10 @@ export class TerminalState {
       return true
     }
 
-    if (direction === 'right' && this.cursorPosition < this.currentLine.length) {
+    if (
+      direction === 'right' &&
+      this.cursorPosition < this.currentLine.length
+    ) {
       this.cursorPosition++
       return true
     }
@@ -139,6 +146,8 @@ export class TerminalState {
 }
 
 // Factory function pour compatibilité et simplicité d'utilisation
-export const createTerminalState = (initialState?: Partial<TerminalStateData>): TerminalState => {
+export const createTerminalState = (
+  initialState?: Partial<TerminalStateData>
+): TerminalState => {
   return new TerminalState(initialState)
 }

@@ -88,13 +88,17 @@ const getThemeExtension = (theme: 'dark' | 'light') => {
 /**
  * Create a CodeMirror editor
  */
-export const createCodeMirrorEditor = (options: CodeMirrorEditorOptions = {}): CodeMirrorEditor => {
+export const createCodeMirrorEditor = (
+  options: CodeMirrorEditorOptions = {}
+): CodeMirrorEditor => {
   let view: EditorView | null = null
   let changeCallback: ((value: string) => void) | null = null
   let currentTheme = options.theme ?? 'dark'
 
   const createExtensions = (content: string) => {
-    const languageExtension = options.filename ? detectLanguage(options.filename) : []
+    const languageExtension = options.filename
+      ? detectLanguage(options.filename)
+      : []
 
     return [
       EditorView.theme({

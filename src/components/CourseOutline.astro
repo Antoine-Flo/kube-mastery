@@ -1,6 +1,10 @@
 ---
 import { ChevronDown, Circle, CircleCheck, CirclePlay } from '@lucide/astro'
-import type { CourseOverview, OverviewChapter, OverviewLesson } from '../content/overview/facade'
+import type {
+  CourseOverview,
+  OverviewChapter,
+  OverviewLesson
+} from '../content/overview/facade'
 
 interface Props {
   overview: CourseOverview
@@ -9,7 +13,12 @@ interface Props {
   completedLessonIds?: Set<string>
 }
 
-const { overview, currentLessonId, lessonBaseUrl, completedLessonIds = new Set<string>() } = Astro.props
+const {
+  overview,
+  currentLessonId,
+  lessonBaseUrl,
+  completedLessonIds = new Set<string>()
+} = Astro.props
 
 const currentChapterIndex = overview.content.chapters.findIndex((ch) =>
   ch.lessons.some((l) => l.id === currentLessonId)
@@ -20,42 +29,53 @@ const currentChapterIndex = overview.content.chapters.findIndex((ch) =>
   <h2 class="out__ttl">{overview.title}</h2>
   <div class="out__list">
     {
-      overview.content.chapters.map((chapter: OverviewChapter, chapterIndex: number) => {
-        const isCurrentChapter = chapterIndex === currentChapterIndex
-        return (
-          <details class="out__ch" open={isCurrentChapter}>
-            <summary class="out__ch-hd">
-              <span class="out__ch-ttl">{chapter.title}</span>
-              <span class="out__ch-ico" aria-hidden="true">
-                <ChevronDown size={16} aria-hidden="true" />
-              </span>
-            </summary>
-            <div class="out__ch-bd">
-              {chapter.lessons.map((lesson: OverviewLesson) => (
-                <a
-                  href={`${lessonBaseUrl}/${lesson.id}`}
-                  class:list={{
-                    out__it: true,
-                    'progress-completed': completedLessonIds.has(lesson.id),
-                    'progress-current': lesson.id === currentLessonId
-                  }}
-                >
-                  <span class="out__it-ico out__it-ico--pending" aria-hidden="true">
-                    <Circle size={16} />
-                  </span>
-                  <span class="out__it-ico out__it-ico--current" aria-hidden="true">
-                    <CirclePlay size={16} />
-                  </span>
-                  <span class="out__it-ico out__it-ico--completed" aria-hidden="true">
-                    <CircleCheck size={16} />
-                  </span>
-                  <span class="out__it-ttl">{lesson.title}</span>
-                </a>
-              ))}
-            </div>
-          </details>
-        )
-      })
+      overview.content.chapters.map(
+        (chapter: OverviewChapter, chapterIndex: number) => {
+          const isCurrentChapter = chapterIndex === currentChapterIndex
+          return (
+            <details class="out__ch" open={isCurrentChapter}>
+              <summary class="out__ch-hd">
+                <span class="out__ch-ttl">{chapter.title}</span>
+                <span class="out__ch-ico" aria-hidden="true">
+                  <ChevronDown size={16} aria-hidden="true" />
+                </span>
+              </summary>
+              <div class="out__ch-bd">
+                {chapter.lessons.map((lesson: OverviewLesson) => (
+                  <a
+                    href={`${lessonBaseUrl}/${lesson.id}`}
+                    class:list={{
+                      out__it: true,
+                      'progress-completed': completedLessonIds.has(lesson.id),
+                      'progress-current': lesson.id === currentLessonId
+                    }}
+                  >
+                    <span
+                      class="out__it-ico out__it-ico--pending"
+                      aria-hidden="true"
+                    >
+                      <Circle size={16} />
+                    </span>
+                    <span
+                      class="out__it-ico out__it-ico--current"
+                      aria-hidden="true"
+                    >
+                      <CirclePlay size={16} />
+                    </span>
+                    <span
+                      class="out__it-ico out__it-ico--completed"
+                      aria-hidden="true"
+                    >
+                      <CircleCheck size={16} />
+                    </span>
+                    <span class="out__it-ttl">{lesson.title}</span>
+                  </a>
+                ))}
+              </div>
+            </details>
+          )
+        }
+      )
     }
   </div>
 </div>

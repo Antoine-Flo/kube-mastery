@@ -14,12 +14,18 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null
 }
 
-const getStringField = (obj: Record<string, unknown>, key: string): string | null => {
+const getStringField = (
+  obj: Record<string, unknown>,
+  key: string
+): string | null => {
   const value = obj[key]
   return typeof value === 'string' ? value : null
 }
 
-const getNumberField = (obj: Record<string, unknown>, key: string): number | null => {
+const getNumberField = (
+  obj: Record<string, unknown>,
+  key: string
+): number | null => {
   const value = obj[key]
   return typeof value === 'number' ? value : null
 }
@@ -60,7 +66,8 @@ const convertSecretVolume: VolumeHandler = (vol) => {
   if (!isRecord(secret)) {
     return null
   }
-  const secretName = getStringField(secret, 'secretName') || getStringField(secret, 'name')
+  const secretName =
+    getStringField(secret, 'secretName') || getStringField(secret, 'name')
   if (!secretName) {
     return null
   }
@@ -112,7 +119,10 @@ export const convertYamlVolume = (yamlVolume: unknown): Volume | null => {
 
 // ─── Environment Variable Conversion ──────────────────────────────────────
 
-const convertValueEnvVar = (env: Record<string, unknown>, name: string): EnvVar | null => {
+const convertValueEnvVar = (
+  env: Record<string, unknown>,
+  name: string
+): EnvVar | null => {
   const value = getStringField(env, 'value')
   if (!value) {
     return null
@@ -123,7 +133,10 @@ const convertValueEnvVar = (env: Record<string, unknown>, name: string): EnvVar 
   }
 }
 
-const convertSecretKeyRefEnvVar = (env: Record<string, unknown>, name: string): EnvVar | null => {
+const convertSecretKeyRefEnvVar = (
+  env: Record<string, unknown>,
+  name: string
+): EnvVar | null => {
   const valueFrom = env.valueFrom
   if (!isRecord(valueFrom)) {
     return null
@@ -143,7 +156,10 @@ const convertSecretKeyRefEnvVar = (env: Record<string, unknown>, name: string): 
   }
 }
 
-const convertConfigMapKeyRefEnvVar = (env: Record<string, unknown>, name: string): EnvVar | null => {
+const convertConfigMapKeyRefEnvVar = (
+  env: Record<string, unknown>,
+  name: string
+): EnvVar | null => {
   const valueFrom = env.valueFrom
   if (!isRecord(valueFrom)) {
     return null
@@ -163,9 +179,16 @@ const convertConfigMapKeyRefEnvVar = (env: Record<string, unknown>, name: string
   }
 }
 
-type EnvVarHandler = (env: Record<string, unknown>, name: string) => EnvVar | null
+type EnvVarHandler = (
+  env: Record<string, unknown>,
+  name: string
+) => EnvVar | null
 
-const ENV_VAR_HANDLERS: EnvVarHandler[] = [convertValueEnvVar, convertSecretKeyRefEnvVar, convertConfigMapKeyRefEnvVar]
+const ENV_VAR_HANDLERS: EnvVarHandler[] = [
+  convertValueEnvVar,
+  convertSecretKeyRefEnvVar,
+  convertConfigMapKeyRefEnvVar
+]
 
 /**
  * Convert YAML env var format to TypeScript EnvVar type
@@ -230,7 +253,11 @@ const convertExecProbe = (probe: Record<string, unknown>): Probe | null => {
   if (!isRecord(exec)) {
     return null
   }
-  const command = getArrayField(exec, 'command', (cmd): cmd is string => typeof cmd === 'string')
+  const command = getArrayField(
+    exec,
+    'command',
+    (cmd): cmd is string => typeof cmd === 'string'
+  )
   if (!command) {
     return null
   }
@@ -249,7 +276,9 @@ const convertExecProbe = (probe: Record<string, unknown>): Probe | null => {
   return result
 }
 
-const convertTcpSocketProbe = (probe: Record<string, unknown>): Probe | null => {
+const convertTcpSocketProbe = (
+  probe: Record<string, unknown>
+): Probe | null => {
   const tcpSocket = probe.tcpSocket
   if (!isRecord(tcpSocket)) {
     return null
@@ -310,7 +339,10 @@ export const convertYamlProbe = (yamlProbe: unknown): Probe | null => {
 
 // ─── Secret Type Conversion ────────────────────────────────────────────────
 
-type SecretTypeHandler = (metadataName: string, data: Record<string, string>) => SecretType
+type SecretTypeHandler = (
+  metadataName: string,
+  data: Record<string, string>
+) => SecretType
 
 const convertOpaqueSecretType: SecretTypeHandler = () => {
   return { type: 'Opaque' }

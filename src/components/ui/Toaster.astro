@@ -2,7 +2,11 @@
 import '../../styles/components/toast.css'
 ---
 
-<div id="toaster" class="toaster toaster--placement-bottom-end" aria-live="polite">
+<div
+  id="toaster"
+  class="toaster toaster--placement-bottom-end"
+  aria-live="polite"
+>
   <div class="toaster__stack"></div>
 </div>
 
@@ -54,7 +58,9 @@ import '../../styles/components/toast.css'
       getIndicatorHtml(type) +
       '<div class="toast__content">' +
       `<p class="toast__title">${escapeHtml(detail.title)}</p>` +
-      (detail.description ? `<p class="toast__description">${escapeHtml(detail.description)}</p>` : '') +
+      (detail.description
+        ? `<p class="toast__description">${escapeHtml(detail.description)}</p>`
+        : '') +
       '</div>'
 
     stack.appendChild(toast)

@@ -8,9 +8,14 @@ import type { ExecutionResult } from '../../../../shared/result'
 import { error, success } from '../../../../shared/result'
 import type { ShellCommandHandler } from '../../core/ShellCommandHandler'
 
-export const createMkdirHandler = (fileSystem: FileSystem): ShellCommandHandler => {
+export const createMkdirHandler = (
+  fileSystem: FileSystem
+): ShellCommandHandler => {
   return {
-    execute: (args: string[], flags: Record<string, boolean | string>): ExecutionResult => {
+    execute: (
+      args: string[],
+      flags: Record<string, boolean | string>
+    ): ExecutionResult => {
       // Determine directories to create
       const dirsToCreate: string[] = []
 

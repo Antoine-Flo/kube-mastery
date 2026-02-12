@@ -19,7 +19,10 @@ import { applyResourceWithEvents } from '../../kubectl/commands/handlers/resourc
 import { parseKubernetesYaml } from '../../kubectl/yamlParser'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import { loadK8sComponentsForScenario, type Scenario } from '../../../../seeds/ScenarioLoader'
+import {
+  loadK8sComponentsForScenario,
+  type Scenario
+} from '../../../../seeds/ScenarioLoader'
 
 // ─── Multi-Document YAML Parsing ──────────────────────────────────────────
 
@@ -34,7 +37,14 @@ const splitYamlDocuments = (yamlContent: string): string[] => {
 /**
  * Parse a single YAML document
  */
-type ParsedResource = Pod | ConfigMap | Secret | Node | ReplicaSet | Deployment | Service
+type ParsedResource =
+  | Pod
+  | ConfigMap
+  | Secret
+  | Node
+  | ReplicaSet
+  | Deployment
+  | Service
 
 const parseYamlDocument = (yamlContent: string): Result<ParsedResource> => {
   const result = parseKubernetesYaml(yamlContent)
@@ -47,7 +57,9 @@ const parseYamlDocument = (yamlContent: string): Result<ParsedResource> => {
 /**
  * Parse multi-document YAML
  */
-const parseMultiDocumentYaml = (yamlContent: string): Result<Array<ParsedResource>> => {
+const parseMultiDocumentYaml = (
+  yamlContent: string
+): Result<Array<ParsedResource>> => {
   const documents = splitYamlDocuments(yamlContent)
   const resources: Array<ParsedResource> = []
 
@@ -67,7 +79,10 @@ const parseMultiDocumentYaml = (yamlContent: string): Result<Array<ParsedResourc
 /**
  * Load a scenario and create ClusterState
  */
-const loadScenario = async (scenario: Scenario, eventBus?: EventBus): Promise<Result<ClusterState>> => {
+const loadScenario = async (
+  scenario: Scenario,
+  eventBus?: EventBus
+): Promise<Result<ClusterState>> => {
   const bus = eventBus || createEventBus()
   const clusterState = createClusterState(bus)
 
@@ -97,7 +112,9 @@ const loadScenario = async (scenario: Scenario, eventBus?: EventBus): Promise<Re
 /**
  * Load a scenario and return ClusterStateData
  */
-export const loadScenarioData = async (scenario: Scenario): Promise<ClusterStateData> => {
+export const loadScenarioData = async (
+  scenario: Scenario
+): Promise<ClusterStateData> => {
   const result = await loadScenario(scenario)
   if (!result.ok) {
     throw new Error(result.error)

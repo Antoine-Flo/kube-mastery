@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { error, success } from '../../../../src/core/shared/result'
-import type { EditorModal, FileSystem } from '../../../../src/core/shell/commands/index'
+import type {
+  EditorModal,
+  FileSystem
+} from '../../../../src/core/shell/commands/index'
 import { createShellExecutor } from '../../../../src/core/shell/commands/index'
-import { createFile as createFileNode, createDirectory } from '../../../../src/core/filesystem/models'
+import {
+  createFile as createFileNode,
+  createDirectory
+} from '../../../../src/core/filesystem/models'
 import type { FileSystemState } from '../../../../src/core/filesystem/FileSystem'
 import { createMockFileSystem } from '../../helpers/mockFileSystem'
 
@@ -22,7 +28,10 @@ describe('Shell Commands Integration', () => {
         if (path === '/invalid') {
           return error('Directory not found')
         }
-        return success([createFileNode('file1', '/home/kube/file1'), createDirectory('dir1', '/home/kube/dir1')])
+        return success([
+          createFileNode('file1', '/home/kube/file1'),
+          createDirectory('dir1', '/home/kube/dir1')
+        ])
       },
       createFile: (fileName: string) => {
         if (fileName === 'error.txt') {
@@ -214,7 +223,13 @@ describe('Shell Commands Integration', () => {
         listDirectory: (path?: string) => {
           const targetPath = path || currentPath
           if (targetPath === '/home/kube/test') {
-            return success([createFileNode('file.txt', `${targetPath}/file.txt`, 'test content')])
+            return success([
+              createFileNode(
+                'file.txt',
+                `${targetPath}/file.txt`,
+                'test content'
+              )
+            ])
           }
           return success([createDirectory('test', '/home/kube/test')])
         },
@@ -224,7 +239,9 @@ describe('Shell Commands Integration', () => {
           return success(createFileNode(fileName, fullPath))
         },
         readFile: (filePath: string) => {
-          const fullPath = filePath.startsWith('/') ? filePath : `${currentPath}/${filePath}`
+          const fullPath = filePath.startsWith('/')
+            ? filePath
+            : `${currentPath}/${filePath}`
           if (files[fullPath] !== undefined) {
             return success('test content')
           }
@@ -234,7 +251,9 @@ describe('Shell Commands Integration', () => {
         deleteFile: () => success(undefined),
         deleteDirectory: () => success(undefined),
         createDirectory: (dirName: string) => {
-          const fullPath = dirName.startsWith('/') ? dirName : `${currentPath}/${dirName}`
+          const fullPath = dirName.startsWith('/')
+            ? dirName
+            : `${currentPath}/${dirName}`
           dirs.add(fullPath)
           return success('')
         },
@@ -332,7 +351,9 @@ describe('Shell Commands Integration', () => {
           if (path && files.has(path)) {
             return success([createFileNode(path, `/home/kube/${path}`)])
           }
-          const fileList = Array.from(files).map((name) => createFileNode(name, `/home/kube/${name}`))
+          const fileList = Array.from(files).map((name) =>
+            createFileNode(name, `/home/kube/${name}`)
+          )
           return success(fileList)
         },
         createFile: (fileName: string) => {
@@ -373,7 +394,9 @@ describe('Shell Commands Integration', () => {
         getCurrentPath: () => '/home/kube',
         changeDirectory: () => success(''),
         listDirectory: () => {
-          const fileList = Array.from(files).map((name) => createFileNode(name, `/home/kube/${name}`))
+          const fileList = Array.from(files).map((name) =>
+            createFileNode(name, `/home/kube/${name}`)
+          )
           return success(fileList)
         },
         createFile: () => success(createFileNode('test', '/home/kube/test')),
@@ -444,7 +467,9 @@ describe('Shell Commands Integration', () => {
         listDirectory: (path?: string) => {
           const targetPath = path || currentPath
           if (targetPath === '/home/kube/subdir') {
-            return success([createFileNode('file.txt', '/home/kube/subdir/file.txt')])
+            return success([
+              createFileNode('file.txt', '/home/kube/subdir/file.txt')
+            ])
           }
           return success([createDirectory('subdir', '/home/kube/subdir')])
         },

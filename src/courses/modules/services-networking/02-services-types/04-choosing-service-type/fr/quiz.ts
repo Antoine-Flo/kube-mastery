@@ -9,14 +9,16 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'Quel type de Service devriez-vous utiliser pour la communication interne au cluster uniquement ?',
+      question:
+        'Quel type de Service devriez-vous utiliser pour la communication interne au cluster uniquement ?',
       options: ['NodePort', 'LoadBalancer', 'ClusterIP', 'ExternalName'],
       correctAnswer: 2
     },
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'Quel type de Service est le meilleur pour exposer des services en externe sur les plateformes cloud ?',
+      question:
+        'Quel type de Service est le meilleur pour exposer des services en externe sur les plateformes cloud ?',
       options: ['ClusterIP', 'NodePort', 'LoadBalancer', 'ExternalName'],
       correctAnswer: 2
     }

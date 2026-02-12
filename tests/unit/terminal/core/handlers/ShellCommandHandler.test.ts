@@ -50,7 +50,9 @@ describe('ShellCommandHandler', () => {
     }
 
     shellContextStack = new ShellContextStack(fileSystemState)
-    const fileSystem = createFileSystem(fileSystemState, undefined, { mutable: true })
+    const fileSystem = createFileSystem(fileSystemState, undefined, {
+      mutable: true
+    })
     renderer = createMockRenderer()
     const eventBus = createEventBus()
     const clusterState = createClusterState(eventBus)
@@ -116,7 +118,9 @@ describe('ShellCommandHandler', () => {
       const result = handler.execute('cd /home/kube', context)
       expect(result.ok).toBe(true)
       // Le prompt doit être mis à jour
-      expect(shellContextStack.getCurrentFileSystem().getCurrentPath()).toBe('/home/kube')
+      expect(shellContextStack.getCurrentFileSystem().getCurrentPath()).toBe(
+        '/home/kube'
+      )
     })
 
     it('should execute clear command and clear terminal', () => {
@@ -158,9 +162,13 @@ describe('ShellCommandHandler', () => {
     })
 
     it('should not update prompt for non-cd commands', () => {
-      const initialPath = shellContextStack.getCurrentFileSystem().getCurrentPath()
+      const initialPath = shellContextStack
+        .getCurrentFileSystem()
+        .getCurrentPath()
       handler.execute('pwd', context)
-      expect(shellContextStack.getCurrentFileSystem().getCurrentPath()).toBe(initialPath)
+      expect(shellContextStack.getCurrentFileSystem().getCurrentPath()).toBe(
+        initialPath
+      )
     })
   })
 })

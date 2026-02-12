@@ -46,7 +46,10 @@ describe('TerminalState', () => {
 
   describe('insertCharAtCursor', () => {
     it('should insert char at cursor position', () => {
-      const state = createTerminalState({ currentLine: 'helo', cursorPosition: 3 })
+      const state = createTerminalState({
+        currentLine: 'helo',
+        cursorPosition: 3
+      })
       state.insertCharAtCursor('l')
 
       expect(state.currentLine).toBe('hello')
@@ -54,7 +57,10 @@ describe('TerminalState', () => {
     })
 
     it('should insert at start', () => {
-      const state = createTerminalState({ currentLine: 'ello', cursorPosition: 0 })
+      const state = createTerminalState({
+        currentLine: 'ello',
+        cursorPosition: 0
+      })
       state.insertCharAtCursor('h')
 
       expect(state.currentLine).toBe('hello')
@@ -62,7 +68,10 @@ describe('TerminalState', () => {
     })
 
     it('should insert at end', () => {
-      const state = createTerminalState({ currentLine: 'hell', cursorPosition: 4 })
+      const state = createTerminalState({
+        currentLine: 'hell',
+        cursorPosition: 4
+      })
       state.insertCharAtCursor('o')
 
       expect(state.currentLine).toBe('hello')
@@ -72,7 +81,10 @@ describe('TerminalState', () => {
 
   describe('deleteCharBeforeCursor', () => {
     it('should delete char before cursor', () => {
-      const state = createTerminalState({ currentLine: 'hello', cursorPosition: 3 })
+      const state = createTerminalState({
+        currentLine: 'hello',
+        cursorPosition: 3
+      })
       const result = state.deleteCharBeforeCursor()
 
       expect(result).toBe(true)
@@ -81,7 +93,10 @@ describe('TerminalState', () => {
     })
 
     it('should not delete if cursor at start', () => {
-      const state = createTerminalState({ currentLine: 'hello', cursorPosition: 0 })
+      const state = createTerminalState({
+        currentLine: 'hello',
+        cursorPosition: 0
+      })
       const result = state.deleteCharBeforeCursor()
 
       expect(result).toBe(false)
@@ -100,7 +115,10 @@ describe('TerminalState', () => {
 
   describe('moveCursor', () => {
     it('should move cursor left', () => {
-      const state = createTerminalState({ currentLine: 'hello', cursorPosition: 3 })
+      const state = createTerminalState({
+        currentLine: 'hello',
+        cursorPosition: 3
+      })
       const result = state.moveCursor('left')
 
       expect(result).toBe(true)
@@ -108,7 +126,10 @@ describe('TerminalState', () => {
     })
 
     it('should move cursor right', () => {
-      const state = createTerminalState({ currentLine: 'hello', cursorPosition: 2 })
+      const state = createTerminalState({
+        currentLine: 'hello',
+        cursorPosition: 2
+      })
       const result = state.moveCursor('right')
 
       expect(result).toBe(true)
@@ -116,7 +137,10 @@ describe('TerminalState', () => {
     })
 
     it('should not move left if at start', () => {
-      const state = createTerminalState({ currentLine: 'hello', cursorPosition: 0 })
+      const state = createTerminalState({
+        currentLine: 'hello',
+        cursorPosition: 0
+      })
       const result = state.moveCursor('left')
 
       expect(result).toBe(false)
@@ -124,7 +148,10 @@ describe('TerminalState', () => {
     })
 
     it('should not move right if at end', () => {
-      const state = createTerminalState({ currentLine: 'hello', cursorPosition: 5 })
+      const state = createTerminalState({
+        currentLine: 'hello',
+        cursorPosition: 5
+      })
       const result = state.moveCursor('right')
 
       expect(result).toBe(false)
@@ -134,7 +161,10 @@ describe('TerminalState', () => {
 
   describe('clearCurrentLine', () => {
     it('should clear line and reset cursor', () => {
-      const state = createTerminalState({ currentLine: 'hello', cursorPosition: 3 })
+      const state = createTerminalState({
+        currentLine: 'hello',
+        cursorPosition: 3
+      })
       state.clearCurrentLine()
 
       expect(state.currentLine).toBe('')

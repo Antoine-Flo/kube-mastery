@@ -3,7 +3,10 @@ import Layout from '../../../../../layouts/Layout.astro'
 import ContentWithTerminalLayout from '../../../../../components/lesson/ContentWithTerminalLayout.astro'
 import Button from '../../../../../components/ui/Button.astro'
 import { useLocalePath, useTranslations } from '../../../../../i18n/utils'
-import { getTaskContent, getTaskGroupOverview } from '../../../../../content/tasks/facade'
+import {
+  getTaskContent,
+  getTaskGroupOverview
+} from '../../../../../content/tasks/facade'
 import { getProgressContext } from '../../../../../lib/progress/server'
 import '../../../../../styles/components/lesson-content.css'
 import '../../../../../styles/components/cluster-visualization.css'
@@ -14,9 +17,15 @@ const taskId = Astro.params.taskId!
 const localePath = useLocalePath(lang)
 const t = useTranslations(lang)
 
-const { userId } = await getProgressContext(Astro.locals, Astro.request, Astro.cookies)
+const { userId } = await getProgressContext(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
 if (!userId) {
-  return Astro.redirect(localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname))
+  return Astro.redirect(
+    localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
+  )
 }
 
 const taskEntry = getTaskContent(groupId, taskId, lang)
@@ -35,7 +44,10 @@ const seedName = env && env !== 'empty' ? env : 'minimal'
 
 const taskIndex = overview.tasks.findIndex((task) => task.id === taskId)
 const prevTask = taskIndex > 0 ? overview.tasks[taskIndex - 1] : null
-const nextTask = taskIndex >= 0 && taskIndex < overview.tasks.length - 1 ? overview.tasks[taskIndex + 1] : null
+const nextTask =
+  taskIndex >= 0 && taskIndex < overview.tasks.length - 1
+    ? overview.tasks[taskIndex + 1]
+    : null
 
 const taskTargetId = `${groupId}/${taskId}`
 const completeTaskUrl = `/api/progress/complete?type=task&targetId=${encodeURIComponent(taskTargetId)}&redirect=${encodeURIComponent(localePath(`/tasks/${groupId}/${taskId}/complete`))}`
@@ -63,7 +75,10 @@ const contentBarLabels = {
     <nav class="lp__nav--bt">
       {
         prevTask ? (
-          <a href={localePath(`/tasks/${groupId}/${prevTask.id}`)} class="lp__lnk">
+          <a
+            href={localePath(`/tasks/${groupId}/${prevTask.id}`)}
+            class="lp__lnk"
+          >
             ← {prevTask.title}
           </a>
         ) : (
@@ -72,7 +87,10 @@ const contentBarLabels = {
       }
       {
         nextTask ? (
-          <a href={localePath(`/tasks/${groupId}/${nextTask.id}`)} class="lp__lnk lp__lnk--next">
+          <a
+            href={localePath(`/tasks/${groupId}/${nextTask.id}`)}
+            class="lp__lnk lp__lnk--next"
+          >
             {nextTask.title} →
           </a>
         ) : null

@@ -5,7 +5,11 @@
 // Utilise le pattern Strategy avec des providers pluggables
 
 import { AutocompleteProvider } from './AutocompleteProvider'
-import type { AutocompleteContext, CompletionResult, TabCompletionCallbacks } from './types'
+import type {
+  AutocompleteContext,
+  CompletionResult,
+  TabCompletionCallbacks
+} from './types'
 
 /**
  * Tokenize input by splitting on spaces (handles multiple spaces)
@@ -73,7 +77,10 @@ export class AutocompleteEngine {
   /**
    * Get completion results with proper suffixes for directories vs files/commands
    */
-  getCompletionResults(currentLine: string, context: AutocompleteContext): CompletionResult[] {
+  getCompletionResults(
+    currentLine: string,
+    context: AutocompleteContext
+  ): CompletionResult[] {
     const tokens = tokenize(currentLine)
     const currentToken = getCurrentToken(currentLine)
 
@@ -146,7 +153,11 @@ export class AutocompleteEngine {
    * Gère l'appui sur Tab avec toute la logique de complétion
    * Inclut le timing du double tap, la décision single/double tap, et l'affichage
    */
-  handleTabPress(line: string, context: AutocompleteContext, callbacks: TabCompletionCallbacks): void {
+  handleTabPress(
+    line: string,
+    context: AutocompleteContext,
+    callbacks: TabCompletionCallbacks
+  ): void {
     const completionResults = this.getCompletionResults(line, context)
 
     if (completionResults.length === 0) {
@@ -170,7 +181,10 @@ export class AutocompleteEngine {
     this.handleCommonPrefix(completionResults, callbacks)
   }
 
-  private handleSingleMatch(result: CompletionResult, callbacks: TabCompletionCallbacks): void {
+  private handleSingleMatch(
+    result: CompletionResult,
+    callbacks: TabCompletionCallbacks
+  ): void {
     const currentToken = callbacks.getCurrentToken()
 
     if (currentToken === result.text) {
@@ -181,7 +195,10 @@ export class AutocompleteEngine {
     this.completePartialToken(currentToken, result, callbacks)
   }
 
-  private appendSuffixIfMissing(suffix: string, callbacks: TabCompletionCallbacks): void {
+  private appendSuffixIfMissing(
+    suffix: string,
+    callbacks: TabCompletionCallbacks
+  ): void {
     const currentLine = callbacks.getCurrentLine()
     if (currentLine.endsWith(suffix)) {
       return
@@ -200,9 +217,14 @@ export class AutocompleteEngine {
     callbacks.updateLineAndRender(currentLine + toAdd, toAdd)
   }
 
-  private handleDoubleTab(completionResults: CompletionResult[], callbacks: TabCompletionCallbacks): void {
+  private handleDoubleTab(
+    completionResults: CompletionResult[],
+    callbacks: TabCompletionCallbacks
+  ): void {
     const currentLine = callbacks.getCurrentLine()
-    const suggestions = this.formatSuggestions(completionResults.map((r) => r.text))
+    const suggestions = this.formatSuggestions(
+      completionResults.map((r) => r.text)
+    )
 
     callbacks.write('\r\n')
     callbacks.write(suggestions)
@@ -212,7 +234,10 @@ export class AutocompleteEngine {
     callbacks.updateCurrentLine(currentLine, currentLine.length)
   }
 
-  private handleCommonPrefix(completionResults: CompletionResult[], callbacks: TabCompletionCallbacks): void {
+  private handleCommonPrefix(
+    completionResults: CompletionResult[],
+    callbacks: TabCompletionCallbacks
+  ): void {
     const prefix = this.getCommonPrefix(completionResults.map((r) => r.text))
     const currentToken = callbacks.getCurrentToken()
     const toAdd = prefix.slice(currentToken.length)

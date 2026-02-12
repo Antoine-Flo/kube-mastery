@@ -51,7 +51,12 @@ describe('LogGenerator', () => {
 
     it('should include HTTP methods and paths for nginx', () => {
       const logs = generateLogs('nginx:latest', 50)
-      const hasHttpContent = logs.some((log) => log.includes('HTTP/1.1') || log.includes('GET') || log.includes('POST'))
+      const hasHttpContent = logs.some(
+        (log) =>
+          log.includes('HTTP/1.1') ||
+          log.includes('GET') ||
+          log.includes('POST')
+      )
       expect(hasHttpContent).toBe(true)
     })
   })
@@ -94,7 +99,10 @@ describe('LogGenerator', () => {
       const logs = generateLogs('mysql:latest', 3)
 
       const hasMysqlContent = logs.some(
-        (log) => log.includes('mysqld') || log.includes('InnoDB') || log.includes('MySQL')
+        (log) =>
+          log.includes('mysqld') ||
+          log.includes('InnoDB') ||
+          log.includes('MySQL')
       )
       expect(hasMysqlContent).toBe(true)
     })
@@ -111,7 +119,10 @@ describe('LogGenerator', () => {
       const logs = generateLogs('postgres:latest', 3)
 
       const hasPostgresContent = logs.some(
-        (log) => log.includes('database system is ready') || log.includes('PostgreSQL') || log.includes('listening on')
+        (log) =>
+          log.includes('database system is ready') ||
+          log.includes('PostgreSQL') ||
+          log.includes('listening on')
       )
       expect(hasPostgresContent).toBe(true)
     })

@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
-import { createBrowserClient, createServerClient, parseCookieHeader } from '@supabase/ssr'
+import {
+  createBrowserClient,
+  createServerClient,
+  parseCookieHeader
+} from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type SupabaseEnv = {
@@ -30,7 +34,8 @@ type AstroCookies = {
  * Never expose this client or the service role key to the browser.
  */
 export function getSupabaseAdmin(locals: unknown): SupabaseClient | null {
-  const env = (locals as { runtime?: { env?: SupabaseEnv } })?.runtime?.env ?? {}
+  const env =
+    (locals as { runtime?: { env?: SupabaseEnv } })?.runtime?.env ?? {}
   const url = env?.SUPABASE_URL
   const key = env?.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) {
@@ -40,7 +45,11 @@ export function getSupabaseAdmin(locals: unknown): SupabaseClient | null {
 }
 
 /** Server client – use in API routes and server-rendered pages. Cookies = PKCE verifier + session. */
-export function getSupabaseServer(locals: unknown, request: Request, cookies: AstroCookies): SupabaseClient {
+export function getSupabaseServer(
+  locals: unknown,
+  request: Request,
+  cookies: AstroCookies
+): SupabaseClient {
   const env = (locals as any).runtime?.env ?? {}
   const url = env?.SUPABASE_URL
   const key = env?.SUPABASE_PUBLISHABLE_DEFAULT_KEY
@@ -60,7 +69,8 @@ export function getSupabaseServer(locals: unknown, request: Request, cookies: As
       setAll(cookiesToSet) {
         // Supabase may call setAll from an async callback after the response has started.
         // Astro then warns and throws. Avoid spamming the console with the known warning.
-        const astroCookiesWarning = 'Astro.cookies.set() was called after the cookies had already been sent'
+        const astroCookiesWarning =
+          'Astro.cookies.set() was called after the cookies had already been sent'
         const origWarn = console.warn
         console.warn = (...args: unknown[]) => {
           const msg = args[0]?.toString?.() ?? ''

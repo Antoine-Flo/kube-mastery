@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'Where is information about the provisioned load balancer published?',
+      question:
+        'Where is information about the provisioned load balancer published?',
       options: [
         'In the Service spec',
         'In the Service status.loadBalancer field',

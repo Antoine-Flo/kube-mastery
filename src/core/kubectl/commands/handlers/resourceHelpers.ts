@@ -32,9 +32,23 @@ import { error, success } from '../../../shared/result'
 
 // ─── Event-Driven Resource Operations ───────────────────────────────────
 
-type KubernetesResource = Pod | ConfigMap | Secret | Node | ReplicaSet | Deployment | Service
+type KubernetesResource =
+  | Pod
+  | ConfigMap
+  | Secret
+  | Node
+  | ReplicaSet
+  | Deployment
+  | Service
 
-type ResourceKind = 'Pod' | 'ConfigMap' | 'Secret' | 'Node' | 'ReplicaSet' | 'Deployment' | 'Service'
+type ResourceKind =
+  | 'Pod'
+  | 'ConfigMap'
+  | 'Secret'
+  | 'Node'
+  | 'ReplicaSet'
+  | 'Deployment'
+  | 'Service'
 
 interface ResourceHandler {
   find: (state: ClusterState, name: string, namespace: string) => Result<any>
@@ -46,7 +60,11 @@ interface ResourceHandler {
     resource: KubernetesResource,
     previous: any
   ) => void
-  updateDirect?: (state: ClusterState, name: string, resource: KubernetesResource) => void
+  updateDirect?: (
+    state: ClusterState,
+    name: string,
+    resource: KubernetesResource
+  ) => void
   addDirect?: (state: ClusterState, resource: KubernetesResource) => void
 }
 
@@ -59,16 +77,34 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
       eventBus.emit(createPodCreatedEvent(resource as Pod, 'kubectl'))
     },
     emitUpdated: (eventBus, name, namespace, resource, previous) => {
-      eventBus.emit(createPodUpdatedEvent(name, namespace, resource as Pod, previous, 'kubectl'))
+      eventBus.emit(
+        createPodUpdatedEvent(
+          name,
+          namespace,
+          resource as Pod,
+          previous,
+          'kubectl'
+        )
+      )
     }
   },
   ConfigMap: {
     find: (state, name, namespace) => state.findConfigMap(name, namespace),
     emitCreated: (eventBus, resource) => {
-      eventBus.emit(createConfigMapCreatedEvent(resource as ConfigMap, 'kubectl'))
+      eventBus.emit(
+        createConfigMapCreatedEvent(resource as ConfigMap, 'kubectl')
+      )
     },
     emitUpdated: (eventBus, name, namespace, resource, previous) => {
-      eventBus.emit(createConfigMapUpdatedEvent(name, namespace, resource as ConfigMap, previous, 'kubectl'))
+      eventBus.emit(
+        createConfigMapUpdatedEvent(
+          name,
+          namespace,
+          resource as ConfigMap,
+          previous,
+          'kubectl'
+        )
+      )
     }
   },
   Secret: {
@@ -77,7 +113,15 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
       eventBus.emit(createSecretCreatedEvent(resource as Secret, 'kubectl'))
     },
     emitUpdated: (eventBus, name, namespace, resource, previous) => {
-      eventBus.emit(createSecretUpdatedEvent(name, namespace, resource as Secret, previous, 'kubectl'))
+      eventBus.emit(
+        createSecretUpdatedEvent(
+          name,
+          namespace,
+          resource as Secret,
+          previous,
+          'kubectl'
+        )
+      )
     }
   },
   Node: {
@@ -98,19 +142,39 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
   ReplicaSet: {
     find: (state, name, namespace) => state.findReplicaSet(name, namespace),
     emitCreated: (eventBus, resource) => {
-      eventBus.emit(createReplicaSetCreatedEvent(resource as ReplicaSet, 'kubectl'))
+      eventBus.emit(
+        createReplicaSetCreatedEvent(resource as ReplicaSet, 'kubectl')
+      )
     },
     emitUpdated: (eventBus, name, namespace, resource, previous) => {
-      eventBus.emit(createReplicaSetUpdatedEvent(name, namespace, resource as ReplicaSet, previous, 'kubectl'))
+      eventBus.emit(
+        createReplicaSetUpdatedEvent(
+          name,
+          namespace,
+          resource as ReplicaSet,
+          previous,
+          'kubectl'
+        )
+      )
     }
   },
   Deployment: {
     find: (state, name, namespace) => state.findDeployment(name, namespace),
     emitCreated: (eventBus, resource) => {
-      eventBus.emit(createDeploymentCreatedEvent(resource as Deployment, 'kubectl'))
+      eventBus.emit(
+        createDeploymentCreatedEvent(resource as Deployment, 'kubectl')
+      )
     },
     emitUpdated: (eventBus, name, namespace, resource, previous) => {
-      eventBus.emit(createDeploymentUpdatedEvent(name, namespace, resource as Deployment, previous, 'kubectl'))
+      eventBus.emit(
+        createDeploymentUpdatedEvent(
+          name,
+          namespace,
+          resource as Deployment,
+          previous,
+          'kubectl'
+        )
+      )
     }
   },
   Service: {
@@ -119,7 +183,15 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
       eventBus.emit(createServiceCreatedEvent(resource as Service, 'kubectl'))
     },
     emitUpdated: (eventBus, name, namespace, resource, previous) => {
-      eventBus.emit(createServiceUpdatedEvent(name, namespace, resource as Service, previous, 'kubectl'))
+      eventBus.emit(
+        createServiceUpdatedEvent(
+          name,
+          namespace,
+          resource as Service,
+          previous,
+          'kubectl'
+        )
+      )
     }
   }
 }
@@ -138,7 +210,9 @@ export const applyResourceWithEvents = (
 
   const handler = resourceHandlers[kind]
   if (!handler) {
-    return error(`error: the server doesn't have a resource type "${kind.toLowerCase()}s"`)
+    return error(
+      `error: the server doesn't have a resource type "${kind.toLowerCase()}s"`
+    )
   }
 
   // Check if resource exists (Nodes ignore namespace)
@@ -178,14 +252,18 @@ export const createResourceWithEvents = (
 
   const handler = resourceHandlers[kind]
   if (!handler) {
-    return error(`error: the server doesn't have a resource type "${kind.toLowerCase()}s"`)
+    return error(
+      `error: the server doesn't have a resource type "${kind.toLowerCase()}s"`
+    )
   }
 
   // Check if resource exists (Nodes ignore namespace)
   const existing = handler.find(clusterState, name, namespace)
 
   if (existing.ok) {
-    return error(`Error from server (AlreadyExists): ${kind.toLowerCase()}s "${name}" already exists`)
+    return error(
+      `Error from server (AlreadyExists): ${kind.toLowerCase()}s "${name}" already exists`
+    )
   }
 
   // Emit created event or add directly

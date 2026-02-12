@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: "Quel composant est responsable d'assigner les Pods aux nœuds ?",
+      question:
+        "Quel composant est responsable d'assigner les Pods aux nœuds ?",
       options: ['kubelet', 'kube-scheduler', 'kube-apiserver', 'kube-proxy'],
       correctAnswer: 1
     },

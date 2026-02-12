@@ -119,7 +119,10 @@ L'EventBus actuel utilise des interfaces. Il faut l'adapter pour supporter à la
 ```typescript
 export interface EventBus {
   emit: (event: AppEvent | Event) => void
-  subscribe: <T extends AppEvent | Event>(eventType: string, subscriber: (event: T) => void) => UnsubscribeFn
+  subscribe: <T extends AppEvent | Event>(
+    eventType: string,
+    subscriber: (event: T) => void
+  ) => UnsubscribeFn
   // ... autres méthodes
 }
 ```
@@ -153,15 +156,18 @@ eventBus.emit(event)
 createEffect(() => {
   const bus = useGlobalEventBus()
 
-  const unsubscribe = bus.subscribe('terminal-command-executed', (event: TerminalCommandExecutedEvent) => {
-    const question = currentQuestion()
-    if (!question || question.type !== 'terminal-command') {
-      return
-    }
+  const unsubscribe = bus.subscribe(
+    'terminal-command-executed',
+    (event: TerminalCommandExecutedEvent) => {
+      const question = currentQuestion()
+      if (!question || question.type !== 'terminal-command') {
+        return
+      }
 
-    const isValid = validateCommand(question, event.command)
-    // ... validation logic
-  })
+      const isValid = validateCommand(question, event.command)
+      // ... validation logic
+    }
+  )
 
   onCleanup(() => unsubscribe())
 })
@@ -222,9 +228,12 @@ import { TerminalCommandExecutedEvent } from '~/core/terminal/events/TerminalCom
 const eventBus = useGlobalEventBus()
 
 createEffect(() => {
-  const unsubscribe = eventBus.subscribe('terminal-command-executed', (event: TerminalCommandExecutedEvent) => {
-    console.log('Command executed:', event.command)
-  })
+  const unsubscribe = eventBus.subscribe(
+    'terminal-command-executed',
+    (event: TerminalCommandExecutedEvent) => {
+      console.log('Command executed:', event.command)
+    }
+  )
 
   onCleanup(() => unsubscribe())
 })
@@ -234,10 +243,13 @@ createEffect(() => {
 
 ```typescript
 // Si on dispatch sur window au lieu de l'EventBus
-window.addEventListener('terminal-command-executed', (e: TerminalCommandExecutedEvent) => {
-  // TypeScript connaît automatiquement le type !
-  const { command, timestamp } = e
-})
+window.addEventListener(
+  'terminal-command-executed',
+  (e: TerminalCommandExecutedEvent) => {
+    // TypeScript connaît automatiquement le type !
+    const { command, timestamp } = e
+  }
+)
 ```
 
 ## Avantages de cette approche

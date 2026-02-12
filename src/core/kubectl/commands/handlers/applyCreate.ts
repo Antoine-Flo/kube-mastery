@@ -10,12 +10,18 @@ import type { ExecutionResult } from '../../../shared/result'
 import { error } from '../../../shared/result'
 import { parseKubernetesYaml } from '../../yamlParser'
 import type { ParsedCommand } from '../types'
-import { applyResourceWithEvents, createResourceWithEvents } from './resourceHelpers'
+import {
+  applyResourceWithEvents,
+  createResourceWithEvents
+} from './resourceHelpers'
 
 /**
  * Shared helper to load and parse YAML from filesystem
  */
-const loadAndParseYaml = (fileSystem: FileSystem, parsed: ParsedCommand): ExecutionResult & { resource?: any } => {
+const loadAndParseYaml = (
+  fileSystem: FileSystem,
+  parsed: ParsedCommand
+): ExecutionResult & { resource?: any } => {
   // Extract filename from flags
   const filename = parsed.flags.f || parsed.flags.filename
 

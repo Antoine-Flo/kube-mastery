@@ -31,7 +31,9 @@ export const handleDelete = (
     if (!findResult.ok) {
       return error(findResult.error)
     }
-    eventBus.emit(createPodDeletedEvent(parsed.name, namespace, findResult.value, 'kubectl'))
+    eventBus.emit(
+      createPodDeletedEvent(parsed.name, namespace, findResult.value, 'kubectl')
+    )
     return success(`pod "${parsed.name}" deleted`)
   }
 
@@ -40,7 +42,14 @@ export const handleDelete = (
     if (!findResult.ok) {
       return error(findResult.error)
     }
-    eventBus.emit(createConfigMapDeletedEvent(parsed.name, namespace, findResult.value, 'kubectl'))
+    eventBus.emit(
+      createConfigMapDeletedEvent(
+        parsed.name,
+        namespace,
+        findResult.value,
+        'kubectl'
+      )
+    )
     return success(`configmap "${parsed.name}" deleted`)
   }
 
@@ -49,7 +58,14 @@ export const handleDelete = (
     if (!findResult.ok) {
       return error(findResult.error)
     }
-    eventBus.emit(createSecretDeletedEvent(parsed.name, namespace, findResult.value, 'kubectl'))
+    eventBus.emit(
+      createSecretDeletedEvent(
+        parsed.name,
+        namespace,
+        findResult.value,
+        'kubectl'
+      )
+    )
     return success(`secret "${parsed.name}" deleted`)
   }
 

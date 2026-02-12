@@ -8,9 +8,14 @@ import type { ExecutionResult } from '../../../../shared/result'
 import { error, success } from '../../../../shared/result'
 import type { ShellCommandHandler } from '../../core/ShellCommandHandler'
 
-export const createRmHandler = (fileSystem: FileSystem): ShellCommandHandler => {
+export const createRmHandler = (
+  fileSystem: FileSystem
+): ShellCommandHandler => {
   return {
-    execute: (args: string[], flags: Record<string, boolean | string>): ExecutionResult => {
+    execute: (
+      args: string[],
+      flags: Record<string, boolean | string>
+    ): ExecutionResult => {
       // Determine targets to delete
       const targets: string[] = []
 
@@ -28,7 +33,9 @@ export const createRmHandler = (fileSystem: FileSystem): ShellCommandHandler => 
 
       // Delete all specified targets (realistic shell behavior)
       // If -r flag is present, delete as directories, otherwise as files
-      const deleteFn = flags.r ? fileSystem.deleteDirectory : fileSystem.deleteFile
+      const deleteFn = flags.r
+        ? fileSystem.deleteDirectory
+        : fileSystem.deleteFile
 
       for (const target of targets) {
         const result = deleteFn(target)

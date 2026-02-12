@@ -7,7 +7,11 @@ const json = (body: Record<string, unknown>, status: number) =>
     headers: { 'Content-Type': 'application/json' }
   })
 
-function authErrorRedirect(lang: string, opts: { message?: string; messageKey?: string }, redirectTo: string) {
+function authErrorRedirect(
+  lang: string,
+  opts: { message?: string; messageKey?: string },
+  redirectTo: string
+) {
   const base = `/${lang}/auth`
   const params = new URLSearchParams()
   params.set('auth_error', '1')
@@ -25,15 +29,30 @@ function authErrorRedirect(lang: string, opts: { message?: string; messageKey?: 
 
 const USER_FRIENDLY_MESSAGE_KEY = 'auth_magicLinkError'
 
-export const GET: APIRoute = async ({ url, request, cookies, redirect, locals }) => {
+export const GET: APIRoute = async ({
+  url,
+  request,
+  cookies,
+  redirect,
+  locals
+}) => {
   const lang = url.searchParams.get('lang') || 'en'
   const rawRedirect = url.searchParams.get('redirect') ?? ''
-  const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.includes('//') ? rawRedirect : ''
+  const redirectTo =
+    rawRedirect.startsWith('/') && !rawRedirect.includes('//')
+      ? rawRedirect
+      : ''
   const tokenHash = url.searchParams.get('token_hash')
   const type = url.searchParams.get('type')
 
   if (!tokenHash || type !== 'email') {
-    return redirect(authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo))
+    return redirect(
+      authErrorRedirect(
+        lang,
+        { messageKey: USER_FRIENDLY_MESSAGE_KEY },
+        redirectTo
+      )
+    )
   }
 
   let supabase
@@ -55,12 +74,24 @@ export const GET: APIRoute = async ({ url, request, cookies, redirect, locals })
   })
 
   if (error) {
-    return redirect(authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo))
+    return redirect(
+      authErrorRedirect(
+        lang,
+        { messageKey: USER_FRIENDLY_MESSAGE_KEY },
+        redirectTo
+      )
+    )
   }
 
   const session = data?.session
   if (!session?.access_token || !session?.refresh_token) {
-    return redirect(authErrorRedirect(lang, { messageKey: USER_FRIENDLY_MESSAGE_KEY }, redirectTo))
+    return redirect(
+      authErrorRedirect(
+        lang,
+        { messageKey: USER_FRIENDLY_MESSAGE_KEY },
+        redirectTo
+      )
+    )
   }
 
   return redirect(redirectTo || `/${lang}/courses`)

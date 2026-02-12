@@ -28,7 +28,11 @@ const getGoldenFilesDir = (category: GoldenTestCategory): string => {
 /**
  * Write a golden file organized by category
  */
-export const writeGoldenFile = (name: string, content: string, category: GoldenTestCategory): Result<void, string> => {
+export const writeGoldenFile = (
+  name: string,
+  content: string,
+  category: GoldenTestCategory
+): Result<void, string> => {
   try {
     const goldenDir = getGoldenFilesDir(category)
     mkdirSync(goldenDir, { recursive: true })

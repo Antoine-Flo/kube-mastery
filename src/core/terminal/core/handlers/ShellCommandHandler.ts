@@ -26,7 +26,10 @@ export class ShellCommandHandler implements CommandHandler {
     }
 
     // Créer l'executor avec le filesystem et l'editor modal
-    const executor = createShellExecutor(context.fileSystem, context.editorModal)
+    const executor = createShellExecutor(
+      context.fileSystem,
+      context.editorModal
+    )
 
     // Exécuter la commande
     const result = executor.execute(command)

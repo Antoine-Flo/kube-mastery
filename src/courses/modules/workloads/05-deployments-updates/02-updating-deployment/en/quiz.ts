@@ -9,8 +9,10 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'terminal-command',
-      question: 'Update the nginx container image in nginx-deployment to nginx:1.16.1',
-      expectedCommand: 'kubectl set image deployment nginx-deployment nginx=nginx:1.16.1',
+      question:
+        'Update the nginx container image in nginx-deployment to nginx:1.16.1',
+      expectedCommand:
+        'kubectl set image deployment nginx-deployment nginx=nginx:1.16.1',
       validationMode: 'contains',
       normalizeCommand: true
     },

@@ -3,7 +3,11 @@ import type { TaskGroupOverview, TaskGroupListItem } from './types'
 import type { TaskIndexPort } from './port'
 import { stripNumericPrefix } from '../utils'
 
-export function buildTaskGroupOverview(port: TaskIndexPort, groupId: string, lang: UiLang): TaskGroupOverview | null {
+export function buildTaskGroupOverview(
+  port: TaskIndexPort,
+  groupId: string,
+  lang: UiLang
+): TaskGroupOverview | null {
   const meta = port.getGroupMeta(groupId)
   if (!meta) {
     return null
@@ -33,7 +37,10 @@ export function buildTaskGroupOverview(port: TaskIndexPort, groupId: string, lan
   }
 }
 
-export function buildTaskGroupList(port: TaskIndexPort, lang: UiLang): TaskGroupListItem[] {
+export function buildTaskGroupList(
+  port: TaskIndexPort,
+  lang: UiLang
+): TaskGroupListItem[] {
   const groupIds = port.getGroupIds()
   const list: TaskGroupListItem[] = []
 

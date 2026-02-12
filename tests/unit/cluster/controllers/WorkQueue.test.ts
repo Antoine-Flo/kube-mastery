@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createWorkQueue, type WorkQueue } from '../../../../src/core/cluster/controllers/WorkQueue'
+import {
+  createWorkQueue,
+  type WorkQueue
+} from '../../../../src/core/cluster/controllers/WorkQueue'
 
 describe('WorkQueue', () => {
   let queue: WorkQueue
@@ -92,7 +95,11 @@ describe('WorkQueue', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 50))
 
-      expect(processedKeys).toEqual(['default/pod-1', 'default/pod-2', 'default/pod-3'])
+      expect(processedKeys).toEqual([
+        'default/pod-1',
+        'default/pod-2',
+        'default/pod-3'
+      ])
     })
   })
 

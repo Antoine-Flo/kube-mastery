@@ -3,7 +3,10 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Public exports for shell command system.
 
-import { createShellCommandExecutor, ShellCommandExecutor } from './core/ShellCommandExecutor'
+import {
+  createShellCommandExecutor,
+  ShellCommandExecutor
+} from './core/ShellCommandExecutor'
 import type { ShellCommandHandler } from './core/ShellCommandHandler'
 import { parseShellCommand } from './core/ShellCommandParser'
 import type { ParsedShellCommand, ShellCommand } from './core/types'
@@ -30,13 +33,20 @@ import type { FileSystem } from '../../filesystem/FileSystem'
 export type { FileSystem }
 
 export type EditorModal = {
-  open: (filename: string, content: string, onSave: (newContent: string) => void) => void
+  open: (
+    filename: string,
+    content: string,
+    onSave: (newContent: string) => void
+  ) => void
 }
 
 /**
  * Create all shell command handlers
  */
-const createHandlers = (fileSystem: FileSystem, editorModal?: EditorModal): Map<string, ShellCommandHandler> => {
+const createHandlers = (
+  fileSystem: FileSystem,
+  editorModal?: EditorModal
+): Map<string, ShellCommandHandler> => {
   const handlers = new Map<string, ShellCommandHandler>()
 
   // Navigation
@@ -69,7 +79,10 @@ const createHandlers = (fileSystem: FileSystem, editorModal?: EditorModal): Map<
  * @param editorModal - Optional editor modal for nano command
  * @returns ShellCommandExecutor instance
  */
-export const createShellExecutor = (fileSystem: FileSystem, editorModal?: EditorModal): ShellCommandExecutor => {
+export const createShellExecutor = (
+  fileSystem: FileSystem,
+  editorModal?: EditorModal
+): ShellCommandExecutor => {
   const handlers = createHandlers(fileSystem, editorModal)
   return createShellCommandExecutor(handlers)
 }

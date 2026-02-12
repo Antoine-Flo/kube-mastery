@@ -4,7 +4,10 @@ import type { ProgressForLearnable } from './types'
  * Compute progress for a single learnable (ordered lesson IDs).
  * currentLessonId = first incomplete lesson, or last lesson if all completed.
  */
-export function computeProgress(lessonIds: string[], completed: Set<string>): ProgressForLearnable {
+export function computeProgress(
+  lessonIds: string[],
+  completed: Set<string>
+): ProgressForLearnable {
   const total = lessonIds.length
   if (total === 0) {
     return { percentage: 0, hasStarted: false, currentLessonId: null }
@@ -14,7 +17,8 @@ export function computeProgress(lessonIds: string[], completed: Set<string>): Pr
   const hasStarted = completedCount > 0
   const percentage = Math.round((completedCount / total) * 100)
   const firstIncomplete = lessonIds.find((id) => !completed.has(id))
-  const currentLessonId = firstIncomplete ?? lessonIds[lessonIds.length - 1] ?? null
+  const currentLessonId =
+    firstIncomplete ?? lessonIds[lessonIds.length - 1] ?? null
 
   return { percentage, hasStarted, currentLessonId }
 }

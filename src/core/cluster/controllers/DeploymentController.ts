@@ -38,7 +38,13 @@ import type { Deployment, DeploymentStatus } from '../ressources/Deployment'
 import { generateTemplateHash } from '../ressources/Deployment'
 import type { ReplicaSet } from '../ressources/ReplicaSet'
 import { createReplicaSet } from '../ressources/ReplicaSet'
-import { createOwnerRef, findOwnerByRef, getOwnedResources, statusEquals, subscribeToEvents } from './helpers'
+import {
+  createOwnerRef,
+  findOwnerByRef,
+  getOwnedResources,
+  statusEquals,
+  subscribeToEvents
+} from './helpers'
 import type { ClusterEventType, Controller, ControllerState } from './types'
 import { createWorkQueue, type WorkQueue } from './WorkQueue'
 
@@ -56,7 +62,8 @@ const WATCHED_EVENTS: ClusterEventType[] = [
 /**
  * Create a resource key from namespace and name
  */
-const makeKey = (namespace: string, name: string): string => `${namespace}/${name}`
+const makeKey = (namespace: string, name: string): string =>
+  `${namespace}/${name}`
 
 /**
  * Parse a resource key into namespace and name
@@ -69,7 +76,10 @@ const parseKey = (key: string): { namespace: string; name: string } => {
 /**
  * Generate ReplicaSet name from Deployment and template hash
  */
-const generateReplicaSetName = (deploymentName: string, templateHash: string): string => {
+const generateReplicaSetName = (
+  deploymentName: string,
+  templateHash: string
+): string => {
   return `${deploymentName}-${templateHash.substring(0, 10)}`
 }
 
@@ -116,7 +126,9 @@ const createReplicaSetFromDeployment = (deploy: Deployment): ReplicaSet => {
 /**
  * Compute Deployment status from owned ReplicaSets
  */
-const computeDeploymentStatus = (ownedReplicaSets: ReplicaSet[]): DeploymentStatus => {
+const computeDeploymentStatus = (
+  ownedReplicaSets: ReplicaSet[]
+): DeploymentStatus => {
   let totalReplicas = 0
   let readyReplicas = 0
   let availableReplicas = 0
@@ -160,7 +172,11 @@ export class DeploymentController implements Controller {
    */
   start(): void {
     // Subscribe to events - they will enqueue keys
-    this.unsubscribe = subscribeToEvents(this.eventBus, WATCHED_EVENTS, (event) => this.handleEvent(event))
+    this.unsubscribe = subscribeToEvents(
+      this.eventBus,
+      WATCHED_EVENTS,
+      (event) => this.handleEvent(event)
+    )
 
     // Start processing the work queue
     this.workQueue.start((key) => this.reconcile(key))
@@ -213,7 +229,9 @@ export class DeploymentController implements Controller {
    */
   private enqueueOwnerDeployment(rs: ReplicaSet): void {
     const state = this.getState()
-    const ownerDeploy = findOwnerByRef(rs, 'Deployment', () => state.getDeployments(rs.metadata.namespace))
+    const ownerDeploy = findOwnerByRef(rs, 'Deployment', () =>
+      state.getDeployments(rs.metadata.namespace)
+    )
 
     if (ownerDeploy) {
       this.enqueueDeployment(ownerDeploy)
@@ -230,7 +248,12 @@ export class DeploymentController implements Controller {
 
     for (const rs of ownedReplicaSets) {
       this.eventBus.emit(
-        createReplicaSetDeletedEvent(rs.metadata.name, rs.metadata.namespace, rs, 'deployment-controller')
+        createReplicaSetDeletedEvent(
+          rs.metadata.name,
+          rs.metadata.namespace,
+          rs,
+          'deployment-controller'
+        )
       )
     }
   }
@@ -249,7 +272,10 @@ export class DeploymentController implements Controller {
     }
 
     const deploy = deployResult.value
-    const ownedReplicaSets = getOwnedResources(deploy, state.getReplicaSets(namespace))
+    const ownedReplicaSets = getOwnedResources(
+      deploy,
+      state.getReplicaSets(namespace)
+    )
     const currentRs = this.findCurrentReplicaSet(deploy, ownedReplicaSets)
 
     if (currentRs) {
@@ -264,18 +290,29 @@ export class DeploymentController implements Controller {
   /**
    * Find the ReplicaSet matching the current template
    */
-  private findCurrentReplicaSet(deploy: Deployment, ownedReplicaSets: ReplicaSet[]): ReplicaSet | undefined {
+  private findCurrentReplicaSet(
+    deploy: Deployment,
+    ownedReplicaSets: ReplicaSet[]
+  ): ReplicaSet | undefined {
     const templateHash = generateTemplateHash(deploy.spec.template)
-    const expectedRsName = generateReplicaSetName(deploy.metadata.name, templateHash)
+    const expectedRsName = generateReplicaSetName(
+      deploy.metadata.name,
+      templateHash
+    )
     return ownedReplicaSets.find((rs) => rs.metadata.name === expectedRsName)
   }
 
   /**
    * Create a new ReplicaSet and scale down old ones
    */
-  private createNewReplicaSet(deploy: Deployment, oldReplicaSets: ReplicaSet[]): void {
+  private createNewReplicaSet(
+    deploy: Deployment,
+    oldReplicaSets: ReplicaSet[]
+  ): void {
     const newRs = createReplicaSetFromDeployment(deploy)
-    this.eventBus.emit(createReplicaSetCreatedEvent(newRs, 'deployment-controller'))
+    this.eventBus.emit(
+      createReplicaSetCreatedEvent(newRs, 'deployment-controller')
+    )
     this.scaleDownReplicaSets(oldReplicaSets)
   }
 
@@ -291,7 +328,13 @@ export class DeploymentController implements Controller {
         spec: { ...rs.spec, replicas: 0 }
       }
       this.eventBus.emit(
-        createReplicaSetUpdatedEvent(rs.metadata.name, rs.metadata.namespace, scaledDownRs, rs, 'deployment-controller')
+        createReplicaSetUpdatedEvent(
+          rs.metadata.name,
+          rs.metadata.namespace,
+          scaledDownRs,
+          rs,
+          'deployment-controller'
+        )
       )
     }
   }
@@ -299,7 +342,10 @@ export class DeploymentController implements Controller {
   /**
    * Update ReplicaSet replicas if needed
    */
-  private reconcileExistingReplicaSet(deploy: Deployment, currentRs: ReplicaSet): void {
+  private reconcileExistingReplicaSet(
+    deploy: Deployment,
+    currentRs: ReplicaSet
+  ): void {
     const desiredReplicas = deploy.spec.replicas ?? 1
     if (currentRs.spec.replicas === desiredReplicas) {
       return
@@ -325,10 +371,19 @@ export class DeploymentController implements Controller {
    */
   private updateDeploymentStatus(deploy: Deployment, namespace: string): void {
     const state = this.getState()
-    const ownedReplicaSets = getOwnedResources(deploy, state.getReplicaSets(namespace))
+    const ownedReplicaSets = getOwnedResources(
+      deploy,
+      state.getReplicaSets(namespace)
+    )
     const newStatus = computeDeploymentStatus(ownedReplicaSets)
 
-    if (statusEquals(deploy.status, newStatus, ['replicas', 'readyReplicas', 'availableReplicas'])) {
+    if (
+      statusEquals(deploy.status, newStatus, [
+        'replicas',
+        'readyReplicas',
+        'availableReplicas'
+      ])
+    ) {
       return
     }
 

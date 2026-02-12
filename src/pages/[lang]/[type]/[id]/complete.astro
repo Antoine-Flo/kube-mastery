@@ -9,9 +9,15 @@ const lang = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
-const { userId } = await getProgressContext(Astro.locals, Astro.request, Astro.cookies)
+const { userId } = await getProgressContext(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
 if (!userId) {
-  return Astro.redirect(localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname))
+  return Astro.redirect(
+    localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
+  )
 }
 
 const coursesHref = localePath('/courses')
@@ -31,7 +37,10 @@ const coursesHref = localePath('/courses')
           aria-label={t('survey_placeholder')}></textarea>
       </div>
       <div class="complete-survey-form__field">
-        <span class="complete-survey-form__label" id="complete-survey-rating-label">
+        <span
+          class="complete-survey-form__label"
+          id="complete-survey-rating-label"
+        >
           {t('survey_ratingLabel')}
         </span>
         <input
@@ -43,7 +52,11 @@ const coursesHref = localePath('/courses')
           aria-required="true"
           aria-describedby="complete-survey-rating-label"
         />
-        <div class="complete-survey-form__stars" role="group" aria-labelledby="complete-survey-rating-label">
+        <div
+          class="complete-survey-form__stars"
+          role="group"
+          aria-labelledby="complete-survey-rating-label"
+        >
           {
             [1, 2, 3, 4, 5].map((value) => (
               <button
@@ -59,7 +72,13 @@ const coursesHref = localePath('/courses')
           }
         </div>
       </div>
-      <p id="complete-survey-error" class="complete-survey-form__error" aria-live="polite" hidden></p>
+      <p
+        id="complete-survey-error"
+        class="complete-survey-form__error"
+        aria-live="polite"
+        hidden
+      >
+      </p>
       <div class="complete-survey-form__footer">
         <Button href={coursesHref} variant="subtle" color="gray" size="sm">
           {t('courseComplete_backToCourses')}
@@ -81,9 +100,13 @@ const coursesHref = localePath('/courses')
 >
   function getFormPayload(formEl) {
     const ratingEl = formEl.querySelector('#complete-survey-rating')
-    const rating = ratingEl && 'value' in ratingEl && ratingEl.value ? Number(ratingEl.value) : 0
+    const rating =
+      ratingEl && 'value' in ratingEl && ratingEl.value
+        ? Number(ratingEl.value)
+        : 0
     const commentEl = formEl.querySelector('textarea[name="comment"]')
-    const comment = commentEl && 'value' in commentEl ? commentEl.value.trim() : ''
+    const comment =
+      commentEl && 'value' in commentEl ? commentEl.value.trim() : ''
     return { name: 'small', rating, comment: comment || undefined }
   }
 

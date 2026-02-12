@@ -31,7 +31,10 @@ type MetadataType = 'labels' | 'annotations'
 /**
  * Remove a key from metadata object (pure function)
  */
-const removeKey = (metadata: Record<string, string>, key: string): Record<string, string> => {
+const removeKey = (
+  metadata: Record<string, string>,
+  key: string
+): Record<string, string> => {
   return Object.fromEntries(Object.entries(metadata).filter(([k]) => k !== key))
 }
 
@@ -53,7 +56,9 @@ const applyMetadataChanges = (
       // Addition or update
       if (currentMetadata[key] !== undefined && !overwrite) {
         const type = metadataType === 'labels' ? 'label' : 'annotation'
-        return error(`${type} "${key}" already exists, use --overwrite to update`)
+        return error(
+          `${type} "${key}" already exists, use --overwrite to update`
+        )
       }
       newMetadata = { ...newMetadata, [key]: value }
     }
@@ -64,7 +69,8 @@ const applyMetadataChanges = (
     ...resource,
     metadata: {
       ...resource.metadata,
-      [metadataType]: Object.keys(newMetadata).length > 0 ? newMetadata : undefined
+      [metadataType]:
+        Object.keys(newMetadata).length > 0 ? newMetadata : undefined
     }
   }
 
@@ -94,7 +100,10 @@ interface ResourceCollectionAccessor<T extends ResourceWithMetadata> {
 /**
  * Resource collection accessors (object lookup pattern)
  */
-const RESOURCE_ACCESSORS: Record<string, ResourceCollectionAccessor<ResourceWithMetadata>> = {
+const RESOURCE_ACCESSORS: Record<
+  string,
+  ResourceCollectionAccessor<ResourceWithMetadata>
+> = {
   pods: {
     getItems: (state) => state.pods.items as ResourceWithMetadata[],
     setItems: (state, items) => ({ ...state, pods: { items: items as Pod[] } }),
@@ -103,13 +112,19 @@ const RESOURCE_ACCESSORS: Record<string, ResourceCollectionAccessor<ResourceWith
   },
   configmaps: {
     getItems: (state) => state.configMaps.items as ResourceWithMetadata[],
-    setItems: (state, items) => ({ ...state, configMaps: { items: items as ConfigMap[] } }),
+    setItems: (state, items) => ({
+      ...state,
+      configMaps: { items: items as ConfigMap[] }
+    }),
     resourceTypeName: 'ConfigMap',
     singularName: 'configmap'
   },
   secrets: {
     getItems: (state) => state.secrets.items as ResourceWithMetadata[],
-    setItems: (state, items) => ({ ...state, secrets: { items: items as Secret[] } }),
+    setItems: (state, items) => ({
+      ...state,
+      secrets: { items: items as Secret[] }
+    }),
     resourceTypeName: 'Secret',
     singularName: 'secret'
   }
@@ -129,12 +144,16 @@ export const handleMetadataChange = (
 
   // Validate resource type
   if (!parsed.resource) {
-    return error(`error: you must specify the resource type to ${config.commandName}`)
+    return error(
+      `error: you must specify the resource type to ${config.commandName}`
+    )
   }
 
   // Validate resource name
   if (!parsed.name) {
-    return error(`error: you must specify the name of the resource to ${config.commandName}`)
+    return error(
+      `error: you must specify the name of the resource to ${config.commandName}`
+    )
   }
 
   // Validate metadata changes
@@ -178,14 +197,23 @@ const handleMetadataChangeWithEvents = (
   }
 
   const items = accessor.getItems(state)
-  const resource = items.find((r) => r.metadata.name === name && r.metadata.namespace === namespace)
+  const resource = items.find(
+    (r) => r.metadata.name === name && r.metadata.namespace === namespace
+  )
 
   if (!resource) {
-    return error(`Error from server (NotFound): ${resourceType} "${name}" not found`)
+    return error(
+      `Error from server (NotFound): ${resourceType} "${name}" not found`
+    )
   }
 
   // Apply metadata changes
-  const updateResult = applyMetadataChanges(resource, changes, overwrite, config.metadataType)
+  const updateResult = applyMetadataChanges(
+    resource,
+    changes,
+    overwrite,
+    config.metadataType
+  )
   if (!updateResult.ok) {
     return updateResult
   }
@@ -210,9 +238,17 @@ const handleMetadataChangeWithEvents = (
     }
   }
 
-  const factory = eventFactoryMap[resourceType as keyof typeof eventFactoryMap]?.[metadataKey]
+  const factory =
+    eventFactoryMap[resourceType as keyof typeof eventFactoryMap]?.[metadataKey]
   if (factory) {
-    const event = factory(name, namespace, metadataValue, updatedResource as any, resource as any, 'kubectl')
+    const event = factory(
+      name,
+      namespace,
+      metadataValue,
+      updatedResource as any,
+      resource as any,
+      'kubectl'
+    )
     eventBus.emit(event)
   }
 

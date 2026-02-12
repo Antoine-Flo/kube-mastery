@@ -189,7 +189,9 @@ const PodTemplateSpecSchema = z.object({
     })
     .optional(),
   spec: z.object({
-    containers: z.array(ContainerSchema).min(1, 'At least one container is required'),
+    containers: z
+      .array(ContainerSchema)
+      .min(1, 'At least one container is required'),
     initContainers: z.array(ContainerSchema).optional()
   })
 })
@@ -220,7 +222,9 @@ export const parseReplicaSetManifest = (data: unknown): Result<ReplicaSet> => {
 
   if (!result.success) {
     const firstError = result.error.issues[0]
-    return error(`Invalid ReplicaSet manifest: ${firstError.path.join('.')}: ${firstError.message}`)
+    return error(
+      `Invalid ReplicaSet manifest: ${firstError.path.join('.')}: ${firstError.message}`
+    )
   }
 
   const manifest = result.data
@@ -232,8 +236,12 @@ export const parseReplicaSetManifest = (data: unknown): Result<ReplicaSet> => {
     selector: manifest.spec.selector,
     template: manifest.spec.template as PodTemplateSpec,
     ...(manifest.metadata.labels && { labels: manifest.metadata.labels }),
-    ...(manifest.metadata.annotations && { annotations: manifest.metadata.annotations }),
-    ...(manifest.metadata.creationTimestamp && { creationTimestamp: manifest.metadata.creationTimestamp })
+    ...(manifest.metadata.annotations && {
+      annotations: manifest.metadata.annotations
+    }),
+    ...(manifest.metadata.creationTimestamp && {
+      creationTimestamp: manifest.metadata.creationTimestamp
+    })
   })
 
   return success(replicaSet)
@@ -270,7 +278,10 @@ const matchExprByOperator: Record<
 /**
  * Check if selector matches pod labels
  */
-export const selectorMatchesLabels = (selector: LabelSelector, labels: Record<string, string> | undefined): boolean => {
+export const selectorMatchesLabels = (
+  selector: LabelSelector,
+  labels: Record<string, string> | undefined
+): boolean => {
   if (!labels) {
     return false
   }

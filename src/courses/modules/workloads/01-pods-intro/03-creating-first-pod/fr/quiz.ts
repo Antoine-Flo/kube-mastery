@@ -16,7 +16,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'Quelle est la première étape que Kubernetes effectue lorsque vous appliquez un manifest de Pod ?',
+      question:
+        'Quelle est la première étape que Kubernetes effectue lorsque vous appliquez un manifest de Pod ?',
       options: [
         "Récupérer l'image du conteneur",
         'Planifier le Pod sur un nœud',

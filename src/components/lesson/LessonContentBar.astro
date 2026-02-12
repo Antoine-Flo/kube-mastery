@@ -11,9 +11,16 @@ interface Props {
   /** "show" = barre dans lp__show-term (bouton affiche le terminal), "hide" = barre dans lp__term-wrap (bouton masque le terminal) */
   terminalAction: 'show' | 'hide'
 }
-const { labelVisualizer, labelCourse, labelShowTerminal, labelHideTerminal, labelContactSupport, terminalAction } =
-  Astro.props
-const labelTerminal = terminalAction === 'show' ? labelShowTerminal : labelHideTerminal
+const {
+  labelVisualizer,
+  labelCourse,
+  labelShowTerminal,
+  labelHideTerminal,
+  labelContactSupport,
+  terminalAction
+} = Astro.props
+const labelTerminal =
+  terminalAction === 'show' ? labelShowTerminal : labelHideTerminal
 ---
 
 <div class="lp__content-bar">
@@ -83,7 +90,9 @@ const labelTerminal = terminalAction === 'show' ? labelShowTerminal : labelHideT
       e.preventDefault()
       const expanded = btn.getAttribute('aria-expanded') === 'true'
       setVizState(btn, !expanded)
-      document.dispatchEvent(new CustomEvent(expanded ? 'cluster-panel-close' : 'cluster-panel-open'))
+      document.dispatchEvent(
+        new CustomEvent(expanded ? 'cluster-panel-close' : 'cluster-panel-open')
+      )
       return
     }
     const termBtn = (e.target as Element).closest('[data-lesson-term-toggle]')
@@ -92,7 +101,9 @@ const labelTerminal = terminalAction === 'show' ? labelShowTerminal : labelHideT
       document.dispatchEvent(new CustomEvent('lesson-terminal-toggle'))
       return
     }
-    const contactBtn = (e.target as Element).closest('[data-contact-support-trigger]')
+    const contactBtn = (e.target as Element).closest(
+      '[data-contact-support-trigger]'
+    )
     if (contactBtn) {
       e.preventDefault()
       document.dispatchEvent(new CustomEvent('contact-support-open'))

@@ -50,7 +50,10 @@ import {
   createServiceUpdatedEvent
 } from './events/types'
 import { createResourceRepository } from './repositories/resourceRepository'
-import type { KubernetesResource, ResourceCollection } from './repositories/types'
+import type {
+  KubernetesResource,
+  ResourceCollection
+} from './repositories/types'
 import type { ConfigMap } from './ressources/ConfigMap'
 import type { Deployment } from './ressources/Deployment'
 import type { Node } from './ressources/Node'
@@ -112,13 +115,19 @@ const serviceRepo = createResourceRepository<Service>('Service')
 
 // ─── Generic Resource Operations Helper ─────────────────────────────
 
-type ResourceRepository<T extends KubernetesResource> = ReturnType<typeof createResourceRepository<T>>
+type ResourceRepository<T extends KubernetesResource> = ReturnType<
+  typeof createResourceRepository<T>
+>
 
 interface ResourceOperations<T extends KubernetesResource> {
   add: (state: ClusterStateData, resource: T) => ClusterStateData
   getAll: (state: ClusterStateData, namespace?: string) => T[]
   find: (state: ClusterStateData, name: string, namespace: string) => Result<T>
-  delete: (state: ClusterStateData, name: string, namespace: string) => Result<T> & { state?: ClusterStateData }
+  delete: (
+    state: ClusterStateData,
+    name: string,
+    namespace: string
+  ) => Result<T> & { state?: ClusterStateData }
   update: (
     state: ClusterStateData,
     name: string,
@@ -133,17 +142,35 @@ const createResourceOperations = <T extends KubernetesResource>(
 ): ResourceOperations<T> => ({
   add: (state: ClusterStateData, resource: T): ClusterStateData => ({
     ...state,
-    [collectionKey]: repo.add(state[collectionKey] as unknown as ResourceCollection<T>, resource)
+    [collectionKey]: repo.add(
+      state[collectionKey] as unknown as ResourceCollection<T>,
+      resource
+    )
   }),
 
   getAll: (state: ClusterStateData, namespace?: string): T[] =>
-    repo.getAll(state[collectionKey] as unknown as ResourceCollection<T>, namespace),
+    repo.getAll(
+      state[collectionKey] as unknown as ResourceCollection<T>,
+      namespace
+    ),
 
   find: (state: ClusterStateData, name: string, namespace: string): Result<T> =>
-    repo.find(state[collectionKey] as unknown as ResourceCollection<T>, name, namespace),
+    repo.find(
+      state[collectionKey] as unknown as ResourceCollection<T>,
+      name,
+      namespace
+    ),
 
-  delete: (state: ClusterStateData, name: string, namespace: string): Result<T> & { state?: ClusterStateData } => {
-    const result = repo.remove(state[collectionKey] as unknown as ResourceCollection<T>, name, namespace)
+  delete: (
+    state: ClusterStateData,
+    name: string,
+    namespace: string
+  ): Result<T> & { state?: ClusterStateData } => {
+    const result = repo.remove(
+      state[collectionKey] as unknown as ResourceCollection<T>,
+      name,
+      namespace
+    )
     if (result.ok && result.collection) {
       return {
         ok: true,
@@ -160,7 +187,12 @@ const createResourceOperations = <T extends KubernetesResource>(
     namespace: string,
     updateFn: (resource: T) => T
   ): Result<T> & { state?: ClusterStateData } => {
-    const result = repo.update(state[collectionKey] as unknown as ResourceCollection<T>, name, namespace, updateFn)
+    const result = repo.update(
+      state[collectionKey] as unknown as ResourceCollection<T>,
+      name,
+      namespace,
+      updateFn
+    )
     if (result.ok && result.collection) {
       return {
         ok: true,
@@ -187,11 +219,20 @@ const createEmptyState = (): ClusterStateData => ({
 // ─── Resource Operations (Generated) ─────────────────────────────────
 
 const podOps = createResourceOperations<Pod>(podRepo, 'pods')
-const configMapOps = createResourceOperations<ConfigMap>(configMapRepo, 'configMaps')
+const configMapOps = createResourceOperations<ConfigMap>(
+  configMapRepo,
+  'configMaps'
+)
 const secretOps = createResourceOperations<Secret>(secretRepo, 'secrets')
 const nodeOps = createResourceOperations<Node>(nodeRepo, 'nodes')
-const replicaSetOps = createResourceOperations<ReplicaSet>(replicaSetRepo, 'replicaSets')
-const deploymentOps = createResourceOperations<Deployment>(deploymentRepo, 'deployments')
+const replicaSetOps = createResourceOperations<ReplicaSet>(
+  replicaSetRepo,
+  'replicaSets'
+)
+const deploymentOps = createResourceOperations<Deployment>(
+  deploymentRepo,
+  'deployments'
+)
 const serviceOps = createResourceOperations<Service>(serviceRepo, 'services')
 
 // Export Pod operations for test use only
@@ -205,17 +246,29 @@ export interface ClusterState {
   addPod: (pod: Pod) => void
   findPod: (name: string, namespace: string) => Result<Pod>
   deletePod: (name: string, namespace: string) => Result<Pod>
-  updatePod: (name: string, namespace: string, updateFn: (pod: Pod) => Pod) => Result<Pod>
+  updatePod: (
+    name: string,
+    namespace: string,
+    updateFn: (pod: Pod) => Pod
+  ) => Result<Pod>
   getConfigMaps: (namespace?: string) => ConfigMap[]
   addConfigMap: (configMap: ConfigMap) => void
   findConfigMap: (name: string, namespace: string) => Result<ConfigMap>
   deleteConfigMap: (name: string, namespace: string) => Result<ConfigMap>
-  updateConfigMap: (name: string, namespace: string, updateFn: (configMap: ConfigMap) => ConfigMap) => Result<ConfigMap>
+  updateConfigMap: (
+    name: string,
+    namespace: string,
+    updateFn: (configMap: ConfigMap) => ConfigMap
+  ) => Result<ConfigMap>
   getSecrets: (namespace?: string) => Secret[]
   addSecret: (secret: Secret) => void
   findSecret: (name: string, namespace: string) => Result<Secret>
   deleteSecret: (name: string, namespace: string) => Result<Secret>
-  updateSecret: (name: string, namespace: string, updateFn: (secret: Secret) => Secret) => Result<Secret>
+  updateSecret: (
+    name: string,
+    namespace: string,
+    updateFn: (secret: Secret) => Secret
+  ) => Result<Secret>
   getNodes: () => Node[]
   addNode: (node: Node) => void
   findNode: (name: string) => Result<Node>
@@ -243,7 +296,11 @@ export interface ClusterState {
   addService: (service: Service) => void
   findService: (name: string, namespace: string) => Result<Service>
   deleteService: (name: string, namespace: string) => Result<Service>
-  updateService: (name: string, namespace: string, updateFn: (service: Service) => Service) => Result<Service>
+  updateService: (
+    name: string,
+    namespace: string,
+    updateFn: (service: Service) => Service
+  ) => Result<Service>
   toJSON: () => ClusterStateData
   loadState: (state: ClusterStateData) => void
 }
@@ -306,24 +363,39 @@ const createFacadeMethods = <T extends KubernetesResource>(
       eventBus.emit(eventFactory.created(resource as any, 'direct'))
     },
 
-    find: (name: string, namespace: string) => ops.find(getState(), name, namespace),
+    find: (name: string, namespace: string) =>
+      ops.find(getState(), name, namespace),
 
     delete: (name: string, namespace: string): Result<T> => {
       const findResult = ops.find(getState(), name, namespace)
       if (!findResult.ok) {
         return findResult
       }
-      eventBus.emit(eventFactory.deleted(name, namespace, findResult.value as any, 'direct'))
+      eventBus.emit(
+        eventFactory.deleted(name, namespace, findResult.value as any, 'direct')
+      )
       return { ok: true, value: findResult.value }
     },
 
-    update: (name: string, namespace: string, updateFn: (resource: T) => T): Result<T> => {
+    update: (
+      name: string,
+      namespace: string,
+      updateFn: (resource: T) => T
+    ): Result<T> => {
       const findResult = ops.find(getState(), name, namespace)
       if (!findResult.ok) {
         return findResult
       }
       const updatedResource = updateFn(findResult.value)
-      eventBus.emit(eventFactory.updated(name, namespace, updatedResource as any, findResult.value as any, 'direct'))
+      eventBus.emit(
+        eventFactory.updated(
+          name,
+          namespace,
+          updatedResource as any,
+          findResult.value as any,
+          'direct'
+        )
+      )
       return { ok: true, value: updatedResource }
     }
   }
@@ -335,7 +407,10 @@ const createFacadeMethods = <T extends KubernetesResource>(
  * Event handler map for dispatching events to handlers
  * Using object lookup pattern instead of switch
  */
-const EVENT_HANDLERS: Record<string, (state: ClusterStateData, event: any) => ClusterStateData> = {
+const EVENT_HANDLERS: Record<
+  string,
+  (state: ClusterStateData, event: any) => ClusterStateData
+> = {
   PodCreated: handlePodCreated,
   PodDeleted: handlePodDeleted,
   PodUpdated: handlePodUpdated,
@@ -368,7 +443,10 @@ const EVENT_HANDLERS: Record<string, (state: ClusterStateData, event: any) => Cl
  * Apply event to cluster state
  * Dispatches to appropriate handler based on event type
  */
-const applyEventToState = (state: ClusterStateData, event: ClusterEvent): ClusterStateData => {
+const applyEventToState = (
+  state: ClusterStateData,
+  event: ClusterEvent
+): ClusterStateData => {
   const handler = EVENT_HANDLERS[event.type]
   if (!handler) {
     return state
@@ -378,7 +456,10 @@ const applyEventToState = (state: ClusterStateData, event: ClusterEvent): Cluste
 
 // Facade factory function
 export function createClusterState(eventBus: EventBus): ClusterState
-export function createClusterState(initialState: ClusterStateData, eventBus: EventBus): ClusterState
+export function createClusterState(
+  initialState: ClusterStateData,
+  eventBus: EventBus
+): ClusterState
 export function createClusterState(
   initialStateOrEventBus: ClusterStateData | EventBus,
   eventBus?: EventBus
@@ -401,11 +482,41 @@ export function createClusterState(
   })
 
   const podMethods = createFacadeMethods(podOps, getState, setState, bus, 'Pod')
-  const configMapMethods = createFacadeMethods(configMapOps, getState, setState, bus, 'ConfigMap')
-  const secretMethods = createFacadeMethods(secretOps, getState, setState, bus, 'Secret')
-  const replicaSetMethods = createFacadeMethods(replicaSetOps, getState, setState, bus, 'ReplicaSet')
-  const deploymentMethods = createFacadeMethods(deploymentOps, getState, setState, bus, 'Deployment')
-  const serviceMethods = createFacadeMethods(serviceOps, getState, setState, bus, 'Service')
+  const configMapMethods = createFacadeMethods(
+    configMapOps,
+    getState,
+    setState,
+    bus,
+    'ConfigMap'
+  )
+  const secretMethods = createFacadeMethods(
+    secretOps,
+    getState,
+    setState,
+    bus,
+    'Secret'
+  )
+  const replicaSetMethods = createFacadeMethods(
+    replicaSetOps,
+    getState,
+    setState,
+    bus,
+    'ReplicaSet'
+  )
+  const deploymentMethods = createFacadeMethods(
+    deploymentOps,
+    getState,
+    setState,
+    bus,
+    'Deployment'
+  )
+  const serviceMethods = createFacadeMethods(
+    serviceOps,
+    getState,
+    setState,
+    bus,
+    'Service'
+  )
 
   // Nodes are cluster-scoped (no namespace), so we need custom methods
   // For now, we add nodes directly to state since Node events are not yet implemented
@@ -434,7 +545,9 @@ export function createClusterState(
       if (deleteResult.ok && deleteResult.collection) {
         setState({ ...currentState, nodes: deleteResult.collection })
       }
-      bus.emit(createSecretDeletedEvent(name, '', findResult.value as any, 'direct')) // Placeholder
+      bus.emit(
+        createSecretDeletedEvent(name, '', findResult.value as any, 'direct')
+      ) // Placeholder
       return { ok: true, value: findResult.value }
     },
     update: (name: string, updateFn: (node: Node) => Node): Result<Node> => {
@@ -445,11 +558,24 @@ export function createClusterState(
       const updatedNode = updateFn(findResult.value)
       // Update node directly in state using repository
       const currentState = getState()
-      const updateResult = nodeRepo.update(currentState.nodes, name, '', updateFn)
+      const updateResult = nodeRepo.update(
+        currentState.nodes,
+        name,
+        '',
+        updateFn
+      )
       if (updateResult.ok && updateResult.collection) {
         setState({ ...currentState, nodes: updateResult.collection })
       }
-      bus.emit(createSecretUpdatedEvent(name, '', updatedNode as any, findResult.value as any, 'direct')) // Placeholder
+      bus.emit(
+        createSecretUpdatedEvent(
+          name,
+          '',
+          updatedNode as any,
+          findResult.value as any,
+          'direct'
+        )
+      ) // Placeholder
       return { ok: true, value: updatedNode }
     }
   }

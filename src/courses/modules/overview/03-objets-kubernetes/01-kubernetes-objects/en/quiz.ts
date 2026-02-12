@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'Which of the following is NOT a required field in a Kubernetes object manifest?',
+      question:
+        'Which of the following is NOT a required field in a Kubernetes object manifest?',
       options: ['apiVersion', 'kind', 'metadata', 'status'],
       correctAnswer: 3
     },

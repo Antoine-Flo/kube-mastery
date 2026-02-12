@@ -1,6 +1,10 @@
 import type { MarkdownInstance } from 'astro'
 import type { UiLang } from '../courses/types'
-import type { TaskGroupOverview, TaskGroupListItem, TaskLocation } from './types'
+import type {
+  TaskGroupOverview,
+  TaskGroupListItem,
+  TaskLocation
+} from './types'
 import type { TaskGlobAdapter } from './port'
 import { buildTaskGroupOverview, buildTaskGroupList } from './domain'
 import { createTaskGlobAdapter } from './glob-adapter'
@@ -15,13 +19,21 @@ function getAdapter(): TaskGlobAdapter {
   return adapter
 }
 
-export type { TaskGroupOverview, TaskGroupListItem, TaskLocation, TaskOverview } from './types'
+export type {
+  TaskGroupOverview,
+  TaskGroupListItem,
+  TaskLocation,
+  TaskOverview
+} from './types'
 
 export function getTaskGroups(lang: UiLang): TaskGroupListItem[] {
   return buildTaskGroupList(getAdapter(), lang)
 }
 
-export function getTaskGroupOverview(groupId: string, lang: UiLang): TaskGroupOverview | null {
+export function getTaskGroupOverview(
+  groupId: string,
+  lang: UiLang
+): TaskGroupOverview | null {
   return buildTaskGroupOverview(getAdapter(), groupId, lang)
 }
 
@@ -37,7 +49,10 @@ export function getTaskContent(
   return content as MarkdownInstance<Record<string, unknown>>
 }
 
-export function getTaskLocation(groupId: string, taskId: string): TaskLocation | null {
+export function getTaskLocation(
+  groupId: string,
+  taskId: string
+): TaskLocation | null {
   const taskDirs = getAdapter().getTaskDirsByGroup().get(groupId)
   if (!taskDirs) {
     return null

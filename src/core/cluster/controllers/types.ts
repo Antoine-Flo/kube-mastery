@@ -43,11 +43,17 @@ export interface OwnerResource {
 export interface ControllerState {
   // Deployments
   getDeployments: (namespace?: string) => Deployment[]
-  findDeployment: (name: string, namespace: string) => { ok: boolean; value?: Deployment }
+  findDeployment: (
+    name: string,
+    namespace: string
+  ) => { ok: boolean; value?: Deployment }
 
   // ReplicaSets
   getReplicaSets: (namespace?: string) => ReplicaSet[]
-  findReplicaSet: (name: string, namespace: string) => { ok: boolean; value?: ReplicaSet }
+  findReplicaSet: (
+    name: string,
+    namespace: string
+  ) => { ok: boolean; value?: ReplicaSet }
 
   // Pods
   getPods: (namespace?: string) => Pod[]

@@ -1,7 +1,13 @@
 import type { APIRoute } from 'astro'
 import { getSupabaseServer } from '../../../lib/supabase'
 
-export const GET: APIRoute = async ({ url, cookies, redirect, locals, request }) => {
+export const GET: APIRoute = async ({
+  url,
+  cookies,
+  redirect,
+  locals,
+  request
+}) => {
   const lang = url.searchParams.get('lang') || 'en'
   try {
     const supabase = getSupabaseServer(locals, request, cookies)

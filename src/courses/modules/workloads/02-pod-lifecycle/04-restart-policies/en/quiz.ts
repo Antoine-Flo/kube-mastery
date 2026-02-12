@@ -16,7 +16,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'Which restart policy only restarts containers that exit with an error?',
+      question:
+        'Which restart policy only restarts containers that exit with an error?',
       options: ['Always', 'OnFailure', 'Never', 'OnError'],
       correctAnswer: 1
     }

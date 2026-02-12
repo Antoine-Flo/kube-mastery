@@ -38,7 +38,8 @@
   border-end-start-radius: 0;
 }
 
-.button-group--attached.button-group--horizontal > *:not(:first-child):not(:last-child) {
+.button-group--attached.button-group--horizontal
+  > *:not(:first-child):not(:last-child) {
   border-radius: 0;
   margin-inline-end: -1px;
 }
@@ -54,7 +55,8 @@
   border-top-right-radius: 0;
 }
 
-.button-group--attached.button-group--vertical > *:not(:first-child):not(:last-child) {
+.button-group--attached.button-group--vertical
+  > *:not(:first-child):not(:last-child) {
   border-radius: 0;
   margin-bottom: -1px;
 }

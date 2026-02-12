@@ -17,7 +17,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'What does the UP-TO-DATE field in kubectl get deployments show?',
+      question:
+        'What does the UP-TO-DATE field in kubectl get deployments show?',
       options: [
         'Total number of replicas',
         'Number of replicas updated to the desired state',

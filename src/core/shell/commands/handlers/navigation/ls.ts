@@ -4,14 +4,23 @@
 // Lists directory contents with optional detailed view (-l flag).
 
 import type { FileSystem } from '../../../../filesystem/FileSystem'
-import { formatColumns, formatLongListing, type FileEntry } from '../../../../shared/formatter'
+import {
+  formatColumns,
+  formatLongListing,
+  type FileEntry
+} from '../../../../shared/formatter'
 import type { ExecutionResult } from '../../../../shared/result'
 import { error, success } from '../../../../shared/result'
 import type { ShellCommandHandler } from '../../core/ShellCommandHandler'
 
-export const createLsHandler = (fileSystem: FileSystem): ShellCommandHandler => {
+export const createLsHandler = (
+  fileSystem: FileSystem
+): ShellCommandHandler => {
   return {
-    execute: (args: string[], flags: Record<string, boolean | string>): ExecutionResult => {
+    execute: (
+      args: string[],
+      flags: Record<string, boolean | string>
+    ): ExecutionResult => {
       // Determine target paths (all args or flag value, or current directory)
       const targetPaths: (string | undefined)[] = []
 

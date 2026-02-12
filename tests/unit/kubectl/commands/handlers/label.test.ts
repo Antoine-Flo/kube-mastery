@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { handleLabel } from '../../../../../src/core/kubectl/commands/handlers/label'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
-import { createEventBus, type EventBus } from '../../../../../src/core/cluster/events/EventBus'
+import {
+  createEventBus,
+  type EventBus
+} from '../../../../../src/core/cluster/events/EventBus'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 import { createClusterStateData } from '../../../helpers/utils'
 
@@ -12,9 +15,12 @@ describe('kubectl label handler', () => {
     eventBus = createEventBus()
   })
 
-  const createState = (pods: ReturnType<typeof createPod>[] = []) => createClusterStateData({ pods })
+  const createState = (pods: ReturnType<typeof createPod>[] = []) =>
+    createClusterStateData({ pods })
 
-  const createParsedCommand = (overrides: Partial<ParsedCommand> = {}): ParsedCommand => ({
+  const createParsedCommand = (
+    overrides: Partial<ParsedCommand> = {}
+  ): ParsedCommand => ({
     action: 'label',
     resource: 'pods',
     flags: {},

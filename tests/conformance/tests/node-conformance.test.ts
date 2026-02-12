@@ -4,9 +4,15 @@
 // Validates that Node resources created by the simulator conform to Kubernetes OpenAPI specs
 
 import { beforeAll, describe, expect, it } from 'vitest'
-import { createNode, type Node } from '../../../src/core/cluster/ressources/Node'
+import {
+  createNode,
+  type Node
+} from '../../../src/core/cluster/ressources/Node'
 import { loadOpenAPISpec } from '../openapi/loader'
-import { createOpenAPIValidator, removeSimulatorFields } from '../openapi/validator'
+import {
+  createOpenAPIValidator,
+  removeSimulatorFields
+} from '../openapi/validator'
 
 describe('Node OpenAPI Conformance', () => {
   let validator: ReturnType<typeof createOpenAPIValidator>
@@ -343,7 +349,11 @@ describe('Node OpenAPI Conformance', () => {
       }
 
       // This should fail because the schema doesn't exist
-      const result = validator.validateResource(invalidNode, 'invalid/v1', 'Node')
+      const result = validator.validateResource(
+        invalidNode,
+        'invalid/v1',
+        'Node'
+      )
       expect(result.ok).toBe(false)
       if (!result.ok) {
         expect(result.error).toContain('Schema not found')

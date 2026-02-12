@@ -4,26 +4,34 @@ import type { TaskGroupMeta } from './types'
 import type { TaskGlobAdapter } from './port'
 import { stripNumericPrefix, parseH1 } from '../utils'
 
-const groupGlob = import.meta.glob<{ group: TaskGroupMeta }>('../../courses/tasks/*/group.ts', {
-  eager: true
-})
-
-const contentRawGlob = import.meta.glob<string>('../../courses/tasks/*/*/en/content.md', {
-  eager: true,
-  query: '?raw',
-  import: 'default'
-})
-
-const contentFrRawGlob = import.meta.glob<string>('../../courses/tasks/*/*/fr/content.md', {
-  eager: true,
-  query: '?raw',
-  import: 'default'
-})
-
-const contentAsMarkdownGlob = import.meta.glob<MarkdownInstance<Record<string, unknown>>>(
-  '../../courses/tasks/*/*/*/content.md',
-  { eager: true }
+const groupGlob = import.meta.glob<{ group: TaskGroupMeta }>(
+  '../../courses/tasks/*/group.ts',
+  {
+    eager: true
+  }
 )
+
+const contentRawGlob = import.meta.glob<string>(
+  '../../courses/tasks/*/*/en/content.md',
+  {
+    eager: true,
+    query: '?raw',
+    import: 'default'
+  }
+)
+
+const contentFrRawGlob = import.meta.glob<string>(
+  '../../courses/tasks/*/*/fr/content.md',
+  {
+    eager: true,
+    query: '?raw',
+    import: 'default'
+  }
+)
+
+const contentAsMarkdownGlob = import.meta.glob<
+  MarkdownInstance<Record<string, unknown>>
+>('../../courses/tasks/*/*/*/content.md', { eager: true })
 
 const contentMdKeys = Object.keys(contentAsMarkdownGlob)
 
@@ -43,7 +51,9 @@ function getGroupIds(): string[] {
 }
 
 function getGroupMeta(groupId: string): TaskGroupMeta | undefined {
-  const pathKey = Object.keys(groupGlob).find((p) => p.endsWith(`/${groupId}/group.ts`))
+  const pathKey = Object.keys(groupGlob).find((p) =>
+    p.endsWith(`/${groupId}/group.ts`)
+  )
   if (!pathKey) {
     return undefined
   }
@@ -94,7 +104,8 @@ function getTaskTitle(groupId: string, taskId: string, lang: UiLang): string {
   })
   if (!foundKey) {
     const fallbackKey = Object.keys(rawGlob).find(
-      (k) => k.includes(`tasks/${groupId}/`) && k.includes(`/${lang}/content.md`)
+      (k) =>
+        k.includes(`tasks/${groupId}/`) && k.includes(`/${lang}/content.md`)
     )
     if (!fallbackKey) {
       return taskId
@@ -124,7 +135,9 @@ function getTaskContent(
     return null
   }
   const suffix = contentPath(groupId, taskDir, lang)
-  const found = Object.keys(contentAsMarkdownGlob).find((k) => k.replace(/\\/g, '/').endsWith(suffix))
+  const found = Object.keys(contentAsMarkdownGlob).find((k) =>
+    k.replace(/\\/g, '/').endsWith(suffix)
+  )
   if (!found) {
     return null
   }
@@ -132,7 +145,11 @@ function getTaskContent(
   return entry ?? null
 }
 
-function getTaskDescription(groupId: string, taskId: string, lang: UiLang): string | null {
+function getTaskDescription(
+  groupId: string,
+  taskId: string,
+  lang: UiLang
+): string | null {
   const entry = getTaskContent(groupId, taskId, lang)
   if (!entry?.frontmatter?.description) {
     return null
@@ -155,11 +172,15 @@ export function createTaskGlobAdapter(): TaskGlobAdapter {
         return taskId
       }
       const suffix = `tasks/${groupId}/${taskDir}/${lang}/content.md`
-      const foundKey = Object.keys(contentRawGlob).find((k) => k.replace(/\\/g, '/').endsWith(suffix))
+      const foundKey = Object.keys(contentRawGlob).find((k) =>
+        k.replace(/\\/g, '/').endsWith(suffix)
+      )
       if (foundKey && contentRawGlob[foundKey]) {
         return parseH1(contentRawGlob[foundKey] ?? '') || taskId
       }
-      const foundFr = Object.keys(contentFrRawGlob).find((k) => k.replace(/\\/g, '/').endsWith(suffix))
+      const foundFr = Object.keys(contentFrRawGlob).find((k) =>
+        k.replace(/\\/g, '/').endsWith(suffix)
+      )
       if (foundFr && contentFrRawGlob[foundFr] && lang === 'fr') {
         return parseH1(contentFrRawGlob[foundFr] ?? '') || taskId
       }

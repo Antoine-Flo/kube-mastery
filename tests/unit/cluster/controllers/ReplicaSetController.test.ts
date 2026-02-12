@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createEventBus, type EventBus } from '../../../../src/core/cluster/events/EventBus'
+import {
+  createEventBus,
+  type EventBus
+} from '../../../../src/core/cluster/events/EventBus'
 import type {
   PodCreatedEvent,
   PodDeletedEvent,
@@ -64,16 +67,28 @@ describe('ReplicaSetController', () => {
 
     getState = () => ({
       getReplicaSets: (namespace?: string) =>
-        namespace ? mockState.replicaSets.filter((rs) => rs.metadata.namespace === namespace) : mockState.replicaSets,
+        namespace
+          ? mockState.replicaSets.filter(
+              (rs) => rs.metadata.namespace === namespace
+            )
+          : mockState.replicaSets,
       getPods: (namespace?: string) =>
-        namespace ? mockState.pods.filter((p) => p.metadata.namespace === namespace) : mockState.pods,
+        namespace
+          ? mockState.pods.filter((p) => p.metadata.namespace === namespace)
+          : mockState.pods,
       findReplicaSet: (name: string, namespace: string) => {
-        const rs = mockState.replicaSets.find((r) => r.metadata.name === name && r.metadata.namespace === namespace)
+        const rs = mockState.replicaSets.find(
+          (r) => r.metadata.name === name && r.metadata.namespace === namespace
+        )
         return rs ? { ok: true, value: rs } : { ok: false, error: 'not found' }
       },
       findPod: (name: string, namespace: string) => {
-        const pod = mockState.pods.find((p) => p.metadata.name === name && p.metadata.namespace === namespace)
-        return pod ? { ok: true, value: pod } : { ok: false, error: 'not found' }
+        const pod = mockState.pods.find(
+          (p) => p.metadata.name === name && p.metadata.namespace === namespace
+        )
+        return pod
+          ? { ok: true, value: pod }
+          : { ok: false, error: 'not found' }
       },
       getDeployments: () => [],
       findDeployment: () => ({ ok: false, error: 'not found' }),
@@ -125,7 +140,10 @@ describe('ReplicaSetController', () => {
     it('should do nothing when pod count matches desired replicas', () => {
       const rs = createTestReplicaSet('my-rs', 2)
       mockState.replicaSets = [rs]
-      mockState.pods = [createTestPod('my-rs-abc12', 'my-rs'), createTestPod('my-rs-def34', 'my-rs')]
+      mockState.pods = [
+        createTestPod('my-rs-abc12', 'my-rs'),
+        createTestPod('my-rs-def34', 'my-rs')
+      ]
 
       const podCreated = vi.fn()
       const podDeleted = vi.fn()
@@ -152,15 +170,26 @@ describe('ReplicaSetController', () => {
     it('should update ReplicaSet status after reconciliation', () => {
       const rs = {
         ...createTestReplicaSet('my-rs', 2),
-        status: { replicas: 0, readyReplicas: 0, availableReplicas: 0, fullyLabeledReplicas: 0 }
+        status: {
+          replicas: 0,
+          readyReplicas: 0,
+          availableReplicas: 0,
+          fullyLabeledReplicas: 0
+        }
       }
       mockState.replicaSets = [rs]
-      mockState.pods = [createTestPod('my-rs-abc12', 'my-rs'), createTestPod('my-rs-def34', 'my-rs')]
+      mockState.pods = [
+        createTestPod('my-rs-abc12', 'my-rs'),
+        createTestPod('my-rs-def34', 'my-rs')
+      ]
 
       let updatedRs: ReplicaSet | undefined
-      eventBus.subscribe('ReplicaSetUpdated', (event: ReplicaSetUpdatedEvent) => {
-        updatedRs = event.payload.replicaSet
-      })
+      eventBus.subscribe(
+        'ReplicaSetUpdated',
+        (event: ReplicaSetUpdatedEvent) => {
+          updatedRs = event.payload.replicaSet
+        }
+      )
 
       controller.reconcile('default/my-rs')
 
@@ -175,8 +204,16 @@ describe('ReplicaSetController', () => {
       // One owned pod, two unowned pods
       mockState.pods = [
         createTestPod('my-rs-abc12', 'my-rs'),
-        createPod({ name: 'other-pod-1', namespace: 'default', containers: [{ name: 'nginx', image: 'nginx' }] }),
-        createPod({ name: 'other-pod-2', namespace: 'default', containers: [{ name: 'nginx', image: 'nginx' }] })
+        createPod({
+          name: 'other-pod-1',
+          namespace: 'default',
+          containers: [{ name: 'nginx', image: 'nginx' }]
+        }),
+        createPod({
+          name: 'other-pod-2',
+          namespace: 'default',
+          containers: [{ name: 'nginx', image: 'nginx' }]
+        })
       ]
 
       let createdPodsCount = 0

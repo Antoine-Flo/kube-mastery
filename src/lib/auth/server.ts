@@ -2,13 +2,25 @@
  * Server-side auth: layout context + delete account. Entry point for Layout and API routes.
  */
 
-import { createSupabaseDeleteAccountAdapter, createSupabaseLayoutAuthAdapter } from './supabase-adapter'
+import {
+  createSupabaseDeleteAccountAdapter,
+  createSupabaseLayoutAuthAdapter
+} from './supabase-adapter'
 import type { DeleteAccountPort } from './port'
 import type { LayoutAuthContext } from './types'
 import type { DeleteAccountRequest, DeleteAccountResult } from './types'
 
-export type { LayoutAuthContext, LayoutAuthUser, DeleteAccountRequest, DeleteAccountResult } from './types'
-export type { LayoutAuthRequest, LayoutAuthContextPort, DeleteAccountPort } from './port'
+export type {
+  LayoutAuthContext,
+  LayoutAuthUser,
+  DeleteAccountRequest,
+  DeleteAccountResult
+} from './types'
+export type {
+  LayoutAuthRequest,
+  LayoutAuthContextPort,
+  DeleteAccountPort
+} from './port'
 
 /**
  * Returns auth context for the current request (user, login state, paid subscription).

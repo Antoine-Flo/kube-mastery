@@ -4,9 +4,16 @@
 // Validates that Secret resources created by the simulator conform to Kubernetes OpenAPI specs
 
 import { beforeAll, describe, expect, it } from 'vitest'
-import { createSecret, encodeBase64, type Secret } from '../../../src/core/cluster/ressources/Secret'
+import {
+  createSecret,
+  encodeBase64,
+  type Secret
+} from '../../../src/core/cluster/ressources/Secret'
 import { loadOpenAPISpec } from '../openapi/loader'
-import { createOpenAPIValidator, removeSimulatorFields } from '../openapi/validator'
+import {
+  createOpenAPIValidator,
+  removeSimulatorFields
+} from '../openapi/validator'
 
 describe('Secret OpenAPI Conformance', () => {
   let validator: ReturnType<typeof createOpenAPIValidator>
@@ -39,7 +46,11 @@ describe('Secret OpenAPI Conformance', () => {
         type: secret.type.type // Convert ADT to string
       }
 
-      const result = validator.validateResource(secretForValidation, 'v1', 'Secret')
+      const result = validator.validateResource(
+        secretForValidation,
+        'v1',
+        'Secret'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -63,7 +74,11 @@ describe('Secret OpenAPI Conformance', () => {
         type: secret.type.type // Convert ADT to string
       }
 
-      const result = validator.validateResource(secretForValidation, 'v1', 'Secret')
+      const result = validator.validateResource(
+        secretForValidation,
+        'v1',
+        'Secret'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -87,7 +102,11 @@ describe('Secret OpenAPI Conformance', () => {
         type: secret.type.type // Convert ADT to string
       }
 
-      const result = validator.validateResource(secretForValidation, 'v1', 'Secret')
+      const result = validator.validateResource(
+        secretForValidation,
+        'v1',
+        'Secret'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -121,7 +140,11 @@ describe('Secret OpenAPI Conformance', () => {
         type: secret.type.type // Convert ADT to string
       }
 
-      const result = validator.validateResource(secretForValidation, 'v1', 'Secret')
+      const result = validator.validateResource(
+        secretForValidation,
+        'v1',
+        'Secret'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -144,7 +167,11 @@ describe('Secret OpenAPI Conformance', () => {
         type: secret.type.type // Convert ADT to string
       }
 
-      const result = validator.validateResource(secretForValidation, 'v1', 'Secret')
+      const result = validator.validateResource(
+        secretForValidation,
+        'v1',
+        'Secret'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }

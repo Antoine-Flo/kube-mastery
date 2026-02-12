@@ -9,14 +9,16 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: "Quel est le composant central qui expose l'API HTTP de Kubernetes ?",
+      question:
+        "Quel est le composant central qui expose l'API HTTP de Kubernetes ?",
       options: ['kubelet', 'kube-apiserver', 'etcd', 'kube-scheduler'],
       correctAnswer: 1
     },
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: "Quel outil est couramment utilisé pour interagir avec l'API Kubernetes ?",
+      question:
+        "Quel outil est couramment utilisé pour interagir avec l'API Kubernetes ?",
       options: ['docker', 'kubectl', 'kubeadm', 'containerd'],
       correctAnswer: 1
     }

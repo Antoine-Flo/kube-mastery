@@ -1,4 +1,12 @@
-import { checkFlags, extract, parseFlags, parseSelector, pipeResult, tokenize, trim } from '../../shared/parsing'
+import {
+  checkFlags,
+  extract,
+  parseFlags,
+  parseSelector,
+  pipeResult,
+  tokenize,
+  trim
+} from '../../shared/parsing'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import { getTransformerForAction, type ParseContext } from './transformers'
@@ -175,7 +183,11 @@ const extractResource = (ctx: ParseContext): Result<ParseContext> => {
   }
 
   // Commands like 'version', 'cluster-info', and 'api-resources' don't require a resource
-  if (ctx.action === 'version' || ctx.action === 'cluster-info' || ctx.action === 'api-resources') {
+  if (
+    ctx.action === 'version' ||
+    ctx.action === 'cluster-info' ||
+    ctx.action === 'api-resources'
+  ) {
     return success(ctx)
   }
 
@@ -203,7 +215,10 @@ const extractResource = (ctx: ParseContext): Result<ParseContext> => {
 /**
  * Find name by skipping flags - works for dynamic position commands (logs/exec/apply/create)
  */
-const findNameSkippingFlags = (tokens: string[], startPos: number): string | undefined => {
+const findNameSkippingFlags = (
+  tokens: string[],
+  startPos: number
+): string | undefined => {
   for (let i = startPos; i < tokens.length; i++) {
     const token = tokens[i]
 
@@ -229,7 +244,10 @@ const findNameSkippingFlags = (tokens: string[], startPos: number): string | und
 /**
  * Find name at fixed position - works for standard commands (get/describe/delete)
  */
-const findNameAtPosition = (tokens: string[], position: number): string | undefined => {
+const findNameAtPosition = (
+  tokens: string[],
+  position: number
+): string | undefined => {
   if (tokens.length <= position) {
     return undefined
   }
@@ -254,8 +272,16 @@ const extractName = (ctx: ParseContext): Result<ParseContext> => {
   }
 
   // Actions with custom transformers parse name differently
-  const actionsWithCustomParsing = ['exec', 'logs', 'apply', 'create', 'label', 'annotate']
-  const hasTransformer = ctx.action && actionsWithCustomParsing.includes(ctx.action)
+  const actionsWithCustomParsing = [
+    'exec',
+    'logs',
+    'apply',
+    'create',
+    'label',
+    'annotate'
+  ]
+  const hasTransformer =
+    ctx.action && actionsWithCustomParsing.includes(ctx.action)
 
   const name = hasTransformer
     ? findNameSkippingFlags(ctx.tokens, 2) // Position 2: kubectl <action> <name>
@@ -270,7 +296,11 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
   }
 
   // Commands like 'version', 'cluster-info', and 'api-resources' don't require a resource
-  if (ctx.action === 'version' || ctx.action === 'cluster-info' || ctx.action === 'api-resources') {
+  if (
+    ctx.action === 'version' ||
+    ctx.action === 'cluster-info' ||
+    ctx.action === 'api-resources'
+  ) {
     return success(ctx)
   }
 
@@ -278,7 +308,11 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
     return error('Missing resource')
   }
 
-  const validationError = validateCommandSemantics(ctx.action, ctx.resource, ctx.name)
+  const validationError = validateCommandSemantics(
+    ctx.action,
+    ctx.resource,
+    ctx.name
+  )
   if (validationError) {
     return error(validationError)
   }
@@ -296,7 +330,9 @@ const build = (ctx: ParseContext): Result<ParseContext> => {
  * Get namespace from normalized flags with default fallback
  * Supports both -n and --all-namespaces
  */
-const getNamespaceFromFlags = (flags: Record<string, string | boolean>): string | undefined => {
+const getNamespaceFromFlags = (
+  flags: Record<string, string | boolean>
+): string | undefined => {
   // --all-namespaces takes precedence
   if (flags['all-namespaces'] === true) {
     return undefined // Signals all namespaces
@@ -310,10 +346,15 @@ const getNamespaceFromFlags = (flags: Record<string, string | boolean>): string 
 /**
  * Get output format from normalized flags with default fallback
  */
-const getOutputFromFlags = (flags: Record<string, string | boolean>): OutputFormat => {
+const getOutputFromFlags = (
+  flags: Record<string, string | boolean>
+): OutputFormat => {
   const output = flags['output']
 
-  if (typeof output === 'string' && VALID_OUTPUT_FORMATS.has(output as OutputFormat)) {
+  if (
+    typeof output === 'string' &&
+    VALID_OUTPUT_FORMATS.has(output as OutputFormat)
+  ) {
     return output as OutputFormat
   }
 
@@ -323,7 +364,9 @@ const getOutputFromFlags = (flags: Record<string, string | boolean>): OutputForm
 /**
  * Get selector from normalized flags and parse it
  */
-const getSelectorFromFlags = (flags: Record<string, string | boolean>): Record<string, string> | undefined => {
+const getSelectorFromFlags = (
+  flags: Record<string, string | boolean>
+): Record<string, string> | undefined => {
   const selector = flags['selector']
 
   if (typeof selector === 'string') {
@@ -336,7 +379,9 @@ const getSelectorFromFlags = (flags: Record<string, string | boolean>): Record<s
 /**
  * Get replicas from normalized flags for scale command
  */
-const getReplicasFromFlags = (flags: Record<string, string | boolean>): number | undefined => {
+const getReplicasFromFlags = (
+  flags: Record<string, string | boolean>
+): number | undefined => {
   const replicas = flags['replicas']
 
   if (typeof replicas === 'string') {

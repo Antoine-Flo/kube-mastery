@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { createService, parseServiceManifest, getServiceType } from '../../../../src/core/cluster/ressources/Service'
+import {
+  createService,
+  parseServiceManifest,
+  getServiceType
+} from '../../../../src/core/cluster/ressources/Service'
 
 describe('Service', () => {
   describe('createService', () => {
@@ -646,7 +650,9 @@ describe('Service', () => {
       })
 
       expect(service.spec.type).toBe('LoadBalancer')
-      expect(service.status?.loadBalancer?.ingress?.[0]?.ip).toBe('192.168.1.100')
+      expect(service.status?.loadBalancer?.ingress?.[0]?.ip).toBe(
+        '192.168.1.100'
+      )
     })
 
     it('should create ExternalName service', () => {
@@ -703,7 +709,9 @@ describe('Service', () => {
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.spec.type).toBe('LoadBalancer')
-        expect(result.value.status?.loadBalancer?.ingress?.[0]?.ip).toBe('192.168.1.100')
+        expect(result.value.status?.loadBalancer?.ingress?.[0]?.ip).toBe(
+          '192.168.1.100'
+        )
       }
     })
 

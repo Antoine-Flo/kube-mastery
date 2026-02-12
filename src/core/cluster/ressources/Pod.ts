@@ -11,9 +11,18 @@ import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import type { KubernetesResource } from '../repositories/types'
-import { convertYamlEnvVar, convertYamlProbe, convertYamlVolume } from './yamlConverters'
+import {
+  convertYamlEnvVar,
+  convertYamlProbe,
+  convertYamlVolume
+} from './yamlConverters'
 
-export type PodPhase = 'Pending' | 'Running' | 'Succeeded' | 'Failed' | 'Unknown'
+export type PodPhase =
+  | 'Pending'
+  | 'Running'
+  | 'Succeeded'
+  | 'Failed'
+  | 'Unknown'
 
 // ─── Probes ────────────────────────────────────────────────────────
 
@@ -177,13 +186,15 @@ interface PodConfig {
 
 export const createPod = (config: PodConfig): Pod => {
   // Create container statuses for init containers
-  const initContainerStatuses = (config.initContainers || []).map((container) => ({
-    name: container.name,
-    image: container.image,
-    ready: false,
-    restartCount: 0,
-    state: 'Waiting' as const
-  }))
+  const initContainerStatuses = (config.initContainers || []).map(
+    (container) => ({
+      name: container.name,
+      image: container.image,
+      ready: false,
+      restartCount: 0,
+      state: 'Waiting' as const
+    })
+  )
 
   // Create container statuses for regular containers
   const regularContainerStatuses = config.containers.map((container) => ({
@@ -195,7 +206,10 @@ export const createPod = (config: PodConfig): Pod => {
   }))
 
   // Combine: init containers first, then regular containers
-  const allContainerStatuses = [...initContainerStatuses, ...regularContainerStatuses]
+  const allContainerStatuses = [
+    ...initContainerStatuses,
+    ...regularContainerStatuses
+  ]
 
   // Create _simulator.containers with fileSystem and containerType
   const simulatorContainers: Pod['_simulator']['containers'] = {}
@@ -298,13 +312,17 @@ const PodManifestSchema = z.object({
   spec: z.object({
     nodeName: z.string().optional(),
     initContainers: z.array(ContainerSchema).optional(),
-    containers: z.array(ContainerSchema).min(1, 'At least one container is required'),
+    containers: z
+      .array(ContainerSchema)
+      .min(1, 'At least one container is required'),
     volumes: z.array(z.any()).optional(),
     tolerations: z.array(z.any()).optional()
   }),
   status: z
     .object({
-      phase: z.enum(['Pending', 'Running', 'Succeeded', 'Failed', 'Unknown']).optional(),
+      phase: z
+        .enum(['Pending', 'Running', 'Succeeded', 'Failed', 'Unknown'])
+        .optional(),
       restartCount: z.number().optional()
     })
     .optional()
@@ -318,14 +336,18 @@ export const parsePodManifest = (data: unknown): Result<Pod> => {
 
   if (!result.success) {
     const firstError = result.error.issues[0]
-    return error(`Invalid Pod manifest: ${firstError.path.join('.')}: ${firstError.message}`)
+    return error(
+      `Invalid Pod manifest: ${firstError.path.join('.')}: ${firstError.message}`
+    )
   }
 
   const manifest = result.data
 
   // Convert volumes from YAML format to TypeScript format
   const volumes = manifest.spec.volumes
-    ? manifest.spec.volumes.map(convertYamlVolume).filter((v): v is Volume => v !== null)
+    ? manifest.spec.volumes
+        .map(convertYamlVolume)
+        .filter((v): v is Volume => v !== null)
     : undefined
 
   // Convert containers (env vars and probes)
@@ -342,7 +364,9 @@ export const parsePodManifest = (data: unknown): Result<Pod> => {
 
     // Convert env vars
     if (container.env && Array.isArray(container.env)) {
-      const envVars = container.env.map(convertYamlEnvVar).filter((e: EnvVar | null): e is EnvVar => e !== null)
+      const envVars = container.env
+        .map(convertYamlEnvVar)
+        .filter((e: EnvVar | null): e is EnvVar => e !== null)
       if (envVars.length > 0) {
         converted.env = envVars
       }
@@ -372,7 +396,9 @@ export const parsePodManifest = (data: unknown): Result<Pod> => {
   }
 
   // Convert init containers
-  const initContainers = manifest.spec.initContainers ? manifest.spec.initContainers.map(convertContainer) : undefined
+  const initContainers = manifest.spec.initContainers
+    ? manifest.spec.initContainers.map(convertContainer)
+    : undefined
 
   // Convert regular containers
   const containers = manifest.spec.containers.map(convertContainer)
@@ -386,10 +412,16 @@ export const parsePodManifest = (data: unknown): Result<Pod> => {
     containers,
     ...(volumes && { volumes }),
     ...(manifest.metadata.labels && { labels: manifest.metadata.labels }),
-    ...(manifest.metadata.annotations && { annotations: manifest.metadata.annotations }),
-    ...(manifest.metadata.creationTimestamp && { creationTimestamp: manifest.metadata.creationTimestamp }),
+    ...(manifest.metadata.annotations && {
+      annotations: manifest.metadata.annotations
+    }),
+    ...(manifest.metadata.creationTimestamp && {
+      creationTimestamp: manifest.metadata.creationTimestamp
+    }),
     ...(manifest.status?.phase && { phase: manifest.status.phase }),
-    ...(manifest.status?.restartCount && { restartCount: manifest.status.restartCount })
+    ...(manifest.status?.restartCount && {
+      restartCount: manifest.status.restartCount
+    })
   })
 
   return success(pod)

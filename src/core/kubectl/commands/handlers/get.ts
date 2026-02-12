@@ -4,7 +4,12 @@ import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
 import type { Deployment } from '../../../cluster/ressources/Deployment'
 import { getDeploymentDesiredReplicas } from '../../../cluster/ressources/Deployment'
 import type { Node } from '../../../cluster/ressources/Node'
-import { getNodeExternalIP, getNodeInternalIP, getNodeRoles, getNodeStatus } from '../../../cluster/ressources/Node'
+import {
+  getNodeExternalIP,
+  getNodeInternalIP,
+  getNodeRoles,
+  getNodeStatus
+} from '../../../cluster/ressources/Node'
 import type { Pod } from '../../../cluster/ressources/Pod'
 import type { ReplicaSet } from '../../../cluster/ressources/ReplicaSet'
 import { getReplicaSetDesiredReplicas } from '../../../cluster/ressources/ReplicaSet'
@@ -45,10 +50,15 @@ interface ResourceHandler<T extends ResourceWithMetadata> {
  * Filter resources by label selector
  * Pure function that matches all labels in selector
  */
-const filterByLabels = <T extends ResourceWithMetadata>(resources: T[], selector: Record<string, string>): T[] => {
+const filterByLabels = <T extends ResourceWithMetadata>(
+  resources: T[],
+  selector: Record<string, string>
+): T[] => {
   return resources.filter((resource) => {
     const labels = resource.metadata.labels || {}
-    return Object.entries(selector).every(([key, value]) => labels[key] === value)
+    return Object.entries(selector).every(
+      ([key, value]) => labels[key] === value
+    )
   })
 }
 
@@ -56,8 +66,13 @@ const filterByLabels = <T extends ResourceWithMetadata>(resources: T[], selector
  * Filter resources by namespace
  * Pure function for namespace filtering
  */
-const filterByNamespace = <T extends ResourceWithMetadata>(resources: T[], namespace: string): T[] => {
-  return resources.filter((resource) => resource.metadata.namespace === namespace)
+const filterByNamespace = <T extends ResourceWithMetadata>(
+  resources: T[],
+  namespace: string
+): T[] => {
+  return resources.filter(
+    (resource) => resource.metadata.namespace === namespace
+  )
 }
 
 /**
@@ -73,7 +88,9 @@ const applyFilters = <T extends ResourceWithMetadata>(
   name?: string
 ): T[] => {
   // Cluster-scoped resources don't have namespace filtering
-  let filtered = isClusterScoped ? resources : filterByNamespace(resources, namespace)
+  let filtered = isClusterScoped
+    ? resources
+    : filterByNamespace(resources, namespace)
   if (selector) {
     filtered = filterByLabels(filtered, selector)
   }
@@ -97,7 +114,10 @@ const getSecretType = (secretType: SecretType): string => {
  * Returns LoadBalancer IP, ExternalIPs, or '<none>'
  */
 const getServiceExternalIP = (service: Service): string => {
-  if (service.status?.loadBalancer?.ingress && service.status.loadBalancer.ingress.length > 0) {
+  if (
+    service.status?.loadBalancer?.ingress &&
+    service.status.loadBalancer.ingress.length > 0
+  ) {
     const ingress = service.status.loadBalancer.ingress[0]
     return ingress.ip || ingress.hostname || '<pending>'
   }
@@ -117,7 +137,9 @@ const formatServicePorts = (service: Service): string => {
   }
   return service.spec.ports
     .map((port) => {
-      const portStr = port.nodePort ? `${port.nodePort}:${port.port}` : String(port.port)
+      const portStr = port.nodePort
+        ? `${port.nodePort}:${port.port}`
+        : String(port.port)
       const protocol = port.protocol || 'TCP'
       return `${portStr}/${protocol}`
     })
@@ -128,7 +150,9 @@ const formatServicePorts = (service: Service): string => {
  * Remove internal simulator properties from resource for output
  * Pure function that strips _simulator and other internal fields
  */
-const sanitizeForOutput = <T extends Record<string, unknown>>(resource: T): Omit<T, '_simulator'> => {
+const sanitizeForOutput = <T extends Record<string, unknown>>(
+  resource: T
+): Omit<T, '_simulator'> => {
   const { _simulator, ...rest } = resource as T & { _simulator?: unknown }
   return rest as Omit<T, '_simulator'>
 }
@@ -140,7 +164,11 @@ const RESOURCE_HANDLERS: Record<string, ResourceHandler<any>> = {
   pods: {
     getItems: (state) => state.pods.items,
     headers: ['name', 'status', 'age'],
-    formatRow: (pod: Pod) => [pod.metadata.name, pod.status.phase, formatAge(pod.metadata.creationTimestamp)],
+    formatRow: (pod: Pod) => [
+      pod.metadata.name,
+      pod.status.phase,
+      formatAge(pod.metadata.creationTimestamp)
+    ],
     supportsFiltering: true
   },
 
@@ -326,7 +354,10 @@ const formatServicesYaml = (services: Service[]): string => {
  * Handle kubectl get command
  * Strategy pattern: delegate to resource-specific handler configuration
  */
-export const handleGet = (state: ClusterStateData, parsed: ParsedCommand): string => {
+export const handleGet = (
+  state: ClusterStateData,
+  parsed: ParsedCommand
+): string => {
   // Validate resource type
   if (!parsed.resource) {
     return 'No resources found'
@@ -351,7 +382,13 @@ export const handleGet = (state: ClusterStateData, parsed: ParsedCommand): strin
   const namespace = parsed.namespace || 'default'
   const items = handler.getItems(state)
   const isClusterScoped = handler.isClusterScoped || false
-  const filtered = applyFilters(items, namespace, parsed.selector, isClusterScoped, parsed.name)
+  const filtered = applyFilters(
+    items,
+    namespace,
+    parsed.selector,
+    isClusterScoped,
+    parsed.name
+  )
 
   // Empty result
   if (filtered.length === 0) {
@@ -360,7 +397,9 @@ export const handleGet = (state: ClusterStateData, parsed: ParsedCommand): strin
 
   // Check output format
   const explicitOutput = parsed.flags.output || parsed.flags['o']
-  const outputFormat = explicitOutput ? (explicitOutput as string) : parsed.output
+  const outputFormat = explicitOutput
+    ? (explicitOutput as string)
+    : parsed.output
 
   // Sanitize resources for output (remove _simulator)
   const sanitized = filtered.map(sanitizeForOutput)

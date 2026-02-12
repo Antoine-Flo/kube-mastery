@@ -24,7 +24,8 @@ describe('File Operations Handlers', () => {
 
     it('should return error when missing operand', () => {
       const fileSystem = createMockFileSystem({
-        createFile: () => success(createFileNode('test.txt', '/home/kube/test.txt'))
+        createFile: () =>
+          success(createFileNode('test.txt', '/home/kube/test.txt'))
       })
       const handler = createTouchHandler(fileSystem)
       const result = handler.execute([], {})
@@ -252,7 +253,8 @@ describe('File Operations Handlers', () => {
     })
 
     it('should handle file with special characters', () => {
-      const specialContent = 'content with "quotes" and \'apostrophes\' and $variables'
+      const specialContent =
+        'content with "quotes" and \'apostrophes\' and $variables'
       const fileSystem = createMockFileSystem({
         readFile: () => success(specialContent)
       })

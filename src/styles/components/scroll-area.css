@@ -85,11 +85,14 @@
   height: var(--scrollbar-size);
 }
 
-.scroll-area--scrollbar-visible .scroll-area__viewport::-webkit-scrollbar-track {
+.scroll-area--scrollbar-visible
+  .scroll-area__viewport::-webkit-scrollbar-track {
   background-color: var(--color-gray-2);
   border-radius: 9999px;
 }
 
-[data-theme='dark'] .scroll-area--scrollbar-visible .scroll-area__viewport::-webkit-scrollbar-track {
+[data-theme='dark']
+  .scroll-area--scrollbar-visible
+  .scroll-area__viewport::-webkit-scrollbar-track {
   background-color: var(--color-gray-1);
 }

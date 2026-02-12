@@ -342,12 +342,18 @@
   --radius-l3: var(--radius-md);
 
   /* Shadows */
-  --shadow-xs: 0px 1px 2px var(--color-gray-a6), 0px 0px 1px var(--color-gray-a7);
-  --shadow-sm: 0px 2px 4px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
-  --shadow-md: 0px 4px 8px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
-  --shadow-lg: 0px 8px 16px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
-  --shadow-xl: 0px 16px 24px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
-  --shadow-2xl: 0px 24px 40px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
+  --shadow-xs:
+    0px 1px 2px var(--color-gray-a6), 0px 0px 1px var(--color-gray-a7);
+  --shadow-sm:
+    0px 2px 4px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
+  --shadow-md:
+    0px 4px 8px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
+  --shadow-lg:
+    0px 8px 16px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
+  --shadow-xl:
+    0px 16px 24px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
+  --shadow-2xl:
+    0px 24px 40px var(--color-gray-a4), 0px 0px 1px var(--color-gray-a4);
   --shadow-inset: inset 8px 0 12px -8px var(--color-gray-a4);
 
   /* Layout */
@@ -570,11 +576,17 @@
   --color-palette-gray-plain-bg-active: var(--color-gray-a4);
 
   /* Shadows - Dark */
-  --shadow-xs: 0px 1px 1px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
-  --shadow-sm: 0px 2px 4px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
-  --shadow-md: 0px 4px 8px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
-  --shadow-lg: 0px 8px 16px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
-  --shadow-xl: 0px 16px 24px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
-  --shadow-2xl: 0px 24px 40px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
+  --shadow-xs:
+    0px 1px 1px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
+  --shadow-sm:
+    0px 2px 4px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
+  --shadow-md:
+    0px 4px 8px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
+  --shadow-lg:
+    0px 8px 16px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
+  --shadow-xl:
+    0px 16px 24px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
+  --shadow-2xl:
+    0px 24px 40px var(--color-black-a8), 0px 0px 1px inset var(--color-gray-a8);
   --shadow-inset: inset 8px 0 12px -8px var(--color-black-a6);
 }

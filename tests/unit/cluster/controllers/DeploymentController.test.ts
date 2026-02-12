@@ -1,12 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createEventBus, type EventBus } from '../../../../src/core/cluster/events/EventBus'
+import {
+  createEventBus,
+  type EventBus
+} from '../../../../src/core/cluster/events/EventBus'
 import type {
   DeploymentUpdatedEvent,
   ReplicaSetCreatedEvent,
   ReplicaSetUpdatedEvent
 } from '../../../../src/core/cluster/events/types'
 import type { Deployment } from '../../../../src/core/cluster/ressources/Deployment'
-import { createDeployment, generateTemplateHash } from '../../../../src/core/cluster/ressources/Deployment'
+import {
+  createDeployment,
+  generateTemplateHash
+} from '../../../../src/core/cluster/ressources/Deployment'
 import type { ReplicaSet } from '../../../../src/core/cluster/ressources/ReplicaSet'
 import { createReplicaSet } from '../../../../src/core/cluster/ressources/ReplicaSet'
 import { DeploymentController } from '../../../../src/core/cluster/controllers/DeploymentController'
@@ -44,7 +50,12 @@ describe('DeploymentController', () => {
       name: rsName,
       namespace: deploy.metadata.namespace,
       replicas: deploy.spec.replicas ?? 1,
-      selector: { matchLabels: { app: deploy.metadata.name, 'pod-template-hash': templateHash.substring(0, 10) } },
+      selector: {
+        matchLabels: {
+          app: deploy.metadata.name,
+          'pod-template-hash': templateHash.substring(0, 10)
+        }
+      },
       template: deploy.spec.template,
       ownerReferences: [
         {
@@ -67,15 +78,29 @@ describe('DeploymentController', () => {
 
     getState = () => ({
       getDeployments: (namespace?: string) =>
-        namespace ? mockState.deployments.filter((d) => d.metadata.namespace === namespace) : mockState.deployments,
+        namespace
+          ? mockState.deployments.filter(
+              (d) => d.metadata.namespace === namespace
+            )
+          : mockState.deployments,
       getReplicaSets: (namespace?: string) =>
-        namespace ? mockState.replicaSets.filter((rs) => rs.metadata.namespace === namespace) : mockState.replicaSets,
+        namespace
+          ? mockState.replicaSets.filter(
+              (rs) => rs.metadata.namespace === namespace
+            )
+          : mockState.replicaSets,
       findDeployment: (name: string, namespace: string) => {
-        const deploy = mockState.deployments.find((d) => d.metadata.name === name && d.metadata.namespace === namespace)
-        return deploy ? { ok: true, value: deploy } : { ok: false, error: 'not found' }
+        const deploy = mockState.deployments.find(
+          (d) => d.metadata.name === name && d.metadata.namespace === namespace
+        )
+        return deploy
+          ? { ok: true, value: deploy }
+          : { ok: false, error: 'not found' }
       },
       findReplicaSet: (name: string, namespace: string) => {
-        const rs = mockState.replicaSets.find((r) => r.metadata.name === name && r.metadata.namespace === namespace)
+        const rs = mockState.replicaSets.find(
+          (r) => r.metadata.name === name && r.metadata.namespace === namespace
+        )
         return rs ? { ok: true, value: rs } : { ok: false, error: 'not found' }
       },
       getPods: () => [],
@@ -93,9 +118,12 @@ describe('DeploymentController', () => {
       mockState.replicaSets = []
 
       let createdRs: ReplicaSet | undefined
-      eventBus.subscribe('ReplicaSetCreated', (event: ReplicaSetCreatedEvent) => {
-        createdRs = event.payload.replicaSet
-      })
+      eventBus.subscribe(
+        'ReplicaSetCreated',
+        (event: ReplicaSetCreatedEvent) => {
+          createdRs = event.payload.replicaSet
+        }
+      )
 
       controller.reconcile('default/my-deploy')
 
@@ -118,9 +146,12 @@ describe('DeploymentController', () => {
       mockState.replicaSets = [existingRs]
 
       let updatedRs: ReplicaSet | undefined
-      eventBus.subscribe('ReplicaSetUpdated', (event: ReplicaSetUpdatedEvent) => {
-        updatedRs = event.payload.replicaSet
-      })
+      eventBus.subscribe(
+        'ReplicaSetUpdated',
+        (event: ReplicaSetUpdatedEvent) => {
+          updatedRs = event.payload.replicaSet
+        }
+      )
 
       controller.reconcile('default/my-deploy')
 
@@ -186,18 +217,24 @@ describe('DeploymentController', () => {
       let createdRsCount = 0
       let scaleDownUpdate: ReplicaSet | undefined
 
-      eventBus.subscribe('ReplicaSetCreated', (event: ReplicaSetCreatedEvent) => {
-        createdRsCount++
-        expect(event.payload.replicaSet.spec.replicas).toBe(3)
-      })
-      eventBus.subscribe('ReplicaSetUpdated', (event: ReplicaSetUpdatedEvent) => {
-        if (
-          event.payload.replicaSet.metadata.name === 'my-deploy-oldhashttt' &&
-          event.payload.replicaSet.spec.replicas === 0
-        ) {
-          scaleDownUpdate = event.payload.replicaSet
+      eventBus.subscribe(
+        'ReplicaSetCreated',
+        (event: ReplicaSetCreatedEvent) => {
+          createdRsCount++
+          expect(event.payload.replicaSet.spec.replicas).toBe(3)
         }
-      })
+      )
+      eventBus.subscribe(
+        'ReplicaSetUpdated',
+        (event: ReplicaSetUpdatedEvent) => {
+          if (
+            event.payload.replicaSet.metadata.name === 'my-deploy-oldhashttt' &&
+            event.payload.replicaSet.spec.replicas === 0
+          ) {
+            scaleDownUpdate = event.payload.replicaSet
+          }
+        }
+      )
 
       controller.reconcile('default/my-deploy')
 
@@ -210,22 +247,35 @@ describe('DeploymentController', () => {
       const baseDeploy = createTestDeployment('my-deploy', 2)
       const deploy = {
         ...baseDeploy,
-        status: { replicas: 0, readyReplicas: 0, availableReplicas: 0, updatedReplicas: 0 }
+        status: {
+          replicas: 0,
+          readyReplicas: 0,
+          availableReplicas: 0,
+          updatedReplicas: 0
+        }
       }
 
       const baseRs = createTestReplicaSet(deploy)
       const rs = {
         ...baseRs,
-        status: { replicas: 2, readyReplicas: 2, availableReplicas: 2, fullyLabeledReplicas: 2 }
+        status: {
+          replicas: 2,
+          readyReplicas: 2,
+          availableReplicas: 2,
+          fullyLabeledReplicas: 2
+        }
       }
 
       mockState.deployments = [deploy]
       mockState.replicaSets = [rs]
 
       let updatedDeploy: Deployment | undefined
-      eventBus.subscribe('DeploymentUpdated', (event: DeploymentUpdatedEvent) => {
-        updatedDeploy = event.payload.deployment
-      })
+      eventBus.subscribe(
+        'DeploymentUpdated',
+        (event: DeploymentUpdatedEvent) => {
+          updatedDeploy = event.payload.deployment
+        }
+      )
 
       controller.reconcile('default/my-deploy')
 

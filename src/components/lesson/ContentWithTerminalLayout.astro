@@ -21,12 +21,23 @@ interface Props {
   supportContextId?: string
 }
 
-const { seedName, lang, showSidebar = false, labels, supportContextId } = Astro.props
+const {
+  seedName,
+  lang,
+  showSidebar = false,
+  labels,
+  supportContextId
+} = Astro.props
 const t = useTranslations(lang)
 ---
 
 <div class="lp-page-wrap">
-  <div class="lp-root" data-seed-name={seedName} data-lang={lang} data-terminal-open="true">
+  <div
+    class="lp-root"
+    data-seed-name={seedName}
+    data-lang={lang}
+    data-terminal-open="true"
+  >
     <div class="lp">
       {
         showSidebar && (
@@ -115,7 +126,9 @@ const t = useTranslations(lang)
   import { createFilesystemFromConfig } from '../../core/filesystem/debianFileSystem'
 
   const STORAGE_KEY = 'lesson-sidebar-collapsed'
-  let lessonEnv: import('../../core/emulatedEnvironment/EmulatedEnvironment').EmulatedEnvironment | null = null
+  let lessonEnv:
+    | import('../../core/emulatedEnvironment/EmulatedEnvironment').EmulatedEnvironment
+    | null = null
 
   function setupLessonEnv() {
     cleanupLessonEnv()
@@ -152,7 +165,10 @@ const t = useTranslations(lang)
 
     const updateUi = () => {
       const collapsed = sidebar.classList.contains('lp__sb--col')
-      toggle.setAttribute('aria-label', collapsed ? 'Afficher le plan du cours' : 'Réduire le plan du cours')
+      toggle.setAttribute(
+        'aria-label',
+        collapsed ? 'Afficher le plan du cours' : 'Réduire le plan du cours'
+      )
       toggle.setAttribute('aria-expanded', String(!collapsed))
     }
 

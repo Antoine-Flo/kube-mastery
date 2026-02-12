@@ -6,7 +6,10 @@ import { stripNumericPrefix } from '../utils'
 
 export function getChapterIdsFromStructure(
   structure: CourseStructure,
-  chapterDirsByModule: Map<string, Array<{ chapterDir: string; chapterId: string }>>
+  chapterDirsByModule: Map<
+    string,
+    Array<{ chapterDir: string; chapterId: string }>
+  >
 ): Array<{ moduleId: string; chapterId: string }> {
   const out: Array<{ moduleId: string; chapterId: string }> = []
 
@@ -36,7 +39,9 @@ export function buildChapter(
 
   const lessons: OverviewLesson[] = dirs.map((lessonDir) => {
     const lessonId = stripNumericPrefix(lessonDir)
-    const title = lessonTitles.get(`${moduleId}:${chapterId}:${lessonId}:${lang}`) ?? lessonId
+    const title =
+      lessonTitles.get(`${moduleId}:${chapterId}:${lessonId}:${lang}`) ??
+      lessonId
 
     const hasEnvironment = !!(meta?.environment && meta.environment !== 'empty')
 

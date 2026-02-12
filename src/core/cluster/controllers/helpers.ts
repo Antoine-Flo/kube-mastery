@@ -36,7 +36,9 @@ export const findOwnerByRef = <TOwner extends OwnerResource>(
   // Find the actual owner resource
   const owners = getOwners()
   return owners.find(
-    (owner) => owner.metadata.name === ownerRef.name && owner.metadata.namespace === child.metadata.namespace
+    (owner) =>
+      owner.metadata.name === ownerRef.name &&
+      owner.metadata.namespace === child.metadata.namespace
   )
 }
 
@@ -47,14 +49,19 @@ export const findOwnerByRef = <TOwner extends OwnerResource>(
  * @param children - All potential child resources
  * @returns Children that have an ownerReference pointing to the owner
  */
-export const getOwnedResources = <TChild extends OwnedResource>(owner: OwnerResource, children: TChild[]): TChild[] => {
+export const getOwnedResources = <TChild extends OwnedResource>(
+  owner: OwnerResource,
+  children: TChild[]
+): TChild[] => {
   return children.filter((child) => {
     const ownerRefs = child.metadata.ownerReferences
     if (!ownerRefs) {
       return false
     }
 
-    return ownerRefs.some((ref) => ref.kind === owner.kind && ref.name === owner.metadata.name)
+    return ownerRefs.some(
+      (ref) => ref.kind === owner.kind && ref.name === owner.metadata.name
+    )
   })
 }
 
@@ -99,7 +106,10 @@ export const subscribeToEvents = (
   const unsubscribers: UnsubscribeFn[] = []
 
   for (const eventType of eventTypes) {
-    const unsub = eventBus.subscribe(eventType, handler as (event: unknown) => void)
+    const unsub = eventBus.subscribe(
+      eventType,
+      handler as (event: unknown) => void
+    )
     unsubscribers.push(unsub)
   }
 

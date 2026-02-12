@@ -50,11 +50,15 @@ const SPECS: Record<string, unknown> = {
  * Load OpenAPI spec from JSON file
  * Uses static imports for Vite compatibility
  */
-export const loadOpenAPISpec = async (filename: string): Promise<Result<OpenAPISpec>> => {
+export const loadOpenAPISpec = async (
+  filename: string
+): Promise<Result<OpenAPISpec>> => {
   const spec = SPECS[filename]
 
   if (!spec) {
-    return error(`Spec file not found: ${filename}. Available: ${Object.keys(SPECS).join(', ')}`)
+    return error(
+      `Spec file not found: ${filename}. Available: ${Object.keys(SPECS).join(', ')}`
+    )
   }
 
   // Validate basic structure

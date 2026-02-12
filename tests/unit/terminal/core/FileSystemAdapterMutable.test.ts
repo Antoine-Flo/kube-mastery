@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createEventBus, type EventBus } from '../../../../src/core/cluster/events/EventBus'
+import {
+  createEventBus,
+  type EventBus
+} from '../../../../src/core/cluster/events/EventBus'
 import { createFileSystem } from '../../../../src/core/filesystem/FileSystem'
-import { createDirectory, createFile } from '../../../../src/core/filesystem/models'
+import {
+  createDirectory,
+  createFile
+} from '../../../../src/core/filesystem/models'
 import type { FileSystemState } from '../../../../src/core/filesystem/FileSystem'
 
 describe('FileSystem Mutable Mode - Integration Tests', () => {
@@ -21,7 +27,9 @@ describe('FileSystem Mutable Mode - Integration Tests', () => {
 
   describe('state sharing with original', () => {
     it('should modify original state directly', () => {
-      const fileSystem = createFileSystem(fileSystemState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
       const originalPath = fileSystemState.currentPath
 
       fileSystem.createFile('test.txt', 'content')
@@ -40,7 +48,9 @@ describe('FileSystem Mutable Mode - Integration Tests', () => {
     })
 
     it('should reflect direct state mutations', () => {
-      const fileSystem = createFileSystem(fileSystemState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
 
       // Modifier directement le state
       fileSystemState.currentPath = '/custom'
@@ -50,7 +60,9 @@ describe('FileSystem Mutable Mode - Integration Tests', () => {
     })
 
     it('should share tree mutations', () => {
-      const fileSystem = createFileSystem(fileSystemState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
 
       // Créer un fichier via FileSystem
       fileSystem.createFile('test.txt', 'content')
@@ -58,7 +70,11 @@ describe('FileSystem Mutable Mode - Integration Tests', () => {
       // Modifier directement le tree
       const homeDir = fileSystemState.tree.children.get('home')
       if (homeDir?.type === 'directory') {
-        const directFile = createFile('direct.txt', '/home/direct.txt', 'direct')
+        const directFile = createFile(
+          'direct.txt',
+          '/home/direct.txt',
+          'direct'
+        )
         homeDir.children.set('direct.txt', directFile)
       }
 
@@ -76,7 +92,9 @@ describe('FileSystem Mutable Mode - Integration Tests', () => {
 
   describe('toJSON returns original state', () => {
     it('should return original state reference (no clone)', () => {
-      const fileSystem = createFileSystem(fileSystemState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
 
       fileSystem.createFile('test.txt', 'content')
       const json = fileSystem.toJSON()
@@ -91,7 +109,9 @@ describe('FileSystem Mutable Mode - Integration Tests', () => {
     })
 
     it('should reflect all mutations in toJSON', () => {
-      const fileSystem = createFileSystem(fileSystemState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
 
       fileSystem.createFile('test1.txt', 'content1')
       fileSystem.createFile('test2.txt', 'content2')
@@ -111,7 +131,9 @@ describe('FileSystem Mutable Mode - Integration Tests', () => {
 
   describe('loadState modifies original', () => {
     it('should modify original state when loading new state', () => {
-      const fileSystem = createFileSystem(fileSystemState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
 
       const newState: FileSystemState = {
         currentPath: '/new',
@@ -129,7 +151,9 @@ describe('FileSystem Mutable Mode - Integration Tests', () => {
     })
 
     it('should preserve state reference after loadState', () => {
-      const fileSystem = createFileSystem(fileSystemState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
       const originalReference = fileSystemState
 
       const newState: FileSystemState = {
@@ -155,7 +179,9 @@ describe('FileSystem Mutable Mode - Integration Tests', () => {
       const subscriber = vi.fn()
       eventBus.subscribeAll(subscriber)
 
-      const fileSystem = createFileSystem(fileSystemState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
 
       fileSystem.createFile('test.txt', 'content')
       fileSystem.writeFile('test.txt', 'new content')
@@ -171,7 +197,9 @@ describe('FileSystem Mutable Mode - Integration Tests', () => {
       const createdSubscriber = vi.fn()
       eventBus.subscribe('FileCreated', createdSubscriber)
 
-      const fileSystem = createFileSystem(fileSystemState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
 
       fileSystem.createFile('test.txt', 'content')
 
@@ -196,8 +224,12 @@ describe('FileSystem Mutable Mode - Integration Tests', () => {
 
   describe('multiple adapters on same state', () => {
     it('should share state between multiple adapters', () => {
-      const adapter1 = createFileSystem(fileSystemState, eventBus, { mutable: true })
-      const adapter2 = createFileSystem(fileSystemState, eventBus, { mutable: true })
+      const adapter1 = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
+      const adapter2 = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
 
       // Modifier via adapter1 (créer dans /home)
       adapter1.createFile('test1.txt', 'content1')
@@ -219,8 +251,12 @@ describe('FileSystem Mutable Mode - Integration Tests', () => {
       const subscriber = vi.fn()
       eventBus.subscribeAll(subscriber)
 
-      const adapter1 = createFileSystem(fileSystemState, eventBus, { mutable: true })
-      const adapter2 = createFileSystem(fileSystemState, eventBus, { mutable: true })
+      const adapter1 = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
+      const adapter2 = createFileSystem(fileSystemState, eventBus, {
+        mutable: true
+      })
 
       adapter1.createFile('file1.txt', 'content1')
       adapter2.createFile('file2.txt', 'content2')

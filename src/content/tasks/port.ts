@@ -6,7 +6,11 @@ export interface TaskIndexPort {
   getGroupMeta(groupId: string): TaskGroupMeta | undefined
   getTaskDirsByGroup(): Map<string, string[]>
   getTaskTitle(groupId: string, taskId: string, lang: UiLang): string
-  getTaskDescription(groupId: string, taskId: string, lang: UiLang): string | null
+  getTaskDescription(
+    groupId: string,
+    taskId: string,
+    lang: UiLang
+  ): string | null
 }
 
 export interface TaskContentPort {

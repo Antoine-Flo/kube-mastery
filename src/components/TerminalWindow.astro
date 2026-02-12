@@ -38,7 +38,9 @@ const {
   commandLimit,
   commandLimitMessage
 } = Astro.props
-const rootClass = ['t-win', fullHeight && 't-win--full', className].filter(Boolean).join(' ')
+const rootClass = ['t-win', fullHeight && 't-win--full', className]
+  .filter(Boolean)
+  .join(' ')
 ---
 
 <div
@@ -133,10 +135,15 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className].filter(Boole
   })
 
   function getTheme(): 'dark' | 'light' {
-    return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'
+    return document.documentElement.getAttribute('data-theme') === 'light'
+      ? 'light'
+      : 'dark'
   }
 
-  function createEditorModal(overlayEl: HTMLElement, editorBoxEl: HTMLElement): EditorModalWithLifecycle {
+  function createEditorModal(
+    overlayEl: HTMLElement,
+    editorBoxEl: HTMLElement
+  ): EditorModalWithLifecycle {
     let currentEditor: CodeMirrorEditor | null = null
     let currentOnSave: ((content: string) => void) | null = null
     const filenameEl = overlayEl.querySelector('.t-editor-filename')
@@ -240,8 +247,12 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className].filter(Boole
       const lang = (el.dataset.lang === 'fr' ? 'fr' : 'en') as 'en' | 'fr'
       const seedName = el.dataset.seedName
       const topPromptRaw = el.dataset.topPrompt
-      const topPrompt = topPromptRaw ? (JSON.parse(topPromptRaw) as string) : undefined
-      const commandLimit = el.dataset.commandLimit ? Number(el.dataset.commandLimit) : undefined
+      const topPrompt = topPromptRaw
+        ? (JSON.parse(topPromptRaw) as string)
+        : undefined
+      const commandLimit = el.dataset.commandLimit
+        ? Number(el.dataset.commandLimit)
+        : undefined
       const commandLimitMessage = el.dataset.commandLimitMessage
 
       const editorModal = createEditorModal(overlayEl, editorBoxEl)
@@ -272,7 +283,8 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className].filter(Boole
           lang,
           ...(seedName && { seedName }),
           ...(topPrompt !== undefined && { topPrompt }),
-          ...(commandLimit !== undefined && !Number.isNaN(commandLimit) && { commandLimit }),
+          ...(commandLimit !== undefined &&
+            !Number.isNaN(commandLimit) && { commandLimit }),
           ...(commandLimitMessage && { commandLimitMessage })
         })
         return
@@ -293,9 +305,13 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className].filter(Boole
         withEnv(g.__lessonEnv)
         return
       }
-      document.addEventListener('lesson-env-ready', (ev: Event) => withEnv((ev as CustomEvent).detail?.env), {
-        once: true
-      })
+      document.addEventListener(
+        'lesson-env-ready',
+        (ev: Event) => withEnv((ev as CustomEvent).detail?.env),
+        {
+          once: true
+        }
+      )
     })
   }
 

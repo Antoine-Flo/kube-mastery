@@ -4,7 +4,12 @@
 
 export type LogLevel = 'info' | 'warn' | 'error' | 'debug'
 
-export type LogCategory = 'COMMAND' | 'EXECUTOR' | 'FILESYSTEM' | 'CLUSTER' | 'SYSTEM'
+export type LogCategory =
+  | 'COMMAND'
+  | 'EXECUTOR'
+  | 'FILESYSTEM'
+  | 'CLUSTER'
+  | 'SYSTEM'
 
 export interface LogEntry {
   timestamp: string

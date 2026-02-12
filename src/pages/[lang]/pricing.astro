@@ -25,46 +25,70 @@ const faqItems = [
 
     <div class="pricing__plans">
       <!-- Free plan -->
-      <article class="card card--outline pricing__plan-card pricing__plan-card--highlighted">
+      <article
+        class="card card--outline pricing__plan-card pricing__plan-card--highlighted"
+      >
         <div class="card__header">
           <div class="pricing__badge">
-            <span class="pricing__badge-text pricing__badge-text--green">{t('pricing_betaNote')}</span>
+            <span class="pricing__badge-text pricing__badge-text--green"
+              >{t('pricing_betaNote')}</span
+            >
           </div>
           <h2 class="card__title pricing__plan-title">
             {t('pricing_free_name')}
           </h2>
           <div class="pricing__plan-price">
-            <span class="pricing__plan-price-amount">{t('pricing_free_price')}€</span>
+            <span class="pricing__plan-price-amount"
+              >{t('pricing_free_price')}€</span
+            >
           </div>
         </div>
         <div class="card__body">
           <ul class="pricing__plan-features">
             <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>{t('pricing_free_feature1')}
+              <span class="pricing__plan-feature-check">✓</span>{
+                t('pricing_free_feature1')
+              }
             </li>
             <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>{t('pricing_free_feature2')}
+              <span class="pricing__plan-feature-check">✓</span>{
+                t('pricing_free_feature2')
+              }
             </li>
             <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>{t('pricing_free_feature3')}
+              <span class="pricing__plan-feature-check">✓</span>{
+                t('pricing_free_feature3')
+              }
             </li>
             <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>{t('pricing_free_feature4')}
+              <span class="pricing__plan-feature-check">✓</span>{
+                t('pricing_free_feature4')
+              }
             </li>
           </ul>
         </div>
         <div class="card__footer pricing__plan-footer">
-          <Button href={localePath('/courses')} variant="solid" size="lg" color="cyan" class="pricing__plan-button">
+          <Button
+            href={localePath('/courses')}
+            variant="solid"
+            size="lg"
+            color="cyan"
+            class="pricing__plan-button"
+          >
             {t('pricing_free_cta')}
           </Button>
         </div>
       </article>
 
       <!-- Full Access (one-time, coming soon) -->
-      <article class="card card--outline pricing__plan-card pricing__plan-card--coming-soon">
+      <article
+        class="card card--outline pricing__plan-card pricing__plan-card--coming-soon"
+      >
         <div class="card__header">
           <div class="pricing__badge">
-            <span class="pricing__badge-text pricing__badge-text--cyan">{t('pricing_fullaccess_comingSoon')}</span>
+            <span class="pricing__badge-text pricing__badge-text--cyan"
+              >{t('pricing_fullaccess_comingSoon')}</span
+            >
           </div>
           <h2 class="card__title pricing__plan-title">
             {t('pricing_fullaccess_name')}
@@ -73,13 +97,17 @@ const faqItems = [
             {t('pricing_fullaccess_subline')}
           </p>
           <div class="pricing__plan-price">
-            <span class="pricing__plan-price-amount">{t('pricing_fullaccess_price')}</span>
+            <span class="pricing__plan-price-amount"
+              >{t('pricing_fullaccess_price')}</span
+            >
           </div>
         </div>
         <div class="card__body">
           <ul class="pricing__plan-features">
             <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>{t('pricing_fullaccess_feature1')}
+              <span class="pricing__plan-feature-check">✓</span>{
+                t('pricing_fullaccess_feature1')
+              }
             </li>
             <!-- <li class="pricing__plan-feature">
               <span class="pricing__plan-feature-check">✓</span>{t('pricing_fullaccess_feature2')}
@@ -93,7 +121,12 @@ const faqItems = [
           </ul>
         </div>
         <div class="card__footer pricing__plan-footer">
-          <Button variant="outline" size="lg" disabled class="pricing__plan-button">
+          <Button
+            variant="outline"
+            size="lg"
+            disabled
+            class="pricing__plan-button"
+          >
             {t('pricing_fullaccess_cta')}
           </Button>
         </div>
@@ -138,7 +171,10 @@ const faqItems = [
         <div class="accordion accordion--size-md pricing__faq-accordion">
           {
             faqItems.map((faq) => (
-              <details class="accordion__item accordion__item--variant-outline" id={faq.id}>
+              <details
+                class="accordion__item accordion__item--variant-outline"
+                id={faq.id}
+              >
                 <summary class="accordion__item-trigger">
                   <span class="pricing__faq-question">{faq.q}</span>
                   <span class="accordion__item-indicator" aria-hidden="true">

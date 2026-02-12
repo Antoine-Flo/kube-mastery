@@ -30,7 +30,13 @@ const {
 ---
 
 <Dialog id={CONTACT_SUPPORT_DIALOG_ID} title={title} size="lg">
-  <form id="contact-support-form" class="contact-support-form" data-lesson-id={lessonId} method="post" action="#">
+  <form
+    id="contact-support-form"
+    class="contact-support-form"
+    data-lesson-id={lessonId}
+    method="post"
+    action="#"
+  >
     <div class="contact-support-form__types">
       <label class="contact-support-form__type">
         <input type="radio" name="contactType" value="support" checked />
@@ -51,9 +57,16 @@ const {
       placeholder={placeholder}
       rows={5}
       required></textarea>
-    <p id="contact-support-error" class="lesson__suggest-error contact-support-form__error" aria-live="polite" hidden>
+    <p
+      id="contact-support-error"
+      class="lesson__suggest-error contact-support-form__error"
+      aria-live="polite"
+      hidden
+    >
     </p>
-    <footer class="dialog__footer lesson-dialog__footer contact-support-form__footer">
+    <footer
+      class="dialog__footer lesson-dialog__footer contact-support-form__footer"
+    >
       <Button type="button" variant="subtle" color="gray" data-dialog-close>
         {cancelLabel}
       </Button>
@@ -64,7 +77,8 @@ const {
   </form>
 </Dialog>
 
-<script define:vars={{ dialogId: CONTACT_SUPPORT_DIALOG_ID, successToastTitle }}>
+<script define:vars={{ dialogId: CONTACT_SUPPORT_DIALOG_ID, successToastTitle }}
+>
   function openContactDialog(id) {
     const dialog = document.getElementById(id)
     if (!dialog || typeof dialog.showModal !== 'function') {
@@ -86,7 +100,9 @@ const {
     const typeInput = formEl.querySelector("input[name='contactType']:checked")
     const type = typeInput && 'value' in typeInput ? typeInput.value : 'support'
     const messageEl = formEl.querySelector("textarea[name='message']")
-    const message = (messageEl && 'value' in messageEl ? messageEl.value : '').trim()
+    const message = (
+      messageEl && 'value' in messageEl ? messageEl.value : ''
+    ).trim()
     const lessonId = formEl.getAttribute('data-lesson-id') ?? ''
     return { type, message, lessonId: lessonId || undefined }
   }
@@ -159,7 +175,10 @@ const {
     'submit',
     (e) => {
       const form = e.target
-      if (!(form instanceof HTMLFormElement) || form.id !== 'contact-support-form') {
+      if (
+        !(form instanceof HTMLFormElement) ||
+        form.id !== 'contact-support-form'
+      ) {
         return
       }
       e.preventDefault()
@@ -217,7 +236,11 @@ const {
   .contact-support-form__type input[type='radio']:checked {
     border-color: var(--color-cyan-9);
     background-color: var(--color-cyan-3);
-    background-image: radial-gradient(circle at center, var(--color-cyan-9) 35%, transparent 40%);
+    background-image: radial-gradient(
+      circle at center,
+      var(--color-cyan-9) 35%,
+      transparent 40%
+    );
   }
   .contact-support-form__message {
     display: block;

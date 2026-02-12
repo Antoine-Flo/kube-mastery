@@ -17,7 +17,11 @@ import {
 import { runKubectlCommand } from './modules/command-runner'
 import { writeGoldenFile } from './modules/file-writer'
 import { normalizeOutput } from './modules/normalizer'
-import { GOLDEN_TESTS, type GoldenTest, type GoldenTestCategory } from './config/golden-tests'
+import {
+  GOLDEN_TESTS,
+  type GoldenTest,
+  type GoldenTestCategory
+} from './config/golden-tests'
 import type { Result } from './utils/types'
 
 // ─── CLI Setup ─────────────────────────────────────────────────────────────
@@ -44,7 +48,9 @@ program
 /**
  * Type guard to check if a Result is an error
  */
-const isError = <T, E>(result: Result<T, E>): result is { ok: false; error: E } => {
+const isError = <T, E>(
+  result: Result<T, E>
+): result is { ok: false; error: E } => {
   return !result.ok
 }
 
@@ -106,7 +112,9 @@ const executeTest = (test: GoldenTest): boolean => {
         console.error(`   ❌ Failed to write golden file: ${writeResult.error}`)
         return false
       }
-      console.log(`   ✓ Generated (error output): ${test.category}/${test.name}.txt`)
+      console.log(
+        `   ✓ Generated (error output): ${test.category}/${test.name}.txt`
+      )
       return true
     } else {
       console.error(`   ❌ Command failed: ${commandResult.error}`)
@@ -217,7 +225,9 @@ const main = async (options: CliOptions) => {
       process.exit(1)
     }
     tests = tests.filter((t) => t.category === options.category)
-    console.log(`Filtering by category: ${options.category} (${tests.length} test(s))`)
+    console.log(
+      `Filtering by category: ${options.category} (${tests.length} test(s))`
+    )
   }
 
   if (options.test) {
@@ -250,10 +260,14 @@ const main = async (options: CliOptions) => {
   let failureCount = 0
   let currentCluster: string | null = null
 
-  for (const [clusterName, clusterTests] of Array.from(testsByCluster.entries())) {
+  for (const [clusterName, clusterTests] of Array.from(
+    testsByCluster.entries()
+  )) {
     // Supprimer le cluster précédent si on change de cluster
     if (currentCluster && currentCluster !== clusterName) {
-      console.log(`\n🔄 Switching from cluster ${currentCluster} to ${clusterName}`)
+      console.log(
+        `\n🔄 Switching from cluster ${currentCluster} to ${clusterName}`
+      )
       deleteCluster(currentCluster)
     }
 

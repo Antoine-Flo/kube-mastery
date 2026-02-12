@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { parseShellCommand, VALID_COMMANDS } from '../../../../../src/core/shell/commands/core/ShellCommandParser'
+import {
+  parseShellCommand,
+  VALID_COMMANDS
+} from '../../../../../src/core/shell/commands/core/ShellCommandParser'
 
 describe('ShellCommandParser', () => {
   describe('parseShellCommand', () => {

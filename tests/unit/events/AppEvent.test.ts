@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createEventBus, type EventBus } from '../../../src/core/cluster/events/EventBus'
+import {
+  createEventBus,
+  type EventBus
+} from '../../../src/core/cluster/events/EventBus'
 import { createPod } from '../../../src/core/cluster/ressources/Pod'
 import { createFileCreatedEvent } from '../../../src/core/filesystem/events/types'
 import { createFile } from '../../../src/core/filesystem/models/File'
@@ -84,7 +87,8 @@ describe('AppEvent Integration', () => {
   describe('filtered subscription with mixed types', () => {
     it('should filter by event domain', () => {
       const filesystemSubscriber = vi.fn()
-      const filter = (event: AppEvent) => event.type.startsWith('File') || event.type.startsWith('Directory')
+      const filter = (event: AppEvent) =>
+        event.type.startsWith('File') || event.type.startsWith('Directory')
 
       eventBus.subscribeFiltered(filter, filesystemSubscriber)
 

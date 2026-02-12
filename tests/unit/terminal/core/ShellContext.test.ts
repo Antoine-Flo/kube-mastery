@@ -75,7 +75,12 @@ describe('ShellContextStack', () => {
         currentPath: '/',
         tree: fileSystemState.tree
       }
-      shellContextStack.pushContainerContext('nginx-pod', 'nginx', 'default', containerFs)
+      shellContextStack.pushContainerContext(
+        'nginx-pod',
+        'nginx',
+        'default',
+        containerFs
+      )
     })
 
     it('should be in container after pushContainerContext', () => {
@@ -93,7 +98,9 @@ describe('ShellContextStack', () => {
       const context = shellContextStack.getCurrentContext()
       ;(context.fileSystem as any).getCurrentPath = () => '/var/log'
       shellContextStack.updateCurrentPrompt()
-      expect(shellContextStack.getCurrentPrompt()).toBe('[nginx-pod:nginx] /var/log>')
+      expect(shellContextStack.getCurrentPrompt()).toBe(
+        '[nginx-pod:nginx] /var/log>'
+      )
     })
 
     it('should return to host context after popContext', () => {

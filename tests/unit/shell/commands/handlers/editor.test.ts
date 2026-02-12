@@ -20,7 +20,11 @@ describe('Editor Handler (nano)', () => {
     const result = handler.execute(['test.yaml'], {})
 
     expect(result.ok).toBe(true)
-    expect(openCallback).toHaveBeenCalledWith('test.yaml', 'existing content', expect.any(Function))
+    expect(openCallback).toHaveBeenCalledWith(
+      'test.yaml',
+      'existing content',
+      expect.any(Function)
+    )
   })
 
   it('should open editor for new file', () => {
@@ -28,7 +32,9 @@ describe('Editor Handler (nano)', () => {
     const editorModal = {
       open: openCallback
     }
-    const createFileMock = vi.fn(() => success(createFileNode('new.yaml', '/home/kube/new.yaml')))
+    const createFileMock = vi.fn(() =>
+      success(createFileNode('new.yaml', '/home/kube/new.yaml'))
+    )
     const writeFileMock = vi.fn(() => success(undefined))
     const fileSystem = createMockFileSystem({
       readFile: () => error('File not found'),
@@ -39,7 +45,11 @@ describe('Editor Handler (nano)', () => {
     const result = handler.execute(['new.yaml'], {})
 
     expect(result.ok).toBe(true)
-    expect(openCallback).toHaveBeenCalledWith('new.yaml', '', expect.any(Function))
+    expect(openCallback).toHaveBeenCalledWith(
+      'new.yaml',
+      '',
+      expect.any(Function)
+    )
 
     // Test save callback creates file
     const saveCallback = openCallback.mock.calls[0][2]

@@ -58,7 +58,11 @@ describe('Deployment OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(deployment, 'apps/v1', 'Deployment')
+      const result = validator.validateResource(
+        deployment,
+        'apps/v1',
+        'Deployment'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -99,7 +103,11 @@ describe('Deployment OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(deployment, 'apps/v1', 'Deployment')
+      const result = validator.validateResource(
+        deployment,
+        'apps/v1',
+        'Deployment'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -147,7 +155,11 @@ describe('Deployment OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(deployment, 'apps/v1', 'Deployment')
+      const result = validator.validateResource(
+        deployment,
+        'apps/v1',
+        'Deployment'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -195,7 +207,11 @@ describe('Deployment OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(deployment, 'apps/v1', 'Deployment')
+      const result = validator.validateResource(
+        deployment,
+        'apps/v1',
+        'Deployment'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -217,7 +233,11 @@ describe('Deployment OpenAPI Conformance', () => {
         labels: { app: 'nginx' }
       })
 
-      const result = validator.validateResource(deployment, 'apps/v1', 'Deployment')
+      const result = validator.validateResource(
+        deployment,
+        'apps/v1',
+        'Deployment'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -242,7 +262,11 @@ describe('Deployment OpenAPI Conformance', () => {
         }
       })
 
-      const result = validator.validateResource(deployment, 'apps/v1', 'Deployment')
+      const result = validator.validateResource(
+        deployment,
+        'apps/v1',
+        'Deployment'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -279,7 +303,11 @@ describe('Deployment OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(invalidDeployment, 'apps/v1', 'Deployment')
+      const result = validator.validateResource(
+        invalidDeployment,
+        'apps/v1',
+        'Deployment'
+      )
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.valid).toBe(false)
@@ -306,7 +334,11 @@ describe('Deployment OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(invalidDeployment, 'apps/v1', 'Deployment')
+      const result = validator.validateResource(
+        invalidDeployment,
+        'apps/v1',
+        'Deployment'
+      )
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.valid).toBe(false)
@@ -347,7 +379,11 @@ describe('Deployment OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(invalidDeployment, 'apps/v1', 'Deployment')
+      const result = validator.validateResource(
+        invalidDeployment,
+        'apps/v1',
+        'Deployment'
+      )
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.valid).toBe(false)
@@ -385,7 +421,11 @@ describe('Deployment OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(invalidDeployment, 'apps/v1', 'Deployment')
+      const result = validator.validateResource(
+        invalidDeployment,
+        'apps/v1',
+        'Deployment'
+      )
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.valid).toBe(false)

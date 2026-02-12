@@ -38,7 +38,9 @@ export const clusterStateData = createClusterStateData({
       name: 'coredns-6d4b75c6df-2xz9k',
       namespace: 'kube-system',
       nodeName: 'control-plane',
-      containers: [{ name: 'coredns', image: 'registry.k8s.io/coredns/coredns:v1.10.1' }],
+      containers: [
+        { name: 'coredns', image: 'registry.k8s.io/coredns/coredns:v1.10.1' }
+      ],
       phase: 'Running'
     })
   ],

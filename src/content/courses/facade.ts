@@ -13,17 +13,29 @@ function getAdapter(): CourseDataPort {
   return adapter
 }
 
-export type { CourseFrontmatter, CourseListItem, ModuleListItem, UiLang } from './types'
+export type {
+  CourseFrontmatter,
+  CourseListItem,
+  ModuleListItem,
+  UiLang
+} from './types'
 
-export function getCourseMarkdown(courseId: string, lang: UiLang): ReturnType<CourseDataPort['getCourseMarkdown']> {
+export function getCourseMarkdown(
+  courseId: string,
+  lang: UiLang
+): ReturnType<CourseDataPort['getCourseMarkdown']> {
   return getAdapter().getCourseMarkdown(courseId, lang)
 }
 
-export function getCourseStructure(courseId: string): ReturnType<CourseDataPort['getCourseStructure']> {
+export function getCourseStructure(
+  courseId: string
+): ReturnType<CourseDataPort['getCourseStructure']> {
   return getAdapter().getCourseStructure(courseId)
 }
 
-export function getModule(moduleId: string): ReturnType<CourseDataPort['getModule']> {
+export function getModule(
+  moduleId: string
+): ReturnType<CourseDataPort['getModule']> {
   return getAdapter().getModule(moduleId)
 }
 

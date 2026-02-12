@@ -15,8 +15,14 @@ describe('KubectlAutocompleteProvider', () => {
           { metadata: { name: 'nginx-2' } },
           { metadata: { name: 'redis-1' } }
         ],
-        getConfigMaps: () => [{ metadata: { name: 'app-config' } }, { metadata: { name: 'db-config' } }],
-        getSecrets: () => [{ metadata: { name: 'db-secret' } }, { metadata: { name: 'api-secret' } }]
+        getConfigMaps: () => [
+          { metadata: { name: 'app-config' } },
+          { metadata: { name: 'db-config' } }
+        ],
+        getSecrets: () => [
+          { metadata: { name: 'db-secret' } },
+          { metadata: { name: 'api-secret' } }
+        ]
       },
       fileSystem: {
         getCurrentPath: () => '/home/kube'
@@ -45,7 +51,9 @@ describe('KubectlAutocompleteProvider', () => {
     })
 
     it('should match at position 1 (action) when tokens.length === 2 and line does not end with space', () => {
-      expect(provider.match(['kubectl', 'get'], 'get', 'kubectl get')).toBe(true)
+      expect(provider.match(['kubectl', 'get'], 'get', 'kubectl get')).toBe(
+        true
+      )
     })
 
     it('should match at position 2 (resource type) when line ends with space', () => {
@@ -54,35 +62,65 @@ describe('KubectlAutocompleteProvider', () => {
     })
 
     it('should match at position 2 (resource type) for non-logs/exec actions', () => {
-      expect(provider.match(['kubectl', 'get'], 'get', 'kubectl get')).toBe(true)
-      expect(provider.match(['kubectl', 'get', 'pods'], 'pods', 'kubectl get pods')).toBe(true)
+      expect(provider.match(['kubectl', 'get'], 'get', 'kubectl get')).toBe(
+        true
+      )
+      expect(
+        provider.match(['kubectl', 'get', 'pods'], 'pods', 'kubectl get pods')
+      ).toBe(true)
     })
 
     it('should match at position 2 (resource type) when tokens.length === 2', () => {
-      expect(provider.match(['kubectl', 'get'], 'get', 'kubectl get')).toBe(true)
+      expect(provider.match(['kubectl', 'get'], 'get', 'kubectl get')).toBe(
+        true
+      )
     })
 
     it('should match at position 2 (resource type) when tokens.length === 3 and line does not end with space', () => {
-      expect(provider.match(['kubectl', 'get', 'pods'], 'pods', 'kubectl get pods')).toBe(true)
+      expect(
+        provider.match(['kubectl', 'get', 'pods'], 'pods', 'kubectl get pods')
+      ).toBe(true)
     })
 
     it('should match at position 2 (pod name) for logs action', () => {
       expect(provider.match(['kubectl', 'logs'], '', 'kubectl logs')).toBe(true)
-      expect(provider.match(['kubectl', 'logs', 'nginx-1'], 'nginx-1', 'kubectl logs nginx-1')).toBe(true)
+      expect(
+        provider.match(
+          ['kubectl', 'logs', 'nginx-1'],
+          'nginx-1',
+          'kubectl logs nginx-1'
+        )
+      ).toBe(true)
     })
 
     it('should match at position 2 (pod name) for exec action', () => {
       expect(provider.match(['kubectl', 'exec'], '', 'kubectl exec')).toBe(true)
-      expect(provider.match(['kubectl', 'exec', 'nginx-1'], 'nginx-1', 'kubectl exec nginx-1')).toBe(true)
+      expect(
+        provider.match(
+          ['kubectl', 'exec', 'nginx-1'],
+          'nginx-1',
+          'kubectl exec nginx-1'
+        )
+      ).toBe(true)
     })
 
     it('should match at position 3 (resource name) for non-logs/exec actions', () => {
-      expect(provider.match(['kubectl', 'get', 'pods', 'nginx-1'], 'nginx-1', 'kubectl get pods nginx-1')).toBe(true)
+      expect(
+        provider.match(
+          ['kubectl', 'get', 'pods', 'nginx-1'],
+          'nginx-1',
+          'kubectl get pods nginx-1'
+        )
+      ).toBe(true)
     })
 
     it('should match at position 3+ for resource names', () => {
       expect(
-        provider.match(['kubectl', 'get', 'pods', 'nginx-1', 'extra'], 'extra', 'kubectl get pods nginx-1 extra')
+        provider.match(
+          ['kubectl', 'get', 'pods', 'nginx-1', 'extra'],
+          'extra',
+          'kubectl get pods nginx-1 extra'
+        )
       ).toBe(true)
     })
   })
@@ -162,14 +200,22 @@ describe('KubectlAutocompleteProvider', () => {
       })
 
       it('should filter pod names by prefix for logs', () => {
-        const results = provider.complete(['kubectl', 'logs'], 'ngin', mockContext)
+        const results = provider.complete(
+          ['kubectl', 'logs'],
+          'ngin',
+          mockContext
+        )
         expect(results).toContainEqual({ text: 'nginx-1', suffix: ' ' })
         expect(results).toContainEqual({ text: 'nginx-2', suffix: ' ' })
         expect(results).not.toContainEqual({ text: 'redis-1', suffix: ' ' })
       })
 
       it('should filter pod names by prefix for exec', () => {
-        const results = provider.complete(['kubectl', 'exec'], 'red', mockContext)
+        const results = provider.complete(
+          ['kubectl', 'exec'],
+          'red',
+          mockContext
+        )
         expect(results).toContainEqual({ text: 'redis-1', suffix: ' ' })
         expect(results).not.toContainEqual({ text: 'nginx-1', suffix: ' ' })
       })
@@ -177,46 +223,78 @@ describe('KubectlAutocompleteProvider', () => {
 
     describe('position 3+ (resource names)', () => {
       it('should return pod names for pods resource type', () => {
-        const results = provider.complete(['kubectl', 'get', 'pods'], '', mockContext)
+        const results = provider.complete(
+          ['kubectl', 'get', 'pods'],
+          '',
+          mockContext
+        )
         expect(results).toContainEqual({ text: 'nginx-1', suffix: ' ' })
         expect(results).toContainEqual({ text: 'nginx-2', suffix: ' ' })
         expect(results).toContainEqual({ text: 'redis-1', suffix: ' ' })
       })
 
       it('should return pod names for pod alias', () => {
-        const results = provider.complete(['kubectl', 'get', 'pod'], '', mockContext)
+        const results = provider.complete(
+          ['kubectl', 'get', 'pod'],
+          '',
+          mockContext
+        )
         expect(results).toContainEqual({ text: 'nginx-1', suffix: ' ' })
       })
 
       it('should return pod names for po alias', () => {
-        const results = provider.complete(['kubectl', 'get', 'po'], '', mockContext)
+        const results = provider.complete(
+          ['kubectl', 'get', 'po'],
+          '',
+          mockContext
+        )
         expect(results).toContainEqual({ text: 'nginx-1', suffix: ' ' })
       })
 
       it('should return configmap names for configmaps resource type', () => {
-        const results = provider.complete(['kubectl', 'get', 'configmaps'], '', mockContext)
+        const results = provider.complete(
+          ['kubectl', 'get', 'configmaps'],
+          '',
+          mockContext
+        )
         expect(results).toContainEqual({ text: 'app-config', suffix: ' ' })
         expect(results).toContainEqual({ text: 'db-config', suffix: ' ' })
       })
 
       it('should return configmap names for configmap alias', () => {
-        const results = provider.complete(['kubectl', 'get', 'configmap'], '', mockContext)
+        const results = provider.complete(
+          ['kubectl', 'get', 'configmap'],
+          '',
+          mockContext
+        )
         expect(results).toContainEqual({ text: 'app-config', suffix: ' ' })
       })
 
       it('should return configmap names for cm alias', () => {
-        const results = provider.complete(['kubectl', 'get', 'cm'], '', mockContext)
+        const results = provider.complete(
+          ['kubectl', 'get', 'cm'],
+          '',
+          mockContext
+        )
         expect(results).toContainEqual({ text: 'app-config', suffix: ' ' })
       })
 
       it('should return secret names for secrets resource type', () => {
-        const results = provider.complete(['kubectl', 'get', 'secrets'], '', mockContext)
+        const results = provider.complete(
+          ['kubectl', 'get', 'secrets'],
+          '',
+          mockContext
+        )
         expect(results).toContainEqual({ text: 'db-secret', suffix: ' ' })
         expect(results).toContainEqual({ text: 'api-secret', suffix: ' ' })
       })
 
       it('should return secret names for secret alias', () => {
-        const results = provider.complete(['kubectl', 'get', 'secret'], '', mockContext)
+        const results = provider.complete(
+          ['kubectl', 'get', 'secret'],
+          '',
+          mockContext
+        )
         expect(results).toContainEqual({ text: 'db-secret', suffix: ' ' })
       })
 
@@ -225,10 +303,17 @@ describe('KubectlAutocompleteProvider', () => {
           ...mockContext,
           clusterState: {
             ...mockContext.clusterState,
-            getNodes: () => [{ metadata: { name: 'control-plane' } }, { metadata: { name: 'worker-node-1' } }]
+            getNodes: () => [
+              { metadata: { name: 'control-plane' } },
+              { metadata: { name: 'worker-node-1' } }
+            ]
           }
         }
-        const results = provider.complete(['kubectl', 'get', 'nodes'], '', contextWithNodes)
+        const results = provider.complete(
+          ['kubectl', 'get', 'nodes'],
+          '',
+          contextWithNodes
+        )
         expect(results).toContainEqual({ text: 'control-plane', suffix: ' ' })
         expect(results).toContainEqual({ text: 'worker-node-1', suffix: ' ' })
       })
@@ -241,7 +326,11 @@ describe('KubectlAutocompleteProvider', () => {
             getNodes: () => [{ metadata: { name: 'control-plane' } }]
           }
         }
-        const results = provider.complete(['kubectl', 'get', 'node'], '', contextWithNodes)
+        const results = provider.complete(
+          ['kubectl', 'get', 'node'],
+          '',
+          contextWithNodes
+        )
         expect(results).toContainEqual({ text: 'control-plane', suffix: ' ' })
       })
 
@@ -253,7 +342,11 @@ describe('KubectlAutocompleteProvider', () => {
             getNodes: () => [{ metadata: { name: 'worker-node-1' } }]
           }
         }
-        const results = provider.complete(['kubectl', 'get', 'no'], '', contextWithNodes)
+        const results = provider.complete(
+          ['kubectl', 'get', 'no'],
+          '',
+          contextWithNodes
+        )
         expect(results).toContainEqual({ text: 'worker-node-1', suffix: ' ' })
       })
 
@@ -262,26 +355,44 @@ describe('KubectlAutocompleteProvider', () => {
           ...mockContext,
           clusterState: {
             ...mockContext.clusterState,
-            getNodes: () => [{ metadata: { name: 'control-plane' } }, { metadata: { name: 'worker-node-1' } }]
+            getNodes: () => [
+              { metadata: { name: 'control-plane' } },
+              { metadata: { name: 'worker-node-1' } }
+            ]
           }
         }
-        const results = provider.complete(['kubectl', 'get', 'nodes'], 'work', contextWithNodes)
+        const results = provider.complete(
+          ['kubectl', 'get', 'nodes'],
+          'work',
+          contextWithNodes
+        )
         expect(results).toContainEqual({ text: 'worker-node-1', suffix: ' ' })
-        expect(results).not.toContainEqual({ text: 'control-plane', suffix: ' ' })
+        expect(results).not.toContainEqual({
+          text: 'control-plane',
+          suffix: ' '
+        })
       })
 
       // Note: getNodes is now part of ClusterState interface, so this test is no longer needed
       // If getNodes is missing, the type guard at the start of getResourceNames will catch it
 
       it('should filter resource names by prefix', () => {
-        const results = provider.complete(['kubectl', 'get', 'pods'], 'ngin', mockContext)
+        const results = provider.complete(
+          ['kubectl', 'get', 'pods'],
+          'ngin',
+          mockContext
+        )
         expect(results).toContainEqual({ text: 'nginx-1', suffix: ' ' })
         expect(results).toContainEqual({ text: 'nginx-2', suffix: ' ' })
         expect(results).not.toContainEqual({ text: 'redis-1', suffix: ' ' })
       })
 
       it('should return empty array for unknown resource type', () => {
-        const results = provider.complete(['kubectl', 'get', 'unknown'], '', mockContext)
+        const results = provider.complete(
+          ['kubectl', 'get', 'unknown'],
+          '',
+          mockContext
+        )
         expect(results).toEqual([])
       })
 
@@ -299,7 +410,11 @@ describe('KubectlAutocompleteProvider', () => {
           clusterState: null as any,
           fileSystem: mockContext.fileSystem
         }
-        const results = provider.complete(['kubectl', 'get', 'pods'], '', contextWithoutClusterState)
+        const results = provider.complete(
+          ['kubectl', 'get', 'pods'],
+          '',
+          contextWithoutClusterState
+        )
         expect(results).toEqual([])
       })
 
@@ -308,7 +423,11 @@ describe('KubectlAutocompleteProvider', () => {
           clusterState: {} as any,
           fileSystem: mockContext.fileSystem
         }
-        const results = provider.complete(['kubectl', 'get', 'pods'], '', contextWithoutMethods)
+        const results = provider.complete(
+          ['kubectl', 'get', 'pods'],
+          '',
+          contextWithoutMethods
+        )
         expect(results).toEqual([])
       })
 
@@ -321,7 +440,11 @@ describe('KubectlAutocompleteProvider', () => {
           },
           fileSystem: mockContext.fileSystem
         }
-        const results = provider.complete(['kubectl', 'get', 'pods'], '', emptyContext)
+        const results = provider.complete(
+          ['kubectl', 'get', 'pods'],
+          '',
+          emptyContext
+        )
         expect(results).toEqual([])
       })
     })
@@ -344,19 +467,39 @@ describe('KubectlAutocompleteProvider', () => {
 
       it('should handle resourceType not in RESOURCE_ALIASES but valid', () => {
         // Unknown resource type should still match at position 3
-        expect(provider.match(['kubectl', 'get', 'unknown'], 'unknown', 'kubectl get unknown')).toBe(true)
+        expect(
+          provider.match(
+            ['kubectl', 'get', 'unknown'],
+            'unknown',
+            'kubectl get unknown'
+          )
+        ).toBe(true)
       })
 
       it('should handle line with special characters', () => {
-        expect(provider.match(['kubectl', 'get'], 'get', 'kubectl get!')).toBe(true)
+        expect(provider.match(['kubectl', 'get'], 'get', 'kubectl get!')).toBe(
+          true
+        )
       })
     })
 
     describe('complete() edge cases', () => {
       it('should handle all pod aliases (po, pod, pods)', () => {
-        const results1 = provider.complete(['kubectl', 'get', 'po'], '', mockContext)
-        const results2 = provider.complete(['kubectl', 'get', 'pod'], '', mockContext)
-        const results3 = provider.complete(['kubectl', 'get', 'pods'], '', mockContext)
+        const results1 = provider.complete(
+          ['kubectl', 'get', 'po'],
+          '',
+          mockContext
+        )
+        const results2 = provider.complete(
+          ['kubectl', 'get', 'pod'],
+          '',
+          mockContext
+        )
+        const results3 = provider.complete(
+          ['kubectl', 'get', 'pods'],
+          '',
+          mockContext
+        )
 
         expect(results1).toContainEqual({ text: 'nginx-1', suffix: ' ' })
         expect(results2).toContainEqual({ text: 'nginx-1', suffix: ' ' })
@@ -364,9 +507,21 @@ describe('KubectlAutocompleteProvider', () => {
       })
 
       it('should handle all configmap aliases (cm, configmap, configmaps)', () => {
-        const results1 = provider.complete(['kubectl', 'get', 'cm'], '', mockContext)
-        const results2 = provider.complete(['kubectl', 'get', 'configmap'], '', mockContext)
-        const results3 = provider.complete(['kubectl', 'get', 'configmaps'], '', mockContext)
+        const results1 = provider.complete(
+          ['kubectl', 'get', 'cm'],
+          '',
+          mockContext
+        )
+        const results2 = provider.complete(
+          ['kubectl', 'get', 'configmap'],
+          '',
+          mockContext
+        )
+        const results3 = provider.complete(
+          ['kubectl', 'get', 'configmaps'],
+          '',
+          mockContext
+        )
 
         expect(results1).toContainEqual({ text: 'app-config', suffix: ' ' })
         expect(results2).toContainEqual({ text: 'app-config', suffix: ' ' })
@@ -387,7 +542,11 @@ describe('KubectlAutocompleteProvider', () => {
           fileSystem: mockContext.fileSystem
         }
 
-        const results = provider.complete(['kubectl', 'get', 'pods'], '', contextWithInvalidPods)
+        const results = provider.complete(
+          ['kubectl', 'get', 'pods'],
+          '',
+          contextWithInvalidPods
+        )
         // Current implementation doesn't filter undefined/empty names
         // It maps all pods including those with undefined names
         expect(results).toContainEqual({ text: 'valid-pod', suffix: ' ' })
@@ -398,14 +557,21 @@ describe('KubectlAutocompleteProvider', () => {
       it('should handle resources with empty names', () => {
         const contextWithEmptyNames: AutocompleteContext = {
           clusterState: {
-            getPods: () => [{ metadata: { name: '' } }, { metadata: { name: 'valid-pod' } }],
+            getPods: () => [
+              { metadata: { name: '' } },
+              { metadata: { name: 'valid-pod' } }
+            ],
             getConfigMaps: () => [],
             getSecrets: () => []
           },
           fileSystem: mockContext.fileSystem
         }
 
-        const results = provider.complete(['kubectl', 'get', 'pods'], '', contextWithEmptyNames)
+        const results = provider.complete(
+          ['kubectl', 'get', 'pods'],
+          '',
+          contextWithEmptyNames
+        )
         // Current implementation doesn't filter empty names
         // It includes all names including empty strings
         expect(results).toContainEqual({ text: 'valid-pod', suffix: ' ' })
@@ -427,28 +593,43 @@ describe('KubectlAutocompleteProvider', () => {
           fileSystem: mockContext.fileSystem
         }
 
-        const results = provider.complete(['kubectl', 'get', 'pods'], '', contextWithManyPods)
+        const results = provider.complete(
+          ['kubectl', 'get', 'pods'],
+          '',
+          contextWithManyPods
+        )
         expect(results.length).toBe(150)
         expect(results[0]).toEqual({ text: 'pod-0', suffix: ' ' })
         expect(results[149]).toEqual({ text: 'pod-149', suffix: ' ' })
       })
 
       it('should handle filtering with prefix that matches nothing', () => {
-        const results = provider.complete(['kubectl', 'get', 'pods'], 'xyz-nonexistent', mockContext)
+        const results = provider.complete(
+          ['kubectl', 'get', 'pods'],
+          'xyz-nonexistent',
+          mockContext
+        )
         expect(results).toEqual([])
       })
 
       it('should handle case-sensitive filtering', () => {
         const contextWithMixedCase: AutocompleteContext = {
           clusterState: {
-            getPods: () => [{ metadata: { name: 'nginx-1' } }, { metadata: { name: 'Nginx-1' } }],
+            getPods: () => [
+              { metadata: { name: 'nginx-1' } },
+              { metadata: { name: 'Nginx-1' } }
+            ],
             getConfigMaps: () => [],
             getSecrets: () => []
           },
           fileSystem: mockContext.fileSystem
         }
 
-        const results = provider.complete(['kubectl', 'get', 'pods'], 'N', contextWithMixedCase)
+        const results = provider.complete(
+          ['kubectl', 'get', 'pods'],
+          'N',
+          contextWithMixedCase
+        )
         expect(results).toContainEqual({ text: 'Nginx-1', suffix: ' ' })
         expect(results).not.toContainEqual({ text: 'nginx-1', suffix: ' ' })
       })

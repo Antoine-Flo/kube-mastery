@@ -113,7 +113,9 @@ const ServicePortSchema = z.object({
 })
 
 const ServiceSpecSchema = z.object({
-  type: z.enum(['ClusterIP', 'NodePort', 'LoadBalancer', 'ExternalName']).default('ClusterIP'),
+  type: z
+    .enum(['ClusterIP', 'NodePort', 'LoadBalancer', 'ExternalName'])
+    .default('ClusterIP'),
   selector: z.record(z.string(), z.string()).optional(),
   ports: z.array(ServicePortSchema).min(1, 'At least one port is required'),
   clusterIP: z.string().optional(),
@@ -159,7 +161,9 @@ export const parseServiceManifest = (data: unknown): Result<Service> => {
 
   if (!result.success) {
     const firstError = result.error.issues[0]
-    return error(`Invalid Service manifest: ${firstError.path.join('.')}: ${firstError.message}`)
+    return error(
+      `Invalid Service manifest: ${firstError.path.join('.')}: ${firstError.message}`
+    )
   }
 
   const manifest = result.data
@@ -170,9 +174,12 @@ export const parseServiceManifest = (data: unknown): Result<Service> => {
     metadata: {
       name: manifest.metadata.name,
       namespace: manifest.metadata.namespace,
-      creationTimestamp: manifest.metadata.creationTimestamp || new Date().toISOString(),
+      creationTimestamp:
+        manifest.metadata.creationTimestamp || new Date().toISOString(),
       ...(manifest.metadata.labels && { labels: manifest.metadata.labels }),
-      ...(manifest.metadata.annotations && { annotations: manifest.metadata.annotations })
+      ...(manifest.metadata.annotations && {
+        annotations: manifest.metadata.annotations
+      })
     },
     spec: {
       type: manifest.spec.type,
@@ -184,10 +191,18 @@ export const parseServiceManifest = (data: unknown): Result<Service> => {
         ...(port.nodePort !== undefined && { nodePort: port.nodePort })
       })),
       ...(manifest.spec.selector && { selector: manifest.spec.selector }),
-      ...(manifest.spec.clusterIP !== undefined && { clusterIP: manifest.spec.clusterIP }),
-      ...(manifest.spec.externalIPs && { externalIPs: manifest.spec.externalIPs }),
-      ...(manifest.spec.externalName && { externalName: manifest.spec.externalName }),
-      ...(manifest.spec.sessionAffinity && { sessionAffinity: manifest.spec.sessionAffinity })
+      ...(manifest.spec.clusterIP !== undefined && {
+        clusterIP: manifest.spec.clusterIP
+      }),
+      ...(manifest.spec.externalIPs && {
+        externalIPs: manifest.spec.externalIPs
+      }),
+      ...(manifest.spec.externalName && {
+        externalName: manifest.spec.externalName
+      }),
+      ...(manifest.spec.sessionAffinity && {
+        sessionAffinity: manifest.spec.sessionAffinity
+      })
     },
     ...(manifest.status && { status: manifest.status })
   }

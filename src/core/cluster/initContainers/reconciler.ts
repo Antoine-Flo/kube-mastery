@@ -49,7 +49,10 @@ const updateContainerStatus = (
 /**
  * Update pod phase
  */
-const updatePodPhase = (pod: Pod, phase: 'Pending' | 'Running' | 'Succeeded' | 'Failed' | 'Unknown'): Pod => {
+const updatePodPhase = (
+  pod: Pod,
+  phase: 'Pending' | 'Running' | 'Succeeded' | 'Failed' | 'Unknown'
+): Pod => {
   return {
     ...pod,
     status: {
@@ -109,14 +112,18 @@ export const reconcileInitContainers = (pod: Pod): Pod => {
     }
 
     // Get current filesystem for this init container from _simulator
-    const containerSimulator = currentPod._simulator.containers[initContainer.name]
+    const containerSimulator =
+      currentPod._simulator.containers[initContainer.name]
     if (!containerSimulator) {
       // Should not happen, but handle gracefully
       return updatePodPhase(currentPod, 'Failed')
     }
 
     // Execute init container
-    const result = executeInitContainer(initContainer, containerSimulator.fileSystem)
+    const result = executeInitContainer(
+      initContainer,
+      containerSimulator.fileSystem
+    )
 
     if (!result.ok) {
       // Execution failed - mark as Terminated and fail pod

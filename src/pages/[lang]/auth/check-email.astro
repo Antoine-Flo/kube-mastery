@@ -8,7 +8,8 @@ const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
 const redirect = Astro.url.searchParams.get('redirect') ?? ''
-const redirectTo = redirect.startsWith('/') && !redirect.includes('//') ? redirect : ''
+const redirectTo =
+  redirect.startsWith('/') && !redirect.includes('//') ? redirect : ''
 
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)

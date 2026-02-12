@@ -18,6 +18,8 @@ export interface BaseEvent {
 
 // ─── Event Subscriber Types ────────────────────────────────────────────────
 
-export type EventSubscriber<T extends BaseEvent = BaseEvent> = (event: T) => void
+export type EventSubscriber<T extends BaseEvent = BaseEvent> = (
+  event: T
+) => void
 
 export type UnsubscribeFn = () => void

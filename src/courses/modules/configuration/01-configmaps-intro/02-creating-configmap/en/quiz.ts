@@ -9,8 +9,10 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'terminal-command',
-      question: 'Create a ConfigMap named my-config with a key-value pair: key1=value1',
-      expectedCommand: 'kubectl create configmap my-config --from-literal=key1=value1',
+      question:
+        'Create a ConfigMap named my-config with a key-value pair: key1=value1',
+      expectedCommand:
+        'kubectl create configmap my-config --from-literal=key1=value1',
       validationMode: 'contains',
       normalizeCommand: true
     },

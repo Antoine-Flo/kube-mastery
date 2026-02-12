@@ -28,8 +28,14 @@ const formatEnvVar = (envVar: EnvVar): string => {
 /**
  * Simulate environment variables display
  */
-const handleEnvCommand = (state: ClusterStateData, podName: string, namespace: string): string => {
-  const pod = state.pods.items.find((p) => p.metadata.name === podName && p.metadata.namespace === namespace)
+const handleEnvCommand = (
+  state: ClusterStateData,
+  podName: string,
+  namespace: string
+): string => {
+  const pod = state.pods.items.find(
+    (p) => p.metadata.name === podName && p.metadata.namespace === namespace
+  )
 
   if (!pod) {
     return ''
@@ -56,7 +62,10 @@ const handleEnvCommand = (state: ClusterStateData, podName: string, namespace: s
  * Handle kubectl exec command
  * Simulates command execution in a pod container
  */
-export const handleExec = (state: ClusterStateData, parsed: ParsedCommand): string => {
+export const handleExec = (
+  state: ClusterStateData,
+  parsed: ParsedCommand
+): string => {
   // Validate pod name is provided
   if (!parsed.name) {
     return 'Error: pod name is required'
@@ -71,7 +80,9 @@ export const handleExec = (state: ClusterStateData, parsed: ParsedCommand): stri
   const podName = parsed.name
 
   // Find the pod
-  const pod = state.pods.items.find((p) => p.metadata.name === podName && p.metadata.namespace === namespace)
+  const pod = state.pods.items.find(
+    (p) => p.metadata.name === podName && p.metadata.namespace === namespace
+  )
 
   if (!pod) {
     return `Error from server (NotFound): pods "${podName}" not found`
@@ -90,7 +101,9 @@ export const handleExec = (state: ClusterStateData, parsed: ParsedCommand): stri
 
   if (containerFlagValue) {
     // Container specified via -c flag - validate it exists
-    const targetContainer = regularContainers.find((c) => c.name === containerFlagValue)
+    const targetContainer = regularContainers.find(
+      (c) => c.name === containerFlagValue
+    )
 
     if (!targetContainer) {
       const availableNames = regularContainers.map((c) => c.name).join(', ')
@@ -114,7 +127,12 @@ export const handleExec = (state: ClusterStateData, parsed: ParsedCommand): stri
   const args = parsed.execCommand
 
   // Shell commands - enter interactive mode
-  if (command === 'sh' || command === 'bash' || command === '/bin/sh' || command === '/bin/bash') {
+  if (
+    command === 'sh' ||
+    command === 'bash' ||
+    command === '/bin/sh' ||
+    command === '/bin/bash'
+  ) {
     // This will be handled by the main dispatcher to enter container mode
     return `ENTER_CONTAINER:${podName}:${containerName}:${namespace}`
   }

@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'Comment les conteneurs dans le même Pod communiquent-ils entre eux ?',
+      question:
+        'Comment les conteneurs dans le même Pod communiquent-ils entre eux ?',
       options: [
         'En utilisant des adresses IP externes',
         'En utilisant localhost',
@@ -21,7 +22,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'Quelles ressources partagées les Pods fournissent-ils à leurs conteneurs ?',
+      question:
+        'Quelles ressources partagées les Pods fournissent-ils à leurs conteneurs ?',
       options: [
         'Seulement le réseau',
         'Seulement le stockage',

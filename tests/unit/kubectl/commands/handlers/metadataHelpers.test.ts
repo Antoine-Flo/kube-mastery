@@ -3,7 +3,10 @@ import { handleMetadataChange } from '../../../../../src/core/kubectl/commands/h
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
-import { createEventBus, type EventBus } from '../../../../../src/core/cluster/events/EventBus'
+import {
+  createEventBus,
+  type EventBus
+} from '../../../../../src/core/cluster/events/EventBus'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 import { createClusterStateData } from '../../../helpers/utils'
 
@@ -34,7 +37,9 @@ describe('metadataHelpers', () => {
     secrets: ReturnType<typeof createSecret>[] = []
   ) => createClusterStateData({ pods, configMaps, secrets })
 
-  const createParsedCommand = (overrides: Partial<ParsedCommand> = {}): ParsedCommand => ({
+  const createParsedCommand = (
+    overrides: Partial<ParsedCommand> = {}
+  ): ParsedCommand => ({
     action: 'label',
     resource: 'pods',
     flags: {},
@@ -231,7 +236,12 @@ describe('metadataHelpers', () => {
         annotationChanges: { description: 'My app' }
       })
 
-      const result = handleMetadataChange(state, parsed, annotateConfig, eventBus)
+      const result = handleMetadataChange(
+        state,
+        parsed,
+        annotateConfig,
+        eventBus
+      )
 
       expect(result.ok).toBe(true)
       if (result.ok) {

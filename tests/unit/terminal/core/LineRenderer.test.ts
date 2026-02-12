@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { LineRenderer } from '../../../../src/core/terminal/core/LineRenderer'
-import { createTerminalState, TerminalState } from '../../../../src/core/terminal/core/TerminalState'
+import {
+  createTerminalState,
+  TerminalState
+} from '../../../../src/core/terminal/core/TerminalState'
 import { createMockRenderer } from '../../helpers/mockRenderer'
 
 describe('LineRenderer', () => {

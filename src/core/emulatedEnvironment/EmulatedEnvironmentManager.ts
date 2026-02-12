@@ -5,13 +5,19 @@
 // Handles memory cleanup and auto-save logic
 
 import { createClusterState } from '../cluster/ClusterState'
-import { initializeControllers, initializeScheduler } from '../cluster/controllers/initializers'
+import {
+  initializeControllers,
+  initializeScheduler
+} from '../cluster/controllers/initializers'
 import { createEventBus, type EventBus } from '../cluster/events/EventBus'
 import type { AppEvent } from '../events/AppEvent'
 import { createHostFileSystem } from '../filesystem/debianFileSystem'
 import { saveSandboxEnvironment } from '../storage/indexedDBAdapter'
 import { ShellContextStack } from '../terminal/core/ShellContext'
-import type { CreateEmulatedEnvironmentOptions, EmulatedEnvironment } from './EmulatedEnvironment'
+import type {
+  CreateEmulatedEnvironmentOptions,
+  EmulatedEnvironment
+} from './EmulatedEnvironment'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DEBOUNCE HELPER
@@ -37,7 +43,9 @@ const debounce = <T extends (...args: Parameters<T>) => void>(
 /**
  * Create a new emulated environment from a record or in demo mode
  */
-export function createEmulatedEnvironment(options: CreateEmulatedEnvironmentOptions = {}): EmulatedEnvironment {
+export function createEmulatedEnvironment(
+  options: CreateEmulatedEnvironmentOptions = {}
+): EmulatedEnvironment {
   const {
     userId,
     filesystemState: providedFilesystemState,
@@ -84,7 +92,11 @@ export function createEmulatedEnvironment(options: CreateEmulatedEnvironmentOpti
           return
         }
 
-        const result = await saveSandboxEnvironment(userId, fileSystemState, clusterState.toJSON())
+        const result = await saveSandboxEnvironment(
+          userId,
+          fileSystemState,
+          clusterState.toJSON()
+        )
         if (!result.ok) {
           throw new Error(`Failed to save environment: ${result.error}`)
         }
@@ -116,7 +128,9 @@ export function createEmulatedEnvironment(options: CreateEmulatedEnvironmentOpti
  * Destroy an emulated environment and clean up all resources
  * This should be called before switching environments or on unmount
  */
-export function destroyEmulatedEnvironment(emulatedEnvironment: EmulatedEnvironment): void {
+export function destroyEmulatedEnvironment(
+  emulatedEnvironment: EmulatedEnvironment
+): void {
   // Unsubscribe from auto-save
   if (emulatedEnvironment.unsubscribeAutoSave) {
     emulatedEnvironment.unsubscribeAutoSave()

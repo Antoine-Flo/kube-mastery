@@ -5,8 +5,17 @@
 
 import { getSupabaseAdmin, getSupabaseServer } from '../supabase'
 import { isPaidSubscription } from './domain'
-import type { DeleteAccountPort, DeleteAccountRequest, LayoutAuthContextPort, LayoutAuthRequest } from './port'
-import type { DeleteAccountResult, LayoutAuthContext, LayoutAuthUser } from './types'
+import type {
+  DeleteAccountPort,
+  DeleteAccountRequest,
+  LayoutAuthContextPort,
+  LayoutAuthRequest
+} from './port'
+import type {
+  DeleteAccountResult,
+  LayoutAuthContext,
+  LayoutAuthUser
+} from './types'
 
 const EMPTY_CONTEXT: LayoutAuthContext = {
   isLoggedIn: false,
@@ -14,7 +23,11 @@ const EMPTY_CONTEXT: LayoutAuthContext = {
   hasPaidSubscription: false
 }
 
-function mapAuthUser(raw: { id: string; email?: string | null; user_metadata?: unknown }): LayoutAuthUser {
+function mapAuthUser(raw: {
+  id: string
+  email?: string | null
+  user_metadata?: unknown
+}): LayoutAuthUser {
   return {
     id: raw.id,
     email: raw.email ?? undefined,
@@ -46,7 +59,9 @@ export function createSupabaseLayoutAuthAdapter(): LayoutAuthContextPort {
           .select('id, plan_tier, status')
           .eq('user_id', authUser.id)
 
-        const hasPaidSubscription = (subs ?? []).some((s) => isPaidSubscription(s.plan_tier, s.status))
+        const hasPaidSubscription = (subs ?? []).some((s) =>
+          isPaidSubscription(s.plan_tier, s.status)
+        )
 
         return {
           isLoggedIn: true,
@@ -62,7 +77,9 @@ export function createSupabaseLayoutAuthAdapter(): LayoutAuthContextPort {
 
 export function createSupabaseDeleteAccountAdapter(): DeleteAccountPort {
   return {
-    async deleteCurrentUser(args: DeleteAccountRequest): Promise<DeleteAccountResult> {
+    async deleteCurrentUser(
+      args: DeleteAccountRequest
+    ): Promise<DeleteAccountResult> {
       const { locals, request, cookies } = args
 
       let supabase
@@ -87,7 +104,11 @@ export function createSupabaseDeleteAccountAdapter(): DeleteAccountPort {
 
       const { error: deleteError } = await admin.auth.admin.deleteUser(user.id)
       if (deleteError) {
-        return { ok: false, reason: 'delete_failed', message: deleteError.message }
+        return {
+          ok: false,
+          reason: 'delete_failed',
+          message: deleteError.message
+        }
       }
 
       await supabase.auth.signOut()

@@ -262,7 +262,11 @@ describe('describeFormatters', () => {
             env: [
               {
                 name: 'DB_HOST',
-                source: { type: 'configMapKeyRef', name: 'db-config', key: 'host' }
+                source: {
+                  type: 'configMapKeyRef',
+                  name: 'db-config',
+                  key: 'host'
+                }
               }
             ]
           }
@@ -286,7 +290,11 @@ describe('describeFormatters', () => {
             env: [
               {
                 name: 'DB_PASSWORD',
-                source: { type: 'secretKeyRef', name: 'db-secret', key: 'password' }
+                source: {
+                  type: 'secretKeyRef',
+                  name: 'db-secret',
+                  key: 'password'
+                }
               }
             ]
           }

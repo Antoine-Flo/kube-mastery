@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { createSecret, encodeBase64, parseSecretManifest } from '../../../../src/core/cluster/ressources/Secret'
+import {
+  createSecret,
+  encodeBase64,
+  parseSecretManifest
+} from '../../../../src/core/cluster/ressources/Secret'
 import { decodeBase64 } from '../../helpers/utils'
 
 describe('Secret', () => {
@@ -235,7 +239,9 @@ describe('Secret', () => {
 
       expect(result.ok).toBe(true)
       if (result.ok) {
-        expect(result.value.type.type).toBe('kubernetes.io/service-account-token')
+        expect(result.value.type.type).toBe(
+          'kubernetes.io/service-account-token'
+        )
         if (result.value.type.type === 'kubernetes.io/service-account-token') {
           expect(result.value.type.serviceAccountName).toBe('sa-token-secret')
         }

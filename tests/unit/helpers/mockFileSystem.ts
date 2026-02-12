@@ -5,14 +5,19 @@
 
 import { success } from '../../../src/core/shared/result'
 import type { FileSystem } from '../../../src/core/filesystem/FileSystem'
-import { createFile as createFileNode, createDirectory } from '../../../src/core/filesystem/models'
+import {
+  createFile as createFileNode,
+  createDirectory
+} from '../../../src/core/filesystem/models'
 import type { FileSystemState } from '../../../src/core/filesystem/FileSystem'
 
 /**
  * Create a minimal mock FileSystem with default implementations
  * All methods can be overridden via the overrides parameter
  */
-export const createMockFileSystem = (overrides: Partial<FileSystem> = {}): FileSystem => ({
+export const createMockFileSystem = (
+  overrides: Partial<FileSystem> = {}
+): FileSystem => ({
   getCurrentPath: () => '/home/kube',
   changeDirectory: () => success(''),
   listDirectory: () => success([]),

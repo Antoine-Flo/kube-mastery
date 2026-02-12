@@ -105,7 +105,9 @@ describe('createDeployment', () => {
     })
 
     expect(deployment.metadata.labels).toEqual({ app: 'nginx', version: 'v1' })
-    expect(deployment.metadata.annotations).toEqual({ description: 'Test deployment' })
+    expect(deployment.metadata.annotations).toEqual({
+      description: 'Test deployment'
+    })
   })
 })
 

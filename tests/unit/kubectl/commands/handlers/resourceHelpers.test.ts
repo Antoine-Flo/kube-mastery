@@ -6,8 +6,14 @@ import {
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
-import { createEventBus, type EventBus } from '../../../../../src/core/cluster/events/EventBus'
-import { createClusterState, type ClusterState } from '../../../../../src/core/cluster/ClusterState'
+import {
+  createEventBus,
+  type EventBus
+} from '../../../../../src/core/cluster/events/EventBus'
+import {
+  createClusterState,
+  type ClusterState
+} from '../../../../../src/core/cluster/ClusterState'
 
 describe('resourceHelpers', () => {
   let eventBus: EventBus
@@ -64,7 +70,11 @@ describe('resourceHelpers', () => {
           containers: [{ name: 'main', image: 'nginx:2.0' }]
         })
 
-        const result = applyResourceWithEvents(updatedPod, clusterState, eventBus)
+        const result = applyResourceWithEvents(
+          updatedPod,
+          clusterState,
+          eventBus
+        )
 
         expect(result.ok).toBe(true)
         if (result.ok) {
@@ -140,7 +150,11 @@ describe('resourceHelpers', () => {
           data: { key: 'new' }
         })
 
-        const result = applyResourceWithEvents(updatedCm, clusterState, eventBus)
+        const result = applyResourceWithEvents(
+          updatedCm,
+          clusterState,
+          eventBus
+        )
 
         expect(result.ok).toBe(true)
         if (result.ok) {
@@ -220,7 +234,11 @@ describe('resourceHelpers', () => {
           data: { key: 'new' }
         })
 
-        const result = applyResourceWithEvents(updatedSecret, clusterState, eventBus)
+        const result = applyResourceWithEvents(
+          updatedSecret,
+          clusterState,
+          eventBus
+        )
 
         expect(result.ok).toBe(true)
         if (result.ok) {
@@ -261,7 +279,11 @@ describe('resourceHelpers', () => {
           metadata: { name: 'test', namespace: 'default' }
         } as any
 
-        const result = applyResourceWithEvents(unknownResource, clusterState, eventBus)
+        const result = applyResourceWithEvents(
+          unknownResource,
+          clusterState,
+          eventBus
+        )
 
         expect(result.ok).toBe(false)
         if (!result.ok) {
@@ -429,7 +451,11 @@ describe('resourceHelpers', () => {
           data: { new: 'data' }
         })
 
-        const result = createResourceWithEvents(newSecret, clusterState, eventBus)
+        const result = createResourceWithEvents(
+          newSecret,
+          clusterState,
+          eventBus
+        )
 
         expect(result.ok).toBe(false)
         if (!result.ok) {
@@ -446,7 +472,11 @@ describe('resourceHelpers', () => {
           metadata: { name: 'test', namespace: 'default' }
         } as any
 
-        const result = createResourceWithEvents(unknownResource, clusterState, eventBus)
+        const result = createResourceWithEvents(
+          unknownResource,
+          clusterState,
+          eventBus
+        )
 
         expect(result.ok).toBe(false)
         if (!result.ok) {

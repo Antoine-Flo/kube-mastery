@@ -17,8 +17,14 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: "Quel composant crée ou supprime réellement les Pods lors de la mise à l'échelle d'un Deployment ?",
-      options: ['Le contrôleur de Deployment directement', 'Le contrôleur de ReplicaSet', 'Le kubelet', 'Le scheduler'],
+      question:
+        "Quel composant crée ou supprime réellement les Pods lors de la mise à l'échelle d'un Deployment ?",
+      options: [
+        'Le contrôleur de Deployment directement',
+        'Le contrôleur de ReplicaSet',
+        'Le kubelet',
+        'Le scheduler'
+      ],
       correctAnswer: 1
     }
   ]

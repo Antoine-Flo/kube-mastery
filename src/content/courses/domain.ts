@@ -1,6 +1,9 @@
 import type { CourseStructure } from '../../courses/types'
 
-export function countLessonsForModule(lessonIndex: Map<string, Map<string, Set<string>>>, moduleId: string): number {
+export function countLessonsForModule(
+  lessonIndex: Map<string, Map<string, Set<string>>>,
+  moduleId: string
+): number {
   const mod = lessonIndex.get(moduleId)
   if (!mod) {
     return 0

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { reconcileInitContainers } from '../../../../src/core/cluster/initContainers/reconciler'
-import { createPod, type Pod } from '../../../../src/core/cluster/ressources/Pod'
+import {
+  createPod,
+  type Pod
+} from '../../../../src/core/cluster/ressources/Pod'
 
 describe('InitContainer Reconciler', () => {
   describe('pod without init containers', () => {
@@ -15,7 +18,9 @@ describe('InitContainer Reconciler', () => {
 
       expect(result.status.phase).toBe('Running')
 
-      const mainStatus = result.status.containerStatuses?.find((cs) => cs.name === 'main')
+      const mainStatus = result.status.containerStatuses?.find(
+        (cs) => cs.name === 'main'
+      )
       expect(mainStatus?.state).toBe('Running')
       expect(mainStatus?.ready).toBe(true)
     })
@@ -47,8 +52,12 @@ describe('InitContainer Reconciler', () => {
 
       expect(result.status.phase).toBe('Running')
 
-      const nginxStatus = result.status.containerStatuses?.find((cs) => cs.name === 'nginx')
-      const redisStatus = result.status.containerStatuses?.find((cs) => cs.name === 'redis')
+      const nginxStatus = result.status.containerStatuses?.find(
+        (cs) => cs.name === 'nginx'
+      )
+      const redisStatus = result.status.containerStatuses?.find(
+        (cs) => cs.name === 'redis'
+      )
 
       expect(nginxStatus?.state).toBe('Running')
       expect(nginxStatus?.ready).toBe(true)
@@ -70,7 +79,9 @@ describe('InitContainer Reconciler', () => {
 
       expect(result.status.phase).toBe('Failed')
 
-      const initStatus = result.status.containerStatuses?.find((cs) => cs.name === 'init')
+      const initStatus = result.status.containerStatuses?.find(
+        (cs) => cs.name === 'init'
+      )
       expect(initStatus?.state).toBe('Terminated')
     })
 
@@ -86,7 +97,9 @@ describe('InitContainer Reconciler', () => {
 
       expect(result.status.phase).toBe('Failed')
 
-      const mainStatus = result.status.containerStatuses?.find((cs) => cs.name === 'main')
+      const mainStatus = result.status.containerStatuses?.find(
+        (cs) => cs.name === 'main'
+      )
       // Regular container should not have started
       expect(mainStatus?.state).not.toBe('Running')
     })
@@ -112,7 +125,9 @@ describe('InitContainer Reconciler', () => {
 
       expect(result.status.phase).toBe('Failed')
 
-      const initStatus = result.status.containerStatuses?.find((cs) => cs.name === 'init')
+      const initStatus = result.status.containerStatuses?.find(
+        (cs) => cs.name === 'init'
+      )
       expect(initStatus?.state).toBe('Terminated')
     })
   })
@@ -137,10 +152,14 @@ describe('InitContainer Reconciler', () => {
 
       expect(result.status.phase).toBe('Running')
 
-      const initStatus = result.status.containerStatuses?.find((cs) => cs.name === 'init')
+      const initStatus = result.status.containerStatuses?.find(
+        (cs) => cs.name === 'init'
+      )
       expect(initStatus?.state).toBe('Terminated')
 
-      const mainStatus = result.status.containerStatuses?.find((cs) => cs.name === 'main')
+      const mainStatus = result.status.containerStatuses?.find(
+        (cs) => cs.name === 'main'
+      )
       expect(mainStatus?.state).toBe('Running')
       expect(mainStatus?.ready).toBe(true)
     })
@@ -215,8 +234,12 @@ describe('InitContainer Reconciler', () => {
 
       expect(result.status.phase).toBe('Running')
 
-      const init1Status = result.status.containerStatuses?.find((cs) => cs.name === 'init-1')
-      const init2Status = result.status.containerStatuses?.find((cs) => cs.name === 'init-2')
+      const init1Status = result.status.containerStatuses?.find(
+        (cs) => cs.name === 'init-1'
+      )
+      const init2Status = result.status.containerStatuses?.find(
+        (cs) => cs.name === 'init-2'
+      )
 
       expect(init1Status?.state).toBe('Terminated')
       expect(init2Status?.state).toBe('Terminated')
@@ -251,9 +274,15 @@ describe('InitContainer Reconciler', () => {
 
       expect(result.status.phase).toBe('Failed')
 
-      const init1Status = result.status.containerStatuses?.find((cs) => cs.name === 'init-1')
-      const init2Status = result.status.containerStatuses?.find((cs) => cs.name === 'init-2')
-      const init3Status = result.status.containerStatuses?.find((cs) => cs.name === 'init-3')
+      const init1Status = result.status.containerStatuses?.find(
+        (cs) => cs.name === 'init-1'
+      )
+      const init2Status = result.status.containerStatuses?.find(
+        (cs) => cs.name === 'init-2'
+      )
+      const init3Status = result.status.containerStatuses?.find(
+        (cs) => cs.name === 'init-3'
+      )
 
       // First completed, second failed, third never ran
       expect(init1Status?.state).toBe('Terminated')

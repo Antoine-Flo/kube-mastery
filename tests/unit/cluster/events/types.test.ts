@@ -72,7 +72,12 @@ describe('Event Types', () => {
         containers: [{ name: 'main', image: 'nginx:1.25' }]
       })
 
-      const event = createPodUpdatedEvent('test-pod', 'default', updatedPod, testPod)
+      const event = createPodUpdatedEvent(
+        'test-pod',
+        'default',
+        updatedPod,
+        testPod
+      )
 
       expect(event.type).toBe('PodUpdated')
       expect(event.payload.name).toBe('test-pod')
@@ -88,7 +93,13 @@ describe('Event Types', () => {
         labels: { app: 'web' }
       })
 
-      const event = createPodLabeledEvent('test-pod', 'default', { app: 'web' }, labeledPod, testPod)
+      const event = createPodLabeledEvent(
+        'test-pod',
+        'default',
+        { app: 'web' },
+        labeledPod,
+        testPod
+      )
 
       expect(event.type).toBe('PodLabeled')
       expect(event.payload.labels).toEqual({ app: 'web' })
@@ -102,7 +113,13 @@ describe('Event Types', () => {
         annotations: { note: 'important' }
       })
 
-      const event = createPodAnnotatedEvent('test-pod', 'default', { note: 'important' }, annotatedPod, testPod)
+      const event = createPodAnnotatedEvent(
+        'test-pod',
+        'default',
+        { note: 'important' },
+        annotatedPod,
+        testPod
+      )
 
       expect(event.type).toBe('PodAnnotated')
       expect(event.payload.annotations).toEqual({ note: 'important' })
@@ -118,7 +135,11 @@ describe('Event Types', () => {
     })
 
     it('should create ConfigMapDeleted event', () => {
-      const event = createConfigMapDeletedEvent('test-config', 'default', testConfigMap)
+      const event = createConfigMapDeletedEvent(
+        'test-config',
+        'default',
+        testConfigMap
+      )
 
       expect(event.type).toBe('ConfigMapDeleted')
       expect(event.payload.name).toBe('test-config')
@@ -132,7 +153,12 @@ describe('Event Types', () => {
         data: { key: 'new-value' }
       })
 
-      const event = createConfigMapUpdatedEvent('test-config', 'default', updatedConfigMap, testConfigMap)
+      const event = createConfigMapUpdatedEvent(
+        'test-config',
+        'default',
+        updatedConfigMap,
+        testConfigMap
+      )
 
       expect(event.type).toBe('ConfigMapUpdated')
       expect(event.payload.configMap).toEqual(updatedConfigMap)
@@ -189,7 +215,11 @@ describe('Event Types', () => {
     })
 
     it('should create SecretDeleted event', () => {
-      const event = createSecretDeletedEvent('test-secret', 'default', testSecret)
+      const event = createSecretDeletedEvent(
+        'test-secret',
+        'default',
+        testSecret
+      )
 
       expect(event.type).toBe('SecretDeleted')
       expect(event.payload.name).toBe('test-secret')
@@ -204,7 +234,12 @@ describe('Event Types', () => {
         data: { password: 'new-secret' }
       })
 
-      const event = createSecretUpdatedEvent('test-secret', 'default', updatedSecret, testSecret)
+      const event = createSecretUpdatedEvent(
+        'test-secret',
+        'default',
+        updatedSecret,
+        testSecret
+      )
 
       expect(event.type).toBe('SecretUpdated')
       expect(event.payload.secret).toEqual(updatedSecret)
@@ -250,7 +285,9 @@ describe('Event Types', () => {
       )
 
       expect(event.type).toBe('SecretAnnotated')
-      expect(event.payload.annotations).toEqual({ 'rotation-date': '2024-01-01' })
+      expect(event.payload.annotations).toEqual({
+        'rotation-date': '2024-01-01'
+      })
     })
   })
 

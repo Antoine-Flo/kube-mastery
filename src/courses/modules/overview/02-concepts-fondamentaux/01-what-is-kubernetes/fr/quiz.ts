@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: "Laquelle des capacités suivantes n'est PAS fournie par Kubernetes ?",
+      question:
+        "Laquelle des capacités suivantes n'est PAS fournie par Kubernetes ?",
       options: [
         'Découverte de services et équilibrage de charge',
         'Déploiements et retours en arrière automatisés',

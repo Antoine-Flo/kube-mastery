@@ -22,7 +22,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'terminal-command',
-      question: "Créez un deployment nommé nginx en utilisant l'approche de commande impérative",
+      question:
+        "Créez un deployment nommé nginx en utilisant l'approche de commande impérative",
       expectedCommand: 'kubectl create deployment nginx --image nginx',
       validationMode: 'contains',
       normalizeCommand: true
@@ -30,7 +31,8 @@ export const quiz: Quiz = {
     {
       id: 'q3',
       type: 'multiple-choice',
-      question: "Quelle est l'approche recommandée pour gérer les objets Kubernetes en production ?",
+      question:
+        "Quelle est l'approche recommandée pour gérer les objets Kubernetes en production ?",
       options: [
         'Seulement les commandes impératives',
         "Seulement la configuration d'objet déclarative",

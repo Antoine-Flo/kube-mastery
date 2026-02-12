@@ -6,7 +6,9 @@
 import { Terminal as XTermTerminal } from '@xterm/xterm'
 import type { TerminalRenderer } from './TerminalRenderer'
 
-export const createXTermRenderer = (terminal: XTermTerminal): TerminalRenderer => {
+export const createXTermRenderer = (
+  terminal: XTermTerminal
+): TerminalRenderer => {
   return {
     write: (text: string) => {
       terminal.write(text)

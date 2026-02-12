@@ -22,11 +22,19 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const type = body.type
   const message = typeof body.message === 'string' ? body.message.trim() : ''
 
-  if (!type || !CONTACT_TYPES.includes(type as (typeof CONTACT_TYPES)[number])) {
-    return new Response(JSON.stringify({ error: 'Invalid or missing type (support, suggestion, other)' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' }
-    })
+  if (
+    !type ||
+    !CONTACT_TYPES.includes(type as (typeof CONTACT_TYPES)[number])
+  ) {
+    return new Response(
+      JSON.stringify({
+        error: 'Invalid or missing type (support, suggestion, other)'
+      }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    )
   }
   if (!message) {
     return new Response(JSON.stringify({ error: 'Message is required' }), {
@@ -49,7 +57,10 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
   const { error: insertError } = await supabase.from('messages').insert({
     type,
-    lesson_id: typeof body.lessonId === 'string' && body.lessonId.trim() ? body.lessonId.trim() : null,
+    lesson_id:
+      typeof body.lessonId === 'string' && body.lessonId.trim()
+        ? body.lessonId.trim()
+        : null,
     content: { message },
     user_id: user.id
   })

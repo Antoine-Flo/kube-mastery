@@ -57,7 +57,12 @@ const serviceRepo = createResourceRepository<Service>('Service')
  */
 const createRepoHandler = <T>(
   repo: any,
-  stateKey: 'configMaps' | 'secrets' | 'replicaSets' | 'deployments' | 'services'
+  stateKey:
+    | 'configMaps'
+    | 'secrets'
+    | 'replicaSets'
+    | 'deployments'
+    | 'services'
 ) => ({
   created: (state: ClusterStateData, resource: T) => ({
     ...state,
@@ -66,12 +71,26 @@ const createRepoHandler = <T>(
 
   deleted: (state: ClusterStateData, name: string, namespace: string) => {
     const result = repo.remove(state[stateKey] as any, name, namespace)
-    return result.ok && result.collection ? { ...state, [stateKey]: result.collection } : state
+    return result.ok && result.collection
+      ? { ...state, [stateKey]: result.collection }
+      : state
   },
 
-  updated: (state: ClusterStateData, name: string, namespace: string, resource: T) => {
-    const result = repo.update(state[stateKey] as any, name, namespace, () => resource)
-    return result.ok && result.collection ? { ...state, [stateKey]: result.collection } : state
+  updated: (
+    state: ClusterStateData,
+    name: string,
+    namespace: string,
+    resource: T
+  ) => {
+    const result = repo.update(
+      state[stateKey] as any,
+      name,
+      namespace,
+      () => resource
+    )
+    return result.ok && result.collection
+      ? { ...state, [stateKey]: result.collection }
+      : state
   }
 })
 
@@ -86,7 +105,12 @@ const createPodHandler = () => ({
     return result.ok && result.state ? result.state : state
   },
 
-  updated: (state: ClusterStateData, name: string, namespace: string, pod: any) => {
+  updated: (
+    state: ClusterStateData,
+    name: string,
+    namespace: string,
+    pod: any
+  ) => {
     const result = updatePod(state, name, namespace, () => pod)
     return result.ok && result.state ? result.state : state
   }
@@ -103,93 +127,233 @@ const serviceHandler = createRepoHandler(serviceRepo, 'services')
 
 // ─── Pod Handlers ────────────────────────────────────────────────────────
 
-export const handlePodCreated = (state: ClusterStateData, event: PodCreatedEvent) => {
+export const handlePodCreated = (
+  state: ClusterStateData,
+  event: PodCreatedEvent
+) => {
   // Reconcile init containers before adding pod to state
   const reconciledPod = reconcileInitContainers(event.payload.pod)
   return podHandler.created(state, reconciledPod)
 }
 
-export const handlePodDeleted = (state: ClusterStateData, event: PodDeletedEvent) =>
-  podHandler.deleted(state, event.payload.name, event.payload.namespace)
+export const handlePodDeleted = (
+  state: ClusterStateData,
+  event: PodDeletedEvent
+) => podHandler.deleted(state, event.payload.name, event.payload.namespace)
 
-export const handlePodUpdated = (state: ClusterStateData, event: PodUpdatedEvent) =>
-  podHandler.updated(state, event.payload.name, event.payload.namespace, event.payload.pod)
+export const handlePodUpdated = (
+  state: ClusterStateData,
+  event: PodUpdatedEvent
+) =>
+  podHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.pod
+  )
 
-export const handlePodLabeled = (state: ClusterStateData, event: PodLabeledEvent) =>
-  podHandler.updated(state, event.payload.name, event.payload.namespace, event.payload.pod)
+export const handlePodLabeled = (
+  state: ClusterStateData,
+  event: PodLabeledEvent
+) =>
+  podHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.pod
+  )
 
-export const handlePodAnnotated = (state: ClusterStateData, event: PodAnnotatedEvent) =>
-  podHandler.updated(state, event.payload.name, event.payload.namespace, event.payload.pod)
+export const handlePodAnnotated = (
+  state: ClusterStateData,
+  event: PodAnnotatedEvent
+) =>
+  podHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.pod
+  )
 
 // ─── ConfigMap Handlers ──────────────────────────────────────────────────
 
-export const handleConfigMapCreated = (state: ClusterStateData, event: ConfigMapCreatedEvent) =>
-  configMapHandler.created(state, event.payload.configMap)
+export const handleConfigMapCreated = (
+  state: ClusterStateData,
+  event: ConfigMapCreatedEvent
+) => configMapHandler.created(state, event.payload.configMap)
 
-export const handleConfigMapDeleted = (state: ClusterStateData, event: ConfigMapDeletedEvent) =>
+export const handleConfigMapDeleted = (
+  state: ClusterStateData,
+  event: ConfigMapDeletedEvent
+) =>
   configMapHandler.deleted(state, event.payload.name, event.payload.namespace)
 
-export const handleConfigMapUpdated = (state: ClusterStateData, event: ConfigMapUpdatedEvent) =>
-  configMapHandler.updated(state, event.payload.name, event.payload.namespace, event.payload.configMap)
+export const handleConfigMapUpdated = (
+  state: ClusterStateData,
+  event: ConfigMapUpdatedEvent
+) =>
+  configMapHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.configMap
+  )
 
-export const handleConfigMapLabeled = (state: ClusterStateData, event: ConfigMapLabeledEvent) =>
-  configMapHandler.updated(state, event.payload.name, event.payload.namespace, event.payload.configMap)
+export const handleConfigMapLabeled = (
+  state: ClusterStateData,
+  event: ConfigMapLabeledEvent
+) =>
+  configMapHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.configMap
+  )
 
-export const handleConfigMapAnnotated = (state: ClusterStateData, event: ConfigMapAnnotatedEvent) =>
-  configMapHandler.updated(state, event.payload.name, event.payload.namespace, event.payload.configMap)
+export const handleConfigMapAnnotated = (
+  state: ClusterStateData,
+  event: ConfigMapAnnotatedEvent
+) =>
+  configMapHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.configMap
+  )
 
 // ─── Secret Handlers ─────────────────────────────────────────────────────
 
-export const handleSecretCreated = (state: ClusterStateData, event: SecretCreatedEvent) =>
-  secretHandler.created(state, event.payload.secret)
+export const handleSecretCreated = (
+  state: ClusterStateData,
+  event: SecretCreatedEvent
+) => secretHandler.created(state, event.payload.secret)
 
-export const handleSecretDeleted = (state: ClusterStateData, event: SecretDeletedEvent) =>
-  secretHandler.deleted(state, event.payload.name, event.payload.namespace)
+export const handleSecretDeleted = (
+  state: ClusterStateData,
+  event: SecretDeletedEvent
+) => secretHandler.deleted(state, event.payload.name, event.payload.namespace)
 
-export const handleSecretUpdated = (state: ClusterStateData, event: SecretUpdatedEvent) =>
-  secretHandler.updated(state, event.payload.name, event.payload.namespace, event.payload.secret)
+export const handleSecretUpdated = (
+  state: ClusterStateData,
+  event: SecretUpdatedEvent
+) =>
+  secretHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.secret
+  )
 
-export const handleSecretLabeled = (state: ClusterStateData, event: SecretLabeledEvent) =>
-  secretHandler.updated(state, event.payload.name, event.payload.namespace, event.payload.secret)
+export const handleSecretLabeled = (
+  state: ClusterStateData,
+  event: SecretLabeledEvent
+) =>
+  secretHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.secret
+  )
 
-export const handleSecretAnnotated = (state: ClusterStateData, event: SecretAnnotatedEvent) =>
-  secretHandler.updated(state, event.payload.name, event.payload.namespace, event.payload.secret)
+export const handleSecretAnnotated = (
+  state: ClusterStateData,
+  event: SecretAnnotatedEvent
+) =>
+  secretHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.secret
+  )
 
 // ─── ReplicaSet Handlers ──────────────────────────────────────────────────
 
-export const handleReplicaSetCreated = (state: ClusterStateData, event: ReplicaSetCreatedEvent) =>
-  replicaSetHandler.created(state, event.payload.replicaSet)
+export const handleReplicaSetCreated = (
+  state: ClusterStateData,
+  event: ReplicaSetCreatedEvent
+) => replicaSetHandler.created(state, event.payload.replicaSet)
 
-export const handleReplicaSetDeleted = (state: ClusterStateData, event: ReplicaSetDeletedEvent) =>
+export const handleReplicaSetDeleted = (
+  state: ClusterStateData,
+  event: ReplicaSetDeletedEvent
+) =>
   replicaSetHandler.deleted(state, event.payload.name, event.payload.namespace)
 
-export const handleReplicaSetUpdated = (state: ClusterStateData, event: ReplicaSetUpdatedEvent) =>
-  replicaSetHandler.updated(state, event.payload.name, event.payload.namespace, event.payload.replicaSet)
+export const handleReplicaSetUpdated = (
+  state: ClusterStateData,
+  event: ReplicaSetUpdatedEvent
+) =>
+  replicaSetHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.replicaSet
+  )
 
 // ─── Deployment Handlers ──────────────────────────────────────────────────
 
-export const handleDeploymentCreated = (state: ClusterStateData, event: DeploymentCreatedEvent) =>
-  deploymentHandler.created(state, event.payload.deployment)
+export const handleDeploymentCreated = (
+  state: ClusterStateData,
+  event: DeploymentCreatedEvent
+) => deploymentHandler.created(state, event.payload.deployment)
 
-export const handleDeploymentDeleted = (state: ClusterStateData, event: DeploymentDeletedEvent) =>
+export const handleDeploymentDeleted = (
+  state: ClusterStateData,
+  event: DeploymentDeletedEvent
+) =>
   deploymentHandler.deleted(state, event.payload.name, event.payload.namespace)
 
-export const handleDeploymentUpdated = (state: ClusterStateData, event: DeploymentUpdatedEvent) =>
-  deploymentHandler.updated(state, event.payload.name, event.payload.namespace, event.payload.deployment)
+export const handleDeploymentUpdated = (
+  state: ClusterStateData,
+  event: DeploymentUpdatedEvent
+) =>
+  deploymentHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.deployment
+  )
 
 // ─── Service Handlers ──────────────────────────────────────────────────────
 
-export const handleServiceCreated = (state: ClusterStateData, event: ServiceCreatedEvent) =>
-  serviceHandler.created(state, event.payload.service)
+export const handleServiceCreated = (
+  state: ClusterStateData,
+  event: ServiceCreatedEvent
+) => serviceHandler.created(state, event.payload.service)
 
-export const handleServiceDeleted = (state: ClusterStateData, event: ServiceDeletedEvent) =>
-  serviceHandler.deleted(state, event.payload.name, event.payload.namespace)
+export const handleServiceDeleted = (
+  state: ClusterStateData,
+  event: ServiceDeletedEvent
+) => serviceHandler.deleted(state, event.payload.name, event.payload.namespace)
 
-export const handleServiceUpdated = (state: ClusterStateData, event: ServiceUpdatedEvent) =>
-  serviceHandler.updated(state, event.payload.name, event.payload.namespace, event.payload.service)
+export const handleServiceUpdated = (
+  state: ClusterStateData,
+  event: ServiceUpdatedEvent
+) =>
+  serviceHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.service
+  )
 
-export const handleServiceLabeled = (state: ClusterStateData, event: ServiceLabeledEvent) =>
-  serviceHandler.updated(state, event.payload.name, event.payload.namespace, event.payload.service)
+export const handleServiceLabeled = (
+  state: ClusterStateData,
+  event: ServiceLabeledEvent
+) =>
+  serviceHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.service
+  )
 
-export const handleServiceAnnotated = (state: ClusterStateData, event: ServiceAnnotatedEvent) =>
-  serviceHandler.updated(state, event.payload.name, event.payload.namespace, event.payload.service)
+export const handleServiceAnnotated = (
+  state: ClusterStateData,
+  event: ServiceAnnotatedEvent
+) =>
+  serviceHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.service
+  )

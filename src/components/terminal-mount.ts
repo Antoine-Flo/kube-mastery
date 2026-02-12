@@ -8,7 +8,10 @@ import {
   destroyEmulatedEnvironment
 } from '../core/emulatedEnvironment/EmulatedEnvironmentManager'
 import type { EmulatedEnvironment } from '../core/emulatedEnvironment/EmulatedEnvironment'
-import { clusterStateData as demoClusterStateData, fsConfig as demoFsConfig } from '../courses/seeds/demo'
+import {
+  clusterStateData as demoClusterStateData,
+  fsConfig as demoFsConfig
+} from '../courses/seeds/demo'
 import { getSeed } from '../courses/seeds/getSeed'
 import { createFilesystemFromConfig } from '../core/filesystem/debianFileSystem'
 import { createFileSystem } from '../core/filesystem/FileSystem'
@@ -24,7 +27,9 @@ import {
 import { createLogger } from '../logger/Logger'
 
 function getTheme(): 'dark' | 'light' {
-  return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'
+  return document.documentElement.getAttribute('data-theme') === 'light'
+    ? 'light'
+    : 'dark'
 }
 
 export interface MountTerminalOptions {
@@ -47,7 +52,10 @@ export interface MountTerminalOptions {
 }
 
 /** Mounts xterm, returns cleanup (detach + destroy env). */
-export function mountTerminal(container: HTMLElement, options: MountTerminalOptions = {}): () => void {
+export function mountTerminal(
+  container: HTMLElement,
+  options: MountTerminalOptions = {}
+): () => void {
   const {
     rows = 20,
     scrollback = 1000,
@@ -63,7 +71,9 @@ export function mountTerminal(container: HTMLElement, options: MountTerminalOpti
   const env: EmulatedEnvironment =
     providedEnv ??
     (() => {
-      const seed = seedName ? getSeed(seedName) : { clusterStateData: demoClusterStateData, fsConfig: demoFsConfig }
+      const seed = seedName
+        ? getSeed(seedName)
+        : { clusterStateData: demoClusterStateData, fsConfig: demoFsConfig }
       return createEmulatedEnvironment({
         clusterStateData: seed.clusterStateData,
         filesystemState: createFilesystemFromConfig(seed.fsConfig ?? {})
@@ -90,7 +100,11 @@ export function mountTerminal(container: HTMLElement, options: MountTerminalOpti
           return
         }
         try {
-          const fileSystem = createFileSystem(env.fileSystemState, env.eventBus, { mutable: true })
+          const fileSystem = createFileSystem(
+            env.fileSystemState,
+            env.eventBus,
+            { mutable: true }
+          )
           dispatcher = createCommandDispatcher({
             fileSystem,
             editorModal,

@@ -2,8 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { handleScale } from '../../../../../src/core/kubectl/commands/handlers/scale'
 import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
 import { createReplicaSet } from '../../../../../src/core/cluster/ressources/ReplicaSet'
-import { createEventBus, type EventBus } from '../../../../../src/core/cluster/events/EventBus'
-import { createClusterState, type ClusterState } from '../../../../../src/core/cluster/ClusterState'
+import {
+  createEventBus,
+  type EventBus
+} from '../../../../../src/core/cluster/events/EventBus'
+import {
+  createClusterState,
+  type ClusterState
+} from '../../../../../src/core/cluster/ClusterState'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 
 describe('kubectl scale handler', () => {
@@ -15,7 +21,9 @@ describe('kubectl scale handler', () => {
     clusterState = createClusterState(eventBus)
   })
 
-  const createParsedCommand = (overrides: Partial<ParsedCommand> = {}): ParsedCommand => ({
+  const createParsedCommand = (
+    overrides: Partial<ParsedCommand> = {}
+  ): ParsedCommand => ({
     action: 'scale',
     resource: 'deployments',
     flags: {},

@@ -70,13 +70,16 @@
     transform: translateX(var(--cube-move)) rotate(-90deg) scale(0.5);
   }
   50% {
-    transform: translateX(var(--cube-move)) translateY(var(--cube-move)) rotate(-179deg);
+    transform: translateX(var(--cube-move)) translateY(var(--cube-move))
+      rotate(-179deg);
   }
   50.1% {
-    transform: translateX(var(--cube-move)) translateY(var(--cube-move)) rotate(-180deg);
+    transform: translateX(var(--cube-move)) translateY(var(--cube-move))
+      rotate(-180deg);
   }
   75% {
-    transform: translateX(0px) translateY(var(--cube-move)) rotate(-270deg) scale(0.5);
+    transform: translateX(0px) translateY(var(--cube-move)) rotate(-270deg)
+      scale(0.5);
   }
   100% {
     transform: rotate(-360deg);

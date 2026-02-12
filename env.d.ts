@@ -13,7 +13,8 @@ interface CloudflareEnv {
   SUPABASE_SERVICE_ROLE_KEY?: string
 }
 
-type AstroCloudflareRuntime = import('@astrojs/cloudflare').Runtime<CloudflareEnv>
+type AstroCloudflareRuntime =
+  import('@astrojs/cloudflare').Runtime<CloudflareEnv>
 
 declare namespace App {
   interface Locals extends AstroCloudflareRuntime {}

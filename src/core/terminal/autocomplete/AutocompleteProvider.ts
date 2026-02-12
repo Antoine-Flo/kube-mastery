@@ -27,5 +27,9 @@ export abstract class AutocompleteProvider {
    * @param currentToken - Token actuellement en cours de frappe
    * @param context - Contexte (clusterState, fileSystem)
    */
-  abstract complete(tokens: string[], currentToken: string, context: AutocompleteContext): CompletionResult[]
+  abstract complete(
+    tokens: string[],
+    currentToken: string,
+    context: AutocompleteContext
+  ): CompletionResult[]
 }

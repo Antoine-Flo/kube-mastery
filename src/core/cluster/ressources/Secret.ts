@@ -94,13 +94,19 @@ export const parseSecretManifest = (data: unknown): Result<Secret> => {
 
   if (!result.success) {
     const firstError = result.error.issues[0]
-    return error(`Invalid Secret manifest: ${firstError.path.join('.')}: ${firstError.message}`)
+    return error(
+      `Invalid Secret manifest: ${firstError.path.join('.')}: ${firstError.message}`
+    )
   }
 
   const manifest = result.data
 
   // Normalize type to ADT format
-  const secretType = convertYamlSecretType(manifest.type, manifest.metadata.name, manifest.data)
+  const secretType = convertYamlSecretType(
+    manifest.type,
+    manifest.metadata.name,
+    manifest.data
+  )
 
   const secret: Secret = {
     apiVersion: 'v1',
@@ -108,9 +114,12 @@ export const parseSecretManifest = (data: unknown): Result<Secret> => {
     metadata: {
       name: manifest.metadata.name,
       namespace: manifest.metadata.namespace,
-      creationTimestamp: manifest.metadata.creationTimestamp || new Date().toISOString(),
+      creationTimestamp:
+        manifest.metadata.creationTimestamp || new Date().toISOString(),
       ...(manifest.metadata.labels && { labels: manifest.metadata.labels }),
-      ...(manifest.metadata.annotations && { annotations: manifest.metadata.annotations })
+      ...(manifest.metadata.annotations && {
+        annotations: manifest.metadata.annotations
+      })
     },
     type: secretType,
     data: manifest.data

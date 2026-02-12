@@ -4,7 +4,10 @@ import { createCdHandler } from '../../../../../src/core/shell/commands/handlers
 import { createLsHandler } from '../../../../../src/core/shell/commands/handlers/navigation/ls'
 import { createPwdHandler } from '../../../../../src/core/shell/commands/handlers/navigation/pwd'
 import { createMockFileSystem } from '../../../helpers/mockFileSystem'
-import { createFile as createFileNode, createDirectory } from '../../../../../src/core/filesystem/models'
+import {
+  createFile as createFileNode,
+  createDirectory
+} from '../../../../../src/core/filesystem/models'
 
 describe('Navigation Handlers', () => {
   describe('pwd', () => {
@@ -159,7 +162,10 @@ describe('Navigation Handlers', () => {
     it('should list directory contents', () => {
       const fileSystem = createMockFileSystem({
         listDirectory: () =>
-          success([createFileNode('file1', '/home/kube/file1'), createDirectory('dir1', '/home/kube/dir1')])
+          success([
+            createFileNode('file1', '/home/kube/file1'),
+            createDirectory('dir1', '/home/kube/dir1')
+          ])
       })
       const handler = createLsHandler(fileSystem)
       const result = handler.execute([], {})
@@ -173,7 +179,8 @@ describe('Navigation Handlers', () => {
 
     it('should list with -l flag (detailed)', () => {
       const fileSystem = createMockFileSystem({
-        listDirectory: () => success([createFileNode('file1', '/home/kube/file1', 'test')])
+        listDirectory: () =>
+          success([createFileNode('file1', '/home/kube/file1', 'test')])
       })
       const handler = createLsHandler(fileSystem)
       const result = handler.execute([], { l: true })
@@ -241,10 +248,14 @@ describe('Navigation Handlers', () => {
       const fileSystem = createMockFileSystem({
         listDirectory: (path?: string) => {
           if (path === 'file1') {
-            return success([createFileNode('file1', '/home/kube/file1', 'content1')])
+            return success([
+              createFileNode('file1', '/home/kube/file1', 'content1')
+            ])
           }
           if (path === 'file2') {
-            return success([createFileNode('file2', '/home/kube/file2', 'content2')])
+            return success([
+              createFileNode('file2', '/home/kube/file2', 'content2')
+            ])
           }
           return success([])
         }

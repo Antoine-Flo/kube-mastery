@@ -7,7 +7,12 @@ const json = (body: { error: string; message: string }, status: number) =>
     headers: { 'Content-Type': 'application/json' }
   })
 
-export const POST: APIRoute = async ({ request, cookies, redirect, locals }) => {
+export const POST: APIRoute = async ({
+  request,
+  cookies,
+  redirect,
+  locals
+}) => {
   let supabase
   try {
     supabase = getSupabaseServer(locals, request, cookies)

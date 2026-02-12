@@ -8759,7 +8759,13 @@
             "type": "string"
           }
         },
-        "required": ["type", "status", "lastTransitionTime", "reason", "message"],
+        "required": [
+          "type",
+          "status",
+          "lastTransitionTime",
+          "reason",
+          "message"
+        ],
         "type": "object"
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions": {

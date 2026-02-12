@@ -3,8 +3,14 @@ import { handleDelete } from '../../../../../src/core/kubectl/commands/handlers/
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
-import { createEventBus, type EventBus } from '../../../../../src/core/cluster/events/EventBus'
-import { createClusterState, type ClusterState } from '../../../../../src/core/cluster/ClusterState'
+import {
+  createEventBus,
+  type EventBus
+} from '../../../../../src/core/cluster/events/EventBus'
+import {
+  createClusterState,
+  type ClusterState
+} from '../../../../../src/core/cluster/ClusterState'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 
 describe('kubectl delete handler', () => {
@@ -16,7 +22,9 @@ describe('kubectl delete handler', () => {
     clusterState = createClusterState(eventBus)
   })
 
-  const createParsedCommand = (overrides: Partial<ParsedCommand> = {}): ParsedCommand => ({
+  const createParsedCommand = (
+    overrides: Partial<ParsedCommand> = {}
+  ): ParsedCommand => ({
     action: 'delete',
     resource: 'pods',
     flags: {},

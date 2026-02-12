@@ -58,7 +58,11 @@ describe('ReplicaSet OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(replicaSet, 'apps/v1', 'ReplicaSet')
+      const result = validator.validateResource(
+        replicaSet,
+        'apps/v1',
+        'ReplicaSet'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -99,7 +103,11 @@ describe('ReplicaSet OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(replicaSet, 'apps/v1', 'ReplicaSet')
+      const result = validator.validateResource(
+        replicaSet,
+        'apps/v1',
+        'ReplicaSet'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -147,7 +155,11 @@ describe('ReplicaSet OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(replicaSet, 'apps/v1', 'ReplicaSet')
+      const result = validator.validateResource(
+        replicaSet,
+        'apps/v1',
+        'ReplicaSet'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -197,7 +209,11 @@ describe('ReplicaSet OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(replicaSet, 'apps/v1', 'ReplicaSet')
+      const result = validator.validateResource(
+        replicaSet,
+        'apps/v1',
+        'ReplicaSet'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -246,7 +262,11 @@ describe('ReplicaSet OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(replicaSet, 'apps/v1', 'ReplicaSet')
+      const result = validator.validateResource(
+        replicaSet,
+        'apps/v1',
+        'ReplicaSet'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -305,7 +325,11 @@ describe('ReplicaSet OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(invalidReplicaSet, 'apps/v1', 'ReplicaSet')
+      const result = validator.validateResource(
+        invalidReplicaSet,
+        'apps/v1',
+        'ReplicaSet'
+      )
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.valid).toBe(false)
@@ -351,7 +375,11 @@ describe('ReplicaSet OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(invalidReplicaSet, 'apps/v1', 'ReplicaSet')
+      const result = validator.validateResource(
+        invalidReplicaSet,
+        'apps/v1',
+        'ReplicaSet'
+      )
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.valid).toBe(false)
@@ -389,7 +417,11 @@ describe('ReplicaSet OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(invalidReplicaSet, 'apps/v1', 'ReplicaSet')
+      const result = validator.validateResource(
+        invalidReplicaSet,
+        'apps/v1',
+        'ReplicaSet'
+      )
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.valid).toBe(false)

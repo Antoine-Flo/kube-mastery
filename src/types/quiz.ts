@@ -1,4 +1,8 @@
-export type QuestionType = 'multiple-choice' | 'terminal-command' | 'command' | 'order'
+export type QuestionType =
+  | 'multiple-choice'
+  | 'terminal-command'
+  | 'command'
+  | 'order'
 
 export interface BaseQuestion {
   id: string
@@ -32,7 +36,11 @@ export interface OrderQuestion extends BaseQuestion {
   correctOrder: number[]
 }
 
-export type Question = MultipleChoiceQuestion | TerminalCommandQuestion | CommandQuestion | OrderQuestion
+export type Question =
+  | MultipleChoiceQuestion
+  | TerminalCommandQuestion
+  | CommandQuestion
+  | OrderQuestion
 
 export interface Quiz {
   questions: Question[]

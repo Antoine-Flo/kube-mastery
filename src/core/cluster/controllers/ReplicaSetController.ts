@@ -7,7 +7,11 @@
 
 import type { EventBus } from '../events/EventBus'
 import type { ClusterEvent } from '../events/types'
-import { createPodCreatedEvent, createPodDeletedEvent, createReplicaSetUpdatedEvent } from '../events/types'
+import {
+  createPodCreatedEvent,
+  createPodDeletedEvent,
+  createReplicaSetUpdatedEvent
+} from '../events/types'
 import type { Container, Pod } from '../ressources/Pod'
 import { createPod } from '../ressources/Pod'
 import type { ReplicaSet, ReplicaSetStatus } from '../ressources/ReplicaSet'
@@ -38,7 +42,8 @@ const WATCHED_EVENTS: ClusterEventType[] = [
 /**
  * Create a resource key from namespace and name
  */
-const makeKey = (namespace: string, name: string): string => `${namespace}/${name}`
+const makeKey = (namespace: string, name: string): string =>
+  `${namespace}/${name}`
 
 /**
  * Parse a resource key into namespace and name
@@ -120,7 +125,11 @@ export class ReplicaSetController implements Controller {
    */
   start(): void {
     // Subscribe to events - they will enqueue keys
-    this.unsubscribe = subscribeToEvents(this.eventBus, WATCHED_EVENTS, (event) => this.handleEvent(event))
+    this.unsubscribe = subscribeToEvents(
+      this.eventBus,
+      WATCHED_EVENTS,
+      (event) => this.handleEvent(event)
+    )
 
     // Start processing the work queue
     this.workQueue.start((key) => this.reconcile(key))
@@ -157,7 +166,10 @@ export class ReplicaSetController implements Controller {
       case 'PodCreated':
       case 'PodDeleted':
         // Find and enqueue the owning ReplicaSet
-        const pod = event.type === 'PodCreated' ? event.payload.pod : event.payload.deletedPod
+        const pod =
+          event.type === 'PodCreated'
+            ? event.payload.pod
+            : event.payload.deletedPod
         this.enqueueOwnerReplicaSet(pod)
         break
     }
@@ -176,7 +188,9 @@ export class ReplicaSetController implements Controller {
    */
   private enqueueOwnerReplicaSet(pod: Pod): void {
     const state = this.getState()
-    const ownerRs = findOwnerByRef(pod, 'ReplicaSet', () => state.getReplicaSets(pod.metadata.namespace))
+    const ownerRs = findOwnerByRef(pod, 'ReplicaSet', () =>
+      state.getReplicaSets(pod.metadata.namespace)
+    )
 
     if (ownerRs) {
       this.enqueueReplicaSet(ownerRs)
@@ -192,7 +206,14 @@ export class ReplicaSetController implements Controller {
     const ownedPods = getOwnedResources(rs, allPods)
 
     for (const pod of ownedPods) {
-      this.eventBus.emit(createPodDeletedEvent(pod.metadata.name, pod.metadata.namespace, pod, 'replicaset-controller'))
+      this.eventBus.emit(
+        createPodDeletedEvent(
+          pod.metadata.name,
+          pod.metadata.namespace,
+          pod,
+          'replicaset-controller'
+        )
+      )
     }
   }
 
@@ -237,20 +258,37 @@ export class ReplicaSetController implements Controller {
 
       for (const pod of podsToRemove) {
         this.eventBus.emit(
-          createPodDeletedEvent(pod.metadata.name, pod.metadata.namespace, pod, 'replicaset-controller')
+          createPodDeletedEvent(
+            pod.metadata.name,
+            pod.metadata.namespace,
+            pod,
+            'replicaset-controller'
+          )
         )
       }
     }
 
     // Update ReplicaSet status if changed
     const newStatus = computeReplicaSetStatus(ownedPods)
-    if (!statusEquals(rs.status, newStatus, ['replicas', 'readyReplicas', 'availableReplicas'])) {
+    if (
+      !statusEquals(rs.status, newStatus, [
+        'replicas',
+        'readyReplicas',
+        'availableReplicas'
+      ])
+    ) {
       const updatedRs: ReplicaSet = {
         ...rs,
         status: newStatus
       }
       this.eventBus.emit(
-        createReplicaSetUpdatedEvent(rs.metadata.name, rs.metadata.namespace, updatedRs, rs, 'replicaset-controller')
+        createReplicaSetUpdatedEvent(
+          rs.metadata.name,
+          rs.metadata.namespace,
+          updatedRs,
+          rs,
+          'replicaset-controller'
+        )
       )
     }
   }

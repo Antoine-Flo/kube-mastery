@@ -17,7 +17,12 @@ export const quiz: Quiz = {
       id: 'q2',
       type: 'multiple-choice',
       question: 'How does an ExternalName Service redirect traffic?',
-      options: ['Via proxying', 'At the DNS level using CNAME records', 'Via load balancing', 'Via port forwarding'],
+      options: [
+        'Via proxying',
+        'At the DNS level using CNAME records',
+        'Via load balancing',
+        'Via port forwarding'
+      ],
       correctAnswer: 1
     }
   ]

@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { getTransformerForAction, type ParseContext } from '../../../../src/core/kubectl/commands/transformers'
+import {
+  getTransformerForAction,
+  type ParseContext
+} from '../../../../src/core/kubectl/commands/transformers'
 
 describe('kubectl transformers', () => {
-  const createContext = (overrides: Partial<ParseContext> = {}): ParseContext => ({
+  const createContext = (
+    overrides: Partial<ParseContext> = {}
+  ): ParseContext => ({
     input: 'kubectl get pods',
     tokens: ['kubectl', 'get', 'pods'],
     ...overrides
@@ -82,7 +87,17 @@ describe('kubectl transformers', () => {
       const transformer = getTransformerForAction('exec')
       const ctx = createContext({
         input: 'kubectl exec my-pod -c nginx -- sh -c "echo hello"',
-        tokens: ['kubectl', 'exec', 'my-pod', '-c', 'nginx', '--', 'sh', '-c', 'echo hello']
+        tokens: [
+          'kubectl',
+          'exec',
+          'my-pod',
+          '-c',
+          'nginx',
+          '--',
+          'sh',
+          '-c',
+          'echo hello'
+        ]
       })
 
       const result = transformer(ctx)
@@ -90,7 +105,13 @@ describe('kubectl transformers', () => {
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.execCommand).toEqual(['sh', '-c', 'echo hello'])
-        expect(result.value.tokens).toEqual(['kubectl', 'exec', 'my-pod', '-c', 'nginx'])
+        expect(result.value.tokens).toEqual([
+          'kubectl',
+          'exec',
+          'my-pod',
+          '-c',
+          'nginx'
+        ])
       }
     })
 
@@ -222,7 +243,15 @@ describe('kubectl transformers', () => {
       const transformer = getTransformerForAction('label')
       const ctx = createContext({
         input: 'kubectl label pods my-pod app=web env=prod tier=frontend',
-        tokens: ['kubectl', 'label', 'pods', 'my-pod', 'app=web', 'env=prod', 'tier=frontend']
+        tokens: [
+          'kubectl',
+          'label',
+          'pods',
+          'my-pod',
+          'app=web',
+          'env=prod',
+          'tier=frontend'
+        ]
       })
 
       const result = transformer(ctx)
@@ -318,7 +347,9 @@ describe('kubectl transformers', () => {
       if (result.ok) {
         expect(result.value.resource).toBe('pods')
         expect(result.value.name).toBe('my-pod')
-        expect(result.value.annotationChanges).toEqual({ description: 'My app' })
+        expect(result.value.annotationChanges).toEqual({
+          description: 'My app'
+        })
       }
     })
 
@@ -466,7 +497,14 @@ describe('kubectl transformers', () => {
       const transformer = getTransformerForAction('scale')
       const ctx = createContext({
         input: 'kubectl scale deployment/nginx --replicas=5 -n production',
-        tokens: ['kubectl', 'scale', 'deployment/nginx', '--replicas=5', '-n', 'production']
+        tokens: [
+          'kubectl',
+          'scale',
+          'deployment/nginx',
+          '--replicas=5',
+          '-n',
+          'production'
+        ]
       })
 
       const result = transformer(ctx)

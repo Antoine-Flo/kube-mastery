@@ -13,7 +13,9 @@
  * @template T - Success value type
  * @template E - Error message type (defaults to string)
  */
-export type Result<T, E = string> = { ok: true; value: T } | { ok: false; error: E }
+export type Result<T, E = string> =
+  | { ok: true; value: T }
+  | { ok: false; error: E }
 
 /**
  * Result type for command execution (stdout/stderr)

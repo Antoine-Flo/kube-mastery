@@ -49,7 +49,9 @@ describe('KubectlCommandHandler', () => {
     }
 
     const shellContextStack = new ShellContextStack(fileSystemState)
-    const fileSystem = createFileSystem(fileSystemState, undefined, { mutable: true })
+    const fileSystem = createFileSystem(fileSystemState, undefined, {
+      mutable: true
+    })
     renderer = createMockRenderer()
     const eventBus = createEventBus()
     const clusterState = createClusterState(eventBus)

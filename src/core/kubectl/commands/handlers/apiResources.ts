@@ -110,7 +110,10 @@ const extractAPIGroup = (apiversion: string): string => {
 /**
  * Filter resources by namespaced flag
  */
-const filterByNamespaced = (resources: APIResource[], namespaced?: boolean): APIResource[] => {
+const filterByNamespaced = (
+  resources: APIResource[],
+  namespaced?: boolean
+): APIResource[] => {
   if (namespaced === undefined) {
     return resources
   }
@@ -120,7 +123,10 @@ const filterByNamespaced = (resources: APIResource[], namespaced?: boolean): API
 /**
  * Sort resources by specified field
  */
-const sortResources = (resources: APIResource[], sortBy?: string): APIResource[] => {
+const sortResources = (
+  resources: APIResource[],
+  sortBy?: string
+): APIResource[] => {
   const sorted = [...resources]
 
   if (sortBy === 'name') {
@@ -184,7 +190,10 @@ const formatCategories = (categories?: string[]): string => {
  * Format table output (default format)
  * Columns: NAME, SHORTNAMES, APIVERSION, NAMESPACED, KIND
  */
-const formatTableOutput = (resources: APIResource[], noHeaders = false): string => {
+const formatTableOutput = (
+  resources: APIResource[],
+  noHeaders = false
+): string => {
   const headers = ['NAME', 'SHORTNAMES', 'APIVERSION', 'NAMESPACED', 'KIND']
   const rows = resources.map((resource) => [
     resource.name,
@@ -202,8 +211,19 @@ const formatTableOutput = (resources: APIResource[], noHeaders = false): string 
  * Format wide output (--output wide)
  * Columns: NAME, SHORTNAMES, APIVERSION, NAMESPACED, KIND, VERBS, CATEGORIES
  */
-const formatWideOutput = (resources: APIResource[], noHeaders = false): string => {
-  const headers = ['NAME', 'SHORTNAMES', 'APIVERSION', 'NAMESPACED', 'KIND', 'VERBS', 'CATEGORIES']
+const formatWideOutput = (
+  resources: APIResource[],
+  noHeaders = false
+): string => {
+  const headers = [
+    'NAME',
+    'SHORTNAMES',
+    'APIVERSION',
+    'NAMESPACED',
+    'KIND',
+    'VERBS',
+    'CATEGORIES'
+  ]
   const rows = resources.map((resource) => [
     resource.name,
     formatShortnames(resource.shortnames),
@@ -248,7 +268,9 @@ const formatJsonOutput = (resources: APIResource[]): string => {
     groupVersion: 'v1',
     resources: resources.map((resource) => ({
       name: resource.name,
-      singularName: resource.name.endsWith('s') ? resource.name.slice(0, -1) : resource.name,
+      singularName: resource.name.endsWith('s')
+        ? resource.name.slice(0, -1)
+        : resource.name,
       namespaced: resource.namespaced,
       kind: resource.kind,
       verbs: resource.verbs || [],
@@ -271,7 +293,9 @@ const formatYamlOutput = (resources: APIResource[]): string => {
     groupVersion: 'v1',
     resources: resources.map((resource) => ({
       name: resource.name,
-      singularName: resource.name.endsWith('s') ? resource.name.slice(0, -1) : resource.name,
+      singularName: resource.name.endsWith('s')
+        ? resource.name.slice(0, -1)
+        : resource.name,
       namespaced: resource.namespaced,
       kind: resource.kind,
       verbs: resource.verbs || [],
@@ -320,11 +344,14 @@ export const handleAPIResources = (parsed: ParsedCommand): Result<string> => {
   }
 
   // Parse --no-headers flag
-  const noHeaders = parsed.flags['no-headers'] === true || parsed.flags.noHeaders === true
+  const noHeaders =
+    parsed.flags['no-headers'] === true || parsed.flags.noHeaders === true
 
   // Get output format
   const explicitOutput = parsed.flags.output || parsed.flags['o']
-  const outputFormat = explicitOutput ? (explicitOutput as string) : parsed.output || 'table'
+  const outputFormat = explicitOutput
+    ? (explicitOutput as string)
+    : parsed.output || 'table'
 
   // Filter resources
   let filteredResources = filterByNamespaced(API_RESOURCES, namespacedFilter)

@@ -66,7 +66,9 @@ import { z } from 'zod'
 const MAX_BODY_SIZE = 10 * 1024 // 10KB
 const contentLength = parseInt(request.headers.get('content-length') || '0')
 if (contentLength > MAX_BODY_SIZE) {
-  return new Response(JSON.stringify({ error: 'Payload too large' }), { status: 413 })
+  return new Response(JSON.stringify({ error: 'Payload too large' }), {
+    status: 413
+  })
 }
 
 const SuggestionSchema = z.object({
@@ -134,7 +136,8 @@ mermaid.initialize({ securityLevel: 'strict' })
 ```typescript
 const corsHeaders = {
   'Access-Control-Allow-Origin': 'https://votre-domaine.com', // Pas '*'
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type'
 }
 ```
 

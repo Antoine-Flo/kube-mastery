@@ -4,7 +4,10 @@
 // Provider d'autocomplete pour les commandes shell (cd, ls, pwd, etc.)
 
 import { AutocompleteProvider } from '../../terminal/autocomplete/AutocompleteProvider'
-import type { AutocompleteContext, CompletionResult } from '../../terminal/autocomplete/types'
+import type {
+  AutocompleteContext,
+  CompletionResult
+} from '../../terminal/autocomplete/types'
 
 // Commandes shell valides
 const SHELL_COMMANDS = [
@@ -46,7 +49,14 @@ export class ShellAutocompleteProvider extends AutocompleteProvider {
     return tokens.length === 0 || (tokens.length === 1 && !line.endsWith(' '))
   }
 
-  complete(_tokens: string[], currentToken: string, _context: AutocompleteContext): CompletionResult[] {
-    return filterMatches(ALL_COMMANDS, currentToken).map((cmd) => ({ text: cmd, suffix: ' ' }))
+  complete(
+    _tokens: string[],
+    currentToken: string,
+    _context: AutocompleteContext
+  ): CompletionResult[] {
+    return filterMatches(ALL_COMMANDS, currentToken).map((cmd) => ({
+      text: cmd,
+      suffix: ' '
+    }))
   }
 }

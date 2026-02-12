@@ -16,7 +16,10 @@ import { error, success } from '../utils/types'
  */
 const clusterExists = (name: string): boolean => {
   try {
-    const output = execSync(`kind get clusters`, { encoding: 'utf-8', stdio: 'pipe' })
+    const output = execSync(`kind get clusters`, {
+      encoding: 'utf-8',
+      stdio: 'pipe'
+    })
     return output.split('\n').some((line) => line.trim() === name)
   } catch {
     return false
@@ -46,7 +49,10 @@ export const ensureCluster = (name: string): Result<void, string> => {
  */
 export const getAllClusters = (): Result<string[], string> => {
   try {
-    const output = execSync(`kind get clusters`, { encoding: 'utf-8', stdio: 'pipe' })
+    const output = execSync(`kind get clusters`, {
+      encoding: 'utf-8',
+      stdio: 'pipe'
+    })
     const clusters = output
       .split('\n')
       .map((line) => line.trim())
@@ -175,23 +181,33 @@ const ensureNamespace = (namespace: string): Result<void, string> => {
  * Ensure default service account exists in a namespace
  * Kind clusters don't create it automatically
  */
-const ensureServiceAccount = (namespace: string = 'default'): Result<void, string> => {
+const ensureServiceAccount = (
+  namespace: string = 'default'
+): Result<void, string> => {
   try {
     // First ensure namespace exists
     const nsResult = ensureNamespace(namespace)
-    if (!nsResult.ok && namespace !== 'default' && namespace !== 'kube-system') {
+    if (
+      !nsResult.ok &&
+      namespace !== 'default' &&
+      namespace !== 'kube-system'
+    ) {
       // Only fail for non-system namespaces
       return nsResult
     }
 
     // Check if service account exists
     try {
-      execSync(`kubectl get serviceaccount default -n ${namespace}`, { stdio: 'pipe' })
+      execSync(`kubectl get serviceaccount default -n ${namespace}`, {
+        stdio: 'pipe'
+      })
       // Already exists, nothing to do
       return success(undefined)
     } catch {
       // Doesn't exist, create it
-      execSync(`kubectl create serviceaccount default -n ${namespace}`, { stdio: 'pipe' })
+      execSync(`kubectl create serviceaccount default -n ${namespace}`, {
+        stdio: 'pipe'
+      })
       return success(undefined)
     }
   } catch (err) {
@@ -211,7 +227,9 @@ export const applyYamlFiles = (seedDir: string): Result<void, string> => {
       return error(`No YAML files found in ${seedDir}`)
     }
 
-    console.log(`  Applying ${yamlFiles.length} YAML file(s) from ${seedDir}...`)
+    console.log(
+      `  Applying ${yamlFiles.length} YAML file(s) from ${seedDir}...`
+    )
 
     // Ensure service accounts exist in namespaces that will be used
     // Extract namespaces from YAML files (simple approach: check for namespace: in YAML)
@@ -268,22 +286,32 @@ export const waitForPodsReady = (namespace?: string): Result<void, string> => {
 
     // Wait for pods, but don't fail if some are in error state
     try {
-      execSync(`kubectl wait --for=condition=Ready pod --all ${nsFlag} --timeout=${timeout}`, {
-        stdio: 'pipe'
-      })
+      execSync(
+        `kubectl wait --for=condition=Ready pod --all ${nsFlag} --timeout=${timeout}`,
+        {
+          stdio: 'pipe'
+        }
+      )
     } catch {
       // Some pods might be in error state intentionally (troubleshooting seeds)
       // Check if at least some pods are ready
-      const output = execSync(`kubectl get pods ${nsFlag} -o json`, { encoding: 'utf-8' })
+      const output = execSync(`kubectl get pods ${nsFlag} -o json`, {
+        encoding: 'utf-8'
+      })
       const pods = JSON.parse(output)
       const readyPods =
-        pods.items?.filter((p: any) => p.status?.phase === 'Running' || p.status?.phase === 'Succeeded') || []
+        pods.items?.filter(
+          (p: any) =>
+            p.status?.phase === 'Running' || p.status?.phase === 'Succeeded'
+        ) || []
 
       if (readyPods.length === 0) {
         return error('No pods are ready')
       }
 
-      console.log(`  ⚠ Some pods are not ready (expected for troubleshooting seeds)`)
+      console.log(
+        `  ⚠ Some pods are not ready (expected for troubleshooting seeds)`
+      )
     }
 
     return success(undefined)

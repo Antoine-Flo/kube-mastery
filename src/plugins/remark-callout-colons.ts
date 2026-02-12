@@ -32,7 +32,10 @@ function getParagraphText(node: Paragraph): string {
 
 function mdastToHtml(children: Root['children']): string {
   const root: Root = { type: 'root', children }
-  const processor = unified().use(remarkRehype, { allowDangerousHtml: true }).use(rehypeRaw).use(rehypeStringify)
+  const processor = unified()
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeRaw)
+    .use(rehypeStringify)
   const hastTree = processor.runSync(root, new VFile())
   return processor.stringify(hastTree, new VFile()) as string
 }
@@ -54,7 +57,9 @@ function buildCalloutHtml(calloutType: string, htmlContent: string): string {
 </div>`
 }
 
-function parseSingleParagraphCallout(text: string): { type: string; content: string } | null {
+function parseSingleParagraphCallout(
+  text: string
+): { type: string; content: string } | null {
   const match = text.match(CALLOUT_SINGLE_REGEX)
   if (!match) {
     return null
@@ -62,7 +67,9 @@ function parseSingleParagraphCallout(text: string): { type: string; content: str
   return { type: match[1], content: match[2].trim() }
 }
 
-function parseCalloutOpen(text: string): { type: string; firstLine: string } | null {
+function parseCalloutOpen(
+  text: string
+): { type: string; firstLine: string } | null {
   const match = text.match(CALLOUT_OPEN_REGEX)
   if (!match) {
     return null
@@ -77,7 +84,10 @@ function paragraphEndsWithClose(closeText: string): boolean {
   return closeText.endsWith(':::') || closeText.includes('\n:::')
 }
 
-function stripTrailingCloseFromParagraph(paragraph: Paragraph, closeText: string): Paragraph | null {
+function stripTrailingCloseFromParagraph(
+  paragraph: Paragraph,
+  closeText: string
+): Paragraph | null {
   const lastChild = paragraph.children[paragraph.children.length - 1]
   if (lastChild?.type === 'text' && typeof lastChild.value === 'string') {
     const newValue = lastChild.value.replace(/\n:::\s*$/, '')
@@ -90,7 +100,10 @@ function stripTrailingCloseFromParagraph(paragraph: Paragraph, closeText: string
     }
     return {
       ...paragraph,
-      children: [...paragraph.children.slice(0, -1), { ...lastChild, value: newValue }]
+      children: [
+        ...paragraph.children.slice(0, -1),
+        { ...lastChild, value: newValue }
+      ]
     }
   }
   if (!closeText.endsWith(':::')) {
@@ -134,7 +147,10 @@ function collectMultiNodeCallout(
       continue
     }
 
-    const closingNode = stripTrailingCloseFromParagraph(node as Paragraph, closeText)
+    const closingNode = stripTrailingCloseFromParagraph(
+      node as Paragraph,
+      closeText
+    )
     if (closingNode) {
       contentNodes.push(closingNode)
     }
@@ -161,7 +177,10 @@ export default function remarkCalloutColons() {
       if (single) {
         newChildren.push({
           type: 'html',
-          value: buildCalloutHtml(single.type, markdownStringToHtml(single.content))
+          value: buildCalloutHtml(
+            single.type,
+            markdownStringToHtml(single.content)
+          )
         })
         continue
       }
@@ -172,7 +191,11 @@ export default function remarkCalloutColons() {
         continue
       }
 
-      const multi = collectMultiNodeCallout(tree.children, i + 1, open.firstLine)
+      const multi = collectMultiNodeCallout(
+        tree.children,
+        i + 1,
+        open.firstLine
+      )
       if (!multi) {
         newChildren.push(node)
         continue

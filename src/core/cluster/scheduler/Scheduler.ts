@@ -82,7 +82,10 @@ const findFeasibleNodes = (nodes: Node[]): Node[] => {
  * 4. Selects a node (round-robin)
  * 5. Emits PodUpdated with nodeName assigned
  */
-export const createScheduler = (eventBus: EventBus, getState: () => SchedulerState): Scheduler => {
+export const createScheduler = (
+  eventBus: EventBus,
+  getState: () => SchedulerState
+): Scheduler => {
   let unsubscribe: (() => void) | null = null
   let nextNodeIndex = 0
 
@@ -116,7 +119,15 @@ export const createScheduler = (eventBus: EventBus, getState: () => SchedulerSta
       }
     }
 
-    eventBus.emit(createPodUpdatedEvent(pod.metadata.name, pod.metadata.namespace, updatedPod, pod, 'scheduler'))
+    eventBus.emit(
+      createPodUpdatedEvent(
+        pod.metadata.name,
+        pod.metadata.namespace,
+        updatedPod,
+        pod,
+        'scheduler'
+      )
+    )
   }
 
   /**

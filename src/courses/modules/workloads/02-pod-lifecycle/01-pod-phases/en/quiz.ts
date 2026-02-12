@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'What Pod phase indicates that all containers have terminated successfully?',
+      question:
+        'What Pod phase indicates that all containers have terminated successfully?',
       options: ['Running', 'Succeeded', 'Pending', 'Failed'],
       correctAnswer: 1
     },

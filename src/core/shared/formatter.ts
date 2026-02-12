@@ -105,7 +105,20 @@ const formatDate = (timestamp: string): string => {
   const now = new Date()
   const sixMonthsAgo = new Date(now.getTime() - 6 * 30 * 24 * 60 * 60 * 1000)
 
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
+  ]
   const month = months[date.getUTCMonth()]
   const day = date.getUTCDate().toString().padStart(2, ' ')
 
@@ -180,7 +193,11 @@ const calculateColumnWidths = (rows: string[][]): number[] => {
  * padCell('foo', 5, 'left')   // 'foo  '
  * padCell('foo', 5, 'right')  // '  foo'
  */
-const padCell = (text: string, width: number, align: 'left' | 'right'): string => {
+const padCell = (
+  text: string,
+  width: number,
+  align: 'left' | 'right'
+): string => {
   if (text.length >= width) {
     return text
   }
@@ -212,7 +229,11 @@ const padCell = (text: string, width: number, align: 'left' | 'right'): string =
  * // nginx  Running  5m
  * // redis  Running  10m
  */
-export const formatTable = (headers: string[], rows: string[][], options: TableOptions = {}): string => {
+export const formatTable = (
+  headers: string[],
+  rows: string[][],
+  options: TableOptions = {}
+): string => {
   const { spacing = 2, uppercase = true, align } = options
 
   if (headers.length === 0) {
@@ -220,7 +241,9 @@ export const formatTable = (headers: string[], rows: string[][], options: TableO
   }
 
   // Uppercase headers if requested
-  const processedHeaders = uppercase ? headers.map((h) => h.toUpperCase()) : headers
+  const processedHeaders = uppercase
+    ? headers.map((h) => h.toUpperCase())
+    : headers
 
   // Combine headers and rows for width calculation
   const allRows = [processedHeaders, ...rows]
@@ -273,7 +296,10 @@ export const formatTable = (headers: string[], rows: string[][], options: TableO
  * formatColumns(['file3', 'file1', 'file2'])
  * // => 'file1  file2  file3'
  */
-export const formatColumns = (items: string[], options: ColumnOptions = {}): string => {
+export const formatColumns = (
+  items: string[],
+  options: ColumnOptions = {}
+): string => {
   const { spacing = 2, sort = true, terminalWidth = 80 } = options
 
   if (items.length === 0) {

@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'What was the main problem with traditional deployment on physical servers?',
+      question:
+        'What was the main problem with traditional deployment on physical servers?',
       options: [
         'Too expensive to maintain',
         'No way to define resource boundaries, causing allocation issues',
@@ -21,7 +22,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'What is the key difference between containers and virtual machines?',
+      question:
+        'What is the key difference between containers and virtual machines?',
       options: [
         'Containers are more expensive',
         'Containers share the Operating System among applications',

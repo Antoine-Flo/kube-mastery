@@ -1,9 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createEventBus, type EventBus } from '../../../../src/core/cluster/events/EventBus'
-import { createPodCreatedEvent, type PodUpdatedEvent } from '../../../../src/core/cluster/events/types'
-import { createNode, type Node } from '../../../../src/core/cluster/ressources/Node'
-import { createPod, type Pod } from '../../../../src/core/cluster/ressources/Pod'
-import { createScheduler, type Scheduler, type SchedulerState } from '../../../../src/core/cluster/scheduler'
+import {
+  createEventBus,
+  type EventBus
+} from '../../../../src/core/cluster/events/EventBus'
+import {
+  createPodCreatedEvent,
+  type PodUpdatedEvent
+} from '../../../../src/core/cluster/events/types'
+import {
+  createNode,
+  type Node
+} from '../../../../src/core/cluster/ressources/Node'
+import {
+  createPod,
+  type Pod
+} from '../../../../src/core/cluster/ressources/Pod'
+import {
+  createScheduler,
+  type Scheduler,
+  type SchedulerState
+} from '../../../../src/core/cluster/scheduler'
 
 describe('Scheduler', () => {
   let eventBus: EventBus
@@ -112,10 +128,16 @@ describe('Scheduler', () => {
     getState = () => ({
       getNodes: () => mockState.nodes,
       getPods: (namespace?: string) =>
-        namespace ? mockState.pods.filter((p) => p.metadata.namespace === namespace) : mockState.pods,
+        namespace
+          ? mockState.pods.filter((p) => p.metadata.namespace === namespace)
+          : mockState.pods,
       findPod: (name: string, namespace: string) => {
-        const pod = mockState.pods.find((p) => p.metadata.name === name && p.metadata.namespace === namespace)
-        return pod ? { ok: true, value: pod } : { ok: false, error: 'not found' }
+        const pod = mockState.pods.find(
+          (p) => p.metadata.name === name && p.metadata.namespace === namespace
+        )
+        return pod
+          ? { ok: true, value: pod }
+          : { ok: false, error: 'not found' }
       }
     })
 
@@ -193,7 +215,10 @@ describe('Scheduler', () => {
     })
 
     it('should skip NotReady nodes and schedule to Ready nodes', () => {
-      mockState.nodes = [createNotReadyNode('node-bad'), createReadyNode('node-good')]
+      mockState.nodes = [
+        createNotReadyNode('node-bad'),
+        createReadyNode('node-good')
+      ]
       scheduler.start()
 
       let updatedPod: Pod | undefined
@@ -209,7 +234,11 @@ describe('Scheduler', () => {
     })
 
     it('should use round-robin to distribute pods across nodes', () => {
-      mockState.nodes = [createReadyNode('node-1'), createReadyNode('node-2'), createReadyNode('node-3')]
+      mockState.nodes = [
+        createReadyNode('node-1'),
+        createReadyNode('node-2'),
+        createReadyNode('node-3')
+      ]
       scheduler.start()
 
       const scheduledNodes: string[] = []
@@ -224,7 +253,14 @@ describe('Scheduler', () => {
       }
 
       // Should distribute evenly: node-1, node-2, node-3, node-1, node-2, node-3
-      expect(scheduledNodes).toEqual(['node-1', 'node-2', 'node-3', 'node-1', 'node-2', 'node-3'])
+      expect(scheduledNodes).toEqual([
+        'node-1',
+        'node-2',
+        'node-3',
+        'node-1',
+        'node-2',
+        'node-3'
+      ])
     })
 
     it('should not process events from scheduler source (avoid loops)', () => {

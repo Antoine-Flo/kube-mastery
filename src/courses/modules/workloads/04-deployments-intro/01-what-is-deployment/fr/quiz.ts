@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: "Pour quel type d'applications les Deployments sont-ils le mieux adaptés ?",
+      question:
+        "Pour quel type d'applications les Deployments sont-ils le mieux adaptés ?",
       options: [
         'Applications avec état',
         'Applications sans état',

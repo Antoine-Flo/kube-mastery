@@ -1,7 +1,13 @@
 import type { EventBus } from '../cluster/events/EventBus'
 import type { Result } from '../shared/result'
 import { error, success } from '../shared/result'
-import { createDirectory, createFile, type DirectoryNode, type FileNode, type FileSystemNode } from './models'
+import {
+  createDirectory,
+  createFile,
+  type DirectoryNode,
+  type FileNode,
+  type FileSystemNode
+} from './models'
 import {
   createDirectoryChangedEvent,
   createDirectoryCreatedEvent,
@@ -89,7 +95,10 @@ const validateFilename = (name: string): boolean => {
  * Find node in tree by absolute path
  * Returns undefined if not found
  */
-const findNode = (tree: DirectoryNode, path: string): FileSystemNode | undefined => {
+const findNode = (
+  tree: DirectoryNode,
+  path: string
+): FileSystemNode | undefined => {
   if (path === '/') {
     return tree
   }
@@ -122,7 +131,11 @@ const findNode = (tree: DirectoryNode, path: string): FileSystemNode | undefined
  * Note: Currently mutates tree (not fully immutable)
  * TODO(Phase 2): Make truly immutable with structural sharing
  */
-const insertNode = (tree: DirectoryNode, path: string, node: FileSystemNode): DirectoryNode => {
+const insertNode = (
+  tree: DirectoryNode,
+  path: string,
+  node: FileSystemNode
+): DirectoryNode => {
   if (path === '/') {
     return tree
   }
@@ -165,7 +178,10 @@ const removeNode = (tree: DirectoryNode, path: string): DirectoryNode => {
 /**
  * Create directories recursively (mkdir -p behavior)
  */
-const createDirectoriesRecursive = (tree: DirectoryNode, absolutePath: string): void => {
+const createDirectoriesRecursive = (
+  tree: DirectoryNode,
+  absolutePath: string
+): void => {
   const parts = absolutePath.split('/').filter((p) => p.length > 0)
   let currentPath = '/'
 
@@ -183,13 +199,18 @@ const createDirectoriesRecursive = (tree: DirectoryNode, absolutePath: string): 
 /**
  * Create single directory (non-recursive)
  */
-const createSingleDirectory = (tree: DirectoryNode, absolutePath: string): Result<void> => {
+const createSingleDirectory = (
+  tree: DirectoryNode,
+  absolutePath: string
+): Result<void> => {
   const parts = absolutePath.split('/').filter((p) => p.length > 0)
   const parentPath = '/' + parts.slice(0, -1).join('/')
   const parent = findNode(tree, parentPath)
 
   if (!parent || parent.type !== 'directory') {
-    return error(`mkdir: cannot create directory '${absolutePath}': No such file or directory`)
+    return error(
+      `mkdir: cannot create directory '${absolutePath}': No such file or directory`
+    )
   }
 
   const dirName = parts[parts.length - 1]
@@ -204,14 +225,20 @@ const createSingleDirectory = (tree: DirectoryNode, absolutePath: string): Resul
 /**
  * Validate directory creation constraints
  */
-const validateDirectoryCreation = (name: string, absolutePath: string, tree: DirectoryNode): Result<void> => {
+const validateDirectoryCreation = (
+  name: string,
+  absolutePath: string,
+  tree: DirectoryNode
+): Result<void> => {
   if (!validateFilename(name.split('/').pop() || '')) {
     return error(`mkdir: cannot create directory '${name}': Invalid argument`)
   }
 
   const existing = findNode(tree, absolutePath)
   if (existing) {
-    return error(`mkdir: cannot create directory '${absolutePath}': File exists`)
+    return error(
+      `mkdir: cannot create directory '${absolutePath}': File exists`
+    )
   }
 
   return success(undefined)
@@ -220,7 +247,11 @@ const validateDirectoryCreation = (name: string, absolutePath: string, tree: Dir
 /**
  * Validate file creation constraints
  */
-const validateFileCreation = (name: string, absolutePath: string, tree: DirectoryNode): Result<void> => {
+const validateFileCreation = (
+  name: string,
+  absolutePath: string,
+  tree: DirectoryNode
+): Result<void> => {
   if (!validateFilename(name)) {
     return error(`touch: cannot touch '${name}': Invalid argument`)
   }
@@ -255,7 +286,11 @@ const validateIsDirectory = (
 /**
  * Validate node is a file
  */
-const validateIsFile = (node: FileSystemNode | undefined, path: string, command: string = 'cat'): Result<FileNode> => {
+const validateIsFile = (
+  node: FileSystemNode | undefined,
+  path: string,
+  command: string = 'cat'
+): Result<FileNode> => {
   if (!node) {
     return error(`${command}: ${path}: No such file or directory`)
   }
@@ -292,7 +327,9 @@ const createNavigationOps = (
     setState({ ...state, currentPath: absolutePath })
 
     if (eventBus && previousPath !== absolutePath) {
-      eventBus.emit(createDirectoryChangedEvent(previousPath, absolutePath, 'filesystem'))
+      eventBus.emit(
+        createDirectoryChangedEvent(previousPath, absolutePath, 'filesystem')
+      )
     }
 
     return success(absolutePath)
@@ -300,7 +337,9 @@ const createNavigationOps = (
 
   listDirectory: (path?: string): Result<FileSystemNode[]> => {
     const state = getState()
-    const targetPath = path ? resolvePath(state.currentPath, path) : state.currentPath
+    const targetPath = path
+      ? resolvePath(state.currentPath, path)
+      : state.currentPath
     const node = findNode(state.tree, targetPath)
 
     const validation = validateIsDirectory(node, targetPath, 'ls')
@@ -314,7 +353,10 @@ const createNavigationOps = (
 
 // ─── Directory Operations ────────────────────────────────────────────────
 
-const createDirectoryOps = (getState: () => FileSystemState, eventBus?: EventBus) => ({
+const createDirectoryOps = (
+  getState: () => FileSystemState,
+  eventBus?: EventBus
+) => ({
   createDirectory: (name: string, recursive = false): Result<string> => {
     const state = getState()
     const absolutePath = resolvePath(state.currentPath, name)
@@ -337,7 +379,9 @@ const createDirectoryOps = (getState: () => FileSystemState, eventBus?: EventBus
     if (eventBus) {
       const createdDir = findNode(state.tree, absolutePath)
       if (createdDir && createdDir.type === 'directory') {
-        eventBus.emit(createDirectoryCreatedEvent(createdDir, absolutePath, 'filesystem'))
+        eventBus.emit(
+          createDirectoryCreatedEvent(createdDir, absolutePath, 'filesystem')
+        )
       }
     }
 
@@ -354,7 +398,9 @@ const createDirectoryOps = (getState: () => FileSystemState, eventBus?: EventBus
 
     const node = findNode(state.tree, absolutePath)
     if (!node) {
-      return error(`rm: cannot remove '${absolutePath}': No such file or directory`)
+      return error(
+        `rm: cannot remove '${absolutePath}': No such file or directory`
+      )
     }
 
     if (node.type !== 'directory') {
@@ -369,7 +415,9 @@ const createDirectoryOps = (getState: () => FileSystemState, eventBus?: EventBus
     removeNode(state.tree, absolutePath)
 
     if (eventBus && deletedDir) {
-      eventBus.emit(createDirectoryDeletedEvent(absolutePath, deletedDir, 'filesystem'))
+      eventBus.emit(
+        createDirectoryDeletedEvent(absolutePath, deletedDir, 'filesystem')
+      )
     }
 
     return success(undefined)
@@ -378,7 +426,10 @@ const createDirectoryOps = (getState: () => FileSystemState, eventBus?: EventBus
 
 // ─── File Operations ─────────────────────────────────────────────────────
 
-const createFileOps = (getState: () => FileSystemState, eventBus?: EventBus) => ({
+const createFileOps = (
+  getState: () => FileSystemState,
+  eventBus?: EventBus
+) => ({
   createFile: (name: string, content = ''): Result<FileNode> => {
     const state = getState()
     const absolutePath = resolvePath(state.currentPath, name)
@@ -426,7 +477,9 @@ const createFileOps = (getState: () => FileSystemState, eventBus?: EventBus) => 
       const parent = findNode(state.tree, parentPath)
 
       if (!parent || parent.type !== 'directory') {
-        return error(`nano: cannot create file '${path}': No such file or directory`)
+        return error(
+          `nano: cannot create file '${path}': No such file or directory`
+        )
       }
 
       const fileName = absolutePath.split('/').pop() || path
@@ -438,7 +491,9 @@ const createFileOps = (getState: () => FileSystemState, eventBus?: EventBus) => 
       insertNode(state.tree, absolutePath, newFile)
 
       if (eventBus) {
-        eventBus.emit(createFileCreatedEvent(newFile, absolutePath, 'filesystem'))
+        eventBus.emit(
+          createFileCreatedEvent(newFile, absolutePath, 'filesystem')
+        )
       }
 
       return success(undefined)
@@ -453,12 +508,23 @@ const createFileOps = (getState: () => FileSystemState, eventBus?: EventBus) => 
     const previousFile = validation.value
 
     // Side effect: Update file with new content and modifiedAt timestamp
-    const updatedFile = createFile(previousFile.name, previousFile.path, content)
+    const updatedFile = createFile(
+      previousFile.name,
+      previousFile.path,
+      content
+    )
     removeNode(state.tree, absolutePath)
     insertNode(state.tree, absolutePath, updatedFile)
 
     if (eventBus) {
-      eventBus.emit(createFileModifiedEvent(absolutePath, updatedFile, previousFile, 'filesystem'))
+      eventBus.emit(
+        createFileModifiedEvent(
+          absolutePath,
+          updatedFile,
+          previousFile,
+          'filesystem'
+        )
+      )
     }
 
     return success(undefined)
@@ -478,7 +544,9 @@ const createFileOps = (getState: () => FileSystemState, eventBus?: EventBus) => 
     removeNode(state.tree, absolutePath)
 
     if (eventBus) {
-      eventBus.emit(createFileDeletedEvent(absolutePath, deletedFile, 'filesystem'))
+      eventBus.emit(
+        createFileDeletedEvent(absolutePath, deletedFile, 'filesystem')
+      )
     }
 
     return success(undefined)
@@ -567,7 +635,11 @@ export const createFileSystem = (
     ...createNavigationOps(getState, setState, eventBus),
     ...createDirectoryOps(getState, eventBus),
     ...createFileOps(getState, eventBus),
-    ...createStateOps(getState, setState, isMutable && originalState ? originalState : undefined)
+    ...createStateOps(
+      getState,
+      setState,
+      isMutable && originalState ? originalState : undefined
+    )
   }
 }
 

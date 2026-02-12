@@ -29,7 +29,9 @@ export const trim = <Ctx extends { input: string }>(ctx: Ctx): Result<Ctx> => {
  * Tokenize step for pipeline: splits ctx.input into tokens, returns error if empty
  * Works with any context that has input field, adds tokens field
  */
-export const tokenize = <Ctx extends { input: string }>(ctx: Ctx): Result<Ctx & { tokens: string[] }> => {
+export const tokenize = <Ctx extends { input: string }>(
+  ctx: Ctx
+): Result<Ctx & { tokens: string[] }> => {
   const tokens = ctx.input
     .trim()
     .split(/\s+/)
@@ -44,8 +46,13 @@ export const tokenize = <Ctx extends { input: string }>(ctx: Ctx): Result<Ctx & 
  * Parse flags for pipeline
  */
 export const parseFlags =
-  <Ctx extends { tokens?: string[]; flags?: ParsedFlags }>(startIndex = 1, aliases?: Record<string, string>) =>
-  (ctx: Ctx): Result<Ctx & { flags: ParsedFlags; normalizedFlags?: ParsedFlags }> => {
+  <Ctx extends { tokens?: string[]; flags?: ParsedFlags }>(
+    startIndex = 1,
+    aliases?: Record<string, string>
+  ) =>
+  (
+    ctx: Ctx
+  ): Result<Ctx & { flags: ParsedFlags; normalizedFlags?: ParsedFlags }> => {
     if (!ctx.tokens) {
       return error('No tokens available')
     }
@@ -56,7 +63,11 @@ export const parseFlags =
 
     if (aliases) {
       const normalized = normalizeFlags(mergedFlags, aliases)
-      return success({ ...ctx, flags: mergedFlags, normalizedFlags: normalized })
+      return success({
+        ...ctx,
+        flags: mergedFlags,
+        normalizedFlags: normalized
+      })
     }
 
     return success({ ...ctx, flags: mergedFlags })
@@ -130,7 +141,10 @@ const parseFlagsRaw = (tokens: string[], startIndex = 0): ParsedFlags => {
  * normalizeFlags({ n: "default", o: "yaml" }, { n: "namespace", o: "output" })
  * // => { namespace: "default", output: "yaml" }
  */
-const normalizeFlags = (flags: ParsedFlags, aliases: Record<string, string>): ParsedFlags => {
+const normalizeFlags = (
+  flags: ParsedFlags,
+  aliases: Record<string, string>
+): ParsedFlags => {
   const normalized: ParsedFlags = {}
 
   for (const [key, value] of Object.entries(flags)) {

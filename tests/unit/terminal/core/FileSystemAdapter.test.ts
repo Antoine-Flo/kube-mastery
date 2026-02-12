@@ -162,7 +162,11 @@ describe('FileSystemAdapter', () => {
 
       const listResult = fileSystem.listDirectory()
       if (listResult.ok) {
-        expect(listResult.value.some((f) => f.name === 'test.txt' && f.type === 'file')).toBe(true)
+        expect(
+          listResult.value.some(
+            (f) => f.name === 'test.txt' && f.type === 'file'
+          )
+        ).toBe(true)
       }
     })
 
@@ -274,7 +278,11 @@ describe('FileSystemAdapter', () => {
 
       const listResult = fileSystem.listDirectory()
       if (listResult.ok) {
-        expect(listResult.value.some((f) => f.name === 'test' && f.type === 'directory')).toBe(true)
+        expect(
+          listResult.value.some(
+            (f) => f.name === 'test' && f.type === 'directory'
+          )
+        ).toBe(true)
       }
     })
 

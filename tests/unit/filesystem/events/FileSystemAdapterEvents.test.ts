@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createEventBus, type EventBus } from '../../../../src/core/cluster/events/EventBus'
+import {
+  createEventBus,
+  type EventBus
+} from '../../../../src/core/cluster/events/EventBus'
 import { createFileSystem } from '../../../../src/core/filesystem/FileSystem'
 import { createDirectory } from '../../../../src/core/filesystem/models'
 import type { FileSystemState } from '../../../../src/core/filesystem/FileSystem'

@@ -25,7 +25,11 @@ class MockProvider extends AutocompleteProvider {
     return this.shouldMatch
   }
 
-  complete(_tokens: string[], _currentToken: string, _context: AutocompleteContext): CompletionResult[] {
+  complete(
+    _tokens: string[],
+    _currentToken: string,
+    _context: AutocompleteContext
+  ): CompletionResult[] {
     return this.completions
   }
 }
@@ -54,9 +58,15 @@ describe('AutocompleteEngine', () => {
     })
 
     it('should sort providers by priority', () => {
-      const provider1 = new MockProvider(30, true, [{ text: 'first', suffix: ' ' }])
-      const provider2 = new MockProvider(10, true, [{ text: 'second', suffix: ' ' }])
-      const provider3 = new MockProvider(20, true, [{ text: 'third', suffix: ' ' }])
+      const provider1 = new MockProvider(30, true, [
+        { text: 'first', suffix: ' ' }
+      ])
+      const provider2 = new MockProvider(10, true, [
+        { text: 'second', suffix: ' ' }
+      ])
+      const provider3 = new MockProvider(20, true, [
+        { text: 'third', suffix: ' ' }
+      ])
 
       // Register in non-priority order
       engine.registerProvider(provider1)
@@ -69,8 +79,12 @@ describe('AutocompleteEngine', () => {
     })
 
     it('should re-sort when adding new provider', () => {
-      const provider1 = new MockProvider(30, true, [{ text: 'first', suffix: ' ' }])
-      const provider2 = new MockProvider(10, true, [{ text: 'second', suffix: ' ' }])
+      const provider1 = new MockProvider(30, true, [
+        { text: 'first', suffix: ' ' }
+      ])
+      const provider2 = new MockProvider(10, true, [
+        { text: 'second', suffix: ' ' }
+      ])
 
       engine.registerProvider(provider1)
       const results1 = engine.getCompletionResults('test', mockContext)
@@ -84,7 +98,9 @@ describe('AutocompleteEngine', () => {
 
   describe('registerProviders', () => {
     it('should register multiple providers', () => {
-      const provider1 = new MockProvider(10, true, [{ text: 'first', suffix: ' ' }])
+      const provider1 = new MockProvider(10, true, [
+        { text: 'first', suffix: ' ' }
+      ])
       const provider2 = new MockProvider(20, false, [])
       const provider3 = new MockProvider(30, false, [])
 
@@ -95,9 +111,15 @@ describe('AutocompleteEngine', () => {
     })
 
     it('should sort providers by priority when registering multiple', () => {
-      const provider1 = new MockProvider(30, true, [{ text: 'third', suffix: ' ' }])
-      const provider2 = new MockProvider(10, true, [{ text: 'first', suffix: ' ' }])
-      const provider3 = new MockProvider(20, true, [{ text: 'second', suffix: ' ' }])
+      const provider1 = new MockProvider(30, true, [
+        { text: 'third', suffix: ' ' }
+      ])
+      const provider2 = new MockProvider(10, true, [
+        { text: 'first', suffix: ' ' }
+      ])
+      const provider3 = new MockProvider(20, true, [
+        { text: 'second', suffix: ' ' }
+      ])
 
       engine.registerProviders([provider1, provider2, provider3])
 
@@ -133,8 +155,12 @@ describe('AutocompleteEngine', () => {
     })
 
     it('should use first matching provider', () => {
-      const provider1 = new MockProvider(10, true, [{ text: 'first', suffix: ' ' }])
-      const provider2 = new MockProvider(20, true, [{ text: 'second', suffix: ' ' }])
+      const provider1 = new MockProvider(10, true, [
+        { text: 'first', suffix: ' ' }
+      ])
+      const provider2 = new MockProvider(20, true, [
+        { text: 'second', suffix: ' ' }
+      ])
       engine.registerProvider(provider1)
       engine.registerProvider(provider2)
 
@@ -143,15 +169,23 @@ describe('AutocompleteEngine', () => {
     })
 
     it('should tokenize input correctly', () => {
-      const provider = new MockProvider(10, true, [{ text: 'result', suffix: ' ' }])
+      const provider = new MockProvider(10, true, [
+        { text: 'result', suffix: ' ' }
+      ])
       engine.registerProvider(provider)
 
       // Test with multiple spaces
-      const results1 = engine.getCompletionResults('kubectl  get  pods', mockContext)
+      const results1 = engine.getCompletionResults(
+        'kubectl  get  pods',
+        mockContext
+      )
       expect(results1).toEqual([{ text: 'result', suffix: ' ' }])
 
       // Test with leading/trailing spaces
-      const results2 = engine.getCompletionResults('  kubectl get  ', mockContext)
+      const results2 = engine.getCompletionResults(
+        '  kubectl get  ',
+        mockContext
+      )
       expect(results2).toEqual([{ text: 'result', suffix: ' ' }])
     })
   })
@@ -287,7 +321,9 @@ describe('AutocompleteEngine', () => {
     })
 
     it('should complete single match', () => {
-      const provider = new MockProvider(10, true, [{ text: 'kubectl', suffix: ' ' }])
+      const provider = new MockProvider(10, true, [
+        { text: 'kubectl', suffix: ' ' }
+      ])
       engine.registerProvider(provider)
 
       vi.mocked(mockCallbacks.getCurrentToken).mockReturnValue('kube')
@@ -295,11 +331,16 @@ describe('AutocompleteEngine', () => {
 
       engine.handleTabPress('kube', mockContext, mockCallbacks)
 
-      expect(mockCallbacks.updateLineAndRender).toHaveBeenCalledWith('kubectl ', 'ctl ')
+      expect(mockCallbacks.updateLineAndRender).toHaveBeenCalledWith(
+        'kubectl ',
+        'ctl '
+      )
     })
 
     it('should append suffix when token is already complete', () => {
-      const provider = new MockProvider(10, true, [{ text: 'kubectl', suffix: ' ' }])
+      const provider = new MockProvider(10, true, [
+        { text: 'kubectl', suffix: ' ' }
+      ])
       engine.registerProvider(provider)
 
       vi.mocked(mockCallbacks.getCurrentToken).mockReturnValue('kubectl')
@@ -307,11 +348,16 @@ describe('AutocompleteEngine', () => {
 
       engine.handleTabPress('kubectl', mockContext, mockCallbacks)
 
-      expect(mockCallbacks.updateLineAndRender).toHaveBeenCalledWith('kubectl ', ' ')
+      expect(mockCallbacks.updateLineAndRender).toHaveBeenCalledWith(
+        'kubectl ',
+        ' '
+      )
     })
 
     it('should not append suffix if already present', () => {
-      const provider = new MockProvider(10, true, [{ text: 'kubectl', suffix: ' ' }])
+      const provider = new MockProvider(10, true, [
+        { text: 'kubectl', suffix: ' ' }
+      ])
       engine.registerProvider(provider)
 
       vi.mocked(mockCallbacks.getCurrentToken).mockReturnValue('kubectl')
@@ -356,9 +402,15 @@ describe('AutocompleteEngine', () => {
       engine.handleTabPress('pod', mockContext, mockCallbacks)
 
       expect(mockCallbacks.write).toHaveBeenCalledWith('\r\n')
-      expect(mockCallbacks.write).toHaveBeenCalledWith(expect.stringContaining('pod1'))
-      expect(mockCallbacks.write).toHaveBeenCalledWith(expect.stringContaining('pod2'))
-      expect(mockCallbacks.write).toHaveBeenCalledWith(expect.stringContaining('pod3'))
+      expect(mockCallbacks.write).toHaveBeenCalledWith(
+        expect.stringContaining('pod1')
+      )
+      expect(mockCallbacks.write).toHaveBeenCalledWith(
+        expect.stringContaining('pod2')
+      )
+      expect(mockCallbacks.write).toHaveBeenCalledWith(
+        expect.stringContaining('pod3')
+      )
       expect(mockCallbacks.showPrompt).toHaveBeenCalled()
       expect(mockCallbacks.updateCurrentLine).toHaveBeenCalled()
     })
@@ -434,7 +486,9 @@ describe('AutocompleteEngine', () => {
   describe('edge cases / error scenarios', () => {
     describe('tokenize edge cases', () => {
       it('should handle line with only spaces', () => {
-        const provider = new MockProvider(10, true, [{ text: 'result', suffix: ' ' }])
+        const provider = new MockProvider(10, true, [
+          { text: 'result', suffix: ' ' }
+        ])
         engine.registerProvider(provider)
 
         const results = engine.getCompletionResults('   ', mockContext)
@@ -448,24 +502,36 @@ describe('AutocompleteEngine', () => {
       })
 
       it('should handle line with tabs mixed with spaces', () => {
-        const provider = new MockProvider(10, true, [{ text: 'result', suffix: ' ' }])
+        const provider = new MockProvider(10, true, [
+          { text: 'result', suffix: ' ' }
+        ])
         engine.registerProvider(provider)
 
-        const results = engine.getCompletionResults('kubectl\tget\tpods', mockContext)
+        const results = engine.getCompletionResults(
+          'kubectl\tget\tpods',
+          mockContext
+        )
         // Tabs should be treated as whitespace
         expect(results).toEqual([{ text: 'result', suffix: ' ' }])
       })
 
       it('should handle line with multiple consecutive spaces (3+)', () => {
-        const provider = new MockProvider(10, true, [{ text: 'result', suffix: ' ' }])
+        const provider = new MockProvider(10, true, [
+          { text: 'result', suffix: ' ' }
+        ])
         engine.registerProvider(provider)
 
-        const results = engine.getCompletionResults('kubectl   get     pods', mockContext)
+        const results = engine.getCompletionResults(
+          'kubectl   get     pods',
+          mockContext
+        )
         expect(results).toEqual([{ text: 'result', suffix: ' ' }])
       })
 
       it('should handle empty line', () => {
-        const provider = new MockProvider(10, true, [{ text: 'result', suffix: ' ' }])
+        const provider = new MockProvider(10, true, [
+          { text: 'result', suffix: ' ' }
+        ])
         engine.registerProvider(provider)
 
         const results = engine.getCompletionResults('', mockContext)
@@ -478,25 +544,37 @@ describe('AutocompleteEngine', () => {
       })
 
       it('should handle line with Unicode characters', () => {
-        const provider = new MockProvider(10, true, [{ text: 'result', suffix: ' ' }])
+        const provider = new MockProvider(10, true, [
+          { text: 'result', suffix: ' ' }
+        ])
         engine.registerProvider(provider)
 
-        const results = engine.getCompletionResults('kubectl 🚀 get', mockContext)
+        const results = engine.getCompletionResults(
+          'kubectl 🚀 get',
+          mockContext
+        )
         expect(results).toEqual([{ text: 'result', suffix: ' ' }])
       })
 
       it('should handle line with special characters in tokens', () => {
-        const provider = new MockProvider(10, true, [{ text: 'result', suffix: ' ' }])
+        const provider = new MockProvider(10, true, [
+          { text: 'result', suffix: ' ' }
+        ])
         engine.registerProvider(provider)
 
-        const results = engine.getCompletionResults('kubectl get-pods', mockContext)
+        const results = engine.getCompletionResults(
+          'kubectl get-pods',
+          mockContext
+        )
         expect(results).toEqual([{ text: 'result', suffix: ' ' }])
       })
     })
 
     describe('getCurrentToken edge cases', () => {
       it('should handle line with only spaces', () => {
-        const provider = new MockProvider(10, true, [{ text: 'result', suffix: ' ' }])
+        const provider = new MockProvider(10, true, [
+          { text: 'result', suffix: ' ' }
+        ])
         engine.registerProvider(provider)
 
         const results = engine.getCompletionResults('   ', mockContext)
@@ -506,7 +584,9 @@ describe('AutocompleteEngine', () => {
       })
 
       it('should handle line ending with space (empty token)', () => {
-        const provider = new MockProvider(10, true, [{ text: 'result', suffix: ' ' }])
+        const provider = new MockProvider(10, true, [
+          { text: 'result', suffix: ' ' }
+        ])
         engine.registerProvider(provider)
 
         const results = engine.getCompletionResults('kubectl ', mockContext)
@@ -515,7 +595,9 @@ describe('AutocompleteEngine', () => {
       })
 
       it('should handle line with single character', () => {
-        const provider = new MockProvider(10, true, [{ text: 'result', suffix: ' ' }])
+        const provider = new MockProvider(10, true, [
+          { text: 'result', suffix: ' ' }
+        ])
         engine.registerProvider(provider)
 
         const results = engine.getCompletionResults('k', mockContext)
@@ -523,7 +605,9 @@ describe('AutocompleteEngine', () => {
       })
 
       it('should handle line with Unicode in token', () => {
-        const provider = new MockProvider(10, true, [{ text: 'result', suffix: ' ' }])
+        const provider = new MockProvider(10, true, [
+          { text: 'result', suffix: ' ' }
+        ])
         engine.registerProvider(provider)
 
         const results = engine.getCompletionResults('kubectl 🚀', mockContext)
@@ -549,7 +633,11 @@ describe('AutocompleteEngine', () => {
 
       it('should handle very long prefix (>100 chars)', () => {
         const longPrefix = 'a'.repeat(100)
-        const prefix = engine.getCommonPrefix([longPrefix + '1', longPrefix + '2', longPrefix + '3'])
+        const prefix = engine.getCommonPrefix([
+          longPrefix + '1',
+          longPrefix + '2',
+          longPrefix + '3'
+        ])
         expect(prefix).toBe(longPrefix)
       })
 
@@ -573,7 +661,11 @@ describe('AutocompleteEngine', () => {
       })
 
       it('should handle items with special characters', () => {
-        const formatted = engine.formatSuggestions(['test-1', 'test_2', 'test.3'])
+        const formatted = engine.formatSuggestions([
+          'test-1',
+          'test_2',
+          'test.3'
+        ])
         expect(formatted).toContain('test-1')
         expect(formatted).toContain('test_2')
         expect(formatted).toContain('test.3')
@@ -595,13 +687,32 @@ describe('AutocompleteEngine', () => {
       })
 
       it('should handle exactly 8 items (2 complete rows)', () => {
-        const formatted = engine.formatSuggestions(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
+        const formatted = engine.formatSuggestions([
+          'a',
+          'b',
+          'c',
+          'd',
+          'e',
+          'f',
+          'g',
+          'h'
+        ])
         const lines = formatted.split('\r\n')
         expect(lines.length).toBe(2)
       })
 
       it('should handle 9 items (2 rows + 1 item)', () => {
-        const formatted = engine.formatSuggestions(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
+        const formatted = engine.formatSuggestions([
+          'a',
+          'b',
+          'c',
+          'd',
+          'e',
+          'f',
+          'g',
+          'h',
+          'i'
+        ])
         const lines = formatted.split('\r\n')
         expect(lines.length).toBe(3) // 2 full rows + 1 partial
       })
@@ -622,7 +733,9 @@ describe('AutocompleteEngine', () => {
       })
 
       it('should handle callback that throws error', () => {
-        const provider = new MockProvider(10, true, [{ text: 'kubectl', suffix: ' ' }])
+        const provider = new MockProvider(10, true, [
+          { text: 'kubectl', suffix: ' ' }
+        ])
         engine.registerProvider(provider)
 
         vi.mocked(mockCallbacks.getCurrentToken).mockReturnValue('kube')
@@ -688,10 +801,14 @@ describe('AutocompleteEngine', () => {
       })
 
       it('should handle currentToken longer than result.text', () => {
-        const provider = new MockProvider(10, true, [{ text: 'kubectl', suffix: ' ' }])
+        const provider = new MockProvider(10, true, [
+          { text: 'kubectl', suffix: ' ' }
+        ])
         engine.registerProvider(provider)
 
-        vi.mocked(mockCallbacks.getCurrentToken).mockReturnValue('kubectl-extra')
+        vi.mocked(mockCallbacks.getCurrentToken).mockReturnValue(
+          'kubectl-extra'
+        )
         vi.mocked(mockCallbacks.getCurrentLine).mockReturnValue('kubectl-extra')
 
         engine.handleTabPress('kubectl-extra', mockContext, mockCallbacks)
@@ -705,7 +822,9 @@ describe('AutocompleteEngine', () => {
       })
 
       it('should handle suffix empty string', () => {
-        const provider = new MockProvider(10, true, [{ text: 'kubectl', suffix: '' }])
+        const provider = new MockProvider(10, true, [
+          { text: 'kubectl', suffix: '' }
+        ])
         engine.registerProvider(provider)
 
         vi.mocked(mockCallbacks.getCurrentToken).mockReturnValue('kube')
@@ -713,15 +832,24 @@ describe('AutocompleteEngine', () => {
 
         engine.handleTabPress('kube', mockContext, mockCallbacks)
 
-        expect(mockCallbacks.updateLineAndRender).toHaveBeenCalledWith('kubectl', 'ctl')
+        expect(mockCallbacks.updateLineAndRender).toHaveBeenCalledWith(
+          'kubectl',
+          'ctl'
+        )
       })
     })
 
     describe('multiple providers edge cases', () => {
       it('should use only first matching provider when multiple match', () => {
-        const provider1 = new MockProvider(10, true, [{ text: 'first', suffix: ' ' }])
-        const provider2 = new MockProvider(20, true, [{ text: 'second', suffix: ' ' }])
-        const provider3 = new MockProvider(30, true, [{ text: 'third', suffix: ' ' }])
+        const provider1 = new MockProvider(10, true, [
+          { text: 'first', suffix: ' ' }
+        ])
+        const provider2 = new MockProvider(20, true, [
+          { text: 'second', suffix: ' ' }
+        ])
+        const provider3 = new MockProvider(30, true, [
+          { text: 'third', suffix: ' ' }
+        ])
 
         engine.registerProvider(provider1)
         engine.registerProvider(provider2)
@@ -745,7 +873,11 @@ describe('AutocompleteEngine', () => {
           priority() {
             return 10
           }
-          match(_tokens: string[], _currentToken: string, _line: string): boolean {
+          match(
+            _tokens: string[],
+            _currentToken: string,
+            _line: string
+          ): boolean {
             throw new Error('Match error')
           }
           complete() {
@@ -767,10 +899,18 @@ describe('AutocompleteEngine', () => {
           priority() {
             return 10
           }
-          match(_tokens: string[], _currentToken: string, _line: string): boolean {
+          match(
+            _tokens: string[],
+            _currentToken: string,
+            _line: string
+          ): boolean {
             return true
           }
-          complete(_tokens: string[], _currentToken: string, _context: AutocompleteContext): CompletionResult[] {
+          complete(
+            _tokens: string[],
+            _currentToken: string,
+            _context: AutocompleteContext
+          ): CompletionResult[] {
             throw new Error('Complete error')
           }
         }

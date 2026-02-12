@@ -13,12 +13,18 @@ export type ChapterMeta = {
 export interface OverviewIndexPort {
   getLessonTitleIndex(): Map<string, string>
   getChapterMetaIndex(): Map<string, ChapterMeta>
-  getChapterDirsByModule(): Map<string, Array<{ chapterDir: string; chapterId: string }>>
+  getChapterDirsByModule(): Map<
+    string,
+    Array<{ chapterDir: string; chapterId: string }>
+  >
   getLessonDirsByChapter(): Map<string, string[]>
 }
 
 export interface LessonContentPort {
   getLessonMarkdown(loc: LessonLocation, lang: UiLang): string | null
-  getLessonContent(loc: LessonLocation, lang: UiLang): MarkdownInstance<Record<string, unknown>> | null
+  getLessonContent(
+    loc: LessonLocation,
+    lang: UiLang
+  ): MarkdownInstance<Record<string, unknown>> | null
   getLessonQuiz(loc: LessonLocation, lang: UiLang): Quiz | null
 }

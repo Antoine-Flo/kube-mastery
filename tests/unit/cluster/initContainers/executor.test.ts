@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { executeInitContainer } from '../../../../src/core/cluster/initContainers/executor'
 import type { Container } from '../../../../src/core/cluster/ressources/Pod'
-import { createFileSystem, type FileSystemState } from '../../../../src/core/filesystem/FileSystem'
+import {
+  createFileSystem,
+  type FileSystemState
+} from '../../../../src/core/filesystem/FileSystem'
 
 describe('InitContainer Executor', () => {
   let initialFileSystem: FileSystemState
@@ -294,7 +297,10 @@ describe('InitContainer Executor', () => {
         name: 'init',
         image: 'busybox:latest',
         command: ['sh'],
-        args: ['-c', 'mkdir -p /app/data && touch /app/data/config && echo "value" > /app/data/setting']
+        args: [
+          '-c',
+          'mkdir -p /app/data && touch /app/data/config && echo "value" > /app/data/setting'
+        ]
       }
 
       const result = executeInitContainer(container, initialFileSystem)

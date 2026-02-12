@@ -11,7 +11,12 @@ const MAX_RATING = 5
  * Inserts into messages (type survey). User must be authenticated.
  */
 export const POST: APIRoute = async ({ request, cookies, locals }) => {
-  let body: { name?: string; rating?: number; comment?: string; taskId?: string }
+  let body: {
+    name?: string
+    rating?: number
+    comment?: string
+    taskId?: string
+  }
   try {
     body = await request.json()
   } catch {
@@ -23,18 +28,27 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
   const name = body.name
   if (!name || !SURVEY_NAMES.includes(name as (typeof SURVEY_NAMES)[number])) {
-    return new Response(JSON.stringify({ error: 'Invalid or missing name (e.g. small)' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' }
-    })
+    return new Response(
+      JSON.stringify({ error: 'Invalid or missing name (e.g. small)' }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    )
   }
 
-  const rating = typeof body.rating === 'number' ? body.rating : Number(body.rating)
+  const rating =
+    typeof body.rating === 'number' ? body.rating : Number(body.rating)
   if (!Number.isInteger(rating) || rating < MIN_RATING || rating > MAX_RATING) {
-    return new Response(JSON.stringify({ error: `Rating must be between ${MIN_RATING} and ${MAX_RATING}` }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' }
-    })
+    return new Response(
+      JSON.stringify({
+        error: `Rating must be between ${MIN_RATING} and ${MAX_RATING}`
+      }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    )
   }
 
   const supabase = getSupabaseServer(locals, request, cookies)
@@ -49,9 +63,14 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     })
   }
 
-  const comment = typeof body.comment === 'string' ? body.comment.trim() : undefined
-  const content = comment !== undefined && comment !== '' ? { rating, comment } : { rating }
-  const lessonId = name === 'task' && typeof body.taskId === 'string' && body.taskId.trim() ? body.taskId.trim() : null
+  const comment =
+    typeof body.comment === 'string' ? body.comment.trim() : undefined
+  const content =
+    comment !== undefined && comment !== '' ? { rating, comment } : { rating }
+  const lessonId =
+    name === 'task' && typeof body.taskId === 'string' && body.taskId.trim()
+      ? body.taskId.trim()
+      : null
 
   const { error: insertError } = await supabase.from('messages').insert({
     type: 'survey',

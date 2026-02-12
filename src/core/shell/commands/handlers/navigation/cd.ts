@@ -8,7 +8,9 @@ import type { ExecutionResult } from '../../../../shared/result'
 import { error, success } from '../../../../shared/result'
 import type { ShellCommandHandler } from '../../core/ShellCommandHandler'
 
-export const createCdHandler = (fileSystem: FileSystem): ShellCommandHandler => {
+export const createCdHandler = (
+  fileSystem: FileSystem
+): ShellCommandHandler => {
   return {
     execute: (args: string[]): ExecutionResult => {
       if (args.length === 0) {

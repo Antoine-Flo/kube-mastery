@@ -23,11 +23,15 @@ const createMockShellContextStack = (): ShellContextStack => {
 }
 
 // Mock AutocompleteEngine pour les tests
-const createMockAutocompleteEngine = (): AutocompleteEngine & { resetTabTiming: () => void } => {
+const createMockAutocompleteEngine = (): AutocompleteEngine & {
+  resetTabTiming: () => void
+} => {
   const mockResults: CompletionResult[] = []
-  const mockGetCompletionResults = vi.fn((_line: string, _context: any): CompletionResult[] => {
-    return mockResults
-  })
+  const mockGetCompletionResults = vi.fn(
+    (_line: string, _context: any): CompletionResult[] => {
+      return mockResults
+    }
+  )
   const mockGetCommonPrefix = vi.fn((suggestions: string[]): string => {
     if (suggestions.length === 0) return ''
     if (suggestions.length === 1) return suggestions[0]
@@ -45,44 +49,55 @@ const createMockAutocompleteEngine = (): AutocompleteEngine & { resetTabTiming: 
     return suggestions.join('  ')
   })
   let lastTabPressTime = 0
-  const mockHandleTabPress = vi.fn((_line: string, _context: any, callbacks: any): void => {
-    const results = mockGetCompletionResults(_line, _context)
-    if (results.length === 0) return
+  const mockHandleTabPress = vi.fn(
+    (_line: string, _context: any, callbacks: any): void => {
+      const results = mockGetCompletionResults(_line, _context)
+      if (results.length === 0) return
 
-    const now = Date.now()
-    const isDoubleTap = now - lastTabPressTime < 500
-    lastTabPressTime = now
+      const now = Date.now()
+      const isDoubleTap = now - lastTabPressTime < 500
+      lastTabPressTime = now
 
-    // Simuler la logique de base pour les tests
-    if (results.length === 1) {
-      const result = results[0]
-      const currentToken = callbacks.getCurrentToken()
-      if (currentToken === result.text) {
-        callbacks.updateLineAndRender(callbacks.getCurrentLine() + result.suffix, result.suffix)
+      // Simuler la logique de base pour les tests
+      if (results.length === 1) {
+        const result = results[0]
+        const currentToken = callbacks.getCurrentToken()
+        if (currentToken === result.text) {
+          callbacks.updateLineAndRender(
+            callbacks.getCurrentLine() + result.suffix,
+            result.suffix
+          )
+        } else {
+          const toAdd = result.text.slice(currentToken.length) + result.suffix
+          callbacks.updateLineAndRender(
+            callbacks.getCurrentLine() + toAdd,
+            toAdd
+          )
+        }
+      } else if (isDoubleTap) {
+        // Double tap : afficher toutes les suggestions
+        const suggestions = mockFormatSuggestions(results.map((r) => r.text))
+        const currentLine = callbacks.getCurrentLine()
+        callbacks.write('\r\n')
+        callbacks.write(suggestions)
+        callbacks.write('\r\n')
+        callbacks.showPrompt()
+        callbacks.write(currentLine)
+        callbacks.updateCurrentLine(currentLine, currentLine.length)
       } else {
-        const toAdd = result.text.slice(currentToken.length) + result.suffix
-        callbacks.updateLineAndRender(callbacks.getCurrentLine() + toAdd, toAdd)
-      }
-    } else if (isDoubleTap) {
-      // Double tap : afficher toutes les suggestions
-      const suggestions = mockFormatSuggestions(results.map((r) => r.text))
-      const currentLine = callbacks.getCurrentLine()
-      callbacks.write('\r\n')
-      callbacks.write(suggestions)
-      callbacks.write('\r\n')
-      callbacks.showPrompt()
-      callbacks.write(currentLine)
-      callbacks.updateCurrentLine(currentLine, currentLine.length)
-    } else {
-      // Single tap avec multiple matches : common prefix
-      const prefix = mockGetCommonPrefix(results.map((r) => r.text))
-      const currentToken = callbacks.getCurrentToken()
-      const toAdd = prefix.slice(currentToken.length)
-      if (toAdd) {
-        callbacks.updateLineAndRender(callbacks.getCurrentLine() + toAdd, toAdd)
+        // Single tap avec multiple matches : common prefix
+        const prefix = mockGetCommonPrefix(results.map((r) => r.text))
+        const currentToken = callbacks.getCurrentToken()
+        const toAdd = prefix.slice(currentToken.length)
+        if (toAdd) {
+          callbacks.updateLineAndRender(
+            callbacks.getCurrentLine() + toAdd,
+            toAdd
+          )
+        }
       }
     }
-  })
+  )
   const resetTabTiming = vi.fn(() => {
     lastTabPressTime = 0
   })
@@ -290,7 +305,9 @@ describe('TerminalController', () => {
     })
 
     it('should autocomplete single match', () => {
-      vi.mocked(autocompleteEngine.getCompletionResults).mockReturnValue([{ text: 'kubectl', suffix: ' ' }])
+      vi.mocked(autocompleteEngine.getCompletionResults).mockReturnValue([
+        { text: 'kubectl', suffix: ' ' }
+      ])
 
       const controller = createTerminalController({
         renderer,

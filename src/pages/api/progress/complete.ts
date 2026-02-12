@@ -8,7 +8,13 @@ import { createSupabaseProgressRepository } from '../../../lib/progress/server'
  * - type=task&targetId=groupId/taskId&redirect=/path : marks task completed, then redirects (e.g. to task complete page).
  * If not authenticated, redirects without marking.
  */
-export const GET: APIRoute = async ({ url, request, cookies, redirect, locals }) => {
+export const GET: APIRoute = async ({
+  url,
+  request,
+  cookies,
+  redirect,
+  locals
+}) => {
   const lessonId = url.searchParams.get('lessonId')
   const type = url.searchParams.get('type')
   const targetId = url.searchParams.get('targetId')
@@ -20,10 +26,14 @@ export const GET: APIRoute = async ({ url, request, cookies, redirect, locals })
 
   const isTask = type === 'task' && targetId
   if (!lessonId && !isTask) {
-    return new Response('Missing lessonId or type=task&targetId', { status: 400 })
+    return new Response('Missing lessonId or type=task&targetId', {
+      status: 400
+    })
   }
   if (lessonId && isTask) {
-    return new Response('Use either lessonId or type=task&targetId', { status: 400 })
+    return new Response('Use either lessonId or type=task&targetId', {
+      status: 400
+    })
   }
 
   const supabase = getSupabaseServer(locals, request, cookies)

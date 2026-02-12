@@ -19,7 +19,11 @@ interface LoggerOptions {
   mirrorToConsole?: boolean
 }
 
-const createLogEntry = (level: LogLevel, category: LogCategory, message: string): LogEntry => ({
+const createLogEntry = (
+  level: LogLevel,
+  category: LogCategory,
+  message: string
+): LogEntry => ({
   timestamp: new Date().toISOString(),
   level,
   category,
@@ -42,7 +46,10 @@ const createConsoleObserver = (): LogObserver => {
   }
 }
 
-const matchesFilter = (entry: LogEntry, filter: { level?: LogLevel; category?: LogCategory }): boolean => {
+const matchesFilter = (
+  entry: LogEntry,
+  filter: { level?: LogLevel; category?: LogCategory }
+): boolean => {
   if (filter.level && entry.level !== filter.level) {
     return false
   }
@@ -61,7 +68,11 @@ export const createLogger = (options: LoggerOptions = {}): Logger => {
     observers.push(createConsoleObserver())
   }
 
-  const appendEntry = (level: LogLevel, category: LogCategory, message: string): void => {
+  const appendEntry = (
+    level: LogLevel,
+    category: LogCategory,
+    message: string
+  ): void => {
     const entry = createLogEntry(level, category, message)
     entries = [...entries, entry]
     if (entries.length > maxEntries) entries = entries.slice(1)
@@ -73,7 +84,8 @@ export const createLogger = (options: LoggerOptions = {}): Logger => {
     warn: (c, m) => appendEntry('warn', c, m),
     error: (c, m) => appendEntry('error', c, m),
     debug: (c, m) => appendEntry('debug', c, m),
-    getEntries: (filter) => (filter ? entries.filter((e) => matchesFilter(e, filter)) : [...entries]),
+    getEntries: (filter) =>
+      filter ? entries.filter((e) => matchesFilter(e, filter)) : [...entries],
     clear: () => {
       entries = []
     },

@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: "What must match between a ReplicaSet's selector and pod template labels?",
+      question:
+        "What must match between a ReplicaSet's selector and pod template labels?",
       options: [
         'Nothing needs to match',
         'The selector and pod template labels must match',

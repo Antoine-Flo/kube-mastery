@@ -37,7 +37,8 @@ const DEBIAN_FILESYSTEM_CONFIG: FileSystemConfig = {
   etc: {
     hostname: 'container-hostname',
     hosts: '127.0.0.1\tlocalhost\n::1\t\tlocalhost ip6-localhost ip6-loopback',
-    passwd: 'root:x:0:0:root:/root:/bin/bash\nkube:x:1000:1000:kube:/home/kube:/bin/bash',
+    passwd:
+      'root:x:0:0:root:/root:/bin/bash\nkube:x:1000:1000:kube:/home/kube:/bin/bash',
     group: 'root:x:0:\nkube:x:1000:',
     'resolv.conf': 'nameserver 8.8.8.8\nnameserver 8.8.4.4',
     'os-release':
@@ -99,7 +100,10 @@ export type FilesPreset = Record<string, string>
 /**
  * Create filesystem tree from configuration object
  */
-const createFileSystemFromConfig = (config: FileSystemConfig, basePath: string = ''): Map<string, any> => {
+const createFileSystemFromConfig = (
+  config: FileSystemConfig,
+  basePath: string = ''
+): Map<string, any> => {
   const children = new Map()
 
   for (const [name, content] of Object.entries(config)) {
@@ -265,7 +269,9 @@ export interface FsConfig {
  * Create filesystem from scenario config
  * Always uses /home/kube as current path (kube user is always present in base filesystem)
  */
-export const createFilesystemFromConfig = (config?: FsConfig): FileSystemState => {
+export const createFilesystemFromConfig = (
+  config?: FsConfig
+): FileSystemState => {
   const state = createDebianFileSystem()
 
   // Always set current path to /home/kube (kube user is in base filesystem)

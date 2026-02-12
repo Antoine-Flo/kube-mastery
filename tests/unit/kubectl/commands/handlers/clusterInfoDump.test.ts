@@ -4,7 +4,10 @@ import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
 import { createEventBus } from '../../../../../src/core/cluster/events/EventBus'
-import { createClusterState, type ClusterState } from '../../../../../src/core/cluster/ClusterState'
+import {
+  createClusterState,
+  type ClusterState
+} from '../../../../../src/core/cluster/ClusterState'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 import type { ClusterStateData } from '../../../../../src/core/cluster/ClusterState'
 import { createClusterStateData } from '../../../helpers/utils'
@@ -45,7 +48,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
     stateData = clusterState.toJSON()
   })
 
-  const createParsedCommand = (overrides: Partial<ParsedCommand> = {}): ParsedCommand => ({
+  const createParsedCommand = (
+    overrides: Partial<ParsedCommand> = {}
+  ): ParsedCommand => ({
     action: 'cluster-info',
     flags: {},
     ...overrides
@@ -83,10 +88,14 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
       expect(result.ok).toBe(true)
       if (result.ok) {
         // Logs are plain text after JSON resources
-        expect(result.value).toContain('==== START logs for pod default/test-pod ====')
+        expect(result.value).toContain(
+          '==== START logs for pod default/test-pod ===='
+        )
         expect(result.value).toContain('Log line 1')
         expect(result.value).toContain('Log line 2')
-        expect(result.value).toContain('==== END logs for pod default/test-pod ====')
+        expect(result.value).toContain(
+          '==== END logs for pod default/test-pod ===='
+        )
       }
     })
   })
@@ -123,7 +132,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
         expect(result.value).toContain('"name": "pod1"')
         expect(result.value).toContain('"name": "pod2"')
         // Should have resources from multiple namespaces
-        expect(result.value.split('"kind": "PodList"').length).toBeGreaterThan(1)
+        expect(result.value.split('"kind": "PodList"').length).toBeGreaterThan(
+          1
+        )
       }
     })
 
@@ -240,7 +251,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
-        expect(result.error).toContain('--output-directory is not yet supported')
+        expect(result.error).toContain(
+          '--output-directory is not yet supported'
+        )
       }
     })
 
@@ -302,7 +315,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
       if (result.ok) {
         expect(result.value).toContain('"name": "no-logs-pod"')
         // Should not have logs since pod has no logs
-        expect(result.value).not.toContain('==== START logs for pod default/no-logs-pod ====')
+        expect(result.value).not.toContain(
+          '==== START logs for pod default/no-logs-pod ===='
+        )
       }
     })
   })

@@ -18,7 +18,12 @@ export class KubectlCommandHandler implements CommandHandler {
 
   execute(command: string, context: CommandContext): ExecutionResult {
     // Créer l'executor avec les dépendances du contexte
-    const executor = createKubectlExecutor(context.clusterState, context.fileSystem, context.logger, context.eventBus)
+    const executor = createKubectlExecutor(
+      context.clusterState,
+      context.fileSystem,
+      context.logger,
+      context.eventBus
+    )
 
     // Exécuter la commande kubectl
     const result = executor.execute(command)

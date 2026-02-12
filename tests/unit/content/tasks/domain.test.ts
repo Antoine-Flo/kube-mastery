@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import type { TaskGroupMeta } from '../../../../src/content/tasks/types'
 import type { TaskIndexPort } from '../../../../src/content/tasks/port'
 import type { UiLang } from '../../../../src/content/courses/types'
-import { buildTaskGroupOverview, buildTaskGroupList } from '../../../../src/content/tasks/domain'
+import {
+  buildTaskGroupOverview,
+  buildTaskGroupList
+} from '../../../../src/content/tasks/domain'
 
 function createMockPort(overrides: {
   groupIds?: string[]
@@ -10,12 +13,18 @@ function createMockPort(overrides: {
   taskDirsByGroup?: Map<string, string[]>
   getTaskDirsByGroup?: () => Map<string, string[]>
   getTaskTitle?: (groupId: string, taskId: string, lang: UiLang) => string
-  getTaskDescription?: (groupId: string, taskId: string, lang: UiLang) => string | null
+  getTaskDescription?: (
+    groupId: string,
+    taskId: string,
+    lang: UiLang
+  ) => string | null
 }): TaskIndexPort {
   return {
     getGroupIds: () => overrides.groupIds ?? [],
     getGroupMeta: overrides.getGroupMeta ?? (() => undefined),
-    getTaskDirsByGroup: overrides.getTaskDirsByGroup ?? (() => overrides.taskDirsByGroup ?? new Map()),
+    getTaskDirsByGroup:
+      overrides.getTaskDirsByGroup ??
+      (() => overrides.taskDirsByGroup ?? new Map()),
     getTaskTitle: overrides.getTaskTitle ?? (() => ''),
     getTaskDescription: overrides.getTaskDescription ?? (() => null)
   }
@@ -59,7 +68,8 @@ describe('buildTaskGroupOverview', () => {
           environment: 'minimal'
         }
       },
-      getTaskDirsByGroup: () => new Map([['my-group', ['01-first-task', '02-second-task']]]),
+      getTaskDirsByGroup: () =>
+        new Map([['my-group', ['01-first-task', '02-second-task']]]),
       getTaskTitle: (groupId, taskId) => {
         if (groupId === 'my-group' && taskId === 'first-task') {
           return 'First Task'
@@ -129,7 +139,8 @@ describe('buildTaskGroupList', () => {
   it('excludes groups without meta', () => {
     const port = createMockPort({
       groupIds: ['g1', 'g2'],
-      getGroupMeta: (groupId) => (groupId === 'g1' ? { title: { en: 'G1', fr: 'G1' } } : undefined),
+      getGroupMeta: (groupId) =>
+        groupId === 'g1' ? { title: { en: 'G1', fr: 'G1' } } : undefined,
       getTaskDirsByGroup: () =>
         new Map([
           ['g1', ['01-a']],

@@ -64,8 +64,20 @@ const formatTimestamp = (baseTime: Date, offsetSeconds: number): string => {
 const generateNginxLog = (timestamp: string, level: LogLevel): string => {
   const ips = ['192.168.1.100', '10.0.0.5', '172.16.0.42', '192.168.1.200']
   const methods = ['GET', 'POST', 'PUT', 'DELETE']
-  const paths = ['/', '/api/users', '/api/products', '/health', '/static/app.js', '/index.html']
-  const statuses = level === 'ERROR' ? ['500', '502', '503'] : level === 'WARN' ? ['404', '403'] : ['200', '201', '304']
+  const paths = [
+    '/',
+    '/api/users',
+    '/api/products',
+    '/health',
+    '/static/app.js',
+    '/index.html'
+  ]
+  const statuses =
+    level === 'ERROR'
+      ? ['500', '502', '503']
+      : level === 'WARN'
+        ? ['404', '403']
+        : ['200', '201', '304']
   const userAgents = ['Mozilla/5.0', 'curl/7.68.0', 'Go-http-client/1.1']
 
   const ip = randomChoice(ips)
@@ -78,7 +90,11 @@ const generateNginxLog = (timestamp: string, level: LogLevel): string => {
   return `${timestamp} ${level} ${ip} - - [${timestamp}] "${method} ${path} HTTP/1.1" ${status} ${bytes} "-" "${userAgent}"`
 }
 
-const generateRedisLog = (timestamp: string, level: LogLevel, index: number): string => {
+const generateRedisLog = (
+  timestamp: string,
+  level: LogLevel,
+  index: number
+): string => {
   if (index < 3) {
     const messages = [
       'Redis server started, Redis version 6.2.6',
@@ -109,7 +125,11 @@ const generateRedisLog = (timestamp: string, level: LogLevel, index: number): st
   return `${timestamp} ${level} ${randomChoice(messages)}`
 }
 
-const generateMysqlLog = (timestamp: string, level: LogLevel, index: number): string => {
+const generateMysqlLog = (
+  timestamp: string,
+  level: LogLevel,
+  index: number
+): string => {
   if (index < 3) {
     const messages = [
       'mysqld: ready for connections. Version: 8.0.27  port: 3306',
@@ -139,7 +159,11 @@ const generateMysqlLog = (timestamp: string, level: LogLevel, index: number): st
   return `${timestamp} ${level} ${randomChoice(messages)}`
 }
 
-const generatePostgresLog = (timestamp: string, level: LogLevel, index: number): string => {
+const generatePostgresLog = (
+  timestamp: string,
+  level: LogLevel,
+  index: number
+): string => {
   if (index < 3) {
     const messages = [
       'database system is ready to accept connections',
@@ -169,9 +193,17 @@ const generatePostgresLog = (timestamp: string, level: LogLevel, index: number):
   return `${timestamp} ${level} ${randomChoice(messages)}`
 }
 
-const generateGenericLog = (timestamp: string, level: LogLevel, index: number): string => {
+const generateGenericLog = (
+  timestamp: string,
+  level: LogLevel,
+  index: number
+): string => {
   if (index < 3) {
-    const messages = ['Application starting...', 'Initialization complete', 'Server ready on port 8080']
+    const messages = [
+      'Application starting...',
+      'Initialization complete',
+      'Server ready on port 8080'
+    ]
     return `${timestamp} ${level} ${messages[index] || messages[0]}`
   }
 
@@ -204,7 +236,10 @@ const generateGenericLog = (timestamp: string, level: LogLevel, index: number): 
  * @param count - Number of log lines to generate (max 200)
  * @returns Array of log lines with timestamps and realistic content
  */
-export const generateLogs = (containerImage: string, count: number): string[] => {
+export const generateLogs = (
+  containerImage: string,
+  count: number
+): string[] => {
   if (count <= 0) {
     return []
   }
@@ -218,7 +253,10 @@ export const generateLogs = (containerImage: string, count: number): string[] =>
   let currentOffset = 0
 
   // Log generator lookup table (object lookup pattern)
-  const LOG_GENERATORS: Record<string, (ts: string, level: LogLevel, i: number) => string> = {
+  const LOG_GENERATORS: Record<
+    string,
+    (ts: string, level: LogLevel, i: number) => string
+  > = {
     nginx: generateNginxLog,
     redis: generateRedisLog,
     mysql: generateMysqlLog,

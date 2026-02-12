@@ -316,7 +316,10 @@ const createEventTimestamp = (): string => new Date().toISOString()
 /**
  * Create PodCreated event
  */
-export const createPodCreatedEvent = (pod: Pod, source?: string): PodCreatedEvent => ({
+export const createPodCreatedEvent = (
+  pod: Pod,
+  source?: string
+): PodCreatedEvent => ({
   type: 'PodCreated',
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
@@ -357,7 +360,10 @@ export const createPodUpdatedEvent = (
 /**
  * Create ConfigMapCreated event
  */
-export const createConfigMapCreatedEvent = (configMap: ConfigMap, source?: string): ConfigMapCreatedEvent => ({
+export const createConfigMapCreatedEvent = (
+  configMap: ConfigMap,
+  source?: string
+): ConfigMapCreatedEvent => ({
   type: 'ConfigMapCreated',
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
@@ -398,7 +404,10 @@ export const createConfigMapUpdatedEvent = (
 /**
  * Create SecretCreated event
  */
-export const createSecretCreatedEvent = (secret: Secret, source?: string): SecretCreatedEvent => ({
+export const createSecretCreatedEvent = (
+  secret: Secret,
+  source?: string
+): SecretCreatedEvent => ({
   type: 'SecretCreated',
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
@@ -439,7 +448,10 @@ export const createSecretUpdatedEvent = (
 /**
  * Create ReplicaSetCreated event
  */
-export const createReplicaSetCreatedEvent = (replicaSet: ReplicaSet, source?: string): ReplicaSetCreatedEvent => ({
+export const createReplicaSetCreatedEvent = (
+  replicaSet: ReplicaSet,
+  source?: string
+): ReplicaSetCreatedEvent => ({
   type: 'ReplicaSetCreated',
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
@@ -480,7 +492,10 @@ export const createReplicaSetUpdatedEvent = (
 /**
  * Create DeploymentCreated event
  */
-export const createDeploymentCreatedEvent = (deployment: Deployment, source?: string): DeploymentCreatedEvent => ({
+export const createDeploymentCreatedEvent = (
+  deployment: Deployment,
+  source?: string
+): DeploymentCreatedEvent => ({
   type: 'DeploymentCreated',
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
@@ -623,7 +638,10 @@ export const createSecretAnnotatedEvent = (
 /**
  * Create ServiceCreated event
  */
-export const createServiceCreatedEvent = (service: Service, source?: string): ServiceCreatedEvent => ({
+export const createServiceCreatedEvent = (
+  service: Service,
+  source?: string
+): ServiceCreatedEvent => ({
   type: 'ServiceCreated',
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),

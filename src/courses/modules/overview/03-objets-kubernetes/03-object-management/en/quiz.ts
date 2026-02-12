@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'Which management technique automatically detects create, update, and delete operations?',
+      question:
+        'Which management technique automatically detects create, update, and delete operations?',
       options: [
         'Imperative commands',
         'Imperative object configuration',
@@ -21,7 +22,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'terminal-command',
-      question: 'Create a deployment named nginx using the imperative command approach',
+      question:
+        'Create a deployment named nginx using the imperative command approach',
       expectedCommand: 'kubectl create deployment nginx --image nginx',
       validationMode: 'contains',
       normalizeCommand: true
@@ -29,7 +31,8 @@ export const quiz: Quiz = {
     {
       id: 'q3',
       type: 'multiple-choice',
-      question: 'What is the recommended approach for managing Kubernetes objects in production?',
+      question:
+        'What is the recommended approach for managing Kubernetes objects in production?',
       options: [
         'Only imperative commands',
         'Only declarative object configuration',

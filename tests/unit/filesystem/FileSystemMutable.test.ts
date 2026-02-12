@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createEventBus, type EventBus } from '../../../src/core/cluster/events/EventBus'
-import { createFileSystem, type FileSystemState } from '../../../src/core/filesystem/FileSystem'
+import {
+  createEventBus,
+  type EventBus
+} from '../../../src/core/cluster/events/EventBus'
+import {
+  createFileSystem,
+  type FileSystemState
+} from '../../../src/core/filesystem/FileSystem'
 import { createDirectory } from '../../../src/core/filesystem/models'
 
 describe('FileSystem Mutable Mode', () => {
@@ -20,7 +26,9 @@ describe('FileSystem Mutable Mode', () => {
 
   describe('mutable mode - state sharing', () => {
     it('should modify original state directly in mutable mode', () => {
-      const fileSystem = createFileSystem(originalState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(originalState, eventBus, {
+        mutable: true
+      })
 
       // Modifier via FileSystem
       fileSystem.createFile('test.txt', 'content')
@@ -40,7 +48,9 @@ describe('FileSystem Mutable Mode', () => {
     })
 
     it('should not modify original state in normal mode', () => {
-      const fileSystem = createFileSystem(originalState, eventBus, { mutable: false })
+      const fileSystem = createFileSystem(originalState, eventBus, {
+        mutable: false
+      })
       const originalPath = originalState.currentPath
 
       // Modifier via FileSystem
@@ -51,7 +61,9 @@ describe('FileSystem Mutable Mode', () => {
     })
 
     it('should share state reference in mutable mode', () => {
-      const fileSystem = createFileSystem(originalState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(originalState, eventBus, {
+        mutable: true
+      })
 
       // Modifier directement le state original
       originalState.currentPath = '/custom'
@@ -61,7 +73,9 @@ describe('FileSystem Mutable Mode', () => {
     })
 
     it('should not share state reference in normal mode after setState', () => {
-      const fileSystem = createFileSystem(originalState, eventBus, { mutable: false })
+      const fileSystem = createFileSystem(originalState, eventBus, {
+        mutable: false
+      })
       const originalPath = originalState.currentPath
 
       // Modifier via FileSystem (appelle setState qui crée une nouvelle référence)
@@ -75,7 +89,9 @@ describe('FileSystem Mutable Mode', () => {
 
   describe('mutable mode - toJSON', () => {
     it('should return original state directly in mutable mode (no clone)', () => {
-      const fileSystem = createFileSystem(originalState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(originalState, eventBus, {
+        mutable: true
+      })
 
       fileSystem.createFile('test.txt', 'content')
       const json = fileSystem.toJSON()
@@ -90,7 +106,9 @@ describe('FileSystem Mutable Mode', () => {
     })
 
     it('should return cloned state in normal mode', () => {
-      const fileSystem = createFileSystem(originalState, eventBus, { mutable: false })
+      const fileSystem = createFileSystem(originalState, eventBus, {
+        mutable: false
+      })
 
       const json = fileSystem.toJSON()
 
@@ -101,7 +119,9 @@ describe('FileSystem Mutable Mode', () => {
     })
 
     it('should reflect mutations in mutable mode toJSON', () => {
-      const fileSystem = createFileSystem(originalState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(originalState, eventBus, {
+        mutable: true
+      })
 
       fileSystem.createFile('test.txt', 'content')
       const json = fileSystem.toJSON()
@@ -118,7 +138,9 @@ describe('FileSystem Mutable Mode', () => {
 
   describe('mutable mode - loadState', () => {
     it('should modify original state directly in mutable mode', () => {
-      const fileSystem = createFileSystem(originalState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(originalState, eventBus, {
+        mutable: true
+      })
 
       const newState: FileSystemState = {
         currentPath: '/new',
@@ -133,7 +155,9 @@ describe('FileSystem Mutable Mode', () => {
     })
 
     it('should replace internal state in normal mode', () => {
-      const fileSystem = createFileSystem(originalState, eventBus, { mutable: false })
+      const fileSystem = createFileSystem(originalState, eventBus, {
+        mutable: false
+      })
       const originalPath = originalState.currentPath
 
       const newState: FileSystemState = {
@@ -154,7 +178,9 @@ describe('FileSystem Mutable Mode', () => {
       const subscriber = vi.fn()
       eventBus.subscribeAll(subscriber)
 
-      const fileSystem = createFileSystem(originalState, eventBus, { mutable: true })
+      const fileSystem = createFileSystem(originalState, eventBus, {
+        mutable: true
+      })
 
       fileSystem.createFile('test.txt', 'content')
       fileSystem.writeFile('test.txt', 'new content')

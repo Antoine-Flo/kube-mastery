@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createEventBus, type EventBus } from '../../../../src/core/cluster/events/EventBus'
-import type { PodCreatedEvent, PodDeletedEvent } from '../../../../src/core/cluster/events/types'
+import {
+  createEventBus,
+  type EventBus
+} from '../../../../src/core/cluster/events/EventBus'
+import type {
+  PodCreatedEvent,
+  PodDeletedEvent
+} from '../../../../src/core/cluster/events/types'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 import type { AppEvent } from '../../../../src/core/events/AppEvent'
 
@@ -269,8 +275,12 @@ describe('EventBus', () => {
       expect(history).toHaveLength(3)
 
       // First event should be dropped
-      expect((history[0] as PodCreatedEvent).payload.pod.metadata.name).toBe('pod-2')
-      expect((history[2] as PodCreatedEvent).payload.pod.metadata.name).toBe('pod-4')
+      expect((history[0] as PodCreatedEvent).payload.pod.metadata.name).toBe(
+        'pod-2'
+      )
+      expect((history[2] as PodCreatedEvent).payload.pod.metadata.name).toBe(
+        'pod-4'
+      )
     })
   })
 

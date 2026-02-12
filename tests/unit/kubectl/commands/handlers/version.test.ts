@@ -3,7 +3,9 @@ import { handleVersion } from '../../../../../src/core/kubectl/commands/handlers
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 
 describe('kubectl version handler', () => {
-  const createParsedCommand = (overrides: Partial<ParsedCommand> = {}): ParsedCommand => ({
+  const createParsedCommand = (
+    overrides: Partial<ParsedCommand> = {}
+  ): ParsedCommand => ({
     action: 'version',
     flags: {},
     ...overrides
@@ -64,7 +66,9 @@ describe('kubectl version handler', () => {
       expect(result.ok).toBe(true)
       if (result.ok) {
         // Check format matches kubectl style (simple GitVersion only)
-        expect(result.value).toMatch(/^Client Version: v1\.35\.0\nKustomize Version: v5\.7\.1$/)
+        expect(result.value).toMatch(
+          /^Client Version: v1\.35\.0\nKustomize Version: v5\.7\.1$/
+        )
       }
     })
   })

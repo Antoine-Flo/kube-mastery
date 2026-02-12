@@ -6,7 +6,10 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import { createPod, type Pod } from '../../../src/core/cluster/ressources/Pod'
 import { loadOpenAPISpec } from '../openapi/loader'
-import { createOpenAPIValidator, removeSimulatorFields } from '../openapi/validator'
+import {
+  createOpenAPIValidator,
+  removeSimulatorFields
+} from '../openapi/validator'
 
 describe('Pod OpenAPI Conformance', () => {
   let validator: ReturnType<typeof createOpenAPIValidator>

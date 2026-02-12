@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { InputHandler } from '../../../../src/core/terminal/core/InputHandler'
 import type { InputHandlerContext } from '../../../../src/core/terminal/core/InputHandlerContext'
-import { createTerminalState, TerminalState } from '../../../../src/core/terminal/core/TerminalState'
+import {
+  createTerminalState,
+  TerminalState
+} from '../../../../src/core/terminal/core/TerminalState'
 import { createMockRenderer } from '../../helpers/mockRenderer'
 
 describe('InputHandler', () => {

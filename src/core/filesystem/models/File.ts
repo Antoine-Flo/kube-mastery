@@ -24,7 +24,11 @@ const getFileExtension = (filename: string): string => {
 }
 
 // Factory function: Create immutable file
-export const createFile = (name: string, path: string, content: string = ''): FileNode => {
+export const createFile = (
+  name: string,
+  path: string,
+  content: string = ''
+): FileNode => {
   const extension = getFileExtension(name)
   const now = new Date().toISOString()
 

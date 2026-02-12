@@ -87,7 +87,11 @@ const createEventTimestamp = (): string => new Date().toISOString()
 /**
  * Create FileCreated event
  */
-export const createFileCreatedEvent = (file: FileNode, path: string, source?: string): FileCreatedEvent => ({
+export const createFileCreatedEvent = (
+  file: FileNode,
+  path: string,
+  source?: string
+): FileCreatedEvent => ({
   type: 'FileCreated',
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
@@ -112,7 +116,11 @@ export const createFileModifiedEvent = (
 /**
  * Create FileDeleted event
  */
-export const createFileDeletedEvent = (path: string, deletedFile: FileNode, source?: string): FileDeletedEvent => ({
+export const createFileDeletedEvent = (
+  path: string,
+  deletedFile: FileNode,
+  source?: string
+): FileDeletedEvent => ({
   type: 'FileDeleted',
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),

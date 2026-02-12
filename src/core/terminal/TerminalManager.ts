@@ -7,7 +7,10 @@ import { FitAddon } from '@xterm/addon-fit'
 import { Terminal as XTermTerminal, type IDisposable } from '@xterm/xterm'
 import type { EmulatedEnvironment } from '../emulatedEnvironment/EmulatedEnvironment'
 import { createDefaultAutocompleteEngine } from './autocomplete'
-import { createTerminalController, type TerminalController } from './core/TerminalController'
+import {
+  createTerminalController,
+  type TerminalController
+} from './core/TerminalController'
 import { createXTermRenderer } from './renderer/XTermRenderer'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -147,7 +150,12 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
       clearTimeout(fitTimeout)
     }
     fitTimeout = setTimeout(() => {
-      if (state.fitAddon && state.terminal && container.offsetWidth > 0 && container.offsetHeight > 0) {
+      if (
+        state.fitAddon &&
+        state.terminal &&
+        container.offsetWidth > 0 &&
+        container.offsetHeight > 0
+      ) {
         try {
           state.fitAddon.fit()
         } catch {
@@ -199,7 +207,10 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
   state.terminal.focus()
 }
 
-const createResizeObserver = (container: HTMLElement, expectedAttachId: number) => {
+const createResizeObserver = (
+  container: HTMLElement,
+  expectedAttachId: number
+) => {
   // Only observe window resize, not container resize (to avoid infinite loop)
   let resizeTimeout: number | null = null
 
@@ -242,7 +253,9 @@ export const attachTerminal = (options: AttachOptions): number => {
   const currentAttachId = state.attachId
 
   if (!state.options) {
-    console.error('[TerminalManager] Not initialized. Call initTerminalManager first.')
+    console.error(
+      '[TerminalManager] Not initialized. Call initTerminalManager first.'
+    )
     return currentAttachId
   }
 
@@ -286,7 +299,8 @@ export const updateTerminalTheme = (): void => {
   state.terminal.options.theme = getThemeColors(state.options.theme())
 }
 
-export const getTerminalController = (): TerminalController | null => state.controller
+export const getTerminalController = (): TerminalController | null =>
+  state.controller
 
 export const focusTerminal = (): void => {
   if (state.terminal) {

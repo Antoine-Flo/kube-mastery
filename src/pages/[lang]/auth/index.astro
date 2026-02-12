@@ -10,12 +10,15 @@ const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
 const rawRedirect = Astro.url.searchParams.get('redirect') ?? ''
-const redirect = rawRedirect.startsWith('/') && !rawRedirect.includes('//') ? rawRedirect : ''
+const redirect =
+  rawRedirect.startsWith('/') && !rawRedirect.includes('//') ? rawRedirect : ''
 
 const authError = Astro.url.searchParams.get('auth_error') === '1'
 const authErrorMessageKey = Astro.url.searchParams.get('message_key') ?? ''
 const authErrorMessageRaw = Astro.url.searchParams.get('message') ?? ''
-const authErrorMessage = authErrorMessageKey ? t(authErrorMessageKey) : authErrorMessageRaw
+const authErrorMessage = authErrorMessageKey
+  ? t(authErrorMessageKey)
+  : authErrorMessageRaw
 
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
@@ -45,11 +48,21 @@ try {
 
     <div class="auth__card-body">
       <div id="auth-providers" class="auth__buttons">
-        <form action="/api/auth/signin" method="post" class="auth__provider-form" data-astro-reload>
+        <form
+          action="/api/auth/signin"
+          method="post"
+          class="auth__provider-form"
+          data-astro-reload
+        >
           <input type="hidden" name="provider" value="github" />
           <input type="hidden" name="lang" value={lang} />
           <input type="hidden" name="redirect" value={redirect} />
-          <Button type="submit" variant="outline" size="lg" class="auth__provider-button auth__provider-button--github">
+          <Button
+            type="submit"
+            variant="outline"
+            size="lg"
+            class="auth__provider-button auth__provider-button--github"
+          >
             <span class="auth__provider-btn-inner">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -71,7 +84,12 @@ try {
           </Button>
         </form>
         <div id="auth-show-email">
-          <Button type="button" variant="outline" size="lg" class="auth__provider-button auth__provider-button--mail">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            class="auth__provider-button auth__provider-button--mail"
+          >
             <span class="auth__provider-btn-inner">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -94,12 +112,20 @@ try {
       </div>
 
       <div id="auth-email-form" class="auth__form-wrapper" hidden>
-        <form id="auth-form-magic" class="auth__form" action="/api/auth/signin" method="post" data-astro-reload>
+        <form
+          id="auth-form-magic"
+          class="auth__form"
+          action="/api/auth/signin"
+          method="post"
+          data-astro-reload
+        >
           <input type="hidden" name="magic" value="1" />
           <input type="hidden" name="lang" value={lang} />
           <input type="hidden" name="redirect" value={redirect} />
           <div class="auth__field">
-            <label for="auth-email-magic" class="auth__label">{t('auth_email')}</label>
+            <label for="auth-email-magic" class="auth__label"
+              >{t('auth_email')}</label
+            >
             <input
               type="email"
               id="auth-email-magic"
@@ -109,7 +135,12 @@ try {
               class="auth__input"
             />
           </div>
-          <Button type="submit" variant="solid" size="lg" class="auth__submit-button">
+          <Button
+            type="submit"
+            variant="solid"
+            size="lg"
+            class="auth__submit-button"
+          >
             {t('auth_sendLoginLink')}
           </Button>
         </form>

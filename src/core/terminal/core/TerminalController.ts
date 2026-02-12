@@ -65,7 +65,8 @@ export class TerminalController {
       createAutocompleteContext: () => this.createAutocompleteContext(),
       showPrompt: () => this.showPrompt(),
       replaceLineWithCommand: (command) => this.replaceLineWithCommand(command),
-      updateLineAndRender: (newLine, textToRender) => this.updateLineAndRender(newLine, textToRender),
+      updateLineAndRender: (newLine, textToRender) =>
+        this.updateLineAndRender(newLine, textToRender),
       hideCursor: () => this.renderer.write('\x1b[?25l'),
       showCursor: () => this.renderer.write('\x1b[?25h'),
       isInputLocked: () => this.inputLocked
@@ -131,7 +132,9 @@ export class TerminalController {
 }
 
 // Factory function pour simplifier l'usage (crée le state par défaut)
-export const createTerminalController = (options: Omit<TerminalControllerOptions, 'state'>): TerminalController => {
+export const createTerminalController = (
+  options: Omit<TerminalControllerOptions, 'state'>
+): TerminalController => {
   return new TerminalController({
     ...options,
     state: createTerminalState() // Crée par défaut si pas fourni

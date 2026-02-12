@@ -75,7 +75,9 @@ export class CommandDispatcher {
     }
 
     const shouldLock =
-      this.commandLimit !== undefined && this.commandLimit > 0 && this.commandCount + 1 >= this.commandLimit
+      this.commandLimit !== undefined &&
+      this.commandLimit > 0 &&
+      this.commandCount + 1 >= this.commandLimit
 
     // Trouver le premier handler qui peut traiter la commande
     const handler = this.handlers.find((h) => h.canHandle(command))
@@ -104,6 +106,8 @@ export class CommandDispatcher {
  * @param options - Options de configuration
  * @returns Instance de CommandDispatcher
  */
-export const createCommandDispatcher = (options: CommandDispatcherOptions): CommandDispatcher => {
+export const createCommandDispatcher = (
+  options: CommandDispatcherOptions
+): CommandDispatcher => {
   return new CommandDispatcher(options)
 }

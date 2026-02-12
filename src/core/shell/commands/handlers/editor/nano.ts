@@ -9,10 +9,17 @@ import { error, success } from '../../../../shared/result'
 import type { ShellCommandHandler } from '../../core/ShellCommandHandler'
 
 export type EditorModal = {
-  open: (filename: string, content: string, onSave: (newContent: string) => void) => void
+  open: (
+    filename: string,
+    content: string,
+    onSave: (newContent: string) => void
+  ) => void
 }
 
-export const createNanoHandler = (fileSystem: FileSystem, editorModal?: EditorModal): ShellCommandHandler => {
+export const createNanoHandler = (
+  fileSystem: FileSystem,
+  editorModal?: EditorModal
+): ShellCommandHandler => {
   return {
     execute: (args: string[]): ExecutionResult => {
       if (args.length === 0) {

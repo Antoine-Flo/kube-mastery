@@ -18,7 +18,11 @@ interface Props {
   hasPaidSubscription?: boolean
 }
 
-const { isLoggedIn = false, user = null, hasPaidSubscription = false } = Astro.props
+const {
+  isLoggedIn = false,
+  user = null,
+  hasPaidSubscription = false
+} = Astro.props
 const lang = getLangFromUrl(Astro.url)
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
@@ -28,7 +32,10 @@ const userEmail = user?.email ?? ''
 
 <header class:list={{ 'navbar--logged-in': isLoggedIn }}>
   <div class="navbar-inner">
-    <a href={isLoggedIn ? localePath('/courses') : localePath('/')} class="logo">
+    <a
+      href={isLoggedIn ? localePath('/courses') : localePath('/')}
+      class="logo"
+    >
       <Logo size={27} class="logo-icon" />
       {!isLoggedIn && <span class="logo-name">{t('nav_appName')}</span>}
     </a>
@@ -37,7 +44,11 @@ const userEmail = user?.email ?? ''
       <nav>
         <a href={localePath('/courses')}>{t('nav_courses')}</a>
         {!isLoggedIn && <a href={localePath('/pricing')}>{t('nav_pricing')}</a>}
-        {isLoggedIn && !hasPaidSubscription && <a href={localePath('/pricing')}>{t('nav_upgrade')}</a>}
+        {
+          isLoggedIn && !hasPaidSubscription && (
+            <a href={localePath('/pricing')}>{t('nav_upgrade')}</a>
+          )
+        }
         {
           isLoggedIn ? (
             <NavbarUserMenu
@@ -49,7 +60,12 @@ const userEmail = user?.email ?? ''
             />
           ) : (
             <>
-              <Button href={localePath('/auth')} variant="solid" color="cyan" size="sm">
+              <Button
+                href={localePath('/auth')}
+                variant="solid"
+                color="cyan"
+                size="sm"
+              >
                 {t('nav_login')}
               </Button>
               <div class="acts">

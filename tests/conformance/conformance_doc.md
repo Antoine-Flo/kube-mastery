@@ -63,7 +63,11 @@ describe('Ressource OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(ressourceForValidation, 'v1', 'Ressource')
+      const result = validator.validateResource(
+        ressourceForValidation,
+        'v1',
+        'Ressource'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -80,7 +84,11 @@ describe('Ressource OpenAPI Conformance', () => {
         spec: { field: 123 } // Invalid: should be string
       }
 
-      const result = validator.validateResource(invalidRessource, 'v1', 'Ressource')
+      const result = validator.validateResource(
+        invalidRessource,
+        'v1',
+        'Ressource'
+      )
       expect(result.ok).toBe(true)
       if (result.ok) {
         // Le test échoue si la ressource est valide

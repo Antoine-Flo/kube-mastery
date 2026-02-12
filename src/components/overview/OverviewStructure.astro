@@ -1,6 +1,9 @@
 ---
 import { ChevronDown, Circle, CircleCheck, CirclePlay } from '@lucide/astro'
-import type { OverviewChapter, OverviewLesson } from '../../content/overview/facade'
+import type {
+  OverviewChapter,
+  OverviewLesson
+} from '../../content/overview/facade'
 
 interface Props {
   chapters: OverviewChapter[]
@@ -65,11 +68,16 @@ function getModuleTitle(moduleId: string): string {
           )}
           <div class="acc">
             {group.chapters.map((chapter) => (
-              <details open={chapter.lessons.some((l) => l.id === currentLessonId)}>
+              <details
+                open={chapter.lessons.some((l) => l.id === currentLessonId)}
+              >
                 <summary>
                   <span class="tit">{chapter.title}</span>
                   <span class="n">
-                    {chapter.lessons.length} {chapter.lessons.length === 1 ? t('courses_lesson') : t('courses_lessons')}
+                    {chapter.lessons.length}{' '}
+                    {chapter.lessons.length === 1
+                      ? t('courses_lesson')
+                      : t('courses_lessons')}
                   </span>
                   <ChevronDown size={20} class="arr" aria-hidden="true" />
                 </summary>
@@ -80,17 +88,28 @@ function getModuleTitle(moduleId: string): string {
                         href={`${lessonBaseUrl}/${lesson.id}`}
                         class:list={{
                           os__lesson: true,
-                          'progress-completed': completedLessonIds.has(lesson.id),
+                          'progress-completed': completedLessonIds.has(
+                            lesson.id
+                          ),
                           'progress-current': lesson.id === currentLessonId
                         }}
                       >
-                        <span class="os__lesson-icon os__lesson-icon--pending" aria-hidden="true">
+                        <span
+                          class="os__lesson-icon os__lesson-icon--pending"
+                          aria-hidden="true"
+                        >
                           <Circle size={16} />
                         </span>
-                        <span class="os__lesson-icon os__lesson-icon--current" aria-hidden="true">
+                        <span
+                          class="os__lesson-icon os__lesson-icon--current"
+                          aria-hidden="true"
+                        >
                           <CirclePlay size={16} />
                         </span>
-                        <span class="os__lesson-icon os__lesson-icon--completed" aria-hidden="true">
+                        <span
+                          class="os__lesson-icon os__lesson-icon--completed"
+                          aria-hidden="true"
+                        >
                           <CircleCheck size={16} />
                         </span>
                         <span class="os__lesson-title">{lesson.title}</span>

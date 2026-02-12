@@ -17,7 +17,10 @@ const DEFAULT_LOG_COUNT = 50
  * - kubectl logs <pod> --tail=20
  * - kubectl logs <pod> -f/--follow
  */
-export const handleLogs = (state: ClusterStateData, parsed: ParsedCommand): string => {
+export const handleLogs = (
+  state: ClusterStateData,
+  parsed: ParsedCommand
+): string => {
   // Validate pod name is provided
   if (!parsed.name) {
     return 'Error: pod name is required'
@@ -27,7 +30,9 @@ export const handleLogs = (state: ClusterStateData, parsed: ParsedCommand): stri
   const podName = parsed.name
 
   // Find the pod
-  const pod = state.pods.items.find((p) => p.metadata.name === podName && p.metadata.namespace === namespace)
+  const pod = state.pods.items.find(
+    (p) => p.metadata.name === podName && p.metadata.namespace === namespace
+  )
 
   if (!pod) {
     return `Error from server (NotFound): pods "${podName}" not found`
@@ -42,7 +47,10 @@ export const handleLogs = (state: ClusterStateData, parsed: ParsedCommand): stri
   if (containerName) {
     // Container specified via -c flag
     // Check both init and regular containers
-    const allContainers = [...(pod.spec.initContainers || []), ...regularContainers]
+    const allContainers = [
+      ...(pod.spec.initContainers || []),
+      ...regularContainers
+    ]
     targetContainer = allContainers.find((c) => c.name === containerName)
 
     if (!targetContainer) {

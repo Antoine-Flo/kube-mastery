@@ -5,10 +5,21 @@
 // Gère les actions, types de ressources et noms de ressources
 
 import { AutocompleteProvider } from '../../terminal/autocomplete/AutocompleteProvider'
-import type { AutocompleteContext, CompletionResult } from '../../terminal/autocomplete/types'
+import type {
+  AutocompleteContext,
+  CompletionResult
+} from '../../terminal/autocomplete/types'
 
 // Actions kubectl
-const KUBECTL_ACTIONS = ['get', 'describe', 'delete', 'apply', 'logs', 'exec', 'scale'] as const
+const KUBECTL_ACTIONS = [
+  'get',
+  'describe',
+  'delete',
+  'apply',
+  'logs',
+  'exec',
+  'scale'
+] as const
 
 // Resource type aliases (for kubectl completion)
 const RESOURCE_ALIASES: Record<string, string> = {
@@ -50,18 +61,28 @@ const getResourceNames = (
   context: AutocompleteContext
 ): CompletionResult[] => {
   // Type guard pour vérifier que clusterState a les méthodes nécessaires
-  if (!context.clusterState || typeof context.clusterState.getPods !== 'function') {
+  if (
+    !context.clusterState ||
+    typeof context.clusterState.getPods !== 'function'
+  ) {
     return []
   }
 
   // Map resource types to their getter functions
-  const resourceGetters: Record<string, (state: typeof context.clusterState) => string[]> = {
+  const resourceGetters: Record<
+    string,
+    (state: typeof context.clusterState) => string[]
+  > = {
     pods: (state) => state.getPods().map((pod: any) => pod.metadata.name),
-    configmaps: (state) => state.getConfigMaps().map((cm: any) => cm.metadata.name),
-    secrets: (state) => state.getSecrets().map((secret: any) => secret.metadata.name),
+    configmaps: (state) =>
+      state.getConfigMaps().map((cm: any) => cm.metadata.name),
+    secrets: (state) =>
+      state.getSecrets().map((secret: any) => secret.metadata.name),
     nodes: (state) => state.getNodes().map((node: any) => node.metadata.name),
-    replicasets: (state) => state.getReplicaSets().map((rs: any) => rs.metadata.name),
-    deployments: (state) => state.getDeployments().map((deploy: any) => deploy.metadata.name)
+    replicasets: (state) =>
+      state.getReplicaSets().map((rs: any) => rs.metadata.name),
+    deployments: (state) =>
+      state.getDeployments().map((deploy: any) => deploy.metadata.name)
   }
 
   const getter = resourceGetters[resourceType]
@@ -70,7 +91,10 @@ const getResourceNames = (
   }
 
   const names = getter(context.clusterState)
-  return filterMatches(names, currentToken).map((name) => ({ text: name, suffix: ' ' }))
+  return filterMatches(names, currentToken).map((name) => ({
+    text: name,
+    suffix: ' '
+  }))
 }
 
 export class KubectlAutocompleteProvider extends AutocompleteProvider {
@@ -105,10 +129,16 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
     return tokens.length >= 3
   }
 
-  complete(tokens: string[], currentToken: string, context: AutocompleteContext): CompletionResult[] {
+  complete(
+    tokens: string[],
+    currentToken: string,
+    context: AutocompleteContext
+  ): CompletionResult[] {
     // Action kubectl (position 1)
     if (tokens.length === 1) {
-      return filterMatches([...KUBECTL_ACTIONS], currentToken).map((action) => ({ text: action, suffix: ' ' }))
+      return filterMatches([...KUBECTL_ACTIONS], currentToken).map(
+        (action) => ({ text: action, suffix: ' ' })
+      )
     }
 
     const action = tokens[1]
@@ -117,7 +147,9 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
     if (action !== 'logs' && action !== 'exec') {
       if (tokens.length === 2) {
         const allResourceTypes = Object.keys(RESOURCE_ALIASES)
-        return filterMatches(allResourceTypes, currentToken).map((resource) => ({ text: resource, suffix: ' ' }))
+        return filterMatches(allResourceTypes, currentToken).map(
+          (resource) => ({ text: resource, suffix: ' ' })
+        )
       }
     }
 

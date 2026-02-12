@@ -377,7 +377,12 @@ export const quiz: Quiz = {
       id: 'q1',
       type: 'multiple-choice',
       question: "Qu'est-ce qu'un Pod dans Kubernetes ?",
-      options: ['Un conteneur', 'La plus petite unité déployable dans Kubernetes', 'Un service', 'Un namespace'],
+      options: [
+        'Un conteneur',
+        'La plus petite unité déployable dans Kubernetes',
+        'Un service',
+        'Un namespace'
+      ],
       correctAnswer: 1 // Index de la bonne réponse (0-based)
     },
     {

@@ -300,7 +300,8 @@ export const GOLDEN_TESTS: GoldenTest[] = [
     command: 'kubectl api-resources --output wide',
     seed: 'deployment-with-configmap',
     category: 'api-resources',
-    description: 'List API resources with wide output (includes VERBS and CATEGORIES)'
+    description:
+      'List API resources with wide output (includes VERBS and CATEGORIES)'
   },
   {
     name: 'api-resources-name',

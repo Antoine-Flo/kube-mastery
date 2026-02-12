@@ -1,5 +1,9 @@
 import type { MarkdownInstance } from 'astro'
-import { getCourseMarkdown, getCourseStructure, getModule } from '../courses/facade'
+import {
+  getCourseMarkdown,
+  getCourseStructure,
+  getModule
+} from '../courses/facade'
 import type { UiLang } from '../courses/types'
 import { getChapterIdsFromStructure, buildChapter } from './domain'
 import { createOverviewGlobAdapter } from './glob-adapter'
@@ -16,9 +20,18 @@ function getAdapter() {
   return adapter
 }
 
-export type { CourseOverview, OverviewChapter, OverviewLesson, OverviewType, LessonLocation } from './types'
+export type {
+  CourseOverview,
+  OverviewChapter,
+  OverviewLesson,
+  OverviewType,
+  LessonLocation
+} from './types'
 
-export function getCourseOverview(courseId: string, lang: UiLang): CourseOverview | null {
+export function getCourseOverview(
+  courseId: string,
+  lang: UiLang
+): CourseOverview | null {
   const entry = getCourseMarkdown(courseId, lang)
   if (!entry) {
     return null
@@ -32,13 +45,23 @@ export function getCourseOverview(courseId: string, lang: UiLang): CourseOvervie
   const structureOrEmpty = structure ?? { chapters: [] }
   const index = getAdapter()
   const chapterDirsByModule = index.getChapterDirsByModule()
-  const chapterIds = getChapterIdsFromStructure(structureOrEmpty, chapterDirsByModule)
+  const chapterIds = getChapterIdsFromStructure(
+    structureOrEmpty,
+    chapterDirsByModule
+  )
   const lessonTitles = index.getLessonTitleIndex()
   const chapterMeta = index.getChapterMetaIndex()
   const lessonDirsMap = index.getLessonDirsByChapter()
 
   const chapters = chapterIds.map(({ moduleId, chapterId }) =>
-    buildChapter(moduleId, chapterId, chapterMeta.get(`${moduleId}:${chapterId}`), lessonDirsMap, lessonTitles, lang)
+    buildChapter(
+      moduleId,
+      chapterId,
+      chapterMeta.get(`${moduleId}:${chapterId}`),
+      lessonDirsMap,
+      lessonTitles,
+      lang
+    )
   )
 
   return {
@@ -49,12 +72,17 @@ export function getCourseOverview(courseId: string, lang: UiLang): CourseOvervie
     isFree: fm.isFree ?? (fm.price == null || fm.price === 0),
     comingSoon: fm.comingSoon ?? false,
     content: { chapters },
-    descriptionContent: entry as unknown as MarkdownInstance<Record<string, unknown>>,
+    descriptionContent: entry as unknown as MarkdownInstance<
+      Record<string, unknown>
+    >,
     description: null
   }
 }
 
-export function getModuleOverview(moduleId: string, lang: UiLang): CourseOverview | null {
+export function getModuleOverview(
+  moduleId: string,
+  lang: UiLang
+): CourseOverview | null {
   const mod = getModule(moduleId)
   if (!mod) {
     return null
@@ -71,7 +99,14 @@ export function getModuleOverview(moduleId: string, lang: UiLang): CourseOvervie
   const lessonDirsMap = index.getLessonDirsByChapter()
 
   const chapters = chapterDirs.map(({ chapterId }) =>
-    buildChapter(moduleId, chapterId, chapterMeta.get(`${moduleId}:${chapterId}`), lessonDirsMap, lessonTitles, lang)
+    buildChapter(
+      moduleId,
+      chapterId,
+      chapterMeta.get(`${moduleId}:${chapterId}`),
+      lessonDirsMap,
+      lessonTitles,
+      lang
+    )
   )
 
   return {
@@ -87,9 +122,16 @@ export function getModuleOverview(moduleId: string, lang: UiLang): CourseOvervie
   }
 }
 
-export function getLessonLocation(type: OverviewType, id: string, lessonId: string): LessonLocation | null {
+export function getLessonLocation(
+  type: OverviewType,
+  id: string,
+  lessonId: string
+): LessonLocation | null {
   const lang: UiLang = 'en'
-  const overview = type === 'courses' ? getCourseOverview(id, lang) : getModuleOverview(id, lang)
+  const overview =
+    type === 'courses'
+      ? getCourseOverview(id, lang)
+      : getModuleOverview(id, lang)
 
   if (!overview) {
     return null
@@ -103,13 +145,16 @@ export function getLessonLocation(type: OverviewType, id: string, lessonId: stri
 
     const moduleId = chapter.moduleId ?? overview.id
     const chapterId = chapter.id
-    const chapterDirs = getAdapter().getChapterDirsByModule().get(moduleId) ?? []
+    const chapterDirs =
+      getAdapter().getChapterDirsByModule().get(moduleId) ?? []
     const chapterEntry = chapterDirs.find((c) => c.chapterId === chapterId)
     if (!chapterEntry) {
       return null
     }
 
-    const lessonDirs = getAdapter().getLessonDirsByChapter().get(`${moduleId}:${chapterId}`) ?? []
+    const lessonDirs =
+      getAdapter().getLessonDirsByChapter().get(`${moduleId}:${chapterId}`) ??
+      []
     const lessonDir = lessonDirs.find((d) => stripNumericPrefix(d) === lessonId)
     if (!lessonDir) {
       return null
@@ -124,7 +169,12 @@ export function getLessonLocation(type: OverviewType, id: string, lessonId: stri
   return null
 }
 
-export function getLessonMarkdown(type: OverviewType, id: string, lessonId: string, lang: UiLang): string | null {
+export function getLessonMarkdown(
+  type: OverviewType,
+  id: string,
+  lessonId: string,
+  lang: UiLang
+): string | null {
   const loc = getLessonLocation(type, id, lessonId)
   if (!loc) {
     return null
@@ -147,7 +197,12 @@ export function getLessonContent(
   return getAdapter().getLessonContent(loc, lang)
 }
 
-export function getLessonQuiz(type: OverviewType, id: string, lessonId: string, lang: UiLang): Quiz | null {
+export function getLessonQuiz(
+  type: OverviewType,
+  id: string,
+  lessonId: string,
+  lang: UiLang
+): Quiz | null {
   const loc = getLessonLocation(type, id, lessonId)
   if (!loc) {
     return null

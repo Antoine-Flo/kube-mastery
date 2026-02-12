@@ -5,9 +5,12 @@ import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/typ
 import { createClusterStateData } from '../../../helpers/utils'
 
 describe('kubectl logs handler', () => {
-  const createState = (pods: ReturnType<typeof createPod>[]) => createClusterStateData({ pods })
+  const createState = (pods: ReturnType<typeof createPod>[]) =>
+    createClusterStateData({ pods })
 
-  const createParsedCommand = (overrides: Partial<ParsedCommand> = {}): ParsedCommand => ({
+  const createParsedCommand = (
+    overrides: Partial<ParsedCommand> = {}
+  ): ParsedCommand => ({
     action: 'logs',
     resource: 'pods',
     flags: {},

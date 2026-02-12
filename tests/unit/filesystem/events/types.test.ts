@@ -22,7 +22,11 @@ describe('Filesystem Event Types', () => {
 
   describe('createFileCreatedEvent', () => {
     it('should create FileCreated event with correct structure', () => {
-      const event = createFileCreatedEvent(testFile, '/home/test.txt', 'filesystem')
+      const event = createFileCreatedEvent(
+        testFile,
+        '/home/test.txt',
+        'filesystem'
+      )
 
       expect(event.type).toBe('FileCreated')
       expect(event.payload.file).toEqual(testFile)
@@ -40,9 +44,22 @@ describe('Filesystem Event Types', () => {
 
   describe('createFileModifiedEvent', () => {
     it('should create FileModified event with correct structure', () => {
-      const previousFile = createFile('test.txt', '/home/test.txt', 'old content')
-      const updatedFile = createFile('test.txt', '/home/test.txt', 'new content')
-      const event = createFileModifiedEvent('/home/test.txt', updatedFile, previousFile, 'filesystem')
+      const previousFile = createFile(
+        'test.txt',
+        '/home/test.txt',
+        'old content'
+      )
+      const updatedFile = createFile(
+        'test.txt',
+        '/home/test.txt',
+        'new content'
+      )
+      const event = createFileModifiedEvent(
+        '/home/test.txt',
+        updatedFile,
+        previousFile,
+        'filesystem'
+      )
 
       expect(event.type).toBe('FileModified')
       expect(event.payload.path).toBe('/home/test.txt')
@@ -54,7 +71,11 @@ describe('Filesystem Event Types', () => {
 
   describe('createFileDeletedEvent', () => {
     it('should create FileDeleted event with correct structure', () => {
-      const event = createFileDeletedEvent('/home/test.txt', testFile, 'filesystem')
+      const event = createFileDeletedEvent(
+        '/home/test.txt',
+        testFile,
+        'filesystem'
+      )
 
       expect(event.type).toBe('FileDeleted')
       expect(event.payload.path).toBe('/home/test.txt')
@@ -65,7 +86,11 @@ describe('Filesystem Event Types', () => {
 
   describe('createDirectoryCreatedEvent', () => {
     it('should create DirectoryCreated event with correct structure', () => {
-      const event = createDirectoryCreatedEvent(testDirectory, '/home/test-dir', 'filesystem')
+      const event = createDirectoryCreatedEvent(
+        testDirectory,
+        '/home/test-dir',
+        'filesystem'
+      )
 
       expect(event.type).toBe('DirectoryCreated')
       expect(event.payload.directory).toEqual(testDirectory)
@@ -76,7 +101,11 @@ describe('Filesystem Event Types', () => {
 
   describe('createDirectoryDeletedEvent', () => {
     it('should create DirectoryDeleted event with correct structure', () => {
-      const event = createDirectoryDeletedEvent('/home/test-dir', testDirectory, 'filesystem')
+      const event = createDirectoryDeletedEvent(
+        '/home/test-dir',
+        testDirectory,
+        'filesystem'
+      )
 
       expect(event.type).toBe('DirectoryDeleted')
       expect(event.payload.path).toBe('/home/test-dir')
@@ -87,7 +116,11 @@ describe('Filesystem Event Types', () => {
 
   describe('createDirectoryChangedEvent', () => {
     it('should create DirectoryChanged event with correct structure', () => {
-      const event = createDirectoryChangedEvent('/home', '/home/test', 'filesystem')
+      const event = createDirectoryChangedEvent(
+        '/home',
+        '/home/test',
+        'filesystem'
+      )
 
       expect(event.type).toBe('DirectoryChanged')
       expect(event.payload.previousPath).toBe('/home')

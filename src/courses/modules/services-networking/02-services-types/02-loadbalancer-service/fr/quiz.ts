@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: "Où les informations sur l'équilibreur de charge provisionné sont-elles publiées ?",
+      question:
+        "Où les informations sur l'équilibreur de charge provisionné sont-elles publiées ?",
       options: [
         'Dans le spec du Service',
         'Dans le champ status.loadBalancer du Service',

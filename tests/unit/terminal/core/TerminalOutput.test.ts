@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createTerminalOutput, formatCommandOutput } from '../../../../src/core/terminal/core/TerminalOutput'
+import {
+  createTerminalOutput,
+  formatCommandOutput
+} from '../../../../src/core/terminal/core/TerminalOutput'
 import type { TerminalRenderer } from '../../../../src/core/terminal/renderer/TerminalRenderer'
 
 /**

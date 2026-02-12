@@ -11,19 +11,37 @@ export const normalizeOutput = (output: string): string => {
   let normalized = output
 
   // Normalize timestamps (ISO format)
-  normalized = normalized.replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z/g, '<timestamp>')
-  normalized = normalized.replace(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g, '<timestamp>')
+  normalized = normalized.replace(
+    /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z/g,
+    '<timestamp>'
+  )
+  normalized = normalized.replace(
+    /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g,
+    '<timestamp>'
+  )
 
   // Normalize creationTimestamp in YAML/JSON
-  normalized = normalized.replace(/creationTimestamp:\s*[^\n]+/g, 'creationTimestamp: <timestamp>')
+  normalized = normalized.replace(
+    /creationTimestamp:\s*[^\n]+/g,
+    'creationTimestamp: <timestamp>'
+  )
 
   // Normalize UIDs (UUID format: 8-4-4-4-12 hex digits)
   normalized = normalized.replace(/uid:\s*[a-f0-9-]{36}/gi, 'uid: <uid>')
-  normalized = normalized.replace(/"uid"\s*:\s*"[a-f0-9-]{36}"/gi, '"uid": "<uid>"')
+  normalized = normalized.replace(
+    /"uid"\s*:\s*"[a-f0-9-]{36}"/gi,
+    '"uid": "<uid>"'
+  )
 
   // Normalize resourceVersions
-  normalized = normalized.replace(/resourceVersion:\s*"\d+"/g, 'resourceVersion: "<version>"')
-  normalized = normalized.replace(/"resourceVersion"\s*:\s*"\d+"/g, '"resourceVersion": "<version>"')
+  normalized = normalized.replace(
+    /resourceVersion:\s*"\d+"/g,
+    'resourceVersion: "<version>"'
+  )
+  normalized = normalized.replace(
+    /"resourceVersion"\s*:\s*"\d+"/g,
+    '"resourceVersion": "<version>"'
+  )
 
   // Normalize ages (time ago format)
   normalized = normalized.replace(/\d+s ago/g, 'Xs ago')
@@ -32,7 +50,10 @@ export const normalizeOutput = (output: string): string => {
   normalized = normalized.replace(/\d+d ago/g, 'Xd ago')
 
   // Normalize IP addresses
-  normalized = normalized.replace(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, '<ip>')
+  normalized = normalized.replace(
+    /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g,
+    '<ip>'
+  )
 
   // Normalize ephemeral ports (ports > 30000, typically 5 digits)
   normalized = normalized.replace(/\b[3-9]\d{4}\b/g, (match: string) => {
@@ -41,11 +62,20 @@ export const normalizeOutput = (output: string): string => {
   })
 
   // Normalize timestamps in log lines
-  normalized = normalized.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/gm, '<timestamp>')
+  normalized = normalized.replace(
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/gm,
+    '<timestamp>'
+  )
 
   // Normalize container IDs (docker/k8s format)
-  normalized = normalized.replace(/docker:\/\/[a-f0-9]{64}/g, 'docker://<container-id>')
-  normalized = normalized.replace(/containerd:\/\/[a-f0-9]{64}/g, 'containerd://<container-id>')
+  normalized = normalized.replace(
+    /docker:\/\/[a-f0-9]{64}/g,
+    'docker://<container-id>'
+  )
+  normalized = normalized.replace(
+    /containerd:\/\/[a-f0-9]{64}/g,
+    'containerd://<container-id>'
+  )
 
   // Normalize node names (kind clusters use specific patterns)
   normalized = normalized.replace(/kind-worker\d+/g, '<node-name>')

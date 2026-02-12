@@ -232,7 +232,9 @@ describe('selectorMatchesLabels', () => {
 
   it('should match with In operator', () => {
     const selector = {
-      matchExpressions: [{ key: 'env', operator: 'In' as const, values: ['prod', 'staging'] }]
+      matchExpressions: [
+        { key: 'env', operator: 'In' as const, values: ['prod', 'staging'] }
+      ]
     }
     const labels = { env: 'prod' }
 
@@ -241,7 +243,9 @@ describe('selectorMatchesLabels', () => {
 
   it('should not match with In operator when value not in list', () => {
     const selector = {
-      matchExpressions: [{ key: 'env', operator: 'In' as const, values: ['prod', 'staging'] }]
+      matchExpressions: [
+        { key: 'env', operator: 'In' as const, values: ['prod', 'staging'] }
+      ]
     }
     const labels = { env: 'dev' }
 

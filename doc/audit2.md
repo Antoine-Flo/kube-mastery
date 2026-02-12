@@ -99,10 +99,13 @@ const abTestEventSchema = z.object({
 // Limiter la taille de metadata :
 const metadataSize = JSON.stringify(body.metadata || {}).length
 if (metadataSize > 10000) {
-  return new Response(JSON.stringify({ ok: false, error: 'Metadata too large' }), {
-    status: 400,
-    headers: { 'Content-Type': 'application/json' }
-  })
+  return new Response(
+    JSON.stringify({ ok: false, error: 'Metadata too large' }),
+    {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    }
+  )
 }
 ```
 
@@ -129,10 +132,13 @@ const surveySchema = z.object({
 // Vérifier la taille totale :
 const totalSize = JSON.stringify(body).length
 if (totalSize > 50000) {
-  return new Response(JSON.stringify({ ok: false, error: 'Payload too large' }), {
-    status: 400,
-    headers: { 'Content-Type': 'application/json' }
-  })
+  return new Response(
+    JSON.stringify({ ok: false, error: 'Payload too large' }),
+    {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    }
+  )
 }
 ```
 
@@ -177,10 +183,13 @@ const errorMessage = err instanceof Error ? err.message : 'Unknown error'
 console.error('Seed loading error:', err)
 
 // Retourner un message générique
-return new Response(JSON.stringify({ ok: false, error: 'Failed to load scenario' }), {
-  status: 500,
-  headers: { 'Content-Type': 'application/json' }
-})
+return new Response(
+  JSON.stringify({ ok: false, error: 'Failed to load scenario' }),
+  {
+    status: 500,
+    headers: { 'Content-Type': 'application/json' }
+  }
+)
 ```
 
 ---

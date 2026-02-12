@@ -40,17 +40,18 @@ function buildLessonIndex(): Map<string, Map<string, Set<string>>> {
 
 let lessonIndexCache: Map<string, Map<string, Set<string>>> | null = null
 
-const courseMdGlob = import.meta.glob<MarkdownInstance<CourseFrontmatter>>('../../courses/*/{en,fr}.md', {
+const courseMdGlob = import.meta.glob<MarkdownInstance<CourseFrontmatter>>(
+  '../../courses/*/{en,fr}.md',
+  {
+    eager: true
+  }
+)
+const structuresGlob = import.meta.glob('../../courses/*/course-structure.ts', {
   eager: true
-})
-const structuresGlob = import.meta.glob('../../courses/*/course-structure.ts', { eager: true }) as Record<
-  string,
-  { courseStructure: CourseStructure }
->
-const modulesGlob = import.meta.glob('../../courses/modules/*/module.ts', { eager: true }) as Record<
-  string,
-  { module: LocalModule }
->
+}) as Record<string, { courseStructure: CourseStructure }>
+const modulesGlob = import.meta.glob('../../courses/modules/*/module.ts', {
+  eager: true
+}) as Record<string, { module: LocalModule }>
 
 export function createCourseGlobAdapter(): CourseDataPort {
   return {
@@ -65,7 +66,10 @@ export function createCourseGlobAdapter(): CourseDataPort {
       return Array.from(ids)
     },
 
-    getCourseMarkdown(courseId: string, lang: UiLang): MarkdownInstance<CourseFrontmatter> | null {
+    getCourseMarkdown(
+      courseId: string,
+      lang: UiLang
+    ): MarkdownInstance<CourseFrontmatter> | null {
       for (const [path, entry] of Object.entries(courseMdGlob)) {
         const parts = path.replace(/\\/g, '/').split('/')
         const pathCourseId = parts[parts.length - 2]
@@ -87,9 +91,13 @@ export function createCourseGlobAdapter(): CourseDataPort {
     },
 
     getCourseStructure(courseId: string): CourseStructure | undefined {
-      const structurePath = Object.keys(structuresGlob).find((p) => p.includes(`/${courseId}/`))
+      const structurePath = Object.keys(structuresGlob).find((p) =>
+        p.includes(`/${courseId}/`)
+      )
 
-      return structurePath ? structuresGlob[structurePath]?.courseStructure : undefined
+      return structurePath
+        ? structuresGlob[structurePath]?.courseStructure
+        : undefined
     },
 
     getModuleEntries(): Array<{ moduleId: string; module: LocalModule }> {
@@ -105,7 +113,9 @@ export function createCourseGlobAdapter(): CourseDataPort {
     },
 
     getModule(moduleId: string): LocalModule | undefined {
-      const pathKey = Object.keys(modulesGlob).find((p) => p.endsWith(`/${moduleId}/module.ts`))
+      const pathKey = Object.keys(modulesGlob).find((p) =>
+        p.endsWith(`/${moduleId}/module.ts`)
+      )
 
       return pathKey ? modulesGlob[pathKey].module : undefined
     }

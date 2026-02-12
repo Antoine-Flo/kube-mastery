@@ -12,9 +12,15 @@ const taskId = Astro.params.taskId!
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
-const { userId } = await getProgressContext(Astro.locals, Astro.request, Astro.cookies)
+const { userId } = await getProgressContext(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
 if (!userId) {
-  return Astro.redirect(localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname))
+  return Astro.redirect(
+    localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
+  )
 }
 
 const overview = getTaskGroupOverview(groupId, lang)
@@ -29,7 +35,11 @@ const taskTargetId = `${groupId}/${taskId}`
 <Layout>
   <main class="complete-page">
     <h1 class="complete-page__title">{t('taskComplete_congrats')}</h1>
-    <form id="complete-survey-form" class="complete-survey-form" data-task-id={taskTargetId}>
+    <form
+      id="complete-survey-form"
+      class="complete-survey-form"
+      data-task-id={taskTargetId}
+    >
       <div class="complete-survey-form__field">
         <textarea
           id="complete-survey-comment"
@@ -40,7 +50,10 @@ const taskTargetId = `${groupId}/${taskId}`
           aria-label={t('survey_placeholder')}></textarea>
       </div>
       <div class="complete-survey-form__field">
-        <span class="complete-survey-form__label" id="complete-survey-rating-label">
+        <span
+          class="complete-survey-form__label"
+          id="complete-survey-rating-label"
+        >
           {t('survey_ratingLabel')}
         </span>
         <input
@@ -52,7 +65,11 @@ const taskTargetId = `${groupId}/${taskId}`
           aria-required="true"
           aria-describedby="complete-survey-rating-label"
         />
-        <div class="complete-survey-form__stars" role="group" aria-labelledby="complete-survey-rating-label">
+        <div
+          class="complete-survey-form__stars"
+          role="group"
+          aria-labelledby="complete-survey-rating-label"
+        >
           {
             [1, 2, 3, 4, 5].map((value) => (
               <button
@@ -68,7 +85,13 @@ const taskTargetId = `${groupId}/${taskId}`
           }
         </div>
       </div>
-      <p id="complete-survey-error" class="complete-survey-form__error" aria-live="polite" hidden></p>
+      <p
+        id="complete-survey-error"
+        class="complete-survey-form__error"
+        aria-live="polite"
+        hidden
+      >
+      </p>
       <div class="complete-survey-form__footer">
         <Button href={coursesHref} variant="subtle" color="gray" size="sm">
           {t('courseComplete_backToCourses')}
@@ -90,11 +113,20 @@ const taskTargetId = `${groupId}/${taskId}`
 >
   function getFormPayload(formEl) {
     const ratingEl = formEl.querySelector('#complete-survey-rating')
-    const rating = ratingEl && 'value' in ratingEl && ratingEl.value ? Number(ratingEl.value) : 0
+    const rating =
+      ratingEl && 'value' in ratingEl && ratingEl.value
+        ? Number(ratingEl.value)
+        : 0
     const commentEl = formEl.querySelector('textarea[name="comment"]')
-    const comment = commentEl && 'value' in commentEl ? commentEl.value.trim() : ''
+    const comment =
+      commentEl && 'value' in commentEl ? commentEl.value.trim() : ''
     const taskId = formEl.getAttribute('data-task-id') ?? ''
-    return { name: 'task', rating, comment: comment || undefined, taskId: taskId || undefined }
+    return {
+      name: 'task',
+      rating,
+      comment: comment || undefined,
+      taskId: taskId || undefined
+    }
   }
 
   function setupStars(formEl) {

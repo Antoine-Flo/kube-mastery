@@ -16,7 +16,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'How do you access a NodePort Service from outside the cluster?',
+      question:
+        'How do you access a NodePort Service from outside the cluster?',
       options: [
         'Using the Service cluster IP',
         'Using <NodeIP>:<nodePort>',

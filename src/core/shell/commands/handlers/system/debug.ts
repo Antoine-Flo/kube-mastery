@@ -24,7 +24,9 @@ Usage: debug <subcommand>`
 
       // TODO: Implement debug logs and clear when logger is migrated
       if (subcommand === 'logs') {
-        return success('Debug logs not available yet (logger migration pending).')
+        return success(
+          'Debug logs not available yet (logger migration pending).'
+        )
       }
 
       if (subcommand === 'clear') {

@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: "Lequel des champs suivants n'est PAS un champ requis dans un manifest d'objet Kubernetes ?",
+      question:
+        "Lequel des champs suivants n'est PAS un champ requis dans un manifest d'objet Kubernetes ?",
       options: ['apiVersion', 'kind', 'metadata', 'status'],
       correctAnswer: 3
     },

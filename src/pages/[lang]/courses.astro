@@ -50,7 +50,11 @@ const taskGroups = getTaskGroups(locale)
               description={group.description}
               totalLessons={group.totalTasks}
               href={localePath(`/tasks/${group.id}`)}
-              lessonsLabel={group.totalTasks === 1 ? `1 ${t('tasks_task')}` : `${group.totalTasks} ${t('tasks_tasks')}`}
+              lessonsLabel={
+                group.totalTasks === 1
+                  ? `1 ${t('tasks_task')}`
+                  : `${group.totalTasks} ${t('tasks_tasks')}`
+              }
               comingSoonLabel={t('courses_comingSoon')}
             />
           ))

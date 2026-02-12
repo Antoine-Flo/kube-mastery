@@ -58,6 +58,8 @@ export class ShellCommandExecutor {
 }
 
 // Factory function pour simplifier l'usage
-export const createShellCommandExecutor = (handlers: Map<string, ShellCommandHandler>): ShellCommandExecutor => {
+export const createShellCommandExecutor = (
+  handlers: Map<string, ShellCommandHandler>
+): ShellCommandExecutor => {
   return new ShellCommandExecutor({ handlers })
 }

@@ -21,10 +21,13 @@ interface Props {
   lessonId?: string
 }
 
-const { quiz, prevHref, nextHref, isFirst, isLast, labels, lessonId } = Astro.props
+const { quiz, prevHref, nextHref, isFirst, isLast, labels, lessonId } =
+  Astro.props
 
 // Filter to only multiple-choice questions
-const mcQuestions = (quiz?.questions ?? []).filter((q): q is MultipleChoiceQuestion => q.type === 'multiple-choice')
+const mcQuestions = (quiz?.questions ?? []).filter(
+  (q): q is MultipleChoiceQuestion => q.type === 'multiple-choice'
+)
 
 const hasQuiz = mcQuestions.length > 0
 const completeUrl =
@@ -49,7 +52,9 @@ const completeUrl =
             {labels.quizTitle}
           </h2>
           <div class="quiz__info" data-quiz-info>
-            {labels.questionInfo.replace('{current}', '1').replace('{total}', String(mcQuestions.length))}
+            {labels.questionInfo
+              .replace('{current}', '1')
+              .replace('{total}', String(mcQuestions.length))}
           </div>
         </header>
 
@@ -67,7 +72,11 @@ const completeUrl =
               <h3 class="quiz__question-title">{q.question}</h3>
               <div class="quiz__options" role="group" aria-label="Options">
                 {q.options.map((option, optIndex) => (
-                  <button type="button" class="quiz__option" data-option-index={optIndex}>
+                  <button
+                    type="button"
+                    class="quiz__option"
+                    data-option-index={optIndex}
+                  >
                     {option}
                   </button>
                 ))}
@@ -102,12 +111,22 @@ const completeUrl =
       {/* No quiz or quiz done: link via API (mark complete + redirect) */}
       {
         !hasQuiz && !isLast && (
-          <Button href={completeUrl} variant="solid" color="cyan" size="sm" data-nav-next-lesson>
+          <Button
+            href={completeUrl}
+            variant="solid"
+            color="cyan"
+            size="sm"
+            data-nav-next-lesson
+          >
             {labels.nextLesson}
           </Button>
         )
       }
-      {!hasQuiz && isLast && <span class="lesson-nav__complete">{labels.courseComplete}</span>}
+      {
+        !hasQuiz && isLast && (
+          <span class="lesson-nav__complete">{labels.courseComplete}</span>
+        )
+      }
       {/* Quiz: button controlled by JS; link shown when quiz done */}
       {
         hasQuiz && (
@@ -149,10 +168,16 @@ const completeUrl =
 
     const questionCount = parseInt(container.dataset.questionCount ?? '0', 10)
     const isLast = container.dataset.isLast === 'true'
-    const questions = container.querySelectorAll<HTMLElement>('[data-question-index]')
+    const questions = container.querySelectorAll<HTMLElement>(
+      '[data-question-index]'
+    )
     const infoEl = container.querySelector<HTMLElement>('[data-quiz-info]')
-    const nextQuestionBtn = container.querySelector<HTMLButtonElement>('[data-nav-next-question]')
-    const nextLessonLink = container.querySelector<HTMLAnchorElement>('[data-nav-next-lesson]')
+    const nextQuestionBtn = container.querySelector<HTMLButtonElement>(
+      '[data-nav-next-question]'
+    )
+    const nextLessonLink = container.querySelector<HTMLAnchorElement>(
+      '[data-nav-next-lesson]'
+    )
 
     let currentIndex = 0
 
@@ -242,18 +267,25 @@ const completeUrl =
 
       // Mark correct answer if wrong
       if (!isCorrect) {
-        const correctBtn = question.querySelector<HTMLButtonElement>(`[data-option-index="${correctAnswer}"]`)
+        const correctBtn = question.querySelector<HTMLButtonElement>(
+          `[data-option-index="${correctAnswer}"]`
+        )
         if (correctBtn) {
           correctBtn.dataset.result = 'correct'
         }
       }
 
       // Disable all options so only "Next question" / "Next lesson" is clickable
-      question.querySelectorAll<HTMLButtonElement>('.quiz__option').forEach((b) => {
-        b.disabled = true
-      })
+      question
+        .querySelectorAll<HTMLButtonElement>('.quiz__option')
+        .forEach((b) => {
+          b.disabled = true
+        })
 
-      if (parseInt(question.getAttribute('data-question-index') ?? '-1', 10) >= questionCount - 1) {
+      if (
+        parseInt(question.getAttribute('data-question-index') ?? '-1', 10) >=
+        questionCount - 1
+      ) {
         container.dataset.quizCompleted = 'true'
       }
 
@@ -395,12 +427,20 @@ const completeUrl =
 
   .quiz__option[data-result='correct'] {
     border-color: var(--color-palette-green-solid-bg);
-    background: color-mix(in srgb, var(--color-palette-green-solid-bg) 15%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--color-palette-green-solid-bg) 15%,
+      transparent
+    );
   }
 
   .quiz__option[data-result='incorrect'][data-selected='true'] {
     border-color: var(--color-palette-ruby-solid-bg);
-    background: color-mix(in srgb, var(--color-palette-ruby-solid-bg) 15%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--color-palette-ruby-solid-bg) 15%,
+      transparent
+    );
   }
 
   /* Hint */

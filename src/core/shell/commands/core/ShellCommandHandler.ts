@@ -7,5 +7,8 @@
 import type { ExecutionResult } from '../../../shared/result'
 
 export interface ShellCommandHandler {
-  execute(args: string[], flags: Record<string, boolean | string>): ExecutionResult
+  execute(
+    args: string[],
+    flags: Record<string, boolean | string>
+  ): ExecutionResult
 }

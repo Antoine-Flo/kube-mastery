@@ -44,14 +44,23 @@ const getOutputFormat = (parsed: ParsedCommand): 'json' | 'yaml' => {
 /**
  * Get namespaces to dump based on flags
  */
-const getDumpNamespaces = (parsed: ParsedCommand, clusterState: ClusterStateData): string[] => {
+const getDumpNamespaces = (
+  parsed: ParsedCommand,
+  clusterState: ClusterStateData
+): string[] => {
   // --all-namespaces takes precedence
   if (parsed.flags['all-namespaces'] === true || parsed.flags['A'] === true) {
     // Get all unique namespaces from pods, configmaps, secrets
     const namespaces = new Set<string>()
-    clusterState.pods.items.forEach((pod) => namespaces.add(pod.metadata.namespace))
-    clusterState.configMaps.items.forEach((cm) => namespaces.add(cm.metadata.namespace))
-    clusterState.secrets.items.forEach((secret) => namespaces.add(secret.metadata.namespace))
+    clusterState.pods.items.forEach((pod) =>
+      namespaces.add(pod.metadata.namespace)
+    )
+    clusterState.configMaps.items.forEach((cm) =>
+      namespaces.add(cm.metadata.namespace)
+    )
+    clusterState.secrets.items.forEach((secret) =>
+      namespaces.add(secret.metadata.namespace)
+    )
     return Array.from(namespaces).sort()
   }
 
@@ -82,8 +91,14 @@ const formatAsYaml = (obj: unknown): string => {
 /**
  * Dump pods for given namespace
  */
-const dumpPods = (clusterState: ClusterStateData, namespace: string, format: 'json' | 'yaml'): string => {
-  const pods = clusterState.pods.items.filter((pod) => pod.metadata.namespace === namespace)
+const dumpPods = (
+  clusterState: ClusterStateData,
+  namespace: string,
+  format: 'json' | 'yaml'
+): string => {
+  const pods = clusterState.pods.items.filter(
+    (pod) => pod.metadata.namespace === namespace
+  )
   const list = { apiVersion: 'v1', kind: 'PodList', items: pods }
 
   if (format === 'yaml') {
@@ -95,8 +110,14 @@ const dumpPods = (clusterState: ClusterStateData, namespace: string, format: 'js
 /**
  * Dump ConfigMaps for given namespace
  */
-const dumpConfigMaps = (clusterState: ClusterStateData, namespace: string, format: 'json' | 'yaml'): string => {
-  const configMaps = clusterState.configMaps.items.filter((cm) => cm.metadata.namespace === namespace)
+const dumpConfigMaps = (
+  clusterState: ClusterStateData,
+  namespace: string,
+  format: 'json' | 'yaml'
+): string => {
+  const configMaps = clusterState.configMaps.items.filter(
+    (cm) => cm.metadata.namespace === namespace
+  )
   const list = { apiVersion: 'v1', kind: 'ConfigMapList', items: configMaps }
 
   if (format === 'yaml') {
@@ -108,8 +129,14 @@ const dumpConfigMaps = (clusterState: ClusterStateData, namespace: string, forma
 /**
  * Dump Secrets for given namespace
  */
-const dumpSecrets = (clusterState: ClusterStateData, namespace: string, format: 'json' | 'yaml'): string => {
-  const secrets = clusterState.secrets.items.filter((secret) => secret.metadata.namespace === namespace)
+const dumpSecrets = (
+  clusterState: ClusterStateData,
+  namespace: string,
+  format: 'json' | 'yaml'
+): string => {
+  const secrets = clusterState.secrets.items.filter(
+    (secret) => secret.metadata.namespace === namespace
+  )
   const list = { apiVersion: 'v1', kind: 'SecretList', items: secrets }
 
   if (format === 'yaml') {
@@ -121,19 +148,28 @@ const dumpSecrets = (clusterState: ClusterStateData, namespace: string, format: 
 /**
  * Dump pod logs
  */
-const dumpPodLogs = (clusterState: ClusterStateData, namespace: string): string => {
-  const pods = clusterState.pods.items.filter((pod) => pod.metadata.namespace === namespace)
+const dumpPodLogs = (
+  clusterState: ClusterStateData,
+  namespace: string
+): string => {
+  const pods = clusterState.pods.items.filter(
+    (pod) => pod.metadata.namespace === namespace
+  )
   const lines: string[] = []
 
   for (const pod of pods) {
     // Logs are stored in _simulator.logs (string[]), not in status.logs
     const logs = pod._simulator?.logs || []
     if (logs.length > 0) {
-      lines.push(`==== START logs for pod ${pod.metadata.namespace}/${pod.metadata.name} ====`)
+      lines.push(
+        `==== START logs for pod ${pod.metadata.namespace}/${pod.metadata.name} ====`
+      )
       for (const logLine of logs) {
         lines.push(logLine)
       }
-      lines.push(`==== END logs for pod ${pod.metadata.namespace}/${pod.metadata.name} ====`)
+      lines.push(
+        `==== END logs for pod ${pod.metadata.namespace}/${pod.metadata.name} ====`
+      )
       lines.push('')
     }
   }
@@ -145,7 +181,10 @@ const dumpPodLogs = (clusterState: ClusterStateData, namespace: string): string 
  * Handle cluster-info dump subcommand
  * Format: JSON objects for resources, followed by logs as plain text
  */
-const handleDump = (clusterState: ClusterStateData, parsed: ParsedCommand): Result<string> => {
+const handleDump = (
+  clusterState: ClusterStateData,
+  parsed: ParsedCommand
+): Result<string> => {
   // Note: --output-directory is not yet supported (would require file system access)
   const outputDir = parsed.flags['output-directory']
   if (outputDir && outputDir !== '-' && typeof outputDir === 'string') {
@@ -158,7 +197,12 @@ const handleDump = (clusterState: ClusterStateData, parsed: ParsedCommand): Resu
   const parts: string[] = []
 
   // Dump nodes (empty NodeList for now - Nodes not yet supported in ClusterState)
-  const nodeList = { apiVersion: 'v1', kind: 'NodeList', metadata: { resourceVersion: '0' }, items: [] }
+  const nodeList = {
+    apiVersion: 'v1',
+    kind: 'NodeList',
+    metadata: { resourceVersion: '0' },
+    items: []
+  }
   if (outputFormat === 'json') {
     parts.push(formatAsJson(nodeList))
   } else {
@@ -176,7 +220,11 @@ const handleDump = (clusterState: ClusterStateData, parsed: ParsedCommand): Resu
     }
 
     // ReplicationControllers (empty - not yet supported)
-    const rcList = { apiVersion: 'v1', kind: 'ReplicationControllerList', items: [] }
+    const rcList = {
+      apiVersion: 'v1',
+      kind: 'ReplicationControllerList',
+      items: []
+    }
     if (outputFormat === 'json') {
       parts.push(formatAsJson(rcList))
     } else {
@@ -244,7 +292,10 @@ const handleDump = (clusterState: ClusterStateData, parsed: ParsedCommand): Resu
  * - kubectl cluster-info (displays control plane and services)
  * - kubectl cluster-info dump (dumps cluster information for debugging)
  */
-export const handleClusterInfo = (clusterState: ClusterStateData, parsed: ParsedCommand): Result<string> => {
+export const handleClusterInfo = (
+  clusterState: ClusterStateData,
+  parsed: ParsedCommand
+): Result<string> => {
   // Check if dump subcommand is present
   if (parsed.flags.dump === true) {
     return handleDump(clusterState, parsed)
@@ -262,7 +313,9 @@ export const handleClusterInfo = (clusterState: ClusterStateData, parsed: Parsed
 
   // Add empty line before help message
   lines.push('')
-  lines.push("To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.")
+  lines.push(
+    "To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'."
+  )
 
   return success(lines.join('\n'))
 }

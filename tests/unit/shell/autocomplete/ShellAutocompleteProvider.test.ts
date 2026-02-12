@@ -39,7 +39,9 @@ describe('ShellAutocompleteProvider', () => {
     })
 
     it('should not match when tokens.length > 1', () => {
-      expect(provider.match(['kubectl', 'get'], 'get', 'kubectl get')).toBe(false)
+      expect(provider.match(['kubectl', 'get'], 'get', 'kubectl get')).toBe(
+        false
+      )
       expect(provider.match(['cd', '..'], '..', 'cd ..')).toBe(false)
     })
   })
@@ -106,7 +108,9 @@ describe('ShellAutocompleteProvider', () => {
 
       it('should handle line with tabs instead of spaces', () => {
         // Tabs should be treated as part of the token, not as separators
-        expect(provider.match(['kubectl\tget'], 'kubectl\tget', 'kubectl\tget')).toBe(true)
+        expect(
+          provider.match(['kubectl\tget'], 'kubectl\tget', 'kubectl\tget')
+        ).toBe(true)
       })
 
       it('should handle empty line with tokens.length === 0', () => {

@@ -16,7 +16,8 @@ const POD_PHASE_CLASS: Record<Pod['status']['phase'], string> = {
   Unknown: 'cluster-viz__pod--unknown'
 }
 
-const TOOLTIP_SELECTOR = '.cluster-viz__node, .cluster-viz__pod, .cluster-viz__container'
+const TOOLTIP_SELECTOR =
+  '.cluster-viz__node, .cluster-viz__pod, .cluster-viz__container'
 
 function formatNodeTooltip(node: Node): string {
   const status = getNodeStatus(node)
@@ -24,7 +25,9 @@ function formatNodeTooltip(node: Node): string {
   const conditions = node.status.conditions ?? []
   for (const c of conditions) {
     if (c.reason || c.message) {
-      lines.push(`${c.type}: ${c.status}${c.reason ? ` (${c.reason})` : ''}${c.message ? `\n  ${c.message}` : ''}`)
+      lines.push(
+        `${c.type}: ${c.status}${c.reason ? ` (${c.reason})` : ''}${c.message ? `\n  ${c.message}` : ''}`
+      )
     }
   }
   return lines.join('\n')
@@ -37,7 +40,10 @@ function formatPodTooltip(pod: Pod): string {
   return `Pod\n${name}\nPhase: ${phase}\nContainers: ${containers || '(none)'}`
 }
 
-function formatContainerTooltip(container: { name: string; image: string }): string {
+function formatContainerTooltip(container: {
+  name: string
+  image: string
+}): string {
   return `Container\n${container.name}\nImage: ${container.image}`
 }
 
@@ -57,7 +63,10 @@ export interface MountClusterViewerOptions {
   env: EmulatedEnvironment
 }
 
-function renderCluster(overlayContent: HTMLElement, env: EmulatedEnvironment): void {
+function renderCluster(
+  overlayContent: HTMLElement,
+  env: EmulatedEnvironment
+): void {
   const nodes = env.clusterState.getNodes()
   const pods = env.clusterState.getPods()
 
@@ -100,7 +109,10 @@ function renderCluster(overlayContent: HTMLElement, env: EmulatedEnvironment): v
     const nodePods = podsByNode.get(name) ?? []
     const nodeEl = document.createElement('div')
     const status = getNodeStatus(node)
-    nodeEl.className = status === 'Ready' ? 'cluster-viz__node' : 'cluster-viz__node cluster-viz__node--unscheduled'
+    nodeEl.className =
+      status === 'Ready'
+        ? 'cluster-viz__node'
+        : 'cluster-viz__node cluster-viz__node--unscheduled'
     nodeEl.dataset.tooltip = formatNodeTooltip(node)
     nodeEl.innerHTML = `
 			<div class="cluster-viz__node-header">
@@ -173,14 +185,18 @@ function escapeAttr(s: string): string {
 }
 
 /** Mounts cluster viz into a content container; returns cleanup. */
-export function mountClusterViewer(contentElement: HTMLElement, options: MountClusterViewerOptions): () => void {
+export function mountClusterViewer(
+  contentElement: HTMLElement,
+  options: MountClusterViewerOptions
+): () => void {
   const { env } = options
   const render = () => renderCluster(contentElement, env)
   render()
 
   const tooltipEl = document.createElement('div')
   tooltipEl.className = 'cluster-viz__tooltip'
-  tooltipEl.style.cssText = 'display:none;position:fixed;z-index:1000;pointer-events:none;'
+  tooltipEl.style.cssText =
+    'display:none;position:fixed;z-index:1000;pointer-events:none;'
   document.body.appendChild(tooltipEl)
 
   let hideTimeout: ReturnType<typeof setTimeout> | null = null
@@ -203,8 +219,17 @@ export function mountClusterViewer(contentElement: HTMLElement, options: MountCl
     const aboveY = rect.top - 4 - th
     const belowY = rect.bottom + 4
     const topPreferred = aboveY >= margin ? aboveY : belowY
-    const topClamped = Math.max(margin, Math.min(window.innerHeight - th - margin, topPreferred))
-    const left = Math.max(margin, Math.min(window.innerWidth - tw - margin, rect.left + rect.width / 2 - tw / 2))
+    const topClamped = Math.max(
+      margin,
+      Math.min(window.innerHeight - th - margin, topPreferred)
+    )
+    const left = Math.max(
+      margin,
+      Math.min(
+        window.innerWidth - tw - margin,
+        rect.left + rect.width / 2 - tw / 2
+      )
+    )
     tooltipEl.style.left = `${left}px`
     tooltipEl.style.top = `${topClamped}px`
   }

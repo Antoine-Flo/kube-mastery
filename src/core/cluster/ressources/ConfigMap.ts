@@ -72,7 +72,9 @@ export const parseConfigMapManifest = (data: unknown): Result<ConfigMap> => {
 
   if (!result.success) {
     const firstError = result.error.issues[0]
-    return error(`Invalid ConfigMap manifest: ${firstError.path.join('.')}: ${firstError.message}`)
+    return error(
+      `Invalid ConfigMap manifest: ${firstError.path.join('.')}: ${firstError.message}`
+    )
   }
 
   const manifest = result.data
@@ -83,9 +85,12 @@ export const parseConfigMapManifest = (data: unknown): Result<ConfigMap> => {
     metadata: {
       name: manifest.metadata.name,
       namespace: manifest.metadata.namespace,
-      creationTimestamp: manifest.metadata.creationTimestamp || new Date().toISOString(),
+      creationTimestamp:
+        manifest.metadata.creationTimestamp || new Date().toISOString(),
       ...(manifest.metadata.labels && { labels: manifest.metadata.labels }),
-      ...(manifest.metadata.annotations && { annotations: manifest.metadata.annotations })
+      ...(manifest.metadata.annotations && {
+        annotations: manifest.metadata.annotations
+      })
     },
     ...(manifest.data && { data: manifest.data }),
     ...(manifest.binaryData && { binaryData: manifest.binaryData })

@@ -128,10 +128,12 @@ export class InputHandler {
     autocompleteEngine.handleTabPress(state.currentLine, autocompleteContext, {
       write: (text) => renderer.write(text),
       showPrompt: () => this.context.showPrompt(),
-      updateLineAndRender: (newLine, textToRender) => this.context.updateLineAndRender(newLine, textToRender),
+      updateLineAndRender: (newLine, textToRender) =>
+        this.context.updateLineAndRender(newLine, textToRender),
       getCurrentToken: () => state.getCurrentToken(),
       getCurrentLine: () => state.currentLine,
-      updateCurrentLine: (line, cursorPos) => state.updateCurrentLine(line, cursorPos)
+      updateCurrentLine: (line, cursorPos) =>
+        state.updateCurrentLine(line, cursorPos)
     })
   }
 

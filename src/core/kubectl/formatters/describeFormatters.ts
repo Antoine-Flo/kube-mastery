@@ -5,7 +5,14 @@
 // Reproduces real kubectl describe style with proper indentation and sections.
 
 import type { ConfigMap } from '../../cluster/ressources/ConfigMap'
-import type { ContainerStatus, EnvVar, Pod, Probe, Volume, VolumeMount } from '../../cluster/ressources/Pod'
+import type {
+  ContainerStatus,
+  EnvVar,
+  Pod,
+  Probe,
+  Volume,
+  VolumeMount
+} from '../../cluster/ressources/Pod'
 import type { Secret } from '../../cluster/ressources/Secret'
 import { blank, indent, kv, section } from './describeHelpers'
 
@@ -169,7 +176,9 @@ const formatContainer = (
 
   // Ports
   if (container.ports && container.ports.length > 0) {
-    const portsStr = container.ports.map((p) => `${p.containerPort}/${p.protocol || 'TCP'}`).join(', ')
+    const portsStr = container.ports
+      .map((p) => `${p.containerPort}/${p.protocol || 'TCP'}`)
+      .join(', ')
     lines.push(indent(kv('Ports', portsStr), 2))
   }
 
@@ -208,17 +217,23 @@ const formatContainer = (
   // Probes
   if (container.livenessProbe) {
     lines.push(indent('Liveness:', 2))
-    formatProbe(container.livenessProbe).forEach((line) => lines.push(indent(line, 2)))
+    formatProbe(container.livenessProbe).forEach((line) =>
+      lines.push(indent(line, 2))
+    )
   }
 
   if (container.readinessProbe) {
     lines.push(indent('Readiness:', 2))
-    formatProbe(container.readinessProbe).forEach((line) => lines.push(indent(line, 2)))
+    formatProbe(container.readinessProbe).forEach((line) =>
+      lines.push(indent(line, 2))
+    )
   }
 
   if (container.startupProbe) {
     lines.push(indent('Startup:', 2))
-    formatProbe(container.startupProbe).forEach((line) => lines.push(indent(line, 2)))
+    formatProbe(container.startupProbe).forEach((line) =>
+      lines.push(indent(line, 2))
+    )
   }
 
   // Environment variables
@@ -259,7 +274,9 @@ export const describePod = (pod: Pod): string => {
   if (pod.spec.initContainers && pod.spec.initContainers.length > 0) {
     const initContainerLines: string[] = []
     for (const initContainer of pod.spec.initContainers) {
-      const status = pod.status.containerStatuses?.find((cs) => cs.name === initContainer.name)
+      const status = pod.status.containerStatuses?.find(
+        (cs) => cs.name === initContainer.name
+      )
       formatContainer(initContainer, initContainerLines, status)
     }
     lines.push(...section('Init Containers', initContainerLines))
@@ -269,7 +286,9 @@ export const describePod = (pod: Pod): string => {
   // Containers section
   const containerLines: string[] = []
   for (const container of pod.spec.containers) {
-    const status = pod.status.containerStatuses?.find((cs) => cs.name === container.name)
+    const status = pod.status.containerStatuses?.find(
+      (cs) => cs.name === container.name
+    )
     formatContainer(container, containerLines, status)
   }
   lines.push(...section('Containers', containerLines))
@@ -317,7 +336,9 @@ export const describeConfigMap = (configMap: ConfigMap): string => {
 
   // Data section
   const dataCount = configMap.data ? Object.keys(configMap.data).length : 0
-  const binaryDataCount = configMap.binaryData ? Object.keys(configMap.binaryData).length : 0
+  const binaryDataCount = configMap.binaryData
+    ? Object.keys(configMap.binaryData).length
+    : 0
 
   lines.push('Data')
   lines.push('====')

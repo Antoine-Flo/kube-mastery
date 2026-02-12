@@ -10,7 +10,8 @@ interface Props {
   lang: 'en' | 'fr'
 }
 
-const { userDisplayName, userEmail, profileHref, signoutHref, lang } = Astro.props
+const { userDisplayName, userEmail, profileHref, signoutHref, lang } =
+  Astro.props
 const t = useTranslations(lang)
 ---
 
@@ -43,13 +44,25 @@ const t = useTranslations(lang)
 
     <div class="usermenu__section">
       <div class="usermenu__section-title">{t('menu_theme')}</div>
-      <div class="usermenu__theme-options" role="group" aria-label={t('menu_theme')}>
-        <button type="button" class="usermenu__theme-opt" data-theme-value="dark">
+      <div
+        class="usermenu__theme-options"
+        role="group"
+        aria-label={t('menu_theme')}
+      >
+        <button
+          type="button"
+          class="usermenu__theme-opt"
+          data-theme-value="dark"
+        >
           <span class="usermenu__theme-radio" aria-hidden="true"></span>
           <span>{t('theme_dark')}</span>
         </button>
 
-        <button type="button" class="usermenu__theme-opt" data-theme-value="light">
+        <button
+          type="button"
+          class="usermenu__theme-opt"
+          data-theme-value="light"
+        >
           <span class="usermenu__theme-radio" aria-hidden="true"></span>
           <span>{t('theme_light')}</span>
         </button>
@@ -58,7 +71,11 @@ const t = useTranslations(lang)
 
     <div class="usermenu__sep"></div>
 
-    <a href={signoutHref} class="usermenu__item usermenu__item--logout" data-astro-reload>
+    <a
+      href={signoutHref}
+      class="usermenu__item usermenu__item--logout"
+      data-astro-reload
+    >
       <LogOut size={16} />
       <span>{t('nav_logout')}</span>
     </a>
@@ -220,27 +237,35 @@ const t = useTranslations(lang)
   import { applyTheme, getEffectiveTheme } from '../lib/theme-client'
 
   function closeAllUsermenuPanels() {
-    document.querySelectorAll<HTMLElement>('[data-usermenu-panel]').forEach((panel) => {
-      if (!panel.hidden) {
-        panel.hidden = true
-        const trigger = panel.closest('[data-usermenu]')?.querySelector('[data-usermenu-trigger]')
-        if (trigger) {
-          trigger.setAttribute('aria-expanded', 'false')
+    document
+      .querySelectorAll<HTMLElement>('[data-usermenu-panel]')
+      .forEach((panel) => {
+        if (!panel.hidden) {
+          panel.hidden = true
+          const trigger = panel
+            .closest('[data-usermenu]')
+            ?.querySelector('[data-usermenu-trigger]')
+          if (trigger) {
+            trigger.setAttribute('aria-expanded', 'false')
+          }
         }
-      }
-    })
+      })
   }
 
   function syncThemeSelectionInUsermenu(container: HTMLElement) {
     const effective = getEffectiveTheme()
-    container.querySelectorAll<HTMLButtonElement>('.usermenu__theme-opt').forEach((btn) => {
-      const val = btn.getAttribute('data-theme-value')
-      btn.toggleAttribute('data-selected', val === effective)
-    })
+    container
+      .querySelectorAll<HTMLButtonElement>('.usermenu__theme-opt')
+      .forEach((btn) => {
+        const val = btn.getAttribute('data-theme-value')
+        btn.toggleAttribute('data-selected', val === effective)
+      })
   }
 
   function syncThemeSelectionInAllUsermenus() {
-    document.querySelectorAll<HTMLElement>('[data-usermenu]').forEach(syncThemeSelectionInUsermenu)
+    document
+      .querySelectorAll<HTMLElement>('[data-usermenu]')
+      .forEach(syncThemeSelectionInUsermenu)
   }
 
   function onDocumentClick(e: MouseEvent) {

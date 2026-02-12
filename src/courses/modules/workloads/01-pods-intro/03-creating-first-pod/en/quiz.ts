@@ -16,7 +16,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'What is the first step Kubernetes performs when you apply a Pod manifest?',
+      question:
+        'What is the first step Kubernetes performs when you apply a Pod manifest?',
       options: [
         'Pulling the container image',
         'Scheduling the Pod to a node',
@@ -28,7 +29,8 @@ export const quiz: Quiz = {
     {
       id: 'q3',
       type: 'multiple-choice',
-      question: 'What happens if you try to create a Pod with a name that already exists in the same namespace?',
+      question:
+        'What happens if you try to create a Pod with a name that already exists in the same namespace?',
       options: [
         'The existing Pod is replaced',
         'A new Pod is created with a suffix',

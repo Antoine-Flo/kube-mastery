@@ -13,9 +13,15 @@ export type EventFilter = (event: AppEvent) => boolean
 
 export interface EventBus {
   emit: (event: AppEvent) => void
-  subscribe: <T extends AppEvent>(eventType: AppEventType, subscriber: EventSubscriber<T>) => UnsubscribeFn
+  subscribe: <T extends AppEvent>(
+    eventType: AppEventType,
+    subscriber: EventSubscriber<T>
+  ) => UnsubscribeFn
   subscribeAll: (subscriber: EventSubscriber<AppEvent>) => UnsubscribeFn
-  subscribeFiltered: (filter: EventFilter, subscriber: EventSubscriber<AppEvent>) => UnsubscribeFn
+  subscribeFiltered: (
+    filter: EventFilter,
+    subscriber: EventSubscriber<AppEvent>
+  ) => UnsubscribeFn
   getHistory: () => readonly AppEvent[]
   getHistoryFiltered: (filter: EventFilter) => readonly AppEvent[]
   clearHistory: () => void
@@ -32,7 +38,11 @@ interface EventBusOptions {
  * Add event to history with FIFO rotation
  * Pure function
  */
-const addToHistory = (history: AppEvent[], event: AppEvent, maxSize: number): AppEvent[] => {
+const addToHistory = (
+  history: AppEvent[],
+  event: AppEvent,
+  maxSize: number
+): AppEvent[] => {
   const newHistory = [...history, event]
   if (newHistory.length > maxSize) {
     return newHistory.slice(1)
@@ -96,7 +106,10 @@ export const createEventBus = (options: EventBusOptions = {}): EventBus => {
   /**
    * Subscribe to a specific event type
    */
-  const subscribe = <T extends AppEvent>(eventType: AppEventType, subscriber: EventSubscriber<T>): UnsubscribeFn => {
+  const subscribe = <T extends AppEvent>(
+    eventType: AppEventType,
+    subscriber: EventSubscriber<T>
+  ): UnsubscribeFn => {
     if (!subscribers.has(eventType)) {
       subscribers.set(eventType, new Set())
     }
@@ -116,7 +129,9 @@ export const createEventBus = (options: EventBusOptions = {}): EventBus => {
   /**
    * Subscribe to all events
    */
-  const subscribeAll = (subscriber: EventSubscriber<AppEvent>): UnsubscribeFn => {
+  const subscribeAll = (
+    subscriber: EventSubscriber<AppEvent>
+  ): UnsubscribeFn => {
     allSubscribers.add(subscriber)
 
     // Return unsubscribe function
@@ -128,7 +143,10 @@ export const createEventBus = (options: EventBusOptions = {}): EventBus => {
   /**
    * Subscribe to events matching a filter
    */
-  const subscribeFiltered = (filter: EventFilter, subscriber: EventSubscriber<AppEvent>): UnsubscribeFn => {
+  const subscribeFiltered = (
+    filter: EventFilter,
+    subscriber: EventSubscriber<AppEvent>
+  ): UnsubscribeFn => {
     filteredSubscribers.set(subscriber, filter)
 
     // Return unsubscribe function

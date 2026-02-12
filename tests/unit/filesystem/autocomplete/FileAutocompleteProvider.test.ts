@@ -39,27 +39,37 @@ describe('FileAutocompleteProvider', () => {
 
     it('should match when command is cat', () => {
       expect(provider.match(['cat'], '', 'cat')).toBe(true)
-      expect(provider.match(['cat', 'file.txt'], 'file.txt', 'cat file.txt')).toBe(true)
+      expect(
+        provider.match(['cat', 'file.txt'], 'file.txt', 'cat file.txt')
+      ).toBe(true)
     })
 
     it('should match when command is nano', () => {
       expect(provider.match(['nano'], '', 'nano')).toBe(true)
-      expect(provider.match(['nano', 'file.txt'], 'file.txt', 'nano file.txt')).toBe(true)
+      expect(
+        provider.match(['nano', 'file.txt'], 'file.txt', 'nano file.txt')
+      ).toBe(true)
     })
 
     it('should match when command is rm', () => {
       expect(provider.match(['rm'], '', 'rm')).toBe(true)
-      expect(provider.match(['rm', 'file.txt'], 'file.txt', 'rm file.txt')).toBe(true)
+      expect(
+        provider.match(['rm', 'file.txt'], 'file.txt', 'rm file.txt')
+      ).toBe(true)
     })
 
     it('should match when command is vi', () => {
       expect(provider.match(['vi'], '', 'vi')).toBe(true)
-      expect(provider.match(['vi', 'file.txt'], 'file.txt', 'vi file.txt')).toBe(true)
+      expect(
+        provider.match(['vi', 'file.txt'], 'file.txt', 'vi file.txt')
+      ).toBe(true)
     })
 
     it('should match when command is vim', () => {
       expect(provider.match(['vim'], '', 'vim')).toBe(true)
-      expect(provider.match(['vim', 'file.txt'], 'file.txt', 'vim file.txt')).toBe(true)
+      expect(
+        provider.match(['vim', 'file.txt'], 'file.txt', 'vim file.txt')
+      ).toBe(true)
     })
 
     it('should not match when command is not in FILE_COMMANDS', () => {

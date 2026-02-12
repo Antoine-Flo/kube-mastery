@@ -38,7 +38,12 @@ try {
             <span class="sub-tagline">{t('home_subtitle_tagline')}</span>
           </p>
           <div class="cta">
-            <Button href={localePath('/courses')} variant="solid" color="cyan" size="xl">
+            <Button
+              href={localePath('/courses')}
+              variant="solid"
+              color="cyan"
+              size="xl"
+            >
               {t('home_viewCourses')}
             </Button>
           </div>
@@ -130,9 +135,11 @@ try {
                 </ul>
               </div>
               <div class="media">
-                <img src="/src/assets/network.jpg" alt={t('home_concerns_section1_image_alt')} loading="lazy" />
-
-                <!-- <img src={landingPlaceholder.src} alt={t('home_concerns_section3_image_alt')} loading="lazy" /> -->
+                <img
+                  src="/src/assets/network.jpg"
+                  alt={t('home_concerns_section1_image_alt')}
+                  loading="lazy"
+                />
               </div>
             </div>
           </div>
@@ -144,7 +151,11 @@ try {
       <div class="content">
         <div class="guarantee-row">
           <div class="guarantee-badge anim">
-            <img src={guaranteeBadge.src} alt={t('home_guarantee_image_alt')} loading="lazy" />
+            <img
+              src={guaranteeBadge.src}
+              alt={t('home_guarantee_image_alt')}
+              loading="lazy"
+            />
           </div>
           <div class="guarantee-text anim">
             <h2>{t('home_guarantee_title')}</h2>
@@ -154,8 +165,13 @@ try {
               <li>{t('home_guarantee_point2')}</li>
             </ul>
             <div class="cta">
-              <Button href={localePath('/auth')} variant="solid" color="cyan" size="xl">
-                {t('home_guarantee_cta')}
+              <Button
+                href={localePath('/courses')}
+                variant="solid"
+                color="cyan"
+                size="xl"
+              >
+                {t('home_viewCourses')}
               </Button>
             </div>
           </div>
@@ -167,7 +183,6 @@ try {
       <div class="content">
         <div class="section-header anim">
           <h2>{t('home_platform_features_title')}</h2>
-          <p>{t('home_platform_features_subtitle')}</p>
         </div>
         <div class="section-body">
           <div class="feature-rows">
@@ -217,7 +232,11 @@ try {
                 <p>{t('home_platform_features_visual_description')}</p>
               </div>
               <div class="media">
-                <img src={landingPlaceholder.src} alt={t('home_platform_features_visual_alt')} loading="lazy" />
+                <img
+                  src={landingPlaceholder.src}
+                  alt={t('home_platform_features_visual_alt')}
+                  loading="lazy"
+                />
               </div>
             </div>
           </div>
@@ -249,7 +268,12 @@ try {
         </div>
       </div>
       <div class="cta">
-        <Button href={localePath('/courses')} variant="solid" color="cyan" size="xl">{t('home_viewCourses')}</Button>
+        <Button
+          href={localePath('/courses')}
+          variant="solid"
+          color="cyan"
+          size="xl">{t('home_viewCourses')}</Button
+        >
       </div>
     </div>
   </main>
@@ -272,19 +296,35 @@ try {
     z-index: 0;
     pointer-events: none;
     /* Une tache, nombreuses étapes = transition très douce */
-    background: radial-gradient(ellipse 45% 20% at 75% 15%, hsl(192, 74%, 10%) 0%, var(--color-gray-1) 75%);
+    background: radial-gradient(
+      ellipse 45% 20% at 75% 15%,
+      hsl(192, 74%, 10%) 0%,
+      var(--color-gray-1) 75%
+    );
   }
 
   :global([data-theme='light']) .bg-halo {
-    background: radial-gradient(ellipse 45% 40% at 75% 15%, hsl(194, 55%, 87%) 0%, var(--color-gray-1) 65%);
+    background: radial-gradient(
+      ellipse 45% 40% at 75% 15%,
+      hsl(194, 55%, 87%) 0%,
+      var(--color-gray-1) 65%
+    );
   }
 
   @media (max-width: 768px) {
     .bg-halo {
-      background: radial-gradient(ellipse 65% 20% at 70% 10%, hsl(192, 74%, 10%) 0%, var(--color-gray-1) 65%);
+      background: radial-gradient(
+        ellipse 65% 20% at 70% 10%,
+        hsl(192, 74%, 10%) 0%,
+        var(--color-gray-1) 65%
+      );
     }
     :global([data-theme='light']) .bg-halo {
-      background: radial-gradient(ellipse 65% 30% at 70% 10%, hsl(194, 55%, 87%) 0%, var(--color-gray-1) 65%);
+      background: radial-gradient(
+        ellipse 65% 30% at 70% 10%,
+        hsl(194, 55%, 87%) 0%,
+        var(--color-gray-1) 65%
+      );
     }
   }
 
@@ -684,7 +724,7 @@ try {
   .concern-rows {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-28);
+    gap: var(--spacing-36);
   }
 
   .concern-row {

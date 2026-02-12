@@ -4,7 +4,10 @@
 // Provider d'autocomplete pour les fichiers et dossiers
 
 import { AutocompleteProvider } from '../../terminal/autocomplete/AutocompleteProvider'
-import type { AutocompleteContext, CompletionResult } from '../../terminal/autocomplete/types'
+import type {
+  AutocompleteContext,
+  CompletionResult
+} from '../../terminal/autocomplete/types'
 
 // Commandes qui acceptent des fichiers/dossiers comme arguments
 const FILE_COMMANDS = ['cd', 'ls', 'cat', 'nano', 'rm', 'vi', 'vim'] as const
@@ -41,7 +44,11 @@ export class FileAutocompleteProvider extends AutocompleteProvider {
     return FILE_COMMANDS.includes(command as any)
   }
 
-  complete(tokens: string[], currentToken: string, context: AutocompleteContext): CompletionResult[] {
+  complete(
+    tokens: string[],
+    currentToken: string,
+    context: AutocompleteContext
+  ): CompletionResult[] {
     const command = tokens[0]
     const directoriesOnly = command === 'cd'
     return getFileCompletions(currentToken, context.fileSystem, directoriesOnly)

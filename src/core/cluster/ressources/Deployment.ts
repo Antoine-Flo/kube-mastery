@@ -40,7 +40,10 @@ export interface DeploymentSpec {
 
 // ─── Deployment Condition ─────────────────────────────────────────────────
 
-export type DeploymentConditionType = 'Available' | 'Progressing' | 'ReplicaFailure'
+export type DeploymentConditionType =
+  | 'Available'
+  | 'Progressing'
+  | 'ReplicaFailure'
 
 export interface DeploymentCondition {
   type: DeploymentConditionType
@@ -165,7 +168,9 @@ const PodTemplateSpecSchema = z.object({
     })
     .optional(),
   spec: z.object({
-    containers: z.array(ContainerSchema).min(1, 'At least one container is required'),
+    containers: z
+      .array(ContainerSchema)
+      .min(1, 'At least one container is required'),
     initContainers: z.array(ContainerSchema).optional()
   })
 })
@@ -212,7 +217,9 @@ export const parseDeploymentManifest = (data: unknown): Result<Deployment> => {
 
   if (!result.success) {
     const firstError = result.error.issues[0]
-    return error(`Invalid Deployment manifest: ${firstError.path.join('.')}: ${firstError.message}`)
+    return error(
+      `Invalid Deployment manifest: ${firstError.path.join('.')}: ${firstError.message}`
+    )
   }
 
   const manifest = result.data
@@ -225,8 +232,12 @@ export const parseDeploymentManifest = (data: unknown): Result<Deployment> => {
     template: manifest.spec.template as PodTemplateSpec,
     strategy: manifest.spec.strategy as DeploymentStrategy | undefined,
     ...(manifest.metadata.labels && { labels: manifest.metadata.labels }),
-    ...(manifest.metadata.annotations && { annotations: manifest.metadata.annotations }),
-    ...(manifest.metadata.creationTimestamp && { creationTimestamp: manifest.metadata.creationTimestamp })
+    ...(manifest.metadata.annotations && {
+      annotations: manifest.metadata.annotations
+    }),
+    ...(manifest.metadata.creationTimestamp && {
+      creationTimestamp: manifest.metadata.creationTimestamp
+    })
   })
 
   return success(deployment)
@@ -237,7 +248,9 @@ export const parseDeploymentManifest = (data: unknown): Result<Deployment> => {
 /**
  * Get desired replicas count
  */
-export const getDeploymentDesiredReplicas = (deployment: Deployment): number => {
+export const getDeploymentDesiredReplicas = (
+  deployment: Deployment
+): number => {
   return deployment.spec.replicas ?? 1
 }
 
@@ -254,14 +267,19 @@ export const getDeploymentReadyDisplay = (deployment: Deployment): string => {
  * Check if deployment is available
  */
 export const isDeploymentAvailable = (deployment: Deployment): boolean => {
-  const condition = deployment.status.conditions?.find((c) => c.type === 'Available')
+  const condition = deployment.status.conditions?.find(
+    (c) => c.type === 'Available'
+  )
   return condition?.status === 'True'
 }
 
 /**
  * Generate ReplicaSet name from Deployment
  */
-export const generateReplicaSetName = (deploymentName: string, templateHash: string): string => {
+export const generateReplicaSetName = (
+  deploymentName: string,
+  templateHash: string
+): string => {
   return `${deploymentName}-${templateHash}`
 }
 

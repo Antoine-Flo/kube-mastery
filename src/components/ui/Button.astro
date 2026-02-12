@@ -40,7 +40,13 @@ const attrs =
       }
 ---
 
-<El {...attrs} data-variant={variant} data-size={size} data-color={color} data-has-sublabel={sublabel ? '' : undefined}>
+<El
+  {...attrs}
+  data-variant={variant}
+  data-size={size}
+  data-color={color}
+  data-has-sublabel={sublabel ? '' : undefined}
+>
   {
     sublabel ? (
       <span class="btn-inner">
@@ -103,7 +109,10 @@ const attrs =
   .btn {
     --btn-solid-bg: var(--color-palette-gray-solid-bg);
     --btn-solid-bg-hover: var(--color-palette-gray-solid-bg-hover);
-    --btn-solid-bg-active: var(--color-palette-gray-solid-bg-active, var(--color-palette-gray-solid-bg-hover));
+    --btn-solid-bg-active: var(
+      --color-palette-gray-solid-bg-active,
+      var(--color-palette-gray-solid-bg-hover)
+    );
     --btn-solid-fg: var(--color-palette-gray-solid-fg);
 
     --btn-surface-bg: var(--color-palette-gray-surface-bg);
@@ -131,11 +140,17 @@ const attrs =
   .btn[data-color='cyan'] {
     --btn-solid-bg: var(--color-palette-cyan-solid-bg);
     --btn-solid-bg-hover: var(--color-palette-cyan-solid-bg-hover);
-    --btn-solid-bg-active: var(--color-palette-cyan-solid-bg-active, var(--color-palette-cyan-solid-bg-hover));
+    --btn-solid-bg-active: var(
+      --color-palette-cyan-solid-bg-active,
+      var(--color-palette-cyan-solid-bg-hover)
+    );
     --btn-solid-fg: var(--color-palette-cyan-solid-fg);
 
     --btn-surface-bg: var(--color-palette-cyan-surface-bg);
-    --btn-surface-bg-hover: var(--color-palette-cyan-surface-bg-hover, var(--color-palette-cyan-surface-bg-active));
+    --btn-surface-bg-hover: var(
+      --color-palette-cyan-surface-bg-hover,
+      var(--color-palette-cyan-surface-bg-active)
+    );
     --btn-surface-bg-active: var(--color-palette-cyan-surface-bg-active);
     --btn-surface-border: var(--color-palette-cyan-surface-border);
     --btn-surface-border-hover: var(--color-palette-cyan-surface-border-hover);
@@ -159,11 +174,17 @@ const attrs =
   .btn[data-color='ruby'] {
     --btn-solid-bg: var(--color-palette-ruby-solid-bg);
     --btn-solid-bg-hover: var(--color-palette-ruby-solid-bg-hover);
-    --btn-solid-bg-active: var(--color-palette-ruby-solid-bg-active, var(--color-palette-ruby-solid-bg-hover));
+    --btn-solid-bg-active: var(
+      --color-palette-ruby-solid-bg-active,
+      var(--color-palette-ruby-solid-bg-hover)
+    );
     --btn-solid-fg: var(--color-palette-ruby-solid-fg);
 
     --btn-surface-bg: var(--color-palette-ruby-surface-bg);
-    --btn-surface-bg-hover: var(--color-palette-ruby-surface-bg-hover, var(--color-palette-ruby-surface-bg-active));
+    --btn-surface-bg-hover: var(
+      --color-palette-ruby-surface-bg-hover,
+      var(--color-palette-ruby-surface-bg-active)
+    );
     --btn-surface-bg-active: var(--color-palette-ruby-surface-bg-active);
     --btn-surface-border: var(--color-palette-ruby-surface-border);
     --btn-surface-border-hover: var(--color-palette-ruby-surface-border-hover);
@@ -187,11 +208,17 @@ const attrs =
   .btn[data-color='green'] {
     --btn-solid-bg: var(--color-palette-green-solid-bg);
     --btn-solid-bg-hover: var(--color-palette-green-solid-bg-hover);
-    --btn-solid-bg-active: var(--color-palette-green-solid-bg-active, var(--color-palette-green-solid-bg-hover));
+    --btn-solid-bg-active: var(
+      --color-palette-green-solid-bg-active,
+      var(--color-palette-green-solid-bg-hover)
+    );
     --btn-solid-fg: var(--color-palette-green-solid-fg);
 
     --btn-surface-bg: var(--color-palette-green-surface-bg);
-    --btn-surface-bg-hover: var(--color-palette-green-surface-bg-hover, var(--color-palette-green-surface-bg-active));
+    --btn-surface-bg-hover: var(
+      --color-palette-green-surface-bg-hover,
+      var(--color-palette-green-surface-bg-active)
+    );
     --btn-surface-bg-active: var(--color-palette-green-surface-bg-active);
     --btn-surface-border: var(--color-palette-green-surface-border);
     --btn-surface-border-hover: var(--color-palette-green-surface-border-hover);
@@ -215,11 +242,17 @@ const attrs =
   .btn[data-color='amber'] {
     --btn-solid-bg: var(--color-palette-amber-solid-bg);
     --btn-solid-bg-hover: var(--color-palette-amber-solid-bg-hover);
-    --btn-solid-bg-active: var(--color-palette-amber-solid-bg-active, var(--color-palette-amber-solid-bg-hover));
+    --btn-solid-bg-active: var(
+      --color-palette-amber-solid-bg-active,
+      var(--color-palette-amber-solid-bg-hover)
+    );
     --btn-solid-fg: var(--color-palette-amber-solid-fg);
 
     --btn-surface-bg: var(--color-palette-amber-surface-bg);
-    --btn-surface-bg-hover: var(--color-palette-amber-surface-bg-hover, var(--color-palette-amber-surface-bg-active));
+    --btn-surface-bg-hover: var(
+      --color-palette-amber-surface-bg-hover,
+      var(--color-palette-amber-surface-bg-active)
+    );
     --btn-surface-bg-active: var(--color-palette-amber-surface-bg-active);
     --btn-surface-border: var(--color-palette-amber-surface-border);
     --btn-surface-border-hover: var(--color-palette-amber-surface-border-hover);
