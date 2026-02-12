@@ -6,6 +6,7 @@
 
 import type { ClusterState, ClusterStateData } from '../cluster/ClusterState'
 import type { EventBus } from '../cluster/events/EventBus'
+import type { PodStartupSimulator } from '../cluster/podStartupSimulator'
 import type { FileSystemState } from '../filesystem/FileSystem'
 import { ShellContextStack } from '../terminal/core/ShellContext'
 
@@ -41,6 +42,9 @@ export interface EmulatedEnvironment {
 
   /** Auto-save unsubscribe function (if auto-save is enabled) */
   unsubscribeAutoSave?: () => void
+
+  /** Pod startup simulator (stops pending timeouts on destroy) */
+  podStartupSimulator?: PodStartupSimulator
 }
 
 /**

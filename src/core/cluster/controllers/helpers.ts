@@ -138,3 +138,12 @@ export const statusEquals = <T>(a: T, b: T, keys: (keyof T)[]): boolean => {
 export const generateSuffix = (): string => {
   return Math.random().toString(36).substring(2, 7)
 }
+
+/**
+ * Generate a Kind-like pod name: prefix-<10 char hash>-<5 char suffix>
+ * e.g. coredns-7d764666f9-9nlgh
+ */
+export const generateKindLikePodName = (prefix: string): string => {
+  const segment10 = Math.random().toString(36).substring(2, 12)
+  return `${prefix}-${segment10}-${generateSuffix()}`
+}

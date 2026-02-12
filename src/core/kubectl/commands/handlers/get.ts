@@ -44,6 +44,8 @@ interface ResourceHandler<T extends ResourceWithMetadata> {
   isClusterScoped?: boolean // True for cluster-scoped resources (nodes, namespaces)
   formatRowWide?: (item: T) => string[] // Optional wide format
   headersWide?: string[] // Optional wide headers
+  /** Column alignment for table output (kubectl-style: READY, RESTARTS, AGE right-aligned) */
+  align?: ('left' | 'right')[]
 }
 
 /**
@@ -228,7 +230,8 @@ const RESOURCE_HANDLERS: Record<string, ResourceHandler<any>> = {
       String(getPodRestarts(pod)),
       formatAge(pod.metadata.creationTimestamp)
     ],
-    supportsFiltering: true
+    supportsFiltering: true,
+    align: ['left', 'right', 'left', 'right', 'right']
   },
 
   configmaps: {
@@ -527,9 +530,19 @@ export const handleGet = (
         formatAge(p.metadata.creationTimestamp)
       ]
     })
-    return formatTable(headersAllNs, rowsAllNs)
+    const alignAllNs: ('left' | 'right')[] = [
+      'left',
+      'left',
+      'right',
+      'left',
+      'right',
+      'right'
+    ]
+    return formatTable(headersAllNs, rowsAllNs, { align: alignAllNs })
   }
 
   const rows = filtered.map(handler.formatRow) as string[][]
-  return formatTable(handler.headers, rows)
+  const tableOptions =
+    handler.align != null ? { align: handler.align } : undefined
+  return formatTable(handler.headers, rows, tableOptions)
 }

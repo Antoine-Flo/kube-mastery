@@ -83,7 +83,7 @@ const createPodFromTemplate = (rs: ReplicaSet): Pod => {
       'pod-template-hash': rs.metadata.name.split('-').pop() || ''
     },
     containers: convertTemplateContainers(rs.spec.template.spec.containers),
-    phase: 'Running',
+    phase: 'Pending',
     ownerReferences: [createOwnerRef(rs)]
   })
 }

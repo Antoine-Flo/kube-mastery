@@ -4,10 +4,9 @@
 // Hardcoded pods for kube-system and local-path-storage so that
 // kubectl get pods -A matches a real kind cluster (same namespaces and types).
 
+import { generateKindLikePodName } from './controllers/helpers'
 import type { Pod } from './ressources/Pod'
 import { createPod } from './ressources/Pod'
-
-const PAST_TIMESTAMP = '2024-01-01T12:00:00Z'
 
 const minimalContainer = (
   name: string,
@@ -17,106 +16,126 @@ const minimalContainer = (
   image
 })
 
+function uniqueKindLikeName(prefix: string, used: Set<string>): string {
+  let name: string
+  do {
+    name = generateKindLikePodName(prefix)
+  } while (used.has(name))
+  used.add(name)
+  return name
+}
+
+export interface GetSystemPodsOptions {
+  /** Optional clock for creationTimestamp (e.g. for tests/conformance). Default: now */
+  clock?: () => string
+}
+
 /**
  * Returns a list of system pods (kube-system, local-path-storage) to be
  * added to the cluster state after loading a seed. Aligns with what kind
  * installs so that get pods -A output is comparable.
+ * Uses dynamic creationTimestamp so formatAge() shows realistic age (0s, 5s, etc.).
+ * Pod names for ReplicaSet-style components use Kind-like format (prefix-hash-suffix).
  */
-export const getSystemPods = (): Pod[] => {
+export const getSystemPods = (options?: GetSystemPodsOptions): Pod[] => {
+  const now =
+    options?.clock != null ? options.clock() : new Date().toISOString()
+  const usedNames = new Set<string>()
+
   const kubeSystem: Pod[] = [
     createPod({
-      name: 'coredns-1',
+      name: uniqueKindLikeName('coredns', usedNames),
       namespace: 'kube-system',
       containers: [minimalContainer('coredns')],
-      creationTimestamp: PAST_TIMESTAMP,
-      phase: 'Running'
+      creationTimestamp: now,
+      phase: 'Pending'
     }),
     createPod({
-      name: 'coredns-2',
+      name: uniqueKindLikeName('coredns', usedNames),
       namespace: 'kube-system',
       containers: [minimalContainer('coredns')],
-      creationTimestamp: PAST_TIMESTAMP,
-      phase: 'Running'
+      creationTimestamp: now,
+      phase: 'Pending'
     }),
     createPod({
       name: 'etcd-control-plane',
       namespace: 'kube-system',
       containers: [minimalContainer('etcd')],
-      creationTimestamp: PAST_TIMESTAMP,
-      phase: 'Running'
+      creationTimestamp: now,
+      phase: 'Pending'
     }),
     createPod({
-      name: 'kindnet-1',
+      name: uniqueKindLikeName('kindnet', usedNames),
       namespace: 'kube-system',
       containers: [minimalContainer('kindnet')],
-      creationTimestamp: PAST_TIMESTAMP,
-      phase: 'Running'
+      creationTimestamp: now,
+      phase: 'Pending'
     }),
     createPod({
-      name: 'kindnet-2',
+      name: uniqueKindLikeName('kindnet', usedNames),
       namespace: 'kube-system',
       containers: [minimalContainer('kindnet')],
-      creationTimestamp: PAST_TIMESTAMP,
-      phase: 'Running'
+      creationTimestamp: now,
+      phase: 'Pending'
     }),
     createPod({
-      name: 'kindnet-3',
+      name: uniqueKindLikeName('kindnet', usedNames),
       namespace: 'kube-system',
       containers: [minimalContainer('kindnet')],
-      creationTimestamp: PAST_TIMESTAMP,
-      phase: 'Running'
+      creationTimestamp: now,
+      phase: 'Pending'
     }),
     createPod({
       name: 'kube-apiserver-control-plane',
       namespace: 'kube-system',
       containers: [minimalContainer('kube-apiserver')],
-      creationTimestamp: PAST_TIMESTAMP,
-      phase: 'Running'
+      creationTimestamp: now,
+      phase: 'Pending'
     }),
     createPod({
       name: 'kube-controller-manager-control-plane',
       namespace: 'kube-system',
       containers: [minimalContainer('kube-controller-manager')],
-      creationTimestamp: PAST_TIMESTAMP,
-      phase: 'Running'
+      creationTimestamp: now,
+      phase: 'Pending'
     }),
     createPod({
-      name: 'kube-proxy-1',
+      name: uniqueKindLikeName('kube-proxy', usedNames),
       namespace: 'kube-system',
       containers: [minimalContainer('kube-proxy')],
-      creationTimestamp: PAST_TIMESTAMP,
-      phase: 'Running'
+      creationTimestamp: now,
+      phase: 'Pending'
     }),
     createPod({
-      name: 'kube-proxy-2',
+      name: uniqueKindLikeName('kube-proxy', usedNames),
       namespace: 'kube-system',
       containers: [minimalContainer('kube-proxy')],
-      creationTimestamp: PAST_TIMESTAMP,
-      phase: 'Running'
+      creationTimestamp: now,
+      phase: 'Pending'
     }),
     createPod({
-      name: 'kube-proxy-3',
+      name: uniqueKindLikeName('kube-proxy', usedNames),
       namespace: 'kube-system',
       containers: [minimalContainer('kube-proxy')],
-      creationTimestamp: PAST_TIMESTAMP,
-      phase: 'Running'
+      creationTimestamp: now,
+      phase: 'Pending'
     }),
     createPod({
       name: 'kube-scheduler-control-plane',
       namespace: 'kube-system',
       containers: [minimalContainer('kube-scheduler')],
-      creationTimestamp: PAST_TIMESTAMP,
-      phase: 'Running'
+      creationTimestamp: now,
+      phase: 'Pending'
     })
   ]
 
   const localPathStorage: Pod[] = [
     createPod({
-      name: 'local-path-provisioner-1',
+      name: uniqueKindLikeName('local-path-provisioner', usedNames),
       namespace: 'local-path-storage',
       containers: [minimalContainer('local-path-provisioner')],
-      creationTimestamp: PAST_TIMESTAMP,
-      phase: 'Running'
+      creationTimestamp: now,
+      phase: 'Pending'
     })
   ]
 

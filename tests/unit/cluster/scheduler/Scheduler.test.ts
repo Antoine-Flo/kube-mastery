@@ -159,7 +159,8 @@ describe('Scheduler', () => {
 
       expect(updatedPod).toBeDefined()
       expect(updatedPod!.spec.nodeName).toBe('node-1')
-      expect(updatedPod!.status.phase).toBe('Running')
+      // Scheduler only assigns nodeName; phase stays Pending until PodStartupSimulator transitions
+      expect(updatedPod!.status.phase).toBe('Pending')
     })
 
     it('should not schedule a pod that already has a nodeName', () => {

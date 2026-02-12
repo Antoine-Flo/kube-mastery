@@ -103,8 +103,8 @@ export const createScheduler = (
   }
 
   /**
-   * Bind a pod to a node by emitting PodUpdated event
-   * Also sets the pod to Running (simulating kubelet behavior)
+   * Bind a pod to a node by emitting PodUpdated event.
+   * Only assigns nodeName; phase stays Pending until PodStartupSimulator transitions to Running.
    */
   const bind = (pod: Pod, nodeName: string): void => {
     const updatedPod: Pod = {
@@ -114,8 +114,7 @@ export const createScheduler = (
         nodeName
       },
       status: {
-        ...pod.status,
-        phase: 'Running'
+        ...pod.status
       }
     }
 

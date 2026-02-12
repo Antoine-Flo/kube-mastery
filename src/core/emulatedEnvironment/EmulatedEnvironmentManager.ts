@@ -10,6 +10,7 @@ import {
   initializeScheduler
 } from '../cluster/controllers/initializers'
 import { createEventBus, type EventBus } from '../cluster/events/EventBus'
+import { createPodStartupSimulator } from '../cluster/podStartupSimulator'
 import type { AppEvent } from '../events/AppEvent'
 import { createHostFileSystem } from '../filesystem/debianFileSystem'
 import { saveSandboxEnvironment } from '../storage/indexedDBAdapter'
@@ -81,6 +82,14 @@ export function createEmulatedEnvironment(
   // Initialize scheduler to assign pods to nodes
   initializeScheduler(eventBus, clusterState)
 
+  // Transition Pending -> Running after random delay (kubelet-like)
+  const podStartupSimulator = createPodStartupSimulator(
+    eventBus,
+    () => clusterState,
+    { startupDelayMs: 1500 }
+  )
+  podStartupSimulator.start()
+
   // Setup auto-save if enabled
   let unsubscribeAutoSave: (() => void) | undefined
 
@@ -120,7 +129,8 @@ export function createEmulatedEnvironment(
     fileSystemState,
     eventBus,
     shellContextStack,
-    unsubscribeAutoSave
+    unsubscribeAutoSave,
+    podStartupSimulator
   }
 }
 
@@ -135,6 +145,12 @@ export function destroyEmulatedEnvironment(
   if (emulatedEnvironment.unsubscribeAutoSave) {
     emulatedEnvironment.unsubscribeAutoSave()
     emulatedEnvironment.unsubscribeAutoSave = undefined
+  }
+
+  // Stop pod startup simulator (clears pending timeouts)
+  if (emulatedEnvironment.podStartupSimulator) {
+    emulatedEnvironment.podStartupSimulator.stop()
+    emulatedEnvironment.podStartupSimulator = undefined
   }
 
   // Note: We don't explicitly clean up clusterState, fileSystemState, eventBus, or shellContextStack
