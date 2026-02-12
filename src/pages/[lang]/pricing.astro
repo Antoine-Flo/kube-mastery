@@ -357,12 +357,17 @@ const faqItems = [
 </Layout>
 
 <script>
-  const toggle = document.getElementById('pricing-billing-toggle')
-  const optionMonthly = document.getElementById('pricing-option-monthly')
-  const optionYearly = document.getElementById('pricing-option-yearly')
-  const banners = document.querySelectorAll('.pricing__plan-price-banner')
+  /** Réexécuter à chaque chargement de page (dont changement de langue /en ↔ /fr) */
+  function initPricingToggle() {
+    const toggle = document.getElementById('pricing-billing-toggle')
+    const optionMonthly = document.getElementById('pricing-option-monthly')
+    const optionYearly = document.getElementById('pricing-option-yearly')
+    const banners = document.querySelectorAll('.pricing__plan-price-banner')
 
-  if (toggle && optionMonthly && optionYearly && banners.length > 0) {
+    if (!toggle || !optionMonthly || !optionYearly || banners.length === 0) {
+      return
+    }
+
     /** @param {boolean} yearly */
     // @ts-expect-error - inline script, yearly is boolean at runtime
     function setBilling(yearly) {
@@ -415,4 +420,7 @@ const faqItems = [
 
     setBilling(true)
   }
+
+  initPricingToggle()
+  document.addEventListener('astro:page-load', initPricingToggle)
 </script>
