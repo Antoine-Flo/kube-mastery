@@ -9,6 +9,7 @@ import type { TaskGlobAdapter } from './port'
 import { buildTaskGroupOverview, buildTaskGroupList } from './domain'
 import { createTaskGlobAdapter } from './glob-adapter'
 import { stripNumericPrefix } from '../utils'
+import { DEMO_TASK_GROUP_ID } from './constants'
 
 let adapter: TaskGlobAdapter | null = null
 
@@ -27,7 +28,9 @@ export type {
 } from './types'
 
 export function getTaskGroups(lang: UiLang): TaskGroupListItem[] {
-  return buildTaskGroupList(getAdapter(), lang)
+  return buildTaskGroupList(getAdapter(), lang).filter(
+    (g) => g.id !== DEMO_TASK_GROUP_ID
+  )
 }
 
 export function getTaskGroupOverview(

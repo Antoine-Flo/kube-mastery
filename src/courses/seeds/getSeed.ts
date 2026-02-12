@@ -11,6 +11,10 @@ import {
   fsConfig as demoFsConfig
 } from './demo'
 import {
+  clusterStateData as introClusterStateData,
+  fsConfig as introFsConfig
+} from './intro'
+import {
   clusterStateData as minimalClusterStateData,
   fsConfig as minimalFsConfig
 } from './minimal'
@@ -34,6 +38,9 @@ export function getSeed(seedName: string): SeedData {
   }
   if (name === 'demo') {
     return { clusterStateData: demoClusterStateData, fsConfig: demoFsConfig }
+  }
+  if (name === 'intro') {
+    return { clusterStateData: introClusterStateData, fsConfig: introFsConfig }
   }
   // default: minimal
   return {

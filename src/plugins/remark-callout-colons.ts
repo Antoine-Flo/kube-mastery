@@ -4,6 +4,7 @@
  */
 
 import type { Root, Paragraph, Text } from 'mdast'
+import type { Point } from 'unist'
 import { visit } from 'unist-util-visit'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
@@ -11,6 +12,24 @@ import remarkRehype from 'remark-rehype'
 import rehypeRaw from 'rehype-raw'
 import rehypeStringify from 'rehype-stringify'
 import { VFile } from 'vfile'
+
+function pointToOffset(source: string, point: Point): number {
+  const lines = source.split('\n')
+  let offset = 0
+  for (let lineIndex = 0; lineIndex < point.line - 1 && lineIndex < lines.length; lineIndex++) {
+    offset += lines[lineIndex].length + 1
+  }
+  return offset + (point.column - 1)
+}
+
+function getSourceSlice(
+  source: string,
+  position: { start: Point; end: Point }
+): string {
+  const startOffset = pointToOffset(source, position.start)
+  const endOffset = pointToOffset(source, position.end)
+  return source.slice(startOffset, endOffset)
+}
 
 const CALLOUT_SINGLE_REGEX = /^:::(info|warning|important)\n([\s\S]*?)\n:::\s*$/
 const CALLOUT_OPEN_REGEX = /^:::(info|warning|important)(?:\n([\s\S]*))?$/
@@ -161,8 +180,9 @@ function collectMultiNodeCallout(
 }
 
 export default function remarkCalloutColons() {
-  return (tree: Root) => {
+  return (tree: Root, file: VFile) => {
     const newChildren: Root['children'] = []
+    const source = typeof file.value === 'string' ? file.value : ''
 
     for (let i = 0; i < tree.children.length; i++) {
       const node = tree.children[i]
@@ -175,11 +195,23 @@ export default function remarkCalloutColons() {
 
       const single = parseSingleParagraphCallout(text)
       if (single) {
+        let content = single.content
+        if (
+          source &&
+          node.position?.start &&
+          node.position?.end
+        ) {
+          const paragraphSource = getSourceSlice(source, node.position)
+          const match = paragraphSource.match(CALLOUT_SINGLE_REGEX)
+          if (match) {
+            content = match[2].trim()
+          }
+        }
         newChildren.push({
           type: 'html',
           value: buildCalloutHtml(
             single.type,
-            markdownStringToHtml(single.content)
+            markdownStringToHtml(content)
           )
         })
         continue

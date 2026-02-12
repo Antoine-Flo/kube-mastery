@@ -15,6 +15,7 @@ import { getLayoutAuthContext } from '../lib/auth/server'
 const lang = getLangFromUrl(Astro.url)
 const bodyClass = Astro.props.bodyClass
 const showFooter = Astro.props.showFooter ?? true
+const navbarFullWidth = Boolean(bodyClass?.includes('navbar-full-width'))
 
 const auth = await getLayoutAuthContext(
   Astro.locals,
@@ -41,6 +42,7 @@ const auth = await getLayoutAuthContext(
       isLoggedIn={auth.isLoggedIn}
       user={auth.user}
       hasPaidSubscription={auth.hasPaidSubscription}
+      fullWidth={navbarFullWidth}
     />
     <main class="layout-main">
       <slot />
@@ -74,4 +76,5 @@ const auth = await getLayoutAuthContext(
   body.lp-fill .layout-main {
     overflow: auto;
   }
+
 </style>

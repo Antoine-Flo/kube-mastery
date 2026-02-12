@@ -7,6 +7,7 @@ import {
   getTaskContent,
   getTaskGroupOverview
 } from '../../../../../content/tasks/facade'
+import { DEMO_TASK_GROUP_ID } from '../../../../../content/tasks/constants'
 import { getProgressContext } from '../../../../../lib/progress/server'
 import '../../../../../styles/components/lesson-content.css'
 import '../../../../../styles/components/cluster-visualization.css'
@@ -22,7 +23,8 @@ const { userId } = await getProgressContext(
   Astro.request,
   Astro.cookies
 )
-if (!userId) {
+const isDemoTask = groupId === DEMO_TASK_GROUP_ID
+if (!userId && !isDemoTask) {
   return Astro.redirect(
     localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
   )
@@ -61,7 +63,10 @@ const contentBarLabels = {
 }
 ---
 
-<Layout bodyClass="lp-fill" showFooter={false}>
+<Layout
+  bodyClass={isDemoTask ? 'lp-fill navbar-full-width' : 'lp-fill'}
+  showFooter={false}
+>
   <ContentWithTerminalLayout
     seedName={seedName}
     lang={lang}
@@ -97,9 +102,20 @@ const contentBarLabels = {
       }
     </nav>
     <div class="lp__task-complete">
-      <Button href={completeTaskUrl} variant="solid" color="cyan" size="md">
-        {t('tasks_doneButton')}
-      </Button>
+      {isDemoTask && !userId ? (
+        <Button
+          href={localePath('/pricing')}
+          variant="solid"
+          color="cyan"
+          size="md"
+        >
+          {t('home_cta_join')}
+        </Button>
+      ) : (
+        <Button href={completeTaskUrl} variant="solid" color="cyan" size="md">
+          {t('tasks_doneButton')}
+        </Button>
+      )}
     </div>
   </ContentWithTerminalLayout>
 </Layout>

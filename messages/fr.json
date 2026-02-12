@@ -89,6 +89,7 @@
   "home_subtitle": "Formez-vous à l'orchestration de conteneurs avec le premier simulateur Kubernetes en ligne.",
   "home_subtitle_tagline": "Zéro setup, zéro attente, zéro frais cloud.",
   "home_cta_join": "Rejoindre la formation",
+  "home_cta_tryDemo": "Essayer la démo",
   "home_tryTerminal": "Tester le terminal",
   "home_features_speed_title": "Chargement instantané",
   "home_features_speed_description": "Chargez la page et c'est parti : pas d'attente, pas de configuration",

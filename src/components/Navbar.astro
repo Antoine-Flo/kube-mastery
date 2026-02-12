@@ -16,12 +16,15 @@ interface Props {
   isLoggedIn?: boolean
   user?: NavbarUser | null
   hasPaidSubscription?: boolean
+  /** When true, navbar inner is full width (e.g. landing page). */
+  fullWidth?: boolean
 }
 
 const {
   isLoggedIn = false,
   user = null,
-  hasPaidSubscription = false
+  hasPaidSubscription = false,
+  fullWidth = false
 } = Astro.props
 const lang = getLangFromUrl(Astro.url)
 const t = useTranslations(lang)
@@ -30,7 +33,12 @@ const userDisplayName = user?.user_metadata?.full_name ?? ''
 const userEmail = user?.email ?? ''
 ---
 
-<header class:list={{ 'navbar--logged-in': isLoggedIn }}>
+<header
+  class:list={{
+    'navbar--logged-in': isLoggedIn,
+    'navbar--full-width': fullWidth
+  }}
+>
   <div class="navbar-inner">
     <a
       href={isLoggedIn ? localePath('/courses') : localePath('/')}
@@ -107,7 +115,8 @@ const userEmail = user?.email ?? ''
     gap: 1rem;
     flex-wrap: wrap;
   }
-  header.navbar--logged-in .navbar-inner {
+  header.navbar--logged-in .navbar-inner,
+  header.navbar--full-width .navbar-inner {
     max-width: none;
   }
 

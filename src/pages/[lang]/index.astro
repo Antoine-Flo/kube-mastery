@@ -4,6 +4,10 @@ import Button from '../../components/ui/Button.astro'
 import Terminal from '../../components/Terminal.astro'
 import { Zap, Shield, Euro, CircleCheck } from '@lucide/astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
+import {
+  DEMO_TASK_GROUP_ID,
+  DEMO_TASK_ID
+} from '../../content/tasks/constants'
 import { getSupabaseServer } from '../../lib/supabase'
 import landingPlaceholder from '../../assets/landing-placeholder.svg'
 import guaranteeBadge from '../../assets/guarantee-badge.svg'
@@ -46,6 +50,14 @@ try {
               size="xl"
             >
               {t('home_cta_join')}
+            </Button>
+            <Button
+              href={localePath(`/tasks/${DEMO_TASK_GROUP_ID}/${DEMO_TASK_ID}`)}
+              variant="outline"
+              color="cyan"
+              size="xl"
+            >
+              {t('home_cta_tryDemo')}
             </Button>
           </div>
         </div>
@@ -443,8 +455,11 @@ try {
   .cta {
     margin-top: 1rem;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
     position: relative;
     z-index: 1;
     animation: fadeInUp 0.8s ease-out 0.4s both;
