@@ -15,11 +15,7 @@ if (!overview) {
   return Astro.redirect(localePath('/courses'))
 }
 
-const completedTaskIds = await getCompletedTaskIds(
-  Astro.locals,
-  Astro.request,
-  Astro.cookies
-)
+const completedTaskIds = await getCompletedTaskIds(Astro.locals, Astro.request, Astro.cookies)
 ---
 
 <Layout>
@@ -37,16 +33,10 @@ const completedTaskIds = await getCompletedTaskIds(
                 href={localePath(`/tasks/${groupId}/${task.id}`)}
                 class={`task-link${completed ? ' task-link--completed' : ''}`}
               >
-                {completed ? (
-                  <CircleCheck size={18} aria-hidden="true" />
-                ) : (
-                  <CirclePlay size={18} aria-hidden="true" />
-                )}
+                {completed ? <CircleCheck size={18} aria-hidden="true" /> : <CirclePlay size={18} aria-hidden="true" />}
                 <div class="task-link__text">
                   <span class="task-link__title">{task.title}</span>
-                  {task.description && (
-                    <span class="task-link__description">{task.description}</span>
-                  )}
+                  {task.description && <span class="task-link__description">{task.description}</span>}
                 </div>
               </a>
             </li>

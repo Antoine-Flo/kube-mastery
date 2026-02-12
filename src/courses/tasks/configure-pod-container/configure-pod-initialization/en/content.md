@@ -1,6 +1,7 @@
 ---
-description: "Use an Init Container to prepare a Pod before the main container runs."
+description: 'Use an Init Container to prepare a Pod before the main container runs.'
 ---
+
 # Configure Pod Initialization
 
 This page shows how to use an **Init Container** to initialize a Pod before the main application container runs.

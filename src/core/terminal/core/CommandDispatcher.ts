@@ -27,11 +27,18 @@ interface CommandDispatcherOptions {
   clusterState: ClusterState
   eventBus: EventBus
   logger: Logger
+  commandLimit?: number
+  commandLimitMessage?: string
+  lockInput?: () => void
+  isInputLocked?: () => boolean
 }
 
 export class CommandDispatcher {
   private handlers: CommandHandler[]
   private context: CommandContext
+  private commandCount = 0
+  private commandLimit?: number
+  private commandLimitMessage?: string
 
   constructor(options: CommandDispatcherOptions) {
     // Créer l'abstraction TerminalOutput pour une gestion propre des lignes
@@ -45,8 +52,12 @@ export class CommandDispatcher {
       shellContextStack: options.shellContextStack,
       clusterState: options.clusterState,
       eventBus: options.eventBus,
-      logger: options.logger
+      logger: options.logger,
+      lockInput: options.lockInput,
+      isInputLocked: options.isInputLocked
     }
+    this.commandLimit = options.commandLimit
+    this.commandLimitMessage = options.commandLimitMessage
 
     // Ordre important : les handlers sont testés dans l'ordre
     // ShellCommandHandler en premier car il peut parser rapidement
@@ -59,6 +70,13 @@ export class CommandDispatcher {
    * @returns Résultat d'exécution
    */
   execute(command: string): ExecutionResult {
+    if (this.context.isInputLocked?.()) {
+      return error('Input locked')
+    }
+
+    const shouldLock =
+      this.commandLimit !== undefined && this.commandLimit > 0 && this.commandCount + 1 >= this.commandLimit
+
     // Trouver le premier handler qui peut traiter la commande
     const handler = this.handlers.find((h) => h.canHandle(command))
 
@@ -67,8 +85,17 @@ export class CommandDispatcher {
       return error(`Unknown command: ${command}`)
     }
 
+    this.commandCount += 1
     // Exécuter la commande via le handler
-    return handler.execute(command, this.context)
+    const result = handler.execute(command, this.context)
+
+    if (shouldLock && this.commandLimitMessage) {
+      this.context.output.newLine()
+      this.context.output.writeLine(this.commandLimitMessage)
+      this.context.lockInput?.()
+    }
+
+    return result
   }
 }
 

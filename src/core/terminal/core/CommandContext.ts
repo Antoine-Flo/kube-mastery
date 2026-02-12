@@ -41,4 +41,10 @@ export interface CommandContext {
 
   /** Logger pour le suivi des commandes */
   logger: Logger
+
+  /** Verrouille l'entrée utilisateur (mode démo) */
+  lockInput?: () => void
+
+  /** Indique si l'entrée est verrouillée */
+  isInputLocked?: () => boolean
 }

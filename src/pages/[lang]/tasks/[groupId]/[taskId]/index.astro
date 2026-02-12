@@ -61,18 +61,22 @@ const contentBarLabels = {
       <Content />
     </article>
     <nav class="lp__nav--bt">
-      {prevTask ? (
-        <a href={localePath(`/tasks/${groupId}/${prevTask.id}`)} class="lp__lnk">
-          ← {prevTask.title}
-        </a>
-      ) : (
-        <span />
-      )}
-      {nextTask ? (
-        <a href={localePath(`/tasks/${groupId}/${nextTask.id}`)} class="lp__lnk lp__lnk--next">
-          {nextTask.title} →
-        </a>
-      ) : null}
+      {
+        prevTask ? (
+          <a href={localePath(`/tasks/${groupId}/${prevTask.id}`)} class="lp__lnk">
+            ← {prevTask.title}
+          </a>
+        ) : (
+          <span />
+        )
+      }
+      {
+        nextTask ? (
+          <a href={localePath(`/tasks/${groupId}/${nextTask.id}`)} class="lp__lnk lp__lnk--next">
+            {nextTask.title} →
+          </a>
+        ) : null
+      }
     </nav>
     <div class="lp__task-complete">
       <Button href={completeTaskUrl} variant="solid" color="cyan" size="md">

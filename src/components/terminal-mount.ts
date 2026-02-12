@@ -40,11 +40,25 @@ export interface MountTerminalOptions {
   env?: EmulatedEnvironment
   /** Editor overlay for vim/nano. If set, nano/vi/vim open this modal. */
   editorModal?: EditorModal & { close?(): void }
+  /** Optional command limit for demo terminals. */
+  commandLimit?: number
+  /** Message shown when command limit is reached. */
+  commandLimitMessage?: string
 }
 
 /** Mounts xterm, returns cleanup (detach + destroy env). */
 export function mountTerminal(container: HTMLElement, options: MountTerminalOptions = {}): () => void {
-  const { rows = 20, scrollback = 1000, lang = 'en', seedName, topPrompt, env: providedEnv, editorModal } = options
+  const {
+    rows = 20,
+    scrollback = 1000,
+    lang = 'en',
+    seedName,
+    topPrompt,
+    env: providedEnv,
+    editorModal,
+    commandLimit,
+    commandLimitMessage
+  } = options
 
   const env: EmulatedEnvironment =
     providedEnv ??
@@ -84,7 +98,11 @@ export function mountTerminal(container: HTMLElement, options: MountTerminalOpti
             shellContextStack: env.shellContextStack,
             clusterState: env.clusterState,
             eventBus: env.eventBus,
-            logger
+            logger,
+            commandLimit,
+            commandLimitMessage,
+            lockInput: () => controller.lockInput(),
+            isInputLocked: () => controller.isInputLocked()
           })
         } catch (err) {
           console.error('[Terminal] Failed to create dispatcher:', err)

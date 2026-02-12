@@ -27,7 +27,7 @@ describe('ShellContextStack', () => {
     })
 
     it('should have default prompt for /home/kube', () => {
-      expect(shellContextStack.getCurrentPrompt()).toBe('☸ ~>')
+      expect(shellContextStack.getCurrentPrompt()).toBe('~>')
     })
   })
 
@@ -35,37 +35,37 @@ describe('ShellContextStack', () => {
     it('should show ~ for /home/kube', () => {
       fileSystemState.currentPath = '/home/kube'
       shellContextStack.updateCurrentPrompt()
-      expect(shellContextStack.getCurrentPrompt()).toBe('☸ ~>')
+      expect(shellContextStack.getCurrentPrompt()).toBe('~>')
     })
 
     it('should show ~/examples for /home/kube/examples', () => {
       fileSystemState.currentPath = '/home/kube/examples'
       shellContextStack.updateCurrentPrompt()
-      expect(shellContextStack.getCurrentPrompt()).toBe('☸ ~/examples>')
+      expect(shellContextStack.getCurrentPrompt()).toBe('~/examples>')
     })
 
     it('should show ~/nested/path for /home/kube/nested/path', () => {
       fileSystemState.currentPath = '/home/kube/nested/path'
       shellContextStack.updateCurrentPrompt()
-      expect(shellContextStack.getCurrentPrompt()).toBe('☸ ~/nested/path>')
+      expect(shellContextStack.getCurrentPrompt()).toBe('~/nested/path>')
     })
 
     it('should show absolute path for paths outside /home/kube', () => {
       fileSystemState.currentPath = '/etc'
       shellContextStack.updateCurrentPrompt()
-      expect(shellContextStack.getCurrentPrompt()).toBe('☸ /etc>')
+      expect(shellContextStack.getCurrentPrompt()).toBe('/etc>')
     })
 
     it('should show absolute path for root', () => {
       fileSystemState.currentPath = '/'
       shellContextStack.updateCurrentPrompt()
-      expect(shellContextStack.getCurrentPrompt()).toBe('☸ />')
+      expect(shellContextStack.getCurrentPrompt()).toBe('/>')
     })
 
     it('should show absolute path for /home (not /home/kube)', () => {
       fileSystemState.currentPath = '/home'
       shellContextStack.updateCurrentPrompt()
-      expect(shellContextStack.getCurrentPrompt()).toBe('☸ /home>')
+      expect(shellContextStack.getCurrentPrompt()).toBe('/home>')
     })
   })
 
@@ -83,7 +83,7 @@ describe('ShellContextStack', () => {
     })
 
     it('should show container prompt for root', () => {
-      expect(shellContextStack.getCurrentPrompt()).toBe('☸ [nginx-pod:nginx] />')
+      expect(shellContextStack.getCurrentPrompt()).toBe('[nginx-pod:nginx] />')
     })
 
     it('should show container prompt with path', () => {
@@ -93,14 +93,14 @@ describe('ShellContextStack', () => {
       const context = shellContextStack.getCurrentContext()
       ;(context.fileSystem as any).getCurrentPath = () => '/var/log'
       shellContextStack.updateCurrentPrompt()
-      expect(shellContextStack.getCurrentPrompt()).toBe('☸ [nginx-pod:nginx] /var/log>')
+      expect(shellContextStack.getCurrentPrompt()).toBe('[nginx-pod:nginx] /var/log>')
     })
 
     it('should return to host context after popContext', () => {
       const result = shellContextStack.popContext()
       expect(result).toBe(true)
       expect(shellContextStack.isInContainer()).toBe(false)
-      expect(shellContextStack.getCurrentPrompt()).toBe('☸ ~>')
+      expect(shellContextStack.getCurrentPrompt()).toBe('~>')
     })
   })
 

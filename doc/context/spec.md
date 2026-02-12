@@ -40,7 +40,7 @@ pwd, ls, cd, mkdir (-p), touch, cat, rm (-r), nano/vi/vim, clear, help, debug. D
 
 - **Command history**: Navigate with ↑↓ (max 100 commands)
 - **Tab autocompletion**: Bash-like autocomplete for commands, resources, files, flags
-- **Enhanced prompt**: Format `☸ ~/path>` with dynamic path
+- **Enhanced prompt**: Format `~/path>` with dynamic path
 - **Persistent state**: Cluster and filesystem saved to localStorage
 - **Full-screen mode**: Terminal only, like real exam environment
 - **Cluster viewer**: Collapsible panel below terminal showing nodes, pods, and containers visually
@@ -247,7 +247,7 @@ All MVP criteria have been met:
 - ✅ Terminal functional and styled
 - ✅ Command history with ↑↓ navigation
 - ✅ Tab autocompletion working
-- ✅ Enhanced prompt with ☸ icon and path
+- ✅ Enhanced prompt with kube icon and path
 - ✅ 13+ kubectl commands supported (get, describe, delete, create, apply, logs, exec, label, annotate, version, cluster-info, api-resources)
 - ✅ Shell commands functional (cd, ls, pwd, mkdir, touch, cat, rm, nano/vi/vim)
 - ✅ Virtual filesystem with max 3 levels

@@ -15,8 +15,7 @@ function createMockPort(overrides: {
   return {
     getGroupIds: () => overrides.groupIds ?? [],
     getGroupMeta: overrides.getGroupMeta ?? (() => undefined),
-    getTaskDirsByGroup:
-      overrides.getTaskDirsByGroup ?? (() => overrides.taskDirsByGroup ?? new Map()),
+    getTaskDirsByGroup: overrides.getTaskDirsByGroup ?? (() => overrides.taskDirsByGroup ?? new Map()),
     getTaskTitle: overrides.getTaskTitle ?? (() => ''),
     getTaskDescription: overrides.getTaskDescription ?? (() => null)
   }
@@ -60,13 +59,7 @@ describe('buildTaskGroupOverview', () => {
           environment: 'minimal'
         }
       },
-      getTaskDirsByGroup: () =>
-        new Map([
-          [
-            'my-group',
-            ['01-first-task', '02-second-task']
-          ]
-        ]),
+      getTaskDirsByGroup: () => new Map([['my-group', ['01-first-task', '02-second-task']]]),
       getTaskTitle: (groupId, taskId) => {
         if (groupId === 'my-group' && taskId === 'first-task') {
           return 'First Task'

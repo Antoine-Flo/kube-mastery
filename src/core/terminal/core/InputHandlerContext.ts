@@ -23,4 +23,6 @@ export interface InputHandlerContext {
   hideCursor: () => void
   /** Affiche le curseur */
   showCursor: () => void
+  /** Indique si l'entrée est verrouillée */
+  isInputLocked?: () => boolean
 }

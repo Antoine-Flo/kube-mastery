@@ -15,6 +15,10 @@ interface Props {
   lessonTerminal?: boolean
   /** Show min/max/close controls (home only; hidden on lesson). */
   showControls?: boolean
+  /** Optional command limit for demo terminals. */
+  commandLimit?: number
+  /** Message shown when command limit is reached. */
+  commandLimitMessage?: string
 }
 
 import { Minus, Save, Square, X } from '@lucide/astro'
@@ -30,7 +34,9 @@ const {
   persistId,
   topPrompt,
   lessonTerminal = false,
-  showControls = true
+  showControls = true,
+  commandLimit,
+  commandLimitMessage
 } = Astro.props
 const rootClass = ['t-win', fullHeight && 't-win--full', className].filter(Boolean).join(' ')
 ---
@@ -46,6 +52,8 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className].filter(Boole
   data-persist-id={lessonTerminal ? undefined : (persistId ?? undefined)}
   data-top-prompt={topPrompt != null ? JSON.stringify(topPrompt) : undefined}
   data-lesson-terminal={lessonTerminal ? 'true' : undefined}
+  data-command-limit={commandLimit ?? undefined}
+  data-command-limit-message={commandLimitMessage ?? undefined}
 >
   {
     showControls && (
@@ -233,6 +241,8 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className].filter(Boole
       const seedName = el.dataset.seedName
       const topPromptRaw = el.dataset.topPrompt
       const topPrompt = topPromptRaw ? (JSON.parse(topPromptRaw) as string) : undefined
+      const commandLimit = el.dataset.commandLimit ? Number(el.dataset.commandLimit) : undefined
+      const commandLimitMessage = el.dataset.commandLimitMessage
 
       const editorModal = createEditorModal(overlayEl, editorBoxEl)
       editorModalByRoot.set(root, editorModal)
@@ -261,7 +271,9 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className].filter(Boole
           rows,
           lang,
           ...(seedName && { seedName }),
-          ...(topPrompt !== undefined && { topPrompt })
+          ...(topPrompt !== undefined && { topPrompt }),
+          ...(commandLimit !== undefined && !Number.isNaN(commandLimit) && { commandLimit }),
+          ...(commandLimitMessage && { commandLimitMessage })
         })
         return
       }
@@ -323,8 +335,8 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className].filter(Boole
   }
   .t-ctrl {
     position: absolute;
-    top: var(--spacing-1);
-    right: var(--spacing-1);
+    top: var(--spacing-2);
+    right: var(--spacing-2);
     display: flex;
     gap: var(--spacing-2);
     z-index: 20;

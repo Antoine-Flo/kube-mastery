@@ -12,7 +12,7 @@ const createMockShellContextStack = (): ShellContextStack => {
   }
 
   return {
-    getCurrentPrompt: vi.fn(() => '☸ ~>'),
+    getCurrentPrompt: vi.fn(() => '~>'),
     updateCurrentPrompt: vi.fn(),
     getCurrentFileSystem: vi.fn(() => mockFileSystem),
     pushContainerContext: vi.fn(),
@@ -133,7 +133,7 @@ describe('TerminalController', () => {
       controller.showPrompt()
 
       expect(shellContextStack.getCurrentPrompt).toHaveBeenCalled()
-      expect(renderer.getOutput()).toContain('☸ ~>')
+      expect(renderer.getOutput()).toContain('~>')
     })
 
     it('should update prompt', () => {

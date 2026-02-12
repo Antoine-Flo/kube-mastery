@@ -37,7 +37,7 @@ export class ShellContextStack {
       id: 'host',
       type: 'host',
       fileSystem: createFileSystem(hostFileSystem),
-      prompt: '☸ ~>'
+      prompt: '~>'
     })
   }
 
@@ -58,7 +58,7 @@ export class ShellContextStack {
       containerName,
       namespace,
       fileSystem: createFileSystem(containerFileSystem),
-      prompt: `☸ [${podName}:${containerName}] />`
+      prompt: `[${podName}:${containerName}] />`
     }
 
     this.contexts.push(context)
@@ -81,20 +81,20 @@ export class ShellContextStack {
 
     if (context.type === 'host') {
       if (currentPath === '/home/kube') {
-        context.prompt = '☸ ~>'
+        context.prompt = '~>'
       } else if (currentPath.startsWith('/home/kube/')) {
         const relativePath = currentPath.substring('/home/kube/'.length)
-        context.prompt = `☸ ~/${relativePath}>`
+        context.prompt = `~/${relativePath}>`
       } else {
-        context.prompt = `☸ ${currentPath}>`
+        context.prompt = `${currentPath}>`
       }
     } else {
       // Container context
       if (currentPath === '/') {
-        context.prompt = `☸ [${context.podName}:${context.containerName}] />`
+        context.prompt = `[${context.podName}:${context.containerName}] />`
       } else {
         const relativePath = currentPath.substring(1) // Remove leading /
-        context.prompt = `☸ [${context.podName}:${context.containerName}] /${relativePath}>`
+        context.prompt = `[${context.podName}:${context.containerName}] /${relativePath}>`
       }
     }
   }

@@ -30,6 +30,7 @@ export class TerminalController {
   private autocompleteEngine?: AutocompleteEngine
   private commandCallback?: CommandCallback
   private inputHandler: InputHandler
+  private inputLocked = false
 
   constructor(options: TerminalControllerOptions) {
     this.state = options.state
@@ -66,7 +67,8 @@ export class TerminalController {
       replaceLineWithCommand: (command) => this.replaceLineWithCommand(command),
       updateLineAndRender: (newLine, textToRender) => this.updateLineAndRender(newLine, textToRender),
       hideCursor: () => this.renderer.write('\x1b[?25l'),
-      showCursor: () => this.renderer.write('\x1b[?25h')
+      showCursor: () => this.renderer.write('\x1b[?25h'),
+      isInputLocked: () => this.inputLocked
     }
   }
 
@@ -109,6 +111,14 @@ export class TerminalController {
 
   focus(): void {
     this.renderer.focus()
+  }
+
+  lockInput(): void {
+    this.inputLocked = true
+  }
+
+  isInputLocked(): boolean {
+    return this.inputLocked
   }
 
   getRenderer(): TerminalRenderer {

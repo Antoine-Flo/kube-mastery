@@ -51,10 +51,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
   const comment = typeof body.comment === 'string' ? body.comment.trim() : undefined
   const content = comment !== undefined && comment !== '' ? { rating, comment } : { rating }
-  const lessonId =
-    name === 'task' && typeof body.taskId === 'string' && body.taskId.trim()
-      ? body.taskId.trim()
-      : null
+  const lessonId = name === 'task' && typeof body.taskId === 'string' && body.taskId.trim() ? body.taskId.trim() : null
 
   const { error: insertError } = await supabase.from('messages').insert({
     type: 'survey',

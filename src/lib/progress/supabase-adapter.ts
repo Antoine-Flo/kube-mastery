@@ -21,10 +21,7 @@ export function createSupabaseProgressRepository(supabase: SupabaseClient): Prog
       return new Set(list)
     },
 
-    async getCompletedItemIds(
-      userId: string,
-      type: CompletionType
-    ): Promise<Set<string>> {
+    async getCompletedItemIds(userId: string, type: CompletionType): Promise<Set<string>> {
       const { data, error } = await supabase
         .from('completions')
         .select('target_id')
@@ -39,11 +36,7 @@ export function createSupabaseProgressRepository(supabase: SupabaseClient): Prog
       return new Set((data ?? []).map((row) => row.target_id))
     },
 
-    async addCompletedItem(
-      userId: string,
-      type: CompletionType,
-      targetId: string
-    ): Promise<void> {
+    async addCompletedItem(userId: string, type: CompletionType, targetId: string): Promise<void> {
       const { error: upsertError } = await supabase.from('completions').upsert(
         {
           user_id: userId,

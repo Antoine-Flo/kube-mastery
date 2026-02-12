@@ -26,82 +26,84 @@ const t = useTranslations(lang)
 ---
 
 <div class="lp-page-wrap">
-<div class="lp-root" data-seed-name={seedName} data-lang={lang} data-terminal-open="true">
-  <div class="lp">
-    {
-      showSidebar && (
-        <aside id="lesson-sidebar" class="lp__sb" aria-label="Plan du cours">
-          <div class="lp__sb-ct">
-            <slot name="sidebar" />
+  <div class="lp-root" data-seed-name={seedName} data-lang={lang} data-terminal-open="true">
+    <div class="lp">
+      {
+        showSidebar && (
+          <aside id="lesson-sidebar" class="lp__sb" aria-label="Plan du cours">
+            <div class="lp__sb-ct">
+              <slot name="sidebar" />
+            </div>
+            <div class="lp__sb-ft">
+              <button
+                id="lesson-sidebar-toggle"
+                type="button"
+                aria-label="Réduire le plan du cours"
+                aria-expanded="true"
+              >
+                <span class="lp__sb-ico lp__sb-ico--exp" aria-hidden="true">
+                  <ArrowRightToLine size={18} />
+                </span>
+                <span class="lp__sb-ico lp__sb-ico--col" aria-hidden="true">
+                  <ArrowLeftToLine size={18} />
+                </span>
+              </button>
+            </div>
+          </aside>
+        )
+      }
+      <div class="lp__bd">
+        <div class="lp__content">
+          <div class="lp__content-body">
+            <ScrollArea>
+              <main class="lp__main">
+                <slot />
+              </main>
+            </ScrollArea>
+            <LessonClusterPanel />
           </div>
-          <div class="lp__sb-ft">
-            <button
-              id="lesson-sidebar-toggle"
-              type="button"
-              aria-label="Réduire le plan du cours"
-              aria-expanded="true"
-            >
-              <span class="lp__sb-ico lp__sb-ico--exp" aria-hidden="true">
-                <ArrowRightToLine size={18} />
-              </span>
-              <span class="lp__sb-ico lp__sb-ico--col" aria-hidden="true">
-                <ArrowLeftToLine size={18} />
-              </span>
-            </button>
+          <div class="lp__show-term" data-lesson-show-term aria-hidden="true">
+            <LessonContentBar
+              labelVisualizer={labels.labelVisualizer}
+              labelCourse={labels.labelCourse}
+              labelShowTerminal={labels.labelShowTerminal}
+              labelHideTerminal={labels.labelHideTerminal}
+              labelContactSupport={labels.labelContactSupport}
+              terminalAction="show"
+            />
           </div>
-        </aside>
-      )
-    }
-    <div class="lp__bd">
-      <div class="lp__content">
-        <div class="lp__content-body">
-          <ScrollArea>
-            <main class="lp__main">
-              <slot />
-            </main>
-          </ScrollArea>
-          <LessonClusterPanel />
         </div>
-        <div class="lp__show-term" data-lesson-show-term aria-hidden="true">
+        <div class="lp__term-wrap" data-lesson-term-wrap>
+          <div class="lp__term">
+            <LessonTerminal seedName={seedName} lang={lang} />
+          </div>
           <LessonContentBar
             labelVisualizer={labels.labelVisualizer}
             labelCourse={labels.labelCourse}
             labelShowTerminal={labels.labelShowTerminal}
             labelHideTerminal={labels.labelHideTerminal}
             labelContactSupport={labels.labelContactSupport}
-            terminalAction="show"
+            terminalAction="hide"
           />
         </div>
       </div>
-      <div class="lp__term-wrap" data-lesson-term-wrap>
-        <div class="lp__term">
-          <LessonTerminal seedName={seedName} lang={lang} />
-        </div>
-        <LessonContentBar
-          labelVisualizer={labels.labelVisualizer}
-          labelCourse={labels.labelCourse}
-          labelShowTerminal={labels.labelShowTerminal}
-          labelHideTerminal={labels.labelHideTerminal}
-          labelContactSupport={labels.labelContactSupport}
-          terminalAction="hide"
-        />
-      </div>
     </div>
   </div>
-</div>
-{supportContextId && (
-  <ContactSupportModal
-    title={t('lesson_contactSupport')}
-    placeholder={t('courseLesson_suggestPlaceholder')}
-    submitLabel={t('courseLesson_suggestSubmit')}
-    cancelLabel={t('courseLesson_suggestCancel')}
-    successToastTitle={t('toast_sendSuccess')}
-    typeSupport={t('lesson_contactTypeSupport')}
-    typeSuggestion={t('lesson_contactTypeSuggestion')}
-    typeOther={t('lesson_contactTypeOther')}
-    lessonId={supportContextId}
-  />
-)}
+  {
+    supportContextId && (
+      <ContactSupportModal
+        title={t('lesson_contactSupport')}
+        placeholder={t('courseLesson_suggestPlaceholder')}
+        submitLabel={t('courseLesson_suggestSubmit')}
+        cancelLabel={t('courseLesson_suggestCancel')}
+        successToastTitle={t('toast_sendSuccess')}
+        typeSupport={t('lesson_contactTypeSupport')}
+        typeSuggestion={t('lesson_contactTypeSuggestion')}
+        typeOther={t('lesson_contactTypeOther')}
+        lessonId={supportContextId}
+      />
+    )
+  }
 </div>
 
 <script>

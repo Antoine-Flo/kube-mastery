@@ -1,6 +1,5 @@
 Ce doc est pour moi, ne le modifie pas
 
-
 - plausible
 - https://yukaichou.com/gamification-examples/octalysis-gamification-framework/
 - hasEnvironment ?
@@ -11,7 +10,6 @@ Ce doc est pour moi, ne le modifie pas
 - Mettre pourquoi notre simulation respecte Kuberntes (utilisation de l'openAPI officiel pour les tests)
 - mettre en place tests avec golden files
 - tracesSampleRate
-
 
 - Faire les cours
 - Envrionnement de tests / staging fly.io

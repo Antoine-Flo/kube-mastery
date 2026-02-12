@@ -30,14 +30,7 @@ const userEmail = user?.email ?? ''
   <div class="navbar-inner">
     <a href={isLoggedIn ? localePath('/courses') : localePath('/')} class="logo">
       <Logo size={27} class="logo-icon" />
-      {
-        !isLoggedIn && (
-          <span class="logo-name">
-            {t('nav_appName')}
-            <span class="logo-beta">beta</span>
-          </span>
-        )
-      }
+      {!isLoggedIn && <span class="logo-name">{t('nav_appName')}</span>}
     </a>
 
     <div class="right">
@@ -129,20 +122,6 @@ const userEmail = user?.email ?? ''
     position: relative;
   }
 
-  .logo-beta {
-    position: absolute;
-    bottom: -2px;
-    right: -35px;
-    font-size: 0.5rem;
-    font-weight: var(--font-weight-semibold);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: var(--color-amber-9);
-    background: var(--color-amber-4);
-    padding: 0.1rem 0.35rem;
-    border-radius: 3px;
-    line-height: 1.2;
-  }
   nav {
     display: flex;
     align-items: center;

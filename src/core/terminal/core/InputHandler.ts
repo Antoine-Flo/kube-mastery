@@ -19,6 +19,9 @@ export class InputHandler {
    * Traite un input et exécute l'action appropriée
    */
   handleInput(data: string): void {
+    if (this.context.isInputLocked?.()) {
+      return
+    }
     const charCode = data.charCodeAt(0)
 
     // Handle arrow keys
@@ -152,10 +155,11 @@ export class InputHandler {
     }
 
     state.resetAfterCommand()
-    this.context.showPrompt()
-
-    // Réafficher le curseur après le prompt
-    this.context.showCursor()
+    if (!this.context.isInputLocked?.()) {
+      this.context.showPrompt()
+      // Réafficher le curseur après le prompt
+      this.context.showCursor()
+    }
   }
 
   private handleBackspace(): void {
