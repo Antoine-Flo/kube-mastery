@@ -8,6 +8,9 @@ import { DEMO_TASK_GROUP_ID, DEMO_TASK_ID } from '../../content/tasks/constants'
 import { getSupabaseServer } from '../../lib/supabase'
 import landingPlaceholder from '../../assets/landing-placeholder.svg'
 import guaranteeBadge from '../../assets/guarantee-badge.svg'
+import astronautTrainingGif from '../../assets/astronaut-training.gif'
+import networkImg from '../../assets/network.jpg'
+import videoDemo from '../../assets/video-demo.mp4'
 import '../../styles/components/guarantee.css'
 
 const locale = Astro.params.lang as 'en' | 'fr'
@@ -118,7 +121,7 @@ try {
               </div>
               <div class="media">
                 <img
-                  src="/src/assets/astronaut-training.gif"
+                  src={astronautTrainingGif.src}
                   alt={t('home_concerns_section1_image_alt')}
                   loading="lazy"
                 />
@@ -146,7 +149,7 @@ try {
               </div>
               <div class="media">
                 <img
-                  src="/src/assets/network.jpg"
+                  src={networkImg.src}
                   alt={t('home_concerns_section1_image_alt')}
                   loading="lazy"
                 />
@@ -226,7 +229,7 @@ try {
               </div>
               <div class="media">
                 <video
-                  src="/src/assets/video-demo.mp4"
+                  src={videoDemo}
                   autoplay
                   muted
                   loop
