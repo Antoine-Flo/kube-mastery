@@ -7,6 +7,7 @@ import { useTranslations, useLocalePath } from '../../i18n/utils'
 import { getSupabaseServer } from '../../lib/supabase'
 import landingPlaceholder from '../../assets/landing-placeholder.svg'
 import guaranteeBadge from '../../assets/guarantee-badge.svg'
+import '../../styles/components/guarantee.css'
 
 const locale = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(locale)
@@ -39,12 +40,12 @@ try {
           </p>
           <div class="cta">
             <Button
-              href={localePath('/courses')}
+              href={localePath('/pricing')}
               variant="solid"
               color="cyan"
               size="xl"
             >
-              {t('home_viewCourses')}
+              {t('home_cta_join')}
             </Button>
           </div>
         </div>
@@ -166,12 +167,12 @@ try {
             </ul>
             <div class="cta">
               <Button
-                href={localePath('/courses')}
+                href={localePath('/pricing')}
                 variant="solid"
                 color="cyan"
                 size="xl"
               >
-                {t('home_viewCourses')}
+                {t('home_cta_join')}
               </Button>
             </div>
           </div>
@@ -269,10 +270,10 @@ try {
       </div>
       <div class="cta">
         <Button
-          href={localePath('/courses')}
+          href={localePath('/pricing')}
           variant="solid"
           color="cyan"
-          size="xl">{t('home_viewCourses')}</Button
+          size="xl">{t('home_cta_join')}</Button
         >
       </div>
     </div>
@@ -625,100 +626,6 @@ try {
   }
   .concerns .section-body {
     margin-top: 2.5rem;
-  }
-  .guarantee {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    padding: 8rem 0;
-    border-top: 1px solid var(--color-gray-6);
-    border-bottom: 1px solid var(--color-gray-6);
-  }
-  .guarantee .content {
-    max-width: var(--content-max-width);
-    margin: 0 auto;
-    padding: 0 1rem;
-    display: flex;
-    flex-direction: column;
-  }
-  @media (min-width: 768px) {
-    .guarantee .content {
-      padding: 0 2rem;
-    }
-  }
-  .guarantee-row {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2.5rem;
-  }
-  @media (min-width: 1024px) {
-    .guarantee-row {
-      flex-direction: row;
-      align-items: center;
-      gap: 4rem;
-    }
-  }
-  .guarantee-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-  }
-  .guarantee-badge img {
-    width: min(240px, 70vw);
-    height: auto;
-    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.25));
-  }
-  .guarantee-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    text-align: center;
-  }
-  @media (min-width: 1024px) {
-    .guarantee-text {
-      text-align: left;
-      align-items: flex-start;
-    }
-  }
-  .guarantee h2 {
-    font-size: 1.5rem;
-    font-weight: var(--font-weight-bold);
-    color: var(--color-gray-12);
-  }
-  @media (min-width: 768px) {
-    .guarantee h2 {
-      font-size: 1.875rem;
-    }
-  }
-  .guarantee p {
-    font-size: var(--text-base);
-    color: var(--color-gray-11);
-    line-height: 1.6;
-    max-width: 800px;
-    margin: 0;
-  }
-  @media (min-width: 768px) {
-    .guarantee p {
-      font-size: var(--text-lg);
-    }
-  }
-  .guarantee-bullets {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    font-size: var(--text-base);
-    color: var(--color-gray-11);
-    text-align: left;
-  }
-  @media (min-width: 768px) {
-    .guarantee-bullets {
-      font-size: var(--text-lg);
-    }
   }
 
   .concern-rows {

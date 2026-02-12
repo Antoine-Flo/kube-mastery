@@ -2,13 +2,25 @@
 import Layout from '../../layouts/Layout.astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import Button from '../../components/ui/Button.astro'
+import guaranteeBadge from '../../assets/guarantee-badge.svg'
+import { SUBSCRIPTION_PLANS } from '../../lib/subscription-plans'
 import '../../styles/components/card.css'
 import '../../styles/components/accordion.css'
+import '../../styles/components/guarantee.css'
 import '../../styles/routes/pricing.css'
 
 const lang = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
+
+const proPlan = SUBSCRIPTION_PLANS.individual
+const pricing = proPlan.pricing
+const priceMonth = pricing?.priceMonth ?? 12
+const priceYearTotal = pricing?.priceYearTotal ?? 120
+const priceYearPerMonth = pricing?.priceYearPerMonth ?? 10
+const struckMonth = pricing?.struckMonth ?? 24
+const struckYearPerMonth = pricing?.struckYearPerMonth ?? 20
+const detailYearlyText = `${t('pricing_earlyaccess_paid_yearly_label')} ${priceYearTotal}€ - ${t('pricing_earlyaccess_detail_yearly')}`
 
 const faqItems = [
   { id: 'q1', q: t('pricing_faq_q1'), a: t('pricing_faq_a1') },
@@ -23,47 +35,100 @@ const faqItems = [
     <h1 class="pricing__title">{t('pricing_title')}</h1>
     <p class="pricing__subtitle">{t('pricing_subtitle')}</p>
 
-    <div class="pricing__plans">
-      <!-- Free plan -->
-      <article
-        class="card card--outline pricing__plan-card pricing__plan-card--highlighted"
+    <div class="pricing__toggle" role="group" aria-label="Billing period">
+      <span
+        class="pricing__toggle-option"
+        id="pricing-option-monthly"
+        aria-pressed="false"
       >
+        {t('pricing_toggle_monthly')}
+      </span>
+      <button
+        type="button"
+        class="pricing__toggle-switch"
+        id="pricing-billing-toggle"
+        aria-pressed="true"
+        aria-label="Toggle yearly billing"
+        title={t('pricing_toggle_yearly')}
+      >
+      </button>
+      <span
+        class="pricing__toggle-option"
+        id="pricing-option-yearly"
+        aria-pressed="true"
+      >
+        {t('pricing_toggle_yearly')}
+      </span>
+    </div>
+
+    <div class="pricing__plans">
+      <!-- KubeMastery Pro plan -->
+      <article
+        class="card card--outline pricing__plan-card pricing__plan-card--highlighted pricing__plan-card--with-banner"
+        data-billing="monthly"
+      >
+        <div class="pricing__promo-banner" role="status" aria-live="polite">
+          <span class="pricing__promo-banner-text">
+            {t('pricing_earlyaccess_badge')}
+          </span>
+        </div>
         <div class="card__header">
-          <div class="pricing__badge">
-            <span class="pricing__badge-text pricing__badge-text--green"
-              >{t('pricing_betaNote')}</span
-            >
-          </div>
           <h2 class="card__title pricing__plan-title">
-            {t('pricing_free_name')}
+            {t('pricing_earlyaccess_name')}
           </h2>
           <div class="pricing__plan-price">
-            <span class="pricing__plan-price-amount"
-              >{t('pricing_free_price')}€</span
+            <div
+              class="pricing__plan-price-banner"
+              data-month-price={String(priceMonth)}
+              data-year-price={String(priceYearPerMonth)}
+              data-struck-month={String(struckMonth)}
+              data-struck-year={String(struckYearPerMonth)}
+              data-detail-yearly={detailYearlyText}
             >
+              <div class="pricing__plan-price-current">
+                <span class="pricing__plan-price-struck" id="pricing-struck">
+                  {struckYearPerMonth}€
+                </span>
+                <span class="pricing__plan-price-amount" id="pricing-current">
+                  {priceYearPerMonth}€
+                </span>
+                <span class="pricing__plan-price-period">
+                  {t('pricing_per_month')}
+                </span>
+              </div>
+              <div class="pricing__plan-price-detail-wrap">
+                <span
+                  class="pricing__plan-price-detail pricing__plan-price-detail--top"
+                  id="pricing-detail-top"
+                >
+                  {detailYearlyText}
+                </span>
+                <span
+                  class="pricing__plan-price-detail pricing__plan-price-detail--discreet"
+                >
+                  {t('pricing_earlyaccess_detail_monthly')}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
         <div class="card__body">
           <ul class="pricing__plan-features">
             <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>{
-                t('pricing_free_feature1')
-              }
+              <span class="pricing__plan-feature-check">✓</span>
+              {t('pricing_earlyaccess_feature1')}
             </li>
             <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>{
-                t('pricing_free_feature2')
-              }
+              <span class="pricing__plan-feature-check">✓</span>
+              {t('pricing_earlyaccess_feature2')}
             </li>
             <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>{
-                t('pricing_free_feature3')
-              }
+              <span class="pricing__plan-feature-check">✓</span>
+              {t('pricing_earlyaccess_feature3')}
             </li>
             <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>{
-                t('pricing_free_feature4')
-              }
+              <span class="pricing__plan-feature-check">✓</span>
+              {t('pricing_earlyaccess_feature4')}
             </li>
           </ul>
         </div>
@@ -75,49 +140,36 @@ const faqItems = [
             color="cyan"
             class="pricing__plan-button"
           >
-            {t('pricing_free_cta')}
+            {t('pricing_earlyaccess_cta')}
           </Button>
         </div>
       </article>
 
-      <!-- Full Access (one-time, coming soon) -->
+      <!-- Business (coming soon) -->
       <article
         class="card card--outline pricing__plan-card pricing__plan-card--coming-soon"
       >
         <div class="card__header">
           <div class="pricing__badge">
-            <span class="pricing__badge-text pricing__badge-text--cyan"
-              >{t('pricing_fullaccess_comingSoon')}</span
-            >
+            <span class="pricing__badge-text pricing__badge-text--cyan">
+              {t('pricing_business_comingSoon')}
+            </span>
           </div>
           <h2 class="card__title pricing__plan-title">
-            {t('pricing_fullaccess_name')}
+            {t('pricing_business_name')}
           </h2>
-          <p class="pricing__plan-subline">
-            {t('pricing_fullaccess_subline')}
-          </p>
-          <div class="pricing__plan-price">
-            <span class="pricing__plan-price-amount"
-              >{t('pricing_fullaccess_price')}</span
-            >
-          </div>
+          <div class="pricing__plan-header-spacer" aria-hidden="true"></div>
         </div>
         <div class="card__body">
           <ul class="pricing__plan-features">
             <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>{
-                t('pricing_fullaccess_feature1')
-              }
-            </li>
-            <!-- <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>{t('pricing_fullaccess_feature2')}
+              <span class="pricing__plan-feature-check">✓</span>
+              {t('pricing_business_feature1')}
             </li>
             <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>{t('pricing_fullaccess_feature3')}
+              <span class="pricing__plan-feature-check">✓</span>
+              {t('pricing_business_feature2')}
             </li>
-            <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>{t('pricing_fullaccess_feature4')}
-            </li> -->
           </ul>
         </div>
         <div class="card__footer pricing__plan-footer">
@@ -127,10 +179,32 @@ const faqItems = [
             disabled
             class="pricing__plan-button"
           >
-            {t('pricing_fullaccess_cta')}
+            {t('pricing_business_comingSoon')}
           </Button>
         </div>
       </article>
+    </div>
+
+    <div class="guarantee">
+      <div class="content">
+        <div class="guarantee-row">
+          <div class="guarantee-badge">
+            <img
+              src={guaranteeBadge.src}
+              alt={t('home_guarantee_image_alt')}
+              loading="lazy"
+            />
+          </div>
+          <div class="guarantee-text">
+            <h2>{t('home_guarantee_title')}</h2>
+            <p>{t('home_guarantee_subtitle')}</p>
+            <ul class="guarantee-bullets">
+              <li>{t('home_guarantee_point1')}</li>
+              <li>{t('home_guarantee_point2')}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
 
     <section class="pricing__features-section">
@@ -194,3 +268,64 @@ const faqItems = [
     </section>
   </div>
 </Layout>
+
+<script>
+  const toggle = document.getElementById('pricing-billing-toggle')
+  const optionMonthly = document.getElementById('pricing-option-monthly')
+  const optionYearly = document.getElementById('pricing-option-yearly')
+  const currentEl = document.getElementById('pricing-current')
+  const struckEl = document.getElementById('pricing-struck')
+  const detailTopEl = document.getElementById('pricing-detail-top')
+  const banner = document.querySelector('.pricing__plan-price-banner')
+
+  if (
+    toggle &&
+    optionMonthly &&
+    optionYearly &&
+    currentEl &&
+    struckEl &&
+    detailTopEl &&
+    banner
+  ) {
+    const monthPrice = banner.getAttribute('data-month-price') ?? '12'
+    const yearPrice = banner.getAttribute('data-year-price') ?? '10'
+    const struckMonth = banner.getAttribute('data-struck-month') ?? '24'
+    const struckYear = banner.getAttribute('data-struck-year') ?? '20'
+    const detailYearly = banner.getAttribute('data-detail-yearly') ?? ''
+
+    /** @param {boolean} yearly */
+    // @ts-expect-error - inline script, yearly is boolean at runtime
+    function setBilling(yearly) {
+      const isYearly = Boolean(yearly)
+      toggle?.setAttribute('aria-pressed', String(isYearly))
+      optionMonthly?.setAttribute('aria-pressed', String(!isYearly))
+      optionYearly?.setAttribute('aria-pressed', String(isYearly))
+
+      if (currentEl) {
+        currentEl.textContent = isYearly ? `${yearPrice}€` : `${monthPrice}€`
+      }
+      if (struckEl) {
+        struckEl.textContent = isYearly ? `${struckYear}€` : `${struckMonth}€`
+      }
+      if (detailTopEl) {
+        detailTopEl.textContent = isYearly ? detailYearly : '\u00A0'
+        detailTopEl.classList.toggle('pricing__plan-price-detail--highlight', isYearly)
+      }
+    }
+
+    toggle.addEventListener('click', () => {
+      const isYearly = toggle.getAttribute('aria-pressed') === 'true'
+      setBilling(!isYearly)
+    })
+
+    optionMonthly.addEventListener('click', () => {
+      setBilling(false)
+    })
+
+    optionYearly.addEventListener('click', () => {
+      setBilling(true)
+    })
+
+    setBilling(true)
+  }
+</script>
