@@ -13,14 +13,25 @@ const lang = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
+const standardPlan = SUBSCRIPTION_PLANS.standard
+const standardPricing = standardPlan.pricing!
+const standardPriceMonth = standardPricing.priceMonth
+const standardPriceYearTotal = standardPricing.priceYearTotal
+const standardPriceYearPerMonth = standardPricing.priceYearPerMonth
+const standardStruckMonth = standardPricing.struckMonth
+const standardStruckYearPerMonth = standardPricing.struckYearPerMonth
+const standardYearlyMonthsFree = standardPricing.yearlyMonthsFree
+const standardDetailYearlyText = `${t('pricing_earlyaccess_paid_yearly_label')} ${standardPriceYearTotal}€ - ${t('pricing_earlyaccess_detail_yearly', { count: standardYearlyMonthsFree })}`
+
 const proPlan = SUBSCRIPTION_PLANS.individual
-const pricing = proPlan.pricing
-const priceMonth = pricing?.priceMonth ?? 12
-const priceYearTotal = pricing?.priceYearTotal ?? 120
-const priceYearPerMonth = pricing?.priceYearPerMonth ?? 10
-const struckMonth = pricing?.struckMonth ?? 24
-const struckYearPerMonth = pricing?.struckYearPerMonth ?? 20
-const detailYearlyText = `${t('pricing_earlyaccess_paid_yearly_label')} ${priceYearTotal}€ - ${t('pricing_earlyaccess_detail_yearly')}`
+const pricing = proPlan.pricing!
+const priceMonth = pricing.priceMonth
+const priceYearTotal = pricing.priceYearTotal
+const priceYearPerMonth = pricing.priceYearPerMonth
+const struckMonth = pricing.struckMonth
+const struckYearPerMonth = pricing.struckYearPerMonth
+const yearlyMonthsFree = pricing.yearlyMonthsFree
+const detailYearlyText = `${t('pricing_earlyaccess_paid_yearly_label')} ${priceYearTotal}€ - ${t('pricing_earlyaccess_detail_yearly', { count: yearlyMonthsFree })}`
 
 const faqItems = [
   { id: 'q1', q: t('pricing_faq_q1'), a: t('pricing_faq_a1') },
@@ -61,17 +72,92 @@ const faqItems = [
       </span>
     </div>
 
+    <div class="pricing__promo-wrap" role="status" aria-live="polite">
+      <span class="pricing__promo-banner-text">
+        {t('pricing_earlyaccess_badge')}
+      </span>
+    </div>
+
     <div class="pricing__plans">
-      <!-- KubeMastery Pro plan -->
+      <!-- Standard plan -->
       <article
-        class="card card--outline pricing__plan-card pricing__plan-card--highlighted pricing__plan-card--with-banner"
+        class="card card--outline pricing__plan-card"
         data-billing="monthly"
       >
-        <div class="pricing__promo-banner" role="status" aria-live="polite">
-          <span class="pricing__promo-banner-text">
-            {t('pricing_earlyaccess_badge')}
-          </span>
+        <div class="card__header">
+          <h2 class="card__title pricing__plan-title">
+            {t('pricing_standard_name')}
+          </h2>
+          <div class="pricing__plan-price">
+            <div
+              class="pricing__plan-price-banner"
+              data-month-price={String(standardPriceMonth)}
+              data-year-price={String(standardPriceYearPerMonth)}
+              data-struck-month={String(standardStruckMonth)}
+              data-struck-year={String(standardStruckYearPerMonth)}
+              data-detail-yearly={standardDetailYearlyText}
+            >
+              <div class="pricing__plan-price-current">
+                <span class="pricing__plan-price-struck">
+                  {standardStruckYearPerMonth}€
+                </span>
+                <span class="pricing__plan-price-amount">
+                  {standardPriceYearPerMonth}€
+                </span>
+                <span class="pricing__plan-price-period">
+                  {t('pricing_per_month')}
+                </span>
+              </div>
+              <div class="pricing__plan-price-detail-wrap">
+                <span class="pricing__plan-price-detail pricing__plan-price-detail--top">
+                  {standardDetailYearlyText}
+                </span>
+                <span
+                  class="pricing__plan-price-detail pricing__plan-price-detail--discreet"
+                >
+                  {t('pricing_earlyaccess_detail_monthly')}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
+        <div class="card__body">
+          <ul class="pricing__plan-features">
+            <li class="pricing__plan-feature">
+              <span class="pricing__plan-feature-check">✓</span>
+              {t('pricing_standard_feature1')}
+            </li>
+            <li class="pricing__plan-feature">
+              <span class="pricing__plan-feature-check">✓</span>
+              {t('pricing_standard_feature2')}
+            </li>
+            <li class="pricing__plan-feature pricing__plan-feature--excluded">
+              <span class="pricing__plan-feature-x" aria-hidden="true">—</span>
+              {t('pricing_standard_feature3')}
+            </li>
+            <li class="pricing__plan-feature pricing__plan-feature--excluded">
+              <span class="pricing__plan-feature-x" aria-hidden="true">—</span>
+              {t('pricing_standard_feature4')}
+            </li>
+          </ul>
+        </div>
+        <div class="card__footer pricing__plan-footer">
+          <Button
+            href={localePath('/courses')}
+            variant="outline"
+            size="lg"
+            class="pricing__plan-button"
+          >
+            {t('pricing_standard_cta')}
+          </Button>
+        </div>
+      </article>
+
+      <!-- KubeMastery Pro plan -->
+      <article
+        class="card card--outline pricing__plan-card pricing__plan-card--highlighted"
+        data-billing="monthly"
+      >
         <div class="card__header">
           <h2 class="card__title pricing__plan-title">
             {t('pricing_earlyaccess_name')}
@@ -86,10 +172,10 @@ const faqItems = [
               data-detail-yearly={detailYearlyText}
             >
               <div class="pricing__plan-price-current">
-                <span class="pricing__plan-price-struck" id="pricing-struck">
+                <span class="pricing__plan-price-struck">
                   {struckYearPerMonth}€
                 </span>
-                <span class="pricing__plan-price-amount" id="pricing-current">
+                <span class="pricing__plan-price-amount">
                   {priceYearPerMonth}€
                 </span>
                 <span class="pricing__plan-price-period">
@@ -97,10 +183,7 @@ const faqItems = [
                 </span>
               </div>
               <div class="pricing__plan-price-detail-wrap">
-                <span
-                  class="pricing__plan-price-detail pricing__plan-price-detail--top"
-                  id="pricing-detail-top"
-                >
+                <span class="pricing__plan-price-detail pricing__plan-price-detail--top">
                   {detailYearlyText}
                 </span>
                 <span
@@ -273,26 +356,9 @@ const faqItems = [
   const toggle = document.getElementById('pricing-billing-toggle')
   const optionMonthly = document.getElementById('pricing-option-monthly')
   const optionYearly = document.getElementById('pricing-option-yearly')
-  const currentEl = document.getElementById('pricing-current')
-  const struckEl = document.getElementById('pricing-struck')
-  const detailTopEl = document.getElementById('pricing-detail-top')
-  const banner = document.querySelector('.pricing__plan-price-banner')
+  const banners = document.querySelectorAll('.pricing__plan-price-banner')
 
-  if (
-    toggle &&
-    optionMonthly &&
-    optionYearly &&
-    currentEl &&
-    struckEl &&
-    detailTopEl &&
-    banner
-  ) {
-    const monthPrice = banner.getAttribute('data-month-price') ?? '12'
-    const yearPrice = banner.getAttribute('data-year-price') ?? '10'
-    const struckMonth = banner.getAttribute('data-struck-month') ?? '24'
-    const struckYear = banner.getAttribute('data-struck-year') ?? '20'
-    const detailYearly = banner.getAttribute('data-detail-yearly') ?? ''
-
+  if (toggle && optionMonthly && optionYearly && banners.length > 0) {
     /** @param {boolean} yearly */
     // @ts-expect-error - inline script, yearly is boolean at runtime
     function setBilling(yearly) {
@@ -301,16 +367,31 @@ const faqItems = [
       optionMonthly?.setAttribute('aria-pressed', String(!isYearly))
       optionYearly?.setAttribute('aria-pressed', String(isYearly))
 
-      if (currentEl) {
-        currentEl.textContent = isYearly ? `${yearPrice}€` : `${monthPrice}€`
-      }
-      if (struckEl) {
-        struckEl.textContent = isYearly ? `${struckYear}€` : `${struckMonth}€`
-      }
-      if (detailTopEl) {
-        detailTopEl.textContent = isYearly ? detailYearly : '\u00A0'
-        detailTopEl.classList.toggle('pricing__plan-price-detail--highlight', isYearly)
-      }
+      banners.forEach((banner) => {
+        const monthPrice = banner.getAttribute('data-month-price') ?? '12'
+        const yearPrice = banner.getAttribute('data-year-price') ?? '10'
+        const struckMonth = banner.getAttribute('data-struck-month') ?? '24'
+        const struckYear = banner.getAttribute('data-struck-year') ?? '20'
+        const detailYearly = banner.getAttribute('data-detail-yearly') ?? ''
+
+        const currentEl = banner.querySelector('.pricing__plan-price-amount')
+        const struckEl = banner.querySelector('.pricing__plan-price-struck')
+        const detailTopEl = banner.querySelector('.pricing__plan-price-detail--top')
+
+        if (currentEl) {
+          currentEl.textContent = isYearly ? `${yearPrice}€` : `${monthPrice}€`
+        }
+        if (struckEl) {
+          struckEl.textContent = isYearly ? `${struckYear}€` : `${struckMonth}€`
+        }
+        if (detailTopEl) {
+          detailTopEl.textContent = isYearly ? detailYearly : '\u00A0'
+          detailTopEl.classList.toggle(
+            'pricing__plan-price-detail--highlight',
+            isYearly
+          )
+        }
+      })
     }
 
     toggle.addEventListener('click', () => {

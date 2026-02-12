@@ -27,9 +27,18 @@ export function getPathWithoutLocale(url: URL): string {
 }
 
 export function useTranslations(lang: UiLang) {
-  return function t(key: keyof (typeof ui)[typeof defaultLang]) {
+  return function t(
+    key: keyof (typeof ui)[typeof defaultLang],
+    params?: Record<string, string | number>
+  ) {
     const dict = lang && lang in ui ? ui[lang] : ui[defaultLang]
-    return dict[key as string] ?? ui[defaultLang][key as string] ?? key
+    let str = dict[key as string] ?? ui[defaultLang][key as string] ?? key
+    if (params && typeof str === 'string') {
+      str = str.replace(/\{(\w+)\}/g, (_, k) =>
+        params[k] != null ? String(params[k]) : `{${k}}`
+      )
+    }
+    return str
   }
 }
 

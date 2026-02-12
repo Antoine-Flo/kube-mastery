@@ -1,6 +1,6 @@
 /* Pricing Page */
 .pricing {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 4rem 2rem;
 }
@@ -82,42 +82,28 @@
   transform: translateX(1.5rem);
 }
 
-/* Pricing promo banner (on top of Pro card) */
-.pricing__plan-card--with-banner {
-  overflow: hidden;
-  padding-top: 0;
-}
-
-.pricing__plan-card--with-banner .card__header {
-  padding-top: var(--spacing-4);
-}
-
-.pricing__promo-banner {
+/* Pricing promo banner (full width above cards) */
+.pricing__promo-wrap {
   width: 100%;
-  margin: 0;
+  margin-bottom: 2rem;
   padding: var(--spacing-3) var(--spacing-4);
   background: linear-gradient(
     135deg,
     var(--color-cyan-4) 0%,
     var(--color-green-4) 100%
   );
-  border-bottom: 2px solid var(--color-cyan-8);
+  border-radius: var(--radius-l3);
+  border: 2px solid var(--color-cyan-8);
   text-align: center;
 }
 
-.pricing__promo-banner-text {
+.pricing__promo-wrap .pricing__promo-banner-text {
   display: block;
   font-size: var(--text-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-gray-12);
   letter-spacing: 0.02em;
   line-height: 1.3;
-}
-
-@media (min-width: 768px) {
-  .pricing__promo-banner-text {
-    font-size: var(--text-md);
-  }
 }
 
 /* Pricing Plan Price Banner (with strikethrough) */
@@ -198,19 +184,32 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
-  max-width: 800px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
 @media (min-width: 768px) {
   .pricing__plans {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .pricing__plans {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 100%;
   }
 }
 
 /* Pricing Plan Card */
 .pricing__plan-card {
   position: relative;
+  height: 100%;
+}
+
+.pricing__plans .card__body {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .pricing__plan-card--highlighted {
@@ -267,9 +266,9 @@
   margin-top: var(--spacing-2);
 }
 
-/* Spacer in Business card header so feature list aligns with Pro card */
+/* Spacer in Business card header so body aligns with Standard/Pro cards */
 .pricing__plan-header-spacer {
-  min-height: 7rem;
+  min-height: 6rem;
   margin-top: var(--spacing-2);
 }
 
@@ -290,6 +289,15 @@
 .pricing__plan-feature-check {
   color: var(--color-green-9);
   font-weight: var(--font-weight-bold);
+}
+
+.pricing__plan-feature--excluded {
+  color: var(--color-gray-8);
+}
+
+.pricing__plan-feature-x {
+  color: var(--color-gray-7);
+  font-weight: var(--font-weight-medium);
 }
 
 /* Pricing Plan Footer */

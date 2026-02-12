@@ -7,6 +7,7 @@
 
 export const SUBSCRIPTION_PLAN_TIERS = [
   'free',
+  'standard',
   'individual',
   'enterprise'
 ] as const
@@ -30,10 +31,16 @@ export interface PlanPricingComputed {
   priceYearTotal: number
   /** Price per month when paying yearly (priceYearTotal / 12). */
   priceYearPerMonth: number
-  /** Strikethrough: full price per month. */
+  /** Strikethrough: full price per month (monthly view). */
   struckMonth: number
-  /** Strikethrough when yearly: monthly equivalent before yearly discount. */
+  /** Strikethrough when yearly: monthly equivalent at full price with months free (shows -50% in yearly too). */
   struckYearPerMonth: number
+}
+
+const STANDARD_PRICING: PlanPricingInput = {
+  basePriceMonth: 15,
+  promoPercent: 50,
+  yearlyMonthsFree: 2
 }
 
 const INDIVIDUAL_PRICING: PlanPricingInput = {
@@ -49,12 +56,15 @@ export function computePlanPricing(input: PlanPricingInput): PlanPricingComputed
   const monthsPaid = 12 - input.yearlyMonthsFree
   const priceYearTotal = priceMonth * monthsPaid
   const priceYearPerMonth = Math.round(priceYearTotal / 12)
+  const struckYearPerMonth = Math.round(
+    (input.basePriceMonth * monthsPaid) / 12
+  )
   return {
     priceMonth,
     priceYearTotal,
     priceYearPerMonth,
     struckMonth: input.basePriceMonth,
-    struckYearPerMonth: priceMonth
+    struckYearPerMonth
   }
 }
 
@@ -72,6 +82,15 @@ const PLANS: Record<SubscriptionPlanTier, SubscriptionPlan> = {
     tier: 'free',
     nameKey: 'pricing_free_name',
     isActive: true
+  },
+  standard: {
+    tier: 'standard',
+    nameKey: 'pricing_standard_name',
+    isActive: true,
+    pricing: {
+      ...STANDARD_PRICING,
+      ...computePlanPricing(STANDARD_PRICING)
+    }
   },
   individual: {
     tier: 'individual',

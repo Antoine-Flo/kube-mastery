@@ -1,5 +1,7 @@
 Ce doc est pour moi, ne le modifie pas
 
+
+- yaml template library
 - plausible
 - https://yukaichou.com/gamification-examples/octalysis-gamification-framework/
 - hasEnvironment ?
