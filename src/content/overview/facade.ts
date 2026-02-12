@@ -122,7 +122,7 @@ export function getModuleOverview(
   }
 }
 
-export function getLessonLocation(
+function getLessonLocation(
   type: OverviewType,
   id: string,
   lessonId: string
@@ -167,20 +167,6 @@ export function getLessonLocation(
     }
   }
   return null
-}
-
-export function getLessonMarkdown(
-  type: OverviewType,
-  id: string,
-  lessonId: string,
-  lang: UiLang
-): string | null {
-  const loc = getLessonLocation(type, id, lessonId)
-  if (!loc) {
-    return null
-  }
-
-  return getAdapter().getLessonMarkdown(loc, lang)
 }
 
 export function getLessonContent(

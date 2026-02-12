@@ -1,10 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // SEED LOADER
 // ═══════════════════════════════════════════════════════════════════════════
-// Load K8s resources from scenarios and create ClusterState
-// This file is only used server-side (in API routes)
+// Load K8s resources from YAML (directory or content) and create ClusterState.
+// Single source of truth: seeds in src/courses/seeds/<seedName>/*.yaml
 
-import type { ClusterState, ClusterStateData } from '../ClusterState'
+import type { ClusterState } from '../ClusterState'
 import { createClusterState } from '../ClusterState'
 import type { EventBus } from '../events/EventBus'
 import { createEventBus } from '../events/EventBus'
@@ -19,10 +19,9 @@ import { applyResourceWithEvents } from '../../kubectl/commands/handlers/resourc
 import { parseKubernetesYaml } from '../../kubectl/yamlParser'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import {
-  loadK8sComponentsForScenario,
-  type Scenario
-} from '../../../../seeds/ScenarioLoader'
+import { getSystemPods } from '../systemPods'
+import { readdirSync, readFileSync } from 'fs'
+import { join } from 'path'
 
 // ─── Multi-Document YAML Parsing ──────────────────────────────────────────
 
@@ -35,7 +34,7 @@ const splitYamlDocuments = (yamlContent: string): string[] => {
 }
 
 /**
- * Parse a single YAML document
+ * Parse a single YAML document (supported kinds only)
  */
 type ParsedResource =
   | Pod
@@ -46,78 +45,95 @@ type ParsedResource =
   | Deployment
   | Service
 
-const parseYamlDocument = (yamlContent: string): Result<ParsedResource> => {
-  const result = parseKubernetesYaml(yamlContent)
-  if (!result.ok) {
-    return error(result.error)
-  }
-  return success(result.value)
-}
-
 /**
- * Parse multi-document YAML
+ * Parse multi-document YAML, skipping unsupported kinds (e.g. Namespace).
+ * Real cluster applies all YAML; simulator only applies supported resources.
  */
-const parseMultiDocumentYaml = (
+const parseMultiDocumentYamlSkipUnsupported = (
   yamlContent: string
-): Result<Array<ParsedResource>> => {
+): ParsedResource[] => {
   const documents = splitYamlDocuments(yamlContent)
-  const resources: Array<ParsedResource> = []
+  const resources: ParsedResource[] = []
 
   for (const doc of documents) {
-    const result = parseYamlDocument(doc.trim())
-    if (!result.ok) {
-      return error(`Failed to parse YAML document: ${result.error}`)
+    const result = parseKubernetesYaml(doc.trim())
+    if (result.ok) {
+      resources.push(result.value)
     }
-    resources.push(result.value)
+    // Skip unsupported kinds (e.g. Namespace) without failing
   }
 
-  return success(resources)
+  return resources
 }
 
-// ─── Scenario Loading ──────────────────────────────────────────────────────
+// ─── Load from YAML content ──────────────────────────────────────────────
 
 /**
- * Load a scenario and create ClusterState
+ * Create ClusterState from concatenated YAML content.
+ * Skips unsupported resource kinds.
  */
-const loadScenario = async (
-  scenario: Scenario,
+const loadClusterStateFromYamlContent = (
+  yamlContent: string,
   eventBus?: EventBus
-): Promise<Result<ClusterState>> => {
-  const bus = eventBus || createEventBus()
+): Result<ClusterState, string> => {
+  const bus = eventBus ?? createEventBus()
   const clusterState = createClusterState(bus)
+  const resources = parseMultiDocumentYamlSkipUnsupported(yamlContent)
 
-  // Load all K8s components
-  const yamlResult = await loadK8sComponentsForScenario(scenario)
-  if (!yamlResult.ok) {
-    return error(yamlResult.error)
-  }
-
-  // Parse the combined YAML
-  const parseResult = parseMultiDocumentYaml(yamlResult.value)
-  if (!parseResult.ok) {
-    return error(parseResult.error)
-  }
-
-  // Apply each resource to the cluster state
-  for (const resource of parseResult.value) {
+  for (const resource of resources) {
     const applyResult = applyResourceWithEvents(resource, clusterState, bus)
     if (!applyResult.ok) {
       return error(`Failed to apply resource: ${applyResult.error}`)
     }
   }
 
+  for (const pod of getSystemPods()) {
+    clusterState.addPod(pod)
+  }
+
   return success(clusterState)
 }
 
 /**
- * Load a scenario and return ClusterStateData
+ * Read all YAML files from a seed directory (flat, no recursion).
+ * Files are sorted by name for deterministic order. Documents are
+ * concatenated with "---" separator.
+ *
+ * @param absolutePath - Absolute path to the seed directory
+ * @returns Concatenated YAML string
  */
-export const loadScenarioData = async (
-  scenario: Scenario
-): Promise<ClusterStateData> => {
-  const result = await loadScenario(scenario)
-  if (!result.ok) {
-    throw new Error(result.error)
+const loadSeedYamlFromPath = (absolutePath: string): string => {
+  const entries = readdirSync(absolutePath, { withFileTypes: true })
+  const yamlFiles = entries
+    .filter(
+      (e) => e.isFile() && (e.name.endsWith('.yaml') || e.name.endsWith('.yml'))
+    )
+    .map((e) => join(absolutePath, e.name))
+    .sort()
+
+  const parts: string[] = []
+  for (const filePath of yamlFiles) {
+    const content = readFileSync(filePath, 'utf-8').trim()
+    if (content.length > 0) {
+      parts.push(content)
+    }
   }
-  return result.value.toJSON()
+  return parts.join('\n---\n')
+}
+
+/**
+ * Create ClusterState from a seed directory path (absolute).
+ * Reads all .yaml/.yml files from the directory, then loads as YAML content.
+ */
+export const loadClusterStateFromSeedPath = (
+  seedPath: string,
+  eventBus?: EventBus
+): Result<ClusterState, string> => {
+  try {
+    const yamlContent = loadSeedYamlFromPath(seedPath)
+    return loadClusterStateFromYamlContent(yamlContent, eventBus)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return error(`Failed to load seed from ${seedPath}: ${message}`)
+  }
 }

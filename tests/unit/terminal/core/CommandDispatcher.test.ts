@@ -126,7 +126,9 @@ describe('CommandDispatcher', () => {
       const result = dispatcher.execute('kubectl get pods')
       expect(result.ok).toBe(true)
       // Cluster vide, pas de pods
-      expect(renderer.getOutput()).toContain('No resources found')
+      expect(renderer.getOutput()).toContain(
+        'No resources found in default namespace.'
+      )
     })
 
     it('should handle kubectl describe with non-existent resource', () => {

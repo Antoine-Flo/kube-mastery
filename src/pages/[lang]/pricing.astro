@@ -109,7 +109,9 @@ const faqItems = [
                 </span>
               </div>
               <div class="pricing__plan-price-detail-wrap">
-                <span class="pricing__plan-price-detail pricing__plan-price-detail--top">
+                <span
+                  class="pricing__plan-price-detail pricing__plan-price-detail--top"
+                >
                   {standardDetailYearlyText}
                 </span>
                 <span
@@ -183,7 +185,9 @@ const faqItems = [
                 </span>
               </div>
               <div class="pricing__plan-price-detail-wrap">
-                <span class="pricing__plan-price-detail pricing__plan-price-detail--top">
+                <span
+                  class="pricing__plan-price-detail pricing__plan-price-detail--top"
+                >
                   {detailYearlyText}
                 </span>
                 <span
@@ -376,7 +380,9 @@ const faqItems = [
 
         const currentEl = banner.querySelector('.pricing__plan-price-amount')
         const struckEl = banner.querySelector('.pricing__plan-price-struck')
-        const detailTopEl = banner.querySelector('.pricing__plan-price-detail--top')
+        const detailTopEl = banner.querySelector(
+          '.pricing__plan-price-detail--top'
+        )
 
         if (currentEl) {
           currentEl.textContent = isYearly ? `${yearPrice}€` : `${monthPrice}€`

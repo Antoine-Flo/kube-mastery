@@ -119,7 +119,7 @@ flowchart LR
 
 ## Créer un Pod avec un fichier YAML
 
-En plus des commandes impératives, vous pouvez décrire vos objets dans un fichier YAML (un *manifest*) et les appliquer au cluster. Voici un manifest minimal pour un Pod qui exécute nginx :
+En plus des commandes impératives, vous pouvez décrire vos objets dans un fichier YAML (un _manifest_) et les appliquer au cluster. Voici un manifest minimal pour un Pod qui exécute nginx :
 
 ```yaml
 apiVersion: v1

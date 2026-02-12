@@ -16,7 +16,11 @@ import { VFile } from 'vfile'
 function pointToOffset(source: string, point: Point): number {
   const lines = source.split('\n')
   let offset = 0
-  for (let lineIndex = 0; lineIndex < point.line - 1 && lineIndex < lines.length; lineIndex++) {
+  for (
+    let lineIndex = 0;
+    lineIndex < point.line - 1 && lineIndex < lines.length;
+    lineIndex++
+  ) {
     offset += lines[lineIndex].length + 1
   }
   return offset + (point.column - 1)
@@ -196,11 +200,7 @@ export default function remarkCalloutColons() {
       const single = parseSingleParagraphCallout(text)
       if (single) {
         let content = single.content
-        if (
-          source &&
-          node.position?.start &&
-          node.position?.end
-        ) {
+        if (source && node.position?.start && node.position?.end) {
           const paragraphSource = getSourceSlice(source, node.position)
           const match = paragraphSource.match(CALLOUT_SINGLE_REGEX)
           if (match) {
@@ -209,10 +209,7 @@ export default function remarkCalloutColons() {
         }
         newChildren.push({
           type: 'html',
-          value: buildCalloutHtml(
-            single.type,
-            markdownStringToHtml(content)
-          )
+          value: buildCalloutHtml(single.type, markdownStringToHtml(content))
         })
         continue
       }

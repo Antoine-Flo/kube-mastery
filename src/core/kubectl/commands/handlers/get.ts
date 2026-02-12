@@ -77,28 +77,44 @@ const filterByNamespace = <T extends ResourceWithMetadata>(
 
 /**
  * Apply all filters to resources
- * Pure function that chains namespace, label, and name filtering
- * Note: For cluster-scoped resources (like nodes), namespace is ignored
+ * Pure function that chains namespace, label, and name filtering.
+ * When namespace is undefined (e.g. --all-namespaces), namespaced resources are not filtered by namespace.
  */
 const applyFilters = <T extends ResourceWithMetadata>(
   resources: T[],
-  namespace: string,
+  namespace: string | undefined,
   selector?: Record<string, string>,
   isClusterScoped: boolean = false,
   name?: string
 ): T[] => {
-  // Cluster-scoped resources don't have namespace filtering
-  let filtered = isClusterScoped
-    ? resources
-    : filterByNamespace(resources, namespace)
+  let filtered: T[]
+  if (isClusterScoped) {
+    filtered = resources
+  } else if (namespace === undefined) {
+    filtered = resources
+  } else {
+    filtered = filterByNamespace(resources, namespace)
+  }
   if (selector) {
     filtered = filterByLabels(filtered, selector)
   }
-  // Filter by name if specified
   if (name) {
     filtered = filtered.filter((resource) => resource.metadata.name === name)
   }
   return filtered
+}
+
+/**
+ * Message when no resources match (kubectl behavior: "in X namespace." for namespaced resources)
+ */
+const noResourcesMessage = (
+  effectiveNamespace: string | undefined,
+  isClusterScoped: boolean
+): string => {
+  if (isClusterScoped || effectiveNamespace === undefined) {
+    return 'No resources found'
+  }
+  return `No resources found in ${effectiveNamespace} namespace.`
 }
 
 /**
@@ -157,16 +173,59 @@ const sanitizeForOutput = <T extends Record<string, unknown>>(
   return rest as Omit<T, '_simulator'>
 }
 
+/**
+ * READY column: readyContainers/totalContainers (regular containers only, not init)
+ */
+const getPodReady = (pod: Pod): string => {
+  const statuses = pod.status.containerStatuses ?? []
+  const regular = pod.spec.containers.length
+  if (regular === 0) {
+    return '0/0'
+  }
+  const ready = statuses.filter((cs) => cs.ready).length
+  return `${ready}/${regular}`
+}
+
+/**
+ * RESTARTS column: sum of container restart counts
+ */
+const getPodRestarts = (pod: Pod): number => {
+  const statuses = pod.status.containerStatuses ?? []
+  return statuses.reduce((sum, cs) => sum + (cs.restartCount ?? 0), 0)
+}
+
+/**
+ * STATUS column: phase or container state reason (e.g. Pending, Running, CrashLoopBackOff)
+ */
+const getPodDisplayStatus = (pod: Pod): string => {
+  if (pod.status.phase === 'Running') {
+    return 'Running'
+  }
+  const statuses = pod.status.containerStatuses ?? []
+  const withReason = statuses.find(
+    (cs) => cs.waitingReason != null || cs.terminatedReason != null
+  )
+  if (withReason?.waitingReason != null) {
+    return withReason.waitingReason
+  }
+  if (withReason?.terminatedReason != null) {
+    return withReason.terminatedReason
+  }
+  return pod.status.phase
+}
+
 // ─── Resource Handlers Configuration ─────────────────────────────────────
 // Object lookup pattern (like executor.ts) - add new resource = add config
 
 const RESOURCE_HANDLERS: Record<string, ResourceHandler<any>> = {
   pods: {
     getItems: (state) => state.pods.items,
-    headers: ['name', 'status', 'age'],
+    headers: ['name', 'ready', 'status', 'restarts', 'age'],
     formatRow: (pod: Pod) => [
       pod.metadata.name,
-      pod.status.phase,
+      getPodReady(pod),
+      getPodDisplayStatus(pod),
+      String(getPodRestarts(pod)),
       formatAge(pod.metadata.creationTimestamp)
     ],
     supportsFiltering: true
@@ -360,7 +419,7 @@ export const handleGet = (
 ): string => {
   // Validate resource type
   if (!parsed.resource) {
-    return 'No resources found'
+    return noResourcesMessage('default', false)
   }
 
   const resourceType = parsed.resource
@@ -374,25 +433,30 @@ export const handleGet = (
   // Standard resource handling with filtering
   const handler = RESOURCE_HANDLERS[resourceType]
   if (!handler) {
-    return 'No resources found'
+    return noResourcesMessage('default', false)
   }
 
-  // Get items and apply filters
-  // For cluster-scoped resources (nodes), namespace is ignored
-  const namespace = parsed.namespace || 'default'
+  // Get items and apply filters (--all-namespaces => no namespace filter for namespaced resources)
+  const allNamespacesFlag =
+    parsed.flags['all-namespaces'] === true || parsed.flags['A'] === true
+  const effectiveNamespace = parsed.namespace ?? 'default'
+  const filterNamespace = allNamespacesFlag ? undefined : effectiveNamespace
   const items = handler.getItems(state)
   const isClusterScoped = handler.isClusterScoped || false
   const filtered = applyFilters(
     items,
-    namespace,
+    filterNamespace,
     parsed.selector,
     isClusterScoped,
     parsed.name
   )
 
-  // Empty result
+  // Empty result (use effectiveNamespace for message unless --all-namespaces was explicitly set)
   if (filtered.length === 0) {
-    return 'No resources found'
+    return noResourcesMessage(
+      allNamespacesFlag ? undefined : effectiveNamespace,
+      isClusterScoped
+    )
   }
 
   // Check output format
@@ -434,6 +498,38 @@ export const handleGet = (
   }
 
   // Default: table format
+  // For pods with --all-namespaces (-A), add NAMESPACE column and sort by namespace then name
+  if (resourceType === ('pods' as Resource) && allNamespacesFlag) {
+    const sorted = [...filtered].sort((a, b) => {
+      const na = (a as Pod).metadata.namespace
+      const nb = (b as Pod).metadata.namespace
+      if (na !== nb) {
+        return na.localeCompare(nb)
+      }
+      return (a as Pod).metadata.name.localeCompare((b as Pod).metadata.name)
+    })
+    const headersAllNs = [
+      'namespace',
+      'name',
+      'ready',
+      'status',
+      'restarts',
+      'age'
+    ]
+    const rowsAllNs = sorted.map((pod) => {
+      const p = pod as Pod
+      return [
+        p.metadata.namespace,
+        p.metadata.name,
+        getPodReady(p),
+        getPodDisplayStatus(p),
+        String(getPodRestarts(p)),
+        formatAge(p.metadata.creationTimestamp)
+      ]
+    })
+    return formatTable(headersAllNs, rowsAllNs)
+  }
+
   const rows = filtered.map(handler.formatRow) as string[][]
   return formatTable(handler.headers, rows)
 }

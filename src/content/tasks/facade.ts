@@ -51,20 +51,3 @@ export function getTaskContent(
   }
   return content as MarkdownInstance<Record<string, unknown>>
 }
-
-export function getTaskLocation(
-  groupId: string,
-  taskId: string
-): TaskLocation | null {
-  const taskDirs = getAdapter().getTaskDirsByGroup().get(groupId)
-  if (!taskDirs) {
-    return null
-  }
-
-  const taskDir = taskDirs.find((d) => stripNumericPrefix(d) === taskId)
-  if (!taskDir) {
-    return null
-  }
-
-  return { groupId, taskDir }
-}

@@ -102,20 +102,22 @@ const contentBarLabels = {
       }
     </nav>
     <div class="lp__task-complete">
-      {isDemoTask && !userId ? (
-        <Button
-          href={localePath('/pricing')}
-          variant="solid"
-          color="cyan"
-          size="md"
-        >
-          {t('home_cta_join')}
-        </Button>
-      ) : (
-        <Button href={completeTaskUrl} variant="solid" color="cyan" size="md">
-          {t('tasks_doneButton')}
-        </Button>
-      )}
+      {
+        isDemoTask && !userId ? (
+          <Button
+            href={localePath('/pricing')}
+            variant="solid"
+            color="cyan"
+            size="md"
+          >
+            {t('home_cta_join')}
+          </Button>
+        ) : (
+          <Button href={completeTaskUrl} variant="solid" color="cyan" size="md">
+            {t('tasks_doneButton')}
+          </Button>
+        )
+      }
     </div>
   </ContentWithTerminalLayout>
 </Layout>

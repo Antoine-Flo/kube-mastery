@@ -92,11 +92,11 @@ describe('ShellContextStack', () => {
     })
 
     it('should show container prompt with path', () => {
-      // Simulate changing directory in container
-      const containerFs = shellContextStack.getCurrentFileSystem()
       // We need to modify the underlying state
       const context = shellContextStack.getCurrentContext()
+
       ;(context.fileSystem as any).getCurrentPath = () => '/var/log'
+
       shellContextStack.updateCurrentPrompt()
       expect(shellContextStack.getCurrentPrompt()).toBe(
         '[nginx-pod:nginx] /var/log>'

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: crashloop-pod
+  namespace: default
+spec:
+  containers:
+    - name: crash
+      image: busybox
+      command: ['sh', '-c', 'exit 1']
+status:
+  phase: Running
+  containerStatuses:
+    - name: crash
+      ready: false
+      restartCount: 1
+      state:
+        waiting:
+          reason: CrashLoopBackOff

@@ -12,18 +12,6 @@ export type SupabaseEnv = {
   SUPABASE_SERVICE_ROLE_KEY?: string
 }
 
-/** Browser client – use in <script> in .astro pages. Needs PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_PUBLISHABLE_KEY in .env (same values as server vars for local dev). */
-export function createSupabaseBrowserClient(): SupabaseClient {
-  const url = import.meta.env.PUBLIC_SUPABASE_URL
-  const key = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
-  if (!url || !key) {
-    throw new Error(
-      'Supabase client: set PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_PUBLISHABLE_KEY (or PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY) in .env.'
-    )
-  }
-  return createBrowserClient(url, key)
-}
-
 type AstroCookies = {
   set: (name: string, value: string, options?: { path?: string }) => void
   delete?: (name: string, options?: { path?: string }) => void

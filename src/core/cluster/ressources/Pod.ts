@@ -143,6 +143,10 @@ export interface ContainerStatus {
   ready: boolean
   restartCount: number
   state?: 'Waiting' | 'Running' | 'Terminated'
+  /** Reason shown in kubectl get pods STATUS (e.g. ContainerCreating, ImagePullBackOff) */
+  waitingReason?: string
+  /** Reason when terminated (e.g. CrashLoopBackOff) */
+  terminatedReason?: string
 }
 
 interface PodStatus {
@@ -168,6 +172,15 @@ export interface Pod extends KubernetesResource {
   }
 }
 
+/** Override container status (e.g. from YAML status) for display in kubectl get pods */
+interface ContainerStatusOverride {
+  name: string
+  ready?: boolean
+  restartCount?: number
+  waitingReason?: string
+  terminatedReason?: string
+}
+
 interface PodConfig {
   name: string
   namespace: string
@@ -182,6 +195,8 @@ interface PodConfig {
   restartCount?: number
   logs?: string[]
   ownerReferences?: OwnerReference[]
+  /** Override container statuses (from YAML status) for display */
+  containerStatusOverrides?: ContainerStatusOverride[]
 }
 
 export const createPod = (config: PodConfig): Pod => {
@@ -196,14 +211,36 @@ export const createPod = (config: PodConfig): Pod => {
     })
   )
 
-  // Create container statuses for regular containers
-  const regularContainerStatuses = config.containers.map((container) => ({
-    name: container.name,
-    image: container.image,
-    ready: config.phase === 'Running',
-    restartCount: 0,
-    state: 'Waiting' as const
-  }))
+  const overridesByName = new Map(
+    (config.containerStatusOverrides ?? []).map((o) => [o.name, o])
+  )
+
+  const regularContainerStatuses = config.containers.map((container) => {
+    const override = overridesByName.get(container.name)
+    const ready = override?.ready ?? config.phase === 'Running'
+    const restartCount = override?.restartCount ?? 0
+    const state: 'Waiting' | 'Running' | 'Terminated' =
+      override?.terminatedReason != null
+        ? 'Terminated'
+        : override?.waitingReason != null
+          ? 'Waiting'
+          : config.phase === 'Running'
+            ? 'Running'
+            : 'Waiting'
+    return {
+      name: container.name,
+      image: container.image,
+      ready,
+      restartCount,
+      state,
+      ...(override?.waitingReason != null && {
+        waitingReason: override.waitingReason
+      }),
+      ...(override?.terminatedReason != null && {
+        terminatedReason: override.terminatedReason
+      })
+    }
+  })
 
   // Combine: init containers first, then regular containers
   const allContainerStatuses = [
@@ -323,7 +360,22 @@ const PodManifestSchema = z.object({
       phase: z
         .enum(['Pending', 'Running', 'Succeeded', 'Failed', 'Unknown'])
         .optional(),
-      restartCount: z.number().optional()
+      restartCount: z.number().optional(),
+      containerStatuses: z
+        .array(
+          z.object({
+            name: z.string(),
+            ready: z.boolean().optional(),
+            restartCount: z.number().optional(),
+            state: z
+              .object({
+                waiting: z.object({ reason: z.string() }).optional(),
+                terminated: z.object({ reason: z.string() }).optional()
+              })
+              .optional()
+          })
+        )
+        .optional()
     })
     .optional()
 })
@@ -403,7 +455,20 @@ export const parsePodManifest = (data: unknown): Result<Pod> => {
   // Convert regular containers
   const containers = manifest.spec.containers.map(convertContainer)
 
-  // Use createPod to properly initialize all container statuses
+  const containerStatusOverrides = manifest.status?.containerStatuses?.map(
+    (cs) => ({
+      name: cs.name,
+      ...(cs.ready !== undefined && { ready: cs.ready }),
+      ...(cs.restartCount !== undefined && { restartCount: cs.restartCount }),
+      ...(cs.state?.waiting?.reason != null && {
+        waitingReason: cs.state.waiting.reason
+      }),
+      ...(cs.state?.terminated?.reason != null && {
+        terminatedReason: cs.state.terminated.reason
+      })
+    })
+  )
+
   const pod = createPod({
     name: manifest.metadata.name,
     namespace: manifest.metadata.namespace,
@@ -419,9 +484,13 @@ export const parsePodManifest = (data: unknown): Result<Pod> => {
       creationTimestamp: manifest.metadata.creationTimestamp
     }),
     ...(manifest.status?.phase && { phase: manifest.status.phase }),
-    ...(manifest.status?.restartCount && {
+    ...(manifest.status?.restartCount != null && {
       restartCount: manifest.status.restartCount
-    })
+    }),
+    ...(containerStatusOverrides &&
+      containerStatusOverrides.length > 0 && {
+        containerStatusOverrides
+      })
   })
 
   return success(pod)

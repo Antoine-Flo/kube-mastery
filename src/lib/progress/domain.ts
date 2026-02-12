@@ -22,17 +22,3 @@ export function computeProgress(
 
   return { percentage, hasStarted, currentLessonId }
 }
-
-/**
- * Compute progress for multiple learnables.
- */
-export function computeProgressMap(
-  learnables: { id: string; lessonIds: string[] }[],
-  completed: Set<string>
-): Map<string, ProgressForLearnable> {
-  const map = new Map<string, ProgressForLearnable>()
-  for (const { id, lessonIds } of learnables) {
-    map.set(id, computeProgress(lessonIds, completed))
-  }
-  return map
-}

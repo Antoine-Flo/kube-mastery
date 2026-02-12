@@ -10,7 +10,7 @@ function applyEffectiveTheme(effective: Theme) {
   document.documentElement.setAttribute('data-theme', effective)
 }
 
-export function getStoredTheme(): Theme {
+function getStoredTheme(): Theme {
   if (typeof window === 'undefined') {
     return 'dark'
   }

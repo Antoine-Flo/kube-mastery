@@ -43,7 +43,7 @@
   transition: color 0.2s;
 }
 
-.pricing__toggle-option[aria-pressed="true"] {
+.pricing__toggle-option[aria-pressed='true'] {
   color: var(--color-gray-12);
   font-weight: var(--font-weight-semibold);
 }
@@ -62,12 +62,12 @@
   background-color: var(--color-gray-7);
 }
 
-.pricing__toggle-switch[aria-pressed="true"] {
+.pricing__toggle-switch[aria-pressed='true'] {
   background-color: var(--color-cyan-9);
 }
 
 .pricing__toggle-switch::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 2px;
   left: 2px;
@@ -78,7 +78,7 @@
   transition: transform 0.2s;
 }
 
-.pricing__toggle-switch[aria-pressed="true"]::after {
+.pricing__toggle-switch[aria-pressed='true']::after {
   transform: translateX(1.5rem);
 }
 

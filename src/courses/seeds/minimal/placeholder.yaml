@@ -1,0 +1,8 @@
+# Minimal seed: empty user workload. Only kube-system pods from kind.
+# This placeholder ensures the seed directory is not empty for applyYamlFiles.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: placeholder
+  namespace: default
+data: {}
