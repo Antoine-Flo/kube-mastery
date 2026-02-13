@@ -38,7 +38,7 @@ export const deleteCluster = (name: string): Result<void, string> => {
   }
 }
 
-const findYamlFiles = (dir: string): string[] => {
+export const listYamlFiles = (dir: string): string[] => {
   const yamlFiles: string[] = []
   const scan = (currentDir: string): void => {
     const entries = readdirSync(currentDir)
@@ -58,19 +58,70 @@ const findYamlFiles = (dir: string): string[] => {
   return yamlFiles.sort()
 }
 
-export const applyYamlFiles = (seedDir: string): Result<void, string> => {
+const isYamlFile = (path: string): boolean => {
+  return path.endsWith('.yaml') || path.endsWith('.yml')
+}
+
+const resolveYamlTargets = (targetPath: string): Result<string[], string> => {
   try {
-    const yamlFiles = findYamlFiles(seedDir)
-    if (yamlFiles.length === 0) {
-      return error(`No YAML files found in ${seedDir}`)
+    const stat = statSync(targetPath)
+    if (stat.isDirectory()) {
+      const files = listYamlFiles(targetPath)
+      if (files.length === 0) {
+        return error(`No YAML files found in ${targetPath}`)
+      }
+      return success(files)
     }
-    for (const yamlFile of yamlFiles) {
-      execSync(`kubectl apply -f ${yamlFile}`, { stdio: 'pipe' })
+    if (!isYamlFile(targetPath)) {
+      return error(`Target is not a YAML file: ${targetPath}`)
     }
-    return success(undefined)
+    return success([targetPath])
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    return error(`Failed to apply YAML files from ${seedDir}: ${message}`)
+    return error(`Failed to resolve target path ${targetPath}: ${message}`)
+  }
+}
+
+const runKubectlForYamlTargets = (
+  action: 'apply' | 'delete',
+  targetPath: string,
+  ignoreNotFound?: boolean
+): Result<string, string> => {
+  const filesResult = resolveYamlTargets(targetPath)
+  if (!filesResult.ok) {
+    return filesResult
+  }
+  const outputs: string[] = []
+  for (const yamlFile of filesResult.value) {
+    const ignoreNotFoundArg =
+      action === 'delete' && ignoreNotFound ? ' --ignore-not-found' : ''
+    const output = execSync(`kubectl ${action} -f ${yamlFile}${ignoreNotFoundArg}`, {
+      stdio: 'pipe',
+      encoding: 'utf-8'
+    }).trim()
+    outputs.push(output)
+  }
+  return success(outputs.filter((line) => line.length > 0).join('\n'))
+}
+
+export const applyYamlTarget = (targetPath: string): Result<string, string> => {
+  try {
+    return runKubectlForYamlTargets('apply', targetPath)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    return error(`Failed to apply YAML target ${targetPath}: ${message}`)
+  }
+}
+
+export const deleteYamlTarget = (
+  targetPath: string,
+  ignoreNotFound = true
+): Result<string, string> => {
+  try {
+    return runKubectlForYamlTargets('delete', targetPath, ignoreNotFound)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    return error(`Failed to delete YAML target ${targetPath}: ${message}`)
   }
 }
 

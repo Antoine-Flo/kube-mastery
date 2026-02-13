@@ -1,24 +1,22 @@
 #!/usr/bin/env node
 import {
-  applyYamlFiles,
+  applyYamlTarget,
   ensureCluster,
   getSeedPath,
   waitForPodsReady
 } from './lib/cluster-manager'
-import { CONFORMANCE_SCENARIOS } from './config/conformance-scenarios'
 import type { Result } from './lib/types'
 
 const isError = <T, E>(r: Result<T, E>): r is { ok: false; error: E } => !r.ok
 
 const name = process.argv[2]
 if (!name) {
-  console.error('Usage: start-cluster <name>')
+  console.error('Usage: start-cluster <seed>')
   process.exit(1)
 }
 
-const scenario = CONFORMANCE_SCENARIOS.find((s) => s.name === name)
-const seedName = scenario?.seed ?? name
-const waitForPods = scenario?.seedWaitForPods ?? false
+const seedName = name
+const waitForPods = false
 
 console.log(`Starting: ${name} (seed: ${seedName})\n`)
 
@@ -29,7 +27,7 @@ if (isError(e)) {
   process.exit(1)
 }
 
-const a = applyYamlFiles(getSeedPath(seedName))
+const a = applyYamlTarget(getSeedPath(seedName))
 
 if (isError(a)) {
   console.error(a.error)

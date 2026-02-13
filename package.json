@@ -7,7 +7,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "test": "vitest run",
-    "conformance": "tsx bin/run-conformance.ts",
+    "conformance": "tsx bin/generate-conformance-scenario.ts && tsx bin/run-conformance.ts",
     "astro": "astro",
     "knip": "knip",
     "check": "astro check",

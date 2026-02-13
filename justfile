@@ -2,7 +2,7 @@
 conformance:
     npx tsx bin/run-conformance.ts
 
-# Démarrer un scénario (minimal, deployment-with-configmap, multi-namespace, pods-errors)
+# Démarrer un seed (ex: minimal, deployment-with-configmap, multi-namespace, pods-errors)
 cluster-start NAME:
     npx tsx bin/start-cluster.ts {{NAME}}
 
@@ -13,3 +13,6 @@ cluster-list:
 # Arrêter le cluster
 cluster-down NAME:
     kind delete cluster --name {{NAME}}
+
+compare:
+    delta artifacts/conformance/kind.log artifacts/conformance/runner.log --side-by-side

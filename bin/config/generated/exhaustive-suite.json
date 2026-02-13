@@ -1,0 +1,430 @@
+{
+  "name": "exhaustive-single-cluster-suite",
+  "clusterName": "conformance",
+  "actions": [
+    {
+      "id": "minimal-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "minimal-cmd-1",
+      "type": "command",
+      "command": "kubectl get pods",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-2",
+      "type": "command",
+      "command": "kubectl get pods -A",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-3",
+      "type": "command",
+      "command": "kubectl get pods -o yaml",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-4",
+      "type": "command",
+      "command": "kubectl get pods -o json",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-5",
+      "type": "command",
+      "command": "kubectl get nodes",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-6",
+      "type": "command",
+      "command": "kubectl get configmaps",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-7",
+      "type": "command",
+      "command": "kubectl get secrets",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "deploy-cm-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "waitForPods": true
+    },
+    {
+      "id": "deploy-cm-cmd-1",
+      "type": "command",
+      "command": "kubectl get pods",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-2",
+      "type": "command",
+      "command": "kubectl get pods -A",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-3",
+      "type": "command",
+      "command": "kubectl get pods -o wide",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-4",
+      "type": "command",
+      "command": "kubectl describe pod web",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-5",
+      "type": "command",
+      "command": "kubectl get pod web -o yaml",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-6",
+      "type": "command",
+      "command": "kubectl get deployments",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-7",
+      "type": "command",
+      "command": "kubectl get replicasets",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-8",
+      "type": "command",
+      "command": "kubectl create deployment exhaustive-web --image=nginx:latest",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-9",
+      "type": "command",
+      "command": "kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-10",
+      "type": "command",
+      "command": "kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-11",
+      "type": "command",
+      "command": "kubectl scale deployments exhaustive-web --replicas=3",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-12",
+      "type": "command",
+      "command": "kubectl get deployments",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-13",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-api",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-14",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-multi",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-15",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-web",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "platform-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "platform-cmd-1",
+      "type": "command",
+      "command": "kubectl version",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-2",
+      "type": "command",
+      "command": "kubectl version --client",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-3",
+      "type": "command",
+      "command": "kubectl version --output json",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-4",
+      "type": "command",
+      "command": "kubectl version --output yaml",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-5",
+      "type": "command",
+      "command": "kubectl cluster-info",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-6",
+      "type": "command",
+      "command": "kubectl cluster-info dump",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-7",
+      "type": "command",
+      "command": "kubectl cluster-info dump -o yaml",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-8",
+      "type": "command",
+      "command": "kubectl cluster-info dump --namespaces=default,kube-system",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-9",
+      "type": "command",
+      "command": "kubectl api-resources",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-10",
+      "type": "command",
+      "command": "kubectl api-resources --output wide",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-11",
+      "type": "command",
+      "command": "kubectl api-resources --output name",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-12",
+      "type": "command",
+      "command": "kubectl api-resources --output json",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-13",
+      "type": "command",
+      "command": "kubectl api-resources --output yaml",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-14",
+      "type": "command",
+      "command": "kubectl api-resources --namespaced=true",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-15",
+      "type": "command",
+      "command": "kubectl api-resources --namespaced=false",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-16",
+      "type": "command",
+      "command": "kubectl api-resources --sort-by=name",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-17",
+      "type": "command",
+      "command": "kubectl api-resources --sort-by=kind",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-18",
+      "type": "command",
+      "command": "kubectl api-resources --no-headers",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "errors-help-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "errors-help-cmd-1",
+      "type": "command",
+      "command": "kubectl create deployment invalid-without-image",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-2",
+      "type": "command",
+      "command": "kubectl delete pods missing-pod",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-3",
+      "type": "command",
+      "command": "kubectl describe pod missing-pod",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-4",
+      "type": "command",
+      "command": "kubectl scale deployments missing-deploy --replicas=2",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-5",
+      "type": "command",
+      "command": "kubectl get not-a-resource",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-6",
+      "type": "command",
+      "command": "kubectl version --output wide",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-7",
+      "type": "command",
+      "command": "kubectl api-resources --sort-by=age",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-8",
+      "type": "command",
+      "command": "kubectl cluster-info dump --output-directory /tmp/out",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-9",
+      "type": "command",
+      "command": "kubectl -h",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-10",
+      "type": "command",
+      "command": "kubectl --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-11",
+      "type": "command",
+      "command": "kubectl get --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-12",
+      "type": "command",
+      "command": "kubectl create --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-13",
+      "type": "command",
+      "command": "kubectl create deployment --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-14",
+      "type": "command",
+      "command": "kubectl delete --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-15",
+      "type": "command",
+      "command": "kubectl describe --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-16",
+      "type": "command",
+      "command": "kubectl scale --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-17",
+      "type": "command",
+      "command": "kubectl version --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-18",
+      "type": "command",
+      "command": "kubectl cluster-info --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-19",
+      "type": "command",
+      "command": "kubectl api-resources --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-20",
+      "type": "command",
+      "command": "kubectl logs --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-21",
+      "type": "command",
+      "command": "kubectl exec --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-22",
+      "type": "command",
+      "command": "kubectl label --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-23",
+      "type": "command",
+      "command": "kubectl annotate --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    }
+  ],
+  "stopOnMismatch": false
+}
