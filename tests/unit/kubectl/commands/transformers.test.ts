@@ -160,7 +160,7 @@ describe('kubectl transformers', () => {
   })
 
   describe('create transformer', () => {
-    it('should set resource to pods', () => {
+    it('should keep create -f behavior and set resource to pods', () => {
       const transformer = getTransformerForAction('create')
       const ctx = createContext({
         input: 'kubectl create -f pod.yaml',
@@ -172,6 +172,157 @@ describe('kubectl transformers', () => {
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.resource).toBe('pods')
+      }
+    })
+
+    it('should extract deployment resource and name for imperative create', () => {
+      const transformer = getTransformerForAction('create')
+      const ctx = createContext({
+        input: 'kubectl create deployment my-dep --image=busybox',
+        tokens: ['kubectl', 'create', 'deployment', 'my-dep', '--image=busybox']
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.resource).toBe('deployments')
+        expect(result.value.name).toBe('my-dep')
+      }
+    })
+
+    it('should extract repeated --image flags', () => {
+      const transformer = getTransformerForAction('create')
+      const ctx = createContext({
+        input:
+          'kubectl create deployment my-dep --image=busybox --image=ubuntu --image=nginx',
+        tokens: [
+          'kubectl',
+          'create',
+          'deployment',
+          'my-dep',
+          '--image=busybox',
+          '--image=ubuntu',
+          '--image=nginx'
+        ]
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.createImages).toEqual([
+          'busybox',
+          'ubuntu',
+          'nginx'
+        ])
+      }
+    })
+
+    it('should extract command after -- separator', () => {
+      const transformer = getTransformerForAction('create')
+      const ctx = createContext({
+        input: 'kubectl create deployment my-dep --image=busybox -- date',
+        tokens: [
+          'kubectl',
+          'create',
+          'deployment',
+          'my-dep',
+          '--image=busybox',
+          '--',
+          'date'
+        ]
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.createCommand).toEqual(['date'])
+        expect(result.value.tokens).toEqual([
+          'kubectl',
+          'create',
+          'deployment',
+          'my-dep',
+          '--image=busybox'
+        ])
+      }
+    })
+
+    it('should support deploy alias', () => {
+      const transformer = getTransformerForAction('create')
+      const ctx = createContext({
+        input: 'kubectl create deploy my-dep --image=busybox',
+        tokens: ['kubectl', 'create', 'deploy', 'my-dep', '--image=busybox']
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.resource).toBe('deployments')
+        expect(result.value.name).toBe('my-dep')
+      }
+    })
+
+    it('should extract image when using --image with separate value', () => {
+      const transformer = getTransformerForAction('create')
+      const ctx = createContext({
+        input: 'kubectl create deployment my-dep --image busybox',
+        tokens: [
+          'kubectl',
+          'create',
+          'deployment',
+          'my-dep',
+          '--image',
+          'busybox'
+        ]
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.createImages).toEqual(['busybox'])
+      }
+    })
+
+    it('should extract name when namespace flag is before name', () => {
+      const transformer = getTransformerForAction('create')
+      const ctx = createContext({
+        input: 'kubectl create deployment -n prod my-dep --image=busybox',
+        tokens: [
+          'kubectl',
+          'create',
+          'deployment',
+          '-n',
+          'prod',
+          'my-dep',
+          '--image=busybox'
+        ]
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.name).toBe('my-dep')
+      }
+    })
+
+    it('should keep undefined name when deployment name is missing', () => {
+      const transformer = getTransformerForAction('create')
+      const ctx = createContext({
+        input: 'kubectl create deployment --image=busybox',
+        tokens: ['kubectl', 'create', 'deployment', '--image=busybox']
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.resource).toBe('deployments')
+        expect(result.value.name).toBeUndefined()
       }
     })
   })

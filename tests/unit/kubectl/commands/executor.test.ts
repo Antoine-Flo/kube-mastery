@@ -146,6 +146,176 @@ data:
       })
     })
 
+    describe('create deployment (imperative)', () => {
+      it('should create a deployment with one image', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create deployment my-dep --image=busybox'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('deployment/my-dep created')
+        const deployment = clusterState.findDeployment('my-dep', 'default')
+        expect(deployment.ok).toBe(true)
+      })
+
+      it('should create a deployment with command after --', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create deployment my-dep --image=busybox -- date'
+        )
+
+        expect(result.ok).toBe(true)
+        const deployment = clusterState.findDeployment('my-dep', 'default')
+        expect(deployment.ok).toBe(true)
+        if (!deployment.ok) {
+          return
+        }
+
+        expect(
+          deployment.value.spec.template.spec.containers[0].command
+        ).toEqual(['date'])
+      })
+
+      it('should create a deployment with replicas', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create deployment my-dep --image=nginx --replicas=3'
+        )
+
+        expect(result.ok).toBe(true)
+        const deployment = clusterState.findDeployment('my-dep', 'default')
+        expect(deployment.ok).toBe(true)
+        if (!deployment.ok) {
+          return
+        }
+
+        expect(deployment.value.spec.replicas).toBe(3)
+      })
+
+      it('should create a deployment with exposed container port', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create deployment my-dep --image=busybox --port=5701'
+        )
+
+        expect(result.ok).toBe(true)
+        const deployment = clusterState.findDeployment('my-dep', 'default')
+        expect(deployment.ok).toBe(true)
+        if (!deployment.ok) {
+          return
+        }
+
+        expect(
+          deployment.value.spec.template.spec.containers[0].ports?.[0]
+            ?.containerPort
+        ).toBe(5701)
+      })
+
+      it('should create a deployment with multiple images', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create deployment my-dep --image=busybox:latest --image=ubuntu:latest --image=nginx'
+        )
+
+        expect(result.ok).toBe(true)
+        const deployment = clusterState.findDeployment('my-dep', 'default')
+        expect(deployment.ok).toBe(true)
+        if (!deployment.ok) {
+          return
+        }
+
+        const images = deployment.value.spec.template.spec.containers.map(
+          (container) => container.image
+        )
+        expect(images).toEqual(['busybox:latest', 'ubuntu:latest', 'nginx'])
+      })
+
+      it('should support --image with separate value', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create deployment my-dep --image busybox'
+        )
+
+        expect(result.ok).toBe(true)
+        const deployment = clusterState.findDeployment('my-dep', 'default')
+        expect(deployment.ok).toBe(true)
+        if (!deployment.ok) {
+          return
+        }
+
+        expect(deployment.value.spec.template.spec.containers[0].image).toBe(
+          'busybox'
+        )
+      })
+
+      it('should create deployment in a specific namespace', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create deployment my-dep --image=busybox -n staging'
+        )
+
+        expect(result.ok).toBe(true)
+        const deployment = clusterState.findDeployment('my-dep', 'staging')
+        expect(deployment.ok).toBe(true)
+      })
+
+      it('should parse name correctly when namespace flag is before name', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create deployment -n staging my-dep --image=busybox'
+        )
+
+        expect(result.ok).toBe(true)
+        const deployment = clusterState.findDeployment('my-dep', 'staging')
+        expect(deployment.ok).toBe(true)
+      })
+    })
+
     describe('get command with different resources', () => {
       it('should handle "kubectl get pods"', () => {
         const executor = createKubectlExecutor(

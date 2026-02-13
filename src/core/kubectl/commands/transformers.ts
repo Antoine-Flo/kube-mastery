@@ -22,6 +22,8 @@ export type ParseContext = {
   flags?: Record<string, string | boolean>
   normalizedFlags?: Record<string, string | boolean>
   execCommand?: string[]
+  createImages?: string[]
+  createCommand?: string[]
   labelChanges?: Record<string, string | null>
   annotationChanges?: Record<string, string | null>
 }
@@ -54,6 +56,16 @@ const buildResourceAliasMap = (): Record<string, string> => {
 
 const RESOURCE_ALIAS_MAP = buildResourceAliasMap()
 
+const FLAGS_REQUIRING_VALUES = new Set([
+  'n',
+  'namespace',
+  'f',
+  'filename',
+  'image',
+  'replicas',
+  'port'
+])
+
 // ─── Helper Functions ────────────────────────────────────────────────────
 
 /**
@@ -65,11 +77,64 @@ const findNameSkippingFlags = (
 ): string | undefined => {
   for (let i = startIndex; i < tokens.length; i++) {
     const token = tokens[i]
-    if (!token.startsWith('-')) {
-      return token
+    if (token === '--') {
+      break
     }
+
+    if (token.startsWith('-')) {
+      const flagName = token.replace(/^-+/, '').split('=')[0]
+      if (FLAGS_REQUIRING_VALUES.has(flagName) && !token.includes('=')) {
+        i += 1
+      }
+      continue
+    }
+
+    return token
   }
   return undefined
+}
+
+const splitTokensBySeparator = (
+  tokens: string[]
+): { beforeSeparator: string[]; afterSeparator?: string[] } => {
+  const separatorIndex = tokens.indexOf('--')
+  if (separatorIndex === -1) {
+    return { beforeSeparator: tokens }
+  }
+
+  const beforeSeparator = tokens.slice(0, separatorIndex)
+  const afterSeparator = tokens.slice(separatorIndex + 1)
+  return { beforeSeparator, afterSeparator }
+}
+
+const extractFlagValues = (tokens: string[], flagName: string): string[] => {
+  const values: string[] = []
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]
+    const prefix = `--${flagName}=`
+    if (token.startsWith(prefix)) {
+      const value = token.slice(prefix.length)
+      if (value) {
+        values.push(value)
+      }
+      continue
+    }
+
+    if (token !== `--${flagName}`) {
+      continue
+    }
+
+    const nextToken = tokens[i + 1]
+    if (!nextToken || nextToken.startsWith('-')) {
+      continue
+    }
+
+    values.push(nextToken)
+    i += 1
+  }
+
+  return values
 }
 
 /**
@@ -136,10 +201,57 @@ const execTransformer: ActionTransformer = (ctx) => {
 }
 
 /**
- * Transformer for apply/create: sets default resource to pods
+ * Transformer for apply: sets default resource to pods
  */
-const applyCreateTransformer: ActionTransformer = (ctx) => {
+const applyTransformer: ActionTransformer = (ctx) => {
   return success({ ...ctx, resource: 'pods' as Resource })
+}
+
+/**
+ * Transformer for create:
+ * - create -f file.yaml (legacy path)
+ * - create deployment <name> --image=... [-- ...]
+ */
+const createTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens) {
+    return success(ctx)
+  }
+
+  const { beforeSeparator, afterSeparator } = splitTokensBySeparator(ctx.tokens)
+  const createCommand =
+    afterSeparator && afterSeparator.length > 0 ? afterSeparator : undefined
+  const resourceToken = beforeSeparator[2]
+
+  if (!resourceToken || resourceToken.startsWith('-')) {
+    return success({
+      ...ctx,
+      resource: 'pods' as Resource,
+      tokens: beforeSeparator,
+      createCommand
+    })
+  }
+
+  const resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
+  if (!resource) {
+    return success({
+      ...ctx,
+      tokens: beforeSeparator,
+      createCommand
+    })
+  }
+
+  const name = findNameSkippingFlags(beforeSeparator, 3)
+  const createImages = extractFlagValues(beforeSeparator, 'image')
+  const hasCreateImages = createImages.length > 0
+
+  return success({
+    ...ctx,
+    resource,
+    name,
+    tokens: beforeSeparator,
+    createImages: hasCreateImages ? createImages : undefined,
+    createCommand
+  })
 }
 
 /**
@@ -311,8 +423,8 @@ const identityTransformer: ActionTransformer = (ctx) => success(ctx)
 const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
   exec: execTransformer,
   logs: logsTransformer,
-  apply: applyCreateTransformer,
-  create: applyCreateTransformer,
+  apply: applyTransformer,
+  create: createTransformer,
   label: labelTransformer,
   annotate: annotateTransformer,
   version: versionTransformer,

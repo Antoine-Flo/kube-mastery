@@ -23,12 +23,12 @@ const randomInRange = (min: number, max: number): number =>
   Math.floor(Math.random() * (max - min + 1)) + min
 
 function podToRunning(pod: Pod): Pod {
-  const containerStatuses: ContainerStatus[] = (pod.status.containerStatuses ?? []).map(
-    (cs) => {
-      const { waitingReason: _w, terminatedReason: _t, ...rest } = cs
-      return { ...rest, ready: true, state: 'Running' as const }
-    }
-  )
+  const containerStatuses: ContainerStatus[] = (
+    pod.status.containerStatuses ?? []
+  ).map((cs) => {
+    const { waitingReason: _w, terminatedReason: _t, ...rest } = cs
+    return { ...rest, ready: true, state: 'Running' as const }
+  })
   return {
     ...pod,
     status: {
@@ -83,7 +83,10 @@ export const createPodStartupSimulator = (
     timeouts.push(id)
   }
 
-  const handlePodUpdated = (event: { type: string; payload?: { newPod: Pod } }): void => {
+  const handlePodUpdated = (event: {
+    type: string
+    payload?: { newPod: Pod }
+  }): void => {
     if (event.type !== 'PodUpdated' || event.payload == null) {
       return
     }
@@ -102,7 +105,10 @@ export const createPodStartupSimulator = (
         scheduleTransition(pod)
       }
     }
-    unsubscribe = eventBus.subscribe('PodUpdated', handlePodUpdated as (e: unknown) => void)
+    unsubscribe = eventBus.subscribe(
+      'PodUpdated',
+      handlePodUpdated as (e: unknown) => void
+    )
   }
 
   const stop = (): void => {
@@ -118,4 +124,3 @@ export const createPodStartupSimulator = (
 
   return { start, stop }
 }
-

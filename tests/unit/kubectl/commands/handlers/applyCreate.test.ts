@@ -1,0 +1,142 @@
+import { beforeEach, describe, expect, it } from 'vitest'
+import { createClusterState } from '../../../../../src/core/cluster/ClusterState'
+import { createEventBus } from '../../../../../src/core/cluster/events/EventBus'
+import { createHostFileSystem } from '../../../../../src/core/filesystem/debianFileSystem'
+import {
+  createFileSystem,
+  type FileSystem
+} from '../../../../../src/core/filesystem/FileSystem'
+import { parseCommand } from '../../../../../src/core/kubectl/commands/parser'
+import { handleCreate } from '../../../../../src/core/kubectl/commands/handlers/applyCreate'
+
+describe('applyCreate handler', () => {
+  let fileSystem: FileSystem
+  let eventBus: ReturnType<typeof createEventBus>
+  let clusterState: ReturnType<typeof createClusterState>
+
+  beforeEach(() => {
+    eventBus = createEventBus()
+    clusterState = createClusterState(eventBus)
+    fileSystem = createFileSystem(createHostFileSystem())
+  })
+
+  it('should create deployment imperatively with --image', () => {
+    const parsed = parseCommand(
+      'kubectl create deployment my-dep --image=busybox'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toContain('deployment/my-dep created')
+    const deployment = clusterState.findDeployment('my-dep', 'default')
+    expect(deployment.ok).toBe(true)
+  })
+
+  it('should return explicit error when image is missing', () => {
+    const parsed = parseCommand('kubectl create deployment my-dep')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('requires --image')
+    }
+  })
+
+  it('should return explicit error when deployment name is missing', () => {
+    const parsed = parseCommand('kubectl create deployment --image=busybox')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('requires a name')
+    }
+  })
+
+  it('should create deployment in provided namespace', () => {
+    const parsed = parseCommand(
+      'kubectl create deployment my-dep --image=busybox -n staging'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+
+    expect(result.ok).toBe(true)
+    const deployment = clusterState.findDeployment('my-dep', 'staging')
+    expect(deployment.ok).toBe(true)
+  })
+
+  it('should keep create from file flow', () => {
+    const yaml = `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-config
+data:
+  key: value
+`
+
+    fileSystem.createFile('config.yaml')
+    fileSystem.writeFile('config.yaml', yaml)
+
+    const parsed = parseCommand('kubectl create -f config.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toContain('created')
+  })
+})

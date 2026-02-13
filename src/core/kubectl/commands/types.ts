@@ -38,4 +38,7 @@ export interface ParsedCommand {
   labelChanges?: Record<string, string | null> // For kubectl label: key=value or key- (null = removal)
   annotationChanges?: Record<string, string | null> // For kubectl annotate: key=value or key- (null = removal)
   replicas?: number // For kubectl scale: --replicas=N
+  port?: number // For create deployment: --port=N
+  createImages?: string[] // For create deployment: repeated --image flags
+  createCommand?: string[] // For create deployment: command after --
 }

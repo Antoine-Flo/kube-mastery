@@ -25,14 +25,14 @@ Document de conception pour les contrôleurs de cycle de vie dans le simulateur,
 
 ## 3. Mapping Kubernetes → simulateur
 
-| Kubernetes           | Simulateur actuel / cible                                      |
-|----------------------|-----------------------------------------------------------------|
-| DeploymentController | `DeploymentController` (exist.) → ReplicaSets                  |
-| ReplicaSetController | `ReplicaSetController` (exist.) → Pods (Pending)                |
-| Scheduler            | `Scheduler` (exist.) → assigne `nodeName`, ne touche pas phase |
-| Kubelet              | **KubeletSimulator** (à formaliser) → Pending → Running / Error |
+| Kubernetes           | Simulateur actuel / cible                                           |
+| -------------------- | ------------------------------------------------------------------- |
+| DeploymentController | `DeploymentController` (exist.) → ReplicaSets                       |
+| ReplicaSetController | `ReplicaSetController` (exist.) → Pods (Pending)                    |
+| Scheduler            | `Scheduler` (exist.) → assigne `nodeName`, ne touche pas phase      |
+| Kubelet              | **KubeletSimulator** (à formaliser) → Pending → Running / Error     |
 | Events API           | Events cluster (PodUpdated, etc.) + **EventList** pour `get events` |
-| status.conditions    | À renforcer sur Pod (et autres si besoin)                      |
+| status.conditions    | À renforcer sur Pod (et autres si besoin)                           |
 
 Le **KubeletSimulator** est le “controller” qui gère le cycle de vie des Pods après la pose de `nodeName` : délai (pull/start), évaluation des conditions d’erreur, mise à jour du status.
 

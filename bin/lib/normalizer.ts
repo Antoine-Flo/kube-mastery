@@ -82,7 +82,10 @@ export const normalizeOutput = (output: string): string => {
   // ─── Noms de pods système (style Kind / ReplicaSet) ───────────────────────
   // Réel : coredns-7d764666f9-59cxc ; sim : coredns-b9mlw7r7ai-mvf9n.
   // On normalise en coredns-<id> pour que la comparaison ne dépende pas du hash/suffix.
-  normalized = normalized.replace(/coredns-[a-z0-9]+-[a-z0-9]+/g, 'coredns-<id>')
+  normalized = normalized.replace(
+    /coredns-[a-z0-9]+-[a-z0-9]+/g,
+    'coredns-<id>'
+  )
   normalized = normalized.replace(
     /kindnet-[a-z0-9]+(?:-[a-z0-9]+)?/g,
     'kindnet-<id>'

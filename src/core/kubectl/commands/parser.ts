@@ -62,7 +62,9 @@ const FLAGS_REQUIRING_VALUES = [
   'container',
   'namespaces',
   'output-directory',
-  'replicas'
+  'replicas',
+  'image',
+  'port'
 ]
 // Note: 'filename' is required for apply/create, but 'f' and 'follow' are boolean for logs
 
@@ -160,9 +162,12 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     selector: getSelectorFromFlags(normalizedFlags),
     flags: ctx.flags,
     execCommand: ctx.execCommand,
+    createImages: ctx.createImages,
+    createCommand: ctx.createCommand,
     labelChanges: ctx.labelChanges,
     annotationChanges: ctx.annotationChanges,
-    replicas: getReplicasFromFlags(normalizedFlags)
+    replicas: getReplicasFromFlags(normalizedFlags),
+    port: getPortFromFlags(normalizedFlags)
   })
 }
 
@@ -276,7 +281,6 @@ const extractName = (ctx: ParseContext): Result<ParseContext> => {
     'exec',
     'logs',
     'apply',
-    'create',
     'label',
     'annotate'
   ]
@@ -390,6 +394,22 @@ const getReplicasFromFlags = (
   }
 
   return undefined
+}
+
+const getPortFromFlags = (
+  flags: Record<string, string | boolean>
+): number | undefined => {
+  const port = flags['port']
+  if (typeof port !== 'string') {
+    return undefined
+  }
+
+  const parsed = parseInt(port, 10)
+  if (isNaN(parsed)) {
+    return undefined
+  }
+
+  return parsed
 }
 
 // ─── Validation ──────────────────────────────────────────────────────────
