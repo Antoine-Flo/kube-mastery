@@ -163,7 +163,7 @@ describe('kubectl get handler - nodes', () => {
       const result = handleGet(state, parsed)
 
       expect(result).toContain('"apiVersion": "v1"')
-      expect(result).toContain('"kind": "NodeList"')
+      expect(result).toContain('"kind": "List"')
       expect(result).toContain('"items"')
       expect(result).toContain('"control-plane"')
       expect(result).toContain('"worker-node-1"')
@@ -172,7 +172,7 @@ describe('kubectl get handler - nodes', () => {
 
       // Should be valid JSON
       const parsedJson = JSON.parse(result)
-      expect(parsedJson.kind).toBe('NodeList')
+      expect(parsedJson.kind).toBe('List')
       expect(parsedJson.items).toHaveLength(2)
       expect(parsedJson.items[0].metadata.name).toBe('control-plane')
       expect(parsedJson.items[1].metadata.name).toBe('worker-node-1')
@@ -189,7 +189,7 @@ describe('kubectl get handler - nodes', () => {
       const result = handleGet(state, parsed)
 
       expect(result).toContain('apiVersion: v1')
-      expect(result).toContain('kind: NodeList')
+      expect(result).toContain('kind: List')
       expect(result).toContain('items:')
       expect(result).toContain('control-plane')
       expect(result).toContain('worker-node-1')

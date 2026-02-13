@@ -5,6 +5,7 @@
 // Handles memory cleanup and auto-save logic
 
 import { createClusterState } from '../cluster/ClusterState'
+import { DEFAULT_KIND_LIKE_BOOTSTRAP } from '../cluster/systemBootstrap'
 import {
   initializeControllers,
   initializeScheduler
@@ -60,18 +61,26 @@ export function createEmulatedEnvironment(
   let eventBus: EventBus
   let clusterState
   let storageMode: 'indexeddb' | 'none' = 'none'
+  const bootstrapConfig = {
+    ...DEFAULT_KIND_LIKE_BOOTSTRAP,
+    clusterName: 'simulator'
+  } as const
 
   if (providedFilesystemState && providedClusterStateData) {
     // Mode with provided data (for lessons)
     storageMode = userId ? 'indexeddb' : 'none'
     fileSystemState = providedFilesystemState
     eventBus = createEventBus()
-    clusterState = createClusterState(providedClusterStateData, eventBus)
+    clusterState = createClusterState(providedClusterStateData, eventBus, {
+      bootstrap: bootstrapConfig
+    })
   } else {
     storageMode = 'none'
     fileSystemState = createHostFileSystem()
     eventBus = createEventBus()
-    clusterState = createClusterState(eventBus)
+    clusterState = createClusterState(eventBus, {
+      bootstrap: bootstrapConfig
+    })
   }
 
   const shellContextStack = new ShellContextStack(fileSystemState)

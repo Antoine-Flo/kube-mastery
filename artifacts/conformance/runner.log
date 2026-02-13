@@ -25,79 +25,109 @@ No resources found in default namespace.
 [command] kubectl get pods -A
 [exitCode] 0
 [stdout]
-NAMESPACE           NAME                                     READY  STATUS   RESTARTS  AGE
-kube-system         coredns-c313q4p7cd-i7nph                   1/1  Running         0  18s
-kube-system         coredns-hsg3ajubiz-dcywz                   1/1  Running         0  18s
-kube-system         etcd-control-plane                         1/1  Running         0  18s
-kube-system         kindnet-0u5xbu18j3-tf16c                   1/1  Running         0  18s
-kube-system         kindnet-ayn7civj6y-eejs2                   1/1  Running         0  18s
-kube-system         kindnet-qk31m81xcs-xeugx                   1/1  Running         0  18s
-kube-system         kube-apiserver-control-plane               1/1  Running         0  18s
-kube-system         kube-controller-manager-control-plane      1/1  Running         0  18s
-kube-system         kube-proxy-3kotfhaccn-f8grj                1/1  Running         0  18s
-kube-system         kube-proxy-rpfc0wu1fs-9x8qd                1/1  Running         0  18s
-kube-system         kube-proxy-zjmtm29muy-gky1u                1/1  Running         0  18s
-kube-system         kube-scheduler-control-plane               1/1  Running         0  18s
-local-path-storage  local-path-provisioner-7lm2eetwnu-087h2    1/1  Running         0  18s
+NAMESPACE            NAME                                      READY   STATUS    RESTARTS   AGE
+kube-system          coredns-0elnzci0xf-57k14                    1/1   Running          0   15s
+kube-system          coredns-vi2c1u33lu-it3ze                    1/1   Running          0   15s
+kube-system          etcd-control-plane                          1/1   Running          0   15s
+kube-system          kindnet-b13w6uecgm-gmgc1                    1/1   Running          0   15s
+kube-system          kindnet-difribrfg2-f5oc4                    1/1   Running          0   15s
+kube-system          kindnet-jjaxmj5g1h-ea3fr                    1/1   Running          0   15s
+kube-system          kube-apiserver-control-plane                1/1   Running          0   15s
+kube-system          kube-controller-manager-control-plane       1/1   Running          0   15s
+kube-system          kube-proxy-0r07g5g6yd-ztefu                 1/1   Running          0   15s
+kube-system          kube-proxy-2wbtabbxlw-g570o                 1/1   Running          0   15s
+kube-system          kube-proxy-c29tgn4v39-k2ew3                 1/1   Running          0   15s
+kube-system          kube-scheduler-control-plane                1/1   Running          0   15s
+local-path-storage   local-path-provisioner-9ok8bvlmed-94vi7     1/1   Running          0   15s
 [stderr]
 (empty)
 [normalized]
-NAMESPACE           NAME                                     READY  STATUS   RESTARTS  AGE
-kube-system         coredns-<id>                   1/1  Running         0  18s
-kube-system         coredns-<id>                   1/1  Running         0  18s
-kube-system         etcd-control-plane                         1/1  Running         0  18s
-kube-system         kindnet-<id>                   1/1  Running         0  18s
-kube-system         kindnet-<id>                   1/1  Running         0  18s
-kube-system         kindnet-<id>                   1/1  Running         0  18s
-kube-system         kube-apiserver-control-plane               1/1  Running         0  18s
-kube-system         kube-controller-manager-control-plane      1/1  Running         0  18s
-kube-system         kube-proxy-<id>                1/1  Running         0  18s
-kube-system         kube-proxy-<id>                1/1  Running         0  18s
-kube-system         kube-proxy-<id>                1/1  Running         0  18s
-kube-system         kube-scheduler-control-plane               1/1  Running         0  18s
-local-path-storage  local-path-provisioner-<id>    1/1  Running         0  18s
+NAMESPACE            NAME                                      READY   STATUS    RESTARTS   AGE
+kube-system          coredns-<id>                    1/1   Running          0   15s
+kube-system          coredns-<id>                    1/1   Running          0   15s
+kube-system          etcd-control-plane                          1/1   Running          0   15s
+kube-system          kindnet-<id>                    1/1   Running          0   15s
+kube-system          kindnet-<id>                    1/1   Running          0   15s
+kube-system          kindnet-<id>                    1/1   Running          0   15s
+kube-system          kube-apiserver-control-plane                1/1   Running          0   15s
+kube-system          kube-controller-manager-control-plane       1/1   Running          0   15s
+kube-system          kube-proxy-<id>                 1/1   Running          0   15s
+kube-system          kube-proxy-<id>                 1/1   Running          0   15s
+kube-system          kube-proxy-<id>                 1/1   Running          0   15s
+kube-system          kube-scheduler-control-plane                1/1   Running          0   15s
+local-path-storage   local-path-provisioner-<id>     1/1   Running          0   15s
 ---
 [action] minimal-cmd-3 (command)
 [command] kubectl get pods -o yaml
 [exitCode] 0
 [stdout]
-No resources found in default namespace.
+apiVersion: v1
+items: []
+kind: List
+metadata:
+  resourceVersion: ""
 [stderr]
 (empty)
 [normalized]
-No resources found in default namespace.
+apiVersion: v1
+items: []
+kind: List
+metadata:
+  resourceVersion: ""
 ---
 [action] minimal-cmd-4 (command)
 [command] kubectl get pods -o json
 [exitCode] 0
 [stdout]
-No resources found in default namespace.
+{
+    "apiVersion": "v1",
+    "items": [],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}
 [stderr]
 (empty)
 [normalized]
-No resources found in default namespace.
+{
+    "apiVersion": "v1",
+    "items": [],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}
 ---
 [action] minimal-cmd-5 (command)
 [command] kubectl get nodes
 [exitCode] 0
 [stdout]
-No resources found
+NAME                        STATUS     ROLES           AGE   VERSION
+conformance-control-plane   NotReady   control-plane   16s   v1.35.0
+conformance-worker          NotReady   <none>          16s   v1.35.0
+conformance-worker2         NotReady   <none>          16s   v1.35.0
 [stderr]
 (empty)
 [normalized]
-No resources found
+NAME                        STATUS     ROLES           AGE   VERSION
+conformance-control-plane   NotReady   control-plane   16s   v1.35.0
+conformance-worker          NotReady   <none>          16s   v1.35.0
+conformance-worker2         NotReady   <none>          16s   v1.35.0
 ---
 [action] minimal-cmd-6 (command)
 [command] kubectl get configmaps
 [exitCode] 0
 [stdout]
-NAME         DATA  AGE
-placeholder     0  0s
+NAME               DATA   AGE
+kube-root-ca.crt      1   16s
+placeholder           0   0s
 [stderr]
 (empty)
 [normalized]
-NAME         DATA  AGE
-placeholder     0  0s
+NAME               DATA   AGE
+kube-root-ca.crt      1   16s
+placeholder           0   0s
 ---
 [action] minimal-cmd-7 (command)
 [command] kubectl get secrets
@@ -137,63 +167,63 @@ secret/app-secret created
 [command] kubectl get pods
 [exitCode] 0
 [stdout]
-NAME  READY  STATUS   RESTARTS  AGE
-web     1/1  Running         0   0s
+NAME   READY   STATUS    RESTARTS   AGE
+web      1/1   Running          0    0s
 [stderr]
 (empty)
 [normalized]
-NAME  READY  STATUS   RESTARTS  AGE
-web     1/1  Running         0   0s
+NAME   READY   STATUS    RESTARTS   AGE
+web      1/1   Running          0    0s
 ---
 [action] deploy-cm-cmd-2 (command)
 [command] kubectl get pods -A
 [exitCode] 0
 [stdout]
-NAMESPACE           NAME                                     READY  STATUS   RESTARTS  AGE
-default             web                                        1/1  Running         0   0s
-kube-system         coredns-c313q4p7cd-i7nph                   1/1  Running         0  38s
-kube-system         coredns-hsg3ajubiz-dcywz                   1/1  Running         0  38s
-kube-system         etcd-control-plane                         1/1  Running         0  38s
-kube-system         kindnet-0u5xbu18j3-tf16c                   1/1  Running         0  38s
-kube-system         kindnet-ayn7civj6y-eejs2                   1/1  Running         0  38s
-kube-system         kindnet-qk31m81xcs-xeugx                   1/1  Running         0  38s
-kube-system         kube-apiserver-control-plane               1/1  Running         0  38s
-kube-system         kube-controller-manager-control-plane      1/1  Running         0  38s
-kube-system         kube-proxy-3kotfhaccn-f8grj                1/1  Running         0  38s
-kube-system         kube-proxy-rpfc0wu1fs-9x8qd                1/1  Running         0  38s
-kube-system         kube-proxy-zjmtm29muy-gky1u                1/1  Running         0  38s
-kube-system         kube-scheduler-control-plane               1/1  Running         0  38s
-local-path-storage  local-path-provisioner-7lm2eetwnu-087h2    1/1  Running         0  38s
+NAMESPACE            NAME                                      READY   STATUS    RESTARTS   AGE
+default              web                                         1/1   Running          0    0s
+kube-system          coredns-0elnzci0xf-57k14                    1/1   Running          0   35s
+kube-system          coredns-vi2c1u33lu-it3ze                    1/1   Running          0   35s
+kube-system          etcd-control-plane                          1/1   Running          0   35s
+kube-system          kindnet-b13w6uecgm-gmgc1                    1/1   Running          0   35s
+kube-system          kindnet-difribrfg2-f5oc4                    1/1   Running          0   35s
+kube-system          kindnet-jjaxmj5g1h-ea3fr                    1/1   Running          0   35s
+kube-system          kube-apiserver-control-plane                1/1   Running          0   35s
+kube-system          kube-controller-manager-control-plane       1/1   Running          0   35s
+kube-system          kube-proxy-0r07g5g6yd-ztefu                 1/1   Running          0   35s
+kube-system          kube-proxy-2wbtabbxlw-g570o                 1/1   Running          0   35s
+kube-system          kube-proxy-c29tgn4v39-k2ew3                 1/1   Running          0   35s
+kube-system          kube-scheduler-control-plane                1/1   Running          0   35s
+local-path-storage   local-path-provisioner-9ok8bvlmed-94vi7     1/1   Running          0   35s
 [stderr]
 (empty)
 [normalized]
-NAMESPACE           NAME                                     READY  STATUS   RESTARTS  AGE
-default             web                                        1/1  Running         0   0s
-kube-system         coredns-<id>                   1/1  Running         0  38s
-kube-system         coredns-<id>                   1/1  Running         0  38s
-kube-system         etcd-control-plane                         1/1  Running         0  38s
-kube-system         kindnet-<id>                   1/1  Running         0  38s
-kube-system         kindnet-<id>                   1/1  Running         0  38s
-kube-system         kindnet-<id>                   1/1  Running         0  38s
-kube-system         kube-apiserver-control-plane               1/1  Running         0  38s
-kube-system         kube-controller-manager-control-plane      1/1  Running         0  38s
-kube-system         kube-proxy-<id>                1/1  Running         0  38s
-kube-system         kube-proxy-<id>                1/1  Running         0  38s
-kube-system         kube-proxy-<id>                1/1  Running         0  38s
-kube-system         kube-scheduler-control-plane               1/1  Running         0  38s
-local-path-storage  local-path-provisioner-<id>    1/1  Running         0  38s
+NAMESPACE            NAME                                      READY   STATUS    RESTARTS   AGE
+default              web                                         1/1   Running          0    0s
+kube-system          coredns-<id>                    1/1   Running          0   35s
+kube-system          coredns-<id>                    1/1   Running          0   35s
+kube-system          etcd-control-plane                          1/1   Running          0   35s
+kube-system          kindnet-<id>                    1/1   Running          0   35s
+kube-system          kindnet-<id>                    1/1   Running          0   35s
+kube-system          kindnet-<id>                    1/1   Running          0   35s
+kube-system          kube-apiserver-control-plane                1/1   Running          0   35s
+kube-system          kube-controller-manager-control-plane       1/1   Running          0   35s
+kube-system          kube-proxy-<id>                 1/1   Running          0   35s
+kube-system          kube-proxy-<id>                 1/1   Running          0   35s
+kube-system          kube-proxy-<id>                 1/1   Running          0   35s
+kube-system          kube-scheduler-control-plane                1/1   Running          0   35s
+local-path-storage   local-path-provisioner-<id>     1/1   Running          0   35s
 ---
 [action] deploy-cm-cmd-3 (command)
 [command] kubectl get pods -o wide
 [exitCode] 0
 [stdout]
-NAME  READY  STATUS   RESTARTS  AGE
-web     1/1  Running         0   0s
+NAME   READY   STATUS    RESTARTS   AGE
+web      1/1   Running          0    0s
 [stderr]
 (empty)
 [normalized]
-NAME  READY  STATUS   RESTARTS  AGE
-web     1/1  Running         0   0s
+NAME   READY   STATUS    RESTARTS   AGE
+web      1/1   Running          0    0s
 ---
 [action] deploy-cm-cmd-4 (command)
 [command] kubectl describe pod web
@@ -253,53 +283,51 @@ Events:  <none>
 [command] kubectl get pod web -o yaml
 [exitCode] 0
 [stdout]
-- apiVersion: v1
-  kind: Pod
-  metadata:
-    name: web
-    namespace: default
-    creationTimestamp: 2026-02-13T11:59:45.291Z
-  spec:
-    containers:
-      - name: nginx
-        image: nginx:1.25
-        ports:
-          - containerPort: 80
-  status:
-    phase: Running
-    restartCount: 0
-    containerStatuses:
-      - name: nginx
-        image: nginx:1.25
-        ready: true
-        restartCount: 0
-        state: Running
-
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+  namespace: default
+  creationTimestamp: 2026-02-13T12:51:51.944Z
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25
+      ports:
+        - containerPort: 80
+status:
+  phase: Running
+  restartCount: 0
+  containerStatuses:
+    - name: nginx
+      image: nginx:1.25
+      ready: true
+      restartCount: 0
+      state: Running
 [stderr]
 (empty)
 [normalized]
-- apiVersion: v1
-  kind: Pod
-  metadata:
-    name: web
-    namespace: default
-    creationTimestamp: <timestamp>
-  spec:
-    containers:
-      - name: nginx
-        image: nginx:1.25
-        ports:
-          - containerPort: 80
-  status:
-    phase: Running
-    restartCount: 0
-    containerStatuses:
-      - name: nginx
-        image: nginx:1.25
-        ready: true
-        restartCount: 0
-        state: Running
-
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+  namespace: default
+  creationTimestamp: <timestamp>
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25
+      ports:
+        - containerPort: 80
+status:
+  phase: Running
+  restartCount: 0
+  containerStatuses:
+    - name: nginx
+      image: nginx:1.25
+      ready: true
+      restartCount: 0
+      state: Running
 ---
 [action] deploy-cm-cmd-6 (command)
 [command] kubectl get deployments
@@ -365,17 +393,17 @@ deployment.apps/exhaustive-web scaled
 [command] kubectl get deployments
 [exitCode] 0
 [stdout]
-NAME              READY  UP-TO-DATE  AVAILABLE  AGE
-exhaustive-web    0/3             0          0  0s
-exhaustive-api    0/2             0          0  0s
-exhaustive-multi  0/1             0          0  0s
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+exhaustive-web     0/3              0           0   0s
+exhaustive-api     0/2              0           0   0s
+exhaustive-multi   0/1              0           0   0s
 [stderr]
 (empty)
 [normalized]
-NAME              READY  UP-TO-DATE  AVAILABLE  AGE
-exhaustive-web    0/3             0          0  0s
-exhaustive-api    0/2             0          0  0s
-exhaustive-multi  0/1             0          0  0s
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+exhaustive-web     0/3              0           0   0s
+exhaustive-api     0/2              0           0   0s
+exhaustive-multi   0/1              0           0   0s
 ---
 [action] deploy-cm-cmd-13 (command)
 [command] kubectl delete deployments exhaustive-api
@@ -652,9 +680,21 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
       "apiVersion": "v1",
       "kind": "ConfigMap",
       "metadata": {
+        "name": "kube-root-ca.crt",
+        "namespace": "default",
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
+      },
+      "data": {
+        "ca.crt": "-----BEGIN CERTIFICATE-----\nSIMULATED-CA\n-----END CERTIFICATE-----"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
         "name": "placeholder",
         "namespace": "default",
-        "creationTimestamp": "2026-02-13T11:59:48.170Z"
+        "creationTimestamp": "2026-02-13T12:51:54.766Z"
       },
       "data": {}
     }
@@ -703,9 +743,9 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "coredns-c313q4p7cd-i7nph",
+        "name": "coredns-0elnzci0xf-57k14",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -749,9 +789,9 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "coredns-hsg3ajubiz-dcywz",
+        "name": "coredns-vi2c1u33lu-it3ze",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -797,7 +837,7 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
       "metadata": {
         "name": "etcd-control-plane",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -841,9 +881,9 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "kindnet-ayn7civj6y-eejs2",
+        "name": "kindnet-jjaxmj5g1h-ea3fr",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -887,9 +927,9 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "kindnet-0u5xbu18j3-tf16c",
+        "name": "kindnet-b13w6uecgm-gmgc1",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -933,9 +973,9 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "kindnet-qk31m81xcs-xeugx",
+        "name": "kindnet-difribrfg2-f5oc4",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -981,7 +1021,7 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
       "metadata": {
         "name": "kube-apiserver-control-plane",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -1027,7 +1067,7 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
       "metadata": {
         "name": "kube-controller-manager-control-plane",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -1071,9 +1111,9 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "kube-proxy-zjmtm29muy-gky1u",
+        "name": "kube-proxy-c29tgn4v39-k2ew3",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -1117,9 +1157,9 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "kube-proxy-rpfc0wu1fs-9x8qd",
+        "name": "kube-proxy-0r07g5g6yd-ztefu",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -1163,9 +1203,9 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "kube-proxy-3kotfhaccn-f8grj",
+        "name": "kube-proxy-2wbtabbxlw-g570o",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -1211,7 +1251,7 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
       "metadata": {
         "name": "kube-scheduler-control-plane",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -1313,6 +1353,18 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
   "apiVersion": "v1",
   "kind": "ConfigMapList",
   "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "kube-root-ca.crt",
+        "namespace": "default",
+        "creationTimestamp": "<timestamp>"
+      },
+      "data": {
+        "ca.crt": "-----BEGIN CERTIFICATE-----\nSIMULATED-CA\n-----END CERTIFICATE-----"
+      }
+    },
     {
       "apiVersion": "v1",
       "kind": "ConfigMap",
@@ -1973,9 +2025,20 @@ items:
   - apiVersion: v1
     kind: ConfigMap
     metadata:
+      name: kube-root-ca.crt
+      namespace: default
+      creationTimestamp: 2026-02-13T12:51:16.456Z
+    data:
+      ca.crt: |-
+        -----BEGIN CERTIFICATE-----
+        SIMULATED-CA
+        -----END CERTIFICATE-----
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
       name: placeholder
       namespace: default
-      creationTimestamp: 2026-02-13T11:59:48.170Z
+      creationTimestamp: 2026-02-13T12:51:54.766Z
     data: {}
 
 apiVersion: v1
@@ -2012,9 +2075,9 @@ items:
   - apiVersion: v1
     kind: Pod
     metadata:
-      name: coredns-c313q4p7cd-i7nph
+      name: coredns-0elnzci0xf-57k14
       namespace: kube-system
-      creationTimestamp: 2026-02-13T11:59:06.743Z
+      creationTimestamp: 2026-02-13T12:51:16.456Z
     spec:
       containers:
         - name: coredns
@@ -2051,8 +2114,8 @@ items:
                         #!/bin/sh
                         # Simulated shell binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     bash:
                       type: file
                       name: bash
@@ -2061,8 +2124,8 @@ items:
                         #!/bin/bash
                         # Simulated bash binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     ls:
                       type: file
                       name: ls
@@ -2071,8 +2134,8 @@ items:
                         #!/bin/sh
                         # Simulated ls binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cat:
                       type: file
                       name: cat
@@ -2081,8 +2144,8 @@ items:
                         #!/bin/sh
                         # Simulated cat binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     grep:
                       type: file
                       name: grep
@@ -2091,8 +2154,8 @@ items:
                         #!/bin/sh
                         # Simulated grep binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     ps:
                       type: file
                       name: ps
@@ -2101,8 +2164,8 @@ items:
                         #!/bin/sh
                         # Simulated ps binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     env:
                       type: file
                       name: env
@@ -2111,8 +2174,8 @@ items:
                         #!/bin/sh
                         # Simulated env binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     mkdir:
                       type: file
                       name: mkdir
@@ -2121,8 +2184,8 @@ items:
                         #!/bin/sh
                         # Simulated mkdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     rmdir:
                       type: file
                       name: rmdir
@@ -2131,8 +2194,8 @@ items:
                         #!/bin/sh
                         # Simulated rmdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cp:
                       type: file
                       name: cp
@@ -2141,8 +2204,8 @@ items:
                         #!/bin/sh
                         # Simulated cp binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     mv:
                       type: file
                       name: mv
@@ -2151,8 +2214,8 @@ items:
                         #!/bin/sh
                         # Simulated mv binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     rm:
                       type: file
                       name: rm
@@ -2161,8 +2224,8 @@ items:
                         #!/bin/sh
                         # Simulated rm binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     echo:
                       type: file
                       name: echo
@@ -2171,8 +2234,8 @@ items:
                         #!/bin/sh
                         # Simulated echo binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     pwd:
                       type: file
                       name: pwd
@@ -2181,8 +2244,8 @@ items:
                         #!/bin/sh
                         # Simulated pwd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cd:
                       type: file
                       name: cd
@@ -2191,8 +2254,8 @@ items:
                         #!/bin/sh
                         # Simulated cd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 etc:
                   type: directory
                   name: etc
@@ -2204,8 +2267,8 @@ items:
                       path: /etc/hostname
                       content: container-hostname
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     hosts:
                       type: file
                       name: hosts
@@ -2214,8 +2277,8 @@ items:
                         127.0.0.1	localhost
                         ::1		localhost ip6-localhost ip6-loopback
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     passwd:
                       type: file
                       name: passwd
@@ -2224,8 +2287,8 @@ items:
                         root:x:0:0:root:/root:/bin/bash
                         kube:x:1000:1000:kube:/home/kube:/bin/bash
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     group:
                       type: file
                       name: group
@@ -2234,8 +2297,8 @@ items:
                         root:x:0:
                         kube:x:1000:
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     resolv.conf:
                       type: file
                       name: resolv.conf
@@ -2244,8 +2307,8 @@ items:
                         nameserver 8.8.8.8
                         nameserver 8.8.4.4
                       extension: .conf
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     os-release:
                       type: file
                       name: os-release
@@ -2257,32 +2320,32 @@ items:
                         VERSION="12 (bookworm)"
                         ID=debian
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     fstab:
                       type: file
                       name: fstab
                       path: /etc/fstab
                       content: "# /etc/fstab: static file system information."
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     issue:
                       type: file
                       name: issue
                       path: /etc/issue
                       content: Debian GNU/Linux 12 \n \l
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     motd:
                       type: file
                       name: motd
                       path: /etc/motd
                       content: Welcome to Debian GNU/Linux 12 (bookworm)
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 home:
                   type: directory
                   name: home
@@ -2309,16 +2372,16 @@ items:
                           . /etc/bash.bashrc
                         fi
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     .profile:
                       type: file
                       name: .profile
                       path: /root/.profile
                       content: "# root .profile"
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 tmp:
                   type: directory
                   name: tmp
@@ -2340,16 +2403,16 @@ items:
                           path: /var/log/syslog
                           content: "# System log file"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.744Z
-                          modifiedAt: 2026-02-13T11:59:06.744Z
+                          createdAt: 2026-02-13T12:51:16.457Z
+                          modifiedAt: 2026-02-13T12:51:16.457Z
                         messages:
                           type: file
                           name: messages
                           path: /var/log/messages
                           content: "# System messages"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.744Z
-                          modifiedAt: 2026-02-13T11:59:06.744Z
+                          createdAt: 2026-02-13T12:51:16.457Z
+                          modifiedAt: 2026-02-13T12:51:16.457Z
                     run:
                       type: directory
                       name: run
@@ -2469,9 +2532,9 @@ items:
   - apiVersion: v1
     kind: Pod
     metadata:
-      name: coredns-hsg3ajubiz-dcywz
+      name: coredns-vi2c1u33lu-it3ze
       namespace: kube-system
-      creationTimestamp: 2026-02-13T11:59:06.743Z
+      creationTimestamp: 2026-02-13T12:51:16.456Z
     spec:
       containers:
         - name: coredns
@@ -2508,8 +2571,8 @@ items:
                         #!/bin/sh
                         # Simulated shell binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     bash:
                       type: file
                       name: bash
@@ -2518,8 +2581,8 @@ items:
                         #!/bin/bash
                         # Simulated bash binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     ls:
                       type: file
                       name: ls
@@ -2528,8 +2591,8 @@ items:
                         #!/bin/sh
                         # Simulated ls binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cat:
                       type: file
                       name: cat
@@ -2538,8 +2601,8 @@ items:
                         #!/bin/sh
                         # Simulated cat binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     grep:
                       type: file
                       name: grep
@@ -2548,8 +2611,8 @@ items:
                         #!/bin/sh
                         # Simulated grep binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     ps:
                       type: file
                       name: ps
@@ -2558,8 +2621,8 @@ items:
                         #!/bin/sh
                         # Simulated ps binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     env:
                       type: file
                       name: env
@@ -2568,8 +2631,8 @@ items:
                         #!/bin/sh
                         # Simulated env binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     mkdir:
                       type: file
                       name: mkdir
@@ -2578,8 +2641,8 @@ items:
                         #!/bin/sh
                         # Simulated mkdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     rmdir:
                       type: file
                       name: rmdir
@@ -2588,8 +2651,8 @@ items:
                         #!/bin/sh
                         # Simulated rmdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cp:
                       type: file
                       name: cp
@@ -2598,8 +2661,8 @@ items:
                         #!/bin/sh
                         # Simulated cp binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     mv:
                       type: file
                       name: mv
@@ -2608,8 +2671,8 @@ items:
                         #!/bin/sh
                         # Simulated mv binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     rm:
                       type: file
                       name: rm
@@ -2618,8 +2681,8 @@ items:
                         #!/bin/sh
                         # Simulated rm binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     echo:
                       type: file
                       name: echo
@@ -2628,8 +2691,8 @@ items:
                         #!/bin/sh
                         # Simulated echo binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     pwd:
                       type: file
                       name: pwd
@@ -2638,8 +2701,8 @@ items:
                         #!/bin/sh
                         # Simulated pwd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cd:
                       type: file
                       name: cd
@@ -2648,8 +2711,8 @@ items:
                         #!/bin/sh
                         # Simulated cd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 etc:
                   type: directory
                   name: etc
@@ -2661,8 +2724,8 @@ items:
                       path: /etc/hostname
                       content: container-hostname
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     hosts:
                       type: file
                       name: hosts
@@ -2671,8 +2734,8 @@ items:
                         127.0.0.1	localhost
                         ::1		localhost ip6-localhost ip6-loopback
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     passwd:
                       type: file
                       name: passwd
@@ -2681,8 +2744,8 @@ items:
                         root:x:0:0:root:/root:/bin/bash
                         kube:x:1000:1000:kube:/home/kube:/bin/bash
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     group:
                       type: file
                       name: group
@@ -2691,8 +2754,8 @@ items:
                         root:x:0:
                         kube:x:1000:
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     resolv.conf:
                       type: file
                       name: resolv.conf
@@ -2701,8 +2764,8 @@ items:
                         nameserver 8.8.8.8
                         nameserver 8.8.4.4
                       extension: .conf
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     os-release:
                       type: file
                       name: os-release
@@ -2714,32 +2777,32 @@ items:
                         VERSION="12 (bookworm)"
                         ID=debian
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     fstab:
                       type: file
                       name: fstab
                       path: /etc/fstab
                       content: "# /etc/fstab: static file system information."
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     issue:
                       type: file
                       name: issue
                       path: /etc/issue
                       content: Debian GNU/Linux 12 \n \l
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     motd:
                       type: file
                       name: motd
                       path: /etc/motd
                       content: Welcome to Debian GNU/Linux 12 (bookworm)
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 home:
                   type: directory
                   name: home
@@ -2766,16 +2829,16 @@ items:
                           . /etc/bash.bashrc
                         fi
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     .profile:
                       type: file
                       name: .profile
                       path: /root/.profile
                       content: "# root .profile"
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 tmp:
                   type: directory
                   name: tmp
@@ -2797,16 +2860,16 @@ items:
                           path: /var/log/syslog
                           content: "# System log file"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.744Z
-                          modifiedAt: 2026-02-13T11:59:06.744Z
+                          createdAt: 2026-02-13T12:51:16.457Z
+                          modifiedAt: 2026-02-13T12:51:16.457Z
                         messages:
                           type: file
                           name: messages
                           path: /var/log/messages
                           content: "# System messages"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.744Z
-                          modifiedAt: 2026-02-13T11:59:06.744Z
+                          createdAt: 2026-02-13T12:51:16.457Z
+                          modifiedAt: 2026-02-13T12:51:16.457Z
                     run:
                       type: directory
                       name: run
@@ -2928,7 +2991,7 @@ items:
     metadata:
       name: etcd-control-plane
       namespace: kube-system
-      creationTimestamp: 2026-02-13T11:59:06.743Z
+      creationTimestamp: 2026-02-13T12:51:16.456Z
     spec:
       containers:
         - name: etcd
@@ -2965,8 +3028,8 @@ items:
                         #!/bin/sh
                         # Simulated shell binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     bash:
                       type: file
                       name: bash
@@ -2975,8 +3038,8 @@ items:
                         #!/bin/bash
                         # Simulated bash binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     ls:
                       type: file
                       name: ls
@@ -2985,8 +3048,8 @@ items:
                         #!/bin/sh
                         # Simulated ls binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cat:
                       type: file
                       name: cat
@@ -2995,8 +3058,8 @@ items:
                         #!/bin/sh
                         # Simulated cat binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     grep:
                       type: file
                       name: grep
@@ -3005,8 +3068,8 @@ items:
                         #!/bin/sh
                         # Simulated grep binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     ps:
                       type: file
                       name: ps
@@ -3015,8 +3078,8 @@ items:
                         #!/bin/sh
                         # Simulated ps binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     env:
                       type: file
                       name: env
@@ -3025,8 +3088,8 @@ items:
                         #!/bin/sh
                         # Simulated env binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     mkdir:
                       type: file
                       name: mkdir
@@ -3035,8 +3098,8 @@ items:
                         #!/bin/sh
                         # Simulated mkdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     rmdir:
                       type: file
                       name: rmdir
@@ -3045,8 +3108,8 @@ items:
                         #!/bin/sh
                         # Simulated rmdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cp:
                       type: file
                       name: cp
@@ -3055,8 +3118,8 @@ items:
                         #!/bin/sh
                         # Simulated cp binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     mv:
                       type: file
                       name: mv
@@ -3065,8 +3128,8 @@ items:
                         #!/bin/sh
                         # Simulated mv binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     rm:
                       type: file
                       name: rm
@@ -3075,8 +3138,8 @@ items:
                         #!/bin/sh
                         # Simulated rm binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     echo:
                       type: file
                       name: echo
@@ -3085,8 +3148,8 @@ items:
                         #!/bin/sh
                         # Simulated echo binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     pwd:
                       type: file
                       name: pwd
@@ -3095,8 +3158,8 @@ items:
                         #!/bin/sh
                         # Simulated pwd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cd:
                       type: file
                       name: cd
@@ -3105,8 +3168,8 @@ items:
                         #!/bin/sh
                         # Simulated cd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 etc:
                   type: directory
                   name: etc
@@ -3118,8 +3181,8 @@ items:
                       path: /etc/hostname
                       content: container-hostname
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     hosts:
                       type: file
                       name: hosts
@@ -3128,8 +3191,8 @@ items:
                         127.0.0.1	localhost
                         ::1		localhost ip6-localhost ip6-loopback
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     passwd:
                       type: file
                       name: passwd
@@ -3138,8 +3201,8 @@ items:
                         root:x:0:0:root:/root:/bin/bash
                         kube:x:1000:1000:kube:/home/kube:/bin/bash
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     group:
                       type: file
                       name: group
@@ -3148,8 +3211,8 @@ items:
                         root:x:0:
                         kube:x:1000:
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     resolv.conf:
                       type: file
                       name: resolv.conf
@@ -3158,8 +3221,8 @@ items:
                         nameserver 8.8.8.8
                         nameserver 8.8.4.4
                       extension: .conf
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     os-release:
                       type: file
                       name: os-release
@@ -3171,32 +3234,32 @@ items:
                         VERSION="12 (bookworm)"
                         ID=debian
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     fstab:
                       type: file
                       name: fstab
                       path: /etc/fstab
                       content: "# /etc/fstab: static file system information."
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     issue:
                       type: file
                       name: issue
                       path: /etc/issue
                       content: Debian GNU/Linux 12 \n \l
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     motd:
                       type: file
                       name: motd
                       path: /etc/motd
                       content: Welcome to Debian GNU/Linux 12 (bookworm)
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 home:
                   type: directory
                   name: home
@@ -3223,16 +3286,16 @@ items:
                           . /etc/bash.bashrc
                         fi
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     .profile:
                       type: file
                       name: .profile
                       path: /root/.profile
                       content: "# root .profile"
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 tmp:
                   type: directory
                   name: tmp
@@ -3254,16 +3317,16 @@ items:
                           path: /var/log/syslog
                           content: "# System log file"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.744Z
-                          modifiedAt: 2026-02-13T11:59:06.744Z
+                          createdAt: 2026-02-13T12:51:16.457Z
+                          modifiedAt: 2026-02-13T12:51:16.457Z
                         messages:
                           type: file
                           name: messages
                           path: /var/log/messages
                           content: "# System messages"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.744Z
-                          modifiedAt: 2026-02-13T11:59:06.744Z
+                          createdAt: 2026-02-13T12:51:16.457Z
+                          modifiedAt: 2026-02-13T12:51:16.457Z
                     run:
                       type: directory
                       name: run
@@ -3383,9 +3446,9 @@ items:
   - apiVersion: v1
     kind: Pod
     metadata:
-      name: kindnet-ayn7civj6y-eejs2
+      name: kindnet-jjaxmj5g1h-ea3fr
       namespace: kube-system
-      creationTimestamp: 2026-02-13T11:59:06.743Z
+      creationTimestamp: 2026-02-13T12:51:16.456Z
     spec:
       containers:
         - name: kindnet
@@ -3422,8 +3485,8 @@ items:
                         #!/bin/sh
                         # Simulated shell binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     bash:
                       type: file
                       name: bash
@@ -3432,8 +3495,8 @@ items:
                         #!/bin/bash
                         # Simulated bash binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     ls:
                       type: file
                       name: ls
@@ -3442,8 +3505,8 @@ items:
                         #!/bin/sh
                         # Simulated ls binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cat:
                       type: file
                       name: cat
@@ -3452,8 +3515,8 @@ items:
                         #!/bin/sh
                         # Simulated cat binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     grep:
                       type: file
                       name: grep
@@ -3462,8 +3525,8 @@ items:
                         #!/bin/sh
                         # Simulated grep binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     ps:
                       type: file
                       name: ps
@@ -3472,8 +3535,8 @@ items:
                         #!/bin/sh
                         # Simulated ps binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     env:
                       type: file
                       name: env
@@ -3482,8 +3545,8 @@ items:
                         #!/bin/sh
                         # Simulated env binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     mkdir:
                       type: file
                       name: mkdir
@@ -3492,8 +3555,8 @@ items:
                         #!/bin/sh
                         # Simulated mkdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     rmdir:
                       type: file
                       name: rmdir
@@ -3502,8 +3565,8 @@ items:
                         #!/bin/sh
                         # Simulated rmdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cp:
                       type: file
                       name: cp
@@ -3512,8 +3575,8 @@ items:
                         #!/bin/sh
                         # Simulated cp binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     mv:
                       type: file
                       name: mv
@@ -3522,8 +3585,8 @@ items:
                         #!/bin/sh
                         # Simulated mv binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     rm:
                       type: file
                       name: rm
@@ -3532,8 +3595,8 @@ items:
                         #!/bin/sh
                         # Simulated rm binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     echo:
                       type: file
                       name: echo
@@ -3542,8 +3605,8 @@ items:
                         #!/bin/sh
                         # Simulated echo binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     pwd:
                       type: file
                       name: pwd
@@ -3552,8 +3615,8 @@ items:
                         #!/bin/sh
                         # Simulated pwd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cd:
                       type: file
                       name: cd
@@ -3562,8 +3625,8 @@ items:
                         #!/bin/sh
                         # Simulated cd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 etc:
                   type: directory
                   name: etc
@@ -3575,8 +3638,8 @@ items:
                       path: /etc/hostname
                       content: container-hostname
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     hosts:
                       type: file
                       name: hosts
@@ -3585,8 +3648,8 @@ items:
                         127.0.0.1	localhost
                         ::1		localhost ip6-localhost ip6-loopback
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     passwd:
                       type: file
                       name: passwd
@@ -3595,8 +3658,8 @@ items:
                         root:x:0:0:root:/root:/bin/bash
                         kube:x:1000:1000:kube:/home/kube:/bin/bash
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     group:
                       type: file
                       name: group
@@ -3605,8 +3668,8 @@ items:
                         root:x:0:
                         kube:x:1000:
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     resolv.conf:
                       type: file
                       name: resolv.conf
@@ -3615,8 +3678,8 @@ items:
                         nameserver 8.8.8.8
                         nameserver 8.8.4.4
                       extension: .conf
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     os-release:
                       type: file
                       name: os-release
@@ -3628,32 +3691,32 @@ items:
                         VERSION="12 (bookworm)"
                         ID=debian
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     fstab:
                       type: file
                       name: fstab
                       path: /etc/fstab
                       content: "# /etc/fstab: static file system information."
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     issue:
                       type: file
                       name: issue
                       path: /etc/issue
                       content: Debian GNU/Linux 12 \n \l
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     motd:
                       type: file
                       name: motd
                       path: /etc/motd
                       content: Welcome to Debian GNU/Linux 12 (bookworm)
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 home:
                   type: directory
                   name: home
@@ -3680,16 +3743,16 @@ items:
                           . /etc/bash.bashrc
                         fi
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     .profile:
                       type: file
                       name: .profile
                       path: /root/.profile
                       content: "# root .profile"
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 tmp:
                   type: directory
                   name: tmp
@@ -3711,16 +3774,16 @@ items:
                           path: /var/log/syslog
                           content: "# System log file"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.744Z
-                          modifiedAt: 2026-02-13T11:59:06.744Z
+                          createdAt: 2026-02-13T12:51:16.457Z
+                          modifiedAt: 2026-02-13T12:51:16.457Z
                         messages:
                           type: file
                           name: messages
                           path: /var/log/messages
                           content: "# System messages"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.744Z
-                          modifiedAt: 2026-02-13T11:59:06.744Z
+                          createdAt: 2026-02-13T12:51:16.457Z
+                          modifiedAt: 2026-02-13T12:51:16.457Z
                     run:
                       type: directory
                       name: run
@@ -3840,9 +3903,9 @@ items:
   - apiVersion: v1
     kind: Pod
     metadata:
-      name: kindnet-0u5xbu18j3-tf16c
+      name: kindnet-b13w6uecgm-gmgc1
       namespace: kube-system
-      creationTimestamp: 2026-02-13T11:59:06.743Z
+      creationTimestamp: 2026-02-13T12:51:16.456Z
     spec:
       containers:
         - name: kindnet
@@ -3879,8 +3942,8 @@ items:
                         #!/bin/sh
                         # Simulated shell binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     bash:
                       type: file
                       name: bash
@@ -3889,8 +3952,8 @@ items:
                         #!/bin/bash
                         # Simulated bash binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     ls:
                       type: file
                       name: ls
@@ -3899,8 +3962,8 @@ items:
                         #!/bin/sh
                         # Simulated ls binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cat:
                       type: file
                       name: cat
@@ -3909,8 +3972,8 @@ items:
                         #!/bin/sh
                         # Simulated cat binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     grep:
                       type: file
                       name: grep
@@ -3919,8 +3982,8 @@ items:
                         #!/bin/sh
                         # Simulated grep binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     ps:
                       type: file
                       name: ps
@@ -3929,8 +3992,8 @@ items:
                         #!/bin/sh
                         # Simulated ps binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     env:
                       type: file
                       name: env
@@ -3939,8 +4002,8 @@ items:
                         #!/bin/sh
                         # Simulated env binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     mkdir:
                       type: file
                       name: mkdir
@@ -3949,8 +4012,8 @@ items:
                         #!/bin/sh
                         # Simulated mkdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     rmdir:
                       type: file
                       name: rmdir
@@ -3959,8 +4022,8 @@ items:
                         #!/bin/sh
                         # Simulated rmdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cp:
                       type: file
                       name: cp
@@ -3969,8 +4032,8 @@ items:
                         #!/bin/sh
                         # Simulated cp binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     mv:
                       type: file
                       name: mv
@@ -3979,8 +4042,8 @@ items:
                         #!/bin/sh
                         # Simulated mv binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     rm:
                       type: file
                       name: rm
@@ -3989,8 +4052,8 @@ items:
                         #!/bin/sh
                         # Simulated rm binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     echo:
                       type: file
                       name: echo
@@ -3999,8 +4062,8 @@ items:
                         #!/bin/sh
                         # Simulated echo binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     pwd:
                       type: file
                       name: pwd
@@ -4009,8 +4072,8 @@ items:
                         #!/bin/sh
                         # Simulated pwd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cd:
                       type: file
                       name: cd
@@ -4019,8 +4082,8 @@ items:
                         #!/bin/sh
                         # Simulated cd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 etc:
                   type: directory
                   name: etc
@@ -4032,8 +4095,8 @@ items:
                       path: /etc/hostname
                       content: container-hostname
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     hosts:
                       type: file
                       name: hosts
@@ -4042,8 +4105,8 @@ items:
                         127.0.0.1	localhost
                         ::1		localhost ip6-localhost ip6-loopback
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     passwd:
                       type: file
                       name: passwd
@@ -4052,8 +4115,8 @@ items:
                         root:x:0:0:root:/root:/bin/bash
                         kube:x:1000:1000:kube:/home/kube:/bin/bash
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     group:
                       type: file
                       name: group
@@ -4062,8 +4125,8 @@ items:
                         root:x:0:
                         kube:x:1000:
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     resolv.conf:
                       type: file
                       name: resolv.conf
@@ -4072,8 +4135,8 @@ items:
                         nameserver 8.8.8.8
                         nameserver 8.8.4.4
                       extension: .conf
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     os-release:
                       type: file
                       name: os-release
@@ -4085,32 +4148,32 @@ items:
                         VERSION="12 (bookworm)"
                         ID=debian
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     fstab:
                       type: file
                       name: fstab
                       path: /etc/fstab
                       content: "# /etc/fstab: static file system information."
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     issue:
                       type: file
                       name: issue
                       path: /etc/issue
                       content: Debian GNU/Linux 12 \n \l
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     motd:
                       type: file
                       name: motd
                       path: /etc/motd
                       content: Welcome to Debian GNU/Linux 12 (bookworm)
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 home:
                   type: directory
                   name: home
@@ -4137,16 +4200,16 @@ items:
                           . /etc/bash.bashrc
                         fi
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     .profile:
                       type: file
                       name: .profile
                       path: /root/.profile
                       content: "# root .profile"
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 tmp:
                   type: directory
                   name: tmp
@@ -4168,16 +4231,16 @@ items:
                           path: /var/log/syslog
                           content: "# System log file"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.744Z
-                          modifiedAt: 2026-02-13T11:59:06.744Z
+                          createdAt: 2026-02-13T12:51:16.457Z
+                          modifiedAt: 2026-02-13T12:51:16.457Z
                         messages:
                           type: file
                           name: messages
                           path: /var/log/messages
                           content: "# System messages"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.744Z
-                          modifiedAt: 2026-02-13T11:59:06.744Z
+                          createdAt: 2026-02-13T12:51:16.457Z
+                          modifiedAt: 2026-02-13T12:51:16.457Z
                     run:
                       type: directory
                       name: run
@@ -4297,9 +4360,9 @@ items:
   - apiVersion: v1
     kind: Pod
     metadata:
-      name: kindnet-qk31m81xcs-xeugx
+      name: kindnet-difribrfg2-f5oc4
       namespace: kube-system
-      creationTimestamp: 2026-02-13T11:59:06.743Z
+      creationTimestamp: 2026-02-13T12:51:16.456Z
     spec:
       containers:
         - name: kindnet
@@ -4336,8 +4399,8 @@ items:
                         #!/bin/sh
                         # Simulated shell binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     bash:
                       type: file
                       name: bash
@@ -4346,8 +4409,8 @@ items:
                         #!/bin/bash
                         # Simulated bash binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     ls:
                       type: file
                       name: ls
@@ -4356,8 +4419,8 @@ items:
                         #!/bin/sh
                         # Simulated ls binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cat:
                       type: file
                       name: cat
@@ -4366,8 +4429,8 @@ items:
                         #!/bin/sh
                         # Simulated cat binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     grep:
                       type: file
                       name: grep
@@ -4376,8 +4439,8 @@ items:
                         #!/bin/sh
                         # Simulated grep binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     ps:
                       type: file
                       name: ps
@@ -4386,8 +4449,8 @@ items:
                         #!/bin/sh
                         # Simulated ps binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     env:
                       type: file
                       name: env
@@ -4396,8 +4459,8 @@ items:
                         #!/bin/sh
                         # Simulated env binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     mkdir:
                       type: file
                       name: mkdir
@@ -4406,8 +4469,8 @@ items:
                         #!/bin/sh
                         # Simulated mkdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     rmdir:
                       type: file
                       name: rmdir
@@ -4416,8 +4479,8 @@ items:
                         #!/bin/sh
                         # Simulated rmdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cp:
                       type: file
                       name: cp
@@ -4426,8 +4489,8 @@ items:
                         #!/bin/sh
                         # Simulated cp binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     mv:
                       type: file
                       name: mv
@@ -4436,8 +4499,8 @@ items:
                         #!/bin/sh
                         # Simulated mv binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     rm:
                       type: file
                       name: rm
@@ -4446,8 +4509,8 @@ items:
                         #!/bin/sh
                         # Simulated rm binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     echo:
                       type: file
                       name: echo
@@ -4456,8 +4519,8 @@ items:
                         #!/bin/sh
                         # Simulated echo binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     pwd:
                       type: file
                       name: pwd
@@ -4466,8 +4529,8 @@ items:
                         #!/bin/sh
                         # Simulated pwd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cd:
                       type: file
                       name: cd
@@ -4476,8 +4539,8 @@ items:
                         #!/bin/sh
                         # Simulated cd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 etc:
                   type: directory
                   name: etc
@@ -4489,8 +4552,8 @@ items:
                       path: /etc/hostname
                       content: container-hostname
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     hosts:
                       type: file
                       name: hosts
@@ -4499,8 +4562,8 @@ items:
                         127.0.0.1	localhost
                         ::1		localhost ip6-localhost ip6-loopback
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     passwd:
                       type: file
                       name: passwd
@@ -4509,8 +4572,8 @@ items:
                         root:x:0:0:root:/root:/bin/bash
                         kube:x:1000:1000:kube:/home/kube:/bin/bash
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     group:
                       type: file
                       name: group
@@ -4519,8 +4582,8 @@ items:
                         root:x:0:
                         kube:x:1000:
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     resolv.conf:
                       type: file
                       name: resolv.conf
@@ -4529,8 +4592,8 @@ items:
                         nameserver 8.8.8.8
                         nameserver 8.8.4.4
                       extension: .conf
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     os-release:
                       type: file
                       name: os-release
@@ -4542,32 +4605,32 @@ items:
                         VERSION="12 (bookworm)"
                         ID=debian
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     fstab:
                       type: file
                       name: fstab
                       path: /etc/fstab
                       content: "# /etc/fstab: static file system information."
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     issue:
                       type: file
                       name: issue
                       path: /etc/issue
                       content: Debian GNU/Linux 12 \n \l
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     motd:
                       type: file
                       name: motd
                       path: /etc/motd
                       content: Welcome to Debian GNU/Linux 12 (bookworm)
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 home:
                   type: directory
                   name: home
@@ -4594,16 +4657,16 @@ items:
                           . /etc/bash.bashrc
                         fi
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     .profile:
                       type: file
                       name: .profile
                       path: /root/.profile
                       content: "# root .profile"
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.744Z
-                      modifiedAt: 2026-02-13T11:59:06.744Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 tmp:
                   type: directory
                   name: tmp
@@ -4625,16 +4688,16 @@ items:
                           path: /var/log/syslog
                           content: "# System log file"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.744Z
-                          modifiedAt: 2026-02-13T11:59:06.744Z
+                          createdAt: 2026-02-13T12:51:16.457Z
+                          modifiedAt: 2026-02-13T12:51:16.457Z
                         messages:
                           type: file
                           name: messages
                           path: /var/log/messages
                           content: "# System messages"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.744Z
-                          modifiedAt: 2026-02-13T11:59:06.744Z
+                          createdAt: 2026-02-13T12:51:16.457Z
+                          modifiedAt: 2026-02-13T12:51:16.457Z
                     run:
                       type: directory
                       name: run
@@ -4756,7 +4819,7 @@ items:
     metadata:
       name: kube-apiserver-control-plane
       namespace: kube-system
-      creationTimestamp: 2026-02-13T11:59:06.743Z
+      creationTimestamp: 2026-02-13T12:51:16.456Z
     spec:
       containers:
         - name: kube-apiserver
@@ -4793,8 +4856,8 @@ items:
                         #!/bin/sh
                         # Simulated shell binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     bash:
                       type: file
                       name: bash
@@ -4803,8 +4866,8 @@ items:
                         #!/bin/bash
                         # Simulated bash binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     ls:
                       type: file
                       name: ls
@@ -4813,8 +4876,8 @@ items:
                         #!/bin/sh
                         # Simulated ls binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cat:
                       type: file
                       name: cat
@@ -4823,8 +4886,8 @@ items:
                         #!/bin/sh
                         # Simulated cat binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     grep:
                       type: file
                       name: grep
@@ -4833,8 +4896,8 @@ items:
                         #!/bin/sh
                         # Simulated grep binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     ps:
                       type: file
                       name: ps
@@ -4843,8 +4906,8 @@ items:
                         #!/bin/sh
                         # Simulated ps binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     env:
                       type: file
                       name: env
@@ -4853,8 +4916,8 @@ items:
                         #!/bin/sh
                         # Simulated env binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     mkdir:
                       type: file
                       name: mkdir
@@ -4863,8 +4926,8 @@ items:
                         #!/bin/sh
                         # Simulated mkdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     rmdir:
                       type: file
                       name: rmdir
@@ -4873,8 +4936,8 @@ items:
                         #!/bin/sh
                         # Simulated rmdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cp:
                       type: file
                       name: cp
@@ -4883,8 +4946,8 @@ items:
                         #!/bin/sh
                         # Simulated cp binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     mv:
                       type: file
                       name: mv
@@ -4893,8 +4956,8 @@ items:
                         #!/bin/sh
                         # Simulated mv binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     rm:
                       type: file
                       name: rm
@@ -4903,8 +4966,8 @@ items:
                         #!/bin/sh
                         # Simulated rm binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     echo:
                       type: file
                       name: echo
@@ -4913,8 +4976,8 @@ items:
                         #!/bin/sh
                         # Simulated echo binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     pwd:
                       type: file
                       name: pwd
@@ -4923,8 +4986,8 @@ items:
                         #!/bin/sh
                         # Simulated pwd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     cd:
                       type: file
                       name: cd
@@ -4933,8 +4996,8 @@ items:
                         #!/bin/sh
                         # Simulated cd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 etc:
                   type: directory
                   name: etc
@@ -4946,8 +5009,8 @@ items:
                       path: /etc/hostname
                       content: container-hostname
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     hosts:
                       type: file
                       name: hosts
@@ -4956,8 +5019,8 @@ items:
                         127.0.0.1	localhost
                         ::1		localhost ip6-localhost ip6-loopback
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     passwd:
                       type: file
                       name: passwd
@@ -4966,8 +5029,8 @@ items:
                         root:x:0:0:root:/root:/bin/bash
                         kube:x:1000:1000:kube:/home/kube:/bin/bash
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     group:
                       type: file
                       name: group
@@ -4976,8 +5039,8 @@ items:
                         root:x:0:
                         kube:x:1000:
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     resolv.conf:
                       type: file
                       name: resolv.conf
@@ -4986,8 +5049,8 @@ items:
                         nameserver 8.8.8.8
                         nameserver 8.8.4.4
                       extension: .conf
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     os-release:
                       type: file
                       name: os-release
@@ -4999,32 +5062,32 @@ items:
                         VERSION="12 (bookworm)"
                         ID=debian
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     fstab:
                       type: file
                       name: fstab
                       path: /etc/fstab
                       content: "# /etc/fstab: static file system information."
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     issue:
                       type: file
                       name: issue
                       path: /etc/issue
                       content: Debian GNU/Linux 12 \n \l
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     motd:
                       type: file
                       name: motd
                       path: /etc/motd
                       content: Welcome to Debian GNU/Linux 12 (bookworm)
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 home:
                   type: directory
                   name: home
@@ -5051,16 +5114,16 @@ items:
                           . /etc/bash.bashrc
                         fi
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                     .profile:
                       type: file
                       name: .profile
                       path: /root/.profile
                       content: "# root .profile"
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.457Z
+                      modifiedAt: 2026-02-13T12:51:16.457Z
                 tmp:
                   type: directory
                   name: tmp
@@ -5082,16 +5145,16 @@ items:
                           path: /var/log/syslog
                           content: "# System log file"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.745Z
-                          modifiedAt: 2026-02-13T11:59:06.745Z
+                          createdAt: 2026-02-13T12:51:16.457Z
+                          modifiedAt: 2026-02-13T12:51:16.457Z
                         messages:
                           type: file
                           name: messages
                           path: /var/log/messages
                           content: "# System messages"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.745Z
-                          modifiedAt: 2026-02-13T11:59:06.745Z
+                          createdAt: 2026-02-13T12:51:16.457Z
+                          modifiedAt: 2026-02-13T12:51:16.457Z
                     run:
                       type: directory
                       name: run
@@ -5213,7 +5276,7 @@ items:
     metadata:
       name: kube-controller-manager-control-plane
       namespace: kube-system
-      creationTimestamp: 2026-02-13T11:59:06.743Z
+      creationTimestamp: 2026-02-13T12:51:16.456Z
     spec:
       containers:
         - name: kube-controller-manager
@@ -5250,8 +5313,8 @@ items:
                         #!/bin/sh
                         # Simulated shell binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     bash:
                       type: file
                       name: bash
@@ -5260,8 +5323,8 @@ items:
                         #!/bin/bash
                         # Simulated bash binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     ls:
                       type: file
                       name: ls
@@ -5270,8 +5333,8 @@ items:
                         #!/bin/sh
                         # Simulated ls binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cat:
                       type: file
                       name: cat
@@ -5280,8 +5343,8 @@ items:
                         #!/bin/sh
                         # Simulated cat binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     grep:
                       type: file
                       name: grep
@@ -5290,8 +5353,8 @@ items:
                         #!/bin/sh
                         # Simulated grep binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     ps:
                       type: file
                       name: ps
@@ -5300,8 +5363,8 @@ items:
                         #!/bin/sh
                         # Simulated ps binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     env:
                       type: file
                       name: env
@@ -5310,8 +5373,8 @@ items:
                         #!/bin/sh
                         # Simulated env binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     mkdir:
                       type: file
                       name: mkdir
@@ -5320,8 +5383,8 @@ items:
                         #!/bin/sh
                         # Simulated mkdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     rmdir:
                       type: file
                       name: rmdir
@@ -5330,8 +5393,8 @@ items:
                         #!/bin/sh
                         # Simulated rmdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cp:
                       type: file
                       name: cp
@@ -5340,8 +5403,8 @@ items:
                         #!/bin/sh
                         # Simulated cp binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     mv:
                       type: file
                       name: mv
@@ -5350,8 +5413,8 @@ items:
                         #!/bin/sh
                         # Simulated mv binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     rm:
                       type: file
                       name: rm
@@ -5360,8 +5423,8 @@ items:
                         #!/bin/sh
                         # Simulated rm binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     echo:
                       type: file
                       name: echo
@@ -5370,8 +5433,8 @@ items:
                         #!/bin/sh
                         # Simulated echo binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     pwd:
                       type: file
                       name: pwd
@@ -5380,8 +5443,8 @@ items:
                         #!/bin/sh
                         # Simulated pwd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cd:
                       type: file
                       name: cd
@@ -5390,8 +5453,8 @@ items:
                         #!/bin/sh
                         # Simulated cd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 etc:
                   type: directory
                   name: etc
@@ -5403,8 +5466,8 @@ items:
                       path: /etc/hostname
                       content: container-hostname
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     hosts:
                       type: file
                       name: hosts
@@ -5413,8 +5476,8 @@ items:
                         127.0.0.1	localhost
                         ::1		localhost ip6-localhost ip6-loopback
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     passwd:
                       type: file
                       name: passwd
@@ -5423,8 +5486,8 @@ items:
                         root:x:0:0:root:/root:/bin/bash
                         kube:x:1000:1000:kube:/home/kube:/bin/bash
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     group:
                       type: file
                       name: group
@@ -5433,8 +5496,8 @@ items:
                         root:x:0:
                         kube:x:1000:
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     resolv.conf:
                       type: file
                       name: resolv.conf
@@ -5443,8 +5506,8 @@ items:
                         nameserver 8.8.8.8
                         nameserver 8.8.4.4
                       extension: .conf
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     os-release:
                       type: file
                       name: os-release
@@ -5456,32 +5519,32 @@ items:
                         VERSION="12 (bookworm)"
                         ID=debian
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     fstab:
                       type: file
                       name: fstab
                       path: /etc/fstab
                       content: "# /etc/fstab: static file system information."
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     issue:
                       type: file
                       name: issue
                       path: /etc/issue
                       content: Debian GNU/Linux 12 \n \l
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     motd:
                       type: file
                       name: motd
                       path: /etc/motd
                       content: Welcome to Debian GNU/Linux 12 (bookworm)
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 home:
                   type: directory
                   name: home
@@ -5508,16 +5571,16 @@ items:
                           . /etc/bash.bashrc
                         fi
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     .profile:
                       type: file
                       name: .profile
                       path: /root/.profile
                       content: "# root .profile"
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 tmp:
                   type: directory
                   name: tmp
@@ -5539,16 +5602,16 @@ items:
                           path: /var/log/syslog
                           content: "# System log file"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.745Z
-                          modifiedAt: 2026-02-13T11:59:06.745Z
+                          createdAt: 2026-02-13T12:51:16.458Z
+                          modifiedAt: 2026-02-13T12:51:16.458Z
                         messages:
                           type: file
                           name: messages
                           path: /var/log/messages
                           content: "# System messages"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.745Z
-                          modifiedAt: 2026-02-13T11:59:06.745Z
+                          createdAt: 2026-02-13T12:51:16.458Z
+                          modifiedAt: 2026-02-13T12:51:16.458Z
                     run:
                       type: directory
                       name: run
@@ -5668,9 +5731,9 @@ items:
   - apiVersion: v1
     kind: Pod
     metadata:
-      name: kube-proxy-zjmtm29muy-gky1u
+      name: kube-proxy-c29tgn4v39-k2ew3
       namespace: kube-system
-      creationTimestamp: 2026-02-13T11:59:06.743Z
+      creationTimestamp: 2026-02-13T12:51:16.456Z
     spec:
       containers:
         - name: kube-proxy
@@ -5707,8 +5770,8 @@ items:
                         #!/bin/sh
                         # Simulated shell binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     bash:
                       type: file
                       name: bash
@@ -5717,8 +5780,8 @@ items:
                         #!/bin/bash
                         # Simulated bash binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     ls:
                       type: file
                       name: ls
@@ -5727,8 +5790,8 @@ items:
                         #!/bin/sh
                         # Simulated ls binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cat:
                       type: file
                       name: cat
@@ -5737,8 +5800,8 @@ items:
                         #!/bin/sh
                         # Simulated cat binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     grep:
                       type: file
                       name: grep
@@ -5747,8 +5810,8 @@ items:
                         #!/bin/sh
                         # Simulated grep binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     ps:
                       type: file
                       name: ps
@@ -5757,8 +5820,8 @@ items:
                         #!/bin/sh
                         # Simulated ps binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     env:
                       type: file
                       name: env
@@ -5767,8 +5830,8 @@ items:
                         #!/bin/sh
                         # Simulated env binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     mkdir:
                       type: file
                       name: mkdir
@@ -5777,8 +5840,8 @@ items:
                         #!/bin/sh
                         # Simulated mkdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     rmdir:
                       type: file
                       name: rmdir
@@ -5787,8 +5850,8 @@ items:
                         #!/bin/sh
                         # Simulated rmdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cp:
                       type: file
                       name: cp
@@ -5797,8 +5860,8 @@ items:
                         #!/bin/sh
                         # Simulated cp binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     mv:
                       type: file
                       name: mv
@@ -5807,8 +5870,8 @@ items:
                         #!/bin/sh
                         # Simulated mv binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     rm:
                       type: file
                       name: rm
@@ -5817,8 +5880,8 @@ items:
                         #!/bin/sh
                         # Simulated rm binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     echo:
                       type: file
                       name: echo
@@ -5827,8 +5890,8 @@ items:
                         #!/bin/sh
                         # Simulated echo binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     pwd:
                       type: file
                       name: pwd
@@ -5837,8 +5900,8 @@ items:
                         #!/bin/sh
                         # Simulated pwd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cd:
                       type: file
                       name: cd
@@ -5847,8 +5910,8 @@ items:
                         #!/bin/sh
                         # Simulated cd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 etc:
                   type: directory
                   name: etc
@@ -5860,8 +5923,8 @@ items:
                       path: /etc/hostname
                       content: container-hostname
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     hosts:
                       type: file
                       name: hosts
@@ -5870,8 +5933,8 @@ items:
                         127.0.0.1	localhost
                         ::1		localhost ip6-localhost ip6-loopback
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     passwd:
                       type: file
                       name: passwd
@@ -5880,8 +5943,8 @@ items:
                         root:x:0:0:root:/root:/bin/bash
                         kube:x:1000:1000:kube:/home/kube:/bin/bash
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     group:
                       type: file
                       name: group
@@ -5890,8 +5953,8 @@ items:
                         root:x:0:
                         kube:x:1000:
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     resolv.conf:
                       type: file
                       name: resolv.conf
@@ -5900,8 +5963,8 @@ items:
                         nameserver 8.8.8.8
                         nameserver 8.8.4.4
                       extension: .conf
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     os-release:
                       type: file
                       name: os-release
@@ -5913,32 +5976,32 @@ items:
                         VERSION="12 (bookworm)"
                         ID=debian
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     fstab:
                       type: file
                       name: fstab
                       path: /etc/fstab
                       content: "# /etc/fstab: static file system information."
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     issue:
                       type: file
                       name: issue
                       path: /etc/issue
                       content: Debian GNU/Linux 12 \n \l
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     motd:
                       type: file
                       name: motd
                       path: /etc/motd
                       content: Welcome to Debian GNU/Linux 12 (bookworm)
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 home:
                   type: directory
                   name: home
@@ -5965,16 +6028,16 @@ items:
                           . /etc/bash.bashrc
                         fi
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     .profile:
                       type: file
                       name: .profile
                       path: /root/.profile
                       content: "# root .profile"
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 tmp:
                   type: directory
                   name: tmp
@@ -5996,16 +6059,16 @@ items:
                           path: /var/log/syslog
                           content: "# System log file"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.745Z
-                          modifiedAt: 2026-02-13T11:59:06.745Z
+                          createdAt: 2026-02-13T12:51:16.458Z
+                          modifiedAt: 2026-02-13T12:51:16.458Z
                         messages:
                           type: file
                           name: messages
                           path: /var/log/messages
                           content: "# System messages"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.745Z
-                          modifiedAt: 2026-02-13T11:59:06.745Z
+                          createdAt: 2026-02-13T12:51:16.458Z
+                          modifiedAt: 2026-02-13T12:51:16.458Z
                     run:
                       type: directory
                       name: run
@@ -6125,9 +6188,9 @@ items:
   - apiVersion: v1
     kind: Pod
     metadata:
-      name: kube-proxy-rpfc0wu1fs-9x8qd
+      name: kube-proxy-0r07g5g6yd-ztefu
       namespace: kube-system
-      creationTimestamp: 2026-02-13T11:59:06.743Z
+      creationTimestamp: 2026-02-13T12:51:16.456Z
     spec:
       containers:
         - name: kube-proxy
@@ -6164,8 +6227,8 @@ items:
                         #!/bin/sh
                         # Simulated shell binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     bash:
                       type: file
                       name: bash
@@ -6174,8 +6237,8 @@ items:
                         #!/bin/bash
                         # Simulated bash binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     ls:
                       type: file
                       name: ls
@@ -6184,8 +6247,8 @@ items:
                         #!/bin/sh
                         # Simulated ls binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cat:
                       type: file
                       name: cat
@@ -6194,8 +6257,8 @@ items:
                         #!/bin/sh
                         # Simulated cat binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     grep:
                       type: file
                       name: grep
@@ -6204,8 +6267,8 @@ items:
                         #!/bin/sh
                         # Simulated grep binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     ps:
                       type: file
                       name: ps
@@ -6214,8 +6277,8 @@ items:
                         #!/bin/sh
                         # Simulated ps binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     env:
                       type: file
                       name: env
@@ -6224,8 +6287,8 @@ items:
                         #!/bin/sh
                         # Simulated env binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     mkdir:
                       type: file
                       name: mkdir
@@ -6234,8 +6297,8 @@ items:
                         #!/bin/sh
                         # Simulated mkdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     rmdir:
                       type: file
                       name: rmdir
@@ -6244,8 +6307,8 @@ items:
                         #!/bin/sh
                         # Simulated rmdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cp:
                       type: file
                       name: cp
@@ -6254,8 +6317,8 @@ items:
                         #!/bin/sh
                         # Simulated cp binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     mv:
                       type: file
                       name: mv
@@ -6264,8 +6327,8 @@ items:
                         #!/bin/sh
                         # Simulated mv binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     rm:
                       type: file
                       name: rm
@@ -6274,8 +6337,8 @@ items:
                         #!/bin/sh
                         # Simulated rm binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     echo:
                       type: file
                       name: echo
@@ -6284,8 +6347,8 @@ items:
                         #!/bin/sh
                         # Simulated echo binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     pwd:
                       type: file
                       name: pwd
@@ -6294,8 +6357,8 @@ items:
                         #!/bin/sh
                         # Simulated pwd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cd:
                       type: file
                       name: cd
@@ -6304,8 +6367,8 @@ items:
                         #!/bin/sh
                         # Simulated cd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 etc:
                   type: directory
                   name: etc
@@ -6317,8 +6380,8 @@ items:
                       path: /etc/hostname
                       content: container-hostname
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     hosts:
                       type: file
                       name: hosts
@@ -6327,8 +6390,8 @@ items:
                         127.0.0.1	localhost
                         ::1		localhost ip6-localhost ip6-loopback
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     passwd:
                       type: file
                       name: passwd
@@ -6337,8 +6400,8 @@ items:
                         root:x:0:0:root:/root:/bin/bash
                         kube:x:1000:1000:kube:/home/kube:/bin/bash
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     group:
                       type: file
                       name: group
@@ -6347,8 +6410,8 @@ items:
                         root:x:0:
                         kube:x:1000:
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     resolv.conf:
                       type: file
                       name: resolv.conf
@@ -6357,8 +6420,8 @@ items:
                         nameserver 8.8.8.8
                         nameserver 8.8.4.4
                       extension: .conf
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     os-release:
                       type: file
                       name: os-release
@@ -6370,32 +6433,32 @@ items:
                         VERSION="12 (bookworm)"
                         ID=debian
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     fstab:
                       type: file
                       name: fstab
                       path: /etc/fstab
                       content: "# /etc/fstab: static file system information."
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     issue:
                       type: file
                       name: issue
                       path: /etc/issue
                       content: Debian GNU/Linux 12 \n \l
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     motd:
                       type: file
                       name: motd
                       path: /etc/motd
                       content: Welcome to Debian GNU/Linux 12 (bookworm)
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 home:
                   type: directory
                   name: home
@@ -6422,16 +6485,16 @@ items:
                           . /etc/bash.bashrc
                         fi
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     .profile:
                       type: file
                       name: .profile
                       path: /root/.profile
                       content: "# root .profile"
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 tmp:
                   type: directory
                   name: tmp
@@ -6453,16 +6516,16 @@ items:
                           path: /var/log/syslog
                           content: "# System log file"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.745Z
-                          modifiedAt: 2026-02-13T11:59:06.745Z
+                          createdAt: 2026-02-13T12:51:16.458Z
+                          modifiedAt: 2026-02-13T12:51:16.458Z
                         messages:
                           type: file
                           name: messages
                           path: /var/log/messages
                           content: "# System messages"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.745Z
-                          modifiedAt: 2026-02-13T11:59:06.745Z
+                          createdAt: 2026-02-13T12:51:16.458Z
+                          modifiedAt: 2026-02-13T12:51:16.458Z
                     run:
                       type: directory
                       name: run
@@ -6582,9 +6645,9 @@ items:
   - apiVersion: v1
     kind: Pod
     metadata:
-      name: kube-proxy-3kotfhaccn-f8grj
+      name: kube-proxy-2wbtabbxlw-g570o
       namespace: kube-system
-      creationTimestamp: 2026-02-13T11:59:06.743Z
+      creationTimestamp: 2026-02-13T12:51:16.456Z
     spec:
       containers:
         - name: kube-proxy
@@ -6621,8 +6684,8 @@ items:
                         #!/bin/sh
                         # Simulated shell binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     bash:
                       type: file
                       name: bash
@@ -6631,8 +6694,8 @@ items:
                         #!/bin/bash
                         # Simulated bash binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     ls:
                       type: file
                       name: ls
@@ -6641,8 +6704,8 @@ items:
                         #!/bin/sh
                         # Simulated ls binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cat:
                       type: file
                       name: cat
@@ -6651,8 +6714,8 @@ items:
                         #!/bin/sh
                         # Simulated cat binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     grep:
                       type: file
                       name: grep
@@ -6661,8 +6724,8 @@ items:
                         #!/bin/sh
                         # Simulated grep binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     ps:
                       type: file
                       name: ps
@@ -6671,8 +6734,8 @@ items:
                         #!/bin/sh
                         # Simulated ps binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     env:
                       type: file
                       name: env
@@ -6681,8 +6744,8 @@ items:
                         #!/bin/sh
                         # Simulated env binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     mkdir:
                       type: file
                       name: mkdir
@@ -6691,8 +6754,8 @@ items:
                         #!/bin/sh
                         # Simulated mkdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     rmdir:
                       type: file
                       name: rmdir
@@ -6701,8 +6764,8 @@ items:
                         #!/bin/sh
                         # Simulated rmdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cp:
                       type: file
                       name: cp
@@ -6711,8 +6774,8 @@ items:
                         #!/bin/sh
                         # Simulated cp binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     mv:
                       type: file
                       name: mv
@@ -6721,8 +6784,8 @@ items:
                         #!/bin/sh
                         # Simulated mv binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     rm:
                       type: file
                       name: rm
@@ -6731,8 +6794,8 @@ items:
                         #!/bin/sh
                         # Simulated rm binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     echo:
                       type: file
                       name: echo
@@ -6741,8 +6804,8 @@ items:
                         #!/bin/sh
                         # Simulated echo binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     pwd:
                       type: file
                       name: pwd
@@ -6751,8 +6814,8 @@ items:
                         #!/bin/sh
                         # Simulated pwd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cd:
                       type: file
                       name: cd
@@ -6761,8 +6824,8 @@ items:
                         #!/bin/sh
                         # Simulated cd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 etc:
                   type: directory
                   name: etc
@@ -6774,8 +6837,8 @@ items:
                       path: /etc/hostname
                       content: container-hostname
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     hosts:
                       type: file
                       name: hosts
@@ -6784,8 +6847,8 @@ items:
                         127.0.0.1	localhost
                         ::1		localhost ip6-localhost ip6-loopback
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     passwd:
                       type: file
                       name: passwd
@@ -6794,8 +6857,8 @@ items:
                         root:x:0:0:root:/root:/bin/bash
                         kube:x:1000:1000:kube:/home/kube:/bin/bash
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     group:
                       type: file
                       name: group
@@ -6804,8 +6867,8 @@ items:
                         root:x:0:
                         kube:x:1000:
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     resolv.conf:
                       type: file
                       name: resolv.conf
@@ -6814,8 +6877,8 @@ items:
                         nameserver 8.8.8.8
                         nameserver 8.8.4.4
                       extension: .conf
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     os-release:
                       type: file
                       name: os-release
@@ -6827,32 +6890,32 @@ items:
                         VERSION="12 (bookworm)"
                         ID=debian
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     fstab:
                       type: file
                       name: fstab
                       path: /etc/fstab
                       content: "# /etc/fstab: static file system information."
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     issue:
                       type: file
                       name: issue
                       path: /etc/issue
                       content: Debian GNU/Linux 12 \n \l
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     motd:
                       type: file
                       name: motd
                       path: /etc/motd
                       content: Welcome to Debian GNU/Linux 12 (bookworm)
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 home:
                   type: directory
                   name: home
@@ -6879,16 +6942,16 @@ items:
                           . /etc/bash.bashrc
                         fi
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     .profile:
                       type: file
                       name: .profile
                       path: /root/.profile
                       content: "# root .profile"
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 tmp:
                   type: directory
                   name: tmp
@@ -6910,16 +6973,16 @@ items:
                           path: /var/log/syslog
                           content: "# System log file"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.745Z
-                          modifiedAt: 2026-02-13T11:59:06.745Z
+                          createdAt: 2026-02-13T12:51:16.458Z
+                          modifiedAt: 2026-02-13T12:51:16.458Z
                         messages:
                           type: file
                           name: messages
                           path: /var/log/messages
                           content: "# System messages"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.745Z
-                          modifiedAt: 2026-02-13T11:59:06.745Z
+                          createdAt: 2026-02-13T12:51:16.458Z
+                          modifiedAt: 2026-02-13T12:51:16.458Z
                     run:
                       type: directory
                       name: run
@@ -7041,7 +7104,7 @@ items:
     metadata:
       name: kube-scheduler-control-plane
       namespace: kube-system
-      creationTimestamp: 2026-02-13T11:59:06.743Z
+      creationTimestamp: 2026-02-13T12:51:16.456Z
     spec:
       containers:
         - name: kube-scheduler
@@ -7078,8 +7141,8 @@ items:
                         #!/bin/sh
                         # Simulated shell binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     bash:
                       type: file
                       name: bash
@@ -7088,8 +7151,8 @@ items:
                         #!/bin/bash
                         # Simulated bash binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     ls:
                       type: file
                       name: ls
@@ -7098,8 +7161,8 @@ items:
                         #!/bin/sh
                         # Simulated ls binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cat:
                       type: file
                       name: cat
@@ -7108,8 +7171,8 @@ items:
                         #!/bin/sh
                         # Simulated cat binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     grep:
                       type: file
                       name: grep
@@ -7118,8 +7181,8 @@ items:
                         #!/bin/sh
                         # Simulated grep binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     ps:
                       type: file
                       name: ps
@@ -7128,8 +7191,8 @@ items:
                         #!/bin/sh
                         # Simulated ps binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     env:
                       type: file
                       name: env
@@ -7138,8 +7201,8 @@ items:
                         #!/bin/sh
                         # Simulated env binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     mkdir:
                       type: file
                       name: mkdir
@@ -7148,8 +7211,8 @@ items:
                         #!/bin/sh
                         # Simulated mkdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     rmdir:
                       type: file
                       name: rmdir
@@ -7158,8 +7221,8 @@ items:
                         #!/bin/sh
                         # Simulated rmdir binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cp:
                       type: file
                       name: cp
@@ -7168,8 +7231,8 @@ items:
                         #!/bin/sh
                         # Simulated cp binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     mv:
                       type: file
                       name: mv
@@ -7178,8 +7241,8 @@ items:
                         #!/bin/sh
                         # Simulated mv binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     rm:
                       type: file
                       name: rm
@@ -7188,8 +7251,8 @@ items:
                         #!/bin/sh
                         # Simulated rm binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     echo:
                       type: file
                       name: echo
@@ -7198,8 +7261,8 @@ items:
                         #!/bin/sh
                         # Simulated echo binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     pwd:
                       type: file
                       name: pwd
@@ -7208,8 +7271,8 @@ items:
                         #!/bin/sh
                         # Simulated pwd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     cd:
                       type: file
                       name: cd
@@ -7218,8 +7281,8 @@ items:
                         #!/bin/sh
                         # Simulated cd binary
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 etc:
                   type: directory
                   name: etc
@@ -7231,8 +7294,8 @@ items:
                       path: /etc/hostname
                       content: container-hostname
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     hosts:
                       type: file
                       name: hosts
@@ -7241,8 +7304,8 @@ items:
                         127.0.0.1	localhost
                         ::1		localhost ip6-localhost ip6-loopback
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     passwd:
                       type: file
                       name: passwd
@@ -7251,8 +7314,8 @@ items:
                         root:x:0:0:root:/root:/bin/bash
                         kube:x:1000:1000:kube:/home/kube:/bin/bash
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     group:
                       type: file
                       name: group
@@ -7261,8 +7324,8 @@ items:
                         root:x:0:
                         kube:x:1000:
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     resolv.conf:
                       type: file
                       name: resolv.conf
@@ -7271,8 +7334,8 @@ items:
                         nameserver 8.8.8.8
                         nameserver 8.8.4.4
                       extension: .conf
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     os-release:
                       type: file
                       name: os-release
@@ -7284,32 +7347,32 @@ items:
                         VERSION="12 (bookworm)"
                         ID=debian
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     fstab:
                       type: file
                       name: fstab
                       path: /etc/fstab
                       content: "# /etc/fstab: static file system information."
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     issue:
                       type: file
                       name: issue
                       path: /etc/issue
                       content: Debian GNU/Linux 12 \n \l
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     motd:
                       type: file
                       name: motd
                       path: /etc/motd
                       content: Welcome to Debian GNU/Linux 12 (bookworm)
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 home:
                   type: directory
                   name: home
@@ -7336,16 +7399,16 @@ items:
                           . /etc/bash.bashrc
                         fi
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                     .profile:
                       type: file
                       name: .profile
                       path: /root/.profile
                       content: "# root .profile"
                       extension: ""
-                      createdAt: 2026-02-13T11:59:06.745Z
-                      modifiedAt: 2026-02-13T11:59:06.745Z
+                      createdAt: 2026-02-13T12:51:16.458Z
+                      modifiedAt: 2026-02-13T12:51:16.458Z
                 tmp:
                   type: directory
                   name: tmp
@@ -7367,16 +7430,16 @@ items:
                           path: /var/log/syslog
                           content: "# System log file"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.745Z
-                          modifiedAt: 2026-02-13T11:59:06.745Z
+                          createdAt: 2026-02-13T12:51:16.458Z
+                          modifiedAt: 2026-02-13T12:51:16.458Z
                         messages:
                           type: file
                           name: messages
                           path: /var/log/messages
                           content: "# System messages"
                           extension: ""
-                          createdAt: 2026-02-13T11:59:06.745Z
-                          modifiedAt: 2026-02-13T11:59:06.745Z
+                          createdAt: 2026-02-13T12:51:16.458Z
+                          modifiedAt: 2026-02-13T12:51:16.458Z
                     run:
                       type: directory
                       name: run
@@ -7542,6 +7605,17 @@ items: []
 apiVersion: v1
 kind: ConfigMapList
 items:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: kube-root-ca.crt
+      namespace: default
+      creationTimestamp: <timestamp>
+    data:
+      ca.crt: |-
+        -----BEGIN CERTIFICATE-----
+        SIMULATED-CA
+        -----END CERTIFICATE-----
   - apiVersion: v1
     kind: ConfigMap
     metadata:
@@ -13130,9 +13204,21 @@ items: []
       "apiVersion": "v1",
       "kind": "ConfigMap",
       "metadata": {
+        "name": "kube-root-ca.crt",
+        "namespace": "default",
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
+      },
+      "data": {
+        "ca.crt": "-----BEGIN CERTIFICATE-----\nSIMULATED-CA\n-----END CERTIFICATE-----"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
         "name": "placeholder",
         "namespace": "default",
-        "creationTimestamp": "2026-02-13T11:59:48.170Z"
+        "creationTimestamp": "2026-02-13T12:51:54.766Z"
       },
       "data": {}
     }
@@ -13181,9 +13267,9 @@ items: []
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "coredns-c313q4p7cd-i7nph",
+        "name": "coredns-0elnzci0xf-57k14",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -13227,9 +13313,9 @@ items: []
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "coredns-hsg3ajubiz-dcywz",
+        "name": "coredns-vi2c1u33lu-it3ze",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -13275,7 +13361,7 @@ items: []
       "metadata": {
         "name": "etcd-control-plane",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -13319,9 +13405,9 @@ items: []
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "kindnet-ayn7civj6y-eejs2",
+        "name": "kindnet-jjaxmj5g1h-ea3fr",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -13365,9 +13451,9 @@ items: []
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "kindnet-0u5xbu18j3-tf16c",
+        "name": "kindnet-b13w6uecgm-gmgc1",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -13411,9 +13497,9 @@ items: []
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "kindnet-qk31m81xcs-xeugx",
+        "name": "kindnet-difribrfg2-f5oc4",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -13459,7 +13545,7 @@ items: []
       "metadata": {
         "name": "kube-apiserver-control-plane",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -13505,7 +13591,7 @@ items: []
       "metadata": {
         "name": "kube-controller-manager-control-plane",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -13549,9 +13635,9 @@ items: []
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "kube-proxy-zjmtm29muy-gky1u",
+        "name": "kube-proxy-c29tgn4v39-k2ew3",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -13595,9 +13681,9 @@ items: []
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "kube-proxy-rpfc0wu1fs-9x8qd",
+        "name": "kube-proxy-0r07g5g6yd-ztefu",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -13641,9 +13727,9 @@ items: []
       "apiVersion": "v1",
       "kind": "Pod",
       "metadata": {
-        "name": "kube-proxy-3kotfhaccn-f8grj",
+        "name": "kube-proxy-2wbtabbxlw-g570o",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -13689,7 +13775,7 @@ items: []
       "metadata": {
         "name": "kube-scheduler-control-plane",
         "namespace": "kube-system",
-        "creationTimestamp": "2026-02-13T11:59:06.743Z"
+        "creationTimestamp": "2026-02-13T12:51:16.456Z"
       },
       "spec": {
         "containers": [
@@ -13791,6 +13877,18 @@ items: []
   "apiVersion": "v1",
   "kind": "ConfigMapList",
   "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "kube-root-ca.crt",
+        "namespace": "default",
+        "creationTimestamp": "<timestamp>"
+      },
+      "data": {
+        "ca.crt": "-----BEGIN CERTIFICATE-----\nSIMULATED-CA\n-----END CERTIFICATE-----"
+      }
+    },
     {
       "apiVersion": "v1",
       "kind": "ConfigMap",

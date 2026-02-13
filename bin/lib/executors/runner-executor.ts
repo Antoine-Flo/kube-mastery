@@ -2,7 +2,7 @@ import { readFileSync, statSync } from 'fs'
 import { basename } from 'path'
 import { createClusterState } from '../../../src/core/cluster/ClusterState'
 import { createEventBus } from '../../../src/core/cluster/events/EventBus'
-import { getSystemPods } from '../../../src/core/cluster/systemPods'
+import { DEFAULT_KIND_LIKE_BOOTSTRAP } from '../../../src/core/cluster/systemBootstrap'
 import { parseKubernetesYaml } from '../../../src/core/kubectl/yamlParser'
 import { createKubectlExecutor } from '../../../src/core/kubectl/commands/executor'
 import { createFileSystem } from '../../../src/core/filesystem/FileSystem'
@@ -116,16 +116,17 @@ const executionFromOutput = (
   }
 }
 
-export const createRunnerExecutor = (): RunnerExecutor => {
+export const createRunnerExecutor = (clusterName = 'conformance'): RunnerExecutor => {
   const logger = createLogger({ mirrorToConsole: false })
   const eventBus = createEventBus()
-  const clusterState = createClusterState(eventBus)
+  const clusterState = createClusterState(eventBus, {
+    bootstrap: {
+      ...DEFAULT_KIND_LIKE_BOOTSTRAP,
+      clusterName
+    }
+  })
   const fileSystem = createFileSystem()
   const executor = createKubectlExecutor(clusterState, fileSystem, logger, eventBus)
-
-  for (const pod of getSystemPods()) {
-    clusterState.addPod(pod)
-  }
 
   return {
     executeCommand(command: string): CommandExecutionResult {

@@ -48,6 +48,37 @@ interface ResourceHandler<T extends ResourceWithMetadata> {
   align?: ('left' | 'right')[]
 }
 
+interface ResourceOutputMetadata {
+  apiVersion: string
+  kind: string
+}
+
+interface ResourceListOutput<T> {
+  apiVersion: string
+  items: T[]
+  kind: string
+  metadata: {
+    resourceVersion: string
+  }
+}
+
+const KUBECTL_TABLE_SPACING = 3
+const KUBECTL_JSON_INDENT = 4
+
+const withKubectlTableSpacing = (
+  options?: { align?: ('left' | 'right')[] }
+): { spacing: number; align?: ('left' | 'right')[] } => {
+  if (options?.align != null) {
+    return {
+      spacing: KUBECTL_TABLE_SPACING,
+      align: options.align
+    }
+  }
+  return {
+    spacing: KUBECTL_TABLE_SPACING
+  }
+}
+
 /**
  * Filter resources by label selector
  * Pure function that matches all labels in selector
@@ -173,6 +204,53 @@ const sanitizeForOutput = <T extends Record<string, unknown>>(
 ): Omit<T, '_simulator'> => {
   const { _simulator, ...rest } = resource as T & { _simulator?: unknown }
   return rest as Omit<T, '_simulator'>
+}
+
+const RESOURCE_OUTPUT_METADATA: Record<Resource, ResourceOutputMetadata> = {
+  pods: { apiVersion: 'v1', kind: 'Pod' },
+  configmaps: { apiVersion: 'v1', kind: 'ConfigMap' },
+  secrets: { apiVersion: 'v1', kind: 'Secret' },
+  nodes: { apiVersion: 'v1', kind: 'Node' },
+  replicasets: { apiVersion: 'apps/v1', kind: 'ReplicaSet' },
+  deployments: { apiVersion: 'apps/v1', kind: 'Deployment' },
+  services: { apiVersion: 'v1', kind: 'Service' },
+  namespaces: { apiVersion: 'v1', kind: 'Namespace' }
+}
+
+const getResourceOutputMetadata = (resourceType: Resource): ResourceOutputMetadata => {
+  return RESOURCE_OUTPUT_METADATA[resourceType]
+}
+
+const buildListOutput = <T>(
+  resourceType: Resource,
+  items: T[]
+): ResourceListOutput<T> => {
+  const metadata = getResourceOutputMetadata(resourceType)
+  return {
+    apiVersion: metadata.apiVersion,
+    items,
+    kind: 'List',
+    metadata: {
+      resourceVersion: ''
+    }
+  }
+}
+
+const isStructuredOutput = (outputFormat: string): boolean => {
+  return outputFormat === 'json' || outputFormat === 'yaml'
+}
+
+const serializeStructuredOutput = (
+  outputFormat: string,
+  resourceType: Resource,
+  items: unknown[],
+  asSingleObject: boolean
+): string => {
+  const payload = asSingleObject ? items[0] : buildListOutput(resourceType, items)
+  if (outputFormat === 'json') {
+    return JSON.stringify(payload, null, KUBECTL_JSON_INDENT)
+  }
+  return yamlStringify(payload).trimEnd()
 }
 
 /**
@@ -346,71 +424,11 @@ const SPECIAL_HANDLERS: Record<string, () => string> = {
       ['default', 'Active', '5d'],
       ['kube-system', 'Active', '5d']
     ]
-    return formatTable(headers, rows)
+    return formatTable(headers, rows, withKubectlTableSpacing())
   }
 }
 
 // ─── Main Handler ────────────────────────────────────────────────────────
-
-/**
- * Format nodes as JSON (NodeList structure)
- */
-const formatNodesJson = (nodes: Node[]): string => {
-  const nodeList = {
-    apiVersion: 'v1',
-    kind: 'NodeList',
-    items: nodes,
-    metadata: {
-      resourceVersion: ''
-    }
-  }
-  return JSON.stringify(nodeList, null, 2)
-}
-
-/**
- * Format nodes as YAML (NodeList structure)
- */
-const formatNodesYaml = (nodes: Node[]): string => {
-  const nodeList = {
-    apiVersion: 'v1',
-    kind: 'NodeList',
-    items: nodes,
-    metadata: {
-      resourceVersion: ''
-    }
-  }
-  return yamlStringify(nodeList)
-}
-
-/**
- * Format services as JSON (ServiceList structure)
- */
-const formatServicesJson = (services: Service[]): string => {
-  const serviceList = {
-    apiVersion: 'v1',
-    kind: 'ServiceList',
-    items: services,
-    metadata: {
-      resourceVersion: ''
-    }
-  }
-  return JSON.stringify(serviceList, null, 2)
-}
-
-/**
- * Format services as YAML (ServiceList structure)
- */
-const formatServicesYaml = (services: Service[]): string => {
-  const serviceList = {
-    apiVersion: 'v1',
-    kind: 'ServiceList',
-    items: services,
-    metadata: {
-      resourceVersion: ''
-    }
-  }
-  return yamlStringify(serviceList)
-}
 
 /**
  * Handle kubectl get command
@@ -444,6 +462,11 @@ export const handleGet = (
     parsed.flags['all-namespaces'] === true || parsed.flags['A'] === true
   const effectiveNamespace = parsed.namespace ?? 'default'
   const filterNamespace = allNamespacesFlag ? undefined : effectiveNamespace
+  const explicitOutput = parsed.flags.output || parsed.flags['o']
+  const outputFormat = explicitOutput
+    ? (explicitOutput as string)
+    : (parsed.output ?? 'table')
+  const structuredOutput = isStructuredOutput(outputFormat)
   const items = handler.getItems(state)
   const isClusterScoped = handler.isClusterScoped || false
   const filtered = applyFilters(
@@ -456,48 +479,33 @@ export const handleGet = (
 
   // Empty result (use effectiveNamespace for message unless --all-namespaces was explicitly set)
   if (filtered.length === 0) {
+    if (structuredOutput && parsed.name === undefined) {
+      return serializeStructuredOutput(outputFormat, resourceType, [], false)
+    }
     return noResourcesMessage(
       allNamespacesFlag ? undefined : effectiveNamespace,
       isClusterScoped
     )
   }
 
-  // Check output format
-  const explicitOutput = parsed.flags.output || parsed.flags['o']
-  const outputFormat = explicitOutput
-    ? (explicitOutput as string)
-    : parsed.output
-
   // Sanitize resources for output (remove _simulator)
   const sanitized = filtered.map(sanitizeForOutput)
 
-  // Handle JSON output
-  if (outputFormat === 'json') {
-    if (resourceType === ('nodes' as Resource)) {
-      return formatNodesJson(sanitized as Node[])
-    }
-    if (resourceType === ('services' as Resource)) {
-      return formatServicesJson(sanitized as Service[])
-    }
-    return JSON.stringify(sanitized, null, 2)
-  }
-
-  // Handle YAML output
-  if (outputFormat === 'yaml') {
-    if (resourceType === ('nodes' as Resource)) {
-      return formatNodesYaml(sanitized as Node[])
-    }
-    if (resourceType === ('services' as Resource)) {
-      return formatServicesYaml(sanitized as Service[])
-    }
-    return yamlStringify(sanitized)
+  if (structuredOutput) {
+    const asSingleObject = parsed.name !== undefined
+    return serializeStructuredOutput(
+      outputFormat,
+      resourceType,
+      sanitized,
+      asSingleObject
+    )
   }
 
   // Handle wide format
   const isWide = outputFormat === 'wide' || parsed.flags.wide === true
   if (isWide && handler.formatRowWide && handler.headersWide) {
     const rows = filtered.map(handler.formatRowWide) as string[][]
-    return formatTable(handler.headersWide, rows)
+    return formatTable(handler.headersWide, rows, withKubectlTableSpacing())
   }
 
   // Default: table format
@@ -538,11 +546,17 @@ export const handleGet = (
       'right',
       'right'
     ]
-    return formatTable(headersAllNs, rowsAllNs, { align: alignAllNs })
+    return formatTable(
+      headersAllNs,
+      rowsAllNs,
+      withKubectlTableSpacing({ align: alignAllNs })
+    )
   }
 
   const rows = filtered.map(handler.formatRow) as string[][]
   const tableOptions =
-    handler.align != null ? { align: handler.align } : undefined
+    handler.align != null
+      ? withKubectlTableSpacing({ align: handler.align })
+      : withKubectlTableSpacing()
   return formatTable(handler.headers, rows, tableOptions)
 }

@@ -61,6 +61,8 @@ import type { Pod } from './ressources/Pod'
 import type { ReplicaSet } from './ressources/ReplicaSet'
 import type { Secret } from './ressources/Secret'
 import type { Service } from './ressources/Service'
+import type { ClusterBootstrapConfig } from './systemBootstrap'
+import { applyClusterBootstrap } from './systemBootstrap'
 
 // ╔═══════════════════════════════════════════════════════════════════════╗
 // ║                    KUBERNETES CLUSTER STATE                           ║
@@ -305,6 +307,10 @@ export interface ClusterState {
   loadState: (state: ClusterStateData) => void
 }
 
+export interface CreateClusterStateOptions {
+  bootstrap?: ClusterBootstrapConfig
+}
+
 // ─── Event Factory Map ────────────────────────────────────────────────
 
 const EVENT_FACTORIES = {
@@ -454,19 +460,46 @@ const applyEventToState = (
   return handler(state, event)
 }
 
+const isEventBusValue = (value: unknown): value is EventBus => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'subscribeAll' in value &&
+    typeof (value as EventBus).subscribeAll === 'function'
+  )
+}
+
 // Facade factory function
-export function createClusterState(eventBus: EventBus): ClusterState
+export function createClusterState(
+  eventBus: EventBus,
+  options?: CreateClusterStateOptions
+): ClusterState
 export function createClusterState(
   initialState: ClusterStateData,
-  eventBus: EventBus
+  eventBus: EventBus,
+  options?: CreateClusterStateOptions
 ): ClusterState
 export function createClusterState(
   initialStateOrEventBus: ClusterStateData | EventBus,
-  eventBus?: EventBus
+  eventBusOrOptions?: EventBus | CreateClusterStateOptions,
+  maybeOptions?: CreateClusterStateOptions
 ): ClusterState {
-  const [initialState, bus] = eventBus
-    ? [initialStateOrEventBus as ClusterStateData, eventBus]
-    : [undefined, initialStateOrEventBus as EventBus]
+  let initialState: ClusterStateData | undefined
+  let bus: EventBus
+  let options: CreateClusterStateOptions | undefined
+
+  if (isEventBusValue(initialStateOrEventBus)) {
+    initialState = undefined
+    bus = initialStateOrEventBus
+    options = eventBusOrOptions as CreateClusterStateOptions | undefined
+  } else {
+    initialState = initialStateOrEventBus
+    if (!isEventBusValue(eventBusOrOptions)) {
+      throw new Error('createClusterState requires an EventBus instance')
+    }
+    bus = eventBusOrOptions
+    options = maybeOptions
+  }
 
   let state: ClusterStateData = initialState || createEmptyState()
 
@@ -580,7 +613,7 @@ export function createClusterState(
     }
   }
 
-  return {
+  const clusterStateFacade: ClusterState = {
     getPods: podMethods.getAll,
     addPod: podMethods.add,
     findPod: podMethods.find,
@@ -645,4 +678,10 @@ export function createClusterState(
       }
     }
   }
+
+  if (options?.bootstrap) {
+    applyClusterBootstrap(clusterStateFacade, options.bootstrap)
+  }
+
+  return clusterStateFacade
 }

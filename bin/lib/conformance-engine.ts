@@ -89,6 +89,54 @@ const diff = (a: string, b: string): string => {
   return out.join('\n')
 }
 
+const MAX_DIFF_LINES = 80
+const MAX_LINE_LENGTH = 220
+const MAX_COMMAND_LENGTH = 400
+
+interface DiffLine {
+  index: number
+  kind: string
+  runnerSimulation: string
+}
+
+const truncate = (value: string, maxLength: number): string => {
+  if (value.length <= maxLength) {
+    return value
+  }
+  return `${value.slice(0, maxLength)}…`
+}
+
+const formatDiffLines = (kindCompared: string, runnerCompared: string): string[] => {
+  const kindLines = kindCompared.split('\n')
+  const runnerLines = runnerCompared.split('\n')
+  const maxLen = Math.max(kindLines.length, runnerLines.length)
+  const lines: DiffLine[] = []
+  for (let index = 0; index < maxLen; index++) {
+    const kind = kindLines[index] ?? '(missing)'
+    const runnerSimulation = runnerLines[index] ?? '(missing)'
+    if (kind !== runnerSimulation) {
+      lines.push({
+        index: index + 1,
+        kind: truncate(kind, MAX_LINE_LENGTH),
+        runnerSimulation: truncate(runnerSimulation, MAX_LINE_LENGTH)
+      })
+    }
+  }
+  const rendered = lines
+    .slice(0, MAX_DIFF_LINES)
+    .flatMap((line) => [
+      `[line ${line.index}]`,
+      `[kind] ${line.kind}`,
+      `[runner-simulation] ${line.runnerSimulation}`
+    ])
+  if (lines.length > MAX_DIFF_LINES) {
+    rendered.push(
+      `[truncated] ${lines.length - MAX_DIFF_LINES} diff lines omitted to reduce noise`
+    )
+  }
+  return rendered
+}
+
 export const compareResults = (
   kind: CommandExecutionResult,
   runner: CommandExecutionResult,
@@ -148,13 +196,28 @@ const executeAction = (
 const appendMismatch = (
   suiteName: string,
   action: ConformanceAction,
+  kind: CommandExecutionResult,
+  runner: CommandExecutionResult,
   comparison: ConformanceComparison
 ): string => {
+  const command =
+    kind.command.length >= runner.command.length ? kind.command : runner.command
+  const renderedDiffLines = formatDiffLines(
+    comparison.kindCompared,
+    comparison.runnerCompared
+  )
   return [
     `[suite] ${suiteName}`,
     `[action] ${action.id} (${action.type})`,
+    `[command] ${truncate(command, MAX_COMMAND_LENGTH)}`,
     '[mismatch]',
-    comparison.diff,
+    `[kind.exitCode] ${kind.exitCode}`,
+    `[runner-simulation.exitCode] ${runner.exitCode}`,
+    '[diff]',
+    ...renderedDiffLines,
+    '[details]',
+    '[kind-log] artifacts/conformance/kind.log',
+    '[runner-log] artifacts/conformance/runner.log',
     '---'
   ].join('\n')
 }
@@ -168,6 +231,7 @@ const appendExpectationError = (
   return [
     `[suite] ${suiteName}`,
     `[action] ${action.id} (${action.type})`,
+    `[command] ${truncate(action.command, MAX_COMMAND_LENGTH)}`,
     `[expectation:${backend}] ${message}`,
     '---'
   ].join('\n')
@@ -235,7 +299,7 @@ export const runConformanceSuite = (
         action.type === 'command' ? action.compareMode || 'normalized' : 'normalized'
       const comparison = compareResults(kind, runner, compareMode)
       if (!comparison.matched) {
-        reporter.recordDiff(appendMismatch(suite.name, action, comparison))
+        reporter.recordDiff(appendMismatch(suite.name, action, kind, runner, comparison))
         if (suite.stopOnMismatch ?? true) {
           reporter.flush()
           return error(

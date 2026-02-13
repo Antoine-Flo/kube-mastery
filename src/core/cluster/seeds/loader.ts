@@ -19,7 +19,7 @@ import { applyResourceWithEvents } from '../../kubectl/commands/handlers/resourc
 import { parseKubernetesYaml } from '../../kubectl/yamlParser'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import { getSystemPods } from '../systemPods'
+import { DEFAULT_KIND_LIKE_BOOTSTRAP } from '../systemBootstrap'
 import { readdirSync, readFileSync } from 'fs'
 import { join } from 'path'
 
@@ -77,7 +77,12 @@ const loadClusterStateFromYamlContent = (
   eventBus?: EventBus
 ): Result<ClusterState, string> => {
   const bus = eventBus ?? createEventBus()
-  const clusterState = createClusterState(bus)
+  const clusterState = createClusterState(bus, {
+    bootstrap: {
+      ...DEFAULT_KIND_LIKE_BOOTSTRAP,
+      clusterName: 'simulator'
+    }
+  })
   const resources = parseMultiDocumentYamlSkipUnsupported(yamlContent)
 
   for (const resource of resources) {
@@ -85,10 +90,6 @@ const loadClusterStateFromYamlContent = (
     if (!applyResult.ok) {
       return error(`Failed to apply resource: ${applyResult.error}`)
     }
-  }
-
-  for (const pod of getSystemPods()) {
-    clusterState.addPod(pod)
   }
 
   return success(clusterState)

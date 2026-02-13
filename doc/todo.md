@@ -1,5 +1,21 @@
 Ce doc est pour moi, ne le modifie pas
 
+
+- Apprenez et pratiquez Kubernetes sans installation et sans tant chargement
+
+- Utilisant notre Kuberentes dans le névigateur sans attente sans installation
+
+- Outils en ligne sans installation sans frais
+
+Ajoute bandeau early access sur landing
+Essayez la démo sans inscription
+
+Stable et local remplacer par dans le navigateur
+Abordalbe remplacer par aucun frais cloud: pas d'infrastructure à déployer apprenez sans vous ruinez
+Enlever pricing landing
+Posez question dans terminal
+Remplacer cours par nos formations
+
 - yaml template library
 - plausible
 - https://yukaichou.com/gamification-examples/octalysis-gamification-framework/
