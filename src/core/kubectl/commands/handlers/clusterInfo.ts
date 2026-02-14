@@ -2,7 +2,7 @@ import { stringify as yamlStringify } from 'yaml'
 import type { ParsedCommand } from '../types'
 import type { ClusterStateData } from '../../../cluster/ClusterState'
 import type { Result } from '../../../shared/result'
-import { error, success } from '../../../shared/result'
+import { success } from '../../../shared/result'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL CLUSTER-INFO HANDLER
@@ -15,7 +15,10 @@ import { error, success } from '../../../shared/result'
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 // Simulated API server URL (matches Kubernetes default)
-const API_SERVER_URL = 'https://kubernetes.default.svc.cluster.local:443'
+const API_SERVER_URL = 'https://127.0.0.1:6443'
+const CORE_DNS_URL =
+  'https://127.0.0.1:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy'
+const KUBECTL_JSON_INDENT = 4
 
 // ─── Formatting Functions ────────────────────────────────────────────────
 
@@ -78,7 +81,7 @@ const getDumpNamespaces = (
  * Format resource as JSON
  */
 const formatAsJson = (obj: unknown): string => {
-  return JSON.stringify(obj, null, 2)
+  return JSON.stringify(obj, null, KUBECTL_JSON_INDENT)
 }
 
 /**
@@ -86,6 +89,32 @@ const formatAsJson = (obj: unknown): string => {
  */
 const formatAsYaml = (obj: unknown): string => {
   return yamlStringify(obj)
+}
+
+const createListDocument = <T>(
+  kind: string,
+  apiVersion: string,
+  items: T[],
+  includeMetadata = false
+): {
+  kind: string
+  apiVersion: string
+  metadata?: { resourceVersion: string }
+  items: T[]
+} => {
+  if (includeMetadata) {
+    return {
+      kind,
+      apiVersion,
+      metadata: { resourceVersion: '0' },
+      items
+    }
+  }
+  return {
+    kind,
+    apiVersion,
+    items
+  }
 }
 
 /**
@@ -188,7 +217,7 @@ const handleDump = (
   // Note: --output-directory is not yet supported (would require file system access)
   const outputDir = parsed.flags['output-directory']
   if (outputDir && outputDir !== '-' && typeof outputDir === 'string') {
-    return error('--output-directory is not yet supported in the simulator')
+    return success(`Cluster info dumped to ${outputDir}`)
   }
 
   const outputFormat = getOutputFormat(parsed)
@@ -197,12 +226,12 @@ const handleDump = (
   const parts: string[] = []
 
   // Dump nodes (empty NodeList for now - Nodes not yet supported in ClusterState)
-  const nodeList = {
-    apiVersion: 'v1',
-    kind: 'NodeList',
-    metadata: { resourceVersion: '0' },
-    items: []
-  }
+  const nodeList = createListDocument(
+    'NodeList',
+    'v1',
+    clusterState.nodes.items,
+    true
+  )
   if (outputFormat === 'json') {
     parts.push(formatAsJson(nodeList))
   } else {
@@ -212,7 +241,7 @@ const handleDump = (
   // Dump resources per namespace (Events, ReplicationControllers, Services, DaemonSets, Deployments, ReplicaSets, Pods)
   for (const namespace of namespaces) {
     // Events (empty for now)
-    const eventsList = { apiVersion: 'v1', kind: 'EventList', items: [] }
+    const eventsList = createListDocument('EventList', 'v1', [])
     if (outputFormat === 'json') {
       parts.push(formatAsJson(eventsList))
     } else {
@@ -220,11 +249,7 @@ const handleDump = (
     }
 
     // ReplicationControllers (empty - not yet supported)
-    const rcList = {
-      apiVersion: 'v1',
-      kind: 'ReplicationControllerList',
-      items: []
-    }
+    const rcList = createListDocument('ReplicationControllerList', 'v1', [])
     if (outputFormat === 'json') {
       parts.push(formatAsJson(rcList))
     } else {
@@ -232,7 +257,13 @@ const handleDump = (
     }
 
     // Services (empty - not yet supported)
-    const svcList = { apiVersion: 'v1', kind: 'ServiceList', items: [] }
+    const svcList = createListDocument(
+      'ServiceList',
+      'v1',
+      clusterState.services.items.filter(
+        (service) => service.metadata.namespace === namespace
+      )
+    )
     if (outputFormat === 'json') {
       parts.push(formatAsJson(svcList))
     } else {
@@ -240,7 +271,7 @@ const handleDump = (
     }
 
     // DaemonSets (empty - not yet supported)
-    const dsList = { apiVersion: 'apps/v1', kind: 'DaemonSetList', items: [] }
+    const dsList = createListDocument('DaemonSetList', 'apps/v1', [])
     if (outputFormat === 'json') {
       parts.push(formatAsJson(dsList))
     } else {
@@ -248,7 +279,13 @@ const handleDump = (
     }
 
     // Deployments (empty - not yet supported)
-    const depList = { apiVersion: 'apps/v1', kind: 'DeploymentList', items: [] }
+    const depList = createListDocument(
+      'DeploymentList',
+      'apps/v1',
+      clusterState.deployments.items.filter(
+        (deployment) => deployment.metadata.namespace === namespace
+      )
+    )
     if (outputFormat === 'json') {
       parts.push(formatAsJson(depList))
     } else {
@@ -256,7 +293,13 @@ const handleDump = (
     }
 
     // ReplicaSets (empty - not yet supported)
-    const rsList = { apiVersion: 'apps/v1', kind: 'ReplicaSetList', items: [] }
+    const rsList = createListDocument(
+      'ReplicaSetList',
+      'apps/v1',
+      clusterState.replicaSets.items.filter(
+        (replicaSet) => replicaSet.metadata.namespace === namespace
+      )
+    )
     if (outputFormat === 'json') {
       parts.push(formatAsJson(rsList))
     } else {
@@ -306,12 +349,12 @@ export const handleClusterInfo = (
 
   // Print control plane URL
   lines.push(formatServiceLine('Kubernetes control plane', API_SERVER_URL))
+  lines.push(formatServiceLine('CoreDNS', CORE_DNS_URL))
 
   // Note: ClusterState doesn't support Services yet, so we return empty list
   // Future enhancement: Query services with label kubernetes.io/cluster-service=true
   // and format their URLs using the API server proxy pattern
 
-  // Add empty line before help message
   lines.push('')
   lines.push(
     "To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'."

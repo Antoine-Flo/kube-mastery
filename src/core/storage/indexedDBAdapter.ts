@@ -8,6 +8,7 @@ import type { ClusterStateData } from '../cluster/ClusterState'
 import type { FileSystemState } from '../filesystem/FileSystem'
 import type { Result } from '../shared/result'
 import { error, success } from '../shared/result'
+import { INDEXED_DB_CONFIG } from '../../config/storageConfig'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -19,10 +20,6 @@ export interface SandboxEnvironment {
   updated_at: string
 }
 
-const DB_NAME = 'kube-simulator'
-const DB_VERSION = 1
-const STORE_NAME = 'sandbox-environments'
-
 // ═══════════════════════════════════════════════════════════════════════════
 // INDEXEDDB ADAPTER
 // ═══════════════════════════════════════════════════════════════════════════
@@ -32,7 +29,10 @@ const STORE_NAME = 'sandbox-environments'
  */
 const openDatabase = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION)
+    const request = indexedDB.open(
+      INDEXED_DB_CONFIG.name,
+      INDEXED_DB_CONFIG.version
+    )
 
     request.onerror = () => {
       reject(new Error(`Failed to open database: ${request.error?.message}`))
@@ -44,8 +44,10 @@ const openDatabase = (): Promise<IDBDatabase> => {
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'userId' })
+      if (!db.objectStoreNames.contains(INDEXED_DB_CONFIG.storeName)) {
+        db.createObjectStore(INDEXED_DB_CONFIG.storeName, {
+          keyPath: 'userId'
+        })
       }
     }
   })
@@ -61,8 +63,8 @@ export const saveSandboxEnvironment = async (
 ): Promise<Result<void>> => {
   try {
     const db = await openDatabase()
-    const transaction = db.transaction([STORE_NAME], 'readwrite')
-    const store = transaction.objectStore(STORE_NAME)
+    const transaction = db.transaction([INDEXED_DB_CONFIG.storeName], 'readwrite')
+    const store = transaction.objectStore(INDEXED_DB_CONFIG.storeName)
 
     const environment: SandboxEnvironment & { userId: string } = {
       userId,

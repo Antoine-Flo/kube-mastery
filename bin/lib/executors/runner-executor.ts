@@ -1,15 +1,20 @@
 import { readFileSync, statSync } from 'fs'
 import { basename } from 'path'
 import { createClusterState } from '../../../src/core/cluster/ClusterState'
+import { type ClusterNodeRole } from '../../../src/config/clusterConfig'
 import { createEventBus } from '../../../src/core/cluster/events/EventBus'
-import { DEFAULT_KIND_LIKE_BOOTSTRAP } from '../../../src/core/cluster/systemBootstrap'
 import { parseKubernetesYaml } from '../../../src/core/kubectl/yamlParser'
 import { createKubectlExecutor } from '../../../src/core/kubectl/commands/executor'
 import { createFileSystem } from '../../../src/core/filesystem/FileSystem'
 import { createDirectory } from '../../../src/core/filesystem/models/Directory'
 import { createFile } from '../../../src/core/filesystem/models/File'
 import { createLogger } from '../../../src/logger/Logger'
+import {
+  CONFORMANCE_CLUSTER_NAME,
+  getConformanceBootstrapConfig
+} from '../../../src/config/runtimeConfig'
 import { listYamlFiles } from '../cluster-manager'
+import { loadClusterNodeRoles } from '../cluster-manager'
 import type {
   ApplyYamlAction,
   CommandExecutionResult,
@@ -116,14 +121,17 @@ const executionFromOutput = (
   }
 }
 
-export const createRunnerExecutor = (clusterName = 'conformance'): RunnerExecutor => {
+export const createRunnerExecutor = (
+  clusterName = CONFORMANCE_CLUSTER_NAME
+): RunnerExecutor => {
   const logger = createLogger({ mirrorToConsole: false })
   const eventBus = createEventBus()
+  const nodeRolesResult = loadClusterNodeRoles()
+  const nodeRoles: readonly ClusterNodeRole[] | undefined = nodeRolesResult.ok
+    ? nodeRolesResult.value
+    : undefined
   const clusterState = createClusterState(eventBus, {
-    bootstrap: {
-      ...DEFAULT_KIND_LIKE_BOOTSTRAP,
-      clusterName
-    }
+    bootstrap: getConformanceBootstrapConfig(clusterName, nodeRoles)
   })
   const fileSystem = createFileSystem()
   const executor = createKubectlExecutor(clusterState, fileSystem, logger, eventBus)

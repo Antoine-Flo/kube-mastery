@@ -45,6 +45,14 @@ const simulatePodIP = (podName: string): string => {
   return `172.17.0.${lastOctet}`
 }
 
+const formatDescribeDate = (isoDate: string): string => {
+  const parsed = new Date(isoDate)
+  if (isNaN(parsed.getTime())) {
+    return isoDate
+  }
+  return parsed.toUTCString()
+}
+
 /**
  * Format probe configuration
  */
@@ -260,14 +268,23 @@ const formatContainer = (
  */
 export const describePod = (pod: Pod): string => {
   const lines: string[] = []
+  const podIP = simulatePodIP(pod.metadata.name)
+  const nodeName = pod.spec.nodeName ?? '<none>'
+  const nodeIP = simulatePodIP(nodeName)
 
   // Basic metadata
-  lines.push(`Name:         ${pod.metadata.name}`)
-  lines.push(`Namespace:    ${pod.metadata.namespace}`)
-  lines.push(`Labels:       ${formatLabels(pod.metadata.labels)}`)
-  lines.push(`Annotations:  ${formatLabels(pod.metadata.annotations)}`)
-  lines.push(`Status:       ${pod.status.phase}`)
-  lines.push(`IP:           ${simulatePodIP(pod.metadata.name)}`)
+  lines.push(`Name:             ${pod.metadata.name}`)
+  lines.push(`Namespace:        ${pod.metadata.namespace}`)
+  lines.push('Priority:         0')
+  lines.push('Service Account:  default')
+  lines.push(`Node:             ${nodeName}/${nodeIP}`)
+  lines.push(`Start Time:       ${formatDescribeDate(pod.metadata.creationTimestamp)}`)
+  lines.push(`Labels:           ${formatLabels(pod.metadata.labels)}`)
+  lines.push(`Annotations:      ${formatLabels(pod.metadata.annotations)}`)
+  lines.push(`Status:           ${pod.status.phase}`)
+  lines.push(`IP:               ${podIP}`)
+  lines.push('IPs:')
+  lines.push(`  IP:             ${podIP}`)
   lines.push(blank())
 
   // Init Containers section (if any)
@@ -315,8 +332,12 @@ export const describePod = (pod: Pod): string => {
   lines.push('  Ready             True')
   lines.push('  ContainersReady   True')
   lines.push('  PodScheduled      True')
-  lines.push('')
-  lines.push('Events:  <none>')
+  lines.push(blank())
+  lines.push('QoS Class:          BestEffort')
+  lines.push('Node-Selectors:     <none>')
+  lines.push('Tolerations:        <none>')
+  lines.push(blank())
+  lines.push('Events:             <none>')
 
   return lines.join('\n')
 }

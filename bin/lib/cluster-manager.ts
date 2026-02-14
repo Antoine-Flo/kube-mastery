@@ -1,10 +1,15 @@
 import { execSync } from 'child_process'
-import { existsSync, readdirSync, statSync } from 'fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'fs'
 import { join } from 'path'
+import {
+  DEFAULT_CLUSTER_CONFIG_PATH,
+  type ClusterNodeRole
+} from '../../src/config/clusterConfig'
+import { parseClusterNodeRolesFromKindConfig } from '../../src/core/cluster/clusterConfig'
 import type { Result } from './types'
 import { error, success } from './types'
 
-const DEFAULT_KIND_CONFIG = 'kind/configs/multi-node.yaml'
+const DEFAULT_KIND_CONFIG = DEFAULT_CLUSTER_CONFIG_PATH
 
 export const ensureCluster = (
   name: string,
@@ -25,6 +30,25 @@ export const ensureCluster = (
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     return error(`Failed to create cluster ${name}: ${message}`)
+  }
+}
+
+export const loadClusterNodeRoles = (
+  kindConfigPath?: string
+): Result<ClusterNodeRole[], string> => {
+  const configPath = kindConfigPath ?? DEFAULT_KIND_CONFIG
+  const absolutePath = join(process.cwd(), configPath)
+  if (!existsSync(absolutePath)) {
+    return error(`Kind config not found at ${configPath}`)
+  }
+
+  try {
+    const yamlContent = readFileSync(absolutePath, 'utf-8')
+    const roles = parseClusterNodeRolesFromKindConfig(yamlContent)
+    return success(roles)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    return error(`Failed to parse cluster config ${configPath}: ${message}`)
   }
 }
 

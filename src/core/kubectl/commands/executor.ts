@@ -16,6 +16,7 @@ import { handleLabel } from './handlers/label'
 import { handleLogs } from './handlers/logs'
 import { handleScale } from './handlers/scale'
 import { handleVersion } from './handlers/version'
+import { resolveKubectlHelp } from './help'
 import { parseCommand } from './parser'
 import type { ParsedCommand } from './types'
 
@@ -137,6 +138,11 @@ export const createKubectlExecutor = (
 ) => {
   const execute = (input: string, fileSystem?: FileSystem): ExecutionResult => {
     logger.info('COMMAND', `Kubectl: ${input}`)
+
+    const helpText = resolveKubectlHelp(input)
+    if (helpText !== undefined) {
+      return success(helpText)
+    }
 
     const parseResult = parseCommand(input)
     if (!parseResult.ok) {

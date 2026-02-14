@@ -9,6 +9,25 @@ import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
 
+const formatDeletedMessage = (
+  kindRef: string,
+  name: string,
+  namespace: string,
+  namespaced: boolean
+): string => {
+  if (!namespaced) {
+    return `${kindRef} "${name}" deleted`
+  }
+  return `${kindRef} "${name}" deleted from ${namespace} namespace`
+}
+
+const formatNotFoundMessage = (
+  kindRefPlural: string,
+  name: string
+): ExecutionResult => {
+  return error(`Error from server (NotFound): ${kindRefPlural} "${name}" not found`)
+}
+
 /**
  * Handle kubectl delete command
  * Uses event-driven architecture to delete resources
@@ -34,7 +53,7 @@ export const handleDelete = (
     eventBus.emit(
       createPodDeletedEvent(parsed.name, namespace, findResult.value, 'kubectl')
     )
-    return success(`pod "${parsed.name}" deleted`)
+    return success(formatDeletedMessage('pod', parsed.name, namespace, true))
   }
 
   if (resource === 'configmaps') {
@@ -50,7 +69,7 @@ export const handleDelete = (
         'kubectl'
       )
     )
-    return success(`configmap "${parsed.name}" deleted`)
+    return success(formatDeletedMessage('configmap', parsed.name, namespace, true))
   }
 
   if (resource === 'secrets') {
@@ -66,20 +85,30 @@ export const handleDelete = (
         'kubectl'
       )
     )
-    return success(`secret "${parsed.name}" deleted`)
+    return success(formatDeletedMessage('secret', parsed.name, namespace, true))
   }
 
   if (resource === 'deployments') {
-    return success(`deployment "${parsed.name}" deleted`)
+    const deleteResult = clusterState.deleteDeployment(parsed.name, namespace)
+    if (!deleteResult.ok) {
+      return formatNotFoundMessage('deployments.apps', parsed.name)
+    }
+    return success(
+      formatDeletedMessage('deployment.apps', parsed.name, namespace, true)
+    )
   }
 
   if (resource === 'services') {
-    return success(`service "${parsed.name}" deleted`)
+    const deleteResult = clusterState.deleteService(parsed.name, namespace)
+    if (!deleteResult.ok) {
+      return error(deleteResult.error)
+    }
+    return success(formatDeletedMessage('service', parsed.name, namespace, true))
   }
 
   if (resource === 'namespaces') {
-    return success(`namespace "${parsed.name}" deleted`)
+    return success(formatDeletedMessage('namespace', parsed.name, namespace, false))
   }
 
-  return success(`${resource} "${parsed.name}" deleted`)
+  return success(formatDeletedMessage(resource, parsed.name, namespace, false))
 }

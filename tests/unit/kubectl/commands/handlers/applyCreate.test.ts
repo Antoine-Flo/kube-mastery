@@ -41,7 +41,7 @@ describe('applyCreate handler', () => {
       return
     }
 
-    expect(result.value).toContain('deployment/my-dep created')
+    expect(result.value).toContain('deployment.apps/my-dep created')
     const deployment = clusterState.findDeployment('my-dep', 'default')
     expect(deployment.ok).toBe(true)
   })
@@ -62,7 +62,31 @@ describe('applyCreate handler', () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain('requires --image')
+      expect(result.error).toContain('required flag(s) "image" not set')
+    }
+  })
+
+  it('should return error when multiple images are used with command', () => {
+    const parsed = parseCommand(
+      'kubectl create deployment my-dep --image=busybox --image=nginx -- date'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'cannot specify multiple --image options and command'
+      )
     }
   })
 

@@ -242,18 +242,16 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
   })
 
   describe('--output-directory flag', () => {
-    it('should return error when --output-directory is specified', () => {
+    it('should return success message when --output-directory is specified', () => {
       const parsed = createParsedCommand({
         flags: { dump: true, 'output-directory': '/tmp/dump' }
       })
 
       const result = handleClusterInfo(stateData, parsed)
 
-      expect(result.ok).toBe(false)
-      if (!result.ok) {
-        expect(result.error).toContain(
-          '--output-directory is not yet supported'
-        )
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toContain('Cluster info dumped to /tmp/dump')
       }
     })
 

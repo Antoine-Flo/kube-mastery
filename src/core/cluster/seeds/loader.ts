@@ -19,7 +19,7 @@ import { applyResourceWithEvents } from '../../kubectl/commands/handlers/resourc
 import { parseKubernetesYaml } from '../../kubectl/yamlParser'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import { DEFAULT_KIND_LIKE_BOOTSTRAP } from '../systemBootstrap'
+import { getSimulatorBootstrapConfig } from '../../../config/runtimeConfig'
 import { readdirSync, readFileSync } from 'fs'
 import { join } from 'path'
 
@@ -78,10 +78,7 @@ const loadClusterStateFromYamlContent = (
 ): Result<ClusterState, string> => {
   const bus = eventBus ?? createEventBus()
   const clusterState = createClusterState(bus, {
-    bootstrap: {
-      ...DEFAULT_KIND_LIKE_BOOTSTRAP,
-      clusterName: 'simulator'
-    }
+    bootstrap: getSimulatorBootstrapConfig()
   })
   const resources = parseMultiDocumentYamlSkipUnsupported(yamlContent)
 

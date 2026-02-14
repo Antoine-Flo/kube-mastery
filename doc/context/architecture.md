@@ -38,6 +38,21 @@
 
 `src/core/cluster/scheduler/` — séparé des controllers. Watch PodCreated (sans nodeName), filter nodes Ready, round-robin, bind. Init dans `EmulatedEnvironmentManager.ts`.
 
+### Cluster Bootstrap Policy
+
+Le bootstrap cluster est centralise dans `src/core/cluster/ClusterState.ts` via `createClusterState(...)`.
+
+- Point unique de verite: tous les callsites passent par la meme policy.
+- Configuration explicite:
+  - `profile`: `kind-like` | `none`
+  - `mode`: `always` | `missing-only` | `never`
+- Implementation des ressources bootstrap dans `src/core/cluster/systemBootstrap.ts`.
+- Topologie des nodes centralisee dans `src/core/cluster/clusterConfig.ts` et alignee sur le YAML partage `src/courses/seeds/clusterConfig/multi-node.yaml` (source commune kind + simulateur).
+- Points d'integration principaux:
+  - `src/core/emulatedEnvironment/EmulatedEnvironmentManager.ts`
+  - `src/core/cluster/seeds/loader.ts`
+  - `bin/lib/executors/runner-executor.ts`
+
 ### Autocomplete
 
 `src/core/terminal/autocomplete/` — `AutocompleteProvider`, `AutocompleteEngine`. Providers: kubectl, shell, filesystem.
@@ -45,6 +60,39 @@
 ### Command Dispatcher
 
 `src/core/terminal/core/CommandDispatcher.ts` — `CommandHandler` (canHandle, execute). Handlers: ShellCommandHandler, KubectlCommandHandler dans `handlers/`.
+
+### kubectl Help Resolution
+
+Le flux help est resolu en pre-parse dans la couche commandes kubectl (`src/core/kubectl/commands/parser.ts` / `executor.ts`) pour garantir:
+
+- priorite de `-h` / `--help` sur les validations metier,
+- `exitCode=0` en mode help,
+- absence d'effet de bord (pas d'execution des handlers metier).
+
+### API Discovery Catalog
+
+`kubectl api-resources` repose sur un catalogue discovery dedie pour decoupler:
+
+- ressources executees par le simulateur,
+- ressources exposees par discovery (parite kind-like, tri, filtres, formats).
+
+Ce registre alimente toutes les sorties (`table`, `wide`, `name`, `json`, `yaml`) depuis une source unique pour eviter les derives de format.
+
+### Create/Delete Semantics Layer
+
+La couche handlers kubectl aligne explicitement les messages create/delete sur des references kube (`deployment.apps/...`) et sur les conventions de namespace:
+
+- `create`/`apply` construisent une reference de ressource adaptee au groupe API,
+- `delete` namespaced ajoute `from <namespace> namespace`,
+- les cas `NotFound` critiques (deployments) sont normalises avec `deployments.apps`.
+
+### Cluster-Info Dump Behavior
+
+`cluster-info` et `cluster-info dump` partagent un renderer central:
+
+- URL control-plane + ligne CoreDNS pour la sortie standard,
+- rendu `dump` en listes Kubernetes (`NodeList`, `PodList`, etc.),
+- prise en charge de `--output-directory` en mode confirmation pour conserver la compatibilite CLI.
 
 ### Terminal
 

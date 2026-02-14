@@ -20,11 +20,24 @@
 
 - [ ] **Nettoyer le code** : Supprimer dead code, commentaires obsolètes
 
+### Conformance Realism (Lots en cours)
+
+- [x] **Lot A - Help CLI parity** : `kubectl -h`, `kubectl --help`, `<cmd> --help` resolves in pre-parse with `exitCode=0` and no side effects.
+- [x] **Lot B - api-resources parity** : discovery catalog kind-like + outputs `default|wide|name|json|yaml` + options `--namespaced`, `--sort-by`, `--no-headers`.
+- [x] **Validation A/B** : tests unitaires dedies + baisse mesuree des mismatches `errors-help-*` et `platform-cmd-*` dans `artifacts/conformance/diff.log`.
+- [x] **Lot C - create/delete semantics** : references `deployment.apps`, namespace suffix sur delete, NotFound deployment en exit non-zero.
+- [x] **Lot D - validation create deployment** : rejection de `--image` multiple combine a une commande (`-- ...`) avec message d'erreur kubectl-like.
+- [~] **Lot E - cluster-info + describe pod parity** : cluster-info rapproche de kind, dump plus coherent; describe pod continue a raffiner.
+- [~] **Lot F - get/api-resources finishing** : `get pods -o wide` enrichi + categories `all`; derniers ecarts de tabulation/ordering a ajuster.
+
 ### Améliorations Nodes (Post-MVP)
 
 **État actuel** : MVP complète (modèle, CRUD, `kubectl get nodes`, tests conformance). Score de complétude : ~60%.
 
 **Recommandations prioritaires** :
+
+- [x] **Bootstrap cluster centralise** : Policy de bootstrap unifiee dans `createClusterState(...)` avec options explicites (`profile` + `mode`) pour reutilisation runner/app/seeds.
+- [x] **Seed kind-like minimal** : Injection systematique de nodes systeme + `kube-root-ca.crt` + pods systeme via bootstrap.
 
 - [ ] **Événements Node** (Priorité 1 - 2-3h) : Créer `NodeCreatedEvent`, `NodeUpdatedEvent`, `NodeDeletedEvent` + handlers pour cohérence architecturale. Actuellement : placeholders (`createSecretCreatedEvent`)
 - [ ] **kubectl describe node** (Priorité 2 - 1-2h) : Implémenter la commande `kubectl describe node <name>` - **Note** : Mentionné dans Sprint 10
@@ -76,6 +89,7 @@
 - [ ] kubectl get events (CRITIQUE pour CKA - 30% troubleshooting)
 - [ ] Multi-resource support (e.g., `kubectl get pods,services`)
 - [ ] Rolling updates and rollbacks fonctionnels (Deployments)
+- [x] Parite `kubectl get -o yaml/json` (shape `List`/`Object`) + indentation JSON/tabulation plus fideles
 - [ ] **kubectl describe node** (amélioration Nodes - voir "À faire maintenant")
 
 ### Sprint 11: Security & Networking (CKA Critical - 20%)

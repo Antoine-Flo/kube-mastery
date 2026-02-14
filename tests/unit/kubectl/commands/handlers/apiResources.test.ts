@@ -78,7 +78,7 @@ describe('kubectl api-resources handler', () => {
         expect(result.value).toContain('NAME')
         expect(result.value).toContain('VERBS')
         expect(result.value).toContain('CATEGORIES')
-        expect(result.value).toContain('get,list,create')
+        expect(result.value).toContain('create,delete,deletecollection')
       }
     })
 
@@ -97,7 +97,9 @@ describe('kubectl api-resources handler', () => {
         )
         expect(podLine).toBeTruthy()
         if (podLine) {
-          expect(podLine).toContain('get,list,create,update,patch,delete,watch')
+          expect(podLine).toContain(
+            'create,delete,deletecollection,get,list,patch,update,watch'
+          )
         }
       }
     })
@@ -163,7 +165,7 @@ describe('kubectl api-resources handler', () => {
         const json = JSON.parse(result.value)
         expect(json.kind).toBe('APIResourceList')
         expect(json.apiVersion).toBe('v1')
-        expect(json.groupVersion).toBe('v1')
+        expect(json.groupVersion).toBe('')
         expect(Array.isArray(json.resources)).toBe(true)
       }
     })
@@ -187,7 +189,7 @@ describe('kubectl api-resources handler', () => {
           expect(podsResource).toHaveProperty('kind')
           expect(podsResource).toHaveProperty('verbs')
           expect(podsResource).toHaveProperty('shortNames')
-          expect(podsResource).toHaveProperty('categories')
+          expect(podsResource).toHaveProperty('version')
           expect(podsResource.namespaced).toBe(true)
           expect(podsResource.kind).toBe('Pod')
         }
@@ -366,7 +368,7 @@ describe('kubectl api-resources handler', () => {
           const parts = line.trim().split(/\s+/)
           return parts[parts.length - 1] // Last column is KIND
         })
-        const sorted = [...kinds].sort()
+        const sorted = [...kinds].sort((a, b) => a.localeCompare(b))
         expect(kinds).toEqual(sorted)
       }
     })

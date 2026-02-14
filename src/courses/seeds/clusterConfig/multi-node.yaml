@@ -1,6 +1,7 @@
 # kind multi-node cluster config
-# Use: kind create cluster --name <name> --config kind/configs/multi-node.yaml
-# Requires kind to be installed (see https://kind.sigs.k8s.io/)
+# Shared source for:
+# - kind cluster creation (conformance)
+# - simulator node bootstrap topology
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:

@@ -43,4 +43,26 @@ describe('systemBootstrap', () => {
     )
     expect(clusterState.getPods()).toHaveLength(expected.pods.length)
   })
+
+  it('supports topology with extra workers without magic strings', () => {
+    const resources = createSystemBootstrapResources({
+      clusterName: 'conformance',
+      clock: () => '2026-02-13T12:00:00Z',
+      nodeRoles: ['control-plane', 'worker', 'worker', 'worker']
+    })
+
+    expect(resources.nodes.map((node) => node.metadata.name)).toEqual([
+      'conformance-control-plane',
+      'conformance-worker',
+      'conformance-worker2',
+      'conformance-worker3'
+    ])
+    expect(resources.nodes.map((node) => {
+      const addresses = node.status.addresses ?? []
+      const internal = addresses.find((address) => {
+        return address.type === 'InternalIP'
+      })
+      return internal?.address
+    })).toEqual(['172.18.0.2', '172.18.0.3', '172.18.0.4', '172.18.0.5'])
+  })
 })

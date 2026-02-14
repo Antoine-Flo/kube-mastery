@@ -68,6 +68,25 @@ interface ResourceHandler {
   addDirect?: (state: ClusterState, resource: KubernetesResource) => void
 }
 
+const KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
+  Deployment: 'deployment.apps',
+  ReplicaSet: 'replicaset.apps'
+}
+
+const toKindReference = (kind: ResourceKind): string => {
+  return KIND_REFERENCE_BY_KIND[kind] ?? kind.toLowerCase()
+}
+
+const toPluralKindReference = (kind: ResourceKind): string => {
+  if (kind === 'Deployment') {
+    return 'deployments.apps'
+  }
+  if (kind === 'ReplicaSet') {
+    return 'replicasets.apps'
+  }
+  return `${kind.toLowerCase()}s`
+}
+
 // ─── Resource Handlers Configuration ─────────────────────────────────────
 
 const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
@@ -225,7 +244,7 @@ export const applyResourceWithEvents = (
     } else {
       handler.emitUpdated(eventBus, name, namespace, resource, existing.value)
     }
-    return success(`${kind.toLowerCase()}/${name} configured`)
+    return success(`${toKindReference(kind)}/${name} configured`)
   } else {
     // Create: emit created event or add directly
     if (handler.addDirect) {
@@ -233,7 +252,7 @@ export const applyResourceWithEvents = (
     } else {
       handler.emitCreated(eventBus, resource)
     }
-    return success(`${kind.toLowerCase()}/${name} created`)
+    return success(`${toKindReference(kind)}/${name} created`)
   }
 }
 
@@ -262,7 +281,7 @@ export const createResourceWithEvents = (
 
   if (existing.ok) {
     return error(
-      `Error from server (AlreadyExists): ${kind.toLowerCase()}s "${name}" already exists`
+      `Error from server (AlreadyExists): ${toPluralKindReference(kind)} "${name}" already exists`
     )
   }
 
@@ -273,5 +292,5 @@ export const createResourceWithEvents = (
     handler.emitCreated(eventBus, resource)
   }
 
-  return success(`${kind.toLowerCase()}/${name} created`)
+  return success(`${toKindReference(kind)}/${name} created`)
 }

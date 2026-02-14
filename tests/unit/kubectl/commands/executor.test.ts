@@ -163,7 +163,7 @@ data:
           return
         }
 
-        expect(result.value).toContain('deployment/my-dep created')
+        expect(result.value).toContain('deployment.apps/my-dep created')
         const deployment = clusterState.findDeployment('my-dep', 'default')
         expect(deployment.ok).toBe(true)
       })
@@ -258,6 +258,25 @@ data:
           (container) => container.image
         )
         expect(images).toEqual(['busybox:latest', 'ubuntu:latest', 'nginx'])
+      })
+
+      it('should fail when multiple images are combined with command', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create deployment my-dep --image=busybox --image=nginx -- date'
+        )
+
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+          expect(result.error).toContain(
+            'cannot specify multiple --image options and command'
+          )
+        }
       })
 
       it('should support --image with separate value', () => {
@@ -580,6 +599,65 @@ data:
     })
 
     describe('integration with parser', () => {
+      it('should return root help for kubectl -h', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl -h')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain(
+          'kubectl controls the Kubernetes cluster manager.'
+        )
+      })
+
+      it('should return subcommand help for kubectl get --help', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl get --help')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('Display one or many resources.')
+        expect(result.value).toContain('Usage:')
+      })
+
+      it('should return create deployment help without executing command', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const before = clusterState.getDeployments('default').length
+        const result = executor.execute('kubectl create deployment --help')
+        const after = clusterState.getDeployments('default').length
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain(
+          'Create a deployment with the specified name.'
+        )
+        expect(after).toBe(before)
+      })
+
       it('should handle complete command flow: parse → route → execute', () => {
         const executor = createKubectlExecutor(
           clusterState,

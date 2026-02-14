@@ -294,6 +294,30 @@ const getPodDisplayStatus = (pod: Pod): string => {
   return pod.status.phase
 }
 
+const getPodIP = (pod: Pod): string => {
+  const statuses = pod.status.containerStatuses ?? []
+  if (statuses.length === 0) {
+    return '<none>'
+  }
+
+  const hashSource = `${pod.metadata.namespace}/${pod.metadata.name}`
+  let hash = 0
+  for (let i = 0; i < hashSource.length; i++) {
+    hash = (hash << 5) - hash + hashSource.charCodeAt(i)
+    hash = hash & hash
+  }
+  const thirdOctet = (Math.abs(hash) % 240) + 10
+  const fourthOctet = (Math.abs(hash >> 4) % 240) + 10
+  return `10.244.${thirdOctet}.${fourthOctet}`
+}
+
+const getPodNodeName = (pod: Pod): string => {
+  if (typeof pod.spec.nodeName === 'string' && pod.spec.nodeName.length > 0) {
+    return pod.spec.nodeName
+  }
+  return '<none>'
+}
+
 // ─── Resource Handlers Configuration ─────────────────────────────────────
 // Object lookup pattern (like executor.ts) - add new resource = add config
 
@@ -309,7 +333,29 @@ const RESOURCE_HANDLERS: Record<string, ResourceHandler<any>> = {
       formatAge(pod.metadata.creationTimestamp)
     ],
     supportsFiltering: true,
-    align: ['left', 'right', 'left', 'right', 'right']
+    align: ['left', 'right', 'left', 'right', 'right'],
+    headersWide: [
+      'name',
+      'ready',
+      'status',
+      'restarts',
+      'age',
+      'ip',
+      'node',
+      'nominated node',
+      'readiness gates'
+    ],
+    formatRowWide: (pod: Pod) => [
+      pod.metadata.name,
+      getPodReady(pod),
+      getPodDisplayStatus(pod),
+      String(getPodRestarts(pod)),
+      formatAge(pod.metadata.creationTimestamp),
+      getPodIP(pod),
+      getPodNodeName(pod),
+      '<none>',
+      '<none>'
+    ]
   },
 
   configmaps: {
@@ -553,7 +599,13 @@ export const handleGet = (
     )
   }
 
-  const rows = filtered.map(handler.formatRow) as string[][]
+  const rowsSource =
+    resourceType === ('deployments' as Resource)
+      ? [...filtered].sort((a, b) =>
+          a.metadata.name.localeCompare(b.metadata.name)
+        )
+      : filtered
+  const rows = rowsSource.map(handler.formatRow) as string[][]
   const tableOptions =
     handler.align != null
       ? withKubectlTableSpacing({ align: handler.align })

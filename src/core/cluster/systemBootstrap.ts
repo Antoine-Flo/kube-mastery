@@ -1,4 +1,9 @@
 import type { ClusterState } from './ClusterState'
+import {
+  buildNodeRoleSlotNames,
+  DEFAULT_CLUSTER_NODE_ROLES,
+  type ClusterNodeRole
+} from './clusterConfig'
 import { getSystemPods } from './systemPods'
 import type { ConfigMap } from './ressources/ConfigMap'
 import { createConfigMap } from './ressources/ConfigMap'
@@ -9,6 +14,7 @@ import type { Pod } from './ressources/Pod'
 export interface SystemBootstrapOptions {
   clusterName?: string
   clock?: () => string
+  nodeRoles?: readonly ClusterNodeRole[]
 }
 
 export type ClusterBootstrapProfile = 'kind-like' | 'none'
@@ -44,18 +50,12 @@ const createNotReadyCondition = (): NodeCondition => {
   }
 }
 
-const createNodeInternalIP = (role: 'control-plane' | 'worker' | 'worker2'): string => {
-  if (role === 'control-plane') {
-    return '172.18.0.2'
-  }
-  if (role === 'worker') {
-    return '172.18.0.3'
-  }
-  return '172.18.0.4'
+const createNodeInternalIP = (nodeIndex: number): string => {
+  return `172.18.0.${nodeIndex + 2}`
 }
 
 const createNodeLabels = (
-  role: 'control-plane' | 'worker' | 'worker2'
+  role: ClusterNodeRole
 ): Record<string, string> => {
   if (role === 'control-plane') {
     return {
@@ -72,11 +72,12 @@ const createNodeLabels = (
 
 const createBootstrapNode = (
   clusterName: string,
-  role: 'control-plane' | 'worker' | 'worker2',
+  role: ClusterNodeRole,
+  roleSlotName: string,
+  nodeIndex: number,
   creationTimestamp: string
 ): Node => {
-  const nodeName =
-    role === 'control-plane' ? `${clusterName}-control-plane` : `${clusterName}-${role}`
+  const nodeName = `${clusterName}-${roleSlotName}`
   return createNode({
     name: nodeName,
     labels: createNodeLabels(role),
@@ -85,7 +86,7 @@ const createBootstrapNode = (
       addresses: [
         {
           type: 'InternalIP',
-          address: createNodeInternalIP(role)
+          address: createNodeInternalIP(nodeIndex)
         },
         {
           type: 'Hostname',
@@ -120,14 +121,20 @@ export const createSystemBootstrapResources = (
   options: SystemBootstrapOptions = {}
 ): SystemBootstrapResources => {
   const clusterName = options.clusterName ?? DEFAULT_CLUSTER_NAME
+  const nodeRoles = options.nodeRoles ?? DEFAULT_CLUSTER_NODE_ROLES
+  const roleSlotNames = buildNodeRoleSlotNames(nodeRoles)
   const creationTimestamp =
     options.clock != null ? options.clock() : new Date().toISOString()
   return {
-    nodes: [
-      createBootstrapNode(clusterName, 'control-plane', creationTimestamp),
-      createBootstrapNode(clusterName, 'worker', creationTimestamp),
-      createBootstrapNode(clusterName, 'worker2', creationTimestamp)
-    ],
+    nodes: nodeRoles.map((role, index) => {
+      return createBootstrapNode(
+        clusterName,
+        role,
+        roleSlotNames[index],
+        index,
+        creationTimestamp
+      )
+    }),
     configMaps: [createKubeRootCAConfigMap(creationTimestamp)],
     pods: getSystemPods({ clock: () => creationTimestamp })
   }

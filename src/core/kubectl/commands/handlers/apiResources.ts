@@ -3,6 +3,10 @@ import type { ParsedCommand } from '../types'
 import type { Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import { formatTable } from '../../../shared/formatter'
+import {
+  API_DISCOVERY_CATALOG,
+  type APIResourceDiscovery
+} from '../../discovery/apiDiscoveryCatalog'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL API-RESOURCES HANDLER
@@ -13,107 +17,33 @@ import { formatTable } from '../../../shared/formatter'
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
-interface APIResource {
-  name: string // "pods"
-  shortnames: string[] // ["po"]
-  apiversion: string // "v1"
-  namespaced: boolean // true
-  kind: string // "Pod"
-  verbs?: string[] // ["get", "list", "create", ...] (for --output wide)
-  categories?: string[] // (for --output wide, optional)
-}
-
-// ─── Resource Configuration ──────────────────────────────────────────────
-
-/**
- * Static configuration of all supported API resources
- * Based on KUBECTL_RESOURCES from parser and Kubernetes API reference
- */
-const API_RESOURCES: APIResource[] = [
-  {
-    name: 'configmaps',
-    shortnames: ['cm'],
-    apiversion: 'v1',
-    namespaced: true,
-    kind: 'ConfigMap',
-    verbs: ['get', 'list', 'create', 'update', 'patch', 'delete', 'watch']
-  },
-  {
-    name: 'deployments',
-    shortnames: ['deploy'],
-    apiversion: 'apps/v1',
-    namespaced: true,
-    kind: 'Deployment',
-    verbs: ['get', 'list', 'create', 'update', 'patch', 'delete', 'watch']
-  },
-  {
-    name: 'namespaces',
-    shortnames: ['ns'],
-    apiversion: 'v1',
-    namespaced: false,
-    kind: 'Namespace',
-    verbs: ['get', 'list', 'create', 'update', 'patch', 'delete', 'watch']
-  },
-  {
-    name: 'nodes',
-    shortnames: ['no'],
-    apiversion: 'v1',
-    namespaced: false,
-    kind: 'Node',
-    verbs: ['get', 'list', 'create', 'update', 'patch', 'delete', 'watch']
-  },
-  {
-    name: 'pods',
-    shortnames: ['po'],
-    apiversion: 'v1',
-    namespaced: true,
-    kind: 'Pod',
-    verbs: ['get', 'list', 'create', 'update', 'patch', 'delete', 'watch']
-  },
-  {
-    name: 'replicasets',
-    shortnames: ['rs'],
-    apiversion: 'apps/v1',
-    namespaced: true,
-    kind: 'ReplicaSet',
-    verbs: ['get', 'list', 'create', 'update', 'patch', 'delete', 'watch']
-  },
-  {
-    name: 'secrets',
-    shortnames: [],
-    apiversion: 'v1',
-    namespaced: true,
-    kind: 'Secret',
-    verbs: ['get', 'list', 'create', 'update', 'patch', 'delete', 'watch']
-  },
-  {
-    name: 'services',
-    shortnames: ['svc'],
-    apiversion: 'v1',
-    namespaced: true,
-    kind: 'Service',
-    verbs: ['get', 'list', 'create', 'update', 'patch', 'delete', 'watch']
-  }
-]
-
 // ─── Helper Functions ────────────────────────────────────────────────────
 
-/**
- * Extract API group from apiversion
- * Examples: "v1" -> "", "apps/v1" -> "apps"
- */
-const extractAPIGroup = (apiversion: string): string => {
-  const parts = apiversion.split('/')
-  return parts.length > 1 ? parts[0] : ''
+const KUBECTL_JSON_INDENT = 4
+
+const extractAPIGroup = (groupVersion: string): string => {
+  const parts = groupVersion.split('/')
+  if (parts.length > 1) {
+    return parts[0]
+  }
+  return ''
+}
+
+const extractVersion = (groupVersion: string): string => {
+  const parts = groupVersion.split('/')
+  if (parts.length > 1) {
+    return parts[1]
+  }
+  return groupVersion
 }
 
 /**
  * Filter resources by namespaced flag
  */
 const filterByNamespaced = (
-  resources: APIResource[],
+  resources: APIResourceDiscovery[],
   namespaced?: boolean
-): APIResource[] => {
+): APIResourceDiscovery[] => {
   if (namespaced === undefined) {
     return resources
   }
@@ -124,9 +54,9 @@ const filterByNamespaced = (
  * Sort resources by specified field
  */
 const sortResources = (
-  resources: APIResource[],
+  resources: APIResourceDiscovery[],
   sortBy?: string
-): APIResource[] => {
+): APIResourceDiscovery[] => {
   const sorted = [...resources]
 
   if (sortBy === 'name') {
@@ -140,17 +70,6 @@ const sortResources = (
       // Secondary sort by name if kinds are equal
       return a.name.localeCompare(b.name)
     })
-  } else {
-    // Default sort: by API group, then by name
-    sorted.sort((a, b) => {
-      const groupA = extractAPIGroup(a.apiversion)
-      const groupB = extractAPIGroup(b.apiversion)
-      const groupCompare = groupA.localeCompare(groupB)
-      if (groupCompare !== 0) {
-        return groupCompare
-      }
-      return a.name.localeCompare(b.name)
-    })
   }
 
   return sorted
@@ -161,7 +80,10 @@ const sortResources = (
 /**
  * Format shortnames as comma-separated string
  */
-const formatShortnames = (shortnames: string[]): string => {
+const formatShortnames = (shortnames?: string[]): string => {
+  if (!shortnames) {
+    return ''
+  }
   return shortnames.length > 0 ? shortnames.join(',') : ''
 }
 
@@ -175,7 +97,7 @@ const formatNamespaced = (namespaced: boolean): string => {
 /**
  * Format verbs as comma-separated string
  */
-const formatVerbs = (verbs?: string[]): string => {
+const formatVerbs = (verbs: string[]): string => {
   return verbs ? verbs.join(',') : ''
 }
 
@@ -191,14 +113,14 @@ const formatCategories = (categories?: string[]): string => {
  * Columns: NAME, SHORTNAMES, APIVERSION, NAMESPACED, KIND
  */
 const formatTableOutput = (
-  resources: APIResource[],
+  resources: APIResourceDiscovery[],
   noHeaders = false
 ): string => {
   const headers = ['NAME', 'SHORTNAMES', 'APIVERSION', 'NAMESPACED', 'KIND']
   const rows = resources.map((resource) => [
     resource.name,
-    formatShortnames(resource.shortnames),
-    resource.apiversion,
+    formatShortnames(resource.shortNames),
+    resource.groupVersion,
     formatNamespaced(resource.namespaced),
     resource.kind
   ])
@@ -212,7 +134,7 @@ const formatTableOutput = (
  * Columns: NAME, SHORTNAMES, APIVERSION, NAMESPACED, KIND, VERBS, CATEGORIES
  */
 const formatWideOutput = (
-  resources: APIResource[],
+  resources: APIResourceDiscovery[],
   noHeaders = false
 ): string => {
   const headers = [
@@ -226,8 +148,8 @@ const formatWideOutput = (
   ]
   const rows = resources.map((resource) => [
     resource.name,
-    formatShortnames(resource.shortnames),
-    resource.apiversion,
+    formatShortnames(resource.shortNames),
+    resource.groupVersion,
     formatNamespaced(resource.namespaced),
     resource.kind,
     formatVerbs(resource.verbs),
@@ -242,11 +164,11 @@ const formatWideOutput = (
  * Format name output (--output name)
  * One resource name per line, with API group suffix if not v1
  */
-const formatNameOutput = (resources: APIResource[]): string => {
+const formatNameOutput = (resources: APIResourceDiscovery[]): string => {
   const lines: string[] = []
 
   for (const resource of resources) {
-    const group = extractAPIGroup(resource.apiversion)
+    const group = extractAPIGroup(resource.groupVersion)
     if (group) {
       lines.push(`${resource.name}.${group}`)
     } else {
@@ -261,50 +183,48 @@ const formatNameOutput = (resources: APIResource[]): string => {
  * Format JSON output (--output json)
  * Structure matches metav1.APIResourceList
  */
-const formatJsonOutput = (resources: APIResource[]): string => {
+const formatJsonOutput = (resources: APIResourceDiscovery[]): string => {
   const apiResourceList = {
     kind: 'APIResourceList',
     apiVersion: 'v1',
-    groupVersion: 'v1',
+    groupVersion: '',
     resources: resources.map((resource) => ({
       name: resource.name,
-      singularName: resource.name.endsWith('s')
-        ? resource.name.slice(0, -1)
-        : resource.name,
+      singularName: resource.singularName,
       namespaced: resource.namespaced,
+      version: extractVersion(resource.groupVersion),
       kind: resource.kind,
-      verbs: resource.verbs || [],
-      shortNames: resource.shortnames || [],
-      categories: resource.categories || []
+      verbs: resource.verbs,
+      ...(resource.shortNames ? { shortNames: resource.shortNames } : {}),
+      ...(resource.categories ? { categories: resource.categories } : {})
     }))
   }
 
-  return JSON.stringify(apiResourceList, null, 2)
+  return JSON.stringify(apiResourceList, null, KUBECTL_JSON_INDENT)
 }
 
 /**
  * Format YAML output (--output yaml)
  * Same structure as JSON but YAML format
  */
-const formatYamlOutput = (resources: APIResource[]): string => {
+const formatYamlOutput = (resources: APIResourceDiscovery[]): string => {
   const apiResourceList = {
     kind: 'APIResourceList',
     apiVersion: 'v1',
-    groupVersion: 'v1',
+    groupVersion: '',
     resources: resources.map((resource) => ({
       name: resource.name,
-      singularName: resource.name.endsWith('s')
-        ? resource.name.slice(0, -1)
-        : resource.name,
+      singularName: resource.singularName,
       namespaced: resource.namespaced,
+      version: extractVersion(resource.groupVersion),
       kind: resource.kind,
-      verbs: resource.verbs || [],
-      shortNames: resource.shortnames || [],
-      categories: resource.categories || []
+      verbs: resource.verbs,
+      ...(resource.shortNames ? { shortNames: resource.shortNames } : {}),
+      ...(resource.categories ? { categories: resource.categories } : {})
     }))
   }
 
-  return yamlStringify(apiResourceList)
+  return yamlStringify(apiResourceList).trimEnd()
 }
 
 // ─── Main Handler ────────────────────────────────────────────────────────
@@ -354,7 +274,10 @@ export const handleAPIResources = (parsed: ParsedCommand): Result<string> => {
     : parsed.output || 'table'
 
   // Filter resources
-  let filteredResources = filterByNamespaced(API_RESOURCES, namespacedFilter)
+  let filteredResources = filterByNamespaced(
+    API_DISCOVERY_CATALOG,
+    namespacedFilter
+  )
 
   // Sort resources
   filteredResources = sortResources(filteredResources, sortBy as string)

@@ -19,8 +19,8 @@ describe('describeFormatters', () => {
 
       const result = describePod(pod)
 
-      expect(result).toContain('Name:         nginx-pod')
-      expect(result).toContain('Namespace:    default')
+      expect(result).toContain('Name:             nginx-pod')
+      expect(result).toContain('Namespace:        default')
       expect(result).toContain('Status:')
     })
 
@@ -48,7 +48,7 @@ describe('describeFormatters', () => {
 
       const result = describePod(pod)
 
-      expect(result).toContain('Labels:       <none>')
+      expect(result).toContain('Labels:           <none>')
     })
 
     it('should format annotations', () => {

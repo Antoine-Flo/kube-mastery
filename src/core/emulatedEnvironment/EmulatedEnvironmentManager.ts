@@ -5,7 +5,6 @@
 // Handles memory cleanup and auto-save logic
 
 import { createClusterState } from '../cluster/ClusterState'
-import { DEFAULT_KIND_LIKE_BOOTSTRAP } from '../cluster/systemBootstrap'
 import {
   initializeControllers,
   initializeScheduler
@@ -16,6 +15,7 @@ import type { AppEvent } from '../events/AppEvent'
 import { createHostFileSystem } from '../filesystem/debianFileSystem'
 import { saveSandboxEnvironment } from '../storage/indexedDBAdapter'
 import { ShellContextStack } from '../terminal/core/ShellContext'
+import { getSimulatorBootstrapConfig } from '../../config/runtimeConfig'
 import type {
   CreateEmulatedEnvironmentOptions,
   EmulatedEnvironment
@@ -61,10 +61,7 @@ export function createEmulatedEnvironment(
   let eventBus: EventBus
   let clusterState
   let storageMode: 'indexeddb' | 'none' = 'none'
-  const bootstrapConfig = {
-    ...DEFAULT_KIND_LIKE_BOOTSTRAP,
-    clusterName: 'simulator'
-  } as const
+  const bootstrapConfig = getSimulatorBootstrapConfig()
 
   if (providedFilesystemState && providedClusterStateData) {
     // Mode with provided data (for lessons)

@@ -11,6 +11,77 @@ Rapprocher le simulateur du comportement reel de Kubernetes (profil `kind`) sans
 - Chaque lot d'amelioration doit faire baisser le diff conformance "naturellement".
 - Garder des sorties proches de `kubectl` (shape, sections, ordre, vocabulaire).
 
+## Etat d'avancement (mis a jour)
+
+### Deja implemente
+
+- Bootstrap kind-like minimum en code (nodes + objets systeme minimum + pods systeme).
+- Bootstrap centralise avec un point unique de verite: `createClusterState(...)`.
+- Policy explicite de bootstrap: profil + mode (`kind-like|none` et `always|missing-only|never`).
+- Parite `kubectl get -o yaml/json`:
+  - mode structure pour listes vides (`kind: List`, `apiVersion`, `items`, `metadata.resourceVersion`),
+  - objet unique pour `kubectl get <resource> <name> -o yaml/json`.
+- Ajustements de fidelite sur le rendu:
+  - indentation JSON alignee (4 espaces),
+  - tabulation table `kubectl get` amelioree (spacing coherent).
+
+### Reste a traiter (prochaines vagues)
+
+- Validation stricte des combinaisons de flags `create/scale/delete`.
+- Surface help globale et sous-commandes (`-h`, `--help`).
+- Parite `api-resources` (catalogue + tri + formats).
+- `cluster-info dump` plus complet.
+- `describe pod` runtime/events plus proches kubelet.
+
+### Avancement recent (Lots C a F)
+
+- Lot C (create/delete semantics):
+  - `create deployment` renvoie des references kind-like (`deployment.apps/...`),
+  - `delete` namespaced ajoute le suffixe `from <namespace> namespace`,
+  - `delete deployments <name>` renvoie `NotFound` + `exitCode=1` si absent.
+- Lot D (validation parser/create):
+  - `create deployment --image --image -- <cmd>` est maintenant refuse avec erreur kubectl-like,
+  - absence de `--image` renvoie un message de flag requis plus proche de kubectl.
+- Lot E (cluster-info / describe):
+  - `cluster-info` inclut la ligne CoreDNS et une URL control-plane plus proche de kind,
+  - `cluster-info dump --output-directory <path>` ne retourne plus une erreur "not supported".
+- Lot F (formats get / api-resources):
+  - `kubectl get pods -o wide` expose IP/NODE/NOMINATED NODE/READINESS GATES,
+  - tri stable des deployments en sortie tabulaire,
+  - `api-resources --output wide` expose `categories: all` pour les workloads principaux.
+
+### Execution en cours: Lot A / Lot B
+
+#### Lot A - Help CLI (`-h`, `--help`)
+
+- Objectif:
+  - pre-parser des flags help avant validation metier pour eviter les faux "Invalid or missing ...",
+  - `exitCode=0` sur les chemins help, sans executer la logique de commande.
+- Risques:
+  - regressions de parsing si la priorite help est injectee trop tard,
+  - duplication des textes d'aide entre commandes.
+- Criteres d'acceptation:
+  - `kubectl -h`, `kubectl --help`, `kubectl get --help`, `kubectl create --help`, `kubectl api-resources --help` passent en mode aide,
+  - baisse nette des mismatches sur `errors-help-cmd-9..23`.
+- Metriques cibles:
+  - diminution visible du volume `(missing)` dans la famille `errors-help-*`,
+  - zero erreur de type "Invalid or missing action/resource" pour les commandes `--help`.
+
+#### Lot B - `kubectl api-resources` parity
+
+- Objectif:
+  - separer "ressources supportees par le moteur" et "ressources exposees par discovery",
+  - aligner default/wide/name/json/yaml + options `--namespaced`, `--sort-by`, `--no-headers`.
+- Risques:
+  - derive entre format table et format structure (json/yaml) si la source n'est pas unique,
+  - erreurs d'ordering si tri et filtrage ne s'appliquent pas dans le meme ordre que kubectl.
+- Criteres d'acceptation:
+  - baisse nette des mismatches `platform-cmd-9..18`,
+  - shape `APIResourceList` conforme et `groupVersion` aligne en JSON/YAML.
+- Metriques cibles:
+  - baisse du mismatch count dans la famille `platform-cmd-*`,
+  - exact match sur les validations deja bonnes (`--sort-by=age` reste une erreur specifique).
+
 ## Resume des ecarts majeurs observes
 
 - `kubectl get ... -o yaml/json`: shape incorrecte pour les listes vides et ressources unitaires.
@@ -244,7 +315,7 @@ Mieux simuler l'enchainement Pending -> ContainerCreating -> Running et les read
 
 ## Priorite immediate recommandee
 
-1. Bootstrap cluster kind-like (`nodes` + system configmaps + timeline system pods).
-2. Shape `get -o yaml/json` (collections + objet unique).
-3. Validation stricte `create deployment` et erreurs standardisees.
-4. Help global/sous-commandes pour eliminer le bruit massif du diff.
+1. Completer la parite `cluster-info dump` (structure detaillee des listes + ordering fin).
+2. Rapprocher `describe pod` des sections kubelet (mounts/events/container details complets).
+3. Finaliser les ecarts cosmetiques tabulaires (`get`/`api-resources`) restants.
+4. Rejouer la conformance complete et mesurer le delta par famille.

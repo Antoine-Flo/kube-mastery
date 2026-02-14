@@ -32,6 +32,29 @@ Interactive web application for learning `kubectl` commands through a simulated 
 
 get (pods, deploy, rs, services, configmaps, secrets, nodes), describe, delete, create -f, apply -f, logs, exec -it, label, annotate, version (--client, --output json/yaml), cluster-info, cluster-info dump, api-resources (--output wide, --namespaced, --sort-by). Détail : voir `src/core/kubectl/commands/handlers/`.
 
+### kubectl Realism Guarantees (current baseline)
+
+- Structured outputs for `kubectl get` are explicit:
+  - collection queries in `-o json|-o yaml` return a `List` shape (`apiVersion`, `kind`, `metadata.resourceVersion`, `items`), including empty results,
+  - named queries (`kubectl get <resource> <name> -o json|-o yaml`) return a single object shape.
+- JSON output indentation for structured `get` output follows a stable 4-space formatting.
+- Table rendering for `kubectl get` uses consistent spacing tuned against `kind` output to reduce visual drift.
+- Help behavior is explicit:
+  - `kubectl -h` and `kubectl --help` are resolved before action validation,
+  - `<command> --help` returns usage/help text and does not execute command side effects.
+- `kubectl api-resources` behavior is explicit:
+  - supported output modes: default table, `wide`, `name`, `json`, `yaml`,
+  - supported options: `--namespaced=true|false`, `--sort-by=name|kind`, `--no-headers`,
+  - JSON/YAML output is emitted as `APIResourceList` with stable ordering.
+- Create/Delete behavior is explicit:
+  - `kubectl create deployment ...` emits `deployment.apps/<name> created`,
+  - `kubectl create deployment` rejects multiple `--image` when combined with command (`-- ...`),
+  - `kubectl delete` namespaced resources emit `deleted from <namespace> namespace`,
+  - deleting a missing deployment emits `Error from server (NotFound): deployments.apps "<name>" not found` with non-zero exit code.
+- `kubectl cluster-info` baseline:
+  - includes control-plane and CoreDNS lines,
+  - `kubectl cluster-info dump --output-directory <path>` returns a success confirmation message.
+
 ### Shell
 
 pwd, ls, cd, mkdir (-p), touch, cat, rm (-r), nano/vi/vim, clear, help, debug. Détail : voir `src/core/shell/`.
@@ -164,6 +187,14 @@ interface ClusterState {
   secrets: Secret[]
 }
 ```
+
+Cluster initialization always goes through a centralized bootstrap policy:
+
+- Single entry point: `createClusterState(...)` (`src/core/cluster/ClusterState.ts`)
+- Explicit options:
+  - `profile`: `kind-like` | `none`
+  - `mode`: `always` | `missing-only` | `never`
+- Bootstrap resources are implemented in `src/core/cluster/systemBootstrap.ts` and shared across runner, seed loader, and emulated environment manager.
 
 ### Controller Hierarchy
 

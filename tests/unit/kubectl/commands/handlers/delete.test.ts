@@ -11,6 +11,8 @@ import {
   createClusterState,
   type ClusterState
 } from '../../../../../src/core/cluster/ClusterState'
+import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
+import { createService } from '../../../../../src/core/cluster/ressources/Service'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 
 describe('kubectl delete handler', () => {
@@ -234,7 +236,22 @@ describe('kubectl delete handler', () => {
   })
 
   describe('deleting other resources', () => {
-    it('should handle deployment delete (simulated)', () => {
+    it('should delete deployment with kind-like message', () => {
+      clusterState.addDeployment(
+        createDeployment({
+          name: 'my-deploy',
+          namespace: 'default',
+          replicas: 1,
+          selector: { matchLabels: { app: 'my-deploy' } },
+          template: {
+            metadata: { labels: { app: 'my-deploy' } },
+            spec: {
+              containers: [{ name: 'my-deploy', image: 'nginx:latest' }]
+            }
+          }
+        })
+      )
+
       const parsed = createParsedCommand({
         name: 'my-deploy',
         resource: 'deployments'
@@ -244,12 +261,35 @@ describe('kubectl delete handler', () => {
 
       expect(result.ok).toBe(true)
       if (result.ok) {
-        expect(result.value).toContain('deployment')
-        expect(result.value).toContain('deleted')
+        expect(result.value).toContain('deployment.apps')
+        expect(result.value).toContain('deleted from default namespace')
       }
     })
 
-    it('should handle service delete (simulated)', () => {
+    it('should return not found for missing deployment', () => {
+      const parsed = createParsedCommand({
+        name: 'missing-deploy',
+        resource: 'deployments'
+      })
+
+      const result = handleDelete(clusterState, parsed, eventBus)
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('deployments.apps "missing-deploy" not found')
+      }
+    })
+
+    it('should delete service with namespace suffix', () => {
+      clusterState.addService(
+        createService({
+          name: 'my-service',
+          namespace: 'default',
+          selector: { app: 'my-app' },
+          ports: [{ port: 80 }]
+        })
+      )
+
       const parsed = createParsedCommand({
         name: 'my-service',
         resource: 'services'
@@ -259,7 +299,9 @@ describe('kubectl delete handler', () => {
 
       expect(result.ok).toBe(true)
       if (result.ok) {
-        expect(result.value).toContain('service')
+        expect(result.value).toContain(
+          'service "my-service" deleted from default namespace'
+        )
       }
     })
 
