@@ -308,36 +308,84 @@ try {
     inset: -10%;
     z-index: 0;
     pointer-events: none;
-    /* Une tache, nombreuses étapes = transition très douce */
-    background: radial-gradient(
-      ellipse 45% 20% at 75% 15%,
-      hsl(192, 74%, 10%) 0%,
-      var(--color-gray-1) 75%
-    );
+    /* Plusieurs halos pour rythmer la page sans couper le fond */
+    background:
+      radial-gradient(
+        ellipse 45% 20% at 75% 14%,
+        hsl(192, 74%, 10%) 0%,
+        transparent 74%
+      ),
+      radial-gradient(
+        ellipse 42% 18% at 28% 48%,
+        hsl(192, 74%, 10%) 0%,
+        transparent 72%
+      ),
+      radial-gradient(
+        ellipse 46% 22% at 72% 80%,
+        hsl(192, 74%, 10%) 0%,
+        transparent 75%
+      ),
+      var(--color-gray-1);
   }
 
   :global([data-theme='light']) .bg-halo {
-    background: radial-gradient(
-      ellipse 45% 40% at 75% 15%,
-      hsl(194, 55%, 87%) 0%,
-      var(--color-gray-1) 65%
-    );
+    background:
+      radial-gradient(
+        ellipse 50% 30% at 75% 14%,
+        hsl(194, 55%, 87%) 0%,
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 46% 26% at 28% 48%,
+        hsl(194, 55%, 90%) 0%,
+        transparent 68%
+      ),
+      radial-gradient(
+        ellipse 52% 30% at 72% 80%,
+        hsl(194, 55%, 88%) 0%,
+        transparent 72%
+      ),
+      var(--color-gray-1);
   }
 
   @media (max-width: 768px) {
     .bg-halo {
-      background: radial-gradient(
-        ellipse 65% 20% at 70% 10%,
-        hsl(192, 74%, 10%) 0%,
-        var(--color-gray-1) 65%
-      );
+      background:
+        radial-gradient(
+          ellipse 78% 18% at 72% 8%,
+          hsl(192, 74%, 10%) 0%,
+          transparent 72%
+        ),
+        radial-gradient(
+          ellipse 80% 18% at 28% 44%,
+          hsl(192, 74%, 10%) 0%,
+          transparent 70%
+        ),
+        radial-gradient(
+          ellipse 82% 20% at 70% 78%,
+          hsl(192, 74%, 10%) 0%,
+          transparent 74%
+        ),
+        var(--color-gray-1);
     }
     :global([data-theme='light']) .bg-halo {
-      background: radial-gradient(
-        ellipse 65% 30% at 70% 10%,
-        hsl(194, 55%, 87%) 0%,
-        var(--color-gray-1) 65%
-      );
+      background:
+        radial-gradient(
+          ellipse 82% 24% at 72% 8%,
+          hsl(194, 55%, 87%) 0%,
+          transparent 68%
+        ),
+        radial-gradient(
+          ellipse 84% 24% at 28% 44%,
+          hsl(194, 55%, 90%) 0%,
+          transparent 66%
+        ),
+        radial-gradient(
+          ellipse 86% 24% at 70% 78%,
+          hsl(194, 55%, 88%) 0%,
+          transparent 70%
+        ),
+        var(--color-gray-1);
     }
   }
 
