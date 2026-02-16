@@ -1,0 +1,15 @@
+[submodule "refs/k8s/api"]
+	path = refs/k8s/api
+	url = https://github.com/kubernetes/api.git
+[submodule "refs/k8s/apimachinery"]
+	path = refs/k8s/apimachinery
+	url = https://github.com/kubernetes/apimachinery.git
+[submodule "refs/k8s/client-go"]
+	path = refs/k8s/client-go
+	url = https://github.com/kubernetes/client-go.git
+[submodule "refs/k8s/kubectl"]
+	path = refs/k8s/kubectl
+	url = https://github.com/kubernetes/kubectl.git
+[submodule "refs/k8s/controller-runtime"]
+	path = refs/k8s/controller-runtime
+	url = https://github.com/kubernetes-sigs/controller-runtime.git
