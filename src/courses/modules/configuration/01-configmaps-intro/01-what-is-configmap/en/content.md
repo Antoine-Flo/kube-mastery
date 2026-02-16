@@ -1,24 +1,88 @@
-# What is a ConfigMap?
+# What Is a ConfigMap?
 
-A ConfigMap is an API object that lets you store configuration for other objects to use.
+Every application needs configuration — database URLs, log levels, feature flags, timeouts. But baking these values into your container images creates a problem: you'd need a different image for every environment. Development uses `localhost`, staging uses a staging URL, production uses a production URL. Three environments, three images — for every configuration change.
 
-## Motivation
+**ConfigMaps** solve this by separating configuration from code. They're Kubernetes objects that store key-value pairs, injected into your Pods at runtime.
 
-Use a ConfigMap for setting configuration data separately from application code. For example, you might have an application that looks for a `DATABASE_HOST` environment variable. Locally, you set it to `localhost`. In the cloud, you set it to refer to a Kubernetes Service.
+## The Configuration Separation Principle
 
-This lets you use the same container image in different environments by changing the configuration, not the code.
+Think of a ConfigMap as a settings file that lives outside your application. Your container image is the recipe; the ConfigMap is the ingredient list that changes depending on who's cooking.
+
+The same image runs everywhere — only the ConfigMap changes:
+
+```mermaid
+flowchart LR
+  Image["Container Image (same everywhere)"]
+  Dev["ConfigMap: dev (DB=localhost)"] --> Image
+  Staging["ConfigMap: staging (DB=staging-db)"] --> Image
+  Prod["ConfigMap: prod (DB=prod-db)"] --> Image
+```
 
 ## ConfigMap Structure
 
-Unlike most Kubernetes objects that have a `spec`, a ConfigMap has `data` and `binaryData` fields. These fields accept key-value pairs:
+Unlike most Kubernetes objects that have a `spec`, ConfigMaps have `data` and `binaryData` fields:
 
-- **data**: Designed to contain UTF-8 strings
-- **binaryData**: Designed to contain binary data as base64-encoded strings
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-settings
+data:
+  LOG_LEVEL: "info"
+  DATABASE_HOST: "postgres.default.svc.cluster.local"
+  FEATURE_NEW_UI: "true"
+  config.json: |
+    {
+      "timeout": 30,
+      "retries": 3,
+      "cache_ttl": 300
+    }
+```
 
-## Important Note
+The `data` field accepts any UTF-8 string — simple values, JSON, YAML, properties files, even entire configuration files. Keys become environment variable names or filenames, depending on how you consume the ConfigMap.
 
-ConfigMap does not provide secrecy or encryption. If the data you want to store are confidential, use a Secret rather than a ConfigMap.
+:::info
+Keys must consist of alphanumeric characters, hyphens (`-`), underscores (`_`), or dots (`.`). Each key maps to a value that can be a simple string or an entire file content.
+:::
+
+## When to Use ConfigMaps
+
+ConfigMaps are ideal for:
+- **Environment-specific settings** — API URLs, database hostnames, log levels
+- **Feature flags** — Enable/disable features without redeploying
+- **Configuration files** — nginx.conf, application.yaml, properties files
+- **Non-sensitive data** that varies between environments
+
+## When NOT to Use ConfigMaps
+
+ConfigMaps are **not encrypted** and should never contain:
+- Passwords or API keys
+- OAuth tokens or TLS certificates
+- Any sensitive credential
+
+Use **Secrets** for those — we'll cover them later in this module.
 
 :::warning
-ConfigMaps are not encrypted and should not contain sensitive data like passwords, API keys, or tokens. Use Secrets for confidential information instead.
+ConfigMaps are stored unencrypted in etcd by default. Anyone with API access can read them. Never put passwords, keys, or tokens in ConfigMaps — use Secrets instead.
 :::
+
+## Verifying ConfigMaps
+
+```bash
+# List all ConfigMaps in the current namespace
+kubectl get configmaps
+
+# See the full content
+kubectl get configmap app-settings -o yaml
+
+# Quick overview (shows keys but may truncate values)
+kubectl describe configmap app-settings
+```
+
+## Size Limit
+
+ConfigMaps are stored in etcd, which has a 1 MiB limit per object. For most configuration, this is more than enough. If you need to store larger data, consider using a volume mount with a PVC or an external configuration store.
+
+## Wrapping Up
+
+ConfigMaps decouple configuration from container images, letting you run the same image in any environment with different settings. They store non-sensitive key-value data that Pods consume as environment variables or mounted files. In the next lesson, you'll learn how to create ConfigMaps — from manifests, literal values, and files.

@@ -1,0 +1,1 @@
+{"title":{"en":"Introduction to PV and PVC","fr":"Introduction à PV et PVC"},"description":{"en":"Learn about PersistentVolumes and PersistentVolumeClaims for cluster-level persistent storage","fr":"Apprenez les PersistentVolumes et PersistentVolumeClaims pour le stockage persistant au niveau du cluster"},"environment":"minimal"}

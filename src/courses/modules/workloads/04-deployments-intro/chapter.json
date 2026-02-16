@@ -7,6 +7,5 @@
     "en": "Learn about Deployments and how they manage Pods through ReplicaSets",
     "fr": "Apprenez les Deployments et comment ils gèrent les Pods via les ReplicaSets"
   },
-  "isFree": true,
   "environment": "minimal"
 }

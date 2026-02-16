@@ -5,7 +5,6 @@ export interface CourseFrontmatter {
   shortDescription: string
   isActive?: boolean
   price?: number
-  isFree?: boolean
   comingSoon?: boolean
   order?: number
   level?: string
@@ -17,7 +16,6 @@ export interface CourseListItem {
   description: string | null
   shortDescription: string | null
   level: string | null
-  isFree: boolean
   comingSoon: boolean
   order: number
   totalLessons: number

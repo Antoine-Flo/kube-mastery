@@ -8,11 +8,15 @@ export const quiz: Quiz = {
   questions: [
     {
       id: 'q1',
-      type: 'terminal-command',
+      type: 'multiple-choice',
       question: 'Rollback the nginx-deployment to the previous revision',
-      expectedCommand: 'kubectl rollout undo deployment nginx-deployment',
-      validationMode: 'contains',
-      normalizeCommand: true
+      options: [
+        'kubectl rollout undo deployment nginx-deployment',
+        'kubectl rollback deployment nginx-deployment',
+        'kubectl undo deployment nginx-deployment',
+        'kubectl rollout previous deployment nginx-deployment'
+      ],
+      correctAnswer: 0
     },
     {
       id: 'q2',

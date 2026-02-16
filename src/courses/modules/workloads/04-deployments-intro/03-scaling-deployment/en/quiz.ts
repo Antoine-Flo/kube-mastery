@@ -8,11 +8,15 @@ export const quiz: Quiz = {
   questions: [
     {
       id: 'q1',
-      type: 'terminal-command',
+      type: 'multiple-choice',
       question: 'Scale the nginx-deployment to 5 replicas',
-      expectedCommand: 'kubectl scale deployment nginx-deployment --replicas=5',
-      validationMode: 'contains',
-      normalizeCommand: true
+      options: [
+        'kubectl scale deployment nginx-deployment --replicas=5',
+        'kubectl scale nginx-deployment --replicas 5',
+        'kubectl set replicas deployment nginx-deployment 5',
+        'kubectl rollout scale deployment nginx-deployment 5'
+      ],
+      correctAnswer: 0
     },
     {
       id: 'q2',

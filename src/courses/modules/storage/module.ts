@@ -3,11 +3,11 @@ import type { LocalModule } from '../../types'
 export const module: LocalModule = {
   title: {
     en: 'Storage',
-    fr: 'Stockage'
+    fr: 'Storage'
   },
   description: {
-    en: 'Learn Kubernetes storage: Volumes, PersistentVolumes, PersistentVolumeClaims, StorageClasses, dynamic provisioning, snapshots, and CSI',
-    fr: 'Apprenez le stockage Kubernetes : Volumes, PersistentVolumes, PersistentVolumeClaims, StorageClasses, provisioning dynamique, snapshots, et CSI'
+    en: 'Learn about Volumes, PersistentVolumes, PersistentVolumeClaims, StorageClasses, and CSI for persistent storage in Kubernetes',
+    fr: 'Apprenez les Volumes, PersistentVolumes, PersistentVolumeClaims, StorageClasses et CSI pour le stockage persistant dans Kubernetes'
   },
-  tags: ['CKA', 'CKAD', 'stockage']
+  tags: ['CKA', 'CKAD', 'storage']
 }

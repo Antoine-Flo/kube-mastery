@@ -6,11 +6,9 @@ interface Props {
   description: string | null
   totalLessons: number
   href: string
-  isFree?: boolean
   comingSoon?: boolean
   level?: string | null
   lessonsLabel: string
-  freeBadgeLabel?: string
   comingSoonLabel?: string
 }
 
@@ -18,10 +16,9 @@ const {
   title,
   description,
   href,
-  isFree = false,
   comingSoon = false,
+  level,
   lessonsLabel,
-  freeBadgeLabel = 'Free course',
   comingSoonLabel = 'Coming soon'
 } = Astro.props
 const descriptionText = description ?? ''
@@ -31,20 +28,26 @@ const descriptionText = description ?? ''
   class:list={[
     'card',
     'card--outline',
-    isFree && 'free',
     comingSoon && 'soon',
     !comingSoon && 'link'
   ]}
 >
   <a href={comingSoon ? '#' : href} class="card__link">
-    {isFree && <div class="banner">{freeBadgeLabel}</div>}
     {comingSoon && <div class="banner banner--soon">{comingSoonLabel}</div>}
     <div class="card__header">
       <h3 class="card__title">{title}</h3>
-      <span class="lessons">
-        <BookOpen size={16} aria-hidden="true" />
-        {lessonsLabel}
-      </span>
+      <div class="card__meta">
+        <span class="lessons">
+          <BookOpen size={16} aria-hidden="true" />
+          {lessonsLabel}
+        </span>
+        {level && (
+          <>
+            <span class="meta-separator" aria-hidden="true">&middot;</span>
+            <span class="level">{level}</span>
+          </>
+        )}
+      </div>
     </div>
     <div class="card__body">
       {descriptionText && <p class="card__description">{descriptionText}</p>}
@@ -106,9 +109,6 @@ const descriptionText = description ?? ''
     transform: translateY(-5px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
-  .free.card--outline {
-    border-color: var(--color-green-7) !important;
-  }
   .banner {
     display: flex;
     align-items: center;
@@ -119,11 +119,6 @@ const descriptionText = description ?? ''
     text-align: center;
     width: 100%;
   }
-  .banner:not(.banner--soon) {
-    color: var(--color-green-11);
-    background-color: var(--color-green-2);
-    border-bottom: 1px solid var(--color-green-4);
-  }
   .banner--soon {
     color: var(--color-amber-11);
     background-color: var(--color-amber-2);
@@ -132,11 +127,19 @@ const descriptionText = description ?? ''
   h3 {
     font-size: var(--text-xl);
   }
+  .card__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+  }
   .level {
-    display: block;
     font-size: var(--text-xs);
     color: var(--color-fg-muted);
-    margin-top: 0.25rem;
+  }
+  .meta-separator {
+    font-size: var(--text-xs);
+    color: var(--color-gray-8);
   }
   .lessons {
     display: inline-flex;
@@ -145,7 +148,6 @@ const descriptionText = description ?? ''
     font-size: var(--text-xs);
     color: var(--color-gray-11);
     line-height: 1.5;
-    margin-top: 0.25rem;
   }
   .lessons :global(svg) {
     flex-shrink: 0;

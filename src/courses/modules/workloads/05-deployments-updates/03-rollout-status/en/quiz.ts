@@ -8,11 +8,15 @@ export const quiz: Quiz = {
   questions: [
     {
       id: 'q1',
-      type: 'terminal-command',
+      type: 'multiple-choice',
       question: 'Check the rollout status of the nginx-deployment',
-      expectedCommand: 'kubectl rollout status deployment nginx-deployment',
-      validationMode: 'contains',
-      normalizeCommand: true
+      options: [
+        'kubectl rollout status deployment nginx-deployment',
+        'kubectl get rollout nginx-deployment',
+        'kubectl deployment status nginx-deployment',
+        'kubectl describe rollout nginx-deployment'
+      ],
+      correctAnswer: 0
     },
     {
       id: 'q2',

@@ -1,29 +1,30 @@
 ---
-title: Formation complète Kubernetes
-shortDescription: Maîtrisez Kubernetes de A à Z avec 95 chapitres complets couvrant tous les concepts essentiels.
+title: "Formation complète Kubernetes"
+shortDescription: Le parcours exhaustif couvrant tous les sujets en un seul cours linéaire — tous les modules, tous les chapitres, des fondamentaux aux extensions avancées. 40 chapitres et en croissance.
 isActive: true
 price: 0
-isFree: false
-comingSoon: true
-order: 2
+comingSoon: false
+order: 5
+level: Tous niveaux
 ---
 
-Une formation Kubernetes complète couvrant tout des fondamentaux aux sujets avancés. Ce cours de 95 chapitres est conçu pour les développeurs et opérateurs qui veulent une compréhension approfondie de Kubernetes.
+Le cours tout-en-un Kubernetes qui couvre **l'intégralité** des sujets en un seul parcours linéaire. Au lieu de choisir entre les parcours spécialisés (Développeur, Opérateur, Platform Engineer), ce cours vous emmène à travers chaque module du début à la fin.
 
-**Ce que vous apprendrez :**
+**Ce qui est inclus :**
 
-- **Fondations** : Overview, architecture, concepts API, namespaces, labels, annotations
-- **Containers & Pods** : Images, lifecycle, patterns multi-containers, QoS
-- **Workloads** : Deployments, StatefulSets, DaemonSets, Jobs, CronJobs, autoscaling
-- **Networking** : Services, DNS, Ingress, Gateway API, Network Policies
-- **Storage** : Volumes, PV/PVC, StorageClasses, CSI
-- **Configuration** : ConfigMaps, Secrets, gestion des ressources, probes
-- **Sécurité** : RBAC, ServiceAccounts, Pod Security Standards, sécurité Linux
-- **Opérations** : Policies, observability, certificats, admission webhooks
-- **Extensions** : CRDs, Operators, API aggregation
+- **Fondations** (8 ch.) : Overview, architecture, concepts API, namespaces, labels, annotations, opérations
+- **Workloads** (8 ch.) : Pods, lifecycle, ReplicaSets, Deployments, updates, StatefulSets, Jobs, CronJobs
+- **Networking** (4 ch.) : Services, types de services, DNS discovery, Ingress
+- **Stockage** (3 ch.) : Volumes, PV/PVC, StorageClasses
+- **Configuration** (5 ch.) : ConfigMaps, Secrets, gestion des ressources, probes, kubeconfig
+- **Sécurité** (6 ch.) : Sécurité cloud-native, contrôle d'accès API, RBAC, Pod Security Standards, sécurité Linux
+- **Policy & Administration** (5 ch.) : ResourceQuotas, LimitRanges, logging, observabilité, certificats
+- **Extensions** (3 ch.) : CRDs, Operators, plugins kubectl
 
-**Structure du cours :**
+**Pour qui ?**
 
-11 parties organisées progressivement des bases aux sujets avancés. Chaque chapitre s'appuie sur les connaissances précédentes avec de la pratique.
+Les ingénieurs qui veulent la vue complète sans choisir de parcours. C'est le parcours de référence exhaustif — il combine tout le contenu des parcours Fondamentaux, Développeur, Opérateur et Platform Engineer en un seul cours progressif.
 
-Parfait pour les ingénieurs DevOps, administrateurs système et développeurs préparant les certifications CKA/CKAD ou souhaitant devenir experts Kubernetes.
+Idéal aussi pour ceux qui préparent les certifications **CKA** et **CKAD** simultanément.
+
+**Statut actuel :** 40 chapitres publiés sur 9 modules. Roadmap cible : 95 chapitres.

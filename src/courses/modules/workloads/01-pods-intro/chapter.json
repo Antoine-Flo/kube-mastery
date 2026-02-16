@@ -7,6 +7,5 @@
     "en": "Learn about Pods, the smallest deployable unit in Kubernetes",
     "fr": "Apprenez les Pods, la plus petite unité déployable dans Kubernetes"
   },
-  "isFree": true,
   "environment": "minimal"
 }

@@ -148,7 +148,6 @@ Chaque chapitre est directement dans le module `{NN-chapter-name}/` avec un `cha
     "en": "Learn the fundamentals of Pods",
     "fr": "Apprenez les fondamentaux des Pods"
   },
-  "isFree": true,
   "environment": "minimal"
 }
 ```
@@ -156,7 +155,6 @@ Chaque chapitre est directement dans le module `{NN-chapter-name}/` avec un `cha
 **Propriétés** :
 
 - `title` / `description` : Métadonnées multilingues
-- `isFree` : Accès gratuit sans inscription
 - `environment` : Nom du scénario à charger (optionnel, défaut : `"empty"`)
 
 **Scénarios disponibles** : `empty`, `default`, `troubleshooting`, `multi-namespace`
@@ -188,8 +186,7 @@ export const course: LocalCourse = {
     fr: 'Description du cours'
   },
   isActive: true,
-  isFree: true, // Optionnel : affiche un badge "Free" sur la carte du cours
-  price: 0, // 0 = gratuit
+  price: 0,
   order: 1 // Ordre d'affichage
 }
 ```
@@ -225,40 +222,69 @@ Chaque leçon doit avoir un fichier `content.md` dans les dossiers `fr/` et `en/
 
 Le contenu est en Markdown standard. Respectez les règles suivantes :
 
-- **Longueur** : 25-30 lignes maximum par leçon (format micro-learning)
-- **Focus** : Un seul concept par leçon
-- **Structure** : Introduction courte (2-3 lignes) + concept principal + points clés (3-5 points)
+- **Longueur cible (EN)** : 70-120 lignes par leçon pour un format plus approfondi
+- **Focus** : Un seul concept principal par leçon, avec 1-2 sous-cas concrets
+- **Structure minimale** :
+  - H1 obligatoire en première ligne (`# Title`)
+  - Contexte/problème (3-6 lignes)
+  - 3 à 5 sections `##` (concept, fonctionnement, usage, pièges)
+  - 1 à 2 callouts (`:::info`, `:::warning`, `:::important`)
+  - 2 blocs code minimum (`bash` et/ou `yaml`)
+  - Mini-récap final (points à retenir)
 - **Titre H1 obligatoire** : La première ligne doit être un titre H1 (`# Titre`) qui sera utilisé comme titre de la leçon
 
 ### Exemple
 
 ````markdown
-# Titre de la leçon
+# Lesson Title
 
-Introduction courte qui contextualise le concept.
+Short context: why this topic matters in real Kubernetes operations.
 
-## Concept principal
+## Core Concept
 
-Explication du concept avec des exemples si nécessaire.
+Explain what this object/feature does and where it fits in the control plane.
 
-## Points clés
+## How it Works
 
-- Point 1
-- Point 2
-- Point 3
+Describe the lifecycle or reconciliation behavior.
 
-## Exemple
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+```
+
+## Hands-on Commands
 
 ```bash
-kubectl get pods
+kubectl apply -f configmap.yaml
+kubectl describe configmap app-config
 ```
-````
 
-Cette commande fait...
+:::info
+Explain one practical rule of thumb that helps in real projects.
+:::
 
+## Common Pitfalls
+
+- Pitfall 1
+- Pitfall 2
+- Pitfall 3
+
+:::warning
+Highlight one frequent production mistake and how to avoid it.
+:::
+
+## Quick Recap
+
+- Key point 1
+- Key point 2
+- Key point 3
 ````
 
 **Important** : Le titre H1 (`# Titre de la leçon`) sera automatiquement extrait et utilisé comme titre de la leçon dans l'interface. Assurez-vous qu'il soit présent et cohérent entre les versions `fr/` et `en/`.
+Pour ce chantier, l'enrichissement est effectué en priorité sur les contenus `en/`.
 
 ## 4. Ajouter un diagramme Mermaid
 

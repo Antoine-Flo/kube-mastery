@@ -15,11 +15,15 @@ export const quiz: Quiz = {
     },
     {
       id: 'q2',
-      type: 'terminal-command',
+      type: 'multiple-choice',
       question: 'Create a Deployment from a YAML file named deployment.yaml',
-      expectedCommand: 'kubectl apply -f deployment.yaml',
-      validationMode: 'contains',
-      normalizeCommand: true
+      options: [
+        'kubectl apply -f deployment.yaml',
+        'kubectl create deployment.yaml',
+        'kubectl run -f deployment.yaml',
+        'kubectl deploy apply deployment.yaml'
+      ],
+      correctAnswer: 0
     }
   ]
 }

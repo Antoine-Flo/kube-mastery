@@ -11,7 +11,6 @@ export interface OverviewChapter {
   moduleId?: string
   title: string
   description?: string
-  isFree?: boolean
   environment?: string
   lessons: OverviewLesson[]
 }
@@ -21,7 +20,6 @@ export interface CourseOverview {
   title: string
   shortDescription: string | null
   level: string | null
-  isFree: boolean
   comingSoon: boolean
   content: { chapters: OverviewChapter[] }
   descriptionContent: MarkdownInstance<Record<string, unknown>> | null

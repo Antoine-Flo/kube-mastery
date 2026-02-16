@@ -21,12 +21,16 @@ export const quiz: Quiz = {
     },
     {
       id: 'q2',
-      type: 'terminal-command',
+      type: 'multiple-choice',
       question:
         'Create a deployment named nginx using the imperative command approach',
-      expectedCommand: 'kubectl create deployment nginx --image nginx',
-      validationMode: 'contains',
-      normalizeCommand: true
+      options: [
+        'kubectl create deployment nginx --image nginx',
+        'kubectl run deployment nginx --image nginx',
+        'kubectl apply deployment nginx --image nginx',
+        'kubectl new deployment nginx --image nginx'
+      ],
+      correctAnswer: 0
     },
     {
       id: 'q3',

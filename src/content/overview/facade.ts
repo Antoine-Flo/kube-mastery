@@ -69,7 +69,6 @@ export function getCourseOverview(
     title: fm.title,
     shortDescription: fm.shortDescription ?? null,
     level: fm.level ?? null,
-    isFree: fm.isFree ?? (fm.price == null || fm.price === 0),
     comingSoon: fm.comingSoon ?? false,
     content: { chapters },
     descriptionContent: entry as unknown as MarkdownInstance<
@@ -114,7 +113,6 @@ export function getModuleOverview(
     title: mod.title[lang] ?? mod.title.en,
     shortDescription: mod.description?.[lang] ?? mod.description?.en ?? null,
     level: null,
-    isFree: false,
     comingSoon: false,
     content: { chapters },
     descriptionContent: null,

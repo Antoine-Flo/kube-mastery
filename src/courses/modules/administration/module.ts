@@ -2,12 +2,12 @@ import type { LocalModule } from '../../types'
 
 export const module: LocalModule = {
   title: {
-    en: 'Cluster Administration',
-    fr: 'Administration de cluster'
+    en: 'Administration',
+    fr: 'Administration'
   },
   description: {
-    en: 'Learn how to administer a Kubernetes cluster: addons, certificates, logging, networking, node management, observability, and API flow control',
-    fr: 'Apprenez à administrer un cluster Kubernetes : addons, certificats, logging, networking, gestion des nodes, observabilité, et contrôle de flux API'
+    en: 'Learn about logging, observability, certificates, and cluster administration in Kubernetes',
+    fr: 'Apprenez le logging, l\'observabilité, les certificats et l\'administration du cluster Kubernetes'
   },
-  tags: ['CKA', 'administration']
+  tags: ['CKA', 'CKAD', 'administration']
 }

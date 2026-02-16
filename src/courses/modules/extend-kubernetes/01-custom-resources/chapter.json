@@ -1,0 +1,1 @@
+{"title":{"en":"Custom Resources","fr":"Ressources personnalisées"},"description":{"en":"Learn how to define and use Custom Resource Definitions (CRDs) to extend the Kubernetes API","fr":"Apprenez à définir et utiliser les Custom Resource Definitions (CRD) pour étendre l'API Kubernetes"},"environment":"minimal"}

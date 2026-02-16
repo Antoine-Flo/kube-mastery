@@ -15,11 +15,15 @@ export const quiz: Quiz = {
     },
     {
       id: 'q2',
-      type: 'terminal-command',
+      type: 'multiple-choice',
       question: 'Create a ReplicaSet from a YAML file named replicaset.yaml',
-      expectedCommand: 'kubectl apply -f replicaset.yaml',
-      validationMode: 'contains',
-      normalizeCommand: true
+      options: [
+        'kubectl apply -f replicaset.yaml',
+        'kubectl create -f replicaset.yaml --kind ReplicaSet',
+        'kubectl run -f replicaset.yaml',
+        'kubectl replicaset create -f replicaset.yaml'
+      ],
+      correctAnswer: 0
     }
   ]
 }

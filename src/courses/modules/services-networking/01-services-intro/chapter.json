@@ -7,6 +7,5 @@
     "en": "Learn about Services and how they enable service discovery and load balancing",
     "fr": "Apprenez les Services et comment ils permettent la découverte de services et l'équilibrage de charge"
   },
-  "isFree": true,
   "environment": "minimal"
 }

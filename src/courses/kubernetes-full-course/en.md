@@ -1,29 +1,30 @@
 ---
-title: Kubernetes Complete Course
-shortDescription: Master Kubernetes from A to Z with 95 comprehensive chapters covering all essential concepts.
+title: "Kubernetes Complete Course"
+shortDescription: The exhaustive path covering every topic in one linear course — all modules, all chapters, from fundamentals to advanced extensions. 40 chapters and growing.
 isActive: true
 price: 0
-isFree: false
-comingSoon: true
-order: 2
+comingSoon: false
+order: 5
+level: All levels
 ---
 
-A comprehensive Kubernetes course covering everything from fundamentals to advanced topics. This 95-chapter course is designed for developers and operators who want a deep understanding of Kubernetes.
+The all-in-one Kubernetes course that covers **everything** in a single linear path. Instead of choosing between specialized tracks (Developer, Operator, Platform Engineer), this course takes you through every module from start to finish.
 
-**What you'll learn:**
+**What's included:**
 
-- **Foundations**: Overview, architecture, API concepts, namespaces, labels, annotations
-- **Containers & Pods**: Images, lifecycle, multi-container patterns, QoS
-- **Workloads**: Deployments, StatefulSets, DaemonSets, Jobs, CronJobs, autoscaling
-- **Networking**: Services, DNS, Ingress, Gateway API, Network Policies
-- **Storage**: Volumes, PV/PVC, StorageClasses, CSI
-- **Configuration**: ConfigMaps, Secrets, resource management, probes
-- **Security**: RBAC, ServiceAccounts, Pod Security Standards, Linux security
-- **Operations**: Policies, observability, certificates, admission webhooks
-- **Extensions**: CRDs, Operators, API aggregation
+- **Foundations** (8 ch.): Overview, architecture, API concepts, namespaces, labels, annotations, operations
+- **Workloads** (8 ch.): Pods, lifecycle, ReplicaSets, Deployments, updates, StatefulSets, Jobs, CronJobs
+- **Networking** (4 ch.): Services, service types, DNS discovery, Ingress
+- **Storage** (3 ch.): Volumes, PV/PVC, StorageClasses
+- **Configuration** (5 ch.): ConfigMaps, Secrets, resource management, probes, kubeconfig
+- **Security** (6 ch.): Cloud-native security, API access control, RBAC, Pod Security Standards, Linux security
+- **Policy & Administration** (5 ch.): ResourceQuotas, LimitRanges, logging, observability, certificates
+- **Extensions** (3 ch.): CRDs, Operators, kubectl plugins
 
-**Course structure:**
+**Who is this for?**
 
-11 parts organized progressively from basics to advanced topics. Each chapter builds on previous knowledge with hands-on practice.
+Engineers who want the complete picture without choosing a track. This is the exhaustive reference path — it combines all content from the Fundamentals, Developer, Operator, and Platform Engineer paths into one progressive course.
 
-Perfect for DevOps engineers, system administrators, and developers preparing for CKA/CKAD certifications or wanting to become Kubernetes experts.
+Also ideal for anyone preparing for both **CKA** and **CKAD** certifications simultaneously.
+
+**Current status:** 40 chapters published across 9 modules. Target roadmap: 95 chapters.

@@ -8,13 +8,16 @@ export const quiz: Quiz = {
   questions: [
     {
       id: 'q1',
-      type: 'terminal-command',
+      type: 'multiple-choice',
       question:
         'Create a ConfigMap named my-config with a key-value pair: key1=value1',
-      expectedCommand:
+      options: [
         'kubectl create configmap my-config --from-literal=key1=value1',
-      validationMode: 'contains',
-      normalizeCommand: true
+        'kubectl create cm my-config key1=value1',
+        'kubectl apply configmap my-config --literal key1=value1',
+        'kubectl new configmap my-config key1=value1'
+      ],
+      correctAnswer: 0
     },
     {
       id: 'q2',

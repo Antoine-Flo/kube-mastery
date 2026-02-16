@@ -6,7 +6,6 @@ import type { MarkdownInstance } from 'astro'
 export type ChapterMeta = {
   title: Record<UiLang, string>
   description?: Record<UiLang, string>
-  isFree?: boolean
   environment?: string
 }
 

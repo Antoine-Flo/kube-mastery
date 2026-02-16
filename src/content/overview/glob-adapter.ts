@@ -84,7 +84,6 @@ function buildChapterMetaIndex(): Map<string, ChapterMeta> {
     const raw = data as unknown as {
       title?: { en?: string; fr?: string }
       description?: { en?: string; fr?: string }
-      isFree?: boolean
       environment?: string
     }
 
@@ -93,7 +92,6 @@ function buildChapterMetaIndex(): Map<string, ChapterMeta> {
       description: raw.description
         ? { en: raw.description.en ?? '', fr: raw.description.fr ?? '' }
         : undefined,
-      isFree: raw.isFree,
       environment: raw.environment
     })
   }

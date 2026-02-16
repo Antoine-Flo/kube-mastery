@@ -8,12 +8,16 @@ export const quiz: Quiz = {
   questions: [
     {
       id: 'q1',
-      type: 'terminal-command',
+      type: 'multiple-choice',
       question: 'Create a new file called "test.txt"',
-      expectedCommand: 'touch test.txt',
-      validationMode: 'contains',
-      normalizeCommand: true,
-      hint: 'Type "touch test.txt" in the terminal on the right side of the screen.'
+      options: [
+        'touch test.txt',
+        'create test.txt',
+        'nano --new test.txt',
+        'kubectl create file test.txt'
+      ],
+      correctAnswer: 0,
+      hint: 'Use the shell command that creates an empty file.'
     }
   ]
 }

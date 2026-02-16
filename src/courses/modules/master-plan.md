@@ -1,5 +1,30 @@
 # Master Plan - Matrice des sujets couverts
 
+## État d'avancement (février 2026)
+
+- Cours complet (`kubernetes-full-course`) publié et visible (`comingSoon: false`).
+- Structure cible du parcours complet: **95 chapitres**.
+- Chapitres actuellement implémentés (`chapter.json` présents): **40**.
+- Écart restant: **55 chapitres**.
+- Référence de suivi détaillée: `src/courses/modules/gap-matrix-en.md`.
+
+### Modules déjà enrichis (EN)
+
+- `overview`: 8 chapitres
+- `workloads`: 8 chapitres
+- `services-networking`: 4 chapitres
+- `configuration`: 5 chapitres
+- `security`: 6 chapitres
+- `storage`: 3 chapitres
+- `policy`: 2 chapitres
+- `administration`: 3 chapitres
+- `extend-kubernetes`: 3 chapitres
+
+### Standard de contenu appliqué
+
+- Leçons EN avec H1 + callout + exemple `bash`/`yaml`.
+- Quiz EN en **multiple-choice uniquement**.
+
 ## Matrice Modules / Sujets
 
 | Sujet                             | Module              | Niveau | Notes                             |
@@ -182,28 +207,35 @@ Chapitres marqués "intro" qui peuvent être assemblés pour un parcours débuta
 
 ---
 
-## Cours planifiés
+## Cours planifiés / statut
 
-### Cours 1 : Fondamentaux Kubernetes (7 chapitres)
+### Cours 1 : Fondamentaux Kubernetes (12 chapitres) — `kubernetes-fundamentals`
 
-Objectif : Comprendre les concepts de base et déployer ses premières applications.
-Profil cible : Développeur qui découvre Kubernetes.
+Objectif : Comprendre les concepts de base, naviguer dans un cluster, et déployer ses premières applications.
+Profil cible : Tout le monde — tronc commun obligatoire.
+Statut : publié.
 
 | #   | Module              | Chapitre              | Objectif                                   |
 | --- | ------------------- | --------------------- | ------------------------------------------ |
 | 1   | Overview            | onboarding            | Utiliser la plateforme, environnement      |
 | 2   | Overview            | concepts-fondamentaux | Qu'est-ce que K8s, pourquoi l'utiliser     |
 | 3   | Overview            | objets-kubernetes     | Structure YAML, apiVersion, kind, metadata |
-| 4   | Workloads           | pods-intro            | Premier Pod, anatomie de base              |
-| 5   | Workloads           | deployments-intro     | Création, scaling basique                  |
-| 6   | Services-Networking | services-intro        | Exposer ses Pods, ClusterIP                |
-| 7   | Services-Networking | services-types        | NodePort, LoadBalancer                     |
+| 4   | Overview            | object-management     | Impératif vs déclaratif, kubectl apply     |
+| 5   | Overview            | namespaces            | Isolation logique, organisation            |
+| 6   | Overview            | labels-intro          | Clé/valeur, sélecteurs, organisation       |
+| 7   | Overview            | annotations           | Métadonnées non identifiantes              |
+| 8   | Overview            | operations            | kubectl get/describe/edit, bonnes pratiques|
+| 9   | Workloads           | pods-intro            | Premier Pod, anatomie de base              |
+| 10  | Workloads           | deployments-intro     | Création, scaling basique                  |
+| 11  | Services-Networking | services-intro        | Exposer ses Pods, ClusterIP                |
+| 12  | Services-Networking | services-types        | NodePort, LoadBalancer                     |
 
 ### Cours 2 : Kubernetes Complet (50+ chapitres)
 
 Objectif : Maîtriser Kubernetes de A à Z, des concepts de base aux fonctionnalités avancées.
 Profil cible : Développeur ou ops qui veut une compréhension approfondie de Kubernetes.
 Prérequis : Avoir suivi le Cours 1 ou avoir des bases solides.
+Statut : publié, enrichissement en cours.
 
 #### Partie 1 : Fondations et Architecture (10 chapitres)
 
@@ -358,3 +390,62 @@ Prérequis : Avoir suivi le Cours 1 ou avoir des bases solides.
 **Total : 95 chapitres**
 
 **Note** : Ce parcours couvre l'essentiel de Kubernetes pur. Les sujets très avancés (CNI/CSI development, device plugins, scheduler extensions) peuvent faire l'objet d'un parcours séparé "Extension de Kubernetes".
+
+---
+
+## Parcours d'apprentissage (Learning Paths)
+
+L'offre de cours est organisée en parcours spécialisés pour éviter la répétition des modules.
+Chaque module a un **propriétaire principal** et n'apparaît que dans un seul parcours.
+
+### Vue d'ensemble des parcours
+
+| # | Parcours | Slug | Order | Cible | Durée | Statut |
+|---|---|---|---:|---|---|---|
+| 0 | Prérequis | *(futur)* | — | Vrais débutants (terminal, Docker, YAML) | 4-6h | À créer |
+| 1 | Fondamentaux Kubernetes | `kubernetes-fundamentals` | 1 | Tout le monde — tronc commun | 4-6h | **Implémenté** |
+| 2 | Développeur Kubernetes | `kubernetes-developer` | 2 | Devs, prépa CKAD | 8-12h | **Implémenté** |
+| 3 | Opérateur / SRE | `kubernetes-operator` | 3 | SREs, ops, prépa CKA | 8-10h | **Implémenté** |
+| 4 | Platform Engineer | `kubernetes-platform-engineer` | 4 | Architectes, contributeurs K8s | 4-6h | **Implémenté** |
+| — | Formation complète | `kubernetes-full-course` | 5 | Parcours exhaustif tout-en-un | 30h+ | **Implémenté** |
+| 5 | Prépa Certification | *(futur)* | — | CKAD / CKA — parcours transversal | variable | À créer |
+
+### Matrice de répartition des modules
+
+| Module | Parcours propriétaire | Chapitres |
+|---|---|---|
+| overview | **Fondamentaux** (1) | onboarding → operations (8 ch.) |
+| workloads/pods-intro, deployments-intro | **Fondamentaux** (1) | premiers workloads (2 ch.) |
+| services-networking/services-intro, services-types | **Fondamentaux** (1) | premiers services (2 ch.) |
+| workloads (suite) | **Développeur** (2) | pod-lifecycle → cronjobs (6 ch.) |
+| services-networking (suite) | **Développeur** (2) | dns-intro, ingress-intro (2 ch.) |
+| configuration (sauf kubeconfig) | **Développeur** (2) | configmaps → probes (4 ch.) |
+| security | **Opérateur** (3) | cloud-native-security → linux-security (6 ch.) |
+| storage | **Opérateur** (3) | volumes → storage-class (3 ch.) |
+| policy | **Opérateur** (3) | resource-quotas, limit-ranges (2 ch.) |
+| administration | **Opérateur** (3) | logging, observability, certificates (3 ch.) |
+| configuration/kubeconfig | **Opérateur** (3) | kubeconfig (1 ch.) |
+| extend-kubernetes | **Platform Eng.** (4) | custom-resources, operators, kubectl-plugins (3 ch.) |
+| linux-basics *(futur)* | Prérequis (0) | — |
+| docker *(futur)* | Prérequis (0) | — |
+| yaml-basics *(futur)* | Prérequis (0) | — |
+| helm *(futur)* | Platform Eng. (4) | — |
+| istio *(futur)* | Platform Eng. (4) | — |
+
+**Résultat : zéro module dupliqué** (configuration est split entre Développeur et Opérateur, ce qui est logique — ConfigMaps/Secrets/probes = dev, kubeconfig = ops).
+
+### Progression recommandée par profil
+
+| Profil | Parcours |
+|---|---|
+| Développeur junior | 0 → 1 → 2 |
+| SRE / Ops | 0 → 1 → 3 |
+| Fullstack K8s | 0 → 1 → 2 → 3 |
+| Platform Engineer | 0 → 1 → 2 + 3 → 4 |
+| Certif CKAD | 0 → 1 → 2 → 5/CKAD |
+| Certif CKA | 0 → 1 → 2 + 3 → 5/CKA |
+
+### Notes
+
+- Le cours `kubernetes-intro` (quick start) a été supprimé — ses chapitres sont intégrés dans Fondamentaux.
+- Le cours `kubernetes-full-course` (order 5) est le parcours exhaustif tout-en-un qui combine l'intégralité des modules en un seul cours linéaire.

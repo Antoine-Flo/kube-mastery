@@ -3,11 +3,11 @@ import type { LocalModule } from '../../types'
 export const module: LocalModule = {
   title: {
     en: 'Policy',
-    fr: 'Policies'
+    fr: 'Policy'
   },
   description: {
-    en: 'Learn about Kubernetes policies: ResourceQuotas, LimitRanges, PID limiting, and node resource managers',
-    fr: 'Apprenez les policies Kubernetes : ResourceQuotas, LimitRanges, limitation des PIDs, et gestionnaires de ressources node'
+    en: 'Learn about ResourceQuotas, LimitRanges, and cluster policy management in Kubernetes',
+    fr: 'Apprenez les ResourceQuotas, LimitRanges et la gestion des politiques du cluster Kubernetes'
   },
-  tags: ['CKA', 'administration']
+  tags: ['CKA', 'CKAD', 'policy']
 }

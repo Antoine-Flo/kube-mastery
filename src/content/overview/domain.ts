@@ -53,7 +53,6 @@ export function buildChapter(
     moduleId,
     title: meta?.title?.[lang] ?? meta?.title?.en ?? chapterId,
     description: meta?.description?.[lang] ?? meta?.description?.en,
-    isFree: meta?.isFree,
     environment: meta?.environment,
     lessons
   }
