@@ -1,13 +1,25 @@
-import { ui, defaultLang } from './ui'
+import { ui, defaultLang, enabledLanguages } from './ui'
 
 export type UiLang = keyof typeof ui
 
+function isUiLanguage(value: string): value is UiLang {
+  return value in ui
+}
+
 export function getLangFromUrl(url: URL): UiLang {
   const [, lang] = url.pathname.split('/')
-  if (lang && lang in ui) {
-    return lang as UiLang
+  if (lang && isUiLanguage(lang) && isEnabledUiLang(lang)) {
+    return lang
   }
   return defaultLang
+}
+
+export function getLangSegmentFromPath(pathname: string): UiLang | null {
+  const [, lang] = pathname.split('/')
+  if (lang && isUiLanguage(lang)) {
+    return lang
+  }
+  return null
 }
 
 /** Path without locale prefix, for building same-page links in other locales (e.g. /fr/terms-of-service → /terms-of-service). */
@@ -54,4 +66,8 @@ export function useLocalePath(locale: UiLang) {
   return function localePath(path: string): string {
     return path === '/' ? `/${locale}` : `/${locale}${path}`
   }
+}
+
+export function isEnabledUiLang(lang: UiLang): boolean {
+  return enabledLanguages.includes(lang)
 }

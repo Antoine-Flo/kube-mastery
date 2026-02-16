@@ -25,6 +25,7 @@ Interactive web application for learning `kubectl` commands through a simulated 
 - **Overview** : `/[lang]/[type]/[id]` (type = courses | modules).
 - **Leçon** : `/[lang]/[type]/[id]/[lessonId]`.
 - **Autres** : `/[lang]/courses`, `/[lang]/auth`, `/[lang]/pricing`, etc.
+- **Rollout langue (actuel)** : EN prioritaire. FR reste disponible dans le code mais est desactive par flag (`src/config/i18nConfig.ts`, `ENABLE_FRENCH_UI = false`) ; `/fr/*` redirige vers `/en/*`.
 
 ## Core Features
 

@@ -6,6 +6,8 @@
 
 **Phase 1 MVP Complete** ✅ — Tests à migrer (Vitest, objectif ~94% coverage).
 
+- **Language strategy (launch)** : focus EN-only pour accelerer la creation de contenu. FR sera reactive plus tard via flag dans `src/config/i18nConfig.ts`.
+
 > Pour les détails de ce qui est implémenté, voir `spec.md` et `architecture.md`
 
 ## Business Model

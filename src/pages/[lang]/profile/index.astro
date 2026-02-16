@@ -3,6 +3,7 @@ import Layout from '../../../layouts/Layout.astro'
 import Button from '../../../components/ui/Button.astro'
 import Dialog from '../../../components/ui/Dialog.astro'
 import { useTranslations, useLocalePath } from '../../../i18n/utils'
+import { enabledLanguages } from '../../../i18n/ui'
 import { getSupabaseServer } from '../../../lib/supabase'
 
 const lang = (Astro.params.lang ?? 'en') as 'en' | 'fr'
@@ -31,6 +32,7 @@ const { data: prefs } = await supabase
 if (prefs?.locale === 'en' || prefs?.locale === 'fr') {
   preferredLocale = prefs.locale
 }
+const showLanguagePreferences = enabledLanguages.length > 1
 
 const DELETE_DIALOG_ID = 'profile-delete-dialog'
 ---
@@ -39,34 +41,38 @@ const DELETE_DIALOG_ID = 'profile-delete-dialog'
   <div class="profile" data-profile data-current-lang={lang}>
     <h1 class="profile__title">{t('profile_title')}</h1>
 
-    <section class="profile__section">
-      <h2 class="profile__section-title">{t('profile_defaultLanguage')}</h2>
-      <div
-        class="profile__locale-options"
-        role="group"
-        aria-label={t('profile_defaultLanguage')}
-      >
-        <button
-          type="button"
-          class="profile__locale-opt"
-          data-locale="en"
-          aria-pressed={preferredLocale === 'en'}
-        >
-          English
-        </button>
-        <button
-          type="button"
-          class="profile__locale-opt"
-          data-locale="fr"
-          aria-pressed={preferredLocale === 'fr'}
-        >
-          Français
-        </button>
-      </div>
-      <p class="profile__hint" data-locale-hint hidden>
-        {t('common_save')}
-      </p>
-    </section>
+    {
+      showLanguagePreferences && (
+        <section class="profile__section">
+          <h2 class="profile__section-title">{t('profile_defaultLanguage')}</h2>
+          <div
+            class="profile__locale-options"
+            role="group"
+            aria-label={t('profile_defaultLanguage')}
+          >
+            <button
+              type="button"
+              class="profile__locale-opt"
+              data-locale="en"
+              aria-pressed={preferredLocale === 'en'}
+            >
+              English
+            </button>
+            <button
+              type="button"
+              class="profile__locale-opt"
+              data-locale="fr"
+              aria-pressed={preferredLocale === 'fr'}
+            >
+              Français
+            </button>
+          </div>
+          <p class="profile__hint" data-locale-hint hidden>
+            {t('common_save')}
+          </p>
+        </section>
+      )
+    }
 
     <section class="profile__section profile__danger">
       <h2 class="profile__section-title">{t('profile_dangerZone')}</h2>

@@ -6,6 +6,7 @@ import {
   useTranslatedPath,
   useLocalePath
 } from '../i18n/utils'
+import { enabledLanguages } from '../i18n/ui'
 
 const lang = getLangFromUrl(Astro.url)
 const t = useTranslations(lang)
@@ -20,11 +21,18 @@ const currentPath = getPathWithoutLocale(Astro.url)
     <a href={localePath('/privacy-policy')}>{t('footer_privacyPolicy')}</a>
     <a href={localePath('/contact')}>{t('footer_contact')}</a>
   </nav>
-  <div class="lang">
-    <a href={translatePath(currentPath, 'en')}>EN</a>
-    <span aria-hidden="true"> · </span>
-    <a href={translatePath(currentPath, 'fr')}>FR</a>
-  </div>
+  {
+    enabledLanguages.length > 1 && (
+      <div class="lang">
+        {enabledLanguages.map((locale, index) => (
+          <>
+            {index > 0 && <span aria-hidden="true"> · </span>}
+            <a href={translatePath(currentPath, locale)}>{locale.toUpperCase()}</a>
+          </>
+        ))}
+      </div>
+    )
+  }
 </footer>
 
 <style>
