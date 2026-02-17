@@ -1,27 +1,30 @@
 import type { CourseStructure } from '../types'
 
 // Parcours 2 — Développeur Kubernetes
-// Suite logique des fondamentaux, sans doublons avec le parcours 1.
+// Progression orientée delivery applicatif:
+// deploiements -> exposition -> config -> stateful/batch -> operations quotidiennes.
 export const courseStructure: CourseStructure = {
   chapters: [
-    // Overview (suite) — manipuler les objets proprement
+    // Workflow de delivery applicative
     { moduleId: 'overview', chapterId: 'object-management' },
-    { moduleId: 'overview', chapterId: 'labels-intro' },
-    { moduleId: 'overview', chapterId: 'annotations' },
-    { moduleId: 'overview', chapterId: 'operations' },
-
-    // Workloads (suite) — déploiements applicatifs avancés
     { moduleId: 'workloads', chapterId: 'replicasets' },
     { moduleId: 'workloads', chapterId: 'deployments-updates' },
+    { moduleId: 'configuration', chapterId: 'secrets-intro' },
+    { moduleId: 'services-networking', chapterId: 'ingress-intro' },
+    { moduleId: 'configuration', chapterId: 'resource-management-intro' },
+
+    // Applications stateful et persistance
+    { moduleId: 'storage', chapterId: 'volumes-intro' },
+    { moduleId: 'storage', chapterId: 'pv-pvc-intro' },
     { moduleId: 'workloads', chapterId: 'statefulsets-intro' },
+
+    // Traitements batch et planification
     { moduleId: 'workloads', chapterId: 'jobs-intro' },
     { moduleId: 'workloads', chapterId: 'cronjobs' },
 
-    // Networking (suite) — entrée HTTP
-    { moduleId: 'services-networking', chapterId: 'ingress-intro' },
-
-    // Configuration (suite) — secret management et ressources
-    { moduleId: 'configuration', chapterId: 'secrets-intro' },
-    { moduleId: 'configuration', chapterId: 'resource-management-intro' }
+    // Hygiene des manifests et exploitation quotidienne
+    { moduleId: 'overview', chapterId: 'labels-intro' },
+    { moduleId: 'overview', chapterId: 'annotations' },
+    { moduleId: 'overview', chapterId: 'operations' }
   ]
 }

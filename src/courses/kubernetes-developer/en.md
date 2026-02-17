@@ -1,6 +1,6 @@
 ---
 title: "Kubernetes Developer"
-shortDescription: Go deeper on application delivery in Kubernetes. Object management, labels/annotations, advanced workloads, Ingress, Secrets, and resource management.
+shortDescription: Build and ship production-ready apps on Kubernetes. Covers deployment updates, Ingress, secrets, resource management, and stateful workloads with storage.
 isActive: true
 price: 0
 comingSoon: false
@@ -8,14 +8,15 @@ order: 2
 level: Intermediate
 ---
 
-The hands-on path for developers who deploy and operate applications on Kubernetes every day. After completing the Fundamentals course, this is where you learn to ship software on a cluster.
+The hands-on path for developers who deploy and operate applications on Kubernetes every day. After Fundamentals, this course focuses on application delivery in real teams: safe updates, HTTP exposure, secrets, resources, and stateful workloads.
 
 **What you'll learn:**
 
-- **Overview (advanced)** (4 chapters): object management, labels, annotations, and day-to-day kubectl operations
-- **Workloads (advanced)** (5 chapters): ReplicaSets, Deployment updates, StatefulSets, Jobs, and CronJobs
-- **Networking (advanced)** (1 chapter): Ingress for HTTP routing
-- **Configuration (advanced)** (2 chapters): Secrets and resource management (requests/limits, QoS)
+- **Release workflows**: object management, ReplicaSets, and Deployment updates for safer rollouts
+- **App runtime concerns**: Secrets, Ingress, and resource management for production behavior
+- **Stateful app foundations**: Volumes, PV/PVC, and StatefulSets
+- **Batch processing**: Jobs and CronJobs for asynchronous and scheduled workloads
+- **Operational hygiene**: labels, annotations, and daily kubectl operations
 
 **Who is this for?**
 
@@ -25,6 +26,6 @@ Backend and frontend developers, DevOps engineers writing CI/CD pipelines, and a
 
 **Course structure:**
 
-12 chapters across 4 modules, moving from proper Kubernetes object management to advanced application workloads with Ingress and resource configuration. Every chapter includes YAML examples, kubectl commands, and quizzes.
+14 chapters across 5 modules, progressing from release management to stateful and batch workloads, then closing with day-to-day operational practices. Every chapter includes YAML examples, kubectl commands, and quizzes.
 
 Recommended next step: **Kubernetes Platform Engineer** (to extend Kubernetes) or **Kubernetes Operator** (to expand into cluster administration).

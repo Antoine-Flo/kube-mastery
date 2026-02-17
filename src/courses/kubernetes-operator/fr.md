@@ -1,6 +1,6 @@
 ---
 title: "Kubernetes Opérateur / SRE"
-shortDescription: Sécurisez, gouvernez et administrez des clusters Kubernetes en production. Couvre sécurité, PV/PVC, policies, observabilité, certificats et kubeconfig.
+shortDescription: Securisez, gouvernez et administrez des clusters Kubernetes en production. Couvre controle d'acces, policies, provisioning stockage, observabilite, certificats et kubeconfig.
 isActive: true
 price: 0
 comingSoon: false
@@ -8,15 +8,15 @@ order: 3
 level: Intermédiaire
 ---
 
-Le parcours pour les SREs, ingénieurs ops et administrateurs de clusters qui maintiennent Kubernetes en production. Après les Fondamentaux, c'est ici que vous apprenez à sécuriser et opérer des clusters à grande échelle.
+Le parcours pour les SREs, ingenieurs ops et administrateurs de clusters qui maintiennent Kubernetes en production. Apres les Fondamentaux, ce cours se concentre sur l'operation d'un cluster multi-equipes securise et gouvernable.
 
 **Ce que vous apprendrez :**
 
-- **Sécurité** (6 chapitres) : Modèle de sécurité cloud-native, contrôle d'accès API, ServiceAccounts, RBAC, Pod Security Standards et contextes de sécurité Linux
-- **Stockage** (1 chapitre) : PersistentVolumes & PersistentVolumeClaims (PV/PVC)
-- **Policy** (2 chapitres) : ResourceQuotas et LimitRanges pour la gouvernance multi-tenant
-- **Administration** (3 chapitres) : Logging des conteneurs, métriques & observabilité, PKI Kubernetes et gestion des certificats
-- **Kubeconfig** (1 chapitre) : Accès multi-cluster, contextes et méthodes d'authentification
+- **Acces cluster et identite** : kubeconfig, controle d'acces API, ServiceAccounts et RBAC
+- **Securite des workloads et des tenants** : modele cloud-native, Pod Security Standards, contextes Linux
+- **Garde-fous de gouvernance** : ResourceQuotas et LimitRanges pour les equipes multi-tenant
+- **Provisioning de stockage** : fondamentaux StorageClass pour le provisioning dynamique
+- **Operations de production** : logging, observabilite et gestion des certificats
 
 **Pour qui ?**
 
@@ -26,6 +26,6 @@ SREs, administrateurs système, équipes plateforme, et toute personne préparan
 
 **Structure du cours :**
 
-13 chapitres répartis sur 5 modules, du modèle de sécurité à l'administration confiante de clusters en production avec RBAC, stockage persistant, quotas et monitoring. Chaque chapitre inclut des exemples YAML, des commandes kubectl et des quiz.
+13 chapitres repartis sur 5 modules, de l'acces cluster et des controles de securite jusqu'a la gouvernance et aux operations de production. Chaque chapitre inclut des exemples YAML, des commandes kubectl et des quiz.
 
 Prochaine étape recommandée : **Kubernetes Platform Engineer** (pour étendre Kubernetes avec CRDs et operators).

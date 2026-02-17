@@ -395,8 +395,12 @@ Statut : publié, enrichissement en cours.
 
 ## Parcours d'apprentissage (Learning Paths)
 
-L'offre de cours est organisée en parcours spécialisés pour éviter la répétition des modules.
-Chaque module a un **propriétaire principal** et n'apparaît que dans un seul parcours.
+L'offre de cours est organisee en parcours specialises par profil metier.
+Le principe pedagogique est:
+
+- `kubernetes-fundamentals` = tronc commun (chapitres non reiteres dans les autres parcours)
+- parcours 2 a 4 = progression metier (Developer, Operator, Platform Engineer)
+- chevauchements autorises entre 2 a 4 quand le contexte d'usage est different (ex: RBAC pour dev de plateforme vs ops production)
 
 ### Vue d'ensemble des parcours
 
@@ -418,23 +422,24 @@ Chaque module a un **propriétaire principal** et n'apparaît que dans un seul p
 | workloads (fondations) | **Fondamentaux** (1) | pods-intro, pod-lifecycle, deployments-intro (3 ch.) |
 | services-networking (fondations) | **Fondamentaux** (1) | services-intro, services-types, dns-intro (3 ch.) |
 | configuration (fondations) | **Fondamentaux** (1) | configmaps-intro, probes-intro (2 ch.) |
-| overview (suite) | **Développeur** (2) | object-management, labels-intro, annotations, operations (4 ch.) |
-| workloads (suite) | **Développeur** (2) | replicasets, deployments-updates, statefulsets-intro, jobs-intro, cronjobs (5 ch.) |
-| services-networking (suite) | **Développeur** (2) | ingress-intro (1 ch.) |
-| configuration (suite) | **Développeur** (2) | secrets-intro, resource-management-intro (2 ch.) |
-| security | **Opérateur** (3) | cloud-native-security → linux-security (6 ch.) |
-| storage | **Opérateur** (3) + full-course | pv-pvc-intro (opérateur), volumes-intro et storage-class-intro (full-course) |
-| policy | **Opérateur** (3) | resource-quotas, limit-ranges (2 ch.) |
+| overview (delivery + operations) | **Développeur** (2) | object-management, labels-intro, annotations, operations (4 ch.) |
+| workloads (delivery + batch) | **Développeur** (2) | replicasets, deployments-updates, statefulsets-intro, jobs-intro, cronjobs (5 ch.) |
+| services-networking (app exposure) | **Développeur** (2) | ingress-intro (1 ch.) |
+| configuration (app runtime) | **Développeur** (2) | secrets-intro, resource-management-intro (2 ch.) |
+| storage (app usage) | **Développeur** (2) | volumes-intro, pv-pvc-intro (2 ch.) |
+| security | **Opérateur** (3) | cloud-native-security, controlling-api-access, service-accounts-intro, rbac-intro, pod-security-standards, linux-security-intro (6 ch.) |
+| policy (governance) | **Opérateur** (3) | resource-quotas, limit-ranges (2 ch.) |
+| storage (provisioning) | **Opérateur** (3) | storage-class-intro (1 ch.) |
 | administration | **Opérateur** (3) | logging, observability, certificates (3 ch.) |
 | configuration/kubeconfig | **Opérateur** (3) | kubeconfig (1 ch.) |
-| extend-kubernetes | **Platform Eng.** (4) | custom-resources, operators, kubectl-plugins (3 ch.) |
+| platform standards + extend-kubernetes | **Platform Eng.** (4) | object-management, labels-intro, resource-quotas, rbac-intro, custom-resources, operators, kubectl-plugins, observability, certificates, kubeconfig (10 ch.) |
 | linux-basics *(futur)* | Prérequis (0) | — |
 | docker *(futur)* | Prérequis (0) | — |
 | yaml-basics *(futur)* | Prérequis (0) | — |
 | helm *(futur)* | Platform Eng. (4) | — |
 | istio *(futur)* | Platform Eng. (4) | — |
 
-**Résultat : zéro chapitre dupliqué entre parcours 1→4 (hors full-course), et zéro chapitre implémenté orphelin.**
+**Resultat :** pas de duplication avec le tronc commun (cours 1), chevauchements intentionnels entre parcours 2→4, et couverture complete des chapitres actuellement implementes.
 
 ### Progression recommandée par profil
 

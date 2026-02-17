@@ -1,6 +1,6 @@
 ---
 title: "Kubernetes Développeur"
-shortDescription: Approfondissez la livraison applicative sur Kubernetes. Object management, labels/annotations, workloads avancés, Ingress, Secrets et gestion des ressources.
+shortDescription: Construisez et livrez des applications pretes pour la production sur Kubernetes. Couvre les updates de deploiement, Ingress, secrets, gestion des ressources et workloads stateful avec stockage.
 isActive: true
 price: 0
 comingSoon: false
@@ -8,14 +8,15 @@ order: 2
 level: Intermédiaire
 ---
 
-Le parcours pratique pour les développeurs qui déploient et opèrent des applications sur Kubernetes au quotidien. Après les Fondamentaux, c'est ici que vous apprenez à livrer du logiciel sur un cluster.
+Le parcours pratique pour les développeurs qui déploient et opèrent des applications sur Kubernetes au quotidien. Après les Fondamentaux, ce cours se concentre sur la livraison applicative en conditions reelles: mises a jour sans interruption, exposition HTTP, secrets, ressources et workloads stateful.
 
 **Ce que vous apprendrez :**
 
-- **Overview (suite)** (4 chapitres) : object-management, labels, annotations et opérations kubectl du quotidien
-- **Workloads (suite)** (5 chapitres) : ReplicaSets, updates de Deployments, StatefulSets, Jobs et CronJobs
-- **Networking (suite)** (1 chapitre) : Ingress pour le routage HTTP
-- **Configuration (suite)** (2 chapitres) : Secrets et gestion des ressources (requests/limits, QoS)
+- **Workflows de release** : object management, ReplicaSets et updates de Deployments pour des rollouts plus surs
+- **Runtime applicatif** : Secrets, Ingress et gestion des ressources pour le comportement en production
+- **Fondations stateful** : Volumes, PV/PVC et StatefulSets
+- **Traitements batch** : Jobs et CronJobs pour les workloads asynchrones et planifies
+- **Hygiene operationnelle** : labels, annotations et operations kubectl du quotidien
 
 **Pour qui ?**
 
@@ -25,6 +26,6 @@ Développeurs backend et frontend, ingénieurs DevOps qui écrivent des pipeline
 
 **Structure du cours :**
 
-12 chapitres répartis sur 4 modules, de la bonne gestion des objets Kubernetes aux workloads applicatifs avancés avec Ingress et configuration des ressources. Chaque chapitre inclut des exemples YAML, des commandes kubectl et des quiz.
+14 chapitres repartis sur 5 modules, de la gestion des releases aux workloads stateful et batch, puis aux pratiques d'exploitation quotidiennes. Chaque chapitre inclut des exemples YAML, des commandes kubectl et des quiz.
 
 Prochaine étape recommandée : **Kubernetes Platform Engineer** (pour étendre Kubernetes) ou **Kubernetes Opérateur** (pour l'administration de clusters).

@@ -1,6 +1,6 @@
 ---
 title: "Kubernetes Platform Engineer"
-shortDescription: Étendez Kubernetes avec Custom Resources, Operators et kubectl plugins. Le parcours avancé pour les architectes plateforme.
+shortDescription: Concevez des plateformes Kubernetes internes avec guardrails et extensibilite. Couvre standards, RBAC et quotas, CRDs/operators, observabilite et operations plateforme.
 isActive: true
 price: 0
 comingSoon: false
@@ -8,13 +8,14 @@ order: 4
 level: Avancé
 ---
 
-Le parcours avancé pour les ingénieurs plateforme et architectes qui construisent au-dessus de Kubernetes. Après les parcours Développeur ou Opérateur, c'est ici que vous apprenez à étendre et personnaliser la plateforme elle-même.
+Le parcours avance pour les ingenieurs plateforme et architectes qui construisent au-dessus de Kubernetes. Apres les parcours Developpeur et/ou Operateur, vous apprenez a definir des standards internes, poser des garde-fous et etendre Kubernetes proprement.
 
 **Ce que vous apprendrez :**
 
-- **Custom Resources** (3 leçons) : CRDs, custom controllers, finalizers — comment enseigner de nouveaux types d'objets à Kubernetes
-- **Operators** (3 leçons) : Le pattern Operator, Operator SDK, Kubebuilder et l'Operator Lifecycle Manager (OLM)
-- **Plugins kubectl** (2 leçons) : Étendre kubectl avec des commandes personnalisées et le gestionnaire de plugins Krew
+- **Standards plateforme** : object management et conventions de labels pour des APIs internes coherentes
+- **Garde-fous multi-equipes** : RBAC et ResourceQuotas pour definir des frontieres securisees
+- **Extensibilite Kubernetes** : Custom Resources, Operators et plugins kubectl
+- **Operations plateforme** : observabilite, certificats et kubeconfig pour la fiabilite day-2
 
 **Bientôt disponible :**
 
@@ -29,4 +30,4 @@ Ingénieurs plateforme, architectes Kubernetes, équipes qui construisent des pl
 
 **Structure du cours :**
 
-Actuellement 3 chapitres (8 leçons) centrés sur l'extension de Kubernetes. Ce parcours grandira significativement avec l'ajout de Helm et Istio.
+Actuellement 10 chapitres repartis sur 6 modules, des conventions plateforme et garde-fous jusqu'a l'extension de l'API et la fiabilite operationnelle. Ce parcours continuera de grandir avec l'ajout de Helm et Istio.

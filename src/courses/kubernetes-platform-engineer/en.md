@@ -1,6 +1,6 @@
 ---
 title: "Kubernetes Platform Engineer"
-shortDescription: Extend Kubernetes with Custom Resources, Operators, and kubectl plugins. The advanced path for platform architects.
+shortDescription: Design internal Kubernetes platforms with guardrails and extensibility. Covers standards, RBAC and quotas, CRDs/operators, observability, and platform operations.
 isActive: true
 price: 0
 comingSoon: false
@@ -8,13 +8,14 @@ order: 4
 level: Advanced
 ---
 
-The advanced path for platform engineers and architects who build on top of Kubernetes. After the Developer or Operator paths, this is where you learn to extend and customize the platform itself.
+The advanced path for platform engineers and architects who build on top of Kubernetes. After Developer and/or Operator, this is where you learn to design internal platform standards, enforce guardrails, and extend Kubernetes safely.
 
 **What you'll learn:**
 
-- **Custom Resources** (3 lessons): CRDs, custom controllers, finalizers — how to teach Kubernetes new object types
-- **Operators** (3 lessons): The Operator pattern, Operator SDK, Kubebuilder, and the Operator Lifecycle Manager (OLM)
-- **kubectl Plugins** (2 lessons): Extending kubectl with custom commands and the Krew plugin manager
+- **Platform standards**: object management and label conventions for reusable platform APIs
+- **Multi-team guardrails**: RBAC and ResourceQuotas to define secure boundaries
+- **Kubernetes extensibility**: Custom Resources, Operators, and kubectl plugins
+- **Platform operations**: observability, certificates, and kubeconfig for day-2 platform reliability
 
 **Coming soon:**
 
@@ -29,4 +30,4 @@ Platform engineers, Kubernetes architects, teams building internal developer pla
 
 **Course structure:**
 
-Currently 3 chapters (8 lessons) focused on extending Kubernetes. This path will grow significantly as Helm and Istio content is added.
+Currently 10 chapters across 6 modules, moving from platform conventions and guardrails to API extension and operational reliability. This path will grow further as Helm and Istio content is added.
