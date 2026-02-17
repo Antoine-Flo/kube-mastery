@@ -200,21 +200,25 @@ const extractResource = (ctx: ParseContext): Result<ParseContext> => {
     return error('Invalid or missing resource type')
   }
 
-  const resourceToken = ctx.tokens[2]
-
-  // Skip if it's a flag
-  if (resourceToken.startsWith('-')) {
+  const resourceCandidate = findTokenSkippingFlags(ctx.tokens, 2)
+  if (!resourceCandidate) {
     return error('Invalid or missing resource type')
   }
 
   // Lookup canonical resource from alias map
-  const resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
+  const resource = RESOURCE_ALIAS_MAP[resourceCandidate.token] as
+    | Resource
+    | undefined
 
   if (!resource) {
     return error('Invalid or missing resource type')
   }
 
-  return success({ ...ctx, resource })
+  return success({
+    ...ctx,
+    resource,
+    resourceTokenIndex: resourceCandidate.index
+  })
 }
 
 /**
@@ -224,6 +228,18 @@ const findNameSkippingFlags = (
   tokens: string[],
   startPos: number
 ): string | undefined => {
+  const candidate = findTokenSkippingFlags(tokens, startPos)
+  return candidate?.token
+}
+
+const getFlagName = (token: string): string => {
+  return token.replace(/^-+/, '').split('=')[0]
+}
+
+const findTokenSkippingFlags = (
+  tokens: string[],
+  startPos: number
+): { token: string; index: number } | undefined => {
   for (let i = startPos; i < tokens.length; i++) {
     const token = tokens[i]
 
@@ -233,32 +249,17 @@ const findNameSkippingFlags = (
 
     if (token.startsWith('-')) {
       // Skip flag and its value if needed
-      const flagName = token.replace(/^-+/, '')
-      if (FLAGS_REQUIRING_VALUES.includes(flagName)) {
+      const flagName = getFlagName(token)
+      if (FLAGS_REQUIRING_VALUES.includes(flagName) && !token.includes('=')) {
         i++
       }
       continue
     }
 
-    return token // Found it!
+    return { token, index: i } // Found it!
   }
 
   return undefined
-}
-
-/**
- * Find name at fixed position - works for standard commands (get/describe/delete)
- */
-const findNameAtPosition = (
-  tokens: string[],
-  position: number
-): string | undefined => {
-  if (tokens.length <= position) {
-    return undefined
-  }
-
-  const token = tokens[position]
-  return token.startsWith('-') ? undefined : token
 }
 
 const extractName = (ctx: ParseContext): Result<ParseContext> => {
@@ -287,9 +288,12 @@ const extractName = (ctx: ParseContext): Result<ParseContext> => {
   const hasTransformer =
     ctx.action && actionsWithCustomParsing.includes(ctx.action)
 
+  const startIndexForResourceName =
+    ctx.resourceTokenIndex != null ? ctx.resourceTokenIndex + 1 : 3
+
   const name = hasTransformer
     ? findNameSkippingFlags(ctx.tokens, 2) // Position 2: kubectl <action> <name>
-    : findNameAtPosition(ctx.tokens, 3) // Position 3: kubectl <action> <resource> <name>
+    : findNameSkippingFlags(ctx.tokens, startIndexForResourceName)
 
   return success({ ...ctx, name })
 }

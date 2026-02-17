@@ -18,6 +18,7 @@ export type ParseContext = {
   tokens?: string[]
   action?: Action
   resource?: Resource
+  resourceTokenIndex?: number
   name?: string
   flags?: Record<string, string | boolean>
   normalizedFlags?: Record<string, string | boolean>

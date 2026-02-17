@@ -5,6 +5,7 @@ import {
   type ClusterNodeRole
 } from './clusterConfig'
 import { getSystemPods } from './systemPods'
+import type { SimSystemWorkloadPolicy } from './systemWorkloads/SimWorkloadSpecs'
 import type { ConfigMap } from './ressources/ConfigMap'
 import { createConfigMap } from './ressources/ConfigMap'
 import type { Node, NodeCondition } from './ressources/Node'
@@ -15,6 +16,7 @@ export interface SystemBootstrapOptions {
   clusterName?: string
   clock?: () => string
   nodeRoles?: readonly ClusterNodeRole[]
+  systemWorkloadPolicy?: SimSystemWorkloadPolicy
 }
 
 export type ClusterBootstrapProfile = 'kind-like' | 'none'
@@ -134,7 +136,12 @@ export const createSystemBootstrapResources = (
       )
     }),
     configMaps: [createKubeRootCAConfigMap(creationTimestamp)],
-    pods: getSystemPods({ clock: () => creationTimestamp })
+    pods: getSystemPods({
+      clusterName,
+      nodeRoles,
+      policy: options.systemWorkloadPolicy,
+      clock: () => creationTimestamp
+    })
   }
 }
 

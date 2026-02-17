@@ -52,6 +52,61 @@ describe('Scheduler', () => {
     })
   }
 
+  const createReadyNodeWithLabels = (
+    name: string,
+    labels: Record<string, string>
+  ): Node => {
+    return createNode({
+      name,
+      labels,
+      status: {
+        nodeInfo: {
+          architecture: 'amd64',
+          containerRuntimeVersion: 'containerd://1.6.0',
+          kernelVersion: '5.15.0',
+          kubeletVersion: 'v1.28.0',
+          operatingSystem: 'linux',
+          osImage: 'Ubuntu 22.04'
+        },
+        conditions: [
+          {
+            type: 'Ready',
+            status: 'True'
+          }
+        ]
+      }
+    })
+  }
+
+  const createReadyNodeWithNoScheduleTaint = (
+    name: string,
+    key: string,
+    value: string
+  ): Node => {
+    return createNode({
+      name,
+      spec: {
+        taints: [{ key, value, effect: 'NoSchedule' }]
+      },
+      status: {
+        nodeInfo: {
+          architecture: 'amd64',
+          containerRuntimeVersion: 'containerd://1.6.0',
+          kernelVersion: '5.15.0',
+          kubeletVersion: 'v1.28.0',
+          operatingSystem: 'linux',
+          osImage: 'Ubuntu 22.04'
+        },
+        conditions: [
+          {
+            type: 'Ready',
+            status: 'True'
+          }
+        ]
+      }
+    })
+  }
+
   const createNotReadyNode = (name: string): Node => {
     return createNode({
       name,
@@ -103,6 +158,63 @@ describe('Scheduler', () => {
     return createPod({
       name,
       namespace: 'default',
+      containers: [{ name: 'nginx', image: 'nginx:latest' }],
+      phase: 'Pending'
+    })
+  }
+
+  const createUnscheduledPodWithNodeSelector = (
+    name: string,
+    nodeSelector: Record<string, string>
+  ): Pod => {
+    return createPod({
+      name,
+      namespace: 'default',
+      nodeSelector,
+      containers: [{ name: 'nginx', image: 'nginx:latest' }],
+      phase: 'Pending'
+    })
+  }
+
+  const createUnscheduledPodWithToleration = (
+    name: string,
+    key: string,
+    value: string
+  ): Pod => {
+    return createPod({
+      name,
+      namespace: 'default',
+      tolerations: [{ key, value, operator: 'Equal', effect: 'NoSchedule' }],
+      containers: [{ name: 'nginx', image: 'nginx:latest' }],
+      phase: 'Pending'
+    })
+  }
+
+  const createUnscheduledPodWithRequiredNodeAffinity = (
+    name: string,
+    key: string,
+    values: string[]
+  ): Pod => {
+    return createPod({
+      name,
+      namespace: 'default',
+      affinity: {
+        nodeAffinity: {
+          requiredDuringSchedulingIgnoredDuringExecution: {
+            nodeSelectorTerms: [
+              {
+                matchExpressions: [
+                  {
+                    key,
+                    operator: 'In',
+                    values
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
       containers: [{ name: 'nginx', image: 'nginx:latest' }],
       phase: 'Pending'
     })
@@ -275,6 +387,81 @@ describe('Scheduler', () => {
       eventBus.emit(createPodCreatedEvent(pod, 'scheduler'))
 
       expect(podUpdated).not.toHaveBeenCalled()
+    })
+
+    it('should reject node with NoSchedule taint when pod has no toleration', () => {
+      mockState.nodes = [createReadyNodeWithNoScheduleTaint('node-1', 'dedicated', 'system')]
+      scheduler.start()
+
+      const podUpdated = vi.fn()
+      eventBus.subscribe('PodUpdated', podUpdated)
+
+      const pod = createUnscheduledPod('test-pod')
+      eventBus.emit(createPodCreatedEvent(pod, 'test'))
+
+      expect(podUpdated).not.toHaveBeenCalled()
+    })
+
+    it('should schedule pod when matching toleration exists', () => {
+      mockState.nodes = [createReadyNodeWithNoScheduleTaint('node-1', 'dedicated', 'system')]
+      scheduler.start()
+
+      let updatedPod: Pod | undefined
+      eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+        updatedPod = event.payload.pod
+      })
+
+      const pod = createUnscheduledPodWithToleration(
+        'test-pod',
+        'dedicated',
+        'system'
+      )
+      eventBus.emit(createPodCreatedEvent(pod, 'test'))
+
+      expect(updatedPod).toBeDefined()
+      expect(updatedPod!.spec.nodeName).toBe('node-1')
+    })
+
+    it('should schedule only on node matching nodeSelector', () => {
+      mockState.nodes = [
+        createReadyNodeWithLabels('node-a', { zone: 'a' }),
+        createReadyNodeWithLabels('node-b', { zone: 'b' })
+      ]
+      scheduler.start()
+
+      let updatedPod: Pod | undefined
+      eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+        updatedPod = event.payload.pod
+      })
+
+      const pod = createUnscheduledPodWithNodeSelector('test-pod', { zone: 'b' })
+      eventBus.emit(createPodCreatedEvent(pod, 'test'))
+
+      expect(updatedPod).toBeDefined()
+      expect(updatedPod!.spec.nodeName).toBe('node-b')
+    })
+
+    it('should schedule only on node matching required node affinity', () => {
+      mockState.nodes = [
+        createReadyNodeWithLabels('node-a', { region: 'eu-west-1' }),
+        createReadyNodeWithLabels('node-b', { region: 'us-east-1' })
+      ]
+      scheduler.start()
+
+      let updatedPod: Pod | undefined
+      eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+        updatedPod = event.payload.pod
+      })
+
+      const pod = createUnscheduledPodWithRequiredNodeAffinity(
+        'test-pod',
+        'region',
+        ['us-east-1']
+      )
+      eventBus.emit(createPodCreatedEvent(pod, 'test'))
+
+      expect(updatedPod).toBeDefined()
+      expect(updatedPod!.spec.nodeName).toBe('node-b')
     })
   })
 

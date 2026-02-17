@@ -11,6 +11,7 @@ import {
 } from '../cluster/controllers/initializers'
 import { createEventBus, type EventBus } from '../cluster/events/EventBus'
 import { createPodStartupSimulator } from '../cluster/podStartupSimulator'
+import { initializeSimPodIpAllocation } from '../cluster/ipAllocator/SimPodIpAllocationService'
 import type { AppEvent } from '../events/AppEvent'
 import { createHostFileSystem } from '../filesystem/debianFileSystem'
 import { saveSandboxEnvironment } from '../storage/indexedDBAdapter'
@@ -86,6 +87,12 @@ export function createEmulatedEnvironment(
   // Initialize scheduler to assign pods to nodes
   initializeScheduler(eventBus, clusterState)
 
+  // Keep pod IP allocation unique and stable across lifecycle events
+  const unsubscribePodIpAllocation = initializeSimPodIpAllocation(
+    eventBus,
+    clusterState
+  )
+
   // Transition Pending -> Running after random delay (kubelet-like)
   const podStartupSimulator = createPodStartupSimulator(
     eventBus,
@@ -134,6 +141,7 @@ export function createEmulatedEnvironment(
     eventBus,
     shellContextStack,
     unsubscribeAutoSave,
+    unsubscribePodIpAllocation,
     podStartupSimulator
   }
 }
@@ -149,6 +157,11 @@ export function destroyEmulatedEnvironment(
   if (emulatedEnvironment.unsubscribeAutoSave) {
     emulatedEnvironment.unsubscribeAutoSave()
     emulatedEnvironment.unsubscribeAutoSave = undefined
+  }
+
+  if (emulatedEnvironment.unsubscribePodIpAllocation) {
+    emulatedEnvironment.unsubscribePodIpAllocation()
+    emulatedEnvironment.unsubscribePodIpAllocation = undefined
   }
 
   // Stop pod startup simulator (clears pending timeouts)

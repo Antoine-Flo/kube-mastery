@@ -29,6 +29,29 @@ describe('systemBootstrap', () => {
     expect(resources.configMaps[0].metadata.name).toBe('kube-root-ca.crt')
     expect(resources.configMaps[0].metadata.namespace).toBe('default')
     expect(resources.pods.length).toBeGreaterThan(0)
+    const staticControlPlanePods = [
+      'etcd-control-plane',
+      'kube-apiserver-control-plane',
+      'kube-controller-manager-control-plane',
+      'kube-scheduler-control-plane'
+    ]
+    for (const podName of staticControlPlanePods) {
+      const pod = resources.pods.find((item) => {
+        return item.metadata.name === podName
+      })
+      expect(pod).toBeDefined()
+      expect(pod?.spec.nodeName).toBe('conformance-control-plane')
+    }
+    const corednsPods = resources.pods.filter((item) => {
+      return item.metadata.name.startsWith('coredns-')
+    })
+    expect(corednsPods).toHaveLength(2)
+    expect(corednsPods.every((pod) => {
+      return (
+        pod.spec.nodeName === undefined &&
+        pod.spec.nodeSelector?.['node-role.kubernetes.io/control-plane'] === ''
+      )
+    })).toBe(true)
   })
 
   it('applies bootstrap resources without duplicates when called twice', () => {
@@ -70,5 +93,25 @@ describe('systemBootstrap', () => {
       })
       return internal?.address
     })).toEqual(['172.18.0.2', '172.18.0.3', '172.18.0.4', '172.18.0.5'])
+    const kubeProxyPods = resources.pods.filter((pod) => {
+      return pod.metadata.name.startsWith('kube-proxy-')
+    })
+    const kindnetPods = resources.pods.filter((pod) => {
+      return pod.metadata.name.startsWith('kindnet-')
+    })
+    expect(kubeProxyPods).toHaveLength(4)
+    expect(kindnetPods).toHaveLength(4)
+    const daemonSetNodeNames = new Set([
+      ...kubeProxyPods.map((pod) => pod.spec.nodeName),
+      ...kindnetPods.map((pod) => pod.spec.nodeName)
+    ])
+    expect(daemonSetNodeNames).toEqual(
+      new Set([
+        'conformance-control-plane',
+        'conformance-worker',
+        'conformance-worker2',
+        'conformance-worker3'
+      ])
+    )
   })
 })

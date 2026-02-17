@@ -402,6 +402,22 @@ data:
         }
       })
 
+      it('should parse get when namespace flag is before resource', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl get -n kube-system pods')
+
+        expect(result.ok).toBe(true)
+        if (result.ok) {
+          expect(result.value).toContain('redis-pod')
+          expect(result.value).not.toContain('nginx-pod')
+        }
+      })
+
       it('should pass namespace to describe handler', () => {
         const executor = createKubectlExecutor(
           clusterState,
@@ -411,6 +427,23 @@ data:
         )
         const result = executor.execute(
           'kubectl describe pod redis-pod -n kube-system'
+        )
+
+        expect(result.ok).toBe(true)
+        if (result.ok) {
+          expect(result.value).toContain('redis-pod')
+        }
+      })
+
+      it('should parse describe when namespace flag is before pod name', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl describe pod -n kube-system redis-pod'
         )
 
         expect(result.ok).toBe(true)
@@ -528,6 +561,25 @@ data:
         )
         const result = executor.execute(
           'kubectl delete pod redis-pod -n kube-system'
+        )
+
+        expect(result.ok).toBe(true)
+
+        const pods = clusterState.getPods('kube-system')
+        expect(
+          pods.find((p) => p.metadata.name === 'redis-pod')
+        ).toBeUndefined()
+      })
+
+      it('should delete pod when namespace flag is before resource', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl delete -n kube-system pod redis-pod'
         )
 
         expect(result.ok).toBe(true)

@@ -268,7 +268,7 @@ const formatContainer = (
  */
 export const describePod = (pod: Pod): string => {
   const lines: string[] = []
-  const podIP = simulatePodIP(pod.metadata.name)
+  const podIP = pod.status.podIP ?? simulatePodIP(pod.metadata.name)
   const nodeName = pod.spec.nodeName ?? '<none>'
   const nodeIP = simulatePodIP(nodeName)
 

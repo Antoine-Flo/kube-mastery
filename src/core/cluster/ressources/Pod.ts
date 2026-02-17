@@ -130,8 +130,38 @@ interface PodMetadata {
   ownerReferences?: OwnerReference[]
 }
 
+export interface PodToleration {
+  key?: string
+  operator?: 'Exists' | 'Equal'
+  value?: string
+  effect?: 'NoSchedule' | 'PreferNoSchedule' | 'NoExecute'
+}
+
+export interface PodNodeSelectorRequirement {
+  key: string
+  operator: 'In' | 'NotIn' | 'Exists' | 'DoesNotExist'
+  values?: string[]
+}
+
+export interface PodNodeSelectorTerm {
+  matchExpressions?: PodNodeSelectorRequirement[]
+}
+
+export interface PodNodeAffinityRequired {
+  nodeSelectorTerms: PodNodeSelectorTerm[]
+}
+
+export interface PodAffinity {
+  nodeAffinity?: {
+    requiredDuringSchedulingIgnoredDuringExecution?: PodNodeAffinityRequired
+  }
+}
+
 interface PodSpec {
   nodeName?: string
+  nodeSelector?: Record<string, string>
+  tolerations?: PodToleration[]
+  affinity?: PodAffinity
   initContainers?: readonly Container[]
   containers: readonly Container[]
   volumes?: Volume[]
@@ -151,6 +181,7 @@ export interface ContainerStatus {
 
 interface PodStatus {
   phase: PodPhase
+  podIP?: string
   restartCount: number
   containerStatuses?: ContainerStatus[]
 }
@@ -185,6 +216,9 @@ interface PodConfig {
   name: string
   namespace: string
   nodeName?: string
+  nodeSelector?: Record<string, string>
+  tolerations?: PodToleration[]
+  affinity?: PodAffinity
   initContainers?: Container[]
   containers: Container[]
   volumes?: Volume[]
@@ -192,6 +226,7 @@ interface PodConfig {
   annotations?: Record<string, string>
   creationTimestamp?: string
   phase?: PodPhase
+  podIP?: string
   restartCount?: number
   logs?: string[]
   ownerReferences?: OwnerReference[]
@@ -280,12 +315,16 @@ export const createPod = (config: PodConfig): Pod => {
     },
     spec: {
       ...(config.nodeName && { nodeName: config.nodeName }),
+      ...(config.nodeSelector && { nodeSelector: config.nodeSelector }),
+      ...(config.tolerations && { tolerations: config.tolerations }),
+      ...(config.affinity && { affinity: config.affinity }),
       ...(config.initContainers && { initContainers: config.initContainers }),
       containers: config.containers,
       ...(config.volumes && { volumes: config.volumes })
     },
     status: {
       phase: config.phase || 'Pending',
+      ...(config.podIP != null && { podIP: config.podIP }),
       restartCount: config.restartCount || 0,
       containerStatuses: allContainerStatuses
     },
@@ -348,18 +387,59 @@ const PodManifestSchema = z.object({
   }),
   spec: z.object({
     nodeName: z.string().optional(),
+    nodeSelector: z.record(z.string(), z.string()).optional(),
     initContainers: z.array(ContainerSchema).optional(),
     containers: z
       .array(ContainerSchema)
       .min(1, 'At least one container is required'),
     volumes: z.array(z.any()).optional(),
-    tolerations: z.array(z.any()).optional()
+    tolerations: z
+      .array(
+        z.object({
+          key: z.string().optional(),
+          operator: z.enum(['Exists', 'Equal']).optional(),
+          value: z.string().optional(),
+          effect: z.enum(['NoSchedule', 'PreferNoSchedule', 'NoExecute']).optional()
+        })
+      )
+      .optional(),
+    affinity: z
+      .object({
+        nodeAffinity: z
+          .object({
+            requiredDuringSchedulingIgnoredDuringExecution: z
+              .object({
+                nodeSelectorTerms: z.array(
+                  z.object({
+                    matchExpressions: z
+                      .array(
+                        z.object({
+                          key: z.string(),
+                          operator: z.enum([
+                            'In',
+                            'NotIn',
+                            'Exists',
+                            'DoesNotExist'
+                          ]),
+                          values: z.array(z.string()).optional()
+                        })
+                      )
+                      .optional()
+                  })
+                )
+              })
+              .optional()
+          })
+          .optional()
+      })
+      .optional()
   }),
   status: z
     .object({
       phase: z
         .enum(['Pending', 'Running', 'Succeeded', 'Failed', 'Unknown'])
         .optional(),
+      podIP: z.string().optional(),
       restartCount: z.number().optional(),
       containerStatuses: z
         .array(
@@ -473,6 +553,9 @@ export const parsePodManifest = (data: unknown): Result<Pod> => {
     name: manifest.metadata.name,
     namespace: manifest.metadata.namespace,
     ...(manifest.spec.nodeName && { nodeName: manifest.spec.nodeName }),
+    ...(manifest.spec.nodeSelector && { nodeSelector: manifest.spec.nodeSelector }),
+    ...(manifest.spec.tolerations && { tolerations: manifest.spec.tolerations }),
+    ...(manifest.spec.affinity && { affinity: manifest.spec.affinity }),
     ...(initContainers && { initContainers }),
     containers,
     ...(volumes && { volumes }),
@@ -484,6 +567,7 @@ export const parsePodManifest = (data: unknown): Result<Pod> => {
       creationTimestamp: manifest.metadata.creationTimestamp
     }),
     ...(manifest.status?.phase && { phase: manifest.status.phase }),
+    ...(manifest.status?.podIP && { podIP: manifest.status.podIP }),
     ...(manifest.status?.restartCount != null && {
       restartCount: manifest.status.restartCount
     }),

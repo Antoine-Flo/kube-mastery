@@ -37,7 +37,9 @@ function formatPodTooltip(pod: Pod): string {
   const name = `${pod.metadata.namespace}/${pod.metadata.name}`
   const phase = pod.status.phase
   const containers = (pod.spec.containers ?? []).map((c) => c.name).join(', ')
-  return `Pod\n${name}\nPhase: ${phase}\nContainers: ${containers || '(none)'}`
+  const workloadType =
+    pod.metadata.annotations?.['sim.kubernetes.io/workload-type'] ?? 'Pod'
+  return `Pod\n${name}\nPhase: ${phase}\nWorkload: ${workloadType}\nContainers: ${containers || '(none)'}`
 }
 
 function formatContainerTooltip(container: {
@@ -68,7 +70,13 @@ function renderCluster(
   env: EmulatedEnvironment
 ): void {
   const nodes = env.clusterState.getNodes()
-  const pods = env.clusterState.getPods()
+  const pods = [...env.clusterState.getPods()].sort((a, b) => {
+    const namespaceDiff = a.metadata.namespace.localeCompare(b.metadata.namespace)
+    if (namespaceDiff !== 0) {
+      return namespaceDiff
+    }
+    return a.metadata.name.localeCompare(b.metadata.name)
+  })
 
   const podsByNode = new Map<string, Pod[]>()
   for (const pod of pods) {
@@ -77,7 +85,9 @@ function renderCluster(
     podsByNode.get(nodeName)!.push(pod)
   }
 
-  const nodeNames = new Set(nodes.map((n) => n.metadata.name))
+  const sortedNodes = [...nodes].sort((a, b) => {
+    return a.metadata.name.localeCompare(b.metadata.name)
+  })
   const unscheduledPods = podsByNode.get('') ?? []
   if (unscheduledPods.length > 0) {
     podsByNode.set('', unscheduledPods)
@@ -104,7 +114,7 @@ function renderCluster(
   }
 
   // Nodes with pods
-  for (const node of nodes) {
+  for (const node of sortedNodes) {
     const name = node.metadata.name
     const nodePods = podsByNode.get(name) ?? []
     const nodeEl = document.createElement('div')
@@ -121,13 +131,20 @@ function renderCluster(
 			<div class="cluster-viz__pods"></div>
 		`
     const podsContainer = nodeEl.querySelector('.cluster-viz__pods')!
-    if (nodePods.length === 0) {
+    const sortedNodePods = [...nodePods].sort((a, b) => {
+      const namespaceDiff = a.metadata.namespace.localeCompare(b.metadata.namespace)
+      if (namespaceDiff !== 0) {
+        return namespaceDiff
+      }
+      return a.metadata.name.localeCompare(b.metadata.name)
+    })
+    if (sortedNodePods.length === 0) {
       const empty = document.createElement('span')
       empty.className = 'cluster-viz__no-pods'
       empty.textContent = 'No pods'
       podsContainer.appendChild(empty)
     } else {
-      for (const pod of nodePods) {
+      for (const pod of sortedNodePods) {
         podsContainer.appendChild(createPodEl(pod))
       }
     }

@@ -59,3 +59,85 @@ describe('kubectl parser - create deployment', () => {
     expect(result.value.namespace).toBe('staging')
   })
 })
+
+describe('kubectl parser - describe', () => {
+  it('should parse name when namespace flag is between resource and name', () => {
+    const result = parseCommand('kubectl describe pod -n kube-system coredns-abc')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBe('coredns-abc')
+    expect(result.value.namespace).toBe('kube-system')
+  })
+
+  it('should parse resource and name when namespace flag is before resource', () => {
+    const result = parseCommand('kubectl describe -n kube-system pod coredns-abc')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBe('coredns-abc')
+    expect(result.value.namespace).toBe('kube-system')
+  })
+})
+
+describe('kubectl parser - get and delete flag positions', () => {
+  it('should parse get when namespace flag is before resource', () => {
+    const result = parseCommand('kubectl get -n kube-system pods')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.namespace).toBe('kube-system')
+    expect(result.value.name).toBeUndefined()
+  })
+
+  it('should parse get when namespace flag is between resource and name', () => {
+    const result = parseCommand('kubectl get pod -n kube-system coredns-abc')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBe('coredns-abc')
+    expect(result.value.namespace).toBe('kube-system')
+  })
+
+  it('should parse delete when namespace flag is before resource', () => {
+    const result = parseCommand('kubectl delete -n kube-system pod coredns-abc')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBe('coredns-abc')
+    expect(result.value.namespace).toBe('kube-system')
+  })
+
+  it('should parse delete when namespace flag is between resource and name', () => {
+    const result = parseCommand('kubectl delete pod -n kube-system coredns-abc')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBe('coredns-abc')
+    expect(result.value.namespace).toBe('kube-system')
+  })
+})

@@ -9,8 +9,8 @@ import type { EventBus } from '../events/EventBus'
 import type { ClusterEvent, PodCreatedEvent } from '../events/types'
 import { createPodUpdatedEvent } from '../events/types'
 import type { Node } from '../ressources/Node'
-import { getNodeStatus } from '../ressources/Node'
 import type { Pod } from '../ressources/Pod'
+import { isNodeEligibleForPod } from './SimSchedulingPredicates'
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -40,34 +40,10 @@ const needsScheduling = (pod: Pod): boolean => {
   return !pod.spec.nodeName
 }
 
-/**
- * Check if a node is schedulable
- * - Must be Ready
- * - Must not be unschedulable (cordoned)
- * - Must not have NoSchedule taints that the pod doesn't tolerate
- */
-const isNodeSchedulable = (node: Node): boolean => {
-  // Check if node is Ready
-  if (getNodeStatus(node) !== 'Ready') {
-    return false
-  }
-
-  // Check if node is cordoned
-  if (node.spec.unschedulable) {
-    return false
-  }
-
-  // For simplicity, we don't check taints/tolerations in this version
-  // A full implementation would check pod tolerations against node taints
-
-  return true
-}
-
-/**
- * Find all feasible nodes for scheduling
- */
-const findFeasibleNodes = (nodes: Node[]): Node[] => {
-  return nodes.filter(isNodeSchedulable)
+const findFeasibleNodes = (nodes: Node[], pod: Pod): Node[] => {
+  return nodes.filter((node) => {
+    return isNodeEligibleForPod(pod, node)
+  })
 }
 
 // ─── Scheduler Implementation ─────────────────────────────────────────────
@@ -138,7 +114,7 @@ export const createScheduler = (
     const nodes = state.getNodes()
 
     // Find feasible nodes
-    const feasibleNodes = findFeasibleNodes(nodes)
+    const feasibleNodes = findFeasibleNodes(nodes, pod)
 
     if (feasibleNodes.length === 0) {
       // No nodes available - pod stays unscheduled

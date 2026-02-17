@@ -43,6 +43,9 @@ export interface EmulatedEnvironment {
   /** Auto-save unsubscribe function (if auto-save is enabled) */
   unsubscribeAutoSave?: () => void
 
+  /** Pod IP allocation unsubscribe function */
+  unsubscribePodIpAllocation?: () => void
+
   /** Pod startup simulator (stops pending timeouts on destroy) */
   podStartupSimulator?: PodStartupSimulator
 }

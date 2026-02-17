@@ -38,6 +38,7 @@ get (pods, deploy, rs, services, configmaps, secrets, nodes), describe, delete, 
 - Structured outputs for `kubectl get` are explicit:
   - collection queries in `-o json|-o yaml` return a `List` shape (`apiVersion`, `kind`, `metadata.resourceVersion`, `items`), including empty results,
   - named queries (`kubectl get <resource> <name> -o json|-o yaml`) return a single object shape.
+- `kubectl get pods -A` and `kubectl get pods -A -o wide` include `NAMESPACE` as first column.
 - JSON output indentation for structured `get` output follows a stable 4-space formatting.
 - Table rendering for `kubectl get` uses consistent spacing tuned against `kind` output to reduce visual drift.
 - Help behavior is explicit:
@@ -196,6 +197,10 @@ Cluster initialization always goes through a centralized bootstrap policy:
   - `profile`: `kind-like` | `none`
   - `mode`: `always` | `missing-only` | `never`
 - Bootstrap resources are implemented in `src/core/cluster/systemBootstrap.ts` and shared across runner, seed loader, and emulated environment manager.
+- System workloads are modeled by a dedicated simulation component (`SimSystemWorkloadsController`) with static-control-plane, daemonset-like, and deployment-like behaviors.
+- System workload policy `conformance` targets CoreDNS on control-plane to mirror reference outputs captured in `artifacts/conformance/kind.log`.
+- Scheduler predicates include taints/tolerations, nodeSelector, and required nodeAffinity for closer Kubernetes placement behavior.
+- Pod IP assignment is centralized (`SimPodIpAllocator`) to avoid collisions and keep `get/describe` outputs coherent.
 
 ### Controller Hierarchy
 

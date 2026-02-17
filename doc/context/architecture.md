@@ -36,7 +36,11 @@
 
 ### Scheduler
 
-`src/core/cluster/scheduler/` — séparé des controllers. Watch PodCreated (sans nodeName), filter nodes Ready, round-robin, bind. Init dans `EmulatedEnvironmentManager.ts`.
+`src/core/cluster/scheduler/` — séparé des controllers. Watch PodCreated (sans nodeName) + passe initiale au start. Predicates de simulation `SimSchedulingPredicates` (Ready/cordon, taints-tolerations, nodeSelector, nodeAffinity required), puis sélection round-robin et bind.
+
+### Pod IP Allocation
+
+`src/core/cluster/ipAllocator/` — allocation d'IP Pod centralisée (`SimPodIpAllocator`) avec unicité par pod actif et libération sur suppression. Intégré via `SimPodIpAllocationService` dans le cycle de vie de l'environnement.
 
 ### Cluster Bootstrap Policy
 
@@ -47,11 +51,17 @@ Le bootstrap cluster est centralise dans `src/core/cluster/ClusterState.ts` via 
   - `profile`: `kind-like` | `none`
   - `mode`: `always` | `missing-only` | `never`
 - Implementation des ressources bootstrap dans `src/core/cluster/systemBootstrap.ts`.
+- Workloads système simulés via `src/core/cluster/systemWorkloads/SimSystemWorkloadsController.ts`:
+  - static pods control-plane
+  - daemonset-like (1 pod par node)
+  - deployment-like (replicas schedulées)
+- Policy conformance explicite: CoreDNS ciblé control-plane pour alignement avec le baseline `artifacts/conformance/kind.log`.
 - Topologie des nodes centralisee dans `src/core/cluster/clusterConfig.ts` et alignee sur le YAML partage `src/courses/seeds/clusterConfig/multi-node.yaml` (source commune kind + simulateur).
 - Points d'integration principaux:
   - `src/core/emulatedEnvironment/EmulatedEnvironmentManager.ts`
   - `src/core/cluster/seeds/loader.ts`
   - `bin/lib/executors/runner-executor.ts`
+  - ordre runtime: bootstrap -> scheduler -> ip allocation service -> pod startup simulator
 
 ### Autocomplete
 

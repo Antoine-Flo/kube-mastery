@@ -295,6 +295,9 @@ const getPodDisplayStatus = (pod: Pod): string => {
 }
 
 const getPodIP = (pod: Pod): string => {
+  if (pod.status.podIP != null && pod.status.podIP.length > 0) {
+    return pod.status.podIP
+  }
   const statuses = pod.status.containerStatuses ?? []
   if (statuses.length === 0) {
     return '<none>'
@@ -309,6 +312,43 @@ const getPodIP = (pod: Pod): string => {
   const thirdOctet = (Math.abs(hash) % 240) + 10
   const fourthOctet = (Math.abs(hash >> 4) % 240) + 10
   return `10.244.${thirdOctet}.${fourthOctet}`
+}
+
+const getUniquePodIPMap = (pods: Pod[]): Map<string, string> => {
+  const ipMap = new Map<string, string>()
+  const usedIPs = new Set<string>()
+  for (const pod of pods) {
+    const key = `${pod.metadata.namespace}/${pod.metadata.name}`
+    if (pod.status.podIP != null && pod.status.podIP.length > 0) {
+      ipMap.set(key, pod.status.podIP)
+      usedIPs.add(pod.status.podIP)
+      continue
+    }
+    const statuses = pod.status.containerStatuses ?? []
+    if (statuses.length === 0) {
+      ipMap.set(key, '<none>')
+      continue
+    }
+    const hashSource = key
+    let hash = 0
+    for (let index = 0; index < hashSource.length; index++) {
+      hash = (hash << 5) - hash + hashSource.charCodeAt(index)
+      hash = hash & hash
+    }
+    let thirdOctet = (Math.abs(hash) % 240) + 10
+    let fourthOctet = (Math.abs(hash >> 4) % 240) + 10
+    let candidate = `10.244.${thirdOctet}.${fourthOctet}`
+    let attempt = 0
+    while (usedIPs.has(candidate)) {
+      attempt = attempt + 1
+      thirdOctet = ((thirdOctet + attempt) % 240) + 10
+      fourthOctet = ((fourthOctet + attempt * 7) % 240) + 10
+      candidate = `10.244.${thirdOctet}.${fourthOctet}`
+    }
+    usedIPs.add(candidate)
+    ipMap.set(key, candidate)
+  }
+  return ipMap
 }
 
 const getPodNodeName = (pod: Pod): string => {
@@ -547,15 +587,10 @@ export const handleGet = (
     )
   }
 
-  // Handle wide format
-  const isWide = outputFormat === 'wide' || parsed.flags.wide === true
-  if (isWide && handler.formatRowWide && handler.headersWide) {
-    const rows = filtered.map(handler.formatRowWide) as string[][]
-    return formatTable(handler.headersWide, rows, withKubectlTableSpacing())
-  }
-
   // Default: table format
-  // For pods with --all-namespaces (-A), add NAMESPACE column and sort by namespace then name
+  // For pods with --all-namespaces (-A), add NAMESPACE column and sort by namespace then name.
+  // Applies to both default and wide formats.
+  const isWide = outputFormat === 'wide' || parsed.flags.wide === true
   if (resourceType === ('pods' as Resource) && allNamespacesFlag) {
     const sorted = [...filtered].sort((a, b) => {
       const na = (a as Pod).metadata.namespace
@@ -565,16 +600,39 @@ export const handleGet = (
       }
       return (a as Pod).metadata.name.localeCompare((b as Pod).metadata.name)
     })
-    const headersAllNs = [
-      'namespace',
-      'name',
-      'ready',
-      'status',
-      'restarts',
-      'age'
-    ]
+
+    const headersAllNs = isWide
+      ? [
+          'namespace',
+          'name',
+          'ready',
+          'status',
+          'restarts',
+          'age',
+          'ip',
+          'node',
+          'nominated node',
+          'readiness gates'
+        ]
+      : ['namespace', 'name', 'ready', 'status', 'restarts', 'age']
+    const ipMap = getUniquePodIPMap(sorted as Pod[])
     const rowsAllNs = sorted.map((pod) => {
       const p = pod as Pod
+      if (isWide) {
+        const key = `${p.metadata.namespace}/${p.metadata.name}`
+        return [
+          p.metadata.namespace,
+          p.metadata.name,
+          getPodReady(p),
+          getPodDisplayStatus(p),
+          String(getPodRestarts(p)),
+          formatAge(p.metadata.creationTimestamp),
+          ipMap.get(key) ?? getPodIP(p),
+          getPodNodeName(p),
+          '<none>',
+          '<none>'
+        ]
+      }
       return [
         p.metadata.namespace,
         p.metadata.name,
@@ -584,19 +642,31 @@ export const handleGet = (
         formatAge(p.metadata.creationTimestamp)
       ]
     })
-    const alignAllNs: ('left' | 'right')[] = [
-      'left',
-      'left',
-      'right',
-      'left',
-      'right',
-      'right'
-    ]
+    const alignAllNs: ('left' | 'right')[] = isWide
+      ? [
+          'left',
+          'left',
+          'right',
+          'left',
+          'right',
+          'right',
+          'left',
+          'left',
+          'left',
+          'left'
+        ]
+      : ['left', 'left', 'right', 'left', 'right', 'right']
     return formatTable(
       headersAllNs,
       rowsAllNs,
       withKubectlTableSpacing({ align: alignAllNs })
     )
+  }
+
+  // Handle wide format
+  if (isWide && handler.formatRowWide && handler.headersWide) {
+    const rows = filtered.map(handler.formatRowWide) as string[][]
+    return formatTable(handler.headersWide, rows, withKubectlTableSpacing())
   }
 
   const rowsSource =
