@@ -6,47 +6,47 @@
 [runner-simulation.exitCode] 0
 [diff]
 [line 1]
-[kind] NAMESPACE            NAME                                                READY   STATUS    RESTARTS   AGE
+[kind] NAMESPACE            NAME                                                READY   STATUS              RESTARTS   AGE
 [runner-simulation] NAMESPACE            NAME                                      READY   STATUS    RESTARTS   AGE
 [line 2]
-[kind] kube-system          coredns-<id>                            0/1     Pending   0          5s
-[runner-simulation] kube-system          coredns-<id>                    0/1   Pending          0   20s
+[kind] kube-system          coredns-<id>                            0/1     Pending             0          1s
+[runner-simulation] kube-system          coredns-<id>                    0/1   Pending          0   16s
 [line 3]
-[kind] kube-system          coredns-<id>                            0/1     Pending   0          5s
-[runner-simulation] kube-system          coredns-<id>                    0/1   Pending          0   20s
+[kind] kube-system          coredns-<id>                            0/1     Pending             0          1s
+[runner-simulation] kube-system          coredns-<id>                    0/1   Pending          0   16s
 [line 4]
-[kind] kube-system          etcd-<node>-control-plane                      0/1     Running   0          14s
-[runner-simulation] kube-system          etcd-control-plane                          0/1   Pending          0   20s
+[kind] kube-system          etcd-<node>-control-plane                      0/1     Running             0          9s
+[runner-simulation] kube-system          etcd-control-plane                          0/1   Pending          0   16s
 [line 5]
-[kind] kube-system          kindnet-<id>                                       1/1     Running   0          5s
-[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   20s
+[kind] kube-system          kindnet-<id>                                       0/1     ContainerCreating   0          1s
+[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   16s
 [line 6]
-[kind] kube-system          kindnet-<id>                                       0/1     Pending   0          1s
-[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   20s
+[kind] kube-system          kindnet-<id>                                       0/1     Pending             0          1s
+[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   16s
 [line 7]
-[kind] kube-system          kindnet-<id>                                       0/1     Pending   0          1s
-[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   20s
+[kind] kube-system          kindnet-<id>                                       0/1     Pending             0          1s
+[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   16s
 [line 8]
-[kind] kube-system          kube-apiserver-<node>-control-plane            1/1     Running   0          14s
-[runner-simulation] kube-system          kube-apiserver-control-plane                0/1   Pending          0   20s
+[kind] kube-system          kube-apiserver-<node>-control-plane            0/1     Running             0          9s
+[runner-simulation] kube-system          kube-apiserver-control-plane                0/1   Pending          0   16s
 [line 9]
-[kind] kube-system          kube-controller-manager-<node>-control-plane   0/1     Running   0          13s
-[runner-simulation] kube-system          kube-controller-manager-control-plane       0/1   Pending          0   20s
+[kind] kube-system          kube-controller-manager-<node>-control-plane   0/1     Running             0          8s
+[runner-simulation] kube-system          kube-controller-manager-control-plane       0/1   Pending          0   16s
 [line 10]
-[kind] kube-system          kube-proxy-<id>                                    0/1     Pending   0          1s
-[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   20s
+[kind] kube-system          kube-proxy-<id>                                    0/1     Pending             0          1s
+[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   16s
 [line 11]
-[kind] kube-system          kube-proxy-<id>                                    0/1     Pending   0          1s
-[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   20s
+[kind] kube-system          kube-proxy-<id>                                    0/1     ContainerCreating   0          1s
+[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   16s
 [line 12]
-[kind] kube-system          kube-proxy-<id>                                    1/1     Running   0          5s
-[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   20s
+[kind] kube-system          kube-proxy-<id>                                    0/1     Pending             0          1s
+[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   16s
 [line 13]
-[kind] kube-system          kube-scheduler-<node>-control-plane            0/1     Running   0          14s
-[runner-simulation] kube-system          kube-scheduler-control-plane                0/1   Pending          0   20s
+[kind] kube-system          kube-scheduler-<node>-control-plane            0/1     Running             0          9s
+[runner-simulation] kube-system          kube-scheduler-control-plane                0/1   Pending          0   16s
 [line 14]
-[kind] local-path-storage   local-path-provisioner-<id>             0/1     Pending   0          5s
-[runner-simulation] local-path-storage   local-path-provisioner-<id>     0/1   Pending          0   20s
+[kind] local-path-storage   local-path-provisioner-<id>             0/1     Pending             0          1s
+[runner-simulation] local-path-storage   local-path-provisioner-<id>     0/1   Pending          0   16s
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log
@@ -62,14 +62,14 @@
 [kind] NAME                        STATUS     ROLES           AGE   VERSION
 [runner-simulation] NAME                        STATUS   ROLES           AGE   VERSION
 [line 2]
-[kind] conformance-control-plane   NotReady   control-plane   15s   v1.35.0
-[runner-simulation] conformance-control-plane   Ready    control-plane   21s   v1.35.0
+[kind] conformance-control-plane   NotReady   control-plane   10s   v1.35.0
+[runner-simulation] conformance-control-plane   Ready    control-plane   16s   v1.35.0
 [line 3]
 [kind] conformance-worker          NotReady   <none>          1s    v1.35.0
-[runner-simulation] conformance-worker          Ready    <none>          21s   v1.35.0
+[runner-simulation] conformance-worker          Ready    <none>          16s   v1.35.0
 [line 4]
 [kind] conformance-worker2         NotReady   <none>          1s    v1.35.0
-[runner-simulation] conformance-worker2         Ready    <none>          21s   v1.35.0
+[runner-simulation] conformance-worker2         Ready    <none>          16s   v1.35.0
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log
@@ -82,8 +82,8 @@
 [runner-simulation.exitCode] 0
 [diff]
 [line 2]
-[kind] kube-root-ca.crt   1      5s
-[runner-simulation] kube-root-ca.crt      1   21s
+[kind] kube-root-ca.crt   1      2s
+[runner-simulation] kube-root-ca.crt      1   16s
 [line 3]
 [kind] placeholder        0      0s
 [runner-simulation] placeholder           0   0s
@@ -99,7 +99,7 @@
 [runner-simulation.exitCode] 0
 [diff]
 [line 2]
-[kind] web    1/1     Running   0          19s
+[kind] web    1/1     Running   0          18s
 [runner-simulation] web      0/1   Pending          0    0s
 [details]
 [kind-log] artifacts/conformance/kind.log
@@ -116,47 +116,47 @@
 [kind] NAMESPACE            NAME                                                READY   STATUS    RESTARTS   AGE
 [runner-simulation] NAMESPACE            NAME                                      READY   STATUS    RESTARTS   AGE
 [line 2]
-[kind] default              web                                                 1/1     Running   0          19s
+[kind] default              web                                                 1/1     Running   0          18s
 [runner-simulation] default              web                                         0/1   Pending          0    0s
 [line 3]
-[kind] kube-system          coredns-<id>                            1/1     Running   0          25s
-[runner-simulation] kube-system          coredns-<id>                    0/1   Pending          0   40s
+[kind] kube-system          coredns-<id>                            1/1     Running   0          20s
+[runner-simulation] kube-system          coredns-<id>                    0/1   Pending          0   34s
 [line 4]
-[kind] kube-system          coredns-<id>                            1/1     Running   0          25s
-[runner-simulation] kube-system          coredns-<id>                    0/1   Pending          0   40s
+[kind] kube-system          coredns-<id>                            1/1     Running   0          20s
+[runner-simulation] kube-system          coredns-<id>                    0/1   Pending          0   34s
 [line 5]
-[kind] kube-system          etcd-<node>-control-plane                      1/1     Running   0          34s
-[runner-simulation] kube-system          etcd-control-plane                          0/1   Pending          0   40s
+[kind] kube-system          etcd-<node>-control-plane                      1/1     Running   0          28s
+[runner-simulation] kube-system          etcd-control-plane                          0/1   Pending          0   34s
 [line 6]
-[kind] kube-system          kindnet-<id>                                       1/1     Running   0          25s
-[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   40s
+[kind] kube-system          kindnet-<id>                                       1/1     Running   0          20s
+[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   34s
 [line 7]
-[kind] kube-system          kindnet-<id>                                       1/1     Running   0          21s
-[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   40s
+[kind] kube-system          kindnet-<id>                                       1/1     Running   0          20s
+[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   34s
 [line 8]
-[kind] kube-system          kindnet-<id>                                       1/1     Running   0          21s
-[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   40s
+[kind] kube-system          kindnet-<id>                                       1/1     Running   0          20s
+[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   34s
 [line 9]
-[kind] kube-system          kube-apiserver-<node>-control-plane            1/1     Running   0          34s
-[runner-simulation] kube-system          kube-apiserver-control-plane                0/1   Pending          0   40s
+[kind] kube-system          kube-apiserver-<node>-control-plane            1/1     Running   0          28s
+[runner-simulation] kube-system          kube-apiserver-control-plane                0/1   Pending          0   34s
 [line 10]
-[kind] kube-system          kube-controller-manager-<node>-control-plane   1/1     Running   0          33s
-[runner-simulation] kube-system          kube-controller-manager-control-plane       0/1   Pending          0   40s
+[kind] kube-system          kube-controller-manager-<node>-control-plane   1/1     Running   0          27s
+[runner-simulation] kube-system          kube-controller-manager-control-plane       0/1   Pending          0   34s
 [line 11]
-[kind] kube-system          kube-proxy-<id>                                    1/1     Running   0          21s
-[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   40s
+[kind] kube-system          kube-proxy-<id>                                    1/1     Running   0          20s
+[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   34s
 [line 12]
-[kind] kube-system          kube-proxy-<id>                                    1/1     Running   0          21s
-[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   40s
+[kind] kube-system          kube-proxy-<id>                                    1/1     Running   0          20s
+[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   34s
 [line 13]
-[kind] kube-system          kube-proxy-<id>                                    1/1     Running   0          25s
-[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   40s
+[kind] kube-system          kube-proxy-<id>                                    1/1     Running   0          20s
+[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   34s
 [line 14]
-[kind] kube-system          kube-scheduler-<node>-control-plane            1/1     Running   0          34s
-[runner-simulation] kube-system          kube-scheduler-control-plane                0/1   Pending          0   40s
+[kind] kube-system          kube-scheduler-<node>-control-plane            1/1     Running   0          28s
+[runner-simulation] kube-system          kube-scheduler-control-plane                0/1   Pending          0   34s
 [line 15]
-[kind] local-path-storage   local-path-provisioner-<id>             1/1     Running   0          25s
-[runner-simulation] local-path-storage   local-path-provisioner-<id>     0/1   Pending          0   40s
+[kind] local-path-storage   local-path-provisioner-<id>             1/1     Running   0          20s
+[runner-simulation] local-path-storage   local-path-provisioner-<id>     0/1   Pending          0   34s
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log
@@ -169,10 +169,10 @@
 [runner-simulation.exitCode] 0
 [diff]
 [line 1]
-[kind] NAME   READY   STATUS    RESTARTS   AGE   IP           NODE                  NOMINATED NODE   READINESS GATES
+[kind] NAME   READY   STATUS    RESTARTS   AGE   IP           NODE                 NOMINATED NODE   READINESS GATES
 [runner-simulation] NAME   READY   STATUS    RESTARTS   AGE   IP              NODE     NOMINATED NODE   READINESS GATES
 [line 2]
-[kind] web    1/1     Running   0          19s   <ip>   conformance-worker2   <none>           <none>
+[kind] web    1/1     Running   0          18s   <ip>   conformance-worker   <none>           <none>
 [runner-simulation] web    0/1     Pending          0   0s    <ip>   <none>   <none>           <none>
 [details]
 [kind-log] artifacts/conformance/kind.log
@@ -186,11 +186,11 @@
 [runner-simulation.exitCode] 0
 [diff]
 [line 5]
-[kind] Node:             conformance-worker2/<ip>
+[kind] Node:             conformance-worker/<ip>
 [runner-simulation] Node:             <none>/<ip>
 [line 6]
-[kind] Start Time:       Tue, 17 Feb 2026 17:02:02 +0100
-[runner-simulation] Start Time:       Tue, 17 Feb 2026 16:02:10 GMT
+[kind] Start Time:       Tue, 17 Feb 2026 18:25:18 +0100
+[runner-simulation] Start Time:       Tue, 17 Feb 2026 17:25:25 GMT
 [line 9]
 [kind] Status:           Running
 [runner-simulation] Status:           Pending
@@ -222,7 +222,7 @@
 [kind]     State:          Running
 [runner-simulation] Volumes:  <none>
 [line 21]
-[kind]       Started:      Tue, 17 Feb 2026 17:02:08 +0100
+[kind]       Started:      Tue, 17 Feb 2026 18:25:23 +0100
 [runner-simulation] 
 [line 22]
 [kind]     Ready:          True
@@ -237,7 +237,7 @@
 [kind]     Mounts:
 [runner-simulation]   Ready             True
 [line 26]
-[kind]       /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-c2cmj (ro)
+[kind]       /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-mrp6q (ro)
 [runner-simulation]   ContainersReady   True
 [line 27]
 [kind] Conditions:
@@ -264,7 +264,7 @@
 [kind] Volumes:
 [runner-simulation] (missing)
 [line 35]
-[kind]   kube-api-access-c2cmj:
+[kind]   kube-api-access-mrp6q:
 [runner-simulation] (missing)
 [line 36]
 [kind]     Type:                    Projected (a volume that contains injected data from multiple sources)
@@ -303,16 +303,16 @@
 [kind]   ----     ------            ----  ----               -------
 [runner-simulation] (missing)
 [line 48]
-[kind]   Warning  FailedScheduling  19s   default-scheduler  0/3 nodes are available: 3 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/3 nodes are available: 3 Preemption is not helpful for schedul…
+[kind]   Warning  FailedScheduling  18s   default-scheduler  0/3 nodes are available: 3 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/3 nodes are available: 3 Preemption is not helpful for schedul…
 [runner-simulation] (missing)
 [line 49]
-[kind]   Normal   Scheduled         8s    default-scheduler  Successfully assigned default/web to conformance-worker2
+[kind]   Normal   Scheduled         7s    default-scheduler  Successfully assigned default/web to conformance-worker
 [runner-simulation] (missing)
 [line 50]
-[kind]   Normal   Pulling           8s    kubelet            spec.containers{nginx}: Pulling image "nginx:1.25"
+[kind]   Normal   Pulling           6s    kubelet            spec.containers{nginx}: Pulling image "nginx:1.25"
 [runner-simulation] (missing)
 [line 51]
-[kind]   Normal   Pulled            2s    kubelet            spec.containers{nginx}: Successfully pulled image "nginx:1.25" in 5.766s (5.766s including waiting). Image size: 71005258 bytes.
+[kind]   Normal   Pulled            2s    kubelet            spec.containers{nginx}: Successfully pulled image "nginx:1.25" in 4.122s (4.122s including waiting). Image size: 71005258 bytes.
 [runner-simulation] (missing)
 [line 52]
 [kind]   Normal   Created           2s    kubelet            spec.containers{nginx}: Container created
@@ -398,7 +398,7 @@
 [kind]     - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
 [runner-simulation] (missing)
 [line 26]
-[kind]       name: kube-api-access-c2cmj
+[kind]       name: kube-api-access-mrp6q
 [runner-simulation] (missing)
 [line 27]
 [kind]       readOnly: true
@@ -410,7 +410,7 @@
 [kind]   enableServiceLinks: true
 [runner-simulation] (missing)
 [line 30]
-[kind]   nodeName: conformance-worker2
+[kind]   nodeName: conformance-worker
 [runner-simulation] (missing)
 [line 31]
 [kind]   preemptionPolicy: PreemptLowerPriority
@@ -467,7 +467,7 @@
 [kind]   volumes:
 [runner-simulation] (missing)
 [line 49]
-[kind]   - name: kube-api-access-c2cmj
+[kind]   - name: kube-api-access-mrp6q
 [runner-simulation] (missing)
 [line 50]
 [kind]     projected:
@@ -577,78 +577,6 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] deploy-cm-cmd-8-pods (command)
-[command] kubectl get pods
-[mismatch]
-[kind.exitCode] 0
-[runner-simulation.exitCode] 0
-[diff]
-[line 1]
-[kind] NAME                              READY   STATUS              RESTARTS   AGE
-[runner-simulation] NAME   READY   STATUS    RESTARTS   AGE
-[line 2]
-[kind] exhaustive-web-869fc747ff-ctslk   0/1     ContainerCreating   0          0s
-[runner-simulation] web      0/1   Pending          0    0s
-[line 3]
-[kind] web                               1/1     Running             0          19s
-[runner-simulation] (missing)
-[details]
-[kind-log] artifacts/conformance/kind.log
-[runner-log] artifacts/conformance/runner.log
----
-[suite] exhaustive-single-cluster-suite
-[action] deploy-cm-cmd-9-pods (command)
-[command] kubectl get pods
-[mismatch]
-[kind.exitCode] 0
-[runner-simulation.exitCode] 0
-[diff]
-[line 1]
-[kind] NAME                              READY   STATUS              RESTARTS   AGE
-[runner-simulation] NAME   READY   STATUS    RESTARTS   AGE
-[line 2]
-[kind] exhaustive-api-ff9987cfb-hgrvs    0/1     ContainerCreating   0          0s
-[runner-simulation] web      0/1   Pending          0    0s
-[line 3]
-[kind] exhaustive-api-ff9987cfb-zm2rt    0/1     ContainerCreating   0          0s
-[runner-simulation] (missing)
-[line 4]
-[kind] exhaustive-web-869fc747ff-ctslk   0/1     ContainerCreating   0          0s
-[runner-simulation] (missing)
-[line 5]
-[kind] web                               1/1     Running             0          19s
-[runner-simulation] (missing)
-[details]
-[kind-log] artifacts/conformance/kind.log
-[runner-log] artifacts/conformance/runner.log
----
-[suite] exhaustive-single-cluster-suite
-[action] deploy-cm-cmd-10-pods (command)
-[command] kubectl get pods
-[mismatch]
-[kind.exitCode] 0
-[runner-simulation.exitCode] 0
-[diff]
-[line 1]
-[kind] NAME                              READY   STATUS              RESTARTS   AGE
-[runner-simulation] NAME   READY   STATUS    RESTARTS   AGE
-[line 2]
-[kind] exhaustive-api-ff9987cfb-hgrvs    0/1     ContainerCreating   0          0s
-[runner-simulation] web      0/1   Pending          0    0s
-[line 3]
-[kind] exhaustive-api-ff9987cfb-zm2rt    0/1     ContainerCreating   0          0s
-[runner-simulation] (missing)
-[line 4]
-[kind] exhaustive-web-869fc747ff-ctslk   0/1     ContainerCreating   0          0s
-[runner-simulation] (missing)
-[line 5]
-[kind] web                               1/1     Running             0          19s
-[runner-simulation] (missing)
-[details]
-[kind-log] artifacts/conformance/kind.log
-[runner-log] artifacts/conformance/runner.log
----
-[suite] exhaustive-single-cluster-suite
 [action] deploy-cm-cmd-12 (command)
 [command] kubectl get deployments
 [mismatch]
@@ -666,7 +594,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] platform-cmd-1 (command)
+[action] platform-cmd-3 (command)
 [command] kubectl version
 [mismatch]
 [kind.exitCode] 0
@@ -680,7 +608,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] platform-cmd-2 (command)
+[action] platform-cmd-4 (command)
 [command] kubectl version --client
 [mismatch]
 [kind.exitCode] 0
@@ -694,7 +622,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] platform-cmd-3 (command)
+[action] platform-cmd-5 (command)
 [command] kubectl version --output json
 [mismatch]
 [kind.exitCode] 0
@@ -747,7 +675,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] platform-cmd-4 (command)
+[action] platform-cmd-6 (command)
 [command] kubectl version --output yaml
 [mismatch]
 [kind.exitCode] 0
@@ -824,7 +752,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] platform-cmd-5 (command)
+[action] platform-cmd-7 (command)
 [command] kubectl cluster-info
 [mismatch]
 [kind.exitCode] 0
@@ -841,7 +769,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] platform-cmd-6 (command)
+[action] platform-cmd-8 (command)
 [command] kubectl cluster-info dump
 [mismatch]
 [kind.exitCode] 0
@@ -1087,13 +1015,13 @@
 [line 92]
 [kind]                 "addresses": [
 [runner-simulation]                     "osImage": "Debian GNU/Linux 12 (bookworm)"
-[truncated] 9525 diff lines omitted to reduce noise
+[truncated] 9507 diff lines omitted to reduce noise
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] platform-cmd-7 (command)
+[action] platform-cmd-9 (command)
 [command] kubectl cluster-info dump -o yaml
 [mismatch]
 [kind.exitCode] 0
@@ -1339,13 +1267,13 @@
 [line 80]
 [kind]       - registry.k8s.io/kube-apiserver:v1.35.0
 [runner-simulation]           status: "True"
-[truncated] 6953 diff lines omitted to reduce noise
+[truncated] 6935 diff lines omitted to reduce noise
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] platform-cmd-8 (command)
+[action] platform-cmd-10 (command)
 [command] kubectl cluster-info dump --namespaces=default,kube-system
 [mismatch]
 [kind.exitCode] 0
@@ -1591,13 +1519,90 @@
 [line 92]
 [kind]                 "addresses": [
 [runner-simulation]                     "osImage": "Debian GNU/Linux 12 (bookworm)"
-[truncated] 9522 diff lines omitted to reduce noise
+[truncated] 9504 diff lines omitted to reduce noise
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] platform-cmd-10 (command)
+[action] platform-cmd-11 (command)
+[command] kubectl api-versions
+[mismatch]
+[kind.exitCode] 0
+[runner-simulation.exitCode] 1
+[diff]
+[line 1]
+[kind] admissionregistration.k8s.io/v1
+[runner-simulation] Invalid or missing action: api-versions
+[line 2]
+[kind] apiextensions.k8s.io/v1
+[runner-simulation] (missing)
+[line 3]
+[kind] apiregistration.k8s.io/v1
+[runner-simulation] (missing)
+[line 4]
+[kind] apps/v1
+[runner-simulation] (missing)
+[line 5]
+[kind] authentication.k8s.io/v1
+[runner-simulation] (missing)
+[line 6]
+[kind] authorization.k8s.io/v1
+[runner-simulation] (missing)
+[line 7]
+[kind] autoscaling/v1
+[runner-simulation] (missing)
+[line 8]
+[kind] autoscaling/v2
+[runner-simulation] (missing)
+[line 9]
+[kind] batch/v1
+[runner-simulation] (missing)
+[line 10]
+[kind] certificates.k8s.io/v1
+[runner-simulation] (missing)
+[line 11]
+[kind] coordination.k8s.io/v1
+[runner-simulation] (missing)
+[line 12]
+[kind] discovery.k8s.io/v1
+[runner-simulation] (missing)
+[line 13]
+[kind] events.k8s.io/v1
+[runner-simulation] (missing)
+[line 14]
+[kind] flowcontrol.apiserver.k8s.io/v1
+[runner-simulation] (missing)
+[line 15]
+[kind] networking.k8s.io/v1
+[runner-simulation] (missing)
+[line 16]
+[kind] node.k8s.io/v1
+[runner-simulation] (missing)
+[line 17]
+[kind] policy/v1
+[runner-simulation] (missing)
+[line 18]
+[kind] rbac.authorization.k8s.io/v1
+[runner-simulation] (missing)
+[line 19]
+[kind] resource.k8s.io/v1
+[runner-simulation] (missing)
+[line 20]
+[kind] scheduling.k8s.io/v1
+[runner-simulation] (missing)
+[line 21]
+[kind] storage.k8s.io/v1
+[runner-simulation] (missing)
+[line 22]
+[kind] v1
+[runner-simulation] (missing)
+[details]
+[kind-log] artifacts/conformance/kind.log
+[runner-log] artifacts/conformance/runner.log
+---
+[suite] exhaustive-single-cluster-suite
+[action] platform-cmd-13 (command)
 [command] kubectl api-resources --output wide
 [mismatch]
 [kind.exitCode] 0
@@ -1635,7 +1640,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] platform-cmd-12 (command)
+[action] platform-cmd-15 (command)
 [command] kubectl api-resources --output json
 [mismatch]
 [kind.exitCode] 0
@@ -1887,7 +1892,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] platform-cmd-13 (command)
+[action] platform-cmd-16 (command)
 [command] kubectl api-resources --output yaml
 [mismatch]
 [kind.exitCode] 0
@@ -2139,7 +2144,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] platform-cmd-17 (command)
+[action] platform-cmd-20 (command)
 [command] kubectl api-resources --sort-by=kind
 [mismatch]
 [kind.exitCode] 0
@@ -2195,7 +2200,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] platform-cmd-18 (command)
+[action] platform-cmd-21 (command)
 [command] kubectl api-resources --no-headers
 [mismatch]
 [kind.exitCode] 0
@@ -2401,7 +2406,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-4 (command)
+[action] errors-help-cmd-6 (command)
 [command] kubectl scale deployments missing-deploy --replicas=2
 [mismatch]
 [kind.exitCode] 1
@@ -2415,7 +2420,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-5 (command)
+[action] errors-help-cmd-7 (command)
 [command] kubectl get not-a-resource
 [mismatch]
 [kind.exitCode] 1
@@ -2429,7 +2434,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-6 (command)
+[action] errors-help-cmd-8 (command)
 [command] kubectl version --output wide
 [mismatch]
 [kind.exitCode] 1
@@ -2443,7 +2448,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-7 (command)
+[action] errors-help-cmd-9 (command)
 [command] kubectl api-resources --sort-by=age
 [mismatch]
 [kind.exitCode] 1
@@ -2457,7 +2462,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-9 (command)
+[action] errors-help-cmd-11 (command)
 [command] kubectl -h
 [mismatch]
 [kind.exitCode] 0
@@ -2663,7 +2668,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-10 (command)
+[action] errors-help-cmd-12 (command)
 [command] kubectl --help
 [mismatch]
 [kind.exitCode] 0
@@ -2869,7 +2874,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-11 (command)
+[action] errors-help-cmd-13 (command)
 [command] kubectl get --help
 [mismatch]
 [kind.exitCode] 0
@@ -3121,7 +3126,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-12 (command)
+[action] errors-help-cmd-14 (command)
 [command] kubectl create --help
 [mismatch]
 [kind.exitCode] 0
@@ -3373,7 +3378,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-13 (command)
+[action] errors-help-cmd-15 (command)
 [command] kubectl create deployment --help
 [mismatch]
 [kind.exitCode] 0
@@ -3552,7 +3557,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-14 (command)
+[action] errors-help-cmd-16 (command)
 [command] kubectl delete --help
 [mismatch]
 [kind.exitCode] 0
@@ -3804,7 +3809,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-15 (command)
+[action] errors-help-cmd-17 (command)
 [command] kubectl describe --help
 [mismatch]
 [kind.exitCode] 0
@@ -3977,7 +3982,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-16 (command)
+[action] errors-help-cmd-18 (command)
 [command] kubectl scale --help
 [mismatch]
 [kind.exitCode] 0
@@ -4192,7 +4197,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-17 (command)
+[action] errors-help-cmd-19 (command)
 [command] kubectl version --help
 [mismatch]
 [kind.exitCode] 0
@@ -4251,7 +4256,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-18 (command)
+[action] errors-help-cmd-20 (command)
 [command] kubectl cluster-info --help
 [mismatch]
 [kind.exitCode] 0
@@ -4298,7 +4303,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-19 (command)
+[action] errors-help-cmd-21 (command)
 [command] kubectl api-resources --help
 [mismatch]
 [kind.exitCode] 0
@@ -4462,7 +4467,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-20 (command)
+[action] errors-help-cmd-22 (command)
 [command] kubectl logs --help
 [mismatch]
 [kind.exitCode] 0
@@ -4714,7 +4719,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-21 (command)
+[action] errors-help-cmd-23 (command)
 [command] kubectl exec --help
 [mismatch]
 [kind.exitCode] 0
@@ -4866,7 +4871,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-22 (command)
+[action] errors-help-cmd-24 (command)
 [command] kubectl label --help
 [mismatch]
 [kind.exitCode] 0
@@ -5118,7 +5123,7 @@
 [runner-log] artifacts/conformance/runner.log
 ---
 [suite] exhaustive-single-cluster-suite
-[action] errors-help-cmd-23 (command)
+[action] errors-help-cmd-25 (command)
 [command] kubectl annotate --help
 [mismatch]
 [kind.exitCode] 0

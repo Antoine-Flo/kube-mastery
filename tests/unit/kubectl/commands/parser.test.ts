@@ -141,3 +141,59 @@ describe('kubectl parser - get and delete flag positions', () => {
     expect(result.value.namespace).toBe('kube-system')
   })
 })
+
+describe('kubectl parser - get raw', () => {
+  it('should parse raw root path', () => {
+    const result = parseCommand('kubectl get --raw /')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('get')
+    expect(result.value.rawPath).toBe('/')
+    expect(result.value.resource).toBeUndefined()
+  })
+
+  it('should parse raw namespaces path', () => {
+    const result = parseCommand('kubectl get --raw /api/v1/namespaces')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.rawPath).toBe('/api/v1/namespaces')
+    expect(result.value.resource).toBeUndefined()
+  })
+
+  it('should reject arguments when --raw is provided', () => {
+    const result = parseCommand('kubectl get pods --raw /')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'arguments may not be passed when --raw is specified'
+      )
+    }
+  })
+
+  it('should reject --raw with output flag', () => {
+    const result = parseCommand('kubectl get --raw / -o json')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('--raw and --output are mutually exclusive')
+    }
+  })
+
+  it('should reject invalid raw path', () => {
+    const result = parseCommand('kubectl get --raw not-a-path')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('--raw must be a valid URL path')
+    }
+  })
+})

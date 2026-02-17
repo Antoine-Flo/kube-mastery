@@ -29,6 +29,7 @@ export type Resource =
 export interface ParsedCommand {
   action: Action
   resource?: Resource // Optional for commands like 'version' that don't require a resource
+  rawPath?: string // For kubectl get --raw: direct API path (e.g. /api/v1/namespaces)
   name?: string
   namespace?: string
   output?: 'table' | 'yaml' | 'json'

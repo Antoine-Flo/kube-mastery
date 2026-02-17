@@ -65,6 +65,8 @@ kubectl get --raw /
 kubectl get --raw /api/v1/namespaces
 ```
 
+In this simulator, not all API entry points are implemented yet: these endpoints currently use stubs, and additional ones will be added over time based on pedagogical needs.
+
 The first command returns the root of the API. The second lists all namespaces as raw JSON. These commands help you understand what `kubectl` does for you automatically.
 
 ## Common Errors and What They Mean

@@ -726,6 +726,60 @@ data:
         }
       })
 
+      it('should execute kubectl get --raw / and return discovery root JSON', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl get --raw /')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        const payload = JSON.parse(result.value)
+        expect(payload).toHaveProperty('paths')
+        expect(Array.isArray(payload.paths)).toBe(true)
+      })
+
+      it('should execute kubectl get --raw /api/v1/namespaces and return NamespaceList', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl get --raw /api/v1/namespaces')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        const payload = JSON.parse(result.value)
+        expect(payload.kind).toBe('NamespaceList')
+        expect(payload.apiVersion).toBe('v1')
+        expect(Array.isArray(payload.items)).toBe(true)
+      })
+
+      it('should reject kubectl get --raw when output is also provided', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl get --raw / -o json')
+
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+          expect(result.error).toContain('--raw and --output are mutually exclusive')
+        }
+      })
+
       it('should propagate parser errors correctly', () => {
         const executor = createKubectlExecutor(
           clusterState,

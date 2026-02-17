@@ -110,33 +110,15 @@
       "compareMode": "normalized"
     },
     {
-      "id": "deploy-cm-cmd-8-pods",
-      "type": "command",
-      "command": "kubectl get pods",
-      "compareMode": "normalized"
-    },
-    {
       "id": "deploy-cm-cmd-9",
       "type": "command",
       "command": "kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080",
       "compareMode": "normalized"
     },
     {
-      "id": "deploy-cm-cmd-9-pods",
-      "type": "command",
-      "command": "kubectl get pods",
-      "compareMode": "normalized"
-    },
-    {
       "id": "deploy-cm-cmd-10",
       "type": "command",
       "command": "kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "deploy-cm-cmd-10-pods",
-      "type": "command",
-      "command": "kubectl get pods",
       "compareMode": "normalized"
     },
     {
@@ -183,107 +165,161 @@
     {
       "id": "platform-cmd-1",
       "type": "command",
-      "command": "kubectl version",
-      "compareMode": "normalized"
+      "command": "kubectl get --raw /",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "\"paths\"",
+          "/api",
+          "/openapi/v3"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "\"paths\"",
+          "/api",
+          "/openapi/v3"
+        ]
+      }
     },
     {
       "id": "platform-cmd-2",
       "type": "command",
-      "command": "kubectl version --client",
-      "compareMode": "normalized"
+      "command": "kubectl get --raw /api/v1/namespaces",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NamespaceList",
+          "\"items\"",
+          "\"kubernetes.io/metadata.name\"",
+          "\"kube-public\"",
+          "\"kube-node-lease\""
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NamespaceList",
+          "\"items\"",
+          "\"kubernetes.io/metadata.name\"",
+          "\"kube-public\"",
+          "\"kube-node-lease\""
+        ]
+      }
     },
     {
       "id": "platform-cmd-3",
       "type": "command",
-      "command": "kubectl version --output json",
+      "command": "kubectl version",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-4",
       "type": "command",
-      "command": "kubectl version --output yaml",
+      "command": "kubectl version --client",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-5",
       "type": "command",
-      "command": "kubectl cluster-info",
+      "command": "kubectl version --output json",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-6",
       "type": "command",
-      "command": "kubectl cluster-info dump",
+      "command": "kubectl version --output yaml",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-7",
       "type": "command",
-      "command": "kubectl cluster-info dump -o yaml",
+      "command": "kubectl cluster-info",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-8",
       "type": "command",
-      "command": "kubectl cluster-info dump --namespaces=default,kube-system",
+      "command": "kubectl cluster-info dump",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-9",
       "type": "command",
-      "command": "kubectl api-resources",
+      "command": "kubectl cluster-info dump -o yaml",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-10",
       "type": "command",
-      "command": "kubectl api-resources --output wide",
+      "command": "kubectl cluster-info dump --namespaces=default,kube-system",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-11",
       "type": "command",
-      "command": "kubectl api-resources --output name",
+      "command": "kubectl api-versions",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-12",
       "type": "command",
-      "command": "kubectl api-resources --output json",
+      "command": "kubectl api-resources",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-13",
       "type": "command",
-      "command": "kubectl api-resources --output yaml",
+      "command": "kubectl api-resources --output wide",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-14",
       "type": "command",
-      "command": "kubectl api-resources --namespaced=true",
+      "command": "kubectl api-resources --output name",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-15",
       "type": "command",
-      "command": "kubectl api-resources --namespaced=false",
+      "command": "kubectl api-resources --output json",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-16",
       "type": "command",
-      "command": "kubectl api-resources --sort-by=name",
+      "command": "kubectl api-resources --output yaml",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-17",
       "type": "command",
-      "command": "kubectl api-resources --sort-by=kind",
+      "command": "kubectl api-resources --namespaced=true",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-18",
+      "type": "command",
+      "command": "kubectl api-resources --namespaced=false",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-19",
+      "type": "command",
+      "command": "kubectl api-resources --sort-by=name",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-20",
+      "type": "command",
+      "command": "kubectl api-resources --sort-by=kind",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-21",
       "type": "command",
       "command": "kubectl api-resources --no-headers",
       "compareMode": "normalized"
@@ -302,137 +338,173 @@
     {
       "id": "errors-help-cmd-1",
       "type": "command",
-      "command": "kubectl create deployment invalid-without-image",
-      "compareMode": "normalized"
+      "command": "kubectl get pods --raw /",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "arguments may not be passed when --raw is specified"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "arguments may not be passed when --raw is specified"
+        ]
+      }
     },
     {
       "id": "errors-help-cmd-2",
       "type": "command",
-      "command": "kubectl delete pods missing-pod",
-      "compareMode": "normalized"
+      "command": "kubectl get --raw / -o json",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "--raw and --output are mutually exclusive"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "--raw and --output are mutually exclusive"
+        ]
+      }
     },
     {
       "id": "errors-help-cmd-3",
       "type": "command",
-      "command": "kubectl describe pod missing-pod",
+      "command": "kubectl create deployment invalid-without-image",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-4",
       "type": "command",
-      "command": "kubectl scale deployments missing-deploy --replicas=2",
+      "command": "kubectl delete pods missing-pod",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-5",
       "type": "command",
-      "command": "kubectl get not-a-resource",
+      "command": "kubectl describe pod missing-pod",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-6",
       "type": "command",
-      "command": "kubectl version --output wide",
+      "command": "kubectl scale deployments missing-deploy --replicas=2",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-7",
       "type": "command",
-      "command": "kubectl api-resources --sort-by=age",
+      "command": "kubectl get not-a-resource",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-8",
       "type": "command",
-      "command": "kubectl cluster-info dump --output-directory /tmp/out",
+      "command": "kubectl version --output wide",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-9",
       "type": "command",
-      "command": "kubectl -h",
+      "command": "kubectl api-resources --sort-by=age",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-10",
       "type": "command",
-      "command": "kubectl --help",
+      "command": "kubectl cluster-info dump --output-directory /tmp/out",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-11",
       "type": "command",
-      "command": "kubectl get --help",
+      "command": "kubectl -h",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-12",
       "type": "command",
-      "command": "kubectl create --help",
+      "command": "kubectl --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-13",
       "type": "command",
-      "command": "kubectl create deployment --help",
+      "command": "kubectl get --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-14",
       "type": "command",
-      "command": "kubectl delete --help",
+      "command": "kubectl create --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-15",
       "type": "command",
-      "command": "kubectl describe --help",
+      "command": "kubectl create deployment --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-16",
       "type": "command",
-      "command": "kubectl scale --help",
+      "command": "kubectl delete --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-17",
       "type": "command",
-      "command": "kubectl version --help",
+      "command": "kubectl describe --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-18",
       "type": "command",
-      "command": "kubectl cluster-info --help",
+      "command": "kubectl scale --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-19",
       "type": "command",
-      "command": "kubectl api-resources --help",
+      "command": "kubectl version --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-20",
       "type": "command",
-      "command": "kubectl logs --help",
+      "command": "kubectl cluster-info --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-21",
       "type": "command",
-      "command": "kubectl exec --help",
+      "command": "kubectl api-resources --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-22",
       "type": "command",
-      "command": "kubectl label --help",
+      "command": "kubectl logs --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-23",
+      "type": "command",
+      "command": "kubectl exec --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-24",
+      "type": "command",
+      "command": "kubectl label --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-25",
       "type": "command",
       "command": "kubectl annotate --help",
       "compareMode": "normalized"

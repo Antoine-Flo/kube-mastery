@@ -18,6 +18,7 @@ import type { Service } from '../../../cluster/ressources/Service'
 import { getServiceType } from '../../../cluster/ressources/Service'
 import { formatAge, formatTable } from '../../../shared/formatter'
 import type { ParsedCommand, Resource } from '../types'
+import { handleGetRaw } from './getRaw'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL GET HANDLER
@@ -524,6 +525,10 @@ export const handleGet = (
   state: ClusterStateData,
   parsed: ParsedCommand
 ): string => {
+  if (typeof parsed.rawPath === 'string') {
+    return handleGetRaw(state, parsed.rawPath)
+  }
+
   // Validate resource type
   if (!parsed.resource) {
     return noResourcesMessage('default', false)

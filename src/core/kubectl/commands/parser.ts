@@ -64,7 +64,8 @@ const FLAGS_REQUIRING_VALUES = [
   'output-directory',
   'replicas',
   'image',
-  'port'
+  'port',
+  'raw'
 ]
 // Note: 'filename' is required for apply/create, but 'f' and 'follow' are boolean for logs
 
@@ -156,6 +157,7 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
   return success({
     action: ctx.action,
     resource: ctx.resource, // May be undefined for commands like 'version'
+    rawPath: getRawPathFromFlags(normalizedFlags),
     name: ctx.name,
     namespace: getNamespaceFromFlags(normalizedFlags),
     output: getOutputFromFlags(normalizedFlags),
@@ -194,6 +196,11 @@ const extractResource = (ctx: ParseContext): Result<ParseContext> => {
     ctx.action === 'api-resources'
   ) {
     return success(ctx)
+  }
+
+  const rawPath = getRawPathFromFlags(ctx.normalizedFlags || ctx.flags || {})
+  if (ctx.action === 'get' && typeof rawPath === 'string') {
+    return success({ ...ctx, resource: undefined })
   }
 
   if (!ctx.tokens || ctx.tokens.length < 3) {
@@ -312,6 +319,21 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
     return success(ctx)
   }
 
+  const rawPath = getRawPathFromFlags(ctx.normalizedFlags || ctx.flags || {})
+  if (ctx.action === 'get' && typeof rawPath === 'string') {
+    const validationError = validateCommandSemantics(
+      ctx.action,
+      ctx.resource,
+      ctx.name,
+      ctx.normalizedFlags || ctx.flags || {},
+      ctx.tokens || []
+    )
+    if (validationError) {
+      return error(validationError)
+    }
+    return success(ctx)
+  }
+
   if (!ctx.resource) {
     return error('Missing resource')
   }
@@ -319,7 +341,9 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
   const validationError = validateCommandSemantics(
     ctx.action,
     ctx.resource,
-    ctx.name
+    ctx.name,
+    ctx.normalizedFlags || ctx.flags || {},
+    ctx.tokens || []
   )
   if (validationError) {
     return error(validationError)
@@ -416,6 +440,16 @@ const getPortFromFlags = (
   return parsed
 }
 
+const getRawPathFromFlags = (
+  flags: Record<string, string | boolean>
+): string | undefined => {
+  const raw = flags['raw']
+  if (typeof raw === 'string') {
+    return raw
+  }
+  return undefined
+}
+
 // ─── Validation ──────────────────────────────────────────────────────────
 
 /**
@@ -425,8 +459,15 @@ const getPortFromFlags = (
 const validateCommandSemantics = (
   action: Action,
   _resource: Resource | undefined,
-  name?: string
+  name?: string,
+  flags: Record<string, string | boolean> = {},
+  tokens: string[] = []
 ): string | undefined => {
+  const rawValidationError = validateGetRawSemantics(action, flags, tokens)
+  if (rawValidationError !== undefined) {
+    return rawValidationError
+  }
+
   if (
     (action === 'delete' ||
       action === 'describe' ||
@@ -440,4 +481,73 @@ const validateCommandSemantics = (
     return `${action} requires a resource name`
   }
   return undefined
+}
+
+const validateGetRawSemantics = (
+  action: Action,
+  flags: Record<string, string | boolean>,
+  tokens: string[]
+): string | undefined => {
+  if (action !== 'get') {
+    return undefined
+  }
+
+  const rawPath = getRawPathFromFlags(flags)
+  if (rawPath === undefined) {
+    return undefined
+  }
+
+  if (hasPositionalArgsAfterGet(tokens)) {
+    return 'arguments may not be passed when --raw is specified'
+  }
+
+  const hasWatch = flags['watch'] === true || flags['w'] === true
+  const hasWatchOnly = flags['watch-only'] === true
+  const hasSelector =
+    typeof flags['selector'] === 'string' || typeof flags['l'] === 'string'
+  if (hasWatch || hasWatchOnly || hasSelector) {
+    return '--raw may not be specified with other flags that filter the server request or alter the output'
+  }
+
+  const hasOutput =
+    typeof flags['output'] === 'string' || typeof flags['o'] === 'string'
+  if (hasOutput) {
+    return '--raw and --output are mutually exclusive'
+  }
+
+  if (!isValidRawPath(rawPath)) {
+    return `--raw must be a valid URL path: invalid path "${rawPath}"`
+  }
+
+  return undefined
+}
+
+const hasPositionalArgsAfterGet = (tokens: string[]): boolean => {
+  for (let index = 2; index < tokens.length; index++) {
+    const token = tokens[index]
+    if (token === '--') {
+      break
+    }
+    if (token.startsWith('-')) {
+      const flagName = getFlagName(token)
+      if (FLAGS_REQUIRING_VALUES.includes(flagName) && !token.includes('=')) {
+        index = index + 1
+      }
+      continue
+    }
+    return true
+  }
+  return false
+}
+
+const isValidRawPath = (rawPath: string): boolean => {
+  if (!rawPath.startsWith('/')) {
+    return false
+  }
+  try {
+    const parsed = new URL(rawPath, 'https://kubernetes.local')
+    return parsed.pathname.startsWith('/')
+  } catch {
+    return false
+  }
 }

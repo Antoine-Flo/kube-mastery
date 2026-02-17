@@ -3,10 +3,47 @@ import { mkdirSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
 import {
   generateLifecycleSuite,
-  type LifecycleSegment
+  type LifecycleSegment,
+  type LifecycleCommandConfig
 } from './lib/scenario-generator'
 
 const OUTPUT_PATH = 'bin/config/generated/exhaustive-suite.json'
+
+const createRawCommand = (
+  command: string,
+  stdoutContains: string[]
+): LifecycleCommandConfig => {
+  return {
+    command,
+    compareMode: 'none',
+    expectKind: {
+      exitCode: 0,
+      stdoutContains
+    },
+    expectRunner: {
+      exitCode: 0,
+      stdoutContains
+    }
+  }
+}
+
+const createRawErrorCommand = (
+  command: string,
+  stderrContains: string[]
+): LifecycleCommandConfig => {
+  return {
+    command,
+    compareMode: 'none',
+    expectKind: {
+      exitCode: 1,
+      stderrContains
+    },
+    expectRunner: {
+      exitCode: 1,
+      stderrContains
+    }
+  }
+}
 
 const createExhaustiveSegments = (): LifecycleSegment[] => {
   return [
@@ -49,6 +86,18 @@ const createExhaustiveSegments = (): LifecycleSegment[] => {
       idPrefix: 'platform',
       seed: 'minimal',
       commands: [
+        createRawCommand('kubectl get --raw /', [
+          '"paths"',
+          '/api',
+          '/openapi/v3'
+        ]),
+        createRawCommand('kubectl get --raw /api/v1/namespaces', [
+          'NamespaceList',
+          '"items"',
+          '"kubernetes.io/metadata.name"',
+          '"kube-public"',
+          '"kube-node-lease"'
+        ]),
         'kubectl version',
         'kubectl version --client',
         'kubectl version --output json',
@@ -57,6 +106,7 @@ const createExhaustiveSegments = (): LifecycleSegment[] => {
         'kubectl cluster-info dump',
         'kubectl cluster-info dump -o yaml',
         'kubectl cluster-info dump --namespaces=default,kube-system',
+        'kubectl api-versions',
         'kubectl api-resources',
         'kubectl api-resources --output wide',
         'kubectl api-resources --output name',
@@ -73,6 +123,12 @@ const createExhaustiveSegments = (): LifecycleSegment[] => {
       idPrefix: 'errors-help',
       seed: 'minimal',
       commands: [
+        createRawErrorCommand('kubectl get pods --raw /', [
+          'arguments may not be passed when --raw is specified'
+        ]),
+        createRawErrorCommand('kubectl get --raw / -o json', [
+          '--raw and --output are mutually exclusive'
+        ]),
         'kubectl create deployment invalid-without-image',
         'kubectl delete pods missing-pod',
         'kubectl describe pod missing-pod',

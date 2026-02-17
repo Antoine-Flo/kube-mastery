@@ -1,15 +1,23 @@
 import { getSeedPath } from './cluster-manager'
 import type {
   CommandAction,
+  CommandExpectation,
   ConformanceAction,
   ConformanceSuite
 } from './conformance-types'
+
+export interface LifecycleCommandConfig {
+  command: string
+  compareMode?: CommandAction['compareMode']
+  expectKind?: CommandExpectation
+  expectRunner?: CommandExpectation
+}
 
 export interface LifecycleSegment {
   idPrefix: string
   seed: string
   waitForPods?: boolean
-  commands: string[]
+  commands: Array<string | LifecycleCommandConfig>
   cleanup?: boolean
 }
 
@@ -22,14 +30,24 @@ export interface LifecycleSuiteTemplate {
 
 const buildCommandAction = (
   segment: LifecycleSegment,
-  command: string,
+  commandInput: string | LifecycleCommandConfig,
   commandIndex: number
 ): CommandAction => {
+  const commandConfig: LifecycleCommandConfig =
+    typeof commandInput === 'string'
+      ? { command: commandInput }
+      : commandInput
   return {
     id: `${segment.idPrefix}-cmd-${commandIndex + 1}`,
     type: 'command',
-    command,
-    compareMode: 'normalized'
+    command: commandConfig.command,
+    compareMode: commandConfig.compareMode ?? 'normalized',
+    ...(commandConfig.expectKind !== undefined
+      ? { expectKind: commandConfig.expectKind }
+      : {}),
+    ...(commandConfig.expectRunner !== undefined
+      ? { expectRunner: commandConfig.expectRunner }
+      : {})
   }
 }
 
