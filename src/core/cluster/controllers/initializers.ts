@@ -1,6 +1,10 @@
 import type { ClusterState } from '../ClusterState'
 import type { EventBus } from '../events/EventBus'
-import { createScheduler, type Scheduler } from '../scheduler'
+import {
+  createScheduler,
+  type Scheduler,
+  type SchedulerOptions
+} from '../scheduler'
 import { createDeploymentController } from './DeploymentController'
 import { createReplicaSetController } from './ReplicaSetController'
 import type { ControllerState } from './types'
@@ -34,10 +38,11 @@ export const initializeControllers = (
 
 export const initializeScheduler = (
   eventBus: EventBus,
-  clusterState: ClusterState
+  clusterState: ClusterState,
+  options: SchedulerOptions = {}
 ): Scheduler => {
   const getState = createControllerStateAccessor(clusterState)
-  const scheduler = createScheduler(eventBus, getState)
+  const scheduler = createScheduler(eventBus, getState, options)
   scheduler.start()
   return scheduler
 }

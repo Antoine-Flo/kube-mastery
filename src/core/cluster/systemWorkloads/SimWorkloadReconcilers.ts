@@ -53,6 +53,7 @@ const materializeDaemonSetPods = (
       namespace: spec.namespace,
       nodeName,
       containers: [minimalContainer(spec.containerName)],
+      ...(spec.tolerations != null && { tolerations: spec.tolerations }),
       annotations: {
         'sim.kubernetes.io/workload-type': 'DaemonSet'
       },
@@ -75,6 +76,7 @@ const materializeDeploymentPods = (
         namespace: spec.namespace,
         containers: [minimalContainer(spec.containerName)],
         ...(spec.nodeSelector != null && { nodeSelector: spec.nodeSelector }),
+        ...(spec.tolerations != null && { tolerations: spec.tolerations }),
         annotations: {
           'sim.kubernetes.io/workload-type': 'Deployment',
           ...(spec.annotations ?? {})

@@ -6,7 +6,6 @@ import type { Deployment } from '../ressources/Deployment'
 import type { ReplicaSet } from '../ressources/ReplicaSet'
 import type { Secret } from '../ressources/Secret'
 import type { Service } from '../ressources/Service'
-import { reconcileInitContainers } from '../initContainers/reconciler'
 import type {
   ConfigMapAnnotatedEvent,
   ConfigMapCreatedEvent,
@@ -131,9 +130,7 @@ export const handlePodCreated = (
   state: ClusterStateData,
   event: PodCreatedEvent
 ) => {
-  // Reconcile init containers before adding pod to state
-  const reconciledPod = reconcileInitContainers(event.payload.pod)
-  return podHandler.created(state, reconciledPod)
+  return podHandler.created(state, event.payload.pod)
 }
 
 export const handlePodDeleted = (

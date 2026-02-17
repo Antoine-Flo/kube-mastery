@@ -18,6 +18,11 @@ const POD_PHASE_CLASS: Record<Pod['status']['phase'], string> = {
 
 const TOOLTIP_SELECTOR =
   '.cluster-viz__node, .cluster-viz__pod, .cluster-viz__container'
+const NAMESPACE_FILTER_INPUT_SELECTOR = 'input[data-cluster-viz-namespace-toggle]'
+const HIDDEN_NAMESPACES_BY_DEFAULT = new Set<string>([
+  'kube-system',
+  'local-path-storage'
+])
 
 function formatNodeTooltip(node: Node): string {
   const status = getNodeStatus(node)
@@ -65,23 +70,101 @@ export interface MountClusterViewerOptions {
   env: EmulatedEnvironment
 }
 
+function getSortedUniqueNamespaces(pods: Pod[]): string[] {
+  const namespaces = new Set<string>()
+  for (const pod of pods) {
+    namespaces.add(pod.metadata.namespace)
+  }
+  return [...namespaces].sort((a, b) => {
+    return a.localeCompare(b)
+  })
+}
+
+function syncNamespaceSelection(
+  namespaces: string[],
+  selectedNamespaces: Set<string>,
+  knownNamespaces: Set<string>
+): void {
+  for (const knownNamespace of [...knownNamespaces]) {
+    if (!namespaces.includes(knownNamespace)) {
+      knownNamespaces.delete(knownNamespace)
+      selectedNamespaces.delete(knownNamespace)
+    }
+  }
+
+  for (const namespace of namespaces) {
+    if (!knownNamespaces.has(namespace)) {
+      knownNamespaces.add(namespace)
+      if (!HIDDEN_NAMESPACES_BY_DEFAULT.has(namespace)) {
+        selectedNamespaces.add(namespace)
+      }
+    }
+  }
+}
+
+function createNamespaceFilterEl(
+  namespaces: string[],
+  selectedNamespaces: Set<string>
+): HTMLElement {
+  const filterEl = document.createElement('div')
+  filterEl.className = 'cluster-viz__filter'
+
+  const labelEl = document.createElement('span')
+  labelEl.className = 'cluster-viz__filter-label'
+  labelEl.textContent = 'Namespaces:'
+  filterEl.appendChild(labelEl)
+
+  const optionsEl = document.createElement('div')
+  optionsEl.className = 'cluster-viz__filter-options'
+
+  for (const namespace of namespaces) {
+    const optionEl = document.createElement('label')
+    optionEl.className = 'cluster-viz__filter-option'
+
+    const inputEl = document.createElement('input')
+    inputEl.type = 'checkbox'
+    inputEl.checked = selectedNamespaces.has(namespace)
+    inputEl.setAttribute('data-cluster-viz-namespace-toggle', 'true')
+    inputEl.setAttribute('data-namespace', namespace)
+
+    const nameEl = document.createElement('span')
+    nameEl.textContent = namespace
+
+    optionEl.appendChild(inputEl)
+    optionEl.appendChild(nameEl)
+    optionsEl.appendChild(optionEl)
+  }
+
+  filterEl.appendChild(optionsEl)
+  return filterEl
+}
+
 function renderCluster(
   overlayContent: HTMLElement,
-  env: EmulatedEnvironment
+  env: EmulatedEnvironment,
+  selectedNamespaces: Set<string>,
+  knownNamespaces: Set<string>
 ): void {
   const nodes = env.clusterState.getNodes()
-  const pods = [...env.clusterState.getPods()].sort((a, b) => {
+  const allPods = [...env.clusterState.getPods()].sort((a, b) => {
     const namespaceDiff = a.metadata.namespace.localeCompare(b.metadata.namespace)
     if (namespaceDiff !== 0) {
       return namespaceDiff
     }
     return a.metadata.name.localeCompare(b.metadata.name)
   })
+  const namespaces = getSortedUniqueNamespaces(allPods)
+  syncNamespaceSelection(namespaces, selectedNamespaces, knownNamespaces)
+  const pods = allPods.filter((pod) => {
+    return selectedNamespaces.has(pod.metadata.namespace)
+  })
 
   const podsByNode = new Map<string, Pod[]>()
   for (const pod of pods) {
     const nodeName = pod.spec.nodeName ?? ''
-    if (!podsByNode.has(nodeName)) podsByNode.set(nodeName, [])
+    if (!podsByNode.has(nodeName)) {
+      podsByNode.set(nodeName, [])
+    }
     podsByNode.get(nodeName)!.push(pod)
   }
 
@@ -94,24 +177,6 @@ function renderCluster(
   }
 
   const fragment = document.createDocumentFragment()
-
-  // Unscheduled pods (no node)
-  if (unscheduledPods.length > 0) {
-    const nodeEl = document.createElement('div')
-    nodeEl.className = 'cluster-viz__node cluster-viz__node--unscheduled'
-    nodeEl.dataset.tooltip = 'Node (unscheduled)\nPods not assigned to any node'
-    nodeEl.innerHTML = `
-			<div class="cluster-viz__node-header">
-				<span class="cluster-viz__node-name">(unscheduled)</span>
-			</div>
-			<div class="cluster-viz__pods"></div>
-		`
-    const podsContainer = nodeEl.querySelector('.cluster-viz__pods')!
-    for (const pod of unscheduledPods) {
-      podsContainer.appendChild(createPodEl(pod))
-    }
-    fragment.appendChild(nodeEl)
-  }
 
   // Nodes with pods
   for (const node of sortedNodes) {
@@ -151,17 +216,46 @@ function renderCluster(
     fragment.appendChild(nodeEl)
   }
 
+  // Unscheduled pods (no node) - rendered last to keep it at the bottom.
+  if (unscheduledPods.length > 0) {
+    const nodeEl = document.createElement('div')
+    nodeEl.className =
+      'cluster-viz__node cluster-viz__node--unscheduled cluster-viz__node--unscheduled-row'
+    nodeEl.dataset.tooltip = 'Node (unscheduled)\nPods not assigned to any node'
+    nodeEl.innerHTML = `
+			<div class="cluster-viz__node-header">
+				<span class="cluster-viz__node-name">(unscheduled)</span>
+			</div>
+			<div class="cluster-viz__pods"></div>
+		`
+    const podsContainer = nodeEl.querySelector('.cluster-viz__pods')!
+    for (const pod of unscheduledPods) {
+      podsContainer.appendChild(createPodEl(pod))
+    }
+    fragment.appendChild(nodeEl)
+  }
+
   const nodesWrap = document.createElement('div')
   nodesWrap.className = 'cluster-viz__nodes'
   nodesWrap.appendChild(fragment)
 
   overlayContent.innerHTML = ''
-  if (nodes.length === 0 && pods.length === 0) {
+  if (namespaces.length > 0) {
+    overlayContent.appendChild(createNamespaceFilterEl(namespaces, selectedNamespaces))
+  }
+
+  if (nodes.length === 0 && allPods.length === 0) {
     const empty = document.createElement('p')
     empty.className = 'cluster-viz__empty'
     empty.textContent = 'No nodes or pods yet.'
     overlayContent.appendChild(empty)
   } else {
+    if (pods.length === 0) {
+      const emptyFiltered = document.createElement('p')
+      emptyFiltered.className = 'cluster-viz__empty'
+      emptyFiltered.textContent = 'No pods for selected namespaces.'
+      overlayContent.appendChild(emptyFiltered)
+    }
     overlayContent.appendChild(nodesWrap)
   }
 }
@@ -207,7 +301,10 @@ export function mountClusterViewer(
   options: MountClusterViewerOptions
 ): () => void {
   const { env } = options
-  const render = () => renderCluster(contentElement, env)
+  const selectedNamespaces = new Set<string>()
+  const knownNamespaces = new Set<string>()
+  const render = () =>
+    renderCluster(contentElement, env, selectedNamespaces, knownNamespaces)
   render()
 
   const tooltipEl = document.createElement('div')
@@ -277,8 +374,28 @@ export function mountClusterViewer(
     }, 50)
   }
 
+  function onNamespaceFilterChange(e: Event): void {
+    const target = e.target as HTMLInputElement | null
+    if (!target || !target.matches(NAMESPACE_FILTER_INPUT_SELECTOR)) {
+      return
+    }
+
+    const namespace = target.getAttribute('data-namespace')
+    if (!namespace) {
+      return
+    }
+
+    if (target.checked) {
+      selectedNamespaces.add(namespace)
+    } else {
+      selectedNamespaces.delete(namespace)
+    }
+    render()
+  }
+
   contentElement.addEventListener('mouseover', onOver)
   contentElement.addEventListener('mouseout', onOut)
+  contentElement.addEventListener('change', onNamespaceFilterChange)
 
   const unsub = env.eventBus.subscribeFiltered(
     (e) =>
@@ -286,13 +403,16 @@ export function mountClusterViewer(
       e.type.startsWith('Node') ||
       e.type.startsWith('Deployment') ||
       e.type.startsWith('ReplicaSet'),
-    render
+    () => {
+      render()
+    }
   )
 
   return () => {
     unsub()
     contentElement.removeEventListener('mouseover', onOver)
     contentElement.removeEventListener('mouseout', onOut)
+    contentElement.removeEventListener('change', onNamespaceFilterChange)
     if (hideTimeout !== null) clearTimeout(hideTimeout)
     tooltipEl.remove()
   }

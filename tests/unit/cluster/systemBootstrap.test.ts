@@ -19,6 +19,15 @@ describe('systemBootstrap', () => {
       'conformance-worker',
       'conformance-worker2'
     ])
+    const controlPlaneNode = resources.nodes.find((node) => {
+      return node.metadata.name === 'conformance-control-plane'
+    })
+    expect(controlPlaneNode?.spec.taints).toEqual([
+      {
+        key: 'node-role.kubernetes.io/control-plane',
+        effect: 'NoSchedule'
+      }
+    ])
     expect(resources.nodes.every((node) => {
       const readyCondition = (node.status.conditions ?? []).find((condition) => {
         return condition.type === 'Ready'
@@ -49,7 +58,25 @@ describe('systemBootstrap', () => {
     expect(corednsPods.every((pod) => {
       return (
         pod.spec.nodeName === undefined &&
-        pod.spec.nodeSelector?.['node-role.kubernetes.io/control-plane'] === ''
+        pod.spec.nodeSelector?.['node-role.kubernetes.io/control-plane'] === '' &&
+        pod.spec.tolerations?.some((toleration) => {
+          return (
+            toleration.key === 'node-role.kubernetes.io/control-plane' &&
+            toleration.operator === 'Exists' &&
+            toleration.effect === 'NoSchedule'
+          )
+        }) === true
+      )
+    })).toBe(true)
+    const localPathPods = resources.pods.filter((item) => {
+      return item.metadata.namespace === 'local-path-storage'
+    })
+    expect(localPathPods).toHaveLength(1)
+    expect(localPathPods[0].spec.tolerations?.some((toleration) => {
+      return (
+        toleration.key === 'node-role.kubernetes.io/control-plane' &&
+        toleration.operator === 'Exists' &&
+        toleration.effect === 'NoSchedule'
       )
     })).toBe(true)
   })

@@ -110,15 +110,33 @@
       "compareMode": "normalized"
     },
     {
+      "id": "deploy-cm-cmd-8-pods",
+      "type": "command",
+      "command": "kubectl get pods",
+      "compareMode": "normalized"
+    },
+    {
       "id": "deploy-cm-cmd-9",
       "type": "command",
       "command": "kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080",
       "compareMode": "normalized"
     },
     {
+      "id": "deploy-cm-cmd-9-pods",
+      "type": "command",
+      "command": "kubectl get pods",
+      "compareMode": "normalized"
+    },
+    {
       "id": "deploy-cm-cmd-10",
       "type": "command",
       "command": "kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-10-pods",
+      "type": "command",
+      "command": "kubectl get pods",
       "compareMode": "normalized"
     },
     {

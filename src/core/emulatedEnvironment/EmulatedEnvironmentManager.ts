@@ -16,7 +16,11 @@ import type { AppEvent } from '../events/AppEvent'
 import { createHostFileSystem } from '../filesystem/debianFileSystem'
 import { saveSandboxEnvironment } from '../storage/indexedDBAdapter'
 import { ShellContextStack } from '../terminal/core/ShellContext'
-import { getSimulatorBootstrapConfig } from '../../config/runtimeConfig'
+import {
+  getSimulatorBootstrapConfig,
+  SIM_POD_PENDING_DELAY_RANGE_MS,
+  SIM_POD_SCHEDULING_DELAY_RANGE_MS
+} from '../../config/runtimeConfig'
 import type {
   CreateEmulatedEnvironmentOptions,
   EmulatedEnvironment
@@ -85,7 +89,9 @@ export function createEmulatedEnvironment(
   initializeControllers(eventBus, clusterState)
 
   // Initialize scheduler to assign pods to nodes
-  initializeScheduler(eventBus, clusterState)
+  initializeScheduler(eventBus, clusterState, {
+    schedulingDelayRangeMs: SIM_POD_SCHEDULING_DELAY_RANGE_MS
+  })
 
   // Keep pod IP allocation unique and stable across lifecycle events
   const unsubscribePodIpAllocation = initializeSimPodIpAllocation(
@@ -97,7 +103,7 @@ export function createEmulatedEnvironment(
   const podStartupSimulator = createPodStartupSimulator(
     eventBus,
     () => clusterState,
-    { startupDelayMs: 1500 }
+    { pendingDelayRangeMs: SIM_POD_PENDING_DELAY_RANGE_MS }
   )
   podStartupSimulator.start()
 

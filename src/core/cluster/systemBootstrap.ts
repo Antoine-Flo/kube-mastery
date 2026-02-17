@@ -78,10 +78,22 @@ const createBootstrapNode = (
   creationTimestamp: string
 ): Node => {
   const nodeName = `${clusterName}-${roleSlotName}`
+  const spec = role === 'control-plane'
+    ? {
+        taints: [
+          {
+            key: 'node-role.kubernetes.io/control-plane',
+            effect: 'NoSchedule' as const
+          }
+        ]
+      }
+    : {}
+
   return createNode({
     name: nodeName,
     labels: createNodeLabels(role),
     creationTimestamp,
+    spec,
     status: {
       addresses: [
         {

@@ -2,41 +2,24 @@
 // POD STARTUP SIMULATOR
 // ═══════════════════════════════════════════════════════════════════════════
 // Transitions Pending pods to Running after a delay (simulating kubelet startup).
-// Subscribes to PodUpdated and processes existing Pending pods on start.
+// Subscribes to PodBound and processes existing Pending+scheduled pods on start.
 
 import type { ClusterState } from './ClusterState'
 import type { EventBus } from './events/EventBus'
 import { createPodUpdatedEvent } from './events/types'
+import type { PodBoundEvent } from './events/types'
 import type { Pod } from './ressources/Pod'
-import type { ContainerStatus } from './ressources/Pod'
+import { reconcileInitContainers } from './initContainers/reconciler'
 
 export interface PodStartupSimulatorOptions {
-  /**
-   * Delay before transitioning Pending -> Running.
-   * 0 or undefined: immediate (for conformance / sync mode).
-   * >0: random delay in ms between 100 and this value (capped at 2000).
-   */
-  startupDelayMs?: number
+  pendingDelayRangeMs?: {
+    minMs: number
+    maxMs: number
+  }
 }
 
-const randomInRange = (min: number, max: number): number =>
-  Math.floor(Math.random() * (max - min + 1)) + min
-
-function podToRunning(pod: Pod): Pod {
-  const containerStatuses: ContainerStatus[] = (
-    pod.status.containerStatuses ?? []
-  ).map((cs) => {
-    const { waitingReason: _w, terminatedReason: _t, ...rest } = cs
-    return { ...rest, ready: true, state: 'Running' as const }
-  })
-  return {
-    ...pod,
-    status: {
-      ...pod.status,
-      phase: 'Running',
-      containerStatuses
-    }
-  }
+const randomInRange = (min: number, max: number): number => {
+  return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 export interface PodStartupSimulator {
@@ -53,13 +36,13 @@ export const createPodStartupSimulator = (
   getState: () => ClusterState,
   options: PodStartupSimulatorOptions = {}
 ): PodStartupSimulator => {
-  const { startupDelayMs = 0 } = options
+  const pendingDelayRangeMs = options.pendingDelayRangeMs
   let unsubscribe: (() => void) | null = null
   const timeouts: ReturnType<typeof setTimeout>[] = []
 
   const scheduleTransition = (pod: Pod): void => {
     const emitRunning = (): void => {
-      const updated = podToRunning(pod)
+      const updated = reconcileInitContainers(pod)
       eventBus.emit(
         createPodUpdatedEvent(
           pod.metadata.name,
@@ -71,27 +54,31 @@ export const createPodStartupSimulator = (
       )
     }
 
-    if (startupDelayMs === 0 || startupDelayMs == null) {
+    if (pendingDelayRangeMs == null) {
       emitRunning()
       return
     }
 
-    const delay = randomInRange(100, Math.min(startupDelayMs, 2000))
+    const minDelayMs = Math.max(0, Math.floor(pendingDelayRangeMs.minMs))
+    const maxDelayMs = Math.max(minDelayMs, Math.floor(pendingDelayRangeMs.maxMs))
+    if (maxDelayMs === 0) {
+      emitRunning()
+      return
+    }
+
+    const delay = randomInRange(minDelayMs, maxDelayMs)
     const id = setTimeout(() => {
       emitRunning()
     }, delay)
     timeouts.push(id)
   }
 
-  const handlePodUpdated = (event: {
-    type: string
-    payload?: { newPod: Pod }
-  }): void => {
-    if (event.type !== 'PodUpdated' || event.payload == null) {
+  const handlePodBound = (event: PodBoundEvent): void => {
+    const pod = event.payload.pod
+    if (pod.status.phase !== 'Pending') {
       return
     }
-    const pod = event.payload.newPod
-    if (pod.status.phase !== 'Pending') {
+    if (pod.spec.nodeName == null || pod.spec.nodeName.length === 0) {
       return
     }
     scheduleTransition(pod)
@@ -101,13 +88,17 @@ export const createPodStartupSimulator = (
     const state = getState()
     const pods = state.getPods()
     for (const pod of pods) {
-      if (pod.status.phase === 'Pending') {
+      if (
+        pod.status.phase === 'Pending' &&
+        pod.spec.nodeName != null &&
+        pod.spec.nodeName.length > 0
+      ) {
         scheduleTransition(pod)
       }
     }
     unsubscribe = eventBus.subscribe(
-      'PodUpdated',
-      handlePodUpdated as (e: unknown) => void
+      'PodBound',
+      handlePodBound
     )
   }
 

@@ -2,6 +2,7 @@ import {
   buildNodeRoleSlotNames,
   type ClusterNodeRole
 } from '../clusterConfig'
+import type { PodToleration } from '../ressources/Pod'
 
 export type SimSystemWorkloadPolicy = 'conformance'
 
@@ -24,6 +25,7 @@ export interface SimDaemonSetWorkloadSpec {
   podPrefix: string
   containerName: string
   nodeNames: string[]
+  tolerations?: PodToleration[]
 }
 
 export interface SimDeploymentWorkloadSpec {
@@ -33,6 +35,7 @@ export interface SimDeploymentWorkloadSpec {
   containerName: string
   replicas: number
   nodeSelector?: Record<string, string>
+  tolerations?: PodToleration[]
   annotations?: Record<string, string>
 }
 
@@ -104,20 +107,27 @@ const createStaticSpecs = (controlPlaneNodeName: string): SimSystemWorkloadSpec[
 }
 
 const createDaemonSetSpecs = (nodeNames: string[]): SimSystemWorkloadSpec[] => {
+  const controlPlaneToleration: PodToleration = {
+    key: 'node-role.kubernetes.io/control-plane',
+    operator: 'Exists',
+    effect: 'NoSchedule'
+  }
   return [
     {
       kind: 'daemonset',
       namespace: 'kube-system',
       podPrefix: 'kindnet',
       containerName: 'kindnet',
-      nodeNames
+      nodeNames,
+      tolerations: [controlPlaneToleration]
     },
     {
       kind: 'daemonset',
       namespace: 'kube-system',
       podPrefix: 'kube-proxy',
       containerName: 'kube-proxy',
-      nodeNames
+      nodeNames,
+      tolerations: [controlPlaneToleration]
     }
   ]
 }
@@ -137,6 +147,13 @@ const createDeploymentSpecs = (
         nodeSelector: {
           'node-role.kubernetes.io/control-plane': ''
         },
+        tolerations: [
+          {
+            key: 'node-role.kubernetes.io/control-plane',
+            operator: 'Exists',
+            effect: 'NoSchedule'
+          }
+        ],
         annotations: {
           'sim.kubernetes.io/preferred-node': controlPlaneNodeName
         }
@@ -159,6 +176,13 @@ const createStorageSpecs = (
       nodeSelector: {
         'node-role.kubernetes.io/control-plane': ''
       },
+      tolerations: [
+        {
+          key: 'node-role.kubernetes.io/control-plane',
+          operator: 'Exists',
+          effect: 'NoSchedule'
+        }
+      ],
       annotations: {
         'sim.kubernetes.io/preferred-node': controlPlaneNodeName
       }

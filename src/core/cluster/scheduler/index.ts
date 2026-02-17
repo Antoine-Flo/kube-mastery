@@ -3,4 +3,4 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 export { createScheduler } from './Scheduler'
-export type { Scheduler, SchedulerState } from './Scheduler'
+export type { Scheduler, SchedulerOptions, SchedulerState } from './Scheduler'

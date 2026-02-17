@@ -131,18 +131,42 @@ const t = useTranslations(lang)
     | null = null
 
   function setupLessonEnv() {
-    cleanupLessonEnv()
     const root = document.querySelector('.lp-root')
     if (!root) {
       return
     }
     const seedName = root.getAttribute('data-seed-name') ?? 'minimal'
-    const seed = getSeed(seedName)
-    lessonEnv = createEmulatedEnvironment({
-      filesystemState: createFilesystemFromConfig(seed.fsConfig ?? {})
-    })
+    const globalState = globalThis as {
+      __lessonEnv?: import('../../core/emulatedEnvironment/EmulatedEnvironment').EmulatedEnvironment
+      __lessonEnvSeed?: string
+    }
+
+    if (globalState.__lessonEnv && globalState.__lessonEnvSeed === seedName) {
+      lessonEnv = globalState.__lessonEnv
+    } else {
+      if (globalState.__lessonEnv) {
+        destroyEmulatedEnvironment(globalState.__lessonEnv)
+      }
+
+      const seed = getSeed(seedName)
+      lessonEnv = createEmulatedEnvironment({
+        filesystemState: createFilesystemFromConfig(seed.fsConfig ?? {})
+      })
+      globalState.__lessonEnv = lessonEnv
+      globalState.__lessonEnvSeed = seedName
+    }
+
+    if (!lessonEnv) {
+      return
+    }
+
     document.dispatchEvent(
       new CustomEvent('cluster-env-ready', {
+        detail: { env: lessonEnv }
+      })
+    )
+    document.dispatchEvent(
+      new CustomEvent('lesson-env-ready', {
         detail: { env: lessonEnv }
       })
     )
@@ -153,6 +177,18 @@ const t = useTranslations(lang)
       destroyEmulatedEnvironment(lessonEnv)
       lessonEnv = null
     }
+    delete (
+      globalThis as {
+        __lessonEnv?: import('../../core/emulatedEnvironment/EmulatedEnvironment').EmulatedEnvironment
+        __lessonEnvSeed?: string
+      }
+    ).__lessonEnv
+    delete (
+      globalThis as {
+        __lessonEnv?: import('../../core/emulatedEnvironment/EmulatedEnvironment').EmulatedEnvironment
+        __lessonEnvSeed?: string
+      }
+    ).__lessonEnvSeed
   }
 
   function setupSidebarToggle() {
@@ -247,7 +283,8 @@ const t = useTranslations(lang)
     setupTerminalToggle()
     requestAnimationFrame(setupLessonEnv)
   })
-  document.addEventListener('astro:before-swap', () => {
+  // Keep shared env alive across page transitions for persistent lesson terminal.
+  window.addEventListener('beforeunload', () => {
     cleanupLessonEnv()
   })
 </script>

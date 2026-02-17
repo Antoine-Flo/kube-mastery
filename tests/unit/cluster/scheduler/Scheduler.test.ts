@@ -5,6 +5,7 @@ import {
 } from '../../../../src/core/cluster/events/EventBus'
 import {
   createPodCreatedEvent,
+  type PodBoundEvent,
   type PodUpdatedEvent
 } from '../../../../src/core/cluster/events/types'
 import {
@@ -564,6 +565,24 @@ describe('Scheduler', () => {
       expect(previousPod).toBeDefined()
       expect(previousPod!.spec.nodeName).toBeUndefined()
       expect(previousPod!.status.phase).toBe('Pending')
+    })
+
+    it('should emit PodBound with node name and scheduler source', () => {
+      mockState.nodes = [createReadyNode('node-1')]
+      scheduler.start()
+
+      let podBoundEvent: PodBoundEvent | undefined
+      eventBus.subscribe('PodBound', (event: PodBoundEvent) => {
+        podBoundEvent = event
+      })
+
+      const pod = createUnscheduledPod('test-pod')
+      eventBus.emit(createPodCreatedEvent(pod, 'test'))
+
+      expect(podBoundEvent).toBeDefined()
+      expect(podBoundEvent!.payload.nodeName).toBe('node-1')
+      expect(podBoundEvent!.payload.pod.spec.nodeName).toBe('node-1')
+      expect(podBoundEvent!.metadata?.source).toBe('scheduler')
     })
   })
 })

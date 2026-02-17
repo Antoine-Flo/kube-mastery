@@ -7,6 +7,14 @@ import {
 
 export const SIMULATOR_CLUSTER_NAME = 'sim'
 export const CONFORMANCE_CLUSTER_NAME = 'conformance'
+export const SIM_POD_PENDING_DELAY_RANGE_MS = {
+  minMs: 3000,
+  maxMs: 4000
+} as const
+export const SIM_POD_SCHEDULING_DELAY_RANGE_MS = {
+  minMs: 900,
+  maxMs: 2200
+} as const
 
 interface BootstrapConfigOverrides {
   clusterName?: string

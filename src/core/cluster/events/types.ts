@@ -40,6 +40,17 @@ export interface PodUpdatedEvent extends BaseEvent {
   }
 }
 
+export interface PodBoundEvent extends BaseEvent {
+  type: 'PodBound'
+  payload: {
+    name: string
+    namespace: string
+    nodeName: string
+    pod: Pod
+    previousPod: Pod
+  }
+}
+
 // ─── ConfigMap Events ────────────────────────────────────────────────────
 
 export interface ConfigMapCreatedEvent extends BaseEvent {
@@ -278,6 +289,7 @@ export type ClusterEvent =
   | PodCreatedEvent
   | PodDeletedEvent
   | PodUpdatedEvent
+  | PodBoundEvent
   | ConfigMapCreatedEvent
   | ConfigMapDeletedEvent
   | ConfigMapUpdatedEvent
@@ -355,6 +367,23 @@ export const createPodUpdatedEvent = (
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
   payload: { name, namespace, pod, previousPod }
+})
+
+/**
+ * Create PodBound event
+ */
+export const createPodBoundEvent = (
+  name: string,
+  namespace: string,
+  nodeName: string,
+  pod: Pod,
+  previousPod: Pod,
+  source?: string
+): PodBoundEvent => ({
+  type: 'PodBound',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, nodeName, pod, previousPod }
 })
 
 /**

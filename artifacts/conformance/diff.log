@@ -6,47 +6,47 @@
 [runner-simulation.exitCode] 0
 [diff]
 [line 1]
-[kind] NAMESPACE            NAME                                                READY   STATUS              RESTARTS   AGE
+[kind] NAMESPACE            NAME                                                READY   STATUS    RESTARTS   AGE
 [runner-simulation] NAMESPACE            NAME                                      READY   STATUS    RESTARTS   AGE
 [line 2]
-[kind] kube-system          coredns-<id>                            0/1     Pending             0          6s
-[runner-simulation] kube-system          coredns-<id>                    1/1   Running          0   22s
+[kind] kube-system          coredns-<id>                            0/1     Pending   0          5s
+[runner-simulation] kube-system          coredns-<id>                    0/1   Pending          0   20s
 [line 3]
-[kind] kube-system          coredns-<id>                            0/1     Pending             0          6s
-[runner-simulation] kube-system          coredns-<id>                    1/1   Running          0   22s
+[kind] kube-system          coredns-<id>                            0/1     Pending   0          5s
+[runner-simulation] kube-system          coredns-<id>                    0/1   Pending          0   20s
 [line 4]
-[kind] kube-system          etcd-<node>-control-plane                      0/1     Running             0          14s
-[runner-simulation] kube-system          etcd-control-plane                          1/1   Running          0   22s
+[kind] kube-system          etcd-<node>-control-plane                      0/1     Running   0          14s
+[runner-simulation] kube-system          etcd-control-plane                          0/1   Pending          0   20s
 [line 5]
-[kind] kube-system          kindnet-<id>                                       0/1     ContainerCreating   0          1s
-[runner-simulation] kube-system          kindnet-<id>                    1/1   Running          0   22s
+[kind] kube-system          kindnet-<id>                                       1/1     Running   0          5s
+[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   20s
 [line 6]
-[kind] kube-system          kindnet-<id>                                       0/1     Pending             0          1s
-[runner-simulation] kube-system          kindnet-<id>                    1/1   Running          0   22s
+[kind] kube-system          kindnet-<id>                                       0/1     Pending   0          1s
+[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   20s
 [line 7]
-[kind] kube-system          kindnet-<id>                                       1/1     Running             0          6s
-[runner-simulation] kube-system          kindnet-<id>                    1/1   Running          0   22s
+[kind] kube-system          kindnet-<id>                                       0/1     Pending   0          1s
+[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   20s
 [line 8]
-[kind] kube-system          kube-apiserver-<node>-control-plane            0/1     Running             0          13s
-[runner-simulation] kube-system          kube-apiserver-control-plane                1/1   Running          0   22s
+[kind] kube-system          kube-apiserver-<node>-control-plane            1/1     Running   0          14s
+[runner-simulation] kube-system          kube-apiserver-control-plane                0/1   Pending          0   20s
 [line 9]
-[kind] kube-system          kube-controller-manager-<node>-control-plane   0/1     Running             0          13s
-[runner-simulation] kube-system          kube-controller-manager-control-plane       1/1   Running          0   22s
+[kind] kube-system          kube-controller-manager-<node>-control-plane   0/1     Running   0          13s
+[runner-simulation] kube-system          kube-controller-manager-control-plane       0/1   Pending          0   20s
 [line 10]
-[kind] kube-system          kube-proxy-<id>                                    0/1     Pending             0          1s
-[runner-simulation] kube-system          kube-proxy-<id>                 1/1   Running          0   22s
+[kind] kube-system          kube-proxy-<id>                                    0/1     Pending   0          1s
+[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   20s
 [line 11]
-[kind] kube-system          kube-proxy-<id>                                    0/1     ContainerCreating   0          1s
-[runner-simulation] kube-system          kube-proxy-<id>                 1/1   Running          0   22s
+[kind] kube-system          kube-proxy-<id>                                    0/1     Pending   0          1s
+[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   20s
 [line 12]
-[kind] kube-system          kube-proxy-<id>                                    1/1     Running             0          6s
-[runner-simulation] kube-system          kube-proxy-<id>                 1/1   Running          0   22s
+[kind] kube-system          kube-proxy-<id>                                    1/1     Running   0          5s
+[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   20s
 [line 13]
-[kind] kube-system          kube-scheduler-<node>-control-plane            1/1     Running             0          13s
-[runner-simulation] kube-system          kube-scheduler-control-plane                1/1   Running          0   22s
+[kind] kube-system          kube-scheduler-<node>-control-plane            0/1     Running   0          14s
+[runner-simulation] kube-system          kube-scheduler-control-plane                0/1   Pending          0   20s
 [line 14]
-[kind] local-path-storage   local-path-provisioner-<id>             0/1     Pending             0          6s
-[runner-simulation] local-path-storage   local-path-provisioner-<id>     1/1   Running          0   22s
+[kind] local-path-storage   local-path-provisioner-<id>             0/1     Pending   0          5s
+[runner-simulation] local-path-storage   local-path-provisioner-<id>     0/1   Pending          0   20s
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log
@@ -58,15 +58,18 @@
 [kind.exitCode] 0
 [runner-simulation.exitCode] 0
 [diff]
+[line 1]
+[kind] NAME                        STATUS     ROLES           AGE   VERSION
+[runner-simulation] NAME                        STATUS   ROLES           AGE   VERSION
 [line 2]
 [kind] conformance-control-plane   NotReady   control-plane   15s   v1.35.0
-[runner-simulation] conformance-control-plane   NotReady   control-plane   22s   v1.35.0
+[runner-simulation] conformance-control-plane   Ready    control-plane   21s   v1.35.0
 [line 3]
 [kind] conformance-worker          NotReady   <none>          1s    v1.35.0
-[runner-simulation] conformance-worker          NotReady   <none>          22s   v1.35.0
+[runner-simulation] conformance-worker          Ready    <none>          21s   v1.35.0
 [line 4]
 [kind] conformance-worker2         NotReady   <none>          1s    v1.35.0
-[runner-simulation] conformance-worker2         NotReady   <none>          22s   v1.35.0
+[runner-simulation] conformance-worker2         Ready    <none>          21s   v1.35.0
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log
@@ -79,8 +82,8 @@
 [runner-simulation.exitCode] 0
 [diff]
 [line 2]
-[kind] kube-root-ca.crt   1      6s
-[runner-simulation] kube-root-ca.crt      1   22s
+[kind] kube-root-ca.crt   1      5s
+[runner-simulation] kube-root-ca.crt      1   21s
 [line 3]
 [kind] placeholder        0      0s
 [runner-simulation] placeholder           0   0s
@@ -96,8 +99,8 @@
 [runner-simulation.exitCode] 0
 [diff]
 [line 2]
-[kind] web    1/1     Running   0          18s
-[runner-simulation] web      1/1   Running          0    0s
+[kind] web    1/1     Running   0          19s
+[runner-simulation] web      0/1   Pending          0    0s
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log
@@ -113,47 +116,47 @@
 [kind] NAMESPACE            NAME                                                READY   STATUS    RESTARTS   AGE
 [runner-simulation] NAMESPACE            NAME                                      READY   STATUS    RESTARTS   AGE
 [line 2]
-[kind] default              web                                                 1/1     Running   0          18s
-[runner-simulation] default              web                                         1/1   Running          0    0s
+[kind] default              web                                                 1/1     Running   0          19s
+[runner-simulation] default              web                                         0/1   Pending          0    0s
 [line 3]
 [kind] kube-system          coredns-<id>                            1/1     Running   0          25s
-[runner-simulation] kube-system          coredns-<id>                    1/1   Running          0   41s
+[runner-simulation] kube-system          coredns-<id>                    0/1   Pending          0   40s
 [line 4]
 [kind] kube-system          coredns-<id>                            1/1     Running   0          25s
-[runner-simulation] kube-system          coredns-<id>                    1/1   Running          0   41s
+[runner-simulation] kube-system          coredns-<id>                    0/1   Pending          0   40s
 [line 5]
-[kind] kube-system          etcd-<node>-control-plane                      1/1     Running   0          33s
-[runner-simulation] kube-system          etcd-control-plane                          1/1   Running          0   41s
+[kind] kube-system          etcd-<node>-control-plane                      1/1     Running   0          34s
+[runner-simulation] kube-system          etcd-control-plane                          0/1   Pending          0   40s
 [line 6]
-[kind] kube-system          kindnet-<id>                                       1/1     Running   0          20s
-[runner-simulation] kube-system          kindnet-<id>                    1/1   Running          0   41s
-[line 7]
-[kind] kube-system          kindnet-<id>                                       1/1     Running   0          20s
-[runner-simulation] kube-system          kindnet-<id>                    1/1   Running          0   41s
-[line 8]
 [kind] kube-system          kindnet-<id>                                       1/1     Running   0          25s
-[runner-simulation] kube-system          kindnet-<id>                    1/1   Running          0   41s
+[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   40s
+[line 7]
+[kind] kube-system          kindnet-<id>                                       1/1     Running   0          21s
+[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   40s
+[line 8]
+[kind] kube-system          kindnet-<id>                                       1/1     Running   0          21s
+[runner-simulation] kube-system          kindnet-<id>                    0/1   Pending          0   40s
 [line 9]
-[kind] kube-system          kube-apiserver-<node>-control-plane            1/1     Running   0          32s
-[runner-simulation] kube-system          kube-apiserver-control-plane                1/1   Running          0   41s
+[kind] kube-system          kube-apiserver-<node>-control-plane            1/1     Running   0          34s
+[runner-simulation] kube-system          kube-apiserver-control-plane                0/1   Pending          0   40s
 [line 10]
-[kind] kube-system          kube-controller-manager-<node>-control-plane   1/1     Running   0          32s
-[runner-simulation] kube-system          kube-controller-manager-control-plane       1/1   Running          0   41s
+[kind] kube-system          kube-controller-manager-<node>-control-plane   1/1     Running   0          33s
+[runner-simulation] kube-system          kube-controller-manager-control-plane       0/1   Pending          0   40s
 [line 11]
-[kind] kube-system          kube-proxy-<id>                                    1/1     Running   0          20s
-[runner-simulation] kube-system          kube-proxy-<id>                 1/1   Running          0   41s
+[kind] kube-system          kube-proxy-<id>                                    1/1     Running   0          21s
+[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   40s
 [line 12]
-[kind] kube-system          kube-proxy-<id>                                    1/1     Running   0          20s
-[runner-simulation] kube-system          kube-proxy-<id>                 1/1   Running          0   41s
+[kind] kube-system          kube-proxy-<id>                                    1/1     Running   0          21s
+[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   40s
 [line 13]
 [kind] kube-system          kube-proxy-<id>                                    1/1     Running   0          25s
-[runner-simulation] kube-system          kube-proxy-<id>                 1/1   Running          0   41s
+[runner-simulation] kube-system          kube-proxy-<id>                 0/1   Pending          0   40s
 [line 14]
-[kind] kube-system          kube-scheduler-<node>-control-plane            1/1     Running   0          32s
-[runner-simulation] kube-system          kube-scheduler-control-plane                1/1   Running          0   41s
+[kind] kube-system          kube-scheduler-<node>-control-plane            1/1     Running   0          34s
+[runner-simulation] kube-system          kube-scheduler-control-plane                0/1   Pending          0   40s
 [line 15]
 [kind] local-path-storage   local-path-provisioner-<id>             1/1     Running   0          25s
-[runner-simulation] local-path-storage   local-path-provisioner-<id>     1/1   Running          0   41s
+[runner-simulation] local-path-storage   local-path-provisioner-<id>     0/1   Pending          0   40s
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log
@@ -166,11 +169,11 @@
 [runner-simulation.exitCode] 0
 [diff]
 [line 1]
-[kind] NAME   READY   STATUS    RESTARTS   AGE   IP           NODE                 NOMINATED NODE   READINESS GATES
+[kind] NAME   READY   STATUS    RESTARTS   AGE   IP           NODE                  NOMINATED NODE   READINESS GATES
 [runner-simulation] NAME   READY   STATUS    RESTARTS   AGE   IP              NODE     NOMINATED NODE   READINESS GATES
 [line 2]
-[kind] web    1/1     Running   0          19s   <ip>   conformance-worker   <none>           <none>
-[runner-simulation] web    1/1     Running          0   0s    <ip>   <none>   <none>           <none>
+[kind] web    1/1     Running   0          19s   <ip>   conformance-worker2   <none>           <none>
+[runner-simulation] web    0/1     Pending          0   0s    <ip>   <none>   <none>           <none>
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log
@@ -183,11 +186,14 @@
 [runner-simulation.exitCode] 0
 [diff]
 [line 5]
-[kind] Node:             conformance-worker/<ip>
+[kind] Node:             conformance-worker2/<ip>
 [runner-simulation] Node:             <none>/<ip>
 [line 6]
-[kind] Start Time:       Fri, 13 Feb 2026 17:01:43 +0100
-[runner-simulation] Start Time:       Fri, 13 Feb 2026 16:01:50 GMT
+[kind] Start Time:       Tue, 17 Feb 2026 17:02:02 +0100
+[runner-simulation] Start Time:       Tue, 17 Feb 2026 16:02:10 GMT
+[line 9]
+[kind] Status:           Running
+[runner-simulation] Status:           Pending
 [line 12]
 [kind]   IP:  <ip>
 [runner-simulation]   IP:             <ip>
@@ -202,7 +208,7 @@
 [runner-simulation]     nginx:
 [line 16]
 [kind]     Image:          nginx:1.25
-[runner-simulation]       State:      Running
+[runner-simulation]       State:      Waiting
 [line 17]
 [kind]     Image ID:       docker.io/library/nginx@sha256:a484819eb60211f5299034ac80f6a681b06f89e65866ce91f356ed7c72af059c
 [runner-simulation]       Image:      nginx:1.25
@@ -216,7 +222,7 @@
 [kind]     State:          Running
 [runner-simulation] Volumes:  <none>
 [line 21]
-[kind]       Started:      Fri, 13 Feb 2026 17:01:48 +0100
+[kind]       Started:      Tue, 17 Feb 2026 17:02:08 +0100
 [runner-simulation] 
 [line 22]
 [kind]     Ready:          True
@@ -231,7 +237,7 @@
 [kind]     Mounts:
 [runner-simulation]   Ready             True
 [line 26]
-[kind]       /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-sx9rg (ro)
+[kind]       /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-c2cmj (ro)
 [runner-simulation]   ContainersReady   True
 [line 27]
 [kind] Conditions:
@@ -258,7 +264,7 @@
 [kind] Volumes:
 [runner-simulation] (missing)
 [line 35]
-[kind]   kube-api-access-sx9rg:
+[kind]   kube-api-access-c2cmj:
 [runner-simulation] (missing)
 [line 36]
 [kind]     Type:                    Projected (a volume that contains injected data from multiple sources)
@@ -300,19 +306,19 @@
 [kind]   Warning  FailedScheduling  19s   default-scheduler  0/3 nodes are available: 3 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/3 nodes are available: 3 Preemption is not helpful for schedul…
 [runner-simulation] (missing)
 [line 49]
-[kind]   Normal   Scheduled         8s    default-scheduler  Successfully assigned default/web to conformance-worker
+[kind]   Normal   Scheduled         8s    default-scheduler  Successfully assigned default/web to conformance-worker2
 [runner-simulation] (missing)
 [line 50]
 [kind]   Normal   Pulling           8s    kubelet            spec.containers{nginx}: Pulling image "nginx:1.25"
 [runner-simulation] (missing)
 [line 51]
-[kind]   Normal   Pulled            3s    kubelet            spec.containers{nginx}: Successfully pulled image "nginx:1.25" in 4.441s (4.441s including waiting). Image size: 71005258 bytes.
+[kind]   Normal   Pulled            2s    kubelet            spec.containers{nginx}: Successfully pulled image "nginx:1.25" in 5.766s (5.766s including waiting). Image size: 71005258 bytes.
 [runner-simulation] (missing)
 [line 52]
-[kind]   Normal   Created           3s    kubelet            spec.containers{nginx}: Container created
+[kind]   Normal   Created           2s    kubelet            spec.containers{nginx}: Container created
 [runner-simulation] (missing)
 [line 53]
-[kind]   Normal   Started           3s    kubelet            spec.containers{nginx}: Container started
+[kind]   Normal   Started           2s    kubelet            spec.containers{nginx}: Container started
 [runner-simulation] (missing)
 [details]
 [kind-log] artifacts/conformance/kind.log
@@ -357,7 +363,7 @@
 [runner-simulation] status:
 [line 14]
 [kind]   containers:
-[runner-simulation]   phase: Running
+[runner-simulation]   phase: Pending
 [line 15]
 [kind]   - image: nginx:1.25
 [runner-simulation]   restartCount: 0
@@ -372,13 +378,13 @@
 [runner-simulation]       image: nginx:1.25
 [line 19]
 [kind]     - containerPort: 80
-[runner-simulation]       ready: true
+[runner-simulation]       ready: false
 [line 20]
 [kind]       protocol: TCP
 [runner-simulation]       restartCount: 0
 [line 21]
 [kind]     resources: {}
-[runner-simulation]       state: Running
+[runner-simulation]       state: Waiting
 [line 22]
 [kind]     terminationMessagePath: /dev/termination-log
 [runner-simulation] (missing)
@@ -392,7 +398,7 @@
 [kind]     - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
 [runner-simulation] (missing)
 [line 26]
-[kind]       name: kube-api-access-sx9rg
+[kind]       name: kube-api-access-c2cmj
 [runner-simulation] (missing)
 [line 27]
 [kind]       readOnly: true
@@ -404,7 +410,7 @@
 [kind]   enableServiceLinks: true
 [runner-simulation] (missing)
 [line 30]
-[kind]   nodeName: conformance-worker
+[kind]   nodeName: conformance-worker2
 [runner-simulation] (missing)
 [line 31]
 [kind]   preemptionPolicy: PreemptLowerPriority
@@ -461,7 +467,7 @@
 [kind]   volumes:
 [runner-simulation] (missing)
 [line 49]
-[kind]   - name: kube-api-access-sx9rg
+[kind]   - name: kube-api-access-c2cmj
 [runner-simulation] (missing)
 [line 50]
 [kind]     projected:
@@ -566,6 +572,78 @@
 [kind]     type: Ready
 [runner-simulation] (missing)
 [truncated] 44 diff lines omitted to reduce noise
+[details]
+[kind-log] artifacts/conformance/kind.log
+[runner-log] artifacts/conformance/runner.log
+---
+[suite] exhaustive-single-cluster-suite
+[action] deploy-cm-cmd-8-pods (command)
+[command] kubectl get pods
+[mismatch]
+[kind.exitCode] 0
+[runner-simulation.exitCode] 0
+[diff]
+[line 1]
+[kind] NAME                              READY   STATUS              RESTARTS   AGE
+[runner-simulation] NAME   READY   STATUS    RESTARTS   AGE
+[line 2]
+[kind] exhaustive-web-869fc747ff-ctslk   0/1     ContainerCreating   0          0s
+[runner-simulation] web      0/1   Pending          0    0s
+[line 3]
+[kind] web                               1/1     Running             0          19s
+[runner-simulation] (missing)
+[details]
+[kind-log] artifacts/conformance/kind.log
+[runner-log] artifacts/conformance/runner.log
+---
+[suite] exhaustive-single-cluster-suite
+[action] deploy-cm-cmd-9-pods (command)
+[command] kubectl get pods
+[mismatch]
+[kind.exitCode] 0
+[runner-simulation.exitCode] 0
+[diff]
+[line 1]
+[kind] NAME                              READY   STATUS              RESTARTS   AGE
+[runner-simulation] NAME   READY   STATUS    RESTARTS   AGE
+[line 2]
+[kind] exhaustive-api-ff9987cfb-hgrvs    0/1     ContainerCreating   0          0s
+[runner-simulation] web      0/1   Pending          0    0s
+[line 3]
+[kind] exhaustive-api-ff9987cfb-zm2rt    0/1     ContainerCreating   0          0s
+[runner-simulation] (missing)
+[line 4]
+[kind] exhaustive-web-869fc747ff-ctslk   0/1     ContainerCreating   0          0s
+[runner-simulation] (missing)
+[line 5]
+[kind] web                               1/1     Running             0          19s
+[runner-simulation] (missing)
+[details]
+[kind-log] artifacts/conformance/kind.log
+[runner-log] artifacts/conformance/runner.log
+---
+[suite] exhaustive-single-cluster-suite
+[action] deploy-cm-cmd-10-pods (command)
+[command] kubectl get pods
+[mismatch]
+[kind.exitCode] 0
+[runner-simulation.exitCode] 0
+[diff]
+[line 1]
+[kind] NAME                              READY   STATUS              RESTARTS   AGE
+[runner-simulation] NAME   READY   STATUS    RESTARTS   AGE
+[line 2]
+[kind] exhaustive-api-ff9987cfb-hgrvs    0/1     ContainerCreating   0          0s
+[runner-simulation] web      0/1   Pending          0    0s
+[line 3]
+[kind] exhaustive-api-ff9987cfb-zm2rt    0/1     ContainerCreating   0          0s
+[runner-simulation] (missing)
+[line 4]
+[kind] exhaustive-web-869fc747ff-ctslk   0/1     ContainerCreating   0          0s
+[runner-simulation] (missing)
+[line 5]
+[kind] web                               1/1     Running             0          19s
+[runner-simulation] (missing)
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log
@@ -807,209 +885,209 @@
 [runner-simulation]             },
 [line 21]
 [kind]                     "node.kubernetes.io/exclude-from-external-load-balancers": ""
-[runner-simulation]             "spec": {},
+[runner-simulation]             "spec": {
 [line 22]
 [kind]                 },
-[runner-simulation]             "status": {
+[runner-simulation]                 "taints": [
 [line 23]
 [kind]                 "annotations": {
-[runner-simulation]                 "addresses": [
+[runner-simulation]                     {
 [line 24]
 [kind]                     "node.alpha.kubernetes.io/ttl": "0",
-[runner-simulation]                     {
+[runner-simulation]                         "key": "node-role.kubernetes.io/control-plane",
 [line 25]
 [kind]                     "volumes.kubernetes.io/controller-managed-attach-detach": "true"
-[runner-simulation]                         "type": "InternalIP",
+[runner-simulation]                         "effect": "NoSchedule"
 [line 26]
 [kind]                 }
-[runner-simulation]                         "address": "<ip>"
+[runner-simulation]                     }
 [line 27]
 [kind]             },
-[runner-simulation]                     },
+[runner-simulation]                 ]
 [line 28]
 [kind]             "spec": {
-[runner-simulation]                     {
+[runner-simulation]             },
 [line 29]
 [kind]                 "podCIDR": "<ip>/24",
-[runner-simulation]                         "type": "Hostname",
+[runner-simulation]             "status": {
 [line 30]
 [kind]                 "podCIDRs": [
-[runner-simulation]                         "address": "conformance-control-plane"
+[runner-simulation]                 "addresses": [
 [line 31]
 [kind]                     "<ip>/24"
-[runner-simulation]                     }
+[runner-simulation]                     {
+[line 32]
+[kind]                 ],
+[runner-simulation]                         "type": "InternalIP",
 [line 33]
 [kind]                 "providerID": "kind://docker/conformance/conformance-control-plane",
-[runner-simulation]                 "conditions": [
+[runner-simulation]                         "address": "<ip>"
 [line 34]
 [kind]                 "taints": [
-[runner-simulation]                     {
-[line 35]
-[kind]                     {
-[runner-simulation]                         "type": "Ready",
+[runner-simulation]                     },
 [line 36]
 [kind]                         "key": "node-role.kubernetes.io/control-plane",
-[runner-simulation]                         "status": "False",
+[runner-simulation]                         "type": "Hostname",
 [line 37]
 [kind]                         "effect": "NoSchedule"
-[runner-simulation]                         "reason": "KubeletNotReady",
-[line 38]
-[kind]                     }
-[runner-simulation]                         "message": "container runtime network not ready"
+[runner-simulation]                         "address": "conformance-control-plane"
 [line 39]
 [kind]                 ]
-[runner-simulation]                     }
+[runner-simulation]                 ],
 [line 40]
 [kind]             },
-[runner-simulation]                 ],
+[runner-simulation]                 "conditions": [
 [line 41]
 [kind]             "status": {
-[runner-simulation]                 "nodeInfo": {
+[runner-simulation]                     {
 [line 42]
 [kind]                 "capacity": {
-[runner-simulation]                     "architecture": "amd64",
+[runner-simulation]                         "type": "Ready",
 [line 43]
 [kind]                     "cpu": "24",
-[runner-simulation]                     "containerRuntimeVersion": "containerd://2.2.0",
+[runner-simulation]                         "status": "True"
 [line 44]
 [kind]                     "ephemeral-storage": "951220Mi",
-[runner-simulation]                     "kernelVersion": "<ip>-microsoft-standard-WSL2",
+[runner-simulation]                     }
 [line 45]
 [kind]                     "hugepages-1Gi": "0",
-[runner-simulation]                     "kubeletVersion": "v1.35.0",
+[runner-simulation]                 ],
 [line 46]
 [kind]                     "hugepages-2Mi": "0",
-[runner-simulation]                     "operatingSystem": "linux",
+[runner-simulation]                 "nodeInfo": {
 [line 47]
-[kind]                     "memory": "49157724Ki",
-[runner-simulation]                     "osImage": "Debian GNU/Linux 12 (bookworm)"
+[kind]                     "memory": "49157736Ki",
+[runner-simulation]                     "architecture": "amd64",
 [line 48]
 [kind]                     "pods": "110"
-[runner-simulation]                 }
+[runner-simulation]                     "containerRuntimeVersion": "containerd://2.2.0",
 [line 49]
 [kind]                 },
-[runner-simulation]             }
+[runner-simulation]                     "kernelVersion": "<ip>-microsoft-standard-WSL2",
 [line 50]
 [kind]                 "allocatable": {
-[runner-simulation]         },
+[runner-simulation]                     "kubeletVersion": "v1.35.0",
 [line 51]
 [kind]                     "cpu": "24",
-[runner-simulation]         {
+[runner-simulation]                     "operatingSystem": "linux",
 [line 52]
 [kind]                     "ephemeral-storage": "951220Mi",
-[runner-simulation]             "apiVersion": "v1",
+[runner-simulation]                     "osImage": "Debian GNU/Linux 12 (bookworm)"
 [line 53]
 [kind]                     "hugepages-1Gi": "0",
-[runner-simulation]             "kind": "Node",
+[runner-simulation]                 }
 [line 54]
 [kind]                     "hugepages-2Mi": "0",
-[runner-simulation]             "metadata": {
+[runner-simulation]             }
 [line 55]
-[kind]                     "memory": "49157724Ki",
-[runner-simulation]                 "name": "conformance-worker",
+[kind]                     "memory": "49157736Ki",
+[runner-simulation]         },
 [line 56]
 [kind]                     "pods": "110"
-[runner-simulation]                 "namespace": "",
+[runner-simulation]         {
 [line 57]
 [kind]                 },
-[runner-simulation]                 "creationTimestamp": "<timestamp>",
+[runner-simulation]             "apiVersion": "v1",
 [line 58]
 [kind]                 "conditions": [
-[runner-simulation]                 "labels": {
+[runner-simulation]             "kind": "Node",
 [line 59]
 [kind]                     {
-[runner-simulation]                     "kubernetes.io/os": "linux",
+[runner-simulation]             "metadata": {
 [line 60]
 [kind]                         "type": "MemoryPressure",
-[runner-simulation]                     "kubernetes.io/arch": "amd64"
+[runner-simulation]                 "name": "conformance-worker",
 [line 61]
 [kind]                         "status": "False",
-[runner-simulation]                 }
+[runner-simulation]                 "namespace": "",
 [line 62]
 [kind]                         "lastHeartbeatTime": "<timestamp>",
-[runner-simulation]             },
+[runner-simulation]                 "creationTimestamp": "<timestamp>",
 [line 63]
 [kind]                         "lastTransitionTime": "<timestamp>",
-[runner-simulation]             "spec": {},
+[runner-simulation]                 "labels": {
 [line 64]
 [kind]                         "reason": "KubeletHasSufficientMemory",
-[runner-simulation]             "status": {
+[runner-simulation]                     "kubernetes.io/os": "linux",
 [line 65]
 [kind]                         "message": "kubelet has sufficient memory available"
-[runner-simulation]                 "addresses": [
+[runner-simulation]                     "kubernetes.io/arch": "amd64"
 [line 66]
 [kind]                     },
-[runner-simulation]                     {
+[runner-simulation]                 }
 [line 67]
 [kind]                     {
-[runner-simulation]                         "type": "InternalIP",
+[runner-simulation]             },
 [line 68]
 [kind]                         "type": "DiskPressure",
-[runner-simulation]                         "address": "<ip>"
+[runner-simulation]             "spec": {},
 [line 69]
 [kind]                         "status": "False",
-[runner-simulation]                     },
+[runner-simulation]             "status": {
 [line 70]
 [kind]                         "lastHeartbeatTime": "<timestamp>",
-[runner-simulation]                     {
+[runner-simulation]                 "addresses": [
 [line 71]
 [kind]                         "lastTransitionTime": "<timestamp>",
-[runner-simulation]                         "type": "Hostname",
+[runner-simulation]                     {
 [line 72]
 [kind]                         "reason": "KubeletHasNoDiskPressure",
-[runner-simulation]                         "address": "conformance-worker"
+[runner-simulation]                         "type": "InternalIP",
 [line 73]
 [kind]                         "message": "kubelet has no disk pressure"
-[runner-simulation]                     }
-[line 74]
-[kind]                     },
-[runner-simulation]                 ],
-[line 75]
-[kind]                     {
-[runner-simulation]                 "conditions": [
+[runner-simulation]                         "address": "<ip>"
 [line 76]
 [kind]                         "type": "PIDPressure",
-[runner-simulation]                     {
+[runner-simulation]                         "type": "Hostname",
 [line 77]
 [kind]                         "status": "False",
-[runner-simulation]                         "type": "Ready",
+[runner-simulation]                         "address": "conformance-worker"
 [line 78]
 [kind]                         "lastHeartbeatTime": "<timestamp>",
-[runner-simulation]                         "status": "False",
+[runner-simulation]                     }
 [line 79]
 [kind]                         "lastTransitionTime": "<timestamp>",
-[runner-simulation]                         "reason": "KubeletNotReady",
+[runner-simulation]                 ],
 [line 80]
 [kind]                         "reason": "KubeletHasSufficientPID",
-[runner-simulation]                         "message": "container runtime network not ready"
+[runner-simulation]                 "conditions": [
 [line 81]
 [kind]                         "message": "kubelet has sufficient PID available"
-[runner-simulation]                     }
+[runner-simulation]                     {
 [line 82]
 [kind]                     },
-[runner-simulation]                 ],
+[runner-simulation]                         "type": "Ready",
 [line 83]
 [kind]                     {
-[runner-simulation]                 "nodeInfo": {
+[runner-simulation]                         "status": "True"
 [line 84]
 [kind]                         "type": "Ready",
-[runner-simulation]                     "architecture": "amd64",
+[runner-simulation]                     }
 [line 85]
 [kind]                         "status": "True",
-[runner-simulation]                     "containerRuntimeVersion": "containerd://2.2.0",
+[runner-simulation]                 ],
 [line 86]
 [kind]                         "lastHeartbeatTime": "<timestamp>",
-[runner-simulation]                     "kernelVersion": "<ip>-microsoft-standard-WSL2",
+[runner-simulation]                 "nodeInfo": {
 [line 87]
 [kind]                         "lastTransitionTime": "<timestamp>",
-[runner-simulation]                     "kubeletVersion": "v1.35.0",
+[runner-simulation]                     "architecture": "amd64",
 [line 88]
 [kind]                         "reason": "KubeletReady",
-[runner-simulation]                     "operatingSystem": "linux",
+[runner-simulation]                     "containerRuntimeVersion": "containerd://2.2.0",
 [line 89]
 [kind]                         "message": "kubelet is posting ready status"
+[runner-simulation]                     "kernelVersion": "<ip>-microsoft-standard-WSL2",
+[line 90]
+[kind]                     }
+[runner-simulation]                     "kubeletVersion": "v1.35.0",
+[line 91]
+[kind]                 ],
+[runner-simulation]                     "operatingSystem": "linux",
+[line 92]
+[kind]                 "addresses": [
 [runner-simulation]                     "osImage": "Debian GNU/Linux 12 (bookworm)"
-[truncated] 10265 diff lines omitted to reduce noise
+[truncated] 9525 diff lines omitted to reduce noise
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log
@@ -1068,200 +1146,200 @@
 [runner-simulation]         kubernetes.io/arch: amd64
 [line 16]
 [kind]     name: conformance-control-plane
-[runner-simulation]     spec: {}
+[runner-simulation]     spec:
 [line 17]
 [kind]     resourceVersion: "<version>"
-[runner-simulation]     status:
+[runner-simulation]       taints:
 [line 18]
 [kind]     uid: <uid>
-[runner-simulation]       addresses:
+[runner-simulation]         - key: node-role.kubernetes.io/control-plane
 [line 19]
 [kind]   spec:
-[runner-simulation]         - type: InternalIP
+[runner-simulation]           effect: NoSchedule
 [line 20]
 [kind]     podCIDR: <ip>/24
-[runner-simulation]           address: <ip>
+[runner-simulation]     status:
 [line 21]
 [kind]     podCIDRs:
-[runner-simulation]         - type: Hostname
+[runner-simulation]       addresses:
 [line 22]
 [kind]     - <ip>/24
-[runner-simulation]           address: conformance-control-plane
+[runner-simulation]         - type: InternalIP
 [line 23]
 [kind]     providerID: kind://docker/conformance/conformance-control-plane
-[runner-simulation]       conditions:
+[runner-simulation]           address: <ip>
 [line 24]
 [kind]     taints:
-[runner-simulation]         - type: Ready
+[runner-simulation]         - type: Hostname
 [line 25]
 [kind]     - effect: NoSchedule
-[runner-simulation]           status: "False"
+[runner-simulation]           address: conformance-control-plane
 [line 26]
 [kind]       key: node-role.kubernetes.io/control-plane
-[runner-simulation]           reason: KubeletNotReady
+[runner-simulation]       conditions:
 [line 27]
 [kind]   status:
-[runner-simulation]           message: container runtime network not ready
+[runner-simulation]         - type: Ready
 [line 28]
 [kind]     addresses:
-[runner-simulation]       nodeInfo:
+[runner-simulation]           status: "True"
 [line 29]
 [kind]     - address: <ip>
-[runner-simulation]         architecture: amd64
+[runner-simulation]       nodeInfo:
 [line 30]
 [kind]       type: InternalIP
-[runner-simulation]         containerRuntimeVersion: containerd://2.2.0
+[runner-simulation]         architecture: amd64
 [line 31]
 [kind]     - address: conformance-control-plane
-[runner-simulation]         kernelVersion: <ip>-microsoft-standard-WSL2
+[runner-simulation]         containerRuntimeVersion: containerd://2.2.0
 [line 32]
 [kind]       type: Hostname
-[runner-simulation]         kubeletVersion: v1.35.0
+[runner-simulation]         kernelVersion: <ip>-microsoft-standard-WSL2
 [line 33]
 [kind]     allocatable:
-[runner-simulation]         operatingSystem: linux
+[runner-simulation]         kubeletVersion: v1.35.0
 [line 34]
 [kind]       cpu: "24"
-[runner-simulation]         osImage: Debian GNU/Linux 12 (bookworm)
+[runner-simulation]         operatingSystem: linux
 [line 35]
 [kind]       ephemeral-storage: 951220Mi
-[runner-simulation]   - apiVersion: v1
+[runner-simulation]         osImage: Debian GNU/Linux 12 (bookworm)
 [line 36]
 [kind]       hugepages-1Gi: "0"
-[runner-simulation]     kind: Node
+[runner-simulation]   - apiVersion: v1
 [line 37]
 [kind]       hugepages-2Mi: "0"
-[runner-simulation]     metadata:
+[runner-simulation]     kind: Node
 [line 38]
-[kind]       memory: 49157724Ki
-[runner-simulation]       name: conformance-worker
+[kind]       memory: 49157736Ki
+[runner-simulation]     metadata:
 [line 39]
 [kind]       pods: "110"
-[runner-simulation]       namespace: ""
+[runner-simulation]       name: conformance-worker
 [line 40]
 [kind]     capacity:
-[runner-simulation]       creationTimestamp: <timestamp>
+[runner-simulation]       namespace: ""
 [line 41]
 [kind]       cpu: "24"
-[runner-simulation]       labels:
+[runner-simulation]       creationTimestamp: <timestamp>
 [line 42]
 [kind]       ephemeral-storage: 951220Mi
-[runner-simulation]         kubernetes.io/os: linux
+[runner-simulation]       labels:
 [line 43]
 [kind]       hugepages-1Gi: "0"
-[runner-simulation]         kubernetes.io/arch: amd64
+[runner-simulation]         kubernetes.io/os: linux
 [line 44]
 [kind]       hugepages-2Mi: "0"
-[runner-simulation]     spec: {}
+[runner-simulation]         kubernetes.io/arch: amd64
 [line 45]
-[kind]       memory: 49157724Ki
-[runner-simulation]     status:
+[kind]       memory: 49157736Ki
+[runner-simulation]     spec: {}
 [line 46]
 [kind]       pods: "110"
-[runner-simulation]       addresses:
+[runner-simulation]     status:
 [line 47]
 [kind]     conditions:
-[runner-simulation]         - type: InternalIP
+[runner-simulation]       addresses:
 [line 48]
 [kind]     - lastHeartbeatTime: "<timestamp>"
-[runner-simulation]           address: <ip>
+[runner-simulation]         - type: InternalIP
 [line 49]
 [kind]       lastTransitionTime: "<timestamp>"
-[runner-simulation]         - type: Hostname
+[runner-simulation]           address: <ip>
 [line 50]
 [kind]       message: kubelet has sufficient memory available
-[runner-simulation]           address: conformance-worker
+[runner-simulation]         - type: Hostname
 [line 51]
 [kind]       reason: KubeletHasSufficientMemory
-[runner-simulation]       conditions:
+[runner-simulation]           address: conformance-worker
 [line 52]
 [kind]       status: "False"
-[runner-simulation]         - type: Ready
+[runner-simulation]       conditions:
 [line 53]
 [kind]       type: MemoryPressure
-[runner-simulation]           status: "False"
+[runner-simulation]         - type: Ready
 [line 54]
 [kind]     - lastHeartbeatTime: "<timestamp>"
-[runner-simulation]           reason: KubeletNotReady
+[runner-simulation]           status: "True"
 [line 55]
 [kind]       lastTransitionTime: "<timestamp>"
-[runner-simulation]           message: container runtime network not ready
+[runner-simulation]       nodeInfo:
 [line 56]
 [kind]       message: kubelet has no disk pressure
-[runner-simulation]       nodeInfo:
+[runner-simulation]         architecture: amd64
 [line 57]
 [kind]       reason: KubeletHasNoDiskPressure
-[runner-simulation]         architecture: amd64
+[runner-simulation]         containerRuntimeVersion: containerd://2.2.0
 [line 58]
 [kind]       status: "False"
-[runner-simulation]         containerRuntimeVersion: containerd://2.2.0
+[runner-simulation]         kernelVersion: <ip>-microsoft-standard-WSL2
 [line 59]
 [kind]       type: DiskPressure
-[runner-simulation]         kernelVersion: <ip>-microsoft-standard-WSL2
+[runner-simulation]         kubeletVersion: v1.35.0
 [line 60]
 [kind]     - lastHeartbeatTime: "<timestamp>"
-[runner-simulation]         kubeletVersion: v1.35.0
+[runner-simulation]         operatingSystem: linux
 [line 61]
 [kind]       lastTransitionTime: "<timestamp>"
-[runner-simulation]         operatingSystem: linux
+[runner-simulation]         osImage: Debian GNU/Linux 12 (bookworm)
 [line 62]
 [kind]       message: kubelet has sufficient PID available
-[runner-simulation]         osImage: Debian GNU/Linux 12 (bookworm)
+[runner-simulation]   - apiVersion: v1
 [line 63]
 [kind]       reason: KubeletHasSufficientPID
-[runner-simulation]   - apiVersion: v1
+[runner-simulation]     kind: Node
 [line 64]
 [kind]       status: "False"
-[runner-simulation]     kind: Node
+[runner-simulation]     metadata:
 [line 65]
 [kind]       type: PIDPressure
-[runner-simulation]     metadata:
+[runner-simulation]       name: conformance-worker2
 [line 66]
 [kind]     - lastHeartbeatTime: "<timestamp>"
-[runner-simulation]       name: conformance-worker2
+[runner-simulation]       namespace: ""
 [line 67]
 [kind]       lastTransitionTime: "<timestamp>"
-[runner-simulation]       namespace: ""
+[runner-simulation]       creationTimestamp: <timestamp>
 [line 68]
 [kind]       message: kubelet is posting ready status
-[runner-simulation]       creationTimestamp: <timestamp>
+[runner-simulation]       labels:
 [line 69]
 [kind]       reason: KubeletReady
-[runner-simulation]       labels:
+[runner-simulation]         kubernetes.io/os: linux
 [line 70]
 [kind]       status: "True"
-[runner-simulation]         kubernetes.io/os: linux
+[runner-simulation]         kubernetes.io/arch: amd64
 [line 71]
 [kind]       type: Ready
-[runner-simulation]         kubernetes.io/arch: amd64
+[runner-simulation]     spec: {}
 [line 72]
 [kind]     daemonEndpoints:
-[runner-simulation]     spec: {}
+[runner-simulation]     status:
 [line 73]
 [kind]       kubeletEndpoint:
-[runner-simulation]     status:
+[runner-simulation]       addresses:
 [line 74]
 [kind]         Port: 10250
-[runner-simulation]       addresses:
+[runner-simulation]         - type: InternalIP
 [line 75]
 [kind]     features:
-[runner-simulation]         - type: InternalIP
+[runner-simulation]           address: <ip>
 [line 76]
 [kind]       supplementalGroupsPolicy: true
-[runner-simulation]           address: <ip>
+[runner-simulation]         - type: Hostname
 [line 77]
 [kind]     images:
-[runner-simulation]         - type: Hostname
+[runner-simulation]           address: conformance-worker2
 [line 78]
 [kind]     - names:
-[runner-simulation]           address: conformance-worker2
+[runner-simulation]       conditions:
 [line 79]
 [kind]       - registry.k8s.io/kube-apiserver-amd64:v1.35.0
-[runner-simulation]       conditions:
+[runner-simulation]         - type: Ready
 [line 80]
 [kind]       - registry.k8s.io/kube-apiserver:v1.35.0
-[runner-simulation]         - type: Ready
-[truncated] 7536 diff lines omitted to reduce noise
+[runner-simulation]           status: "True"
+[truncated] 6953 diff lines omitted to reduce noise
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log
@@ -1311,209 +1389,209 @@
 [runner-simulation]             },
 [line 21]
 [kind]                     "node.kubernetes.io/exclude-from-external-load-balancers": ""
-[runner-simulation]             "spec": {},
+[runner-simulation]             "spec": {
 [line 22]
 [kind]                 },
-[runner-simulation]             "status": {
+[runner-simulation]                 "taints": [
 [line 23]
 [kind]                 "annotations": {
-[runner-simulation]                 "addresses": [
+[runner-simulation]                     {
 [line 24]
 [kind]                     "node.alpha.kubernetes.io/ttl": "0",
-[runner-simulation]                     {
+[runner-simulation]                         "key": "node-role.kubernetes.io/control-plane",
 [line 25]
 [kind]                     "volumes.kubernetes.io/controller-managed-attach-detach": "true"
-[runner-simulation]                         "type": "InternalIP",
+[runner-simulation]                         "effect": "NoSchedule"
 [line 26]
 [kind]                 }
-[runner-simulation]                         "address": "<ip>"
+[runner-simulation]                     }
 [line 27]
 [kind]             },
-[runner-simulation]                     },
+[runner-simulation]                 ]
 [line 28]
 [kind]             "spec": {
-[runner-simulation]                     {
+[runner-simulation]             },
 [line 29]
 [kind]                 "podCIDR": "<ip>/24",
-[runner-simulation]                         "type": "Hostname",
+[runner-simulation]             "status": {
 [line 30]
 [kind]                 "podCIDRs": [
-[runner-simulation]                         "address": "conformance-control-plane"
+[runner-simulation]                 "addresses": [
 [line 31]
 [kind]                     "<ip>/24"
-[runner-simulation]                     }
+[runner-simulation]                     {
+[line 32]
+[kind]                 ],
+[runner-simulation]                         "type": "InternalIP",
 [line 33]
 [kind]                 "providerID": "kind://docker/conformance/conformance-control-plane",
-[runner-simulation]                 "conditions": [
+[runner-simulation]                         "address": "<ip>"
 [line 34]
 [kind]                 "taints": [
-[runner-simulation]                     {
-[line 35]
-[kind]                     {
-[runner-simulation]                         "type": "Ready",
+[runner-simulation]                     },
 [line 36]
 [kind]                         "key": "node-role.kubernetes.io/control-plane",
-[runner-simulation]                         "status": "False",
+[runner-simulation]                         "type": "Hostname",
 [line 37]
 [kind]                         "effect": "NoSchedule"
-[runner-simulation]                         "reason": "KubeletNotReady",
-[line 38]
-[kind]                     }
-[runner-simulation]                         "message": "container runtime network not ready"
+[runner-simulation]                         "address": "conformance-control-plane"
 [line 39]
 [kind]                 ]
-[runner-simulation]                     }
+[runner-simulation]                 ],
 [line 40]
 [kind]             },
-[runner-simulation]                 ],
+[runner-simulation]                 "conditions": [
 [line 41]
 [kind]             "status": {
-[runner-simulation]                 "nodeInfo": {
+[runner-simulation]                     {
 [line 42]
 [kind]                 "capacity": {
-[runner-simulation]                     "architecture": "amd64",
+[runner-simulation]                         "type": "Ready",
 [line 43]
 [kind]                     "cpu": "24",
-[runner-simulation]                     "containerRuntimeVersion": "containerd://2.2.0",
+[runner-simulation]                         "status": "True"
 [line 44]
 [kind]                     "ephemeral-storage": "951220Mi",
-[runner-simulation]                     "kernelVersion": "<ip>-microsoft-standard-WSL2",
+[runner-simulation]                     }
 [line 45]
 [kind]                     "hugepages-1Gi": "0",
-[runner-simulation]                     "kubeletVersion": "v1.35.0",
+[runner-simulation]                 ],
 [line 46]
 [kind]                     "hugepages-2Mi": "0",
-[runner-simulation]                     "operatingSystem": "linux",
+[runner-simulation]                 "nodeInfo": {
 [line 47]
-[kind]                     "memory": "49157724Ki",
-[runner-simulation]                     "osImage": "Debian GNU/Linux 12 (bookworm)"
+[kind]                     "memory": "49157736Ki",
+[runner-simulation]                     "architecture": "amd64",
 [line 48]
 [kind]                     "pods": "110"
-[runner-simulation]                 }
+[runner-simulation]                     "containerRuntimeVersion": "containerd://2.2.0",
 [line 49]
 [kind]                 },
-[runner-simulation]             }
+[runner-simulation]                     "kernelVersion": "<ip>-microsoft-standard-WSL2",
 [line 50]
 [kind]                 "allocatable": {
-[runner-simulation]         },
+[runner-simulation]                     "kubeletVersion": "v1.35.0",
 [line 51]
 [kind]                     "cpu": "24",
-[runner-simulation]         {
+[runner-simulation]                     "operatingSystem": "linux",
 [line 52]
 [kind]                     "ephemeral-storage": "951220Mi",
-[runner-simulation]             "apiVersion": "v1",
+[runner-simulation]                     "osImage": "Debian GNU/Linux 12 (bookworm)"
 [line 53]
 [kind]                     "hugepages-1Gi": "0",
-[runner-simulation]             "kind": "Node",
+[runner-simulation]                 }
 [line 54]
 [kind]                     "hugepages-2Mi": "0",
-[runner-simulation]             "metadata": {
+[runner-simulation]             }
 [line 55]
-[kind]                     "memory": "49157724Ki",
-[runner-simulation]                 "name": "conformance-worker",
+[kind]                     "memory": "49157736Ki",
+[runner-simulation]         },
 [line 56]
 [kind]                     "pods": "110"
-[runner-simulation]                 "namespace": "",
+[runner-simulation]         {
 [line 57]
 [kind]                 },
-[runner-simulation]                 "creationTimestamp": "<timestamp>",
+[runner-simulation]             "apiVersion": "v1",
 [line 58]
 [kind]                 "conditions": [
-[runner-simulation]                 "labels": {
+[runner-simulation]             "kind": "Node",
 [line 59]
 [kind]                     {
-[runner-simulation]                     "kubernetes.io/os": "linux",
+[runner-simulation]             "metadata": {
 [line 60]
 [kind]                         "type": "MemoryPressure",
-[runner-simulation]                     "kubernetes.io/arch": "amd64"
+[runner-simulation]                 "name": "conformance-worker",
 [line 61]
 [kind]                         "status": "False",
-[runner-simulation]                 }
+[runner-simulation]                 "namespace": "",
 [line 62]
 [kind]                         "lastHeartbeatTime": "<timestamp>",
-[runner-simulation]             },
+[runner-simulation]                 "creationTimestamp": "<timestamp>",
 [line 63]
 [kind]                         "lastTransitionTime": "<timestamp>",
-[runner-simulation]             "spec": {},
+[runner-simulation]                 "labels": {
 [line 64]
 [kind]                         "reason": "KubeletHasSufficientMemory",
-[runner-simulation]             "status": {
+[runner-simulation]                     "kubernetes.io/os": "linux",
 [line 65]
 [kind]                         "message": "kubelet has sufficient memory available"
-[runner-simulation]                 "addresses": [
+[runner-simulation]                     "kubernetes.io/arch": "amd64"
 [line 66]
 [kind]                     },
-[runner-simulation]                     {
+[runner-simulation]                 }
 [line 67]
 [kind]                     {
-[runner-simulation]                         "type": "InternalIP",
+[runner-simulation]             },
 [line 68]
 [kind]                         "type": "DiskPressure",
-[runner-simulation]                         "address": "<ip>"
+[runner-simulation]             "spec": {},
 [line 69]
 [kind]                         "status": "False",
-[runner-simulation]                     },
+[runner-simulation]             "status": {
 [line 70]
 [kind]                         "lastHeartbeatTime": "<timestamp>",
-[runner-simulation]                     {
+[runner-simulation]                 "addresses": [
 [line 71]
 [kind]                         "lastTransitionTime": "<timestamp>",
-[runner-simulation]                         "type": "Hostname",
+[runner-simulation]                     {
 [line 72]
 [kind]                         "reason": "KubeletHasNoDiskPressure",
-[runner-simulation]                         "address": "conformance-worker"
+[runner-simulation]                         "type": "InternalIP",
 [line 73]
 [kind]                         "message": "kubelet has no disk pressure"
-[runner-simulation]                     }
-[line 74]
-[kind]                     },
-[runner-simulation]                 ],
-[line 75]
-[kind]                     {
-[runner-simulation]                 "conditions": [
+[runner-simulation]                         "address": "<ip>"
 [line 76]
 [kind]                         "type": "PIDPressure",
-[runner-simulation]                     {
+[runner-simulation]                         "type": "Hostname",
 [line 77]
 [kind]                         "status": "False",
-[runner-simulation]                         "type": "Ready",
+[runner-simulation]                         "address": "conformance-worker"
 [line 78]
 [kind]                         "lastHeartbeatTime": "<timestamp>",
-[runner-simulation]                         "status": "False",
+[runner-simulation]                     }
 [line 79]
 [kind]                         "lastTransitionTime": "<timestamp>",
-[runner-simulation]                         "reason": "KubeletNotReady",
+[runner-simulation]                 ],
 [line 80]
 [kind]                         "reason": "KubeletHasSufficientPID",
-[runner-simulation]                         "message": "container runtime network not ready"
+[runner-simulation]                 "conditions": [
 [line 81]
 [kind]                         "message": "kubelet has sufficient PID available"
-[runner-simulation]                     }
+[runner-simulation]                     {
 [line 82]
 [kind]                     },
-[runner-simulation]                 ],
+[runner-simulation]                         "type": "Ready",
 [line 83]
 [kind]                     {
-[runner-simulation]                 "nodeInfo": {
+[runner-simulation]                         "status": "True"
 [line 84]
 [kind]                         "type": "Ready",
-[runner-simulation]                     "architecture": "amd64",
+[runner-simulation]                     }
 [line 85]
 [kind]                         "status": "True",
-[runner-simulation]                     "containerRuntimeVersion": "containerd://2.2.0",
+[runner-simulation]                 ],
 [line 86]
 [kind]                         "lastHeartbeatTime": "<timestamp>",
-[runner-simulation]                     "kernelVersion": "<ip>-microsoft-standard-WSL2",
+[runner-simulation]                 "nodeInfo": {
 [line 87]
 [kind]                         "lastTransitionTime": "<timestamp>",
-[runner-simulation]                     "kubeletVersion": "v1.35.0",
+[runner-simulation]                     "architecture": "amd64",
 [line 88]
 [kind]                         "reason": "KubeletReady",
-[runner-simulation]                     "operatingSystem": "linux",
+[runner-simulation]                     "containerRuntimeVersion": "containerd://2.2.0",
 [line 89]
 [kind]                         "message": "kubelet is posting ready status"
+[runner-simulation]                     "kernelVersion": "<ip>-microsoft-standard-WSL2",
+[line 90]
+[kind]                     }
+[runner-simulation]                     "kubeletVersion": "v1.35.0",
+[line 91]
+[kind]                 ],
+[runner-simulation]                     "operatingSystem": "linux",
+[line 92]
+[kind]                 "addresses": [
 [runner-simulation]                     "osImage": "Debian GNU/Linux 12 (bookworm)"
-[truncated] 10265 diff lines omitted to reduce noise
+[truncated] 9522 diff lines omitted to reduce noise
 [details]
 [kind-log] artifacts/conformance/kind.log
 [runner-log] artifacts/conformance/runner.log

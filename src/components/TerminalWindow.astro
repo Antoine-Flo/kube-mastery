@@ -230,6 +230,8 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
         return
       }
 
+      const isLesson =
+        el.dataset.lessonTerminal === 'true' || el.closest('.lp-root') != null
       // Déjà monté (évite double xterm après astro:page-load / view transitions)
       if (box.querySelector('.xterm')) {
         loader.style.display = 'none'
@@ -237,7 +239,6 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
         return
       }
 
-      const isLesson = el.dataset.lessonTerminal === 'true'
       const pid = el.dataset.persistId
       if (cleanups.has(root)) {
         return
@@ -258,7 +259,7 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
       const editorModal = createEditorModal(overlayEl, editorBoxEl)
       editorModalByRoot.set(root, editorModal)
 
-      const doMount = (opts: Parameters<typeof mountTerminal>[1]) => {
+      const doMount = (opts: NonNullable<Parameters<typeof mountTerminal>[1]>) => {
         try {
           const cleanup = mountTerminal(box, {
             ...opts,
@@ -305,13 +306,15 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
         withEnv(g.__lessonEnv)
         return
       }
-      document.addEventListener(
-        'lesson-env-ready',
-        (ev: Event) => withEnv((ev as CustomEvent).detail?.env),
-        {
-          once: true
-        }
-      )
+      const onLessonEnvReady = (ev: Event) => {
+        withEnv((ev as CustomEvent).detail?.env)
+      }
+      document.addEventListener('lesson-env-ready', onLessonEnvReady, {
+        once: true
+      })
+      document.addEventListener('cluster-env-ready', onLessonEnvReady, {
+        once: true
+      })
     })
   }
 

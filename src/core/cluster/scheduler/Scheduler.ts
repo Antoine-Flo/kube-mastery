@@ -7,7 +7,7 @@
 
 import type { EventBus } from '../events/EventBus'
 import type { ClusterEvent, PodCreatedEvent } from '../events/types'
-import { createPodUpdatedEvent } from '../events/types'
+import { createPodBoundEvent, createPodUpdatedEvent } from '../events/types'
 import type { Node } from '../ressources/Node'
 import type { Pod } from '../ressources/Pod'
 import { isNodeEligibleForPod } from './SimSchedulingPredicates'
@@ -29,6 +29,13 @@ export interface SchedulerState {
 export interface Scheduler {
   start(): void
   stop(): void
+}
+
+export interface SchedulerOptions {
+  schedulingDelayRangeMs?: {
+    minMs: number
+    maxMs: number
+  }
 }
 
 // ─── Helper Functions ─────────────────────────────────────────────────────
@@ -60,10 +67,17 @@ const findFeasibleNodes = (nodes: Node[], pod: Pod): Node[] => {
  */
 export const createScheduler = (
   eventBus: EventBus,
-  getState: () => SchedulerState
+  getState: () => SchedulerState,
+  options: SchedulerOptions = {}
 ): Scheduler => {
   let unsubscribe: (() => void) | null = null
   let nextNodeIndex = 0
+  const timeouts: ReturnType<typeof setTimeout>[] = []
+  const schedulingDelayRangeMs = options.schedulingDelayRangeMs
+
+  const randomInRange = (min: number, max: number): number => {
+    return Math.floor(Math.random() * (max - min + 1)) + min
+  }
 
   /**
    * Select a node using round-robin strategy
@@ -103,6 +117,16 @@ export const createScheduler = (
         'scheduler'
       )
     )
+    eventBus.emit(
+      createPodBoundEvent(
+        pod.metadata.name,
+        pod.metadata.namespace,
+        nodeName,
+        updatedPod,
+        pod,
+        'scheduler'
+      )
+    )
   }
 
   /**
@@ -134,6 +158,30 @@ export const createScheduler = (
     return true
   }
 
+  const scheduleWithOptionalDelay = (pod: Pod): void => {
+    if (schedulingDelayRangeMs == null) {
+      scheduleOne(pod)
+      return
+    }
+
+    const minDelayMs = Math.max(0, Math.floor(schedulingDelayRangeMs.minMs))
+    const maxDelayMs = Math.max(minDelayMs, Math.floor(schedulingDelayRangeMs.maxMs))
+    const delayMs = randomInRange(minDelayMs, maxDelayMs)
+
+    const timeoutId = setTimeout(() => {
+      const state = getState()
+      const currentPod = state.findPod(pod.metadata.name, pod.metadata.namespace)
+      if (!currentPod.ok || currentPod.value == null) {
+        return
+      }
+      if (!needsScheduling(currentPod.value)) {
+        return
+      }
+      scheduleOne(currentPod.value)
+    }, delayMs)
+    timeouts.push(timeoutId)
+  }
+
   /**
    * Handle PodCreated events
    */
@@ -150,8 +198,8 @@ export const createScheduler = (
       return
     }
 
-    // Schedule the pod
-    scheduleOne(pod)
+    // Schedule the pod (optionally delayed to visualize unscheduled -> scheduled transition)
+    scheduleWithOptionalDelay(pod)
   }
 
   /**
@@ -170,7 +218,7 @@ export const createScheduler = (
       if (!needsScheduling(pod)) {
         continue
       }
-      scheduleOne(pod)
+      scheduleWithOptionalDelay(pod)
     }
   }
 
@@ -186,6 +234,10 @@ export const createScheduler = (
         unsubscribe()
         unsubscribe = null
       }
+      for (const timeoutId of timeouts) {
+        clearTimeout(timeoutId)
+      }
+      timeouts.length = 0
     }
   }
 }
