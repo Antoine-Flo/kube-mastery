@@ -460,48 +460,12 @@ const applyEventToState = (
   return handler(state, event)
 }
 
-const isEventBusValue = (value: unknown): value is EventBus => {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'subscribeAll' in value &&
-    typeof (value as EventBus).subscribeAll === 'function'
-  )
-}
-
 // Facade factory function
 export function createClusterState(
   eventBus: EventBus,
   options?: CreateClusterStateOptions
-): ClusterState
-export function createClusterState(
-  initialState: ClusterStateData,
-  eventBus: EventBus,
-  options?: CreateClusterStateOptions
-): ClusterState
-export function createClusterState(
-  initialStateOrEventBus: ClusterStateData | EventBus,
-  eventBusOrOptions?: EventBus | CreateClusterStateOptions,
-  maybeOptions?: CreateClusterStateOptions
 ): ClusterState {
-  let initialState: ClusterStateData | undefined
-  let bus: EventBus
-  let options: CreateClusterStateOptions | undefined
-
-  if (isEventBusValue(initialStateOrEventBus)) {
-    initialState = undefined
-    bus = initialStateOrEventBus
-    options = eventBusOrOptions as CreateClusterStateOptions | undefined
-  } else {
-    initialState = initialStateOrEventBus
-    if (!isEventBusValue(eventBusOrOptions)) {
-      throw new Error('createClusterState requires an EventBus instance')
-    }
-    bus = eventBusOrOptions
-    options = maybeOptions
-  }
-
-  let state: ClusterStateData = initialState || createEmptyState()
+  let state: ClusterStateData = createEmptyState()
 
   const getState = () => state
   const setState = (newState: ClusterStateData) => {
@@ -510,44 +474,50 @@ export function createClusterState(
 
   // Subscribe to all events for state updates
   // Cast is safe: applyEventToState ignores unknown event types
-  bus.subscribeAll((event) => {
+  eventBus.subscribeAll((event) => {
     state = applyEventToState(state, event as ClusterEvent)
   })
 
-  const podMethods = createFacadeMethods(podOps, getState, setState, bus, 'Pod')
+  const podMethods = createFacadeMethods(
+    podOps,
+    getState,
+    setState,
+    eventBus,
+    'Pod'
+  )
   const configMapMethods = createFacadeMethods(
     configMapOps,
     getState,
     setState,
-    bus,
+    eventBus,
     'ConfigMap'
   )
   const secretMethods = createFacadeMethods(
     secretOps,
     getState,
     setState,
-    bus,
+    eventBus,
     'Secret'
   )
   const replicaSetMethods = createFacadeMethods(
     replicaSetOps,
     getState,
     setState,
-    bus,
+    eventBus,
     'ReplicaSet'
   )
   const deploymentMethods = createFacadeMethods(
     deploymentOps,
     getState,
     setState,
-    bus,
+    eventBus,
     'Deployment'
   )
   const serviceMethods = createFacadeMethods(
     serviceOps,
     getState,
     setState,
-    bus,
+    eventBus,
     'Service'
   )
 
@@ -561,7 +531,7 @@ export function createClusterState(
       const updatedNodes = nodeRepo.add(currentState.nodes, node)
       setState({ ...currentState, nodes: updatedNodes })
       // Emit placeholder event for logging (but state is already updated)
-      bus.emit(createSecretCreatedEvent(node as any, 'direct')) // Placeholder until Node events are created
+      eventBus.emit(createSecretCreatedEvent(node as any, 'direct')) // Placeholder until Node events are created
     },
     find: (name: string): Result<Node> => {
       // Nodes are cluster-scoped, use empty namespace
@@ -578,7 +548,7 @@ export function createClusterState(
       if (deleteResult.ok && deleteResult.collection) {
         setState({ ...currentState, nodes: deleteResult.collection })
       }
-      bus.emit(
+      eventBus.emit(
         createSecretDeletedEvent(name, '', findResult.value as any, 'direct')
       ) // Placeholder
       return { ok: true, value: findResult.value }
@@ -600,7 +570,7 @@ export function createClusterState(
       if (updateResult.ok && updateResult.collection) {
         setState({ ...currentState, nodes: updateResult.collection })
       }
-      bus.emit(
+      eventBus.emit(
         createSecretUpdatedEvent(
           name,
           '',

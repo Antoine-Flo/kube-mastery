@@ -139,7 +139,6 @@ const t = useTranslations(lang)
     const seedName = root.getAttribute('data-seed-name') ?? 'minimal'
     const seed = getSeed(seedName)
     lessonEnv = createEmulatedEnvironment({
-      clusterStateData: seed.clusterStateData,
       filesystemState: createFilesystemFromConfig(seed.fsConfig ?? {})
     })
     document.dispatchEvent(

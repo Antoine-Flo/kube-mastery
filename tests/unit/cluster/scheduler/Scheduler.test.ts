@@ -279,6 +279,33 @@ describe('Scheduler', () => {
   })
 
   describe('start and stop', () => {
+    it('should schedule existing unscheduled pods on start', () => {
+      mockState.nodes = [createReadyNode('node-1')]
+      mockState.pods = [createUnscheduledPod('existing-pod')]
+
+      const podUpdated = vi.fn()
+      eventBus.subscribe('PodUpdated', podUpdated)
+
+      scheduler.start()
+
+      expect(podUpdated).toHaveBeenCalledTimes(1)
+      const event = podUpdated.mock.calls[0][0] as PodUpdatedEvent
+      expect(event.payload.pod.metadata.name).toBe('existing-pod')
+      expect(event.payload.pod.spec.nodeName).toBe('node-1')
+    })
+
+    it('should not re-schedule existing already bound pods on start', () => {
+      mockState.nodes = [createReadyNode('node-1')]
+      mockState.pods = [createScheduledPod('existing-pod', 'node-1')]
+
+      const podUpdated = vi.fn()
+      eventBus.subscribe('PodUpdated', podUpdated)
+
+      scheduler.start()
+
+      expect(podUpdated).not.toHaveBeenCalled()
+    })
+
     it('should start listening for events', () => {
       mockState.nodes = [createReadyNode('node-1')]
 

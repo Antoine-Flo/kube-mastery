@@ -234,7 +234,7 @@ interface FileSystemState {
 
 ## Seed System
 
-Environnements (cluster + filesystem) dans `src/courses/seeds/` : `minimal.ts`, `demo.ts`, registry dans `getSeed.ts`. Pas d’API ; chargement build-time / client. Seed par chapitre : `chapter.json` → `"environment": "minimal"` (ou `"demo"`, etc.) ; défaut `minimal` si absent. Voir `src/courses/seeds/README.md`.
+Environnements seedés côté cours dans `src/courses/seeds/` : `minimal.ts`, `demo.ts`, registry dans `getSeed.ts`. Les seeds fournissent le filesystem; la topologie cluster est bootstrapée par la policy runtime unique (`createClusterState(..., { bootstrap })`). Seed par chapitre : `chapter.json` → `"environment": "minimal"` (ou `"demo"`, etc.) ; défaut `minimal` si absent. Voir `src/courses/seeds/README.md`.
 
 ## UI Layout
 

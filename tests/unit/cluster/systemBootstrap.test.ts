@@ -19,6 +19,12 @@ describe('systemBootstrap', () => {
       'conformance-worker',
       'conformance-worker2'
     ])
+    expect(resources.nodes.every((node) => {
+      const readyCondition = (node.status.conditions ?? []).find((condition) => {
+        return condition.type === 'Ready'
+      })
+      return readyCondition?.status === 'True'
+    })).toBe(true)
     expect(resources.configMaps).toHaveLength(1)
     expect(resources.configMaps[0].metadata.name).toBe('kube-root-ca.crt')
     expect(resources.configMaps[0].metadata.namespace).toBe('default')

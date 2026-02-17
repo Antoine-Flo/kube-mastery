@@ -4,7 +4,7 @@
 // An EmulatedEnvironment represents a complete environment: cluster state + filesystem
 // This is what gets loaded into the terminal and needs to be managed.
 
-import type { ClusterState, ClusterStateData } from '../cluster/ClusterState'
+import type { ClusterState } from '../cluster/ClusterState'
 import type { EventBus } from '../cluster/events/EventBus'
 import type { PodStartupSimulator } from '../cluster/podStartupSimulator'
 import type { FileSystemState } from '../filesystem/FileSystem'
@@ -56,8 +56,6 @@ export interface CreateEmulatedEnvironmentOptions {
   userId?: string
   /** Filesystem state */
   filesystemState?: FileSystemState
-  /** Cluster state data */
-  clusterStateData?: ClusterStateData
   /** Enable auto-save (requires userId for IndexedDB) */
   enableAutoSave?: boolean
   /** Callback when state changes (for tracking dirty state) */

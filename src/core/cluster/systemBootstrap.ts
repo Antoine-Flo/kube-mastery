@@ -41,12 +41,10 @@ export const DEFAULT_KIND_LIKE_BOOTSTRAP: Readonly<
   mode: 'missing-only'
 })
 
-const createNotReadyCondition = (): NodeCondition => {
+const createReadyCondition = (): NodeCondition => {
   return {
     type: 'Ready',
-    status: 'False',
-    reason: 'KubeletNotReady',
-    message: 'container runtime network not ready'
+    status: 'True'
   }
 }
 
@@ -93,7 +91,7 @@ const createBootstrapNode = (
           address: nodeName
         }
       ],
-      conditions: [createNotReadyCondition()],
+      conditions: [createReadyCondition()],
       nodeInfo: {
         architecture: 'amd64',
         containerRuntimeVersion: 'containerd://2.2.0',

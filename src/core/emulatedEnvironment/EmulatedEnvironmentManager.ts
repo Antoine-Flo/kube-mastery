@@ -51,7 +51,6 @@ export function createEmulatedEnvironment(
   const {
     userId,
     filesystemState: providedFilesystemState,
-    clusterStateData: providedClusterStateData,
     enableAutoSave = false,
     onStateChange,
     autoSaveDelay = 2000
@@ -63,12 +62,11 @@ export function createEmulatedEnvironment(
   let storageMode: 'indexeddb' | 'none' = 'none'
   const bootstrapConfig = getSimulatorBootstrapConfig()
 
-  if (providedFilesystemState && providedClusterStateData) {
-    // Mode with provided data (for lessons)
+  if (providedFilesystemState) {
     storageMode = userId ? 'indexeddb' : 'none'
     fileSystemState = providedFilesystemState
     eventBus = createEventBus()
-    clusterState = createClusterState(providedClusterStateData, eventBus, {
+    clusterState = createClusterState(eventBus, {
       bootstrap: bootstrapConfig
     })
   } else {

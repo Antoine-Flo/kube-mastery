@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  createClusterState,
-  createClusterStateData
-} from '../../../src/core/cluster/ClusterState'
+import { createClusterState } from '../../../src/core/cluster/ClusterState'
 import { SIMULATOR_CLUSTER_NAME } from '../../../src/config/runtimeConfig'
 import { createEventBus } from '../../../src/core/cluster/events/EventBus'
 import { DEFAULT_KIND_LIKE_BOOTSTRAP } from '../../../src/core/cluster/systemBootstrap'
@@ -46,22 +43,5 @@ describe('createClusterState bootstrap policy', () => {
 
     expect(clusterState.getNodes()).toHaveLength(0)
     expect(clusterState.getConfigMaps('default')).toHaveLength(0)
-  })
-
-  it('supports missing-only bootstrap on restored state', () => {
-    const eventBus = createEventBus()
-    const initialState = createClusterStateData()
-    const clusterState = createClusterState(initialState, eventBus, {
-      bootstrap: {
-        ...DEFAULT_KIND_LIKE_BOOTSTRAP,
-        clusterName: 'restored'
-      }
-    })
-
-    expect(clusterState.getNodes().map((node) => node.metadata.name)).toEqual([
-      'restored-control-plane',
-      'restored-worker',
-      'restored-worker2'
-    ])
   })
 })

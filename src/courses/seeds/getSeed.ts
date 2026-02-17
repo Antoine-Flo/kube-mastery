@@ -1,26 +1,21 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // SEED REGISTRY
 // ═══════════════════════════════════════════════════════════════════════════
-// Resolves seed name (from chapter.json environment) to cluster + fs data.
+// Resolves seed name (from chapter.json environment) to filesystem seed data.
 // No barrel: direct imports per seed file.
 
-import type { ClusterStateData } from '../../core/cluster/ClusterState'
 import type { FsConfig } from '../../core/filesystem/debianFileSystem'
 import {
-  clusterStateData as demoClusterStateData,
   fsConfig as demoFsConfig
 } from './demo'
 import {
-  clusterStateData as introClusterStateData,
   fsConfig as introFsConfig
 } from './intro'
 import {
-  clusterStateData as minimalClusterStateData,
   fsConfig as minimalFsConfig
 } from './minimal'
 
 export interface SeedData {
-  clusterStateData: ClusterStateData
   fsConfig: FsConfig
 }
 
@@ -31,20 +26,13 @@ export interface SeedData {
 export function getSeed(seedName: string): SeedData {
   const name = (seedName || '').trim().toLowerCase()
   if (name === 'empty' || name === '') {
-    return {
-      clusterStateData: minimalClusterStateData,
-      fsConfig: minimalFsConfig
-    }
+    return { fsConfig: minimalFsConfig }
   }
   if (name === 'demo') {
-    return { clusterStateData: demoClusterStateData, fsConfig: demoFsConfig }
+    return { fsConfig: demoFsConfig }
   }
   if (name === 'intro') {
-    return { clusterStateData: introClusterStateData, fsConfig: introFsConfig }
+    return { fsConfig: introFsConfig }
   }
-  // default: minimal
-  return {
-    clusterStateData: minimalClusterStateData,
-    fsConfig: minimalFsConfig
-  }
+  return { fsConfig: minimalFsConfig }
 }

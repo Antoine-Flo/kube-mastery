@@ -187,8 +187,20 @@ export const createScheduler = (
     }
   }
 
+  const scheduleExistingUnboundPods = (): void => {
+    const state = getState()
+    const pods = state.getPods()
+    for (const pod of pods) {
+      if (!needsScheduling(pod)) {
+        continue
+      }
+      scheduleOne(pod)
+    }
+  }
+
   return {
     start(): void {
+      scheduleExistingUnboundPods()
       // Subscribe to PodCreated events
       unsubscribe = eventBus.subscribe('PodCreated', handleEvent)
     },

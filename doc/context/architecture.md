@@ -115,7 +115,7 @@ src/
 │   ├── lesson/                   # LessonQuizNav, LessonTerminal, LessonClusterViewer, etc.
 │   └── overview/
 ├── content/                      # Content collections (courses, overview), facades
-├── courses/                      # course-structure.ts, modules/*, seeds/ (minimal, demo, getSeed)
+├── courses/                      # course-structure.ts, modules/*, seeds/ (filesystem seeds + getSeed)
 ├── lib/
 │   ├── supabase.ts
 │   └── progress/                 # domain, server, supabase-adapter

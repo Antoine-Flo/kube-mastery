@@ -9,7 +9,6 @@ import {
 } from '../core/emulatedEnvironment/EmulatedEnvironmentManager'
 import type { EmulatedEnvironment } from '../core/emulatedEnvironment/EmulatedEnvironment'
 import {
-  clusterStateData as demoClusterStateData,
   fsConfig as demoFsConfig
 } from '../courses/seeds/demo'
 import { getSeed } from '../courses/seeds/getSeed'
@@ -73,9 +72,8 @@ export function mountTerminal(
     (() => {
       const seed = seedName
         ? getSeed(seedName)
-        : { clusterStateData: demoClusterStateData, fsConfig: demoFsConfig }
+        : { fsConfig: demoFsConfig }
       return createEmulatedEnvironment({
-        clusterStateData: seed.clusterStateData,
         filesystemState: createFilesystemFromConfig(seed.fsConfig ?? {})
       })
     })()
