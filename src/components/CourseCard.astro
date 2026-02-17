@@ -1,5 +1,12 @@
 ---
-import { BookOpen } from '@lucide/astro'
+import {
+  BookOpen,
+  Compass,
+  Code,
+  Shield,
+  Blocks,
+  GraduationCap
+} from '@lucide/astro'
 
 interface Props {
   title: string
@@ -10,6 +17,7 @@ interface Props {
   level?: string | null
   lessonsLabel: string
   comingSoonLabel?: string
+  visualVariant?: 'fundamentals' | 'developer' | 'operator' | 'platform' | 'full'
 }
 
 const {
@@ -19,9 +27,12 @@ const {
   comingSoon = false,
   level,
   lessonsLabel,
-  comingSoonLabel = 'Coming soon'
+  comingSoonLabel = 'Coming soon',
+  visualVariant
 } = Astro.props
+
 const descriptionText = description ?? ''
+const hasVisual = !!visualVariant
 ---
 
 <div
@@ -34,11 +45,22 @@ const descriptionText = description ?? ''
 >
   <a href={comingSoon ? '#' : href} class="card__link">
     {comingSoon && <div class="banner banner--soon">{comingSoonLabel}</div>}
+    {hasVisual && (
+      <div class:list={['card__visual', visualVariant && `card__visual--${visualVariant}`]}>
+        <div class="card__visual-icon">
+          {visualVariant === 'fundamentals' && <Compass size={40} aria-hidden="true" />}
+          {visualVariant === 'developer' && <Code size={40} aria-hidden="true" />}
+          {visualVariant === 'operator' && <Shield size={40} aria-hidden="true" />}
+          {visualVariant === 'platform' && <Blocks size={40} aria-hidden="true" />}
+          {visualVariant === 'full' && <GraduationCap size={40} aria-hidden="true" />}
+        </div>
+      </div>
+    )}
     <div class="card__header">
       <h3 class="card__title">{title}</h3>
       <div class="card__meta">
         <span class="lessons">
-          <BookOpen size={16} aria-hidden="true" />
+          <BookOpen size={16} aria-hidden="true" class="lessons__icon" />
           {lessonsLabel}
         </span>
         {level && (
@@ -67,6 +89,7 @@ const descriptionText = description ?? ''
     background-color: var(--color-palette-gray-surface-bg);
     border: 1px solid var(--color-border);
   }
+
   .card__link {
     display: flex;
     flex-direction: column;
@@ -74,12 +97,74 @@ const descriptionText = description ?? ''
     text-decoration: none;
     color: inherit;
   }
+
+  .card__visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 92px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card__visual--fundamentals {
+    background: linear-gradient(135deg, var(--color-cyan-3) 0%, var(--color-cyan-5) 100%);
+  }
+
+  .card__visual--developer {
+    background: linear-gradient(135deg, var(--color-amber-3) 0%, var(--color-amber-5) 100%);
+  }
+
+  .card__visual--operator {
+    background: linear-gradient(135deg, var(--color-ruby-3) 0%, var(--color-ruby-5) 100%);
+  }
+
+  .card__visual--platform {
+    background: linear-gradient(135deg, var(--color-green-3) 0%, var(--color-green-5) 100%);
+  }
+
+  .card__visual--full {
+    background: linear-gradient(
+      135deg,
+      var(--color-gray-3) 0%,
+      var(--color-cyan-3) 50%,
+      var(--color-gray-4) 100%
+    );
+  }
+
+  .card__visual-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card__visual--fundamentals .card__visual-icon {
+    color: var(--color-cyan-11);
+  }
+
+  .card__visual--developer .card__visual-icon {
+    color: var(--color-amber-11);
+  }
+
+  .card__visual--operator .card__visual-icon {
+    color: var(--color-ruby-11);
+  }
+
+  .card__visual--platform .card__visual-icon {
+    color: var(--color-green-11);
+  }
+
+  .card__visual--full .card__visual-icon {
+    color: var(--color-gray-12);
+  }
+
   .card__header {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
     padding: var(--spacing-6);
   }
+
   .card__body {
     display: flex;
     flex: 1;
@@ -88,27 +173,32 @@ const descriptionText = description ?? ''
     padding-left: var(--spacing-6);
     padding-right: var(--spacing-6);
   }
+
   .card__title {
     font-size: var(--text-lg);
     line-height: var(--line-height-lg);
     font-weight: var(--font-weight-semibold);
     margin: 0;
   }
+
   .card__description {
     color: var(--color-fg-muted);
     font-size: var(--text-sm);
     line-height: var(--line-height-sm);
   }
+
   .link {
     cursor: pointer;
     transition:
       transform 0.1s ease,
       box-shadow 0.15s ease;
   }
+
   .card.link:hover {
     transform: translateY(-5px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
+
   .banner {
     display: flex;
     align-items: center;
@@ -119,28 +209,34 @@ const descriptionText = description ?? ''
     text-align: center;
     width: 100%;
   }
+
   .banner--soon {
     color: var(--color-amber-11);
     background-color: var(--color-amber-2);
     border-bottom: 1px solid var(--color-amber-4);
   }
+
   h3 {
     font-size: var(--text-xl);
   }
+
   .card__meta {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     margin-top: 0.25rem;
   }
+
   .level {
     font-size: var(--text-xs);
     color: var(--color-fg-muted);
   }
+
   .meta-separator {
     font-size: var(--text-xs);
     color: var(--color-gray-8);
   }
+
   .lessons {
     display: inline-flex;
     align-items: center;
@@ -149,15 +245,18 @@ const descriptionText = description ?? ''
     color: var(--color-gray-11);
     line-height: 1.5;
   }
-  .lessons :global(svg) {
+
+  .lessons__icon {
     flex-shrink: 0;
     color: var(--color-gray-9);
   }
+
   .card.soon {
     opacity: 0.6;
     cursor: not-allowed;
     pointer-events: none;
   }
+
   .card.soon * {
     color: var(--color-gray-9);
   }

@@ -3,14 +3,22 @@ import Layout from '../../layouts/Layout.astro'
 import CourseCard from '../../components/CourseCard.astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import { getCourses } from '../../content/courses/facade'
-import { getTaskGroups } from '../../content/tasks/facade'
 
 const locale = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(locale)
 const localePath = useLocalePath(locale)
 
 const courses = getCourses(locale)
-const taskGroups = getTaskGroups(locale)
+
+type CourseVisualVariant = 'fundamentals' | 'developer' | 'operator' | 'platform' | 'full'
+
+const visualVariantByCourseId: Partial<Record<string, CourseVisualVariant>> = {
+  'kubernetes-fundamentals': 'fundamentals',
+  'kubernetes-developer': 'developer',
+  'kubernetes-operator': 'operator',
+  'kubernetes-platform-engineer': 'platform',
+  'kubernetes-full-course': 'full'
+}
 ---
 
 <Layout>
@@ -20,43 +28,24 @@ const taskGroups = getTaskGroups(locale)
 
     <div class="grid">
       {
-        courses.map((course) => (
-          <CourseCard
-            title={course.title}
-            description={course.shortDescription ?? course.description}
-            totalLessons={course.totalLessons}
-            href={localePath(`/courses/${course.id}`)}
-            comingSoon={course.comingSoon}
-            level={course.level}
-            lessonsLabel={`${course.totalLessons} ${t('courses_lessons')}`}
-            comingSoonLabel={t('courses_comingSoon')}
-          />
-        ))
-      }
-    </div>
+        courses.map((course) => {
+          const visualVariant = visualVariantByCourseId[course.id]
 
-    <div class="section">
-      <h2>{t('tasks_title')}</h2>
-      <p>{t('tasks_subtitle')}</p>
-
-      <div class="grid">
-        {
-          taskGroups.map((group) => (
+          return (
             <CourseCard
-              title={group.title}
-              description={group.description}
-              totalLessons={group.totalTasks}
-              href={localePath(`/tasks/${group.id}`)}
-              lessonsLabel={
-                group.totalTasks === 1
-                  ? `1 ${t('tasks_task')}`
-                  : `${group.totalTasks} ${t('tasks_tasks')}`
-              }
+              title={course.title}
+              description={course.shortDescription ?? course.description}
+              totalLessons={course.totalLessons}
+              href={localePath(`/courses/${course.id}`)}
+              comingSoon={course.comingSoon}
+              level={course.level}
+              lessonsLabel={`${course.totalLessons} ${t('courses_lessons')}`}
               comingSoonLabel={t('courses_comingSoon')}
+              visualVariant={visualVariant}
             />
-          ))
-        }
-      </div>
+          )
+        })
+      }
     </div>
 
     <p class="modules-link">
@@ -76,12 +65,12 @@ const taskGroups = getTaskGroups(locale)
     font-size: 1.875rem;
     font-weight: var(--font-weight-bold);
     color: var(--color-gray-12);
-    text-align: center;
+    text-align: left;
     margin-bottom: 0.2rem;
   }
   main > p {
     color: var(--color-gray-11);
-    text-align: center;
+    text-align: left;
     margin-bottom: 3rem;
     font-size: var(--text-lg);
   }
@@ -105,18 +94,21 @@ const taskGroups = getTaskGroups(locale)
       grid-template-columns: repeat(3, 1fr);
     }
   }
+
   .modules-link {
     text-align: center;
     margin-top: 3rem;
-    font-size: var(--text-sm);
     color: var(--color-gray-9);
   }
+  
   .modules-link a {
+    font-size: var(--text-sm);
     color: var(--color-gray-9);
     text-decoration: underline;
     text-underline-offset: 2px;
     transition: color 0.15s ease;
   }
+
   .modules-link a:hover {
     color: var(--color-gray-11);
   }

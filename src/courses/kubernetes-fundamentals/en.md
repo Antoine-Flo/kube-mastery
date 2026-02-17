@@ -1,6 +1,6 @@
 ---
 title: "Kubernetes Fundamentals"
-shortDescription: Master the core concepts of Kubernetes and deploy your first applications. Architecture, objects, namespaces, labels, Pods, Deployments, and Services.
+shortDescription: Master Kubernetes fundamentals and deploy your first applications. Core concepts, objects, namespaces, Pods, Services, DNS, ConfigMaps, and probes.
 isActive: true
 price: 0
 comingSoon: false
@@ -12,12 +12,10 @@ Your essential starting point for Kubernetes. This course walks you through ever
 
 **What you'll learn:**
 
-- **How Kubernetes works**: Cluster architecture, control plane, worker nodes, and the API server
-- **Kubernetes objects**: Spec & status model, YAML structure, imperative vs. declarative management
-- **Organizing resources**: Namespaces for isolation, labels for filtering, annotations for metadata
-- **Day-to-day operations**: `kubectl get`, `describe`, `logs`, `exec`, `edit`, `delete`, and `apply`
-- **Your first workloads**: Pods, Deployments, scaling, and managing application lifecycle
-- **Exposing applications**: Services (ClusterIP, NodePort, LoadBalancer) and service types
+- **Understanding the foundations**: Onboarding, core concepts, Kubernetes objects, and namespaces
+- **Running first workloads**: Pods, pod lifecycle, and Deployments
+- **Exposing and connecting apps**: Services, service types, and DNS discovery
+- **Configuring applications**: ConfigMaps and probes (liveness/readiness)
 
 **Why start here?**
 
@@ -25,6 +23,6 @@ Every Kubernetes journey — whether you're a developer deploying applications, 
 
 **Course structure:**
 
-12 chapters across 3 modules, progressing from "what is Kubernetes?" to deploying and exposing your first applications on a real cluster. Each lesson includes explanations, YAML examples, kubectl commands, and quizzes.
+12 chapters across 4 modules, progressing from "what is Kubernetes?" to deploying, exposing, and configuring your first applications on a real cluster. Each lesson includes explanations, YAML examples, kubectl commands, and quizzes.
 
 Recommended next step: **Kubernetes Developer** (to go deeper with workloads and configuration) or **Kubernetes Operator** (to secure and administer clusters).

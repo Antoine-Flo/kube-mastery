@@ -305,46 +305,52 @@ try {
 
   .bg-halo {
     position: absolute;
-    inset: -10%;
+    inset: 0;
     z-index: 0;
     pointer-events: none;
-    /* Plusieurs halos pour rythmer la page sans couper le fond */
+    /* Trois halos distincts, sans transition vers transparent */
     background:
       radial-gradient(
-        ellipse 45% 20% at 75% 14%,
+        ellipse 34% 48% at 76% 16%,
         hsl(192, 74%, 10%) 0%,
-        transparent 74%
-      ),
+        hsl(192, 74%, 10%) 24%,
+        var(--color-gray-1) 100%
+      ) 50% 0% / 100% 28% no-repeat,
       radial-gradient(
-        ellipse 42% 18% at 28% 48%,
+        ellipse 32% 46% at 26% 50%,
         hsl(192, 74%, 10%) 0%,
-        transparent 72%
-      ),
+        hsl(192, 74%, 10%) 22%,
+        var(--color-gray-1) 100%
+      ) 50% 50% / 100% 24% no-repeat,
       radial-gradient(
-        ellipse 46% 22% at 72% 80%,
+        ellipse 36% 50% at 74% 84%,
         hsl(192, 74%, 10%) 0%,
-        transparent 75%
-      ),
+        hsl(192, 74%, 10%) 24%,
+        var(--color-gray-1) 100%
+      ) 50% 100% / 100% 24% no-repeat,
       var(--color-gray-1);
   }
 
   :global([data-theme='light']) .bg-halo {
     background:
       radial-gradient(
-        ellipse 50% 30% at 75% 14%,
+        ellipse 34% 48% at 76% 16%,
         hsl(194, 55%, 87%) 0%,
-        transparent 70%
-      ),
+        hsl(194, 55%, 87%) 24%,
+        var(--color-gray-1) 100%
+      ) 50% 0% / 100% 28% no-repeat,
       radial-gradient(
-        ellipse 46% 26% at 28% 48%,
-        hsl(194, 55%, 90%) 0%,
-        transparent 68%
-      ),
+        ellipse 32% 46% at 26% 50%,
+        hsl(194, 55%, 87%) 0%,
+        hsl(194, 55%, 87%) 22%,
+        var(--color-gray-1) 100%
+      ) 50% 50% / 100% 24% no-repeat,
       radial-gradient(
-        ellipse 52% 30% at 72% 80%,
-        hsl(194, 55%, 88%) 0%,
-        transparent 72%
-      ),
+        ellipse 36% 50% at 74% 84%,
+        hsl(194, 55%, 87%) 0%,
+        hsl(194, 55%, 87%) 24%,
+        var(--color-gray-1) 100%
+      ) 50% 100% / 100% 24% no-repeat,
       var(--color-gray-1);
   }
 
@@ -352,39 +358,46 @@ try {
     .bg-halo {
       background:
         radial-gradient(
-          ellipse 78% 18% at 72% 8%,
+          ellipse 90% 86% at 72% 10%,
           hsl(192, 74%, 10%) 0%,
-          transparent 72%
-        ),
+          hsl(192, 74%, 10%) 34%,
+          var(--color-gray-1) 100%
+        ) 50% 0% / 100% 36% no-repeat,
         radial-gradient(
-          ellipse 80% 18% at 28% 44%,
+          ellipse 92% 86% at 28% 50%,
           hsl(192, 74%, 10%) 0%,
-          transparent 70%
-        ),
+          hsl(192, 74%, 10%) 32%,
+          var(--color-gray-1) 100%
+        ) 50% 50% / 100% 36% no-repeat,
         radial-gradient(
-          ellipse 82% 20% at 70% 78%,
+          ellipse 94% 90% at 70% 86%,
           hsl(192, 74%, 10%) 0%,
-          transparent 74%
-        ),
+          hsl(192, 74%, 10%) 34%,
+          var(--color-gray-1) 100%
+        ) 50% 100% / 100% 36% no-repeat,
         var(--color-gray-1);
     }
-    :global([data-theme='light']) .bg-halo {
+
+    [data-theme='light'] .bg-halo {
       background:
         radial-gradient(
-          ellipse 82% 24% at 72% 8%,
+          ellipse 90% 86% at 72% 10%,
           hsl(194, 55%, 87%) 0%,
-          transparent 68%
-        ),
+          hsl(194, 55%, 87%) 34%,
+          var(--color-gray-1) 100%
+        ) 50% 0% / 100% 36% no-repeat,
         radial-gradient(
-          ellipse 84% 24% at 28% 44%,
-          hsl(194, 55%, 90%) 0%,
-          transparent 66%
-        ),
+          ellipse 92% 86% at 28% 50%,
+          hsl(194, 55%, 87%) 0%,
+          hsl(194, 55%, 87%) 32%,
+          var(--color-gray-1) 100%
+        ) 50% 50% / 100% 36% no-repeat,
         radial-gradient(
-          ellipse 86% 24% at 70% 78%,
-          hsl(194, 55%, 88%) 0%,
-          transparent 70%
-        ),
+          ellipse 94% 90% at 70% 86%,
+          hsl(194, 55%, 87%) 0%,
+          hsl(194, 55%, 87%) 34%,
+          var(--color-gray-1) 100%
+        ) 50% 100% / 100% 36% no-repeat,
         var(--color-gray-1);
     }
   }

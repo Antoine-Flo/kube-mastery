@@ -1,6 +1,6 @@
 ---
 title: "Kubernetes Complete Course"
-shortDescription: The exhaustive path covering every topic in one linear course — all modules, all chapters, from fundamentals to advanced extensions. 40 chapters and growing.
+shortDescription: The exhaustive path covering every topic in one linear course — all modules, all chapters, from fundamentals to advanced extensions. 42 chapters and growing.
 isActive: true
 price: 0
 comingSoon: false
@@ -27,4 +27,4 @@ Engineers who want the complete picture without choosing a track. This is the ex
 
 Also ideal for anyone preparing for both **CKA** and **CKAD** certifications simultaneously.
 
-**Current status:** 40 chapters published across 9 modules. Target roadmap: 95 chapters.
+**Current status:** 42 chapters published across 9 modules. Target roadmap: 95 chapters.

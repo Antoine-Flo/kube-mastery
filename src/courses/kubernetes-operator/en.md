@@ -1,6 +1,6 @@
 ---
 title: "Kubernetes Operator / SRE"
-shortDescription: Secure, monitor, and administer Kubernetes clusters in production. Covers RBAC, storage, policies, observability, certificates, and kubeconfig.
+shortDescription: Secure, govern, and administer Kubernetes clusters in production. Covers security, PV/PVC, policies, observability, certificates, and kubeconfig.
 isActive: true
 price: 0
 comingSoon: false
@@ -13,7 +13,7 @@ The path for SREs, ops engineers, and cluster administrators who keep Kubernetes
 **What you'll learn:**
 
 - **Security** (6 chapters): Cloud-native security model, API access control, ServiceAccounts, RBAC, Pod Security Standards, and Linux security contexts
-- **Storage** (3 chapters): Volumes, PersistentVolumes & PersistentVolumeClaims, StorageClasses and dynamic provisioning
+- **Storage** (1 chapter): PersistentVolumes & PersistentVolumeClaims (PV/PVC)
 - **Policy** (2 chapters): ResourceQuotas and LimitRanges for multi-tenant governance
 - **Administration** (3 chapters): Container logging, metrics & observability, Kubernetes PKI and certificate management
 - **Kubeconfig** (1 chapter): Multi-cluster access, contexts, and authentication methods
@@ -26,6 +26,6 @@ SREs, system administrators, platform teams, and anyone preparing for the **CKA*
 
 **Course structure:**
 
-15 chapters across 5 modules, moving from understanding the security model to confidently managing production clusters with proper RBAC, storage, quotas, and monitoring. Every chapter includes YAML examples, kubectl commands, and quizzes.
+13 chapters across 5 modules, moving from understanding the security model to confidently managing production clusters with proper RBAC, persistent storage, quotas, and monitoring. Every chapter includes YAML examples, kubectl commands, and quizzes.
 
 Recommended next step: **Kubernetes Platform Engineer** (to extend Kubernetes with CRDs and operators).

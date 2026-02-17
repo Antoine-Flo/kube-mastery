@@ -1,6 +1,6 @@
 ---
 title: "Fondamentaux Kubernetes"
-shortDescription: Maîtrisez les concepts essentiels de Kubernetes et déployez vos premières applications. Architecture, objets, namespaces, labels, Pods, Deployments et Services.
+shortDescription: Maîtrisez les fondamentaux Kubernetes et déployez vos premières applications. Concepts clés, objets, namespaces, Pods, Services, DNS, ConfigMaps et probes.
 isActive: true
 price: 0
 comingSoon: false
@@ -12,12 +12,10 @@ Votre point de départ essentiel pour Kubernetes. Ce cours vous guide à travers
 
 **Ce que vous apprendrez :**
 
-- **Comment fonctionne Kubernetes** : Architecture du cluster, control plane, worker nodes et API server
-- **Les objets Kubernetes** : Modèle spec/status, structure YAML, gestion impérative vs déclarative
-- **Organiser ses ressources** : Namespaces pour l'isolation, labels pour le filtrage, annotations pour les métadonnées
-- **Opérations quotidiennes** : `kubectl get`, `describe`, `logs`, `exec`, `edit`, `delete` et `apply`
-- **Premiers workloads** : Pods, Deployments, scaling et gestion du cycle de vie des applications
-- **Exposer ses applications** : Services (ClusterIP, NodePort, LoadBalancer) et types de services
+- **Comprendre les bases** : Onboarding, concepts fondamentaux, objets Kubernetes et namespaces
+- **Lancer ses premiers workloads** : Pods, cycle de vie des Pods et Deployments
+- **Exposer et connecter ses apps** : Services, types de services et découverte DNS
+- **Configurer une application** : ConfigMaps et probes (liveness/readiness)
 
 **Pourquoi commencer ici ?**
 
@@ -25,6 +23,6 @@ Tout parcours Kubernetes — que vous soyez développeur déployant des applicat
 
 **Structure du cours :**
 
-12 chapitres répartis sur 3 modules, progressant de « qu'est-ce que Kubernetes ? » au déploiement et à l'exposition de vos premières applications sur un vrai cluster. Chaque leçon inclut des explications, des exemples YAML, des commandes kubectl et des quiz.
+12 chapitres répartis sur 4 modules, progressant de « qu'est-ce que Kubernetes ? » au déploiement, à l'exposition réseau et à la configuration de vos premières applications sur un vrai cluster. Chaque leçon inclut des explications, des exemples YAML, des commandes kubectl et des quiz.
 
 Prochaine étape recommandée : **Kubernetes Développeur** (pour approfondir workloads et configuration) ou **Kubernetes Opérateur** (pour sécuriser et administrer des clusters).

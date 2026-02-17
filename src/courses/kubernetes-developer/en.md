@@ -1,6 +1,6 @@
 ---
 title: "Kubernetes Developer"
-shortDescription: Deploy, expose, configure, and debug your applications on Kubernetes. Covers Pods, Deployments, Services, Ingress, ConfigMaps, Secrets, and probes.
+shortDescription: Go deeper on application delivery in Kubernetes. Object management, labels/annotations, advanced workloads, Ingress, Secrets, and resource management.
 isActive: true
 price: 0
 comingSoon: false
@@ -12,9 +12,10 @@ The hands-on path for developers who deploy and operate applications on Kubernet
 
 **What you'll learn:**
 
-- **Workloads** (8 chapters): Pods, lifecycle, ReplicaSets, Deployments, rolling updates, rollbacks, StatefulSets, Jobs, and CronJobs
-- **Networking** (4 chapters): ClusterIP, NodePort, LoadBalancer, ExternalName Services, DNS discovery, and Ingress for HTTP routing
-- **Configuration** (4 chapters): ConfigMaps, Secrets, resource requests/limits, QoS classes, and liveness/readiness/startup probes
+- **Overview (advanced)** (4 chapters): object management, labels, annotations, and day-to-day kubectl operations
+- **Workloads (advanced)** (5 chapters): ReplicaSets, Deployment updates, StatefulSets, Jobs, and CronJobs
+- **Networking (advanced)** (1 chapter): Ingress for HTTP routing
+- **Configuration (advanced)** (2 chapters): Secrets and resource management (requests/limits, QoS)
 
 **Who is this for?**
 
@@ -24,6 +25,6 @@ Backend and frontend developers, DevOps engineers writing CI/CD pipelines, and a
 
 **Course structure:**
 
-16 chapters across 3 modules, moving from deploying your first Pod to confidently managing production workloads with proper health checks and configuration. Every chapter includes YAML examples, kubectl commands, and quizzes.
+12 chapters across 4 modules, moving from proper Kubernetes object management to advanced application workloads with Ingress and resource configuration. Every chapter includes YAML examples, kubectl commands, and quizzes.
 
 Recommended next step: **Kubernetes Platform Engineer** (to extend Kubernetes) or **Kubernetes Operator** (to expand into cluster administration).

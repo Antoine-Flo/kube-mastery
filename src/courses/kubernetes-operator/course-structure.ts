@@ -12,10 +12,8 @@ export const courseStructure: CourseStructure = {
     { moduleId: 'security', chapterId: 'pod-security-standards' },
     { moduleId: 'security', chapterId: 'linux-security-intro' },
 
-    // Storage — gérer le stockage persistant
-    { moduleId: 'storage', chapterId: 'volumes-intro' },
+    // Storage — gérer le stockage persistant (chapitres implémentés)
     { moduleId: 'storage', chapterId: 'pv-pvc-intro' },
-    { moduleId: 'storage', chapterId: 'storage-class-intro' },
 
     // Policy — gouvernance multi-tenant
     { moduleId: 'policy', chapterId: 'resource-quotas' },

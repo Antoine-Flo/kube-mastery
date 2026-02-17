@@ -1,6 +1,6 @@
 ---
 title: "Formation complète Kubernetes"
-shortDescription: Le parcours exhaustif couvrant tous les sujets en un seul cours linéaire — tous les modules, tous les chapitres, des fondamentaux aux extensions avancées. 40 chapitres et en croissance.
+shortDescription: Le parcours exhaustif couvrant tous les sujets en un seul cours linéaire — tous les modules, tous les chapitres, des fondamentaux aux extensions avancées. 42 chapitres et en croissance.
 isActive: true
 price: 0
 comingSoon: false
@@ -27,4 +27,4 @@ Les ingénieurs qui veulent la vue complète sans choisir de parcours. C'est le 
 
 Idéal aussi pour ceux qui préparent les certifications **CKA** et **CKAD** simultanément.
 
-**Statut actuel :** 40 chapitres publiés sur 9 modules. Roadmap cible : 95 chapitres.
+**Statut actuel :** 42 chapitres publiés sur 9 modules. Roadmap cible : 95 chapitres.

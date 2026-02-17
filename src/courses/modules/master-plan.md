@@ -4,8 +4,8 @@
 
 - Cours complet (`kubernetes-full-course`) publié et visible (`comingSoon: false`).
 - Structure cible du parcours complet: **95 chapitres**.
-- Chapitres actuellement implémentés (`chapter.json` présents): **40**.
-- Écart restant: **55 chapitres**.
+- Chapitres actuellement implémentés (`chapter.json` présents): **42**.
+- Écart restant: **53 chapitres**.
 - Référence de suivi détaillée: `src/courses/modules/gap-matrix-en.md`.
 
 ### Modules déjà enrichis (EN)
@@ -220,15 +220,15 @@ Statut : publié.
 | 1   | Overview            | onboarding            | Utiliser la plateforme, environnement      |
 | 2   | Overview            | concepts-fondamentaux | Qu'est-ce que K8s, pourquoi l'utiliser     |
 | 3   | Overview            | objets-kubernetes     | Structure YAML, apiVersion, kind, metadata |
-| 4   | Overview            | object-management     | Impératif vs déclaratif, kubectl apply     |
-| 5   | Overview            | namespaces            | Isolation logique, organisation            |
-| 6   | Overview            | labels-intro          | Clé/valeur, sélecteurs, organisation       |
-| 7   | Overview            | annotations           | Métadonnées non identifiantes              |
-| 8   | Overview            | operations            | kubectl get/describe/edit, bonnes pratiques|
-| 9   | Workloads           | pods-intro            | Premier Pod, anatomie de base              |
-| 10  | Workloads           | deployments-intro     | Création, scaling basique                  |
-| 11  | Services-Networking | services-intro        | Exposer ses Pods, ClusterIP                |
-| 12  | Services-Networking | services-types        | NodePort, LoadBalancer                     |
+| 4   | Overview            | namespaces            | Isolation logique, organisation            |
+| 5   | Workloads           | pods-intro            | Premier Pod, anatomie de base              |
+| 6   | Workloads           | pod-lifecycle         | Phases, redémarrages, état des Pods        |
+| 7   | Workloads           | deployments-intro     | Création, scaling basique                  |
+| 8   | Services-Networking | services-intro        | Exposer ses Pods, ClusterIP                |
+| 9   | Services-Networking | services-types        | NodePort, LoadBalancer                     |
+| 10  | Services-Networking | dns-intro             | Découverte de services via DNS interne     |
+| 11  | Configuration       | configmaps-intro      | Externaliser la configuration applicative   |
+| 12  | Configuration       | probes-intro          | Health checks (liveness/readiness)         |
 
 ### Cours 2 : Kubernetes Complet (50+ chapitres)
 
@@ -414,14 +414,16 @@ Chaque module a un **propriétaire principal** et n'apparaît que dans un seul p
 
 | Module | Parcours propriétaire | Chapitres |
 |---|---|---|
-| overview | **Fondamentaux** (1) | onboarding → operations (8 ch.) |
-| workloads/pods-intro, deployments-intro | **Fondamentaux** (1) | premiers workloads (2 ch.) |
-| services-networking/services-intro, services-types | **Fondamentaux** (1) | premiers services (2 ch.) |
-| workloads (suite) | **Développeur** (2) | pod-lifecycle → cronjobs (6 ch.) |
-| services-networking (suite) | **Développeur** (2) | dns-intro, ingress-intro (2 ch.) |
-| configuration (sauf kubeconfig) | **Développeur** (2) | configmaps → probes (4 ch.) |
+| overview (fondations) | **Fondamentaux** (1) | onboarding, concepts-fondamentaux, objets-kubernetes, namespaces (4 ch.) |
+| workloads (fondations) | **Fondamentaux** (1) | pods-intro, pod-lifecycle, deployments-intro (3 ch.) |
+| services-networking (fondations) | **Fondamentaux** (1) | services-intro, services-types, dns-intro (3 ch.) |
+| configuration (fondations) | **Fondamentaux** (1) | configmaps-intro, probes-intro (2 ch.) |
+| overview (suite) | **Développeur** (2) | object-management, labels-intro, annotations, operations (4 ch.) |
+| workloads (suite) | **Développeur** (2) | replicasets, deployments-updates, statefulsets-intro, jobs-intro, cronjobs (5 ch.) |
+| services-networking (suite) | **Développeur** (2) | ingress-intro (1 ch.) |
+| configuration (suite) | **Développeur** (2) | secrets-intro, resource-management-intro (2 ch.) |
 | security | **Opérateur** (3) | cloud-native-security → linux-security (6 ch.) |
-| storage | **Opérateur** (3) | volumes → storage-class (3 ch.) |
+| storage | **Opérateur** (3) + full-course | pv-pvc-intro (opérateur), volumes-intro et storage-class-intro (full-course) |
 | policy | **Opérateur** (3) | resource-quotas, limit-ranges (2 ch.) |
 | administration | **Opérateur** (3) | logging, observability, certificates (3 ch.) |
 | configuration/kubeconfig | **Opérateur** (3) | kubeconfig (1 ch.) |
@@ -432,7 +434,7 @@ Chaque module a un **propriétaire principal** et n'apparaît que dans un seul p
 | helm *(futur)* | Platform Eng. (4) | — |
 | istio *(futur)* | Platform Eng. (4) | — |
 
-**Résultat : zéro module dupliqué** (configuration est split entre Développeur et Opérateur, ce qui est logique — ConfigMaps/Secrets/probes = dev, kubeconfig = ops).
+**Résultat : zéro chapitre dupliqué entre parcours 1→4 (hors full-course), et zéro chapitre implémenté orphelin.**
 
 ### Progression recommandée par profil
 
@@ -449,3 +451,4 @@ Chaque module a un **propriétaire principal** et n'apparaît que dans un seul p
 
 - Le cours `kubernetes-intro` (quick start) a été supprimé — ses chapitres sont intégrés dans Fondamentaux.
 - Le cours `kubernetes-full-course` (order 5) est le parcours exhaustif tout-en-un qui combine l'intégralité des modules en un seul cours linéaire.
+- **Tasks** : les groupes de tâches pratiques (tasks) sont mis de côté pour le moment. Le bloc tasks sur la page `/courses` est commenté. On y reviendra plus tard une fois le contenu des parcours stabilisé.
