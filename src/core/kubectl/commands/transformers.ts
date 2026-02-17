@@ -349,6 +349,14 @@ const clusterInfoTransformer: ActionTransformer = (ctx) => {
 }
 
 /**
+ * Transformer for api-versions command: explicitly sets resource to undefined
+ * Api-versions command doesn't require a resource
+ */
+const apiVersionsTransformer: ActionTransformer = (ctx) => {
+  return success({ ...ctx, resource: undefined })
+}
+
+/**
  * Transformer for api-resources command: explicitly sets resource to undefined
  * Api-resources command doesn't require a resource
  */
@@ -430,6 +438,7 @@ const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
   annotate: annotateTransformer,
   version: versionTransformer,
   'cluster-info': clusterInfoTransformer,
+  'api-versions': apiVersionsTransformer,
   'api-resources': apiResourcesTransformer,
   scale: scaleTransformer
 }

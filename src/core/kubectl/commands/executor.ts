@@ -5,6 +5,7 @@ import type { Logger } from '../../../logger/Logger'
 import type { ExecutionResult } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import { handleAnnotate } from './handlers/annotate'
+import { handleAPIVersions } from './handlers/apiVersions'
 import { handleAPIResources } from './handlers/apiResources'
 import { handleApply, handleCreate } from './handlers/applyCreate'
 import { handleClusterInfo } from './handlers/clusterInfo'
@@ -66,6 +67,7 @@ const createHandlers = (
   handlers.set('cluster-info', (parsed) =>
     handleClusterInfo(clusterState.toJSON(), parsed)
   )
+  handlers.set('api-versions', (parsed) => success(handleAPIVersions(parsed)))
   handlers.set('api-resources', (parsed) => handleAPIResources(parsed))
   handlers.set('scale', (parsed) => handleScale(clusterState, parsed, eventBus))
 

@@ -11,6 +11,7 @@ export type Action =
   | 'annotate'
   | 'version'
   | 'cluster-info'
+  | 'api-versions'
   | 'api-resources'
   | 'scale'
 

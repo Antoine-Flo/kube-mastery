@@ -933,6 +933,23 @@ data:
           expect(result.value).toContain('"kind": "NodeList"')
         }
       })
+
+      it('should handle kubectl api-versions command', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl api-versions')
+
+        expect(result.ok).toBe(true)
+        if (result.ok) {
+          expect(result.value).toContain('apps/v1')
+          expect(result.value).toContain('rbac.authorization.k8s.io/v1')
+          expect(result.value).toContain('v1')
+        }
+      })
     })
   })
 })

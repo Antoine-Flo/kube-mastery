@@ -10,6 +10,7 @@ type HelpTopic =
   | 'scale'
   | 'version'
   | 'cluster-info'
+  | 'api-versions'
   | 'api-resources'
   | 'logs'
   | 'exec'
@@ -37,6 +38,7 @@ Settings Commands:
 Other Commands:
   version         Print the client and server version information
   cluster-info    Display cluster information
+  api-versions    Print the supported API versions on the server
   api-resources   Print the supported API resources on the server
   scale           Set a new size for a deployment, replica set, or replication controller
 
@@ -98,6 +100,12 @@ Available Commands:
 
 Usage:
   kubectl cluster-info [flags] [options]
+
+Use "kubectl options" for a list of global command-line options (applies to all commands).`,
+  'api-versions': `Print the supported API versions on the server.
+
+Usage:
+  kubectl api-versions
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`,
   'api-resources': `Print the supported API resources on the server.

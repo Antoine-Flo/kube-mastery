@@ -35,6 +35,7 @@ const VALID_ACTIONS: Action[] = [
   'annotate',
   'version',
   'cluster-info',
+  'api-versions',
   'api-resources',
   'scale'
 ]
@@ -189,10 +190,11 @@ const extractResource = (ctx: ParseContext): Result<ParseContext> => {
     return success(ctx)
   }
 
-  // Commands like 'version', 'cluster-info', and 'api-resources' don't require a resource
+  // Commands like 'version', 'cluster-info', 'api-versions' and 'api-resources' don't require a resource
   if (
     ctx.action === 'version' ||
     ctx.action === 'cluster-info' ||
+    ctx.action === 'api-versions' ||
     ctx.action === 'api-resources'
   ) {
     return success(ctx)
@@ -310,10 +312,11 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
     return error('Missing action')
   }
 
-  // Commands like 'version', 'cluster-info', and 'api-resources' don't require a resource
+  // Commands like 'version', 'cluster-info', 'api-versions' and 'api-resources' don't require a resource
   if (
     ctx.action === 'version' ||
     ctx.action === 'cluster-info' ||
+    ctx.action === 'api-versions' ||
     ctx.action === 'api-resources'
   ) {
     return success(ctx)

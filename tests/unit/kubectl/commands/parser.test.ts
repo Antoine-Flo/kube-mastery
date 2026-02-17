@@ -197,3 +197,17 @@ describe('kubectl parser - get raw', () => {
     }
   })
 })
+
+describe('kubectl parser - api versions', () => {
+  it('should parse api-versions command without resource', () => {
+    const result = parseCommand('kubectl api-versions')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('api-versions')
+    expect(result.value.resource).toBeUndefined()
+  })
+})
