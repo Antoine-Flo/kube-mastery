@@ -51,7 +51,7 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
   data-rows={rows}
   data-lang={lang}
   data-seed-name={seedName ?? undefined}
-  data-persist-id={lessonTerminal ? undefined : (persistId ?? undefined)}
+  data-persist-id={persistId ?? undefined}
   data-top-prompt={topPrompt != null ? JSON.stringify(topPrompt) : undefined}
   data-lesson-terminal={lessonTerminal ? 'true' : undefined}
   data-command-limit={commandLimit ?? undefined}
@@ -267,12 +267,14 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
           })
           cleanups.set(root, () => {
             editorModalByRoot.delete(root)
+            lessonPending.delete(root)
             cleanup()
           })
           if (pid) persistIdByRoot.set(root, pid)
           loader.style.display = 'none'
           wrapper.style.display = 'block'
         } catch (err) {
+          lessonPending.delete(root)
           console.error('[TerminalWindow] Mount failed:', err)
           loader.textContent = 'Terminal unavailable.'
         }
@@ -307,7 +309,12 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
         return
       }
       const onLessonEnvReady = (ev: Event) => {
-        withEnv((ev as CustomEvent).detail?.env)
+        const env = (ev as CustomEvent).detail?.env
+        if (!env) {
+          lessonPending.delete(root)
+          return
+        }
+        withEnv(env)
       }
       document.addEventListener('lesson-env-ready', onLessonEnvReady, {
         once: true
@@ -332,6 +339,7 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
       }
       cleanup()
       cleanups.delete(root)
+      lessonPending.delete(root)
       if (pid) persistIdByRoot.delete(root)
     })
   })

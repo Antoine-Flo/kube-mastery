@@ -147,7 +147,6 @@ const t = useTranslations(lang)
       if (globalState.__lessonEnv) {
         destroyEmulatedEnvironment(globalState.__lessonEnv)
       }
-
       const seed = getSeed(seedName)
       lessonEnv = createEmulatedEnvironment({
         filesystemState: createFilesystemFromConfig(seed.fsConfig ?? {})
