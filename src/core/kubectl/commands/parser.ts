@@ -26,6 +26,7 @@ import type { Action, ParsedCommand, Resource } from './types'
 
 const VALID_ACTIONS: Action[] = [
   'get',
+  'explain',
   'describe',
   'delete',
   'apply',
@@ -48,7 +49,8 @@ const FLAG_ALIASES: Record<string, string> = {
   l: 'selector',
   f: 'filename', // Note: -f is also used for --follow in logs, but filename takes precedence
   A: 'all-namespaces',
-  c: 'container' // Container name for logs/exec
+  c: 'container', // Container name for logs/exec
+  R: 'recursive'
 }
 
 // Flags that require a value (cannot be boolean)
@@ -67,7 +69,8 @@ const FLAGS_REQUIRING_VALUES = [
   'replicas',
   'image',
   'port',
-  'raw'
+  'raw',
+  'api-version'
 ]
 // Note: 'filename' is required for apply/create, but 'f' and 'follow' are boolean for logs
 
@@ -141,6 +144,7 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     execCommand: ctx.execCommand,
     createImages: ctx.createImages,
     createCommand: ctx.createCommand,
+    explainPath: ctx.explainPath,
     labelChanges: ctx.labelChanges,
     annotationChanges: ctx.annotationChanges,
     replicas: getReplicasFromFlags(normalizedFlags),
@@ -266,7 +270,8 @@ const extractName = (ctx: ParseContext): Result<ParseContext> => {
     'logs',
     'apply',
     'label',
-    'annotate'
+    'annotate',
+    'explain'
   ]
   const hasTransformer =
     ctx.action && actionsWithCustomParsing.includes(ctx.action)

@@ -974,6 +974,41 @@ data:
           expect(result.value).toContain('v1')
         }
       })
+
+      it('should handle kubectl explain pod.spec.containers command', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl explain pod.spec.containers')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('KIND:')
+        expect(result.value).toContain('VERSION:')
+        expect(result.value).toContain('FIELD:    containers')
+        expect(result.value).toContain('DESCRIPTION:')
+      })
+
+      it('should return field not found for unknown explain path', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl explain pod.spec.unknownField')
+
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+          expect(result.error).toContain('field "unknownField" does not exist')
+        }
+      })
     })
   })
 })

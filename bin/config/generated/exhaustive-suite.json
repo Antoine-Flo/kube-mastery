@@ -337,6 +337,202 @@
       "compareMode": "normalized"
     },
     {
+      "id": "platform-cmd-22",
+      "type": "command",
+      "command": "kubectl explain pod",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "KIND:",
+          "Pod",
+          "FIELDS:"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "KIND:",
+          "Pod",
+          "FIELDS:"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-23",
+      "type": "command",
+      "command": "kubectl explain pod.spec.containers",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    containers",
+          "DESCRIPTION:"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    containers",
+          "DESCRIPTION:"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-24",
+      "type": "command",
+      "command": "kubectl explain deployment.spec.template.spec.containers",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    containers",
+          "KIND:",
+          "Deployment"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    containers",
+          "KIND:",
+          "Deployment"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-25",
+      "type": "command",
+      "command": "kubectl explain service.spec.ports",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    ports",
+          "KIND:",
+          "Service"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    ports",
+          "KIND:",
+          "Service"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-26",
+      "type": "command",
+      "command": "kubectl explain configmap.data",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    data",
+          "KIND:",
+          "ConfigMap"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    data",
+          "KIND:",
+          "ConfigMap"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-27",
+      "type": "command",
+      "command": "kubectl explain secret.data",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    data",
+          "KIND:",
+          "Secret"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    data",
+          "KIND:",
+          "Secret"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-28",
+      "type": "command",
+      "command": "kubectl explain namespace.metadata",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    metadata",
+          "KIND:",
+          "Namespace"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    metadata",
+          "KIND:",
+          "Namespace"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-29",
+      "type": "command",
+      "command": "kubectl explain node.status",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    status",
+          "KIND:",
+          "Node"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    status",
+          "KIND:",
+          "Node"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-30",
+      "type": "command",
+      "command": "kubectl explain replicaset.spec.replicas",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    replicas",
+          "KIND:",
+          "ReplicaSet"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    replicas",
+          "KIND:",
+          "ReplicaSet"
+        ]
+      }
+    },
+    {
       "id": "platform-cleanup",
       "type": "deleteYaml",
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
@@ -416,107 +612,143 @@
     {
       "id": "errors-help-cmd-8",
       "type": "command",
-      "command": "kubectl version --output wide",
-      "compareMode": "normalized"
+      "command": "kubectl explain pod.spec.notFound",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "field \"notFound\" does not exist"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "field \"notFound\" does not exist"
+        ]
+      }
     },
     {
       "id": "errors-help-cmd-9",
       "type": "command",
-      "command": "kubectl api-resources --sort-by=age",
-      "compareMode": "normalized"
+      "command": "kubectl explain all",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "the server does not have a resource type"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "the server does not have a resource type"
+        ]
+      }
     },
     {
       "id": "errors-help-cmd-10",
       "type": "command",
-      "command": "kubectl cluster-info dump --output-directory /tmp/out",
+      "command": "kubectl version --output wide",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-11",
       "type": "command",
-      "command": "kubectl -h",
+      "command": "kubectl api-resources --sort-by=age",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-12",
       "type": "command",
-      "command": "kubectl --help",
+      "command": "kubectl cluster-info dump --output-directory /tmp/out",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-13",
       "type": "command",
-      "command": "kubectl get --help",
+      "command": "kubectl -h",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-14",
       "type": "command",
-      "command": "kubectl create --help",
+      "command": "kubectl --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-15",
       "type": "command",
-      "command": "kubectl create deployment --help",
+      "command": "kubectl get --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-16",
       "type": "command",
-      "command": "kubectl delete --help",
+      "command": "kubectl create --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-17",
       "type": "command",
-      "command": "kubectl describe --help",
+      "command": "kubectl create deployment --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-18",
       "type": "command",
-      "command": "kubectl scale --help",
+      "command": "kubectl delete --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-19",
       "type": "command",
-      "command": "kubectl version --help",
+      "command": "kubectl describe --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-20",
       "type": "command",
-      "command": "kubectl cluster-info --help",
+      "command": "kubectl scale --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-21",
       "type": "command",
-      "command": "kubectl api-resources --help",
+      "command": "kubectl version --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-22",
       "type": "command",
-      "command": "kubectl logs --help",
+      "command": "kubectl cluster-info --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-23",
       "type": "command",
-      "command": "kubectl exec --help",
+      "command": "kubectl api-resources --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-24",
       "type": "command",
-      "command": "kubectl label --help",
+      "command": "kubectl logs --help",
       "compareMode": "normalized"
     },
     {
       "id": "errors-help-cmd-25",
+      "type": "command",
+      "command": "kubectl exec --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-26",
+      "type": "command",
+      "command": "kubectl label --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-27",
       "type": "command",
       "command": "kubectl annotate --help",
       "compareMode": "normalized"

@@ -225,3 +225,60 @@ describe('kubectl parser - get all', () => {
     expect(result.value.resource).toBe('all')
   })
 })
+
+describe('kubectl parser - explain', () => {
+  it('should parse explain command with resource path', () => {
+    const result = parseCommand('kubectl explain pod.spec.containers')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('explain')
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.explainPath).toEqual(['spec', 'containers'])
+  })
+
+  it('should parse explain command with root resource only', () => {
+    const result = parseCommand('kubectl explain service')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('explain')
+    expect(result.value.resource).toBe('services')
+    expect(result.value.explainPath).toEqual([])
+  })
+
+  it('should parse explain recursive flag', () => {
+    const result = parseCommand('kubectl explain pod.spec.containers --recursive')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.flags.recursive).toBe(true)
+  })
+
+  it('should reject explain command without resource argument', () => {
+    const result = parseCommand('kubectl explain')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('you must specify the type of resource to explain')
+    }
+  })
+
+  it('should reject explain command with multiple positional arguments', () => {
+    const result = parseCommand('kubectl explain pod spec')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('We accept only this format: explain RESOURCE')
+    }
+  })
+})

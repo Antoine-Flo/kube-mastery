@@ -11,6 +11,7 @@ import { handleApply, handleCreate } from './handlers/applyCreate'
 import { handleClusterInfo } from './handlers/clusterInfo'
 import { handleDelete } from './handlers/delete'
 import { handleDescribe } from './handlers/describe'
+import { handleExplain } from './handlers/explain'
 import { handleExec } from './handlers/exec'
 import { handleGet } from './handlers/get'
 import { handleLabel } from './handlers/label'
@@ -39,6 +40,7 @@ const createHandlers = (
   handlers.set('get', (parsed) =>
     success(handleGet(clusterState.toJSON(), parsed))
   )
+  handlers.set('explain', (parsed) => handleExplain(parsed))
   handlers.set('describe', (parsed) =>
     handleDescribe(clusterState.toJSON(), parsed)
   )

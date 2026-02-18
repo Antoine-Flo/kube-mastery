@@ -26,6 +26,7 @@ export type ParseContext = {
   execCommand?: string[]
   createImages?: string[]
   createCommand?: string[]
+  explainPath?: string[]
   labelChanges?: Record<string, string | null>
   annotationChanges?: Record<string, string | null>
 }
@@ -39,7 +40,10 @@ const FLAGS_REQUIRING_VALUES = new Set([
   'filename',
   'image',
   'replicas',
-  'port'
+  'port',
+  'api-version',
+  'output',
+  'o'
 ])
 
 // ─── Helper Functions ────────────────────────────────────────────────────
@@ -111,6 +115,51 @@ const extractFlagValues = (tokens: string[], flagName: string): string[] => {
   }
 
   return values
+}
+
+const extractPositionalTokensAfterAction = (tokens: string[]): string[] => {
+  const positionalTokens: string[] = []
+
+  for (let index = 2; index < tokens.length; index++) {
+    const token = tokens[index]
+    if (token === '--') {
+      break
+    }
+
+    if (token.startsWith('-')) {
+      const flagName = token.replace(/^-+/, '').split('=')[0]
+      const hasInlineValue = token.includes('=')
+      if (FLAGS_REQUIRING_VALUES.has(flagName) && !hasInlineValue) {
+        index += 1
+      }
+      continue
+    }
+
+    positionalTokens.push(token)
+  }
+
+  return positionalTokens
+}
+
+const splitExplainPath = (
+  explainArg: string
+): { resourceToken: string; explainPath: string[] } | null => {
+  const normalized = explainArg.trim().replace(/\.$/, '')
+  if (!normalized) {
+    return null
+  }
+
+  const segments = normalized.split('.')
+  if (segments.some((segment) => segment.length === 0)) {
+    return null
+  }
+
+  const [resourceToken, ...explainPath] = segments
+  if (!resourceToken) {
+    return null
+  }
+
+  return { resourceToken, explainPath }
 }
 
 /**
@@ -340,6 +389,44 @@ const apiResourcesTransformer: ActionTransformer = (ctx) => {
 }
 
 /**
+ * Transformer for explain command: extracts resource and field path.
+ * Supports:
+ * - kubectl explain pod
+ * - kubectl explain pod.spec.containers
+ */
+const explainTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens) {
+    return error('you must specify the type of resource to explain')
+  }
+
+  const positionalTokens = extractPositionalTokensAfterAction(ctx.tokens)
+  if (positionalTokens.length === 0) {
+    return error('you must specify the type of resource to explain')
+  }
+  if (positionalTokens.length > 1) {
+    return error('We accept only this format: explain RESOURCE')
+  }
+
+  const parsedExplainPath = splitExplainPath(positionalTokens[0])
+  if (!parsedExplainPath) {
+    return error('invalid explain resource path')
+  }
+
+  const resource = RESOURCE_ALIAS_MAP[parsedExplainPath.resourceToken] as
+    | Resource
+    | undefined
+  if (!resource) {
+    return error('Invalid or missing resource type')
+  }
+
+  return success({
+    ...ctx,
+    resource,
+    explainPath: parsedExplainPath.explainPath
+  })
+}
+
+/**
  * Transformer for scale command: extracts resource and name
  * Supports two syntaxes:
  * - kubectl scale deployment/name --replicas=N
@@ -415,6 +502,7 @@ const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
   'cluster-info': clusterInfoTransformer,
   'api-versions': apiVersionsTransformer,
   'api-resources': apiResourcesTransformer,
+  explain: explainTransformer,
   scale: scaleTransformer
 }
 

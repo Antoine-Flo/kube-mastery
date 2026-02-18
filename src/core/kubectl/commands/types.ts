@@ -3,6 +3,7 @@ import type { KubectlResource } from './resources'
 // Action types supported by kubectl parser
 export type Action =
   | 'get'
+  | 'explain'
   | 'describe'
   | 'delete'
   | 'apply'
@@ -37,4 +38,5 @@ export interface ParsedCommand {
   port?: number // For create deployment: --port=N
   createImages?: string[] // For create deployment: repeated --image flags
   createCommand?: string[] // For create deployment: command after --
+  explainPath?: string[] // For kubectl explain: field path segments after resource
 }

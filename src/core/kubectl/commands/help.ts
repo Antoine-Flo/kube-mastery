@@ -6,6 +6,7 @@ type HelpTopic =
   | 'create'
   | 'create deployment'
   | 'delete'
+  | 'explain'
   | 'describe'
   | 'scale'
   | 'version'
@@ -27,6 +28,7 @@ Basic Commands (Beginner):
   delete          Delete resources by file names, stdin, resources and names
 
 Troubleshooting and Debugging Commands:
+  explain         Get documentation for a resource
   describe        Show details of a specific resource or group of resources
   logs            Print the logs for a container in a pod
   exec            Execute a command in a container
@@ -73,6 +75,17 @@ Use "kubectl options" for a list of global command-line options (applies to all 
 
 Usage:
   kubectl delete (-f FILENAME | TYPE [NAME])
+
+Use "kubectl options" for a list of global command-line options (applies to all commands).`,
+  explain: `Get documentation for a resource.
+
+Usage:
+  kubectl explain TYPE [--recursive=TRUE|FALSE] [--api-version=GROUP/VERSION]
+  kubectl explain TYPE.FIELD[.FIELD]
+
+Examples:
+  kubectl explain pods
+  kubectl explain pods.spec.containers
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`,
   describe: `Show details of a specific resource or group of resources.

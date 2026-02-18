@@ -118,7 +118,46 @@ const createExhaustiveSegments = (): LifecycleSegment[] => {
         'kubectl api-resources --namespaced=false',
         'kubectl api-resources --sort-by=name',
         'kubectl api-resources --sort-by=kind',
-        'kubectl api-resources --no-headers'
+        'kubectl api-resources --no-headers',
+        createRawCommand('kubectl explain pod', ['KIND:', 'Pod', 'FIELDS:']),
+        createRawCommand('kubectl explain pod.spec.containers', [
+          'FIELD:    containers',
+          'DESCRIPTION:'
+        ]),
+        createRawCommand(
+          'kubectl explain deployment.spec.template.spec.containers',
+          ['FIELD:    containers', 'KIND:', 'Deployment']
+        ),
+        createRawCommand('kubectl explain service.spec.ports', [
+          'FIELD:    ports',
+          'KIND:',
+          'Service'
+        ]),
+        createRawCommand('kubectl explain configmap.data', [
+          'FIELD:    data',
+          'KIND:',
+          'ConfigMap'
+        ]),
+        createRawCommand('kubectl explain secret.data', [
+          'FIELD:    data',
+          'KIND:',
+          'Secret'
+        ]),
+        createRawCommand('kubectl explain namespace.metadata', [
+          'FIELD:    metadata',
+          'KIND:',
+          'Namespace'
+        ]),
+        createRawCommand('kubectl explain node.status', [
+          'FIELD:    status',
+          'KIND:',
+          'Node'
+        ]),
+        createRawCommand('kubectl explain replicaset.spec.replicas', [
+          'FIELD:    replicas',
+          'KIND:',
+          'ReplicaSet'
+        ])
       ]
     },
     {
@@ -136,6 +175,12 @@ const createExhaustiveSegments = (): LifecycleSegment[] => {
         'kubectl describe pod missing-pod',
         'kubectl scale deployments missing-deploy --replicas=2',
         'kubectl get not-a-resource',
+        createRawErrorCommand('kubectl explain pod.spec.notFound', [
+          'field "notFound" does not exist'
+        ]),
+        createRawErrorCommand('kubectl explain all', [
+          'the server does not have a resource type'
+        ]),
         'kubectl version --output wide',
         'kubectl api-resources --sort-by=age',
         'kubectl cluster-info dump --output-directory /tmp/out',
