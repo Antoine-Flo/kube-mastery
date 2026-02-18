@@ -54,6 +54,8 @@ interface ResourceOutputMetadata {
   kind: string
 }
 
+type StructuredResource = Exclude<Resource, 'all'>
+
 interface ResourceListOutput<T> {
   apiVersion: string
   items: T[]
@@ -207,7 +209,7 @@ const sanitizeForOutput = <T extends Record<string, unknown>>(
   return rest as Omit<T, '_simulator'>
 }
 
-const RESOURCE_OUTPUT_METADATA: Record<Resource, ResourceOutputMetadata> = {
+const RESOURCE_OUTPUT_METADATA: Record<StructuredResource, ResourceOutputMetadata> = {
   pods: { apiVersion: 'v1', kind: 'Pod' },
   configmaps: { apiVersion: 'v1', kind: 'ConfigMap' },
   secrets: { apiVersion: 'v1', kind: 'Secret' },
@@ -218,12 +220,14 @@ const RESOURCE_OUTPUT_METADATA: Record<Resource, ResourceOutputMetadata> = {
   namespaces: { apiVersion: 'v1', kind: 'Namespace' }
 }
 
-const getResourceOutputMetadata = (resourceType: Resource): ResourceOutputMetadata => {
+const getResourceOutputMetadata = (
+  resourceType: StructuredResource
+): ResourceOutputMetadata => {
   return RESOURCE_OUTPUT_METADATA[resourceType]
 }
 
 const buildListOutput = <T>(
-  resourceType: Resource,
+  resourceType: StructuredResource,
   items: T[]
 ): ResourceListOutput<T> => {
   const metadata = getResourceOutputMetadata(resourceType)
@@ -243,7 +247,7 @@ const isStructuredOutput = (outputFormat: string): boolean => {
 
 const serializeStructuredOutput = (
   outputFormat: string,
-  resourceType: Resource,
+  resourceType: StructuredResource,
   items: unknown[],
   asSingleObject: boolean
 ): string => {
@@ -529,6 +533,10 @@ export const handleGet = (
     return handleGetRaw(state, parsed.rawPath)
   }
 
+  if (parsed.resource === 'all') {
+    return handleGetAll(state, parsed)
+  }
+
   // Validate resource type
   if (!parsed.resource) {
     return noResourcesMessage('default', false)
@@ -584,9 +592,10 @@ export const handleGet = (
 
   if (structuredOutput) {
     const asSingleObject = parsed.name !== undefined
+    const structuredResourceType = resourceType as StructuredResource
     return serializeStructuredOutput(
       outputFormat,
-      resourceType,
+      structuredResourceType,
       sanitized,
       asSingleObject
     )
@@ -686,4 +695,144 @@ export const handleGet = (
       ? withKubectlTableSpacing({ align: handler.align })
       : withKubectlTableSpacing()
   return formatTable(handler.headers, rows, tableOptions)
+}
+
+type GetAllResourceType = 'pods' | 'services' | 'deployments' | 'replicasets'
+
+const GET_ALL_RESOURCE_ORDER: GetAllResourceType[] = [
+  'pods',
+  'services',
+  'deployments',
+  'replicasets'
+]
+
+const GET_ALL_REFERENCE_BY_RESOURCE: Record<GetAllResourceType, string> = {
+  pods: 'pod',
+  services: 'service',
+  deployments: 'deployment.apps',
+  replicasets: 'replicaset.apps'
+}
+
+interface GetAllContext {
+  allNamespacesFlag: boolean
+  effectiveNamespace: string
+  filterNamespace: string | undefined
+}
+
+const buildGetAllContext = (parsed: ParsedCommand): GetAllContext => {
+  const allNamespacesFlag =
+    parsed.flags['all-namespaces'] === true || parsed.flags['A'] === true
+  const effectiveNamespace = parsed.namespace ?? 'default'
+  const filterNamespace = allNamespacesFlag ? undefined : effectiveNamespace
+  return {
+    allNamespacesFlag,
+    effectiveNamespace,
+    filterNamespace
+  }
+}
+
+const sortGetAllItems = (
+  resourceType: GetAllResourceType,
+  items: ResourceWithMetadata[]
+): ResourceWithMetadata[] => {
+  if (resourceType === 'deployments') {
+    return [...items].sort((left, right) =>
+      left.metadata.name.localeCompare(right.metadata.name)
+    )
+  }
+  return items
+}
+
+const buildGetAllRows = (
+  resourceType: GetAllResourceType,
+  items: ResourceWithMetadata[],
+  handler: ResourceHandler<ResourceWithMetadata>,
+  allNamespacesFlag: boolean
+): string[][] => {
+  const rowsSource = sortGetAllItems(resourceType, items)
+  return rowsSource.map((item) => {
+    const row = handler.formatRow(item)
+    const nameReference = GET_ALL_REFERENCE_BY_RESOURCE[resourceType]
+    const rowWithReference = [...row]
+    rowWithReference[0] = `${nameReference}/${item.metadata.name}`
+    if (allNamespacesFlag) {
+      return [item.metadata.namespace, ...rowWithReference]
+    }
+    return rowWithReference
+  })
+}
+
+const buildGetAllHeaders = (
+  allNamespacesFlag: boolean,
+  handler: ResourceHandler<ResourceWithMetadata>
+): string[] => {
+  if (allNamespacesFlag) {
+    return ['namespace', ...handler.headers]
+  }
+  return handler.headers
+}
+
+const buildGetAllTableOptions = (
+  allNamespacesFlag: boolean,
+  handler: ResourceHandler<ResourceWithMetadata>
+): { spacing: number; align?: ('left' | 'right')[] } => {
+  if (allNamespacesFlag && handler.align != null) {
+    const alignWithNamespace: ('left' | 'right')[] = ['left', ...handler.align]
+    return withKubectlTableSpacing({ align: alignWithNamespace })
+  }
+  if (handler.align != null) {
+    return withKubectlTableSpacing({ align: handler.align })
+  }
+  return withKubectlTableSpacing()
+}
+
+const buildGetAllSection = (
+  state: ClusterStateData,
+  parsed: ParsedCommand,
+  context: GetAllContext,
+  resourceType: GetAllResourceType
+): string | undefined => {
+  const handler = RESOURCE_HANDLERS[resourceType] as ResourceHandler<ResourceWithMetadata>
+  const items = handler.getItems(state)
+  const filteredItems = applyFilters(
+    items,
+    context.filterNamespace,
+    parsed.selector,
+    false,
+    parsed.name
+  )
+  if (filteredItems.length === 0) {
+    return undefined
+  }
+
+  const headers = buildGetAllHeaders(context.allNamespacesFlag, handler)
+  const rows = buildGetAllRows(
+    resourceType,
+    filteredItems,
+    handler,
+    context.allNamespacesFlag
+  )
+  const tableOptions = buildGetAllTableOptions(context.allNamespacesFlag, handler)
+  return formatTable(headers, rows, tableOptions)
+}
+
+const handleGetAll = (state: ClusterStateData, parsed: ParsedCommand): string => {
+  const context = buildGetAllContext(parsed)
+  const sections: string[] = []
+
+  for (const resourceType of GET_ALL_RESOURCE_ORDER) {
+    const section = buildGetAllSection(state, parsed, context, resourceType)
+    if (section != null) {
+      sections.push(section)
+    }
+  }
+
+  if (sections.length === 0) {
+    return noResourcesMessage(
+      context.allNamespacesFlag ? undefined : context.effectiveNamespace,
+      false
+    )
+  }
+
+  return sections.join('\n\n')
 }

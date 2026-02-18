@@ -211,3 +211,17 @@ describe('kubectl parser - api versions', () => {
     expect(result.value.resource).toBeUndefined()
   })
 })
+
+describe('kubectl parser - get all', () => {
+  it('should parse get all as a valid resource', () => {
+    const result = parseCommand('kubectl get all')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('get')
+    expect(result.value.resource).toBe('all')
+  })
+})

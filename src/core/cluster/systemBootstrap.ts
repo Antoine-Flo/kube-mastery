@@ -11,6 +11,8 @@ import { createConfigMap } from './ressources/ConfigMap'
 import type { Node, NodeCondition } from './ressources/Node'
 import { createNode } from './ressources/Node'
 import type { Pod } from './ressources/Pod'
+import type { Service } from './ressources/Service'
+import { createService } from './ressources/Service'
 
 export interface SystemBootstrapOptions {
   clusterName?: string
@@ -31,6 +33,7 @@ export interface ClusterBootstrapConfig extends SystemBootstrapOptions {
 export interface SystemBootstrapResources {
   nodes: Node[]
   configMaps: ConfigMap[]
+  services: Service[]
   pods: Pod[]
 }
 
@@ -129,6 +132,29 @@ const createKubeRootCAConfigMap = (creationTimestamp: string): ConfigMap => {
   })
 }
 
+const createSystemServices = (creationTimestamp: string): Service[] => {
+  return [
+    createService({
+      name: 'kubernetes',
+      namespace: 'default',
+      creationTimestamp,
+      clusterIP: '10.96.0.1',
+      ports: [{ port: 443, protocol: 'TCP' }]
+    }),
+    createService({
+      name: 'kube-dns',
+      namespace: 'kube-system',
+      creationTimestamp,
+      clusterIP: '10.96.0.10',
+      ports: [
+        { name: 'dns', port: 53, protocol: 'UDP', targetPort: 53 },
+        { name: 'dns-tcp', port: 53, protocol: 'TCP', targetPort: 53 },
+        { name: 'metrics', port: 9153, protocol: 'TCP', targetPort: 9153 }
+      ]
+    })
+  ]
+}
+
 export const createSystemBootstrapResources = (
   options: SystemBootstrapOptions = {}
 ): SystemBootstrapResources => {
@@ -148,6 +174,7 @@ export const createSystemBootstrapResources = (
       )
     }),
     configMaps: [createKubeRootCAConfigMap(creationTimestamp)],
+    services: createSystemServices(creationTimestamp),
     pods: getSystemPods({
       clusterName,
       nodeRoles,
@@ -209,6 +236,24 @@ const upsertConfigMaps = (
   }
 }
 
+const upsertServices = (clusterState: ClusterState, services: Service[]): void => {
+  for (const service of services) {
+    const findServiceResult = clusterState.findService(
+      service.metadata.name,
+      service.metadata.namespace
+    )
+    if (!findServiceResult.ok) {
+      clusterState.addService(service)
+      continue
+    }
+    clusterState.updateService(
+      service.metadata.name,
+      service.metadata.namespace,
+      () => service
+    )
+  }
+}
+
 const ensureSystemPods = (clusterState: ClusterState, pods: Pod[]): void => {
   const existingPods = clusterState.getPods()
   const hasExistingSystemPods = existingPods.some((pod) => {
@@ -251,6 +296,7 @@ const applyKindLikeBootstrap = (
 
   upsertNodes(clusterState, resources.nodes)
   upsertConfigMaps(clusterState, resources.configMaps)
+  upsertServices(clusterState, resources.services)
 
   if (mode === 'always') {
     replaceSystemPods(clusterState, resources.pods)

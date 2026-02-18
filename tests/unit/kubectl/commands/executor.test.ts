@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createClusterState } from '../../../../src/core/cluster/ClusterState'
 import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
+import { createService } from '../../../../src/core/cluster/ressources/Service'
 import { createHostFileSystem } from '../../../../src/core/filesystem/debianFileSystem'
 import {
   createFileSystem,
@@ -346,6 +347,29 @@ data:
         const result = executor.execute('kubectl get pods')
 
         expect(result.ok).toBe(true)
+      })
+
+      it('should handle "kubectl get all"', () => {
+        clusterState.addService(
+          createService({
+            name: 'kubernetes',
+            namespace: 'default',
+            clusterIP: '10.96.0.1',
+            ports: [{ port: 443, protocol: 'TCP' }]
+          })
+        )
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl get all')
+
+        expect(result.ok).toBe(true)
+        if (result.ok) {
+          expect(result.value).toContain('service/kubernetes')
+        }
       })
 
       it('should handle "kubectl get deployments"', () => {

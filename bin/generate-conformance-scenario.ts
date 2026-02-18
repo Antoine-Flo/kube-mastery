@@ -75,6 +75,8 @@ const createExhaustiveSegments = (): LifecycleSegment[] => {
         'kubectl create deployment exhaustive-web --image=nginx:latest',
         'kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080',
         'kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date',
+        'kubectl get all',
+        'kubectl get all -A',
         'kubectl scale deployments exhaustive-web --replicas=3',
         'kubectl get deployments',
         'kubectl delete deployments exhaustive-api',

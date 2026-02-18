@@ -37,6 +37,14 @@ describe('systemBootstrap', () => {
     expect(resources.configMaps).toHaveLength(1)
     expect(resources.configMaps[0].metadata.name).toBe('kube-root-ca.crt')
     expect(resources.configMaps[0].metadata.namespace).toBe('default')
+    expect(resources.services.map((service) => service.metadata.name)).toEqual([
+      'kubernetes',
+      'kube-dns'
+    ])
+    expect(resources.services.map((service) => service.metadata.namespace)).toEqual([
+      'default',
+      'kube-system'
+    ])
     expect(resources.pods.length).toBeGreaterThan(0)
     const staticControlPlanePods = [
       'etcd-control-plane',
@@ -97,6 +105,7 @@ describe('systemBootstrap', () => {
     expect(clusterState.getConfigMaps('default')).toHaveLength(
       expected.configMaps.length
     )
+    expect(clusterState.getServices()).toHaveLength(expected.services.length)
     expect(clusterState.getPods()).toHaveLength(expected.pods.length)
   })
 

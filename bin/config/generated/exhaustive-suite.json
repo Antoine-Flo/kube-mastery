@@ -124,29 +124,41 @@
     {
       "id": "deploy-cm-cmd-11",
       "type": "command",
-      "command": "kubectl scale deployments exhaustive-web --replicas=3",
+      "command": "kubectl get all",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-12",
       "type": "command",
-      "command": "kubectl get deployments",
+      "command": "kubectl get all -A",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-13",
       "type": "command",
-      "command": "kubectl delete deployments exhaustive-api",
+      "command": "kubectl scale deployments exhaustive-web --replicas=3",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-14",
       "type": "command",
-      "command": "kubectl delete deployments exhaustive-multi",
+      "command": "kubectl get deployments",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-15",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-api",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-16",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-multi",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-17",
       "type": "command",
       "command": "kubectl delete deployments exhaustive-web",
       "compareMode": "normalized"

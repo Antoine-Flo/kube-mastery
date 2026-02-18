@@ -9,6 +9,7 @@ import {
 } from '../../shared/parsing'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
+import { RESOURCE_ALIAS_MAP } from './resources'
 import { getTransformerForAction, type ParseContext } from './transformers'
 import type { Action, ParsedCommand, Resource } from './types'
 
@@ -73,33 +74,6 @@ const FLAGS_REQUIRING_VALUES = [
 // Output formats for kubectl commands
 type OutputFormat = 'table' | 'yaml' | 'json'
 const VALID_OUTPUT_FORMATS = new Set<OutputFormat>(['table', 'yaml', 'json'])
-
-// Kubectl resources: canonical name -> list of aliases
-const KUBECTL_RESOURCES = {
-  pods: ['pods', 'pod', 'po'],
-  deployments: ['deployments', 'deployment', 'deploy'],
-  services: ['services', 'service', 'svc'],
-  namespaces: ['namespaces', 'namespace', 'ns'],
-  configmaps: ['configmaps', 'configmap', 'cm'],
-  secrets: ['secrets', 'secret'],
-  nodes: ['nodes', 'node', 'no'],
-  replicasets: ['replicasets', 'replicaset', 'rs']
-} as const
-
-// Build reverse lookup: alias -> canonical resource (O(1) access)
-const RESOURCE_ALIAS_MAP = buildResourceAliasMap()
-
-function buildResourceAliasMap(): Record<string, string> {
-  const map: Record<string, string> = {}
-
-  for (const [canonical, aliases] of Object.entries(KUBECTL_RESOURCES)) {
-    for (const alias of aliases) {
-      map[alias] = canonical
-    }
-  }
-
-  return map
-}
 
 // ─── Main Parsing Pipeline ──────────────────────────────────────────────
 

@@ -1,3 +1,5 @@
+import type { KubectlResource } from './resources'
+
 // Action types supported by kubectl parser
 export type Action =
   | 'get'
@@ -16,15 +18,7 @@ export type Action =
   | 'scale'
 
 // Resource types (canonical names only)
-export type Resource =
-  | 'pods'
-  | 'deployments'
-  | 'services'
-  | 'namespaces'
-  | 'configmaps'
-  | 'secrets'
-  | 'nodes'
-  | 'replicasets'
+export type Resource = KubectlResource
 
 // Parsed command structure
 export interface ParsedCommand {

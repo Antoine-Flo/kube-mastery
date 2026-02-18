@@ -1,5 +1,6 @@
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
+import { RESOURCE_ALIAS_MAP } from './resources'
 import type { Action, Resource } from './types'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -30,32 +31,6 @@ export type ParseContext = {
 }
 
 type ActionTransformer = (ctx: ParseContext) => Result<ParseContext>
-
-// ─── Resource Alias Mapping ──────────────────────────────────────────────
-
-// Kubectl resources: canonical name -> list of aliases
-const KUBECTL_RESOURCES = {
-  pods: ['pods', 'pod', 'po'],
-  deployments: ['deployments', 'deployment', 'deploy'],
-  services: ['services', 'service', 'svc'],
-  namespaces: ['namespaces', 'namespace', 'ns'],
-  configmaps: ['configmaps', 'configmap', 'cm'],
-  secrets: ['secrets', 'secret'],
-  replicasets: ['replicasets', 'replicaset', 'rs']
-} as const
-
-// Build reverse lookup: alias -> canonical resource (O(1) access)
-const buildResourceAliasMap = (): Record<string, string> => {
-  const map: Record<string, string> = {}
-  for (const [canonical, aliases] of Object.entries(KUBECTL_RESOURCES)) {
-    for (const alias of aliases) {
-      map[alias] = canonical
-    }
-  }
-  return map
-}
-
-const RESOURCE_ALIAS_MAP = buildResourceAliasMap()
 
 const FLAGS_REQUIRING_VALUES = new Set([
   'n',

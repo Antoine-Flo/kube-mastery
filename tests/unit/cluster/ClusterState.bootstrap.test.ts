@@ -30,6 +30,12 @@ describe('createClusterState bootstrap policy', () => {
     expect(clusterState.getConfigMaps('default').some((configMap) => {
       return configMap.metadata.name === 'kube-root-ca.crt'
     })).toBe(true)
+    expect(clusterState.getServices().some((service) => {
+      return service.metadata.name === 'kubernetes'
+    })).toBe(true)
+    expect(clusterState.getServices().some((service) => {
+      return service.metadata.name === 'kube-dns'
+    })).toBe(true)
   })
 
   it('supports explicit none profile to disable bootstrap', () => {
