@@ -81,6 +81,20 @@ export interface ClusterStateData {
   services: ResourceCollection<Service>
 }
 
+type ResourceByKind = {
+  Pod: Pod
+  ConfigMap: ConfigMap
+  Secret: Secret
+  Node: Node
+  ReplicaSet: ReplicaSet
+  Deployment: Deployment
+  Service: Service
+}
+
+export type ResourceKind = keyof ResourceByKind
+
+export type KindToResource<TKind extends ResourceKind> = ResourceByKind[TKind]
+
 /**
  * Create a ClusterStateData with optional partial collections
  */
@@ -303,6 +317,15 @@ export interface ClusterState {
     namespace: string,
     updateFn: (service: Service) => Service
   ) => Result<Service>
+  findByKind: <TKind extends ResourceKind>(
+    kind: TKind,
+    name: string,
+    namespace?: string
+  ) => Result<KindToResource<TKind>>
+  listByKind: <TKind extends ResourceKind>(
+    kind: TKind,
+    namespace?: string
+  ) => KindToResource<TKind>[]
   toJSON: () => ClusterStateData
   loadState: (state: ClusterStateData) => void
 }
@@ -583,6 +606,71 @@ export function createClusterState(
     }
   }
 
+  const findByKind = <TKind extends ResourceKind>(
+    kind: TKind,
+    name: string,
+    namespace?: string
+  ): Result<KindToResource<TKind>> => {
+    const effectiveNamespace = namespace ?? 'default'
+    const finders: Record<
+      ResourceKind,
+      (resourceName: string, resourceNamespace: string) => Result<KubernetesResource>
+    > = {
+      Pod: (resourceName, resourceNamespace) =>
+        podMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+      ConfigMap: (resourceName, resourceNamespace) =>
+        configMapMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+      Secret: (resourceName, resourceNamespace) =>
+        secretMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+      Node: (resourceName, _resourceNamespace) =>
+        nodeMethods.find(resourceName) as Result<KubernetesResource>,
+      ReplicaSet: (resourceName, resourceNamespace) =>
+        replicaSetMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+      Deployment: (resourceName, resourceNamespace) =>
+        deploymentMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+      Service: (resourceName, resourceNamespace) =>
+        serviceMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>
+    }
+
+    const finder = finders[kind]
+    if (!finder) {
+      return { ok: false, error: `Unsupported resource kind: ${kind}` }
+    }
+
+    return finder(name, effectiveNamespace) as Result<KindToResource<TKind>>
+  }
+
+  const listByKind = <TKind extends ResourceKind>(
+    kind: TKind,
+    namespace?: string
+  ): KindToResource<TKind>[] => {
+    const listers: Record<
+      ResourceKind,
+      (resourceNamespace?: string) => KubernetesResource[]
+    > = {
+      Pod: (resourceNamespace) =>
+        podMethods.getAll(resourceNamespace) as KubernetesResource[],
+      ConfigMap: (resourceNamespace) =>
+        configMapMethods.getAll(resourceNamespace) as KubernetesResource[],
+      Secret: (resourceNamespace) =>
+        secretMethods.getAll(resourceNamespace) as KubernetesResource[],
+      Node: (_resourceNamespace) => nodeMethods.getAll() as KubernetesResource[],
+      ReplicaSet: (resourceNamespace) =>
+        replicaSetMethods.getAll(resourceNamespace) as KubernetesResource[],
+      Deployment: (resourceNamespace) =>
+        deploymentMethods.getAll(resourceNamespace) as KubernetesResource[],
+      Service: (resourceNamespace) =>
+        serviceMethods.getAll(resourceNamespace) as KubernetesResource[]
+    }
+
+    const lister = listers[kind]
+    if (!lister) {
+      return []
+    }
+
+    return lister(namespace) as KindToResource<TKind>[]
+  }
+
   const clusterStateFacade: ClusterState = {
     getPods: podMethods.getAll,
     addPod: podMethods.add,
@@ -625,6 +713,9 @@ export function createClusterState(
     findService: serviceMethods.find,
     deleteService: serviceMethods.delete,
     updateService: serviceMethods.update,
+
+    findByKind,
+    listByKind,
 
     toJSON: () => ({
       pods: { items: [...state.pods.items] },

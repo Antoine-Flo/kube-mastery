@@ -282,3 +282,26 @@ describe('kubectl parser - explain', () => {
     }
   })
 })
+
+describe('kubectl parser - diff', () => {
+  it('should parse diff command with filename', () => {
+    const result = parseCommand('kubectl diff -f pod.yaml')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('diff')
+    expect(result.value.flags.f).toBe('pod.yaml')
+  })
+
+  it('should reject diff command without filename', () => {
+    const result = parseCommand('kubectl diff')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('diff requires one of -f or --filename')
+    }
+  })
+})

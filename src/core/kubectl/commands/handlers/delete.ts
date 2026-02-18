@@ -1,4 +1,4 @@
-import type { ClusterState } from '../../../cluster/ClusterState'
+import type { ClusterState, ResourceKind } from '../../../cluster/ClusterState'
 import type { EventBus } from '../../../cluster/events/EventBus'
 import {
   createConfigMapDeletedEvent,
@@ -28,6 +28,50 @@ const formatNotFoundMessage = (
   return error(`Error from server (NotFound): ${kindRefPlural} "${name}" not found`)
 }
 
+type NamespacedEventDeleteResource = 'pods' | 'configmaps' | 'secrets'
+
+interface NamespacedDeleteConfig {
+  kind: ResourceKind
+  kindRef: string
+  emit: (
+    eventBus: EventBus,
+    name: string,
+    namespace: string,
+    resource: unknown
+  ) => void
+}
+
+const NAMESPACED_EVENT_DELETE_CONFIG: Record<
+  NamespacedEventDeleteResource,
+  NamespacedDeleteConfig
+> = {
+  pods: {
+    kind: 'Pod',
+    kindRef: 'pod',
+    emit: (eventBus, name, namespace, resource) => {
+      eventBus.emit(createPodDeletedEvent(name, namespace, resource as any, 'kubectl'))
+    }
+  },
+  configmaps: {
+    kind: 'ConfigMap',
+    kindRef: 'configmap',
+    emit: (eventBus, name, namespace, resource) => {
+      eventBus.emit(
+        createConfigMapDeletedEvent(name, namespace, resource as any, 'kubectl')
+      )
+    }
+  },
+  secrets: {
+    kind: 'Secret',
+    kindRef: 'secret',
+    emit: (eventBus, name, namespace, resource) => {
+      eventBus.emit(
+        createSecretDeletedEvent(name, namespace, resource as any, 'kubectl')
+      )
+    }
+  }
+}
+
 /**
  * Handle kubectl delete command
  * Uses event-driven architecture to delete resources
@@ -45,47 +89,24 @@ export const handleDelete = (
 
   const resource = parsed.resource
 
-  if (resource === 'pods') {
-    const findResult = clusterState.findPod(parsed.name, namespace)
+  if (
+    resource === 'pods' ||
+    resource === 'configmaps' ||
+    resource === 'secrets'
+  ) {
+    const deleteConfig = NAMESPACED_EVENT_DELETE_CONFIG[resource]
+    const findResult = clusterState.findByKind(
+      deleteConfig.kind,
+      parsed.name,
+      namespace
+    )
     if (!findResult.ok) {
       return error(findResult.error)
     }
-    eventBus.emit(
-      createPodDeletedEvent(parsed.name, namespace, findResult.value, 'kubectl')
+    deleteConfig.emit(eventBus, parsed.name, namespace, findResult.value)
+    return success(
+      formatDeletedMessage(deleteConfig.kindRef, parsed.name, namespace, true)
     )
-    return success(formatDeletedMessage('pod', parsed.name, namespace, true))
-  }
-
-  if (resource === 'configmaps') {
-    const findResult = clusterState.findConfigMap(parsed.name, namespace)
-    if (!findResult.ok) {
-      return error(findResult.error)
-    }
-    eventBus.emit(
-      createConfigMapDeletedEvent(
-        parsed.name,
-        namespace,
-        findResult.value,
-        'kubectl'
-      )
-    )
-    return success(formatDeletedMessage('configmap', parsed.name, namespace, true))
-  }
-
-  if (resource === 'secrets') {
-    const findResult = clusterState.findSecret(parsed.name, namespace)
-    if (!findResult.ok) {
-      return error(findResult.error)
-    }
-    eventBus.emit(
-      createSecretDeletedEvent(
-        parsed.name,
-        namespace,
-        findResult.value,
-        'kubectl'
-      )
-    )
-    return success(formatDeletedMessage('secret', parsed.name, namespace, true))
   }
 
   if (resource === 'deployments') {

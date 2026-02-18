@@ -1,5 +1,5 @@
 import { readFileSync, statSync } from 'fs'
-import { basename } from 'path'
+import { basename, join } from 'path'
 import { createClusterState } from '../../../src/core/cluster/ClusterState'
 import {
   initializeControllers,
@@ -17,6 +17,7 @@ import {
   CONFORMANCE_CLUSTER_NAME,
   getConformanceBootstrapConfig
 } from '../../../src/config/runtimeConfig'
+import { parseCommand } from '../../../src/core/kubectl/commands/parser'
 import { listYamlFiles } from '../cluster-manager'
 import { loadClusterNodeRoles } from '../cluster-manager'
 import type {
@@ -125,6 +126,42 @@ const executionFromOutput = (
   }
 }
 
+const getDiffFilenameFromCommand = (command: string): string | undefined => {
+  const parsed = parseCommand(command)
+  if (!parsed.ok) {
+    return undefined
+  }
+  if (parsed.value.action !== 'diff') {
+    return undefined
+  }
+
+  const filename = parsed.value.flags.f || parsed.value.flags.filename
+  if (typeof filename !== 'string') {
+    return undefined
+  }
+  return filename
+}
+
+const rewriteDiffCommandForMountedFile = (
+  command: string,
+  originalPath: string,
+  mountedPath: string
+): string => {
+  if (command.includes(`--filename=${originalPath}`)) {
+    return command.replace(`--filename=${originalPath}`, `--filename=${mountedPath}`)
+  }
+  if (command.includes(`-f=${originalPath}`)) {
+    return command.replace(`-f=${originalPath}`, `-f=${mountedPath}`)
+  }
+  if (command.includes(`--filename ${originalPath}`)) {
+    return command.replace(`--filename ${originalPath}`, `--filename ${mountedPath}`)
+  }
+  if (command.includes(`-f ${originalPath}`)) {
+    return command.replace(`-f ${originalPath}`, `-f ${mountedPath}`)
+  }
+  return command
+}
+
 export const createRunnerExecutor = (
   clusterName = CONFORMANCE_CLUSTER_NAME
 ): RunnerExecutor => {
@@ -144,9 +181,30 @@ export const createRunnerExecutor = (
 
   return {
     executeCommand(command: string): CommandExecutionResult {
-      const result = executor.execute(command)
+      const diffFilename = getDiffFilenameFromCommand(command)
+      let result
+      if (diffFilename != null) {
+        const filePath = diffFilename.startsWith('/')
+          ? diffFilename
+          : join(process.cwd(), diffFilename)
+        const mountedPath = `/${basename(filePath)}`
+        const fs = createSingleFileSystem(filePath)
+        const rewrittenCommand = rewriteDiffCommandForMountedFile(
+          command,
+          diffFilename,
+          mountedPath
+        )
+        result = executor.execute(rewrittenCommand, fs)
+      } else {
+        result = executor.execute(command)
+      }
+
       if (result.ok) {
         const value = result.value ?? ''
+        if (diffFilename != null) {
+          const exitCode = value.trim().length === 0 ? 0 : 1
+          return executionFromOutput(command, exitCode, value, '')
+        }
         return executionFromOutput(command, 0, value, '')
       }
       return executionFromOutput(command, 1, '', result.error)

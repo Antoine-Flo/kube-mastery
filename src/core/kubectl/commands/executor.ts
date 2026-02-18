@@ -10,6 +10,7 @@ import { handleAPIResources } from './handlers/apiResources'
 import { handleApply, handleCreate } from './handlers/applyCreate'
 import { handleClusterInfo } from './handlers/clusterInfo'
 import { handleDelete } from './handlers/delete'
+import { handleDiff } from './handlers/diff'
 import { handleDescribe } from './handlers/describe'
 import { handleExplain } from './handlers/explain'
 import { handleExec } from './handlers/exec'
@@ -40,6 +41,7 @@ const createHandlers = (
   handlers.set('get', (parsed) =>
     success(handleGet(clusterState.toJSON(), parsed))
   )
+  handlers.set('diff', (parsed) => handleDiff(fileSystem, clusterState, parsed))
   handlers.set('explain', (parsed) => handleExplain(parsed))
   handlers.set('describe', (parsed) =>
     handleDescribe(clusterState.toJSON(), parsed)

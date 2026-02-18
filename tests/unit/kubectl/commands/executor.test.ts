@@ -145,6 +145,35 @@ data:
           expect(result.value).toContain('created')
         }
       })
+
+      it('should route "kubectl diff -f" to diff handler', () => {
+        const yaml = `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: default
+data:
+  mode: blue
+`
+        fileSystem.createFile('configmap.yaml')
+        fileSystem.writeFile('configmap.yaml', yaml)
+
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl diff -f configmap.yaml')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('diff -u -N /tmp/LIVE-')
+        expect(result.value).toContain('/tmp/MERGED-')
+      })
     })
 
     describe('create deployment (imperative)', () => {

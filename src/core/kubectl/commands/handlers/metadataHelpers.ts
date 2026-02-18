@@ -1,5 +1,10 @@
-import type { ClusterStateData } from '../../../cluster/ClusterState'
+import {
+  createClusterState,
+  type ClusterStateData,
+  type ResourceKind
+} from '../../../cluster/ClusterState'
 import type { EventBus } from '../../../cluster/events/EventBus'
+import { createEventBus } from '../../../cluster/events/EventBus'
 import {
   createConfigMapAnnotatedEvent,
   createConfigMapLabeledEvent,
@@ -91,8 +96,7 @@ interface MetadataOperationConfig {
  * Resource collection accessor - declarative mapping
  */
 interface ResourceCollectionAccessor<T extends ResourceWithMetadata> {
-  getItems: (state: ClusterStateData) => T[]
-  setItems: (state: ClusterStateData, items: T[]) => ClusterStateData
+  kind: ResourceKind
   resourceTypeName: string // For error messages (capitalized: "Pod")
   singularName: string // For success messages (lowercase: "pod")
 }
@@ -105,26 +109,17 @@ const RESOURCE_ACCESSORS: Record<
   ResourceCollectionAccessor<ResourceWithMetadata>
 > = {
   pods: {
-    getItems: (state) => state.pods.items as ResourceWithMetadata[],
-    setItems: (state, items) => ({ ...state, pods: { items: items as Pod[] } }),
+    kind: 'Pod',
     resourceTypeName: 'Pod',
     singularName: 'pod'
   },
   configmaps: {
-    getItems: (state) => state.configMaps.items as ResourceWithMetadata[],
-    setItems: (state, items) => ({
-      ...state,
-      configMaps: { items: items as ConfigMap[] }
-    }),
+    kind: 'ConfigMap',
     resourceTypeName: 'ConfigMap',
     singularName: 'configmap'
   },
   secrets: {
-    getItems: (state) => state.secrets.items as ResourceWithMetadata[],
-    setItems: (state, items) => ({
-      ...state,
-      secrets: { items: items as Secret[] }
-    }),
+    kind: 'Secret',
     resourceTypeName: 'Secret',
     singularName: 'secret'
   }
@@ -196,10 +191,12 @@ const handleMetadataChangeWithEvents = (
     return error(`Resource type "${resourceType}" is not supported`)
   }
 
-  const items = accessor.getItems(state)
-  const resource = items.find(
-    (r) => r.metadata.name === name && r.metadata.namespace === namespace
-  )
+  const lookupState = createClusterState(createEventBus())
+  lookupState.loadState(state)
+  const resourceResult = lookupState.findByKind(accessor.kind, name, namespace)
+  const resource = resourceResult.ok
+    ? (resourceResult.value as ResourceWithMetadata)
+    : undefined
 
   if (!resource) {
     return error(

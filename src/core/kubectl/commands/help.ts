@@ -3,6 +3,7 @@ const HELP_FLAGS = new Set(['-h', '--help'])
 type HelpTopic =
   | 'root'
   | 'get'
+  | 'diff'
   | 'create'
   | 'create deployment'
   | 'delete'
@@ -39,6 +40,7 @@ Settings Commands:
 
 Other Commands:
   version         Print the client and server version information
+  diff            Diff the live version against a would-be applied version
   cluster-info    Display cluster information
   api-versions    Print the supported API versions on the server
   api-resources   Print the supported API resources on the server
@@ -53,6 +55,17 @@ const HELP_TEXTS: Record<HelpTopic, string> = {
 
 Usage:
   kubectl get [(-o|--output=)json|yaml|wide|name] (TYPE [NAME | -l label] | TYPE/NAME)
+
+Use "kubectl options" for a list of global command-line options (applies to all commands).`,
+  diff: `Diff configurations specified by file name between the current online configuration, and the configuration as it would be if applied.
+
+Usage:
+  kubectl diff -f FILENAME
+
+Exit status:
+  0 No differences were found.
+  1 Differences were found.
+  >1 Kubectl failed with an error.
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`,
   create: `Create a resource from a file or from stdin.

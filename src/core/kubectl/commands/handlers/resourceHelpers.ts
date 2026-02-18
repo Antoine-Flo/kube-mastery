@@ -91,7 +91,7 @@ const toPluralKindReference = (kind: ResourceKind): string => {
 
 const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
   Pod: {
-    find: (state, name, namespace) => state.findPod(name, namespace),
+    find: (state, name, namespace) => state.findByKind('Pod', name, namespace),
     emitCreated: (eventBus, resource) => {
       eventBus.emit(createPodCreatedEvent(resource as Pod, 'kubectl'))
     },
@@ -108,7 +108,8 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
     }
   },
   ConfigMap: {
-    find: (state, name, namespace) => state.findConfigMap(name, namespace),
+    find: (state, name, namespace) =>
+      state.findByKind('ConfigMap', name, namespace),
     emitCreated: (eventBus, resource) => {
       eventBus.emit(
         createConfigMapCreatedEvent(resource as ConfigMap, 'kubectl')
@@ -127,7 +128,7 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
     }
   },
   Secret: {
-    find: (state, name, namespace) => state.findSecret(name, namespace),
+    find: (state, name, namespace) => state.findByKind('Secret', name, namespace),
     emitCreated: (eventBus, resource) => {
       eventBus.emit(createSecretCreatedEvent(resource as Secret, 'kubectl'))
     },
@@ -144,7 +145,7 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
     }
   },
   Node: {
-    find: (state, name, _namespace) => state.findNode(name), // Nodes are cluster-scoped, ignore namespace
+    find: (state, name, _namespace) => state.findByKind('Node', name), // Nodes are cluster-scoped, ignore namespace
     emitCreated: (_eventBus, _resource) => {
       // Nodes use direct state update for now (placeholder events not yet implemented)
     },
@@ -159,7 +160,8 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
     }
   },
   ReplicaSet: {
-    find: (state, name, namespace) => state.findReplicaSet(name, namespace),
+    find: (state, name, namespace) =>
+      state.findByKind('ReplicaSet', name, namespace),
     emitCreated: (eventBus, resource) => {
       eventBus.emit(
         createReplicaSetCreatedEvent(resource as ReplicaSet, 'kubectl')
@@ -178,7 +180,8 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
     }
   },
   Deployment: {
-    find: (state, name, namespace) => state.findDeployment(name, namespace),
+    find: (state, name, namespace) =>
+      state.findByKind('Deployment', name, namespace),
     emitCreated: (eventBus, resource) => {
       eventBus.emit(
         createDeploymentCreatedEvent(resource as Deployment, 'kubectl')
@@ -197,7 +200,7 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
     }
   },
   Service: {
-    find: (state, name, namespace) => state.findService(name, namespace),
+    find: (state, name, namespace) => state.findByKind('Service', name, namespace),
     emitCreated: (eventBus, resource) => {
       eventBus.emit(createServiceCreatedEvent(resource as Service, 'kubectl'))
     },

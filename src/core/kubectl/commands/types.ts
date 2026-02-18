@@ -3,6 +3,7 @@ import type { KubectlResource } from './resources'
 // Action types supported by kubectl parser
 export type Action =
   | 'get'
+  | 'diff'
   | 'explain'
   | 'describe'
   | 'delete'

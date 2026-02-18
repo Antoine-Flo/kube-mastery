@@ -16,4 +16,19 @@ describe('kubectl help resolver', () => {
     expect(output).toBeDefined()
     expect(output).toContain('explain')
   })
+
+  it('should return diff help text', () => {
+    const output = resolveKubectlHelp('kubectl diff --help')
+
+    expect(output).toBeDefined()
+    expect(output).toContain('Diff configurations specified by file name')
+    expect(output).toContain('kubectl diff -f FILENAME')
+  })
+
+  it('should include diff command in root help', () => {
+    const output = resolveKubectlHelp('kubectl --help')
+
+    expect(output).toBeDefined()
+    expect(output).toContain('diff')
+  })
 })

@@ -26,6 +26,7 @@ import type { Action, ParsedCommand, Resource } from './types'
 
 const VALID_ACTIONS: Action[] = [
   'get',
+  'diff',
   'explain',
   'describe',
   'delete',
@@ -61,6 +62,7 @@ const FLAGS_REQUIRING_VALUES = [
   'output',
   'l',
   'selector',
+  'filename',
   'tail',
   'c',
   'container',
@@ -77,6 +79,14 @@ const FLAGS_REQUIRING_VALUES = [
 // Output formats for kubectl commands
 type OutputFormat = 'table' | 'yaml' | 'json'
 const VALID_OUTPUT_FORMATS = new Set<OutputFormat>(['table', 'yaml', 'json'])
+
+const ACTIONS_WITHOUT_RESOURCE: Action[] = [
+  'version',
+  'cluster-info',
+  'api-versions',
+  'api-resources',
+  'diff'
+]
 
 // ─── Main Parsing Pipeline ──────────────────────────────────────────────
 
@@ -168,13 +178,8 @@ const extractResource = (ctx: ParseContext): Result<ParseContext> => {
     return success(ctx)
   }
 
-  // Commands like 'version', 'cluster-info', 'api-versions' and 'api-resources' don't require a resource
-  if (
-    ctx.action === 'version' ||
-    ctx.action === 'cluster-info' ||
-    ctx.action === 'api-versions' ||
-    ctx.action === 'api-resources'
-  ) {
+  // Commands like 'version', 'cluster-info', 'api-versions', 'api-resources' and 'diff' don't require a resource
+  if (ctx.action && ACTIONS_WITHOUT_RESOURCE.includes(ctx.action)) {
     return success(ctx)
   }
 
@@ -291,13 +296,18 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
     return error('Missing action')
   }
 
-  // Commands like 'version', 'cluster-info', 'api-versions' and 'api-resources' don't require a resource
-  if (
-    ctx.action === 'version' ||
-    ctx.action === 'cluster-info' ||
-    ctx.action === 'api-versions' ||
-    ctx.action === 'api-resources'
-  ) {
+  // Commands like 'version', 'cluster-info', 'api-versions', 'api-resources' and 'diff' don't require a resource
+  if (ACTIONS_WITHOUT_RESOURCE.includes(ctx.action)) {
+    const validationError = validateCommandSemantics(
+      ctx.action,
+      ctx.resource,
+      ctx.name,
+      ctx.normalizedFlags || ctx.flags || {},
+      ctx.tokens || []
+    )
+    if (validationError) {
+      return error(validationError)
+    }
     return success(ctx)
   }
 
@@ -461,6 +471,13 @@ const validateCommandSemantics = (
     !name
   ) {
     return `${action} requires a resource name`
+  }
+  if (action === 'diff') {
+    const hasFilename =
+      typeof flags['filename'] === 'string' || typeof flags['f'] === 'string'
+    if (!hasFilename) {
+      return 'diff requires one of -f or --filename'
+    }
   }
   return undefined
 }

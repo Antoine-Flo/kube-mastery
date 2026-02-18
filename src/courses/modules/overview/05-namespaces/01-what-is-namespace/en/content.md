@@ -20,13 +20,13 @@ Not everything in Kubernetes lives inside a namespace. Most resources — Pods, 
 You can check which resources are namespaced:
 
 ```bash
-kubectl api-resources --namespaced=true | head -20
+kubectl api-resources --namespaced=true
 ```
 
 And which are cluster-scoped:
 
 ```bash
-kubectl api-resources --namespaced=false | head -10
+kubectl api-resources --namespaced=false
 ```
 
 ## The Built-In Namespaces

@@ -45,6 +45,24 @@ const createRawErrorCommand = (
   }
 }
 
+const createRawDiffCommand = (
+  command: string,
+  stdoutContains: string[]
+): LifecycleCommandConfig => {
+  return {
+    command,
+    compareMode: 'none',
+    expectKind: {
+      exitCode: 1,
+      stdoutContains
+    },
+    expectRunner: {
+      exitCode: 1,
+      stdoutContains
+    }
+  }
+}
+
 const createExhaustiveSegments = (): LifecycleSegment[] => {
   return [
     {
@@ -72,6 +90,16 @@ const createExhaustiveSegments = (): LifecycleSegment[] => {
         'kubectl get pod web -o yaml',
         'kubectl get deployments',
         'kubectl get replicasets',
+        'kubectl diff -f src/courses/seeds/deployment-with-configmap/configmap.yaml',
+        'kubectl diff -f src/courses/seeds/deployment-with-configmap/secret.yaml',
+        createRawDiffCommand(
+          'kubectl diff -f src/courses/seeds/diff-fixtures/configmap-changed.yaml',
+          ['app-config', 'LOG_LEVEL']
+        ),
+        createRawDiffCommand(
+          'kubectl diff -f src/courses/seeds/diff-fixtures/secret-changed.yaml',
+          ['app-secret']
+        ),
         'kubectl create deployment exhaustive-web --image=nginx:latest',
         'kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080',
         'kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date',
