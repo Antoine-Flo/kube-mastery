@@ -57,18 +57,39 @@ This makes ExternalName best suited for protocols that don't rely on hostname ma
 ExternalName can cause issues with HTTP and HTTPS due to hostname mismatches. The client sends the internal Service name in the Host header, but the external server expects its own hostname. For HTTP/HTTPS, consider using an Ingress or manual EndpointSlices instead.
 :::
 
-## Verifying ExternalName
+---
+
+## Hands-On Practice
+
+### Step 1: Create an ExternalName Service
 
 ```bash
-# Check the Service configuration
-kubectl get svc my-database -o yaml
-
-# Test DNS resolution from inside the cluster
-kubectl run -it dns-test --image=busybox --restart=Never --rm \
-  -- nslookup my-database.production.svc.cluster.local
+kubectl create service externalname ext-demo --external-name=example.com
 ```
 
-You should see a CNAME record pointing to the external hostname.
+**Observation:** Creates a Service that resolves to `example.com` via CNAME.
+
+### Step 2: Verify the Service
+
+```bash
+kubectl get svc ext-demo
+```
+
+**Observation:** The Service has no cluster IP — ExternalName Services don't get one.
+
+### Step 3: Describe the Service
+
+```bash
+kubectl describe service ext-demo
+```
+
+**Observation:** Shows the `externalName` field — DNS queries for this Service return a CNAME to that hostname.
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete service ext-demo
+```
 
 ## Wrapping Up
 

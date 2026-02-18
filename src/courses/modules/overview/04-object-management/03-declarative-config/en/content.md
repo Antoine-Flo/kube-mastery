@@ -39,36 +39,6 @@ This is the foundation of **infrastructure-as-code**: your files are the source 
 Declarative configuration uses the **patch API**, which only updates the differences between your desired state and the current state. This is fundamentally different from `kubectl replace`, which overwrites the entire object and can accidentally remove fields that Kubernetes set.
 :::
 
-## Try It: Apply and Diff
-
-Apply an entire directory of manifests at once:
-
-```bash
-kubectl apply -f configs/
-```
-
-Or apply specific files:
-
-```bash
-kubectl apply -f configmap.yaml -f deployment.yaml
-```
-
-Before applying in a real environment, always preview what would change:
-
-```bash
-kubectl diff -f configs/
-```
-
-The diff output shows additions, removals, and modifications — just like a `git diff`. If the output is empty, the cluster already matches your files.
-
-You can also validate your manifests without applying them:
-
-```bash
-kubectl apply -f configs/ --dry-run=client
-```
-
-This checks that your YAML is valid and that the API server would accept it, but makes no actual changes.
-
 ## The Recommended Workflow
 
 For production environments, the pattern looks like this:
@@ -90,6 +60,63 @@ This four-step cycle — edit, diff, apply, verify — keeps you in control and 
 :::warning
 If you manually edit live objects with `kubectl edit`, those changes are not reflected in your manifest files. The next `kubectl apply` may overwrite your edits. Always prefer editing files and reapplying — it keeps your files and the cluster in sync.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a manifest file
+
+```bash
+nano nginx-decl.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-decl
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25
+```
+
+### Step 2: Apply the manifest
+
+```bash
+kubectl apply -f nginx-decl.yaml
+```
+
+### Step 3: Preview a change with diff
+
+Edit the file to change the image to `nginx:1.27`, then:
+
+```bash
+kubectl diff -f nginx-decl.yaml
+```
+
+The diff shows exactly what will change before you commit.
+
+### Step 4: Apply the updated manifest
+
+```bash
+kubectl apply -f nginx-decl.yaml
+```
+
+### Step 5: Verify
+
+```bash
+kubectl get pod nginx-decl -o jsonpath='{.spec.containers[0].image}'
+```
+
+It should show `nginx:1.27`.
+
+### Step 6: Clean up
+
+```bash
+kubectl delete -f nginx-decl.yaml
+```
 
 ## Wrapping Up
 

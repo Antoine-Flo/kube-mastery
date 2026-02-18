@@ -127,6 +127,28 @@ If your application is stateless and doesn't need stable identity or persistent 
 | DNS identity | Via Service (shared IP) | Per-Pod via Headless Service |
 | Best for | Stateless apps | Stateful, distributed systems |
 
+---
+
+## Hands-On Practice
+
+### Step 1: List Existing StatefulSets
+
+```bash
+kubectl get statefulsets
+```
+
+If any StatefulSets exist in the cluster, they appear here with their replica counts and status.
+
+### Step 2: Inspect Pods with Ordinal Names
+
+```bash
+kubectl get pods
+```
+
+If StatefulSet Pods exist in the cluster, their names follow the `<name>-0`, `<name>-1`, `<name>-2` pattern — stable, predictable ordinal identifiers.
+
+---
+
 ## Wrapping Up
 
 A StatefulSet gives each Pod something Deployments never do: a **stable, persistent identity**. Pods receive predictable names (`mysql-0`, `mysql-1`, `mysql-2`), individual DNS entries through a Headless Service, and the ability to reattach to their own PersistentVolume after rescheduling. Creation happens in order, deletion in reverse — providing the guarantees that distributed, stateful systems depend on.

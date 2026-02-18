@@ -66,25 +66,29 @@ In high-availability setups, etcd is often run on dedicated machines to improve 
 
 You might wonder: why not put everything on one machine? Separating the control plane from worker nodes brings real advantages. You can scale compute capacity (add more worker nodes) without touching the control plane. The control plane stays small and stable while the workers grow with demand. If a worker node goes down, the control plane notices and reschedules the affected workloads onto healthy nodes. This pattern, a small brain coordinating many workers, is a proven design in distributed systems.
 
-## Try It: Inspect Your Cluster
+:::warning
+In production, avoid running user workloads on control plane nodes. Keep the brain focused on coordination, not application work. Use `kubectl describe node <name>` to inspect the details and conditions of any node.
+:::
 
-List the nodes in your cluster:
+---
+
+## Hands-On Practice
+
+### Step 1: List the Nodes
 
 ```bash
 kubectl get nodes
 ```
 
-Then look at the system components running in the `kube-system` namespace:
+This shows the machines in your cluster — both control plane and worker nodes, depending on your setup.
+
+### Step 2: Inspect System Components
 
 ```bash
 kubectl get pods -n kube-system
 ```
 
-These are the Pods that keep the cluster itself running: DNS, proxies, and other infrastructure components.
-
-:::warning
-In production, avoid running user workloads on control plane nodes. Keep the brain focused on coordination, not application work. Use `kubectl describe node <name>` to inspect the details and conditions of any node.
-:::
+These are the Pods that keep the cluster itself running: DNS, proxies, and other infrastructure components. Seeing them helps connect the architecture theory to what is actually running.
 
 ## Wrapping Up
 

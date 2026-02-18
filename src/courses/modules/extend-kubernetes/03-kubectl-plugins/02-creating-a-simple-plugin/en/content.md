@@ -17,20 +17,7 @@ echo "Current namespace: $(kubectl config view --minify -o jsonpath='{.contexts[
 kubectl get nodes
 ```
 
-Save it, make it executable, and move it into your PATH:
-
-```bash
-chmod +x kubectl-hello
-mv kubectl-hello /usr/local/bin/
-```
-
-Now run it:
-
-```bash
-kubectl hello
-```
-
-You should see a greeting, your current context, namespace, and a list of nodes. Not groundbreaking, but it demonstrates the key idea: your plugin runs in the same context as kubectl, with access to the same cluster.
+Save it, then make it executable with `chmod +x` and move it into your PATH. Now run `kubectl hello` — you should see a greeting, your current context, namespace, and a list of nodes. Not groundbreaking, but it demonstrates the key idea: your plugin runs in the same context as kubectl, with access to the same cluster.
 
 ## Building Something Useful: A Pod Inspector
 
@@ -155,6 +142,43 @@ print(result.stdout)
 :::warning
 When calling `kubectl` from within a plugin, keep in mind that it spawns a new process each time. For plugins that make many API calls, using the Kubernetes client libraries directly is more efficient — you authenticate once and reuse the connection.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Simple Shell Plugin
+
+```bash
+echo '#!/bin/bash
+echo "Hello from plugin!"
+echo "Context: $(kubectl config current-context 2>/dev/null || echo unknown)"' > kubectl-hello
+chmod +x kubectl-hello
+```
+
+### Step 2: Install the Plugin to PATH
+
+```bash
+mkdir -p ~/bin
+mv kubectl-hello ~/bin/
+export PATH="$HOME/bin:$PATH"
+```
+
+Ensure `~/bin` is in your PATH (add to `.bashrc` or `.zshrc` if needed).
+
+### Step 3: Test the Plugin
+
+```bash
+kubectl hello
+```
+
+You should see the greeting and your current context.
+
+### Step 4: Clean Up (Optional)
+
+```bash
+rm ~/bin/kubectl-hello
+```
 
 ## Common Pitfalls
 

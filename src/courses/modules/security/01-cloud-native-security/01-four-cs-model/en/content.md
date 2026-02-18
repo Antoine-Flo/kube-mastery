@@ -43,15 +43,7 @@ Think of it like a house: reinforcing the bedroom door is pointless if the front
 
 ## Checking Your Starting Point
 
-Before diving deeper, it helps to understand what your current access looks like. These commands give you a quick picture of your position within the cluster:
-
-```bash
-kubectl get nodes
-kubectl get pods -A
-kubectl auth can-i list nodes --all-namespaces
-```
-
-The first two show you what you can see. The third tests whether you have a specific permission. You will use `kubectl auth can-i` frequently throughout this security module — it is your go-to tool for verifying access.
+Before diving deeper, it helps to understand what your current access looks like. The commands in the hands-on section below give you a quick picture of your position within the cluster. You will use `kubectl auth can-i` frequently throughout this security module — it is your go-to tool for verifying access.
 
 ## A First Taste of Hardening
 
@@ -87,6 +79,33 @@ When you design or audit security for a cluster, try mapping every control to it
 | Code        | Dependency scanning, secret management, input validation |
 
 Gaps in outer layers increase risk for everything inside them. A missing firewall rule (Cloud) matters more than a missing seccomp profile (Container), because it exposes a wider attack surface.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Check your cluster nodes
+
+```bash
+kubectl get nodes
+```
+
+### Step 2: See what is running across all namespaces
+
+```bash
+kubectl get pods -A
+```
+
+Notice the system components in `kube-system` — these are part of the Cluster security layer.
+
+### Step 3: Test your permissions
+
+```bash
+kubectl auth can-i list nodes
+kubectl auth can-i delete secrets --all-namespaces
+```
+
+This gives you a quick view of what your current identity is allowed to do.
 
 ## Wrapping Up
 

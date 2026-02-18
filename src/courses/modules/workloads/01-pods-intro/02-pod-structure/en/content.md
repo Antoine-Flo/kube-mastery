@@ -66,26 +66,6 @@ You never write the `status` section — Kubernetes manages it entirely. But you
 - **`conditions`** — a list of boolean conditions like `PodScheduled`, `ContainersReady`, and `Ready`, each with a status and reason.
 - **`containerStatuses`** — per-container details including current state (`Waiting`, `Running`, `Terminated`), restart count, and readiness.
 
-## Inspecting a Pod's Structure
-
-You can view the complete structure of any running Pod in YAML format:
-
-```bash
-kubectl get pod <pod-name> -o yaml
-```
-
-This outputs the full object — metadata, spec, and status — exactly as Kubernetes stores it. For a more human-readable summary with events and conditions, use:
-
-```bash
-kubectl describe pod <pod-name>
-```
-
-To extract specific fields (useful in scripts or quick checks), use JSONPath:
-
-```bash
-kubectl get pod <pod-name> -o jsonpath='{.spec.containers[*].name}'
-```
-
 ## Pod Templates: Where Spec Meets Controllers
 
 In practice, you rarely write a standalone Pod definition. Instead, you define a **pod template** inside a workload resource like a Deployment or StatefulSet. The template contains the same `metadata` and `spec` you would write for a Pod, and the controller uses it as a blueprint to create actual Pods.
@@ -100,6 +80,30 @@ graph LR
 :::warning
 When you update a pod template in a Deployment, Kubernetes does **not** modify existing Pods in place. Instead, it creates new Pods with the updated configuration and gradually terminates the old ones. If your changes do not seem to take effect, check whether old Pods are still running.
 :::
+
+---
+
+## Hands-On Practice
+
+Pick any running Pod and dissect its internal structure.
+
+### Step 1: View the Full YAML
+
+```bash
+kubectl get pod <pod-name> -o yaml
+```
+
+Scroll through and identify the three sections: `metadata`, `spec`, and `status`. Notice how `status` contains fields you never wrote — Kubernetes filled them in.
+
+### Step 2: Extract Specific Fields with JSONPath
+
+```bash
+kubectl get pod <pod-name> -o jsonpath='{.spec.containers[*].name}'
+kubectl get pod <pod-name> -o jsonpath='{.status.phase}'
+kubectl get pod <pod-name> -o jsonpath='{.metadata.labels}'
+```
+
+JSONPath lets you pull exactly the data you need without scrolling through the full output.
 
 ## Wrapping Up
 

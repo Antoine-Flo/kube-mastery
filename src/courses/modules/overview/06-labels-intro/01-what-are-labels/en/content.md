@@ -53,27 +53,41 @@ Labels have a few constraints to keep them fast and efficient:
 
 Reserved prefixes like `kubernetes.io/` and `k8s.io/` are for Kubernetes itself — use your own domain (like `mycompany.com/team`) for custom labels.
 
-## Viewing Labels
-
-To see labels on your resources:
-
-```bash
-# Show all labels as an extra column
-kubectl get pods --show-labels
-
-# Show specific labels as columns
-kubectl get pods -L app,env
-
-# Filter by label
-kubectl get pods -l app=nginx
-kubectl get pods -l 'env=production,tier=frontend'
-```
-
 The `-l` flag is your filter — it selects only resources that match the specified labels. You can combine multiple requirements with commas (all must match).
 
 :::warning
 Don't put large or structured data in labels — they're meant to be small and indexed. For longer metadata like documentation links, build info, or JSON config, use **annotations** instead. We'll cover those in the next chapter.
 :::
+
+---
+
+## Hands-On Practice
+
+First ensure you have Pods to work with. Run `kubectl run nginx --image=nginx` and wait for it to be Ready, or use existing Pods from earlier lessons.
+
+### Step 1: Show Labels on Pods
+
+```bash
+kubectl get pods --show-labels
+```
+
+The `LABELS` column shows all labels on each Pod. Deployments add labels like `app=nginx` automatically.
+
+### Step 2: Filter by Label
+
+```bash
+kubectl get pods -l app=nginx
+```
+
+Only Pods matching the selector appear. Use `-l 'app=nginx,env=production'` to require multiple labels.
+
+### Step 3: Show Specific Labels as Columns
+
+```bash
+kubectl get pods -L app,env
+```
+
+The `-L` flag adds custom columns for the specified label keys, making it easy to scan labeled resources.
 
 ## Wrapping Up
 

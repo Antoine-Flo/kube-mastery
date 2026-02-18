@@ -58,22 +58,6 @@ kubectl label namespace app pod-security.kubernetes.io/enforce=baseline
 
 Once this label is in place, any Pod that violates the Baseline standard — for example, one that uses `hostNetwork: true` or `privileged: true` — will be rejected at admission time.
 
-## Testing the Policy
-
-Let's verify that the policy is active. Try creating a Pod that would violate Baseline in an enforced namespace:
-
-```bash
-# Check the namespace labels
-kubectl get namespace app -o jsonpath='{.metadata.labels}'
-
-# Attempt to create a Pod that violates Baseline
-kubectl run test --image=nginx \
-  --overrides='{"spec":{"containers":[{"name":"test","image":"nginx","securityContext":{"privileged":true}}]}}' \
-  -n app
-```
-
-The second command should be rejected with an error message explaining which Baseline requirement was violated.
-
 ## Choosing the Right Level
 
 The level you choose depends on the workloads running in the namespace:
@@ -85,6 +69,27 @@ The level you choose depends on the workloads running in the namespace:
 :::warning
 Avoid applying Privileged to application namespaces. It disables all Pod security checks, which means any misconfiguration — accidental or intentional — goes undetected. Reserve Privileged for `kube-system` and similarly trusted namespaces.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Label a namespace with Baseline policy
+
+```bash
+kubectl create namespace pss-demo --dry-run=client -o yaml | kubectl apply -f -
+kubectl label namespace pss-demo pod-security.kubernetes.io/enforce=baseline --overwrite
+```
+
+Creates a namespace and applies the Baseline Pod Security level. Use a dedicated namespace like `pss-demo` to avoid affecting existing workloads.
+
+### Step 2: Verify the label and test (optional)
+
+```bash
+kubectl get namespace pss-demo -o jsonpath='{.metadata.labels}'
+```
+
+Shows the enforce label. You can then try creating a Pod that violates Baseline (e.g. with `privileged: true`) to see the admission controller reject it.
 
 ## Wrapping Up
 

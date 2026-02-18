@@ -107,23 +107,64 @@ spec:
 Ingress supports both host-based and path-based routing — or both combined. This lets you expose dozens of internal Services through a single external IP, with clean URLs and hostnames.
 :::
 
-## Verifying Ingress
+If the `ADDRESS` column is empty when listing Ingress, the Ingress controller hasn't assigned an IP — verify it's installed and running. If you get 503 errors, the backend Service has no ready Pods — check the Service selector and Pod readiness.
+
+---
+
+## Hands-On Practice
+
+You need an Ingress controller (e.g., NGINX, Traefik) installed for the Ingress to receive an address. This creates the resource; routing will work when a controller is present.
+
+### Step 1: Create a Simple Ingress Manifest
+
+Create backend and `ingress.yaml`:
 
 ```bash
-# Check Ingress status and assigned address
-kubectl get ingress
-
-# Detailed view with rules and backends
-kubectl describe ingress app-ingress
-
-# Verify backend Services have endpoints
-kubectl get endpoints web
-kubectl get endpoints api
+kubectl create deployment web --image=nginx --replicas=1
+kubectl expose deployment web --port=80
 ```
 
-If the `ADDRESS` column is empty, the Ingress controller hasn't assigned an IP — verify it's installed and running.
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-demo
+spec:
+  rules:
+    - host: app.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 80
+```
 
-If you get 503 errors, the backend Service has no ready Pods — check the Service selector and Pod readiness.
+```bash
+kubectl apply -f ingress.yaml
+```
+
+**Observation:** The Ingress resource is created. An Ingress controller must be installed for it to receive traffic.
+
+### Step 2: List and Describe Ingress
+
+```bash
+kubectl get ingress
+kubectl describe ingress ingress-demo
+```
+
+**Observation:** The Ingress exists with its rules. ADDRESS is populated if an Ingress controller is running.
+
+### Step 3: Clean Up
+
+```bash
+kubectl delete ingress ingress-demo
+kubectl delete deployment web
+kubectl delete service web
+```
 
 ## Wrapping Up
 

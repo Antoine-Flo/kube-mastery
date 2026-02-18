@@ -81,26 +81,6 @@ Once the container runs successfully for **10 minutes**, the backoff timer reset
 
 You can spot the backoff in action when `kubectl get pods` shows the status **CrashLoopBackOff**. The container is in the Waiting state, and Kubernetes is counting down before the next restart attempt.
 
-## Monitoring Restart Counts
-
-Each container tracks how many times it has been restarted. A rising restart count is a signal that something is persistently wrong — a misconfiguration, a missing dependency, a memory leak, or a faulty probe.
-
-```bash
-kubectl get pods
-```
-
-The **RESTARTS** column shows the count at a glance. For more detail:
-
-```bash
-kubectl describe pod <pod-name>
-```
-
-Look at the **Restart Count** and **Last State** fields for each container. **Last State** tells you what happened in the previous run — the exit code and reason — which is invaluable for debugging a container that keeps crashing.
-
-:::info
-High restart counts combined with **OOMKilled** in the last state strongly suggest the container needs a higher memory limit or has a memory leak. Check `resources.limits.memory` and profile your application's actual memory usage.
-:::
-
 ## Restart Policy vs. Workload Controllers
 
 An important distinction: the restart policy governs restarts **on the same node**. If the Pod is deleted, evicted (due to node pressure), or the node itself goes down, the restart policy does nothing — it is a node-local mechanism.
@@ -114,6 +94,85 @@ An important distinction: the restart policy governs restarts **on the same node
 | Pod is manually deleted | **Workload controller** (creates a replacement to meet desired state) |
 
 This is why standalone Pods (not managed by any controller) are risky in production — if the node fails, nobody recreates them.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Pod with `restartPolicy: Always` (default)
+
+```bash
+nano restart-always.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: restart-always
+spec:
+  containers:
+    - name: crash
+      image: busybox
+      command: ["sh", "-c", "echo 'starting'; sleep 3; exit 1"]
+```
+
+```bash
+kubectl apply -f restart-always.yaml
+```
+
+### Step 2: Watch the restarts accumulate
+
+```bash
+kubectl get pod restart-always -w
+```
+
+Watch for about 30 seconds. You will see the RESTARTS counter climb and the status cycle through `Running` → `Error` → `CrashLoopBackOff` → `Running`. Press `Ctrl+C`.
+
+### Step 3: Check restart details
+
+```bash
+kubectl describe pod restart-always
+```
+
+Look at the **Restart Count** and **Last State** fields. The Last State should show `Terminated` with exit code `1`.
+
+### Step 4: Create a Pod with `restartPolicy: Never`
+
+```bash
+nano restart-never.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: restart-never
+spec:
+  restartPolicy: Never
+  containers:
+    - name: crash
+      image: busybox
+      command: ["sh", "-c", "echo 'starting'; sleep 3; exit 1"]
+```
+
+```bash
+kubectl apply -f restart-never.yaml
+```
+
+Wait about 10 seconds, then check:
+
+```bash
+kubectl get pods
+```
+
+The Pod should show `Error` status with `0` restarts — it ran once, failed, and stayed terminated.
+
+### Step 5: Clean up
+
+```bash
+kubectl delete pod restart-always restart-never
+```
 
 ## Wrapping Up
 

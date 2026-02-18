@@ -45,36 +45,11 @@ You might wonder: what happens if multiple methods are configured? The API serve
 
 ## Testing Your Permissions
 
-One of the most useful commands in your security toolkit is `kubectl auth can-i`. It lets you check whether a specific identity has a specific permission — without actually performing the action:
-
-```bash
-# Can I list Pods in the default namespace?
-kubectl auth can-i get pods --namespace default
-
-# Can a specific ServiceAccount create Deployments?
-kubectl auth can-i create deployments --namespace app \
-  --as=system:serviceaccount:app:app-sa
-
-# What can I do? List all my permissions
-kubectl auth can-i --list
-```
-
-The `--as` flag is particularly powerful — it lets you impersonate another user or ServiceAccount to verify their effective permissions. This is invaluable when debugging access issues.
+One of the most useful commands in your security toolkit is `kubectl auth can-i`. It lets you check whether a specific identity has a specific permission — without actually performing the action. The `--as` flag is particularly powerful — it lets you impersonate another user or ServiceAccount to verify their effective permissions. This is invaluable when debugging access issues.
 
 ## Checking Your Current Identity
 
-Sometimes the question is not "what can I do?" but "who am I?" These commands help you understand your current context:
-
-```bash
-# Which context am I using?
-kubectl config current-context
-
-# Show details about my current configuration
-kubectl config view --minify
-
-# Inside a Pod, inspect the ServiceAccount token
-cat /var/run/secrets/kubernetes.io/serviceaccount/token | cut -d. -f2 | base64 -d
-```
+Sometimes the question is not "what can I do?" but "who am I?" Use `kubectl config current-context` to see which context you are using, and `kubectl config view --minify` for details about your current configuration.
 
 ## Troubleshooting Access Issues
 
@@ -87,6 +62,26 @@ When an API request fails, the error message tells you which stage failed:
 :::warning
 A `403 Forbidden` after successful authentication almost always points to a missing or incorrect RBAC RoleBinding. Use `kubectl auth can-i` and `kubectl describe rolebinding` to investigate.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Test create permission on Pods
+
+```bash
+kubectl auth can-i create pods --namespace default
+```
+
+Returns `yes` or `no`. If `yes`, your current identity can create Pods in the default namespace.
+
+### Step 2: Test permission to delete nodes
+
+```bash
+kubectl auth can-i delete nodes --all-namespaces
+```
+
+Deleting nodes is a highly privileged action. If this returns `yes`, your identity has cluster-admin or equivalent broad permissions.
 
 ## Wrapping Up
 

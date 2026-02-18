@@ -4,20 +4,7 @@ You might work with multiple Kubernetes clusters — development, staging, produ
 
 ## Why Contexts Matter
 
-Without contexts, you'd have to manually change the server URL and credentials every time you switch clusters. With contexts, you define the combinations once and switch instantly:
-
-```bash
-# See all available contexts (current one marked with *)
-kubectl config get-contexts
-
-# Which context am I using right now?
-kubectl config current-context
-
-# Switch to a different context
-kubectl config use-context staging-cluster
-```
-
-The active context determines **everything**: which cluster receives your commands, which identity you authenticate as, and which namespace is used by default.
+Without contexts, you'd have to manually change the server URL and credentials every time you switch clusters. With contexts, you define the combinations once and switch instantly. The active context determines **everything**: which cluster receives your commands, which identity you authenticate as, and which namespace is used by default.
 
 :::warning
 Always verify the active context before running destructive commands. Running `kubectl delete deployment nginx` in the wrong context can have serious consequences. Consider adding the current context to your shell prompt.
@@ -89,6 +76,34 @@ kubectl apply -f production-deploy.yaml
 ```
 
 This three-step check takes seconds and prevents costly mistakes.
+
+---
+
+## Hands-On Practice
+
+### Step 1: List all contexts
+
+```bash
+kubectl config get-contexts
+```
+
+You'll see each context with its cluster, user, and namespace. The current context is marked with `*`.
+
+### Step 2: Show the current context
+
+```bash
+kubectl config current-context
+```
+
+This confirms which context is active. All kubectl commands use this context's cluster and credentials.
+
+### Step 3: Switch context (if you have multiple)
+
+```bash
+kubectl config use-context <context-name>
+```
+
+Replace `<context-name>` with a context from Step 1. If you only have one cluster, this step is optional — but it's essential when managing dev, staging, and production from the same terminal.
 
 ## Wrapping Up
 

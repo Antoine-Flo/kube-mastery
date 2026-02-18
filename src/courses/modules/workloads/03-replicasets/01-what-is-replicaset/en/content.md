@@ -61,30 +61,6 @@ spec:
 
 Notice that the labels in `spec.template.metadata.labels` **must match** the `spec.selector.matchLabels`. This is how the ReplicaSet knows which Pods belong to it. If they don't match, Kubernetes rejects the manifest outright.
 
-## Seeing It in Action
-
-You can list ReplicaSets in your cluster using the full name or the handy shortcut `rs`:
-
-```bash
-kubectl get replicasets
-kubectl get rs
-```
-
-To get more details — the selector, the image, and the current vs desired replica count:
-
-```bash
-kubectl get rs -o wide
-kubectl describe replicaset nginx-rs
-```
-
-You can also verify which Pods are managed by the ReplicaSet by filtering on the selector label:
-
-```bash
-kubectl get pods -l app=nginx
-```
-
-Each Pod created by a ReplicaSet carries a field called `metadata.ownerReferences` that points back to the ReplicaSet. This is how Kubernetes tracks the **ownership chain** — if the ReplicaSet is deleted, Kubernetes knows which Pods to clean up.
-
 ## ReplicaSets and Deployments
 
 You might be wondering: *"If ReplicaSets are so useful, why don't I see them used directly very often?"*
@@ -107,6 +83,36 @@ As a general rule, use a Deployment rather than a bare ReplicaSet. Deployments g
 :::warning
 Avoid creating standalone Pods that happen to match a ReplicaSet's selector. The ReplicaSet may **adopt** those Pods, which can lead to unexpected behavior — such as the ReplicaSet deleting your manually created Pod to stay at the desired count.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: List any existing ReplicaSets
+
+```bash
+kubectl get rs
+```
+
+If you have Deployments running, you will see their underlying ReplicaSets listed here.
+
+### Step 2: Look at ReplicaSets in wide format
+
+```bash
+kubectl get rs -o wide
+```
+
+This shows the image, selector, and replica counts in one view.
+
+### Step 3: Check the ownership chain
+
+Pick any Pod managed by a ReplicaSet and inspect its `ownerReferences`:
+
+```bash
+kubectl get pod <pod-name> -o jsonpath='{.metadata.ownerReferences}'
+```
+
+You should see a reference pointing back to the ReplicaSet — this is how Kubernetes tracks which Pods belong to which controller.
 
 ## Wrapping Up
 

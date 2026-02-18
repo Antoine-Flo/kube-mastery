@@ -26,37 +26,18 @@ The Krew index currently contains over 200 plugins. You can browse them at <a ta
 
 Krew installation is a one-time setup. Follow the official instructions at <a target="_blank" href="https://krew.sigs.k8s.io/docs/user-guide/setup/install/">krew.sigs.k8s.io</a> — it's typically a short script that downloads the Krew binary and adds `~/.krew/bin` to your PATH.
 
-After installation, verify it works:
-
-```bash
-kubectl krew version
-```
-
-If you see a version number, you're good to go. Make sure `~/.krew/bin` is in your shell's PATH (add it to your `.bashrc`, `.zshrc`, or equivalent if it isn't):
-
-```bash
-echo $PATH | tr ':' '\n' | grep krew
-```
+After installation, verify it works by running `kubectl krew version`. If you see a version number, you're good to go. Make sure `~/.krew/bin` is in your shell's PATH — you can check by piping `echo $PATH` through `grep krew`. Add it to your `.bashrc`, `.zshrc`, or equivalent if it isn't there.
 
 ## Finding and Installing Plugins
 
-The workflow is intuitive:
+The workflow is intuitive. Search the full index with `kubectl krew search`, or narrow it down with `kubectl krew search ctx` for a specific plugin. Then install and use it:
 
 ```bash
-# Search for plugins
-kubectl krew search
-
-# Search for something specific
-kubectl krew search ctx
-
-# Install a plugin
 kubectl krew install ctx
-
-# Use the newly installed plugin
 kubectl ctx
 ```
 
-After `kubectl krew install ctx`, you can switch Kubernetes contexts by simply typing `kubectl ctx` — much faster than `kubectl config use-context my-long-context-name`.
+After installing, you can switch Kubernetes contexts by simply typing `kubectl ctx` — much faster than `kubectl config use-context my-long-context-name`.
 
 Let's install a few popular plugins to see what's available:
 
@@ -76,25 +57,38 @@ kubectl krew install tree
 
 ## Managing Your Plugins
 
-Once you've installed some plugins, Krew makes management simple:
+Once you've installed some plugins, Krew makes management simple. Check what you have with `kubectl krew list`, then use the following to maintain them:
 
 ```bash
-# List all installed plugins
-kubectl krew list
-
-# Upgrade all plugins to their latest versions
 kubectl krew upgrade
-
-# Upgrade a specific plugin
 kubectl krew upgrade ctx
-
-# Remove a plugin you no longer need
 kubectl krew uninstall neat
 ```
 
 :::warning
 Make sure you only manage plugins through **one method**. If you install a plugin manually (by placing a file in PATH) and also install it through Krew, they can conflict. Pick one approach per plugin — Krew for community plugins, manual installation for your own custom scripts.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: List Installed Plugins (if Krew is installed)
+
+```bash
+kubectl krew list
+```
+
+If Krew isn't installed, you'll get a "command not found" — install from krew.sigs.k8s.io first.
+
+### Step 2: Search the Plugin Index
+
+```bash
+kubectl krew search
+kubectl krew search ctx
+```
+
+Browse available plugins. The search narrows the list when you provide a term.
 
 ## Popular Plugins Worth Trying
 

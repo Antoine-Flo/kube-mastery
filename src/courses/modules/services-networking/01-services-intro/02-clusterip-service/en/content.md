@@ -57,19 +57,6 @@ This is a common source of confusion. Here's the distinction:
 
 They can be different! Your Service can listen on port 80 (standard HTTP) while your app listens on port 9376. The Service translates between them.
 
-## Verifying Your ClusterIP Service
-
-```bash
-# See the assigned cluster IP
-kubectl describe service my-service
-
-# Check endpoints — which Pods are receiving traffic?
-kubectl get endpoints my-service
-
-# Modern alternative: EndpointSlices
-kubectl get endpointslices -l kubernetes.io/service-name=my-service
-```
-
 The **endpoints** list should contain the IPs of all Pods matching the selector. If it's empty, your selector doesn't match any Pods.
 
 ## Headless Services
@@ -81,6 +68,65 @@ Headless Services are used with **StatefulSets**, where you need to address spec
 :::warning
 Don't set `clusterIP: None` unless you specifically need direct Pod resolution. Without a virtual IP, there's no load balancing — clients connect directly to individual Pods.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Deployment
+
+```bash
+kubectl create deployment web --image=nginx --replicas=2
+```
+
+**Observation:** The deployment creates 2 nginx Pods with label `app=web` (the default for create deployment).
+
+### Step 2: Create a ClusterIP Service
+
+Create `service.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 80
+```
+
+```bash
+kubectl apply -f service.yaml
+```
+
+**Observation:** The Service gets a cluster IP and targets Pods with `app=web`.
+
+### Step 3: Apply and Verify
+
+```bash
+kubectl get svc
+kubectl get endpoints web
+```
+
+**Observation:** You see the Service's cluster IP and the list of Pod IPs in the endpoints.
+
+### Step 4: Describe the Service
+
+```bash
+kubectl describe service web
+```
+
+**Observation:** The output shows selector, ports, and endpoints — confirm everything matches.
+
+### Step 5: Clean Up
+
+```bash
+kubectl delete deployment web
+kubectl delete service web
+```
 
 ## Wrapping Up
 

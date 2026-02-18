@@ -80,19 +80,6 @@ flowchart TD
   Pod --> C2["Container app2: runAsUser: 2000 → UID 2000 (overridden)"]
 ```
 
-## Verifying at Runtime
-
-Always verify that your security settings are actually applied:
-
-```bash
-# Check the configured UID
-kubectl get pod myapp -o jsonpath='{.spec.containers[*].securityContext.runAsUser}'
-
-# Verify inside the container
-kubectl exec myapp -- id
-# Output: uid=1000 gid=3000 groups=3000
-```
-
 ## Troubleshooting
 
 **Pod rejected with "must run as non-root"** — The image's default user is root and `runAsNonRoot: true` is set. Add `runAsUser: 1000` (or higher).
@@ -104,6 +91,55 @@ kubectl exec myapp -- id
 :::warning
 Some legacy images only work as root because they bind to privileged ports (below 1024) or write to root-owned directories. The solution is to switch to a non-root compatible image, configure the app to use non-privileged ports, or mount writable volumes where needed.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Pod with runAsUser and runAsNonRoot
+
+Create `nonroot-pod.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nonroot-test
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+  containers:
+    - name: app
+      image: nginx
+```
+
+Apply it:
+
+```bash
+kubectl apply -f nonroot-pod.yaml
+```
+
+### Step 2: Wait for the Pod to be Running
+
+```bash
+kubectl wait --for=condition=Ready pod/nonroot-test --timeout=60s
+```
+
+### Step 3: Verify the user inside the container
+
+```bash
+kubectl exec nonroot-test -- id
+kubectl exec nonroot-test -- whoami
+```
+
+Output should show `uid=1000` and `whoami` returns a non-root user (typically a numeric UID or `nginx` if the image defines one).
+
+### Step 4: Clean up
+
+```bash
+kubectl delete pod nonroot-test
+```
 
 ## Wrapping Up
 

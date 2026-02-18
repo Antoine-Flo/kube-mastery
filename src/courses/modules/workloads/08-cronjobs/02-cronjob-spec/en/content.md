@@ -90,23 +90,7 @@ Let's break this down:
 
 ## Inspecting Your CronJob
 
-Once the CronJob is running, you can inspect its configuration and recent activity:
-
-```bash
-# Overview of all CronJobs
-kubectl get cronjobs
-
-# Detailed view including concurrencyPolicy and history limits
-kubectl describe cronjob db-backup
-
-# List Jobs created by this CronJob
-kubectl get jobs --sort-by=.metadata.creationTimestamp
-
-# Check logs from the most recent Job
-kubectl logs job/db-backup-<timestamp>
-```
-
-The `describe` output shows you the schedule, concurrency policy, history limits, and a list of recent active/completed/failed Jobs — everything you need at a glance to understand the CronJob's current state.
+Once the CronJob is running, use `kubectl describe cronjob <name>` to see the full configuration: schedule, concurrency policy, history limits, and a list of recent active/completed/failed Jobs. List the created Jobs with `kubectl get jobs --sort-by=.metadata.creationTimestamp` and inspect individual run logs with `kubectl logs job/<job-name>`.
 
 ## Choosing the Right Settings
 
@@ -117,6 +101,68 @@ Here are practical guidelines to help you decide:
 - **Lightweight health checks** — `Allow` may be acceptable if each run completes in seconds and overlap is virtually impossible.
 
 For history limits, keep enough successful Jobs to cover your review cycle (a week's worth of daily Jobs means setting the limit to 7), and enough failed Jobs to give your team time to respond to alerts.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a CronJob Manifest
+
+Create `cronjob.yaml` with a schedule of every minute:
+
+```bash
+nano cronjob.yaml
+```
+
+Use this manifest:
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: hello-cron
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: hello
+              image: busybox
+              command: ["echo", "Hello from CronJob"]
+          restartPolicy: OnFailure
+```
+
+Save and exit.
+
+### Step 2: Apply and List CronJobs
+
+```bash
+kubectl apply -f cronjob.yaml
+kubectl get cronjobs
+```
+
+The CronJob appears with schedule `*/1 * * * *` and will fire every minute.
+
+### Step 3: Wait and Verify Jobs Are Created
+
+Wait about a minute, then run:
+
+```bash
+kubectl get jobs
+kubectl get pods
+```
+
+You see Jobs created by the CronJob (e.g., `hello-cron-<timestamp>`) and their Pods. Each run is an independent Job.
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete cronjob hello-cron
+```
+
+---
 
 ## Wrapping Up
 

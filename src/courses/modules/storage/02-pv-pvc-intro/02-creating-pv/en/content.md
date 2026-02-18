@@ -61,19 +61,6 @@ spec:
 
 No `storageClassName` is set here, so this PV can only be bound by PVCs that also omit the class (or explicitly set it to `""`).
 
-## Applying and Inspecting the PV
-
-```bash
-# Create the PV
-kubectl apply -f pv-hostpath-demo.yaml
-
-# List all PVs — check the STATUS column
-kubectl get pv
-
-# See detailed information
-kubectl describe pv pv-hostpath-demo
-```
-
 A freshly created PV has status `Available` — it's waiting for a matching PVC. Once bound, the status changes to `Bound` and shows which PVC it's connected to.
 
 :::info
@@ -97,6 +84,58 @@ For manually created PVs containing important data, always use `Retain`. For dyn
 **hostPath not found** — The directory doesn't exist on the node. Use `type: DirectoryOrCreate` to let Kubernetes create it, or ensure the path exists before creating the PV.
 
 **Binding fails** — The PVC's requirements don't match any PV. Common mismatches: access modes (PVC asks for RWX but PV only supports RWO), capacity (PVC asks for more than the PV offers), or StorageClass mismatch.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a PersistentVolume manifest
+
+```bash
+nano my-pv.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: my-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /tmp/my-pv-data
+    type: DirectoryOrCreate
+```
+
+```bash
+kubectl apply -f my-pv.yaml
+```
+
+### Step 2: Verify the PV was created
+
+```bash
+kubectl get pv
+```
+
+You should see `my-pv` with status `Available`.
+
+### Step 3: Inspect the PV
+
+```bash
+kubectl describe pv my-pv
+```
+
+Check the capacity, access modes, and reclaim policy.
+
+### Step 4: Clean up
+
+```bash
+kubectl delete pv my-pv
+```
 
 ## Wrapping Up
 

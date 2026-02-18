@@ -4,103 +4,23 @@ You can see that a Pod is running with `kubectl get`. You can see its events wit
 
 ## kubectl logs — Reading Container Output
 
-Containers write their output to stdout and stderr, and `kubectl logs` lets you read it:
-
-```bash
-# View logs from a Pod
-kubectl logs nginx-pod
-
-# Follow logs in real time (like tail -f)
-kubectl logs nginx-pod -f
-
-# Show only the last 20 lines
-kubectl logs nginx-pod --tail=20
-
-# Show logs from the last hour
-kubectl logs nginx-pod --since=1h
-```
-
-This is usually your first debugging tool when an application isn't behaving as expected. Application errors, startup messages, request logs — they all show up here.
+Containers write their output to stdout and stderr, and `kubectl logs` lets you read it. Use `-f` to follow in real time, `--tail=N` for the last N lines, and `--since=1h` for recent logs. This is usually your first debugging tool when an application isn't behaving as expected — application errors, startup messages, and request logs all show up here.
 
 ## Multi-Container Pods
 
-When a Pod has more than one container, you need to specify which container's logs you want:
-
-```bash
-# Logs from a specific container
-kubectl logs nginx-pod -c nginx
-
-# Logs from the sidecar
-kubectl logs nginx-pod -c log-collector
-
-# Logs from ALL containers
-kubectl logs nginx-pod --all-containers=true
-```
-
-Without `-c`, kubectl will either pick the first container or ask you to specify one — depending on the version.
+When a Pod has more than one container, use `-c <container-name>` to specify which container's logs you want, or `--all-containers=true` for all of them. Without `-c`, kubectl picks the first container or asks you to specify one.
 
 ## Logs from Previous Instances
 
-When a container crashes and restarts, the current logs belong to the new instance. To see what happened before the crash:
-
-```bash
-kubectl logs nginx-pod --previous
-```
-
-This is invaluable for debugging crash loops — the cause of the crash is usually in the previous instance's logs.
+When a container crashes and restarts, the current logs belong to the new instance. Use `kubectl logs <pod> --previous` to see what happened before the crash — invaluable for debugging crash loops.
 
 ## kubectl exec — Running Commands Inside Containers
 
-Sometimes you need to look inside a running container — check a configuration file, test network connectivity, or inspect the filesystem. `kubectl exec` lets you run commands directly:
-
-```bash
-# Run a single command
-kubectl exec nginx-pod -- ls /usr/share/nginx/html
-
-# Read a config file
-kubectl exec nginx-pod -- cat /etc/nginx/nginx.conf
-
-# Check network connectivity
-kubectl exec nginx-pod -- curl -s http://backend-service:8080/health
-```
+Sometimes you need to look inside a running container — check a configuration file, test network connectivity, or inspect the filesystem. `kubectl exec` lets you run commands directly. The `--` separator is important: everything before it is a kubectl option; everything after is passed to the container.
 
 :::info
-The `--` separator is important. Everything before `--` is a kubectl option; everything after is passed to the container as the command. Without it, kubectl might interpret your command's flags as its own.
+The `-i` flag keeps stdin open, and `-t` allocates a terminal for interactive shells. Not all images have `/bin/sh` — minimal images like `distroless` may not include a shell.
 :::
-
-## Interactive Shells
-
-For more exploratory debugging, open an interactive shell:
-
-```bash
-kubectl exec -it nginx-pod -- /bin/sh
-```
-
-The `-i` flag keeps stdin open, and `-t` allocates a terminal. Together, they give you a shell session inside the container. Exit with `exit` or Ctrl+D.
-
-Not all images have `/bin/sh` — minimal images like `distroless` may not include a shell at all. In those cases, consider using `kubectl debug` (Kubernetes 1.25+) to attach a debug container with the tools you need.
-
-## A Debugging Workflow
-
-Here's a practical sequence for investigating a misbehaving Pod:
-
-```bash
-# 1. Check the status
-kubectl get pod problem-pod
-
-# 2. Read the events
-kubectl describe pod problem-pod
-
-# 3. Check the logs
-kubectl logs problem-pod --tail=50
-
-# 4. If it crashed, check previous logs
-kubectl logs problem-pod --previous
-
-# 5. If it's running but wrong, look inside
-kubectl exec problem-pod -- cat /app/config.yaml
-kubectl exec -it problem-pod -- /bin/sh
-```
 
 ```mermaid
 flowchart TD
@@ -113,6 +33,38 @@ flowchart TD
 :::warning
 `kubectl exec` gives you direct access to a running container with whatever permissions that container has. In production, use it carefully — and prefer read-only operations (checking files, running diagnostics) over modifying state. For sensitive environments, RBAC can restrict who can exec into Pods.
 :::
+
+---
+
+## Hands-On Practice
+
+You need a Running Pod. Use `kubectl run nginx-pod --image=nginx` or an existing Pod from earlier lessons.
+
+### Step 1: View Logs
+
+```bash
+kubectl logs nginx-pod
+kubectl logs nginx-pod --tail=20
+```
+
+Application output goes to stdout/stderr and appears here. Use `-f` to follow logs in real time.
+
+### Step 2: Run a Command in the Container
+
+```bash
+kubectl exec nginx-pod -- ls /usr/share/nginx/html
+kubectl exec nginx-pod -- cat /etc/nginx/nginx.conf
+```
+
+The `--` separates kubectl options from the command passed to the container.
+
+### Step 3: Open an Interactive Shell
+
+```bash
+kubectl exec -it nginx-pod -- /bin/sh
+```
+
+You are now inside the container. Run commands like `ls`, `pwd`, `curl`. Exit with `exit` or Ctrl+D.
 
 ## Wrapping Up
 

@@ -61,34 +61,7 @@ volumes:
 
 The `defaultMode: 0400` sets owner-read-only permissions on every file. This is important for files like TLS private keys, where restrictive permissions are a security requirement.
 
-## Creating the ConfigMap
-
-You can create a ConfigMap from literal values, files, or directories:
-
-```bash
-# From literal key-value pairs
-kubectl create configmap my-configmap \
-  --from-literal=key1=value1 \
-  --from-literal=config.json='{"debug": false, "logLevel": "info"}'
-
-# From a file
-kubectl create configmap nginx-config --from-file=nginx.conf
-
-# Verify the content
-kubectl get configmap my-configmap -o yaml
-```
-
-## Verifying the Mount
-
-After creating the Pod, check that the files appear at the expected path:
-
-```bash
-# List files in the mount directory
-kubectl exec app-with-config -- ls -la /etc/config/
-
-# Read a specific file
-kubectl exec app-with-config -- cat /etc/config/key1
-```
+You can create a ConfigMap from literal values, files, or directories — using `kubectl create configmap --from-literal`, `--from-file`, or `--from-dir`. After creating the Pod, you can verify the files appear at the expected mount path with `kubectl exec`.
 
 ## Mounting a Single File with subPath
 
@@ -114,6 +87,63 @@ When using `subPath`, the file is **not automatically updated** when the ConfigM
 **Permission denied** — The default file mode may not match what your application expects. Use `defaultMode` in the volume definition, or adjust `runAsUser` and `fsGroup` in the Pod's security context.
 
 **Stale data after update** — ConfigMap updates propagate to mounts, but with a delay (the kubelet sync period, typically up to a minute). Applications that cache config files at startup won't see the change until they're restarted or reloaded.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a ConfigMap
+
+```bash
+kubectl create configmap my-configmap \
+  --from-literal=key1=value1 \
+  --from-literal=app.conf='log_level=info'
+kubectl get configmap my-configmap -o yaml
+```
+
+Each key becomes a filename in the mounted volume. Verify the ConfigMap exists and has the expected keys.
+
+### Step 2: Create a Pod that mounts the ConfigMap as a volume
+
+```bash
+cat <<'EOF' | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-config
+spec:
+  containers:
+    - name: app
+      image: nginx
+      volumeMounts:
+        - name: config-vol
+          mountPath: /etc/config
+          readOnly: true
+  volumes:
+    - name: config-vol
+      configMap:
+        name: my-configmap
+EOF
+kubectl wait --for=condition=Ready pod/app-with-config --timeout=60s
+```
+
+The Pod mounts the ConfigMap at `/etc/config`. The volume is read-only by default.
+
+### Step 3: Verify the mounted files exist
+
+```bash
+kubectl exec app-with-config -- ls -la /etc/config/
+kubectl exec app-with-config -- cat /etc/config/key1
+```
+
+You should see the keys as filenames and `value1` when reading `key1`. Configuration is injected as files without baking them into the image.
+
+### Step 4: Clean up
+
+```bash
+kubectl delete pod app-with-config
+kubectl delete configmap my-configmap
+```
 
 ## Wrapping Up
 

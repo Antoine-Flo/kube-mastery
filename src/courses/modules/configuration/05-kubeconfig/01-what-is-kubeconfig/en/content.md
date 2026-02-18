@@ -69,24 +69,37 @@ flowchart TD
 When you run any kubectl command, it reads the current context, finds the associated cluster and user, and makes the API request with those credentials. Change the context, and all your commands target a different cluster or identity.
 :::
 
-## Verifying Your Configuration
-
-```bash
-# See the current configuration (credentials redacted)
-kubectl config view
-
-# Which context is active?
-kubectl config current-context
-
-# Test the connection
-kubectl cluster-info
-```
-
-If `cluster-info` succeeds, your kubeconfig is working. If you get "connection refused" or "unauthorized," check the server URL and credentials.
-
 :::warning
 kubeconfig files contain sensitive credentials — certificates, tokens, or references to credential helpers. Never commit them to version control. Restrict file permissions: `chmod 600 ~/.kube/config`.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: View your kubeconfig
+
+```bash
+kubectl config view
+```
+
+This shows the merged configuration from your kubeconfig file(s). Credentials are typically redacted for security. You'll see clusters, users, and contexts.
+
+### Step 2: List available contexts
+
+```bash
+kubectl config get-contexts
+```
+
+Each context links a cluster with a user. The current context is marked with an asterisk (*). This is what you'll switch between when working with multiple clusters.
+
+### Step 3: Show the current context
+
+```bash
+kubectl config current-context
+```
+
+This outputs the name of the context kubectl is using right now. All commands target this context's cluster and credentials.
 
 ## Wrapping Up
 

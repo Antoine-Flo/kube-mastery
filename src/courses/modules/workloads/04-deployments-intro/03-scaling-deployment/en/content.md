@@ -15,44 +15,15 @@ An important detail: **scaling does not trigger a rollout**. No new ReplicaSet i
 
 ## Manual Scaling with kubectl
 
-The most direct way to scale is with `kubectl scale`:
-
-```bash
-kubectl scale deployment/nginx-deployment --replicas=5
-```
-
-This tells Kubernetes: "I now want five replicas instead of three." The Deployment controller immediately begins creating two additional Pods.
-
-You can verify the result:
-
-```bash
-kubectl get deployment nginx-deployment
-```
-
-```
-NAME               READY   UP-TO-DATE   AVAILABLE   AGE
-nginx-deployment   5/5     5            5           4m
-```
-
-The `READY` column should update to `5/5` once all new Pods pass their readiness checks.
+The most direct way to scale is with `kubectl scale`. You specify the Deployment name and the desired replica count. The Deployment controller immediately begins creating or terminating Pods to match. The `READY` column in `kubectl get deployment` updates once all new Pods pass their readiness checks.
 
 ## Scaling Through the Manifest
 
-Alternatively, you can edit the `spec.replicas` field in your YAML file and reapply:
+Alternatively, you can edit the `spec.replicas` field in your YAML file and reapply, or use `kubectl edit` to modify the live object directly:
 
 ```yaml
 spec:
   replicas: 5
-```
-
-```bash
-kubectl apply -f nginx-deployment.yaml
-```
-
-Or use `kubectl edit` to modify the live object directly:
-
-```bash
-kubectl edit deployment nginx-deployment
 ```
 
 Both approaches produce the same result. The difference is workflow preference — manifest-driven changes are easier to track in version control, while `kubectl scale` is convenient for quick adjustments during development or incidents.
@@ -63,19 +34,7 @@ Be careful when mixing `kubectl scale` with `kubectl apply`. If you scale to 5 r
 
 ## Verifying the Scale Operation
 
-After scaling, confirm that the actual Pod count matches your desired count:
-
-```bash
-kubectl get pods -l app=nginx
-```
-
-You should see exactly the number of Pods you requested. If some Pods remain in `Pending` state, the cluster may not have enough resources to schedule them. Run `kubectl describe pod <pod-name>` and check the Events section for messages about insufficient CPU or memory.
-
-You can also query the desired replica count directly:
-
-```bash
-kubectl get deployment nginx-deployment -o jsonpath='{.spec.replicas}'
-```
+After scaling, confirm that the actual Pod count matches your desired count. Use `kubectl get pods -l app=nginx` to see the Pods and `kubectl get deployment` to check the Deployment status. If some Pods remain in `Pending` state, the cluster may not have enough resources to schedule them — run `kubectl describe pod <pod-name>` and check the Events section for messages about insufficient CPU or memory. You can also query the desired replica count programmatically with `kubectl get deployment -o jsonpath`.
 
 ## Automatic Scaling with HPA
 
@@ -88,6 +47,98 @@ When using an HPA, do not set `spec.replicas` in your Deployment manifest. Let t
 :::
 
 Setting up HPA is beyond the scope of this lesson, but keep this concept in mind — it is a natural next step once your application is in production.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a deployment
+
+Create `deploy.yaml` with a 3-replica nginx Deployment:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+```
+
+```bash
+nano deploy.yaml
+# Paste the YAML above, save and exit
+kubectl apply -f deploy.yaml
+```
+
+**Observation:** Three nginx Pods are created and scheduled across your cluster.
+
+### Step 2: Scale up with kubectl scale
+
+```bash
+kubectl scale deployment/nginx-deployment --replicas=5
+```
+
+**Observation:** The Deployment controller immediately begins creating two additional Pods.
+
+### Step 3: Verify the scale-up
+
+```bash
+kubectl get deployment nginx-deployment
+kubectl get pods -l app=nginx
+```
+
+**Observation:** The `READY` column shows `5/5` once all new Pods pass readiness checks. You should see five nginx Pods.
+
+### Step 4: Scale down
+
+```bash
+kubectl scale deployment/nginx-deployment --replicas=2
+```
+
+**Observation:** Kubernetes selects excess Pods for termination and gracefully shuts them down.
+
+### Step 5: Verify the scale-down
+
+```bash
+kubectl get deployment nginx-deployment
+kubectl get pods -l app=nginx
+```
+
+**Observation:** Only two Pods remain. The `READY` column reflects `2/2`.
+
+### Step 6: Check the replica count programmatically
+
+```bash
+kubectl get deployment nginx-deployment -o jsonpath='{.spec.replicas}'
+```
+
+**Observation:** The output shows `2` — the current desired replica count.
+
+### Step 7: Clean up
+
+```bash
+kubectl delete deployment nginx-deployment
+```
+
+**Observation:** The Deployment and all its Pods are removed from the cluster.
+
+---
 
 ## Wrapping Up
 

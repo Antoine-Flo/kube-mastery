@@ -96,6 +96,79 @@ If one container in a Pod has requests and limits and another doesn't, the whole
 Guaranteed Pods with conservative settings (requests = limits) may underutilize resources. There's a tradeoff between predictability and efficiency. Use monitoring data to find the right balance.
 :::
 
+---
+
+## Hands-On Practice
+
+### Step 1: Create three Pods with different QoS profiles
+
+Create `qos-pods.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: guaranteed
+spec:
+  containers:
+    - name: app
+      image: nginx
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "100m"
+          memory: "128Mi"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: burstable
+spec:
+  containers:
+    - name: app
+      image: nginx
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: besteffort
+spec:
+  containers:
+    - name: app
+      image: nginx
+```
+
+Apply it:
+
+```bash
+kubectl apply -f qos-pods.yaml
+```
+
+### Step 2: Check each Pod's QoS class
+
+```bash
+kubectl get pod guaranteed -o jsonpath='{.status.qosClass}'; echo
+kubectl get pod burstable -o jsonpath='{.status.qosClass}'; echo
+kubectl get pod besteffort -o jsonpath='{.status.qosClass}'; echo
+```
+
+You should see `Guaranteed`, `Burstable`, and `BestEffort` respectively. Kubernetes assigns the class automatically based on your resource settings.
+
+### Step 3: Clean up
+
+```bash
+kubectl delete -f qos-pods.yaml
+```
+
 ## Wrapping Up
 
 QoS classes determine eviction priority: Guaranteed Pods are evicted last, BestEffort first, and Burstable falls in between. The class is determined automatically by how you set requests and limits. For critical workloads, set requests equal to limits. For everything else, at least set requests to avoid being BestEffort. Next up: probes — how Kubernetes knows whether your application is actually healthy and ready to serve traffic.

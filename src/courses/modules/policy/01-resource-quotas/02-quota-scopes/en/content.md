@@ -88,6 +88,44 @@ The output will be `BestEffort`, `Burstable`, or `Guaranteed`.
 If a Pod isn't being counted by a quota you expected, it probably doesn't match the scope. A Pod with `requests` but no `limits` is Burstable (NotBestEffort), not BestEffort. Use `kubectl get pod -o jsonpath` to check the QoS class.
 :::
 
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Scoped ResourceQuota
+
+Create and apply a quota that limits BestEffort Pods:
+
+```bash
+kubectl create namespace dev 2>/dev/null || true
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: best-effort-quota
+  namespace: dev
+spec:
+  hard:
+    pods: "5"
+  scopes:
+    - BestEffort
+EOF
+```
+
+### Step 2: Verify the Scope
+
+```bash
+kubectl get resourcequota best-effort-quota -n dev -o yaml
+```
+
+The `scopes` field shows `[BestEffort]`, confirming only Pods without requests/limits are counted.
+
+### Step 3: Clean Up
+
+```bash
+kubectl delete resourcequota best-effort-quota -n dev
+```
+
 ## Wrapping Up
 
 Quota scopes let you tailor resource limits to different types of workloads. Use BestEffort/NotBestEffort to separate experimental from production Pods, and Terminating/NotTerminating to handle batch Jobs differently from long-running services. Combined with standard quotas, scopes give you precise control over who gets what in your namespaces. In the next lesson, we'll look at object count quotas — limiting how many ConfigMaps, Secrets, and other objects a namespace can hold.

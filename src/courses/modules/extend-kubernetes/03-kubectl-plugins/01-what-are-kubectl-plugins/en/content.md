@@ -37,13 +37,7 @@ There's a rich ecosystem of community plugins — we'll explore how to discover 
 
 ## Discovering Installed Plugins
 
-To see which plugins are available on your system:
-
-```bash
-kubectl plugin list
-```
-
-This scans every directory in your `PATH` and lists all executables matching the `kubectl-*` pattern. If you see nothing, you simply don't have any plugins installed yet.
+To see which plugins are available on your system, run `kubectl plugin list`. This scans every directory in your `PATH` and lists all executables matching the `kubectl-*` pattern. If you see nothing, you simply don't have any plugins installed yet.
 
 To find where a specific plugin lives:
 
@@ -84,6 +78,27 @@ This means plugins **cannot override built-in commands**. You can't replace `kub
 :::warning
 Plugins run with **your credentials**. A plugin has the same access to the cluster as you do. Only install plugins from sources you trust, and be cautious with plugins that modify cluster state or handle secrets.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: List Installed Plugins
+
+```bash
+kubectl plugin list
+```
+
+Scans PATH for executables matching `kubectl-*`. If you see nothing, no plugins are installed yet.
+
+### Step 2: Check Where Plugins Could Live
+
+```bash
+which kubectl-ctx 2>/dev/null || echo "kubectl-ctx not found"
+echo $PATH | tr ':' '\n' | grep -E 'bin|krew'
+```
+
+Common plugin locations: `/usr/local/bin`, `~/.krew/bin`. If Krew is installed, you'll see its path.
 
 ## Common Pitfalls
 

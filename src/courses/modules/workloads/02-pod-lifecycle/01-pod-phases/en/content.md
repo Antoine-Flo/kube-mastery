@@ -45,25 +45,30 @@ Let's follow a Pod from birth to completion.
 
 **4 — Unknown.** If the kubelet on the node stops communicating with the control plane (network partition, node crash, kubelet down), the phase becomes *Unknown*. Once communication is restored, the phase updates to reflect reality.
 
-## Observing Phases in Practice
+## Troubleshooting by Phase
 
-The quickest way to see Pod phases is with `kubectl get pods`:
+When something goes wrong, the phase is your first breadcrumb:
+
+- **Stuck in Pending** — The scheduler cannot place the Pod. Check resource requests (`kubectl describe pod`), node taints and tolerations, and node capacity (`kubectl describe node`).
+- **Running but not Ready** — The Pod is alive but not serving traffic. This usually points to a failing readiness probe. We will cover probes in a dedicated module, but `kubectl describe pod` will show the probe status right away.
+- **Failed** — Inspect container logs with `kubectl logs <pod-name>` and look at the exit code in `kubectl describe pod`. A non-zero exit code is your starting point for root-cause analysis.
+- **Unknown** — Focus on the node, not the Pod. Check `kubectl get nodes` and `kubectl describe node <node-name>`. Network issues and kubelet crashes are the usual suspects.
+
+:::warning
+**Succeeded** and **Failed** are terminal states. Once a Pod reaches either, it will not restart on its own. Workload controllers like Deployments and Jobs are responsible for creating *new* Pods when needed — the old Pod object remains for inspection until it is garbage-collected.
+:::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Pod and watch its phase transitions
 
 ```bash
-kubectl get pods -o wide
+nano phase-demo.yaml
 ```
 
-The `STATUS` column shows the phase (or a more specific reason like `CrashLoopBackOff`). To dig deeper into *why* a Pod is in a particular phase, use `describe`:
-
-```bash
-kubectl describe pod <pod-name>
-```
-
-The **Events** section at the bottom is especially valuable — it tells the story of what happened in chronological order: scheduling decisions, image pulls, probe failures, and more.
-
-### A quick experiment
-
-Apply this minimal Pod and watch it progress from Pending to Running:
+Paste the following content:
 
 ```yaml
 apiVersion: v1
@@ -78,23 +83,68 @@ spec:
 
 ```bash
 kubectl apply -f phase-demo.yaml
+```
+
+### Step 2: Watch the Pod in real time
+
+```bash
 kubectl get pod phase-demo -w
 ```
 
-The `-w` flag streams updates in real time. You should see the status move from `Pending` → `ContainerCreating` → `Running` within a few seconds on a healthy cluster.
+You should see the status progress from `Pending` → `ContainerCreating` → `Running`. Press `Ctrl+C` to stop watching.
 
-## Troubleshooting by Phase
+### Step 3: Check the phase in the raw status
 
-When something goes wrong, the phase is your first breadcrumb:
+```bash
+kubectl get pod phase-demo -o jsonpath='{.status.phase}'
+```
 
-- **Stuck in Pending** — The scheduler cannot place the Pod. Check resource requests (`kubectl describe pod`), node taints and tolerations, and node capacity (`kubectl describe node`).
-- **Running but not Ready** — The Pod is alive but not serving traffic. This usually points to a failing readiness probe. We will cover probes in a dedicated module, but `kubectl describe pod` will show the probe status right away.
-- **Failed** — Inspect container logs with `kubectl logs <pod-name>` and look at the exit code in `kubectl describe pod`. A non-zero exit code is your starting point for root-cause analysis.
-- **Unknown** — Focus on the node, not the Pod. Check `kubectl get nodes` and `kubectl describe node <node-name>`. Network issues and kubelet crashes are the usual suspects.
+This returns the exact value of `status.phase` — one of the five phases you learned about.
 
-:::warning
-**Succeeded** and **Failed** are terminal states. Once a Pod reaches either, it will not restart on its own. Workload controllers like Deployments and Jobs are responsible for creating *new* Pods when needed — the old Pod object remains for inspection until it is garbage-collected.
-:::
+### Step 4: Inspect the events timeline
+
+```bash
+kubectl describe pod phase-demo
+```
+
+Scroll to the **Events** section to see the chronological story: scheduling, image pull, container start.
+
+### Step 5: Create a Pod that will fail
+
+```bash
+nano fail-demo.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fail-demo
+spec:
+  restartPolicy: Never
+  containers:
+    - name: fail
+      image: busybox
+      command: ["sh", "-c", "exit 1"]
+```
+
+```bash
+kubectl apply -f fail-demo.yaml
+```
+
+Wait a few seconds, then check:
+
+```bash
+kubectl get pod fail-demo
+```
+
+The status should show `Error` or `Failed` — because the container exited with a non-zero code and `restartPolicy: Never` prevents Kubernetes from restarting it.
+
+### Step 6: Clean up
+
+```bash
+kubectl delete pod phase-demo fail-demo
+```
 
 ## Wrapping Up
 

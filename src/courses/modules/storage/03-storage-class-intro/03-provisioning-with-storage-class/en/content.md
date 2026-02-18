@@ -30,60 +30,11 @@ flowchart TD
 Dynamic provisioning eliminates the manual PV creation step entirely. In cloud environments, this means you can go from "I need storage" to "I have storage" with a single `kubectl apply` — no tickets, no waiting for an admin.
 :::
 
-## Trying It Out
-
-Create a PVC that references a StorageClass with a provisioner:
-
-```yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: dynamic-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: standard
-  resources:
-    requests:
-      storage: 10Gi
-```
-
-Apply it and watch what happens:
-
-```bash
-# Apply the PVC
-kubectl apply -f dynamic-pvc.yaml
-
-# Watch the PVC status transition to Bound
-kubectl get pvc dynamic-pvc -w
-
-# See the automatically created PV
-kubectl get pv
-
-# Inspect the provisioned PV
-kubectl describe pv <pv-name>
-```
-
-If the StorageClass uses `WaitForFirstConsumer` binding mode, the PVC will stay in `Pending` until a Pod references it. Once you create a Pod that mounts this PVC, provisioning triggers — and the provisioner knows which node the Pod will run on, so it can create storage in the correct zone.
+Create a PVC that references a StorageClass with a provisioner — the YAML includes `storageClassName` and `resources.requests.storage`. Apply it and the provisioner creates a PV automatically. If the StorageClass uses `WaitForFirstConsumer` binding mode, the PVC stays in `Pending` until a Pod references it; once you create a Pod that mounts the PVC, provisioning triggers and the provisioner creates storage in the correct zone.
 
 ## What Happens with WaitForFirstConsumer
 
-In multi-zone clusters, `WaitForFirstConsumer` is crucial. Without it, the provisioner might create a disk in zone A, but the scheduler puts your Pod in zone B — and the Pod can't reach the disk.
-
-With `WaitForFirstConsumer`, provisioning is deferred until the Pod is scheduled. The provisioner sees which node was chosen and creates the disk in the same zone. Problem solved.
-
-```bash
-# With WaitForFirstConsumer, the PVC stays Pending...
-kubectl get pvc dynamic-pvc
-# STATUS: Pending
-
-# ...until you create a Pod that uses it
-kubectl apply -f pod-with-pvc.yaml
-
-# Now the PVC becomes Bound
-kubectl get pvc dynamic-pvc
-# STATUS: Bound
-```
+In multi-zone clusters, `WaitForFirstConsumer` is crucial. Without it, the provisioner might create a disk in zone A, but the scheduler puts your Pod in zone B — and the Pod can't reach the disk. With `WaitForFirstConsumer`, provisioning is deferred until the Pod is scheduled. The provisioner sees which node was chosen and creates the disk in the same zone.
 
 ## When Provisioning Fails
 
@@ -116,6 +67,90 @@ When you delete a PVC, the reclaim policy determines what happens to the dynamic
 - **Retain** — The PV and disk are kept, but the PV moves to `Released` state. An admin must manually clean up.
 
 For development environments, `Delete` keeps things tidy. For production data you can't afford to lose, consider `Retain`.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Check available StorageClasses
+
+```bash
+kubectl get storageclass
+```
+
+### Step 2: Create a PVC that requests dynamic provisioning
+
+```bash
+nano dynamic-pvc.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dynamic-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+```
+
+```bash
+kubectl apply -f dynamic-pvc.yaml
+```
+
+### Step 3: Check if a PV was provisioned
+
+```bash
+kubectl get pv
+kubectl get pvc
+```
+
+If dynamic provisioning is configured, you should see a PV automatically created and bound to your PVC.
+
+### Step 4: Create a Pod that uses the PVC
+
+```bash
+nano pvc-pod.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvc-pod
+spec:
+  containers:
+    - name: app
+      image: busybox
+      command: ["sh", "-c", "echo 'data saved' > /data/test.txt && sleep 3600"]
+      volumeMounts:
+        - name: storage
+          mountPath: /data
+  volumes:
+    - name: storage
+      persistentVolumeClaim:
+        claimName: dynamic-pvc
+```
+
+```bash
+kubectl apply -f pvc-pod.yaml
+```
+
+### Step 5: Verify the mount
+
+```bash
+kubectl exec pvc-pod -- cat /data/test.txt
+```
+
+### Step 6: Clean up
+
+```bash
+kubectl delete pod pvc-pod
+kubectl delete pvc dynamic-pvc
+```
 
 ## Wrapping Up
 

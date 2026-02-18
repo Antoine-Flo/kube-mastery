@@ -6,35 +6,9 @@ Labels alone are just metadata. **Selectors** are what make them powerful — th
 
 Kubernetes supports two selector syntaxes:
 
-**Equality-based** — Simple `key=value` matching. The most common type, used by Services and in `kubectl`:
+**Equality-based** — Simple `key=value` matching. The most common type, used by Services and in `kubectl`. You filter with `-l key=value`, combine multiple requirements with commas (e.g., `-l 'app=nginx,env=production'`), and negate with `!=` (e.g., `-l 'env!=staging'`). Multiple comma-separated requirements are ANDed — all must match.
 
-```bash
-# Pods where app equals nginx
-kubectl get pods -l app=nginx
-
-# Pods where app equals nginx AND env equals production
-kubectl get pods -l 'app=nginx,env=production'
-
-# Pods where env is NOT staging
-kubectl get pods -l 'env!=staging'
-```
-
-Multiple requirements separated by commas are ANDed — all must match.
-
-**Set-based** — More expressive, using operators like `in`, `notin`, and `exists`:
-
-```bash
-# Pods where env is dev OR staging
-kubectl get pods -l 'env in (dev,staging)'
-
-# Pods where tier is NOT cache
-kubectl get pods -l 'tier notin (cache)'
-
-# Pods that have a "version" label (any value)
-kubectl get pods -l 'version'
-```
-
-Set-based selectors are powerful for filtering across multiple values or checking for label presence.
+**Set-based** — More expressive, using operators like `in`, `notin`, and `exists`. The `in` operator matches any of several values (e.g., `-l 'env in (dev,staging)'`), `notin` excludes values (e.g., `-l 'tier notin (cache)'`), and a bare key checks for label existence regardless of value (e.g., `-l 'version'`). Set-based selectors are powerful for filtering across multiple values or checking for label presence.
 
 ## Selectors in Manifests
 
@@ -85,27 +59,7 @@ flowchart LR
   EP --> P3["Pod 3 (app=nginx)"]
 ```
 
-You can inspect this with:
-
-```bash
-# See which Pods the Service selects
-kubectl get endpoints web-service
-```
-
 If the endpoints list is empty, no Pods match the selector — check your labels.
-
-## Verifying Selectors
-
-```bash
-# Does this selector match any Pods?
-kubectl get pods -l app=nginx
-
-# What does the Service actually select?
-kubectl get endpoints web-service
-
-# Detailed view of selector matching
-kubectl describe service web-service
-```
 
 :::warning
 Inconsistent labels are one of the most common causes of "why isn't my Service routing traffic?" If a selector expects `app: nginx` but your Pods have `app: web`, the Service finds nothing. Always verify both sides — the selector and the Pod labels.
@@ -116,6 +70,36 @@ Inconsistent labels are one of the most common causes of "why isn't my Service r
 - **Empty endpoints** — The selector doesn't match any Pods. Double-check label keys and values on both the Service and the Pods.
 - **Too many matches** — A broad selector like `app=nginx` might match Pods from different Deployments. Narrow the selector with additional labels.
 - **Orphaned Pods** — Changing a Deployment's selector after creation can disconnect it from its existing Pods, leaving them orphaned while new ones are created.
+
+---
+
+## Hands-On Practice
+
+### Step 1: List Pods with an equality-based selector
+
+```bash
+kubectl get pods -l app=nginx
+```
+
+### Step 2: Try a set-based selector
+
+```bash
+kubectl get pods -l 'app in (nginx,web)'
+```
+
+### Step 3: Use a negation selector
+
+```bash
+kubectl get pods -l app!=nginx
+```
+
+### Step 4: Check Service endpoints
+
+```bash
+kubectl get endpoints
+```
+
+This shows which Pods each Service has selected — a direct result of label selectors at work.
 
 ## Wrapping Up
 

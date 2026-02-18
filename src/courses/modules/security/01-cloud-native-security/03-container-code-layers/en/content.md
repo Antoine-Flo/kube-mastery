@@ -68,21 +68,6 @@ flowchart TD
 These settings are low-effort and high-impact. Adding `runAsNonRoot`, `allowPrivilegeEscalation: false`, and `capabilities.drop: [ALL]` to your Pod specs significantly reduces your attack surface — and they work with most applications out of the box.
 :::
 
-## Verifying Your Container Security
-
-Do not just set security options — verify them. These commands help you confirm that a running Pod is actually hardened as expected:
-
-```bash
-# Check the security context of a running Pod
-kubectl get pod <pod-name> -o jsonpath='{.spec.securityContext}'
-
-# Verify the user ID inside the container
-kubectl get pod <pod-name> -o jsonpath='{.spec.containers[*].securityContext.runAsUser}'
-
-# Scan an image for vulnerabilities
-trivy image myapp:v1.2.3
-```
-
 ## Building Secure Images
 
 The best security starts before deployment — in your Dockerfile. Build images with a non-root `USER` directive, choose a minimal base (like distroless or Alpine), and avoid installing packages you do not need. When you build security into the image itself, the Pod spec has less work to do.
@@ -90,6 +75,18 @@ The best security starts before deployment — in your Dockerfile. Build images 
 :::warning
 If a Pod is rejected with a "must run as non-root" error, the image's default user is root. Either add a `USER` directive in the Dockerfile or set `runAsUser` in the Pod spec. If an application fails with `readOnlyRootFilesystem`, add an `emptyDir` volume for writable paths like `/tmp`.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Inspect image names of running Pods
+
+```bash
+kubectl get pods -A -o jsonpath='{range .items[*]}{.metadata.namespace}{"\t"}{.metadata.name}{"\t"}{.spec.containers[*].image}{"\n"}{end}'
+```
+
+This lists namespace, Pod name, and container image for each running Pod. Knowing which images you deploy is the first step toward trusting and scanning them.
 
 ## Wrapping Up
 

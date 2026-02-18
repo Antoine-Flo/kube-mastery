@@ -49,19 +49,7 @@ ResourceQuotas apply **per namespace**. Different namespaces can have different 
 
 ## Checking Quota Usage
 
-The most useful command for quota troubleshooting:
-
-```bash
-kubectl describe resourcequota compute-quota -n dev
-```
-
-This shows `Hard` (the limit) and `Used` (current consumption) for each metric. When `Used` equals `Hard`, no more resources of that type can be created.
-
-To see all quotas across the cluster:
-
-```bash
-kubectl get resourcequota -A
-```
+To troubleshoot quota issues, use `kubectl describe resourcequota <name> -n <namespace>` — it shows `Hard` (the limit) and `Used` (current consumption) for each metric. When `Used` equals `Hard`, no more resources of that type can be created. To list all quotas across the cluster, use `kubectl get resourcequota -A`.
 
 ## When Quotas Cause Confusion
 
@@ -76,6 +64,55 @@ Quotas can surprise you. Here are the common scenarios:
 :::warning
 When a namespace has a compute ResourceQuota, all Pods in that namespace must specify `requests` and `limits` for the quoted resources. A Pod without them will be rejected — even if the namespace is well under quota. Combine ResourceQuotas with LimitRanges (covered in the next chapter) to automatically inject defaults.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Check Existing ResourceQuotas
+
+```bash
+kubectl get resourcequotas -A
+```
+
+You may see quotas in namespaces like `kube-system` or custom namespaces. If the cluster has none, the output will be empty.
+
+### Step 2: Create a ResourceQuota Manifest
+
+Create a file `quota.yaml` with a simple quota (ensure you have a `dev` namespace, or use `default`):
+
+```bash
+cat <<'EOF' > quota.yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: compute-quota
+  namespace: dev
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    pods: "10"
+EOF
+```
+
+If needed, create the namespace first: `kubectl create namespace dev`
+
+### Step 3: Apply and Verify the ResourceQuota
+
+```bash
+kubectl apply -f quota.yaml
+kubectl describe resourcequota compute-quota -n dev
+```
+
+The `describe` output shows `Hard` (limits) and `Used` (current consumption) for each metric.
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete resourcequota compute-quota -n dev
+kubectl delete -f quota.yaml 2>/dev/null || rm -f quota.yaml
+```
 
 ## Wrapping Up
 

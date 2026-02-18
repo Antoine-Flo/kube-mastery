@@ -81,23 +81,46 @@ What happens to the PV when the PVC is deleted? That depends on the **reclaim po
 
 ## Checking PVs and PVCs
 
-```bash
-# List all PersistentVolumes (cluster-scoped)
-kubectl get pv
-
-# List PersistentVolumeClaims (namespaced)
-kubectl get pvc -A
-
-# See details about a specific PV or PVC
-kubectl describe pv pv-example
-kubectl describe pvc my-claim
-```
+To inspect storage in your cluster, use `kubectl get pv` to list all PersistentVolumes (they're cluster-scoped, so no namespace is needed) and `kubectl get pvc -A` to list PersistentVolumeClaims across all namespaces. For more detail, `kubectl describe pv <name>` and `kubectl describe pvc <name>` show capacity, access modes, binding status, and events.
 
 Look at the `STATUS` column: `Available` means the PV is waiting for a PVC, `Bound` means it's matched.
 
 :::warning
 A PVC stuck in `Pending` means no PV matches its requirements — check capacity, access modes, and StorageClass. This is one of the most common storage issues in Kubernetes.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: List PersistentVolumes and PersistentVolumeClaims
+
+```bash
+kubectl get pv
+kubectl get pvc
+```
+
+PVs are cluster-scoped (no namespace column). PVCs are namespaced — use `kubectl get pvc -A` to see all namespaces. Check the `STATUS` column: `Available` means a PV is waiting for a PVC, `Bound` means it's matched.
+
+### Step 2: Explore PV and PVC API resources
+
+```bash
+kubectl api-resources | grep -i persistent
+```
+
+This shows the `persistentvolume` and `persistentvolumeclaim` resource types, their API group, and whether they're namespaced. PVs are cluster-scoped; PVCs are namespaced.
+
+### Step 3: Inspect an existing PV or PVC (if any exist)
+
+```bash
+# Pick a PV name from Step 1, then:
+kubectl describe pv <pv-name>
+
+# Or a PVC (include namespace if not default):
+kubectl describe pvc <pvc-name> -n <namespace>
+```
+
+If your cluster has PVs or PVCs (e.g., from other workloads), you'll see capacity, access modes, and binding details. On a fresh cluster with no PVs or PVCs, skip this step — that's expected.
 
 ## Wrapping Up
 

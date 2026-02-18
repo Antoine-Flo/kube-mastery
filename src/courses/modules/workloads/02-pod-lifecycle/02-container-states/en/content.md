@@ -57,25 +57,28 @@ The exponential backoff protects your cluster from a container that keeps crashi
 Exit code **137** usually means **OOMKilled** — the container tried to use more memory than its `resources.limits.memory` allows. Increase the limit if the workload genuinely needs more memory, or investigate memory leaks in your application.
 :::
 
-## Inspecting Container States
+## Debugging by Container State
 
-The richest view comes from `kubectl describe`:
+Here is a quick reference for the most common issues:
+
+- **Waiting + ImagePullBackOff** — Wrong image name or tag, missing `imagePullSecrets`, or a private registry that requires authentication. Double-check your manifest and registry access.
+- **Waiting + CrashLoopBackOff** — The container keeps crashing. Run `kubectl logs <pod-name>` (add `--previous` to see logs from the last crashed instance) and fix the root cause.
+- **Terminated + OOMKilled** — Memory limit exceeded. Review your `resources.limits.memory` and your application's actual memory usage.
+- **Terminated + Error** — The process returned a non-zero exit code. Logs are your best friend here.
+
+:::info
+When a container restarts, its previous logs are still accessible with `kubectl logs <pod-name> --previous`. This is invaluable for debugging crashes — the current container may have no useful output yet, but the previous run often reveals the error.
+:::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Pod to observe container states
 
 ```bash
-kubectl describe pod <pod-name>
+nano state-demo.yaml
 ```
-
-Look for the **State**, **Last State**, **Reason**, and **Exit Code** fields under each container. **Last State** is particularly helpful when a container has restarted — it tells you what happened in the *previous* run.
-
-You can also extract state programmatically with JSONPath:
-
-```bash
-kubectl get pod <pod-name> -o jsonpath='{.status.containerStatuses[*].state}'
-```
-
-### Try it yourself
-
-Apply this Pod and watch its container move from Waiting to Running:
 
 ```yaml
 apiVersion: v1
@@ -93,23 +96,69 @@ spec:
 
 ```bash
 kubectl apply -f state-demo.yaml
+```
+
+### Step 2: Watch the state transition
+
+```bash
 kubectl get pod state-demo -w
 ```
 
-Once the Pod is Running, use `kubectl describe pod state-demo` and read the container state section. Everything should show **State: Running** with a `startedAt` timestamp.
+You should see `Pending` → `ContainerCreating` → `Running`. Press `Ctrl+C` to stop watching.
 
-## Debugging by Container State
+### Step 3: Inspect the container state in detail
 
-Here is a quick reference for the most common issues:
+```bash
+kubectl describe pod state-demo
+```
 
-- **Waiting + ImagePullBackOff** — Wrong image name or tag, missing `imagePullSecrets`, or a private registry that requires authentication. Double-check your manifest and registry access.
-- **Waiting + CrashLoopBackOff** — The container keeps crashing. Run `kubectl logs <pod-name>` (add `--previous` to see logs from the last crashed instance) and fix the root cause.
-- **Terminated + OOMKilled** — Memory limit exceeded. Review your `resources.limits.memory` and your application's actual memory usage.
-- **Terminated + Error** — The process returned a non-zero exit code. Logs are your best friend here.
+Find the **State** field under the container section. It should show `Running` with a `startedAt` timestamp.
 
-:::info
-When a container restarts, its previous logs are still accessible with `kubectl logs <pod-name> --previous`. This is invaluable for debugging crashes — the current container may have no useful output yet, but the previous run often reveals the error.
-:::
+### Step 4: Extract state programmatically
+
+```bash
+kubectl get pod state-demo -o jsonpath='{.status.containerStatuses[0].state}'
+```
+
+### Step 5: Observe a CrashLoopBackOff
+
+```bash
+nano crash-demo.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: crash-demo
+spec:
+  containers:
+    - name: crash
+      image: busybox
+      command: ["sh", "-c", "exit 1"]
+```
+
+```bash
+kubectl apply -f crash-demo.yaml
+```
+
+Wait about 30 seconds, then check:
+
+```bash
+kubectl get pod crash-demo
+```
+
+You should see `CrashLoopBackOff` in the STATUS column. Check the previous container logs:
+
+```bash
+kubectl logs crash-demo --previous
+```
+
+### Step 6: Clean up
+
+```bash
+kubectl delete pod state-demo crash-demo
+```
 
 ## Wrapping Up
 

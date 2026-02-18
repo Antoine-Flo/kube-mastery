@@ -111,21 +111,7 @@ kubectl create rolebinding dev-user-edit \
 
 ## Verifying Access
 
-After setting everything up, verify it works:
-
-```bash
-# Check the current context
-kubectl config current-context
-
-# View the full kubeconfig structure
-kubectl config view
-
-# Test what the user can do
-kubectl auth can-i get pods --as=dev-user -n dev
-
-# Check certificate expiry
-openssl x509 -in dev-user.crt -noout -dates
-```
+After setting everything up, verify by checking the current context, reviewing the full kubeconfig structure with `kubectl config view`, and testing permissions with `kubectl auth can-i`. You should also check the certificate expiry date with `openssl x509 -noout -dates`.
 
 ## Troubleshooting Common Errors
 
@@ -138,6 +124,27 @@ openssl x509 -in dev-user.crt -noout -dates
 :::warning
 Never commit kubeconfig files with private keys to version control. Treat client certificates like passwords — they grant cluster access. Rotate them before they expire, and revoke access by removing the user's RoleBindings when they leave the team.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Explore Your kubeconfig
+
+```bash
+kubectl config view
+kubectl config get-contexts
+kubectl config current-context
+```
+
+Look for `client-certificate` and `client-key` paths in the user sections — these are certificate references.
+
+### Step 2: Test Your Permissions
+
+```bash
+kubectl auth can-i get pods
+kubectl auth can-i create deployments
+```
 
 ## Wrapping Up
 

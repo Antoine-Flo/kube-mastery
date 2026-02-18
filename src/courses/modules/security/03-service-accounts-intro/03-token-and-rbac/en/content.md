@@ -62,33 +62,7 @@ Keep ServiceAccount permissions minimal and namespace-scoped whenever possible. 
 
 ## Verifying Permissions
 
-The `kubectl auth can-i` command with the `--as` flag is your best friend for testing ServiceAccount permissions:
-
-```bash
-# Can app-sa list Pods in the app namespace?
-kubectl auth can-i list pods \
-  --as=system:serviceaccount:app:app-sa -n app
-
-# Can app-sa create ConfigMaps? (Probably not, if we only granted pod-reader)
-kubectl auth can-i create configmaps \
-  --as=system:serviceaccount:app:app-sa -n app
-```
-
-The first command should return `yes`; the second should return `no`. This is exactly the principle of least privilege in action — the ServiceAccount can do what it needs and nothing more.
-
-## Inspecting Existing Bindings
-
-When troubleshooting, you may need to find which RoleBindings reference a particular ServiceAccount:
-
-```bash
-# Search for bindings that mention app-sa
-kubectl get rolebinding,clusterrolebinding -A -o wide | grep app-sa
-
-# Get the full details of a specific binding
-kubectl describe rolebinding pod-reader-binding -n app
-```
-
-The `describe` output shows you the subjects, the referenced Role, and the namespace — everything you need to understand why a particular ServiceAccount does or does not have access.
+The `kubectl auth can-i` command with the `--as` flag lets you test ServiceAccount permissions without performing actions. When troubleshooting, use `kubectl get rolebinding,clusterrolebinding -A` and `kubectl describe rolebinding` to find which RoleBindings reference a particular ServiceAccount.
 
 :::warning
 Binding a ServiceAccount to a broad ClusterRole (like `cluster-admin`) gives it unrestricted access across the entire cluster. This is almost never the right choice for application workloads. If you need cross-namespace access, consider a more targeted ClusterRole with specific permissions.
@@ -97,6 +71,38 @@ Binding a ServiceAccount to a broad ClusterRole (like `cluster-admin`) gives it 
 ## A Common Pitfall: Namespace Mismatch
 
 One of the most frequent RBAC issues is a namespace mismatch. The RoleBinding must be in the **same namespace** where you want permissions to apply. If your Pod is in the `app` namespace and the RoleBinding is in `default`, the permissions will not take effect. Similarly, the `namespace` field in the `subjects` section must match the ServiceAccount's actual namespace.
+
+---
+
+## Hands-On Practice
+
+For these steps, ensure you have a ServiceAccount named `my-sa` in the default namespace (create it with `kubectl create serviceaccount my-sa -n default` if needed).
+
+### Step 1: Create a token for the ServiceAccount
+
+```bash
+kubectl create token my-sa -n default
+```
+
+Outputs a short-lived JWT that authenticates as `system:serviceaccount:default:my-sa`. Copy the token if you want to inspect it.
+
+### Step 2: Inspect the token (optional)
+
+The token is a JWT with three base64-encoded parts separated by dots. You can decode the middle (payload) part with:
+
+```bash
+kubectl create token my-sa -n default | cut -d. -f2 | base64 -d 2>/dev/null
+```
+
+The payload contains the ServiceAccount identity and expiration. Do not share tokens — they grant access.
+
+### Step 3: Test RBAC permissions for the ServiceAccount
+
+```bash
+kubectl auth can-i list pods --as=system:serviceaccount:default:my-sa -n default
+```
+
+Returns `yes` or `no`. By default, `my-sa` has no extra permissions, so this typically returns `no` unless you have created a RoleBinding for it.
 
 ## Wrapping Up
 

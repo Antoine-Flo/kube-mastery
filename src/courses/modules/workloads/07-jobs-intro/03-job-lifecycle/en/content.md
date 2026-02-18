@@ -153,6 +153,78 @@ kubectl logs -l job-name=<job-name> --tail=50
 
 The conditions section reveals whether it was a `BackoffLimitExceeded` or `DeadlineExceeded` failure, guiding you toward the right fix.
 
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Failing Job with backoffLimit: 2
+
+Create a Job that exits with code 1:
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: failing-job
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      containers:
+        - name: fail
+          image: busybox
+          command: ["sh", "-c", "exit 1"]
+      restartPolicy: Never
+EOF
+```
+
+### Step 2: Observe Retries and Job Status
+
+```bash
+kubectl get pods -l job-name=failing-job
+kubectl describe job failing-job
+```
+
+You see multiple Pods created and failed. The Job eventually transitions to Failed after exceeding `backoffLimit`.
+
+### Step 3: Create a Successful Job with completions: 3
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: multi-completion-job
+spec:
+  completions: 3
+  template:
+    spec:
+      containers:
+        - name: worker
+          image: busybox
+          command: ["sh", "-c", "echo Done"]
+      restartPolicy: Never
+EOF
+```
+
+### Step 4: Observe Sequential Completion
+
+```bash
+kubectl get jobs -w
+kubectl get pods -l job-name=multi-completion-job
+```
+
+Pods run one after another (default parallelism 1) until 3 completions are reached.
+
+### Step 5: Clean Up
+
+```bash
+kubectl delete job failing-job multi-completion-job
+```
+
+---
+
 ## Wrapping Up
 
 A Job's lifecycle follows a clear path: **Active** while Pods are running, **Succeeded** when all completions are reached, and **Failed** when retry or time limits are exceeded. Completed Jobs and Pods remain in the cluster by default for inspection. Use `ttlSecondsAfterFinished` to automate cleanup, or delete Jobs manually when you are done.

@@ -57,24 +57,7 @@ Use `fsGroup` when:
 
 `fsGroup` works with most volume types: `emptyDir`, `persistentVolumeClaim`, `configMap`, `secret`, and others.
 
-## Verifying fsGroup
-
-Check that the group ownership is correctly applied:
-
-```bash
-# Check the configured fsGroup
-kubectl get pod myapp -o jsonpath='{.spec.securityContext.fsGroup}'
-
-# Verify supplementary groups inside the container
-kubectl exec myapp -- id
-# Output: uid=1000 gid=3000 groups=2000,3000
-
-# Check volume ownership
-kubectl exec myapp -- ls -la /data
-# Should show group 2000
-```
-
-Without `fsGroup`, `ls -la /data` shows root ownership. With `fsGroup: 2000`, the group column changes to `2000`.
+Without `fsGroup`, `ls -la` on a mounted volume would show root ownership. With `fsGroup` set, the group column reflects the specified GID.
 
 :::info
 Setting `fsGroup` causes kubelet to recursively `chown` the volume at Pod startup. For large volumes with many files, this can add significant startup time. For read-only ConfigMaps or Secrets, `fsGroup` is usually unnecessary — they're already readable.
@@ -105,6 +88,62 @@ spec:
 :::warning
 Not all storage drivers support `fsGroup`. NFS and some CSI drivers may handle ownership differently. Check your storage provider's documentation if `fsGroup` doesn't seem to take effect.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Pod with fsGroup and a volume
+
+Create `fsgroup-pod.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fsgroup-test
+spec:
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
+  containers:
+    - name: app
+      image: nginx
+      volumeMounts:
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: data
+      emptyDir: {}
+```
+
+Apply it:
+
+```bash
+kubectl apply -f fsgroup-pod.yaml
+```
+
+### Step 2: Wait for the Pod to be Running
+
+```bash
+kubectl wait --for=condition=Ready pod/fsgroup-test --timeout=60s
+```
+
+### Step 3: Verify group ownership inside the container
+
+```bash
+kubectl exec fsgroup-test -- id
+kubectl exec fsgroup-test -- ls -la /data
+```
+
+The `id` output should show `groups=2000,3000`. The `ls -la /data` output should show the directory owned by group `2000`.
+
+### Step 4: Clean up
+
+```bash
+kubectl delete pod fsgroup-test
+```
 
 ## Wrapping Up
 

@@ -6,14 +6,7 @@ Both are powerful — and both come with important caveats for production use.
 
 ## kubectl edit — Quick Live Changes
 
-`kubectl edit` opens a resource in your default text editor (usually `vim` or `nano`). When you save and close, the changes are applied immediately:
-
-```bash
-kubectl edit deployment nginx
-kubectl edit pod nginx-pod
-```
-
-This is convenient for quick experiments — changing an environment variable, adjusting a replica count, or tweaking a label. You see the full resource definition and can modify any mutable field.
+`kubectl edit` opens a resource in your default text editor (usually `vim` or `nano`). When you save and close, the changes are applied immediately. It is convenient for quick experiments — changing an environment variable, adjusting a replica count, or tweaking a label. You see the full resource definition and can modify any mutable field.
 
 ## Why Edit Has a Tradeoff
 
@@ -33,21 +26,7 @@ For production workflows, the recommended approach is:
 
 ## kubectl delete — Removing Resources
 
-`kubectl delete` removes objects from the cluster:
-
-```bash
-# Delete a specific Pod
-kubectl delete pod nginx-pod
-
-# Delete a Deployment (cascades to ReplicaSets and Pods)
-kubectl delete deployment nginx
-
-# Delete using a manifest file
-kubectl delete -f deployment.yaml
-
-# Delete all Pods in a namespace
-kubectl delete pods --all -n dev
-```
+`kubectl delete` removes objects from the cluster. Delete a specific Pod, Deployment (which cascades to ReplicaSets and Pods), or use a manifest file with `kubectl delete -f`. Use `kubectl delete pods --all -n <namespace>` to remove all Pods in a namespace.
 
 ## Cascade Behavior
 
@@ -70,26 +49,6 @@ flowchart TD
   RSGone --> PodsStay["Pods stay running (orphaned)"]
 ```
 
-## Verifying After Changes
-
-Always verify that your edit or delete had the expected effect:
-
-```bash
-# After editing
-kubectl get deployment nginx -o yaml
-kubectl describe deployment nginx
-
-# After deleting
-kubectl get deployment nginx
-kubectl get pods -l app=nginx
-```
-
-If a delete seems stuck, check for **finalizers** — some resources block deletion until a controller finishes cleanup:
-
-```bash
-kubectl get pod stuck-pod -o jsonpath='{.metadata.finalizers}'
-```
-
 ## Important Safety Notes
 
 **Deleting a namespace** removes everything inside it — all Pods, Services, ConfigMaps, Secrets, PVCs, everything. This is irreversible:
@@ -101,16 +60,51 @@ kubectl delete namespace dev
 
 **Deleting PVCs** may delete the underlying storage (depending on the reclaim policy). Check before you delete.
 
-**Force deletion** should be a last resort:
-
-```bash
-# Only use when a Pod is truly stuck
-kubectl delete pod stuck-pod --force --grace-period=0
-```
+**Force deletion** (`--force --grace-period=0`) should be a last resort when a Pod is truly stuck. If a delete seems stuck, check for **finalizers** with `kubectl get pod <name> -o jsonpath='{.metadata.finalizers}'` — some resources block deletion until a controller finishes cleanup.
 
 :::info
 If you accidentally delete something managed by a controller (like a Pod owned by a Deployment), don't panic — the controller will recreate it automatically. That's the beauty of the declarative model. The controller continuously reconciles desired state with actual state.
 :::
+
+---
+
+## Hands-On Practice
+
+You need resources to modify and delete. Create a Deployment and Pod: `kubectl create deployment nginx --image=nginx` and `kubectl run temp-pod --image=nginx`. Get Pod names with `kubectl get pods`.
+
+### Step 1: Edit a Resource
+
+```bash
+kubectl edit deployment nginx
+```
+
+In the editor, change `replicas: 1` to `replicas: 2`, save, and exit. The change applies immediately. **Note:** This modifies the live object, not your manifest files.
+
+### Step 2: Verify the Edit
+
+```bash
+kubectl get deployment nginx
+kubectl get pods -l app=nginx
+```
+
+You should see two replicas. The Deployment controller created the extra Pod.
+
+### Step 3: Delete a Pod
+
+```bash
+kubectl delete pod <pod-name>
+```
+
+Replace `<pod-name>` with a Pod from `kubectl get pods`. If the Pod was managed by a Deployment, it is recreated automatically — that is the reconciliation loop in action.
+
+### Step 4: Delete Resources
+
+```bash
+kubectl delete deployment nginx
+kubectl delete pod temp-pod
+```
+
+Deployments cascade — deleting the Deployment also removes its ReplicaSet and Pods. To delete using a manifest file, use `kubectl delete -f deployment.yaml`.
 
 ## Wrapping Up
 

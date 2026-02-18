@@ -125,19 +125,72 @@ securityContext:
 `readOnlyRootFilesystem` will break applications that write to the root filesystem — even temporary files. Always test in a non-production environment first and add `emptyDir` mounts for paths your application writes to.
 :::
 
-## Verifying Your Security Context
+---
+
+## Hands-On Practice
+
+### Step 1: Create a hardened Pod
+
+Create `secure-context-pod.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secure-context-test
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10000
+    runAsGroup: 10000
+  containers:
+    - name: app
+      image: nginx
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+  volumes:
+    - name: tmp
+      emptyDir: {}
+```
+
+Apply it:
 
 ```bash
-# Inspect the full security context
-kubectl get pod secure-app -o jsonpath='{.spec.securityContext}' | python3 -m json.tool
+kubectl apply -f secure-context-pod.yaml
+```
 
-# Verify inside the container
-kubectl exec secure-app -- id
-kubectl exec secure-app -- cat /proc/1/status | grep -i cap
+### Step 2: Wait and verify the process runs as expected
 
-# Test read-only filesystem
-kubectl exec secure-app -- touch /test
-# Expected: Read-only file system error
+```bash
+kubectl wait --for=condition=Ready pod/secure-context-test --timeout=60s
+kubectl exec secure-context-test -- id
+```
+
+Should show `uid=10000`. The container runs as non-root with minimal capabilities.
+
+### Step 3: Verify read-only root filesystem
+
+```bash
+kubectl exec secure-context-test -- touch /test
+```
+
+This should fail with "Read-only file system". Writing to `/tmp` (the emptyDir) should work:
+
+```bash
+kubectl exec secure-context-test -- touch /tmp/test
+```
+
+### Step 4: Clean up
+
+```bash
+kubectl delete pod secure-context-test
 ```
 
 ## Wrapping Up

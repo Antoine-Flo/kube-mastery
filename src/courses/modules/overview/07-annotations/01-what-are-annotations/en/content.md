@@ -51,21 +51,42 @@ Annotation keys follow similar rules to labels, but with more freedom in values.
 - Use your own domain as a prefix for custom annotations: `mycompany.com/owner`, `mycompany.com/cost-center`
 - Third-party tools document which annotations they expect — always check their docs
 
-## Viewing Annotations
-
-```bash
-# Full object details including annotations
-kubectl describe pod nginx-pod
-
-# Extract annotations specifically
-kubectl get pod nginx-pod -o jsonpath='{.metadata.annotations}'
-```
-
 Annotations appear under the **Metadata** section in `describe` output.
 
 :::warning
 Labels are for selection; annotations are for metadata. Don't put data that selectors need into annotations — it won't work. And don't use labels for large descriptive text — that's what annotations are for.
 :::
+
+---
+
+## Hands-On Practice
+
+You need a Pod with a known name. Run `kubectl run nginx-pod --image=nginx` and wait for it to be Running, or use an existing Pod.
+
+### Step 1: View Annotations via describe
+
+```bash
+kubectl describe pod nginx-pod
+```
+
+Look for the **Annotations** section under Metadata. New Pods may have few or no annotations.
+
+### Step 2: Extract Annotations with jsonpath
+
+```bash
+kubectl get pod nginx-pod -o jsonpath='{.metadata.annotations}'
+```
+
+This outputs only the annotations as JSON. Use this for scripting or when you need a machine-readable view.
+
+### Step 3: Add an Annotation
+
+```bash
+kubectl annotate pod nginx-pod description="Production web server"
+kubectl get pod nginx-pod -o jsonpath='{.metadata.annotations}'
+```
+
+Annotations store metadata that tools and humans read — unlike labels, they are not used for selection.
 
 ## Wrapping Up
 

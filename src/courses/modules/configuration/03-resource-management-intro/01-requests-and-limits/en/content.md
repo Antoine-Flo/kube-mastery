@@ -86,14 +86,7 @@ This says: "I need at least 100m CPU and 128Mi memory (reserve this for me), but
 
 ## Monitoring Actual Usage
 
-Use `kubectl top` (requires metrics-server) to see real consumption:
-
-```bash
-kubectl top pod my-pod
-kubectl top node
-```
-
-Compare actual usage against requests and limits to find where you're over- or under-provisioned.
+Once metrics-server is installed, you can use `kubectl top pod` and `kubectl top node` to see real CPU and memory consumption. Compare actual usage against requests and limits to find where you're over- or under-provisioned.
 
 ## Common Problems
 
@@ -106,6 +99,58 @@ Compare actual usage against requests and limits to find where you're over- or u
 :::warning
 Without requests, the scheduler can't make informed decisions — Pods might land on overloaded nodes. Without limits, a single container can consume all node resources. Always set both for production workloads.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Pod with requests and limits
+
+```bash
+nano resource-pod.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: resource-pod
+spec:
+  containers:
+    - name: app
+      image: nginx
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "100m"
+        limits:
+          memory: "128Mi"
+          cpu: "250m"
+```
+
+```bash
+kubectl apply -f resource-pod.yaml
+```
+
+### Step 2: Verify the resource allocation
+
+```bash
+kubectl describe pod resource-pod
+```
+
+Look for the **Requests** and **Limits** fields under the container section.
+
+### Step 3: Check resource usage
+
+```bash
+kubectl top pod resource-pod
+```
+
+### Step 4: Clean up
+
+```bash
+kubectl delete pod resource-pod
+```
 
 ## Wrapping Up
 

@@ -62,18 +62,33 @@ flowchart LR
 Use `stringData` when writing manifests to avoid manual base64 encoding. It's cleaner and less error-prone. But **never commit real credentials** to version control — use placeholders or external secret managers.
 :::
 
-## Verifying Secrets
+---
+
+## Hands-On Practice
+
+### Step 1: List Secrets
 
 ```bash
-# List Secrets (values are hidden)
 kubectl get secrets
-
-# See keys but not values
-kubectl describe secret db-credentials
-
-# Decode a specific value
-kubectl get secret db-credentials -o jsonpath='{.data.password}' | base64 -d
 ```
+
+You'll see built-in Secrets (like `default-token-*` from ServiceAccounts) and any custom ones. Values are never shown in the output — only names, types, and key counts.
+
+### Step 2: Describe a Secret
+
+```bash
+kubectl describe secret <secret-name>
+```
+
+Replace `<secret-name>` with any name from Step 1 (e.g. `default-token-xxxxx`). The `describe` output shows keys but not values — Kubernetes protects sensitive data from casual inspection.
+
+### Step 3: Inspect the base64 encoding
+
+```bash
+kubectl get secret <secret-name> -o yaml
+```
+
+Look at the `data` section — values are base64-encoded strings. Secrets store values in base64, not encryption. Anyone with API access can decode them; RBAC controls who gets that access.
 
 ## Wrapping Up
 

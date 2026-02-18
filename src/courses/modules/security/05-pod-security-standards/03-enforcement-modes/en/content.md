@@ -77,23 +77,6 @@ labels:
   pod-security.kubernetes.io/enforce: restricted
 ```
 
-## Hands-On
-
-Apply a namespace with mixed modes and test:
-
-```bash
-# Apply the namespace
-kubectl apply -f namespace.yaml
-
-# Try creating a Pod — observe warnings if it violates the warn level
-kubectl run test --image=nginx -n app-production
-
-# Check for audit events
-kubectl get events -n app-production --sort-by='.lastTimestamp'
-```
-
-If enforce blocks the Pod, you'll see an admission error explaining which rule was violated.
-
 ## Version Labels
 
 The `-version` suffix controls which version of the Pod Security Standard is applied:
@@ -107,6 +90,54 @@ Use `latest` for the current behavior (recommended for most clusters). Pinning a
 :::warning
 Keep version labels consistent across enforce, audit, and warn. Mixing versions can produce confusing behavior — a Pod might pass enforce but fail audit because they reference different rule sets.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a namespace with mixed modes
+
+Create `namespace.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pss-modes
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+```
+
+Apply it:
+
+```bash
+kubectl apply -f namespace.yaml
+```
+
+### Step 2: Deploy a Pod and observe behavior
+
+```bash
+kubectl run test --image=nginx -n pss-modes
+```
+
+If the Pod violates the warn level (Restricted) but passes enforce (Baseline), it will be created — but you may see a warning. Check events:
+
+```bash
+kubectl get events -n pss-modes --sort-by='.lastTimestamp'
+```
+
+### Step 3: Try a privileged Pod (optional)
+
+```bash
+kubectl run privileged-test --image=nginx -n pss-modes --overrides='{"spec":{"containers":[{"name":"privileged-test","image":"nginx","securityContext":{"privileged":true}}]}}'
+```
+
+This should be rejected — Baseline blocks privileged containers. The admission error explains which rule was violated.
 
 ## Wrapping Up
 

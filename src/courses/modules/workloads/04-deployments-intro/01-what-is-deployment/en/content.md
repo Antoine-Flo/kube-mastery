@@ -74,25 +74,29 @@ Deployments are designed for **stateless applications** — workloads where any 
 
 For **stateful workloads** — databases, message brokers, or anything requiring stable network identity and persistent storage — Kubernetes provides <a target="_blank" href="https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/">StatefulSets</a>, which are purpose-built for those needs.
 
-## Quick Verification
+:::warning
+Never manually modify or delete ReplicaSets that belong to a Deployment. The Deployment controller owns them, and any manual changes will be overwritten or cause unexpected behavior. Always make changes through the Deployment itself.
+:::
 
-You can list Deployments in your cluster at any time:
+---
 
-```bash
-kubectl get deployments
-```
+## Hands-On Practice
 
-The shorthand `deploy` also works:
+### Step 1: List Existing Deployments
 
 ```bash
 kubectl get deploy
 ```
 
-The output shows columns like `READY`, `UP-TO-DATE`, and `AVAILABLE`, giving you an at-a-glance view of each Deployment's health. We will explore these columns in detail in upcoming lessons.
+The output shows columns like `READY`, `UP-TO-DATE`, and `AVAILABLE`, giving you an at-a-glance view of each Deployment's health.
 
-:::warning
-Never manually modify or delete ReplicaSets that belong to a Deployment. The Deployment controller owns them, and any manual changes will be overwritten or cause unexpected behavior. Always make changes through the Deployment itself.
-:::
+### Step 2: Inspect the Ownership Chain
+
+```bash
+kubectl get pods --show-labels
+```
+
+Look for the `pod-template-hash` label — this ties each Pod to its specific ReplicaSet version, which is itself managed by the Deployment.
 
 ## Wrapping Up
 

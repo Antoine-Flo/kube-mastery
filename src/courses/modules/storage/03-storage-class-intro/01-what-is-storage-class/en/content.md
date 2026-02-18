@@ -50,16 +50,6 @@ The `volumeBindingMode` controls **when** storage is provisioned:
 - **Immediate** — The PV is created as soon as the PVC appears. Simple, but the provisioner doesn't know which node the Pod will run on. This can cause problems in multi-zone clusters if storage is provisioned in zone A but the Pod runs in zone B.
 - **WaitForFirstConsumer** — Provisioning is delayed until a Pod actually references the PVC. The provisioner knows the Pod's node and can create storage in the right zone. This is the recommended mode for topology-aware storage.
 
-## Exploring StorageClasses
-
-```bash
-# List all StorageClasses — the default one is marked "(default)"
-kubectl get storageclass
-
-# See details about a specific class
-kubectl describe storageclass standard
-```
-
 ## Multiple Storage Tiers
 
 You can define multiple StorageClasses to offer different storage tiers:
@@ -73,6 +63,26 @@ Users choose the tier that fits their workload by setting `storageClassName` in 
 :::warning
 If a PVC specifies a StorageClass that has **no provisioner** (like `kubernetes.io/no-provisioner`), it stays in Pending until an admin manually creates a matching PV. Make sure the StorageClass has a valid provisioner if you want dynamic provisioning.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: List all StorageClasses
+
+```bash
+kubectl get storageclass
+```
+
+Cloud-managed clusters (EKS, GKE, AKS) typically have at least one StorageClass. The default one is marked `(default)` in the output. Each class has a provisioner that creates PVs on demand.
+
+### Step 2: Inspect a StorageClass in detail
+
+```bash
+kubectl describe storageclass standard
+```
+
+Replace `standard` with a StorageClass name from Step 1. The output shows the provisioner, reclaim policy, volume binding mode, and any parameters. Use this to understand what kind of storage a class provides.
 
 ## Wrapping Up
 

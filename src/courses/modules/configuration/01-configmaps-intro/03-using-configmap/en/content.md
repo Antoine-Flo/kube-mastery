@@ -114,6 +114,56 @@ spec:
 If the ConfigMap doesn't exist when the Pod starts, the Pod will fail. Use `optional: true` in your references to allow graceful startup when config might not be available yet.
 :::
 
+---
+
+## Hands-On Practice
+
+### Step 1: Create a ConfigMap
+
+```bash
+kubectl create configmap app-settings --from-literal=LOG_LEVEL=info --from-literal=DB_HOST=postgres
+```
+
+### Step 2: Create a Pod that uses the ConfigMap as environment variables
+
+Create `pod-env.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: config-demo
+spec:
+  containers:
+    - name: app
+      image: busybox
+      command: ["sleep", "3600"]
+      envFrom:
+        - configMapRef:
+            name: app-settings
+```
+
+Apply it:
+
+```bash
+kubectl apply -f pod-env.yaml
+```
+
+### Step 3: Verify the environment variables
+
+```bash
+kubectl exec config-demo -- env | grep -E "LOG_LEVEL|DB_HOST"
+```
+
+You should see `LOG_LEVEL=info` and `DB_HOST=postgres` — the ConfigMap keys and values are now environment variables inside the container.
+
+### Step 4: Clean up
+
+```bash
+kubectl delete pod config-demo
+kubectl delete configmap app-settings
+```
+
 ## Wrapping Up
 
 ConfigMaps can be consumed as environment variables (simple, fixed at startup) or volume mounts (files, auto-updating). Choose based on how your application reads config and whether you need live updates. Both methods require the ConfigMap to be in the same namespace as the Pod. Next up: Secrets — the ConfigMap equivalent for sensitive data.

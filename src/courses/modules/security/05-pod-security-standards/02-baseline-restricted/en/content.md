@@ -105,24 +105,25 @@ When migrating to Restricted, start by identifying which paths your application 
 
 ## Testing Compliance
 
-After creating a Pod, verify it is accepted in the enforced namespace:
-
-```bash
-# Apply the Pod
-kubectl apply -f restricted-pod.yaml
-
-# Check its status
-kubectl get pod restricted-pod
-
-# If rejected, the error message explains which rule was violated
-kubectl describe pod restricted-pod
-```
-
-If the Pod is rejected, the admission controller's error message tells you exactly which requirement was not met — use it as a checklist.
+When you apply a Pod, verify it is accepted in the enforced namespace with `kubectl get pod` and `kubectl describe pod`. If the Pod is rejected, the admission controller's error message tells you exactly which requirement was not met — use it as a checklist when fixing your spec.
 
 :::warning
 Legacy container images that run as root will fail under both Baseline and Restricted. You have two options: set `runAsUser` in the Pod spec to override the image's default, or rebuild the image with a `USER` directive in the Dockerfile. The second approach is more robust because it ensures the image works correctly as non-root.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Pod that would violate Restricted (optional)
+
+In a namespace with enforce=restricted (or enforce=baseline), try creating a Pod without `readOnlyRootFilesystem`:
+
+```bash
+kubectl run test-restricted --image=nginx -n pss-demo --overrides='{"spec":{"securityContext":{"runAsNonRoot":true,"runAsUser":1000},"containers":[{"name":"test-restricted","image":"nginx","securityContext":{"allowPrivilegeEscalation":false}}]}}'
+```
+
+If the namespace enforces Restricted, this may be rejected for missing `readOnlyRootFilesystem` or `seccompProfile`. The error message tells you which rule failed.
 
 ## Wrapping Up
 

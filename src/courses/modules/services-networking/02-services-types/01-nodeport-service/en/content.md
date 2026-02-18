@@ -59,26 +59,7 @@ NodePort introduces a third port to remember:
 
 ## Accessing the Service
 
-From outside the cluster:
-
-```bash
-# Using any node's IP
-curl http://192.168.1.10:30007
-
-# Or any other node — they all work
-curl http://192.168.1.11:30007
-```
-
-## Verifying NodePort
-
-```bash
-# See the port mapping
-kubectl get service my-service -o wide
-# PORT(S) column shows: 80:30007/TCP
-
-# Check which node IPs are available
-kubectl get nodes -o wide
-```
+From outside the cluster, use any node's IP with the NodePort: `curl http://<NodeIP>:30007`. All nodes expose the same port.
 
 :::info
 NodePort is useful for development, testing, and bare-metal environments where cloud load balancers aren't available. It works anywhere Kubernetes runs, without any cloud provider integration.
@@ -98,6 +79,61 @@ For production external access, **LoadBalancer** or **Ingress** are better choic
 :::warning
 Ports 30000-32767 must be open in your firewall rules. Many cloud security groups and on-premises firewalls block these by default. If you get "connection refused" from outside, check your firewall before debugging the Service.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a NodePort Service
+
+Create `nodeport-svc.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodeport-demo
+spec:
+  type: NodePort
+  selector:
+    app: nodeport-demo
+  ports:
+    - port: 80
+      targetPort: 80
+```
+
+Create backing Pods and the Service:
+
+```bash
+kubectl create deployment nodeport-demo --image=nginx --replicas=1
+kubectl label deployment nodeport-demo app=nodeport-demo --overwrite
+kubectl apply -f nodeport-svc.yaml
+```
+
+**Observation:** The Service is created with a NodePort from the 30000-32767 range.
+
+### Step 2: Verify the Service
+
+```bash
+kubectl get svc nodeport-demo
+```
+
+**Observation:** The PORT(S) column shows `80:3xxxx/TCP` — the second number is the allocated NodePort.
+
+### Step 3: Describe the Service
+
+```bash
+kubectl describe service nodeport-demo
+```
+
+**Observation:** Output confirms NodePort type, port mappings, and endpoints.
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete deployment nodeport-demo
+kubectl delete service nodeport-demo
+```
 
 ## Wrapping Up
 

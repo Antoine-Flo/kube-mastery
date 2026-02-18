@@ -83,6 +83,20 @@ flowchart LR
 Node-level logs are ephemeral by design. For any production environment, you need a log aggregation system that ships logs off the node before they're lost. The next lesson covers exactly how to set this up.
 :::
 
+---
+
+## Hands-On Practice
+
+### Step 1: Explore System Component Logs
+
+Kubernetes system components write logs to the same node-level log structure. Inspect control plane Pod logs:
+
+```bash
+kubectl get pods -n kube-system
+kubectl logs -n kube-system -l component=kube-apiserver --tail=20
+kubectl logs -n kube-system -l component=kube-scheduler --tail=20
+```
+
 ## Wrapping Up
 
 Container logs live on the node under `/var/log/pods/`, organized by Pod and container. The kubelet handles rotation to prevent disk exhaustion. System components write logs too, accessible via `journalctl` or through the same Pod log structure. The key takeaway: these logs are temporary. Once you move to production, you'll need a way to collect and store them centrally — and that's exactly what we'll cover next.

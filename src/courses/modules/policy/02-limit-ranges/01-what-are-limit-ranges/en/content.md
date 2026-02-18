@@ -74,16 +74,67 @@ You can define multiple types in a single LimitRange.
 
 ## Checking a LimitRange
 
-```bash
-kubectl get limitrange -n dev
-kubectl describe limitrange cpu-mem-limits -n dev
-```
-
-The `describe` output shows all configured defaults, minimums, and maximums.
+Use `kubectl get limitrange -n <namespace>` to list LimitRanges, and `kubectl describe limitrange <name> -n <namespace>` to see all configured defaults, minimums, and maximums.
 
 :::warning
 If you set `max` without `default`, containers that don't specify limits won't get defaults — and depending on configuration, they may be rejected. Always provide both `default` and `defaultRequest` for predictable behavior.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Check Existing LimitRanges
+
+```bash
+kubectl get limitranges -A
+```
+
+See if any namespaces already have LimitRanges configured.
+
+### Step 2: Create a LimitRange Manifest
+
+Create `lr.yaml`:
+
+```bash
+cat <<'EOF' > lr.yaml
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: cpu-mem-limits
+  namespace: dev
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: "500m"
+        memory: 512Mi
+      defaultRequest:
+        cpu: "100m"
+        memory: 128Mi
+      max:
+        cpu: "2"
+        memory: 2Gi
+EOF
+```
+
+Create the namespace if needed: `kubectl create namespace dev`
+
+### Step 3: Apply and Verify
+
+```bash
+kubectl apply -f lr.yaml
+kubectl describe limitrange cpu-mem-limits -n dev
+```
+
+The output shows defaults, minimums, and maximums for containers in the namespace.
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete limitrange cpu-mem-limits -n dev
+rm -f lr.yaml
+```
 
 ## Wrapping Up
 

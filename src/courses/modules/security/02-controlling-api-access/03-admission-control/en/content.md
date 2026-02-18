@@ -65,21 +65,6 @@ When someone creates a Pod in the `dev` namespace without specifying resource re
 Admission control fills a gap that RBAC cannot cover. RBAC answers "who can do what," but admission control answers "should this specific request be allowed, and what should it look like?" Use them together for comprehensive access control.
 :::
 
-## Verifying Admission Configuration
-
-You can inspect how admission control is configured in your cluster:
-
-```bash
-# Check Pod Security labels on a namespace
-kubectl get namespace <ns> -o jsonpath='{.metadata.labels}'
-
-# View LimitRange defaults in a namespace
-kubectl describe limitrange -n <namespace>
-
-# List enabled admission plugins (on control plane nodes)
-kube-apiserver -h | grep enable-admission-plugins
-```
-
 ## Webhook Admission Controllers
 
 Beyond the built-in controllers, Kubernetes supports **admission webhooks** — external HTTP services that the API server calls during admission. There are two types:
@@ -92,6 +77,18 @@ Policy engines like OPA/Gatekeeper, Kyverno, and custom operators use webhooks t
 :::warning
 If an admission webhook is unavailable (its service is down), it can block all matching API requests. Configure `failurePolicy` carefully — `Fail` blocks requests when the webhook is unreachable, while `Ignore` allows them through. Choose based on your risk tolerance.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: List API resources
+
+```bash
+kubectl api-resources
+```
+
+This shows all resource types the API server knows about. Admission controllers validate requests against these resources — understanding what exists is the first step to understanding admission behavior.
 
 ## Wrapping Up
 

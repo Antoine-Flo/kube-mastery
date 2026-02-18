@@ -125,6 +125,61 @@ Even though Kubernetes injects Secrets securely, be mindful of where values end 
 - **Don't expose via APIs** — Ensure your application doesn't include Secret values in error responses or health endpoints
 - **Limit RBAC** — Restrict who can `kubectl get secret` in production namespaces
 
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Secret
+
+```bash
+kubectl create secret generic app-secret --from-literal=api-key=mykey123
+```
+
+### Step 2: Create a Pod that mounts the Secret as a volume
+
+Create `pod-secret.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secret-demo
+spec:
+  containers:
+    - name: app
+      image: busybox
+      command: ["sleep", "3600"]
+      volumeMounts:
+        - name: secret-vol
+          mountPath: /etc/secrets
+          readOnly: true
+  volumes:
+    - name: secret-vol
+      secret:
+        secretName: app-secret
+```
+
+Apply it:
+
+```bash
+kubectl apply -f pod-secret.yaml
+```
+
+### Step 3: Read the mounted Secret in the Pod
+
+```bash
+kubectl exec secret-demo -- cat /etc/secrets/api-key
+```
+
+You should see `mykey123` — the Secret value is decoded and available as a file inside the container. Each Secret key becomes a file; the key name is the filename.
+
+### Step 4: Clean up
+
+```bash
+kubectl delete pod secret-demo
+kubectl delete secret app-secret
+```
+
 ## Wrapping Up
 
 Secrets are consumed as environment variables (`secretKeyRef`) or volume mounts (`secret`), following the same patterns as ConfigMaps. Always use `readOnly: true` for volume mounts, set appropriate file permissions, and be careful about where Secret values end up in logs or API responses. Next up: resource management — how to tell Kubernetes how much CPU and memory your containers need.

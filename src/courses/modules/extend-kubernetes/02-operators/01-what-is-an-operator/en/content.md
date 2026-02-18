@@ -71,13 +71,7 @@ You interact with the Operator through its custom resources, not by managing Pod
 
 ## Seeing Operators in Action
 
-To discover what Operators are running in your cluster, start by listing the CRDs:
-
-```bash
-kubectl get crd
-```
-
-Many Operators register their own CRDs — look for names that describe applications (like `postgresqls.postgresql.example.com` or `prometheuses.monitoring.coreos.com`).
+To discover what Operators are running in your cluster, start by listing the CRDs with `kubectl get crd`. Many Operators register their own CRDs — look for names that describe applications (like `postgresqls.postgresql.example.com` or `prometheuses.monitoring.coreos.com`).
 
 Check for Operator Pods:
 
@@ -104,6 +98,26 @@ Operators are typically installed through one of three methods:
 - **Raw manifests** — Apply CRDs, RBAC, and Deployment YAML directly
 
 Once installed, the Operator watches for custom resources and starts reconciling. You'll learn more about OLM in a later lesson.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Check for CRDs in your cluster
+
+```bash
+kubectl get crds
+```
+
+Any CRDs present likely belong to installed Operators.
+
+### Step 2: Look for Operator Pods
+
+```bash
+kubectl get pods -A | grep -i operator
+```
+
+If an Operator is installed, you will see its controller Pod running in a dedicated namespace.
 
 ## Wrapping Up
 

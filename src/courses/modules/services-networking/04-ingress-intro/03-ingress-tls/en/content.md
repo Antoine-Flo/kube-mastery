@@ -19,13 +19,7 @@ flowchart LR
 
 TLS certificates are stored as Kubernetes **Secrets** of type `tls`. The Secret must be in the **same namespace** as the Ingress.
 
-```bash
-kubectl create secret tls example-tls \
-  --cert=path/to/tls.crt \
-  --key=path/to/tls.key
-```
-
-This creates a Secret with two keys:
+Use `kubectl create secret tls` to store your certificate and key, specifying the cert and key file paths. This creates a Secret with two keys:
 - `tls.crt` — The certificate (or certificate chain)
 - `tls.key` — The private key
 
@@ -78,23 +72,7 @@ metadata:
 
 With cert-manager, you add an annotation, and it handles creating the TLS Secret automatically. This is the standard approach for production clusters.
 
-## Verifying TLS
-
-```bash
-# Ensure the Secret exists
-kubectl get secret example-tls
-
-# Check Ingress configuration
-kubectl describe ingress tls-ingress
-
-# Test from outside (use -k for self-signed certs in testing)
-curl -v https://example.com
-```
-
-If TLS doesn't work:
-- Verify the Secret is in the same namespace as the Ingress
-- Check that the certificate's CN/SAN matches the hostname
-- Ensure the Ingress controller supports TLS (most do by default)
+If TLS doesn't work: verify the Secret is in the same namespace as the Ingress, check that the certificate's CN/SAN matches the hostname, and ensure the Ingress controller supports TLS (most do by default).
 
 :::warning
 The TLS Secret must exist in the same namespace as the Ingress. If it's missing or in a different namespace, the Ingress controller may fall back to its default certificate or reject the connection.
@@ -116,6 +94,67 @@ spec:
 ```
 
 Or use a wildcard certificate that covers all subdomains.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a TLS Secret
+
+Generate a self-signed cert for testing and create the Secret:
+
+```bash
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout tls.key -out tls.crt -subj "/CN=example.com"
+kubectl create secret tls example-tls --cert=tls.crt --key=tls.key
+```
+
+**Observation:** The Secret is created with `tls.crt` and `tls.key` keys.
+
+### Step 2: Create an Ingress with TLS Config
+
+```bash
+kubectl create deployment tls-web --image=nginx --replicas=1
+kubectl expose deployment tls-web --port=80
+kubectl apply -f - <<EOF
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tls-ingress
+spec:
+  tls:
+    - hosts:
+        - example.com
+      secretName: example-tls
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tls-web
+                port:
+                  number: 80
+EOF
+```
+
+### Step 3: Verify
+
+```bash
+kubectl get secret example-tls
+kubectl describe ingress tls-ingress
+```
+
+**Observation:** The Ingress references the TLS Secret. With an Ingress controller, HTTPS would be served for the configured host.
+
+```bash
+kubectl delete ingress tls-ingress
+kubectl delete deployment tls-web
+kubectl delete service tls-web
+kubectl delete secret example-tls
+```
 
 ## Wrapping Up
 

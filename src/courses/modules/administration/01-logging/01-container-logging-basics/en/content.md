@@ -16,24 +16,7 @@ Writing to stdout and stderr is the Kubernetes-native way to log. It requires ze
 
 ## Viewing Logs with kubectl
 
-The `kubectl logs` command is your primary tool for reading container logs. It's fast, simple, and covers most debugging scenarios:
-
-```bash
-# Basic: get logs from a Pod
-kubectl logs my-pod
-
-# Follow logs in real time (like tail -f)
-kubectl logs -f my-pod
-
-# Show only the last 100 lines
-kubectl logs my-pod --tail=100
-
-# Show logs from the last hour
-kubectl logs my-pod --since=1h
-
-# Show logs from a previous container instance (after a restart)
-kubectl logs my-pod --previous
-```
+The `kubectl logs` command is your primary tool for reading container logs. It supports several useful flags: `-f` to follow in real time (like `tail -f`), `--tail=N` to limit output to the last N lines, `--since=1h` to filter by time, and `--previous` to see logs from a previous container instance after a restart.
 
 The `--previous` flag is particularly useful. When a container crashes and restarts, the current logs belong to the new instance. To see what happened before the crash, you need `--previous`.
 
@@ -54,16 +37,7 @@ spec:
       image: fluent-bit
 ```
 
-```bash
-# Logs from a specific container
-kubectl logs app-with-sidecar -c app
-kubectl logs app-with-sidecar -c log-collector
-
-# Logs from ALL containers at once
-kubectl logs app-with-sidecar --all-containers=true
-```
-
-Without the `-c` flag on a multi-container Pod, kubectl will ask you to specify which container you want. The `--all-containers` flag is a convenient shortcut when you need to see everything at once.
+To read logs from a specific container, use `-c <container-name>`. To get logs from all containers at once, use `--all-containers=true`. Without `-c` on a multi-container Pod, kubectl will ask you to specify which container you want.
 
 ## Troubleshooting Common Issues
 
@@ -87,6 +61,49 @@ kubectl logs my-pod -c init-container-name
 :::warning
 Node-level logs are temporary. When a Pod is rescheduled to a different node or the node is replaced, those logs are gone. For production environments, you'll need a log aggregation system (like Fluent Bit, Loki, or Elasticsearch) for long-term storage and search. We'll cover that in an upcoming lesson.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Test Pod and View Its Logs
+
+```bash
+kubectl run log-test --image=nginx
+kubectl logs log-test
+```
+
+### Step 2: Follow Logs in Real Time
+
+```bash
+kubectl logs -f log-test
+```
+
+Press `Ctrl+C` to stop following.
+
+### Step 3: Filter by Line Count and Time
+
+```bash
+kubectl logs log-test --tail=10
+kubectl logs log-test --since=5m
+```
+
+### Step 4: View Previous Container Logs
+
+If the container has restarted at least once:
+
+```bash
+kubectl logs log-test --previous
+```
+
+### Step 5: Target a Specific Container
+
+For multi-container Pods, specify which container with `-c`:
+
+```bash
+kubectl logs log-test -c nginx --tail=5
+kubectl logs log-test --all-containers=true
+```
 
 ## Wrapping Up
 

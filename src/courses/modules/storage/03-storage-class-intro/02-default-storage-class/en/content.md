@@ -16,19 +16,7 @@ flowchart LR
   Provisioner -->|creates| PV["PV"]
 ```
 
-## Which StorageClass Is the Default?
-
-List your StorageClasses — the default one is clearly marked:
-
-```bash
-kubectl get storageclass
-```
-
-You'll see `(default)` next to the default class in the output. Under the hood, it's identified by an annotation:
-
-```
-storageclass.kubernetes.io/is-default-class: "true"
-```
+The default StorageClass is marked `(default)` when you list StorageClasses. Under the hood, it's identified by the annotation `storageclass.kubernetes.io/is-default-class: "true"`.
 
 :::info
 Cloud-managed clusters (EKS, GKE, AKS) typically configure a default StorageClass during setup. On EKS, it's usually `gp2` or `gp3`; on GKE, it's `standard` or `premium-rwo`. Check what's available in your cluster before creating PVCs.
@@ -81,19 +69,6 @@ kubectl patch storageclass old-default -p '{"metadata": {"annotations": {"storag
 kubectl patch storageclass fast-ssd -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"}}}'
 ```
 
-## Verifying It Works
-
-Let's create a PVC without a class and confirm the default was injected:
-
-```bash
-kubectl apply -f simple-pvc.yaml
-
-# Check which StorageClass was assigned
-kubectl get pvc simple-pvc -o jsonpath='{.spec.storageClassName}'
-```
-
-The output should show your default StorageClass name.
-
 :::warning
 Only **one** StorageClass should be marked as default per cluster. Having multiple defaults leads to unpredictable behavior — Kubernetes may pick any one of them. If you see unexpected PVC behavior, check `kubectl get storageclass` for multiple defaults.
 :::
@@ -104,6 +79,26 @@ If no StorageClass is marked as default and a PVC omits `storageClassName`, the 
 
 - Set a StorageClass as default
 - Or explicitly specify `storageClassName` in every PVC
+
+---
+
+## Hands-On Practice
+
+### Step 1: List StorageClasses and identify the default
+
+```bash
+kubectl get storageclass
+```
+
+Look for `(default)` in the output — that class is used when a PVC omits `storageClassName`. Most cloud clusters have one pre-configured.
+
+### Step 2: Verify the default annotation (optional)
+
+```bash
+kubectl get storageclass -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.annotations.storageclass\.kubernetes\.io/is-default-class}{"\n"}{end}'
+```
+
+The default class shows `true`; others show nothing or `false`. This confirms how Kubernetes identifies the default.
 
 ## Wrapping Up
 

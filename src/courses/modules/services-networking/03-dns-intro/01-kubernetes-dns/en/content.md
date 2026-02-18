@@ -56,26 +56,7 @@ env:
 Pods in the same namespace can use just the Service name (e.g., `redis`). For cross-namespace access, add the namespace: `redis.cache-namespace`. The FQDN is rarely needed but useful for explicitness.
 :::
 
-## Verifying DNS Resolution
-
-Test DNS from inside the cluster with a temporary Pod:
-
-```bash
-# Quick DNS lookup
-kubectl run -it dns-test --image=busybox --restart=Never --rm \
-  -- nslookup backend-api.default.svc.cluster.local
-
-# Test the built-in "kubernetes" Service (always exists)
-kubectl run -it dns-test --image=busybox --restart=Never --rm \
-  -- nslookup kubernetes.default.svc.cluster.local
-```
-
-If the lookup succeeds, CoreDNS is working. If it fails:
-
-```bash
-# Is CoreDNS running?
-kubectl get pods -n kube-system -l k8s-app=kube-dns
-```
+If DNS lookups fail, verify CoreDNS is running: `kubectl get pods -n kube-system -l k8s-app=kube-dns`.
 
 ## The ndots Trap
 
@@ -92,6 +73,44 @@ value: "api.example.com."  # Trailing dot = skip the search list
 :::warning
 DNS resolution only works from within the cluster. External clients cannot resolve `*.svc.cluster.local` names unless they have access to the cluster DNS. For external access, use Services (NodePort, LoadBalancer) or Ingress.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Service and Pod
+
+```bash
+kubectl create deployment dns-demo --image=nginx --replicas=1
+kubectl label deployment dns-demo app=dns-demo --overwrite
+kubectl expose deployment dns-demo --port=80
+```
+
+**Observation:** You have a Service `dns-demo` and a Pod in the default namespace.
+
+### Step 2: Resolve the Service Using FQDN
+
+```bash
+POD=$(kubectl get pods -l app=dns-demo -o jsonpath='{.items[0].metadata.name}')
+kubectl exec $POD -- nslookup dns-demo.default.svc.cluster.local
+```
+
+**Observation:** CoreDNS returns the Service's cluster IP. The FQDN resolves correctly.
+
+### Step 3: Try the Short Name
+
+```bash
+kubectl exec $POD -- nslookup dns-demo
+```
+
+**Observation:** From the same namespace, the short name also resolves via the DNS search domains.
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete deployment dns-demo
+kubectl delete service dns-demo
+```
 
 ## Wrapping Up
 

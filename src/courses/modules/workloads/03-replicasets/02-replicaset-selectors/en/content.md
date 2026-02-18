@@ -75,14 +75,7 @@ This matters for two reasons:
 1. **Garbage collection** — if you delete the ReplicaSet, Kubernetes knows to delete its Pods too.
 2. **Conflict prevention** — two ReplicaSets with overlapping selectors won't fight over the same Pods because ownership is tracked explicitly.
 
-You can inspect this relationship directly:
-
-```bash
-kubectl get pods -l tier=frontend
-kubectl get pod <pod-name> -o jsonpath='{.metadata.ownerReferences}' | jq
-```
-
-The output will show the ReplicaSet's name, UID, and the `controller: true` flag confirming it is the managing controller.
+You can inspect this relationship by listing Pods matching the selector and reading their `ownerReferences` field — it will show the ReplicaSet's name, UID, and the `controller: true` flag confirming it is the managing controller.
 
 ## Pod Adoption: A Double-Edged Sword
 
@@ -94,22 +87,92 @@ This sounds convenient, but it can lead to surprises. Imagine you manually creat
 To avoid accidental adoption, use specific and unique label combinations for your ReplicaSets. The more precise your selectors, the less likely you are to encounter unexpected ownership conflicts.
 :::
 
-## Verifying Your Setup
+---
 
-After creating a ReplicaSet, always verify that the selector, template labels, and running Pods are aligned:
+## Hands-On Practice
+
+### Step 1: Create a ReplicaSet with a specific selector
 
 ```bash
-# Check the ReplicaSet's selector and current state
-kubectl get rs -o wide
+nano selector-demo.yaml
+```
 
-# List Pods matching the selector
+```yaml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: selector-demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        tier: frontend
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25
+```
+
+```bash
+kubectl apply -f selector-demo.yaml
+```
+
+### Step 2: List Pods matching the selector
+
+```bash
 kubectl get pods -l tier=frontend
+```
 
-# Confirm a Pod's owner
+You should see 2 Pods created by the ReplicaSet.
+
+### Step 3: Check ownership
+
+```bash
 kubectl get pod <pod-name> -o jsonpath='{.metadata.ownerReferences[0].name}'
 ```
 
-If the desired and ready counts don't match, start by checking whether the template labels satisfy the selector — that mismatch is the most common source of problems.
+It should return `selector-demo` — confirming the ReplicaSet owns this Pod.
+
+### Step 4: Test Pod adoption — create a standalone Pod with matching labels
+
+```bash
+nano orphan-pod.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: orphan-frontend
+  labels:
+    tier: frontend
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25
+```
+
+```bash
+kubectl apply -f orphan-pod.yaml
+```
+
+Now check:
+
+```bash
+kubectl get pods -l tier=frontend
+```
+
+The ReplicaSet wants 2 replicas but now sees 3 matching Pods — it will terminate one to stay at the desired count.
+
+### Step 5: Clean up
+
+```bash
+kubectl delete rs selector-demo
+```
 
 ## Wrapping Up
 

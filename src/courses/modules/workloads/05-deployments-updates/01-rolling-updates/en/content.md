@@ -64,19 +64,7 @@ For production workloads where availability is critical, `maxUnavailable: 0` wit
 
 ## Monitoring a Rolling Update
 
-Once an update is in flight, you can watch its progress:
-
-```bash
-kubectl rollout status deployment/nginx-deployment
-```
-
-This command blocks until the rollout completes or fails, giving you real-time feedback. For a broader view, watch the Pods transition between ReplicaSets:
-
-```bash
-kubectl get pods -l app=nginx -w
-```
-
-You will see old Pods moving to `Terminating` state while new Pods go through `ContainerCreating` and then `Running`.
+Once an update is in flight, you can watch its progress with `kubectl rollout status deployment/<name>`, which blocks until the rollout completes or fails and gives real-time feedback. For a broader view, watch the Pods transition between ReplicaSets with `kubectl get pods -l app=nginx -w` — you will see old Pods moving to `Terminating` state while new Pods go through `ContainerCreating` and then `Running`.
 
 ## Pausing and Resuming
 
@@ -97,6 +85,44 @@ The rollout picks up where it left off.
 :::warning
 A large `maxUnavailable` value can cause brief periods of reduced capacity during updates. For services with tight SLAs, keep this value low and rely on `maxSurge` to speed up the rollout instead. If a rollout gets stuck — perhaps due to a bad image or failing readiness probes — use `kubectl rollout undo deployment/<name>` to revert immediately.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a deployment with 3 replicas of nginx:1.14.2
+
+```bash
+kubectl create deployment nginx-deploy --image=nginx:1.14.2 --replicas=3
+```
+
+**Observation:** Three Pods running nginx:1.14.2 are created.
+
+### Step 2: Trigger a rolling update by changing the image
+
+```bash
+kubectl set image deployment/nginx-deploy nginx=nginx:1.16.1
+```
+
+**Observation:** A rollout begins immediately. The Deployment controller creates a new ReplicaSet with the updated image.
+
+### Step 3: Watch Pods Transition in Real Time
+
+```bash
+kubectl get pods -l app=nginx-deploy -w
+```
+
+**Observation:** (Press Ctrl+C to stop.) During the rollout you see old Pods in `Terminating` and new Pods in `ContainerCreating` then `Running`. This is the rolling update mechanism in action.
+
+### Step 4: Clean up
+
+```bash
+kubectl delete deployment nginx-deploy
+```
+
+**Observation:** The Deployment and all its Pods are removed.
+
+---
 
 ## Wrapping Up
 

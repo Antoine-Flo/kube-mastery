@@ -25,53 +25,15 @@ When you `kubectl apply` this manifest, the Pod is created with all three labels
 
 ## Adding Labels to Existing Resources
 
-Sometimes you need to label resources that already exist — maybe they were created without labels, or your labeling scheme has evolved. Use `kubectl label`:
-
-```bash
-# Add a new label
-kubectl label pod nginx-pod tier=frontend
-
-# Add labels to all Pods in a namespace
-kubectl label pods --all env=staging -n dev
-```
-
-This is also useful for quick experiments or temporary tagging during debugging.
+Sometimes you need to label resources that already exist — maybe they were created without labels, or your labeling scheme has evolved. Use `kubectl label`. This is also useful for quick experiments or temporary tagging during debugging.
 
 ## Updating and Removing Labels
 
-If a label already exists with a different value, kubectl refuses to overwrite it by default — a safety feature. Use `--overwrite` to change it:
-
-```bash
-# Update an existing label
-kubectl label pod nginx-pod env=production --overwrite
-```
-
-To remove a label entirely, append a hyphen (`-`) to the key name:
-
-```bash
-# Remove the "tier" label
-kubectl label pod nginx-pod tier-
-```
-
-The trailing hyphen is a kubectl convention that means "delete this key."
+If a label already exists with a different value, kubectl refuses to overwrite it by default — a safety feature. Use `--overwrite` to change it. To remove a label entirely, append a hyphen (`-`) to the key name: the trailing hyphen is a kubectl convention that means "delete this key."
 
 :::info
 Use `--overwrite` when you intentionally want to change a label's value. Without it, kubectl protects you from accidental changes — especially important when labels control Service routing or controller behavior.
 :::
-
-## Verifying Your Changes
-
-Always verify after modifying labels, especially on resources that Services or controllers select:
-
-```bash
-# See all labels on a specific Pod
-kubectl get pod nginx-pod --show-labels
-
-# Full details including labels
-kubectl describe pod nginx-pod
-```
-
-The `--show-labels` flag adds a `LABELS` column to the output, making it easy to confirm your changes at a glance.
 
 ## Be Careful with Selector Labels
 
@@ -91,6 +53,48 @@ This can actually be useful for debugging — temporarily removing a Pod from a 
 :::warning
 Changing labels that Services or controllers rely on can break routing or orphan Pods. Always verify which selectors reference a label before modifying it. Use `kubectl get endpoints <service>` to check which Pods a Service currently selects.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Pod
+
+```bash
+kubectl run nginx-pod --image=nginx
+kubectl get pods
+```
+
+Wait for the Pod to be Running. Replace `nginx-pod` with your Pod name if different.
+
+### Step 2: Add a Label
+
+```bash
+kubectl label pod nginx-pod env=staging
+```
+
+### Step 3: Verify the Label
+
+```bash
+kubectl get pod nginx-pod --show-labels
+```
+
+You should see `env=staging` in the LABELS column.
+
+### Step 4: Update and Remove a Label
+
+```bash
+kubectl label pod nginx-pod env=production --overwrite
+kubectl label pod nginx-pod env-
+```
+
+The first command updates the value. The second removes the `env` label entirely (the trailing hyphen means "delete this key").
+
+### Step 5: Clean Up
+
+```bash
+kubectl delete pod nginx-pod
+```
 
 ## Wrapping Up
 

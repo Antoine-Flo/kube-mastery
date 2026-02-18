@@ -8,13 +8,7 @@ Think of switching namespaces like changing floors in an office building. Most o
 
 ## Targeting a Specific Namespace
 
-Every `kubectl` command for namespaced resources accepts the `-n` (or `--namespace`) flag:
-
-```bash
-kubectl get pods -n dev
-kubectl get services -n staging
-kubectl describe deployment nginx -n prod
-```
+Every `kubectl` command for namespaced resources accepts the `-n` (or `--namespace`) flag. For example, `kubectl get pods -n dev` lists Pods in the `dev` namespace, `kubectl get services -n staging` shows Services in `staging`, and `kubectl describe deployment nginx -n prod` describes a specific Deployment in `prod`.
 
 To see resources across *all* namespaces at once, use `-A` (or `--all-namespaces`):
 
@@ -27,13 +21,7 @@ This is useful when you are looking for something but are not sure which namespa
 
 ## Setting a Default Namespace
 
-If you spend most of your time in one namespace, you can set it as the default for your current context. After that, every command runs against that namespace unless you override with `-n`:
-
-```bash
-kubectl config set-context --current --namespace=dev
-```
-
-Now `kubectl get pods` shows Pods in `dev`, not `default`. You can verify your current settings:
+If you spend most of your time in one namespace, you can set it as the default for your current context with `kubectl config set-context --current --namespace=<name>`. After that, every command runs against that namespace unless you override with `-n`, so `kubectl get pods` shows Pods in your chosen namespace instead of `default`. You can verify your current settings:
 
 ```bash
 kubectl config view --minify | grep namespace
@@ -66,13 +54,7 @@ Labels on namespaces are useful for applying policies or quotas to groups of nam
 
 ## Deleting a Namespace
 
-When a namespace is no longer needed, you can delete it:
-
-```bash
-kubectl delete namespace dev
-```
-
-This removes the namespace **and everything inside it** — all Pods, Services, Deployments, ConfigMaps, and other namespaced resources. It is a cascade operation, and it can take time if there are many resources or if finalizers need to be processed.
+When a namespace is no longer needed, you can delete it with `kubectl delete namespace <name>`. This removes the namespace **and everything inside it** — all Pods, Services, Deployments, ConfigMaps, and other namespaced resources. It is a cascade operation, and it can take time if there are many resources or if finalizers need to be processed.
 
 ```mermaid
 flowchart LR
@@ -88,33 +70,53 @@ flowchart LR
 Deleting a namespace is irreversible and removes all namespaced resources inside it. Always double-check the target before running the command. Never delete `kube-system` — it will break your cluster.
 :::
 
-## A Practical Workflow
-
-Here is a typical sequence for working with namespaces:
-
-```bash
-# Create a namespace
-kubectl create namespace my-app
-
-# Set it as your default
-kubectl config set-context --current --namespace=my-app
-
-# Deploy resources (they go into my-app automatically)
-kubectl apply -f deployment.yaml
-kubectl apply -f service.yaml
-
-# Verify
-kubectl get all
-
-# When done, clean up everything at once
-kubectl delete namespace my-app
-```
-
 ## Handling Common Issues
 
 - **"Resource not found"** — The most common cause is looking in the wrong namespace. Add `-n <namespace>` or use `-A` to search everywhere.
 - **Namespace stuck in "Terminating"** — This usually means a finalizer is blocking deletion. Inspect the namespace with `kubectl get namespace dev -o yaml` and look for stuck finalizers.
 - **Accidentally working in the wrong namespace** — Always verify your current context with `kubectl config view --minify` before running destructive commands.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a new namespace
+
+```bash
+kubectl create namespace staging
+```
+
+### Step 2: Deploy a Pod into it
+
+```bash
+kubectl run nginx --image=nginx -n staging
+```
+
+### Step 3: Verify the Pod is in the correct namespace
+
+```bash
+kubectl get pods -n staging
+```
+
+### Step 4: Set the namespace as your default context
+
+```bash
+kubectl config set-context --current --namespace=staging
+```
+
+Now `kubectl get pods` without `-n` shows Pods in `staging`.
+
+### Step 5: Switch back to default
+
+```bash
+kubectl config set-context --current --namespace=default
+```
+
+### Step 6: Clean up
+
+```bash
+kubectl delete namespace staging
+```
 
 ## Wrapping Up
 

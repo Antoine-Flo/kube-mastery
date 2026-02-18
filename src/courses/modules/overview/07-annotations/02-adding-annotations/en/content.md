@@ -25,52 +25,15 @@ When you `kubectl apply` this manifest, the Pod is created with all three annota
 
 ## Adding Annotations to Existing Resources
 
-Use `kubectl annotate` to add annotations to resources that already exist:
-
-```bash
-# Add an annotation
-kubectl annotate pod nginx-pod description="Production web server"
-
-# Add multiple annotations at once
-kubectl annotate pod nginx-pod \
-  owner="frontend-team" \
-  docs="https://wiki.example.com/nginx"
-```
+Use `kubectl annotate` to add annotations to resources that already exist. You can add multiple annotations at once by listing them one after another.
 
 ## Updating and Removing
 
-Just like labels, kubectl refuses to overwrite an existing annotation without explicit permission:
-
-```bash
-# Update an existing annotation (requires --overwrite)
-kubectl annotate pod nginx-pod description="Updated web server" --overwrite
-
-# Remove an annotation (trailing hyphen)
-kubectl annotate pod nginx-pod description-
-```
-
-The trailing hyphen convention (`key-`) works the same way for both labels and annotations.
+Just like labels, kubectl refuses to overwrite an existing annotation without explicit permission. Use `--overwrite` to change a value. The trailing hyphen (`key-`) removes an annotation — the same convention as for labels.
 
 :::info
-To remove an annotation, append a hyphen to the key: `kubectl annotate pod nginx-pod description-`. This convention is the same as for labels — consistent across all metadata operations in kubectl.
+To remove an annotation, append a hyphen to the key: `kubectl annotate pod <name> description-`. This convention is the same as for labels — consistent across all metadata operations in kubectl.
 :::
-
-## Verifying Annotations
-
-After adding or changing annotations, verify they're correct:
-
-```bash
-# See annotations in describe output
-kubectl describe pod nginx-pod
-
-# Extract annotations as JSON
-kubectl get pod nginx-pod -o jsonpath='{.metadata.annotations}'
-
-# Pretty-print all annotations
-kubectl get pod nginx-pod -o jsonpath='{.metadata.annotations}' | python3 -m json.tool
-```
-
-Annotations appear under the **Metadata** section in `describe` output.
 
 ## A Word of Caution
 
@@ -84,6 +47,36 @@ Before modifying annotations on a resource, consider:
 :::warning
 Some annotations are used by controllers and tools to configure behavior. Overwriting them can change how your application is exposed, monitored, or managed. When in doubt, check the tool's documentation before modifying.
 :::
+
+---
+
+## Hands-On Practice
+
+You need a Pod. Run `kubectl run web-app --image=nginx` or use an existing one.
+
+### Step 1: Add Annotations
+
+```bash
+kubectl annotate pod web-app description="Production web server"
+kubectl annotate pod web-app owner="frontend-team" docs="https://wiki.example.com/nginx"
+```
+
+### Step 2: Verify
+
+```bash
+kubectl get pod web-app -o jsonpath='{.metadata.annotations}'
+```
+
+Or use `kubectl describe pod web-app` and check the Annotations section under Metadata.
+
+### Step 3: Update and Remove
+
+```bash
+kubectl annotate pod web-app description="Updated web server" --overwrite
+kubectl annotate pod web-app description-
+```
+
+The first command updates the value. The second removes the `description` annotation (trailing hyphen).
 
 ## Wrapping Up
 

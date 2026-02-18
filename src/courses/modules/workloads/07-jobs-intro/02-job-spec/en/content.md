@@ -111,6 +111,63 @@ Selecting the right combination of these fields depends on your workload:
 
 Start conservative — low parallelism, moderate backoff — and increase based on observed behavior. High parallelism can overwhelm your cluster's scheduling capacity if nodes are already loaded, so always verify that your cluster has enough resources to handle the concurrency you configure.
 
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Simple Job Manifest
+
+Create `job.yaml` with a Job that runs busybox and echoes a message:
+
+```bash
+nano job.yaml
+```
+
+Use this minimal spec:
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hello-job
+spec:
+  template:
+    spec:
+      containers:
+        - name: hello
+          image: busybox
+          command: ["sh", "-c", "echo Hello from Job"]
+      restartPolicy: Never
+```
+
+Save and exit.
+
+### Step 2: Apply and Watch Completion
+
+```bash
+kubectl apply -f job.yaml
+kubectl get jobs -w
+```
+
+The Job shows `0/1` initially, then `1/1` once the Pod completes. Press Ctrl+C to stop watching.
+
+### Step 3: Check Pod Status and Logs
+
+```bash
+kubectl get pods -l job-name=hello-job
+kubectl logs job/hello-job
+```
+
+The Pod status is `Completed`, and the logs show "Hello from Job".
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete job hello-job
+```
+
+---
+
 ## Wrapping Up
 
 The Job spec gives you four essential controls: `completions` defines the success target, `parallelism` sets the concurrency level, `backoffLimit` governs failure tolerance, and `activeDeadlineSeconds` enforces a hard time limit. Together, they let you express a wide range of batch processing patterns — from simple one-shot tasks to large parallel workloads.

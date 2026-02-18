@@ -71,21 +71,7 @@ This command blocks until the rollback completes (or fails), giving you real-tim
 
 ## Verifying the Rollback
 
-After the rollback finishes, take a moment to confirm everything is in the expected state. A simple verification workflow looks like this:
-
-```bash
-kubectl get deployment nginx-deployment
-kubectl get replicasets -l app=nginx
-kubectl get pods -l app=nginx
-```
-
-Look at the **ReplicaSets**: the one that matches your rollback target should now have the desired replica count, while the others should be scaled to zero. You can also verify the container image running in the Pods:
-
-```bash
-kubectl describe deployment nginx-deployment | grep Image
-```
-
-If the image matches the revision you targeted, the rollback succeeded.
+After the rollback finishes, confirm everything is in the expected state. Check the Deployment status, inspect the ReplicaSets (the rollback target should have the desired replica count while others are at zero), and verify the container image with `kubectl describe deployment | grep Image`. If the image matches the revision you targeted, the rollback succeeded.
 
 :::warning
 If `revisionHistoryLimit` was exceeded, older revisions may no longer be available. In that case, you'll need to manually fix the Pod template and apply it as a new update rather than rolling back.
@@ -99,6 +85,59 @@ Rollbacks are a **reactive safety measure**, not a deployment strategy. Here are
 - **Always check rollout history first** before rolling back. Make sure the target revision actually contains the configuration you want.
 - **Use `--to-revision` explicitly** when you need precision. Blindly undoing to "the previous one" works in simple cases but can surprise you if multiple updates happened in quick succession.
 - **Treat rollback as triage, not a fix.** After reverting, investigate the root cause and ship a proper correction. Relying on repeated rollbacks can leave your revision history in a confusing state.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Deployment with nginx:1.14.2
+
+```bash
+kubectl create deployment nginx-deployment --image=nginx:1.14.2 --replicas=3
+```
+
+You now have a Deployment running three Pods on nginx 1.14.2.
+
+### Step 2: Update to nginx:1.16.1
+
+```bash
+kubectl set image deployment/nginx-deployment nginx=nginx:1.16.1
+```
+
+The rolling update begins; new Pods are created with the updated image.
+
+### Step 3: Inspect Rollout History
+
+```bash
+kubectl rollout history deployment/nginx-deployment
+```
+
+You see revision 1 (nginx:1.14.2) and revision 2 (nginx:1.16.1). This history is what enables rollback.
+
+### Step 4: Rollback to the Previous Revision
+
+```bash
+kubectl rollout undo deployment/nginx-deployment
+```
+
+Kubernetes starts a rolling update in reverse, scaling down the current ReplicaSet and scaling up the previous one.
+
+### Step 5: Verify the Rollback
+
+```bash
+kubectl get rs
+kubectl describe deployment nginx-deployment
+```
+
+The active ReplicaSet should again use nginx:1.14.2. The Deployment's image field and ReplicaSet status confirm the rollback succeeded.
+
+### Step 6: Clean Up
+
+```bash
+kubectl delete deployment nginx-deployment
+```
+
+---
 
 ## Wrapping Up
 

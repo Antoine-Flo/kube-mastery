@@ -73,24 +73,37 @@ ServiceAccounts come into play whenever a workload needs to interact with the Ku
 
 In each case, the workload needs a stable, auditable identity so that RBAC policies can be applied consistently.
 
-## Verifying ServiceAccounts
-
-You can inspect which ServiceAccounts exist and which one a Pod is using:
-
-```bash
-# List ServiceAccounts in a namespace
-kubectl get serviceaccounts -n <namespace>
-
-# Check which ServiceAccount a Pod uses
-kubectl get pod <pod-name> -o jsonpath='{.spec.serviceAccountName}'
-
-# Inside a Pod, inspect the mounted token directory
-ls -la /var/run/secrets/kubernetes.io/serviceaccount/
-```
-
 :::warning
 If a Pod is stuck in `Pending`, check whether the specified ServiceAccount exists. If API calls from inside a Pod return `403 Forbidden`, the ServiceAccount likely lacks RBAC permissions — check its RoleBindings. If the token is not mounted, verify that `automountServiceAccountToken` is not set to `false`.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: List ServiceAccounts
+
+```bash
+kubectl get serviceaccounts -n default
+```
+
+Every namespace has at least the `default` ServiceAccount. You will see it listed here.
+
+### Step 2: Inspect the default ServiceAccount YAML
+
+```bash
+kubectl get sa default -o yaml -n default
+```
+
+The output shows the ServiceAccount resource — its name, namespace, and any attached tokens or secrets. Most fields are auto-managed by Kubernetes.
+
+### Step 3: Describe the default ServiceAccount
+
+```bash
+kubectl describe sa default -n default
+```
+
+The describe output provides a human-readable summary: creation metadata, mounted secrets, and token details.
 
 ## Wrapping Up
 

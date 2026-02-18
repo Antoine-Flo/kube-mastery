@@ -89,17 +89,39 @@ For production environments, avoid storing real credentials in Git:
 
 These tools let you follow GitOps practices without exposing sensitive values.
 
-## Verifying Secrets
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Secret from literals
 
 ```bash
-# List Secrets
-kubectl get secrets
+kubectl create secret generic db-creds --from-literal=username=admin --from-literal=password=s3cr3t
+```
 
-# See keys (values hidden)
-kubectl describe secret db-credentials
+Values are base64-encoded automatically. This is convenient for testing — avoid using real credentials.
 
-# Decode a value
-kubectl get secret db-credentials -o jsonpath='{.data.password}' | base64 -d
+### Step 2: Verify the Secret
+
+```bash
+kubectl get secret db-creds -o yaml
+```
+
+You'll see the `data` section with base64-encoded values. The keys `username` and `password` are visible, but the actual values appear as encoded strings.
+
+### Step 3: Decode a value
+
+```bash
+kubectl get secret db-creds -o jsonpath='{.data.password}' | base64 -d
+echo
+```
+
+This decodes the password field. It confirms that base64 is encoding, not encryption — anyone with `kubectl get secret` access can decode values.
+
+### Step 4: Clean up
+
+```bash
+kubectl delete secret db-creds
 ```
 
 ## Wrapping Up

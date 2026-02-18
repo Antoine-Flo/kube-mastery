@@ -105,6 +105,26 @@ When implementing finalizer handling in your controller, keep these principles i
 
 **Cleanup not idempotent** — If your cleanup logic fails partway through and runs again, it should pick up where it left off without errors. Design for re-entrancy from the start.
 
+---
+
+## Hands-On Practice
+
+### Step 1: List CRDs in the Cluster
+
+```bash
+kubectl get crds
+```
+
+Many clusters have CRDs from operators or add-ons (Prometheus, cert-manager, etc.). Each CRD has an associated controller or Operator.
+
+### Step 2: Inspect an Existing CRD's Spec
+
+```bash
+kubectl get crd <some-crd-name> -o yaml
+```
+
+Look at the `spec.versions[].schema.openAPIV3Schema` to see the resource structure. For example: `kubectl get crd certificaterequests.cert-manager.io -o yaml | head -80`
+
 ## Wrapping Up
 
 Controllers are what bring custom resources to life — they watch for changes and reconcile desired state with reality. Finalizers ensure that when a resource is deleted, the controller gets a chance to clean up before the object disappears. Together, they form the backbone of the Kubernetes extension model: declare what you want, and software handles the rest.

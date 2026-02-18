@@ -85,23 +85,7 @@ spec:
 
 Notice the structure: the **CronJob** wraps a **jobTemplate**, which itself contains a **Pod template** — exactly the same nesting you saw with Jobs. The `restartPolicy` must be either `Never` or `OnFailure`, just like a regular Job.
 
-Apply it and observe:
-
-```bash
-# Create the CronJob
-kubectl apply -f cronjob-hello.yaml
-
-# Check the CronJob status
-kubectl get cronjobs
-
-# After the first scheduled run, list the Jobs it created
-kubectl get jobs --selector=job-name
-
-# Inspect logs from the most recent run
-kubectl logs job/hello-<timestamp>
-```
-
-The `LAST SCHEDULE` column in `kubectl get cronjobs` tells you when the last Job was triggered. If you do not see any Jobs being created, verify that the `kube-controller-manager` is running and that your schedule syntax is correct.
+After applying it, the `LAST SCHEDULE` column in `kubectl get cronjobs` tells you when the last Job was triggered. If you do not see any Jobs being created, verify that the `kube-controller-manager` is running and that your schedule syntax is correct.
 
 :::warning
 By default, CronJobs interpret the schedule using the **kube-controller-manager's local time**, which is typically UTC. If your cluster runs in UTC and you write `0 9 * * *` expecting 9 AM in your local time zone, the Job will actually run at 9 AM UTC. Starting with Kubernetes 1.27, you can set the `timeZone` field to control this — we will cover that in a later lesson.
@@ -118,6 +102,20 @@ CronJobs are ideal for any task that is:
 Common real-world use cases include database backups, certificate renewal checks, cache warming, report generation, and stale-data cleanup.
 
 If your task needs to run **once** rather than on a schedule, use a plain Job instead. If it needs to run **continuously**, a Deployment or DaemonSet is the better fit.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Check API Resources
+
+```bash
+kubectl api-resources | grep -i cronjob
+```
+
+You see `cronjobs` in the `batch` group, confirming the CronJob API is available.
+
+---
 
 ## Wrapping Up
 

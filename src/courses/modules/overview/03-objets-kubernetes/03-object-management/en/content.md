@@ -67,22 +67,6 @@ The cluster now has 5 replicas. But your manifest file still says `replicas: 3`.
 A Kubernetes object should be managed using only one technique. Mixing imperative commands with declarative configuration on the same object is a common source of confusion — especially on teams.
 :::
 
-## Try It: Preview Before You Apply
-
-One of the most powerful features of declarative management is the ability to see what *would* change before actually changing anything:
-
-```bash
-kubectl diff -f configs/
-```
-
-This shows the difference between what your files describe and what currently exists in the cluster. You can also use dry-run mode to validate without applying:
-
-```bash
-kubectl apply -f configs/ --dry-run=client
-```
-
-Together, `diff` and `--dry-run` form a safety net that helps you catch mistakes before they reach the cluster.
-
 ## Choosing the Right Approach
 
 | Situation | Recommended Approach |
@@ -93,6 +77,61 @@ Together, `diff` and `--dry-run` form a safety net that helps you catch mistakes
 | Production, GitOps, CI/CD | Declarative configuration |
 
 Most teams settle on declarative configuration for anything that matters, and use imperative commands only for quick, throwaway experiments.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Pod Imperatively
+
+```bash
+kubectl run test-pod --image=nginx
+kubectl get pods
+```
+
+No files involved — a single command creates the Pod. Fast, but there is no manifest to version or share.
+
+### Step 2: Create a Pod Declaratively
+
+Create `pod.yaml` with the following content:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: declarative-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+```
+
+Apply it:
+
+```bash
+kubectl apply -f pod.yaml
+```
+
+You now have a file describing the desired state. It can be checked into Git and shared with your team.
+
+### Step 3: Preview Changes with diff
+
+Modify `pod.yaml` (e.g. change the image to `nginx:1.25`) and run:
+
+```bash
+kubectl diff -f pod.yaml
+```
+
+This shows what *would* change before you apply. Use `kubectl apply -f pod.yaml --dry-run=client` to validate without applying.
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete pod test-pod
+kubectl delete pod declarative-pod
+```
+
+Both approaches created Pods, but only the declarative one left a reproducible record behind.
 
 ## Wrapping Up
 

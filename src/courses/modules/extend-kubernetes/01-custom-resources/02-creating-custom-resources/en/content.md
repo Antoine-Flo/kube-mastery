@@ -44,13 +44,7 @@ flowchart LR
 
 ## Applying and Inspecting Your Resources
 
-Once you've written your manifest, apply it like any other Kubernetes object:
-
-```bash
-kubectl apply -f backup-job.yaml
-```
-
-The API server validates against the CRD schema. If valid, the object is stored. If not, you'll see a clear error explaining what went wrong.
+Once you've written your manifest, apply it with `kubectl apply -f` like any other Kubernetes object. The API server validates against the CRD schema. If valid, the object is stored. If not, you'll see a clear error explaining what went wrong.
 
 To list all instances of your custom resource, use the plural name and API group:
 
@@ -76,13 +70,7 @@ You can add **short names** and **printer columns** to your CRD definition. This
 
 ## Verifying Everything is in Place
 
-Before creating instances, it's always a good idea to confirm the CRD is installed:
-
-```bash
-kubectl get crd | grep stable.example.com
-```
-
-If the CRD isn't there, your `kubectl apply` will fail with a "no matches for kind" error. Install the CRD first, then create your resources.
+Before creating instances, it's always a good idea to confirm the CRD is installed by running `kubectl get crd` and filtering for your API group. If the CRD isn't there, your `kubectl apply` will fail with a "no matches for kind" error. Install the CRD first, then create your resources.
 
 ## Common Pitfalls
 
@@ -95,6 +83,82 @@ If the CRD isn't there, your `kubectl apply` will fail with a "no matches for ki
 :::warning
 Changing a CRD's schema in incompatible ways (removing fields, changing types) can break existing instances. Plan schema migrations carefully, especially in production. Consider versioning your CRD (v1, v2) to introduce breaking changes safely.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a CRD Manifest
+
+Create `crd.yaml` with a minimal CRD:
+
+```bash
+cat <<'EOF' > crd.yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: backupjobs.stable.example.com
+spec:
+  group: stable.example.com
+  names:
+    kind: BackupJob
+    listKind: BackupJobList
+    plural: backupjobs
+    singular: backupjob
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [metadata, spec]
+          properties:
+            metadata:
+              type: object
+            spec:
+              type: object
+              properties:
+                schedule:
+                  type: string
+EOF
+```
+
+### Step 2: Apply the CRD and Verify
+
+```bash
+kubectl apply -f crd.yaml
+kubectl get crds | grep backupjobs
+```
+
+### Step 3: Create a Custom Resource Instance
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: stable.example.com/v1
+kind: BackupJob
+metadata:
+  name: test-backup
+  namespace: default
+spec:
+  schedule: "0 2 * * *"
+EOF
+```
+
+### Step 4: List Custom Resources
+
+```bash
+kubectl get backupjobs.stable.example.com
+kubectl get backupjob test-backup -o yaml
+```
+
+### Step 5: Clean Up
+
+```bash
+kubectl delete backupjob test-backup
+kubectl delete -f crd.yaml
+```
 
 ## Wrapping Up
 

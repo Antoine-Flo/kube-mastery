@@ -82,23 +82,37 @@ Kubernetes ships with several built-in ClusterRoles. The most notable ones:
 
 You can list all ClusterRoles with `kubectl get clusterrole`. Prefer creating custom ClusterRoles with the specific permissions your workload needs, rather than binding to `cluster-admin`.
 
-## Hands-on: Verify ClusterRole Access
-
-```bash
-# List ClusterRoles and ClusterRoleBindings
-kubectl get clusterrole,clusterrolebinding
-
-# Test cluster-wide access for a ServiceAccount
-kubectl auth can-i list pods --all-namespaces \
-  --as=system:serviceaccount:app:app-sa
-
-# Inspect a specific ClusterRoleBinding
-kubectl describe clusterrolebinding read-pods-binding
-```
-
 :::warning
 ClusterRoleBindings grant permissions across **all namespaces**, including namespaces that will be created in the future. Audit them regularly — a single overly broad ClusterRoleBinding can silently undermine the isolation you have built with namespace-scoped Roles.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: List ClusterRoles
+
+```bash
+kubectl get clusterroles
+```
+
+Shows all ClusterRoles, including built-in ones like `view`, `edit`, `admin`, and `cluster-admin`.
+
+### Step 2: Describe a built-in ClusterRole
+
+```bash
+kubectl describe clusterrole view
+```
+
+The `view` ClusterRole grants read-only access to most resources. The output lists the rules — which API groups, resources, and verbs it allows.
+
+### Step 3: List ClusterRoleBindings
+
+```bash
+kubectl get clusterrolebindings
+```
+
+Shows which subjects (users, groups, ServiceAccounts) are bound to ClusterRoles cluster-wide. Each binding grants its ClusterRole's permissions to the listed subjects.
 
 ## Wrapping Up
 

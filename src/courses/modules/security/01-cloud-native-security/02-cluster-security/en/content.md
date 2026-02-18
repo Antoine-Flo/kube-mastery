@@ -50,27 +50,7 @@ Pod Security Standards and `securityContext` settings restrict what containers a
 
 ## Verifying Your Security Posture
 
-Let's put theory into practice. These commands help you check how your cluster is configured today.
-
-**Check your permissions:**
-
-```bash
-kubectl auth can-i get secrets --namespace default
-kubectl auth can-i create clusterrolebindings
-kubectl auth can-i '*' '*' --all-namespaces
-```
-
-The last command tests for full cluster-admin access. If it returns "yes," that identity has unrestricted power — worth investigating.
-
-**Inspect RBAC bindings and audit configuration:**
-
-```bash
-# List all RBAC bindings across namespaces
-kubectl get clusterrolebinding,rolebinding -A
-
-# Check audit log configuration (on control plane nodes)
-grep -r audit /etc/kubernetes/
-```
+The commands in the hands-on section below help you check how your cluster is configured today.
 
 :::info
 Regular auditing of ClusterRoleBindings can reveal overly broad permissions that accumulate over time. Treat this as routine maintenance, not a one-time task.
@@ -92,6 +72,27 @@ flowchart LR
 ```
 
 Every request flows through authentication, authorization, and admission before reaching etcd. Audit logs capture the entire journey. Encryption at rest protects data once it is stored. Together, these layers create a strong security posture — no single control does everything, but combined they leave few gaps.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Inspect security components in kube-system
+
+```bash
+kubectl get pods -n kube-system
+```
+
+The `kube-system` namespace hosts control plane components and security-sensitive add-ons. Seeing what runs here helps you understand your cluster's security footprint.
+
+### Step 2: Check your permissions
+
+```bash
+kubectl auth can-i get secrets --namespace default
+kubectl auth can-i '*' '*' --all-namespaces
+```
+
+The second command tests for full cluster-admin access. If it returns `yes`, your identity has unrestricted power — worth investigating.
 
 ## Wrapping Up
 

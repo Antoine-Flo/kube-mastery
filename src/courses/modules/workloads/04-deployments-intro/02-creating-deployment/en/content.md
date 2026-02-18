@@ -64,39 +64,6 @@ The **selector labels and the template labels must match**. If `selector.matchLa
 The selector (`spec.selector`) is **immutable** after creation. Once you create a Deployment, you cannot change which labels it selects. Plan your labeling strategy carefully before your first `kubectl apply`.
 :::
 
-## Applying and Verifying
-
-Save the manifest to a file (e.g., `nginx-deployment.yaml`) and apply it:
-
-```bash
-kubectl apply -f nginx-deployment.yaml
-```
-
-Then verify that everything came up correctly:
-
-```bash
-kubectl get deployments
-```
-
-You should see output like:
-
-```
-NAME               READY   UP-TO-DATE   AVAILABLE   AGE
-nginx-deployment   3/3     3            3           12s
-```
-
-- **READY** — `3/3` means all three desired Pods are running and ready.
-- **UP-TO-DATE** — the number of Pods that match the latest template.
-- **AVAILABLE** — the number of Pods available to serve traffic.
-
-You can also inspect the ReplicaSet that the Deployment created:
-
-```bash
-kubectl get rs
-```
-
-Notice how the ReplicaSet name includes a hash suffix (e.g., `nginx-deployment-6b474476c4`). That hash is derived from the Pod template. It is how Kubernetes ties each ReplicaSet to a specific version of your configuration.
-
 ## Troubleshooting Common Issues
 
 Even with a correct manifest, things can go wrong at the infrastructure level. Here are the most common issues you may encounter:
@@ -110,6 +77,69 @@ Even with a correct manifest, things can go wrong at the infrastructure level. H
 :::info
 When a Deployment is not behaving as expected, `kubectl describe deployment <name>` is your best diagnostic tool. The Events section at the bottom shows exactly what the controller has been doing — and what went wrong.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create the manifest file
+
+```bash
+nano nginx-deployment.yaml
+```
+
+Paste the Deployment manifest from above, save, and exit.
+
+### Step 2: Apply the manifest
+
+```bash
+kubectl apply -f nginx-deployment.yaml
+```
+
+### Step 3: Verify the Deployment
+
+```bash
+kubectl get deployments
+```
+
+You should see:
+
+```
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   3/3     3            3           12s
+```
+
+- **READY** — `3/3` means all three desired Pods are running and ready.
+- **UP-TO-DATE** — the number of Pods that match the latest template.
+- **AVAILABLE** — the number of Pods available to serve traffic.
+
+### Step 4: Inspect the ReplicaSet created by the Deployment
+
+```bash
+kubectl get rs
+```
+
+Notice the hash suffix in the ReplicaSet name (e.g., `nginx-deployment-6b474476c4`). That hash is derived from the Pod template.
+
+### Step 5: Check the Pods
+
+```bash
+kubectl get pods -l app=nginx
+```
+
+### Step 6: Describe the Deployment
+
+```bash
+kubectl describe deployment nginx-deployment
+```
+
+Check the **Events** section at the bottom — it shows what the controller has been doing.
+
+### Step 7: Clean up
+
+```bash
+kubectl delete deployment nginx-deployment
+```
 
 ## Wrapping Up
 

@@ -74,24 +74,43 @@ nslookup -type=SRV _http._tcp.my-service.default.svc.cluster.local
 
 This returns both the hostname and port number, useful for advanced service discovery patterns.
 
-## Testing Service Discovery
+---
 
-Use a temporary Pod to verify DNS resolution:
+## Hands-On Practice
+
+### Step 1: Create a Service and Pod
 
 ```bash
-# Quick DNS test
-kubectl run -it dns-test --image=busybox --restart=Never --rm \
-  -- nslookup backend-api.default.svc.cluster.local
-
-# Test connectivity
-kubectl run -it curl-test --image=curlimages/curl --restart=Never --rm \
-  -- curl -s http://backend-api:8080/health
+kubectl create deployment discover-demo --image=nginx --replicas=1
+kubectl label deployment discover-demo app=discover-demo --overwrite
+kubectl expose deployment discover-demo --port=80
 ```
 
-If DNS resolution fails:
-1. Check that the Service exists: `kubectl get svc backend-api`
-2. Verify CoreDNS is running: `kubectl get pods -n kube-system -l k8s-app=kube-dns`
-3. Allow a few seconds for DNS propagation after creating a new Service
+**Observation:** You now have a Service and a Pod in the same namespace.
+
+### Step 2: Use Service DNS Name from Inside a Pod
+
+```bash
+POD=$(kubectl get pods -l app=discover-demo -o jsonpath='{.items[0].metadata.name}')
+kubectl exec $POD -- nslookup discover-demo
+```
+
+**Observation:** nslookup resolves the Service name to its cluster IP. Short name works from the same namespace.
+
+### Step 3: Check Environment Variables
+
+```bash
+kubectl exec $POD -- env | grep DISCOVER_DEMO
+```
+
+**Observation:** The Pod has `DISCOVER_DEMO_SERVICE_HOST` and `DISCOVER_DEMO_SERVICE_PORT` — these were injected when the Pod started.
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete deployment discover-demo
+kubectl delete service discover-demo
+```
 
 ## Wrapping Up
 

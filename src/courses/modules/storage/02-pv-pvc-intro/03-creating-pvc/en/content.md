@@ -70,39 +70,7 @@ When you create a PVC, Kubernetes starts looking for a match:
 
 If the StorageClass has a dynamic provisioner, Kubernetes creates a new PV automatically instead of waiting for a manual one. We'll cover dynamic provisioning in the StorageClass chapter.
 
-## Applying and Verifying
-
-```bash
-# Apply the PVC and Pod
-kubectl apply -f pvc-pod.yaml
-
-# Watch the PVC status — it should become Bound
-kubectl get pvc my-pvc
-
-# Verify the Pod mounted the volume
-kubectl exec app-with-pvc -- df -h /data
-
-# Write some data and verify persistence
-kubectl exec app-with-pvc -- sh -c 'echo "hello" > /data/test.txt'
-kubectl exec app-with-pvc -- cat /data/test.txt
-```
-
-## Testing Persistence
-
-Here's the real test: delete the Pod and recreate it. The data should still be there:
-
-```bash
-# Delete the Pod (PVC stays)
-kubectl delete pod app-with-pvc
-
-# Recreate the Pod with the same PVC
-kubectl apply -f pod.yaml
-
-# Check the data
-kubectl exec app-with-pvc -- cat /data/test.txt
-```
-
-You should see `hello` — the data persisted because the PVC (and its bound PV) were not deleted. This is the key difference from `emptyDir`: the data outlives the Pod.
+The PVC must be bound before the Pod can mount it. Once bound, you can verify the mount with `kubectl exec` and confirm data persists across Pod restarts.
 
 ## Common Issues
 
@@ -122,6 +90,96 @@ The events section of `describe` will tell you what's wrong — capacity mismatc
 :::warning
 Remember that PVC binding is **exclusive** — one PVC per PV. If a PV is already bound to another PVC, it's unavailable. Check `kubectl get pv` to see which PVs are free (status `Available`).
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create and apply a PV
+
+First, create a PV that the PVC can bind to. Use the same `storageClassName: manual` as in the previous lesson:
+
+```bash
+cat <<'EOF' | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-hostpath-demo
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: /mnt/pv-data
+    type: DirectoryOrCreate
+EOF
+```
+
+### Step 2: Create and apply the PVC and Pod
+
+```bash
+cat <<'EOF' | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+  storageClassName: manual
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-pvc
+spec:
+  containers:
+    - name: app
+      image: nginx
+      volumeMounts:
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: my-pvc
+EOF
+```
+
+### Step 3: Verify the binding
+
+```bash
+kubectl get pv,pvc
+```
+
+The PVC should show status `Bound` and the PV should show the same. The `CLAIM` column on the PV indicates which PVC is using it.
+
+### Step 4: Verify the Pod mounted the volume
+
+```bash
+kubectl wait --for=condition=Ready pod/app-with-pvc --timeout=60s
+kubectl exec app-with-pvc -- df -h /data
+kubectl exec app-with-pvc -- sh -c 'echo "hello" > /data/test.txt'
+kubectl exec app-with-pvc -- cat /data/test.txt
+```
+
+You should see `hello`. The Pod mounted the PVC, which is bound to the PV — data is now on persistent storage.
+
+### Step 5: Clean up
+
+```bash
+kubectl delete pod app-with-pvc
+kubectl delete pvc my-pvc
+kubectl delete pv pv-hostpath-demo
+```
+
+Delete the Pod first, then the PVC, then the PV. With `Retain` reclaim policy, the PV moves to `Released`; deleting it removes the object from the cluster.
 
 ## Wrapping Up
 

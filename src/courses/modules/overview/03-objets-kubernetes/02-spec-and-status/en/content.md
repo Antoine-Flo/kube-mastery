@@ -37,24 +37,6 @@ flowchart LR
     W --> CMP
 ```
 
-## Try It: Watch the Loop in Action
-
-If you have a Deployment running, inspect both its spec and its status:
-
-```bash
-kubectl get deployment <name> -o yaml
-```
-
-Look for the `spec` section — you will see your desired configuration. Then look for the `status` section — it shows what Kubernetes has actually achieved.
-
-You can also watch status change in real time:
-
-```bash
-kubectl get deployment <name> -w
-```
-
-The `-w` flag ("watch") keeps the output updating as changes happen.
-
 Here is what the spec and status might look like for a healthy Deployment:
 
 ```yaml
@@ -91,6 +73,34 @@ The spec/status pattern shows up everywhere in Kubernetes — in Pods, Deploymen
 - When something is broken, compare spec to status. The gap tells you what Kubernetes is trying to fix.
 - When you want to change behavior, update the spec. Kubernetes handles the rest.
 - When you need to monitor health, watch the status.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Get a Pod Name
+
+```bash
+kubectl get pods
+```
+
+Note the name of any Running Pod (e.g. `test-nginx`). If none exists, create one with `kubectl run demo-pod --image=nginx` and wait for it to reach Running status.
+
+### Step 2: Inspect Spec vs Status
+
+```bash
+kubectl get pod test-nginx -o yaml
+```
+
+Replace `test-nginx` with your Pod name. Look for the `spec` section — your desired configuration. Then look for the `status` section — what Kubernetes has actually achieved (phase, conditions, container statuses).
+
+### Step 3: Extract Status with jsonpath
+
+```bash
+kubectl get pod test-nginx -o jsonpath='{.status.phase}'
+```
+
+Replace `test-nginx` with your Pod name. This extracts just the phase (e.g. `Running`) from the status. The `jsonpath` flag lets you query specific fields without parsing the full YAML.
 
 ## Wrapping Up
 

@@ -2,7 +2,7 @@
 
 Theory is valuable, but nothing solidifies understanding like doing it yourself. In this lesson, you will write a Pod manifest from scratch, hand it to Kubernetes, and watch a running container appear in your cluster. By the end, you will have a clear mental model of the journey a manifest takes — from a file on your machine to a live workload on a node.
 
-## Writing the Manifest
+## Anatomy of a Pod Manifest
 
 Every Pod starts as a YAML file — a declarative description of what you want Kubernetes to create. Here is a simple manifest that runs an Nginx web server:
 
@@ -35,22 +35,6 @@ Let's break this down field by field:
 The `name` field under `metadata` must be unique within a namespace. If you try to create a Pod with a name that already exists, Kubernetes will reject the request. You can use different namespaces to avoid naming collisions.
 :::
 
-## Applying the Manifest
-
-Save the YAML above to a file — for example, `nginx-pod.yaml` — and then tell Kubernetes to create the Pod:
-
-```bash
-kubectl apply -f nginx-pod.yaml
-```
-
-You should see output confirming the creation:
-
-```
-pod/nginx-pod created
-```
-
-The `apply` command is **declarative**: it tells Kubernetes "make reality match this file." If the Pod does not exist, Kubernetes creates it. If it already exists, Kubernetes updates it to match the file (where possible). This declarative approach is central to how Kubernetes works — you describe the *desired state*, and the system converges toward it.
-
 ## What Happens Behind the Scenes
 
 When you run `kubectl apply`, a chain of events unfolds inside the cluster. Understanding this flow helps enormously when something goes wrong:
@@ -80,24 +64,59 @@ sequenceDiagram
 
 If anything goes wrong at any step — an invalid field, no available nodes, a missing image — the Pod's status will reflect the problem, and events will explain what happened.
 
-## Verifying Your Pod
+:::warning
+In production, you should almost never create standalone Pods like this. Use a **Deployment** instead — it wraps your Pod in a controller that provides self-healing (automatic restarts), scaling (run multiple replicas), and rolling updates (zero-downtime deployments). Direct Pod creation is ideal for learning and quick experiments, but a Deployment is what keeps your application resilient.
+:::
 
-Once the Pod is created, your first instinct should be to check its status:
+---
+
+## Hands-On Practice
+
+### Step 1: Create the manifest file
+
+```bash
+nano nginx-pod.yaml
+```
+
+Paste the following content, save, and exit:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.27
+      ports:
+        - containerPort: 80
+```
+
+### Step 2: Apply the manifest
+
+```bash
+kubectl apply -f nginx-pod.yaml
+```
+
+You should see: `pod/nginx-pod created`. The `apply` command is **declarative** — it tells Kubernetes "make reality match this file."
+
+### Step 3: Check the Pod status
 
 ```bash
 kubectl get pods
 ```
 
-You will see output like:
+You should see output like:
 
 ```
 NAME        READY   STATUS    RESTARTS   AGE
 nginx-pod   1/1     Running   0          12s
 ```
 
-The `READY` column shows how many containers are ready out of the total. `1/1` means your single container is up and healthy. If you see `ContainerCreating`, the image is still being pulled — give it a moment.
+`READY 1/1` means your single container is up and healthy.
 
-For a deeper look, use `describe` to see the full story: events, conditions, resource allocations, and container states:
+### Step 4: Inspect the Pod in detail
 
 ```bash
 kubectl describe pod nginx-pod
@@ -105,29 +124,31 @@ kubectl describe pod nginx-pod
 
 Scroll to the **Events** section at the bottom — it reads like a timeline of everything that happened to your Pod, from scheduling to image pull to container start.
 
-To see which node the Pod landed on and its IP address:
+### Step 5: Check which node it landed on
 
 ```bash
 kubectl get pod nginx-pod -o wide
 ```
 
-## Quick Cleanup
+This shows the node name and Pod IP address.
 
-When you are done experimenting, remove the Pod to free up cluster resources:
+### Step 6: View the Pod logs
+
+```bash
+kubectl logs nginx-pod
+```
+
+### Step 7: Clean up
 
 ```bash
 kubectl delete pod nginx-pod
 ```
 
-Or delete it using the same manifest file:
+Verify the Pod is gone:
 
 ```bash
-kubectl delete -f nginx-pod.yaml
+kubectl get pods
 ```
-
-:::warning
-In production, you should almost never create standalone Pods like this. Use a **Deployment** instead — it wraps your Pod in a controller that provides self-healing (automatic restarts), scaling (run multiple replicas), and rolling updates (zero-downtime deployments). Direct Pod creation is ideal for learning and quick experiments, but a Deployment is what keeps your application resilient.
-:::
 
 ## Wrapping Up
 

@@ -88,21 +88,31 @@ spec:
 
 This single resource covers all three levels: individual containers get defaults and boundaries, the Pod aggregate is capped, and PVC sizes are constrained.
 
-## Testing the Limits
+---
+
+## Hands-On Practice
+
+### Step 1: Create a LimitRange with PVC Limits
 
 ```bash
-# Apply the LimitRange
-kubectl apply -f full-limits.yaml
-
-# Check the configured limits
-kubectl describe limitrange full-limits -n dev
-
-# Create a Pod and verify container defaults were applied
-kubectl run test --image=nginx -n dev
-kubectl get pod test -n dev -o jsonpath='{.spec.containers[0].resources}'
+kubectl create namespace dev 2>/dev/null || true
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: pvc-limits
+  namespace: dev
+spec:
+  limits:
+    - type: PersistentVolumeClaim
+      min:
+        storage: 1Gi
+      max:
+        storage: 10Gi
+EOF
 ```
 
-To test PVC limits:
+### Step 2: Create a Valid PVC
 
 ```bash
 kubectl apply -f - <<EOF
@@ -121,6 +131,32 @@ kubectl get pvc test-pvc -n dev
 ```
 
 A 5Gi request fits within the 1Gi-10Gi range, so it's accepted.
+
+### Step 3: Try Creating an Oversized PVC
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: oversize-pvc
+  namespace: dev
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 50Gi
+EOF
+```
+
+The request will be rejected because 50Gi exceeds the max of 10Gi.
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete pvc test-pvc -n dev 2>/dev/null || true
+kubectl delete limitrange pvc-limits -n dev
+```
 
 :::warning
 Pod-level limits don't inject defaults — they only validate. If a Pod's containers have no requests/limits and there's no container-level LimitRange to inject defaults, the Pod may be rejected by the Pod-level validator. Always pair Pod limits with container-level defaults for a smooth experience.

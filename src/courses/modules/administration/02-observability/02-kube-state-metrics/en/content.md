@@ -101,6 +101,19 @@ kubectl port-forward -n monitoring svc/kube-state-metrics 8080:8080
 If no metrics appear, the most common issue is **missing RBAC permissions**. The ServiceAccount used by kube-state-metrics needs `list` and `watch` permissions on the resources it tracks (Pods, Deployments, Nodes, etc.). Check the ClusterRole and ClusterRoleBinding.
 :::
 
+---
+
+## Hands-On Practice
+
+### Step 1: Check for kube-state-metrics
+
+```bash
+kubectl get pods -n kube-system | grep kube-state
+kubectl get pods -A | grep kube-state-metrics
+```
+
+If kube-state-metrics is deployed (often by Prometheus Helm charts), it runs in `monitoring` or `kube-system`. Many clusters don't have it by default.
+
 ## Wrapping Up
 
 kube-state-metrics complements resource metrics by telling you about *object state* — whether your Deployments are healthy, your Pods are running, and your nodes are ready. Combined with metrics-server (resource usage) and Prometheus (storage and alerting), it forms a complete monitoring picture. In the next lesson, we'll see how Prometheus ties everything together with scraping, storage, and alerting.

@@ -6,13 +6,7 @@ Kubernetes provides several tools to observe rollout progress, from a single blo
 
 ## Watching the Rollout in Real Time
 
-The primary command for monitoring a rollout is:
-
-```bash
-kubectl rollout status deployment/nginx-deployment
-```
-
-This command **blocks** your terminal and streams progress updates until the rollout either completes successfully or fails. You will see output like:
+The primary command for monitoring a rollout is `kubectl rollout status deployment/<name>`. This command **blocks** your terminal and streams progress updates until the rollout either completes successfully or fails. You will see output like:
 
 ```
 Waiting for deployment "nginx-deployment" rollout to finish: 1 out of 3 new replicas have been updated...
@@ -20,15 +14,7 @@ Waiting for deployment "nginx-deployment" rollout to finish: 2 out of 3 new repl
 deployment "nginx-deployment" successfully rolled out
 ```
 
-Think of it as a progress bar for your deployment. When the final line reads "successfully rolled out," every Pod is running the new template and ready to serve traffic.
-
-If you prefer continuous monitoring without blocking, use the watch flag on `kubectl get`:
-
-```bash
-kubectl get deployment nginx-deployment -w
-```
-
-This shows the Deployment status columns updating in real time as the rollout progresses.
+Think of it as a progress bar for your deployment. When the final line reads "successfully rolled out," every Pod is running the new template and ready to serve traffic. If you prefer continuous monitoring without blocking, use `kubectl get deployment nginx-deployment -w` to watch the status columns update in real time.
 
 ## Reading the Status Columns
 
@@ -63,27 +49,7 @@ A rollout is considered **complete** when three conditions are met: the new Repl
 
 ## Inspecting ReplicaSets During a Rollout
 
-For deeper visibility, look at the ReplicaSets directly:
-
-```bash
-kubectl get replicasets -l app=nginx
-```
-
-During a rollout, you will see both the old and new ReplicaSets:
-
-```
-NAME                          DESIRED   CURRENT   READY   AGE
-nginx-deployment-6b474476c4   3         3         3       45s
-nginx-deployment-d4f9bdc7c    1         1         1       12m
-```
-
-When the rollout finishes, the old ReplicaSet drops to zero replicas but remains in the cluster — it serves as the rollback target if you ever need to revert.
-
-To see the individual Pods and which node they landed on:
-
-```bash
-kubectl get pods -l app=nginx -o wide
-```
+For deeper visibility, look at the ReplicaSets directly with `kubectl get replicasets -l app=nginx-deployment`. During a rollout, you will see both the old and new ReplicaSets. When the rollout finishes, the old ReplicaSet drops to zero replicas but remains in the cluster — it serves as the rollback target if you ever need to revert. Use `kubectl get pods -l app=nginx-deployment -o wide` to see the individual Pods and which node they landed on.
 
 ## The Progress Deadline
 
@@ -96,15 +62,7 @@ spec:
     type: RollingUpdate
 ```
 
-"Progress" here means any change in the rollout state — a new Pod becoming ready, an old Pod being terminated. As long as *something* is moving forward, the clock resets. But if the rollout is completely stuck for 600 seconds, Kubernetes flags it.
-
-You can detect this with:
-
-```bash
-kubectl rollout status deployment/nginx-deployment
-```
-
-A failed rollout produces an error exit code and a message like `error: deployment "nginx-deployment" exceeded its progress deadline`.
+"Progress" here means any change in the rollout state — a new Pod becoming ready, an old Pod being terminated. As long as *something* is moving forward, the clock resets. But if the rollout is completely stuck for 600 seconds, Kubernetes flags it. A failed rollout produces an error exit code when you run `kubectl rollout status`, with a message like `error: deployment "nginx-deployment" exceeded its progress deadline`.
 
 :::warning
 A "successful" rollout means the controller finished replacing Pods — it does not guarantee your application is healthy. A Pod can pass its readiness probe but still serve errors. Always validate with application-level health checks, logs, and metrics after every rollout.
@@ -118,6 +76,68 @@ If a rollout is not progressing, here is a diagnostic checklist:
 2. **Inspect pending Pods**: `kubectl describe pod <pod-name>` — look for scheduling failures, image pull errors, or crash loops.
 3. **Review logs**: `kubectl logs <pod-name>` — the application itself may be crashing on startup.
 4. **Consider reverting**: If the issue is not quickly resolvable, `kubectl rollout undo deployment/nginx-deployment` restores the previous version immediately.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a deployment
+
+```bash
+kubectl create deployment nginx-deployment --image=nginx:1.14.2 --replicas=3
+```
+
+**Observation:** Three Pods running nginx:1.14.2 are created.
+
+### Step 2: Trigger an update
+
+```bash
+kubectl set image deployment/nginx-deployment nginx=nginx:1.16.1
+```
+
+**Observation:** A rolling update begins. The Deployment controller creates a new ReplicaSet.
+
+### Step 3: Run kubectl rollout status
+
+```bash
+kubectl rollout status deployment/nginx-deployment
+```
+
+**Observation:** The command blocks and shows progress — "1 out of 3 new replicas have been updated...", then "successfully rolled out". This is your real-time rollout monitor.
+
+### Step 4: Inspect ReplicaSets
+
+```bash
+kubectl get rs -l app=nginx
+```
+
+**Observation:** You see both the old and new ReplicaSets. The old one is scaled to zero; the new one has 3 replicas. The old ReplicaSet remains for rollback.
+
+### Step 5: Check status columns
+
+```bash
+kubectl get deployment nginx-deployment
+```
+
+**Observation:** The `READY`, `UP-TO-DATE`, and `AVAILABLE` columns all show `3/3`. During an active rollout, `UP-TO-DATE` would climb from 0 to 3 as new Pods become ready.
+
+### Step 6: View Pods with node info
+
+```bash
+kubectl get pods -l app=nginx-deployment -o wide
+```
+
+**Observation:** You see each Pod, its status, the node it runs on, and the pod IP. Useful for understanding placement and debugging.
+
+### Step 7: Clean up
+
+```bash
+kubectl delete deployment nginx-deployment
+```
+
+**Observation:** The Deployment and all its Pods are removed.
+
+---
 
 ## Wrapping Up
 

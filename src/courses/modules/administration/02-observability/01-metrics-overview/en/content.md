@@ -27,31 +27,9 @@ The **metrics-server** provides real-time resource metrics and is required for `
 
 ## Using kubectl top
 
-The quickest way to see resource usage is `kubectl top`. It queries the metrics-server and shows you CPU and memory consumption:
+The quickest way to see resource usage is `kubectl top`. It queries the metrics-server and shows CPU and memory consumption for nodes (`kubectl top nodes`) and Pods (`kubectl top pods`). You can filter by namespace with `-n`, get per-container breakdown with `--containers`, or sort by CPU or memory with `--sort-by`.
 
-```bash
-# Node-level resource usage
-kubectl top nodes
-
-# Pod-level resource usage
-kubectl top pods
-
-# Pods in a specific namespace
-kubectl top pods -n my-namespace
-
-# Per-container breakdown
-kubectl top pods --containers
-
-# Sort by CPU or memory
-kubectl top pods --sort-by=cpu
-kubectl top pods --sort-by=memory
-```
-
-If `kubectl top` returns "metrics not available," the metrics-server probably isn't installed or isn't ready yet. Let's check:
-
-```bash
-kubectl get deployment metrics-server -n kube-system
-```
+If `kubectl top` returns "metrics not available," the metrics-server probably isn't installed or isn't ready yet.
 
 ## Querying the Metrics API Directly
 
@@ -69,19 +47,7 @@ This is the same API that the HPA controller uses to make scaling decisions. Whe
 
 ## Verifying the Metrics Pipeline
 
-A quick health check to make sure your metrics infrastructure is working:
-
-```bash
-# Is metrics-server running?
-kubectl get deployment metrics-server -n kube-system
-
-# Is the Metrics API registered?
-kubectl get apiservice | grep metrics
-
-# Can we get data?
-kubectl top nodes
-kubectl top pods -A
-```
+A quick health check: verify the metrics-server Deployment is running in `kube-system`, confirm the Metrics API is registered via `kubectl get apiservice`, and test data availability with `kubectl top`. If any step fails, the metrics pipeline needs attention.
 
 ## Troubleshooting
 
@@ -98,6 +64,32 @@ kubectl logs -n kube-system -l k8s-app=metrics-server
 :::warning
 The metrics-server is a snapshot tool — it shows current usage, not history. If you need to answer questions like "What was CPU usage at 3 AM?" or "How has memory trended over the past week?", you need a time-series database like Prometheus. We'll cover that in the next lessons.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Verify the Metrics Pipeline
+
+```bash
+kubectl get deployment metrics-server -n kube-system
+kubectl get apiservice | grep metrics
+```
+
+### Step 2: Check Node and Pod Usage
+
+```bash
+kubectl top nodes
+kubectl top pods -A
+```
+
+### Step 3: Explore Sorting and Filtering
+
+```bash
+kubectl top pods --sort-by=cpu
+kubectl top pods --containers
+kubectl top pods -n kube-system
+```
 
 ## Wrapping Up
 

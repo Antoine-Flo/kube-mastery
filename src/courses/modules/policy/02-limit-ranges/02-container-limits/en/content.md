@@ -47,23 +47,6 @@ Here's what each field does:
 The `defaultRequest` and `default` values should be between `min` and `max`. If they're outside those bounds, the LimitRange configuration itself is invalid. Design them to represent a reasonable starting point for most workloads in the namespace.
 :::
 
-## Seeing Defaults in Action
-
-Let's create a Pod without any resource specifications and see what the LimitRange does:
-
-```bash
-# Apply the LimitRange
-kubectl apply -f container-limits.yaml
-
-# Create a Pod with no resources specified
-kubectl run test-pod --image=nginx -n dev
-
-# Check what resources were assigned
-kubectl get pod test-pod -n dev -o jsonpath='{.spec.containers[0].resources}'
-```
-
-You'll see that `requests` and `limits` were automatically filled in with the LimitRange's defaults. The developer didn't need to think about it.
-
 ## Ephemeral Storage Limits
 
 LimitRanges can also constrain ephemeral storage — the temporary disk space containers use for logs, caches, and tmp files:
@@ -100,6 +83,61 @@ The LimitRanger must be enabled in your cluster (it's enabled by default on most
 **"Below minimum"** — The container requests are below `min`. Increase them or rely on `defaultRequest`.
 
 **"Defaults not applied"** — The LimitRanger admission controller may not be enabled, or the LimitRange is in a different namespace. LimitRanges are namespace-scoped — they only apply to Pods in the same namespace.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a LimitRange with Container Defaults
+
+```bash
+kubectl create namespace dev 2>/dev/null || true
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: container-limits
+  namespace: dev
+spec:
+  limits:
+    - type: Container
+      min:
+        cpu: "50m"
+        memory: 64Mi
+      max:
+        cpu: "1"
+        memory: 1Gi
+      default:
+        cpu: "200m"
+        memory: 256Mi
+      defaultRequest:
+        cpu: "50m"
+        memory: 64Mi
+EOF
+```
+
+### Step 2: Create a Pod Without Specifying Resources
+
+```bash
+kubectl run test-pod --image=nginx -n dev
+```
+
+The Pod runs even though you didn't specify requests or limits.
+
+### Step 3: Verify Defaults Were Applied
+
+```bash
+kubectl get pod test-pod -n dev -o jsonpath='{.spec.containers[0].resources}'
+```
+
+You'll see `requests` and `limits` automatically filled in with the LimitRange's defaults.
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete pod test-pod -n dev
+kubectl delete limitrange container-limits -n dev
+```
 
 ## Wrapping Up
 

@@ -42,14 +42,6 @@ The process is continuous:
 - Pod deleted or labels changed? Removed from EndpointSlices within seconds.
 - Pod fails readiness probe? Removed until it's healthy again.
 
-```bash
-# See which Pods the Service currently selects
-kubectl get endpoints my-service
-
-# More detailed view with EndpointSlices
-kubectl get endpointslices -l kubernetes.io/service-name=my-service
-```
-
 ## Exact Match — No Fuzzy Logic
 
 Service selectors use **exact matching**. Labels must match precisely, including case:
@@ -70,26 +62,63 @@ Multiple Services can select the same Pods — and this is sometimes intentional
 
 Both target the same Pods but expose different ports. This is perfectly valid.
 
-## Verifying Selector Matching
-
-When a Service doesn't seem to work, always verify the selector chain:
-
-```bash
-# Step 1: What does the Service select?
-kubectl describe service my-service | grep Selector
-
-# Step 2: Do any Pods match that selector?
-kubectl get pods -l 'app.kubernetes.io/name=MyApp,tier=backend'
-
-# Step 3: Are the endpoints populated?
-kubectl get endpoints my-service
-```
-
-If Step 2 returns no Pods, your selector doesn't match — check the labels on your Pods with `kubectl get pods --show-labels`.
+When a Service doesn't seem to work, always verify the selector chain: Service selector → Pod labels → Endpoints. If no Pods match, check labels with `kubectl get pods --show-labels`.
 
 :::info
 When you remove a label from a Pod, the Service immediately stops sending traffic to it. This can be a useful debugging technique: temporarily removing a selector label takes a Pod out of rotation so you can inspect it without live traffic.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Service and Pods with Matching Labels
+
+```bash
+kubectl create deployment demo --image=nginx --replicas=2
+kubectl label deployment demo app=demo tier=web --overwrite
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo
+spec:
+  selector:
+    app: demo
+    tier: web
+  ports:
+    - port: 80
+      targetPort: 80
+EOF
+```
+
+**Observation:** The Service and Pods share matching labels, so the Service will select them.
+
+### Step 2: Verify Endpoints
+
+```bash
+kubectl get endpoints demo
+kubectl get pods --show-labels
+```
+
+**Observation:** Endpoints list shows Pod IPs. `--show-labels` confirms the labels match the Service selector.
+
+### Step 3: Change a Pod Label and Observe Endpoint Removal
+
+```bash
+POD=$(kubectl get pods -l app=demo -o jsonpath='{.items[0].metadata.name}')
+kubectl label pod $POD tier=api --overwrite
+kubectl get endpoints demo
+```
+
+**Observation:** The endpoints list drops by one — the relabeled Pod no longer matches `tier: web`.
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete deployment demo
+kubectl delete service demo
+```
 
 ## Wrapping Up
 

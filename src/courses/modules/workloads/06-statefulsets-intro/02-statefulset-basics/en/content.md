@@ -106,51 +106,11 @@ The sequential creation isn't just a cosmetic detail — it solves real problems
 
 The same logic applies when scaling down. Kubernetes removes Pods in **reverse order** — `web-2` first, then `web-1`, and `web-0` last. This predictability allows distributed systems to perform graceful handoffs. A replica can transfer its responsibilities before shutting down, and the primary (ordinal 0) is always the last to go.
 
-Let's see the lifecycle in action. After applying the manifest above:
-
-```bash
-kubectl get pods -l app=nginx -w
-```
-
-You'll see Pods appear one by one:
-
-```
-NAME    READY   STATUS    AGE
-web-0   1/1     Running   10s
-web-1   1/1     Running   6s
-web-2   1/1     Running   2s
-```
-
-If you then scale down:
-
-```bash
-kubectl scale statefulset web --replicas=1
-```
-
-Pods are removed in reverse: `web-2` terminates first, then `web-1`. Only `web-0` remains.
+After applying the manifest, watch Pod creation with `kubectl get pods -w`. You will see Pods appear one by one — `web-0` first, then `web-1`, then `web-2`. When you scale down (e.g., to 1 replica), Pods are removed in reverse order: `web-2` terminates first, then `web-1`. Only `web-0` remains.
 
 ## Verifying Your StatefulSet
 
-After deploying, a quick verification workflow ensures everything is connected properly:
-
-```bash
-kubectl get statefulset web
-kubectl get pods -l app=nginx
-kubectl get svc nginx
-```
-
-Check that:
-- The StatefulSet shows the correct number of ready replicas.
-- Pod names follow the `<statefulset-name>-<ordinal>` pattern.
-- The Service has `CLUSTER-IP` set to `None`.
-
-You can also test DNS resolution from inside the cluster. Spin up a temporary Pod and look up a StatefulSet member:
-
-```bash
-kubectl run dns-test --image=busybox:1.36 --rm -it --restart=Never -- nslookup web-0.nginx
-```
-
-If the DNS lookup returns the Pod's IP, your Headless Service and StatefulSet are correctly linked.
+After deploying, verify that the StatefulSet shows the correct replica count, Pod names follow the `<statefulset-name>-<ordinal>` pattern, and the Headless Service has `CLUSTER-IP` set to `None`. You can also test DNS resolution from inside the cluster by looking up a StatefulSet member by its stable hostname.
 
 ## Common Pitfalls
 
@@ -160,6 +120,63 @@ A few issues come up regularly when working with StatefulSets for the first time
 - **Using a regular Service instead of Headless.** If the Service has a `clusterIP` assigned (anything other than `None`), DNS will return the Service's virtual IP instead of individual Pod IPs. StatefulSet identity depends on Headless behavior.
 - **Mismatching `serviceName`.** The StatefulSet's `serviceName` field must be the exact name of the Headless Service. A typo here is easy to miss and hard to debug.
 - **Expecting fast scale-down.** Because Pods are removed one at a time in reverse order, scaling down a large StatefulSet takes longer than scaling down a Deployment of the same size. This is by design — it protects data integrity.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a StatefulSet Manifest
+
+Create `statefulset.yaml` with a Headless Service and a StatefulSet (for example, using `web` / `nginx` as in the lesson). Ensure `clusterIP: None` on the Service and `serviceName` matching the Service name.
+
+```bash
+nano statefulset.yaml
+```
+
+Paste the Headless Service and StatefulSet YAML from the lesson, then save and exit.
+
+### Step 2: Apply and Watch Ordered Pod Creation
+
+```bash
+kubectl apply -f statefulset.yaml
+kubectl get pods -w
+```
+
+Pods appear one by one: `web-0` first, then `web-1`, then `web-2`. Press Ctrl+C when all are Running.
+
+### Step 3: Verify the StatefulSet and Its Service
+
+```bash
+kubectl get statefulset web
+kubectl get svc nginx
+```
+
+The StatefulSet shows ready replicas. The Service should have `CLUSTER-IP` set to `None`.
+
+### Step 4: Test DNS Resolution
+
+```bash
+kubectl run dns-test --image=busybox:1.36 --rm -it --restart=Never -- nslookup web-0.nginx
+```
+
+If the DNS lookup returns the Pod's IP, your Headless Service and StatefulSet are correctly linked.
+
+### Step 5: Scale Down and Observe Reverse Order
+
+```bash
+kubectl scale statefulset web --replicas=1
+kubectl get pods -w
+```
+
+Pods terminate in reverse order: `web-2` first, then `web-1`. Press Ctrl+C when done.
+
+### Step 6: Clean Up
+
+```bash
+kubectl delete -f statefulset.yaml
+```
+
+---
 
 ## Wrapping Up
 

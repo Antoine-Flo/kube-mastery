@@ -50,25 +50,7 @@ That's it. The cloud provider does the rest.
 
 ## Watching It Provision
 
-Load balancer provisioning is **asynchronous** — it takes 30 seconds to a few minutes:
-
-```bash
-# Watch the EXTERNAL-IP column
-kubectl get service my-service --watch
-```
-
-You'll see `<pending>` until the cloud provider finishes, then the external IP appears:
-
-```
-NAME         TYPE           CLUSTER-IP     EXTERNAL-IP    PORT(S)        AGE
-my-service   LoadBalancer   10.96.0.15     203.0.113.50   80:31234/TCP   2m
-```
-
-Once the external IP is assigned, you can access your Service:
-
-```bash
-curl http://203.0.113.50
-```
+Load balancer provisioning is **asynchronous** — it takes 30 seconds to a few minutes. You'll see `<pending>` until the cloud provider finishes, then the external IP appears. Once assigned, you can access the Service via that IP.
 
 :::info
 LoadBalancer Services are the standard way to expose applications on cloud platforms. They include all ClusterIP and NodePort functionality — you can also access the Service internally via its cluster IP.
@@ -93,6 +75,56 @@ The common solution: use **one LoadBalancer** that fronts an **Ingress controlle
 :::warning
 Each LoadBalancer Service typically creates a billable cloud resource. For multiple Services, use an Ingress controller behind a single LoadBalancer to reduce costs.
 :::
+
+---
+
+## Hands-On Practice
+
+Load balancers require a cloud provider — on local clusters (minikube, kind), EXTERNAL-IP will stay Pending. This exercise demonstrates the behavior.
+
+### Step 1: Create a LoadBalancer Service Manifest
+
+Create `lb-svc.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: lb-demo
+spec:
+  type: LoadBalancer
+  selector:
+    app: lb-demo
+  ports:
+    - port: 80
+      targetPort: 80
+```
+
+### Step 2: Apply and Observe
+
+```bash
+kubectl create deployment lb-demo --image=nginx --replicas=1
+kubectl label deployment lb-demo app=lb-demo --overwrite
+kubectl apply -f lb-svc.yaml
+kubectl get svc lb-demo
+```
+
+**Observation:** EXTERNAL-IP shows `<pending>` without a cloud provider — the Service exists but no external LB is provisioned.
+
+### Step 3: Describe the Service
+
+```bash
+kubectl describe service lb-demo
+```
+
+**Observation:** Confirms LoadBalancer type and that it still has a ClusterIP and NodePort.
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete deployment lb-demo
+kubectl delete service lb-demo
+```
 
 ## Wrapping Up
 

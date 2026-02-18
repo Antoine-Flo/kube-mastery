@@ -53,18 +53,6 @@ Kubernetes supports many volume types. Here are the most common ones you'll enco
 
 Each type has different lifecycle and sharing semantics. We'll explore the most important ones in detail throughout this chapter.
 
-## Trying It Out
-
-Let's verify a volume mount on a running Pod:
-
-```bash
-# See the volumes defined on a Pod
-kubectl get pod pod-with-volume -o jsonpath='{.spec.volumes}'
-
-# Check the mount inside the container
-kubectl exec pod-with-volume -- ls -la /usr/share/nginx/html
-```
-
 You can also use `subPath` in `volumeMounts` to mount a specific file or subdirectory rather than the entire volume root — useful when you need to mount a single config file without overwriting the entire directory.
 
 ## Common Issues
@@ -78,6 +66,68 @@ You can also use `subPath` in `volumeMounts` to mount a specific file or subdire
 :::warning
 The volume type determines the data's lifecycle. An `emptyDir` volume disappears with the Pod. A PVC-backed volume persists independently. Choose the right type for your use case — using `emptyDir` for data you can't afford to lose is a common mistake.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Pod manifest with an emptyDir volume
+
+Create `pod-vol.yaml` with a Pod that mounts an emptyDir at `/data`:
+
+```bash
+cat <<'EOF' > pod-vol.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-with-volume
+spec:
+  containers:
+    - name: app
+      image: nginx
+      volumeMounts:
+        - name: data-vol
+          mountPath: /data
+  volumes:
+    - name: data-vol
+      emptyDir: {}
+EOF
+```
+
+This defines an `emptyDir` volume mounted at `/data` in the container. The volume is created when the Pod starts.
+
+### Step 2: Apply the Pod
+
+```bash
+kubectl apply -f pod-vol.yaml
+kubectl wait --for=condition=Ready pod/pod-with-volume --timeout=60s
+```
+
+The Pod should reach `Running` state. The emptyDir volume is now available at `/data` inside the container.
+
+### Step 3: Write a file into the volume
+
+```bash
+kubectl exec pod-with-volume -- sh -c 'echo hello > /data/test.txt'
+```
+
+This writes `hello` to a file in the mounted volume. The data lives in the volume, not in the container's ephemeral filesystem.
+
+### Step 4: Read the file back
+
+```bash
+kubectl exec pod-with-volume -- cat /data/test.txt
+```
+
+You should see `hello` — confirming the volume mount works and data is accessible.
+
+### Step 5: Clean up
+
+```bash
+kubectl delete -f pod-vol.yaml
+```
+
+Deleting the Pod also removes the emptyDir volume and all its contents. The data was ephemeral, tied to the Pod's lifecycle.
 
 ## Wrapping Up
 

@@ -81,26 +81,26 @@ When creating your own annotation conventions:
 - **Keep values reasonable** — While annotations can hold large values, etcd stores everything. Use ConfigMaps for large configuration data.
 - **Document your conventions** — Maintain a reference of which annotations your team uses and what they mean.
 
-```bash
-# Add organizational annotations
-kubectl annotate deployment nginx \
-  mycompany.com/owner="platform-team" \
-  mycompany.com/cost-center="engineering"
-```
+You can apply these conventions with `kubectl annotate`, passing multiple key-value pairs in a single command — for example, setting `mycompany.com/owner` and `mycompany.com/cost-center` on a Deployment.
 
 :::warning
 Reserved prefixes `kubernetes.io/` and `k8s.io/` should only be used for annotations documented by Kubernetes or official tools. Using them for custom data risks conflicts with future Kubernetes features.
 :::
 
-## Verifying Annotations
+---
+
+## Hands-On Practice (Optional)
+
+This is a reference lesson — the step below is optional. If you have a Deployment named `nginx`:
+
+### Step 1: Add and View Organizational Annotations
 
 ```bash
-# View all annotations on a resource
+kubectl annotate deployment nginx mycompany.com/owner="platform-team" mycompany.com/cost-center="engineering"
 kubectl get deployment nginx -o jsonpath='{.metadata.annotations}'
-
-# Human-readable view
-kubectl describe deployment nginx
 ```
+
+Using a domain prefix for custom annotations avoids clashes with Kubernetes and third-party tools.
 
 ## Wrapping Up
 

@@ -89,6 +89,51 @@ Start by measuring your application's worst-case startup time, then add buffer:
 If `failureThreshold × periodSeconds` is shorter than your app's startup time, the container will be killed before it finishes starting — causing an infinite restart loop. Always add buffer for variability (cold caches, slow I/O, resource contention).
 :::
 
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Pod with a startup probe
+
+Create `startup-pod.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: startup-demo
+spec:
+  containers:
+    - name: app
+      image: nginx
+      startupProbe:
+        httpGet:
+          path: /
+          port: 80
+        failureThreshold: 30
+        periodSeconds: 10
+```
+
+Apply it:
+
+```bash
+kubectl apply -f startup-pod.yaml
+```
+
+### Step 2: Check probe status
+
+```bash
+kubectl describe pod startup-demo | grep -A 10 "Startup"
+```
+
+The startup probe runs before liveness and readiness. nginx starts quickly, so it should succeed within the first few checks (30 × 10 = 300 second window).
+
+### Step 3: Clean up
+
+```bash
+kubectl delete pod startup-demo
+```
+
 ## Wrapping Up
 
 Startup probes give slow-starting containers time to initialize without being killed by aggressive liveness probes. They run first, holding off liveness and readiness until the application is ready. Calculate your window as `failureThreshold × periodSeconds` and add buffer for worst-case scenarios. Fast-starting containers typically don't need them. Next: kubeconfig — how kubectl finds and authenticates to your cluster.

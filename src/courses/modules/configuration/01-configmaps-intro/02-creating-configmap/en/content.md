@@ -68,19 +68,50 @@ ConfigMap keys must follow these rules:
 
 When keys are used as environment variables (via `envFrom`), they must be valid environment variable names — alphanumeric and underscore only. Keys with hyphens or dots will be silently skipped.
 
-## Verifying Your ConfigMap
-
-```bash
-# See the full content
-kubectl get configmap my-config -o yaml
-
-# Quick overview with key list
-kubectl describe configmap my-config
-```
-
 :::warning
 Values with special characters (colons, quotes, newlines) can be tricky in YAML. Wrap values in quotes or use `--from-file` for complex content to avoid parsing issues.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a ConfigMap from literal values
+
+```bash
+kubectl create configmap app-settings --from-literal=LOG_LEVEL=info --from-literal=DB_HOST=postgres
+```
+
+Each `--from-literal` adds one key-value pair. Ideal for quick experiments without writing a manifest.
+
+### Step 2: Verify the ConfigMap
+
+```bash
+kubectl get configmap app-settings -o yaml
+```
+
+The `data` section shows your keys and values. Confirm they match what you specified.
+
+### Step 3: Create a ConfigMap from a file
+
+First, create a file:
+
+```bash
+echo -e "log.level=debug\nserver.port=8080" > config.properties
+kubectl create configmap file-config --from-file=config.properties
+```
+
+The filename becomes the ConfigMap key; the file content becomes the value.
+
+### Step 4: Verify and clean up
+
+```bash
+kubectl get configmap file-config -o yaml
+kubectl delete configmap app-settings file-config
+rm -f config.properties
+```
+
+You've created ConfigMaps from literals and from a file. Remove them when done.
 
 ## Wrapping Up
 

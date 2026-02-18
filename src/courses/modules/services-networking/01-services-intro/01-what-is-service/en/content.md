@@ -55,20 +55,7 @@ Services decouple frontends from backends. Your frontend connects to a stable Se
 
 ## Verifying Your Service
 
-After creating a Service, check that it's correctly connected to your Pods:
-
-```bash
-# List Services and their cluster IPs
-kubectl get services
-
-# See more detail (selector, ports)
-kubectl get svc -o wide
-
-# Check which Pods the Service targets
-kubectl get endpoints backend-api
-```
-
-The **endpoints** list shows the actual Pod IPs backing the Service. If it's empty, no Pods match the selector — double-check your labels.
+After creating a Service, check that it's correctly connected to your Pods. The **endpoints** list shows the actual Pod IPs backing the Service. If it's empty, no Pods match the selector — double-check your labels.
 
 ## Common Pitfalls
 
@@ -81,6 +68,36 @@ The **endpoints** list shows the actual Pod IPs backing the Service. If it's emp
 :::warning
 Services provide networking and load balancing, not encryption. ClusterIP traffic is unencrypted by default. For sensitive data, add TLS at the application level or use a service mesh.
 :::
+
+---
+
+## Hands-On Practice
+
+If you have a cluster with existing Services (e.g., from previous lessons or `kubernetes`), try these quick verification commands.
+
+### Step 1: List Services
+
+```bash
+kubectl get services
+```
+
+**Observation:** You see all Services in the current namespace with their cluster IPs and ports.
+
+### Step 2: Get Wide View
+
+```bash
+kubectl get svc -o wide
+```
+
+**Observation:** The wide output shows selectors and additional details for each Service.
+
+### Step 3: Check Endpoints for a Service
+
+```bash
+kubectl get endpoints <service-name>
+```
+
+Replace `<service-name>` with an actual Service (e.g., `kubernetes` or one you've created). **Observation:** The endpoints list shows the Pod IPs backing the Service. Empty means no Pods match the selector.
 
 ## Wrapping Up
 

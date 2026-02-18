@@ -66,19 +66,59 @@ This works for any resource type registered in the API, including CRDs.
 
 ## Checking Usage
 
-```bash
-# See all quotas in a namespace, including object counts
-kubectl describe resourcequota object-quota -n dev
-
-# List supported API resources (to get the right name for count/ syntax)
-kubectl api-resources --verbs=list
-```
-
-The `describe` output shows `Hard` and `Used` for each type, so you can see exactly how close the namespace is to its limits.
+Use `kubectl describe resourcequota <name> -n <namespace>` to see `Hard` and `Used` for each type — this shows exactly how close the namespace is to its limits. To discover the correct resource name for the `count/` syntax, run `kubectl api-resources --verbs=list`.
 
 :::warning
 Object count quotas are **independent of compute quotas**. Having 10 Pods within your compute budget doesn't mean you can create 100 — if the `pods` count quota is set to 10, you're blocked. Both quota types can coexist in the same namespace.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create an Object Count Quota
+
+Create and apply a quota that limits the number of Pods:
+
+```bash
+kubectl create namespace dev 2>/dev/null || true
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: object-quota
+  namespace: dev
+spec:
+  hard:
+    pods: "5"
+EOF
+```
+
+### Step 2: Verify the Quota
+
+```bash
+kubectl describe resourcequota object-quota -n dev
+```
+
+You'll see `pods: "5"` in the Hard column and current usage in Used.
+
+### Step 3: Try Exceeding the Quota
+
+Create Pods until the quota blocks you:
+
+```bash
+for i in 1 2 3 4 5 6; do kubectl run pod-$i --image=nginx -n dev 2>&1; done
+```
+
+After 5 Pods, the 6th creation will fail with "exceeded quota" or similar.
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete namespace dev
+```
+
+Or delete the quota and Pods individually.
 
 ## Wrapping Up
 

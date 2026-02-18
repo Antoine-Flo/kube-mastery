@@ -80,6 +80,18 @@ Some clusters have a second CA specifically for API aggregation — the front-pr
 Certificate expiration is one of the most common causes of cluster outages. Set up monitoring (Prometheus alerts on certificate expiry) and establish a rotation calendar. Most kubeadm certificates expire after one year — don't let them surprise you.
 :::
 
+---
+
+## Hands-On Practice
+
+### Step 1: List Certificate Signing Requests
+
+```bash
+kubectl get csr
+```
+
+CSRs are used when nodes or users request new certificates from the cluster. You may see Approved or Pending CSRs. This demonstrates that Kubernetes manages certificates through the API.
+
 ## Wrapping Up
 
 Kubernetes uses a PKI where a central CA signs certificates for every cluster component. These certificates enable encrypted, authenticated communication between the API server, kubelets, etcd, and clients. Certificates live under `/etc/kubernetes/pki/` and can be inspected with OpenSSL or `kubeadm certs check-expiration`. In the next lesson, we'll walk through how to rotate certificates before they expire — a critical maintenance task for any cluster.

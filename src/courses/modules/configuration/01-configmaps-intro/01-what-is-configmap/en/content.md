@@ -68,20 +68,39 @@ ConfigMaps are stored unencrypted in etcd by default. Anyone with API access can
 
 ## Verifying ConfigMaps
 
-```bash
-# List all ConfigMaps in the current namespace
-kubectl get configmaps
-
-# See the full content
-kubectl get configmap app-settings -o yaml
-
-# Quick overview (shows keys but may truncate values)
-kubectl describe configmap app-settings
-```
+You can verify ConfigMaps using standard kubectl commands. Use `kubectl get configmaps` to list all ConfigMaps in the current namespace, `kubectl get configmap <name> -o yaml` to view the full content including the `data` section, and `kubectl describe configmap <name>` for a quick overview that shows keys but may truncate long values.
 
 ## Size Limit
 
 ConfigMaps are stored in etcd, which has a 1 MiB limit per object. For most configuration, this is more than enough. If you need to store larger data, consider using a volume mount with a PVC or an external configuration store.
+
+---
+
+## Hands-On Practice
+
+### Step 1: List existing ConfigMaps
+
+```bash
+kubectl get configmaps
+```
+
+You'll see ConfigMaps in the current namespace (including built-in ones like `kube-root-ca.crt`). The output shows name, keys count, and age.
+
+### Step 2: Inspect a ConfigMap in YAML
+
+```bash
+kubectl get configmap kube-root-ca.crt -o yaml
+```
+
+Replace `kube-root-ca.crt` with any ConfigMap name from Step 1. The `-o yaml` format shows the full structure, including the `data` section with key-value pairs.
+
+### Step 3: Describe a ConfigMap
+
+```bash
+kubectl describe configmap kube-root-ca.crt
+```
+
+The `describe` output gives a readable overview — it shows keys but typically truncates long values for readability.
 
 ## Wrapping Up
 

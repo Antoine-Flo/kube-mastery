@@ -50,21 +50,6 @@ flowchart LR
   Volume -->|reads from /shared| Consumer["Consumer container"]
 ```
 
-## Trying It Out
-
-```bash
-# Create the Pod
-kubectl apply -f shared-storage-pod.yaml
-
-# Wait for it to be ready
-kubectl wait --for=condition=Ready pod/shared-storage-pod --timeout=60s
-
-# Verify the consumer can read what the producer wrote
-kubectl exec shared-storage-pod -c consumer -- cat /shared/greeting
-```
-
-You should see `hello from producer`. Both containers are sharing the same volume, even though they're separate processes with separate filesystems.
-
 ## Memory-Backed emptyDir
 
 By default, `emptyDir` uses the node's disk. But if you need faster I/O, you can back it with RAM instead by setting `medium: Memory`:
@@ -105,6 +90,70 @@ If you need data to persist, use a PersistentVolumeClaim instead. We'll cover th
 :::warning
 A common mistake is using `emptyDir` for data you can't afford to lose. Remember: when the Pod dies, the data dies with it. If persistence matters, use a PVC.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a multi-container Pod with a shared emptyDir
+
+```bash
+nano emptydir-demo.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: emptydir-demo
+spec:
+  containers:
+    - name: writer
+      image: busybox
+      command: ["sh", "-c", "echo 'Hello from writer' > /shared/message.txt && sleep 3600"]
+      volumeMounts:
+        - name: shared-data
+          mountPath: /shared
+    - name: reader
+      image: busybox
+      command: ["sh", "-c", "sleep 5 && cat /shared/message.txt && sleep 3600"]
+      volumeMounts:
+        - name: shared-data
+          mountPath: /shared
+  volumes:
+    - name: shared-data
+      emptyDir: {}
+```
+
+```bash
+kubectl apply -f emptydir-demo.yaml
+```
+
+### Step 2: Verify the writer created the file
+
+```bash
+kubectl exec emptydir-demo -c writer -- cat /shared/message.txt
+```
+
+### Step 3: Verify the reader can see it
+
+```bash
+kubectl exec emptydir-demo -c reader -- cat /shared/message.txt
+```
+
+Both containers share the same data through the `emptyDir` volume.
+
+### Step 4: List files in the shared directory
+
+```bash
+kubectl exec emptydir-demo -c writer -- ls -la /shared
+```
+
+### Step 5: Clean up
+
+```bash
+kubectl delete pod emptydir-demo
+```
 
 ## Wrapping Up
 

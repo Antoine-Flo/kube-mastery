@@ -56,49 +56,37 @@ flowchart TB
 When you create an object, Kubernetes assigns it a unique **UID** that never changes. Even if you delete and recreate an object with the same name, the new one gets a different UID. The name must be unique within a namespace, but the UID is unique across the entire cluster.
 :::
 
-## Try It: Inspect an Object
+:::warning
+Resource names must be unique within a namespace. If you try to create a Pod with a name that already exists, the API server will reject the request. Use `kubectl get pods` to check what is already running before creating new objects.
+:::
 
-Let's see objects in action. List what is in the default namespace:
+---
+
+## Hands-On Practice
+
+### Step 1: List all resource types in the cluster
 
 ```bash
-kubectl get all
+kubectl api-resources
 ```
 
-If you have a Pod running (perhaps the `test-nginx` from an earlier lesson), inspect its full manifest:
+Each row is a different kind of Kubernetes object.
+
+### Step 2: Examine a running object in YAML format
 
 ```bash
-kubectl get pod test-nginx -o yaml
+kubectl get pods -o yaml
 ```
 
-You will see the four required fields plus additional fields that Kubernetes added automatically, like `status`, `uid`, and `resourceVersion`. Do not worry about those yet; we will cover `status` in the next lesson.
+Identify the four required fields: `apiVersion`, `kind`, `metadata`, and `spec`.
 
-You can also use `kubectl explain` to explore the structure of any object type:
+### Step 3: Use `kubectl explain` to discover object fields
 
 ```bash
 kubectl explain pod.spec.containers
 ```
 
-This command is like a built-in reference manual. It shows you which fields exist, what they mean, and what types they accept. Whenever you are unsure about a field, `kubectl explain` is your first stop.
-
-## Try It: Create an Object
-
-Apply a manifest to create a Pod:
-
-```bash
-kubectl apply -f pod.yaml
-```
-
-Then verify Kubernetes created it:
-
-```bash
-kubectl get pods
-```
-
-You should see your Pod with a status of **Running**. This confirm-and-verify cycle, *define, apply, check*, is the fundamental workflow for every Kubernetes object, regardless of type.
-
-:::warning
-Resource names must be unique within a namespace. If you try to create a Pod with a name that already exists, the API server will reject the request. Use `kubectl get pods` to check what is already running before creating new objects.
-:::
+This shows the available fields and their descriptions — a built-in reference for writing manifests.
 
 ## Wrapping Up
 

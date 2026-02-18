@@ -102,21 +102,19 @@ kubeconfig files grant cluster access. A stolen kubeconfig with admin credential
 
 ## Troubleshooting Auth Failures
 
-When kubectl says "unauthorized" or "unable to connect":
+When kubectl says "unauthorized" or "unable to connect", check which credentials are being used with `kubectl config view --minify`, test the connection with `kubectl cluster-info`, and for cert-based auth verify expiration with `openssl x509`. For exec-based auth, run the exec command manually (e.g. `aws eks get-token --cluster-name my-cluster`) to debug.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Inspect the auth section of your current context
 
 ```bash
-# Check which credentials are being used
 kubectl config view --minify
-
-# Test the connection
-kubectl cluster-info
-
-# For cert-based auth, check expiration
-openssl x509 -in /path/to/client.crt -noout -dates
-
-# For exec-based auth, run the command manually
-aws eks get-token --cluster-name my-cluster
 ```
+
+The `--minify` flag shows only the configuration for the active context. Look at the `users` section — you'll see `client-certificate-data`, `token`, or `exec` depending on your authentication method. This helps you understand how kubectl authenticates to your cluster.
 
 ## Wrapping Up
 

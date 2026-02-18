@@ -12,56 +12,9 @@ When you run an imperative command, `kubectl` translates it into an API request 
 
 This means imperative commands are *stateless* from a file perspective. If you need to recreate the same resource later, you would have to remember (or look up) the exact command you ran. For learning and exploration, that is perfectly fine. For production systems, it is a risk — which is why teams typically graduate to declarative configuration.
 
-## Try It: Create and Manage Resources
-
-Let's create a Deployment and a namespace using imperative commands:
-
-```bash
-kubectl create deployment nginx --image nginx
-kubectl create namespace dev
-```
-
-The first command creates a Deployment called `nginx` that runs the Nginx container image. The second creates a new namespace called `dev`. Both take effect immediately.
-
-Now let's scale the Deployment and verify:
-
-```bash
-kubectl scale deployment nginx --replicas=3
-kubectl get deployment nginx
-```
-
-You should see three replicas listed. Try a few more useful commands:
-
-```bash
-kubectl get all
-kubectl get pods
-kubectl get namespace dev
-```
-
-You can also create individual Pods and Services:
-
-```bash
-kubectl run temp-pod --image nginx
-kubectl expose deployment nginx --port=80
-```
-
-`kubectl run` creates a standalone Pod. `kubectl expose` creates a Service that routes traffic to the Deployment's Pods on the specified port.
-
 :::info
 Imperative commands are the best starting point when you are learning Kubernetes. They let you focus on *concepts* without getting bogged down in YAML syntax. As you gain confidence, you will naturally transition to file-based approaches.
 :::
-
-## Cleaning Up
-
-Removing resources is just as straightforward:
-
-```bash
-kubectl delete deployment nginx
-kubectl delete namespace dev
-kubectl delete pod temp-pod
-```
-
-Each command sends a delete request to the API server. For Deployments, the delete cascades — the Deployment, its ReplicaSet, and all its Pods are removed together.
 
 ## The Tradeoff: No Paper Trail
 
@@ -76,6 +29,55 @@ Imperative commands do not create or update manifest files. If another team memb
 - **"Resource already exists"** — The object you are trying to create already exists. Delete it first with `kubectl delete`, or switch to `kubectl apply` for an update.
 - **Wrong namespace** — By default, commands target the `default` namespace. Use `-n <namespace>` to target a different one, or set a default namespace in your context.
 - **Mixing with declarative** — If you create or modify an object imperatively, and someone later runs `kubectl apply -f` with a manifest for the same object, the manifest takes precedence. Pick one approach per object.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Deployment and Namespace
+
+```bash
+kubectl create deployment nginx --image nginx
+kubectl create namespace dev
+```
+
+Both take effect immediately — no files involved.
+
+### Step 2: Scale and Verify
+
+```bash
+kubectl scale deployment nginx --replicas=3
+kubectl get deployment nginx
+```
+
+You should see three replicas listed.
+
+### Step 3: Create a Pod and Service
+
+```bash
+kubectl run temp-pod --image nginx
+kubectl expose deployment nginx --port=80
+```
+
+`kubectl run` creates a standalone Pod. `kubectl expose` creates a Service that routes traffic to the Deployment's Pods on port 80.
+
+### Step 4: Inspect Your Resources
+
+```bash
+kubectl get all
+kubectl get pods
+kubectl get namespace dev
+```
+
+### Step 5: Clean Up
+
+```bash
+kubectl delete deployment nginx
+kubectl delete namespace dev
+kubectl delete pod temp-pod
+```
+
+Each delete sends a request to the API server. For Deployments, the delete cascades to ReplicaSets and Pods.
 
 ## Wrapping Up
 

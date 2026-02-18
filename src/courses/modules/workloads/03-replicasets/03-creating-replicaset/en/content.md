@@ -4,11 +4,9 @@
 
 You now understand what a ReplicaSet is and how selectors connect it to its Pods. It is time to put that knowledge into action. In this lesson, you will write a ReplicaSet manifest from scratch, apply it to a cluster, observe the Pods it creates, and learn how to scale it up and down.
 
-Think of this as moving from reading a recipe to actually stepping into the kitchen. The ingredients are the same ones you have been learning about — replica count, selector, and Pod template — and now you will combine them.
-
 ## Anatomy of the Manifest
 
-Here is a complete ReplicaSet manifest. Take a moment to read through it before we break it down:
+Here is a complete ReplicaSet manifest:
 
 ```yaml
 apiVersion: apps/v1
@@ -35,8 +33,6 @@ spec:
             - containerPort: 80
 ```
 
-Let's walk through each section:
-
 | Section | What It Does |
 |---------|-------------|
 | `apiVersion: apps/v1` | Tells Kubernetes which API group and version to use. ReplicaSets belong to the `apps` group. |
@@ -50,15 +46,7 @@ Let's walk through each section:
 The labels on the ReplicaSet's own `metadata` (like `app: guestbook`) are for your organizational purposes — they do not affect which Pods the ReplicaSet manages. Only the **selector** determines Pod ownership.
 :::
 
-## Applying the Manifest
-
-Save the manifest to a file called `replicaset.yaml` and apply it:
-
-```bash
-kubectl apply -f replicaset.yaml
-```
-
-Kubernetes will validate the manifest, store it in etcd, and the ReplicaSet controller will immediately start working. Within seconds, it creates 3 Pods to satisfy the desired replica count.
+When you apply this manifest, Kubernetes validates it, stores it in etcd, and the ReplicaSet controller immediately creates 3 Pods to satisfy the desired replica count.
 
 ```mermaid
 sequenceDiagram
@@ -76,108 +64,102 @@ sequenceDiagram
     API->>etcd: Store Pod objects
 ```
 
-## Verifying the Result
+:::warning
+Scaling **down** terminates Pods. If your application needs to handle in-flight requests or save state before shutting down, make sure your containers respond to the `SIGTERM` signal and perform a **graceful shutdown**. Kubernetes sends `SIGTERM` and waits for a grace period (default: 30 seconds) before forcefully killing the container.
+:::
 
-After applying, verify that everything is running as expected. Start by checking the ReplicaSet itself:
+---
+
+## Hands-On Practice
+
+### Step 1: Create the manifest file
+
+```bash
+nano replicaset.yaml
+```
+
+Paste the manifest from above, save, and exit.
+
+### Step 2: Apply the manifest
+
+```bash
+kubectl apply -f replicaset.yaml
+```
+
+### Step 3: Verify the ReplicaSet
 
 ```bash
 kubectl get rs frontend
 ```
 
-You should see output similar to:
+You should see:
 
 ```
 NAME       DESIRED   CURRENT   READY   AGE
 frontend   3         3         3       30s
 ```
 
-- **DESIRED** — the replica count you specified (3)
-- **CURRENT** — how many Pods have been created (3)
-- **READY** — how many Pods are running and healthy (3)
-
 When all three numbers match, your ReplicaSet is fully operational.
 
-To see the individual Pods:
+### Step 4: List the Pods it created
 
 ```bash
 kubectl get pods -l tier=frontend
 ```
 
-For a deeper look at events, the selector, and the template:
+### Step 5: Inspect the ReplicaSet events
 
 ```bash
 kubectl describe rs frontend
 ```
 
-The `Events` section at the bottom of the output is particularly useful — it shows you exactly when and why Pods were created or deleted.
+The `Events` section shows exactly when and why Pods were created.
 
-## Scaling the ReplicaSet
-
-One of the most powerful aspects of a ReplicaSet is how easy it is to change the number of replicas. There are two common approaches.
-
-### Option 1: Edit the manifest and reapply
-
-Change `spec.replicas` from `3` to `5` in your YAML file, then run:
-
-```bash
-kubectl apply -f replicaset.yaml
-```
-
-The ReplicaSet controller detects that 5 Pods are desired but only 3 exist, so it creates 2 more.
-
-### Option 2: Use `kubectl scale`
-
-For a quick, imperative change without editing files:
+### Step 6: Scale up to 5 replicas
 
 ```bash
 kubectl scale rs frontend --replicas=5
 ```
 
-Both approaches work, but the declarative method (editing the file and reapplying) is preferred in production workflows because it keeps your manifest in sync with reality.
-
-:::warning
-Scaling **down** terminates Pods. If your application needs to handle in-flight requests or save state before shutting down, make sure your containers respond to the `SIGTERM` signal and perform a **graceful shutdown**. Kubernetes sends `SIGTERM` and waits for a grace period (default: 30 seconds) before forcefully killing the container.
-:::
-
-## Testing Self-Healing
-
-This is where it gets satisfying. Delete one of the Pods manually and watch what happens:
-
-```bash
-kubectl delete pod <pod-name>
-```
-
-Now check the Pods again:
+Verify:
 
 ```bash
 kubectl get pods -l tier=frontend
 ```
 
-You will see a **new Pod** has appeared with a fresh name and a very recent `AGE`. The ReplicaSet detected that the actual count dropped below the desired count and immediately created a replacement. This self-healing behavior is what makes ReplicaSets — and by extension, Deployments — so valuable in production.
+You should now see 5 Pods.
+
+### Step 7: Test self-healing — delete a Pod
+
+```bash
+kubectl delete pod <pod-name>
+```
+
+Check again:
+
+```bash
+kubectl get pods -l tier=frontend
+```
+
+A **new Pod** appeared with a fresh name and a recent `AGE`. The ReplicaSet detected the gap and created a replacement.
 
 ```mermaid
 flowchart LR
-    A["3 Pods running"] -->|"Pod deleted"| B["2 Pods running"]
+    A["5 Pods running"] -->|"Pod deleted"| B["4 Pods running"]
     B -->|"Controller detects gap"| C["New Pod created"]
-    C --> D["3 Pods running ✓"]
+    C --> D["5 Pods running ✓"]
 ```
 
-## Cleaning Up
-
-When you are done experimenting, you can delete the ReplicaSet. By default, this also deletes all the Pods it owns:
+### Step 8: Clean up
 
 ```bash
 kubectl delete rs frontend
 ```
 
-If you want to delete the ReplicaSet but **keep the Pods** running (they become standalone, unmanaged Pods), use the `--cascade=orphan` flag:
-
-```bash
-kubectl delete rs frontend --cascade=orphan
-```
+This also deletes all Pods owned by the ReplicaSet.
 
 :::info
-Orphaned Pods lose their safety net — no controller will recreate them if they fail. This option is mainly useful during migrations or debugging, not for regular operations.
+To delete the ReplicaSet but **keep the Pods** running, use `kubectl delete rs frontend --cascade=orphan`. Orphaned Pods lose their safety net — no controller will recreate them if they fail.
 :::
 
 ## Wrapping Up

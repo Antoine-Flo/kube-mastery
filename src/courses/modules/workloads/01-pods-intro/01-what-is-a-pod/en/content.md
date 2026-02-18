@@ -52,26 +52,47 @@ flowchart LR
   RS -->|creates & manages| P3["Pod 3"]
 ```
 
-## Seeing Pods in Action
+:::warning
+Standalone Pods created without a controller will **not** be restarted if they crash or are evicted. Always use a workload resource (Deployment, StatefulSet, Job) for anything beyond quick experiments. Controllers give you self-healing, scaling, and update strategies that bare Pods simply cannot provide.
+:::
 
-Even at this early stage, you can list the Pods running in your cluster to get a feel for what is happening:
+---
+
+## Hands-On Practice
+
+Your cluster already has Pods running. Let's explore them.
+
+### Step 1: List all Pods in the default namespace
 
 ```bash
 kubectl get pods
 ```
 
-This command shows each Pod's name, status (`Pending`, `Running`, `Succeeded`, `Failed`), the number of ready containers, and how long it has been running. It is one of the commands you will use most often.
+You should see a table with each Pod's name, status, ready containers, restarts, and age.
 
-For more detail on a specific Pod — including events, container states, and the node it landed on — use:
+### Step 2: Look at Pods across all namespaces
+
+```bash
+kubectl get pods -A
+```
+
+Notice the system Pods running in `kube-system` — these are the components that keep Kubernetes itself running.
+
+### Step 3: Pick a Pod and inspect it
 
 ```bash
 kubectl describe pod <pod-name>
+```
+
+Scroll through the output. Pay attention to the **Labels**, **Node**, **IP**, and the **Events** section at the bottom.
+
+### Step 4: Get the wide view
+
+```bash
 kubectl get pod <pod-name> -o wide
 ```
 
-:::warning
-Standalone Pods created without a controller will **not** be restarted if they crash or are evicted. Always use a workload resource (Deployment, StatefulSet, Job) for anything beyond quick experiments. Controllers give you self-healing, scaling, and update strategies that bare Pods simply cannot provide.
-:::
+This adds the node name and Pod IP to the output — useful for understanding where Pods are physically placed.
 
 ## Wrapping Up
 

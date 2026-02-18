@@ -71,23 +71,7 @@ The `subjects` list can include multiple entries — users, groups, and ServiceA
 A RoleBinding can also reference a **ClusterRole** instead of a Role. When it does, the ClusterRole's permissions are granted **only within the RoleBinding's namespace**. This is a common pattern: define reusable permissions once as a ClusterRole, then bind them per-namespace with RoleBindings.
 :::
 
-## Hands-on: Verify Your Setup
-
-After creating a Role and RoleBinding, always verify that the permissions work as expected:
-
-```bash
-# List Roles and RoleBindings in the namespace
-kubectl get role,rolebinding -n default
-
-# Test whether the ServiceAccount can list Pods
-kubectl auth can-i list pods \
-  --as=system:serviceaccount:default:my-sa -n default
-
-# Inspect the binding details
-kubectl describe rolebinding read-pods -n default
-```
-
-The `describe` command shows you the subjects, the referenced Role, and the namespace — a complete picture of the authorization chain.
+After creating a Role and RoleBinding, always verify that the permissions work as expected. The `kubectl describe rolebinding` command shows you the subjects, the referenced Role, and the namespace — a complete picture of the authorization chain.
 
 ## Common Pitfalls
 
@@ -100,6 +84,84 @@ The `describe` command shows you the subjects, the referenced Role, and the name
 :::warning
 RBAC denies everything by default — there are no "allow all" defaults. If a subject has no RoleBinding, it has no permissions. This is by design and is a security strength, but it can surprise newcomers when freshly created ServiceAccounts cannot do anything.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Role
+
+```bash
+nano pod-reader-role.yaml
+```
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+```
+
+```bash
+kubectl apply -f pod-reader-role.yaml
+```
+
+### Step 2: Create a ServiceAccount and RoleBinding
+
+```bash
+kubectl create serviceaccount test-sa
+```
+
+```bash
+nano pod-reader-binding.yaml
+```
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pods-binding
+subjects:
+  - kind: ServiceAccount
+    name: test-sa
+    namespace: default
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+```
+
+```bash
+kubectl apply -f pod-reader-binding.yaml
+```
+
+### Step 3: Verify the binding
+
+```bash
+kubectl get roles
+kubectl get rolebindings
+```
+
+### Step 4: Test the permissions
+
+```bash
+kubectl auth can-i list pods --as system:serviceaccount:default:test-sa
+kubectl auth can-i delete pods --as system:serviceaccount:default:test-sa
+```
+
+The first should return `yes`, the second `no`.
+
+### Step 5: Clean up
+
+```bash
+kubectl delete rolebinding read-pods-binding
+kubectl delete role pod-reader
+kubectl delete serviceaccount test-sa
+```
 
 ## Wrapping Up
 

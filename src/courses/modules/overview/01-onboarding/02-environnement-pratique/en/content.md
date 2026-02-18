@@ -26,55 +26,7 @@ Here are the everyday commands available in the terminal:
 Since this is a browser-based simulation, some advanced features might behave slightly differently than on a full Linux machine. If you notice an issue in the course, click the **pen icon** at the bottom right of the window to suggest a correction.
 :::
 
-## Exploring the Filesystem
-
-Let's warm up with a few basic commands. In the terminal, try:
-
-```bash
-cd ~
-pwd
-ls -la
-mkdir my-project
-cd my-project
-```
-
-You just navigated to your home directory, printed the current path, listed its contents, created a new folder, and moved into it. If you have used a Linux terminal before, this will feel familiar. If not, do not worry. You will pick it up quickly by practicing.
-
-## Testing the Cluster
-
-Now let's make sure the cluster is responding:
-
-```bash
-kubectl get nodes
-```
-
-You should see at least one node listed. Next, let's go through the complete workflow: writing a manifest, applying it, and verifying the result. Create a small file:
-
-```bash
-nano pod.yaml
-```
-
-In the editor, paste the following YAML and save with **Ctrl+S**:
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: test
-spec:
-  containers:
-    - name: nginx
-      image: nginx
-```
-
-Then apply and verify:
-
-```bash
-kubectl apply -f pod.yaml
-kubectl get pods
-```
-
-When the Pod reaches **Running** status, you have confirmed that every part of the pipeline works: filesystem, editor, `kubectl`, and cluster are all connected. This loop of write, apply, and verify is the workflow you will use throughout the entire course.
+The workflow you will use throughout the course is: write YAML in the editor, apply it to the cluster, and verify the result. This loop repeats for every resource you create or change:
 
 ```mermaid
 flowchart LR
@@ -90,6 +42,40 @@ Here is one of the biggest advantages of a simulated environment: mistakes are c
 :::warning
 The environment covers the features used in this course, but not every Kubernetes API or addon is present. Stick to documented commands, and consult the platform documentation if something behaves unexpectedly.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Explore the filesystem
+
+```bash
+ls
+pwd
+```
+
+### Step 2: Create a directory for your manifests
+
+```bash
+mkdir manifests
+ls
+```
+
+### Step 3: Check the cluster nodes
+
+```bash
+kubectl get nodes
+```
+
+You should see a control-plane node and two worker nodes.
+
+### Step 4: List system Pods
+
+```bash
+kubectl get pods -n kube-system
+```
+
+These are the components that keep Kubernetes running.
 
 ## Wrapping Up
 

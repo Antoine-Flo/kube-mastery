@@ -81,17 +81,6 @@ This is why StatefulSets and Headless Services go together. StatefulSets give Po
 Regular Deployments create Pods with random suffixes (like `nginx-7x9kf2`). StatefulSets create Pods with ordinal indexes (`db-0`, `db-1`), making them predictable enough for DNS names.
 :::
 
-## Verifying Pod DNS
-
-```bash
-# Test resolution of a specific Pod
-kubectl run -it dns-test --image=busybox --restart=Never --rm \
-  -- nslookup db-0.mysql.default.svc.cluster.local
-
-# Check endpoints — each Pod should have its own entry
-kubectl get endpoints mysql
-```
-
 :::warning
 A Pod must be **Ready** to appear in DNS. If readiness probes fail, the Pod is removed from the Headless Service's endpoints and won't resolve via DNS. This prevents routing traffic to unhealthy Pods.
 :::
@@ -103,6 +92,25 @@ A Pod must be **Ready** to appear in DNS. If readiness probes fail, the Pod is r
 - **Any StatefulSet** — When each Pod must be individually addressable
 
 For stateless workloads, stick with regular ClusterIP Services — you don't need per-Pod DNS.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Pod and Check DNS Config
+
+```bash
+kubectl run resolv-demo --image=busybox --restart=Never -- sleep 3600
+kubectl exec resolv-demo -- cat /etc/resolv.conf
+```
+
+**Observation:** You'll see the nameserver (CoreDNS cluster IP), search domains like `default.svc.cluster.local`, and options such as `ndots: 5`.
+
+### Step 2: Clean Up
+
+```bash
+kubectl delete pod resolv-demo
+```
 
 ## Wrapping Up
 

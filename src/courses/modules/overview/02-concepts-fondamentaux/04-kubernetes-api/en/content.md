@@ -48,27 +48,6 @@ You are not limited to `kubectl`. There are three common ways to interact with t
 
 One of the most practical features of the Kubernetes API is that it is self-describing. The **Discovery API** publishes a list of all available resources, and the **OpenAPI document** provides detailed schemas. This means tools like `kubectl` can validate your manifests before sending them and offer tab completion for resource types and field names. You might wonder why this matters: it means you can explore the API without ever leaving your terminal.
 
-## Try It: Explore the API
-
-List all API versions and groups available on your cluster:
-
-```bash
-kubectl api-versions
-```
-
-This shows you which API groups (like `apps/v1`, `batch/v1`) are supported.
-
-You can also make raw API requests to see the underlying structure:
-
-```bash
-kubectl get --raw /
-kubectl get --raw /api/v1/namespaces
-```
-
-In this simulator, not all API entry points are implemented yet: these endpoints currently use stubs, and additional ones will be added over time based on pedagogical needs.
-
-The first command returns the root of the API. The second lists all namespaces as raw JSON. These commands help you understand what `kubectl` does for you automatically.
-
 ## Common Errors and What They Mean
 
 When working with the API, you may encounter a few common errors:
@@ -80,6 +59,42 @@ When working with the API, you may encounter a few common errors:
 :::warning
 Never bypass the API server by modifying etcd directly or communicating with components outside the API. The API server enforces authentication, authorization, and admission. Skipping it means skipping your security controls.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: List API Versions
+
+```bash
+kubectl api-versions
+```
+
+This shows which API groups and versions (like `apps/v1`, `batch/v1`) your cluster supports. The API is self-describing — tools like `kubectl` use this to know what resources exist.
+
+### Step 2: List API Resources
+
+```bash
+kubectl api-resources
+```
+
+This lists every type of object the API can manage.
+
+### Step 3: Hit the API root directly
+
+```bash
+kubectl get --raw /
+```
+
+This returns the raw JSON of the API root — the list of all top-level paths the API server exposes. This is the Discovery API in action.
+
+### Step 4: Query a specific API path
+
+```bash
+kubectl get --raw /api/v1/namespaces
+```
+
+This calls the REST endpoint for namespaces directly, bypassing `kubectl get namespaces` formatting. You see the raw JSON response exactly as the API server returns it — useful for understanding what `kubectl` does under the hood.
 
 ## Wrapping Up
 

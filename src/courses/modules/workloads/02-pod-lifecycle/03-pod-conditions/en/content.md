@@ -56,25 +56,28 @@ This means:
 
 This self-healing behavior keeps unhealthy instances out of your load-balancing pool without manual intervention.
 
-## Inspecting Conditions
+## Debugging with Conditions
 
-The easiest way to see all conditions is with `kubectl describe`:
+When a Pod is not behaving as expected, conditions narrow down the problem area quickly:
+
+- **PodScheduled: False** — The scheduler cannot place the Pod. Investigate node capacity, taints, affinities, and resource requests.
+- **Initialized: False** — An init container has not finished. Check init container logs with `kubectl logs <pod-name> -c <init-container-name>`.
+- **ContainersReady: False** — A container is not passing its readiness probe. Review the probe configuration and the application's actual health endpoint.
+- **Ready: False** — Often follows from `ContainersReady: False`, but can also be influenced by <a target="_blank" href="https://kubernetes.io/docs/concepts/workloads/pods/readiness-gates/">readiness gates</a> if your cluster uses them.
+
+:::warning
+If no readiness probe is defined, Kubernetes considers a container ready the moment it starts. This can be misleading — your application might need 30 seconds to load data, but the Pod will already be receiving traffic. Always define readiness probes for production workloads.
+:::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a Pod with a readiness probe
 
 ```bash
-kubectl describe pod <pod-name>
+nano conditions-demo.yaml
 ```
-
-Look for the **Conditions** section. Each condition is listed with its status. Any `False` condition deserves your attention.
-
-For a machine-readable view, use JSONPath piped to `jq`:
-
-```bash
-kubectl get pod <pod-name> -o jsonpath='{.status.conditions}' | jq .
-```
-
-### Try it yourself
-
-Apply a Pod with a readiness probe and watch the conditions evolve:
 
 ```yaml
 apiVersion: v1
@@ -95,23 +98,45 @@ spec:
 
 ```bash
 kubectl apply -f conditions-demo.yaml
+```
+
+### Step 2: Inspect conditions immediately
+
+```bash
 kubectl describe pod conditions-demo
 ```
 
-Right after creation, you will likely see `ContainersReady: False` and `Ready: False`. After the `initialDelaySeconds` passes and the first probe succeeds, both flip to `True`. That is the preflight checklist completing in real time.
+Look at the **Conditions** section. Right after creation, you will likely see `ContainersReady: False` and `Ready: False`.
 
-## Debugging with Conditions
+### Step 3: Wait and check again
 
-When a Pod is not behaving as expected, conditions narrow down the problem area quickly:
+Wait about 10 seconds for the readiness probe to pass, then:
 
-- **PodScheduled: False** — The scheduler cannot place the Pod. Investigate node capacity, taints, affinities, and resource requests.
-- **Initialized: False** — An init container has not finished. Check init container logs with `kubectl logs <pod-name> -c <init-container-name>`.
-- **ContainersReady: False** — A container is not passing its readiness probe. Review the probe configuration and the application's actual health endpoint.
-- **Ready: False** — Often follows from `ContainersReady: False`, but can also be influenced by <a target="_blank" href="https://kubernetes.io/docs/concepts/workloads/pods/readiness-gates/">readiness gates</a> if your cluster uses them.
+```bash
+kubectl describe pod conditions-demo
+```
 
-:::warning
-If no readiness probe is defined, Kubernetes considers a container ready the moment it starts. This can be misleading — your application might need 30 seconds to load data, but the Pod will already be receiving traffic. Always define readiness probes for production workloads.
-:::
+Both `ContainersReady` and `Ready` should now be `True`. That is the preflight checklist completing in real time.
+
+### Step 4: Extract conditions programmatically
+
+```bash
+kubectl get pod conditions-demo -o jsonpath='{.status.conditions}' | jq .
+```
+
+### Step 5: Check which Pods are ready
+
+```bash
+kubectl get pods
+```
+
+The `READY` column reflects the Ready condition — `1/1` means all containers are ready.
+
+### Step 6: Clean up
+
+```bash
+kubectl delete pod conditions-demo
+```
 
 ## Wrapping Up
 

@@ -80,20 +80,26 @@ dnsConfig:
       value: "2"
 ```
 
-## Verifying DNS Configuration
+The `resolv.conf` inside a Pod shows the nameserver, search domains, and options — this is what the Pod actually uses for DNS.
 
-Check what DNS settings a Pod actually uses:
+---
+
+## Hands-On Practice
+
+### Step 1: Check a Pod's resolv.conf
 
 ```bash
-# See the resolv.conf inside a Pod
-kubectl exec my-app -- cat /etc/resolv.conf
-
-# Test resolution
-kubectl run -it dns-test --image=busybox --restart=Never --rm \
-  -- nslookup kubernetes.default.svc.cluster.local
+kubectl run dnsconfig-demo --image=busybox --restart=Never -- sleep 3600
+kubectl exec dnsconfig-demo -- cat /etc/resolv.conf
 ```
 
-The `resolv.conf` shows the nameserver, search domains, and options — this is what the Pod actually uses for DNS.
+**Observation:** Default `ClusterFirst` gives CoreDNS as nameserver and search domains like `default.svc.cluster.local`. The `ndots: 5` option is typically present.
+
+### Step 2: Clean Up
+
+```bash
+kubectl delete pod dnsconfig-demo
+```
 
 ## Wrapping Up
 

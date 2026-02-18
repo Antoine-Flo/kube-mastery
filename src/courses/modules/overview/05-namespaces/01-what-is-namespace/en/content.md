@@ -46,34 +46,6 @@ When you run `kubectl get pods` without specifying a namespace, you are looking 
 Resource names must be unique *within* a namespace, but the same name can be reused across different namespaces. This is why namespaces are the first line of organizational structure in most clusters.
 :::
 
-## Try It: Create and Use a Namespace
-
-List the existing namespaces:
-
-```bash
-kubectl get namespaces
-```
-
-Create a new one:
-
-```bash
-kubectl create namespace dev
-```
-
-Now create a Pod inside that namespace:
-
-```bash
-kubectl run nginx --image nginx -n dev
-```
-
-Verify it is there:
-
-```bash
-kubectl get pods -n dev
-```
-
-Notice that if you run `kubectl get pods` (without `-n`), the Pod does not appear — because you are looking at the `default` namespace. This is one of the most common sources of confusion for beginners, and it is by design: namespaces keep things separated.
-
 ```mermaid
 flowchart TB
     Cluster["Kubernetes Cluster"]
@@ -98,6 +70,48 @@ Namespaces are most useful when:
 - You need to apply resource quotas or network policies to a specific group of workloads.
 
 For small clusters with a few users, namespaces are optional — you can work entirely in `default`. But as complexity grows, they become essential for keeping things organized and secure.
+
+---
+
+## Hands-On Practice
+
+### Step 1: List Namespaces
+
+```bash
+kubectl get namespaces
+```
+
+You will see the built-in namespaces: `default`, `kube-system`, and others.
+
+### Step 2: Create a Namespace
+
+```bash
+kubectl create namespace dev
+```
+
+### Step 3: Run a Pod in the New Namespace
+
+```bash
+kubectl run nginx --image nginx -n dev
+```
+
+The `-n dev` flag targets the `dev` namespace.
+
+### Step 4: Verify and Compare
+
+```bash
+kubectl get pods -n dev
+kubectl get pods
+```
+
+Pods in `dev` do not appear when you run `kubectl get pods` without `-n` — you are looking at `default` by default. Namespaces keep things separated.
+
+### Step 5: Clean Up
+
+```bash
+kubectl delete pod nginx -n dev
+kubectl delete namespace dev
+```
 
 ## Wrapping Up
 

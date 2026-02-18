@@ -75,30 +75,7 @@ spec:
   backoffLimit: 4
 ```
 
-Apply it to your cluster and observe the result:
-
-```bash
-kubectl apply -f pi-job.yaml
-kubectl get jobs
-```
-
-You should see the Job with `COMPLETIONS` showing `0/1` initially, then `1/1` once the Pod finishes. To see the Pod itself:
-
-```bash
-kubectl get pods -l job-name=pi
-```
-
-Notice the Pod status will be `Completed` — not `Running`. That is exactly what we want. To read the output (all those digits of Pi):
-
-```bash
-kubectl logs job/pi
-```
-
-And to get full details on the Job's progress and events:
-
-```bash
-kubectl describe job pi
-```
+Apply it to your cluster, and the Job will create a Pod that runs to completion. You will see `COMPLETIONS` progress from `0/1` to `1/1`. The Pod's status will show `Completed` — not `Running`. Use `kubectl logs job/pi` to see the output, and `kubectl describe job pi` for the full event timeline.
 
 :::warning
 If you forget to set `restartPolicy` (or leave it as `Always`), Kubernetes will **reject** the Job with a validation error. Jobs require `Never` or `OnFailure` — always double-check your Pod template.
@@ -111,6 +88,44 @@ As you start working with Jobs, keep these points in mind:
 - **Forgetting `restartPolicy`** is the most common mistake. The Job will fail to create, and the error message can be confusing if you are not expecting it.
 - **Setting `backoffLimit` too high** with a Pod that keeps failing can result in dozens of failed Pods cluttering your cluster. Start with a reasonable limit (4–6) and adjust as needed.
 - **Leaving completed Jobs around** — without `ttlSecondsAfterFinished`, completed Jobs and their Pods stay in the cluster indefinitely. This is fine for debugging, but in production you will want an automatic cleanup strategy.
+
+---
+
+## Hands-On Practice
+
+### Step 1: Check the Batch API Group
+
+```bash
+kubectl api-resources | grep -E "job|batch"
+```
+
+You see `jobs` in the `batch` group, confirming the Job API is available in your cluster.
+
+### Step 2: Create and Run a Job
+
+Save the Pi Job YAML from above into `pi-job.yaml`, then:
+
+```bash
+kubectl apply -f pi-job.yaml
+kubectl get jobs
+kubectl get pods -l job-name=pi
+```
+
+Watch `COMPLETIONS` go from `0/1` to `1/1`. The Pod status shows `Completed`.
+
+### Step 3: Read the Output
+
+```bash
+kubectl logs job/pi
+```
+
+### Step 4: Clean Up
+
+```bash
+kubectl delete job pi
+```
+
+---
 
 ## Wrapping Up
 

@@ -81,24 +81,70 @@ spec:
 
 Setting `automountServiceAccountToken: false` prevents the token from being mounted. This is a good practice for workloads that do not interact with the Kubernetes API — it reduces the attack surface by removing credentials that are not needed.
 
-## Verifying Your Setup
-
-After creating a ServiceAccount and a Pod, verify everything is connected:
-
-```bash
-# Confirm the ServiceAccount exists
-kubectl get serviceaccount my-app-sa -n my-namespace -o yaml
-
-# Check the Pod's assigned ServiceAccount
-kubectl get pod my-pod -n my-namespace -o jsonpath='{.spec.serviceAccountName}'
-
-# Inside the Pod, verify the token is mounted
-kubectl exec my-pod -n my-namespace -- ls /var/run/secrets/kubernetes.io/serviceaccount/
-```
-
 :::warning
 A ServiceAccount by itself grants no permissions. If your Pod makes API calls and receives `403 Forbidden` responses, the next step is to create an RBAC RoleBinding that connects the ServiceAccount to a Role. We will cover this in the next lesson.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a ServiceAccount
+
+```bash
+kubectl create serviceaccount my-sa -n default
+```
+
+Creates a ServiceAccount named `my-sa` in the default namespace.
+
+### Step 2: Verify the ServiceAccount
+
+```bash
+kubectl get sa my-sa -n default
+kubectl describe sa my-sa -n default
+```
+
+Confirm the ServiceAccount exists and inspect its details. The describe output shows tokens and any attached secrets.
+
+### Step 3: Create a Pod using the ServiceAccount
+
+Create a Pod manifest `pod-with-sa.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod-sa
+  namespace: default
+spec:
+  serviceAccountName: my-sa
+  containers:
+    - name: app
+      image: nginx
+```
+
+Then apply it:
+
+```bash
+kubectl apply -f pod-with-sa.yaml
+```
+
+### Step 4: Verify the Pod uses the ServiceAccount
+
+```bash
+kubectl get pod test-pod-sa -n default -o jsonpath='{.spec.serviceAccountName}'
+```
+
+Output should be `my-sa`. Wait for the Pod to be Running before the next step.
+
+### Step 5: Clean up
+
+```bash
+kubectl delete pod test-pod-sa -n default
+kubectl delete serviceaccount my-sa -n default
+```
+
+Remove the test resources. The ServiceAccount can be deleted even if Pods used it — existing Pods keep their mounted token until they are restarted.
 
 ## Wrapping Up
 

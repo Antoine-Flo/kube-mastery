@@ -30,13 +30,7 @@ Resources are organized by **API groups**. Core resources like Pods, Services, a
 - `batch` — Jobs, CronJobs
 - `rbac.authorization.k8s.io` — Roles, RoleBindings, ClusterRoles
 
-You can discover all available resources and their groups with:
-
-```bash
-kubectl api-resources
-```
-
-This command shows the resource name, short name, API group, whether it is namespaced, and its kind — very useful when writing RBAC rules.
+You can discover all available resources and their groups with `kubectl api-resources`, which shows the resource name, short name, API group, whether it is namespaced, and its kind — very useful when writing RBAC rules.
 
 ## Subresources: The Often-Missed Detail
 
@@ -87,25 +81,41 @@ rules:
 
 This rule only allows `get` and `update` on the ConfigMap named `app-config` — no other ConfigMaps are accessible. This is useful for controllers or applications that only need to manage a specific configuration.
 
-## Testing Permissions
-
-Always verify that your rules produce the expected results:
-
-```bash
-# Check a specific permission
-kubectl auth can-i get pods/log \
-  --as=system:serviceaccount:app:app-sa -n app
-
-# List all permissions for a ServiceAccount
-kubectl auth can-i --list \
-  --as=system:serviceaccount:app:app-sa -n app
-```
-
-The `--list` flag is particularly helpful — it shows every permission the subject has in the given namespace, making it easy to spot overly broad or missing rules.
+Always verify that your rules produce the expected results. The `kubectl auth can-i --list` flag is particularly helpful — it shows every permission the subject has in the given namespace, making it easy to spot overly broad or missing rules.
 
 :::warning
 Wildcards (`"*"` for verbs, resources, or API groups) grant blanket access and should be avoided in production Roles. They make it difficult to audit what is actually permitted and can lead to unintended privilege escalation.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Test different verbs
+
+```bash
+kubectl auth can-i get pods -n default
+kubectl auth can-i create pods -n default
+kubectl auth can-i delete pods -n default
+```
+
+Each verb is a separate permission. You may have `get` but not `delete`, or vice versa, depending on your RBAC bindings.
+
+### Step 2: List API resources
+
+```bash
+kubectl api-resources
+```
+
+Shows resource names (e.g. `pods`, `services`, `deployments`), API groups, and whether each resource is namespaced. Use this when writing RBAC rules to get the exact resource names.
+
+### Step 3: List your effective permissions (optional)
+
+```bash
+kubectl auth can-i --list -n default
+```
+
+Shows every permission your current identity has in the default namespace. Helps you understand the cumulative effect of all your RoleBindings and ClusterRoleBindings.
 
 ## Wrapping Up
 

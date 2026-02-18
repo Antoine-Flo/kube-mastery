@@ -39,20 +39,7 @@ spec:
           restartPolicy: OnFailure
 ```
 
-Or toggle it on the fly with `kubectl patch`:
-
-```bash
-# Pause the CronJob
-kubectl patch cronjob db-backup -p '{"spec":{"suspend":true}}'
-
-# Check the current suspend status
-kubectl get cronjob db-backup -o jsonpath='{.spec.suspend}'
-
-# Resume the CronJob
-kubectl patch cronjob db-backup -p '{"spec":{"suspend":false}}'
-```
-
-The change takes effect immediately — the controller picks it up on its next reconciliation loop.
+Or toggle it on the fly with `kubectl patch` to set `suspend` to `true` or `false`. The change takes effect immediately — the controller picks it up on its next reconciliation loop.
 
 :::warning
 Suspending a CronJob does **not** stop Jobs that are already running. If you need to halt an in-progress Job, you must delete that Job (or its Pods) separately. Always verify with `kubectl get jobs` after suspending to confirm no active Jobs remain if that is your goal.
@@ -116,18 +103,7 @@ This CronJob is configured to run every Friday at 6:30 PM Paris time — but it 
 
 ## Verification and Troubleshooting
 
-After configuring suspend and time zone, verify everything is in order:
-
-```bash
-# Check both fields at once
-kubectl get cronjob morning-report -o jsonpath='{.spec.timeZone} | suspend={.spec.suspend}'
-
-# Describe the CronJob for a full overview
-kubectl describe cronjob morning-report
-
-# Watch for the next Job creation
-kubectl get jobs -w
-```
+After configuring suspend and time zone, use `kubectl describe cronjob <name>` for a full overview and `kubectl get jobs -w` to watch for the next Job creation.
 
 If Jobs are not being created at the expected times, work through this checklist:
 
@@ -139,6 +115,57 @@ If Jobs are not being created at the expected times, work through this checklist
 :::warning
 On Kubernetes versions older than 1.27, the `timeZone` field is silently ignored — no error is raised. The schedule will be interpreted in the controller's local time (usually UTC). Always verify your cluster version with `kubectl version` before relying on this feature.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Create a CronJob
+
+```bash
+cat <<EOF | kubectl apply -f -
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: suspend-demo
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: hello
+              image: busybox
+              command: ["echo", "Hello"]
+          restartPolicy: OnFailure
+EOF
+```
+
+### Step 2: Suspend the CronJob
+
+```bash
+kubectl patch cronjob suspend-demo -p '{"spec":{"suspend":true}}'
+```
+
+The CronJob stops creating new Jobs at each scheduled time.
+
+### Step 3: Verify It Is Suspended
+
+```bash
+kubectl get cronjob suspend-demo -o jsonpath='{.spec.suspend}'
+```
+
+The output confirms `true`. No new Jobs are created until you resume.
+
+### Step 4: Resume and Clean Up
+
+```bash
+kubectl patch cronjob suspend-demo -p '{"spec":{"suspend":false}}'
+kubectl delete cronjob suspend-demo
+```
+
+---
 
 ## Wrapping Up
 

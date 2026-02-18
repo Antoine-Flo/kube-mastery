@@ -18,29 +18,15 @@ Kubernetes gives you multiple paths to update a Deployment. Each has its place d
 
 ### Method 1: `kubectl set image`
 
-The fastest way to change a container image. Perfect for quick updates during development or incident response:
-
-```bash
-kubectl set image deployment/nginx-deployment nginx=nginx:1.16.1
-```
-
-This command tells Kubernetes: "In the Deployment `nginx-deployment`, update the container named `nginx` to use the image `nginx:1.16.1`." A rollout begins immediately.
+The fastest way to change a container image. Perfect for quick updates during development or incident response. You specify the Deployment, container name, and new image — for example, `kubectl set image deployment/nginx-deployment nginx=nginx:1.16.1`. A rollout begins immediately.
 
 ### Method 2: `kubectl edit`
 
-Opens the live Deployment object in your terminal editor, letting you modify any field:
-
-```bash
-kubectl edit deployment/nginx-deployment
-```
-
-Find the `spec.template.spec.containers` section, change the `image` field from `nginx:1.14.2` to `nginx:1.16.1`, save, and close. The rollout starts as soon as you save.
-
-This method is useful when you need to change multiple template fields at once — for example, updating an image *and* adding an environment variable in the same operation.
+Opens the live Deployment object in your terminal editor, letting you modify any field. Find the `spec.template.spec.containers` section, change the `image` field, save, and close. The rollout starts as soon as you save. This method is useful when you need to change multiple template fields at once — for example, updating an image *and* adding an environment variable in the same operation.
 
 ### Method 3: Edit the manifest and `kubectl apply`
 
-The most production-friendly approach. Update your YAML file in version control, then apply:
+The most production-friendly approach. Update your YAML file in version control, then run `kubectl apply -f nginx-deployment.yaml`:
 
 ```yaml
 spec:
@@ -51,10 +37,6 @@ spec:
           image: nginx:1.16.1
           ports:
             - containerPort: 80
-```
-
-```bash
-kubectl apply -f nginx-deployment.yaml
 ```
 
 This is the declarative workflow — your Git repository becomes the source of truth, and every change is tracked, reviewed, and auditable.
@@ -87,33 +69,7 @@ The old ReplicaSet is not deleted — it is scaled to zero and kept in the clust
 
 ## Verifying the Update
 
-After triggering a rollout, monitor its progress:
-
-```bash
-kubectl rollout status deployment/nginx-deployment
-```
-
-This command blocks until the rollout succeeds or fails. For a more detailed view:
-
-```bash
-kubectl get replicasets
-```
-
-You should see two ReplicaSets — the new one with your desired replica count and the old one scaled to zero:
-
-```
-NAME                          DESIRED   CURRENT   READY   AGE
-nginx-deployment-6b474476c4   3         3         3       30s
-nginx-deployment-d4f9bdc7c    0         0         0       5m
-```
-
-To inspect the full state and event history:
-
-```bash
-kubectl describe deployment nginx-deployment
-```
-
-The Events section at the bottom shows exactly what happened during the rollout — which ReplicaSets were scaled up or down and when.
+After triggering a rollout, monitor its progress with `kubectl rollout status deployment/nginx-deployment`, which blocks until the rollout succeeds or fails. Run `kubectl get replicasets` to see two ReplicaSets — the new one with your desired replica count and the old one scaled to zero. Use `kubectl describe deployment nginx-deployment` to inspect the full state and event history; the Events section at the bottom shows exactly what happened during the rollout.
 
 ## Troubleshooting Failed Updates
 
@@ -121,24 +77,61 @@ Not every update goes smoothly. Here are the most common issues and how to addre
 
 **`ImagePullBackOff`** — Kubernetes cannot pull the new image. This usually means a typo in the image name or tag, or missing registry credentials. Verify the image exists and check `imagePullSecrets` if using a private registry.
 
-**Rollout stalled** — New Pods are created but never become ready. This often points to failing readiness probes, insufficient resources, or a crash loop. Inspect the Pods directly:
+**Rollout stalled** — New Pods are created but never become ready. This often points to failing readiness probes, insufficient resources, or a crash loop. Inspect the Pods directly with `kubectl describe pod` and `kubectl logs`.
 
-```bash
-kubectl describe pod <pod-name>
-kubectl logs <pod-name>
-```
-
-**Need to revert immediately** — If the new version is broken and you need to go back:
-
-```bash
-kubectl rollout undo deployment/nginx-deployment
-```
-
-This reverts to the previous ReplicaSet, which Kubernetes conveniently kept around.
+**Need to revert immediately** — If the new version is broken and you need to go back, use `kubectl rollout undo` to revert to the previous ReplicaSet (covered in the rollback lesson).
 
 :::warning
 Updating multiple containers in a multi-container Pod triggers a single rollout — all containers are updated together. There is no way to roll out changes to one container independently. If you need independent update lifecycles, consider splitting containers into separate Deployments.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Ensure a deployment exists
+
+Create one if needed — a Deployment with nginx:1.14.2 and 3 replicas:
+
+```bash
+kubectl create deployment nginx-deployment --image=nginx:1.14.2 --replicas=3
+```
+
+**Observation:** Three Pods running nginx:1.14.2 are created.
+
+### Step 2: Update with kubectl set image
+
+```bash
+kubectl set image deployment/nginx-deployment nginx=nginx:1.16.1
+```
+
+**Observation:** A rollout begins immediately. The Deployment controller creates a new ReplicaSet with the updated Pod template.
+
+### Step 3: Describe the Deployment
+
+```bash
+kubectl describe deployment nginx-deployment
+```
+
+**Observation:** The Events section at the bottom shows the rollout history — which ReplicaSets were scaled up or down and when.
+
+### Step 4: Check the Running Image
+
+```bash
+kubectl get pods -l app=nginx-deployment -o jsonpath='{.items[*].spec.containers[0].image}'
+```
+
+**Observation:** The output shows `nginx:1.16.1` for all Pods — confirming the update succeeded.
+
+### Step 5: Clean up
+
+```bash
+kubectl delete deployment nginx-deployment
+```
+
+**Observation:** The Deployment and all its Pods are removed.
+
+---
 
 ## Wrapping Up
 

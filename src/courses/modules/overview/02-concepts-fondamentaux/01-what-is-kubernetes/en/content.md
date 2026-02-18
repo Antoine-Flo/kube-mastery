@@ -38,25 +38,6 @@ flowchart TB
     K8s --> S6["Rollouts & Rollbacks"]
 ```
 
-## Try It: Explore the API
-
-Every capability in Kubernetes is exposed through an API. Let's see what your cluster supports:
-
-```bash
-kubectl api-resources
-```
-
-This command lists every type of object Kubernetes can manage, including Pods, Deployments, Services, and many more. You will learn the most important ones throughout the course.
-
-Confirm your cluster is reachable:
-
-```bash
-kubectl cluster-info
-kubectl get nodes
-```
-
-If both commands succeed, your `kubectl` tool is configured and the cluster is ready to go.
-
 ## What Kubernetes Is Not
 
 Understanding boundaries is just as important as understanding features. Kubernetes is **not** a traditional Platform-as-a-Service (PaaS). It operates at the container level and provides building blocks rather than complete solutions:
@@ -68,6 +49,34 @@ Understanding boundaries is just as important as understanding features. Kuberne
 :::warning
 Kubernetes is powerful but deliberately unopinionated. It gives you the building blocks; you decide how to assemble them. This flexibility is a strength, but it also means you have architectural choices to make.
 :::
+
+---
+
+## Hands-On Practice
+
+### Step 1: Check Cluster Connectivity
+
+```bash
+kubectl cluster-info
+```
+
+This prints the API server address and confirms your `kubectl` can reach the cluster.
+
+### Step 2: List Your Nodes
+
+```bash
+kubectl get nodes
+```
+
+Every capability in Kubernetes is exposed through an API. This command shows the machines (nodes) that make up your cluster. If both commands succeed, your environment is ready to go.
+
+### Step 3: See Available Resources (Optional)
+
+```bash
+kubectl api-resources
+```
+
+This lists every type of object Kubernetes can manage — Pods, Deployments, Services, and many more. You will learn the most important ones throughout the course.
 
 ## Wrapping Up
 
