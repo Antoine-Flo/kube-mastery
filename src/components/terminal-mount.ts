@@ -10,8 +10,8 @@ import {
 import type { EmulatedEnvironment } from '../core/emulatedEnvironment/EmulatedEnvironment'
 import {
   fsConfig as demoFsConfig
-} from '../oldCourses/seeds/demo'
-import { getSeed } from '../oldCourses/seeds/getSeed'
+} from '../courses/seeds/demo'
+import { getSeed } from '../courses/seeds/getSeed'
 import { createFilesystemFromConfig } from '../core/filesystem/debianFileSystem'
 import { createFileSystem } from '../core/filesystem/FileSystem'
 import type { EditorModal } from '../core/shell/commands'
