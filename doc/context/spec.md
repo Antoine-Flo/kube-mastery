@@ -1,4 +1,4 @@
-# Specification - Kube Mastery
+# Specification - KubeMastery
 
 ## Vision
 

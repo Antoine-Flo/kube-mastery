@@ -1,6 +1,6 @@
 # Ingress Controllers
 
-In the previous lesson you learned that an Ingress resource is just a declaration of routing rules — a piece of configuration stored in etcd. By itself it has no effect. The component that reads those rules and actually implements them is the **Ingress controller**, and understanding how it works is essential before you can use Ingress in practice.
+In the previous lesson you learned that an Ingress resource is just a declaration of routing rules , a piece of configuration stored in etcd. By itself it has no effect. The component that reads those rules and actually implements them is the **Ingress controller**, and understanding how it works is essential before you can use Ingress in practice.
 
 ## The Ingress Controller Is Not Built In
 
@@ -44,7 +44,7 @@ The controller Pod is exposed via a Service of type `LoadBalancer` (or `NodePort
 
 ## Installing ingress-nginx
 
-The ingress-nginx controller can be installed with a single `kubectl apply` command using the official manifest. The exact manifest URL depends on your environment — cloud vs. bare metal:
+The ingress-nginx controller can be installed with a single `kubectl apply` command using the official manifest. The exact manifest URL depends on your environment , cloud vs. bare metal:
 
 For cloud environments (where LoadBalancer Services work):
 
@@ -87,7 +87,7 @@ The ingress-nginx controller maintained by the Kubernetes community lives at `ku
 
 ## The `ingressClassName` Field
 
-When your cluster has multiple Ingress controllers installed — for example, ingress-nginx for public traffic and a cloud-native controller for internal traffic — you need a way to tell each Ingress resource which controller should handle it. That is what `ingressClassName` is for.
+When your cluster has multiple Ingress controllers installed , for example, ingress-nginx for public traffic and a cloud-native controller for internal traffic , you need a way to tell each Ingress resource which controller should handle it. That is what `ingressClassName` is for.
 
 Each Ingress controller creates an **IngressClass** object when it is installed. An IngressClass is a simple Kubernetes object that represents a class of Ingress that a particular controller can handle. When you create an Ingress resource, you set `spec.ingressClassName` to the name of the IngressClass you want to use:
 
@@ -98,7 +98,7 @@ spec:
     - ...
 ```
 
-If you omit `ingressClassName`, some controllers will claim all Ingresses without a class (depending on their configuration), while others will ignore them. To avoid ambiguity — especially in clusters with multiple controllers — always specify `ingressClassName` explicitly.
+If you omit `ingressClassName`, some controllers will claim all Ingresses without a class (depending on their configuration), while others will ignore them. To avoid ambiguity , especially in clusters with multiple controllers , always specify `ingressClassName` explicitly.
 
 You can mark one IngressClass as the cluster default using the annotation `ingressclass.kubernetes.io/is-default-class: "true"`. With a default class set, Ingress resources that omit `ingressClassName` will automatically be assigned to that class.
 

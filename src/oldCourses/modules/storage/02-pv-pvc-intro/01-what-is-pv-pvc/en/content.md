@@ -29,9 +29,9 @@ The PV/PVC pattern decouples storage provisioning from consumption. Users don't 
 
 When requesting storage, you specify how it should be accessible. Kubernetes supports three access modes:
 
-- **ReadWriteOnce (RWO)** — The volume can be mounted as read-write by a single node. This is the most common mode, used by block storage like AWS EBS or GCE Persistent Disks.
-- **ReadOnlyMany (ROX)** — The volume can be mounted read-only by multiple nodes simultaneously. Useful for shared configuration or static assets.
-- **ReadWriteMany (RWX)** — The volume can be mounted read-write by multiple nodes. Fewer backends support this (NFS, CephFS, some CSI drivers).
+- **ReadWriteOnce (RWO):**  The volume can be mounted as read-write by a single node. This is the most common mode, used by block storage like AWS EBS or GCE Persistent Disks.
+- **ReadOnlyMany (ROX):**  The volume can be mounted read-only by multiple nodes simultaneously. Useful for shared configuration or static assets.
+- **ReadWriteMany (RWX):**  The volume can be mounted read-write by multiple nodes. Fewer backends support this (NFS, CephFS, some CSI drivers).
 
 The access mode must match between the PV and the PVC for binding to succeed.
 
@@ -76,8 +76,8 @@ The PVC requests 5Gi with RWO access. The PV offers 10Gi with RWO — it matches
 
 What happens to the PV when the PVC is deleted? That depends on the **reclaim policy**:
 
-- **Retain** — The PV keeps its data and stays in a "Released" state. An admin must manually clean it up. Safe for important data.
-- **Delete** — The PV and its underlying storage are deleted automatically. Common with dynamic provisioning.
+- **Retain:**  The PV keeps its data and stays in a "Released" state. An admin must manually clean it up. Safe for important data.
+- **Delete:**  The PV and its underlying storage are deleted automatically. Common with dynamic provisioning.
 
 ## Checking PVs and PVCs
 

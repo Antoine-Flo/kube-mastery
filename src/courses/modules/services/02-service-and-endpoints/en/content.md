@@ -4,7 +4,7 @@ In the previous lesson you saw that a Service provides a stable IP and DNS name 
 
 ## The Endpoints Object: Kubernetes' Address Book
 
-When you create a Service with a `selector`, Kubernetes automatically creates a companion Endpoints object with the same name. This object is a flat list of IP addresses and port numbers — one entry for every Pod that currently matches the Service's selector and is considered healthy.
+When you create a Service with a `selector`, Kubernetes automatically creates a companion Endpoints object with the same name. This object is a flat list of IP addresses and port numbers , one entry for every Pod that currently matches the Service's selector and is considered healthy.
 
 You can inspect it directly:
 
@@ -14,7 +14,7 @@ kubectl get endpoints web-service
 # web-service   10.244.1.5:80,10.244.2.11:80,10.244.3.8:80      5m
 ```
 
-Those three IP:port pairs are the current backend Pods. The Endpoints controller (part of `kube-controller-manager`) watches for Pod events — creates, updates, and deletes — and keeps this list perpetually up to date. When a Pod dies and a replacement starts up with a new IP, the Endpoints list is updated automatically within seconds.
+Those three IP:port pairs are the current backend Pods. The Endpoints controller (part of `kube-controller-manager`) watches for Pod events , creates, updates, and deletes , and keeps this list perpetually up to date. When a Pod dies and a replacement starts up with a new IP, the Endpoints list is updated automatically within seconds.
 
 `kube-proxy` on every node watches the Endpoints object. Whenever it changes, kube-proxy updates the node's iptables or IPVS rules to reflect the new backend set. This is how the Service's virtual IP ends up routing to the right Pods, even as those Pods come and go.
 
@@ -41,11 +41,11 @@ graph TB
 
 ## Readiness Probes and Endpoints: Only Ready Pods Get Traffic
 
-This is one of Kubernetes' most important safety mechanisms, and it's easy to overlook. A Pod is only added to the Endpoints list if it is **Ready** — meaning it has passed its readiness probe. A Pod that is still starting up, running its initialization logic, or failing its health check will not appear in the Endpoints list and will not receive any traffic, even if it is technically `Running`.
+This is one of Kubernetes' most important safety mechanisms, and it's easy to overlook. A Pod is only added to the Endpoints list if it is **Ready:**  meaning it has passed its readiness probe. A Pod that is still starting up, running its initialization logic, or failing its health check will not appear in the Endpoints list and will not receive any traffic, even if it is technically `Running`.
 
-This means that during a rolling update, new Pods don't start receiving production traffic the moment their container starts. They receive traffic only after they've passed their readiness probe — confirming that the application inside is actually ready to handle requests. Old Pods remain in the Endpoints list (and keep serving traffic) until they are actually terminated.
+This means that during a rolling update, new Pods don't start receiving production traffic the moment their container starts. They receive traffic only after they've passed their readiness probe , confirming that the application inside is actually ready to handle requests. Old Pods remain in the Endpoints list (and keep serving traffic) until they are actually terminated.
 
-Similarly, if a running Pod starts failing its readiness probe — perhaps it's under heavy load, or a downstream dependency has gone away — Kubernetes removes it from the Endpoints list. Traffic stops going to that Pod while it recovers. If the Pod becomes ready again, it's automatically re-added. This is live, automatic circuit-breaking at the infrastructure level.
+Similarly, if a running Pod starts failing its readiness probe , perhaps it's under heavy load, or a downstream dependency has gone away , Kubernetes removes it from the Endpoints list. Traffic stops going to that Pod while it recovers. If the Pod becomes ready again, it's automatically re-added. This is live, automatic circuit-breaking at the infrastructure level.
 
 :::info
 If you don't define a readiness probe, Kubernetes assumes your container is ready as soon as it starts. This is fine for simple use cases but can cause traffic errors during rolling updates if your application needs time to warm up. Always define a readiness probe for production services.
@@ -70,11 +70,11 @@ kubectl describe endpoints web-service
 #     <unset>  80    TCP
 ```
 
-Notice the `NotReadyAddresses` field. Any Pod that matches the selector but is not yet Ready appears here — tracked but not receiving traffic. This field is invaluable for debugging: if a Pod you expect to be serving traffic is in `NotReadyAddresses`, its readiness probe is failing.
+Notice the `NotReadyAddresses` field. Any Pod that matches the selector but is not yet Ready appears here , tracked but not receiving traffic. This field is invaluable for debugging: if a Pod you expect to be serving traffic is in `NotReadyAddresses`, its readiness probe is failing.
 
 ## Headless Services: Direct Pod Discovery
 
-Sometimes you don't want a virtual IP at all. Some applications — especially stateful ones, like clustered databases — need to discover individual Pod IPs directly, not route through a virtual IP. Kubernetes supports this with **headless Services**.
+Sometimes you don't want a virtual IP at all. Some applications , especially stateful ones, like clustered databases , need to discover individual Pod IPs directly, not route through a virtual IP. Kubernetes supports this with **headless Services**.
 
 To create a headless Service, set `spec.clusterIP: None`:
 
@@ -96,12 +96,12 @@ A headless Service does not get a virtual ClusterIP. Instead, the DNS query for 
 Headless Services are fundamental to how StatefulSets work: each Pod in a StatefulSet gets a stable DNS name of the form `<pod-name>.<service-name>.<namespace>.svc.cluster.local`, which always resolves to that specific Pod's IP, even as the Pod is replaced.
 
 :::info
-A StatefulSet Pod named `db-0` in a namespace called `default` with a headless Service named `db-headless` can be reached at `db-0.db-headless.default.svc.cluster.local`. This name is stable — if the Pod is deleted and recreated, the new Pod gets the same name and the DNS record is updated to point to the new IP.
+A StatefulSet Pod named `db-0` in a namespace called `default` with a headless Service named `db-headless` can be reached at `db-0.db-headless.default.svc.cluster.local`. This name is stable , if the Pod is deleted and recreated, the new Pod gets the same name and the DNS record is updated to point to the new IP.
 :::
 
 ## ExternalName Services: Mapping to External DNS
 
-A third special type of Service is the **ExternalName** Service. It doesn't select any Pods at all — instead, it returns a CNAME record pointing to an external DNS name.
+A third special type of Service is the **ExternalName** Service. It doesn't select any Pods at all , instead, it returns a CNAME record pointing to an external DNS name.
 
 ```yaml
 apiVersion: v1
@@ -113,22 +113,22 @@ spec:
   externalName: my-database.example.com
 ```
 
-With this Service in place, any Pod in the cluster that makes a DNS query for `external-db` will get a CNAME pointing to `my-database.example.com`. This is useful for abstracting external dependencies: your application code uses the in-cluster name `external-db`, and if you ever move the database into the cluster, you just change the Service definition — no application code changes needed.
+With this Service in place, any Pod in the cluster that makes a DNS query for `external-db` will get a CNAME pointing to `my-database.example.com`. This is useful for abstracting external dependencies: your application code uses the in-cluster name `external-db`, and if you ever move the database into the cluster, you just change the Service definition , no application code changes needed.
 
 ## EndpointSlices: The Modern Alternative
 
-For large clusters, Endpoints objects can become massive — a single Service with 1000 backend Pods produces one Endpoints object with 1000 entries, and every update (even a single Pod restart) causes the entire object to be re-distributed to every node.
+For large clusters, Endpoints objects can become massive , a single Service with 1000 backend Pods produces one Endpoints object with 1000 entries, and every update (even a single Pod restart) causes the entire object to be re-distributed to every node.
 
 Kubernetes introduced **EndpointSlices** to solve this scaling problem. Instead of one large Endpoints object, Kubernetes creates multiple EndpointSlice objects, each holding at most 100 endpoints. Updates are smaller, network traffic is reduced, and the overall system is more efficient.
 
-EndpointSlices are created and managed automatically. You don't need to interact with them directly — but it's useful to know they exist if you're looking at cluster internals:
+EndpointSlices are created and managed automatically. You don't need to interact with them directly , but it's useful to know they exist if you're looking at cluster internals:
 
 ```bash
 kubectl get endpointslices -l kubernetes.io/service-name=web-service
 ```
 
 :::info
-EndpointSlice is enabled by default in Kubernetes 1.21 and later. For most practical purposes you can use `kubectl get endpoints` for day-to-day inspection and debugging — kube-proxy reads from EndpointSlices under the hood, but the classic Endpoints API is still kept in sync for compatibility.
+EndpointSlice is enabled by default in Kubernetes 1.21 and later. For most practical purposes you can use `kubectl get endpoints` for day-to-day inspection and debugging , kube-proxy reads from EndpointSlices under the hood, but the classic Endpoints API is still kept in sync for compatibility.
 :::
 
 ## Hands-On Practice
@@ -160,7 +160,6 @@ spec:
               port: 80
             initialDelaySeconds: 2
             periodSeconds: 5
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -244,7 +243,7 @@ kubectl run dns-test --image=busybox --rm -it --restart=Never -- sh -c \
   'nslookup web-service && echo "---" && nslookup web-headless'
 ```
 
-For `web-service` you'll see a single IP (the ClusterIP). For `web-headless` you'll see multiple A records — one per Pod IP.
+For `web-service` you'll see a single IP (the ClusterIP). For `web-headless` you'll see multiple A records , one per Pod IP.
 
 **7. Clean up**
 

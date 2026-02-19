@@ -121,9 +121,9 @@ Pods can only reference Secrets in the same namespace. Cross-namespace Secret ac
 
 Even though Kubernetes injects Secrets securely, be mindful of where values end up:
 
-- **Don't log Secret values** — Avoid `echo $DB_PASSWORD` in scripts or `env | grep` in debug output
-- **Don't expose via APIs** — Ensure your application doesn't include Secret values in error responses or health endpoints
-- **Limit RBAC** — Restrict who can `kubectl get secret` in production namespaces
+- **Don't log Secret values:**  Avoid `echo $DB_PASSWORD` in scripts or `env | grep` in debug output
+- **Don't expose via APIs:**  Ensure your application doesn't include Secret values in error responses or health endpoints
+- **Limit RBAC:**  Restrict who can `kubectl get secret` in production namespaces
 
 ---
 

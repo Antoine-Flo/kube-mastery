@@ -17,11 +17,11 @@ graph LR
     style R fill:#e8f5e9,stroke:#388E3C
 ```
 
-**Privileged** — completely unrestricted. Any Pod configuration is allowed. This level is intended for trusted system-level workloads, like those in `kube-system`, that genuinely need elevated access to do their job. It is *not* appropriate for application workloads.
+**Privileged:**  completely unrestricted. Any Pod configuration is allowed. This level is intended for trusted system-level workloads, like those in `kube-system`, that genuinely need elevated access to do their job. It is *not* appropriate for application workloads.
 
-**Baseline** — prevents known privilege escalation paths while remaining compatible with most applications. It blocks dangerous settings like host namespaces, privileged containers, and certain capabilities, but does not require full hardening. Most standard applications can run under Baseline with minimal changes.
+**Baseline:**  prevents known privilege escalation paths while remaining compatible with most applications. It blocks dangerous settings like host namespaces, privileged containers, and certain capabilities, but does not require full hardening. Most standard applications can run under Baseline with minimal changes.
 
-**Restricted** — the strictest level, aligned with current hardening best practices. It requires non-root execution, a read-only root filesystem, dropping all capabilities, and a restricted seccomp profile. Applications that meet Restricted have a significantly smaller attack surface.
+**Restricted:**  the strictest level, aligned with current hardening best practices. It requires non-root execution, a read-only root filesystem, dropping all capabilities, and a restricted seccomp profile. Applications that meet Restricted have a significantly smaller attack surface.
 
 :::info
 If you are unsure where to start, **Baseline** is a safe default for most namespaces. It blocks the most dangerous Pod configurations without breaking typical applications. Move to **Restricted** for namespaces where workloads are known to be compatible.

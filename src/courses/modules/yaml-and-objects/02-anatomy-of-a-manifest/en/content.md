@@ -4,11 +4,11 @@ One of the most elegant ideas in Kubernetes is also one of the simplest to under
 
 ## The Thermostat Analogy
 
-Imagine a thermostat in your home. You walk up to it and dial in 22°C. That number — the temperature you *want* — is the `spec`. It is your declaration of intent, your desired state. The actual temperature in the room right now is the `status`. Maybe it's 18°C because the heating system hasn't caught up yet. Maybe a window is open, and the room keeps drifting away from your target despite the heater running.
+Imagine a thermostat in your home. You walk up to it and dial in 22°C. That number , the temperature you *want* , is the `spec`. It is your declaration of intent, your desired state. The actual temperature in the room right now is the `status`. Maybe it's 18°C because the heating system hasn't caught up yet. Maybe a window is open, and the room keeps drifting away from your target despite the heater running.
 
-The thermostat doesn't give up after one attempt. It continuously checks: "Is the current temperature equal to the desired temperature? If not, turn on the heat. Check again. Still not there? Keep heating. Now it's 22°C? Great — hold steady. Oh, it dropped again? Heat more." This loop runs forever, never stopping, always comparing intent against reality.
+The thermostat doesn't give up after one attempt. It continuously checks: "Is the current temperature equal to the desired temperature? If not, turn on the heat. Check again. Still not there? Keep heating. Now it's 22°C? Great , hold steady. Oh, it dropped again? Heat more." This loop runs forever, never stopping, always comparing intent against reality.
 
-Kubernetes works in exactly the same way. Your `spec` is the thermostat setting. The `status` is the room temperature. And the **controller** is the thermostat's heating system — a software process that runs continuously to bring reality into alignment with your intent.
+Kubernetes works in exactly the same way. Your `spec` is the thermostat setting. The `status` is the room temperature. And the **controller** is the thermostat's heating system , a software process that runs continuously to bring reality into alignment with your intent.
 
 ## What `spec` Contains
 
@@ -32,7 +32,7 @@ spec:
             - containerPort: 80
 ```
 
-This `spec` says: "I want three Pods, each running the `nginx:1.25` container, listening on port 80." That's it. You are not instructing Kubernetes *how* to achieve this — you are simply stating the desired end result. You don't say "schedule a Pod on node-3" or "pull the image at this exact moment." You declare intent, and the system handles the execution.
+This `spec` says: "I want three Pods, each running the `nginx:1.25` container, listening on port 80." That's it. You are not instructing Kubernetes *how* to achieve this , you are simply stating the desired end result. You don't say "schedule a Pod on node-3" or "pull the image at this exact moment." You declare intent, and the system handles the execution.
 
 :::info
 The `spec` schema is different for every kind of object. A Pod's `spec` has `containers`, `volumes`, and `restartPolicy`. A Service's `spec` has `selector`, `ports`, and `type`. Always refer to the Kubernetes API documentation or use `kubectl explain <resource>.spec` in the terminal to explore the available fields for any object.
@@ -58,15 +58,15 @@ status:
       reason: NewReplicaSetAvailable
 ```
 
-This `status` tells you the real-world situation: there are currently three Pods running, all three are ready, and the Deployment is healthy. If something went wrong — say, one Pod couldn't be scheduled because the cluster ran out of CPU — the `status` would reflect that, perhaps showing `availableReplicas: 2` and a `condition` with a `reason` explaining the problem.
+This `status` tells you the real-world situation: there are currently three Pods running, all three are ready, and the Deployment is healthy. If something went wrong , say, one Pod couldn't be scheduled because the cluster ran out of CPU , the `status` would reflect that, perhaps showing `availableReplicas: 2` and a `condition` with a `reason` explaining the problem.
 
 :::warning
-Never manually edit the `status` field in a manifest and apply it. It will either be ignored or cause confusing errors. The `status` field is a read-only window into reality — it belongs to Kubernetes, not to you. Even if you delete `status` from an exported YAML before re-applying it, that's fine — Kubernetes will simply repopulate it.
+Never manually edit the `status` field in a manifest and apply it. It will either be ignored or cause confusing errors. The `status` field is a read-only window into reality , it belongs to Kubernetes, not to you. Even if you delete `status` from an exported YAML before re-applying it, that's fine , Kubernetes will simply repopulate it.
 :::
 
 ## The Reconciliation Loop
 
-The engine that bridges `spec` and `status` is called the **reconciliation loop** (sometimes called the *control loop*). Every Kubernetes controller — the Deployment controller, the ReplicaSet controller, the StatefulSet controller — runs this loop perpetually. The logic is elegantly simple:
+The engine that bridges `spec` and `status` is called the **reconciliation loop** (sometimes called the *control loop*). Every Kubernetes controller , the Deployment controller, the ReplicaSet controller, the StatefulSet controller , runs this loop perpetually. The logic is elegantly simple:
 
 1. **Observe**: Read the current state of the world (the `status` and what's actually running on nodes)
 2. **Compare**: Diff the observed state against the desired state (`spec`)
@@ -107,7 +107,7 @@ The easiest way to see `status` in action is with `kubectl get` and `kubectl des
 kubectl describe deployment web-app
 ```
 
-Look for the `Conditions` section in the output — that comes directly from `status.conditions`. Look for `Replicas` and `Available` lines — those come from `status.replicas` and `status.availableReplicas`. When things go wrong, `status.conditions` is often the first place you should look for an explanation.
+Look for the `Conditions` section in the output , that comes directly from `status.conditions`. Look for `Replicas` and `Available` lines , those come from `status.replicas` and `status.availableReplicas`. When things go wrong, `status.conditions` is often the first place you should look for an explanation.
 
 You can also retrieve the raw YAML and see `status` in its full form:
 
@@ -119,9 +119,9 @@ Scroll to the bottom of the output to find the complete `status` block. You'll s
 
 ## Why This Design Matters
 
-The spec/status split isn't just an implementation detail — it's a design philosophy. By separating *what you want* from *what exists*, Kubernetes achieves several important properties. First, it makes the system **declarative**: you write down your goal once, and you don't have to worry about the sequence of steps to get there. Second, it makes the system **resilient**: because controllers always compare spec to reality, any deviation — whether caused by a node crash, a network blip, or an accidental manual change — will automatically be corrected. Third, it makes the system **observable**: the `status` field gives you a standardized, machine-readable way to check whether any object is healthy without having to write custom monitoring logic.
+The spec/status split isn't just an implementation detail , it's a design philosophy. By separating *what you want* from *what exists*, Kubernetes achieves several important properties. First, it makes the system **declarative**: you write down your goal once, and you don't have to worry about the sequence of steps to get there. Second, it makes the system **resilient**: because controllers always compare spec to reality, any deviation , whether caused by a node crash, a network blip, or an accidental manual change , will automatically be corrected. Third, it makes the system **observable**: the `status` field gives you a standardized, machine-readable way to check whether any object is healthy without having to write custom monitoring logic.
 
-When you understand that your job is to write `spec` and Kubernetes' job is to reconcile reality toward it, a lot of confusing behaviors suddenly make sense. Why does deleting a Pod not "delete" your application? Because the Deployment's spec still says three replicas — the controller just creates a new Pod to replace it. Why does scaling work instantly? Because you just edited the `spec.replicas` field, and the controller noticed the discrepancy within seconds.
+When you understand that your job is to write `spec` and Kubernetes' job is to reconcile reality toward it, a lot of confusing behaviors suddenly make sense. Why does deleting a Pod not "delete" your application? Because the Deployment's spec still says three replicas , the controller just creates a new Pod to replace it. Why does scaling work instantly? Because you just edited the `spec.replicas` field, and the controller noticed the discrepancy within seconds.
 
 ## Hands-On Practice
 
@@ -165,7 +165,7 @@ Then immediately run:
 kubectl get pods -l app=demo --watch
 ```
 
-Watch as the deleted Pod disappears and a new one appears within seconds. Press `Ctrl+C` to stop watching. The Deployment's `spec.replicas` said 3 — Kubernetes made it so.
+Watch as the deleted Pod disappears and a new one appears within seconds. Press `Ctrl+C` to stop watching. The Deployment's `spec.replicas` said 3 , Kubernetes made it so.
 
 **5. Scale the Deployment and watch status update:**
 

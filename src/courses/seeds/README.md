@@ -10,7 +10,7 @@ Données de seed pour le terminal : filesystem uniquement.
 
 Dans chaque `chapter.json` des modules, la clé **`environment`** indique le seed filesystem à utiliser pour les leçons du chapitre :
 
-- `"minimal"` : seed minimal (fs vide) — **défaut** si absent ou `"empty"`.
+- `"minimal"` : seed minimal (fs vide) , **défaut** si absent ou `"empty"`.
 - `"demo"` : seed démo (fichier exemple).
 - `"empty"` ou absent : traité comme `"minimal"`.
 

@@ -1,6 +1,6 @@
 # Working Across Namespaces
 
-Now that you understand what namespaces are and why the built-in ones exist, it is time to get practical. Most real-world Kubernetes work involves switching between namespaces, targeting specific ones for commands, and sometimes querying across all of them at once. This lesson covers the mechanics of working with namespaces day to day — including how to change your default namespace so you stop having to type `-n my-namespace` on every command.
+Now that you understand what namespaces are and why the built-in ones exist, it is time to get practical. Most real-world Kubernetes work involves switching between namespaces, targeting specific ones for commands, and sometimes querying across all of them at once. This lesson covers the mechanics of working with namespaces day to day , including how to change your default namespace so you stop having to type `-n my-namespace` on every command.
 
 ## Targeting a Specific Namespace
 
@@ -37,7 +37,7 @@ kubectl get deployments -A
 kubectl get services -A -o wide
 ```
 
-The `-A` flag is particularly useful when you are trying to find a specific pod or service and you cannot remember which namespace it is in. It is also the right flag for cluster-wide health checks — "are there any pods not in Running state anywhere in the cluster?"
+The `-A` flag is particularly useful when you are trying to find a specific pod or service and you cannot remember which namespace it is in. It is also the right flag for cluster-wide health checks , "are there any pods not in Running state anywhere in the cluster?"
 
 :::info
 `-A` is equivalent to `--all-namespaces`. Both work identically. Most experienced users use `-A` because it is faster to type.
@@ -73,7 +73,7 @@ Typing `-n my-namespace` on every command gets tedious quickly when you are work
 kubectl config set-context --current --namespace=dev
 ```
 
-After running this command, all subsequent kubectl commands will automatically target the `dev` namespace — no `-n` flag needed. You can verify the change:
+After running this command, all subsequent kubectl commands will automatically target the `dev` namespace , no `-n` flag needed. You can verify the change:
 
 ```bash
 kubectl config get-contexts
@@ -139,7 +139,7 @@ The declarative approach is preferred for namespaces that are part of a long-liv
 
 ## Cross-Namespace Communication via DNS
 
-Resources in different namespaces can still communicate over the network — Kubernetes does not block inter-namespace traffic by default. The key is using the correct DNS name.
+Resources in different namespaces can still communicate over the network , Kubernetes does not block inter-namespace traffic by default. The key is using the correct DNS name.
 
 Within a namespace, a service is reachable by its short name:
 
@@ -158,7 +158,7 @@ curl http://my-service.production.svc.cluster.local
 The format is `<service-name>.<namespace>.svc.cluster.local`. The `.svc.cluster.local` suffix is the cluster's internal DNS domain. You can often omit it and use just `<service-name>.<namespace>` (CoreDNS will resolve it), but the full form is the most explicit and reliable.
 
 :::info
-The ability to communicate across namespaces via DNS is what allows a shared service (like a database or a logging agent) to be accessed by workloads in different namespaces. If you want to *prevent* cross-namespace communication for security reasons, you need to implement NetworkPolicies — covered in a later lesson.
+The ability to communicate across namespaces via DNS is what allows a shared service (like a database or a logging agent) to be accessed by workloads in different namespaces. If you want to *prevent* cross-namespace communication for security reasons, you need to implement NetworkPolicies , covered in a later lesson.
 :::
 
 ## Hands-On Practice
@@ -182,7 +182,7 @@ kubectl get namespaces
 kubectl run dev-pod --image=nginx -n dev
 kubectl run staging-pod --image=nginx -n staging
 
-# Verify — they are invisible from the default namespace
+# Verify , they are invisible from the default namespace
 kubectl get pods
 kubectl get pods -n dev
 kubectl get pods -n staging

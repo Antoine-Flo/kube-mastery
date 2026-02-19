@@ -48,9 +48,9 @@ Keys must consist of alphanumeric characters, hyphens (`-`), underscores (`_`), 
 ## When to Use ConfigMaps
 
 ConfigMaps are ideal for:
-- **Environment-specific settings** — API URLs, database hostnames, log levels
-- **Feature flags** — Enable/disable features without redeploying
-- **Configuration files** — nginx.conf, application.yaml, properties files
+- **Environment-specific settings:**  API URLs, database hostnames, log levels
+- **Feature flags:**  Enable/disable features without redeploying
+- **Configuration files:**  nginx.conf, application.yaml, properties files
 - **Non-sensitive data** that varies between environments
 
 ## When NOT to Use ConfigMaps

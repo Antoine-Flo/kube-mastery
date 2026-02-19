@@ -1,14 +1,14 @@
-# NodePort — Exposing Services Outside the Cluster
+# NodePort , Exposing Services Outside the Cluster
 
-ClusterIP Services are perfect for internal communication, but sometimes you need something outside the cluster to talk to your application — a browser, a load balancer, a monitoring system, or your laptop during development. `NodePort` is the simplest way to make a Service reachable from outside the cluster. It works by opening a specific port on every Node in the cluster and routing incoming traffic through to your Service.
+ClusterIP Services are perfect for internal communication, but sometimes you need something outside the cluster to talk to your application , a browser, a load balancer, a monitoring system, or your laptop during development. `NodePort` is the simplest way to make a Service reachable from outside the cluster. It works by opening a specific port on every Node in the cluster and routing incoming traffic through to your Service.
 
 ## How NodePort Works
 
-When you create a NodePort Service, Kubernetes does two things simultaneously: it creates a regular ClusterIP Service (with a stable internal IP), and it opens the specified port on every Node's network interface. Any traffic that arrives at `<any-node-IP>:<node-port>` is intercepted by kube-proxy and forwarded to the Service, which then forwards it to one of the backend Pods — regardless of which Node the Pod happens to be running on.
+When you create a NodePort Service, Kubernetes does two things simultaneously: it creates a regular ClusterIP Service (with a stable internal IP), and it opens the specified port on every Node's network interface. Any traffic that arrives at `<any-node-IP>:<node-port>` is intercepted by kube-proxy and forwarded to the Service, which then forwards it to one of the backend Pods , regardless of which Node the Pod happens to be running on.
 
 This "any node" property is important. You don't need to know which Node is running your Pods. Traffic arrives at Node 1's NodePort, gets forwarded to a Pod on Node 3 if that's where the matching Pod happens to live. kube-proxy handles this cross-node routing transparently.
 
-The NodePort range is 30000–32767 by default. You can either let Kubernetes pick an available port in this range automatically, or specify one yourself. Ports below 30000 (like 80 or 443) are off-limits for NodePort — those are considered privileged and reserved for system processes.
+The NodePort range is 30000–32767 by default. You can either let Kubernetes pick an available port in this range automatically, or specify one yourself. Ports below 30000 (like 80 or 443) are off-limits for NodePort , those are considered privileged and reserved for system processes.
 
 ## The NodePort Manifest
 
@@ -31,11 +31,11 @@ spec:
 
 Three port-related fields work together here:
 
-**`nodePort: 30080`** — The port opened on every Node. External clients connect to `<node-ip>:30080`.
+**`nodePort: 30080`:**  The port opened on every Node. External clients connect to `<node-ip>:30080`.
 
-**`port: 80`** — The Service's internal port. Inside the cluster, Pods still reach this Service at `web-service:80`, just like a regular ClusterIP Service.
+**`port: 80`:**  The Service's internal port. Inside the cluster, Pods still reach this Service at `web-service:80`, just like a regular ClusterIP Service.
 
-**`targetPort: 80`** — The port on the backend Pods where the container is listening.
+**`targetPort: 80`:**  The port on the backend Pods where the container is listening.
 
 If you omit `nodePort`, Kubernetes picks an available port from the 30000–32767 range automatically. You can find the assigned port with `kubectl get service`.
 
@@ -78,7 +78,7 @@ curl http://web-service:80
 curl http://web-service.default.svc.cluster.local:80
 ```
 
-NodePort doesn't replace or remove the ClusterIP — it adds external accessibility on top of it. The Service is always accessible both internally and externally.
+NodePort doesn't replace or remove the ClusterIP , it adds external accessibility on top of it. The Service is always accessible both internally and externally.
 
 ## Finding the Node IPs
 
@@ -91,7 +91,7 @@ kubectl get nodes -o wide
 # node-2   Ready    <none>   5d    v1.28     192.168.1.101   <none>
 ```
 
-Use any of the `INTERNAL-IP` values with your NodePort. In cloud environments, Nodes may also have external IPs — either a public IP in the `EXTERNAL-IP` column or via the cloud provider's routing.
+Use any of the `INTERNAL-IP` values with your NodePort. In cloud environments, Nodes may also have external IPs , either a public IP in the `EXTERNAL-IP` column or via the cloud provider's routing.
 
 In **minikube**, a convenience command makes this easy:
 
@@ -120,7 +120,7 @@ For production-grade external access in cloud environments, prefer `LoadBalancer
 
 NodePort is convenient but comes with real limitations that matter in production.
 
-**Every node gets the port opened.** Even nodes that aren't running any matching Pods still have the port open. This expands your attack surface — all nodes need firewall rules updated when you add a NodePort Service.
+**Every node gets the port opened.** Even nodes that aren't running any matching Pods still have the port open. This expands your attack surface , all nodes need firewall rules updated when you add a NodePort Service.
 
 **The port range is awkward.** End users don't expect to type port numbers above 30000 into their browsers. You'd typically put a reverse proxy or load balancer in front to map ports 80/443 to the NodePort, which adds complexity.
 
@@ -129,7 +129,7 @@ NodePort is convenient but comes with real limitations that matter in production
 **Port conflicts can occur.** If you have many Services, you have to manage the NodePort range to avoid collisions. Kubernetes prevents duplicate assignments automatically, but at scale, keeping track of which ports are used becomes a chore.
 
 :::warning
-Do not expose sensitive internal Services with NodePort unless your cluster nodes are behind a firewall. The port is opened on every node, meaning anyone who can reach any node in your cluster can reach the NodePort — even if the Service was meant to be internal.
+Do not expose sensitive internal Services with NodePort unless your cluster nodes are behind a firewall. The port is opened on every node, meaning anyone who can reach any node in your cluster can reach the NodePort , even if the Service was meant to be internal.
 :::
 
 ## Hands-On Practice
@@ -157,7 +157,6 @@ spec:
           image: nginx:1.25
           ports:
             - containerPort: 80
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -233,7 +232,7 @@ spec:
 EOF
 
 kubectl get service web-nodeport-auto
-# PORT(S) column will show something like 80:31423/TCP — Kubernetes picked 31423
+# PORT(S) column will show something like 80:31423/TCP , Kubernetes picked 31423
 ```
 
 **7. Clean up**

@@ -6,9 +6,9 @@ You've created a PersistentVolume — storage is available in the cluster. Now l
 
 A PVC is straightforward:
 
-- **accessModes** — How you want to access the storage (`ReadWriteOnce`, `ReadOnlyMany`, `ReadWriteMany`)
-- **resources.requests.storage** — How much storage you need (e.g., `3Gi`)
-- **storageClassName** — Which class of storage you want (must match a PV's class or trigger dynamic provisioning)
+- **accessModes:**  How you want to access the storage (`ReadWriteOnce`, `ReadOnlyMany`, `ReadWriteMany`)
+- **resources.requests.storage:**  How much storage you need (e.g., `3Gi`)
+- **storageClassName:**  Which class of storage you want (must match a PV's class or trigger dynamic provisioning)
 
 That's it. The PVC doesn't need to know about NFS servers, cloud disk IDs, or node paths. It just says "I need this much storage, accessible in this way."
 
@@ -55,7 +55,7 @@ flowchart LR
 ```
 
 :::info
-PVCs are **namespaced** — they must be in the same namespace as the Pod that uses them. PVs are cluster-scoped and can be bound by a PVC from any namespace.
+PVCs are **namespaced:**  they must be in the same namespace as the Pod that uses them. PVs are cluster-scoped and can be bound by a PVC from any namespace.
 :::
 
 ## The Binding Process
@@ -74,7 +74,7 @@ The PVC must be bound before the Pod can mount it. Once bound, you can verify th
 
 ## Common Issues
 
-**PVC stuck in Pending** — No PV matches the request. Check:
+**PVC stuck in Pending:**  No PV matches the request. Check:
 
 ```bash
 kubectl describe pvc my-pvc
@@ -83,12 +83,12 @@ kubectl get pv
 
 The events section of `describe` will tell you what's wrong — capacity mismatch, access mode mismatch, or no available PVs.
 
-**Pod stuck in Pending** — The PVC exists but isn't bound yet. Check the PVC status first.
+**Pod stuck in Pending:**  The PVC exists but isn't bound yet. Check the PVC status first.
 
-**StorageClass mismatch** — The PVC specifies a `storageClassName` that doesn't match any PV. Either create a PV with the matching class or adjust the PVC.
+**StorageClass mismatch:**  The PVC specifies a `storageClassName` that doesn't match any PV. Either create a PV with the matching class or adjust the PVC.
 
 :::warning
-Remember that PVC binding is **exclusive** — one PVC per PV. If a PV is already bound to another PVC, it's unavailable. Check `kubectl get pv` to see which PVs are free (status `Available`).
+Remember that PVC binding is **exclusive:**  one PVC per PV. If a PV is already bound to another PVC, it's unavailable. Check `kubectl get pv` to see which PVs are free (status `Available`).
 :::
 
 ---

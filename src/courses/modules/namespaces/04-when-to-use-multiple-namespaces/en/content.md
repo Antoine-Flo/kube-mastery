@@ -4,7 +4,7 @@ Creating namespaces is easy. Knowing *when* and *how* to use them well is a desi
 
 ## Use Case 1: Environment Separation
 
-One of the most intuitive uses for namespaces is separating environments — development, staging, and production — within the same cluster. Instead of running three separate clusters, you run one and use namespaces to keep the environments apart.
+One of the most intuitive uses for namespaces is separating environments , development, staging, and production , within the same cluster. Instead of running three separate clusters, you run one and use namespaces to keep the environments apart.
 
 ```
 dev-namespace:        frontend:v1-dev, backend:v1-dev, postgres:dev
@@ -33,7 +33,7 @@ kubectl create rolebinding team-admin \
 
 ## Use Case 3: Resource Quotas
 
-Without constraints, any single namespace — or the workloads running in it — can consume all the CPU and memory in the cluster, starving everyone else. Kubernetes **ResourceQuotas** solve this by setting hard limits on what a namespace is allowed to consume.
+Without constraints, any single namespace , or the workloads running in it , can consume all the CPU and memory in the cluster, starving everyone else. Kubernetes **ResourceQuotas** solve this by setting hard limits on what a namespace is allowed to consume.
 
 ```yaml
 apiVersion: v1
@@ -56,7 +56,7 @@ Resource quotas only make sense when applied at the namespace level. This is one
 
 ## Use Case 4: Network Isolation
 
-By default, all pods in a Kubernetes cluster can communicate with all other pods — across namespace boundaries, across nodes, everywhere. Namespaces alone do not provide network isolation. But when you add **NetworkPolicies**, namespaces become the natural unit of isolation.
+By default, all pods in a Kubernetes cluster can communicate with all other pods , across namespace boundaries, across nodes, everywhere. Namespaces alone do not provide network isolation. But when you add **NetworkPolicies**, namespaces become the natural unit of isolation.
 
 A NetworkPolicy that says "only traffic from the same namespace is allowed" gives you a meaningful security boundary between teams or environments:
 
@@ -97,7 +97,7 @@ flowchart TD
 
 More namespaces is not always better. For small teams, learning environments, or single-tenant clusters, using the `default` namespace (or one custom namespace) is perfectly fine. Adding namespaces introduces overhead: you have to remember to pass `-n` to every command, set up separate RBAC and quotas for each namespace, and mentally track which resources live where.
 
-A single person running a personal Kubernetes cluster does not need three environments in three namespaces. A five-person startup with one application does not need a namespace-per-team structure. Start simple, and add namespaces as genuine needs arise — not in anticipation of needs that may never materialize.
+A single person running a personal Kubernetes cluster does not need three environments in three namespaces. A five-person startup with one application does not need a namespace-per-team structure. Start simple, and add namespaces as genuine needs arise , not in anticipation of needs that may never materialize.
 
 :::warning
 **Anti-pattern: namespace per microservice.** It might seem clean to give each microservice its own namespace, but this creates significant operational overhead with little benefit. If your application has twenty microservices, twenty namespaces means twenty sets of RBAC bindings, twenty ResourceQuotas to maintain, and twenty places to look when debugging. Namespaces are team and environment boundaries, not application component boundaries. Keep microservices of the same application in the same namespace.

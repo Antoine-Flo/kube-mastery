@@ -1,12 +1,12 @@
 # Generating Manifests from the CLI
 
-Writing Kubernetes manifests by hand is a useful skill, but it can be slow and error-prone, especially when you're just getting started and don't yet have every field memorized. Fortunately, `kubectl` comes with a powerful trick that lets you generate valid, ready-to-use YAML in seconds — without ever actually creating anything in the cluster. Once you discover this technique, you'll wonder how you ever lived without it.
+Writing Kubernetes manifests by hand is a useful skill, but it can be slow and error-prone, especially when you're just getting started and don't yet have every field memorized. Fortunately, `kubectl` comes with a powerful trick that lets you generate valid, ready-to-use YAML in seconds , without ever actually creating anything in the cluster. Once you discover this technique, you'll wonder how you ever lived without it.
 
 ## The `--dry-run=client -o yaml` Trick
 
 The secret is a combination of two flags: `--dry-run=client` and `-o yaml`.
 
-`--dry-run=client` tells `kubectl` to go through all the motions of creating or running a resource — parsing your command, building the object — but to stop just before sending anything to the API server. Nothing gets created. Nothing changes in the cluster. It's a rehearsal, not a performance.
+`--dry-run=client` tells `kubectl` to go through all the motions of creating or running a resource , parsing your command, building the object , but to stop just before sending anything to the API server. Nothing gets created. Nothing changes in the cluster. It's a rehearsal, not a performance.
 
 `-o yaml` tells `kubectl` to print the result in YAML format rather than showing the usual success message.
 
@@ -50,7 +50,7 @@ You can redirect this output to a file with a simple `>`:
 kubectl run mypod --image=nginx --dry-run=client -o yaml > pod.yaml
 ```
 
-Now you have a file called `pod.yaml` that you can open, clean up, and customize to your needs — adding environment variables, resource requests, labels, or anything else — before applying it to the cluster.
+Now you have a file called `pod.yaml` that you can open, clean up, and customize to your needs , adding environment variables, resource requests, labels, or anything else , before applying it to the cluster.
 
 ## Generating a Deployment Manifest
 

@@ -21,11 +21,11 @@ Jobs solve this problem by introducing **completion-aware orchestration**. The J
 
 This makes Jobs ideal for:
 
-- **Batch processing** — crunching through a dataset in parallel
-- **Database migrations** — running schema changes exactly once
-- **Data imports/exports** — loading data from external sources
-- **Backups** — creating a snapshot and exiting
-- **One-off administrative tasks** — any work that has a clear end
+- **Batch processing:**  crunching through a dataset in parallel
+- **Database migrations:**  running schema changes exactly once
+- **Data imports/exports:**  loading data from external sources
+- **Backups:**  creating a snapshot and exiting
+- **One-off administrative tasks:**  any work that has a clear end
 
 ## How Jobs Work Under the Hood
 
@@ -87,7 +87,7 @@ As you start working with Jobs, keep these points in mind:
 
 - **Forgetting `restartPolicy`** is the most common mistake. The Job will fail to create, and the error message can be confusing if you are not expecting it.
 - **Setting `backoffLimit` too high** with a Pod that keeps failing can result in dozens of failed Pods cluttering your cluster. Start with a reasonable limit (4–6) and adjust as needed.
-- **Leaving completed Jobs around** — without `ttlSecondsAfterFinished`, completed Jobs and their Pods stay in the cluster indefinitely. This is fine for debugging, but in production you will want an automatic cleanup strategy.
+- **Leaving completed Jobs around:**  without `ttlSecondsAfterFinished`, completed Jobs and their Pods stay in the cluster indefinitely. This is fine for debugging, but in production you will want an automatic cleanup strategy.
 
 ---
 
@@ -129,6 +129,6 @@ kubectl delete job pi
 
 ## Wrapping Up
 
-A Job is Kubernetes' answer to **finite workloads** — tasks that need to run, succeed, and stop. Unlike Deployments that keep Pods alive indefinitely, Jobs track completions and stop creating Pods once the work is done. The Pod template must use `restartPolicy: Never` or `OnFailure`, and you can control retries with `backoffLimit`.
+A Job is Kubernetes' answer to **finite workloads:**  tasks that need to run, succeed, and stop. Unlike Deployments that keep Pods alive indefinitely, Jobs track completions and stop creating Pods once the work is done. The Pod template must use `restartPolicy: Never` or `OnFailure`, and you can control retries with `backoffLimit`.
 
-You now understand *why* Jobs exist and *what* they do. In the next lesson, we will dive into the **Job specification** — the fields that let you control parallelism, completion counts, deadlines, and more.
+You now understand *why* Jobs exist and *what* they do. In the next lesson, we will dive into the **Job specification:**  the fields that let you control parallelism, completion counts, deadlines, and more.

@@ -1,6 +1,6 @@
 # ServiceAccount Tokens and RBAC
 
-You have created a ServiceAccount and assigned it to a Pod. The Pod now has an identity — but identity alone does not unlock any doors. A hotel key card identifies you as a guest, but it only opens the doors you have been authorized to access. In Kubernetes, that authorization comes from **RBAC** — specifically, from RoleBindings that connect your ServiceAccount to the permissions defined in a Role.
+You have created a ServiceAccount and assigned it to a Pod. The Pod now has an identity — but identity alone does not unlock any doors. A hotel key card identifies you as a guest, but it only opens the doors you have been authorized to access. In Kubernetes, that authorization comes from **RBAC:**  specifically, from RoleBindings that connect your ServiceAccount to the permissions defined in a Role.
 
 Let's see how identity and authorization work together.
 

@@ -1,6 +1,6 @@
 # Creating Your First Pod
 
-There are two fundamental ways to create resources in Kubernetes: the **imperative** approach and the **declarative** approach. Understanding both — when to use each, and what happens under the hood either way — is a key skill for any Kubernetes practitioner. In this lesson, we'll create Pods using both methods, observe how they come to life in the cluster, and trace the full journey from your command to a running container.
+There are two fundamental ways to create resources in Kubernetes: the **imperative** approach and the **declarative** approach. Understanding both , when to use each, and what happens under the hood either way , is a key skill for any Kubernetes practitioner. In this lesson, we'll create Pods using both methods, observe how they come to life in the cluster, and trace the full journey from your command to a running container.
 
 ## The Imperative Approach: `kubectl run`
 
@@ -80,7 +80,7 @@ If you run the same command again without changing the file:
 pod/my-first-pod unchanged
 ```
 
-Kubernetes is smart about idempotency — it only acts when there's something to change.
+Kubernetes is smart about idempotency , it only acts when there's something to change.
 
 :::info
 A key benefit of `kubectl apply` over `kubectl create` is that `apply` will **update** an existing resource if you change the manifest and re-run the command. `kubectl create` will fail if the object already exists. For this reason, `kubectl apply` is the standard command for both initial creation and subsequent updates.
@@ -143,7 +143,7 @@ NAME           READY   STATUS    RESTARTS   AGE
 my-first-pod   1/1     Running   0          30s
 ```
 
-`READY` shows `1/1` because one container is running and one was requested. `STATUS` shows `Running`. `RESTARTS` shows 0 — the container hasn't needed to restart yet.
+`READY` shows `1/1` because one container is running and one was requested. `STATUS` shows `Running`. `RESTARTS` shows 0 , the container hasn't needed to restart yet.
 
 For more detail, use `-o wide` to see the node and IP:
 
@@ -157,7 +157,7 @@ For a full human-readable breakdown:
 kubectl describe pod my-first-pod
 ```
 
-`kubectl describe` is invaluable for debugging. Look at the `Events:` section at the bottom — it shows a chronological log of what happened: when the Pod was scheduled, when the image was pulled, when the container started.
+`kubectl describe` is invaluable for debugging. Look at the `Events:` section at the bottom , it shows a chronological log of what happened: when the Pod was scheduled, when the image was pulled, when the container started.
 
 For the raw object (spec + status combined in YAML):
 
@@ -266,4 +266,4 @@ You should see events like `Scheduled`, `Pulling`, `Pulled`, `Created`, and `Sta
 kubectl delete pod imperative-pod declarative-pod watch-pod
 ```
 
-You've now created Pods both ways, traced the full lifecycle from manifest to running container, and learned the core commands for inspecting Pod state. In the next lesson, we'll go deeper into what happens after a Pod is created — specifically, the phases a Pod passes through during its lifetime.
+You've now created Pods both ways, traced the full lifecycle from manifest to running container, and learned the core commands for inspecting Pod state. In the next lesson, we'll go deeper into what happens after a Pod is created , specifically, the phases a Pod passes through during its lifetime.

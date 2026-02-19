@@ -1,14 +1,14 @@
-# ClusterIP — The Default Service Type
+# ClusterIP , The Default Service Type
 
 When you create a Service without specifying a type, Kubernetes uses `ClusterIP`. It's the most fundamental Service type, and all the other types build on top of it. Understanding ClusterIP thoroughly means you understand the core of how Service networking works in Kubernetes.
 
 ## What ClusterIP Means
 
-A ClusterIP Service receives a virtual IP address — the "cluster IP" — from a reserved range in the cluster's network configuration (typically something like `10.96.0.0/12`). This IP is special: it doesn't belong to any Node, and no network interface anywhere actually holds it. It exists only in the routing rules programmed by `kube-proxy` on every node. Despite being virtual, it is completely stable — it's assigned when the Service is created and stays the same for the life of the Service.
+A ClusterIP Service receives a virtual IP address , the "cluster IP" , from a reserved range in the cluster's network configuration (typically something like `10.96.0.0/12`). This IP is special: it doesn't belong to any Node, and no network interface anywhere actually holds it. It exists only in the routing rules programmed by `kube-proxy` on every node. Despite being virtual, it is completely stable , it's assigned when the Service is created and stays the same for the life of the Service.
 
-"ClusterIP" in the name refers to the scope of accessibility: the Service is only reachable from within the cluster. Pods can reach it, other Services can reach it, and anything running inside the cluster's network can reach it. But external clients — your laptop, users on the internet, traffic from outside — cannot reach a ClusterIP Service directly. It's purely for internal cluster communication.
+"ClusterIP" in the name refers to the scope of accessibility: the Service is only reachable from within the cluster. Pods can reach it, other Services can reach it, and anything running inside the cluster's network can reach it. But external clients , your laptop, users on the internet, traffic from outside , cannot reach a ClusterIP Service directly. It's purely for internal cluster communication.
 
-This is actually a security feature as much as a design choice. Most microservices should not be directly reachable from the outside world. A database Service, an internal API, a cache — these should only be accessible to other components within the cluster. ClusterIP enforces that boundary by default.
+This is actually a security feature as much as a design choice. Most microservices should not be directly reachable from the outside world. A database Service, an internal API, a cache , these should only be accessible to other components within the cluster. ClusterIP enforces that boundary by default.
 
 ## Creating a ClusterIP Service
 
@@ -29,9 +29,9 @@ spec:
 
 Since `type` is omitted, this is a ClusterIP Service. The `ports` section has two fields that are often confused:
 
-**`port`** is the port that the Service itself listens on — the port you connect to when you use the Service's IP or DNS name. In this case, `port: 80` means clients connect to `web-service:80`.
+**`port`** is the port that the Service itself listens on , the port you connect to when you use the Service's IP or DNS name. In this case, `port: 80` means clients connect to `web-service:80`.
 
-**`targetPort`** is the port on the Pod where your container is actually listening. Traffic arriving at the Service on port 80 will be forwarded to port 80 on the backend Pods. These two values don't have to match — for example, if your container listens on port 8080 but you want to expose it as port 80, you'd write `port: 80, targetPort: 8080`.
+**`targetPort`** is the port on the Pod where your container is actually listening. Traffic arriving at the Service on port 80 will be forwarded to port 80 on the backend Pods. These two values don't have to match , for example, if your container listens on port 8080 but you want to expose it as port 80, you'd write `port: 80, targetPort: 8080`.
 
 You can also expose multiple ports on a single Service by adding more entries to the `ports` list:
 
@@ -45,7 +45,7 @@ ports:
     targetPort: 9090
 ```
 
-When exposing multiple ports, the `name` field becomes required — Kubernetes needs a way to distinguish between them.
+When exposing multiple ports, the `name` field becomes required , Kubernetes needs a way to distinguish between them.
 
 ## How kube-proxy Makes It Work
 
@@ -94,7 +94,7 @@ curl http://web-service.default.svc.cluster.local
 curl http://10.96.45.12
 ```
 
-**Via environment variables (legacy):** Kubernetes automatically injects environment variables for every Service that exists when a Pod starts. For a Service named `web-service`, Pods get variables like `WEB_SERVICE_SERVICE_HOST` and `WEB_SERVICE_SERVICE_PORT`. This mechanism predates in-cluster DNS and is considered legacy — prefer DNS.
+**Via environment variables (legacy):** Kubernetes automatically injects environment variables for every Service that exists when a Pod starts. For a Service named `web-service`, Pods get variables like `WEB_SERVICE_SERVICE_HOST` and `WEB_SERVICE_SERVICE_PORT`. This mechanism predates in-cluster DNS and is considered legacy , prefer DNS.
 
 :::warning
 Environment variable injection only captures Services that existed *before* the Pod was created. If you create a Pod first and a Service later, the Pod won't have the new Service's variables. DNS works regardless of creation order, which is another reason to prefer it.
@@ -140,7 +140,6 @@ spec:
           image: nginx:1.25
           ports:
             - containerPort: 80
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -179,7 +178,7 @@ kubectl get endpoints web-service
 ```bash
 kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- \
   curl -s http://web-service | head -5
-# Should return nginx's HTML — the request was load-balanced to one of the three Pods
+# Should return nginx's HTML , the request was load-balanced to one of the three Pods
 ```
 
 **5. Test the fully-qualified DNS name from a different namespace**
@@ -187,7 +186,7 @@ kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- \
 ```bash
 kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never \
   -n kube-system -- curl -s http://web-service.default.svc.cluster.local | head -5
-# Should also return nginx's HTML — crossing namespace boundary via FQDN
+# Should also return nginx's HTML , crossing namespace boundary via FQDN
 ```
 
 **6. Confirm the environment variables injected into a Pod**

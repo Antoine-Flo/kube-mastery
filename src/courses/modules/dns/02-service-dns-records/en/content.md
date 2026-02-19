@@ -1,16 +1,16 @@
 # Service DNS Records
 
-In the previous lesson you learned how CoreDNS acts as the cluster's internal phone book, and how every Pod is automatically configured to use it. Now let's dig deeper into the actual DNS records that Kubernetes creates for Services — the full record format, the shortcuts that make your life easier, and the special cases that exist for headless Services and external names.
+In the previous lesson you learned how CoreDNS acts as the cluster's internal phone book, and how every Pod is automatically configured to use it. Now let's dig deeper into the actual DNS records that Kubernetes creates for Services , the full record format, the shortcuts that make your life easier, and the special cases that exist for headless Services and external names.
 
 ## The Standard A Record Format
 
-Every Kubernetes Service that has a ClusterIP gets a DNS A record automatically. You never have to create it manually — the moment a Service is created, CoreDNS picks it up from the Kubernetes API and makes it resolvable. The format of the DNS name follows a strict convention:
+Every Kubernetes Service that has a ClusterIP gets a DNS A record automatically. You never have to create it manually , the moment a Service is created, CoreDNS picks it up from the Kubernetes API and makes it resolvable. The format of the DNS name follows a strict convention:
 
 ```
 <service-name>.<namespace>.svc.cluster.local
 ```
 
-Let's unpack each segment. The `<service-name>` part is exactly the `metadata.name` of your Service object — the same name you use in `kubectl get svc`. The `<namespace>` segment is the namespace the Service lives in. The `svc` segment is a fixed label that distinguishes Service records from Pod records (which use `pod` instead). Finally, `cluster.local` is the cluster domain.
+Let's unpack each segment. The `<service-name>` part is exactly the `metadata.name` of your Service object , the same name you use in `kubectl get svc`. The `<namespace>` segment is the namespace the Service lives in. The `svc` segment is a fixed label that distinguishes Service records from Pod records (which use `pod` instead). Finally, `cluster.local` is the cluster domain.
 
 As a concrete example: if you have a Service named `web` in the `production` namespace, its full DNS name is `web.production.svc.cluster.local`. Any Pod in any namespace in the cluster can resolve that name and reach the Service.
 
@@ -53,7 +53,7 @@ spec:
   externalName: mydb.us-east-1.rds.amazonaws.com
 ```
 
-Now any Pod in the cluster can connect to `database.production.svc.cluster.local` (or just `database` from within the `production` namespace), and DNS will return a CNAME pointing to `mydb.us-east-1.rds.amazonaws.com`. The beauty of this pattern is that you can change the underlying external endpoint without updating any application configuration — just update the ExternalName Service.
+Now any Pod in the cluster can connect to `database.production.svc.cluster.local` (or just `database` from within the `production` namespace), and DNS will return a CNAME pointing to `mydb.us-east-1.rds.amazonaws.com`. The beauty of this pattern is that you can change the underlying external endpoint without updating any application configuration , just update the ExternalName Service.
 
 :::warning
 ExternalName Services do not provide any proxy or load balancing. They are purely a DNS alias. This means features like session affinity, connection tracking, and cluster-level health checking do not apply. Also, ExternalName Services do not support port remapping.
@@ -61,7 +61,7 @@ ExternalName Services do not provide any proxy or load balancing. They are purel
 
 ## Headless Services: Multiple A Records
 
-A **headless Service** is created by setting `spec.clusterIP: None`. This tells Kubernetes not to assign a virtual ClusterIP to the Service. Instead of a single stable IP, DNS returns multiple A records — one for each Pod IP that matches the Service's selector.
+A **headless Service** is created by setting `spec.clusterIP: None`. This tells Kubernetes not to assign a virtual ClusterIP to the Service. Instead of a single stable IP, DNS returns multiple A records , one for each Pod IP that matches the Service's selector.
 
 This is fundamentally different from a normal Service. With a normal Service, DNS returns one IP (the ClusterIP) and then `kube-proxy` handles load balancing transparently. With a headless Service, DNS itself returns all the Pod IPs, and the client is responsible for choosing which one to connect to. This gives applications direct access to individual Pod IPs, bypassing the virtual ClusterIP layer entirely.
 
@@ -151,7 +151,7 @@ Address 1: 10.96.xxx.xxx web.blue.svc.cluster.local
 kubectl run test --image=busybox --rm -it --restart=Never -n blue -- nslookup web
 ```
 
-This should resolve to the `blue` namespace's `web` Service — the short name works because the search domain `blue.svc.cluster.local` is tried first.
+This should resolve to the `blue` namespace's `web` Service , the short name works because the search domain `blue.svc.cluster.local` is tried first.
 
 **Step 5: Reach the green namespace from the blue namespace**
 
@@ -165,7 +165,7 @@ Name:      web.green
 Address 1: 10.96.yyy.yyy web.green.svc.cluster.local
 ```
 
-Notice that `web.green` resolves to a different IP than `web` — it's the Service in the `green` namespace.
+Notice that `web.green` resolves to a different IP than `web` , it's the Service in the `green` namespace.
 
 **Step 6: Create and inspect a headless Service**
 

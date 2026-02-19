@@ -35,8 +35,8 @@ resources:
 ```
 
 What happens when limits are exceeded:
-- **CPU**: The container is **throttled** — it slows down but keeps running
-- **Memory**: The container is **OOMKilled** — Kubernetes terminates it
+- **CPU**: The container is **throttled:**  it slows down but keeps running
+- **Memory**: The container is **OOMKilled:**  Kubernetes terminates it
 
 ```mermaid
 flowchart TD
@@ -90,11 +90,11 @@ Once metrics-server is installed, you can use `kubectl top pod` and `kubectl top
 
 ## Common Problems
 
-**Pod stuck in Pending** — Requests exceed available node capacity. Either reduce requests or add more nodes.
+**Pod stuck in Pending:**  Requests exceed available node capacity. Either reduce requests or add more nodes.
 
-**Container OOMKilled** — Memory usage exceeded the limit. Increase the memory limit or investigate memory leaks.
+**Container OOMKilled:**  Memory usage exceeded the limit. Increase the memory limit or investigate memory leaks.
 
-**Application feels slow** — CPU is being throttled because the limit is too low. Increase the CPU limit or check if requests match actual needs.
+**Application feels slow:**  CPU is being throttled because the limit is too low. Increase the CPU limit or check if requests match actual needs.
 
 :::warning
 Without requests, the scheduler can't make informed decisions — Pods might land on overloaded nodes. Without limits, a single container can consume all node resources. Always set both for production workloads.

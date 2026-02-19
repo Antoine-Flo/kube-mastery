@@ -23,7 +23,7 @@ flowchart LR
 
 Prometheus needs to know which targets to scrape. In Kubernetes, there are two common approaches:
 
-**Pod annotations** — Add annotations to your Pod that tell Prometheus "scrape me":
+**Pod annotations:**  Add annotations to your Pod that tell Prometheus "scrape me":
 
 ```yaml
 apiVersion: v1
@@ -42,7 +42,7 @@ spec:
         - containerPort: 8080
 ```
 
-**ServiceMonitor (Prometheus Operator)** — If you're using the <a target="_blank" href="https://github.com/prometheus-operator/prometheus-operator">Prometheus Operator</a>, you define ServiceMonitor resources that tell Prometheus which Services to scrape. This is the more structured approach and scales better for large clusters.
+**ServiceMonitor (Prometheus Operator):**  If you're using the <a target="_blank" href="https://github.com/prometheus-operator/prometheus-operator">Prometheus Operator</a>, you define ServiceMonitor resources that tell Prometheus which Services to scrape. This is the more structured approach and scales better for large clusters.
 
 :::info
 The Prometheus Operator is the most popular way to run Prometheus in Kubernetes. It uses custom resources (Prometheus, ServiceMonitor, AlertmanagerConfig) to manage the entire monitoring stack declaratively. If you're starting fresh, it's worth considering from the start.

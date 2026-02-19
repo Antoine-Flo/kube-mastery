@@ -28,8 +28,8 @@ spec:
 ```
 
 With this LimitRange:
-- A Pod with three containers requesting 2 CPU each (total: 6 CPU) would be **rejected** — it exceeds the Pod max of 4.
-- A Pod with one container requesting 50m CPU would be **rejected** — it's below the Pod min of 100m.
+- A Pod with three containers requesting 2 CPU each (total: 6 CPU) would be **rejected:**  it exceeds the Pod max of 4.
+- A Pod with one container requesting 50m CPU would be **rejected:**  it's below the Pod min of 100m.
 
 :::info
 Pod-level and container-level LimitRanges can coexist in the same namespace. Both are validated independently: a Pod must satisfy container-level limits for each individual container **and** Pod-level limits for the aggregate. This gives you layered control.
@@ -166,10 +166,10 @@ Pod-level limits don't inject defaults — they only validate. If a Pod's contai
 
 With everything we've covered in this chapter, here's how the pieces fit together:
 
-- **LimitRange (Container)** — Defaults and min/max per container
-- **LimitRange (Pod)** — Max aggregate per Pod
-- **LimitRange (PVC)** — Min/max storage per PVC
-- **ResourceQuota** — Total namespace budget for compute and object counts
+- **LimitRange (Container):**  Defaults and min/max per container
+- **LimitRange (Pod):**  Max aggregate per Pod
+- **LimitRange (PVC):**  Min/max storage per PVC
+- **ResourceQuota:**  Total namespace budget for compute and object counts
 
 Together, they ensure that no single object is too big, no namespace is too greedy, and every workload gets sensible resource boundaries.
 

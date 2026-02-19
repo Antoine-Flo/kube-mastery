@@ -1,6 +1,6 @@
 # Container Logging Basics
 
-When something goes wrong with an application running in Kubernetes, the first question is always: what did the application say? Logs are the primary window into what a container is doing, why it failed, and what it was working on before it crashed. Kubernetes provides a built-in logging mechanism that is simple, consistent, and powerful enough for most day-to-day debugging tasks — but it works best when you understand how it actually functions under the hood.
+When something goes wrong with an application running in Kubernetes, the first question is always: what did the application say? Logs are the primary window into what a container is doing, why it failed, and what it was working on before it crashed. Kubernetes provides a built-in logging mechanism that is simple, consistent, and powerful enough for most day-to-day debugging tasks , but it works best when you understand how it actually functions under the hood.
 
 ## How Container Logging Works
 
@@ -8,7 +8,7 @@ Containers are expected to follow a single, universal convention: **write all lo
 
 This might feel counterintuitive if you come from a background where applications write to `/var/log/app.log` or similar. But in a containerized, ephemeral environment, writing logs to a file inside the container creates serious problems. When the container crashes and a new one starts, the log file from the previous container is gone. When the Pod is rescheduled to a different node, the log files don't follow it. You end up with logs scattered across nodes, rotated away, or simply lost.
 
-By writing to stdout and stderr instead, containers delegate log management to the container runtime and the Kubernetes node. The container doesn't need to know anything about where the logs go or how they're stored — it just writes to its natural output streams.
+By writing to stdout and stderr instead, containers delegate log management to the container runtime and the Kubernetes node. The container doesn't need to know anything about where the logs go or how they're stored , it just writes to its natural output streams.
 
 ## What Happens to Those Logs
 
@@ -74,7 +74,7 @@ One of the most important flags for debugging is `--previous` (or `-p`):
 kubectl logs --previous my-pod
 ```
 
-This shows the logs from the *previous* (now terminated) instance of the container. When a container crashes and Kubernetes restarts it, the new container starts with a fresh log stream — the old logs from before the crash are gone from the current stream. The `--previous` flag lets you look back at what the crashed container wrote before it died.
+This shows the logs from the *previous* (now terminated) instance of the container. When a container crashes and Kubernetes restarts it, the new container starts with a fresh log stream , the old logs from before the crash are gone from the current stream. The `--previous` flag lets you look back at what the crashed container wrote before it died.
 
 This is absolutely essential for debugging `CrashLoopBackOff`. When a container is in a crash loop, it keeps restarting and its current log stream might be nearly empty (if it crashes immediately at startup). `--previous` shows you the last gasp of the previous run.
 
@@ -91,13 +91,13 @@ The rotation limits can be configured at the kubelet level via `containerLogMaxS
 ## Logs Are Not Forever: Plan for a Log Aggregation System
 
 :::warning
-`kubectl logs` is a debugging tool, not a logging strategy. In production, you must ship logs to a centralized system. If a node is replaced or recycled (common in cloud environments with auto-scaling node groups), all logs on that node are permanently lost. If your application crashes at 3 AM and is auto-restarted before your on-call engineer wakes up, the only evidence of the crash will be in a log aggregation system — not in `kubectl logs`.
+`kubectl logs` is a debugging tool, not a logging strategy. In production, you must ship logs to a centralized system. If a node is replaced or recycled (common in cloud environments with auto-scaling node groups), all logs on that node are permanently lost. If your application crashes at 3 AM and is auto-restarted before your on-call engineer wakes up, the only evidence of the crash will be in a log aggregation system , not in `kubectl logs`.
 :::
 
 Production logging typically involves a **log shipping agent** running as a DaemonSet on every node. This agent reads the container log files and forwards them to a centralized backend. Common choices include:
 
 - **ELK Stack** (Elasticsearch, Logstash, Kibana) or its more modern variant the EFK stack (with Fluentd or Fluent Bit instead of Logstash)
-- **Grafana Loki** with Promtail — a lightweight, label-based log aggregation system designed for Kubernetes
+- **Grafana Loki** with Promtail , a lightweight, label-based log aggregation system designed for Kubernetes
 - **Datadog**, **Splunk**, **Coralogix**, or other commercial observability platforms
 
 Regardless of which system you use, the principle is the same: the container writes to stdout/stderr, the kubelet captures it to the node filesystem, and a DaemonSet agent ships it to your central system before the local logs can be rotated or lost.

@@ -1,10 +1,10 @@
 # What Are Labels?
 
-Kubernetes clusters can grow surprisingly fast. A modest production system might have dozens of Deployments, hundreds of Pods, several Services, and a handful of ConfigMaps — all living together in the same namespace. Without some way to organize and query all those objects, you'd quickly find yourself lost in a sea of resource names. Labels are Kubernetes's elegant answer to that problem.
+Kubernetes clusters can grow surprisingly fast. A modest production system might have dozens of Deployments, hundreds of Pods, several Services, and a handful of ConfigMaps , all living together in the same namespace. Without some way to organize and query all those objects, you'd quickly find yourself lost in a sea of resource names. Labels are Kubernetes's elegant answer to that problem.
 
 ## The Sticky-Note Analogy
 
-Imagine a large filing cabinet filled with hundreds of folders — one for each microservice, job, or component in your system. Without any organization, finding the folders that belong to your "production" environment, or just the folders related to the "payments" team, would mean reading every label on every folder. Labels in Kubernetes are like sticky notes you attach to those folders. You can put as many sticky notes on a folder as you like, and then — crucially — you can ask the filing system: "Give me every folder that has a sticky note saying `env=production`," and it will hand you exactly those folders, nothing more.
+Imagine a large filing cabinet filled with hundreds of folders , one for each microservice, job, or component in your system. Without any organization, finding the folders that belong to your "production" environment, or just the folders related to the "payments" team, would mean reading every label on every folder. Labels in Kubernetes are like sticky notes you attach to those folders. You can put as many sticky notes on a folder as you like, and then , crucially , you can ask the filing system: "Give me every folder that has a sticky note saying `env=production`," and it will hand you exactly those folders, nothing more.
 
 That's the mental model to carry with you: labels are small, descriptive tags that you attach to Kubernetes objects, and they let you filter, organize, and connect resources in a flexible, decentralized way.
 
@@ -27,7 +27,7 @@ spec:
       image: nginx:1.25
 ```
 
-This Pod carries three labels. You can attach labels to any Kubernetes resource: Pods, Deployments, Services, Nodes, Namespaces, ConfigMaps — anything at all.
+This Pod carries three labels. You can attach labels to any Kubernetes resource: Pods, Deployments, Services, Nodes, Namespaces, ConfigMaps , anything at all.
 
 ## Why Labels Are Everywhere
 
@@ -41,7 +41,7 @@ Labels aren't just for human convenience. They are the primary wiring mechanism 
 
 **Scheduling** can also use labels on Nodes combined with `nodeSelector` or affinity rules to steer Pods onto specific machines.
 
-The diagram below illustrates the most common relationship — a Service using a label selector to find its backing Pods:
+The diagram below illustrates the most common relationship , a Service using a label selector to find its backing Pods:
 
 ```mermaid
 graph LR
@@ -61,7 +61,7 @@ The Service sees four Pods in the namespace but only forwards traffic to the two
 
 Labels follow a specific syntax enforced by the Kubernetes API. Understanding these rules will save you from frustrating validation errors.
 
-**Keys** consist of an optional prefix and a name, separated by a slash (`/`). The name portion must be 63 characters or fewer and can contain alphanumeric characters, hyphens (`-`), underscores (`_`), and dots (`.`). It must start and end with an alphanumeric character. The optional prefix must be a valid DNS subdomain — for example, `app.kubernetes.io`. Kubernetes itself and several popular tools use the `app.kubernetes.io/` prefix to mark "official" labels.
+**Keys** consist of an optional prefix and a name, separated by a slash (`/`). The name portion must be 63 characters or fewer and can contain alphanumeric characters, hyphens (`-`), underscores (`_`), and dots (`.`). It must start and end with an alphanumeric character. The optional prefix must be a valid DNS subdomain , for example, `app.kubernetes.io`. Kubernetes itself and several popular tools use the `app.kubernetes.io/` prefix to mark "official" labels.
 
 **Values** follow the same character rules as key names and are also limited to 63 characters. Values can also be empty strings.
 
@@ -76,7 +76,7 @@ Some valid examples:
 | `team` | `platform-infra` |
 
 :::warning
-Label keys and values have a 63-character limit and a restricted character set. If you try to use a value like a long URL, a full sentence, or a JSON blob, the API will reject it. Use **annotations** for large or unstructured metadata — we'll cover those in a later lesson.
+Label keys and values have a 63-character limit and a restricted character set. If you try to use a value like a long URL, a full sentence, or a JSON blob, the API will reject it. Use **annotations** for large or unstructured metadata , we'll cover those in a later lesson.
 :::
 
 ## Filtering with `-l`
@@ -100,12 +100,12 @@ kubectl get all -l team=platform
 This is invaluable when debugging. Instead of scrolling through a long list of every Pod in a namespace, you can instantly narrow the view to exactly the resources you care about.
 
 :::info
-You can use `-l` with almost every `kubectl get` command. It also works with `kubectl delete`, which makes it easy — and dangerous — to delete a whole group of resources at once. Always double-check your selector before using `kubectl delete -l`.
+You can use `-l` with almost every `kubectl get` command. It also works with `kubectl delete`, which makes it easy , and dangerous , to delete a whole group of resources at once. Always double-check your selector before using `kubectl delete -l`.
 :::
 
 ## Labels vs. Large Metadata
 
-Because labels have a strict size limit and a narrow character set, they are not suitable for storing rich information. Their purpose is identification and selection, not documentation. Think of them as the call number on a library book — short, structured, and designed to be queried — not the book's full bibliography.
+Because labels have a strict size limit and a narrow character set, they are not suitable for storing rich information. Their purpose is identification and selection, not documentation. Think of them as the call number on a library book , short, structured, and designed to be queried , not the book's full bibliography.
 
 If you need to store a URL, a JSON configuration blob, a build timestamp, or an on-call email address alongside a resource, that's what **annotations** are for. Labels and annotations complement each other, and you'll learn all about annotations in lesson 3 of this module.
 

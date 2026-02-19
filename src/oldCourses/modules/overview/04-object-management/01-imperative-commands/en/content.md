@@ -26,9 +26,9 @@ Imperative commands do not create or update manifest files. If another team memb
 
 ## Common Gotchas
 
-- **"Resource already exists"** — The object you are trying to create already exists. Delete it first with `kubectl delete`, or switch to `kubectl apply` for an update.
-- **Wrong namespace** — By default, commands target the `default` namespace. Use `-n <namespace>` to target a different one, or set a default namespace in your context.
-- **Mixing with declarative** — If you create or modify an object imperatively, and someone later runs `kubectl apply -f` with a manifest for the same object, the manifest takes precedence. Pick one approach per object.
+- **"Resource already exists":**  The object you are trying to create already exists. Delete it first with `kubectl delete`, or switch to `kubectl apply` for an update.
+- **Wrong namespace:**  By default, commands target the `default` namespace. Use `-n <namespace>` to target a different one, or set a default namespace in your context.
+- **Mixing with declarative:**  If you create or modify an object imperatively, and someone later runs `kubectl apply -f` with a manifest for the same object, the manifest takes precedence. Pick one approach per object.
 
 ---
 

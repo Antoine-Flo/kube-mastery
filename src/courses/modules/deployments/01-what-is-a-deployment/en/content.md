@@ -1,12 +1,12 @@
 # What is a Deployment?
 
-In the previous module you learned about ReplicaSets — and you also saw their biggest limitation: they are excellent at keeping a fixed number of Pods alive, but they have no idea how to update those Pods safely when you change your application. That gap is precisely where Deployments come in.
+In the previous module you learned about ReplicaSets , and you also saw their biggest limitation: they are excellent at keeping a fixed number of Pods alive, but they have no idea how to update those Pods safely when you change your application. That gap is precisely where Deployments come in.
 
 A Deployment is a higher-level Kubernetes controller that manages ReplicaSets on your behalf. Rather than creating and managing Pods directly, a Deployment creates ReplicaSets, and those ReplicaSets create the Pods. This extra layer of indirection is what enables all the powerful update and rollback capabilities that make Deployments the standard way to run stateless workloads in Kubernetes.
 
 ## The Gap ReplicaSets Leave
 
-To appreciate what Deployments add, it helps to remember what ReplicaSets cannot do. A ReplicaSet watches a set of Pods by label selector and ensures the correct count is always running. That's it. If you update the Pod template inside a ReplicaSet — say, changing the container image from `nginx:1.25` to `nginx:1.26` — the already-running Pods are completely unaffected. The ReplicaSet controller counts Pods by label, sees that the desired count is met, and does nothing. Your fleet silently continues running the old version.
+To appreciate what Deployments add, it helps to remember what ReplicaSets cannot do. A ReplicaSet watches a set of Pods by label selector and ensures the correct count is always running. That's it. If you update the Pod template inside a ReplicaSet , say, changing the container image from `nginx:1.25` to `nginx:1.26` , the already-running Pods are completely unaffected. The ReplicaSet controller counts Pods by label, sees that the desired count is met, and does nothing. Your fleet silently continues running the old version.
 
 To actually update those Pods with a plain ReplicaSet, you'd have to take matters into your own hands: either scale to zero (causing full downtime) or delete each Pod individually and hope the replacements come up healthy before anyone notices. There's no built-in way to pause midway through if something looks wrong, and there's certainly no built-in rollback. If your new image has a fatal startup bug, you're in trouble.
 
@@ -14,11 +14,11 @@ This is the gap Deployments were designed to fill: **declarative, automated, zer
 
 ## A Deployment is the HR Department
 
-A useful analogy: think of your Pods as individual workers on a factory floor. A ReplicaSet is the floor manager — responsible for making sure there are always enough workers present. If someone calls in sick, the floor manager immediately finds a replacement. The floor manager is very good at headcount.
+A useful analogy: think of your Pods as individual workers on a factory floor. A ReplicaSet is the floor manager , responsible for making sure there are always enough workers present. If someone calls in sick, the floor manager immediately finds a replacement. The floor manager is very good at headcount.
 
-But what happens when the company wants to retrain all workers on a new procedure, or issue everyone new equipment? That's not a floor-management problem — that's an HR problem. HR plans the transition carefully: it doesn't retrain everyone at once (the factory would grind to a halt). Instead, it brings workers up to speed in small batches, confirms each batch is performing correctly before moving on, and can reverse the entire process if the new procedure turns out to be flawed.
+But what happens when the company wants to retrain all workers on a new procedure, or issue everyone new equipment? That's not a floor-management problem , that's an HR problem. HR plans the transition carefully: it doesn't retrain everyone at once (the factory would grind to a halt). Instead, it brings workers up to speed in small batches, confirms each batch is performing correctly before moving on, and can reverse the entire process if the new procedure turns out to be flawed.
 
-A Deployment is the HR department of your application fleet. It orchestrates the transition between one version of your application and the next, while ensuring that the factory floor — your running service — never goes completely dark.
+A Deployment is the HR department of your application fleet. It orchestrates the transition between one version of your application and the next, while ensuring that the factory floor , your running service , never goes completely dark.
 
 ## The Three-Tier Hierarchy
 
@@ -44,7 +44,7 @@ graph TB
     style RS2 fill:#326ce5,color:#fff
 ```
 
-The **Deployment** holds your declared intent — the desired image, replica count, and update strategy. It is the object you create and interact with.
+The **Deployment** holds your declared intent , the desired image, replica count, and update strategy. It is the object you create and interact with.
 
 The **ReplicaSets** are created by the Deployment controller, one per distinct Pod template. You rarely interact with them directly, but understanding their role is essential when you need to debug a stuck rollout.
 
@@ -56,19 +56,19 @@ When you run `kubectl get rs` in a namespace that uses Deployments, you'll see R
 
 A Deployment adds four capabilities that a bare ReplicaSet lacks:
 
-**Declarative updates.** You describe the desired state — a new image tag, a new environment variable — and the Deployment controller figures out how to get there. You don't specify *how* to replace Pods; you specify *what* you want, and Kubernetes makes it happen.
+**Declarative updates.** You describe the desired state , a new image tag, a new environment variable , and the Deployment controller figures out how to get there. You don't specify *how* to replace Pods; you specify *what* you want, and Kubernetes makes it happen.
 
 **Rolling update strategy.** By default, Kubernetes replaces Pods gradually: a few new ones come up, a few old ones go down, repeat. The ratio is configurable. At no point does your replica count drop to zero, so users never experience an outage during a routine update.
 
 **Rollback via revision history.** Every time the Deployment's Pod template changes, Kubernetes keeps the old ReplicaSet around (at zero replicas). Rolling back to a previous version is a single command. The revision history acts like a git log for your running workload.
 
-**Pause and resume.** You can pause a rollout mid-way — useful when you want to canary-test a new image on a few Pods before committing to the full update — and resume it when you're satisfied.
+**Pause and resume.** You can pause a rollout mid-way , useful when you want to canary-test a new image on a few Pods before committing to the full update , and resume it when you're satisfied.
 
 ## How the Deployment Controller Works
 
 The Deployment controller is a control loop running inside `kube-controller-manager`. Its job is straightforward: compare the current state of the cluster to the desired state declared in the Deployment spec, and take actions to reconcile any differences.
 
-When you update the Deployment's Pod template (for example, bumping the image tag), the controller detects the change, creates a brand-new ReplicaSet with the updated template, and begins scaling it up. Simultaneously, it scales the old ReplicaSet down. It coordinates these two operations carefully — governed by `maxUnavailable` and `maxSurge` parameters you'll learn about in the Rolling Updates lesson — so that the total number of healthy Pods never drops below an acceptable threshold.
+When you update the Deployment's Pod template (for example, bumping the image tag), the controller detects the change, creates a brand-new ReplicaSet with the updated template, and begins scaling it up. Simultaneously, it scales the old ReplicaSet down. It coordinates these two operations carefully , governed by `maxUnavailable` and `maxSurge` parameters you'll learn about in the Rolling Updates lesson , so that the total number of healthy Pods never drops below an acceptable threshold.
 
 ```mermaid
 sequenceDiagram
@@ -90,15 +90,15 @@ sequenceDiagram
     DC->>RS2: Final replicas: 3
 ```
 
-Throughout this process, the old ReplicaSet is never deleted — only scaled to zero. This is what makes rollback instant: if something goes wrong, the controller can reverse the process by scaling the old ReplicaSet back up and scaling the new one back down.
+Throughout this process, the old ReplicaSet is never deleted , only scaled to zero. This is what makes rollback instant: if something goes wrong, the controller can reverse the process by scaling the old ReplicaSet back up and scaling the new one back down.
 
 :::info
-You can see the full ownership chain with `kubectl get pods -o yaml` and look for the `ownerReferences` field. Each Pod lists the ReplicaSet that owns it. Each ReplicaSet lists the Deployment that owns it. This chain determines what gets deleted when you `kubectl delete deployment` — Kubernetes cascades the deletion through the entire hierarchy.
+You can see the full ownership chain with `kubectl get pods -o yaml` and look for the `ownerReferences` field. Each Pod lists the ReplicaSet that owns it. Each ReplicaSet lists the Deployment that owns it. This chain determines what gets deleted when you `kubectl delete deployment` , Kubernetes cascades the deletion through the entire hierarchy.
 :::
 
 ## Why You Should Always Use a Deployment
 
-For any stateless application — a web server, an API service, a worker process — a Deployment should be your default choice. The overhead is minimal (it's just one extra object wrapping the ReplicaSet), and the benefits are enormous.
+For any stateless application , a web server, an API service, a worker process , a Deployment should be your default choice. The overhead is minimal (it's just one extra object wrapping the ReplicaSet), and the benefits are enormous.
 
 Bare ReplicaSets are useful as primitives for other controllers (some custom operators manage them directly) or for very simple educational purposes. In production, you will almost never create one yourself.
 
@@ -165,11 +165,11 @@ kubectl get pods -l app=web
 # Pick any Pod name from the previous command
 POD=$(kubectl get pods -l app=web -o name | head -1)
 
-# See its ownerReference — it points to a ReplicaSet
+# See its ownerReference , it points to a ReplicaSet
 kubectl get $POD -o jsonpath='{.metadata.ownerReferences[0].name}'
 echo ""
 
-# See the ReplicaSet's ownerReference — it points to the Deployment
+# See the ReplicaSet's ownerReference , it points to the Deployment
 RS=$(kubectl get rs -l app=web -o name | head -1)
 kubectl get $RS -o jsonpath='{.metadata.ownerReferences[0].name}'
 echo ""
@@ -183,7 +183,7 @@ Expected output: the Pod owner will be a ReplicaSet name (something like `web-ap
 kubectl set image deployment/web-app web=nginx:1.26
 kubectl rollout status deployment/web-app
 
-# Now look at the ReplicaSets — you'll see TWO
+# Now look at the ReplicaSets , you'll see TWO
 kubectl get rs -l app=web
 # NAME                      DESIRED   CURRENT   READY   AGE
 # web-app-6d4b9c7f8         0         0         0       2m   ← old, kept for rollback

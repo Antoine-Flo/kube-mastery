@@ -336,7 +336,7 @@
         {
           "id": "anatomy-of-a-manifest",
           "order": 2,
-          "description": "apiVersion, kind, metadata, spec — décortiqué",
+          "description": "apiVersion, kind, metadata, spec , décortiqué",
           "theory_only": false,
           "commands": [
             "kubectl.explain",
@@ -413,7 +413,7 @@
         {
           "id": "viewing-resources",
           "order": 2,
-          "description": "get, describe, explain — lire et comprendre",
+          "description": "get, describe, explain , lire et comprendre",
           "theory_only": false,
           "commands": [
             "kubectl.get.pods.all",
@@ -430,7 +430,7 @@
         {
           "id": "logs-and-exec",
           "order": 3,
-          "description": "kubectl logs, kubectl exec — debugger un container",
+          "description": "kubectl logs, kubectl exec , debugger un container",
           "theory_only": false,
           "commands": [
             "kubectl.get.pods.all",
@@ -530,7 +530,7 @@
         {
           "id": "pod-structure",
           "order": 2,
-          "description": "containers, ports, env — anatomie du manifest",
+          "description": "containers, ports, env , anatomie du manifest",
           "theory_only": false,
           "commands": [
             "kubectl.apply.file",
@@ -581,7 +581,7 @@
         {
           "id": "container-restart-policies",
           "order": 5,
-          "description": "Always, OnFailure, Never — impact sur le comportement",
+          "description": "Always, OnFailure, Never , impact sur le comportement",
           "theory_only": false,
           "commands": [
             "kubectl.apply.file",
@@ -1008,7 +1008,7 @@
         {
           "id": "sidecar-pattern",
           "order": 2,
-          "description": "Logging, proxy, sync — exemples concrets",
+          "description": "Logging, proxy, sync , exemples concrets",
           "theory_only": true,
           "commands": [],
           "assessment_ids": [
@@ -1698,7 +1698,7 @@
         {
           "id": "qos-classes",
           "order": 4,
-          "description": "Guaranteed, Burstable, BestEffort — impact éviction",
+          "description": "Guaranteed, Burstable, BestEffort , impact éviction",
           "theory_only": false,
           "commands": [
             "kubectl.top.pods",
@@ -2215,7 +2215,7 @@
         {
           "id": "ingress-controllers",
           "order": 2,
-          "description": "NGINX, Traefik — déploiement nécessaire",
+          "description": "NGINX, Traefik , déploiement nécessaire",
           "theory_only": false,
           "commands": [
             "kubectl.get.pods.ns",
@@ -2769,7 +2769,7 @@
         {
           "id": "authentication-methods",
           "order": 2,
-          "description": "Certificates, tokens, OIDC — vue d'ensemble",
+          "description": "Certificates, tokens, OIDC , vue d'ensemble",
           "theory_only": false,
           "commands": [
             "kubectl.get.pods.ns",
@@ -2835,7 +2835,7 @@
         {
           "id": "certificate-creation",
           "order": 3,
-          "description": "openssl, cfssl — générer des certs pour K8s",
+          "description": "openssl, cfssl , générer des certs pour K8s",
           "theory_only": true,
           "commands": [],
           "assessment_ids": [
@@ -2959,7 +2959,7 @@
         {
           "id": "authorization-methods-overview",
           "order": 1,
-          "description": "RBAC, ABAC, webhooks — pourquoi RBAC",
+          "description": "RBAC, ABAC, webhooks , pourquoi RBAC",
           "theory_only": false,
           "commands": [
             "kubectl.get.pods.ns",
@@ -3078,7 +3078,7 @@
         {
           "id": "image-pull-policies",
           "order": 3,
-          "description": "Always, IfNotPresent, Never — impact",
+          "description": "Always, IfNotPresent, Never , impact",
           "theory_only": false,
           "commands": [
             "kubectl.get.pods.ns",
@@ -3183,7 +3183,7 @@
         {
           "id": "pod-security-standards",
           "order": 1,
-          "description": "Privileged, Baseline, Restricted — les 3 niveaux",
+          "description": "Privileged, Baseline, Restricted , les 3 niveaux",
           "theory_only": true,
           "commands": [],
           "assessment_ids": [
@@ -3937,7 +3937,7 @@
         {
           "id": "docker-networking",
           "order": 4,
-          "description": "Bridge, host, none — rappel",
+          "description": "Bridge, host, none , rappel",
           "theory_only": true,
           "commands": [],
           "assessment_ids": [
@@ -4079,7 +4079,7 @@
         {
           "id": "api-versions",
           "order": 2,
-          "description": "alpha, beta, stable — signification",
+          "description": "alpha, beta, stable , signification",
           "theory_only": true,
           "commands": [],
           "assessment_ids": [
@@ -4186,7 +4186,7 @@
         {
           "id": "what-is-helm",
           "order": 1,
-          "description": "Charts, releases, repositories — concepts",
+          "description": "Charts, releases, repositories , concepts",
           "theory_only": false,
           "commands": [
             "helm.install",
@@ -4273,7 +4273,7 @@
         {
           "id": "what-are-containers",
           "order": 1,
-          "description": "Isolation, namespaces Linux, cgroups — concept",
+          "description": "Isolation, namespaces Linux, cgroups , concept",
           "theory_only": true,
           "commands": [],
           "assessment_ids": [
@@ -4295,7 +4295,7 @@
         {
           "id": "container-runtimes",
           "order": 3,
-          "description": "containerd, CRI-O, Docker, CRI — la chaîne",
+          "description": "containerd, CRI-O, Docker, CRI , la chaîne",
           "theory_only": true,
           "commands": [],
           "assessment_ids": [
@@ -4364,7 +4364,7 @@
         {
           "id": "open-standards",
           "order": 3,
-          "description": "OCI, CNI, CRI, CSI, SMI — pourquoi les standards comptent",
+          "description": "OCI, CNI, CRI, CSI, SMI , pourquoi les standards comptent",
           "theory_only": true,
           "commands": [],
           "assessment_ids": [
@@ -4433,7 +4433,7 @@
         {
           "id": "observability-fundamentals",
           "order": 1,
-          "description": "Logs, métriques, traces — les 3 piliers",
+          "description": "Logs, métriques, traces , les 3 piliers",
           "theory_only": true,
           "commands": [],
           "assessment_ids": [
@@ -4584,7 +4584,7 @@
         {
           "id": "application-delivery-fundamentals",
           "order": 1,
-          "description": "Build, ship, run — pipeline overview",
+          "description": "Build, ship, run , pipeline overview",
           "theory_only": false,
           "commands": [
             "kubectl.get.yaml",

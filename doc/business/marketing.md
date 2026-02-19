@@ -1,4 +1,4 @@
-# Marketing & Outils - Kube Mastery
+# Marketing & Outils - KubeMastery
 
 ## Positionnement & Ton
 
@@ -10,7 +10,7 @@
 
 ### Transparence : limitations et inconvénients (page d’accueil / landing)
 
-- **Principe** : afficher clairement les **limitations** et **inconvénients** sur la page d’accueil (ou une page dédiée “Ce que Kube Mastery n’est pas” / “Limitations”).
+- **Principe** : afficher clairement les **limitations** et **inconvénients** sur la page d’accueil (ou une page dédiée “Ce que KubeMastery n’est pas” / “Limitations”).
 - **Pourquoi** : des études montrent que la transparence sur les limites augmente la confiance et la **propension à payer plus** ; les utilisateurs savent à quoi s’attendre et valorisent l’honnêteté.
 - **À indiquer** (exemples) :
   - Simulateur local uniquement (pas de vrais clusters cloud).
@@ -203,7 +203,7 @@ Donc pour te faire une paye avec du one-time : compter **environ 60–100 ventes
 
 ## Différenciation vs Concurrence
 
-| Aspect            | Kube Mastery           | Killer.sh | KodeKloud |
+| Aspect            | KubeMastery           | Killer.sh | KodeKloud |
 | ----------------- | ---------------------- | --------- | --------- |
 | Essai sans compte | ✅ 1er cours complet   | ❌        | ❌        |
 | Simulateur        | Local (rapide)         | N/A       | Payant    |

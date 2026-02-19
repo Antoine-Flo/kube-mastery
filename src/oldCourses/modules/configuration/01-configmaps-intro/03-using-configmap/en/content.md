@@ -68,8 +68,8 @@ This is the most important distinction between the two methods:
 
 | Method | Updates | When to Use |
 |--------|---------|-------------|
-| Environment variables | **Fixed at startup** — changes require Pod restart | Simple values, fast apps |
-| Volume mounts | **Synced periodically** — updates appear without restart | Config files, live reload |
+| Environment variables | **Fixed at startup:**  changes require Pod restart | Simple values, fast apps |
+| Volume mounts | **Synced periodically:**  updates appear without restart | Config files, live reload |
 
 Volume mounts are synced by the kubelet, typically within about a minute. This means you can update a ConfigMap and have running Pods pick up the change — if your application watches for file changes.
 
@@ -104,11 +104,11 @@ spec:
 
 ## Common Pitfalls
 
-**ConfigMap not found** — The Pod won't start if the referenced ConfigMap doesn't exist. Use `optional: true` in `configMapKeyRef` or `configMapRef` to allow the Pod to start without it.
+**ConfigMap not found:**  The Pod won't start if the referenced ConfigMap doesn't exist. Use `optional: true` in `configMapKeyRef` or `configMapRef` to allow the Pod to start without it.
 
-**Cross-namespace** — A Pod can only reference ConfigMaps in its own namespace. A Pod in `production` cannot reference a ConfigMap in `default`.
+**Cross-namespace:**  A Pod can only reference ConfigMaps in its own namespace. A Pod in `production` cannot reference a ConfigMap in `default`.
 
-**subPath mounts** — If you use `subPath` to mount a single file, updates to the ConfigMap won't be reflected. Use a full volume mount for live updates.
+**subPath mounts:**  If you use `subPath` to mount a single file, updates to the ConfigMap won't be reflected. Use a full volume mount for live updates.
 
 :::warning
 If the ConfigMap doesn't exist when the Pod starts, the Pod will fail. Use `optional: true` in your references to allow graceful startup when config might not be available yet.

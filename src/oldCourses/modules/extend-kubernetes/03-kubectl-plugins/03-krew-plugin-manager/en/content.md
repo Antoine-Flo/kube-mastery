@@ -94,13 +94,13 @@ Browse available plugins. The search narrows the list when you provide a term.
 
 Here are a few community favorites to get you started:
 
-- **ctx** — Switch between kubectl contexts with fuzzy matching
-- **ns** — Switch between namespaces quickly
-- **neat** — Remove clutter (managed fields, status) from `kubectl get -o yaml` output
-- **tree** — Show the ownership hierarchy of Kubernetes resources (Deployment → ReplicaSet → Pods)
-- **view-secret** — Decode and display Secret values without manual base64
-- **images** — List container images used in the cluster
-- **whoami** — Show the current user/service account and their permissions
+- **ctx:**  Switch between kubectl contexts with fuzzy matching
+- **ns:**  Switch between namespaces quickly
+- **neat:**  Remove clutter (managed fields, status) from `kubectl get -o yaml` output
+- **tree:**  Show the ownership hierarchy of Kubernetes resources (Deployment → ReplicaSet → Pods)
+- **view-secret:**  Decode and display Secret values without manual base64
+- **images:**  List container images used in the cluster
+- **whoami:**  Show the current user/service account and their permissions
 
 Each of these saves you a few keystrokes or a few minutes of manual work. Over time, they add up to a significantly smoother workflow.
 
@@ -124,9 +124,9 @@ kubectl plugin list
 
 ## Common Pitfalls
 
-- **Krew bin not in PATH** — The most common issue. After installing Krew, make sure `~/.krew/bin` is in your shell's PATH. Add `export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"` to your shell profile.
-- **Platform compatibility** — Some plugins only have binaries for certain OS/architecture combinations. If installation fails, check the plugin's page for supported platforms.
-- **Stale index** — If a plugin you expected isn't showing up, run `kubectl krew update` to refresh the index.
+- **Krew bin not in PATH:**  The most common issue. After installing Krew, make sure `~/.krew/bin` is in your shell's PATH. Add `export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"` to your shell profile.
+- **Platform compatibility:**  Some plugins only have binaries for certain OS/architecture combinations. If installation fails, check the plugin's page for supported platforms.
+- **Stale index:**  If a plugin you expected isn't showing up, run `kubectl krew update` to refresh the index.
 
 ## Wrapping Up
 

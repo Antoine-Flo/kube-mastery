@@ -17,7 +17,7 @@ Most of your Services will be ClusterIP. You add NodePort or LoadBalancer only w
 
 ## The Nesting Principle
 
-Service types are **nested** — each layer builds on the previous:
+Service types are **nested:**  each layer builds on the previous:
 
 ```mermaid
 flowchart TD

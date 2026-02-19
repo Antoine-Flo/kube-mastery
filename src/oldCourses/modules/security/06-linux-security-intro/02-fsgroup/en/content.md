@@ -79,11 +79,11 @@ spec:
 
 ## Troubleshooting
 
-**Permission denied on volume** — Most likely `fsGroup` is not set, or it doesn't match the expected GID. Add `fsGroup` to the Pod's securityContext.
+**Permission denied on volume:**  Most likely `fsGroup` is not set, or it doesn't match the expected GID. Add `fsGroup` to the Pod's securityContext.
 
-**Slow Pod startup** — Recursive `chown` on a large volume. Use `fsGroupChangePolicy: OnRootMismatch` to speed things up.
+**Slow Pod startup:**  Recursive `chown` on a large volume. Use `fsGroupChangePolicy: OnRootMismatch` to speed things up.
 
-**NFS volumes** — NFS may handle ownership differently. You might need `supplementalGroups` instead of `fsGroup`, or configure NFS exports with the correct GID.
+**NFS volumes:**  NFS may handle ownership differently. You might need `supplementalGroups` instead of `fsGroup`, or configure NFS exports with the correct GID.
 
 :::warning
 Not all storage drivers support `fsGroup`. NFS and some CSI drivers may handle ownership differently. Check your storage provider's documentation if `fsGroup` doesn't seem to take effect.

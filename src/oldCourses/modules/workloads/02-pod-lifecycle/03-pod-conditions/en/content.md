@@ -30,15 +30,15 @@ flowchart LR
     D --> E[Ready]
 ```
 
-**PodScheduled** — The scheduler found a node for this Pod. If this is `False`, the Pod cannot even begin. Common blockers: insufficient CPU or memory on available nodes, unsatisfied node selectors, or unmatched taints and tolerations.
+**PodScheduled:**  The scheduler found a node for this Pod. If this is `False`, the Pod cannot even begin. Common blockers: insufficient CPU or memory on available nodes, unsatisfied node selectors, or unmatched taints and tolerations.
 
-**Initialized** — All <a target="_blank" href="https://kubernetes.io/docs/concepts/workloads/pods/init-containers/">init containers</a> have completed successfully. Init containers run sequentially before app containers start. If one fails, the Pod stays in an initializing state and this condition remains `False`.
+**Initialized:**  All <a target="_blank" href="https://kubernetes.io/docs/concepts/workloads/pods/init-containers/">init containers</a> have completed successfully. Init containers run sequentially before app containers start. If one fails, the Pod stays in an initializing state and this condition remains `False`.
 
-**PodReadyToStartContainers** — The Pod sandbox is created and networking is configured. This is a relatively recent addition and confirms that the infrastructure layer is in place.
+**PodReadyToStartContainers:**  The Pod sandbox is created and networking is configured. This is a relatively recent addition and confirms that the infrastructure layer is in place.
 
-**ContainersReady** — Every container in the Pod is passing its readiness probe (or, if no probe is defined, is simply running). This is a container-level roll-up.
+**ContainersReady:**  Every container in the Pod is passing its readiness probe (or, if no probe is defined, is simply running). This is a container-level roll-up.
 
-**Ready** — The Pod is fully ready to serve requests and is added to the endpoint list of any matching Service. This is the condition that controls whether traffic reaches your Pod.
+**Ready:**  The Pod is fully ready to serve requests and is added to the endpoint list of any matching Service. This is the condition that controls whether traffic reaches your Pod.
 
 :::info
 The **Ready** condition is the gatekeeper for traffic. A Service only sends requests to Pods whose Ready condition is `True`. If your application takes time to warm up, define a readiness probe so that the Ready condition reflects actual readiness — not just "the process started."
@@ -60,10 +60,10 @@ This self-healing behavior keeps unhealthy instances out of your load-balancing 
 
 When a Pod is not behaving as expected, conditions narrow down the problem area quickly:
 
-- **PodScheduled: False** — The scheduler cannot place the Pod. Investigate node capacity, taints, affinities, and resource requests.
-- **Initialized: False** — An init container has not finished. Check init container logs with `kubectl logs <pod-name> -c <init-container-name>`.
-- **ContainersReady: False** — A container is not passing its readiness probe. Review the probe configuration and the application's actual health endpoint.
-- **Ready: False** — Often follows from `ContainersReady: False`, but can also be influenced by <a target="_blank" href="https://kubernetes.io/docs/concepts/workloads/pods/readiness-gates/">readiness gates</a> if your cluster uses them.
+- **PodScheduled: False:**  The scheduler cannot place the Pod. Investigate node capacity, taints, affinities, and resource requests.
+- **Initialized: False:**  An init container has not finished. Check init container logs with `kubectl logs <pod-name> -c <init-container-name>`.
+- **ContainersReady: False:**  A container is not passing its readiness probe. Review the probe configuration and the application's actual health endpoint.
+- **Ready: False:**  Often follows from `ContainersReady: False`, but can also be influenced by <a target="_blank" href="https://kubernetes.io/docs/concepts/workloads/pods/readiness-gates/">readiness gates</a> if your cluster uses them.
 
 :::warning
 If no readiness probe is defined, Kubernetes considers a container ready the moment it starts. This can be misleading — your application might need 30 seconds to load data, but the Pod will already be receiving traffic. Always define readiness probes for production workloads.
@@ -140,4 +140,4 @@ kubectl delete pod conditions-demo
 
 ## Wrapping Up
 
-Pod conditions are the **preflight checklist** of the Kubernetes lifecycle. They answer precise yes-or-no questions: is this Pod scheduled? Are init containers done? Are all containers ready? Is the Pod as a whole ready for traffic? Unlike phases and container states, conditions are directly tied to real-world consequences — especially the **Ready** condition, which controls whether a Service sends traffic to the Pod. Learning to read conditions fluently will make you significantly faster at diagnosing problems. In the next and final lesson of this chapter, we look at **restart policies** — the rules that govern what happens when a container exits.
+Pod conditions are the **preflight checklist** of the Kubernetes lifecycle. They answer precise yes-or-no questions: is this Pod scheduled? Are init containers done? Are all containers ready? Is the Pod as a whole ready for traffic? Unlike phases and container states, conditions are directly tied to real-world consequences — especially the **Ready** condition, which controls whether a Service sends traffic to the Pod. Learning to read conditions fluently will make you significantly faster at diagnosing problems. In the next and final lesson of this chapter, we look at **restart policies:**  the rules that govern what happens when a container exits.

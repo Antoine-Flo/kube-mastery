@@ -8,12 +8,12 @@ Think of Baseline as a seatbelt — it protects against the most common dangers 
 
 Baseline blocks the most dangerous Pod configurations while remaining compatible with most workloads. Here are the key restrictions:
 
-- **No host namespaces** — `hostPID`, `hostIPC`, and `hostNetwork` must not be set to `true`
-- **No privileged containers** — `privileged: true` is forbidden
-- **No privilege escalation** — `allowPrivilegeEscalation` must be `false`
-- **Non-root execution** — `runAsNonRoot` must be `true`
-- **Limited capabilities** — dangerous capabilities like `SYS_ADMIN` or `NET_RAW` are not allowed
-- **Restricted volume types** — host path mounts and other sensitive volume types are forbidden
+- **No host namespaces:**  `hostPID`, `hostIPC`, and `hostNetwork` must not be set to `true`
+- **No privileged containers:**  `privileged: true` is forbidden
+- **No privilege escalation:**  `allowPrivilegeEscalation` must be `false`
+- **Non-root execution:**  `runAsNonRoot` must be `true`
+- **Limited capabilities:**  dangerous capabilities like `SYS_ADMIN` or `NET_RAW` are not allowed
+- **Restricted volume types:**  host path mounts and other sensitive volume types are forbidden
 
 Most standard applications — web servers, APIs, background workers — can meet these requirements with just a few lines added to the Pod spec.
 
@@ -46,10 +46,10 @@ The key additions are `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, a
 
 Restricted builds on Baseline with additional hardening requirements:
 
-- **Read-only root filesystem** — `readOnlyRootFilesystem: true` prevents writes to the container's root filesystem
-- **Seccomp profile required** — a `seccompProfile` of type `RuntimeDefault` or `Localhost` must be set
-- **All capabilities dropped** — `capabilities.drop: [ALL]` is mandatory (Baseline recommends it; Restricted requires it)
-- **Stricter volume types** — only a narrow set of volume types is allowed
+- **Read-only root filesystem:**  `readOnlyRootFilesystem: true` prevents writes to the container's root filesystem
+- **Seccomp profile required:**  a `seccompProfile` of type `RuntimeDefault` or `Localhost` must be set
+- **All capabilities dropped:**  `capabilities.drop: [ALL]` is mandatory (Baseline recommends it; Restricted requires it)
+- **Stricter volume types:**  only a narrow set of volume types is allowed
 
 The biggest practical impact is the read-only root filesystem. Applications that write to `/tmp`, `/var/log`, or other directories will need `emptyDir` volumes mounted at those paths.
 
@@ -127,4 +127,4 @@ If the namespace enforces Restricted, this may be rejected for missing `readOnly
 
 ## Wrapping Up
 
-Baseline catches the most dangerous misconfigurations with minimal friction. Restricted adds read-only root filesystem and a mandatory seccomp profile for a hardened posture. Moving between levels is incremental — start with Baseline, add `readOnlyRootFilesystem` and `seccompProfile`, mount `emptyDir` for writable paths, and you are at Restricted. In the next lesson, we will explore the **enforcement modes** — enforce, audit, and warn — that let you roll out these policies gradually.
+Baseline catches the most dangerous misconfigurations with minimal friction. Restricted adds read-only root filesystem and a mandatory seccomp profile for a hardened posture. Moving between levels is incremental — start with Baseline, add `readOnlyRootFilesystem` and `seccompProfile`, mount `emptyDir` for writable paths, and you are at Restricted. In the next lesson, we will explore the **enforcement modes:**  enforce, audit, and warn — that let you roll out these policies gradually.

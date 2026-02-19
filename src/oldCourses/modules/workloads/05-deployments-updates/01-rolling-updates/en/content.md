@@ -15,8 +15,8 @@ Changes that do **not** trigger a rollout include scaling (`spec.replicas`), upd
 When you change the Pod template, the Deployment controller orchestrates a carefully coordinated dance between two ReplicaSets:
 
 1. A **new ReplicaSet** is created with the updated Pod template.
-2. The new ReplicaSet is gradually **scaled up** — new Pods are created and must pass readiness checks.
-3. The **old ReplicaSet** is gradually **scaled down** — old Pods are terminated as new ones become ready.
+2. The new ReplicaSet is gradually **scaled up:**  new Pods are created and must pass readiness checks.
+3. The **old ReplicaSet** is gradually **scaled down:**  old Pods are terminated as new ones become ready.
 4. The process continues until the new ReplicaSet has all the desired replicas and the old ReplicaSet has zero.
 
 ```mermaid
@@ -36,8 +36,8 @@ Throughout this process, a minimum number of Pods remain available to serve traf
 
 Two parameters give you fine-grained control over the rollout speed and availability guarantees:
 
-- **`maxSurge`** — the maximum number of Pods that can exist *above* the desired replica count during the update. More surge means faster rollouts, because more new Pods can spin up in parallel.
-- **`maxUnavailable`** — the maximum number of Pods that can be *unavailable* during the update. Higher values speed up the rollout but reduce the number of Pods serving traffic.
+- **`maxSurge`:**  the maximum number of Pods that can exist *above* the desired replica count during the update. More surge means faster rollouts, because more new Pods can spin up in parallel.
+- **`maxUnavailable`:**  the maximum number of Pods that can be *unavailable* during the update. Higher values speed up the rollout but reduce the number of Pods serving traffic.
 
 Both values can be absolute numbers or percentages. The defaults are **25% each**.
 

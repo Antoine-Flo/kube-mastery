@@ -1,6 +1,6 @@
 # ClusterIP Service
 
-When you create a Service without specifying a type, Kubernetes defaults to **ClusterIP** — and for good reason. It's the most common Service type, designed for internal communication between Pods within the cluster.
+When you create a Service without specifying a type, Kubernetes defaults to **ClusterIP:**  and for good reason. It's the most common Service type, designed for internal communication between Pods within the cluster.
 
 Think of ClusterIP as an internal phone extension. It works within the building (your cluster), but external callers can't dial it directly. Every internal team can reach it, and it never changes even when people (Pods) move desks.
 
@@ -52,8 +52,8 @@ If you omit `targetPort`, it defaults to the same value as `port`. So `port: 80`
 
 This is a common source of confusion. Here's the distinction:
 
-- **port** — The port the Service listens on. Clients connect to this port.
-- **targetPort** — The port on the Pod where your application actually listens.
+- **port:**  The port the Service listens on. Clients connect to this port.
+- **targetPort:**  The port on the Pod where your application actually listens.
 
 They can be different! Your Service can listen on port 80 (standard HTTP) while your app listens on port 9376. The Service translates between them.
 

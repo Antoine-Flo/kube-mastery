@@ -1,6 +1,6 @@
 # Kubernetes DNS
 
-You've been using Service names like `backend-api` in your configuration. But how does a Pod know that `backend-api` translates to IP `10.96.0.15`? The answer is **CoreDNS** — Kubernetes' built-in DNS server that makes service discovery seamless.
+You've been using Service names like `backend-api` in your configuration. But how does a Pod know that `backend-api` translates to IP `10.96.0.15`? The answer is **CoreDNS:**  Kubernetes' built-in DNS server that makes service discovery seamless.
 
 Think of CoreDNS as the phone directory for your cluster. Every Service gets an entry, and any Pod can look up any Service by name.
 
@@ -60,7 +60,7 @@ If DNS lookups fail, verify CoreDNS is running: `kubectl get pods -n kube-system
 
 ## The ndots Trap
 
-By default, Pods have `ndots: 5` in their DNS configuration. This means any name with fewer than 5 dots triggers a **search list** — Kubernetes tries appending `.default.svc.cluster.local`, `.svc.cluster.local`, `.cluster.local`, etc.
+By default, Pods have `ndots: 5` in their DNS configuration. This means any name with fewer than 5 dots triggers a **search list:**  Kubernetes tries appending `.default.svc.cluster.local`, `.svc.cluster.local`, `.cluster.local`, etc.
 
 This is great for short names like `redis` — they resolve correctly through the search list. But for external names like `api.example.com` (only 2 dots), Kubernetes tries the search list first, generating unnecessary DNS queries.
 

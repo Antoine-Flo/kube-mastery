@@ -1,6 +1,6 @@
 # Pod Security Enforcement Modes
 
-You know the three Pod Security Standards levels — Privileged, Baseline, and Restricted. But how do you actually apply them? The answer is **enforcement modes** — labels on namespaces that tell Kubernetes how strictly to enforce each level.
+You know the three Pod Security Standards levels — Privileged, Baseline, and Restricted. But how do you actually apply them? The answer is **enforcement modes:**  labels on namespaces that tell Kubernetes how strictly to enforce each level.
 
 The key insight: you don't have to go from zero to full enforcement overnight. Kubernetes gives you a gradual rollout path.
 

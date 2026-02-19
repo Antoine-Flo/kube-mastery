@@ -6,7 +6,7 @@ Up to this point, every workload we've managed — Pods through Deployments and 
 
 But what about a database cluster? A distributed message queue? An Elasticsearch ring? These systems need something Deployments can't provide: **identity**. Each instance must know who it is, where its data lives, and which peers surround it. Replacing a database node with a brand-new stranger that has no idea which shard it owns would be catastrophic.
 
-This is the problem **StatefulSets** solve. They manage Pods that need a **stable, persistent identity** — a fixed name, reliable storage, and predictable ordering — even when Pods are rescheduled, restarted, or moved across nodes.
+This is the problem **StatefulSets** solve. They manage Pods that need a **stable, persistent identity:**  a fixed name, reliable storage, and predictable ordering — even when Pods are rescheduled, restarted, or moved across nodes.
 
 ## The Apartment Building Analogy
 
@@ -106,9 +106,9 @@ After applying this manifest, Kubernetes will create `mysql-0`, then `mysql-1`, 
 
 StatefulSets are the right choice when your workload requires one or more of the following:
 
-- **Stable network identity** — each Pod must be individually addressable (databases, distributed caches).
-- **Stable persistent storage** — each Pod needs its own PersistentVolume that survives rescheduling.
-- **Ordered deployment and scaling** — Pods must start and stop in a specific sequence.
+- **Stable network identity:**  each Pod must be individually addressable (databases, distributed caches).
+- **Stable persistent storage:**  each Pod needs its own PersistentVolume that survives rescheduling.
+- **Ordered deployment and scaling:**  Pods must start and stop in a specific sequence.
 
 Common use cases include distributed databases (MySQL, PostgreSQL, MongoDB, Cassandra), message brokers (Kafka, RabbitMQ), and search engines (Elasticsearch).
 

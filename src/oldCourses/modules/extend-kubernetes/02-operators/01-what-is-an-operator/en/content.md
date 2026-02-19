@@ -62,10 +62,10 @@ Popular Operators include the <a target="_blank" href="https://github.com/promet
 
 An Operator is just a Pod (or set of Pods) running in your cluster. It uses the Kubernetes API like any other controller:
 
-1. **Watch** — It listens for changes to its custom resources
-2. **Reconcile** — When something changes, it compares desired state with actual state
-3. **Act** — It creates, updates, or deletes the underlying resources (Pods, Services, PVCs, ConfigMaps)
-4. **Report** — It updates the custom resource's `status` so you can see what's happening
+1. **Watch:**  It listens for changes to its custom resources
+2. **Reconcile:**  When something changes, it compares desired state with actual state
+3. **Act:**  It creates, updates, or deletes the underlying resources (Pods, Services, PVCs, ConfigMaps)
+4. **Report:**  It updates the custom resource's `status` so you can see what's happening
 
 You interact with the Operator through its custom resources, not by managing Pods and Services directly. Want to scale? Change `replicas` in the CR. Want to upgrade? Change `version`. The Operator figures out the rest.
 
@@ -93,9 +93,9 @@ Operators add complexity to your cluster. Use them when the application genuinel
 
 Operators are typically installed through one of three methods:
 
-- **Helm charts** — The most common approach. `helm install my-operator operator-repo/operator-chart`
-- **OLM (Operator Lifecycle Manager)** — A catalog-based system, common in OpenShift environments
-- **Raw manifests** — Apply CRDs, RBAC, and Deployment YAML directly
+- **Helm charts:**  The most common approach. `helm install my-operator operator-repo/operator-chart`
+- **OLM (Operator Lifecycle Manager):**  A catalog-based system, common in OpenShift environments
+- **Raw manifests:**  Apply CRDs, RBAC, and Deployment YAML directly
 
 Once installed, the Operator watches for custom resources and starts reconciling. You'll learn more about OLM in a later lesson.
 

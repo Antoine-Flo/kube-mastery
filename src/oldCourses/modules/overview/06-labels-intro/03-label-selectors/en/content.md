@@ -6,9 +6,9 @@ Labels alone are just metadata. **Selectors** are what make them powerful — th
 
 Kubernetes supports two selector syntaxes:
 
-**Equality-based** — Simple `key=value` matching. The most common type, used by Services and in `kubectl`. You filter with `-l key=value`, combine multiple requirements with commas (e.g., `-l 'app=nginx,env=production'`), and negate with `!=` (e.g., `-l 'env!=staging'`). Multiple comma-separated requirements are ANDed — all must match.
+**Equality-based:**  Simple `key=value` matching. The most common type, used by Services and in `kubectl`. You filter with `-l key=value`, combine multiple requirements with commas (e.g., `-l 'app=nginx,env=production'`), and negate with `!=` (e.g., `-l 'env!=staging'`). Multiple comma-separated requirements are ANDed — all must match.
 
-**Set-based** — More expressive, using operators like `in`, `notin`, and `exists`. The `in` operator matches any of several values (e.g., `-l 'env in (dev,staging)'`), `notin` excludes values (e.g., `-l 'tier notin (cache)'`), and a bare key checks for label existence regardless of value (e.g., `-l 'version'`). Set-based selectors are powerful for filtering across multiple values or checking for label presence.
+**Set-based:**  More expressive, using operators like `in`, `notin`, and `exists`. The `in` operator matches any of several values (e.g., `-l 'env in (dev,staging)'`), `notin` excludes values (e.g., `-l 'tier notin (cache)'`), and a bare key checks for label existence regardless of value (e.g., `-l 'version'`). Set-based selectors are powerful for filtering across multiple values or checking for label presence.
 
 ## Selectors in Manifests
 
@@ -67,9 +67,9 @@ Inconsistent labels are one of the most common causes of "why isn't my Service r
 
 ## Common Pitfalls
 
-- **Empty endpoints** — The selector doesn't match any Pods. Double-check label keys and values on both the Service and the Pods.
-- **Too many matches** — A broad selector like `app=nginx` might match Pods from different Deployments. Narrow the selector with additional labels.
-- **Orphaned Pods** — Changing a Deployment's selector after creation can disconnect it from its existing Pods, leaving them orphaned while new ones are created.
+- **Empty endpoints:**  The selector doesn't match any Pods. Double-check label keys and values on both the Service and the Pods.
+- **Too many matches:**  A broad selector like `app=nginx` might match Pods from different Deployments. Narrow the selector with additional labels.
+- **Orphaned Pods:**  Changing a Deployment's selector after creation can disconnect it from its existing Pods, leaving them orphaned while new ones are created.
 
 ---
 

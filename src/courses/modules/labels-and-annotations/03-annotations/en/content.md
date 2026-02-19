@@ -1,21 +1,21 @@
 # Annotations
 
-Labels and annotations are often introduced together, and for good reason — they're siblings, not twins. Both live in the `metadata` section of a Kubernetes object, and both store key-value pairs. But they serve completely different purposes, and confusing the two leads to subtle bugs and a messier cluster. This lesson explains what annotations are, why they exist alongside labels, and how to use them effectively.
+Labels and annotations are often introduced together, and for good reason , they're siblings, not twins. Both live in the `metadata` section of a Kubernetes object, and both store key-value pairs. But they serve completely different purposes, and confusing the two leads to subtle bugs and a messier cluster. This lesson explains what annotations are, why they exist alongside labels, and how to use them effectively.
 
 ## The Library Book Analogy
 
-Imagine a library's cataloguing system. Every book has a call number — a short, structured code like `QA76.73.P98` — printed on the spine. Librarians use that number to shelve books and patrons use it to find them on the shelves. The call number is designed to be searched and sorted: it's the library's equivalent of a label.
+Imagine a library's cataloguing system. Every book has a call number , a short, structured code like `QA76.73.P98` , printed on the spine. Librarians use that number to shelve books and patrons use it to find them on the shelves. The call number is designed to be searched and sorted: it's the library's equivalent of a label.
 
 But a book also has a lot more information attached to it: the ISBN, the publisher's notes on the back cover, margin annotations left by previous readers, a stamp showing which branch it came from, a slip of paper with the last three due dates. None of that information is used to locate the book on the shelf. It's there for humans and systems that need richer context once they've already found the book.
 
-Annotations are exactly those richer notes. They are metadata attached to a Kubernetes object that is not meant for selecting or filtering — they're meant for informing tools, operators, and humans.
+Annotations are exactly those richer notes. They are metadata attached to a Kubernetes object that is not meant for selecting or filtering , they're meant for informing tools, operators, and humans.
 
 ## Labels vs. Annotations at a Glance
 
 The fundamental rule is simple:
 
 - **Labels** are for selection and identification. They must conform to strict size and character rules. Kubernetes uses them internally to wire objects together.
-- **Annotations** are for information. They have looser rules (values can be large, up to 256 KB), and Kubernetes itself mostly ignores their contents — but tools, controllers, and humans read them.
+- **Annotations** are for information. They have looser rules (values can be large, up to 256 KB), and Kubernetes itself mostly ignores their contents , but tools, controllers, and humans read them.
 
 ```mermaid
 graph TB
@@ -31,7 +31,7 @@ graph TB
 
 Annotations serve as a communication channel between the people and systems that deploy software and the tools that operate it. Here are the most common use cases you'll encounter in real clusters.
 
-**Ownership and contact information.** It's useful to know who owns a resource — especially in large organizations where dozens of teams share a cluster. Many teams annotate their resources with an on-call contact or a link to a runbook:
+**Ownership and contact information.** It's useful to know who owns a resource , especially in large organizations where dozens of teams share a cluster. Many teams annotate their resources with an on-call contact or a link to a runbook:
 
 ```yaml
 annotations:
@@ -105,7 +105,7 @@ Annotations:  contact: platform-team@example.com
 ...
 ```
 
-If you want to extract a specific annotation value programmatically — for example, in a shell script — use `kubectl get` with a `jsonpath` expression:
+If you want to extract a specific annotation value programmatically , for example, in a shell script , use `kubectl get` with a `jsonpath` expression:
 
 ```bash
 kubectl get pod my-pod -o jsonpath='{.metadata.annotations.contact}'

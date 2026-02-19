@@ -76,10 +76,10 @@ The `change-cause` annotation is particularly useful — it's displayed by `kube
 
 When creating your own annotation conventions:
 
-- **Use a domain prefix** — `mycompany.com/owner` instead of just `owner`. This prevents clashes with other tools and makes it clear which annotations are yours.
-- **Be consistent** — Decide on a convention and stick to it across all resources and teams.
-- **Keep values reasonable** — While annotations can hold large values, etcd stores everything. Use ConfigMaps for large configuration data.
-- **Document your conventions** — Maintain a reference of which annotations your team uses and what they mean.
+- **Use a domain prefix:**  `mycompany.com/owner` instead of just `owner`. This prevents clashes with other tools and makes it clear which annotations are yours.
+- **Be consistent:**  Decide on a convention and stick to it across all resources and teams.
+- **Keep values reasonable:**  While annotations can hold large values, etcd stores everything. Use ConfigMaps for large configuration data.
+- **Document your conventions:**  Maintain a reference of which annotations your team uses and what they mean.
 
 You can apply these conventions with `kubectl annotate`, passing multiple key-value pairs in a single command — for example, setting `mycompany.com/owner` and `mycompany.com/cost-center` on a Deployment.
 

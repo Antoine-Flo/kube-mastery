@@ -22,9 +22,9 @@ The `concurrencyPolicy` field accepts three values:
 
 Think of it like a meeting room with a single projector:
 
-- **Allow** — anyone can walk in and start presenting, even if someone else is already mid-presentation. It gets chaotic.
-- **Forbid** — if the room is occupied, the next presenter waits outside and their slot is skipped entirely.
-- **Replace** — the current presenter is asked to leave so the new one can start immediately.
+- **Allow:**  anyone can walk in and start presenting, even if someone else is already mid-presentation. It gets chaotic.
+- **Forbid:**  if the room is occupied, the next presenter waits outside and their slot is skipped entirely.
+- **Replace:**  the current presenter is asked to leave so the new one can start immediately.
 
 ```mermaid
 flowchart TD
@@ -46,8 +46,8 @@ The default policy is `Allow`, which means overlapping Jobs can pile up silently
 
 Every time a CronJob fires, it creates a new Job object. Over days and weeks, these accumulate. Kubernetes provides two fields to manage this automatically:
 
-- **`successfulJobsHistoryLimit`** — how many completed (successful) Jobs to retain. Default: **3**.
-- **`failedJobsHistoryLimit`** — how many failed Jobs to retain. Default: **1**.
+- **`successfulJobsHistoryLimit`:**  how many completed (successful) Jobs to retain. Default: **3**.
+- **`failedJobsHistoryLimit`:**  how many failed Jobs to retain. Default: **1**.
 
 Older Jobs beyond these limits are garbage-collected along with their Pods. This keeps your cluster tidy while still preserving enough history to inspect recent runs and debug failures.
 
@@ -82,11 +82,11 @@ spec:
 
 Let's break this down:
 
-- **`schedule: "0 2 * * *"`** — runs every day at 2:00 AM (in the controller's time zone, typically UTC).
-- **`concurrencyPolicy: Forbid`** — if last night's backup is somehow still running, tonight's run is skipped rather than starting a conflicting second backup.
-- **`successfulJobsHistoryLimit: 5`** — keeps the last five successful backup Jobs so you can review recent runs.
-- **`failedJobsHistoryLimit: 3`** — retains the last three failures, giving you time to investigate.
-- **`restartPolicy: OnFailure`** — if the container exits with an error, the Pod restarts it before marking the Job as failed.
+- **`schedule: "0 2 * * *"`:**  runs every day at 2:00 AM (in the controller's time zone, typically UTC).
+- **`concurrencyPolicy: Forbid`:**  if last night's backup is somehow still running, tonight's run is skipped rather than starting a conflicting second backup.
+- **`successfulJobsHistoryLimit: 5`:**  keeps the last five successful backup Jobs so you can review recent runs.
+- **`failedJobsHistoryLimit: 3`:**  retains the last three failures, giving you time to investigate.
+- **`restartPolicy: OnFailure`:**  if the container exits with an error, the Pod restarts it before marking the Job as failed.
 
 ## Inspecting Your CronJob
 
@@ -96,9 +96,9 @@ Once the CronJob is running, use `kubectl describe cronjob <name>` to see the fu
 
 Here are practical guidelines to help you decide:
 
-- **Backups and data exports** — use `Forbid`. Overlapping backups can corrupt data or double resource usage.
-- **Cache warming or report generation** — `Replace` works well. If the previous run is stale, you want the latest one to take over.
-- **Lightweight health checks** — `Allow` may be acceptable if each run completes in seconds and overlap is virtually impossible.
+- **Backups and data exports:**  use `Forbid`. Overlapping backups can corrupt data or double resource usage.
+- **Cache warming or report generation:**  `Replace` works well. If the previous run is stale, you want the latest one to take over.
+- **Lightweight health checks:**  `Allow` may be acceptable if each run completes in seconds and overlap is virtually impossible.
 
 For history limits, keep enough successful Jobs to cover your review cycle (a week's worth of daily Jobs means setting the limit to 7), and enough failed Jobs to give your team time to respond to alerts.
 

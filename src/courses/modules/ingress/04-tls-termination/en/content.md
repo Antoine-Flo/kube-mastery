@@ -1,14 +1,14 @@
 # TLS Termination with Ingress
 
-Virtually every production web application needs HTTPS. Browsers warn users about HTTP sites, search engines penalize them, and for anything handling user data or authentication, plain HTTP is simply not acceptable. Kubernetes Ingress makes configuring HTTPS remarkably straightforward through a mechanism called **TLS termination** — the controller handles the secure connection with the outside world, while your backend Services can keep speaking plain HTTP internally.
+Virtually every production web application needs HTTPS. Browsers warn users about HTTP sites, search engines penalize them, and for anything handling user data or authentication, plain HTTP is simply not acceptable. Kubernetes Ingress makes configuring HTTPS remarkably straightforward through a mechanism called **TLS termination:**  the controller handles the secure connection with the outside world, while your backend Services can keep speaking plain HTTP internally.
 
 ## What TLS Termination Means
 
-TLS termination is the act of decrypting an incoming HTTPS connection at a specific point in your infrastructure and then forwarding the decrypted traffic to the backend. The "termination" refers to the end of the encrypted tunnel — beyond that point, traffic flows as HTTP.
+TLS termination is the act of decrypting an incoming HTTPS connection at a specific point in your infrastructure and then forwarding the decrypted traffic to the backend. The "termination" refers to the end of the encrypted tunnel , beyond that point, traffic flows as HTTP.
 
 In the Ingress model, the controller Pod is where TLS terminates. An HTTPS request from a browser travels encrypted over the public internet, hits the Ingress controller, and at that point the controller decrypts it using your certificate and private key. The request then travels as plain HTTP from the controller to your backend Service and Pods, all within the private cluster network.
 
-This approach has significant advantages. Your application code never has to deal with TLS — no certificate configuration in nginx or Express or Spring Boot. All certificate management is centralized at the Ingress layer. And since cluster-internal traffic is already within a trusted network boundary, plain HTTP inside the cluster is a widely accepted trade-off (though service meshes like Istio can encrypt internal traffic too if you need it).
+This approach has significant advantages. Your application code never has to deal with TLS , no certificate configuration in nginx or Express or Spring Boot. All certificate management is centralized at the Ingress layer. And since cluster-internal traffic is already within a trusted network boundary, plain HTTP inside the cluster is a widely accepted trade-off (though service meshes like Istio can encrypt internal traffic too if you need it).
 
 ```mermaid
 sequenceDiagram
@@ -58,10 +58,10 @@ kubectl get secret my-tls-secret
 kubectl describe secret my-tls-secret
 ```
 
-The `describe` output will show two data keys (`tls.crt` and `tls.key`) but will not reveal their values — Kubernetes keeps Secret data protected from casual inspection.
+The `describe` output will show two data keys (`tls.crt` and `tls.key`) but will not reveal their values , Kubernetes keeps Secret data protected from casual inspection.
 
 :::warning
-The TLS Secret **must be in the same namespace as the Ingress resource** that references it. An Ingress in the `production` namespace cannot reference a Secret in the `default` namespace. If you need the same certificate in multiple namespaces, you must copy the Secret into each one — or use a tool like cert-manager's Certificate resource to manage this automatically.
+The TLS Secret **must be in the same namespace as the Ingress resource** that references it. An Ingress in the `production` namespace cannot reference a Secret in the `default` namespace. If you need the same certificate in multiple namespaces, you must copy the Secret into each one , or use a tool like cert-manager's Certificate resource to manage this automatically.
 :::
 
 ## Configuring TLS in the Ingress Manifest
@@ -92,7 +92,7 @@ spec:
                   number: 80
 ```
 
-The `spec.tls` block is a list, meaning you can specify multiple TLS entries — useful when your Ingress serves multiple hostnames with different certificates. Each entry has a list of `hosts` that should use that certificate, and the `secretName` pointing to the Secret containing the certificate and key.
+The `spec.tls` block is a list, meaning you can specify multiple TLS entries , useful when your Ingress serves multiple hostnames with different certificates. Each entry has a list of `hosts` that should use that certificate, and the `secretName` pointing to the Secret containing the certificate and key.
 
 When the Ingress controller reads this, it configures the underlying proxy (nginx, Traefik, etc.) to listen on port 443, load the certificate from the Secret, and handle the HTTPS handshake for the listed hosts. The controller automatically watches the Secret and reloads when the certificate is renewed.
 
@@ -114,7 +114,7 @@ With ingress-nginx, when you configure TLS in the Ingress spec, `ssl-redirect` d
 
 ## cert-manager: Automatic Certificate Management
 
-Managing TLS certificates manually — generating them, tracking expiry dates, renewing them before they expire, and updating Secrets — is a tedious and error-prone process. A missed renewal means users see scary certificate error pages in their browsers.
+Managing TLS certificates manually , generating them, tracking expiry dates, renewing them before they expire, and updating Secrets , is a tedious and error-prone process. A missed renewal means users see scary certificate error pages in their browsers.
 
 **cert-manager** is a Kubernetes add-on that automates the entire certificate lifecycle. It integrates with certificate authorities like Let's Encrypt (free, publicly trusted certificates) and internal PKI systems. Once installed and configured, you add annotations to your Ingress resource, and cert-manager handles everything else: requesting the certificate, proving domain ownership, storing the certificate in a Secret, and renewing it automatically before expiry.
 

@@ -50,13 +50,13 @@ contexts:
 current-context: my-context
 ```
 
-**Clusters** — Where to connect. Each entry has the API server address and the CA certificate to verify the server's identity.
+**Clusters:**  Where to connect. Each entry has the API server address and the CA certificate to verify the server's identity.
 
-**Users** — How to authenticate. Credentials can be client certificates, bearer tokens, or exec commands that fetch tokens at runtime.
+**Users:**  How to authenticate. Credentials can be client certificates, bearer tokens, or exec commands that fetch tokens at runtime.
 
-**Contexts** — The combination. Each context links a cluster with a user and optionally sets a default namespace.
+**Contexts:**  The combination. Each context links a cluster with a user and optionally sets a default namespace.
 
-**current-context** — Which context kubectl uses right now.
+**current-context:**  Which context kubectl uses right now.
 
 ```mermaid
 flowchart TD

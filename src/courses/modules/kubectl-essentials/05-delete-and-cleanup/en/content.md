@@ -1,6 +1,6 @@
 # Deleting and Cleaning Up Resources
 
-Creating resources is only half of the story. Eventually, you need to remove them — to clean up experiments, decommission old services, free resources, or simply reset a namespace to a clean state. Kubernetes provides a thoughtful deletion mechanism that prioritizes graceful application shutdown. Understanding how deletion works, and when to deviate from the defaults, will help you avoid both stuck resources and unexpected downtime.
+Creating resources is only half of the story. Eventually, you need to remove them , to clean up experiments, decommission old services, free resources, or simply reset a namespace to a clean state. Kubernetes provides a thoughtful deletion mechanism that prioritizes graceful application shutdown. Understanding how deletion works, and when to deviate from the defaults, will help you avoid both stuck resources and unexpected downtime.
 
 ## The Basic Delete Commands
 
@@ -33,7 +33,7 @@ kubectl delete -f deployment.yaml
 kubectl delete -f ./manifests/
 ```
 
-This is a natural complement to the declarative workflow. If `kubectl apply -f my-service.yaml` created the resources, then `kubectl delete -f my-service.yaml` removes exactly those resources — Kubernetes reads the resource type and name from the file and deletes the matching objects in the cluster. You do not need to remember the exact names.
+This is a natural complement to the declarative workflow. If `kubectl apply -f my-service.yaml` created the resources, then `kubectl delete -f my-service.yaml` removes exactly those resources , Kubernetes reads the resource type and name from the file and deletes the matching objects in the cluster. You do not need to remember the exact names.
 
 :::info
 `kubectl delete -f <file>` is the cleanest way to tear down resources you created declaratively, because the manifest file serves as the record of what was created.
@@ -41,7 +41,7 @@ This is a natural complement to the declarative workflow. If `kubectl apply -f m
 
 ## How Kubernetes Deletes: Graceful Termination
 
-When you delete a pod, Kubernetes does not simply kill it instantly. It follows a graceful termination sequence that gives your application time to finish in-flight requests, close connections, and clean up — just like a well-run restaurant that lets you finish your meal even after closing time.
+When you delete a pod, Kubernetes does not simply kill it instantly. It follows a graceful termination sequence that gives your application time to finish in-flight requests, close connections, and clean up , just like a well-run restaurant that lets you finish your meal even after closing time.
 
 Here is what happens step by step when a pod is deleted:
 
@@ -49,7 +49,7 @@ Here is what happens step by step when a pod is deleted:
 2. Kubernetes sends a **SIGTERM** signal to the main process inside each container. This is a polite request to shut down.
 3. A grace period timer starts (default: 30 seconds).
 4. If the process exits before the grace period ends, the pod is deleted immediately.
-5. If the process is still running when the grace period expires, Kubernetes sends **SIGKILL** — an immediate, forceful termination.
+5. If the process is still running when the grace period expires, Kubernetes sends **SIGKILL:**  an immediate, forceful termination.
 6. The pod is removed from the cluster.
 
 ```mermaid
@@ -111,7 +111,7 @@ There is a special case where you might want to delete a parent without deleting
 kubectl delete deployment my-app --cascade=orphan
 ```
 
-This is occasionally useful for controlled migrations — for example, when you want to transfer ownership of pods from one controller to another, or when you need to keep pods alive while you reconfigure their management. It is a niche use case, but good to know it exists.
+This is occasionally useful for controlled migrations , for example, when you want to transfer ownership of pods from one controller to another, or when you need to keep pods alive while you reconfigure their management. It is a niche use case, but good to know it exists.
 
 :::warning
 Orphaned pods are no longer managed by any controller. If they crash, they will not be restarted. If the node they live on dies, they will not be rescheduled. Use `--cascade=orphan` only with a clear plan for what happens next.
@@ -119,7 +119,7 @@ Orphaned pods are no longer managed by any controller. If they crash, they will 
 
 ## Deleting Namespaces: All or Nothing
 
-Deleting a namespace is the nuclear option. When you delete a namespace, Kubernetes deletes every single resource inside it — every pod, every service, every deployment, every configmap, every secret, every persistent volume claim. All of it.
+Deleting a namespace is the nuclear option. When you delete a namespace, Kubernetes deletes every single resource inside it , every pod, every service, every deployment, every configmap, every secret, every persistent volume claim. All of it.
 
 ```bash
 kubectl delete namespace staging
@@ -129,7 +129,7 @@ kubectl delete namespace staging
 **Deleting a namespace is irreversible and destroys everything inside it.** Double-check you have the right namespace before running this command. There is no "are you sure?" prompt. In production, namespace deletion should be a carefully considered, team-approved action.
 :::
 
-The deletion is not instant for large namespaces. Kubernetes works through the contained resources methodically, and the namespace itself will sit in a `Terminating` state until all resources are cleaned up. If a namespace is stuck in `Terminating`, it is usually because a finalizer on one of its resources is not completing — this requires more advanced troubleshooting.
+The deletion is not instant for large namespaces. Kubernetes works through the contained resources methodically, and the namespace itself will sit in a `Terminating` state until all resources are cleaned up. If a namespace is stuck in `Terminating`, it is usually because a finalizer on one of its resources is not completing , this requires more advanced troubleshooting.
 
 ## Deleting Resources by Label
 
@@ -145,7 +145,7 @@ kubectl delete all -l app=my-app
 
 ## Hands-On Practice
 
-Work through these commands in the terminal. Take particular note of how the termination grace period works — watch the pod status transitions in real time.
+Work through these commands in the terminal. Take particular note of how the termination grace period works , watch the pod status transitions in real time.
 
 ```bash
 # Create some resources to clean up
@@ -160,7 +160,7 @@ kubectl get all
 POD_NAME=$(kubectl get pods -l app=cleanup-demo -o jsonpath='{.items[0].metadata.name}')
 echo "Pod to delete: $POD_NAME"
 
-# Delete the pod — watch the Deployment immediately create a replacement
+# Delete the pod , watch the Deployment immediately create a replacement
 kubectl delete pod $POD_NAME &
 kubectl get pods -w
 
@@ -170,7 +170,7 @@ kubectl get pods -w
 # Run a pod that ignores SIGTERM (sleep runs for a long time)
 kubectl run grace-demo --image=busybox -- sleep 3600
 
-# Delete it and watch — you will see it in Terminating state
+# Delete it and watch , you will see it in Terminating state
 kubectl delete pod grace-demo &
 kubectl get pods -w
 
@@ -187,7 +187,7 @@ kubectl get pods
 # See the ReplicaSets owned by the deployment
 kubectl get replicasets
 
-# Delete the deployment — watch ReplicaSets and Pods go too
+# Delete the deployment , watch ReplicaSets and Pods go too
 kubectl delete deployment cleanup-demo
 kubectl get all
 
@@ -209,4 +209,4 @@ kubectl get all
 kubectl delete service cleanup-demo 2>/dev/null; true
 ```
 
-As you practice, pay attention to the pod status transitions in `kubectl get pods -w`. Watching a pod move from `Running` to `Terminating` to disappearing entirely gives you a concrete feel for the termination lifecycle — knowledge that will serve you well when troubleshooting stuck deletions in the future.
+As you practice, pay attention to the pod status transitions in `kubectl get pods -w`. Watching a pod move from `Running` to `Terminating` to disappearing entirely gives you a concrete feel for the termination lifecycle , knowledge that will serve you well when troubleshooting stuck deletions in the future.

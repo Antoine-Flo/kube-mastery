@@ -1,6 +1,6 @@
 # NetworkPolicy Structure
 
-Now that you understand what NetworkPolicies do conceptually, it's time to get familiar with how they're actually written. Like all Kubernetes resources, a NetworkPolicy is a YAML manifest that follows a predictable structure. Once you internalize this structure, you'll be able to read and write policies confidently — and more importantly, you'll be able to reason about what a policy does or doesn't allow just by reading it.
+Now that you understand what NetworkPolicies do conceptually, it's time to get familiar with how they're actually written. Like all Kubernetes resources, a NetworkPolicy is a YAML manifest that follows a predictable structure. Once you internalize this structure, you'll be able to read and write policies confidently , and more importantly, you'll be able to reason about what a policy does or doesn't allow just by reading it.
 
 ## The Top-Level Shape
 
@@ -45,7 +45,7 @@ policyTypes:
   - Egress
 ```
 
-This field matters more than it might seem. If you include `Ingress` in `policyTypes`, Kubernetes activates ingress filtering for the selected Pods using the rules you define in the `ingress` section. If you include `Ingress` but leave the `ingress` section empty (or omit it), the result is a **deny-all ingress** — no inbound traffic is allowed.
+This field matters more than it might seem. If you include `Ingress` in `policyTypes`, Kubernetes activates ingress filtering for the selected Pods using the rules you define in the `ingress` section. If you include `Ingress` but leave the `ingress` section empty (or omit it), the result is a **deny-all ingress:**  no inbound traffic is allowed.
 
 The same logic applies to `Egress`. Including it activates egress filtering. Including it with an empty or absent `egress` list means no outbound traffic is allowed.
 
@@ -68,7 +68,7 @@ ingress:
         port: 8080
 ```
 
-This rule says: allow inbound TCP connections on port 8080 from Pods labeled `app=frontend`. Anything else — a different port, a different source Pod — is blocked.
+This rule says: allow inbound TCP connections on port 8080 from Pods labeled `app=frontend`. Anything else , a different port, a different source Pod , is blocked.
 
 ## egress: Rules for Outbound Traffic
 
@@ -115,7 +115,7 @@ spec:
 
 Reading this aloud: "In the `default` namespace, Pods labeled `app=backend` will only accept inbound TCP connections on port 8080 from Pods labeled `app=frontend`. All other inbound traffic is denied."
 
-Notice that `policyTypes` only contains `Ingress`. This means egress from the backend is **not restricted** by this policy. The backend Pods can still make outbound connections anywhere. That's intentional here — we're only locking down who can reach the backend, not what the backend can reach.
+Notice that `policyTypes` only contains `Ingress`. This means egress from the backend is **not restricted** by this policy. The backend Pods can still make outbound connections anywhere. That's intentional here , we're only locking down who can reach the backend, not what the backend can reach.
 
 ## The from and to Arrays: OR vs AND Logic
 
@@ -125,7 +125,7 @@ This is where NetworkPolicy gets subtle, and it's a common source of confusion. 
 - **namespaceSelector**: matches all Pods in namespaces whose labels match
 - **ipBlock**: matches traffic from (or to) a CIDR IP range
 
-You can have multiple items in the `from` array. Each item in the array is treated with **OR logic** — traffic is allowed if it matches any one of them.
+You can have multiple items in the `from` array. Each item in the array is treated with **OR logic:**  traffic is allowed if it matches any one of them.
 
 ```yaml
 from:
@@ -170,7 +170,7 @@ graph TD
     NP --> IG["ingress[]\nList of inbound rules"]
     NP --> EG["egress[]\nList of outbound rules"]
 
-    IG --> IGR["Rule (item in list)\n— OR with other rules"]
+    IG --> IGR["Rule (item in list)\n, OR with other rules"]
     IGR --> FROM["from[]\nAllowed sources\n(OR between items)"]
     IGR --> PORTS["ports[]\nAllowed ports/protocols"]
 
@@ -200,7 +200,7 @@ graph TD
 
 ## Ports: Restricting Further
 
-The `ports` array within each ingress or egress rule lets you narrow down which ports and protocols are matched. If you omit `ports` entirely from a rule, the rule matches all ports and protocols — be intentional about this.
+The `ports` array within each ingress or egress rule lets you narrow down which ports and protocols are matched. If you omit `ports` entirely from a rule, the rule matches all ports and protocols , be intentional about this.
 
 Each port entry can specify:
 
@@ -208,7 +208,7 @@ Each port entry can specify:
 - `port`: a port number (e.g., `8080`) or a named port (e.g., `"http"`)
 - `endPort`: optionally specify a range when combined with `port` (covered in the advanced lesson)
 
-If you want to allow both TCP and UDP on the same port, you need two separate entries in the `ports` list — one for each protocol.
+If you want to allow both TCP and UDP on the same port, you need two separate entries in the `ports` list , one for each protocol.
 
 ## Hands-On Practice
 
@@ -270,7 +270,7 @@ You should receive an nginx HTML response.
 kubectl exec other -- curl -s --connect-timeout 3 <BACKEND-IP>
 ```
 
-This time the request should time out — the `other` Pod doesn't have the `app=frontend` label, so the policy blocks it.
+This time the request should time out , the `other` Pod doesn't have the `app=frontend` label, so the policy blocks it.
 
 **6. Inspect the policy:**
 
@@ -278,7 +278,7 @@ This time the request should time out — the `other` Pod doesn't have the `app=
 kubectl describe networkpolicy allow-frontend-to-backend
 ```
 
-Look at the `PodSelector` and `Allowing ingress traffic` sections — they cleanly summarize the policy in human-readable form.
+Look at the `PodSelector` and `Allowing ingress traffic` sections , they cleanly summarize the policy in human-readable form.
 
 **7. Clean up:**
 

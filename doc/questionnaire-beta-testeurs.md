@@ -1,14 +1,14 @@
-# Questionnaire Beta Testeurs - Kube Mastery
+# Questionnaire Beta Testeurs - KubeMastery
 
 ## Instructions
 
-Ce questionnaire est destiné aux beta testeurs de Kube Mastery. Répondez de manière honnête et détaillée. Vos retours nous aideront à améliorer la plateforme.
+Ce questionnaire est destiné aux beta testeurs de KubeMastery. Répondez de manière honnête et détaillée. Vos retours nous aideront à améliorer la plateforme.
 
 ---
 
 ## Sur la première impression
 
-**1. Est-ce que tu as compris immédiatement à quoi sert Kube Mastery en arrivant sur la plateforme ?**
+**1. Est-ce que tu as compris immédiatement à quoi sert KubeMastery en arrivant sur la plateforme ?**
 
 - [ ] Oui, c'était clair dès le départ
 - [ ] Oui, mais après quelques secondes de réflexion
@@ -172,7 +172,7 @@ _(Réponse libre - sois précis si possible)_
 - [ ] Oui, j'en ai utilisé plusieurs
 - [ ] Oui, j'en ai utilisé une
 - [ ] Non, c'est ma première
-      _(Si oui, comment Kube Mastery se compare-t-il ?)_
+      _(Si oui, comment KubeMastery se compare-t-il ?)_
 
 **25. Autres commentaires ou suggestions ?**
 _(Réponse libre)_

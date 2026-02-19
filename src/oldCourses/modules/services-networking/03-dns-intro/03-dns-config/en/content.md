@@ -53,9 +53,9 @@ spec:
 ```
 
 This gives you complete control over:
-- **nameservers** — Which DNS servers to query
-- **searches** — Which domains to append to short names
-- **options** — DNS resolver behavior (like `ndots`)
+- **nameservers:**  Which DNS servers to query
+- **searches:**  Which domains to append to short names
+- **options:**  DNS resolver behavior (like `ndots`)
 
 :::warning
 With `dnsPolicy: None`, the Pod has **no DNS configuration** unless you provide `dnsConfig`. If you forget it, DNS resolution won't work at all. To keep cluster DNS working alongside custom settings, include the CoreDNS service IP in your nameservers list.

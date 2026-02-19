@@ -10,10 +10,10 @@ Think of a StorageClass as a menu at a restaurant. The menu describes what's ava
 
 A StorageClass has four key components:
 
-- **Provisioner** — The driver that creates PVs. Could be a cloud provider (`kubernetes.io/aws-ebs`), a CSI driver, or `kubernetes.io/no-provisioner` for manual provisioning.
-- **Parameters** — Backend-specific options like disk type, IOPS, or zone.
-- **Reclaim Policy** — What happens to the PV when the PVC is deleted (`Delete` or `Retain`).
-- **Volume Binding Mode** — When provisioning happens: `Immediate` (as soon as the PVC is created) or `WaitForFirstConsumer` (when a Pod actually needs it).
+- **Provisioner:**  The driver that creates PVs. Could be a cloud provider (`kubernetes.io/aws-ebs`), a CSI driver, or `kubernetes.io/no-provisioner` for manual provisioning.
+- **Parameters:**  Backend-specific options like disk type, IOPS, or zone.
+- **Reclaim Policy:**  What happens to the PV when the PVC is deleted (`Delete` or `Retain`).
+- **Volume Binding Mode:**  When provisioning happens: `Immediate` (as soon as the PVC is created) or `WaitForFirstConsumer` (when a Pod actually needs it).
 
 ```mermaid
 flowchart LR
@@ -47,8 +47,8 @@ In a real cloud environment, you'd use a provisioner like `ebs.csi.aws.com` (AWS
 
 The `volumeBindingMode` controls **when** storage is provisioned:
 
-- **Immediate** — The PV is created as soon as the PVC appears. Simple, but the provisioner doesn't know which node the Pod will run on. This can cause problems in multi-zone clusters if storage is provisioned in zone A but the Pod runs in zone B.
-- **WaitForFirstConsumer** — Provisioning is delayed until a Pod actually references the PVC. The provisioner knows the Pod's node and can create storage in the right zone. This is the recommended mode for topology-aware storage.
+- **Immediate:**  The PV is created as soon as the PVC appears. Simple, but the provisioner doesn't know which node the Pod will run on. This can cause problems in multi-zone clusters if storage is provisioned in zone A but the Pod runs in zone B.
+- **WaitForFirstConsumer:**  Provisioning is delayed until a Pod actually references the PVC. The provisioner knows the Pod's node and can create storage in the right zone. This is the recommended mode for topology-aware storage.
 
 ## Multiple Storage Tiers
 

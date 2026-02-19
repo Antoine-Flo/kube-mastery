@@ -56,9 +56,9 @@ spec:
 
 Let's break down the key fields:
 
-- **`replicas: 3`** — the desired number of identical Pods.
-- **`selector.matchLabels`** — tells the Deployment which Pods it owns. This must match the labels in the Pod template.
-- **`template`** — the blueprint for every Pod the Deployment creates. Change this template, and the Deployment triggers a rolling update.
+- **`replicas: 3`:**  the desired number of identical Pods.
+- **`selector.matchLabels`:**  tells the Deployment which Pods it owns. This must match the labels in the Pod template.
+- **`template`:**  the blueprint for every Pod the Deployment creates. Change this template, and the Deployment triggers a rolling update.
 
 :::info
 Kubernetes adds a `pod-template-hash` label to every ReplicaSet and Pod created by a Deployment. This hash is derived from the Pod template and guarantees that each ReplicaSet only manages the Pods it created — never someone else's.
@@ -66,13 +66,13 @@ Kubernetes adds a `pod-template-hash` label to every ReplicaSet and Pod created 
 
 ## When to Use a Deployment
 
-Deployments are designed for **stateless applications** — workloads where any replica can handle any request and no Pod needs a stable identity or persistent local storage. Common examples include:
+Deployments are designed for **stateless applications:**  workloads where any replica can handle any request and no Pod needs a stable identity or persistent local storage. Common examples include:
 
 - Web servers and frontends
 - REST APIs and GraphQL services
 - Microservices and background workers
 
-For **stateful workloads** — databases, message brokers, or anything requiring stable network identity and persistent storage — Kubernetes provides <a target="_blank" href="https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/">StatefulSets</a>, which are purpose-built for those needs.
+For **stateful workloads:**  databases, message brokers, or anything requiring stable network identity and persistent storage — Kubernetes provides <a target="_blank" href="https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/">StatefulSets</a>, which are purpose-built for those needs.
 
 :::warning
 Never manually modify or delete ReplicaSets that belong to a Deployment. The Deployment controller owns them, and any manual changes will be overwritten or cause unexpected behavior. Always make changes through the Deployment itself.

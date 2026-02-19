@@ -1,14 +1,14 @@
 # Monitoring Cluster Component Logs
 
-So far in this module we've looked at logging for your own application containers. But Kubernetes itself is composed of several components that generate their own logs — the API server, the scheduler, the controller manager, etcd, CoreDNS, and the kubelet. When something goes wrong at the infrastructure level — a node stops accepting Pods, the API server starts returning errors, PVCs won't bind — these component logs are where you look for answers. Knowing how to access them efficiently is an essential skill for any Kubernetes operator.
+So far in this module we've looked at logging for your own application containers. But Kubernetes itself is composed of several components that generate their own logs , the API server, the scheduler, the controller manager, etcd, CoreDNS, and the kubelet. When something goes wrong at the infrastructure level , a node stops accepting Pods, the API server starts returning errors, PVCs won't bind , these component logs are where you look for answers. Knowing how to access them efficiently is an essential skill for any Kubernetes operator.
 
 ## Where System Components Run
 
 The answer depends on how your cluster was set up.
 
-On **managed Kubernetes clusters** (GKE, EKS, AKS, and most cloud-hosted options), the control plane runs on infrastructure managed by your cloud provider. You typically don't have direct node access to the control plane machines. However, the control plane components — or at least some of them — may still be accessible via `kubectl logs` through their operator-managed representations. Some providers expose control plane logs through their own logging systems (CloudWatch Logs for EKS, Cloud Logging for GKE).
+On **managed Kubernetes clusters** (GKE, EKS, AKS, and most cloud-hosted options), the control plane runs on infrastructure managed by your cloud provider. You typically don't have direct node access to the control plane machines. However, the control plane components , or at least some of them , may still be accessible via `kubectl logs` through their operator-managed representations. Some providers expose control plane logs through their own logging systems (CloudWatch Logs for EKS, Cloud Logging for GKE).
 
-On **self-managed clusters built with kubeadm**, the control plane components run as **static Pods** in the `kube-system` namespace. Static Pods are managed directly by the kubelet on the control plane node, not by the API server — but they appear as regular Pods in `kubectl get pods` and their logs are fully accessible via `kubectl logs`.
+On **self-managed clusters built with kubeadm**, the control plane components run as **static Pods** in the `kube-system` namespace. Static Pods are managed directly by the kubelet on the control plane node, not by the API server , but they appear as regular Pods in `kubectl get pods` and their logs are fully accessible via `kubectl logs`.
 
 On **older or manually installed clusters**, some components may run as **systemd services** on the node itself rather than as containers. In that case, `kubectl logs` won't work and you need to use `journalctl` on the node.
 
@@ -54,7 +54,7 @@ kubectl logs -n kube-system kube-apiserver-controlplane --tail=50 --since=5m
 ```
 
 :::info
-Static Pod manifests are stored on the control plane node at `/etc/kubernetes/manifests/`. If a static Pod is behaving strangely, it's worth inspecting its manifest directly on the node. Changes to these YAML files take effect immediately — the kubelet on that node watches this directory and reacts to changes.
+Static Pod manifests are stored on the control plane node at `/etc/kubernetes/manifests/`. If a static Pod is behaving strangely, it's worth inspecting its manifest directly on the node. Changes to these YAML files take effect immediately , the kubelet on that node watches this directory and reacts to changes.
 :::
 
 ## Which Component to Check for Which Symptom
@@ -79,7 +79,7 @@ flowchart TD
     H --> H1["coredns Pod logs\n(DNS queries, upstream errors)"]
 ```
 
-When a Pod is stuck in `Pending`, the scheduler is the first place to look — it logs the exact reason it couldn't place the Pod. When the API server is throwing 503 errors, the apiserver logs will contain details about overload, authentication failures, or webhook timeouts. When a Deployment isn't reconciling properly, the controller-manager logs contain the reconciliation loop output.
+When a Pod is stuck in `Pending`, the scheduler is the first place to look , it logs the exact reason it couldn't place the Pod. When the API server is throwing 503 errors, the apiserver logs will contain details about overload, authentication failures, or webhook timeouts. When a Deployment isn't reconciling properly, the controller-manager logs contain the reconciliation loop output.
 
 ## CoreDNS Logs
 
@@ -93,7 +93,7 @@ Using `-l k8s-app=kube-dns` selects all CoreDNS Pods at once using the label sel
 
 ## Node-Level Logs: The kubelet
 
-The kubelet runs as a systemd service directly on each node — it is not itself a containerized process (it can't be, because it's responsible for managing containers). This means you cannot access kubelet logs with `kubectl logs`. Instead, you need to SSH into the node and use `journalctl`:
+The kubelet runs as a systemd service directly on each node , it is not itself a containerized process (it can't be, because it's responsible for managing containers). This means you cannot access kubelet logs with `kubectl logs`. Instead, you need to SSH into the node and use `journalctl`:
 
 ```bash
 # On the node itself:
@@ -121,7 +121,7 @@ The verbosity levels have informal conventions:
 - **`-v=8`**: API request/response bodies
 - **`-v=10`**: Complete dump of HTTP messages and request contents
 
-In practice, if you're asked to increase verbosity for debugging, `-v=6` or `-v=8` are the most commonly useful levels — they show the API request traffic without the full body dump of level 10.
+In practice, if you're asked to increase verbosity for debugging, `-v=6` or `-v=8` are the most commonly useful levels , they show the API request traffic without the full body dump of level 10.
 
 ## Hands-On Practice
 
@@ -208,6 +208,5 @@ kubectl logs -n kube-system kube-controller-manager-$(kubectl get node -o jsonpa
 kubectl delete pod scheduler-test
 ```
 
----
 
-With the combination of `kubectl logs` for system Pods, `journalctl` for kubelet, and `kubectl get events`, you now have a complete toolkit for diagnosing problems at every layer of the cluster — from your own applications all the way down to the infrastructure components that keep Kubernetes running.
+With the combination of `kubectl logs` for system Pods, `journalctl` for kubelet, and `kubectl get events`, you now have a complete toolkit for diagnosing problems at every layer of the cluster , from your own applications all the way down to the infrastructure components that keep Kubernetes running.

@@ -28,9 +28,9 @@ Containers are isolated by design — that is their superpower. But sometimes, i
 
 Pods solve this elegantly. By grouping tightly coupled containers together, a Pod gives them:
 
-- **A shared network namespace** — all containers in the Pod share one IP address and can communicate over `localhost`.
-- **Shared storage volumes** — containers can read and write to the same files.
-- **A shared lifecycle** — containers start together, run together, and are terminated together.
+- **A shared network namespace:**  all containers in the Pod share one IP address and can communicate over `localhost`.
+- **Shared storage volumes:**  containers can read and write to the same files.
+- **A shared lifecycle:**  containers start together, run together, and are terminated together.
 
 This makes Pods the natural unit for patterns like sidecar containers (log shippers, proxies, config reloaders) and init containers (setup tasks that run before your main app starts).
 

@@ -10,9 +10,9 @@ Think of objects as entries in a to-do list that never gets lost. You write down
 
 Kubernetes objects capture three main aspects of your cluster:
 
-- **What is running** — Which containerized applications are deployed and on which nodes.
-- **What resources they have** — CPU, memory, storage, and network configuration.
-- **How they behave** — Restart policies, update strategies, and fault-tolerance rules.
+- **What is running:**  Which containerized applications are deployed and on which nodes.
+- **What resources they have:**  CPU, memory, storage, and network configuration.
+- **How they behave:**  Restart policies, update strategies, and fault-tolerance rules.
 
 You create and change objects through the Kubernetes API. When you run a `kubectl` command or apply a YAML manifest, you are sending an API request that creates or modifies an object. The API server validates your input, stores the object in etcd, and controllers take action to bring the cluster in line with your intent.
 

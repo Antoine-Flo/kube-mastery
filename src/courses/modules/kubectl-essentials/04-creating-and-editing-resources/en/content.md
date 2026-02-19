@@ -1,6 +1,6 @@
 # Creating and Editing Resources
 
-Now that you know how to observe resources and look inside containers, it is time to talk about the full lifecycle of creating and modifying them. Kubernetes gives you several ways to bring resources into existence and change them over time. Understanding the differences between these tools — and when each one is appropriate — will help you work with the cluster confidently and avoid common mistakes.
+Now that you know how to observe resources and look inside containers, it is time to talk about the full lifecycle of creating and modifying them. Kubernetes gives you several ways to bring resources into existence and change them over time. Understanding the differences between these tools , and when each one is appropriate , will help you work with the cluster confidently and avoid common mistakes.
 
 ## kubectl apply: The Workhorse of Declarative Management
 
@@ -16,7 +16,7 @@ When you run `kubectl apply`, kubectl stores a copy of the applied configuration
 
 ### Applying an Entire Directory
 
-If your manifests are organized across multiple files in a directory — a common pattern in real projects — you can apply all of them at once:
+If your manifests are organized across multiple files in a directory , a common pattern in real projects , you can apply all of them at once:
 
 ```bash
 kubectl apply -f ./manifests/
@@ -55,7 +55,7 @@ In production and in any automated pipeline, prefer `apply`. It handles both the
 
 ## kubectl edit: Live Editing
 
-`kubectl edit` is the command-line equivalent of clicking "edit" in a web UI. It fetches the resource from the API server, opens it in your terminal's default text editor (whatever is set in the `$EDITOR` environment variable, defaulting to `vi`), and lets you modify it. When you save and close the editor, kubectl sends the updated resource back to the API server — the changes take effect immediately.
+`kubectl edit` is the command-line equivalent of clicking "edit" in a web UI. It fetches the resource from the API server, opens it in your terminal's default text editor (whatever is set in the `$EDITOR` environment variable, defaulting to `vi`), and lets you modify it. When you save and close the editor, kubectl sends the updated resource back to the API server , the changes take effect immediately.
 
 ```bash
 kubectl edit deployment myapp
@@ -63,7 +63,7 @@ kubectl edit deployment myapp
 
 This is useful for quick, one-off changes when you do not have the original manifest file handy, or when you want to make a small adjustment and see the effect immediately without going through a full file-based workflow.
 
-The key thing to remember is that `kubectl edit` is **not idempotent** in the way `apply` is — it creates a divergence between your live cluster state and whatever manifest file you have checked into source control. If a teammate later runs `kubectl apply -f deployment.yaml` from the original file, your edit will be overwritten. Use `kubectl edit` for exploration and quick fixes, but always reflect the change back into your tracked manifest files.
+The key thing to remember is that `kubectl edit` is **not idempotent** in the way `apply` is , it creates a divergence between your live cluster state and whatever manifest file you have checked into source control. If a teammate later runs `kubectl apply -f deployment.yaml` from the original file, your edit will be overwritten. Use `kubectl edit` for exploration and quick fixes, but always reflect the change back into your tracked manifest files.
 
 :::warning
 Changes made with `kubectl edit` go live as soon as you save the file. There is no confirmation step. Make sure you are confident in your edit before saving, especially in production environments.
@@ -81,7 +81,7 @@ kubectl patch deployment myapp --type=merge -p '{"spec":{"replicas":5}}'
 kubectl patch pod my-pod --type=merge -p '{"metadata":{"labels":{"env":"production"}}}'
 ```
 
-The `--type=merge` flag tells kubectl to merge the patch with the existing object — any fields you do not mention in the patch are left unchanged. There is also `--type=json` for RFC 6902 JSON patch operations (add, remove, replace, copy, move, test), which gives you more surgical control.
+The `--type=merge` flag tells kubectl to merge the patch with the existing object , any fields you do not mention in the patch are left unchanged. There is also `--type=json` for RFC 6902 JSON patch operations (add, remove, replace, copy, move, test), which gives you more surgical control.
 
 `kubectl patch` is particularly valuable in automation scripts and operators where you need to update a single field programmatically without reading and re-writing the entire resource.
 
@@ -101,7 +101,7 @@ kubectl rollout status deployment/myapp
 
 ## The Apply Flow: What Happens Under the Hood
 
-It helps to understand what actually happens when you run `kubectl apply`. The command is not doing magic — it is making a series of well-defined API calls to the Kubernetes API server.
+It helps to understand what actually happens when you run `kubectl apply`. The command is not doing magic , it is making a series of well-defined API calls to the Kubernetes API server.
 
 ```mermaid
 flowchart LR
@@ -155,7 +155,7 @@ EOF
 # Apply it (creates the deployment)
 kubectl apply -f /tmp/my-deployment.yaml
 
-# Apply it again — idempotent, no error
+# Apply it again , idempotent, no error
 kubectl apply -f /tmp/my-deployment.yaml
 
 # Check the deployment
@@ -186,4 +186,4 @@ kubectl apply -f /tmp/k8s-manifests/
 kubectl delete -f /tmp/my-deployment.yaml
 ```
 
-As you work through these commands, notice how `kubectl apply` smoothly handles both the initial creation and subsequent updates. This workflow — write a manifest, apply it, modify the manifest, apply again — is the backbone of production Kubernetes operations.
+As you work through these commands, notice how `kubectl apply` smoothly handles both the initial creation and subsequent updates. This workflow , write a manifest, apply it, modify the manifest, apply again , is the backbone of production Kubernetes operations.

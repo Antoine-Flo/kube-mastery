@@ -57,18 +57,18 @@ spec:
 
 What this does:
 
-- **default** — If a container doesn't specify `limits`, it gets 500m CPU and 512Mi memory
-- **defaultRequest** — If a container doesn't specify `requests`, it gets 100m CPU and 128Mi memory
-- **max** — No container can request or be limited to more than 2 CPU cores or 2Gi memory
-- **min** — No container can request less than 50m CPU or 64Mi memory
+- **default:**  If a container doesn't specify `limits`, it gets 500m CPU and 512Mi memory
+- **defaultRequest:**  If a container doesn't specify `requests`, it gets 100m CPU and 128Mi memory
+- **max:**  No container can request or be limited to more than 2 CPU cores or 2Gi memory
+- **min:**  No container can request less than 50m CPU or 64Mi memory
 
 ## LimitRange Types
 
 LimitRanges support three types:
 
-- **Container** — Per-container CPU, memory, ephemeral storage. This is the most commonly used type.
-- **Pod** — Aggregate min/max across all containers in the Pod. Prevents a multi-container Pod from being too greedy.
-- **PersistentVolumeClaim** — Min/max storage size for PVCs. Prevents requests for absurdly large (or tiny) volumes.
+- **Container:**  Per-container CPU, memory, ephemeral storage. This is the most commonly used type.
+- **Pod:**  Aggregate min/max across all containers in the Pod. Prevents a multi-container Pod from being too greedy.
+- **PersistentVolumeClaim:**  Min/max storage size for PVCs. Prevents requests for absurdly large (or tiny) volumes.
 
 You can define multiple types in a single LimitRange.
 

@@ -4,7 +4,7 @@ Now that you understand what a Deployment is and why it exists, it's time to cre
 
 ## Anatomy of a Deployment Manifest
 
-A Deployment manifest looks very similar to a ReplicaSet manifest — and that's intentional. A Deployment is a thin but powerful wrapper around a ReplicaSet. Here's a complete example:
+A Deployment manifest looks very similar to a ReplicaSet manifest , and that's intentional. A Deployment is a thin but powerful wrapper around a ReplicaSet. Here's a complete example:
 
 ```yaml
 apiVersion: apps/v1
@@ -32,17 +32,17 @@ spec:
 
 Let's walk through each section carefully.
 
-**`apiVersion: apps/v1`** — Deployments belong to the `apps` API group, introduced as a stable (`v1`) API in Kubernetes 1.9. This is the only version you'll use today; the older `extensions/v1beta1` path was removed years ago.
+**`apiVersion: apps/v1`:**  Deployments belong to the `apps` API group, introduced as a stable (`v1`) API in Kubernetes 1.9. This is the only version you'll use today; the older `extensions/v1beta1` path was removed years ago.
 
-**`kind: Deployment`** — Tells Kubernetes what type of object you're creating.
+**`kind: Deployment`:**  Tells Kubernetes what type of object you're creating.
 
-**`metadata.name`** — The name of the Deployment object itself. This name also becomes the prefix for the ReplicaSets and Pods that the Deployment creates. For example, a Deployment named `web-app` will create ReplicaSets like `web-app-6d4b9c7f8` and Pods like `web-app-6d4b9c7f8-x2pkz`.
+**`metadata.name`:**  The name of the Deployment object itself. This name also becomes the prefix for the ReplicaSets and Pods that the Deployment creates. For example, a Deployment named `web-app` will create ReplicaSets like `web-app-6d4b9c7f8` and Pods like `web-app-6d4b9c7f8-x2pkz`.
 
-**`spec.replicas`** — The desired number of Pod replicas. The Deployment passes this down to its active ReplicaSet.
+**`spec.replicas`:**  The desired number of Pod replicas. The Deployment passes this down to its active ReplicaSet.
 
-**`spec.selector`** — The label selector the Deployment uses to identify the Pods it owns. This must match the labels in `spec.template.metadata.labels`. If they don't match, the API server will reject the manifest.
+**`spec.selector`:**  The label selector the Deployment uses to identify the Pods it owns. This must match the labels in `spec.template.metadata.labels`. If they don't match, the API server will reject the manifest.
 
-**`spec.template`** — The Pod template. Everything under this key describes the Pods that will be created. It has the same structure as a standalone Pod manifest, minus the top-level `apiVersion`, `kind`, and the name (Pods get auto-generated names).
+**`spec.template`:**  The Pod template. Everything under this key describes the Pods that will be created. It has the same structure as a standalone Pod manifest, minus the top-level `apiVersion`, `kind`, and the name (Pods get auto-generated names).
 
 :::info
 The `spec.selector` in a Deployment is immutable after creation. If you ever need to change the label selector, you must delete and recreate the Deployment. Plan your label strategy carefully before you go to production.
@@ -67,7 +67,7 @@ kubectl apply -f deployment.yaml
 # deployment.apps/web-app created
 ```
 
-The `apply` subcommand is declarative — it creates the object if it doesn't exist, or updates it if it does. This is different from `kubectl create`, which fails if the object already exists. Using `apply` consistently means you can re-run the same command idempotently as you iterate on your manifest.
+The `apply` subcommand is declarative , it creates the object if it doesn't exist, or updates it if it does. This is different from `kubectl create`, which fails if the object already exists. Using `apply` consistently means you can re-run the same command idempotently as you iterate on your manifest.
 
 ## Inspecting the Hierarchy
 
@@ -106,7 +106,7 @@ graph TB
     style RS fill:#326ce5,color:#fff
 ```
 
-Notice that the ReplicaSet's name is the Deployment's name with a hash appended. That hash is computed from the Pod template contents — it changes whenever the template changes, which is how Kubernetes distinguishes between ReplicaSets representing different versions of your application.
+Notice that the ReplicaSet's name is the Deployment's name with a hash appended. That hash is computed from the Pod template contents , it changes whenever the template changes, which is how Kubernetes distinguishes between ReplicaSets representing different versions of your application.
 
 ## Describing the Deployment
 
@@ -118,17 +118,17 @@ kubectl describe deployment web-app
 
 The output includes several useful sections:
 
-- **Replicas** — current counts across ready, available, and up-to-date
-- **StrategyType** — `RollingUpdate` (and the maxUnavailable/maxSurge values)
-- **Pod Template** — the full pod spec that this Deployment is managing
-- **Conditions** — health conditions like `Available` and `Progressing`; a stuck rollout will show a `False` condition here
-- **Events** — a chronological log of what the Deployment controller has done (scaled up ReplicaSets, etc.)
+- **Replicas:**  current counts across ready, available, and up-to-date
+- **StrategyType:**  `RollingUpdate` (and the maxUnavailable/maxSurge values)
+- **Pod Template:**  the full pod spec that this Deployment is managing
+- **Conditions:**  health conditions like `Available` and `Progressing`; a stuck rollout will show a `False` condition here
+- **Events:**  a chronological log of what the Deployment controller has done (scaled up ReplicaSets, etc.)
 
 The Events section is particularly useful for debugging. If a rollout is stuck, the events will usually tell you why: image pull failures, insufficient cluster resources, failing readiness probes.
 
 ## The Imperative Alternative
 
-If you need to create a Deployment quickly — for example, during the CKA exam or when prototyping — you can use the imperative form:
+If you need to create a Deployment quickly , for example, during the CKA exam or when prototyping , you can use the imperative form:
 
 ```bash
 kubectl create deployment web-app --image=nginx:1.25 --replicas=3

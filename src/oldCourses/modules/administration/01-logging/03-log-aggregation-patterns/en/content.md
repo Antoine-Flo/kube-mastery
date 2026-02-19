@@ -6,7 +6,7 @@ Let's explore the two main patterns for achieving this.
 
 ## Pattern 1: The DaemonSet Collector (Most Common)
 
-The most popular approach in Kubernetes is to run a log collector as a **DaemonSet** — one collector Pod on every node. Each collector reads the log files from the node's filesystem (`/var/log/pods/`) and forwards them to a central backend like Elasticsearch, Loki, or a cloud logging service.
+The most popular approach in Kubernetes is to run a log collector as a **DaemonSet:**  one collector Pod on every node. Each collector reads the log files from the node's filesystem (`/var/log/pods/`) and forwards them to a central backend like Elasticsearch, Loki, or a cloud logging service.
 
 Think of it as having a mail carrier on every street. No matter which house (Pod) produces mail (logs), the carrier picks it up and delivers it to the central post office (your logging backend).
 

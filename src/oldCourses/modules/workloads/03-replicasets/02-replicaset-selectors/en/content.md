@@ -72,8 +72,8 @@ When a ReplicaSet creates a Pod, Kubernetes automatically sets a field called `m
 
 This matters for two reasons:
 
-1. **Garbage collection** — if you delete the ReplicaSet, Kubernetes knows to delete its Pods too.
-2. **Conflict prevention** — two ReplicaSets with overlapping selectors won't fight over the same Pods because ownership is tracked explicitly.
+1. **Garbage collection:**  if you delete the ReplicaSet, Kubernetes knows to delete its Pods too.
+2. **Conflict prevention:**  two ReplicaSets with overlapping selectors won't fight over the same Pods because ownership is tracked explicitly.
 
 You can inspect this relationship by listing Pods matching the selector and reading their `ownerReferences` field — it will show the ReplicaSet's name, UID, and the `controller: true` flag confirming it is the managing controller.
 

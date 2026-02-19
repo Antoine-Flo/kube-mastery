@@ -1,6 +1,6 @@
 # Pod DNS Records
 
-You have seen how Services get clean, predictable DNS names that your applications can rely on. Pods also participate in the DNS system, but in a more nuanced way. Pod DNS records exist and can be very powerful, but they work differently from Service records and serve specific use cases — most notably giving stateful applications like databases a stable, addressable identity for each individual instance.
+You have seen how Services get clean, predictable DNS names that your applications can rely on. Pods also participate in the DNS system, but in a more nuanced way. Pod DNS records exist and can be very powerful, but they work differently from Service records and serve specific use cases , most notably giving stateful applications like databases a stable, addressable identity for each individual instance.
 
 ## The Default Pod DNS Record Format
 
@@ -12,9 +12,9 @@ Every Pod in a Kubernetes cluster can be reached via DNS using a record based on
 
 The Pod's IP address is taken and every dot is replaced with a dash. So a Pod with IP `10.244.1.5` running in the `default` namespace would have the DNS name `10-244-1-5.default.pod.cluster.local`.
 
-This record is automatically created and maintained by CoreDNS. You do not configure it yourself — it simply exists as long as the Pod is running.
+This record is automatically created and maintained by CoreDNS. You do not configure it yourself , it simply exists as long as the Pod is running.
 
-However, this format is awkward and almost never used directly in practice. Think about why: if your application hardcodes `10-244-1-5.default.pod.cluster.local`, it is essentially encoding the Pod's current IP address into its configuration. Pods are ephemeral — they get recreated with new IPs all the time. That DNS name will become invalid as soon as the Pod is replaced. For that reason, Services are almost always the right tool for reaching Pods via DNS. But Pod DNS records do have a critical use case, as we are about to see.
+However, this format is awkward and almost never used directly in practice. Think about why: if your application hardcodes `10-244-1-5.default.pod.cluster.local`, it is essentially encoding the Pod's current IP address into its configuration. Pods are ephemeral , they get recreated with new IPs all the time. That DNS name will become invalid as soon as the Pod is replaced. For that reason, Services are almost always the right tool for reaching Pods via DNS. But Pod DNS records do have a critical use case, as we are about to see.
 
 ## Custom Hostnames: `spec.hostname` and `spec.subdomain`
 
@@ -38,7 +38,7 @@ This is a stable name that does not change when the Pod is replaced, as long as 
 
 ## StatefulSets and Stable Pod Identity
 
-StatefulSets are Kubernetes workloads designed for stateful applications — things like databases, message queues, and distributed stores. Unlike Deployments, StatefulSets give each Pod a stable, ordered identity. Pod 0 is always Pod 0. Pod 1 is always Pod 1. When Pod 0 is deleted and recreated, it comes back as Pod 0 with the same name.
+StatefulSets are Kubernetes workloads designed for stateful applications , things like databases, message queues, and distributed stores. Unlike Deployments, StatefulSets give each Pod a stable, ordered identity. Pod 0 is always Pod 0. Pod 1 is always Pod 1. When Pod 0 is deleted and recreated, it comes back as Pod 0 with the same name.
 
 StatefulSets automatically set `spec.hostname` and `spec.subdomain` for each Pod they manage. The hostname is set to the Pod name (e.g., `mysql-0`, `mysql-1`, `mysql-2`), and the subdomain is set to the name of the headless Service defined in the StatefulSet's `spec.serviceName` field.
 
@@ -78,7 +78,7 @@ fe00::0         ip6-localnet
 
 The entry for the Pod itself maps the Pod's own hostname to its IP address. This lets the container resolve its own name without a network call to CoreDNS.
 
-You can add custom entries to a Pod's `/etc/hosts` using `spec.hostAliases`. This is useful when you need to map a hostname to a specific IP inside the Pod's network namespace — for example, to override an external DNS name for testing, or to point a legacy application at a service using a hostname it already knows.
+You can add custom entries to a Pod's `/etc/hosts` using `spec.hostAliases`. This is useful when you need to map a hostname to a specific IP inside the Pod's network namespace , for example, to override an external DNS name for testing, or to point a legacy application at a service using a hostname it already knows.
 
 ```yaml
 spec:
@@ -165,7 +165,6 @@ spec:
     app: db
   ports:
     - port: 5432
----
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -201,7 +200,7 @@ kubectl run resolver --image=busybox --rm -it --restart=Never -- nslookup db-0.d
 kubectl run resolver --image=busybox --rm -it --restart=Never -- nslookup db-1.db.default.svc.cluster.local
 ```
 
-Each should return the IP of the corresponding StatefulSet Pod. Delete Pod `db-0` and watch it come back — the DNS name `db-0.db.default.svc.cluster.local` will resolve to the new Pod's IP automatically.
+Each should return the IP of the corresponding StatefulSet Pod. Delete Pod `db-0` and watch it come back , the DNS name `db-0.db.default.svc.cluster.local` will resolve to the new Pod's IP automatically.
 
 ```bash
 kubectl delete pod db-0

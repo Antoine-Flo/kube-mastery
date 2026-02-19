@@ -1,6 +1,6 @@
 # Pod Structure and Anatomy
 
-Now that you understand what a Pod is, it's time to open it up and look at the mechanics. A Pod manifest can look simple — just a container name and image — or it can be quite detailed, with volumes, init containers, environment variables, resource constraints, and scheduling hints. In this lesson, we'll walk through every major section of a Pod manifest so you know exactly what each field does and when to use it.
+Now that you understand what a Pod is, it's time to open it up and look at the mechanics. A Pod manifest can look simple , just a container name and image , or it can be quite detailed, with volumes, init containers, environment variables, resource constraints, and scheduling hints. In this lesson, we'll walk through every major section of a Pod manifest so you know exactly what each field does and when to use it.
 
 ## The Complete Manifest at a Glance
 
@@ -36,19 +36,19 @@ This manifest creates a single Pod with one container. Let's break down every pi
 
 ## `spec.containers[]`
 
-The heart of a Pod manifest is the `spec.containers` field — a list of containers that will run inside the Pod. At minimum, each container entry needs a `name` and an `image`. Everything else is optional, though you'll almost always want at least some of it.
+The heart of a Pod manifest is the `spec.containers` field , a list of containers that will run inside the Pod. At minimum, each container entry needs a `name` and an `image`. Everything else is optional, though you'll almost always want at least some of it.
 
 ### `name` and `image`
 
-The `name` must be unique within the Pod (you can't have two containers with the same name in one Pod). The `image` is the container image to pull from a registry — just like you'd pass to `docker run`. You should always specify a version tag (like `nginx:1.25`) rather than relying on `latest`, which can cause unexpected behavior when a new image version is pulled without you realizing it.
+The `name` must be unique within the Pod (you can't have two containers with the same name in one Pod). The `image` is the container image to pull from a registry , just like you'd pass to `docker run`. You should always specify a version tag (like `nginx:1.25`) rather than relying on `latest`, which can cause unexpected behavior when a new image version is pulled without you realizing it.
 
 ### `ports`
 
-The `ports` section documents which ports the container listens on. It's mostly informational — it doesn't actually expose or open any ports. The real networking is configured at the Service level. But declaring ports is good practice for documentation, and some tools use this information to auto-configure things. Each port entry can have a `containerPort` (required), a `name` (optional but useful for referencing in Services), and a `protocol` (defaults to TCP).
+The `ports` section documents which ports the container listens on. It's mostly informational , it doesn't actually expose or open any ports. The real networking is configured at the Service level. But declaring ports is good practice for documentation, and some tools use this information to auto-configure things. Each port entry can have a `containerPort` (required), a `name` (optional but useful for referencing in Services), and a `protocol` (defaults to TCP).
 
 ### `env`
 
-The `env` field is a list of environment variables to inject into the container. Each entry has a `name` and a `value`. This is the simplest form — a hardcoded string. But Kubernetes also supports reading values from ConfigMaps and Secrets using `valueFrom`:
+The `env` field is a list of environment variables to inject into the container. Each entry has a `name` and a `value`. This is the simplest form , a hardcoded string. But Kubernetes also supports reading values from ConfigMaps and Secrets using `valueFrom`:
 
 ```yaml
 env:
@@ -95,7 +95,7 @@ volumeMounts:
 
 ## `spec.volumes[]`
 
-Volumes are declared at the Pod level — not the container level — and then mounted into one or more containers. This design allows multiple containers in the same Pod to share the same volume. Volumes have many possible types: `emptyDir` (temporary storage that lives as long as the Pod), `configMap` and `secret` (expose Kubernetes objects as files), `persistentVolumeClaim` (durable storage), `hostPath` (mounts a path from the node's filesystem), and more.
+Volumes are declared at the Pod level , not the container level , and then mounted into one or more containers. This design allows multiple containers in the same Pod to share the same volume. Volumes have many possible types: `emptyDir` (temporary storage that lives as long as the Pod), `configMap` and `secret` (expose Kubernetes objects as files), `persistentVolumeClaim` (durable storage), `hostPath` (mounts a path from the node's filesystem), and more.
 
 A simple example using an `emptyDir` shared between two containers:
 
@@ -146,7 +146,7 @@ This means the scheduler will only consider nodes that have the label `disktype=
 
 ## Init Containers
 
-Init containers are a special type of container that runs **before** the main containers start. They run to completion in sequence — if you have three init containers, the first must complete successfully before the second starts, and so on. Only after all init containers have successfully completed will the main containers be started.
+Init containers are a special type of container that runs **before** the main containers start. They run to completion in sequence , if you have three init containers, the first must complete successfully before the second starts, and so on. Only after all init containers have successfully completed will the main containers be started.
 
 This is useful for preparation tasks: waiting for a database to become available, downloading a configuration file, running database migrations, or initializing a shared volume with some data.
 
@@ -164,7 +164,7 @@ spec:
 In this example, the `wait-for-db` init container loops until port 5432 on `db-service` is reachable. Only then does the main `app` container start. This neatly solves the startup ordering problem without building the waiting logic into your application image.
 
 :::warning
-If an init container fails (exits with a non-zero code), Kubernetes will restart the Pod according to its `restartPolicy`. If the `restartPolicy` is `Always` or `OnFailure`, the init container will be retried. Make sure your init containers are idempotent — they should be safe to run multiple times.
+If an init container fails (exits with a non-zero code), Kubernetes will restart the Pod according to its `restartPolicy`. If the `restartPolicy` is `Always` or `OnFailure`, the init container will be retried. Make sure your init containers are idempotent , they should be safe to run multiple times.
 :::
 
 ## Full Structural Overview

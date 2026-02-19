@@ -1,6 +1,6 @@
 # What Are Namespaces?
 
-Imagine you work in a large office building. The building has one lobby, one set of elevators, and a shared address — but inside, each floor belongs to a different department. The accounting team on floor three does not interfere with the engineering team on floor seven. Each floor has its own rooms, its own equipment, and its own set of people. They are all under the same roof, but they are effectively isolated from each other.
+Imagine you work in a large office building. The building has one lobby, one set of elevators, and a shared address , but inside, each floor belongs to a different department. The accounting team on floor three does not interfere with the engineering team on floor seven. Each floor has its own rooms, its own equipment, and its own set of people. They are all under the same roof, but they are effectively isolated from each other.
 
 Kubernetes namespaces work the same way. They are a mechanism for dividing a single physical cluster into multiple virtual clusters, each with its own isolated space for resources. Everything in a namespace coexists under the same Kubernetes cluster, but the resources in one namespace are kept separate from the resources in another.
 
@@ -10,7 +10,7 @@ Without namespaces, everything in a Kubernetes cluster lives in one giant pile. 
 
 **Naming collisions** become inevitable. If the frontend team and the backend team both want to create a deployment named `api`, only one of them can win. The second one to try gets an "already exists" error. Every resource name must be globally unique, which quickly becomes awkward.
 
-**Visibility and confusion** compound the naming problem. When you run `kubectl get pods`, you see every pod in the cluster — from every team, every application, every environment. Finding the pod you actually care about becomes like searching for a specific book in an unsorted library.
+**Visibility and confusion** compound the naming problem. When you run `kubectl get pods`, you see every pod in the cluster , from every team, every application, every environment. Finding the pod you actually care about becomes like searching for a specific book in an unsorted library.
 
 **Access control** becomes coarse-grained. You cannot easily say "Team A can manage their resources but not Team B's" when everything is in the same space. RBAC (Role-Based Access Control) becomes difficult to apply cleanly.
 
@@ -32,7 +32,7 @@ Namespaced resources belong to a specific namespace and are invisible from other
 - PersistentVolumeClaims
 - Ingresses
 
-Cluster-scoped resources, on the other hand, exist at the cluster level — they do not belong to any namespace and are visible cluster-wide:
+Cluster-scoped resources, on the other hand, exist at the cluster level , they do not belong to any namespace and are visible cluster-wide:
 
 - Nodes
 - PersistentVolumes
@@ -40,7 +40,7 @@ Cluster-scoped resources, on the other hand, exist at the cluster level — they
 - ClusterRoles and ClusterRoleBindings
 - StorageClasses
 
-The intuition here is straightforward: a Node is a physical or virtual machine — it does not "belong" to any team. A PersistentVolume is a piece of storage that might be shared across namespaces. These things naturally live outside of any namespace boundary.
+The intuition here is straightforward: a Node is a physical or virtual machine , it does not "belong" to any team. A PersistentVolume is a piece of storage that might be shared across namespaces. These things naturally live outside of any namespace boundary.
 
 You can always check whether a resource type is namespaced using `kubectl api-resources`:
 
@@ -61,7 +61,7 @@ When you look at the output of `kubectl api-resources`, the NAMESPACED column sh
 When you first create a Kubernetes cluster, four namespaces are created automatically. Each has a specific purpose, and understanding them helps you navigate the cluster with confidence.
 
 - **default**: The namespace where objects land when you do not specify one. Perfect for learning and experimentation.
-- **kube-system**: Home to all Kubernetes system components — DNS, the API server, the controller manager, and more.
+- **kube-system**: Home to all Kubernetes system components , DNS, the API server, the controller manager, and more.
 - **kube-public**: Publicly readable by all users, including unauthenticated ones. Contains basic cluster information.
 - **kube-node-lease**: Used internally by nodes to report heartbeats. You will rarely interact with this one directly.
 
@@ -83,7 +83,7 @@ flowchart TD
     Cluster --> PV["PersistentVolumes\n(cluster-scoped)"]
 ```
 
-Each namespace is its own isolated environment within the same cluster. Pods in the `dev` namespace cannot directly reference services in the `production` namespace by their short name — they need to use the full DNS name. Nodes and PersistentVolumes, being cluster-scoped, are shared across all namespaces.
+Each namespace is its own isolated environment within the same cluster. Pods in the `dev` namespace cannot directly reference services in the `production` namespace by their short name , they need to use the full DNS name. Nodes and PersistentVolumes, being cluster-scoped, are shared across all namespaces.
 
 :::warning
 Namespaces provide **logical isolation**, not **security isolation**. By default, pods in different namespaces can still communicate with each other over the network. If you need to enforce network-level isolation between namespaces, you must configure NetworkPolicies. Similarly, access control isolation requires RBAC to be configured explicitly.
@@ -118,7 +118,7 @@ kubectl get namespaces
 # Deploy a pod into your new namespace
 kubectl run hello --image=nginx -n my-team
 
-# See the pod — only visible in the right namespace
+# See the pod , only visible in the right namespace
 kubectl get pods             # not visible here (wrong namespace)
 kubectl get pods -n my-team  # visible here
 

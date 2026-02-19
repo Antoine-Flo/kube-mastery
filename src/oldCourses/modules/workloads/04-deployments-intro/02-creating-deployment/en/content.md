@@ -54,9 +54,9 @@ spec:
 
 Three fields deserve special attention:
 
-- **`spec.replicas`** — how many identical Pods you want. Here, three.
-- **`spec.selector.matchLabels`** — the label query the Deployment uses to find *its* Pods. Think of it as the Deployment's way of saying "these Pods belong to me."
-- **`spec.template`** — the Pod blueprint. Every Pod created by this Deployment will be stamped from this template.
+- **`spec.replicas`:**  how many identical Pods you want. Here, three.
+- **`spec.selector.matchLabels`:**  the label query the Deployment uses to find *its* Pods. Think of it as the Deployment's way of saying "these Pods belong to me."
+- **`spec.template`:**  the Pod blueprint. Every Pod created by this Deployment will be stamped from this template.
 
 The **selector labels and the template labels must match**. If `selector.matchLabels` says `app: nginx`, the template must carry the label `app: nginx`. This is how the Deployment knows which Pods it owns.
 
@@ -68,11 +68,11 @@ The selector (`spec.selector`) is **immutable** after creation. Once you create 
 
 Even with a correct manifest, things can go wrong at the infrastructure level. Here are the most common issues you may encounter:
 
-**Pods stuck in `Pending`** — The scheduler cannot find a node with enough CPU or memory. Run `kubectl describe pod <pod-name>` and look at the Events section for scheduling errors. You may need to free resources or add nodes.
+**Pods stuck in `Pending`:**  The scheduler cannot find a node with enough CPU or memory. Run `kubectl describe pod <pod-name>` and look at the Events section for scheduling errors. You may need to free resources or add nodes.
 
-**`ImagePullBackOff` or `ErrImagePull`** — Kubernetes cannot pull the container image. Double-check the image name, tag, and registry. If using a private registry, ensure the correct `imagePullSecrets` are configured.
+**`ImagePullBackOff` or `ErrImagePull`:**  Kubernetes cannot pull the container image. Double-check the image name, tag, and registry. If using a private registry, ensure the correct `imagePullSecrets` are configured.
 
-**Selector mismatch error** — The labels in `spec.selector.matchLabels` do not match the labels in `spec.template.metadata.labels`. Kubernetes will reject the manifest outright. Align them and reapply.
+**Selector mismatch error:**  The labels in `spec.selector.matchLabels` do not match the labels in `spec.template.metadata.labels`. Kubernetes will reject the manifest outright. Align them and reapply.
 
 :::info
 When a Deployment is not behaving as expected, `kubectl describe deployment <name>` is your best diagnostic tool. The Events section at the bottom shows exactly what the controller has been doing — and what went wrong.
@@ -109,9 +109,9 @@ NAME               READY   UP-TO-DATE   AVAILABLE   AGE
 nginx-deployment   3/3     3            3           12s
 ```
 
-- **READY** — `3/3` means all three desired Pods are running and ready.
-- **UP-TO-DATE** — the number of Pods that match the latest template.
-- **AVAILABLE** — the number of Pods available to serve traffic.
+- **READY:**  `3/3` means all three desired Pods are running and ready.
+- **UP-TO-DATE:**  the number of Pods that match the latest template.
+- **AVAILABLE:**  the number of Pods available to serve traffic.
 
 ### Step 4: Inspect the ReplicaSet created by the Deployment
 

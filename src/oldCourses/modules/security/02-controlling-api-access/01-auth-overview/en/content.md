@@ -36,10 +36,10 @@ These stages are strictly sequential. A request that fails authentication never 
 
 Kubernetes supports several authentication methods. The API server can have multiple methods enabled simultaneously — the first one that successfully identifies the requester wins.
 
-- **X.509 client certificates** — presented during the TLS handshake. This is common for administrators and `kubectl` configurations.
-- **Bearer tokens** — sent in the `Authorization` header. Used by ServiceAccounts and external identity providers (like OIDC).
-- **ServiceAccount tokens** — automatically mounted into Pods at `/var/run/secrets/kubernetes.io/serviceaccount/token`. This is how workloads running inside the cluster authenticate.
-- **Bootstrap tokens** — used during cluster setup for node and component bootstrapping.
+- **X.509 client certificates:**  presented during the TLS handshake. This is common for administrators and `kubectl` configurations.
+- **Bearer tokens:**  sent in the `Authorization` header. Used by ServiceAccounts and external identity providers (like OIDC).
+- **ServiceAccount tokens:**  automatically mounted into Pods at `/var/run/secrets/kubernetes.io/serviceaccount/token`. This is how workloads running inside the cluster authenticate.
+- **Bootstrap tokens:**  used during cluster setup for node and component bootstrapping.
 
 You might wonder: what happens if multiple methods are configured? The API server tries each one in turn. The first method that successfully authenticates the request determines the identity. If none succeed, the request is rejected with `401 Unauthorized`.
 
@@ -55,9 +55,9 @@ Sometimes the question is not "what can I do?" but "who am I?" Use `kubectl conf
 
 When an API request fails, the error message tells you which stage failed:
 
-- **`401 Unauthorized`** — Authentication failed. The API server could not identify the requester. Check your kubeconfig, token, or client certificate.
-- **`403 Forbidden`** — Authorization failed. The identity is valid, but it lacks permission. Check RBAC Roles and RoleBindings.
-- **`403` with valid credentials but an unexpected message** — This might come from admission control. ResourceQuota, LimitRange, or Pod Security admission can reject requests after authorization succeeds.
+- **`401 Unauthorized`:**  Authentication failed. The API server could not identify the requester. Check your kubeconfig, token, or client certificate.
+- **`403 Forbidden`:**  Authorization failed. The identity is valid, but it lacks permission. Check RBAC Roles and RoleBindings.
+- **`403` with valid credentials but an unexpected message:**  This might come from admission control. ResourceQuota, LimitRange, or Pod Security admission can reject requests after authorization succeeds.
 
 :::warning
 A `403 Forbidden` after successful authentication almost always points to a missing or incorrect RBAC RoleBinding. Use `kubectl auth can-i` and `kubectl describe rolebinding` to investigate.

@@ -12,11 +12,11 @@ Kubernetes works the same way:
 
 - **spec** (specification) — You define what you want. For a Deployment, this might include the number of replicas, the container image, resource limits, and environment variables. You are the one who sets the spec; Kubernetes never changes it on its own.
 
-- **status** — Kubernetes and its controllers populate this field with what is actually happening. How many replicas are running? Which Pods are ready? Are there any errors? When you run `kubectl get deployment`, the columns you see — READY, UP-TO-DATE, AVAILABLE — all come from the status.
+- **status:**  Kubernetes and its controllers populate this field with what is actually happening. How many replicas are running? Which Pods are ready? Are there any errors? When you run `kubectl get deployment`, the columns you see — READY, UP-TO-DATE, AVAILABLE — all come from the status.
 
 ## The Reconciliation Loop
 
-The magic happens in the space between spec and status. Kubernetes runs a continuous loop — sometimes called the **reconciliation loop** or **control loop** — that works like this:
+The magic happens in the space between spec and status. Kubernetes runs a continuous loop — sometimes called the **reconciliation loop** or **control loop:**  that works like this:
 
 1. You set the spec (e.g., `replicas: 3`).
 2. The controller reads the spec and takes action (creates Pods).

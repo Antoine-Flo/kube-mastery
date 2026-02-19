@@ -1,4 +1,4 @@
-# Gamification - Kube Mastery
+# Gamification - KubeMastery
 
 Documentation des idées de gamification pour rendre la plateforme plus attractive et engageante.
 

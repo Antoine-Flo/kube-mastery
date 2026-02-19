@@ -1,6 +1,6 @@
-# Update Strategies — RollingUpdate vs Recreate
+# Update Strategies , RollingUpdate vs Recreate
 
-When you update a Deployment, Kubernetes doesn't just decide on its own how to replace the Pods. You get to choose the strategy. Kubernetes offers two built-in update strategies, each suited to a different class of application. Choosing the wrong one can either cause unnecessary downtime or create subtle and painful data consistency problems. Understanding both — and when to use each — is an essential skill.
+When you update a Deployment, Kubernetes doesn't just decide on its own how to replace the Pods. You get to choose the strategy. Kubernetes offers two built-in update strategies, each suited to a different class of application. Choosing the wrong one can either cause unnecessary downtime or create subtle and painful data consistency problems. Understanding both , and when to use each , is an essential skill.
 
 ## The Two Strategies
 
@@ -8,13 +8,13 @@ When you update a Deployment, Kubernetes doesn't just decide on its own how to r
 
 The `RollingUpdate` strategy is what you've been working with throughout this module. It replaces Pods incrementally: a few new Pods come up, a few old Pods go down, then the cycle repeats until all Pods are running the new version. At no point does the total number of healthy Pods drop to zero.
 
-This strategy is designed for stateless applications that can safely run multiple versions simultaneously. Think of a web server: a user's HTTP request might be handled by a Pod running version 1.25, and their next request might hit a Pod running version 1.26. For a well-designed stateless API, this is perfectly fine — each request is independent and the two versions are compatible enough to serve them interchangeably during the brief transition window.
+This strategy is designed for stateless applications that can safely run multiple versions simultaneously. Think of a web server: a user's HTTP request might be handled by a Pod running version 1.25, and their next request might hit a Pod running version 1.26. For a well-designed stateless API, this is perfectly fine , each request is independent and the two versions are compatible enough to serve them interchangeably during the brief transition window.
 
 ### Recreate
 
 The `Recreate` strategy does exactly what its name suggests. First, it terminates *all* currently running Pods. Then, once all the old Pods are gone, it starts creating the new Pods. There is a deliberate downtime window between the two phases.
 
-This might sound strictly worse than `RollingUpdate`, and for most applications it is. But there's a significant class of workloads for which `Recreate` is not just acceptable — it's *required*.
+This might sound strictly worse than `RollingUpdate`, and for most applications it is. But there's a significant class of workloads for which `Recreate` is not just acceptable , it's *required*.
 
 ## When Recreate Is the Right Choice
 
@@ -22,7 +22,7 @@ Consider an application that holds an exclusive lock on a resource: a single-ins
 
 If you were to use `RollingUpdate` on this kind of application, you'd briefly run both the old and new versions simultaneously. The old version might hold an exclusive lock that the new version is trying to acquire. The new version might apply a schema migration that the old version can't understand, causing it to crash or corrupt data. The old version and the new version might write conflicting data to the same storage.
 
-In these cases, `Recreate` ensures a clean break: the old version is completely gone before the new version ever starts. Yes, there's downtime — but it's a controlled, predictable window, not a race condition.
+In these cases, `Recreate` ensures a clean break: the old version is completely gone before the new version ever starts. Yes, there's downtime , but it's a controlled, predictable window, not a race condition.
 
 :::warning
 If your application uses a database schema migration that is not backward-compatible with the previous application version, use `Recreate`. Using `RollingUpdate` in this scenario means your old Pods will be trying to read data written in a schema they don't understand. This can cause cascading failures that are difficult to diagnose.
@@ -33,14 +33,14 @@ If your application uses a database schema migration that is not backward-compat
 The strategy is configured under `spec.strategy`:
 
 ```yaml
-# Recreate — no additional parameters needed
+# Recreate , no additional parameters needed
 spec:
   strategy:
     type: Recreate
 ```
 
 ```yaml
-# RollingUpdate — with explicit tuning
+# RollingUpdate , with explicit tuning
 spec:
   strategy:
     type: RollingUpdate
@@ -78,7 +78,7 @@ To make the difference concrete, here's how the two strategies behave over time 
 
 ```mermaid
 gantt
-    title RollingUpdate vs Recreate — 3 replica deployment
+    title RollingUpdate vs Recreate , 3 replica deployment
     dateFormat  mm:ss
     axisFormat  %M:%S
 
@@ -100,13 +100,13 @@ gantt
     New Pod 3 (starting)  :active,  cn3, 00:20, 00:35
 ```
 
-With `RollingUpdate`, old and new Pods overlap. There is never a moment with zero healthy Pods. With `Recreate`, there's a gap — all old Pods terminate before any new ones start.
+With `RollingUpdate`, old and new Pods overlap. There is never a moment with zero healthy Pods. With `Recreate`, there's a gap , all old Pods terminate before any new ones start.
 
 ## Thinking Through Your Application's Needs
 
 Before choosing a strategy, ask these questions:
 
-**Can two versions of my application run simultaneously?** If yes, `RollingUpdate` is almost certainly the right choice. If no — due to exclusive resource locking, incompatible schema versions, or licensing constraints — use `Recreate`.
+**Can two versions of my application run simultaneously?** If yes, `RollingUpdate` is almost certainly the right choice. If no , due to exclusive resource locking, incompatible schema versions, or licensing constraints , use `Recreate`.
 
 **Can my application handle connections being dropped mid-request?** `Recreate` terminates Pods abruptly (with a configurable graceful period). Long-running connections (WebSockets, streaming APIs) will be dropped. `RollingUpdate` gives you time to drain connections gradually with the right configuration.
 
@@ -203,7 +203,7 @@ Then trigger the update:
 kubectl set image deployment/rolling-app app=nginx:1.26
 ```
 
-This time you'll see a fourth Pod appear before any old one terminates — that's `maxSurge: 1` at work. The old Pods terminate one-by-one only after new ones are Ready. The total count never drops below 3.
+This time you'll see a fourth Pod appear before any old one terminates , that's `maxSurge: 1` at work. The old Pods terminate one-by-one only after new ones are Ready. The total count never drops below 3.
 
 **4. Try the zero-downtime configuration explicitly**
 
@@ -215,7 +215,7 @@ kubectl set image deployment/rolling-app app=nginx:1.27
 kubectl get pods -l app=rolling -w
 ```
 
-With `maxSurge: 2`, Kubernetes will spin up two new Pods first, wait for both to be Ready, then terminate two old Pods — completing the rollout in roughly two cycles instead of three.
+With `maxSurge: 2`, Kubernetes will spin up two new Pods first, wait for both to be Ready, then terminate two old Pods , completing the rollout in roughly two cycles instead of three.
 
 **5. Clean up**
 

@@ -1,8 +1,8 @@
 # emptyDir Volumes
 
-Of all the volume types Kubernetes offers, `emptyDir` is the simplest to understand and the easiest to use. It does exactly what its name suggests: when a Pod starts, Kubernetes creates an empty directory for it. That directory is mounted into the container (or containers) you specify. The directory persists for the entire lifetime of the Pod — surviving container restarts within the Pod — and is permanently deleted when the Pod is removed from the cluster.
+Of all the volume types Kubernetes offers, `emptyDir` is the simplest to understand and the easiest to use. It does exactly what its name suggests: when a Pod starts, Kubernetes creates an empty directory for it. That directory is mounted into the container (or containers) you specify. The directory persists for the entire lifetime of the Pod , surviving container restarts within the Pod , and is permanently deleted when the Pod is removed from the cluster.
 
-Think of `emptyDir` as a temporary shared notepad that the entire Pod can write on. Individual team members (containers) might come and go — someone steps out to take a call, comes back, and the notepad is right there on the table. But when the meeting ends and everyone leaves the room (the Pod is deleted), the notepad is thrown away.
+Think of `emptyDir` as a temporary shared notepad that the entire Pod can write on. Individual team members (containers) might come and go , someone steps out to take a call, comes back, and the notepad is right there on the table. But when the meeting ends and everyone leaves the room (the Pod is deleted), the notepad is thrown away.
 
 ## When to Use emptyDir
 
@@ -10,9 +10,9 @@ There are two primary use cases for `emptyDir`.
 
 The first is **sharing data between containers in the same Pod**. This is the classic sidecar pattern: one container produces files and another container processes or forwards them. Because both containers are in the same Pod, they have access to the same volumes, and `emptyDir` is the natural choice for this kind of in-Pod coordination.
 
-A concrete example: an application writes processed events to a directory as JSON files. A sidecar container reads those files and ships them to a centralized logging system. Neither container needs to know anything about the other's internals — they just read and write to a shared directory. The sidecar doesn't need to reach into the main app's memory; it just watches the shared filesystem.
+A concrete example: an application writes processed events to a directory as JSON files. A sidecar container reads those files and ships them to a centralized logging system. Neither container needs to know anything about the other's internals , they just read and write to a shared directory. The sidecar doesn't need to reach into the main app's memory; it just watches the shared filesystem.
 
-The second use case is **scratch space for a single container**. Some workloads need significant temporary storage — a video transcoder might need space to work with large intermediate files, an AI inference service might unpack a large model into memory-mapped files before processing, or a build tool might compile source code into a temporary output directory. In these cases, `emptyDir` gives the container a place to work that won't pollute the container image or consume the container's layered filesystem.
+The second use case is **scratch space for a single container**. Some workloads need significant temporary storage , a video transcoder might need space to work with large intermediate files, an AI inference service might unpack a large model into memory-mapped files before processing, or a build tool might compile source code into a temporary output directory. In these cases, `emptyDir` gives the container a place to work that won't pollute the container image or consume the container's layered filesystem.
 
 ## The Manifest
 
@@ -25,7 +25,7 @@ spec:
       emptyDir: {}
 ```
 
-The `{}` is not a placeholder — it's valid YAML for an empty object, which means "use all defaults." There's nothing else required to get a working `emptyDir`. The name is the only required field.
+The `{}` is not a placeholder , it's valid YAML for an empty object, which means "use all defaults." There's nothing else required to get a working `emptyDir`. The name is the only required field.
 
 ## A Multi-Container Example
 
@@ -55,7 +55,7 @@ spec:
           mountPath: /data
 ```
 
-When this Pod starts, Kubernetes creates the `shared-data` emptyDir volume. Both containers mount it — the writer at `/data` and the reader also at `/data`. The writer container runs first and writes `hello` to `/data/file.txt`. The reader waits two seconds (to give the writer a head start), then reads from the same path and prints the contents.
+When this Pod starts, Kubernetes creates the `shared-data` emptyDir volume. Both containers mount it , the writer at `/data` and the reader also at `/data`. The writer container runs first and writes `hello` to `/data/file.txt`. The reader waits two seconds (to give the writer a head start), then reads from the same path and prints the contents.
 
 Notice that both containers use the same `mountPath` here, but that's not required. You could mount the same volume at `/output` in the writer and `/input` in the reader. The path inside the container is independent of the volume definition.
 
@@ -78,7 +78,7 @@ graph LR
     style V fill:#F5A623,color:#fff,stroke:#c77d00
 ```
 
-The volume is the single source of truth. There's no network call, no serialization overhead, no API to agree on — just a shared filesystem path.
+The volume is the single source of truth. There's no network call, no serialization overhead, no API to agree on , just a shared filesystem path.
 
 ## Surviving Container Restarts
 
@@ -102,7 +102,7 @@ volumes:
       sizeLimit: 512Mi
 ```
 
-A memory-backed `emptyDir` is significantly faster than disk — reads and writes operate at memory speed. This is useful for high-throughput workloads where disk I/O would be a bottleneck: caching parsed configuration, working with large arrays of binary data, or storing intermediate results that will be consumed immediately.
+A memory-backed `emptyDir` is significantly faster than disk , reads and writes operate at memory speed. This is useful for high-throughput workloads where disk I/O would be a bottleneck: caching parsed configuration, working with large arrays of binary data, or storing intermediate results that will be consumed immediately.
 
 The downside is that memory-backed volumes count against the container's memory limit. If a container writes 200Mi to a `medium: Memory` volume, that 200Mi comes out of the container's memory budget and can trigger an OOM kill if the container is close to its limit. Plan accordingly.
 
@@ -178,7 +178,7 @@ kubectl exec writer-reader -c reader -- ls /data
 
 Both should show `message.txt`.
 
-**5. Prove the volume survives a container restart — kill the writer and check:**
+**5. Prove the volume survives a container restart , kill the writer and check:**
 
 ```bash
 kubectl exec writer-reader -c writer -- kill 1
@@ -192,7 +192,7 @@ kubectl get pod writer-reader
 
 The restart count on the writer should increment to 1.
 
-**6. Read the file from the reader — it should still be there:**
+**6. Read the file from the reader , it should still be there:**
 
 ```bash
 kubectl exec writer-reader -c reader -- cat /data/message.txt
@@ -224,7 +224,7 @@ spec:
 EOF
 ```
 
-**8. Check the output — it wrote 10MB to memory:**
+**8. Check the output , it wrote 10MB to memory:**
 
 ```bash
 kubectl logs memory-scratch -c app

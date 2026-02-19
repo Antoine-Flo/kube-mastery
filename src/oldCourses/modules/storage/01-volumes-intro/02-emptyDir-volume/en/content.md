@@ -10,9 +10,9 @@ Think of `emptyDir` as a shared whiteboard between containers in a Pod. While th
 
 This makes it ideal for several scenarios:
 
-- **Inter-container communication** — A producer container writes data, a sidecar container reads and processes it
-- **Temporary scratch space** — Disk-based sorting, image processing, or other tasks that need temporary storage
-- **Caching** — Data that can be regenerated if lost, but is faster to read from local storage
+- **Inter-container communication:**  A producer container writes data, a sidecar container reads and processes it
+- **Temporary scratch space:**  Disk-based sorting, image processing, or other tasks that need temporary storage
+- **Caching:**  Data that can be regenerated if lost, but is faster to read from local storage
 
 ## A Practical Example
 

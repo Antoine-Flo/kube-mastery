@@ -23,13 +23,13 @@ graph TB
     style Code fill:#fce8e8,stroke:#E53935
 ```
 
-**1. Cloud (or Co-location)** — the outermost layer. This is the infrastructure your cluster runs on: compute instances, networks, storage, and cloud IAM policies. Think of it as the building itself — its walls, fences, and entry gates. Network isolation, firewall rules, and least-privilege cloud policies belong here. Secure this first, because everything else sits inside it.
+**1. Cloud (or Co-location):**  the outermost layer. This is the infrastructure your cluster runs on: compute instances, networks, storage, and cloud IAM policies. Think of it as the building itself — its walls, fences, and entry gates. Network isolation, firewall rules, and least-privilege cloud policies belong here. Secure this first, because everything else sits inside it.
 
-**2. Cluster** — the Kubernetes control plane and worker nodes. This includes the API server, etcd (the cluster's database), the kubelet on each node, and the scheduler. RBAC, audit logging, and encryption at rest protect this layer. A breach here can compromise every workload in the cluster.
+**2. Cluster:**  the Kubernetes control plane and worker nodes. This includes the API server, etcd (the cluster's database), the kubelet on each node, and the scheduler. RBAC, audit logging, and encryption at rest protect this layer. A breach here can compromise every workload in the cluster.
 
-**3. Container** — what actually runs on your nodes. This covers the container runtime, the images you deploy, and how workloads are isolated from each other. Use trusted base images, run containers as non-root, and drop unnecessary Linux capabilities. Image scanning catches known vulnerabilities before they reach production.
+**3. Container:**  what actually runs on your nodes. This covers the container runtime, the images you deploy, and how workloads are isolated from each other. Use trusted base images, run containers as non-root, and drop unnecessary Linux capabilities. Image scanning catches known vulnerabilities before they reach production.
 
-**4. Code** — the innermost layer. Your application source code and its dependencies live here. Address library vulnerabilities with dependency scanning, never hardcode secrets, and follow secure coding practices.
+**4. Code:**  the innermost layer. Your application source code and its dependencies live here. Address library vulnerabilities with dependency scanning, never hardcode secrets, and follow secure coding practices.
 
 :::info
 Each layer depends on the security of the layers outside it. A perfectly hardened container cannot protect you if the cluster's API server is exposed to the internet without authentication. Always work from the outside in.

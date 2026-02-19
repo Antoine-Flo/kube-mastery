@@ -12,7 +12,7 @@ Commandes reproductibles et emplacements des rapports pour l’audit.
 
 ## Tests
 
-**À migrer (prévu)** — Cible documentée pour la migration :
+**À migrer (prévu):**  Cible documentée pour la migration :
 
 | Commande           | Description (cible)                    |
 | ------------------ | -------------------------------------- |

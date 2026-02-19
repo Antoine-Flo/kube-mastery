@@ -49,10 +49,10 @@ Let's follow a Pod from birth to completion.
 
 When something goes wrong, the phase is your first breadcrumb:
 
-- **Stuck in Pending** — The scheduler cannot place the Pod. Check resource requests (`kubectl describe pod`), node taints and tolerations, and node capacity (`kubectl describe node`).
-- **Running but not Ready** — The Pod is alive but not serving traffic. This usually points to a failing readiness probe. We will cover probes in a dedicated module, but `kubectl describe pod` will show the probe status right away.
-- **Failed** — Inspect container logs with `kubectl logs <pod-name>` and look at the exit code in `kubectl describe pod`. A non-zero exit code is your starting point for root-cause analysis.
-- **Unknown** — Focus on the node, not the Pod. Check `kubectl get nodes` and `kubectl describe node <node-name>`. Network issues and kubelet crashes are the usual suspects.
+- **Stuck in Pending:**  The scheduler cannot place the Pod. Check resource requests (`kubectl describe pod`), node taints and tolerations, and node capacity (`kubectl describe node`).
+- **Running but not Ready:**  The Pod is alive but not serving traffic. This usually points to a failing readiness probe. We will cover probes in a dedicated module, but `kubectl describe pod` will show the probe status right away.
+- **Failed:**  Inspect container logs with `kubectl logs <pod-name>` and look at the exit code in `kubectl describe pod`. A non-zero exit code is your starting point for root-cause analysis.
+- **Unknown:**  Focus on the node, not the Pod. Check `kubectl get nodes` and `kubectl describe node <node-name>`. Network issues and kubelet crashes are the usual suspects.
 
 :::warning
 **Succeeded** and **Failed** are terminal states. Once a Pod reaches either, it will not restart on its own. Workload controllers like Deployments and Jobs are responsible for creating *new* Pods when needed — the old Pod object remains for inspection until it is garbage-collected.
@@ -148,4 +148,4 @@ kubectl delete pod phase-demo fail-demo
 
 ## Wrapping Up
 
-Pod phases give you a fast, at-a-glance picture of where a Pod stands in its lifecycle. Five values — **Pending**, **Running**, **Succeeded**, **Failed**, and **Unknown** — cover every possibility. They are intentionally broad: think of them as the chapter titles of a Pod's story, not the full text. To read the full story, you need the finer-grained tools we explore next: **container states** (what each individual container is doing) and **Pod conditions** (whether specific health checks have passed). With phase as your starting compass, you will always know which direction to investigate.
+Pod phases give you a fast, at-a-glance picture of where a Pod stands in its lifecycle. Five values — **Pending**, **Running**, **Succeeded**, **Failed**, and **Unknown:**  cover every possibility. They are intentionally broad: think of them as the chapter titles of a Pod's story, not the full text. To read the full story, you need the finer-grained tools we explore next: **container states** (what each individual container is doing) and **Pod conditions** (whether specific health checks have passed). With phase as your starting compass, you will always know which direction to investigate.

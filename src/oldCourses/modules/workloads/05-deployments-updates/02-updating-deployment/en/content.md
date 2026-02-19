@@ -75,11 +75,11 @@ After triggering a rollout, monitor its progress with `kubectl rollout status de
 
 Not every update goes smoothly. Here are the most common issues and how to address them:
 
-**`ImagePullBackOff`** — Kubernetes cannot pull the new image. This usually means a typo in the image name or tag, or missing registry credentials. Verify the image exists and check `imagePullSecrets` if using a private registry.
+**`ImagePullBackOff`:**  Kubernetes cannot pull the new image. This usually means a typo in the image name or tag, or missing registry credentials. Verify the image exists and check `imagePullSecrets` if using a private registry.
 
-**Rollout stalled** — New Pods are created but never become ready. This often points to failing readiness probes, insufficient resources, or a crash loop. Inspect the Pods directly with `kubectl describe pod` and `kubectl logs`.
+**Rollout stalled:**  New Pods are created but never become ready. This often points to failing readiness probes, insufficient resources, or a crash loop. Inspect the Pods directly with `kubectl describe pod` and `kubectl logs`.
 
-**Need to revert immediately** — If the new version is broken and you need to go back, use `kubectl rollout undo` to revert to the previous ReplicaSet (covered in the rollback lesson).
+**Need to revert immediately:**  If the new version is broken and you need to go back, use `kubectl rollout undo` to revert to the previous ReplicaSet (covered in the rollback lesson).
 
 :::warning
 Updating multiple containers in a multi-container Pod triggers a single rollout — all containers are updated together. There is no way to roll out changes to one container independently. If you need independent update lifecycles, consider splitting containers into separate Deployments.

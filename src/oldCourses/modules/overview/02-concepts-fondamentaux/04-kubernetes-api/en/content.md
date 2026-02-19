@@ -34,11 +34,11 @@ Nothing bypasses the API server. If it is down, the cluster cannot accept new in
 
 You are not limited to `kubectl`. There are three common ways to interact with the Kubernetes API:
 
-- **kubectl** — The command-line tool you have been using. It translates human-friendly commands into API requests. When you type `kubectl get pods`, it sends a GET request to the Pods endpoint and formats the response as a table.
+- **kubectl:**  The command-line tool you have been using. It translates human-friendly commands into API requests. When you type `kubectl get pods`, it sends a GET request to the Pods endpoint and formats the response as a table.
 
-- **REST calls** — You can use `curl` or any HTTP client to talk to the API directly. This is useful for automation scripts and custom integrations.
+- **REST calls:**  You can use `curl` or any HTTP client to talk to the API directly. This is useful for automation scripts and custom integrations.
 
-- **Client libraries** — Official SDKs exist for Go, Python, Java, and other languages. They handle authentication and request formatting, making it easier to build applications that interact with Kubernetes programmatically.
+- **Client libraries:**  Official SDKs exist for Go, Python, Java, and other languages. They handle authentication and request formatting, making it easier to build applications that interact with Kubernetes programmatically.
 
 :::info
 `kubectl` fetches and caches the API specification from the cluster, which is how it knows what resources and commands are available. When you type `kubectl get` and press Tab, the suggestions come from this cached specification.
@@ -52,9 +52,9 @@ One of the most practical features of the Kubernetes API is that it is self-desc
 
 When working with the API, you may encounter a few common errors:
 
-- **401 Unauthorized** — Your credentials are invalid or missing. Check your kubeconfig.
-- **403 Forbidden** — You are authenticated, but you do not have permission. This is an RBAC (Role-Based Access Control) issue. Inspect the RoleBindings for your user or ServiceAccount.
-- **Connection refused** — The API server is unreachable. Use `kubectl cluster-info` to verify connectivity.
+- **401 Unauthorized:**  Your credentials are invalid or missing. Check your kubeconfig.
+- **403 Forbidden:**  You are authenticated, but you do not have permission. This is an RBAC (Role-Based Access Control) issue. Inspect the RoleBindings for your user or ServiceAccount.
+- **Connection refused:**  The API server is unreachable. Use `kubectl cluster-info` to verify connectivity.
 
 :::warning
 Never bypass the API server by modifying etcd directly or communicating with components outside the API. The API server enforces authentication, authorization, and admission. Skipping it means skipping your security controls.

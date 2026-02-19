@@ -87,9 +87,9 @@ A Pod must be **Ready** to appear in DNS. If readiness probes fail, the Pod is r
 
 ## When to Use Headless Services
 
-- **Database clusters** — Replicas need to find the primary by name
-- **Distributed systems** — Kafka, Elasticsearch, etcd members need stable identities
-- **Any StatefulSet** — When each Pod must be individually addressable
+- **Database clusters:**  Replicas need to find the primary by name
+- **Distributed systems:**  Kafka, Elasticsearch, etcd members need stable identities
+- **Any StatefulSet:**  When each Pod must be individually addressable
 
 For stateless workloads, stick with regular ClusterIP Services — you don't need per-Pod DNS.
 

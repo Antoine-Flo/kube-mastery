@@ -1,4 +1,4 @@
-# Coding Conventions - Kube Mastery
+# Coding Conventions - KubeMastery
 
 ## Programming Paradigm
 

@@ -6,7 +6,7 @@ Kubernetes provides two mechanisms for this: **environment variables** and **DNS
 
 ## DNS — The Recommended Way
 
-Kubernetes runs a built-in DNS server (CoreDNS) that automatically creates DNS records for every Service. This means your application can connect to other Services **by name** — no IP addresses needed.
+Kubernetes runs a built-in DNS server (CoreDNS) that automatically creates DNS records for every Service. This means your application can connect to other Services **by name:**  no IP addresses needed.
 
 A Service named `backend-api` in the `default` namespace is reachable at:
 

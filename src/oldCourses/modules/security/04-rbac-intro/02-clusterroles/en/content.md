@@ -11,7 +11,7 @@ Imagine a company with multiple offices (namespaces). A regular Role is like a b
 Here is the critical distinction:
 
 - A **ClusterRole** is a cluster-scoped set of permissions. It is not bound to any namespace and can reference both namespaced resources (like Pods) and cluster-scoped resources (like Nodes).
-- A **ClusterRoleBinding** grants a ClusterRole **cluster-wide** — the subject gets those permissions in every namespace.
+- A **ClusterRoleBinding** grants a ClusterRole **cluster-wide:**  the subject gets those permissions in every namespace.
 - A **RoleBinding** that references a ClusterRole grants those permissions **only in the RoleBinding's namespace**.
 
 This flexibility makes ClusterRoles the most reusable permission object in RBAC.
@@ -75,10 +75,10 @@ When you see a ClusterRole, the scope of its effect depends entirely on **how it
 
 Kubernetes ships with several built-in ClusterRoles. The most notable ones:
 
-- **`cluster-admin`** — unrestricted access to everything in the cluster. Use this sparingly and only for administrative purposes.
-- **`view`** — read-only access to most resources in a namespace (when used with a RoleBinding).
-- **`edit`** — read-write access to most resources in a namespace, but no ability to modify Roles or RoleBindings.
-- **`admin`** — full access within a namespace, including the ability to manage Roles and RoleBindings.
+- **`cluster-admin`:**  unrestricted access to everything in the cluster. Use this sparingly and only for administrative purposes.
+- **`view`:**  read-only access to most resources in a namespace (when used with a RoleBinding).
+- **`edit`:**  read-write access to most resources in a namespace, but no ability to modify Roles or RoleBindings.
+- **`admin`:**  full access within a namespace, including the ability to manage Roles and RoleBindings.
 
 You can list all ClusterRoles with `kubectl get clusterrole`. Prefer creating custom ClusterRoles with the specific permissions your workload needs, rather than binding to `cluster-admin`.
 
@@ -116,4 +116,4 @@ Shows which subjects (users, groups, ServiceAccounts) are bound to ClusterRoles 
 
 ## Wrapping Up
 
-ClusterRoles are the reusable building blocks of RBAC. Bind them cluster-wide with ClusterRoleBindings when you need cross-namespace access, or bind them per-namespace with RoleBindings for scoped reuse. The built-in ClusterRoles cover common patterns, but custom ClusterRoles with minimal permissions are always the safer choice. In the next lesson, we will look more closely at **verbs and resources** — the specific actions and objects that RBAC rules control.
+ClusterRoles are the reusable building blocks of RBAC. Bind them cluster-wide with ClusterRoleBindings when you need cross-namespace access, or bind them per-namespace with RoleBindings for scoped reuse. The built-in ClusterRoles cover common patterns, but custom ClusterRoles with minimal permissions are always the safer choice. In the next lesson, we will look more closely at **verbs and resources:**  the specific actions and objects that RBAC rules control.

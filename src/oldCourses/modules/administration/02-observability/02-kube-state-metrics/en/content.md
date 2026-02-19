@@ -23,11 +23,11 @@ flowchart LR
 
 kube-state-metrics watches the Kubernetes API server and generates Prometheus-format metrics about object state. Here are some of the most useful ones:
 
-- **`kube_pod_status_phase`** — Is this Pod Running, Pending, Succeeded, or Failed?
-- **`kube_deployment_status_replicas_available`** — How many replicas are actually ready?
-- **`kube_deployment_status_replicas_desired`** — How many replicas should there be?
-- **`kube_node_status_condition`** — Is this node Ready? Under disk pressure? Memory pressure?
-- **`kube_pod_container_status_waiting`** — Are any containers stuck in a Waiting state?
+- **`kube_pod_status_phase`:**  Is this Pod Running, Pending, Succeeded, or Failed?
+- **`kube_deployment_status_replicas_available`:**  How many replicas are actually ready?
+- **`kube_deployment_status_replicas_desired`:**  How many replicas should there be?
+- **`kube_node_status_condition`:**  Is this node Ready? Under disk pressure? Memory pressure?
+- **`kube_pod_container_status_waiting`:**  Are any containers stuck in a Waiting state?
 
 These metrics power some of the most important alerts you can have. For example: "Alert me when a Deployment has fewer available replicas than desired for more than 5 minutes."
 

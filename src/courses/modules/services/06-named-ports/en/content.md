@@ -1,6 +1,6 @@
 # Named Ports
 
-Throughout this module, all the Service manifests have referenced ports by number: `targetPort: 80`, `targetPort: 8080`, and so on. This works perfectly well for simple cases. But as your application grows — more containers, more ports, more teams managing different parts of the stack — hardcoded port numbers become a maintenance problem. Named ports solve this elegantly, and they're one of those small practices that make the difference between a brittle manifest and a robust one.
+Throughout this module, all the Service manifests have referenced ports by number: `targetPort: 80`, `targetPort: 8080`, and so on. This works perfectly well for simple cases. But as your application grows , more containers, more ports, more teams managing different parts of the stack , hardcoded port numbers become a maintenance problem. Named ports solve this elegantly, and they're one of those small practices that make the difference between a brittle manifest and a robust one.
 
 ## The Problem with Port Numbers
 
@@ -13,7 +13,7 @@ ports:
     targetPort: 8080
 ```
 
-This works fine. But now your team decides to change the container's listening port from 8080 to 9090 — perhaps to avoid a conflict with another process, or to align with a new organizational standard. Now you have to update two things: the container's configuration *and* the Service manifest. In a large cluster with multiple Services referencing the same port, that's multiple places to update. You also need to update any readiness probes, liveness probes, or NetworkPolicies that reference port 8080 by number.
+This works fine. But now your team decides to change the container's listening port from 8080 to 9090 , perhaps to avoid a conflict with another process, or to align with a new organizational standard. Now you have to update two things: the container's configuration *and* the Service manifest. In a large cluster with multiple Services referencing the same port, that's multiple places to update. You also need to update any readiness probes, liveness probes, or NetworkPolicies that reference port 8080 by number.
 
 Named ports break this coupling. You give the port a name in the Pod spec, and everything else references that name. The port number is now defined in exactly one place.
 
@@ -32,10 +32,10 @@ containers:
         containerPort: 9090
 ```
 
-The `name` field is just a string — any valid DNS label works. Common conventions are `http`, `https`, `grpc`, `metrics`, `admin`, or domain-specific names like `api` or `health`.
+The `name` field is just a string , any valid DNS label works. Common conventions are `http`, `https`, `grpc`, `metrics`, `admin`, or domain-specific names like `api` or `health`.
 
 :::info
-Port names must be lowercase and can contain hyphens, but must start and end with a letter or digit. They follow DNS label syntax. Avoid underscores — `http_api` is invalid; `http-api` is fine.
+Port names must be lowercase and can contain hyphens, but must start and end with a letter or digit. They follow DNS label syntax. Avoid underscores , `http_api` is invalid; `http-api` is fine.
 :::
 
 ## Referencing the Named Port in the Service
@@ -59,7 +59,7 @@ spec:
       targetPort: metrics  # ← name, not a number
 ```
 
-When Kubernetes processes this Service, it looks up the name `http` in the matching Pods' port definitions and resolves it to the actual port number (`80`). If you later change the container's `containerPort` from `80` to `8080`, you only update the Pod template — the Service manifest is untouched, because it refers to the port by name, not by number.
+When Kubernetes processes this Service, it looks up the name `http` in the matching Pods' port definitions and resolves it to the actual port number (`80`). If you later change the container's `containerPort` from `80` to `8080`, you only update the Pod template , the Service manifest is untouched, because it refers to the port by name, not by number.
 
 ```mermaid
 graph LR
@@ -88,9 +88,9 @@ readinessProbe:
 
 **NetworkPolicy** rules can reference named ports when targeting specific traffic. This is especially useful in policies that need to allow traffic on a semantic port (like "the metrics port") without being tied to a specific number.
 
-**Ingress rules** reference Service ports, which in turn reference named Pod ports — the chain of names carries all the way through.
+**Ingress rules** reference Service ports, which in turn reference named Pod ports , the chain of names carries all the way through.
 
-The result is that changing a port number in a mature application becomes a surgical change in one place — the Pod template — rather than a scavenger hunt across Services, probes, and policies.
+The result is that changing a port number in a mature application becomes a surgical change in one place , the Pod template , rather than a scavenger hunt across Services, probes, and policies.
 
 ## A Complete Example
 
@@ -131,7 +131,6 @@ spec:
               port: http        # ← using the name
             initialDelaySeconds: 10
             periodSeconds: 30
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -148,7 +147,7 @@ spec:
       targetPort: metrics   # ← resolves to 9090
 ```
 
-If the team later decides the application should listen on 8443 instead of 8080, the only change needed is `containerPort: 8080` → `containerPort: 8443` in the Pod template. The Service, the readiness probe, and the liveness probe all continue to work unchanged, because they reference `http` — not `8080`.
+If the team later decides the application should listen on 8443 instead of 8080, the only change needed is `containerPort: 8080` → `containerPort: 8443` in the Pod template. The Service, the readiness probe, and the liveness probe all continue to work unchanged, because they reference `http` , not `8080`.
 
 ## Named Ports and Port Discovery
 
@@ -162,14 +161,14 @@ Named ports are particularly important in multi-container Pods (sidecars), where
 
 ## Best Practices
 
-Always name ports in production manifests — the extra few characters in your YAML pay dividends when you're debugging a production incident at midnight and need to understand what `targetPort: 8080` actually means without cross-referencing four other files.
+Always name ports in production manifests , the extra few characters in your YAML pay dividends when you're debugging a production incident at midnight and need to understand what `targetPort: 8080` actually means without cross-referencing four other files.
 
-Use semantic names that reflect the protocol or purpose: `http`, `https`, `grpc`, `metrics`, `admin`, `debug`. Avoid names like `port1` or `p80` — they add no more information than the number itself.
+Use semantic names that reflect the protocol or purpose: `http`, `https`, `grpc`, `metrics`, `admin`, `debug`. Avoid names like `port1` or `p80` , they add no more information than the number itself.
 
 Keep port names consistent across your organization. If every team names their HTTP port `http`, operational tooling (dashboards, alerting rules, network policies) can be written generically and applied uniformly.
 
 :::warning
-If you use the same Service to route to containers with different port names that resolve to different numbers — for example, a canary Pod where `http` maps to 8080 and a stable Pod where `http` maps to 9090 — the traffic routing will appear correct from the Service's perspective but the actual destination ports will differ. This is rarely intentional; ensure your port names resolve consistently across all Pods in a Service's selector.
+If you use the same Service to route to containers with different port names that resolve to different numbers , for example, a canary Pod where `http` maps to 8080 and a stable Pod where `http` maps to 9090 , the traffic routing will appear correct from the Service's perspective but the actual destination ports will differ. This is rarely intentional; ensure your port names resolve consistently across all Pods in a Service's selector.
 :::
 
 ## Hands-On Practice
@@ -252,7 +251,7 @@ kubectl patch deployment web-named --type='json' -p='[
 ]'
 ```
 
-The Service manifest hasn't changed at all — it still says `targetPort: http`. But after the rollout, the Endpoints will show port 8080 instead of 80, because Kubernetes re-resolved the name `http` from the updated Pod template.
+The Service manifest hasn't changed at all , it still says `targetPort: http`. But after the rollout, the Endpoints will show port 8080 instead of 80, because Kubernetes re-resolved the name `http` from the updated Pod template.
 
 ```bash
 kubectl rollout status deployment/web-named
@@ -260,7 +259,7 @@ kubectl describe endpoints web-named-svc
 # Endpoints now show :8080 instead of :80
 ```
 
-Note: nginx listens on port 80 by default, so if you test connectivity after this patch it will actually fail — this step is purely to demonstrate the port name resolution mechanism. In a real application, the new image would actually listen on 8080.
+Note: nginx listens on port 80 by default, so if you test connectivity after this patch it will actually fail , this step is purely to demonstrate the port name resolution mechanism. In a real application, the new image would actually listen on 8080.
 
 **6. Restore and verify**
 

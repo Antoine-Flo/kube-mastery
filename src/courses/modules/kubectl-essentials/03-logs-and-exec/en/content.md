@@ -1,6 +1,6 @@
-# kubectl logs and kubectl exec — Looking Inside Containers
+# kubectl logs and kubectl exec , Looking Inside Containers
 
-So far you have learned to observe Kubernetes resources from the outside — listing pods, reading their status, examining their conditions and events. But sometimes the outside view is not enough. You need to look *inside* the container itself: what is the application printing to the console? What does the filesystem look like? Is a configuration file in the right place?
+So far you have learned to observe Kubernetes resources from the outside , listing pods, reading their status, examining their conditions and events. But sometimes the outside view is not enough. You need to look *inside* the container itself: what is the application printing to the console? What does the filesystem look like? Is a configuration file in the right place?
 
 That is where `kubectl logs` and `kubectl exec` come in. They are your windows directly into the running container, and they are indispensable tools for debugging application-level problems.
 
@@ -55,7 +55,7 @@ kubectl logs my-pod -c sidecar-container
 
 ### Logs from a Crashed Container
 
-This is one of the most important flags: `--previous`. When a container crashes and restarts, Kubernetes starts a fresh container — and the logs of the previous run are gone from the live view. The `--previous` flag retrieves the logs from the *last terminated* instance of the container, which is exactly what you need when debugging a crash.
+This is one of the most important flags: `--previous`. When a container crashes and restarts, Kubernetes starts a fresh container , and the logs of the previous run are gone from the live view. The `--previous` flag retrieves the logs from the *last terminated* instance of the container, which is exactly what you need when debugging a crash.
 
 ```bash
 kubectl logs --previous my-pod
@@ -99,7 +99,7 @@ For deeper exploration, you can open a full interactive shell inside the contain
 kubectl exec -it my-pod -- /bin/sh
 ```
 
-Once inside, you have a shell prompt and can explore the container's filesystem, check running processes, test network connections, inspect environment variables, and much more — just as if you were logged into a traditional server.
+Once inside, you have a shell prompt and can explore the container's filesystem, check running processes, test network connections, inspect environment variables, and much more , just as if you were logged into a traditional server.
 
 To exit, type `exit` or press `Ctrl+D`.
 
@@ -122,7 +122,7 @@ Not all container images include a shell. Minimal images built on distroless bas
 :::
 
 :::warning
-`kubectl exec` gives you direct access to a running container in your cluster. In a production environment, treat this capability with the same care you would give to SSH access to a production server. Avoid making changes inside containers directly — container filesystems are ephemeral and changes will be lost when the container restarts. Use exec for observation and diagnosis, not for making permanent changes.
+`kubectl exec` gives you direct access to a running container in your cluster. In a production environment, treat this capability with the same care you would give to SSH access to a production server. Avoid making changes inside containers directly , container filesystems are ephemeral and changes will be lost when the container restarts. Use exec for observation and diagnosis, not for making permanent changes.
 :::
 
 ## The Debugging Flow: From Outside to Inside
@@ -196,4 +196,4 @@ kubectl logs --previous crash-demo
 kubectl delete pod log-demo crash-demo
 ```
 
-The combination of `kubectl logs` and `kubectl exec` puts you in a strong position to diagnose virtually any application-level problem in your cluster. Practice these commands until they feel natural — they will be part of your daily workflow.
+The combination of `kubectl logs` and `kubectl exec` puts you in a strong position to diagnose virtually any application-level problem in your cluster. Practice these commands until they feel natural , they will be part of your daily workflow.

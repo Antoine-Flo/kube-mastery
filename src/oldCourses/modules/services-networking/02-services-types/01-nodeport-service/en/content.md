@@ -69,10 +69,10 @@ NodePort is useful for development, testing, and bare-metal environments where c
 
 NodePort has real tradeoffs for production:
 
-- **Security** — Every node exposes the port; you need firewall rules to control access
-- **Port range** — Limited to 30000-32767, which are non-standard ports clients need to know
-- **No single entry point** — If a node goes down, clients connecting to that specific IP fail
-- **No TLS termination** — You handle TLS yourself
+- **Security:**  Every node exposes the port; you need firewall rules to control access
+- **Port range:**  Limited to 30000-32767, which are non-standard ports clients need to know
+- **No single entry point:**  If a node goes down, clients connecting to that specific IP fail
+- **No TLS termination:**  You handle TLS yourself
 
 For production external access, **LoadBalancer** or **Ingress** are better choices. NodePort is often used as a building block — an Ingress controller typically sits behind a NodePort or LoadBalancer Service.
 

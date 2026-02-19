@@ -2,7 +2,7 @@
 
 ## From Start to Finish
 
-You now know what a Job is and how to configure its spec. The final piece of the puzzle is understanding **what happens after you create a Job** — how it moves through phases, how Kubernetes tracks its progress, and what happens to all those Pods once the work is done.
+You now know what a Job is and how to configure its spec. The final piece of the puzzle is understanding **what happens after you create a Job:**  how it moves through phases, how Kubernetes tracks its progress, and what happens to all those Pods once the work is done.
 
 Think of a Job's lifecycle like a project timeline on a task board. The project starts in an **active** state while work is underway. It eventually moves to **succeeded** if everything goes well, or **failed** if too many problems pile up. And once the project is closed, you need to decide: do you archive the records, or shred them?
 
@@ -42,7 +42,7 @@ The **Events** section at the bottom reveals exactly when Pods were created, com
 
 When the number of successfully completed Pods reaches the `completions` target, the Job transitions to **Succeeded**. No more Pods are created, and the Job is considered done.
 
-The Job object **remains in the cluster** — it does not disappear. Its completed Pods also remain, which is intentional: you can still inspect their logs, review exit codes, and verify the output.
+The Job object **remains in the cluster:**  it does not disappear. Its completed Pods also remain, which is intentional: you can still inspect their logs, review exit codes, and verify the output.
 
 ```bash
 kubectl logs job/<job-name>
@@ -59,8 +59,8 @@ kubectl logs <specific-pod-name>
 
 A Job transitions to **Failed** when either of these conditions is met:
 
-- **Pod failures exceed `backoffLimit`** — the controller gave up after too many retries.
-- **Total runtime exceeds `activeDeadlineSeconds`** — the hard deadline was reached, and all remaining Pods were terminated.
+- **Pod failures exceed `backoffLimit`:**  the controller gave up after too many retries.
+- **Total runtime exceeds `activeDeadlineSeconds`:**  the hard deadline was reached, and all remaining Pods were terminated.
 
 A Failed Job also stays in the cluster. This is important for debugging: you can inspect the Job's conditions, look at Pod events, and examine container logs to understand what went wrong.
 
@@ -115,7 +115,7 @@ kubectl delete job <job-name>
 ```
 
 :::warning
-Deleting a Job **cascades to its Pods** — they are removed as well. Make sure you have already retrieved any logs or output you need before deleting. If you only want to remove the Job object while keeping the Pods, use `kubectl delete job <job-name> --cascade=orphan`.
+Deleting a Job **cascades to its Pods:**  they are removed as well. Make sure you have already retrieved any logs or output you need before deleting. If you only want to remove the Job object while keeping the Pods, use `kubectl delete job <job-name> --cascade=orphan`.
 :::
 
 ## Choosing a Cleanup Strategy
@@ -135,7 +135,7 @@ In production environments, combining `ttlSecondsAfterFinished` with a centraliz
 
 When a Job does not behave as expected, here is a systematic approach:
 
-**Job stuck in Active** — Pods might be pending due to insufficient resources or scheduling constraints. Check Pod status:
+**Job stuck in Active:**  Pods might be pending due to insufficient resources or scheduling constraints. Check Pod status:
 
 ```bash
 kubectl get pods -l job-name=<job-name>
@@ -144,7 +144,7 @@ kubectl describe pod <pod-name>
 
 Look for events like `FailedScheduling` or `Insufficient cpu`.
 
-**Job marked as Failed** — Inspect the Job's conditions and the last Pod's logs:
+**Job marked as Failed:**  Inspect the Job's conditions and the last Pod's logs:
 
 ```bash
 kubectl describe job <job-name>

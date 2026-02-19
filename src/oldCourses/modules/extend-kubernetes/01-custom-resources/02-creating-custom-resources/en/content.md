@@ -74,11 +74,11 @@ Before creating instances, it's always a good idea to confirm the CRD is install
 
 ## Common Pitfalls
 
-**"Schema validation failed"** — Your manifest doesn't match what the CRD expects. Maybe a field has the wrong type, a required field is missing, or you added a field that isn't in the schema. Check the CRD's `openAPIV3Schema` and fix the manifest.
+**"Schema validation failed":**  Your manifest doesn't match what the CRD expects. Maybe a field has the wrong type, a required field is missing, or you added a field that isn't in the schema. Check the CRD's `openAPIV3Schema` and fix the manifest.
 
-**"NotFound" or "no matches for kind"** — The `apiVersion` or `kind` in your manifest doesn't match the CRD exactly. Kubernetes is case-sensitive here — `backupjob` and `BackupJob` are different. Double-check both values.
+**"NotFound" or "no matches for kind":**  The `apiVersion` or `kind` in your manifest doesn't match the CRD exactly. Kubernetes is case-sensitive here — `backupjob` and `BackupJob` are different. Double-check both values.
 
-**Nothing happens after creation** — Remember, CRDs only store data. If no controller is watching your custom resources, nothing will react. You need a controller or Operator to bring your resources to life.
+**Nothing happens after creation:**  Remember, CRDs only store data. If no controller is watching your custom resources, nothing will react. You need a controller or Operator to bring your resources to life.
 
 :::warning
 Changing a CRD's schema in incompatible ways (removing fields, changing types) can break existing instances. Plan schema migrations carefully, especially in production. Consider versioning your CRD (v1, v2) to introduce breaking changes safely.

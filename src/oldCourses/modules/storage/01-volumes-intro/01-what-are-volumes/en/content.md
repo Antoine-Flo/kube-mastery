@@ -10,9 +10,9 @@ Think of a container's filesystem as a whiteboard. You can write whatever you wa
 
 Volumes serve three main purposes in Kubernetes:
 
-- **Sharing data between containers** — Two containers in the same Pod can mount the same volume, each at a different path. One writes, the other reads.
-- **Persisting data** — With PersistentVolumeClaim volumes, data survives Pod restarts, rescheduling, and even node failures.
-- **Injecting configuration** — ConfigMap and Secret volumes let you mount configuration files and credentials without baking them into your container image.
+- **Sharing data between containers:**  Two containers in the same Pod can mount the same volume, each at a different path. One writes, the other reads.
+- **Persisting data:**  With PersistentVolumeClaim volumes, data survives Pod restarts, rescheduling, and even node failures.
+- **Injecting configuration:**  ConfigMap and Secret volumes let you mount configuration files and credentials without baking them into your container image.
 
 ## How Volumes Are Defined
 
@@ -45,11 +45,11 @@ All containers in a Pod can access the same volume — each mounting it at a dif
 
 Kubernetes supports many volume types. Here are the most common ones you'll encounter:
 
-- **emptyDir** — Temporary storage, created with the Pod, deleted with the Pod. Great for scratch space and inter-container sharing.
-- **configMap** and **secret** — Read-only volumes that inject configuration data or sensitive information as files.
-- **persistentVolumeClaim (PVC)** — Binds to a PersistentVolume for data that needs to survive Pod restarts.
-- **hostPath** — Mounts a directory from the node. Useful for development but risky in production multi-node clusters.
-- **CSI volumes** — Provisioned via StorageClass for cloud block storage and other backends.
+- **emptyDir:**  Temporary storage, created with the Pod, deleted with the Pod. Great for scratch space and inter-container sharing.
+- **configMap** and **secret:**  Read-only volumes that inject configuration data or sensitive information as files.
+- **persistentVolumeClaim (PVC):**  Binds to a PersistentVolume for data that needs to survive Pod restarts.
+- **hostPath:**  Mounts a directory from the node. Useful for development but risky in production multi-node clusters.
+- **CSI volumes:**  Provisioned via StorageClass for cloud block storage and other backends.
 
 Each type has different lifecycle and sharing semantics. We'll explore the most important ones in detail throughout this chapter.
 
@@ -57,11 +57,11 @@ You can also use `subPath` in `volumeMounts` to mount a specific file or subdire
 
 ## Common Issues
 
-**Volume mount fails** — Make sure the volume name in `volumes` matches exactly with `volumeMounts`. A typo here means the mount silently doesn't happen.
+**Volume mount fails:**  Make sure the volume name in `volumes` matches exactly with `volumeMounts`. A typo here means the mount silently doesn't happen.
 
-**Permission denied** — The container user may not have access to the mounted files. Adjust `fsGroup` or `runAsUser` in the Pod's security context.
+**Permission denied:**  The container user may not have access to the mounted files. Adjust `fsGroup` or `runAsUser` in the Pod's security context.
 
-**PVC stuck in Pending** — No matching PersistentVolume exists. Check that a PV with the right size and access mode is available, or that a StorageClass can dynamically provision one.
+**PVC stuck in Pending:**  No matching PersistentVolume exists. Check that a PV with the right size and access mode is available, or that a StorageClass can dynamically provision one.
 
 :::warning
 The volume type determines the data's lifecycle. An `emptyDir` volume disappears with the Pod. A PVC-backed volume persists independently. Choose the right type for your use case — using `emptyDir` for data you can't afford to lose is a common mistake.

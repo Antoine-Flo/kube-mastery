@@ -1,6 +1,6 @@
 # Label Selectors
 
-Labels would be little more than decorative metadata if there were no way to query them. Label selectors are the query language of Kubernetes — the mechanism that turns a static collection of key-value pairs into a dynamic, filterable, connectable system. Wherever you see one Kubernetes object pointing at another, a label selector is almost certainly doing the work behind the scenes.
+Labels would be little more than decorative metadata if there were no way to query them. Label selectors are the query language of Kubernetes , the mechanism that turns a static collection of key-value pairs into a dynamic, filterable, connectable system. Wherever you see one Kubernetes object pointing at another, a label selector is almost certainly doing the work behind the scenes.
 
 ## Selectors as a Query Language
 
@@ -12,8 +12,8 @@ There are two families of selectors: **equality-based** and **set-based**. They 
 
 Equality-based selectors are the simpler form. They compare the value of a label key directly.
 
-- `key=value` or `key==value` — matches objects where the key exists and its value equals the given string.
-- `key!=value` — matches objects where the key does not exist, or its value is anything other than the given string.
+- `key=value` or `key==value` , matches objects where the key exists and its value equals the given string.
+- `key!=value` , matches objects where the key does not exist, or its value is anything other than the given string.
 
 You'll use these directly in `kubectl` with the `-l` flag, and you'll see them in Service and NetworkPolicy manifests:
 
@@ -23,7 +23,7 @@ kubectl get pods -l env!=staging
 kubectl get pods -l app=web,env=production
 ```
 
-When you list multiple expressions separated by commas, they form an **AND** — the object must satisfy every condition. There is no built-in OR at this syntax level.
+When you list multiple expressions separated by commas, they form an **AND:**  the object must satisfy every condition. There is no built-in OR at this syntax level.
 
 Services use equality-based selectors in their `.spec.selector` field:
 
@@ -47,10 +47,10 @@ This Service will route traffic to any Pod that simultaneously carries `app=web`
 
 Set-based selectors are more expressive. They let you match against a set of possible values rather than a single one, and they can test for the mere existence of a key regardless of its value.
 
-- `key in (v1, v2)` — matches objects where the key's value is one of the listed values.
-- `key notin (v1, v2)` — matches objects where the key doesn't exist, or its value is not in the list.
-- `key` — matches objects where the key exists (any value).
-- `!key` — matches objects where the key does not exist at all.
+- `key in (v1, v2)` , matches objects where the key's value is one of the listed values.
+- `key notin (v1, v2)` , matches objects where the key doesn't exist, or its value is not in the list.
+- `key` , matches objects where the key exists (any value).
+- `!key` , matches objects where the key does not exist at all.
 
 These are especially useful in `kubectl` when you need flexible filtering:
 
@@ -103,7 +103,7 @@ selector:
       operator: Exists
 ```
 
-You can combine both fields in the same selector — an object must satisfy all `matchLabels` entries AND all `matchExpressions` entries. It's AND all the way down.
+You can combine both fields in the same selector , an object must satisfy all `matchLabels` entries AND all `matchExpressions` entries. It's AND all the way down.
 
 :::warning
 The `spec.selector` of a Deployment or ReplicaSet is **immutable** after creation. If you need to change the selector, you must delete the resource and recreate it. Attempting to patch the selector will be rejected by the API server.
@@ -111,7 +111,7 @@ The `spec.selector` of a Deployment or ReplicaSet is **immutable** after creatio
 
 ## How Services Build Their Endpoints List
 
-This is where selectors become truly powerful. When you create a Service with a selector, Kubernetes starts a continuous watch. Every time a Pod is created, updated, or deleted anywhere in the namespace, the Endpoints controller re-evaluates which Pods match the Service's selector. The resulting list of IP addresses and ports becomes the Service's Endpoints object — and that's what kube-proxy (or whatever CNI you're using) uses to forward traffic.
+This is where selectors become truly powerful. When you create a Service with a selector, Kubernetes starts a continuous watch. Every time a Pod is created, updated, or deleted anywhere in the namespace, the Endpoints controller re-evaluates which Pods match the Service's selector. The resulting list of IP addresses and ports becomes the Service's Endpoints object , and that's what kube-proxy (or whatever CNI you're using) uses to forward traffic.
 
 ```mermaid
 graph LR
@@ -125,7 +125,7 @@ graph LR
     style P4 fill:#f5f5f5,stroke:#ccc,color:#999
 ```
 
-The beauty of this design is that it's entirely dynamic. Scale up from 3 Pods to 10, and the Endpoints list grows automatically. A Pod crashes, and within seconds it's removed from the Endpoints list and traffic stops going to it. The Service itself never changes — only its backing Endpoints do.
+The beauty of this design is that it's entirely dynamic. Scale up from 3 Pods to 10, and the Endpoints list grows automatically. A Pod crashes, and within seconds it's removed from the Endpoints list and traffic stops going to it. The Service itself never changes , only its backing Endpoints do.
 
 ## The Most Common Pitfall: Selector Mismatch
 
@@ -151,10 +151,10 @@ spec:
           image: nginx:1.25
 ```
 
-If the selector says `app: web` but the template labels say `app: webapp`, the Deployment will fail validation — the API server checks this at creation time for Deployments. For Services, there's no such validation: the Service will be created successfully, but its Endpoints list will be empty, and no traffic will ever reach your Pods. This causes a maddening situation where the Service exists, the Pods exist, but requests simply time out.
+If the selector says `app: web` but the template labels say `app: webapp`, the Deployment will fail validation , the API server checks this at creation time for Deployments. For Services, there's no such validation: the Service will be created successfully, but its Endpoints list will be empty, and no traffic will ever reach your Pods. This causes a maddening situation where the Service exists, the Pods exist, but requests simply time out.
 
 :::warning
-If a Service is returning connection timeouts and you're sure the Pods are running, the first thing to check is whether the Service's selector matches the actual labels on the Pods. Run `kubectl describe service <name>` and look at the `Endpoints:` line — if it shows `<none>`, the selector isn't matching anything.
+If a Service is returning connection timeouts and you're sure the Pods are running, the first thing to check is whether the Service's selector matches the actual labels on the Pods. Run `kubectl describe service <name>` and look at the `Endpoints:` line , if it shows `<none>`, the selector isn't matching anything.
 :::
 
 ## AND Logic Is the Only Logic
@@ -197,7 +197,7 @@ kubectl get pods -l "track notin (canary),app=web"
 ```bash
 kubectl expose pod web-prod --name=web-svc --port=80 --selector="app=web,env=production,track=stable"
 kubectl describe service web-svc
-# Look at the Endpoints line — it should list the IPs of matching Pods
+# Look at the Endpoints line , it should list the IPs of matching Pods
 kubectl get endpoints web-svc
 ```
 

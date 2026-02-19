@@ -4,7 +4,7 @@
 
 In the previous lesson, you learned that a Job runs Pods to completion. But how do you tell Kubernetes *how many* times a task should run? Can multiple Pods work in parallel? What happens if something takes too long?
 
-The answers lie in the **Job spec** — a small set of powerful fields that act as a blueprint for your batch workload. Think of it like a work order you hand to a construction crew: it specifies how many units to build, how many workers can operate simultaneously, how many mistakes are tolerable, and the hard deadline for the project.
+The answers lie in the **Job spec:**  a small set of powerful fields that act as a blueprint for your batch workload. Think of it like a work order you hand to a construction crew: it specifies how many units to build, how many workers can operate simultaneously, how many mistakes are tolerable, and the hard deadline for the project.
 
 Let's explore each field in detail.
 
@@ -172,4 +172,4 @@ kubectl delete job hello-job
 
 The Job spec gives you four essential controls: `completions` defines the success target, `parallelism` sets the concurrency level, `backoffLimit` governs failure tolerance, and `activeDeadlineSeconds` enforces a hard time limit. Together, they let you express a wide range of batch processing patterns — from simple one-shot tasks to large parallel workloads.
 
-In the next lesson, we will explore the **Job lifecycle** — how Jobs transition through phases, what happens when they succeed or fail, and how to manage cleanup of completed Jobs.
+In the next lesson, we will explore the **Job lifecycle:**  how Jobs transition through phases, what happens when they succeed or fail, and how to manage cleanup of completed Jobs.

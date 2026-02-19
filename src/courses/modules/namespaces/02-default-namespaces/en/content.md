@@ -1,6 +1,6 @@
 # The Four Built-In Kubernetes Namespaces
 
-Every Kubernetes cluster starts its life with four namespaces already created. These are not optional — they are part of the Kubernetes system itself, and each one serves a specific purpose. As a Kubernetes practitioner, knowing what lives in each namespace and what the rules of engagement are will save you from confusion and, occasionally, from accidentally breaking your cluster.
+Every Kubernetes cluster starts its life with four namespaces already created. These are not optional , they are part of the Kubernetes system itself, and each one serves a specific purpose. As a Kubernetes practitioner, knowing what lives in each namespace and what the rules of engagement are will save you from confusion and, occasionally, from accidentally breaking your cluster.
 
 ## A Map of the Four Namespaces
 
@@ -18,7 +18,7 @@ Let us walk through each one in detail.
 
 ## default: Where Your Work Lives
 
-The `default` namespace is exactly what its name suggests — it is where Kubernetes places any resource that does not specify a namespace. When you run `kubectl run my-pod --image=nginx` without a `-n` flag, the pod lands in `default`. When you run `kubectl get pods` without specifying a namespace, you are looking at `default`.
+The `default` namespace is exactly what its name suggests , it is where Kubernetes places any resource that does not specify a namespace. When you run `kubectl run my-pod --image=nginx` without a `-n` flag, the pod lands in `default`. When you run `kubectl get pods` without specifying a namespace, you are looking at `default`.
 
 This makes `default` the most visible namespace in a fresh cluster, and it is perfectly fine to use for learning and experimentation. In a tutorial, a workshop, or a personal practice cluster, having everything in one namespace is simple and convenient.
 
@@ -30,7 +30,7 @@ You can check what is currently in the `default` namespace with `kubectl get all
 
 ## kube-system: The Engine Room
 
-The `kube-system` namespace is the home of all Kubernetes system components. These are the processes that make the cluster work — the control plane components and the infrastructure-level services that run on every node.
+The `kube-system` namespace is the home of all Kubernetes system components. These are the processes that make the cluster work , the control plane components and the infrastructure-level services that run on every node.
 
 What you typically find in `kube-system`:
 
@@ -53,7 +53,7 @@ Do not modify resources in `kube-system` unless you are explicitly following a d
 
 ## kube-public: The Public Notice Board
 
-The `kube-public` namespace is readable by all users in the cluster, including unauthenticated users. This makes it a special case — most namespaces require proper authentication and authorization to access, but `kube-public` is intentionally open.
+The `kube-public` namespace is readable by all users in the cluster, including unauthenticated users. This makes it a special case , most namespaces require proper authentication and authorization to access, but `kube-public` is intentionally open.
 
 In practice, `kube-public` contains almost nothing. The one notable thing you will find there is the `cluster-info` ConfigMap, which stores basic information about the cluster including the API server URL. This is what `kubectl cluster-info` reads to display the cluster's address.
 
@@ -62,7 +62,7 @@ kubectl get configmaps -n kube-public
 kubectl get configmap cluster-info -n kube-public -o yaml
 ```
 
-In most clusters, `kube-public` is essentially empty beyond that ConfigMap. It exists as a convention — a designated place for information that needs to be world-readable — but it is rarely used in practice. You can technically create resources here, but there is almost never a good reason to do so.
+In most clusters, `kube-public` is essentially empty beyond that ConfigMap. It exists as a convention , a designated place for information that needs to be world-readable , but it is rarely used in practice. You can technically create resources here, but there is almost never a good reason to do so.
 
 ## kube-node-lease: Heartbeats from Nodes
 
@@ -73,11 +73,11 @@ In earlier versions of Kubernetes, nodes reported their health by updating their
 To solve this, Kubernetes introduced **Lease objects** in the `kube-node-lease` namespace. Each node has a corresponding Lease object that it updates with a timestamp at a regular interval (the heartbeat). The control plane's node controller watches these Lease objects to determine whether a node is still alive. If a node stops updating its Lease, the controller marks the node as `NotReady` and begins taking action on the pods it was running.
 
 ```bash
-# See the Lease objects — one per node
+# See the Lease objects , one per node
 kubectl get leases -n kube-node-lease
 ```
 
-Each Lease object is small and simple. Because Lease objects are separate from the full Node objects, updating them is a much lighter write operation, reducing the load on etcd significantly — especially important in large clusters with hundreds of nodes.
+Each Lease object is small and simple. Because Lease objects are separate from the full Node objects, updating them is a much lighter write operation, reducing the load on etcd significantly , especially important in large clusters with hundreds of nodes.
 
 You will never need to manage Lease objects manually. They are entirely managed by the kubelet running on each node.
 
@@ -85,9 +85,9 @@ You will never need to manage Lease objects manually. They are entirely managed 
 
 | Namespace | Purpose | Managed by | Should you touch it? |
 |-----------|---------|------------|----------------------|
-| `default` | Your workloads | You | Yes — for learning. Use named namespaces for production. |
+| `default` | Your workloads | You | Yes , for learning. Use named namespaces for production. |
 | `kube-system` | Kubernetes system components | Kubernetes | Only with care and reason |
-| `kube-public` | World-readable cluster information | Kubernetes | Rarely — read-only is fine |
+| `kube-public` | World-readable cluster information | Kubernetes | Rarely , read-only is fine |
 | `kube-node-lease` | Node heartbeat Leases | Kubernetes (kubelet) | Never |
 
 ## Hands-On Practice
@@ -109,7 +109,7 @@ kubectl get service kubernetes -n default -o yaml
 # See all the system components
 kubectl get pods -n kube-system
 
-# Check CoreDNS — it is the cluster's internal DNS
+# Check CoreDNS , it is the cluster's internal DNS
 kubectl get pods -n kube-system -l k8s-app=kube-dns
 
 # Describe a CoreDNS pod to see its configuration
@@ -130,7 +130,7 @@ kubectl get configmap cluster-info -n kube-public -o yaml
 kubectl cluster-info
 
 # --- kube-node-lease ---
-# See the Lease objects — one per node
+# See the Lease objects , one per node
 kubectl get leases -n kube-node-lease
 
 # Describe a Lease to see the heartbeat timestamp

@@ -82,11 +82,11 @@ When using `subPath`, the file is **not automatically updated** when the ConfigM
 
 ## Common Issues
 
-**Pod stuck in Pending** — The ConfigMap or Secret referenced in the volume doesn't exist yet. Kubernetes waits for it before starting the Pod. Always create ConfigMaps and Secrets before the Pods that use them.
+**Pod stuck in Pending:**  The ConfigMap or Secret referenced in the volume doesn't exist yet. Kubernetes waits for it before starting the Pod. Always create ConfigMaps and Secrets before the Pods that use them.
 
-**Permission denied** — The default file mode may not match what your application expects. Use `defaultMode` in the volume definition, or adjust `runAsUser` and `fsGroup` in the Pod's security context.
+**Permission denied:**  The default file mode may not match what your application expects. Use `defaultMode` in the volume definition, or adjust `runAsUser` and `fsGroup` in the Pod's security context.
 
-**Stale data after update** — ConfigMap updates propagate to mounts, but with a delay (the kubelet sync period, typically up to a minute). Applications that cache config files at startup won't see the change until they're restarted or reloaded.
+**Stale data after update:**  ConfigMap updates propagate to mounts, but with a delay (the kubelet sync period, typically up to a minute). Applications that cache config files at startup won't see the change until they're restarted or reloaded.
 
 ---
 

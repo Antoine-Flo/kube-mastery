@@ -41,7 +41,7 @@ To read logs from a specific container, use `-c <container-name>`. To get logs f
 
 ## Troubleshooting Common Issues
 
-**"No logs available"** — This usually means the Pod hasn't started yet or the container hasn't written any output. Check the Pod status first:
+**"No logs available":**  This usually means the Pod hasn't started yet or the container hasn't written any output. Check the Pod status first:
 
 ```bash
 kubectl get pod my-pod
@@ -50,9 +50,9 @@ kubectl describe pod my-pod
 
 Look at the Events section of `describe` — it often reveals why a Pod isn't starting (image pull failures, resource limits, scheduling issues).
 
-**"--previous" doesn't work** — The `--previous` flag only works if the container has restarted at least once. If the Pod was deleted and recreated (rather than restarted), there's no "previous" to show.
+**"--previous" doesn't work:**  The `--previous` flag only works if the container has restarted at least once. If the Pod was deleted and recreated (rather than restarted), there's no "previous" to show.
 
-**Init container logs** — Init containers run before the main containers and may hold important clues. Access them with `-c`:
+**Init container logs:**  Init containers run before the main containers and may hold important clues. Access them with `-c`:
 
 ```bash
 kubectl logs my-pod -c init-container-name

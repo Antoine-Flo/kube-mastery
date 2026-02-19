@@ -14,15 +14,15 @@ That's exactly what certificates do in Kubernetes. Each component has a certific
 
 At the top of the hierarchy is the **cluster CA** (Certificate Authority). It's the root of trust — every other certificate in the cluster is signed by it. Here's what the main certificates cover:
 
-- **API server** — Has its own certificate so clients (kubectl, kubelets, controllers) can verify they're talking to the real API server
-- **kubelet** — Holds client certificates for authenticating to the API server
-- **etcd** — Uses peer certificates for cluster communication between etcd members, and server certificates for API server access
-- **Front-proxy CA** — A separate CA used for API aggregation (extension API servers)
+- **API server:**  Has its own certificate so clients (kubectl, kubelets, controllers) can verify they're talking to the real API server
+- **kubelet:**  Holds client certificates for authenticating to the API server
+- **etcd:**  Uses peer certificates for cluster communication between etcd members, and server certificates for API server access
+- **Front-proxy CA:**  A separate CA used for API aggregation (extension API servers)
 
 The CA files are typically named `ca.crt` (public certificate) and `ca.key` (private key). The CA cert is shared across the cluster; each component has its own key pair.
 
 :::info
-On kubeadm-based clusters, all certificate files live under `/etc/kubernetes/pki/` on the control plane node. The CA cert is shared; each component has its own key and certificate. **Never expose private keys** — if compromised, rotate them immediately.
+On kubeadm-based clusters, all certificate files live under `/etc/kubernetes/pki/` on the control plane node. The CA cert is shared; each component has its own key and certificate. **Never expose private keys:**  if compromised, rotate them immediately.
 :::
 
 ## Inspecting Cluster Certificates
@@ -70,11 +70,11 @@ Some clusters have a second CA specifically for API aggregation — the front-pr
 
 ## Common Issues
 
-**"certificate has expired"** — The most common issue in older clusters. Certificates must be renewed before expiry. The next lesson covers rotation in detail.
+**"certificate has expired":**  The most common issue in older clusters. Certificates must be renewed before expiry. The next lesson covers rotation in detail.
 
-**"certificate signed by unknown authority"** — The client's CA doesn't match the cluster CA. This often happens when mixing kubeconfigs or after a CA rotation. Verify the CA reference in your kubeconfig.
+**"certificate signed by unknown authority":**  The client's CA doesn't match the cluster CA. This often happens when mixing kubeconfigs or after a CA rotation. Verify the CA reference in your kubeconfig.
 
-**"x509: certificate is valid for X, not Y"** — The certificate's Subject Alternative Names (SANs) don't include the hostname or IP you're connecting to. This can happen after changing the API server's address.
+**"x509: certificate is valid for X, not Y":**  The certificate's Subject Alternative Names (SANs) don't include the hostname or IP you're connecting to. This can happen after changing the API server's address.
 
 :::warning
 Certificate expiration is one of the most common causes of cluster outages. Set up monitoring (Prometheus alerts on certificate expiry) and establish a rotation calendar. Most kubeadm certificates expire after one year — don't let them surprise you.

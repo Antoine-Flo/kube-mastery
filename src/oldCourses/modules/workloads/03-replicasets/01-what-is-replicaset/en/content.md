@@ -118,4 +118,4 @@ You should see a reference pointing back to the ReplicaSet — this is how Kuber
 
 A ReplicaSet is Kubernetes' way of guaranteeing that a specific number of identical Pods are always running. It continuously watches the cluster, compares the actual state to the desired state, and takes corrective action. It is built on three pillars: a **replica count**, a **label selector**, and a **Pod template**.
 
-While you will rarely create ReplicaSets directly (Deployments handle that for you), understanding them is key to grasping how Kubernetes keeps your applications resilient. In the next lesson, we will take a closer look at **selectors** — the mechanism that connects a ReplicaSet to its Pods.
+While you will rarely create ReplicaSets directly (Deployments handle that for you), understanding them is key to grasping how Kubernetes keeps your applications resilient. In the next lesson, we will take a closer look at **selectors:**  the mechanism that connects a ReplicaSet to its Pods.

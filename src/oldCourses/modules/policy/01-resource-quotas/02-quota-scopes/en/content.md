@@ -8,10 +8,10 @@ Not all Pods are created equal. Some are critical production workloads with guar
 
 Kubernetes supports four built-in scopes:
 
-- **BestEffort** — Pods with no CPU/memory requests or limits at all. These are the lowest-priority Pods and get evicted first when nodes are under pressure.
-- **NotBestEffort** — Pods that have at least one request or limit (Burstable or Guaranteed QoS class). These are your "real" workloads.
-- **Terminating** — Pods with `activeDeadlineSeconds` set — typically Jobs with a time limit.
-- **NotTerminating** — Long-running Pods without `activeDeadlineSeconds` — most Deployments and StatefulSets.
+- **BestEffort:**  Pods with no CPU/memory requests or limits at all. These are the lowest-priority Pods and get evicted first when nodes are under pressure.
+- **NotBestEffort:**  Pods that have at least one request or limit (Burstable or Guaranteed QoS class). These are your "real" workloads.
+- **Terminating:**  Pods with `activeDeadlineSeconds` set — typically Jobs with a time limit.
+- **NotTerminating:**  Long-running Pods without `activeDeadlineSeconds` — most Deployments and StatefulSets.
 
 You can combine scopes: a resource must match **all** specified scopes to be counted.
 

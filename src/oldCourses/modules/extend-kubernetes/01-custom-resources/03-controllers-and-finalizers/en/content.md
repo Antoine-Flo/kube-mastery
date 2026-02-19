@@ -99,11 +99,11 @@ When implementing finalizer handling in your controller, keep these principles i
 
 ## Common Pitfalls
 
-**Stuck in Terminating** — The most common issue. The controller isn't removing its finalizer, either because it's crashed, has a bug, or can't reach an external system. Check controller logs first, fix the issue, and the deletion will complete automatically.
+**Stuck in Terminating:**  The most common issue. The controller isn't removing its finalizer, either because it's crashed, has a bug, or can't reach an external system. Check controller logs first, fix the issue, and the deletion will complete automatically.
 
-**Finalizer conflicts** — Make sure only one controller manages a given finalizer key. If two controllers both try to handle the same finalizer, they'll fight each other.
+**Finalizer conflicts:**  Make sure only one controller manages a given finalizer key. If two controllers both try to handle the same finalizer, they'll fight each other.
 
-**Cleanup not idempotent** — If your cleanup logic fails partway through and runs again, it should pick up where it left off without errors. Design for re-entrancy from the start.
+**Cleanup not idempotent:**  If your cleanup logic fails partway through and runs again, it should pick up where it left off without errors. Design for re-entrancy from the start.
 
 ---
 

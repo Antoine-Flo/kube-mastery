@@ -51,8 +51,8 @@ spec:
 ```
 
 The `tls` section specifies:
-- **hosts** — Which hostnames this certificate covers (must match the cert's CN or SAN)
-- **secretName** — Which Secret contains the certificate and key
+- **hosts:**  Which hostnames this certificate covers (must match the cert's CN or SAN)
+- **secretName:**  Which Secret contains the certificate and key
 
 When a client connects to `https://example.com`, the Ingress controller uses the certificate from `example-tls` to establish the TLS connection, then forwards the decrypted request to the `web` Service.
 

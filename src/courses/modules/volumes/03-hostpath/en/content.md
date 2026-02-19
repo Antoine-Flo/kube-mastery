@@ -1,6 +1,6 @@
 # hostPath Volumes
 
-Every Kubernetes Pod runs on a physical or virtual node — a machine running Linux with its own filesystem, its own `/var/log`, its own `/proc`, its own device files. Most of the time, the containerized workloads running on that node are completely isolated from the node's filesystem by design. But sometimes you specifically need to reach down and touch the host's filesystem directly. That's what `hostPath` volumes are for.
+Every Kubernetes Pod runs on a physical or virtual node , a machine running Linux with its own filesystem, its own `/var/log`, its own `/proc`, its own device files. Most of the time, the containerized workloads running on that node are completely isolated from the node's filesystem by design. But sometimes you specifically need to reach down and touch the host's filesystem directly. That's what `hostPath` volumes are for.
 
 A `hostPath` volume mounts a file or directory from the **node's own filesystem** into a Pod. The container sees a path inside its own filesystem, but reads and writes go directly to the corresponding location on the underlying node.
 
@@ -8,7 +8,7 @@ A `hostPath` volume mounts a file or directory from the **node's own filesystem*
 
 The most legitimate uses of `hostPath` fall into a specific category: **system-level observability and monitoring tools**.
 
-Consider a DaemonSet running a log collection agent on every node. Its job is to pick up all the log files that the containerd runtime writes to `/var/log/containers/` on the host, parse them, and ship them to a centralized log aggregator. This agent needs to see the node's log directory, not some abstract Kubernetes volume — the actual files on disk, right where the runtime wrote them.
+Consider a DaemonSet running a log collection agent on every node. Its job is to pick up all the log files that the containerd runtime writes to `/var/log/containers/` on the host, parse them, and ship them to a centralized log aggregator. This agent needs to see the node's log directory, not some abstract Kubernetes volume , the actual files on disk, right where the runtime wrote them.
 
 Similarly, a node-level metrics collector like **Prometheus node-exporter** needs to read from `/proc` and `/sys` to gather CPU, memory, disk, and network metrics about the node itself. These are special virtual filesystems that only exist on the node and cannot be replicated inside a container without `hostPath`.
 
@@ -60,7 +60,7 @@ The `type` field in a `hostPath` definition is optional but highly recommended. 
 | `CharDevice` | Must be a character device file |
 | `BlockDevice` | Must be a block device file |
 
-Using `DirectoryOrCreate` or `FileOrCreate` makes your Pod more resilient to path variation across nodes — but use them carefully, as automatically creating directories on node filesystems can be surprising.
+Using `DirectoryOrCreate` or `FileOrCreate` makes your Pod more resilient to path variation across nodes , but use them carefully, as automatically creating directories on node filesystems can be surprising.
 
 ## The Architecture: Pod Sees Host
 
@@ -84,7 +84,7 @@ The arrows go both ways intentionally: the container can read *and write* to the
 
 ## Security Warnings
 
-`hostPath` is one of the most powerful — and most dangerous — volume types in Kubernetes. Because it gives a container direct access to the node's filesystem, it can be misused to:
+`hostPath` is one of the most powerful , and most dangerous , volume types in Kubernetes. Because it gives a container direct access to the node's filesystem, it can be misused to:
 
 - Read sensitive files from the node (TLS certificates, kubeconfig files, secret credentials stored on disk)
 - Write arbitrary files to the node, potentially modifying system configuration
@@ -96,14 +96,14 @@ The arrows go both ways intentionally: the container can read *and write* to the
 :::
 
 :::warning
-`hostPath` volumes create tight coupling between a Pod and a specific node. If a Pod mounts `/var/specialtool/data` and that path only exists on certain nodes, the Pod can only run on those nodes — unless you use `nodeSelector` or node affinity to enforce placement. This can cause mysterious scheduling failures that are hard to debug.
+`hostPath` volumes create tight coupling between a Pod and a specific node. If a Pod mounts `/var/specialtool/data` and that path only exists on certain nodes, the Pod can only run on those nodes , unless you use `nodeSelector` or node affinity to enforce placement. This can cause mysterious scheduling failures that are hard to debug.
 :::
 
 ## Node Coupling and Scheduling
 
-Because `hostPath` depends on what's physically present on the node's filesystem, Pods using it may be tied to specific nodes. If you use `DirectoryOrCreate`, Kubernetes will create the directory on whichever node the Pod lands on — but the data written there will only be accessible on that specific node. If the Pod is rescheduled to a different node (due to a node failure or scale-down), the new node won't have the data.
+Because `hostPath` depends on what's physically present on the node's filesystem, Pods using it may be tied to specific nodes. If you use `DirectoryOrCreate`, Kubernetes will create the directory on whichever node the Pod lands on , but the data written there will only be accessible on that specific node. If the Pod is rescheduled to a different node (due to a node failure or scale-down), the new node won't have the data.
 
-This is why `hostPath` is almost exclusively used in DaemonSets. A DaemonSet runs one Pod per node, so there's no question of "which node" — each Pod runs on exactly one node and accesses that node's local filesystem. The DaemonSet guarantees coverage across all nodes while the hostPath gives each agent Pod access to its local node's files.
+This is why `hostPath` is almost exclusively used in DaemonSets. A DaemonSet runs one Pod per node, so there's no question of "which node" , each Pod runs on exactly one node and accesses that node's local filesystem. The DaemonSet guarantees coverage across all nodes while the hostPath gives each agent Pod access to its local node's files.
 
 ## Mounting the Docker/Containerd Socket
 
@@ -123,7 +123,7 @@ containers:
         mountPath: /run/containerd/containerd.sock
 ```
 
-This is powerful and purposefully restricted to specialized workloads. Mounting the container runtime socket effectively gives the container the ability to manage all other containers on the node — treat it with the same respect you'd give root access.
+This is powerful and purposefully restricted to specialized workloads. Mounting the container runtime socket effectively gives the container the ability to manage all other containers on the node , treat it with the same respect you'd give root access.
 
 ## Hands-On Practice
 
@@ -169,7 +169,7 @@ You should see the real contents of the node's `/var/log` directory.
 kubectl exec hostpath-demo -- ls /node-logs/pods/ 2>/dev/null | head -5
 ```
 
-These are the actual log directories that kubelet writes for each Pod running on this node — real host data, visible inside your container.
+These are the actual log directories that kubelet writes for each Pod running on this node , real host data, visible inside your container.
 
 **4. Verify the readOnly mount prevents writing:**
 
@@ -222,4 +222,4 @@ kubectl describe pod hostpath-writer | grep -A 10 "Volumes:"
 kubectl delete pod hostpath-demo hostpath-writer
 ```
 
-You've now seen `hostPath` in action — both as a read-only window into host system files and as a read-write path for node-local data. In the next lesson, we'll move away from raw filesystem mounting and look at how to inject structured configuration into Pods using ConfigMap and Secret volumes.
+You've now seen `hostPath` in action , both as a read-only window into host system files and as a read-write path for node-local data. In the next lesson, we'll move away from raw filesystem mounting and look at how to inject structured configuration into Pods using ConfigMap and Secret volumes.
