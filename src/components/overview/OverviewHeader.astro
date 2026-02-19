@@ -13,19 +13,22 @@ interface Props {
 const { overview, t, ctaHref, ctaLabel } = Astro.props
 const DescriptionContent = overview.descriptionContent?.Content
 
-const totalLessons = overview.content.chapters.reduce(
-  (sum, ch) => sum + ch.lessons.length,
+const totalLessons = overview.content.sections.reduce(
+  (sum, s) => sum + s.modules.reduce((n, m) => n + m.lessons.length, 0),
   0
 )
-const totalChapters = overview.content.chapters.length
+const totalModules = overview.content.sections.reduce(
+  (sum, s) => sum + s.modules.length,
+  0
+)
 const lessonsLabel =
   totalLessons === 1
     ? `1 ${t('courses_lesson')}`
     : `${totalLessons} ${t('courses_lessons')}`
-const chaptersLabel =
-  totalChapters === 1
-    ? `1 ${t('courses_chapter')}`
-    : `${totalChapters} ${t('courses_chapters')}`
+const modulesLabel =
+  totalModules === 1
+    ? `1 ${t('courses_module')}`
+    : `${totalModules} ${t('courses_modules')}`
 ---
 
 <div class="oh">
@@ -35,7 +38,7 @@ const chaptersLabel =
       <BookOpen size={18} aria-hidden="true" /><span>{lessonsLabel}</span>
     </div>
     <div class="i">
-      <Layers size={18} aria-hidden="true" /><span>{chaptersLabel}</span>
+      <Layers size={18} aria-hidden="true" /><span>{modulesLabel}</span>
     </div>
     {
       overview.level && (

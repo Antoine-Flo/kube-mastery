@@ -259,6 +259,8 @@
   "courses_lessons": "leçons",
   "courses_chapter": "chapitre",
   "courses_chapters": "chapitres",
+  "courses_module": "module",
+  "courses_modules": "modules",
   "courses_level": "Niveau",
   "courses_environment": "environnement",
   "courses_environments": "environnements",

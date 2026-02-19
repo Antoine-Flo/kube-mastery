@@ -1,5 +1,14 @@
 export type UiLang = 'en' | 'fr'
 
+/** Course structure: sections only. Each section has a title and ordered moduleIds. */
+export interface CourseStructure {
+  sections: Array<{
+    id?: string
+    title: { en: string }
+    moduleIds: string[]
+  }>
+}
+
 export interface CourseFrontmatter {
   title: string
   shortDescription: string

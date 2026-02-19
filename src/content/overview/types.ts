@@ -6,12 +6,10 @@ export interface OverviewLesson {
   hasEnvironment: boolean
 }
 
-export interface OverviewChapter {
-  id: string
-  moduleId?: string
+/** One expandable row in the UI: a module with its lessons. */
+export interface OverviewModule {
+  moduleId: string
   title: string
-  description?: string
-  environment?: string
   lessons: OverviewLesson[]
 }
 
@@ -21,7 +19,7 @@ export interface CourseOverview {
   shortDescription: string | null
   level: string | null
   comingSoon: boolean
-  content: { chapters: OverviewChapter[] }
+  content: { sections: Array<{ title: string; modules: OverviewModule[] }> }
   descriptionContent: MarkdownInstance<Record<string, unknown>> | null
   description: string | null
 }
@@ -30,6 +28,5 @@ export type OverviewType = 'courses' | 'modules'
 
 export interface LessonLocation {
   moduleId: string
-  chapterDir: string
-  lessonDir: string
+  topicDir: string
 }

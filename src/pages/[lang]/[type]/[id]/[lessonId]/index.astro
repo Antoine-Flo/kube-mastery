@@ -39,7 +39,9 @@ if (!userId) {
     localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
   )
 }
-const allLessons = overview.content.chapters.flatMap((ch) => ch.lessons)
+const allLessons = overview.content.sections.flatMap((s) =>
+  s.modules.flatMap((m) => m.lessons)
+)
 const currentIndex = allLessons.findIndex((l) => l.id === lessonId)
 const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null
 const nextLesson =
@@ -47,11 +49,7 @@ const nextLesson =
 const lessonBaseUrl = localePath(`/${type}/${id}`)
 const { Content } = lessonEntry
 
-const currentChapter = overview.content.chapters.find((ch) =>
-  ch.lessons.some((l) => l.id === lessonId)
-)
-const env = currentChapter?.environment?.trim().toLowerCase()
-const seedName = env && env !== 'empty' ? env : 'minimal'
+const seedName = 'minimal'
 const t = useTranslations(lang)
 const quiz = getLessonQuiz(type, id, lessonId, lang)
 const prevLessonHref = prevLesson

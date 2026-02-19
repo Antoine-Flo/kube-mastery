@@ -5,10 +5,6 @@ import OverviewHeader from '../../../../components/overview/OverviewHeader.astro
 import OverviewStructure from '../../../../components/overview/OverviewStructure.astro'
 import { useTranslations, useLocalePath } from '../../../../i18n/utils'
 import {
-  getModules,
-  type ModuleListItem
-} from '../../../../content/courses/facade'
-import {
   getCourseOverview,
   getModuleOverview
 } from '../../../../content/overview/facade'
@@ -40,8 +36,8 @@ const { completed, userId } = await getProgressContext(
 )
 const isLoggedIn = !!userId
 
-const lessonIds = overview.content.chapters.flatMap((ch) =>
-  ch.lessons.map((l) => l.id)
+const lessonIds = overview.content.sections.flatMap((s) =>
+  s.modules.flatMap((m) => m.lessons.map((l) => l.id))
 )
 const progress = computeProgress(lessonIds, completed)
 const targetLessonId = progress.currentLessonId ?? lessonIds[0]
@@ -66,10 +62,20 @@ if (!isLoggedIn) {
 }
 
 const lessonBaseUrl = localePath(`/${type}/${id}`)
-const modules = type === TYPE_COURSES ? getModules(lang) : null
-const moduleTitles = modules
-  ? new Map(modules.map((m: ModuleListItem) => [m.id, m.title]))
-  : undefined
+
+// DEBUG overview: sections = groupes de modules (délimiteurs). Ce qui est passé à OverviewStructure.
+console.log('[overview] reçu par la page (passé à OverviewStructure)', {
+  type,
+  id,
+  overviewTitle: overview.title,
+  sectionsCount: overview.content.sections.length,
+  sectionsAsGroups: overview.content.sections.map((s, i) => ({
+    index: i,
+    sectionTitle: s.title,
+    modulesInGroup: s.modules.length,
+    moduleTitles: s.modules.map((m) => m.title)
+  }))
+})
 ---
 
 <Layout>
@@ -84,9 +90,7 @@ const moduleTitles = modules
     </div>
     <div class="or">
       <OverviewStructure
-        chapters={overview.content.chapters}
-        groupByModule={type === TYPE_COURSES}
-        moduleTitles={moduleTitles}
+        sections={overview.content.sections}
         lessonBaseUrl={lessonBaseUrl}
         t={t}
         completedLessonIds={completed}

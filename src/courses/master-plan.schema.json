@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kube-mastery.local/schemas/master-plan.schema.json",
+  "title": "Master Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "meta",
+    "commands",
+    "assessments",
+    "modules",
+    "learning_paths",
+    "domains"
+  ],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "source", "description", "language", "generated_on"],
+      "properties": {
+        "schema_version": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "language": { "type": "string", "minLength": 2 },
+        "generated_on": { "type": "string", "minLength": 8 }
+      }
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "template"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" },
+          "template": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "assessments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "type", "description", "question", "options", "answer_index"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" },
+              "type": { "const": "mcq_single" },
+              "description": { "type": "string", "minLength": 1 },
+              "question": { "type": "string", "minLength": 1 },
+              "options": {
+                "type": "array",
+                "minItems": 2,
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "answer_index": { "type": "integer", "minimum": 0 }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "type", "description", "question", "options", "answer_indices"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" },
+              "type": { "const": "mcq_multi" },
+              "description": { "type": "string", "minLength": 1 },
+              "question": { "type": "string", "minLength": 1 },
+              "options": {
+                "type": "array",
+                "minItems": 2,
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "answer_indices": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "integer", "minimum": 0 }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "type", "description", "items", "solution_order", "explanation"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" },
+              "type": { "const": "order_sequence" },
+              "description": { "type": "string", "minLength": 1 },
+              "items": {
+                "type": "array",
+                "minItems": 2,
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "solution_order": {
+                "type": "array",
+                "minItems": 2,
+                "items": { "type": "integer", "minimum": 0 }
+              },
+              "explanation": { "type": "string", "minLength": 1 }
+            }
+          }
+        ]
+      }
+    },
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "status", "prerequisites", "topics"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "description": { "type": "string", "minLength": 1 },
+          "status": { "type": "string", "enum": ["ready", "draft", "deprecated", "archived"] },
+          "prerequisites": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "topics": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "order",
+                "description",
+                "theory_only",
+                "commands",
+                "assessment_ids",
+                "prerequisites"
+              ],
+              "properties": {
+                "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+                "order": { "type": "integer", "minimum": 1 },
+                "description": { "type": "string", "minLength": 1 },
+                "theory_only": { "type": "boolean" },
+                "commands": {
+                  "type": "array",
+                  "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" }
+                },
+                "assessment_ids": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$" }
+                },
+                "prerequisites": {
+                  "type": "array",
+                  "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "learning_paths": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "module_ids"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "description": { "type": "string", "minLength": 1 },
+          "module_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }
+          }
+        }
+      }
+    },
+    "domains": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["certification", "domain", "weight", "module_ids"],
+        "properties": {
+          "certification": { "type": "string", "enum": ["kcna", "ckad", "cka"] },
+          "domain": { "type": "string", "minLength": 1 },
+          "weight": { "type": "integer", "minimum": 1, "maximum": 100 },
+          "module_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 import type { MarkdownInstance } from 'astro'
-import type { CourseStructure, LocalModule } from '../../courses/types'
-import type { CourseFrontmatter, UiLang } from './types'
+import type { LocalModule } from '../../oldCourses/types'
+import type { CourseStructure, CourseFrontmatter, UiLang } from './types'
 
 export interface CourseDataPort {
   getCourseIds(): string[]

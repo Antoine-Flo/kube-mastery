@@ -2,7 +2,7 @@
 import { ChevronDown, Circle, CircleCheck, CirclePlay } from '@lucide/astro'
 import type {
   CourseOverview,
-  OverviewChapter,
+  OverviewModule,
   OverviewLesson
 } from '../content/overview/facade'
 
@@ -20,28 +20,31 @@ const {
   completedLessonIds = new Set<string>()
 } = Astro.props
 
-const currentChapterIndex = overview.content.chapters.findIndex((ch) =>
-  ch.lessons.some((l) => l.id === currentLessonId)
+const allModules = overview.content.sections.flatMap((s) => s.modules)
+const currentModuleIndex = allModules.findIndex((m) =>
+  m.lessons.some((l) => l.id === currentLessonId)
 )
+let moduleFlatIndex = 0
 ---
 
 <div class="out">
   <h2 class="out__ttl">{overview.title}</h2>
   <div class="out__list">
     {
-      overview.content.chapters.map(
-        (chapter: OverviewChapter, chapterIndex: number) => {
-          const isCurrentChapter = chapterIndex === currentChapterIndex
+      overview.content.sections.flatMap((section) =>
+        section.modules.map((module: OverviewModule) => {
+          const isCurrentModule = moduleFlatIndex === currentModuleIndex
+          moduleFlatIndex += 1
           return (
-            <details class="out__ch" open={isCurrentChapter}>
+            <details class="out__ch" open={isCurrentModule}>
               <summary class="out__ch-hd">
-                <span class="out__ch-ttl">{chapter.title}</span>
+                <span class="out__ch-ttl">{module.title}</span>
                 <span class="out__ch-ico" aria-hidden="true">
                   <ChevronDown size={16} aria-hidden="true" />
                 </span>
               </summary>
               <div class="out__ch-bd">
-                {chapter.lessons.map((lesson: OverviewLesson) => (
+                {module.lessons.map((lesson: OverviewLesson) => (
                   <a
                     href={`${lessonBaseUrl}/${lesson.id}`}
                     class:list={{
@@ -74,7 +77,7 @@ const currentChapterIndex = overview.content.chapters.findIndex((ch) =>
               </div>
             </details>
           )
-        }
+        })
       )
     }
   </div>

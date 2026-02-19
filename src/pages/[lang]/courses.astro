@@ -13,11 +13,12 @@ const courses = getCourses(locale)
 type CourseVisualVariant = 'fundamentals' | 'developer' | 'operator' | 'platform' | 'full'
 
 const visualVariantByCourseId: Partial<Record<string, CourseVisualVariant>> = {
-  'kubernetes-fundamentals': 'fundamentals',
-  'kubernetes-developer': 'developer',
-  'kubernetes-operator': 'operator',
-  'kubernetes-platform-engineer': 'platform',
-  'kubernetes-full-course': 'full'
+  'common-core': 'fundamentals',
+  'ckad': 'developer',
+  'cka': 'operator',
+  'kcna': 'platform',
+  'kcna-to-ckad-delta': 'developer',
+  'ckad-to-cka-delta': 'full'
 }
 ---
 
@@ -30,7 +31,6 @@ const visualVariantByCourseId: Partial<Record<string, CourseVisualVariant>> = {
       {
         courses.map((course) => {
           const visualVariant = visualVariantByCourseId[course.id]
-
           return (
             <CourseCard
               title={course.title}

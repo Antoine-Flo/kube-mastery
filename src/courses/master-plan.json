@@ -1,0 +1,5061 @@
+{
+  "meta": {
+    "schema_version": "1.0.0",
+    "source": "new-plans.md + plans-deep-research-gemini.md",
+    "description": "Canonical source for AI-generated Kubernetes learning paths.",
+    "language": "en",
+    "generated_on": "2026-02-18"
+  },
+  "commands": [
+    {
+      "id": "kubectl.get.nodes",
+      "template": "kubectl get nodes -o wide"
+    },
+    {
+      "id": "kubectl.get.pods.ns",
+      "template": "kubectl get pods -n <namespace>"
+    },
+    {
+      "id": "kubectl.get.pods.all",
+      "template": "kubectl get pods -A"
+    },
+    {
+      "id": "kubectl.describe.pod",
+      "template": "kubectl describe pod <pod> -n <namespace>"
+    },
+    {
+      "id": "kubectl.logs.pod",
+      "template": "kubectl logs <pod> -n <namespace>"
+    },
+    {
+      "id": "kubectl.exec.pod",
+      "template": "kubectl exec -it <pod> -n <namespace> -- <cmd>"
+    },
+    {
+      "id": "kubectl.apply.file",
+      "template": "kubectl apply -f <file.yaml> -n <namespace>"
+    },
+    {
+      "id": "kubectl.delete.file",
+      "template": "kubectl delete -f <file.yaml> -n <namespace>"
+    },
+    {
+      "id": "kubectl.scale.deployment",
+      "template": "kubectl scale deploy/<name> --replicas=<n> -n <namespace>"
+    },
+    {
+      "id": "kubectl.rollout.status",
+      "template": "kubectl rollout status deploy/<name> -n <namespace>"
+    },
+    {
+      "id": "kubectl.rollout.undo",
+      "template": "kubectl rollout undo deploy/<name> -n <namespace>"
+    },
+    {
+      "id": "kubectl.create.configmap",
+      "template": "kubectl create configmap <name> --from-literal=<k>=<v> -n <namespace>"
+    },
+    {
+      "id": "kubectl.create.secret.generic",
+      "template": "kubectl create secret generic <name> --from-literal=<k>=<v> -n <namespace>"
+    },
+    {
+      "id": "kubectl.auth.can-i",
+      "template": "kubectl auth can-i <verb> <resource> -n <namespace>"
+    },
+    {
+      "id": "kubectl.top.pods",
+      "template": "kubectl top pods -n <namespace>"
+    },
+    {
+      "id": "kubectl.get.events",
+      "template": "kubectl get events -n <namespace> --sort-by=.metadata.creationTimestamp"
+    },
+    {
+      "id": "kubectl.explain",
+      "template": "kubectl explain <resource[.field]>"
+    },
+    {
+      "id": "kubectl.get.yaml",
+      "template": "kubectl get <resource> <name> -n <namespace> -o yaml"
+    },
+    {
+      "id": "kubectl.patch",
+      "template": "kubectl patch <resource> <name> -n <namespace> --type merge -p <json>"
+    },
+    {
+      "id": "kubectl.debug",
+      "template": "kubectl debug <pod> -n <namespace> -it --image=busybox --target=<container>"
+    },
+    {
+      "id": "kubectl.get.gateway",
+      "template": "kubectl get gateway,httproute -n <namespace>"
+    },
+    {
+      "id": "helm.install",
+      "template": "helm install <release> <chart> -n <namespace> --create-namespace"
+    },
+    {
+      "id": "helm.upgrade",
+      "template": "helm upgrade <release> <chart> -n <namespace>"
+    },
+    {
+      "id": "kubeadm.upgrade.plan",
+      "template": "kubeadm upgrade plan"
+    },
+    {
+      "id": "etcdctl.snapshot.save",
+      "template": "ETCDCTL_API=3 etcdctl snapshot save <file.db> ..."
+    },
+    {
+      "id": "etcdctl.snapshot.restore",
+      "template": "ETCDCTL_API=3 etcdctl snapshot restore <file.db> ..."
+    }
+  ],
+  "assessments": [
+    {
+      "id": "quiz.generic.mcq-single",
+      "type": "mcq_single",
+      "description": "Valider la compréhension d'un concept clé du topic.",
+      "question": "Quelle option décrit le mieux le concept présenté ?",
+      "options": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "answer_index": 0
+    },
+    {
+      "id": "quiz.generic.mcq-multi",
+      "type": "mcq_multi",
+      "description": "Identifier plusieurs assertions correctes dans un contexte Kubernetes.",
+      "question": "Quelles affirmations sont correctes ?",
+      "options": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "answer_indices": [
+        0,
+        2
+      ]
+    },
+    {
+      "id": "quiz.generic.order-sequence",
+      "type": "order_sequence",
+      "description": "Remettre dans le bon ordre un workflow opérationnel Kubernetes.",
+      "items": [
+        "Observer",
+        "Appliquer",
+        "Verifier",
+        "Depanner"
+      ],
+      "solution_order": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explanation": "On observe avant de modifier, puis on vérifie et on dépanne."
+    }
+  ],
+  "modules": [
+    {
+      "id": "onboarding",
+      "description": "Prise en main de la plateforme et contexte des certifications.",
+      "status": "ready",
+      "prerequisites": [],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "how-to-use-this-platform",
+          "order": 1,
+          "description": "Navigation, interface, terminal intégré",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.nodes"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "your-practice-environment",
+          "order": 2,
+          "description": "kubectl, cluster, connexion",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.nodes"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "certification-overview",
+          "order": 3,
+          "description": "CKAD vs CKA, format, conseils",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.nodes"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "kubernetes-basics",
+      "description": "Qu'est-ce que Kubernetes, pourquoi l'utiliser, vue d'ensemble de l'architecture.",
+      "status": "ready",
+      "prerequisites": [],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "what-is-kubernetes",
+          "order": 1,
+          "description": "Orchestration de conteneurs, ce que K8s fait et ne fait pas",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.nodes",
+            "kubectl.explain"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "evolution-of-deployment",
+          "order": 2,
+          "description": "Physique → VMs → Containers → Orchestration",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.nodes",
+            "kubectl.explain"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "cluster-architecture-overview",
+          "order": 3,
+          "description": "Control plane vs worker nodes, vue 10 000 pieds",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.nodes",
+            "kubectl.explain"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "control-plane-components",
+          "order": 4,
+          "description": "apiserver, etcd, scheduler, controller-manager",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.nodes",
+            "kubectl.explain"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "node-components",
+          "order": 5,
+          "description": "kubelet, kube-proxy, container runtime",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.nodes",
+            "kubectl.explain"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "yaml-and-objects",
+      "description": "Comprendre la structure des objets Kubernetes et le format YAML.",
+      "status": "ready",
+      "prerequisites": [
+        "kubernetes-basics"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "kubernetes-object-model",
+          "order": 1,
+          "description": "Entités persistantes, spec vs status, desired state",
+          "theory_only": false,
+          "commands": [
+            "kubectl.explain",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "anatomy-of-a-manifest",
+          "order": 2,
+          "description": "apiVersion, kind, metadata, spec — décortiqué",
+          "theory_only": false,
+          "commands": [
+            "kubectl.explain",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "generating-manifests-from-cli",
+          "order": 3,
+          "description": "`kubectl run --dry-run=client -o yaml`",
+          "theory_only": false,
+          "commands": [
+            "kubectl.explain",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "object-names-uids-and-dns-rules",
+          "order": 4,
+          "description": "Contraintes de nommage, identifiants uniques",
+          "theory_only": false,
+          "commands": [
+            "kubectl.explain",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "kubectl-essentials",
+      "description": "Maîtriser les commandes kubectl fondamentales.",
+      "status": "ready",
+      "prerequisites": [
+        "yaml-and-objects"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "imperative-vs-declarative",
+          "order": 1,
+          "description": "Commandes impératives, kubectl apply, quand utiliser quoi",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.all",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "viewing-resources",
+          "order": 2,
+          "description": "get, describe, explain — lire et comprendre",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.all",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "logs-and-exec",
+          "order": 3,
+          "description": "kubectl logs, kubectl exec — debugger un container",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.all",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "creating-and-editing-resources",
+          "order": 4,
+          "description": "create, apply, edit, patch, replace",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.all",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "delete-and-cleanup",
+          "order": 5,
+          "description": "delete, --grace-period, force delete",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.all",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "formatting-output-and-tips",
+          "order": 6,
+          "description": "-o wide/yaml/json, JSONPath, custom-columns, certification tips",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.all",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "pods",
+      "description": "Le Pod : unité de base de Kubernetes. Créer, inspecter, comprendre le cycle de vie.",
+      "status": "ready",
+      "prerequisites": [
+        "kubectl-essentials"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "what-is-a-pod",
+          "order": 1,
+          "description": "Pourquoi le Pod, relation pod/container, networking intra-pod",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.pods.ns",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "pod-structure",
+          "order": 2,
+          "description": "containers, ports, env — anatomie du manifest",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.pods.ns",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "creating-your-first-pod",
+          "order": 3,
+          "description": "Impératif et déclaratif, premier déploiement",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.pods.ns",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "pod-lifecycle-and-phases",
+          "order": 4,
+          "description": "Pending, Running, Succeeded, Failed, Unknown",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.pods.ns",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "container-restart-policies",
+          "order": 5,
+          "description": "Always, OnFailure, Never — impact sur le comportement",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.pods.ns",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "editing-pods",
+          "order": 6,
+          "description": "Ce qu'on peut/ne peut pas modifier, recréation",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.pods.ns",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "namespaces",
+      "description": "Isolation logique des ressources dans un cluster.",
+      "status": "ready",
+      "prerequisites": [
+        "pods"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "what-are-namespaces",
+          "order": 1,
+          "description": "Isolation logique, multi-tenancy léger",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "default-namespaces",
+          "order": 2,
+          "description": "default, kube-system, kube-public, kube-node-lease",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "working-across-namespaces",
+          "order": 3,
+          "description": "-n flag, DNS cross-namespace, context defaults",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "when-to-use-multiple-namespaces",
+          "order": 4,
+          "description": "Stratégies d'organisation, bonnes pratiques",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "labels-and-annotations",
+      "description": "Labels, sélecteurs et annotations : organiser et filtrer les objets.",
+      "status": "ready",
+      "prerequisites": [
+        "pods"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "what-are-labels",
+          "order": 1,
+          "description": "Paires clé/valeur, syntaxe, contraintes",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "label-selectors",
+          "order": 2,
+          "description": "Equality-based, set-based, matchLabels vs matchExpressions",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "annotations",
+          "order": 3,
+          "description": "Métadonnées non identifiantes, cas d'usage",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "recommended-labels",
+          "order": 4,
+          "description": "Standards app.kubernetes.io/*, bonnes pratiques",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "replicasets",
+      "description": "Maintenir un nombre stable de répliques de Pods.",
+      "status": "ready",
+      "prerequisites": [
+        "labels-and-annotations"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "why-replicasets",
+          "order": 1,
+          "description": "Le problème : pods éphémères, besoin de réplication",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "creating-a-replicaset",
+          "order": 2,
+          "description": "Manifest, template, label selector",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "scaling-and-self-healing",
+          "order": 3,
+          "description": "Scaling manuel, auto-remplacement des pods crashés",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "limitations-of-replicasets",
+          "order": 4,
+          "description": "Pourquoi on utilise des Deployments à la place",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "deployments",
+      "description": "Déployer, scaler et mettre à jour des applications de manière déclarative.",
+      "status": "ready",
+      "prerequisites": [
+        "replicasets"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "what-is-a-deployment",
+          "order": 1,
+          "description": "Deployments vs ReplicaSets, quand utiliser quoi",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.scale.deployment",
+            "kubectl.rollout.status",
+            "kubectl.rollout.undo"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "creating-a-deployment",
+          "order": 2,
+          "description": "Manifest, scaling basique",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.scale.deployment",
+            "kubectl.rollout.status",
+            "kubectl.rollout.undo"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "rolling-updates",
+          "order": 3,
+          "description": "Stratégie par défaut, mise à jour d'image",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.scale.deployment",
+            "kubectl.rollout.status",
+            "kubectl.rollout.undo"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "rollback-and-revision-history",
+          "order": 4,
+          "description": "kubectl rollout undo, history, annotations",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.scale.deployment",
+            "kubectl.rollout.status",
+            "kubectl.rollout.undo"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "update-strategies",
+          "order": 5,
+          "description": "RollingUpdate vs Recreate, maxSurge, maxUnavailable",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.scale.deployment",
+            "kubectl.rollout.status",
+            "kubectl.rollout.undo"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "deployment-strategies",
+      "description": "Stratégies de déploiement avancées : blue-green, canary.",
+      "status": "ready",
+      "prerequisites": [
+        "deployments"
+      ],
+      "tags": [
+        "ckad",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "blue-green-deployments",
+          "order": 1,
+          "description": "Concept, implémentation avec labels/services",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "canary-deployments",
+          "order": 2,
+          "description": "Concept, implémentation avec poids/répliques",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "pause-and-resume-rollouts",
+          "order": 3,
+          "description": "kubectl rollout pause/resume, cas d'usage",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "choosing-a-deployment-strategy",
+          "order": 4,
+          "description": "Arbre de décision, trade-offs",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "multi-container-pods",
+      "description": "Patterns multi-containers : sidecar, init containers, ambassador.",
+      "status": "ready",
+      "prerequisites": [
+        "pods"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "why-multiple-containers",
+          "order": 1,
+          "description": "Shared network/storage, cas d'usage",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "sidecar-pattern",
+          "order": 2,
+          "description": "Logging, proxy, sync — exemples concrets",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "ambassador-and-adapter-patterns",
+          "order": 3,
+          "description": "Proxy sortant, normalisation de données",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "init-containers",
+          "order": 4,
+          "description": "Séquençage, cas d'usage, différences avec app containers",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "native-sidecar-patterns",
+          "order": 5,
+          "description": "Extension 2026: native sidecar patterns.",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "jobs",
+      "description": "Tâches one-shot et planifiées : Jobs et CronJobs.",
+      "status": "ready",
+      "prerequisites": [
+        "pods"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "what-is-a-job",
+          "order": 1,
+          "description": "Tâche à exécution unique, complétion",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "job-parallelism-and-completions",
+          "order": 2,
+          "description": "Parallélisme, multiple completions",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "backoff-and-retry",
+          "order": 3,
+          "description": "backoffLimit, activeDeadlineSeconds, TTL",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "cronjobs",
+          "order": 4,
+          "description": "Syntaxe cron, concurrencyPolicy, suspend",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "daemonsets",
+      "description": "Un Pod par node : logging, monitoring, networking agents.",
+      "status": "ready",
+      "prerequisites": [
+        "deployments"
+      ],
+      "tags": [
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "what-is-a-daemonset",
+          "order": 1,
+          "description": "Un pod par node, différence avec Deployment",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "typical-use-cases",
+          "order": 2,
+          "description": "Logging (fluentd), monitoring (node-exporter), CNI",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "daemonset-scheduling",
+          "order": 3,
+          "description": "Tolerations, nodeSelector, affinity",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "updating-daemonsets",
+          "order": 4,
+          "description": "Rolling update, on delete",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "statefulsets",
+      "description": "Applications stateful : identité stable, stockage persistant par pod.",
+      "status": "ready",
+      "prerequisites": [
+        "deployments",
+        "persistent-storage",
+        "services"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "stateful-vs-stateless",
+          "order": 1,
+          "description": "Pourquoi les Deployments ne suffisent pas",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "statefulset-fundamentals",
+          "order": 2,
+          "description": "Identité stable, nommage ordonné",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "headless-services",
+          "order": 3,
+          "description": "Pourquoi et comment, DNS par pod",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "storage-in-statefulsets",
+          "order": 4,
+          "description": "volumeClaimTemplates, PVC par pod",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "ordering-and-updates",
+          "order": 5,
+          "description": "Ordered/parallel pod management, rolling updates",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "autoscaling",
+      "description": "Scaling automatique : HPA, VPA, resize in-place.",
+      "status": "ready",
+      "prerequisites": [
+        "deployments",
+        "resource-management"
+      ],
+      "tags": [
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "introduction-to-autoscaling",
+          "order": 1,
+          "description": "Pourquoi scaler automatiquement, approches",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "horizontal-pod-autoscaler",
+          "order": 2,
+          "description": "HPA basé CPU/mémoire, configuration",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "hpa-stabilization-and-behavior",
+          "order": 3,
+          "description": "Stabilization window, scaling policies",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "vertical-pod-autoscaler",
+          "order": 4,
+          "description": "VPA concepts, modes (Off, Initial, Auto)",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "in-place-resize-of-pods",
+          "order": 5,
+          "description": "Resize sans restart (K8s 1.27+)",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "event-driven-scaling-concepts",
+          "order": 6,
+          "description": "Extension 2026: event driven scaling concepts.",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "commands-and-args",
+      "description": "Contrôler le point d'entrée et les arguments d'un container.",
+      "status": "ready",
+      "prerequisites": [
+        "pods"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "docker-cmd-vs-entrypoint",
+          "order": 1,
+          "description": "Rappel Docker, override behavior",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "command-and-args-in-kubernetes",
+          "order": 2,
+          "description": "Mapping Docker → K8s, syntaxe YAML",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "practical-override-scenarios",
+          "order": 3,
+          "description": "Exemples concrets, debugging tips",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "configmaps",
+      "description": "Externaliser la configuration applicative.",
+      "status": "ready",
+      "prerequisites": [
+        "pods"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "what-is-a-configmap",
+          "order": 1,
+          "description": "Concept, séparation config/code",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "creating-configmaps",
+          "order": 2,
+          "description": "--from-literal, --from-file, --from-env-file, YAML",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "using-via-environment-variables",
+          "order": 3,
+          "description": "envFrom, valueFrom, variables individuelles",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "using-via-volume-mounts",
+          "order": 4,
+          "description": "Montage complet, fichiers spécifiques, subPath",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "immutable-configmaps",
+          "order": 5,
+          "description": "Pourquoi, comment, impact",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "secrets",
+      "description": "Gérer les données sensibles (mots de passe, tokens, clés).",
+      "status": "ready",
+      "prerequisites": [
+        "configmaps"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "what-is-a-secret",
+          "order": 1,
+          "description": "Différence avec ConfigMap, encoding base64",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "types-of-secrets",
+          "order": 2,
+          "description": "Opaque, docker-registry, tls, basic-auth",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "creating-and-using-secrets",
+          "order": 3,
+          "description": "CLI, YAML, env vars, volume mounts",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "encrypting-secrets-at-rest",
+          "order": 4,
+          "description": "EncryptionConfiguration, etcd encryption",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "security-best-practices",
+          "order": 5,
+          "description": "Limitations, RBAC, external secret managers",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "resource-management",
+      "description": "Contrôler CPU et mémoire : requests, limits, QoS.",
+      "status": "ready",
+      "prerequisites": [
+        "pods"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "resource-requests-and-limits",
+          "order": 1,
+          "description": "CPU (millicores), mémoire (Mi/Gi), syntaxe",
+          "theory_only": false,
+          "commands": [
+            "kubectl.top.pods",
+            "kubectl.describe.pod"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "how-scheduling-uses-requests",
+          "order": 2,
+          "description": "Le scheduler et les requests, overcommit",
+          "theory_only": false,
+          "commands": [
+            "kubectl.top.pods",
+            "kubectl.describe.pod"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "what-happens-when-limits-are-exceeded",
+          "order": 3,
+          "description": "OOMKilled, CPU throttling",
+          "theory_only": false,
+          "commands": [
+            "kubectl.top.pods",
+            "kubectl.describe.pod"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "qos-classes",
+          "order": 4,
+          "description": "Guaranteed, Burstable, BestEffort — impact éviction",
+          "theory_only": false,
+          "commands": [
+            "kubectl.top.pods",
+            "kubectl.describe.pod"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "limitranges-and-resourcequotas",
+          "order": 5,
+          "description": "Defaults namespace, limites globales",
+          "theory_only": false,
+          "commands": [
+            "kubectl.top.pods",
+            "kubectl.describe.pod"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "in-place-resize-operational-considerations",
+          "order": 6,
+          "description": "Extension 2026: in place resize operational considerations.",
+          "theory_only": false,
+          "commands": [
+            "kubectl.top.pods",
+            "kubectl.describe.pod"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "probes",
+      "description": "Health checks : liveness, readiness, startup probes.",
+      "status": "ready",
+      "prerequisites": [
+        "pods"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "why-probes-matter",
+          "order": 1,
+          "description": "Détection de pannes, traffic routing",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.describe.pod",
+            "kubectl.get.events"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "liveness-probes",
+          "order": 2,
+          "description": "Quand le container est mort, restart automatique",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.describe.pod",
+            "kubectl.get.events"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "readiness-probes",
+          "order": 3,
+          "description": "Quand le container n'est pas prêt, retrait du Service",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.describe.pod",
+            "kubectl.get.events"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "startup-probes",
+          "order": 4,
+          "description": "Applications lentes à démarrer, protection",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.describe.pod",
+            "kubectl.get.events"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "probe-types-and-configuration",
+          "order": 5,
+          "description": "httpGet, tcpSocket, exec, timing parameters",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.describe.pod",
+            "kubectl.get.events"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "startup-probe-for-slow-apps",
+          "order": 6,
+          "description": "Extension 2026: startup probe for slow apps.",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.describe.pod",
+            "kubectl.get.events"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "security-contexts",
+      "description": "Contrôler les privilèges de sécurité des containers.",
+      "status": "ready",
+      "prerequisites": [
+        "pods"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "security-in-docker-recap",
+          "order": 1,
+          "description": "Namespaces Linux, capabilities, root vs non-root",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "pod-vs-container-security-context",
+          "order": 2,
+          "description": "Niveaux d'application, héritage",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "runasuser-runasgroup-runasnonroot",
+          "order": 3,
+          "description": "Contrôler l'identité du process",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "capabilities-and-readonlyrootfilesystem",
+          "order": 4,
+          "description": "Ajouter/retirer des capabilities, filesystem en lecture seule",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "service-accounts",
+      "description": "Identité des Pods pour accéder à l'API Kubernetes.",
+      "status": "ready",
+      "prerequisites": [
+        "pods",
+        "namespaces"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "what-is-a-serviceaccount",
+          "order": 1,
+          "description": "Identité pod, default SA, différence avec users",
+          "theory_only": false,
+          "commands": [
+            "kubectl.auth.can-i",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "creating-and-assigning-sas",
+          "order": 2,
+          "description": "Créer un SA, l'assigner à un pod",
+          "theory_only": false,
+          "commands": [
+            "kubectl.auth.can-i",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "token-projection-and-automount",
+          "order": 3,
+          "description": "Projected tokens, automountServiceAccountToken",
+          "theory_only": false,
+          "commands": [
+            "kubectl.auth.can-i",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "practical-scenarios",
+          "order": 4,
+          "description": "Accès API depuis un pod, debugging",
+          "theory_only": false,
+          "commands": [
+            "kubectl.auth.can-i",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "projected-serviceaccount-token",
+          "order": 5,
+          "description": "Extension 2026: projected serviceaccount token.",
+          "theory_only": false,
+          "commands": [
+            "kubectl.auth.can-i",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "services",
+      "description": "Exposer des Pods avec un point d'accès réseau stable.",
+      "status": "ready",
+      "prerequisites": [
+        "pods",
+        "labels-and-annotations"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "why-services",
+          "order": 1,
+          "description": "IP éphémères des pods, besoin d'abstraction",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "service-and-endpoints",
+          "order": 2,
+          "description": "Mécanisme de sélection, endpoints automatiques",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "clusterip",
+          "order": 3,
+          "description": "Type par défaut, accès interne uniquement",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "nodeport",
+          "order": 4,
+          "description": "Exposer sur un port de chaque node",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "loadbalancer",
+          "order": 5,
+          "description": "Intégration cloud, IP externe",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "named-ports",
+          "order": 6,
+          "description": "Nommage des ports, bonnes pratiques",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.yaml"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "dns",
+      "description": "Découverte de services via DNS interne.",
+      "status": "ready",
+      "prerequisites": [
+        "services"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "dns-in-kubernetes",
+          "order": 1,
+          "description": "CoreDNS, résolution automatique",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "service-dns-records",
+          "order": 2,
+          "description": "`svc-name.namespace.svc.cluster.local`",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "pod-dns-records",
+          "order": 3,
+          "description": "Pods DNS, hostname et subdomain",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "dns-debugging",
+          "order": 4,
+          "description": "nslookup, dig depuis un pod, dépannage",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "ingress",
+      "description": "Router le trafic HTTP/HTTPS externe vers les Services.",
+      "status": "ready",
+      "prerequisites": [
+        "services"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "what-is-ingress",
+          "order": 1,
+          "description": "Concept, Ingress vs Service LoadBalancer",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "ingress-controllers",
+          "order": 2,
+          "description": "NGINX, Traefik — déploiement nécessaire",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "routing-rules",
+          "order": 3,
+          "description": "Host-based, path-based, default backend",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "tls-termination",
+          "order": 4,
+          "description": "Certificats, Secrets TLS, HTTPS",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "annotations-and-rewrite-target",
+          "order": 5,
+          "description": "Configuration spécifique au controller",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "gateway-api",
+      "description": "La nouvelle API de Gateway : remplacement moderne d'Ingress.",
+      "status": "ready",
+      "prerequisites": [
+        "ingress"
+      ],
+      "tags": [
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "introduction-to-gateway-api",
+          "order": 1,
+          "description": "Pourquoi remplacer Ingress, avantages",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.gateway"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "gateway-api-structure",
+          "order": 2,
+          "description": "Gateway, HTTPRoute, GatewayClass",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.gateway"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "practical-gateway-api",
+          "order": 3,
+          "description": "Déployer et configurer",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.gateway"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "tls-with-gateway-api",
+          "order": 4,
+          "description": "TLS terminate mode, passthrough",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.gateway"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "mapping-ingress-to-gateway-api",
+          "order": 5,
+          "description": "Migration, équivalences",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.gateway"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "gatewayclass-and-controller-operations",
+          "order": 6,
+          "description": "Extension 2026: gatewayclass and controller operations.",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.gateway"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "httproute-basics",
+          "order": 7,
+          "description": "Extension 2026: httproute basics.",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.gateway"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "weighted-routing-canary",
+          "order": 8,
+          "description": "Extension 2026: weighted routing canary.",
+          "theory_only": false,
+          "commands": [
+            "kubectl.apply.file",
+            "kubectl.get.gateway"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "network-policies",
+      "description": "Contrôler le trafic réseau entre Pods.",
+      "status": "ready",
+      "prerequisites": [
+        "services"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "what-are-network-policies",
+          "order": 1,
+          "description": "Concept, deny-all par défaut",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "networkpolicy-structure",
+          "order": 2,
+          "description": "podSelector, policyTypes, rules",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "ingress-rules",
+          "order": 3,
+          "description": "Autoriser le trafic entrant, from selectors",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "egress-rules",
+          "order": 4,
+          "description": "Autoriser le trafic sortant, to selectors",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "advanced-rules",
+          "order": 5,
+          "description": "CIDR blocks, ports, protocols, except",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "volumes",
+      "description": "Partager et persister des données dans un Pod.",
+      "status": "ready",
+      "prerequisites": [
+        "pods"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "why-volumes",
+          "order": 1,
+          "description": "Filesystem éphémère des containers, besoin de persistance",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "emptydir",
+          "order": 2,
+          "description": "Partage entre containers, scratch space",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "hostpath",
+          "order": 3,
+          "description": "Monter un chemin du node, risques",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "configmap-and-secret-volumes",
+          "order": 4,
+          "description": "Monter ConfigMaps et Secrets comme fichiers",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "persistent-storage",
+      "description": "Persistent Volumes et Claims : stockage découplé du Pod.",
+      "status": "ready",
+      "prerequisites": [
+        "volumes"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "pv-and-pvc-concepts",
+          "order": 1,
+          "description": "Séparation admin/dev, lifecycle",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "creating-a-persistentvolume",
+          "order": 2,
+          "description": "Manifest, capacity, accessModes",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "creating-a-persistentvolumeclaim",
+          "order": 3,
+          "description": "Binding, request vs capacity",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "using-pvcs-in-pods",
+          "order": 4,
+          "description": "volumeMounts, claimName",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "access-modes-and-reclaim-policies",
+          "order": 5,
+          "description": "RWO, ROX, RWX, Retain, Delete, Recycle",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "storage-classes",
+      "description": "Provisionnement dynamique de volumes.",
+      "status": "ready",
+      "prerequisites": [
+        "persistent-storage"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "static-vs-dynamic-provisioning",
+          "order": 1,
+          "description": "Le problème du provisionnement manuel",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "what-is-a-storageclass",
+          "order": 2,
+          "description": "Provisioner, parameters, reclaimPolicy",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "dynamic-provisioning-in-practice",
+          "order": 3,
+          "description": "Créer une SC, l'utiliser avec un PVC",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "container-storage-interface",
+          "order": 4,
+          "description": "CSI concept, plugins courants",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "authentication",
+      "description": "Comment Kubernetes identifie les utilisateurs et les pods.",
+      "status": "ready",
+      "prerequisites": [
+        "kubernetes-basics"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "security-primitives",
+          "order": 1,
+          "description": "Qui peut accéder ? Que peut-il faire ?",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "authentication-methods",
+          "order": 2,
+          "description": "Certificates, tokens, OIDC — vue d'ensemble",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "users-vs-serviceaccounts",
+          "order": 3,
+          "description": "Humains vs machines, pas d'objet User dans K8s",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "tls-certificates",
+      "description": "PKI Kubernetes : créer, gérer et renouveler les certificats TLS.",
+      "status": "ready",
+      "prerequisites": [
+        "authentication"
+      ],
+      "tags": [
+        "cka",
+        "advanced"
+      ],
+      "topics": [
+        {
+          "id": "tls-and-pki-basics",
+          "order": 1,
+          "description": "Chiffrement asymétrique, CA, chaîne de confiance",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "tls-in-kubernetes",
+          "order": 2,
+          "description": "Quels composants utilisent TLS, quels certificats",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "certificate-creation",
+          "order": 3,
+          "description": "openssl, cfssl — générer des certs pour K8s",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "viewing-certificate-details",
+          "order": 4,
+          "description": "Inspecter les certs existants, expiration",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "certificates-api",
+          "order": 5,
+          "description": "CertificateSigningRequest, approbation, rotation",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "kubeconfig",
+      "description": "Configurer l'accès au cluster : contextes, utilisateurs, clusters.",
+      "status": "ready",
+      "prerequisites": [
+        "authentication"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "kubeconfig-basics",
+          "order": 1,
+          "description": "Pourquoi kubeconfig, localisation par défaut",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "structure-clusters-users-contexts",
+          "order": 2,
+          "description": "Les 3 sections, comment elles s'articulent",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "switching-contexts",
+          "order": 3,
+          "description": "kubectl config use-context, current-context",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "creating-kubeconfig-from-scratch",
+          "order": 4,
+          "description": "Construire un fichier complet manuellement",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "rbac",
+      "description": "Contrôler les permissions : Roles, RoleBindings, ClusterRoles.",
+      "status": "ready",
+      "prerequisites": [
+        "service-accounts",
+        "kubeconfig"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "authorization-methods-overview",
+          "order": 1,
+          "description": "RBAC, ABAC, webhooks — pourquoi RBAC",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "roles-and-rolebindings",
+          "order": 2,
+          "description": "Permissions namespace-scoped, création",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "clusterroles-and-clusterrolebindings",
+          "order": 3,
+          "description": "Permissions cluster-wide",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "testing-permissions",
+          "order": 4,
+          "description": "kubectl auth can-i, impersonation",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "rbac-best-practices",
+          "order": 5,
+          "description": "Least privilege, audit, agrégation",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "image-security",
+      "description": "Sécuriser l'approvisionnement des images container.",
+      "status": "ready",
+      "prerequisites": [
+        "pods"
+      ],
+      "tags": [
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "image-naming-and-registries",
+          "order": 1,
+          "description": "Registry privé, fully qualified image names",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "imagepullsecrets",
+          "order": 2,
+          "description": "Créer et utiliser des secrets de registry",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "image-pull-policies",
+          "order": 3,
+          "description": "Always, IfNotPresent, Never — impact",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "admission-controllers",
+      "description": "Intercepter et modifier les requêtes API avant persistence.",
+      "status": "ready",
+      "prerequisites": [
+        "rbac"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "advanced"
+      ],
+      "topics": [
+        {
+          "id": "what-are-admission-controllers",
+          "order": 1,
+          "description": "Chaîne de traitement API, built-in controllers",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "enabling-and-disabling",
+          "order": 2,
+          "description": "kube-apiserver flags, controllers courants",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "validating-webhooks",
+          "order": 3,
+          "description": "Rejeter les requêtes non conformes",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "mutating-webhooks",
+          "order": 4,
+          "description": "Modifier les requêtes à la volée, injection de sidecar",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "pod-security",
+      "description": "Pod Security Standards et Pod Security Admission.",
+      "status": "ready",
+      "prerequisites": [
+        "security-contexts",
+        "namespaces"
+      ],
+      "tags": [
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "pod-security-standards",
+          "order": 1,
+          "description": "Privileged, Baseline, Restricted — les 3 niveaux",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "pod-security-admission",
+          "order": 2,
+          "description": "Labels de namespace, enforce/audit/warn",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "practical-enforcement",
+          "order": 3,
+          "description": "Appliquer des standards à un namespace",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "scheduling-basics",
+      "description": "Contrôler où les Pods s'exécutent : taints, tolerations, affinity.",
+      "status": "ready",
+      "prerequisites": [
+        "pods",
+        "labels-and-annotations"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "taints-and-tolerations",
+          "order": 1,
+          "description": "Repousser les pods, NoSchedule, NoExecute, PreferNoSchedule",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "node-selectors",
+          "order": 2,
+          "description": "Placer un pod sur un node spécifique (simple)",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "node-affinity",
+          "order": 3,
+          "description": "requiredDuringScheduling, preferredDuringScheduling",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "taints-vs-node-affinity",
+          "order": 4,
+          "description": "Quand utiliser quoi, combiner les deux",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "advanced-scheduling",
+      "description": "Scheduling avancé : static pods, priority, multi-schedulers.",
+      "status": "ready",
+      "prerequisites": [
+        "scheduling-basics"
+      ],
+      "tags": [
+        "cka",
+        "advanced"
+      ],
+      "topics": [
+        {
+          "id": "manual-scheduling",
+          "order": 1,
+          "description": "Assigner un pod à un node sans scheduler",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "static-pods",
+          "order": 2,
+          "description": "Pods gérés par kubelet, manifests statiques",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "priority-classes",
+          "order": 3,
+          "description": "PriorityClass, preemption",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "multiple-schedulers",
+          "order": 4,
+          "description": "Déployer un scheduler custom, schedulerName",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "scheduler-profiles",
+          "order": 5,
+          "description": "Configurer les plugins du scheduler",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "logging-and-monitoring",
+      "description": "Logs, métriques et événements pour surveiller les applications.",
+      "status": "ready",
+      "prerequisites": [
+        "pods"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "container-logging-basics",
+          "order": 1,
+          "description": "kubectl logs, -f, --previous, multi-container",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "monitoring-with-metrics-server",
+          "order": 2,
+          "description": "kubectl top pods/nodes, installation",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "kubernetes-events",
+          "order": 3,
+          "description": "kubectl get events, describe, event sources",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "monitoring-cluster-component-logs",
+          "order": 4,
+          "description": "Logs apiserver, scheduler, kubelet",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting",
+      "description": "Diagnostiquer et résoudre les pannes application et cluster.",
+      "status": "ready",
+      "prerequisites": [
+        "logging-and-monitoring",
+        "services",
+        "deployments"
+      ],
+      "tags": [
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "troubleshooting-application-failures",
+          "order": 1,
+          "description": "CrashLoopBackOff, ImagePullBackOff, pending pods",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.all",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod",
+            "kubectl.debug"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "troubleshooting-service-connectivity",
+          "order": 2,
+          "description": "Endpoints manquants, DNS, network policies",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.all",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod",
+            "kubectl.debug"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "troubleshooting-control-plane",
+          "order": 3,
+          "description": "apiserver, etcd, scheduler, controller-manager down",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.all",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod",
+            "kubectl.debug"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "troubleshooting-worker-nodes",
+          "order": 4,
+          "description": "Node NotReady, kubelet, disk pressure",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.all",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod",
+            "kubectl.debug"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "systematic-debugging-methodology",
+          "order": 5,
+          "description": "Approche structurée, checklist de diagnostic",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.all",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod",
+            "kubectl.debug"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "debug-distroless-with-kubectl-debug",
+          "order": 6,
+          "description": "Extension 2026: debug distroless with kubectl debug.",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.all",
+            "kubectl.describe.pod",
+            "kubectl.logs.pod",
+            "kubectl.debug"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "cluster-architecture-deep",
+      "description": "Plongée dans les composants internes du cluster.",
+      "status": "ready",
+      "prerequisites": [
+        "kubernetes-basics"
+      ],
+      "tags": [
+        "cka",
+        "advanced"
+      ],
+      "topics": [
+        {
+          "id": "etcd-deep-dive",
+          "order": 1,
+          "description": "Stockage clé-valeur, consensus, HA",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "kube-apiserver-internals",
+          "order": 2,
+          "description": "Processing pipeline, admission, audit",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "kube-scheduler-internals",
+          "order": 3,
+          "description": "Filtering, scoring, extensibilité",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "kube-controller-manager",
+          "order": 4,
+          "description": "Controllers built-in, reconciliation loops",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "container-runtime-interface",
+          "order": 5,
+          "description": "CRI, containerd, CRI-O, dockershim deprecation",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "cluster-installation",
+      "description": "Installer un cluster Kubernetes avec kubeadm.",
+      "status": "ready",
+      "prerequisites": [
+        "cluster-architecture-deep"
+      ],
+      "tags": [
+        "cka",
+        "advanced"
+      ],
+      "topics": [
+        {
+          "id": "installation-options-overview",
+          "order": 1,
+          "description": "Managed vs self-hosted, minikube/kind/kubeadm",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "kubeadm-master-node-setup",
+          "order": 2,
+          "description": "kubeadm init, phases, CNI",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "kubeadm-worker-node-join",
+          "order": 3,
+          "description": "kubeadm join, token, discovery",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "high-availability-considerations",
+          "order": 4,
+          "description": "Multi-master, etcd topology, LB",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "cluster-maintenance",
+      "description": "Maintenir un cluster en production : upgrades, drain, eviction.",
+      "status": "ready",
+      "prerequisites": [
+        "cluster-installation"
+      ],
+      "tags": [
+        "cka",
+        "advanced"
+      ],
+      "topics": [
+        {
+          "id": "os-upgrades-and-drain",
+          "order": 1,
+          "description": "kubectl drain, cordon, uncordon",
+          "theory_only": false,
+          "commands": [
+            "kubeadm.upgrade.plan"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "version-skew-policy",
+          "order": 2,
+          "description": "Compatibilité entre composants",
+          "theory_only": false,
+          "commands": [
+            "kubeadm.upgrade.plan"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "cluster-upgrade-process",
+          "order": 3,
+          "description": "kubeadm upgrade plan/apply, worker upgrade",
+          "theory_only": false,
+          "commands": [
+            "kubeadm.upgrade.plan"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "taint-based-evictions",
+          "order": 4,
+          "description": "Eviction automatique, tolerationSeconds",
+          "theory_only": false,
+          "commands": [
+            "kubeadm.upgrade.plan"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "version-skew-and-safe-upgrade-flow",
+          "order": 5,
+          "description": "Extension 2026: version skew and safe upgrade flow.",
+          "theory_only": false,
+          "commands": [
+            "kubeadm.upgrade.plan"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "backup-and-restore",
+      "description": "Sauvegarder et restaurer l'état du cluster via etcd.",
+      "status": "ready",
+      "prerequisites": [
+        "cluster-architecture-deep"
+      ],
+      "tags": [
+        "cka",
+        "advanced"
+      ],
+      "topics": [
+        {
+          "id": "backup-strategies",
+          "order": 1,
+          "description": "Ressources YAML vs etcd snapshot",
+          "theory_only": false,
+          "commands": [
+            "etcdctl.snapshot.save",
+            "etcdctl.snapshot.restore"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "etcd-backup-with-etcdctl",
+          "order": 2,
+          "description": "ETCDCTL_API=3, snapshot save",
+          "theory_only": false,
+          "commands": [
+            "etcdctl.snapshot.save",
+            "etcdctl.snapshot.restore"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "restore-from-snapshot",
+          "order": 3,
+          "description": "snapshot restore, reconfiguration",
+          "theory_only": false,
+          "commands": [
+            "etcdctl.snapshot.save",
+            "etcdctl.snapshot.restore"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "etcdutl",
+          "order": 4,
+          "description": "Nouvel outil, migration depuis ETCDCTL",
+          "theory_only": false,
+          "commands": [
+            "etcdctl.snapshot.save",
+            "etcdctl.snapshot.restore"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "etcd-restore-drill-end-to-end",
+          "order": 5,
+          "description": "Extension 2026: etcd restore drill end to end.",
+          "theory_only": false,
+          "commands": [
+            "etcdctl.snapshot.save",
+            "etcdctl.snapshot.restore"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "networking-fundamentals",
+      "description": "Prérequis réseau pour le CKA : switching, routing, DNS, namespaces.",
+      "status": "ready",
+      "prerequisites": [
+        "kubernetes-basics"
+      ],
+      "tags": [
+        "cka",
+        "advanced"
+      ],
+      "topics": [
+        {
+          "id": "switching-and-routing",
+          "order": 1,
+          "description": "Interfaces, routes, gateways (rappels Linux)",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "dns-fundamentals",
+          "order": 2,
+          "description": "Résolution, /etc/hosts, /etc/resolv.conf",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "network-namespaces",
+          "order": 3,
+          "description": "Isolation réseau Linux, veth pairs",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "docker-networking",
+          "order": 4,
+          "description": "Bridge, host, none — rappel",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "kubernetes-networking",
+      "description": "Réseau interne Kubernetes : CNI, pod networking, service networking.",
+      "status": "ready",
+      "prerequisites": [
+        "networking-fundamentals",
+        "services"
+      ],
+      "tags": [
+        "cka",
+        "advanced"
+      ],
+      "topics": [
+        {
+          "id": "cni-concepts",
+          "order": 1,
+          "description": "Container Network Interface, plugins",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "pod-networking",
+          "order": 2,
+          "description": "Modèle réseau K8s, communication inter-pods",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "service-networking",
+          "order": 3,
+          "description": "kube-proxy modes (iptables, IPVS), ClusterIP internals",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "cluster-networking-configuration",
+          "order": 4,
+          "description": "Configurer le réseau, CNI Weave/Calico/Flannel",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "ipam",
+          "order": 5,
+          "description": "IP Address Management, pod CIDR",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "cni-troubleshooting-method",
+          "order": 6,
+          "description": "Extension 2026: cni troubleshooting method.",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.pods.ns",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "api-and-versioning",
+      "description": "Groupes d'API, versions et politique de dépréciation.",
+      "status": "ready",
+      "prerequisites": [
+        "kubectl-essentials"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "api-groups",
+          "order": 1,
+          "description": "/api (core), /apis (named groups)",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "api-versions",
+          "order": 2,
+          "description": "alpha, beta, stable — signification",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "api-deprecation-policy",
+          "order": 3,
+          "description": "Durée de support, migration",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "field-selectors",
+          "order": 4,
+          "description": "Filtrer par champs (status.phase, metadata.name)",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "custom-resources",
+      "description": "Étendre Kubernetes avec des CRDs et des controllers custom.",
+      "status": "ready",
+      "prerequisites": [
+        "api-and-versioning"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "advanced"
+      ],
+      "topics": [
+        {
+          "id": "what-are-custom-resources",
+          "order": 1,
+          "description": "Étendre l'API, CRDs",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "creating-a-crd",
+          "order": 2,
+          "description": "Manifest, validation, schema",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "custom-controllers",
+          "order": 3,
+          "description": "Reconciliation, watch, react",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "operator-pattern",
+          "order": 4,
+          "description": "Operators, frameworks (Operator SDK, kubebuilder)",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "helm",
+      "description": "Gestionnaire de packages Kubernetes.",
+      "status": "ready",
+      "prerequisites": [
+        "kubectl-essentials"
+      ],
+      "tags": [
+        "ckad",
+        "cka",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "what-is-helm",
+          "order": 1,
+          "description": "Charts, releases, repositories — concepts",
+          "theory_only": false,
+          "commands": [
+            "helm.install",
+            "helm.upgrade"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "installing-helm",
+          "order": 2,
+          "description": "Installation, configuration",
+          "theory_only": false,
+          "commands": [
+            "helm.install",
+            "helm.upgrade"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "working-with-charts",
+          "order": 3,
+          "description": "helm install, upgrade, rollback, uninstall",
+          "theory_only": false,
+          "commands": [
+            "helm.install",
+            "helm.upgrade"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "values-and-configuration",
+          "order": 4,
+          "description": "values.yaml, --set, override hierarchy",
+          "theory_only": false,
+          "commands": [
+            "helm.install",
+            "helm.upgrade"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "finding-and-using-charts",
+          "order": 5,
+          "description": "helm search, artifact hub, helm repo",
+          "theory_only": false,
+          "commands": [
+            "helm.install",
+            "helm.upgrade"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "containers-fundamentals",
+      "description": "Comprendre les conteneurs, les runtimes et les standards OCI.",
+      "status": "ready",
+      "prerequisites": [],
+      "tags": [
+        "kcna",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "what-are-containers",
+          "order": 1,
+          "description": "Isolation, namespaces Linux, cgroups — concept",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "containers-vs-vms",
+          "order": 2,
+          "description": "Différences architecturales, avantages/inconvénients",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "container-runtimes",
+          "order": 3,
+          "description": "containerd, CRI-O, Docker, CRI — la chaîne",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "oci-standards",
+          "order": 4,
+          "description": "Open Container Initiative, image spec, runtime spec",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "container-images",
+          "order": 5,
+          "description": "Layers, registries, tags, digests",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "cloud-native-ecosystem",
+      "description": "L'écosystème cloud-native : CNCF, standards ouverts, gouvernance Kubernetes.",
+      "status": "ready",
+      "prerequisites": [
+        "kubernetes-basics"
+      ],
+      "tags": [
+        "kcna",
+        "beginner"
+      ],
+      "topics": [
+        {
+          "id": "what-is-cloud-native",
+          "order": 1,
+          "description": "Définition CNCF, principes, 12-factor apps",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "the-cncf-landscape",
+          "order": 2,
+          "description": "Projets graduated/incubating/sandbox, catégories",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "open-standards",
+          "order": 3,
+          "description": "OCI, CNI, CRI, CSI, SMI — pourquoi les standards comptent",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "keps-and-sigs",
+          "order": 4,
+          "description": "Comment Kubernetes évolue, processus de contribution",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "serverless-on-kubernetes",
+          "order": 5,
+          "description": "Knative, concepts FaaS, quand l'utiliser",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "platform-engineering-basics",
+          "order": 6,
+          "description": "Extension 2026: platform engineering basics.",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "finops-greenops-basics",
+          "order": 7,
+          "description": "Extension 2026: finops greenops basics.",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "observability-concepts",
+      "description": "Concepts d'observabilité : métriques, SLO/SLA/SLI, introduction à Prometheus.",
+      "status": "ready",
+      "prerequisites": [
+        "logging-and-monitoring"
+      ],
+      "tags": [
+        "kcna",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "observability-fundamentals",
+          "order": 1,
+          "description": "Logs, métriques, traces — les 3 piliers",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "slo-sla-sli",
+          "order": 2,
+          "description": "Définitions, exemples concrets, error budgets",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "prometheus-basics",
+          "order": 3,
+          "description": "Architecture, pull model, PromQL intro",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "prometheus-on-kubernetes",
+          "order": 4,
+          "description": "Node exporter, kube-state-metrics, monitoring des pods",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "cost-management",
+          "order": 5,
+          "description": "Coûts cloud, right-sizing, outils d'optimisation",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "opentelemetry-foundations",
+          "order": 6,
+          "description": "Extension 2026: opentelemetry foundations.",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "service-mesh",
+      "description": "Service mesh : proxy sidecar, Envoy, Istio.",
+      "status": "ready",
+      "prerequisites": [
+        "services",
+        "multi-container-pods"
+      ],
+      "tags": [
+        "kcna",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "monoliths-vs-microservices",
+          "order": 1,
+          "description": "Évolution architecturale, challenges des microservices",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "what-is-a-service-mesh",
+          "order": 2,
+          "description": "Concept, data plane vs control plane",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "envoy-proxy",
+          "order": 3,
+          "description": "Sidecar proxy, fonctionnalités, rôle dans le mesh",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "istio-introduction",
+          "order": 4,
+          "description": "Architecture, installation, traffic management",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "when-to-use-a-service-mesh",
+          "order": 5,
+          "description": "Trade-offs, complexité vs bénéfices",
+          "theory_only": true,
+          "commands": [],
+          "assessment_ids": [
+            "quiz.generic.mcq-single"
+          ],
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": "gitops",
+      "description": "GitOps : principes, CI/CD cloud-native, ArgoCD.",
+      "status": "ready",
+      "prerequisites": [
+        "deployments",
+        "helm"
+      ],
+      "tags": [
+        "kcna",
+        "intermediate"
+      ],
+      "topics": [
+        {
+          "id": "application-delivery-fundamentals",
+          "order": 1,
+          "description": "Build, ship, run — pipeline overview",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.yaml",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "what-is-gitops",
+          "order": 2,
+          "description": "Git comme source de vérité, principes fondamentaux",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.yaml",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "push-vs-pull-based-deployments",
+          "order": 3,
+          "description": "Modèles de déploiement, avantages du pull",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.yaml",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "argocd-introduction",
+          "order": 4,
+          "description": "Architecture, Application CRD, sync",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.yaml",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        },
+        {
+          "id": "ci-cd-with-gitops",
+          "order": 5,
+          "description": "Pipeline complète, intégration CI + CD GitOps",
+          "theory_only": false,
+          "commands": [
+            "kubectl.get.yaml",
+            "kubectl.apply.file"
+          ],
+          "assessment_ids": [
+            "quiz.generic.mcq-single",
+            "quiz.generic.order-sequence"
+          ],
+          "prerequisites": []
+        }
+      ]
+    }
+  ],
+  "learning_paths": [
+    {
+      "id": "common-core",
+      "description": "Shared core for KCNA, CKAD and CKA to maximize reuse.",
+      "module_ids": [
+        "onboarding",
+        "kubernetes-basics",
+        "yaml-and-objects",
+        "kubectl-essentials",
+        "pods",
+        "namespaces",
+        "labels-and-annotations",
+        "replicasets",
+        "deployments",
+        "services",
+        "dns",
+        "ingress",
+        "network-policies",
+        "volumes",
+        "persistent-storage",
+        "logging-and-monitoring"
+      ]
+    },
+    {
+      "id": "kcna",
+      "description": "Conceptual cloud-native path and Kubernetes fundamentals (theory-oriented).",
+      "module_ids": [
+        "onboarding",
+        "containers-fundamentals",
+        "kubernetes-basics",
+        "yaml-and-objects",
+        "kubectl-essentials",
+        "pods",
+        "namespaces",
+        "labels-and-annotations",
+        "replicasets",
+        "deployments",
+        "services",
+        "scheduling-basics",
+        "dns",
+        "ingress",
+        "network-policies",
+        "volumes",
+        "persistent-storage",
+        "cloud-native-ecosystem",
+        "autoscaling",
+        "logging-and-monitoring",
+        "observability-concepts",
+        "gitops",
+        "service-mesh"
+      ]
+    },
+    {
+      "id": "ckad",
+      "description": "Kubernetes developer path focused on design, deployment and application operations.",
+      "module_ids": [
+        "onboarding",
+        "kubernetes-basics",
+        "yaml-and-objects",
+        "kubectl-essentials",
+        "pods",
+        "namespaces",
+        "labels-and-annotations",
+        "commands-and-args",
+        "multi-container-pods",
+        "jobs",
+        "configmaps",
+        "secrets",
+        "resource-management",
+        "probes",
+        "security-contexts",
+        "replicasets",
+        "deployments",
+        "deployment-strategies",
+        "services",
+        "dns",
+        "ingress",
+        "network-policies",
+        "volumes",
+        "persistent-storage",
+        "statefulsets",
+        "service-accounts",
+        "authentication",
+        "kubeconfig",
+        "rbac",
+        "admission-controllers",
+        "logging-and-monitoring",
+        "api-and-versioning",
+        "custom-resources",
+        "helm"
+      ]
+    },
+    {
+      "id": "cka",
+      "description": "Kubernetes administrator path focused on cluster operations, networking, storage and troubleshooting.",
+      "module_ids": [
+        "onboarding",
+        "kubernetes-basics",
+        "yaml-and-objects",
+        "kubectl-essentials",
+        "pods",
+        "namespaces",
+        "labels-and-annotations",
+        "cluster-architecture-deep",
+        "networking-fundamentals",
+        "kubernetes-networking",
+        "commands-and-args",
+        "configmaps",
+        "secrets",
+        "resource-management",
+        "replicasets",
+        "deployments",
+        "daemonsets",
+        "multi-container-pods",
+        "scheduling-basics",
+        "advanced-scheduling",
+        "probes",
+        "jobs",
+        "autoscaling",
+        "services",
+        "dns",
+        "ingress",
+        "gateway-api",
+        "network-policies",
+        "volumes",
+        "persistent-storage",
+        "storage-classes",
+        "statefulsets",
+        "service-accounts",
+        "authentication",
+        "tls-certificates",
+        "kubeconfig",
+        "rbac",
+        "security-contexts",
+        "image-security",
+        "admission-controllers",
+        "pod-security",
+        "cluster-installation",
+        "cluster-maintenance",
+        "backup-and-restore",
+        "logging-and-monitoring",
+        "troubleshooting",
+        "api-and-versioning",
+        "custom-resources",
+        "helm"
+      ]
+    },
+    {
+      "id": "kcna-to-ckad-delta",
+      "description": "Modules to study after KCNA to cover the CKAD delta.",
+      "module_ids": [
+        "commands-and-args",
+        "multi-container-pods",
+        "jobs",
+        "configmaps",
+        "secrets",
+        "resource-management",
+        "probes",
+        "security-contexts",
+        "deployment-strategies",
+        "statefulsets",
+        "service-accounts",
+        "authentication",
+        "kubeconfig",
+        "rbac",
+        "admission-controllers",
+        "api-and-versioning",
+        "custom-resources",
+        "helm"
+      ]
+    },
+    {
+      "id": "ckad-to-cka-delta",
+      "description": "Modules to study after CKAD to cover the CKA delta.",
+      "module_ids": [
+        "cluster-architecture-deep",
+        "networking-fundamentals",
+        "kubernetes-networking",
+        "daemonsets",
+        "scheduling-basics",
+        "advanced-scheduling",
+        "autoscaling",
+        "gateway-api",
+        "storage-classes",
+        "tls-certificates",
+        "image-security",
+        "pod-security",
+        "cluster-installation",
+        "cluster-maintenance",
+        "backup-and-restore",
+        "troubleshooting"
+      ]
+    }
+  ],
+  "domains": [
+    {
+      "certification": "ckad",
+      "domain": "application-design-and-build",
+      "weight": 20,
+      "module_ids": [
+        "yaml-and-objects",
+        "kubectl-essentials",
+        "pods",
+        "commands-and-args",
+        "multi-container-pods",
+        "jobs",
+        "configmaps",
+        "volumes",
+        "persistent-storage",
+        "statefulsets",
+        "helm"
+      ]
+    },
+    {
+      "certification": "ckad",
+      "domain": "application-deployment",
+      "weight": 20,
+      "module_ids": [
+        "labels-and-annotations",
+        "replicasets",
+        "deployments",
+        "deployment-strategies"
+      ]
+    },
+    {
+      "certification": "ckad",
+      "domain": "application-observability-and-maintenance",
+      "weight": 15,
+      "module_ids": [
+        "probes",
+        "logging-and-monitoring"
+      ]
+    },
+    {
+      "certification": "ckad",
+      "domain": "application-environment-configuration-and-security",
+      "weight": 25,
+      "module_ids": [
+        "namespaces",
+        "secrets",
+        "resource-management",
+        "security-contexts",
+        "service-accounts",
+        "authentication",
+        "kubeconfig",
+        "rbac",
+        "admission-controllers",
+        "api-and-versioning",
+        "custom-resources"
+      ]
+    },
+    {
+      "certification": "ckad",
+      "domain": "services-and-networking",
+      "weight": 20,
+      "module_ids": [
+        "services",
+        "dns",
+        "ingress",
+        "network-policies",
+        "gateway-api"
+      ]
+    },
+    {
+      "certification": "cka",
+      "domain": "cluster-architecture-installation-configuration",
+      "weight": 25,
+      "module_ids": [
+        "kubernetes-basics",
+        "yaml-and-objects",
+        "kubectl-essentials",
+        "namespaces",
+        "authentication",
+        "kubeconfig",
+        "rbac",
+        "service-accounts",
+        "tls-certificates",
+        "cluster-architecture-deep",
+        "cluster-installation",
+        "cluster-maintenance",
+        "backup-and-restore"
+      ]
+    },
+    {
+      "certification": "cka",
+      "domain": "workloads-and-scheduling",
+      "weight": 15,
+      "module_ids": [
+        "pods",
+        "labels-and-annotations",
+        "commands-and-args",
+        "configmaps",
+        "secrets",
+        "resource-management",
+        "replicasets",
+        "deployments",
+        "daemonsets",
+        "multi-container-pods",
+        "scheduling-basics",
+        "advanced-scheduling",
+        "probes",
+        "jobs",
+        "autoscaling",
+        "statefulsets"
+      ]
+    },
+    {
+      "certification": "cka",
+      "domain": "services-and-networking",
+      "weight": 20,
+      "module_ids": [
+        "networking-fundamentals",
+        "kubernetes-networking",
+        "services",
+        "dns",
+        "ingress",
+        "gateway-api",
+        "network-policies"
+      ]
+    },
+    {
+      "certification": "cka",
+      "domain": "storage",
+      "weight": 10,
+      "module_ids": [
+        "volumes",
+        "persistent-storage",
+        "storage-classes",
+        "statefulsets"
+      ]
+    },
+    {
+      "certification": "cka",
+      "domain": "troubleshooting",
+      "weight": 30,
+      "module_ids": [
+        "logging-and-monitoring",
+        "troubleshooting"
+      ]
+    },
+    {
+      "certification": "kcna",
+      "domain": "kubernetes-fundamentals",
+      "weight": 46,
+      "module_ids": [
+        "onboarding",
+        "containers-fundamentals",
+        "kubernetes-basics",
+        "yaml-and-objects",
+        "kubectl-essentials",
+        "pods",
+        "namespaces",
+        "labels-and-annotations",
+        "replicasets",
+        "deployments"
+      ]
+    },
+    {
+      "certification": "kcna",
+      "domain": "container-orchestration",
+      "weight": 22,
+      "module_ids": [
+        "services",
+        "scheduling-basics",
+        "dns",
+        "ingress",
+        "network-policies",
+        "volumes",
+        "persistent-storage",
+        "service-mesh"
+      ]
+    },
+    {
+      "certification": "kcna",
+      "domain": "cloud-native-architecture",
+      "weight": 16,
+      "module_ids": [
+        "cloud-native-ecosystem",
+        "autoscaling"
+      ]
+    },
+    {
+      "certification": "kcna",
+      "domain": "cloud-native-observability",
+      "weight": 8,
+      "module_ids": [
+        "logging-and-monitoring",
+        "observability-concepts"
+      ]
+    },
+    {
+      "certification": "kcna",
+      "domain": "cloud-native-application-delivery",
+      "weight": 8,
+      "module_ids": [
+        "gitops"
+      ]
+    }
+  ]
+}

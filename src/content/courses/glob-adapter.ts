@@ -1,9 +1,11 @@
 import type { MarkdownInstance } from 'astro'
-import type { CourseStructure, LocalModule } from '../../courses/types'
+import type { LocalModule } from '../../oldCourses/types'
+import type { CourseStructure } from './types'
 import type { CourseDataPort } from './port'
 import type { CourseFrontmatter, UiLang } from './types'
 import { stripNumericPrefix } from '../utils'
 
+/** Path shape: modules/{moduleId}/{topicDir}/{lang}/content.md. One lesson per topic. */
 function buildLessonIndex(): Map<string, Map<string, Set<string>>> {
   const index = new Map<string, Map<string, Set<string>>>()
   const glob = import.meta.glob('../../courses/modules/**/content.md')
@@ -17,10 +19,8 @@ function buildLessonIndex(): Map<string, Map<string, Set<string>>> {
     }
 
     const moduleId = parts[modulesIdx + 1]
-    const chapterDir = parts[modulesIdx + 2]
-    const lessonDir = parts[modulesIdx + 3]
-    const chapterId = stripNumericPrefix(chapterDir)
-    const lessonId = stripNumericPrefix(lessonDir)
+    const topicDir = parts[modulesIdx + 2]
+    const topicId = stripNumericPrefix(topicDir)
 
     if (!index.has(moduleId)) {
       index.set(moduleId, new Map())
@@ -28,11 +28,11 @@ function buildLessonIndex(): Map<string, Map<string, Set<string>>> {
 
     const mod = index.get(moduleId)!
 
-    if (!mod.has(chapterId)) {
-      mod.set(chapterId, new Set())
+    if (!mod.has(topicId)) {
+      mod.set(topicId, new Set())
     }
 
-    mod.get(chapterId)!.add(lessonId)
+    mod.get(topicId)!.add(topicId)
   }
 
   return index
@@ -41,14 +41,15 @@ function buildLessonIndex(): Map<string, Map<string, Set<string>>> {
 let lessonIndexCache: Map<string, Map<string, Set<string>>> | null = null
 
 const courseMdGlob = import.meta.glob<MarkdownInstance<CourseFrontmatter>>(
-  '../../courses/*/{en,fr}.md',
+  '../../courses/learningPaths/*/{en,fr}.md',
   {
     eager: true
   }
 )
-const structuresGlob = import.meta.glob('../../courses/*/course-structure.ts', {
-  eager: true
-}) as Record<string, { courseStructure: CourseStructure }>
+const structuresGlob = import.meta.glob(
+  '../../courses/learningPaths/*/course-structure.ts',
+  { eager: true }
+) as Record<string, { courseStructure: CourseStructure }>
 const modulesGlob = import.meta.glob('../../courses/modules/*/module.ts', {
   eager: true
 }) as Record<string, { module: LocalModule }>
@@ -91,13 +92,15 @@ export function createCourseGlobAdapter(): CourseDataPort {
     },
 
     getCourseStructure(courseId: string): CourseStructure | undefined {
-      const structurePath = Object.keys(structuresGlob).find((p) =>
+      const allPaths = Object.keys(structuresGlob)
+      const structurePath = allPaths.find((p) =>
         p.includes(`/${courseId}/`)
       )
-
-      return structurePath
+      const structure = structurePath
         ? structuresGlob[structurePath]?.courseStructure
         : undefined
+      // sections = groupes de modules (délimiteurs sur l’overview)
+      return structure
     },
 
     getModuleEntries(): Array<{ moduleId: string; module: LocalModule }> {

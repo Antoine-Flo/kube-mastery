@@ -3,20 +3,13 @@ import type { LessonLocation } from './types'
 import type { Quiz } from '../../types/quiz'
 import type { MarkdownInstance } from 'astro'
 
-export type ChapterMeta = {
-  title: Record<UiLang, string>
-  description?: Record<UiLang, string>
-  environment?: string
-}
-
 export interface OverviewIndexPort {
   getLessonTitleIndex(): Map<string, string>
-  getChapterMetaIndex(): Map<string, ChapterMeta>
-  getChapterDirsByModule(): Map<
+  getTopicDirsByModule(): Map<
     string,
-    Array<{ chapterDir: string; chapterId: string }>
+    Array<{ topicDir: string; topicId: string }>
   >
-  getLessonDirsByChapter(): Map<string, string[]>
+  getLessonDirsByTopic(): Map<string, string[]>
 }
 
 export interface LessonContentPort {

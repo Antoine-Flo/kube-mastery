@@ -1,7 +1,7 @@
 import type { MarkdownInstance } from 'astro'
 import type { Quiz } from '../../types/quiz'
 import type { UiLang } from '../courses/types'
-import type { OverviewIndexPort, LessonContentPort, ChapterMeta } from './port'
+import type { OverviewIndexPort, LessonContentPort } from './port'
 import type { LessonLocation } from './types'
 import { stripNumericPrefix, parseH1 } from '../utils'
 
@@ -12,10 +12,6 @@ const lessonTitleGlob = import.meta.glob<string>(
     query: '?raw',
     import: 'default'
   }
-)
-const chapterMetaGlob = import.meta.glob<{ default: Record<string, unknown> }>(
-  '../../courses/modules/*/*/chapter.json',
-  { eager: true, import: 'default' }
 )
 const contentMdPathsGlob = import.meta.glob(
   '../../courses/modules/**/content.md'
@@ -39,6 +35,7 @@ const quizGlob = import.meta.glob<{ quiz?: Quiz }>(
   { eager: true }
 )
 
+/** Path shape: modules/{moduleId}/{topicDir}/{lang}/content.md */
 function buildLessonTitleIndex(): Map<string, string> {
   const index = new Map<string, string>()
 
@@ -46,61 +43,27 @@ function buildLessonTitleIndex(): Map<string, string> {
     const text = content ?? ''
     const parts = path.split('/')
     const modulesIdx = parts.indexOf('modules')
-    if (modulesIdx === -1 || parts.length < modulesIdx + 5) {
+    if (modulesIdx === -1 || parts.length < modulesIdx + 4) {
       continue
     }
 
     const moduleId = parts[modulesIdx + 1]
-    const chapterDir = parts[modulesIdx + 2]
-    const lessonDir = parts[modulesIdx + 3]
-    const lang = parts[modulesIdx + 4]
+    const topicDir = parts[modulesIdx + 2]
+    const lang = parts[modulesIdx + 3]
     if (lang !== 'en' && lang !== 'fr') {
       continue
     }
 
-    const chapterId = stripNumericPrefix(chapterDir)
-    const lessonId = stripNumericPrefix(lessonDir)
-    const title = parseH1(text)
-    index.set(`${moduleId}:${chapterId}:${lessonId}:${lang}`, title)
+    const topicId = stripNumericPrefix(topicDir)
+    const title = parseH1(text) || topicId
+    index.set(`${moduleId}:${topicId}:${lang}`, title)
   }
   return index
 }
 
-function buildChapterMetaIndex(): Map<string, ChapterMeta> {
-  const index = new Map<string, ChapterMeta>()
-
-  for (const [path, data] of Object.entries(chapterMetaGlob)) {
-    const parts = path.split('/')
-    const modulesIdx = parts.indexOf('modules')
-
-    if (modulesIdx === -1 || parts.length < modulesIdx + 3) {
-      continue
-    }
-
-    const moduleId = parts[modulesIdx + 1]
-    const chapterDir = parts[modulesIdx + 2]
-    const chapterId = stripNumericPrefix(chapterDir)
-
-    const raw = data as unknown as {
-      title?: { en?: string; fr?: string }
-      description?: { en?: string; fr?: string }
-      environment?: string
-    }
-
-    index.set(`${moduleId}:${chapterId}`, {
-      title: { en: raw.title?.en ?? '', fr: raw.title?.fr ?? '' },
-      description: raw.description
-        ? { en: raw.description.en ?? '', fr: raw.description.fr ?? '' }
-        : undefined,
-      environment: raw.environment
-    })
-  }
-  return index
-}
-
-function buildChapterDirsByModule(): Map<
+function buildTopicDirsByModule(): Map<
   string,
-  Array<{ chapterDir: string; chapterId: string }>
+  Array<{ topicDir: string; topicId: string }>
 > {
   const seen = new Map<string, Set<string>>()
 
@@ -112,31 +75,32 @@ function buildChapterDirsByModule(): Map<
     }
 
     const moduleId = parts[modulesIdx + 1]
-    const chapterDir = parts[modulesIdx + 2]
-    const chapterId = stripNumericPrefix(chapterDir)
+    const topicDir = parts[modulesIdx + 2]
+    const topicId = stripNumericPrefix(topicDir)
     if (!seen.has(moduleId)) {
       seen.set(moduleId, new Set())
     }
-    seen.get(moduleId)!.add(JSON.stringify({ chapterDir, chapterId }))
+    seen.get(moduleId)!.add(JSON.stringify({ topicDir, topicId }))
   }
 
   const out = new Map<
     string,
-    Array<{ chapterDir: string; chapterId: string }>
+    Array<{ topicDir: string; topicId: string }>
   >()
 
   for (const [moduleId, set] of seen) {
     const arr = Array.from(set).map(
-      (s) => JSON.parse(s) as { chapterDir: string; chapterId: string }
+      (s) => JSON.parse(s) as { topicDir: string; topicId: string }
     )
-    arr.sort((a, b) => a.chapterDir.localeCompare(b.chapterDir))
+    arr.sort((a, b) => a.topicDir.localeCompare(b.topicDir))
     out.set(moduleId, arr)
   }
 
   return out
 }
 
-function buildLessonDirsByChapter(): Map<string, string[]> {
+/** Key = moduleId:topicId. Value = [topicDir] (one lesson per topic in new structure). */
+function buildLessonDirsByTopic(): Map<string, string[]> {
   const seen = new Map<string, Set<string>>()
 
   for (const path of contentMdGlobKeys) {
@@ -148,14 +112,13 @@ function buildLessonDirsByChapter(): Map<string, string[]> {
     }
 
     const moduleId = parts[modulesIdx + 1]
-    const chapterDir = parts[modulesIdx + 2]
-    const lessonDir = parts[modulesIdx + 3]
-    const chapterId = stripNumericPrefix(chapterDir)
-    const key = `${moduleId}:${chapterId}`
+    const topicDir = parts[modulesIdx + 2]
+    const topicId = stripNumericPrefix(topicDir)
+    const key = `${moduleId}:${topicId}`
     if (!seen.has(key)) {
       seen.set(key, new Set())
     }
-    seen.get(key)!.add(lessonDir)
+    seen.get(key)!.add(topicDir)
   }
 
   const out = new Map<string, string[]>()
@@ -168,12 +131,11 @@ function buildLessonDirsByChapter(): Map<string, string[]> {
 }
 
 let lessonTitleIndex: Map<string, string> | null = null
-let chapterMetaIndex: Map<string, ChapterMeta> | null = null
-let chapterDirsByModule: Map<
+let topicDirsByModule: Map<
   string,
-  Array<{ chapterDir: string; chapterId: string }>
+  Array<{ topicDir: string; topicId: string }>
 > | null = null
-let lessonDirsByChapter: Map<string, string[]> | null = null
+let lessonDirsByTopic: Map<string, string[]> | null = null
 
 const indexPort: OverviewIndexPort = {
   getLessonTitleIndex() {
@@ -182,32 +144,26 @@ const indexPort: OverviewIndexPort = {
     }
     return lessonTitleIndex
   },
-  getChapterMetaIndex() {
-    if (!chapterMetaIndex) {
-      chapterMetaIndex = buildChapterMetaIndex()
+  getTopicDirsByModule() {
+    if (!topicDirsByModule) {
+      topicDirsByModule = buildTopicDirsByModule()
     }
-    return chapterMetaIndex
+    return topicDirsByModule
   },
-  getChapterDirsByModule() {
-    if (!chapterDirsByModule) {
-      chapterDirsByModule = buildChapterDirsByModule()
+  getLessonDirsByTopic() {
+    if (!lessonDirsByTopic) {
+      lessonDirsByTopic = buildLessonDirsByTopic()
     }
-    return chapterDirsByModule
-  },
-  getLessonDirsByChapter() {
-    if (!lessonDirsByChapter) {
-      lessonDirsByChapter = buildLessonDirsByChapter()
-    }
-    return lessonDirsByChapter
+    return lessonDirsByTopic
   }
 }
 
 function contentPath(loc: LessonLocation, lang: UiLang): string {
-  return `modules/${loc.moduleId}/${loc.chapterDir}/${loc.lessonDir}/${lang}/content.md`
+  return `modules/${loc.moduleId}/${loc.topicDir}/${lang}/content.md`
 }
 
 function quizPath(loc: LessonLocation, lang: UiLang): string {
-  return `modules/${loc.moduleId}/${loc.chapterDir}/${loc.lessonDir}/${lang}/quiz.ts`
+  return `modules/${loc.moduleId}/${loc.topicDir}/${lang}/quiz.ts`
 }
 
 const contentPort: LessonContentPort = {

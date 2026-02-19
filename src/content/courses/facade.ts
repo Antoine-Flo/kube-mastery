@@ -1,6 +1,6 @@
 import type { UiLang } from './types'
 import type { CourseDataPort } from './port'
-import { countLessonsForModule, countLessonsForChapters } from './domain'
+import { countLessonsForModule, countLessonsForStructure } from './domain'
 import { createCourseGlobAdapter } from './glob-adapter'
 import type { CourseListItem, ModuleListItem } from './types'
 
@@ -55,8 +55,10 @@ export function getCourses(lang: UiLang): CourseListItem[] {
     }
 
     const structure = port.getCourseStructure(courseId)
-    const structureOrEmpty = structure ?? { chapters: [] }
-    const totalLessons = countLessonsForChapters(structureOrEmpty, index)
+    if (!structure) {
+      continue
+    }
+    const totalLessons = countLessonsForStructure(structure, index)
 
     list.push({
       id: courseId,
