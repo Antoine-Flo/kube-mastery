@@ -62,20 +62,6 @@ if (!isLoggedIn) {
 }
 
 const lessonBaseUrl = localePath(`/${type}/${id}`)
-
-// DEBUG overview: sections = groupes de modules (délimiteurs). Ce qui est passé à OverviewStructure.
-console.log('[overview] reçu par la page (passé à OverviewStructure)', {
-  type,
-  id,
-  overviewTitle: overview.title,
-  sectionsCount: overview.content.sections.length,
-  sectionsAsGroups: overview.content.sections.map((s, i) => ({
-    index: i,
-    sectionTitle: s.title,
-    modulesInGroup: s.modules.length,
-    moduleTitles: s.modules.map((m) => m.title)
-  }))
-})
 ---
 
 <Layout>
