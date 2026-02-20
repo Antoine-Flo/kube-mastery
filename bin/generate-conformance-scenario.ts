@@ -90,6 +90,7 @@ const createExhaustiveSegments = (): LifecycleSegment[] => {
         'kubectl get pod web -o yaml',
         'kubectl get deployments',
         'kubectl get replicasets',
+        'kubectl get daemonsets -A',
         'kubectl diff -f src/courses/seeds/deployment-with-configmap/configmap.yaml',
         'kubectl diff -f src/courses/seeds/deployment-with-configmap/secret.yaml',
         createRawDiffCommand(
@@ -185,6 +186,11 @@ const createExhaustiveSegments = (): LifecycleSegment[] => {
           'FIELD:    replicas',
           'KIND:',
           'ReplicaSet'
+        ]),
+        createRawCommand('kubectl explain daemonset.spec.template', [
+          'FIELD:    template',
+          'KIND:',
+          'DaemonSet'
         ])
       ]
     },

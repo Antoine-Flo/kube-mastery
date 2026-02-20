@@ -1,10 +1,7 @@
 import { readFileSync, statSync } from 'fs'
 import { basename, join } from 'path'
 import { createClusterState } from '../../../src/core/cluster/ClusterState'
-import {
-  initializeControllers,
-  initializeScheduler
-} from '../../../src/core/cluster/controllers/initializers'
+import { initializeControllers } from '../../../src/core/cluster/controllers/initializers'
 import { type ClusterNodeRole } from '../../../src/config/clusterConfig'
 import { createEventBus } from '../../../src/core/cluster/events/EventBus'
 import { parseKubernetesYaml } from '../../../src/core/kubectl/yamlParser'
@@ -175,7 +172,6 @@ export const createRunnerExecutor = (
     bootstrap: getConformanceBootstrapConfig(clusterName, nodeRoles)
   })
   initializeControllers(eventBus, clusterState)
-  initializeScheduler(eventBus, clusterState)
   const fileSystem = createFileSystem()
   const executor = createKubectlExecutor(clusterState, fileSystem, logger, eventBus)
 

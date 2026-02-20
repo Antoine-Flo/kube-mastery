@@ -22,17 +22,22 @@ export interface SimStaticPodWorkloadSpec {
 export interface SimDaemonSetWorkloadSpec {
   kind: 'daemonset'
   namespace: string
-  podPrefix: string
+  name: string
   containerName: string
-  nodeNames: string[]
+  labels: Record<string, string>
+  selectorLabels: Record<string, string>
+  nodeSelector?: Record<string, string>
   tolerations?: PodToleration[]
+  annotations?: Record<string, string>
 }
 
 export interface SimDeploymentWorkloadSpec {
   kind: 'deployment'
   namespace: string
-  podPrefix: string
+  name: string
   containerName: string
+  labels: Record<string, string>
+  selectorLabels: Record<string, string>
   replicas: number
   nodeSelector?: Record<string, string>
   tolerations?: PodToleration[]
@@ -106,7 +111,7 @@ const createStaticSpecs = (controlPlaneNodeName: string): SimSystemWorkloadSpec[
   ]
 }
 
-const createDaemonSetSpecs = (nodeNames: string[]): SimSystemWorkloadSpec[] => {
+const createDaemonSetSpecs = (): SimSystemWorkloadSpec[] => {
   const controlPlaneToleration: PodToleration = {
     key: 'node-role.kubernetes.io/control-plane',
     operator: 'Exists',
@@ -115,18 +120,20 @@ const createDaemonSetSpecs = (nodeNames: string[]): SimSystemWorkloadSpec[] => {
   return [
     {
       kind: 'daemonset',
+      name: 'kindnet',
       namespace: 'kube-system',
-      podPrefix: 'kindnet',
       containerName: 'kindnet',
-      nodeNames,
+      labels: { 'k8s-app': 'kindnet' },
+      selectorLabels: { 'k8s-app': 'kindnet' },
       tolerations: [controlPlaneToleration]
     },
     {
       kind: 'daemonset',
+      name: 'kube-proxy',
       namespace: 'kube-system',
-      podPrefix: 'kube-proxy',
       containerName: 'kube-proxy',
-      nodeNames,
+      labels: { 'k8s-app': 'kube-proxy' },
+      selectorLabels: { 'k8s-app': 'kube-proxy' },
       tolerations: [controlPlaneToleration]
     }
   ]
@@ -140,9 +147,11 @@ const createDeploymentSpecs = (
     return [
       {
         kind: 'deployment',
+        name: 'coredns',
         namespace: 'kube-system',
-        podPrefix: 'coredns',
         containerName: 'coredns',
+        labels: { 'k8s-app': 'kube-dns' },
+        selectorLabels: { 'k8s-app': 'kube-dns' },
         replicas: 2,
         nodeSelector: {
           'node-role.kubernetes.io/control-plane': ''
@@ -169,9 +178,11 @@ const createStorageSpecs = (
   return [
     {
       kind: 'deployment',
+      name: 'local-path-provisioner',
       namespace: 'local-path-storage',
-      podPrefix: 'local-path-provisioner',
       containerName: 'local-path-provisioner',
+      labels: { app: 'local-path-provisioner' },
+      selectorLabels: { app: 'local-path-provisioner' },
       replicas: 1,
       nodeSelector: {
         'node-role.kubernetes.io/control-plane': ''
@@ -195,11 +206,10 @@ export const createSimSystemWorkloadSpecs = (
 ): SimSystemWorkloadSpec[] => {
   const policy = options.policy ?? 'conformance'
   const nodes = buildNodes(options.clusterName, options.nodeRoles)
-  const nodeNames = nodes.map((node) => node.name)
   const controlPlaneNodeName = getControlPlaneNodeName(nodes)
   return [
     ...createStaticSpecs(controlPlaneNodeName),
-    ...createDaemonSetSpecs(nodeNames),
+    ...createDaemonSetSpecs(),
     ...createDeploymentSpecs(controlPlaneNodeName, policy),
     ...createStorageSpecs(controlPlaneNodeName)
   ]

@@ -4,12 +4,14 @@ import {
   DEFAULT_CLUSTER_NODE_ROLES,
   type ClusterNodeRole
 } from './clusterConfig'
-import { getSystemPods } from './systemPods'
+import { getSystemWorkloads } from './systemPods'
 import type { SimSystemWorkloadPolicy } from './systemWorkloads/SimWorkloadSpecs'
 import type { ConfigMap } from './ressources/ConfigMap'
 import { createConfigMap } from './ressources/ConfigMap'
+import type { DaemonSet } from './ressources/DaemonSet'
 import type { Node, NodeCondition } from './ressources/Node'
 import { createNode } from './ressources/Node'
+import type { Deployment } from './ressources/Deployment'
 import type { Pod } from './ressources/Pod'
 import type { Service } from './ressources/Service'
 import { createService } from './ressources/Service'
@@ -35,6 +37,9 @@ export interface SystemBootstrapResources {
   configMaps: ConfigMap[]
   services: Service[]
   pods: Pod[]
+  staticPods: Pod[]
+  deployments: Deployment[]
+  daemonSets: DaemonSet[]
 }
 
 const DEFAULT_CLUSTER_NAME = 'conformance'
@@ -163,6 +168,13 @@ export const createSystemBootstrapResources = (
   const roleSlotNames = buildNodeRoleSlotNames(nodeRoles)
   const creationTimestamp =
     options.clock != null ? options.clock() : new Date().toISOString()
+  const workloads = getSystemWorkloads({
+    clusterName,
+    nodeRoles,
+    policy: options.systemWorkloadPolicy,
+    clock: () => creationTimestamp
+  })
+
   return {
     nodes: nodeRoles.map((role, index) => {
       return createBootstrapNode(
@@ -175,12 +187,10 @@ export const createSystemBootstrapResources = (
     }),
     configMaps: [createKubeRootCAConfigMap(creationTimestamp)],
     services: createSystemServices(creationTimestamp),
-    pods: getSystemPods({
-      clusterName,
-      nodeRoles,
-      policy: options.systemWorkloadPolicy,
-      clock: () => creationTimestamp
-    })
+    pods: workloads.staticPods,
+    staticPods: workloads.staticPods,
+    deployments: workloads.deployments,
+    daemonSets: workloads.daemonSets
   }
 }
 
@@ -254,15 +264,49 @@ const upsertServices = (clusterState: ClusterState, services: Service[]): void =
   }
 }
 
-const ensureSystemPods = (clusterState: ClusterState, pods: Pod[]): void => {
-  const existingPods = clusterState.getPods()
-  const hasExistingSystemPods = existingPods.some((pod) => {
-    return isSystemPodNamespace(pod.metadata.namespace)
-  })
-  if (hasExistingSystemPods) {
-    return
+const upsertDeployments = (
+  clusterState: ClusterState,
+  deployments: Deployment[]
+): void => {
+  for (const deployment of deployments) {
+    const findDeploymentResult = clusterState.findDeployment(
+      deployment.metadata.name,
+      deployment.metadata.namespace
+    )
+    if (!findDeploymentResult.ok) {
+      clusterState.addDeployment(deployment)
+      continue
+    }
+    clusterState.updateDeployment(
+      deployment.metadata.name,
+      deployment.metadata.namespace,
+      () => deployment
+    )
   }
+}
 
+const upsertDaemonSets = (
+  clusterState: ClusterState,
+  daemonSets: DaemonSet[]
+): void => {
+  for (const daemonSet of daemonSets) {
+    const findDaemonSetResult = clusterState.findDaemonSet(
+      daemonSet.metadata.name,
+      daemonSet.metadata.namespace
+    )
+    if (!findDaemonSetResult.ok) {
+      clusterState.addDaemonSet(daemonSet)
+      continue
+    }
+    clusterState.updateDaemonSet(
+      daemonSet.metadata.name,
+      daemonSet.metadata.namespace,
+      () => daemonSet
+    )
+  }
+}
+
+const ensureSystemPods = (clusterState: ClusterState, pods: Pod[]): void => {
   for (const pod of pods) {
     const findPodResult = clusterState.findPod(
       pod.metadata.name,
@@ -297,13 +341,15 @@ const applyKindLikeBootstrap = (
   upsertNodes(clusterState, resources.nodes)
   upsertConfigMaps(clusterState, resources.configMaps)
   upsertServices(clusterState, resources.services)
+  upsertDeployments(clusterState, resources.deployments)
+  upsertDaemonSets(clusterState, resources.daemonSets)
 
   if (mode === 'always') {
-    replaceSystemPods(clusterState, resources.pods)
+    replaceSystemPods(clusterState, resources.staticPods)
     return
   }
 
-  ensureSystemPods(clusterState, resources.pods)
+  ensureSystemPods(clusterState, resources.staticPods)
 }
 
 export const applyClusterBootstrap = (

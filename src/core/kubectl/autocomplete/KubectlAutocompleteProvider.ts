@@ -37,6 +37,9 @@ const RESOURCE_ALIASES: Record<string, string> = {
   replicasets: 'replicasets',
   replicaset: 'replicasets',
   rs: 'replicasets',
+  daemonsets: 'daemonsets',
+  daemonset: 'daemonsets',
+  ds: 'daemonsets',
   deployments: 'deployments',
   deployment: 'deployments',
   deploy: 'deployments'
@@ -81,6 +84,8 @@ const getResourceNames = (
     nodes: (state) => state.getNodes().map((node: any) => node.metadata.name),
     replicasets: (state) =>
       state.getReplicaSets().map((rs: any) => rs.metadata.name),
+    daemonsets: (state) =>
+      state.getDaemonSets().map((daemonSet: any) => daemonSet.metadata.name),
     deployments: (state) =>
       state.getDeployments().map((deploy: any) => deploy.metadata.name)
   }

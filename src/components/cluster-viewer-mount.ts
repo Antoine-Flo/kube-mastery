@@ -38,12 +38,45 @@ function formatNodeTooltip(node: Node): string {
   return lines.join('\n')
 }
 
-function formatPodTooltip(pod: Pod): string {
+function getPodWorkloadType(pod: Pod, env: EmulatedEnvironment): string {
+  const ownerRefs = pod.metadata.ownerReferences ?? []
+
+  const daemonSetOwnerRef = ownerRefs.find((ref) => ref.kind === 'DaemonSet')
+  if (daemonSetOwnerRef != null) {
+    return 'DaemonSet'
+  }
+
+  const replicaSetOwnerRef = ownerRefs.find((ref) => ref.kind === 'ReplicaSet')
+  if (replicaSetOwnerRef != null) {
+    const replicaSet = env.clusterState
+      .getReplicaSets(pod.metadata.namespace)
+      .find((item) => item.metadata.name === replicaSetOwnerRef.name)
+    if (replicaSet != null) {
+      const replicaSetOwnerRefs = replicaSet.metadata.ownerReferences ?? []
+      const deploymentOwnerRef = replicaSetOwnerRefs.find(
+        (ref) => ref.kind === 'Deployment'
+      )
+      if (deploymentOwnerRef != null) {
+        return 'Deployment'
+      }
+    }
+    return 'ReplicaSet'
+  }
+
+  const fallbackWorkloadType =
+    pod.metadata.annotations?.['sim.kubernetes.io/workload-type']
+  if (fallbackWorkloadType != null && fallbackWorkloadType.length > 0) {
+    return fallbackWorkloadType
+  }
+
+  return 'Pod'
+}
+
+function formatPodTooltip(pod: Pod, env: EmulatedEnvironment): string {
   const name = `${pod.metadata.namespace}/${pod.metadata.name}`
   const phase = pod.status.phase
   const containers = (pod.spec.containers ?? []).map((c) => c.name).join(', ')
-  const workloadType =
-    pod.metadata.annotations?.['sim.kubernetes.io/workload-type'] ?? 'Pod'
+  const workloadType = getPodWorkloadType(pod, env)
   return `Pod\n${name}\nPhase: ${phase}\nWorkload: ${workloadType}\nContainers: ${containers || '(none)'}`
 }
 
@@ -210,7 +243,7 @@ function renderCluster(
       podsContainer.appendChild(empty)
     } else {
       for (const pod of sortedNodePods) {
-        podsContainer.appendChild(createPodEl(pod))
+        podsContainer.appendChild(createPodEl(pod, env))
       }
     }
     fragment.appendChild(nodeEl)
@@ -230,7 +263,7 @@ function renderCluster(
 		`
     const podsContainer = nodeEl.querySelector('.cluster-viz__pods')!
     for (const pod of unscheduledPods) {
-      podsContainer.appendChild(createPodEl(pod))
+      podsContainer.appendChild(createPodEl(pod, env))
     }
     fragment.appendChild(nodeEl)
   }
@@ -260,14 +293,14 @@ function renderCluster(
   }
 }
 
-function createPodEl(pod: Pod): HTMLElement {
+function createPodEl(pod: Pod, env: EmulatedEnvironment): HTMLElement {
   const phase = pod.status.phase
   const phaseClass = POD_PHASE_CLASS[phase]
   const name = `${pod.metadata.namespace}/${pod.metadata.name}`
   const containers = pod.spec.containers ?? []
   const div = document.createElement('div')
   div.className = `cluster-viz__pod ${phaseClass}`
-  div.dataset.tooltip = formatPodTooltip(pod)
+  div.dataset.tooltip = formatPodTooltip(pod, env)
   div.innerHTML = `
 		<div class="cluster-viz__pod-header">
 			<span class="cluster-viz__pod-name" title="${escapeAttr(name)}">${escapeHtml(pod.metadata.name)}</span>
@@ -402,7 +435,8 @@ export function mountClusterViewer(
       e.type.startsWith('Pod') ||
       e.type.startsWith('Node') ||
       e.type.startsWith('Deployment') ||
-      e.type.startsWith('ReplicaSet'),
+      e.type.startsWith('ReplicaSet') ||
+      e.type.startsWith('DaemonSet'),
     () => {
       render()
     }

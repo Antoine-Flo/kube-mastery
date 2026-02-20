@@ -147,6 +147,7 @@ const isResourceKind = (kind: string): kind is ResourceKind => {
     kind === 'Node' ||
     kind === 'ReplicaSet' ||
     kind === 'Deployment' ||
+    kind === 'DaemonSet' ||
     kind === 'Service'
   )
 }

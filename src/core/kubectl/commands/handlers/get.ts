@@ -1,6 +1,7 @@
 import { stringify as yamlStringify } from 'yaml'
 import type { ClusterStateData } from '../../../cluster/ClusterState'
 import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
+import type { DaemonSet } from '../../../cluster/ressources/DaemonSet'
 import type { Deployment } from '../../../cluster/ressources/Deployment'
 import { getDeploymentDesiredReplicas } from '../../../cluster/ressources/Deployment'
 import type { Node } from '../../../cluster/ressources/Node'
@@ -216,6 +217,7 @@ const RESOURCE_OUTPUT_METADATA: Record<StructuredResource, ResourceOutputMetadat
   nodes: { apiVersion: 'v1', kind: 'Node' },
   replicasets: { apiVersion: 'apps/v1', kind: 'ReplicaSet' },
   deployments: { apiVersion: 'apps/v1', kind: 'Deployment' },
+  daemonsets: { apiVersion: 'apps/v1', kind: 'DaemonSet' },
   services: { apiVersion: 'v1', kind: 'Service' },
   namespaces: { apiVersion: 'v1', kind: 'Namespace' }
 }
@@ -477,6 +479,19 @@ const RESOURCE_HANDLERS: Record<string, ResourceHandler<any>> = {
     supportsFiltering: true
   },
 
+  daemonsets: {
+    getItems: (state) => state.daemonSets.items,
+    headers: ['name', 'desired', 'current', 'ready', 'age'],
+    formatRow: (daemonSet: DaemonSet) => [
+      daemonSet.metadata.name,
+      String(daemonSet.status.desiredNumberScheduled ?? 0),
+      String(daemonSet.status.currentNumberScheduled ?? 0),
+      String(daemonSet.status.numberReady ?? 0),
+      formatAge(daemonSet.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true
+  },
+
   deployments: {
     getItems: (state) => state.deployments.items,
     headers: ['name', 'ready', 'up-to-date', 'available', 'age'],
@@ -697,12 +712,18 @@ export const handleGet = (
   return formatTable(handler.headers, rows, tableOptions)
 }
 
-type GetAllResourceType = 'pods' | 'services' | 'deployments' | 'replicasets'
+type GetAllResourceType =
+  | 'pods'
+  | 'services'
+  | 'deployments'
+  | 'daemonsets'
+  | 'replicasets'
 
 const GET_ALL_RESOURCE_ORDER: GetAllResourceType[] = [
   'pods',
   'services',
   'deployments',
+  'daemonsets',
   'replicasets'
 ]
 
@@ -710,6 +731,7 @@ const GET_ALL_REFERENCE_BY_RESOURCE: Record<GetAllResourceType, string> = {
   pods: 'pod',
   services: 'service',
   deployments: 'deployment.apps',
+  daemonsets: 'daemonset.apps',
   replicasets: 'replicaset.apps'
 }
 

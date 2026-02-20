@@ -11,7 +11,7 @@ Les specs sont téléchargées depuis : https://github.com/kubernetes/kubernetes
 Fichiers utilisés :
 
 - `api__v1_openapi.json` - Core v1 (Pods, ConfigMaps, Secrets, Services, Namespaces)
-- `apis__apps__v1_openapi.json` - Apps v1 (Deployments, ReplicaSets, StatefulSets)
+- `apis__apps__v1_openapi.json` - Apps v1 (Deployments, ReplicaSets, DaemonSets, StatefulSets)
 
 ## Architecture
 
@@ -22,6 +22,10 @@ Tests → Loader (charge specs) → Validator (Ajv) → Validation JSON Schema �
 - **loader.ts** : Charge et parse les specs OpenAPI JSON
 - **validator.ts** : Utilise Ajv pour valider contre les schémas (résolution automatique des $ref)
 - **tests/** : Tests de conformité par type de ressource
+
+Ressources actuellement couvertes par les tests:
+- Core v1: Pod, Node, ConfigMap, Secret, Service
+- Apps v1: Deployment, ReplicaSet, DaemonSet
 
 ## Ajouter un test de conformité
 

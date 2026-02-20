@@ -56,7 +56,7 @@ describe('kubectl get handler - all', () => {
     const webDeployment = createDeployment({
       name: 'web-deploy',
       namespace: 'default',
-      selector: { app: 'web' },
+      selector: { matchLabels: { app: 'web' } },
       template: {
         metadata: { labels: { app: 'web' } },
         spec: {

@@ -8,6 +8,7 @@ export const KUBECTL_RESOURCES = {
   configmaps: ['configmaps', 'configmap', 'cm'],
   secrets: ['secrets', 'secret'],
   nodes: ['nodes', 'node', 'no'],
+  daemonsets: ['daemonsets', 'daemonset', 'ds'],
   replicasets: ['replicasets', 'replicaset', 'rs']
 } as const
 

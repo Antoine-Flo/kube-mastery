@@ -21,10 +21,16 @@ import {
   findOwnerByRef,
   generateSuffix,
   getOwnedResources,
+  startPeriodicResync,
   statusEquals,
   subscribeToEvents
 } from './helpers'
-import type { ClusterEventType, Controller, ControllerState } from './types'
+import type {
+  ClusterEventType,
+  ControllerResyncOptions,
+  ControllerState,
+  ReconcilerController
+} from './types'
 import { createWorkQueue, type WorkQueue } from './WorkQueue'
 
 // ─── Constants ────────────────────────────────────────────────────────────
@@ -82,6 +88,8 @@ const createPodFromTemplate = (rs: ReplicaSet): Pod => {
       ...templateLabels,
       'pod-template-hash': rs.metadata.name.split('-').pop() || ''
     },
+    nodeSelector: rs.spec.template.spec.nodeSelector,
+    tolerations: rs.spec.template.spec.tolerations,
     containers: convertTemplateContainers(rs.spec.template.spec.containers),
     phase: 'Pending',
     ownerReferences: [createOwnerRef(rs)]
@@ -108,15 +116,22 @@ const computeReplicaSetStatus = (ownedPods: Pod[]): ReplicaSetStatus => {
  * ReplicaSet Controller
  * Ensures the correct number of pods are running for each ReplicaSet
  */
-export class ReplicaSetController implements Controller {
+export class ReplicaSetController implements ReconcilerController {
   private eventBus: EventBus
   private getState: () => ControllerState
   private workQueue: WorkQueue
   private unsubscribe: (() => void) | null = null
+  private stopPeriodicResync: () => void = () => {}
+  private options: ControllerResyncOptions
 
-  constructor(eventBus: EventBus, getState: () => ControllerState) {
+  constructor(
+    eventBus: EventBus,
+    getState: () => ControllerState,
+    options: ControllerResyncOptions = {}
+  ) {
     this.eventBus = eventBus
     this.getState = getState
+    this.options = options
     this.workQueue = createWorkQueue({ processDelay: 0 })
   }
 
@@ -133,6 +148,12 @@ export class ReplicaSetController implements Controller {
 
     // Start processing the work queue
     this.workQueue.start((key) => this.reconcile(key))
+
+    this.initialSync()
+    this.stopPeriodicResync = startPeriodicResync(
+      this.options.resyncIntervalMs,
+      () => this.resyncAll()
+    )
   }
 
   /**
@@ -143,6 +164,8 @@ export class ReplicaSetController implements Controller {
       this.unsubscribe()
       this.unsubscribe = null
     }
+    this.stopPeriodicResync()
+    this.stopPeriodicResync = () => {}
     this.workQueue.stop()
   }
 
@@ -181,6 +204,18 @@ export class ReplicaSetController implements Controller {
   private enqueueReplicaSet(rs: ReplicaSet): void {
     const key = makeKey(rs.metadata.namespace, rs.metadata.name)
     this.workQueue.add(key)
+  }
+
+  initialSync(): void {
+    const state = this.getState()
+    const replicaSets = state.getReplicaSets()
+    for (const replicaSet of replicaSets) {
+      this.enqueueReplicaSet(replicaSet)
+    }
+  }
+
+  resyncAll(): void {
+    this.initialSync()
   }
 
   /**
@@ -299,9 +334,10 @@ export class ReplicaSetController implements Controller {
  */
 export const createReplicaSetController = (
   eventBus: EventBus,
-  getState: () => ControllerState
+  getState: () => ControllerState,
+  options: ControllerResyncOptions = {}
 ): ReplicaSetController => {
-  const controller = new ReplicaSetController(eventBus, getState)
+  const controller = new ReplicaSetController(eventBus, getState, options)
   controller.start()
   return controller
 }

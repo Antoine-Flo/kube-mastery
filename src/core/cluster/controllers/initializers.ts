@@ -1,22 +1,44 @@
 import type { ClusterState } from '../ClusterState'
 import type { EventBus } from '../events/EventBus'
-import {
-  createScheduler,
-  type Scheduler,
-  type SchedulerOptions
-} from '../scheduler'
+import { createDaemonSetController } from './DaemonSetController'
 import { createDeploymentController } from './DeploymentController'
+import {
+  createPodLifecycleController,
+  type PodLifecycleControllerOptions
+} from './PodLifecycleController'
 import { createReplicaSetController } from './ReplicaSetController'
-import type { ControllerState } from './types'
+import {
+  createSchedulerController,
+  type SchedulerControllerOptions
+} from './SchedulerController'
+import type { Controller, ControllerState } from './types'
+
+export interface RuntimeControllers {
+  deploymentController: Controller
+  daemonSetController: Controller
+  replicaSetController: Controller
+  podLifecycleController: Controller
+  schedulerController: Controller
+}
+
+export interface InitializeControllersOptions {
+  deployment?: { resyncIntervalMs?: number }
+  daemonSet?: { resyncIntervalMs?: number }
+  replicaSet?: { resyncIntervalMs?: number }
+  podLifecycle?: PodLifecycleControllerOptions
+  scheduler?: SchedulerControllerOptions
+}
 
 const createControllerStateAccessor = (
   clusterState: ClusterState
 ): (() => ControllerState) => {
   return () => ({
     getDeployments: clusterState.getDeployments,
+    getDaemonSets: clusterState.getDaemonSets,
     getReplicaSets: clusterState.getReplicaSets,
     getPods: clusterState.getPods,
     findDeployment: clusterState.findDeployment,
+    findDaemonSet: clusterState.findDaemonSet,
     findReplicaSet: clusterState.findReplicaSet,
     findPod: clusterState.findPod,
     getNodes: clusterState.getNodes
@@ -25,24 +47,53 @@ const createControllerStateAccessor = (
 
 export const initializeControllers = (
   eventBus: EventBus,
-  clusterState: ClusterState
-) => {
+  clusterState: ClusterState,
+  options: InitializeControllersOptions = {}
+): RuntimeControllers => {
   const getState = createControllerStateAccessor(clusterState)
-  const deploymentController = createDeploymentController(eventBus, getState)
-  const replicaSetController = createReplicaSetController(eventBus, getState)
+  const deploymentController = createDeploymentController(
+    eventBus,
+    getState,
+    options.deployment
+  )
+  const daemonSetController = createDaemonSetController(
+    eventBus,
+    getState,
+    options.daemonSet
+  )
+  const replicaSetController = createReplicaSetController(
+    eventBus,
+    getState,
+    options.replicaSet
+  )
+  const podLifecycleController = createPodLifecycleController(
+    eventBus,
+    getState,
+    options.podLifecycle
+  )
+  const schedulerController = createSchedulerController(
+    eventBus,
+    getState,
+    options.scheduler
+  )
   return {
     deploymentController,
-    replicaSetController
+    daemonSetController,
+    replicaSetController,
+    podLifecycleController,
+    schedulerController
   }
 }
 
-export const initializeScheduler = (
-  eventBus: EventBus,
-  clusterState: ClusterState,
-  options: SchedulerOptions = {}
-): Scheduler => {
-  const getState = createControllerStateAccessor(clusterState)
-  const scheduler = createScheduler(eventBus, getState, options)
-  scheduler.start()
-  return scheduler
+export const stopRuntimeControllers = (
+  controllers: RuntimeControllers | undefined
+): void => {
+  if (controllers == null) {
+    return
+  }
+  controllers.deploymentController.stop()
+  controllers.daemonSetController.stop()
+  controllers.replicaSetController.stop()
+  controllers.schedulerController.stop()
+  controllers.podLifecycleController.stop()
 }

@@ -121,6 +121,21 @@ export const subscribeToEvents = (
   }
 }
 
+export const startPeriodicResync = (
+  resyncIntervalMs: number | undefined,
+  resyncFn: () => void
+): (() => void) => {
+  if (resyncIntervalMs == null || resyncIntervalMs <= 0) {
+    return () => {}
+  }
+  const intervalId = setInterval(() => {
+    resyncFn()
+  }, resyncIntervalMs)
+  return () => {
+    clearInterval(intervalId)
+  }
+}
+
 // ─── Status Computation Helpers ──────────────────────────────────────────
 
 /**

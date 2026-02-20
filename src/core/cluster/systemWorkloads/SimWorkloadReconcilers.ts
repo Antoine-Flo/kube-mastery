@@ -1,4 +1,7 @@
-import { generateKindLikePodName } from '../controllers/helpers'
+import type { DaemonSet } from '../ressources/DaemonSet'
+import { createDaemonSet } from '../ressources/DaemonSet'
+import type { Deployment } from '../ressources/Deployment'
+import { createDeployment } from '../ressources/Deployment'
 import type { Pod } from '../ressources/Pod'
 import { createPod } from '../ressources/Pod'
 import type {
@@ -15,15 +18,6 @@ const minimalContainer = (
   name,
   image
 })
-
-const uniqueKindLikeName = (prefix: string, usedNames: Set<string>): string => {
-  let generatedName: string
-  do {
-    generatedName = generateKindLikePodName(prefix)
-  } while (usedNames.has(generatedName))
-  usedNames.add(generatedName)
-  return generatedName
-}
 
 const materializeStaticPod = (
   spec: SimStaticPodWorkloadSpec,
@@ -44,67 +38,85 @@ const materializeStaticPod = (
 
 const materializeDaemonSetPods = (
   spec: SimDaemonSetWorkloadSpec,
-  usedNames: Set<string>,
   creationTimestamp: string
-): Pod[] => {
-  return spec.nodeNames.map((nodeName) => {
-    return createPod({
-      name: uniqueKindLikeName(spec.podPrefix, usedNames),
-      namespace: spec.namespace,
-      nodeName,
-      containers: [minimalContainer(spec.containerName)],
-      ...(spec.tolerations != null && { tolerations: spec.tolerations }),
-      annotations: {
-        'sim.kubernetes.io/workload-type': 'DaemonSet'
+): DaemonSet => {
+  return createDaemonSet({
+    name: spec.name,
+    namespace: spec.namespace,
+    labels: spec.labels,
+    annotations: spec.annotations,
+    selector: {
+      matchLabels: spec.selectorLabels
+    },
+    template: {
+      metadata: {
+        labels: spec.selectorLabels
       },
-      creationTimestamp,
-      phase: 'Pending'
-    })
+      spec: {
+        ...(spec.nodeSelector != null && { nodeSelector: spec.nodeSelector }),
+        ...(spec.tolerations != null && { tolerations: spec.tolerations }),
+        containers: [minimalContainer(spec.containerName)]
+      }
+    },
+    creationTimestamp
   })
 }
 
-const materializeDeploymentPods = (
+const materializeDeployment = (
   spec: SimDeploymentWorkloadSpec,
-  usedNames: Set<string>,
   creationTimestamp: string
-): Pod[] => {
-  const pods: Pod[] = []
-  for (let replica = 0; replica < spec.replicas; replica++) {
-    pods.push(
-      createPod({
-        name: uniqueKindLikeName(spec.podPrefix, usedNames),
-        namespace: spec.namespace,
-        containers: [minimalContainer(spec.containerName)],
+): Deployment => {
+  return createDeployment({
+    name: spec.name,
+    namespace: spec.namespace,
+    labels: spec.labels,
+    annotations: spec.annotations,
+    replicas: spec.replicas,
+    selector: {
+      matchLabels: spec.selectorLabels
+    },
+    template: {
+      metadata: {
+        labels: spec.selectorLabels
+      },
+      spec: {
         ...(spec.nodeSelector != null && { nodeSelector: spec.nodeSelector }),
         ...(spec.tolerations != null && { tolerations: spec.tolerations }),
-        annotations: {
-          'sim.kubernetes.io/workload-type': 'Deployment',
-          ...(spec.annotations ?? {})
-        },
-        creationTimestamp,
-        phase: 'Pending'
-      })
-    )
-  }
-  return pods
+        containers: [minimalContainer(spec.containerName)]
+      }
+    },
+    creationTimestamp
+  })
+}
+
+export interface MaterializedSimSystemWorkloads {
+  staticPods: Pod[]
+  daemonSets: DaemonSet[]
+  deployments: Deployment[]
 }
 
 export const materializeSimSystemWorkloads = (
   specs: SimSystemWorkloadSpec[],
   creationTimestamp: string
-): Pod[] => {
-  const usedNames = new Set<string>()
-  const pods: Pod[] = []
+): MaterializedSimSystemWorkloads => {
+  const staticPods: Pod[] = []
+  const daemonSets: DaemonSet[] = []
+  const deployments: Deployment[] = []
   for (const spec of specs) {
     if (spec.kind === 'static') {
-      pods.push(materializeStaticPod(spec, creationTimestamp))
+      staticPods.push(materializeStaticPod(spec, creationTimestamp))
       continue
     }
     if (spec.kind === 'daemonset') {
-      pods.push(...materializeDaemonSetPods(spec, usedNames, creationTimestamp))
+      daemonSets.push(materializeDaemonSetPods(spec, creationTimestamp))
       continue
     }
-    pods.push(...materializeDeploymentPods(spec, usedNames, creationTimestamp))
+    deployments.push(materializeDeployment(spec, creationTimestamp))
   }
-  return pods
+
+  return {
+    staticPods,
+    daemonSets,
+    deployments
+  }
 }

@@ -9,7 +9,7 @@ import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import type { KubernetesResource } from '../repositories/types'
-import type { OwnerReference } from './Pod'
+import type { OwnerReference, PodToleration } from './Pod'
 
 // ─── Label Selector ───────────────────────────────────────────────────────
 
@@ -33,6 +33,8 @@ export interface PodTemplateSpec {
     annotations?: Record<string, string>
   }
   spec: {
+    nodeSelector?: Record<string, string>
+    tolerations?: PodToleration[]
     containers: Array<{
       name: string
       image: string
@@ -189,6 +191,17 @@ const PodTemplateSpecSchema = z.object({
     })
     .optional(),
   spec: z.object({
+    nodeSelector: z.record(z.string(), z.string()).optional(),
+    tolerations: z
+      .array(
+        z.object({
+          key: z.string().optional(),
+          operator: z.enum(['Exists', 'Equal']).optional(),
+          value: z.string().optional(),
+          effect: z.enum(['NoSchedule', 'PreferNoSchedule', 'NoExecute']).optional()
+        })
+      )
+      .optional(),
     containers: z
       .array(ContainerSchema)
       .min(1, 'At least one container is required'),

@@ -9,6 +9,7 @@ import { createClusterState } from '../ClusterState'
 import type { EventBus } from '../events/EventBus'
 import { createEventBus } from '../events/EventBus'
 import type { ConfigMap } from '../ressources/ConfigMap'
+import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
 import type { Node } from '../ressources/Node'
 import type { Pod } from '../ressources/Pod'
@@ -43,6 +44,7 @@ type ParsedResource =
   | Node
   | ReplicaSet
   | Deployment
+  | DaemonSet
   | Service
 
 /**

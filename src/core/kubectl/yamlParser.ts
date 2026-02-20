@@ -7,6 +7,8 @@
 import { parse } from 'yaml'
 import type { ConfigMap } from '../cluster/ressources/ConfigMap'
 import { parseConfigMapManifest } from '../cluster/ressources/ConfigMap'
+import type { DaemonSet } from '../cluster/ressources/DaemonSet'
+import { parseDaemonSetManifest } from '../cluster/ressources/DaemonSet'
 import type { Deployment } from '../cluster/ressources/Deployment'
 import { parseDeploymentManifest } from '../cluster/ressources/Deployment'
 import type { Node } from '../cluster/ressources/Node'
@@ -31,6 +33,7 @@ type ParsedResource =
   | Node
   | ReplicaSet
   | Deployment
+  | DaemonSet
   | Service
 
 type ResourceKind =
@@ -40,6 +43,7 @@ type ResourceKind =
   | 'Node'
   | 'ReplicaSet'
   | 'Deployment'
+  | 'DaemonSet'
   | 'Service'
 
 // ─── YAML Parsing ────────────────────────────────────────────────────────
@@ -72,6 +76,7 @@ const isSupportedKind = (kind: string): kind is ResourceKind => {
     kind === 'Node' ||
     kind === 'ReplicaSet' ||
     kind === 'Deployment' ||
+    kind === 'DaemonSet' ||
     kind === 'Service'
   )
 }
@@ -89,6 +94,7 @@ const MANIFEST_PARSERS: Record<
   Node: parseNodeManifest,
   ReplicaSet: parseReplicaSetManifest,
   Deployment: parseDeploymentManifest,
+  DaemonSet: parseDaemonSetManifest,
   Service: parseServiceManifest
 }
 
@@ -103,7 +109,7 @@ const validateResource = (obj: any): Result<ParsedResource> => {
 
   if (!isSupportedKind(obj.kind)) {
     return error(
-      `Unsupported resource kind: ${obj.kind} (supported: Pod, ConfigMap, Secret, Node, ReplicaSet, Deployment, Service)`
+      `Unsupported resource kind: ${obj.kind} (supported: Pod, ConfigMap, Secret, Node, ReplicaSet, Deployment, DaemonSet, Service)`
     )
   }
 

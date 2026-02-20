@@ -6,6 +6,7 @@
 
 import type { BaseEvent } from '../../events/types'
 import type { ConfigMap } from '../ressources/ConfigMap'
+import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
 import type { Pod } from '../ressources/Pod'
 import type { ReplicaSet } from '../ressources/ReplicaSet'
@@ -163,6 +164,32 @@ export interface DeploymentUpdatedEvent extends BaseEvent {
   }
 }
 
+export interface DaemonSetCreatedEvent extends BaseEvent {
+  type: 'DaemonSetCreated'
+  payload: {
+    daemonSet: DaemonSet
+  }
+}
+
+export interface DaemonSetDeletedEvent extends BaseEvent {
+  type: 'DaemonSetDeleted'
+  payload: {
+    name: string
+    namespace: string
+    deletedDaemonSet: DaemonSet
+  }
+}
+
+export interface DaemonSetUpdatedEvent extends BaseEvent {
+  type: 'DaemonSetUpdated'
+  payload: {
+    name: string
+    namespace: string
+    daemonSet: DaemonSet
+    previousDaemonSet: DaemonSet
+  }
+}
+
 // ─── Service Events ────────────────────────────────────────────────────
 
 export interface ServiceCreatedEvent extends BaseEvent {
@@ -302,6 +329,9 @@ export type ClusterEvent =
   | DeploymentCreatedEvent
   | DeploymentDeletedEvent
   | DeploymentUpdatedEvent
+  | DaemonSetCreatedEvent
+  | DaemonSetDeletedEvent
+  | DaemonSetUpdatedEvent
   | PodLabeledEvent
   | ConfigMapLabeledEvent
   | SecretLabeledEvent
@@ -560,6 +590,41 @@ export const createDeploymentUpdatedEvent = (
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
   payload: { name, namespace, deployment, previousDeployment }
+})
+
+export const createDaemonSetCreatedEvent = (
+  daemonSet: DaemonSet,
+  source?: string
+): DaemonSetCreatedEvent => ({
+  type: 'DaemonSetCreated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { daemonSet }
+})
+
+export const createDaemonSetDeletedEvent = (
+  name: string,
+  namespace: string,
+  deletedDaemonSet: DaemonSet,
+  source?: string
+): DaemonSetDeletedEvent => ({
+  type: 'DaemonSetDeleted',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, deletedDaemonSet }
+})
+
+export const createDaemonSetUpdatedEvent = (
+  name: string,
+  namespace: string,
+  daemonSet: DaemonSet,
+  previousDaemonSet: DaemonSet,
+  source?: string
+): DaemonSetUpdatedEvent => ({
+  type: 'DaemonSetUpdated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, daemonSet, previousDaemonSet }
 })
 
 /**

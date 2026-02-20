@@ -1,5 +1,4 @@
 import type { ClusterNodeRole } from '../clusterConfig'
-import type { Pod } from '../ressources/Pod'
 import { materializeSimSystemWorkloads } from './SimWorkloadReconcilers'
 import {
   createSimSystemWorkloadSpecs,
@@ -15,9 +14,11 @@ export interface SimSystemWorkloadsControllerOptions {
   creationTimestamp: string
 }
 
+export type SimSystemWorkloads = ReturnType<typeof materializeSimSystemWorkloads>
+
 export const createSimSystemWorkloads = (
   options: SimSystemWorkloadsControllerOptions
-): Pod[] => {
+): SimSystemWorkloads => {
   const workloadSpecs = createSimSystemWorkloadSpecs({
     clusterName: options.clusterName,
     nodeRoles: options.nodeRoles,

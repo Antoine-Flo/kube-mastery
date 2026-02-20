@@ -5,8 +5,8 @@
 // This is what gets loaded into the terminal and needs to be managed.
 
 import type { ClusterState } from '../cluster/ClusterState'
+import type { RuntimeControllers } from '../cluster/controllers/initializers'
 import type { EventBus } from '../cluster/events/EventBus'
-import type { PodStartupSimulator } from '../cluster/podStartupSimulator'
 import type { FileSystemState } from '../filesystem/FileSystem'
 import { ShellContextStack } from '../terminal/core/ShellContext'
 
@@ -46,8 +46,8 @@ export interface EmulatedEnvironment {
   /** Pod IP allocation unsubscribe function */
   unsubscribePodIpAllocation?: () => void
 
-  /** Pod startup simulator (stops pending timeouts on destroy) */
-  podStartupSimulator?: PodStartupSimulator
+  /** Runtime controllers to stop on destroy */
+  runtimeControllers?: RuntimeControllers
 }
 
 /**

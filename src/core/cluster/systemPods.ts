@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// SYSTEM PODS (SIM WORKLOADS)
+// SYSTEM WORKLOADS
 // ═══════════════════════════════════════════════════════════════════════════
 // Delegates kube-system workload creation to SimSystemWorkloadsController.
 
@@ -7,6 +7,8 @@ import {
   DEFAULT_CLUSTER_NODE_ROLES,
   type ClusterNodeRole
 } from './clusterConfig'
+import type { DaemonSet } from './ressources/DaemonSet'
+import type { Deployment } from './ressources/Deployment'
 import type { Pod } from './ressources/Pod'
 import {
   createSimSystemWorkloads,
@@ -22,21 +24,35 @@ export interface GetSystemPodsOptions {
 }
 
 /**
- * Returns a list of system pods (kube-system, local-path-storage) to be
- * added to the cluster state after loading a seed. Aligns with what kind
- * installs so that get pods -A output is comparable.
- * Uses dynamic creationTimestamp so formatAge() shows realistic age (0s, 5s, etc.).
- * Pod names for ReplicaSet-style components use Kind-like format (prefix-hash-suffix).
+ * Static pods are returned directly; controller-managed resources are returned
+ * as top-level objects to be reconciled by controllers.
  */
-export const getSystemPods = (options?: GetSystemPodsOptions): Pod[] => {
+export interface SystemWorkloads {
+  staticPods: Pod[]
+  deployments: Deployment[]
+  daemonSets: DaemonSet[]
+}
+
+export const getSystemWorkloads = (
+  options?: GetSystemPodsOptions
+): SystemWorkloads => {
   const clusterName = options?.clusterName ?? 'conformance'
   const nodeRoles = options?.nodeRoles ?? DEFAULT_CLUSTER_NODE_ROLES
   const creationTimestamp =
     options?.clock != null ? options.clock() : new Date().toISOString()
-  return createSimSystemWorkloads({
+  const workloads = createSimSystemWorkloads({
     clusterName,
     nodeRoles,
     policy: options?.policy,
     creationTimestamp
   })
+  return {
+    staticPods: workloads.staticPods,
+    deployments: workloads.deployments,
+    daemonSets: workloads.daemonSets
+  }
+}
+
+export const getSystemPods = (options?: GetSystemPodsOptions): Pod[] => {
+  return getSystemWorkloads(options).staticPods
 }

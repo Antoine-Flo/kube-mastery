@@ -15,6 +15,13 @@ export const SIM_POD_SCHEDULING_DELAY_RANGE_MS = {
   minMs: 900,
   maxMs: 2200
 } as const
+export const SIM_RUNTIME_RESYNC_INTERVAL_MS = {
+  deployment: 12000,
+  replicaSet: 10000,
+  daemonSet: 10000,
+  podLifecycle: 4000,
+  scheduler: 5000
+} as const
 
 interface BootstrapConfigOverrides {
   clusterName?: string
@@ -53,3 +60,6 @@ export const getConformanceBootstrapConfig = (
   })
 }
 
+export const getRuntimeControllerResyncConfig = () => {
+  return SIM_RUNTIME_RESYNC_INTERVAL_MS
+}

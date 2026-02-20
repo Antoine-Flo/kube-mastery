@@ -1,0 +1,237 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// POD LIFECYCLE CONTROLLER
+// ═══════════════════════════════════════════════════════════════════════════
+// Reconciles pod phase transitions (Pending -> Running) for scheduled pods.
+
+import type { EventBus } from '../events/EventBus'
+import type { ClusterEvent } from '../events/types'
+import type { PodBoundEvent } from '../events/types'
+import { createPodUpdatedEvent } from '../events/types'
+import type { Pod } from '../ressources/Pod'
+import { reconcileInitContainers } from '../initContainers/reconciler'
+import {
+  startPeriodicResync,
+  subscribeToEvents
+} from './helpers'
+import type {
+  ClusterEventType,
+  ControllerResyncOptions,
+  ControllerState,
+  ReconcilerController
+} from './types'
+import { createWorkQueue, type WorkQueue } from './WorkQueue'
+
+export interface PodLifecycleControllerOptions extends ControllerResyncOptions {
+  pendingDelayRangeMs?: {
+    minMs: number
+    maxMs: number
+  }
+  eventSource?: string
+}
+
+const WATCHED_EVENTS: ClusterEventType[] = [
+  'PodCreated',
+  'PodUpdated',
+  'PodDeleted'
+]
+
+const makePodKey = (namespace: string, name: string): string => {
+  return `${namespace}/${name}`
+}
+
+const parsePodKey = (key: string): { namespace: string; name: string } => {
+  const [namespace, name] = key.split('/')
+  return { namespace, name }
+}
+
+const randomInRange = (min: number, max: number): number => {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+const shouldProgressPod = (pod: Pod): boolean => {
+  return (
+    pod.status.phase === 'Pending' &&
+    pod.spec.nodeName != null &&
+    pod.spec.nodeName.length > 0
+  )
+}
+
+export class PodLifecycleController implements ReconcilerController {
+  private eventBus: EventBus
+  private getState: () => ControllerState
+  private workQueue: WorkQueue
+  private unsubscribe: (() => void) | null = null
+  private unsubscribePodBound: (() => void) | null = null
+  private stopPeriodicResync: () => void = () => {}
+  private options: PodLifecycleControllerOptions
+  private pendingTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+
+  constructor(
+    eventBus: EventBus,
+    getState: () => ControllerState,
+    options: PodLifecycleControllerOptions = {}
+  ) {
+    this.eventBus = eventBus
+    this.getState = getState
+    this.options = options
+    this.workQueue = createWorkQueue({ processDelay: 0 })
+  }
+
+  start(): void {
+    this.unsubscribe = subscribeToEvents(
+      this.eventBus,
+      WATCHED_EVENTS,
+      (event) => this.handleEvent(event)
+    )
+    this.unsubscribePodBound = this.eventBus.subscribe(
+      'PodBound',
+      (event) => this.handlePodBound(event as PodBoundEvent)
+    )
+    this.workQueue.start((key) => this.reconcile(key))
+    this.initialSync()
+    this.stopPeriodicResync = startPeriodicResync(
+      this.options.resyncIntervalMs,
+      () => this.resyncAll()
+    )
+  }
+
+  stop(): void {
+    if (this.unsubscribe != null) {
+      this.unsubscribe()
+      this.unsubscribe = null
+    }
+    if (this.unsubscribePodBound != null) {
+      this.unsubscribePodBound()
+      this.unsubscribePodBound = null
+    }
+    this.stopPeriodicResync()
+    this.stopPeriodicResync = () => {}
+    this.workQueue.stop()
+    for (const timeoutId of this.pendingTimeouts.values()) {
+      clearTimeout(timeoutId)
+    }
+    this.pendingTimeouts.clear()
+  }
+
+  initialSync(): void {
+    const state = this.getState()
+    const pods = state.getPods()
+    for (const pod of pods) {
+      if (!shouldProgressPod(pod)) {
+        continue
+      }
+      this.enqueuePod(pod)
+    }
+  }
+
+  resyncAll(): void {
+    this.initialSync()
+  }
+
+  reconcile(key: string): void {
+    const { namespace, name } = parsePodKey(key)
+    const state = this.getState()
+    const podResult = state.findPod(name, namespace)
+    if (!podResult.ok || podResult.value == null) {
+      this.clearPendingTimeout(key)
+      return
+    }
+
+    const pod = podResult.value
+    if (!shouldProgressPod(pod)) {
+      this.clearPendingTimeout(key)
+      return
+    }
+    if (this.pendingTimeouts.has(key)) {
+      return
+    }
+
+    const delayRange = this.options.pendingDelayRangeMs
+    if (delayRange == null) {
+      this.emitPodRunning(pod)
+      return
+    }
+
+    const minDelayMs = Math.max(0, Math.floor(delayRange.minMs))
+    const maxDelayMs = Math.max(minDelayMs, Math.floor(delayRange.maxMs))
+    if (maxDelayMs === 0) {
+      this.emitPodRunning(pod)
+      return
+    }
+
+    const delayMs = randomInRange(minDelayMs, maxDelayMs)
+    const timeoutId = setTimeout(() => {
+      this.pendingTimeouts.delete(key)
+      const latestPodResult = this.getState().findPod(name, namespace)
+      if (!latestPodResult.ok || latestPodResult.value == null) {
+        return
+      }
+      const latestPod = latestPodResult.value
+      if (!shouldProgressPod(latestPod)) {
+        return
+      }
+      this.emitPodRunning(latestPod)
+    }, delayMs)
+    this.pendingTimeouts.set(key, timeoutId)
+  }
+
+  private handleEvent(event: ClusterEvent): void {
+    if (event.type === 'PodDeleted') {
+      const pod = event.payload.deletedPod
+      this.clearPendingTimeout(makePodKey(pod.metadata.namespace, pod.metadata.name))
+      return
+    }
+    if (event.type !== 'PodCreated' && event.type !== 'PodUpdated') {
+      return
+    }
+    const pod = event.payload.pod
+    if (!shouldProgressPod(pod)) {
+      return
+    }
+    this.enqueuePod(pod)
+  }
+
+  private handlePodBound(event: PodBoundEvent): void {
+    const pod = event.payload.pod
+    if (!shouldProgressPod(pod)) {
+      return
+    }
+    this.enqueuePod(pod)
+  }
+
+  private enqueuePod(pod: Pod): void {
+    this.workQueue.add(makePodKey(pod.metadata.namespace, pod.metadata.name))
+  }
+
+  private clearPendingTimeout(key: string): void {
+    const timeoutId = this.pendingTimeouts.get(key)
+    if (timeoutId == null) {
+      return
+    }
+    clearTimeout(timeoutId)
+    this.pendingTimeouts.delete(key)
+  }
+
+  private emitPodRunning(pod: Pod): void {
+    const updated = reconcileInitContainers(pod)
+    this.eventBus.emit(
+      createPodUpdatedEvent(
+        pod.metadata.name,
+        pod.metadata.namespace,
+        updated,
+        pod,
+        this.options.eventSource ?? 'pod-lifecycle-controller'
+      )
+    )
+  }
+}
+
+export const createPodLifecycleController = (
+  eventBus: EventBus,
+  getState: () => ControllerState,
+  options: PodLifecycleControllerOptions = {}
+): PodLifecycleController => {
+  const controller = new PodLifecycleController(eventBus, getState, options)
+  controller.start()
+  return controller
+}

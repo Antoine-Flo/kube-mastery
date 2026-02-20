@@ -2,6 +2,7 @@ import type { ClusterStateData } from '../ClusterState'
 import { addPod, deletePod, updatePod } from '../ClusterState'
 import { createResourceRepository } from '../repositories/resourceRepository'
 import type { ConfigMap } from '../ressources/ConfigMap'
+import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
 import type { ReplicaSet } from '../ressources/ReplicaSet'
 import type { Secret } from '../ressources/Secret'
@@ -12,6 +13,9 @@ import type {
   ConfigMapDeletedEvent,
   ConfigMapLabeledEvent,
   ConfigMapUpdatedEvent,
+  DaemonSetCreatedEvent,
+  DaemonSetDeletedEvent,
+  DaemonSetUpdatedEvent,
   DeploymentCreatedEvent,
   DeploymentDeletedEvent,
   DeploymentUpdatedEvent,
@@ -47,6 +51,7 @@ const configMapRepo = createResourceRepository<ConfigMap>('ConfigMap')
 const secretRepo = createResourceRepository<Secret>('Secret')
 const replicaSetRepo = createResourceRepository<ReplicaSet>('ReplicaSet')
 const deploymentRepo = createResourceRepository<Deployment>('Deployment')
+const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
 const serviceRepo = createResourceRepository<Service>('Service')
 
 // ─── Generic Handler Factories ───────────────────────────────────────────
@@ -61,6 +66,7 @@ const createRepoHandler = <T>(
     | 'secrets'
     | 'replicaSets'
     | 'deployments'
+    | 'daemonSets'
     | 'services'
 ) => ({
   created: (state: ClusterStateData, resource: T) => ({
@@ -122,6 +128,7 @@ const configMapHandler = createRepoHandler(configMapRepo, 'configMaps')
 const secretHandler = createRepoHandler(secretRepo, 'secrets')
 const replicaSetHandler = createRepoHandler(replicaSetRepo, 'replicaSets')
 const deploymentHandler = createRepoHandler(deploymentRepo, 'deployments')
+const daemonSetHandler = createRepoHandler(daemonSetRepo, 'daemonSets')
 const serviceHandler = createRepoHandler(serviceRepo, 'services')
 
 // ─── Pod Handlers ────────────────────────────────────────────────────────
@@ -308,6 +315,28 @@ export const handleDeploymentUpdated = (
     event.payload.name,
     event.payload.namespace,
     event.payload.deployment
+  )
+
+export const handleDaemonSetCreated = (
+  state: ClusterStateData,
+  event: DaemonSetCreatedEvent
+) => daemonSetHandler.created(state, event.payload.daemonSet)
+
+export const handleDaemonSetDeleted = (
+  state: ClusterStateData,
+  event: DaemonSetDeletedEvent
+) =>
+  daemonSetHandler.deleted(state, event.payload.name, event.payload.namespace)
+
+export const handleDaemonSetUpdated = (
+  state: ClusterStateData,
+  event: DaemonSetUpdatedEvent
+) =>
+  daemonSetHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.daemonSet
   )
 
 // ─── Service Handlers ──────────────────────────────────────────────────────

@@ -1,15 +1,21 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// POD STARTUP SIMULATOR
+// POD STARTUP SIMULATOR (COMPAT WRAPPER)
 // ═══════════════════════════════════════════════════════════════════════════
-// Transitions Pending pods to Running after a delay (simulating kubelet startup).
-// Subscribes to PodBound and processes existing Pending+scheduled pods on start.
+// Backward-compatible wrapper around PodLifecycleController.
 
 import type { ClusterState } from './ClusterState'
 import type { EventBus } from './events/EventBus'
-import { createPodUpdatedEvent } from './events/types'
-import type { PodBoundEvent } from './events/types'
+import type {
+  PodBoundEvent,
+  PodCreatedEvent,
+  PodDeletedEvent,
+  PodUpdatedEvent
+} from './events/types'
+import {
+  createPodLifecycleController,
+  type PodLifecycleControllerOptions
+} from './controllers/PodLifecycleController'
 import type { Pod } from './ressources/Pod'
-import { reconcileInitContainers } from './initContainers/reconciler'
 
 export interface PodStartupSimulatorOptions {
   pendingDelayRangeMs?: {
@@ -18,100 +24,131 @@ export interface PodStartupSimulatorOptions {
   }
 }
 
-const randomInRange = (min: number, max: number): number => {
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
 export interface PodStartupSimulator {
   start: () => void
   stop: () => void
 }
 
-/**
- * Create a simulator that transitions Pending pods to Running after a delay.
- * Call start() after scheduler is initialized (e.g. in EmulatedEnvironmentManager).
- */
 export const createPodStartupSimulator = (
   eventBus: EventBus,
   getState: () => ClusterState,
   options: PodStartupSimulatorOptions = {}
 ): PodStartupSimulator => {
-  const pendingDelayRangeMs = options.pendingDelayRangeMs
-  let unsubscribe: (() => void) | null = null
-  const timeouts: ReturnType<typeof setTimeout>[] = []
+  let controller:
+    | ReturnType<typeof createPodLifecycleController>
+    | null = null
+  let unsubscribeLocalStore: (() => void) | null = null
+  const localPods = new Map<string, Pod>()
 
-  const scheduleTransition = (pod: Pod): void => {
-    const emitRunning = (): void => {
-      const updated = reconcileInitContainers(pod)
-      eventBus.emit(
-        createPodUpdatedEvent(
-          pod.metadata.name,
-          pod.metadata.namespace,
-          updated,
-          pod,
-          'pod-startup-simulator'
-        )
-      )
-    }
-
-    if (pendingDelayRangeMs == null) {
-      emitRunning()
-      return
-    }
-
-    const minDelayMs = Math.max(0, Math.floor(pendingDelayRangeMs.minMs))
-    const maxDelayMs = Math.max(minDelayMs, Math.floor(pendingDelayRangeMs.maxMs))
-    if (maxDelayMs === 0) {
-      emitRunning()
-      return
-    }
-
-    const delay = randomInRange(minDelayMs, maxDelayMs)
-    const id = setTimeout(() => {
-      emitRunning()
-    }, delay)
-    timeouts.push(id)
+  const controllerOptions: PodLifecycleControllerOptions = {
+    pendingDelayRangeMs: options.pendingDelayRangeMs,
+    eventSource: 'pod-startup-simulator'
   }
 
-  const handlePodBound = (event: PodBoundEvent): void => {
-    const pod = event.payload.pod
-    if (pod.status.phase !== 'Pending') {
-      return
-    }
-    if (pod.spec.nodeName == null || pod.spec.nodeName.length === 0) {
-      return
-    }
-    scheduleTransition(pod)
+  const makePodKey = (namespace: string, name: string): string => {
+    return `${namespace}/${name}`
   }
 
-  const start = (): void => {
-    const state = getState()
-    const pods = state.getPods()
-    for (const pod of pods) {
-      if (
-        pod.status.phase === 'Pending' &&
-        pod.spec.nodeName != null &&
-        pod.spec.nodeName.length > 0
-      ) {
-        scheduleTransition(pod)
+  const maybeGetUnderlyingState = (): Partial<ClusterState> => {
+    return getState() as Partial<ClusterState>
+  }
+
+  const buildStateAdapter = () => {
+    return {
+      getPods: (namespace?: string): Pod[] => {
+        const underlyingState = maybeGetUnderlyingState()
+        if (typeof underlyingState.getPods === 'function') {
+          return underlyingState.getPods(namespace)
+        }
+        const pods = Array.from(localPods.values())
+        if (namespace == null) {
+          return pods
+        }
+        return pods.filter((pod) => pod.metadata.namespace === namespace)
+      },
+      findPod: (name: string, namespace: string) => {
+        const underlyingState = maybeGetUnderlyingState()
+        if (typeof underlyingState.findPod === 'function') {
+          return underlyingState.findPod(name, namespace)
+        }
+        const pod = localPods.get(makePodKey(namespace, name))
+        if (pod == null) {
+          return { ok: false as const }
+        }
+        return { ok: true as const, value: pod }
+      },
+      getNodes: () => {
+        const underlyingState = maybeGetUnderlyingState()
+        if (typeof underlyingState.getNodes === 'function') {
+          return underlyingState.getNodes()
+        }
+        return []
+      },
+      getReplicaSets: () => [],
+      findReplicaSet: () => ({ ok: false as const }),
+      getDeployments: () => [],
+      findDeployment: () => ({ ok: false as const }),
+      getDaemonSets: () => [],
+      findDaemonSet: () => ({ ok: false as const })
+    }
+  }
+
+  return {
+    start(): void {
+      if (controller != null) {
+        return
       }
+      const unsubscribePodCreated = eventBus.subscribe(
+        'PodCreated',
+        (event: PodCreatedEvent) => {
+          const pod = event.payload.pod
+          localPods.set(makePodKey(pod.metadata.namespace, pod.metadata.name), pod)
+        }
+      )
+      const unsubscribePodUpdated = eventBus.subscribe(
+        'PodUpdated',
+        (event: PodUpdatedEvent) => {
+          const pod = event.payload.pod
+          localPods.set(makePodKey(pod.metadata.namespace, pod.metadata.name), pod)
+        }
+      )
+      const unsubscribePodBound = eventBus.subscribe(
+        'PodBound',
+        (event: PodBoundEvent) => {
+          const pod = event.payload.pod
+          localPods.set(makePodKey(pod.metadata.namespace, pod.metadata.name), pod)
+        }
+      )
+      const unsubscribePodDeleted = eventBus.subscribe(
+        'PodDeleted',
+        (event: PodDeletedEvent) => {
+          const pod = event.payload.deletedPod
+          localPods.delete(makePodKey(pod.metadata.namespace, pod.metadata.name))
+        }
+      )
+      unsubscribeLocalStore = () => {
+        unsubscribePodCreated()
+        unsubscribePodUpdated()
+        unsubscribePodBound()
+        unsubscribePodDeleted()
+      }
+      controller = createPodLifecycleController(
+        eventBus,
+        buildStateAdapter,
+        controllerOptions
+      )
+    },
+    stop(): void {
+      if (controller == null) {
+        return
+      }
+      controller.stop()
+      controller = null
+      if (unsubscribeLocalStore != null) {
+        unsubscribeLocalStore()
+        unsubscribeLocalStore = null
+      }
+      localPods.clear()
     }
-    unsubscribe = eventBus.subscribe(
-      'PodBound',
-      handlePodBound
-    )
   }
-
-  const stop = (): void => {
-    for (const id of timeouts) {
-      clearTimeout(id)
-    }
-    timeouts.length = 0
-    if (unsubscribe != null) {
-      unsubscribe()
-      unsubscribe = null
-    }
-  }
-
-  return { start, stop }
 }

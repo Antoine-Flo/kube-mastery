@@ -94,7 +94,7 @@ export const createScheduler = (
 
   /**
    * Bind a pod to a node by emitting PodUpdated event.
-   * Only assigns nodeName; phase stays Pending until PodStartupSimulator transitions to Running.
+   * Only assigns nodeName; phase stays Pending until PodLifecycleController transitions to Running.
    */
   const bind = (pod: Pod, nodeName: string): void => {
     const updatedPod: Pod = {

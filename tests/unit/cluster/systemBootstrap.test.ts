@@ -45,7 +45,8 @@ describe('systemBootstrap', () => {
       'default',
       'kube-system'
     ])
-    expect(resources.pods.length).toBeGreaterThan(0)
+    expect(resources.pods).toHaveLength(4)
+    expect(resources.staticPods).toHaveLength(4)
     const staticControlPlanePods = [
       'etcd-control-plane',
       'kube-apiserver-control-plane',
@@ -59,34 +60,37 @@ describe('systemBootstrap', () => {
       expect(pod).toBeDefined()
       expect(pod?.spec.nodeName).toBe('conformance-control-plane')
     }
-    const corednsPods = resources.pods.filter((item) => {
-      return item.metadata.name.startsWith('coredns-')
+    const corednsDeployment = resources.deployments.find((item) => {
+      return item.metadata.name === 'coredns'
     })
-    expect(corednsPods).toHaveLength(2)
-    expect(corednsPods.every((pod) => {
-      return (
-        pod.spec.nodeName === undefined &&
-        pod.spec.nodeSelector?.['node-role.kubernetes.io/control-plane'] === '' &&
-        pod.spec.tolerations?.some((toleration) => {
-          return (
-            toleration.key === 'node-role.kubernetes.io/control-plane' &&
-            toleration.operator === 'Exists' &&
-            toleration.effect === 'NoSchedule'
-          )
-        }) === true
-      )
-    })).toBe(true)
-    const localPathPods = resources.pods.filter((item) => {
-      return item.metadata.namespace === 'local-path-storage'
+    expect(corednsDeployment).toBeDefined()
+    expect(corednsDeployment?.spec.replicas).toBe(2)
+    expect(corednsDeployment?.spec.template.spec.nodeSelector).toEqual({
+      'node-role.kubernetes.io/control-plane': ''
     })
-    expect(localPathPods).toHaveLength(1)
-    expect(localPathPods[0].spec.tolerations?.some((toleration) => {
+    expect(corednsDeployment?.spec.template.spec.tolerations?.some((toleration) => {
       return (
         toleration.key === 'node-role.kubernetes.io/control-plane' &&
         toleration.operator === 'Exists' &&
         toleration.effect === 'NoSchedule'
       )
     })).toBe(true)
+    const localPathDeployment = resources.deployments.find((item) => {
+      return item.metadata.name === 'local-path-provisioner'
+    })
+    expect(localPathDeployment).toBeDefined()
+    expect(localPathDeployment?.spec.replicas).toBe(1)
+    expect(localPathDeployment?.spec.template.spec.tolerations?.some((toleration) => {
+      return (
+        toleration.key === 'node-role.kubernetes.io/control-plane' &&
+        toleration.operator === 'Exists' &&
+        toleration.effect === 'NoSchedule'
+      )
+    })).toBe(true)
+    expect(resources.daemonSets.map((item) => item.metadata.name)).toEqual([
+      'kindnet',
+      'kube-proxy'
+    ])
   })
 
   it('applies bootstrap resources without duplicates when called twice', () => {
@@ -107,6 +111,8 @@ describe('systemBootstrap', () => {
     )
     expect(clusterState.getServices()).toHaveLength(expected.services.length)
     expect(clusterState.getPods()).toHaveLength(expected.pods.length)
+    expect(clusterState.getDeployments()).toHaveLength(expected.deployments.length)
+    expect(clusterState.getDaemonSets()).toHaveLength(expected.daemonSets.length)
   })
 
   it('supports topology with extra workers without magic strings', () => {
@@ -129,25 +135,22 @@ describe('systemBootstrap', () => {
       })
       return internal?.address
     })).toEqual(['172.18.0.2', '172.18.0.3', '172.18.0.4', '172.18.0.5'])
-    const kubeProxyPods = resources.pods.filter((pod) => {
-      return pod.metadata.name.startsWith('kube-proxy-')
+    const daemonSets = resources.daemonSets
+    expect(daemonSets).toHaveLength(2)
+    const kubeProxyDaemonSet = daemonSets.find((daemonSet) => {
+      return daemonSet.metadata.name === 'kube-proxy'
     })
-    const kindnetPods = resources.pods.filter((pod) => {
-      return pod.metadata.name.startsWith('kindnet-')
+    const kindnetDaemonSet = daemonSets.find((daemonSet) => {
+      return daemonSet.metadata.name === 'kindnet'
     })
-    expect(kubeProxyPods).toHaveLength(4)
-    expect(kindnetPods).toHaveLength(4)
-    const daemonSetNodeNames = new Set([
-      ...kubeProxyPods.map((pod) => pod.spec.nodeName),
-      ...kindnetPods.map((pod) => pod.spec.nodeName)
-    ])
-    expect(daemonSetNodeNames).toEqual(
-      new Set([
-        'conformance-control-plane',
-        'conformance-worker',
-        'conformance-worker2',
-        'conformance-worker3'
-      ])
-    )
+    expect(kubeProxyDaemonSet).toBeDefined()
+    expect(kindnetDaemonSet).toBeDefined()
+    expect(kubeProxyDaemonSet?.spec.template.spec.tolerations?.some((toleration) => {
+      return (
+        toleration.key === 'node-role.kubernetes.io/control-plane' &&
+        toleration.operator === 'Exists' &&
+        toleration.effect === 'NoSchedule'
+      )
+    })).toBe(true)
   })
 })

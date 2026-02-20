@@ -32,11 +32,24 @@
 
 ### Kubernetes Controllers
 
-`src/core/cluster/controllers/` — `Controller` (start, stop, reconcile), `WorkQueue`. DeploymentController → ReplicaSets ; ReplicaSetController → Pods. Level-triggered, idempotent.
+`src/core/cluster/controllers/` — socle unique `ReconcilerController` (`start`, `stop`, `reconcile`, `initialSync`, `resyncAll`) + `WorkQueue`.
+
+- DeploymentController -> ReplicaSets
+- ReplicaSetController -> Pods
+- DaemonSetController -> 1 Pod par node eligible
+- SchedulerController -> binding (`nodeName`) uniquement
+- PodLifecycleController -> progression de phase (`Pending -> Running`)
+
+Tous les controllers runtime critiques sont level-triggered, idempotents, et appliquent la strategie `event + initial sync + periodic resync`.
 
 ### Scheduler
 
-`src/core/cluster/scheduler/` — séparé des controllers. Watch PodCreated (sans nodeName) + passe initiale au start. Predicates de simulation `SimSchedulingPredicates` (Ready/cordon, taints-tolerations, nodeSelector, nodeAffinity required), puis sélection round-robin et bind.
+Le scheduler est aligne sur le pattern controller via `SchedulerController`:
+
+- observe les changements Pod,
+- enfile une key `namespace/name`,
+- reconcilie le binding via predicates (`SimSchedulingPredicates`) + round-robin,
+- n'ecrit pas la phase (responsabilite reservee a `PodLifecycleController`).
 
 ### Pod IP Allocation
 
@@ -61,7 +74,18 @@ Le bootstrap cluster est centralise dans `src/core/cluster/ClusterState.ts` via 
   - `src/core/emulatedEnvironment/EmulatedEnvironmentManager.ts`
   - `src/core/cluster/seeds/loader.ts`
   - `bin/lib/executors/runner-executor.ts`
-  - ordre runtime: bootstrap -> scheduler -> ip allocation service -> pod startup simulator
+  - ordre runtime: bootstrap -> controllers runtime -> ip allocation service
+
+### Runtime Controller Contract Checklist
+
+Checklist obligatoire pour tout nouveau composant runtime critique:
+
+1. Events observes explicitement listes.
+2. Key d'enqueue deterministe (`namespace/name` ou equivalent stable).
+3. Invariant metier explicite et verifiable.
+4. `initialSync()` implemente et appele au `start()`.
+5. `resyncAll()` implemente (periodic resync configurable).
+6. Tests d'invariants agnostiques a l'ordre des evenements (create avant/apres start, restart, replay partiel).
 
 ### Autocomplete
 

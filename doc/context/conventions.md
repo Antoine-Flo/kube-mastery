@@ -117,6 +117,16 @@ deleteFile('/path', { recursive: true, force: false })
 - **Coverage**: >80%
 - **TDD**: Red → Green → Refactor
 
+### Runtime Controller Conventions
+
+Pour tout controller runtime (Deployment/ReplicaSet/DaemonSet/Scheduler/PodLifecycle):
+
+- Implementer `initialSync()` et `resyncAll()` en plus de `start/stop/reconcile`.
+- Utiliser `WorkQueue` avec key stable et idempotence stricte de `reconcile`.
+- Isoler les responsabilites: scheduling (binding) separe de lifecycle (phase).
+- Eviter les triggers uniques fragiles: toujours couvrir `event + initial sync + periodic resync`.
+- Ajouter au minimum un test d'invariant agnostique a l'ordre des evenements.
+
 ```bash
 npm test              # All tests
 npm run coverage      # Coverage report

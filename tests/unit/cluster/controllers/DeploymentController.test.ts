@@ -103,6 +103,8 @@ describe('DeploymentController', () => {
         )
         return rs ? { ok: true, value: rs } : { ok: false, error: 'not found' }
       },
+      getDaemonSets: () => [],
+      findDaemonSet: () => ({ ok: false, error: 'not found' }),
       getPods: () => [],
       findPod: () => ({ ok: false, error: 'not found' }),
       getNodes: () => []

@@ -7,10 +7,9 @@
 import { createClusterState } from '../cluster/ClusterState'
 import {
   initializeControllers,
-  initializeScheduler
+  stopRuntimeControllers
 } from '../cluster/controllers/initializers'
 import { createEventBus, type EventBus } from '../cluster/events/EventBus'
-import { createPodStartupSimulator } from '../cluster/podStartupSimulator'
 import { initializeSimPodIpAllocation } from '../cluster/ipAllocator/SimPodIpAllocationService'
 import type { AppEvent } from '../events/AppEvent'
 import { createHostFileSystem } from '../filesystem/debianFileSystem'
@@ -18,6 +17,7 @@ import { saveSandboxEnvironment } from '../storage/indexedDBAdapter'
 import { ShellContextStack } from '../terminal/core/ShellContext'
 import {
   getSimulatorBootstrapConfig,
+  getRuntimeControllerResyncConfig,
   SIM_POD_PENDING_DELAY_RANGE_MS,
   SIM_POD_SCHEDULING_DELAY_RANGE_MS
 } from '../../config/runtimeConfig'
@@ -85,12 +85,19 @@ export function createEmulatedEnvironment(
 
   const shellContextStack = new ShellContextStack(fileSystemState)
 
-  // Initialize controllers for Deployment -> ReplicaSet -> Pod lifecycle
-  initializeControllers(eventBus, clusterState)
-
-  // Initialize scheduler to assign pods to nodes
-  initializeScheduler(eventBus, clusterState, {
-    schedulingDelayRangeMs: SIM_POD_SCHEDULING_DELAY_RANGE_MS
+  const resyncConfig = getRuntimeControllerResyncConfig()
+  const controllers = initializeControllers(eventBus, clusterState, {
+    deployment: { resyncIntervalMs: resyncConfig.deployment },
+    daemonSet: { resyncIntervalMs: resyncConfig.daemonSet },
+    replicaSet: { resyncIntervalMs: resyncConfig.replicaSet },
+    scheduler: {
+      schedulingDelayRangeMs: SIM_POD_SCHEDULING_DELAY_RANGE_MS,
+      resyncIntervalMs: resyncConfig.scheduler
+    },
+    podLifecycle: {
+      pendingDelayRangeMs: SIM_POD_PENDING_DELAY_RANGE_MS,
+      resyncIntervalMs: resyncConfig.podLifecycle
+    }
   })
 
   // Keep pod IP allocation unique and stable across lifecycle events
@@ -98,14 +105,6 @@ export function createEmulatedEnvironment(
     eventBus,
     clusterState
   )
-
-  // Transition Pending -> Running after random delay (kubelet-like)
-  const podStartupSimulator = createPodStartupSimulator(
-    eventBus,
-    () => clusterState,
-    { pendingDelayRangeMs: SIM_POD_PENDING_DELAY_RANGE_MS }
-  )
-  podStartupSimulator.start()
 
   // Setup auto-save if enabled
   let unsubscribeAutoSave: (() => void) | undefined
@@ -148,7 +147,7 @@ export function createEmulatedEnvironment(
     shellContextStack,
     unsubscribeAutoSave,
     unsubscribePodIpAllocation,
-    podStartupSimulator
+    runtimeControllers: controllers
   }
 }
 
@@ -170,11 +169,8 @@ export function destroyEmulatedEnvironment(
     emulatedEnvironment.unsubscribePodIpAllocation = undefined
   }
 
-  // Stop pod startup simulator (clears pending timeouts)
-  if (emulatedEnvironment.podStartupSimulator) {
-    emulatedEnvironment.podStartupSimulator.stop()
-    emulatedEnvironment.podStartupSimulator = undefined
-  }
+  stopRuntimeControllers(emulatedEnvironment.runtimeControllers)
+  emulatedEnvironment.runtimeControllers = undefined
 
   // Note: We don't explicitly clean up clusterState, fileSystemState, eventBus, or shellContextStack
   // as they will be garbage collected when the emulated environment object is no longer referenced.

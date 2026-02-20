@@ -38,6 +38,7 @@ export const collectDiscoveredNamespaces = (
     'ConfigMap',
     'Secret',
     'Deployment',
+    'DaemonSet',
     'ReplicaSet',
     'Service'
   ]

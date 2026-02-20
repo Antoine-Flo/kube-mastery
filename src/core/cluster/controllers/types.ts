@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Shared types for all Kubernetes controllers
 
+import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
 import type { Node } from '../ressources/Node'
 import type { OwnerReference } from '../ressources/Pod'
@@ -48,6 +49,13 @@ export interface ControllerState {
     namespace: string
   ) => { ok: boolean; value?: Deployment }
 
+  // DaemonSets
+  getDaemonSets: (namespace?: string) => DaemonSet[]
+  findDaemonSet: (
+    name: string,
+    namespace: string
+  ) => { ok: boolean; value?: DaemonSet }
+
   // ReplicaSets
   getReplicaSets: (namespace?: string) => ReplicaSet[]
   findReplicaSet: (
@@ -82,6 +90,22 @@ export interface Controller {
   reconcile(key: string): void
 }
 
+export interface ReconcilerController extends Controller {
+  /**
+   * Queue all existing resources handled by this controller.
+   * Called on startup to avoid missing resources created before subscriptions.
+   */
+  initialSync(): void
+  /**
+   * Re-enqueue all resources to recover from event loss or ordering races.
+   */
+  resyncAll(): void
+}
+
+export interface ControllerResyncOptions {
+  resyncIntervalMs?: number
+}
+
 // ─── Event Types for Controllers ─────────────────────────────────────────
 
 export type ClusterEventType =
@@ -94,3 +118,6 @@ export type ClusterEventType =
   | 'DeploymentCreated'
   | 'DeploymentDeleted'
   | 'DeploymentUpdated'
+  | 'DaemonSetCreated'
+  | 'DaemonSetDeleted'
+  | 'DaemonSetUpdated'

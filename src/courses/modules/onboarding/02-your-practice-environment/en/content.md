@@ -4,7 +4,7 @@
 
 The terminal gives you two things: an emulated Kubernetes cluster and a virtual Linux filesystem. You can create files, write YAML manifests, and apply them to the cluster with `kubectl`, just like you would on a real machine.
 
-Here are the commands available in your environment:
+Here are the commands available:
 
 | Category | Commands |
 |---|---|

@@ -168,6 +168,17 @@ const PodTemplateSpecSchema = z.object({
     })
     .optional(),
   spec: z.object({
+    nodeSelector: z.record(z.string(), z.string()).optional(),
+    tolerations: z
+      .array(
+        z.object({
+          key: z.string().optional(),
+          operator: z.enum(['Exists', 'Equal']).optional(),
+          value: z.string().optional(),
+          effect: z.enum(['NoSchedule', 'PreferNoSchedule', 'NoExecute']).optional()
+        })
+      )
+      .optional(),
     containers: z
       .array(ContainerSchema)
       .min(1, 'At least one container is required'),

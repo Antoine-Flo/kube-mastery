@@ -22,6 +22,7 @@ const BASE_RESOURCE_TARGETS: Record<Resource, BaseTarget | undefined> = {
   all: undefined,
   pods: { group: '', version: 'v1', kind: 'Pod' },
   deployments: { group: 'apps', version: 'v1', kind: 'Deployment' },
+  daemonsets: { group: 'apps', version: 'v1', kind: 'DaemonSet' },
   services: { group: '', version: 'v1', kind: 'Service' },
   namespaces: { group: '', version: 'v1', kind: 'Namespace' },
   configmaps: { group: '', version: 'v1', kind: 'ConfigMap' },

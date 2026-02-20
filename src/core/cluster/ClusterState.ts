@@ -6,6 +6,9 @@ import {
   handleConfigMapDeleted,
   handleConfigMapLabeled,
   handleConfigMapUpdated,
+  handleDaemonSetCreated,
+  handleDaemonSetDeleted,
+  handleDaemonSetUpdated,
   handleDeploymentCreated,
   handleDeploymentDeleted,
   handleDeploymentUpdated,
@@ -33,6 +36,9 @@ import {
   createConfigMapCreatedEvent,
   createConfigMapDeletedEvent,
   createConfigMapUpdatedEvent,
+  createDaemonSetCreatedEvent,
+  createDaemonSetDeletedEvent,
+  createDaemonSetUpdatedEvent,
   createDeploymentCreatedEvent,
   createDeploymentDeletedEvent,
   createDeploymentUpdatedEvent,
@@ -55,6 +61,7 @@ import type {
   ResourceCollection
 } from './repositories/types'
 import type { ConfigMap } from './ressources/ConfigMap'
+import type { DaemonSet } from './ressources/DaemonSet'
 import type { Deployment } from './ressources/Deployment'
 import type { Node } from './ressources/Node'
 import type { Pod } from './ressources/Pod'
@@ -78,6 +85,7 @@ export interface ClusterStateData {
   nodes: ResourceCollection<Node>
   replicaSets: ResourceCollection<ReplicaSet>
   deployments: ResourceCollection<Deployment>
+  daemonSets: ResourceCollection<DaemonSet>
   services: ResourceCollection<Service>
 }
 
@@ -88,6 +96,7 @@ type ResourceByKind = {
   Node: Node
   ReplicaSet: ReplicaSet
   Deployment: Deployment
+  DaemonSet: DaemonSet
   Service: Service
 }
 
@@ -106,6 +115,7 @@ export const createClusterStateData = (
     nodes: Node[]
     replicaSets: ReplicaSet[]
     deployments: Deployment[]
+    daemonSets: DaemonSet[]
     services: Service[]
   }> = {}
 ): ClusterStateData => ({
@@ -115,6 +125,7 @@ export const createClusterStateData = (
   nodes: { items: collections.nodes ?? [] },
   replicaSets: { items: collections.replicaSets ?? [] },
   deployments: { items: collections.deployments ?? [] },
+  daemonSets: { items: collections.daemonSets ?? [] },
   services: { items: collections.services ?? [] }
 })
 
@@ -127,6 +138,7 @@ const secretRepo = createResourceRepository<Secret>('Secret')
 const nodeRepo = createResourceRepository<Node>('Node')
 const replicaSetRepo = createResourceRepository<ReplicaSet>('ReplicaSet')
 const deploymentRepo = createResourceRepository<Deployment>('Deployment')
+const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
 const serviceRepo = createResourceRepository<Service>('Service')
 
 // ─── Generic Resource Operations Helper ─────────────────────────────
@@ -229,6 +241,7 @@ const createEmptyState = (): ClusterStateData => ({
   nodes: nodeRepo.createEmpty(),
   replicaSets: replicaSetRepo.createEmpty(),
   deployments: deploymentRepo.createEmpty(),
+  daemonSets: daemonSetRepo.createEmpty(),
   services: serviceRepo.createEmpty()
 })
 
@@ -248,6 +261,10 @@ const replicaSetOps = createResourceOperations<ReplicaSet>(
 const deploymentOps = createResourceOperations<Deployment>(
   deploymentRepo,
   'deployments'
+)
+const daemonSetOps = createResourceOperations<DaemonSet>(
+  daemonSetRepo,
+  'daemonSets'
 )
 const serviceOps = createResourceOperations<Service>(serviceRepo, 'services')
 
@@ -308,6 +325,15 @@ export interface ClusterState {
     namespace: string,
     updateFn: (deployment: Deployment) => Deployment
   ) => Result<Deployment>
+  getDaemonSets: (namespace?: string) => DaemonSet[]
+  addDaemonSet: (daemonSet: DaemonSet) => void
+  findDaemonSet: (name: string, namespace: string) => Result<DaemonSet>
+  deleteDaemonSet: (name: string, namespace: string) => Result<DaemonSet>
+  updateDaemonSet: (
+    name: string,
+    namespace: string,
+    updateFn: (daemonSet: DaemonSet) => DaemonSet
+  ) => Result<DaemonSet>
   getServices: (namespace?: string) => Service[]
   addService: (service: Service) => void
   findService: (name: string, namespace: string) => Result<Service>
@@ -366,6 +392,11 @@ const EVENT_FACTORIES = {
     created: createDeploymentCreatedEvent,
     deleted: createDeploymentDeletedEvent,
     updated: createDeploymentUpdatedEvent
+  },
+  DaemonSet: {
+    created: createDaemonSetCreatedEvent,
+    deleted: createDaemonSetDeletedEvent,
+    updated: createDaemonSetUpdatedEvent
   },
   Service: {
     created: createServiceCreatedEvent,
@@ -455,6 +486,9 @@ const EVENT_HANDLERS: Record<
   DeploymentCreated: handleDeploymentCreated,
   DeploymentDeleted: handleDeploymentDeleted,
   DeploymentUpdated: handleDeploymentUpdated,
+  DaemonSetCreated: handleDaemonSetCreated,
+  DaemonSetDeleted: handleDaemonSetDeleted,
+  DaemonSetUpdated: handleDaemonSetUpdated,
   PodLabeled: handlePodLabeled,
   ConfigMapLabeled: handleConfigMapLabeled,
   SecretLabeled: handleSecretLabeled,
@@ -535,6 +569,13 @@ export function createClusterState(
     setState,
     eventBus,
     'Deployment'
+  )
+  const daemonSetMethods = createFacadeMethods(
+    daemonSetOps,
+    getState,
+    setState,
+    eventBus,
+    'DaemonSet'
   )
   const serviceMethods = createFacadeMethods(
     serviceOps,
@@ -628,6 +669,8 @@ export function createClusterState(
         replicaSetMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
       Deployment: (resourceName, resourceNamespace) =>
         deploymentMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+      DaemonSet: (resourceName, resourceNamespace) =>
+        daemonSetMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
       Service: (resourceName, resourceNamespace) =>
         serviceMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>
     }
@@ -659,6 +702,8 @@ export function createClusterState(
         replicaSetMethods.getAll(resourceNamespace) as KubernetesResource[],
       Deployment: (resourceNamespace) =>
         deploymentMethods.getAll(resourceNamespace) as KubernetesResource[],
+      DaemonSet: (resourceNamespace) =>
+        daemonSetMethods.getAll(resourceNamespace) as KubernetesResource[],
       Service: (resourceNamespace) =>
         serviceMethods.getAll(resourceNamespace) as KubernetesResource[]
     }
@@ -708,6 +753,12 @@ export function createClusterState(
     deleteDeployment: deploymentMethods.delete,
     updateDeployment: deploymentMethods.update,
 
+    getDaemonSets: daemonSetMethods.getAll,
+    addDaemonSet: daemonSetMethods.add,
+    findDaemonSet: daemonSetMethods.find,
+    deleteDaemonSet: daemonSetMethods.delete,
+    updateDaemonSet: daemonSetMethods.update,
+
     getServices: serviceMethods.getAll,
     addService: serviceMethods.add,
     findService: serviceMethods.find,
@@ -724,6 +775,7 @@ export function createClusterState(
       nodes: { items: [...state.nodes.items] },
       replicaSets: { items: [...state.replicaSets.items] },
       deployments: { items: [...state.deployments.items] },
+      daemonSets: { items: [...state.daemonSets.items] },
       services: { items: [...state.services.items] }
     }),
 
@@ -735,6 +787,7 @@ export function createClusterState(
         nodes: newState.nodes || { items: [] },
         replicaSets: newState.replicaSets || { items: [] },
         deployments: newState.deployments || { items: [] },
+        daemonSets: newState.daemonSets || { items: [] },
         services: newState.services || { items: [] }
       }
     }

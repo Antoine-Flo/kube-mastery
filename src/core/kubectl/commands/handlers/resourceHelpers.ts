@@ -9,6 +9,8 @@ import type { EventBus } from '../../../cluster/events/EventBus'
 import {
   createConfigMapCreatedEvent,
   createConfigMapUpdatedEvent,
+  createDaemonSetCreatedEvent,
+  createDaemonSetUpdatedEvent,
   createDeploymentCreatedEvent,
   createDeploymentUpdatedEvent,
   createPodCreatedEvent,
@@ -21,6 +23,7 @@ import {
   createServiceUpdatedEvent
 } from '../../../cluster/events/types'
 import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
+import type { DaemonSet } from '../../../cluster/ressources/DaemonSet'
 import type { Deployment } from '../../../cluster/ressources/Deployment'
 import type { Node } from '../../../cluster/ressources/Node'
 import type { Pod } from '../../../cluster/ressources/Pod'
@@ -39,6 +42,7 @@ type KubernetesResource =
   | Node
   | ReplicaSet
   | Deployment
+  | DaemonSet
   | Service
 
 type ResourceKind =
@@ -48,6 +52,7 @@ type ResourceKind =
   | 'Node'
   | 'ReplicaSet'
   | 'Deployment'
+  | 'DaemonSet'
   | 'Service'
 
 interface ResourceHandler {
@@ -70,6 +75,7 @@ interface ResourceHandler {
 
 const KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
   Deployment: 'deployment.apps',
+  DaemonSet: 'daemonset.apps',
   ReplicaSet: 'replicaset.apps'
 }
 
@@ -83,6 +89,9 @@ const toPluralKindReference = (kind: ResourceKind): string => {
   }
   if (kind === 'ReplicaSet') {
     return 'replicasets.apps'
+  }
+  if (kind === 'DaemonSet') {
+    return 'daemonsets.apps'
   }
   return `${kind.toLowerCase()}s`
 }
@@ -193,6 +202,26 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
           name,
           namespace,
           resource as Deployment,
+          previous,
+          'kubectl'
+        )
+      )
+    }
+  },
+  DaemonSet: {
+    find: (state, name, namespace) =>
+      state.findByKind('DaemonSet', name, namespace),
+    emitCreated: (eventBus, resource) => {
+      eventBus.emit(
+        createDaemonSetCreatedEvent(resource as DaemonSet, 'kubectl')
+      )
+    },
+    emitUpdated: (eventBus, name, namespace, resource, previous) => {
+      eventBus.emit(
+        createDaemonSetUpdatedEvent(
+          name,
+          namespace,
+          resource as DaemonSet,
           previous,
           'kubectl'
         )

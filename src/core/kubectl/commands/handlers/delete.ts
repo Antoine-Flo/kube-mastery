@@ -88,6 +88,9 @@ export const handleDelete = (
   }
 
   const resource = parsed.resource
+  if (!resource) {
+    return error('error: you must specify a resource type')
+  }
 
   if (
     resource === 'pods' ||
@@ -116,6 +119,16 @@ export const handleDelete = (
     }
     return success(
       formatDeletedMessage('deployment.apps', parsed.name, namespace, true)
+    )
+  }
+
+  if (resource === 'daemonsets') {
+    const deleteResult = clusterState.deleteDaemonSet(parsed.name, namespace)
+    if (!deleteResult.ok) {
+      return formatNotFoundMessage('daemonsets.apps', parsed.name)
+    }
+    return success(
+      formatDeletedMessage('daemonset.apps', parsed.name, namespace, true)
     )
   }
 

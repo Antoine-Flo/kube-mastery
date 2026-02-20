@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createEventBus } from '../../../src/core/cluster/events/EventBus'
 import {
   createPodBoundEvent,
@@ -9,7 +9,12 @@ import { createPod } from '../../../src/core/cluster/ressources/Pod'
 import { createPodStartupSimulator } from '../../../src/core/cluster/podStartupSimulator'
 
 describe('podStartupSimulator', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('transitions pending scheduled pod to running on PodBound', () => {
+    vi.useFakeTimers()
     const eventBus = createEventBus()
     const simulator = createPodStartupSimulator(
       eventBus,
@@ -58,12 +63,14 @@ describe('podStartupSimulator', () => {
         'scheduler'
       )
     )
+    vi.runAllTimers()
 
     expect(emittedBySimulator.length).toBe(1)
     expect(emittedBySimulator[0].payload.pod.status.phase).toBe('Running')
   })
 
   it('does not transition pending unscheduled pod to running', () => {
+    vi.useFakeTimers()
     const eventBus = createEventBus()
     const pendingUnscheduledPod = createPod({
       name: 'nginx',
@@ -102,11 +109,13 @@ describe('podStartupSimulator', () => {
         'scheduler'
       )
     )
+    vi.runAllTimers()
 
     expect(emittedBySimulator).toHaveLength(0)
   })
 
   it('does not transition when PodBound payload has no nodeName on pod', () => {
+    vi.useFakeTimers()
     const eventBus = createEventBus()
     const pendingUnscheduledPod = createPod({
       name: 'nginx',
@@ -146,6 +155,7 @@ describe('podStartupSimulator', () => {
         'scheduler'
       )
     )
+    vi.runAllTimers()
 
     expect(emittedBySimulator).toHaveLength(0)
   })

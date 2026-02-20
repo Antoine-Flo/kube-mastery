@@ -92,6 +92,8 @@ describe('ReplicaSetController', () => {
       },
       getDeployments: () => [],
       findDeployment: () => ({ ok: false, error: 'not found' }),
+      getDaemonSets: () => [],
+      findDaemonSet: () => ({ ok: false, error: 'not found' }),
       getNodes: () => []
     })
 

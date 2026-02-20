@@ -42,10 +42,16 @@ import {
   createOwnerRef,
   findOwnerByRef,
   getOwnedResources,
+  startPeriodicResync,
   statusEquals,
   subscribeToEvents
 } from './helpers'
-import type { ClusterEventType, Controller, ControllerState } from './types'
+import type {
+  ClusterEventType,
+  ControllerResyncOptions,
+  ControllerState,
+  ReconcilerController
+} from './types'
 import { createWorkQueue, type WorkQueue } from './WorkQueue'
 
 // ─── Constants ────────────────────────────────────────────────────────────
@@ -155,15 +161,22 @@ const computeDeploymentStatus = (
  * Deployment Controller
  * Manages ReplicaSets for each Deployment
  */
-export class DeploymentController implements Controller {
+export class DeploymentController implements ReconcilerController {
   private eventBus: EventBus
   private getState: () => ControllerState
   private workQueue: WorkQueue
   private unsubscribe: (() => void) | null = null
+  private stopPeriodicResync: () => void = () => {}
+  private options: ControllerResyncOptions
 
-  constructor(eventBus: EventBus, getState: () => ControllerState) {
+  constructor(
+    eventBus: EventBus,
+    getState: () => ControllerState,
+    options: ControllerResyncOptions = {}
+  ) {
     this.eventBus = eventBus
     this.getState = getState
+    this.options = options
     this.workQueue = createWorkQueue({ processDelay: 0 })
   }
 
@@ -180,6 +193,12 @@ export class DeploymentController implements Controller {
 
     // Start processing the work queue
     this.workQueue.start((key) => this.reconcile(key))
+
+    this.initialSync()
+    this.stopPeriodicResync = startPeriodicResync(
+      this.options.resyncIntervalMs,
+      () => this.resyncAll()
+    )
   }
 
   /**
@@ -190,6 +209,8 @@ export class DeploymentController implements Controller {
       this.unsubscribe()
       this.unsubscribe = null
     }
+    this.stopPeriodicResync()
+    this.stopPeriodicResync = () => {}
     this.workQueue.stop()
   }
 
@@ -222,6 +243,18 @@ export class DeploymentController implements Controller {
   private enqueueDeployment(deploy: Deployment): void {
     const key = makeKey(deploy.metadata.namespace, deploy.metadata.name)
     this.workQueue.add(key)
+  }
+
+  initialSync(): void {
+    const state = this.getState()
+    const deployments = state.getDeployments()
+    for (const deployment of deployments) {
+      this.enqueueDeployment(deployment)
+    }
+  }
+
+  resyncAll(): void {
+    this.initialSync()
   }
 
   /**
@@ -408,9 +441,10 @@ export class DeploymentController implements Controller {
  */
 export const createDeploymentController = (
   eventBus: EventBus,
-  getState: () => ControllerState
+  getState: () => ControllerState,
+  options: ControllerResyncOptions = {}
 ): DeploymentController => {
-  const controller = new DeploymentController(eventBus, getState)
+  const controller = new DeploymentController(eventBus, getState, options)
   controller.start()
   return controller
 }
