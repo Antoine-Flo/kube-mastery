@@ -77,6 +77,27 @@ describe('kubectl Executor', () => {
         }
       })
 
+      it('should route "kubectl describe deployment" to describe handler', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const created = executor.execute(
+          'kubectl create deployment web-app --image=nginx:1.25 --replicas=3'
+        )
+        expect(created.ok).toBe(true)
+
+        const result = executor.execute('kubectl describe deployment web-app')
+        expect(result.ok).toBe(true)
+        if (result.ok) {
+          expect(result.value).toContain('Name:             web-app')
+          expect(result.value).toContain('Replicas:')
+          expect(result.value).toContain('Pod Template:')
+        }
+      })
+
       it('should route "kubectl delete pod" to delete handler', () => {
         const executor = createKubectlExecutor(
           clusterState,

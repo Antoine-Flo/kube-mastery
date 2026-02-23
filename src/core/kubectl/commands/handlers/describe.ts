@@ -3,6 +3,7 @@ import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import {
   describeConfigMap,
+  describeDeployment,
   describePod,
   describeSecret
 } from '../../formatters/describeFormatters'
@@ -38,6 +39,11 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
     items: 'secrets',
     formatter: describeSecret,
     type: 'Secret'
+  },
+  deployments: {
+    items: 'deployments',
+    formatter: describeDeployment,
+    type: 'Deployment'
   }
 } as const
 

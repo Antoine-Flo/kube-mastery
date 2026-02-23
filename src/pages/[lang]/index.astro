@@ -4,15 +4,12 @@ import Button from '../../components/ui/Button.astro'
 import Terminal from '../../components/Terminal.astro'
 import { Zap, Shield, Euro, CircleCheck } from '@lucide/astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
-import { DEMO_TASK_GROUP_ID, DEMO_TASK_ID } from '../../content/tasks/constants'
 import { getSupabaseServer } from '../../lib/supabase'
 import landingPlaceholder from '../../assets/landing-placeholder.svg'
-import guaranteeBadge from '../../assets/guarantee-badge.svg'
 import astronautTrainingGif from '../../assets/astronaut-training.gif'
 import networkImg from '../../assets/network.jpg'
+import demoVideo from '../../assets/demo.mp4'
 import videoDemo from '../../assets/video-demo.mp4'
-import '../../styles/components/guarantee.css'
-
 const locale = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(locale)
 const localePath = useLocalePath(locale)
@@ -40,7 +37,6 @@ try {
           <p class="sub">
             {t('home_subtitle')}
             <br />
-            <span class="sub-tagline">{t('home_subtitle_tagline')}</span>
           </p>
           <div class="cta">
             <Button
@@ -51,18 +47,19 @@ try {
             >
               {t('home_cta_join')}
             </Button>
-            <Button
-              href={localePath(`/tasks/${DEMO_TASK_GROUP_ID}/${DEMO_TASK_ID}`)}
-              variant="outline"
-              color="cyan"
-              size="xl"
-            >
-              {t('home_cta_tryDemo')}
-            </Button>
           </div>
         </div>
         <div class="hero-media">
-          <Terminal rows={20} lang={locale} />
+          <video
+            src={demoVideo}
+            autoplay
+            loop
+            muted
+            playsinline
+            class="hero-demo-video"
+            data-playback-rate="1.5"
+            aria-label={t('home_subtitle')}
+          />
         </div>
       </div>
     </section>
@@ -91,11 +88,27 @@ try {
       </div>
     </div>
 
+    <div class="try-it">
+      <div class="content">
+        <h2 class="try-it-title anim">{t('home_try_title')}</h2>
+        <div class="try-it-terminal anim">
+          <Terminal rows={20} lang={locale} />
+        </div>
+      </div>
+    </div>
     <div class="concerns">
       <div class="content">
         <div class="section-header anim">
           <h2>{t('home_concerns_title')}</h2>
           <p>{t('home_concerns_subtitle')}</p>
+          <div class="cta">
+            <Button
+              href={localePath('/courses')}
+              variant="solid"
+              color="cyan"
+              size="xl">{t('home_cta_explore')}</Button
+            >
+          </div>
         </div>
         <div class="section-body">
           <div class="concern-rows">
@@ -160,37 +173,6 @@ try {
       </div>
     </div>
 
-    <div class="guarantee">
-      <div class="content">
-        <div class="guarantee-row">
-          <div class="guarantee-badge anim">
-            <img
-              src={guaranteeBadge.src}
-              alt={t('home_guarantee_image_alt')}
-              loading="lazy"
-            />
-          </div>
-          <div class="guarantee-text anim">
-            <h2>{t('home_guarantee_title')}</h2>
-            <p>{t('home_guarantee_subtitle')}</p>
-            <ul class="guarantee-bullets">
-              <li>{t('home_guarantee_point1')}</li>
-              <li>{t('home_guarantee_point2')}</li>
-            </ul>
-            <div class="cta">
-              <Button
-                href={localePath('/pricing')}
-                variant="solid"
-                color="cyan"
-                size="xl"
-              >
-                {t('home_cta_join')}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <div class="platform-features">
       <div class="content">
@@ -256,39 +238,6 @@ try {
         </div>
       </div>
     </div>
-
-    <div class="stats">
-      <h2 class="anim">{t('home_stats_title')}</h2>
-      <p class="anim">{t('home_stats_subtitle')}</p>
-      <div class="grid">
-        <div class="card anim">
-          <div class="val">{t('home_stats_adoption_value')}</div>
-          <h3>{t('home_stats_adoption_label')}</h3>
-          <p>{t('home_stats_adoption_description')}</p>
-          <p class="src">{t('home_stats_adoption_source')}</p>
-        </div>
-        <div class="card anim">
-          <div class="val">{t('home_stats_market_value')}</div>
-          <h3>{t('home_stats_market_label')}</h3>
-          <p>{t('home_stats_market_description')}</p>
-          <p class="src">{t('home_stats_market_source')}</p>
-        </div>
-        <div class="card anim">
-          <div class="val">{t('home_stats_companies_value')}</div>
-          <h3>{t('home_stats_companies_label')}</h3>
-          <p>{t('home_stats_companies_description')}</p>
-          <p class="src">{t('home_stats_companies_source')}</p>
-        </div>
-      </div>
-      <div class="cta">
-        <Button
-          href={localePath('/pricing')}
-          variant="solid"
-          color="cyan"
-          size="xl">{t('home_cta_join')}</Button
-        >
-      </div>
-    </div>
   </main>
 </Layout>
 
@@ -308,7 +257,6 @@ try {
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    /* Trois halos distincts, sans transition vers transparent */
     background:
       radial-gradient(
         ellipse 34% 48% at 76% 16%,
@@ -435,7 +383,6 @@ try {
     min-height: 80vh;
     position: relative;
     padding: 4rem 1rem;
-    border-bottom: 1px solid var(--color-gray-6);
   }
 
   .hero .content {
@@ -446,27 +393,13 @@ try {
     width: 100%;
     max-width: var(--content-max-width);
   }
-  @media (min-width: 1024px) {
-    .hero .content {
-      flex-direction: row;
-      align-items: center;
-      gap: 4rem;
-    }
-  }
 
   .left {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1.5rem;
-    flex: 1;
-  }
-  @media (min-width: 1024px) {
-    .left {
-      align-items: flex-start;
-      min-width: 0;
-      flex-shrink: 1;
-    }
+    width: 100%;
   }
 
   .hero h1 {
@@ -481,15 +414,10 @@ try {
     min-width: 100%;
   }
 
-  @media (min-width: 1024px) {
-    .hero h1 {
-      text-align: left;
-    }
-  }
-
   .sub {
     font-size: var(--text-lg);
     color: var(--color-gray-12);
+    font-style: italic;
     line-height: 1.6;
     text-align: center;
     max-width: 700px;
@@ -498,11 +426,6 @@ try {
   @media (min-width: 768px) {
     .sub {
       font-size: var(--text-xl);
-    }
-  }
-  @media (min-width: 1024px) {
-    .sub {
-      text-align: left;
     }
   }
 
@@ -524,6 +447,21 @@ try {
     position: relative;
     z-index: 1;
     animation: fadeInUp 0.8s ease-out 0.4s both;
+  }
+
+  .cta :global(.btn[data-color='cyan'][data-variant='solid']) {
+    background: linear-gradient(
+      135deg,
+      var(--color-cyan-9) 0%,
+      var(--color-cyan-7) 100%
+    );
+  }
+  .cta :global(.btn[data-color='cyan'][data-variant='solid']):hover:not(:disabled) {
+    background: linear-gradient(
+      135deg,
+      var(--color-cyan-10) 0%,
+      var(--color-cyan-8) 100%
+    );
   }
 
   .features {
@@ -643,6 +581,69 @@ try {
     font-size: var(--text-sm);
     color: var(--color-gray-11);
     line-height: 1.6;
+  }
+
+  /* Try it section (replaces guarantee) */
+  .try-it {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 8rem 0;
+    border-top: 1px solid var(--color-gray-6);
+    border-bottom: 1px solid var(--color-gray-6);
+  }
+
+  .try-it .content {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+  @media (min-width: 768px) {
+    .try-it .content {
+      padding: 0 2rem;
+    }
+  }
+
+  .try-it-title {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-12);
+    text-align: center;
+    margin: 0;
+  }
+  @media (min-width: 768px) {
+    .try-it-title {
+      font-size: 1.875rem;
+    }
+  }
+
+  .try-it-terminal {
+    flex: 1;
+    width: 100%;
+    max-width: 620px;
+    min-width: 0;
+    animation: fadeInUp 0.5s ease-out 0.3s both;
+    background-color: var(--color-gray-1);
+    border: 1px solid var(--color-gray-6);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  @media (max-width: 768px) {
+    .try-it-terminal {
+      margin-top: 1.25rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .try-it-terminal {
+      flex: 0 0 auto;
+      width: 100%;
+      max-width: 1000px;
+      min-width: min(1000px, 90vw);
+    }
   }
 
   .concerns {
@@ -933,148 +934,36 @@ try {
     }
   }
 
-  .stats {
-    width: 100%;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 7rem 0;
-    border-top: 1px solid var(--color-gray-6);
-    border-bottom: 1px solid var(--color-gray-6);
-  }
-  @media (min-width: 768px) {
-    .stats {
-      padding: 8rem 2rem;
-    }
-  }
-
-  .stats h2 {
-    font-size: 1.5rem;
-    font-weight: var(--font-weight-bold);
-    color: var(--color-gray-12);
-    text-align: center;
-  }
-  @media (min-width: 768px) {
-    .stats h2 {
-      font-size: 1.875rem;
-    }
-  }
-
-  .stats > p {
-    font-size: var(--text-base);
-    color: var(--color-gray-11);
-    line-height: 1.6;
-    text-align: center;
-    max-width: 800px;
-    margin: 0 auto;
-  }
-  @media (min-width: 768px) {
-    .stats > p {
-      font-size: var(--text-lg);
-    }
-  }
-
-  .stats .grid {
-    display: grid;
-    padding: 0 2rem;
-    max-width: var(--content-max-width);
-    margin: 2rem auto;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    width: 100%;
-  }
-  @media (min-width: 768px) {
-    .stats .grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  @media (min-width: 1024px) {
-    .stats .grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-
-  .stats .card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1.5rem;
-    border-radius: var(--radius-lg);
-    background-color: var(--color-gray-2);
-    border: 1px solid var(--color-gray-6);
-    text-align: center;
-  }
-
-  .stats .card:nth-child(1) {
-    transition-delay: 0.1s;
-  }
-
-  .stats .card:nth-child(2) {
-    transition-delay: 0.2s;
-  }
-
-  .stats .card:nth-child(3) {
-    transition-delay: 0.3s;
-  }
-
-  .val {
-    font-size: 2rem;
-    font-weight: var(--font-weight-bold);
-    color: var(--color-cyan-9);
-    line-height: 1.2;
-  }
-  @media (min-width: 768px) {
-    .val {
-      font-size: 2.5rem;
-    }
-  }
-
-  .stats .card h3 {
-    font-size: var(--text-lg);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-gray-12);
-  }
-
-  .stats .card p {
-    font-size: var(--text-sm);
-    color: var(--color-gray-11);
-    line-height: 1.6;
-  }
-
-  .src {
-    font-size: var(--text-xs);
-    color: var(--color-gray-9);
-    line-height: 1.5;
-    margin-top: 0.5rem;
-    font-style: italic;
-  }
-
   /* Hero Media */
   .hero-media {
-    flex: 1;
     width: 100%;
-    max-width: 620px;
-    min-width: 0;
+    border-radius: var(--radius-lg);
+    margin: 0 auto;
+    margin-top: 2rem;
     animation: fadeInUp 0.5s ease-out 0.3s both;
-    background-color: var(--color-gray-1);
-    border: 1px solid var(--color-gray-6);
-    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .hero-demo-video {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    display: block;
   }
 
   @media (max-width: 768px) {
     .hero-media {
       margin-top: 1.25rem;
-      margin-left: -0.35rem;
     }
   }
 
   @media (min-width: 1024px) {
     .hero-media {
-      flex: 0 0 52%;
-      max-width: none;
-      min-width: 520px;
+      max-width: 1000px;
+    }
+
+    .hero-demo-video {
     }
   }
 </style>

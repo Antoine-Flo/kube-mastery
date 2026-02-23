@@ -6,6 +6,11 @@
 
 import type { ConfigMap } from '../../cluster/ressources/ConfigMap'
 import type {
+  Deployment,
+  DeploymentCondition,
+  DeploymentStrategyType
+} from '../../cluster/ressources/Deployment'
+import type {
   ContainerStatus,
   EnvVar,
   Pod,
@@ -51,6 +56,113 @@ const formatDescribeDate = (isoDate: string): string => {
     return isoDate
   }
   return parsed.toUTCString()
+}
+
+const formatSelector = (deployment: Deployment): string => {
+  const selector = deployment.spec.selector
+  const selectorParts: string[] = []
+  if (selector.matchLabels) {
+    for (const [key, value] of Object.entries(selector.matchLabels)) {
+      selectorParts.push(`${key}=${value}`)
+    }
+  }
+
+  if (selector.matchExpressions) {
+    for (const expr of selector.matchExpressions) {
+      const values =
+        expr.values && expr.values.length > 0 ? expr.values.join(',') : ''
+      selectorParts.push(`${expr.key} ${expr.operator} (${values})`)
+    }
+  }
+
+  if (selectorParts.length === 0) {
+    return '<none>'
+  }
+
+  return selectorParts.join(',')
+}
+
+const formatIntOrString = (value: number | string | undefined): string => {
+  if (value === undefined) {
+    return '<none>'
+  }
+  return String(value)
+}
+
+const formatDeploymentReplicas = (deployment: Deployment): string => {
+  const desired = deployment.spec.replicas ?? 1
+  const updated = deployment.status.updatedReplicas ?? 0
+  const total = deployment.status.replicas ?? 0
+  const available = deployment.status.availableReplicas ?? 0
+  const unavailable = deployment.status.unavailableReplicas ?? total - available
+  return `${desired} desired | ${updated} updated | ${total} total | ${available} available | ${unavailable} unavailable`
+}
+
+const formatStrategyType = (
+  strategyType: DeploymentStrategyType | undefined
+): string => {
+  if (!strategyType) {
+    return 'RollingUpdate'
+  }
+  return strategyType
+}
+
+const formatTemplateEnv = (
+  envVar: {
+    name: string
+    value?: string
+    valueFrom?: {
+      configMapKeyRef?: { name: string; key: string }
+      secretKeyRef?: { name: string; key: string }
+    }
+  },
+  lines: string[]
+): void => {
+  if (envVar.value !== undefined) {
+    lines.push(indent(`${envVar.name}:  ${envVar.value}`, 4))
+    return
+  }
+
+  if (envVar.valueFrom?.configMapKeyRef) {
+    lines.push(
+      indent(
+        `${envVar.name}:  <set to the key '${envVar.valueFrom.configMapKeyRef.key}' in config map '${envVar.valueFrom.configMapKeyRef.name}'>`,
+        4
+      )
+    )
+    return
+  }
+
+  if (envVar.valueFrom?.secretKeyRef) {
+    lines.push(
+      indent(
+        `${envVar.name}:  <set to the key '${envVar.valueFrom.secretKeyRef.key}' of secret '${envVar.valueFrom.secretKeyRef.name}'>`,
+        4
+      )
+    )
+    return
+  }
+
+  lines.push(indent(`${envVar.name}:  <unknown>`, 4))
+}
+
+const formatDeploymentConditions = (
+  conditions: DeploymentCondition[] | undefined
+): string[] => {
+  const lines: string[] = ['Conditions:']
+  if (!conditions || conditions.length === 0) {
+    lines.push('  <none>')
+    return lines
+  }
+
+  lines.push('  Type           Status  Reason')
+  for (const condition of conditions) {
+    lines.push(
+      `  ${condition.type.padEnd(14)} ${condition.status.padEnd(7)} ${condition.reason ?? '<none>'}`
+    )
+  }
+
+  return lines
 }
 
 /**
@@ -336,6 +448,108 @@ export const describePod = (pod: Pod): string => {
   lines.push('QoS Class:          BestEffort')
   lines.push('Node-Selectors:     <none>')
   lines.push('Tolerations:        <none>')
+  lines.push(blank())
+  lines.push('Events:             <none>')
+
+  return lines.join('\n')
+}
+
+/**
+ * Format detailed Deployment description
+ */
+export const describeDeployment = (deployment: Deployment): string => {
+  const lines: string[] = []
+  const strategyType = formatStrategyType(deployment.spec.strategy?.type)
+
+  lines.push(`Name:             ${deployment.metadata.name}`)
+  lines.push(`Namespace:        ${deployment.metadata.namespace}`)
+  lines.push(
+    `CreationTimestamp: ${formatDescribeDate(deployment.metadata.creationTimestamp)}`
+  )
+  lines.push(`Labels:           ${formatLabels(deployment.metadata.labels)}`)
+  lines.push(`Annotations:      ${formatLabels(deployment.metadata.annotations)}`)
+  lines.push(`Selector:         ${formatSelector(deployment)}`)
+  lines.push(`Replicas:         ${formatDeploymentReplicas(deployment)}`)
+  lines.push(`StrategyType:     ${strategyType}`)
+  lines.push(`MinReadySeconds:  ${deployment.spec.minReadySeconds ?? 0}`)
+  if (strategyType === 'RollingUpdate') {
+    const rollingUpdate = deployment.spec.strategy?.rollingUpdate
+    lines.push(
+      `RollingUpdateStrategy: ${formatIntOrString(rollingUpdate?.maxUnavailable)} max unavailable, ${formatIntOrString(rollingUpdate?.maxSurge)} max surge`
+    )
+  }
+
+  lines.push(blank())
+
+  const templateLines: string[] = []
+  templateLines.push(kv('Labels', formatLabels(deployment.spec.template.metadata?.labels)))
+  templateLines.push(
+    kv('Annotations', formatLabels(deployment.spec.template.metadata?.annotations))
+  )
+  templateLines.push(
+    kv('Node-Selectors', formatLabels(deployment.spec.template.spec.nodeSelector))
+  )
+
+  const tolerations = deployment.spec.template.spec.tolerations
+  if (tolerations && tolerations.length > 0) {
+    const tolerationParts = tolerations.map((toleration) => {
+      const key = toleration.key ?? '<none>'
+      const operator = toleration.operator ?? 'Equal'
+      const value = toleration.value ?? '<none>'
+      const effect = toleration.effect ?? '<none>'
+      return `${key}:${operator}:${value}:${effect}`
+    })
+    templateLines.push(kv('Tolerations', tolerationParts.join(', ')))
+  } else {
+    templateLines.push(kv('Tolerations', '<none>'))
+  }
+
+  const initContainers = deployment.spec.template.spec.initContainers
+  if (initContainers && initContainers.length > 0) {
+    templateLines.push('Init Containers:')
+    for (const container of initContainers) {
+      templateLines.push(indent(`${container.name}:`, 1))
+      templateLines.push(indent(kv('Image', container.image), 2))
+    }
+  }
+
+  templateLines.push('Containers:')
+  for (const container of deployment.spec.template.spec.containers) {
+    templateLines.push(indent(`${container.name}:`, 1))
+    templateLines.push(indent(kv('Image', container.image), 2))
+
+    if (container.command && container.command.length > 0) {
+      templateLines.push(indent('Command:', 2))
+      for (const cmd of container.command) {
+        templateLines.push(indent(cmd, 3))
+      }
+    }
+
+    if (container.args && container.args.length > 0) {
+      templateLines.push(indent('Args:', 2))
+      for (const arg of container.args) {
+        templateLines.push(indent(arg, 3))
+      }
+    }
+
+    if (container.ports && container.ports.length > 0) {
+      const ports = container.ports
+        .map((port) => `${port.containerPort}/${port.protocol ?? 'TCP'}`)
+        .join(', ')
+      templateLines.push(indent(kv('Ports', ports), 2))
+    }
+
+    if (container.env && container.env.length > 0) {
+      templateLines.push(indent('Environment:', 2))
+      for (const envVar of container.env) {
+        formatTemplateEnv(envVar, templateLines)
+      }
+    }
+  }
+
+  lines.push(...section('Pod Template', templateLines))
+  lines.push(blank())
+  lines.push(...formatDeploymentConditions(deployment.status.conditions))
   lines.push(blank())
   lines.push('Events:             <none>')
 

@@ -21,7 +21,8 @@ const standardPriceYearPerMonth = standardPricing.priceYearPerMonth
 const standardStruckMonth = standardPricing.struckMonth
 const standardStruckYearPerMonth = standardPricing.struckYearPerMonth
 const standardYearlyMonthsFree = standardPricing.yearlyMonthsFree
-const standardDetailYearlyText = `${t('pricing_earlyaccess_paid_yearly_label')} ${standardPriceYearTotal}€ - ${t('pricing_earlyaccess_detail_yearly', { count: standardYearlyMonthsFree })}`
+const standardDetailYearlyText = t('pricing_detail_yearly', { total: standardPriceYearTotal })
+const standardDetailMonthlyText = t('pricing_detail_monthly')
 
 const proPlan = SUBSCRIPTION_PLANS.individual
 const pricing = proPlan.pricing!
@@ -31,7 +32,8 @@ const priceYearPerMonth = pricing.priceYearPerMonth
 const struckMonth = pricing.struckMonth
 const struckYearPerMonth = pricing.struckYearPerMonth
 const yearlyMonthsFree = pricing.yearlyMonthsFree
-const detailYearlyText = `${t('pricing_earlyaccess_paid_yearly_label')} ${priceYearTotal}€ - ${t('pricing_earlyaccess_detail_yearly', { count: yearlyMonthsFree })}`
+const detailYearlyText = t('pricing_detail_yearly', { total: priceYearTotal })
+const detailMonthlyText = t('pricing_detail_monthly')
 
 const faqItems = [
   { id: 'q1', q: t('pricing_faq_q1'), a: t('pricing_faq_a1') },
@@ -43,8 +45,7 @@ const faqItems = [
 
 <Layout>
   <div class="pricing">
-    <h1 class="pricing__title">{t('pricing_title')}</h1>
-    <p class="pricing__subtitle">{t('pricing_subtitle')}</p>
+    <h2 class="pricing__title">{t('pricing_title')}</h2>
 
     <div class="pricing__toggle" role="group" aria-label="Billing period">
       <span
@@ -63,12 +64,15 @@ const faqItems = [
         title={t('pricing_toggle_yearly')}
       >
       </button>
-      <span
-        class="pricing__toggle-option"
-        id="pricing-option-yearly"
-        aria-pressed="true"
-      >
-        {t('pricing_toggle_yearly')}
+      <span class="pricing__toggle-yearly-wrap">
+        <span
+          class="pricing__toggle-option"
+          id="pricing-option-yearly"
+          aria-pressed="true"
+        >
+          {t('pricing_toggle_yearly')}
+        </span>
+        <span class="pricing__toggle-yearly-badge">{t('pricing_toggle_yearly_badge')}</span>
       </span>
     </div>
 
@@ -96,6 +100,7 @@ const faqItems = [
               data-struck-month={String(standardStruckMonth)}
               data-struck-year={String(standardStruckYearPerMonth)}
               data-detail-yearly={standardDetailYearlyText}
+              data-detail-monthly={standardDetailMonthlyText}
             >
               <div class="pricing__plan-price-current">
                 <span class="pricing__plan-price-struck">
@@ -109,15 +114,8 @@ const faqItems = [
                 </span>
               </div>
               <div class="pricing__plan-price-detail-wrap">
-                <span
-                  class="pricing__plan-price-detail pricing__plan-price-detail--top"
-                >
+                <span class="pricing__plan-price-detail">
                   {standardDetailYearlyText}
-                </span>
-                <span
-                  class="pricing__plan-price-detail pricing__plan-price-detail--discreet"
-                >
-                  {t('pricing_earlyaccess_detail_monthly')}
                 </span>
               </div>
             </div>
@@ -172,6 +170,7 @@ const faqItems = [
               data-struck-month={String(struckMonth)}
               data-struck-year={String(struckYearPerMonth)}
               data-detail-yearly={detailYearlyText}
+              data-detail-monthly={detailMonthlyText}
             >
               <div class="pricing__plan-price-current">
                 <span class="pricing__plan-price-struck">
@@ -185,15 +184,8 @@ const faqItems = [
                 </span>
               </div>
               <div class="pricing__plan-price-detail-wrap">
-                <span
-                  class="pricing__plan-price-detail pricing__plan-price-detail--top"
-                >
+                <span class="pricing__plan-price-detail">
                   {detailYearlyText}
-                </span>
-                <span
-                  class="pricing__plan-price-detail pricing__plan-price-detail--discreet"
-                >
-                  {t('pricing_earlyaccess_detail_monthly')}
                 </span>
               </div>
             </div>
@@ -294,34 +286,27 @@ const faqItems = [
       </div>
     </div>
 
-    <section class="pricing__features-section">
-      <h2 class="pricing__features-title">
-        {t('pricing_features_title')}
-      </h2>
-      <div class="pricing__features-grid">
-        <div class="pricing__feature-card">
-          <h3 class="pricing__feature-card-title">
-            {t('pricing_features_speed_title')}
-          </h3>
-          <p class="pricing__feature-card-description">
-            {t('pricing_features_speed_desc')}
-          </p>
+    <section class="pricing__stats">
+      <h2 class="pricing__stats-title">{t('home_stats_title')}</h2>
+      <p class="pricing__stats-subtitle">{t('home_stats_subtitle')}</p>
+      <div class="pricing__stats-grid">
+        <div class="pricing__stats-card">
+          <div class="pricing__stats-val">{t('home_stats_adoption_value')}</div>
+          <h3>{t('home_stats_adoption_label')}</h3>
+          <p>{t('home_stats_adoption_description')}</p>
+          <p class="pricing__stats-src">{t('home_stats_adoption_source')}</p>
         </div>
-        <div class="pricing__feature-card">
-          <h3 class="pricing__feature-card-title">
-            {t('pricing_features_stability_title')}
-          </h3>
-          <p class="pricing__feature-card-description">
-            {t('pricing_features_stability_desc')}
-          </p>
+        <div class="pricing__stats-card">
+          <div class="pricing__stats-val">{t('home_stats_market_value')}</div>
+          <h3>{t('home_stats_market_label')}</h3>
+          <p>{t('home_stats_market_description')}</p>
+          <p class="pricing__stats-src">{t('home_stats_market_source')}</p>
         </div>
-        <div class="pricing__feature-card">
-          <h3 class="pricing__feature-card-title">
-            {t('pricing_features_price_title')}
-          </h3>
-          <p class="pricing__feature-card-description">
-            {t('pricing_features_price_desc')}
-          </p>
+        <div class="pricing__stats-card">
+          <div class="pricing__stats-val">{t('home_stats_companies_value')}</div>
+          <h3>{t('home_stats_companies_label')}</h3>
+          <p>{t('home_stats_companies_description')}</p>
+          <p class="pricing__stats-src">{t('home_stats_companies_source')}</p>
         </div>
       </div>
     </section>
@@ -388,12 +373,11 @@ const faqItems = [
         const struckMonth = banner.getAttribute('data-struck-month') ?? '24'
         const struckYear = banner.getAttribute('data-struck-year') ?? '20'
         const detailYearly = banner.getAttribute('data-detail-yearly') ?? ''
+        const detailMonthly = banner.getAttribute('data-detail-monthly') ?? ''
 
         const currentEl = banner.querySelector('.pricing__plan-price-amount')
         const struckEl = banner.querySelector('.pricing__plan-price-struck')
-        const detailTopEl = banner.querySelector(
-          '.pricing__plan-price-detail--top'
-        )
+        const detailEl = banner.querySelector('.pricing__plan-price-detail')
 
         if (currentEl) {
           currentEl.textContent = isYearly ? `${yearPrice}€` : `${monthPrice}€`
@@ -401,12 +385,8 @@ const faqItems = [
         if (struckEl) {
           struckEl.textContent = isYearly ? `${struckYear}€` : `${struckMonth}€`
         }
-        if (detailTopEl) {
-          detailTopEl.textContent = isYearly ? detailYearly : '\u00A0'
-          detailTopEl.classList.toggle(
-            'pricing__plan-price-detail--highlight',
-            isYearly
-          )
+        if (detailEl) {
+          detailEl.textContent = isYearly ? detailYearly : detailMonthly
         }
       })
     }

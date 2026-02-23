@@ -4,7 +4,7 @@ Now that you understand what a Deployment is and why it exists, it's time to cre
 
 ## Anatomy of a Deployment Manifest
 
-A Deployment manifest looks very similar to a ReplicaSet manifest , and that's intentional. A Deployment is a thin but powerful wrapper around a ReplicaSet. Here's a complete example:
+A Deployment manifest looks very similar to a ReplicaSet manifest, and that's intentional. A Deployment is a thin but powerful wrapper around a ReplicaSet. Here's a complete example:
 
 ```yaml
 apiVersion: apps/v1
@@ -32,17 +32,17 @@ spec:
 
 Let's walk through each section carefully.
 
-**`apiVersion: apps/v1`:**  Deployments belong to the `apps` API group, introduced as a stable (`v1`) API in Kubernetes 1.9. This is the only version you'll use today; the older `extensions/v1beta1` path was removed years ago.
+**`apiVersion: apps/v1`:** Deployments belong to the `apps` API group, introduced as a stable (`v1`) API in Kubernetes 1.9. This is the only version you'll use today; the older `extensions/v1beta1` path was removed years ago.
 
-**`kind: Deployment`:**  Tells Kubernetes what type of object you're creating.
+**`kind: Deployment`:** Tells Kubernetes what type of object you're creating.
 
-**`metadata.name`:**  The name of the Deployment object itself. This name also becomes the prefix for the ReplicaSets and Pods that the Deployment creates. For example, a Deployment named `web-app` will create ReplicaSets like `web-app-6d4b9c7f8` and Pods like `web-app-6d4b9c7f8-x2pkz`.
+**`metadata.name`:** The name of the Deployment object itself. This name also becomes the prefix for the ReplicaSets and Pods that the Deployment creates. For example, a Deployment named `web-app` will create ReplicaSets like `web-app-6d4b9c7f8` and Pods like `web-app-6d4b9c7f8-x2pkz`.
 
-**`spec.replicas`:**  The desired number of Pod replicas. The Deployment passes this down to its active ReplicaSet.
+**`spec.replicas`:** The desired number of Pod replicas. The Deployment passes this down to its active ReplicaSet.
 
-**`spec.selector`:**  The label selector the Deployment uses to identify the Pods it owns. This must match the labels in `spec.template.metadata.labels`. If they don't match, the API server will reject the manifest.
+**`spec.selector`:** The label selector the Deployment uses to identify the Pods it owns. This must match the labels in `spec.template.metadata.labels`. If they don't match, the API server will reject the manifest.
 
-**`spec.template`:**  The Pod template. Everything under this key describes the Pods that will be created. It has the same structure as a standalone Pod manifest, minus the top-level `apiVersion`, `kind`, and the name (Pods get auto-generated names).
+**`spec.template`:** The Pod template. Everything under this key describes the Pods that will be created. It has the same structure as a standalone Pod manifest, minus the top-level `apiVersion`, `kind`, and the name (Pods get auto-generated names).
 
 :::info
 The `spec.selector` in a Deployment is immutable after creation. If you ever need to change the label selector, you must delete and recreate the Deployment. Plan your label strategy carefully before you go to production.
@@ -58,36 +58,23 @@ You'll notice the manifest above doesn't include a `spec.strategy` section. When
 
 This means during an update, at most 25% of your Pods can be unavailable at any time, and at most 25% extra Pods above the desired count can be created. For a 3-replica Deployment that works out to approximately one Pod unavailable and one Pod extra at any given moment during the rollout. You'll tune these values in a later lesson.
 
-## Applying the Manifest
+## Applying the Manifest: Declarative vs Imperative Creation
 
-Save the YAML above to a file called `deployment.yaml` and apply it:
+Once your manifest is saved to a file (for example `deployment.yaml`), you send it to the cluster. The standard way is **declarative**: you use `kubectl apply -f <file>`. The `apply` subcommand is idempotent—it creates the object if it doesn't exist, or updates it if it does. That's different from `kubectl create`, which fails if the object already exists. In practice, using `apply` consistently means you can re-run the same command as you iterate on your manifest: add a label, change the image, adjust replicas, and apply again. The cluster converges to what you declared.
 
-```bash
-kubectl apply -f deployment.yaml
-# deployment.apps/web-app created
-```
-
-The `apply` subcommand is declarative , it creates the object if it doesn't exist, or updates it if it does. This is different from `kubectl create`, which fails if the object already exists. Using `apply` consistently means you can re-run the same command idempotently as you iterate on your manifest.
+:::tip
+Prefer `kubectl apply` for anything you intend to version-control or reuse. Reserve `kubectl create` for one-off experiments or when you explicitly want to avoid overwriting an existing object.
+:::
 
 ## Inspecting the Hierarchy
 
-One of the most satisfying things about creating a Deployment for the first time is watching the full hierarchy materialize. Run these three commands in sequence:
+One of the most satisfying things about creating a Deployment for the first time is watching the full hierarchy materialize. The Deployment controller creates a ReplicaSet; the ReplicaSet creates the Pods. You can inspect each level.
 
-```bash
-kubectl get deployment web-app
-# NAME      READY   UP-TO-DATE   AVAILABLE   AGE
-# web-app   3/3     3            3           20s
+At the Deployment level, `kubectl get deployment <name>` shows you **READY** (e.g. `3/3`), **UP-TO-DATE** (how many Pods match the current template), and **AVAILABLE** (how many are ready for traffic). Those columns tell you at a glance whether the desired state is met.
 
-kubectl get rs -l app=web
-# NAME                  DESIRED   CURRENT   READY   AGE
-# web-app-6d4b9c7f8    3         3         3       20s
+At the ReplicaSet level, you list ReplicaSets with the same labels as your Deployment (e.g. `app=web`). You'll see one active ReplicaSet whose name is the Deployment name plus a hash. That hash is derived from the Pod template: change the image or the container spec, and a new ReplicaSet appears with a new hash. Kubernetes uses this to distinguish "old" from "new" during rollouts.
 
-kubectl get pods -l app=web
-# NAME                        READY   STATUS    RESTARTS   AGE
-# web-app-6d4b9c7f8-abc12     1/1     Running   0          20s
-# web-app-6d4b9c7f8-def34     1/1     Running   0          20s
-# web-app-6d4b9c7f8-ghi56     1/1     Running   0          20s
-```
+At the Pod level, you list Pods with the same label selector. Each Pod name includes the ReplicaSet hash and a unique suffix. Seeing all three levels—Deployment → ReplicaSet → Pods—confirms that the controller chain is working.
 
 ```mermaid
 graph TB
@@ -106,71 +93,51 @@ graph TB
     style RS fill:#326ce5,color:#fff
 ```
 
-Notice that the ReplicaSet's name is the Deployment's name with a hash appended. That hash is computed from the Pod template contents , it changes whenever the template changes, which is how Kubernetes distinguishes between ReplicaSets representing different versions of your application.
-
 ## Describing the Deployment
 
-For a more detailed view, `kubectl describe` is invaluable:
+For a deeper view than `kubectl get`, use `kubectl describe deployment <name>`. The output is structured into sections that every Kubernetes practitioner should know.
 
-```bash
-kubectl describe deployment web-app
-```
+- **Replicas:** Current counts for ready, available, and up-to-date replicas. If something is wrong, the numbers here often tell you (e.g. desired 3, ready 2).
 
-The output includes several useful sections:
+- **StrategyType:** Confirms `RollingUpdate` and shows the configured `maxUnavailable` and `maxSurge` values.
 
-- **Replicas:**  current counts across ready, available, and up-to-date
-- **StrategyType:**  `RollingUpdate` (and the maxUnavailable/maxSurge values)
-- **Pod Template:**  the full pod spec that this Deployment is managing
-- **Conditions:**  health conditions like `Available` and `Progressing`; a stuck rollout will show a `False` condition here
-- **Events:**  a chronological log of what the Deployment controller has done (scaled up ReplicaSets, etc.)
+- **Pod Template:** The full Pod spec that this Deployment is managing. Handy to verify that the image, labels, and container config are what you expect.
 
-The Events section is particularly useful for debugging. If a rollout is stuck, the events will usually tell you why: image pull failures, insufficient cluster resources, failing readiness probes.
+- **Conditions:** High-level health: `Available` (can the Deployment serve traffic?) and `Progressing` (is a rollout in progress?). A stuck rollout will show one of these as `False` with a reason.
 
-## The Imperative Alternative
+- **Events:** A chronological log of what the Deployment controller did: scaled up a ReplicaSet, scaled down an old one, etc. When a rollout is stuck, the Events section usually explains why—image pull errors, insufficient cluster resources, or failing readiness probes. Get into the habit of scrolling to Events when something doesn't match your expectations.
 
-If you need to create a Deployment quickly , for example, during the CKA exam or when prototyping , you can use the imperative form:
+:::info
+In real clusters, `kubectl describe` and its Events are among the first tools you use to debug Deployments. If Pods are not becoming Ready, the Events will often point you to the exact cause.
+:::
 
-```bash
-kubectl create deployment web-app --image=nginx:1.25 --replicas=3
-```
+## The Imperative Alternative: When and Why
 
-This is fast, but it has limitations: you can't set ports, environment variables, resource requests, volume mounts, or anything else complex through the command line alone. For anything beyond a quick test, always use a YAML manifest.
+Sometimes you need a Deployment in seconds—during the CKA exam, in a demo, or when prototyping. Kubernetes lets you create a Deployment **imperatively** with `kubectl create deployment <name> --image=<image> --replicas=<n>`. No YAML file: the API server creates the object from the flags. It's fast, but limited: you cannot set container ports, environment variables, resource requests, volume mounts, or any non-default strategy through the command line alone. For anything beyond a quick smoke test, use a manifest.
 
-A useful hybrid approach: generate a manifest from the imperative command and then edit it:
-
-```bash
-kubectl create deployment web-app --image=nginx:1.25 --replicas=3 \
-  --dry-run=client -o yaml > deployment.yaml
-```
-
-The `--dry-run=client -o yaml` flags tell kubectl to generate the YAML without sending anything to the API server. You get a ready-to-edit manifest in seconds, rather than writing it from scratch.
+A very useful **hybrid** is to let kubectl generate the YAML for you, then edit it. Using `--dry-run=client -o yaml` with `kubectl create deployment` tells kubectl to build the object in memory and print the YAML without sending anything to the API server. You get a valid, ready-to-edit manifest in one command. You can then add ports, env, resources, and apply the file. This pattern is especially valuable when time is limited (e.g. CKA) or when you want a correct skeleton for Deployments, Services, ConfigMaps, and more without memorizing every field.
 
 :::info
 The `--dry-run=client -o yaml` pattern is extremely valuable during the CKA exam where time is limited. Use it to generate skeleton manifests for Deployments, Services, ConfigMaps, and more, then edit as needed and apply.
 :::
 
-## Checking Deployment Status
+So you have three practical ways to create a Deployment: **declarative** (write a YAML file and `apply` it—best for production and version control), **imperative** (one `kubectl create deployment` command—best for quick tests), and **hybrid** (generate YAML with `create ... --dry-run=client -o yaml`, edit, then `apply`—best when you want speed plus full control). Choose according to context.
 
-After applying a Deployment, it's good practice to wait for the rollout to complete before proceeding:
+## Checking Rollout Status
 
-```bash
-kubectl rollout status deployment/web-app
-# Waiting for deployment "web-app" rollout to finish: 0 of 3 updated replicas are available...
-# Waiting for deployment "web-app" rollout to finish: 1 of 3 updated replicas are available...
-# Waiting for deployment "web-app" rollout to finish: 2 of 3 updated replicas are available...
-# deployment "web-app" successfully rolled out
-```
+After you apply a Deployment (or an update to it), the rollout may take a few seconds or longer. It's good practice to wait until the rollout is complete before moving on—for example before running integration tests or switching traffic. The command for that is `kubectl rollout status deployment/<name>`. It blocks until the Deployment has finished rolling out (all new Pods are up and old ones are terminated, according to the strategy), or until it times out or the rollout fails. In that case it exits with a non-zero code, which is useful in CI/CD: you can run `kubectl apply -f ...` followed by `kubectl rollout status deployment/...` and fail the pipeline if the new version doesn't become fully available.
 
-This command blocks until the rollout is complete (or exits with a non-zero code if it fails or times out). In CI/CD pipelines, this command is often used immediately after `kubectl apply` to ensure the new version is fully up before continuing.
+---
 
 ## Hands-On Practice
 
-Let's build and inspect a Deployment step by step.
+Put the theory into practice with the following steps. Use the manifest from the Anatomy section.
 
 **1. Write the manifest to a file**
 
-```bash
-cat <<EOF > deployment.yaml
+Save the following to `deployment.yaml` (same as the Anatomy section):
+
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -192,7 +159,6 @@ spec:
           image: nginx:1.25
           ports:
             - containerPort: 80
-EOF
 ```
 
 **2. Apply it and wait for the rollout**
@@ -217,6 +183,7 @@ kubectl describe deployment web-app
 ```
 
 Read through the Events section at the bottom. You should see something like:
+
 ```
 Events:
   Type    Reason             Age   From                   Message
@@ -257,4 +224,6 @@ kubectl delete deployment web-app
 kubectl delete -f deployment.yaml  # if needed
 ```
 
+:::tip
 Open the cluster visualizer (telescope icon) after step 2. Expand the Deployment node to see the ReplicaSet and then the three Pod nodes beneath it. Repeat after step 6 to see two more Pods appear under the same ReplicaSet.
+:::

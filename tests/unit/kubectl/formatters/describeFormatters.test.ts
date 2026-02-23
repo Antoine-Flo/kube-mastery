@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   describeConfigMap,
+  describeDeployment,
   describePod,
   describeSecret
 } from '../../../../src/core/kubectl/formatters/describeFormatters'
+import {
+  createDeployment,
+  type DeploymentCondition
+} from '../../../../src/core/cluster/ressources/Deployment'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../src/core/cluster/ressources/Secret'
@@ -433,6 +438,194 @@ describe('describeFormatters', () => {
 
       expect(ipMatch1?.[1]).toBe(ipMatch2?.[1])
       expect(ipMatch1?.[1]).toMatch(/^172\.17\.0\.\d+$/)
+    })
+  })
+
+  describe('describeDeployment', () => {
+    it('should format basic deployment metadata', () => {
+      const deployment = createDeployment({
+        name: 'web-app',
+        namespace: 'default',
+        selector: { matchLabels: { app: 'web-app' } },
+        template: {
+          metadata: { labels: { app: 'web-app' } },
+          spec: {
+            containers: [{ name: 'nginx', image: 'nginx:1.25' }]
+          }
+        },
+        labels: { app: 'web-app' },
+        annotations: { owner: 'team-platform' },
+        creationTimestamp: '2026-02-20T10:00:00.000Z'
+      })
+
+      const result = describeDeployment(deployment)
+
+      expect(result).toContain('Name:             web-app')
+      expect(result).toContain('Namespace:        default')
+      expect(result).toContain('CreationTimestamp:')
+      expect(result).toContain('Labels:           app=web-app')
+      expect(result).toContain('Annotations:      owner=team-platform')
+      expect(result).toContain('Selector:         app=web-app')
+      expect(result).toContain('StrategyType:     RollingUpdate')
+      expect(result).toContain('MinReadySeconds:  0')
+      expect(result).toContain('Pod Template:')
+      expect(result).toContain('Containers:')
+      expect(result).toContain('Image:      nginx:1.25')
+    })
+
+    it('should format replica counters from deployment status', () => {
+      const deployment = {
+        ...createDeployment({
+          name: 'api-app',
+          namespace: 'default',
+          replicas: 3,
+          selector: { matchLabels: { app: 'api-app' } },
+          template: {
+            metadata: { labels: { app: 'api-app' } },
+            spec: {
+              containers: [{ name: 'api', image: 'nginx:latest' }]
+            }
+          }
+        }),
+        status: {
+          replicas: 3,
+          updatedReplicas: 2,
+          availableReplicas: 1,
+          unavailableReplicas: 2
+        }
+      }
+
+      const result = describeDeployment(deployment)
+
+      expect(result).toContain(
+        'Replicas:         3 desired | 2 updated | 3 total | 1 available | 2 unavailable'
+      )
+    })
+
+    it('should format rolling update strategy values', () => {
+      const deployment = createDeployment({
+        name: 'rollout-app',
+        namespace: 'default',
+        selector: { matchLabels: { app: 'rollout-app' } },
+        template: {
+          metadata: { labels: { app: 'rollout-app' } },
+          spec: {
+            containers: [{ name: 'web', image: 'nginx:latest' }]
+          }
+        },
+        strategy: {
+          type: 'RollingUpdate',
+          rollingUpdate: { maxUnavailable: 1, maxSurge: '25%' }
+        }
+      })
+
+      const result = describeDeployment(deployment)
+
+      expect(result).toContain('StrategyType:     RollingUpdate')
+      expect(result).toContain(
+        'RollingUpdateStrategy: 1 max unavailable, 25% max surge'
+      )
+    })
+
+    it('should format Recreate strategy without rolling update line', () => {
+      const deployment = createDeployment({
+        name: 'recreate-app',
+        namespace: 'default',
+        selector: { matchLabels: { app: 'recreate-app' } },
+        template: {
+          metadata: { labels: { app: 'recreate-app' } },
+          spec: {
+            containers: [{ name: 'web', image: 'nginx:latest' }]
+          }
+        },
+        strategy: { type: 'Recreate' }
+      })
+
+      const result = describeDeployment(deployment)
+
+      expect(result).toContain('StrategyType:     Recreate')
+      expect(result).not.toContain('RollingUpdateStrategy:')
+    })
+
+    it('should show <none> fallbacks for missing labels and annotations', () => {
+      const deployment = createDeployment({
+        name: 'no-meta-app',
+        namespace: 'default',
+        selector: { matchLabels: { app: 'no-meta-app' } },
+        template: {
+          spec: {
+            containers: [{ name: 'web', image: 'nginx:latest' }]
+          }
+        }
+      })
+
+      const result = describeDeployment(deployment)
+
+      expect(result).toContain('Labels:           <none>')
+      expect(result).toContain('Annotations:      <none>')
+      expect(result).toContain('Events:             <none>')
+    })
+
+    it('should format template environment variables and conditions', () => {
+      const deploymentConditions: DeploymentCondition[] = [
+        {
+          type: 'Available',
+          status: 'True',
+          reason: 'MinimumReplicasAvailable'
+        },
+        {
+          type: 'Progressing',
+          status: 'True',
+          reason: 'NewReplicaSetAvailable'
+        }
+      ]
+
+      const deployment = {
+        ...createDeployment({
+          name: 'env-app',
+          namespace: 'default',
+          selector: { matchLabels: { app: 'env-app' } },
+          template: {
+            metadata: { labels: { app: 'env-app' } },
+            spec: {
+              containers: [
+                {
+                  name: 'web',
+                  image: 'nginx:latest',
+                  env: [
+                    { name: 'MODE', value: 'prod' },
+                    {
+                      name: 'DB_HOST',
+                      valueFrom: {
+                        configMapKeyRef: { name: 'db-config', key: 'host' }
+                      }
+                    },
+                    {
+                      name: 'DB_PASSWORD',
+                      valueFrom: {
+                        secretKeyRef: { name: 'db-secret', key: 'password' }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }),
+        status: {
+          conditions: deploymentConditions
+        }
+      }
+
+      const result = describeDeployment(deployment)
+
+      expect(result).toContain('Environment:')
+      expect(result).toContain('MODE:  prod')
+      expect(result).toContain("config map 'db-config'")
+      expect(result).toContain("secret 'db-secret'")
+      expect(result).toContain('Conditions:')
+      expect(result).toContain('Available')
+      expect(result).toContain('Progressing')
     })
   })
 

@@ -2,7 +2,7 @@
   <circle cx="160" cy="160" r="150" fill="#111827" stroke="#F59E0B" stroke-width="8" />
   <circle cx="160" cy="160" r="120" fill="#0B1220" stroke="#FBBF24" stroke-width="4" />
   <text x="160" y="130" text-anchor="middle" fill="#FBBF24" font-size="40" font-weight="700" font-family="Arial, sans-serif">
-    60 DAYS
+    30 DAYS
   </text>
   <text x="160" y="175" text-anchor="middle" fill="#F9FAFB" font-size="20" font-weight="600" font-family="Arial, sans-serif" letter-spacing="2">
     MONEY BACK

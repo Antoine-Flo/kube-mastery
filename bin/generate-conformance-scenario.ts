@@ -102,6 +102,7 @@ const createExhaustiveSegments = (): LifecycleSegment[] => {
           ['app-secret']
         ),
         'kubectl create deployment exhaustive-web --image=nginx:latest',
+        'kubectl describe deployment exhaustive-web',
         'kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080',
         'kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date',
         'kubectl get all',
