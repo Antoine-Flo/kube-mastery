@@ -6,9 +6,13 @@ When you create a Service without specifying a type, Kubernetes uses `ClusterIP`
 
 A ClusterIP Service receives a virtual IP address , the "cluster IP" , from a reserved range in the cluster's network configuration (typically something like `10.96.0.0/12`). This IP is special: it doesn't belong to any Node, and no network interface anywhere actually holds it. It exists only in the routing rules programmed by `kube-proxy` on every node. Despite being virtual, it is completely stable , it's assigned when the Service is created and stays the same for the life of the Service.
 
-"ClusterIP" in the name refers to the scope of accessibility: the Service is only reachable from within the cluster. Pods can reach it, other Services can reach it, and anything running inside the cluster's network can reach it. But external clients , your laptop, users on the internet, traffic from outside , cannot reach a ClusterIP Service directly. It's purely for internal cluster communication.
+:::info
+`ClusterIP` is the **default** Service type. Omitting `type:` in a Service manifest gives you a ClusterIP Service.
+:::
 
-This is actually a security feature as much as a design choice. Most microservices should not be directly reachable from the outside world. A database Service, an internal API, a cache , these should only be accessible to other components within the cluster. ClusterIP enforces that boundary by default.
+"ClusterIP" in the name refers to scope: the Service is reachable only from within the cluster. External clients, your laptop, users on the internet, cannot reach it directly.
+
+This is a deliberate security boundary. Databases, caches, and internal APIs should only be accessible to other cluster components, not the outside world. ClusterIP enforces that by default.
 
 ## Creating a ClusterIP Service
 

@@ -2,6 +2,10 @@
 
 Now that you understand what namespaces are and why the built-in ones exist, it is time to get practical. Most real-world Kubernetes work involves switching between namespaces, targeting specific ones for commands, and sometimes querying across all of them at once. This lesson covers the mechanics of working with namespaces day to day , including how to change your default namespace so you stop having to type `-n my-namespace` on every command.
 
+:::info
+Three tools cover most day-to-day namespace navigation: `-n <name>` targets a specific namespace, `-A` queries all namespaces at once, and `kubectl config set-context --current --namespace=<name>` sets your default so you stop repeating `-n` on every command.
+:::
+
 ## Targeting a Specific Namespace
 
 Every kubectl command that works with namespaced resources accepts a `-n` flag (short for `--namespace`) that tells it which namespace to operate in. Without this flag, kubectl targets the namespace configured in your current context (which defaults to `default` unless you have changed it).
@@ -155,7 +159,7 @@ To reach a service in a *different* namespace, you use the fully qualified DNS n
 curl http://my-service.production.svc.cluster.local
 ```
 
-The format is `<service-name>.<namespace>.svc.cluster.local`. The `.svc.cluster.local` suffix is the cluster's internal DNS domain. You can often omit it and use just `<service-name>.<namespace>` (CoreDNS will resolve it), but the full form is the most explicit and reliable.
+The full DNS format is `<service-name>.<namespace>.svc.cluster.local`. You can shorten this to `<service-name>.<namespace>` and CoreDNS will resolve it, but the full form is the most explicit and reliable.
 
 :::info
 The ability to communicate across namespaces via DNS is what allows a shared service (like a database or a logging agent) to be accessed by workloads in different namespaces. If you want to *prevent* cross-namespace communication for security reasons, you need to implement NetworkPolicies , covered in a later lesson.

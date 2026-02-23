@@ -2,6 +2,10 @@
 
 NodePort gets traffic from outside the cluster to your Service, but it asks clients to use awkward port numbers and to know Node IPs , which can change. For production workloads in cloud environments, Kubernetes offers a more elegant solution: the `LoadBalancer` Service type. It automatically provisions a cloud load balancer in front of your cluster and assigns a single, stable, public-facing IP address or hostname that external clients use.
 
+:::info
+`LoadBalancer` builds on top of NodePort and ClusterIP, it creates all three layers and adds a cloud-provisioned external load balancer on top. From a client perspective, it's just one IP.
+:::
+
 ## How LoadBalancer Services Work
 
 The `LoadBalancer` type is an extension of NodePort. When you create a LoadBalancer Service, Kubernetes actually creates all three layers in sequence:

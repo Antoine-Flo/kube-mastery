@@ -2,6 +2,10 @@
 
 Creating namespaces is easy. Knowing *when* and *how* to use them well is a design question that has a meaningful impact on your cluster's maintainability, security, and operational clarity. This lesson explores the most common patterns for namespace usage, the situations where multiple namespaces add real value, and just as importantly, the situations where they add unnecessary complexity.
 
+:::info
+The main use cases for multiple namespaces are: environment separation, team separation, resource quotas, and network isolation. This lesson also covers when a single namespace is the simpler and better choice.
+:::
+
 ## Use Case 1: Environment Separation
 
 One of the most intuitive uses for namespaces is separating environments , development, staging, and production , within the same cluster. Instead of running three separate clusters, you run one and use namespaces to keep the environments apart.
@@ -105,7 +109,11 @@ A single person running a personal Kubernetes cluster does not need three enviro
 
 ## Namespaces Are Not a Complete Security Boundary
 
-This point deserves clear emphasis: namespaces provide **logical isolation**, not security isolation on their own. A pod in namespace A can, by default, make network requests to a pod in namespace B. A user with cluster-admin privileges can read secrets from any namespace. A misbehaving admission controller can affect the whole cluster.
+This point deserves clear emphasis: namespaces provide **logical isolation**, not security isolation on their own. By default:
+
+- A pod in namespace A can make network requests to any pod in namespace B.
+- A user with cluster-admin privileges can read secrets from any namespace.
+- A misbehaving admission controller can affect the whole cluster.
 
 Namespaces are the *attachment point* for security controls, not the controls themselves. The full picture of namespace-level security requires:
 
@@ -219,4 +227,4 @@ kubectl describe namespace backend
 kubectl delete namespace frontend backend shared
 ```
 
-As you practice, think about what structure would make sense for a real project you are working on. The goal of namespaces is to make your cluster *easier* to navigate and operate, not harder. If the structure you design causes you to constantly fight with `-n` flags and cross-namespace complexity, it is probably too granular. Start coarse-grained and split namespaces only when you have a concrete operational reason to do so.
+As you practice, think about what structure would make sense for a real project. The goal of namespaces is to make your cluster *easier* to navigate and operate, not harder. If you constantly fight `-n` flags and cross-namespace complexity, the structure is too granular, start coarse-grained and split only when there is a concrete operational reason.

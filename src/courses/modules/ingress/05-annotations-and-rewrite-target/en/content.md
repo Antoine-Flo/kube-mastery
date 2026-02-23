@@ -1,18 +1,14 @@
 # Ingress Annotations and Rewrite-Target
 
-The Kubernetes Ingress API is intentionally minimal. It covers the essential routing concepts , host-based rules, path-based rules, TLS , but deliberately leaves out the dozens of advanced features that proxy servers offer. Different controllers implement different features in different ways, and the Ingress spec cannot possibly standardize all of them. The solution to this extensibility problem is **annotations**: key-value pairs in the Ingress metadata that pass controller-specific configuration directly to the underlying proxy.
+The Kubernetes Ingress API is intentionally minimal, it covers host-based rules, path-based rules, and TLS, but deliberately leaves out the dozens of advanced features that proxy servers offer. The solution to this extensibility problem is **annotations**: key-value pairs in the Ingress metadata that pass controller-specific configuration directly to the underlying proxy.
 
-## Annotations as Controller-Specific Extensions
-
-Annotations are a general Kubernetes mechanism , every object can carry annotations , but for Ingress they serve a specific purpose: they allow you to pass configuration to the Ingress controller that goes beyond what the Ingress spec supports.
-
-Think of the Ingress spec as a universal language that all controllers understand, and annotations as dialects that are specific to each controller. A configuration option that ingress-nginx reads via an annotation will be silently ignored by Traefik, and vice versa. This is both a strength (no lock-in in the core spec) and a practical consideration (if you switch controllers, you need to translate your annotations).
-
-All ingress-nginx annotations share the prefix `nginx.ingress.kubernetes.io/`. This namespace prefix makes it clear which controller they target. Traefik uses `traefik.io/` prefixed annotations. HAProxy uses `haproxy.org/`.
+:::info
+Think of the Ingress spec as a universal language that all controllers understand, and annotations as dialects specific to each controller. All ingress-nginx annotations share the prefix `nginx.ingress.kubernetes.io/`. Traefik uses `traefik.io/`, HAProxy uses `haproxy.org/`. A configuration option one controller reads will be silently ignored by another.
+:::
 
 ## Common ingress-nginx Annotations
 
-Let's walk through the most useful ingress-nginx annotations you will encounter regularly.
+Here are the most useful ingress-nginx annotations you will encounter regularly.
 
 **`ssl-redirect`** forces all HTTP traffic to redirect to HTTPS. When TLS is configured in the Ingress, this defaults to `"true"`:
 
@@ -36,14 +32,14 @@ annotations:
   nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
 ```
 
-**`rate-limit`** enables basic rate limiting on requests per second. ingress-nginx implements this using the nginx `limit_req` module:
+**`limit-rps`** enables basic rate limiting on requests per second, implemented via the nginx `limit_req` module:
 
 ```yaml
 annotations:
   nginx.ingress.kubernetes.io/limit-rps: "10"
 ```
 
-**`cors-enable`** adds CORS headers automatically, so you do not have to implement CORS in your application:
+**`enable-cors`** adds CORS headers automatically, so you do not have to implement CORS in your application:
 
 ```yaml
 annotations:
@@ -53,11 +49,9 @@ annotations:
 
 ## The Rewrite-Target Annotation
 
-The `rewrite-target` annotation is one of the most commonly needed , and most commonly misunderstood , annotations in ingress-nginx. Understanding it well is worth your time.
+The `rewrite-target` annotation is one of the most commonly needed, and most commonly misunderstood, annotations in ingress-nginx.
 
-**The problem it solves:** Imagine your Ingress exposes the path `/api/v1` to the public, routing requests to your backend API service. However, your API service only knows about paths like `/v1/users`, `/v1/products` , it has no idea it's being served under `/api`. When a request for `/api/v1/users` arrives at the controller and gets forwarded to the backend, the backend receives the full path `/api/v1/users`. The backend tries to find a route for `/api/v1/users` and fails, returning a 404.
-
-What you actually need is for the controller to strip the `/api` prefix before forwarding the request. The backend should receive `/v1/users`, not `/api/v1/users`. This is exactly what `rewrite-target` does.
+**The problem it solves:** your Ingress exposes `/api/v1` to the public, routing requests to your backend API service. But your API only knows about paths like `/v1/users`, it has no idea it's being served under `/api`. When a request for `/api/v1/users` arrives and gets forwarded to the backend, the backend receives the full path `/api/v1/users`, fails to find a route, and returns a 404. What you need is for the controller to strip the `/api` prefix before forwarding. That is exactly what `rewrite-target` does.
 
 A simple rewrite looks like this:
 
@@ -83,11 +77,11 @@ spec:
                   number: 80
 ```
 
-With `rewrite-target: /`, any request to `/api` or `/api/anything` gets rewritten so the backend receives `/` or simply the root path. But this is too aggressive , you lose everything after `/api`.
+With `rewrite-target: /`, any request to `/api` or `/api/anything` gets rewritten so the backend receives `/`. But this is too aggressive, you lose everything after `/api`.
 
 ## Regex Capture Groups for Precise Rewrites
 
-For a more surgical rewrite that preserves the rest of the path, you use a regex in the path and a capture group in the rewrite target. This is where the power really comes in:
+For a more surgical rewrite that preserves the rest of the path, use a regex in the path and a capture group in the rewrite target:
 
 ```yaml
 metadata:
@@ -108,7 +102,7 @@ spec:
                   number: 80
 ```
 
-In this example, the path regex `/api(/|$)(.*)` captures everything after `/api/` in capture group `$2`. The `rewrite-target: /$2` tells nginx to rewrite the path to just `/$2` , the part after the prefix. So a request for `/api/v1/users` gets rewritten to `/v1/users` before reaching the backend.
+The path regex `/api(/|$)(.*)` captures everything after `/api/` in capture group `$2`. The `rewrite-target: /$2` tells nginx to rewrite the path to just `/$2`. So a request for `/api/v1/users` gets rewritten to `/v1/users` before reaching the backend.
 
 ```mermaid
 graph LR
@@ -120,16 +114,6 @@ graph LR
 
 :::warning
 The annotation `nginx.ingress.kubernetes.io/use-regex: "true"` enables regex matching for **all paths** on that Ingress resource. Mixing regex and non-regex paths on the same Ingress can cause unexpected matching behavior. If you need regex, use a dedicated Ingress resource for those paths.
-:::
-
-## Annotations Are Controller-Specific
-
-This cannot be stressed enough: annotations are not portable between controllers. An annotation that works perfectly with ingress-nginx will be silently ignored by Traefik, and might even conflict with a Traefik annotation that happens to have a similar name.
-
-If your team is evaluating multiple Ingress controllers or you are working in a multi-controller environment (e.g., ingress-nginx for public traffic, Traefik for internal), you need to maintain separate Ingress resources for each controller with the appropriate annotations for each.
-
-:::info
-The Gateway API , the successor to Ingress , addresses this portability problem by providing standardized resources (HTTPRoute, GRPCRoute, etc.) with controller-specific extensions moved to separate `Policy` objects. If you're building greenfield infrastructure, it's worth investigating Gateway API as a more future-proof alternative to annotated Ingresses.
 :::
 
 ## Putting It All Together: A Production-Style Ingress
@@ -169,6 +153,10 @@ spec:
 ```
 
 This Ingress forces HTTPS, accepts request bodies up to 10MB, allows 60 seconds for the backend to respond, rate-limits to 20 requests per second per IP, and rewrites `/v1/anything` to `/anything` before sending to the backend.
+
+:::info
+The Gateway API, the successor to Ingress, addresses the annotation portability problem by providing standardized resources (HTTPRoute, GRPCRoute, etc.) with controller-specific extensions moved to separate `Policy` objects. If you're building greenfield infrastructure, it's worth investigating Gateway API as a more future-proof alternative.
+:::
 
 ## Hands-On Practice
 
@@ -211,7 +199,7 @@ INGRESS_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpa
 curl -s -H "Host: app.example.com" http://$INGRESS_IP/api/users | python3 -m json.tool | grep path
 ```
 
-Notice the backend receives `/api/users` , the full path including the prefix.
+Notice the backend receives `/api/users`, the full path including the prefix.
 
 **Step 3: Add rewrite-target to strip the prefix**
 
@@ -245,7 +233,7 @@ Test again:
 curl -s -H "Host: app.example.com" http://$INGRESS_IP/api/users | python3 -m json.tool | grep path
 ```
 
-Now the backend receives `/users` , the prefix has been stripped. The rewrite worked.
+Now the backend receives `/users`, the prefix has been stripped. The rewrite worked.
 
 **Step 4: Test rate limiting**
 

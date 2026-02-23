@@ -26,31 +26,20 @@ Reloading discards any files you created in the terminal. If you wrote a manifes
 
 Not every Kubernetes feature is available here. Some advanced add-ons, storage drivers, or cloud-specific resources require infrastructure beyond a learning environment. When a lesson touches something unavailable, we'll say so explicitly. That said, everything you need for the KCNA, CKAD, and CKA certifications is fully accessible.
 
-## Hands-On 
+## Hands-On
 
-Let's try to create a file. Type (or paste) the following command in the terminal on the right and press Enter:
+Let's try the filesystem. Run these commands one by one:
+
 ```bash
 touch test.txt
-```
-
-Then list the files in the current directory:
-```bash
 ls
-```
-
-To modify the file, you can use the nano editor, you can write anything you want:
-```bash
 nano test.txt
 ```
 
-Then save and exit the editor.
-```bash
-Ctrl + s
-```
+Write anything in the editor, then save and exit with `Ctrl + S`. Finally, display the content:
 
-Finally, display the content of the file:
 ```bash
 cat test.txt
 ```
 
-Next time you don't event have to use `touch` to create a file, you can use `nano` to create and edit in one command. Ready to go ! In the next lesson, we'll look at the Kubernetes certifications so you understand where this Common Core fits into the bigger picture.
+Note that `nano` can create and edit a file in one step, no need for `touch` first. Ready to go! In the next lesson, we'll look at the Kubernetes certifications so you understand where this Common Core fits into the bigger picture.

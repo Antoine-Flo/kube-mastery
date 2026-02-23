@@ -2,9 +2,13 @@
 
 Now that you understand what a Deployment is and why it exists, it's time to create one. In this lesson you'll write a complete Deployment manifest, apply it to the cluster, and explore the objects it creates at each level of the hierarchy. You'll also learn the imperative shortcut for when you need to spin something up quickly.
 
+:::info
+A Deployment manifest looks almost identical to a ReplicaSet manifest, the key addition is `spec.strategy`, which controls how updates are applied.
+:::
+
 ## Anatomy of a Deployment Manifest
 
-A Deployment manifest looks very similar to a ReplicaSet manifest, and that's intentional. A Deployment is a thin but powerful wrapper around a ReplicaSet. Here's a complete example:
+A Deployment is a thin but powerful wrapper around a ReplicaSet. Here's a complete example:
 
 ```yaml
 apiVersion: apps/v1
@@ -60,9 +64,9 @@ This means during an update, at most 25% of your Pods can be unavailable at any 
 
 ## Applying the Manifest: Declarative vs Imperative Creation
 
-Once your manifest is saved to a file (for example `deployment.yaml`), you send it to the cluster. The standard way is **declarative**: you use `kubectl apply -f <file>`. The `apply` subcommand is idempotent—it creates the object if it doesn't exist, or updates it if it does. That's different from `kubectl create`, which fails if the object already exists. In practice, using `apply` consistently means you can re-run the same command as you iterate on your manifest: add a label, change the image, adjust replicas, and apply again. The cluster converges to what you declared.
+Once your manifest is saved to a file (for example `deployment.yaml`), you send it to the cluster. The standard way is **declarative**: `kubectl apply -f <file>` is idempotent, it creates the object if it doesn't exist, or updates it if it does. Unlike `kubectl create` (which fails if the object exists), you can re-run `apply` as you iterate on your manifest: change the image, adjust replicas, apply again. The cluster converges to what you declared.
 
-:::tip
+:::info
 Prefer `kubectl apply` for anything you intend to version-control or reuse. Reserve `kubectl create` for one-off experiments or when you explicitly want to avoid overwriting an existing object.
 :::
 
@@ -117,15 +121,13 @@ Sometimes you need a Deployment in seconds—during the CKA exam, in a demo, or 
 
 A very useful **hybrid** is to let kubectl generate the YAML for you, then edit it. Using `--dry-run=client -o yaml` with `kubectl create deployment` tells kubectl to build the object in memory and print the YAML without sending anything to the API server. You get a valid, ready-to-edit manifest in one command. You can then add ports, env, resources, and apply the file. This pattern is especially valuable when time is limited (e.g. CKA) or when you want a correct skeleton for Deployments, Services, ConfigMaps, and more without memorizing every field.
 
-:::info
-The `--dry-run=client -o yaml` pattern is extremely valuable during the CKA exam where time is limited. Use it to generate skeleton manifests for Deployments, Services, ConfigMaps, and more, then edit as needed and apply.
-:::
-
 So you have three practical ways to create a Deployment: **declarative** (write a YAML file and `apply` it—best for production and version control), **imperative** (one `kubectl create deployment` command—best for quick tests), and **hybrid** (generate YAML with `create ... --dry-run=client -o yaml`, edit, then `apply`—best when you want speed plus full control). Choose according to context.
 
 ## Checking Rollout Status
 
-After you apply a Deployment (or an update to it), the rollout may take a few seconds or longer. It's good practice to wait until the rollout is complete before moving on—for example before running integration tests or switching traffic. The command for that is `kubectl rollout status deployment/<name>`. It blocks until the Deployment has finished rolling out (all new Pods are up and old ones are terminated, according to the strategy), or until it times out or the rollout fails. In that case it exits with a non-zero code, which is useful in CI/CD: you can run `kubectl apply -f ...` followed by `kubectl rollout status deployment/...` and fail the pipeline if the new version doesn't become fully available.
+After you apply a Deployment (or an update to it), the rollout may take a few seconds or longer. It's good practice to wait until the rollout is complete before moving on, for example before running integration tests or switching traffic.
+
+The command is `kubectl rollout status deployment/<name>`. It blocks until all new Pods are up and old ones are terminated according to the strategy, or exits with a non-zero code if the rollout fails or times out. This makes it useful in CI/CD pipelines: run `kubectl apply -f ...` followed by `kubectl rollout status ...` to automatically fail the pipeline if the new version doesn't become healthy.
 
 ---
 
@@ -224,6 +226,6 @@ kubectl delete deployment web-app
 kubectl delete -f deployment.yaml  # if needed
 ```
 
-:::tip
+:::info
 Open the cluster visualizer (telescope icon) after step 2. Expand the Deployment node to see the ReplicaSet and then the three Pod nodes beneath it. Repeat after step 6 to see two more Pods appear under the same ReplicaSet.
 :::

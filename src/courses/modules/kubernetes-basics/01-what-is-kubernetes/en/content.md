@@ -8,23 +8,21 @@ Kubernetes does for containers what an air traffic controller does for planes. I
 
 Containers bundle an application and its dependencies into a single, portable unit that runs consistently wherever it is deployed. A single container on a single machine is easy to manage. The challenge appears when you have hundreds or thousands of containers spread across many machines.
 
-Consider a modern web app: frontend, backend API, database, cache, background workers. Multiply by redundancy and load distribution. Those containers need to communicate, recover when a machine crashes, deploy new versions without downtime, and scale up and down with traffic.
-
-Doing all of that manually is not feasible at scale. You need a system that handles orchestration automatically. That system is Kubernetes.
+Consider a modern web app: frontend, backend API, database, cache, background workers, each multiplied for redundancy. Those containers need to communicate, recover from failures, deploy new versions without downtime, and scale with traffic, doing all of that manually is not feasible at scale. That is the problem Kubernetes solves.
 
 ## What Kubernetes Actually Does
 
 Kubernetes provides a set of capabilities that solve the container management problem:
 
-- **Scheduling** — Decides which machine a container runs on, based on resources, constraints, and policies. You say "I need three copies of this web server"; Kubernetes places them on nodes with enough CPU and memory.
+- **Scheduling** Decides which machine a container runs on, based on resources, constraints, and policies. You say "I need three copies of this web server"; Kubernetes places them on nodes with enough CPU and memory.
 
-- **Self-healing** — Continuously monitors your workloads. If a container crashes, Kubernetes restarts it. If a node goes down, it reschedules those workloads elsewhere. You describe the desired state ("I want three replicas"); Kubernetes keeps it that way.
+- **Self-healing** Continuously monitors your workloads. If a container crashes, Kubernetes restarts it. If a node goes down, it reschedules those workloads elsewhere. You describe the desired state ("I want three replicas"); Kubernetes keeps it that way.
 
-- **Scaling** — Adjusts the number of running containers up or down, manually or automatically (e.g. based on CPU).
+- **Scaling** Adjusts the number of running containers up or down, manually or automatically (e.g. based on CPU).
 
-- **Service discovery and load balancing** — Containers find each other and communicate without hardcoding IPs. Kubernetes assigns stable names and routes traffic.
+- **Service discovery and load balancing**, Containers find each other and communicate without hardcoding IPs. Kubernetes assigns stable names and routes traffic.
 
-- **Configuration management** — Separates config from container images. You inject environment variables, config files, and secrets without rebuilding images.
+- **Configuration management**, Separates config from container images. You inject environment variables, config files, and secrets without rebuilding images.
 
 :::info
 A core idea is *desired state*. Instead of "start container X," you say "I want the cluster to look like this." Kubernetes figures out the steps and keeps it there.
@@ -83,7 +81,7 @@ kubectl cluster-info
 You should see the API server endpoint (the address `kubectl` uses). Then list resource types Kubernetes knows about:
 
 ```bash
-kubectl api-resources | head -20
+kubectl api-resources
 ```
 
 Each row is a type of object Kubernetes can manage. Finally, look at the control plane workloads in `kube-system`:

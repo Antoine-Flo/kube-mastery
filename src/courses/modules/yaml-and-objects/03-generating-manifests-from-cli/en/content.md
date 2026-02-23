@@ -142,11 +142,12 @@ flowchart LR
 
 ## Why This Is So Useful
 
-Before this trick, the alternative was to either memorize every field of every manifest (impractical) or copy-paste from documentation (slow and error-prone). With `--dry-run=client -o yaml`, you get a valid, version-correct YAML that you can trust as a starting point.
+The `--dry-run=client -o yaml` combination solves several real problems at once:
 
-It's also extremely useful during exams and time-limited exercises. Generating a Deployment manifest in two seconds and editing it is much faster than writing one from a blank file. And because `kubectl` generates the manifest based on the actual API schema it knows about, you're guaranteed to start with a structurally correct document.
-
-Another major benefit is that this technique encourages the **declarative workflow**. Instead of running imperative `kubectl create` commands that leave no audit trail, you end up with a YAML file that can be committed to version control, reviewed in a pull request, and applied consistently across multiple environments. The generated YAML is your starting point for infrastructure as code.
+- **No memorization required** Instead of memorizing every field, you get a valid, version-correct YAML you can trust as a starting point.
+- **Speed** Generating a Deployment manifest in two seconds and editing it is much faster than writing from a blank file, especially during exams or time-limited exercises.
+- **Structural correctness** Because `kubectl` generates the manifest from its own API schema, you're guaranteed to start with a structurally valid document.
+- **Declarative workflow** You end up with a YAML file that can be committed to version control, reviewed in a pull request, and applied consistently across environments. The generated YAML is your starting point for infrastructure as code.
 
 ## A Practical Editing Example
 

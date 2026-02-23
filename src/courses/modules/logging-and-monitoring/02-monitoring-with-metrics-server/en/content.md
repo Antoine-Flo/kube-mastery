@@ -1,10 +1,10 @@
 # Monitoring with Metrics Server
 
-Logs tell you what happened. Metrics tell you how much , how much CPU your application is consuming, how much memory it's using, whether it's trending toward a resource limit. Kubernetes has a built-in command for this: `kubectl top`. But `kubectl top` doesn't work out of the box. It requires an add-on called the **Metrics Server** to be installed in your cluster. This lesson covers what Metrics Server is, how to install it, and how to use `kubectl top` effectively.
+Logs tell you what happened. Metrics tell you how much, CPU usage, memory consumption, whether you're trending toward a resource limit. Kubernetes provides `kubectl top` for this, but it requires an add-on called **Metrics Server** to be installed in your cluster. This lesson covers what Metrics Server is, how to install it, and how to use `kubectl top` effectively.
 
 ## Why `kubectl top` Needs Metrics Server
 
-Kubernetes itself doesn't continuously measure CPU and memory usage at the API level , that would require the API server to poll every node and container, which would be expensive and complex. Instead, the kubelet on each node already collects resource metrics for every container it manages (it needs this information internally for things like enforcing resource limits). What Metrics Server does is aggregate those node-level metrics from every kubelet across the cluster and expose them through a standard Kubernetes API called the **Resource Metrics API** (specifically, `metrics.k8s.io`).
+Kubernetes doesn't continuously measure CPU and memory usage at the API level, that would require the API server to poll every node and container, which would be expensive and complex. Instead, the kubelet on each node already collects resource metrics for every container it manages (it needs this information internally for enforcing resource limits). What Metrics Server does is aggregate those per-node metrics from every kubelet and expose them through the **Resource Metrics API** (`metrics.k8s.io`).
 
 `kubectl top` then simply queries this API, just like it queries the standard API server for Pod information. Without Metrics Server, the `metrics.k8s.io` endpoint doesn't exist, and `kubectl top` returns an error like `error: Metrics API not available`.
 
@@ -35,7 +35,7 @@ flowchart LR
     D --> F[Horizontal Pod\nAutoscaler HPA]
 ```
 
-The kubelet on each node exposes a `/metrics/resource` endpoint. Metrics Server scrapes these endpoints every 60 seconds by default, aggregates the data, and makes it available via the standard Kubernetes API. This data is held entirely in memory , Metrics Server does not write to any database or disk. If the Metrics Server Pod is restarted, the metrics history resets.
+The kubelet on each node exposes a `/metrics/resource` endpoint. Metrics Server scrapes these endpoints every 60 seconds by default, aggregates the data, and makes it available via the standard Kubernetes API. This data is held entirely in memory, Metrics Server does not write to any database or disk. If the Metrics Server Pod is restarted, the metrics history resets.
 
 ## `kubectl top nodes`
 
@@ -61,7 +61,7 @@ Each column tells you something useful:
 - **MEMORY(bytes)**: The actual memory in use, shown in mebibytes (Mi) or gibibytes (Gi).
 - **MEMORY%**: Memory usage as a percentage of the node's total allocatable memory.
 
-Notice the `control-plane` node in the example above , it's at 96% memory, which would be cause for concern in a real cluster.
+Notice the `control-plane` node in the example above, it's at 96% memory, which would be cause for concern in a real cluster.
 
 ## `kubectl top pods`
 

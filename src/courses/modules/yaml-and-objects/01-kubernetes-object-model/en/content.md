@@ -20,7 +20,7 @@ Objects describe three broad categories of information:
 
 ## The Four Required Fields
 
-Every Kubernetes manifest , that is, every YAML or JSON file you write to define an object , must contain exactly four top-level fields. No matter what kind of object you are creating, these four fields are always required. Let's go through each one.
+Every Kubernetes manifest, whether YAML or JSON, must contain exactly four top-level fields, regardless of the object type.
 
 ### `apiVersion`
 
@@ -32,9 +32,10 @@ This field specifies the type of object you want to create. `Pod`, `Deployment`,
 
 ### `metadata`
 
-The `metadata` field is where you give your object an identity and context. At minimum, it must contain a `name`. Most objects also live within a `namespace`, which provides a logical boundary for grouping resources. Beyond name and namespace, `metadata` can hold two very useful maps: **labels** and **annotations**.
+The `metadata` field is where you give your object an identity and context. At minimum, it must contain a `name`. Most objects also live within a `namespace`, which provides a logical boundary for grouping resources. Beyond name and namespace, `metadata` supports two key maps:
 
-Labels are short key-value pairs used for identification and selection. For example, you might label all your production Pods with `env: production` or `app: web`. Selectors use labels to find the right objects , a Service uses a label selector to know which Pods to route traffic to. Annotations, on the other hand, are for storing arbitrary non-identifying metadata: tool-specific information, documentation links, or build timestamps.
+- **Labels** Short key-value pairs for identification and selection (e.g. `env: production`, `app: web`). Services use label selectors to find the right Pods to route traffic to.
+- **Annotations** Arbitrary non-identifying metadata: tool-specific information, documentation links, build timestamps, and so on.
 
 ### `spec`
 

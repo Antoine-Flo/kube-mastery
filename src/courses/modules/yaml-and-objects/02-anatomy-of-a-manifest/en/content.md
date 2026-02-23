@@ -119,7 +119,11 @@ Scroll to the bottom of the output to find the complete `status` block. You'll s
 
 ## Why This Design Matters
 
-The spec/status split isn't just an implementation detail , it's a design philosophy. By separating *what you want* from *what exists*, Kubernetes achieves several important properties. First, it makes the system **declarative**: you write down your goal once, and you don't have to worry about the sequence of steps to get there. Second, it makes the system **resilient**: because controllers always compare spec to reality, any deviation , whether caused by a node crash, a network blip, or an accidental manual change , will automatically be corrected. Third, it makes the system **observable**: the `status` field gives you a standardized, machine-readable way to check whether any object is healthy without having to write custom monitoring logic.
+The spec/status split isn't just an implementation detail, it's a design philosophy. By separating *what you want* from *what exists*, Kubernetes achieves three key properties:
+
+- **Declarative**, You write down your goal once and don't worry about the sequence of steps to get there.
+- **Resilient**, Controllers always compare spec to reality, so any deviation, node crash, network blip, or accidental change, is automatically corrected.
+- **Observable**, The `status` field gives you a standardized, machine-readable window into object health, with no custom monitoring logic required.
 
 When you understand that your job is to write `spec` and Kubernetes' job is to reconcile reality toward it, a lot of confusing behaviors suddenly make sense. Why does deleting a Pod not "delete" your application? Because the Deployment's spec still says three replicas , the controller just creates a new Pod to replace it. Why does scaling work instantly? Because you just edited the `spec.replicas` field, and the controller noticed the discrepancy within seconds.
 

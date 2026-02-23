@@ -1,6 +1,6 @@
 # Using PersistentVolumeClaims in Pods
 
-Creating a PersistentVolume and binding a PVC to it is only half the story. The real goal is to make that storage available inside a running container. This lesson covers exactly how to wire a PVC into a Pod , and more importantly, what that gives you in terms of data durability and workload design.
+Creating a PersistentVolume and binding a PVC to it is only half the story. The real goal is to make that storage available inside a running container. This lesson covers exactly how to wire a PVC into a Pod, and more importantly, what that gives you in terms of data durability and workload design.
 
 ## Referencing a PVC in a Pod
 
@@ -32,9 +32,9 @@ spec:
           value: "password"
 ```
 
-The `volumes` section defines a volume named `storage` and points it at the PVC named `my-pvc`. The `volumeMounts` section inside the container tells Kubernetes to mount that volume at `/var/lib/postgresql/data`, which is the path PostgreSQL uses to store its database files. The two are linked by the `name` field , `storage` in the volume list matches `storage` in the volumeMount list.
+The `volumes` section defines a volume named `storage` and points it at the PVC named `my-pvc`. The `volumeMounts` section tells Kubernetes to mount that volume at `/var/lib/postgresql/data`, the path PostgreSQL uses to store its database files. The two are linked by the `name` field: `storage` in the volume list matches `storage` in the volumeMount list.
 
-This pattern of declaring volumes at the Pod level and mounts at the container level allows a single Pod to have multiple volumes (perhaps one for data and one for configuration) and lets multiple containers in the same Pod potentially share the same volume.
+This pattern of declaring volumes at the Pod level and mounts at the container level allows a single Pod to have multiple volumes and lets multiple containers in the same Pod potentially share the same volume.
 
 :::info
 The PVC must exist in the **same namespace** as the Pod. If the Pod is in the `production` namespace, the PVC must also be in the `production` namespace. There is no way to reference a PVC across namespaces.
@@ -44,7 +44,7 @@ The PVC must exist in the **same namespace** as the Pod. If the Pod is in the `p
 
 The most important property of PVC-backed storage is this: when the Pod is deleted and a new Pod is created referencing the same PVC, it gets exactly the same data back. The storage lifecycle is completely independent from the Pod lifecycle.
 
-Think about what that means for a database. Without persistent storage, every time the database Pod crashes or gets rescheduled, you start with an empty database. With a PVC, the data is stored outside the container, on the persistent volume. The container is just software running against that data. A new instance of the same container, pointing at the same volume, picks up exactly where the previous one left off.
+Without persistent storage, every time a database Pod crashes or gets rescheduled, you start with an empty database. With a PVC, the data is stored outside the container on the persistent volume, a new instance of the same container, pointing at the same volume, picks up exactly where the previous one left off.
 
 ```mermaid
 sequenceDiagram
@@ -68,17 +68,15 @@ This is the fundamental promise of persistent storage in Kubernetes. The Pod is 
 
 ## The Namespace Constraint in Practice
 
-Because PVCs are namespaced, the cluster administrator typically provisions PVs (cluster-scoped) and the developer or platform team creates PVCs within the appropriate namespace. If you're deploying a database in the `payments` namespace, your PVC must be in the `payments` namespace too, even if the underlying PV was created without any namespace association.
-
-This is usually not a practical limitation , it's more of a reminder to include the `namespace` field in your PVC manifest, or to ensure `kubectl` is pointed at the right namespace when you create resources.
+Because PVCs are namespaced, the cluster administrator typically provisions PVs (cluster-scoped) while the developer or platform team creates PVCs within the appropriate namespace. If you're deploying a database in the `payments` namespace, your PVC must be there too, even if the underlying PV was created without any namespace association. In practice this just means including the `namespace` field in your PVC manifest and ensuring `kubectl` is pointed at the right namespace.
 
 ## Access Modes and Multi-Pod Usage
 
 A common question is: can multiple Pods use the same PVC at the same time? The answer depends entirely on the **access mode** of the underlying PV.
 
-With **ReadWriteOnce (RWO):**  the most common access mode for cloud block storage , only one node can mount the volume in read-write mode at a time. In practice, this usually means only one Pod can actively use the volume. If you create a second Pod that references the same RWO PVC but it gets scheduled to a different node, that second Pod will fail to start because the volume is already exclusively mounted.
+With **ReadWriteOnce (RWO)**, the most common access mode for cloud block storage, only one node can mount the volume in read-write mode at a time. In practice, this usually means only one Pod can actively use the volume. If you create a second Pod that references the same RWO PVC but it gets scheduled to a different node, that second Pod will fail to start because the volume is already exclusively mounted.
 
-With **ReadWriteMany (RWX):**  available with NFS, CephFS, and other networked storage backends , multiple Pods across multiple nodes can all mount the same PVC simultaneously in read-write mode. This is the right choice for workloads that need to share a filesystem, like a CMS where multiple web servers all need to read and write the same uploaded files directory.
+With **ReadWriteMany (RWX)**, available with NFS, CephFS, and other networked storage backends, multiple Pods across multiple nodes can all mount the same PVC simultaneously in read-write mode. This is the right choice for workloads that need to share a filesystem, like a CMS where multiple web servers all need to read and write the same uploaded files directory.
 
 :::warning
 Using RWO storage with a Deployment that has more than one replica is a common mistake. If the Deployment scales to two replicas and they land on different nodes, the second replica's Pod will get stuck in `ContainerCreating` because the volume cannot be attached to two nodes at once. Use RWX storage or a StatefulSet with per-Pod PVCs for multi-replica stateful workloads.
@@ -90,7 +88,7 @@ When you think about stateful workloads, it's important to choose the right high
 
 **Deployments** work fine with PVCs if you're running a single replica (or using RWX storage). You create the PVC separately and reference it by name in the Deployment's Pod template. All replicas of that Deployment will try to mount the same PVC. For stateless applications that happen to need some shared storage, this can work well.
 
-**StatefulSets** are the designed-for-stateful workload type in Kubernetes. Instead of referencing a single shared PVC, StatefulSets have a `volumeClaimTemplates` field that automatically creates a *separate* PVC for each replica. So a StatefulSet with three replicas would create three PVCs , `data-mydb-0`, `data-mydb-1`, `data-mydb-2` , each bound to its own PV. This is ideal for clustered databases like Cassandra, MySQL replicas, or Elasticsearch nodes, where each instance needs its own independent storage.
+**StatefulSets** are the designed-for-stateful workload type in Kubernetes. Instead of referencing a single shared PVC, StatefulSets have a `volumeClaimTemplates` field that automatically creates a *separate* PVC for each replica. So a StatefulSet with three replicas creates three PVCs, `data-mydb-0`, `data-mydb-1`, `data-mydb-2`, each bound to its own PV. This is ideal for clustered databases (Cassandra, MySQL replicas, Elasticsearch) where each instance needs independent storage.
 
 For this lesson, we focus on the straightforward case: a single Pod referencing a single PVC. StatefulSets and their volume claim templates are covered in a dedicated lesson.
 
@@ -180,7 +178,7 @@ Hello from the first pod
 kubectl delete pod writer-pod
 ```
 
-The Pod is gone. The PVC and PV still exist , you can verify with `kubectl get pvc demo-pvc`.
+The Pod is gone. The PVC and PV still exist, you can verify with `kubectl get pvc demo-pvc`.
 
 **Step 5: Create a new Pod and read the same data**
 

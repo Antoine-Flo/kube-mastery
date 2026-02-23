@@ -2,6 +2,10 @@
 
 In the previous lesson you saw that a Service provides a stable IP and DNS name in front of a dynamic group of Pods. But how does Kubernetes actually keep track of *which* Pod IPs are currently behind a Service? The answer is an object you may never have heard of: the **Endpoints** object (or its modern successor, **EndpointSlices**). Understanding this layer helps you debug Service connectivity issues and opens the door to some advanced patterns.
 
+:::info
+Every Service with a `selector` automatically gets a companion **Endpoints** object, Kubernetes' internal address book, updated in real time as Pods come and go.
+:::
+
 ## The Endpoints Object: Kubernetes' Address Book
 
 When you create a Service with a `selector`, Kubernetes automatically creates a companion Endpoints object with the same name. This object is a flat list of IP addresses and port numbers , one entry for every Pod that currently matches the Service's selector and is considered healthy.
@@ -43,9 +47,10 @@ graph TB
 
 This is one of Kubernetes' most important safety mechanisms, and it's easy to overlook. A Pod is only added to the Endpoints list if it is **Ready:**  meaning it has passed its readiness probe. A Pod that is still starting up, running its initialization logic, or failing its health check will not appear in the Endpoints list and will not receive any traffic, even if it is technically `Running`.
 
-This means that during a rolling update, new Pods don't start receiving production traffic the moment their container starts. They receive traffic only after they've passed their readiness probe , confirming that the application inside is actually ready to handle requests. Old Pods remain in the Endpoints list (and keep serving traffic) until they are actually terminated.
+This ensures safe rolling updates and automatic recovery:
 
-Similarly, if a running Pod starts failing its readiness probe , perhaps it's under heavy load, or a downstream dependency has gone away , Kubernetes removes it from the Endpoints list. Traffic stops going to that Pod while it recovers. If the Pod becomes ready again, it's automatically re-added. This is live, automatic circuit-breaking at the infrastructure level.
+- **During rollouts:** new Pods only receive traffic after their readiness probe passes; old Pods keep serving until they are actually terminated.
+- **During degradation:** a Pod failing its probe is removed from the Endpoints list until it recovers, then automatically re-added, live, infrastructure-level circuit-breaking.
 
 :::info
 If you don't define a readiness probe, Kubernetes assumes your container is ready as soon as it starts. This is fine for simple use cases but can cause traffic errors during rolling updates if your application needs time to warm up. Always define a readiness probe for production services.

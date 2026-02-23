@@ -1,10 +1,14 @@
 # Object Names, UIDs, and DNS Naming Rules
 
-Names might seem like a trivial detail , after all, you just have to call something *something*, right? But in Kubernetes, names are far more than labels of convenience. They participate directly in networking, access control, and the cluster's internal bookkeeping. Getting names right from the start saves you from debugging confusing errors later, and understanding UIDs gives you a clearer picture of how Kubernetes tracks the lifecycle of every object it ever creates.
+Names might seem like a trivial detail, after all, you just have to call something *something*, right? But in Kubernetes, names are far more than labels of convenience. They participate directly in networking, access control, and the cluster's internal bookkeeping.
+
+:::info
+Kubernetes enforces strict naming rules at the API level, an invalid name like `my_app` is rejected before any object is created. A Service name also becomes a DNS hostname, so the rules aren't just conventions: they have real operational consequences.
+:::
 
 ## Names: Your Human-Readable Handle
 
-Every Kubernetes object has a `name` field in its `metadata`. Within a given namespace, no two objects of the **same resource type** can share a name. That means you can have a Deployment named `web-app` and a Service named `web-app` in the same namespace simultaneously , they are different resource types. But you cannot have two Deployments both named `web-app` in `default`. The name must be unique for that type within that scope.
+Every Kubernetes object has a `name` field in its `metadata`. Within a given namespace, no two objects of the **same resource type** can share a name. That means you can have a Deployment named `web-app` and a Service named `web-app` in the same namespace simultaneously, they are different resource types, but you cannot have two Deployments both named `web-app` in `default`.
 
 Across namespaces, names can repeat freely. A Deployment named `backend` can exist in both the `production` and `staging` namespaces without any conflict.
 

@@ -1,16 +1,21 @@
 # Service DNS Records
 
-In the previous lesson you learned how CoreDNS acts as the cluster's internal phone book, and how every Pod is automatically configured to use it. Now let's dig deeper into the actual DNS records that Kubernetes creates for Services , the full record format, the shortcuts that make your life easier, and the special cases that exist for headless Services and external names.
+In the previous lesson you learned how CoreDNS acts as the cluster's internal phone book, and how every Pod is automatically configured to use it. Now let's dig deeper into the actual DNS records that Kubernetes creates for Services, the full record format, the shortcuts that make your life easier, and the special cases for headless Services and external names.
 
 ## The Standard A Record Format
 
-Every Kubernetes Service that has a ClusterIP gets a DNS A record automatically. You never have to create it manually , the moment a Service is created, CoreDNS picks it up from the Kubernetes API and makes it resolvable. The format of the DNS name follows a strict convention:
+Every Kubernetes Service that has a ClusterIP gets a DNS A record automatically. You never have to create it manually, the moment a Service is created, CoreDNS picks it up from the Kubernetes API and makes it resolvable. The format follows a strict convention:
 
 ```
 <service-name>.<namespace>.svc.cluster.local
 ```
 
-Let's unpack each segment. The `<service-name>` part is exactly the `metadata.name` of your Service object , the same name you use in `kubectl get svc`. The `<namespace>` segment is the namespace the Service lives in. The `svc` segment is a fixed label that distinguishes Service records from Pod records (which use `pod` instead). Finally, `cluster.local` is the cluster domain.
+Each segment has a specific role:
+
+- `<service-name>` the `metadata.name` of your Service object, the same name you use in `kubectl get svc`.
+- `<namespace>` the namespace the Service lives in.
+- `svc` a fixed label that distinguishes Service records from Pod records (which use `pod` instead).
+- `cluster.local` the cluster domain.
 
 As a concrete example: if you have a Service named `web` in the `production` namespace, its full DNS name is `web.production.svc.cluster.local`. Any Pod in any namespace in the cluster can resolve that name and reach the Service.
 
@@ -18,9 +23,9 @@ As a concrete example: if you have a Service named `web` in the `production` nam
 
 You rarely need to type the full DNS name. Kubernetes sets up the search domain list in each Pod's `/etc/resolv.conf` so that short names resolve automatically.
 
-If your Pod is in the same namespace as the Service you want to reach, the shortest possible name just works. A Pod in the `production` namespace can reach `web.production.svc.cluster.local` simply by using the name `web`. The resolver tries `web.production.svc.cluster.local` first (by appending the search domain `production.svc.cluster.local`), finds it, and returns the IP.
+If your Pod is in the same namespace as the Service, the shortest possible name just works. A Pod in the `production` namespace can reach `web.production.svc.cluster.local` simply by using the name `web`, the resolver tries `web.production.svc.cluster.local` first, finds it, and returns the IP.
 
-If your Pod is in a different namespace, the short name alone is not enough. A Pod in the `staging` namespace trying to connect to `web` would resolve to `web.staging.svc.cluster.local`, which is a different Service (or a non-existent one). To cross namespace boundaries, you need to include at least the namespace: `web.production`. The resolver expands this to `web.production.svc.cluster.local` and finds the right Service.
+If your Pod is in a different namespace, the short name alone is not enough. A Pod in the `staging` namespace trying to connect to `web` would resolve to `web.staging.svc.cluster.local`, a different Service, or a non-existent one. To cross namespace boundaries, include at least the namespace: `web.production`. The resolver expands this to `web.production.svc.cluster.local` and finds the right Service.
 
 ```mermaid
 graph TD
@@ -38,7 +43,7 @@ A best practice in production environments is to always use the full `<service>.
 
 ## ExternalName Services: CNAME Records
 
-Not every Service in Kubernetes points to Pods inside the cluster. An **ExternalName** Service is a special type that maps a Kubernetes Service name to an external DNS name. Instead of creating an A record pointing to a ClusterIP, Kubernetes creates a CNAME record that points to the external hostname.
+Not every Service in Kubernetes points to Pods inside the cluster. An **ExternalName** Service maps a Kubernetes Service name to an external DNS name. Instead of creating an A record pointing to a ClusterIP, Kubernetes creates a CNAME record pointing to the external hostname.
 
 For example, suppose you have a managed database at `mydb.us-east-1.rds.amazonaws.com`. You can create an ExternalName Service:
 
@@ -53,19 +58,21 @@ spec:
   externalName: mydb.us-east-1.rds.amazonaws.com
 ```
 
-Now any Pod in the cluster can connect to `database.production.svc.cluster.local` (or just `database` from within the `production` namespace), and DNS will return a CNAME pointing to `mydb.us-east-1.rds.amazonaws.com`. The beauty of this pattern is that you can change the underlying external endpoint without updating any application configuration , just update the ExternalName Service.
+Now any Pod in the cluster can connect to `database.production.svc.cluster.local` (or just `database` from within the `production` namespace), and DNS will return a CNAME pointing to `mydb.us-east-1.rds.amazonaws.com`. The beauty of this pattern is that you can change the underlying external endpoint without updating any application configuration, just update the ExternalName Service.
 
 :::warning
-ExternalName Services do not provide any proxy or load balancing. They are purely a DNS alias. This means features like session affinity, connection tracking, and cluster-level health checking do not apply. Also, ExternalName Services do not support port remapping.
+ExternalName Services do not provide any proxy or load balancing. They are purely a DNS alias. Features like session affinity, connection tracking, and cluster-level health checking do not apply. ExternalName Services also do not support port remapping.
 :::
 
 ## Headless Services: Multiple A Records
 
-A **headless Service** is created by setting `spec.clusterIP: None`. This tells Kubernetes not to assign a virtual ClusterIP to the Service. Instead of a single stable IP, DNS returns multiple A records , one for each Pod IP that matches the Service's selector.
+A **headless Service** is created by setting `spec.clusterIP: None`. This tells Kubernetes not to assign a virtual ClusterIP. Instead of a single stable IP, DNS returns multiple A records, one for each Pod IP that matches the Service's selector.
 
-This is fundamentally different from a normal Service. With a normal Service, DNS returns one IP (the ClusterIP) and then `kube-proxy` handles load balancing transparently. With a headless Service, DNS itself returns all the Pod IPs, and the client is responsible for choosing which one to connect to. This gives applications direct access to individual Pod IPs, bypassing the virtual ClusterIP layer entirely.
+This is fundamentally different from a normal Service. With a normal Service, DNS returns one IP (the ClusterIP) and `kube-proxy` handles load balancing transparently. With a headless Service, DNS returns all the Pod IPs directly, and the client is responsible for choosing which one to connect to. Use cases include:
 
-The use cases for headless Services include stateful applications where each Pod is distinct (like a database cluster where you always want to write to Pod 0), client-side load balancing where the application manages its own connection pool, and service discovery systems that need to know about all backing instances, not just a single virtual endpoint.
+- **Stateful applications** where each Pod is distinct (e.g. a database cluster where you always write to Pod 0).
+- **Client-side load balancing** where the application manages its own connection pool.
+- **Service discovery** systems that need to know about all backing instances, not just a single virtual endpoint.
 
 ```mermaid
 graph LR
@@ -92,13 +99,13 @@ The format for an SRV record is:
 _<port-name>._<protocol>.<service-name>.<namespace>.svc.cluster.local
 ```
 
-For example, if you have a Service named `api` in the `default` namespace with a named port `http` using the TCP protocol, the SRV record would be:
+For example, if you have a Service named `api` in the `default` namespace with a named port `http` over TCP, the SRV record would be:
 
 ```
 _http._tcp.api.default.svc.cluster.local
 ```
 
-Querying this record returns both the target hostname and the port number. Most application code does not query SRV records directly, but gRPC clients, some service mesh implementations, and DNS-based service discovery tools (like Consul-compatible clients) use them extensively.
+Querying this record returns both the target hostname and the port number. Most application code does not query SRV records directly, but gRPC clients, some service mesh implementations, and DNS-based service discovery tools use them extensively.
 
 ## Hands-On Practice
 
@@ -151,7 +158,7 @@ Address 1: 10.96.xxx.xxx web.blue.svc.cluster.local
 kubectl run test --image=busybox --rm -it --restart=Never -n blue -- nslookup web
 ```
 
-This should resolve to the `blue` namespace's `web` Service , the short name works because the search domain `blue.svc.cluster.local` is tried first.
+This should resolve to the `blue` namespace's `web` Service, the short name works because the search domain `blue.svc.cluster.local` is tried first.
 
 **Step 5: Reach the green namespace from the blue namespace**
 
@@ -165,7 +172,7 @@ Name:      web.green
 Address 1: 10.96.yyy.yyy web.green.svc.cluster.local
 ```
 
-Notice that `web.green` resolves to a different IP than `web` , it's the Service in the `green` namespace.
+Notice that `web.green` resolves to a different IP than `web`, it's the Service in the `green` namespace.
 
 **Step 6: Create and inspect a headless Service**
 

@@ -1,32 +1,34 @@
 # What Is Ingress?
 
-As soon as a Kubernetes application needs to be accessed from the outside world, you need a strategy for getting external traffic into your cluster. For simple cases, a Service of type `LoadBalancer` does the job. But once your application grows beyond a single component, the LoadBalancer-per-Service approach starts to show its cracks , and that is exactly the problem Ingress was designed to solve.
+As soon as a Kubernetes application needs to be accessed from the outside world, you need a strategy for getting external traffic into your cluster. For simple cases, a Service of type `LoadBalancer` does the job. But once your application grows beyond a single component, the LoadBalancer-per-Service approach starts to show its cracks, and that is exactly the problem Ingress was designed to solve.
 
 ## The Problem: One LoadBalancer per Service
 
 Imagine a typical web application composed of three separate Services: a `frontend` that serves the React app, an `api` that handles business logic, and an `auth` service that manages login and tokens. If you expose each with a `LoadBalancer` Service, you get three separate external IP addresses and three separate cloud load balancers.
 
-This is expensive. Cloud providers charge by the hour for load balancers, and at scale this cost adds up quickly. But the expense is only part of the problem. You now also have three different hostnames or IP addresses to manage, three different TLS certificates to provision and renew, and three different sets of routing rules to maintain. Your DNS configuration becomes complex. Your clients need to know which endpoint to talk to for which purpose. Operations becomes a headache.
+This approach gets expensive fast, and cost is only part of the problem:
 
-What you really want is a single entry point , one external IP, one load balancer , that is smart enough to route traffic to the right backend Service based on what the client is asking for. That is exactly what Ingress provides.
+- Cloud providers charge by the hour for load balancers; at scale this adds up quickly.
+- You now manage three different hostnames or IP addresses, three TLS certificates, and three sets of routing rules.
+- DNS configuration grows complex, and clients need to know which endpoint to use for which purpose.
+
+What you really want is a single entry point, one external IP, one load balancer, smart enough to route traffic to the right backend Service based on what the client is asking for. That is exactly what Ingress provides.
 
 ## What Ingress Is
 
-Ingress is a Kubernetes API object that defines a set of HTTP and HTTPS routing rules. Think of it as a traffic director that sits in front of your Services. You declare the rules , "requests for `app.example.com/api` go to the `api-service`; requests for `app.example.com/` go to the `frontend-service`" , and the Ingress resource captures those rules in a structured, version-controlled Kubernetes object.
+Ingress is a Kubernetes API object that defines a set of HTTP and HTTPS routing rules. Think of it as a traffic director that sits in front of your Services. You declare the rules, "requests for `app.example.com/api` go to the `api-service`; requests for `app.example.com/` go to the `frontend-service`", and the Ingress resource captures those rules in a structured, version-controlled Kubernetes object.
 
-A helpful analogy: an Ingress is like the receptionist at a large hotel. When guests arrive at the front entrance, they do not each get their own door , there is one entrance for everyone. The receptionist looks at who the guest is and what they need, then directs them: "You are here for the conference? Room 201. You want the restaurant? Down the hall on the left." One entrance, one receptionist, many destinations. The hotel lobby is the Ingress, the receptionist is the Ingress controller (more on that in the next lesson), and the conference rooms and restaurant are your backend Services.
+A helpful analogy: an Ingress is like the receptionist at a large hotel. When guests arrive at the front entrance, they do not each get their own door, there is one entrance for everyone. The receptionist looks at who the guest is and what they need, then directs them: "You are here for the conference? Room 201. You want the restaurant? Down the hall on the left." One entrance, one receptionist, many destinations. The hotel lobby is the Ingress, the receptionist is the Ingress controller (more on that in the next lesson), and the conference rooms and restaurant are your backend Services.
 
 ## What Ingress Can Do
 
-Ingress enables several powerful routing capabilities that plain Services do not offer.
+Ingress enables several powerful routing capabilities that plain Services do not offer:
 
-**Host-based routing** lets you use different domain names to reach different Services, all through a single entry point. Requests to `api.example.com` go to your API service. Requests to `app.example.com` go to your frontend. Both domains share the same external IP and load balancer.
+- **Host-based routing**, Different domain names reach different Services through a single entry point. Requests to `api.example.com` go to your API service; requests to `app.example.com` go to your frontend, both sharing the same external IP and load balancer.
+- **Path-based routing**, Traffic is split by URL path. `example.com/api` goes to the API service, `example.com/` goes to the frontend, all on the same hostname.
+- **TLS termination**, The Ingress controller handles HTTPS on behalf of your backend Services. Your backend Pods serve plain HTTP internally; the controller manages certificates and the secure connection with clients.
 
-**Path-based routing** lets you split traffic based on the URL path. Requests to `example.com/api` can go to your API service, while requests to `example.com/` go to the frontend , all on the same hostname.
-
-**TLS termination** allows the Ingress controller to handle HTTPS on behalf of your backend Services. Your backend Pods can serve plain HTTP internally, and the Ingress controller manages the certificates and the secure connection with clients.
-
-These three capabilities together mean you can run a complex multi-service application with a single external load balancer, a single external IP, and a single TLS certificate.
+Together, these three capabilities let you run a complex multi-service application with a single external load balancer, a single external IP, and a single TLS certificate.
 
 ```mermaid
 graph TD
@@ -45,9 +47,9 @@ graph TD
 
 ## What Ingress Does Not Do on Its Own
 
-Here is a critical point that trips up many beginners: **an Ingress resource is just a set of rules stored in etcd**. By itself it does nothing. Creating an Ingress object without an Ingress controller is like writing a recipe without having a kitchen , the instructions exist, but nothing gets cooked.
+Here is a critical point that trips up many beginners: **an Ingress resource is just a set of rules stored in etcd**. By itself it does nothing. Creating an Ingress object without an Ingress controller is like writing a recipe without having a kitchen, the instructions exist, but nothing gets cooked.
 
-You need an **Ingress controller** to actually process and implement those rules. The controller is a separate software component , typically a Pod running nginx, Traefik, or another proxy , that watches your Ingress resources and configures the underlying proxy to enforce them. We will cover Ingress controllers in the very next lesson.
+You need an **Ingress controller** to actually process and implement those rules. The controller is a separate software component, typically a Pod running nginx, Traefik, or another proxy, that watches your Ingress resources and configures the underlying proxy to enforce them. We will cover Ingress controllers in the very next lesson.
 
 :::info
 Kubernetes intentionally separates the Ingress resource (the what) from the Ingress controller (the how). This design lets you swap out the controller implementation without changing your application's Ingress manifests. You could migrate from nginx to Traefik, and your Ingress YAML files stay the same.
@@ -55,12 +57,12 @@ Kubernetes intentionally separates the Ingress resource (the what) from the Ingr
 
 ## The Economics: One Load Balancer for Everything
 
-The financial argument for Ingress is compelling. With the Ingress pattern, you deploy one LoadBalancer Service that sits in front of the Ingress controller. All external traffic flows through that single load balancer. The Ingress controller then routes internally to the right Service using cluster-internal networking , which costs nothing extra.
+With the Ingress pattern, you deploy one `LoadBalancer` Service in front of the Ingress controller. All external traffic flows through that single load balancer; the controller then routes internally to the right Service using cluster-internal networking, which costs nothing extra.
 
-Compare: without Ingress, 10 Services means 10 cloud load balancers. With Ingress, 10 Services (or 100) still means one cloud load balancer. The Ingress controller handles all the internal routing efficiently, and the only external resource you pay for is the single LB in front.
+Without Ingress, 10 Services means 10 cloud load balancers. With Ingress, 10 Services (or 100) still means one.
 
 :::warning
-Ingress only handles HTTP and HTTPS traffic (Layer 7). If you need to expose non-HTTP services , such as a raw TCP database connection, a UDP service, or a gRPC service that requires more advanced configuration , you will need other approaches: a plain `LoadBalancer` Service, or controller-specific annotations/extensions.
+Ingress only handles HTTP and HTTPS traffic (Layer 7). If you need to expose non-HTTP services, such as a raw TCP database connection, a UDP service, or a gRPC service that requires more advanced configuration, you will need other approaches: a plain `LoadBalancer` Service, or controller-specific annotations/extensions.
 :::
 
 ## Hands-On Practice
@@ -140,7 +142,7 @@ Rules:
                     /      frontend-service:80
 ```
 
-Notice the `ADDRESS` field is likely empty , because without an Ingress controller, no one is assigning an external IP to this Ingress. The rules are stored and visible, but not yet enforced. This demonstrates the separation between the Ingress resource and the controller.
+Notice the `ADDRESS` field is likely empty, because without an Ingress controller, no one is assigning an external IP to this Ingress. The rules are stored and visible, but not yet enforced. This demonstrates the separation between the Ingress resource and the controller.
 
 **Step 5: Check Ingress classes available**
 

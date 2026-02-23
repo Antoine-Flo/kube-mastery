@@ -1,26 +1,22 @@
 # Ingress Controllers
 
-In the previous lesson you learned that an Ingress resource is just a declaration of routing rules , a piece of configuration stored in etcd. By itself it has no effect. The component that reads those rules and actually implements them is the **Ingress controller**, and understanding how it works is essential before you can use Ingress in practice.
+In the previous lesson you learned that an Ingress resource is just a declaration of routing rules, a piece of configuration stored in etcd. By itself it has no effect. The component that reads those rules and actually implements them is the **Ingress controller**, and understanding how it works is essential before you can use Ingress in practice.
 
-## The Ingress Controller Is Not Built In
-
-This surprises many people coming from other platforms: Kubernetes does not ship with an Ingress controller. Out of the box, creating Ingress resources in a fresh cluster does nothing. The Kubernetes project deliberately made this decision to avoid being opinionated about which proxy or load balancing technology you should use. Different organizations have different needs, and there is a rich ecosystem of Ingress controllers to choose from.
-
-You are responsible for installing an Ingress controller into your cluster before Ingress resources have any effect. On managed Kubernetes platforms (GKE, EKS, AKS), the cloud provider typically offers a managed controller that is either pre-installed or easily enabled. On self-managed clusters, you install one yourself.
+:::info
+Kubernetes does not ship with a built-in Ingress controller. This is an intentional design choice: different organizations have different needs, and there is a rich ecosystem of controllers to choose from. You are responsible for installing one before Ingress resources have any effect.
+:::
 
 ## Popular Ingress Controllers
 
-The ecosystem of Ingress controllers is large, but a handful stand out as the most commonly used.
+The ecosystem is large, but a handful stand out as the most commonly used:
 
-**ingress-nginx** is the most widely deployed open-source Ingress controller. It uses nginx as the underlying proxy, is maintained by the Kubernetes community (separate from the nginx company's own controller), and supports a very rich set of features via annotations. If you are new to Ingress and not sure what to use, ingress-nginx is a solid default choice.
+- **ingress-nginx** The most widely deployed open-source controller, maintained by the Kubernetes community. Uses nginx as the underlying proxy and supports a rich set of features via annotations. Solid default choice if you are not sure what to use.
+- **Traefik** A cloud-native proxy built with Kubernetes in mind from the start. Clean configuration model, excellent web dashboard, and tight integration with Let's Encrypt for automatic TLS.
+- **HAProxy Ingress** Uses HAProxy under the hood, known for extreme performance and fine-grained connection control. Often chosen for high-throughput production workloads.
+- **Contour** Uses Envoy as the proxy, developed by the VMware/Broadcom team. Strong support for advanced HTTP features and the reference implementation for the Gateway API (the successor to Ingress).
+- **Cloud-managed controllers**, The AWS Load Balancer Controller (ALBs/NLBs), GKE Ingress controller (Google Cloud Load Balancers), and Azure Application Gateway Ingress Controller all integrate deeply with their respective clouds, automatically provisioning cloud-native load balancers from Ingress resources.
 
-**Traefik** is a cloud-native proxy and load balancer that was built with Kubernetes in mind from the start. It has a clean, modern configuration model and an excellent web dashboard. Traefik is popular in environments that use Docker or want tight integration with Let's Encrypt for automatic TLS.
-
-**HAProxy Ingress** uses HAProxy as the underlying proxy, which is known for extreme performance and fine-grained connection control. It is often chosen for high-throughput production workloads.
-
-**Contour** uses Envoy as the underlying proxy and is developed by the VMware/Broadcom team. It offers strong support for more advanced HTTP features and is the reference implementation for the Gateway API (the successor to Ingress).
-
-**Cloud-managed controllers** include the AWS Load Balancer Controller (which provisions ALBs and NLBs), the GKE Ingress controller (which provisions Google Cloud Load Balancers), and the Azure Application Gateway Ingress Controller. These integrate deeply with their respective clouds, automatically provisioning cloud-native load balancers based on Ingress resources.
+On managed Kubernetes platforms (GKE, EKS, AKS), the cloud provider typically offers a managed controller that is either pre-installed or easily enabled. On self-managed clusters, you install one yourself.
 
 ## How an Ingress Controller Works
 
@@ -44,7 +40,7 @@ The controller Pod is exposed via a Service of type `LoadBalancer` (or `NodePort
 
 ## Installing ingress-nginx
 
-The ingress-nginx controller can be installed with a single `kubectl apply` command using the official manifest. The exact manifest URL depends on your environment , cloud vs. bare metal:
+The ingress-nginx controller can be installed with a single `kubectl apply` command using the official manifest. The exact manifest URL depends on your environment:
 
 For cloud environments (where LoadBalancer Services work):
 
@@ -87,7 +83,7 @@ The ingress-nginx controller maintained by the Kubernetes community lives at `ku
 
 ## The `ingressClassName` Field
 
-When your cluster has multiple Ingress controllers installed , for example, ingress-nginx for public traffic and a cloud-native controller for internal traffic , you need a way to tell each Ingress resource which controller should handle it. That is what `ingressClassName` is for.
+When your cluster has multiple Ingress controllers installed, for example, ingress-nginx for public traffic and a cloud-native controller for internal traffic, you need a way to tell each Ingress resource which controller should handle it. That is what `ingressClassName` is for.
 
 Each Ingress controller creates an **IngressClass** object when it is installed. An IngressClass is a simple Kubernetes object that represents a class of Ingress that a particular controller can handle. When you create an Ingress resource, you set `spec.ingressClassName` to the name of the IngressClass you want to use:
 
@@ -98,7 +94,7 @@ spec:
     - ...
 ```
 
-If you omit `ingressClassName`, some controllers will claim all Ingresses without a class (depending on their configuration), while others will ignore them. To avoid ambiguity , especially in clusters with multiple controllers , always specify `ingressClassName` explicitly.
+If you omit `ingressClassName`, some controllers will claim all Ingresses without a class (depending on their configuration), while others will ignore them. To avoid ambiguity, especially in clusters with multiple controllers, always specify `ingressClassName` explicitly.
 
 You can mark one IngressClass as the cluster default using the annotation `ingressclass.kubernetes.io/is-default-class: "true"`. With a default class set, Ingress resources that omit `ingressClassName` will automatically be assigned to that class.
 

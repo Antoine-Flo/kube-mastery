@@ -12,11 +12,9 @@ Welcome and thank you so much for using KubeMastery. We work hard to make a plea
 
 Think back to the first time you learned to ride a bicycle. You probably didn't master it by reading a manual. You got on the bike, wobbled, fell a few times, and eventually found your balance. Kubernetes is no different. The fastest path to real understanding is to type commands, watch what happens, and build muscle memory along the way.
 
-That's exactly what KubeMastery is built for. Every lesson is paired with a live environment so you can immediately apply what you learn. Here's a quick tour so you know where everything is.
-
 ## Navigating the Interface
 
-The screen is split into two panels. The **left panel** is where you are right now, displaying lessons in order, organized into modules. Work through them in sequence, especially if Kubernetes is new to you. On the bottom left of you screen you'll find a button to collapse the course outline.
+The screen is split into two panels. The **left panel** is where you are right now, displaying lessons in order, organized into modules. Work through them in sequence, especially if Kubernetes is new to you. On the bottom left of your screen you'll find a button to collapse the course outline.
 
 The **right panel** is a fully functional terminal connected to a simulated Kubernetes cluster. Below the terminal you'll find two icons: 
 - The **telescope icon** opens the cluster visualizer, a live diagram that shows your nodes, Pods, and containers updating in real time. It's a great way to see the effect of your commands visually, for example watching three Pods appear the moment you create a Deployment. You can hover the visualizer to see the details of the objects.
@@ -25,7 +23,6 @@ The **right panel** is a fully functional terminal connected to a simulated Kube
 :::info
 On mobile, not every keyboard works well with the terminal. **Gboard** works reliably if you need to practice on the go.
 :::
-
 
 ## Hands-On Practice
 

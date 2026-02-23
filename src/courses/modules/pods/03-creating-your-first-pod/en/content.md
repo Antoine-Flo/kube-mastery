@@ -1,6 +1,6 @@
 # Creating Your First Pod
 
-There are two fundamental ways to create resources in Kubernetes: the **imperative** approach and the **declarative** approach. Understanding both , when to use each, and what happens under the hood either way , is a key skill for any Kubernetes practitioner. In this lesson, we'll create Pods using both methods, observe how they come to life in the cluster, and trace the full journey from your command to a running container.
+There are two fundamental ways to create resources in Kubernetes: the **imperative** approach and the **declarative** approach. Understanding both, when to use each, and what happens under the hood, is a key skill for any Kubernetes practitioner. In this lesson, we'll create Pods using both methods, observe how they come to life in the cluster, and trace the full journey from your command to a running container.
 
 ## The Imperative Approach: `kubectl run`
 
@@ -10,9 +10,7 @@ The imperative approach means issuing a direct command to Kubernetes: "Create th
 kubectl run nginx-pod --image=nginx:1.25
 ```
 
-That's it. One command, one Pod. Kubernetes receives the instruction, creates the Pod object in etcd, and the machinery to actually run it starts immediately.
-
-The `kubectl run` command has a few commonly used flags worth knowing:
+That's it. One command, one Pod. The `kubectl run` command has a few commonly used flags worth knowing:
 
 ```bash
 # Run with a specific port documented on the container
@@ -25,7 +23,9 @@ kubectl run nginx-pod --image=nginx:1.25 --labels="app=web,tier=frontend"
 kubectl run debug-pod --image=busybox:1.36 --command -- sh -c "sleep 3600"
 ```
 
-The imperative approach has one significant downside: **it leaves no record**. There is no file you can commit to version control, no history of exactly what was applied. It's perfect for throwaway experimentation but not for production workflows.
+:::warning
+The imperative approach leaves no record. There is no file you can commit to version control, no history of exactly what was applied. It's perfect for throwaway experimentation but not for production workflows.
+:::
 
 ## The Declarative Approach: `kubectl apply -f`
 
@@ -68,19 +68,7 @@ Save this as `my-first-pod.yaml` and apply it:
 kubectl apply -f my-first-pod.yaml
 ```
 
-You'll see output like:
-
-```
-pod/my-first-pod created
-```
-
-If you run the same command again without changing the file:
-
-```
-pod/my-first-pod unchanged
-```
-
-Kubernetes is smart about idempotency , it only acts when there's something to change.
+If you run the same command again without changing the file, Kubernetes responds with `pod/my-first-pod unchanged`, it only acts when there's something to change.
 
 :::info
 A key benefit of `kubectl apply` over `kubectl create` is that `apply` will **update** an existing resource if you change the manifest and re-run the command. `kubectl create` will fail if the object already exists. For this reason, `kubectl apply` is the standard command for both initial creation and subsequent updates.
@@ -114,23 +102,19 @@ sequenceDiagram
     Kubelet->>API: Update Pod status: Running
 ```
 
-Let's walk through each step:
+Each step in sequence:
 
-**1. Validation.** The API server receives your request, checks that you have permission to create a Pod in this namespace, and validates the manifest against the Pod schema. If anything is missing or malformed, it rejects the request immediately with a descriptive error message.
-
-**2. Storage.** If the manifest is valid, the Pod object is written to etcd. At this point, the Pod is in the `Pending` phase. It exists as an object, but no node has been assigned and no container is running yet.
-
-**3. Scheduling.** The scheduler is watching the API server for newly created Pods that don't yet have a `nodeName` assigned. It picks up your Pod, evaluates all available nodes (checking resource availability, node selectors, taints, etc.), scores them, picks the best one, and writes the chosen node name back to the Pod object.
-
-**4. Kubelet.** The kubelet on the selected node is also watching the API server for Pods that are assigned to its node. It picks up the Pod, instructs the container runtime (containerd or another CRI-compatible runtime) to pull the image if it's not already cached, and creates and starts the container.
-
-**5. Status update.** Once the container is running, the kubelet updates the Pod's `status` field in etcd, setting the phase to `Running` and populating the container state. From now on, the kubelet continues monitoring the container and reporting its health back to the API server.
+1. **Validation** The API server checks your permissions and validates the manifest against the Pod schema. Any issue is rejected immediately with a descriptive error.
+2. **Storage** The valid Pod object is written to etcd. The Pod is now `Pending`: it exists, but no node is assigned and no container is running.
+3. **Scheduling** The scheduler watches for Pods without a `nodeName`. It evaluates nodes (resources, selectors, taints), scores them, and writes the chosen node back to the Pod object.
+4. **Kubelet** The kubelet on the selected node picks up the Pod, pulls the image if not cached, and starts the container via the container runtime.
+5. **Status update** Once running, the kubelet updates the Pod's `status` in etcd to `Running` and continues monitoring container health.
 
 ## Checking Your Pod
 
 Once you've created a Pod, there are several commands for inspecting it.
 
-`kubectl get pod` gives you a quick summary table:
+`kubectl get pod` gives you a quick summary:
 
 ```bash
 kubectl get pod my-first-pod
@@ -143,21 +127,7 @@ NAME           READY   STATUS    RESTARTS   AGE
 my-first-pod   1/1     Running   0          30s
 ```
 
-`READY` shows `1/1` because one container is running and one was requested. `STATUS` shows `Running`. `RESTARTS` shows 0 , the container hasn't needed to restart yet.
-
-For more detail, use `-o wide` to see the node and IP:
-
-```bash
-kubectl get pod my-first-pod -o wide
-```
-
-For a full human-readable breakdown:
-
-```bash
-kubectl describe pod my-first-pod
-```
-
-`kubectl describe` is invaluable for debugging. Look at the `Events:` section at the bottom , it shows a chronological log of what happened: when the Pod was scheduled, when the image was pulled, when the container started.
+`READY` shows `1/1` because one container is running and one was requested. For more detail, use `-o wide` to see the node and IP, or `kubectl describe` for a full human-readable breakdown including the `Events:` section at the bottom, invaluable for debugging.
 
 For the raw object (spec + status combined in YAML):
 
@@ -166,10 +136,6 @@ kubectl get pod my-first-pod -o yaml
 ```
 
 This gives you everything Kubernetes knows about the Pod, including the `status` section populated by the kubelet.
-
-## Tip: Watch the Cluster Visualizer
-
-After creating a Pod, open the **cluster visualizer** by clicking the telescope icon. You'll see the Pod appear as a node in the cluster graph, connected to the node it's running on. This is a great way to develop an intuitive understanding of how resources are placed across your cluster.
 
 :::info
 You can use `kubectl get pods --watch` in the terminal to stream live updates as a Pod's status changes. This is useful when you're waiting for a Pod to become ready and want to see each state transition in real time.
@@ -266,4 +232,4 @@ You should see events like `Scheduled`, `Pulling`, `Pulled`, `Created`, and `Sta
 kubectl delete pod imperative-pod declarative-pod watch-pod
 ```
 
-You've now created Pods both ways, traced the full lifecycle from manifest to running container, and learned the core commands for inspecting Pod state. In the next lesson, we'll go deeper into what happens after a Pod is created , specifically, the phases a Pod passes through during its lifetime.
+You've now created Pods both ways, traced the full lifecycle from manifest to running container, and learned the core commands for inspecting Pod state. In the next lesson, we'll go deeper into what happens after a Pod is created, specifically, the phases a Pod passes through during its lifetime.

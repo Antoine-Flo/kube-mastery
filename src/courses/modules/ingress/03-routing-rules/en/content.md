@@ -1,12 +1,25 @@
 # Routing Rules: Host-Based and Path-Based
 
-The true power of Ingress lies in its routing rules , the precise, declarative way you tell the controller how to direct incoming traffic to the right backend Service. Kubernetes Ingress supports two fundamental routing strategies: host-based routing, which separates traffic by the domain name in the request, and path-based routing, which separates traffic by the URL path. In practice, you will often combine both strategies in a single Ingress resource.
+The true power of Ingress lies in its routing rules, the precise, declarative way you tell the controller how to direct incoming traffic to the right backend Service. Kubernetes Ingress supports two fundamental routing strategies: **host-based routing** (separating traffic by domain name) and **path-based routing** (separating traffic by URL path). In practice, you will often combine both strategies in a single Ingress resource.
+
+```mermaid
+graph TD
+    Client([HTTP Request]) --> IC[Ingress Controller]
+    
+    IC -->|Host: app.example.com\nPath: /api/*| API[api-service:80]
+    IC -->|Host: app.example.com\nPath: /\nall other paths| FE[frontend-service:80]
+    IC -->|Host: admin.example.com\nPath: /| ADMIN[admin-service:80]
+
+    API --> AP[api Pods]
+    FE --> FP[frontend Pods]
+    ADMIN --> ADM[admin Pods]
+```
 
 ## Host-Based Routing
 
 Host-based routing works by inspecting the `Host` HTTP header that every web browser and HTTP client sends with each request. When you visit `api.example.com`, your browser sends `Host: api.example.com`. When you visit `app.example.com`, it sends `Host: app.example.com`. The Ingress controller reads this header and matches it against the `host` field in each Ingress rule.
 
-This allows you to serve completely different applications from the same external IP address and Ingress controller, distinguished purely by hostname. Your API team can deploy independently behind `api.example.com`, your frontend team can deploy behind `app.example.com`, and your internal admin panel can sit at `admin.example.com` , all sharing the same entry point, with the Ingress controller handling the routing transparently.
+This allows you to serve completely different applications from the same external IP address and Ingress controller, distinguished purely by hostname. Your API team can deploy independently behind `api.example.com`, your frontend team can deploy behind `app.example.com`, and your internal admin panel can sit at `admin.example.com`, all sharing the same entry point, with the Ingress controller handling the routing transparently.
 
 ## Path-Based Routing
 
@@ -55,33 +68,19 @@ spec:
                   number: 80
 ```
 
-Reading through this manifest: there are two host rules. For requests to `app.example.com`, there are two path rules , requests with paths starting with `/api` go to `api-service`, and everything else goes to `frontend-service`. For requests to `admin.example.com`, everything goes to `admin-service`. The `ingressClassName: nginx` field tells the controller which IngressClass should handle this resource.
-
-```mermaid
-graph TD
-    Client([HTTP Request]) --> IC[Ingress Controller]
-    
-    IC -->|Host: app.example.com\nPath: /api/*| API[api-service:80]
-    IC -->|Host: app.example.com\nPath: /\nall other paths| FE[frontend-service:80]
-    IC -->|Host: admin.example.com\nPath: /| ADMIN[admin-service:80]
-
-    API --> AP[api Pods]
-    FE --> FP[frontend Pods]
-    ADMIN --> ADM[admin Pods]
-```
+Reading through this manifest: there are two host rules. For requests to `app.example.com`, paths starting with `/api` go to `api-service`, and everything else goes to `frontend-service`. For requests to `admin.example.com`, everything goes to `admin-service`. The `ingressClassName: nginx` field tells the controller which IngressClass should handle this resource.
 
 ## `pathType`: Prefix vs Exact
 
-The `pathType` field controls how strictly the path is matched. There are two values you will use regularly:
+The `pathType` field controls how strictly the path is matched:
 
-**`Prefix`** matches the path and anything that starts with it. A rule with `path: /api` and `pathType: Prefix` will match `/api`, `/api/`, `/api/users`, `/api/v1/products`, and so on. This is the most commonly used path type and is what you want for routing to an API or any sub-path tree.
+- **`Prefix`**, Matches the path and anything that starts with it. A rule with `path: /api` and `pathType: Prefix` matches `/api`, `/api/`, `/api/users`, `/api/v1/products`, and so on. This is the most commonly used path type and is what you want for routing to an API or any sub-path tree.
+- **`Exact`**, Matches only the exact path string. A rule with `path: /healthz` and `pathType: Exact` matches `/healthz` and nothing else, not `/healthz/`, not `/healthz/live`. Use `Exact` when you need to expose a very specific endpoint without accidentally routing other paths to the same backend.
 
-**`Exact`** matches only the exact path string, with no trailing variations. A rule with `path: /healthz` and `pathType: Exact` will match `/healthz` and nothing else , not `/healthz/`, not `/healthz/live`. Use `Exact` when you need to expose a very specific endpoint without accidentally routing other paths to the same backend.
-
-There is an important subtlety with `Prefix` and trailing slashes. The path `/api` with `Prefix` matches `/api` and `/api/anything`, but different Ingress controllers handle the trailing slash case slightly differently. When in doubt, use a path like `/api/` with a trailing slash, or test explicitly.
+There is an important subtlety with `Prefix` and trailing slashes: the path `/api` with `Prefix` matches `/api` and `/api/anything`, but different Ingress controllers handle the trailing slash case slightly differently. When in doubt, use a path like `/api/` with a trailing slash, or test explicitly.
 
 :::info
-When multiple path rules could match the same request, Ingress controllers generally apply a longest-match-wins rule: the most specific path that matches wins. So if you have rules for `/` and `/api`, a request for `/api/users` will match `/api` and not `/`, because `/api` is a longer and therefore more specific prefix.
+When multiple path rules could match the same request, Ingress controllers generally apply a longest-match-wins rule: the most specific path wins. So if you have rules for `/` and `/api`, a request for `/api/users` will match `/api` and not `/`, because `/api` is the longer and more specific prefix.
 :::
 
 ## The Default Backend
@@ -99,9 +98,7 @@ spec:
     - ...
 ```
 
-If no rule matches , wrong hostname, unknown path , the request is routed to `catch-all-service`. This is typically a simple service that returns a 404 page with a user-friendly message.
-
-If you do not specify a default backend in your Ingress, the Ingress controller's own default backend handles unmatched requests. For ingress-nginx, this is a built-in 404 page served by the controller itself.
+If no rule matches, wrong hostname, unknown path, the request is routed to `catch-all-service`. This is typically a simple service that returns a 404 page with a user-friendly message. If you do not specify a default backend in your Ingress, the Ingress controller's own default backend handles unmatched requests (for ingress-nginx, this is a built-in 404 page served by the controller itself).
 
 :::warning
 Do not confuse the Ingress `defaultBackend` (for unmatched requests) with the `default` IngressClass. They are completely different concepts. The `defaultBackend` is a fallback routing target; the default IngressClass is the class assigned to Ingress resources that do not specify `spec.ingressClassName`.
@@ -198,7 +195,7 @@ curl -H "Host: app.example.com" http://<INGRESS-IP>/api
 # Should return "ADMIN"
 curl -H "Host: admin.example.com" http://<INGRESS-IP>/
 
-# Unmatched host , hits default backend, returns "FRONTEND"
+# Unmatched host, hits default backend, returns "FRONTEND"
 curl -H "Host: unknown.example.com" http://<INGRESS-IP>/
 ```
 
@@ -208,7 +205,7 @@ curl -H "Host: unknown.example.com" http://<INGRESS-IP>/
 kubectl describe ingress demo-routing
 ```
 
-Look at the `Rules` section to confirm path and backend mappings are correct. Also check the `Address` field , it should now show the Ingress controller's external IP, which means the controller has acknowledged and configured this Ingress.
+Look at the `Rules` section to confirm path and backend mappings are correct. Also check the `Address` field, it should now show the Ingress controller's external IP, which means the controller has acknowledged and configured this Ingress.
 
 **Step 6: Test Exact pathType**
 

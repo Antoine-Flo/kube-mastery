@@ -2,6 +2,10 @@
 
 Throughout this module, all the Service manifests have referenced ports by number: `targetPort: 80`, `targetPort: 8080`, and so on. This works perfectly well for simple cases. But as your application grows , more containers, more ports, more teams managing different parts of the stack , hardcoded port numbers become a maintenance problem. Named ports solve this elegantly, and they're one of those small practices that make the difference between a brittle manifest and a robust one.
 
+:::info
+With named ports, a container's port number is defined in exactly one place, the Pod spec, and everything else (Services, probes, policies) references it by name.
+:::
+
 ## The Problem with Port Numbers
 
 Imagine you have a container that listens on port 8080, and you have a Service that forwards traffic to it:
@@ -13,7 +17,11 @@ ports:
     targetPort: 8080
 ```
 
-This works fine. But now your team decides to change the container's listening port from 8080 to 9090 , perhaps to avoid a conflict with another process, or to align with a new organizational standard. Now you have to update two things: the container's configuration *and* the Service manifest. In a large cluster with multiple Services referencing the same port, that's multiple places to update. You also need to update any readiness probes, liveness probes, or NetworkPolicies that reference port 8080 by number.
+This works fine, until the port number needs to change. A single update ripples through every resource that hardcodes `8080`:
+
+- The Service manifest
+- Readiness and liveness probes
+- NetworkPolicies
 
 Named ports break this coupling. You give the port a name in the Pod spec, and everything else references that name. The port number is now defined in exactly one place.
 
@@ -161,11 +169,9 @@ Named ports are particularly important in multi-container Pods (sidecars), where
 
 ## Best Practices
 
-Always name ports in production manifests , the extra few characters in your YAML pay dividends when you're debugging a production incident at midnight and need to understand what `targetPort: 8080` actually means without cross-referencing four other files.
-
-Use semantic names that reflect the protocol or purpose: `http`, `https`, `grpc`, `metrics`, `admin`, `debug`. Avoid names like `port1` or `p80` , they add no more information than the number itself.
-
-Keep port names consistent across your organization. If every team names their HTTP port `http`, operational tooling (dashboards, alerting rules, network policies) can be written generically and applied uniformly.
+- **Always name ports in production manifests**, it pays dividends when you're debugging at midnight and need to understand what `targetPort: 8080` means without cross-referencing four other files.
+- **Use semantic names** that reflect protocol or purpose: `http`, `https`, `grpc`, `metrics`, `admin`, `debug`. Avoid `port1` or `p80`, they add nothing over the number itself.
+- **Keep names consistent across your organization.** If every team uses `http` for HTTP, dashboards, alerting rules, and NetworkPolicies can be written generically and applied uniformly.
 
 :::warning
 If you use the same Service to route to containers with different port names that resolve to different numbers , for example, a canary Pod where `http` maps to 8080 and a stable Pod where `http` maps to 9090 , the traffic routing will appear correct from the Service's perspective but the actual destination ports will differ. This is rarely intentional; ensure your port names resolve consistently across all Pods in a Service's selector.

@@ -1,20 +1,16 @@
 # Debugging DNS Issues in Kubernetes
 
-DNS problems are some of the most common networking issues you will encounter in Kubernetes, and they can be frustrating because the symptoms , "cannot connect to service X" , look exactly like the symptoms of many other problems. The good news is that DNS issues follow predictable patterns, and there is a systematic debugging process that will get you to the root cause quickly every time. In this lesson you will learn that process, the tools to use, and how to read the output.
+DNS problems are some of the most common networking issues you will encounter in Kubernetes, and they can be frustrating because the symptoms, "cannot connect to service X", look exactly like the symptoms of many other problems. The good news is that DNS issues follow predictable patterns, and there is a systematic debugging process that will get you to the root cause quickly every time.
 
 ## Common Causes of DNS Failures
 
-Before reaching for debugging tools, it helps to know what the most frequent culprits are. DNS resolution failures in Kubernetes almost always fall into one of these categories.
+Before reaching for debugging tools, it helps to know the most frequent culprits. DNS resolution failures in Kubernetes almost always fall into one of these categories:
 
-The most common cause is a simple **typo in the Service name or namespace**. DNS is case-sensitive and exact. If your Service is named `api-service` and your code queries `apiservice` or `Api-Service`, resolution will fail. The same applies to namespace names.
-
-The second most common cause is a **wrong namespace**. A Pod in the `staging` namespace querying the short name `database` will look for `database.staging.svc.cluster.local`, not `database.production.svc.cluster.local`. If the Service only exists in `production`, the query will fail.
-
-Third, the **Service itself might not exist**. Perhaps it was deleted, or it was never created in that namespace, or the wrong `kubectl apply` was run. Before debugging DNS, confirm the Service exists.
-
-Fourth, **CoreDNS itself might be unhealthy**. If the CoreDNS Pods are crashing or not ready, every DNS query in the cluster will fail simultaneously , which is immediately obvious because everything stops working at once.
-
-Finally, **label selector mismatches** cause the Service to exist but have no endpoints , the Service resolves via DNS but connections time out because there are no Pods backing it.
+- **Typo in the Service name or namespace** DNS is case-sensitive and exact. `apiservice` and `api-service` are different names. The same applies to namespace names.
+- **Wrong namespace** A Pod in `staging` querying `database` looks for `database.staging.svc.cluster.local`. If the Service only exists in `production`, the query fails.
+- **Service does not exist** It may have been deleted, never created in that namespace, or the wrong manifest was applied. Always confirm the Service exists before debugging DNS.
+- **CoreDNS is unhealthy** If the CoreDNS Pods are crashing or not ready, every DNS query in the cluster fails simultaneously, which is immediately obvious because everything stops working at once.
+- **Label selector mismatch** The Service exists and resolves via DNS, but connections time out because there are no Pods backing it.
 
 ```mermaid
 flowchart TD
@@ -64,7 +60,7 @@ Then check that the Service has backing Pods (endpoints):
 kubectl get endpoints <service-name> -n <namespace>
 ```
 
-If the `ENDPOINTS` column shows `<none>`, the Service exists in DNS and will resolve, but connections will fail because there are no Pods to route traffic to. This is a label selector mismatch , fix the `selector` on your Service or the `labels` on your Pods.
+If the `ENDPOINTS` column shows `<none>`, the Service exists in DNS and will resolve, but connections will fail because there are no Pods to route traffic to. This is a label selector mismatch, fix the `selector` on your Service or the `labels` on your Pods.
 
 :::warning
 A Service with no endpoints is a very common trap. DNS resolution succeeds (the name resolves to the ClusterIP), but TCP connections time out immediately. Always check `kubectl get endpoints` before concluding the issue is DNS-related.
@@ -110,7 +106,7 @@ kubectl run dns-test --image=busybox --rm -it --restart=Never -n production -- n
 
 ## Step 4: Check `/etc/resolv.conf` Inside the Pod
 
-If DNS resolution is misbehaving in unexpected ways , for example, short names are not expanding correctly or lookups are timing out , inspect the DNS configuration the Pod actually received:
+If DNS resolution is misbehaving, for example, short names are not expanding correctly or lookups are timing out, inspect the DNS configuration the Pod actually received:
 
 ```bash
 kubectl exec <pod-name> -- cat /etc/resolv.conf
@@ -124,9 +120,9 @@ search default.svc.cluster.local svc.cluster.local cluster.local
 options ndots:5
 ```
 
-If the `nameserver` line is missing or points to a wrong IP, the Pod was misconfigured at creation time. If the `search` domains are wrong or missing, short names will not expand correctly. This can happen when a Pod uses a non-default `dnsPolicy` or when `dnsConfig` is set incorrectly.
-
-Also pay attention to `ndots:5`. This setting means any name with fewer than 5 dots will first be tried with all search domains appended before being tried as a global name. For most Service lookups this is fine, but for lookups of external names with few dots it can cause unexpected behavior and latency (each search domain is tried before the external name).
+- If the `nameserver` line is missing or points to a wrong IP, the Pod was misconfigured at creation time.
+- If the `search` domains are wrong or missing, short names will not expand correctly. This can happen when a Pod uses a non-default `dnsPolicy` or when `dnsConfig` is set incorrectly.
+- `ndots:5` means any name with fewer than 5 dots will be tried with all search domains before being tried as a global name. For external names with few dots, this can cause unexpected latency as each search domain is tried first.
 
 ## Step 5: Read the CoreDNS ConfigMap
 
@@ -164,20 +160,19 @@ The default Corefile looks like this:
 The `kubernetes` block tells CoreDNS to handle queries for `cluster.local` by looking up Kubernetes Services and Pods. The `forward` block forwards everything else to the upstream DNS defined in the node's `/etc/resolv.conf`. If someone has accidentally removed the `kubernetes` block or changed the domain, cluster-internal DNS will break.
 
 :::info
-If you make changes to the CoreDNS ConfigMap, CoreDNS picks them up automatically (thanks to the `reload` plugin) within about 30 seconds. You do not need to restart the CoreDNS Pods. However, be careful , a bad Corefile syntax can cause CoreDNS to crash entirely.
+If you make changes to the CoreDNS ConfigMap, CoreDNS picks them up automatically (thanks to the `reload` plugin) within about 30 seconds, no need to restart the CoreDNS Pods. However, a bad Corefile syntax can cause CoreDNS to crash entirely, so test changes carefully.
 :::
 
 ## Common Error Messages and What They Mean
 
 When `nslookup` fails, you will see one of these errors:
 
-`nslookup: can't resolve '<name>'` , The name does not exist in DNS. Either the Service does not exist, the namespace is wrong, or there is a typo. Start at Step 2.
-
-`server can't find <name>: NXDOMAIN` , Same as above, but the DNS server explicitly returned "non-existent domain." Confirms the record does not exist.
-
-`connection timed out; no servers could be reached` , The DNS server is not responding. CoreDNS might be down, or the Pod cannot reach the CoreDNS ClusterIP (a network policy issue). Start at Step 1.
-
-`nslookup: can't resolve '<name>': Temporary failure in name resolution` , The resolver tried and received no response. Network connectivity issue between the Pod and CoreDNS. Check network policies.
+| Error | Meaning |
+|---|---|
+| `nslookup: can't resolve '<name>'` | The name does not exist in DNS. Wrong Service name, wrong namespace, or typo. Start at Step 2. |
+| `server can't find <name>: NXDOMAIN` | Same as above, the DNS server explicitly returned "non-existent domain." |
+| `connection timed out; no servers could be reached` | The DNS server is not responding. CoreDNS may be down, or the Pod cannot reach the CoreDNS ClusterIP (network policy issue). Start at Step 1. |
+| `Temporary failure in name resolution` | The resolver tried and received no response. Network connectivity issue between the Pod and CoreDNS. Check network policies. |
 
 ## Hands-On Practice
 
@@ -257,7 +252,7 @@ kubectl run dnsutils \
   --rm -it --restart=Never -- dig backend.default.svc.cluster.local
 ```
 
-Look for the `ANSWER SECTION` in the output , it should contain the A record for your Service.
+Look for the `ANSWER SECTION` in the output, it should contain the A record for your Service.
 
 **Step 8: Clean up**
 

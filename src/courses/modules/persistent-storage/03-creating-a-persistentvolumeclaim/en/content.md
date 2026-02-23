@@ -1,6 +1,6 @@
 # Creating a PersistentVolumeClaim
 
-With a PersistentVolume in place, the next step is to claim it. This is where the application developer enters the picture. The PersistentVolumeClaim is the object that bridges the gap between the abstract storage resource an administrator has provisioned and the concrete storage need an application has. Writing a PVC does not require knowing which specific volume you'll get , you simply describe what you need, and Kubernetes finds a match.
+With a PersistentVolume in place, the next step is to claim it. This is where the application developer enters the picture. The PersistentVolumeClaim is the object that bridges the gap between the abstract storage resource an administrator has provisioned and the concrete storage need an application has. Writing a PVC does not require knowing which specific volume you'll get, you simply describe what you need, and Kubernetes finds a match.
 
 ## PVCs Are Namespaced
 
@@ -37,13 +37,11 @@ Just like a PV, the PVC declares which access mode it requires. The binding algo
 
 This is the minimum amount of storage the PVC needs. Kubernetes will bind this PVC to a PV that has at least this much capacity. In the example above, any PV with 5Gi or more (and matching access mode and storage class) would be eligible. If a 10Gi PV is the only available one, the PVC will bind to it and effectively "use" 10Gi of reservation, even though only 5Gi was requested.
 
-This is an important nuance: **a PVC can bind to a PV that is larger than the requested size**. The PVC does not get a dedicated slice of the PV , it gets the entire PV. The `storage` field in the request is a *minimum threshold*, not an exact allocation.
+This is an important nuance: **a PVC can bind to a PV that is larger than the requested size**. The PVC does not get a dedicated slice of the PV, it gets the entire PV. The `storage` field in the request is a *minimum threshold*, not an exact allocation.
 
 ### `storageClassName`
 
-This field controls which StorageClass the PVC belongs to. When set to `manual`, only PVs also labeled `storageClassName: manual` are considered. If you omit this field entirely, the behavior depends on cluster configuration , the default StorageClass (if one is annotated as default) may be applied automatically.
-
-To explicitly request a PV with no storage class (for manual, pre-bound scenarios), set `storageClassName: ""` (empty string).
+This field controls which StorageClass the PVC belongs to. When set to `manual`, only PVs also labeled `storageClassName: manual` are considered. If you omit this field entirely, the behavior depends on cluster configuration, the default StorageClass (if one is annotated as default) may be applied automatically. To explicitly request a PV with no storage class (for manual, pre-bound scenarios), set `storageClassName: ""` (empty string).
 
 :::info
 In most production clusters, you won't use `storageClassName: manual`. Instead, you'll reference a real StorageClass like `standard`, `gp2`, `premium-rwo`, or whatever your cloud provider offers. The StorageClass determines both which PVs are eligible for binding and, with dynamic provisioning, how the PV is automatically created.
@@ -66,13 +64,11 @@ flowchart LR
     G --> H[Pod can now\nmount the PVC]
 ```
 
-The matching algorithm checks: access mode compatibility, then capacity (PV storage ≥ PVC request), then storage class. All three must match. The first PV that satisfies all requirements wins , there is no further optimization (e.g., Kubernetes does not try to find the *smallest* PV that fits; it just finds the first one that qualifies based on how PVs are internally ordered).
+All three criteria must match: access mode, capacity (PV storage ≥ PVC request), and storage class. The first PV that satisfies all requirements wins, Kubernetes does not try to find the *smallest* PV that fits, just the first qualifying one.
 
 ## What Happens When No Match Is Found
 
-If no compatible PV exists at the time the PVC is submitted, the PVC enters `Pending` state and waits. The controller periodically retries. The moment a compatible PV becomes available , whether because an administrator creates one manually or because dynamic provisioning kicks in , the PVC is automatically bound without any further action on your part.
-
-This makes PVC behavior pleasantly self-healing: you can submit a PVC and a PV in any order, and Kubernetes will figure it out.
+If no compatible PV exists when the PVC is submitted, the PVC enters `Pending` state and waits. The controller periodically retries, the moment a compatible PV becomes available (whether created manually by an admin or via dynamic provisioning), the PVC is automatically bound without any further action on your part. You can submit a PVC and a PV in any order, and Kubernetes will figure it out.
 
 When a PVC is stuck in `Pending`, the most useful diagnostic command is:
 
@@ -80,7 +76,7 @@ When a PVC is stuck in `Pending`, the most useful diagnostic command is:
 kubectl describe pvc my-pvc
 ```
 
-The `Events` section at the bottom will typically tell you exactly why binding failed , "no persistent volumes available for this claim" means no PV exists or none satisfies the requirements.
+The `Events` section at the bottom will typically tell you exactly why binding failed, "no persistent volumes available for this claim" means no PV exists or none satisfies the requirements.
 
 ## Dynamic Provisioning: PVs on Demand
 
@@ -161,7 +157,7 @@ NAME    CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM            STO
 my-pv   5Gi        RWO            Retain           Bound    default/my-pvc   manual         45s
 ```
 
-The CLAIM column shows `default/my-pvc` , the namespace and name of the bound PVC.
+The CLAIM column shows `default/my-pvc`, the namespace and name of the bound PVC.
 
 **Step 4: Simulate a pending PVC**
 

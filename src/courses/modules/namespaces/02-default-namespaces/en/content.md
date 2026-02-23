@@ -22,7 +22,7 @@ The `default` namespace is exactly what its name suggests , it is where Kubernet
 
 This makes `default` the most visible namespace in a fresh cluster, and it is perfectly fine to use for learning and experimentation. In a tutorial, a workshop, or a personal practice cluster, having everything in one namespace is simple and convenient.
 
-In production, however, it is considered poor practice to run workloads in the `default` namespace. The name gives away nothing about what is running there. There is no natural boundary between different applications or teams. Resource quotas and RBAC policies are harder to apply meaningfully. For production environments, you should create named namespaces that reflect your applications, teams, or environments, and deploy everything there.
+In production, however, running workloads in `default` is considered poor practice. There is no natural boundary between applications or teams, and applying RBAC and resource quotas meaningfully is harder. For production, create named namespaces that reflect your applications, teams, or environments.
 
 :::info
 You can check what is currently in the `default` namespace with `kubectl get all`. In a brand-new cluster this will usually just show the `kubernetes` service, which is the entry point for pods to communicate with the Kubernetes API server.

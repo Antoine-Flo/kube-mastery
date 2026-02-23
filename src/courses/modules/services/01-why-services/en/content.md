@@ -4,6 +4,10 @@ You've learned how to create Pods and Deployments. Now imagine you have a fronte
 
 This is the fundamental problem that Services solve.
 
+:::info
+A Kubernetes **Service** gives a stable IP and DNS name to a dynamic group of Pods, abstracting away their ephemeral individual IPs.
+:::
+
 ## Pod IPs Are Ephemeral
 
 Every Pod in Kubernetes gets its own IP address from the cluster's internal network. But this address has a critical property: it is temporary. When a Pod is deleted and recreated , whether because of a rolling update, a node failure, a liveness probe failure, or a simple `kubectl delete pod` , the replacement Pod gets a completely different IP address. There is no reservation, no DNS record automatically updated, no forwarding from the old address. The old IP is gone; the new IP is unknown until the Pod starts.
@@ -18,7 +22,11 @@ That intermediary is a Kubernetes **Service**.
 
 A Service is a Kubernetes object that gives a stable identity , a fixed IP address and a DNS name , to a dynamic group of Pods. Once you create a Service, that identity never changes. You can reboot Pods, roll out updates, scale up and down , the Service's IP and DNS name stay constant. Any client inside the cluster (or outside it, depending on the Service type) can reliably reach those Pods through the Service without ever needing to know the current Pod IPs.
 
-Beyond stability, a Service also provides automatic load balancing. Traffic sent to the Service IP is distributed across all the Pods that match its selector. Add a new Pod with the right label and it automatically starts receiving traffic. Remove a Pod and traffic stops going to it immediately. The Service never needs to be reconfigured.
+Beyond stability, a Service provides automatic load balancing, traffic is distributed across all matching Pods with no manual configuration:
+
+- Add a Pod with the right label → it immediately starts receiving traffic.
+- Remove or replace a Pod → traffic stops going to it instantly.
+- The Service never needs to be reconfigured.
 
 ## How Services Find Their Pods: Label Selectors
 

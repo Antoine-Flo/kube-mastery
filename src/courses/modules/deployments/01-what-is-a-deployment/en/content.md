@@ -4,13 +4,15 @@ In the previous module you learned about ReplicaSets, and you also saw their big
 
 A Deployment is a higher-level controller that **manages ReplicaSets** on your behalf. It doesn't create Pods directly; it creates ReplicaSets, and those ReplicaSets create the Pods. This extra layer is what enables declarative, zero-downtime updates and instant rollback. Deployments are the standard way to run stateless workloads in Kubernetes.
 
-## The Gap ReplicaSets Leave
+:::info
+You interact with the Deployment; the controller chain handles ReplicaSets and Pods beneath it automatically.
+:::
+
+## Why ReplicaSets Aren't Enough
 
 A ReplicaSet watches Pods by label selector and ensures the correct count is running. If you change the Pod template (e.g. the image from `nginx:1.25` to `nginx:1.26`), the existing Pods are unaffected: the controller sees the desired count and does nothing. To update with a plain ReplicaSet you'd have to scale to zero (downtime) or delete Pods by hand, with no built-in rollback. Deployments were designed to fill that gap.
 
-## A Deployment is the HR Department
-
-Think of Pods as workers on a factory floor. A ReplicaSet is the floor manager: it keeps headcount. Retraining everyone on a new procedure or issuing new equipment isn't a floor problem: it's an HR problem. HR plans the transition in batches, checks each batch before continuing, and can reverse if the new procedure fails. A Deployment is that HR layer for your application fleet: it orchestrates the transition between versions while keeping the service up.
+Think of Pods as workers on a factory floor. A ReplicaSet is the floor manager: it keeps headcount. Retraining everyone on a new procedure or issuing new equipment isn't a floor problem, it's an HR problem. HR plans the transition in batches, checks each batch before continuing, and can reverse if the new procedure fails. A Deployment is that HR layer for your application fleet: it orchestrates the transition between versions while keeping the service up.
 
 ## The Three-Tier Hierarchy
 
@@ -49,7 +51,7 @@ The next lessons cover how to create a Deployment, how to inspect the hierarchy,
 
 ## How the Controller Works (in Short)
 
-The Deployment controller runs in `kube-controller-manager`. It compares the cluster state to the Deployment spec and reconciles. When you change the Pod template, it creates a new ReplicaSet with the new template and scales it up while scaling the old one down. The pace is controlled by strategy parameters you'll see in the Creating and Rolling Update lessons. Old ReplicaSets stay at zero replicas so rollback is instant.
+The Deployment controller runs in `kube-controller-manager` and continuously reconciles the cluster state against the Deployment spec. When you change the Pod template, it creates a new ReplicaSet and scales it up while scaling the old one down, at a pace controlled by `spec.strategy` parameters you'll see in the next lessons. Old ReplicaSets are kept at zero replicas so rollback is always instant.
 
 ## Why Use a Deployment (Not a Raw ReplicaSet)
 

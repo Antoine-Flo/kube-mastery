@@ -1,12 +1,14 @@
 # Creating a PersistentVolume
 
-Now that you understand the conceptual relationship between PersistentVolumes and PersistentVolumeClaims, it's time to look closely at what a PV manifest actually contains and what each field means. Creating PVs by hand is something you will do primarily in learning environments and on self-managed clusters , but understanding the structure is essential even when dynamic provisioning does the work for you, because troubleshooting storage problems always requires reading and interpreting PV objects.
+Now that you understand the conceptual relationship between PersistentVolumes and PersistentVolumeClaims, it's time to look closely at what a PV manifest actually contains and what each field means. Creating PVs by hand is something you will do primarily in learning environments and on self-managed clusters, but understanding the structure is essential even when dynamic provisioning does the work for you, because troubleshooting storage problems always requires reading and interpreting PV objects.
 
 ## PVs Are Cluster-Scoped Resources
 
-The first important thing to know about a PersistentVolume is that it is a **cluster-scoped** resource. Unlike most Kubernetes objects , Pods, Deployments, Services , a PV does not belong to any namespace. It exists at the cluster level, which makes sense: a storage resource is infrastructure, and infrastructure typically spans the entire cluster rather than being confined to one team's namespace.
+:::info
+A PersistentVolume is a **cluster-scoped** resource, unlike Pods, Deployments, or Services, it does not belong to any namespace. When you run `kubectl get pv`, you see all PVs in the cluster regardless of your current namespace context. You do not need to pass `-n <namespace>`.
+:::
 
-This has a practical consequence: when you run `kubectl get pv`, you see all PVs in the cluster regardless of your current namespace context. You do not need to pass `-n <namespace>` because namespaces simply do not apply to PVs.
+This design makes sense: a storage resource is infrastructure, and infrastructure typically spans the entire cluster rather than being confined to one team's namespace.
 
 ## Anatomy of a PersistentVolume Manifest
 
@@ -32,9 +34,9 @@ Let's walk through each field carefully.
 
 ### `capacity.storage`
 
-This defines the size of the volume , in this case, 5 gibibytes. Kubernetes uses binary SI suffixes: `Ki`, `Mi`, `Gi`, `Ti`. When a PVC is evaluated against this PV, the PVC's requested size must be less than or equal to this value. A PVC requesting 3Gi would match this PV; one requesting 10Gi would not.
+This defines the size of the volume, in this case, 5 gibibytes. Kubernetes uses binary SI suffixes: `Ki`, `Mi`, `Gi`, `Ti`. When a PVC is evaluated against this PV, the PVC's requested size must be less than or equal to this value. A PVC requesting 3Gi would match this PV; one requesting 10Gi would not.
 
-Note that the capacity field is declarative and informational. Kubernetes trusts what you write here , it does not independently verify that the underlying storage actually has that much space. If you provision a 2Gi disk on your infrastructure but declare `5Gi` in the manifest, Kubernetes will believe you until applications start failing with out-of-space errors.
+Note that the capacity field is declarative and informational. Kubernetes trusts what you write here, it does not independently verify that the underlying storage actually has that much space. If you provision a 2Gi disk on your infrastructure but declare `5Gi` in the manifest, Kubernetes will believe you until applications start failing with out-of-space errors.
 
 ### `accessModes`
 
@@ -47,16 +49,16 @@ Access modes describe how many nodes can mount the volume simultaneously and whe
 A PV can advertise multiple access modes. When binding, Kubernetes looks for a PV that supports at least the mode requested by the PVC.
 
 :::info
-Access modes describe capabilities at the **node** level, not the Pod level. `ReadWriteOnce` means one node at a time , multiple Pods on the *same* node could theoretically mount it simultaneously if the underlying driver allows it.
+Access modes describe capabilities at the **node** level, not the Pod level. `ReadWriteOnce` means one node at a time, multiple Pods on the *same* node could theoretically mount it simultaneously if the underlying driver allows it.
 :::
 
 ### `persistentVolumeReclaimPolicy`
 
-This field determines what happens to the PV , and the underlying storage , when the PVC that claimed it is deleted. Think of it as the "what happens to the parking space when you return your permit" policy. There are three options:
+This field determines what happens to the PV, and the underlying storage, when the PVC that claimed it is deleted. Think of it as the "what happens to the parking space when you return your permit" policy. There are three options:
 
-**Retain** is the safest choice. When the PVC is deleted, the PV moves to a `Released` state and keeps all its data intact. However, a `Released` PV cannot be automatically re-bound to a new PVC , an administrator must intervene, manually inspect the data, and either delete the PV (discarding the data) or clear the `claimRef` field to make it available again. This is ideal for databases and any data you cannot afford to lose accidentally.
+**Retain** is the safest choice. When the PVC is deleted, the PV moves to a `Released` state with all its data intact. However, a `Released` PV cannot be automatically re-bound to a new PVC, an administrator must manually inspect the data and either delete the PV or clear the `claimRef` field to make it available again. This is ideal for databases and any data you cannot afford to lose accidentally.
 
-**Delete** is the most common choice when using dynamic provisioning. When the PVC is deleted, Kubernetes automatically deletes the PV *and* the underlying storage resource (for example, it will call the AWS or GCP API to delete the actual disk). This is convenient for ephemeral workloads but dangerous if you delete a PVC by mistake.
+**Delete** is the most common choice when using dynamic provisioning. When the PVC is deleted, Kubernetes automatically deletes the PV *and* the underlying storage resource (calling the AWS or GCP API to delete the actual disk). This is convenient for ephemeral workloads but dangerous if you delete a PVC by mistake.
 
 **Recycle** is deprecated and should not be used in new clusters. It used to scrub the volume with a basic `rm -rf /` and make it available again, but this approach was too crude and has been replaced by dynamic provisioning.
 
@@ -72,7 +74,7 @@ This field links the PV to a StorageClass. When a PVC specifies `storageClassNam
 
 The last part of the spec defines where the storage actually comes from. In the example above we use `hostPath`, which mounts a directory from the node's local filesystem. This is useful for development and testing on single-node clusters but is not suitable for production because the data is tied to a specific node.
 
-In production you would see fields like `nfs` (for an NFS share), `awsElasticBlockStore` (for an EBS volume, in older configurations), `csi` (for modern Container Storage Interface drivers), and many others. The specific fields vary by backend , consult the documentation for your storage provider.
+In production you would see fields like `nfs` (for an NFS share), `awsElasticBlockStore` (for an EBS volume, in older configurations), `csi` (for modern Container Storage Interface drivers), and many others. The specific fields vary by backend, consult the documentation for your storage provider.
 
 ## PV Lifecycle Phases
 
@@ -89,19 +91,14 @@ stateDiagram-v2
     Released --> Failed : Error during\nreclaim
 ```
 
-**Available**: The PV has been created and is not yet bound to any PVC. It is ready to be claimed.
-
-**Bound**: A PVC has been bound to this PV. The PV is now exclusively reserved for that PVC and will not be given to another.
-
-**Released**: The PVC that was bound to this PV has been deleted. The PV still exists and its data is intact (especially with the `Retain` policy), but it cannot be claimed by a new PVC without administrator action.
-
-**Failed**: Something went wrong during the automatic reclaim process. This is rare but worth checking when a PV seems stuck.
+- **Available**: The PV has been created and is not yet bound to any PVC. It is ready to be claimed.
+- **Bound**: A PVC has been bound to this PV. The PV is exclusively reserved for that PVC and will not be given to another.
+- **Released**: The PVC has been deleted. The PV still exists and its data is intact, but it cannot be claimed by a new PVC without administrator action.
+- **Failed**: Something went wrong during the automatic reclaim process. This is rare but worth checking when a PV seems stuck.
 
 ## A Note on Production Workflows
 
-In a real production cluster, you will rarely write PV manifests by hand. StorageClasses with dynamic provisioning handle PV creation automatically in response to PVC requests. However, there are scenarios where manual PVs are still relevant: migrating data from an old system, using storage backends that don't have a CSI driver, or binding a PVC to a specific pre-existing disk for data recovery purposes.
-
-Even if you never create a PV manually in production, you will absolutely need to read and interpret them. When a PVC is stuck in `Pending`, the first thing you check is whether any compatible PVs exist , and that means reading PV manifests.
+In a real production cluster, you will rarely write PV manifests by hand, StorageClasses with dynamic provisioning handle PV creation automatically in response to PVC requests. Manual PVs are still relevant in specific scenarios: migrating data from an old system, using storage backends that don't have a CSI driver, or binding a PVC to a specific pre-existing disk for data recovery. Even if you never create a PV manually in production, you will absolutely need to read and interpret them: when a PVC is stuck in `Pending`, the first thing you check is whether any compatible PVs exist.
 
 ## Hands-On Practice
 
@@ -167,7 +164,7 @@ Source:
     HostPathType:
 ```
 
-Notice the `Finalizers` field , Kubernetes adds `kubernetes.io/pv-protection` automatically to prevent accidental deletion of a PV while it is in use.
+Notice the `Finalizers` field, Kubernetes adds `kubernetes.io/pv-protection` automatically to prevent accidental deletion of a PV while it is in use.
 
 **Step 4: Try to delete the PV while it has a finalizer**
 

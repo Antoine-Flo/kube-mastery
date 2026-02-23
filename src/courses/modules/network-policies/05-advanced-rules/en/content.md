@@ -1,14 +1,12 @@
 # Advanced NetworkPolicy Patterns
 
-You now understand the building blocks of NetworkPolicies: how they select Pods, how ingress rules work, and how egress rules work. In this lesson, we put it all together. Real production clusters don't use a single simple policy , they use layered strategies, multiple overlapping policies, and nuanced selectors. This lesson covers the patterns you'll reach for when you need to go beyond the basics.
+You now understand the building blocks: how NetworkPolicies select Pods, how ingress rules work, and how egress rules work. Real production clusters don't use a single simple policy, they use layered strategies, multiple overlapping policies, and nuanced selectors. This lesson covers the patterns you'll reach for when you need to go beyond the basics.
 
 ## The Default Deny All Pattern: Defense in Depth
 
-The most effective security posture for a production namespace isn't to write careful allow rules for every service and trust that you got them all right. It's to start from zero trust , deny everything by default , and then add explicit allow rules for every traffic flow your application actually needs.
+The most effective security posture for a production namespace isn't to write careful allow rules and trust that you got them all right. It's to **start from zero trust**, deny everything by default, then add explicit allow rules for every traffic flow your application actually needs.
 
-This is called **defense in depth**, and it means that if you forget to lock down a service, it's unreachable by default rather than wide open.
-
-The implementation is straightforward: apply a single policy per namespace that denies all ingress and all egress.
+This is called **defense in depth**: if you forget to lock down a service, it's unreachable by default rather than wide open.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -25,7 +23,7 @@ spec:
   egress: []
 ```
 
-One policy. Selects all Pods. No rules. Result: nothing can reach anything, and nothing can reach out. From here, you add granular allow policies for each specific service: let the frontend receive HTTP traffic, let the backend reach the database, let everything reach DNS, and so on.
+One policy. Selects all Pods. No rules. Result: nothing can reach anything, and nothing can reach out. From here, add granular allow policies for each specific service: let the frontend receive HTTP traffic, let the backend reach the database, let everything reach DNS.
 
 :::warning
 Don't forget DNS! The moment you apply a deny-all egress policy, DNS resolution breaks for all Pods in the namespace. Always add a follow-up egress policy allowing UDP/TCP port 53 to the `kube-system` namespace immediately after applying deny-all. Treat it as a mandatory companion.
@@ -33,11 +31,9 @@ Don't forget DNS! The moment you apply a deny-all egress policy, DNS resolution 
 
 ## Combining podSelector and namespaceSelector: AND Logic
 
-We touched on this in the structure lesson, but it's worth reinforcing with a concrete scenario because it's both powerful and confusing.
+Suppose you have a `monitoring` namespace and a `production` namespace. You want to allow your Prometheus scraper to collect metrics from production Pods, but only the Prometheus Pod, not anything else in the monitoring namespace.
 
-Suppose you have a `monitoring` namespace and a `production` namespace. You want to allow your Prometheus scraper to collect metrics from the production Pods , but only the Prometheus Pod, not just anything running in the monitoring namespace.
-
-Using two separate items in the `from` array would be wrong here:
+Using two separate items in `from` would be wrong:
 
 ```yaml
 from:
@@ -49,9 +45,9 @@ from:
         kubernetes.io/metadata.name: monitoring
 ```
 
-This is OR logic: it allows any Pod labeled `app=prometheus` in the same namespace, **OR** anything from the monitoring namespace. An attacker who compromises any Pod in the monitoring namespace could now reach your production Pods.
+This is OR logic: it allows any Pod labeled `app=prometheus` in the same namespace, **OR** anything from the monitoring namespace. An attacker who compromises any Pod in monitoring could now reach your production Pods.
 
-The correct approach uses a single item with both selectors , AND logic:
+The correct approach uses a single item with both selectors, AND logic:
 
 ```yaml
 from:
@@ -63,11 +59,11 @@ from:
         kubernetes.io/metadata.name: monitoring
 ```
 
-Now only Pods labeled `app=prometheus` that also reside in the `monitoring` namespace are allowed. The combination is precise and tight. This is the pattern you want whenever you're opening a cross-namespace path.
+Now only Pods labeled `app=prometheus` that also reside in the `monitoring` namespace are allowed. This is the pattern you want whenever you're opening a cross-namespace path.
 
 ## ipBlock: CIDR Ranges and Exceptions
 
-The `ipBlock` selector allows you to express policies in terms of IP address ranges rather than Pod labels. This is primarily useful for two scenarios: allowing traffic from outside the cluster (ingress from an external load balancer or office VPN), or allowing Pods to reach external destinations (egress to a third-party API).
+The `ipBlock` selector allows you to express policies in terms of IP address ranges. This is primarily useful for: allowing traffic from outside the cluster (ingress from an external load balancer or office VPN), or allowing Pods to reach external destinations (egress to a third-party API).
 
 ```yaml
 ingress:
@@ -78,15 +74,15 @@ ingress:
             - 172.16.1.0/24
 ```
 
-This allows inbound traffic from the entire `172.16.0.0/12` range , a typical private network range for an office VPN , except for the specific subnet `172.16.1.0/24`. The `except` field is useful when you need to allow a broad range but exclude a known segment that shouldn't have access, such as a guest network or a legacy system.
+This allows inbound traffic from the entire `172.16.0.0/12` range, a typical private network for an office VPN, except for the specific subnet `172.16.1.0/24`. The `except` field is useful when you need to allow a broad range but exclude a known segment such as a guest network.
 
 :::info
-`ipBlock` matches the source IP of the packet as seen at the node level, not the Pod's internal IP. For traffic entering through a load balancer or NodePort, the source IP may be the load balancer's IP rather than the original client's IP, depending on your cluster's configuration. Always test your `ipBlock` rules carefully.
+`ipBlock` matches the source IP of the packet as seen at the node level, not the Pod's internal IP. For traffic entering through a load balancer or NodePort, the source IP may be the load balancer's IP rather than the original client's IP, depending on your cluster's configuration. Always test `ipBlock` rules carefully.
 :::
 
 ## Port Ranges With endPort
 
-Starting in Kubernetes 1.25, you can specify a range of ports in a single rule using the `endPort` field alongside `port`. This is useful for applications that use a range of ephemeral or data ports.
+Starting in Kubernetes 1.25, you can specify a range of ports in a single rule using `endPort` alongside `port`.
 
 ```yaml
 ports:
@@ -95,13 +91,13 @@ ports:
     endPort: 8999
 ```
 
-This matches any TCP connection on ports 8000 through 8999 inclusive. Without `endPort`, you'd need to list each port individually or write multiple rules. The `endPort` must always be greater than or equal to `port`, and the `protocol` field is required when using `endPort`.
+This matches any TCP connection on ports 8000 through 8999 inclusive. Without `endPort`, you'd need to list each port individually or write multiple rules. The `protocol` field is required when using `endPort`, and `endPort` must always be greater than or equal to `port`.
 
 ## NetworkPolicies Are Additive: The Union Model
 
-A Pod can be selected by multiple NetworkPolicies simultaneously. When that happens, the effective rule set for that Pod is the **union** of all the policies that select it. Traffic is allowed if *any* applicable policy permits it.
+A Pod can be selected by multiple NetworkPolicies simultaneously. The effective rule set is the **union** of all applicable policies, traffic is allowed if *any* policy permits it.
 
-This is an important architectural property. It means you can compose your security posture from many small, focused policies rather than one massive, hard-to-read policy. Each team or service can own its own policy, and the overall behavior is the sum of all of them.
+This architectural property lets you compose your security posture from many small, focused policies rather than one massive, hard-to-read policy. Each team or service can own its own policy, and the overall behavior is the sum of all of them.
 
 ```mermaid
 graph TD
@@ -126,19 +122,22 @@ graph TD
     style ALLOW fill:#1ABC9C,color:#fff,stroke:#148f77
 ```
 
-This union model also means you can safely split a large policy into several smaller ones without worrying about interaction effects. There's no way to use one policy to "block" what another policy has allowed , once traffic is permitted by any policy, it goes through.
+There's no way to use one policy to "block" what another policy has allowed. Once traffic is permitted by any policy, it goes through.
 
 ## The Limitation: No Logging or Auditing
 
-NetworkPolicies are binary: traffic either passes or it doesn't. There's no built-in mechanism to log blocked connections, audit policy hits, or alert when unusual traffic patterns are detected. The policies themselves are silent enforcers.
+NetworkPolicies are silent enforcers: traffic either passes or it doesn't, with no built-in logging, auditing, or alerting on blocked connections.
 
-For observability into policy decisions, you need a CNI plugin that provides these capabilities as an extension. **Cilium** is the most capable option here , it offers a tool called **Hubble** that provides a real-time, graphical view of all traffic flows in your cluster, including which connections were allowed or dropped by policy, and which network policy made the decision. **Calico** offers similar capabilities through its flow log export features.
+For visibility into policy decisions, you need a CNI plugin with observability extensions:
 
-If visibility into network policy decisions is important to you (and in production, it should be), factor CNI capabilities into your cluster design from the start. Retrofitting observability is much harder than building it in.
+- **Cilium + Hubble** real-time graphical view of all traffic flows, showing which connections were allowed or dropped and by which policy.
+- **Calico** similar capabilities via flow log export.
+
+Factor CNI observability into your cluster design from the start. Retrofitting it is significantly harder than building it in.
 
 ## A Full Multi-Service Namespace Example
 
-Let's look at how you'd compose policies for a realistic three-tier application: a frontend, a backend, and a database. Start with a deny-all, then open each necessary path.
+Here's how you'd compose policies for a realistic three-tier application: frontend, backend, and database. Start with a deny-all, then open each necessary path.
 
 ```yaml
 # 1. Default deny everything
@@ -272,7 +271,7 @@ spec:
           port: 5432
 ```
 
-Seven policies, clearly named, each responsible for one specific traffic path. The database is now completely unreachable except from the backend. The backend is completely unreachable except from the frontend. The frontend only accepts HTTP. Any path not described above is silently blocked.
+Seven policies, clearly named, each responsible for one specific traffic path. The database is completely unreachable except from the backend. The backend is completely unreachable except from the frontend. Any path not described above is silently blocked.
 
 ## Hands-On Practice
 
@@ -318,7 +317,7 @@ spec:
 EOF
 ```
 
-**5. Now apply a selective allow: frontend can reach backend:**
+**5. Apply a selective allow: frontend can reach backend:**
 
 ```bash
 kubectl apply -f - <<EOF
@@ -363,6 +362,8 @@ kubectl get networkpolicies -n secured-app
 kubectl delete namespace secured-app
 ```
 
-Deleting the namespace removes all resources inside it , Pods, policies, and all. This makes namespace-based cleanup very convenient.
+Deleting the namespace removes all resources inside it, Pods, policies, and all.
 
-You've now seen how advanced patterns come together: deny-all as a baseline, targeted allows for each traffic flow, AND logic for cross-namespace precision, and the additive union model that lets you compose policies independently. These patterns are the foundation of a secure, understandable Kubernetes network architecture.
+## Wrapping Up
+
+The patterns in this lesson are the foundation of a secure, understandable Kubernetes network architecture: deny-all as a baseline, targeted allows for each traffic flow, AND logic for cross-namespace precision, and the additive union model that lets you compose policies independently.

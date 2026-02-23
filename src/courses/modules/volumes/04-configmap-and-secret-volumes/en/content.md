@@ -1,14 +1,22 @@
 # Mounting ConfigMaps and Secrets as Volumes
 
-In earlier lessons you likely encountered ConfigMaps and Secrets used as environment variables , a quick way to inject a database URL or an API key into a running container. But injecting config as environment variables has real limitations. Some applications don't read environment variables at all; they expect a config file at a specific path. Others have configuration that's too complex for a flat list of key-value pairs , think a multi-section NGINX config, a full application properties file, or a TLS certificate bundle. And sometimes you have many related values that logically belong together in one file rather than scattered across environment variables.
+Injecting config as environment variables has real limitations. Some applications don't read environment variables at all, they expect a config file at a specific path. Others have configuration too complex for a flat list of key-value pairs:
+
+- A multi-section NGINX config or full application properties file
+- A TLS certificate bundle
+- Many related values that logically belong together in one file
 
 Kubernetes solves all of this by letting you mount ConfigMaps and Secrets directly as files inside your containers, using the same volume mechanism you've already learned.
 
 ## The Core Idea: Keys Become Files
 
-When you mount a ConfigMap (or Secret) as a volume, each key in that ConfigMap becomes a file inside the container at the specified mount path. The file's content is the key's value. It's a direct, one-to-one mapping between the key-value data in your Kubernetes object and the file structure inside the container.
+When you mount a ConfigMap (or Secret) as a volume, each key in that ConfigMap becomes a file inside the container at the specified mount path. The file's content is the key's value, a direct, one-to-one mapping.
 
-Imagine you have a ConfigMap with two keys: `app.properties` and `log4j.xml`. After mounting it, the container sees exactly those two files inside the mount directory, with exactly the correct content in each. The application can read them like any ordinary files , it doesn't need to know they came from Kubernetes at all.
+:::info
+The application can read these files like any ordinary files, it doesn't need to know they came from Kubernetes at all. No SDK, no special integration required.
+:::
+
+Imagine you have a ConfigMap with two keys: `app.properties` and `log4j.xml`. After mounting it, the container sees exactly those two files inside the mount directory, with exactly the correct content in each.
 
 ## Mounting a ConfigMap as a Volume
 
@@ -47,11 +55,11 @@ spec:
           mountPath: /etc/config
 ```
 
-Inside the container, the directory `/etc/config` will contain exactly two files: `database.conf` and `logging.conf`, each with the correct multi-line content. The application can open `/etc/config/database.conf` the same way it would open any file , no Kubernetes SDK needed, no special integration required.
+Inside the container, `/etc/config` will contain exactly two files: `database.conf` and `logging.conf`, each with the correct multi-line content.
 
 ## Mounting a Secret as a Volume
 
-The syntax for mounting a Secret is nearly identical , you just replace `configMap:` with `secret:` and provide the Secret's name:
+The syntax for mounting a Secret is nearly identical, you just replace `configMap:` with `secret:` and provide the Secret's name:
 
 ```yaml
 spec:
@@ -68,7 +76,7 @@ spec:
           readOnly: true
 ```
 
-When mounted, Secret files have restrictive permissions by default , `0400` (readable only by the owner). This means the container process can read them, but other users on the same node generally cannot. This is intentional: Secrets often contain credentials or private keys that should be tightly restricted.
+When mounted, Secret files have restrictive permissions by default, `0400` (readable only by the owner). This is intentional: Secrets often contain credentials or private keys that should be tightly restricted.
 
 :::info
 Setting `readOnly: true` on the volumeMount is a best practice for both ConfigMap and Secret mounts. Your application should be reading configuration files, not writing to them. A readOnly mount prevents accidental writes and makes it immediately clear in the manifest that this volume is input data.
@@ -99,7 +107,7 @@ graph LR
 
 ## Mounting Only Specific Keys
 
-If a ConfigMap contains many keys but you only want to mount a subset of them , or you want to control what the file is named inside the container , you can use the `items` field:
+If a ConfigMap contains many keys but you only want to mount a subset, or you want to control what the file is named inside the container, you can use the `items` field:
 
 ```yaml
 volumes:
@@ -113,25 +121,23 @@ volumes:
           path: logs/settings.conf
 ```
 
-With this declaration, the container will see two files: `/etc/config/db/connection.conf` and `/etc/config/logs/settings.conf`. The key named `database.conf` in the ConfigMap is mounted at the custom path `db/connection.conf` relative to the `mountPath`. This lets you adapt the Kubernetes key names to whatever file layout your application expects, without modifying the ConfigMap.
-
-Any keys in the ConfigMap not listed in `items` are simply not mounted , they don't appear in the container's filesystem at all.
+With this declaration, the container will see two files: `/etc/config/db/connection.conf` and `/etc/config/logs/settings.conf`. This lets you adapt the Kubernetes key names to whatever file layout your application expects, without modifying the ConfigMap. Any keys not listed in `items` are simply not mounted.
 
 ## The Hot-Reload Superpower
 
-Here's one of the most compelling advantages of volume-mounted ConfigMaps over environment variables: **when the ConfigMap changes, the mounted files update automatically:**  no Pod restart required.
+One of the most compelling advantages of volume-mounted ConfigMaps over environment variables: **when the ConfigMap changes, the mounted files update automatically**, no Pod restart required.
 
-Kubernetes's kubelet periodically syncs volume-mounted ConfigMaps (typically within 30-60 seconds, sometimes up to 2 minutes). When it detects that the ConfigMap has been updated, it writes the new file contents to the mounted directory. Applications that watch for file changes (inotify-based watchers, or applications that poll their config file) can pick up the new configuration entirely live.
+Kubernetes's kubelet periodically syncs volume-mounted ConfigMaps (typically within 30–60 seconds). When it detects an update, it writes the new file contents to the mounted directory. Applications that watch for file changes can pick up the new configuration entirely live.
 
-This enables a powerful operational pattern: update a ConfigMap, and within a minute, your application reloads its configuration without any downtime, without any rollout, without any Pod restart. For things like feature flags, logging levels, or tunable parameters, this is extremely convenient.
+This enables a powerful operational pattern: update a ConfigMap, and within a minute, your application reloads its configuration without any downtime, without any rollout, without any Pod restart.
 
 :::warning
-**Environment variables from ConfigMaps do NOT hot-reload.** If you inject a ConfigMap key as an environment variable (`env.valueFrom.configMapKeyRef`), the only way to pick up a changed value is to restart the Pod. Volume mounts are the only path to live configuration updates. This is a significant operational difference , choose your injection method based on whether live reload matters to you.
+**Environment variables from ConfigMaps do NOT hot-reload.** If you inject a ConfigMap key as an environment variable (`env.valueFrom.configMapKeyRef`), the only way to pick up a changed value is to restart the Pod. Volume mounts are the only path to live configuration updates, choose your injection method based on whether live reload matters to you.
 :::
 
 ## Practical Example: NGINX Configuration
 
-Let's tie this together with a realistic scenario. You want to run NGINX with a custom configuration stored in a ConfigMap, so you can update the config without rebuilding the container image.
+Let's tie this together with a realistic scenario: NGINX with a custom configuration stored in a ConfigMap, so you can update the config without rebuilding the container image.
 
 First, the ConfigMap with the NGINX configuration:
 
@@ -176,7 +182,7 @@ spec:
           readOnly: true
 ```
 
-Notice the `subPath` field here. Normally, mounting a volume to `/etc/nginx/nginx.conf` would replace the entire `/etc/nginx/` directory with the ConfigMap's contents. That would wipe out all the other NGINX configuration files in that directory. `subPath` lets you mount a single key from the ConfigMap to a single specific file path, without disturbing anything else in the parent directory.
+Notice the `subPath` field. Normally, mounting a volume to `/etc/nginx/nginx.conf` would replace the entire `/etc/nginx/` directory with the ConfigMap's contents, wiping out all other NGINX configuration files. `subPath` lets you mount a single key to a single specific file path, without disturbing anything else in the parent directory.
 
 :::warning
 There is an important limitation of `subPath`: **files mounted with `subPath` do NOT receive live updates when the ConfigMap changes**. The hot-reload feature only works for full-directory mounts, not `subPath` mounts. If you need hot reloading, mount the ConfigMap to a separate directory and symlink your target path to it, or restructure your configuration to use a directory-based layout.
@@ -184,7 +190,7 @@ There is an important limitation of `subPath`: **files mounted with `subPath` do
 
 ## Default File Permissions
 
-By default, files mounted from a ConfigMap have permissions `0644` , readable by everyone, writable only by the owner. Secrets default to `0400` , readable only by the owner. You can override the default permissions for all files in a volume with the `defaultMode` field, expressed as a decimal integer:
+By default, files mounted from a ConfigMap have permissions `0644`, readable by everyone, writable only by the owner. Secrets default to `0400`, readable only by the owner. You can override the default permissions for all files in a volume with the `defaultMode` field, expressed as a decimal integer:
 
 ```yaml
 volumes:
@@ -259,7 +265,7 @@ kubectl exec config-reader -- cat /config/settings.conf
 
 ```bash
 kubectl create configmap demo-config \
-  --from-literal=greeting.txt="Updated greeting , no restart needed!" \
+  --from-literal=greeting.txt="Updated greeting, no restart needed!" \
   --from-literal=settings.conf="color=green\nsize=small" \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
@@ -314,13 +320,13 @@ EOF
 kubectl logs secret-reader
 ```
 
-**11. Check file permissions on the Secret mount , they should be 0400:**
+**11. Check file permissions on the Secret mount, they should be 0400:**
 
 ```bash
 kubectl exec secret-reader -- ls -la /secrets/
 ```
 
-Notice the permissions: `-r--------` , readable only by the owner, as expected for sensitive data.
+Notice the permissions: `-r--------`, readable only by the owner, as expected for sensitive data.
 
 **12. Clean up:**
 
@@ -330,4 +336,4 @@ kubectl delete configmap demo-config
 kubectl delete secret demo-secret
 ```
 
-You've now mastered all four volume types covered in this module. You understand the ephemeral nature of container filesystems, the Pod-scoped persistence of `emptyDir`, the node-coupled power and danger of `hostPath`, and the elegant configuration injection capabilities of ConfigMap and Secret volumes. These tools, used thoughtfully, cover the vast majority of storage needs you'll encounter for stateless and semi-stateful workloads in Kubernetes.
+You've now mastered all four volume types covered in this module: the Pod-scoped persistence of `emptyDir`, the node-coupled power and danger of `hostPath`, and the elegant configuration injection capabilities of ConfigMap and Secret volumes. These tools cover the vast majority of storage needs for stateless and semi-stateful workloads in Kubernetes.

@@ -1,6 +1,10 @@
 # Access Modes and Reclaim Policies
 
-Two of the most consequential settings on any PersistentVolume are its **access mode** and its **reclaim policy**. Getting these right means understanding both how your workload uses storage (does it need to be shared? does it need to be writable from multiple places?) and what should happen to your data when you're done with it. Making the wrong choice here can lead to application failures that are surprisingly hard to diagnose, or , far worse , accidental data loss.
+Two of the most consequential settings on any PersistentVolume are its **access mode** and its **reclaim policy**. Getting these right means understanding both how your workload uses storage (does it need to be shared? does it need to be writable from multiple places?) and what should happen to your data when you're done with it.
+
+:::warning
+Making the wrong choice here can lead to application failures that are surprisingly hard to diagnose, or, far worse, accidental data loss.
+:::
 
 ## Access Modes
 
@@ -8,23 +12,21 @@ An access mode describes how many nodes can attach the volume, and whether they 
 
 ### ReadWriteOnce (RWO)
 
-`ReadWriteOnce` is by far the most common access mode. It means the volume can be mounted in **read-write mode by a single node at a time**. It does not mean only one Pod can use it , if multiple Pods are scheduled on the same node and they all reference the same PVC, they can all write to it simultaneously (though you would almost never do this intentionally). The restriction is at the *node* level, not the Pod level.
+`ReadWriteOnce` is by far the most common access mode. It means the volume can be mounted in **read-write mode by a single node at a time**. It does not mean only one Pod can use it, if multiple Pods are scheduled on the same node and they all reference the same PVC, they can all write to it simultaneously (though you would almost never do this intentionally). The restriction is at the *node* level, not the Pod level.
 
 RWO is supported by virtually every storage backend: AWS Elastic Block Store, GCP Persistent Disk, Azure Disk, and most CSI drivers for local SSDs. It is the right choice for single-replica databases, stateful applications managed by StatefulSets (where each Pod gets its own PVC), and any workload where only one instance runs at a time.
 
-The limitation of RWO becomes apparent when you try to scale. If a Deployment with RWO storage scales to two replicas and those replicas land on different nodes, the second replica's Pod will remain stuck in `ContainerCreating` indefinitely. The volume cannot be attached to two nodes at once, and Kubernetes will simply wait. The error in `kubectl describe pod` will mention a `FailedAttachVolume` event.
+The limitation appears at scale: if a Deployment with RWO storage scales to two replicas and those replicas land on different nodes, the second replica stays stuck in `ContainerCreating` indefinitely. The volume cannot be attached to two nodes at once, check `kubectl describe pod` for a `FailedAttachVolume` event.
 
 ### ReadOnlyMany (ROX)
 
-`ReadOnlyMany` allows the volume to be mounted **read-only by multiple nodes simultaneously**. This is useful for distributing configuration files, static assets, or reference data that many Pods need to read but none need to modify. For example, a shared directory of SSL certificates or ML model files could be a good candidate for ROX.
-
-ROX is less commonly used than RWO or RWX, but it has its place. Some storage backends that don't support simultaneous writes can still handle simultaneous reads, making ROX a reasonable option for those cases.
+`ReadOnlyMany` allows the volume to be mounted **read-only by multiple nodes simultaneously**. This is useful for distributing configuration files, static assets, or reference data that many Pods need to read but none need to modify, for example, a shared directory of SSL certificates or ML model files. Some storage backends that don't support simultaneous writes can still handle simultaneous reads, making ROX a reasonable option for those cases.
 
 ### ReadWriteMany (RWX)
 
-`ReadWriteMany` is the mode that allows **multiple nodes to mount the volume in read-write mode at the same time**. This is what you need when multiple Pods across multiple nodes all need to read and write to the same shared filesystem , for example, a CMS where multiple web server pods write uploaded files to a shared directory, or a batch processing system where workers consume from a shared input queue stored on disk.
+`ReadWriteMany` is the mode that allows **multiple nodes to mount the volume in read-write mode at the same time**. This is what you need when multiple Pods across multiple nodes all need to read and write to the same shared filesystem, for example, a CMS where multiple web server pods write uploaded files to a shared directory, or a batch processing system where workers consume from a shared input queue stored on disk.
 
-The critical thing to understand about RWX is that **most cloud block storage providers do not support it**. AWS EBS, GCP Persistent Disk, and Azure Disk are all block storage , they can only be attached to one node at a time at the hardware level. To get RWX, you need networked filesystem storage: NFS, CephFS, GlusterFS, Azure Files, AWS EFS, or similar solutions.
+The critical thing to understand about RWX is that **most cloud block storage providers do not support it**. AWS EBS, GCP Persistent Disk, and Azure Disk are all block storage, they can only be attached to one node at a time at the hardware level. To get RWX, you need networked filesystem storage: NFS, CephFS, GlusterFS, Azure Files, AWS EFS, or similar solutions.
 
 :::warning
 Attempting to use an RWX access mode with a storage backend that only supports RWO will fail at the PVC binding stage. The PVC will remain in `Pending` because no eligible PV (or dynamically provisioned volume) can satisfy the `ReadWriteMany` requirement. Always confirm your StorageClass supports the access mode you need.
@@ -34,7 +36,7 @@ Attempting to use an RWX access mode with a storage backend that only supports R
 
 Added in Kubernetes 1.22 and graduated to stable in 1.29, `ReadWriteOncePod` is a stricter version of RWO. Where RWO restricts the volume to a single *node*, RWOP restricts it to a single *Pod* across the entire cluster. Only one Pod anywhere in the cluster can mount the volume read-write at a time.
 
-This is particularly useful for workloads that must have exclusive, singleton access to storage , for example, a leader election pattern where you want to guarantee that even if two Pods somehow end up on the same node, only one can mount the volume. RWOP requires CSI driver support.
+This is particularly useful for workloads that must have exclusive, singleton access to storage, for example, a leader election pattern where you want to guarantee that even if two Pods somehow end up on the same node, only one can mount the volume. RWOP requires CSI driver support.
 
 ## Access Mode Summary
 
@@ -59,7 +61,7 @@ This is one of the most operationally important settings in Kubernetes storage. 
 
 ### Retain
 
-With the `Retain` policy, when a PVC is deleted the PV moves to `Released` state. The PV object still exists in the cluster. The data on the underlying storage is completely untouched. Nothing is automatically deleted.
+With the `Retain` policy, when a PVC is deleted the PV moves to `Released` state, the PV object still exists, and the data on the underlying storage is completely untouched. Nothing is automatically deleted.
 
 However, a `Released` PV **cannot be automatically claimed by a new PVC**. Even though the data is there and the PV object exists, the PV carries a `claimRef` field pointing to the old (now deleted) PVC. Kubernetes will not bind it to a new PVC until an administrator explicitly clears that reference.
 
@@ -74,11 +76,9 @@ To manually reclaim a `Retain` PV and make it available for a new PVC, you would
 
 ### Delete
 
-With the `Delete` policy, when a PVC is deleted, Kubernetes automatically deletes the PV *and* calls the underlying storage provider's API to delete the actual storage resource , the cloud disk, the NFS export, the Ceph volume, whatever it is.
+With the `Delete` policy, when a PVC is deleted, Kubernetes automatically deletes the PV *and* calls the underlying storage provider's API to delete the actual storage resource, the cloud disk, the NFS export, the Ceph volume, whatever it is.
 
-`Delete` is the default reclaim policy for dynamically provisioned PVs in most cloud environments. It makes sense there because the cloud disk was created specifically for this PVC , there is no pre-existing data to worry about, and cleaning up automatically prevents orphaned resources from accumulating.
-
-The danger of `Delete` is obvious: if a developer accidentally runs `kubectl delete pvc my-database-pvc`, the database storage is gone permanently. There is no recycle bin.
+`Delete` is the default reclaim policy for dynamically provisioned PVs in most cloud environments. It makes sense there because the cloud disk was created specifically for this PVC, there is no pre-existing data to worry about, and cleaning up automatically prevents orphaned resources from accumulating. The danger is obvious: if a developer accidentally runs `kubectl delete pvc my-database-pvc`, the storage is gone permanently. There is no recycle bin.
 
 :::warning
 In production environments with critical data, consider changing the default StorageClass's reclaim policy from `Delete` to `Retain`. This gives you a safety net even with dynamic provisioning. You can override the policy by patching an existing PV after it's created: `kubectl patch pv <name> -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'`
@@ -86,11 +86,11 @@ In production environments with critical data, consider changing the default Sto
 
 ### Recycle (Deprecated)
 
-The `Recycle` policy used to perform a basic scrub of the volume , running the equivalent of `rm -rf /volume/*` , and then reset the PV to `Available` so it could be bound to a new PVC. This approach was deprecated in Kubernetes 1.11 and is no longer recommended. It is too blunt an instrument (you can't customize the scrubbing behavior) and dynamic provisioning handles the use case much better.
+The `Recycle` policy used to perform a basic scrub of the volume, running the equivalent of `rm -rf /volume/*`, and then reset the PV to `Available` so it could be bound to a new PVC. This approach was deprecated in Kubernetes 1.11 and is no longer recommended. It is too blunt an instrument (you can't customize the scrubbing behavior) and dynamic provisioning handles the use case much better.
 
 ## The Released-to-Available Journey
 
-Understanding the full lifecycle of a PV is important for troubleshooting. When you delete a PVC that was bound to a PV with a `Retain` policy, the PV moves to `Released`. If you then try to create a new PVC that matches this PV's characteristics, the new PVC will stay in `Pending` , because the PV is `Released`, not `Available`. This is a surprisingly common source of confusion.
+Understanding the full lifecycle of a PV is important for troubleshooting. When you delete a PVC that was bound to a PV with a `Retain` policy, the PV moves to `Released`. If you then try to create a new PVC that matches this PV's characteristics, the new PVC will stay in `Pending`, because the PV is `Released`, not `Available`. This is a surprisingly common source of confusion.
 
 ```mermaid
 stateDiagram-v2

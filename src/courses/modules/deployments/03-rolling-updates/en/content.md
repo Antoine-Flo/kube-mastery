@@ -2,19 +2,23 @@
 
 Releasing a new version of software is inherently risky. No matter how thoroughly you test in staging, production environments have a way of surfacing surprises. The rolling update strategy is Kubernetes' answer to this challenge: it replaces your application's Pods gradually, a few at a time, ensuring that healthy Pods are always serving traffic throughout the transition. If something goes wrong, you can pause or roll back before the damage is widespread.
 
+:::info
+A rolling update is triggered automatically whenever you change the Deployment's Pod template, for example by updating the container image. The Deployment controller handles the rest.
+:::
+
 ## What a Rolling Update Actually Does
 
-Imagine you have three Pods running `nginx:1.25` and you want to upgrade to `nginx:1.26`. A naive approach would be to terminate all three Pods and then start three new ones , but during that gap, your service is completely down. A rolling update avoids this entirely.
+Imagine you have three Pods running `nginx:1.25` and you want to upgrade to `nginx:1.26`. A naive approach would be to terminate all three Pods and then start three new ones, but during that gap, your service is completely down. A rolling update avoids this entirely.
 
 Instead, Kubernetes follows a carefully coordinated sequence:
 
 1. Create a brand-new ReplicaSet for the new version (`nginx:1.26`), initially at zero replicas.
 2. Scale the new ReplicaSet up by one (or a small batch). A new Pod starts, gets its image pulled, and goes through the normal startup sequence.
-3. Wait until the new Pod passes its readiness probe , confirming it can actually serve traffic.
+3. Wait until the new Pod passes its readiness probe, confirming it can actually serve traffic.
 4. Scale the old ReplicaSet down by one. One old Pod is terminated gracefully.
 5. Repeat until the new ReplicaSet has the full desired count and the old ReplicaSet is at zero.
 
-At no point during this process does the total number of healthy, ready Pods drop to zero. Your users keep getting served the whole time , some from old Pods, some from new ones, depending on where they land during the transition.
+At no point during this process does the total number of healthy, ready Pods drop to zero. Your users keep getting served the whole time, some from old Pods, some from new ones, depending on where they land during the transition.
 
 ## How to Trigger a Rolling Update
 
@@ -119,7 +123,7 @@ sequenceDiagram
 
 ## Pausing and Resuming a Rollout
 
-Sometimes you want to roll out an update gradually , update a subset of Pods, verify the new version is healthy, then continue. Kubernetes supports this with pause and resume:
+Sometimes you want to roll out an update gradually, update a subset of Pods, verify the new version is healthy, then continue. Kubernetes supports this with pause and resume:
 
 ```bash
 # Trigger the update and immediately pause it
@@ -127,7 +131,7 @@ kubectl set image deployment/web-app web=nginx:1.26
 kubectl rollout pause deployment/web-app
 ```
 
-While paused, the Deployment controller stops making further changes. New Pods that were already started will remain running, old Pods will remain running. This lets you inspect the new version in production with limited blast radius , you've updated maybe one Pod out of three, and only a fraction of traffic is hitting the new version.
+While paused, the Deployment controller stops making further changes. New Pods that were already started will remain running, old Pods will remain running. This lets you inspect the new version in production with limited blast radius, you've updated maybe one Pod out of three, and only a fraction of traffic is hitting the new version.
 
 When you're satisfied:
 
@@ -142,9 +146,9 @@ Don't leave a Deployment in a paused state for long periods unintentionally. A p
 
 ## What Happens If the Update Fails?
 
-If new Pods fail to become Ready (due to a bad image, a crashing container, or failed health checks), the Deployment controller will stop the rollout , it won't continue scaling up the broken new ReplicaSet. The old Pods remain running. Your service stays up at reduced capacity, but it doesn't go down.
+If new Pods fail to become Ready (due to a bad image, a crashing container, or failed health checks), the Deployment controller stops the rollout, it won't continue scaling up the broken new ReplicaSet. The old Pods remain running, so your service stays up at reduced capacity.
 
-By default, Kubernetes will retry starting failed Pods with exponential backoff. If you want to stop the madness immediately, roll back (covered in the next lesson) or fix the underlying issue and re-apply the manifest.
+By default, Kubernetes retries starting failed Pods with exponential backoff. If you want to stop immediately, roll back (covered in the next lesson) or fix the underlying issue and re-apply the manifest.
 
 You can configure how long Kubernetes waits before declaring a rollout "stuck" using `spec.progressDeadlineSeconds` (default: 600 seconds):
 
@@ -221,7 +225,7 @@ kubectl patch deployment web-app -p \
 
 kubectl set image deployment/web-app web=nginx:1.27
 
-# This update will be much faster , nearly instantaneous for 3 replicas
+# This update will be much faster, nearly instantaneous for 3 replicas
 kubectl rollout status deployment/web-app
 ```
 
