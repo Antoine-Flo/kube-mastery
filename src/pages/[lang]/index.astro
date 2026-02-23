@@ -211,6 +211,23 @@ try {
           </div>
         </div>
       </div>
+      <div class="reliability-cta-wrap">
+        <div class="content">
+          <div class="reliability-cta anim">
+            <p>{t('home_reliability_cta_intro')}</p>
+            <div class="cta">
+              <Button
+                href={localePath('/pricing')}
+                variant="solid"
+                color="cyan"
+                size="xl"
+              >
+                {t('home_cta_join')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 </Layout>
@@ -862,6 +879,31 @@ try {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-28);
+  }
+  .reliability-cta-wrap {
+    width: 100%;
+    margin-top: 3rem;
+    border-top: 1px solid var(--color-gray-6);
+  }
+  .reliability-cta {
+    padding-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: center;
+  }
+  .reliability-cta p {
+    margin: 0;
+    font-size: var(--text-base);
+    color: var(--color-gray-11);
+    line-height: 1.6;
+    max-width: 720px;
+  }
+  @media (min-width: 768px) {
+    .reliability-cta p {
+      font-size: var(--text-lg);
+    }
   }
   .feature-row {
     display: flex;
