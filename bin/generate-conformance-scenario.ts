@@ -73,7 +73,9 @@ const createExhaustiveSegments = (): LifecycleSegment[] => {
         'kubectl get pods -A',
         'kubectl get pods -o yaml',
         'kubectl get pods -o json',
+        'kubectl delete pod web-00063e839a-chadq',
         'kubectl get nodes',
+        'kubectl describe node conformance-worker',
         'kubectl get configmaps',
         'kubectl get secrets'
       ]
@@ -183,6 +185,8 @@ const createExhaustiveSegments = (): LifecycleSegment[] => {
           'KIND:',
           'Node'
         ]),
+        'kubectl describe node conformance-control-plane',
+        'kubectl describe node conformance-worker2',
         createRawCommand('kubectl explain replicaset.spec.replicas', [
           'FIELD:    replicas',
           'KIND:',

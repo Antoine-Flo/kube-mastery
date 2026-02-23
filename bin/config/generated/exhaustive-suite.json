@@ -34,17 +34,29 @@
     {
       "id": "minimal-cmd-5",
       "type": "command",
-      "command": "kubectl get nodes",
+      "command": "kubectl delete pod web-00063e839a-chadq",
       "compareMode": "normalized"
     },
     {
       "id": "minimal-cmd-6",
       "type": "command",
-      "command": "kubectl get configmaps",
+      "command": "kubectl get nodes",
       "compareMode": "normalized"
     },
     {
       "id": "minimal-cmd-7",
+      "type": "command",
+      "command": "kubectl describe node conformance-worker",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-8",
+      "type": "command",
+      "command": "kubectl get configmaps",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-9",
       "type": "command",
       "command": "kubectl get secrets",
       "compareMode": "normalized"
@@ -106,17 +118,23 @@
     {
       "id": "deploy-cm-cmd-8",
       "type": "command",
-      "command": "kubectl diff -f src/courses/seeds/deployment-with-configmap/configmap.yaml",
+      "command": "kubectl get daemonsets -A",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-9",
       "type": "command",
-      "command": "kubectl diff -f src/courses/seeds/deployment-with-configmap/secret.yaml",
+      "command": "kubectl diff -f src/courses/seeds/deployment-with-configmap/configmap.yaml",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-10",
+      "type": "command",
+      "command": "kubectl diff -f src/courses/seeds/deployment-with-configmap/secret.yaml",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-11",
       "type": "command",
       "command": "kubectl diff -f src/courses/seeds/diff-fixtures/configmap-changed.yaml",
       "compareMode": "none",
@@ -136,7 +154,7 @@
       }
     },
     {
-      "id": "deploy-cm-cmd-11",
+      "id": "deploy-cm-cmd-12",
       "type": "command",
       "command": "kubectl diff -f src/courses/seeds/diff-fixtures/secret-changed.yaml",
       "compareMode": "none",
@@ -154,61 +172,67 @@
       }
     },
     {
-      "id": "deploy-cm-cmd-12",
+      "id": "deploy-cm-cmd-13",
       "type": "command",
       "command": "kubectl create deployment exhaustive-web --image=nginx:latest",
       "compareMode": "normalized"
     },
     {
-      "id": "deploy-cm-cmd-13",
-      "type": "command",
-      "command": "kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080",
-      "compareMode": "normalized"
-    },
-    {
       "id": "deploy-cm-cmd-14",
       "type": "command",
-      "command": "kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date",
+      "command": "kubectl describe deployment exhaustive-web",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-15",
       "type": "command",
-      "command": "kubectl get all",
+      "command": "kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-16",
       "type": "command",
-      "command": "kubectl get all -A",
+      "command": "kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-17",
       "type": "command",
-      "command": "kubectl scale deployments exhaustive-web --replicas=3",
+      "command": "kubectl get all",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-18",
       "type": "command",
-      "command": "kubectl get deployments",
+      "command": "kubectl get all -A",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-19",
       "type": "command",
-      "command": "kubectl delete deployments exhaustive-api",
+      "command": "kubectl scale deployments exhaustive-web --replicas=3",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-20",
       "type": "command",
-      "command": "kubectl delete deployments exhaustive-multi",
+      "command": "kubectl get deployments",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-21",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-api",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-22",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-multi",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-23",
       "type": "command",
       "command": "kubectl delete deployments exhaustive-web",
       "compareMode": "normalized"
@@ -563,6 +587,18 @@
     {
       "id": "platform-cmd-30",
       "type": "command",
+      "command": "kubectl describe node conformance-control-plane",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-31",
+      "type": "command",
+      "command": "kubectl describe node conformance-worker2",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-32",
+      "type": "command",
       "command": "kubectl explain replicaset.spec.replicas",
       "compareMode": "none",
       "expectKind": {
@@ -579,6 +615,28 @@
           "FIELD:    replicas",
           "KIND:",
           "ReplicaSet"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-33",
+      "type": "command",
+      "command": "kubectl explain daemonset.spec.template",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    template",
+          "KIND:",
+          "DaemonSet"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    template",
+          "KIND:",
+          "DaemonSet"
         ]
       }
     },

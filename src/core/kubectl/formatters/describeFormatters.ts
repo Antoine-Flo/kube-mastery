@@ -5,11 +5,14 @@
 // Reproduces real kubectl describe style with proper indentation and sections.
 
 import type { ConfigMap } from '../../cluster/ressources/ConfigMap'
+import type { ClusterStateData } from '../../cluster/ClusterState'
 import type {
   Deployment,
   DeploymentCondition,
   DeploymentStrategyType
 } from '../../cluster/ressources/Deployment'
+import type { Node, NodeCondition, NodeTaint } from '../../cluster/ressources/Node'
+import { getNodeRoles } from '../../cluster/ressources/Node'
 import type {
   ContainerStatus,
   EnvVar,
@@ -19,6 +22,7 @@ import type {
   VolumeMount
 } from '../../cluster/ressources/Pod'
 import type { Secret } from '../../cluster/ressources/Secret'
+import { formatAge } from '../../shared/formatter'
 import { blank, indent, kv, section } from './describeHelpers'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -263,6 +267,261 @@ const formatSecretType = (secretType: Secret['type']): string => {
   return 'Unknown'
 }
 
+const formatNodeTaints = (taints: NodeTaint[] | undefined): string => {
+  if (!taints || taints.length === 0) {
+    return '<none>'
+  }
+  return taints
+    .map((taint) => {
+      const valuePart = taint.value ? `=${taint.value}` : ''
+      return `${taint.key}${valuePart}:${taint.effect}`
+    })
+    .join(', ')
+}
+
+const formatNodeConditions = (
+  conditions: NodeCondition[] | undefined
+): string[] => {
+  const lines: string[] = ['Conditions:']
+  if (!conditions || conditions.length === 0) {
+    lines.push('  <none>')
+    return lines
+  }
+
+  lines.push(
+    '  Type             Status  LastHeartbeatTime               LastTransitionTime              Reason                         Message'
+  )
+  lines.push(
+    '  ----             ------  -----------------               ------------------              ------                         -------'
+  )
+  for (const condition of conditions) {
+    const heartbeat = condition.lastHeartbeatTime
+      ? formatDescribeDate(condition.lastHeartbeatTime)
+      : '<none>'
+    const transition = condition.lastTransitionTime
+      ? formatDescribeDate(condition.lastTransitionTime)
+      : '<none>'
+    const reason = condition.reason ?? '<none>'
+    const message = condition.message ?? '<none>'
+    lines.push(
+      `  ${condition.type.padEnd(16)} ${condition.status.padEnd(6)}  ${heartbeat.padEnd(31)} ${transition.padEnd(31)} ${reason.padEnd(30)} ${message}`
+    )
+  }
+  return lines
+}
+
+const formatNodeAddresses = (
+  addresses: Node['status']['addresses'] | undefined
+): string[] => {
+  const lines: string[] = ['Addresses:']
+  if (!addresses || addresses.length === 0) {
+    lines.push('  <none>')
+    return lines
+  }
+  for (const address of addresses) {
+    lines.push(`  ${address.type}:\t${address.address}`)
+  }
+  return lines
+}
+
+const formatNodeResourceList = (
+  title: string,
+  resources: Record<string, string> | undefined
+): string[] => {
+  if (!resources || Object.keys(resources).length === 0) {
+    return [`${title}:`, '  <none>']
+  }
+  const lines: string[] = [`${title}:`]
+  const keys = Object.keys(resources).sort((left, right) => {
+    return left.localeCompare(right)
+  })
+  for (const key of keys) {
+    lines.push(`  ${key}:\t${resources[key]}`)
+  }
+  return lines
+}
+
+const formatNodeSystemInfo = (node: Node): string[] => {
+  const info = node.status.nodeInfo
+  return [
+    'System Info:',
+    `  Machine ID:\t${info.machineID ?? '<none>'}`,
+    `  System UUID:\t${info.systemUUID ?? '<none>'}`,
+    `  Boot ID:\t${info.bootID ?? '<none>'}`,
+    `  Kernel Version:\t${info.kernelVersion}`,
+    `  OS Image:\t${info.osImage}`,
+    `  Operating System:\t${info.operatingSystem}`,
+    `  Architecture:\t${info.architecture}`,
+    `  Container Runtime Version:\t${info.containerRuntimeVersion}`,
+    `  Kubelet Version:\t${info.kubeletVersion}`
+  ]
+}
+
+const isNonTerminatedPod = (pod: Pod): boolean => {
+  return pod.status.phase !== 'Succeeded' && pod.status.phase !== 'Failed'
+}
+
+const getNonTerminatedPodsOnNode = (
+  nodeName: string,
+  state: ClusterStateData | undefined
+): Pod[] => {
+  if (state === undefined) {
+    return []
+  }
+  return state.pods.items.filter((pod) => {
+    return pod.spec.nodeName === nodeName && isNonTerminatedPod(pod)
+  })
+}
+
+const parseCpuToMilli = (value: string | undefined): number => {
+  if (value === undefined || value.length === 0) {
+    return 0
+  }
+  if (value.endsWith('m')) {
+    const milli = Number.parseInt(value.slice(0, -1), 10)
+    return Number.isNaN(milli) ? 0 : milli
+  }
+  const cores = Number.parseFloat(value)
+  if (Number.isNaN(cores)) {
+    return 0
+  }
+  return Math.round(cores * 1000)
+}
+
+const parseMemoryToBytes = (value: string | undefined): number => {
+  if (value === undefined || value.length === 0) {
+    return 0
+  }
+  const normalized = value.trim()
+  const binaryUnits: Record<string, number> = {
+    Ki: 1024,
+    Mi: 1024 ** 2,
+    Gi: 1024 ** 3,
+    Ti: 1024 ** 4
+  }
+  const unit = Object.keys(binaryUnits).find((candidate) => {
+    return normalized.endsWith(candidate)
+  })
+  if (unit) {
+    const numeric = Number.parseFloat(normalized.slice(0, -2))
+    if (Number.isNaN(numeric)) {
+      return 0
+    }
+    return Math.round(numeric * binaryUnits[unit])
+  }
+  const asNumber = Number.parseFloat(normalized)
+  if (Number.isNaN(asNumber)) {
+    return 0
+  }
+  return Math.round(asNumber)
+}
+
+const calculatePercent = (used: number, total: number): number => {
+  if (total <= 0) {
+    return 0
+  }
+  return Math.floor((used / total) * 100)
+}
+
+interface PodResourceTotals {
+  cpuRequestsMilli: number
+  cpuLimitsMilli: number
+  memoryRequestsBytes: number
+  memoryLimitsBytes: number
+}
+
+const createEmptyPodResourceTotals = (): PodResourceTotals => {
+  return {
+    cpuRequestsMilli: 0,
+    cpuLimitsMilli: 0,
+    memoryRequestsBytes: 0,
+    memoryLimitsBytes: 0
+  }
+}
+
+const getPodResources = (pod: Pod): PodResourceTotals => {
+  const totals = createEmptyPodResourceTotals()
+  for (const container of pod.spec.containers) {
+    totals.cpuRequestsMilli =
+      totals.cpuRequestsMilli + parseCpuToMilli(container.resources?.requests?.cpu)
+    totals.cpuLimitsMilli =
+      totals.cpuLimitsMilli + parseCpuToMilli(container.resources?.limits?.cpu)
+    totals.memoryRequestsBytes =
+      totals.memoryRequestsBytes +
+      parseMemoryToBytes(container.resources?.requests?.memory)
+    totals.memoryLimitsBytes =
+      totals.memoryLimitsBytes + parseMemoryToBytes(container.resources?.limits?.memory)
+  }
+  return totals
+}
+
+const addPodResourcesToTotals = (
+  totals: PodResourceTotals,
+  podTotals: PodResourceTotals
+): void => {
+  totals.cpuRequestsMilli = totals.cpuRequestsMilli + podTotals.cpuRequestsMilli
+  totals.cpuLimitsMilli = totals.cpuLimitsMilli + podTotals.cpuLimitsMilli
+  totals.memoryRequestsBytes =
+    totals.memoryRequestsBytes + podTotals.memoryRequestsBytes
+  totals.memoryLimitsBytes = totals.memoryLimitsBytes + podTotals.memoryLimitsBytes
+}
+
+const formatNonTerminatedPodRow = (
+  pod: Pod,
+  podTotals: PodResourceTotals
+): string => {
+  return `  ${pod.metadata.namespace}\t${pod.metadata.name}\t${podTotals.cpuRequestsMilli}m\t${podTotals.cpuLimitsMilli}m\t${podTotals.memoryRequestsBytes}\t${podTotals.memoryLimitsBytes}\t${formatAge(pod.metadata.creationTimestamp)}`
+}
+
+const formatAllocatedResourceLines = (
+  node: Node,
+  totals: PodResourceTotals
+): string[] => {
+  const allocatableCpuMilli = parseCpuToMilli(node.status.allocatable?.cpu)
+  const allocatableMemoryBytes = parseMemoryToBytes(node.status.allocatable?.memory)
+  const cpuRequestsPercent = calculatePercent(
+    totals.cpuRequestsMilli,
+    allocatableCpuMilli
+  )
+  const cpuLimitsPercent = calculatePercent(totals.cpuLimitsMilli, allocatableCpuMilli)
+  const memoryRequestsPercent = calculatePercent(
+    totals.memoryRequestsBytes,
+    allocatableMemoryBytes
+  )
+  const memoryLimitsPercent = calculatePercent(
+    totals.memoryLimitsBytes,
+    allocatableMemoryBytes
+  )
+
+  return [
+    'Allocated resources:\n  (Total limits may be over 100 percent, i.e., overcommitted.)',
+    '  Resource\tRequests\tLimits',
+    '  --------\t--------\t------',
+    `  cpu\t${totals.cpuRequestsMilli}m (${cpuRequestsPercent}%)\t${totals.cpuLimitsMilli}m (${cpuLimitsPercent}%)`,
+    `  memory\t${totals.memoryRequestsBytes} (${memoryRequestsPercent}%)\t${totals.memoryLimitsBytes} (${memoryLimitsPercent}%)`
+  ]
+}
+
+const formatNodePodResources = (node: Node, pods: Pod[]): string[] => {
+  const lines: string[] = []
+  lines.push(`Non-terminated Pods:\t(${pods.length} in total)`)
+  lines.push(
+    '  Namespace\tName\tCPU Requests\tCPU Limits\tMemory Requests\tMemory Limits\tAge'
+  )
+  lines.push(
+    '  ---------\t----\t------------\t----------\t---------------\t-------------\t---'
+  )
+
+  const totals = createEmptyPodResourceTotals()
+  for (const pod of pods) {
+    const podTotals = getPodResources(pod)
+    addPodResourcesToTotals(totals, podTotals)
+    lines.push(formatNonTerminatedPodRow(pod, podTotals))
+  }
+  lines.push(...formatAllocatedResourceLines(node, totals))
+  return lines
+}
+
 // ─── Container Formatter ─────────────────────────────────────────────────
 
 /**
@@ -451,6 +710,44 @@ export const describePod = (pod: Pod): string => {
   lines.push(blank())
   lines.push('Events:             <none>')
 
+  return lines.join('\n')
+}
+
+export const describeNode = (
+  node: Node,
+  state?: ClusterStateData
+): string => {
+  const lines: string[] = []
+  lines.push(`Name:\t${node.metadata.name}`)
+  lines.push(`Roles:\t${getNodeRoles(node)}`)
+  lines.push(`Labels:\t${formatLabels(node.metadata.labels)}`)
+  lines.push(`Annotations:\t${formatLabels(node.metadata.annotations)}`)
+  lines.push(`CreationTimestamp:\t${formatDescribeDate(node.metadata.creationTimestamp)}`)
+  lines.push(`Taints:\t${formatNodeTaints(node.spec.taints)}`)
+  lines.push(`Unschedulable:\t${node.spec.unschedulable === true}`)
+  lines.push(blank())
+  lines.push(...formatNodeConditions(node.status.conditions))
+  lines.push(blank())
+  lines.push(...formatNodeAddresses(node.status.addresses))
+  lines.push(blank())
+  lines.push(...formatNodeResourceList('Capacity', node.status.capacity))
+  lines.push(...formatNodeResourceList('Allocatable', node.status.allocatable))
+  lines.push(blank())
+  lines.push(...formatNodeSystemInfo(node))
+  if (node.spec.podCIDR && node.spec.podCIDR.length > 0) {
+    lines.push(`PodCIDR:\t${node.spec.podCIDR}`)
+  }
+  if (node.spec.podCIDRs && node.spec.podCIDRs.length > 0) {
+    lines.push(`PodCIDRs:\t${node.spec.podCIDRs.join(',')}`)
+  }
+  if (node.spec.providerID && node.spec.providerID.length > 0) {
+    lines.push(`ProviderID:\t${node.spec.providerID}`)
+  }
+  lines.push(blank())
+  const pods = getNonTerminatedPodsOnNode(node.metadata.name, state)
+  lines.push(...formatNodePodResources(node, pods))
+  lines.push(blank())
+  lines.push('Events:\t<none>')
   return lines.join('\n')
 }
 

@@ -49,7 +49,7 @@ const authPath = localePath('/auth')
 let ctaHref: string
 let ctaLabel: string
 if (!isLoggedIn) {
-  ctaLabel = t('auth_loginButton')
+  ctaLabel = t('home_cta_join')
   ctaHref =
     firstLessonUrl !== null
       ? `${authPath}?redirect=${encodeURIComponent(firstLessonUrl)}`

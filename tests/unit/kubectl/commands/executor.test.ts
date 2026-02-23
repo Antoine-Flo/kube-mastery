@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createClusterState } from '../../../../src/core/cluster/ClusterState'
 import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
+import { createNode } from '../../../../src/core/cluster/ressources/Node'
 import { createService } from '../../../../src/core/cluster/ressources/Service'
 import { createHostFileSystem } from '../../../../src/core/filesystem/debianFileSystem'
 import {
@@ -43,6 +44,41 @@ describe('kubectl Executor', () => {
           name: 'redis-pod',
           namespace: 'kube-system',
           containers: [{ name: 'redis', image: 'redis:alpine', ports: [] }]
+        })
+      )
+      clusterState.addNode(
+        createNode({
+          name: 'sim-worker',
+          status: {
+            nodeInfo: {
+              architecture: 'amd64',
+              containerRuntimeVersion: 'containerd://2.2.0',
+              kernelVersion: '6.6.87.2-microsoft-standard-WSL2',
+              kubeletVersion: 'v1.35.0',
+              operatingSystem: 'linux',
+              osImage: 'Debian GNU/Linux 12 (bookworm)'
+            },
+            addresses: [
+              {
+                type: 'InternalIP',
+                address: '172.18.0.3'
+              },
+              {
+                type: 'Hostname',
+                address: 'sim-worker'
+              }
+            ],
+            allocatable: {
+              cpu: '4000m',
+              memory: '8Gi'
+            },
+            conditions: [
+              {
+                type: 'Ready',
+                status: 'True'
+              }
+            ]
+          }
         })
       )
     })
@@ -96,6 +132,25 @@ describe('kubectl Executor', () => {
           expect(result.value).toContain('Replicas:')
           expect(result.value).toContain('Pod Template:')
         }
+      })
+
+      it('should route "kubectl describe node" to describe handler', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl describe node sim-worker')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('Name:')
+        expect(result.value).toContain('sim-worker')
+        expect(result.value).toContain('Conditions:')
       })
 
       it('should route "kubectl delete pod" to delete handler', () => {
@@ -708,6 +763,21 @@ data:
         expect(result.ok).toBe(true)
         if (result.ok) {
           expect(result.value).toContain('nginx-pod')
+        }
+      })
+
+      it('should handle "kubectl describe no sim-worker" (node alias)', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl describe no sim-worker')
+
+        expect(result.ok).toBe(true)
+        if (result.ok) {
+          expect(result.value).toContain('sim-worker')
         }
       })
 

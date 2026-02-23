@@ -31,18 +31,18 @@ const modulesLabel =
     : `${totalModules} ${t('courses_modules')}`
 ---
 
-<div class="oh">
+<div class="overview-header">
   <h1>{overview.title}</h1>
-  <div class="row">
-    <div class="i">
+  <div class="meta-row">
+    <div class="meta-item">
       <BookOpen size={18} aria-hidden="true" /><span>{lessonsLabel}</span>
     </div>
-    <div class="i">
+    <div class="meta-item">
       <Layers size={18} aria-hidden="true" /><span>{modulesLabel}</span>
     </div>
     {
       overview.level && (
-        <div class="i">
+        <div class="meta-item">
           <>
             <Circle size={18} aria-hidden="true" />
             <span>
@@ -55,7 +55,7 @@ const modulesLabel =
   </div>
   {
     (DescriptionContent || overview.description) && (
-      <div class="d">
+      <div class="description">
         {DescriptionContent ? (
           <DescriptionContent />
         ) : (
@@ -64,64 +64,80 @@ const modulesLabel =
       </div>
     )
   }
-  <Button href={ctaHref} variant="solid" size="lg" color="cyan" class="cta">
-    {ctaLabel}
-  </Button>
+  <div class="cta">
+    <Button href={ctaHref} variant="solid" size="xl" color="cyan">
+      {ctaLabel}
+    </Button>
+  </div>
 </div>
 
 <style>
-  .oh {
+  .overview-header {
     margin-bottom: 0;
   }
-  .oh h1 {
+  .overview-header h1 {
     font-size: 1.875rem;
     font-weight: var(--font-weight-bold);
     color: var(--color-gray-12);
     margin: 0 0 0.75rem;
   }
   @media (min-width: 768px) {
-    .oh h1 {
+    .overview-header h1 {
       font-size: 2.25rem;
     }
   }
-  .oh .row {
+  .meta-row {
     margin: 1.5rem 0;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 1.5rem;
   }
-  .oh .row .i {
+  .meta-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
-  .oh .row .i :global(svg) {
+  .meta-item :global(svg) {
     flex-shrink: 0;
     color: var(--color-gray-9);
   }
-  .oh .row .i span {
+  .meta-item span {
     font-size: var(--text-sm);
     color: var(--color-gray-11);
     line-height: 1.5;
   }
-  .oh .d {
+  .description {
     color: var(--color-gray-11);
     margin-bottom: 1.5rem;
     line-height: 1.7;
     font-size: var(--text-base);
   }
-  .oh .d :global(p) {
+  .description :global(p) {
     margin: 0 0 1rem;
   }
-  .oh .d :global(p:last-child) {
+  .description :global(p:last-child) {
     margin-bottom: 0;
   }
-  .oh .d :global(strong) {
+  .description :global(strong) {
     color: var(--color-gray-12);
     font-weight: var(--font-weight-semibold);
   }
-  .oh .cta {
-    min-width: 200px;
+  .cta {
+    margin-top: 0.5rem;
+  }
+  .cta :global(.btn[data-color='cyan'][data-variant='solid']) {
+    background: linear-gradient(
+      135deg,
+      var(--color-cyan-9) 0%,
+      var(--color-cyan-7) 100%
+    );
+  }
+  .cta :global(.btn[data-color='cyan'][data-variant='solid']):hover:not(:disabled) {
+    background: linear-gradient(
+      135deg,
+      var(--color-cyan-10) 0%,
+      var(--color-cyan-8) 100%
+    );
   }
 </style>

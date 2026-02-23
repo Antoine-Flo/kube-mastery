@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   describeConfigMap,
   describeDeployment,
+  describeNode,
   describePod,
   describeSecret
 } from '../../../../src/core/kubectl/formatters/describeFormatters'
@@ -9,9 +10,11 @@ import {
   createDeployment,
   type DeploymentCondition
 } from '../../../../src/core/cluster/ressources/Deployment'
+import { createNode } from '../../../../src/core/cluster/ressources/Node'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../src/core/cluster/ressources/Secret'
+import { createClusterStateData } from '../../helpers/utils'
 
 describe('describeFormatters', () => {
   describe('describePod', () => {
@@ -807,6 +810,144 @@ describe('describeFormatters', () => {
       expect(result).toContain('type=credentials')
       expect(result).toContain('Annotations:')
       expect(result).toContain('rotation-date=2024-01-01')
+    })
+  })
+
+  describe('describeNode', () => {
+    it('should format basic node information', () => {
+      const node = createNode({
+        name: 'sim-worker',
+        status: {
+          nodeInfo: {
+            architecture: 'amd64',
+            containerRuntimeVersion: 'containerd://2.2.0',
+            kernelVersion: '6.6.87.2-microsoft-standard-WSL2',
+            kubeletVersion: 'v1.35.0',
+            operatingSystem: 'linux',
+            osImage: 'Debian GNU/Linux 12 (bookworm)'
+          },
+          conditions: [
+            {
+              type: 'Ready',
+              status: 'True'
+            }
+          ],
+          addresses: [
+            { type: 'InternalIP', address: '172.18.0.3' },
+            { type: 'Hostname', address: 'sim-worker' }
+          ],
+          capacity: {
+            cpu: '4',
+            memory: '8Gi'
+          },
+          allocatable: {
+            cpu: '3900m',
+            memory: '7800Mi'
+          }
+        },
+        creationTimestamp: '2024-01-16T18:03:00Z'
+      })
+
+      const result = describeNode(node)
+
+      expect(result).toContain('Name:')
+      expect(result).toContain('sim-worker')
+      expect(result).toContain('Roles:')
+      expect(result).toContain('CreationTimestamp:')
+      expect(result).toContain('Conditions:')
+      expect(result).toContain('Addresses:')
+      expect(result).toContain('Capacity:')
+      expect(result).toContain('Allocatable:')
+      expect(result).toContain('System Info:')
+    })
+
+    it('should format taints and unschedulable when present', () => {
+      const node = createNode({
+        name: 'sim-control-plane',
+        labels: {
+          'node-role.kubernetes.io/control-plane': ''
+        },
+        spec: {
+          unschedulable: true,
+          taints: [
+            {
+              key: 'node-role.kubernetes.io/control-plane',
+              effect: 'NoSchedule'
+            }
+          ]
+        },
+        status: {
+          nodeInfo: {
+            architecture: 'amd64',
+            containerRuntimeVersion: 'containerd://2.2.0',
+            kernelVersion: '6.6.87.2-microsoft-standard-WSL2',
+            kubeletVersion: 'v1.35.0',
+            operatingSystem: 'linux',
+            osImage: 'Debian GNU/Linux 12 (bookworm)'
+          }
+        }
+      })
+
+      const result = describeNode(node)
+
+      expect(result).toContain('Roles:')
+      expect(result).toContain('control-plane')
+      expect(result).toContain('Taints:')
+      expect(result).toContain('NoSchedule')
+      expect(result).toContain('Unschedulable:\ttrue')
+    })
+
+    it('should include non-terminated pods and allocated resources sections', () => {
+      const node = createNode({
+        name: 'sim-worker',
+        status: {
+          nodeInfo: {
+            architecture: 'amd64',
+            containerRuntimeVersion: 'containerd://2.2.0',
+            kernelVersion: '6.6.87.2-microsoft-standard-WSL2',
+            kubeletVersion: 'v1.35.0',
+            operatingSystem: 'linux',
+            osImage: 'Debian GNU/Linux 12 (bookworm)'
+          },
+          allocatable: {
+            cpu: '4000m',
+            memory: '8Gi'
+          }
+        }
+      })
+      const pod = createPod({
+        name: 'web-pod',
+        namespace: 'default',
+        nodeName: 'sim-worker',
+        containers: [
+          {
+            name: 'web',
+            image: 'nginx:latest',
+            resources: {
+              requests: {
+                cpu: '100m',
+                memory: '128Mi'
+              },
+              limits: {
+                cpu: '500m',
+                memory: '512Mi'
+              }
+            }
+          }
+        ],
+        phase: 'Running'
+      })
+      const state = createClusterStateData({
+        pods: [pod]
+      })
+
+      const result = describeNode(node, state)
+
+      expect(result).toContain('Non-terminated Pods:')
+      expect(result).toContain('web-pod')
+      expect(result).toContain('Allocated resources:')
+      expect(result).toContain('cpu')
+      expect(result).toContain('memory')
     })
   })
 })

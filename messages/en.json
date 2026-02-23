@@ -55,7 +55,7 @@
   "auth_confirmPassword": "Confirm password",
   "auth_loginButton": "Sign in",
   "auth_continueWithGitHub": "Continue with GitHub",
-  "auth_continueWithMail": "Continue with email",
+  "auth_continueWithMail": "Continue with a magic link",
   "auth_or": "or",
   "auth_back": "Back",
   "auth_signupButton": "Create account",

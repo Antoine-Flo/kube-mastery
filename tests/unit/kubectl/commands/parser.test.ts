@@ -86,6 +86,30 @@ describe('kubectl parser - describe', () => {
     expect(result.value.name).toBe('coredns-abc')
     expect(result.value.namespace).toBe('kube-system')
   })
+
+  it('should parse node describe command', () => {
+    const result = parseCommand('kubectl describe node sim-worker')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('nodes')
+    expect(result.value.name).toBe('sim-worker')
+  })
+
+  it('should parse node alias "no" for describe', () => {
+    const result = parseCommand('kubectl describe no sim-worker')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('nodes')
+    expect(result.value.name).toBe('sim-worker')
+  })
 })
 
 describe('kubectl parser - get and delete flag positions', () => {

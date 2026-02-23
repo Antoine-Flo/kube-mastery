@@ -4,6 +4,7 @@ import { error, success } from '../../../shared/result'
 import {
   describeConfigMap,
   describeDeployment,
+  describeNode,
   describePod,
   describeSecret
 } from '../../formatters/describeFormatters'
@@ -20,30 +21,70 @@ import type { ParsedCommand } from '../types'
  */
 interface DescribeConfig {
   items: keyof ClusterStateData
-  formatter: (item: any) => string
+  formatter: (item: any, state: ClusterStateData) => string
   type: string
+  isClusterScoped?: boolean
+}
+
+interface DescribeableResource {
+  metadata: {
+    name: string
+    namespace: string
+  }
+}
+
+const findDescribeResource = (
+  collection: DescribeableResource[],
+  name: string,
+  namespace: string,
+  isClusterScoped: boolean
+): DescribeableResource | undefined => {
+  if (isClusterScoped) {
+    return collection.find((item) => {
+      return item.metadata.name === name
+    })
+  }
+  return collection.find((item) => {
+    return item.metadata.name === name && item.metadata.namespace === namespace
+  })
 }
 
 const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
   pods: {
     items: 'pods',
-    formatter: describePod,
+    formatter: (item) => {
+      return describePod(item)
+    },
     type: 'Pod'
   },
   configmaps: {
     items: 'configMaps',
-    formatter: describeConfigMap,
+    formatter: (item) => {
+      return describeConfigMap(item)
+    },
     type: 'ConfigMap'
   },
   secrets: {
     items: 'secrets',
-    formatter: describeSecret,
+    formatter: (item) => {
+      return describeSecret(item)
+    },
     type: 'Secret'
   },
   deployments: {
     items: 'deployments',
-    formatter: describeDeployment,
+    formatter: (item) => {
+      return describeDeployment(item)
+    },
     type: 'Deployment'
+  },
+  nodes: {
+    items: 'nodes',
+    formatter: (item, state) => {
+      return describeNode(item, state)
+    },
+    type: 'Node',
+    isClusterScoped: true
   }
 } as const
 
@@ -73,12 +114,14 @@ export const handleDescribe = (
 
   const namespace = parsed.namespace || 'default'
   const collection = state[config.items] as {
-    items: Array<{ metadata: { name: string; namespace: string } }>
+    items: DescribeableResource[]
   }
-  const resource = collection.items.find(
-    (item) =>
-      item.metadata.name === parsed.name &&
-      item.metadata.namespace === namespace
+  const isClusterScoped = config.isClusterScoped === true
+  const resource = findDescribeResource(
+    collection.items,
+    parsed.name,
+    namespace,
+    isClusterScoped
   )
 
   if (!resource) {
@@ -87,5 +130,5 @@ export const handleDescribe = (
     )
   }
 
-  return success(config.formatter(resource))
+  return success(config.formatter(resource, state))
 }
