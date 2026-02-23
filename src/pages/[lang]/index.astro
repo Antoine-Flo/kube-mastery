@@ -5,11 +5,11 @@ import Terminal from '../../components/Terminal.astro'
 import { Zap, Shield, Euro, CircleCheck } from '@lucide/astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import { getSupabaseServer } from '../../lib/supabase'
-import landingPlaceholder from '../../assets/landing-placeholder.svg'
 import astronautTrainingGif from '../../assets/astronaut-training.gif'
 import networkImg from '../../assets/network.jpg'
 import demoVideo from '../../assets/demo.mp4'
-import videoDemo from '../../assets/video-demo.mp4'
+import conformanceImage from '../../assets/conformance.png'
+import openapiLogo from '../../assets/openapi_logo.svg'
 const locale = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(locale)
 const localePath = useLocalePath(locale)
@@ -177,59 +177,33 @@ try {
     <div class="platform-features">
       <div class="content">
         <div class="section-header anim">
-          <h2>{t('home_platform_features_title')}</h2>
+          <h2>{t('home_reliability_title')}</h2>
+          <p>{t('home_reliability_subtitle')}</p>
         </div>
         <div class="section-body">
           <div class="feature-rows">
             <div class="feature-row anim">
               <div class="text">
-                <h3>{t('home_platform_features_path_title')}</h3>
-                <p>{t('home_platform_features_path_description')}</p>
+                <h3>{t('home_reliability_conformance_title')}</h3>
+                <p>{t('home_reliability_conformance_description')}</p>
               </div>
-              <div class="media mermaid-media">
-                <div class="mermaid-stack">
-                  <pre
-                    class="mermaid">
-                    {`mindmap
-  root((Kubernetes))
-    Pods
-    Deployments
-    Services
-    Ingress
-    ConfigMaps
-    Secrets
-    Volumes
-    RBAC`}
-                  </pre>
-                </div>
+              <div class="media media-conformance">
+                <img
+                  src={conformanceImage.src}
+                  alt={t('home_reliability_conformance_alt')}
+                  loading="lazy"
+                />
               </div>
             </div>
             <div class="feature-row reverse anim">
               <div class="text">
-                <h3>{t('home_platform_features_terminal_title')}</h3>
-                <p>{t('home_platform_features_terminal_description')}</p>
+                <h3>{t('home_reliability_openapi_title')}</h3>
+                <p>{t('home_reliability_openapi_description')}</p>
               </div>
-              <div class="media">
-                <video
-                  src={videoDemo}
-                  autoplay
-                  muted
-                  loop
-                  playsinline
-                  class="media-video"
-                  data-playback-rate="1.5"
-                  aria-label={t('home_platform_features_terminal_alt')}></video>
-              </div>
-            </div>
-            <div class="feature-row anim">
-              <div class="text">
-                <h3>{t('home_platform_features_visual_title')}</h3>
-                <p>{t('home_platform_features_visual_description')}</p>
-              </div>
-              <div class="media">
+              <div class="media media-openapi">
                 <img
-                  src={landingPlaceholder.src}
-                  alt={t('home_platform_features_visual_alt')}
+                  src={openapiLogo.src}
+                  alt={t('home_reliability_openapi_alt')}
                   loading="lazy"
                 />
               </div>
@@ -808,31 +782,28 @@ try {
     background: var(--color-gray-2);
   }
 
-  .mermaid-media .mermaid {
-    margin: 0;
-    padding: 1rem;
-    background: var(--color-gray-2);
-    border: 1px solid var(--color-gray-6);
-    border-radius: var(--radius-lg);
-  }
-  .mermaid-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  .mermaid-media .mermaid svg {
-    width: 100%;
+  .media-conformance img {
     height: auto;
-    display: block;
-  }
-  .media .media-video {
-    height: auto;
+    max-height: none;
     object-fit: contain;
   }
+
+  .media-openapi img {
+    aspect-ratio: 594 / 279;
+    height: auto;
+    object-fit: contain;
+    padding: 2.5rem;
+    background: var(--color-gray-2);
+  }
+
   @media (min-width: 768px) {
     .media img,
     .media video {
       height: 360px;
+    }
+    .media-conformance img,
+    .media-openapi img {
+      height: auto;
     }
   }
 
