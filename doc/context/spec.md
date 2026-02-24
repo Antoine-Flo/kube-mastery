@@ -11,7 +11,7 @@ Interactive web application for learning `kubectl` commands through a simulated 
 ### Phase 1: MVP ✅ (Completed)
 
 - Functional terminal with xterm.js (centered, styled)
-- kubectl command interpreter (get, describe, delete, create, apply, logs, exec, label, annotate, version, cluster-info, api-resources)
+- kubectl command interpreter (get, describe, delete, create, apply, run, logs, exec, label, annotate, version, cluster-info, api-resources)
 - Stateful virtual cluster (namespaces, pods, deployments, services, configmaps, secrets)
 - Local persistence (localStorage with auto-save)
 - Virtual filesystem for YAML manifests
@@ -31,7 +31,7 @@ Interactive web application for learning `kubectl` commands through a simulated 
 
 ### kubectl (Phase 1)
 
-get (pods, deploy, rs, services, configmaps, secrets, nodes), describe, delete, create -f, apply -f, logs, exec -it, label, annotate, version (--client, --output json/yaml), cluster-info, cluster-info dump, api-resources (--output wide, --namespaced, --sort-by). Détail : voir `src/core/kubectl/commands/handlers/`.
+get (pods, deploy, rs, services, configmaps, secrets, nodes), describe, delete, create -f, apply -f, run, logs, exec -it, label, annotate, version (--client, --output json/yaml), cluster-info, cluster-info dump, api-resources (--output wide, --namespaced, --sort-by). Détail : voir `src/core/kubectl/commands/handlers/`.
 
 ### kubectl Realism Guarantees (current baseline)
 
@@ -53,6 +53,11 @@ get (pods, deploy, rs, services, configmaps, secrets, nodes), describe, delete, 
   - `kubectl create deployment` rejects multiple `--image` when combined with command (`-- ...`),
   - `kubectl delete` namespaced resources emit `deleted from <namespace> namespace`,
   - deleting a missing deployment emits `Error from server (NotFound): deployments.apps "<name>" not found` with non-zero exit code.
+- `kubectl run` baseline:
+  - supports `kubectl run NAME --image=<image>`,
+  - supports `--command -- <cmd> [args...]` and `-- <arg1> <arg2> ...`,
+  - supports `--env`, `--labels`, `--port`, `--dry-run=client`, `-i/--stdin`, `-t/--tty`, `--rm`,
+  - current simulator scope limits restart policy handling to `--restart=Never` (other values return explicit error).
 - `kubectl cluster-info` baseline:
   - includes control-plane and CoreDNS lines,
   - `kubectl cluster-info dump --output-directory <path>` returns a success confirmation message.
@@ -285,7 +290,7 @@ All MVP criteria have been met:
 - ✅ Command history with ↑↓ navigation
 - ✅ Tab autocompletion working
 - ✅ Enhanced prompt with kube icon and path
-- ✅ 13+ kubectl commands supported (get, describe, delete, create, apply, logs, exec, label, annotate, version, cluster-info, api-resources)
+- ✅ 14+ kubectl commands supported (get, describe, delete, create, apply, run, logs, exec, label, annotate, version, cluster-info, api-resources)
 - ✅ Shell commands functional (cd, ls, pwd, mkdir, touch, cat, rm, nano/vi/vim)
 - ✅ Virtual filesystem with max 3 levels
 - ✅ Cluster persists between sessions (localStorage)

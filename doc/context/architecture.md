@@ -120,6 +120,19 @@ La couche handlers kubectl aligne explicitement les messages create/delete sur d
 - `delete` namespaced ajoute `from <namespace> namespace`,
 - les cas `NotFound` critiques (deployments) sont normalises avec `deployments.apps`.
 
+### Run Command Semantics Layer
+
+Le flux `kubectl run` repose sur la meme architecture parseur/transformer/handler:
+
+- parsing dedie dans `src/core/kubectl/commands/transformers.ts` (`runTransformer`),
+- validations semantiques centralisees dans `src/core/kubectl/commands/parser.ts`,
+- execution dans `src/core/kubectl/commands/handlers/applyCreate.ts` (`handleRun`) puis persistence via `createResourceWithEvents`.
+
+Portee actuelle:
+
+- support de `--image`, `--command -- <cmd>`, `-- <args...>`, `--env`, `--labels`, `--port`, `--dry-run=client`, `-i/--stdin`, `-t/--tty`, `--rm`,
+- `--restart` accepte uniquement `Never` (les autres valeurs sont explicitement rejetees pour rester coherentes avec le modele Pod-only du simulateur).
+
 ### Cluster-Info Dump Behavior
 
 `cluster-info` et `cluster-info dump` partagent un renderer central:

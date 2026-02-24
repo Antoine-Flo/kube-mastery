@@ -31,6 +31,7 @@
 - [x] **Lot D - validation create deployment** : rejection de `--image` multiple combine a une commande (`-- ...`) avec message d'erreur kubectl-like.
 - [~] **Lot E - cluster-info + describe pod parity** : cluster-info rapproche de kind, dump plus coherent; describe pod continue a raffiner.
 - [~] **Lot F - get/api-resources finishing** : `get pods -o wide` enrichi + categories `all`; derniers ecarts de tabulation/ordering a ajuster.
+- [x] **Lot G - run baseline parity** : support `kubectl run` (image, command/args, env, labels, port, dry-run client, stdin/tty/rm) avec limite explicite `--restart=Never` dans le simulateur.
 
 ### Améliorations Nodes (Post-MVP)
 
