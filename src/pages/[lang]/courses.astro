@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro'
 import CourseCard from '../../components/CourseCard.astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import { getCourses } from '../../content/courses/facade'
+import '../../styles/components/page-halo.css'
 
 const locale = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(locale)
@@ -23,35 +24,38 @@ const visualVariantByCourseId: Partial<Record<string, CourseVisualVariant>> = {
 ---
 
 <Layout>
-  <main>
-    <h1>{t('courses_title')}</h1>
-    <p>{t('courses_subtitle')}</p>
+  <div class="page-halo">
+    <div class="page-halo__bg" aria-hidden="true"></div>
+    <main>
+      <h1>{t('courses_title')}</h1>
+      <p>{t('courses_subtitle')}</p>
 
-    <div class="grid">
-      {
-        courses.map((course) => {
-          const visualVariant = visualVariantByCourseId[course.id]
-          return (
-            <CourseCard
-              title={course.title}
-              description={course.shortDescription ?? course.description}
-              totalLessons={course.totalLessons}
-              href={localePath(`/courses/${course.id}`)}
-              comingSoon={course.comingSoon}
-              level={course.level}
-              lessonsLabel={`${course.totalLessons} ${t('courses_lessons')}`}
-              comingSoonLabel={t('courses_comingSoon')}
-              visualVariant={visualVariant}
-            />
-          )
-        })
-      }
-    </div>
+      <div class="grid">
+        {
+          courses.map((course) => {
+            const visualVariant = visualVariantByCourseId[course.id]
+            return (
+              <CourseCard
+                title={course.title}
+                description={course.shortDescription ?? course.description}
+                totalLessons={course.totalLessons}
+                href={localePath(`/courses/${course.id}`)}
+                comingSoon={course.comingSoon}
+                level={course.level}
+                lessonsLabel={`${course.totalLessons} ${t('courses_lessons')}`}
+                comingSoonLabel={t('courses_comingSoon')}
+                visualVariant={visualVariant}
+              />
+            )
+          })
+        }
+      </div>
 
-    <p class="modules-link">
-      <a href={localePath('/modules')}>{t('courses_browseModules')}</a>
-    </p>
-  </main>
+      <p class="modules-link">
+        <a href={localePath('/modules')}>{t('courses_browseModules')}</a>
+      </p>
+    </main>
+  </div>
 </Layout>
 
 <style>

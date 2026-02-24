@@ -5,6 +5,7 @@ import Button from '../../../components/ui/Button.astro'
 import { useTranslations, useLocalePath } from '../../../i18n/utils'
 import { getSupabaseServer } from '../../../lib/supabase'
 import '../../../styles/components/card.css'
+import '../../../styles/components/page-halo.css'
 
 const lang = (Astro.params.lang || 'en') as 'en' | 'fr'
 const t = useTranslations(lang)
@@ -35,11 +36,13 @@ try {
 ---
 
 <Layout>
-  <div class="auth-page">
-    <div class="auth card card--outline">
-      <div class="card__header auth__header">
-        <h1 class="card__title auth__title">{t('auth_loginTitle')}</h1>
-      </div>
+  <div class="page-halo">
+    <div class="page-halo__bg" aria-hidden="true"></div>
+    <div class="auth-page">
+      <div class="auth card card--outline">
+        <div class="card__header auth__header">
+          <h1 class="card__title auth__title">{t('auth_loginTitle')}</h1>
+        </div>
 
       <div class="card__body auth__card-body">
         {
@@ -171,13 +174,6 @@ try {
     justify-content: center;
     width: 100%;
     padding: clamp(2.5rem, 5vw, 5rem) 1.25rem;
-    background:
-      radial-gradient(
-        70% 55% at 50% 0%,
-        color-mix(in srgb, var(--color-cyan-8) 10%, transparent),
-        transparent 70%
-      ),
-      var(--color-bg);
   }
 
   .auth {

@@ -7,6 +7,7 @@ import { SUBSCRIPTION_PLANS } from '../../lib/subscription-plans'
 import '../../styles/components/card.css'
 import '../../styles/components/accordion.css'
 import '../../styles/components/guarantee.css'
+import '../../styles/components/page-halo.css'
 import '../../styles/routes/pricing.css'
 
 const lang = Astro.params.lang as 'en' | 'fr'
@@ -44,8 +45,10 @@ const faqItems = [
 ---
 
 <Layout>
-  <div class="pricing">
-    <h2 class="pricing__title">{t('pricing_title')}</h2>
+  <div class="page-halo">
+    <div class="page-halo__bg" aria-hidden="true"></div>
+    <div class="pricing">
+      <h2 class="pricing__title">{t('pricing_title')}</h2>
 
     <div class="pricing__toggle" role="group" aria-label="Billing period">
       <span
@@ -311,33 +314,34 @@ const faqItems = [
       </div>
     </section>
 
-    <section class="pricing__faq-section">
-      <h2 class="pricing__faq-title">{t('pricing_faq_title')}</h2>
-      <div class="pricing__faq-container">
-        <div class="accordion accordion--size-md pricing__faq-accordion">
-          {
-            faqItems.map((faq) => (
-              <details
-                class="accordion__item accordion__item--variant-outline"
-                id={faq.id}
-              >
-                <summary class="accordion__item-trigger">
-                  <span class="pricing__faq-question">{faq.q}</span>
-                  <span class="accordion__item-indicator" aria-hidden="true">
-                    ▼
-                  </span>
-                </summary>
-                <div class="accordion__item-content">
-                  <div class="accordion__item-body">
-                    <p class="pricing__faq-answer">{faq.a}</p>
+      <section class="pricing__faq-section">
+        <h2 class="pricing__faq-title">{t('pricing_faq_title')}</h2>
+        <div class="pricing__faq-container">
+          <div class="accordion accordion--size-md pricing__faq-accordion">
+            {
+              faqItems.map((faq) => (
+                <details
+                  class="accordion__item accordion__item--variant-outline"
+                  id={faq.id}
+                >
+                  <summary class="accordion__item-trigger">
+                    <span class="pricing__faq-question">{faq.q}</span>
+                    <span class="accordion__item-indicator" aria-hidden="true">
+                      ▼
+                    </span>
+                  </summary>
+                  <div class="accordion__item-content">
+                    <div class="accordion__item-body">
+                      <p class="pricing__faq-answer">{faq.a}</p>
+                    </div>
                   </div>
-                </div>
-              </details>
-            ))
-          }
+                </details>
+              ))
+            }
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   </div>
 </Layout>
 

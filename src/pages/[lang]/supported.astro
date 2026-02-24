@@ -1,0 +1,444 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import Button from '../../components/ui/Button.astro'
+import { useLocalePath, useTranslations } from '../../i18n/utils'
+import { Terminal, Layers, BookOpen, Telescope, Zap, ArrowRight } from '@lucide/astro'
+import '../../styles/components/card.css'
+import '../../styles/routes/supported.css'
+
+const locale = Astro.params.lang as 'en' | 'fr'
+const t = useTranslations(locale)
+const localePath = useLocalePath(locale)
+
+type LocaleStr = { en: string; fr: string }
+
+const kubectlCommands: Array<{
+  cmd: string
+  arg: string
+  flags: string
+  desc: LocaleStr
+}> = [
+  {
+    cmd: 'get', arg: '<resource>',
+    flags: '-n, -A, -o table/yaml/json, -l / --selector, --raw',
+    desc: { en: 'List one or more resources', fr: 'Lister une ou plusieurs ressources' },
+  },
+  {
+    cmd: 'describe', arg: '<resource>',
+    flags: '-n, -A',
+    desc: { en: 'Show detailed state of a resource', fr: 'Afficher l\'état détaillé d\'une ressource' },
+  },
+  {
+    cmd: 'delete', arg: '<resource>',
+    flags: '-n, -A, -l, -f',
+    desc: { en: 'Delete a resource', fr: 'Supprimer une ressource' },
+  },
+  {
+    cmd: 'apply', arg: '',
+    flags: '-f (required), -R',
+    desc: { en: 'Create or update resources from a file', fr: 'Créer ou mettre à jour des ressources depuis un fichier' },
+  },
+  {
+    cmd: 'create', arg: '',
+    flags: '-f (required)',
+    desc: { en: 'Create a resource from a file', fr: 'Créer une ressource depuis un fichier' },
+  },
+  {
+    cmd: 'run', arg: '<name>',
+    flags: '--image (required), -n, --dry-run, --restart, --env, --labels, --port, -i, -t',
+    desc: { en: 'Create and run a pod', fr: 'Créer et exécuter un pod' },
+  },
+  {
+    cmd: 'exec', arg: '<pod>',
+    flags: '-n, -c, -i, -t',
+    desc: { en: 'Run a command inside a pod', fr: 'Exécuter une commande dans un pod' },
+  },
+  {
+    cmd: 'logs', arg: '<pod>',
+    flags: '-n, -c, -f, --tail',
+    desc: { en: 'Print the logs of a pod', fr: 'Afficher les logs d\'un pod' },
+  },
+  {
+    cmd: 'label', arg: '<resource>',
+    flags: '-n',
+    desc: { en: 'Add or update labels', fr: 'Ajouter ou modifier des labels' },
+  },
+  {
+    cmd: 'annotate', arg: '<resource>',
+    flags: '-n',
+    desc: { en: 'Add or update annotations', fr: 'Ajouter ou modifier des annotations' },
+  },
+  {
+    cmd: 'scale', arg: '<resource>',
+    flags: '--replicas (required), -n',
+    desc: { en: 'Set the number of replicas', fr: 'Définir le nombre de replicas' },
+  },
+  {
+    cmd: 'diff', arg: '',
+    flags: '-f (required)',
+    desc: { en: 'Diff live config vs file', fr: 'Comparer la config live avec un fichier' },
+  },
+  {
+    cmd: 'explain', arg: '',
+    flags: 'field path  (e.g. pod.spec.containers)',
+    desc: { en: 'Show API field documentation', fr: 'Afficher la doc d\'un champ API' },
+  },
+  {
+    cmd: 'version', arg: '',
+    flags: '',
+    desc: { en: 'Print client and server version', fr: 'Afficher les versions client et serveur' },
+  },
+  {
+    cmd: 'cluster-info', arg: '',
+    flags: 'dump',
+    desc: { en: 'Display cluster endpoints', fr: 'Afficher les endpoints du cluster' },
+  },
+  {
+    cmd: 'api-resources', arg: '',
+    flags: '',
+    desc: { en: 'List available resource types', fr: 'Lister les types de ressources disponibles' },
+  },
+  {
+    cmd: 'api-versions', arg: '',
+    flags: '',
+    desc: { en: 'List available API versions', fr: 'Lister les versions d\'API disponibles' },
+  },
+]
+
+const resources = [
+  { name: 'pods',        alias: 'po' },
+  { name: 'deployments', alias: 'deploy' },
+  { name: 'services',    alias: 'svc' },
+  { name: 'namespaces',  alias: 'ns' },
+  { name: 'configmaps',  alias: 'cm' },
+  { name: 'secrets',     alias: '' },
+  { name: 'nodes',       alias: 'no' },
+  { name: 'daemonsets',  alias: 'ds' },
+  { name: 'replicasets', alias: 'rs' },
+  { name: 'all',         alias: '' },
+]
+
+const shellCommands: Array<{
+  cmd: string
+  arg: string
+  flags: string
+  desc: LocaleStr
+}> = [
+  {
+    cmd: '↑ / ↓', arg: '',
+    flags: '',
+    desc: { en: 'Navigate command history', fr: 'Naviguer dans l\'historique' },
+  },
+  {
+    cmd: 'ls', arg: '[path]',
+    flags: '-l',
+    desc: { en: 'List directory contents', fr: 'Lister le contenu d\'un répertoire' },
+  },
+  {
+    cmd: 'cd', arg: '<path>',
+    flags: '',
+    desc: { en: 'Change current directory', fr: 'Changer de répertoire courant' },
+  },
+  {
+    cmd: 'pwd', arg: '',
+    flags: '',
+    desc: { en: 'Print current directory', fr: 'Afficher le répertoire courant' },
+  },
+  {
+    cmd: 'mkdir', arg: '<dir>',
+    flags: '-p',
+    desc: { en: 'Create a directory', fr: 'Créer un répertoire' },
+  },
+  {
+    cmd: 'touch', arg: '<file>',
+    flags: '',
+    desc: { en: 'Create an empty file', fr: 'Créer un fichier vide' },
+  },
+  {
+    cmd: 'cat', arg: '<file>',
+    flags: '',
+    desc: { en: 'Print file contents', fr: 'Afficher le contenu d\'un fichier' },
+  },
+  {
+    cmd: 'rm', arg: '<target>',
+    flags: '-r',
+    desc: { en: 'Remove files or directories', fr: 'Supprimer des fichiers ou répertoires' },
+  },
+  {
+    cmd: 'nano', arg: '[file]',
+    flags: '',
+    desc: { en: 'Terminal text editor', fr: 'Éditeur de texte terminal' },
+  },
+  {
+    cmd: 'vi / vim', arg: '[file]',
+    flags: '',
+    desc: { en: 'Terminal text editor', fr: 'Éditeur de texte terminal' },
+  },
+  {
+    cmd: 'clear', arg: '',
+    flags: '',
+    desc: { en: 'Clear the terminal screen', fr: 'Vider l\'écran du terminal' },
+  },
+  {
+    cmd: 'help', arg: '',
+    flags: '',
+    desc: { en: 'List available commands', fr: 'Lister les commandes disponibles' },
+  },
+]
+
+const plannedCommands = [
+  { cmd: 'kubectl rollout',        notes: 'status, history, undo, pause, resume' },
+  { cmd: 'kubectl port-forward',   notes: '' },
+  { cmd: 'kubectl top',            notes: 'pods, nodes' },
+  { cmd: 'kubectl auth can-i',     notes: 'RBAC' },
+  { cmd: 'kubectl get events',     notes: '' },
+  { cmd: 'kubectl cordon/uncordon',notes: 'node management' },
+  { cmd: 'kubectl drain',          notes: 'node management' },
+  { cmd: 'kubectl cp',             notes: '' },
+  { cmd: 'kubectl patch',          notes: '' },
+  { cmd: 'kubectl edit',           notes: '' },
+]
+
+const ecosystemNotes: Record<string, Record<string, string>> = {
+  Docker:     { en: 'container runtime', fr: 'runtime de conteneurs' },
+  Helm:       { en: 'package management',  fr: 'gestion de paquets' },
+  Kustomize:  { en: 'manifest overlays',   fr: 'overlays de manifests' },
+  Istio:      { en: 'service mesh',        fr: 'service mesh' },
+  Cilium:     { en: 'network policy',      fr: 'politiques réseau' },
+}
+const ecosystemTools = Object.keys(ecosystemNotes).map((name) => ({
+  name,
+  notes: ecosystemNotes[name][locale],
+}))
+---
+
+<Layout>
+  <main class="supported-page">
+
+    <section class="supported-hero">
+      <div class="supported-container">
+        <p class="supported-eyebrow">{t('supported_eyebrow')}</p>
+        <h1>{t('supported_title')}</h1>
+        <p class="supported-subtitle">{t('supported_subtitle')}</p>
+      </div>
+    </section>
+
+    <section class="supported-section">
+      <div class="supported-container">
+        <div class="supported-section-header">
+          <span class="supported-badge supported-badge--supported">
+            {t('supported_supported_badge')}
+          </span>
+          <h2>{t('supported_supported_title')}</h2>
+          <p>{t('supported_supported_intro')}</p>
+        </div>
+
+        <div class="supported-subsection">
+          <h3 class="supported-subsection-title">
+            <Terminal size={16} aria-hidden="true" />
+            {t('supported_card_kubectl_title')}
+          </h3>
+          <div class="supported-table-wrap">
+            <table class="supported-table">
+              <thead>
+                <tr>
+                  <th>kubectl</th>
+                  <th>Flags &amp; options</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {kubectlCommands.map(({ cmd, arg, flags, desc }) => (
+                  <tr>
+                    <td class="supported-table__cmd">
+                      {cmd}{arg && <span class="supported-table__arg">&nbsp;{arg}</span>}
+                    </td>
+                    <td class="supported-table__flags">{flags}</td>
+                    <td class="supported-table__desc">{desc[locale]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="supported-bottom-grid">
+          <div class="supported-subsection">
+            <h3 class="supported-subsection-title">
+              <Layers size={16} aria-hidden="true" />
+              {t('supported_card_resources_title')}
+            </h3>
+            <div class="supported-table-wrap">
+              <table class="supported-table">
+                <thead>
+                  <tr>
+                    <th>Resource</th>
+                    <th>Alias</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {resources.map(({ name, alias }) => (
+                    <tr>
+                      <td class="supported-table__cmd">{name}</td>
+                      <td class="supported-table__flags">{alias}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="supported-subsection">
+            <h3 class="supported-subsection-title">
+              <BookOpen size={16} aria-hidden="true" />
+              {t('supported_card_shell_title')}
+            </h3>
+            <div class="supported-table-wrap">
+              <table class="supported-table">
+                <thead>
+                  <tr>
+                    <th>shell</th>
+                    <th>Flags</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shellCommands.map(({ cmd, arg, flags, desc }) => (
+                    <tr>
+                      <td class="supported-table__cmd">
+                        {cmd}{arg && <span class="supported-table__arg">&nbsp;{arg}</span>}
+                      </td>
+                      <td class="supported-table__flags">{flags}</td>
+                      <td class="supported-table__desc">{desc[locale]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="supported-section supported-section--planned">
+      <div class="supported-container">
+        <div class="supported-section-header">
+          <span class="supported-badge supported-badge--planned">
+            {t('supported_planned_badge')}
+          </span>
+          <h2>{t('supported_planned_title')}</h2>
+          <p>{t('supported_planned_intro')}</p>
+        </div>
+
+        <div class="supported-bottom-grid">
+          <div class="supported-subsection">
+            <h3 class="supported-subsection-title">
+              <Telescope size={16} aria-hidden="true" />
+              {t('supported_planned_kubectl_title')}
+            </h3>
+            <div class="supported-table-wrap">
+              <table class="supported-table supported-table--planned">
+                <thead>
+                  <tr>
+                    <th>kubectl</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {plannedCommands.map(({ cmd, notes }) => (
+                    <tr>
+                      <td class="supported-table__cmd">{cmd}</td>
+                      <td class="supported-table__notes">{notes}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="supported-subsection">
+            <h3 class="supported-subsection-title">
+              <Zap size={16} aria-hidden="true" />
+              {t('supported_planned_ecosystem_title')}
+            </h3>
+            <div class="supported-table-wrap">
+              <table class="supported-table supported-table--planned">
+                <thead>
+                  <tr>
+                    <th>Tool</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ecosystemTools.map(({ name, notes }) => (
+                    <tr>
+                      <td class="supported-table__cmd">{name}</td>
+                      <td class="supported-table__notes">{notes}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="supported-section">
+      <div class="supported-container">
+        <div class="supported-section-header">
+          <span class="supported-badge supported-badge--prereq">
+            {t('supported_prereq_badge')}
+          </span>
+          <h2>{t('supported_prereq_title')}</h2>
+          <p>{t('supported_prereq_intro')}</p>
+        </div>
+
+        <div class="prereq-flow">
+          <article class="card card--outline prereq-step">
+            <div class="card__header prereq-step__header">
+              <h3 class="card__title">{t('supported_prereq_linux_title')}</h3>
+            </div>
+            <div class="card__body">
+              <p>{t('supported_prereq_linux_text')}</p>
+            </div>
+          </article>
+
+          <ArrowRight class="prereq-arrow" size={20} aria-hidden="true" />
+
+          <article class="card card--outline prereq-step">
+            <div class="card__header prereq-step__header">
+              <h3 class="card__title">{t('supported_prereq_docker_title')}</h3>
+            </div>
+            <div class="card__body">
+              <p>{t('supported_prereq_docker_text')}</p>
+            </div>
+          </article>
+
+          <ArrowRight class="prereq-arrow" size={20} aria-hidden="true" />
+
+          <article class="card card--outline prereq-step">
+            <div class="card__header prereq-step__header">
+              <h3 class="card__title">{t('supported_prereq_kubernetes_title')}</h3>
+            </div>
+            <div class="card__body">
+              <p>{t('supported_prereq_kubernetes_text')}</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="supported-note">
+          <p>{t('supported_transparency_note')}</p>
+        </div>
+
+        <div class="supported-cta">
+          <p>{t('supported_cta_text')}</p>
+          <Button href={localePath('/courses')} variant="solid" color="cyan" size="lg">
+            {t('supported_cta_button')}
+          </Button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</Layout>

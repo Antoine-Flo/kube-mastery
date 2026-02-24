@@ -26,8 +26,7 @@ export const createHelpHandler = (): ShellCommandHandler => {
   clear           Clear terminal
   help            Show this help
 
-Use 'kubectl' prefix for Kubernetes commands
-See available images in the Registry panel below`
+Use 'kubectl' prefix for Kubernetes commands`
 
       return success(helpText)
     }

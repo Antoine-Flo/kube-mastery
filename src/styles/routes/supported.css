@@ -1,0 +1,304 @@
+.supported-page {
+  padding: 0 0 5rem;
+}
+
+.supported-container {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 768px) {
+  .supported-container {
+    padding: 0 2rem;
+  }
+}
+
+/* ─── Hero ───────────────────────────────────────────────────── */
+
+.supported-hero {
+  padding: 5rem 0 3rem;
+  border-bottom: 1px solid var(--color-gray-6);
+  background:
+    radial-gradient(
+      ellipse 50% 60% at 50% 0%,
+      var(--color-cyan-3) 0%,
+      transparent 70%
+    )
+    no-repeat;
+}
+
+:global([data-theme='dark']) .supported-hero {
+  background:
+    radial-gradient(
+      ellipse 50% 60% at 50% 0%,
+      rgba(0, 162, 199, 0.2) 0%,
+      transparent 70%
+    )
+    no-repeat;
+}
+
+.supported-eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--text-xs);
+  color: var(--color-cyan-10);
+  font-weight: var(--font-weight-semibold);
+}
+
+.supported-hero h1 {
+  margin: 0.75rem 0 0;
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.supported-subtitle {
+  margin: 1rem 0 0;
+  max-width: 760px;
+  font-size: var(--text-lg);
+  color: var(--color-gray-11);
+}
+
+@media (min-width: 768px) {
+  .supported-hero h1 {
+    font-size: 2.5rem;
+  }
+}
+
+/* ─── Sections ───────────────────────────────────────────────── */
+
+.supported-section {
+  padding: 3.25rem 0;
+  border-bottom: 1px solid var(--color-gray-6);
+}
+
+.supported-section--planned {
+  background-color: var(--color-gray-2);
+}
+
+:global([data-theme='dark']) .supported-section--planned {
+  background-color: var(--color-gray-a2);
+}
+
+.supported-section-header {
+  margin-bottom: 1.5rem;
+}
+
+.supported-section-header h2 {
+  margin: 0.7rem 0 0;
+  font-size: 1.6rem;
+}
+
+.supported-section-header p {
+  margin: 0.7rem 0 0;
+  max-width: 860px;
+}
+
+/* ─── Badges ─────────────────────────────────────────────────── */
+
+.supported-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  font-size: var(--text-xs);
+  padding: 0.3rem 0.75rem;
+  font-weight: var(--font-weight-semibold);
+}
+
+.supported-badge--supported {
+  color: var(--color-green-11);
+  background-color: var(--color-green-3);
+}
+
+.supported-badge--planned {
+  color: var(--color-amber-11);
+  background-color: var(--color-amber-3);
+}
+
+.supported-badge--prereq {
+  color: var(--color-cyan-11);
+  background-color: var(--color-cyan-3);
+}
+
+/* ─── Subsections ────────────────────────────────────────────── */
+
+.supported-subsection {
+  margin-top: 1.5rem;
+}
+
+.supported-subsection-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 0.75rem;
+  color: var(--color-gray-12);
+}
+
+/* ─── Table ──────────────────────────────────────────────────── */
+
+.supported-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-gray-6);
+}
+
+.supported-table {
+  margin: 0;
+}
+
+.supported-table thead th {
+  padding: 0.55rem 1rem;
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-gray-10);
+  background-color: var(--color-gray-2);
+  border-bottom: 1px solid var(--color-gray-5);
+}
+
+:global([data-theme='dark']) .supported-table thead th {
+  background-color: var(--color-gray-a2);
+}
+
+.supported-table tbody tr {
+  border-bottom: 1px solid var(--color-gray-4);
+}
+
+.supported-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.supported-table tbody tr:nth-child(even) {
+  background-color: var(--color-gray-1);
+}
+
+:global([data-theme='dark']) .supported-table tbody tr:nth-child(even) {
+  background-color: var(--color-gray-a1);
+}
+
+.supported-table td {
+  padding: 0.5rem 1rem;
+  vertical-align: top;
+}
+
+.supported-table__cmd {
+  font-family: var(--font-mono, monospace);
+  color: var(--color-cyan-11);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  font-size: var(--text-sm);
+}
+
+.supported-table__arg {
+  font-style: italic;
+  color: var(--color-gray-9);
+  font-weight: var(--font-weight-normal);
+}
+
+.supported-table__flags {
+  font-family: var(--font-mono, monospace);
+  color: var(--color-gray-11);
+  font-size: var(--text-xs);
+  line-height: 1.7;
+}
+
+.supported-table__desc {
+  color: var(--color-gray-9);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.supported-table__notes {
+  color: var(--color-gray-10);
+  font-size: var(--text-sm);
+}
+
+.supported-table--planned .supported-table__cmd {
+  color: var(--color-amber-10);
+}
+
+/* ─── Bottom grid (resources + shell) ───────────────────────── */
+
+.supported-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .supported-bottom-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
+/* ─── Prerequisites flow ─────────────────────────────────────── */
+
+.prereq-flow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+}
+
+@media (min-width: 1024px) {
+  .prereq-flow {
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    align-items: stretch;
+  }
+}
+
+.prereq-step__header {
+  padding-bottom: var(--spacing-3);
+}
+
+.prereq-step p {
+  margin: 0;
+}
+
+.prereq-arrow {
+  align-self: center;
+  justify-self: center;
+  color: var(--color-gray-9);
+}
+
+@media (max-width: 1023px) {
+  .prereq-arrow {
+    transform: rotate(90deg);
+  }
+}
+
+/* ─── Note & CTA ─────────────────────────────────────────────── */
+
+.supported-note {
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--color-cyan-6);
+  border-radius: var(--radius-md);
+  background-color: var(--color-cyan-2);
+}
+
+:global([data-theme='dark']) .supported-note {
+  background-color: rgba(0, 162, 199, 0.14);
+}
+
+.supported-note p {
+  margin: 0;
+  color: var(--color-gray-12);
+}
+
+.supported-cta {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.supported-cta p {
+  margin: 0;
+}
