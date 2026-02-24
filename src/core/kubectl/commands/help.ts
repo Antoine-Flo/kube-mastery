@@ -18,6 +18,7 @@ type HelpTopic =
   | 'exec'
   | 'label'
   | 'annotate'
+  | 'run'
 
 const ROOT_HELP = `kubectl controls the Kubernetes cluster manager.
 
@@ -25,6 +26,7 @@ Find more information at: https://kubernetes.io/docs/reference/kubectl/
 
 Basic Commands (Beginner):
   create          Create a resource from a file or from stdin
+  run             Run a particular image on the cluster
   get             Display one or many resources
   delete          Delete resources by file names, stdin, resources and names
 
@@ -165,6 +167,18 @@ Use "kubectl options" for a list of global command-line options (applies to all 
 
 Usage:
   kubectl annotate TYPE NAME KEY=VALUE [--overwrite]
+
+Use "kubectl options" for a list of global command-line options (applies to all commands).`
+  ,
+  run: `Run a particular image on the cluster.
+
+Usage:
+  kubectl run NAME --image=image
+  kubectl run -i -t NAME --image=image --restart=Never [--rm]
+  kubectl run NAME --image=image -- <arg1> <arg2> ... <argN>
+  kubectl run NAME --image=image --command -- COMMAND [args...]
+  kubectl run NAME --image=image --env=KEY=VALUE --labels=key=value --port=PORT
+  kubectl run NAME --image=image --dry-run=client
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`
 }

@@ -18,7 +18,8 @@ const KUBECTL_ACTIONS = [
   'apply',
   'logs',
   'exec',
-  'scale'
+  'scale',
+  'run'
 ] as const
 
 // Resource type aliases (for kubectl completion)
@@ -118,10 +119,10 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
       return true
     }
 
-    // Type de ressource (position 2) - sauf pour logs/exec
+    // Type de ressource (position 2) - sauf pour logs/exec/run
     const action = tokens[1]
-    if (action === 'logs' || action === 'exec') {
-      // logs/exec prennent directement le nom du pod (position 2)
+    if (action === 'logs' || action === 'exec' || action === 'run') {
+      // logs/exec/run prennent directement le nom du pod (position 2)
       return tokens.length >= 2
     }
 
@@ -148,14 +149,18 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
 
     const action = tokens[1]
 
-    // Type de ressource (position 2) - sauf pour logs/exec
-    if (action !== 'logs' && action !== 'exec') {
+    // Type de ressource (position 2) - sauf pour logs/exec/run
+    if (action !== 'logs' && action !== 'exec' && action !== 'run') {
       if (tokens.length === 2) {
         const allResourceTypes = Object.keys(RESOURCE_ALIASES)
         return filterMatches(allResourceTypes, currentToken).map(
           (resource) => ({ text: resource, suffix: ' ' })
         )
       }
+    }
+
+    if (action === 'run') {
+      return []
     }
 
     // Nom de ressource

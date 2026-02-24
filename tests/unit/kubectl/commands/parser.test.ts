@@ -60,6 +60,148 @@ describe('kubectl parser - create deployment', () => {
   })
 })
 
+describe('kubectl parser - run', () => {
+  it('should parse run with image and command separator', () => {
+    const result = parseCommand(
+      'kubectl run test-pod --image=busybox --command -- sleep 3600'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('run')
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBe('test-pod')
+    expect(result.value.runImage).toBe('busybox')
+    expect(result.value.runUseCommand).toBe(true)
+    expect(result.value.runCommand).toEqual(['sleep', '3600'])
+  })
+
+  it('should parse run namespace flag', () => {
+    const result = parseCommand(
+      'kubectl run test-pod --image=busybox --command -n tools -- sleep 3600'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.namespace).toBe('tools')
+  })
+
+  it('should parse run args without --command', () => {
+    const result = parseCommand('kubectl run test-pod --image=busybox -- sleep 3600')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.runUseCommand).toBe(false)
+    expect(result.value.runArgs).toEqual(['sleep', '3600'])
+  })
+
+  it('should parse run labels/env/port flags', () => {
+    const result = parseCommand(
+      'kubectl run test-pod --image=busybox --port=5701 --env=DNS_DOMAIN=cluster --env=POD_NAMESPACE=default --labels=app=hazelcast,env=prod'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.port).toBe(5701)
+    expect(result.value.runEnv).toEqual([
+      'DNS_DOMAIN=cluster',
+      'POD_NAMESPACE=default'
+    ])
+    expect(result.value.runLabels).toEqual({ app: 'hazelcast', env: 'prod' })
+  })
+
+  it('should parse run with dry-run client', () => {
+    const result = parseCommand('kubectl run test-pod --image=busybox --dry-run=client')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.runDryRunClient).toBe(true)
+  })
+
+  it('should parse run interactive flags with restart Never and rm', () => {
+    const result = parseCommand(
+      'kubectl run -i -t busybox --image=busybox --restart=Never --rm'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.name).toBe('busybox')
+    expect(result.value.runStdin).toBe(true)
+    expect(result.value.runTty).toBe(true)
+    expect(result.value.runRemove).toBe(true)
+    expect(result.value.runRestart).toBe('Never')
+  })
+
+  it('should reject run when image is missing', () => {
+    const result = parseCommand('kubectl run test-pod --command -- sleep 3600')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('run requires flag --image')
+    }
+  })
+
+  it('should reject run when --command has no command after separator', () => {
+    const result = parseCommand('kubectl run test-pod --image=busybox --command --')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('run requires command after --')
+    }
+  })
+
+  it('should reject run when separator is present without args', () => {
+    const result = parseCommand('kubectl run test-pod --image=busybox --')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('run requires arguments after --')
+    }
+  })
+
+  it('should reject run when dry-run value is invalid', () => {
+    const result = parseCommand('kubectl run test-pod --image=busybox --dry-run=local')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'run dry-run must be one of: none, server, client'
+      )
+    }
+  })
+
+  it('should reject run when restart value is invalid', () => {
+    const result = parseCommand(
+      'kubectl run test-pod --image=busybox --restart=Sometimes'
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'run restart must be one of: Always, OnFailure, Never'
+      )
+    }
+  })
+})
+
 describe('kubectl parser - describe', () => {
   it('should parse name when namespace flag is between resource and name', () => {
     const result = parseCommand('kubectl describe pod -n kube-system coredns-abc')

@@ -40,7 +40,8 @@ const VALID_ACTIONS: Action[] = [
   'cluster-info',
   'api-versions',
   'api-resources',
-  'scale'
+  'scale',
+  'run'
 ]
 
 // Flag aliases: short form → long form
@@ -51,7 +52,9 @@ const FLAG_ALIASES: Record<string, string> = {
   f: 'filename', // Note: -f is also used for --follow in logs, but filename takes precedence
   A: 'all-namespaces',
   c: 'container', // Container name for logs/exec
-  R: 'recursive'
+  R: 'recursive',
+  i: 'stdin',
+  t: 'tty'
 }
 
 // Flags that require a value (cannot be boolean)
@@ -71,6 +74,10 @@ const FLAGS_REQUIRING_VALUES = [
   'replicas',
   'image',
   'port',
+  'env',
+  'labels',
+  'dry-run',
+  'restart',
   'raw',
   'api-version'
 ]
@@ -154,6 +161,18 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     execCommand: ctx.execCommand,
     createImages: ctx.createImages,
     createCommand: ctx.createCommand,
+    runImage: ctx.runImage,
+    runCommand: ctx.runCommand,
+    runArgs: ctx.runArgs,
+    runUseCommand: ctx.runUseCommand,
+    runHasSeparator: ctx.runHasSeparator,
+    runEnv: ctx.runEnv,
+    runLabels: ctx.runLabels,
+    runDryRunClient: ctx.runDryRunClient,
+    runRestart: ctx.runRestart,
+    runStdin: ctx.runStdin,
+    runTty: ctx.runTty,
+    runRemove: ctx.runRemove,
     explainPath: ctx.explainPath,
     labelChanges: ctx.labelChanges,
     annotationChanges: ctx.annotationChanges,
@@ -276,7 +295,8 @@ const extractName = (ctx: ParseContext): Result<ParseContext> => {
     'apply',
     'label',
     'annotate',
-    'explain'
+    'explain',
+    'run'
   ]
   const hasTransformer =
     ctx.action && actionsWithCustomParsing.includes(ctx.action)
@@ -303,7 +323,10 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
       ctx.resource,
       ctx.name,
       ctx.normalizedFlags || ctx.flags || {},
-      ctx.tokens || []
+      ctx.tokens || [],
+      ctx.runCommand,
+      ctx.runArgs,
+      ctx.runHasSeparator
     )
     if (validationError) {
       return error(validationError)
@@ -318,7 +341,10 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
       ctx.resource,
       ctx.name,
       ctx.normalizedFlags || ctx.flags || {},
-      ctx.tokens || []
+      ctx.tokens || [],
+      ctx.runCommand,
+      ctx.runArgs,
+      ctx.runHasSeparator
     )
     if (validationError) {
       return error(validationError)
@@ -335,7 +361,10 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
     ctx.resource,
     ctx.name,
     ctx.normalizedFlags || ctx.flags || {},
-    ctx.tokens || []
+    ctx.tokens || [],
+    ctx.runCommand,
+    ctx.runArgs,
+    ctx.runHasSeparator
   )
   if (validationError) {
     return error(validationError)
@@ -453,7 +482,10 @@ const validateCommandSemantics = (
   _resource: Resource | undefined,
   name?: string,
   flags: Record<string, string | boolean> = {},
-  tokens: string[] = []
+  tokens: string[] = [],
+  runCommand?: string[],
+  runArgs?: string[],
+  runHasSeparator?: boolean
 ): string | undefined => {
   const rawValidationError = validateGetRawSemantics(action, flags, tokens)
   if (rawValidationError !== undefined) {
@@ -467,10 +499,50 @@ const validateCommandSemantics = (
       action === 'exec' ||
       action === 'label' ||
       action === 'annotate' ||
-      action === 'scale') &&
+      action === 'scale' ||
+      action === 'run') &&
     !name
   ) {
     return `${action} requires a resource name`
+  }
+  if (action === 'run') {
+    const runImage = flags['image']
+    if (typeof runImage !== 'string' || runImage.length === 0) {
+      return 'run requires flag --image'
+    }
+
+    const runUsesCommand = flags['command'] === true
+    if (runUsesCommand && (!runCommand || runCommand.length === 0)) {
+      return 'run requires command after --'
+    }
+
+    if (
+      runHasSeparator &&
+      !runUsesCommand &&
+      (!runArgs || runArgs.length === 0)
+    ) {
+      return 'run requires arguments after --'
+    }
+
+    const dryRunFlag = flags['dry-run']
+    if (
+      dryRunFlag !== undefined &&
+      dryRunFlag !== 'client' &&
+      dryRunFlag !== 'server' &&
+      dryRunFlag !== 'none'
+    ) {
+      return 'run dry-run must be one of: none, server, client'
+    }
+
+    const restartFlag = flags['restart']
+    if (
+      restartFlag !== undefined &&
+      restartFlag !== 'Always' &&
+      restartFlag !== 'OnFailure' &&
+      restartFlag !== 'Never'
+    ) {
+      return 'run restart must be one of: Always, OnFailure, Never'
+    }
   }
   if (action === 'diff') {
     const hasFilename =

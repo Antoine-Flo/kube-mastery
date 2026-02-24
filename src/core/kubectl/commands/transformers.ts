@@ -1,5 +1,6 @@
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
+import { parseSelector } from '../../shared/parsing'
 import { RESOURCE_ALIAS_MAP } from './resources'
 import type { Action, Resource } from './types'
 
@@ -26,6 +27,18 @@ export type ParseContext = {
   execCommand?: string[]
   createImages?: string[]
   createCommand?: string[]
+  runImage?: string
+  runCommand?: string[]
+  runArgs?: string[]
+  runUseCommand?: boolean
+  runHasSeparator?: boolean
+  runEnv?: string[]
+  runLabels?: Record<string, string>
+  runDryRunClient?: boolean
+  runRestart?: 'Always' | 'OnFailure' | 'Never'
+  runStdin?: boolean
+  runTty?: boolean
+  runRemove?: boolean
   explainPath?: string[]
   labelChanges?: Record<string, string | null>
   annotationChanges?: Record<string, string | null>
@@ -42,6 +55,8 @@ const FLAGS_REQUIRING_VALUES = new Set([
   'replicas',
   'port',
   'api-version',
+  'dry-run',
+  'restart',
   'output',
   'o'
 ])
@@ -195,6 +210,28 @@ const parseChanges = (tokens: string[]): Record<string, string | null> => {
   }
 
   return changes
+}
+
+const parseRunLabels = (
+  labelsValues: string[]
+): Record<string, string> | undefined => {
+  if (labelsValues.length === 0) {
+    return undefined
+  }
+
+  const parsed: Record<string, string> = {}
+  for (const labelsValue of labelsValues) {
+    const fromSelector = parseSelector(labelsValue)
+    for (const [key, value] of Object.entries(fromSelector)) {
+      parsed[key] = value
+    }
+  }
+
+  if (Object.keys(parsed).length === 0) {
+    return undefined
+  }
+
+  return parsed
 }
 
 // ─── Transformers ────────────────────────────────────────────────────────
@@ -483,6 +520,61 @@ const scaleTransformer: ActionTransformer = (ctx) => {
 }
 
 /**
+ * Transformer for run command:
+ * - kubectl run NAME --image=busybox --command -- sleep 3600
+ */
+const runTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens) {
+    return success(ctx)
+  }
+
+  const { beforeSeparator, afterSeparator } = splitTokensBySeparator(ctx.tokens)
+  const runHasSeparator = ctx.tokens.includes('--')
+  const name = findNameSkippingFlags(beforeSeparator, 2)
+  const runImages = extractFlagValues(beforeSeparator, 'image')
+  const runImage = runImages.length > 0 ? runImages[0] : undefined
+  const runEnvs = extractFlagValues(beforeSeparator, 'env')
+  const runLabels = parseRunLabels(extractFlagValues(beforeSeparator, 'labels'))
+  const dryRunValues = extractFlagValues(beforeSeparator, 'dry-run')
+  const runDryRunClient = dryRunValues.includes('client')
+  const restartValues = extractFlagValues(beforeSeparator, 'restart')
+  const runRestart =
+    restartValues.length > 0
+      ? (restartValues[0] as 'Always' | 'OnFailure' | 'Never')
+      : undefined
+  const runUseCommand = beforeSeparator.includes('--command')
+  const runStdin =
+    beforeSeparator.includes('-i') || beforeSeparator.includes('--stdin')
+  const runTty = beforeSeparator.includes('-t') || beforeSeparator.includes('--tty')
+  const runRemove = beforeSeparator.includes('--rm')
+  const separatorTokens =
+    afterSeparator && afterSeparator.length > 0 ? afterSeparator : undefined
+  const runCommand =
+    runUseCommand && separatorTokens ? separatorTokens : undefined
+  const runArgs =
+    !runUseCommand && separatorTokens ? separatorTokens : undefined
+
+  return success({
+    ...ctx,
+    resource: 'pods' as Resource,
+    name,
+    tokens: beforeSeparator,
+    runImage,
+    runCommand,
+    runArgs,
+    runUseCommand,
+    runHasSeparator,
+    runEnv: runEnvs.length > 0 ? runEnvs : undefined,
+    runLabels,
+    runDryRunClient,
+    runRestart,
+    runStdin,
+    runTty,
+    runRemove
+  })
+}
+
+/**
  * Default transformer: no-op, returns context as-is
  */
 const identityTransformer: ActionTransformer = (ctx) => success(ctx)
@@ -503,7 +595,8 @@ const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
   'api-versions': apiVersionsTransformer,
   'api-resources': apiResourcesTransformer,
   explain: explainTransformer,
-  scale: scaleTransformer
+  scale: scaleTransformer,
+  run: runTransformer
 }
 
 /**

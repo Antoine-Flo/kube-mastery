@@ -250,6 +250,25 @@ data:
         expect(result.value).toContain('diff -u -N /tmp/LIVE-')
         expect(result.value).toContain('/tmp/MERGED-')
       })
+
+      it('should route "kubectl run" to run handler', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl run test-pod --image=busybox --command -- sleep 3600'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('pod/test-pod created')
+      })
     })
 
     describe('create deployment (imperative)', () => {
@@ -1127,6 +1146,182 @@ data:
         expect(result.ok).toBe(false)
         if (!result.ok) {
           expect(result.error).toContain('field "unknownField" does not exist')
+        }
+      })
+
+      it('should create pod with command for kubectl run', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl run test-pod --image=busybox --command -- sleep 3600'
+        )
+
+        expect(result.ok).toBe(true)
+
+        const podResult = clusterState.findPod('test-pod', 'default')
+        expect(podResult.ok).toBe(true)
+        if (!podResult.ok) {
+          return
+        }
+
+        expect(podResult.value.spec.containers[0].image).toBe('busybox')
+        expect(podResult.value.spec.containers[0].command).toEqual([
+          'sleep',
+          '3600'
+        ])
+      })
+
+      it('should create pod in provided namespace for kubectl run', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl run test-pod-ns --image=busybox --command -n tools -- sleep 3600'
+        )
+
+        expect(result.ok).toBe(true)
+
+        const podResult = clusterState.findPod('test-pod-ns', 'tools')
+        expect(podResult.ok).toBe(true)
+      })
+
+      it('should create pod with args when --command is not set', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl run test-pod-args --image=busybox -- sleep 3600'
+        )
+
+        expect(result.ok).toBe(true)
+        const podResult = clusterState.findPod('test-pod-args', 'default')
+        expect(podResult.ok).toBe(true)
+        if (!podResult.ok) {
+          return
+        }
+
+        expect(podResult.value.spec.containers[0].args).toEqual(['sleep', '3600'])
+      })
+
+      it('should create pod with labels env and port for kubectl run', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl run hazelcast --image=hazelcast/hazelcast --port=5701 --env=DNS_DOMAIN=cluster --env=POD_NAMESPACE=default --labels=app=hazelcast,env=prod'
+        )
+
+        expect(result.ok).toBe(true)
+        const podResult = clusterState.findPod('hazelcast', 'default')
+        expect(podResult.ok).toBe(true)
+        if (!podResult.ok) {
+          return
+        }
+
+        expect(podResult.value.metadata.labels).toEqual({
+          app: 'hazelcast',
+          env: 'prod'
+        })
+        expect(podResult.value.spec.containers[0].ports?.[0]?.containerPort).toBe(
+          5701
+        )
+        expect(podResult.value.spec.containers[0].env).toEqual([
+          {
+            name: 'DNS_DOMAIN',
+            source: { type: 'value', value: 'cluster' }
+          },
+          {
+            name: 'POD_NAMESPACE',
+            source: { type: 'value', value: 'default' }
+          }
+        ])
+      })
+
+      it('should return dry-run message without creating pod', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl run dry-run-pod --image=busybox --dry-run=client'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+        expect(result.value).toContain('pod/dry-run-pod created (dry run)')
+
+        const podResult = clusterState.findPod('dry-run-pod', 'default')
+        expect(podResult.ok).toBe(false)
+      })
+
+      it('should fail kubectl run when env format is invalid', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl run bad-env --image=busybox --env INVALID'
+        )
+
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+          expect(result.error).toContain(
+            'run --env values must use KEY=VALUE format'
+          )
+        }
+      })
+
+      it('should support kubectl run with -i -t --restart=Never --rm', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl run -i -t busybox --image=busybox --restart=Never --rm'
+        )
+
+        expect(result.ok).toBe(true)
+        const podResult = clusterState.findPod('busybox', 'default')
+        expect(podResult.ok).toBe(true)
+      })
+
+      it('should reject kubectl run when restart is not Never', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl run nginx --image=nginx --restart=Always'
+        )
+
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+          expect(result.error).toContain(
+            'run currently supports only --restart=Never in this simulator'
+          )
         }
       })
     })

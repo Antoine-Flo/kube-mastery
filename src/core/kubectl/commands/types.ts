@@ -18,6 +18,7 @@ export type Action =
   | 'api-versions'
   | 'api-resources'
   | 'scale'
+  | 'run'
 
 // Resource types (canonical names only)
 export type Resource = KubectlResource
@@ -40,4 +41,16 @@ export interface ParsedCommand {
   createImages?: string[] // For create deployment: repeated --image flags
   createCommand?: string[] // For create deployment: command after --
   explainPath?: string[] // For kubectl explain: field path segments after resource
+  runImage?: string // For kubectl run: --image value
+  runCommand?: string[] // For kubectl run: command after --
+  runArgs?: string[] // For kubectl run: args after -- when --command is not set
+  runUseCommand?: boolean // For kubectl run: --command flag
+  runHasSeparator?: boolean // For kubectl run: whether -- separator is present
+  runEnv?: string[] // For kubectl run: repeated --env flags (KEY=VALUE)
+  runLabels?: Record<string, string> // For kubectl run: --labels key=value list
+  runDryRunClient?: boolean // For kubectl run: --dry-run=client
+  runRestart?: 'Always' | 'OnFailure' | 'Never' // For kubectl run: --restart policy
+  runStdin?: boolean // For kubectl run: -i/--stdin
+  runTty?: boolean // For kubectl run: -t/--tty
+  runRemove?: boolean // For kubectl run: --rm
 }

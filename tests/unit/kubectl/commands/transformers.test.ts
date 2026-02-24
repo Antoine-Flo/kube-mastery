@@ -703,4 +703,165 @@ describe('kubectl transformers', () => {
       expect(result.ok).toBe(true)
     })
   })
+
+  describe('run transformer', () => {
+    it('should set resource to pods and extract command metadata', () => {
+      const transformer = getTransformerForAction('run')
+      const ctx = createContext({
+        input: 'kubectl run test-pod --image=busybox --command -- sleep 3600',
+        tokens: [
+          'kubectl',
+          'run',
+          'test-pod',
+          '--image=busybox',
+          '--command',
+          '--',
+          'sleep',
+          '3600'
+        ]
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value.resource).toBe('pods')
+      expect(result.value.name).toBe('test-pod')
+      expect(result.value.runImage).toBe('busybox')
+      expect(result.value.runUseCommand).toBe(true)
+      expect(result.value.runHasSeparator).toBe(true)
+      expect(result.value.runCommand).toEqual(['sleep', '3600'])
+      expect(result.value.tokens).toEqual([
+        'kubectl',
+        'run',
+        'test-pod',
+        '--image=busybox',
+        '--command'
+      ])
+    })
+
+    it('should extract image from separate value syntax', () => {
+      const transformer = getTransformerForAction('run')
+      const ctx = createContext({
+        input: 'kubectl run test-pod --image busybox --command -- sleep 3600',
+        tokens: [
+          'kubectl',
+          'run',
+          'test-pod',
+          '--image',
+          'busybox',
+          '--command',
+          '--',
+          'sleep',
+          '3600'
+        ]
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value.runImage).toBe('busybox')
+    })
+
+    it('should extract run args when --command is not set', () => {
+      const transformer = getTransformerForAction('run')
+      const ctx = createContext({
+        input: 'kubectl run test-pod --image=busybox -- sleep 3600',
+        tokens: [
+          'kubectl',
+          'run',
+          'test-pod',
+          '--image=busybox',
+          '--',
+          'sleep',
+          '3600'
+        ]
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value.runUseCommand).toBe(false)
+      expect(result.value.runArgs).toEqual(['sleep', '3600'])
+      expect(result.value.runCommand).toBeUndefined()
+    })
+
+    it('should extract env labels and dry-run client', () => {
+      const transformer = getTransformerForAction('run')
+      const ctx = createContext({
+        input:
+          'kubectl run test-pod --image=busybox --env=DNS_DOMAIN=cluster --labels=app=hazelcast,env=prod --dry-run=client',
+        tokens: [
+          'kubectl',
+          'run',
+          'test-pod',
+          '--image=busybox',
+          '--env=DNS_DOMAIN=cluster',
+          '--labels=app=hazelcast,env=prod',
+          '--dry-run=client'
+        ]
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value.runEnv).toEqual(['DNS_DOMAIN=cluster'])
+      expect(result.value.runLabels).toEqual({ app: 'hazelcast', env: 'prod' })
+      expect(result.value.runDryRunClient).toBe(true)
+    })
+
+    it('should extract run interactive and restart flags', () => {
+      const transformer = getTransformerForAction('run')
+      const ctx = createContext({
+        input: 'kubectl run -i -t busybox --image=busybox --restart=Never --rm',
+        tokens: [
+          'kubectl',
+          'run',
+          '-i',
+          '-t',
+          'busybox',
+          '--image=busybox',
+          '--restart=Never',
+          '--rm'
+        ]
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value.name).toBe('busybox')
+      expect(result.value.runStdin).toBe(true)
+      expect(result.value.runTty).toBe(true)
+      expect(result.value.runRemove).toBe(true)
+      expect(result.value.runRestart).toBe('Never')
+    })
+
+    it('should handle missing tokens gracefully', () => {
+      const transformer = getTransformerForAction('run')
+      const ctx = createContext({ tokens: undefined })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+    })
+  })
 })

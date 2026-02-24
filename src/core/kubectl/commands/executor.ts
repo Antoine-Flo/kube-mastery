@@ -7,7 +7,7 @@ import { error, success } from '../../shared/result'
 import { handleAnnotate } from './handlers/annotate'
 import { handleAPIVersions } from './handlers/apiVersions'
 import { handleAPIResources } from './handlers/apiResources'
-import { handleApply, handleCreate } from './handlers/applyCreate'
+import { handleApply, handleCreate, handleRun } from './handlers/applyCreate'
 import { handleClusterInfo } from './handlers/clusterInfo'
 import { handleDelete } from './handlers/delete'
 import { handleDiff } from './handlers/diff'
@@ -74,6 +74,7 @@ const createHandlers = (
   handlers.set('api-versions', (parsed) => success(handleAPIVersions(parsed)))
   handlers.set('api-resources', (parsed) => handleAPIResources(parsed))
   handlers.set('scale', (parsed) => handleScale(clusterState, parsed, eventBus))
+  handlers.set('run', (parsed) => handleRun(clusterState, parsed, eventBus))
 
   return handlers
 }

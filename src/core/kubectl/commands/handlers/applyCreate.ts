@@ -6,6 +6,8 @@
 import type { ClusterState } from '../../../cluster/ClusterState'
 import type { EventBus } from '../../../cluster/events/EventBus'
 import { createDeployment } from '../../../cluster/ressources/Deployment'
+import type { EnvVar } from '../../../cluster/ressources/Pod'
+import { createPod } from '../../../cluster/ressources/Pod'
 import type { PodTemplateSpec } from '../../../cluster/ressources/ReplicaSet'
 import type { FileSystem } from '../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../shared/result'
@@ -218,4 +220,86 @@ export const handleCreate = (
   }
 
   return createResourceWithEvents(loadResult.resource, clusterState, eventBus)
+}
+
+/**
+ * Handle kubectl run command (minimal scope)
+ * Creates a single Pod with one container and command from `--command -- ...`.
+ */
+export const handleRun = (
+  clusterState: ClusterState,
+  parsed: ParsedCommand,
+  eventBus: EventBus
+): ExecutionResult => {
+  const podName = parsed.name
+  if (typeof podName !== 'string' || podName.length === 0) {
+    return error('run requires a resource name')
+  }
+
+  const image = parsed.runImage
+  if (typeof image !== 'string' || image.length === 0) {
+    return error('run requires flag --image')
+  }
+
+  const runCommand = parsed.runCommand
+  const runArgs = parsed.runArgs
+  if (parsed.runUseCommand && (!runCommand || runCommand.length === 0)) {
+    return error('run requires command after --')
+  }
+  if (
+    parsed.runHasSeparator &&
+    !parsed.runUseCommand &&
+    (!runArgs || runArgs.length === 0)
+  ) {
+    return error('run requires arguments after --')
+  }
+  if (parsed.runRestart && parsed.runRestart !== 'Never') {
+    return error('run currently supports only --restart=Never in this simulator')
+  }
+
+  const envVars: EnvVar[] = []
+  const runEnv = parsed.runEnv || []
+  for (const envValue of runEnv) {
+    const equalsIndex = envValue.indexOf('=')
+    if (equalsIndex <= 0 || equalsIndex === envValue.length - 1) {
+      return error('run --env values must use KEY=VALUE format')
+    }
+    const envName = envValue.slice(0, equalsIndex).trim()
+    const envRawValue = envValue.slice(equalsIndex + 1).trim()
+    if (envName.length === 0 || envRawValue.length === 0) {
+      return error('run --env values must use KEY=VALUE format')
+    }
+    envVars.push({
+      name: envName,
+      source: {
+        type: 'value',
+        value: envRawValue
+      }
+    })
+  }
+
+  const pod = createPod({
+    name: podName,
+    namespace: parsed.namespace || 'default',
+    ...(parsed.runLabels && { labels: parsed.runLabels }),
+    containers: [
+      {
+        name: podName,
+        image,
+        ...(parsed.runUseCommand && runCommand && { command: runCommand }),
+        ...(!parsed.runUseCommand && runArgs && { args: runArgs }),
+        ...(typeof parsed.port === 'number' && {
+          ports: [{ containerPort: parsed.port }]
+        }),
+        ...(envVars.length > 0 && { env: envVars })
+      }
+    ],
+    phase: 'Pending'
+  })
+
+  if (parsed.runDryRunClient) {
+    return { ok: true, value: `pod/${podName} created (dry run)` }
+  }
+
+  return createResourceWithEvents(pod, clusterState, eventBus)
 }
