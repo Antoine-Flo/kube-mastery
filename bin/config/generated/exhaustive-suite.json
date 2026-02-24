@@ -5,7 +5,8 @@
     {
       "id": "minimal-apply",
       "type": "applyYaml",
-      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "waitForPods": true
     },
     {
       "id": "minimal-cmd-1",
@@ -647,6 +648,185 @@
       "ignoreNotFound": true
     },
     {
+      "id": "run-cases-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "run-cases-cmd-1",
+      "type": "command",
+      "command": "kubectl run run-ok-command --image=busybox --command -- sleep 3600",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-command created"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-command created"
+        ]
+      }
+    },
+    {
+      "id": "run-cases-cmd-2",
+      "type": "command",
+      "command": "kubectl get pod run-ok-command",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "run-cases-cmd-3",
+      "type": "command",
+      "command": "kubectl delete pod run-ok-command",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "run-cases-cmd-4",
+      "type": "command",
+      "command": "kubectl run run-ok-image-only --image=busybox",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-image-only created"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-image-only created"
+        ]
+      }
+    },
+    {
+      "id": "run-cases-cmd-5",
+      "type": "command",
+      "command": "kubectl delete pod run-ok-image-only",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "run-cases-cmd-6",
+      "type": "command",
+      "command": "kubectl run run-ok-args --image=busybox -- sleep 3600",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-args created"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-args created"
+        ]
+      }
+    },
+    {
+      "id": "run-cases-cmd-7",
+      "type": "command",
+      "command": "kubectl delete pod run-ok-args",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "run-cases-cmd-8",
+      "type": "command",
+      "command": "kubectl run run-ok-env-label-port --image=busybox --env=DNS_DOMAIN=cluster --env=POD_NAMESPACE=default --labels=app=hazelcast,env=prod --port=5701",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-env-label-port created"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-env-label-port created"
+        ]
+      }
+    },
+    {
+      "id": "run-cases-cmd-9",
+      "type": "command",
+      "command": "kubectl describe pod run-ok-env-label-port",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "run-cases-cmd-10",
+      "type": "command",
+      "command": "kubectl delete pod run-ok-env-label-port",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "run-cases-cmd-11",
+      "type": "command",
+      "command": "kubectl run run-ok-interactive --image=busybox -i -t --restart=Never --rm",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-interactive created"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-interactive created"
+        ]
+      }
+    },
+    {
+      "id": "run-cases-cmd-12",
+      "type": "command",
+      "command": "kubectl delete pod run-ok-interactive",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "run-cases-cmd-13",
+      "type": "command",
+      "command": "kubectl run run-ok-dry-run --image=busybox --dry-run=client",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-dry-run created (dry run)"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-dry-run created (dry run)"
+        ]
+      }
+    },
+    {
+      "id": "run-cases-cmd-14",
+      "type": "command",
+      "command": "kubectl get pod run-ok-dry-run",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "Error from server (NotFound): pods \"run-ok-dry-run\" not found"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "Error from server (NotFound): pods \"run-ok-dry-run\" not found"
+        ]
+      }
+    },
+    {
+      "id": "run-cases-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
       "id": "errors-help-apply",
       "type": "applyYaml",
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
@@ -720,6 +900,150 @@
     {
       "id": "errors-help-cmd-8",
       "type": "command",
+      "command": "kubectl run",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires a resource name"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires a resource name"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-9",
+      "type": "command",
+      "command": "kubectl run missing-image",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires flag --image"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires flag --image"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-10",
+      "type": "command",
+      "command": "kubectl run missing-command --image=busybox --command --",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires command after --"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires command after --"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-11",
+      "type": "command",
+      "command": "kubectl run missing-args --image=busybox --",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires arguments after --"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires arguments after --"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-12",
+      "type": "command",
+      "command": "kubectl run invalid-env --image=busybox --env INVALID",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run --env values must use KEY=VALUE format"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run --env values must use KEY=VALUE format"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-13",
+      "type": "command",
+      "command": "kubectl run invalid-dry-run --image=busybox --dry-run=local",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run dry-run must be one of: none, server, client"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run dry-run must be one of: none, server, client"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-14",
+      "type": "command",
+      "command": "kubectl run invalid-restart-value --image=busybox --restart=Sometimes",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run restart must be one of: Always, OnFailure, Never"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run restart must be one of: Always, OnFailure, Never"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-15",
+      "type": "command",
+      "command": "kubectl run unsupported-restart --image=busybox --restart=Always",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run currently supports only --restart=Never in this simulator"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run currently supports only --restart=Never in this simulator"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-16",
+      "type": "command",
       "command": "kubectl explain pod.spec.notFound",
       "compareMode": "none",
       "expectKind": {
@@ -736,7 +1060,7 @@
       }
     },
     {
-      "id": "errors-help-cmd-9",
+      "id": "errors-help-cmd-17",
       "type": "command",
       "command": "kubectl explain all",
       "compareMode": "none",
@@ -754,109 +1078,115 @@
       }
     },
     {
-      "id": "errors-help-cmd-10",
+      "id": "errors-help-cmd-18",
       "type": "command",
       "command": "kubectl version --output wide",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-11",
+      "id": "errors-help-cmd-19",
       "type": "command",
       "command": "kubectl api-resources --sort-by=age",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-12",
+      "id": "errors-help-cmd-20",
       "type": "command",
       "command": "kubectl cluster-info dump --output-directory /tmp/out",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-13",
+      "id": "errors-help-cmd-21",
       "type": "command",
       "command": "kubectl -h",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-14",
+      "id": "errors-help-cmd-22",
       "type": "command",
       "command": "kubectl --help",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-15",
+      "id": "errors-help-cmd-23",
       "type": "command",
       "command": "kubectl get --help",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-16",
+      "id": "errors-help-cmd-24",
       "type": "command",
       "command": "kubectl create --help",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-17",
+      "id": "errors-help-cmd-25",
       "type": "command",
       "command": "kubectl create deployment --help",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-18",
+      "id": "errors-help-cmd-26",
       "type": "command",
       "command": "kubectl delete --help",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-19",
+      "id": "errors-help-cmd-27",
       "type": "command",
       "command": "kubectl describe --help",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-20",
+      "id": "errors-help-cmd-28",
       "type": "command",
       "command": "kubectl scale --help",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-21",
+      "id": "errors-help-cmd-29",
       "type": "command",
       "command": "kubectl version --help",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-22",
+      "id": "errors-help-cmd-30",
       "type": "command",
       "command": "kubectl cluster-info --help",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-23",
+      "id": "errors-help-cmd-31",
       "type": "command",
       "command": "kubectl api-resources --help",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-24",
+      "id": "errors-help-cmd-32",
       "type": "command",
       "command": "kubectl logs --help",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-25",
+      "id": "errors-help-cmd-33",
       "type": "command",
       "command": "kubectl exec --help",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-26",
+      "id": "errors-help-cmd-34",
+      "type": "command",
+      "command": "kubectl run --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-35",
       "type": "command",
       "command": "kubectl label --help",
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-27",
+      "id": "errors-help-cmd-36",
       "type": "command",
       "command": "kubectl annotate --help",
       "compareMode": "normalized"

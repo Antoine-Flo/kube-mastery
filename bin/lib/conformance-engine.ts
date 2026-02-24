@@ -247,13 +247,14 @@ export const runConformanceSuite = (
 ): Result<void, string> => {
   const kindExecutor =
     dependencies?.kindExecutor ?? createKindExecutor(suite.clusterName)
-  const runnerExecutor = dependencies?.runnerExecutor ?? createRunnerExecutor()
   const reporter = dependencies?.reporter ?? createConformanceReporter()
 
   const setupResult = kindExecutor.setup()
   if (!setupResult.ok) {
     return error(setupResult.error)
   }
+
+  const runnerExecutor = dependencies?.runnerExecutor ?? createRunnerExecutor()
 
   try {
     for (const action of suite.actions) {

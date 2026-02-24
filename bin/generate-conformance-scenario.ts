@@ -68,6 +68,7 @@ const createExhaustiveSegments = (): LifecycleSegment[] => {
     {
       idPrefix: 'minimal',
       seed: 'minimal',
+      waitForPods: true,
       commands: [
         'kubectl get pods',
         'kubectl get pods -A',

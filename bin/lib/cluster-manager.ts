@@ -153,29 +153,52 @@ export const waitForPodsReady = (namespace?: string): Result<void, string> => {
   try {
     const nsFlag = namespace ? `-n ${namespace}` : '--all-namespaces'
     const timeout = '60s'
+    const waitCommand = `kubectl wait --for=condition=Ready pod --all ${nsFlag} --timeout=${timeout}`
 
     try {
-      execSync(
-        `kubectl wait --for=condition=Ready pod --all ${nsFlag} --timeout=${timeout}`,
-        { stdio: 'pipe' }
-      )
+      execSync(waitCommand, { stdio: 'pipe' })
+      return success(undefined)
     } catch {
       const output = execSync(`kubectl get pods ${nsFlag} -o json`, {
         encoding: 'utf-8'
       })
-
       const pods = JSON.parse(output)
-      const readyPods =
-        pods.items?.filter(
-          (p: any) =>
-            p.status?.phase === 'Running' || p.status?.phase === 'Succeeded'
-        ) || []
-      if (readyPods.length === 0) {
-        return error('No pods are ready')
-      }
-    }
+      const items = Array.isArray(pods.items) ? pods.items : []
+      const notReadyPods = items
+        .filter((pod: any) => {
+          const phase = pod?.status?.phase
+          if (phase === 'Succeeded') {
+            return false
+          }
+          const containerStatuses = Array.isArray(pod?.status?.containerStatuses)
+            ? pod.status.containerStatuses
+            : []
+          if (containerStatuses.length === 0) {
+            return true
+          }
+          const allReady = containerStatuses.every((status: any) => {
+            return status?.ready === true
+          })
+          return !allReady
+        })
+        .map((pod: any) => {
+          const podNamespace = pod?.metadata?.namespace ?? 'default'
+          const podName = pod?.metadata?.name ?? 'unknown'
+          const phase = pod?.status?.phase ?? 'Unknown'
+          return `${podNamespace}/${podName}:${phase}`
+        })
 
-    return success(undefined)
+      const scope = namespace != null && namespace.length > 0
+        ? `namespace "${namespace}"`
+        : 'all namespaces'
+      const renderedPods = notReadyPods.slice(0, 12).join(', ')
+      const hasMore = notReadyPods.length > 12
+      const suffix = hasMore ? ', ...' : ''
+      const details = renderedPods.length > 0 ? renderedPods : '<none>'
+      return error(
+        `Timed out waiting for pods to become Ready in ${scope}. Not ready: ${details}${suffix}`
+      )
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     return error(`Failed to wait for pods: ${message}`)

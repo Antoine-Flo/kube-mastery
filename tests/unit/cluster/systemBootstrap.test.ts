@@ -6,10 +6,19 @@ import {
   createSystemBootstrapResources
 } from '../../../src/core/cluster/systemBootstrap'
 
+const createControlPlaneStaticPodName = (
+  controlPlaneNodeName: string,
+  componentName: string
+): string => {
+  return `${componentName}-${controlPlaneNodeName}`
+}
+
 describe('systemBootstrap', () => {
   it('creates expected kind-like bootstrap resources', () => {
+    const clusterName = 'conformance'
+    const controlPlaneNodeName = `${clusterName}-control-plane`
     const resources = createSystemBootstrapResources({
-      clusterName: 'conformance',
+      clusterName,
       clock: () => '2026-02-13T12:00:00Z'
     })
 
@@ -48,10 +57,10 @@ describe('systemBootstrap', () => {
     expect(resources.pods).toHaveLength(4)
     expect(resources.staticPods).toHaveLength(4)
     const staticControlPlanePods = [
-      'etcd-control-plane',
-      'kube-apiserver-control-plane',
-      'kube-controller-manager-control-plane',
-      'kube-scheduler-control-plane'
+      createControlPlaneStaticPodName(controlPlaneNodeName, 'etcd'),
+      createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-apiserver'),
+      createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-controller-manager'),
+      createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-scheduler')
     ]
     for (const podName of staticControlPlanePods) {
       const pod = resources.pods.find((item) => {

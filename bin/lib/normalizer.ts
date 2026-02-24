@@ -100,22 +100,22 @@ export const normalizeOutput = (output: string): string => {
   )
 
   // ─── Noms des pods control-plane ─────────────────────────────────────────
-  // Réel : etcd-minimal-control-plane (nom du cluster au milieu) ; sim : etcd-control-plane.
-  // On unifie en etcd-<node>-control-plane pour matcher les deux.
+  // Réel/sim : etcd-<nodeName-control-plane>, kube-apiserver-<nodeName-control-plane>, etc.
+  // On unifie en *-<node>-control-plane pour matcher indépendamment du nom de cluster.
   normalized = normalized.replace(
-    /etcd-[a-z0-9]*-control-plane/g,
+    /etcd-[a-z0-9-]+-control-plane/g,
     'etcd-<node>-control-plane'
   )
   normalized = normalized.replace(
-    /kube-apiserver-[a-z0-9]*-control-plane/g,
+    /kube-apiserver-[a-z0-9-]+-control-plane/g,
     'kube-apiserver-<node>-control-plane'
   )
   normalized = normalized.replace(
-    /kube-controller-manager-[a-z0-9]*-control-plane/g,
+    /kube-controller-manager-[a-z0-9-]+-control-plane/g,
     'kube-controller-manager-<node>-control-plane'
   )
   normalized = normalized.replace(
-    /kube-scheduler-[a-z0-9]*-control-plane/g,
+    /kube-scheduler-[a-z0-9-]+-control-plane/g,
     'kube-scheduler-<node>-control-plane'
   )
 

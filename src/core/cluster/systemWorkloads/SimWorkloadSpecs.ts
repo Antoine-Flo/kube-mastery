@@ -78,32 +78,44 @@ const getControlPlaneNodeName = (nodes: SimSystemWorkloadNode[]): string => {
   return nodes[0]?.name ?? 'control-plane'
 }
 
-const createStaticSpecs = (controlPlaneNodeName: string): SimSystemWorkloadSpec[] => {
+const createControlPlaneStaticPodName = (
+  controlPlaneNodeName: string,
+  componentName: string
+): string => {
+  return `${componentName}-${controlPlaneNodeName}`
+}
+
+const createStaticSpecs = (
+  controlPlaneNodeName: string
+): SimSystemWorkloadSpec[] => {
   return [
     {
       kind: 'static',
-      name: 'etcd-control-plane',
+      name: createControlPlaneStaticPodName(controlPlaneNodeName, 'etcd'),
       namespace: 'kube-system',
       containerName: 'etcd',
       nodeName: controlPlaneNodeName
     },
     {
       kind: 'static',
-      name: 'kube-apiserver-control-plane',
+      name: createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-apiserver'),
       namespace: 'kube-system',
       containerName: 'kube-apiserver',
       nodeName: controlPlaneNodeName
     },
     {
       kind: 'static',
-      name: 'kube-controller-manager-control-plane',
+      name: createControlPlaneStaticPodName(
+        controlPlaneNodeName,
+        'kube-controller-manager'
+      ),
       namespace: 'kube-system',
       containerName: 'kube-controller-manager',
       nodeName: controlPlaneNodeName
     },
     {
       kind: 'static',
-      name: 'kube-scheduler-control-plane',
+      name: createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-scheduler'),
       namespace: 'kube-system',
       containerName: 'kube-scheduler',
       nodeName: controlPlaneNodeName
