@@ -4,6 +4,8 @@
 
 Valider que les ressources Kubernetes créées par le simulateur sont conformes aux spécifications OpenAPI officielles. **Les tests échouent si les ressources ne sont pas conformes.**
 
+Ce document couvre la conformance OpenAPI. Les suites runtime kind vs simulateur (commande par commande) sont pilotées depuis `bin/` et suivent une matrice pairwise/risk-based dédiée.
+
 ## Spécifications OpenAPI
 
 Les specs sont téléchargées depuis : https://github.com/kubernetes/kubernetes/tree/master/api/openapi-spec/v3
@@ -138,3 +140,38 @@ const secretForValidation = {
 ```bash
 npm test -- tests/conformance/tests/
 ```
+
+## Runtime conformance (kind vs simulateur)
+
+### Génération des suites
+
+```bash
+npm run conformance:generate
+```
+
+Suites générées:
+- `bin/config/generated/exhaustive-suite.json` (exhaustif par défaut)
+- `bin/config/generated/by-command/<command>.json` (suite ciblée)
+
+### Exécution
+
+```bash
+npm run conformance
+npm run conformance:list
+npm run conformance:cmd:get
+npm run conformance:cmd:run
+```
+
+### Principe de matrice (anti explosion combinatoire)
+
+La matrice runtime est définie dans `bin/config/conformance/command-matrix.ts`.
+
+Pour chaque commande kubectl:
+- dimensions minimales: **forme d'entrée**, **contexte de seed/namespace**, **contrat de sortie**,
+- sélection de cas via:
+  - pairwise sur flags orthogonaux,
+  - priorisation risque (erreurs fréquentes, cas critiques),
+  - cas limites ciblés (conflits de flags, messages stricts),
+- pas de produit cartésien complet.
+
+Objectif: couverture large des scénarios sans multiplier les combinaisons redondantes.

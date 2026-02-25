@@ -1,0 +1,283 @@
+{
+  "name": "explain-command-suite",
+  "clusterName": "conformance",
+  "actions": [
+    {
+      "id": "platform-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "platform-cmd-1",
+      "type": "command",
+      "command": "kubectl explain pod",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "KIND:",
+          "Pod",
+          "FIELDS:"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "KIND:",
+          "Pod",
+          "FIELDS:"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-2",
+      "type": "command",
+      "command": "kubectl explain pod.spec.containers",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    containers",
+          "DESCRIPTION:"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    containers",
+          "DESCRIPTION:"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-3",
+      "type": "command",
+      "command": "kubectl explain deployment.spec.template.spec.containers",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    containers",
+          "KIND:",
+          "Deployment"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    containers",
+          "KIND:",
+          "Deployment"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-4",
+      "type": "command",
+      "command": "kubectl explain service.spec.ports",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    ports",
+          "KIND:",
+          "Service"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    ports",
+          "KIND:",
+          "Service"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-5",
+      "type": "command",
+      "command": "kubectl explain configmap.data",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    data",
+          "KIND:",
+          "ConfigMap"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    data",
+          "KIND:",
+          "ConfigMap"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-6",
+      "type": "command",
+      "command": "kubectl explain secret.data",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    data",
+          "KIND:",
+          "Secret"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    data",
+          "KIND:",
+          "Secret"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-7",
+      "type": "command",
+      "command": "kubectl explain namespace.metadata",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    metadata",
+          "KIND:",
+          "Namespace"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    metadata",
+          "KIND:",
+          "Namespace"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-8",
+      "type": "command",
+      "command": "kubectl explain node.status",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    status",
+          "KIND:",
+          "Node"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    status",
+          "KIND:",
+          "Node"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-9",
+      "type": "command",
+      "command": "kubectl explain replicaset.spec.replicas",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    replicas",
+          "KIND:",
+          "ReplicaSet"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    replicas",
+          "KIND:",
+          "ReplicaSet"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-10",
+      "type": "command",
+      "command": "kubectl explain daemonset.spec.template",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    template",
+          "KIND:",
+          "DaemonSet"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    template",
+          "KIND:",
+          "DaemonSet"
+        ]
+      }
+    },
+    {
+      "id": "platform-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "errors-help-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "errors-help-cmd-1",
+      "type": "command",
+      "command": "kubectl explain pod.spec.notFound",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "field \"notFound\" does not exist"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "field \"notFound\" does not exist"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-2",
+      "type": "command",
+      "command": "kubectl explain all",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "the server does not have a resource type"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "the server does not have a resource type"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    }
+  ],
+  "stopOnMismatch": false
+}

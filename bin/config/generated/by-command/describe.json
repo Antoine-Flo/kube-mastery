@@ -1,0 +1,112 @@
+{
+  "name": "describe-command-suite",
+  "clusterName": "conformance",
+  "actions": [
+    {
+      "id": "minimal-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "waitForPods": true
+    },
+    {
+      "id": "minimal-cmd-1",
+      "type": "command",
+      "command": "kubectl describe node conformance-worker",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "deploy-cm-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "waitForPods": true
+    },
+    {
+      "id": "deploy-cm-cmd-1",
+      "type": "command",
+      "command": "kubectl describe pod web",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-2",
+      "type": "command",
+      "command": "kubectl describe deployment exhaustive-web",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "platform-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "platform-cmd-1",
+      "type": "command",
+      "command": "kubectl describe node conformance-control-plane",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-2",
+      "type": "command",
+      "command": "kubectl describe node conformance-worker2",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "run-cases-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "run-cases-cmd-1",
+      "type": "command",
+      "command": "kubectl describe pod run-ok-env-label-port",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "run-cases-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "errors-help-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "errors-help-cmd-1",
+      "type": "command",
+      "command": "kubectl describe pod missing-pod",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-2",
+      "type": "command",
+      "command": "kubectl describe --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    }
+  ],
+  "stopOnMismatch": false
+}

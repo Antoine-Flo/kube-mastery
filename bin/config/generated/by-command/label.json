@@ -1,0 +1,24 @@
+{
+  "name": "label-command-suite",
+  "clusterName": "conformance",
+  "actions": [
+    {
+      "id": "errors-help-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "errors-help-cmd-1",
+      "type": "command",
+      "command": "kubectl label --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    }
+  ],
+  "stopOnMismatch": false
+}

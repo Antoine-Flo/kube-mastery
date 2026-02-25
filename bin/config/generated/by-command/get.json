@@ -1,0 +1,347 @@
+{
+  "name": "get-command-suite",
+  "clusterName": "conformance",
+  "actions": [
+    {
+      "id": "minimal-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "waitForPods": true
+    },
+    {
+      "id": "minimal-cmd-1",
+      "type": "command",
+      "command": "kubectl get pods",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-2",
+      "type": "command",
+      "command": "kubectl get pods -A",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-3",
+      "type": "command",
+      "command": "kubectl get pods -o yaml",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-4",
+      "type": "command",
+      "command": "kubectl get pods -o json",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-5",
+      "type": "command",
+      "command": "kubectl get nodes",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-6",
+      "type": "command",
+      "command": "kubectl get configmaps",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-7",
+      "type": "command",
+      "command": "kubectl get secrets",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "deploy-cm-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "waitForPods": true
+    },
+    {
+      "id": "deploy-cm-cmd-1",
+      "type": "command",
+      "command": "kubectl get pods",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-2",
+      "type": "command",
+      "command": "kubectl get pods -A",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-3",
+      "type": "command",
+      "command": "kubectl get pods -o wide",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-4",
+      "type": "command",
+      "command": "kubectl get pod web -o yaml",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-5",
+      "type": "command",
+      "command": "kubectl get deployments",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-6",
+      "type": "command",
+      "command": "kubectl get replicasets",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-7",
+      "type": "command",
+      "command": "kubectl get daemonsets -A",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-8",
+      "type": "command",
+      "command": "kubectl get all",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-9",
+      "type": "command",
+      "command": "kubectl get all -A",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-10",
+      "type": "command",
+      "command": "kubectl get deployments",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "platform-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "platform-cmd-1",
+      "type": "command",
+      "command": "kubectl get --raw /",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "\"paths\"",
+          "/api",
+          "/openapi/v3"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "\"paths\"",
+          "/api",
+          "/openapi/v3"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-2",
+      "type": "command",
+      "command": "kubectl get --raw /api/v1/namespaces",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NamespaceList",
+          "\"items\"",
+          "\"kubernetes.io/metadata.name\"",
+          "\"kube-public\"",
+          "\"kube-node-lease\""
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NamespaceList",
+          "\"items\"",
+          "\"kubernetes.io/metadata.name\"",
+          "\"kube-public\"",
+          "\"kube-node-lease\""
+        ]
+      }
+    },
+    {
+      "id": "platform-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "run-cases-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "run-cases-cmd-1",
+      "type": "command",
+      "command": "kubectl get pod run-ok-command",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "run-cases-cmd-2",
+      "type": "command",
+      "command": "kubectl get pod run-ok-dry-run",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "Error from server (NotFound): pods \"run-ok-dry-run\" not found"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "Error from server (NotFound): pods \"run-ok-dry-run\" not found"
+        ]
+      }
+    },
+    {
+      "id": "run-cases-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "namespace-ops-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "namespace-ops-cmd-1",
+      "type": "command",
+      "command": "kubectl get namespace my-team",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "namespace-ops-cmd-2",
+      "type": "command",
+      "command": "kubectl get namespaces",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "namespace-ops-cmd-3",
+      "type": "command",
+      "command": "kubectl get --raw /api/v1/namespaces",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NamespaceList",
+          "\"my-team\""
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NamespaceList",
+          "\"my-team\""
+        ]
+      }
+    },
+    {
+      "id": "namespace-ops-cmd-4",
+      "type": "command",
+      "command": "kubectl get namespace my-team",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "Error from server (NotFound): namespaces \"my-team\" not found"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "Error from server (NotFound): namespaces \"my-team\" not found"
+        ]
+      }
+    },
+    {
+      "id": "namespace-ops-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "errors-help-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "errors-help-cmd-1",
+      "type": "command",
+      "command": "kubectl get pods --raw /",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "arguments may not be passed when --raw is specified"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "arguments may not be passed when --raw is specified"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-2",
+      "type": "command",
+      "command": "kubectl get --raw / -o json",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "--raw and --output are mutually exclusive"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "--raw and --output are mutually exclusive"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-3",
+      "type": "command",
+      "command": "kubectl get not-a-resource",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-4",
+      "type": "command",
+      "command": "kubectl get --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    }
+  ],
+  "stopOnMismatch": false
+}

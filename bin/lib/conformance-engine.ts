@@ -22,6 +22,26 @@ interface BackendActionResult {
   runner: CommandExecutionResult
 }
 
+export interface ConformanceProgressEvent {
+  suiteName: string
+  action: ConformanceAction
+  actionIndex: number
+  actionTotal: number
+}
+
+export interface ConformanceActionCompleteEvent extends ConformanceProgressEvent {
+  kind: CommandExecutionResult
+  runner: CommandExecutionResult
+  comparison: ConformanceComparison
+}
+
+export interface ConformanceProgressListener {
+  onSuiteStart?: (suite: ConformanceSuite) => void
+  onActionStart?: (event: ConformanceProgressEvent) => void
+  onActionComplete?: (event: ConformanceActionCompleteEvent) => void
+  onSuiteFinish?: (suite: ConformanceSuite, result: Result<void, string>) => void
+}
+
 export const checkExpectation = (
   result: CommandExecutionResult,
   expectation: CommandExpectation | undefined
@@ -243,21 +263,36 @@ export const runConformanceSuite = (
     kindExecutor?: KindExecutor
     runnerExecutor?: RunnerExecutor
     reporter?: ReturnType<typeof createConformanceReporter>
+    progressListener?: ConformanceProgressListener
   }
 ): Result<void, string> => {
   const kindExecutor =
     dependencies?.kindExecutor ?? createKindExecutor(suite.clusterName)
   const reporter = dependencies?.reporter ?? createConformanceReporter()
+  const progressListener = dependencies?.progressListener
+
+  progressListener?.onSuiteStart?.(suite)
 
   const setupResult = kindExecutor.setup()
   if (!setupResult.ok) {
-    return error(setupResult.error)
+    const failed = error(setupResult.error)
+    progressListener?.onSuiteFinish?.(suite, failed)
+    return failed
   }
 
   const runnerExecutor = dependencies?.runnerExecutor ?? createRunnerExecutor()
+  let finalResult: Result<void, string> = success(undefined)
 
   try {
-    for (const action of suite.actions) {
+    const actionTotal = suite.actions.length
+    for (let actionIndex = 0; actionIndex < actionTotal; actionIndex++) {
+      const action = suite.actions[actionIndex]
+      progressListener?.onActionStart?.({
+        suiteName: suite.name,
+        action,
+        actionIndex,
+        actionTotal
+      })
       const { kind, runner } = executeAction(action, kindExecutor, runnerExecutor)
 
       reporter.recordKind(createRecord(suite.name, action, 'kind', kind))
@@ -299,13 +334,23 @@ export const runConformanceSuite = (
       const compareMode =
         action.type === 'command' ? action.compareMode || 'normalized' : 'normalized'
       const comparison = compareResults(kind, runner, compareMode)
+      progressListener?.onActionComplete?.({
+        suiteName: suite.name,
+        action,
+        actionIndex,
+        actionTotal,
+        kind,
+        runner,
+        comparison
+      })
       if (!comparison.matched) {
         reporter.recordDiff(appendMismatch(suite.name, action, kind, runner, comparison))
         if (suite.stopOnMismatch ?? true) {
           reporter.flush()
-          return error(
+          finalResult = error(
             `[${action.id}] output mismatch between kind and runner.\n${comparison.diff}`
           )
+          return finalResult
         }
       }
     }
@@ -317,5 +362,6 @@ export const runConformanceSuite = (
     reporter.flush()
   }
 
-  return success(undefined)
+  progressListener?.onSuiteFinish?.(suite, finalResult)
+  return finalResult
 }

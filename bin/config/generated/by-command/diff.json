@@ -1,0 +1,69 @@
+{
+  "name": "diff-command-suite",
+  "clusterName": "conformance",
+  "actions": [
+    {
+      "id": "deploy-cm-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "waitForPods": true
+    },
+    {
+      "id": "deploy-cm-cmd-1",
+      "type": "command",
+      "command": "kubectl diff -f src/courses/seeds/deployment-with-configmap/configmap.yaml",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-2",
+      "type": "command",
+      "command": "kubectl diff -f src/courses/seeds/deployment-with-configmap/secret.yaml",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-3",
+      "type": "command",
+      "command": "kubectl diff -f src/courses/seeds/diff-fixtures/configmap-changed.yaml",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stdoutContains": [
+          "app-config",
+          "LOG_LEVEL"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stdoutContains": [
+          "app-config",
+          "LOG_LEVEL"
+        ]
+      }
+    },
+    {
+      "id": "deploy-cm-cmd-4",
+      "type": "command",
+      "command": "kubectl diff -f src/courses/seeds/diff-fixtures/secret-changed.yaml",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stdoutContains": [
+          "app-secret"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stdoutContains": [
+          "app-secret"
+        ]
+      }
+    },
+    {
+      "id": "deploy-cm-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "ignoreNotFound": true
+    }
+  ],
+  "stopOnMismatch": false
+}

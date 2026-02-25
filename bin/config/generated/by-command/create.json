@@ -1,0 +1,113 @@
+{
+  "name": "create-command-suite",
+  "clusterName": "conformance",
+  "actions": [
+    {
+      "id": "deploy-cm-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "waitForPods": true
+    },
+    {
+      "id": "deploy-cm-cmd-1",
+      "type": "command",
+      "command": "kubectl create deployment exhaustive-web --image=nginx:latest",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-2",
+      "type": "command",
+      "command": "kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-3",
+      "type": "command",
+      "command": "kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "namespace-ops-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "namespace-ops-cmd-1",
+      "type": "command",
+      "command": "kubectl create namespace my-team",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "namespace/my-team created"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "namespace/my-team created"
+        ]
+      }
+    },
+    {
+      "id": "namespace-ops-cmd-2",
+      "type": "command",
+      "command": "kubectl create namespace my-team",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "Error from server (AlreadyExists): namespaces \"my-team\" already exists"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "Error from server (AlreadyExists): namespaces \"my-team\" already exists"
+        ]
+      }
+    },
+    {
+      "id": "namespace-ops-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "errors-help-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "errors-help-cmd-1",
+      "type": "command",
+      "command": "kubectl create deployment invalid-without-image",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-2",
+      "type": "command",
+      "command": "kubectl create --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-3",
+      "type": "command",
+      "command": "kubectl create deployment --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    }
+  ],
+  "stopOnMismatch": false
+}

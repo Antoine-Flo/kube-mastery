@@ -1,0 +1,287 @@
+{
+  "name": "run-command-suite",
+  "clusterName": "conformance",
+  "actions": [
+    {
+      "id": "run-cases-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "run-cases-cmd-1",
+      "type": "command",
+      "command": "kubectl run run-ok-command --image=busybox --command -- sleep 3600",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-command created"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-command created"
+        ]
+      }
+    },
+    {
+      "id": "run-cases-cmd-2",
+      "type": "command",
+      "command": "kubectl run run-ok-image-only --image=busybox",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-image-only created"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-image-only created"
+        ]
+      }
+    },
+    {
+      "id": "run-cases-cmd-3",
+      "type": "command",
+      "command": "kubectl run run-ok-args --image=busybox -- sleep 3600",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-args created"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-args created"
+        ]
+      }
+    },
+    {
+      "id": "run-cases-cmd-4",
+      "type": "command",
+      "command": "kubectl run run-ok-env-label-port --image=busybox --env=DNS_DOMAIN=cluster --env=POD_NAMESPACE=default --labels=app=hazelcast,env=prod --port=5701",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-env-label-port created"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-env-label-port created"
+        ]
+      }
+    },
+    {
+      "id": "run-cases-cmd-5",
+      "type": "command",
+      "command": "kubectl run run-ok-interactive --image=busybox -i -t --restart=Never --rm",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-interactive created"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-interactive created"
+        ]
+      }
+    },
+    {
+      "id": "run-cases-cmd-6",
+      "type": "command",
+      "command": "kubectl run run-ok-dry-run --image=busybox --dry-run=client",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-dry-run created (dry run)"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/run-ok-dry-run created (dry run)"
+        ]
+      }
+    },
+    {
+      "id": "run-cases-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "errors-help-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "errors-help-cmd-1",
+      "type": "command",
+      "command": "kubectl run",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires a resource name"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires a resource name"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-2",
+      "type": "command",
+      "command": "kubectl run missing-image",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires flag --image"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires flag --image"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-3",
+      "type": "command",
+      "command": "kubectl run missing-command --image=busybox --command --",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires command after --"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires command after --"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-4",
+      "type": "command",
+      "command": "kubectl run missing-args --image=busybox --",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires arguments after --"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run requires arguments after --"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-5",
+      "type": "command",
+      "command": "kubectl run invalid-env --image=busybox --env INVALID",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run --env values must use KEY=VALUE format"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run --env values must use KEY=VALUE format"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-6",
+      "type": "command",
+      "command": "kubectl run invalid-dry-run --image=busybox --dry-run=local",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run dry-run must be one of: none, server, client"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run dry-run must be one of: none, server, client"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-7",
+      "type": "command",
+      "command": "kubectl run invalid-restart-value --image=busybox --restart=Sometimes",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run restart must be one of: Always, OnFailure, Never"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run restart must be one of: Always, OnFailure, Never"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-8",
+      "type": "command",
+      "command": "kubectl run unsupported-restart --image=busybox --restart=Always",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run currently supports only --restart=Never in this simulator"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "run currently supports only --restart=Never in this simulator"
+        ]
+      }
+    },
+    {
+      "id": "errors-help-cmd-9",
+      "type": "command",
+      "command": "kubectl run --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    }
+  ],
+  "stopOnMismatch": false
+}

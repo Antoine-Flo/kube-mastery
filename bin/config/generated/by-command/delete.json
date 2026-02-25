@@ -1,0 +1,136 @@
+{
+  "name": "delete-command-suite",
+  "clusterName": "conformance",
+  "actions": [
+    {
+      "id": "minimal-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "waitForPods": true
+    },
+    {
+      "id": "minimal-cmd-1",
+      "type": "command",
+      "command": "kubectl delete pod web-00063e839a-chadq",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "deploy-cm-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "waitForPods": true
+    },
+    {
+      "id": "deploy-cm-cmd-1",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-api",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-2",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-multi",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-3",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-web",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "run-cases-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "run-cases-cmd-1",
+      "type": "command",
+      "command": "kubectl delete pod run-ok-command",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "run-cases-cmd-2",
+      "type": "command",
+      "command": "kubectl delete pod run-ok-image-only",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "run-cases-cmd-3",
+      "type": "command",
+      "command": "kubectl delete pod run-ok-args",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "run-cases-cmd-4",
+      "type": "command",
+      "command": "kubectl delete pod run-ok-env-label-port",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "run-cases-cmd-5",
+      "type": "command",
+      "command": "kubectl delete pod run-ok-interactive",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "run-cases-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "namespace-ops-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "namespace-ops-cmd-1",
+      "type": "command",
+      "command": "kubectl delete namespace my-team",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "namespace-ops-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "errors-help-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "errors-help-cmd-1",
+      "type": "command",
+      "command": "kubectl delete pods missing-pod",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cmd-2",
+      "type": "command",
+      "command": "kubectl delete --help",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "errors-help-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    }
+  ],
+  "stopOnMismatch": false
+}
