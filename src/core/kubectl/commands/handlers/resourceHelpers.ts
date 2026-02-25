@@ -26,6 +26,7 @@ import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
 import type { DaemonSet } from '../../../cluster/ressources/DaemonSet'
 import type { Deployment } from '../../../cluster/ressources/Deployment'
 import type { Node } from '../../../cluster/ressources/Node'
+import type { Namespace } from '../../../cluster/ressources/Namespace'
 import type { Pod } from '../../../cluster/ressources/Pod'
 import type { ReplicaSet } from '../../../cluster/ressources/ReplicaSet'
 import type { Secret } from '../../../cluster/ressources/Secret'
@@ -40,6 +41,7 @@ type KubernetesResource =
   | ConfigMap
   | Secret
   | Node
+  | Namespace
   | ReplicaSet
   | Deployment
   | DaemonSet
@@ -50,6 +52,7 @@ type ResourceKind =
   | 'ConfigMap'
   | 'Secret'
   | 'Node'
+  | 'Namespace'
   | 'ReplicaSet'
   | 'Deployment'
   | 'DaemonSet'
@@ -92,6 +95,9 @@ const toPluralKindReference = (kind: ResourceKind): string => {
   }
   if (kind === 'DaemonSet') {
     return 'daemonsets.apps'
+  }
+  if (kind === 'Namespace') {
+    return 'namespaces'
   }
   return `${kind.toLowerCase()}s`
 }
@@ -166,6 +172,21 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
     },
     addDirect: (state, resource: KubernetesResource) => {
       state.addNode(resource as Node)
+    }
+  },
+  Namespace: {
+    find: (state, name, _namespace) => state.findByKind('Namespace', name),
+    emitCreated: (_eventBus, _resource) => {
+      // Namespaces use direct state updates in this simulator.
+    },
+    emitUpdated: (_eventBus, _name, _namespace, _resource, _previous) => {
+      // Namespaces use direct state updates in this simulator.
+    },
+    updateDirect: (state, name, resource: KubernetesResource) => {
+      state.updateNamespace(name, () => resource as Namespace)
+    },
+    addDirect: (state, resource: KubernetesResource) => {
+      state.addNamespace(resource as Namespace)
     }
   },
   ReplicaSet: {

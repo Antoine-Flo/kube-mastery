@@ -26,6 +26,13 @@ import type { ParsedCommand } from './types'
 // Action handler signature (dependencies captured in closure)
 type ActionHandler = (parsed: ParsedCommand) => ExecutionResult
 
+const toGetExecutionResult = (output: string): ExecutionResult => {
+  if (output.startsWith('Error from server')) {
+    return error(output)
+  }
+  return success(output)
+}
+
 /**
  * Create action handlers Map with dependencies captured in closures
  */
@@ -39,7 +46,7 @@ const createHandlers = (
 
   // Direct handler mapping - logging is handled centrally by event system
   handlers.set('get', (parsed) =>
-    success(handleGet(clusterState.toJSON(), parsed))
+    toGetExecutionResult(handleGet(clusterState.toJSON(), parsed))
   )
   handlers.set('diff', (parsed) => handleDiff(fileSystem, clusterState, parsed))
   handlers.set('explain', (parsed) => handleExplain(parsed))

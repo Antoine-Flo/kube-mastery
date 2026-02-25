@@ -269,6 +269,23 @@ data:
 
         expect(result.value).toContain('pod/test-pod created')
       })
+
+      it('should route "kubectl create namespace" to create handler', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl create namespace my-team')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('namespace/my-team created')
+      })
     })
 
     describe('create deployment (imperative)', () => {
@@ -534,6 +551,51 @@ data:
     })
 
     describe('namespace handling', () => {
+      it('should handle namespace lifecycle create duplicate delete and not found', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+
+        const created = executor.execute('kubectl create namespace my-team')
+        expect(created.ok).toBe(true)
+        if (!created.ok) {
+          return
+        }
+        expect(created.value).toContain('namespace/my-team created')
+
+        const listResult = executor.execute('kubectl get namespaces')
+        expect(listResult.ok).toBe(true)
+        if (!listResult.ok) {
+          return
+        }
+        expect(listResult.value).toContain('my-team')
+
+        const duplicate = executor.execute('kubectl create namespace my-team')
+        expect(duplicate.ok).toBe(false)
+        if (!duplicate.ok) {
+          expect(duplicate.error).toContain('Error from server (AlreadyExists)')
+          expect(duplicate.error).toContain('namespaces "my-team" already exists')
+        }
+
+        const deleted = executor.execute('kubectl delete namespace my-team')
+        expect(deleted.ok).toBe(true)
+        if (!deleted.ok) {
+          return
+        }
+        expect(deleted.value).toContain('namespace "my-team" deleted')
+
+        const afterDelete = executor.execute('kubectl get namespace my-team')
+        expect(afterDelete.ok).toBe(false)
+        if (!afterDelete.ok) {
+          expect(afterDelete.error).toContain(
+            'Error from server (NotFound): namespaces "my-team" not found'
+          )
+        }
+      })
+
       it('should pass namespace to get handler from -n flag', () => {
         const executor = createKubectlExecutor(
           clusterState,

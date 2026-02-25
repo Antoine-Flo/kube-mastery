@@ -63,6 +63,10 @@ import type {
 import type { ConfigMap } from './ressources/ConfigMap'
 import type { DaemonSet } from './ressources/DaemonSet'
 import type { Deployment } from './ressources/Deployment'
+import {
+  createNamespace,
+  type Namespace
+} from './ressources/Namespace'
 import type { Node } from './ressources/Node'
 import type { Pod } from './ressources/Pod'
 import type { ReplicaSet } from './ressources/ReplicaSet'
@@ -87,6 +91,7 @@ export interface ClusterStateData {
   deployments: ResourceCollection<Deployment>
   daemonSets: ResourceCollection<DaemonSet>
   services: ResourceCollection<Service>
+  namespaces: ResourceCollection<Namespace>
 }
 
 type ResourceByKind = {
@@ -98,6 +103,7 @@ type ResourceByKind = {
   Deployment: Deployment
   DaemonSet: DaemonSet
   Service: Service
+  Namespace: Namespace
 }
 
 export type ResourceKind = keyof ResourceByKind
@@ -117,6 +123,7 @@ export const createClusterStateData = (
     deployments: Deployment[]
     daemonSets: DaemonSet[]
     services: Service[]
+    namespaces: Namespace[]
   }> = {}
 ): ClusterStateData => ({
   pods: { items: collections.pods ?? [] },
@@ -126,7 +133,8 @@ export const createClusterStateData = (
   replicaSets: { items: collections.replicaSets ?? [] },
   deployments: { items: collections.deployments ?? [] },
   daemonSets: { items: collections.daemonSets ?? [] },
-  services: { items: collections.services ?? [] }
+  services: { items: collections.services ?? [] },
+  namespaces: { items: collections.namespaces ?? [] }
 })
 
 // ─── Resource Repositories ───────────────────────────────────────────
@@ -140,6 +148,7 @@ const replicaSetRepo = createResourceRepository<ReplicaSet>('ReplicaSet')
 const deploymentRepo = createResourceRepository<Deployment>('Deployment')
 const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
 const serviceRepo = createResourceRepository<Service>('Service')
+const namespaceRepo = createResourceRepository<Namespace>('Namespace')
 
 // ─── Generic Resource Operations Helper ─────────────────────────────
 
@@ -242,7 +251,15 @@ const createEmptyState = (): ClusterStateData => ({
   replicaSets: replicaSetRepo.createEmpty(),
   deployments: deploymentRepo.createEmpty(),
   daemonSets: daemonSetRepo.createEmpty(),
-  services: serviceRepo.createEmpty()
+  services: serviceRepo.createEmpty(),
+  namespaces: {
+    items: [
+      createNamespace({ name: 'default' }),
+      createNamespace({ name: 'kube-system' }),
+      createNamespace({ name: 'kube-public' }),
+      createNamespace({ name: 'kube-node-lease' })
+    ]
+  }
 })
 
 // ─── Resource Operations (Generated) ─────────────────────────────────
@@ -267,6 +284,10 @@ const daemonSetOps = createResourceOperations<DaemonSet>(
   'daemonSets'
 )
 const serviceOps = createResourceOperations<Service>(serviceRepo, 'services')
+const namespaceOps = createResourceOperations<Namespace>(
+  namespaceRepo,
+  'namespaces'
+)
 
 // Export Pod operations for test use only
 export const addPod = podOps.add
@@ -343,6 +364,14 @@ export interface ClusterState {
     namespace: string,
     updateFn: (service: Service) => Service
   ) => Result<Service>
+  getNamespaces: () => Namespace[]
+  addNamespace: (namespace: Namespace) => void
+  findNamespace: (name: string) => Result<Namespace>
+  deleteNamespace: (name: string) => Result<Namespace>
+  updateNamespace: (
+    name: string,
+    updateFn: (namespace: Namespace) => Namespace
+  ) => Result<Namespace>
   findByKind: <TKind extends ResourceKind>(
     kind: TKind,
     name: string,
@@ -584,6 +613,50 @@ export function createClusterState(
     eventBus,
     'Service'
   )
+  const namespaceMethods = {
+    getAll: () => namespaceOps.getAll(getState(), undefined),
+    add: (namespace: Namespace) => {
+      const currentState = getState()
+      const updatedNamespaces = namespaceRepo.add(
+        currentState.namespaces,
+        namespace
+      )
+      setState({ ...currentState, namespaces: updatedNamespaces })
+    },
+    find: (name: string): Result<Namespace> => {
+      return namespaceOps.find(getState(), name, '')
+    },
+    delete: (name: string): Result<Namespace> => {
+      const currentState = getState()
+      const deleteResult = namespaceRepo.remove(currentState.namespaces, name, '')
+      if (!deleteResult.ok) {
+        return deleteResult
+      }
+      if (deleteResult.collection) {
+        setState({ ...currentState, namespaces: deleteResult.collection })
+      }
+      return { ok: true, value: deleteResult.value }
+    },
+    update: (
+      name: string,
+      updateFn: (namespace: Namespace) => Namespace
+    ): Result<Namespace> => {
+      const currentState = getState()
+      const updateResult = namespaceRepo.update(
+        currentState.namespaces,
+        name,
+        '',
+        updateFn
+      )
+      if (!updateResult.ok) {
+        return updateResult
+      }
+      if (updateResult.collection) {
+        setState({ ...currentState, namespaces: updateResult.collection })
+      }
+      return { ok: true, value: updateResult.value }
+    }
+  }
 
   // Nodes are cluster-scoped (no namespace), so we need custom methods
   // For now, we add nodes directly to state since Node events are not yet implemented
@@ -672,7 +745,9 @@ export function createClusterState(
       DaemonSet: (resourceName, resourceNamespace) =>
         daemonSetMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
       Service: (resourceName, resourceNamespace) =>
-        serviceMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>
+        serviceMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+      Namespace: (resourceName, _resourceNamespace) =>
+        namespaceMethods.find(resourceName) as Result<KubernetesResource>
     }
 
     const finder = finders[kind]
@@ -705,7 +780,9 @@ export function createClusterState(
       DaemonSet: (resourceNamespace) =>
         daemonSetMethods.getAll(resourceNamespace) as KubernetesResource[],
       Service: (resourceNamespace) =>
-        serviceMethods.getAll(resourceNamespace) as KubernetesResource[]
+        serviceMethods.getAll(resourceNamespace) as KubernetesResource[],
+      Namespace: (_resourceNamespace) =>
+        namespaceMethods.getAll() as KubernetesResource[]
     }
 
     const lister = listers[kind]
@@ -765,6 +842,12 @@ export function createClusterState(
     deleteService: serviceMethods.delete,
     updateService: serviceMethods.update,
 
+    getNamespaces: namespaceMethods.getAll,
+    addNamespace: namespaceMethods.add,
+    findNamespace: namespaceMethods.find,
+    deleteNamespace: namespaceMethods.delete,
+    updateNamespace: namespaceMethods.update,
+
     findByKind,
     listByKind,
 
@@ -776,7 +859,8 @@ export function createClusterState(
       replicaSets: { items: [...state.replicaSets.items] },
       deployments: { items: [...state.deployments.items] },
       daemonSets: { items: [...state.daemonSets.items] },
-      services: { items: [...state.services.items] }
+      services: { items: [...state.services.items] },
+      namespaces: { items: [...state.namespaces.items] }
     }),
 
     loadState: (newState: ClusterStateData) => {
@@ -788,7 +872,8 @@ export function createClusterState(
         replicaSets: newState.replicaSets || { items: [] },
         deployments: newState.deployments || { items: [] },
         daemonSets: newState.daemonSets || { items: [] },
-        services: newState.services || { items: [] }
+        services: newState.services || { items: [] },
+        namespaces: newState.namespaces || { items: [] }
       }
     }
   }

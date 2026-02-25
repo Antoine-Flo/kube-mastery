@@ -42,6 +42,7 @@ export const collectDiscoveredNamespaces = (
     'ReplicaSet',
     'Service'
   ]
+  const explicitNamespaceKinds: ResourceKind[] = ['Namespace']
   const lookupState = createClusterState(createEventBus())
   lookupState.loadState(state)
 
@@ -55,6 +56,16 @@ export const collectDiscoveredNamespaces = (
       addNamespace(
         namespaces,
         (resource as { metadata?: { namespace?: string } }).metadata?.namespace
+      )
+    }
+  }
+
+  for (const kind of explicitNamespaceKinds) {
+    const resources = lookupState.listByKind(kind)
+    for (const resource of resources) {
+      addNamespace(
+        namespaces,
+        (resource as { metadata?: { name?: string } }).metadata?.name
       )
     }
   }

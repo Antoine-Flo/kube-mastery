@@ -6,6 +6,7 @@
 import type { ClusterState } from '../../../cluster/ClusterState'
 import type { EventBus } from '../../../cluster/events/EventBus'
 import { createDeployment } from '../../../cluster/ressources/Deployment'
+import { createNamespace } from '../../../cluster/ressources/Namespace'
 import type { EnvVar } from '../../../cluster/ressources/Pod'
 import { createPod } from '../../../cluster/ressources/Pod'
 import type { PodTemplateSpec } from '../../../cluster/ressources/ReplicaSet'
@@ -96,6 +97,18 @@ const isCreateDeploymentImperative = (
   return parsed.name.length > 0
 }
 
+const isCreateNamespaceImperative = (
+  parsed: ParsedCommand
+): parsed is ParsedCommand & { name: string } => {
+  if (parsed.resource !== 'namespaces') {
+    return false
+  }
+  if (typeof parsed.name !== 'string') {
+    return false
+  }
+  return parsed.name.length > 0
+}
+
 const isCreateDeploymentCommand = (parsed: ParsedCommand): boolean => {
   return parsed.resource === 'deployments'
 }
@@ -146,6 +159,21 @@ const createDeploymentFromFlags = (
   })
 
   return createResourceWithEvents(deployment, clusterState, eventBus)
+}
+
+const createNamespaceFromFlags = (
+  parsed: ParsedCommand & { name: string },
+  clusterState: ClusterState,
+  eventBus: EventBus
+): ExecutionResult => {
+  const namespace = createNamespace({
+    name: parsed.name,
+    labels: {
+      'kubernetes.io/metadata.name': parsed.name
+    }
+  })
+
+  return createResourceWithEvents(namespace, clusterState, eventBus)
 }
 
 /**
@@ -212,6 +240,10 @@ export const handleCreate = (
 
   if (isCreateDeploymentImperative(parsed)) {
     return createDeploymentFromFlags(parsed, clusterState, eventBus)
+  }
+
+  if (isCreateNamespaceImperative(parsed)) {
+    return createNamespaceFromFlags(parsed, clusterState, eventBus)
   }
 
   const loadResult = loadAndParseYaml(fileSystem, parsed)

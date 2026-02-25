@@ -58,6 +58,19 @@ describe('kubectl parser - create deployment', () => {
     expect(result.value.name).toBe('my-dep')
     expect(result.value.namespace).toBe('staging')
   })
+
+  it('should parse imperative namespace creation', () => {
+    const result = parseCommand('kubectl create namespace my-team')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('create')
+    expect(result.value.resource).toBe('namespaces')
+    expect(result.value.name).toBe('my-team')
+  })
 })
 
 describe('kubectl parser - run', () => {

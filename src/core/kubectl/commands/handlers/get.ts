@@ -4,6 +4,7 @@ import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
 import type { DaemonSet } from '../../../cluster/ressources/DaemonSet'
 import type { Deployment } from '../../../cluster/ressources/Deployment'
 import { getDeploymentDesiredReplicas } from '../../../cluster/ressources/Deployment'
+import type { Namespace } from '../../../cluster/ressources/Namespace'
 import type { Node } from '../../../cluster/ressources/Node'
 import {
   getNodeExternalIP,
@@ -517,22 +518,25 @@ const RESOURCE_HANDLERS: Record<string, ResourceHandler<any>> = {
       formatAge(svc.metadata.creationTimestamp)
     ],
     supportsFiltering: true
+  },
+
+  namespaces: {
+    getItems: (state) => state.namespaces.items,
+    headers: ['name', 'status', 'age'],
+    formatRow: (namespace: Namespace) => [
+      namespace.metadata.name,
+      'Active',
+      formatAge(namespace.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true,
+    isClusterScoped: true
   }
 }
 
 // ─── Special Cases ───────────────────────────────────────────────────────
 // Resources that don't follow standard pattern (hardcoded data, no filtering)
 
-const SPECIAL_HANDLERS: Record<string, () => string> = {
-  namespaces: () => {
-    const headers = ['name', 'status', 'age']
-    const rows = [
-      ['default', 'Active', '5d'],
-      ['kube-system', 'Active', '5d']
-    ]
-    return formatTable(headers, rows, withKubectlTableSpacing())
-  }
-}
+const SPECIAL_HANDLERS: Record<string, () => string> = {}
 
 // ─── Main Handler ────────────────────────────────────────────────────────
 
@@ -593,6 +597,9 @@ export const handleGet = (
 
   // Empty result (use effectiveNamespace for message unless --all-namespaces was explicitly set)
   if (filtered.length === 0) {
+    if (resourceType === 'namespaces' && parsed.name !== undefined) {
+      return `Error from server (NotFound): namespaces "${parsed.name}" not found`
+    }
     if (structuredOutput && parsed.name === undefined) {
       return serializeStructuredOutput(outputFormat, resourceType, [], false)
     }

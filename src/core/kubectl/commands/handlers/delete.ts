@@ -141,6 +141,10 @@ export const handleDelete = (
   }
 
   if (resource === 'namespaces') {
+    const deleteResult = clusterState.deleteNamespace(parsed.name)
+    if (!deleteResult.ok) {
+      return formatNotFoundMessage('namespaces', parsed.name)
+    }
     return success(formatDeletedMessage('namespace', parsed.name, namespace, false))
   }
 

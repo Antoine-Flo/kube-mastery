@@ -239,6 +239,28 @@ const createExhaustiveSegments = (): LifecycleSegment[] => {
       ]
     },
     {
+      idPrefix: 'namespace-ops',
+      seed: 'minimal',
+      commands: [
+        createRawCommand('kubectl create namespace my-team', [
+          'namespace/my-team created'
+        ]),
+        'kubectl get namespace my-team',
+        'kubectl get namespaces',
+        createRawCommand('kubectl get --raw /api/v1/namespaces', [
+          'NamespaceList',
+          '"my-team"'
+        ]),
+        createRawErrorCommand('kubectl create namespace my-team', [
+          'Error from server (AlreadyExists): namespaces "my-team" already exists'
+        ]),
+        'kubectl delete namespace my-team',
+        createRawErrorCommand('kubectl get namespace my-team', [
+          'Error from server (NotFound): namespaces "my-team" not found'
+        ])
+      ]
+    },
+    {
       idPrefix: 'errors-help',
       seed: 'minimal',
       commands: [

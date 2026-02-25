@@ -163,4 +163,55 @@ data:
 
     expect(result.value).toContain('created')
   })
+
+  it('should create namespace imperatively with name', () => {
+    const parsed = parseCommand('kubectl create namespace my-team')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toContain('namespace/my-team created')
+  })
+
+  it('should return AlreadyExists error when namespace already exists', () => {
+    const first = parseCommand('kubectl create namespace my-team')
+    expect(first.ok).toBe(true)
+    if (!first.ok) {
+      return
+    }
+
+    const firstResult = handleCreate(fileSystem, clusterState, first.value, eventBus)
+    expect(firstResult.ok).toBe(true)
+
+    const second = parseCommand('kubectl create namespace my-team')
+    expect(second.ok).toBe(true)
+    if (!second.ok) {
+      return
+    }
+
+    const secondResult = handleCreate(
+      fileSystem,
+      clusterState,
+      second.value,
+      eventBus
+    )
+    expect(secondResult.ok).toBe(false)
+    if (!secondResult.ok) {
+      expect(secondResult.error).toContain('Error from server (AlreadyExists)')
+      expect(secondResult.error).toContain('namespaces "my-team" already exists')
+    }
+  })
 })
