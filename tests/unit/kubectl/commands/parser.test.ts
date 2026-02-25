@@ -215,6 +215,46 @@ describe('kubectl parser - run', () => {
   })
 })
 
+describe('kubectl parser - expose', () => {
+  it('should parse expose deployment with required port', () => {
+    const result = parseCommand('kubectl expose deployment web --port=80 -n dev')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('expose')
+    expect(result.value.resource).toBe('deployments')
+    expect(result.value.name).toBe('web')
+    expect(result.value.port).toBe(80)
+    expect(result.value.namespace).toBe('dev')
+  })
+
+  it('should parse expose type and target-port flags', () => {
+    const result = parseCommand(
+      'kubectl expose deployment web --port=80 --target-port=8080 --type=NodePort'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.flags['target-port']).toBe('8080')
+    expect(result.value.flags.type).toBe('NodePort')
+  })
+
+  it('should reject expose without name', () => {
+    const result = parseCommand('kubectl expose deployment --port=80')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('expose requires a resource name')
+    }
+  })
+})
+
 describe('kubectl parser - describe', () => {
   it('should parse name when namespace flag is between resource and name', () => {
     const result = parseCommand('kubectl describe pod -n kube-system coredns-abc')

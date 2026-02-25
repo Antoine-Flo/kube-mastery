@@ -1,6 +1,7 @@
 import type { ClusterState } from '../../cluster/ClusterState'
 import type { EventBus } from '../../cluster/events/EventBus'
 import type { FileSystem } from '../../filesystem/FileSystem'
+import type { SimNetworkRuntime } from '../../network/SimNetworkRuntime'
 import type { Logger } from '../../../logger/Logger'
 import type { ExecutionResult } from '../../shared/result'
 import { error, success } from '../../shared/result'
@@ -17,6 +18,7 @@ import { handleDelete } from './handlers/delete'
 import { handleDiff } from './handlers/diff'
 import { handleDescribe } from './handlers/describe'
 import { handleExplain } from './handlers/explain'
+import { handleExpose } from './handlers/expose'
 import { handleExec } from './handlers/exec'
 import { handleGet } from './handlers/get'
 import { handleLabel } from './handlers/label'
@@ -73,7 +75,8 @@ const createHandlers = (
   clusterState: ClusterState,
   fileSystem: FileSystem,
   _logger: Logger,
-  eventBus: EventBus
+  eventBus: EventBus,
+  networkRuntime?: SimNetworkRuntime
 ): Map<string, ActionHandler> => {
   const handlers = new Map<string, ActionHandler>()
 
@@ -99,7 +102,7 @@ const createHandlers = (
     success(handleLogs(clusterState.toJSON(), parsed))
   )
   handlers.set('exec', (parsed) =>
-    success(handleExec(clusterState.toJSON(), parsed))
+    success(handleExec(clusterState.toJSON(), parsed, networkRuntime))
   )
   handlers.set('label', (parsed) =>
     handleLabelAdapter(clusterState, fileSystem, eventBus, parsed)
@@ -114,7 +117,10 @@ const createHandlers = (
   handlers.set('api-versions', (parsed) => success(handleAPIVersions(parsed)))
   handlers.set('api-resources', (parsed) => handleAPIResources(parsed))
   handlers.set('scale', (parsed) => handleScale(clusterState, parsed, eventBus))
-  handlers.set('run', (parsed) => handleRun(clusterState, parsed, eventBus))
+  handlers.set('run', (parsed) =>
+    handleRun(clusterState, parsed, eventBus, networkRuntime)
+  )
+  handlers.set('expose', (parsed) => handleExpose(clusterState, parsed, eventBus))
   handlers.set('config-get-contexts', (parsed) => handleConfig(clusterState, parsed))
   handlers.set('config-current-context', (parsed) => handleConfig(clusterState, parsed))
   handlers.set('config-view', (parsed) => handleConfig(clusterState, parsed))
@@ -185,7 +191,8 @@ export const createKubectlExecutor = (
   clusterState: ClusterState,
   defaultFileSystem: FileSystem,
   logger: Logger,
-  eventBus: EventBus
+  eventBus: EventBus,
+  networkRuntime?: SimNetworkRuntime
 ) => {
   const execute = (input: string, fileSystem?: FileSystem): ExecutionResult => {
     logger.info('COMMAND', `Kubectl: ${input}`)
@@ -203,7 +210,13 @@ export const createKubectlExecutor = (
 
     // Use provided filesystem or fallback to default
     const fs = fileSystem || defaultFileSystem
-    const handlers = createHandlers(clusterState, fs, logger, eventBus)
+    const handlers = createHandlers(
+      clusterState,
+      fs,
+      logger,
+      eventBus,
+      networkRuntime
+    )
     const parsedWithNamespace = applyImplicitNamespaceFromKubeconfig(
       clusterState,
       parseResult.value

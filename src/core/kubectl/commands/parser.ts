@@ -42,6 +42,7 @@ const VALID_ACTIONS: Action[] = [
   'api-resources',
   'scale',
   'run',
+  'expose',
   'config'
 ]
 
@@ -80,7 +81,11 @@ const FLAGS_REQUIRING_VALUES = [
   'dry-run',
   'restart',
   'raw',
-  'api-version'
+  'api-version',
+  'target-port',
+  'type',
+  'name',
+  'node-port'
 ]
 // Note: 'filename' is required for apply/create, but 'f' and 'follow' are boolean for logs
 
@@ -531,7 +536,8 @@ const validateCommandSemantics = (
       action === 'label' ||
       action === 'annotate' ||
       action === 'scale' ||
-      action === 'run') &&
+      action === 'run' ||
+      action === 'expose') &&
     !name
   ) {
     return `${action} requires a resource name`

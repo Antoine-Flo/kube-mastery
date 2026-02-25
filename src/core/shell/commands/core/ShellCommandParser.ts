@@ -42,7 +42,10 @@ export const VALID_COMMANDS: ShellCommand[] = [
   'debug',
   'nano',
   'vi',
-  'vim'
+  'vim',
+  'nslookup',
+  'curl',
+  'exit'
 ]
 
 /**

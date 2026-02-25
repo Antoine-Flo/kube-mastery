@@ -179,6 +179,36 @@ describe('Shell Commands Integration', () => {
     }
   })
 
+  it('should execute nslookup with runtime options', () => {
+    const executor = createShellExecutor(fileSystem, undefined, {
+      resolveNamespace: () => 'dev',
+      runDnsLookup: (query, namespace) =>
+        success(`query=${query} namespace=${namespace}`)
+    })
+    const result = executor.execute('nslookup web.dev.svc.cluster.local')
+
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.value).toBe('query=web.dev.svc.cluster.local namespace=dev')
+    }
+  })
+
+  it('should execute curl with runtime options', () => {
+    const executor = createShellExecutor(fileSystem, undefined, {
+      resolveNamespace: () => 'dev',
+      runCurl: (target, namespace) =>
+        success(`target=${target} namespace=${namespace}`)
+    })
+    const result = executor.execute('curl http://web.dev.svc.cluster.local')
+
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.value).toBe(
+        'target=http://web.dev.svc.cluster.local namespace=dev'
+      )
+    }
+  })
+
   it('should handle errors gracefully', () => {
     const executor = createShellExecutor(fileSystem)
     const result = executor.execute('cat missing.txt')

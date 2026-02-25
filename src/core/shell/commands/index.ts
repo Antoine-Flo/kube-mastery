@@ -9,6 +9,7 @@ import {
 } from './core/ShellCommandExecutor'
 import type { ShellCommandHandler } from './core/ShellCommandHandler'
 import { parseShellCommand } from './core/ShellCommandParser'
+import type { ExecutionResult } from '../../shared/result'
 import type { ParsedShellCommand, ShellCommand } from './core/types'
 
 // Handlers
@@ -20,8 +21,11 @@ import { createTouchHandler } from './handlers/fileops/touch'
 import { createCdHandler } from './handlers/navigation/cd'
 import { createLsHandler } from './handlers/navigation/ls'
 import { createPwdHandler } from './handlers/navigation/pwd'
+import { createCurlHandler } from './handlers/network/curl'
+import { createNslookupHandler } from './handlers/network/nslookup'
 import { createClearHandler } from './handlers/system/clear'
 import { createDebugHandler } from './handlers/system/debug'
+import { createExitHandler } from './handlers/system/exit'
 import { createHelpHandler } from './handlers/system/help'
 
 // Types
@@ -40,12 +44,20 @@ export type EditorModal = {
   ) => void
 }
 
+export interface ShellRuntimeOptions {
+  resolveNamespace?: () => string
+  runDnsLookup?: (query: string, namespace: string) => ExecutionResult
+  runCurl?: (target: string, namespace: string) => ExecutionResult
+  onExit?: () => ExecutionResult
+}
+
 /**
  * Create all shell command handlers
  */
 const createHandlers = (
   fileSystem: FileSystem,
-  editorModal?: EditorModal
+  editorModal?: EditorModal,
+  runtimeOptions: ShellRuntimeOptions = {}
 ): Map<string, ShellCommandHandler> => {
   const handlers = new Map<string, ShellCommandHandler>()
 
@@ -69,6 +81,21 @@ const createHandlers = (
   handlers.set('clear', createClearHandler())
   handlers.set('help', createHelpHandler())
   handlers.set('debug', createDebugHandler())
+  handlers.set('exit', createExitHandler({ onExit: runtimeOptions.onExit }))
+  handlers.set(
+    'nslookup',
+    createNslookupHandler({
+      resolveNamespace: runtimeOptions.resolveNamespace,
+      runDnsLookup: runtimeOptions.runDnsLookup
+    })
+  )
+  handlers.set(
+    'curl',
+    createCurlHandler({
+      resolveNamespace: runtimeOptions.resolveNamespace,
+      runCurl: runtimeOptions.runCurl
+    })
+  )
 
   return handlers
 }
@@ -81,8 +108,9 @@ const createHandlers = (
  */
 export const createShellExecutor = (
   fileSystem: FileSystem,
-  editorModal?: EditorModal
+  editorModal?: EditorModal,
+  runtimeOptions: ShellRuntimeOptions = {}
 ): ShellCommandExecutor => {
-  const handlers = createHandlers(fileSystem, editorModal)
+  const handlers = createHandlers(fileSystem, editorModal, runtimeOptions)
   return createShellCommandExecutor(handlers)
 }

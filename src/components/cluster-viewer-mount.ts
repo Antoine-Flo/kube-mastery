@@ -7,6 +7,7 @@ import type { EmulatedEnvironment } from '../core/emulatedEnvironment/EmulatedEn
 import type { Node } from '../core/cluster/ressources/Node'
 import type { Pod } from '../core/cluster/ressources/Pod'
 import { getNodeStatus } from '../core/cluster/ressources/Node'
+import type { SimServiceRuntime } from '../core/network/NetworkState'
 
 const POD_PHASE_CLASS: Record<Pod['status']['phase'], string> = {
   Pending: 'cluster-viz__pod--pending',
@@ -17,12 +18,28 @@ const POD_PHASE_CLASS: Record<Pod['status']['phase'], string> = {
 }
 
 const TOOLTIP_SELECTOR =
-  '.cluster-viz__node, .cluster-viz__pod, .cluster-viz__container'
+  '.cluster-viz__node, .cluster-viz__pod, .cluster-viz__container, .cluster-viz__service, .cluster-viz__service-endpoint'
 const NAMESPACE_FILTER_INPUT_SELECTOR = 'input[data-cluster-viz-namespace-toggle]'
+const LAYER_TOGGLE_SELECTOR = 'button[data-cluster-viz-layer]'
+const FOCUS_TARGET_SELECTOR = '[data-focus-kind][data-focus-id]'
 const HIDDEN_NAMESPACES_BY_DEFAULT = new Set<string>([
   'kube-system',
   'local-path-storage'
 ])
+type ClusterVizLayer = 'compute' | 'network'
+type ClusterVizFocusKind = 'service' | 'pod' | 'node'
+
+interface ClusterVizFocus {
+  kind: ClusterVizFocusKind
+  id: string
+}
+
+const isClusterVizLayer = (value: string): value is ClusterVizLayer => {
+  if (value === 'compute' || value === 'network') {
+    return true
+  }
+  return false
+}
 
 function formatNodeTooltip(node: Node): string {
   const status = getNodeStatus(node)
@@ -171,26 +188,162 @@ function createNamespaceFilterEl(
   return filterEl
 }
 
-function renderCluster(
+function createLayerToggleEl(selectedLayer: ClusterVizLayer): HTMLElement {
+  const wrapper = document.createElement('div')
+  wrapper.className = 'cluster-viz__layer-toggle'
+
+  const computeButton = document.createElement('button')
+  computeButton.type = 'button'
+  computeButton.className = 'cluster-viz__layer-button'
+  computeButton.setAttribute('data-cluster-viz-layer', 'compute')
+  computeButton.setAttribute(
+    'aria-pressed',
+    selectedLayer === 'compute' ? 'true' : 'false'
+  )
+  computeButton.textContent = 'Compute'
+  if (selectedLayer === 'compute') {
+    computeButton.classList.add('cluster-viz__layer-button--active')
+  }
+
+  const networkButton = document.createElement('button')
+  networkButton.type = 'button'
+  networkButton.className = 'cluster-viz__layer-button'
+  networkButton.setAttribute('data-cluster-viz-layer', 'network')
+  networkButton.setAttribute('aria-pressed', selectedLayer === 'network' ? 'true' : 'false')
+  networkButton.textContent = 'Network'
+  if (selectedLayer === 'network') {
+    networkButton.classList.add('cluster-viz__layer-button--active')
+  }
+
+  wrapper.appendChild(computeButton)
+  wrapper.appendChild(networkButton)
+
+  return wrapper
+}
+
+function getPodFocusId(pod: Pod): string {
+  return `${pod.metadata.namespace}/${pod.metadata.name}`
+}
+
+function getServiceFocusId(service: SimServiceRuntime): string {
+  return `${service.namespace}/${service.serviceName}`
+}
+
+function getNodeFocusId(nodeName: string): string {
+  return nodeName
+}
+
+function isFocused(
+  focus: ClusterVizFocus | null,
+  kind: ClusterVizFocusKind,
+  id: string
+): boolean {
+  if (focus == null) {
+    return false
+  }
+  if (focus.kind !== kind) {
+    return false
+  }
+  return focus.id === id
+}
+
+function formatServiceTooltip(service: SimServiceRuntime): string {
+  const serviceKey = `${service.namespace}/${service.serviceName}`
+  const addresses =
+    service.clusterIP != null && service.clusterIP !== 'None'
+      ? service.clusterIP
+      : service.serviceType === 'ExternalName'
+        ? 'ExternalName'
+        : 'Headless'
+  const ports = service.ports
+    .map((port) => {
+      const nodePortSuffix = port.nodePort != null ? ` (nodePort: ${port.nodePort})` : ''
+      return `${port.port} -> ${port.targetPort}/${port.protocol}${nodePortSuffix}`
+    })
+    .join(', ')
+  return `Service\n${serviceKey}\nType: ${service.serviceType}\nAddress: ${addresses}\nPorts: ${ports || '(none)'}\nEndpoints: ${service.endpoints.length}`
+}
+
+function formatServiceEndpointTooltip(
+  service: SimServiceRuntime,
+  endpoint: SimServiceRuntime['endpoints'][number]
+): string {
+  const endpointName = `${endpoint.namespace}/${endpoint.podName}`
+  return `Endpoint\n${service.namespace}/${service.serviceName}\nPod: ${endpointName}\nTarget: ${endpoint.podIP}:${endpoint.targetPort}${endpoint.nodeName != null ? `\nNode: ${endpoint.nodeName}` : ''}`
+}
+
+function createServiceEl(
+  service: SimServiceRuntime,
+  focus: ClusterVizFocus | null
+): HTMLElement {
+  const serviceEl = document.createElement('div')
+  serviceEl.className = 'cluster-viz__service'
+  serviceEl.dataset.tooltip = formatServiceTooltip(service)
+  const serviceFocusId = getServiceFocusId(service)
+  serviceEl.setAttribute('data-focus-kind', 'service')
+  serviceEl.setAttribute('data-focus-id', serviceFocusId)
+  if (isFocused(focus, 'service', serviceFocusId)) {
+    serviceEl.classList.add('cluster-viz__service--focused')
+  }
+
+  const typeClass =
+    service.serviceType === 'NodePort'
+      ? 'cluster-viz__service-type--nodeport'
+      : service.serviceType === 'LoadBalancer'
+        ? 'cluster-viz__service-type--loadbalancer'
+        : service.serviceType === 'ExternalName'
+          ? 'cluster-viz__service-type--externalname'
+          : 'cluster-viz__service-type--clusterip'
+
+  const portsText = service.ports
+    .map((port) => {
+      const nodePortSuffix = port.nodePort != null ? ` / nodePort ${port.nodePort}` : ''
+      return `${port.port} -> ${port.targetPort}${nodePortSuffix}`
+    })
+    .join(' • ')
+
+  serviceEl.innerHTML = `
+		<div class="cluster-viz__service-header">
+			<span class="cluster-viz__service-name">${escapeHtml(service.serviceName)}</span>
+			<span class="cluster-viz__service-type ${typeClass}">${escapeHtml(service.serviceType)}</span>
+		</div>
+		<div class="cluster-viz__service-meta">
+			<span>${escapeHtml(service.namespace)}</span>
+			<span>${escapeHtml(service.clusterIP ?? 'no ClusterIP')}</span>
+		</div>
+		<div class="cluster-viz__service-ports">${escapeHtml(portsText || 'No ports')}</div>
+		<div class="cluster-viz__service-endpoints"></div>
+	`
+
+  const endpointsContainer = serviceEl.querySelector('.cluster-viz__service-endpoints')
+  if (endpointsContainer != null) {
+    if (service.endpoints.length === 0) {
+      const empty = document.createElement('span')
+      empty.className = 'cluster-viz__service-endpoints-empty'
+      empty.textContent = 'No endpoints'
+      endpointsContainer.appendChild(empty)
+    } else {
+      for (const endpoint of service.endpoints) {
+        const endpointEl = document.createElement('span')
+        endpointEl.className = 'cluster-viz__service-endpoint'
+        endpointEl.textContent = `${endpoint.podName}:${endpoint.targetPort}`
+        endpointEl.dataset.tooltip = formatServiceEndpointTooltip(service, endpoint)
+        endpointsContainer.appendChild(endpointEl)
+      }
+    }
+  }
+
+  return serviceEl
+}
+
+function renderComputeLayer(
   overlayContent: HTMLElement,
   env: EmulatedEnvironment,
-  selectedNamespaces: Set<string>,
-  knownNamespaces: Set<string>
+  pods: Pod[],
+  allPods: Pod[],
+  nodes: Node[],
+  focus: ClusterVizFocus | null
 ): void {
-  const nodes = env.clusterState.getNodes()
-  const allPods = [...env.clusterState.getPods()].sort((a, b) => {
-    const namespaceDiff = a.metadata.namespace.localeCompare(b.metadata.namespace)
-    if (namespaceDiff !== 0) {
-      return namespaceDiff
-    }
-    return a.metadata.name.localeCompare(b.metadata.name)
-  })
-  const namespaces = getSortedNamespaces(env)
-  syncNamespaceSelection(namespaces, selectedNamespaces, knownNamespaces)
-  const pods = allPods.filter((pod) => {
-    return selectedNamespaces.has(pod.metadata.namespace)
-  })
-
   const podsByNode = new Map<string, Pod[]>()
   for (const pod of pods) {
     const nodeName = pod.spec.nodeName ?? ''
@@ -220,6 +373,12 @@ function renderCluster(
       status === 'Ready'
         ? 'cluster-viz__node'
         : 'cluster-viz__node cluster-viz__node--unscheduled'
+    const nodeFocusId = getNodeFocusId(node.metadata.name)
+    nodeEl.setAttribute('data-focus-kind', 'node')
+    nodeEl.setAttribute('data-focus-id', nodeFocusId)
+    if (isFocused(focus, 'node', nodeFocusId)) {
+      nodeEl.classList.add('cluster-viz__node--focused')
+    }
     nodeEl.dataset.tooltip = formatNodeTooltip(node)
     nodeEl.innerHTML = `
 			<div class="cluster-viz__node-header">
@@ -242,7 +401,7 @@ function renderCluster(
       podsContainer.appendChild(empty)
     } else {
       for (const pod of sortedNodePods) {
-        podsContainer.appendChild(createPodEl(pod, env))
+        podsContainer.appendChild(createPodEl(pod, env, focus))
       }
     }
     fragment.appendChild(nodeEl)
@@ -253,6 +412,8 @@ function renderCluster(
     const nodeEl = document.createElement('div')
     nodeEl.className =
       'cluster-viz__node cluster-viz__node--unscheduled cluster-viz__node--unscheduled-row'
+    nodeEl.setAttribute('data-focus-kind', 'node')
+    nodeEl.setAttribute('data-focus-id', getNodeFocusId('(unscheduled)'))
     nodeEl.dataset.tooltip = 'Node (unscheduled)\nPods not assigned to any node'
     nodeEl.innerHTML = `
 			<div class="cluster-viz__node-header">
@@ -262,7 +423,7 @@ function renderCluster(
 		`
     const podsContainer = nodeEl.querySelector('.cluster-viz__pods')!
     for (const pod of unscheduledPods) {
-      podsContainer.appendChild(createPodEl(pod, env))
+      podsContainer.appendChild(createPodEl(pod, env, focus))
     }
     fragment.appendChild(nodeEl)
   }
@@ -271,34 +432,115 @@ function renderCluster(
   nodesWrap.className = 'cluster-viz__nodes'
   nodesWrap.appendChild(fragment)
 
-  overlayContent.innerHTML = ''
-  if (namespaces.length > 0) {
-    overlayContent.appendChild(createNamespaceFilterEl(namespaces, selectedNamespaces))
-  }
-
   if (nodes.length === 0 && allPods.length === 0) {
     const empty = document.createElement('p')
     empty.className = 'cluster-viz__empty'
     empty.textContent = 'No nodes or pods yet.'
     overlayContent.appendChild(empty)
-  } else {
-    if (pods.length === 0) {
-      const emptyFiltered = document.createElement('p')
-      emptyFiltered.className = 'cluster-viz__empty'
-      emptyFiltered.textContent = 'No pods for selected namespaces.'
-      overlayContent.appendChild(emptyFiltered)
-    }
-    overlayContent.appendChild(nodesWrap)
+    return
   }
+  if (pods.length === 0) {
+    const emptyFiltered = document.createElement('p')
+    emptyFiltered.className = 'cluster-viz__empty'
+    emptyFiltered.textContent = 'No pods for selected namespaces.'
+    overlayContent.appendChild(emptyFiltered)
+  }
+  overlayContent.appendChild(nodesWrap)
 }
 
-function createPodEl(pod: Pod, env: EmulatedEnvironment): HTMLElement {
+function renderNetworkLayer(
+  overlayContent: HTMLElement,
+  env: EmulatedEnvironment,
+  selectedNamespaces: Set<string>,
+  focus: ClusterVizFocus | null
+): void {
+  if (env.networkRuntime == null) {
+    const empty = document.createElement('p')
+    empty.className = 'cluster-viz__empty'
+    empty.textContent = 'Network runtime is not available.'
+    overlayContent.appendChild(empty)
+    return
+  }
+
+  const services = env.networkRuntime.state
+    .listServiceRuntimes()
+    .filter((service) => {
+      return selectedNamespaces.has(service.namespace)
+    })
+    .sort((a, b) => {
+      const namespaceDiff = a.namespace.localeCompare(b.namespace)
+      if (namespaceDiff !== 0) {
+        return namespaceDiff
+      }
+      return a.serviceName.localeCompare(b.serviceName)
+    })
+
+  if (services.length === 0) {
+    const empty = document.createElement('p')
+    empty.className = 'cluster-viz__empty'
+    empty.textContent = 'No services for selected namespaces.'
+    overlayContent.appendChild(empty)
+    return
+  }
+
+  const servicesWrap = document.createElement('div')
+  servicesWrap.className = 'cluster-viz__services'
+  for (const service of services) {
+    servicesWrap.appendChild(createServiceEl(service, focus))
+  }
+  overlayContent.appendChild(servicesWrap)
+}
+
+function renderCluster(
+  overlayContent: HTMLElement,
+  env: EmulatedEnvironment,
+  selectedNamespaces: Set<string>,
+  knownNamespaces: Set<string>,
+  selectedLayer: ClusterVizLayer,
+  focus: ClusterVizFocus | null
+): void {
+  const nodes = env.clusterState.getNodes()
+  const allPods = [...env.clusterState.getPods()].sort((a, b) => {
+    const namespaceDiff = a.metadata.namespace.localeCompare(b.metadata.namespace)
+    if (namespaceDiff !== 0) {
+      return namespaceDiff
+    }
+    return a.metadata.name.localeCompare(b.metadata.name)
+  })
+  const namespaces = getSortedNamespaces(env)
+  syncNamespaceSelection(namespaces, selectedNamespaces, knownNamespaces)
+  const pods = allPods.filter((pod) => {
+    return selectedNamespaces.has(pod.metadata.namespace)
+  })
+
+  overlayContent.innerHTML = ''
+  overlayContent.appendChild(createLayerToggleEl(selectedLayer))
+  if (namespaces.length > 0) {
+    overlayContent.appendChild(createNamespaceFilterEl(namespaces, selectedNamespaces))
+  }
+  if (selectedLayer === 'network') {
+    renderNetworkLayer(overlayContent, env, selectedNamespaces, focus)
+    return
+  }
+  renderComputeLayer(overlayContent, env, pods, allPods, nodes, focus)
+}
+
+function createPodEl(
+  pod: Pod,
+  env: EmulatedEnvironment,
+  focus: ClusterVizFocus | null
+): HTMLElement {
   const phase = pod.status.phase
   const phaseClass = POD_PHASE_CLASS[phase]
   const name = `${pod.metadata.namespace}/${pod.metadata.name}`
   const containers = pod.spec.containers ?? []
   const div = document.createElement('div')
   div.className = `cluster-viz__pod ${phaseClass}`
+  div.setAttribute('data-focus-kind', 'pod')
+  div.setAttribute('data-focus-id', name)
+  if (isFocused(focus, 'pod', name)) {
+    div.classList.add('cluster-viz__pod--focused')
+  }
   div.dataset.tooltip = formatPodTooltip(pod, env)
   div.innerHTML = `
 		<div class="cluster-viz__pod-header">
@@ -335,8 +577,17 @@ export function mountClusterViewer(
   const { env } = options
   const selectedNamespaces = new Set<string>()
   const knownNamespaces = new Set<string>()
+  let selectedLayer: ClusterVizLayer = 'compute'
+  let focus: ClusterVizFocus | null = null
   const render = () =>
-    renderCluster(contentElement, env, selectedNamespaces, knownNamespaces)
+    renderCluster(
+      contentElement,
+      env,
+      selectedNamespaces,
+      knownNamespaces,
+      selectedLayer,
+      focus
+    )
   render()
 
   const tooltipEl = document.createElement('div')
@@ -425,14 +676,58 @@ export function mountClusterViewer(
     render()
   }
 
+  function onLayerChange(e: Event): void {
+    const target = (e.target as Element | null)?.closest(LAYER_TOGGLE_SELECTOR)
+    if (target == null) {
+      return
+    }
+    const layerValue = target.getAttribute('data-cluster-viz-layer')
+    if (layerValue == null || !isClusterVizLayer(layerValue)) {
+      return
+    }
+    if (selectedLayer === layerValue) {
+      return
+    }
+    selectedLayer = layerValue
+    render()
+  }
+
+  function onFocusClick(e: Event): void {
+    const focusTarget = (e.target as Element | null)?.closest(FOCUS_TARGET_SELECTOR)
+    if (focusTarget == null) {
+      return
+    }
+    const kind = focusTarget.getAttribute('data-focus-kind')
+    const id = focusTarget.getAttribute('data-focus-id')
+    if (kind == null || id == null) {
+      return
+    }
+    if (kind !== 'service' && kind !== 'pod' && kind !== 'node') {
+      return
+    }
+    if (focus != null && focus.kind === kind && focus.id === id) {
+      focus = null
+      render()
+      return
+    }
+    focus = {
+      kind,
+      id
+    }
+    render()
+  }
+
   contentElement.addEventListener('mouseover', onOver)
   contentElement.addEventListener('mouseout', onOut)
   contentElement.addEventListener('change', onNamespaceFilterChange)
+  contentElement.addEventListener('click', onLayerChange)
+  contentElement.addEventListener('click', onFocusClick)
 
   const unsub = env.eventBus.subscribeFiltered(
     (e) =>
       e.type.startsWith('Pod') ||
       e.type.startsWith('Node') ||
+      e.type.startsWith('Service') ||
       e.type.startsWith('Deployment') ||
       e.type.startsWith('ReplicaSet') ||
       e.type.startsWith('DaemonSet'),
@@ -446,7 +741,11 @@ export function mountClusterViewer(
     contentElement.removeEventListener('mouseover', onOver)
     contentElement.removeEventListener('mouseout', onOut)
     contentElement.removeEventListener('change', onNamespaceFilterChange)
-    if (hideTimeout !== null) clearTimeout(hideTimeout)
+    contentElement.removeEventListener('click', onLayerChange)
+    contentElement.removeEventListener('click', onFocusClick)
+    if (hideTimeout !== null) {
+      clearTimeout(hideTimeout)
+    }
     tooltipEl.remove()
   }
 }

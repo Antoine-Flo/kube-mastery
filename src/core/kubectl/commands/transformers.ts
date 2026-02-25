@@ -62,7 +62,11 @@ const FLAGS_REQUIRING_VALUES = new Set([
   'dry-run',
   'restart',
   'output',
-  'o'
+  'o',
+  'target-port',
+  'type',
+  'name',
+  'node-port'
 ])
 
 // ─── Helper Functions ────────────────────────────────────────────────────
@@ -578,6 +582,42 @@ const runTransformer: ActionTransformer = (ctx) => {
   })
 }
 
+const exposeTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens) {
+    return success(ctx)
+  }
+
+  const resourceToken = ctx.tokens[2]
+  if (!resourceToken || resourceToken.startsWith('-')) {
+    return error('Invalid or missing resource type')
+  }
+
+  if (resourceToken.includes('/')) {
+    const [resourcePart, namePart] = resourceToken.split('/')
+    const resource = RESOURCE_ALIAS_MAP[resourcePart] as Resource | undefined
+    if (!resource) {
+      return error('Invalid or missing resource type')
+    }
+    return success({
+      ...ctx,
+      resource,
+      name: namePart
+    })
+  }
+
+  const resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
+  if (!resource) {
+    return error('Invalid or missing resource type')
+  }
+
+  const name = findNameSkippingFlags(ctx.tokens, 3)
+  return success({
+    ...ctx,
+    resource,
+    name
+  })
+}
+
 const configTransformer: ActionTransformer = (ctx) => {
   if (!ctx.tokens || ctx.tokens.length < 3) {
     return error('config requires a subcommand')
@@ -646,6 +686,7 @@ const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
   explain: explainTransformer,
   scale: scaleTransformer,
   run: runTransformer,
+  expose: exposeTransformer,
   config: configTransformer
 }
 

@@ -5,8 +5,11 @@
 // Utilise ShellCommandExecutor et affiche les résultats dans le terminal.
 
 import type { ExecutionResult } from '../../../shared/result'
-import { error } from '../../../shared/result'
-import { createShellExecutor, parseShellCommand } from '../../../shell/commands'
+import { error, success } from '../../../shared/result'
+import {
+  createShellExecutor,
+  parseShellCommand
+} from '../../../shell/commands'
 import type { CommandContext } from '../CommandContext'
 import type { CommandHandler } from '../CommandHandler'
 
@@ -28,7 +31,61 @@ export class ShellCommandHandler implements CommandHandler {
     // Créer l'executor avec le filesystem et l'editor modal
     const executor = createShellExecutor(
       context.fileSystem,
-      context.editorModal
+      context.editorModal,
+      {
+        resolveNamespace: () => {
+          const containerInfo = context.shellContextStack.getCurrentContainerInfo()
+          return containerInfo?.namespace ?? 'default'
+        },
+        runDnsLookup: (query, namespace) => {
+          if (context.networkRuntime == null) {
+            return error('network runtime is not available')
+          }
+          const dnsResult = context.networkRuntime.dnsResolver.resolveARecord(
+            query,
+            namespace
+          )
+          if (!dnsResult.ok) {
+            return error(dnsResult.error)
+          }
+          const address = dnsResult.value.addresses[0]
+          return success(
+            [
+              'Server:\t10.96.0.10',
+              'Address:\t10.96.0.10:53',
+              '',
+              `Name:\t${dnsResult.value.fqdn}`,
+              `Address:\t${address}`
+            ].join('\n')
+          )
+        },
+        runCurl: (target, namespace) => {
+          if (context.networkRuntime == null) {
+            return error('network runtime is not available')
+          }
+          const curlResult = context.networkRuntime.trafficEngine.simulateHttpGet(
+            target,
+            {
+              sourceNamespace: namespace
+            }
+          )
+          if (!curlResult.ok) {
+            return error(curlResult.error)
+          }
+          return success(curlResult.value)
+        },
+        onExit: () => {
+          if (!context.shellContextStack.isInContainer()) {
+            return success('')
+          }
+          const popped = context.shellContextStack.popContext()
+          if (!popped) {
+            return success('')
+          }
+          context.shellContextStack.updateCurrentPrompt()
+          return success('')
+        }
+      }
     )
 
     // Exécuter la commande

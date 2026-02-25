@@ -18,6 +18,9 @@ export type ShellCommand =
   | 'nano'
   | 'vi'
   | 'vim'
+  | 'nslookup'
+  | 'curl'
+  | 'exit'
 
 export interface ParsedShellCommand {
   command: ShellCommand

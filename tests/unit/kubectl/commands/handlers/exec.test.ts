@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { handleExec } from '../../../../../src/core/kubectl/commands/handlers/exec'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
+import { createDnsResolver } from '../../../../../src/core/network/DnsResolver'
+import { createNetworkState } from '../../../../../src/core/network/NetworkState'
+import { createTrafficEngine } from '../../../../../src/core/network/TrafficEngine'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 import { createClusterStateData } from '../../../helpers/utils'
 
@@ -291,6 +294,94 @@ describe('kubectl exec handler', () => {
       expect(result).toContain('PATH=')
       expect(result).toContain('HOME=/root')
       expect(result).toContain('HOSTNAME=my-pod')
+    })
+  })
+
+  describe('network commands', () => {
+    it('should execute nslookup with network runtime', () => {
+      const pod = createPod({
+        name: 'my-pod',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'busybox' }],
+        phase: 'Running'
+      })
+      const state = createState([pod])
+      const networkState = createNetworkState()
+      networkState.upsertServiceRuntime({
+        namespace: 'default',
+        serviceName: 'web',
+        serviceType: 'ClusterIP',
+        clusterIP: '10.96.99.10',
+        ports: [{ protocol: 'TCP', port: 80, targetPort: 8080 }],
+        endpoints: []
+      })
+      const dnsResolver = createDnsResolver(networkState)
+      const trafficEngine = createTrafficEngine(networkState, dnsResolver)
+      const parsed = createParsedCommand({
+        name: 'my-pod',
+        execCommand: ['nslookup', 'web.default.svc.cluster.local']
+      })
+
+      const result = handleExec(state, parsed, {
+        state: networkState,
+        dnsResolver,
+        trafficEngine,
+        controller: {
+          start: () => {},
+          stop: () => {},
+          initialSync: () => {},
+          resyncAll: () => {},
+          getState: () => networkState
+        }
+      })
+      expect(result).toContain('Name:\tweb.default.svc.cluster.local')
+      expect(result).toContain('Address:\t10.96.99.10')
+    })
+
+    it('should execute curl with network runtime', () => {
+      const pod = createPod({
+        name: 'my-pod',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'busybox' }],
+        phase: 'Running'
+      })
+      const state = createState([pod])
+      const networkState = createNetworkState()
+      networkState.upsertServiceRuntime({
+        namespace: 'default',
+        serviceName: 'web',
+        serviceType: 'ClusterIP',
+        clusterIP: '10.96.99.11',
+        ports: [{ protocol: 'TCP', port: 80, targetPort: 8080 }],
+        endpoints: [
+          {
+            podName: 'web-1',
+            namespace: 'default',
+            podIP: '10.244.2.2',
+            targetPort: 8080
+          }
+        ]
+      })
+      const dnsResolver = createDnsResolver(networkState)
+      const trafficEngine = createTrafficEngine(networkState, dnsResolver)
+      const parsed = createParsedCommand({
+        name: 'my-pod',
+        execCommand: ['curl', 'http://web.default.svc.cluster.local']
+      })
+
+      const result = handleExec(state, parsed, {
+        state: networkState,
+        dnsResolver,
+        trafficEngine,
+        controller: {
+          start: () => {},
+          stop: () => {},
+          initialSync: () => {},
+          resyncAll: () => {},
+          getState: () => networkState
+        }
+      })
+      expect(result).toContain('200 OK')
     })
   })
 

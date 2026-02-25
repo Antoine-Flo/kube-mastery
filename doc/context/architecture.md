@@ -55,6 +55,22 @@ Le scheduler est aligne sur le pattern controller via `SchedulerController`:
 
 `src/core/cluster/ipAllocator/` — allocation d'IP Pod centralisée (`SimPodIpAllocator`) avec unicité par pod actif et libération sur suppression. Intégré via `SimPodIpAllocationService` dans le cycle de vie de l'environnement.
 
+### Network Simulation Runtime
+
+La simulation reseau est desormais isolee dans `src/core/network/`:
+
+- `NetworkController`: reconcile event-driven des Services/Pods vers un etat reseau derive,
+- `NetworkState`: index runtime (ClusterIP, NodePort, endpoints, lookup helpers),
+- `ServiceIpAllocator` et `NodePortAllocator`: attribution deterministe + prevention des collisions,
+- `DnsResolver`: resolution A records (`service`, `service.namespace`, `service.namespace.svc`, `service.namespace.svc.cluster.local`),
+- `TrafficEngine`: simulation de trafic HTTP intra-cluster et NodePort.
+
+Points d'integration:
+
+- bootstrap runtime dans `src/core/emulatedEnvironment/EmulatedEnvironmentManager.ts` via `initializeSimNetworkRuntime(...)`,
+- injection dans le flux terminal/kubectl via `CommandContext.networkRuntime`,
+- commandes supportees en execution: `kubectl expose`, `kubectl exec ... nslookup`, `kubectl exec ... curl`, et flux diagnostic court `kubectl run ... --rm -it --command -- nslookup|curl ...`.
+
 ### Cluster Bootstrap Policy
 
 Le bootstrap cluster est centralise dans `src/core/cluster/ClusterState.ts` via `createClusterState(...)`.
@@ -74,7 +90,7 @@ Le bootstrap cluster est centralise dans `src/core/cluster/ClusterState.ts` via 
   - `src/core/emulatedEnvironment/EmulatedEnvironmentManager.ts`
   - `src/core/cluster/seeds/loader.ts`
   - `bin/lib/executors/runner-executor.ts`
-  - ordre runtime: bootstrap -> controllers runtime -> ip allocation service
+  - ordre runtime: bootstrap -> controllers runtime -> ip allocation service -> network runtime
 
 ### Runtime Controller Contract Checklist
 

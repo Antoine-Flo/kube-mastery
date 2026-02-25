@@ -110,6 +110,7 @@ export function mountTerminal(
             shellContextStack: env.shellContextStack,
             clusterState: env.clusterState,
             eventBus: env.eventBus,
+            networkRuntime: env.networkRuntime,
             logger,
             commandLimit,
             commandLimitMessage,

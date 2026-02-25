@@ -7,6 +7,7 @@
 import type { ClusterState } from '~/core/cluster/ClusterState'
 import type { EventBus } from '~/core/cluster/events/EventBus'
 import type { FileSystem } from '../../../core/filesystem/FileSystem'
+import type { SimNetworkRuntime } from '../../../core/network/SimNetworkRuntime'
 import type { Logger } from '../../../logger/Logger'
 import type { EditorModal } from '../../shell/commands'
 import type { TerminalRenderer } from '../renderer/TerminalRenderer'
@@ -38,6 +39,9 @@ export interface CommandContext {
 
   /** Bus d'événements pour l'architecture event-driven */
   eventBus: EventBus
+
+  /** Simulated network runtime (DNS, service routing, traffic) */
+  networkRuntime?: SimNetworkRuntime
 
   /** Logger pour le suivi des commandes */
   logger: Logger

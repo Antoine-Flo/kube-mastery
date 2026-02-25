@@ -32,6 +32,7 @@
 - [~] **Lot E - cluster-info + describe pod parity** : cluster-info rapproche de kind, dump plus coherent; describe pod continue a raffiner.
 - [~] **Lot F - get/api-resources finishing** : `get pods -o wide` enrichi + categories `all`; derniers ecarts de tabulation/ordering a ajuster.
 - [x] **Lot G - run baseline parity** : support `kubectl run` (image, command/args, env, labels, port, dry-run client, stdin/tty/rm) avec limite explicite `--restart=Never` dans le simulateur.
+- [x] **Lot H - network runtime baseline** : module `src/core/network` (controller/state/allocators), `kubectl expose`, resolution DNS (`nslookup`) et simulation `curl` (ClusterIP/NodePort) avec tests unitaires dedies.
 
 ### Améliorations Nodes (Post-MVP)
 
@@ -100,10 +101,10 @@
 - [ ] RBAC (Roles, ClusterRoles, Bindings)
 - [ ] kubectl auth can-i
 - [x] Services fonctionnels (ClusterIP, NodePort, LoadBalancer, ExternalName) - **✅ Implémenté** : Modèle, ClusterState, kubectl get, apply/create, événements, parsing YAML
-- [ ] Service Endpoints (gestion automatique, `kubectl get endpoints`)
+- [~] Service Endpoints (gestion automatique partielle via runtime reseau; `kubectl get endpoints` reste a ajouter)
 - [ ] Ingress with routing rules
 - [ ] NetworkPolicies
-- [ ] CoreDNS (compréhension et simulation de base)
+- [~] CoreDNS (simulation DNS de base via `nslookup`; parite et troubleshooting avances restent a couvrir)
 
 ### Sprint 12: Autoscaling & Resource Quotas
 

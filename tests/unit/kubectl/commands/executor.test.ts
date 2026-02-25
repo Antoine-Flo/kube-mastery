@@ -12,6 +12,7 @@ import {
   type FileSystem
 } from '../../../../src/core/filesystem/FileSystem'
 import { createKubectlExecutor } from '../../../../src/core/kubectl/commands/executor'
+import { initializeSimNetworkRuntime } from '../../../../src/core/network/SimNetworkRuntime'
 import { createLogger } from '../../../../src/logger/Logger'
 
 describe('kubectl Executor', () => {
@@ -287,6 +288,28 @@ data:
         }
 
         expect(result.value).toContain('pod/test-pod created')
+      })
+
+      it('should route "kubectl expose deployment" to expose handler', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const createResult = executor.execute(
+          'kubectl create deployment web --image=nginx --port=8080'
+        )
+        expect(createResult.ok).toBe(true)
+
+        const exposeResult = executor.execute(
+          'kubectl expose deployment web --port=80 -n default'
+        )
+        expect(exposeResult.ok).toBe(true)
+        if (!exposeResult.ok) {
+          return
+        }
+        expect(exposeResult.value).toContain('service/web created')
       })
 
       it('should route "kubectl create namespace" to create handler', () => {
@@ -1511,6 +1534,30 @@ data:
         expect(result.ok).toBe(true)
         const podResult = clusterState.findPod('busybox', 'default')
         expect(podResult.ok).toBe(true)
+      })
+
+      it('should execute nslookup in kubectl run --rm -it flow', () => {
+        const networkRuntime = initializeSimNetworkRuntime(eventBus, clusterState)
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus,
+          networkRuntime
+        )
+        executor.execute('kubectl create deployment web --image=nginx --port=8080')
+        executor.execute('kubectl expose deployment web --port=80')
+
+        const result = executor.execute(
+          'kubectl run dns-test --image=busybox -i -t --restart=Never --rm --command -- nslookup web.default.svc.cluster.local'
+        )
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          networkRuntime.controller.stop()
+          return
+        }
+        expect(result.value).toContain('Name:\tweb.default.svc.cluster.local')
+        networkRuntime.controller.stop()
       })
 
       it('should reject kubectl run when restart is not Never', () => {

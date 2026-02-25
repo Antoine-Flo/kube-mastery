@@ -1,5 +1,6 @@
 import type { ClusterStateData } from '../../../cluster/ClusterState'
 import type { EnvVar } from '../../../cluster/ressources/Pod'
+import type { SimNetworkRuntime } from '../../../network/SimNetworkRuntime'
 import type { ParsedCommand } from '../types'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -64,7 +65,8 @@ const handleEnvCommand = (
  */
 export const handleExec = (
   state: ClusterStateData,
-  parsed: ParsedCommand
+  parsed: ParsedCommand,
+  networkRuntime?: SimNetworkRuntime
 ): string => {
   // Validate pod name is provided
   if (!parsed.name) {
@@ -140,6 +142,48 @@ export const handleExec = (
   // env command - show environment variables
   if (command === 'env') {
     return handleEnvCommand(state, podName, namespace)
+  }
+
+  if (command === 'nslookup') {
+    const lookupQuery = parsed.execCommand[1]
+    if (lookupQuery == null) {
+      return '** server can not find : NXDOMAIN'
+    }
+    if (networkRuntime == null) {
+      return 'Error: network runtime is not available'
+    }
+    const dnsResult = networkRuntime.dnsResolver.resolveARecord(
+      lookupQuery,
+      namespace
+    )
+    if (!dnsResult.ok) {
+      return dnsResult.error
+    }
+    const address = dnsResult.value.addresses[0]
+    return [
+      'Server:\t10.96.0.10',
+      'Address:\t10.96.0.10:53',
+      '',
+      `Name:\t${dnsResult.value.fqdn}`,
+      `Address:\t${address}`
+    ].join('\n')
+  }
+
+  if (command === 'curl') {
+    const curlTarget = parsed.execCommand[1]
+    if (curlTarget == null) {
+      return 'curl: try "curl <url>"'
+    }
+    if (networkRuntime == null) {
+      return 'Error: network runtime is not available'
+    }
+    const curlResult = networkRuntime.trafficEngine.simulateHttpGet(curlTarget, {
+      sourceNamespace: namespace
+    })
+    if (!curlResult.ok) {
+      return curlResult.error
+    }
+    return curlResult.value
   }
 
   // For all other commands, let the shell executor handle them

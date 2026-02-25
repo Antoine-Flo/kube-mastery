@@ -31,7 +31,7 @@ Interactive web application for learning `kubectl` commands through a simulated 
 
 ### kubectl (Phase 1)
 
-get (pods, deploy, rs, services, configmaps, secrets, nodes), describe, delete, create -f, apply -f, run, logs, exec -it, label, annotate, version (--client, --output json/yaml), cluster-info, cluster-info dump, api-resources (--output wide, --namespaced, --sort-by). Détail : voir `src/core/kubectl/commands/handlers/`.
+get (pods, deploy, rs, services, configmaps, secrets, nodes), describe, delete, create -f, apply -f, run, expose, logs, exec -it, label, annotate, version (--client, --output json/yaml), cluster-info, cluster-info dump, api-resources (--output wide, --namespaced, --sort-by). Détail : voir `src/core/kubectl/commands/handlers/`.
 
 ### kubectl Realism Guarantees (current baseline)
 
@@ -58,6 +58,15 @@ get (pods, deploy, rs, services, configmaps, secrets, nodes), describe, delete, 
   - supports `--command -- <cmd> [args...]` and `-- <arg1> <arg2> ...`,
   - supports `--env`, `--labels`, `--port`, `--dry-run=client`, `-i/--stdin`, `-t/--tty`, `--rm`,
   - current simulator scope limits restart policy handling to `--restart=Never` (other values return explicit error).
+- `kubectl expose` baseline:
+  - supports `kubectl expose deployment NAME --port=<port>`,
+  - supports `--target-port`, `--type`, `--name`, `--selector`, `--node-port`,
+  - service creation remains declarative; endpoints/network runtime are reconciled asynchronously by the network controller.
+- Network simulation baseline:
+  - dedicated runtime module (`src/core/network/`) computes service runtime state (ClusterIP, NodePort, endpoints),
+  - `kubectl exec ... -- nslookup <service>.<namespace>.svc.cluster.local` resolves Service DNS records,
+  - `kubectl exec ... -- curl <url>` simulates in-cluster service traffic,
+  - `kubectl run ... --rm -it --command -- nslookup|curl ...` supports short-lived diagnostics flows.
 - `kubectl cluster-info` baseline:
   - includes control-plane and CoreDNS lines,
   - `kubectl cluster-info dump --output-directory <path>` returns a success confirmation message.

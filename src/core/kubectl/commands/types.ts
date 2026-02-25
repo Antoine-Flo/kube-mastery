@@ -19,6 +19,7 @@ export type Action =
   | 'api-resources'
   | 'scale'
   | 'run'
+  | 'expose'
   | 'config'
   | 'config-get-contexts'
   | 'config-current-context'

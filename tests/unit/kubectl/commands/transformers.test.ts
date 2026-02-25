@@ -864,4 +864,40 @@ describe('kubectl transformers', () => {
       expect(result.ok).toBe(true)
     })
   })
+
+  describe('expose transformer', () => {
+    it('should extract resource and name', () => {
+      const transformer = getTransformerForAction('expose')
+      const ctx = createContext({
+        input: 'kubectl expose deployment web --port=80',
+        tokens: ['kubectl', 'expose', 'deployment', 'web', '--port=80']
+      })
+
+      const result = transformer(ctx)
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value.resource).toBe('deployments')
+      expect(result.value.name).toBe('web')
+    })
+
+    it('should support resource/name syntax', () => {
+      const transformer = getTransformerForAction('expose')
+      const ctx = createContext({
+        input: 'kubectl expose deployment/web --port=80',
+        tokens: ['kubectl', 'expose', 'deployment/web', '--port=80']
+      })
+
+      const result = transformer(ctx)
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value.resource).toBe('deployments')
+      expect(result.value.name).toBe('web')
+    })
+  })
 })

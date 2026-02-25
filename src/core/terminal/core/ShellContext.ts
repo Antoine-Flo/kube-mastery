@@ -27,6 +27,12 @@ interface ShellContext {
   prompt: string
 }
 
+export interface ContainerShellContextInfo {
+  podName: string
+  containerName: string
+  namespace: string
+}
+
 export class ShellContextStack {
   private contexts: ShellContext[] = []
   private currentIndex = 0
@@ -109,5 +115,24 @@ export class ShellContextStack {
 
   getCurrentPrompt(): string {
     return this.getCurrentContext().prompt
+  }
+
+  getCurrentContainerInfo(): ContainerShellContextInfo | undefined {
+    const context = this.getCurrentContext()
+    if (context.type !== 'container') {
+      return undefined
+    }
+    if (
+      context.podName == null ||
+      context.containerName == null ||
+      context.namespace == null
+    ) {
+      return undefined
+    }
+    return {
+      podName: context.podName,
+      containerName: context.containerName,
+      namespace: context.namespace
+    }
   }
 }

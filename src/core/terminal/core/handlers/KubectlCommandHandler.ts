@@ -22,7 +22,8 @@ export class KubectlCommandHandler implements CommandHandler {
       context.clusterState,
       context.fileSystem,
       context.logger,
-      context.eventBus
+      context.eventBus,
+      context.networkRuntime
     )
 
     // Exécuter la commande kubectl

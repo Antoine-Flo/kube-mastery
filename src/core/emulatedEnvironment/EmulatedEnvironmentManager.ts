@@ -13,6 +13,7 @@ import { createEventBus, type EventBus } from '../cluster/events/EventBus'
 import { initializeSimPodIpAllocation } from '../cluster/ipAllocator/SimPodIpAllocationService'
 import type { AppEvent } from '../events/AppEvent'
 import { createHostFileSystem } from '../filesystem/debianFileSystem'
+import { initializeSimNetworkRuntime } from '../network/SimNetworkRuntime'
 import { saveSandboxEnvironment } from '../storage/indexedDBAdapter'
 import { ShellContextStack } from '../terminal/core/ShellContext'
 import {
@@ -84,6 +85,7 @@ export function createEmulatedEnvironment(
   }
 
   const shellContextStack = new ShellContextStack(fileSystemState)
+  const networkRuntime = initializeSimNetworkRuntime(eventBus, clusterState)
 
   const resyncConfig = getRuntimeControllerResyncConfig()
   const controllers = initializeControllers(eventBus, clusterState, {
@@ -147,7 +149,8 @@ export function createEmulatedEnvironment(
     shellContextStack,
     unsubscribeAutoSave,
     unsubscribePodIpAllocation,
-    runtimeControllers: controllers
+    runtimeControllers: controllers,
+    networkRuntime
   }
 }
 
@@ -171,6 +174,8 @@ export function destroyEmulatedEnvironment(
 
   stopRuntimeControllers(emulatedEnvironment.runtimeControllers)
   emulatedEnvironment.runtimeControllers = undefined
+  emulatedEnvironment.networkRuntime?.controller.stop()
+  emulatedEnvironment.networkRuntime = undefined
 
   // Note: We don't explicitly clean up clusterState, fileSystemState, eventBus, or shellContextStack
   // as they will be garbage collected when the emulated environment object is no longer referenced.

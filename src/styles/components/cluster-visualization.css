@@ -127,6 +127,39 @@
   height: 0.9rem;
 }
 
+/* ─── Layer Toggle ─────────────────────────────────────────────────────── */
+
+.cluster-viz__layer-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1);
+  margin-bottom: var(--spacing-2);
+  border: 1px solid var(--color-gray-6);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-gray-2);
+}
+
+.cluster-viz__layer-button {
+  border: 1px solid var(--color-gray-6);
+  border-radius: var(--radius-xs);
+  background-color: var(--color-gray-1);
+  color: var(--color-gray-11);
+  font-size: var(--text-xs);
+  padding: 0.2rem 0.45rem;
+  cursor: pointer;
+}
+
+.cluster-viz__layer-button:hover {
+  background-color: var(--color-gray-3);
+}
+
+.cluster-viz__layer-button--active {
+  border-color: var(--color-primary-7);
+  background-color: var(--color-primary-3);
+  color: var(--color-primary-11);
+}
+
 /* ─── Nodes Grid ───────────────────────────────────────────────────────── */
 
 .cluster-viz__nodes {
@@ -257,11 +290,113 @@
   font-weight: var(--font-weight-medium);
 }
 
+/* ─── Services (Network Layer) ─────────────────────────────────────────── */
+
+.cluster-viz__services {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-3);
+}
+
+.cluster-viz__service {
+  border: 1px solid var(--color-gray-6);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-gray-2);
+  padding: var(--spacing-2);
+}
+
+.cluster-viz__service-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-1);
+}
+
+.cluster-viz__service-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-12);
+}
+
+.cluster-viz__service-type {
+  border: 1px solid var(--color-gray-6);
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 10px;
+  color: var(--color-gray-11);
+  background-color: var(--color-gray-1);
+}
+
+.cluster-viz__service-type--clusterip {
+  border-color: var(--color-blue-7);
+  color: var(--color-blue-11);
+}
+
+.cluster-viz__service-type--nodeport {
+  border-color: var(--color-amber-8);
+  color: var(--color-amber-11);
+}
+
+.cluster-viz__service-type--loadbalancer {
+  border-color: var(--color-green-8);
+  color: var(--color-green-11);
+}
+
+.cluster-viz__service-type--externalname {
+  border-color: var(--color-purple-8);
+  color: var(--color-purple-11);
+}
+
+.cluster-viz__service-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  font-size: 10px;
+  color: var(--color-gray-10);
+  margin-bottom: var(--spacing-1);
+}
+
+.cluster-viz__service-ports {
+  font-size: 10px;
+  color: var(--color-gray-11);
+  margin-bottom: var(--spacing-2);
+}
+
+.cluster-viz__service-endpoints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-1);
+}
+
+.cluster-viz__service-endpoint {
+  font-size: 10px;
+  border: 1px solid var(--color-gray-6);
+  border-radius: 999px;
+  padding: 1px 7px;
+  color: var(--color-gray-11);
+  background-color: var(--color-gray-1);
+}
+
+.cluster-viz__service-endpoints-empty {
+  font-size: 10px;
+  font-style: italic;
+  color: var(--color-gray-9);
+}
+
+.cluster-viz__node--focused,
+.cluster-viz__pod--focused,
+.cluster-viz__service--focused {
+  box-shadow: 0 0 0 2px var(--color-primary-7);
+}
+
 /* ─── Tooltips ────────────────────────────────────────────────────────── */
 
 .cluster-viz__node,
 .cluster-viz__pod,
-.cluster-viz__container {
+.cluster-viz__container,
+.cluster-viz__service,
+.cluster-viz__service-endpoint {
   position: relative;
 }
 

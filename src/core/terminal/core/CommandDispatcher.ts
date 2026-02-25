@@ -7,6 +7,7 @@
 import type { ClusterState } from '../../cluster/ClusterState'
 import type { EventBus } from '../../cluster/events/EventBus'
 import type { FileSystem } from '../../../core/filesystem/FileSystem'
+import type { SimNetworkRuntime } from '../../../core/network/SimNetworkRuntime'
 import type { Logger } from '../../../logger/Logger'
 import type { ExecutionResult } from '../../shared/result'
 import { error } from '../../shared/result'
@@ -26,6 +27,7 @@ interface CommandDispatcherOptions {
   shellContextStack: ShellContextStack
   clusterState: ClusterState
   eventBus: EventBus
+  networkRuntime?: SimNetworkRuntime
   logger: Logger
   commandLimit?: number
   commandLimitMessage?: string
@@ -52,6 +54,7 @@ export class CommandDispatcher {
       shellContextStack: options.shellContextStack,
       clusterState: options.clusterState,
       eventBus: options.eventBus,
+      networkRuntime: options.networkRuntime,
       logger: options.logger,
       lockInput: options.lockInput,
       isInputLocked: options.isInputLocked

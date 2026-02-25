@@ -8,6 +8,7 @@ import type { ClusterState } from '../cluster/ClusterState'
 import type { RuntimeControllers } from '../cluster/controllers/initializers'
 import type { EventBus } from '../cluster/events/EventBus'
 import type { FileSystemState } from '../filesystem/FileSystem'
+import type { SimNetworkRuntime } from '../network/SimNetworkRuntime'
 import { ShellContextStack } from '../terminal/core/ShellContext'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -48,6 +49,9 @@ export interface EmulatedEnvironment {
 
   /** Runtime controllers to stop on destroy */
   runtimeControllers?: RuntimeControllers
+
+  /** Simulated network runtime */
+  networkRuntime?: SimNetworkRuntime
 }
 
 /**
