@@ -31,31 +31,43 @@ const {
 const t = useTranslations(lang)
 ---
 
-<div class="lp-page-wrap">
+<div class="lesson-layout-page">
   <div
-    class="lp-root"
+    class="lesson-layout-root"
     data-seed-name={seedName}
     data-lang={lang}
     data-terminal-open="true"
   >
-    <div class="lp">
+    <div class="lesson-layout">
       {
         showSidebar && (
-          <aside id="lesson-sidebar" class="lp__sb" aria-label="Plan du cours">
-            <div class="lp__sb-ct">
-              <slot name="sidebar" />
+          <aside
+            id="lesson-sidebar"
+            class="lesson-layout__sidebar"
+            aria-label="Plan du cours"
+          >
+            <div class="lesson-layout__sidebar-content">
+              <ScrollArea>
+                <slot name="sidebar" />
+              </ScrollArea>
             </div>
-            <div class="lp__sb-ft">
+            <div class="lesson-layout__sidebar-footer">
               <button
                 id="lesson-sidebar-toggle"
                 type="button"
                 aria-label="Réduire le plan du cours"
                 aria-expanded="true"
               >
-                <span class="lp__sb-ico lp__sb-ico--exp" aria-hidden="true">
+                <span
+                  class="lesson-layout__sidebar-icon lesson-layout__sidebar-icon--expand"
+                  aria-hidden="true"
+                >
                   <ArrowRightToLine size={18} />
                 </span>
-                <span class="lp__sb-ico lp__sb-ico--col" aria-hidden="true">
+                <span
+                  class="lesson-layout__sidebar-icon lesson-layout__sidebar-icon--collapse"
+                  aria-hidden="true"
+                >
                   <ArrowLeftToLine size={18} />
                 </span>
               </button>
@@ -63,17 +75,21 @@ const t = useTranslations(lang)
           </aside>
         )
       }
-      <div class="lp__bd">
-        <div class="lp__content">
-          <div class="lp__content-body">
+      <div class="lesson-layout__body">
+        <div class="lesson-layout__content">
+          <div class="lesson-layout__content-body">
             <ScrollArea>
-              <main class="lp__main">
+              <main class="lesson-layout__main">
                 <slot />
               </main>
             </ScrollArea>
             <LessonClusterPanel />
           </div>
-          <div class="lp__show-term" data-lesson-show-term aria-hidden="true">
+          <div
+            class="lesson-layout__show-terminal"
+            data-lesson-show-term
+            aria-hidden="true"
+          >
             <LessonContentBar
               labelVisualizer={labels.labelVisualizer}
               labelCourse={labels.labelCourse}
@@ -84,8 +100,8 @@ const t = useTranslations(lang)
             />
           </div>
         </div>
-        <div class="lp__term-wrap" data-lesson-term-wrap>
-          <div class="lp__term">
+        <div class="lesson-layout__terminal-wrap" data-lesson-term-wrap>
+          <div class="lesson-layout__terminal">
             <LessonTerminal seedName={seedName} lang={lang} />
           </div>
           <LessonContentBar
@@ -131,7 +147,7 @@ const t = useTranslations(lang)
     | null = null
 
   function setupLessonEnv() {
-    const root = document.querySelector('.lp-root')
+    const root = document.querySelector('.lesson-layout-root')
     if (!root) {
       return
     }
@@ -198,7 +214,9 @@ const t = useTranslations(lang)
     }
 
     const updateUi = () => {
-      const collapsed = sidebar.classList.contains('lp__sb--col')
+      const collapsed = sidebar.classList.contains(
+        'lesson-layout__sidebar--collapsed'
+      )
       toggle.setAttribute(
         'aria-label',
         collapsed ? 'Afficher le plan du cours' : 'Réduire le plan du cours'
@@ -208,14 +226,16 @@ const t = useTranslations(lang)
 
     const init = () => {
       const collapsed = localStorage.getItem(STORAGE_KEY) === 'true'
-      sidebar.classList.toggle('lp__sb--col', collapsed)
+      sidebar.classList.toggle('lesson-layout__sidebar--collapsed', collapsed)
       updateUi()
     }
 
     init()
     toggle.onclick = () => {
-      const collapsed = !sidebar.classList.contains('lp__sb--col')
-      sidebar.classList.toggle('lp__sb--col', collapsed)
+      const collapsed = !sidebar.classList.contains(
+        'lesson-layout__sidebar--collapsed'
+      )
+      sidebar.classList.toggle('lesson-layout__sidebar--collapsed', collapsed)
       localStorage.setItem(STORAGE_KEY, String(collapsed))
       updateUi()
     }
@@ -224,7 +244,7 @@ const t = useTranslations(lang)
   let terminalToggleBound = false
 
   function initTerminalStateForMobile() {
-    const root = document.querySelector('.lp-root')
+    const root = document.querySelector('.lesson-layout-root')
     const termWrap = document.querySelector('[data-lesson-term-wrap]')
     const showTerm = document.querySelector('[data-lesson-show-term]')
     if (!root || !termWrap || !showTerm) {
@@ -234,7 +254,7 @@ const t = useTranslations(lang)
       return
     }
     root.setAttribute('data-terminal-open', 'false')
-    termWrap.classList.add('lp__term-wrap--hidden')
+    termWrap.classList.add('lesson-layout__terminal-wrap--hidden')
     showTerm.setAttribute('aria-hidden', 'false')
   }
 
@@ -246,7 +266,7 @@ const t = useTranslations(lang)
     terminalToggleBound = true
 
     document.addEventListener('lesson-terminal-toggle', () => {
-      const root = document.querySelector('.lp-root')
+      const root = document.querySelector('.lesson-layout-root')
       const termWrap = document.querySelector('[data-lesson-term-wrap]')
       const showTerm = document.querySelector('[data-lesson-show-term]')
       if (!root || !termWrap || !showTerm) {
@@ -254,7 +274,7 @@ const t = useTranslations(lang)
       }
       const open = root.getAttribute('data-terminal-open') !== 'false'
       root.setAttribute('data-terminal-open', !open ? 'true' : 'false')
-      termWrap.classList.toggle('lp__term-wrap--hidden', open)
+      termWrap.classList.toggle('lesson-layout__terminal-wrap--hidden', open)
       showTerm.setAttribute('aria-hidden', !open ? 'true' : 'false')
     })
 
@@ -262,14 +282,14 @@ const t = useTranslations(lang)
       if (!(e.target as Element).closest('[data-lesson-show-term-btn]')) {
         return
       }
-      const root = document.querySelector('.lp-root')
+      const root = document.querySelector('.lesson-layout-root')
       const termWrap = document.querySelector('[data-lesson-term-wrap]')
       const showTerm = document.querySelector('[data-lesson-show-term]')
       if (!root || !termWrap || !showTerm) {
         return
       }
       root.setAttribute('data-terminal-open', 'true')
-      termWrap.classList.remove('lp__term-wrap--hidden')
+      termWrap.classList.remove('lesson-layout__terminal-wrap--hidden')
       showTerm.setAttribute('aria-hidden', 'true')
     })
   }
@@ -289,14 +309,14 @@ const t = useTranslations(lang)
 </script>
 
 <style>
-  .lp-page-wrap {
+  .lesson-layout-page {
     height: 100%;
     display: flex;
     flex-direction: column;
     min-height: 0;
   }
 
-  .lp-root {
+  .lesson-layout-root {
     flex: 1;
     min-height: 0;
     overflow: hidden;
@@ -304,7 +324,7 @@ const t = useTranslations(lang)
     flex-direction: column;
   }
 
-  .lp {
+  .lesson-layout {
     background-color: var(--color-gray-1);
     flex: 1;
     min-height: 0;
@@ -312,7 +332,7 @@ const t = useTranslations(lang)
     overflow: hidden;
   }
 
-  .lp__sb {
+  .lesson-layout__sidebar {
     flex-shrink: 0;
     border-right: 1px solid var(--color-gray-6);
     background-color: var(--color-gray-1);
@@ -322,23 +342,26 @@ const t = useTranslations(lang)
     flex-direction: column;
   }
 
-  .lp__sb--col {
+  .lesson-layout__sidebar--collapsed {
     width: 41px;
   }
 
-  .lp__sb-ico {
+  .lesson-layout__sidebar-icon {
     display: none;
   }
 
-  .lp__sb:not(.lp__sb--col) .lp__sb-ico--col {
+  .lesson-layout__sidebar:not(.lesson-layout__sidebar--collapsed)
+    .lesson-layout__sidebar-icon--collapse {
     display: inline-flex;
   }
 
-  .lp__sb--col .lp__sb-ico--exp {
+  .lesson-layout__sidebar--collapsed .lesson-layout__sidebar-icon--expand {
     display: inline-flex;
   }
 
-  .lp__sb-ct {
+  .lesson-layout__sidebar-content {
+    display: flex;
+    flex-direction: column;
     flex: 1;
     min-height: 0;
     overflow: hidden;
@@ -348,12 +371,12 @@ const t = useTranslations(lang)
     transition: opacity var(--duration-normal) ease-out;
   }
 
-  .lp__sb--col .lp__sb-ct {
+  .lesson-layout__sidebar--collapsed .lesson-layout__sidebar-content {
     opacity: 0;
     pointer-events: none;
   }
 
-  .lp__sb-ft {
+  .lesson-layout__sidebar-footer {
     margin-top: auto;
     padding: var(--spacing-1);
     display: flex;
@@ -362,11 +385,11 @@ const t = useTranslations(lang)
     transition: opacity var(--duration-normal);
   }
 
-  .lp__sb-ft:hover {
+  .lesson-layout__sidebar-footer:hover {
     opacity: 0.8;
   }
 
-  .lp__sb-ft button {
+  .lesson-layout__sidebar-footer button {
     padding-inline: 0.6rem;
     min-width: 2rem;
     display: flex;
@@ -378,7 +401,7 @@ const t = useTranslations(lang)
     color: var(--color-gray-11);
   }
 
-  .lp__bd {
+  .lesson-layout__body {
     display: flex;
     flex-direction: row;
     flex: 1;
@@ -387,7 +410,7 @@ const t = useTranslations(lang)
     background-color: var(--color-gray-1);
   }
 
-  .lp__content {
+  .lesson-layout__content {
     flex: 0.8;
     min-width: 0;
     min-height: 0;
@@ -396,7 +419,7 @@ const t = useTranslations(lang)
     overflow: hidden;
   }
 
-  .lp__content-body {
+  .lesson-layout__content-body {
     position: relative;
     flex: 1;
     min-height: 0;
@@ -405,7 +428,7 @@ const t = useTranslations(lang)
     flex-direction: column;
   }
 
-  .lp__term-wrap {
+  .lesson-layout__terminal-wrap {
     flex: 1;
     min-width: 320px;
     min-height: 0;
@@ -415,7 +438,7 @@ const t = useTranslations(lang)
     border-left: 1px solid var(--color-gray-6);
   }
 
-  .lp__term {
+  .lesson-layout__terminal {
     flex: 1;
     min-height: 0;
     display: flex;
@@ -423,12 +446,12 @@ const t = useTranslations(lang)
     overflow: hidden;
   }
 
-  .lp__main {
+  .lesson-layout__main {
     max-width: 80ch;
     margin: 0 auto;
   }
 
-  .lp__nav--bt {
+  .lesson-layout__navigation-bottom {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
@@ -436,16 +459,17 @@ const t = useTranslations(lang)
     margin-bottom: 0;
   }
 
-  .lp__lnk {
+  .lesson-layout__link {
     color: var(--color-primary-5);
     text-decoration: underline;
   }
 
-  .lp__lnk--next {
+  .lesson-layout__link--next {
     margin-left: auto;
   }
 
   /* :global needed: slot content is rendered by parent, so it has parent's scope */
+  :global(.lesson-layout__task-complete),
   :global(.lp__task-complete) {
     margin-top: 1.5rem;
     margin-bottom: 2rem;
@@ -456,7 +480,7 @@ const t = useTranslations(lang)
     justify-content: flex-end;
   }
 
-  .lp__show-term {
+  .lesson-layout__show-terminal {
     display: none;
     flex-shrink: 0;
     border-top: 1px solid var(--color-gray-6);
@@ -464,28 +488,29 @@ const t = useTranslations(lang)
   }
 
   @media (max-width: 640px) {
-    .lp__main {
+    .lesson-layout__main {
       padding: var(--spacing-2);
     }
   }
 
   @media (max-width: 1024px) {
-    .lp__sb {
+    .lesson-layout__sidebar {
       display: none;
     }
-    .lp__bd {
+    .lesson-layout__body {
       flex-direction: column;
     }
-    .lp__term-wrap {
+    .lesson-layout__terminal-wrap {
       flex: 0 0 40vh;
       min-width: unset;
       border-left: none;
       border-top: 1px solid var(--color-gray-6);
     }
-    .lp__term-wrap.lp__term-wrap--hidden {
+    .lesson-layout__terminal-wrap.lesson-layout__terminal-wrap--hidden {
       display: none;
     }
-    .lp-root[data-terminal-open='false'] .lp__show-term {
+    .lesson-layout-root[data-terminal-open='false']
+      .lesson-layout__show-terminal {
       display: flex;
       position: fixed;
       bottom: 0;
@@ -493,12 +518,13 @@ const t = useTranslations(lang)
       right: 0;
       z-index: 100;
     }
-    .lp-root[data-terminal-open='false'] .lp__content-body {
+    .lesson-layout-root[data-terminal-open='false']
+      .lesson-layout__content-body {
       padding-bottom: 56px;
     }
   }
   @media (max-width: 640px) {
-    .lp__term-wrap {
+    .lesson-layout__terminal-wrap {
       flex: 0 0 40vh;
       min-height: 320px;
     }
