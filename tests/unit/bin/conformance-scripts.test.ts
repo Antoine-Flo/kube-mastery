@@ -43,6 +43,7 @@ describe('conformance scripts', () => {
     expect(suites).toContain('get')
     expect(suites).toContain('version')
     expect(suites).toContain('run')
+    expect(suites).toContain('config')
   })
 
   it('should parse CLI options for command and list modes', () => {

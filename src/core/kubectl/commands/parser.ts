@@ -41,7 +41,8 @@ const VALID_ACTIONS: Action[] = [
   'api-versions',
   'api-resources',
   'scale',
-  'run'
+  'run',
+  'config'
 ]
 
 // Flag aliases: short form → long form
@@ -92,7 +93,11 @@ const ACTIONS_WITHOUT_RESOURCE: Action[] = [
   'cluster-info',
   'api-versions',
   'api-resources',
-  'diff'
+  'diff',
+  'config-get-contexts',
+  'config-current-context',
+  'config-view',
+  'config-set-context'
 ]
 
 // ─── Main Parsing Pipeline ──────────────────────────────────────────────
@@ -151,6 +156,7 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
 
   return success({
     action: ctx.action,
+    configSubcommand: ctx.configSubcommand,
     resource: ctx.resource, // May be undefined for commands like 'version'
     rawPath: getRawPathFromFlags(normalizedFlags),
     name: ctx.name,
@@ -173,6 +179,9 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     runStdin: ctx.runStdin,
     runTty: ctx.runTty,
     runRemove: ctx.runRemove,
+    configCurrent: getConfigCurrentFromFlags(normalizedFlags),
+    configMinify: getConfigMinifyFromFlags(normalizedFlags),
+    configNamespace: getConfigNamespaceFromFlags(normalizedFlags),
     explainPath: ctx.explainPath,
     labelChanges: ctx.labelChanges,
     annotationChanges: ctx.annotationChanges,
@@ -471,6 +480,28 @@ const getRawPathFromFlags = (
   return undefined
 }
 
+const getConfigCurrentFromFlags = (
+  flags: Record<string, string | boolean>
+): boolean => {
+  return flags['current'] === true
+}
+
+const getConfigMinifyFromFlags = (
+  flags: Record<string, string | boolean>
+): boolean => {
+  return flags['minify'] === true
+}
+
+const getConfigNamespaceFromFlags = (
+  flags: Record<string, string | boolean>
+): string | undefined => {
+  const namespace = flags['namespace']
+  if (typeof namespace === 'string') {
+    return namespace
+  }
+  return undefined
+}
+
 // ─── Validation ──────────────────────────────────────────────────────────
 
 /**
@@ -551,6 +582,18 @@ const validateCommandSemantics = (
       return 'diff requires one of -f or --filename'
     }
   }
+
+  if (action === 'config-set-context') {
+    const isCurrent = flags['current'] === true
+    const namespace = flags['namespace']
+    if (!isCurrent) {
+      return 'config set-context currently supports only --current'
+    }
+    if (typeof namespace !== 'string' || namespace.length === 0) {
+      return 'config set-context requires flag --namespace'
+    }
+  }
+
   return undefined
 }
 

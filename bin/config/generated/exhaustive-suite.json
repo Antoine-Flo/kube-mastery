@@ -324,95 +324,171 @@
     {
       "id": "platform-cmd-7",
       "type": "command",
-      "command": "kubectl cluster-info",
-      "compareMode": "normalized"
+      "command": "kubectl config get-contexts",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "kind-conformance"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "kind-conformance"
+        ]
+      }
     },
     {
       "id": "platform-cmd-8",
       "type": "command",
-      "command": "kubectl cluster-info dump",
-      "compareMode": "normalized"
+      "command": "kubectl config current-context",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "kind-conformance"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "kind-conformance"
+        ]
+      }
     },
     {
       "id": "platform-cmd-9",
       "type": "command",
-      "command": "kubectl cluster-info dump -o yaml",
-      "compareMode": "normalized"
+      "command": "kubectl config view --minify",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "current-context: kind-conformance",
+          "certificate-authority-data: DATA+OMITTED",
+          "client-certificate-data: DATA+OMITTED"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "current-context: kind-conformance",
+          "certificate-authority-data: DATA+OMITTED",
+          "client-certificate-data: DATA+OMITTED"
+        ]
+      }
     },
     {
       "id": "platform-cmd-10",
       "type": "command",
-      "command": "kubectl cluster-info dump --namespaces=default,kube-system",
-      "compareMode": "normalized"
+      "command": "kubectl config set-context --current --namespace=dev",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "Context \"kind-conformance\" modified."
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "Context \"kind-conformance\" modified."
+        ]
+      }
     },
     {
       "id": "platform-cmd-11",
       "type": "command",
-      "command": "kubectl api-versions",
+      "command": "kubectl cluster-info",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-12",
       "type": "command",
-      "command": "kubectl api-resources",
+      "command": "kubectl cluster-info dump",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-13",
       "type": "command",
-      "command": "kubectl api-resources --output wide",
+      "command": "kubectl cluster-info dump -o yaml",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-14",
       "type": "command",
-      "command": "kubectl api-resources --output name",
+      "command": "kubectl cluster-info dump --namespaces=default,kube-system",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-15",
       "type": "command",
-      "command": "kubectl api-resources --output json",
+      "command": "kubectl api-versions",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-16",
       "type": "command",
-      "command": "kubectl api-resources --output yaml",
+      "command": "kubectl api-resources",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-17",
       "type": "command",
-      "command": "kubectl api-resources --namespaced=true",
+      "command": "kubectl api-resources --output wide",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-18",
       "type": "command",
-      "command": "kubectl api-resources --namespaced=false",
+      "command": "kubectl api-resources --output name",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-19",
       "type": "command",
-      "command": "kubectl api-resources --sort-by=name",
+      "command": "kubectl api-resources --output json",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-20",
       "type": "command",
-      "command": "kubectl api-resources --sort-by=kind",
+      "command": "kubectl api-resources --output yaml",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-21",
       "type": "command",
-      "command": "kubectl api-resources --no-headers",
+      "command": "kubectl api-resources --namespaced=true",
       "compareMode": "normalized"
     },
     {
       "id": "platform-cmd-22",
+      "type": "command",
+      "command": "kubectl api-resources --namespaced=false",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-23",
+      "type": "command",
+      "command": "kubectl api-resources --sort-by=name",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-24",
+      "type": "command",
+      "command": "kubectl api-resources --sort-by=kind",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-25",
+      "type": "command",
+      "command": "kubectl api-resources --no-headers",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "platform-cmd-26",
       "type": "command",
       "command": "kubectl explain pod",
       "compareMode": "none",
@@ -434,7 +510,7 @@
       }
     },
     {
-      "id": "platform-cmd-23",
+      "id": "platform-cmd-27",
       "type": "command",
       "command": "kubectl explain pod.spec.containers",
       "compareMode": "none",
@@ -454,7 +530,7 @@
       }
     },
     {
-      "id": "platform-cmd-24",
+      "id": "platform-cmd-28",
       "type": "command",
       "command": "kubectl explain deployment.spec.template.spec.containers",
       "compareMode": "none",
@@ -476,7 +552,7 @@
       }
     },
     {
-      "id": "platform-cmd-25",
+      "id": "platform-cmd-29",
       "type": "command",
       "command": "kubectl explain service.spec.ports",
       "compareMode": "none",
@@ -498,7 +574,7 @@
       }
     },
     {
-      "id": "platform-cmd-26",
+      "id": "platform-cmd-30",
       "type": "command",
       "command": "kubectl explain configmap.data",
       "compareMode": "none",
@@ -520,7 +596,7 @@
       }
     },
     {
-      "id": "platform-cmd-27",
+      "id": "platform-cmd-31",
       "type": "command",
       "command": "kubectl explain secret.data",
       "compareMode": "none",
@@ -542,7 +618,7 @@
       }
     },
     {
-      "id": "platform-cmd-28",
+      "id": "platform-cmd-32",
       "type": "command",
       "command": "kubectl explain namespace.metadata",
       "compareMode": "none",
@@ -564,7 +640,7 @@
       }
     },
     {
-      "id": "platform-cmd-29",
+      "id": "platform-cmd-33",
       "type": "command",
       "command": "kubectl explain node.status",
       "compareMode": "none",
@@ -586,19 +662,19 @@
       }
     },
     {
-      "id": "platform-cmd-30",
+      "id": "platform-cmd-34",
       "type": "command",
       "command": "kubectl describe node conformance-control-plane",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-31",
+      "id": "platform-cmd-35",
       "type": "command",
       "command": "kubectl describe node conformance-worker2",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-32",
+      "id": "platform-cmd-36",
       "type": "command",
       "command": "kubectl explain replicaset.spec.replicas",
       "compareMode": "none",
@@ -620,7 +696,7 @@
       }
     },
     {
-      "id": "platform-cmd-33",
+      "id": "platform-cmd-37",
       "type": "command",
       "command": "kubectl explain daemonset.spec.template",
       "compareMode": "none",

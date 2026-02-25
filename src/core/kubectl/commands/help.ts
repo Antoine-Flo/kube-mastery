@@ -19,6 +19,7 @@ type HelpTopic =
   | 'label'
   | 'annotate'
   | 'run'
+  | 'config'
 
 const ROOT_HELP = `kubectl controls the Kubernetes cluster manager.
 
@@ -37,6 +38,7 @@ Troubleshooting and Debugging Commands:
   exec            Execute a command in a container
 
 Settings Commands:
+  config          Modify kubeconfig files
   label           Update the labels on a resource
   annotate        Update the annotations on a resource
 
@@ -170,6 +172,15 @@ Usage:
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`
   ,
+  config: `Modify kubeconfig files.
+
+Usage:
+  kubectl config get-contexts
+  kubectl config current-context
+  kubectl config view --minify
+  kubectl config set-context --current --namespace=NAME
+
+Use "kubectl options" for a list of global command-line options (applies to all commands).`,
   run: `Run a particular image on the cluster.
 
 Usage:
@@ -206,6 +217,10 @@ const resolveTopic = (tokens: string[]): HelpTopic => {
 
   if (actionToken === 'create' && tokens.length >= 3 && tokens[2] === 'deployment') {
     return 'create deployment'
+  }
+
+  if (actionToken === 'config') {
+    return 'config'
   }
 
   const topic = actionToken as HelpTopic

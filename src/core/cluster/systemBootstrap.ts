@@ -140,28 +140,48 @@ const createKubeRootCAConfigMap = (creationTimestamp: string): ConfigMap => {
   })
 }
 
-const createClusterInfoKubeconfig = (): string => {
+const buildKubeconfigIdentity = (clusterName: string): string => {
+  const normalizedName = clusterName.trim().toLowerCase()
+  if (normalizedName.length === 0) {
+    return 'kind-sim'
+  }
+  return `kind-${normalizedName}`
+}
+
+const createClusterInfoKubeconfig = (clusterName: string): string => {
+  const kubeconfigIdentity = buildKubeconfigIdentity(clusterName)
   return [
     'apiVersion: v1',
     'kind: Config',
     'clusters:',
     '- cluster:',
-    '    server: https://127.0.0.1:6443',
-    '  name: kubernetes',
-    'contexts: []',
-    'current-context: ""',
-    'preferences: {}',
-    'users: []'
+    '    certificate-authority-data: DATA+OMITTED',
+    '    server: https://127.0.0.1:34001',
+    `  name: ${kubeconfigIdentity}`,
+    'contexts:',
+    '- context:',
+    `    cluster: ${kubeconfigIdentity}`,
+    `    user: ${kubeconfigIdentity}`,
+    `  name: ${kubeconfigIdentity}`,
+    `current-context: ${kubeconfigIdentity}`,
+    'users:',
+    `- name: ${kubeconfigIdentity}`,
+    '  user:',
+    '    client-certificate-data: DATA+OMITTED',
+    '    client-key-data: DATA+OMITTED'
   ].join('\n')
 }
 
-const createClusterInfoConfigMap = (creationTimestamp: string): ConfigMap => {
+const createClusterInfoConfigMap = (
+  creationTimestamp: string,
+  clusterName: string
+): ConfigMap => {
   return createConfigMap({
     name: 'cluster-info',
     namespace: 'kube-public',
     creationTimestamp,
     data: {
-      kubeconfig: createClusterInfoKubeconfig()
+      kubeconfig: createClusterInfoKubeconfig(clusterName)
     }
   })
 }
@@ -217,7 +237,7 @@ export const createSystemBootstrapResources = (
     }),
     configMaps: [
       createKubeRootCAConfigMap(creationTimestamp),
-      createClusterInfoConfigMap(creationTimestamp)
+      createClusterInfoConfigMap(creationTimestamp, clusterName)
     ],
     services: createSystemServices(creationTimestamp),
     pods: workloads.staticPods,

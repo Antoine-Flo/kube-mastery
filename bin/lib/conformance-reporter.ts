@@ -92,6 +92,10 @@ const inferResourceBucketFromCommand = (command: string): string => {
   }
 
   const action = normalizeToken(tokens[1])
+  if (action === 'config') {
+    return 'config'
+  }
+
   if (action === 'logs' || action === 'exec') {
     return 'pods'
   }

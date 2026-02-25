@@ -127,6 +127,16 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
         'kubectl version --client',
         'kubectl version --output json',
         'kubectl version --output yaml',
+        createRawCommand('kubectl config get-contexts', ['kind-conformance']),
+        createRawCommand('kubectl config current-context', ['kind-conformance']),
+        createRawCommand('kubectl config view --minify', [
+          'current-context: kind-conformance',
+          'certificate-authority-data: DATA+OMITTED',
+          'client-certificate-data: DATA+OMITTED'
+        ]),
+        createRawCommand('kubectl config set-context --current --namespace=dev', [
+          'Context "kind-conformance" modified.'
+        ]),
         'kubectl cluster-info',
         'kubectl cluster-info dump',
         'kubectl cluster-info dump -o yaml',

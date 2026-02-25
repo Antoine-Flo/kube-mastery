@@ -31,4 +31,19 @@ describe('kubectl help resolver', () => {
     expect(output).toBeDefined()
     expect(output).toContain('diff')
   })
+
+  it('should return config help text', () => {
+    const output = resolveKubectlHelp('kubectl config --help')
+
+    expect(output).toBeDefined()
+    expect(output).toContain('Modify kubeconfig files.')
+    expect(output).toContain('kubectl config get-contexts')
+  })
+
+  it('should include config command in root help', () => {
+    const output = resolveKubectlHelp('kubectl --help')
+
+    expect(output).toBeDefined()
+    expect(output).toContain('config')
+  })
 })

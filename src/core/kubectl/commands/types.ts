@@ -19,6 +19,11 @@ export type Action =
   | 'api-resources'
   | 'scale'
   | 'run'
+  | 'config'
+  | 'config-get-contexts'
+  | 'config-current-context'
+  | 'config-view'
+  | 'config-set-context'
 
 // Resource types (canonical names only)
 export type Resource = KubectlResource
@@ -26,6 +31,7 @@ export type Resource = KubectlResource
 // Parsed command structure
 export interface ParsedCommand {
   action: Action
+  configSubcommand?: 'get-contexts' | 'current-context' | 'view' | 'set-context'
   resource?: Resource // Optional for commands like 'version' that don't require a resource
   rawPath?: string // For kubectl get --raw: direct API path (e.g. /api/v1/namespaces)
   name?: string
@@ -53,4 +59,7 @@ export interface ParsedCommand {
   runStdin?: boolean // For kubectl run: -i/--stdin
   runTty?: boolean // For kubectl run: -t/--tty
   runRemove?: boolean // For kubectl run: --rm
+  configCurrent?: boolean // For kubectl config set-context --current
+  configMinify?: boolean // For kubectl config view --minify
+  configNamespace?: string // For kubectl config set-context --namespace
 }

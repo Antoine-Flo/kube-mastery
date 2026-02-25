@@ -897,6 +897,43 @@ data:
     })
 
     describe('integration with parser', () => {
+      const seedConfigCommandKubeconfig = (): void => {
+        const kubeconfig = [
+          'apiVersion: v1',
+          'kind: Config',
+          'clusters:',
+          '- cluster:',
+          '    certificate-authority-data: DATA+OMITTED',
+          '    server: https://127.0.0.1:34001',
+          '  name: kind-conformance',
+          'contexts:',
+          '- context:',
+          '    cluster: kind-conformance',
+          '    user: kind-conformance',
+          '  name: kind-conformance',
+          'current-context: kind-conformance',
+          'users:',
+          '- name: kind-conformance',
+          '  user:',
+          '    client-certificate-data: DATA+OMITTED',
+          '    client-key-data: DATA+OMITTED'
+        ].join('\n')
+        const updateResult = clusterState.updateConfigMap(
+          'cluster-info',
+          'kube-public',
+          (configMap) => {
+            return {
+              ...configMap,
+              data: {
+                ...(configMap.data || {}),
+                kubeconfig
+              }
+            }
+          }
+        )
+        expect(updateResult.ok).toBe(true)
+      }
+
       it('should return root help for kubectl -h', () => {
         const executor = createKubectlExecutor(
           clusterState,
@@ -1143,6 +1180,92 @@ data:
             'To further debug and diagnose cluster problems'
           )
         }
+      })
+
+      it('should handle kubectl config current-context command', () => {
+        seedConfigCommandKubeconfig()
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl config current-context')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('kind-conformance')
+      })
+
+      it('should handle kubectl config get-contexts command', () => {
+        seedConfigCommandKubeconfig()
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl config get-contexts')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('CURRENT')
+        expect(result.value).toContain('kind-conformance')
+        expect(result.value).toContain('*')
+      })
+
+      it('should handle kubectl config view --minify command', () => {
+        seedConfigCommandKubeconfig()
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl config view --minify')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('current-context: kind-conformance')
+        expect(result.value).toContain('certificate-authority-data: DATA+OMITTED')
+      })
+
+      it('should set current context namespace and use it implicitly', () => {
+        seedConfigCommandKubeconfig()
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+
+        const setContextResult = executor.execute(
+          'kubectl config set-context --current --namespace=kube-system'
+        )
+        expect(setContextResult.ok).toBe(true)
+        if (!setContextResult.ok) {
+          return
+        }
+        expect(setContextResult.value).toContain(
+          'Context "kind-conformance" modified.'
+        )
+
+        const getPodsResult = executor.execute('kubectl get pods')
+        expect(getPodsResult.ok).toBe(true)
+        if (!getPodsResult.ok) {
+          return
+        }
+        expect(getPodsResult.value).toContain('redis-pod')
+        expect(getPodsResult.value).not.toContain('nginx-pod')
       })
 
       it('should handle kubectl cluster-info dump command', () => {

@@ -119,6 +119,10 @@ interface DiffLine {
   runnerSimulation: string
 }
 
+const makeWhitespaceVisible = (value: string): string => {
+  return value.replaceAll('\t', '→\t').replaceAll(' ', '·')
+}
+
 const truncate = (value: string, maxLength: number): string => {
   if (value.length <= maxLength) {
     return value
@@ -155,6 +159,43 @@ const formatDiffLines = (kindCompared: string, runnerCompared: string): string[]
     )
   }
   return rendered
+}
+
+const formatUnifiedDiffLines = (
+  leftRaw: string,
+  rightRaw: string,
+  options?: {
+    showWhitespace?: boolean
+  }
+): string[] => {
+  const leftLines = leftRaw.split('\n')
+  const rightLines = rightRaw.split('\n')
+  const maxLen = Math.max(leftLines.length, rightLines.length)
+  const out: string[] = []
+
+  for (let index = 0; index < maxLen; index++) {
+    const left = leftLines[index] ?? '(missing)'
+    const right = rightLines[index] ?? '(missing)'
+    if (left !== right) {
+      const renderedLeft = options?.showWhitespace ? makeWhitespaceVisible(left) : left
+      const renderedRight = options?.showWhitespace
+        ? makeWhitespaceVisible(right)
+        : right
+      out.push(`@@ line ${index + 1} @@`)
+      out.push(`- ${truncate(renderedLeft, MAX_LINE_LENGTH)}`)
+      out.push(`+ ${truncate(renderedRight, MAX_LINE_LENGTH)}`)
+    }
+  }
+
+  if (out.length > MAX_DIFF_LINES * 3) {
+    const maxOutput = MAX_DIFF_LINES * 3
+    const trimmed = out.slice(0, maxOutput)
+    trimmed.push(
+      `[truncated] ${Math.ceil((out.length - maxOutput) / 3)} diff blocks omitted to reduce noise`
+    )
+    return trimmed
+  }
+  return out
 }
 
 export const compareResults = (
@@ -246,13 +287,23 @@ const appendExpectationError = (
   suiteName: string,
   action: CommandAction,
   backend: 'kind' | 'runner',
-  message: string
+  message: string,
+  kind: CommandExecutionResult,
+  runner: CommandExecutionResult
 ): string => {
+  const diffLines = formatUnifiedDiffLines(kind.combined, runner.combined, {
+    showWhitespace: true
+  })
   return [
     `[suite] ${suiteName}`,
     `[action] ${action.id} (${action.type})`,
     `[command] ${truncate(action.command, MAX_COMMAND_LENGTH)}`,
     `[expectation:${backend}] ${message}`,
+    '[expectation-diff]',
+    ...diffLines,
+    '[details]',
+    '[kind-log] artifacts/conformance/kind.log',
+    '[runner-log] artifacts/conformance/runner.log',
     '---'
   ].join('\n')
 }
@@ -306,7 +357,9 @@ export const runConformanceSuite = (
               suite.name,
               action,
               'kind',
-              kindExpectation.error
+              kindExpectation.error,
+              kind,
+              runner
             )
           )
           if (suite.stopOnMismatch ?? true) {
@@ -321,7 +374,9 @@ export const runConformanceSuite = (
               suite.name,
               action,
               'runner',
-              runnerExpectation.error
+              runnerExpectation.error,
+              kind,
+              runner
             )
           )
           if (suite.stopOnMismatch ?? true) {

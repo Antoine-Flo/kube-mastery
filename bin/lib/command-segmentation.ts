@@ -9,6 +9,7 @@ export type KubectlCommandName =
   | 'api-versions'
   | 'apply'
   | 'cluster-info'
+  | 'config'
   | 'create'
   | 'delete'
   | 'describe'
@@ -29,6 +30,7 @@ const KNOWN_COMMANDS = new Set<KubectlCommandName>([
   'api-versions',
   'apply',
   'cluster-info',
+  'config',
   'create',
   'delete',
   'describe',

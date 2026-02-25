@@ -9,6 +9,10 @@ import { handleAPIVersions } from './handlers/apiVersions'
 import { handleAPIResources } from './handlers/apiResources'
 import { handleApply, handleCreate, handleRun } from './handlers/applyCreate'
 import { handleClusterInfo } from './handlers/clusterInfo'
+import {
+  getCurrentNamespaceFromKubeconfig,
+  handleConfig
+} from './handlers/config'
 import { handleDelete } from './handlers/delete'
 import { handleDiff } from './handlers/diff'
 import { handleDescribe } from './handlers/describe'
@@ -31,6 +35,35 @@ const toGetExecutionResult = (output: string): ExecutionResult => {
     return error(output)
   }
   return success(output)
+}
+
+const applyImplicitNamespaceFromKubeconfig = (
+  clusterState: ClusterState,
+  parsed: ParsedCommand
+): ParsedCommand => {
+  if (parsed.namespace !== undefined) {
+    return parsed
+  }
+
+  if (
+    parsed.action === 'config' ||
+    parsed.action === 'config-get-contexts' ||
+    parsed.action === 'config-current-context' ||
+    parsed.action === 'config-view' ||
+    parsed.action === 'config-set-context'
+  ) {
+    return parsed
+  }
+
+  const namespace = getCurrentNamespaceFromKubeconfig(clusterState.toJSON())
+  if (namespace === undefined) {
+    return parsed
+  }
+
+  return {
+    ...parsed,
+    namespace
+  }
 }
 
 /**
@@ -82,6 +115,10 @@ const createHandlers = (
   handlers.set('api-resources', (parsed) => handleAPIResources(parsed))
   handlers.set('scale', (parsed) => handleScale(clusterState, parsed, eventBus))
   handlers.set('run', (parsed) => handleRun(clusterState, parsed, eventBus))
+  handlers.set('config-get-contexts', (parsed) => handleConfig(clusterState, parsed))
+  handlers.set('config-current-context', (parsed) => handleConfig(clusterState, parsed))
+  handlers.set('config-view', (parsed) => handleConfig(clusterState, parsed))
+  handlers.set('config-set-context', (parsed) => handleConfig(clusterState, parsed))
 
   return handlers
 }
@@ -167,8 +204,12 @@ export const createKubectlExecutor = (
     // Use provided filesystem or fallback to default
     const fs = fileSystem || defaultFileSystem
     const handlers = createHandlers(clusterState, fs, logger, eventBus)
+    const parsedWithNamespace = applyImplicitNamespaceFromKubeconfig(
+      clusterState,
+      parseResult.value
+    )
 
-    return routeCommand(handlers, parseResult.value, logger)
+    return routeCommand(handlers, parsedWithNamespace, logger)
   }
 
   return { execute }

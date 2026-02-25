@@ -19,7 +19,15 @@ const KUBECTL_ACTIONS = [
   'logs',
   'exec',
   'scale',
-  'run'
+  'run',
+  'config'
+] as const
+
+const KUBECTL_CONFIG_SUBCOMMANDS = [
+  'get-contexts',
+  'current-context',
+  'view',
+  'set-context'
 ] as const
 
 // Resource type aliases (for kubectl completion)
@@ -119,8 +127,15 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
       return true
     }
 
-    // Type de ressource (position 2) - sauf pour logs/exec/run
     const action = tokens[1]
+    if (action === 'config') {
+      if (tokens.length === 2 || (tokens.length === 3 && !line.endsWith(' '))) {
+        return true
+      }
+      return false
+    }
+
+    // Type de ressource (position 2) - sauf pour logs/exec/run
     if (action === 'logs' || action === 'exec' || action === 'run') {
       // logs/exec/run prennent directement le nom du pod (position 2)
       return tokens.length >= 2
@@ -148,6 +163,28 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
     }
 
     const action = tokens[1]
+
+    if (action === 'config') {
+      if (tokens.length === 2) {
+        return filterMatches([...KUBECTL_CONFIG_SUBCOMMANDS], currentToken).map(
+          (subcommand) => ({ text: subcommand, suffix: ' ' })
+        )
+      }
+      if (tokens[2] === 'set-context') {
+        const setContextFlags = ['--current', '--namespace=']
+        return filterMatches(setContextFlags, currentToken).map((flag) => ({
+          text: flag,
+          suffix: flag.endsWith('=') ? '' : ' '
+        }))
+      }
+      if (tokens[2] === 'view') {
+        return filterMatches(['--minify'], currentToken).map((flag) => ({
+          text: flag,
+          suffix: ' '
+        }))
+      }
+      return []
+    }
 
     // Type de ressource (position 2) - sauf pour logs/exec/run
     if (action !== 'logs' && action !== 'exec' && action !== 'run') {

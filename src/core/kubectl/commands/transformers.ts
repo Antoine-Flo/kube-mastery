@@ -39,6 +39,10 @@ export type ParseContext = {
   runStdin?: boolean
   runTty?: boolean
   runRemove?: boolean
+  configSubcommand?: 'get-contexts' | 'current-context' | 'view' | 'set-context'
+  configCurrent?: boolean
+  configMinify?: boolean
+  configNamespace?: string
   explainPath?: string[]
   labelChanges?: Record<string, string | null>
   annotationChanges?: Record<string, string | null>
@@ -574,6 +578,51 @@ const runTransformer: ActionTransformer = (ctx) => {
   })
 }
 
+const configTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens || ctx.tokens.length < 3) {
+    return error('config requires a subcommand')
+  }
+
+  const subcommandToken = ctx.tokens[2]
+  if (subcommandToken === 'get-contexts') {
+    return success({
+      ...ctx,
+      action: 'config-get-contexts',
+      resource: undefined,
+      configSubcommand: 'get-contexts'
+    })
+  }
+
+  if (subcommandToken === 'current-context') {
+    return success({
+      ...ctx,
+      action: 'config-current-context',
+      resource: undefined,
+      configSubcommand: 'current-context'
+    })
+  }
+
+  if (subcommandToken === 'view') {
+    return success({
+      ...ctx,
+      action: 'config-view',
+      resource: undefined,
+      configSubcommand: 'view'
+    })
+  }
+
+  if (subcommandToken === 'set-context') {
+    return success({
+      ...ctx,
+      action: 'config-set-context',
+      resource: undefined,
+      configSubcommand: 'set-context'
+    })
+  }
+
+  return error(`unknown config subcommand: ${subcommandToken}`)
+}
+
 /**
  * Default transformer: no-op, returns context as-is
  */
@@ -596,7 +645,8 @@ const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
   'api-resources': apiResourcesTransformer,
   explain: explainTransformer,
   scale: scaleTransformer,
-  run: runTransformer
+  run: runTransformer,
+  config: configTransformer
 }
 
 /**

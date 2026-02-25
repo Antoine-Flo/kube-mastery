@@ -484,3 +484,65 @@ describe('kubectl parser - diff', () => {
     }
   })
 })
+
+describe('kubectl parser - config', () => {
+  it('should parse config get-contexts command', () => {
+    const result = parseCommand('kubectl config get-contexts')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('config-get-contexts')
+    expect(result.value.configSubcommand).toBe('get-contexts')
+  })
+
+  it('should parse config current-context command', () => {
+    const result = parseCommand('kubectl config current-context')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('config-current-context')
+    expect(result.value.configSubcommand).toBe('current-context')
+  })
+
+  it('should parse config view --minify command', () => {
+    const result = parseCommand('kubectl config view --minify')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('config-view')
+    expect(result.value.configMinify).toBe(true)
+  })
+
+  it('should parse config set-context --current --namespace command', () => {
+    const result = parseCommand(
+      'kubectl config set-context --current --namespace=dev'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('config-set-context')
+    expect(result.value.configCurrent).toBe(true)
+    expect(result.value.configNamespace).toBe('dev')
+  })
+
+  it('should reject config set-context without namespace', () => {
+    const result = parseCommand('kubectl config set-context --current')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('config set-context requires flag --namespace')
+    }
+  })
+})

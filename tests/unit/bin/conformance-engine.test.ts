@@ -151,4 +151,38 @@ describe('conformance engine', () => {
     expect(result.ok).toBe(false)
     expect(diffEntries.length).toBeGreaterThan(0)
   })
+
+  it('should include line-by-line diff when expectation fails', () => {
+    const suite: ConformanceSuite = {
+      name: 'expectation-diff-suite',
+      clusterName: 'test',
+      actions: [
+        {
+          id: 'cmd-expect-1',
+          type: 'command',
+          command: 'kubectl config get-contexts',
+          compareMode: 'none',
+          expectKind: { stdoutContains: ['kubernetes-admin@kubernetes'] },
+          expectRunner: { stdoutContains: ['kubernetes-admin@kubernetes'] }
+        }
+      ],
+      stopOnMismatch: false
+    }
+    const { reporter, diffEntries } = createMemoryReporter()
+    const result = runConformanceSuite(suite, {
+      kindExecutor: createMockKindExecutor('CURRENT   kind-conformance'),
+      runnerExecutor: createMockRunnerExecutor(
+        'CURRENT  kubernetes-admin@kubernetes'
+      ),
+      reporter
+    })
+
+    expect(result.ok).toBe(true)
+    const joined = diffEntries.join('\n')
+    expect(joined.includes('[expectation:kind]')).toBe(true)
+    expect(joined.includes('[expectation-diff]')).toBe(true)
+    expect(joined.includes('@@ line 1 @@')).toBe(true)
+    expect(joined.includes('- CURRENT···kind-conformance')).toBe(true)
+    expect(joined.includes('+ CURRENT··kubernetes-admin@kubernetes')).toBe(true)
+  })
 })

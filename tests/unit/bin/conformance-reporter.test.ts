@@ -134,4 +134,43 @@ describe('conformance reporter', () => {
     expect(deployKindLog).not.toContain('kubectl get pods')
     expect(deployDiffLog).toContain('kubectl get deployments')
   })
+
+  it('should bucket kubectl config commands under config', () => {
+    const outputDir = mkdtempSync(join(tmpdir(), 'conformance-reporter-config-'))
+    tempDirs.push(outputDir)
+
+    const reporter = createConformanceReporter(outputDir)
+    reporter.recordKind({
+      suiteName: 'suite',
+      actionId: 'config-step',
+      actionType: 'command',
+      backend: 'kind',
+      command: 'kubectl config current-context',
+      exitCode: 0,
+      stdout: 'kubernetes-admin@kubernetes',
+      stderr: '',
+      normalized: 'kubernetes-admin@kubernetes'
+    })
+    reporter.recordRunner({
+      suiteName: 'suite',
+      actionId: 'config-step',
+      actionType: 'command',
+      backend: 'runner',
+      command: 'kubectl config current-context',
+      exitCode: 0,
+      stdout: 'kubernetes-admin@kubernetes',
+      stderr: '',
+      normalized: 'kubernetes-admin@kubernetes'
+    })
+    reporter.flush()
+
+    const configKindLog = readFileSync(join(outputDir, 'config', 'kind.log'), 'utf-8')
+    const configRunnerLog = readFileSync(
+      join(outputDir, 'config', 'runner.log'),
+      'utf-8'
+    )
+
+    expect(configKindLog).toContain('kubectl config current-context')
+    expect(configRunnerLog).toContain('kubectl config current-context')
+  })
 })

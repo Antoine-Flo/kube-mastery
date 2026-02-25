@@ -23,6 +23,7 @@
     "conformance:cmd:explain": "npm run conformance:generate && tsx bin/run-conformance.ts --command=explain",
     "conformance:cmd:diff": "npm run conformance:generate && tsx bin/run-conformance.ts --command=diff",
     "conformance:cmd:help": "npm run conformance:generate && tsx bin/run-conformance.ts --command=help",
+    "conformance:cmd:config": "npm run conformance:generate && tsx bin/run-conformance.ts --command=config",
     "astro": "astro",
     "knip": "knip",
     "check": "astro check",

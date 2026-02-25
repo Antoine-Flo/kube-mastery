@@ -96,6 +96,23 @@ export const COMMAND_MATRIX: Record<KubectlCommandName, CommandMatrixDefinition>
       expectedOutput: COMMON_EXPECTATIONS
     }
   },
+  config: {
+    command: 'config',
+    strategy: 'pairwise-risk-based',
+    scenarioTypes: ['happy-path', 'help-path', 'format-path'],
+    mandatoryCases: [
+      'kubectl config get-contexts',
+      'kubectl config current-context',
+      'kubectl config view --minify',
+      'kubectl config set-context --current --namespace=dev',
+      'kubectl config --help'
+    ],
+    axis: {
+      inputShape: ['get-contexts', 'current-context', 'view --minify', 'set-context --current --namespace'],
+      context: ['seed=minimal'],
+      expectedOutput: COMMON_EXPECTATIONS
+    }
+  },
   create: {
     command: 'create',
     strategy: 'pairwise-risk-based',
