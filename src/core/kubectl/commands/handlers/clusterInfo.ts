@@ -2,7 +2,7 @@ import { stringify as yamlStringify } from 'yaml'
 import type { ParsedCommand } from '../types'
 import type { ClusterStateData } from '../../../cluster/ClusterState'
 import type { Result } from '../../../shared/result'
-import { success } from '../../../shared/result'
+import { error, success } from '../../../shared/result'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL CLUSTER-INFO HANDLER
@@ -14,11 +14,68 @@ import { success } from '../../../shared/result'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-// Simulated API server URL (matches Kubernetes default)
-const API_SERVER_URL = 'https://127.0.0.1:6443'
-const CORE_DNS_URL =
-  'https://127.0.0.1:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy'
 const KUBECTL_JSON_INDENT = 4
+const CLUSTER_INFO_NAMESPACE = 'kube-public'
+const CLUSTER_INFO_CONFIGMAP_NAME = 'cluster-info'
+
+const buildCoreDnsProxyUrl = (apiServerUrl: string): string => {
+  const normalizedApiServerUrl = apiServerUrl.endsWith('/')
+    ? apiServerUrl.slice(0, -1)
+    : apiServerUrl
+  return `${normalizedApiServerUrl}/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy`
+}
+
+const extractApiServerUrl = (kubeconfig: string): Result<string> => {
+  const serverMatch = kubeconfig.match(/^\s*server:\s*(\S+)\s*$/m)
+  if (!serverMatch) {
+    return error(
+      'cluster-info ConfigMap in kube-public is invalid: missing kubeconfig server URL'
+    )
+  }
+
+  const serverUrl = serverMatch[1].trim()
+  if (serverUrl.length === 0) {
+    return error(
+      'cluster-info ConfigMap in kube-public is invalid: empty kubeconfig server URL'
+    )
+  }
+
+  return success(serverUrl)
+}
+
+const resolveClusterInfoUrls = (
+  clusterState: ClusterStateData
+): Result<{ apiServerUrl: string; coreDnsUrl: string }> => {
+  const clusterInfoConfigMap = clusterState.configMaps.items.find((configMap) => {
+    return (
+      configMap.metadata.name === CLUSTER_INFO_CONFIGMAP_NAME &&
+      configMap.metadata.namespace === CLUSTER_INFO_NAMESPACE
+    )
+  })
+
+  if (!clusterInfoConfigMap) {
+    return error(
+      'cluster-info ConfigMap is missing in kube-public namespace'
+    )
+  }
+
+  const kubeconfig = clusterInfoConfigMap.data?.kubeconfig
+  if (!kubeconfig) {
+    return error(
+      'cluster-info ConfigMap in kube-public is invalid: missing data.kubeconfig'
+    )
+  }
+
+  const apiServerUrlResult = extractApiServerUrl(kubeconfig)
+  if (!apiServerUrlResult.ok) {
+    return apiServerUrlResult
+  }
+
+  return success({
+    apiServerUrl: apiServerUrlResult.value,
+    coreDnsUrl: buildCoreDnsProxyUrl(apiServerUrlResult.value)
+  })
+}
 
 // ─── Formatting Functions ────────────────────────────────────────────────
 
@@ -345,15 +402,21 @@ export const handleClusterInfo = (
   }
 
   // Default behavior: display cluster info
+  const clusterInfoUrlsResult = resolveClusterInfoUrls(clusterState)
+  if (!clusterInfoUrlsResult.ok) {
+    return clusterInfoUrlsResult
+  }
+
   const lines: string[] = []
 
   // Print control plane URL
-  lines.push(formatServiceLine('Kubernetes control plane', API_SERVER_URL))
-  lines.push(formatServiceLine('CoreDNS', CORE_DNS_URL))
-
-  // Note: ClusterState doesn't support Services yet, so we return empty list
-  // Future enhancement: Query services with label kubernetes.io/cluster-service=true
-  // and format their URLs using the API server proxy pattern
+  lines.push(
+    formatServiceLine(
+      'Kubernetes control plane',
+      clusterInfoUrlsResult.value.apiServerUrl
+    )
+  )
+  lines.push(formatServiceLine('CoreDNS', clusterInfoUrlsResult.value.coreDnsUrl))
 
   lines.push('')
   lines.push(

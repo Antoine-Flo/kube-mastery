@@ -30,6 +30,15 @@ describe('createClusterState bootstrap policy', () => {
     expect(clusterState.getConfigMaps('default').some((configMap) => {
       return configMap.metadata.name === 'kube-root-ca.crt'
     })).toBe(true)
+    expect(clusterState.getConfigMaps('kube-public').some((configMap) => {
+      return configMap.metadata.name === 'cluster-info'
+    })).toBe(true)
+    const clusterInfoConfigMap = clusterState.getConfigMaps('kube-public').find((configMap) => {
+      return configMap.metadata.name === 'cluster-info'
+    })
+    expect(clusterInfoConfigMap?.data?.kubeconfig).toContain(
+      'server: https://127.0.0.1:6443'
+    )
     expect(clusterState.getServices().some((service) => {
       return service.metadata.name === 'kubernetes'
     })).toBe(true)

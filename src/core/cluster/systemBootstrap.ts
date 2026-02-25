@@ -137,6 +137,32 @@ const createKubeRootCAConfigMap = (creationTimestamp: string): ConfigMap => {
   })
 }
 
+const createClusterInfoKubeconfig = (): string => {
+  return [
+    'apiVersion: v1',
+    'kind: Config',
+    'clusters:',
+    '- cluster:',
+    '    server: https://127.0.0.1:6443',
+    '  name: kubernetes',
+    'contexts: []',
+    'current-context: ""',
+    'preferences: {}',
+    'users: []'
+  ].join('\n')
+}
+
+const createClusterInfoConfigMap = (creationTimestamp: string): ConfigMap => {
+  return createConfigMap({
+    name: 'cluster-info',
+    namespace: 'kube-public',
+    creationTimestamp,
+    data: {
+      kubeconfig: createClusterInfoKubeconfig()
+    }
+  })
+}
+
 const createSystemServices = (creationTimestamp: string): Service[] => {
   return [
     createService({
@@ -185,7 +211,10 @@ export const createSystemBootstrapResources = (
         creationTimestamp
       )
     }),
-    configMaps: [createKubeRootCAConfigMap(creationTimestamp)],
+    configMaps: [
+      createKubeRootCAConfigMap(creationTimestamp),
+      createClusterInfoConfigMap(creationTimestamp)
+    ],
     services: createSystemServices(creationTimestamp),
     pods: workloads.staticPods,
     staticPods: workloads.staticPods,

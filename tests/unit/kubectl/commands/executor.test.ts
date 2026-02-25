@@ -4,6 +4,7 @@ import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 import { createNode } from '../../../../src/core/cluster/ressources/Node'
 import { createService } from '../../../../src/core/cluster/ressources/Service'
+import { createConfigMap } from '../../../../src/core/cluster/ressources/ConfigMap'
 import { createHostFileSystem } from '../../../../src/core/filesystem/debianFileSystem'
 import {
   createFileSystem,
@@ -24,6 +25,23 @@ describe('kubectl Executor', () => {
       clusterState = createClusterState(eventBus)
       fileSystem = createFileSystem(createHostFileSystem())
       logger = createLogger()
+
+      clusterState.addConfigMap(
+        createConfigMap({
+          name: 'cluster-info',
+          namespace: 'kube-public',
+          data: {
+            kubeconfig: [
+              'apiVersion: v1',
+              'kind: Config',
+              'clusters:',
+              '- cluster:',
+              '    server: https://127.0.0.1:6443',
+              '  name: kubernetes'
+            ].join('\n')
+          }
+        })
+      )
 
       // Seed with test pods
       clusterState.addPod(

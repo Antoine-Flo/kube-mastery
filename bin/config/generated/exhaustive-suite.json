@@ -827,6 +827,109 @@
       "ignoreNotFound": true
     },
     {
+      "id": "namespace-ops-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
+    },
+    {
+      "id": "namespace-ops-cmd-1",
+      "type": "command",
+      "command": "kubectl create namespace my-team",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "namespace/my-team created"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "namespace/my-team created"
+        ]
+      }
+    },
+    {
+      "id": "namespace-ops-cmd-2",
+      "type": "command",
+      "command": "kubectl get namespace my-team",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "namespace-ops-cmd-3",
+      "type": "command",
+      "command": "kubectl get namespaces",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "namespace-ops-cmd-4",
+      "type": "command",
+      "command": "kubectl get --raw /api/v1/namespaces",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NamespaceList",
+          "\"my-team\""
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NamespaceList",
+          "\"my-team\""
+        ]
+      }
+    },
+    {
+      "id": "namespace-ops-cmd-5",
+      "type": "command",
+      "command": "kubectl create namespace my-team",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "Error from server (AlreadyExists): namespaces \"my-team\" already exists"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "Error from server (AlreadyExists): namespaces \"my-team\" already exists"
+        ]
+      }
+    },
+    {
+      "id": "namespace-ops-cmd-6",
+      "type": "command",
+      "command": "kubectl delete namespace my-team",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "namespace-ops-cmd-7",
+      "type": "command",
+      "command": "kubectl get namespace my-team",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "Error from server (NotFound): namespaces \"my-team\" not found"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "Error from server (NotFound): namespaces \"my-team\" not found"
+        ]
+      }
+    },
+    {
+      "id": "namespace-ops-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
       "id": "errors-help-apply",
       "type": "applyYaml",
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"

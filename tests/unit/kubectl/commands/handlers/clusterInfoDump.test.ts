@@ -100,6 +100,78 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
     })
   })
 
+  describe('default cluster-info command', () => {
+    it('should read control plane URL from kube-public/cluster-info ConfigMap', () => {
+      const stateWithClusterInfo = createClusterStateData({
+        configMaps: [
+          createConfigMap({
+            name: 'cluster-info',
+            namespace: 'kube-public',
+            data: {
+              kubeconfig: [
+                'apiVersion: v1',
+                'kind: Config',
+                'clusters:',
+                '- cluster:',
+                '    server: https://10.0.0.1:6443',
+                '  name: kubernetes'
+              ].join('\n')
+            }
+          })
+        ]
+      })
+
+      const parsed = createParsedCommand()
+      const result = handleClusterInfo(stateWithClusterInfo, parsed)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toContain(
+          'Kubernetes control plane is running at https://10.0.0.1:6443'
+        )
+        expect(result.value).toContain(
+          'CoreDNS is running at https://10.0.0.1:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy'
+        )
+      }
+    })
+
+    it('should return explicit error when cluster-info ConfigMap is missing', () => {
+      const parsed = createParsedCommand()
+      const result = handleClusterInfo(stateData, parsed)
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain(
+          'cluster-info ConfigMap is missing in kube-public namespace'
+        )
+      }
+    })
+
+    it('should return explicit error when cluster-info kubeconfig is invalid', () => {
+      const stateWithInvalidClusterInfo = createClusterStateData({
+        configMaps: [
+          createConfigMap({
+            name: 'cluster-info',
+            namespace: 'kube-public',
+            data: {
+              kubeconfig: 'apiVersion: v1\nkind: Config\nclusters: []'
+            }
+          })
+        ]
+      })
+
+      const parsed = createParsedCommand()
+      const result = handleClusterInfo(stateWithInvalidClusterInfo, parsed)
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain(
+          'cluster-info ConfigMap in kube-public is invalid: missing kubeconfig server URL'
+        )
+      }
+    })
+  })
+
   describe('--all-namespaces flag', () => {
     it('should dump all namespaces when --all-namespaces is set', () => {
       // Add resources in different namespace

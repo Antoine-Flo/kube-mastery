@@ -43,9 +43,15 @@ describe('systemBootstrap', () => {
       })
       return readyCondition?.status === 'True'
     })).toBe(true)
-    expect(resources.configMaps).toHaveLength(1)
-    expect(resources.configMaps[0].metadata.name).toBe('kube-root-ca.crt')
-    expect(resources.configMaps[0].metadata.namespace).toBe('default')
+    expect(resources.configMaps).toHaveLength(2)
+    expect(resources.configMaps.map((configMap) => configMap.metadata.name)).toEqual([
+      'kube-root-ca.crt',
+      'cluster-info'
+    ])
+    expect(resources.configMaps.map((configMap) => configMap.metadata.namespace)).toEqual([
+      'default',
+      'kube-public'
+    ])
     expect(resources.services.map((service) => service.metadata.name)).toEqual([
       'kubernetes',
       'kube-dns'
@@ -115,9 +121,7 @@ describe('systemBootstrap', () => {
     applySystemBootstrap(clusterState, { clusterName: 'conformance', clock })
 
     expect(clusterState.getNodes()).toHaveLength(expected.nodes.length)
-    expect(clusterState.getConfigMaps('default')).toHaveLength(
-      expected.configMaps.length
-    )
+    expect(clusterState.getConfigMaps()).toHaveLength(expected.configMaps.length)
     expect(clusterState.getServices()).toHaveLength(expected.services.length)
     expect(clusterState.getPods()).toHaveLength(expected.pods.length)
     expect(clusterState.getDeployments()).toHaveLength(expected.deployments.length)
