@@ -100,6 +100,13 @@ const t = useTranslations(lang)
             />
           </div>
         </div>
+        <div
+          class="lesson-layout__resizer"
+          data-lesson-resizer
+          role="separator"
+          aria-label="Redimensionner le contenu et le terminal"
+          aria-orientation="vertical"
+        ></div>
         <div class="lesson-layout__terminal-wrap" data-lesson-term-wrap>
           <div class="lesson-layout__terminal">
             <LessonTerminal seedName={seedName} lang={lang} />
@@ -142,9 +149,20 @@ const t = useTranslations(lang)
   import { createFilesystemFromConfig } from '../../core/filesystem/debianFileSystem'
 
   const STORAGE_KEY = 'lesson-sidebar-collapsed'
+  const PANEL_RESIZE_STORAGE_KEY = 'lesson-terminal-width'
+  const DESKTOP_BREAKPOINT = '(min-width: 1025px)'
+  const MIN_TERMINAL_WIDTH = 320
+  const MIN_CONTENT_WIDTH = 420
   let lessonEnv:
     | import('../../core/emulatedEnvironment/EmulatedEnvironment').EmulatedEnvironment
     | null = null
+  let panelResizeBound = false
+  let panelResizeState: {
+    body: HTMLElement
+    content: HTMLElement
+    terminalWrap: HTMLElement
+    resizer: HTMLElement
+  } | null = null
 
   function setupLessonEnv() {
     const root = document.querySelector('.lesson-layout-root')
@@ -294,12 +312,164 @@ const t = useTranslations(lang)
     })
   }
 
+  function getPanelElements() {
+    const body = document.querySelector('.lesson-layout__body')
+    const content = document.querySelector('.lesson-layout__content')
+    const terminalWrap = document.querySelector(
+      '[data-lesson-term-wrap]'
+    ) as HTMLElement | null
+    const resizer = document.querySelector(
+      '[data-lesson-resizer]'
+    ) as HTMLElement | null
+
+    if (
+      !(body instanceof HTMLElement) ||
+      !(content instanceof HTMLElement) ||
+      !(terminalWrap instanceof HTMLElement) ||
+      !(resizer instanceof HTMLElement)
+    ) {
+      return null
+    }
+
+    return {
+      body,
+      content,
+      terminalWrap,
+      resizer
+    }
+  }
+
+  function clampTerminalWidth(layoutWidth: number, desiredWidth: number) {
+    const maxTerminalWidth = Math.max(
+      MIN_TERMINAL_WIDTH,
+      layoutWidth - MIN_CONTENT_WIDTH
+    )
+    return Math.min(Math.max(desiredWidth, MIN_TERMINAL_WIDTH), maxTerminalWidth)
+  }
+
+  function applyTerminalWidth(desiredWidth: number) {
+    const desktopQuery = window.matchMedia(DESKTOP_BREAKPOINT)
+    const panelElements = getPanelElements()
+    if (!panelElements) {
+      return
+    }
+
+    const { body, content, terminalWrap } = panelElements
+
+    if (!desktopQuery.matches) {
+      terminalWrap.style.removeProperty('flex')
+      content.style.removeProperty('flex')
+      return
+    }
+
+    const clampedWidth = clampTerminalWidth(body.clientWidth, desiredWidth)
+    terminalWrap.style.flex = `0 0 ${clampedWidth}px`
+    content.style.flex = '1 1 auto'
+  }
+
+  function setupPanelResize() {
+    const desktopQuery = window.matchMedia(DESKTOP_BREAKPOINT)
+    const panelElements = getPanelElements()
+    if (!panelElements) {
+      return
+    }
+
+    const { body } = panelElements
+
+    const storedWidth = Number(localStorage.getItem(PANEL_RESIZE_STORAGE_KEY))
+    if (Number.isFinite(storedWidth) && storedWidth > 0) {
+      applyTerminalWidth(storedWidth)
+    } else {
+      applyTerminalWidth(Math.round(body.clientWidth * 0.5))
+    }
+
+    if (panelResizeBound) {
+      return
+    }
+    panelResizeBound = true
+
+    const stopResize = () => {
+      if (!panelResizeState) {
+        return
+      }
+      panelResizeState.resizer.classList.remove('lesson-layout__resizer--dragging')
+      document.body.classList.remove('lesson-layout--resizing')
+      panelResizeState = null
+    }
+
+    document.addEventListener('pointerdown', (event) => {
+      if (!(event.target instanceof Element)) {
+        return
+      }
+      const resizer = event.target.closest('[data-lesson-resizer]')
+      if (!(resizer instanceof HTMLElement)) {
+        return
+      }
+      if (!desktopQuery.matches) {
+        return
+      }
+
+      const currentPanelElements = getPanelElements()
+      if (!currentPanelElements) {
+        return
+      }
+
+      event.preventDefault()
+      panelResizeState = {
+        body: currentPanelElements.body,
+        content: currentPanelElements.content,
+        terminalWrap: currentPanelElements.terminalWrap,
+        resizer
+      }
+      panelResizeState.resizer.classList.add('lesson-layout__resizer--dragging')
+      document.body.classList.add('lesson-layout--resizing')
+    })
+
+    document.addEventListener('pointermove', (event) => {
+      if (!panelResizeState) {
+        return
+      }
+
+      const { body, terminalWrap, content } = panelResizeState
+      const bodyRect = body.getBoundingClientRect()
+      const rawTerminalWidth = bodyRect.right - event.clientX
+      const nextTerminalWidth = clampTerminalWidth(bodyRect.width, rawTerminalWidth)
+
+      terminalWrap.style.flex = `0 0 ${nextTerminalWidth}px`
+      content.style.flex = '1 1 auto'
+      localStorage.setItem(PANEL_RESIZE_STORAGE_KEY, String(Math.round(nextTerminalWidth)))
+    })
+
+    document.addEventListener('pointerup', () => {
+      stopResize()
+    })
+
+    document.addEventListener('pointercancel', () => {
+      stopResize()
+    })
+
+    window.addEventListener('resize', () => {
+      const currentPanelElements = getPanelElements()
+      if (!currentPanelElements) {
+        return
+      }
+      const currentWidth = Number.parseFloat(
+        currentPanelElements.terminalWrap.style.flexBasis
+      )
+      if (Number.isFinite(currentWidth) && currentWidth > 0) {
+        applyTerminalWidth(currentWidth)
+      }
+    })
+  }
+
   setupSidebarToggle()
   setupTerminalToggle()
+  setupPanelResize()
   requestAnimationFrame(setupLessonEnv)
   document.addEventListener('astro:page-load', () => {
     setupSidebarToggle()
     setupTerminalToggle()
+    setupPanelResize()
     requestAnimationFrame(setupLessonEnv)
   })
   // Keep shared env alive across page transitions for persistent lesson terminal.
@@ -435,7 +605,6 @@ const t = useTranslations(lang)
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-left: 1px solid var(--color-gray-6);
   }
 
   .lesson-layout__terminal {
@@ -444,6 +613,56 @@ const t = useTranslations(lang)
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+
+  .lesson-layout__resizer {
+    position: relative;
+    flex: 0 0 10px;
+    width: 10px;
+    cursor: col-resize;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .lesson-layout__resizer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    background-color: var(--color-gray-6);
+    transition: background-color var(--duration-normal);
+  }
+
+  .lesson-layout__resizer::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 44px;
+    border-radius: 9999px;
+    background-color: var(--color-gray-a7);
+    opacity: 0;
+    transition: opacity var(--duration-normal), background-color var(--duration-normal);
+  }
+
+  .lesson-layout__resizer:hover::before,
+  .lesson-layout__resizer--dragging::before {
+    background-color: var(--color-gray-8);
+  }
+
+  .lesson-layout__resizer:hover::after,
+  .lesson-layout__resizer--dragging::after {
+    opacity: 1;
+  }
+
+  :global(body.lesson-layout--resizing) {
+    cursor: col-resize;
+    user-select: none;
   }
 
   .lesson-layout__main {
@@ -505,6 +724,9 @@ const t = useTranslations(lang)
       min-width: unset;
       border-left: none;
       border-top: 1px solid var(--color-gray-6);
+    }
+    .lesson-layout__resizer {
+      display: none;
     }
     .lesson-layout__terminal-wrap.lesson-layout__terminal-wrap--hidden {
       display: none;
