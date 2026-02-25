@@ -11,10 +11,12 @@ import { createConfigMap } from './ressources/ConfigMap'
 import type { DaemonSet } from './ressources/DaemonSet'
 import type { Node, NodeCondition } from './ressources/Node'
 import { createNode } from './ressources/Node'
+import type { Namespace } from './ressources/Namespace'
 import type { Deployment } from './ressources/Deployment'
 import type { Pod } from './ressources/Pod'
 import type { Service } from './ressources/Service'
 import { createService } from './ressources/Service'
+import { createSystemNamespaces, isSystemNamespace } from './systemNamespaces'
 
 export interface SystemBootstrapOptions {
   clusterName?: string
@@ -33,6 +35,7 @@ export interface ClusterBootstrapConfig extends SystemBootstrapOptions {
 }
 
 export interface SystemBootstrapResources {
+  namespaces: Namespace[]
   nodes: Node[]
   configMaps: ConfigMap[]
   services: Service[]
@@ -202,6 +205,7 @@ export const createSystemBootstrapResources = (
   })
 
   return {
+    namespaces: createSystemNamespaces(creationTimestamp),
     nodes: nodeRoles.map((role, index) => {
       return createBootstrapNode(
         clusterName,
@@ -224,7 +228,21 @@ export const createSystemBootstrapResources = (
 }
 
 const isSystemPodNamespace = (namespace: string): boolean => {
-  return namespace === 'kube-system' || namespace === 'local-path-storage'
+  return isSystemNamespace(namespace)
+}
+
+const upsertNamespaces = (
+  clusterState: ClusterState,
+  namespaces: Namespace[]
+): void => {
+  for (const namespace of namespaces) {
+    const findNamespaceResult = clusterState.findNamespace(namespace.metadata.name)
+    if (!findNamespaceResult.ok) {
+      clusterState.addNamespace(namespace)
+      continue
+    }
+    clusterState.updateNamespace(namespace.metadata.name, () => namespace)
+  }
 }
 
 const removeExistingSystemPods = (clusterState: ClusterState): void => {
@@ -367,6 +385,7 @@ const applyKindLikeBootstrap = (
   const resources = createSystemBootstrapResources(options)
   const mode = options.mode ?? 'missing-only'
 
+  upsertNamespaces(clusterState, resources.namespaces)
   upsertNodes(clusterState, resources.nodes)
   upsertConfigMaps(clusterState, resources.configMaps)
   upsertServices(clusterState, resources.services)

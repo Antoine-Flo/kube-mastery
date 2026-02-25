@@ -3,6 +3,7 @@ import { createClusterState } from '../../../../src/core/cluster/ClusterState'
 import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 import { createNode } from '../../../../src/core/cluster/ressources/Node'
+import { createNamespace } from '../../../../src/core/cluster/ressources/Namespace'
 import { createService } from '../../../../src/core/cluster/ressources/Service'
 import { createConfigMap } from '../../../../src/core/cluster/ressources/ConfigMap'
 import { createHostFileSystem } from '../../../../src/core/filesystem/debianFileSystem'
@@ -463,6 +464,7 @@ data:
       })
 
       it('should create deployment in a specific namespace', () => {
+        clusterState.addNamespace(createNamespace({ name: 'staging' }))
         const executor = createKubectlExecutor(
           clusterState,
           fileSystem,
@@ -479,6 +481,7 @@ data:
       })
 
       it('should parse name correctly when namespace flag is before name', () => {
+        clusterState.addNamespace(createNamespace({ name: 'staging' }))
         const executor = createKubectlExecutor(
           clusterState,
           fileSystem,
@@ -1256,6 +1259,7 @@ data:
       })
 
       it('should create pod in provided namespace for kubectl run', () => {
+        clusterState.addNamespace(createNamespace({ name: 'tools' }))
         const executor = createKubectlExecutor(
           clusterState,
           fileSystem,

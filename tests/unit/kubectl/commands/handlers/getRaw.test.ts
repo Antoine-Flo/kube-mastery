@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
+import { createNamespace } from '../../../../../src/core/cluster/ressources/Namespace'
 import { handleGetRaw } from '../../../../../src/core/kubectl/commands/handlers/getRaw'
 import { createClusterStateData } from '../../../helpers/utils'
 
@@ -23,12 +23,16 @@ describe('kubectl get raw handler', () => {
   })
 
   it('returns NamespaceList for "/api/v1/namespaces"', () => {
-    const appPod = createPod({
-      name: 'api',
-      namespace: 'app',
-      containers: [{ name: 'api', image: 'nginx:latest' }]
+    const state = createClusterStateData({
+      namespaces: [
+        createNamespace({ name: 'default' }),
+        createNamespace({ name: 'kube-system' }),
+        createNamespace({ name: 'kube-public' }),
+        createNamespace({ name: 'kube-node-lease' }),
+        createNamespace({ name: 'local-path-storage' }),
+        createNamespace({ name: 'app' })
+      ]
     })
-    const state = createClusterStateData({ pods: [appPod] })
     const output = handleGetRaw(state, '/api/v1/namespaces')
     const payload = JSON.parse(output) as {
       kind: string
@@ -49,6 +53,7 @@ describe('kubectl get raw handler', () => {
     expect(names).toContain('kube-system')
     expect(names).toContain('kube-public')
     expect(names).toContain('kube-node-lease')
+    expect(names).toContain('local-path-storage')
     expect(names).toContain('app')
     const defaultNamespace = payload.items.find(
       (item) => item.metadata.name === 'default'

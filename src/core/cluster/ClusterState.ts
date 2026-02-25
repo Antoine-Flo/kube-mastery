@@ -64,7 +64,6 @@ import type { ConfigMap } from './ressources/ConfigMap'
 import type { DaemonSet } from './ressources/DaemonSet'
 import type { Deployment } from './ressources/Deployment'
 import {
-  createNamespace,
   type Namespace
 } from './ressources/Namespace'
 import type { Node } from './ressources/Node'
@@ -74,6 +73,7 @@ import type { Secret } from './ressources/Secret'
 import type { Service } from './ressources/Service'
 import type { ClusterBootstrapConfig } from './systemBootstrap'
 import { applyClusterBootstrap } from './systemBootstrap'
+import { createSystemNamespaces } from './systemNamespaces'
 
 // ╔═══════════════════════════════════════════════════════════════════════╗
 // ║                    KUBERNETES CLUSTER STATE                           ║
@@ -253,12 +253,7 @@ const createEmptyState = (): ClusterStateData => ({
   daemonSets: daemonSetRepo.createEmpty(),
   services: serviceRepo.createEmpty(),
   namespaces: {
-    items: [
-      createNamespace({ name: 'default' }),
-      createNamespace({ name: 'kube-system' }),
-      createNamespace({ name: 'kube-public' }),
-      createNamespace({ name: 'kube-node-lease' })
-    ]
+    items: createSystemNamespaces()
   }
 })
 
@@ -444,11 +439,28 @@ const createFacadeMethods = <T extends KubernetesResource>(
   resourceKind: keyof typeof EVENT_FACTORIES
 ) => {
   const eventFactory = EVENT_FACTORIES[resourceKind]
+  const assertNamespaceExists = (
+    currentState: ClusterStateData,
+    namespace: string
+  ): void => {
+    const namespaceResult = namespaceRepo.find(
+      currentState.namespaces,
+      namespace,
+      ''
+    )
+    if (!namespaceResult.ok) {
+      throw new Error(
+        `Namespace invariant violation: "${namespace}" does not exist`
+      )
+    }
+  }
 
   return {
     getAll: (namespace?: string) => ops.getAll(getState(), namespace),
 
     add: (resource: T) => {
+      const currentState = getState()
+      assertNamespaceExists(currentState, resource.metadata.namespace)
       eventBus.emit(eventFactory.created(resource as any, 'direct'))
     },
 
@@ -471,6 +483,8 @@ const createFacadeMethods = <T extends KubernetesResource>(
       namespace: string,
       updateFn: (resource: T) => T
     ): Result<T> => {
+      const currentState = getState()
+      assertNamespaceExists(currentState, namespace)
       const findResult = ops.find(getState(), name, namespace)
       if (!findResult.ok) {
         return findResult

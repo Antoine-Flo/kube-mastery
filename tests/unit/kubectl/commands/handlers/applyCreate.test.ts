@@ -111,6 +111,19 @@ describe('applyCreate handler', () => {
   })
 
   it('should create deployment in provided namespace', () => {
+    const createNamespaceParsed = parseCommand('kubectl create namespace staging')
+    expect(createNamespaceParsed.ok).toBe(true)
+    if (!createNamespaceParsed.ok) {
+      return
+    }
+    const createNamespaceResult = handleCreate(
+      fileSystem,
+      clusterState,
+      createNamespaceParsed.value,
+      eventBus
+    )
+    expect(createNamespaceResult.ok).toBe(true)
+
     const parsed = parseCommand(
       'kubectl create deployment my-dep --image=busybox -n staging'
     )
@@ -129,6 +142,29 @@ describe('applyCreate handler', () => {
     expect(result.ok).toBe(true)
     const deployment = clusterState.findDeployment('my-dep', 'staging')
     expect(deployment.ok).toBe(true)
+  })
+
+  it('should fail when deployment namespace does not exist', () => {
+    const parsed = parseCommand(
+      'kubectl create deployment my-dep --image=busybox -n staging'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('Error from server (NotFound)')
+      expect(result.error).toContain('namespaces "staging" not found')
+    }
   })
 
   it('should keep create from file flow', () => {

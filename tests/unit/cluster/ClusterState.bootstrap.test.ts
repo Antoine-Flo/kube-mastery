@@ -45,6 +45,8 @@ describe('createClusterState bootstrap policy', () => {
     expect(clusterState.getServices().some((service) => {
       return service.metadata.name === 'kube-dns'
     })).toBe(true)
+    expect(clusterState.getNamespaces().map((namespace) => namespace.metadata.name))
+      .toContain('local-path-storage')
   })
 
   it('supports explicit none profile to disable bootstrap', () => {

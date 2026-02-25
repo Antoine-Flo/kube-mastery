@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { handleScale } from '../../../../../src/core/kubectl/commands/handlers/scale'
 import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
 import { createReplicaSet } from '../../../../../src/core/cluster/ressources/ReplicaSet'
+import { createNamespace } from '../../../../../src/core/cluster/ressources/Namespace'
 import {
   createEventBus,
   type EventBus
@@ -178,6 +179,7 @@ describe('kubectl scale handler', () => {
     })
 
     it('should scale deployment in specified namespace', () => {
+      clusterState.addNamespace(createNamespace({ name: 'production' }))
       const deployment = createDeployment({
         name: 'nginx-deployment',
         namespace: 'production',
@@ -203,6 +205,7 @@ describe('kubectl scale handler', () => {
     })
 
     it('should not find deployment in wrong namespace', () => {
+      clusterState.addNamespace(createNamespace({ name: 'production' }))
       const deployment = createDeployment({
         name: 'nginx-deployment',
         namespace: 'production',

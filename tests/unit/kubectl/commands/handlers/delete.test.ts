@@ -13,6 +13,7 @@ import {
 } from '../../../../../src/core/cluster/ClusterState'
 import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
 import { createService } from '../../../../../src/core/cluster/ressources/Service'
+import { createNamespace } from '../../../../../src/core/cluster/ressources/Namespace'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 
 describe('kubectl delete handler', () => {
@@ -102,6 +103,7 @@ describe('kubectl delete handler', () => {
     })
 
     it('should delete pod in specified namespace', () => {
+      clusterState.addNamespace(createNamespace({ name: 'production' }))
       const pod = createPod({
         name: 'my-pod',
         namespace: 'production',
@@ -306,6 +308,7 @@ describe('kubectl delete handler', () => {
     })
 
     it('should handle namespace delete (simulated)', () => {
+      clusterState.addNamespace(createNamespace({ name: 'my-namespace' }))
       const parsed = createParsedCommand({
         name: 'my-namespace',
         resource: 'namespaces'
@@ -317,6 +320,45 @@ describe('kubectl delete handler', () => {
       if (result.ok) {
         expect(result.value).toContain('namespace')
       }
+    })
+
+    it('should cascade delete namespaced resources when deleting namespace', () => {
+      clusterState.addNamespace(createNamespace({ name: 'project-x' }))
+      clusterState.addPod(
+        createPod({
+          name: 'app-pod',
+          namespace: 'project-x',
+          containers: [{ name: 'main', image: 'nginx:latest' }]
+        })
+      )
+      clusterState.addConfigMap(
+        createConfigMap({
+          name: 'app-config',
+          namespace: 'project-x',
+          data: { key: 'value' }
+        })
+      )
+      clusterState.addService(
+        createService({
+          name: 'app-service',
+          namespace: 'project-x',
+          selector: { app: 'app' },
+          ports: [{ port: 80 }]
+        })
+      )
+
+      const parsed = createParsedCommand({
+        name: 'project-x',
+        resource: 'namespaces'
+      })
+
+      const result = handleDelete(clusterState, parsed, eventBus)
+
+      expect(result.ok).toBe(true)
+      expect(clusterState.findNamespace('project-x').ok).toBe(false)
+      expect(clusterState.getPods('project-x')).toHaveLength(0)
+      expect(clusterState.getConfigMaps('project-x')).toHaveLength(0)
+      expect(clusterState.getServices('project-x')).toHaveLength(0)
     })
 
     it('should handle unknown resource type', () => {
@@ -355,6 +397,7 @@ describe('kubectl delete handler', () => {
     })
 
     it('should not find pod in wrong namespace', () => {
+      clusterState.addNamespace(createNamespace({ name: 'production' }))
       const pod = createPod({
         name: 'my-pod',
         namespace: 'production',

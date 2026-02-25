@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { handleClusterInfo } from '../../../../../src/core/kubectl/commands/handlers/clusterInfo'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
+import { createNamespace } from '../../../../../src/core/cluster/ressources/Namespace'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
 import { createEventBus } from '../../../../../src/core/cluster/events/EventBus'
@@ -230,6 +231,8 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
       // Add resources in multiple namespaces
       const eventBus = createEventBus()
       const multiNsState = createClusterState(eventBus)
+      multiNsState.addNamespace(createNamespace({ name: 'production' }))
+      multiNsState.addNamespace(createNamespace({ name: 'staging' }))
       multiNsState.addPod(
         createPod({
           name: 'pod1',

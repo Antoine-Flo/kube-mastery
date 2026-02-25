@@ -23,6 +23,13 @@ describe('systemBootstrap', () => {
     })
 
     expect(resources.nodes).toHaveLength(3)
+    expect(resources.namespaces.map((namespace) => namespace.metadata.name)).toEqual([
+      'default',
+      'kube-system',
+      'kube-public',
+      'kube-node-lease',
+      'local-path-storage'
+    ])
     expect(resources.nodes.map((node) => node.metadata.name)).toEqual([
       'conformance-control-plane',
       'conformance-worker',
@@ -121,6 +128,7 @@ describe('systemBootstrap', () => {
     applySystemBootstrap(clusterState, { clusterName: 'conformance', clock })
 
     expect(clusterState.getNodes()).toHaveLength(expected.nodes.length)
+    expect(clusterState.getNamespaces()).toHaveLength(expected.namespaces.length)
     expect(clusterState.getConfigMaps()).toHaveLength(expected.configMaps.length)
     expect(clusterState.getServices()).toHaveLength(expected.services.length)
     expect(clusterState.getPods()).toHaveLength(expected.pods.length)

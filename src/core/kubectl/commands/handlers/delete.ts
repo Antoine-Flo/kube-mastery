@@ -41,6 +41,75 @@ interface NamespacedDeleteConfig {
   ) => void
 }
 
+const deleteNamespacedResourcesForNamespace = (
+  clusterState: ClusterState,
+  namespace: string
+): ExecutionResult | undefined => {
+  const pods = clusterState.getPods(namespace)
+  for (const pod of pods) {
+    const result = clusterState.deletePod(pod.metadata.name, namespace)
+    if (!result.ok) {
+      return result
+    }
+  }
+
+  const configMaps = clusterState.getConfigMaps(namespace)
+  for (const configMap of configMaps) {
+    const result = clusterState.deleteConfigMap(configMap.metadata.name, namespace)
+    if (!result.ok) {
+      return result
+    }
+  }
+
+  const secrets = clusterState.getSecrets(namespace)
+  for (const secret of secrets) {
+    const result = clusterState.deleteSecret(secret.metadata.name, namespace)
+    if (!result.ok) {
+      return result
+    }
+  }
+
+  const deployments = clusterState.getDeployments(namespace)
+  for (const deployment of deployments) {
+    const result = clusterState.deleteDeployment(
+      deployment.metadata.name,
+      namespace
+    )
+    if (!result.ok) {
+      return result
+    }
+  }
+
+  const daemonSets = clusterState.getDaemonSets(namespace)
+  for (const daemonSet of daemonSets) {
+    const result = clusterState.deleteDaemonSet(daemonSet.metadata.name, namespace)
+    if (!result.ok) {
+      return result
+    }
+  }
+
+  const replicaSets = clusterState.getReplicaSets(namespace)
+  for (const replicaSet of replicaSets) {
+    const result = clusterState.deleteReplicaSet(
+      replicaSet.metadata.name,
+      namespace
+    )
+    if (!result.ok) {
+      return result
+    }
+  }
+
+  const services = clusterState.getServices(namespace)
+  for (const service of services) {
+    const result = clusterState.deleteService(service.metadata.name, namespace)
+    if (!result.ok) {
+      return result
+    }
+  }
+
+  return undefined
+}
+
 const NAMESPACED_EVENT_DELETE_CONFIG: Record<
   NamespacedEventDeleteResource,
   NamespacedDeleteConfig
@@ -141,10 +210,24 @@ export const handleDelete = (
   }
 
   if (resource === 'namespaces') {
+    const existingNamespace = clusterState.findNamespace(parsed.name)
+    if (!existingNamespace.ok) {
+      return formatNotFoundMessage('namespaces', parsed.name)
+    }
+
+    const cascadeResult = deleteNamespacedResourcesForNamespace(
+      clusterState,
+      parsed.name
+    )
+    if (cascadeResult != null) {
+      return cascadeResult
+    }
+
     const deleteResult = clusterState.deleteNamespace(parsed.name)
     if (!deleteResult.ok) {
       return formatNotFoundMessage('namespaces', parsed.name)
     }
+
     return success(formatDeletedMessage('namespace', parsed.name, namespace, false))
   }
 

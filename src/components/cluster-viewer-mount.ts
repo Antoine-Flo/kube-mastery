@@ -103,12 +103,11 @@ export interface MountClusterViewerOptions {
   env: EmulatedEnvironment
 }
 
-function getSortedUniqueNamespaces(pods: Pod[]): string[] {
-  const namespaces = new Set<string>()
-  for (const pod of pods) {
-    namespaces.add(pod.metadata.namespace)
-  }
-  return [...namespaces].sort((a, b) => {
+function getSortedNamespaces(env: EmulatedEnvironment): string[] {
+  const namespaces = env.clusterState.getNamespaces().map((namespace) => {
+    return namespace.metadata.name
+  })
+  return namespaces.sort((a, b) => {
     return a.localeCompare(b)
   })
 }
@@ -186,7 +185,7 @@ function renderCluster(
     }
     return a.metadata.name.localeCompare(b.metadata.name)
   })
-  const namespaces = getSortedUniqueNamespaces(allPods)
+  const namespaces = getSortedNamespaces(env)
   syncNamespaceSelection(namespaces, selectedNamespaces, knownNamespaces)
   const pods = allPods.filter((pod) => {
     return selectedNamespaces.has(pod.metadata.namespace)

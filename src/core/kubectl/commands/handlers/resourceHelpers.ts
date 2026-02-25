@@ -58,6 +58,39 @@ type ResourceKind =
   | 'DaemonSet'
   | 'Service'
 
+const NAMESPACED_RESOURCE_KINDS: ResourceKind[] = [
+  'Pod',
+  'ConfigMap',
+  'Secret',
+  'ReplicaSet',
+  'Deployment',
+  'DaemonSet',
+  'Service'
+]
+
+const resourceRequiresNamespace = (kind: ResourceKind): boolean => {
+  return NAMESPACED_RESOURCE_KINDS.includes(kind)
+}
+
+const validateNamespaceExists = (
+  clusterState: ClusterState,
+  kind: ResourceKind,
+  namespace: string
+): ExecutionResult | undefined => {
+  if (!resourceRequiresNamespace(kind)) {
+    return undefined
+  }
+
+  const namespaceResult = clusterState.findNamespace(namespace)
+  if (namespaceResult.ok) {
+    return undefined
+  }
+
+  return error(
+    `Error from server (NotFound): namespaces "${namespace}" not found`
+  )
+}
+
 interface ResourceHandler {
   find: (state: ClusterState, name: string, namespace: string) => Result<any>
   emitCreated: (eventBus: EventBus, resource: KubernetesResource) => void
@@ -287,6 +320,15 @@ export const applyResourceWithEvents = (
     )
   }
 
+  const namespaceValidation = validateNamespaceExists(
+    clusterState,
+    kind,
+    namespace
+  )
+  if (namespaceValidation != null) {
+    return namespaceValidation
+  }
+
   // Check if resource exists (Nodes ignore namespace)
   const existing = handler.find(clusterState, name, namespace)
 
@@ -327,6 +369,15 @@ export const createResourceWithEvents = (
     return error(
       `error: the server doesn't have a resource type "${kind.toLowerCase()}s"`
     )
+  }
+
+  const namespaceValidation = validateNamespaceExists(
+    clusterState,
+    kind,
+    namespace
+  )
+  if (namespaceValidation != null) {
+    return namespaceValidation
   }
 
   // Check if resource exists (Nodes ignore namespace)
