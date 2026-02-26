@@ -130,12 +130,72 @@ function buildLessonDirsByTopic(): Map<string, string[]> {
   return out
 }
 
+function stripFrontmatter(raw: string): string {
+  const normalized = raw.replace(/\r\n/g, '\n').trim()
+  if (!normalized.startsWith('---\n')) {
+    return normalized
+  }
+  return normalized.replace(/^---[\s\S]*?\n---\n?/, '').trim()
+}
+
+function isPlaceholderLesson(raw: string): boolean {
+  const withoutFrontmatter = stripFrontmatter(raw)
+  const nonEmptyLines = withoutFrontmatter
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+
+  if (nonEmptyLines.length === 0) {
+    return false
+  }
+
+  if (nonEmptyLines.length === 1) {
+    return nonEmptyLines[0].toLowerCase() === 'placeholder'
+  }
+
+  if (nonEmptyLines.length === 2 && nonEmptyLines[0].startsWith('#')) {
+    return nonEmptyLines[1].toLowerCase() === 'placeholder'
+  }
+
+  return false
+}
+
+function buildPlaceholderLessonIdsByModule(): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>()
+
+  for (const [path, raw] of Object.entries(contentRawGlob)) {
+    const parts = path.split('/')
+    const modulesIdx = parts.indexOf('modules')
+    if (modulesIdx === -1 || parts.length < modulesIdx + 4) {
+      continue
+    }
+
+    const moduleId = parts[modulesIdx + 1]
+    const topicDir = parts[modulesIdx + 2]
+    const lang = parts[modulesIdx + 3]
+    if (lang !== 'en') {
+      continue
+    }
+    if (!isPlaceholderLesson(raw ?? '')) {
+      continue
+    }
+
+    if (!out.has(moduleId)) {
+      out.set(moduleId, new Set())
+    }
+    out.get(moduleId)!.add(stripNumericPrefix(topicDir))
+  }
+
+  return out
+}
+
 let lessonTitleIndex: Map<string, string> | null = null
 let topicDirsByModule: Map<
   string,
   Array<{ topicDir: string; topicId: string }>
 > | null = null
 let lessonDirsByTopic: Map<string, string[]> | null = null
+let placeholderLessonIdsByModule: Map<string, Set<string>> | null = null
 
 const indexPort: OverviewIndexPort = {
   getLessonTitleIndex() {
@@ -155,6 +215,12 @@ const indexPort: OverviewIndexPort = {
       lessonDirsByTopic = buildLessonDirsByTopic()
     }
     return lessonDirsByTopic
+  },
+  getPlaceholderLessonIdsByModule() {
+    if (!placeholderLessonIdsByModule) {
+      placeholderLessonIdsByModule = buildPlaceholderLessonIdsByModule()
+    }
+    return placeholderLessonIdsByModule
   }
 }
 

@@ -34,9 +34,19 @@ const {
           <div class="overview-structure__accordion">
             {section.modules.map((module) => (
               <details
-                open={module.lessons.some((l) => l.id === currentLessonId)}
+                open={
+                  !module.isLocked &&
+                  module.lessons.some((l) => l.id === currentLessonId)
+                }
+                class:list={{
+                  'overview-structure__module': true,
+                  'overview-structure__module--locked': module.isLocked
+                }}
               >
-                <summary>
+                <summary
+                  aria-disabled={module.isLocked ? 'true' : 'false'}
+                  tabindex={module.isLocked ? -1 : undefined}
+                >
                   <span class="overview-structure__module-title">{module.title}</span>
                   <span class="overview-structure__lesson-count">
                     {module.lessons.length}{' '}
@@ -44,41 +54,58 @@ const {
                       ? t('courses_lesson')
                       : t('courses_lessons')}
                   </span>
+                  {module.isLocked && (
+                    <span class="overview-structure__module-lock-badge">
+                      {t('courses_comingSoon')}
+                    </span>
+                  )}
                   <ChevronDown size={20} class="overview-structure__chevron" aria-hidden="true" />
                 </summary>
                 <div class="overview-structure__details-body">
                   <div class="overview-structure__lesson-list">
                     {module.lessons.map((lesson: OverviewLesson) => (
-                      <a
-                        href={`${lessonBaseUrl}/${lesson.id}`}
-                        class:list={{
-                          'overview-structure__lesson': true,
-                          'progress-completed': completedLessonIds.has(
-                            lesson.id
-                          ),
-                          'progress-current': lesson.id === currentLessonId
-                        }}
-                      >
-                        <span
-                          class="overview-structure__lesson-icon overview-structure__lesson-icon--pending"
-                          aria-hidden="true"
-                        >
-                          <Circle size={16} />
+                      module.isLocked ? (
+                        <span class="overview-structure__lesson overview-structure__lesson--locked">
+                          <span
+                            class="overview-structure__lesson-icon overview-structure__lesson-icon--pending"
+                            aria-hidden="true"
+                          >
+                            <Circle size={16} />
+                          </span>
+                          <span class="overview-structure__lesson-title">{lesson.title}</span>
                         </span>
-                        <span
-                          class="overview-structure__lesson-icon overview-structure__lesson-icon--current"
-                          aria-hidden="true"
+                      ) : (
+                        <a
+                          href={`${lessonBaseUrl}/${lesson.id}`}
+                          class:list={{
+                            'overview-structure__lesson': true,
+                            'progress-completed': completedLessonIds.has(
+                              lesson.id
+                            ),
+                            'progress-current': lesson.id === currentLessonId
+                          }}
                         >
-                          <CirclePlay size={16} />
-                        </span>
-                        <span
-                          class="overview-structure__lesson-icon overview-structure__lesson-icon--completed"
-                          aria-hidden="true"
-                        >
-                          <CircleCheck size={16} />
-                        </span>
-                        <span class="overview-structure__lesson-title">{lesson.title}</span>
-                      </a>
+                          <span
+                            class="overview-structure__lesson-icon overview-structure__lesson-icon--pending"
+                            aria-hidden="true"
+                          >
+                            <Circle size={16} />
+                          </span>
+                          <span
+                            class="overview-structure__lesson-icon overview-structure__lesson-icon--current"
+                            aria-hidden="true"
+                          >
+                            <CirclePlay size={16} />
+                          </span>
+                          <span
+                            class="overview-structure__lesson-icon overview-structure__lesson-icon--completed"
+                            aria-hidden="true"
+                          >
+                            <CircleCheck size={16} />
+                          </span>
+                          <span class="overview-structure__lesson-title">{lesson.title}</span>
+                        </a>
+                      )
                     ))}
                   </div>
                 </div>
@@ -98,39 +125,51 @@ const {
     color: var(--color-gray-12);
     margin: 0 0 1rem;
   }
+
   .overview-structure .overview-structure__box {
     margin-top: 1.5rem;
     padding: var(--spacing-6);
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-gray-6);
   }
+
   .overview-structure .overview-structure__section .overview-structure__section-header {
     margin: var(--spacing-4) 0 var(--spacing-2);
     padding-top: var(--spacing-2);
   }
+
   .overview-structure .overview-structure__section:first-child .overview-structure__section-header {
     margin-top: 0;
     padding-top: 0;
   }
+
   .overview-structure .overview-structure__section .overview-structure__section-header h3 {
     font-size: var(--text-lg);
     font-weight: var(--font-weight-semibold);
     color: var(--color-gray-12);
     margin: 0;
   }
+
   .overview-structure .overview-structure__separator {
     height: 1px;
     background: var(--color-gray-5);
     margin: var(--spacing-4) 0 0;
   }
+
   .overview-structure .overview-structure__accordion {
     width: 100%;
     margin-left: var(--spacing-2);
   }
+
   .overview-structure details {
     border: none;
     margin-top: var(--spacing-2);
   }
+
+  .overview-structure details.overview-structure__module--locked {
+    opacity: 0.6;
+  }
+
   .overview-structure summary {
     display: flex;
     align-items: center;
@@ -140,10 +179,12 @@ const {
     list-style: none;
     color: var(--color-gray-12);
   }
+
   .overview-structure summary::-webkit-details-marker,
   .overview-structure summary::marker {
     display: none;
   }
+
   .overview-structure summary .overview-structure__module-title {
     flex: 1;
     display: flex;
@@ -152,21 +193,55 @@ const {
     font-size: var(--text-sm);
     text-align: left;
   }
+
   .overview-structure summary .overview-structure__lesson-count {
     font-size: var(--text-sm);
     color: var(--color-gray-9);
   }
+
   .overview-structure summary .overview-structure__chevron {
     flex-shrink: 0;
     color: var(--color-gray-8);
     transition: transform 0.2s ease;
   }
+
+  .overview-structure details.overview-structure__module--locked summary {
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .overview-structure
+    details.overview-structure__module--locked
+    summary
+    .overview-structure__chevron {
+    display: none;
+  }
+
+  .overview-structure
+    details.overview-structure__module--locked
+    summary
+    .overview-structure__lesson-count {
+    color: var(--color-gray-8);
+  }
+
+  .overview-structure .overview-structure__module-lock-badge {
+    font-size: var(--text-xs);
+    color: var(--color-cyan-11);
+    background: var(--color-cyan-2);
+    border: 1px solid var(--color-cyan-4);
+    border-radius: 999px;
+    padding: 0.1rem 0.5rem;
+    line-height: 1.4;
+  }
+
   .overview-structure details[open] .overview-structure__chevron {
     transform: rotate(180deg);
   }
+
   .overview-structure .overview-structure__details-body {
     padding: 0;
   }
+
   .overview-structure .overview-structure__lesson-list {
     display: flex;
     flex-direction: column;
@@ -184,10 +259,22 @@ const {
     font-size: var(--text-sm);
     transition: background-color 0.15s ease;
   }
+
+  .overview-structure .overview-structure__lesson-list .overview-structure__lesson--locked {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radius-md);
+    color: var(--color-gray-9);
+    font-size: var(--text-sm);
+  }
+
   .overview-structure .overview-structure__lesson-list a.overview-structure__lesson:hover {
     background: var(--color-gray-2);
     color: var(--color-gray-12);
   }
+
   .overview-structure .overview-structure__lesson-list a.overview-structure__lesson .overview-structure__lesson-title {
     flex: 1;
   }
@@ -200,6 +287,7 @@ const {
     justify-content: center;
     color: var(--color-gray-7);
   }
+
   .overview-structure .overview-structure__lesson-list a.overview-structure__lesson .overview-structure__lesson-icon--current,
   .overview-structure .overview-structure__lesson-list a.overview-structure__lesson .overview-structure__lesson-icon--completed {
     display: none;
@@ -208,10 +296,12 @@ const {
   .overview-structure .overview-structure__lesson-list a.overview-structure__lesson.progress-completed {
     opacity: 0.85;
   }
+
   .overview-structure .overview-structure__lesson-list a.overview-structure__lesson.progress-completed .overview-structure__lesson-icon--pending,
   .overview-structure .overview-structure__lesson-list a.overview-structure__lesson.progress-completed .overview-structure__lesson-icon--current {
     display: none;
   }
+
   .overview-structure .overview-structure__lesson-list a.overview-structure__lesson.progress-completed .overview-structure__lesson-icon--completed {
     display: inline-flex;
     color: var(--color-green-9);
@@ -221,13 +311,16 @@ const {
   .overview-structure .overview-structure__lesson-list a.overview-structure__lesson.progress-current .overview-structure__lesson-icon--completed {
     display: none;
   }
+
   .overview-structure .overview-structure__lesson-list a.overview-structure__lesson.progress-current .overview-structure__lesson-icon--current {
     display: inline-flex;
     color: var(--color-cyan-9);
   }
+
   .overview-structure .overview-structure__lesson-list a.overview-structure__lesson.progress-current {
     background: var(--color-cyan-1);
   }
+
   .overview-structure .overview-structure__lesson-list a.overview-structure__lesson.progress-current:hover {
     background: var(--color-cyan-2);
   }

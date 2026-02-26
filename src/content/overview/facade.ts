@@ -54,6 +54,7 @@ export function getCourseOverview(
   const topicDirsByModule = index.getTopicDirsByModule()
   const lessonTitles = index.getLessonTitleIndex()
   const lessonDirsByTopic = index.getLessonDirsByTopic()
+  const placeholderLessonIdsByModule = index.getPlaceholderLessonIdsByModule()
 
   const sections = structure.sections.map((section) => {
     const modules: OverviewModule[] = section.moduleIds.map((moduleId) => {
@@ -65,6 +66,7 @@ export function getCourseOverview(
         topics.map((t) => ({ topicId: t.topicId })),
         title,
         lessonTitles,
+        placeholderLessonIdsByModule.get(moduleId) ?? new Set<string>(),
         lessonDirsByTopic,
         lang
       )
@@ -106,12 +108,14 @@ export function getModuleOverview(
 
   const lessonTitles = index.getLessonTitleIndex()
   const lessonDirsByTopic = index.getLessonDirsByTopic()
+  const placeholderLessonIdsByModule = index.getPlaceholderLessonIdsByModule()
   const title = mod.title[lang] ?? mod.title.en
   const overviewModule = buildModule(
     moduleId,
     topics.map((t) => ({ topicId: t.topicId })),
     title,
     lessonTitles,
+    placeholderLessonIdsByModule.get(moduleId) ?? new Set<string>(),
     lessonDirsByTopic,
     lang
   )
@@ -174,6 +178,21 @@ export function getLessonContent(
   lessonId: string,
   lang: UiLang
 ): MarkdownInstance<Record<string, unknown>> | null {
+  const overview =
+    type === 'courses'
+      ? getCourseOverview(id, lang)
+      : getModuleOverview(id, lang)
+  if (!overview) {
+    return null
+  }
+  const lessonMeta = overview.content.sections
+    .flatMap((section) => section.modules)
+    .flatMap((module) => module.lessons)
+    .find((lesson) => lesson.id === lessonId)
+  if (!lessonMeta || lessonMeta.isPlaceholder) {
+    return null
+  }
+
   const loc = getLessonLocation(type, id, lessonId)
   if (!loc) {
     return null

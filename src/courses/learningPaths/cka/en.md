@@ -4,6 +4,7 @@ shortDescription: The complete Kubernetes administrator path , cluster installat
 isActive: true
 price: 0
 comingSoon: false
+inProgress: true
 order: 2
 level: Intermediate
 ---

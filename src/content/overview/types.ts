@@ -4,6 +4,7 @@ export interface OverviewLesson {
   id: string
   title: string
   hasEnvironment: boolean
+  isPlaceholder: boolean
 }
 
 /** One expandable row in the UI: a module with its lessons. */
@@ -11,6 +12,7 @@ export interface OverviewModule {
   moduleId: string
   title: string
   lessons: OverviewLesson[]
+  isLocked: boolean
 }
 
 export interface CourseOverview {

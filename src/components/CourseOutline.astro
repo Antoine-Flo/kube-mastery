@@ -36,8 +36,18 @@ let moduleFlatIndex = 0
           const isCurrentModule = moduleFlatIndex === currentModuleIndex
           moduleFlatIndex += 1
           return (
-            <details class="out__ch" open={isCurrentModule}>
-              <summary class="out__ch-hd">
+            <details
+              class:list={{
+                out__ch: true,
+                'out__ch--locked': module.isLocked
+              }}
+              open={!module.isLocked && isCurrentModule}
+            >
+              <summary
+                class="out__ch-hd"
+                aria-disabled={module.isLocked ? 'true' : 'false'}
+                tabindex={module.isLocked ? -1 : undefined}
+              >
                 <span class="out__ch-ttl">{module.title}</span>
                 <span class="out__ch-ico" aria-hidden="true">
                   <ChevronDown size={16} aria-hidden="true" />
@@ -45,34 +55,46 @@ let moduleFlatIndex = 0
               </summary>
               <div class="out__ch-bd">
                 {module.lessons.map((lesson: OverviewLesson) => (
-                  <a
-                    href={`${lessonBaseUrl}/${lesson.id}`}
-                    class:list={{
-                      out__it: true,
-                      'progress-completed': completedLessonIds.has(lesson.id),
-                      'progress-current': lesson.id === currentLessonId
-                    }}
-                  >
-                    <span
-                      class="out__it-ico out__it-ico--pending"
-                      aria-hidden="true"
-                    >
-                      <Circle size={16} />
+                  module.isLocked ? (
+                    <span class="out__it out__it--locked">
+                      <span
+                        class="out__it-ico out__it-ico--pending"
+                        aria-hidden="true"
+                      >
+                        <Circle size={16} />
+                      </span>
+                      <span class="out__it-ttl">{lesson.title}</span>
                     </span>
-                    <span
-                      class="out__it-ico out__it-ico--current"
-                      aria-hidden="true"
+                  ) : (
+                    <a
+                      href={`${lessonBaseUrl}/${lesson.id}`}
+                      class:list={{
+                        out__it: true,
+                        'progress-completed': completedLessonIds.has(lesson.id),
+                        'progress-current': lesson.id === currentLessonId
+                      }}
                     >
-                      <CirclePlay size={16} />
-                    </span>
-                    <span
-                      class="out__it-ico out__it-ico--completed"
-                      aria-hidden="true"
-                    >
-                      <CircleCheck size={16} />
-                    </span>
-                    <span class="out__it-ttl">{lesson.title}</span>
-                  </a>
+                      <span
+                        class="out__it-ico out__it-ico--pending"
+                        aria-hidden="true"
+                      >
+                        <Circle size={16} />
+                      </span>
+                      <span
+                        class="out__it-ico out__it-ico--current"
+                        aria-hidden="true"
+                      >
+                        <CirclePlay size={16} />
+                      </span>
+                      <span
+                        class="out__it-ico out__it-ico--completed"
+                        aria-hidden="true"
+                      >
+                        <CircleCheck size={16} />
+                      </span>
+                      <span class="out__it-ttl">{lesson.title}</span>
+                    </a>
+                  )
                 ))}
               </div>
             </details>
@@ -132,6 +154,10 @@ let moduleFlatIndex = 0
     border-bottom: 1px solid var(--color-gray-6);
   }
 
+  .out__ch--locked {
+    opacity: 0.6;
+  }
+
   .out__ch-hd {
     display: flex;
     align-items: center;
@@ -147,6 +173,15 @@ let moduleFlatIndex = 0
     text-align: left;
     font-size: var(--text-sm);
     font-family: inherit;
+  }
+
+  .out__ch--locked .out__ch-hd {
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .out__ch--locked .out__ch-ico {
+    display: none;
   }
 
   .out__ch-hd::-webkit-details-marker,
@@ -200,6 +235,15 @@ let moduleFlatIndex = 0
 
   .out__it:hover {
     background-color: var(--color-gray-3);
+  }
+
+  .out__it--locked {
+    cursor: not-allowed;
+    color: var(--color-gray-9);
+  }
+
+  .out__it--locked:hover {
+    background-color: transparent;
   }
 
   .out__it-ico {

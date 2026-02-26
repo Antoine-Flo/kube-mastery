@@ -14,9 +14,11 @@ interface Props {
   totalLessons: number
   href: string
   comingSoon?: boolean
+  inProgress?: boolean
   level?: string | null
   lessonsLabel: string
   comingSoonLabel?: string
+  inProgressLabel?: string
   visualVariant?: 'fundamentals' | 'developer' | 'operator' | 'platform' | 'full'
 }
 
@@ -25,9 +27,11 @@ const {
   description,
   href,
   comingSoon = false,
+  inProgress = false,
   level,
   lessonsLabel,
   comingSoonLabel = 'Coming soon',
+  inProgressLabel = 'In progress',
   visualVariant
 } = Astro.props
 
@@ -45,6 +49,9 @@ const hasVisual = !!visualVariant
 >
   <a href={comingSoon ? '#' : href} class="card__link">
     {comingSoon && <div class="banner banner--soon">{comingSoonLabel}</div>}
+    {!comingSoon && inProgress && (
+      <div class="banner banner--progress">{inProgressLabel}</div>
+    )}
     {hasVisual && (
       <div class:list={['card__visual', visualVariant && `card__visual--${visualVariant}`]}>
         <div class="card__visual-icon">
@@ -214,6 +221,12 @@ const hasVisual = !!visualVariant
     color: var(--color-amber-11);
     background-color: var(--color-amber-2);
     border-bottom: 1px solid var(--color-amber-4);
+  }
+
+  .banner--progress {
+    color: var(--color-cyan-11);
+    background-color: var(--color-cyan-2);
+    border-bottom: 1px solid var(--color-cyan-4);
   }
 
   h3 {

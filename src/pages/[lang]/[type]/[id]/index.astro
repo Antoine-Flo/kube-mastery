@@ -37,7 +37,11 @@ const { completed, userId } = await getProgressContext(
 const isLoggedIn = !!userId
 
 const lessonIds = overview.content.sections.flatMap((s) =>
-  s.modules.flatMap((m) => m.lessons.map((l) => l.id))
+  s.modules.flatMap((m) =>
+    m.lessons
+      .filter((lesson) => !lesson.isPlaceholder)
+      .map((lesson) => lesson.id)
+  )
 )
 const progress = computeProgress(lessonIds, completed)
 const targetLessonId = progress.currentLessonId ?? lessonIds[0]

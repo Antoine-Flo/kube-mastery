@@ -15,6 +15,7 @@ export interface CourseFrontmatter {
   isActive?: boolean
   price?: number
   comingSoon?: boolean
+  inProgress?: boolean
   order?: number
   level?: string
 }
@@ -26,6 +27,7 @@ export interface CourseListItem {
   shortDescription: string | null
   level: string | null
   comingSoon: boolean
+  inProgress: boolean
   order: number
   totalLessons: number
 }

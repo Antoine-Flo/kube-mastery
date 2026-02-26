@@ -10,6 +10,7 @@ export interface OverviewIndexPort {
     Array<{ topicDir: string; topicId: string }>
   >
   getLessonDirsByTopic(): Map<string, string[]>
+  getPlaceholderLessonIdsByModule(): Map<string, Set<string>>
 }
 
 export interface LessonContentPort {

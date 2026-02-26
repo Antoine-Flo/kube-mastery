@@ -198,6 +198,7 @@
   "courses_subtitle": "Learn Kubernetes step by step with structured paths",
   "courses_followCourse": "Follow Course",
   "courses_comingSoon": "Coming Soon",
+  "courses_inProgress": "In progress",
   "courses_intro_title": "Introduction to Kubernetes",
   "courses_intro_description": "Get started with Kubernetes fundamentals. Learn the basics of pods, deployments, and services in a safe environment.",
   "courses_intermediate_title": "Kubernetes Intermediate",

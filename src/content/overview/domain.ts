@@ -28,6 +28,7 @@ export function buildModule(
   topicIdsInOrder: Array<{ topicId: string }>,
   moduleTitle: string,
   lessonTitles: Map<string, string>,
+  placeholderLessonIds: Set<string>,
   _lessonDirsByTopic: Map<string, string[]>,
   lang: UiLang
 ): OverviewModule {
@@ -37,13 +38,17 @@ export function buildModule(
     return {
       id: topicId,
       title,
-      hasEnvironment: false
+      hasEnvironment: false,
+      isPlaceholder: placeholderLessonIds.has(topicId)
     }
   })
+
+  const isLocked = lessons.some((lesson) => lesson.isPlaceholder)
 
   return {
     moduleId,
     title: moduleTitle,
-    lessons
+    lessons,
+    isLocked
   }
 }

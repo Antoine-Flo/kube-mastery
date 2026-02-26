@@ -67,6 +67,7 @@ export function getCourses(lang: UiLang): CourseListItem[] {
       shortDescription: fm.shortDescription,
       level: fm.level ?? null,
       comingSoon: fm.comingSoon ?? false,
+      inProgress: fm.inProgress ?? false,
       order: fm.order ?? 999,
       totalLessons
     })

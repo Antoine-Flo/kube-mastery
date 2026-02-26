@@ -4,6 +4,7 @@ shortDescription: The Kubernetes developer path , build, configure, and operate 
 isActive: true
 price: 0
 comingSoon: false
+inProgress: true
 order: 3
 level: Intermediate
 ---
