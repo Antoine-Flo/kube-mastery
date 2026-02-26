@@ -1,0 +1,66 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import { useTranslations } from '../../i18n/utils'
+
+const locale = Astro.params.lang as 'en' | 'fr'
+const t = useTranslations(locale)
+const contactEmail = 'contact@kubemastery.com'
+---
+
+<Layout>
+  <div class="doc">
+    <h1>{t('contact_title')}</h1>
+    <p class="lead">{t('contact_intro')}</p>
+
+    <section class="contact-card">
+      <h2>{t('contact_email_label')}</h2>
+      <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+    </section>
+  </div>
+</Layout>
+
+<style>
+  .doc {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+  }
+
+  .doc h1 {
+    font-size: 1.875rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-12);
+    margin-bottom: 1.5rem;
+  }
+
+  .lead {
+    color: var(--color-gray-11);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    font-size: 1.125rem;
+  }
+
+  .contact-card {
+    border: 1px solid var(--color-gray-a5);
+    border-radius: 12px;
+    padding: 1.5rem;
+    background: var(--color-gray-a2);
+  }
+
+  .contact-card h2 {
+    font-size: 1.125rem;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-12);
+    margin-bottom: 0.75rem;
+  }
+
+  .contact-card a {
+    color: var(--color-cyan-11);
+    font-weight: var(--font-weight-medium);
+    text-decoration: none;
+  }
+
+  .contact-card a:hover {
+    text-decoration: underline;
+  }
+</style>
