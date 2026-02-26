@@ -109,8 +109,14 @@ Start with a running ReplicaSet and work through scaling and self-healing exerci
 
 **1. Create the ReplicaSet**
 
+Create the manifest file:
 ```bash
-kubectl apply -f - <<EOF
+nano web-rs.yaml
+```
+
+Paste the manifest from above, save, and exit.
+
+```yaml
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
@@ -128,8 +134,18 @@ spec:
       containers:
         - name: web
           image: nginx:1.25
-EOF
-kubectl get pods -l app=web
+```
+
+Apply the manifest:
+
+```bash
+kubectl apply -f web-rs.yaml
+```
+
+Check the ReplicaSet:
+
+```bash
+kubectl get rs web-rs
 ```
 
 **2. Scale up to 5 replicas**
@@ -155,9 +171,10 @@ kubectl get pods -l app=web
 kubectl scale rs web-rs --replicas=3
 kubectl get pods -l app=web
 
-# Delete one Pod and immediately watch for replacement
-POD=$(kubectl get pods -l app=web -o name | head -1)
-kubectl delete $POD & kubectl get pods -l app=web -w
+# Pick one Pod name from the list above
+# Then replace <pod-name> below
+kubectl delete pod <pod-name>
+kubectl get pods -l app=web -w
 # Ctrl+C after watching the replacement appear
 ```
 
@@ -179,12 +196,12 @@ kubectl get pods -l app=web -w
 **6. Extract a Pod from the fleet by changing its label**
 
 ```bash
-# Get a Pod name
-POD=$(kubectl get pods -l app=web -o name | head -1 | cut -d/ -f2)
-echo "Extracting: $POD"
+# Pick one Pod name from this command output
+kubectl get pods -l app=web
+# Then replace <pod-name> below
 
 # Remove the label that the RS watches
-kubectl label pod $POD app-
+kubectl label pod <pod-name> app-
 
 # The RS will create a replacement, you now have 4 pods total:
 # 3 managed by the RS + 1 free-floating
@@ -192,7 +209,7 @@ kubectl get pods --show-labels
 
 # The extracted Pod is now a bare Pod you can inspect safely
 # Re-attach the label if you want the RS to reclaim it:
-kubectl label pod $POD app=web
+kubectl label pod <pod-name> app=web
 ```
 
 **7. Clean up**

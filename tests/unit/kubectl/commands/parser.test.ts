@@ -135,6 +135,20 @@ describe('kubectl parser - run', () => {
     expect(result.value.runLabels).toEqual({ app: 'hazelcast', env: 'prod' })
   })
 
+  it('should parse run labels with quoted value', () => {
+    const result = parseCommand(
+      'kubectl run intruder --image=nginx:1.25 --labels="app=web"'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.name).toBe('intruder')
+    expect(result.value.runLabels).toEqual({ app: 'web' })
+  })
+
   it('should parse run with dry-run client', () => {
     const result = parseCommand('kubectl run test-pod --image=busybox --dry-run=client')
 
@@ -332,6 +346,18 @@ describe('kubectl parser - get and delete flag positions', () => {
     expect(result.value.resource).toBe('pods')
     expect(result.value.name).toBe('coredns-abc')
     expect(result.value.namespace).toBe('kube-system')
+  })
+
+  it('should parse get show-labels flag', () => {
+    const result = parseCommand('kubectl get pods --show-labels')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.flags['show-labels']).toBe(true)
   })
 
   it('should parse delete when namespace flag is before resource', () => {

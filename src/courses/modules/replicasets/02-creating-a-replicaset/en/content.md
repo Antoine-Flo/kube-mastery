@@ -182,8 +182,13 @@ Let's create a ReplicaSet step by step and explore the output at each stage.
 
 **1. Save the manifest to a file**
 
+Create the manifest file:
+
 ```bash
-cat <<EOF > web-rs.yaml
+nano web-rs.yaml
+```
+
+```yaml
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
@@ -203,7 +208,6 @@ spec:
           image: nginx:1.25
           ports:
             - containerPort: 80
-EOF
 ```
 
 **2. Apply the manifest**
@@ -249,7 +253,11 @@ echo ""
 **8. Try to deliberately break the selector (observe the error)**
 
 ```bash
-cat <<EOF | kubectl apply -f -
+nano broken-rs.yaml
+# Paste the YAML below, then save and exit nano
+```
+
+```yaml
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
@@ -267,7 +275,10 @@ spec:
       containers:
         - name: nginx
           image: nginx:1.25
-EOF
+```
+
+```bash
+kubectl apply -f broken-rs.yaml
 # Observe the validation error from the API server
 ```
 
@@ -275,7 +286,7 @@ EOF
 
 ```bash
 kubectl delete rs web-rs
-rm web-rs.yaml
+rm web-rs.yaml broken-rs.yaml
 ```
 
 Open the cluster visualizer right after step 2, you'll see the ReplicaSet node and the three Pod nodes appearing in real time as they are scheduled and start running.

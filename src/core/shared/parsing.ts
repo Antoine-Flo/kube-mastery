@@ -168,12 +168,35 @@ const normalizeFlags = (
  * parseSelector("app=nginx,env=prod,tier=backend")
  * // => { app: "nginx", env: "prod", tier: "backend" }
  */
+const stripMatchingQuotes = (raw: string): string => {
+  const trimmed = raw.trim()
+  if (trimmed.length < 2) {
+    return trimmed
+  }
+  const startsWithDoubleQuote = trimmed.startsWith('"')
+  const endsWithDoubleQuote = trimmed.endsWith('"')
+  if (startsWithDoubleQuote && endsWithDoubleQuote) {
+    return trimmed.slice(1, -1).trim()
+  }
+  const startsWithSingleQuote = trimmed.startsWith("'")
+  const endsWithSingleQuote = trimmed.endsWith("'")
+  if (startsWithSingleQuote && endsWithSingleQuote) {
+    return trimmed.slice(1, -1).trim()
+  }
+  return trimmed
+}
+
 export const parseSelector = (selector: string): Record<string, string> => {
-  return selector.split(',').reduce(
+  const normalizedSelector = stripMatchingQuotes(selector)
+  return normalizedSelector.split(',').reduce(
     (acc, pair) => {
       const [key, value] = pair.split('=')
       if (key && value) {
-        acc[key.trim()] = value.trim()
+        const normalizedKey = stripMatchingQuotes(key)
+        const normalizedValue = stripMatchingQuotes(value)
+        if (normalizedKey.length > 0 && normalizedValue.length > 0) {
+          acc[normalizedKey] = normalizedValue
+        }
       }
       return acc
     },

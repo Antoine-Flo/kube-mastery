@@ -3,10 +3,11 @@ import {
   createEventBus,
   type EventBus
 } from '../../../../src/core/cluster/events/EventBus'
-import type {
-  PodCreatedEvent,
-  PodDeletedEvent,
-  ReplicaSetUpdatedEvent
+import {
+  createPodCreatedEvent,
+  type PodCreatedEvent,
+  type PodDeletedEvent,
+  type ReplicaSetUpdatedEvent
 } from '../../../../src/core/cluster/events/types'
 import type { Pod } from '../../../../src/core/cluster/ressources/Pod'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
@@ -200,7 +201,7 @@ describe('ReplicaSetController', () => {
       expect(updatedRs!.status.readyReplicas).toBe(2)
     })
 
-    it('should only count pods owned by the ReplicaSet', () => {
+    it('should ignore unowned pods that do not match the ReplicaSet selector', () => {
       const rs = createTestReplicaSet('my-rs', 2)
       mockState.replicaSets = [rs]
       // One owned pod, two unowned pods
@@ -228,6 +229,32 @@ describe('ReplicaSetController', () => {
       // Should create 1 more pod (2 desired - 1 owned = 1 to create)
       expect(createdPodsCount).toBe(1)
     })
+
+    it('should prefer deleting unowned matching pods when above desired replicas', () => {
+      const rs = createTestReplicaSet('my-rs', 2)
+      mockState.replicaSets = [rs]
+      mockState.pods = [
+        createTestPod('my-rs-owned-a', 'my-rs'),
+        createTestPod('my-rs-owned-b', 'my-rs'),
+        createPod({
+          name: 'intruder',
+          namespace: 'default',
+          labels: { app: 'my-rs' },
+          containers: [{ name: 'nginx', image: 'nginx:latest' }],
+          phase: 'Running'
+        })
+      ]
+
+      const deletedPods: string[] = []
+      eventBus.subscribe('PodDeleted', (event: PodDeletedEvent) => {
+        deletedPods.push(event.payload.name)
+      })
+
+      controller.reconcile('default/my-rs')
+
+      expect(deletedPods).toHaveLength(1)
+      expect(deletedPods[0]).toBe('intruder')
+    })
   })
 
   describe('start and stop', () => {
@@ -251,6 +278,36 @@ describe('ReplicaSetController', () => {
       // Manually call reconcile should still work
       controller.reconcile('default/my-rs')
       expect(podCreated).toHaveBeenCalledTimes(2)
+    })
+
+    it('should reconcile matching ReplicaSet when an unowned matching pod is created', async () => {
+      const rs = createTestReplicaSet('my-rs', 2)
+      mockState.replicaSets = [rs]
+      mockState.pods = [
+        createTestPod('my-rs-owned-a', 'my-rs'),
+        createTestPod('my-rs-owned-b', 'my-rs')
+      ]
+
+      const deletedPods: string[] = []
+      eventBus.subscribe('PodDeleted', (event: PodDeletedEvent) => {
+        deletedPods.push(event.payload.name)
+      })
+
+      controller.start()
+      const intruder = createPod({
+        name: 'intruder',
+        namespace: 'default',
+        labels: { app: 'my-rs' },
+        containers: [{ name: 'nginx', image: 'nginx:latest' }],
+        phase: 'Running'
+      })
+      mockState.pods.push(intruder)
+      eventBus.emit(createPodCreatedEvent(intruder, 'test'))
+
+      await new Promise((resolve) => setTimeout(resolve, 25))
+      controller.stop()
+
+      expect(deletedPods).toContain('intruder')
     })
   })
 })

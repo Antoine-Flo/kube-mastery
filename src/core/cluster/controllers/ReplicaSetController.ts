@@ -194,6 +194,7 @@ export class ReplicaSetController implements ReconcilerController {
             ? event.payload.pod
             : event.payload.deletedPod
         this.enqueueOwnerReplicaSet(pod)
+        this.enqueueMatchingReplicaSets(pod)
         break
     }
   }
@@ -229,6 +230,20 @@ export class ReplicaSetController implements ReconcilerController {
 
     if (ownerRs) {
       this.enqueueReplicaSet(ownerRs)
+    }
+  }
+
+  /**
+   * Enqueue all ReplicaSets in the pod namespace whose selector matches pod labels.
+   * This allows reconciliation for "orphan" pods that still match a ReplicaSet selector.
+   */
+  private enqueueMatchingReplicaSets(pod: Pod): void {
+    const state = this.getState()
+    const replicaSets = state.getReplicaSets(pod.metadata.namespace)
+    for (const replicaSet of replicaSets) {
+      if (selectorMatchesLabels(replicaSet.spec.selector, pod.metadata.labels)) {
+        this.enqueueReplicaSet(replicaSet)
+      }
     }
   }
 
@@ -269,15 +284,24 @@ export class ReplicaSetController implements ReconcilerController {
 
     const rs = rsResult.value
 
-    // Get all pods in namespace: owned by this ReplicaSet and matching its selector
+    // Get all pods in namespace matching this ReplicaSet selector.
+    // We reconcile against all matching pods (owned or not), like Kubernetes does for selector overlap.
     const allPods = state.getPods(namespace)
-    const ownedPods = getOwnedResources(rs, allPods).filter((pod) =>
+    const matchingPods = allPods.filter((pod) =>
       selectorMatchesLabels(rs.spec.selector, pod.metadata.labels)
     )
+    const ownedPods = getOwnedResources(rs, matchingPods)
+    const ownedPodNames = new Set(
+      ownedPods.map((pod) => `${pod.metadata.namespace}/${pod.metadata.name}`)
+    )
+    const unownedMatchingPods = matchingPods.filter((pod) => {
+      const podKey = `${pod.metadata.namespace}/${pod.metadata.name}`
+      return !ownedPodNames.has(podKey)
+    })
 
     // Reconcile replica count
     const desiredReplicas = rs.spec.replicas ?? 1
-    const currentReplicas = ownedPods.length
+    const currentReplicas = matchingPods.length
 
     if (currentReplicas < desiredReplicas) {
       // Create missing pods
@@ -289,7 +313,12 @@ export class ReplicaSetController implements ReconcilerController {
     } else if (currentReplicas > desiredReplicas) {
       // Delete excess pods
       const podsToDelete = currentReplicas - desiredReplicas
-      const podsToRemove = ownedPods.slice(0, podsToDelete)
+      // Prefer deleting non-owned matching pods first (e.g. "intruder" pods),
+      // then owned pods if needed.
+      const podsToRemove = [...unownedMatchingPods, ...ownedPods].slice(
+        0,
+        podsToDelete
+      )
 
       for (const pod of podsToRemove) {
         this.eventBus.emit(
@@ -304,7 +333,7 @@ export class ReplicaSetController implements ReconcilerController {
     }
 
     // Update ReplicaSet status if changed
-    const newStatus = computeReplicaSetStatus(ownedPods)
+    const newStatus = computeReplicaSetStatus(matchingPods)
     if (
       !statusEquals(rs.status, newStatus, [
         'replicas',

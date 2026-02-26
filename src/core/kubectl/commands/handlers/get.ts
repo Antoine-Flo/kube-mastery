@@ -366,6 +366,20 @@ const getPodNodeName = (pod: Pod): string => {
   return '<none>'
 }
 
+const formatLabelsForDisplay = (labels?: Record<string, string>): string => {
+  if (labels == null) {
+    return '<none>'
+  }
+  const entries = Object.entries(labels)
+  if (entries.length === 0) {
+    return '<none>'
+  }
+  return entries
+    .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+    .map(([key, value]) => `${key}=${value}`)
+    .join(',')
+}
+
 // ─── Resource Handlers Configuration ─────────────────────────────────────
 // Object lookup pattern (like executor.ts) - add new resource = add config
 
@@ -627,6 +641,7 @@ export const handleGet = (
   // For pods with --all-namespaces (-A), add NAMESPACE column and sort by namespace then name.
   // Applies to both default and wide formats.
   const isWide = outputFormat === 'wide' || parsed.flags.wide === true
+  const showLabels = parsed.flags['show-labels'] === true
   if (resourceType === ('pods' as Resource) && allNamespacesFlag) {
     const sorted = [...filtered].sort((a, b) => {
       const na = (a as Pod).metadata.namespace
@@ -651,12 +666,15 @@ export const handleGet = (
           'readiness gates'
         ]
       : ['namespace', 'name', 'ready', 'status', 'restarts', 'age']
+    if (showLabels) {
+      headersAllNs.push('labels')
+    }
     const ipMap = getUniquePodIPMap(sorted as Pod[])
     const rowsAllNs = sorted.map((pod) => {
       const p = pod as Pod
       if (isWide) {
         const key = `${p.metadata.namespace}/${p.metadata.name}`
-        return [
+        const wideRow = [
           p.metadata.namespace,
           p.metadata.name,
           getPodReady(p),
@@ -668,8 +686,12 @@ export const handleGet = (
           '<none>',
           '<none>'
         ]
+        if (showLabels) {
+          wideRow.push(formatLabelsForDisplay(p.metadata.labels))
+        }
+        return wideRow
       }
-      return [
+      const defaultRow = [
         p.metadata.namespace,
         p.metadata.name,
         getPodReady(p),
@@ -677,6 +699,10 @@ export const handleGet = (
         String(getPodRestarts(p)),
         formatAge(p.metadata.creationTimestamp)
       ]
+      if (showLabels) {
+        defaultRow.push(formatLabelsForDisplay(p.metadata.labels))
+      }
+      return defaultRow
     })
     const alignAllNs: ('left' | 'right')[] = isWide
       ? [
@@ -692,6 +718,9 @@ export const handleGet = (
           'left'
         ]
       : ['left', 'left', 'right', 'left', 'right', 'right']
+    if (showLabels) {
+      alignAllNs.push('left')
+    }
     return formatTable(
       headersAllNs,
       rowsAllNs,
@@ -701,8 +730,20 @@ export const handleGet = (
 
   // Handle wide format
   if (isWide && handler.formatRowWide && handler.headersWide) {
-    const rows = filtered.map(handler.formatRowWide) as string[][]
-    return formatTable(handler.headersWide, rows, withKubectlTableSpacing())
+    const headers = [...handler.headersWide]
+    const rows = (filtered.map(handler.formatRowWide) as string[][]).map(
+      (row, index) => {
+        if (!showLabels) {
+          return row
+        }
+        const resource = filtered[index]
+        return [...row, formatLabelsForDisplay(resource.metadata.labels)]
+      }
+    )
+    if (showLabels) {
+      headers.push('labels')
+    }
+    return formatTable(headers, rows, withKubectlTableSpacing())
   }
 
   const rowsSource =
@@ -711,12 +752,26 @@ export const handleGet = (
           a.metadata.name.localeCompare(b.metadata.name)
         )
       : filtered
-  const rows = rowsSource.map(handler.formatRow) as string[][]
+  const rows = (rowsSource.map(handler.formatRow) as string[][]).map(
+    (row, index) => {
+      if (!showLabels) {
+        return row
+      }
+      const resource = rowsSource[index]
+      return [...row, formatLabelsForDisplay(resource.metadata.labels)]
+    }
+  )
+  const headers = [...handler.headers]
+  if (showLabels) {
+    headers.push('labels')
+  }
   const tableOptions =
     handler.align != null
-      ? withKubectlTableSpacing({ align: handler.align })
+      ? withKubectlTableSpacing({
+          align: showLabels ? [...handler.align, 'left'] : handler.align
+        })
       : withKubectlTableSpacing()
-  return formatTable(handler.headers, rows, tableOptions)
+  return formatTable(headers, rows, tableOptions)
 }
 
 type GetAllResourceType =
@@ -776,7 +831,8 @@ const buildGetAllRows = (
   resourceType: GetAllResourceType,
   items: ResourceWithMetadata[],
   handler: ResourceHandler<ResourceWithMetadata>,
-  allNamespacesFlag: boolean
+  allNamespacesFlag: boolean,
+  showLabels: boolean
 ): string[][] => {
   const rowsSource = sortGetAllItems(resourceType, items)
   return rowsSource.map((item) => {
@@ -784,6 +840,9 @@ const buildGetAllRows = (
     const nameReference = GET_ALL_REFERENCE_BY_RESOURCE[resourceType]
     const rowWithReference = [...row]
     rowWithReference[0] = `${nameReference}/${item.metadata.name}`
+    if (showLabels) {
+      rowWithReference.push(formatLabelsForDisplay(item.metadata.labels))
+    }
     if (allNamespacesFlag) {
       return [item.metadata.namespace, ...rowWithReference]
     }
@@ -793,24 +852,36 @@ const buildGetAllRows = (
 
 const buildGetAllHeaders = (
   allNamespacesFlag: boolean,
-  handler: ResourceHandler<ResourceWithMetadata>
+  handler: ResourceHandler<ResourceWithMetadata>,
+  showLabels: boolean
 ): string[] => {
-  if (allNamespacesFlag) {
-    return ['namespace', ...handler.headers]
+  const headers = [...handler.headers]
+  if (showLabels) {
+    headers.push('labels')
   }
-  return handler.headers
+  if (allNamespacesFlag) {
+    return ['namespace', ...headers]
+  }
+  return headers
 }
 
 const buildGetAllTableOptions = (
   allNamespacesFlag: boolean,
-  handler: ResourceHandler<ResourceWithMetadata>
+  handler: ResourceHandler<ResourceWithMetadata>,
+  showLabels: boolean
 ): { spacing: number; align?: ('left' | 'right')[] } => {
-  if (allNamespacesFlag && handler.align != null) {
-    const alignWithNamespace: ('left' | 'right')[] = ['left', ...handler.align]
+  const baseAlign: ('left' | 'right')[] | undefined =
+    handler.align != null
+      ? showLabels
+        ? [...handler.align, 'left' as const]
+        : [...handler.align]
+      : undefined
+  if (allNamespacesFlag && baseAlign != null) {
+    const alignWithNamespace: ('left' | 'right')[] = ['left', ...baseAlign]
     return withKubectlTableSpacing({ align: alignWithNamespace })
   }
-  if (handler.align != null) {
-    return withKubectlTableSpacing({ align: handler.align })
+  if (baseAlign != null) {
+    return withKubectlTableSpacing({ align: baseAlign })
   }
   return withKubectlTableSpacing()
 }
@@ -821,6 +892,7 @@ const buildGetAllSection = (
   context: GetAllContext,
   resourceType: GetAllResourceType
 ): string | undefined => {
+  const showLabels = parsed.flags['show-labels'] === true
   const handler = RESOURCE_HANDLERS[resourceType] as ResourceHandler<ResourceWithMetadata>
   const items = handler.getItems(state)
   const filteredItems = applyFilters(
@@ -834,14 +906,19 @@ const buildGetAllSection = (
     return undefined
   }
 
-  const headers = buildGetAllHeaders(context.allNamespacesFlag, handler)
+  const headers = buildGetAllHeaders(context.allNamespacesFlag, handler, showLabels)
   const rows = buildGetAllRows(
     resourceType,
     filteredItems,
     handler,
-    context.allNamespacesFlag
+    context.allNamespacesFlag,
+    showLabels
   )
-  const tableOptions = buildGetAllTableOptions(context.allNamespacesFlag, handler)
+  const tableOptions = buildGetAllTableOptions(
+    context.allNamespacesFlag,
+    handler,
+    showLabels
+  )
   return formatTable(headers, rows, tableOptions)
 }
 
