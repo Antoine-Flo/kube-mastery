@@ -8,6 +8,7 @@ import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
 import { createDaemonSet } from '../../../../src/core/cluster/ressources/DaemonSet'
 import { createDeployment } from '../../../../src/core/cluster/ressources/Deployment'
 import { createNode } from '../../../../src/core/cluster/ressources/Node'
+import { createPersistentVolumeClaim } from '../../../../src/core/cluster/ressources/PersistentVolumeClaim'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 
 const flushRuntime = (): void => {
@@ -36,7 +37,26 @@ describe('runtime controller invariants', () => {
 
     const controllers = initializeControllers(eventBus, clusterState, {
       podLifecycle: {
-        pendingDelayRangeMs: { minMs: 0, maxMs: 0 }
+        pendingDelayRangeMs: { minMs: 0, maxMs: 0 },
+        volumeReadinessProbe: (pod) => {
+          const volume = pod.spec.volumes?.find((candidate) => {
+            return candidate.source.type === 'persistentVolumeClaim'
+          })
+          if (volume == null || volume.source.type !== 'persistentVolumeClaim') {
+            return { ready: true }
+          }
+          const pvcResult = clusterState.findPersistentVolumeClaim(
+            volume.source.claimName,
+            pod.metadata.namespace
+          )
+          if (!pvcResult.ok || pvcResult.value == null) {
+            return { ready: false, reason: 'PersistentVolumeClaimNotFound' }
+          }
+          if (pvcResult.value.status.phase !== 'Bound') {
+            return { ready: false, reason: 'PersistentVolumeClaimPending' }
+          }
+          return { ready: true }
+        }
       },
       scheduler: {
         schedulingDelayRangeMs: { minMs: 0, maxMs: 0 }
@@ -51,6 +71,90 @@ describe('runtime controller invariants', () => {
       return
     }
     expect(stored.value.status.phase).toBe('Running')
+
+    stopRuntimeControllers(controllers)
+  })
+
+  it('keeps pod Pending when referenced PVC is not bound', () => {
+    vi.useFakeTimers()
+    const eventBus = createEventBus()
+    const clusterState = createClusterState(eventBus, {
+      bootstrap: { profile: 'none', mode: 'never' }
+    })
+
+    clusterState.addPersistentVolumeClaim(
+      createPersistentVolumeClaim({
+        name: 'data-claim',
+        namespace: 'default',
+        spec: {
+          accessModes: ['ReadWriteOnce'],
+          resources: { requests: { storage: '1Gi' } }
+        }
+      })
+    )
+    clusterState.addPod(
+      createPod({
+        name: 'pod-with-pvc',
+        namespace: 'default',
+        phase: 'Pending',
+        nodeName: 'sim-worker',
+        containers: [{ name: 'nginx', image: 'nginx:latest' }],
+        volumes: [
+          {
+            name: 'data',
+            source: {
+              type: 'persistentVolumeClaim',
+              claimName: 'data-claim'
+            }
+          }
+        ]
+      })
+    )
+
+    const controllers = initializeControllers(eventBus, clusterState, {
+      podLifecycle: {
+        pendingDelayRangeMs: { minMs: 0, maxMs: 0 },
+        volumeReadinessProbe: (pod) => {
+          const persistentVolumeClaimVolume = pod.spec.volumes?.find((volume) => {
+            return volume.source.type === 'persistentVolumeClaim'
+          })
+          if (
+            persistentVolumeClaimVolume == null ||
+            persistentVolumeClaimVolume.source.type !== 'persistentVolumeClaim'
+          ) {
+            return { ready: true }
+          }
+          const persistentVolumeClaimResult = clusterState.findPersistentVolumeClaim(
+            persistentVolumeClaimVolume.source.claimName,
+            pod.metadata.namespace
+          )
+          if (
+            !persistentVolumeClaimResult.ok ||
+            persistentVolumeClaimResult.value == null
+          ) {
+            return { ready: false, reason: 'PersistentVolumeClaimNotFound' }
+          }
+          if (persistentVolumeClaimResult.value.status.phase !== 'Bound') {
+            return { ready: false, reason: 'PersistentVolumeClaimPending' }
+          }
+          return { ready: true }
+        }
+      },
+      scheduler: {
+        schedulingDelayRangeMs: { minMs: 0, maxMs: 0 }
+      }
+    })
+
+    flushRuntime()
+    const stored = clusterState.findPod('pod-with-pvc', 'default')
+    expect(stored.ok).toBe(true)
+    if (!stored.ok || stored.value == null) {
+      stopRuntimeControllers(controllers)
+      return
+    }
+    expect(stored.value.status.phase).toBe('Pending')
+    const statuses = stored.value.status.containerStatuses ?? []
+    expect(statuses[0]?.waitingReason).toBe('PersistentVolumeClaimPending')
 
     stopRuntimeControllers(controllers)
   })

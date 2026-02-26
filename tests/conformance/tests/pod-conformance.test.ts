@@ -263,6 +263,126 @@ describe('Pod OpenAPI Conformance', () => {
       }
       expect(result.value.valid).toBe(true)
     })
+
+    it('should validate pod with emptyDir, hostPath and pvc volumes', () => {
+      const pod = createPod({
+        name: 'test-pod-volumes',
+        namespace: 'default',
+        containers: [
+          {
+            name: 'nginx',
+            image: 'nginx:latest',
+            volumeMounts: [
+              {
+                name: 'cache',
+                mountPath: '/cache'
+              },
+              {
+                name: 'host-data',
+                mountPath: '/host-data'
+              },
+              {
+                name: 'persistent-data',
+                mountPath: '/data',
+                readOnly: true
+              }
+            ]
+          }
+        ],
+        volumes: [
+          {
+            name: 'cache',
+            source: {
+              type: 'emptyDir',
+              medium: 'Memory',
+              sizeLimit: '64Mi'
+            }
+          },
+          {
+            name: 'host-data',
+            source: {
+              type: 'hostPath',
+              path: '/var/lib/app-data',
+              hostPathType: 'DirectoryOrCreate'
+            }
+          },
+          {
+            name: 'persistent-data',
+            source: {
+              type: 'persistentVolumeClaim',
+              claimName: 'data-claim',
+              readOnly: true
+            }
+          }
+        ]
+      })
+
+      const podWithoutSimulator = removeSimulatorFields(pod) as Pod
+      const podForValidation = {
+        ...podWithoutSimulator,
+        spec: {
+          ...podWithoutSimulator.spec,
+          volumes: podWithoutSimulator.spec.volumes?.map((volume) => {
+            if (volume.source.type === 'emptyDir') {
+              return {
+                name: volume.name,
+                emptyDir: {
+                  ...(volume.source.medium && { medium: volume.source.medium }),
+                  ...(volume.source.sizeLimit && {
+                    sizeLimit: volume.source.sizeLimit
+                  })
+                }
+              }
+            }
+            if (volume.source.type === 'hostPath') {
+              return {
+                name: volume.name,
+                hostPath: {
+                  path: volume.source.path,
+                  ...(volume.source.hostPathType && {
+                    type: volume.source.hostPathType
+                  })
+                }
+              }
+            }
+            if (volume.source.type === 'persistentVolumeClaim') {
+              return {
+                name: volume.name,
+                persistentVolumeClaim: {
+                  claimName: volume.source.claimName,
+                  ...(volume.source.readOnly !== undefined && {
+                    readOnly: volume.source.readOnly
+                  })
+                }
+              }
+            }
+            if (volume.source.type === 'configMap') {
+              return {
+                name: volume.name,
+                configMap: {
+                  name: volume.source.name
+                }
+              }
+            }
+            return {
+              name: volume.name,
+              secret: {
+                secretName: volume.source.secretName
+              }
+            }
+          })
+        },
+        status: {
+          phase: podWithoutSimulator.status.phase
+        }
+      }
+
+      const result = validator.validateResource(podForValidation, 'v1', 'Pod')
+      if (!result.ok) {
+        throw new Error(`Validation failed: ${result.error}`)
+      }
+      expect(result.value.valid).toBe(true)
+    })
   })
 
   describe('invalid pods', () => {

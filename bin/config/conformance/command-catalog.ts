@@ -68,11 +68,15 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
         'kubectl get pods -A',
         'kubectl get pods -o yaml',
         'kubectl get pods -o json',
+        'kubectl get pv',
+        'kubectl get pvc -A',
         'kubectl delete pod web-00063e839a-chadq',
         'kubectl get nodes',
         'kubectl describe node conformance-worker',
         'kubectl get configmaps',
-        'kubectl get secrets'
+        'kubectl get secrets',
+        'kubectl describe pv missing-pv',
+        'kubectl describe pvc missing-pvc'
       ]
     },
     {
@@ -197,6 +201,16 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
           'FIELD:    template',
           'KIND:',
           'DaemonSet'
+        ]),
+        createRawCommand('kubectl explain persistentvolume.spec', [
+          'FIELD:    spec',
+          'KIND:',
+          'PersistentVolume'
+        ]),
+        createRawCommand('kubectl explain persistentvolumeclaim.spec', [
+          'FIELD:    spec',
+          'KIND:',
+          'PersistentVolumeClaim'
         ])
       ]
     },

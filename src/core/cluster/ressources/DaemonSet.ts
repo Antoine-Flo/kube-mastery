@@ -98,7 +98,27 @@ const ContainerSchema = z.object({
       })
     )
     .optional(),
-  env: z.array(z.any()).optional()
+  resources: z
+    .object({
+      requests: z
+        .object({
+          cpu: z.string().optional(),
+          memory: z.string().optional()
+        })
+        .optional(),
+      limits: z
+        .object({
+          cpu: z.string().optional(),
+          memory: z.string().optional()
+        })
+        .optional()
+    })
+    .optional(),
+  env: z.array(z.any()).optional(),
+  volumeMounts: z.array(z.any()).optional(),
+  livenessProbe: z.any().optional(),
+  readinessProbe: z.any().optional(),
+  startupProbe: z.any().optional()
 })
 
 const PodTemplateSpecSchema = z.object({
@@ -123,7 +143,8 @@ const PodTemplateSpecSchema = z.object({
     containers: z
       .array(ContainerSchema)
       .min(1, 'At least one container is required'),
-    initContainers: z.array(ContainerSchema).optional()
+    initContainers: z.array(ContainerSchema).optional(),
+    volumes: z.array(z.any()).optional()
   })
 })
 

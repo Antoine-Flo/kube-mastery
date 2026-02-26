@@ -1,0 +1,290 @@
+import { startPeriodicResync } from '../cluster/controllers/helpers'
+import type { ClusterState } from '../cluster/ClusterState'
+import type { EventBus } from '../cluster/events/EventBus'
+import {
+  createPersistentVolumeClaimUpdatedEvent,
+  createPersistentVolumeUpdatedEvent
+} from '../cluster/events/types'
+import type { AppEventType } from '../events/AppEvent'
+import { type VolumeState } from './VolumeState'
+import {
+  createVolumeBindingPolicy,
+  type VolumeBindingPolicy
+} from './VolumeBindingPolicy'
+
+interface VolumeBindingControllerOptions {
+  resyncIntervalMs?: number
+  policy?: VolumeBindingPolicy
+}
+
+export interface VolumeBindingController {
+  start: () => void
+  stop: () => void
+  initialSync: () => void
+  resyncAll: () => void
+}
+
+const VOLUME_BINDING_EVENTS: AppEventType[] = [
+  'PersistentVolumeCreated',
+  'PersistentVolumeUpdated',
+  'PersistentVolumeDeleted',
+  'PersistentVolumeClaimCreated',
+  'PersistentVolumeClaimUpdated',
+  'PersistentVolumeClaimDeleted'
+]
+
+export const createVolumeBindingController = (
+  eventBus: EventBus,
+  clusterState: ClusterState,
+  volumeState: VolumeState,
+  options: VolumeBindingControllerOptions = {}
+): VolumeBindingController => {
+  const bindingPolicy = options.policy ?? createVolumeBindingPolicy()
+  let started = false
+  let unsubscribeEvents: (() => void) | undefined
+  let stopResync: (() => void) | undefined
+
+  const reconcileVolumeClaims = (): void => {
+    const persistentVolumes = clusterState.getPersistentVolumes()
+    const persistentVolumeClaims = clusterState.getPersistentVolumeClaims()
+    const claimByKey = new Map<string, (typeof persistentVolumeClaims)[number]>()
+    for (const persistentVolumeClaim of persistentVolumeClaims) {
+      const key = `${persistentVolumeClaim.metadata.namespace}/${persistentVolumeClaim.metadata.name}`
+      claimByKey.set(key, persistentVolumeClaim)
+    }
+
+    for (const persistentVolume of persistentVolumes) {
+      const claimRef = persistentVolume.spec.claimRef
+      if (claimRef == null) {
+        continue
+      }
+      const claimKey = `${claimRef.namespace}/${claimRef.name}`
+      if (claimByKey.has(claimKey)) {
+        continue
+      }
+      const releasedPersistentVolume = {
+        ...persistentVolume,
+        spec: {
+          ...persistentVolume.spec,
+          claimRef: undefined
+        },
+        status: {
+          ...persistentVolume.status,
+          phase: 'Available' as const
+        }
+      }
+      eventBus.emit(
+        createPersistentVolumeUpdatedEvent(
+          persistentVolume.metadata.name,
+          releasedPersistentVolume,
+          persistentVolume,
+          'volume-binding-controller'
+        )
+      )
+    }
+
+    for (const persistentVolumeClaim of persistentVolumeClaims) {
+      const claimName = persistentVolumeClaim.metadata.name
+      const claimNamespace = persistentVolumeClaim.metadata.namespace
+
+      const preBoundVolumeName = persistentVolumeClaim.spec.volumeName
+      if (preBoundVolumeName != null && preBoundVolumeName.length > 0) {
+        const matchingPersistentVolume = clusterState.findPersistentVolume(
+          preBoundVolumeName
+        )
+        if (!matchingPersistentVolume.ok || matchingPersistentVolume.value == null) {
+          continue
+        }
+        const persistentVolume = matchingPersistentVolume.value
+        const sameClaim =
+          persistentVolume.spec.claimRef?.name === claimName &&
+          persistentVolume.spec.claimRef?.namespace === claimNamespace
+        if (!sameClaim) {
+          const updatedPersistentVolume = {
+            ...persistentVolume,
+            spec: {
+              ...persistentVolume.spec,
+              claimRef: {
+                namespace: claimNamespace,
+                name: claimName
+              }
+            },
+            status: {
+              ...persistentVolume.status,
+              phase: 'Bound' as const
+            }
+          }
+          eventBus.emit(
+            createPersistentVolumeUpdatedEvent(
+              persistentVolume.metadata.name,
+              updatedPersistentVolume,
+              persistentVolume,
+              'volume-binding-controller'
+            )
+          )
+        }
+        if (persistentVolumeClaim.status.phase !== 'Bound') {
+          const updatedPersistentVolumeClaim = {
+            ...persistentVolumeClaim,
+            status: {
+              ...persistentVolumeClaim.status,
+              phase: 'Bound' as const
+            }
+          }
+          eventBus.emit(
+            createPersistentVolumeClaimUpdatedEvent(
+              claimName,
+              claimNamespace,
+              updatedPersistentVolumeClaim,
+              persistentVolumeClaim,
+              'volume-binding-controller'
+            )
+          )
+        }
+        volumeState.bindClaimToVolume(claimNamespace, claimName, preBoundVolumeName)
+        continue
+      }
+
+      const candidatePersistentVolume = bindingPolicy.findCandidateVolume(
+        persistentVolumes,
+        persistentVolumeClaim
+      )
+
+      if (candidatePersistentVolume == null) {
+        volumeState.unbindClaim(claimNamespace, claimName)
+        if (persistentVolumeClaim.status.phase !== 'Pending') {
+          const pendingPersistentVolumeClaim = {
+            ...persistentVolumeClaim,
+            spec: {
+              ...persistentVolumeClaim.spec,
+              volumeName: undefined
+            },
+            status: {
+              ...persistentVolumeClaim.status,
+              phase: 'Pending' as const
+            }
+          }
+          eventBus.emit(
+            createPersistentVolumeClaimUpdatedEvent(
+              claimName,
+              claimNamespace,
+              pendingPersistentVolumeClaim,
+              persistentVolumeClaim,
+              'volume-binding-controller'
+            )
+          )
+        }
+        continue
+      }
+
+      const boundPersistentVolume = {
+        ...candidatePersistentVolume,
+        spec: {
+          ...candidatePersistentVolume.spec,
+          claimRef: {
+            namespace: claimNamespace,
+            name: claimName
+          }
+        },
+        status: {
+          ...candidatePersistentVolume.status,
+          phase: 'Bound' as const
+        }
+      }
+      eventBus.emit(
+        createPersistentVolumeUpdatedEvent(
+          candidatePersistentVolume.metadata.name,
+          boundPersistentVolume,
+          candidatePersistentVolume,
+          'volume-binding-controller'
+        )
+      )
+
+      const boundPersistentVolumeClaim = {
+        ...persistentVolumeClaim,
+        spec: {
+          ...persistentVolumeClaim.spec,
+          volumeName: candidatePersistentVolume.metadata.name
+        },
+        status: {
+          ...persistentVolumeClaim.status,
+          phase: 'Bound' as const
+        }
+      }
+      eventBus.emit(
+        createPersistentVolumeClaimUpdatedEvent(
+          claimName,
+          claimNamespace,
+          boundPersistentVolumeClaim,
+          persistentVolumeClaim,
+          'volume-binding-controller'
+        )
+      )
+
+      volumeState.bindClaimToVolume(
+        claimNamespace,
+        claimName,
+        candidatePersistentVolume.metadata.name
+      )
+    }
+  }
+
+  const onEvent = (event: { type: AppEventType }): void => {
+    if (!VOLUME_BINDING_EVENTS.includes(event.type)) {
+      return
+    }
+    reconcileVolumeClaims()
+  }
+
+  const initialSync = (): void => {
+    reconcileVolumeClaims()
+  }
+
+  const resyncAll = (): void => {
+    reconcileVolumeClaims()
+  }
+
+  const start = (): void => {
+    if (started) {
+      return
+    }
+    started = true
+    initialSync()
+    const unsubscribers: Array<() => void> = []
+    for (const eventType of VOLUME_BINDING_EVENTS) {
+      const unsubscribe = eventBus.subscribe(
+        eventType,
+        onEvent as (event: unknown) => void
+      )
+      unsubscribers.push(unsubscribe)
+    }
+    unsubscribeEvents = () => {
+      for (const unsubscribe of unsubscribers) {
+        unsubscribe()
+      }
+    }
+    stopResync = startPeriodicResync(options.resyncIntervalMs, resyncAll)
+  }
+
+  const stop = (): void => {
+    if (!started) {
+      return
+    }
+    started = false
+    if (unsubscribeEvents != null) {
+      unsubscribeEvents()
+      unsubscribeEvents = undefined
+    }
+    if (stopResync != null) {
+      stopResync()
+      stopResync = undefined
+    }
+  }
+
+  return {
+    start,
+    stop,
+    initialSync,
+    resyncAll
+  }
+}

@@ -8,6 +8,8 @@ import type { BaseEvent } from '../../events/types'
 import type { ConfigMap } from '../ressources/ConfigMap'
 import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
+import type { PersistentVolume } from '../ressources/PersistentVolume'
+import type { PersistentVolumeClaim } from '../ressources/PersistentVolumeClaim'
 import type { Pod } from '../ressources/Pod'
 import type { ReplicaSet } from '../ressources/ReplicaSet'
 import type { Secret } from '../ressources/Secret'
@@ -218,6 +220,60 @@ export interface ServiceUpdatedEvent extends BaseEvent {
   }
 }
 
+// ─── PersistentVolume Events ───────────────────────────────────────────────
+
+export interface PersistentVolumeCreatedEvent extends BaseEvent {
+  type: 'PersistentVolumeCreated'
+  payload: {
+    persistentVolume: PersistentVolume
+  }
+}
+
+export interface PersistentVolumeDeletedEvent extends BaseEvent {
+  type: 'PersistentVolumeDeleted'
+  payload: {
+    name: string
+    deletedPersistentVolume: PersistentVolume
+  }
+}
+
+export interface PersistentVolumeUpdatedEvent extends BaseEvent {
+  type: 'PersistentVolumeUpdated'
+  payload: {
+    name: string
+    persistentVolume: PersistentVolume
+    previousPersistentVolume: PersistentVolume
+  }
+}
+
+// ─── PersistentVolumeClaim Events ──────────────────────────────────────────
+
+export interface PersistentVolumeClaimCreatedEvent extends BaseEvent {
+  type: 'PersistentVolumeClaimCreated'
+  payload: {
+    persistentVolumeClaim: PersistentVolumeClaim
+  }
+}
+
+export interface PersistentVolumeClaimDeletedEvent extends BaseEvent {
+  type: 'PersistentVolumeClaimDeleted'
+  payload: {
+    name: string
+    namespace: string
+    deletedPersistentVolumeClaim: PersistentVolumeClaim
+  }
+}
+
+export interface PersistentVolumeClaimUpdatedEvent extends BaseEvent {
+  type: 'PersistentVolumeClaimUpdated'
+  payload: {
+    name: string
+    namespace: string
+    persistentVolumeClaim: PersistentVolumeClaim
+    previousPersistentVolumeClaim: PersistentVolumeClaim
+  }
+}
+
 // ─── Label Events ────────────────────────────────────────────────────
 
 export interface PodLabeledEvent extends BaseEvent {
@@ -341,6 +397,12 @@ export type ClusterEvent =
   | ServiceCreatedEvent
   | ServiceDeletedEvent
   | ServiceUpdatedEvent
+  | PersistentVolumeCreatedEvent
+  | PersistentVolumeDeletedEvent
+  | PersistentVolumeUpdatedEvent
+  | PersistentVolumeClaimCreatedEvent
+  | PersistentVolumeClaimDeletedEvent
+  | PersistentVolumeClaimUpdatedEvent
   | ServiceLabeledEvent
   | ServiceAnnotatedEvent
 
@@ -771,4 +833,95 @@ export const createServiceUpdatedEvent = (
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
   payload: { name, namespace, service, previousService }
+})
+
+/**
+ * Create PersistentVolumeCreated event
+ */
+export const createPersistentVolumeCreatedEvent = (
+  persistentVolume: PersistentVolume,
+  source?: string
+): PersistentVolumeCreatedEvent => ({
+  type: 'PersistentVolumeCreated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { persistentVolume }
+})
+
+/**
+ * Create PersistentVolumeDeleted event
+ */
+export const createPersistentVolumeDeletedEvent = (
+  name: string,
+  deletedPersistentVolume: PersistentVolume,
+  source?: string
+): PersistentVolumeDeletedEvent => ({
+  type: 'PersistentVolumeDeleted',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, deletedPersistentVolume }
+})
+
+/**
+ * Create PersistentVolumeUpdated event
+ */
+export const createPersistentVolumeUpdatedEvent = (
+  name: string,
+  persistentVolume: PersistentVolume,
+  previousPersistentVolume: PersistentVolume,
+  source?: string
+): PersistentVolumeUpdatedEvent => ({
+  type: 'PersistentVolumeUpdated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, persistentVolume, previousPersistentVolume }
+})
+
+/**
+ * Create PersistentVolumeClaimCreated event
+ */
+export const createPersistentVolumeClaimCreatedEvent = (
+  persistentVolumeClaim: PersistentVolumeClaim,
+  source?: string
+): PersistentVolumeClaimCreatedEvent => ({
+  type: 'PersistentVolumeClaimCreated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { persistentVolumeClaim }
+})
+
+/**
+ * Create PersistentVolumeClaimDeleted event
+ */
+export const createPersistentVolumeClaimDeletedEvent = (
+  name: string,
+  namespace: string,
+  deletedPersistentVolumeClaim: PersistentVolumeClaim,
+  source?: string
+): PersistentVolumeClaimDeletedEvent => ({
+  type: 'PersistentVolumeClaimDeleted',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, deletedPersistentVolumeClaim }
+})
+
+/**
+ * Create PersistentVolumeClaimUpdated event
+ */
+export const createPersistentVolumeClaimUpdatedEvent = (
+  name: string,
+  namespace: string,
+  persistentVolumeClaim: PersistentVolumeClaim,
+  previousPersistentVolumeClaim: PersistentVolumeClaim,
+  source?: string
+): PersistentVolumeClaimUpdatedEvent => ({
+  type: 'PersistentVolumeClaimUpdated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: {
+    name,
+    namespace,
+    persistentVolumeClaim,
+    previousPersistentVolumeClaim
+  }
 })

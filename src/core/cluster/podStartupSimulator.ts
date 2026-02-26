@@ -89,7 +89,11 @@ export const createPodStartupSimulator = (
       getDeployments: () => [],
       findDeployment: () => ({ ok: false as const }),
       getDaemonSets: () => [],
-      findDaemonSet: () => ({ ok: false as const })
+      findDaemonSet: () => ({ ok: false as const }),
+      getPersistentVolumes: () => [],
+      findPersistentVolume: () => ({ ok: false as const }),
+      getPersistentVolumeClaims: () => [],
+      findPersistentVolumeClaim: () => ({ ok: false as const })
     }
   }
 

@@ -9,6 +9,7 @@ import type { RuntimeControllers } from '../cluster/controllers/initializers'
 import type { EventBus } from '../cluster/events/EventBus'
 import type { FileSystemState } from '../filesystem/FileSystem'
 import type { SimNetworkRuntime } from '../network/SimNetworkRuntime'
+import type { SimVolumeRuntime } from '../volumes/SimVolumeRuntime'
 import { ShellContextStack } from '../terminal/core/ShellContext'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -52,6 +53,9 @@ export interface EmulatedEnvironment {
 
   /** Simulated network runtime */
   networkRuntime?: SimNetworkRuntime
+
+  /** Simulated volumes runtime */
+  volumeRuntime?: SimVolumeRuntime
 }
 
 /**

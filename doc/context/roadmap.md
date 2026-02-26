@@ -1,20 +1,10 @@
 # Roadmap - KubeMastery
 
-**Stack** : Astro 5, Cloudflare. Détails : `architecture.md`.
-
 ## Current Status
-
-**Phase 1 MVP Complete** ✅ — Tests à migrer (Vitest, objectif ~94% coverage).
 
 - **Language strategy (launch)** : focus EN-only pour accelerer la creation de contenu. FR sera reactive plus tard via flag dans `src/config/i18nConfig.ts`.
 
 > Pour les détails de ce qui est implémenté, voir `spec.md` et `architecture.md`
-
-## Business Model
-
-- **Bêta** : Tout gratuit
-- **Après bêta** : Quelques leçons gratuites pour découvrir, reste payant
-- **Revenus** : Accès payant one-time via Paddle, voir `marketing.md`
 
 ## 🔥 À faire maintenant
 
@@ -33,6 +23,8 @@
 - [~] **Lot F - get/api-resources finishing** : `get pods -o wide` enrichi + categories `all`; derniers ecarts de tabulation/ordering a ajuster.
 - [x] **Lot G - run baseline parity** : support `kubectl run` (image, command/args, env, labels, port, dry-run client, stdin/tty/rm) avec limite explicite `--restart=Never` dans le simulateur.
 - [x] **Lot H - network runtime baseline** : module `src/core/network` (controller/state/allocators), `kubectl expose`, resolution DNS (`nslookup`) et simulation `curl` (ClusterIP/NodePort) avec tests unitaires dedies.
+- [x] **Lot I - volumes runtime foundations (v1)** : module `src/core/volumes` (VolumeState, VolumeBindingController, PodVolumeController), support `emptyDir|hostPath|PVC`, ressources `PV/PVC`, support `kubectl get/describe/apply/delete pv,pvc`, gate `Pending -> Running` base sur readiness volumes.
+- [x] **Lot I.1 - binding policy extraction (v2)** : logique de matching PV/PVC extraite dans `VolumeBindingPolicy` pour separer policy et orchestration controller.
 
 ### Améliorations Nodes (Post-MVP)
 
@@ -40,11 +32,10 @@
 
 **Recommandations prioritaires** :
 
-- [x] **Bootstrap cluster centralise** : Policy de bootstrap unifiee dans `createClusterState(...)` avec options explicites (`profile` + `mode`) pour reutilisation runner/app/seeds.
 - [x] **Seed kind-like minimal** : Injection systematique de nodes systeme + `kube-root-ca.crt` + pods systeme via bootstrap.
 
 - [ ] **Événements Node** (Priorité 1 - 2-3h) : Créer `NodeCreatedEvent`, `NodeUpdatedEvent`, `NodeDeletedEvent` + handlers pour cohérence architecturale. Actuellement : placeholders (`createSecretCreatedEvent`)
-- [ ] **kubectl describe node** (Priorité 2 - 1-2h) : Implémenter la commande `kubectl describe node <name>` - **Note** : Mentionné dans Sprint 10
+- [x] **kubectl describe node** (Priorité 2 - 1-2h) : Implémenter la commande `kubectl describe node <name>` - **Note** : Mentionné dans Sprint 10
 - [ ] **Conditions dynamiques** (Priorité 3 - 3-4h) : Système de heartbeat simulé pour mettre à jour les conditions (Ready, MemoryPressure, etc.). Actuellement : conditions statiques dans le seed
 - [ ] **kubectl label/annotate/taint node** (Priorité 4 - 2-3h) : Commandes de gestion des nodes - **Note** : `label` et `annotate` existent pour pods/configmaps/secrets, extension nécessaire pour nodes
 - [ ] **kubectl cordon/uncordon/drain** (Priorité 4) : Commandes pour gérer la schedulabilité des nodes
@@ -70,12 +61,12 @@
 
 ### Sprint 8: Storage (PV/PVC) & StatefulSets
 
-- PersistentVolume and PersistentVolumeClaim
-- Binding logic (match PV to PVC)
-- StorageClasses and dynamic volume provisioning
+- [x] PersistentVolume and PersistentVolumeClaim (baseline)
+- [x] Binding logic (match PV to PVC, statique)
+- [ ] StorageClasses and dynamic volume provisioning
 - Volume types, access modes (ReadWriteOnce, ReadOnlyMany, ReadWriteMany)
 - Reclaim policies (Retain, Recycle, Delete)
-- StatefulSets with ordered pods
+- [ ] StatefulSets with ordered pods
 - Stable network identities
 
 ### Sprint 9: Workloads - Jobs, CronJobs, DaemonSets
@@ -307,7 +298,7 @@ Voir `doc/cka-coverage.md` pour le détail complet de la couverture CKA.
 Pour rivaliser avec KodeKloud/Killer.sh:
 
 - ✅ Phase 1: Terminal complet, kubectl core, Filesystem, Persistence
-- 🎯 Phase 2 (Sprint 7-14): Multi-container, Init containers, Nodes, ReplicaSets, Deployments, kubectl scale, [ ] PV/PVC, [ ] Jobs, [ ] kubectl avancé (rollout, events, port-forward), **CKA prep**
+- 🎯 Phase 2 (Sprint 7-14): Multi-container, Init containers, Nodes, ReplicaSets, Deployments, kubectl scale, [x] PV/PVC foundations, [ ] Jobs, [ ] kubectl avancé (rollout, events, port-forward), **CKA prep**
 - 🎯 Phase 3 (Sprint 15-20): [ ] Chaos engineering, [ ] Challenges, Lessons (partiel), [ ] **CKA scenarios**
 
 ### CKA Preparation Features

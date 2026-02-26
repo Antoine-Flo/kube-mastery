@@ -17,6 +17,12 @@ import {
   handlePodDeleted,
   handlePodLabeled,
   handlePodUpdated,
+  handlePersistentVolumeClaimCreated,
+  handlePersistentVolumeClaimDeleted,
+  handlePersistentVolumeClaimUpdated,
+  handlePersistentVolumeCreated,
+  handlePersistentVolumeDeleted,
+  handlePersistentVolumeUpdated,
   handleReplicaSetCreated,
   handleReplicaSetDeleted,
   handleReplicaSetUpdated,
@@ -45,6 +51,12 @@ import {
   createPodCreatedEvent,
   createPodDeletedEvent,
   createPodUpdatedEvent,
+  createPersistentVolumeClaimCreatedEvent,
+  createPersistentVolumeClaimDeletedEvent,
+  createPersistentVolumeClaimUpdatedEvent,
+  createPersistentVolumeCreatedEvent,
+  createPersistentVolumeDeletedEvent,
+  createPersistentVolumeUpdatedEvent,
   createReplicaSetCreatedEvent,
   createReplicaSetDeletedEvent,
   createReplicaSetUpdatedEvent,
@@ -67,6 +79,8 @@ import {
   type Namespace
 } from './ressources/Namespace'
 import type { Node } from './ressources/Node'
+import type { PersistentVolume } from './ressources/PersistentVolume'
+import type { PersistentVolumeClaim } from './ressources/PersistentVolumeClaim'
 import type { Pod } from './ressources/Pod'
 import type { ReplicaSet } from './ressources/ReplicaSet'
 import type { Secret } from './ressources/Secret'
@@ -91,6 +105,8 @@ export interface ClusterStateData {
   deployments: ResourceCollection<Deployment>
   daemonSets: ResourceCollection<DaemonSet>
   services: ResourceCollection<Service>
+  persistentVolumes: ResourceCollection<PersistentVolume>
+  persistentVolumeClaims: ResourceCollection<PersistentVolumeClaim>
   namespaces: ResourceCollection<Namespace>
 }
 
@@ -103,6 +119,8 @@ type ResourceByKind = {
   Deployment: Deployment
   DaemonSet: DaemonSet
   Service: Service
+  PersistentVolume: PersistentVolume
+  PersistentVolumeClaim: PersistentVolumeClaim
   Namespace: Namespace
 }
 
@@ -123,6 +141,8 @@ export const createClusterStateData = (
     deployments: Deployment[]
     daemonSets: DaemonSet[]
     services: Service[]
+    persistentVolumes: PersistentVolume[]
+    persistentVolumeClaims: PersistentVolumeClaim[]
     namespaces: Namespace[]
   }> = {}
 ): ClusterStateData => ({
@@ -134,6 +154,8 @@ export const createClusterStateData = (
   deployments: { items: collections.deployments ?? [] },
   daemonSets: { items: collections.daemonSets ?? [] },
   services: { items: collections.services ?? [] },
+  persistentVolumes: { items: collections.persistentVolumes ?? [] },
+  persistentVolumeClaims: { items: collections.persistentVolumeClaims ?? [] },
   namespaces: { items: collections.namespaces ?? [] }
 })
 
@@ -148,6 +170,11 @@ const replicaSetRepo = createResourceRepository<ReplicaSet>('ReplicaSet')
 const deploymentRepo = createResourceRepository<Deployment>('Deployment')
 const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
 const serviceRepo = createResourceRepository<Service>('Service')
+const persistentVolumeRepo =
+  createResourceRepository<PersistentVolume>('PersistentVolume')
+const persistentVolumeClaimRepo = createResourceRepository<PersistentVolumeClaim>(
+  'PersistentVolumeClaim'
+)
 const namespaceRepo = createResourceRepository<Namespace>('Namespace')
 
 // ─── Generic Resource Operations Helper ─────────────────────────────
@@ -252,6 +279,8 @@ const createEmptyState = (): ClusterStateData => ({
   deployments: deploymentRepo.createEmpty(),
   daemonSets: daemonSetRepo.createEmpty(),
   services: serviceRepo.createEmpty(),
+  persistentVolumes: persistentVolumeRepo.createEmpty(),
+  persistentVolumeClaims: persistentVolumeClaimRepo.createEmpty(),
   namespaces: {
     items: createSystemNamespaces()
   }
@@ -279,6 +308,14 @@ const daemonSetOps = createResourceOperations<DaemonSet>(
   'daemonSets'
 )
 const serviceOps = createResourceOperations<Service>(serviceRepo, 'services')
+const persistentVolumeOps = createResourceOperations<PersistentVolume>(
+  persistentVolumeRepo,
+  'persistentVolumes'
+)
+const persistentVolumeClaimOps = createResourceOperations<PersistentVolumeClaim>(
+  persistentVolumeClaimRepo,
+  'persistentVolumeClaims'
+)
 const namespaceOps = createResourceOperations<Namespace>(
   namespaceRepo,
   'namespaces'
@@ -359,6 +396,31 @@ export interface ClusterState {
     namespace: string,
     updateFn: (service: Service) => Service
   ) => Result<Service>
+  getPersistentVolumes: () => PersistentVolume[]
+  addPersistentVolume: (persistentVolume: PersistentVolume) => void
+  findPersistentVolume: (name: string) => Result<PersistentVolume>
+  deletePersistentVolume: (name: string) => Result<PersistentVolume>
+  updatePersistentVolume: (
+    name: string,
+    updateFn: (persistentVolume: PersistentVolume) => PersistentVolume
+  ) => Result<PersistentVolume>
+  getPersistentVolumeClaims: (namespace?: string) => PersistentVolumeClaim[]
+  addPersistentVolumeClaim: (
+    persistentVolumeClaim: PersistentVolumeClaim
+  ) => void
+  findPersistentVolumeClaim: (
+    name: string,
+    namespace: string
+  ) => Result<PersistentVolumeClaim>
+  deletePersistentVolumeClaim: (
+    name: string,
+    namespace: string
+  ) => Result<PersistentVolumeClaim>
+  updatePersistentVolumeClaim: (
+    name: string,
+    namespace: string,
+    updateFn: (persistentVolumeClaim: PersistentVolumeClaim) => PersistentVolumeClaim
+  ) => Result<PersistentVolumeClaim>
   getNamespaces: () => Namespace[]
   addNamespace: (namespace: Namespace) => void
   findNamespace: (name: string) => Result<Namespace>
@@ -426,6 +488,16 @@ const EVENT_FACTORIES = {
     created: createServiceCreatedEvent,
     deleted: createServiceDeletedEvent,
     updated: createServiceUpdatedEvent
+  },
+  PersistentVolume: {
+    created: createPersistentVolumeCreatedEvent,
+    deleted: createPersistentVolumeDeletedEvent,
+    updated: createPersistentVolumeUpdatedEvent
+  },
+  PersistentVolumeClaim: {
+    created: createPersistentVolumeClaimCreatedEvent,
+    deleted: createPersistentVolumeClaimDeletedEvent,
+    updated: createPersistentVolumeClaimUpdatedEvent
   }
 } as const
 
@@ -443,6 +515,9 @@ const createFacadeMethods = <T extends KubernetesResource>(
     currentState: ClusterStateData,
     namespace: string
   ): void => {
+    if (namespace.length === 0) {
+      return
+    }
     const namespaceResult = namespaceRepo.find(
       currentState.namespaces,
       namespace,
@@ -542,7 +617,13 @@ const EVENT_HANDLERS: Record<
   ServiceDeleted: handleServiceDeleted,
   ServiceUpdated: handleServiceUpdated,
   ServiceLabeled: handleServiceLabeled,
-  ServiceAnnotated: handleServiceAnnotated
+  ServiceAnnotated: handleServiceAnnotated,
+  PersistentVolumeCreated: handlePersistentVolumeCreated,
+  PersistentVolumeDeleted: handlePersistentVolumeDeleted,
+  PersistentVolumeUpdated: handlePersistentVolumeUpdated,
+  PersistentVolumeClaimCreated: handlePersistentVolumeClaimCreated,
+  PersistentVolumeClaimDeleted: handlePersistentVolumeClaimDeleted,
+  PersistentVolumeClaimUpdated: handlePersistentVolumeClaimUpdated
 }
 
 /**
@@ -626,6 +707,20 @@ export function createClusterState(
     setState,
     eventBus,
     'Service'
+  )
+  const persistentVolumeMethods = createFacadeMethods(
+    persistentVolumeOps,
+    getState,
+    setState,
+    eventBus,
+    'PersistentVolume'
+  )
+  const persistentVolumeClaimMethods = createFacadeMethods(
+    persistentVolumeClaimOps,
+    getState,
+    setState,
+    eventBus,
+    'PersistentVolumeClaim'
   )
   const namespaceMethods = {
     getAll: () => namespaceOps.getAll(getState(), undefined),
@@ -760,6 +855,13 @@ export function createClusterState(
         daemonSetMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
       Service: (resourceName, resourceNamespace) =>
         serviceMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+      PersistentVolume: (resourceName, _resourceNamespace) =>
+        persistentVolumeMethods.find(resourceName, '') as Result<KubernetesResource>,
+      PersistentVolumeClaim: (resourceName, resourceNamespace) =>
+        persistentVolumeClaimMethods.find(
+          resourceName,
+          resourceNamespace
+        ) as Result<KubernetesResource>,
       Namespace: (resourceName, _resourceNamespace) =>
         namespaceMethods.find(resourceName) as Result<KubernetesResource>
     }
@@ -795,6 +897,10 @@ export function createClusterState(
         daemonSetMethods.getAll(resourceNamespace) as KubernetesResource[],
       Service: (resourceNamespace) =>
         serviceMethods.getAll(resourceNamespace) as KubernetesResource[],
+      PersistentVolume: (_resourceNamespace) =>
+        persistentVolumeMethods.getAll(undefined) as KubernetesResource[],
+      PersistentVolumeClaim: (resourceNamespace) =>
+        persistentVolumeClaimMethods.getAll(resourceNamespace) as KubernetesResource[],
       Namespace: (_resourceNamespace) =>
         namespaceMethods.getAll() as KubernetesResource[]
     }
@@ -856,6 +962,19 @@ export function createClusterState(
     deleteService: serviceMethods.delete,
     updateService: serviceMethods.update,
 
+    getPersistentVolumes: () => persistentVolumeMethods.getAll(undefined),
+    addPersistentVolume: persistentVolumeMethods.add,
+    findPersistentVolume: (name) => persistentVolumeMethods.find(name, ''),
+    deletePersistentVolume: (name) => persistentVolumeMethods.delete(name, ''),
+    updatePersistentVolume: (name, updateFn) =>
+      persistentVolumeMethods.update(name, '', updateFn),
+
+    getPersistentVolumeClaims: persistentVolumeClaimMethods.getAll,
+    addPersistentVolumeClaim: persistentVolumeClaimMethods.add,
+    findPersistentVolumeClaim: persistentVolumeClaimMethods.find,
+    deletePersistentVolumeClaim: persistentVolumeClaimMethods.delete,
+    updatePersistentVolumeClaim: persistentVolumeClaimMethods.update,
+
     getNamespaces: namespaceMethods.getAll,
     addNamespace: namespaceMethods.add,
     findNamespace: namespaceMethods.find,
@@ -874,6 +993,8 @@ export function createClusterState(
       deployments: { items: [...state.deployments.items] },
       daemonSets: { items: [...state.daemonSets.items] },
       services: { items: [...state.services.items] },
+      persistentVolumes: { items: [...state.persistentVolumes.items] },
+      persistentVolumeClaims: { items: [...state.persistentVolumeClaims.items] },
       namespaces: { items: [...state.namespaces.items] }
     }),
 
@@ -887,6 +1008,8 @@ export function createClusterState(
         deployments: newState.deployments || { items: [] },
         daemonSets: newState.daemonSets || { items: [] },
         services: newState.services || { items: [] },
+        persistentVolumes: newState.persistentVolumes || { items: [] },
+        persistentVolumeClaims: newState.persistentVolumeClaims || { items: [] },
         namespaces: newState.namespaces || { items: [] }
       }
     }

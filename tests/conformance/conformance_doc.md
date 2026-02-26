@@ -26,7 +26,7 @@ Tests → Loader (charge specs) → Validator (Ajv) → Validation JSON Schema �
 - **tests/** : Tests de conformité par type de ressource
 
 Ressources actuellement couvertes par les tests:
-- Core v1: Pod, Node, ConfigMap, Secret, Service
+- Core v1: Pod, Node, ConfigMap, Secret, Service, PersistentVolume, PersistentVolumeClaim
 - Apps v1: Deployment, ReplicaSet, DaemonSet
 
 ## Ajouter un test de conformité

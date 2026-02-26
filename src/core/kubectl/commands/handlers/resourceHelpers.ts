@@ -15,6 +15,10 @@ import {
   createDeploymentUpdatedEvent,
   createPodCreatedEvent,
   createPodUpdatedEvent,
+  createPersistentVolumeClaimCreatedEvent,
+  createPersistentVolumeClaimUpdatedEvent,
+  createPersistentVolumeCreatedEvent,
+  createPersistentVolumeUpdatedEvent,
   createReplicaSetCreatedEvent,
   createReplicaSetUpdatedEvent,
   createSecretCreatedEvent,
@@ -27,6 +31,8 @@ import type { DaemonSet } from '../../../cluster/ressources/DaemonSet'
 import type { Deployment } from '../../../cluster/ressources/Deployment'
 import type { Node } from '../../../cluster/ressources/Node'
 import type { Namespace } from '../../../cluster/ressources/Namespace'
+import type { PersistentVolume } from '../../../cluster/ressources/PersistentVolume'
+import type { PersistentVolumeClaim } from '../../../cluster/ressources/PersistentVolumeClaim'
 import type { Pod } from '../../../cluster/ressources/Pod'
 import type { ReplicaSet } from '../../../cluster/ressources/ReplicaSet'
 import type { Secret } from '../../../cluster/ressources/Secret'
@@ -45,6 +51,8 @@ type KubernetesResource =
   | ReplicaSet
   | Deployment
   | DaemonSet
+  | PersistentVolume
+  | PersistentVolumeClaim
   | Service
 
 type ResourceKind =
@@ -56,6 +64,8 @@ type ResourceKind =
   | 'ReplicaSet'
   | 'Deployment'
   | 'DaemonSet'
+  | 'PersistentVolume'
+  | 'PersistentVolumeClaim'
   | 'Service'
 
 const NAMESPACED_RESOURCE_KINDS: ResourceKind[] = [
@@ -65,6 +75,7 @@ const NAMESPACED_RESOURCE_KINDS: ResourceKind[] = [
   'ReplicaSet',
   'Deployment',
   'DaemonSet',
+  'PersistentVolumeClaim',
   'Service'
 ]
 
@@ -131,6 +142,12 @@ const toPluralKindReference = (kind: ResourceKind): string => {
   }
   if (kind === 'Namespace') {
     return 'namespaces'
+  }
+  if (kind === 'PersistentVolume') {
+    return 'persistentvolumes'
+  }
+  if (kind === 'PersistentVolumeClaim') {
+    return 'persistentvolumeclaims'
   }
   return `${kind.toLowerCase()}s`
 }
@@ -276,6 +293,47 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
           name,
           namespace,
           resource as DaemonSet,
+          previous,
+          'kubectl'
+        )
+      )
+    }
+  },
+  PersistentVolume: {
+    find: (state, name, _namespace) => state.findByKind('PersistentVolume', name),
+    emitCreated: (eventBus, resource) => {
+      eventBus.emit(
+        createPersistentVolumeCreatedEvent(resource as PersistentVolume, 'kubectl')
+      )
+    },
+    emitUpdated: (eventBus, name, _namespace, resource, previous) => {
+      eventBus.emit(
+        createPersistentVolumeUpdatedEvent(
+          name,
+          resource as PersistentVolume,
+          previous,
+          'kubectl'
+        )
+      )
+    }
+  },
+  PersistentVolumeClaim: {
+    find: (state, name, namespace) =>
+      state.findByKind('PersistentVolumeClaim', name, namespace),
+    emitCreated: (eventBus, resource) => {
+      eventBus.emit(
+        createPersistentVolumeClaimCreatedEvent(
+          resource as PersistentVolumeClaim,
+          'kubectl'
+        )
+      )
+    },
+    emitUpdated: (eventBus, name, namespace, resource, previous) => {
+      eventBus.emit(
+        createPersistentVolumeClaimUpdatedEvent(
+          name,
+          namespace,
+          resource as PersistentVolumeClaim,
           previous,
           'kubectl'
         )

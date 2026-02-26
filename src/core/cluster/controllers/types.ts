@@ -6,6 +6,8 @@
 import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
 import type { Node } from '../ressources/Node'
+import type { PersistentVolume } from '../ressources/PersistentVolume'
+import type { PersistentVolumeClaim } from '../ressources/PersistentVolumeClaim'
 import type { OwnerReference } from '../ressources/Pod'
 import type { Pod } from '../ressources/Pod'
 import type { ReplicaSet } from '../ressources/ReplicaSet'
@@ -69,6 +71,17 @@ export interface ControllerState {
 
   // Nodes (used by Scheduler)
   getNodes: () => Node[]
+
+  // Volumes
+  getPersistentVolumes: () => PersistentVolume[]
+  findPersistentVolume: (
+    name: string
+  ) => { ok: boolean; value?: PersistentVolume }
+  getPersistentVolumeClaims: (namespace?: string) => PersistentVolumeClaim[]
+  findPersistentVolumeClaim: (
+    name: string,
+    namespace: string
+  ) => { ok: boolean; value?: PersistentVolumeClaim }
 }
 
 // ─── Controller Interface ────────────────────────────────────────────────
@@ -121,3 +134,9 @@ export type ClusterEventType =
   | 'DaemonSetCreated'
   | 'DaemonSetDeleted'
   | 'DaemonSetUpdated'
+  | 'PersistentVolumeCreated'
+  | 'PersistentVolumeDeleted'
+  | 'PersistentVolumeUpdated'
+  | 'PersistentVolumeClaimCreated'
+  | 'PersistentVolumeClaimDeleted'
+  | 'PersistentVolumeClaimUpdated'

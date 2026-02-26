@@ -13,6 +13,8 @@ import type {
 } from '../../cluster/ressources/Deployment'
 import type { Node, NodeCondition, NodeTaint } from '../../cluster/ressources/Node'
 import { getNodeRoles } from '../../cluster/ressources/Node'
+import type { PersistentVolume } from '../../cluster/ressources/PersistentVolume'
+import type { PersistentVolumeClaim } from '../../cluster/ressources/PersistentVolumeClaim'
 import type {
   ContainerStatus,
   EnvVar,
@@ -234,7 +236,17 @@ const formatVolumeSource = (volume: Volume): string => {
   }
 
   if (volume.source.type === 'emptyDir') {
-    return `    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)`
+    const medium = volume.source.medium ?? '<unset>'
+    const sizeLimit = volume.source.sizeLimit ?? '<unset>'
+    return `    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)\n    Medium:     ${medium}\n    SizeLimit:  ${sizeLimit}`
+  }
+
+  if (volume.source.type === 'hostPath') {
+    return `    Type:       HostPath (bare host directory volume)\n    Path:       ${volume.source.path}\n    HostPathType: ${volume.source.hostPathType ?? '<unset>'}`
+  }
+
+  if (volume.source.type === 'persistentVolumeClaim') {
+    return `    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)\n    ClaimName:  ${volume.source.claimName}\n    ReadOnly:   ${volume.source.readOnly === true}`
   }
 
   if (volume.source.type === 'configMap') {
@@ -939,5 +951,46 @@ export const describeSecret = (secret: Secret): string => {
   lines.push('')
   lines.push('Events:  <none>')
 
+  return lines.join('\n')
+}
+
+export const describePersistentVolume = (persistentVolume: PersistentVolume): string => {
+  const lines: string[] = []
+  lines.push(`Name:            ${persistentVolume.metadata.name}`)
+  lines.push(`Labels:          ${formatLabels(persistentVolume.metadata.labels)}`)
+  lines.push(`Annotations:     ${formatLabels(persistentVolume.metadata.annotations)}`)
+  lines.push(`StorageClass:    ${persistentVolume.spec.storageClassName ?? '<none>'}`)
+  lines.push(
+    `Status:          ${persistentVolume.status.phase ?? (persistentVolume.spec.claimRef == null ? 'Available' : 'Bound')}`
+  )
+  lines.push(`Claim:           ${persistentVolume.spec.claimRef != null ? `${persistentVolume.spec.claimRef.namespace}/${persistentVolume.spec.claimRef.name}` : '<none>'}`)
+  lines.push(`Reclaim Policy:  ${persistentVolume.spec.persistentVolumeReclaimPolicy ?? 'Retain'}`)
+  lines.push(`Access Modes:    ${persistentVolume.spec.accessModes.join(',')}`)
+  lines.push(`Capacity:        ${persistentVolume.spec.capacity.storage}`)
+  if (persistentVolume.spec.hostPath != null) {
+    lines.push(`Source:          HostPath (${persistentVolume.spec.hostPath.path})`)
+  } else {
+    lines.push('Source:          <none>')
+  }
+  lines.push('')
+  lines.push('Events:          <none>')
+  return lines.join('\n')
+}
+
+export const describePersistentVolumeClaim = (
+  persistentVolumeClaim: PersistentVolumeClaim
+): string => {
+  const lines: string[] = []
+  lines.push(`Name:          ${persistentVolumeClaim.metadata.name}`)
+  lines.push(`Namespace:     ${persistentVolumeClaim.metadata.namespace}`)
+  lines.push(`StorageClass:  ${persistentVolumeClaim.spec.storageClassName ?? '<none>'}`)
+  lines.push(`Status:        ${persistentVolumeClaim.status.phase}`)
+  lines.push(`Volume:        ${persistentVolumeClaim.spec.volumeName ?? '<none>'}`)
+  lines.push(`Labels:        ${formatLabels(persistentVolumeClaim.metadata.labels)}`)
+  lines.push(`Annotations:   ${formatLabels(persistentVolumeClaim.metadata.annotations)}`)
+  lines.push(`Capacity:      ${persistentVolumeClaim.spec.resources.requests.storage}`)
+  lines.push(`Access Modes:  ${persistentVolumeClaim.spec.accessModes.join(',')}`)
+  lines.push('')
+  lines.push('Events:        <none>')
   return lines.join('\n')
 }

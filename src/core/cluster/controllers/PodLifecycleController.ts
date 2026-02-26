@@ -9,6 +9,7 @@ import type { PodBoundEvent } from '../events/types'
 import { createPodUpdatedEvent } from '../events/types'
 import type { Pod } from '../ressources/Pod'
 import { reconcileInitContainers } from '../initContainers/reconciler'
+import type { PodVolumeReadiness } from '../../volumes/VolumeState'
 import {
   startPeriodicResync,
   subscribeToEvents
@@ -27,6 +28,7 @@ export interface PodLifecycleControllerOptions extends ControllerResyncOptions {
     maxMs: number
   }
   eventSource?: string
+  volumeReadinessProbe?: (pod: Pod) => PodVolumeReadiness
 }
 
 const WATCHED_EVENTS: ClusterEventType[] = [
@@ -142,6 +144,13 @@ export class PodLifecycleController implements ReconcilerController {
       this.clearPendingTimeout(key)
       return
     }
+
+    const volumeReadiness = this.options.volumeReadinessProbe?.(pod)
+    if (volumeReadiness != null && !volumeReadiness.ready) {
+      this.clearPendingTimeout(key)
+      this.emitPodWaitingForVolume(pod, volumeReadiness.reason)
+      return
+    }
     if (this.pendingTimeouts.has(key)) {
       return
     }
@@ -168,6 +177,11 @@ export class PodLifecycleController implements ReconcilerController {
       }
       const latestPod = latestPodResult.value
       if (!shouldProgressPod(latestPod)) {
+        return
+      }
+      const latestVolumeReadiness = this.options.volumeReadinessProbe?.(latestPod)
+      if (latestVolumeReadiness != null && !latestVolumeReadiness.ready) {
+        this.emitPodWaitingForVolume(latestPod, latestVolumeReadiness.reason)
         return
       }
       this.emitPodRunning(latestPod)
@@ -219,6 +233,47 @@ export class PodLifecycleController implements ReconcilerController {
         pod.metadata.name,
         pod.metadata.namespace,
         updated,
+        pod,
+        this.options.eventSource ?? 'pod-lifecycle-controller'
+      )
+    )
+  }
+
+  private emitPodWaitingForVolume(pod: Pod, reason?: string): void {
+    const waitingReason = reason ?? 'VolumesNotReady'
+    const currentStatuses = pod.status.containerStatuses ?? []
+    const updatedStatuses = currentStatuses.map((status) => ({
+      ...status,
+      ready: false,
+      state: 'Waiting' as const,
+      waitingReason
+    }))
+    const hasChanged = updatedStatuses.some((updatedStatus, index) => {
+      const previousStatus = currentStatuses[index]
+      if (previousStatus == null) {
+        return true
+      }
+      if (previousStatus.waitingReason !== updatedStatus.waitingReason) {
+        return true
+      }
+      return previousStatus.state !== updatedStatus.state
+    })
+    if (!hasChanged) {
+      return
+    }
+    const updatedPod: Pod = {
+      ...pod,
+      status: {
+        ...pod.status,
+        phase: 'Pending',
+        containerStatuses: updatedStatuses
+      }
+    }
+    this.eventBus.emit(
+      createPodUpdatedEvent(
+        pod.metadata.name,
+        pod.metadata.namespace,
+        updatedPod,
         pod,
         this.options.eventSource ?? 'pod-lifecycle-controller'
       )

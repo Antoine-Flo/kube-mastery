@@ -12,7 +12,7 @@ import {
   createPodDeletedEvent,
   createReplicaSetUpdatedEvent
 } from '../events/types'
-import type { Container, Pod } from '../ressources/Pod'
+import type { Pod } from '../ressources/Pod'
 import { createPod } from '../ressources/Pod'
 import type { ReplicaSet, ReplicaSetStatus } from '../ressources/ReplicaSet'
 import { selectorMatchesLabels } from '../ressources/ReplicaSet'
@@ -25,6 +25,10 @@ import {
   statusEquals,
   subscribeToEvents
 } from './helpers'
+import {
+  convertTemplateContainers,
+  convertTemplateInitContainers
+} from './podTemplateConverters'
 import type {
   ClusterEventType,
   ControllerResyncOptions,
@@ -60,26 +64,14 @@ const parseKey = (key: string): { namespace: string; name: string } => {
 }
 
 /**
- * Convert PodTemplateSpec containers to Pod containers
- */
-const convertTemplateContainers = (
-  templateContainers: ReplicaSet['spec']['template']['spec']['containers']
-): Container[] => {
-  return templateContainers.map((container) => ({
-    name: container.name,
-    image: container.image,
-    ...(container.command && { command: container.command }),
-    ...(container.args && { args: container.args }),
-    ...(container.ports && { ports: container.ports })
-  }))
-}
-
-/**
  * Create a Pod from ReplicaSet template with proper ownerReference
  */
 const createPodFromTemplate = (rs: ReplicaSet): Pod => {
   const podName = `${rs.metadata.name}-${generateSuffix()}`
   const templateLabels = rs.spec.template.metadata?.labels || {}
+  const initContainers = convertTemplateInitContainers(
+    rs.spec.template.spec.initContainers
+  )
 
   return createPod({
     name: podName,
@@ -90,7 +82,9 @@ const createPodFromTemplate = (rs: ReplicaSet): Pod => {
     },
     nodeSelector: rs.spec.template.spec.nodeSelector,
     tolerations: rs.spec.template.spec.tolerations,
+    ...(initContainers && { initContainers }),
     containers: convertTemplateContainers(rs.spec.template.spec.containers),
+    ...(rs.spec.template.spec.volumes && { volumes: rs.spec.template.spec.volumes }),
     phase: 'Pending',
     ownerReferences: [createOwnerRef(rs)]
   })

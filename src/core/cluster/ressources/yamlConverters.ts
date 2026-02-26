@@ -75,16 +75,66 @@ const convertSecretVolume: VolumeHandler = (vol) => {
 }
 
 const convertEmptyDirVolume: VolumeHandler = (vol) => {
-  if (vol.emptyDir !== undefined) {
-    return { type: 'emptyDir' }
+  const emptyDir = vol.emptyDir
+  if (!isRecord(emptyDir)) {
+    return null
   }
-  return null
+
+  const mediumRaw = getStringField(emptyDir, 'medium')
+  const medium = mediumRaw === 'Memory' ? 'Memory' : undefined
+  const sizeLimit = getStringField(emptyDir, 'sizeLimit') ?? undefined
+
+  return {
+    type: 'emptyDir',
+    ...(medium && { medium }),
+    ...(sizeLimit && { sizeLimit })
+  }
+}
+
+const convertHostPathVolume: VolumeHandler = (vol) => {
+  const hostPath = vol.hostPath
+  if (!isRecord(hostPath)) {
+    return null
+  }
+
+  const path = getStringField(hostPath, 'path')
+  if (!path) {
+    return null
+  }
+  const hostPathType = getStringField(hostPath, 'type') ?? undefined
+  return {
+    type: 'hostPath',
+    path,
+    ...(hostPathType && { hostPathType })
+  }
+}
+
+const convertPersistentVolumeClaimVolume: VolumeHandler = (vol) => {
+  const persistentVolumeClaim = vol.persistentVolumeClaim
+  if (!isRecord(persistentVolumeClaim)) {
+    return null
+  }
+
+  const claimName = getStringField(persistentVolumeClaim, 'claimName')
+  if (!claimName) {
+    return null
+  }
+
+  const readOnlyRaw = persistentVolumeClaim.readOnly
+  const readOnly = typeof readOnlyRaw === 'boolean' ? readOnlyRaw : undefined
+  return {
+    type: 'persistentVolumeClaim',
+    claimName,
+    ...(readOnly !== undefined && { readOnly })
+  }
 }
 
 const VOLUME_HANDLERS: Record<string, VolumeHandler> = {
   configMap: convertConfigMapVolume,
   secret: convertSecretVolume,
-  emptyDir: convertEmptyDirVolume
+  emptyDir: convertEmptyDirVolume,
+  hostPath: convertHostPathVolume,
+  persistentVolumeClaim: convertPersistentVolumeClaimVolume
 }
 
 /**

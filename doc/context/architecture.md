@@ -13,7 +13,7 @@
 - **YAML**: yaml 2.8.2
 - **Markdown**: Astro Content (build-time), astro-expressive-code, astro-mermaid
 - **Backend**: Supabase (Auth, progress via `src/lib/`)
-- **Tests**: À migrer (prévu) — Vitest, `tests/unit/`, `tests/conformance/`, golden files `bin/`
+- **Tests**: Vitest, `tests/unit/`, `tests/conformance/`, golden files `bin/`
 - **DB**: À migrer (prévu) — Drizzle, `src/db/`
 
 ## Principles
@@ -70,6 +70,21 @@ Points d'integration:
 - bootstrap runtime dans `src/core/emulatedEnvironment/EmulatedEnvironmentManager.ts` via `initializeSimNetworkRuntime(...)`,
 - injection dans le flux terminal/kubectl via `CommandContext.networkRuntime`,
 - commandes supportees en execution: `kubectl expose`, `kubectl exec ... nslookup`, `kubectl exec ... curl`, et flux diagnostic court `kubectl run ... --rm -it --command -- nslookup|curl ...`.
+
+### Volumes Simulation Runtime
+
+La simulation volumes est isolee dans `src/core/volumes/`:
+
+- `VolumeState`: index runtime (`claim -> volume`, readiness pod, hostPath reserve),
+- `VolumeBindingController`: binding statique PV/PVC idempotent, event-driven,
+- `PodVolumeController`: evaluation readiness volumes au niveau Pod,
+- `VolumeBindingPolicy`: policy dediee (V2) pour matching capacite / accessModes / storageClass.
+
+Points d'integration:
+
+- bootstrap runtime dans `src/core/emulatedEnvironment/EmulatedEnvironmentManager.ts` via `initializeSimVolumeRuntime(...)`,
+- gate de progression dans `PodLifecycleController` via `volumeReadinessProbe`,
+- support event-driven complet via `ClusterState` + `EventBus` pour `PersistentVolume*` et `PersistentVolumeClaim*`.
 
 ### Cluster Bootstrap Policy
 
@@ -192,6 +207,7 @@ src/
 │   ├── containers/registry/
 │   ├── filesystem/               # FileSystem, models, events, autocomplete
 │   ├── kubectl/                  # commands (parser, executor, handlers), formatters, autocomplete
+│   ├── volumes/                  # VolumeState, VolumeBindingController, PodVolumeController, policies
 │   ├── shell/                    # commands, autocomplete
 │   ├── terminal/                 # core, autocomplete, renderer, TerminalManager
 │   ├── emulatedEnvironment/
@@ -214,7 +230,7 @@ src/
 
 ## Key Data Types
 
-- **Cluster** (`src/core/cluster/ressources/`): Pod, Deployment, ReplicaSet, ConfigMap, Secret, Service, Node.
+- **Cluster** (`src/core/cluster/ressources/`): Pod, Deployment, ReplicaSet, DaemonSet, ConfigMap, Secret, Service, Node, PersistentVolume, PersistentVolumeClaim.
 - **Filesystem** (`src/core/filesystem/models/`): FileSystemNode = DirectoryNode | FileNode.
 - **Quiz** (`src/types/quiz.ts`): MultipleChoiceQuestion, TerminalCommandQuestion, CommandQuestion, OrderQuestion.
 

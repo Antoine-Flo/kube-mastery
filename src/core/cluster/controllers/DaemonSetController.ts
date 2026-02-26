@@ -12,7 +12,7 @@ import {
 } from '../events/types'
 import type { DaemonSet, DaemonSetStatus } from '../ressources/DaemonSet'
 import type { Node } from '../ressources/Node'
-import type { Container, Pod } from '../ressources/Pod'
+import type { Pod } from '../ressources/Pod'
 import { createPod } from '../ressources/Pod'
 import { selectorMatchesLabels } from '../ressources/ReplicaSet'
 import {
@@ -24,6 +24,10 @@ import {
   statusEquals,
   subscribeToEvents
 } from './helpers'
+import {
+  convertTemplateContainers,
+  convertTemplateInitContainers
+} from './podTemplateConverters'
 import type {
   ClusterEventType,
   ControllerResyncOptions,
@@ -50,21 +54,12 @@ const parseKey = (key: string): { namespace: string; name: string } => {
   return { namespace, name }
 }
 
-const convertTemplateContainers = (
-  templateContainers: DaemonSet['spec']['template']['spec']['containers']
-): Container[] => {
-  return templateContainers.map((container) => ({
-    name: container.name,
-    image: container.image,
-    ...(container.command && { command: container.command }),
-    ...(container.args && { args: container.args }),
-    ...(container.ports && { ports: container.ports })
-  }))
-}
-
 const createPodFromTemplate = (daemonSet: DaemonSet, node: Node): Pod => {
   const podName = `${daemonSet.metadata.name}-${generateSuffix()}`
   const templateLabels = daemonSet.spec.template.metadata?.labels || {}
+  const initContainers = convertTemplateInitContainers(
+    daemonSet.spec.template.spec.initContainers
+  )
 
   return createPod({
     name: podName,
@@ -76,7 +71,11 @@ const createPodFromTemplate = (daemonSet: DaemonSet, node: Node): Pod => {
     annotations: daemonSet.spec.template.metadata?.annotations,
     nodeSelector: daemonSet.spec.template.spec.nodeSelector,
     tolerations: daemonSet.spec.template.spec.tolerations,
+    ...(initContainers && { initContainers }),
     containers: convertTemplateContainers(daemonSet.spec.template.spec.containers),
+    ...(daemonSet.spec.template.spec.volumes && {
+      volumes: daemonSet.spec.template.spec.volumes
+    }),
     ownerReferences: [createOwnerRef(daemonSet)],
     phase: 'Pending'
   })

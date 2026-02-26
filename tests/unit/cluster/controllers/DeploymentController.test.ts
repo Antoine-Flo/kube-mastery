@@ -107,7 +107,11 @@ describe('DeploymentController', () => {
       findDaemonSet: () => ({ ok: false, error: 'not found' }),
       getPods: () => [],
       findPod: () => ({ ok: false, error: 'not found' }),
-      getNodes: () => []
+      getNodes: () => [],
+      getPersistentVolumes: () => [],
+      findPersistentVolume: () => ({ ok: false, error: 'not found' }),
+      getPersistentVolumeClaims: () => [],
+      findPersistentVolumeClaim: () => ({ ok: false, error: 'not found' })
     })
 
     controller = new DeploymentController(eventBus, getState)

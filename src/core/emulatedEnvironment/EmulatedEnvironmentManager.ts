@@ -14,6 +14,7 @@ import { initializeSimPodIpAllocation } from '../cluster/ipAllocator/SimPodIpAll
 import type { AppEvent } from '../events/AppEvent'
 import { createHostFileSystem } from '../filesystem/debianFileSystem'
 import { initializeSimNetworkRuntime } from '../network/SimNetworkRuntime'
+import { initializeSimVolumeRuntime } from '../volumes/SimVolumeRuntime'
 import { saveSandboxEnvironment } from '../storage/indexedDBAdapter'
 import { ShellContextStack } from '../terminal/core/ShellContext'
 import {
@@ -85,6 +86,7 @@ export function createEmulatedEnvironment(
   }
 
   const shellContextStack = new ShellContextStack(fileSystemState)
+  const volumeRuntime = initializeSimVolumeRuntime(eventBus, clusterState)
   const networkRuntime = initializeSimNetworkRuntime(eventBus, clusterState)
 
   const resyncConfig = getRuntimeControllerResyncConfig()
@@ -98,7 +100,15 @@ export function createEmulatedEnvironment(
     },
     podLifecycle: {
       pendingDelayRangeMs: SIM_POD_PENDING_DELAY_RANGE_MS,
-      resyncIntervalMs: resyncConfig.podLifecycle
+      resyncIntervalMs: resyncConfig.podLifecycle,
+      volumeReadinessProbe: (pod) => {
+        return (
+          volumeRuntime.state.getPodReadiness(
+            pod.metadata.namespace,
+            pod.metadata.name
+          ) ?? { ready: true }
+        )
+      }
     }
   })
 
@@ -150,7 +160,8 @@ export function createEmulatedEnvironment(
     unsubscribeAutoSave,
     unsubscribePodIpAllocation,
     runtimeControllers: controllers,
-    networkRuntime
+    networkRuntime,
+    volumeRuntime
   }
 }
 
@@ -176,6 +187,9 @@ export function destroyEmulatedEnvironment(
   emulatedEnvironment.runtimeControllers = undefined
   emulatedEnvironment.networkRuntime?.controller.stop()
   emulatedEnvironment.networkRuntime = undefined
+  emulatedEnvironment.volumeRuntime?.volumeBindingController.stop()
+  emulatedEnvironment.volumeRuntime?.podVolumeController.stop()
+  emulatedEnvironment.volumeRuntime = undefined
 
   // Note: We don't explicitly clean up clusterState, fileSystemState, eventBus, or shellContextStack
   // as they will be garbage collected when the emulated environment object is no longer referenced.

@@ -5,6 +5,8 @@ import {
   describeConfigMap,
   describeDeployment,
   describeNode,
+  describePersistentVolume,
+  describePersistentVolumeClaim,
   describePod,
   describeSecret
 } from '../../formatters/describeFormatters'
@@ -85,6 +87,21 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
     },
     type: 'Node',
     isClusterScoped: true
+  },
+  persistentvolumes: {
+    items: 'persistentVolumes',
+    formatter: (item) => {
+      return describePersistentVolume(item)
+    },
+    type: 'PersistentVolume',
+    isClusterScoped: true
+  },
+  persistentvolumeclaims: {
+    items: 'persistentVolumeClaims',
+    formatter: (item) => {
+      return describePersistentVolumeClaim(item)
+    },
+    type: 'PersistentVolumeClaim'
   }
 } as const
 

@@ -62,7 +62,9 @@ export interface EnvVar {
 // ─── Volumes ───────────────────────────────────────────────────────
 
 export type VolumeSource =
-  | { type: 'emptyDir' }
+  | { type: 'emptyDir'; medium?: 'Memory'; sizeLimit?: string }
+  | { type: 'hostPath'; path: string; hostPathType?: string }
+  | { type: 'persistentVolumeClaim'; claimName: string; readOnly?: boolean }
   | { type: 'configMap'; name: string }
   | { type: 'secret'; secretName: string }
 

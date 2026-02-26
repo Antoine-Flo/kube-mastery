@@ -6,6 +6,8 @@ import type { Deployment } from '../../../cluster/ressources/Deployment'
 import { getDeploymentDesiredReplicas } from '../../../cluster/ressources/Deployment'
 import type { Namespace } from '../../../cluster/ressources/Namespace'
 import type { Node } from '../../../cluster/ressources/Node'
+import type { PersistentVolume } from '../../../cluster/ressources/PersistentVolume'
+import type { PersistentVolumeClaim } from '../../../cluster/ressources/PersistentVolumeClaim'
 import {
   getNodeExternalIP,
   getNodeInternalIP,
@@ -220,7 +222,9 @@ const RESOURCE_OUTPUT_METADATA: Record<StructuredResource, ResourceOutputMetadat
   deployments: { apiVersion: 'apps/v1', kind: 'Deployment' },
   daemonsets: { apiVersion: 'apps/v1', kind: 'DaemonSet' },
   services: { apiVersion: 'v1', kind: 'Service' },
-  namespaces: { apiVersion: 'v1', kind: 'Namespace' }
+  namespaces: { apiVersion: 'v1', kind: 'Namespace' },
+  persistentvolumes: { apiVersion: 'v1', kind: 'PersistentVolume' },
+  persistentvolumeclaims: { apiVersion: 'v1', kind: 'PersistentVolumeClaim' }
 }
 
 const getResourceOutputMetadata = (
@@ -544,6 +548,38 @@ const RESOURCE_HANDLERS: Record<string, ResourceHandler<any>> = {
     ],
     supportsFiltering: true,
     isClusterScoped: true
+  },
+
+  persistentvolumes: {
+    getItems: (state) => state.persistentVolumes.items,
+    headers: ['name', 'capacity', 'access modes', 'reclaim policy', 'status', 'claim'],
+    formatRow: (pv: PersistentVolume) => [
+      pv.metadata.name,
+      pv.spec.capacity.storage,
+      pv.spec.accessModes.join(','),
+      pv.spec.persistentVolumeReclaimPolicy ?? 'Retain',
+      pv.status.phase,
+      pv.spec.claimRef != null
+        ? `${pv.spec.claimRef.namespace}/${pv.spec.claimRef.name}`
+        : '<none>'
+    ],
+    supportsFiltering: true,
+    isClusterScoped: true
+  },
+
+  persistentvolumeclaims: {
+    getItems: (state) => state.persistentVolumeClaims.items,
+    headers: ['name', 'status', 'volume', 'capacity', 'access modes', 'storageclass', 'age'],
+    formatRow: (pvc: PersistentVolumeClaim) => [
+      pvc.metadata.name,
+      pvc.status.phase,
+      pvc.spec.volumeName ?? '<none>',
+      pvc.spec.resources.requests.storage,
+      pvc.spec.accessModes.join(','),
+      pvc.spec.storageClassName ?? '<none>',
+      formatAge(pvc.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true
   }
 }
 

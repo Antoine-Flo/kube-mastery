@@ -41,7 +41,11 @@ const createControllerStateAccessor = (
     findDaemonSet: clusterState.findDaemonSet,
     findReplicaSet: clusterState.findReplicaSet,
     findPod: clusterState.findPod,
-    getNodes: clusterState.getNodes
+    getNodes: clusterState.getNodes,
+    getPersistentVolumes: clusterState.getPersistentVolumes,
+    findPersistentVolume: clusterState.findPersistentVolume,
+    getPersistentVolumeClaims: clusterState.getPersistentVolumeClaims,
+    findPersistentVolumeClaim: clusterState.findPersistentVolumeClaim
   })
 }
 

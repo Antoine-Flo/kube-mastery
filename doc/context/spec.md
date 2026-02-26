@@ -31,7 +31,7 @@ Interactive web application for learning `kubectl` commands through a simulated 
 
 ### kubectl (Phase 1)
 
-get (pods, deploy, rs, services, configmaps, secrets, nodes), describe, delete, create -f, apply -f, run, expose, logs, exec -it, label, annotate, version (--client, --output json/yaml), cluster-info, cluster-info dump, api-resources (--output wide, --namespaced, --sort-by). Détail : voir `src/core/kubectl/commands/handlers/`.
+get (pods, deploy, rs, services, configmaps, secrets, nodes, pv, pvc), describe, delete, create -f, apply -f, run, expose, logs, exec -it, label, annotate, version (--client, --output json/yaml), cluster-info, cluster-info dump, api-resources (--output wide, --namespaced, --sort-by). Détail : voir `src/core/kubectl/commands/handlers/`.
 
 ### kubectl Realism Guarantees (current baseline)
 
@@ -67,6 +67,11 @@ get (pods, deploy, rs, services, configmaps, secrets, nodes), describe, delete, 
   - `kubectl exec ... -- nslookup <service>.<namespace>.svc.cluster.local` resolves Service DNS records,
   - `kubectl exec ... -- curl <url>` simulates in-cluster service traffic,
   - `kubectl run ... --rm -it --command -- nslookup|curl ...` supports short-lived diagnostics flows.
+- Volumes simulation baseline:
+  - support runtime `emptyDir`, `hostPath`, `persistentVolumeClaim` au niveau Pod,
+  - support ressources `PersistentVolume` / `PersistentVolumeClaim` avec phases de base (`Available`, `Pending`, `Bound`),
+  - binding statique PV/PVC event-driven (controller dédié),
+  - gate lifecycle: un Pod avec PVC non bound reste `Pending` avec raison explicite (`waitingReason`).
 - `kubectl cluster-info` baseline:
   - includes control-plane and CoreDNS lines,
   - `kubectl cluster-info dump --output-directory <path>` returns a success confirmation message.
@@ -198,9 +203,12 @@ interface ClusterState {
   pods: Pod[]
   replicaSets: ReplicaSet[] // Managed by ReplicaSetController
   deployments: Deployment[] // Managed by DeploymentController
+  daemonSets: DaemonSet[]
   services: Service[]
   configMaps: ConfigMap[]
   secrets: Secret[]
+  persistentVolumes: PersistentVolume[]
+  persistentVolumeClaims: PersistentVolumeClaim[]
 }
 ```
 

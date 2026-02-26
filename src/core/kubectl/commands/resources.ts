@@ -9,7 +9,13 @@ export const KUBECTL_RESOURCES = {
   secrets: ['secrets', 'secret'],
   nodes: ['nodes', 'node', 'no'],
   daemonsets: ['daemonsets', 'daemonset', 'ds'],
-  replicasets: ['replicasets', 'replicaset', 'rs']
+  replicasets: ['replicasets', 'replicaset', 'rs'],
+  persistentvolumes: ['persistentvolumes', 'persistentvolume', 'pv'],
+  persistentvolumeclaims: [
+    'persistentvolumeclaims',
+    'persistentvolumeclaim',
+    'pvc'
+  ]
 } as const
 
 export type KubectlResource = keyof typeof KUBECTL_RESOURCES

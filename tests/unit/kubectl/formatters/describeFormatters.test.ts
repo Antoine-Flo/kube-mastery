@@ -400,6 +400,54 @@ describe('describeFormatters', () => {
       expect(result).toContain('my-secret')
     })
 
+    it('should format volumes section with hostPath', () => {
+      const pod = createPod({
+        name: 'hostpath-pod',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'nginx:latest' }],
+        volumes: [
+          {
+            name: 'host-vol',
+            source: {
+              type: 'hostPath',
+              path: '/var/lib/kube-data',
+              hostPathType: 'DirectoryOrCreate'
+            }
+          }
+        ]
+      })
+
+      const result = describePod(pod)
+
+      expect(result).toContain('HostPath')
+      expect(result).toContain('/var/lib/kube-data')
+      expect(result).toContain('DirectoryOrCreate')
+    })
+
+    it('should format volumes section with persistentVolumeClaim', () => {
+      const pod = createPod({
+        name: 'pvc-pod',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'nginx:latest' }],
+        volumes: [
+          {
+            name: 'pvc-vol',
+            source: {
+              type: 'persistentVolumeClaim',
+              claimName: 'data-claim',
+              readOnly: true
+            }
+          }
+        ]
+      })
+
+      const result = describePod(pod)
+
+      expect(result).toContain('PersistentVolumeClaim')
+      expect(result).toContain('data-claim')
+      expect(result).toContain('ReadOnly:   true')
+    })
+
     it('should show <none> for no volumes', () => {
       const pod = createPod({
         name: 'simple-pod',

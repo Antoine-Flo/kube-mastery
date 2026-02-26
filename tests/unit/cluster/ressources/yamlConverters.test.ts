@@ -69,6 +69,65 @@ describe('yamlConverters', () => {
       })
     })
 
+    it('should convert emptyDir volume options', () => {
+      const yamlVolume = {
+        name: 'cache',
+        emptyDir: {
+          medium: 'Memory',
+          sizeLimit: '128Mi'
+        }
+      }
+
+      const result = convertYamlVolume(yamlVolume)
+
+      expect(result).toEqual({
+        name: 'cache',
+        source: { type: 'emptyDir', medium: 'Memory', sizeLimit: '128Mi' }
+      })
+    })
+
+    it('should convert hostPath volume', () => {
+      const yamlVolume = {
+        name: 'host-data',
+        hostPath: {
+          path: '/var/lib/kube-data',
+          type: 'DirectoryOrCreate'
+        }
+      }
+
+      const result = convertYamlVolume(yamlVolume)
+
+      expect(result).toEqual({
+        name: 'host-data',
+        source: {
+          type: 'hostPath',
+          path: '/var/lib/kube-data',
+          hostPathType: 'DirectoryOrCreate'
+        }
+      })
+    })
+
+    it('should convert persistentVolumeClaim volume', () => {
+      const yamlVolume = {
+        name: 'data',
+        persistentVolumeClaim: {
+          claimName: 'my-claim',
+          readOnly: true
+        }
+      }
+
+      const result = convertYamlVolume(yamlVolume)
+
+      expect(result).toEqual({
+        name: 'data',
+        source: {
+          type: 'persistentVolumeClaim',
+          claimName: 'my-claim',
+          readOnly: true
+        }
+      })
+    })
+
     it('should return null for invalid volume', () => {
       expect(convertYamlVolume(null)).toBeNull()
       expect(convertYamlVolume({})).toBeNull()

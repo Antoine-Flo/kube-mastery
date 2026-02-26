@@ -4,6 +4,8 @@ import { createResourceRepository } from '../repositories/resourceRepository'
 import type { ConfigMap } from '../ressources/ConfigMap'
 import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
+import type { PersistentVolume } from '../ressources/PersistentVolume'
+import type { PersistentVolumeClaim } from '../ressources/PersistentVolumeClaim'
 import type { ReplicaSet } from '../ressources/ReplicaSet'
 import type { Secret } from '../ressources/Secret'
 import type { Service } from '../ressources/Service'
@@ -24,6 +26,12 @@ import type {
   PodDeletedEvent,
   PodLabeledEvent,
   PodUpdatedEvent,
+  PersistentVolumeClaimCreatedEvent,
+  PersistentVolumeClaimDeletedEvent,
+  PersistentVolumeClaimUpdatedEvent,
+  PersistentVolumeCreatedEvent,
+  PersistentVolumeDeletedEvent,
+  PersistentVolumeUpdatedEvent,
   ReplicaSetCreatedEvent,
   ReplicaSetDeletedEvent,
   ReplicaSetUpdatedEvent,
@@ -53,6 +61,11 @@ const replicaSetRepo = createResourceRepository<ReplicaSet>('ReplicaSet')
 const deploymentRepo = createResourceRepository<Deployment>('Deployment')
 const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
 const serviceRepo = createResourceRepository<Service>('Service')
+const persistentVolumeRepo =
+  createResourceRepository<PersistentVolume>('PersistentVolume')
+const persistentVolumeClaimRepo = createResourceRepository<PersistentVolumeClaim>(
+  'PersistentVolumeClaim'
+)
 
 // ─── Generic Handler Factories ───────────────────────────────────────────
 
@@ -68,6 +81,8 @@ const createRepoHandler = <T>(
     | 'deployments'
     | 'daemonSets'
     | 'services'
+    | 'persistentVolumes'
+    | 'persistentVolumeClaims'
 ) => ({
   created: (state: ClusterStateData, resource: T) => ({
     ...state,
@@ -130,6 +145,14 @@ const replicaSetHandler = createRepoHandler(replicaSetRepo, 'replicaSets')
 const deploymentHandler = createRepoHandler(deploymentRepo, 'deployments')
 const daemonSetHandler = createRepoHandler(daemonSetRepo, 'daemonSets')
 const serviceHandler = createRepoHandler(serviceRepo, 'services')
+const persistentVolumeHandler = createRepoHandler(
+  persistentVolumeRepo,
+  'persistentVolumes'
+)
+const persistentVolumeClaimHandler = createRepoHandler(
+  persistentVolumeClaimRepo,
+  'persistentVolumeClaims'
+)
 
 // ─── Pod Handlers ────────────────────────────────────────────────────────
 
@@ -382,4 +405,52 @@ export const handleServiceAnnotated = (
     event.payload.name,
     event.payload.namespace,
     event.payload.service
+  )
+
+export const handlePersistentVolumeCreated = (
+  state: ClusterStateData,
+  event: PersistentVolumeCreatedEvent
+) => persistentVolumeHandler.created(state, event.payload.persistentVolume)
+
+export const handlePersistentVolumeDeleted = (
+  state: ClusterStateData,
+  event: PersistentVolumeDeletedEvent
+) => persistentVolumeHandler.deleted(state, event.payload.name, '')
+
+export const handlePersistentVolumeUpdated = (
+  state: ClusterStateData,
+  event: PersistentVolumeUpdatedEvent
+) =>
+  persistentVolumeHandler.updated(
+    state,
+    event.payload.name,
+    '',
+    event.payload.persistentVolume
+  )
+
+export const handlePersistentVolumeClaimCreated = (
+  state: ClusterStateData,
+  event: PersistentVolumeClaimCreatedEvent
+) =>
+  persistentVolumeClaimHandler.created(state, event.payload.persistentVolumeClaim)
+
+export const handlePersistentVolumeClaimDeleted = (
+  state: ClusterStateData,
+  event: PersistentVolumeClaimDeletedEvent
+) =>
+  persistentVolumeClaimHandler.deleted(
+    state,
+    event.payload.name,
+    event.payload.namespace
+  )
+
+export const handlePersistentVolumeClaimUpdated = (
+  state: ClusterStateData,
+  event: PersistentVolumeClaimUpdatedEvent
+) =>
+  persistentVolumeClaimHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.persistentVolumeClaim
   )

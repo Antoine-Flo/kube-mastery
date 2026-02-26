@@ -95,7 +95,11 @@ describe('ReplicaSetController', () => {
       findDeployment: () => ({ ok: false, error: 'not found' }),
       getDaemonSets: () => [],
       findDaemonSet: () => ({ ok: false, error: 'not found' }),
-      getNodes: () => []
+      getNodes: () => [],
+      getPersistentVolumes: () => [],
+      findPersistentVolume: () => ({ ok: false, error: 'not found' }),
+      getPersistentVolumeClaims: () => [],
+      findPersistentVolumeClaim: () => ({ ok: false, error: 'not found' })
     })
 
     controller = new ReplicaSetController(eventBus, getState)

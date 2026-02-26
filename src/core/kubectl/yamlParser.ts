@@ -13,6 +13,10 @@ import type { Deployment } from '../cluster/ressources/Deployment'
 import { parseDeploymentManifest } from '../cluster/ressources/Deployment'
 import type { Node } from '../cluster/ressources/Node'
 import { parseNodeManifest } from '../cluster/ressources/Node'
+import type { PersistentVolume } from '../cluster/ressources/PersistentVolume'
+import { parsePersistentVolumeManifest } from '../cluster/ressources/PersistentVolume'
+import type { PersistentVolumeClaim } from '../cluster/ressources/PersistentVolumeClaim'
+import { parsePersistentVolumeClaimManifest } from '../cluster/ressources/PersistentVolumeClaim'
 import type { Pod } from '../cluster/ressources/Pod'
 import { parsePodManifest } from '../cluster/ressources/Pod'
 import type { ReplicaSet } from '../cluster/ressources/ReplicaSet'
@@ -31,6 +35,8 @@ type ParsedResource =
   | ConfigMap
   | Secret
   | Node
+  | PersistentVolume
+  | PersistentVolumeClaim
   | ReplicaSet
   | Deployment
   | DaemonSet
@@ -41,6 +47,8 @@ type ResourceKind =
   | 'ConfigMap'
   | 'Secret'
   | 'Node'
+  | 'PersistentVolume'
+  | 'PersistentVolumeClaim'
   | 'ReplicaSet'
   | 'Deployment'
   | 'DaemonSet'
@@ -74,6 +82,8 @@ const isSupportedKind = (kind: string): kind is ResourceKind => {
     kind === 'ConfigMap' ||
     kind === 'Secret' ||
     kind === 'Node' ||
+    kind === 'PersistentVolume' ||
+    kind === 'PersistentVolumeClaim' ||
     kind === 'ReplicaSet' ||
     kind === 'Deployment' ||
     kind === 'DaemonSet' ||
@@ -92,6 +102,8 @@ const MANIFEST_PARSERS: Record<
   ConfigMap: parseConfigMapManifest,
   Secret: parseSecretManifest,
   Node: parseNodeManifest,
+  PersistentVolume: parsePersistentVolumeManifest,
+  PersistentVolumeClaim: parsePersistentVolumeClaimManifest,
   ReplicaSet: parseReplicaSetManifest,
   Deployment: parseDeploymentManifest,
   DaemonSet: parseDaemonSetManifest,
@@ -109,7 +121,7 @@ const validateResource = (obj: any): Result<ParsedResource> => {
 
   if (!isSupportedKind(obj.kind)) {
     return error(
-      `Unsupported resource kind: ${obj.kind} (supported: Pod, ConfigMap, Secret, Node, ReplicaSet, Deployment, DaemonSet, Service)`
+      `Unsupported resource kind: ${obj.kind} (supported: Pod, ConfigMap, Secret, Node, PersistentVolume, PersistentVolumeClaim, ReplicaSet, Deployment, DaemonSet, Service)`
     )
   }
 

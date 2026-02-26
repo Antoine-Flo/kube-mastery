@@ -2,6 +2,8 @@ import type { ClusterState, ResourceKind } from '../../../cluster/ClusterState'
 import type { EventBus } from '../../../cluster/events/EventBus'
 import {
   createConfigMapDeletedEvent,
+  createPersistentVolumeClaimDeletedEvent,
+  createPersistentVolumeDeletedEvent,
   createPodDeletedEvent,
   createSecretDeletedEvent
 } from '../../../cluster/events/types'
@@ -107,6 +109,17 @@ const deleteNamespacedResourcesForNamespace = (
     }
   }
 
+  const persistentVolumeClaims = clusterState.getPersistentVolumeClaims(namespace)
+  for (const persistentVolumeClaim of persistentVolumeClaims) {
+    const result = clusterState.deletePersistentVolumeClaim(
+      persistentVolumeClaim.metadata.name,
+      namespace
+    )
+    if (!result.ok) {
+      return result
+    }
+  }
+
   return undefined
 }
 
@@ -207,6 +220,42 @@ export const handleDelete = (
       return error(deleteResult.error)
     }
     return success(formatDeletedMessage('service', parsed.name, namespace, true))
+  }
+
+  if (resource === 'persistentvolumes') {
+    const findResult = clusterState.findPersistentVolume(parsed.name)
+    if (!findResult.ok) {
+      return formatNotFoundMessage('persistentvolumes', parsed.name)
+    }
+    eventBus.emit(
+      createPersistentVolumeDeletedEvent(parsed.name, findResult.value, 'kubectl')
+    )
+    return success(
+      formatDeletedMessage('persistentvolume', parsed.name, namespace, false)
+    )
+  }
+
+  if (resource === 'persistentvolumeclaims') {
+    const findResult = clusterState.findPersistentVolumeClaim(parsed.name, namespace)
+    if (!findResult.ok) {
+      return formatNotFoundMessage('persistentvolumeclaims', parsed.name)
+    }
+    eventBus.emit(
+      createPersistentVolumeClaimDeletedEvent(
+        parsed.name,
+        namespace,
+        findResult.value,
+        'kubectl'
+      )
+    )
+    return success(
+      formatDeletedMessage(
+        'persistentvolumeclaim',
+        parsed.name,
+        namespace,
+        true
+      )
+    )
   }
 
   if (resource === 'namespaces') {
