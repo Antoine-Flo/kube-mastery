@@ -210,12 +210,78 @@ const createNamespacesList = (
   }
 }
 
+const createOpenAPIV3Index = () => {
+  return {
+    paths: {
+      'apis/networking.k8s.io/v1': {
+        serverRelativeURL: '/openapi/v3/apis/networking.k8s.io/v1'
+      },
+      'api/v1': {
+        serverRelativeURL: '/openapi/v3/api/v1'
+      },
+      'apis/apps/v1': {
+        serverRelativeURL: '/openapi/v3/apis/apps/v1'
+      }
+    }
+  }
+}
+
+const createNetworkingOpenAPIPreview = () => {
+  return {
+    openapi: '3.0.0',
+    info: {
+      title: 'Kubernetes networking.k8s.io/v1',
+      version: 'v1'
+    },
+    paths: {
+      '/apis/networking.k8s.io/v1/ingresses': {},
+      '/apis/networking.k8s.io/v1/ingressclasses': {}
+    }
+  }
+}
+
+const createNetworkingAPIResourceList = () => {
+  return {
+    kind: 'APIResourceList',
+    apiVersion: 'v1',
+    groupVersion: 'networking.k8s.io/v1',
+    resources: [
+      {
+        name: 'ingressclasses',
+        singularName: 'ingressclass',
+        namespaced: false,
+        kind: 'IngressClass',
+        verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch']
+      },
+      {
+        name: 'ingresses',
+        singularName: 'ingress',
+        namespaced: true,
+        kind: 'Ingress',
+        verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch']
+      }
+    ]
+  }
+}
+
 const RAW_GET_HANDLERS: Record<string, RawGetHandler> = {
   '/': () => {
     return createDiscoveryRoot()
   },
   '/api/v1/namespaces': (state) => {
     return createNamespacesList(state)
+  },
+  '/openapi/v3': () => {
+    return createOpenAPIV3Index()
+  },
+  '/openapi/v3/': () => {
+    return createOpenAPIV3Index()
+  },
+  '/openapi/v3/apis/networking.k8s.io/v1': () => {
+    return createNetworkingOpenAPIPreview()
+  },
+  '/apis/networking.k8s.io/v1': () => {
+    return createNetworkingAPIResourceList()
   }
 }
 
@@ -230,6 +296,9 @@ export const handleGetRaw = (
 
   const payload = handler(state)
   if (rawPath === '/') {
+    return JSON.stringify(payload, null, 2)
+  }
+  if (rawPath === '/openapi/v3' || rawPath === '/openapi/v3/') {
     return JSON.stringify(payload, null, 2)
   }
   return JSON.stringify(payload)

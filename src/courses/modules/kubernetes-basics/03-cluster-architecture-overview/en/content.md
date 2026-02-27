@@ -109,23 +109,24 @@ Let's explore the nodes in your practice cluster and see the architecture in act
 
 List your nodes with extra detail:
 
-```
+```bash
 kubectl get nodes -o wide
 ```
 
 Expected output:
 
-```
-NAME           STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
-controlplane   Ready    control-plane   30m   v1.30.0   192.168.0.2   <none>        Ubuntu 22.04.3 LTS   5.15.0-91        containerd://1.7.0
-node01         Ready    <none>          29m   v1.30.0   192.168.0.3   <none>        Ubuntu 22.04.3 LTS   5.15.0-91        containerd://1.7.0
+```bash
+NAME                STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                         KERNEL-VERSION                     CONTAINER-RUNTIME
+sim-control-plane   Ready    control-plane   2m    v1.35.0   172.18.0.2    <none>        Debian GNU/Linux 12 (bookworm)   6.6.87.2-microsoft-standard-WSL2   containerd://2.2.0
+sim-worker          Ready    <none>          2m    v1.35.0   172.18.0.3    <none>        Debian GNU/Linux 12 (bookworm)   6.6.87.2-microsoft-standard-WSL2   containerd://2.2.0
+sim-worker2         Ready    <none>          2m    v1.35.0   172.18.0.4    <none>        Debian GNU/Linux 12 (bookworm)   6.6.87.2-microsoft-standard-WSL2   containerd://2.2.0
 ```
 
 Notice the `ROLES` column. The control plane node shows `control-plane`, while the worker node shows `<none>` (worker nodes do not have an explicit role label by default in many clusters).
 
 Now get detailed information about a specific node to see its resources and running pods:
 
-```
+```bash
 kubectl describe node node01
 ```
 
@@ -137,20 +138,26 @@ This produces a long output. Scan through it and note these important sections:
 
 Check which pods are running on the control plane (the system components we saw earlier):
 
-```
+```bash
 kubectl get pods -n kube-system -o wide
 ```
 
 Expected output:
 
 ```
-NAME                                   READY   STATUS    RESTARTS   AGE   NODE
-coredns-5d78c9869d-6lz8n               1/1     Running   0          30m   controlplane
-etcd-controlplane                      1/1     Running   0          30m   controlplane
-kube-apiserver-controlplane            1/1     Running   0          30m   controlplane
-kube-controller-manager-controlplane   1/1     Running   0          30m   controlplane
-kube-proxy-4hj5k                       1/1     Running   0          29m   node01
-kube-scheduler-controlplane            1/1     Running   0          30m   controlplane
+NAME                                        READY   STATUS    RESTARTS   AGE   IP               NODE                NOMINATED NODE   READINESS GATES
+etcd-sim-control-plane                      1/1     Running          0   4m    10.244.33.147    sim-control-plane   <none>           <none>
+kube-apiserver-sim-control-plane            1/1     Running          0   4m    10.244.68.104    sim-control-plane   <none>           <none>
+kube-controller-manager-sim-control-plane   1/1     Running          0   4m    10.244.239.54    sim-control-plane   <none>           <none>
+kube-scheduler-sim-control-plane            1/1     Running          0   4m    10.244.62.178    sim-control-plane   <none>           <none>
+kindnet-gk6vf                               1/1     Running          0   4m    10.244.104.225   sim-control-plane   <none>           <none>
+kindnet-njmjr                               1/1     Running          0   4m    10.244.15.85     sim-worker          <none>           <none>
+kindnet-5gsl1                               1/1     Running          0   4m    10.244.108.16    sim-worker2         <none>           <none>
+coredns-004db73bf1-i1iz0                    1/1     Running          0   4m    10.244.30.42     sim-control-plane   <none>           <none>
+coredns-004db73bf1-c4440                    1/1     Running          0   4m    10.244.246.175   sim-control-plane   <none>           <none>
+kube-proxy-gixqr                            1/1     Running          0   4m    10.244.82.75     sim-control-plane   <none>           <none>
+kube-proxy-1ymin                            1/1     Running          0   4m    10.244.143.244   sim-worker          <none>           <none>
+kube-proxy-3tx2p                            1/1     Running          0   4m    10.244.68.119    sim-worker2         <none>           <none>
 ```
 
 Look at the `NODE` column. The control plane components (`etcd`, `kube-apiserver`, `kube-controller-manager`, `kube-scheduler`) all run on the `controlplane` node. The `kube-proxy` runs on every node, including worker nodes. This is exactly the architecture we just described. Open the cluster visualizer to see this laid out graphically.

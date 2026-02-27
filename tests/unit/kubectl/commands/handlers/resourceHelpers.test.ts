@@ -6,6 +6,7 @@ import {
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
+import { createIngress } from '../../../../../src/core/cluster/ressources/Ingress'
 import {
   createEventBus,
   type EventBus
@@ -460,6 +461,42 @@ describe('resourceHelpers', () => {
         expect(result.ok).toBe(false)
         if (!result.ok) {
           expect(result.error).toContain('AlreadyExists')
+        }
+      })
+    })
+
+    describe('creating ingresses', () => {
+      it('should create ingress with networking reference', () => {
+        const ingress = createIngress({
+          name: 'demo-ingress',
+          namespace: 'default',
+          spec: {
+            rules: [
+              {
+                host: 'demo.example.com',
+                http: {
+                  paths: [
+                    {
+                      path: '/',
+                      pathType: 'Prefix',
+                      backend: {
+                        service: {
+                          name: 'frontend-service',
+                          port: { number: 80 }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        })
+
+        const result = createResourceWithEvents(ingress, clusterState, eventBus)
+        expect(result.ok).toBe(true)
+        if (result.ok) {
+          expect(result.value).toContain('ingress.networking.k8s.io/demo-ingress created')
         }
       })
     })

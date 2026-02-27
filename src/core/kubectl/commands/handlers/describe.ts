@@ -4,6 +4,7 @@ import { error, success } from '../../../shared/result'
 import {
   describeConfigMap,
   describeDeployment,
+  describeIngress,
   describeNode,
   describePersistentVolume,
   describePersistentVolumeClaim,
@@ -79,6 +80,13 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
       return describeDeployment(item)
     },
     type: 'Deployment'
+  },
+  ingresses: {
+    items: 'ingresses',
+    formatter: (item) => {
+      return describeIngress(item)
+    },
+    type: 'Ingress'
   },
   nodes: {
     items: 'nodes',

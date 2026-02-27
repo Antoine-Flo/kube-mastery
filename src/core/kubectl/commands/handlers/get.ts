@@ -4,6 +4,7 @@ import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
 import type { DaemonSet } from '../../../cluster/ressources/DaemonSet'
 import type { Deployment } from '../../../cluster/ressources/Deployment'
 import { getDeploymentDesiredReplicas } from '../../../cluster/ressources/Deployment'
+import type { Ingress } from '../../../cluster/ressources/Ingress'
 import type { Namespace } from '../../../cluster/ressources/Namespace'
 import type { Node } from '../../../cluster/ressources/Node'
 import type { PersistentVolume } from '../../../cluster/ressources/PersistentVolume'
@@ -202,6 +203,24 @@ const formatServicePorts = (service: Service): string => {
     .join(',')
 }
 
+const formatIngressClass = (ingress: Ingress): string => {
+  return ingress.spec.ingressClassName ?? '<none>'
+}
+
+const formatIngressHosts = (ingress: Ingress): string => {
+  const hosts = ingress.spec.rules
+    .map((rule) => rule.host)
+    .filter((host): host is string => host != null && host.length > 0)
+  if (hosts.length === 0) {
+    return '*'
+  }
+  return hosts.join(',')
+}
+
+const formatIngressPorts = (): string => {
+  return '80'
+}
+
 /**
  * Remove internal simulator properties from resource for output
  * Pure function that strips _simulator and other internal fields
@@ -222,6 +241,8 @@ const RESOURCE_OUTPUT_METADATA: Record<StructuredResource, ResourceOutputMetadat
   deployments: { apiVersion: 'apps/v1', kind: 'Deployment' },
   daemonsets: { apiVersion: 'apps/v1', kind: 'DaemonSet' },
   services: { apiVersion: 'v1', kind: 'Service' },
+  ingresses: { apiVersion: 'networking.k8s.io/v1', kind: 'Ingress' },
+  ingressclasses: { apiVersion: 'networking.k8s.io/v1', kind: 'IngressClass' },
   namespaces: { apiVersion: 'v1', kind: 'Namespace' },
   persistentvolumes: { apiVersion: 'v1', kind: 'PersistentVolume' },
   persistentvolumeclaims: { apiVersion: 'v1', kind: 'PersistentVolumeClaim' }
@@ -536,6 +557,28 @@ const RESOURCE_HANDLERS: Record<string, ResourceHandler<any>> = {
       formatAge(svc.metadata.creationTimestamp)
     ],
     supportsFiltering: true
+  },
+
+  ingresses: {
+    getItems: (state) => state.ingresses.items,
+    headers: ['name', 'class', 'hosts', 'address', 'ports', 'age'],
+    formatRow: (ingress: Ingress) => [
+      ingress.metadata.name,
+      formatIngressClass(ingress),
+      formatIngressHosts(ingress),
+      '<none>',
+      formatIngressPorts(),
+      formatAge(ingress.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true
+  },
+
+  ingressclasses: {
+    getItems: (_state) => [],
+    headers: ['name', 'controller', 'parameters', 'age'],
+    formatRow: () => ['<none>', '<none>', '<none>', '<none>'],
+    supportsFiltering: true,
+    isClusterScoped: true
   },
 
   namespaces: {

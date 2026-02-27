@@ -85,42 +85,42 @@ Let's observe how Kubernetes abstracts away the notion of individual machines. W
 
 Create a simple deployment with three replicas:
 
-```
+```bash
 kubectl create deployment web --image=nginx --replicas=3
 ```
 
 Expected output:
 
-```
+```bash
 deployment.apps/web created
 ```
 
 Now list the pods and see which nodes they were placed on:
 
-```
+```bash
 kubectl get pods -o wide
 ```
 
 Expected output:
 
-```
-NAME                   READY   STATUS    RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
-web-6d6b4f8d5-2xk4p   1/1     Running   0          15s   10.244.1.3    node01   <none>           <none>
-web-6d6b4f8d5-9hbf7   1/1     Running   0          15s   10.244.1.4    node01   <none>           <none>
-web-6d6b4f8d5-tnq8v   1/1     Running   0          15s   10.244.0.5    controlplane   <none>     <none>
+```bash
+NAME                   READY   STATUS    RESTARTS   AGE   IP               NODE          NOMINATED NODE   READINESS GATES
+web-00063e839a-ol75f   1/1     Running          0   6s    10.244.122.122   sim-worker2   <none>           <none>
+web-00063e839a-dxocs   1/1     Running          0   6s    10.244.58.118    sim-worker    <none>           <none>
+web-00063e839a-mirob   1/1     Running          0   6s    10.244.200.111   sim-worker    <none>           <none>
 ```
 
 Kubernetes distributed the three pods across available nodes automatically, the scheduler made that decision, not you. Open the cluster visualizer (telescope icon) to see this placement rendered visually.
 
 Now delete one of the pods by name (use one of the names from your output):
 
-```
+```bash
 kubectl delete pod web-6d6b4f8d5-2xk4p
 ```
 
 Wait a few seconds, then list the pods again:
 
-```
+```bash
 kubectl get pods -o wide
 ```
 
@@ -128,7 +128,7 @@ Kubernetes has automatically created a replacement pod. The self-healing mechani
 
 Clean up when you are done:
 
-```
+```bash
 kubectl delete deployment web
 ```
 

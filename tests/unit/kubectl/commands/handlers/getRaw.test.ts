@@ -66,6 +66,34 @@ describe('kubectl get raw handler', () => {
     }
   })
 
+  it('returns OpenAPI v3 index for "/openapi/v3"', () => {
+    const state = createClusterStateData()
+    const output = handleGetRaw(state, '/openapi/v3')
+    const payload = JSON.parse(output) as {
+      paths: Record<string, { serverRelativeURL: string }>
+    }
+
+    expect(payload.paths['apis/networking.k8s.io/v1']).toBeDefined()
+    expect(payload.paths['apis/networking.k8s.io/v1'].serverRelativeURL).toContain(
+      '/openapi/v3/apis/networking.k8s.io/v1'
+    )
+  })
+
+  it('returns networking API resources for "/apis/networking.k8s.io/v1"', () => {
+    const state = createClusterStateData()
+    const output = handleGetRaw(state, '/apis/networking.k8s.io/v1')
+    const payload = JSON.parse(output) as {
+      kind: string
+      resources: Array<{ name: string }>
+    }
+
+    expect(payload.kind).toBe('APIResourceList')
+    expect(payload.resources.map((resource) => resource.name)).toContain('ingresses')
+    expect(payload.resources.map((resource) => resource.name)).toContain(
+      'ingressclasses'
+    )
+  })
+
   it('returns not found message for unknown raw endpoint', () => {
     const state = createClusterStateData()
     const output = handleGetRaw(state, '/api/v1/unknown')

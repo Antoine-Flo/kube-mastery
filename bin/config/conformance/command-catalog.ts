@@ -127,6 +127,19 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
           '"kube-public"',
           '"kube-node-lease"'
         ]),
+        createRawCommand('kubectl get --raw /openapi/v3', [
+          'networking.k8s.io/v1',
+          '/openapi/v3/apis/networking.k8s.io/v1'
+        ]),
+        createRawCommand('kubectl get --raw /apis/networking.k8s.io/v1', [
+          'APIResourceList',
+          'ingresses',
+          'ingressclasses'
+        ]),
+        createRawCommand(
+          'kubectl get --raw /openapi/v3/apis/networking.k8s.io/v1',
+          ['openapi', 'ingresses', 'ingressclasses']
+        ),
         'kubectl version',
         'kubectl version --client',
         'kubectl version --output json',
@@ -211,6 +224,30 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
           'FIELD:    spec',
           'KIND:',
           'PersistentVolumeClaim'
+        ])
+      ]
+    },
+    {
+      idPrefix: 'ingress-basics',
+      seed: 'ingress-basics',
+      waitForPods: true,
+      commands: [
+        createRawCommand('kubectl get ingress', [
+          'NAME',
+          'demo-ingress',
+          'demo.example.com'
+        ]),
+        createRawCommand('kubectl describe ingress demo-ingress', [
+          'Name:',
+          'demo-ingress',
+          'Rules:',
+          '/api',
+          'api-service:80',
+          'frontend-service:80'
+        ]),
+        createRawCommand('kubectl get ingressclass', ['No resources found']),
+        createRawCommand('kubectl delete ingress demo-ingress', [
+          'ingress.networking.k8s.io "demo-ingress" deleted'
         ])
       ]
     },

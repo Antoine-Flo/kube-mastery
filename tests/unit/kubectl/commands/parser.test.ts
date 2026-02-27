@@ -319,6 +319,18 @@ describe('kubectl parser - describe', () => {
     expect(result.value.resource).toBe('nodes')
     expect(result.value.name).toBe('sim-worker')
   })
+
+  it('should parse ingress alias "ing" for describe', () => {
+    const result = parseCommand('kubectl describe ing demo-ingress')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('ingresses')
+    expect(result.value.name).toBe('demo-ingress')
+  })
 })
 
 describe('kubectl parser - get and delete flag positions', () => {
