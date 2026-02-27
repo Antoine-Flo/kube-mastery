@@ -129,6 +129,7 @@ interface PodMetadata {
   labels?: Record<string, string>
   annotations?: Record<string, string>
   creationTimestamp: string
+  generation?: number
   ownerReferences?: OwnerReference[]
 }
 
@@ -175,15 +176,42 @@ export interface ContainerStatus {
   ready: boolean
   restartCount: number
   state?: 'Waiting' | 'Running' | 'Terminated'
+  started?: boolean
+  startedAt?: string
+  containerID?: string
+  imageID?: string
+  lastState?: 'Waiting' | 'Running' | 'Terminated'
   /** Reason shown in kubectl get pods STATUS (e.g. ContainerCreating, ImagePullBackOff) */
   waitingReason?: string
   /** Reason when terminated (e.g. CrashLoopBackOff) */
   terminatedReason?: string
 }
 
+export type PodQosClass = 'Guaranteed' | 'Burstable' | 'BestEffort'
+
+export interface PodCondition {
+  type:
+    | 'Initialized'
+    | 'Ready'
+    | 'ContainersReady'
+    | 'PodScheduled'
+    | 'PodReadyToStartContainers'
+  status: 'True' | 'False' | 'Unknown'
+  lastTransitionTime: string
+  lastProbeTime?: string | null
+  observedGeneration?: number
+}
+
 interface PodStatus {
   phase: PodPhase
   podIP?: string
+  podIPs?: Array<{ ip: string }>
+  hostIP?: string
+  hostIPs?: Array<{ ip: string }>
+  startTime?: string
+  qosClass?: PodQosClass
+  observedGeneration?: number
+  conditions?: PodCondition[]
   restartCount: number
   containerStatuses?: ContainerStatus[]
 }
@@ -229,6 +257,13 @@ interface PodConfig {
   creationTimestamp?: string
   phase?: PodPhase
   podIP?: string
+  podIPs?: Array<{ ip: string }>
+  hostIP?: string
+  hostIPs?: Array<{ ip: string }>
+  startTime?: string
+  qosClass?: PodQosClass
+  observedGeneration?: number
+  conditions?: PodCondition[]
   restartCount?: number
   logs?: string[]
   ownerReferences?: OwnerReference[]
@@ -236,7 +271,140 @@ interface PodConfig {
   containerStatusOverrides?: ContainerStatusOverride[]
 }
 
+const stableHash = (value: string): string => {
+  let hash = 0
+  for (let index = 0; index < value.length; index++) {
+    hash = (hash << 5) - hash + value.charCodeAt(index)
+    hash |= 0
+  }
+  const normalized = (hash >>> 0).toString(16).padStart(8, '0')
+  return normalized
+}
+
+const computeContainerImageId = (image: string): string => {
+  const normalizedImage = image.includes(':') ? image : `${image}:latest`
+  const digest = stableHash(normalizedImage).repeat(8).slice(0, 64)
+  return `${normalizedImage}@sha256:${digest}`
+}
+
+const computeContainerId = (
+  namespace: string,
+  podName: string,
+  containerName: string
+): string => {
+  const digest = stableHash(`${namespace}/${podName}/${containerName}`).repeat(8).slice(0, 64)
+  return `containerd://${digest}`
+}
+
+const hasCpuAndMemory = (
+  resources: Container['resources'] | undefined,
+  kind: 'requests' | 'limits'
+): boolean => {
+  if (resources == null) {
+    return false
+  }
+  const values = resources[kind]
+  if (values == null) {
+    return false
+  }
+  if (typeof values.cpu !== 'string' || values.cpu.length === 0) {
+    return false
+  }
+  if (typeof values.memory !== 'string' || values.memory.length === 0) {
+    return false
+  }
+  return true
+}
+
+const isGuaranteedContainer = (container: Container): boolean => {
+  const resources = container.resources
+  if (!hasCpuAndMemory(resources, 'requests')) {
+    return false
+  }
+  if (!hasCpuAndMemory(resources, 'limits')) {
+    return false
+  }
+  if (resources == null || resources.requests == null || resources.limits == null) {
+    return false
+  }
+  return (
+    resources.requests.cpu === resources.limits.cpu &&
+    resources.requests.memory === resources.limits.memory
+  )
+}
+
+const hasAnyResources = (container: Container): boolean => {
+  const resources = container.resources
+  if (resources == null) {
+    return false
+  }
+  const hasCpuRequest =
+    typeof resources.requests?.cpu === 'string' && resources.requests.cpu.length > 0
+  const hasMemoryRequest =
+    typeof resources.requests?.memory === 'string' && resources.requests.memory.length > 0
+  const hasCpuLimit =
+    typeof resources.limits?.cpu === 'string' && resources.limits.cpu.length > 0
+  const hasMemoryLimit =
+    typeof resources.limits?.memory === 'string' && resources.limits.memory.length > 0
+  return hasCpuRequest || hasMemoryRequest || hasCpuLimit || hasMemoryLimit
+}
+
+export const computePodQosClassFromContainers = (
+  containers: readonly Container[]
+): PodQosClass => {
+  if (containers.length === 0) {
+    return 'BestEffort'
+  }
+  const guaranteed = containers.every((container) => isGuaranteedContainer(container))
+  if (guaranteed) {
+    return 'Guaranteed'
+  }
+  const hasResources = containers.some((container) => hasAnyResources(container))
+  if (hasResources) {
+    return 'Burstable'
+  }
+  return 'BestEffort'
+}
+
+const buildPodConditions = (
+  phase: PodPhase,
+  nodeName: string | undefined,
+  regularContainerStatuses: ContainerStatus[],
+  transitionTime: string,
+  observedGeneration: number | undefined,
+  initContainersCount: number
+): PodCondition[] => {
+  const allRegularReady =
+    regularContainerStatuses.length > 0 &&
+    regularContainerStatuses.every((status) => status.ready === true)
+  const initialized =
+    initContainersCount === 0 || phase === 'Running' || phase === 'Succeeded'
+  const ready = phase === 'Running' && allRegularReady
+  const podScheduled = nodeName != null && nodeName.length > 0
+  const toCondition = (
+    type: PodCondition['type'],
+    status: PodCondition['status']
+  ): PodCondition => {
+    return {
+      type,
+      status,
+      lastTransitionTime: transitionTime,
+      lastProbeTime: null,
+      ...(observedGeneration != null ? { observedGeneration } : {})
+    }
+  }
+  return [
+    toCondition('Initialized', initialized ? 'True' : 'False'),
+    toCondition('Ready', ready ? 'True' : 'False'),
+    toCondition('ContainersReady', ready ? 'True' : 'False'),
+    toCondition('PodScheduled', podScheduled ? 'True' : 'False')
+  ]
+}
+
 export const createPod = (config: PodConfig): Pod => {
+  const initialPhase = config.phase || 'Pending'
+  const creationTimestamp = config.creationTimestamp || new Date().toISOString()
+  const observedGeneration = config.observedGeneration ?? 1
   // Create container statuses for init containers
   const initContainerStatuses = (config.initContainers || []).map(
     (container) => ({
@@ -244,7 +412,9 @@ export const createPod = (config: PodConfig): Pod => {
       image: container.image,
       ready: false,
       restartCount: 0,
-      state: 'Waiting' as const
+      state: 'Waiting' as const,
+      started: false,
+      imageID: computeContainerImageId(container.image)
     })
   )
 
@@ -254,22 +424,29 @@ export const createPod = (config: PodConfig): Pod => {
 
   const regularContainerStatuses = config.containers.map((container) => {
     const override = overridesByName.get(container.name)
-    const ready = override?.ready ?? config.phase === 'Running'
+    const ready = override?.ready ?? initialPhase === 'Running'
     const restartCount = override?.restartCount ?? 0
     const state: 'Waiting' | 'Running' | 'Terminated' =
       override?.terminatedReason != null
         ? 'Terminated'
         : override?.waitingReason != null
           ? 'Waiting'
-          : config.phase === 'Running'
+          : initialPhase === 'Running'
             ? 'Running'
             : 'Waiting'
+    const isStarted = state === 'Running'
+    const startedAt = isStarted ? creationTimestamp : undefined
     return {
       name: container.name,
       image: container.image,
       ready,
       restartCount,
       state,
+      started: isStarted,
+      ...(startedAt != null ? { startedAt } : {}),
+      containerID: computeContainerId(config.namespace, config.name, container.name),
+      imageID: computeContainerImageId(container.image),
+      ...(state !== 'Waiting' ? { lastState: 'Waiting' as const } : {}),
       ...(override?.waitingReason != null && {
         waitingReason: override.waitingReason
       }),
@@ -284,6 +461,34 @@ export const createPod = (config: PodConfig): Pod => {
     ...initContainerStatuses,
     ...regularContainerStatuses
   ]
+  const podIP = config.podIP
+  const podIPs =
+    config.podIPs ??
+    (podIP != null ? [{ ip: podIP }] : undefined)
+  const hostIP = config.hostIP
+  const hostIPs =
+    config.hostIPs ??
+    (hostIP != null ? [{ ip: hostIP }] : undefined)
+  const startTime =
+    config.startTime ??
+    (initialPhase === 'Running' ? creationTimestamp : undefined)
+  const qosClass = config.qosClass ?? computePodQosClassFromContainers(config.containers)
+  const regularStatuses = allContainerStatuses.filter((status) => {
+    return (
+      (config.initContainers ?? []).some((container) => container.name === status.name) ===
+      false
+    )
+  })
+  const conditions =
+    config.conditions ??
+    buildPodConditions(
+      initialPhase,
+      config.nodeName,
+      regularStatuses,
+      creationTimestamp,
+      observedGeneration,
+      (config.initContainers ?? []).length
+    )
 
   // Create _simulator.containers with fileSystem and containerType
   const simulatorContainers: Pod['_simulator']['containers'] = {}
@@ -310,10 +515,11 @@ export const createPod = (config: PodConfig): Pod => {
     metadata: {
       name: config.name,
       namespace: config.namespace,
-      creationTimestamp: config.creationTimestamp || new Date().toISOString(),
+      creationTimestamp,
       ...(config.labels && { labels: config.labels }),
       ...(config.annotations && { annotations: config.annotations }),
-      ...(config.ownerReferences && { ownerReferences: config.ownerReferences })
+      ...(config.ownerReferences && { ownerReferences: config.ownerReferences }),
+      generation: observedGeneration
     },
     spec: {
       ...(config.nodeName && { nodeName: config.nodeName }),
@@ -325,8 +531,15 @@ export const createPod = (config: PodConfig): Pod => {
       ...(config.volumes && { volumes: config.volumes })
     },
     status: {
-      phase: config.phase || 'Pending',
-      ...(config.podIP != null && { podIP: config.podIP }),
+      phase: initialPhase,
+      ...(podIP != null && { podIP }),
+      ...(podIPs != null ? { podIPs } : {}),
+      ...(hostIP != null ? { hostIP } : {}),
+      ...(hostIPs != null ? { hostIPs } : {}),
+      ...(startTime != null ? { startTime } : {}),
+      qosClass,
+      observedGeneration,
+      conditions,
       restartCount: config.restartCount || 0,
       containerStatuses: allContainerStatuses
     },

@@ -151,6 +151,12 @@ La couche handlers kubectl aligne explicitement les messages create/delete sur d
 - `delete` namespaced ajoute `from <namespace> namespace`,
 - les cas `NotFound` critiques (deployments) sont normalises avec `deployments.apps`.
 
+Extension Ingress (baseline):
+
+- `create`/`apply` pour `Ingress` utilisent la reference groupee `ingress.networking.k8s.io/<name>`,
+- `delete ingress` suit la convention namespaced (`deleted from <namespace> namespace`),
+- le rendu `get/describe` reste volontairement orienté API/object sans simulation de controller L7.
+
 ### Run Command Semantics Layer
 
 Le flux `kubectl run` repose sur la meme architecture parseur/transformer/handler:
@@ -230,7 +236,7 @@ src/
 
 ## Key Data Types
 
-- **Cluster** (`src/core/cluster/ressources/`): Pod, Deployment, ReplicaSet, DaemonSet, ConfigMap, Secret, Service, Node, PersistentVolume, PersistentVolumeClaim.
+- **Cluster** (`src/core/cluster/ressources/`): Pod, Deployment, ReplicaSet, DaemonSet, ConfigMap, Secret, Service, Ingress, Node, PersistentVolume, PersistentVolumeClaim.
 - **Filesystem** (`src/core/filesystem/models/`): FileSystemNode = DirectoryNode | FileNode.
 - **Quiz** (`src/types/quiz.ts`): MultipleChoiceQuestion, TerminalCommandQuestion, CommandQuestion, OrderQuestion.
 

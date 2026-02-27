@@ -57,7 +57,7 @@ describe('conformance reporter', () => {
     expect(diffLog).toContain('mismatch-example')
   })
 
-  it('should split reports by inferred resource bucket', () => {
+  it('should split reports by inferred command bucket', () => {
     const outputDir = mkdtempSync(join(tmpdir(), 'conformance-reporter-bucket-'))
     tempDirs.push(outputDir)
 
@@ -86,53 +86,53 @@ describe('conformance reporter', () => {
     })
     reporter.recordKind({
       suiteName: 'suite',
-      actionId: 'deploy-step',
+      actionId: 'describe-step',
       actionType: 'command',
       backend: 'kind',
-      command: 'kubectl get deployments',
+      command: 'kubectl describe pod demo',
       exitCode: 0,
-      stdout: 'deploy-output',
+      stdout: 'describe-output',
       stderr: '',
-      normalized: 'deploy-output'
+      normalized: 'describe-output'
     })
     reporter.recordRunner({
       suiteName: 'suite',
-      actionId: 'deploy-step',
+      actionId: 'describe-step',
       actionType: 'command',
       backend: 'runner',
-      command: 'kubectl get deployments',
+      command: 'kubectl describe pod demo',
       exitCode: 0,
-      stdout: 'deploy-output',
+      stdout: 'describe-output',
       stderr: '',
-      normalized: 'deploy-output'
+      normalized: 'describe-output'
     })
     reporter.recordDiff('[command] kubectl get pods\n[mismatch]')
-    reporter.recordDiff('[command] kubectl get deployments\n[mismatch]')
+    reporter.recordDiff('[command] kubectl describe pod demo\n[mismatch]')
     reporter.flush()
 
-    const podsKindLog = readFileSync(join(outputDir, 'pods', 'kind.log'), 'utf-8')
-    const podsRunnerLog = readFileSync(
-      join(outputDir, 'pods', 'runner.log'),
+    const getKindLog = readFileSync(join(outputDir, 'get', 'kind.log'), 'utf-8')
+    const getRunnerLog = readFileSync(
+      join(outputDir, 'get', 'runner.log'),
       'utf-8'
     )
-    const podsDiffLog = readFileSync(join(outputDir, 'pods', 'diff.log'), 'utf-8')
-    const deployKindLog = readFileSync(
-      join(outputDir, 'deployments', 'kind.log'),
+    const getDiffLog = readFileSync(join(outputDir, 'get', 'diff.log'), 'utf-8')
+    const describeKindLog = readFileSync(
+      join(outputDir, 'describe', 'kind.log'),
       'utf-8'
     )
-    const deployDiffLog = readFileSync(
-      join(outputDir, 'deployments', 'diff.log'),
+    const describeDiffLog = readFileSync(
+      join(outputDir, 'describe', 'diff.log'),
       'utf-8'
     )
 
-    expect(podsKindLog).toContain('kubectl get pods')
-    expect(podsKindLog).not.toContain('kubectl get deployments')
-    expect(podsRunnerLog).toContain('kubectl get pods')
-    expect(podsDiffLog).toContain('kubectl get pods')
+    expect(getKindLog).toContain('kubectl get pods')
+    expect(getKindLog).not.toContain('kubectl describe pod demo')
+    expect(getRunnerLog).toContain('kubectl get pods')
+    expect(getDiffLog).toContain('kubectl get pods')
 
-    expect(deployKindLog).toContain('kubectl get deployments')
-    expect(deployKindLog).not.toContain('kubectl get pods')
-    expect(deployDiffLog).toContain('kubectl get deployments')
+    expect(describeKindLog).toContain('kubectl describe pod demo')
+    expect(describeKindLog).not.toContain('kubectl get pods')
+    expect(describeDiffLog).toContain('kubectl describe pod demo')
   })
 
   it('should bucket kubectl config commands under config', () => {

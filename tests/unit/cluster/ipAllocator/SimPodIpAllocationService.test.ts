@@ -27,6 +27,9 @@ describe('initializeSimPodIpAllocation', () => {
     eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
       if (event.metadata?.source === 'sim-ip-allocator') {
         updatedPodWithIp = event.payload.pod.status.podIP
+        expect(event.payload.pod.status.podIPs?.[0]?.ip).toBe(
+          event.payload.pod.status.podIP
+        )
       }
     })
 

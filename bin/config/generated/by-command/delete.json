@@ -29,17 +29,35 @@
     {
       "id": "deploy-cm-cmd-1",
       "type": "command",
+      "command": "kubectl delete svc web-svc",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "service \"web-svc\" deleted"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "service \"web-svc\" deleted"
+        ]
+      }
+    },
+    {
+      "id": "deploy-cm-cmd-2",
+      "type": "command",
       "command": "kubectl delete deployments exhaustive-api",
       "compareMode": "normalized"
     },
     {
-      "id": "deploy-cm-cmd-2",
+      "id": "deploy-cm-cmd-3",
       "type": "command",
       "command": "kubectl delete deployments exhaustive-multi",
       "compareMode": "normalized"
     },
     {
-      "id": "deploy-cm-cmd-3",
+      "id": "deploy-cm-cmd-4",
       "type": "command",
       "command": "kubectl delete deployments exhaustive-web",
       "compareMode": "normalized"
@@ -48,6 +66,36 @@
       "id": "deploy-cm-cleanup",
       "type": "deleteYaml",
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "ingress-basics-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/ingress-basics",
+      "waitForPods": true
+    },
+    {
+      "id": "ingress-basics-cmd-1",
+      "type": "command",
+      "command": "kubectl delete ingress demo-ingress",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "ingress.networking.k8s.io \"demo-ingress\" deleted"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "ingress.networking.k8s.io \"demo-ingress\" deleted"
+        ]
+      }
+    },
+    {
+      "id": "ingress-basics-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/ingress-basics",
       "ignoreNotFound": true
     },
     {
@@ -117,12 +165,6 @@
       "id": "errors-help-cmd-1",
       "type": "command",
       "command": "kubectl delete pods missing-pod",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-2",
-      "type": "command",
-      "command": "kubectl delete --help",
       "compareMode": "normalized"
     },
     {

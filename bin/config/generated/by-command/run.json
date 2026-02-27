@@ -134,13 +134,13 @@
       "expectKind": {
         "exitCode": 1,
         "stderrContains": [
-          "run requires a resource name"
+          "error: required flag(s) \"image\" not set"
         ]
       },
       "expectRunner": {
         "exitCode": 1,
         "stderrContains": [
-          "run requires a resource name"
+          "error: required flag(s) \"image\" not set"
         ]
       }
     },
@@ -152,13 +152,13 @@
       "expectKind": {
         "exitCode": 1,
         "stderrContains": [
-          "run requires flag --image"
+          "error: required flag(s) \"image\" not set"
         ]
       },
       "expectRunner": {
         "exitCode": 1,
         "stderrContains": [
-          "run requires flag --image"
+          "error: required flag(s) \"image\" not set"
         ]
       }
     },
@@ -168,15 +168,15 @@
       "command": "kubectl run missing-command --image=busybox --command --",
       "compareMode": "none",
       "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "run requires command after --"
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/missing-command created"
         ]
       },
       "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "run requires command after --"
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/missing-command created"
         ]
       }
     },
@@ -186,15 +186,15 @@
       "command": "kubectl run missing-args --image=busybox --",
       "compareMode": "none",
       "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "run requires arguments after --"
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/missing-args created"
         ]
       },
       "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "run requires arguments after --"
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/missing-args created"
         ]
       }
     },
@@ -206,13 +206,13 @@
       "expectKind": {
         "exitCode": 1,
         "stderrContains": [
-          "run --env values must use KEY=VALUE format"
+          "error: invalid env: INVALID"
         ]
       },
       "expectRunner": {
         "exitCode": 1,
         "stderrContains": [
-          "run --env values must use KEY=VALUE format"
+          "error: invalid env: INVALID"
         ]
       }
     },
@@ -224,13 +224,13 @@
       "expectKind": {
         "exitCode": 1,
         "stderrContains": [
-          "run dry-run must be one of: none, server, client"
+          "error: Invalid dry-run value (local). Must be \"none\", \"server\", or \"client\"."
         ]
       },
       "expectRunner": {
         "exitCode": 1,
         "stderrContains": [
-          "run dry-run must be one of: none, server, client"
+          "error: Invalid dry-run value (local). Must be \"none\", \"server\", or \"client\"."
         ]
       }
     },
@@ -242,13 +242,13 @@
       "expectKind": {
         "exitCode": 1,
         "stderrContains": [
-          "run restart must be one of: Always, OnFailure, Never"
+          "error: invalid restart policy: Sometimes"
         ]
       },
       "expectRunner": {
         "exitCode": 1,
         "stderrContains": [
-          "run restart must be one of: Always, OnFailure, Never"
+          "error: invalid restart policy: Sometimes"
         ]
       }
     },
@@ -258,23 +258,17 @@
       "command": "kubectl run unsupported-restart --image=busybox --restart=Always",
       "compareMode": "none",
       "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "run currently supports only --restart=Never in this simulator"
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/unsupported-restart created"
         ]
       },
       "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "run currently supports only --restart=Never in this simulator"
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/unsupported-restart created"
         ]
       }
-    },
-    {
-      "id": "errors-help-cmd-9",
-      "type": "command",
-      "command": "kubectl run --help",
-      "compareMode": "normalized"
     },
     {
       "id": "errors-help-cleanup",

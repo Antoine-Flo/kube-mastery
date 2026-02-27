@@ -25,6 +25,7 @@
 - [x] **Lot H - network runtime baseline** : module `src/core/network` (controller/state/allocators), `kubectl expose`, resolution DNS (`nslookup`) et simulation `curl` (ClusterIP/NodePort) avec tests unitaires dedies.
 - [x] **Lot I - volumes runtime foundations (v1)** : module `src/core/volumes` (VolumeState, VolumeBindingController, PodVolumeController), support `emptyDir|hostPath|PVC`, ressources `PV/PVC`, support `kubectl get/describe/apply/delete pv,pvc`, gate `Pending -> Running` base sur readiness volumes.
 - [x] **Lot I.1 - binding policy extraction (v2)** : logique de matching PV/PVC extraite dans `VolumeBindingPolicy` pour separer policy et orchestration controller.
+- [x] **Lot J - ingress API baseline + conformance** : support `Ingress` (`apply/create/get/describe/delete`), `get ingressclass` (empty state), endpoints raw/OpenAPI networking cibles conformance et scenario `command-catalog` dedie.
 
 ### Améliorations Nodes (Post-MVP)
 
@@ -93,7 +94,7 @@
 - [ ] kubectl auth can-i
 - [x] Services fonctionnels (ClusterIP, NodePort, LoadBalancer, ExternalName) - **✅ Implémenté** : Modèle, ClusterState, kubectl get, apply/create, événements, parsing YAML
 - [~] Service Endpoints (gestion automatique partielle via runtime reseau; `kubectl get endpoints` reste a ajouter)
-- [ ] Ingress with routing rules
+- [~] Ingress with routing rules (API/object model + inspection `get/describe` implementes; routage L7/controller runtime reste a faire)
 - [ ] NetworkPolicies
 - [~] CoreDNS (simulation DNS de base via `nslookup`; parite et troubleshooting avances restent a couvrir)
 

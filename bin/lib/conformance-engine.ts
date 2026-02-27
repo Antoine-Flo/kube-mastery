@@ -150,8 +150,8 @@ const formatDiffLines = (kindCompared: string, runnerCompared: string): string[]
     .slice(0, MAX_DIFF_LINES)
     .flatMap((line) => [
       `[line ${line.index}]`,
-      `[kind] ${line.kind}`,
-      `[runner-simulation] ${line.runnerSimulation}`
+      `[k] ${line.kind}`,
+      `[r] ${line.runnerSimulation}`
     ])
   if (lines.length > MAX_DIFF_LINES) {
     rendered.push(

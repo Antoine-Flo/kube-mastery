@@ -536,7 +536,6 @@ const validateCommandSemantics = (
       action === 'label' ||
       action === 'annotate' ||
       action === 'scale' ||
-      action === 'run' ||
       action === 'expose') &&
     !name
   ) {
@@ -545,20 +544,11 @@ const validateCommandSemantics = (
   if (action === 'run') {
     const runImage = flags['image']
     if (typeof runImage !== 'string' || runImage.length === 0) {
-      return 'run requires flag --image'
+      return 'error: required flag(s) "image" not set'
     }
 
-    const runUsesCommand = flags['command'] === true
-    if (runUsesCommand && (!runCommand || runCommand.length === 0)) {
-      return 'run requires command after --'
-    }
-
-    if (
-      runHasSeparator &&
-      !runUsesCommand &&
-      (!runArgs || runArgs.length === 0)
-    ) {
-      return 'run requires arguments after --'
+    if (name == null || name.length === 0) {
+      return 'run requires a resource name'
     }
 
     const dryRunFlag = flags['dry-run']
@@ -568,7 +558,7 @@ const validateCommandSemantics = (
       dryRunFlag !== 'server' &&
       dryRunFlag !== 'none'
     ) {
-      return 'run dry-run must be one of: none, server, client'
+      return `error: Invalid dry-run value (${String(dryRunFlag)}). Must be "none", "server", or "client".`
     }
 
     const restartFlag = flags['restart']
@@ -578,7 +568,7 @@ const validateCommandSemantics = (
       restartFlag !== 'OnFailure' &&
       restartFlag !== 'Never'
     ) {
-      return 'run restart must be one of: Always, OnFailure, Never'
+      return `error: invalid restart policy: ${String(restartFlag)}`
     }
   }
   if (action === 'diff') {

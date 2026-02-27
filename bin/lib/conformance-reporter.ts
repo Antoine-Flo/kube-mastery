@@ -2,127 +2,43 @@ import { mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import type { ActionExecutionRecord } from './conformance-types'
 
-const RESOURCE_ALIAS_MAP: Record<string, string> = {
-  pods: 'pods',
-  pod: 'pods',
-  po: 'pods',
-  deployments: 'deployments',
-  deployment: 'deployments',
-  deploy: 'deployments',
-  services: 'services',
-  service: 'services',
-  svc: 'services',
-  namespaces: 'namespaces',
-  namespace: 'namespaces',
-  ns: 'namespaces',
-  configmaps: 'configmaps',
-  configmap: 'configmaps',
-  cm: 'configmaps',
-  secrets: 'secrets',
-  secret: 'secrets',
-  nodes: 'nodes',
-  node: 'nodes',
-  no: 'nodes',
-  replicasets: 'replicasets',
-  replicaset: 'replicasets',
-  rs: 'replicasets',
-  all: 'all'
-}
-
-const FLAGS_REQUIRING_VALUES = new Set([
-  'n',
-  'namespace',
-  'o',
-  'output',
-  'l',
-  'selector',
-  'tail',
-  'c',
-  'container',
-  'namespaces',
-  'output-directory',
-  'replicas',
-  'image',
-  'port',
-  'raw',
-  'api-version',
-  'f',
-  'filename'
-])
-
 const normalizeToken = (value: string): string => {
   return value.trim().toLowerCase()
 }
 
-const inferBucketFromResourceToken = (resourceToken: string): string => {
-  const normalizedToken = normalizeToken(resourceToken)
-  const explainToken = normalizedToken.split('.')[0]
-  return RESOURCE_ALIAS_MAP[explainToken] || 'misc'
-}
-
-const findFirstPositionalAfterAction = (
-  tokens: string[],
-  actionIndex = 2
-): string | undefined => {
-  for (let index = actionIndex; index < tokens.length; index++) {
-    const token = tokens[index]
-    if (token === '--') {
-      break
-    }
-    if (!token.startsWith('-')) {
-      return token
-    }
-
-    const flagName = token.replace(/^-+/, '').split('=')[0]
-    const hasInlineValue = token.includes('=')
-    if (FLAGS_REQUIRING_VALUES.has(flagName) && !hasInlineValue) {
-      index += 1
-    }
+const sanitizeBucketName = (value: string): string => {
+  const sanitized = value.replace(/[^a-z0-9-]/g, '-')
+  if (sanitized.length === 0) {
+    return 'misc'
   }
-  return undefined
+  return sanitized
 }
 
-const inferResourceBucketFromCommand = (command: string): string => {
+const inferCommandBucketFromCommand = (command: string): string => {
   const tokens = command
     .trim()
     .split(/\s+/)
     .filter((token) => token.length > 0)
-  if (tokens.length < 2 || tokens[0] !== 'kubectl') {
+  if (tokens.length < 2) {
     return 'misc'
   }
-
-  const action = normalizeToken(tokens[1])
-  if (action === 'config') {
-    return 'config'
+  if (normalizeToken(tokens[0]) !== 'kubectl') {
+    return 'misc'
   }
-
-  if (action === 'logs' || action === 'exec') {
-    return 'pods'
-  }
-
-  if (action === 'explain') {
-    const resourceToken = findFirstPositionalAfterAction(tokens)
-    if (resourceToken) {
-      return inferBucketFromResourceToken(resourceToken)
+  for (let index = 1; index < tokens.length; index++) {
+    const token = normalizeToken(tokens[index])
+    if (token === '--') {
+      break
     }
-    return 'misc'
-  }
-
-  if (action === 'get') {
-    const hasRaw = tokens.some((token) => token.startsWith('--raw'))
-    if (hasRaw) {
-      return 'discovery'
+    if (token.startsWith('-')) {
+      continue
     }
+    return sanitizeBucketName(token)
   }
-
-  const resourceToken = findFirstPositionalAfterAction(tokens)
-  if (!resourceToken) {
-    return 'misc'
-  }
-  return inferBucketFromResourceToken(resourceToken)
+  return 'misc'
 }
 
-const inferResourceBucketFromDiffEntry = (entry: string): string => {
+const inferCommandBucketFromDiffEntry = (entry: string): string => {
   const commandLine = entry
     .split('\n')
     .find((line) => line.startsWith('[command] '))
@@ -130,7 +46,7 @@ const inferResourceBucketFromDiffEntry = (entry: string): string => {
     return 'misc'
   }
   const command = commandLine.slice('[command] '.length)
-  return inferResourceBucketFromCommand(command)
+  return inferCommandBucketFromCommand(command)
 }
 
 const formatRecord = (record: ActionExecutionRecord): string => {
@@ -177,10 +93,10 @@ export const createConformanceReporter = (
   const getBuckets = (): string[] => {
     const buckets = new Set<string>()
     for (const record of kindRecords) {
-      buckets.add(inferResourceBucketFromCommand(record.command))
+      buckets.add(inferCommandBucketFromCommand(record.command))
     }
     for (const record of runnerRecords) {
-      buckets.add(inferResourceBucketFromCommand(record.command))
+      buckets.add(inferCommandBucketFromCommand(record.command))
     }
     for (const record of diffRecords) {
       buckets.add(record.bucket)
@@ -198,7 +114,7 @@ export const createConformanceReporter = (
     recordDiff(entry: string): void {
       diffRecords.push({
         entry,
-        bucket: inferResourceBucketFromDiffEntry(entry)
+        bucket: inferCommandBucketFromDiffEntry(entry)
       })
     },
     flush(): void {
@@ -225,10 +141,10 @@ export const createConformanceReporter = (
         mkdirSync(bucketDir, { recursive: true })
 
         const bucketKindRecords = kindRecords.filter((record) => {
-          return inferResourceBucketFromCommand(record.command) === bucket
+          return inferCommandBucketFromCommand(record.command) === bucket
         })
         const bucketRunnerRecords = runnerRecords.filter((record) => {
-          return inferResourceBucketFromCommand(record.command) === bucket
+          return inferCommandBucketFromCommand(record.command) === bucket
         })
         const bucketDiffRecords = diffRecords
           .filter((record) => record.bucket === bucket)

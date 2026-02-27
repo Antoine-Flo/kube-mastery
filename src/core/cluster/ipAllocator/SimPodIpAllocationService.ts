@@ -13,7 +13,8 @@ const withAssignedPodIP = (pod: Pod, podIP: string): Pod => {
     ...pod,
     status: {
       ...pod.status,
-      podIP
+      podIP,
+      podIPs: [{ ip: podIP }]
     }
   }
 }
@@ -29,6 +30,21 @@ const ensurePodIpIfRunning = (
   }
   if (pod.status.podIP != null) {
     allocator.reserve(pod)
+    if (
+      pod.status.podIPs == null ||
+      pod.status.podIPs.length === 0 ||
+      pod.status.podIPs[0]?.ip !== pod.status.podIP
+    ) {
+      eventBus.emit(
+        createPodUpdatedEvent(
+          pod.metadata.name,
+          pod.metadata.namespace,
+          withAssignedPodIP(pod, pod.status.podIP),
+          pod,
+          source
+        )
+      )
+    }
     return
   }
   const allocated = allocator.assign(pod)

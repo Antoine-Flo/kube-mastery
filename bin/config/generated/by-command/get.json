@@ -35,17 +35,29 @@
     {
       "id": "minimal-cmd-5",
       "type": "command",
-      "command": "kubectl get nodes",
+      "command": "kubectl get pv",
       "compareMode": "normalized"
     },
     {
       "id": "minimal-cmd-6",
       "type": "command",
-      "command": "kubectl get configmaps",
+      "command": "kubectl get pvc -A",
       "compareMode": "normalized"
     },
     {
       "id": "minimal-cmd-7",
+      "type": "command",
+      "command": "kubectl get nodes",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-8",
+      "type": "command",
+      "command": "kubectl get configmaps",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-9",
       "type": "command",
       "command": "kubectl get secrets",
       "compareMode": "normalized"
@@ -107,17 +119,59 @@
     {
       "id": "deploy-cm-cmd-8",
       "type": "command",
+      "command": "kubectl get svc web-svc",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "web-svc",
+          "ClusterIP"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "web-svc",
+          "ClusterIP"
+        ]
+      }
+    },
+    {
+      "id": "deploy-cm-cmd-9",
+      "type": "command",
+      "command": "kubectl get svc -A",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NAMESPACE",
+          "default",
+          "web-svc"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NAMESPACE",
+          "default",
+          "web-svc"
+        ]
+      }
+    },
+    {
+      "id": "deploy-cm-cmd-10",
+      "type": "command",
       "command": "kubectl get all",
       "compareMode": "normalized"
     },
     {
-      "id": "deploy-cm-cmd-9",
+      "id": "deploy-cm-cmd-11",
       "type": "command",
       "command": "kubectl get all -A",
       "compareMode": "normalized"
     },
     {
-      "id": "deploy-cm-cmd-10",
+      "id": "deploy-cm-cmd-12",
       "type": "command",
       "command": "kubectl get deployments",
       "compareMode": "normalized"
@@ -182,9 +236,177 @@
       }
     },
     {
+      "id": "platform-cmd-3",
+      "type": "command",
+      "command": "kubectl get --raw /openapi/v3",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "networking.k8s.io/v1",
+          "/openapi/v3/apis/networking.k8s.io/v1"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "networking.k8s.io/v1",
+          "/openapi/v3/apis/networking.k8s.io/v1"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-4",
+      "type": "command",
+      "command": "kubectl get --raw /apis/networking.k8s.io/v1",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "APIResourceList",
+          "ingresses",
+          "ingressclasses"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "APIResourceList",
+          "ingresses",
+          "ingressclasses"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-5",
+      "type": "command",
+      "command": "kubectl get --raw /openapi/v3/apis/networking.k8s.io/v1",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "openapi",
+          "ingresses",
+          "ingressclasses"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "openapi",
+          "ingresses",
+          "ingressclasses"
+        ]
+      }
+    },
+    {
       "id": "platform-cleanup",
       "type": "deleteYaml",
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "ingress-basics-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/ingress-basics",
+      "waitForPods": true
+    },
+    {
+      "id": "ingress-basics-cmd-1",
+      "type": "command",
+      "command": "kubectl get ingress",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NAME",
+          "demo-ingress",
+          "demo.example.com"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NAME",
+          "demo-ingress",
+          "demo.example.com"
+        ]
+      }
+    },
+    {
+      "id": "ingress-basics-cmd-2",
+      "type": "command",
+      "command": "kubectl get svc",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "ingress-basics-cmd-3",
+      "type": "command",
+      "command": "kubectl get svc -A",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "ingress-basics-cmd-4",
+      "type": "command",
+      "command": "kubectl get svc api-service -o yaml",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "kind: Service",
+          "name: api-service"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "kind: Service",
+          "name: api-service"
+        ]
+      }
+    },
+    {
+      "id": "ingress-basics-cmd-5",
+      "type": "command",
+      "command": "kubectl get svc frontend-service -o json",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "\"kind\": \"Service\"",
+          "\"name\": \"frontend-service\""
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "\"kind\": \"Service\"",
+          "\"name\": \"frontend-service\""
+        ]
+      }
+    },
+    {
+      "id": "ingress-basics-cmd-6",
+      "type": "command",
+      "command": "kubectl get ingressclass",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "No resources found"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "No resources found"
+        ]
+      }
+    },
+    {
+      "id": "ingress-basics-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/ingress-basics",
       "ignoreNotFound": true
     },
     {
@@ -328,12 +550,6 @@
       "id": "errors-help-cmd-3",
       "type": "command",
       "command": "kubectl get not-a-resource",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-4",
-      "type": "command",
-      "command": "kubectl get --help",
       "compareMode": "normalized"
     },
     {

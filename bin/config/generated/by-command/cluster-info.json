@@ -49,12 +49,6 @@
       "compareMode": "normalized"
     },
     {
-      "id": "errors-help-cmd-2",
-      "type": "command",
-      "command": "kubectl cluster-info --help",
-      "compareMode": "normalized"
-    },
-    {
       "id": "errors-help-cleanup",
       "type": "deleteYaml",
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",

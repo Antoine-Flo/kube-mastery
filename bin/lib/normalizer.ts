@@ -44,10 +44,17 @@ export const normalizeOutput = (output: string): string => {
 
   // ─── Âge relatif (describe / events) ─────────────────────────────────────
   // "5s ago", "2m ago", etc. → "Xs ago", "Xm ago" pour ignorer la valeur exacte.
-  normalized = normalized.replace(/\d+s ago/g, 'Xs ago')
-  normalized = normalized.replace(/\d+m ago/g, 'Xm ago')
-  normalized = normalized.replace(/\d+h ago/g, 'Xh ago')
-  normalized = normalized.replace(/\d+d ago/g, 'Xd ago')
+  normalized = normalized.replace(/\d+s ago/g, '<age> ago')
+  normalized = normalized.replace(/\d+m ago/g, '<age> ago')
+  normalized = normalized.replace(/\d+h ago/g, '<age> ago')
+  normalized = normalized.replace(/\d+d ago/g, '<age> ago')
+  normalized = normalized.replace(/\b\d+m\d+s\b/g, '<age>')
+  normalized = normalized.replace(/\b\d+h\d+m\b/g, '<age>')
+  normalized = normalized.replace(/\b\d+d\d+h\b/g, '<age>')
+  normalized = normalized.replace(/\b\d+s\b/g, '<age>')
+  normalized = normalized.replace(/\b\d+m\b/g, '<age>')
+  normalized = normalized.replace(/\b\d+h\b/g, '<age>')
+  normalized = normalized.replace(/\b\d+d\b/g, '<age>')
 
   // ─── Adresses IP ─────────────────────────────────────────────────────────
   // IPs des pods/nodes différentes entre Kind et sim.
@@ -98,6 +105,7 @@ export const normalizeOutput = (output: string): string => {
     /local-path-provisioner-[a-z0-9]+(?:-[a-z0-9]+)?/g,
     'local-path-provisioner-<id>'
   )
+  normalized = normalized.replace(/kube-api-access-[a-z0-9]+/g, 'kube-api-access-<id>')
 
   // ─── Noms des pods control-plane ─────────────────────────────────────────
   // Réel/sim : etcd-<nodeName-control-plane>, kube-apiserver-<nodeName-control-plane>, etc.
@@ -117,6 +125,15 @@ export const normalizeOutput = (output: string): string => {
   normalized = normalized.replace(
     /kube-scheduler-[a-z0-9-]+-control-plane/g,
     'kube-scheduler-<node>-control-plane'
+  )
+
+  normalized = normalized.replace(
+    /kubectl\.kubernetes\.io\/last-applied-configuration:\s*\|\n\s+\{[^\n]*\}/g,
+    'kubectl.kubernetes.io/last-applied-configuration: <last-applied>'
+  )
+  normalized = normalized.replace(
+    /kubectl\.kubernetes\.io\/last-applied-configuration:\s*['"].*['"]/g,
+    'kubectl.kubernetes.io/last-applied-configuration: <last-applied>'
   )
 
   return normalized

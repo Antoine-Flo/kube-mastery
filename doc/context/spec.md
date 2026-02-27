@@ -31,7 +31,7 @@ Interactive web application for learning `kubectl` commands through a simulated 
 
 ### kubectl (Phase 1)
 
-get (pods, deploy, rs, services, configmaps, secrets, nodes, pv, pvc), describe, delete, create -f, apply -f, run, expose, logs, exec -it, label, annotate, version (--client, --output json/yaml), cluster-info, cluster-info dump, api-resources (--output wide, --namespaced, --sort-by). Détail : voir `src/core/kubectl/commands/handlers/`.
+get (pods, deploy, rs, services, ingresses, ingressclasses, configmaps, secrets, nodes, pv, pvc), describe, delete, create -f, apply -f, run, expose, logs, exec -it, label, annotate, version (--client, --output json/yaml), cluster-info, cluster-info dump, api-resources (--output wide, --namespaced, --sort-by). Détail : voir `src/core/kubectl/commands/handlers/`.
 
 ### kubectl Realism Guarantees (current baseline)
 
@@ -62,11 +62,19 @@ get (pods, deploy, rs, services, configmaps, secrets, nodes, pv, pvc), describe,
   - supports `kubectl expose deployment NAME --port=<port>`,
   - supports `--target-port`, `--type`, `--name`, `--selector`, `--node-port`,
   - service creation remains declarative; endpoints/network runtime are reconciled asynchronously by the network controller.
+- `kubectl ingress` baseline:
+  - supports `Ingress` manifests in `kubectl apply -f` / `kubectl create -f`,
+  - supports `kubectl get ingress`, `kubectl describe ingress`, `kubectl delete ingress`,
+  - supports `kubectl get ingressclass` (empty output when no class is present),
+  - scope is API/object simulation only (no L7 dataplane routing or external `ADDRESS` assignment without controller).
 - Network simulation baseline:
   - dedicated runtime module (`src/core/network/`) computes service runtime state (ClusterIP, NodePort, endpoints),
   - `kubectl exec ... -- nslookup <service>.<namespace>.svc.cluster.local` resolves Service DNS records,
   - `kubectl exec ... -- curl <url>` simulates in-cluster service traffic,
   - `kubectl run ... --rm -it --command -- nslookup|curl ...` supports short-lived diagnostics flows.
+- `kubectl get --raw` baseline:
+  - supports discovery root (`/`) and namespaces list (`/api/v1/namespaces`),
+  - supports OpenAPI/networking inspection endpoints used by conformance (`/openapi/v3`, `/apis/networking.k8s.io/v1`, `/openapi/v3/apis/networking.k8s.io/v1`).
 - Volumes simulation baseline:
   - support runtime `emptyDir`, `hostPath`, `persistentVolumeClaim` au niveau Pod,
   - support ressources `PersistentVolume` / `PersistentVolumeClaim` avec phases de base (`Available`, `Pending`, `Bound`),
@@ -205,6 +213,7 @@ interface ClusterState {
   deployments: Deployment[] // Managed by DeploymentController
   daemonSets: DaemonSet[]
   services: Service[]
+  ingresses: Ingress[]
   configMaps: ConfigMap[]
   secrets: Secret[]
   persistentVolumes: PersistentVolume[]

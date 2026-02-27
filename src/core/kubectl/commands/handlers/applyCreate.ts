@@ -265,30 +265,39 @@ export const handleRun = (
   eventBus: EventBus,
   networkRuntime?: SimNetworkRuntime
 ): ExecutionResult => {
+  const image = parsed.runImage
+  if (typeof image !== 'string' || image.length === 0) {
+    return error('error: required flag(s) "image" not set')
+  }
+
   const podName = parsed.name
   if (typeof podName !== 'string' || podName.length === 0) {
     return error('run requires a resource name')
   }
 
-  const image = parsed.runImage
-  if (typeof image !== 'string' || image.length === 0) {
-    return error('run requires flag --image')
+  const dryRunFlag = parsed.flags['dry-run']
+  if (
+    typeof dryRunFlag === 'string' &&
+    dryRunFlag !== 'none' &&
+    dryRunFlag !== 'server' &&
+    dryRunFlag !== 'client'
+  ) {
+    return error(
+      `error: Invalid dry-run value (${dryRunFlag}). Must be "none", "server", or "client".`
+    )
   }
 
   const runCommand = parsed.runCommand
   const runArgs = parsed.runArgs
-  if (parsed.runUseCommand && (!runCommand || runCommand.length === 0)) {
-    return error('run requires command after --')
-  }
   if (
-    parsed.runHasSeparator &&
-    !parsed.runUseCommand &&
-    (!runArgs || runArgs.length === 0)
+    parsed.runRestart != null &&
+    parsed.runRestart !== 'Always' &&
+    parsed.runRestart !== 'OnFailure' &&
+    parsed.runRestart !== 'Never'
   ) {
-    return error('run requires arguments after --')
-  }
-  if (parsed.runRestart && parsed.runRestart !== 'Never') {
-    return error('run currently supports only --restart=Never in this simulator')
+    return error(
+      `error: invalid restart policy: ${parsed.runRestart}\nSee 'kubectl run -h' for help and examples`
+    )
   }
 
   const envVars: EnvVar[] = []
@@ -296,12 +305,12 @@ export const handleRun = (
   for (const envValue of runEnv) {
     const equalsIndex = envValue.indexOf('=')
     if (equalsIndex <= 0 || equalsIndex === envValue.length - 1) {
-      return error('run --env values must use KEY=VALUE format')
+      return error(`error: invalid env: ${envValue}`)
     }
     const envName = envValue.slice(0, equalsIndex).trim()
     const envRawValue = envValue.slice(equalsIndex + 1).trim()
     if (envName.length === 0 || envRawValue.length === 0) {
-      return error('run --env values must use KEY=VALUE format')
+      return error(`error: invalid env: ${envValue}`)
     }
     envVars.push({
       name: envName,

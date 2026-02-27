@@ -226,6 +226,50 @@
       }
     },
     {
+      "id": "platform-cmd-11",
+      "type": "command",
+      "command": "kubectl explain persistentvolume.spec",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    spec",
+          "KIND:",
+          "PersistentVolume"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    spec",
+          "KIND:",
+          "PersistentVolume"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-12",
+      "type": "command",
+      "command": "kubectl explain persistentvolumeclaim.spec",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    spec",
+          "KIND:",
+          "PersistentVolumeClaim"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    spec",
+          "KIND:",
+          "PersistentVolumeClaim"
+        ]
+      }
+    },
+    {
       "id": "platform-cleanup",
       "type": "deleteYaml",
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
