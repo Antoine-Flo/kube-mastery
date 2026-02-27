@@ -75,8 +75,7 @@ Let's deploy a simple application and inspect what an Ingress resource looks lik
 kubectl create deployment frontend --image=nginx
 kubectl expose deployment frontend --port=80 --name=frontend-service
 
-kubectl create deployment api --image=hashicorp/http-echo --port=5678 \
-  -- /http-echo -text="Hello from the API"
+kubectl create deployment api --image=hashicorp/http-echo --port=5678 -- /http-echo -text="Hello from the API"
 kubectl expose deployment api --port=5678 --name=api-service
 ```
 
@@ -95,8 +94,7 @@ api-service        ClusterIP   10.96.yyy.yyy   <none>        5678/TCP   3s
 
 **Step 3: Create an Ingress resource**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -120,7 +118,6 @@ spec:
                 name: frontend-service
                 port:
                   number: 80
-EOF
 ```
 
 **Step 4: Inspect the Ingress resource**

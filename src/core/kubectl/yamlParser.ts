@@ -11,6 +11,8 @@ import type { DaemonSet } from '../cluster/ressources/DaemonSet'
 import { parseDaemonSetManifest } from '../cluster/ressources/DaemonSet'
 import type { Deployment } from '../cluster/ressources/Deployment'
 import { parseDeploymentManifest } from '../cluster/ressources/Deployment'
+import type { Ingress } from '../cluster/ressources/Ingress'
+import { parseIngressManifest } from '../cluster/ressources/Ingress'
 import type { Node } from '../cluster/ressources/Node'
 import { parseNodeManifest } from '../cluster/ressources/Node'
 import type { PersistentVolume } from '../cluster/ressources/PersistentVolume'
@@ -41,6 +43,7 @@ type ParsedResource =
   | Deployment
   | DaemonSet
   | Service
+  | Ingress
 
 type ResourceKind =
   | 'Pod'
@@ -53,6 +56,7 @@ type ResourceKind =
   | 'Deployment'
   | 'DaemonSet'
   | 'Service'
+  | 'Ingress'
 
 // ─── YAML Parsing ────────────────────────────────────────────────────────
 
@@ -87,7 +91,8 @@ const isSupportedKind = (kind: string): kind is ResourceKind => {
     kind === 'ReplicaSet' ||
     kind === 'Deployment' ||
     kind === 'DaemonSet' ||
-    kind === 'Service'
+    kind === 'Service' ||
+    kind === 'Ingress'
   )
 }
 
@@ -107,7 +112,8 @@ const MANIFEST_PARSERS: Record<
   ReplicaSet: parseReplicaSetManifest,
   Deployment: parseDeploymentManifest,
   DaemonSet: parseDaemonSetManifest,
-  Service: parseServiceManifest
+  Service: parseServiceManifest,
+  Ingress: parseIngressManifest
 }
 
 /**
@@ -121,7 +127,7 @@ const validateResource = (obj: any): Result<ParsedResource> => {
 
   if (!isSupportedKind(obj.kind)) {
     return error(
-      `Unsupported resource kind: ${obj.kind} (supported: Pod, ConfigMap, Secret, Node, PersistentVolume, PersistentVolumeClaim, ReplicaSet, Deployment, DaemonSet, Service)`
+      `Unsupported resource kind: ${obj.kind} (supported: Pod, ConfigMap, Secret, Node, PersistentVolume, PersistentVolumeClaim, ReplicaSet, Deployment, DaemonSet, Service, Ingress)`
     )
   }
 

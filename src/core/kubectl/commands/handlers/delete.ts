@@ -222,6 +222,21 @@ export const handleDelete = (
     return success(formatDeletedMessage('service', parsed.name, namespace, true))
   }
 
+  if (resource === 'ingresses') {
+    const deleteResult = clusterState.deleteIngress(parsed.name, namespace)
+    if (!deleteResult.ok) {
+      return formatNotFoundMessage('ingresses.networking.k8s.io', parsed.name)
+    }
+    return success(
+      formatDeletedMessage(
+        'ingress.networking.k8s.io',
+        parsed.name,
+        namespace,
+        true
+      )
+    )
+  }
+
   if (resource === 'persistentvolumes') {
     const findResult = clusterState.findPersistentVolume(parsed.name)
     if (!findResult.ok) {

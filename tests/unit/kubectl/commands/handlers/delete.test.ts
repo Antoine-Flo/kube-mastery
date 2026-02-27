@@ -12,6 +12,7 @@ import {
   type ClusterState
 } from '../../../../../src/core/cluster/ClusterState'
 import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
+import { createIngress } from '../../../../../src/core/cluster/ressources/Ingress'
 import { createService } from '../../../../../src/core/cluster/ressources/Service'
 import { createNamespace } from '../../../../../src/core/cluster/ressources/Namespace'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
@@ -304,6 +305,49 @@ describe('kubectl delete handler', () => {
         expect(result.value).toContain(
           'service "my-service" deleted from default namespace'
         )
+      }
+    })
+
+    it('should delete ingress with networking kind reference', () => {
+      clusterState.addIngress(
+        createIngress({
+          name: 'demo-ingress',
+          namespace: 'default',
+          spec: {
+            rules: [
+              {
+                host: 'demo.example.com',
+                http: {
+                  paths: [
+                    {
+                      path: '/',
+                      pathType: 'Prefix',
+                      backend: {
+                        service: {
+                          name: 'frontend-service',
+                          port: { number: 80 }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        })
+      )
+
+      const parsed = createParsedCommand({
+        name: 'demo-ingress',
+        resource: 'ingresses'
+      })
+
+      const result = handleDelete(clusterState, parsed, eventBus)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toContain('ingress.networking.k8s.io')
+        expect(result.value).toContain('deleted from default namespace')
       }
     })
 

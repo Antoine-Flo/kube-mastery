@@ -29,6 +29,7 @@ import {
 import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
 import type { DaemonSet } from '../../../cluster/ressources/DaemonSet'
 import type { Deployment } from '../../../cluster/ressources/Deployment'
+import type { Ingress } from '../../../cluster/ressources/Ingress'
 import type { Node } from '../../../cluster/ressources/Node'
 import type { Namespace } from '../../../cluster/ressources/Namespace'
 import type { PersistentVolume } from '../../../cluster/ressources/PersistentVolume'
@@ -48,6 +49,7 @@ type KubernetesResource =
   | Secret
   | Node
   | Namespace
+  | Ingress
   | ReplicaSet
   | Deployment
   | DaemonSet
@@ -61,6 +63,7 @@ type ResourceKind =
   | 'Secret'
   | 'Node'
   | 'Namespace'
+  | 'Ingress'
   | 'ReplicaSet'
   | 'Deployment'
   | 'DaemonSet'
@@ -76,7 +79,8 @@ const NAMESPACED_RESOURCE_KINDS: ResourceKind[] = [
   'Deployment',
   'DaemonSet',
   'PersistentVolumeClaim',
-  'Service'
+  'Service',
+  'Ingress'
 ]
 
 const resourceRequiresNamespace = (kind: ResourceKind): boolean => {
@@ -123,7 +127,8 @@ interface ResourceHandler {
 const KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
   Deployment: 'deployment.apps',
   DaemonSet: 'daemonset.apps',
-  ReplicaSet: 'replicaset.apps'
+  ReplicaSet: 'replicaset.apps',
+  Ingress: 'ingress.networking.k8s.io'
 }
 
 const toKindReference = (kind: ResourceKind): string => {
@@ -148,6 +153,9 @@ const toPluralKindReference = (kind: ResourceKind): string => {
   }
   if (kind === 'PersistentVolumeClaim') {
     return 'persistentvolumeclaims'
+  }
+  if (kind === 'Ingress') {
+    return 'ingresses.networking.k8s.io'
   }
   return `${kind.toLowerCase()}s`
 }
@@ -237,6 +245,23 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
     },
     addDirect: (state, resource: KubernetesResource) => {
       state.addNamespace(resource as Namespace)
+    }
+  },
+  Ingress: {
+    find: (state, name, namespace) => state.findByKind('Ingress', name, namespace),
+    emitCreated: (_eventBus, _resource) => {
+      // Ingresses use direct state updates in this simulator.
+    },
+    emitUpdated: (_eventBus, _name, _namespace, _resource, _previous) => {
+      // Ingresses use direct state updates in this simulator.
+    },
+    updateDirect: (state, name, resource: KubernetesResource) => {
+      state.updateIngress(name, (resource as Ingress).metadata.namespace, () => {
+        return resource as Ingress
+      })
+    },
+    addDirect: (state, resource: KubernetesResource) => {
+      state.addIngress(resource as Ingress)
     }
   },
   ReplicaSet: {

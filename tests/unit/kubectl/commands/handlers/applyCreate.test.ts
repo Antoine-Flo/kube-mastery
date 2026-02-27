@@ -222,6 +222,50 @@ data:
     expect(result.value).toContain('namespace/my-team created')
   })
 
+  it('should create ingress from file', () => {
+    const yaml = `apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-ingress
+  namespace: default
+spec:
+  rules:
+    - host: demo.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 80
+`
+
+    fileSystem.createFile('ingress.yaml')
+    fileSystem.writeFile('ingress.yaml', yaml)
+    const parsed = parseCommand('kubectl create -f ingress.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('ingress.networking.k8s.io/demo-ingress created')
+    const ingress = clusterState.findIngress('demo-ingress', 'default')
+    expect(ingress.ok).toBe(true)
+  })
+
   it('should return AlreadyExists error when namespace already exists', () => {
     const first = parseCommand('kubectl create namespace my-team')
     expect(first.ok).toBe(true)

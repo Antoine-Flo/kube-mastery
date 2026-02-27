@@ -10,6 +10,8 @@ export const KUBECTL_RESOURCES = {
   nodes: ['nodes', 'node', 'no'],
   daemonsets: ['daemonsets', 'daemonset', 'ds'],
   replicasets: ['replicasets', 'replicaset', 'rs'],
+  ingresses: ['ingresses', 'ingress', 'ing'],
+  ingressclasses: ['ingressclasses', 'ingressclass'],
   persistentvolumes: ['persistentvolumes', 'persistentvolume', 'pv'],
   persistentvolumeclaims: [
     'persistentvolumeclaims',

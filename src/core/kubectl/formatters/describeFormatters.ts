@@ -11,6 +11,7 @@ import type {
   DeploymentCondition,
   DeploymentStrategyType
 } from '../../cluster/ressources/Deployment'
+import type { Ingress } from '../../cluster/ressources/Ingress'
 import type { Node, NodeCondition, NodeTaint } from '../../cluster/ressources/Node'
 import { getNodeRoles } from '../../cluster/ressources/Node'
 import type { PersistentVolume } from '../../cluster/ressources/PersistentVolume'
@@ -992,5 +993,32 @@ export const describePersistentVolumeClaim = (
   lines.push(`Access Modes:  ${persistentVolumeClaim.spec.accessModes.join(',')}`)
   lines.push('')
   lines.push('Events:        <none>')
+  return lines.join('\n')
+}
+
+export const describeIngress = (ingress: Ingress): string => {
+  const lines: string[] = []
+  lines.push(`Name:             ${ingress.metadata.name}`)
+  lines.push(`Namespace:        ${ingress.metadata.namespace}`)
+  lines.push(`Address:          <none>`)
+  lines.push(`Ingress Class:    ${ingress.spec.ingressClassName ?? '<none>'}`)
+  lines.push(`Rules:`)
+  lines.push(`  Host              Path  Backends`)
+  lines.push(`  ----              ----  --------`)
+
+  for (const rule of ingress.spec.rules) {
+    const host = rule.host ?? '*'
+    lines.push(`  ${host}`)
+    for (const pathRule of rule.http.paths) {
+      const backendPort =
+        pathRule.backend.service.port.number ?? pathRule.backend.service.port.name
+      lines.push(
+        `                    ${pathRule.path}   ${pathRule.backend.service.name}:${String(backendPort)}`
+      )
+    }
+  }
+
+  lines.push('')
+  lines.push('Events:           <none>')
   return lines.join('\n')
 }
