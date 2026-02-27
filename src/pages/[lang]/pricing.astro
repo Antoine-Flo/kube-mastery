@@ -3,7 +3,6 @@ import Layout from '../../layouts/Layout.astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import Button from '../../components/ui/Button.astro'
 import guaranteeBadge from '../../assets/guarantee-badge.svg'
-import { SUBSCRIPTION_PLANS } from '../../lib/subscription-plans'
 import '../../styles/components/card.css'
 import '../../styles/components/accordion.css'
 import '../../styles/components/guarantee.css'
@@ -14,26 +13,35 @@ const lang = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
-const standardPlan = SUBSCRIPTION_PLANS.standard
-const standardPricing = standardPlan.pricing!
-const standardPriceMonth = standardPricing.priceMonth
-const standardPriceYearTotal = standardPricing.priceYearTotal
-const standardPriceYearPerMonth = standardPricing.priceYearPerMonth
-const standardStruckMonth = standardPricing.struckMonth
-const standardStruckYearPerMonth = standardPricing.struckYearPerMonth
-const standardYearlyMonthsFree = standardPricing.yearlyMonthsFree
-const standardDetailYearlyText = t('pricing_detail_yearly', { total: standardPriceYearTotal })
+const runtimeEnv =
+  ((Astro.locals as { runtime?: { env?: Record<string, string | undefined> } })
+    ?.runtime?.env ??
+    {}) as Record<string, string | undefined>
+const environment = (runtimeEnv.ENVIRONMENT ?? '').toLowerCase().trim()
+const isProduction = environment === 'production'
+const paddleClientToken = isProduction
+  ? (runtimeEnv.PADDLE_CLIENT_TOKEN ?? '')
+  : (runtimeEnv.PADDLE_CLIENT_TOKEN_STAGING ?? '')
+if (paddleClientToken === '') {
+  throw new Error(
+    'Missing Paddle client token. Set PADDLE_CLIENT_TOKEN[_STAGING].'
+  )
+}
+const paddleEnvironment = isProduction ? 'production' : 'sandbox'
+
+const STANDARD_MONTHLY_PRICE_ID = 'pri_01kjfr83ph95rmgypgrdsc20bs'
+const STANDARD_YEARLY_PRICE_ID = 'pri_01kjfr962x53wh4wnkywjmc94s'
+const INDIVIDUAL_MONTHLY_PRICE_ID = 'pri_01kjfgeb1amgf8ht2fxaqsshhg'
+const INDIVIDUAL_YEARLY_PRICE_ID = 'pri_01kjfgg9mz5586yyaxkepp4aa3'
+
+const standardDetailYearlyText = t('pricing_detail_yearly', {
+  total: '--'
+})
 const standardDetailMonthlyText = t('pricing_detail_monthly')
 
-const proPlan = SUBSCRIPTION_PLANS.individual
-const pricing = proPlan.pricing!
-const priceMonth = pricing.priceMonth
-const priceYearTotal = pricing.priceYearTotal
-const priceYearPerMonth = pricing.priceYearPerMonth
-const struckMonth = pricing.struckMonth
-const struckYearPerMonth = pricing.struckYearPerMonth
-const yearlyMonthsFree = pricing.yearlyMonthsFree
-const detailYearlyText = t('pricing_detail_yearly', { total: priceYearTotal })
+const detailYearlyText = t('pricing_detail_yearly', {
+  total: '--'
+})
 const detailMonthlyText = t('pricing_detail_monthly')
 
 const faqItems = [
@@ -101,19 +109,18 @@ const faqItems = [
           <div class="pricing__plan-price">
             <div
               class="pricing__plan-price-banner"
-              data-month-price={String(standardPriceMonth)}
-              data-year-price={String(standardPriceYearPerMonth)}
-              data-struck-month={String(standardStruckMonth)}
-              data-struck-year={String(standardStruckYearPerMonth)}
               data-detail-yearly={standardDetailYearlyText}
+              data-detail-yearly-template={standardDetailYearlyText}
               data-detail-monthly={standardDetailMonthlyText}
+              data-price-id-month={STANDARD_MONTHLY_PRICE_ID}
+              data-price-id-year={STANDARD_YEARLY_PRICE_ID}
             >
               <div class="pricing__plan-price-current">
                 <span class="pricing__plan-price-struck">
-                  {standardStruckYearPerMonth}€
+                  
                 </span>
                 <span class="pricing__plan-price-amount">
-                  {standardPriceYearPerMonth}€
+                  --
                 </span>
                 <span class="pricing__plan-price-period">
                   {t('pricing_per_month')}
@@ -167,19 +174,18 @@ const faqItems = [
           <div class="pricing__plan-price">
             <div
               class="pricing__plan-price-banner"
-              data-month-price={String(priceMonth)}
-              data-year-price={String(priceYearPerMonth)}
-              data-struck-month={String(struckMonth)}
-              data-struck-year={String(struckYearPerMonth)}
               data-detail-yearly={detailYearlyText}
+              data-detail-yearly-template={detailYearlyText}
               data-detail-monthly={detailMonthlyText}
+              data-price-id-month={INDIVIDUAL_MONTHLY_PRICE_ID}
+              data-price-id-year={INDIVIDUAL_YEARLY_PRICE_ID}
             >
               <div class="pricing__plan-price-current">
                 <span class="pricing__plan-price-struck">
-                  {struckYearPerMonth}€
+                  
                 </span>
                 <span class="pricing__plan-price-amount">
-                  {priceYearPerMonth}€
+                  --
                 </span>
                 <span class="pricing__plan-price-period">
                   {t('pricing_per_month')}
@@ -340,8 +346,102 @@ const faqItems = [
   </div>
 </Layout>
 
-<script>
+<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<script define:vars={{ paddleClientToken, paddleEnvironment }}>
   const PRICING_INITED = 'data-pricing-toggle-inited'
+  const PADDLE_INITED = 'data-paddle-inited'
+  const YEAR_MONTHS = 12
+
+  function toYearlyPerMonth(total) {
+    const match = total.trim().match(/(\d+[.,]\d+|\d+)/)
+    if (match == null) {
+      return total
+    }
+    const amount = Number.parseFloat(match[0].replace(',', '.'))
+    if (!Number.isFinite(amount)) {
+      return total
+    }
+    return total.replace(match[0], String(Math.round(amount / YEAR_MONTHS)))
+  }
+
+  function stripTrailingZeroCents(value) {
+    return value.replace(/([.,])00\b/g, '')
+  }
+
+  function doubleDisplayedPrice(value) {
+    const doubled = value.replace(/(\d+[.,]?\d*)/, (_, raw) =>
+      String(Math.round(Number.parseFloat(raw.replace(',', '.')) * 2))
+    )
+    return doubled === value ? '' : doubled
+  }
+
+  async function preview(items, valueKey, bannersByPriceId, yearlyMode) {
+    if (items.length === 0) {
+      return
+    }
+    const paddle = window.Paddle
+    const result = await paddle.PricePreview({ items })
+    const lineItems = result.data.details.lineItems
+
+    lineItems.forEach((lineItem) => {
+      const priceId = lineItem.price.id
+      const total = stripTrailingZeroCents(lineItem.formattedTotals.total)
+      const banner = bannersByPriceId.get(priceId)
+      if (banner == null) {
+        return
+      }
+      const value = yearlyMode ? toYearlyPerMonth(total) : total
+      banner.setAttribute(valueKey, value)
+      if (yearlyMode) {
+        const template = banner.getAttribute('data-detail-yearly-template') ?? ''
+        banner.setAttribute('data-detail-yearly', template.replace('--', total))
+      }
+    })
+  }
+
+  async function hydrateLocalizedPrices(banners) {
+    if (banners.length === 0) {
+      return
+    }
+
+    const monthlyItems = []
+    const yearlyItems = []
+    const monthBanners = new Map()
+    const yearBanners = new Map()
+
+    banners.forEach((banner) => {
+      const monthId = banner.getAttribute('data-price-id-month') ?? ''
+      const yearId = banner.getAttribute('data-price-id-year') ?? ''
+      if (monthId !== '') {
+        monthlyItems.push({ priceId: monthId, quantity: 1 })
+        monthBanners.set(monthId, banner)
+      }
+      if (yearId !== '') {
+        yearlyItems.push({ priceId: yearId, quantity: 1 })
+        yearBanners.set(yearId, banner)
+      }
+    })
+
+    if (!document.documentElement.hasAttribute(PADDLE_INITED)) {
+      if (paddleEnvironment === 'sandbox') {
+        window.Paddle.Environment.set('sandbox')
+      }
+      window.Paddle.Initialize({ token: paddleClientToken })
+      document.documentElement.setAttribute(PADDLE_INITED, '')
+    }
+
+    try {
+      await preview(
+        monthlyItems,
+        'data-month-price-localized',
+        monthBanners,
+        false
+      )
+      await preview(yearlyItems, 'data-year-price-localized', yearBanners, true)
+    } catch (error) {
+      console.error('[Paddle.PricePreview] failed', error)
+    }
+  }
 
   /** Réexécuter à chaque chargement / swap (premier load, reload, navigation, changement de langue). */
   function initPricingToggle() {
@@ -367,10 +467,8 @@ const faqItems = [
       optionYearly?.setAttribute('aria-pressed', String(isYearly))
 
       banners.forEach((banner) => {
-        const monthPrice = banner.getAttribute('data-month-price') ?? '12'
-        const yearPrice = banner.getAttribute('data-year-price') ?? '10'
-        const struckMonth = banner.getAttribute('data-struck-month') ?? '24'
-        const struckYear = banner.getAttribute('data-struck-year') ?? '20'
+        const monthPriceLocalized = banner.getAttribute('data-month-price-localized')
+        const yearPriceLocalized = banner.getAttribute('data-year-price-localized')
         const detailYearly = banner.getAttribute('data-detail-yearly') ?? ''
         const detailMonthly = banner.getAttribute('data-detail-monthly') ?? ''
 
@@ -379,10 +477,23 @@ const faqItems = [
         const detailEl = banner.querySelector('.pricing__plan-price-detail')
 
         if (currentEl) {
-          currentEl.textContent = isYearly ? `${yearPrice}€` : `${monthPrice}€`
+          if (isYearly) {
+            currentEl.textContent = yearPriceLocalized ?? '--'
+          } else {
+            currentEl.textContent = monthPriceLocalized ?? '--'
+          }
         }
         if (struckEl) {
-          struckEl.textContent = isYearly ? `${struckYear}€` : `${struckMonth}€`
+          const shownPrice = isYearly
+            ? (yearPriceLocalized ?? '')
+            : (monthPriceLocalized ?? '')
+          const struckValue = doubleDisplayedPrice(shownPrice)
+          if (struckValue === '') {
+            struckEl.style.display = 'none'
+          } else {
+            struckEl.style.display = ''
+            struckEl.textContent = struckValue
+          }
         }
         if (detailEl) {
           detailEl.textContent = isYearly ? detailYearly : detailMonthly
@@ -401,6 +512,11 @@ const faqItems = [
 
     optionYearly.addEventListener('click', () => {
       setBilling(true)
+    })
+
+    hydrateLocalizedPrices(Array.from(banners)).finally(() => {
+      const isYearly = toggle.getAttribute('aria-pressed') === 'true'
+      setBilling(isYearly)
     })
 
     setBilling(true)

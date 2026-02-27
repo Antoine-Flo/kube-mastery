@@ -131,7 +131,7 @@ export type SelectUserPreferences = typeof userPreferences.$inferSelect
 
 /**
  * Subscriptions table - Stores user subscriptions.
- * plan_tier references plans defined in src/lib/subscription-plans.ts (free, individual, enterprise).
+ * plan_tier stores the selected plan tier (e.g. free, standard, individual, enterprise).
  */
 export const subscriptions = pgTable(
   'subscriptions',
