@@ -58,6 +58,85 @@ const shouldProgressPod = (pod: Pod): boolean => {
   )
 }
 
+const buildPodHostIP = (pod: Pod, state: ControllerState): string | undefined => {
+  const nodeName = pod.spec.nodeName
+  if (nodeName == null || nodeName.length === 0) {
+    return undefined
+  }
+  const node = state.getNodes().find((item) => item.metadata.name === nodeName)
+  if (node == null) {
+    return undefined
+  }
+  const nodeAddresses = node.status.addresses
+  if (nodeAddresses == null) {
+    return undefined
+  }
+  const internalAddress = nodeAddresses.find((address) => {
+    return address.type === 'InternalIP'
+  })
+  if (internalAddress == null) {
+    return undefined
+  }
+  return internalAddress.address
+}
+
+const ensureHostIPs = (hostIP: string | undefined): Array<{ ip: string }> | undefined => {
+  if (hostIP == null || hostIP.length === 0) {
+    return undefined
+  }
+  return [{ ip: hostIP }]
+}
+
+const countInitContainers = (pod: Pod): number => {
+  return pod.spec.initContainers?.length ?? 0
+}
+
+const buildPodConditions = (pod: Pod, transitionTime: string): Pod['status']['conditions'] => {
+  const regularContainerNames = new Set(pod.spec.containers.map((container) => container.name))
+  const regularStatuses = (pod.status.containerStatuses ?? []).filter((status) => {
+    return regularContainerNames.has(status.name)
+  })
+  const allRegularReady =
+    regularStatuses.length > 0 && regularStatuses.every((status) => status.ready === true)
+  const initialized =
+    countInitContainers(pod) === 0 ||
+    pod.status.phase === 'Running' ||
+    pod.status.phase === 'Succeeded'
+  const ready = pod.status.phase === 'Running' && allRegularReady
+  const scheduled = pod.spec.nodeName != null && pod.spec.nodeName.length > 0
+  const observedGeneration = pod.metadata.generation ?? 1
+  return [
+    {
+      type: 'Initialized',
+      status: initialized ? 'True' : 'False',
+      lastTransitionTime: transitionTime,
+      lastProbeTime: null,
+      observedGeneration
+    },
+    {
+      type: 'Ready',
+      status: ready ? 'True' : 'False',
+      lastTransitionTime: transitionTime,
+      lastProbeTime: null,
+      observedGeneration
+    },
+    {
+      type: 'ContainersReady',
+      status: ready ? 'True' : 'False',
+      lastTransitionTime: transitionTime,
+      lastProbeTime: null,
+      observedGeneration
+    },
+    {
+      type: 'PodScheduled',
+      status: scheduled ? 'True' : 'False',
+      lastTransitionTime: transitionTime,
+      lastProbeTime: null,
+      observedGeneration
+    }
+  ]
+}
+
 export class PodLifecycleController implements ReconcilerController {
   private eventBus: EventBus
   private getState: () => ControllerState
@@ -227,7 +306,20 @@ export class PodLifecycleController implements ReconcilerController {
   }
 
   private emitPodRunning(pod: Pod): void {
-    const updated = reconcileInitContainers(pod)
+    const transitionTime = new Date().toISOString()
+    const runningPod = reconcileInitContainers(pod)
+    const hostIP = buildPodHostIP(runningPod, this.getState())
+    const updated: Pod = {
+      ...runningPod,
+      status: {
+        ...runningPod.status,
+        ...(runningPod.status.startTime == null ? { startTime: transitionTime } : {}),
+        ...(hostIP != null ? { hostIP } : {}),
+        ...(hostIP != null ? { hostIPs: ensureHostIPs(hostIP) } : {}),
+        observedGeneration: runningPod.metadata.generation ?? 1,
+        conditions: buildPodConditions(runningPod, transitionTime)
+      }
+    }
     this.eventBus.emit(
       createPodUpdatedEvent(
         pod.metadata.name,
@@ -241,11 +333,13 @@ export class PodLifecycleController implements ReconcilerController {
 
   private emitPodWaitingForVolume(pod: Pod, reason?: string): void {
     const waitingReason = reason ?? 'VolumesNotReady'
+    const transitionTime = new Date().toISOString()
     const currentStatuses = pod.status.containerStatuses ?? []
     const updatedStatuses = currentStatuses.map((status) => ({
       ...status,
       ready: false,
       state: 'Waiting' as const,
+      started: false,
       waitingReason
     }))
     const hasChanged = updatedStatuses.some((updatedStatus, index) => {
@@ -266,6 +360,18 @@ export class PodLifecycleController implements ReconcilerController {
       status: {
         ...pod.status,
         phase: 'Pending',
+        observedGeneration: pod.metadata.generation ?? 1,
+        conditions: buildPodConditions(
+          {
+            ...pod,
+            status: {
+              ...pod.status,
+              phase: 'Pending',
+              containerStatuses: updatedStatuses
+            }
+          },
+          transitionTime
+        ),
         containerStatuses: updatedStatuses
       }
     }

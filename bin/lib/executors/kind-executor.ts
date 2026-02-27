@@ -1,8 +1,9 @@
 import {
   applyYamlTarget,
-  deleteCluster,
+  ensureCurrentContextNamespace,
   deleteYamlTarget,
   ensureCluster,
+  resetConformanceClusterState,
   waitForPodsReady
 } from '../cluster-manager'
 import { runShellCommandDetailed } from '../command-runner'
@@ -53,12 +54,20 @@ export const createKindExecutor = (clusterName: string): KindExecutor => {
       if (!setupResult.ok) {
         return error(setupResult.error)
       }
+      const ensureNamespaceResult = ensureCurrentContextNamespace('default')
+      if (!ensureNamespaceResult.ok) {
+        return error(ensureNamespaceResult.error)
+      }
+      const resetResult = resetConformanceClusterState()
+      if (!resetResult.ok) {
+        return error(resetResult.error)
+      }
       return success(undefined)
     },
     teardown(): Result<void, string> {
-      const deleteResult = deleteCluster(clusterName)
-      if (!deleteResult.ok) {
-        return error(deleteResult.error)
+      const resetResult = resetConformanceClusterState()
+      if (!resetResult.ok) {
+        return error(resetResult.error)
       }
       return success(undefined)
     },

@@ -24,6 +24,7 @@ import { getServiceType } from '../../../cluster/ressources/Service'
 import { formatAge, formatTable } from '../../../shared/formatter'
 import type { ParsedCommand, Resource } from '../types'
 import { handleGetRaw } from './getRaw'
+import { shapePodForStructuredOutput } from './podOutputShaper'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL GET HANDLER
@@ -85,6 +86,10 @@ const withKubectlTableSpacing = (
   return {
     spacing: KUBECTL_TABLE_SPACING
   }
+}
+
+const buildLeftAlign = (columnsCount: number): ('left' | 'right')[] => {
+  return Array.from({ length: columnsCount }, () => 'left')
 }
 
 /**
@@ -221,6 +226,20 @@ const formatIngressPorts = (): string => {
   return '80'
 }
 
+const formatNodeSelector = (selector?: Record<string, string>): string => {
+  if (selector == null) {
+    return '<none>'
+  }
+  const entries = Object.entries(selector)
+  if (entries.length === 0) {
+    return '<none>'
+  }
+  return entries
+    .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+    .map(([key, value]) => `${key}=${value}`)
+    .join(',')
+}
+
 /**
  * Remove internal simulator properties from resource for output
  * Pure function that strips _simulator and other internal fields
@@ -283,7 +302,19 @@ const serializeStructuredOutput = (
   if (outputFormat === 'json') {
     return JSON.stringify(payload, null, KUBECTL_JSON_INDENT)
   }
-  return yamlStringify(payload).trimEnd()
+  return yamlStringify(payload, { indentSeq: false }).trimEnd()
+}
+
+const shapeStructuredItemsForOutput = (
+  resourceType: StructuredResource,
+  items: unknown[]
+): unknown[] => {
+  if (resourceType !== 'pods') {
+    return items
+  }
+  return items.map((item) => {
+    return shapePodForStructuredOutput(item as Pod)
+  })
 }
 
 /**
@@ -521,12 +552,24 @@ const RESOURCE_HANDLERS: Record<string, ResourceHandler<any>> = {
 
   daemonsets: {
     getItems: (state) => state.daemonSets.items,
-    headers: ['name', 'desired', 'current', 'ready', 'age'],
+    headers: [
+      'name',
+      'desired',
+      'current',
+      'ready',
+      'up-to-date',
+      'available',
+      'node selector',
+      'age'
+    ],
     formatRow: (daemonSet: DaemonSet) => [
       daemonSet.metadata.name,
       String(daemonSet.status.desiredNumberScheduled ?? 0),
       String(daemonSet.status.currentNumberScheduled ?? 0),
       String(daemonSet.status.numberReady ?? 0),
+      String(daemonSet.status.currentNumberScheduled ?? 0),
+      String(daemonSet.status.numberReady ?? 0),
+      formatNodeSelector(daemonSet.spec.template.spec.nodeSelector),
       formatAge(daemonSet.metadata.creationTimestamp)
     ],
     supportsFiltering: true
@@ -708,10 +751,11 @@ export const handleGet = (
   if (structuredOutput) {
     const asSingleObject = parsed.name !== undefined
     const structuredResourceType = resourceType as StructuredResource
+    const shaped = shapeStructuredItemsForOutput(structuredResourceType, sanitized)
     return serializeStructuredOutput(
       outputFormat,
       structuredResourceType,
-      sanitized,
+      shaped,
       asSingleObject
     )
   }
@@ -783,27 +827,40 @@ export const handleGet = (
       }
       return defaultRow
     })
-    const alignAllNs: ('left' | 'right')[] = isWide
-      ? [
-          'left',
-          'left',
-          'right',
-          'left',
-          'right',
-          'right',
-          'left',
-          'left',
-          'left',
-          'left'
-        ]
-      : ['left', 'left', 'right', 'left', 'right', 'right']
-    if (showLabels) {
-      alignAllNs.push('left')
-    }
     return formatTable(
       headersAllNs,
       rowsAllNs,
-      withKubectlTableSpacing({ align: alignAllNs })
+      withKubectlTableSpacing({ align: buildLeftAlign(headersAllNs.length) })
+    )
+  }
+
+  if (allNamespacesFlag && !isClusterScoped) {
+    const rowsSource = [...filtered].sort((left, right) => {
+      if (left.metadata.namespace !== right.metadata.namespace) {
+        return left.metadata.namespace.localeCompare(right.metadata.namespace)
+      }
+      return left.metadata.name.localeCompare(right.metadata.name)
+    })
+    const rows = (rowsSource.map(handler.formatRow) as string[][]).map(
+      (row, index) => {
+        const rowWithNamespace = [rowsSource[index].metadata.namespace, ...row]
+        if (!showLabels) {
+          return rowWithNamespace
+        }
+        return [
+          ...rowWithNamespace,
+          formatLabelsForDisplay(rowsSource[index].metadata.labels)
+        ]
+      }
+    )
+    const headers = ['namespace', ...handler.headers]
+    if (showLabels) {
+      headers.push('labels')
+    }
+    return formatTable(
+      headers,
+      rows,
+      withKubectlTableSpacing({ align: buildLeftAlign(headers.length) })
     )
   }
 
@@ -822,7 +879,11 @@ export const handleGet = (
     if (showLabels) {
       headers.push('labels')
     }
-    return formatTable(headers, rows, withKubectlTableSpacing())
+    return formatTable(
+      headers,
+      rows,
+      withKubectlTableSpacing({ align: buildLeftAlign(headers.length) })
+    )
   }
 
   const rowsSource =
@@ -844,12 +905,9 @@ export const handleGet = (
   if (showLabels) {
     headers.push('labels')
   }
-  const tableOptions =
-    handler.align != null
-      ? withKubectlTableSpacing({
-          align: showLabels ? [...handler.align, 'left'] : handler.align
-        })
-      : withKubectlTableSpacing()
+  const tableOptions = withKubectlTableSpacing({
+    align: buildLeftAlign(headers.length)
+  })
   return formatTable(headers, rows, tableOptions)
 }
 
@@ -863,8 +921,8 @@ type GetAllResourceType =
 const GET_ALL_RESOURCE_ORDER: GetAllResourceType[] = [
   'pods',
   'services',
-  'deployments',
   'daemonsets',
+  'deployments',
   'replicasets'
 ]
 
@@ -896,8 +954,17 @@ const buildGetAllContext = (parsed: ParsedCommand): GetAllContext => {
 
 const sortGetAllItems = (
   resourceType: GetAllResourceType,
-  items: ResourceWithMetadata[]
+  items: ResourceWithMetadata[],
+  allNamespacesFlag: boolean
 ): ResourceWithMetadata[] => {
+  if (resourceType === 'pods' && allNamespacesFlag) {
+    return [...items].sort((left, right) => {
+      if (left.metadata.namespace !== right.metadata.namespace) {
+        return left.metadata.namespace.localeCompare(right.metadata.namespace)
+      }
+      return left.metadata.name.localeCompare(right.metadata.name)
+    })
+  }
   if (resourceType === 'deployments') {
     return [...items].sort((left, right) =>
       left.metadata.name.localeCompare(right.metadata.name)
@@ -913,7 +980,7 @@ const buildGetAllRows = (
   allNamespacesFlag: boolean,
   showLabels: boolean
 ): string[][] => {
-  const rowsSource = sortGetAllItems(resourceType, items)
+  const rowsSource = sortGetAllItems(resourceType, items, allNamespacesFlag)
   return rowsSource.map((item) => {
     const row = handler.formatRow(item)
     const nameReference = GET_ALL_REFERENCE_BY_RESOURCE[resourceType]
@@ -949,20 +1016,14 @@ const buildGetAllTableOptions = (
   handler: ResourceHandler<ResourceWithMetadata>,
   showLabels: boolean
 ): { spacing: number; align?: ('left' | 'right')[] } => {
-  const baseAlign: ('left' | 'right')[] | undefined =
-    handler.align != null
-      ? showLabels
-        ? [...handler.align, 'left' as const]
-        : [...handler.align]
-      : undefined
-  if (allNamespacesFlag && baseAlign != null) {
-    const alignWithNamespace: ('left' | 'right')[] = ['left', ...baseAlign]
-    return withKubectlTableSpacing({ align: alignWithNamespace })
-  }
-  if (baseAlign != null) {
-    return withKubectlTableSpacing({ align: baseAlign })
-  }
-  return withKubectlTableSpacing()
+  const namespaceColumns = allNamespacesFlag ? 1 : 0
+  const labelsColumns = showLabels ? 1 : 0
+  const totalColumns = handler.headers.length + namespaceColumns + labelsColumns
+  const align: ('left' | 'right')[] = Array.from(
+    { length: totalColumns },
+    () => 'left'
+  )
+  return withKubectlTableSpacing({ align })
 }
 
 const buildGetAllSection = (

@@ -1514,9 +1514,7 @@ data:
 
         expect(result.ok).toBe(false)
         if (!result.ok) {
-          expect(result.error).toContain(
-            'run --env values must use KEY=VALUE format'
-          )
+          expect(result.error).toContain('error: invalid env: INVALID')
         }
       })
 
@@ -1560,7 +1558,7 @@ data:
         networkRuntime.controller.stop()
       })
 
-      it('should reject kubectl run when restart is not Never', () => {
+      it('should allow kubectl run when restart is Always', () => {
         const executor = createKubectlExecutor(
           clusterState,
           fileSystem,
@@ -1571,12 +1569,12 @@ data:
           'kubectl run nginx --image=nginx --restart=Always'
         )
 
-        expect(result.ok).toBe(false)
+        expect(result.ok).toBe(true)
         if (!result.ok) {
-          expect(result.error).toContain(
-            'run currently supports only --restart=Never in this simulator'
-          )
+          return
         }
+        const podResult = clusterState.findPod('nginx', 'default')
+        expect(podResult.ok).toBe(true)
       })
     })
   })

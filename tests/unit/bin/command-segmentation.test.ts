@@ -21,7 +21,7 @@ describe('command segmentation', () => {
     expect(commands).toContain('get')
     expect(commands).toContain('run')
     expect(commands).toContain('config')
-    expect(commands).toContain('help')
+    expect(commands).not.toContain('help')
     expect(commands).toContain('api-resources')
   })
 

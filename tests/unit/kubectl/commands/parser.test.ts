@@ -182,26 +182,30 @@ describe('kubectl parser - run', () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain('run requires flag --image')
+      expect(result.error).toContain('error: required flag(s) "image" not set')
     }
   })
 
-  it('should reject run when --command has no command after separator', () => {
+  it('should accept run when --command has no command after separator', () => {
     const result = parseCommand('kubectl run test-pod --image=busybox --command --')
 
-    expect(result.ok).toBe(false)
+    expect(result.ok).toBe(true)
     if (!result.ok) {
-      expect(result.error).toContain('run requires command after --')
+      return
     }
+    expect(result.value.runUseCommand).toBe(true)
+    expect(result.value.runCommand).toBeUndefined()
   })
 
-  it('should reject run when separator is present without args', () => {
+  it('should accept run when separator is present without args', () => {
     const result = parseCommand('kubectl run test-pod --image=busybox --')
 
-    expect(result.ok).toBe(false)
+    expect(result.ok).toBe(true)
     if (!result.ok) {
-      expect(result.error).toContain('run requires arguments after --')
+      return
     }
+    expect(result.value.runUseCommand).toBe(false)
+    expect(result.value.runArgs).toBeUndefined()
   })
 
   it('should reject run when dry-run value is invalid', () => {
@@ -210,7 +214,7 @@ describe('kubectl parser - run', () => {
     expect(result.ok).toBe(false)
     if (!result.ok) {
       expect(result.error).toContain(
-        'run dry-run must be one of: none, server, client'
+        'error: Invalid dry-run value (local). Must be "none", "server", or "client".'
       )
     }
   })
@@ -222,9 +226,7 @@ describe('kubectl parser - run', () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain(
-        'run restart must be one of: Always, OnFailure, Never'
-      )
+      expect(result.error).toContain('error: invalid restart policy: Sometimes')
     }
   })
 })

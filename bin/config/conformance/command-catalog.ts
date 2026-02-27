@@ -57,8 +57,18 @@ const createRawDiffCommand = (
   }
 }
 
+const isTemporarilySkippedHelpCommand = (
+  commandConfig: string | LifecycleCommandConfig
+): boolean => {
+  const command =
+    typeof commandConfig === 'string'
+      ? commandConfig
+      : commandConfig.command
+  return /(^|\s)(--help|-h)(\s|$)/.test(command)
+}
+
 export const createCommandCatalogSegments = (): LifecycleSegment[] => {
-  return [
+  const segments: LifecycleSegment[] = [
     {
       idPrefix: 'minimal',
       seed: 'minimal',
@@ -106,10 +116,26 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
         'kubectl describe deployment exhaustive-web',
         'kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080',
         'kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date',
+        createRawCommand(
+          'kubectl expose deployment web --port=80 --target-port=80 --name=web-svc',
+          ['service/web-svc exposed']
+        ),
+        createRawCommand('kubectl get svc web-svc', ['web-svc', 'ClusterIP']),
+        createRawCommand('kubectl describe svc web-svc', [
+          'Name:',
+          'web-svc',
+          'Selector:',
+          'app=web'
+        ]),
+        createRawCommand('kubectl get svc -A', ['NAMESPACE', 'default', 'web-svc']),
         'kubectl get all',
         'kubectl get all -A',
         'kubectl scale deployments exhaustive-web --replicas=3',
         'kubectl get deployments',
+        createRawCommand('kubectl delete svc web-svc', ['service "web-svc" deleted']),
+        createRawErrorCommand('kubectl describe svc web-svc', [
+          'Error from server (NotFound): services "web-svc" not found'
+        ]),
         'kubectl delete deployments exhaustive-api',
         'kubectl delete deployments exhaustive-multi',
         'kubectl delete deployments exhaustive-web'
@@ -237,6 +263,22 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
           'demo-ingress',
           'demo.example.com'
         ]),
+        'kubectl get svc',
+        'kubectl get svc -A',
+        createRawCommand('kubectl describe svc api-service', [
+          'Name:',
+          'api-service',
+          'Selector:',
+          'app=api'
+        ]),
+        createRawCommand('kubectl get svc api-service -o yaml', [
+          'kind: Service',
+          'name: api-service'
+        ]),
+        createRawCommand('kubectl get svc frontend-service -o json', [
+          '"kind": "Service"',
+          '"name": "frontend-service"'
+        ]),
         createRawCommand('kubectl describe ingress demo-ingress', [
           'Name:',
           'demo-ingress',
@@ -326,32 +368,36 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
         'kubectl describe pod missing-pod',
         'kubectl scale deployments missing-deploy --replicas=2',
         'kubectl get not-a-resource',
-        createRawErrorCommand('kubectl run', ['run requires a resource name']),
-        createRawErrorCommand('kubectl run missing-image', [
-          'run requires flag --image'
+        createRawErrorCommand('kubectl run', [
+          'error: required flag(s) "image" not set'
         ]),
-        createRawErrorCommand(
+        createRawErrorCommand('kubectl run missing-image', [
+          'error: required flag(s) "image" not set'
+        ]),
+        createRawCommand(
           'kubectl run missing-command --image=busybox --command --',
-          ['run requires command after --']
+          ['pod/missing-command created']
         ),
-        createRawErrorCommand('kubectl run missing-args --image=busybox --', [
-          'run requires arguments after --'
+        createRawCommand('kubectl run missing-args --image=busybox --', [
+          'pod/missing-args created'
         ]),
         createRawErrorCommand(
           'kubectl run invalid-env --image=busybox --env INVALID',
-          ['run --env values must use KEY=VALUE format']
+          ['error: invalid env: INVALID']
         ),
         createRawErrorCommand(
           'kubectl run invalid-dry-run --image=busybox --dry-run=local',
-          ['run dry-run must be one of: none, server, client']
+          [
+            'error: Invalid dry-run value (local). Must be "none", "server", or "client".'
+          ]
         ),
         createRawErrorCommand(
           'kubectl run invalid-restart-value --image=busybox --restart=Sometimes',
-          ['run restart must be one of: Always, OnFailure, Never']
+          ['error: invalid restart policy: Sometimes']
         ),
-        createRawErrorCommand(
+        createRawCommand(
           'kubectl run unsupported-restart --image=busybox --restart=Always',
-          ['run currently supports only --restart=Never in this simulator']
+          ['pod/unsupported-restart created']
         ),
         createRawErrorCommand('kubectl explain pod.spec.notFound', [
           'field "notFound" does not exist'
@@ -381,4 +427,13 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
       ]
     }
   ]
+
+  return segments.map((segment) => {
+    return {
+      ...segment,
+      commands: segment.commands.filter((commandConfig) => {
+        return !isTemporarilySkippedHelpCommand(commandConfig)
+      })
+    }
+  })
 }

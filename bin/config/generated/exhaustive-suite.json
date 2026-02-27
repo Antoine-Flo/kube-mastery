@@ -35,31 +35,55 @@
     {
       "id": "minimal-cmd-5",
       "type": "command",
-      "command": "kubectl delete pod web-00063e839a-chadq",
+      "command": "kubectl get pv",
       "compareMode": "normalized"
     },
     {
       "id": "minimal-cmd-6",
       "type": "command",
-      "command": "kubectl get nodes",
+      "command": "kubectl get pvc -A",
       "compareMode": "normalized"
     },
     {
       "id": "minimal-cmd-7",
       "type": "command",
-      "command": "kubectl describe node conformance-worker",
+      "command": "kubectl delete pod web-00063e839a-chadq",
       "compareMode": "normalized"
     },
     {
       "id": "minimal-cmd-8",
       "type": "command",
-      "command": "kubectl get configmaps",
+      "command": "kubectl get nodes",
       "compareMode": "normalized"
     },
     {
       "id": "minimal-cmd-9",
       "type": "command",
+      "command": "kubectl describe node conformance-worker",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-10",
+      "type": "command",
+      "command": "kubectl get configmaps",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-11",
+      "type": "command",
       "command": "kubectl get secrets",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-12",
+      "type": "command",
+      "command": "kubectl describe pv missing-pv",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-13",
+      "type": "command",
+      "command": "kubectl describe pvc missing-pvc",
       "compareMode": "normalized"
     },
     {
@@ -199,41 +223,161 @@
     {
       "id": "deploy-cm-cmd-17",
       "type": "command",
-      "command": "kubectl get all",
-      "compareMode": "normalized"
+      "command": "kubectl expose deployment web --port=80 --target-port=80 --name=web-svc",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "service/web-svc exposed"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "service/web-svc exposed"
+        ]
+      }
     },
     {
       "id": "deploy-cm-cmd-18",
       "type": "command",
-      "command": "kubectl get all -A",
-      "compareMode": "normalized"
+      "command": "kubectl get svc web-svc",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "web-svc",
+          "ClusterIP"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "web-svc",
+          "ClusterIP"
+        ]
+      }
     },
     {
       "id": "deploy-cm-cmd-19",
       "type": "command",
-      "command": "kubectl scale deployments exhaustive-web --replicas=3",
-      "compareMode": "normalized"
+      "command": "kubectl describe svc web-svc",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "Name:",
+          "web-svc",
+          "Selector:",
+          "app=web"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "Name:",
+          "web-svc",
+          "Selector:",
+          "app=web"
+        ]
+      }
     },
     {
       "id": "deploy-cm-cmd-20",
       "type": "command",
-      "command": "kubectl get deployments",
-      "compareMode": "normalized"
+      "command": "kubectl get svc -A",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NAMESPACE",
+          "default",
+          "web-svc"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NAMESPACE",
+          "default",
+          "web-svc"
+        ]
+      }
     },
     {
       "id": "deploy-cm-cmd-21",
       "type": "command",
-      "command": "kubectl delete deployments exhaustive-api",
+      "command": "kubectl get all",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-22",
       "type": "command",
-      "command": "kubectl delete deployments exhaustive-multi",
+      "command": "kubectl get all -A",
       "compareMode": "normalized"
     },
     {
       "id": "deploy-cm-cmd-23",
+      "type": "command",
+      "command": "kubectl scale deployments exhaustive-web --replicas=3",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-24",
+      "type": "command",
+      "command": "kubectl get deployments",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-25",
+      "type": "command",
+      "command": "kubectl delete svc web-svc",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "service \"web-svc\" deleted"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "service \"web-svc\" deleted"
+        ]
+      }
+    },
+    {
+      "id": "deploy-cm-cmd-26",
+      "type": "command",
+      "command": "kubectl describe svc web-svc",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 1,
+        "stderrContains": [
+          "Error from server (NotFound): services \"web-svc\" not found"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 1,
+        "stderrContains": [
+          "Error from server (NotFound): services \"web-svc\" not found"
+        ]
+      }
+    },
+    {
+      "id": "deploy-cm-cmd-27",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-api",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-28",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-multi",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "deploy-cm-cmd-29",
       "type": "command",
       "command": "kubectl delete deployments exhaustive-web",
       "compareMode": "normalized"
@@ -300,29 +444,93 @@
     {
       "id": "platform-cmd-3",
       "type": "command",
+      "command": "kubectl get --raw /openapi/v3",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "networking.k8s.io/v1",
+          "/openapi/v3/apis/networking.k8s.io/v1"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "networking.k8s.io/v1",
+          "/openapi/v3/apis/networking.k8s.io/v1"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-4",
+      "type": "command",
+      "command": "kubectl get --raw /apis/networking.k8s.io/v1",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "APIResourceList",
+          "ingresses",
+          "ingressclasses"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "APIResourceList",
+          "ingresses",
+          "ingressclasses"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-5",
+      "type": "command",
+      "command": "kubectl get --raw /openapi/v3/apis/networking.k8s.io/v1",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "openapi",
+          "ingresses",
+          "ingressclasses"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "openapi",
+          "ingresses",
+          "ingressclasses"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-6",
+      "type": "command",
       "command": "kubectl version",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-4",
+      "id": "platform-cmd-7",
       "type": "command",
       "command": "kubectl version --client",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-5",
+      "id": "platform-cmd-8",
       "type": "command",
       "command": "kubectl version --output json",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-6",
+      "id": "platform-cmd-9",
       "type": "command",
       "command": "kubectl version --output yaml",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-7",
+      "id": "platform-cmd-10",
       "type": "command",
       "command": "kubectl config get-contexts",
       "compareMode": "none",
@@ -340,7 +548,7 @@
       }
     },
     {
-      "id": "platform-cmd-8",
+      "id": "platform-cmd-11",
       "type": "command",
       "command": "kubectl config current-context",
       "compareMode": "none",
@@ -358,7 +566,7 @@
       }
     },
     {
-      "id": "platform-cmd-9",
+      "id": "platform-cmd-12",
       "type": "command",
       "command": "kubectl config view --minify",
       "compareMode": "none",
@@ -380,7 +588,7 @@
       }
     },
     {
-      "id": "platform-cmd-10",
+      "id": "platform-cmd-13",
       "type": "command",
       "command": "kubectl config set-context --current --namespace=dev",
       "compareMode": "none",
@@ -398,97 +606,97 @@
       }
     },
     {
-      "id": "platform-cmd-11",
+      "id": "platform-cmd-14",
       "type": "command",
       "command": "kubectl cluster-info",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-12",
+      "id": "platform-cmd-15",
       "type": "command",
       "command": "kubectl cluster-info dump",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-13",
+      "id": "platform-cmd-16",
       "type": "command",
       "command": "kubectl cluster-info dump -o yaml",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-14",
+      "id": "platform-cmd-17",
       "type": "command",
       "command": "kubectl cluster-info dump --namespaces=default,kube-system",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-15",
+      "id": "platform-cmd-18",
       "type": "command",
       "command": "kubectl api-versions",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-16",
+      "id": "platform-cmd-19",
       "type": "command",
       "command": "kubectl api-resources",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-17",
+      "id": "platform-cmd-20",
       "type": "command",
       "command": "kubectl api-resources --output wide",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-18",
+      "id": "platform-cmd-21",
       "type": "command",
       "command": "kubectl api-resources --output name",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-19",
+      "id": "platform-cmd-22",
       "type": "command",
       "command": "kubectl api-resources --output json",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-20",
+      "id": "platform-cmd-23",
       "type": "command",
       "command": "kubectl api-resources --output yaml",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-21",
+      "id": "platform-cmd-24",
       "type": "command",
       "command": "kubectl api-resources --namespaced=true",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-22",
+      "id": "platform-cmd-25",
       "type": "command",
       "command": "kubectl api-resources --namespaced=false",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-23",
+      "id": "platform-cmd-26",
       "type": "command",
       "command": "kubectl api-resources --sort-by=name",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-24",
+      "id": "platform-cmd-27",
       "type": "command",
       "command": "kubectl api-resources --sort-by=kind",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-25",
+      "id": "platform-cmd-28",
       "type": "command",
       "command": "kubectl api-resources --no-headers",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-26",
+      "id": "platform-cmd-29",
       "type": "command",
       "command": "kubectl explain pod",
       "compareMode": "none",
@@ -510,7 +718,7 @@
       }
     },
     {
-      "id": "platform-cmd-27",
+      "id": "platform-cmd-30",
       "type": "command",
       "command": "kubectl explain pod.spec.containers",
       "compareMode": "none",
@@ -530,7 +738,7 @@
       }
     },
     {
-      "id": "platform-cmd-28",
+      "id": "platform-cmd-31",
       "type": "command",
       "command": "kubectl explain deployment.spec.template.spec.containers",
       "compareMode": "none",
@@ -552,7 +760,7 @@
       }
     },
     {
-      "id": "platform-cmd-29",
+      "id": "platform-cmd-32",
       "type": "command",
       "command": "kubectl explain service.spec.ports",
       "compareMode": "none",
@@ -574,7 +782,7 @@
       }
     },
     {
-      "id": "platform-cmd-30",
+      "id": "platform-cmd-33",
       "type": "command",
       "command": "kubectl explain configmap.data",
       "compareMode": "none",
@@ -596,7 +804,7 @@
       }
     },
     {
-      "id": "platform-cmd-31",
+      "id": "platform-cmd-34",
       "type": "command",
       "command": "kubectl explain secret.data",
       "compareMode": "none",
@@ -618,7 +826,7 @@
       }
     },
     {
-      "id": "platform-cmd-32",
+      "id": "platform-cmd-35",
       "type": "command",
       "command": "kubectl explain namespace.metadata",
       "compareMode": "none",
@@ -640,7 +848,7 @@
       }
     },
     {
-      "id": "platform-cmd-33",
+      "id": "platform-cmd-36",
       "type": "command",
       "command": "kubectl explain node.status",
       "compareMode": "none",
@@ -662,19 +870,19 @@
       }
     },
     {
-      "id": "platform-cmd-34",
+      "id": "platform-cmd-37",
       "type": "command",
       "command": "kubectl describe node conformance-control-plane",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-35",
+      "id": "platform-cmd-38",
       "type": "command",
       "command": "kubectl describe node conformance-worker2",
       "compareMode": "normalized"
     },
     {
-      "id": "platform-cmd-36",
+      "id": "platform-cmd-39",
       "type": "command",
       "command": "kubectl explain replicaset.spec.replicas",
       "compareMode": "none",
@@ -696,7 +904,7 @@
       }
     },
     {
-      "id": "platform-cmd-37",
+      "id": "platform-cmd-40",
       "type": "command",
       "command": "kubectl explain daemonset.spec.template",
       "compareMode": "none",
@@ -718,9 +926,227 @@
       }
     },
     {
+      "id": "platform-cmd-41",
+      "type": "command",
+      "command": "kubectl explain persistentvolume.spec",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    spec",
+          "KIND:",
+          "PersistentVolume"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    spec",
+          "KIND:",
+          "PersistentVolume"
+        ]
+      }
+    },
+    {
+      "id": "platform-cmd-42",
+      "type": "command",
+      "command": "kubectl explain persistentvolumeclaim.spec",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    spec",
+          "KIND:",
+          "PersistentVolumeClaim"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "FIELD:    spec",
+          "KIND:",
+          "PersistentVolumeClaim"
+        ]
+      }
+    },
+    {
       "id": "platform-cleanup",
       "type": "deleteYaml",
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
+      "ignoreNotFound": true
+    },
+    {
+      "id": "ingress-basics-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/ingress-basics",
+      "waitForPods": true
+    },
+    {
+      "id": "ingress-basics-cmd-1",
+      "type": "command",
+      "command": "kubectl get ingress",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NAME",
+          "demo-ingress",
+          "demo.example.com"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "NAME",
+          "demo-ingress",
+          "demo.example.com"
+        ]
+      }
+    },
+    {
+      "id": "ingress-basics-cmd-2",
+      "type": "command",
+      "command": "kubectl get svc",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "ingress-basics-cmd-3",
+      "type": "command",
+      "command": "kubectl get svc -A",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "ingress-basics-cmd-4",
+      "type": "command",
+      "command": "kubectl describe svc api-service",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "Name:",
+          "api-service",
+          "Selector:",
+          "app=api"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "Name:",
+          "api-service",
+          "Selector:",
+          "app=api"
+        ]
+      }
+    },
+    {
+      "id": "ingress-basics-cmd-5",
+      "type": "command",
+      "command": "kubectl get svc api-service -o yaml",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "kind: Service",
+          "name: api-service"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "kind: Service",
+          "name: api-service"
+        ]
+      }
+    },
+    {
+      "id": "ingress-basics-cmd-6",
+      "type": "command",
+      "command": "kubectl get svc frontend-service -o json",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "\"kind\": \"Service\"",
+          "\"name\": \"frontend-service\""
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "\"kind\": \"Service\"",
+          "\"name\": \"frontend-service\""
+        ]
+      }
+    },
+    {
+      "id": "ingress-basics-cmd-7",
+      "type": "command",
+      "command": "kubectl describe ingress demo-ingress",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "Name:",
+          "demo-ingress",
+          "Rules:",
+          "/api",
+          "api-service:80",
+          "frontend-service:80"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "Name:",
+          "demo-ingress",
+          "Rules:",
+          "/api",
+          "api-service:80",
+          "frontend-service:80"
+        ]
+      }
+    },
+    {
+      "id": "ingress-basics-cmd-8",
+      "type": "command",
+      "command": "kubectl get ingressclass",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "No resources found"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "No resources found"
+        ]
+      }
+    },
+    {
+      "id": "ingress-basics-cmd-9",
+      "type": "command",
+      "command": "kubectl delete ingress demo-ingress",
+      "compareMode": "none",
+      "expectKind": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "ingress.networking.k8s.io \"demo-ingress\" deleted"
+        ]
+      },
+      "expectRunner": {
+        "exitCode": 0,
+        "stdoutContains": [
+          "ingress.networking.k8s.io \"demo-ingress\" deleted"
+        ]
+      }
+    },
+    {
+      "id": "ingress-basics-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/ingress-basics",
       "ignoreNotFound": true
     },
     {
@@ -1084,13 +1510,13 @@
       "expectKind": {
         "exitCode": 1,
         "stderrContains": [
-          "run requires a resource name"
+          "error: required flag(s) \"image\" not set"
         ]
       },
       "expectRunner": {
         "exitCode": 1,
         "stderrContains": [
-          "run requires a resource name"
+          "error: required flag(s) \"image\" not set"
         ]
       }
     },
@@ -1102,13 +1528,13 @@
       "expectKind": {
         "exitCode": 1,
         "stderrContains": [
-          "run requires flag --image"
+          "error: required flag(s) \"image\" not set"
         ]
       },
       "expectRunner": {
         "exitCode": 1,
         "stderrContains": [
-          "run requires flag --image"
+          "error: required flag(s) \"image\" not set"
         ]
       }
     },
@@ -1118,15 +1544,15 @@
       "command": "kubectl run missing-command --image=busybox --command --",
       "compareMode": "none",
       "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "run requires command after --"
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/missing-command created"
         ]
       },
       "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "run requires command after --"
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/missing-command created"
         ]
       }
     },
@@ -1136,15 +1562,15 @@
       "command": "kubectl run missing-args --image=busybox --",
       "compareMode": "none",
       "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "run requires arguments after --"
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/missing-args created"
         ]
       },
       "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "run requires arguments after --"
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/missing-args created"
         ]
       }
     },
@@ -1156,13 +1582,13 @@
       "expectKind": {
         "exitCode": 1,
         "stderrContains": [
-          "run --env values must use KEY=VALUE format"
+          "error: invalid env: INVALID"
         ]
       },
       "expectRunner": {
         "exitCode": 1,
         "stderrContains": [
-          "run --env values must use KEY=VALUE format"
+          "error: invalid env: INVALID"
         ]
       }
     },
@@ -1174,13 +1600,13 @@
       "expectKind": {
         "exitCode": 1,
         "stderrContains": [
-          "run dry-run must be one of: none, server, client"
+          "error: Invalid dry-run value (local). Must be \"none\", \"server\", or \"client\"."
         ]
       },
       "expectRunner": {
         "exitCode": 1,
         "stderrContains": [
-          "run dry-run must be one of: none, server, client"
+          "error: Invalid dry-run value (local). Must be \"none\", \"server\", or \"client\"."
         ]
       }
     },
@@ -1192,13 +1618,13 @@
       "expectKind": {
         "exitCode": 1,
         "stderrContains": [
-          "run restart must be one of: Always, OnFailure, Never"
+          "error: invalid restart policy: Sometimes"
         ]
       },
       "expectRunner": {
         "exitCode": 1,
         "stderrContains": [
-          "run restart must be one of: Always, OnFailure, Never"
+          "error: invalid restart policy: Sometimes"
         ]
       }
     },
@@ -1208,15 +1634,15 @@
       "command": "kubectl run unsupported-restart --image=busybox --restart=Always",
       "compareMode": "none",
       "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "run currently supports only --restart=Never in this simulator"
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/unsupported-restart created"
         ]
       },
       "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "run currently supports only --restart=Never in this simulator"
+        "exitCode": 0,
+        "stdoutContains": [
+          "pod/unsupported-restart created"
         ]
       }
     },
@@ -1272,102 +1698,6 @@
       "id": "errors-help-cmd-20",
       "type": "command",
       "command": "kubectl cluster-info dump --output-directory /tmp/out",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-21",
-      "type": "command",
-      "command": "kubectl -h",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-22",
-      "type": "command",
-      "command": "kubectl --help",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-23",
-      "type": "command",
-      "command": "kubectl get --help",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-24",
-      "type": "command",
-      "command": "kubectl create --help",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-25",
-      "type": "command",
-      "command": "kubectl create deployment --help",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-26",
-      "type": "command",
-      "command": "kubectl delete --help",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-27",
-      "type": "command",
-      "command": "kubectl describe --help",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-28",
-      "type": "command",
-      "command": "kubectl scale --help",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-29",
-      "type": "command",
-      "command": "kubectl version --help",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-30",
-      "type": "command",
-      "command": "kubectl cluster-info --help",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-31",
-      "type": "command",
-      "command": "kubectl api-resources --help",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-32",
-      "type": "command",
-      "command": "kubectl logs --help",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-33",
-      "type": "command",
-      "command": "kubectl exec --help",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-34",
-      "type": "command",
-      "command": "kubectl run --help",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-35",
-      "type": "command",
-      "command": "kubectl label --help",
-      "compareMode": "normalized"
-    },
-    {
-      "id": "errors-help-cmd-36",
-      "type": "command",
-      "command": "kubectl annotate --help",
       "compareMode": "normalized"
     },
     {

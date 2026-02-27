@@ -96,6 +96,9 @@ const buildDeleteCommand = (resource: ParsedManifestResource): string | undefine
   if (resource.kind === 'Service') {
     return `kubectl delete services ${name} -n ${namespace}`
   }
+  if (resource.kind === 'Ingress') {
+    return `kubectl delete ingress ${name} -n ${namespace}`
+  }
   return undefined
 }
 
@@ -233,7 +236,7 @@ export const createRunnerExecutor = (
     return `${deploymentsCount};${replicaSetsCount};${daemonSetsCount};${pods}`
   }
 
-  const reconcileControllersOnce = (namespace?: string): void => {
+  const reconcileWorkloadControllersOnce = (namespace?: string): void => {
     const deployments = clusterState.getDeployments(namespace)
     for (const deployment of deployments) {
       controllers.deploymentController.reconcile(
@@ -254,7 +257,9 @@ export const createRunnerExecutor = (
         `${daemonSet.metadata.namespace}/${daemonSet.metadata.name}`
       )
     }
+  }
 
+  const reconcileSchedulingControllersOnce = (namespace?: string): void => {
     const pods = listScopedPods(namespace)
     for (const pod of pods) {
       const podKey = `${pod.metadata.namespace}/${pod.metadata.name}`
@@ -308,7 +313,8 @@ export const createRunnerExecutor = (
   const convergePodsToReady = (namespace?: string): string | undefined => {
     for (let pass = 0; pass < MAX_READY_PASSES; pass++) {
       const beforeDigest = getStateDigest(namespace)
-      reconcileControllersOnce(namespace)
+      reconcileWorkloadControllersOnce(namespace)
+      reconcileSchedulingControllersOnce(namespace)
 
       const currentPods = listScopedPods(namespace)
       const notReadyPods = currentPods.filter((pod) => {
@@ -362,6 +368,7 @@ export const createRunnerExecutor = (
 
   return {
     executeCommand(command: string): CommandExecutionResult {
+      reconcileWorkloadControllersOnce()
       const diffFilename = getDiffFilenameFromCommand(command)
       let result
       if (diffFilename != null) {

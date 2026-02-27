@@ -137,6 +137,7 @@ const createDaemonSetSpecs = (): SimSystemWorkloadSpec[] => {
       containerName: 'kindnet',
       labels: { 'k8s-app': 'kindnet' },
       selectorLabels: { 'k8s-app': 'kindnet' },
+      nodeSelector: { 'kubernetes.io/os': 'linux' },
       tolerations: [controlPlaneToleration]
     },
     {
@@ -146,6 +147,7 @@ const createDaemonSetSpecs = (): SimSystemWorkloadSpec[] => {
       containerName: 'kube-proxy',
       labels: { 'k8s-app': 'kube-proxy' },
       selectorLabels: { 'k8s-app': 'kube-proxy' },
+      nodeSelector: { 'kubernetes.io/os': 'linux' },
       tolerations: [controlPlaneToleration]
     }
   ]

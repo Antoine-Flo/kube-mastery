@@ -16,6 +16,18 @@ export const ensureCluster = (
   kindConfigPath?: string
 ): Result<void, string> => {
   try {
+    const existingClustersOutput = execSync('kind get clusters', {
+      stdio: 'pipe',
+      encoding: 'utf-8'
+    })
+    const existingClusters = existingClustersOutput
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+    if (existingClusters.includes(name)) {
+      return success(undefined)
+    }
+
     const configPath =
       kindConfigPath ??
       (existsSync(join(process.cwd(), DEFAULT_KIND_CONFIG))
@@ -30,6 +42,158 @@ export const ensureCluster = (
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     return error(`Failed to create cluster ${name}: ${message}`)
+  }
+}
+
+const runBestEffortKubectlCommand = (command: string): void => {
+  try {
+    execSync(command, {
+      stdio: 'pipe',
+      encoding: 'utf-8'
+    })
+  } catch {
+    return
+  }
+}
+
+const PROTECTED_NAMESPACES = new Set([
+  'default',
+  'kube-system',
+  'kube-public',
+  'kube-node-lease',
+  'local-path-storage'
+])
+
+const DEFAULT_NAMESPACE_CLEANUP_RESOURCES = [
+  'pods',
+  'deployments',
+  'replicasets',
+  'daemonsets',
+  'statefulsets',
+  'jobs',
+  'cronjobs',
+  'services',
+  'configmaps',
+  'secrets',
+  'ingresses',
+  'persistentvolumeclaims'
+]
+
+interface KubernetesListItem {
+  metadata?: {
+    name?: string
+  }
+  type?: string
+}
+
+const getListItemsForResource = (
+  resource: string,
+  namespace: string
+): KubernetesListItem[] => {
+  try {
+    const output = execSync(`kubectl get ${resource} -n ${namespace} -o json`, {
+      stdio: 'pipe',
+      encoding: 'utf-8'
+    })
+    const payload = JSON.parse(output)
+    const items = Array.isArray(payload?.items) ? payload.items : []
+    return items as KubernetesListItem[]
+  } catch {
+    return []
+  }
+}
+
+const shouldPreserveDefaultNamespaceResource = (
+  resource: string,
+  item: KubernetesListItem
+): boolean => {
+  const name = item?.metadata?.name ?? ''
+  if (resource === 'services') {
+    return name === 'kubernetes'
+  }
+  if (resource === 'configmaps') {
+    return name === 'kube-root-ca.crt'
+  }
+  if (resource === 'secrets') {
+    const type = item?.type ?? ''
+    if (type === 'kubernetes.io/service-account-token') {
+      return true
+    }
+    return name.startsWith('default-token-')
+  }
+  return false
+}
+
+const cleanupDefaultNamespaceResource = (resource: string): void => {
+  const items = getListItemsForResource(resource, 'default')
+  for (const item of items) {
+    const name = item?.metadata?.name ?? ''
+    if (name.length === 0) {
+      continue
+    }
+    if (shouldPreserveDefaultNamespaceResource(resource, item)) {
+      continue
+    }
+    runBestEffortKubectlCommand(
+      `kubectl delete ${resource} ${name} -n default --ignore-not-found=true`
+    )
+  }
+}
+
+export const resetConformanceClusterState = (): Result<void, string> => {
+  try {
+    for (const resource of DEFAULT_NAMESPACE_CLEANUP_RESOURCES) {
+      cleanupDefaultNamespaceResource(resource)
+    }
+
+    runBestEffortKubectlCommand(
+      'kubectl delete persistentvolumes --all --ignore-not-found=true'
+    )
+
+    const namespacesOutput = execSync('kubectl get namespaces -o json', {
+      stdio: 'pipe',
+      encoding: 'utf-8'
+    })
+    const namespacesPayload = JSON.parse(namespacesOutput)
+    const namespaceItems = Array.isArray(namespacesPayload.items)
+      ? namespacesPayload.items
+      : []
+
+    for (const namespaceItem of namespaceItems) {
+      const namespaceName =
+        namespaceItem?.metadata?.name != null
+          ? String(namespaceItem.metadata.name)
+          : ''
+      if (namespaceName.length === 0) {
+        continue
+      }
+      if (PROTECTED_NAMESPACES.has(namespaceName)) {
+        continue
+      }
+      runBestEffortKubectlCommand(
+        `kubectl delete namespace ${namespaceName} --ignore-not-found=true --wait=true --timeout=60s`
+      )
+    }
+
+    return success(undefined)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    return error(`Failed to reset conformance cluster state: ${message}`)
+  }
+}
+
+export const ensureCurrentContextNamespace = (
+  namespace: string
+): Result<void, string> => {
+  try {
+    execSync(`kubectl config set-context --current --namespace=${namespace}`, {
+      stdio: 'pipe',
+      encoding: 'utf-8'
+    })
+    return success(undefined)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    return error(`Failed to set current context namespace to ${namespace}: ${message}`)
   }
 }
 

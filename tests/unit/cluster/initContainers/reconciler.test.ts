@@ -23,6 +23,8 @@ describe('InitContainer Reconciler', () => {
       )
       expect(mainStatus?.state).toBe('Running')
       expect(mainStatus?.ready).toBe(true)
+      expect(mainStatus?.started).toBe(true)
+      expect(mainStatus?.startedAt).toBeDefined()
     })
 
     it('should handle pod with empty initContainers array', () => {
