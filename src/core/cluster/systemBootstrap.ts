@@ -61,24 +61,110 @@ const createReadyCondition = (): NodeCondition => {
   }
 }
 
+const createNodeConditions = (creationTimestamp: string): NodeCondition[] => {
+  return [
+    {
+      type: 'MemoryPressure',
+      status: 'False',
+      lastHeartbeatTime: creationTimestamp,
+      lastTransitionTime: creationTimestamp,
+      reason: 'KubeletHasSufficientMemory',
+      message: 'kubelet has sufficient memory available'
+    },
+    {
+      type: 'DiskPressure',
+      status: 'False',
+      lastHeartbeatTime: creationTimestamp,
+      lastTransitionTime: creationTimestamp,
+      reason: 'KubeletHasNoDiskPressure',
+      message: 'kubelet has no disk pressure'
+    },
+    {
+      type: 'PIDPressure',
+      status: 'False',
+      lastHeartbeatTime: creationTimestamp,
+      lastTransitionTime: creationTimestamp,
+      reason: 'KubeletHasSufficientPID',
+      message: 'kubelet has sufficient PID available'
+    },
+    {
+      ...createReadyCondition(),
+      lastHeartbeatTime: creationTimestamp,
+      lastTransitionTime: creationTimestamp,
+      reason: 'KubeletReady',
+      message: 'kubelet is posting ready status'
+    }
+  ]
+}
+
 const createNodeInternalIP = (nodeIndex: number): string => {
   return `172.18.0.${nodeIndex + 2}`
 }
 
 const createNodeLabels = (
-  role: ClusterNodeRole
+  role: ClusterNodeRole,
+  nodeName: string
 ): Record<string, string> => {
+  const baseLabels: Record<string, string> = {
+    'beta.kubernetes.io/arch': 'amd64',
+    'beta.kubernetes.io/os': 'linux',
+    'kubernetes.io/arch': 'amd64',
+    'kubernetes.io/hostname': nodeName,
+    'kubernetes.io/os': 'linux'
+  }
   if (role === 'control-plane') {
     return {
+      ...baseLabels,
       'node-role.kubernetes.io/control-plane': '',
-      'kubernetes.io/os': 'linux',
-      'kubernetes.io/arch': 'amd64'
+      'node.kubernetes.io/exclude-from-external-load-balancers': ''
     }
   }
+  return baseLabels
+}
+
+const createNodeAnnotations = (): Record<string, string> => {
   return {
-    'kubernetes.io/os': 'linux',
-    'kubernetes.io/arch': 'amd64'
+    'node.alpha.kubernetes.io/ttl': '0',
+    'volumes.kubernetes.io/controller-managed-attach-detach': 'true'
   }
+}
+
+const createNodeCapacity = (): Record<string, string> => {
+  return {
+    cpu: '24',
+    'ephemeral-storage': '951220Mi',
+    'hugepages-1Gi': '0',
+    'hugepages-2Mi': '0',
+    memory: '49157748Ki',
+    pods: '110'
+  }
+}
+
+const createNodePodCIDR = (nodeIndex: number): string => {
+  return `10.244.${nodeIndex}.0/24`
+}
+
+const stableHex = (seed: string, length: number): string => {
+  let hash = 0
+  for (let index = 0; index < seed.length; index++) {
+    hash = (hash << 5) - hash + seed.charCodeAt(index)
+    hash |= 0
+  }
+  const hex = (hash >>> 0).toString(16).padStart(8, '0')
+  let output = ''
+  while (output.length < length) {
+    output = `${output}${hex}`
+  }
+  return output.slice(0, length)
+}
+
+const createMachineID = (clusterName: string, nodeName: string): string => {
+  return stableHex(`${clusterName}/${nodeName}/machine-id`, 32)
+}
+
+const createSystemUUID = (clusterName: string, nodeName: string): string => {
+  const raw = stableHex(`${clusterName}/${nodeName}/system-uuid`, 32)
+  return `${raw.slice(0, 8)}-${raw.slice(8, 12)}-${raw.slice(12, 16)}-${raw.slice(16, 20)}-${raw.slice(20, 32)}`
 }
 
 const createBootstrapNode = (
@@ -102,9 +188,15 @@ const createBootstrapNode = (
 
   return createNode({
     name: nodeName,
-    labels: createNodeLabels(role),
+    labels: createNodeLabels(role, nodeName),
+    annotations: createNodeAnnotations(),
     creationTimestamp,
-    spec,
+    spec: {
+      ...spec,
+      podCIDR: createNodePodCIDR(nodeIndex),
+      podCIDRs: [createNodePodCIDR(nodeIndex)],
+      providerID: `kind://docker/${clusterName}/${nodeName}`
+    },
     status: {
       addresses: [
         {
@@ -116,14 +208,20 @@ const createBootstrapNode = (
           address: nodeName
         }
       ],
-      conditions: [createReadyCondition()],
+      capacity: createNodeCapacity(),
+      allocatable: createNodeCapacity(),
+      conditions: createNodeConditions(creationTimestamp),
       nodeInfo: {
         architecture: 'amd64',
+        bootID: 'bf73921b-7ffd-4fd6-8b89-3e87a95e957c',
         containerRuntimeVersion: 'containerd://2.2.0',
-        kernelVersion: '6.6.87.2-microsoft-standard-WSL2',
+        kernelVersion: '6.18.9-200.fc43.x86_64',
+        kubeProxyVersion: '',
         kubeletVersion: 'v1.35.0',
+        machineID: createMachineID(clusterName, nodeName),
         operatingSystem: 'linux',
-        osImage: 'Debian GNU/Linux 12 (bookworm)'
+        osImage: 'Debian GNU/Linux 12 (bookworm)',
+        systemUUID: createSystemUUID(clusterName, nodeName)
       }
     }
   })

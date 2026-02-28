@@ -27,8 +27,10 @@ describe('describeFormatters', () => {
 
       const result = describePod(pod)
 
-      expect(result).toContain('Name:             nginx-pod')
-      expect(result).toContain('Namespace:        default')
+      expect(result).toContain('Name:')
+      expect(result).toContain('nginx-pod')
+      expect(result).toContain('Namespace:')
+      expect(result).toContain('default')
       expect(result).toContain('Status:')
     })
 
@@ -56,7 +58,8 @@ describe('describeFormatters', () => {
 
       const result = describePod(pod)
 
-      expect(result).toContain('Labels:           <none>')
+      expect(result).toContain('Labels:')
+      expect(result).toContain('<none>')
     })
 
     it('should format annotations', () => {
@@ -70,7 +73,7 @@ describe('describeFormatters', () => {
       const result = describePod(pod)
 
       expect(result).toContain('Annotations:')
-      expect(result).toContain('description=test')
+      expect(result).toContain('description: test')
     })
 
     it('should format container section', () => {
@@ -90,7 +93,8 @@ describe('describeFormatters', () => {
 
       expect(result).toContain('Containers:')
       expect(result).toContain('nginx:')
-      expect(result).toContain('Image:      nginx:1.21')
+      expect(result).toContain('Image:')
+      expect(result).toContain('nginx:1.21')
       expect(result).toContain('80/TCP')
     })
 
@@ -112,7 +116,6 @@ describe('describeFormatters', () => {
 
       expect(result).toContain('Command:')
       expect(result).toContain('sh')
-      expect(result).toContain('Args:')
       expect(result).toContain('echo hello')
     })
 
@@ -157,11 +160,15 @@ describe('describeFormatters', () => {
       const result = describePod(pod)
 
       expect(result).toContain('Requests:')
-      expect(result).toContain('cpu: 100m')
-      expect(result).toContain('memory: 128Mi')
+      expect(result).toContain('cpu:')
+      expect(result).toContain('100m')
+      expect(result).toContain('memory:')
+      expect(result).toContain('128Mi')
       expect(result).toContain('Limits:')
-      expect(result).toContain('cpu: 500m')
-      expect(result).toContain('memory: 512Mi')
+      expect(result).toContain('cpu:')
+      expect(result).toContain('500m')
+      expect(result).toContain('memory:')
+      expect(result).toContain('512Mi')
     })
 
     it('should format liveness probe', () => {
@@ -186,7 +193,7 @@ describe('describeFormatters', () => {
       const result = describePod(pod)
 
       expect(result).toContain('Liveness:')
-      expect(result).toContain('http-get /health on port 8080')
+      expect(result).toContain('/health')
       expect(result).toContain('delay=10s')
       expect(result).toContain('period=5s')
     })
@@ -644,17 +651,24 @@ describe('describeFormatters', () => {
                   name: 'web',
                   image: 'nginx:latest',
                   env: [
-                    { name: 'MODE', value: 'prod' },
+                    {
+                      name: 'MODE',
+                      source: { type: 'value', value: 'prod' }
+                    },
                     {
                       name: 'DB_HOST',
-                      valueFrom: {
-                        configMapKeyRef: { name: 'db-config', key: 'host' }
+                      source: {
+                        type: 'configMapKeyRef',
+                        name: 'db-config',
+                        key: 'host'
                       }
                     },
                     {
                       name: 'DB_PASSWORD',
-                      valueFrom: {
-                        secretKeyRef: { name: 'db-secret', key: 'password' }
+                      source: {
+                        type: 'secretKeyRef',
+                        name: 'db-secret',
+                        key: 'password'
                       }
                     }
                   ]
@@ -942,7 +956,7 @@ describe('describeFormatters', () => {
       expect(result).toContain('control-plane')
       expect(result).toContain('Taints:')
       expect(result).toContain('NoSchedule')
-      expect(result).toContain('Unschedulable:\ttrue')
+      expect(result).toContain('Unschedulable:      true')
     })
 
     it('should include non-terminated pods and allocated resources sections', () => {

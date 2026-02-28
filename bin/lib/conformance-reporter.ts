@@ -58,8 +58,6 @@ const formatRecord = (record: ActionExecutionRecord): string => {
     record.stdout || '(empty)',
     '[stderr]',
     record.stderr || '(empty)',
-    '[normalized]',
-    record.normalized || '(empty)',
     '---'
   ].join('\n')
 }

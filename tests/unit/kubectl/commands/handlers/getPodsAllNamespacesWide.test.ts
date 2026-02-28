@@ -20,6 +20,46 @@ const splitTableLine = (line: string): string[] => {
 }
 
 describe('kubectl get pods -A wide output', () => {
+  it('filters kube-system pods by tier=control-plane label selector', () => {
+    const pods = [
+      createPod({
+        name: 'kube-apiserver-conformance-control-plane',
+        namespace: 'kube-system',
+        labels: { tier: 'control-plane', component: 'kube-apiserver' },
+        nodeName: 'conformance-control-plane',
+        containers: [{ name: 'kube-apiserver', image: 'registry.k8s.io/kube-apiserver:v1.35.0' }],
+        phase: 'Running'
+      }),
+      createPod({
+        name: 'coredns-abcd',
+        namespace: 'kube-system',
+        labels: { 'k8s-app': 'kube-dns' },
+        nodeName: 'conformance-control-plane',
+        containers: [{ name: 'coredns', image: 'registry.k8s.io/coredns/coredns:v1.13.1' }],
+        phase: 'Running'
+      }),
+      createPod({
+        name: 'web-default',
+        namespace: 'default',
+        labels: { app: 'web' },
+        nodeName: 'conformance-worker',
+        containers: [{ name: 'nginx', image: 'nginx:1.25' }],
+        phase: 'Running'
+      })
+    ]
+    const state = createClusterStateData({ pods })
+    const parsed = createParsedCommand({
+      namespace: 'kube-system',
+      selector: { tier: 'control-plane' }
+    })
+
+    const result = handleGet(state, parsed)
+
+    expect(result).toContain('kube-apiserver-conformance-control-plane')
+    expect(result).not.toContain('coredns-abcd')
+    expect(result).not.toContain('web-default')
+  })
+
   it('includes NAMESPACE as first column in wide output', () => {
     const pods = [
       createPod({

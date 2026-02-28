@@ -35,29 +35,35 @@
     {
       "id": "minimal-cmd-5",
       "type": "command",
-      "command": "kubectl get pv",
+      "command": "kubectl get pods -n kube-system -l tier=control-plane",
       "compareMode": "normalized"
     },
     {
       "id": "minimal-cmd-6",
       "type": "command",
-      "command": "kubectl get pvc -A",
+      "command": "kubectl get pv",
       "compareMode": "normalized"
     },
     {
       "id": "minimal-cmd-7",
       "type": "command",
-      "command": "kubectl get nodes",
+      "command": "kubectl get pvc -A",
       "compareMode": "normalized"
     },
     {
       "id": "minimal-cmd-8",
       "type": "command",
-      "command": "kubectl get configmaps",
+      "command": "kubectl get nodes",
       "compareMode": "normalized"
     },
     {
       "id": "minimal-cmd-9",
+      "type": "command",
+      "command": "kubectl get configmaps",
+      "compareMode": "normalized"
+    },
+    {
+      "id": "minimal-cmd-10",
       "type": "command",
       "command": "kubectl get secrets",
       "compareMode": "normalized"
