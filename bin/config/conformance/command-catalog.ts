@@ -78,6 +78,8 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
         'kubectl get pods -A',
         'kubectl get pods -o yaml',
         'kubectl get pods -o json',
+        'kubectl get pods -n kube-system -l tier=control-plane',
+        'kubectl describe pod kube-apiserver-conformance-control-plane -n kube-system',
         'kubectl get pv',
         'kubectl get pvc -A',
         'kubectl delete pod web-00063e839a-chadq',

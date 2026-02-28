@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createClusterStateData } from '../../../helpers/utils'
 import { createNode } from '../../../../../src/core/cluster/ressources/Node'
+import { createService } from '../../../../../src/core/cluster/ressources/Service'
 import { handleDescribe } from '../../../../../src/core/kubectl/commands/handlers/describe'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 
@@ -106,6 +107,56 @@ describe('kubectl describe handler - nodes', () => {
     expect(result.ok).toBe(false)
     if (!result.ok) {
       expect(result.error).toContain('must specify the name')
+    }
+  })
+})
+
+describe('kubectl describe handler - services and error semantics', () => {
+  it('should describe an existing service', () => {
+    const state = createClusterStateData({
+      services: [
+        createService({
+          name: 'web-svc',
+          namespace: 'default',
+          clusterIP: '10.96.0.10',
+          selector: { app: 'web' },
+          ports: [{ port: 80, protocol: 'TCP', targetPort: 8080 }]
+        })
+      ]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'services',
+      name: 'web-svc',
+      namespace: 'default',
+      flags: {}
+    }
+    const result = handleDescribe(state, parsed)
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Name:')
+    expect(result.value).toContain('web-svc')
+    expect(result.value).toContain('Selector:')
+    expect(result.value).toContain('app=web')
+  })
+
+  it('should use deployments.apps in deployment not found message', () => {
+    const state = createClusterStateData()
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'deployments',
+      name: 'missing-deploy',
+      namespace: 'default',
+      flags: {}
+    }
+    const result = handleDescribe(state, parsed)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('deployments.apps "missing-deploy" not found')
     }
   })
 })

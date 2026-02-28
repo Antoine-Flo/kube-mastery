@@ -27,8 +27,12 @@ const materializeStaticPod = (
     name: spec.name,
     namespace: spec.namespace,
     nodeName: spec.nodeName,
-    containers: [minimalContainer(spec.containerName)],
+    containers: [spec.container],
+    ...(spec.labels != null && { labels: spec.labels }),
+    ...(spec.volumes != null && { volumes: spec.volumes }),
+    ...(spec.tolerations != null && { tolerations: spec.tolerations }),
     annotations: {
+      ...(spec.annotations ?? {}),
       'sim.kubernetes.io/workload-type': 'StaticPod'
     },
     creationTimestamp,
@@ -55,7 +59,14 @@ const materializeDaemonSetPods = (
       spec: {
         ...(spec.nodeSelector != null && { nodeSelector: spec.nodeSelector }),
         ...(spec.tolerations != null && { tolerations: spec.tolerations }),
-        containers: [minimalContainer(spec.containerName)]
+        containers: [
+          {
+            ...minimalContainer(spec.containerName),
+            ...(spec.containerResources != null && {
+              resources: spec.containerResources
+            })
+          }
+        ]
       }
     },
     creationTimestamp
@@ -82,7 +93,14 @@ const materializeDeployment = (
       spec: {
         ...(spec.nodeSelector != null && { nodeSelector: spec.nodeSelector }),
         ...(spec.tolerations != null && { tolerations: spec.tolerations }),
-        containers: [minimalContainer(spec.containerName)]
+        containers: [
+          {
+            ...minimalContainer(spec.containerName),
+            ...(spec.containerResources != null && {
+              resources: spec.containerResources
+            })
+          }
+        ]
       }
     },
     creationTimestamp

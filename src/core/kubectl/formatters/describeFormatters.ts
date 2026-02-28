@@ -20,11 +20,13 @@ import type {
   ContainerStatus,
   EnvVar,
   Pod,
+  PodToleration,
   Probe,
   Volume,
   VolumeMount
 } from '../../cluster/ressources/Pod'
 import type { Secret } from '../../cluster/ressources/Secret'
+import type { Service } from '../../cluster/ressources/Service'
 import { formatAge } from '../../shared/formatter'
 import { blank, indent, kv, section } from './describeHelpers'
 
@@ -40,6 +42,56 @@ const formatLabels = (labels?: Record<string, string>): string => {
   return Object.entries(labels)
     .map(([key, value]) => `${key}=${value}`)
     .join(',')
+}
+
+const sortRecordEntries = (
+  values?: Record<string, string>
+): Array<[string, string]> => {
+  if (values == null) {
+    return []
+  }
+  return Object.entries(values).sort(([leftKey], [rightKey]) => {
+    return leftKey.localeCompare(rightKey)
+  })
+}
+
+const formatMapMultiLine = (
+  key: string,
+  values?: Record<string, string>,
+  mode: 'equals' | 'colon' = 'equals',
+  firstColumnWidth: number = 20
+): string[] => {
+  const entries = sortRecordEntries(values)
+  const keyLabel = `${key}:`
+  if (entries.length === 0) {
+    return [`${keyLabel.padEnd(firstColumnWidth)}<none>`]
+  }
+  const first = entries[0]
+  const firstValue =
+    mode === 'colon' ? `${first[0]}: ${first[1]}` : `${first[0]}=${first[1]}`
+  const lines: string[] = [`${keyLabel.padEnd(firstColumnWidth)}${firstValue}`]
+  for (let index = 1; index < entries.length; index++) {
+    const [entryKey, entryValue] = entries[index]
+    const rendered =
+      mode === 'colon' ? `${entryKey}: ${entryValue}` : `${entryKey}=${entryValue}`
+    lines.push(`${' '.repeat(firstColumnWidth)}${rendered}`)
+  }
+  return lines
+}
+
+const sanitizeDescribeAnnotations = (
+  annotations?: Record<string, string>
+): Record<string, string> | undefined => {
+  if (annotations == null) {
+    return undefined
+  }
+  const filtered = Object.entries(annotations).filter(([key]) => {
+    return key.startsWith('sim.kubernetes.io/') === false
+  })
+  if (filtered.length === 0) {
+    return undefined
+  }
+  return Object.fromEntries(filtered)
 }
 
 /**
@@ -224,8 +276,8 @@ const formatEnvVar = (env: EnvVar): string => {
  * Format volume mount
  */
 const formatVolumeMount = (mount: VolumeMount): string => {
-  const readOnlyStr = mount.readOnly ? ' (ro)' : ' (rw)'
-  return `    ${mount.name} from ${mount.name} (${mount.mountPath})${readOnlyStr}`
+  const readOnlyStr = mount.readOnly ? '(ro)' : '(rw)'
+  return `      ${mount.mountPath} from ${mount.name} ${readOnlyStr}`
 }
 
 /**
@@ -259,6 +311,20 @@ const formatVolumeSource = (volume: Volume): string => {
   }
 
   return `    Type:       Unknown`
+}
+
+const stableHash = (value: string): string => {
+  let hash = 0
+  for (let index = 0; index < value.length; index++) {
+    hash = (hash << 5) - hash + value.charCodeAt(index)
+    hash |= 0
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0')
+}
+
+const buildKubeApiAccessVolumeName = (pod: Pod): string => {
+  const token = stableHash(`${pod.metadata.namespace}/${pod.metadata.name}`).slice(0, 5)
+  return `kube-api-access-${token}`
 }
 
 /**
@@ -332,7 +398,7 @@ const formatNodeAddresses = (
     return lines
   }
   for (const address of addresses) {
-    lines.push(`  ${address.type}:\t${address.address}`)
+    lines.push(`  ${`${address.type}:`.padEnd(12)}${address.address}`)
   }
   return lines
 }
@@ -349,7 +415,7 @@ const formatNodeResourceList = (
     return left.localeCompare(right)
   })
   for (const key of keys) {
-    lines.push(`  ${key}:\t${resources[key]}`)
+    lines.push(`  ${`${key}:`.padEnd(20)}${resources[key]}`)
   }
   return lines
 }
@@ -358,15 +424,16 @@ const formatNodeSystemInfo = (node: Node): string[] => {
   const info = node.status.nodeInfo
   return [
     'System Info:',
-    `  Machine ID:\t${info.machineID ?? '<none>'}`,
-    `  System UUID:\t${info.systemUUID ?? '<none>'}`,
-    `  Boot ID:\t${info.bootID ?? '<none>'}`,
-    `  Kernel Version:\t${info.kernelVersion}`,
-    `  OS Image:\t${info.osImage}`,
-    `  Operating System:\t${info.operatingSystem}`,
-    `  Architecture:\t${info.architecture}`,
-    `  Container Runtime Version:\t${info.containerRuntimeVersion}`,
-    `  Kubelet Version:\t${info.kubeletVersion}`
+    `  Machine ID:                 ${info.machineID ?? '<none>'}`,
+    `  System UUID:                ${info.systemUUID ?? '<none>'}`,
+    `  Boot ID:                    ${info.bootID ?? '<none>'}`,
+    `  Kernel Version:             ${info.kernelVersion}`,
+    `  OS Image:                   ${info.osImage}`,
+    `  Operating System:           ${info.operatingSystem}`,
+    `  Architecture:               ${info.architecture}`,
+    `  Container Runtime Version:  ${info.containerRuntimeVersion}`,
+    `  Kubelet Version:            ${info.kubeletVersion}`,
+    `  Kube-Proxy Version:         ${info.kubeProxyVersion ?? ''}`
   ]
 }
 
@@ -443,6 +510,14 @@ interface PodResourceTotals {
   memoryLimitsBytes: number
 }
 
+const formatMemoryQuantity = (bytes: number): string => {
+  if (bytes <= 0) {
+    return '0'
+  }
+  const mebibytes = Math.round(bytes / (1024 ** 2))
+  return `${mebibytes}Mi`
+}
+
 const createEmptyPodResourceTotals = (): PodResourceTotals => {
   return {
     cpuRequestsMilli: 0,
@@ -481,9 +556,36 @@ const addPodResourcesToTotals = (
 
 const formatNonTerminatedPodRow = (
   pod: Pod,
-  podTotals: PodResourceTotals
+  podTotals: PodResourceTotals,
+  node: Node,
+  namespaceColumnWidth: number,
+  nameColumnWidth: number
 ): string => {
-  return `  ${pod.metadata.namespace}\t${pod.metadata.name}\t${podTotals.cpuRequestsMilli}m\t${podTotals.cpuLimitsMilli}m\t${podTotals.memoryRequestsBytes}\t${podTotals.memoryLimitsBytes}\t${formatAge(pod.metadata.creationTimestamp)}`
+  const allocatableCpuMilli = parseCpuToMilli(node.status.allocatable?.cpu)
+  const allocatableMemoryBytes = parseMemoryToBytes(node.status.allocatable?.memory)
+  const cpuRequestsPercent = calculatePercent(
+    podTotals.cpuRequestsMilli,
+    allocatableCpuMilli
+  )
+  const cpuLimitsPercent = calculatePercent(podTotals.cpuLimitsMilli, allocatableCpuMilli)
+  const memoryRequestsPercent = calculatePercent(
+    podTotals.memoryRequestsBytes,
+    allocatableMemoryBytes
+  )
+  const memoryLimitsPercent = calculatePercent(
+    podTotals.memoryLimitsBytes,
+    allocatableMemoryBytes
+  )
+  const cpuRequests =
+    podTotals.cpuRequestsMilli === 0
+      ? '0 (0%)'
+      : `${podTotals.cpuRequestsMilli}m (${cpuRequestsPercent}%)`
+  const cpuLimits =
+    podTotals.cpuLimitsMilli === 0 ? '0 (0%)' : `${podTotals.cpuLimitsMilli}m (${cpuLimitsPercent}%)`
+  const memoryRequests = `${formatMemoryQuantity(podTotals.memoryRequestsBytes)} (${memoryRequestsPercent}%)`
+  const memoryLimits = `${formatMemoryQuantity(podTotals.memoryLimitsBytes)} (${memoryLimitsPercent}%)`
+
+  return `  ${pod.metadata.namespace.padEnd(namespaceColumnWidth)}${pod.metadata.name.padEnd(nameColumnWidth)}${cpuRequests.padEnd(14)}${cpuLimits.padEnd(12)}${memoryRequests.padEnd(16)}${memoryLimits.padEnd(15)}${formatAge(pod.metadata.creationTimestamp)}`
 }
 
 const formatAllocatedResourceLines = (
@@ -507,29 +609,47 @@ const formatAllocatedResourceLines = (
   )
 
   return [
-    'Allocated resources:\n  (Total limits may be over 100 percent, i.e., overcommitted.)',
-    '  Resource\tRequests\tLimits',
-    '  --------\t--------\t------',
-    `  cpu\t${totals.cpuRequestsMilli}m (${cpuRequestsPercent}%)\t${totals.cpuLimitsMilli}m (${cpuLimitsPercent}%)`,
-    `  memory\t${totals.memoryRequestsBytes} (${memoryRequestsPercent}%)\t${totals.memoryLimitsBytes} (${memoryLimitsPercent}%)`
+    'Allocated resources:',
+    '  (Total limits may be over 100 percent, i.e., overcommitted.)',
+    '  Resource           Requests    Limits',
+    '  --------           --------    ------',
+    `  ${'cpu'.padEnd(19)}${`${totals.cpuRequestsMilli}m (${cpuRequestsPercent}%)`.padEnd(12)}${`${totals.cpuLimitsMilli}m (${cpuLimitsPercent}%)`}`,
+    `  ${'memory'.padEnd(19)}${`${formatMemoryQuantity(totals.memoryRequestsBytes)} (${memoryRequestsPercent}%)`.padEnd(12)}${`${formatMemoryQuantity(totals.memoryLimitsBytes)} (${memoryLimitsPercent}%)`}`,
+    `  ${'ephemeral-storage'.padEnd(19)}${'0 (0%)'.padEnd(12)}0 (0%)`,
+    `  ${'hugepages-1Gi'.padEnd(19)}${'0 (0%)'.padEnd(12)}0 (0%)`,
+    `  ${'hugepages-2Mi'.padEnd(19)}${'0 (0%)'.padEnd(12)}0 (0%)`
   ]
 }
 
 const formatNodePodResources = (node: Node, pods: Pod[]): string[] => {
   const lines: string[] = []
-  lines.push(`Non-terminated Pods:\t(${pods.length} in total)`)
+  const namespaceColumnWidth = 28
+  const minNameWidth = 20
+  const maxNameLength = pods.reduce((maxLength, pod) => {
+    return Math.max(maxLength, pod.metadata.name.length)
+  }, 'Name'.length)
+  const nameColumnWidth = Math.max(minNameWidth, maxNameLength + 4)
+  lines.push(`Non-terminated Pods:          (${pods.length} in total)`)
   lines.push(
-    '  Namespace\tName\tCPU Requests\tCPU Limits\tMemory Requests\tMemory Limits\tAge'
+    `  ${'Namespace'.padEnd(namespaceColumnWidth)}${'Name'.padEnd(nameColumnWidth)}CPU Requests  CPU Limits  Memory Requests  Memory Limits  Age`
   )
   lines.push(
-    '  ---------\t----\t------------\t----------\t---------------\t-------------\t---'
+    `  ${'---------'.padEnd(namespaceColumnWidth)}${'----'.padEnd(nameColumnWidth)}------------  ----------  ---------------  -------------  ---`
   )
 
   const totals = createEmptyPodResourceTotals()
   for (const pod of pods) {
     const podTotals = getPodResources(pod)
     addPodResourcesToTotals(totals, podTotals)
-    lines.push(formatNonTerminatedPodRow(pod, podTotals))
+    lines.push(
+      formatNonTerminatedPodRow(
+        pod,
+        podTotals,
+        node,
+        namespaceColumnWidth,
+        nameColumnWidth
+      )
+    )
   }
   lines.push(...formatAllocatedResourceLines(node, totals))
   return lines
@@ -642,10 +762,113 @@ const formatContainer = (
     container.volumeMounts.forEach((mount) => {
       lines.push(indent(formatVolumeMount(mount), 2))
     })
+  } else {
+    lines.push(indent('Mounts:           <none>', 2))
   }
 }
 
 // ─── Main Formatters ─────────────────────────────────────────────────────
+
+const formatPodConditionLines = (pod: Pod): string[] => {
+  const lines: string[] = ['Conditions:', '  Type                        Status']
+  const conditions = pod.status.conditions ?? []
+  const hasReadyToStart = conditions.some((condition) => {
+    return condition.type === 'PodReadyToStartContainers'
+  })
+  if (!hasReadyToStart) {
+    const status = pod.status.phase === 'Running' ? 'True' : 'False'
+    lines.push(`  ${'PodReadyToStartContainers'.padEnd(28)}${status} `)
+  }
+  for (const condition of conditions) {
+    lines.push(`  ${condition.type.padEnd(28)}${condition.status} `)
+  }
+  return lines
+}
+
+const formatPodTolerations = (tolerations?: PodToleration[]): string[] => {
+  if (tolerations == null || tolerations.length === 0) {
+    return ['Tolerations:       <none>']
+  }
+  const lines: string[] = []
+  tolerations.forEach((toleration, index) => {
+    const key = toleration.key ?? ''
+    const value = toleration.value != null ? `=${toleration.value}` : ''
+    const effect = toleration.effect ?? '<none>'
+    const operator = toleration.operator ?? 'Equal'
+    const rendered = `${key}${value}:${effect} op=${operator}`
+    if (index === 0) {
+      lines.push(`Tolerations:       ${rendered}`)
+      return
+    }
+    lines.push(`                   ${rendered}`)
+  })
+  return lines
+}
+
+const formatDefaultPodEvents = (pod: Pod, nodeName: string): string[] => {
+  const age = formatAge(pod.metadata.creationTimestamp)
+  const primaryContainer = pod.spec.containers[0]
+  const containerName = primaryContainer?.name ?? 'container'
+  const containerImage = primaryContainer?.image ?? '<unknown>'
+  return [
+    'Events:',
+    '  Type    Reason     Age   From               Message',
+    '  ----    ------     ----  ----               -------',
+    `  Normal  Scheduled  ${age}    default-scheduler  Successfully assigned ${pod.metadata.namespace}/${pod.metadata.name} to ${nodeName}`,
+    `  Normal  Pulled     ${age}    kubelet            spec.containers{${containerName}}: Container image "${containerImage}" already present on machine and can be accessed by the pod`,
+    `  Normal  Created    ${age}    kubelet            spec.containers{${containerName}}: Container created`,
+    `  Normal  Started    ${age}    kubelet            spec.containers{${containerName}}: Container started`
+  ]
+}
+
+const formatStaticControlPlaneHeader = (
+  pod: Pod
+): {
+  priority: string
+  priorityClassName?: string
+  seccompProfile?: string
+  controlledBy?: string
+} => {
+  const labels = pod.metadata.labels ?? {}
+  const isControlPlaneStaticPod =
+    labels['tier'] === 'control-plane' &&
+    (labels['component'] === 'kube-apiserver' ||
+      labels['component'] === 'kube-controller-manager' ||
+      labels['component'] === 'kube-scheduler' ||
+      labels['component'] === 'etcd')
+  if (!isControlPlaneStaticPod) {
+    return {
+      priority: '0'
+    }
+  }
+  return {
+    priority: '2000001000',
+    priorityClassName: 'system-node-critical',
+    seccompProfile: 'RuntimeDefault',
+    controlledBy: pod.spec.nodeName != null ? `Node/${pod.spec.nodeName}` : undefined
+  }
+}
+
+const formatProbeInline = (
+  title: string,
+  probe: Probe,
+  podIP: string,
+  failure: number
+): string => {
+  const titleLabel = `${title}:`.padEnd(14)
+  if (probe.type === 'httpGet') {
+    const delay = probe.initialDelaySeconds ?? 0
+    const period = probe.periodSeconds ?? 10
+    return `    ${titleLabel}http-get https://${podIP}:probe-port${probe.path} delay=${delay}s timeout=15s period=${period}s #success=1 #failure=${failure}`
+  }
+  if (probe.type === 'tcpSocket') {
+    return `    ${titleLabel}tcp-socket :${probe.port}`
+  }
+  if (probe.type === 'exec') {
+    return `    ${titleLabel}exec [${probe.command.join(' ')}]`
+  }
+  return `    ${titleLabel}<unknown>`
+}
 
 /**
  * Format detailed pod description
@@ -655,21 +878,41 @@ export const describePod = (pod: Pod): string => {
   const podIP = pod.status.podIP ?? simulatePodIP(pod.metadata.name)
   const nodeName = pod.spec.nodeName ?? '<none>'
   const nodeIP = simulatePodIP(nodeName)
+  const header = formatStaticControlPlaneHeader(pod)
+  const isStaticControlPlanePod = header.priorityClassName != null
+  const hasNodeAssignment = pod.spec.nodeName != null && pod.spec.nodeName.length > 0
+  const kubeApiAccessVolumeName = buildKubeApiAccessVolumeName(pod)
 
   // Basic metadata
-  lines.push(`Name:             ${pod.metadata.name}`)
-  lines.push(`Namespace:        ${pod.metadata.namespace}`)
-  lines.push('Priority:         0')
-  lines.push('Service Account:  default')
-  lines.push(`Node:             ${nodeName}/${nodeIP}`)
-  lines.push(`Start Time:       ${formatDescribeDate(pod.metadata.creationTimestamp)}`)
-  lines.push(`Labels:           ${formatLabels(pod.metadata.labels)}`)
-  lines.push(`Annotations:      ${formatLabels(pod.metadata.annotations)}`)
-  lines.push(`Status:           ${pod.status.phase}`)
-  lines.push(`IP:               ${podIP}`)
+  lines.push(`Name:                 ${pod.metadata.name}`)
+  lines.push(`Namespace:            ${pod.metadata.namespace}`)
+  lines.push(`Priority:             ${header.priority}`)
+  if (header.priorityClassName != null) {
+    lines.push(`Priority Class Name:  ${header.priorityClassName}`)
+  }
+  if (header.priorityClassName == null) {
+    lines.push('Service Account:      default')
+  }
+  lines.push(`Node:                 ${nodeName}/${nodeIP}`)
+  lines.push(`Start Time:           ${formatDescribeDate(pod.metadata.creationTimestamp)}`)
+  lines.push(...formatMapMultiLine('Labels', pod.metadata.labels))
+  lines.push(
+    ...formatMapMultiLine(
+      'Annotations',
+      sanitizeDescribeAnnotations(pod.metadata.annotations),
+      'colon'
+    )
+  )
+  lines.push(`Status:               ${pod.status.phase}`)
+  if (header.seccompProfile != null) {
+    lines.push(`SeccompProfile:       ${header.seccompProfile}`)
+  }
+  lines.push(`IP:                   ${podIP}`)
   lines.push('IPs:')
-  lines.push(`  IP:             ${podIP}`)
-  lines.push(blank())
+  lines.push(`  IP:           ${podIP}`)
+  if (header.controlledBy != null) {
+    lines.push(`Controlled By:  ${header.controlledBy}`)
+  }
 
   // Init Containers section (if any)
   if (pod.spec.initContainers && pod.spec.initContainers.length > 0) {
@@ -685,43 +928,153 @@ export const describePod = (pod: Pod): string => {
   }
 
   // Containers section
-  const containerLines: string[] = []
+  lines.push('Containers:')
   for (const container of pod.spec.containers) {
     const status = pod.status.containerStatuses?.find(
       (cs) => cs.name === container.name
     )
-    formatContainer(container, containerLines, status)
+    lines.push(`  ${container.name}:`)
+    lines.push(`    Container ID:  ${status?.containerID ?? '<none>'}`)
+    lines.push(`    Image:         ${container.image}`)
+    const rawImageId = status?.imageID ?? '<none>'
+    const imageId =
+      header.priorityClassName != null && rawImageId.includes('@sha256:')
+        ? `sha256:${rawImageId.split('@sha256:')[1]}`
+        : rawImageId
+    lines.push(`    Image ID:      ${imageId}`)
+    if (container.ports != null && container.ports.length > 0) {
+      const firstPort = container.ports[0]
+      if (isStaticControlPlanePod) {
+        lines.push(
+          `    Port:          ${firstPort.containerPort}/${firstPort.protocol ?? 'TCP'} (probe-port)`
+        )
+        lines.push(
+          `    Host Port:     ${firstPort.containerPort}/${firstPort.protocol ?? 'TCP'} (probe-port)`
+        )
+      } else {
+        lines.push(
+          `    Port:          ${firstPort.containerPort}/${firstPort.protocol ?? 'TCP'}`
+        )
+        lines.push(`    Host Port:     0/${firstPort.protocol ?? 'TCP'}`)
+      }
+    }
+    if (container.command && container.command.length > 0) {
+      lines.push('    Command:')
+      container.command.forEach((commandPart) => {
+        lines.push(`      ${commandPart}`)
+      })
+    }
+    if (container.args && container.args.length > 0) {
+      container.args.forEach((arg) => {
+        lines.push(`      ${arg}`)
+      })
+    }
+    const state = status?.state ?? (pod.status.phase === 'Running' ? 'Running' : 'Waiting')
+    lines.push(`    State:          ${state}`)
+    if (status?.startedAt != null) {
+      lines.push(`      Started:      ${formatDescribeDate(status.startedAt)}`)
+    }
+    lines.push(`    Ready:          ${status?.ready === true ? 'True' : 'False'}`)
+    lines.push(`    Restart Count:  ${status?.restartCount ?? 0}`)
+    if (container.resources?.requests != null) {
+      const entries = Object.entries(container.resources.requests)
+      if (entries.length > 0) {
+        lines.push('    Requests:')
+        entries.forEach(([key, value]) => {
+          lines.push(`      ${key}:        ${value}`)
+        })
+      }
+    }
+    if (container.resources?.limits != null) {
+      const entries = Object.entries(container.resources.limits)
+      if (entries.length > 0) {
+        lines.push('    Limits:')
+        entries.forEach(([key, value]) => {
+          lines.push(`      ${key}:        ${value}`)
+        })
+      }
+    }
+    if (container.livenessProbe != null) {
+      lines.push(formatProbeInline('Liveness', container.livenessProbe, podIP, 8))
+    }
+    if (container.readinessProbe != null) {
+      lines.push(formatProbeInline('Readiness', container.readinessProbe, podIP, 3))
+    }
+    if (container.startupProbe != null) {
+      lines.push(formatProbeInline('Startup', container.startupProbe, podIP, 24))
+    }
+    if (container.env != null && container.env.length > 0) {
+      lines.push('    Environment:  ')
+      container.env.forEach((envVar) => {
+        lines.push(`      ${formatEnvVar(envVar).trim()}`)
+      })
+    } else {
+      lines.push('    Environment:  <none>')
+    }
+    if (container.volumeMounts != null && container.volumeMounts.length > 0) {
+      lines.push('    Mounts:')
+      container.volumeMounts.forEach((mount) => {
+        lines.push(
+          `      ${mount.mountPath} from ${mount.name} (${mount.readOnly === true ? 'ro' : 'rw'})`
+        )
+      })
+    } else if (isStaticControlPlanePod === false && hasNodeAssignment) {
+      lines.push('    Mounts:')
+      lines.push(
+        `      /var/run/secrets/kubernetes.io/serviceaccount from ${kubeApiAccessVolumeName} (ro)`
+      )
+    }
   }
-  lines.push(...section('Containers', containerLines))
-  lines.push(blank())
 
   // Volumes section
   if (pod.spec.volumes && pod.spec.volumes.length > 0) {
-    const volumeLines: string[] = []
+    lines.push('Volumes:')
     pod.spec.volumes.forEach((volume) => {
-      volumeLines.push(`${volume.name}:`)
-      volumeLines.push(formatVolumeSource(volume))
+      lines.push(`  ${volume.name}:`)
+      lines.push(formatVolumeSource(volume))
     })
-    lines.push(...section('Volumes', volumeLines))
+  } else if (isStaticControlPlanePod === false && hasNodeAssignment) {
+    lines.push('Volumes:')
+    lines.push(`  ${kubeApiAccessVolumeName}:`)
+    lines.push(
+      '    Type:                    Projected (a volume that contains injected data from multiple sources)'
+    )
+    lines.push('    TokenExpirationSeconds:  3607')
+    lines.push('    ConfigMapName:           kube-root-ca.crt')
+    lines.push('    Optional:                false')
+    lines.push('    DownwardAPI:             true')
   } else {
     lines.push('Volumes:  <none>')
   }
-
-  lines.push(blank())
-
-  // Conditions and Events (placeholders)
-  lines.push('Conditions:')
-  lines.push('  Type              Status')
-  lines.push('  Initialized       True')
-  lines.push('  Ready             True')
-  lines.push('  ContainersReady   True')
-  lines.push('  PodScheduled      True')
-  lines.push(blank())
-  lines.push('QoS Class:          BestEffort')
-  lines.push('Node-Selectors:     <none>')
-  lines.push('Tolerations:        <none>')
-  lines.push(blank())
-  lines.push('Events:             <none>')
+  lines.push(...formatPodConditionLines(pod))
+  lines.push(`QoS Class:         ${pod.status.qosClass ?? 'BestEffort'}`)
+  lines.push(`Node-Selectors:    ${formatLabels(pod.spec.nodeSelector)}`)
+  const effectiveTolerations =
+    pod.spec.tolerations ??
+    (isStaticControlPlanePod
+      ? undefined
+      : hasNodeAssignment
+        ? [
+            {
+              key: 'node.kubernetes.io/not-ready',
+              operator: 'Exists',
+              effect: 'NoExecute',
+              tolerationSeconds: 300
+            },
+            {
+              key: 'node.kubernetes.io/unreachable',
+              operator: 'Exists',
+              effect: 'NoExecute',
+              tolerationSeconds: 300
+            }
+          ]
+        : undefined)
+  lines.push(...formatPodTolerations(effectiveTolerations))
+  if (isStaticControlPlanePod === false && hasNodeAssignment && pod.status.phase === 'Running') {
+    lines.push(...formatDefaultPodEvents(pod, nodeName))
+  } else {
+    lines.push('Events:            <none>')
+  }
 
   return lines.join('\n')
 }
@@ -731,36 +1084,36 @@ export const describeNode = (
   state?: ClusterStateData
 ): string => {
   const lines: string[] = []
-  lines.push(`Name:\t${node.metadata.name}`)
-  lines.push(`Roles:\t${getNodeRoles(node)}`)
-  lines.push(`Labels:\t${formatLabels(node.metadata.labels)}`)
-  lines.push(`Annotations:\t${formatLabels(node.metadata.annotations)}`)
-  lines.push(`CreationTimestamp:\t${formatDescribeDate(node.metadata.creationTimestamp)}`)
-  lines.push(`Taints:\t${formatNodeTaints(node.spec.taints)}`)
-  lines.push(`Unschedulable:\t${node.spec.unschedulable === true}`)
-  lines.push(blank())
+  lines.push(`Name:               ${node.metadata.name}`)
+  lines.push(`Roles:              ${getNodeRoles(node)}`)
+  lines.push(...formatMapMultiLine('Labels', node.metadata.labels))
+  lines.push(...formatMapMultiLine('Annotations', node.metadata.annotations, 'colon'))
+  lines.push(`CreationTimestamp:  ${formatDescribeDate(node.metadata.creationTimestamp)}`)
+  lines.push(`Taints:             ${formatNodeTaints(node.spec.taints)}`)
+  lines.push(`Unschedulable:      ${node.spec.unschedulable === true ? 'true' : 'false'}`)
+  lines.push('Lease:')
+  lines.push(`  HolderIdentity:  ${node.metadata.name}`)
+  lines.push('  AcquireTime:     <unset>')
+  lines.push(
+    `  RenewTime:       ${formatDescribeDate(node.metadata.creationTimestamp)}`
+  )
   lines.push(...formatNodeConditions(node.status.conditions))
-  lines.push(blank())
   lines.push(...formatNodeAddresses(node.status.addresses))
-  lines.push(blank())
   lines.push(...formatNodeResourceList('Capacity', node.status.capacity))
   lines.push(...formatNodeResourceList('Allocatable', node.status.allocatable))
-  lines.push(blank())
   lines.push(...formatNodeSystemInfo(node))
   if (node.spec.podCIDR && node.spec.podCIDR.length > 0) {
-    lines.push(`PodCIDR:\t${node.spec.podCIDR}`)
+    lines.push(`PodCIDR:                      ${node.spec.podCIDR}`)
   }
   if (node.spec.podCIDRs && node.spec.podCIDRs.length > 0) {
-    lines.push(`PodCIDRs:\t${node.spec.podCIDRs.join(',')}`)
+    lines.push(`PodCIDRs:                     ${node.spec.podCIDRs.join(',')}`)
   }
   if (node.spec.providerID && node.spec.providerID.length > 0) {
-    lines.push(`ProviderID:\t${node.spec.providerID}`)
+    lines.push(`ProviderID:                   ${node.spec.providerID}`)
   }
-  lines.push(blank())
   const pods = getNonTerminatedPodsOnNode(node.metadata.name, state)
   lines.push(...formatNodePodResources(node, pods))
-  lines.push(blank())
-  lines.push('Events:\t<none>')
+  lines.push('Events:              <none>')
   return lines.join('\n')
 }
 
@@ -993,6 +1346,81 @@ export const describePersistentVolumeClaim = (
   lines.push(`Access Modes:  ${persistentVolumeClaim.spec.accessModes.join(',')}`)
   lines.push('')
   lines.push('Events:        <none>')
+  return lines.join('\n')
+}
+
+const podMatchesSelector = (
+  pod: Pod,
+  selector: Record<string, string> | undefined
+): boolean => {
+  if (selector == null) {
+    return false
+  }
+  const labels = pod.metadata.labels ?? {}
+  return Object.entries(selector).every(([key, value]) => {
+    return labels[key] === value
+  })
+}
+
+const renderServicePort = (service: Service, portIndex: number): string => {
+  const port = service.spec.ports[portIndex]
+  if (port == null) {
+    return '<none>'
+  }
+  const portName = port.name ?? '<unset>'
+  return `${portName}  ${port.port}/${port.protocol}`
+}
+
+const renderServiceTargetPort = (service: Service, portIndex: number): string => {
+  const port = service.spec.ports[portIndex]
+  if (port == null) {
+    return '<none>'
+  }
+  const targetPort = port.targetPort ?? port.port
+  return `${String(targetPort)}/${port.protocol}`
+}
+
+const renderServiceEndpoints = (
+  service: Service,
+  state: ClusterStateData
+): string => {
+  const selectedPods = state.pods.items.filter((pod) => {
+    return podMatchesSelector(pod, service.spec.selector)
+  })
+  if (selectedPods.length === 0) {
+    return '<none>'
+  }
+  const targetPort = service.spec.ports[0]?.targetPort ?? service.spec.ports[0]?.port
+  const endpointPort =
+    typeof targetPort === 'number' ? targetPort : service.spec.ports[0]?.port ?? 80
+  const endpoints = selectedPods.map((pod) => {
+    const podIP = pod.status.podIP ?? simulatePodIP(pod.metadata.name)
+    return `${podIP}:${endpointPort}`
+  })
+  return endpoints.join(',')
+}
+
+export const describeService = (
+  service: Service,
+  state: ClusterStateData
+): string => {
+  const lines: string[] = []
+  lines.push(`Name:                     ${service.metadata.name}`)
+  lines.push(`Namespace:                ${service.metadata.namespace}`)
+  lines.push(`Labels:                   ${formatLabels(service.metadata.labels)}`)
+  lines.push(`Annotations:              ${formatLabels(service.metadata.annotations)}`)
+  lines.push(`Selector:                 ${formatLabels(service.spec.selector)}`)
+  lines.push(`Type:                     ${service.spec.type ?? 'ClusterIP'}`)
+  lines.push('IP Family Policy:         SingleStack')
+  lines.push('IP Families:              IPv4')
+  lines.push(`IP:                       ${service.spec.clusterIP ?? '<none>'}`)
+  lines.push(`IPs:                      ${service.spec.clusterIP ?? '<none>'}`)
+  lines.push(`Port:                     ${renderServicePort(service, 0)}`)
+  lines.push(`TargetPort:               ${renderServiceTargetPort(service, 0)}`)
+  lines.push(`Endpoints:                ${renderServiceEndpoints(service, state)}`)
+  lines.push(`Session Affinity:         ${service.spec.sessionAffinity ?? 'None'}`)
+  lines.push('Internal Traffic Policy:  Cluster')
+  lines.push('Events:                   <none>')
   return lines.join('\n')
 }
 

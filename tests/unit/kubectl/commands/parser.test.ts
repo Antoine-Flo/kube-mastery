@@ -374,6 +374,34 @@ describe('kubectl parser - get and delete flag positions', () => {
     expect(result.value.flags['show-labels']).toBe(true)
   })
 
+  it('should parse get short label selector flag', () => {
+    const result = parseCommand('kubectl get pods -n kube-system -l tier=control-plane')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.namespace).toBe('kube-system')
+    expect(result.value.selector).toEqual({ tier: 'control-plane' })
+  })
+
+  it('should parse get long label selector flag', () => {
+    const result = parseCommand(
+      'kubectl get pods -n kube-system --selector tier=control-plane'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.namespace).toBe('kube-system')
+    expect(result.value.selector).toEqual({ tier: 'control-plane' })
+  })
+
   it('should parse delete when namespace flag is before resource', () => {
     const result = parseCommand('kubectl delete -n kube-system pod coredns-abc')
 

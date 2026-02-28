@@ -9,7 +9,8 @@ import {
   describePersistentVolume,
   describePersistentVolumeClaim,
   describePod,
-  describeSecret
+  describeSecret,
+  describeService
 } from '../../formatters/describeFormatters'
 import type { ParsedCommand } from '../types'
 
@@ -74,6 +75,13 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
     },
     type: 'Secret'
   },
+  services: {
+    items: 'services',
+    formatter: (item, state) => {
+      return describeService(item, state)
+    },
+    type: 'Service'
+  },
   deployments: {
     items: 'deployments',
     formatter: (item) => {
@@ -113,6 +121,13 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
   }
 } as const
 
+const getNotFoundResourceReference = (resourceType: string): string => {
+  if (resourceType === 'deployments') {
+    return 'deployments.apps'
+  }
+  return resourceType
+}
+
 /**
  * Handle kubectl describe command
  * Provides detailed multi-line output for pods, configmaps, and secrets
@@ -150,8 +165,9 @@ export const handleDescribe = (
   )
 
   if (!resource) {
+    const reference = getNotFoundResourceReference(resourceType)
     return error(
-      `Error from server (NotFound): ${resourceType} "${parsed.name}" not found`
+      `Error from server (NotFound): ${reference} "${parsed.name}" not found`
     )
   }
 

@@ -75,13 +75,53 @@ describe('systemBootstrap', () => {
       createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-controller-manager'),
       createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-scheduler')
     ]
+    const expectedComponentLabelByPodName: Record<string, string> = {
+      [createControlPlaneStaticPodName(controlPlaneNodeName, 'etcd')]: 'etcd',
+      [createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-apiserver')]:
+        'kube-apiserver',
+      [createControlPlaneStaticPodName(
+        controlPlaneNodeName,
+        'kube-controller-manager'
+      )]: 'kube-controller-manager',
+      [createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-scheduler')]:
+        'kube-scheduler'
+    }
     for (const podName of staticControlPlanePods) {
       const pod = resources.pods.find((item) => {
         return item.metadata.name === podName
       })
       expect(pod).toBeDefined()
       expect(pod?.spec.nodeName).toBe('conformance-control-plane')
+      expect(pod?.metadata.labels?.tier).toBe('control-plane')
+      expect(pod?.metadata.labels?.component).toBe(
+        expectedComponentLabelByPodName[podName]
+      )
     }
+    const kubeApiserverPod = resources.pods.find((item) => {
+      return (
+        item.metadata.name ===
+        createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-apiserver')
+      )
+    })
+    expect(kubeApiserverPod).toBeDefined()
+    expect(kubeApiserverPod?.spec.containers[0].image).toBe(
+      'registry.k8s.io/kube-apiserver:v1.35.0'
+    )
+    expect(kubeApiserverPod?.spec.containers[0].ports).toEqual([
+      { containerPort: 6443, protocol: 'TCP' }
+    ])
+    expect(kubeApiserverPod?.spec.containers[0].startupProbe).toBeDefined()
+    expect(kubeApiserverPod?.spec.containers[0].livenessProbe).toBeDefined()
+    expect(kubeApiserverPod?.spec.containers[0].readinessProbe).toBeDefined()
+    expect(kubeApiserverPod?.spec.volumes?.length).toBeGreaterThan(0)
+    expect(kubeApiserverPod?.spec.tolerations?.some((toleration) => {
+      return toleration.operator === 'Exists' && toleration.effect === 'NoExecute'
+    })).toBe(true)
+    expect(
+      kubeApiserverPod?.metadata.annotations?.[
+        'kubeadm.kubernetes.io/kube-apiserver.advertise-address.endpoint'
+      ]
+    ).toBe('172.18.0.2:6443')
     const corednsDeployment = resources.deployments.find((item) => {
       return item.metadata.name === 'coredns'
     })

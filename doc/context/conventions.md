@@ -12,6 +12,7 @@
 - Immutability avec `Object.freeze()` quand approprié
 - Discriminated unions (Result types) pour gestion d'erreurs
 - Pas d'exceptions
+- Conformance parity first: never add conformance-only behavior, hardcoded exceptions, or alternate code paths. Any fix must improve the shared implementation used by all scenarios.
 
 ## Code Structure
 
