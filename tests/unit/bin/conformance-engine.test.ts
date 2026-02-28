@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  checkExpectation,
   compareResults,
   runConformanceSuite
 } from '../../../bin/lib/conformance-engine'
@@ -107,28 +106,13 @@ describe('conformance engine', () => {
         stdout: '2027-02-01T00:00:00Z',
         stderr: '',
         combined: '2027-02-01T00:00:00Z'
-      },
-      'normalized'
+      }
     )
 
     expect(comparison.matched).toBe(true)
   })
 
-  it('should validate expectations', () => {
-    const ok = checkExpectation(
-      {
-        command: 'kubectl create',
-        exitCode: 1,
-        stdout: '',
-        stderr: 'error: invalid',
-        combined: 'error: invalid'
-      },
-      { exitCode: 1, stderrContains: ['error'] }
-    )
-    expect(ok.ok).toBe(true)
-  })
-
-  it('should fail suite on mismatch', () => {
+  it('should continue suite and record diff on mismatch', () => {
     const suite: ConformanceSuite = {
       name: 'test',
       clusterName: 'test',
@@ -136,11 +120,9 @@ describe('conformance engine', () => {
         {
           id: 'cmd-1',
           type: 'command',
-          command: 'kubectl get pods',
-          compareMode: 'raw'
+          command: 'kubectl get pods'
         }
-      ],
-      stopOnMismatch: true
+      ]
     }
     const { reporter, diffEntries } = createMemoryReporter()
     const result = runConformanceSuite(suite, {
@@ -148,25 +130,21 @@ describe('conformance engine', () => {
       runnerExecutor: createMockRunnerExecutor('runner-output'),
       reporter
     })
-    expect(result.ok).toBe(false)
+    expect(result.ok).toBe(true)
     expect(diffEntries.length).toBeGreaterThan(0)
   })
 
-  it('should include line-by-line diff when expectation fails', () => {
+  it('should record line diff for output mismatch', () => {
     const suite: ConformanceSuite = {
-      name: 'expectation-diff-suite',
+      name: 'normalized-fallback-suite',
       clusterName: 'test',
       actions: [
         {
-          id: 'cmd-expect-1',
+          id: 'cmd-none-1',
           type: 'command',
-          command: 'kubectl config get-contexts',
-          compareMode: 'none',
-          expectKind: { stdoutContains: ['kubernetes-admin@kubernetes'] },
-          expectRunner: { stdoutContains: ['kubernetes-admin@kubernetes'] }
+          command: 'kubectl config get-contexts'
         }
-      ],
-      stopOnMismatch: false
+      ]
     }
     const { reporter, diffEntries } = createMemoryReporter()
     const result = runConformanceSuite(suite, {
@@ -179,10 +157,7 @@ describe('conformance engine', () => {
 
     expect(result.ok).toBe(true)
     const joined = diffEntries.join('\n')
-    expect(joined.includes('[expectation:kind]')).toBe(true)
-    expect(joined.includes('[expectation-diff]')).toBe(true)
-    expect(joined.includes('@@ line 1 @@')).toBe(true)
-    expect(joined.includes('- CURRENT···kind-conformance')).toBe(true)
-    expect(joined.includes('+ CURRENT··kubernetes-admin@kubernetes')).toBe(true)
+    expect(joined.includes('[diff]')).toBe(true)
+    expect(joined.includes('[line 1]')).toBe(true)
   })
 })

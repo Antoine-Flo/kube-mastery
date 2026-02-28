@@ -55,6 +55,7 @@ const t = useTranslations(lang)
               <button
                 id="lesson-sidebar-toggle"
                 type="button"
+                class="lesson-layout__sidebar-toggle"
                 aria-label="Réduire le plan du cours"
                 aria-expanded="true"
               >
@@ -548,27 +549,40 @@ const t = useTranslations(lang)
 
   .lesson-layout__sidebar-footer {
     margin-top: auto;
-    padding: var(--spacing-1);
+    padding: var(--spacing-2) 0;
+    border-top: 1px solid var(--color-gray-6);
     display: flex;
     flex-shrink: 0;
-    opacity: 0.2;
-    transition: opacity var(--duration-normal);
   }
 
-  .lesson-layout__sidebar-footer:hover {
-    opacity: 0.8;
-  }
-
-  .lesson-layout__sidebar-footer button {
-    padding-inline: 0.6rem;
-    min-width: 2rem;
+  .lesson-layout__sidebar-toggle {
+    height: var(--spacing-9);
+    min-width: var(--spacing-9);
+    padding-inline: var(--spacing-2);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: none;
+    color: var(--color-palette-gray-plain-fg);
+    background: transparent;
     border: none;
+    border-radius: var(--radius-l2);
     cursor: pointer;
-    color: var(--color-gray-11);
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+
+  .lesson-layout__sidebar-toggle:hover {
+    background: var(--color-palette-gray-plain-bg-hover);
+  }
+
+  .lesson-layout__sidebar-toggle:active {
+    background: var(--color-palette-gray-plain-bg-active);
+  }
+
+  .lesson-layout__sidebar-toggle:focus-visible {
+    outline: 2px solid var(--color-palette-cyan-solid-bg);
+    outline-offset: 2px;
   }
 
   .lesson-layout__body {

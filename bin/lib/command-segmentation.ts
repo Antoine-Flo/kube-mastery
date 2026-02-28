@@ -1,7 +1,4 @@
-import type {
-  LifecycleCommandConfig,
-  LifecycleSegment
-} from './scenario-generator'
+import type { LifecycleSegment } from './scenario-generator'
 
 export type KubectlCommandName =
   | 'annotate'
@@ -55,15 +52,6 @@ export const normalizeKubectlCommandName = (
   return undefined
 }
 
-const getCommandText = (
-  commandInput: string | LifecycleCommandConfig
-): string => {
-  if (typeof commandInput === 'string') {
-    return commandInput
-  }
-  return commandInput.command
-}
-
 export const inferKubectlCommandName = (
   rawCommand: string
 ): KubectlCommandName | undefined => {
@@ -96,8 +84,8 @@ export const listCommandsFromSegments = (
   const discovered = new Set<KubectlCommandName>()
 
   for (const segment of segments) {
-    for (const commandInput of segment.commands) {
-      const commandName = inferKubectlCommandName(getCommandText(commandInput))
+    for (const command of segment.commands) {
+      const commandName = inferKubectlCommandName(command)
       if (commandName !== undefined) {
         discovered.add(commandName)
       }
@@ -116,8 +104,8 @@ export const filterSegmentsByCommand = (
   const filtered: LifecycleSegment[] = []
 
   for (const segment of segments) {
-    const matchingCommands = segment.commands.filter((commandInput) => {
-      const candidate = inferKubectlCommandName(getCommandText(commandInput))
+    const matchingCommands = segment.commands.filter((command) => {
+      const candidate = inferKubectlCommandName(command)
       return candidate === commandName
     })
 

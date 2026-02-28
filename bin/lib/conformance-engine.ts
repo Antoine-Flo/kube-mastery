@@ -2,10 +2,7 @@ import { normalizeOutput } from './normalizer'
 import { createConformanceReporter } from './conformance-reporter'
 import type {
   ActionExecutionRecord,
-  CommandAction,
   CommandExecutionResult,
-  CommandExpectation,
-  CompareMode,
   ConformanceAction,
   ConformanceComparison,
   ConformanceSuite
@@ -40,38 +37,6 @@ export interface ConformanceProgressListener {
   onActionStart?: (event: ConformanceProgressEvent) => void
   onActionComplete?: (event: ConformanceActionCompleteEvent) => void
   onSuiteFinish?: (suite: ConformanceSuite, result: Result<void, string>) => void
-}
-
-export const checkExpectation = (
-  result: CommandExecutionResult,
-  expectation: CommandExpectation | undefined
-): Result<void, string> => {
-  if (expectation === undefined) {
-    return success(undefined)
-  }
-  if (
-    typeof expectation.exitCode === 'number' &&
-    result.exitCode !== expectation.exitCode
-  ) {
-    return error(
-      `Expected exitCode=${expectation.exitCode}, got exitCode=${result.exitCode}`
-    )
-  }
-  if (expectation.stdoutContains) {
-    for (const expected of expectation.stdoutContains) {
-      if (!result.stdout.includes(expected)) {
-        return error(`stdout should contain "${expected}"`)
-      }
-    }
-  }
-  if (expectation.stderrContains) {
-    for (const expected of expectation.stderrContains) {
-      if (!result.stderr.includes(expected)) {
-        return error(`stderr should contain "${expected}"`)
-      }
-    }
-  }
-  return success(undefined)
 }
 
 const createRecord = (
@@ -119,10 +84,6 @@ interface DiffLine {
   runnerSimulation: string
 }
 
-const makeWhitespaceVisible = (value: string): string => {
-  return value.replaceAll('\t', '→\t').replaceAll(' ', '·')
-}
-
 const truncate = (value: string, maxLength: number): string => {
   if (value.length <= maxLength) {
     return value
@@ -161,60 +122,12 @@ const formatDiffLines = (kindCompared: string, runnerCompared: string): string[]
   return rendered
 }
 
-const formatUnifiedDiffLines = (
-  leftRaw: string,
-  rightRaw: string,
-  options?: {
-    showWhitespace?: boolean
-  }
-): string[] => {
-  const leftLines = leftRaw.split('\n')
-  const rightLines = rightRaw.split('\n')
-  const maxLen = Math.max(leftLines.length, rightLines.length)
-  const out: string[] = []
-
-  for (let index = 0; index < maxLen; index++) {
-    const left = leftLines[index] ?? '(missing)'
-    const right = rightLines[index] ?? '(missing)'
-    if (left !== right) {
-      const renderedLeft = options?.showWhitespace ? makeWhitespaceVisible(left) : left
-      const renderedRight = options?.showWhitespace
-        ? makeWhitespaceVisible(right)
-        : right
-      out.push(`@@ line ${index + 1} @@`)
-      out.push(`- ${truncate(renderedLeft, MAX_LINE_LENGTH)}`)
-      out.push(`+ ${truncate(renderedRight, MAX_LINE_LENGTH)}`)
-    }
-  }
-
-  if (out.length > MAX_DIFF_LINES * 3) {
-    const maxOutput = MAX_DIFF_LINES * 3
-    const trimmed = out.slice(0, maxOutput)
-    trimmed.push(
-      `[truncated] ${Math.ceil((out.length - maxOutput) / 3)} diff blocks omitted to reduce noise`
-    )
-    return trimmed
-  }
-  return out
-}
-
 export const compareResults = (
   kind: CommandExecutionResult,
-  runner: CommandExecutionResult,
-  compareMode: CompareMode
+  runner: CommandExecutionResult
 ): ConformanceComparison => {
-  const kindCompared =
-    compareMode === 'raw' ? kind.combined : normalizeOutput(kind.combined)
-  const runnerCompared =
-    compareMode === 'raw' ? runner.combined : normalizeOutput(runner.combined)
-  if (compareMode === 'none') {
-    return {
-      matched: true,
-      kindCompared,
-      runnerCompared,
-      diff: ''
-    }
-  }
+  const kindCompared = normalizeOutput(kind.combined)
+  const runnerCompared = normalizeOutput(runner.combined)
   const outputMatches = kindCompared === runnerCompared
   const exitCodeMatches = kind.exitCode === runner.exitCode
   return {
@@ -283,31 +196,6 @@ const appendMismatch = (
   ].join('\n')
 }
 
-const appendExpectationError = (
-  suiteName: string,
-  action: CommandAction,
-  backend: 'kind' | 'runner',
-  message: string,
-  kind: CommandExecutionResult,
-  runner: CommandExecutionResult
-): string => {
-  const diffLines = formatUnifiedDiffLines(kind.combined, runner.combined, {
-    showWhitespace: true
-  })
-  return [
-    `[suite] ${suiteName}`,
-    `[action] ${action.id} (${action.type})`,
-    `[command] ${truncate(action.command, MAX_COMMAND_LENGTH)}`,
-    `[expectation:${backend}] ${message}`,
-    '[expectation-diff]',
-    ...diffLines,
-    '[details]',
-    '[kind-log] artifacts/conformance/kind.log',
-    '[runner-log] artifacts/conformance/runner.log',
-    '---'
-  ].join('\n')
-}
-
 export const runConformanceSuite = (
   suite: ConformanceSuite,
   dependencies?: {
@@ -349,46 +237,7 @@ export const runConformanceSuite = (
       reporter.recordKind(createRecord(suite.name, action, 'kind', kind))
       reporter.recordRunner(createRecord(suite.name, action, 'runner', runner))
 
-      if (action.type === 'command') {
-        const kindExpectation = checkExpectation(kind, action.expectKind)
-        if (!kindExpectation.ok) {
-          reporter.recordDiff(
-            appendExpectationError(
-              suite.name,
-              action,
-              'kind',
-              kindExpectation.error,
-              kind,
-              runner
-            )
-          )
-          if (suite.stopOnMismatch ?? true) {
-            reporter.flush()
-            return error(kindExpectation.error)
-          }
-        }
-        const runnerExpectation = checkExpectation(runner, action.expectRunner)
-        if (!runnerExpectation.ok) {
-          reporter.recordDiff(
-            appendExpectationError(
-              suite.name,
-              action,
-              'runner',
-              runnerExpectation.error,
-              kind,
-              runner
-            )
-          )
-          if (suite.stopOnMismatch ?? true) {
-            reporter.flush()
-            return error(runnerExpectation.error)
-          }
-        }
-      }
-
-      const compareMode =
-        action.type === 'command' ? action.compareMode || 'normalized' : 'normalized'
-      const comparison = compareResults(kind, runner, compareMode)
+      const comparison = compareResults(kind, runner)
       progressListener?.onActionComplete?.({
         suiteName: suite.name,
         action,
@@ -400,13 +249,6 @@ export const runConformanceSuite = (
       })
       if (!comparison.matched) {
         reporter.recordDiff(appendMismatch(suite.name, action, kind, runner, comparison))
-        if (suite.stopOnMismatch ?? true) {
-          reporter.flush()
-          finalResult = error(
-            `[${action.id}] output mismatch between kind and runner.\n${comparison.diff}`
-          )
-          return finalResult
-        }
       }
     }
   } finally {

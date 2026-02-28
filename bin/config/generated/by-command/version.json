@@ -10,26 +10,22 @@
     {
       "id": "platform-cmd-1",
       "type": "command",
-      "command": "kubectl version",
-      "compareMode": "normalized"
+      "command": "kubectl version"
     },
     {
       "id": "platform-cmd-2",
       "type": "command",
-      "command": "kubectl version --client",
-      "compareMode": "normalized"
+      "command": "kubectl version --client"
     },
     {
       "id": "platform-cmd-3",
       "type": "command",
-      "command": "kubectl version --output json",
-      "compareMode": "normalized"
+      "command": "kubectl version --output json"
     },
     {
       "id": "platform-cmd-4",
       "type": "command",
-      "command": "kubectl version --output yaml",
-      "compareMode": "normalized"
+      "command": "kubectl version --output yaml"
     },
     {
       "id": "platform-cleanup",
@@ -45,8 +41,7 @@
     {
       "id": "errors-help-cmd-1",
       "type": "command",
-      "command": "kubectl version --output wide",
-      "compareMode": "normalized"
+      "command": "kubectl version --output wide"
     },
     {
       "id": "errors-help-cleanup",
@@ -54,6 +49,5 @@
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
       "ignoreNotFound": true
     }
-  ],
-  "stopOnMismatch": false
+  ]
 }

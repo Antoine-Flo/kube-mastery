@@ -108,11 +108,11 @@ kubectl get pods -n kube-system -l tier=control-plane
 Expected output:
 
 ```bash
-NAME                                   READY   STATUS    RESTARTS   AGE
-etcd-controlplane                      1/1     Running   0          45m
-kube-apiserver-controlplane            1/1     Running   0          45m
-kube-controller-manager-controlplane   1/1     Running   0          45m
-kube-scheduler-controlplane            1/1     Running   0          45m
+NAME                                        READY   STATUS    RESTARTS   AGE
+etcd-sim-control-plane                      1/1     Running   0          1m
+kube-apiserver-sim-control-plane            1/1     Running   0          1m
+kube-controller-manager-sim-control-plane   1/1     Running   0          1m
+kube-scheduler-sim-control-plane            1/1     Running   0          1m
 ```
 
 These are the four core control plane components, each running as a Pod on the control plane node.
@@ -120,7 +120,7 @@ These are the four core control plane components, each running as a Pod on the c
 Examine the API server's configuration flags, they reveal a lot about how it is configured:
 
 ```bash
-kubectl describe pod kube-apiserver-sim-control-plane  -n kube-system"
+kubectl describe pod kube-apiserver-sim-control-plane -n kube-system
 ```
 
 Expected output (partial):
@@ -141,7 +141,7 @@ Notice the `--etcd-servers` flag, it shows the API server connecting to etcd on 
 Check the scheduler's logs to see recent scheduling decisions:
 
 ```bash
-kubectl logs kube-scheduler-controlplane -n kube-system --tail=20
+kubectl logs kube-scheduler-sim-control-plane -n kube-system --tail=20
 ```
 
 The output will show recent events, potentially including pod scheduling decisions with node names. This is the live activity log of the scheduler doing its job.

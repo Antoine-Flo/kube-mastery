@@ -127,7 +127,7 @@ Notice the `ROLES` column. The control plane node shows `control-plane`, while t
 Now get detailed information about a specific node to see its resources and running pods:
 
 ```bash
-kubectl describe node node01
+kubectl describe node sim-worker
 ```
 
 This produces a long output. Scan through it and note these important sections:

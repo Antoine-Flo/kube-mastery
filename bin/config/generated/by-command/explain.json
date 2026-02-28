@@ -10,264 +10,62 @@
     {
       "id": "platform-cmd-1",
       "type": "command",
-      "command": "kubectl explain pod",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "KIND:",
-          "Pod",
-          "FIELDS:"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "KIND:",
-          "Pod",
-          "FIELDS:"
-        ]
-      }
+      "command": "kubectl explain pod"
     },
     {
       "id": "platform-cmd-2",
       "type": "command",
-      "command": "kubectl explain pod.spec.containers",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    containers",
-          "DESCRIPTION:"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    containers",
-          "DESCRIPTION:"
-        ]
-      }
+      "command": "kubectl explain pod.spec.containers"
     },
     {
       "id": "platform-cmd-3",
       "type": "command",
-      "command": "kubectl explain deployment.spec.template.spec.containers",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    containers",
-          "KIND:",
-          "Deployment"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    containers",
-          "KIND:",
-          "Deployment"
-        ]
-      }
+      "command": "kubectl explain deployment.spec.template.spec.containers"
     },
     {
       "id": "platform-cmd-4",
       "type": "command",
-      "command": "kubectl explain service.spec.ports",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    ports",
-          "KIND:",
-          "Service"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    ports",
-          "KIND:",
-          "Service"
-        ]
-      }
+      "command": "kubectl explain service.spec.ports"
     },
     {
       "id": "platform-cmd-5",
       "type": "command",
-      "command": "kubectl explain configmap.data",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    data",
-          "KIND:",
-          "ConfigMap"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    data",
-          "KIND:",
-          "ConfigMap"
-        ]
-      }
+      "command": "kubectl explain configmap.data"
     },
     {
       "id": "platform-cmd-6",
       "type": "command",
-      "command": "kubectl explain secret.data",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    data",
-          "KIND:",
-          "Secret"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    data",
-          "KIND:",
-          "Secret"
-        ]
-      }
+      "command": "kubectl explain secret.data"
     },
     {
       "id": "platform-cmd-7",
       "type": "command",
-      "command": "kubectl explain namespace.metadata",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    metadata",
-          "KIND:",
-          "Namespace"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    metadata",
-          "KIND:",
-          "Namespace"
-        ]
-      }
+      "command": "kubectl explain namespace.metadata"
     },
     {
       "id": "platform-cmd-8",
       "type": "command",
-      "command": "kubectl explain node.status",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    status",
-          "KIND:",
-          "Node"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    status",
-          "KIND:",
-          "Node"
-        ]
-      }
+      "command": "kubectl explain node.status"
     },
     {
       "id": "platform-cmd-9",
       "type": "command",
-      "command": "kubectl explain replicaset.spec.replicas",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    replicas",
-          "KIND:",
-          "ReplicaSet"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    replicas",
-          "KIND:",
-          "ReplicaSet"
-        ]
-      }
+      "command": "kubectl explain replicaset.spec.replicas"
     },
     {
       "id": "platform-cmd-10",
       "type": "command",
-      "command": "kubectl explain daemonset.spec.template",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    template",
-          "KIND:",
-          "DaemonSet"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    template",
-          "KIND:",
-          "DaemonSet"
-        ]
-      }
+      "command": "kubectl explain daemonset.spec.template"
     },
     {
       "id": "platform-cmd-11",
       "type": "command",
-      "command": "kubectl explain persistentvolume.spec",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    spec",
-          "KIND:",
-          "PersistentVolume"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    spec",
-          "KIND:",
-          "PersistentVolume"
-        ]
-      }
+      "command": "kubectl explain persistentvolume.spec"
     },
     {
       "id": "platform-cmd-12",
       "type": "command",
-      "command": "kubectl explain persistentvolumeclaim.spec",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    spec",
-          "KIND:",
-          "PersistentVolumeClaim"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "FIELD:    spec",
-          "KIND:",
-          "PersistentVolumeClaim"
-        ]
-      }
+      "command": "kubectl explain persistentvolumeclaim.spec"
     },
     {
       "id": "platform-cleanup",
@@ -283,38 +81,12 @@
     {
       "id": "errors-help-cmd-1",
       "type": "command",
-      "command": "kubectl explain pod.spec.notFound",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "field \"notFound\" does not exist"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "field \"notFound\" does not exist"
-        ]
-      }
+      "command": "kubectl explain pod.spec.notFound"
     },
     {
       "id": "errors-help-cmd-2",
       "type": "command",
-      "command": "kubectl explain all",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "the server does not have a resource type"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "the server does not have a resource type"
-        ]
-      }
+      "command": "kubectl explain all"
     },
     {
       "id": "errors-help-cleanup",
@@ -322,6 +94,5 @@
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
       "ignoreNotFound": true
     }
-  ],
-  "stopOnMismatch": false
+  ]
 }

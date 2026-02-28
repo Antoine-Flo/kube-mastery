@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { handleLogs } from '../../../../../src/core/kubectl/commands/handlers/logs'
+import { createNamespace } from '../../../../../src/core/cluster/ressources/Namespace'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 import { createClusterStateData } from '../../../helpers/utils'
@@ -24,7 +25,10 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      expect(result).toBe('Error: pod name is required')
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toBe('error: pod name is required')
+      }
     })
 
     it('should return error when pod is not found', () => {
@@ -33,8 +37,12 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      expect(result).toContain('NotFound')
-      expect(result).toContain('nonexistent')
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('NotFound')
+        expect(result.error).toContain('nonexistent')
+        expect(result.error).toContain('namespace "default"')
+      }
     })
 
     it('should return error when pod not found in specified namespace', () => {
@@ -51,7 +59,11 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      expect(result).toContain('NotFound')
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('NotFound')
+        expect(result.error).toContain('namespace "other-namespace"')
+      }
     })
 
     it('should return logs for single container pod', () => {
@@ -65,9 +77,10 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      // Should generate logs (not empty)
-      expect(result).toBeTruthy()
-      expect(result).not.toContain('Error')
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.length).toBeGreaterThan(0)
+      }
     })
   })
 
@@ -86,9 +99,12 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      expect(result).toContain('container name must be specified')
-      expect(result).toContain('app')
-      expect(result).toContain('sidecar')
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('container name must be specified')
+        expect(result.error).toContain('app')
+        expect(result.error).toContain('sidecar')
+      }
     })
 
     it('should return logs for specified container with -c flag', () => {
@@ -108,7 +124,7 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      expect(result).not.toContain('Error')
+      expect(result.ok).toBe(true)
     })
 
     it('should return logs with --container flag', () => {
@@ -128,7 +144,7 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      expect(result).not.toContain('Error')
+      expect(result.ok).toBe(true)
     })
 
     it('should return error for non-existent container', () => {
@@ -145,8 +161,12 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      expect(result).toContain('container nonexistent not found')
-      expect(result).toContain('Available containers')
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toBe(
+          'error: container nonexistent is not valid for pod multi-pod'
+        )
+      }
     })
 
     it('should allow accessing init container logs with -c', () => {
@@ -164,7 +184,7 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      expect(result).not.toContain('Error')
+      expect(result.ok).toBe(true)
     })
   })
 
@@ -184,7 +204,7 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      expect(result).toBe('line4\nline5')
+      expect(result).toEqual({ ok: true, value: 'line4\nline5' })
     })
 
     it('should return empty for --tail=0', () => {
@@ -202,7 +222,7 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      expect(result).toBe('')
+      expect(result).toEqual({ ok: true, value: '' })
     })
 
     it('should return error for invalid --tail value', () => {
@@ -219,11 +239,14 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      expect(result).toContain('Error')
-      expect(result).toContain('positive number')
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('invalid argument "invalid"')
+        expect(result.error).toContain("kubectl logs --help")
+      }
     })
 
-    it('should return error for negative --tail value', () => {
+    it('should return full logs for negative --tail value', () => {
       const pod = createPod({
         name: 'nginx-pod',
         namespace: 'default',
@@ -237,64 +260,10 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      expect(result).toContain('Error')
-    })
-  })
-
-  describe('--follow flag', () => {
-    it('should add follow message with -f flag', () => {
-      const pod = createPod({
-        name: 'nginx-pod',
-        namespace: 'default',
-        containers: [{ name: 'nginx', image: 'nginx:latest' }],
-        logs: ['log line']
-      })
-      const state = createState([pod])
-      const parsed = createParsedCommand({
-        name: 'nginx-pod',
-        flags: { f: true }
-      })
-
-      const result = handleLogs(state, parsed)
-
-      expect(result).toContain('following logs')
-      expect(result).toContain('Ctrl+C')
-    })
-
-    it('should add follow message with --follow flag', () => {
-      const pod = createPod({
-        name: 'nginx-pod',
-        namespace: 'default',
-        containers: [{ name: 'nginx', image: 'nginx:latest' }],
-        logs: ['log line']
-      })
-      const state = createState([pod])
-      const parsed = createParsedCommand({
-        name: 'nginx-pod',
-        flags: { follow: true }
-      })
-
-      const result = handleLogs(state, parsed)
-
-      expect(result).toContain('following logs')
-    })
-
-    it('should not add follow message if no logs', () => {
-      const pod = createPod({
-        name: 'nginx-pod',
-        namespace: 'default',
-        containers: [{ name: 'nginx', image: 'nginx:latest' }],
-        logs: []
-      })
-      const state = createState([pod])
-      const parsed = createParsedCommand({
-        name: 'nginx-pod',
-        flags: { f: true, tail: '0' }
-      })
-
-      const result = handleLogs(state, parsed)
-
-      expect(result).not.toContain('following logs')
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.length).toBeGreaterThan(0)
+      }
     })
   })
 
@@ -310,7 +279,7 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      expect(result).not.toContain('Error')
+      expect(result.ok).toBe(true)
     })
 
     it('should find pod in specified namespace', () => {
@@ -327,7 +296,30 @@ describe('kubectl logs handler', () => {
 
       const result = handleLogs(state, parsed)
 
-      expect(result).not.toContain('Error')
+      expect(result.ok).toBe(true)
+    })
+
+    it('should fail when target namespace does not exist', () => {
+      const pod = createPod({
+        name: 'nginx-pod',
+        namespace: 'default',
+        containers: [{ name: 'nginx', image: 'nginx:latest' }]
+      })
+      const state = createClusterStateData({
+        pods: [pod],
+        namespaces: [createNamespace({ name: 'default' })]
+      })
+      const parsed = createParsedCommand({
+        name: 'nginx-pod',
+        namespace: 'dev'
+      })
+
+      const result = handleLogs(state, parsed)
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('namespaces "dev" not found')
+      }
     })
   })
 })

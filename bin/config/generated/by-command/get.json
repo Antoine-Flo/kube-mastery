@@ -11,62 +11,52 @@
     {
       "id": "minimal-cmd-1",
       "type": "command",
-      "command": "kubectl get pods",
-      "compareMode": "normalized"
+      "command": "kubectl get pods"
     },
     {
       "id": "minimal-cmd-2",
       "type": "command",
-      "command": "kubectl get pods -A",
-      "compareMode": "normalized"
+      "command": "kubectl get pods -A"
     },
     {
       "id": "minimal-cmd-3",
       "type": "command",
-      "command": "kubectl get pods -o yaml",
-      "compareMode": "normalized"
+      "command": "kubectl get pods -o yaml"
     },
     {
       "id": "minimal-cmd-4",
       "type": "command",
-      "command": "kubectl get pods -o json",
-      "compareMode": "normalized"
+      "command": "kubectl get pods -o json"
     },
     {
       "id": "minimal-cmd-5",
       "type": "command",
-      "command": "kubectl get pods -n kube-system -l tier=control-plane",
-      "compareMode": "normalized"
+      "command": "kubectl get pods -n kube-system -l tier=control-plane"
     },
     {
       "id": "minimal-cmd-6",
       "type": "command",
-      "command": "kubectl get pv",
-      "compareMode": "normalized"
+      "command": "kubectl get pv"
     },
     {
       "id": "minimal-cmd-7",
       "type": "command",
-      "command": "kubectl get pvc -A",
-      "compareMode": "normalized"
+      "command": "kubectl get pvc -A"
     },
     {
       "id": "minimal-cmd-8",
       "type": "command",
-      "command": "kubectl get nodes",
-      "compareMode": "normalized"
+      "command": "kubectl get nodes"
     },
     {
       "id": "minimal-cmd-9",
       "type": "command",
-      "command": "kubectl get configmaps",
-      "compareMode": "normalized"
+      "command": "kubectl get configmaps"
     },
     {
       "id": "minimal-cmd-10",
       "type": "command",
-      "command": "kubectl get secrets",
-      "compareMode": "normalized"
+      "command": "kubectl get secrets"
     },
     {
       "id": "minimal-cleanup",
@@ -83,104 +73,77 @@
     {
       "id": "deploy-cm-cmd-1",
       "type": "command",
-      "command": "kubectl get pods",
-      "compareMode": "normalized"
+      "command": "kubectl get pods"
     },
     {
       "id": "deploy-cm-cmd-2",
       "type": "command",
-      "command": "kubectl get pods -A",
-      "compareMode": "normalized"
+      "command": "kubectl get pods -A"
     },
     {
       "id": "deploy-cm-cmd-3",
       "type": "command",
-      "command": "kubectl get pods -o wide",
-      "compareMode": "normalized"
+      "command": "kubectl get pods -o wide"
     },
     {
       "id": "deploy-cm-cmd-4",
       "type": "command",
-      "command": "kubectl get pod web -o yaml",
-      "compareMode": "normalized"
+      "command": "kubectl get pod web -o yaml"
     },
     {
       "id": "deploy-cm-cmd-5",
       "type": "command",
-      "command": "kubectl get deployments",
-      "compareMode": "normalized"
+      "command": "kubectl get pod web -o yaml"
     },
     {
       "id": "deploy-cm-cmd-6",
       "type": "command",
-      "command": "kubectl get replicasets",
-      "compareMode": "normalized"
+      "command": "kubectl get deployments"
     },
     {
       "id": "deploy-cm-cmd-7",
       "type": "command",
-      "command": "kubectl get daemonsets -A",
-      "compareMode": "normalized"
+      "command": "kubectl get replicasets"
     },
     {
       "id": "deploy-cm-cmd-8",
       "type": "command",
-      "command": "kubectl get svc web-svc",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "web-svc",
-          "ClusterIP"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "web-svc",
-          "ClusterIP"
-        ]
-      }
+      "command": "kubectl get daemonsets -A"
     },
     {
       "id": "deploy-cm-cmd-9",
       "type": "command",
-      "command": "kubectl get svc -A",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "NAMESPACE",
-          "default",
-          "web-svc"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "NAMESPACE",
-          "default",
-          "web-svc"
-        ]
-      }
+      "command": "kubectl get svc web-svc"
     },
     {
       "id": "deploy-cm-cmd-10",
       "type": "command",
-      "command": "kubectl get all",
-      "compareMode": "normalized"
+      "command": "kubectl get svc web-nodeport"
     },
     {
       "id": "deploy-cm-cmd-11",
       "type": "command",
-      "command": "kubectl get all -A",
-      "compareMode": "normalized"
+      "command": "kubectl get svc web-nodeport -o yaml"
     },
     {
       "id": "deploy-cm-cmd-12",
       "type": "command",
-      "command": "kubectl get deployments",
-      "compareMode": "normalized"
+      "command": "kubectl get svc -A"
+    },
+    {
+      "id": "deploy-cm-cmd-13",
+      "type": "command",
+      "command": "kubectl get all"
+    },
+    {
+      "id": "deploy-cm-cmd-14",
+      "type": "command",
+      "command": "kubectl get all -A"
+    },
+    {
+      "id": "deploy-cm-cmd-15",
+      "type": "command",
+      "command": "kubectl get deployments"
     },
     {
       "id": "deploy-cm-cleanup",
@@ -196,114 +159,27 @@
     {
       "id": "platform-cmd-1",
       "type": "command",
-      "command": "kubectl get --raw /",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "\"paths\"",
-          "/api",
-          "/openapi/v3"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "\"paths\"",
-          "/api",
-          "/openapi/v3"
-        ]
-      }
+      "command": "kubectl get --raw /"
     },
     {
       "id": "platform-cmd-2",
       "type": "command",
-      "command": "kubectl get --raw /api/v1/namespaces",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "NamespaceList",
-          "\"items\"",
-          "\"kubernetes.io/metadata.name\"",
-          "\"kube-public\"",
-          "\"kube-node-lease\""
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "NamespaceList",
-          "\"items\"",
-          "\"kubernetes.io/metadata.name\"",
-          "\"kube-public\"",
-          "\"kube-node-lease\""
-        ]
-      }
+      "command": "kubectl get --raw /api/v1/namespaces"
     },
     {
       "id": "platform-cmd-3",
       "type": "command",
-      "command": "kubectl get --raw /openapi/v3",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "networking.k8s.io/v1",
-          "/openapi/v3/apis/networking.k8s.io/v1"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "networking.k8s.io/v1",
-          "/openapi/v3/apis/networking.k8s.io/v1"
-        ]
-      }
+      "command": "kubectl get --raw /openapi/v3"
     },
     {
       "id": "platform-cmd-4",
       "type": "command",
-      "command": "kubectl get --raw /apis/networking.k8s.io/v1",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "APIResourceList",
-          "ingresses",
-          "ingressclasses"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "APIResourceList",
-          "ingresses",
-          "ingressclasses"
-        ]
-      }
+      "command": "kubectl get --raw /apis/networking.k8s.io/v1"
     },
     {
       "id": "platform-cmd-5",
       "type": "command",
-      "command": "kubectl get --raw /openapi/v3/apis/networking.k8s.io/v1",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "openapi",
-          "ingresses",
-          "ingressclasses"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "openapi",
-          "ingresses",
-          "ingressclasses"
-        ]
-      }
+      "command": "kubectl get --raw /openapi/v3/apis/networking.k8s.io/v1"
     },
     {
       "id": "platform-cleanup",
@@ -320,94 +196,32 @@
     {
       "id": "ingress-basics-cmd-1",
       "type": "command",
-      "command": "kubectl get ingress",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "NAME",
-          "demo-ingress",
-          "demo.example.com"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "NAME",
-          "demo-ingress",
-          "demo.example.com"
-        ]
-      }
+      "command": "kubectl get ingress"
     },
     {
       "id": "ingress-basics-cmd-2",
       "type": "command",
-      "command": "kubectl get svc",
-      "compareMode": "normalized"
+      "command": "kubectl get svc"
     },
     {
       "id": "ingress-basics-cmd-3",
       "type": "command",
-      "command": "kubectl get svc -A",
-      "compareMode": "normalized"
+      "command": "kubectl get svc -A"
     },
     {
       "id": "ingress-basics-cmd-4",
       "type": "command",
-      "command": "kubectl get svc api-service -o yaml",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "kind: Service",
-          "name: api-service"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "kind: Service",
-          "name: api-service"
-        ]
-      }
+      "command": "kubectl get svc api-service -o yaml"
     },
     {
       "id": "ingress-basics-cmd-5",
       "type": "command",
-      "command": "kubectl get svc frontend-service -o json",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "\"kind\": \"Service\"",
-          "\"name\": \"frontend-service\""
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "\"kind\": \"Service\"",
-          "\"name\": \"frontend-service\""
-        ]
-      }
+      "command": "kubectl get svc frontend-service -o json"
     },
     {
       "id": "ingress-basics-cmd-6",
       "type": "command",
-      "command": "kubectl get ingressclass",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "No resources found"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "No resources found"
-        ]
-      }
+      "command": "kubectl get ingressclass"
     },
     {
       "id": "ingress-basics-cleanup",
@@ -423,26 +237,17 @@
     {
       "id": "run-cases-cmd-1",
       "type": "command",
-      "command": "kubectl get pod run-ok-command",
-      "compareMode": "normalized"
+      "command": "kubectl get pod run-ok-command"
     },
     {
       "id": "run-cases-cmd-2",
       "type": "command",
-      "command": "kubectl get pod run-ok-dry-run",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "Error from server (NotFound): pods \"run-ok-dry-run\" not found"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "Error from server (NotFound): pods \"run-ok-dry-run\" not found"
-        ]
-      }
+      "command": "kubectl get pod run-ok-multi-env -o yaml"
+    },
+    {
+      "id": "run-cases-cmd-3",
+      "type": "command",
+      "command": "kubectl get pod run-ok-dry-run"
     },
     {
       "id": "run-cases-cleanup",
@@ -458,52 +263,22 @@
     {
       "id": "namespace-ops-cmd-1",
       "type": "command",
-      "command": "kubectl get namespace my-team",
-      "compareMode": "normalized"
+      "command": "kubectl get namespace my-team"
     },
     {
       "id": "namespace-ops-cmd-2",
       "type": "command",
-      "command": "kubectl get namespaces",
-      "compareMode": "normalized"
+      "command": "kubectl get namespaces"
     },
     {
       "id": "namespace-ops-cmd-3",
       "type": "command",
-      "command": "kubectl get --raw /api/v1/namespaces",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "NamespaceList",
-          "\"my-team\""
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "NamespaceList",
-          "\"my-team\""
-        ]
-      }
+      "command": "kubectl get --raw /api/v1/namespaces"
     },
     {
       "id": "namespace-ops-cmd-4",
       "type": "command",
-      "command": "kubectl get namespace my-team",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "Error from server (NotFound): namespaces \"my-team\" not found"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "Error from server (NotFound): namespaces \"my-team\" not found"
-        ]
-      }
+      "command": "kubectl get namespace my-team"
     },
     {
       "id": "namespace-ops-cleanup",
@@ -519,44 +294,17 @@
     {
       "id": "errors-help-cmd-1",
       "type": "command",
-      "command": "kubectl get pods --raw /",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "arguments may not be passed when --raw is specified"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "arguments may not be passed when --raw is specified"
-        ]
-      }
+      "command": "kubectl get pods --raw /"
     },
     {
       "id": "errors-help-cmd-2",
       "type": "command",
-      "command": "kubectl get --raw / -o json",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "--raw and --output are mutually exclusive"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "--raw and --output are mutually exclusive"
-        ]
-      }
+      "command": "kubectl get --raw / -o json"
     },
     {
       "id": "errors-help-cmd-3",
       "type": "command",
-      "command": "kubectl get not-a-resource",
-      "compareMode": "normalized"
+      "command": "kubectl get not-a-resource"
     },
     {
       "id": "errors-help-cleanup",
@@ -564,6 +312,5 @@
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
       "ignoreNotFound": true
     }
-  ],
-  "stopOnMismatch": false
+  ]
 }

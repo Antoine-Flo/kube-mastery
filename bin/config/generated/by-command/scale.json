@@ -11,8 +11,7 @@
     {
       "id": "deploy-cm-cmd-1",
       "type": "command",
-      "command": "kubectl scale deployments exhaustive-web --replicas=3",
-      "compareMode": "normalized"
+      "command": "kubectl scale deployments exhaustive-web --replicas=3"
     },
     {
       "id": "deploy-cm-cleanup",
@@ -28,8 +27,7 @@
     {
       "id": "errors-help-cmd-1",
       "type": "command",
-      "command": "kubectl scale deployments missing-deploy --replicas=2",
-      "compareMode": "normalized"
+      "command": "kubectl scale deployments missing-deploy --replicas=2"
     },
     {
       "id": "errors-help-cleanup",
@@ -37,6 +35,5 @@
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
       "ignoreNotFound": true
     }
-  ],
-  "stopOnMismatch": false
+  ]
 }
