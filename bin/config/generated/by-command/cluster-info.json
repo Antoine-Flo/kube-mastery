@@ -10,26 +10,22 @@
     {
       "id": "platform-cmd-1",
       "type": "command",
-      "command": "kubectl cluster-info",
-      "compareMode": "normalized"
+      "command": "kubectl cluster-info"
     },
     {
       "id": "platform-cmd-2",
       "type": "command",
-      "command": "kubectl cluster-info dump",
-      "compareMode": "normalized"
+      "command": "kubectl cluster-info dump"
     },
     {
       "id": "platform-cmd-3",
       "type": "command",
-      "command": "kubectl cluster-info dump -o yaml",
-      "compareMode": "normalized"
+      "command": "kubectl cluster-info dump -o yaml"
     },
     {
       "id": "platform-cmd-4",
       "type": "command",
-      "command": "kubectl cluster-info dump --namespaces=default,kube-system",
-      "compareMode": "normalized"
+      "command": "kubectl cluster-info dump --namespaces=default,kube-system"
     },
     {
       "id": "platform-cleanup",
@@ -45,8 +41,7 @@
     {
       "id": "errors-help-cmd-1",
       "type": "command",
-      "command": "kubectl cluster-info dump --output-directory /tmp/out",
-      "compareMode": "normalized"
+      "command": "kubectl cluster-info dump --output-directory /tmp/out"
     },
     {
       "id": "errors-help-cleanup",
@@ -54,6 +49,5 @@
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
       "ignoreNotFound": true
     }
-  ],
-  "stopOnMismatch": false
+  ]
 }

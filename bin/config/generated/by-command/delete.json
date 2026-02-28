@@ -11,8 +11,7 @@
     {
       "id": "minimal-cmd-1",
       "type": "command",
-      "command": "kubectl delete pod web-00063e839a-chadq",
-      "compareMode": "normalized"
+      "command": "kubectl delete pod web-00063e839a-chadq"
     },
     {
       "id": "minimal-cleanup",
@@ -29,38 +28,27 @@
     {
       "id": "deploy-cm-cmd-1",
       "type": "command",
-      "command": "kubectl delete svc web-svc",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "service \"web-svc\" deleted"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "service \"web-svc\" deleted"
-        ]
-      }
+      "command": "kubectl delete svc web-svc"
     },
     {
       "id": "deploy-cm-cmd-2",
       "type": "command",
-      "command": "kubectl delete deployments exhaustive-api",
-      "compareMode": "normalized"
+      "command": "kubectl delete svc web-nodeport"
     },
     {
       "id": "deploy-cm-cmd-3",
       "type": "command",
-      "command": "kubectl delete deployments exhaustive-multi",
-      "compareMode": "normalized"
+      "command": "kubectl delete deployments exhaustive-api"
     },
     {
       "id": "deploy-cm-cmd-4",
       "type": "command",
-      "command": "kubectl delete deployments exhaustive-web",
-      "compareMode": "normalized"
+      "command": "kubectl delete deployments exhaustive-multi"
+    },
+    {
+      "id": "deploy-cm-cmd-5",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-web"
     },
     {
       "id": "deploy-cm-cleanup",
@@ -77,20 +65,7 @@
     {
       "id": "ingress-basics-cmd-1",
       "type": "command",
-      "command": "kubectl delete ingress demo-ingress",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "ingress.networking.k8s.io \"demo-ingress\" deleted"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "ingress.networking.k8s.io \"demo-ingress\" deleted"
-        ]
-      }
+      "command": "kubectl delete ingress demo-ingress"
     },
     {
       "id": "ingress-basics-cleanup",
@@ -106,32 +81,32 @@
     {
       "id": "run-cases-cmd-1",
       "type": "command",
-      "command": "kubectl delete pod run-ok-command",
-      "compareMode": "normalized"
+      "command": "kubectl delete pod run-ok-command"
     },
     {
       "id": "run-cases-cmd-2",
       "type": "command",
-      "command": "kubectl delete pod run-ok-image-only",
-      "compareMode": "normalized"
+      "command": "kubectl delete pod run-ok-image-only"
     },
     {
       "id": "run-cases-cmd-3",
       "type": "command",
-      "command": "kubectl delete pod run-ok-args",
-      "compareMode": "normalized"
+      "command": "kubectl delete pod run-ok-args"
     },
     {
       "id": "run-cases-cmd-4",
       "type": "command",
-      "command": "kubectl delete pod run-ok-env-label-port",
-      "compareMode": "normalized"
+      "command": "kubectl delete pod run-ok-env-label-port"
     },
     {
       "id": "run-cases-cmd-5",
       "type": "command",
-      "command": "kubectl delete pod run-ok-interactive",
-      "compareMode": "normalized"
+      "command": "kubectl delete pod run-ok-multi-env"
+    },
+    {
+      "id": "run-cases-cmd-6",
+      "type": "command",
+      "command": "kubectl delete pod run-ok-interactive"
     },
     {
       "id": "run-cases-cleanup",
@@ -147,8 +122,7 @@
     {
       "id": "namespace-ops-cmd-1",
       "type": "command",
-      "command": "kubectl delete namespace my-team",
-      "compareMode": "normalized"
+      "command": "kubectl delete namespace my-team"
     },
     {
       "id": "namespace-ops-cleanup",
@@ -164,8 +138,7 @@
     {
       "id": "errors-help-cmd-1",
       "type": "command",
-      "command": "kubectl delete pods missing-pod",
-      "compareMode": "normalized"
+      "command": "kubectl delete pods missing-pod"
     },
     {
       "id": "errors-help-cleanup",
@@ -173,6 +146,5 @@
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
       "ignoreNotFound": true
     }
-  ],
-  "stopOnMismatch": false
+  ]
 }

@@ -26,8 +26,7 @@ describe('scenario generator', () => {
     expect(suite.actions[1]).toEqual({
       id: 'segment-a-cmd-1',
       type: 'command',
-      command: 'kubectl get pods',
-      compareMode: 'normalized'
+      command: 'kubectl get pods'
     })
     expect(suite.actions[2]).toEqual({
       id: 'segment-a-cleanup',
@@ -37,22 +36,15 @@ describe('scenario generator', () => {
     })
   })
 
-  it('should support command expectations and compare mode overrides', () => {
+  it('should keep command-only segment config', () => {
     const suite = generateLifecycleSuite({
-      name: 'test-suite-expectations',
+      name: 'test-suite-command-only',
       clusterName: 'test-cluster',
       segments: [
         {
           idPrefix: 'segment-b',
           seed: 'minimal',
-          commands: [
-            {
-              command: 'kubectl get --raw /',
-              compareMode: 'none',
-              expectKind: { exitCode: 0, stdoutContains: ['"paths"'] },
-              expectRunner: { exitCode: 0, stdoutContains: ['"paths"'] }
-            }
-          ]
+          commands: ['kubectl get --raw /']
         }
       ]
     })
@@ -60,10 +52,7 @@ describe('scenario generator', () => {
     expect(suite.actions[1]).toEqual({
       id: 'segment-b-cmd-1',
       type: 'command',
-      command: 'kubectl get --raw /',
-      compareMode: 'none',
-      expectKind: { exitCode: 0, stdoutContains: ['"paths"'] },
-      expectRunner: { exitCode: 0, stdoutContains: ['"paths"'] }
+      command: 'kubectl get --raw /'
     })
   })
 })

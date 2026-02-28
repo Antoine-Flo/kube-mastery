@@ -3,6 +3,28 @@
   "clusterName": "conformance",
   "actions": [
     {
+      "id": "deploy-cm-apply",
+      "type": "applyYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "waitForPods": true
+    },
+    {
+      "id": "deploy-cm-cmd-1",
+      "type": "command",
+      "command": "kubectl label pod web team=platform"
+    },
+    {
+      "id": "deploy-cm-cmd-2",
+      "type": "command",
+      "command": "kubectl label pod web team-"
+    },
+    {
+      "id": "deploy-cm-cleanup",
+      "type": "deleteYaml",
+      "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/deployment-with-configmap",
+      "ignoreNotFound": true
+    },
+    {
       "id": "errors-help-apply",
       "type": "applyYaml",
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal"
@@ -10,8 +32,7 @@
     {
       "id": "errors-help-cmd-1",
       "type": "command",
-      "command": "kubectl label --help",
-      "compareMode": "normalized"
+      "command": "kubectl label pod missing-pod team=platform"
     },
     {
       "id": "errors-help-cleanup",
@@ -19,6 +40,5 @@
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
       "ignoreNotFound": true
     }
-  ],
-  "stopOnMismatch": false
+  ]
 }

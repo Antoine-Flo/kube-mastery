@@ -1,11 +1,3 @@
-export type CompareMode = 'normalized' | 'raw' | 'none'
-
-export interface CommandExpectation {
-  exitCode?: number
-  stdoutContains?: string[]
-  stderrContains?: string[]
-}
-
 export interface CommandExecutionResult {
   command: string
   exitCode: number
@@ -47,9 +39,6 @@ export interface WaitPodsReadyAction extends ConformanceActionBase {
 export interface CommandAction extends ConformanceActionBase {
   type: 'command'
   command: string
-  compareMode?: CompareMode
-  expectKind?: CommandExpectation
-  expectRunner?: CommandExpectation
 }
 
 export type ConformanceAction =
@@ -62,7 +51,6 @@ export interface ConformanceSuite {
   name: string
   clusterName: string
   actions: ConformanceAction[]
-  stopOnMismatch?: boolean
 }
 
 export interface ActionExecutionRecord {

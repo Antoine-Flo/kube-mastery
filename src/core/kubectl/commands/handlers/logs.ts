@@ -1,4 +1,6 @@
 import type { ClusterStateData } from '../../../cluster/ClusterState'
+import type { ExecutionResult } from '../../../shared/result'
+import { error, success } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
 import { generateLogs } from '../../../cluster/logGenerator'
 
@@ -20,14 +22,26 @@ const DEFAULT_LOG_COUNT = 50
 export const handleLogs = (
   state: ClusterStateData,
   parsed: ParsedCommand
-): string => {
+): ExecutionResult => {
   // Validate pod name is provided
   if (!parsed.name) {
-    return 'Error: pod name is required'
+    return error('error: pod name is required')
   }
 
   const namespace = parsed.namespace || 'default'
   const podName = parsed.name
+
+  const hasNamespaces = state.namespaces.items.length > 0
+  if (hasNamespaces) {
+    const namespaceExists = state.namespaces.items.some((item) => {
+      return item.metadata.name === namespace
+    })
+    if (!namespaceExists) {
+      return error(
+        `error: error from server (NotFound): namespaces "${namespace}" not found in namespace "${namespace}"`
+      )
+    }
+  }
 
   // Find the pod
   const pod = state.pods.items.find(
@@ -35,7 +49,9 @@ export const handleLogs = (
   )
 
   if (!pod) {
-    return `Error from server (NotFound): pods "${podName}" not found`
+    return error(
+      `error: error from server (NotFound): pods "${podName}" not found in namespace "${namespace}"`
+    )
   }
 
   // Multi-container support: determine which container to use
@@ -54,18 +70,19 @@ export const handleLogs = (
     targetContainer = allContainers.find((c) => c.name === containerName)
 
     if (!targetContainer) {
-      const availableNames = allContainers.map((c) => c.name).join(', ')
-      return `Error: container ${containerName} not found in pod ${podName}. Available containers: ${availableNames}`
+      return error(`error: container ${containerName} is not valid for pod ${podName}`)
     }
   } else if (regularContainers.length > 1) {
     // Multiple containers but no -c flag specified
     const containerNames = regularContainers.map((c) => c.name).join(', ')
-    return `Error: a container name must be specified for pod ${podName}, choose one of: [${containerNames}]`
+    return error(
+      `error: a container name must be specified for pod ${podName}, choose one of: [${containerNames}]`
+    )
   } else if (regularContainers.length === 1) {
     // Single container - use it automatically
     targetContainer = regularContainers[0]
   } else {
-    return `Error: pod ${podName} has no containers`
+    return error(`error: pod ${podName} has no containers`)
   }
 
   // Get or generate logs
@@ -73,33 +90,33 @@ export const handleLogs = (
 
   if (logs.length === 0) {
     // Generate logs based on target container image
-    logs = generateLogs(targetContainer.image, DEFAULT_LOG_COUNT)
+    logs = generateLogs(targetContainer.image, DEFAULT_LOG_COUNT, {
+      namespace,
+      podName,
+      containerName: targetContainer.name
+    })
   }
 
   // Apply --tail flag if present
   const tailValue = parsed.flags.tail
   if (tailValue !== undefined) {
-    const tailCount = parseInt(tailValue as string, 10)
-
-    if (isNaN(tailCount) || tailCount < 0) {
-      return 'Error: --tail value must be a positive number'
+    const tailText = String(tailValue)
+    const validInteger = /^-?\d+$/.test(tailText)
+    if (!validInteger) {
+      return error(
+        `error: invalid argument "${tailText}" for "--tail" flag: strconv.ParseInt: parsing "${tailText}": invalid syntax\nSee 'kubectl logs --help' for usage.`
+      )
     }
+    const tailCount = parseInt(tailText, 10)
 
     if (tailCount === 0) {
       logs = []
-    } else {
+    } else if (tailCount > 0) {
       logs = logs.slice(-tailCount)
     }
   }
 
   // Format logs
-  let output = logs.join('\n')
-
-  // Apply --follow flag if present
-  const isFollow = parsed.flags.f === true || parsed.flags.follow === true
-  if (isFollow && logs.length > 0) {
-    output += '\n(following logs - press Ctrl+C to stop)'
-  }
-
-  return output
+  const output = logs.join('\n')
+  return success(output)
 }

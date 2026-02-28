@@ -10,8 +10,7 @@
     {
       "id": "platform-cmd-1",
       "type": "command",
-      "command": "kubectl api-versions",
-      "compareMode": "normalized"
+      "command": "kubectl api-versions"
     },
     {
       "id": "platform-cleanup",
@@ -19,6 +18,5 @@
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
       "ignoreNotFound": true
     }
-  ],
-  "stopOnMismatch": false
+  ]
 }

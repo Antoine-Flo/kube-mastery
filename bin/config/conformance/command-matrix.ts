@@ -24,7 +24,7 @@ export interface CommandMatrixDefinition {
 const COMMON_EXPECTATIONS = [
   'exitCode parity',
   'stdout/stderr contract',
-  'compareMode (normalized/raw/none)'
+  'normalized output diff parity'
 ]
 
 export const COMMAND_MATRIX: Record<KubectlCommandName, CommandMatrixDefinition> = {

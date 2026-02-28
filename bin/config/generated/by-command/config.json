@@ -10,78 +10,22 @@
     {
       "id": "platform-cmd-1",
       "type": "command",
-      "command": "kubectl config get-contexts",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "kind-conformance"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "kind-conformance"
-        ]
-      }
+      "command": "kubectl config get-contexts"
     },
     {
       "id": "platform-cmd-2",
       "type": "command",
-      "command": "kubectl config current-context",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "kind-conformance"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "kind-conformance"
-        ]
-      }
+      "command": "kubectl config current-context"
     },
     {
       "id": "platform-cmd-3",
       "type": "command",
-      "command": "kubectl config view --minify",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "current-context: kind-conformance",
-          "certificate-authority-data: DATA+OMITTED",
-          "client-certificate-data: DATA+OMITTED"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "current-context: kind-conformance",
-          "certificate-authority-data: DATA+OMITTED",
-          "client-certificate-data: DATA+OMITTED"
-        ]
-      }
+      "command": "kubectl config view --minify"
     },
     {
       "id": "platform-cmd-4",
       "type": "command",
-      "command": "kubectl config set-context --current --namespace=dev",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "Context \"kind-conformance\" modified."
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "Context \"kind-conformance\" modified."
-        ]
-      }
+      "command": "kubectl config set-context --current --namespace=dev"
     },
     {
       "id": "platform-cleanup",
@@ -89,6 +33,5 @@
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
       "ignoreNotFound": true
     }
-  ],
-  "stopOnMismatch": false
+  ]
 }

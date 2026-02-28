@@ -1,69 +1,6 @@
-import type {
-  LifecycleCommandConfig,
-  LifecycleSegment
-} from '../../lib/scenario-generator'
+import type { LifecycleSegment } from '../../lib/scenario-generator'
 
-const createRawCommand = (
-  command: string,
-  stdoutContains: string[]
-): LifecycleCommandConfig => {
-  return {
-    command,
-    compareMode: 'none',
-    expectKind: {
-      exitCode: 0,
-      stdoutContains
-    },
-    expectRunner: {
-      exitCode: 0,
-      stdoutContains
-    }
-  }
-}
-
-const createRawErrorCommand = (
-  command: string,
-  stderrContains: string[]
-): LifecycleCommandConfig => {
-  return {
-    command,
-    compareMode: 'none',
-    expectKind: {
-      exitCode: 1,
-      stderrContains
-    },
-    expectRunner: {
-      exitCode: 1,
-      stderrContains
-    }
-  }
-}
-
-const createRawDiffCommand = (
-  command: string,
-  stdoutContains: string[]
-): LifecycleCommandConfig => {
-  return {
-    command,
-    compareMode: 'none',
-    expectKind: {
-      exitCode: 1,
-      stdoutContains
-    },
-    expectRunner: {
-      exitCode: 1,
-      stdoutContains
-    }
-  }
-}
-
-const isTemporarilySkippedHelpCommand = (
-  commandConfig: string | LifecycleCommandConfig
-): boolean => {
-  const command =
-    typeof commandConfig === 'string'
-      ? commandConfig
-      : commandConfig.command
+const isTemporarilySkippedHelpCommand = (command: string): boolean => {
   return /(^|\s)(--help|-h)(\s|$)/.test(command)
 }
 
@@ -74,6 +11,9 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
       seed: 'minimal',
       waitForPods: true,
       commands: [
+        'kubectl logs kube-scheduler-conformance-control-plane -n kube-system --tail=20',
+        'kubectl logs kube-apiserver-conformance-control-plane -n kube-system --tail=10',
+        'kubectl logs kube-controller-manager-conformance-control-plane -n kube-system --tail=10',
         'kubectl get pods',
         'kubectl get pods -A',
         'kubectl get pods -o yaml',
@@ -83,6 +23,7 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
         'kubectl get pv',
         'kubectl get pvc -A',
         'kubectl delete pod web-00063e839a-chadq',
+        'kubectl logs web-00063e839a-chadq',
         'kubectl get nodes',
         'kubectl describe node conformance-worker',
         'kubectl get configmaps',
@@ -100,44 +41,51 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
         'kubectl get pods -A',
         'kubectl get pods -o wide',
         'kubectl describe pod web',
+        'kubectl logs web',
+        'kubectl logs web --tail=1',
+        'kubectl logs web --tail=5',
+        'kubectl logs web --tail=20',
+        'kubectl logs web -n default --tail=5',
+        'kubectl logs web -c nginx --tail=5',
+        'kubectl logs web --tail=0',
+        'kubectl logs web --tail=-1',
+        'kubectl logs web --tail=abc',
+        'kubectl logs web -c missing-container',
+        'kubectl exec web -- env',
         'kubectl get pod web -o yaml',
+        'kubectl label pod web team=platform',
+        'kubectl annotate pod web owner=platform',
+        'kubectl get pod web -o yaml',
+        'kubectl label pod web team-',
+        'kubectl annotate pod web owner-',
         'kubectl get deployments',
         'kubectl get replicasets',
         'kubectl get daemonsets -A',
         'kubectl diff -f src/courses/seeds/deployment-with-configmap/configmap.yaml',
         'kubectl diff -f src/courses/seeds/deployment-with-configmap/secret.yaml',
-        createRawDiffCommand(
-          'kubectl diff -f src/courses/seeds/diff-fixtures/configmap-changed.yaml',
-          ['app-config', 'LOG_LEVEL']
-        ),
-        createRawDiffCommand(
-          'kubectl diff -f src/courses/seeds/diff-fixtures/secret-changed.yaml',
-          ['app-secret']
-        ),
+        'kubectl diff -f src/courses/seeds/diff-fixtures/configmap-changed.yaml',
+        'kubectl diff -f src/courses/seeds/diff-fixtures/secret-changed.yaml',
         'kubectl create deployment exhaustive-web --image=nginx:latest',
         'kubectl describe deployment exhaustive-web',
         'kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080',
         'kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date',
-        createRawCommand(
-          'kubectl expose deployment web --port=80 --target-port=80 --name=web-svc',
-          ['service/web-svc exposed']
-        ),
-        createRawCommand('kubectl get svc web-svc', ['web-svc', 'ClusterIP']),
-        createRawCommand('kubectl describe svc web-svc', [
-          'Name:',
-          'web-svc',
-          'Selector:',
-          'app=web'
-        ]),
-        createRawCommand('kubectl get svc -A', ['NAMESPACE', 'default', 'web-svc']),
+        'kubectl expose deployment web --port=80 --target-port=80 --name=web-svc',
+        'kubectl get svc web-svc',
+        'kubectl describe svc web-svc',
+        'kubectl exec web -- nslookup web-svc.default.svc.cluster.local',
+        'kubectl exec web -- curl http://web-svc',
+        'kubectl expose deployment web --port=80 --target-port=80 --type=NodePort --name=web-nodeport --selector=app=web',
+        'kubectl get svc web-nodeport',
+        'kubectl get svc web-nodeport -o yaml',
+        'kubectl describe svc web-nodeport',
+        'kubectl get svc -A',
         'kubectl get all',
         'kubectl get all -A',
         'kubectl scale deployments exhaustive-web --replicas=3',
         'kubectl get deployments',
-        createRawCommand('kubectl delete svc web-svc', ['service "web-svc" deleted']),
-        createRawErrorCommand('kubectl describe svc web-svc', [
-          'Error from server (NotFound): services "web-svc" not found'
-        ]),
+        'kubectl delete svc web-svc',
+        'kubectl delete svc web-nodeport',
+        'kubectl describe svc web-svc',
         'kubectl delete deployments exhaustive-api',
         'kubectl delete deployments exhaustive-multi',
         'kubectl delete deployments exhaustive-web'
@@ -147,41 +95,19 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
       idPrefix: 'platform',
       seed: 'minimal',
       commands: [
-        createRawCommand('kubectl get --raw /', ['"paths"', '/api', '/openapi/v3']),
-        createRawCommand('kubectl get --raw /api/v1/namespaces', [
-          'NamespaceList',
-          '"items"',
-          '"kubernetes.io/metadata.name"',
-          '"kube-public"',
-          '"kube-node-lease"'
-        ]),
-        createRawCommand('kubectl get --raw /openapi/v3', [
-          'networking.k8s.io/v1',
-          '/openapi/v3/apis/networking.k8s.io/v1'
-        ]),
-        createRawCommand('kubectl get --raw /apis/networking.k8s.io/v1', [
-          'APIResourceList',
-          'ingresses',
-          'ingressclasses'
-        ]),
-        createRawCommand(
-          'kubectl get --raw /openapi/v3/apis/networking.k8s.io/v1',
-          ['openapi', 'ingresses', 'ingressclasses']
-        ),
+        'kubectl get --raw /',
+        'kubectl get --raw /api/v1/namespaces',
+        'kubectl get --raw /openapi/v3',
+        'kubectl get --raw /apis/networking.k8s.io/v1',
+        'kubectl get --raw /openapi/v3/apis/networking.k8s.io/v1',
         'kubectl version',
         'kubectl version --client',
         'kubectl version --output json',
         'kubectl version --output yaml',
-        createRawCommand('kubectl config get-contexts', ['kind-conformance']),
-        createRawCommand('kubectl config current-context', ['kind-conformance']),
-        createRawCommand('kubectl config view --minify', [
-          'current-context: kind-conformance',
-          'certificate-authority-data: DATA+OMITTED',
-          'client-certificate-data: DATA+OMITTED'
-        ]),
-        createRawCommand('kubectl config set-context --current --namespace=dev', [
-          'Context "kind-conformance" modified.'
-        ]),
+        'kubectl config get-contexts',
+        'kubectl config current-context',
+        'kubectl config view --minify',
+        'kubectl config set-context --current --namespace=dev',
         'kubectl cluster-info',
         'kubectl cluster-info dump',
         'kubectl cluster-info dump -o yaml',
@@ -197,62 +123,20 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
         'kubectl api-resources --sort-by=name',
         'kubectl api-resources --sort-by=kind',
         'kubectl api-resources --no-headers',
-        createRawCommand('kubectl explain pod', ['KIND:', 'Pod', 'FIELDS:']),
-        createRawCommand('kubectl explain pod.spec.containers', [
-          'FIELD:    containers',
-          'DESCRIPTION:'
-        ]),
-        createRawCommand(
-          'kubectl explain deployment.spec.template.spec.containers',
-          ['FIELD:    containers', 'KIND:', 'Deployment']
-        ),
-        createRawCommand('kubectl explain service.spec.ports', [
-          'FIELD:    ports',
-          'KIND:',
-          'Service'
-        ]),
-        createRawCommand('kubectl explain configmap.data', [
-          'FIELD:    data',
-          'KIND:',
-          'ConfigMap'
-        ]),
-        createRawCommand('kubectl explain secret.data', [
-          'FIELD:    data',
-          'KIND:',
-          'Secret'
-        ]),
-        createRawCommand('kubectl explain namespace.metadata', [
-          'FIELD:    metadata',
-          'KIND:',
-          'Namespace'
-        ]),
-        createRawCommand('kubectl explain node.status', [
-          'FIELD:    status',
-          'KIND:',
-          'Node'
-        ]),
+        'kubectl explain pod',
+        'kubectl explain pod.spec.containers',
+        'kubectl explain deployment.spec.template.spec.containers',
+        'kubectl explain service.spec.ports',
+        'kubectl explain configmap.data',
+        'kubectl explain secret.data',
+        'kubectl explain namespace.metadata',
+        'kubectl explain node.status',
         'kubectl describe node conformance-control-plane',
         'kubectl describe node conformance-worker2',
-        createRawCommand('kubectl explain replicaset.spec.replicas', [
-          'FIELD:    replicas',
-          'KIND:',
-          'ReplicaSet'
-        ]),
-        createRawCommand('kubectl explain daemonset.spec.template', [
-          'FIELD:    template',
-          'KIND:',
-          'DaemonSet'
-        ]),
-        createRawCommand('kubectl explain persistentvolume.spec', [
-          'FIELD:    spec',
-          'KIND:',
-          'PersistentVolume'
-        ]),
-        createRawCommand('kubectl explain persistentvolumeclaim.spec', [
-          'FIELD:    spec',
-          'KIND:',
-          'PersistentVolumeClaim'
-        ])
+        'kubectl explain replicaset.spec.replicas',
+        'kubectl explain daemonset.spec.template',
+        'kubectl explain persistentvolume.spec',
+        'kubectl explain persistentvolumeclaim.spec'
       ]
     },
     {
@@ -260,153 +144,91 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
       seed: 'ingress-basics',
       waitForPods: true,
       commands: [
-        createRawCommand('kubectl get ingress', [
-          'NAME',
-          'demo-ingress',
-          'demo.example.com'
-        ]),
+        'kubectl get ingress',
         'kubectl get svc',
         'kubectl get svc -A',
-        createRawCommand('kubectl describe svc api-service', [
-          'Name:',
-          'api-service',
-          'Selector:',
-          'app=api'
-        ]),
-        createRawCommand('kubectl get svc api-service -o yaml', [
-          'kind: Service',
-          'name: api-service'
-        ]),
-        createRawCommand('kubectl get svc frontend-service -o json', [
-          '"kind": "Service"',
-          '"name": "frontend-service"'
-        ]),
-        createRawCommand('kubectl describe ingress demo-ingress', [
-          'Name:',
-          'demo-ingress',
-          'Rules:',
-          '/api',
-          'api-service:80',
-          'frontend-service:80'
-        ]),
-        createRawCommand('kubectl get ingressclass', ['No resources found']),
-        createRawCommand('kubectl delete ingress demo-ingress', [
-          'ingress.networking.k8s.io "demo-ingress" deleted'
-        ])
+        'kubectl describe svc api-service',
+        'kubectl get svc api-service -o yaml',
+        'kubectl get svc frontend-service -o json',
+        'kubectl describe ingress demo-ingress',
+        'kubectl get ingressclass',
+        'kubectl delete ingress demo-ingress'
       ]
     },
     {
       idPrefix: 'run-cases',
       seed: 'minimal',
       commands: [
-        createRawCommand(
-          'kubectl run run-ok-command --image=busybox --command -- sleep 3600',
-          ['pod/run-ok-command created']
-        ),
+        'kubectl run run-ok-command --image=busybox --command -- sleep 3600',
         'kubectl get pod run-ok-command',
+        'kubectl logs run-ok-command -n default --tail=5',
         'kubectl delete pod run-ok-command',
-        createRawCommand('kubectl run run-ok-image-only --image=busybox', [
-          'pod/run-ok-image-only created'
-        ]),
+        'kubectl logs run-ok-command -n default',
+        'kubectl run run-ok-image-only --image=busybox',
+        'kubectl logs run-ok-image-only -n default --tail=5',
         'kubectl delete pod run-ok-image-only',
-        createRawCommand('kubectl run run-ok-args --image=busybox -- sleep 3600', [
-          'pod/run-ok-args created'
-        ]),
+        'kubectl logs run-ok-image-only -n default',
+        'kubectl run run-ok-args --image=busybox -- sleep 3600',
+        'kubectl logs run-ok-args -n default --tail=5',
         'kubectl delete pod run-ok-args',
-        createRawCommand(
-          'kubectl run run-ok-env-label-port --image=busybox --env=DNS_DOMAIN=cluster --env=POD_NAMESPACE=default --labels=app=hazelcast,env=prod --port=5701',
-          ['pod/run-ok-env-label-port created']
-        ),
+        'kubectl run run-ok-env-label-port --image=busybox --env=DNS_DOMAIN=cluster --env=POD_NAMESPACE=default --labels=app=hazelcast,env=prod --port=5701',
         'kubectl describe pod run-ok-env-label-port',
+        'kubectl logs run-ok-env-label-port -n default --tail=5',
         'kubectl delete pod run-ok-env-label-port',
-        createRawCommand(
-          'kubectl run run-ok-interactive --image=busybox -i -t --restart=Never --rm',
-          ['pod/run-ok-interactive created']
-        ),
+        'kubectl run run-ok-multi-env --image=busybox --env=FOO=1 --env=BAR=2 --labels=team=qa,tier=test --port=9090 --restart=Never --command -- sleep 3600',
+        'kubectl get pod run-ok-multi-env -o yaml',
+        'kubectl logs run-ok-multi-env -n default --tail=5',
+        'kubectl delete pod run-ok-multi-env',
+        'kubectl run run-ok-interactive --image=busybox -i -t --restart=Never --rm',
         'kubectl delete pod run-ok-interactive',
-        createRawCommand(
-          'kubectl run run-ok-dry-run --image=busybox --dry-run=client',
-          ['pod/run-ok-dry-run created (dry run)']
-        ),
-        createRawErrorCommand('kubectl get pod run-ok-dry-run', [
-          'Error from server (NotFound): pods "run-ok-dry-run" not found'
-        ])
+        'kubectl run run-ok-dry-run --image=busybox --dry-run=client',
+        'kubectl get pod run-ok-dry-run',
+        'kubectl logs run-ok-dry-run -n default'
       ]
     },
     {
       idPrefix: 'namespace-ops',
       seed: 'minimal',
       commands: [
-        createRawCommand('kubectl create namespace my-team', [
-          'namespace/my-team created'
-        ]),
+        'kubectl create namespace my-team',
         'kubectl get namespace my-team',
         'kubectl get namespaces',
-        createRawCommand('kubectl get --raw /api/v1/namespaces', [
-          'NamespaceList',
-          '"my-team"'
-        ]),
-        createRawErrorCommand('kubectl create namespace my-team', [
-          'Error from server (AlreadyExists): namespaces "my-team" already exists'
-        ]),
+        'kubectl logs missing-pod -n my-team',
+        'kubectl get --raw /api/v1/namespaces',
+        'kubectl create namespace my-team',
         'kubectl delete namespace my-team',
-        createRawErrorCommand('kubectl get namespace my-team', [
-          'Error from server (NotFound): namespaces "my-team" not found'
-        ])
+        'kubectl get namespace my-team'
       ]
     },
     {
       idPrefix: 'errors-help',
       seed: 'minimal',
       commands: [
-        createRawErrorCommand('kubectl get pods --raw /', [
-          'arguments may not be passed when --raw is specified'
-        ]),
-        createRawErrorCommand('kubectl get --raw / -o json', [
-          '--raw and --output are mutually exclusive'
-        ]),
+        'kubectl get pods --raw /',
+        'kubectl get --raw / -o json',
         'kubectl create deployment invalid-without-image',
         'kubectl delete pods missing-pod',
         'kubectl describe pod missing-pod',
         'kubectl scale deployments missing-deploy --replicas=2',
         'kubectl get not-a-resource',
-        createRawErrorCommand('kubectl run', [
-          'error: required flag(s) "image" not set'
-        ]),
-        createRawErrorCommand('kubectl run missing-image', [
-          'error: required flag(s) "image" not set'
-        ]),
-        createRawCommand(
-          'kubectl run missing-command --image=busybox --command --',
-          ['pod/missing-command created']
-        ),
-        createRawCommand('kubectl run missing-args --image=busybox --', [
-          'pod/missing-args created'
-        ]),
-        createRawErrorCommand(
-          'kubectl run invalid-env --image=busybox --env INVALID',
-          ['error: invalid env: INVALID']
-        ),
-        createRawErrorCommand(
-          'kubectl run invalid-dry-run --image=busybox --dry-run=local',
-          [
-            'error: Invalid dry-run value (local). Must be "none", "server", or "client".'
-          ]
-        ),
-        createRawErrorCommand(
-          'kubectl run invalid-restart-value --image=busybox --restart=Sometimes',
-          ['error: invalid restart policy: Sometimes']
-        ),
-        createRawCommand(
-          'kubectl run unsupported-restart --image=busybox --restart=Always',
-          ['pod/unsupported-restart created']
-        ),
-        createRawErrorCommand('kubectl explain pod.spec.notFound', [
-          'field "notFound" does not exist'
-        ]),
-        createRawErrorCommand('kubectl explain all', [
-          'the server does not have a resource type'
-        ]),
+        'kubectl run',
+        'kubectl run missing-image',
+        'kubectl run missing-command --image=busybox --command --',
+        'kubectl run missing-args --image=busybox --',
+        'kubectl run invalid-env --image=busybox --env INVALID',
+        'kubectl run invalid-dry-run --image=busybox --dry-run=local',
+        'kubectl run invalid-restart-value --image=busybox --restart=Sometimes',
+        'kubectl run unsupported-restart --image=busybox --restart=Always',
+        'kubectl expose deployment missing-deployment --type=NodePort',
+        'kubectl expose deployment missing-deployment --port=80',
+        'kubectl expose deployment missing-deployment --port=80 --type=InvalidType',
+        'kubectl expose deployment missing-deployment --port=80 --node-port=abc',
+        'kubectl logs missing-pod -n default',
+        'kubectl exec missing-pod -- env',
+        'kubectl label pod missing-pod team=platform',
+        'kubectl annotate pod missing-pod owner=platform',
+        'kubectl explain pod.spec.notFound',
+        'kubectl explain all',
         'kubectl version --output wide',
         'kubectl api-resources --sort-by=age',
         'kubectl cluster-info dump --output-directory /tmp/out',
@@ -433,8 +255,8 @@ export const createCommandCatalogSegments = (): LifecycleSegment[] => {
   return segments.map((segment) => {
     return {
       ...segment,
-      commands: segment.commands.filter((commandConfig) => {
-        return !isTemporarilySkippedHelpCommand(commandConfig)
+      commands: segment.commands.filter((command) => {
+        return !isTemporarilySkippedHelpCommand(command)
       })
     }
   })

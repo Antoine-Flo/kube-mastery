@@ -11,20 +11,17 @@
     {
       "id": "deploy-cm-cmd-1",
       "type": "command",
-      "command": "kubectl create deployment exhaustive-web --image=nginx:latest",
-      "compareMode": "normalized"
+      "command": "kubectl create deployment exhaustive-web --image=nginx:latest"
     },
     {
       "id": "deploy-cm-cmd-2",
       "type": "command",
-      "command": "kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080",
-      "compareMode": "normalized"
+      "command": "kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080"
     },
     {
       "id": "deploy-cm-cmd-3",
       "type": "command",
-      "command": "kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date",
-      "compareMode": "normalized"
+      "command": "kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date"
     },
     {
       "id": "deploy-cm-cleanup",
@@ -40,38 +37,12 @@
     {
       "id": "namespace-ops-cmd-1",
       "type": "command",
-      "command": "kubectl create namespace my-team",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "namespace/my-team created"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "namespace/my-team created"
-        ]
-      }
+      "command": "kubectl create namespace my-team"
     },
     {
       "id": "namespace-ops-cmd-2",
       "type": "command",
-      "command": "kubectl create namespace my-team",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "Error from server (AlreadyExists): namespaces \"my-team\" already exists"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "Error from server (AlreadyExists): namespaces \"my-team\" already exists"
-        ]
-      }
+      "command": "kubectl create namespace my-team"
     },
     {
       "id": "namespace-ops-cleanup",
@@ -87,8 +58,7 @@
     {
       "id": "errors-help-cmd-1",
       "type": "command",
-      "command": "kubectl create deployment invalid-without-image",
-      "compareMode": "normalized"
+      "command": "kubectl create deployment invalid-without-image"
     },
     {
       "id": "errors-help-cleanup",
@@ -96,6 +66,5 @@
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
       "ignoreNotFound": true
     }
-  ],
-  "stopOnMismatch": false
+  ]
 }

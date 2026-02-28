@@ -16,8 +16,7 @@ import {
 const EXHAUSTIVE_OUTPUT_PATH = 'bin/config/generated/exhaustive-suite.json'
 const BY_COMMAND_OUTPUT_DIR = 'bin/config/generated/by-command'
 const DEFAULT_TEMPLATE: Omit<LifecycleSuiteTemplate, 'segments' | 'name'> = {
-  clusterName: 'conformance',
-  stopOnMismatch: false
+  clusterName: 'conformance'
 }
 
 export const buildExhaustiveSuite = () => {

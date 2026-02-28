@@ -98,9 +98,7 @@ const createHandlers = (
   handlers.set('create', (parsed) =>
     handleCreate(fileSystem, clusterState, parsed, eventBus)
   )
-  handlers.set('logs', (parsed) =>
-    success(handleLogs(clusterState.toJSON(), parsed))
-  )
+  handlers.set('logs', (parsed) => handleLogs(clusterState.toJSON(), parsed))
   handlers.set('exec', (parsed) =>
     success(handleExec(clusterState.toJSON(), parsed, networkRuntime))
   )

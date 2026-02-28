@@ -1,23 +1,11 @@
 import { getSeedPath } from './cluster-manager'
-import type {
-  CommandAction,
-  CommandExpectation,
-  ConformanceAction,
-  ConformanceSuite
-} from './conformance-types'
-
-export interface LifecycleCommandConfig {
-  command: string
-  compareMode?: CommandAction['compareMode']
-  expectKind?: CommandExpectation
-  expectRunner?: CommandExpectation
-}
+import type { CommandAction, ConformanceAction, ConformanceSuite } from './conformance-types'
 
 export interface LifecycleSegment {
   idPrefix: string
   seed: string
   waitForPods?: boolean
-  commands: Array<string | LifecycleCommandConfig>
+  commands: string[]
   cleanup?: boolean
 }
 
@@ -25,29 +13,17 @@ export interface LifecycleSuiteTemplate {
   name: string
   clusterName: string
   segments: LifecycleSegment[]
-  stopOnMismatch?: boolean
 }
 
 const buildCommandAction = (
   segment: LifecycleSegment,
-  commandInput: string | LifecycleCommandConfig,
+  command: string,
   commandIndex: number
 ): CommandAction => {
-  const commandConfig: LifecycleCommandConfig =
-    typeof commandInput === 'string'
-      ? { command: commandInput }
-      : commandInput
   return {
     id: `${segment.idPrefix}-cmd-${commandIndex + 1}`,
     type: 'command',
-    command: commandConfig.command,
-    compareMode: commandConfig.compareMode ?? 'normalized',
-    ...(commandConfig.expectKind !== undefined
-      ? { expectKind: commandConfig.expectKind }
-      : {}),
-    ...(commandConfig.expectRunner !== undefined
-      ? { expectRunner: commandConfig.expectRunner }
-      : {})
+    command
   }
 }
 
@@ -82,7 +58,6 @@ export const generateLifecycleSuite = (
   return {
     name: template.name,
     clusterName: template.clusterName,
-    actions,
-    stopOnMismatch: template.stopOnMismatch ?? true
+    actions
   }
 }

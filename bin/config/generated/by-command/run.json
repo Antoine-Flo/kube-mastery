@@ -10,110 +10,37 @@
     {
       "id": "run-cases-cmd-1",
       "type": "command",
-      "command": "kubectl run run-ok-command --image=busybox --command -- sleep 3600",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/run-ok-command created"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/run-ok-command created"
-        ]
-      }
+      "command": "kubectl run run-ok-command --image=busybox --command -- sleep 3600"
     },
     {
       "id": "run-cases-cmd-2",
       "type": "command",
-      "command": "kubectl run run-ok-image-only --image=busybox",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/run-ok-image-only created"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/run-ok-image-only created"
-        ]
-      }
+      "command": "kubectl run run-ok-image-only --image=busybox"
     },
     {
       "id": "run-cases-cmd-3",
       "type": "command",
-      "command": "kubectl run run-ok-args --image=busybox -- sleep 3600",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/run-ok-args created"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/run-ok-args created"
-        ]
-      }
+      "command": "kubectl run run-ok-args --image=busybox -- sleep 3600"
     },
     {
       "id": "run-cases-cmd-4",
       "type": "command",
-      "command": "kubectl run run-ok-env-label-port --image=busybox --env=DNS_DOMAIN=cluster --env=POD_NAMESPACE=default --labels=app=hazelcast,env=prod --port=5701",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/run-ok-env-label-port created"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/run-ok-env-label-port created"
-        ]
-      }
+      "command": "kubectl run run-ok-env-label-port --image=busybox --env=DNS_DOMAIN=cluster --env=POD_NAMESPACE=default --labels=app=hazelcast,env=prod --port=5701"
     },
     {
       "id": "run-cases-cmd-5",
       "type": "command",
-      "command": "kubectl run run-ok-interactive --image=busybox -i -t --restart=Never --rm",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/run-ok-interactive created"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/run-ok-interactive created"
-        ]
-      }
+      "command": "kubectl run run-ok-multi-env --image=busybox --env=FOO=1 --env=BAR=2 --labels=team=qa,tier=test --port=9090 --restart=Never --command -- sleep 3600"
     },
     {
       "id": "run-cases-cmd-6",
       "type": "command",
-      "command": "kubectl run run-ok-dry-run --image=busybox --dry-run=client",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/run-ok-dry-run created (dry run)"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/run-ok-dry-run created (dry run)"
-        ]
-      }
+      "command": "kubectl run run-ok-interactive --image=busybox -i -t --restart=Never --rm"
+    },
+    {
+      "id": "run-cases-cmd-7",
+      "type": "command",
+      "command": "kubectl run run-ok-dry-run --image=busybox --dry-run=client"
     },
     {
       "id": "run-cases-cleanup",
@@ -129,146 +56,42 @@
     {
       "id": "errors-help-cmd-1",
       "type": "command",
-      "command": "kubectl run",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "error: required flag(s) \"image\" not set"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "error: required flag(s) \"image\" not set"
-        ]
-      }
+      "command": "kubectl run"
     },
     {
       "id": "errors-help-cmd-2",
       "type": "command",
-      "command": "kubectl run missing-image",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "error: required flag(s) \"image\" not set"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "error: required flag(s) \"image\" not set"
-        ]
-      }
+      "command": "kubectl run missing-image"
     },
     {
       "id": "errors-help-cmd-3",
       "type": "command",
-      "command": "kubectl run missing-command --image=busybox --command --",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/missing-command created"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/missing-command created"
-        ]
-      }
+      "command": "kubectl run missing-command --image=busybox --command --"
     },
     {
       "id": "errors-help-cmd-4",
       "type": "command",
-      "command": "kubectl run missing-args --image=busybox --",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/missing-args created"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/missing-args created"
-        ]
-      }
+      "command": "kubectl run missing-args --image=busybox --"
     },
     {
       "id": "errors-help-cmd-5",
       "type": "command",
-      "command": "kubectl run invalid-env --image=busybox --env INVALID",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "error: invalid env: INVALID"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "error: invalid env: INVALID"
-        ]
-      }
+      "command": "kubectl run invalid-env --image=busybox --env INVALID"
     },
     {
       "id": "errors-help-cmd-6",
       "type": "command",
-      "command": "kubectl run invalid-dry-run --image=busybox --dry-run=local",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "error: Invalid dry-run value (local). Must be \"none\", \"server\", or \"client\"."
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "error: Invalid dry-run value (local). Must be \"none\", \"server\", or \"client\"."
-        ]
-      }
+      "command": "kubectl run invalid-dry-run --image=busybox --dry-run=local"
     },
     {
       "id": "errors-help-cmd-7",
       "type": "command",
-      "command": "kubectl run invalid-restart-value --image=busybox --restart=Sometimes",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 1,
-        "stderrContains": [
-          "error: invalid restart policy: Sometimes"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 1,
-        "stderrContains": [
-          "error: invalid restart policy: Sometimes"
-        ]
-      }
+      "command": "kubectl run invalid-restart-value --image=busybox --restart=Sometimes"
     },
     {
       "id": "errors-help-cmd-8",
       "type": "command",
-      "command": "kubectl run unsupported-restart --image=busybox --restart=Always",
-      "compareMode": "none",
-      "expectKind": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/unsupported-restart created"
-        ]
-      },
-      "expectRunner": {
-        "exitCode": 0,
-        "stdoutContains": [
-          "pod/unsupported-restart created"
-        ]
-      }
+      "command": "kubectl run unsupported-restart --image=busybox --restart=Always"
     },
     {
       "id": "errors-help-cleanup",
@@ -276,6 +99,5 @@
       "targetPath": "/home/af/code/kube-mastery/src/courses/seeds/minimal",
       "ignoreNotFound": true
     }
-  ],
-  "stopOnMismatch": false
+  ]
 }
