@@ -167,42 +167,78 @@ const formatStrategyType = (
 }
 
 const formatTemplateEnv = (
-  envVar: {
+  envVar:
+    | EnvVar
+    | {
+        name: string
+        value?: string
+        valueFrom?: {
+          configMapKeyRef?: { name: string; key: string }
+          secretKeyRef?: { name: string; key: string }
+        }
+      },
+  lines: string[]
+): void => {
+  if ('source' in envVar) {
+    if (envVar.source.type === 'value') {
+      lines.push(indent(`${envVar.name}:  ${envVar.source.value}`, 4))
+      return
+    }
+    if (envVar.source.type === 'configMapKeyRef') {
+      lines.push(
+        indent(
+          `${envVar.name}:  <set to the key '${envVar.source.key}' in config map '${envVar.source.name}'>`,
+          4
+        )
+      )
+      return
+    }
+    if (envVar.source.type === 'secretKeyRef') {
+      lines.push(
+        indent(
+          `${envVar.name}:  <set to the key '${envVar.source.key}' of secret '${envVar.source.name}'>`,
+          4
+        )
+      )
+      return
+    }
+  }
+
+  const legacyEnvVar = envVar as {
     name: string
     value?: string
     valueFrom?: {
       configMapKeyRef?: { name: string; key: string }
       secretKeyRef?: { name: string; key: string }
     }
-  },
-  lines: string[]
-): void => {
-  if (envVar.value !== undefined) {
-    lines.push(indent(`${envVar.name}:  ${envVar.value}`, 4))
+  }
+
+  if (legacyEnvVar.value !== undefined) {
+    lines.push(indent(`${legacyEnvVar.name}:  ${legacyEnvVar.value}`, 4))
     return
   }
 
-  if (envVar.valueFrom?.configMapKeyRef) {
+  if (legacyEnvVar.valueFrom?.configMapKeyRef) {
     lines.push(
       indent(
-        `${envVar.name}:  <set to the key '${envVar.valueFrom.configMapKeyRef.key}' in config map '${envVar.valueFrom.configMapKeyRef.name}'>`,
+        `${legacyEnvVar.name}:  <set to the key '${legacyEnvVar.valueFrom.configMapKeyRef.key}' in config map '${legacyEnvVar.valueFrom.configMapKeyRef.name}'>`,
         4
       )
     )
     return
   }
 
-  if (envVar.valueFrom?.secretKeyRef) {
+  if (legacyEnvVar.valueFrom?.secretKeyRef) {
     lines.push(
       indent(
-        `${envVar.name}:  <set to the key '${envVar.valueFrom.secretKeyRef.key}' of secret '${envVar.valueFrom.secretKeyRef.name}'>`,
+        `${legacyEnvVar.name}:  <set to the key '${legacyEnvVar.valueFrom.secretKeyRef.key}' of secret '${legacyEnvVar.valueFrom.secretKeyRef.name}'>`,
         4
       )
     )
     return
   }
 
-  lines.push(indent(`${envVar.name}:  <unknown>`, 4))
+  lines.push(indent(`${legacyEnvVar.name}:  <unknown>`, 4))
 }
 
 const formatDeploymentConditions = (
