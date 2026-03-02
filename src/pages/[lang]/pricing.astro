@@ -346,7 +346,7 @@ const faqItems = [
   </div>
 </Layout>
 
-<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<script id="paddle-js" src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 <script define:vars={{ paddleClientToken, paddleEnvironment }}>
   const PRICING_INITED = 'data-pricing-toggle-inited'
   const PADDLE_INITED = 'data-paddle-inited'
@@ -398,7 +398,7 @@ const faqItems = [
     })
   }
 
-  async function hydrateLocalizedPrices(banners, remainingRetries = 1) {
+  async function hydrateLocalizedPrices(banners) {
     if (banners.length === 0) {
       return
     }
@@ -423,45 +423,40 @@ const faqItems = [
 
     const paddle = window.Paddle
     if (paddle == null) {
-      if (remainingRetries > 0) {
-        setTimeout(() => {
-          void hydrateLocalizedPrices(banners, remainingRetries - 1)
-        }, 300)
-      } else {
-        console.warn('[Paddle] not available, skipping localized prices hydration.')
-      }
       return
     }
 
-    if (!document.documentElement.hasAttribute(PADDLE_INITED)) {
-      if (
-        paddleEnvironment === 'sandbox' &&
-        paddle.Environment != null &&
-        typeof paddle.Environment.set === 'function'
-      ) {
-        paddle.Environment.set('sandbox')
-      }
-      paddle.Initialize({ token: paddleClientToken })
-      document.documentElement.setAttribute(PADDLE_INITED, '')
-    }
-
     try {
-      await preview(
-        paddle,
-        monthlyItems,
-        'data-month-price-localized',
-        monthBanners,
-        false
-      )
-      await preview(
-        paddle,
-        yearlyItems,
-        'data-year-price-localized',
-        yearBanners,
-        true
-      )
+      if (!document.documentElement.hasAttribute(PADDLE_INITED)) {
+        if (
+          paddleEnvironment === 'sandbox' &&
+          paddle.Environment != null &&
+          typeof paddle.Environment.set === 'function'
+        ) {
+          paddle.Environment.set('sandbox')
+        }
+        paddle.Initialize({ token: paddleClientToken })
+        document.documentElement.setAttribute(PADDLE_INITED, '')
+      }
+
+      await Promise.all([
+        preview(
+          paddle,
+          monthlyItems,
+          'data-month-price-localized',
+          monthBanners,
+          false
+        ),
+        preview(
+          paddle,
+          yearlyItems,
+          'data-year-price-localized',
+          yearBanners,
+          true
+        )
+      ])
     } catch (error) {
-      console.error('[Paddle.PricePreview] failed', error)
+      console.error('[Paddle] localized prices hydration failed', error)
     }
   }
 
@@ -475,11 +470,6 @@ const faqItems = [
     if (!toggle || !optionMonthly || !optionYearly || banners.length === 0) {
       return
     }
-    if (toggle.hasAttribute(PRICING_INITED)) {
-      return
-    }
-    toggle.setAttribute(PRICING_INITED, '')
-
     /** @param {boolean} yearly */
     // @ts-expect-error - inline script, yearly is boolean at runtime
     function setBilling(yearly) {
@@ -523,32 +513,35 @@ const faqItems = [
       })
     }
 
-    toggle.addEventListener('click', () => {
-      const isYearly = toggle.getAttribute('aria-pressed') === 'true'
-      setBilling(!isYearly)
-    })
+    if (!toggle.hasAttribute(PRICING_INITED)) {
+      toggle.setAttribute(PRICING_INITED, '')
 
-    optionMonthly.addEventListener('click', () => {
-      setBilling(false)
-    })
+      toggle.addEventListener('click', () => {
+        const isYearly = toggle.getAttribute('aria-pressed') === 'true'
+        setBilling(!isYearly)
+      })
 
-    optionYearly.addEventListener('click', () => {
+      optionMonthly.addEventListener('click', () => {
+        setBilling(false)
+      })
+
+      optionYearly.addEventListener('click', () => {
+        setBilling(true)
+      })
+
       setBilling(true)
-    })
+    }
 
     hydrateLocalizedPrices(Array.from(banners)).finally(() => {
       const isYearly = toggle.getAttribute('aria-pressed') === 'true'
       setBilling(isYearly)
     })
-
-    setBilling(true)
   }
 
-  /** Premier chargement / reload : attendre que le DOM (et le swap View Transitions) soit prêt. */
+  /** First load/reload: wait until the DOM is ready. */
   function runWhenReady() {
     const run = () => {
       requestAnimationFrame(initPricingToggle)
-      setTimeout(initPricingToggle, 0)
     }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', run)
@@ -558,6 +551,10 @@ const faqItems = [
   }
 
   runWhenReady()
+  const paddleScript = document.getElementById('paddle-js')
+  if (paddleScript != null) {
+    paddleScript.addEventListener('load', initPricingToggle)
+  }
   document.addEventListener('astro:after-swap', initPricingToggle)
   document.addEventListener('astro:page-load', initPricingToggle)
 </script>
