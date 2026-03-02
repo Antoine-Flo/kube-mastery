@@ -1,8 +1,8 @@
 # What Is Kubernetes?
 
-Imagine you are the air traffic controller at a busy international airport. Dozens of planes are in the air at any given moment, each needing to land, refuel, and take off again. You decide which runway each plane uses, sequence arrivals, reroute around bad weather, and respond when a plane declares an emergency. You are not flying any of the planes yourself; your job is to coordinate the whole system.
+Imagine you are the air traffic controller at a busy international airport. Dozens of planes are in the air at any given moment, each needing to land, refuel, and take off again. You decide which runway each plane uses, sequence arrivals, and respond when a plane declares an emergency.
 
-Kubernetes does for containers what an air traffic controller does for planes. It does not run your application code; that is the job of the containers. Kubernetes coordinates those containers across a fleet of machines: the right containers in the right places, failed ones replaced, and the system adapting to changing conditions without human intervention.
+Kubernetes does for containers what an air traffic controller does for planes. It does not run your application code, that is the job of the containers. Kubernetes coordinates those containers across a fleet of machines: the right containers in the right places, failed ones replaced, and the system adapting to changing conditions without human intervention.
 
 ## The Problem Kubernetes Solves
 
@@ -84,13 +84,8 @@ You should see the API server endpoint (the address `kubectl` uses). Then list r
 kubectl api-resources
 ```
 
-Each row is a type of object Kubernetes can manage. Finally, look at the control plane workloads in `kube-system`:
+Each row is a type of object Kubernetes can manage. You see names like Pods, Deployments, Services, ConfigMaps, and many more: each corresponds to a kind of resource you can create, list, or delete with `kubectl`. Do not worry about memorising them now; we will meet the main ones in later lessons as we build and run workloads.
 
-```bash
-kubectl get pods -n kube-system
-```
-
-You will see etcd, kube-apiserver, kube-controller-manager, kube-scheduler, and others. These are the components from the diagram above, running as pods. In the cluster visualizer (telescope icon), you can see where they run.
 
 ## Wrapping Up
 

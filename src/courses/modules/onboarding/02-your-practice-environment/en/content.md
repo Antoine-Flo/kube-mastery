@@ -24,7 +24,7 @@ Reloading discards any files you created in the terminal. If you wrote a manifes
 
 ## Limitations
 
-Not every Kubernetes feature is available here. Some advanced add-ons, storage drivers, or cloud-specific resources require infrastructure beyond a learning environment. When a lesson touches something unavailable, we'll say so explicitly. That said, everything you need for the KCNA, CKAD, and CKA certifications is fully accessible.
+Not every Kubernetes feature is available here. You can find the available features in the [supported features page](https://kubemastery.com/en/supported). When a lesson touches something unavailable, we'll say so explicitly.
 
 ## Hands-On
 

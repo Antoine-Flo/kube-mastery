@@ -5,11 +5,24 @@
 
 import type { FileSystem } from '../core/ShellContext'
 
-// Types temporaires jusqu'à migration complète
-type ClusterState = any // TODO: Migrer depuis cluster/ClusterState
+export interface AutocompleteResource {
+  metadata: {
+    name?: unknown
+  }
+}
+
+export interface AutocompleteClusterState {
+  getPods?: (namespace?: string) => AutocompleteResource[]
+  getConfigMaps?: (namespace?: string) => AutocompleteResource[]
+  getSecrets?: (namespace?: string) => AutocompleteResource[]
+  getNodes?: () => AutocompleteResource[]
+  getReplicaSets?: (namespace?: string) => AutocompleteResource[]
+  getDaemonSets?: (namespace?: string) => AutocompleteResource[]
+  getDeployments?: (namespace?: string) => AutocompleteResource[]
+}
 
 export interface AutocompleteContext {
-  clusterState: ClusterState
+  clusterState: AutocompleteClusterState
   fileSystem: FileSystem
 }
 

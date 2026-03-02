@@ -1,8 +1,6 @@
 # The Evolution of Deployment
 
-To truly appreciate Kubernetes, you need to understand the journey that led to it. The way we deploy software has changed dramatically over three decades, driven by a relentless search for better resource utilization, faster delivery, and greater reliability. Each era solved the problems of the previous one, and introduced new ones, pushing the industry toward the next evolution.
-
-Think of it like the history of human accommodation: early travellers had to buy an entire house just to have a place to sleep, then apartments allowed sharing a building, then hostels sharing a room, then co-living spaces where every resource is shared intelligently. Software deployment has followed a strikingly similar arc.
+To truly appreciate Kubernetes, you need to understand the journey that led to it. The way we deploy software has changed dramatically over three decades. Each era solved the problems of the previous one, and introduced new ones, pushing the industry toward the next evolution.
 
 ## Era 1 Bare Metal: One App Per Server
 
@@ -66,24 +64,11 @@ timeline
           : Scheduling, self-healing, scaling, service discovery
 ```
 
-## The Analogy in Full
-
-The accommodation analogy maps neatly to each era:
-
-- **Bare metal** → buying a whole house: you have everything to yourself, but most rooms sit empty and the cost is enormous
-- **Virtualization** → apartments: you share the building's infrastructure but have your own front door and walls
-- **Containers** → a hostel: you share far more (kitchen, bathrooms), which is cheaper and more flexible, but someone needs to coordinate who sleeps in which bed
-- **Kubernetes** → the co-living operator: the intelligent system that manages coordination, allocates resources fairly, handles maintenance, and ensures everyone has what they need, without anyone managing it manually
-
-:::info
-The "eras" of deployment are not mutually exclusive. Many real-world environments today run all four simultaneously: bare metal for performance-critical workloads, VMs for legacy systems, containers for modern applications, and Kubernetes to orchestrate the containers. Understanding all four helps you navigate these mixed environments.
-:::
-
 ## Hands-On Practice
 
-Let's observe how Kubernetes abstracts away the notion of individual machines. When you deploy a workload, you do not choose which node it runs on, Kubernetes does.
+Let's observe how Kubernetes abstracts away the notion of individual machines. When you deploy a workload, you do not choose which machine it runs on, Kubernetes does. In our current setup, we have three machines, three nodes in Kubernetes terminology. We need to deploy three replicas of a web server.
 
-Create a simple deployment with three replicas:
+For that we will create a deployment, open the visualizer before you press enter:
 
 ```bash
 kubectl create deployment web --image=nginx --replicas=3
@@ -110,7 +95,7 @@ web-00063e839a-dxocs   1/1     Running          0   6s    10.244.58.118    sim-w
 web-00063e839a-mirob   1/1     Running          0   6s    10.244.200.111   sim-worker    <none>           <none>
 ```
 
-Kubernetes distributed the three pods across available nodes automatically, the scheduler made that decision, not you. Open the cluster visualizer (telescope icon) to see this placement rendered visually.
+Congratulations ! You've successfully deployed 3 replicas of a web server across 2 different machines in one command. This is the power of orchestration. You might wonder why there is no pod on the sim-control-plane node. The control plane is a special node, we will learn more about it in the next lesson.
 
 Now delete one of the pods by name (use one of the names from your output):
 
