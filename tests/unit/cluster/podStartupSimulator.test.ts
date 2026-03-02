@@ -65,8 +65,12 @@ describe('podStartupSimulator', () => {
     )
     vi.runAllTimers()
 
-    expect(emittedBySimulator.length).toBe(1)
-    expect(emittedBySimulator[0].payload.pod.status.phase).toBe('Running')
+    expect(emittedBySimulator.length).toBe(2)
+    expect(emittedBySimulator[0].payload.pod.status.phase).toBe('Pending')
+    expect(emittedBySimulator[0].payload.pod.status.containerStatuses?.[0]?.waitingReason).toBe(
+      'ContainerCreating'
+    )
+    expect(emittedBySimulator[1].payload.pod.status.phase).toBe('Running')
   })
 
   it('does not transition pending unscheduled pod to running', () => {
