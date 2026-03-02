@@ -171,6 +171,7 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
   state.controller = createTerminalController({
     renderer: state.renderer,
     shellContextStack: state.currentEnvironment.shellContextStack,
+    clusterState: state.currentEnvironment.clusterState,
     autocompleteEngine: createDefaultAutocompleteEngine()
   })
 

@@ -22,6 +22,16 @@ const createMockShellContextStack = (): ShellContextStack => {
   } as unknown as ShellContextStack
 }
 
+const createMockClusterState = () => ({
+  getPods: () => [],
+  getConfigMaps: () => [],
+  getSecrets: () => [],
+  getNodes: () => [],
+  getReplicaSets: () => [],
+  getDaemonSets: () => [],
+  getDeployments: () => []
+})
+
 // Mock AutocompleteEngine pour les tests
 const createMockAutocompleteEngine = (): AutocompleteEngine & {
   resetTabTiming: () => void
@@ -118,21 +128,32 @@ describe('TerminalController', () => {
   let renderer: ReturnType<typeof createMockRenderer>
   let shellContextStack: ReturnType<typeof createMockShellContextStack>
   let autocompleteEngine: ReturnType<typeof createMockAutocompleteEngine>
+  let clusterState: ReturnType<typeof createMockClusterState>
 
   beforeEach(() => {
     renderer = createMockRenderer()
     shellContextStack = createMockShellContextStack()
     autocompleteEngine = createMockAutocompleteEngine()
+    clusterState = createMockClusterState()
     autocompleteEngine.resetTabTiming()
     vi.clearAllMocks()
   })
 
+  const createController = (
+    options: {
+      autocompleteEngine?: AutocompleteEngine
+    } = {}
+  ) =>
+    createTerminalController({
+      renderer,
+      shellContextStack,
+      clusterState,
+      ...options
+    })
+
   describe('initialization', () => {
     it('should create controller with dependencies', () => {
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack
-      })
+      const controller = createController()
 
       expect(controller).toBeDefined()
     })
@@ -140,10 +161,7 @@ describe('TerminalController', () => {
 
   describe('prompt handling', () => {
     it('should show prompt', () => {
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack
-      })
+      const controller = createController()
 
       controller.showPrompt()
 
@@ -152,10 +170,7 @@ describe('TerminalController', () => {
     })
 
     it('should update prompt', () => {
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack
-      })
+      const controller = createController()
 
       controller.updatePrompt()
 
@@ -166,10 +181,7 @@ describe('TerminalController', () => {
   describe('command handling', () => {
     it('should handle Enter key and call callback', () => {
       const callback = vi.fn()
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack
-      })
+      const controller = createController()
 
       controller.onCommand(callback)
       controller.simulateInput('test')
@@ -180,10 +192,7 @@ describe('TerminalController', () => {
 
     it('should not call callback for empty command', () => {
       const callback = vi.fn()
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack
-      })
+      const controller = createController()
 
       controller.onCommand(callback)
       controller.simulateInput('\r')
@@ -194,10 +203,7 @@ describe('TerminalController', () => {
 
   describe('history navigation', () => {
     it('should navigate history with arrow up', () => {
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack
-      })
+      const controller = createController()
 
       // Set up command callback so commands are added to history
       controller.onCommand(() => {})
@@ -233,10 +239,7 @@ describe('TerminalController', () => {
     })
 
     it('should navigate history with arrow down', () => {
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack
-      })
+      const controller = createController()
 
       // Execute commands to build history
       controller.simulateInput('cmd1')
@@ -258,10 +261,7 @@ describe('TerminalController', () => {
 
   describe('cursor movement', () => {
     it('should move cursor left with arrow left', () => {
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack
-      })
+      const controller = createController()
 
       controller.simulateInput('test')
       renderer.clearOutput()
@@ -272,10 +272,7 @@ describe('TerminalController', () => {
     })
 
     it('should move cursor right with arrow right', () => {
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack
-      })
+      const controller = createController()
 
       controller.simulateInput('test')
       // Move left first
@@ -291,10 +288,7 @@ describe('TerminalController', () => {
 
   describe('autocomplete (handleTab)', () => {
     it('should not autocomplete if no engine provided', () => {
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack
-      })
+      const controller = createController()
 
       controller.simulateInput('kubectl')
       renderer.clearOutput()
@@ -309,11 +303,7 @@ describe('TerminalController', () => {
         { text: 'kubectl', suffix: ' ' }
       ])
 
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack,
-        autocompleteEngine
-      })
+      const controller = createController({ autocompleteEngine })
 
       controller.simulateInput('kube')
       renderer.clearOutput()
@@ -331,11 +321,7 @@ describe('TerminalController', () => {
         { text: 'kubectl-describe', suffix: ' ' }
       ])
 
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack,
-        autocompleteEngine
-      })
+      const controller = createController({ autocompleteEngine })
 
       controller.simulateInput('kubectl-')
       renderer.clearOutput()
@@ -354,11 +340,7 @@ describe('TerminalController', () => {
         { text: 'pod3', suffix: ' ' }
       ])
 
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack,
-        autocompleteEngine
-      })
+      const controller = createController({ autocompleteEngine })
 
       controller.simulateInput('pod')
       renderer.clearOutput()
@@ -377,11 +359,7 @@ describe('TerminalController', () => {
     })
 
     it('should use dynamic filesystem from shell context', () => {
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack,
-        autocompleteEngine
-      })
+      const controller = createController({ autocompleteEngine })
 
       controller.simulateInput('ls')
       renderer.clearOutput()
@@ -394,10 +372,7 @@ describe('TerminalController', () => {
 
   describe('backspace handling', () => {
     it('should delete character before cursor', () => {
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack
-      })
+      const controller = createController()
 
       controller.simulateInput('test')
       renderer.clearOutput()
@@ -409,10 +384,7 @@ describe('TerminalController', () => {
     })
 
     it('should not delete when at start of line', () => {
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack
-      })
+      const controller = createController()
 
       renderer.clearOutput()
       controller.simulateInput('\x7f') // Backspace at start
@@ -424,10 +396,7 @@ describe('TerminalController', () => {
 
   describe('character input', () => {
     it('should insert characters at cursor position', () => {
-      const controller = createTerminalController({
-        renderer,
-        shellContextStack
-      })
+      const controller = createController()
 
       controller.simulateInput('hello')
       renderer.clearOutput()

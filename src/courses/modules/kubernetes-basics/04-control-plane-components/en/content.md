@@ -2,15 +2,13 @@
 
 In the previous lesson, we established that the control plane is the brain of a Kubernetes cluster, the layer responsible for decision-making, state management, and orchestration. But the control plane is not a monolith. It is composed of several distinct processes, each with a clearly defined responsibility.
 
-Think of these components as the different departments of a well-run operations center: the receptionist handles all incoming requests, the archive room stores all records, the logistics planner decides who gets which task, the supervisors make sure every ongoing task is executed correctly. Each department has one job and does it well, and they coordinate through a shared system of record.
-
 :::info
 All four core components, `kube-apiserver`, `etcd`, `kube-scheduler`, and `kube-controller-manager`, run as static Pods on the control plane node. You can inspect them directly with `kubectl get pods -n kube-system`.
 :::
 
 ## kube-apiserver: The Front Door
 
-The `kube-apiserver` is the central component of the entire control plane. Every interaction with a Kubernetes cluster goes through it, every `kubectl` command you run, every health check a node submits, every query from another control plane component. Nothing happens in a Kubernetes cluster without passing through the API server.
+The `kube-apiserver` is the central component of the entire control plane. Every interaction with a Kubernetes cluster goes through it, every `kubectl` command you run, every query from another control plane component. Nothing happens in a Kubernetes cluster without passing through the API server.
 
 When you run `kubectl get pods`, your client sends an HTTP request to the API server. The server authenticates who you are, checks whether you are authorized, validates the request, and retrieves the relevant data from `etcd`. When you run `kubectl apply -f deployment.yaml`, the API server validates the YAML, stores the new object in `etcd`, and notifies the relevant controllers that a change has been made.
 
@@ -22,7 +20,7 @@ The API server exposes a RESTful API over HTTPS. Everything in Kubernetes is a r
 
 ## etcd: The Cluster's Source of Truth
 
-`etcd` is a distributed key-value store that serves as Kubernetes' database. Every piece of cluster state, every object definition, every configuration, every status update, is stored in `etcd`. If you wanted to know what the cluster "thinks" should be happening, you would find it there.
+`etcd` is a distributed key-value store that serves as Kubernetes' database. Every piece of cluster state, every configuration, every status update, is stored in `etcd`. If you wanted to know what the cluster "thinks" should be happening, you would find it there.
 
 The "distributed" part is important. `etcd` is designed to run as a cluster of typically three or five nodes (an odd number, for quorum reasons), spread across different failure zones. It uses the Raft consensus algorithm to ensure all nodes agree on the current state before a write is committed.
 
@@ -34,7 +32,7 @@ Only the `kube-apiserver` should communicate with `etcd` directly. Other compone
 
 ## kube-scheduler: The Placement Planner
 
-The `kube-scheduler` is responsible for one job: watching for newly created Pods that have not yet been assigned to a node, and selecting the best node for each one.
+The `kube-scheduler` is responsible for one job: watching for newly created Pods that have not yet been assigned to a node, and selecting the best node for each one. You can see it in action in the cluster visualizer when you create a pod for example, the pod will be "unscheduled" until the scheduler assigns it to a node.
 
 The scheduling decision happens in two phases. First, the scheduler **filters** out nodes that cannot possibly run the Pod. Then, from the remaining eligible nodes, it **scores** each one and picks the highest-scoring option. The factors considered during filtering and scoring include:
 
@@ -128,11 +126,11 @@ Expected output (partial):
 ```bash
 Command:
   kube-apiserver
-  --advertise-address=192.168.0.2
+  --advertise-address=172.18.0.2
   --allow-privileged=true
   --authorization-mode=Node,RBAC
   --etcd-servers=https://127.0.0.1:2379
-  --service-cluster-ip-range=10.96.0.0/12
+  --service-cluster-ip-range=10.96.0.0/16
   ...
 ```
 

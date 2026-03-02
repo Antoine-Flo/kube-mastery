@@ -6,6 +6,7 @@
 
 import { AutocompleteProvider } from '../../terminal/autocomplete/AutocompleteProvider'
 import type {
+  AutocompleteClusterState,
   AutocompleteContext,
   CompletionResult
 } from '../../terminal/autocomplete/types'
@@ -13,13 +14,23 @@ import type {
 // Actions kubectl
 const KUBECTL_ACTIONS = [
   'get',
+  'diff',
+  'explain',
   'describe',
   'delete',
   'apply',
+  'create',
   'logs',
   'exec',
+  'label',
+  'annotate',
+  'version',
+  'cluster-info',
+  'api-versions',
+  'api-resources',
   'scale',
   'run',
+  'expose',
   'config'
 ] as const
 
@@ -54,6 +65,16 @@ const RESOURCE_ALIASES: Record<string, string> = {
   deploy: 'deployments'
 }
 
+const CANONICAL_RESOURCE_TYPES = [
+  'pods',
+  'configmaps',
+  'secrets',
+  'nodes',
+  'replicasets',
+  'daemonsets',
+  'deployments'
+] as const
+
 /**
  * Filter array to items that start with prefix (case-sensitive)
  */
@@ -65,6 +86,22 @@ const filterMatches = (items: string[], prefix: string): string[] => {
 }
 
 /**
+ * v1 policy: only return a completion when prefix has a single match.
+ * Ambiguous or empty-match prefixes return no suggestions.
+ */
+const completeOnlyWhenUnique = (
+  items: string[],
+  prefix: string,
+  suffix: string
+): CompletionResult[] => {
+  const matches = filterMatches(items, prefix)
+  if (matches.length !== 1) {
+    return []
+  }
+  return [{ text: matches[0], suffix }]
+}
+
+/**
  * Get resource names from cluster state
  */
 const getResourceNames = (
@@ -72,31 +109,25 @@ const getResourceNames = (
   currentToken: string,
   context: AutocompleteContext
 ): CompletionResult[] => {
-  // Type guard pour vérifier que clusterState a les méthodes nécessaires
-  if (
-    !context.clusterState ||
-    typeof context.clusterState.getPods !== 'function'
-  ) {
+  if (!context.clusterState || typeof context.clusterState !== 'object') {
     return []
   }
 
   // Map resource types to their getter functions
   const resourceGetters: Record<
     string,
-    (state: typeof context.clusterState) => string[]
+    (state: AutocompleteClusterState) => unknown[]
   > = {
-    pods: (state) => state.getPods().map((pod: any) => pod.metadata.name),
-    configmaps: (state) =>
-      state.getConfigMaps().map((cm: any) => cm.metadata.name),
-    secrets: (state) =>
-      state.getSecrets().map((secret: any) => secret.metadata.name),
-    nodes: (state) => state.getNodes().map((node: any) => node.metadata.name),
+    pods: (state) => (state.getPods ? state.getPods() : []),
+    configmaps: (state) => (state.getConfigMaps ? state.getConfigMaps() : []),
+    secrets: (state) => (state.getSecrets ? state.getSecrets() : []),
+    nodes: (state) => (state.getNodes ? state.getNodes() : []),
     replicasets: (state) =>
-      state.getReplicaSets().map((rs: any) => rs.metadata.name),
+      state.getReplicaSets ? state.getReplicaSets() : [],
     daemonsets: (state) =>
-      state.getDaemonSets().map((daemonSet: any) => daemonSet.metadata.name),
+      state.getDaemonSets ? state.getDaemonSets() : [],
     deployments: (state) =>
-      state.getDeployments().map((deploy: any) => deploy.metadata.name)
+      state.getDeployments ? state.getDeployments() : []
   }
 
   const getter = resourceGetters[resourceType]
@@ -104,7 +135,10 @@ const getResourceNames = (
     return []
   }
 
-  const names = getter(context.clusterState)
+  const names = getter(context.clusterState).map(
+    (resource) => (resource as { metadata?: { name?: unknown } }).metadata?.name
+  ) as string[]
+
   return filterMatches(names, currentToken).map((name) => ({
     text: name,
     suffix: ' '
@@ -155,11 +189,13 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
     currentToken: string,
     context: AutocompleteContext
   ): CompletionResult[] {
-    // Action kubectl (position 1)
-    if (tokens.length === 1) {
-      return filterMatches([...KUBECTL_ACTIONS], currentToken).map(
-        (action) => ({ text: action, suffix: ' ' })
-      )
+    const isActionPosition =
+      tokens.length === 1 ||
+      (tokens.length === 2 &&
+        currentToken !== '' &&
+        tokens[1] === currentToken)
+    if (isActionPosition) {
+      return completeOnlyWhenUnique([...KUBECTL_ACTIONS], currentToken, ' ')
     }
 
     const action = tokens[1]
@@ -188,10 +224,16 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
 
     // Type de ressource (position 2) - sauf pour logs/exec/run
     if (action !== 'logs' && action !== 'exec' && action !== 'run') {
-      if (tokens.length === 2) {
-        const allResourceTypes = Object.keys(RESOURCE_ALIASES)
-        return filterMatches(allResourceTypes, currentToken).map(
-          (resource) => ({ text: resource, suffix: ' ' })
+      const isResourceTypePosition =
+        tokens.length === 2 ||
+        (tokens.length === 3 &&
+          currentToken !== '' &&
+          tokens[2] === currentToken)
+      if (isResourceTypePosition) {
+        return completeOnlyWhenUnique(
+          [...CANONICAL_RESOURCE_TYPES],
+          currentToken,
+          ' '
         )
       }
     }

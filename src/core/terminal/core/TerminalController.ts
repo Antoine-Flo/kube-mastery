@@ -10,7 +10,10 @@ import { createTerminalState, type TerminalState } from './TerminalState'
 import type { CommandCallback } from './types'
 
 import type { ShellContextStack } from './ShellContext'
-import type { AutocompleteContext } from '../autocomplete/types'
+import type {
+  AutocompleteClusterState,
+  AutocompleteContext
+} from '../autocomplete/types'
 import { AutocompleteEngine } from '../autocomplete/AutocompleteEngine'
 import { InputHandler } from './InputHandler'
 import type { InputHandlerContext } from './InputHandlerContext'
@@ -20,6 +23,7 @@ interface TerminalControllerOptions {
   state: TerminalState
   renderer: TerminalRenderer
   shellContextStack: ShellContextStack // Utilisé uniquement pour récupérer le prompt
+  clusterState: AutocompleteClusterState
   autocompleteEngine?: AutocompleteEngine
 }
 
@@ -27,6 +31,7 @@ export class TerminalController {
   private state: TerminalState
   private renderer: TerminalRenderer
   private shellContextStack: ShellContextStack
+  private clusterState: AutocompleteClusterState
   private autocompleteEngine?: AutocompleteEngine
   private commandCallback?: CommandCallback
   private inputHandler: InputHandler
@@ -36,6 +41,7 @@ export class TerminalController {
     this.state = options.state
     this.renderer = options.renderer
     this.shellContextStack = options.shellContextStack
+    this.clusterState = options.clusterState
     this.autocompleteEngine = options.autocompleteEngine
 
     // Créer InputHandler avec le contexte
@@ -74,10 +80,8 @@ export class TerminalController {
   }
 
   private createAutocompleteContext(): AutocompleteContext {
-    // Pour l'instant, on retourne un contexte minimal
-    // TODO: Récupérer clusterState depuis un endroit approprié
     return {
-      clusterState: {} as any, // TODO: Passer le vrai clusterState
+      clusterState: this.clusterState,
       fileSystem: this.shellContextStack.getCurrentFileSystem()
     }
   }

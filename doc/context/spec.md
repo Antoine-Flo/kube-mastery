@@ -58,6 +58,11 @@ get (pods, deploy, rs, services, ingresses, ingressclasses, configmaps, secrets,
   - supports `--command -- <cmd> [args...]` and `-- <arg1> <arg2> ...`,
   - supports `--env`, `--labels`, `--port`, `--dry-run=client`, `-i/--stdin`, `-t/--tty`, `--rm`,
   - current simulator scope limits restart policy handling to `--restart=Never` (other values return explicit error).
+- `kubectl logs` baseline:
+  - generates deterministic logs using workload profiles (control-plane components, nginx startup/runtime, db-like and generic app logs),
+  - avoids synthetic HTTP access traffic for nginx by default (startup/runtime process logs only),
+  - aligns error contract to kubectl style (`stderr` + non-zero exit code for invalid target/flags),
+  - supports `--tail`; `--tail=0` returns empty output, and non-numeric values return a kubectl-like parsing error.
 - `kubectl expose` baseline:
   - supports `kubectl expose deployment NAME --port=<port>`,
   - supports `--target-port`, `--type`, `--name`, `--selector`, `--node-port`,

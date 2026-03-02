@@ -68,7 +68,7 @@ Let's inspect the node components running in your cluster.
 
 Check which node components are running as pods:
 
-```
+```bash
 kubectl get pods -n kube-system -o wide
 ```
 
@@ -76,53 +76,44 @@ Look at the output and find the `kube-proxy` pod. In a multi-node cluster, there
 
 Confirm that `kube-proxy` is indeed a DaemonSet:
 
-```
+```bash
 kubectl get daemonset -n kube-system
 ```
 
 Expected output:
 
-```
+```bash
 NAME         DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
-kube-proxy   2         2         2       2            2           kubernetes.io/os=linux   50m
+kindnet      3         3         3       3            3           kubernetes.io/os=linux   35s
+kube-proxy   3         3         3       3            3           kubernetes.io/os=linux   35s
 ```
 
 The numbers under DESIRED and CURRENT match the number of nodes in your cluster.
 
 Now verify the container runtime on each node:
 
-```
+```bash
 kubectl get nodes -o wide
 ```
 
-Expected output (excerpt):
+Expected output (partial):
 
-```
-NAME           STATUS   ...   CONTAINER-RUNTIME
-controlplane   Ready    ...   containerd://1.7.0
-node01         Ready    ...   containerd://1.7.0
+```bash
+NAME                STATUS   ...   CONTAINER-RUNTIME
+sim-control-plane   Ready    ...   containerd://2.2.0
+sim-worker          Ready    ...   containerd://2.2.0
+sim-worker2         Ready    ...   containerd://2.2.0
 ```
 
 Let's deploy a simple pod and watch the kubelet bring it to life:
 
-```
-kubectl run test-pod --image=busybox --command -- sleep 3600
-```
-
-Then watch the pod status change in real time:
-
-```
-kubectl get pod test-pod -w
+```bash
+kubectl run test-pod --image=nginx
 ```
 
-Expected output progression:
+Then watch the pod status change in real time in the visualizer (telescope icon):
 
-```
-NAME       READY   STATUS              RESTARTS   AGE
-test-pod   0/1     Pending             0          1s
-test-pod   0/1     ContainerCreating   0          2s
-test-pod   1/1     Running             0          4s
-```
+Expected progression: Pending -> ContainerCreating -> Running
 
 `Pending` means the scheduler has assigned the pod but the kubelet has not yet pulled the image. `ContainerCreating` means the kubelet has instructed the runtime to pull and start the container. `Running` means the container is live. Press `Ctrl+C` to stop watching.
 

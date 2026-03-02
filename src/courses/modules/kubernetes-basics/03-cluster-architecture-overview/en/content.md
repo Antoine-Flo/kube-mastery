@@ -1,11 +1,5 @@
 # Cluster Architecture Overview
 
-Picture a busy restaurant kitchen on a Saturday night. The head chef has the full picture: deciding what gets cooked next, who cooks it, and in what order. The line cooks are heads down at their stations, executing the tasks assigned to them. The head chef does not fry the onions; the line cooks do not plan the evening's menu. Each role is distinct, and together they keep the kitchen running.
-
-A Kubernetes cluster works in exactly this way. There are machines that make decisions, the **control plane**, and machines that do the work, the **worker nodes**. Understanding this division is the single most important mental model you will carry through everything else in Kubernetes.
-
-## The Two Halves of a Cluster
-
 A Kubernetes cluster is made up of at least two kinds of machines, called nodes. In a minimal setup there is one of each, but production clusters typically have multiple of both for redundancy and capacity.
 
 The **control plane** is the brain of the cluster. It makes all the decisions: where to run workloads, how many copies to maintain, what the current state of the cluster is, and what needs to change to reach the desired state. The control plane does not run your application workloads, it manages everything that does.
@@ -21,8 +15,6 @@ In small development environments, it is possible to run workloads on the contro
 The control plane is responsible for the cluster's global state. It stores the desired state of all resources, every deployment, every service, every pod specification, and continuously reconciles the actual state of the cluster against that desired state.
 
 Everything flows through the control plane's API: your `kubectl get pods`, a container crash triggering rescheduling, a deployment scaling from three to ten replicas. The control plane receives the request, records the new desired state, and orchestrates the changes.
-
-The control plane is composed of several components, each with a focused responsibility, the receptionist who handles incoming requests, the database that remembers everything, the planner who decides where work goes, and the supervisor who ensures the right amount of work is always happening. You will meet them in depth in the next lesson.
 
 ## Worker Nodes: The Muscle
 
@@ -136,7 +128,7 @@ This produces a long output. Scan through it and note these important sections:
 - **Capacity** and **Allocatable**: the total and available CPU/memory on the node
 - **Non-terminated Pods**: lists every pod currently running on this node
 
-Check which pods are running on the control plane (the system components we saw earlier):
+Check which pods are running on the control plane (the system components we saw earlier), the `-n kube-system` flag is used to list pods in the kube-system namespace, we will learn more about namespaces in later lessons:
 
 ```bash
 kubectl get pods -n kube-system -o wide
