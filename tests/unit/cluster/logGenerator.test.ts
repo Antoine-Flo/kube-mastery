@@ -34,9 +34,10 @@ describe('LogGenerator', () => {
       const logs = generateLogs('nginx:latest', 5)
 
       expect(logs).toHaveLength(5)
-      logs.forEach((log) => {
-        expect(log).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/)
+      const hasEntrypointContent = logs.some((log) => {
+        return log.includes('/docker-entrypoint.sh')
       })
+      expect(hasEntrypointContent).toBe(true)
     })
 
     it('should recognize nginx image with different tags', () => {
@@ -49,15 +50,13 @@ describe('LogGenerator', () => {
       expect(logs).toHaveLength(3)
     })
 
-    it('should include HTTP methods and paths for nginx', () => {
+    it('should include nginx notice lines after startup sequence', () => {
       const logs = generateLogs('nginx:latest', 50)
-      const hasHttpContent = logs.some(
+      const hasNginxNotice = logs.some(
         (log) =>
-          log.includes('HTTP/1.1') ||
-          log.includes('GET') ||
-          log.includes('POST')
+          /^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2} \[notice\] 1#1:/.test(log)
       )
-      expect(hasHttpContent).toBe(true)
+      expect(hasNginxNotice).toBe(true)
     })
   })
 
@@ -155,7 +154,7 @@ describe('LogGenerator', () => {
 
   describe('generateLogs - timestamp format', () => {
     it('should include ISO timestamp in each log line', () => {
-      const logs = generateLogs('nginx:latest', 10)
+      const logs = generateLogs('generic:latest', 10)
 
       logs.forEach((log) => {
         expect(log).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/)
@@ -178,7 +177,7 @@ describe('LogGenerator', () => {
 
   describe('generateLogs - log levels', () => {
     it('should include INFO level in logs', () => {
-      const logs = generateLogs('nginx:latest', 20)
+      const logs = generateLogs('generic:latest', 20)
 
       const hasInfo = logs.some((log) => log.includes('INFO'))
       expect(hasInfo).toBe(true)
