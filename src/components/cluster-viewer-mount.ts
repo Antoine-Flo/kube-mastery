@@ -91,17 +91,39 @@ function getPodWorkloadType(pod: Pod, env: EmulatedEnvironment): string {
 
 function formatPodTooltip(pod: Pod, env: EmulatedEnvironment): string {
   const name = `${pod.metadata.namespace}/${pod.metadata.name}`
-  const phase = pod.status.phase
+  const displayStatus = getPodDisplayStatus(pod)
   const containers = (pod.spec.containers ?? []).map((c) => c.name).join(', ')
   const workloadType = getPodWorkloadType(pod, env)
-  return `Pod\n${name}\nPhase: ${phase}\nWorkload: ${workloadType}\nContainers: ${containers || '(none)'}`
+  return `Pod\n${name}\nStatus: ${displayStatus}\nWorkload: ${workloadType}\nContainers: ${containers || '(none)'}`
 }
 
 function formatContainerTooltip(container: {
   name: string
   image: string
-}): string {
-  return `Container\n${container.name}\nImage: ${container.image}`
+}, status?: NonNullable<Pod['status']['containerStatuses']>[number]): string {
+  const state = status?.state ?? 'Waiting'
+  const reason =
+    status?.waitingReason ??
+    status?.terminatedReason ??
+    (state === 'Running' ? 'Started' : 'ContainerCreating')
+  return `Container\n${container.name}\nImage: ${container.image}\nState: ${state}\nReason: ${reason}\nRestarts: ${status?.restartCount ?? 0}`
+}
+
+function getPodDisplayStatus(pod: Pod): string {
+  if (pod.status.phase === 'Running') {
+    return 'Running'
+  }
+  const statuses = pod.status.containerStatuses ?? []
+  const statusWithReason = statuses.find((status) => {
+    return status.waitingReason != null || status.terminatedReason != null
+  })
+  if (statusWithReason?.waitingReason != null) {
+    return statusWithReason.waitingReason
+  }
+  if (statusWithReason?.terminatedReason != null) {
+    return statusWithReason.terminatedReason
+  }
+  return pod.status.phase
 }
 
 function setTooltipContent(tooltipEl: HTMLElement, raw: string): void {
@@ -531,9 +553,15 @@ function createPodEl(
   focus: ClusterVizFocus | null
 ): HTMLElement {
   const phase = pod.status.phase
+  const displayStatus = getPodDisplayStatus(pod)
   const phaseClass = POD_PHASE_CLASS[phase]
   const name = `${pod.metadata.namespace}/${pod.metadata.name}`
   const containers = pod.spec.containers ?? []
+  const statusesByName = new Map(
+    (pod.status.containerStatuses ?? []).map((status) => {
+      return [status.name, status]
+    })
+  )
   const div = document.createElement('div')
   div.className = `cluster-viz__pod ${phaseClass}`
   div.setAttribute('data-focus-kind', 'pod')
@@ -545,16 +573,23 @@ function createPodEl(
   div.innerHTML = `
 		<div class="cluster-viz__pod-header">
 			<span class="cluster-viz__pod-name" title="${escapeAttr(name)}">${escapeHtml(pod.metadata.name)}</span>
-			<span class="cluster-viz__pod-phase">${escapeHtml(phase)}</span>
+			<span class="cluster-viz__pod-phase">${escapeHtml(displayStatus)}</span>
 		</div>
 		<div class="cluster-viz__containers"></div>
 	`
   const containersEl = div.querySelector('.cluster-viz__containers')!
   for (const c of containers) {
+    const containerStatus = statusesByName.get(c.name)
+    const containerStateClass =
+      containerStatus?.state === 'Running'
+        ? 'cluster-viz__container--running'
+        : containerStatus?.state === 'Terminated'
+          ? 'cluster-viz__container--terminated'
+          : 'cluster-viz__container--waiting'
     const cEl = document.createElement('span')
-    cEl.className = 'cluster-viz__container'
+    cEl.className = `cluster-viz__container ${containerStateClass}`
     cEl.textContent = c.name
-    cEl.dataset.tooltip = formatContainerTooltip(c)
+    cEl.dataset.tooltip = formatContainerTooltip(c, containerStatus)
     containersEl.appendChild(cEl)
   }
   return div

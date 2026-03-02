@@ -8,6 +8,7 @@ import type { ClusterEvent } from '../events/types'
 import type { PodBoundEvent } from '../events/types'
 import { createPodUpdatedEvent } from '../events/types'
 import type { Pod } from '../ressources/Pod'
+import { createImageRegistry, type ImageRegistry } from '../../containers/registry/ImageRegistry'
 import { reconcileInitContainers } from '../initContainers/reconciler'
 import type { PodVolumeReadiness } from '../../volumes/VolumeState'
 import {
@@ -141,6 +142,7 @@ export class PodLifecycleController implements ReconcilerController {
   private eventBus: EventBus
   private getState: () => ControllerState
   private workQueue: WorkQueue
+  private imageRegistry: ImageRegistry
   private unsubscribe: (() => void) | null = null
   private unsubscribePodBound: (() => void) | null = null
   private stopPeriodicResync: () => void = () => {}
@@ -154,6 +156,7 @@ export class PodLifecycleController implements ReconcilerController {
   ) {
     this.eventBus = eventBus
     this.getState = getState
+    this.imageRegistry = createImageRegistry()
     this.options = options
     this.workQueue = createWorkQueue({ processDelay: 0 })
   }
@@ -230,9 +233,16 @@ export class PodLifecycleController implements ReconcilerController {
       this.emitPodWaitingForVolume(pod, volumeReadiness.reason)
       return
     }
+    const startupIssueReason = this.detectStartupIssueReason(pod)
+    if (startupIssueReason != null) {
+      this.clearPendingTimeout(key)
+      this.emitPodStartupIssue(pod, startupIssueReason)
+      return
+    }
     if (this.pendingTimeouts.has(key)) {
       return
     }
+    this.emitPodContainerCreating(pod)
 
     const delayRange = this.options.pendingDelayRangeMs
     if (delayRange == null) {
@@ -351,6 +361,99 @@ export class PodLifecycleController implements ReconcilerController {
         return true
       }
       return previousStatus.state !== updatedStatus.state
+    })
+    if (!hasChanged) {
+      return
+    }
+    const updatedPod: Pod = {
+      ...pod,
+      status: {
+        ...pod.status,
+        phase: 'Pending',
+        observedGeneration: pod.metadata.generation ?? 1,
+        conditions: buildPodConditions(
+          {
+            ...pod,
+            status: {
+              ...pod.status,
+              phase: 'Pending',
+              containerStatuses: updatedStatuses
+            }
+          },
+          transitionTime
+        ),
+        containerStatuses: updatedStatuses
+      }
+    }
+    this.eventBus.emit(
+      createPodUpdatedEvent(
+        pod.metadata.name,
+        pod.metadata.namespace,
+        updatedPod,
+        pod,
+        this.options.eventSource ?? 'pod-lifecycle-controller'
+      )
+    )
+  }
+
+  private detectStartupIssueReason(pod: Pod): string | undefined {
+    for (const container of pod.spec.containers) {
+      const imageValidation = this.imageRegistry.validateImage(container.image)
+      if (!imageValidation.ok) {
+        return 'ImagePullBackOff'
+      }
+      if (imageValidation.value.behavior.defaultStatus === 'Failed') {
+        return 'CrashLoopBackOff'
+      }
+    }
+    return undefined
+  }
+
+  private emitPodContainerCreating(pod: Pod): void {
+    this.emitPodContainerWaitingReason(pod, 'ContainerCreating')
+  }
+
+  private emitPodStartupIssue(pod: Pod, waitingReason: string): void {
+    this.emitPodContainerWaitingReason(pod, waitingReason)
+  }
+
+  private emitPodContainerWaitingReason(pod: Pod, waitingReason: string): void {
+    const transitionTime = new Date().toISOString()
+    const currentStatuses = pod.status.containerStatuses ?? []
+    const regularContainerNames = new Set(pod.spec.containers.map((container) => container.name))
+    const updatedStatuses = currentStatuses.map((status) => {
+      if (!regularContainerNames.has(status.name)) {
+        return status
+      }
+      return {
+        ...status,
+        ready: false,
+        state: 'Waiting' as const,
+        started: false,
+        waitingReason,
+        ...(waitingReason === 'CrashLoopBackOff'
+          ? {
+              terminatedReason: 'Error',
+              restartCount: (status.restartCount ?? 0) + 1
+            }
+          : { terminatedReason: undefined })
+      }
+    })
+    const hasChanged = updatedStatuses.some((updatedStatus, index) => {
+      const previousStatus = currentStatuses[index]
+      if (previousStatus == null) {
+        return true
+      }
+      if (previousStatus.waitingReason !== updatedStatus.waitingReason) {
+        return true
+      }
+      if (previousStatus.state !== updatedStatus.state) {
+        return true
+      }
+      if (previousStatus.restartCount !== updatedStatus.restartCount) {
+        return true
+      }
+      return previousStatus.terminatedReason !== updatedStatus.terminatedReason
     })
     if (!hasChanged) {
       return
