@@ -375,11 +375,10 @@ const faqItems = [
     return doubled === value ? '' : doubled
   }
 
-  async function preview(items, valueKey, bannersByPriceId, yearlyMode) {
+  async function preview(paddle, items, valueKey, bannersByPriceId, yearlyMode) {
     if (items.length === 0) {
       return
     }
-    const paddle = window.Paddle
     const result = await paddle.PricePreview({ items })
     const lineItems = result.data.details.lineItems
 
@@ -399,7 +398,7 @@ const faqItems = [
     })
   }
 
-  async function hydrateLocalizedPrices(banners) {
+  async function hydrateLocalizedPrices(banners, remainingRetries = 1) {
     if (banners.length === 0) {
       return
     }
@@ -422,22 +421,45 @@ const faqItems = [
       }
     })
 
-    if (!document.documentElement.hasAttribute(PADDLE_INITED)) {
-      if (paddleEnvironment === 'sandbox') {
-        window.Paddle.Environment.set('sandbox')
+    const paddle = window.Paddle
+    if (paddle == null) {
+      if (remainingRetries > 0) {
+        setTimeout(() => {
+          void hydrateLocalizedPrices(banners, remainingRetries - 1)
+        }, 300)
+      } else {
+        console.warn('[Paddle] not available, skipping localized prices hydration.')
       }
-      window.Paddle.Initialize({ token: paddleClientToken })
+      return
+    }
+
+    if (!document.documentElement.hasAttribute(PADDLE_INITED)) {
+      if (
+        paddleEnvironment === 'sandbox' &&
+        paddle.Environment != null &&
+        typeof paddle.Environment.set === 'function'
+      ) {
+        paddle.Environment.set('sandbox')
+      }
+      paddle.Initialize({ token: paddleClientToken })
       document.documentElement.setAttribute(PADDLE_INITED, '')
     }
 
     try {
       await preview(
+        paddle,
         monthlyItems,
         'data-month-price-localized',
         monthBanners,
         false
       )
-      await preview(yearlyItems, 'data-year-price-localized', yearBanners, true)
+      await preview(
+        paddle,
+        yearlyItems,
+        'data-year-price-localized',
+        yearBanners,
+        true
+      )
     } catch (error) {
       console.error('[Paddle.PricePreview] failed', error)
     }
