@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import Button from '../../components/ui/Button.astro'
+import Dialog from '../../components/ui/Dialog.astro'
 import guaranteeBadge from '../../assets/guarantee-badge.svg'
 import '../../styles/components/card.css'
 import '../../styles/components/accordion.css'
@@ -13,10 +14,7 @@ const lang = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
-const runtimeEnv =
-  ((Astro.locals as { runtime?: { env?: Record<string, string | undefined> } })
-    ?.runtime?.env ??
-    {}) as Record<string, string | undefined>
+const runtimeEnv = process.env as Record<string, string | undefined>
 const environment = (runtimeEnv.ENVIRONMENT ?? '').toLowerCase().trim()
 const isProduction = environment === 'production'
 const paddleClientToken = isProduction
@@ -43,6 +41,24 @@ const detailYearlyText = t('pricing_detail_yearly', {
   total: '--'
 })
 const detailMonthlyText = t('pricing_detail_monthly')
+const CHECKOUT_EMAIL_DIALOG_ID = 'pricing-checkout-email-dialog'
+const checkoutDialogTitle =
+  lang === 'fr' ? 'Continuer vers le paiement' : 'Continue to checkout'
+const checkoutDialogDescription =
+  lang === 'fr'
+    ? 'Renseigne ton email pour ouvrir la page de paiement.'
+    : 'Enter your email to open the checkout page.'
+const checkoutEmailLabel = lang === 'fr' ? 'Adresse email' : 'Email address'
+const checkoutEmailPlaceholder =
+  lang === 'fr' ? 'vous@exemple.com' : 'you@example.com'
+const checkoutCancelLabel = lang === 'fr' ? 'Annuler' : 'Cancel'
+const checkoutContinueLabel =
+  lang === 'fr' ? 'Continuer au paiement' : 'Continue to checkout'
+const checkoutInvalidEmailError =
+  lang === 'fr'
+    ? 'Merci de saisir une adresse email valide.'
+    : 'Please enter a valid email address.'
+const checkoutSuccessPath = localePath('/checkout/success')
 
 const faqItems = [
   { id: 'q1', q: t('pricing_faq_q1'), a: t('pricing_faq_a1') },
@@ -61,259 +77,259 @@ const faqItems = [
     <div class="pricing">
       <h2 class="pricing__title">{t('pricing_title')}</h2>
 
-    <div class="pricing__toggle" role="group" aria-label="Billing period">
-      <span
-        class="pricing__toggle-option"
-        id="pricing-option-monthly"
-        aria-pressed="false"
-      >
-        {t('pricing_toggle_monthly')}
-      </span>
-      <button
-        type="button"
-        class="pricing__toggle-switch"
-        id="pricing-billing-toggle"
-        aria-pressed="true"
-        aria-label="Toggle yearly billing"
-        title={t('pricing_toggle_yearly')}
-      >
-      </button>
-      <span class="pricing__toggle-yearly-wrap">
+      <div class="pricing__toggle" role="group" aria-label="Billing period">
         <span
           class="pricing__toggle-option"
-          id="pricing-option-yearly"
-          aria-pressed="true"
+          id="pricing-option-monthly"
+          aria-pressed="false"
         >
-          {t('pricing_toggle_yearly')}
+          {t('pricing_toggle_monthly')}
         </span>
-        <span class="pricing__toggle-yearly-badge">{t('pricing_toggle_yearly_badge')}</span>
-      </span>
-    </div>
+        <button
+          type="button"
+          class="pricing__toggle-switch"
+          id="pricing-billing-toggle"
+          aria-pressed="true"
+          aria-label="Toggle yearly billing"
+          title={t('pricing_toggle_yearly')}
+        >
+        </button>
+        <span class="pricing__toggle-yearly-wrap">
+          <span
+            class="pricing__toggle-option"
+            id="pricing-option-yearly"
+            aria-pressed="true"
+          >
+            {t('pricing_toggle_yearly')}
+          </span>
+          <span class="pricing__toggle-yearly-badge"
+            >{t('pricing_toggle_yearly_badge')}</span
+          >
+        </span>
+      </div>
 
-    <div class="pricing__promo-wrap" role="status" aria-live="polite">
-      <span class="pricing__promo-banner-text">
-        {t('pricing_earlyaccess_badge')}
-      </span>
-    </div>
+      <div class="pricing__promo-wrap" role="status" aria-live="polite">
+        <span class="pricing__promo-banner-text">
+          {t('pricing_earlyaccess_badge')}
+        </span>
+      </div>
 
-    <div class="pricing__plans">
-      <!-- Standard plan -->
-      <article
-        class="card card--outline pricing__plan-card"
-        data-billing="monthly"
-      >
-        <div class="card__header">
-          <h2 class="card__title pricing__plan-title">
-            {t('pricing_standard_name')}
-          </h2>
-          <div class="pricing__plan-price">
-            <div
-              class="pricing__plan-price-banner"
-              data-detail-yearly={standardDetailYearlyText}
-              data-detail-yearly-template={standardDetailYearlyText}
-              data-detail-monthly={standardDetailMonthlyText}
-              data-price-id-month={STANDARD_MONTHLY_PRICE_ID}
-              data-price-id-year={STANDARD_YEARLY_PRICE_ID}
-            >
-              <div class="pricing__plan-price-current">
-                <span class="pricing__plan-price-struck">
-                  
-                </span>
-                <span class="pricing__plan-price-amount">
-                  --
-                </span>
-                <span class="pricing__plan-price-period">
-                  {t('pricing_per_month')}
-                </span>
-              </div>
-              <div class="pricing__plan-price-detail-wrap">
-                <span class="pricing__plan-price-detail">
-                  {standardDetailYearlyText}
-                </span>
+      <div class="pricing__plans">
+        <!-- Standard plan -->
+        <article
+          class="card card--outline pricing__plan-card"
+          data-billing="monthly"
+        >
+          <div class="card__header">
+            <h2 class="card__title pricing__plan-title">
+              {t('pricing_standard_name')}
+            </h2>
+            <div class="pricing__plan-price">
+              <div
+                class="pricing__plan-price-banner"
+                data-detail-yearly={standardDetailYearlyText}
+                data-detail-yearly-template={standardDetailYearlyText}
+                data-detail-monthly={standardDetailMonthlyText}
+                data-price-id-month={STANDARD_MONTHLY_PRICE_ID}
+                data-price-id-year={STANDARD_YEARLY_PRICE_ID}
+              >
+                <div class="pricing__plan-price-current">
+                  <span class="pricing__plan-price-struck"> </span>
+                  <span class="pricing__plan-price-amount"> -- </span>
+                  <span class="pricing__plan-price-period">
+                    {t('pricing_per_month')}
+                  </span>
+                </div>
+                <div class="pricing__plan-price-detail-wrap">
+                  <span class="pricing__plan-price-detail">
+                    {standardDetailYearlyText}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="card__body">
-          <ul class="pricing__plan-features">
-            <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>
-              {t('pricing_standard_feature1')}
-            </li>
-            <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>
-              {t('pricing_standard_feature2')}
-            </li>
-            <li class="pricing__plan-feature pricing__plan-feature--excluded">
-              <span class="pricing__plan-feature-x" aria-hidden="true">—</span>
-              {t('pricing_standard_feature3')}
-            </li>
-          </ul>
-        </div>
-        <div class="card__footer pricing__plan-footer">
-          <Button
-            href={localePath('/courses')}
-            variant="outline"
-            size="lg"
-            class="pricing__plan-button"
-          >
-            {t('pricing_standard_cta')}
-          </Button>
-        </div>
-      </article>
-
-      <!-- KubeMastery Pro plan -->
-      <article
-        class="card card--outline pricing__plan-card pricing__plan-card--highlighted"
-        data-billing="monthly"
-      >
-        <div class="card__header">
-          <h2 class="card__title pricing__plan-title">
-            {t('pricing_earlyaccess_name')}
-          </h2>
-          <div class="pricing__plan-price">
-            <div
-              class="pricing__plan-price-banner"
-              data-detail-yearly={detailYearlyText}
-              data-detail-yearly-template={detailYearlyText}
-              data-detail-monthly={detailMonthlyText}
-              data-price-id-month={INDIVIDUAL_MONTHLY_PRICE_ID}
-              data-price-id-year={INDIVIDUAL_YEARLY_PRICE_ID}
-            >
-              <div class="pricing__plan-price-current">
-                <span class="pricing__plan-price-struck">
-                  
-                </span>
-                <span class="pricing__plan-price-amount">
-                  --
-                </span>
-                <span class="pricing__plan-price-period">
-                  {t('pricing_per_month')}
-                </span>
-              </div>
-              <div class="pricing__plan-price-detail-wrap">
-                <span class="pricing__plan-price-detail">
-                  {detailYearlyText}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card__body">
-          <ul class="pricing__plan-features">
-            <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>
-              {t('pricing_earlyaccess_feature1')}
-            </li>
-            <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>
-              {t('pricing_earlyaccess_feature2')}
-            </li>
-            <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>
-              {t('pricing_earlyaccess_feature4')}
-            </li>
-          </ul>
-        </div>
-        <div class="card__footer pricing__plan-footer">
-          <Button
-            href={localePath('/courses')}
-            variant="solid"
-            size="lg"
-            color="cyan"
-            class="pricing__plan-button"
-          >
-            {t('pricing_earlyaccess_cta')}
-          </Button>
-        </div>
-      </article>
-
-      <!-- Business (coming soon) -->
-      <article
-        class="card card--outline pricing__plan-card pricing__plan-card--coming-soon"
-      >
-        <div class="card__header">
-          <div class="pricing__badge">
-            <span class="pricing__badge-text pricing__badge-text--cyan">
-              {t('pricing_business_comingSoon')}
-            </span>
-          </div>
-          <h2 class="card__title pricing__plan-title">
-            {t('pricing_business_name')}
-          </h2>
-          <div class="pricing__plan-header-spacer" aria-hidden="true"></div>
-        </div>
-        <div class="card__body">
-          <ul class="pricing__plan-features">
-            <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>
-              {t('pricing_business_feature1')}
-            </li>
-            <li class="pricing__plan-feature">
-              <span class="pricing__plan-feature-check">✓</span>
-              {t('pricing_business_feature2')}
-            </li>
-          </ul>
-        </div>
-        <div class="card__footer pricing__plan-footer">
-          <Button
-            variant="outline"
-            size="lg"
-            disabled
-            class="pricing__plan-button"
-          >
-            {t('pricing_business_comingSoon')}
-          </Button>
-        </div>
-      </article>
-    </div>
-
-    <div class="guarantee">
-      <div class="content">
-        <div class="guarantee-row">
-          <div class="guarantee-badge">
-            <img
-              src={guaranteeBadge.src}
-              alt={t('home_guarantee_image_alt')}
-              loading="lazy"
-            />
-          </div>
-          <div class="guarantee-text">
-            <h2>{t('home_guarantee_title')}</h2>
-            <p>{t('home_guarantee_subtitle')}</p>
-            <ul class="guarantee-bullets">
-              <li>{t('home_guarantee_point1')}</li>
-              <li>{t('home_guarantee_point2')}</li>
+          <div class="card__body">
+            <ul class="pricing__plan-features">
+              <li class="pricing__plan-feature">
+                <span class="pricing__plan-feature-check">✓</span>
+                {t('pricing_standard_feature1')}
+              </li>
+              <li class="pricing__plan-feature">
+                <span class="pricing__plan-feature-check">✓</span>
+                {t('pricing_standard_feature2')}
+              </li>
+              <li class="pricing__plan-feature pricing__plan-feature--excluded">
+                <span class="pricing__plan-feature-x" aria-hidden="true">—</span
+                >
+                {t('pricing_standard_feature3')}
+              </li>
             </ul>
           </div>
-        </div>
-      </div>
-    </div>
+          <div class="card__footer pricing__plan-footer">
+            <Button
+              href={localePath('/courses')}
+              variant="outline"
+              size="lg"
+              class="pricing__plan-button"
+            >
+              {t('pricing_standard_cta')}
+            </Button>
+          </div>
+        </article>
 
-    <section class="pricing__stats">
-      <h2 class="pricing__stats-title">{t('home_stats_title')}</h2>
-      <p class="pricing__stats-subtitle">{t('home_stats_subtitle')}</p>
-      <div class="pricing__stats-grid">
-        <div class="pricing__stats-card">
-          <div class="pricing__stats-val">{t('home_stats_adoption_value')}</div>
-          <h3>{t('home_stats_adoption_label')}</h3>
-          <p>{t('home_stats_adoption_description')}</p>
-          <p class="pricing__stats-src">{t('home_stats_adoption_source')}</p>
-        </div>
-        <div class="pricing__stats-card">
-          <div class="pricing__stats-val">{t('home_stats_market_value')}</div>
-          <h3>{t('home_stats_market_label')}</h3>
-          <p>{t('home_stats_market_description')}</p>
-          <p class="pricing__stats-src">{t('home_stats_market_source')}</p>
-        </div>
-        <div class="pricing__stats-card">
-          <div class="pricing__stats-val">{t('home_stats_companies_value')}</div>
-          <h3>{t('home_stats_companies_label')}</h3>
-          <p>{t('home_stats_companies_description')}</p>
-          <p class="pricing__stats-src">{t('home_stats_companies_source')}</p>
+        <!-- KubeMastery Pro plan -->
+        <article
+          class="card card--outline pricing__plan-card pricing__plan-card--highlighted"
+          data-billing="monthly"
+        >
+          <div class="card__header">
+            <h2 class="card__title pricing__plan-title">
+              {t('pricing_earlyaccess_name')}
+            </h2>
+            <div class="pricing__plan-price">
+              <div
+                class="pricing__plan-price-banner"
+                data-detail-yearly={detailYearlyText}
+                data-detail-yearly-template={detailYearlyText}
+                data-detail-monthly={detailMonthlyText}
+                data-price-id-month={INDIVIDUAL_MONTHLY_PRICE_ID}
+                data-price-id-year={INDIVIDUAL_YEARLY_PRICE_ID}
+              >
+                <div class="pricing__plan-price-current">
+                  <span class="pricing__plan-price-struck"> </span>
+                  <span class="pricing__plan-price-amount"> -- </span>
+                  <span class="pricing__plan-price-period">
+                    {t('pricing_per_month')}
+                  </span>
+                </div>
+                <div class="pricing__plan-price-detail-wrap">
+                  <span class="pricing__plan-price-detail">
+                    {detailYearlyText}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card__body">
+            <ul class="pricing__plan-features">
+              <li class="pricing__plan-feature">
+                <span class="pricing__plan-feature-check">✓</span>
+                {t('pricing_earlyaccess_feature1')}
+              </li>
+              <li class="pricing__plan-feature">
+                <span class="pricing__plan-feature-check">✓</span>
+                {t('pricing_earlyaccess_feature2')}
+              </li>
+              <li class="pricing__plan-feature">
+                <span class="pricing__plan-feature-check">✓</span>
+                {t('pricing_earlyaccess_feature4')}
+              </li>
+            </ul>
+          </div>
+          <div class="card__footer pricing__plan-footer">
+            <Button
+              type="button"
+              variant="solid"
+              size="lg"
+              color="cyan"
+              class="pricing__plan-button"
+              data-open-checkout="individual"
+            >
+              {t('pricing_earlyaccess_cta')}
+            </Button>
+          </div>
+        </article>
+
+        <!-- Business (coming soon) -->
+        <article
+          class="card card--outline pricing__plan-card pricing__plan-card--coming-soon"
+        >
+          <div class="card__header">
+            <div class="pricing__badge">
+              <span class="pricing__badge-text pricing__badge-text--cyan">
+                {t('pricing_business_comingSoon')}
+              </span>
+            </div>
+            <h2 class="card__title pricing__plan-title">
+              {t('pricing_business_name')}
+            </h2>
+            <div class="pricing__plan-header-spacer" aria-hidden="true"></div>
+          </div>
+          <div class="card__body">
+            <ul class="pricing__plan-features">
+              <li class="pricing__plan-feature">
+                <span class="pricing__plan-feature-check">✓</span>
+                {t('pricing_business_feature1')}
+              </li>
+              <li class="pricing__plan-feature">
+                <span class="pricing__plan-feature-check">✓</span>
+                {t('pricing_business_feature2')}
+              </li>
+            </ul>
+          </div>
+          <div class="card__footer pricing__plan-footer">
+            <Button
+              variant="outline"
+              size="lg"
+              disabled
+              class="pricing__plan-button"
+            >
+              {t('pricing_business_comingSoon')}
+            </Button>
+          </div>
+        </article>
+      </div>
+
+      <div class="guarantee">
+        <div class="content">
+          <div class="guarantee-row">
+            <div class="guarantee-badge">
+              <img
+                src={guaranteeBadge.src}
+                alt={t('home_guarantee_image_alt')}
+                loading="lazy"
+              />
+            </div>
+            <div class="guarantee-text">
+              <h2>{t('home_guarantee_title')}</h2>
+              <p>{t('home_guarantee_subtitle')}</p>
+              <ul class="guarantee-bullets">
+                <li>{t('home_guarantee_point1')}</li>
+                <li>{t('home_guarantee_point2')}</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
-    </section>
+
+      <section class="pricing__stats">
+        <h2 class="pricing__stats-title">{t('home_stats_title')}</h2>
+        <p class="pricing__stats-subtitle">{t('home_stats_subtitle')}</p>
+        <div class="pricing__stats-grid">
+          <div class="pricing__stats-card">
+            <div class="pricing__stats-val">
+              {t('home_stats_adoption_value')}
+            </div>
+            <h3>{t('home_stats_adoption_label')}</h3>
+            <p>{t('home_stats_adoption_description')}</p>
+            <p class="pricing__stats-src">{t('home_stats_adoption_source')}</p>
+          </div>
+          <div class="pricing__stats-card">
+            <div class="pricing__stats-val">{t('home_stats_market_value')}</div>
+            <h3>{t('home_stats_market_label')}</h3>
+            <p>{t('home_stats_market_description')}</p>
+            <p class="pricing__stats-src">{t('home_stats_market_source')}</p>
+          </div>
+          <div class="pricing__stats-card">
+            <div class="pricing__stats-val">
+              {t('home_stats_companies_value')}
+            </div>
+            <h3>{t('home_stats_companies_label')}</h3>
+            <p>{t('home_stats_companies_description')}</p>
+            <p class="pricing__stats-src">{t('home_stats_companies_source')}</p>
+          </div>
+        </div>
+      </section>
 
       <section class="pricing__faq-section">
         <h2 class="pricing__faq-title">{t('pricing_faq_title')}</h2>
@@ -342,14 +358,69 @@ const faqItems = [
           </div>
         </div>
       </section>
+      <Dialog
+        id={CHECKOUT_EMAIL_DIALOG_ID}
+        title={checkoutDialogTitle}
+        description={checkoutDialogDescription}
+        size="sm"
+      >
+        <form id="pricing-checkout-email-form" class="pricing-checkout-form">
+          <label
+            class="pricing-checkout-form__label"
+            for="pricing-checkout-email"
+          >
+            {checkoutEmailLabel}
+          </label>
+          <input
+            id="pricing-checkout-email"
+            name="email"
+            type="email"
+            class="pricing-checkout-form__input"
+            placeholder={checkoutEmailPlaceholder}
+            autocomplete="email"
+            required
+          />
+          <p
+            id="pricing-checkout-email-error"
+            class="pricing-checkout-form__error"
+            aria-live="polite"
+            hidden
+          >
+          </p>
+          <footer class="dialog__footer pricing-checkout-form__footer">
+            <Button
+              type="button"
+              variant="subtle"
+              color="gray"
+              data-dialog-close
+            >
+              {checkoutCancelLabel}
+            </Button>
+            <Button type="submit" variant="solid" color="cyan">
+              {checkoutContinueLabel}
+            </Button>
+          </footer>
+        </form>
+      </Dialog>
     </div>
   </div>
 </Layout>
 
-<script id="paddle-js" src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
-<script define:vars={{ paddleClientToken, paddleEnvironment }}>
+<script id="paddle-js" src="https://cdn.paddle.com/paddle/v2/paddle.js"
+></script>
+<script
+  define:vars={{
+    paddleClientToken,
+    paddleEnvironment,
+    checkoutDialogId: CHECKOUT_EMAIL_DIALOG_ID,
+    checkoutInvalidEmailError,
+    checkoutSuccessPath,
+    checkoutLang: lang
+  }}
+>
   const PRICING_INITED = 'data-pricing-toggle-inited'
   const PADDLE_INITED = 'data-paddle-inited'
+  const CHECKOUT_DIALOG_INITED = 'data-pricing-checkout-dialog-inited'
   const YEAR_MONTHS = 12
 
   function toYearlyPerMonth(total) {
@@ -386,6 +457,24 @@ const faqItems = [
     return value.replace(/€\s*(\d+(?:[.,]\d+)?)/g, '$1€')
   }
 
+  function showCheckoutError(message) {
+    const errorEl = document.getElementById('pricing-checkout-email-error')
+    if (errorEl == null) {
+      return
+    }
+    errorEl.textContent = message
+    errorEl.removeAttribute('hidden')
+  }
+
+  function hideCheckoutError() {
+    const errorEl = document.getElementById('pricing-checkout-email-error')
+    if (errorEl == null) {
+      return
+    }
+    errorEl.textContent = ''
+    errorEl.setAttribute('hidden', '')
+  }
+
   function doubleDisplayedPrice(value) {
     const doubled = value.replace(/(\d+[.,]?\d*)/, (_, raw) =>
       String(Math.round(Number.parseFloat(raw.replace(',', '.')) * 2))
@@ -393,7 +482,13 @@ const faqItems = [
     return doubled === value ? '' : doubled
   }
 
-  async function preview(paddle, items, valueKey, bannersByPriceId, yearlyMode) {
+  async function preview(
+    paddle,
+    items,
+    valueKey,
+    bannersByPriceId,
+    yearlyMode
+  ) {
     if (items.length === 0) {
       return
     }
@@ -403,7 +498,9 @@ const faqItems = [
     lineItems.forEach((lineItem) => {
       const priceId = lineItem.price.id
       const total = moveEuroSymbolAfterAmount(
-        roundDisplayedPrice(stripTrailingZeroCents(lineItem.formattedTotals.total))
+        roundDisplayedPrice(
+          stripTrailingZeroCents(lineItem.formattedTotals.total)
+        )
       )
       const banner = bannersByPriceId.get(priceId)
       if (banner == null) {
@@ -412,7 +509,8 @@ const faqItems = [
       const value = yearlyMode ? toYearlyPerMonth(total) : total
       banner.setAttribute(valueKey, value)
       if (yearlyMode) {
-        const template = banner.getAttribute('data-detail-yearly-template') ?? ''
+        const template =
+          banner.getAttribute('data-detail-yearly-template') ?? ''
         banner.setAttribute('data-detail-yearly', template.replace('--', total))
       }
     })
@@ -480,6 +578,79 @@ const faqItems = [
     }
   }
 
+  async function ensurePaddleInitialized() {
+    const paddle = window.Paddle
+    if (paddle == null) {
+      return null
+    }
+
+    if (!document.documentElement.hasAttribute(PADDLE_INITED)) {
+      if (
+        paddleEnvironment === 'sandbox' &&
+        paddle.Environment != null &&
+        typeof paddle.Environment.set === 'function'
+      ) {
+        paddle.Environment.set('sandbox')
+      }
+      paddle.Initialize({ token: paddleClientToken })
+      document.documentElement.setAttribute(PADDLE_INITED, '')
+    }
+
+    return paddle
+  }
+
+  function getActivePriceIdForPlan(planName) {
+    const button = document.querySelector(`[data-open-checkout="${planName}"]`)
+    if (!(button instanceof HTMLElement)) {
+      return null
+    }
+
+    const planCard = button.closest('.pricing__plan-card')
+    if (!(planCard instanceof HTMLElement)) {
+      return null
+    }
+
+    const banner = planCard.querySelector('.pricing__plan-price-banner')
+    if (!(banner instanceof HTMLElement)) {
+      return null
+    }
+
+    const toggle = document.getElementById('pricing-billing-toggle')
+    const isYearly = toggle?.getAttribute('aria-pressed') === 'true'
+    const attributeName = isYearly
+      ? 'data-price-id-year'
+      : 'data-price-id-month'
+    return banner.getAttribute(attributeName)
+  }
+
+  async function openCheckoutForPlan(planName, email) {
+    const priceId = getActivePriceIdForPlan(planName)
+    if (priceId == null || priceId === '') {
+      return
+    }
+
+    const paddle = await ensurePaddleInitialized()
+    if (paddle == null) {
+      console.error('[Paddle] unavailable for checkout open.')
+      return
+    }
+
+    const successUrl = `${window.location.origin}${checkoutSuccessPath}`
+
+    paddle.Checkout.open({
+      items: [{ priceId, quantity: 1 }],
+      customer: { email },
+      customData: {
+        lang: checkoutLang,
+        email
+      },
+      settings: {
+        displayMode: 'overlay',
+        successUrl
+      }
+    })
+  }
+
   /** Réexécuter à chaque chargement / swap (premier load, reload, navigation, changement de langue). */
   function initPricingToggle() {
     const toggle = document.getElementById('pricing-billing-toggle')
@@ -499,8 +670,12 @@ const faqItems = [
       optionYearly?.setAttribute('aria-pressed', String(isYearly))
 
       banners.forEach((banner) => {
-        const monthPriceLocalized = banner.getAttribute('data-month-price-localized')
-        const yearPriceLocalized = banner.getAttribute('data-year-price-localized')
+        const monthPriceLocalized = banner.getAttribute(
+          'data-month-price-localized'
+        )
+        const yearPriceLocalized = banner.getAttribute(
+          'data-year-price-localized'
+        )
         const detailYearly = banner.getAttribute('data-detail-yearly') ?? ''
         const detailMonthly = banner.getAttribute('data-detail-monthly') ?? ''
 
@@ -577,4 +752,112 @@ const faqItems = [
   }
   document.addEventListener('astro:after-swap', initPricingToggle)
   document.addEventListener('astro:page-load', initPricingToggle)
+
+  function setupCheckoutDialog() {
+    const dialog = document.getElementById(checkoutDialogId)
+    const form = document.getElementById('pricing-checkout-email-form')
+    if (
+      !(dialog instanceof HTMLDialogElement) ||
+      !(form instanceof HTMLFormElement)
+    ) {
+      return
+    }
+    if (dialog.hasAttribute(CHECKOUT_DIALOG_INITED)) {
+      return
+    }
+    dialog.setAttribute(CHECKOUT_DIALOG_INITED, '')
+
+    document.querySelectorAll('[data-open-checkout]').forEach((trigger) => {
+      if (!(trigger instanceof HTMLElement)) {
+        return
+      }
+      trigger.addEventListener('click', () => {
+        const planName = trigger.getAttribute('data-open-checkout')
+        if (planName == null || planName === '') {
+          return
+        }
+        dialog.setAttribute('data-checkout-plan', planName)
+        hideCheckoutError()
+        const emailInput = form.elements.namedItem('email')
+        if (emailInput instanceof HTMLInputElement) {
+          emailInput.value = ''
+        }
+        dialog.showModal()
+      })
+    })
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault()
+      hideCheckoutError()
+
+      const emailInput = form.elements.namedItem('email')
+      if (!(emailInput instanceof HTMLInputElement)) {
+        showCheckoutError(checkoutInvalidEmailError)
+        return
+      }
+
+      const email = emailInput.value.trim()
+      if (!emailInput.checkValidity()) {
+        showCheckoutError(checkoutInvalidEmailError)
+        return
+      }
+
+      const planName = dialog.getAttribute('data-checkout-plan')
+      if (planName == null || planName === '') {
+        return
+      }
+
+      await openCheckoutForPlan(planName, email)
+      dialog.close()
+    })
+  }
+
+  setupCheckoutDialog()
+  document.addEventListener('astro:page-load', setupCheckoutDialog)
 </script>
+
+<style>
+  .pricing-checkout-form {
+    display: grid;
+    gap: var(--spacing-3);
+  }
+
+  .pricing-checkout-form__label {
+    font-size: var(--text-sm);
+    line-height: var(--line-height-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-fg-default);
+  }
+
+  .pricing-checkout-form__input {
+    width: 100%;
+    border-radius: var(--radius-l2);
+    border: 1px solid var(--color-gray-7);
+    background: var(--color-gray-2);
+    color: var(--color-fg-default);
+    font-size: var(--text-sm);
+    line-height: var(--line-height-sm);
+    padding: var(--spacing-2) var(--spacing-3);
+  }
+
+  .pricing-checkout-form__input:focus-visible {
+    outline: none;
+    border-color: var(--color-cyan-8);
+    box-shadow:
+      0 0 0 2px var(--color-gray-1),
+      0 0 0 4px var(--color-cyan-9);
+  }
+
+  .pricing-checkout-form__error {
+    font-size: var(--text-xs);
+    line-height: var(--line-height-xs);
+    color: var(--color-palette-ruby-text);
+    margin: 0;
+  }
+
+  .pricing-checkout-form__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-2);
+  }
+</style>

@@ -8,6 +8,13 @@
       "when": 1770639509074,
       "tag": "0000_early_payback",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772545515364,
+      "tag": "0001_unknown_grey_gargoyle",
+      "breakpoints": true
     }
   ]
 }

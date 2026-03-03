@@ -190,6 +190,76 @@ export const subscriptions = pgTable(
 export type InsertSubscription = typeof subscriptions.$inferInsert
 export type SelectSubscription = typeof subscriptions.$inferSelect
 
+/**
+ * Billing events table - Raw Paddle webhook notifications for idempotency and audit.
+ */
+export const billingEvents = pgTable(
+  'billing_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    provider: text('provider').notNull().default('paddle'),
+    notificationId: text('notification_id').notNull().unique(),
+    eventType: text('event_type').notNull(),
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
+    payload: jsonb('payload').default('{}').notNull(),
+    processedAt: timestamp('processed_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull()
+  },
+  (table) => [
+    index('billing_events_notification_id_idx').on(table.notificationId),
+    index('billing_events_event_type_idx').on(table.eventType)
+  ]
+)
+
+export type InsertBillingEvent = typeof billingEvents.$inferInsert
+export type SelectBillingEvent = typeof billingEvents.$inferSelect
+
+/**
+ * Pending subscriptions table - Checkout/subscription data before a Supabase user is linked.
+ */
+export const pendingSubscriptions = pgTable(
+  'pending_subscriptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    email: text('email').notNull(),
+    planTier: text('plan_tier').notNull(),
+    status: text('status').notNull(),
+    paddleSubscriptionId: text('paddle_subscription_id').unique(),
+    paddleCustomerId: text('paddle_customer_id'),
+    currentPeriodStart: timestamp('current_period_start', {
+      withTimezone: true
+    }),
+    currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
+    canceledAt: timestamp('canceled_at', { withTimezone: true }),
+    linkedUserId: uuid('linked_user_id').references(() => authUsers.id, {
+      onDelete: 'set null'
+    }),
+    linkedAt: timestamp('linked_at', { withTimezone: true }),
+    magicLinkSentAt: timestamp('magic_link_sent_at', { withTimezone: true }),
+    rawData: jsonb('raw_data').default('{}').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull()
+  },
+  (table) => [
+    index('pending_subscriptions_email_idx').on(table.email),
+    index('pending_subscriptions_status_idx').on(table.status),
+    index('pending_subscriptions_paddle_subscription_id_idx').on(
+      table.paddleSubscriptionId
+    )
+  ]
+)
+
+export type InsertPendingSubscription = typeof pendingSubscriptions.$inferInsert
+export type SelectPendingSubscription = typeof pendingSubscriptions.$inferSelect
+
 // ═══════════════════════════════════════════════════════════════════════════
 // USER MESSAGES TABLE
 // ═══════════════════════════════════════════════════════════════════════════

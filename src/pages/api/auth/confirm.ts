@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
 import { getSupabaseServer } from '../../../lib/supabase'
+import { reconcileBillingForAuthenticatedUser } from '../../../lib/auth/reconcile-billing'
 
 const json = (body: Record<string, unknown>, status: number) =>
   new Response(JSON.stringify(body), {
@@ -93,6 +94,8 @@ export const GET: APIRoute = async ({
       )
     )
   }
+
+  await reconcileBillingForAuthenticatedUser(locals, data?.user)
 
   return redirect(redirectTo || `/${lang}/courses`)
 }

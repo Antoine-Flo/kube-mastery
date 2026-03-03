@@ -17,15 +17,31 @@ type AstroCookies = {
   delete?: (name: string, options?: { path?: string }) => void
 }
 
+function readSupabaseEnv(): SupabaseEnv {
+  return process.env as SupabaseEnv
+}
+
 /**
  * Admin client – server only. Uses service_role key for auth.admin (e.g. deleteUser).
  * Never expose this client or the service role key to the browser.
  */
 export function getSupabaseAdmin(locals: unknown): SupabaseClient | null {
-  const env =
-    (locals as { runtime?: { env?: SupabaseEnv } })?.runtime?.env ?? {}
+  void locals
+  const env = readSupabaseEnv()
   const url = env?.SUPABASE_URL
   const key = env?.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) {
+    return null
+  }
+  return createClient(url, key)
+}
+
+/** Public server client – no session cookies, used for server-side auth flows like magic links. */
+export function getSupabasePublic(locals: unknown): SupabaseClient | null {
+  void locals
+  const env = readSupabaseEnv()
+  const url = env?.SUPABASE_URL
+  const key = env?.SUPABASE_PUBLISHABLE_DEFAULT_KEY
   if (!url || !key) {
     return null
   }
@@ -38,7 +54,8 @@ export function getSupabaseServer(
   request: Request,
   cookies: AstroCookies
 ): SupabaseClient {
-  const env = (locals as any).runtime?.env ?? {}
+  void locals
+  const env = readSupabaseEnv()
   const url = env?.SUPABASE_URL
   const key = env?.SUPABASE_PUBLISHABLE_DEFAULT_KEY
   if (!url || !key) {
