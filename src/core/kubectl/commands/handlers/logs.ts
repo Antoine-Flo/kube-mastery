@@ -70,7 +70,9 @@ export const handleLogs = (
     targetContainer = allContainers.find((c) => c.name === containerName)
 
     if (!targetContainer) {
-      return error(`error: container ${containerName} is not valid for pod ${podName}`)
+      return error(
+        `error: container ${containerName} is not valid for pod ${podName}`
+      )
     }
   } else if (regularContainers.length > 1) {
     // Multiple containers but no -c flag specified

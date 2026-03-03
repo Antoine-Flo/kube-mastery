@@ -27,11 +27,11 @@ Plugins inherit your `KUBECONFIG` and current context automatically. They intera
 
 Plugins can do anything a regular program can do. Some common use cases:
 
-- **Switch contexts quickly:**  `kubectl ctx` (much faster than `kubectl config use-context`)
-- **Clean up YAML output:**  `kubectl neat` removes managed fields from `kubectl get -o yaml`
-- **View resource trees:**  `kubectl tree` shows owner relationships between resources
-- **Manage secrets:**  `kubectl view-secret` decodes and displays secret values
-- **Analyze costs:**  Community plugins that estimate resource costs
+- **Switch contexts quickly:** `kubectl ctx` (much faster than `kubectl config use-context`)
+- **Clean up YAML output:** `kubectl neat` removes managed fields from `kubectl get -o yaml`
+- **View resource trees:** `kubectl tree` shows owner relationships between resources
+- **Manage secrets:** `kubectl view-secret` decodes and displays secret values
+- **Analyze costs:** Community plugins that estimate resource costs
 
 There's a rich ecosystem of community plugins — we'll explore how to discover them with Krew in a later lesson.
 
@@ -102,9 +102,9 @@ Common plugin locations: `/usr/local/bin`, `~/.krew/bin`. If Krew is installed, 
 
 ## Common Pitfalls
 
-- **Plugin not found:**  Make sure the file is in a directory listed in `PATH` and that it's executable (`chmod +x`)
-- **Name collision with built-in:**  Plugins can't override built-in kubectl commands. If your plugin name matches one, kubectl will silently use the built-in
-- **No shebang:**  For scripts, always include a shebang line (`#!/bin/bash` or `#!/usr/bin/env python3`). Without it, the system may not know how to execute the file
+- **Plugin not found:** Make sure the file is in a directory listed in `PATH` and that it's executable (`chmod +x`)
+- **Name collision with built-in:** Plugins can't override built-in kubectl commands. If your plugin name matches one, kubectl will silently use the built-in
+- **No shebang:** For scripts, always include a shebang line (`#!/bin/bash` or `#!/usr/bin/env python3`). Without it, the system may not know how to execute the file
 
 ## Wrapping Up
 

@@ -20,6 +20,7 @@ flowchart LR
 TLS certificates are stored as Kubernetes **Secrets** of type `tls`. The Secret must be in the **same namespace** as the Ingress.
 
 Use `kubectl create secret tls` to store your certificate and key, specifying the cert and key file paths. This creates a Secret with two keys:
+
 - `tls.crt` — The certificate (or certificate chain)
 - `tls.key` — The private key
 
@@ -51,8 +52,9 @@ spec:
 ```
 
 The `tls` section specifies:
-- **hosts:**  Which hostnames this certificate covers (must match the cert's CN or SAN)
-- **secretName:**  Which Secret contains the certificate and key
+
+- **hosts:** Which hostnames this certificate covers (must match the cert's CN or SAN)
+- **secretName:** Which Secret contains the certificate and key
 
 When a client connects to `https://example.com`, the Ingress controller uses the certificate from `example-tls` to establish the TLS connection, then forwards the decrypted request to the `web` Service.
 
@@ -67,7 +69,7 @@ Manually managing certificates is tedious. **cert-manager** automates the entire
 ```yaml
 metadata:
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    cert-manager.io/cluster-issuer: 'letsencrypt-prod'
 ```
 
 With cert-manager, you add an annotation, and it handles creating the TLS Secret automatically. This is the standard approach for production clusters.

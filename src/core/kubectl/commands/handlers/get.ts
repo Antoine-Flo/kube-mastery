@@ -74,9 +74,9 @@ interface ResourceListOutput<T> {
 const KUBECTL_TABLE_SPACING = 3
 const KUBECTL_JSON_INDENT = 4
 
-const withKubectlTableSpacing = (
-  options?: { align?: ('left' | 'right')[] }
-): { spacing: number; align?: ('left' | 'right')[] } => {
+const withKubectlTableSpacing = (options?: {
+  align?: ('left' | 'right')[]
+}): { spacing: number; align?: ('left' | 'right')[] } => {
   if (options?.align != null) {
     return {
       spacing: KUBECTL_TABLE_SPACING,
@@ -251,7 +251,10 @@ const sanitizeForOutput = <T extends Record<string, unknown>>(
   return rest as Omit<T, '_simulator'>
 }
 
-const RESOURCE_OUTPUT_METADATA: Record<StructuredResource, ResourceOutputMetadata> = {
+const RESOURCE_OUTPUT_METADATA: Record<
+  StructuredResource,
+  ResourceOutputMetadata
+> = {
   pods: { apiVersion: 'v1', kind: 'Pod' },
   configmaps: { apiVersion: 'v1', kind: 'ConfigMap' },
   secrets: { apiVersion: 'v1', kind: 'Secret' },
@@ -298,7 +301,9 @@ const serializeStructuredOutput = (
   items: unknown[],
   asSingleObject: boolean
 ): string => {
-  const payload = asSingleObject ? items[0] : buildListOutput(resourceType, items)
+  const payload = asSingleObject
+    ? items[0]
+    : buildListOutput(resourceType, items)
   if (outputFormat === 'json') {
     return JSON.stringify(payload, null, KUBECTL_JSON_INDENT)
   }
@@ -638,7 +643,14 @@ const RESOURCE_HANDLERS: Record<string, ResourceHandler<any>> = {
 
   persistentvolumes: {
     getItems: (state) => state.persistentVolumes.items,
-    headers: ['name', 'capacity', 'access modes', 'reclaim policy', 'status', 'claim'],
+    headers: [
+      'name',
+      'capacity',
+      'access modes',
+      'reclaim policy',
+      'status',
+      'claim'
+    ],
     formatRow: (pv: PersistentVolume) => [
       pv.metadata.name,
       pv.spec.capacity.storage,
@@ -655,7 +667,15 @@ const RESOURCE_HANDLERS: Record<string, ResourceHandler<any>> = {
 
   persistentvolumeclaims: {
     getItems: (state) => state.persistentVolumeClaims.items,
-    headers: ['name', 'status', 'volume', 'capacity', 'access modes', 'storageclass', 'age'],
+    headers: [
+      'name',
+      'status',
+      'volume',
+      'capacity',
+      'access modes',
+      'storageclass',
+      'age'
+    ],
     formatRow: (pvc: PersistentVolumeClaim) => [
       pvc.metadata.name,
       pvc.status.phase,
@@ -751,7 +771,10 @@ export const handleGet = (
   if (structuredOutput) {
     const asSingleObject = parsed.name !== undefined
     const structuredResourceType = resourceType as StructuredResource
-    const shaped = shapeStructuredItemsForOutput(structuredResourceType, sanitized)
+    const shaped = shapeStructuredItemsForOutput(
+      structuredResourceType,
+      sanitized
+    )
     return serializeStructuredOutput(
       outputFormat,
       structuredResourceType,
@@ -1033,7 +1056,9 @@ const buildGetAllSection = (
   resourceType: GetAllResourceType
 ): string | undefined => {
   const showLabels = parsed.flags['show-labels'] === true
-  const handler = RESOURCE_HANDLERS[resourceType] as ResourceHandler<ResourceWithMetadata>
+  const handler = RESOURCE_HANDLERS[
+    resourceType
+  ] as ResourceHandler<ResourceWithMetadata>
   const items = handler.getItems(state)
   const filteredItems = applyFilters(
     items,
@@ -1046,7 +1071,11 @@ const buildGetAllSection = (
     return undefined
   }
 
-  const headers = buildGetAllHeaders(context.allNamespacesFlag, handler, showLabels)
+  const headers = buildGetAllHeaders(
+    context.allNamespacesFlag,
+    handler,
+    showLabels
+  )
   const rows = buildGetAllRows(
     resourceType,
     filteredItems,
@@ -1062,7 +1091,10 @@ const buildGetAllSection = (
   return formatTable(headers, rows, tableOptions)
 }
 
-const handleGetAll = (state: ClusterStateData, parsed: ParsedCommand): string => {
+const handleGetAll = (
+  state: ClusterStateData,
+  parsed: ParsedCommand
+): string => {
   const context = buildGetAllContext(parsed)
   const sections: string[] = []
 

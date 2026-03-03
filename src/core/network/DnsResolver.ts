@@ -72,7 +72,10 @@ const getServiceAddresses = (serviceRuntime: SimServiceRuntime): string[] => {
 }
 
 export interface DnsResolver {
-  resolveARecord: (query: string, defaultNamespace: string) => Result<DnsLookupResult>
+  resolveARecord: (
+    query: string,
+    defaultNamespace: string
+  ) => Result<DnsLookupResult>
 }
 
 export const createDnsResolver = (networkState: NetworkState): DnsResolver => {

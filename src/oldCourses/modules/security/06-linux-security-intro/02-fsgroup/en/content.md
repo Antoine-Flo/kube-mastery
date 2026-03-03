@@ -37,6 +37,7 @@ spec:
 ```
 
 With this configuration:
+
 - The container process runs as **UID 1000**, primary group **3000**
 - The volume `/data` is owned by **group 2000**
 - The process has **2000 as a supplementary group**, so it can access the volume
@@ -51,6 +52,7 @@ flowchart LR
 ## When to Use fsGroup
 
 Use `fsGroup` when:
+
 - Your container runs as non-root and needs to write to a volume
 - Multiple containers in a Pod share a volume
 - Volume contents are owned by root after provisioning
@@ -71,7 +73,7 @@ For large volumes where recursive `chown` is too slow, Kubernetes offers `fsGrou
 spec:
   securityContext:
     fsGroup: 2000
-    fsGroupChangePolicy: "OnRootMismatch"
+    fsGroupChangePolicy: 'OnRootMismatch'
 ```
 
 - **Always** (default): Recursively chown every time the Pod starts
@@ -79,11 +81,11 @@ spec:
 
 ## Troubleshooting
 
-**Permission denied on volume:**  Most likely `fsGroup` is not set, or it doesn't match the expected GID. Add `fsGroup` to the Pod's securityContext.
+**Permission denied on volume:** Most likely `fsGroup` is not set, or it doesn't match the expected GID. Add `fsGroup` to the Pod's securityContext.
 
-**Slow Pod startup:**  Recursive `chown` on a large volume. Use `fsGroupChangePolicy: OnRootMismatch` to speed things up.
+**Slow Pod startup:** Recursive `chown` on a large volume. Use `fsGroupChangePolicy: OnRootMismatch` to speed things up.
 
-**NFS volumes:**  NFS may handle ownership differently. You might need `supplementalGroups` instead of `fsGroup`, or configure NFS exports with the correct GID.
+**NFS volumes:** NFS may handle ownership differently. You might need `supplementalGroups` instead of `fsGroup`, or configure NFS exports with the correct GID.
 
 :::warning
 Not all storage drivers support `fsGroup`. NFS and some CSI drivers may handle ownership differently. Check your storage provider's documentation if `fsGroup` doesn't seem to take effect.

@@ -2,7 +2,7 @@
 
 ## Why Objects?
 
-Up to now, you have seen Kubernetes described as an orchestrator that schedules containers, heals failures, and balances traffic. But how does it know *what* you want it to do? The answer is **objects**. Every intention you express to Kubernetes, whether it is "run this container," "expose this service," or "store this config," is recorded as an object. Objects are persistent records stored in etcd, and Kubernetes continuously works to make reality match what those records describe.
+Up to now, you have seen Kubernetes described as an orchestrator that schedules containers, heals failures, and balances traffic. But how does it know _what_ you want it to do? The answer is **objects**. Every intention you express to Kubernetes, whether it is "run this container," "expose this service," or "store this config," is recorded as an object. Objects are persistent records stored in etcd, and Kubernetes continuously works to make reality match what those records describe.
 
 Think of objects as entries in a to-do list that never gets lost. You write down "run three copies of my web app," and Kubernetes keeps checking that list, making sure all three copies are always running. If one disappears, it creates a replacement, because the to-do item still says "three."
 
@@ -10,9 +10,9 @@ Think of objects as entries in a to-do list that never gets lost. You write down
 
 Kubernetes objects capture three main aspects of your cluster:
 
-- **What is running:**  Which containerized applications are deployed and on which nodes.
-- **What resources they have:**  CPU, memory, storage, and network configuration.
-- **How they behave:**  Restart policies, update strategies, and fault-tolerance rules.
+- **What is running:** Which containerized applications are deployed and on which nodes.
+- **What resources they have:** CPU, memory, storage, and network configuration.
+- **How they behave:** Restart policies, update strategies, and fault-tolerance rules.
 
 You create and change objects through the Kubernetes API. When you run a `kubectl` command or apply a YAML manifest, you are sending an API request that creates or modifies an object. The API server validates your input, stores the object in etcd, and controllers take action to bring the cluster in line with your intent.
 
@@ -20,12 +20,12 @@ You create and change objects through the Kubernetes API. When you run a `kubect
 
 Every Kubernetes object is described by a **manifest**, a YAML (or JSON) file with a consistent structure. Four fields are required in every manifest:
 
-| Field | Purpose | Example |
-|---|---|---|
-| `apiVersion` | Which version of the API to use | `v1`, `apps/v1` |
-| `kind` | The type of object | `Pod`, `Deployment`, `Service` |
-| `metadata` | Identity: name, namespace, labels | `name: nginx-demo` |
-| `spec` | The desired state you want | Containers, ports, replicas |
+| Field        | Purpose                           | Example                        |
+| ------------ | --------------------------------- | ------------------------------ |
+| `apiVersion` | Which version of the API to use   | `v1`, `apps/v1`                |
+| `kind`       | The type of object                | `Pod`, `Deployment`, `Service` |
+| `metadata`   | Identity: name, namespace, labels | `name: nginx-demo`             |
+| `spec`       | The desired state you want        | Containers, ports, replicas    |
 
 Here is a concrete example:
 

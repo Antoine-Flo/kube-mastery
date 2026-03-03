@@ -1,5 +1,8 @@
 import { parse as yamlParse, stringify as yamlStringify } from 'yaml'
-import type { ClusterState, ClusterStateData } from '../../../cluster/ClusterState'
+import type {
+  ClusterState,
+  ClusterStateData
+} from '../../../cluster/ClusterState'
 import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
 import type { Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
@@ -100,7 +103,8 @@ const toSimKubeconfig = (value: unknown): Result<SimKubeconfig> => {
     return error('cluster-info kubeconfig is invalid: expected object')
   }
 
-  const apiVersion = typeof value.apiVersion === 'string' ? value.apiVersion : 'v1'
+  const apiVersion =
+    typeof value.apiVersion === 'string' ? value.apiVersion : 'v1'
   const kind = typeof value.kind === 'string' ? value.kind : 'Config'
   const currentContext =
     typeof value['current-context'] === 'string' ? value['current-context'] : ''

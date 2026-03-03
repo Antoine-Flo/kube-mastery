@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'When you mount a ConfigMap as a volume, what do ConfigMap keys become?',
+      question:
+        'When you mount a ConfigMap as a volume, what do ConfigMap keys become?',
       options: [
         'Environment variable names',
         'Filenames in the mounted directory',

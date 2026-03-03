@@ -195,7 +195,9 @@ const PodTemplateSpecSchema = z.object({
           key: z.string().optional(),
           operator: z.enum(['Exists', 'Equal']).optional(),
           value: z.string().optional(),
-          effect: z.enum(['NoSchedule', 'PreferNoSchedule', 'NoExecute']).optional()
+          effect: z
+            .enum(['NoSchedule', 'PreferNoSchedule', 'NoExecute'])
+            .optional()
         })
       )
       .optional(),

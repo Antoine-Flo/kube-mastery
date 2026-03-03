@@ -8,10 +8,10 @@ The **Operator SDK** exists to take care of all that boilerplate. It scaffolds a
 
 The Operator SDK is part of the broader <a target="_blank" href="https://operatorframework.io/">Operator Framework</a>, which includes:
 
-- **Operator SDK:**  The CLI tool that scaffolds, builds, and tests Operators
-- **Kubebuilder:**  The underlying Go library that provides the project structure and conventions
-- **controller-runtime:**  The Go library that handles watchers, caches, informers, and the reconciliation loop
-- **OLM:**  The Operator Lifecycle Manager for catalog-based installation (covered in the next lesson)
+- **Operator SDK:** The CLI tool that scaffolds, builds, and tests Operators
+- **Kubebuilder:** The underlying Go library that provides the project structure and conventions
+- **controller-runtime:** The Go library that handles watchers, caches, informers, and the reconciliation loop
+- **OLM:** The Operator Lifecycle Manager for catalog-based installation (covered in the next lesson)
 
 Think of it as a layered toolkit. The Operator SDK sits on top of Kubebuilder, which sits on top of controller-runtime. Each layer adds convenience — you can work at whichever level suits your needs.
 
@@ -112,8 +112,8 @@ The SDK generates CRD manifests from your Go types using markers (comments like 
 ## Common Pitfalls
 
 - **Forgetting to run `make manifests`** after changing your types — the CRD won't reflect your changes
-- **Non-idempotent reconciliation:**  If your controller creates a Pod every time it reconciles (instead of checking if one already exists), you'll end up with hundreds of Pods
-- **Missing RBAC rules:**  The controller needs permission to create the resources it manages. Use `// +kubebuilder:rbac` markers to declare them
+- **Non-idempotent reconciliation:** If your controller creates a Pod every time it reconciles (instead of checking if one already exists), you'll end up with hundreds of Pods
+- **Missing RBAC rules:** The controller needs permission to create the resources it manages. Use `// +kubebuilder:rbac` markers to declare them
 
 ## Wrapping Up
 

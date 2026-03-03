@@ -292,7 +292,9 @@ const computeContainerId = (
   podName: string,
   containerName: string
 ): string => {
-  const digest = stableHash(`${namespace}/${podName}/${containerName}`).repeat(8).slice(0, 64)
+  const digest = stableHash(`${namespace}/${podName}/${containerName}`)
+    .repeat(8)
+    .slice(0, 64)
   return `containerd://${digest}`
 }
 
@@ -324,7 +326,11 @@ const isGuaranteedContainer = (container: Container): boolean => {
   if (!hasCpuAndMemory(resources, 'limits')) {
     return false
   }
-  if (resources == null || resources.requests == null || resources.limits == null) {
+  if (
+    resources == null ||
+    resources.requests == null ||
+    resources.limits == null
+  ) {
     return false
   }
   return (
@@ -339,13 +345,16 @@ const hasAnyResources = (container: Container): boolean => {
     return false
   }
   const hasCpuRequest =
-    typeof resources.requests?.cpu === 'string' && resources.requests.cpu.length > 0
+    typeof resources.requests?.cpu === 'string' &&
+    resources.requests.cpu.length > 0
   const hasMemoryRequest =
-    typeof resources.requests?.memory === 'string' && resources.requests.memory.length > 0
+    typeof resources.requests?.memory === 'string' &&
+    resources.requests.memory.length > 0
   const hasCpuLimit =
     typeof resources.limits?.cpu === 'string' && resources.limits.cpu.length > 0
   const hasMemoryLimit =
-    typeof resources.limits?.memory === 'string' && resources.limits.memory.length > 0
+    typeof resources.limits?.memory === 'string' &&
+    resources.limits.memory.length > 0
   return hasCpuRequest || hasMemoryRequest || hasCpuLimit || hasMemoryLimit
 }
 
@@ -355,11 +364,15 @@ export const computePodQosClassFromContainers = (
   if (containers.length === 0) {
     return 'BestEffort'
   }
-  const guaranteed = containers.every((container) => isGuaranteedContainer(container))
+  const guaranteed = containers.every((container) =>
+    isGuaranteedContainer(container)
+  )
   if (guaranteed) {
     return 'Guaranteed'
   }
-  const hasResources = containers.some((container) => hasAnyResources(container))
+  const hasResources = containers.some((container) =>
+    hasAnyResources(container)
+  )
   if (hasResources) {
     return 'Burstable'
   }
@@ -444,7 +457,11 @@ export const createPod = (config: PodConfig): Pod => {
       state,
       started: isStarted,
       ...(startedAt != null ? { startedAt } : {}),
-      containerID: computeContainerId(config.namespace, config.name, container.name),
+      containerID: computeContainerId(
+        config.namespace,
+        config.name,
+        container.name
+      ),
       imageID: computeContainerImageId(container.image),
       ...(state !== 'Waiting' ? { lastState: 'Waiting' as const } : {}),
       ...(override?.waitingReason != null && {
@@ -462,21 +479,20 @@ export const createPod = (config: PodConfig): Pod => {
     ...regularContainerStatuses
   ]
   const podIP = config.podIP
-  const podIPs =
-    config.podIPs ??
-    (podIP != null ? [{ ip: podIP }] : undefined)
+  const podIPs = config.podIPs ?? (podIP != null ? [{ ip: podIP }] : undefined)
   const hostIP = config.hostIP
   const hostIPs =
-    config.hostIPs ??
-    (hostIP != null ? [{ ip: hostIP }] : undefined)
+    config.hostIPs ?? (hostIP != null ? [{ ip: hostIP }] : undefined)
   const startTime =
     config.startTime ??
     (initialPhase === 'Running' ? creationTimestamp : undefined)
-  const qosClass = config.qosClass ?? computePodQosClassFromContainers(config.containers)
+  const qosClass =
+    config.qosClass ?? computePodQosClassFromContainers(config.containers)
   const regularStatuses = allContainerStatuses.filter((status) => {
     return (
-      (config.initContainers ?? []).some((container) => container.name === status.name) ===
-      false
+      (config.initContainers ?? []).some(
+        (container) => container.name === status.name
+      ) === false
     )
   })
   const conditions =
@@ -518,7 +534,9 @@ export const createPod = (config: PodConfig): Pod => {
       creationTimestamp,
       ...(config.labels && { labels: config.labels }),
       ...(config.annotations && { annotations: config.annotations }),
-      ...(config.ownerReferences && { ownerReferences: config.ownerReferences }),
+      ...(config.ownerReferences && {
+        ownerReferences: config.ownerReferences
+      }),
       generation: observedGeneration
     },
     spec: {
@@ -614,7 +632,9 @@ const PodManifestSchema = z.object({
           key: z.string().optional(),
           operator: z.enum(['Exists', 'Equal']).optional(),
           value: z.string().optional(),
-          effect: z.enum(['NoSchedule', 'PreferNoSchedule', 'NoExecute']).optional()
+          effect: z
+            .enum(['NoSchedule', 'PreferNoSchedule', 'NoExecute'])
+            .optional()
         })
       )
       .optional(),
@@ -768,8 +788,12 @@ export const parsePodManifest = (data: unknown): Result<Pod> => {
     name: manifest.metadata.name,
     namespace: manifest.metadata.namespace,
     ...(manifest.spec.nodeName && { nodeName: manifest.spec.nodeName }),
-    ...(manifest.spec.nodeSelector && { nodeSelector: manifest.spec.nodeSelector }),
-    ...(manifest.spec.tolerations && { tolerations: manifest.spec.tolerations }),
+    ...(manifest.spec.nodeSelector && {
+      nodeSelector: manifest.spec.nodeSelector
+    }),
+    ...(manifest.spec.tolerations && {
+      tolerations: manifest.spec.tolerations
+    }),
     ...(manifest.spec.affinity && { affinity: manifest.spec.affinity }),
     ...(initContainers && { initContainers }),
     containers,

@@ -12,6 +12,7 @@ The core difference is **intent and handling**:
 - **Secrets** are for sensitive data — passwords, tokens, certificates, keys
 
 Kubernetes treats them differently:
+
 - Secret values are **base64-encoded** (not plain text)
 - Secrets can be **encrypted at rest** in etcd (when configured)
 - **RBAC** can restrict who reads Secrets, separately from ConfigMaps
@@ -25,16 +26,17 @@ Base64 is **encoding**, not encryption. Anyone can decode base64 strings. The re
 
 Kubernetes has several built-in Secret types, each with a specific structure:
 
-| Type | Purpose |
-|------|---------|
-| `Opaque` | Default — generic key-value data |
-| `kubernetes.io/tls` | TLS certificates and keys |
-| `kubernetes.io/dockerconfigjson` | Container registry credentials |
-| `kubernetes.io/service-account-token` | ServiceAccount tokens |
+| Type                                  | Purpose                          |
+| ------------------------------------- | -------------------------------- |
+| `Opaque`                              | Default — generic key-value data |
+| `kubernetes.io/tls`                   | TLS certificates and keys        |
+| `kubernetes.io/dockerconfigjson`      | Container registry credentials   |
+| `kubernetes.io/service-account-token` | ServiceAccount tokens            |
 
 ## Secret Structure
 
 Secrets have two fields for values:
+
 - `data` — Values must be **base64-encoded**
 - `stringData` — Values in **plain text** (Kubernetes encodes automatically)
 

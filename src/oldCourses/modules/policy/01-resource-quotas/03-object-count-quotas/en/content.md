@@ -34,11 +34,11 @@ metadata:
   namespace: dev
 spec:
   hard:
-    configmaps: "20"
-    secrets: "20"
-    persistentvolumeclaims: "10"
-    services: "5"
-    replicationcontrollers: "0"
+    configmaps: '20'
+    secrets: '20'
+    persistentvolumeclaims: '10'
+    services: '5'
+    replicationcontrollers: '0'
 ```
 
 A few things to notice:
@@ -57,9 +57,9 @@ For Deployments, Ingresses, and custom resources, use the `count/<resource>.<gro
 ```yaml
 spec:
   hard:
-    count/deployments.apps: "10"
-    count/ingresses.networking.k8s.io: "5"
-    count/cronjobs.batch: "3"
+    count/deployments.apps: '10'
+    count/ingresses.networking.k8s.io: '5'
+    count/cronjobs.batch: '3'
 ```
 
 This works for any resource type registered in the API, including CRDs.

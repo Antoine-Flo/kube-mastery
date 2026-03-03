@@ -17,7 +17,11 @@ export interface VolumeState {
     podName: string
   ) => PodVolumeReadiness | undefined
   removePodReadiness: (namespace: string, podName: string) => void
-  bindClaimToVolume: (claimNamespace: string, claimName: string, volumeName: string) => void
+  bindClaimToVolume: (
+    claimNamespace: string,
+    claimName: string,
+    volumeName: string
+  ) => void
   unbindClaim: (claimNamespace: string, claimName: string) => void
   getBoundVolumeForClaim: (
     claimNamespace: string,
@@ -125,7 +129,9 @@ export const createVolumeState = (): VolumeState => {
   }
 }
 
-export const isPersistentVolumeAvailable = (persistentVolume: PersistentVolume): boolean => {
+export const isPersistentVolumeAvailable = (
+  persistentVolume: PersistentVolume
+): boolean => {
   if (persistentVolume.status.phase === 'Bound') {
     return false
   }

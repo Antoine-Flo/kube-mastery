@@ -69,12 +69,12 @@ A Kubernetes object should be managed using only one technique. Mixing imperativ
 
 ## Choosing the Right Approach
 
-| Situation | Recommended Approach |
-|---|---|
-| Learning and experimenting | Imperative commands |
-| One-off changes or debugging | Imperative commands |
+| Situation                       | Recommended Approach            |
+| ------------------------------- | ------------------------------- |
+| Learning and experimenting      | Imperative commands             |
+| One-off changes or debugging    | Imperative commands             |
 | Small teams, simple deployments | Imperative object configuration |
-| Production, GitOps, CI/CD | Declarative configuration |
+| Production, GitOps, CI/CD       | Declarative configuration       |
 
 Most teams settle on declarative configuration for anything that matters, and use imperative commands only for quick, throwaway experiments.
 
@@ -122,7 +122,7 @@ Modify `pod.yaml` (e.g. change the image to `nginx:1.25`) and run:
 kubectl diff -f pod.yaml
 ```
 
-This shows what *would* change before you apply. Use `kubectl apply -f pod.yaml --dry-run=client` to validate without applying.
+This shows what _would_ change before you apply. Use `kubectl apply -f pod.yaml --dry-run=client` to validate without applying.
 
 ### Step 4: Clean Up
 

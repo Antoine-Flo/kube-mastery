@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'What happens if a PVC uses a StorageClass with no provisioner?',
+      question:
+        'What happens if a PVC uses a StorageClass with no provisioner?',
       options: [
         'A default provisioner is used',
         'The PVC stays Pending until a matching PV is created manually',

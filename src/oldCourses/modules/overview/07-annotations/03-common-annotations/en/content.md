@@ -9,10 +9,10 @@ One of the most valuable uses of annotations is tracking who owns a resource and
 ```yaml
 metadata:
   annotations:
-    owner.team: "platform"
-    contact.email: "platform-team@example.com"
-    contact.slack: "#platform-ops"
-    docs.runbook: "https://wiki.example.com/nginx-runbook"
+    owner.team: 'platform'
+    contact.email: 'platform-team@example.com'
+    contact.slack: '#platform-ops'
+    docs.runbook: 'https://wiki.example.com/nginx-runbook'
 ```
 
 This is especially valuable in multi-team clusters where dozens of applications share the same infrastructure.
@@ -24,10 +24,10 @@ Annotations are perfect for recording deployment context — when something was 
 ```yaml
 metadata:
   annotations:
-    deploy.timestamp: "2026-02-16T10:30:00Z"
-    deploy.git-commit: "a1b2c3d"
-    deploy.pipeline-url: "https://ci.example.com/pipelines/12345"
-    deploy.version: "v2.4.1"
+    deploy.timestamp: '2026-02-16T10:30:00Z'
+    deploy.git-commit: 'a1b2c3d'
+    deploy.pipeline-url: 'https://ci.example.com/pipelines/12345'
+    deploy.version: 'v2.4.1'
 ```
 
 When debugging a production issue, these annotations let you quickly answer "What version is running?" and "When was it deployed?" without digging through CI/CD logs.
@@ -42,8 +42,8 @@ Many Kubernetes tools use annotations to configure behavior. Here are some you'l
 metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
 ```
 
 **Prometheus** uses annotations to discover scrape targets:
@@ -51,9 +51,9 @@ metadata:
 ```yaml
 metadata:
   annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "8080"
-    prometheus.io/path: "/metrics"
+    prometheus.io/scrape: 'true'
+    prometheus.io/port: '8080'
+    prometheus.io/path: '/metrics'
 ```
 
 :::info
@@ -67,7 +67,7 @@ Kubernetes itself defines a few standard annotations under the `kubernetes.io/` 
 ```yaml
 metadata:
   annotations:
-    kubernetes.io/change-cause: "Updated nginx to 1.25"
+    kubernetes.io/change-cause: 'Updated nginx to 1.25'
 ```
 
 The `change-cause` annotation is particularly useful — it's displayed by `kubectl rollout history` to show why each revision was made. When you deploy with `--record` (deprecated) or manually set this annotation, your deployment history becomes self-documenting.
@@ -76,10 +76,10 @@ The `change-cause` annotation is particularly useful — it's displayed by `kube
 
 When creating your own annotation conventions:
 
-- **Use a domain prefix:**  `mycompany.com/owner` instead of just `owner`. This prevents clashes with other tools and makes it clear which annotations are yours.
-- **Be consistent:**  Decide on a convention and stick to it across all resources and teams.
-- **Keep values reasonable:**  While annotations can hold large values, etcd stores everything. Use ConfigMaps for large configuration data.
-- **Document your conventions:**  Maintain a reference of which annotations your team uses and what they mean.
+- **Use a domain prefix:** `mycompany.com/owner` instead of just `owner`. This prevents clashes with other tools and makes it clear which annotations are yours.
+- **Be consistent:** Decide on a convention and stick to it across all resources and teams.
+- **Keep values reasonable:** While annotations can hold large values, etcd stores everything. Use ConfigMaps for large configuration data.
+- **Document your conventions:** Maintain a reference of which annotations your team uses and what they mean.
 
 You can apply these conventions with `kubectl annotate`, passing multiple key-value pairs in a single command — for example, setting `mycompany.com/owner` and `mycompany.com/cost-center` on a Deployment.
 

@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'Which command renews control plane certificates in a kubeadm cluster?',
+      question:
+        'Which command renews control plane certificates in a kubeadm cluster?',
       options: [
         'kubectl certs renew',
         'kubeadm certs renew all',

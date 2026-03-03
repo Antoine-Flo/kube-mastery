@@ -55,10 +55,11 @@ const evaluatePodVolumeReadiness = (
       continue
     }
     if (volume.source.type === 'persistentVolumeClaim') {
-      const persistentVolumeClaimResult = clusterState.findPersistentVolumeClaim(
-        volume.source.claimName,
-        pod.metadata.namespace
-      )
+      const persistentVolumeClaimResult =
+        clusterState.findPersistentVolumeClaim(
+          volume.source.claimName,
+          pod.metadata.namespace
+        )
       if (
         !persistentVolumeClaimResult.ok ||
         persistentVolumeClaimResult.value == null
@@ -118,7 +119,11 @@ export const createPodVolumeController = (
   const reconcilePods = (): void => {
     const pods = clusterState.getPods()
     for (const pod of pods) {
-      const readiness = evaluatePodVolumeReadiness(pod, clusterState, volumeState)
+      const readiness = evaluatePodVolumeReadiness(
+        pod,
+        clusterState,
+        volumeState
+      )
       volumeState.setPodReadiness(
         pod.metadata.namespace,
         pod.metadata.name,

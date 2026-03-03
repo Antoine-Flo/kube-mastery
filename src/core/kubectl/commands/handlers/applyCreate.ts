@@ -134,7 +134,11 @@ const createDeploymentFromFlags = (
   eventBus: EventBus
 ): ExecutionResult => {
   const images = getCreateImages(parsed)
-  if (images.length > 1 && parsed.createCommand && parsed.createCommand.length > 0) {
+  if (
+    images.length > 1 &&
+    parsed.createCommand &&
+    parsed.createCommand.length > 0
+  ) {
     return error('error: cannot specify multiple --image options and command')
   }
 
@@ -383,9 +387,12 @@ export const handleRun = (
       if (curlTarget == null) {
         return error('curl: try "curl <url>"')
       }
-      const curlResult = networkRuntime.trafficEngine.simulateHttpGet(curlTarget, {
-        sourceNamespace: runtimeNamespace
-      })
+      const curlResult = networkRuntime.trafficEngine.simulateHttpGet(
+        curlTarget,
+        {
+          sourceNamespace: runtimeNamespace
+        }
+      )
       if (!curlResult.ok) {
         return error(curlResult.error)
       }

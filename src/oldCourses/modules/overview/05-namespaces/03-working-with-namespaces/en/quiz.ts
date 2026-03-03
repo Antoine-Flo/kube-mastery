@@ -22,12 +22,7 @@ export const quiz: Quiz = {
       id: 'q2',
       type: 'multiple-choice',
       question: 'Which flag lists resources across all namespaces?',
-      options: [
-        '-n all',
-        '-A or --all-namespaces',
-        '--global',
-        '-w'
-      ],
+      options: ['-n all', '-A or --all-namespaces', '--global', '-w'],
       correctAnswer: 1
     }
   ]

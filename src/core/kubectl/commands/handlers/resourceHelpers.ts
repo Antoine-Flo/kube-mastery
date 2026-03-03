@@ -201,7 +201,8 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
     }
   },
   Secret: {
-    find: (state, name, namespace) => state.findByKind('Secret', name, namespace),
+    find: (state, name, namespace) =>
+      state.findByKind('Secret', name, namespace),
     emitCreated: (eventBus, resource) => {
       eventBus.emit(createSecretCreatedEvent(resource as Secret, 'kubectl'))
     },
@@ -248,7 +249,8 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
     }
   },
   Ingress: {
-    find: (state, name, namespace) => state.findByKind('Ingress', name, namespace),
+    find: (state, name, namespace) =>
+      state.findByKind('Ingress', name, namespace),
     emitCreated: (_eventBus, _resource) => {
       // Ingresses use direct state updates in this simulator.
     },
@@ -256,9 +258,13 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
       // Ingresses use direct state updates in this simulator.
     },
     updateDirect: (state, name, resource: KubernetesResource) => {
-      state.updateIngress(name, (resource as Ingress).metadata.namespace, () => {
-        return resource as Ingress
-      })
+      state.updateIngress(
+        name,
+        (resource as Ingress).metadata.namespace,
+        () => {
+          return resource as Ingress
+        }
+      )
     },
     addDirect: (state, resource: KubernetesResource) => {
       state.addIngress(resource as Ingress)
@@ -325,10 +331,14 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
     }
   },
   PersistentVolume: {
-    find: (state, name, _namespace) => state.findByKind('PersistentVolume', name),
+    find: (state, name, _namespace) =>
+      state.findByKind('PersistentVolume', name),
     emitCreated: (eventBus, resource) => {
       eventBus.emit(
-        createPersistentVolumeCreatedEvent(resource as PersistentVolume, 'kubectl')
+        createPersistentVolumeCreatedEvent(
+          resource as PersistentVolume,
+          'kubectl'
+        )
       )
     },
     emitUpdated: (eventBus, name, _namespace, resource, previous) => {
@@ -366,7 +376,8 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
     }
   },
   Service: {
-    find: (state, name, namespace) => state.findByKind('Service', name, namespace),
+    find: (state, name, namespace) =>
+      state.findByKind('Service', name, namespace),
     emitCreated: (eventBus, resource) => {
       eventBus.emit(createServiceCreatedEvent(resource as Service, 'kubectl'))
     },

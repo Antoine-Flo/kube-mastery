@@ -8,12 +8,12 @@ Imagine you run a small bakery. You have a single baker on shift. If that baker 
 
 ## What a ReplicaSet Does
 
-A ReplicaSet is a Kubernetes controller whose job is to maintain a **stable set of identical Pod replicas** running at all times. You tell it: *"I want 3 copies of this Pod."* The ReplicaSet controller watches the cluster and continuously makes sure that exactly 3 matching Pods exist.
+A ReplicaSet is a Kubernetes controller whose job is to maintain a **stable set of identical Pod replicas** running at all times. You tell it: _"I want 3 copies of this Pod."_ The ReplicaSet controller watches the cluster and continuously makes sure that exactly 3 matching Pods exist.
 
 - If a Pod disappears (crash, deletion, node failure), the ReplicaSet **creates a replacement**.
 - If there are too many Pods (for example, after scaling down), it **terminates the extras**.
 
-This constant loop of *observing → comparing → acting* is called the **reconciliation loop**, and it is at the heart of how Kubernetes keeps your applications running.
+This constant loop of _observing → comparing → acting_ is called the **reconciliation loop**, and it is at the heart of how Kubernetes keeps your applications running.
 
 ```mermaid
 flowchart LR
@@ -27,11 +27,11 @@ flowchart LR
 
 Every ReplicaSet is defined by three essential pieces:
 
-| Field | Purpose |
-|-------|---------|
-| **`spec.replicas`** | The desired number of Pod copies |
+| Field               | Purpose                                                               |
+| ------------------- | --------------------------------------------------------------------- |
+| **`spec.replicas`** | The desired number of Pod copies                                      |
 | **`spec.selector`** | A label selector that identifies which Pods belong to this ReplicaSet |
-| **`spec.template`** | A Pod template used to create new Pods when needed |
+| **`spec.template`** | A Pod template used to create new Pods when needed                    |
 
 Think of it this way: the **replica count** is how many bakers you want on shift, the **selector** is the uniform they wear so you can identify them, and the **template** is the hiring profile you use when you need to bring in a replacement.
 
@@ -63,9 +63,9 @@ Notice that the labels in `spec.template.metadata.labels` **must match** the `sp
 
 ## ReplicaSets and Deployments
 
-You might be wondering: *"If ReplicaSets are so useful, why don't I see them used directly very often?"*
+You might be wondering: _"If ReplicaSets are so useful, why don't I see them used directly very often?"_
 
-Great question. In practice, you will almost always use a **Deployment** instead. A Deployment is a higher-level controller that creates and manages ReplicaSets for you, while adding powerful features like **rolling updates** and **rollbacks**. When you update a Deployment's Pod template, it creates a *new* ReplicaSet, gradually scales it up, and scales the old one down — all automatically.
+Great question. In practice, you will almost always use a **Deployment** instead. A Deployment is a higher-level controller that creates and manages ReplicaSets for you, while adding powerful features like **rolling updates** and **rollbacks**. When you update a Deployment's Pod template, it creates a _new_ ReplicaSet, gradually scales it up, and scales the old one down — all automatically.
 
 ```mermaid
 flowchart TD
@@ -118,4 +118,4 @@ You should see a reference pointing back to the ReplicaSet — this is how Kuber
 
 A ReplicaSet is Kubernetes' way of guaranteeing that a specific number of identical Pods are always running. It continuously watches the cluster, compares the actual state to the desired state, and takes corrective action. It is built on three pillars: a **replica count**, a **label selector**, and a **Pod template**.
 
-While you will rarely create ReplicaSets directly (Deployments handle that for you), understanding them is key to grasping how Kubernetes keeps your applications resilient. In the next lesson, we will take a closer look at **selectors:**  the mechanism that connects a ReplicaSet to its Pods.
+While you will rarely create ReplicaSets directly (Deployments handle that for you), understanding them is key to grasping how Kubernetes keeps your applications resilient. In the next lesson, we will take a closer look at **selectors:** the mechanism that connects a ReplicaSet to its Pods.

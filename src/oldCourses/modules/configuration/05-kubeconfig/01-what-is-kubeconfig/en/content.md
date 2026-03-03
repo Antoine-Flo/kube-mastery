@@ -13,6 +13,7 @@ By default, kubectl looks for kubeconfig at:
 ```
 
 You can override this with:
+
 - The `KUBECONFIG` environment variable: `export KUBECONFIG=/path/to/my-config`
 - The `--kubeconfig` flag: `kubectl --kubeconfig=/path/to/config get pods`
 
@@ -50,13 +51,13 @@ contexts:
 current-context: my-context
 ```
 
-**Clusters:**  Where to connect. Each entry has the API server address and the CA certificate to verify the server's identity.
+**Clusters:** Where to connect. Each entry has the API server address and the CA certificate to verify the server's identity.
 
-**Users:**  How to authenticate. Credentials can be client certificates, bearer tokens, or exec commands that fetch tokens at runtime.
+**Users:** How to authenticate. Credentials can be client certificates, bearer tokens, or exec commands that fetch tokens at runtime.
 
-**Contexts:**  The combination. Each context links a cluster with a user and optionally sets a default namespace.
+**Contexts:** The combination. Each context links a cluster with a user and optionally sets a default namespace.
 
-**current-context:**  Which context kubectl uses right now.
+**current-context:** Which context kubectl uses right now.
 
 ```mermaid
 flowchart TD
@@ -91,7 +92,7 @@ This shows the merged configuration from your kubeconfig file(s). Credentials ar
 kubectl config get-contexts
 ```
 
-Each context links a cluster with a user. The current context is marked with an asterisk (*). This is what you'll switch between when working with multiple clusters.
+Each context links a cluster with a user. The current context is marked with an asterisk (\*). This is what you'll switch between when working with multiple clusters.
 
 ### Step 3: Show the current context
 

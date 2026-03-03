@@ -1,5 +1,8 @@
 import { stringify as yamlStringify } from 'yaml'
-import type { ClusterState, ClusterStateData } from '../../../cluster/ClusterState'
+import type {
+  ClusterState,
+  ClusterStateData
+} from '../../../cluster/ClusterState'
 import { formatTable } from '../../../shared/formatter'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
@@ -18,7 +21,9 @@ const getCurrentContextEntry = (
   })
 }
 
-const handleConfigGetContexts = (kubeconfig: SimKubeconfig): ExecutionResult => {
+const handleConfigGetContexts = (
+  kubeconfig: SimKubeconfig
+): ExecutionResult => {
   const headers = ['current', 'name', 'cluster', 'authinfo', 'namespace']
   const rows = [...kubeconfig.contexts]
     .sort((left, right) => {
@@ -146,7 +151,10 @@ const handleConfigSetContext = (
       }
     })
   }
-  const writeResult = writeKubeconfigToClusterInfo(clusterState, updatedKubeconfig)
+  const writeResult = writeKubeconfigToClusterInfo(
+    clusterState,
+    updatedKubeconfig
+  )
   if (!writeResult.ok) {
     return error(writeResult.error)
   }
@@ -166,9 +174,11 @@ export const getCurrentNamespaceFromKubeconfig = (
     return undefined
   }
 
-  const currentContextEntry = kubeconfigResult.value.contexts.find((contextEntry) => {
-    return contextEntry.name === currentContext
-  })
+  const currentContextEntry = kubeconfigResult.value.contexts.find(
+    (contextEntry) => {
+      return contextEntry.name === currentContext
+    }
+  )
   if (!currentContextEntry) {
     return undefined
   }

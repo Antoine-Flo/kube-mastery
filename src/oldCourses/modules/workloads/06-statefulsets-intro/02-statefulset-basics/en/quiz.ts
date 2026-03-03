@@ -17,7 +17,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'Which Service type is typically paired with StatefulSets for stable network IDs?',
+      question:
+        'Which Service type is typically paired with StatefulSets for stable network IDs?',
       options: ['LoadBalancer', 'ExternalName', 'Headless Service', 'NodePort'],
       correctAnswer: 2
     }

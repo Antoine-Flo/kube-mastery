@@ -6,9 +6,10 @@ Imagine a large office where every employee stores their files in a single share
 
 ## Namespaces: Virtual Clusters Inside Your Cluster
 
-A **namespace** is a way to divide a single Kubernetes cluster into multiple logical sections. Think of namespaces as floors in an office building. Everyone shares the same building (the cluster), but each floor (namespace) has its own rooms, its own names, and its own access rules. A meeting room called "Room A" can exist on the 3rd floor *and* on the 5th floor without any conflict.
+A **namespace** is a way to divide a single Kubernetes cluster into multiple logical sections. Think of namespaces as floors in an office building. Everyone shares the same building (the cluster), but each floor (namespace) has its own rooms, its own names, and its own access rules. A meeting room called "Room A" can exist on the 3rd floor _and_ on the 5th floor without any conflict.
 
 In Kubernetes terms:
+
 - Resources in one namespace are isolated from resources in another.
 - You can have an `nginx` Deployment in the `dev` namespace and another `nginx` Deployment in the `prod` namespace without any naming conflict.
 - You can apply quotas, policies, and access controls per namespace.
@@ -33,17 +34,17 @@ kubectl api-resources --namespaced=false
 
 Every Kubernetes cluster starts with four namespaces:
 
-| Namespace | Purpose |
-|---|---|
-| `default` | Where objects go if you do not specify a namespace |
-| `kube-system` | Kubernetes system components (DNS, proxy, etc.) |
-| `kube-public` | Public resources readable by everyone (rarely used) |
-| `kube-node-lease` | Node heartbeat data for health monitoring |
+| Namespace         | Purpose                                             |
+| ----------------- | --------------------------------------------------- |
+| `default`         | Where objects go if you do not specify a namespace  |
+| `kube-system`     | Kubernetes system components (DNS, proxy, etc.)     |
+| `kube-public`     | Public resources readable by everyone (rarely used) |
+| `kube-node-lease` | Node heartbeat data for health monitoring           |
 
 When you run `kubectl get pods` without specifying a namespace, you are looking at the `default` namespace. This is convenient for getting started, but as your cluster grows, you will want to create custom namespaces to organize your workloads.
 
 :::info
-Resource names must be unique *within* a namespace, but the same name can be reused across different namespaces. This is why namespaces are the first line of organizational structure in most clusters.
+Resource names must be unique _within_ a namespace, but the same name can be reused across different namespaces. This is why namespaces are the first line of organizational structure in most clusters.
 :::
 
 ```mermaid
@@ -65,6 +66,7 @@ Do not create or modify resources in `kube-system` unless you know exactly what 
 ## When to Use Namespaces
 
 Namespaces are most useful when:
+
 - Multiple teams share the same cluster and need isolated areas.
 - You want separate environments (dev, staging, production) within one cluster.
 - You need to apply resource quotas or network policies to a specific group of workloads.

@@ -2,7 +2,7 @@
 
 ## The Big Question: Who Runs What?
 
-When you tell Kubernetes "run three copies of my application," something has to decide *where* those copies go, *how* they are monitored, and *what happens* when one of them fails. That "something" is the cluster architecture: a carefully designed split between the components that make decisions and the components that carry them out.
+When you tell Kubernetes "run three copies of my application," something has to decide _where_ those copies go, _how_ they are monitored, and _what happens_ when one of them fails. That "something" is the cluster architecture: a carefully designed split between the components that make decisions and the components that carry them out.
 
 Think of it like a restaurant. The **kitchen manager** (control plane) takes orders, decides which station prepares each dish, and monitors quality. The **cooks** (worker nodes) do the actual cooking. Both are essential, but they have very different responsibilities.
 
@@ -46,7 +46,7 @@ Let's explore each piece of the brain, don't worry, we will come back to each of
 
 - **kube-controller-manager:** Runs a collection of controllers, each responsible for a specific reconciliation loop. The Node controller monitors node health, the Deployment controller manages rollouts, and the Job controller tracks batch tasks. Together, they ensure the actual state converges toward the desired state.
 
-- **cloud-controller-manager** *(optional:)* Handles cloud-provider-specific logic, such as provisioning load balancers or managing cloud routes. Not needed for local or bare-metal clusters.
+- **cloud-controller-manager** _(optional:)_ Handles cloud-provider-specific logic, such as provisioning load balancers or managing cloud routes. Not needed for local or bare-metal clusters.
 
 ## Worker Node Components
 

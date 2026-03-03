@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'What can a context optionally specify in addition to cluster and user?',
+      question:
+        'What can a context optionally specify in addition to cluster and user?',
       options: [
         'Container image',
         'Default namespace',

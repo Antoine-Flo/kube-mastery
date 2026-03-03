@@ -6,7 +6,7 @@ Imagine a shared apartment building with a single water supply. If one tenant ru
 
 ## How ResourceQuotas Work
 
-ResourceQuotas are enforced at **admission time:**  the moment you try to create or update a resource. Here's the flow:
+ResourceQuotas are enforced at **admission time:** the moment you try to create or update a resource. Here's the flow:
 
 1. You run `kubectl apply` to create a Pod
 2. The ResourceQuota admission controller checks: "Would this new Pod push the namespace over its quota?"
@@ -34,11 +34,11 @@ metadata:
   namespace: dev
 spec:
   hard:
-    requests.cpu: "2"
+    requests.cpu: '2'
     requests.memory: 4Gi
-    limits.cpu: "4"
+    limits.cpu: '4'
     limits.memory: 8Gi
-    pods: "10"
+    pods: '10'
 ```
 
 This means the total `requests.cpu` across all Pods in the `dev` namespace can't exceed 2 cores. If there are already 8 Pods using 1.8 CPU cores and someone tries to create a Pod requesting 0.5 CPU, it will be rejected.
@@ -55,11 +55,11 @@ To troubleshoot quota issues, use `kubectl describe resourcequota <name> -n <nam
 
 Quotas can surprise you. Here are the common scenarios:
 
-**Pod stuck in Pending:**  You might think it's a scheduling issue, but it's actually a quota issue. The Pod's requests would push the namespace over the limit. Check `kubectl describe resourcequota` before digging into scheduling.
+**Pod stuck in Pending:** You might think it's a scheduling issue, but it's actually a quota issue. The Pod's requests would push the namespace over the limit. Check `kubectl describe resourcequota` before digging into scheduling.
 
-**"Exceeded quota" error:**  You need to either delete unused resources to free up quota, or ask an admin to increase the quota.
+**"Exceeded quota" error:** You need to either delete unused resources to free up quota, or ask an admin to increase the quota.
 
-**Pods without requests/limits:**  When a namespace has a compute quota (like `requests.cpu`), every Pod in that namespace **must** specify requests and limits. Otherwise, Kubernetes can't calculate quota usage, and the Pod is rejected. This often catches developers off guard.
+**Pods without requests/limits:** When a namespace has a compute quota (like `requests.cpu`), every Pod in that namespace **must** specify requests and limits. Otherwise, Kubernetes can't calculate quota usage, and the Pod is rejected. This often catches developers off guard.
 
 :::warning
 When a namespace has a compute ResourceQuota, all Pods in that namespace must specify `requests` and `limits` for the quoted resources. A Pod without them will be rejected — even if the namespace is well under quota. Combine ResourceQuotas with LimitRanges (covered in the next chapter) to automatically inject defaults.

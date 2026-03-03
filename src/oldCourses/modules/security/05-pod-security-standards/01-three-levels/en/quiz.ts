@@ -9,25 +9,16 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'Which Pod Security Standard level has the fewest restrictions?',
-      options: [
-        'Restricted',
-        'Baseline',
-        'Privileged',
-        'Standard'
-      ],
+      question:
+        'Which Pod Security Standard level has the fewest restrictions?',
+      options: ['Restricted', 'Baseline', 'Privileged', 'Standard'],
       correctAnswer: 2
     },
     {
       id: 'q2',
       type: 'multiple-choice',
       question: 'Which level requires runAsNonRoot?',
-      options: [
-        'Privileged',
-        'Baseline',
-        'Restricted',
-        'All levels'
-      ],
+      options: ['Privileged', 'Baseline', 'Restricted', 'All levels'],
       correctAnswer: 2
     }
   ]

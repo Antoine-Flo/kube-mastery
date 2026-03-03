@@ -84,7 +84,9 @@ const createPodFromTemplate = (rs: ReplicaSet): Pod => {
     tolerations: rs.spec.template.spec.tolerations,
     ...(initContainers && { initContainers }),
     containers: convertTemplateContainers(rs.spec.template.spec.containers),
-    ...(rs.spec.template.spec.volumes && { volumes: rs.spec.template.spec.volumes }),
+    ...(rs.spec.template.spec.volumes && {
+      volumes: rs.spec.template.spec.volumes
+    }),
     phase: 'Pending',
     ownerReferences: [createOwnerRef(rs)]
   })
@@ -235,7 +237,9 @@ export class ReplicaSetController implements ReconcilerController {
     const state = this.getState()
     const replicaSets = state.getReplicaSets(pod.metadata.namespace)
     for (const replicaSet of replicaSets) {
-      if (selectorMatchesLabels(replicaSet.spec.selector, pod.metadata.labels)) {
+      if (
+        selectorMatchesLabels(replicaSet.spec.selector, pod.metadata.labels)
+      ) {
         this.enqueueReplicaSet(replicaSet)
       }
     }

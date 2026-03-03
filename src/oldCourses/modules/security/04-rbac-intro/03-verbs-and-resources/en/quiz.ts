@@ -16,13 +16,9 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'For core API resources like Pods, what apiGroups value is used?',
-      options: [
-        '["core"]',
-        '["v1"]',
-        '[""]',
-        '["kubernetes.io"]'
-      ],
+      question:
+        'For core API resources like Pods, what apiGroups value is used?',
+      options: ['["core"]', '["v1"]', '[""]', '["kubernetes.io"]'],
       correctAnswer: 2
     }
   ]

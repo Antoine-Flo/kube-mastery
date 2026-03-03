@@ -37,10 +37,10 @@ Use `--overwrite` when you intentionally want to change a label's value. Without
 
 ## Be Careful with Selector Labels
 
-Here's an important subtlety: some labels are used by **selectors:**  Services routing traffic, Deployments managing Pods. Changing or removing these labels can have real consequences:
+Here's an important subtlety: some labels are used by **selectors:** Services routing traffic, Deployments managing Pods. Changing or removing these labels can have real consequences:
 
 - Removing a label that a Service selects means that Pod **stops receiving traffic**
-- Changing a label that a Deployment uses means the Pod **becomes orphaned:**  the Deployment no longer manages it
+- Changing a label that a Deployment uses means the Pod **becomes orphaned:** the Deployment no longer manages it
 
 ```mermaid
 flowchart LR

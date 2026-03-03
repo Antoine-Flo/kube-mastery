@@ -7,7 +7,9 @@ import type { KubernetesResource } from '../repositories/types'
 export type PersistentVolumeClaimPhase = 'Pending' | 'Bound' | 'Lost'
 
 export interface PersistentVolumeClaimSpec {
-  accessModes: Array<'ReadWriteOnce' | 'ReadOnlyMany' | 'ReadWriteMany' | 'ReadWriteOncePod'>
+  accessModes: Array<
+    'ReadWriteOnce' | 'ReadOnlyMany' | 'ReadWriteMany' | 'ReadWriteOncePod'
+  >
   resources: {
     requests: {
       storage: string
@@ -94,7 +96,10 @@ const PersistentVolumeClaimManifestSchema = z.object({
       requests: z.object({
         storage: z
           .string()
-          .min(1, 'PersistentVolumeClaim resources.requests.storage is required')
+          .min(
+            1,
+            'PersistentVolumeClaim resources.requests.storage is required'
+          )
       })
     }),
     storageClassName: z.string().optional(),
@@ -131,7 +136,9 @@ export const parsePersistentVolumeClaimManifest = (
       ...(manifest.metadata.creationTimestamp && {
         creationTimestamp: manifest.metadata.creationTimestamp
       }),
-      ...(manifest.status?.phase && { status: { phase: manifest.status.phase } })
+      ...(manifest.status?.phase && {
+        status: { phase: manifest.status.phase }
+      })
     })
   )
 }

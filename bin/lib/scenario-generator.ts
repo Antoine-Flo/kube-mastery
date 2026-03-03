@@ -1,5 +1,9 @@
 import { getSeedPath } from './cluster-manager'
-import type { CommandAction, ConformanceAction, ConformanceSuite } from './conformance-types'
+import type {
+  CommandAction,
+  ConformanceAction,
+  ConformanceSuite
+} from './conformance-types'
 
 export interface LifecycleSegment {
   idPrefix: string

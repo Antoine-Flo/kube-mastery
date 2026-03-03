@@ -6,18 +6,18 @@ You now know four Service types. But when you sit down to write a Service manife
 
 Here's a simple mental model:
 
-| Question | Service Type |
-|----------|-------------|
-| Only Pods in the cluster need access? | **ClusterIP** |
-| External access on cloud? | **LoadBalancer** |
-| External access without cloud LB? | **NodePort** |
-| Pointing to an external resource? | **ExternalName** |
+| Question                              | Service Type     |
+| ------------------------------------- | ---------------- |
+| Only Pods in the cluster need access? | **ClusterIP**    |
+| External access on cloud?             | **LoadBalancer** |
+| External access without cloud LB?     | **NodePort**     |
+| Pointing to an external resource?     | **ExternalName** |
 
 Most of your Services will be ClusterIP. You add NodePort or LoadBalancer only when you need external exposure.
 
 ## The Nesting Principle
 
-Service types are **nested:**  each layer builds on the previous:
+Service types are **nested:** each layer builds on the previous:
 
 ```mermaid
 flowchart TD
@@ -30,6 +30,7 @@ A **LoadBalancer** Service also has a NodePort and a ClusterIP. A **NodePort** S
 ## ClusterIP — The Default Choice
 
 Use ClusterIP when:
+
 - Services communicate internally (microservices, databases, caches)
 - You'll use Ingress or Gateway API for external access
 - You don't need direct external exposure
@@ -56,6 +57,7 @@ Most Services in a typical cluster are ClusterIP. External access is usually han
 ## NodePort — Simple External Access
 
 Use NodePort when:
+
 - Running on bare metal or on-premises without cloud integration
 - Development and testing environments
 - You want to put your own load balancer in front
@@ -65,6 +67,7 @@ Tradeoff: non-standard ports (30000-32767) and every node is exposed.
 ## LoadBalancer — Production External Access
 
 Use LoadBalancer when:
+
 - Running on a cloud provider (AWS, GCP, Azure)
 - You need a stable, production-grade external IP
 - The cloud handles health checking and traffic distribution
@@ -74,6 +77,7 @@ Tradeoff: each LoadBalancer costs money — don't create one per microservice.
 ## ExternalName — DNS Aliases
 
 Use ExternalName when:
+
 - Referencing external databases, APIs, or services outside the cluster
 - You want to abstract external dependencies behind a Kubernetes Service name
 - Gradual migration — some backends aren't containerized yet
@@ -103,12 +107,12 @@ Don't create a LoadBalancer Service for every microservice. Use one LoadBalancer
 
 ## Quick Reference
 
-| Type | Access | Use Case | Cost |
-|------|--------|----------|------|
-| ClusterIP | Internal only | Default for all internal services | Free |
-| NodePort | External via node IPs | Dev/test, bare metal | Free |
-| LoadBalancer | External via cloud LB | Production on cloud | Per LB |
-| ExternalName | DNS alias | External dependencies | Free |
+| Type         | Access                | Use Case                          | Cost   |
+| ------------ | --------------------- | --------------------------------- | ------ |
+| ClusterIP    | Internal only         | Default for all internal services | Free   |
+| NodePort     | External via node IPs | Dev/test, bare metal              | Free   |
+| LoadBalancer | External via cloud LB | Production on cloud               | Per LB |
+| ExternalName | DNS alias             | External dependencies             | Free   |
 
 ## Wrapping Up
 

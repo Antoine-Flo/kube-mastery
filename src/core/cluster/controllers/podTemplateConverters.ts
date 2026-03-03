@@ -39,7 +39,9 @@ const convertTemplateContainer = (
     ...(container.env && { env: container.env }),
     ...(container.volumeMounts && { volumeMounts: container.volumeMounts }),
     ...(container.livenessProbe && { livenessProbe: container.livenessProbe }),
-    ...(container.readinessProbe && { readinessProbe: container.readinessProbe }),
+    ...(container.readinessProbe && {
+      readinessProbe: container.readinessProbe
+    }),
     ...(container.startupProbe && { startupProbe: container.startupProbe })
   }
 }

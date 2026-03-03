@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'What benefit does WaitForFirstConsumer volume binding provide?',
+      question:
+        'What benefit does WaitForFirstConsumer volume binding provide?',
       options: [
         'Faster PVC creation',
         'Delays binding until a Pod uses the PVC, improving scheduling',

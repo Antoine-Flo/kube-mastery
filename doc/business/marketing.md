@@ -203,7 +203,7 @@ Donc pour te faire une paye avec du one-time : compter **environ 60–100 ventes
 
 ## Différenciation vs Concurrence
 
-| Aspect            | KubeMastery           | Killer.sh | KodeKloud |
+| Aspect            | KubeMastery            | Killer.sh | KodeKloud |
 | ----------------- | ---------------------- | --------- | --------- |
 | Essai sans compte | ✅ 1er cours complet   | ❌        | ❌        |
 | Simulateur        | Local (rapide)         | N/A       | Payant    |

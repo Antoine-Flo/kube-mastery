@@ -2,9 +2,9 @@
 
 ## The Blueprint of a Job
 
-In the previous lesson, you learned that a Job runs Pods to completion. But how do you tell Kubernetes *how many* times a task should run? Can multiple Pods work in parallel? What happens if something takes too long?
+In the previous lesson, you learned that a Job runs Pods to completion. But how do you tell Kubernetes _how many_ times a task should run? Can multiple Pods work in parallel? What happens if something takes too long?
 
-The answers lie in the **Job spec:**  a small set of powerful fields that act as a blueprint for your batch workload. Think of it like a work order you hand to a construction crew: it specifies how many units to build, how many workers can operate simultaneously, how many mistakes are tolerable, and the hard deadline for the project.
+The answers lie in the **Job spec:** a small set of powerful fields that act as a blueprint for your batch workload. Think of it like a work order you hand to a construction crew: it specifies how many units to build, how many workers can operate simultaneously, how many mistakes are tolerable, and the hard deadline for the project.
 
 Let's explore each field in detail.
 
@@ -76,7 +76,8 @@ spec:
       containers:
         - name: worker
           image: busybox
-          command: ["sh", "-c", "echo Processing item... && sleep 5 && echo done"]
+          command:
+            ['sh', '-c', 'echo Processing item... && sleep 5 && echo done']
       restartPolicy: OnFailure
 ```
 
@@ -102,12 +103,12 @@ In the `describe` output, look for the **Events** section — it shows when Pods
 
 Selecting the right combination of these fields depends on your workload:
 
-| Scenario | completions | parallelism | backoffLimit | activeDeadlineSeconds |
-|---|---|---|---|---|
-| Single migration script | 1 | 1 | 3 | 600 |
-| Process 10 files in parallel | 10 | 4 | 6 | 1800 |
-| Quick health check | 1 | 1 | 1 | 30 |
-| Large batch with retries | 100 | 10 | 20 | 7200 |
+| Scenario                     | completions | parallelism | backoffLimit | activeDeadlineSeconds |
+| ---------------------------- | ----------- | ----------- | ------------ | --------------------- |
+| Single migration script      | 1           | 1           | 3            | 600                   |
+| Process 10 files in parallel | 10          | 4           | 6            | 1800                  |
+| Quick health check           | 1           | 1           | 1            | 30                    |
+| Large batch with retries     | 100         | 10          | 20           | 7200                  |
 
 Start conservative — low parallelism, moderate backoff — and increase based on observed behavior. High parallelism can overwhelm your cluster's scheduling capacity if nodes are already loaded, so always verify that your cluster has enough resources to handle the concurrency you configure.
 
@@ -136,7 +137,7 @@ spec:
       containers:
         - name: hello
           image: busybox
-          command: ["sh", "-c", "echo Hello from Job"]
+          command: ['sh', '-c', 'echo Hello from Job']
       restartPolicy: Never
 ```
 
@@ -172,4 +173,4 @@ kubectl delete job hello-job
 
 The Job spec gives you four essential controls: `completions` defines the success target, `parallelism` sets the concurrency level, `backoffLimit` governs failure tolerance, and `activeDeadlineSeconds` enforces a hard time limit. Together, they let you express a wide range of batch processing patterns — from simple one-shot tasks to large parallel workloads.
 
-In the next lesson, we will explore the **Job lifecycle:**  how Jobs transition through phases, what happens when they succeed or fail, and how to manage cleanup of completed Jobs.
+In the next lesson, we will explore the **Job lifecycle:** how Jobs transition through phases, what happens when they succeed or fail, and how to manage cleanup of completed Jobs.

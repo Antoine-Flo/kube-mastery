@@ -12,9 +12,9 @@ kind: Pod
 metadata:
   name: nginx-pod
   annotations:
-    description: "Web server for the frontend team"
-    docs.url: "https://wiki.example.com/nginx-runbook"
-    deploy.timestamp: "2026-02-16T10:30:00Z"
+    description: 'Web server for the frontend team'
+    docs.url: 'https://wiki.example.com/nginx-runbook'
+    deploy.timestamp: '2026-02-16T10:30:00Z'
 spec:
   containers:
     - name: nginx
@@ -40,6 +40,7 @@ To remove an annotation, append a hyphen to the key: `kubectl annotate pod <name
 Annotations used by tools and controllers carry real meaning. For example, if an Ingress controller reads `nginx.ingress.kubernetes.io/rewrite-target` to configure URL rewriting, changing that annotation changes the Ingress behavior. Similarly, some operators store state in annotations.
 
 Before modifying annotations on a resource, consider:
+
 - Is any tool reading this annotation?
 - Will changing it affect behavior?
 - Is the annotation documented somewhere?

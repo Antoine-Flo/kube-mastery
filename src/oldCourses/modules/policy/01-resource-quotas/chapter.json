@@ -1,1 +1,8 @@
-{"title":{"en":"Resource Quotas","fr":"Quotas de ressources"},"description":{"en":"Learn how ResourceQuotas limit aggregate resource usage per namespace","fr":"Apprenez comment les ResourceQuotas limitent l'utilisation agrégée des ressources par namespace"},"environment":"minimal"}
+{
+  "title": { "en": "Resource Quotas", "fr": "Quotas de ressources" },
+  "description": {
+    "en": "Learn how ResourceQuotas limit aggregate resource usage per namespace",
+    "fr": "Apprenez comment les ResourceQuotas limitent l'utilisation agrégée des ressources par namespace"
+  },
+  "environment": "minimal"
+}

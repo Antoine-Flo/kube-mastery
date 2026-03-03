@@ -118,6 +118,7 @@ kubectl podsummary
 ```
 
 If `kubectl plugin list` doesn't show your plugin, double-check:
+
 - Is the file in a directory that's in your `PATH`?
 - Is the file executable? (`ls -la kubectl-podsummary` should show `x` permission)
 - Does the filename start with `kubectl-`?
@@ -126,8 +127,8 @@ If `kubectl plugin list` doesn't show your plugin, double-check:
 
 Bash is great for quick wrappers that call `kubectl` commands. But for more complex plugins, you might want to reach for a more powerful language:
 
-- **Python:**  Use the <a target="_blank" href="https://github.com/kubernetes-client/python">kubernetes Python client</a> for structured API access
-- **Go:**  Use <a target="_blank" href="https://github.com/kubernetes/client-go">client-go</a> for high performance and easy distribution as a single binary
+- **Python:** Use the <a target="_blank" href="https://github.com/kubernetes-client/python">kubernetes Python client</a> for structured API access
+- **Go:** Use <a target="_blank" href="https://github.com/kubernetes/client-go">client-go</a> for high performance and easy distribution as a single binary
 
 The naming convention is the same regardless of language. A Python plugin looks like:
 
@@ -182,10 +183,10 @@ rm ~/bin/kubectl-hello
 
 ## Common Pitfalls
 
-- **Missing shebang:**  Always include `#!/bin/bash` or `#!/usr/bin/env python3` as the first line. Without it, the system may not know how to execute your script.
-- **Assuming kubectl location:**  On some systems, `kubectl` might not be in the default PATH. Using `$(which kubectl)` or relying on the user's PATH (which already works if they're running kubectl) is usually fine.
-- **Printing secrets to stdout:**  Be careful when your plugin handles sensitive data. Don't echo secret values without considering who might see the output.
-- **No error handling:**  Always check if required arguments are provided and if kubectl commands succeed. A plugin that fails silently is worse than one that fails loudly.
+- **Missing shebang:** Always include `#!/bin/bash` or `#!/usr/bin/env python3` as the first line. Without it, the system may not know how to execute your script.
+- **Assuming kubectl location:** On some systems, `kubectl` might not be in the default PATH. Using `$(which kubectl)` or relying on the user's PATH (which already works if they're running kubectl) is usually fine.
+- **Printing secrets to stdout:** Be careful when your plugin handles sensitive data. Don't echo secret values without considering who might see the output.
+- **No error handling:** Always check if required arguments are provided and if kubectl commands succeed. A plugin that fails silently is worse than one that fails loudly.
 
 ## Wrapping Up
 

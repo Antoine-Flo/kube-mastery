@@ -64,6 +64,6 @@ export const courseStructure: CourseStructure = {
     // Part 10: Extensions
     { moduleId: 'extend-kubernetes', chapterId: 'custom-resources' },
     { moduleId: 'extend-kubernetes', chapterId: 'operators' },
-    { moduleId: 'extend-kubernetes', chapterId: 'kubectl-plugins' },
-  ],
+    { moduleId: 'extend-kubernetes', chapterId: 'kubectl-plugins' }
+  ]
 }

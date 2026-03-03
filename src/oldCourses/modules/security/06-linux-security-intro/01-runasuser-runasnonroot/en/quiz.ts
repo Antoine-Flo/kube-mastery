@@ -10,12 +10,7 @@ export const quiz: Quiz = {
       id: 'q1',
       type: 'multiple-choice',
       question: 'What UID represents root in Linux?',
-      options: [
-        '1',
-        '0',
-        '1000',
-        '65534'
-      ],
+      options: ['1', '0', '1000', '65534'],
       correctAnswer: 1
     },
     {

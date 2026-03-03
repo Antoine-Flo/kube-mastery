@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'Which QoS class is evicted first when a node is under memory pressure?',
+      question:
+        'Which QoS class is evicted first when a node is under memory pressure?',
       options: [
         'Guaranteed',
         'Burstable',

@@ -1,6 +1,6 @@
 # Pod Security Enforcement Modes
 
-You know the three Pod Security Standards levels — Privileged, Baseline, and Restricted. But how do you actually apply them? The answer is **enforcement modes:**  labels on namespaces that tell Kubernetes how strictly to enforce each level.
+You know the three Pod Security Standards levels — Privileged, Baseline, and Restricted. But how do you actually apply them? The answer is **enforcement modes:** labels on namespaces that tell Kubernetes how strictly to enforce each level.
 
 The key insight: you don't have to go from zero to full enforcement overnight. Kubernetes gives you a gradual rollout path.
 
@@ -8,11 +8,11 @@ The key insight: you don't have to go from zero to full enforcement overnight. K
 
 Each mode handles violations differently:
 
-| Mode | Violation Behavior | Use Case |
-|------|-------------------|----------|
-| **enforce** | Rejects the Pod — it won't be created | Production enforcement |
-| **audit** | Allows the Pod but logs the violation | Discovery and monitoring |
-| **warn** | Allows the Pod but warns the user | Developer feedback |
+| Mode        | Violation Behavior                    | Use Case                 |
+| ----------- | ------------------------------------- | ------------------------ |
+| **enforce** | Rejects the Pod — it won't be created | Production enforcement   |
+| **audit**   | Allows the Pod but logs the violation | Discovery and monitoring |
+| **warn**    | Allows the Pod but warns the user     | Developer feedback       |
 
 Think of it like a new traffic law. First, you post warning signs (warn), then install cameras that record violations (audit), and finally start issuing tickets (enforce). This progression lets everyone adapt before consequences kick in.
 

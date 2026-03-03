@@ -8,9 +8,7 @@ import {
   destroyEmulatedEnvironment
 } from '../core/emulatedEnvironment/EmulatedEnvironmentManager'
 import type { EmulatedEnvironment } from '../core/emulatedEnvironment/EmulatedEnvironment'
-import {
-  fsConfig as demoFsConfig
-} from '../courses/seeds/demo'
+import { fsConfig as demoFsConfig } from '../courses/seeds/demo'
 import { getSeed } from '../courses/seeds/getSeed'
 import { createFilesystemFromConfig } from '../core/filesystem/debianFileSystem'
 import { createFileSystem } from '../core/filesystem/FileSystem'
@@ -70,9 +68,7 @@ export function mountTerminal(
   const env: EmulatedEnvironment =
     providedEnv ??
     (() => {
-      const seed = seedName
-        ? getSeed(seedName)
-        : { fsConfig: demoFsConfig }
+      const seed = seedName ? getSeed(seedName) : { fsConfig: demoFsConfig }
       return createEmulatedEnvironment({
         filesystemState: createFilesystemFromConfig(seed.fsConfig ?? {})
       })

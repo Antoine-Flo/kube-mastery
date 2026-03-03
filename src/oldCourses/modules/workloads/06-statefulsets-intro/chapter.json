@@ -1,1 +1,11 @@
-{"title":{"en":"Introduction to StatefulSets","fr":"Introduction aux StatefulSets"},"description":{"en":"Learn about StatefulSets for stateful applications with stable identity","fr":"Apprenez les StatefulSets pour les applications avec état et identité stable"},"environment":"minimal"}
+{
+  "title": {
+    "en": "Introduction to StatefulSets",
+    "fr": "Introduction aux StatefulSets"
+  },
+  "description": {
+    "en": "Learn about StatefulSets for stateful applications with stable identity",
+    "fr": "Apprenez les StatefulSets pour les applications avec état et identité stable"
+  },
+  "environment": "minimal"
+}

@@ -8,11 +8,11 @@ ResourceQuotas set a **total budget** for a namespace — "This namespace can us
 
 These two mechanisms work at different levels:
 
-| | ResourceQuota | LimitRange |
-|---|---|---|
-| **Scope** | Total namespace consumption | Per-object constraints |
+|              | ResourceQuota                              | LimitRange                                |
+| ------------ | ------------------------------------------ | ----------------------------------------- |
+| **Scope**    | Total namespace consumption                | Per-object constraints                    |
 | **Question** | "How much can this namespace use overall?" | "How much can one Pod/container/PVC use?" |
-| **Example** | Total CPU across all Pods ≤ 8 cores | Each container ≤ 2 cores, default 500m |
+| **Example**  | Total CPU across all Pods ≤ 8 cores        | Each container ≤ 2 cores, default 500m    |
 
 They complement each other perfectly. LimitRange ensures each object is well-behaved; ResourceQuota ensures the namespace as a whole stays within bounds.
 
@@ -42,33 +42,33 @@ spec:
   limits:
     - type: Container
       default:
-        cpu: "500m"
+        cpu: '500m'
         memory: 512Mi
       defaultRequest:
-        cpu: "100m"
+        cpu: '100m'
         memory: 128Mi
       max:
-        cpu: "2"
+        cpu: '2'
         memory: 2Gi
       min:
-        cpu: "50m"
+        cpu: '50m'
         memory: 64Mi
 ```
 
 What this does:
 
-- **default:**  If a container doesn't specify `limits`, it gets 500m CPU and 512Mi memory
-- **defaultRequest:**  If a container doesn't specify `requests`, it gets 100m CPU and 128Mi memory
-- **max:**  No container can request or be limited to more than 2 CPU cores or 2Gi memory
-- **min:**  No container can request less than 50m CPU or 64Mi memory
+- **default:** If a container doesn't specify `limits`, it gets 500m CPU and 512Mi memory
+- **defaultRequest:** If a container doesn't specify `requests`, it gets 100m CPU and 128Mi memory
+- **max:** No container can request or be limited to more than 2 CPU cores or 2Gi memory
+- **min:** No container can request less than 50m CPU or 64Mi memory
 
 ## LimitRange Types
 
 LimitRanges support three types:
 
-- **Container:**  Per-container CPU, memory, ephemeral storage. This is the most commonly used type.
-- **Pod:**  Aggregate min/max across all containers in the Pod. Prevents a multi-container Pod from being too greedy.
-- **PersistentVolumeClaim:**  Min/max storage size for PVCs. Prevents requests for absurdly large (or tiny) volumes.
+- **Container:** Per-container CPU, memory, ephemeral storage. This is the most commonly used type.
+- **Pod:** Aggregate min/max across all containers in the Pod. Prevents a multi-container Pod from being too greedy.
+- **PersistentVolumeClaim:** Min/max storage size for PVCs. Prevents requests for absurdly large (or tiny) volumes.
 
 You can define multiple types in a single LimitRange.
 

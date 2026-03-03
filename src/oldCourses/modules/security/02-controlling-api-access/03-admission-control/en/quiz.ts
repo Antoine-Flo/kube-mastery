@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'What is the difference between a validating and a mutating admission controller?',
+      question:
+        'What is the difference between a validating and a mutating admission controller?',
       options: [
         'Validating modifies requests; mutating only checks them',
         'Validating checks if the request is allowed; mutating can modify the request',

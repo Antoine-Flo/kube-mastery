@@ -118,11 +118,19 @@ const createHandlers = (
   handlers.set('run', (parsed) =>
     handleRun(clusterState, parsed, eventBus, networkRuntime)
   )
-  handlers.set('expose', (parsed) => handleExpose(clusterState, parsed, eventBus))
-  handlers.set('config-get-contexts', (parsed) => handleConfig(clusterState, parsed))
-  handlers.set('config-current-context', (parsed) => handleConfig(clusterState, parsed))
+  handlers.set('expose', (parsed) =>
+    handleExpose(clusterState, parsed, eventBus)
+  )
+  handlers.set('config-get-contexts', (parsed) =>
+    handleConfig(clusterState, parsed)
+  )
+  handlers.set('config-current-context', (parsed) =>
+    handleConfig(clusterState, parsed)
+  )
   handlers.set('config-view', (parsed) => handleConfig(clusterState, parsed))
-  handlers.set('config-set-context', (parsed) => handleConfig(clusterState, parsed))
+  handlers.set('config-set-context', (parsed) =>
+    handleConfig(clusterState, parsed)
+  )
 
   return handlers
 }

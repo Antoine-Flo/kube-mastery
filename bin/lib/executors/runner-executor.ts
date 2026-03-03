@@ -55,7 +55,9 @@ const resolveYamlFiles = (targetPath: string): string[] => {
   return [targetPath]
 }
 
-const parseResourcesFromPath = (targetPath: string): ParsedManifestResource[] => {
+const parseResourcesFromPath = (
+  targetPath: string
+): ParsedManifestResource[] => {
   const files = resolveYamlFiles(targetPath)
   const resources: ParsedManifestResource[] = []
   for (const filePath of files) {
@@ -75,7 +77,9 @@ const parseResourcesFromPath = (targetPath: string): ParsedManifestResource[] =>
   return resources
 }
 
-const buildDeleteCommand = (resource: ParsedManifestResource): string | undefined => {
+const buildDeleteCommand = (
+  resource: ParsedManifestResource
+): string | undefined => {
   const namespace = resource.metadata.namespace || 'default'
   const name = resource.metadata.name
   if (resource.kind === 'Pod') {
@@ -151,13 +155,19 @@ const rewriteDiffCommandForMountedFile = (
   mountedPath: string
 ): string => {
   if (command.includes(`--filename=${originalPath}`)) {
-    return command.replace(`--filename=${originalPath}`, `--filename=${mountedPath}`)
+    return command.replace(
+      `--filename=${originalPath}`,
+      `--filename=${mountedPath}`
+    )
   }
   if (command.includes(`-f=${originalPath}`)) {
     return command.replace(`-f=${originalPath}`, `-f=${mountedPath}`)
   }
   if (command.includes(`--filename ${originalPath}`)) {
-    return command.replace(`--filename ${originalPath}`, `--filename ${mountedPath}`)
+    return command.replace(
+      `--filename ${originalPath}`,
+      `--filename ${mountedPath}`
+    )
   }
   if (command.includes(`-f ${originalPath}`)) {
     return command.replace(`-f ${originalPath}`, `-f ${mountedPath}`)
@@ -201,7 +211,12 @@ export const createRunnerExecutor = (
   })
   const controllers = initializeControllers(eventBus, clusterState)
   const fileSystem = createFileSystem()
-  const executor = createKubectlExecutor(clusterState, fileSystem, logger, eventBus)
+  const executor = createKubectlExecutor(
+    clusterState,
+    fileSystem,
+    logger,
+    eventBus
+  )
 
   const listScopedPods = (namespace?: string): Pod[] => {
     if (namespace != null && namespace.length > 0) {

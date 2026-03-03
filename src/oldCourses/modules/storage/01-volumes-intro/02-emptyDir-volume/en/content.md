@@ -10,9 +10,9 @@ Think of `emptyDir` as a shared whiteboard between containers in a Pod. While th
 
 This makes it ideal for several scenarios:
 
-- **Inter-container communication:**  A producer container writes data, a sidecar container reads and processes it
-- **Temporary scratch space:**  Disk-based sorting, image processing, or other tasks that need temporary storage
-- **Caching:**  Data that can be regenerated if lost, but is faster to read from local storage
+- **Inter-container communication:** A producer container writes data, a sidecar container reads and processes it
+- **Temporary scratch space:** Disk-based sorting, image processing, or other tasks that need temporary storage
+- **Caching:** Data that can be regenerated if lost, but is faster to read from local storage
 
 ## A Practical Example
 
@@ -27,7 +27,12 @@ spec:
   containers:
     - name: producer
       image: busybox
-      command: ['sh', '-c', 'echo "hello from producer" > /shared/greeting && sleep 3600']
+      command:
+        [
+          'sh',
+          '-c',
+          'echo "hello from producer" > /shared/greeting && sleep 3600'
+        ]
       volumeMounts:
         - name: shared-data
           mountPath: /shared
@@ -110,13 +115,18 @@ spec:
   containers:
     - name: writer
       image: busybox
-      command: ["sh", "-c", "echo 'Hello from writer' > /shared/message.txt && sleep 3600"]
+      command:
+        [
+          'sh',
+          '-c',
+          "echo 'Hello from writer' > /shared/message.txt && sleep 3600"
+        ]
       volumeMounts:
         - name: shared-data
           mountPath: /shared
     - name: reader
       image: busybox
-      command: ["sh", "-c", "sleep 5 && cat /shared/message.txt && sleep 3600"]
+      command: ['sh', '-c', 'sleep 5 && cat /shared/message.txt && sleep 3600']
       volumeMounts:
         - name: shared-data
           mountPath: /shared

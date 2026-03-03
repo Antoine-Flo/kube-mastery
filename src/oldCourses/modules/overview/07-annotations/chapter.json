@@ -1,1 +1,8 @@
-{"title":{"en":"Annotations","fr":"Annotations"},"description":{"en":"Learn how annotations store non-identifying metadata","fr":"Apprenez comment les annotations stockent des métadonnées non-identifiantes"},"environment":"minimal"}
+{
+  "title": { "en": "Annotations", "fr": "Annotations" },
+  "description": {
+    "en": "Learn how annotations store non-identifying metadata",
+    "fr": "Apprenez comment les annotations stockent des métadonnées non-identifiantes"
+  },
+  "environment": "minimal"
+}

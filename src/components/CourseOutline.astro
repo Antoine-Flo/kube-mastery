@@ -54,7 +54,7 @@ let moduleFlatIndex = 0
                 </span>
               </summary>
               <div class="out__ch-bd">
-                {module.lessons.map((lesson: OverviewLesson) => (
+                {module.lessons.map((lesson: OverviewLesson) =>
                   module.isLocked ? (
                     <span class="out__it out__it--locked">
                       <span
@@ -95,7 +95,7 @@ let moduleFlatIndex = 0
                       <span class="out__it-ttl">{lesson.title}</span>
                     </a>
                   )
-                ))}
+                )}
               </div>
             </details>
           )

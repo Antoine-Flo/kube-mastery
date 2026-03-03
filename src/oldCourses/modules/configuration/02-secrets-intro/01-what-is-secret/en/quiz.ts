@@ -22,12 +22,7 @@ export const quiz: Quiz = {
       id: 'q2',
       type: 'multiple-choice',
       question: 'How is Secret data stored by default in etcd?',
-      options: [
-        'Plain text',
-        'Base64-encoded',
-        'AES-256 encrypted',
-        'Hashed'
-      ],
+      options: ['Plain text', 'Base64-encoded', 'AES-256 encrypted', 'Hashed'],
       correctAnswer: 1
     }
   ]

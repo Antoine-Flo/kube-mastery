@@ -17,8 +17,14 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'What file inside a Pod usually contains DNS resolver settings?',
-      options: ['/etc/hosts', '/etc/resolv.conf', '/var/run/dns.conf', '/etc/kube-dns'],
+      question:
+        'What file inside a Pod usually contains DNS resolver settings?',
+      options: [
+        '/etc/hosts',
+        '/etc/resolv.conf',
+        '/var/run/dns.conf',
+        '/etc/kube-dns'
+      ],
       correctAnswer: 1
     }
   ]

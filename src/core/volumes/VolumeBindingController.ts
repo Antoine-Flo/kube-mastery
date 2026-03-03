@@ -47,7 +47,10 @@ export const createVolumeBindingController = (
   const reconcileVolumeClaims = (): void => {
     const persistentVolumes = clusterState.getPersistentVolumes()
     const persistentVolumeClaims = clusterState.getPersistentVolumeClaims()
-    const claimByKey = new Map<string, (typeof persistentVolumeClaims)[number]>()
+    const claimByKey = new Map<
+      string,
+      (typeof persistentVolumeClaims)[number]
+    >()
     for (const persistentVolumeClaim of persistentVolumeClaims) {
       const key = `${persistentVolumeClaim.metadata.namespace}/${persistentVolumeClaim.metadata.name}`
       claimByKey.set(key, persistentVolumeClaim)
@@ -89,10 +92,12 @@ export const createVolumeBindingController = (
 
       const preBoundVolumeName = persistentVolumeClaim.spec.volumeName
       if (preBoundVolumeName != null && preBoundVolumeName.length > 0) {
-        const matchingPersistentVolume = clusterState.findPersistentVolume(
-          preBoundVolumeName
-        )
-        if (!matchingPersistentVolume.ok || matchingPersistentVolume.value == null) {
+        const matchingPersistentVolume =
+          clusterState.findPersistentVolume(preBoundVolumeName)
+        if (
+          !matchingPersistentVolume.ok ||
+          matchingPersistentVolume.value == null
+        ) {
           continue
         }
         const persistentVolume = matchingPersistentVolume.value
@@ -141,7 +146,11 @@ export const createVolumeBindingController = (
             )
           )
         }
-        volumeState.bindClaimToVolume(claimNamespace, claimName, preBoundVolumeName)
+        volumeState.bindClaimToVolume(
+          claimNamespace,
+          claimName,
+          preBoundVolumeName
+        )
         continue
       }
 

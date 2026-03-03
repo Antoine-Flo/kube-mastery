@@ -105,10 +105,16 @@ const IngressManifestSchema = z.object({
               .array(
                 z.object({
                   path: z.string().min(1, 'path is required'),
-                  pathType: z.enum(['Exact', 'Prefix', 'ImplementationSpecific']),
+                  pathType: z.enum([
+                    'Exact',
+                    'Prefix',
+                    'ImplementationSpecific'
+                  ]),
                   backend: z.object({
                     service: z.object({
-                      name: z.string().min(1, 'backend service name is required'),
+                      name: z
+                        .string()
+                        .min(1, 'backend service name is required'),
                       port: IngressServicePortSchema
                     })
                   })

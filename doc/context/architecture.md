@@ -18,7 +18,7 @@
 
 ## Principles
 
-- **KISS / DRY:**  Functional style, pure functions ; classes pour état. Result types, Factory, Command, Observer. Max indentation 3, no switch (object lookup / if-else). Testable, dependency injection.
+- **KISS / DRY:** Functional style, pure functions ; classes pour état. Result types, Factory, Command, Observer. Max indentation 3, no switch (object lookup / if-else). Testable, dependency injection.
 
 ## Core Patterns
 

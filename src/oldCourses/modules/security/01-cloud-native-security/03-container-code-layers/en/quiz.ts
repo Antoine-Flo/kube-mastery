@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'Why should you avoid using the latest tag for container images?',
+      question:
+        'Why should you avoid using the latest tag for container images?',
       options: [
         'It is slower to pull',
         'It makes deployments less reproducible and can introduce unexpected changes',

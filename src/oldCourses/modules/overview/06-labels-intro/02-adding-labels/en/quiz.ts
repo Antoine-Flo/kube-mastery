@@ -10,12 +10,7 @@ export const quiz: Quiz = {
       id: 'q1',
       type: 'multiple-choice',
       question: 'To change an existing label value, which flag do you need?',
-      options: [
-        '--replace',
-        '--overwrite',
-        '--force',
-        '--update'
-      ],
+      options: ['--replace', '--overwrite', '--force', '--update'],
       correctAnswer: 1
     },
     {

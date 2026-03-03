@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'Which component provides resource metrics (CPU, memory) for kubectl top?',
+      question:
+        'Which component provides resource metrics (CPU, memory) for kubectl top?',
       options: [
         'kube-state-metrics',
         'cAdvisor',

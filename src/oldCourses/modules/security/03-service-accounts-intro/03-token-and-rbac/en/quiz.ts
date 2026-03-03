@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'How does a ServiceAccount get permissions to perform API operations?',
+      question:
+        'How does a ServiceAccount get permissions to perform API operations?',
       options: [
         'Automatically; all ServiceAccounts have full access',
         'Through RBAC RoleBindings or ClusterRoleBindings',
@@ -21,7 +22,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'What identity format does the API server use for ServiceAccount tokens?',
+      question:
+        'What identity format does the API server use for ServiceAccount tokens?',
       options: [
         'system:user:sa-name',
         'system:serviceaccount:<namespace>:<serviceaccount-name>',

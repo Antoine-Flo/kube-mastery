@@ -1,1 +1,10 @@
-{"title":{"en":"Introduction to Resource Management","fr":"Introduction à la gestion des ressources"},"description":{"en":"Learn how to request and limit CPU and memory for containers","fr":"Apprenez à demander et limiter le CPU et la mémoire pour les conteneurs"}}
+{
+  "title": {
+    "en": "Introduction to Resource Management",
+    "fr": "Introduction à la gestion des ressources"
+  },
+  "description": {
+    "en": "Learn how to request and limit CPU and memory for containers",
+    "fr": "Apprenez à demander et limiter le CPU et la mémoire pour les conteneurs"
+  }
+}

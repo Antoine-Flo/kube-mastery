@@ -9,13 +9,9 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'Which field do you use to inject a Secret value as an environment variable?',
-      options: [
-        'configMapKeyRef',
-        'secretKeyRef',
-        'secretRef',
-        'envFrom'
-      ],
+      question:
+        'Which field do you use to inject a Secret value as an environment variable?',
+      options: ['configMapKeyRef', 'secretKeyRef', 'secretRef', 'envFrom'],
       correctAnswer: 1
     },
     {

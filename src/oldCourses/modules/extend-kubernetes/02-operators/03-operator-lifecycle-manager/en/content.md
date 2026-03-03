@@ -8,10 +8,10 @@ The **Operator Lifecycle Manager (OLM)** takes a different approach. Think of it
 
 Without OLM, every Operator has its own installation process. Some use Helm, others use raw manifests, and each has different upgrade procedures. OLM standardizes this by introducing a catalog-based model:
 
-- **Browse:**  Discover Operators from curated catalogs (like <a target="_blank" href="https://operatorhub.io/">OperatorHub.io</a>)
-- **Subscribe:**  Tell OLM which Operator you want and which update channel to follow
-- **Install:**  OLM resolves dependencies, generates an installation plan, and applies everything
-- **Upgrade:**  When a new version appears in the channel, OLM handles the upgrade automatically
+- **Browse:** Discover Operators from curated catalogs (like <a target="_blank" href="https://operatorhub.io/">OperatorHub.io</a>)
+- **Subscribe:** Tell OLM which Operator you want and which update channel to follow
+- **Install:** OLM resolves dependencies, generates an installation plan, and applies everything
+- **Upgrade:** When a new version appears in the channel, OLM handles the upgrade automatically
 
 This is particularly valuable in enterprise environments where you need consistent, auditable Operator management across many clusters.
 
@@ -32,10 +32,10 @@ flowchart LR
   CSV -->|deploys| Op["Operator Pod"]
 ```
 
-- **CatalogSource:**  Points to a catalog of available Operators (like a package repository)
-- **Subscription:**  Declares "I want this Operator from this catalog, on this channel"
-- **InstallPlan:**  A list of everything OLM needs to apply (CRDs, RBAC, Deployments)
-- **ClusterServiceVersion (CSV):**  Represents an installed version of an Operator, including its metadata and status
+- **CatalogSource:** Points to a catalog of available Operators (like a package repository)
+- **Subscription:** Declares "I want this Operator from this catalog, on this channel"
+- **InstallPlan:** A list of everything OLM needs to apply (CRDs, RBAC, Deployments)
+- **ClusterServiceVersion (CSV):** Represents an installed version of an Operator, including its metadata and status
 
 When you create a Subscription, OLM looks up the Operator in the catalog, resolves any dependencies (some Operators require other Operators), generates an InstallPlan, and applies the manifests. The Operator Pod starts running and begins watching for its custom resources.
 
@@ -79,8 +79,8 @@ A healthy setup shows the CSV in `Succeeded` phase and the Operator Pod running.
 
 One of OLM's strengths is automated upgrades. When a new Operator version appears in the catalog channel, OLM detects it and creates a new InstallPlan. Depending on your configuration, upgrades can be:
 
-- **Automatic:**  OLM applies the upgrade as soon as it's available
-- **Manual:**  OLM creates the InstallPlan but waits for you to approve it
+- **Automatic:** OLM applies the upgrade as soon as it's available
+- **Manual:** OLM creates the InstallPlan but waits for you to approve it
 
 For production clusters, manual approval gives you control over when upgrades happen. You can review the InstallPlan, test in a staging environment first, and then approve.
 
@@ -90,9 +90,9 @@ OLM adds significant complexity to your cluster. Evaluate whether you need catal
 
 ## Common Pitfalls
 
-- **InstallPlan stuck:**  Usually a dependency resolution issue or a missing CatalogSource. Check OLM operator Pod logs for details.
-- **Wrong namespace:**  Make sure the `sourceNamespace` matches where your CatalogSource is installed (often `olm`).
-- **Catalog not refreshed:**  Catalogs cache their contents. If a new Operator version isn't showing up, check that the CatalogSource Pod is healthy and its index is up to date.
+- **InstallPlan stuck:** Usually a dependency resolution issue or a missing CatalogSource. Check OLM operator Pod logs for details.
+- **Wrong namespace:** Make sure the `sourceNamespace` matches where your CatalogSource is installed (often `olm`).
+- **Catalog not refreshed:** Catalogs cache their contents. If a new Operator version isn't showing up, check that the CatalogSource Pod is healthy and its index is up to date.
 
 ## Wrapping Up
 

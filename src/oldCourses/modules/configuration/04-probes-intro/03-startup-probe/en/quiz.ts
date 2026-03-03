@@ -17,7 +17,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'When a startup probe is configured, what happens before it succeeds?',
+      question:
+        'When a startup probe is configured, what happens before it succeeds?',
       options: [
         'Only readiness probe runs',
         'Liveness and readiness probes are disabled',

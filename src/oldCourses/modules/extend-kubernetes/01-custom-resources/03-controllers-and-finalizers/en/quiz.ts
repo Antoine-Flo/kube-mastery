@@ -21,13 +21,9 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'What state does a resource enter when deleted but still has finalizers?',
-      options: [
-        'Deleted',
-        'Terminating',
-        'Pending',
-        'Failed'
-      ],
+      question:
+        'What state does a resource enter when deleted but still has finalizers?',
+      options: ['Deleted', 'Terminating', 'Pending', 'Failed'],
       correctAnswer: 1
     }
   ]

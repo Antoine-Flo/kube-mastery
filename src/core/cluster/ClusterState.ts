@@ -76,9 +76,7 @@ import type { ConfigMap } from './ressources/ConfigMap'
 import type { DaemonSet } from './ressources/DaemonSet'
 import type { Deployment } from './ressources/Deployment'
 import type { Ingress } from './ressources/Ingress'
-import {
-  type Namespace
-} from './ressources/Namespace'
+import { type Namespace } from './ressources/Namespace'
 import type { Node } from './ressources/Node'
 import type { PersistentVolume } from './ressources/PersistentVolume'
 import type { PersistentVolumeClaim } from './ressources/PersistentVolumeClaim'
@@ -178,9 +176,8 @@ const serviceRepo = createResourceRepository<Service>('Service')
 const ingressRepo = createResourceRepository<Ingress>('Ingress')
 const persistentVolumeRepo =
   createResourceRepository<PersistentVolume>('PersistentVolume')
-const persistentVolumeClaimRepo = createResourceRepository<PersistentVolumeClaim>(
-  'PersistentVolumeClaim'
-)
+const persistentVolumeClaimRepo =
+  createResourceRepository<PersistentVolumeClaim>('PersistentVolumeClaim')
 const namespaceRepo = createResourceRepository<Namespace>('Namespace')
 
 // ─── Generic Resource Operations Helper ─────────────────────────────
@@ -320,10 +317,11 @@ const persistentVolumeOps = createResourceOperations<PersistentVolume>(
   persistentVolumeRepo,
   'persistentVolumes'
 )
-const persistentVolumeClaimOps = createResourceOperations<PersistentVolumeClaim>(
-  persistentVolumeClaimRepo,
-  'persistentVolumeClaims'
-)
+const persistentVolumeClaimOps =
+  createResourceOperations<PersistentVolumeClaim>(
+    persistentVolumeClaimRepo,
+    'persistentVolumeClaims'
+  )
 const namespaceOps = createResourceOperations<Namespace>(
   namespaceRepo,
   'namespaces'
@@ -436,7 +434,9 @@ export interface ClusterState {
   updatePersistentVolumeClaim: (
     name: string,
     namespace: string,
-    updateFn: (persistentVolumeClaim: PersistentVolumeClaim) => PersistentVolumeClaim
+    updateFn: (
+      persistentVolumeClaim: PersistentVolumeClaim
+    ) => PersistentVolumeClaim
   ) => Result<PersistentVolumeClaim>
   getNamespaces: () => Namespace[]
   addNamespace: (namespace: Namespace) => void
@@ -581,7 +581,9 @@ const createFacadeMethods = <T extends KubernetesResource>(
       if (!findResult.ok) {
         return findResult
       }
-      eventBus.emit(emitDeleted(name, namespace, findResult.value as any, 'direct'))
+      eventBus.emit(
+        emitDeleted(name, namespace, findResult.value as any, 'direct')
+      )
       return { ok: true, value: findResult.value }
     },
 
@@ -762,7 +764,11 @@ export function createClusterState(
     },
     delete: (name: string, namespace: string): Result<Ingress> => {
       const currentState = getState()
-      const deleteResult = ingressRepo.remove(currentState.ingresses, name, namespace)
+      const deleteResult = ingressRepo.remove(
+        currentState.ingresses,
+        name,
+        namespace
+      )
       if (!deleteResult.ok) {
         return deleteResult
       }
@@ -821,7 +827,11 @@ export function createClusterState(
     },
     delete: (name: string): Result<Namespace> => {
       const currentState = getState()
-      const deleteResult = namespaceRepo.remove(currentState.namespaces, name, '')
+      const deleteResult = namespaceRepo.remove(
+        currentState.namespaces,
+        name,
+        ''
+      )
       if (!deleteResult.ok) {
         return deleteResult
       }
@@ -921,28 +931,58 @@ export function createClusterState(
     const effectiveNamespace = namespace ?? 'default'
     const finders: Record<
       ResourceKind,
-      (resourceName: string, resourceNamespace: string) => Result<KubernetesResource>
+      (
+        resourceName: string,
+        resourceNamespace: string
+      ) => Result<KubernetesResource>
     > = {
       Pod: (resourceName, resourceNamespace) =>
-        podMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+        podMethods.find(
+          resourceName,
+          resourceNamespace
+        ) as Result<KubernetesResource>,
       ConfigMap: (resourceName, resourceNamespace) =>
-        configMapMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+        configMapMethods.find(
+          resourceName,
+          resourceNamespace
+        ) as Result<KubernetesResource>,
       Secret: (resourceName, resourceNamespace) =>
-        secretMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+        secretMethods.find(
+          resourceName,
+          resourceNamespace
+        ) as Result<KubernetesResource>,
       Node: (resourceName, _resourceNamespace) =>
         nodeMethods.find(resourceName) as Result<KubernetesResource>,
       ReplicaSet: (resourceName, resourceNamespace) =>
-        replicaSetMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+        replicaSetMethods.find(
+          resourceName,
+          resourceNamespace
+        ) as Result<KubernetesResource>,
       Deployment: (resourceName, resourceNamespace) =>
-        deploymentMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+        deploymentMethods.find(
+          resourceName,
+          resourceNamespace
+        ) as Result<KubernetesResource>,
       DaemonSet: (resourceName, resourceNamespace) =>
-        daemonSetMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+        daemonSetMethods.find(
+          resourceName,
+          resourceNamespace
+        ) as Result<KubernetesResource>,
       Service: (resourceName, resourceNamespace) =>
-        serviceMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+        serviceMethods.find(
+          resourceName,
+          resourceNamespace
+        ) as Result<KubernetesResource>,
       Ingress: (resourceName, resourceNamespace) =>
-        ingressMethods.find(resourceName, resourceNamespace) as Result<KubernetesResource>,
+        ingressMethods.find(
+          resourceName,
+          resourceNamespace
+        ) as Result<KubernetesResource>,
       PersistentVolume: (resourceName, _resourceNamespace) =>
-        persistentVolumeMethods.find(resourceName, '') as Result<KubernetesResource>,
+        persistentVolumeMethods.find(
+          resourceName,
+          ''
+        ) as Result<KubernetesResource>,
       PersistentVolumeClaim: (resourceName, resourceNamespace) =>
         persistentVolumeClaimMethods.find(
           resourceName,
@@ -974,7 +1014,8 @@ export function createClusterState(
         configMapMethods.getAll(resourceNamespace) as KubernetesResource[],
       Secret: (resourceNamespace) =>
         secretMethods.getAll(resourceNamespace) as KubernetesResource[],
-      Node: (_resourceNamespace) => nodeMethods.getAll() as KubernetesResource[],
+      Node: (_resourceNamespace) =>
+        nodeMethods.getAll() as KubernetesResource[],
       ReplicaSet: (resourceNamespace) =>
         replicaSetMethods.getAll(resourceNamespace) as KubernetesResource[],
       Deployment: (resourceNamespace) =>
@@ -988,7 +1029,9 @@ export function createClusterState(
       PersistentVolume: (_resourceNamespace) =>
         persistentVolumeMethods.getAll(undefined) as KubernetesResource[],
       PersistentVolumeClaim: (resourceNamespace) =>
-        persistentVolumeClaimMethods.getAll(resourceNamespace) as KubernetesResource[],
+        persistentVolumeClaimMethods.getAll(
+          resourceNamespace
+        ) as KubernetesResource[],
       Namespace: (_resourceNamespace) =>
         namespaceMethods.getAll() as KubernetesResource[]
     }
@@ -1088,7 +1131,9 @@ export function createClusterState(
       services: { items: [...state.services.items] },
       ingresses: { items: [...state.ingresses.items] },
       persistentVolumes: { items: [...state.persistentVolumes.items] },
-      persistentVolumeClaims: { items: [...state.persistentVolumeClaims.items] },
+      persistentVolumeClaims: {
+        items: [...state.persistentVolumeClaims.items]
+      },
       namespaces: { items: [...state.namespaces.items] }
     }),
 
@@ -1104,7 +1149,9 @@ export function createClusterState(
         services: newState.services || { items: [] },
         ingresses: newState.ingresses || { items: [] },
         persistentVolumes: newState.persistentVolumes || { items: [] },
-        persistentVolumeClaims: newState.persistentVolumeClaims || { items: [] },
+        persistentVolumeClaims: newState.persistentVolumeClaims || {
+          items: []
+        },
         namespaces: newState.namespaces || { items: [] }
       }
     }

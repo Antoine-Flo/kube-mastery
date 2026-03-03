@@ -63,9 +63,8 @@ const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
 const serviceRepo = createResourceRepository<Service>('Service')
 const persistentVolumeRepo =
   createResourceRepository<PersistentVolume>('PersistentVolume')
-const persistentVolumeClaimRepo = createResourceRepository<PersistentVolumeClaim>(
-  'PersistentVolumeClaim'
-)
+const persistentVolumeClaimRepo =
+  createResourceRepository<PersistentVolumeClaim>('PersistentVolumeClaim')
 
 // ─── Generic Handler Factories ───────────────────────────────────────────
 
@@ -432,7 +431,10 @@ export const handlePersistentVolumeClaimCreated = (
   state: ClusterStateData,
   event: PersistentVolumeClaimCreatedEvent
 ) =>
-  persistentVolumeClaimHandler.created(state, event.payload.persistentVolumeClaim)
+  persistentVolumeClaimHandler.created(
+    state,
+    event.payload.persistentVolumeClaim
+  )
 
 export const handlePersistentVolumeClaimDeleted = (
   state: ClusterStateData,

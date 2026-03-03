@@ -83,9 +83,11 @@ const startRegularContainers = (pod: Pod): Pod => {
     .map(([name]) => name)
 
   for (const containerName of regularContainerNames) {
-    const currentStatus = updatedPod.status.containerStatuses?.find((status) => {
-      return status.name === containerName
-    })
+    const currentStatus = updatedPod.status.containerStatuses?.find(
+      (status) => {
+        return status.name === containerName
+      }
+    )
     updatedPod = updateContainerStatus(updatedPod, containerName, {
       state: 'Running',
       ready: true,

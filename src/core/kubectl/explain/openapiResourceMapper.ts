@@ -2,7 +2,9 @@ import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import type { Resource } from '../commands/types'
 
-export type OpenAPISpecFile = 'api__v1_openapi.json' | 'apis__apps__v1_openapi.json'
+export type OpenAPISpecFile =
+  | 'api__v1_openapi.json'
+  | 'apis__apps__v1_openapi.json'
 
 export interface OpenAPIResourceTarget {
   group: string
@@ -50,21 +52,30 @@ const parseApiVersion = (
   return success({ group, version })
 }
 
-const buildSchemaName = (group: string, version: string, kind: string): string => {
+const buildSchemaName = (
+  group: string,
+  version: string,
+  kind: string
+): string => {
   if (group.length === 0 && version === 'v1') {
     return `io.k8s.api.core.v1.${kind}`
   }
   return `io.k8s.api.${group}.${version}.${kind}`
 }
 
-const resolveSpecFile = (group: string, version: string): Result<OpenAPISpecFile> => {
+const resolveSpecFile = (
+  group: string,
+  version: string
+): Result<OpenAPISpecFile> => {
   if (group.length === 0 && version === 'v1') {
     return success('api__v1_openapi.json')
   }
   if (group === 'apps' && version === 'v1') {
     return success('apis__apps__v1_openapi.json')
   }
-  return error(`api-version ${group}/${version} is not supported in this simulator`)
+  return error(
+    `api-version ${group}/${version} is not supported in this simulator`
+  )
 }
 
 export const mapResourceToOpenAPITarget = (
@@ -73,7 +84,9 @@ export const mapResourceToOpenAPITarget = (
 ): Result<OpenAPIResourceTarget> => {
   const baseTarget = BASE_RESOURCE_TARGETS[resource]
   if (!baseTarget) {
-    return error(`error: the server does not have a resource type "${resource}"`)
+    return error(
+      `error: the server does not have a resource type "${resource}"`
+    )
   }
 
   let group = baseTarget.group

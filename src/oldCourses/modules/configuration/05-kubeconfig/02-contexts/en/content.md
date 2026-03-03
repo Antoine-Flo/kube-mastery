@@ -52,9 +52,9 @@ The `--minify` flag is useful for debugging — it shows only the config relevan
 
 For frequent context switching, several tools make life easier:
 
-- **kubectx:**  Fast context switching: `kubectx production` instead of the full `kubectl config use-context production`
-- **kubens:**  Fast namespace switching: `kubens team-a` instead of `kubectl config set-context --current --namespace=team-a`
-- **Shell prompt integration:**  Show the current context and namespace in your terminal prompt, so you always know where you are
+- **kubectx:** Fast context switching: `kubectx production` instead of the full `kubectl config use-context production`
+- **kubens:** Fast namespace switching: `kubens team-a` instead of `kubectl config set-context --current --namespace=team-a`
+- **Shell prompt integration:** Show the current context and namespace in your terminal prompt, so you always know where you are
 
 :::info
 When `KUBECONFIG` points to multiple files, context names can collide. If two files define a context named `default`, the first file wins. Use unique, descriptive context names like `prod-admin`, `staging-readonly`, `dev-team-a`.

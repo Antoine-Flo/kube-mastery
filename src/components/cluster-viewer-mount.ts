@@ -19,7 +19,8 @@ const POD_PHASE_CLASS: Record<Pod['status']['phase'], string> = {
 
 const TOOLTIP_SELECTOR =
   '.cluster-viz__node, .cluster-viz__pod, .cluster-viz__container, .cluster-viz__service, .cluster-viz__service-endpoint'
-const NAMESPACE_FILTER_INPUT_SELECTOR = 'input[data-cluster-viz-namespace-toggle]'
+const NAMESPACE_FILTER_INPUT_SELECTOR =
+  'input[data-cluster-viz-namespace-toggle]'
 const LAYER_TOGGLE_SELECTOR = 'button[data-cluster-viz-layer]'
 const FOCUS_TARGET_SELECTOR = '[data-focus-kind][data-focus-id]'
 const HIDDEN_NAMESPACES_BY_DEFAULT = new Set<string>([
@@ -97,10 +98,13 @@ function formatPodTooltip(pod: Pod, env: EmulatedEnvironment): string {
   return `Pod\n${name}\nStatus: ${displayStatus}\nWorkload: ${workloadType}\nContainers: ${containers || '(none)'}`
 }
 
-function formatContainerTooltip(container: {
-  name: string
-  image: string
-}, status?: NonNullable<Pod['status']['containerStatuses']>[number]): string {
+function formatContainerTooltip(
+  container: {
+    name: string
+    image: string
+  },
+  status?: NonNullable<Pod['status']['containerStatuses']>[number]
+): string {
   const state = status?.state ?? 'Waiting'
   const reason =
     status?.waitingReason ??
@@ -231,7 +235,10 @@ function createLayerToggleEl(selectedLayer: ClusterVizLayer): HTMLElement {
   networkButton.type = 'button'
   networkButton.className = 'cluster-viz__layer-button'
   networkButton.setAttribute('data-cluster-viz-layer', 'network')
-  networkButton.setAttribute('aria-pressed', selectedLayer === 'network' ? 'true' : 'false')
+  networkButton.setAttribute(
+    'aria-pressed',
+    selectedLayer === 'network' ? 'true' : 'false'
+  )
   networkButton.textContent = 'Network'
   if (selectedLayer === 'network') {
     networkButton.classList.add('cluster-viz__layer-button--active')
@@ -279,7 +286,8 @@ function formatServiceTooltip(service: SimServiceRuntime): string {
         : 'Headless'
   const ports = service.ports
     .map((port) => {
-      const nodePortSuffix = port.nodePort != null ? ` (nodePort: ${port.nodePort})` : ''
+      const nodePortSuffix =
+        port.nodePort != null ? ` (nodePort: ${port.nodePort})` : ''
       return `${port.port} -> ${port.targetPort}/${port.protocol}${nodePortSuffix}`
     })
     .join(', ')
@@ -319,7 +327,8 @@ function createServiceEl(
 
   const portsText = service.ports
     .map((port) => {
-      const nodePortSuffix = port.nodePort != null ? ` / nodePort ${port.nodePort}` : ''
+      const nodePortSuffix =
+        port.nodePort != null ? ` / nodePort ${port.nodePort}` : ''
       return `${port.port} -> ${port.targetPort}${nodePortSuffix}`
     })
     .join(' • ')
@@ -337,7 +346,9 @@ function createServiceEl(
 		<div class="cluster-viz__service-endpoints"></div>
 	`
 
-  const endpointsContainer = serviceEl.querySelector('.cluster-viz__service-endpoints')
+  const endpointsContainer = serviceEl.querySelector(
+    '.cluster-viz__service-endpoints'
+  )
   if (endpointsContainer != null) {
     if (service.endpoints.length === 0) {
       const empty = document.createElement('span')
@@ -349,7 +360,10 @@ function createServiceEl(
         const endpointEl = document.createElement('span')
         endpointEl.className = 'cluster-viz__service-endpoint'
         endpointEl.textContent = `${endpoint.podName}:${endpoint.targetPort}`
-        endpointEl.dataset.tooltip = formatServiceEndpointTooltip(service, endpoint)
+        endpointEl.dataset.tooltip = formatServiceEndpointTooltip(
+          service,
+          endpoint
+        )
         endpointsContainer.appendChild(endpointEl)
       }
     }
@@ -410,7 +424,9 @@ function renderComputeLayer(
 		`
     const podsContainer = nodeEl.querySelector('.cluster-viz__pods')!
     const sortedNodePods = [...nodePods].sort((a, b) => {
-      const namespaceDiff = a.metadata.namespace.localeCompare(b.metadata.namespace)
+      const namespaceDiff = a.metadata.namespace.localeCompare(
+        b.metadata.namespace
+      )
       if (namespaceDiff !== 0) {
         return namespaceDiff
       }
@@ -523,7 +539,9 @@ function renderCluster(
 ): void {
   const nodes = env.clusterState.getNodes()
   const allPods = [...env.clusterState.getPods()].sort((a, b) => {
-    const namespaceDiff = a.metadata.namespace.localeCompare(b.metadata.namespace)
+    const namespaceDiff = a.metadata.namespace.localeCompare(
+      b.metadata.namespace
+    )
     if (namespaceDiff !== 0) {
       return namespaceDiff
     }
@@ -538,7 +556,9 @@ function renderCluster(
   overlayContent.innerHTML = ''
   overlayContent.appendChild(createLayerToggleEl(selectedLayer))
   if (namespaces.length > 0) {
-    overlayContent.appendChild(createNamespaceFilterEl(namespaces, selectedNamespaces))
+    overlayContent.appendChild(
+      createNamespaceFilterEl(namespaces, selectedNamespaces)
+    )
   }
   if (selectedLayer === 'network') {
     renderNetworkLayer(overlayContent, env, selectedNamespaces, focus)
@@ -728,7 +748,9 @@ export function mountClusterViewer(
   }
 
   function onFocusClick(e: Event): void {
-    const focusTarget = (e.target as Element | null)?.closest(FOCUS_TARGET_SELECTOR)
+    const focusTarget = (e.target as Element | null)?.closest(
+      FOCUS_TARGET_SELECTOR
+    )
     if (focusTarget == null) {
       return
     }

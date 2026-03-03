@@ -168,7 +168,11 @@ const resolveChildSchema = (
     return current.properties[segment]
   }
 
-  if (current.items && current.items.properties && current.items.properties[segment]) {
+  if (
+    current.items &&
+    current.items.properties &&
+    current.items.properties[segment]
+  ) {
     return current.items.properties[segment]
   }
 

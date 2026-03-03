@@ -8,12 +8,12 @@ This lesson covers the knobs Kubernetes gives you.
 
 Every Pod has a `dnsPolicy` that controls how DNS resolution is configured. There are four options:
 
-| Policy | Behavior | When to Use |
-|--------|----------|-------------|
-| `ClusterFirst` | Use CoreDNS for cluster names, upstream for external | Default — works for most workloads |
-| `ClusterFirstWithHostNet` | Same as ClusterFirst, but for Pods using host networking | When `hostNetwork: true` |
-| `Default` | Use the node's DNS configuration (`/etc/resolv.conf`) | When you don't need cluster DNS |
-| `None` | No automatic DNS — you must provide `dnsConfig` | Full custom control |
+| Policy                    | Behavior                                                 | When to Use                        |
+| ------------------------- | -------------------------------------------------------- | ---------------------------------- |
+| `ClusterFirst`            | Use CoreDNS for cluster names, upstream for external     | Default — works for most workloads |
+| `ClusterFirstWithHostNet` | Same as ClusterFirst, but for Pods using host networking | When `hostNetwork: true`           |
+| `Default`                 | Use the node's DNS configuration (`/etc/resolv.conf`)    | When you don't need cluster DNS    |
+| `None`                    | No automatic DNS — you must provide `dnsConfig`          | Full custom control                |
 
 **ClusterFirst** is the default and handles 95% of use cases. Cluster names resolve through CoreDNS; everything else falls back to upstream DNS servers.
 
@@ -23,7 +23,7 @@ kind: Pod
 metadata:
   name: my-app
 spec:
-  dnsPolicy: ClusterFirst  # This is the default
+  dnsPolicy: ClusterFirst # This is the default
   containers:
     - name: app
       image: myapp
@@ -49,13 +49,14 @@ spec:
       - default.svc.cluster.local
     options:
       - name: ndots
-        value: "2"
+        value: '2'
 ```
 
 This gives you complete control over:
-- **nameservers:**  Which DNS servers to query
-- **searches:**  Which domains to append to short names
-- **options:**  DNS resolver behavior (like `ndots`)
+
+- **nameservers:** Which DNS servers to query
+- **searches:** Which domains to append to short names
+- **options:** DNS resolver behavior (like `ndots`)
 
 :::warning
 With `dnsPolicy: None`, the Pod has **no DNS configuration** unless you provide `dnsConfig`. If you forget it, DNS resolution won't work at all. To keep cluster DNS working alongside custom settings, include the CoreDNS service IP in your nameservers list.
@@ -66,6 +67,7 @@ With `dnsPolicy: None`, the Pod has **no DNS configuration** unless you provide 
 The `ndots` option controls when the DNS resolver uses the search list. With the default `ndots: 5`, any name with fewer than 5 dots goes through the search list first.
 
 For the name `api.example.com` (2 dots, less than 5):
+
 1. Try `api.example.com.default.svc.cluster.local` — fails
 2. Try `api.example.com.svc.cluster.local` — fails
 3. Try `api.example.com.cluster.local` — fails
@@ -77,7 +79,7 @@ That's 3 unnecessary DNS queries. For workloads that frequently resolve external
 dnsConfig:
   options:
     - name: ndots
-      value: "2"
+      value: '2'
 ```
 
 The `resolv.conf` inside a Pod shows the nameserver, search domains, and options — this is what the Pod actually uses for DNS.

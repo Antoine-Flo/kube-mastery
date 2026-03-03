@@ -74,9 +74,10 @@ export interface ControllerState {
 
   // Volumes
   getPersistentVolumes: () => PersistentVolume[]
-  findPersistentVolume: (
-    name: string
-  ) => { ok: boolean; value?: PersistentVolume }
+  findPersistentVolume: (name: string) => {
+    ok: boolean
+    value?: PersistentVolume
+  }
   getPersistentVolumeClaims: (namespace?: string) => PersistentVolumeClaim[]
   findPersistentVolumeClaim: (
     name: string,

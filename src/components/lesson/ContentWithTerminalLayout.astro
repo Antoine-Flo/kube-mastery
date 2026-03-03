@@ -107,7 +107,8 @@ const t = useTranslations(lang)
           role="separator"
           aria-label="Redimensionner le contenu et le terminal"
           aria-orientation="vertical"
-        ></div>
+        >
+        </div>
         <div class="lesson-layout__terminal-wrap" data-lesson-term-wrap>
           <div class="lesson-layout__terminal">
             <LessonTerminal seedName={seedName} lang={lang} />
@@ -345,7 +346,10 @@ const t = useTranslations(lang)
       MIN_TERMINAL_WIDTH,
       layoutWidth - MIN_CONTENT_WIDTH
     )
-    return Math.min(Math.max(desiredWidth, MIN_TERMINAL_WIDTH), maxTerminalWidth)
+    return Math.min(
+      Math.max(desiredWidth, MIN_TERMINAL_WIDTH),
+      maxTerminalWidth
+    )
   }
 
   function applyTerminalWidth(desiredWidth: number) {
@@ -393,7 +397,9 @@ const t = useTranslations(lang)
       if (!panelResizeState) {
         return
       }
-      panelResizeState.resizer.classList.remove('lesson-layout__resizer--dragging')
+      panelResizeState.resizer.classList.remove(
+        'lesson-layout__resizer--dragging'
+      )
       document.body.classList.remove('lesson-layout--resizing')
       panelResizeState = null
     }
@@ -434,11 +440,17 @@ const t = useTranslations(lang)
       const { body, terminalWrap, content } = panelResizeState
       const bodyRect = body.getBoundingClientRect()
       const rawTerminalWidth = bodyRect.right - event.clientX
-      const nextTerminalWidth = clampTerminalWidth(bodyRect.width, rawTerminalWidth)
+      const nextTerminalWidth = clampTerminalWidth(
+        bodyRect.width,
+        rawTerminalWidth
+      )
 
       terminalWrap.style.flex = `0 0 ${nextTerminalWidth}px`
       content.style.flex = '1 1 auto'
-      localStorage.setItem(PANEL_RESIZE_STORAGE_KEY, String(Math.round(nextTerminalWidth)))
+      localStorage.setItem(
+        PANEL_RESIZE_STORAGE_KEY,
+        String(Math.round(nextTerminalWidth))
+      )
     })
 
     document.addEventListener('pointerup', () => {
@@ -661,7 +673,9 @@ const t = useTranslations(lang)
     border-radius: 9999px;
     background-color: var(--color-gray-a7);
     opacity: 0;
-    transition: opacity var(--duration-normal), background-color var(--duration-normal);
+    transition:
+      opacity var(--duration-normal),
+      background-color var(--duration-normal);
   }
 
   .lesson-layout__resizer:hover::before,

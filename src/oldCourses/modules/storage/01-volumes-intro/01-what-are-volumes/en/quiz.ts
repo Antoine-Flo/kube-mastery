@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'What happens to container filesystem data when a container restarts?',
+      question:
+        'What happens to container filesystem data when a container restarts?',
       options: [
         'It is preserved in a temporary cache',
         'It is lost (ephemeral)',

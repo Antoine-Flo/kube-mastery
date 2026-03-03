@@ -10,12 +10,7 @@ export const quiz: Quiz = {
       id: 'q1',
       type: 'multiple-choice',
       question: 'What is the default dnsPolicy for most Pods?',
-      options: [
-        'Default',
-        'ClusterFirst',
-        'None',
-        'ClusterFirstWithHostNet'
-      ],
+      options: ['Default', 'ClusterFirst', 'None', 'ClusterFirstWithHostNet'],
       correctAnswer: 1
     },
     {

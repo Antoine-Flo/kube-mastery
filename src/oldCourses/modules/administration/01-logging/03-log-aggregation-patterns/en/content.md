@@ -6,7 +6,7 @@ Let's explore the two main patterns for achieving this.
 
 ## Pattern 1: The DaemonSet Collector (Most Common)
 
-The most popular approach in Kubernetes is to run a log collector as a **DaemonSet:**  one collector Pod on every node. Each collector reads the log files from the node's filesystem (`/var/log/pods/`) and forwards them to a central backend like Elasticsearch, Loki, or a cloud logging service.
+The most popular approach in Kubernetes is to run a log collector as a **DaemonSet:** one collector Pod on every node. Each collector reads the log files from the node's filesystem (`/var/log/pods/`) and forwards them to a central backend like Elasticsearch, Loki, or a cloud logging service.
 
 Think of it as having a mail carrier on every street. No matter which house (Pod) produces mail (logs), the carrier picks it up and delivers it to the central post office (your logging backend).
 
@@ -60,6 +60,7 @@ The DaemonSet pattern is the recommended approach for most Kubernetes clusters. 
 The alternative is to have your applications send logs directly to a logging service — over HTTP, gRPC, or using a logging SDK. Instead of writing to stdout and relying on a collector, the application pushes structured log events to the backend.
 
 This approach is useful when:
+
 - You need application-specific enrichment (adding request IDs, user context, etc.)
 - Your logging backend supports direct ingestion well
 - The DaemonSet pattern doesn't fit your architecture
@@ -79,7 +80,13 @@ Error: failed to connect to database on port 5432
 Use JSON:
 
 ```json
-{"level":"error","msg":"failed to connect to database","port":5432,"service":"api","timestamp":"2026-02-16T10:30:00Z"}
+{
+  "level": "error",
+  "msg": "failed to connect to database",
+  "port": 5432,
+  "service": "api",
+  "timestamp": "2026-02-16T10:30:00Z"
+}
 ```
 
 Structured logs are parseable by machines. Your logging backend can index fields, and you can search for `service=api AND level=error` instead of trying to grep through free-form text across thousands of Pods.

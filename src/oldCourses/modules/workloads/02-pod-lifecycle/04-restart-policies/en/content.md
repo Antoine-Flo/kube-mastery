@@ -8,11 +8,11 @@ That is determined by the Pod's **restart policy**. Think of it as the safety ne
 
 The `restartPolicy` field lives in the Pod spec and accepts one of three values:
 
-| Policy | Behavior | Best for |
-|---|---|---|
-| **Always** | Restart the container after *any* exit, whether success or failure. | Long-running services (web servers, APIs, workers). |
-| **OnFailure** | Restart only if the container exits with a non-zero code. | Batch jobs that may hit transient errors. |
-| **Never** | Do not restart the container, regardless of exit code. | One-shot tasks that should run exactly once. |
+| Policy        | Behavior                                                            | Best for                                            |
+| ------------- | ------------------------------------------------------------------- | --------------------------------------------------- |
+| **Always**    | Restart the container after _any_ exit, whether success or failure. | Long-running services (web servers, APIs, workers). |
+| **OnFailure** | Restart only if the container exits with a non-zero code.           | Batch jobs that may hit transient errors.           |
+| **Never**     | Do not restart the container, regardless of exit code.              | One-shot tasks that should run exactly once.        |
 
 **The default is `Always`**, which makes sense for the most common Kubernetes workload: a service that should stay up indefinitely.
 
@@ -24,7 +24,7 @@ The restart policy applies to **all containers** in the Pod — you cannot set d
 
 The choice comes down to the nature of your workload:
 
-**Long-running services:**  A web server or API should always come back if it crashes. Use `Always` (or simply omit the field to get the default). Kubernetes will keep restarting the container for as long as the Pod exists on the node.
+**Long-running services:** A web server or API should always come back if it crashes. Use `Always` (or simply omit the field to get the default). Kubernetes will keep restarting the container for as long as the Pod exists on the node.
 
 ```yaml
 apiVersion: v1
@@ -38,7 +38,7 @@ spec:
       image: nginx
 ```
 
-**Jobs that may fail transiently:**  A data-processing task that occasionally fails due to a timeout or a temporary network issue benefits from automatic retries. Use `OnFailure` so the container restarts on error but stays terminated when it succeeds.
+**Jobs that may fail transiently:** A data-processing task that occasionally fails due to a timeout or a temporary network issue benefits from automatic retries. Use `OnFailure` so the container restarts on error but stays terminated when it succeeds.
 
 ```yaml
 apiVersion: batch/v1
@@ -52,10 +52,10 @@ spec:
       containers:
         - name: worker
           image: busybox
-          command: ["sh", "-c", "process-data"]
+          command: ['sh', '-c', 'process-data']
 ```
 
-**One-shot tasks:**  A database migration or a report generator that should run once and exit. Use `Never` so there is no restart regardless of the outcome.
+**One-shot tasks:** A database migration or a report generator that should run once and exit. Use `Never` so there is no restart regardless of the outcome.
 
 :::warning
 Job Pod templates **reject** `restartPolicy: Always`. If you try to use it, the Job controller will refuse to create the Pod. Use `OnFailure` or `Never` for any Pod managed by a Job or CronJob.
@@ -85,13 +85,13 @@ You can spot the backoff in action when `kubectl get pods` shows the status **Cr
 
 An important distinction: the restart policy governs restarts **on the same node**. If the Pod is deleted, evicted (due to node pressure), or the node itself goes down, the restart policy does nothing — it is a node-local mechanism.
 
-**Workload controllers** like Deployments, ReplicaSets, and Jobs are the ones that create *replacement Pods* on other nodes. The restart policy and the controller work at different levels:
+**Workload controllers** like Deployments, ReplicaSets, and Jobs are the ones that create _replacement Pods_ on other nodes. The restart policy and the controller work at different levels:
 
-| Scenario | Who handles it |
-|---|---|
-| Container crashes inside a running Pod | **Restart policy** (kubelet restarts the container) |
-| Pod is evicted or node goes down | **Workload controller** (creates a new Pod on a healthy node) |
-| Pod is manually deleted | **Workload controller** (creates a replacement to meet desired state) |
+| Scenario                               | Who handles it                                                        |
+| -------------------------------------- | --------------------------------------------------------------------- |
+| Container crashes inside a running Pod | **Restart policy** (kubelet restarts the container)                   |
+| Pod is evicted or node goes down       | **Workload controller** (creates a new Pod on a healthy node)         |
+| Pod is manually deleted                | **Workload controller** (creates a replacement to meet desired state) |
 
 This is why standalone Pods (not managed by any controller) are risky in production — if the node fails, nobody recreates them.
 
@@ -114,7 +114,7 @@ spec:
   containers:
     - name: crash
       image: busybox
-      command: ["sh", "-c", "echo 'starting'; sleep 3; exit 1"]
+      command: ['sh', '-c', "echo 'starting'; sleep 3; exit 1"]
 ```
 
 ```bash
@@ -153,7 +153,7 @@ spec:
   containers:
     - name: crash
       image: busybox
-      command: ["sh", "-c", "echo 'starting'; sleep 3; exit 1"]
+      command: ['sh', '-c', "echo 'starting'; sleep 3; exit 1"]
 ```
 
 ```bash
@@ -176,4 +176,4 @@ kubectl delete pod restart-always restart-never
 
 ## Wrapping Up
 
-Restart policies — **Always**, **OnFailure**, and **Never:**  give you precise control over what happens when a container exits. `Always` keeps services running indefinitely, `OnFailure` retries failed batch work, and `Never` enforces one-shot execution. The exponential backoff mechanism protects your cluster from rapid crash loops, and workload controllers complement restart policies by handling scenarios beyond a single node. With phases, container states, conditions, and restart policies under your belt, you now have a complete understanding of the **Pod lifecycle:**  the foundation for everything else you will build in Kubernetes.
+Restart policies — **Always**, **OnFailure**, and **Never:** give you precise control over what happens when a container exits. `Always` keeps services running indefinitely, `OnFailure` retries failed batch work, and `Never` enforces one-shot execution. The exponential backoff mechanism protects your cluster from rapid crash loops, and workload controllers complement restart policies by handling scenarios beyond a single node. With phases, container states, conditions, and restart policies under your belt, you now have a complete understanding of the **Pod lifecycle:** the foundation for everything else you will build in Kubernetes.

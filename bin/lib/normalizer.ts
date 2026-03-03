@@ -105,7 +105,10 @@ export const normalizeOutput = (output: string): string => {
     /local-path-provisioner-[a-z0-9]+(?:-[a-z0-9]+)?/g,
     'local-path-provisioner-<id>'
   )
-  normalized = normalized.replace(/kube-api-access-[a-z0-9]+/g, 'kube-api-access-<id>')
+  normalized = normalized.replace(
+    /kube-api-access-[a-z0-9]+/g,
+    'kube-api-access-<id>'
+  )
 
   // ─── Noms des pods control-plane ─────────────────────────────────────────
   // Réel/sim : etcd-<nodeName-control-plane>, kube-apiserver-<nodeName-control-plane>, etc.

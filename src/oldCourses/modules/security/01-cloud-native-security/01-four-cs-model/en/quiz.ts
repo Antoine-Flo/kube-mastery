@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'What are the four layers of the 4C security model, from outside in?',
+      question:
+        'What are the four layers of the 4C security model, from outside in?',
       options: [
         'Code, Container, Cluster, Cloud',
         'Cloud, Cluster, Container, Code',

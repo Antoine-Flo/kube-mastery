@@ -7,11 +7,12 @@ The fix is straightforward: don't run as root. Kubernetes gives you two security
 ## Why Non-Root Matters
 
 Think of root as having the master key to the container. A process running as root can:
+
 - Modify any file in the container
 - Change file ownership and permissions
 - Potentially exploit kernel vulnerabilities that only work from root
 
-A non-root process is constrained by standard file permissions and capability limits. It's **defense in depth:**  even if your application is compromised, the attacker has significantly less room to maneuver.
+A non-root process is constrained by standard file permissions and capability limits. It's **defense in depth:** even if your application is compromised, the attacker has significantly less room to maneuver.
 
 ## runAsUser — Setting the User ID
 
@@ -61,7 +62,7 @@ Security context can be set at two levels:
 ```yaml
 spec:
   securityContext:
-    runAsUser: 1000          # Default for ALL containers
+    runAsUser: 1000 # Default for ALL containers
   containers:
     - name: app1
       image: app1
@@ -69,7 +70,7 @@ spec:
     - name: app2
       image: app2
       securityContext:
-        runAsUser: 2000      # Override — runs as 2000
+        runAsUser: 2000 # Override — runs as 2000
 ```
 
 **Pod-level** settings apply to all containers as a default. **Container-level** settings override the Pod-level for that specific container. This lets you set a baseline for the Pod while allowing exceptions where needed.
@@ -82,11 +83,11 @@ flowchart TD
 
 ## Troubleshooting
 
-**Pod rejected with "must run as non-root":**  The image's default user is root and `runAsNonRoot: true` is set. Add `runAsUser: 1000` (or higher).
+**Pod rejected with "must run as non-root":** The image's default user is root and `runAsNonRoot: true` is set. Add `runAsUser: 1000` (or higher).
 
-**Permission denied on files:**  The container is running as non-root but files are owned by root. Use `fsGroup` (covered in the next lesson) or fix file permissions in the image.
+**Permission denied on files:** The container is running as non-root but files are owned by root. Use `fsGroup` (covered in the next lesson) or fix file permissions in the image.
 
-**Init containers that need root:**  Set a separate `securityContext` on the init container if it needs root, while keeping the main containers non-root.
+**Init containers that need root:** Set a separate `securityContext` on the init container if it needs root, while keeping the main containers non-root.
 
 :::warning
 Some legacy images only work as root because they bind to privileged ports (below 1024) or write to root-owned directories. The solution is to switch to a non-root compatible image, configure the app to use non-privileged ports, or mount writable volumes where needed.

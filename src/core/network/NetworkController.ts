@@ -6,7 +6,11 @@ import type { Service } from '../cluster/ressources/Service'
 import { startPeriodicResync } from '../cluster/controllers/helpers'
 import type { AppEventType } from '../events/AppEvent'
 import { createNodePortAllocator } from './NodePortAllocator'
-import { createNetworkState, type NetworkState, type SimServiceEndpoint } from './NetworkState'
+import {
+  createNetworkState,
+  type NetworkState,
+  type SimServiceEndpoint
+} from './NetworkState'
 import { createServiceIpAllocator } from './ServiceIpAllocator'
 
 interface NetworkControllerOptions {
@@ -77,7 +81,10 @@ const serviceSelectsPod = (service: Service, pod: Pod): boolean => {
   return Object.entries(selector).every(([key, value]) => labels[key] === value)
 }
 
-const getServiceEndpoints = (service: Service, pods: Pod[]): SimServiceEndpoint[] => {
+const getServiceEndpoints = (
+  service: Service,
+  pods: Pod[]
+): SimServiceEndpoint[] => {
   const endpoints: SimServiceEndpoint[] = []
   for (const pod of pods) {
     if (!serviceSelectsPod(service, pod)) {

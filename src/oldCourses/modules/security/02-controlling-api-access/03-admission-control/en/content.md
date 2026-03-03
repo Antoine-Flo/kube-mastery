@@ -51,11 +51,11 @@ metadata:
 spec:
   limits:
     - default:
-        memory: "256Mi"
-        cpu: "200m"
+        memory: '256Mi'
+        cpu: '200m'
       defaultRequest:
-        memory: "128Mi"
-        cpu: "100m"
+        memory: '128Mi'
+        cpu: '100m'
       type: Container
 ```
 
@@ -67,7 +67,7 @@ Admission control fills a gap that RBAC cannot cover. RBAC answers "who can do w
 
 ## Webhook Admission Controllers
 
-Beyond the built-in controllers, Kubernetes supports **admission webhooks:**  external HTTP services that the API server calls during admission. There are two types:
+Beyond the built-in controllers, Kubernetes supports **admission webhooks:** external HTTP services that the API server calls during admission. There are two types:
 
 - `MutatingAdmissionWebhook` — can modify requests (runs in the mutating phase)
 - `ValidatingAdmissionWebhook` — can accept or reject requests (runs in the validating phase)

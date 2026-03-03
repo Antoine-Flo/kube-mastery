@@ -3,4 +3,3 @@ export const INDEXED_DB_CONFIG = Object.freeze({
   version: 1,
   storeName: 'sandbox-environments'
 })
-

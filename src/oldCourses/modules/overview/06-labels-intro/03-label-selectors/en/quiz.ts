@@ -22,12 +22,7 @@ export const quiz: Quiz = {
       id: 'q2',
       type: 'multiple-choice',
       question: 'Which is a valid set-based selector operator?',
-      options: [
-        'Equals',
-        'In',
-        'SameAs',
-        'Contains'
-      ],
+      options: ['Equals', 'In', 'SameAs', 'Contains'],
       correctAnswer: 1
     }
   ]

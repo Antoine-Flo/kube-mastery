@@ -1,6 +1,6 @@
 # Metrics Overview
 
-Logs tell you *what happened*. Metrics tell you *how things are performing right now*. Together, they form the foundation of Kubernetes observability. In this lesson, we'll explore where Kubernetes metrics come from and how to start using them.
+Logs tell you _what happened_. Metrics tell you _how things are performing right now_. Together, they form the foundation of Kubernetes observability. In this lesson, we'll explore where Kubernetes metrics come from and how to start using them.
 
 ## The Three Pillars of Kubernetes Metrics
 
@@ -10,7 +10,7 @@ Kubernetes doesn't have a single "metrics system." Instead, metrics come from th
 
 **metrics-server** aggregates resource usage data from all nodes and exposes it through the Kubernetes Metrics API. It's what powers `kubectl top` and the HorizontalPodAutoscaler (HPA). Think of it as a dashboard that summarizes "how much CPU and memory is everything using right now?"
 
-**kube-state-metrics** takes a different angle. Instead of resource usage, it watches the Kubernetes API and generates metrics about *object state*: How many replicas does this Deployment want? How many are actually available? Are any Pods stuck in Pending? This is invaluable for alerting and dashboards.
+**kube-state-metrics** takes a different angle. Instead of resource usage, it watches the Kubernetes API and generates metrics about _object state_: How many replicas does this Deployment want? How many are actually available? Are any Pods stuck in Pending? This is invaluable for alerting and dashboards.
 
 ```mermaid
 flowchart TD
@@ -51,15 +51,15 @@ A quick health check: verify the metrics-server Deployment is running in `kube-s
 
 ## Troubleshooting
 
-**"Unable to get metrics":**  The metrics-server is either not installed or not ready. Check the Deployment and its logs:
+**"Unable to get metrics":** The metrics-server is either not installed or not ready. Check the Deployment and its logs:
 
 ```bash
 kubectl logs -n kube-system -l k8s-app=metrics-server
 ```
 
-**Stale or zero values:**  The metrics-server needs a minute or two after Pods start before it has data. Give it time.
+**Stale or zero values:** The metrics-server needs a minute or two after Pods start before it has data. Give it time.
 
-**HPA not scaling:**  Verify three things: the metrics-server is running, the HPA targets the correct resource type (cpu or memory), and the target Pods have `requests` defined (HPA calculates utilization as a percentage of requests).
+**HPA not scaling:** Verify three things: the metrics-server is running, the HPA targets the correct resource type (cpu or memory), and the target Pods have `requests` defined (HPA calculates utilization as a percentage of requests).
 
 :::warning
 The metrics-server is a snapshot tool — it shows current usage, not history. If you need to answer questions like "What was CPU usage at 3 AM?" or "How has memory trended over the past week?", you need a time-series database like Prometheus. We'll cover that in the next lessons.

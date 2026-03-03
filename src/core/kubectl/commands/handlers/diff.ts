@@ -181,12 +181,16 @@ const getNestedDataMap = (
 const maskSecretData = (
   fromResource: GenericObject | undefined,
   toResource: GenericObject | undefined
-): { fromMasked: GenericObject | undefined; toMasked: GenericObject | undefined } => {
+): {
+  fromMasked: GenericObject | undefined
+  toMasked: GenericObject | undefined
+} => {
   if (fromResource == null && toResource == null) {
     return { fromMasked: fromResource, toMasked: toResource }
   }
 
-  const fromMasked = fromResource == null ? undefined : cloneObject(fromResource)
+  const fromMasked =
+    fromResource == null ? undefined : cloneObject(fromResource)
   const toMasked = toResource == null ? undefined : cloneObject(toResource)
 
   const fromData = getNestedDataMap(fromMasked)
@@ -238,7 +242,10 @@ const sanitizeBeforeDiff = (
   liveResource: GenericObject | undefined,
   mergedResource: GenericObject | undefined,
   kind: string
-): { liveSanitized: GenericObject | undefined; mergedSanitized: GenericObject | undefined } => {
+): {
+  liveSanitized: GenericObject | undefined
+  mergedSanitized: GenericObject | undefined
+} => {
   if (kind === 'Secret') {
     const masked = maskSecretData(liveResource, mergedResource)
     return {
@@ -248,7 +255,8 @@ const sanitizeBeforeDiff = (
   }
   return {
     liveSanitized: liveResource == null ? undefined : cloneObject(liveResource),
-    mergedSanitized: mergedResource == null ? undefined : cloneObject(mergedResource)
+    mergedSanitized:
+      mergedResource == null ? undefined : cloneObject(mergedResource)
   }
 }
 
@@ -293,15 +301,9 @@ const buildResourceDiff = (
   const fromPath = buildDiffPath('LIVE', fileName, seed)
   const toPath = buildDiffPath('MERGED', fileName, seed)
   const prelude = `diff -u -N ${fromPath} ${toPath}\n`
-  return createTwoFilesPatch(
-    fromPath,
-    toPath,
-    liveYaml,
-    mergedYaml,
-    '',
-    '',
-    { context: 3 }
-  )
+  return createTwoFilesPatch(fromPath, toPath, liveYaml, mergedYaml, '', '', {
+    context: 3
+  })
     .split('\n')
     .filter((line) => !line.startsWith('Index: ') && !line.startsWith('='))
     .join('\n')
@@ -329,7 +331,8 @@ const computeMergedResource = (
   const liveMetadata = liveResource?.metadata
   if (localMetadata != null && typeof localMetadata === 'object') {
     if (liveMetadata != null && typeof liveMetadata === 'object') {
-      const liveCreationTimestamp = (liveMetadata as GenericObject).creationTimestamp
+      const liveCreationTimestamp = (liveMetadata as GenericObject)
+        .creationTimestamp
       if (typeof liveCreationTimestamp === 'string') {
         const metadataForUpdate = localMetadata as GenericObject
         metadataForUpdate.creationTimestamp = liveCreationTimestamp
@@ -365,7 +368,9 @@ export const handleDiff = (
   }
 
   const parsedResource = parseResult.value as unknown as GenericObject
-  const apiVersion = String((parsedResource as GenericObject).apiVersion ?? 'v1')
+  const apiVersion = String(
+    (parsedResource as GenericObject).apiVersion ?? 'v1'
+  )
   const kind = String((parsedResource as GenericObject).kind ?? '')
   const name = getMetadataString(parsedResource, 'name')
   const namespace = getMetadataString(parsedResource, 'namespace')
@@ -391,7 +396,12 @@ export const handleDiff = (
   const liveYaml = toYaml(sanitized.liveSanitized)
   const mergedYaml = toYaml(sanitized.mergedSanitized)
   const diffFileName = buildDiffFileName(apiVersion, kind, namespace, name)
-  const diffOutput = buildResourceDiff(diffFileName, liveYaml, mergedYaml, filename)
+  const diffOutput = buildResourceDiff(
+    diffFileName,
+    liveYaml,
+    mergedYaml,
+    filename
+  )
   const cleanedDiff = diffOutput.trim()
   if (cleanedDiff.length === 0) {
     return success('')

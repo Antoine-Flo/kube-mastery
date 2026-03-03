@@ -1,6 +1,9 @@
 import type { ClusterState } from '../../../cluster/ClusterState'
 import type { EventBus } from '../../../cluster/events/EventBus'
-import { createService, type ServiceSpec } from '../../../cluster/ressources/Service'
+import {
+  createService,
+  type ServiceSpec
+} from '../../../cluster/ressources/Service'
 import type { ExecutionResult, Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
@@ -15,14 +18,18 @@ const parseExposeServiceType = (
     return 'ClusterIP'
   }
   if (typeof rawType !== 'string') {
-    return error('expose type must be one of: ClusterIP, NodePort, LoadBalancer')
+    return error(
+      'expose type must be one of: ClusterIP, NodePort, LoadBalancer'
+    )
   }
   if (
     rawType !== 'ClusterIP' &&
     rawType !== 'NodePort' &&
     rawType !== 'LoadBalancer'
   ) {
-    return error('expose type must be one of: ClusterIP, NodePort, LoadBalancer')
+    return error(
+      'expose type must be one of: ClusterIP, NodePort, LoadBalancer'
+    )
   }
   return rawType
 }
@@ -64,7 +71,10 @@ const resolveSelectorFromDeployment = (
   deploymentName: string,
   namespace: string
 ): Result<Record<string, string>, string> => {
-  const deploymentResult = clusterState.findDeployment(deploymentName, namespace)
+  const deploymentResult = clusterState.findDeployment(
+    deploymentName,
+    namespace
+  )
   if (!deploymentResult.ok) {
     return error(
       `Error from server (NotFound): deployments.apps "${deploymentName}" not found`
@@ -84,7 +94,10 @@ const resolveDefaultTargetPortFromDeployment = (
   deploymentName: string,
   namespace: string
 ): number | undefined => {
-  const deploymentResult = clusterState.findDeployment(deploymentName, namespace)
+  const deploymentResult = clusterState.findDeployment(
+    deploymentName,
+    namespace
+  )
   if (!deploymentResult.ok) {
     return undefined
   }

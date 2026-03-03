@@ -32,7 +32,7 @@ Starting with Kubernetes 1.21, kubeadm automatically renews certificates during 
 
 Here's the process for renewing control plane certificates:
 
-**Step 1: Back up your PKI directory:**  Always back up before making changes.
+**Step 1: Back up your PKI directory:** Always back up before making changes.
 
 ```bash
 cp -r /etc/kubernetes /etc/kubernetes.backup
@@ -46,7 +46,7 @@ kubeadm certs renew all
 
 This regenerates all control plane certificates, signed by the same CA. The certificates are now valid for another year (or whatever the configured duration is).
 
-**Step 3: Restart control plane components:**  The renewed certificates are on disk, but the running components are still using the old ones loaded in memory. You need to restart them.
+**Step 3: Restart control plane components:** The renewed certificates are on disk, but the running components are still using the old ones loaded in memory. You need to restart them.
 
 ```bash
 # Restart the API server (move manifest out and back)
@@ -85,17 +85,17 @@ kubectl get pods -A
 
 For minimal disruption, follow this order:
 
-1. **API server:**  Clients will briefly lose connectivity but reconnect automatically
-2. **Controller-manager:**  Manages controllers; brief pause in reconciliation
-3. **Scheduler:**  Brief pause in scheduling new Pods
-4. **etcd:**  Only if etcd certificates were rotated; coordinate one member at a time on multi-node etcd
+1. **API server:** Clients will briefly lose connectivity but reconnect automatically
+2. **Controller-manager:** Manages controllers; brief pause in reconciliation
+3. **Scheduler:** Brief pause in scheduling new Pods
+4. **etcd:** Only if etcd certificates were rotated; coordinate one member at a time on multi-node etcd
 
 ## Kubelet Certificate Rotation
 
 The kubelet can rotate its own certificates automatically. When enabled, the kubelet requests a new certificate from the API server before the current one expires. This is configured with:
 
-- **`--rotate-certificates`:**  Enables automatic kubelet client certificate rotation
-- **`--rotate-server-certificates`:**  Enables automatic kubelet serving certificate rotation
+- **`--rotate-certificates`:** Enables automatic kubelet client certificate rotation
+- **`--rotate-server-certificates`:** Enables automatic kubelet serving certificate rotation
 
 On most modern clusters, kubelet certificate rotation is enabled by default. You can verify:
 

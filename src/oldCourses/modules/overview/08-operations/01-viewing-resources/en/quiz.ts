@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'What is the difference between kubectl get and kubectl describe?',
+      question:
+        'What is the difference between kubectl get and kubectl describe?',
       options: [
         'They are identical',
         'get shows a summary, describe shows full details including events',

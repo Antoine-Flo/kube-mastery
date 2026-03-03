@@ -93,9 +93,7 @@ export function createCourseGlobAdapter(): CourseDataPort {
 
     getCourseStructure(courseId: string): CourseStructure | undefined {
       const allPaths = Object.keys(structuresGlob)
-      const structurePath = allPaths.find((p) =>
-        p.includes(`/${courseId}/`)
-      )
+      const structurePath = allPaths.find((p) => p.includes(`/${courseId}/`))
       const structure = structurePath
         ? structuresGlob[structurePath]?.courseStructure
         : undefined

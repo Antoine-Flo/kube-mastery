@@ -17,7 +17,7 @@ metadata:
   name: nightly-backup
   namespace: default
 spec:
-  schedule: "0 2 * * *"
+  schedule: '0 2 * * *'
   target: my-database
   retention: 7
 ```
@@ -30,7 +30,7 @@ Custom resources behave like first-class Kubernetes objects: they show up in `ku
 
 ## CRDs Store Data — Controllers Do the Work
 
-Here's something important to understand early: a CRD only stores data. By itself, it doesn't *do* anything. Your `BackupJob` resource will sit quietly in etcd, waiting. For something to actually happen — for a backup to run — you need a **controller** (or Operator) watching those resources and taking action.
+Here's something important to understand early: a CRD only stores data. By itself, it doesn't _do_ anything. Your `BackupJob` resource will sit quietly in etcd, waiting. For something to actually happen — for a backup to run — you need a **controller** (or Operator) watching those resources and taking action.
 
 Think of it like a to-do list app. The CRD lets you write items on the list. But without someone (the controller) checking the list and doing the work, nothing gets done.
 
@@ -74,11 +74,11 @@ Before creating instances, it's always a good idea to confirm the CRD is install
 
 ## Common Pitfalls
 
-**"Schema validation failed":**  Your manifest doesn't match what the CRD expects. Maybe a field has the wrong type, a required field is missing, or you added a field that isn't in the schema. Check the CRD's `openAPIV3Schema` and fix the manifest.
+**"Schema validation failed":** Your manifest doesn't match what the CRD expects. Maybe a field has the wrong type, a required field is missing, or you added a field that isn't in the schema. Check the CRD's `openAPIV3Schema` and fix the manifest.
 
-**"NotFound" or "no matches for kind":**  The `apiVersion` or `kind` in your manifest doesn't match the CRD exactly. Kubernetes is case-sensitive here — `backupjob` and `BackupJob` are different. Double-check both values.
+**"NotFound" or "no matches for kind":** The `apiVersion` or `kind` in your manifest doesn't match the CRD exactly. Kubernetes is case-sensitive here — `backupjob` and `BackupJob` are different. Double-check both values.
 
-**Nothing happens after creation:**  Remember, CRDs only store data. If no controller is watching your custom resources, nothing will react. You need a controller or Operator to bring your resources to life.
+**Nothing happens after creation:** Remember, CRDs only store data. If no controller is watching your custom resources, nothing will react. You need a controller or Operator to bring your resources to life.
 
 :::warning
 Changing a CRD's schema in incompatible ways (removing fields, changing types) can break existing instances. Plan schema migrations carefully, especially in production. Consider versioning your CRD (v1, v2) to introduce breaking changes safely.

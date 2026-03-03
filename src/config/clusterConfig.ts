@@ -5,4 +5,3 @@ export const DEFAULT_CLUSTER_CONFIG_PATH =
 
 export const DEFAULT_CLUSTER_NODE_ROLES: readonly ClusterNodeRole[] =
   Object.freeze(['control-plane', 'worker', 'worker'])
-

@@ -38,6 +38,7 @@ flowchart LR
 When Pods match a Service's selector, Kubernetes automatically creates and updates **EndpointSlice** objects. These are the lists of "who should receive traffic." You don't need to manage them manually — the Service controller handles everything.
 
 The process is continuous:
+
 - New Pod matches the selector? Added to EndpointSlices.
 - Pod deleted or labels changed? Removed from EndpointSlices within seconds.
 - Pod fails readiness probe? Removed until it's healthy again.

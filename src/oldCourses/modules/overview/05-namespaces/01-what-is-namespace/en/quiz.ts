@@ -22,12 +22,7 @@ export const quiz: Quiz = {
       id: 'q2',
       type: 'multiple-choice',
       question: 'Which namespace is used for Kubernetes system components?',
-      options: [
-        'default',
-        'kube-public',
-        'kube-system',
-        'kube-node-lease'
-      ],
+      options: ['default', 'kube-public', 'kube-system', 'kube-node-lease'],
       correctAnswer: 2
     }
   ]

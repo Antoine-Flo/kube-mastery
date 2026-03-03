@@ -21,13 +21,9 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'What resource do you create to request an Operator from a catalog?',
-      options: [
-        'Deployment',
-        'Subscription',
-        'ConfigMap',
-        'Secret'
-      ],
+      question:
+        'What resource do you create to request an Operator from a catalog?',
+      options: ['Deployment', 'Subscription', 'ConfigMap', 'Secret'],
       correctAnswer: 1
     }
   ]

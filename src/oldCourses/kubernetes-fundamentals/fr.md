@@ -1,5 +1,5 @@
 ---
-title: "Fondamentaux Kubernetes"
+title: 'Fondamentaux Kubernetes'
 shortDescription: Maîtrisez les fondamentaux Kubernetes et déployez vos premières applications. Concepts clés, objets, namespaces, Pods, Services, DNS, ConfigMaps et probes.
 isActive: true
 price: 0

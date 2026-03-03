@@ -6,7 +6,7 @@ Kubernetes provides two mechanisms for this: **environment variables** and **DNS
 
 ## DNS — The Recommended Way
 
-Kubernetes runs a built-in DNS server (CoreDNS) that automatically creates DNS records for every Service. This means your application can connect to other Services **by name:**  no IP addresses needed.
+Kubernetes runs a built-in DNS server (CoreDNS) that automatically creates DNS records for every Service. This means your application can connect to other Services **by name:** no IP addresses needed.
 
 A Service named `backend-api` in the `default` namespace is reachable at:
 
@@ -21,7 +21,7 @@ In practice, this looks like:
 ```yaml
 env:
   - name: API_URL
-    value: "http://backend-api:8080"
+    value: 'http://backend-api:8080'
 ```
 
 Your frontend Pod connects to `backend-api:8080`, and the cluster DNS resolves it to the Service's cluster IP. No hard-coded IPs, no manual configuration.
@@ -31,7 +31,7 @@ For cross-namespace access, include the namespace:
 ```yaml
 env:
   - name: DB_HOST
-    value: "postgres.production.svc.cluster.local"
+    value: 'postgres.production.svc.cluster.local'
 ```
 
 ```mermaid

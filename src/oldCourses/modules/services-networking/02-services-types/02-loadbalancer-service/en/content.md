@@ -50,7 +50,7 @@ That's it. The cloud provider does the rest.
 
 ## Watching It Provision
 
-Load balancer provisioning is **asynchronous:**  it takes 30 seconds to a few minutes. You'll see `<pending>` until the cloud provider finishes, then the external IP appears. Once assigned, you can access the Service via that IP.
+Load balancer provisioning is **asynchronous:** it takes 30 seconds to a few minutes. You'll see `<pending>` until the cloud provider finishes, then the external IP appears. Once assigned, you can access the Service via that IP.
 
 :::info
 LoadBalancer Services are the standard way to expose applications on cloud platforms. They include all ClusterIP and NodePort functionality — you can also access the Service internally via its cluster IP.
@@ -60,9 +60,9 @@ LoadBalancer Services are the standard way to expose applications on cloud platf
 
 If the IP never appears, common causes are:
 
-- **No cloud controller manager:**  Your cluster doesn't have cloud provider integration (common on bare metal or local clusters like minikube)
-- **Quota limits:**  Your cloud account has reached its load balancer quota
-- **Missing permissions:**  The cloud controller needs IAM permissions to create load balancers
+- **No cloud controller manager:** Your cluster doesn't have cloud provider integration (common on bare metal or local clusters like minikube)
+- **Quota limits:** Your cloud account has reached its load balancer quota
+- **Missing permissions:** The cloud controller needs IAM permissions to create load balancers
 
 For local development, tools like `minikube tunnel` or MetalLB simulate LoadBalancer behavior.
 

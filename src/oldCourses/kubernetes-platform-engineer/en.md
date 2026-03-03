@@ -1,5 +1,5 @@
 ---
-title: "Kubernetes Platform Engineer"
+title: 'Kubernetes Platform Engineer'
 shortDescription: Design internal Kubernetes platforms with guardrails and extensibility. Covers standards, RBAC and quotas, CRDs/operators, observability, and platform operations.
 isActive: true
 price: 0

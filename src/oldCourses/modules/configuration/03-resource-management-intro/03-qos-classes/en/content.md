@@ -8,11 +8,11 @@ Think of it as a triage system in a hospital. When resources are scarce, the mos
 
 Kubernetes assigns each Pod one of three QoS classes based on its resource configuration:
 
-| QoS Class | Criteria | Eviction Priority |
-|-----------|----------|-------------------|
-| **Guaranteed** | Every container has requests = limits (for both CPU and memory) | Last to be evicted |
-| **Burstable** | At least one container has a request or limit, but doesn't qualify as Guaranteed | Middle |
-| **BestEffort** | No container has any requests or limits | First to be evicted |
+| QoS Class      | Criteria                                                                         | Eviction Priority   |
+| -------------- | -------------------------------------------------------------------------------- | ------------------- |
+| **Guaranteed** | Every container has requests = limits (for both CPU and memory)                  | Last to be evicted  |
+| **Burstable**  | At least one container has a request or limit, but doesn't qualify as Guaranteed | Middle              |
+| **BestEffort** | No container has any requests or limits                                          | First to be evicted |
 
 ## Guaranteed — Maximum Protection
 
@@ -21,14 +21,15 @@ A Pod is Guaranteed when **every container** has both requests and limits set, a
 ```yaml
 resources:
   requests:
-    cpu: "200m"
-    memory: "256Mi"
+    cpu: '200m'
+    memory: '256Mi'
   limits:
-    cpu: "200m"
-    memory: "256Mi"
+    cpu: '200m'
+    memory: '256Mi'
 ```
 
 Guaranteed Pods:
+
 - Get the resources they asked for — no more, no less
 - Are evicted **last** when the node is under pressure
 - Have the most predictable performance
@@ -42,11 +43,11 @@ A Pod is Burstable when at least one container has requests or limits, but doesn
 ```yaml
 resources:
   requests:
-    cpu: "100m"
-    memory: "128Mi"
+    cpu: '100m'
+    memory: '128Mi'
   limits:
-    cpu: "500m"
-    memory: "512Mi"
+    cpu: '500m'
+    memory: '512Mi'
 ```
 
 Burstable Pods can use more resources than requested (up to their limits) when capacity is available. Under pressure, those exceeding their requests are evicted before those staying within.
@@ -86,11 +87,11 @@ If one container in a Pod has requests and limits and another doesn't, the whole
 
 ## Choosing the Right QoS
 
-| Workload Type | Recommended QoS | Why |
-|---------------|-----------------|-----|
-| Databases, core APIs | Guaranteed | Must survive pressure |
-| Web servers, microservices | Burstable | Balance performance and efficiency |
-| Batch jobs, dev workloads | BestEffort or Burstable | Can be restarted if evicted |
+| Workload Type              | Recommended QoS         | Why                                |
+| -------------------------- | ----------------------- | ---------------------------------- |
+| Databases, core APIs       | Guaranteed              | Must survive pressure              |
+| Web servers, microservices | Burstable               | Balance performance and efficiency |
+| Batch jobs, dev workloads  | BestEffort or Burstable | Can be restarted if evicted        |
 
 :::warning
 Guaranteed Pods with conservative settings (requests = limits) may underutilize resources. There's a tradeoff between predictability and efficiency. Use monitoring data to find the right balance.
@@ -115,11 +116,11 @@ spec:
       image: nginx
       resources:
         requests:
-          cpu: "100m"
-          memory: "128Mi"
+          cpu: '100m'
+          memory: '128Mi'
         limits:
-          cpu: "100m"
-          memory: "128Mi"
+          cpu: '100m'
+          memory: '128Mi'
 ---
 apiVersion: v1
 kind: Pod
@@ -131,11 +132,11 @@ spec:
       image: nginx
       resources:
         requests:
-          cpu: "100m"
-          memory: "128Mi"
+          cpu: '100m'
+          memory: '128Mi'
         limits:
-          cpu: "200m"
-          memory: "256Mi"
+          cpu: '200m'
+          memory: '256Mi'
 ---
 apiVersion: v1
 kind: Pod

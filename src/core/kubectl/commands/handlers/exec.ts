@@ -177,9 +177,12 @@ export const handleExec = (
     if (networkRuntime == null) {
       return 'Error: network runtime is not available'
     }
-    const curlResult = networkRuntime.trafficEngine.simulateHttpGet(curlTarget, {
-      sourceNamespace: namespace
-    })
+    const curlResult = networkRuntime.trafficEngine.simulateHttpGet(
+      curlTarget,
+      {
+        sourceNamespace: namespace
+      }
+    )
     if (!curlResult.ok) {
       return curlResult.error
     }

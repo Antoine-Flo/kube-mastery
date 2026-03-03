@@ -72,7 +72,9 @@ const createPodFromTemplate = (daemonSet: DaemonSet, node: Node): Pod => {
     nodeSelector: daemonSet.spec.template.spec.nodeSelector,
     tolerations: daemonSet.spec.template.spec.tolerations,
     ...(initContainers && { initContainers }),
-    containers: convertTemplateContainers(daemonSet.spec.template.spec.containers),
+    containers: convertTemplateContainers(
+      daemonSet.spec.template.spec.containers
+    ),
     ...(daemonSet.spec.template.spec.volumes && {
       volumes: daemonSet.spec.template.spec.volumes
     }),
@@ -86,7 +88,9 @@ const computeDaemonSetStatus = (
   desiredNumberScheduled: number
 ): DaemonSetStatus => {
   const currentNumberScheduled = ownedPods.length
-  const numberReady = ownedPods.filter((pod) => pod.status.phase === 'Running').length
+  const numberReady = ownedPods.filter(
+    (pod) => pod.status.phase === 'Running'
+  ).length
 
   return {
     currentNumberScheduled,
@@ -140,7 +144,10 @@ export class DaemonSetController implements ReconcilerController {
   }
 
   private handleEvent(event: ClusterEvent): void {
-    if (event.type === 'DaemonSetCreated' || event.type === 'DaemonSetUpdated') {
+    if (
+      event.type === 'DaemonSetCreated' ||
+      event.type === 'DaemonSetUpdated'
+    ) {
       this.enqueueDaemonSet(event.payload.daemonSet)
       return
     }
@@ -242,9 +249,7 @@ export class DaemonSetController implements ReconcilerController {
       const podsForNode = podsByNode.get(node.metadata.name) ?? []
       if (podsForNode.length === 0) {
         const pod = createPodFromTemplate(daemonSet, node)
-        this.eventBus.emit(
-          createPodCreatedEvent(pod, 'daemonset-controller')
-        )
+        this.eventBus.emit(createPodCreatedEvent(pod, 'daemonset-controller'))
       } else if (podsForNode.length > 1) {
         const podsToDelete = podsForNode.slice(1)
         for (const podToDelete of podsToDelete) {

@@ -1,6 +1,6 @@
 # Kubernetes DNS
 
-You've been using Service names like `backend-api` in your configuration. But how does a Pod know that `backend-api` translates to IP `10.96.0.15`? The answer is **CoreDNS:**  Kubernetes' built-in DNS server that makes service discovery seamless.
+You've been using Service names like `backend-api` in your configuration. But how does a Pod know that `backend-api` translates to IP `10.96.0.15`? The answer is **CoreDNS:** Kubernetes' built-in DNS server that makes service discovery seamless.
 
 Think of CoreDNS as the phone directory for your cluster. Every Service gets an entry, and any Pod can look up any Service by name.
 
@@ -28,20 +28,20 @@ Every Service gets a DNS name following this pattern:
 
 The good news: you usually don't need the full name. Depending on where the client Pod is:
 
-| Client Location | What You Can Use | Example |
-|----------------|-----------------|---------|
-| Same namespace | Service name only | `backend-api` |
-| Different namespace | Name + namespace | `backend-api.production` |
-| Anywhere (explicit) | Full FQDN | `backend-api.production.svc.cluster.local` |
+| Client Location     | What You Can Use  | Example                                    |
+| ------------------- | ----------------- | ------------------------------------------ |
+| Same namespace      | Service name only | `backend-api`                              |
+| Different namespace | Name + namespace  | `backend-api.production`                   |
+| Anywhere (explicit) | Full FQDN         | `backend-api.production.svc.cluster.local` |
 
 In practice, same-namespace communication uses just the Service name — clean and simple:
 
 ```yaml
 env:
   - name: DB_HOST
-    value: "postgres"
+    value: 'postgres'
   - name: CACHE_HOST
-    value: "redis"
+    value: 'redis'
 ```
 
 For cross-namespace access:
@@ -49,7 +49,7 @@ For cross-namespace access:
 ```yaml
 env:
   - name: DB_HOST
-    value: "postgres.data.svc.cluster.local"
+    value: 'postgres.data.svc.cluster.local'
 ```
 
 :::info
@@ -60,14 +60,14 @@ If DNS lookups fail, verify CoreDNS is running: `kubectl get pods -n kube-system
 
 ## The ndots Trap
 
-By default, Pods have `ndots: 5` in their DNS configuration. This means any name with fewer than 5 dots triggers a **search list:**  Kubernetes tries appending `.default.svc.cluster.local`, `.svc.cluster.local`, `.cluster.local`, etc.
+By default, Pods have `ndots: 5` in their DNS configuration. This means any name with fewer than 5 dots triggers a **search list:** Kubernetes tries appending `.default.svc.cluster.local`, `.svc.cluster.local`, `.cluster.local`, etc.
 
 This is great for short names like `redis` — they resolve correctly through the search list. But for external names like `api.example.com` (only 2 dots), Kubernetes tries the search list first, generating unnecessary DNS queries.
 
 The fix: use a trailing dot for external FQDNs:
 
 ```yaml
-value: "api.example.com."  # Trailing dot = skip the search list
+value: 'api.example.com.' # Trailing dot = skip the search list
 ```
 
 :::warning

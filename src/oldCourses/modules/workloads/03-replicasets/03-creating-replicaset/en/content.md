@@ -33,14 +33,14 @@ spec:
             - containerPort: 80
 ```
 
-| Section | What It Does |
-|---------|-------------|
-| `apiVersion: apps/v1` | Tells Kubernetes which API group and version to use. ReplicaSets belong to the `apps` group. |
-| `kind: ReplicaSet` | The type of object you are creating. |
-| `metadata.name` | A unique name for this ReplicaSet within its namespace. |
-| `spec.replicas` | The desired number of Pod copies. Here, we want **3**. |
-| `spec.selector.matchLabels` | The label selector. The ReplicaSet manages Pods with `tier: frontend`. |
-| `spec.template` | The blueprint for creating Pods. Its labels **must match** the selector. |
+| Section                     | What It Does                                                                                 |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| `apiVersion: apps/v1`       | Tells Kubernetes which API group and version to use. ReplicaSets belong to the `apps` group. |
+| `kind: ReplicaSet`          | The type of object you are creating.                                                         |
+| `metadata.name`             | A unique name for this ReplicaSet within its namespace.                                      |
+| `spec.replicas`             | The desired number of Pod copies. Here, we want **3**.                                       |
+| `spec.selector.matchLabels` | The label selector. The ReplicaSet manages Pods with `tier: frontend`.                       |
+| `spec.template`             | The blueprint for creating Pods. Its labels **must match** the selector.                     |
 
 :::info
 The labels on the ReplicaSet's own `metadata` (like `app: guestbook`) are for your organizational purposes — they do not affect which Pods the ReplicaSet manages. Only the **selector** determines Pod ownership.

@@ -1,1 +1,7 @@
-{"title":{"en":"kubeconfig","fr":"kubeconfig"},"description":{"en":"Learn how kubeconfig manages cluster access and authentication","fr":"Apprenez comment kubeconfig gère l'accès au cluster et l'authentification"}}
+{
+  "title": { "en": "kubeconfig", "fr": "kubeconfig" },
+  "description": {
+    "en": "Learn how kubeconfig manages cluster access and authentication",
+    "fr": "Apprenez comment kubeconfig gère l'accès au cluster et l'authentification"
+  }
+}

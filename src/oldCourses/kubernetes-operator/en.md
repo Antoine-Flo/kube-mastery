@@ -1,5 +1,5 @@
 ---
-title: "Kubernetes Operator / SRE"
+title: 'Kubernetes Operator / SRE'
 shortDescription: Secure, govern, and administer Kubernetes clusters in production. Covers access control, policies, storage provisioning, observability, certificates, and kubeconfig.
 isActive: true
 price: 0

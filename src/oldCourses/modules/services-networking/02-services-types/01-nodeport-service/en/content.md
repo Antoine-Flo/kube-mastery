@@ -40,9 +40,9 @@ spec:
   ports:
     - name: http
       protocol: TCP
-      port: 80          # Service port (internal access)
-      targetPort: 80    # Pod port (where the app listens)
-      nodePort: 30007   # External port on every node (optional)
+      port: 80 # Service port (internal access)
+      targetPort: 80 # Pod port (where the app listens)
+      nodePort: 30007 # External port on every node (optional)
 ```
 
 If you omit `nodePort`, Kubernetes automatically assigns one from the 30000-32767 range. Specifying it gives you a predictable port number.
@@ -51,11 +51,11 @@ If you omit `nodePort`, Kubernetes automatically assigns one from the 30000-3276
 
 NodePort introduces a third port to remember:
 
-| Port | What It Does | How to Access |
-|------|-------------|---------------|
-| `port: 80` | Service port | `my-service:80` from within the cluster |
-| `targetPort: 80` | Pod port | Where your container listens |
-| `nodePort: 30007` | Node port | `<any-node-IP>:30007` from outside |
+| Port              | What It Does | How to Access                           |
+| ----------------- | ------------ | --------------------------------------- |
+| `port: 80`        | Service port | `my-service:80` from within the cluster |
+| `targetPort: 80`  | Pod port     | Where your container listens            |
+| `nodePort: 30007` | Node port    | `<any-node-IP>:30007` from outside      |
 
 ## Accessing the Service
 
@@ -69,10 +69,10 @@ NodePort is useful for development, testing, and bare-metal environments where c
 
 NodePort has real tradeoffs for production:
 
-- **Security:**  Every node exposes the port; you need firewall rules to control access
-- **Port range:**  Limited to 30000-32767, which are non-standard ports clients need to know
-- **No single entry point:**  If a node goes down, clients connecting to that specific IP fail
-- **No TLS termination:**  You handle TLS yourself
+- **Security:** Every node exposes the port; you need firewall rules to control access
+- **Port range:** Limited to 30000-32767, which are non-standard ports clients need to know
+- **No single entry point:** If a node goes down, clients connecting to that specific IP fail
+- **No TLS termination:** You handle TLS yourself
 
 For production external access, **LoadBalancer** or **Ingress** are better choices. NodePort is often used as a building block — an Ingress controller typically sits behind a NodePort or LoadBalancer Service.
 

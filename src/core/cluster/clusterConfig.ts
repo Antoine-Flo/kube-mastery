@@ -38,7 +38,9 @@ export const parseClusterNodeRolesFromKindConfig = (
   }
 
   if (!Array.isArray(parsed.nodes) || parsed.nodes.length === 0) {
-    throw new Error('Invalid kind cluster config: nodes must be a non-empty array')
+    throw new Error(
+      'Invalid kind cluster config: nodes must be a non-empty array'
+    )
   }
 
   const roles = parsed.nodes.map((node, index) => {
@@ -79,4 +81,3 @@ export const buildNodeRoleSlotNames = (
     return `worker${currentIndex + 1}`
   })
 }
-

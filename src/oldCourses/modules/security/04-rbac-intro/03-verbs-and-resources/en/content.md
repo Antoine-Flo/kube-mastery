@@ -1,6 +1,6 @@
 # Verbs and Resources
 
-You now know that Roles define permissions and RoleBindings assign them to subjects. But what exactly goes *inside* a Role? Every RBAC rule answers two questions: **what** can be accessed (resources) and **how** (verbs). Crafting precise rules is the foundation of least-privilege access — and it is easier than you might think.
+You now know that Roles define permissions and RoleBindings assign them to subjects. But what exactly goes _inside_ a Role? Every RBAC rule answers two questions: **what** can be accessed (resources) and **how** (verbs). Crafting precise rules is the foundation of least-privilege access — and it is easier than you might think.
 
 Think of it like setting permissions on a shared document. You might give someone view access (read-only), comment access (read plus annotate), or edit access (full modification). RBAC verbs work the same way — they define the level of interaction allowed.
 
@@ -8,16 +8,16 @@ Think of it like setting permissions on a shared document. You might give someon
 
 Kubernetes defines a set of standard verbs that correspond to API operations:
 
-| Verb                | What it allows                                   |
-| ------------------- | ------------------------------------------------ |
-| `get`               | Read a single resource by name                   |
-| `list`              | List all resources of a type                     |
-| `watch`             | Stream real-time changes (used by controllers)   |
-| `create`            | Create a new resource                            |
-| `update`            | Replace an existing resource entirely            |
-| `patch`             | Modify specific fields of a resource             |
-| `delete`            | Delete a single resource                         |
-| `deletecollection`  | Delete multiple resources at once                |
+| Verb               | What it allows                                 |
+| ------------------ | ---------------------------------------------- |
+| `get`              | Read a single resource by name                 |
+| `list`             | List all resources of a type                   |
+| `watch`            | Stream real-time changes (used by controllers) |
+| `create`           | Create a new resource                          |
+| `update`           | Replace an existing resource entirely          |
+| `patch`            | Modify specific fields of a resource           |
+| `delete`           | Delete a single resource                       |
+| `deletecollection` | Delete multiple resources at once              |
 
 For read-only access, `get`, `list`, and `watch` are typically sufficient. For full management, you would add `create`, `update`, `patch`, and `delete`. Use `deletecollection` with caution — it removes multiple resources in one call.
 
@@ -44,7 +44,7 @@ Some resources have **subresources** that must be listed explicitly. This catche
 If your Role only grants access to `pods`, a user with that Role **cannot** run `kubectl logs` or `kubectl exec`. You must include the subresources explicitly:
 
 ```yaml
-resources: ["pods", "pods/log", "pods/exec"]
+resources: ['pods', 'pods/log', 'pods/exec']
 ```
 
 ## Putting Rules Together
@@ -53,12 +53,12 @@ Here is a Role with two rules — read-only access to core resources, and full m
 
 ```yaml
 rules:
-  - apiGroups: [""]
-    resources: ["pods", "services", "configmaps"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["apps"]
-    resources: ["deployments"]
-    verbs: ["get", "list", "watch", "create", "update", "delete"]
+  - apiGroups: ['']
+    resources: ['pods', 'services', 'configmaps']
+    verbs: ['get', 'list', 'watch']
+  - apiGroups: ['apps']
+    resources: ['deployments']
+    verbs: ['get', 'list', 'watch', 'create', 'update', 'delete']
 ```
 
 Each rule combines an API group, a set of resources, and the verbs allowed. You can have as many rules as needed in a single Role.
@@ -73,10 +73,10 @@ For even tighter control, you can restrict a rule to specific **named resources*
 
 ```yaml
 rules:
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    resourceNames: ["app-config"]
-    verbs: ["get", "update"]
+  - apiGroups: ['']
+    resources: ['configmaps']
+    resourceNames: ['app-config']
+    verbs: ['get', 'update']
 ```
 
 This rule only allows `get` and `update` on the ConfigMap named `app-config` — no other ConfigMaps are accessible. This is useful for controllers or applications that only need to manage a specific configuration.

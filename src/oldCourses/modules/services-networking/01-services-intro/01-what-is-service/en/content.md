@@ -43,6 +43,7 @@ spec:
 ```
 
 This Service:
+
 - Targets all Pods with labels `app: api` AND `tier: backend`
 - Listens on port **80** (the Service port — what clients connect to)
 - Forwards traffic to port **8080** on the Pods (the targetPort — where your application listens)
@@ -59,11 +60,11 @@ After creating a Service, check that it's correctly connected to your Pods. The 
 
 ## Common Pitfalls
 
-**Empty endpoints:**  The Service selector doesn't match any Pod labels. Verify with `kubectl get pods --show-labels` and compare against the Service's selector.
+**Empty endpoints:** The Service selector doesn't match any Pod labels. Verify with `kubectl get pods --show-labels` and compare against the Service's selector.
 
-**Connection refused:**  The `targetPort` doesn't match the port your container actually listens on. The Service is routing traffic to the right Pod but the wrong port.
+**Connection refused:** The `targetPort` doesn't match the port your container actually listens on. The Service is routing traffic to the right Pod but the wrong port.
 
-**No encryption:**  Services don't provide TLS by default. Traffic between Services travels unencrypted within the cluster. For encrypted communication, use a service mesh (like Istio or Linkerd) or configure TLS at the application level.
+**No encryption:** Services don't provide TLS by default. Traffic between Services travels unencrypted within the cluster. For encrypted communication, use a service mesh (like Istio or Linkerd) or configure TLS at the application level.
 
 :::warning
 Services provide networking and load balancing, not encryption. ClusterIP traffic is unencrypted by default. For sensitive data, add TLS at the application level or use a service mesh.
@@ -101,4 +102,4 @@ Replace `<service-name>` with an actual Service (e.g., `kubernetes` or one you'v
 
 ## Wrapping Up
 
-Services give your applications a stable, discoverable entry point in a world where Pods come and go constantly. They use label selectors to find matching Pods and automatically load-balance traffic across them. In the next lesson, we'll dive into the default Service type — **ClusterIP:**  and how it provides internal cluster communication.
+Services give your applications a stable, discoverable entry point in a world where Pods come and go constantly. They use label selectors to find matching Pods and automatically load-balance traffic across them. In the next lesson, we'll dive into the default Service type — **ClusterIP:** and how it provides internal cluster communication.

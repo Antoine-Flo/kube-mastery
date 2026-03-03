@@ -23,9 +23,9 @@ export const quiz: Quiz = {
       type: 'multiple-choice',
       question: 'Without timeZone, how is the schedule interpreted?',
       options: [
-        'In the Pod\'s time zone',
-        'In the kube-controller-manager\'s local time (often UTC)',
-        'In the client\'s time zone',
+        "In the Pod's time zone",
+        "In the kube-controller-manager's local time (often UTC)",
+        "In the client's time zone",
         'As relative to cluster creation time'
       ],
       correctAnswer: 1

@@ -8,16 +8,16 @@ Think of it as a checklist before launching a spacecraft: each individual check 
 
 Here are the most important securityContext fields and what they do:
 
-| Setting | Level | Purpose |
-|---------|-------|---------|
-| `runAsNonRoot: true` | Pod or Container | Blocks running as root |
-| `runAsUser` | Pod or Container | Sets the specific UID |
-| `runAsGroup` | Pod or Container | Sets the primary GID |
-| `fsGroup` | Pod only | Sets volume group ownership |
-| `allowPrivilegeEscalation: false` | Container only | Prevents gaining extra privileges via setuid |
-| `readOnlyRootFilesystem: true` | Container only | Makes the container filesystem read-only |
-| `capabilities.drop: [ALL]` | Container only | Removes all Linux capabilities |
-| `seccompProfile` | Pod or Container | Restricts allowed system calls |
+| Setting                           | Level            | Purpose                                      |
+| --------------------------------- | ---------------- | -------------------------------------------- |
+| `runAsNonRoot: true`              | Pod or Container | Blocks running as root                       |
+| `runAsUser`                       | Pod or Container | Sets the specific UID                        |
+| `runAsGroup`                      | Pod or Container | Sets the primary GID                         |
+| `fsGroup`                         | Pod only         | Sets volume group ownership                  |
+| `allowPrivilegeEscalation: false` | Container only   | Prevents gaining extra privileges via setuid |
+| `readOnlyRootFilesystem: true`    | Container only   | Makes the container filesystem read-only     |
+| `capabilities.drop: [ALL]`        | Container only   | Removes all Linux capabilities               |
+| `seccompProfile`                  | Pod or Container | Restricts allowed system calls               |
 
 ## A Fully Hardened Pod
 

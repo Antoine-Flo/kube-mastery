@@ -1,6 +1,6 @@
 # What is a ServiceAccount?
 
-When you interact with the Kubernetes API, you identify yourself — usually through a kubeconfig file with certificates or tokens. But what about the applications running *inside* your cluster? When a Pod needs to list other Pods, create a ConfigMap, or watch for changes, it also needs an identity. That identity is a **ServiceAccount**.
+When you interact with the Kubernetes API, you identify yourself — usually through a kubeconfig file with certificates or tokens. But what about the applications running _inside_ your cluster? When a Pod needs to list other Pods, create a ConfigMap, or watch for changes, it also needs an identity. That identity is a **ServiceAccount**.
 
 Think of a ServiceAccount as a name badge for your workload. It does not grant any powers on its own — it simply tells the API server "this is who I am." Permissions come separately, through RBAC.
 
@@ -66,10 +66,10 @@ If the ServiceAccount does not exist when the Pod is created, the Pod will stay 
 
 ServiceAccounts come into play whenever a workload needs to interact with the Kubernetes API:
 
-- **In-cluster tools:**  a monitoring agent that lists Pods to discover targets
-- **Controllers and operators:**  a custom controller that watches and reconciles custom resources
-- **CI/CD agents:**  a pipeline runner that creates Deployments as part of a release process
-- **Sidecar containers:**  a service mesh proxy that needs to read configuration from the API
+- **In-cluster tools:** a monitoring agent that lists Pods to discover targets
+- **Controllers and operators:** a custom controller that watches and reconciles custom resources
+- **CI/CD agents:** a pipeline runner that creates Deployments as part of a release process
+- **Sidecar containers:** a service mesh proxy that needs to read configuration from the API
 
 In each case, the workload needs a stable, auditable identity so that RBAC policies can be applied consistently.
 

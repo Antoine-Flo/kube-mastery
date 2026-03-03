@@ -24,7 +24,7 @@ users:
       client-key: /path/to/client.key
 ```
 
-The API server validates the certificate against its CA on every request. Certificate auth is **stateless:**  no tokens to refresh, no sessions to maintain. The tradeoff: certificates have expiration dates, and you need to rotate them before they expire.
+The API server validates the certificate against its CA on every request. Certificate auth is **stateless:** no tokens to refresh, no sessions to maintain. The tradeoff: certificates have expiration dates, and you need to rotate them before they expire.
 
 :::info
 Client certificates are embedded in the kubeconfig or referenced as files. The certificate's Common Name (CN) becomes the username, and the Organization (O) field becomes the group. This is how RBAC knows who you are.
@@ -42,8 +42,9 @@ users:
 ```
 
 Tokens are common with managed Kubernetes services and ServiceAccount authentication. They can be:
-- **Long-lived:**  Static tokens that don't expire (less secure)
-- **Short-lived:**  Tokens with expiration (more secure, need refresh)
+
+- **Long-lived:** Static tokens that don't expire (less secure)
+- **Short-lived:** Tokens with expiration (more secure, need refresh)
 
 Static tokens in kubeconfig don't rotate automatically — you need to update them manually or use automation.
 
@@ -66,6 +67,7 @@ users:
 ```
 
 When kubectl needs to authenticate:
+
 1. It runs the command (`aws eks get-token --cluster-name my-cluster`)
 2. The command returns a short-lived token via stdout
 3. kubectl uses that token for the API request
@@ -81,20 +83,20 @@ No credentials are stored in the kubeconfig file — they're generated on demand
 
 ## Which Method to Use?
 
-| Environment | Recommended Method | Why |
-|-------------|-------------------|-----|
-| Self-managed (kubeadm, k3s) | Client certificates | Standard, built-in |
-| AWS EKS | Exec (aws eks get-token) | Short-lived tokens, IAM integration |
-| GCP GKE | Exec (gke-gcloud-auth-plugin) | Short-lived tokens, Google auth |
-| Azure AKS | Exec (kubelogin) | Short-lived tokens, Azure AD |
-| CI/CD pipelines | ServiceAccount token | Scoped, automatable |
+| Environment                 | Recommended Method            | Why                                 |
+| --------------------------- | ----------------------------- | ----------------------------------- |
+| Self-managed (kubeadm, k3s) | Client certificates           | Standard, built-in                  |
+| AWS EKS                     | Exec (aws eks get-token)      | Short-lived tokens, IAM integration |
+| GCP GKE                     | Exec (gke-gcloud-auth-plugin) | Short-lived tokens, Google auth     |
+| Azure AKS                   | Exec (kubelogin)              | Short-lived tokens, Azure AD        |
+| CI/CD pipelines             | ServiceAccount token          | Scoped, automatable                 |
 
 ## Security Best Practices
 
-- **File permissions:**  `chmod 600 ~/.kube/config` to restrict access
-- **Credential rotation:**  Certificates expire; set reminders to rotate them
-- **Prefer exec-based auth:**  No long-lived credentials stored on disk
-- **Never commit kubeconfig:**  Use environment variables or secret managers in CI/CD
+- **File permissions:** `chmod 600 ~/.kube/config` to restrict access
+- **Credential rotation:** Certificates expire; set reminders to rotate them
+- **Prefer exec-based auth:** No long-lived credentials stored on disk
+- **Never commit kubeconfig:** Use environment variables or secret managers in CI/CD
 
 :::warning
 kubeconfig files grant cluster access. A stolen kubeconfig with admin credentials gives full control of your cluster. Restrict file permissions, rotate credentials regularly, and prefer exec-based auth where possible.

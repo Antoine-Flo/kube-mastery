@@ -91,7 +91,8 @@ const matchesNodeSelectorTerm = (
 
 const matchesRequiredNodeAffinity = (pod: Pod, node: Node): boolean => {
   const required =
-    pod.spec.affinity?.nodeAffinity?.requiredDuringSchedulingIgnoredDuringExecution
+    pod.spec.affinity?.nodeAffinity
+      ?.requiredDuringSchedulingIgnoredDuringExecution
   if (required == null) {
     return true
   }

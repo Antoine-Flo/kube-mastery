@@ -1,5 +1,5 @@
 ---
-title: "Kubernetes Developer"
+title: 'Kubernetes Developer'
 shortDescription: Build and ship production-ready apps on Kubernetes. Covers deployment updates, Ingress, secrets, resource management, and stateful workloads with storage.
 isActive: true
 price: 0

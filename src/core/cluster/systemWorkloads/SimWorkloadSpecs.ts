@@ -1,7 +1,4 @@
-import {
-  buildNodeRoleSlotNames,
-  type ClusterNodeRole
-} from '../clusterConfig'
+import { buildNodeRoleSlotNames, type ClusterNodeRole } from '../clusterConfig'
 import type { Container, PodToleration, Volume } from '../ressources/Pod'
 
 export type SimSystemWorkloadPolicy = 'conformance'
@@ -237,7 +234,10 @@ const createStaticSpecs = (
     },
     {
       kind: 'static',
-      name: createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-apiserver'),
+      name: createControlPlaneStaticPodName(
+        controlPlaneNodeName,
+        'kube-apiserver'
+      ),
       namespace: 'kube-system',
       container: {
         name: 'kube-apiserver',
@@ -369,7 +369,10 @@ const createStaticSpecs = (
     },
     {
       kind: 'static',
-      name: createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-scheduler'),
+      name: createControlPlaneStaticPodName(
+        controlPlaneNodeName,
+        'kube-scheduler'
+      ),
       namespace: 'kube-system',
       container: {
         name: 'kube-scheduler',

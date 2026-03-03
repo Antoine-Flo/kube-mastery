@@ -6,10 +6,7 @@
 
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
-import {
-  createShellExecutor,
-  parseShellCommand
-} from '../../../shell/commands'
+import { createShellExecutor, parseShellCommand } from '../../../shell/commands'
 import type { CommandContext } from '../CommandContext'
 import type { CommandHandler } from '../CommandHandler'
 
@@ -34,7 +31,8 @@ export class ShellCommandHandler implements CommandHandler {
       context.editorModal,
       {
         resolveNamespace: () => {
-          const containerInfo = context.shellContextStack.getCurrentContainerInfo()
+          const containerInfo =
+            context.shellContextStack.getCurrentContainerInfo()
           return containerInfo?.namespace ?? 'default'
         },
         runDnsLookup: (query, namespace) => {
@@ -63,12 +61,10 @@ export class ShellCommandHandler implements CommandHandler {
           if (context.networkRuntime == null) {
             return error('network runtime is not available')
           }
-          const curlResult = context.networkRuntime.trafficEngine.simulateHttpGet(
-            target,
-            {
+          const curlResult =
+            context.networkRuntime.trafficEngine.simulateHttpGet(target, {
               sourceNamespace: namespace
-            }
-          )
+            })
           if (!curlResult.ok) {
             return error(curlResult.error)
           }

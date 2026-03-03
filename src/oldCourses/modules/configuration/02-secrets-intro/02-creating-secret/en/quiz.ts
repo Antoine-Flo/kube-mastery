@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'What is the advantage of using stringData instead of data in a Secret?',
+      question:
+        'What is the advantage of using stringData instead of data in a Secret?',
       options: [
         'stringData provides stronger encryption',
         'stringData accepts plain text; Kubernetes encodes it automatically',
@@ -21,7 +22,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'Which Secret type is used for private container registry credentials?',
+      question:
+        'Which Secret type is used for private container registry credentials?',
       options: [
         'Opaque',
         'kubernetes.io/tls',

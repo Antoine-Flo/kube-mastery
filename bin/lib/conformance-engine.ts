@@ -36,7 +36,10 @@ export interface ConformanceProgressListener {
   onSuiteStart?: (suite: ConformanceSuite) => void
   onActionStart?: (event: ConformanceProgressEvent) => void
   onActionComplete?: (event: ConformanceActionCompleteEvent) => void
-  onSuiteFinish?: (suite: ConformanceSuite, result: Result<void, string>) => void
+  onSuiteFinish?: (
+    suite: ConformanceSuite,
+    result: Result<void, string>
+  ) => void
 }
 
 const createRecord = (
@@ -91,7 +94,10 @@ const truncate = (value: string, maxLength: number): string => {
   return `${value.slice(0, maxLength)}…`
 }
 
-const formatDiffLines = (kindCompared: string, runnerCompared: string): string[] => {
+const formatDiffLines = (
+  kindCompared: string,
+  runnerCompared: string
+): string[] => {
   const kindLines = kindCompared.split('\n')
   const runnerLines = runnerCompared.split('\n')
   const maxLen = Math.max(kindLines.length, runnerLines.length)
@@ -134,7 +140,8 @@ export const compareResults = (
     matched: outputMatches && exitCodeMatches,
     kindCompared,
     runnerCompared,
-    diff: outputMatches && exitCodeMatches ? '' : diff(kindCompared, runnerCompared)
+    diff:
+      outputMatches && exitCodeMatches ? '' : diff(kindCompared, runnerCompared)
   }
 }
 
@@ -232,7 +239,11 @@ export const runConformanceSuite = (
         actionIndex,
         actionTotal
       })
-      const { kind, runner } = executeAction(action, kindExecutor, runnerExecutor)
+      const { kind, runner } = executeAction(
+        action,
+        kindExecutor,
+        runnerExecutor
+      )
 
       reporter.recordKind(createRecord(suite.name, action, 'kind', kind))
       reporter.recordRunner(createRecord(suite.name, action, 'runner', runner))
@@ -248,7 +259,9 @@ export const runConformanceSuite = (
         comparison
       })
       if (!comparison.matched) {
-        reporter.recordDiff(appendMismatch(suite.name, action, kind, runner, comparison))
+        reporter.recordDiff(
+          appendMismatch(suite.name, action, kind, runner, comparison)
+        )
       }
     }
   } finally {

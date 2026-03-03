@@ -175,16 +175,17 @@ const createBootstrapNode = (
   creationTimestamp: string
 ): Node => {
   const nodeName = `${clusterName}-${roleSlotName}`
-  const spec = role === 'control-plane'
-    ? {
-        taints: [
-          {
-            key: 'node-role.kubernetes.io/control-plane',
-            effect: 'NoSchedule' as const
-          }
-        ]
-      }
-    : {}
+  const spec =
+    role === 'control-plane'
+      ? {
+          taints: [
+            {
+              key: 'node-role.kubernetes.io/control-plane',
+              effect: 'NoSchedule' as const
+            }
+          ]
+        }
+      : {}
 
   return createNode({
     name: nodeName,
@@ -233,7 +234,8 @@ const createKubeRootCAConfigMap = (creationTimestamp: string): ConfigMap => {
     namespace: 'default',
     creationTimestamp,
     data: {
-      'ca.crt': '-----BEGIN CERTIFICATE-----\nSIMULATED-CA\n-----END CERTIFICATE-----'
+      'ca.crt':
+        '-----BEGIN CERTIFICATE-----\nSIMULATED-CA\n-----END CERTIFICATE-----'
     }
   })
 }
@@ -354,7 +356,9 @@ const upsertNamespaces = (
   namespaces: Namespace[]
 ): void => {
   for (const namespace of namespaces) {
-    const findNamespaceResult = clusterState.findNamespace(namespace.metadata.name)
+    const findNamespaceResult = clusterState.findNamespace(
+      namespace.metadata.name
+    )
     if (!findNamespaceResult.ok) {
       clusterState.addNamespace(namespace)
       continue
@@ -411,7 +415,10 @@ const upsertConfigMaps = (
   }
 }
 
-const upsertServices = (clusterState: ClusterState, services: Service[]): void => {
+const upsertServices = (
+  clusterState: ClusterState,
+  services: Service[]
+): void => {
   for (const service of services) {
     const findServiceResult = clusterState.findService(
       service.metadata.name,

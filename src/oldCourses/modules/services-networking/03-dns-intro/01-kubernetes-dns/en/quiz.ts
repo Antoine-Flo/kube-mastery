@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'From a Pod in the same namespace, how do you reach a Service named "api"?',
+      question:
+        'From a Pod in the same namespace, how do you reach a Service named "api"?',
       options: [
         'api.svc.cluster.local',
         'api (short name works)',

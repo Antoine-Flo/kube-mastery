@@ -10,7 +10,7 @@ Without an orchestrator, running many containers across many servers becomes cha
 
 **Kubernetes** (often abbreviated **K8s**, where the "8" stands for the eight letters between K and s) is an open-source platform for managing containerized workloads and services. Originally developed at Google and now maintained by the <a target="_blank" href="https://www.cncf.io/">Cloud Native Computing Foundation (CNCF)</a>, it provides a framework to run distributed systems reliably, even when individual components fail.
 
-Here is the key idea: you tell Kubernetes *what* you want (for example, "run three copies of my web app"), and it figures out *how* to make that happen. If a container crashes, Kubernetes replaces it. If traffic spikes, it can scale up. You set the destination; Kubernetes handles the steering.
+Here is the key idea: you tell Kubernetes _what_ you want (for example, "run three copies of my web app"), and it figures out _how_ to make that happen. If a container crashes, Kubernetes replaces it. If traffic spikes, it can scale up. You set the destination; Kubernetes handles the steering.
 
 :::info
 The name "Kubernetes" comes from Greek, meaning "helmsman" or "pilot." The wheel in the Kubernetes logo represents a ship's helm.

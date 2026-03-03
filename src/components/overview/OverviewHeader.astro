@@ -133,7 +133,10 @@ const modulesLabel =
       var(--color-cyan-7) 100%
     );
   }
-  .cta :global(.btn[data-color='cyan'][data-variant='solid']):hover:not(:disabled) {
+  .cta
+    :global(.btn[data-color='cyan'][data-variant='solid']):hover:not(
+      :disabled
+    ) {
     background: linear-gradient(
       135deg,
       var(--color-cyan-10) 0%,

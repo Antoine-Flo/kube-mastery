@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'In which namespace must the TLS Secret be for the Ingress to use it?',
+      question:
+        'In which namespace must the TLS Secret be for the Ingress to use it?',
       options: [
         'kube-system',
         'Same namespace as the Ingress',

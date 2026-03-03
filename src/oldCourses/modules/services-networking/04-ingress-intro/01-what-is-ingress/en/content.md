@@ -21,12 +21,13 @@ flowchart LR
 
 ## Ingress = Rules, Controller = Implementation
 
-An important distinction: **Ingress** is just a specification — a set of routing rules stored in Kubernetes. By itself, it does nothing. You need an **Ingress controller:**  an actual reverse proxy that reads these rules and implements them.
+An important distinction: **Ingress** is just a specification — a set of routing rules stored in Kubernetes. By itself, it does nothing. You need an **Ingress controller:** an actual reverse proxy that reads these rules and implements them.
 
 Popular Ingress controllers include:
-- **NGINX Ingress Controller:**  The most widely used
-- **Traefik:**  Lightweight and auto-configuring
-- **Cloud-provider controllers:**  AWS ALB Ingress, GCP GCE Ingress
+
+- **NGINX Ingress Controller:** The most widely used
+- **Traefik:** Lightweight and auto-configuring
+- **Cloud-provider controllers:** AWS ALB Ingress, GCP GCE Ingress
 
 The controller runs as Pods in your cluster, typically exposed via a LoadBalancer or NodePort Service.
 
@@ -63,6 +64,7 @@ spec:
 ```
 
 This Ingress routes:
+
 - `app.example.com/` → `web` Service on port 80
 - `app.example.com/api` → `api` Service on port 8080
 
@@ -70,9 +72,9 @@ This Ingress routes:
 
 Every path needs a `pathType`:
 
-- **Prefix:**  Matches the URL path prefix. `/api` matches `/api`, `/api/users`, `/api/v2/items`
-- **Exact:**  Matches exactly. `/api` only matches `/api`, not `/api/users`
-- **ImplementationSpecific:**  Behavior depends on the Ingress controller
+- **Prefix:** Matches the URL path prefix. `/api` matches `/api`, `/api/users`, `/api/v2/items`
+- **Exact:** Matches exactly. `/api` only matches `/api`, not `/api/users`
+- **ImplementationSpecific:** Behavior depends on the Ingress controller
 
 ## Host-Based Routing
 

@@ -1,1 +1,7 @@
-{"title":{"en":"Introduction to RBAC","fr":"Introduction à RBAC"},"description":{"en":"Learn about Roles, RoleBindings, and how to control access with RBAC","fr":"Apprenez les Roles, RoleBindings et comment contrôler l'accès avec RBAC"}}
+{
+  "title": { "en": "Introduction to RBAC", "fr": "Introduction à RBAC" },
+  "description": {
+    "en": "Learn about Roles, RoleBindings, and how to control access with RBAC",
+    "fr": "Apprenez les Roles, RoleBindings et comment contrôler l'accès avec RBAC"
+  }
+}

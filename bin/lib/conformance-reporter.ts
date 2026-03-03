@@ -71,7 +71,9 @@ const renderBackendReport = (
   }
   const suiteName = records[0].suiteName
   const body = records.map((record) => formatRecord(record)).join('\n')
-  return [`[suite] ${suiteName}`, `[backend] ${backend}`, '---', body].join('\n')
+  return [`[suite] ${suiteName}`, `[backend] ${backend}`, '---', body].join(
+    '\n'
+  )
 }
 
 export interface ConformanceReporter {
@@ -158,7 +160,11 @@ export const createConformanceReporter = (
           renderBackendReport(bucketRunnerRecords, 'runner'),
           'utf-8'
         )
-        writeFileSync(join(bucketDir, 'diff.log'), bucketDiffRecords.join('\n'), 'utf-8')
+        writeFileSync(
+          join(bucketDir, 'diff.log'),
+          bucketDiffRecords.join('\n'),
+          'utf-8'
+        )
       }
     }
   }

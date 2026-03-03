@@ -1,5 +1,5 @@
 ---
-title: "Kubernetes Fundamentals"
+title: 'Kubernetes Fundamentals'
 shortDescription: Master Kubernetes fundamentals and deploy your first applications. Core concepts, objects, namespaces, Pods, Services, DNS, ConfigMaps, and probes.
 isActive: true
 price: 0

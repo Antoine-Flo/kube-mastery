@@ -46,17 +46,17 @@ const extractApiServerUrl = (kubeconfig: string): Result<string> => {
 const resolveClusterInfoUrls = (
   clusterState: ClusterStateData
 ): Result<{ apiServerUrl: string; coreDnsUrl: string }> => {
-  const clusterInfoConfigMap = clusterState.configMaps.items.find((configMap) => {
-    return (
-      configMap.metadata.name === CLUSTER_INFO_CONFIGMAP_NAME &&
-      configMap.metadata.namespace === CLUSTER_INFO_NAMESPACE
-    )
-  })
+  const clusterInfoConfigMap = clusterState.configMaps.items.find(
+    (configMap) => {
+      return (
+        configMap.metadata.name === CLUSTER_INFO_CONFIGMAP_NAME &&
+        configMap.metadata.namespace === CLUSTER_INFO_NAMESPACE
+      )
+    }
+  )
 
   if (!clusterInfoConfigMap) {
-    return error(
-      'cluster-info ConfigMap is missing in kube-public namespace'
-    )
+    return error('cluster-info ConfigMap is missing in kube-public namespace')
   }
 
   const kubeconfig = clusterInfoConfigMap.data?.kubeconfig
@@ -416,7 +416,9 @@ export const handleClusterInfo = (
       clusterInfoUrlsResult.value.apiServerUrl
     )
   )
-  lines.push(formatServiceLine('CoreDNS', clusterInfoUrlsResult.value.coreDnsUrl))
+  lines.push(
+    formatServiceLine('CoreDNS', clusterInfoUrlsResult.value.coreDnsUrl)
+  )
 
   lines.push('')
   lines.push(

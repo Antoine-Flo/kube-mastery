@@ -1,14 +1,21 @@
 import type { Result } from '../shared/result'
 import { error, success } from '../shared/result'
 import type { DnsResolver } from './DnsResolver'
-import type { NetworkState, SimServiceEndpoint, SimServiceRuntime } from './NetworkState'
+import type {
+  NetworkState,
+  SimServiceEndpoint,
+  SimServiceRuntime
+} from './NetworkState'
 
 export interface SimHttpRequestContext {
   sourceNamespace: string
 }
 
 export interface TrafficEngine {
-  simulateHttpGet: (target: string, context: SimHttpRequestContext) => Result<string>
+  simulateHttpGet: (
+    target: string,
+    context: SimHttpRequestContext
+  ) => Result<string>
 }
 
 const isIpv4 = (value: string): boolean => {
@@ -23,9 +30,10 @@ const isIpv4 = (value: string): boolean => {
 }
 
 const parseTargetUrl = (target: string): Result<URL> => {
-  const normalized = target.startsWith('http://') || target.startsWith('https://')
-    ? target
-    : `http://${target}`
+  const normalized =
+    target.startsWith('http://') || target.startsWith('https://')
+      ? target
+      : `http://${target}`
   try {
     return success(new URL(normalized))
   } catch {
@@ -65,7 +73,8 @@ export const createTrafficEngine = (
     routeType: 'cluster-ip' | 'node-port'
     port: number
   }> => {
-    const port = parsedUrl.port.length > 0 ? Number.parseInt(parsedUrl.port, 10) : 80
+    const port =
+      parsedUrl.port.length > 0 ? Number.parseInt(parsedUrl.port, 10) : 80
     if (Number.isNaN(port) || port <= 0) {
       return error(`curl: (3) invalid port in URL: ${parsedUrl.href}`)
     }
@@ -98,7 +107,10 @@ export const createTrafficEngine = (
 
     const serviceIp = dnsResult.value.addresses[0]
     const serviceRuntime = networkState.findServiceByClusterIp(serviceIp)
-    if (serviceRuntime == null || !findServiceByServicePort(serviceRuntime, port)) {
+    if (
+      serviceRuntime == null ||
+      !findServiceByServicePort(serviceRuntime, port)
+    ) {
       return error(`curl: (7) Failed to connect to ${hostname} port ${port}`)
     }
 

@@ -23,8 +23,8 @@ If you need to use the `data` field (pre-encoded values):
 
 ```yaml
 data:
-  username: YWRtaW4=        # echo -n "admin" | base64
-  password: bXktc2VjdXJl    # echo -n "my-secure" | base64
+  username: YWRtaW4= # echo -n "admin" | base64
+  password: bXktc2VjdXJl # echo -n "my-secure" | base64
 ```
 
 :::warning
@@ -83,9 +83,9 @@ Prefer `stringData` over `data` in manifests — it avoids manual base64 encodin
 
 For production environments, avoid storing real credentials in Git:
 
-- **External Secrets Operator:**  Syncs secrets from AWS Secrets Manager, HashiCorp Vault, GCP Secret Manager into Kubernetes Secrets
-- **Sealed Secrets:**  Encrypts Secrets so they can be safely committed to Git; only the cluster can decrypt them
-- **SOPS:**  Encrypts secret files with cloud KMS keys
+- **External Secrets Operator:** Syncs secrets from AWS Secrets Manager, HashiCorp Vault, GCP Secret Manager into Kubernetes Secrets
+- **Sealed Secrets:** Encrypts Secrets so they can be safely committed to Git; only the cluster can decrypt them
+- **SOPS:** Encrypts secret files with cloud KMS keys
 
 These tools let you follow GitOps practices without exposing sensitive values.
 

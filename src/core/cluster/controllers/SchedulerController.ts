@@ -25,7 +25,11 @@ export interface SchedulerControllerOptions extends ControllerResyncOptions {
   }
 }
 
-const WATCHED_EVENTS: ClusterEventType[] = ['PodCreated', 'PodUpdated', 'PodDeleted']
+const WATCHED_EVENTS: ClusterEventType[] = [
+  'PodCreated',
+  'PodUpdated',
+  'PodDeleted'
+]
 
 const makePodKey = (namespace: string, name: string): string => {
   return `${namespace}/${name}`

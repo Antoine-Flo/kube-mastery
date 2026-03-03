@@ -556,7 +556,8 @@ const runTransformer: ActionTransformer = (ctx) => {
   const runUseCommand = beforeSeparator.includes('--command')
   const runStdin =
     beforeSeparator.includes('-i') || beforeSeparator.includes('--stdin')
-  const runTty = beforeSeparator.includes('-t') || beforeSeparator.includes('--tty')
+  const runTty =
+    beforeSeparator.includes('-t') || beforeSeparator.includes('--tty')
   const runRemove = beforeSeparator.includes('--rm')
   const separatorTokens =
     afterSeparator && afterSeparator.length > 0 ? afterSeparator : undefined

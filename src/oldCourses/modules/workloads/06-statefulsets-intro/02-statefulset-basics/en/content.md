@@ -10,7 +10,7 @@ At the center of every StatefulSet are two collaborating resources: the **Headle
 
 A regular Kubernetes Service acts like a receptionist: requests come in, and the Service forwards them to whichever Pod happens to be available. The caller never knows (or cares) which specific Pod answered.
 
-A **Headless Service** works differently. By setting `clusterIP: None`, you tell Kubernetes: "Don't assign a virtual IP. Instead, let DNS return the individual Pod addresses directly." It's less like a receptionist and more like a **phone book:**  each Pod gets its own listed entry that callers can look up by name.
+A **Headless Service** works differently. By setting `clusterIP: None`, you tell Kubernetes: "Don't assign a virtual IP. Instead, let DNS return the individual Pod addresses directly." It's less like a receptionist and more like a **phone book:** each Pod gets its own listed entry that callers can look up by name.
 
 Here's what a Headless Service looks like:
 
@@ -104,7 +104,7 @@ The `serviceName` field in the StatefulSet **must exactly match** the name of th
 
 The sequential creation isn't just a cosmetic detail — it solves real problems. Consider a database cluster where `web-0` is the primary node. Replicas `web-1` and `web-2` need to connect to the primary during initialization to sync data. If all three started simultaneously, replicas would fail to find a primary that doesn't exist yet.
 
-The same logic applies when scaling down. Kubernetes removes Pods in **reverse order:**  `web-2` first, then `web-1`, and `web-0` last. This predictability allows distributed systems to perform graceful handoffs. A replica can transfer its responsibilities before shutting down, and the primary (ordinal 0) is always the last to go.
+The same logic applies when scaling down. Kubernetes removes Pods in **reverse order:** `web-2` first, then `web-1`, and `web-0` last. This predictability allows distributed systems to perform graceful handoffs. A replica can transfer its responsibilities before shutting down, and the primary (ordinal 0) is always the last to go.
 
 After applying the manifest, watch Pod creation with `kubectl get pods -w`. You will see Pods appear one by one — `web-0` first, then `web-1`, then `web-2`. When you scale down (e.g., to 1 replica), Pods are removed in reverse order: `web-2` terminates first, then `web-1`. Only `web-0` remains.
 
@@ -182,4 +182,4 @@ kubectl delete -f statefulset.yaml
 
 The Headless Service and the StatefulSet work as a pair. The Service provides `clusterIP: None` to enable per-Pod DNS discovery. The StatefulSet declares `serviceName` to link itself to that Service, then creates Pods sequentially — `web-0`, `web-1`, `web-2` — each with a stable DNS name like `web-0.nginx`. Scaling down happens in reverse order to protect stateful workloads.
 
-These two resources form the foundation of every stateful deployment in Kubernetes. With this foundation in place, you're ready to explore **volumeClaimTemplates:**  the mechanism that gives each StatefulSet Pod its own dedicated persistent storage.
+These two resources form the foundation of every stateful deployment in Kubernetes. With this foundation in place, you're ready to explore **volumeClaimTemplates:** the mechanism that gives each StatefulSet Pod its own dedicated persistent storage.

@@ -10,7 +10,7 @@ Think of switching namespaces like changing floors in an office building. Most o
 
 Every `kubectl` command for namespaced resources accepts the `-n` (or `--namespace`) flag. For example, `kubectl get pods -n dev` lists Pods in the `dev` namespace, `kubectl get services -n staging` shows Services in `staging`, and `kubectl describe deployment nginx -n prod` describes a specific Deployment in `prod`.
 
-To see resources across *all* namespaces at once, use `-A` (or `--all-namespaces`):
+To see resources across _all_ namespaces at once, use `-A` (or `--all-namespaces`):
 
 ```bash
 kubectl get pods -A
@@ -54,7 +54,7 @@ Labels on namespaces are useful for applying policies or quotas to groups of nam
 
 ## Deleting a Namespace
 
-When a namespace is no longer needed, you can delete it with `kubectl delete namespace <name>`. This removes the namespace **and everything inside it:**  all Pods, Services, Deployments, ConfigMaps, and other namespaced resources. It is a cascade operation, and it can take time if there are many resources or if finalizers need to be processed.
+When a namespace is no longer needed, you can delete it with `kubectl delete namespace <name>`. This removes the namespace **and everything inside it:** all Pods, Services, Deployments, ConfigMaps, and other namespaced resources. It is a cascade operation, and it can take time if there are many resources or if finalizers need to be processed.
 
 ```mermaid
 flowchart LR
@@ -72,9 +72,9 @@ Deleting a namespace is irreversible and removes all namespaced resources inside
 
 ## Handling Common Issues
 
-- **"Resource not found":**  The most common cause is looking in the wrong namespace. Add `-n <namespace>` or use `-A` to search everywhere.
-- **Namespace stuck in "Terminating":**  This usually means a finalizer is blocking deletion. Inspect the namespace with `kubectl get namespace dev -o yaml` and look for stuck finalizers.
-- **Accidentally working in the wrong namespace:**  Always verify your current context with `kubectl config view --minify` before running destructive commands.
+- **"Resource not found":** The most common cause is looking in the wrong namespace. Add `-n <namespace>` or use `-A` to search everywhere.
+- **Namespace stuck in "Terminating":** This usually means a finalizer is blocking deletion. Inspect the namespace with `kubectl get namespace dev -o yaml` and look for stuck finalizers.
+- **Accidentally working in the wrong namespace:** Always verify your current context with `kubectl config view --minify` before running destructive commands.
 
 ---
 

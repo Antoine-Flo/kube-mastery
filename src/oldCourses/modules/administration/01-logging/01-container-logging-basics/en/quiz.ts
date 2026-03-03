@@ -17,7 +17,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'Where does Kubernetes expect container logs to be written by default?',
+      question:
+        'Where does Kubernetes expect container logs to be written by default?',
       options: [
         'A custom NFS share',
         'Standard output and standard error',

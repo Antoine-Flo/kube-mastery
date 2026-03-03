@@ -34,9 +34,7 @@ export const createPodStartupSimulator = (
   getState: () => ClusterState,
   options: PodStartupSimulatorOptions = {}
 ): PodStartupSimulator => {
-  let controller:
-    | ReturnType<typeof createPodLifecycleController>
-    | null = null
+  let controller: ReturnType<typeof createPodLifecycleController> | null = null
   let unsubscribeLocalStore: (() => void) | null = null
   const localPods = new Map<string, Pod>()
 
@@ -106,28 +104,39 @@ export const createPodStartupSimulator = (
         'PodCreated',
         (event: PodCreatedEvent) => {
           const pod = event.payload.pod
-          localPods.set(makePodKey(pod.metadata.namespace, pod.metadata.name), pod)
+          localPods.set(
+            makePodKey(pod.metadata.namespace, pod.metadata.name),
+            pod
+          )
         }
       )
       const unsubscribePodUpdated = eventBus.subscribe(
         'PodUpdated',
         (event: PodUpdatedEvent) => {
           const pod = event.payload.pod
-          localPods.set(makePodKey(pod.metadata.namespace, pod.metadata.name), pod)
+          localPods.set(
+            makePodKey(pod.metadata.namespace, pod.metadata.name),
+            pod
+          )
         }
       )
       const unsubscribePodBound = eventBus.subscribe(
         'PodBound',
         (event: PodBoundEvent) => {
           const pod = event.payload.pod
-          localPods.set(makePodKey(pod.metadata.namespace, pod.metadata.name), pod)
+          localPods.set(
+            makePodKey(pod.metadata.namespace, pod.metadata.name),
+            pod
+          )
         }
       )
       const unsubscribePodDeleted = eventBus.subscribe(
         'PodDeleted',
         (event: PodDeletedEvent) => {
           const pod = event.payload.deletedPod
-          localPods.delete(makePodKey(pod.metadata.namespace, pod.metadata.name))
+          localPods.delete(
+            makePodKey(pod.metadata.namespace, pod.metadata.name)
+          )
         }
       )
       unsubscribeLocalStore = () => {

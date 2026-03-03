@@ -1,1 +1,8 @@
-{"title":{"en":"Introduction to Jobs","fr":"Introduction aux Jobs"},"description":{"en":"Learn about Jobs for running finite batch workloads","fr":"Apprenez les Jobs pour exécuter des tâches batch finies"},"environment":"minimal"}
+{
+  "title": { "en": "Introduction to Jobs", "fr": "Introduction aux Jobs" },
+  "description": {
+    "en": "Learn about Jobs for running finite batch workloads",
+    "fr": "Apprenez les Jobs pour exécuter des tâches batch finies"
+  },
+  "environment": "minimal"
+}

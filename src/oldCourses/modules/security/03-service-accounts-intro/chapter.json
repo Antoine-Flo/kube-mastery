@@ -1,1 +1,10 @@
-{"title":{"en":"Introduction to Service Accounts","fr":"Introduction aux Service Accounts"},"description":{"en":"Learn how ServiceAccounts provide identity for processes running in Pods","fr":"Apprenez comment les ServiceAccounts fournissent une identité aux processus dans les Pods"}}
+{
+  "title": {
+    "en": "Introduction to Service Accounts",
+    "fr": "Introduction aux Service Accounts"
+  },
+  "description": {
+    "en": "Learn how ServiceAccounts provide identity for processes running in Pods",
+    "fr": "Apprenez comment les ServiceAccounts fournissent une identité aux processus dans les Pods"
+  }
+}

@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'What happens when a PVC is created and a matching StorageClass has a provisioner?',
+      question:
+        'What happens when a PVC is created and a matching StorageClass has a provisioner?',
       options: [
         'The PVC remains Pending forever',
         'A new PV can be provisioned automatically',

@@ -1,1 +1,8 @@
-{"title":{"en":"CronJobs","fr":"CronJobs"},"description":{"en":"Learn about CronJobs for scheduled recurring tasks","fr":"Apprenez les CronJobs pour les tâches planifiées récurrentes"},"environment":"minimal"}
+{
+  "title": { "en": "CronJobs", "fr": "CronJobs" },
+  "description": {
+    "en": "Learn about CronJobs for scheduled recurring tasks",
+    "fr": "Apprenez les CronJobs pour les tâches planifiées récurrentes"
+  },
+  "environment": "minimal"
+}

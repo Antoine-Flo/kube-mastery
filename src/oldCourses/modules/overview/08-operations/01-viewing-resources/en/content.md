@@ -18,9 +18,9 @@ The basic output is just the beginning. Several flags transform `kubectl get` in
 
 When you need to understand **why** something is happening (or not happening), `describe` is your go-to. The output includes everything `get` shows, plus:
 
-- **Conditions:**  Is the Pod scheduled? Are containers ready?
-- **Events:**  Recent activity: scheduling decisions, image pulls, restarts, errors
-- **Full configuration:**  All labels, annotations, volumes, resource requests
+- **Conditions:** Is the Pod scheduled? Are containers ready?
+- **Events:** Recent activity: scheduling decisions, image pulls, restarts, errors
+- **Full configuration:** All labels, annotations, volumes, resource requests
 
 The **Events** section at the bottom is especially valuable. When a Pod is stuck in `Pending` or `CrashLoopBackOff`, the events tell you why — image pull failures, insufficient resources, scheduling conflicts.
 

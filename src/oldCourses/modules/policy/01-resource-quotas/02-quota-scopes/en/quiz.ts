@@ -9,13 +9,9 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'Which scope applies to Pods with no CPU or memory requests/limits?',
-      options: [
-        'NotBestEffort',
-        'BestEffort',
-        'Terminating',
-        'NotTerminating'
-      ],
+      question:
+        'Which scope applies to Pods with no CPU or memory requests/limits?',
+      options: ['NotBestEffort', 'BestEffort', 'Terminating', 'NotTerminating'],
       correctAnswer: 1
     },
     {

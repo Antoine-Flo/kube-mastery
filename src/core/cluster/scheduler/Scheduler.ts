@@ -165,12 +165,18 @@ export const createScheduler = (
     }
 
     const minDelayMs = Math.max(0, Math.floor(schedulingDelayRangeMs.minMs))
-    const maxDelayMs = Math.max(minDelayMs, Math.floor(schedulingDelayRangeMs.maxMs))
+    const maxDelayMs = Math.max(
+      minDelayMs,
+      Math.floor(schedulingDelayRangeMs.maxMs)
+    )
     const delayMs = randomInRange(minDelayMs, maxDelayMs)
 
     const timeoutId = setTimeout(() => {
       const state = getState()
-      const currentPod = state.findPod(pod.metadata.name, pod.metadata.namespace)
+      const currentPod = state.findPod(
+        pod.metadata.name,
+        pod.metadata.namespace
+      )
       if (!currentPod.ok || currentPod.value == null) {
         return
       }

@@ -22,12 +22,7 @@ export const quiz: Quiz = {
       id: 'q2',
       type: 'multiple-choice',
       question: 'What uses labels to identify sets of objects?',
-      options: [
-        'ConfigMaps',
-        'Secrets',
-        'Selectors',
-        'Namespaces'
-      ],
+      options: ['ConfigMaps', 'Secrets', 'Selectors', 'Namespaces'],
       correctAnswer: 2
     }
   ]

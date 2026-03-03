@@ -1,7 +1,10 @@
 import type { ClusterState } from '../cluster/ClusterState'
 import type { EventBus } from '../cluster/events/EventBus'
 import { createDnsResolver, type DnsResolver } from './DnsResolver'
-import { createNetworkController, type NetworkController } from './NetworkController'
+import {
+  createNetworkController,
+  type NetworkController
+} from './NetworkController'
 import { type NetworkState } from './NetworkState'
 import { createTrafficEngine, type TrafficEngine } from './TrafficEngine'
 

@@ -12,7 +12,11 @@ import type {
   DeploymentStrategyType
 } from '../../cluster/ressources/Deployment'
 import type { Ingress } from '../../cluster/ressources/Ingress'
-import type { Node, NodeCondition, NodeTaint } from '../../cluster/ressources/Node'
+import type {
+  Node,
+  NodeCondition,
+  NodeTaint
+} from '../../cluster/ressources/Node'
 import { getNodeRoles } from '../../cluster/ressources/Node'
 import type { PersistentVolume } from '../../cluster/ressources/PersistentVolume'
 import type { PersistentVolumeClaim } from '../../cluster/ressources/PersistentVolumeClaim'
@@ -73,7 +77,9 @@ const formatMapMultiLine = (
   for (let index = 1; index < entries.length; index++) {
     const [entryKey, entryValue] = entries[index]
     const rendered =
-      mode === 'colon' ? `${entryKey}: ${entryValue}` : `${entryKey}=${entryValue}`
+      mode === 'colon'
+        ? `${entryKey}: ${entryValue}`
+        : `${entryKey}=${entryValue}`
     lines.push(`${' '.repeat(firstColumnWidth)}${rendered}`)
   }
   return lines
@@ -359,7 +365,9 @@ const stableHash = (value: string): string => {
 }
 
 const buildKubeApiAccessVolumeName = (pod: Pod): string => {
-  const token = stableHash(`${pod.metadata.namespace}/${pod.metadata.name}`).slice(0, 5)
+  const token = stableHash(
+    `${pod.metadata.namespace}/${pod.metadata.name}`
+  ).slice(0, 5)
   return `kube-api-access-${token}`
 }
 
@@ -550,7 +558,7 @@ const formatMemoryQuantity = (bytes: number): string => {
   if (bytes <= 0) {
     return '0'
   }
-  const mebibytes = Math.round(bytes / (1024 ** 2))
+  const mebibytes = Math.round(bytes / 1024 ** 2)
   return `${mebibytes}Mi`
 }
 
@@ -567,14 +575,16 @@ const getPodResources = (pod: Pod): PodResourceTotals => {
   const totals = createEmptyPodResourceTotals()
   for (const container of pod.spec.containers) {
     totals.cpuRequestsMilli =
-      totals.cpuRequestsMilli + parseCpuToMilli(container.resources?.requests?.cpu)
+      totals.cpuRequestsMilli +
+      parseCpuToMilli(container.resources?.requests?.cpu)
     totals.cpuLimitsMilli =
       totals.cpuLimitsMilli + parseCpuToMilli(container.resources?.limits?.cpu)
     totals.memoryRequestsBytes =
       totals.memoryRequestsBytes +
       parseMemoryToBytes(container.resources?.requests?.memory)
     totals.memoryLimitsBytes =
-      totals.memoryLimitsBytes + parseMemoryToBytes(container.resources?.limits?.memory)
+      totals.memoryLimitsBytes +
+      parseMemoryToBytes(container.resources?.limits?.memory)
   }
   return totals
 }
@@ -587,7 +597,8 @@ const addPodResourcesToTotals = (
   totals.cpuLimitsMilli = totals.cpuLimitsMilli + podTotals.cpuLimitsMilli
   totals.memoryRequestsBytes =
     totals.memoryRequestsBytes + podTotals.memoryRequestsBytes
-  totals.memoryLimitsBytes = totals.memoryLimitsBytes + podTotals.memoryLimitsBytes
+  totals.memoryLimitsBytes =
+    totals.memoryLimitsBytes + podTotals.memoryLimitsBytes
 }
 
 const formatNonTerminatedPodRow = (
@@ -598,12 +609,17 @@ const formatNonTerminatedPodRow = (
   nameColumnWidth: number
 ): string => {
   const allocatableCpuMilli = parseCpuToMilli(node.status.allocatable?.cpu)
-  const allocatableMemoryBytes = parseMemoryToBytes(node.status.allocatable?.memory)
+  const allocatableMemoryBytes = parseMemoryToBytes(
+    node.status.allocatable?.memory
+  )
   const cpuRequestsPercent = calculatePercent(
     podTotals.cpuRequestsMilli,
     allocatableCpuMilli
   )
-  const cpuLimitsPercent = calculatePercent(podTotals.cpuLimitsMilli, allocatableCpuMilli)
+  const cpuLimitsPercent = calculatePercent(
+    podTotals.cpuLimitsMilli,
+    allocatableCpuMilli
+  )
   const memoryRequestsPercent = calculatePercent(
     podTotals.memoryRequestsBytes,
     allocatableMemoryBytes
@@ -617,7 +633,9 @@ const formatNonTerminatedPodRow = (
       ? '0 (0%)'
       : `${podTotals.cpuRequestsMilli}m (${cpuRequestsPercent}%)`
   const cpuLimits =
-    podTotals.cpuLimitsMilli === 0 ? '0 (0%)' : `${podTotals.cpuLimitsMilli}m (${cpuLimitsPercent}%)`
+    podTotals.cpuLimitsMilli === 0
+      ? '0 (0%)'
+      : `${podTotals.cpuLimitsMilli}m (${cpuLimitsPercent}%)`
   const memoryRequests = `${formatMemoryQuantity(podTotals.memoryRequestsBytes)} (${memoryRequestsPercent}%)`
   const memoryLimits = `${formatMemoryQuantity(podTotals.memoryLimitsBytes)} (${memoryLimitsPercent}%)`
 
@@ -629,12 +647,17 @@ const formatAllocatedResourceLines = (
   totals: PodResourceTotals
 ): string[] => {
   const allocatableCpuMilli = parseCpuToMilli(node.status.allocatable?.cpu)
-  const allocatableMemoryBytes = parseMemoryToBytes(node.status.allocatable?.memory)
+  const allocatableMemoryBytes = parseMemoryToBytes(
+    node.status.allocatable?.memory
+  )
   const cpuRequestsPercent = calculatePercent(
     totals.cpuRequestsMilli,
     allocatableCpuMilli
   )
-  const cpuLimitsPercent = calculatePercent(totals.cpuLimitsMilli, allocatableCpuMilli)
+  const cpuLimitsPercent = calculatePercent(
+    totals.cpuLimitsMilli,
+    allocatableCpuMilli
+  )
   const memoryRequestsPercent = calculatePercent(
     totals.memoryRequestsBytes,
     allocatableMemoryBytes
@@ -806,7 +829,10 @@ const formatContainer = (
 // ─── Main Formatters ─────────────────────────────────────────────────────
 
 const formatPodConditionLines = (pod: Pod): string[] => {
-  const lines: string[] = ['Conditions:', '  Type                        Status']
+  const lines: string[] = [
+    'Conditions:',
+    '  Type                        Status'
+  ]
   const conditions = pod.status.conditions ?? []
   const hasReadyToStart = conditions.some((condition) => {
     return condition.type === 'PodReadyToStartContainers'
@@ -881,7 +907,8 @@ const formatStaticControlPlaneHeader = (
     priority: '2000001000',
     priorityClassName: 'system-node-critical',
     seccompProfile: 'RuntimeDefault',
-    controlledBy: pod.spec.nodeName != null ? `Node/${pod.spec.nodeName}` : undefined
+    controlledBy:
+      pod.spec.nodeName != null ? `Node/${pod.spec.nodeName}` : undefined
   }
 }
 
@@ -916,7 +943,8 @@ export const describePod = (pod: Pod): string => {
   const nodeIP = simulatePodIP(nodeName)
   const header = formatStaticControlPlaneHeader(pod)
   const isStaticControlPlanePod = header.priorityClassName != null
-  const hasNodeAssignment = pod.spec.nodeName != null && pod.spec.nodeName.length > 0
+  const hasNodeAssignment =
+    pod.spec.nodeName != null && pod.spec.nodeName.length > 0
   const kubeApiAccessVolumeName = buildKubeApiAccessVolumeName(pod)
 
   // Basic metadata
@@ -930,7 +958,9 @@ export const describePod = (pod: Pod): string => {
     lines.push('Service Account:      default')
   }
   lines.push(`Node:                 ${nodeName}/${nodeIP}`)
-  lines.push(`Start Time:           ${formatDescribeDate(pod.metadata.creationTimestamp)}`)
+  lines.push(
+    `Start Time:           ${formatDescribeDate(pod.metadata.creationTimestamp)}`
+  )
   lines.push(...formatMapMultiLine('Labels', pod.metadata.labels))
   lines.push(
     ...formatMapMultiLine(
@@ -1005,12 +1035,15 @@ export const describePod = (pod: Pod): string => {
         lines.push(`      ${arg}`)
       })
     }
-    const state = status?.state ?? (pod.status.phase === 'Running' ? 'Running' : 'Waiting')
+    const state =
+      status?.state ?? (pod.status.phase === 'Running' ? 'Running' : 'Waiting')
     lines.push(`    State:          ${state}`)
     if (status?.startedAt != null) {
       lines.push(`      Started:      ${formatDescribeDate(status.startedAt)}`)
     }
-    lines.push(`    Ready:          ${status?.ready === true ? 'True' : 'False'}`)
+    lines.push(
+      `    Ready:          ${status?.ready === true ? 'True' : 'False'}`
+    )
     lines.push(`    Restart Count:  ${status?.restartCount ?? 0}`)
     if (container.resources?.requests != null) {
       const entries = Object.entries(container.resources.requests)
@@ -1031,13 +1064,19 @@ export const describePod = (pod: Pod): string => {
       }
     }
     if (container.livenessProbe != null) {
-      lines.push(formatProbeInline('Liveness', container.livenessProbe, podIP, 8))
+      lines.push(
+        formatProbeInline('Liveness', container.livenessProbe, podIP, 8)
+      )
     }
     if (container.readinessProbe != null) {
-      lines.push(formatProbeInline('Readiness', container.readinessProbe, podIP, 3))
+      lines.push(
+        formatProbeInline('Readiness', container.readinessProbe, podIP, 3)
+      )
     }
     if (container.startupProbe != null) {
-      lines.push(formatProbeInline('Startup', container.startupProbe, podIP, 24))
+      lines.push(
+        formatProbeInline('Startup', container.startupProbe, podIP, 24)
+      )
     }
     if (container.env != null && container.env.length > 0) {
       lines.push('    Environment:  ')
@@ -1106,7 +1145,11 @@ export const describePod = (pod: Pod): string => {
           ]
         : undefined)
   lines.push(...formatPodTolerations(effectiveTolerations))
-  if (isStaticControlPlanePod === false && hasNodeAssignment && pod.status.phase === 'Running') {
+  if (
+    isStaticControlPlanePod === false &&
+    hasNodeAssignment &&
+    pod.status.phase === 'Running'
+  ) {
     lines.push(...formatDefaultPodEvents(pod, nodeName))
   } else {
     lines.push('Events:            <none>')
@@ -1115,18 +1158,21 @@ export const describePod = (pod: Pod): string => {
   return lines.join('\n')
 }
 
-export const describeNode = (
-  node: Node,
-  state?: ClusterStateData
-): string => {
+export const describeNode = (node: Node, state?: ClusterStateData): string => {
   const lines: string[] = []
   lines.push(`Name:               ${node.metadata.name}`)
   lines.push(`Roles:              ${getNodeRoles(node)}`)
   lines.push(...formatMapMultiLine('Labels', node.metadata.labels))
-  lines.push(...formatMapMultiLine('Annotations', node.metadata.annotations, 'colon'))
-  lines.push(`CreationTimestamp:  ${formatDescribeDate(node.metadata.creationTimestamp)}`)
+  lines.push(
+    ...formatMapMultiLine('Annotations', node.metadata.annotations, 'colon')
+  )
+  lines.push(
+    `CreationTimestamp:  ${formatDescribeDate(node.metadata.creationTimestamp)}`
+  )
   lines.push(`Taints:             ${formatNodeTaints(node.spec.taints)}`)
-  lines.push(`Unschedulable:      ${node.spec.unschedulable === true ? 'true' : 'false'}`)
+  lines.push(
+    `Unschedulable:      ${node.spec.unschedulable === true ? 'true' : 'false'}`
+  )
   lines.push('Lease:')
   lines.push(`  HolderIdentity:  ${node.metadata.name}`)
   lines.push('  AcquireTime:     <unset>')
@@ -1166,7 +1212,9 @@ export const describeDeployment = (deployment: Deployment): string => {
     `CreationTimestamp: ${formatDescribeDate(deployment.metadata.creationTimestamp)}`
   )
   lines.push(`Labels:           ${formatLabels(deployment.metadata.labels)}`)
-  lines.push(`Annotations:      ${formatLabels(deployment.metadata.annotations)}`)
+  lines.push(
+    `Annotations:      ${formatLabels(deployment.metadata.annotations)}`
+  )
   lines.push(`Selector:         ${formatSelector(deployment)}`)
   lines.push(`Replicas:         ${formatDeploymentReplicas(deployment)}`)
   lines.push(`StrategyType:     ${strategyType}`)
@@ -1181,12 +1229,20 @@ export const describeDeployment = (deployment: Deployment): string => {
   lines.push(blank())
 
   const templateLines: string[] = []
-  templateLines.push(kv('Labels', formatLabels(deployment.spec.template.metadata?.labels)))
   templateLines.push(
-    kv('Annotations', formatLabels(deployment.spec.template.metadata?.annotations))
+    kv('Labels', formatLabels(deployment.spec.template.metadata?.labels))
   )
   templateLines.push(
-    kv('Node-Selectors', formatLabels(deployment.spec.template.spec.nodeSelector))
+    kv(
+      'Annotations',
+      formatLabels(deployment.spec.template.metadata?.annotations)
+    )
+  )
+  templateLines.push(
+    kv(
+      'Node-Selectors',
+      formatLabels(deployment.spec.template.spec.nodeSelector)
+    )
   )
 
   const tolerations = deployment.spec.template.spec.tolerations
@@ -1344,21 +1400,35 @@ export const describeSecret = (secret: Secret): string => {
   return lines.join('\n')
 }
 
-export const describePersistentVolume = (persistentVolume: PersistentVolume): string => {
+export const describePersistentVolume = (
+  persistentVolume: PersistentVolume
+): string => {
   const lines: string[] = []
   lines.push(`Name:            ${persistentVolume.metadata.name}`)
-  lines.push(`Labels:          ${formatLabels(persistentVolume.metadata.labels)}`)
-  lines.push(`Annotations:     ${formatLabels(persistentVolume.metadata.annotations)}`)
-  lines.push(`StorageClass:    ${persistentVolume.spec.storageClassName ?? '<none>'}`)
+  lines.push(
+    `Labels:          ${formatLabels(persistentVolume.metadata.labels)}`
+  )
+  lines.push(
+    `Annotations:     ${formatLabels(persistentVolume.metadata.annotations)}`
+  )
+  lines.push(
+    `StorageClass:    ${persistentVolume.spec.storageClassName ?? '<none>'}`
+  )
   lines.push(
     `Status:          ${persistentVolume.status.phase ?? (persistentVolume.spec.claimRef == null ? 'Available' : 'Bound')}`
   )
-  lines.push(`Claim:           ${persistentVolume.spec.claimRef != null ? `${persistentVolume.spec.claimRef.namespace}/${persistentVolume.spec.claimRef.name}` : '<none>'}`)
-  lines.push(`Reclaim Policy:  ${persistentVolume.spec.persistentVolumeReclaimPolicy ?? 'Retain'}`)
+  lines.push(
+    `Claim:           ${persistentVolume.spec.claimRef != null ? `${persistentVolume.spec.claimRef.namespace}/${persistentVolume.spec.claimRef.name}` : '<none>'}`
+  )
+  lines.push(
+    `Reclaim Policy:  ${persistentVolume.spec.persistentVolumeReclaimPolicy ?? 'Retain'}`
+  )
   lines.push(`Access Modes:    ${persistentVolume.spec.accessModes.join(',')}`)
   lines.push(`Capacity:        ${persistentVolume.spec.capacity.storage}`)
   if (persistentVolume.spec.hostPath != null) {
-    lines.push(`Source:          HostPath (${persistentVolume.spec.hostPath.path})`)
+    lines.push(
+      `Source:          HostPath (${persistentVolume.spec.hostPath.path})`
+    )
   } else {
     lines.push('Source:          <none>')
   }
@@ -1373,13 +1443,25 @@ export const describePersistentVolumeClaim = (
   const lines: string[] = []
   lines.push(`Name:          ${persistentVolumeClaim.metadata.name}`)
   lines.push(`Namespace:     ${persistentVolumeClaim.metadata.namespace}`)
-  lines.push(`StorageClass:  ${persistentVolumeClaim.spec.storageClassName ?? '<none>'}`)
+  lines.push(
+    `StorageClass:  ${persistentVolumeClaim.spec.storageClassName ?? '<none>'}`
+  )
   lines.push(`Status:        ${persistentVolumeClaim.status.phase}`)
-  lines.push(`Volume:        ${persistentVolumeClaim.spec.volumeName ?? '<none>'}`)
-  lines.push(`Labels:        ${formatLabels(persistentVolumeClaim.metadata.labels)}`)
-  lines.push(`Annotations:   ${formatLabels(persistentVolumeClaim.metadata.annotations)}`)
-  lines.push(`Capacity:      ${persistentVolumeClaim.spec.resources.requests.storage}`)
-  lines.push(`Access Modes:  ${persistentVolumeClaim.spec.accessModes.join(',')}`)
+  lines.push(
+    `Volume:        ${persistentVolumeClaim.spec.volumeName ?? '<none>'}`
+  )
+  lines.push(
+    `Labels:        ${formatLabels(persistentVolumeClaim.metadata.labels)}`
+  )
+  lines.push(
+    `Annotations:   ${formatLabels(persistentVolumeClaim.metadata.annotations)}`
+  )
+  lines.push(
+    `Capacity:      ${persistentVolumeClaim.spec.resources.requests.storage}`
+  )
+  lines.push(
+    `Access Modes:  ${persistentVolumeClaim.spec.accessModes.join(',')}`
+  )
   lines.push('')
   lines.push('Events:        <none>')
   return lines.join('\n')
@@ -1407,7 +1489,10 @@ const renderServicePort = (service: Service, portIndex: number): string => {
   return `${portName}  ${port.port}/${port.protocol}`
 }
 
-const renderServiceTargetPort = (service: Service, portIndex: number): string => {
+const renderServiceTargetPort = (
+  service: Service,
+  portIndex: number
+): string => {
   const port = service.spec.ports[portIndex]
   if (port == null) {
     return '<none>'
@@ -1426,9 +1511,12 @@ const renderServiceEndpoints = (
   if (selectedPods.length === 0) {
     return '<none>'
   }
-  const targetPort = service.spec.ports[0]?.targetPort ?? service.spec.ports[0]?.port
+  const targetPort =
+    service.spec.ports[0]?.targetPort ?? service.spec.ports[0]?.port
   const endpointPort =
-    typeof targetPort === 'number' ? targetPort : service.spec.ports[0]?.port ?? 80
+    typeof targetPort === 'number'
+      ? targetPort
+      : (service.spec.ports[0]?.port ?? 80)
   const endpoints = selectedPods.map((pod) => {
     const podIP = pod.status.podIP ?? simulatePodIP(pod.metadata.name)
     return `${podIP}:${endpointPort}`
@@ -1443,8 +1531,12 @@ export const describeService = (
   const lines: string[] = []
   lines.push(`Name:                     ${service.metadata.name}`)
   lines.push(`Namespace:                ${service.metadata.namespace}`)
-  lines.push(`Labels:                   ${formatLabels(service.metadata.labels)}`)
-  lines.push(`Annotations:              ${formatLabels(service.metadata.annotations)}`)
+  lines.push(
+    `Labels:                   ${formatLabels(service.metadata.labels)}`
+  )
+  lines.push(
+    `Annotations:              ${formatLabels(service.metadata.annotations)}`
+  )
   lines.push(`Selector:                 ${formatLabels(service.spec.selector)}`)
   lines.push(`Type:                     ${service.spec.type ?? 'ClusterIP'}`)
   lines.push('IP Family Policy:         SingleStack')
@@ -1453,8 +1545,12 @@ export const describeService = (
   lines.push(`IPs:                      ${service.spec.clusterIP ?? '<none>'}`)
   lines.push(`Port:                     ${renderServicePort(service, 0)}`)
   lines.push(`TargetPort:               ${renderServiceTargetPort(service, 0)}`)
-  lines.push(`Endpoints:                ${renderServiceEndpoints(service, state)}`)
-  lines.push(`Session Affinity:         ${service.spec.sessionAffinity ?? 'None'}`)
+  lines.push(
+    `Endpoints:                ${renderServiceEndpoints(service, state)}`
+  )
+  lines.push(
+    `Session Affinity:         ${service.spec.sessionAffinity ?? 'None'}`
+  )
   lines.push('Internal Traffic Policy:  Cluster')
   lines.push('Events:                   <none>')
   return lines.join('\n')
@@ -1475,7 +1571,8 @@ export const describeIngress = (ingress: Ingress): string => {
     lines.push(`  ${host}`)
     for (const pathRule of rule.http.paths) {
       const backendPort =
-        pathRule.backend.service.port.number ?? pathRule.backend.service.port.name
+        pathRule.backend.service.port.number ??
+        pathRule.backend.service.port.name
       lines.push(
         `                    ${pathRule.path}   ${pathRule.backend.service.name}:${String(backendPort)}`
       )

@@ -6,11 +6,11 @@ Now that you understand what PVs and PVCs are, let's create one. A PersistentVol
 
 A PV definition tells Kubernetes about a piece of storage: how big it is, how it can be accessed, and what backend it uses. The key fields are:
 
-- **capacity:**  How much storage (e.g., `10Gi`)
-- **accessModes:**  How it can be mounted (`ReadWriteOnce`, `ReadOnlyMany`, `ReadWriteMany`)
-- **persistentVolumeReclaimPolicy:**  What happens when the PVC is deleted (`Retain` or `Delete`)
-- **storageClassName:**  Groups PVs into classes; PVCs reference this to find matching PVs
-- **Volume backend:**  The actual storage: `hostPath`, `nfs`, `awsElasticBlockStore`, `csi`, etc.
+- **capacity:** How much storage (e.g., `10Gi`)
+- **accessModes:** How it can be mounted (`ReadWriteOnce`, `ReadOnlyMany`, `ReadWriteMany`)
+- **persistentVolumeReclaimPolicy:** What happens when the PVC is deleted (`Retain` or `Delete`)
+- **storageClassName:** Groups PVs into classes; PVCs reference this to find matching PVs
+- **Volume backend:** The actual storage: `hostPath`, `nfs`, `awsElasticBlockStore`, `csi`, etc.
 
 ## Example: hostPath PV (Development)
 
@@ -71,19 +71,19 @@ PVs are **cluster-scoped** resources — they don't belong to any namespace. PVC
 
 The reclaim policy determines what happens to the PV after the PVC that was using it is deleted:
 
-- **Retain:**  The PV keeps its data and moves to a `Released` state. An admin must manually clean up the data and make the PV available again. This is the safe choice for important data.
-- **Delete:**  The PV and its underlying storage are automatically deleted. This is common with dynamic provisioning, where storage is treated as disposable.
-- **Recycle:**  Deprecated. Was equivalent to `rm -rf` on the volume. Don't use it.
+- **Retain:** The PV keeps its data and moves to a `Released` state. An admin must manually clean up the data and make the PV available again. This is the safe choice for important data.
+- **Delete:** The PV and its underlying storage are automatically deleted. This is common with dynamic provisioning, where storage is treated as disposable.
+- **Recycle:** Deprecated. Was equivalent to `rm -rf` on the volume. Don't use it.
 
 For manually created PVs containing important data, always use `Retain`. For dynamically provisioned volumes in development environments, `Delete` keeps things clean.
 
 ## Troubleshooting
 
-**PV stuck in Available:**  No PVC has matched it yet. Check that a PVC exists with matching capacity, access modes, and StorageClass.
+**PV stuck in Available:** No PVC has matched it yet. Check that a PVC exists with matching capacity, access modes, and StorageClass.
 
-**hostPath not found:**  The directory doesn't exist on the node. Use `type: DirectoryOrCreate` to let Kubernetes create it, or ensure the path exists before creating the PV.
+**hostPath not found:** The directory doesn't exist on the node. Use `type: DirectoryOrCreate` to let Kubernetes create it, or ensure the path exists before creating the PV.
 
-**Binding fails:**  The PVC's requirements don't match any PV. Common mismatches: access modes (PVC asks for RWX but PV only supports RWO), capacity (PVC asks for more than the PV offers), or StorageClass mismatch.
+**Binding fails:** The PVC's requirements don't match any PV. Common mismatches: access modes (PVC asks for RWX but PV only supports RWO), capacity (PVC asks for more than the PV offers), or StorageClass mismatch.
 
 ---
 

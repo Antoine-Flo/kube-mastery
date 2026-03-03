@@ -12,9 +12,9 @@ Setting `suspend: true` tells the CronJob controller to stop creating new Jobs a
 
 ### When Suspension Is Useful
 
-- **Maintenance windows:**  you are upgrading the database and want to pause backups temporarily.
-- **Incident response:**  a scheduled cleanup Job is causing unexpected load; you need to stop new runs while you investigate.
-- **Staged rollouts:**  you create the CronJob in a suspended state, review it, then enable it when ready.
+- **Maintenance windows:** you are upgrading the database and want to pause backups temporarily.
+- **Incident response:** a scheduled cleanup Job is causing unexpected load; you need to stop new runs while you investigate.
+- **Staged rollouts:** you create the CronJob in a suspended state, review it, then enable it when ready.
 
 ### Suspending in Practice
 
@@ -26,7 +26,7 @@ kind: CronJob
 metadata:
   name: db-backup
 spec:
-  schedule: "0 2 * * *"
+  schedule: '0 2 * * *'
   suspend: true
   jobTemplate:
     spec:
@@ -35,7 +35,7 @@ spec:
           containers:
             - name: backup
               image: backup-tool:1.4
-              command: ["/bin/sh", "-c", "backup-database.sh"]
+              command: ['/bin/sh', '-c', 'backup-database.sh']
           restartPolicy: OnFailure
 ```
 
@@ -61,8 +61,8 @@ kind: CronJob
 metadata:
   name: morning-report
 spec:
-  schedule: "0 9 * * 1-5"
-  timeZone: "America/New_York"
+  schedule: '0 9 * * 1-5'
+  timeZone: 'America/New_York'
   jobTemplate:
     spec:
       template:
@@ -70,7 +70,7 @@ spec:
           containers:
             - name: report
               image: report-gen:2.1
-              command: ["/bin/sh", "-c", "generate-report.sh"]
+              command: ['/bin/sh', '-c', 'generate-report.sh']
           restartPolicy: OnFailure
 ```
 
@@ -94,8 +94,8 @@ These two fields work together naturally. A common pattern is to create a CronJo
 
 ```yaml
 spec:
-  schedule: "30 18 * * 5"
-  timeZone: "Europe/Paris"
+  schedule: '30 18 * * 5'
+  timeZone: 'Europe/Paris'
   suspend: true
 ```
 
@@ -107,10 +107,10 @@ After configuring suspend and time zone, use `kubectl describe cronjob <name>` f
 
 If Jobs are not being created at the expected times, work through this checklist:
 
-1. **Is the CronJob suspended?:**  check `spec.suspend`.
-2. **Is the time zone valid?:**  a typo in the IANA name (e.g., `America/NewYork` instead of `America/New_York`) can cause the CronJob to silently fail. Describe the CronJob and look for warning events.
-3. **Is the cluster running Kubernetes 1.27+?:**  on older versions, the `timeZone` field is ignored and the schedule falls back to the controller's local time.
-4. **Is the schedule correct?:**  test with a short interval like `*/2 * * * *` (every 2 minutes) to confirm the CronJob fires before committing to a daily or weekly schedule.
+1. **Is the CronJob suspended?:** check `spec.suspend`.
+2. **Is the time zone valid?:** a typo in the IANA name (e.g., `America/NewYork` instead of `America/New_York`) can cause the CronJob to silently fail. Describe the CronJob and look for warning events.
+3. **Is the cluster running Kubernetes 1.27+?:** on older versions, the `timeZone` field is ignored and the schedule falls back to the controller's local time.
+4. **Is the schedule correct?:** test with a short interval like `*/2 * * * *` (every 2 minutes) to confirm the CronJob fires before committing to a daily or weekly schedule.
 
 :::warning
 On Kubernetes versions older than 1.27, the `timeZone` field is silently ignored — no error is raised. The schedule will be interpreted in the controller's local time (usually UTC). Always verify your cluster version with `kubectl version` before relying on this feature.

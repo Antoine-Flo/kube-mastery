@@ -21,14 +21,14 @@ spec:
 
 Let's break this down field by field:
 
-| Field                   | What it does                                                       |
-|-------------------------|--------------------------------------------------------------------|
-| `apiVersion: v1`        | Tells Kubernetes which API version to use. Pods belong to the core `v1` group. |
-| `kind: Pod`             | Declares the type of object you are creating.                      |
-| `metadata.name`         | A unique name for the Pod within its namespace. Must be lowercase, alphanumeric, with hyphens allowed. |
-| `spec.containers`       | A list of containers to run. Even for a single container, this is an array. |
-| `spec.containers[].name`  | A human-readable name for the container — required and must be unique within the Pod. |
-| `spec.containers[].image` | The container image to pull. Use an explicit tag (like `1.27`) rather than `latest` for reproducibility. |
+| Field                     | What it does                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `apiVersion: v1`          | Tells Kubernetes which API version to use. Pods belong to the core `v1` group.                                |
+| `kind: Pod`               | Declares the type of object you are creating.                                                                 |
+| `metadata.name`           | A unique name for the Pod within its namespace. Must be lowercase, alphanumeric, with hyphens allowed.        |
+| `spec.containers`         | A list of containers to run. Even for a single container, this is an array.                                   |
+| `spec.containers[].name`  | A human-readable name for the container — required and must be unique within the Pod.                         |
+| `spec.containers[].image` | The container image to pull. Use an explicit tag (like `1.27`) rather than `latest` for reproducibility.      |
 | `spec.containers[].ports` | Declares which ports the container listens on. This is informational but also used by Services for discovery. |
 
 :::info
@@ -57,10 +57,10 @@ sequenceDiagram
     KL-->>API: Update Pod status → Running
 ```
 
-1. **Validation:**  the API server checks your manifest for correctness and stores it in etcd, the cluster's data store.
-2. **Scheduling:**  the scheduler finds a node with enough resources and assigns the Pod to it.
-3. **Execution:**  the kubelet on the chosen node pulls the container image and starts the container.
-4. **Status updates:**  the kubelet continuously reports the Pod's state back to the API server.
+1. **Validation:** the API server checks your manifest for correctness and stores it in etcd, the cluster's data store.
+2. **Scheduling:** the scheduler finds a node with enough resources and assigns the Pod to it.
+3. **Execution:** the kubelet on the chosen node pulls the container image and starts the container.
+4. **Status updates:** the kubelet continuously reports the Pod's state back to the API server.
 
 If anything goes wrong at any step — an invalid field, no available nodes, a missing image — the Pod's status will reflect the problem, and events will explain what happened.
 
@@ -99,7 +99,7 @@ spec:
 kubectl apply -f nginx-pod.yaml
 ```
 
-You should see: `pod/nginx-pod created`. The `apply` command is **declarative:**  it tells Kubernetes "make reality match this file."
+You should see: `pod/nginx-pod created`. The `apply` command is **declarative:** it tells Kubernetes "make reality match this file."
 
 ### Step 3: Check the Pod status
 

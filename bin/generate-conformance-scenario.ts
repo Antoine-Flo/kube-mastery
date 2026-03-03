@@ -28,9 +28,7 @@ export const buildExhaustiveSuite = () => {
   })
 }
 
-export const buildCommandSuite = (
-  commandName: KubectlCommandName
-) => {
+export const buildCommandSuite = (commandName: KubectlCommandName) => {
   const segments = createCommandCatalogSegments()
   const commandSegments = filterSegmentsByCommand(segments, commandName)
   if (commandSegments.length === 0) {

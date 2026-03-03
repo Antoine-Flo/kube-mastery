@@ -1,6 +1,6 @@
 # kubeconfig and Client Certificates
 
-Every time you run a `kubectl` command, it needs to know three things: *which cluster* to talk to, *who you are*, and *which namespace* to default to. All of this information lives in your **kubeconfig** file — typically at `~/.kube/config`.
+Every time you run a `kubectl` command, it needs to know three things: _which cluster_ to talk to, _who you are_, and _which namespace_ to default to. All of this information lives in your **kubeconfig** file — typically at `~/.kube/config`.
 
 Let's explore how kubeconfig works and how client certificates fit into the authentication picture.
 
@@ -8,11 +8,11 @@ Let's explore how kubeconfig works and how client certificates fit into the auth
 
 A kubeconfig file has three main sections that work together:
 
-**Clusters:**  Each entry defines a Kubernetes cluster: its API server URL and the CA certificate used to verify the server's identity.
+**Clusters:** Each entry defines a Kubernetes cluster: its API server URL and the CA certificate used to verify the server's identity.
 
-**Users:**  Each entry defines credentials: client certificates, tokens, or other authentication methods.
+**Users:** Each entry defines credentials: client certificates, tokens, or other authentication methods.
 
-**Contexts:**  Each context combines a cluster, a user, and optionally a default namespace. When you switch context, you switch which cluster you're talking to and which identity you're using.
+**Contexts:** Each context combines a cluster, a user, and optionally a default namespace. When you switch context, you switch which cluster you're talking to and which identity you're using.
 
 Think of it like a phone's contact list. Each contact (context) combines a person (user) with a phone number (cluster). You switch contacts to reach different people on different networks.
 
@@ -115,11 +115,11 @@ After setting everything up, verify by checking the current context, reviewing t
 
 ## Troubleshooting Common Errors
 
-**"certificate signed by unknown authority":**  The client certificate wasn't signed by the cluster CA, or the CA reference in kubeconfig is wrong. Verify the CA cert matches.
+**"certificate signed by unknown authority":** The client certificate wasn't signed by the cluster CA, or the CA reference in kubeconfig is wrong. Verify the CA cert matches.
 
-**"x509: certificate has expired":**  The client certificate has expired. Generate a new one and update kubeconfig.
+**"x509: certificate has expired":** The client certificate has expired. Generate a new one and update kubeconfig.
 
-**"Forbidden":**  Authentication succeeded (the certificate is valid), but RBAC denies the action. The user needs a Role or ClusterRole bound via RoleBinding or ClusterRoleBinding.
+**"Forbidden":** Authentication succeeded (the certificate is valid), but RBAC denies the action. The user needs a Role or ClusterRole bound via RoleBinding or ClusterRoleBinding.
 
 :::warning
 Never commit kubeconfig files with private keys to version control. Treat client certificates like passwords — they grant cluster access. Rotate them before they expire, and revoke access by removing the user's RoleBindings when they leave the team.

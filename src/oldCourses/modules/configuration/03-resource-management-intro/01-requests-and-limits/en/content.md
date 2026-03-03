@@ -11,8 +11,8 @@ A **request** tells the scheduler "my container needs at least this much to func
 ```yaml
 resources:
   requests:
-    cpu: "250m"
-    memory: "256Mi"
+    cpu: '250m'
+    memory: '256Mi'
 ```
 
 - `cpu: "250m"` — 250 millicores (0.25 of a CPU core)
@@ -27,16 +27,17 @@ A **limit** caps the maximum resources your container can use:
 ```yaml
 resources:
   requests:
-    cpu: "250m"
-    memory: "256Mi"
+    cpu: '250m'
+    memory: '256Mi'
   limits:
-    cpu: "500m"
-    memory: "512Mi"
+    cpu: '500m'
+    memory: '512Mi'
 ```
 
 What happens when limits are exceeded:
-- **CPU**: The container is **throttled:**  it slows down but keeps running
-- **Memory**: The container is **OOMKilled:**  Kubernetes terminates it
+
+- **CPU**: The container is **throttled:** it slows down but keeps running
+- **Memory**: The container is **OOMKilled:** Kubernetes terminates it
 
 ```mermaid
 flowchart TD
@@ -47,6 +48,7 @@ flowchart TD
 ## CPU Units
 
 CPU is measured in **cores** or **millicores**:
+
 - `1` = 1 full CPU core
 - `500m` = half a core
 - `100m` = one-tenth of a core
@@ -59,6 +61,7 @@ Prefer millicores (`250m`) over decimal notation (`0.25`) for consistency and cl
 ## Memory Units
 
 Memory uses standard binary prefixes:
+
 - `256Mi` = 256 mebibytes (use this)
 - `1Gi` = 1 gibibyte
 - `256M` = 256 megabytes (decimal — slightly different)
@@ -75,11 +78,11 @@ containers:
     image: myapp:latest
     resources:
       requests:
-        cpu: "100m"
-        memory: "128Mi"
+        cpu: '100m'
+        memory: '128Mi'
       limits:
-        cpu: "500m"
-        memory: "512Mi"
+        cpu: '500m'
+        memory: '512Mi'
 ```
 
 This says: "I need at least 100m CPU and 128Mi memory (reserve this for me), but I might burst up to 500m CPU and 512Mi memory."
@@ -90,11 +93,11 @@ Once metrics-server is installed, you can use `kubectl top pod` and `kubectl top
 
 ## Common Problems
 
-**Pod stuck in Pending:**  Requests exceed available node capacity. Either reduce requests or add more nodes.
+**Pod stuck in Pending:** Requests exceed available node capacity. Either reduce requests or add more nodes.
 
-**Container OOMKilled:**  Memory usage exceeded the limit. Increase the memory limit or investigate memory leaks.
+**Container OOMKilled:** Memory usage exceeded the limit. Increase the memory limit or investigate memory leaks.
 
-**Application feels slow:**  CPU is being throttled because the limit is too low. Increase the CPU limit or check if requests match actual needs.
+**Application feels slow:** CPU is being throttled because the limit is too low. Increase the CPU limit or check if requests match actual needs.
 
 :::warning
 Without requests, the scheduler can't make informed decisions — Pods might land on overloaded nodes. Without limits, a single container can consume all node resources. Always set both for production workloads.
@@ -121,11 +124,11 @@ spec:
       image: nginx
       resources:
         requests:
-          memory: "64Mi"
-          cpu: "100m"
+          memory: '64Mi'
+          cpu: '100m'
         limits:
-          memory: "128Mi"
-          cpu: "250m"
+          memory: '128Mi'
+          cpu: '250m'
 ```
 
 ```bash

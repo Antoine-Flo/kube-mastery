@@ -165,14 +165,14 @@ const corsHeaders = {
 
 #### Fichiers prioritaires à refactoriser
 
-1. **`src/core/cluster/ClusterState.ts`:**  142 lignes dans `createClusterState`
+1. **`src/core/cluster/ClusterState.ts`:** 142 lignes dans `createClusterState`
    - Extraire : `createResourceFacade`, `createNodeFacade`, `setupEventHandling`
 
-2. **`src/core/cluster/controllers/DeploymentController.ts`:**  switch + duplication
+2. **`src/core/cluster/controllers/DeploymentController.ts`:** switch + duplication
    - Remplacer switch par object lookup `EVENT_HANDLERS`
    - Extraire helpers communs avec ReplicaSetController
 
-3. **`src/core/terminal/TerminalManager.ts`:**  throw + returns sans braces
+3. **`src/core/terminal/TerminalManager.ts`:** throw + returns sans braces
    - Remplacer `throw` par `Result<T>`
 
 ### 2.2 Code Dupliqué

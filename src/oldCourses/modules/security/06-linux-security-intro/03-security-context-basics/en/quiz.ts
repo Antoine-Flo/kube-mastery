@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'What can happen if you set readOnlyRootFilesystem: true for an app that writes to /tmp?',
+      question:
+        'What can happen if you set readOnlyRootFilesystem: true for an app that writes to /tmp?',
       options: [
         'It will run faster',
         'The application may fail if it cannot write to /tmp',

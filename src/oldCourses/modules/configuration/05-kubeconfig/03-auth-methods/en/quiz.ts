@@ -9,13 +9,9 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'Which authentication method runs an external command to obtain credentials?',
-      options: [
-        'client-certificate',
-        'token',
-        'exec',
-        'basicAuth'
-      ],
+      question:
+        'Which authentication method runs an external command to obtain credentials?',
+      options: ['client-certificate', 'token', 'exec', 'basicAuth'],
       correctAnswer: 2
     },
     {

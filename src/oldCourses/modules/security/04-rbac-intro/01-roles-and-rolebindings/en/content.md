@@ -6,7 +6,7 @@ Think of it like a library card system. A Role is like a borrowing policy — it
 
 ## How Roles and RoleBindings Relate
 
-A **Role** defines a set of permissions — which actions (called verbs) are allowed on which resources. A **RoleBinding** connects that Role to one or more **subjects:**  users, groups, or ServiceAccounts. The subject receives the permissions described in the Role.
+A **Role** defines a set of permissions — which actions (called verbs) are allowed on which resources. A **RoleBinding** connects that Role to one or more **subjects:** users, groups, or ServiceAccounts. The subject receives the permissions described in the Role.
 
 Both Roles and RoleBindings are **namespace-scoped**, which means they only apply within a single namespace. This is an important design choice: it lets you grant different permissions in different namespaces without risk of cross-contamination.
 
@@ -31,19 +31,19 @@ metadata:
   namespace: default
   name: pod-reader
 rules:
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["pods/log"]
-    verbs: ["get"]
+  - apiGroups: ['']
+    resources: ['pods']
+    verbs: ['get', 'list', 'watch']
+  - apiGroups: ['']
+    resources: ['pods/log']
+    verbs: ['get']
 ```
 
 Let's break down the key fields:
 
-- **apiGroups:**  the API group the resource belongs to. Core resources (Pods, Services, ConfigMaps) use `""` (an empty string). Other resources use their group name, like `apps` for Deployments.
-- **resources:**  which resource types this rule applies to. Subresources like `pods/log` or `pods/status` must be listed separately.
-- **verbs:**  the actions allowed. Common verbs include `get`, `list`, `watch`, `create`, `update`, `patch`, and `delete`.
+- **apiGroups:** the API group the resource belongs to. Core resources (Pods, Services, ConfigMaps) use `""` (an empty string). Other resources use their group name, like `apps` for Deployments.
+- **resources:** which resource types this rule applies to. Subresources like `pods/log` or `pods/status` must be listed separately.
+- **verbs:** the actions allowed. Common verbs include `get`, `list`, `watch`, `create`, `update`, `patch`, and `delete`.
 
 ## Creating a RoleBinding
 
@@ -101,9 +101,9 @@ kind: Role
 metadata:
   name: pod-reader
 rules:
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "list", "watch"]
+  - apiGroups: ['']
+    resources: ['pods']
+    verbs: ['get', 'list', 'watch']
 ```
 
 ```bash

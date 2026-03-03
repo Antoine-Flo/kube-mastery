@@ -27,7 +27,10 @@ const COMMON_EXPECTATIONS = [
   'normalized output diff parity'
 ]
 
-export const COMMAND_MATRIX: Record<KubectlCommandName, CommandMatrixDefinition> = {
+export const COMMAND_MATRIX: Record<
+  KubectlCommandName,
+  CommandMatrixDefinition
+> = {
   annotate: {
     command: 'annotate',
     strategy: 'pairwise-risk-based',
@@ -108,7 +111,12 @@ export const COMMAND_MATRIX: Record<KubectlCommandName, CommandMatrixDefinition>
       'kubectl config --help'
     ],
     axis: {
-      inputShape: ['get-contexts', 'current-context', 'view --minify', 'set-context --current --namespace'],
+      inputShape: [
+        'get-contexts',
+        'current-context',
+        'view --minify',
+        'set-context --current --namespace'
+      ],
       context: ['seed=minimal'],
       expectedOutput: COMMON_EXPECTATIONS
     }
@@ -271,7 +279,16 @@ export const COMMAND_MATRIX: Record<KubectlCommandName, CommandMatrixDefinition>
       'kubectl run --help'
     ],
     axis: {
-      inputShape: ['--image', '--command', '--', '--env', '--labels', '--port', '--dry-run', '--restart'],
+      inputShape: [
+        '--image',
+        '--command',
+        '--',
+        '--env',
+        '--labels',
+        '--port',
+        '--dry-run',
+        '--restart'
+      ],
       context: ['seed=minimal'],
       expectedOutput: COMMON_EXPECTATIONS
     }

@@ -51,7 +51,7 @@ kind: StorageClass
 metadata:
   name: fast-ssd
   annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
+    storageclass.kubernetes.io/is-default-class: 'true'
 provisioner: ebs.csi.aws.com
 parameters:
   type: gp3

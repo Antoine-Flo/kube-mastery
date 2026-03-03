@@ -63,7 +63,10 @@ export const saveSandboxEnvironment = async (
 ): Promise<Result<void>> => {
   try {
     const db = await openDatabase()
-    const transaction = db.transaction([INDEXED_DB_CONFIG.storeName], 'readwrite')
+    const transaction = db.transaction(
+      [INDEXED_DB_CONFIG.storeName],
+      'readwrite'
+    )
     const store = transaction.objectStore(INDEXED_DB_CONFIG.storeName)
 
     const environment: SandboxEnvironment & { userId: string } = {

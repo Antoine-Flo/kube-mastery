@@ -16,7 +16,11 @@ const servicePortKey = (
   return `${service.metadata.namespace}/${service.metadata.name}:${servicePort}/${protocol}`
 }
 
-const baseCandidateFromKey = (key: string, min: number, size: number): number => {
+const baseCandidateFromKey = (
+  key: string,
+  min: number,
+  size: number
+): number => {
   let hash = 0
   for (let index = 0; index < key.length; index++) {
     hash = (hash << 5) - hash + key.charCodeAt(index)
@@ -27,7 +31,12 @@ const baseCandidateFromKey = (key: string, min: number, size: number): number =>
 
 export interface NodePortAllocator {
   assign: (service: Service, servicePort: number, protocol: string) => number
-  reserve: (service: Service, nodePort: number, servicePort: number, protocol: string) => void
+  reserve: (
+    service: Service,
+    nodePort: number,
+    servicePort: number,
+    protocol: string
+  ) => void
   releaseService: (service: Service) => void
 }
 
@@ -41,7 +50,11 @@ export const createNodePortAllocator = (
   const assignedByKey = new Map<string, number>()
   const usedNodePorts = new Set<number>()
 
-  const assign = (service: Service, servicePort: number, protocol: string): number => {
+  const assign = (
+    service: Service,
+    servicePort: number,
+    protocol: string
+  ): number => {
     const key = servicePortKey(service, servicePort, protocol)
     const existing = assignedByKey.get(key)
     if (existing != null) {

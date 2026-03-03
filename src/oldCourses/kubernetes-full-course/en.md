@@ -1,5 +1,5 @@
 ---
-title: "Kubernetes Complete Course"
+title: 'Kubernetes Complete Course'
 shortDescription: The exhaustive path covering every topic in one linear course — all modules, all chapters, from fundamentals to advanced extensions. 42 chapters and growing.
 isActive: true
 price: 0

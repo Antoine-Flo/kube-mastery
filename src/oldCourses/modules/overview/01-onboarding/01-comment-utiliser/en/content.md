@@ -8,8 +8,8 @@ Imagine learning to ride a bicycle by only reading about it. You might understan
 
 Let's take a quick tour of your workspace. The screen is split into two main areas:
 
-- **Left panel:**  Lessons and navigation. This is where you read content, move between lessons, and track your progress through the course.
-- **Right panel:**  Emulated terminal. You can run `kubectl` and other shell commands here, just like you would on a real machine.
+- **Left panel:** Lessons and navigation. This is where you read content, move between lessons, and track your progress through the course.
+- **Right panel:** Emulated terminal. You can run `kubectl` and other shell commands here, just like you would on a real machine.
 
 Below the terminal you will find two small icons. The **telescope icon** opens the **cluster visualizer**, a live diagram of the nodes, Pods, and containers currently running in your cluster. The **chat icon** lets you send feedback or report issues.
 

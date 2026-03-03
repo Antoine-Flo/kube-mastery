@@ -193,7 +193,9 @@ export const ensureCurrentContextNamespace = (
     return success(undefined)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    return error(`Failed to set current context namespace to ${namespace}: ${message}`)
+    return error(
+      `Failed to set current context namespace to ${namespace}: ${message}`
+    )
   }
 }
 
@@ -283,10 +285,13 @@ const runKubectlForYamlTargets = (
   for (const yamlFile of filesResult.value) {
     const ignoreNotFoundArg =
       action === 'delete' && ignoreNotFound ? ' --ignore-not-found' : ''
-    const output = execSync(`kubectl ${action} -f ${yamlFile}${ignoreNotFoundArg}`, {
-      stdio: 'pipe',
-      encoding: 'utf-8'
-    }).trim()
+    const output = execSync(
+      `kubectl ${action} -f ${yamlFile}${ignoreNotFoundArg}`,
+      {
+        stdio: 'pipe',
+        encoding: 'utf-8'
+      }
+    ).trim()
     outputs.push(output)
   }
   return success(outputs.filter((line) => line.length > 0).join('\n'))
@@ -334,7 +339,9 @@ export const waitForPodsReady = (namespace?: string): Result<void, string> => {
           if (phase === 'Succeeded') {
             return false
           }
-          const containerStatuses = Array.isArray(pod?.status?.containerStatuses)
+          const containerStatuses = Array.isArray(
+            pod?.status?.containerStatuses
+          )
             ? pod.status.containerStatuses
             : []
           if (containerStatuses.length === 0) {
@@ -352,9 +359,10 @@ export const waitForPodsReady = (namespace?: string): Result<void, string> => {
           return `${podNamespace}/${podName}:${phase}`
         })
 
-      const scope = namespace != null && namespace.length > 0
-        ? `namespace "${namespace}"`
-        : 'all namespaces'
+      const scope =
+        namespace != null && namespace.length > 0
+          ? `namespace "${namespace}"`
+          : 'all namespaces'
       const renderedPods = notReadyPods.slice(0, 12).join(', ')
       const hasMore = notReadyPods.length > 12
       const suffix = hasMore ? ', ...' : ''

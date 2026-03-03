@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'In what order do authentication, authorization, and admission control run?',
+      question:
+        'In what order do authentication, authorization, and admission control run?',
       options: [
         'Admission, Authentication, Authorization',
         'Authentication, Authorization, Admission',

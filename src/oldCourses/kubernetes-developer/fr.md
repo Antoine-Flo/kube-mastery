@@ -1,5 +1,5 @@
 ---
-title: "Kubernetes Développeur"
+title: 'Kubernetes Développeur'
 shortDescription: Construisez et livrez des applications pretes pour la production sur Kubernetes. Couvre les updates de deploiement, Ingress, secrets, gestion des ressources et workloads stateful avec stockage.
 isActive: true
 price: 0

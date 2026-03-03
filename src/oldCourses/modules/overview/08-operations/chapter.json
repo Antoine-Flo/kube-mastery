@@ -1,1 +1,8 @@
-{"title":{"en":"Common Operations","fr":"Opérations courantes"},"description":{"en":"Learn essential kubectl operations for viewing and managing resources","fr":"Apprenez les opérations kubectl essentielles pour visualiser et gérer les ressources"},"environment":"minimal"}
+{
+  "title": { "en": "Common Operations", "fr": "Opérations courantes" },
+  "description": {
+    "en": "Learn essential kubectl operations for viewing and managing resources",
+    "fr": "Apprenez les opérations kubectl essentielles pour visualiser et gérer les ressources"
+  },
+  "environment": "minimal"
+}

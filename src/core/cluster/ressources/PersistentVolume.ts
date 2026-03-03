@@ -4,13 +4,19 @@ import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import type { KubernetesResource } from '../repositories/types'
 
-export type PersistentVolumePhase = 'Available' | 'Bound' | 'Released' | 'Failed'
+export type PersistentVolumePhase =
+  | 'Available'
+  | 'Bound'
+  | 'Released'
+  | 'Failed'
 
 export interface PersistentVolumeSpec {
   capacity: {
     storage: string
   }
-  accessModes: Array<'ReadWriteOnce' | 'ReadOnlyMany' | 'ReadWriteMany' | 'ReadWriteOncePod'>
+  accessModes: Array<
+    'ReadWriteOnce' | 'ReadOnlyMany' | 'ReadWriteMany' | 'ReadWriteOncePod'
+  >
   storageClassName?: string
   persistentVolumeReclaimPolicy?: 'Retain' | 'Recycle' | 'Delete'
   hostPath?: {
@@ -85,7 +91,9 @@ const PersistentVolumeManifestSchema = z.object({
   }),
   spec: z.object({
     capacity: z.object({
-      storage: z.string().min(1, 'PersistentVolume capacity.storage is required')
+      storage: z
+        .string()
+        .min(1, 'PersistentVolume capacity.storage is required')
     }),
     accessModes: z
       .array(
@@ -144,7 +152,9 @@ export const parsePersistentVolumeManifest = (
       ...(manifest.metadata.creationTimestamp && {
         creationTimestamp: manifest.metadata.creationTimestamp
       }),
-      ...(manifest.status?.phase && { status: { phase: manifest.status.phase } })
+      ...(manifest.status?.phase && {
+        status: { phase: manifest.status.phase }
+      })
     })
   )
 }

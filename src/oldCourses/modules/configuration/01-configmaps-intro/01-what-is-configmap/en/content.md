@@ -28,9 +28,9 @@ kind: ConfigMap
 metadata:
   name: app-settings
 data:
-  LOG_LEVEL: "info"
-  DATABASE_HOST: "postgres.default.svc.cluster.local"
-  FEATURE_NEW_UI: "true"
+  LOG_LEVEL: 'info'
+  DATABASE_HOST: 'postgres.default.svc.cluster.local'
+  FEATURE_NEW_UI: 'true'
   config.json: |
     {
       "timeout": 30,
@@ -48,14 +48,16 @@ Keys must consist of alphanumeric characters, hyphens (`-`), underscores (`_`), 
 ## When to Use ConfigMaps
 
 ConfigMaps are ideal for:
-- **Environment-specific settings:**  API URLs, database hostnames, log levels
-- **Feature flags:**  Enable/disable features without redeploying
-- **Configuration files:**  nginx.conf, application.yaml, properties files
+
+- **Environment-specific settings:** API URLs, database hostnames, log levels
+- **Feature flags:** Enable/disable features without redeploying
+- **Configuration files:** nginx.conf, application.yaml, properties files
 - **Non-sensitive data** that varies between environments
 
 ## When NOT to Use ConfigMaps
 
 ConfigMaps are **not encrypted** and should never contain:
+
 - Passwords or API keys
 - OAuth tokens or TLS certificates
 - Any sensitive credential

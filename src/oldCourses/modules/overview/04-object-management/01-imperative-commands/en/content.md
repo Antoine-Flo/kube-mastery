@@ -10,10 +10,10 @@ Think of imperative commands as speaking directly to a waiter: "One coffee, plea
 
 When you run an imperative command, `kubectl` translates it into an API request and sends it to the cluster immediately. The cluster state changes right away. Nothing is written to disk — no manifest file is created or updated. The command itself is the only record of what you did.
 
-This means imperative commands are *stateless* from a file perspective. If you need to recreate the same resource later, you would have to remember (or look up) the exact command you ran. For learning and exploration, that is perfectly fine. For production systems, it is a risk — which is why teams typically graduate to declarative configuration.
+This means imperative commands are _stateless_ from a file perspective. If you need to recreate the same resource later, you would have to remember (or look up) the exact command you ran. For learning and exploration, that is perfectly fine. For production systems, it is a risk — which is why teams typically graduate to declarative configuration.
 
 :::info
-Imperative commands are the best starting point when you are learning Kubernetes. They let you focus on *concepts* without getting bogged down in YAML syntax. As you gain confidence, you will naturally transition to file-based approaches.
+Imperative commands are the best starting point when you are learning Kubernetes. They let you focus on _concepts_ without getting bogged down in YAML syntax. As you gain confidence, you will naturally transition to file-based approaches.
 :::
 
 ## The Tradeoff: No Paper Trail
@@ -26,9 +26,9 @@ Imperative commands do not create or update manifest files. If another team memb
 
 ## Common Gotchas
 
-- **"Resource already exists":**  The object you are trying to create already exists. Delete it first with `kubectl delete`, or switch to `kubectl apply` for an update.
-- **Wrong namespace:**  By default, commands target the `default` namespace. Use `-n <namespace>` to target a different one, or set a default namespace in your context.
-- **Mixing with declarative:**  If you create or modify an object imperatively, and someone later runs `kubectl apply -f` with a manifest for the same object, the manifest takes precedence. Pick one approach per object.
+- **"Resource already exists":** The object you are trying to create already exists. Delete it first with `kubectl delete`, or switch to `kubectl apply` for an update.
+- **Wrong namespace:** By default, commands target the `default` namespace. Use `-n <namespace>` to target a different one, or set a default namespace in your context.
+- **Mixing with declarative:** If you create or modify an object imperatively, and someone later runs `kubectl apply -f` with a manifest for the same object, the manifest takes precedence. Pick one approach per object.
 
 ---
 

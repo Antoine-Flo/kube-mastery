@@ -19,7 +19,10 @@ export const handleExplain = (parsed: ParsedCommand): Result<string> => {
   const normalizedApiVersion =
     typeof apiVersion === 'string' ? apiVersion : undefined
 
-  const target = mapResourceToOpenAPITarget(parsed.resource, normalizedApiVersion)
+  const target = mapResourceToOpenAPITarget(
+    parsed.resource,
+    normalizedApiVersion
+  )
   if (!target.ok) {
     return error(target.error)
   }

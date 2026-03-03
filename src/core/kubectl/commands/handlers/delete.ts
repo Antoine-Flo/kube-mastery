@@ -27,7 +27,9 @@ const formatNotFoundMessage = (
   kindRefPlural: string,
   name: string
 ): ExecutionResult => {
-  return error(`Error from server (NotFound): ${kindRefPlural} "${name}" not found`)
+  return error(
+    `Error from server (NotFound): ${kindRefPlural} "${name}" not found`
+  )
 }
 
 type NamespacedEventDeleteResource = 'pods' | 'configmaps' | 'secrets'
@@ -57,7 +59,10 @@ const deleteNamespacedResourcesForNamespace = (
 
   const configMaps = clusterState.getConfigMaps(namespace)
   for (const configMap of configMaps) {
-    const result = clusterState.deleteConfigMap(configMap.metadata.name, namespace)
+    const result = clusterState.deleteConfigMap(
+      configMap.metadata.name,
+      namespace
+    )
     if (!result.ok) {
       return result
     }
@@ -84,7 +89,10 @@ const deleteNamespacedResourcesForNamespace = (
 
   const daemonSets = clusterState.getDaemonSets(namespace)
   for (const daemonSet of daemonSets) {
-    const result = clusterState.deleteDaemonSet(daemonSet.metadata.name, namespace)
+    const result = clusterState.deleteDaemonSet(
+      daemonSet.metadata.name,
+      namespace
+    )
     if (!result.ok) {
       return result
     }
@@ -109,7 +117,8 @@ const deleteNamespacedResourcesForNamespace = (
     }
   }
 
-  const persistentVolumeClaims = clusterState.getPersistentVolumeClaims(namespace)
+  const persistentVolumeClaims =
+    clusterState.getPersistentVolumeClaims(namespace)
   for (const persistentVolumeClaim of persistentVolumeClaims) {
     const result = clusterState.deletePersistentVolumeClaim(
       persistentVolumeClaim.metadata.name,
@@ -131,7 +140,9 @@ const NAMESPACED_EVENT_DELETE_CONFIG: Record<
     kind: 'Pod',
     kindRef: 'pod',
     emit: (eventBus, name, namespace, resource) => {
-      eventBus.emit(createPodDeletedEvent(name, namespace, resource as any, 'kubectl'))
+      eventBus.emit(
+        createPodDeletedEvent(name, namespace, resource as any, 'kubectl')
+      )
     }
   },
   configmaps: {
@@ -219,7 +230,9 @@ export const handleDelete = (
     if (!deleteResult.ok) {
       return error(deleteResult.error)
     }
-    return success(formatDeletedMessage('service', parsed.name, namespace, true))
+    return success(
+      formatDeletedMessage('service', parsed.name, namespace, true)
+    )
   }
 
   if (resource === 'ingresses') {
@@ -243,7 +256,11 @@ export const handleDelete = (
       return formatNotFoundMessage('persistentvolumes', parsed.name)
     }
     eventBus.emit(
-      createPersistentVolumeDeletedEvent(parsed.name, findResult.value, 'kubectl')
+      createPersistentVolumeDeletedEvent(
+        parsed.name,
+        findResult.value,
+        'kubectl'
+      )
     )
     return success(
       formatDeletedMessage('persistentvolume', parsed.name, namespace, false)
@@ -251,7 +268,10 @@ export const handleDelete = (
   }
 
   if (resource === 'persistentvolumeclaims') {
-    const findResult = clusterState.findPersistentVolumeClaim(parsed.name, namespace)
+    const findResult = clusterState.findPersistentVolumeClaim(
+      parsed.name,
+      namespace
+    )
     if (!findResult.ok) {
       return formatNotFoundMessage('persistentvolumeclaims', parsed.name)
     }
@@ -292,7 +312,9 @@ export const handleDelete = (
       return formatNotFoundMessage('namespaces', parsed.name)
     }
 
-    return success(formatDeletedMessage('namespace', parsed.name, namespace, false))
+    return success(
+      formatDeletedMessage('namespace', parsed.name, namespace, false)
+    )
   }
 
   return success(formatDeletedMessage(resource, parsed.name, namespace, false))

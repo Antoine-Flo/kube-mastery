@@ -14,7 +14,7 @@ Before diving into rollback commands, let's clarify what a revision actually is.
 
 Each time you modify the **Pod template** section of a Deployment (for example, changing the container image, adding environment variables, or updating resource limits), Kubernetes creates a new revision. Think of it as an automatic checkpoint.
 
-However, not everything triggers a new revision. **Scaling changes:**  increasing or decreasing the replica count — do not create revisions. Only template-level changes do.
+However, not everything triggers a new revision. **Scaling changes:** increasing or decreasing the replica count — do not create revisions. Only template-level changes do.
 
 Kubernetes keeps a limited history of these revisions, controlled by the `revisionHistoryLimit` field (default: **10**). Once the limit is exceeded, older revisions are discarded and can no longer be used as rollback targets.
 
@@ -38,7 +38,7 @@ When you trigger a rollback, Kubernetes doesn't perform any special magic — it
 2. It creates (or reactivates) a ReplicaSet based on that template.
 3. It gradually scales up the old ReplicaSet while scaling down the current one, following your `maxSurge` and `maxUnavailable` settings.
 
-In other words, a rollback is simply a **rolling update in reverse:**  moving from the current template back to a previous one. The same health checks, the same gradual transition, the same zero-downtime guarantees apply.
+In other words, a rollback is simply a **rolling update in reverse:** moving from the current template back to a previous one. The same health checks, the same gradual transition, the same zero-downtime guarantees apply.
 
 ```mermaid
 flowchart LR

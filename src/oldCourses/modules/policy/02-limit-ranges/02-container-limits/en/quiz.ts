@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'What happens when a Pod specifies a container with memory limit above the LimitRange max?',
+      question:
+        'What happens when a Pod specifies a container with memory limit above the LimitRange max?',
       options: [
         'The limit is silently reduced',
         'The Pod creation is rejected',

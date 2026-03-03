@@ -6,8 +6,8 @@ In the previous lesson, you saw the big picture of LimitRanges. Now let's focus 
 
 When you create a Pod, the **LimitRanger admission controller** processes it before it's stored:
 
-1. **Apply defaults:**  If a container is missing `limits`, the LimitRange's `default` values are injected. If `requests` are missing, `defaultRequest` values are injected.
-2. **Validate:**  If the resulting `requests` or `limits` are below `min` or above `max`, the Pod is rejected.
+1. **Apply defaults:** If a container is missing `limits`, the LimitRange's `default` values are injected. If `requests` are missing, `defaultRequest` values are injected.
+2. **Validate:** If the resulting `requests` or `limits` are below `min` or above `max`, the Pod is rejected.
 
 This happens automatically — developers don't need to remember to set resource values every time. The LimitRange acts as a safety net.
 
@@ -23,25 +23,25 @@ spec:
   limits:
     - type: Container
       min:
-        cpu: "50m"
+        cpu: '50m'
         memory: 64Mi
       max:
-        cpu: "1"
+        cpu: '1'
         memory: 1Gi
       default:
-        cpu: "200m"
+        cpu: '200m'
         memory: 256Mi
       defaultRequest:
-        cpu: "50m"
+        cpu: '50m'
         memory: 64Mi
 ```
 
 Here's what each field does:
 
-- **min:**  The floor. No container can request less than 50m CPU or 64Mi memory. This prevents Pods from being too small to function.
-- **max:**  The ceiling. No container can request more than 1 CPU core or 1Gi memory. This prevents any single container from hogging resources.
-- **default:**  The default `limits` value. Applied when a container doesn't specify limits.
-- **defaultRequest:**  The default `requests` value. Applied when a container doesn't specify requests.
+- **min:** The floor. No container can request less than 50m CPU or 64Mi memory. This prevents Pods from being too small to function.
+- **max:** The ceiling. No container can request more than 1 CPU core or 1Gi memory. This prevents any single container from hogging resources.
+- **default:** The default `limits` value. Applied when a container doesn't specify limits.
+- **defaultRequest:** The default `requests` value. Applied when a container doesn't specify requests.
 
 :::info
 The `defaultRequest` and `default` values should be between `min` and `max`. If they're outside those bounds, the LimitRange configuration itself is invalid. Design them to represent a reasonable starting point for most workloads in the namespace.
@@ -78,11 +78,11 @@ The LimitRanger must be enabled in your cluster (it's enabled by default on most
 
 ## Common Troubleshooting
 
-**"Exceeded maximum":**  The container requests or limits are above `max`. Reduce them to fit within the range.
+**"Exceeded maximum":** The container requests or limits are above `max`. Reduce them to fit within the range.
 
-**"Below minimum":**  The container requests are below `min`. Increase them or rely on `defaultRequest`.
+**"Below minimum":** The container requests are below `min`. Increase them or rely on `defaultRequest`.
 
-**"Defaults not applied":**  The LimitRanger admission controller may not be enabled, or the LimitRange is in a different namespace. LimitRanges are namespace-scoped — they only apply to Pods in the same namespace.
+**"Defaults not applied":** The LimitRanger admission controller may not be enabled, or the LimitRange is in a different namespace. LimitRanges are namespace-scoped — they only apply to Pods in the same namespace.
 
 ---
 

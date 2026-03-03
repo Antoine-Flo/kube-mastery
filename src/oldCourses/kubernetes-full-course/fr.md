@@ -1,5 +1,5 @@
 ---
-title: "Formation complète Kubernetes"
+title: 'Formation complète Kubernetes'
 shortDescription: Le parcours exhaustif couvrant tous les sujets en un seul cours linéaire — tous les modules, tous les chapitres, des fondamentaux aux extensions avancées. 42 chapitres et en croissance.
 isActive: true
 price: 0

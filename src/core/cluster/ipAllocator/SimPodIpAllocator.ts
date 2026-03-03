@@ -6,7 +6,9 @@ const podKey = (pod: Pod): string => {
   return `${pod.metadata.namespace}/${pod.metadata.name}`
 }
 
-const baseCandidateFromKey = (key: string): { thirdOctet: number; fourthOctet: number } => {
+const baseCandidateFromKey = (
+  key: string
+): { thirdOctet: number; fourthOctet: number } => {
   let hash = 0
   for (let index = 0; index < key.length; index++) {
     hash = (hash << 5) - hash + key.charCodeAt(index)

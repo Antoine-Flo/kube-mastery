@@ -50,10 +50,10 @@ kubectl logs -n kube-system -l app=ebs-csi-controller
 
 Common causes:
 
-- **No provisioner installed:**  The StorageClass references a provisioner (like a CSI driver) that isn't deployed in the cluster
-- **Cloud credentials missing:**  The provisioner can't authenticate with the cloud provider
-- **Quota exceeded:**  Your cloud account has hit its storage quota
-- **Incompatible parameters:**  The StorageClass parameters don't work with the backend (wrong disk type, unsupported region, etc.)
+- **No provisioner installed:** The StorageClass references a provisioner (like a CSI driver) that isn't deployed in the cluster
+- **Cloud credentials missing:** The provisioner can't authenticate with the cloud provider
+- **Quota exceeded:** Your cloud account has hit its storage quota
+- **Incompatible parameters:** The StorageClass parameters don't work with the backend (wrong disk type, unsupported region, etc.)
 
 :::warning
 If a StorageClass uses `kubernetes.io/no-provisioner`, there's no dynamic provisioning — an admin must create PVs manually. This provisioner name explicitly means "I'll handle PV creation myself." Make sure your StorageClass uses a real provisioner if you want automatic provisioning.
@@ -64,7 +64,7 @@ If a StorageClass uses `kubernetes.io/no-provisioner`, there's no dynamic provis
 When you delete a PVC, the reclaim policy determines what happens to the dynamically provisioned PV:
 
 - **Delete** (default for most dynamic provisioners) — The PV and its underlying cloud disk are deleted automatically. Clean and simple.
-- **Retain:**  The PV and disk are kept, but the PV moves to `Released` state. An admin must manually clean up.
+- **Retain:** The PV and disk are kept, but the PV moves to `Released` state. An admin must manually clean up.
 
 For development environments, `Delete` keeps things tidy. For production data you can't afford to lose, consider `Retain`.
 
@@ -125,7 +125,7 @@ spec:
   containers:
     - name: app
       image: busybox
-      command: ["sh", "-c", "echo 'data saved' > /data/test.txt && sleep 3600"]
+      command: ['sh', '-c', "echo 'data saved' > /data/test.txt && sleep 3600"]
       volumeMounts:
         - name: storage
           mountPath: /data

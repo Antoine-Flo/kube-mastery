@@ -32,7 +32,10 @@ const serviceKey = (namespace: string, serviceName: string): string => {
 export interface NetworkState {
   upsertServiceRuntime: (runtime: SimServiceRuntime) => void
   removeServiceRuntime: (namespace: string, serviceName: string) => void
-  getServiceRuntime: (namespace: string, serviceName: string) => SimServiceRuntime | undefined
+  getServiceRuntime: (
+    namespace: string,
+    serviceName: string
+  ) => SimServiceRuntime | undefined
   listServiceRuntimes: () => SimServiceRuntime[]
   findServiceByClusterIp: (clusterIp: string) => SimServiceRuntime | undefined
   findServiceByNodePort: (nodePort: number) => SimServiceRuntime | undefined
@@ -52,7 +55,10 @@ export const createNetworkState = (): NetworkState => {
     )
   }
 
-  const removeServiceRuntime = (namespace: string, serviceName: string): void => {
+  const removeServiceRuntime = (
+    namespace: string,
+    serviceName: string
+  ): void => {
     runtimeByServiceKey.delete(serviceKey(namespace, serviceName))
   }
 
@@ -67,7 +73,9 @@ export const createNetworkState = (): NetworkState => {
     return [...runtimeByServiceKey.values()]
   }
 
-  const findServiceByClusterIp = (clusterIp: string): SimServiceRuntime | undefined => {
+  const findServiceByClusterIp = (
+    clusterIp: string
+  ): SimServiceRuntime | undefined => {
     for (const runtime of runtimeByServiceKey.values()) {
       if (runtime.clusterIP === clusterIp) {
         return runtime
@@ -76,9 +84,13 @@ export const createNetworkState = (): NetworkState => {
     return undefined
   }
 
-  const findServiceByNodePort = (nodePort: number): SimServiceRuntime | undefined => {
+  const findServiceByNodePort = (
+    nodePort: number
+  ): SimServiceRuntime | undefined => {
     for (const runtime of runtimeByServiceKey.values()) {
-      const hasNodePort = runtime.ports.some((port) => port.nodePort === nodePort)
+      const hasNodePort = runtime.ports.some(
+        (port) => port.nodePort === nodePort
+      )
       if (hasNodePort) {
         return runtime
       }

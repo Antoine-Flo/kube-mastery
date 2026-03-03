@@ -28,7 +28,9 @@ const currentPath = getPathWithoutLocale(Astro.url)
         {enabledLanguages.map((locale, index) => (
           <>
             {index > 0 && <span aria-hidden="true"> · </span>}
-            <a href={translatePath(currentPath, locale)}>{locale.toUpperCase()}</a>
+            <a href={translatePath(currentPath, locale)}>
+              {locale.toUpperCase()}
+            </a>
           </>
         ))}
       </div>

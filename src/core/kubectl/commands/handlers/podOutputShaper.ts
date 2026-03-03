@@ -1,4 +1,8 @@
-import type { Pod, PodCondition, PodToleration } from '../../../cluster/ressources/Pod'
+import type {
+  Pod,
+  PodCondition,
+  PodToleration
+} from '../../../cluster/ressources/Pod'
 
 type PodTolerationWithSeconds = PodToleration & {
   tolerationSeconds?: number
@@ -61,7 +65,9 @@ const buildResourceVersion = (pod: Pod): string => {
 }
 
 const buildKubeApiAccessVolumeName = (pod: Pod): string => {
-  const token = stableHash(`${pod.metadata.namespace}/${pod.metadata.name}`).slice(0, 5)
+  const token = stableHash(
+    `${pod.metadata.namespace}/${pod.metadata.name}`
+  ).slice(0, 5)
   return `kube-api-access-${token}`
 }
 
@@ -92,19 +98,25 @@ const buildLastAppliedAnnotation = (pod: Pod): string => {
 
 const ensurePodConditions = (pod: Pod): PodCondition[] => {
   const transitionTime = pod.status.startTime ?? pod.metadata.creationTimestamp
-  const regularNames = new Set(pod.spec.containers.map((container) => container.name))
-  const regularStatuses = (pod.status.containerStatuses ?? []).filter((status) => {
-    return regularNames.has(status.name)
-  })
+  const regularNames = new Set(
+    pod.spec.containers.map((container) => container.name)
+  )
+  const regularStatuses = (pod.status.containerStatuses ?? []).filter(
+    (status) => {
+      return regularNames.has(status.name)
+    }
+  )
   const allRegularReady =
-    regularStatuses.length > 0 && regularStatuses.every((status) => status.ready === true)
+    regularStatuses.length > 0 &&
+    regularStatuses.every((status) => status.ready === true)
   const initialized =
     (pod.spec.initContainers?.length ?? 0) === 0 ||
     pod.status.phase === 'Running' ||
     pod.status.phase === 'Succeeded'
   const ready = pod.status.phase === 'Running' && allRegularReady
   const scheduled = pod.spec.nodeName != null && pod.spec.nodeName.length > 0
-  const observedGeneration = pod.status.observedGeneration ?? pod.metadata.generation ?? 1
+  const observedGeneration =
+    pod.status.observedGeneration ?? pod.metadata.generation ?? 1
   const defaults: PodCondition[] = [
     {
       lastProbeTime: null,
@@ -193,15 +205,19 @@ const toContainerState = (
   }
 }
 
-export const shapePodForStructuredOutput = (pod: Pod): Record<string, unknown> => {
+export const shapePodForStructuredOutput = (
+  pod: Pod
+): Record<string, unknown> => {
   const podIP = buildPodIp(pod)
   const hostIP = pod.status.hostIP
   const startTime = pod.status.startTime ?? pod.metadata.creationTimestamp
-  const observedGeneration = pod.status.observedGeneration ?? pod.metadata.generation ?? 1
+  const observedGeneration =
+    pod.status.observedGeneration ?? pod.metadata.generation ?? 1
   const kubeApiAccessVolumeName = buildKubeApiAccessVolumeName(pod)
   const metadataAnnotations = {
     ...(pod.metadata.annotations ?? {}),
-    'kubectl.kubernetes.io/last-applied-configuration': buildLastAppliedAnnotation(pod)
+    'kubectl.kubernetes.io/last-applied-configuration':
+      buildLastAppliedAnnotation(pod)
   }
   const specContainers = pod.spec.containers.map((container) => {
     const ports = (container.ports ?? []).map((port) => {
@@ -227,39 +243,41 @@ export const shapePodForStructuredOutput = (pod: Pod): Record<string, unknown> =
       ]
     }
   })
-  const containerStatuses = (pod.status.containerStatuses ?? []).map((status) => {
-    return {
-      containerID:
-        status.containerID ??
-        `containerd://${stableHash(`${pod.metadata.namespace}/${pod.metadata.name}/${status.name}`).repeat(8).slice(0, 64)}`,
-      image: status.image,
-      imageID:
-        status.imageID ??
-        `${status.image}@sha256:${stableHash(status.image).repeat(8).slice(0, 64)}`,
-      lastState: {},
-      name: status.name,
-      ready: status.ready,
-      resources: {},
-      restartCount: status.restartCount,
-      started: status.started ?? status.state === 'Running',
-      state: toContainerState(status),
-      user: {
-        linux: {
-          gid: 0,
-          supplementalGroups: [0],
-          uid: 0
-        }
-      },
-      volumeMounts: [
-        {
-          mountPath: DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT.mountPath,
-          name: kubeApiAccessVolumeName,
-          readOnly: DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT.readOnly,
-          recursiveReadOnly: 'Disabled'
-        }
-      ]
+  const containerStatuses = (pod.status.containerStatuses ?? []).map(
+    (status) => {
+      return {
+        containerID:
+          status.containerID ??
+          `containerd://${stableHash(`${pod.metadata.namespace}/${pod.metadata.name}/${status.name}`).repeat(8).slice(0, 64)}`,
+        image: status.image,
+        imageID:
+          status.imageID ??
+          `${status.image}@sha256:${stableHash(status.image).repeat(8).slice(0, 64)}`,
+        lastState: {},
+        name: status.name,
+        ready: status.ready,
+        resources: {},
+        restartCount: status.restartCount,
+        started: status.started ?? status.state === 'Running',
+        state: toContainerState(status),
+        user: {
+          linux: {
+            gid: 0,
+            supplementalGroups: [0],
+            uid: 0
+          }
+        },
+        volumeMounts: [
+          {
+            mountPath: DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT.mountPath,
+            name: kubeApiAccessVolumeName,
+            readOnly: DEFAULT_SERVICE_ACCOUNT_VOLUME_MOUNT.readOnly,
+            recursiveReadOnly: 'Disabled'
+          }
+        ]
+      }
     }
-  })
+  )
   return {
     apiVersion: pod.apiVersion,
     kind: pod.kind,
@@ -295,7 +313,9 @@ export const shapePodForStructuredOutput = (pod: Pod): Record<string, unknown> =
           return {
             ...(toleration.effect != null ? { effect: toleration.effect } : {}),
             ...(toleration.key != null ? { key: toleration.key } : {}),
-            ...(toleration.operator != null ? { operator: toleration.operator } : {}),
+            ...(toleration.operator != null
+              ? { operator: toleration.operator }
+              : {}),
             ...(toleration.value != null ? { value: toleration.value } : {}),
             ...(tolerationWithSeconds.tolerationSeconds != null
               ? { tolerationSeconds: tolerationWithSeconds.tolerationSeconds }

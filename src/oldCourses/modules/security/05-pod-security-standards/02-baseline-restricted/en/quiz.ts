@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'What must be dropped to meet the Restricted standard for capabilities?',
+      question:
+        'What must be dropped to meet the Restricted standard for capabilities?',
       options: [
         'Only NET_RAW',
         'Only dangerous capabilities',

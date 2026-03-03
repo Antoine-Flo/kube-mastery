@@ -2,7 +2,7 @@
 
 ## The Glue Between a ReplicaSet and Its Pods
 
-In the previous lesson, you learned that a ReplicaSet maintains a desired number of Pods. But how does the ReplicaSet *know* which Pods belong to it? The cluster could have hundreds of Pods running — from different applications, teams, and environments. The ReplicaSet needs a reliable way to say: *"These Pods are mine."*
+In the previous lesson, you learned that a ReplicaSet maintains a desired number of Pods. But how does the ReplicaSet _know_ which Pods belong to it? The cluster could have hundreds of Pods running — from different applications, teams, and environments. The ReplicaSet needs a reliable way to say: _"These Pods are mine."_
 
 That mechanism is the **label selector**.
 
@@ -72,8 +72,8 @@ When a ReplicaSet creates a Pod, Kubernetes automatically sets a field called `m
 
 This matters for two reasons:
 
-1. **Garbage collection:**  if you delete the ReplicaSet, Kubernetes knows to delete its Pods too.
-2. **Conflict prevention:**  two ReplicaSets with overlapping selectors won't fight over the same Pods because ownership is tracked explicitly.
+1. **Garbage collection:** if you delete the ReplicaSet, Kubernetes knows to delete its Pods too.
+2. **Conflict prevention:** two ReplicaSets with overlapping selectors won't fight over the same Pods because ownership is tracked explicitly.
 
 You can inspect this relationship by listing Pods matching the selector and reading their `ownerReferences` field — it will show the ReplicaSet's name, UID, and the `controller: true` flag confirming it is the managing controller.
 
@@ -176,7 +176,7 @@ kubectl delete rs selector-demo
 
 ## Wrapping Up
 
-Label selectors are the connection between a ReplicaSet and the Pods it manages. The selector defines *what to look for*, and the template labels ensure that newly created Pods are always found. The two must match — Kubernetes enforces this strictly.
+Label selectors are the connection between a ReplicaSet and the Pods it manages. The selector defines _what to look for_, and the template labels ensure that newly created Pods are always found. The two must match — Kubernetes enforces this strictly.
 
 Remember that selectors are immutable once created, that `ownerReferences` track the ownership chain, and that Pods matching a selector can be adopted even if they were created elsewhere. Keeping your labels **specific and intentional** is the best way to avoid surprises.
 

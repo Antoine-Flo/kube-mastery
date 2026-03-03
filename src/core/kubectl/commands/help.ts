@@ -170,8 +170,7 @@ Use "kubectl options" for a list of global command-line options (applies to all 
 Usage:
   kubectl annotate TYPE NAME KEY=VALUE [--overwrite]
 
-Use "kubectl options" for a list of global command-line options (applies to all commands).`
-  ,
+Use "kubectl options" for a list of global command-line options (applies to all commands).`,
   config: `Modify kubeconfig files.
 
 Usage:
@@ -215,7 +214,11 @@ const resolveTopic = (tokens: string[]): HelpTopic => {
     return 'root'
   }
 
-  if (actionToken === 'create' && tokens.length >= 3 && tokens[2] === 'deployment') {
+  if (
+    actionToken === 'create' &&
+    tokens.length >= 3 &&
+    tokens[2] === 'deployment'
+  ) {
     return 'create deployment'
   }
 

@@ -21,7 +21,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'If a quota limits persistentvolumeclaims to 10, what happens when creating an 11th PVC?',
+      question:
+        'If a quota limits persistentvolumeclaims to 10, what happens when creating an 11th PVC?',
       options: [
         'The smallest PVC is deleted',
         'Creation is rejected',

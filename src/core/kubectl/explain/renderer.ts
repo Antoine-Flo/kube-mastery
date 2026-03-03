@@ -14,7 +14,8 @@ const appendWrapped = (
 
   let current = indent
   for (const word of words) {
-    const nextLength = current.length + (current === indent ? 0 : 1) + word.length
+    const nextLength =
+      current.length + (current === indent ? 0 : 1) + word.length
     if (nextLength > width && current !== indent) {
       lines.push(current)
       current = `${indent}${word}`
@@ -74,7 +75,9 @@ const guessType = (schema: JSONSchema): string => {
   return 'Object'
 }
 
-const resolveFieldContainer = (schema: JSONSchema): Record<string, JSONSchema> => {
+const resolveFieldContainer = (
+  schema: JSONSchema
+): Record<string, JSONSchema> => {
   if (schema.properties) {
     return schema.properties
   }
@@ -124,7 +127,9 @@ const pushFieldSummary = (
 ): void => {
   const indentPrefix = '  '.repeat(level)
   const requiredSuffix = required ? ' -required-' : ''
-  lines.push(`${indentPrefix}${fieldName}\t<${guessType(fieldSchema)}>${requiredSuffix}`)
+  lines.push(
+    `${indentPrefix}${fieldName}\t<${guessType(fieldSchema)}>${requiredSuffix}`
+  )
   pushEnumBlock(lines, fieldSchema, indentPrefix)
 
   if (fieldSchema.description) {
@@ -167,7 +172,9 @@ export const renderExplainOutput = (
   lines.push('')
 
   if (resolved.fieldName) {
-    lines.push(`FIELD:    ${resolved.fieldName} <${guessType(resolved.schema)}>`)
+    lines.push(
+      `FIELD:    ${resolved.fieldName} <${guessType(resolved.schema)}>`
+    )
     lines.push('')
   }
 

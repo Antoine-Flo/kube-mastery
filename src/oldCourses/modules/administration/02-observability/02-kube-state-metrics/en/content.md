@@ -6,8 +6,8 @@ In the previous lesson, we saw that the metrics-server answers "How much CPU is 
 
 It helps to think of two different perspectives on your cluster:
 
-- **Resource metrics** (from cAdvisor and metrics-server) measure *consumption*: CPU cycles, memory bytes, network packets. They answer "How hard is this thing working?"
-- **State metrics** (from kube-state-metrics) measure *status*: Pod phases, Deployment replica counts, node conditions. They answer "Is everything in the state it should be?"
+- **Resource metrics** (from cAdvisor and metrics-server) measure _consumption_: CPU cycles, memory bytes, network packets. They answer "How hard is this thing working?"
+- **State metrics** (from kube-state-metrics) measure _status_: Pod phases, Deployment replica counts, node conditions. They answer "Is everything in the state it should be?"
 
 Both are essential. A Deployment might be using very little CPU (resource metric looks fine) but only has 1 of 3 desired replicas running (state metric reveals a problem). You need both perspectives to truly understand your cluster's health.
 
@@ -23,11 +23,11 @@ flowchart LR
 
 kube-state-metrics watches the Kubernetes API server and generates Prometheus-format metrics about object state. Here are some of the most useful ones:
 
-- **`kube_pod_status_phase`:**  Is this Pod Running, Pending, Succeeded, or Failed?
-- **`kube_deployment_status_replicas_available`:**  How many replicas are actually ready?
-- **`kube_deployment_status_replicas_desired`:**  How many replicas should there be?
-- **`kube_node_status_condition`:**  Is this node Ready? Under disk pressure? Memory pressure?
-- **`kube_pod_container_status_waiting`:**  Are any containers stuck in a Waiting state?
+- **`kube_pod_status_phase`:** Is this Pod Running, Pending, Succeeded, or Failed?
+- **`kube_deployment_status_replicas_available`:** How many replicas are actually ready?
+- **`kube_deployment_status_replicas_desired`:** How many replicas should there be?
+- **`kube_node_status_condition`:** Is this node Ready? Under disk pressure? Memory pressure?
+- **`kube_pod_container_status_waiting`:** Are any containers stuck in a Waiting state?
 
 These metrics power some of the most important alerts you can have. For example: "Alert me when a Deployment has fewer available replicas than desired for more than 5 minutes."
 
@@ -116,4 +116,4 @@ If kube-state-metrics is deployed (often by Prometheus Helm charts), it runs in 
 
 ## Wrapping Up
 
-kube-state-metrics complements resource metrics by telling you about *object state* — whether your Deployments are healthy, your Pods are running, and your nodes are ready. Combined with metrics-server (resource usage) and Prometheus (storage and alerting), it forms a complete monitoring picture. In the next lesson, we'll see how Prometheus ties everything together with scraping, storage, and alerting.
+kube-state-metrics complements resource metrics by telling you about _object state_ — whether your Deployments are healthy, your Pods are running, and your nodes are ready. Combined with metrics-server (resource usage) and Prometheus (storage and alerting), it forms a complete monitoring picture. In the next lesson, we'll see how Prometheus ties everything together with scraping, storage, and alerting.

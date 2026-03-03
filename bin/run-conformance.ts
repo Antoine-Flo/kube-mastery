@@ -134,7 +134,11 @@ export const loadGeneratedSuite = (suitePath: string): ConformanceSuite => {
   }
   const raw = readFileSync(suitePath, 'utf-8')
   const parsed = JSON.parse(raw) as ConformanceSuite
-  if (!parsed || typeof parsed.name !== 'string' || !Array.isArray(parsed.actions)) {
+  if (
+    !parsed ||
+    typeof parsed.name !== 'string' ||
+    !Array.isArray(parsed.actions)
+  ) {
     throw new Error(`Invalid generated suite format in ${suitePath}`)
   }
   return parsed
@@ -161,7 +165,9 @@ async function main() {
   const resolvedSuitePath = resolveSuitePath(options)
   const suite = loadGeneratedSuite(resolvedSuitePath)
   const result = runConformanceSuite(suite, {
-    ...(options.quiet ? {} : { progressListener: createConsoleProgressListener() })
+    ...(options.quiet
+      ? {}
+      : { progressListener: createConsoleProgressListener() })
   })
 
   console.log('\n' + '='.repeat(50))

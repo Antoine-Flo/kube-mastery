@@ -259,7 +259,9 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
       const editorModal = createEditorModal(overlayEl, editorBoxEl)
       editorModalByRoot.set(root, editorModal)
 
-      const doMount = (opts: NonNullable<Parameters<typeof mountTerminal>[1]>) => {
+      const doMount = (
+        opts: NonNullable<Parameters<typeof mountTerminal>[1]>
+      ) => {
         try {
           const cleanup = mountTerminal(box, {
             ...opts,

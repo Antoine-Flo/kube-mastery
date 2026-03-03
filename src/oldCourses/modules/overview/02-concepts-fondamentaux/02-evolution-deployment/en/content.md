@@ -52,7 +52,7 @@ Containers brought several advantages that made large-scale orchestration practi
 
 ## Declare a Desired State
 
-In Kubernetes, you do not tell the system step-by-step what to do. Instead, you describe the end result you want, a *desired state*, and Kubernetes continuously works to achieve it. Here is a simple example:
+In Kubernetes, you do not tell the system step-by-step what to do. Instead, you describe the end result you want, a _desired state_, and Kubernetes continuously works to achieve it. Here is a simple example:
 
 ```yaml
 apiVersion: apps/v1

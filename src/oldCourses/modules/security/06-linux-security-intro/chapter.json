@@ -1,1 +1,10 @@
-{"title":{"en":"Introduction to Linux Security","fr":"Introduction à la sécurité Linux"},"description":{"en":"Learn runAsUser, runAsNonRoot, and fsGroup for container security","fr":"Apprenez runAsUser, runAsNonRoot et fsGroup pour la sécurité des conteneurs"}}
+{
+  "title": {
+    "en": "Introduction to Linux Security",
+    "fr": "Introduction à la sécurité Linux"
+  },
+  "description": {
+    "en": "Learn runAsUser, runAsNonRoot, and fsGroup for container security",
+    "fr": "Apprenez runAsUser, runAsNonRoot et fsGroup pour la sécurité des conteneurs"
+  }
+}

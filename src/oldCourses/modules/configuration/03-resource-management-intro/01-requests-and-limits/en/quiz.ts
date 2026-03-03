@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'What does the scheduler use to decide which node can run a Pod?',
+      question:
+        'What does the scheduler use to decide which node can run a Pod?',
       options: [
         'Resource limits only',
         'Resource requests',

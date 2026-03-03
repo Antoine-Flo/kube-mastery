@@ -124,10 +124,8 @@ const getResourceNames = (
     nodes: (state) => (state.getNodes ? state.getNodes() : []),
     replicasets: (state) =>
       state.getReplicaSets ? state.getReplicaSets() : [],
-    daemonsets: (state) =>
-      state.getDaemonSets ? state.getDaemonSets() : [],
-    deployments: (state) =>
-      state.getDeployments ? state.getDeployments() : []
+    daemonsets: (state) => (state.getDaemonSets ? state.getDaemonSets() : []),
+    deployments: (state) => (state.getDeployments ? state.getDeployments() : [])
   }
 
   const getter = resourceGetters[resourceType]
@@ -191,9 +189,7 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
   ): CompletionResult[] {
     const isActionPosition =
       tokens.length === 1 ||
-      (tokens.length === 2 &&
-        currentToken !== '' &&
-        tokens[1] === currentToken)
+      (tokens.length === 2 && currentToken !== '' && tokens[1] === currentToken)
     if (isActionPosition) {
       return completeOnlyWhenUnique([...KUBECTL_ACTIONS], currentToken, ' ')
     }

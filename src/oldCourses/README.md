@@ -292,7 +292,7 @@ Pour ce chantier, l'enrichissement est effectué en priorité sur les contenus `
 
 Vous pouvez ajouter directement un bloc de code mermaid dans votre fichier `content.md` :
 
-```markdown
+````markdown
 Voici l'architecture :
 
 ```mermaid
@@ -300,6 +300,7 @@ flowchart LR
     A[Welcome] --> B[Kubernetes Course]
     B --> C[Interactive Terminal]
     C --> D[Learn & Practice]
+```
 ````
 
 Le système détectera automatiquement les blocs de code avec le langage `mermaid` et les rendra comme des diagrammes interactifs.

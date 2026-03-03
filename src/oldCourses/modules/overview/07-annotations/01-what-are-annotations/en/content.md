@@ -6,37 +6,37 @@ You've learned that labels are for identifying and selecting objects. But what a
 
 The distinction is simple:
 
-- **Labels** are for **selection:**  Services, controllers, and selectors use them to find and group objects
-- **Annotations** are for **information:**  they store metadata that humans and tools need, but that Kubernetes doesn't use for filtering
+- **Labels** are for **selection:** Services, controllers, and selectors use them to find and group objects
+- **Annotations** are for **information:** they store metadata that humans and tools need, but that Kubernetes doesn't use for filtering
 
 Think of it like a library book. The call number (label) tells you where the book belongs on the shelf — it's indexed and searchable. The notes inside the front cover (annotations) might say who donated it, when it was added to the collection, or a URL for supplementary material. Useful information, but not used for shelving.
 
 ```yaml
 metadata:
   labels:
-    app: nginx        # Used by selectors
-    env: production   # Used by selectors
+    app: nginx # Used by selectors
+    env: production # Used by selectors
   annotations:
-    description: "Production web server for the frontend team"
-    contact: "frontend-team@example.com"
-    docs: "https://wiki.example.com/nginx-setup"
+    description: 'Production web server for the frontend team'
+    contact: 'frontend-team@example.com'
+    docs: 'https://wiki.example.com/nginx-setup'
 ```
 
 ## What Annotations Are Used For
 
 Annotations are incredibly versatile. Here are common real-world uses:
 
-- **Ownership and contact info:**  `owner: platform-team`, `contact: ops@example.com`
-- **Documentation links:**  URLs to runbooks, wikis, or architecture diagrams
-- **Build and release metadata:**  Git commit hashes, CI pipeline URLs, deployment timestamps
-- **Tool configuration:**  Ingress controllers, monitoring systems, and GitOps tools often read annotations to configure behavior
+- **Ownership and contact info:** `owner: platform-team`, `contact: ops@example.com`
+- **Documentation links:** URLs to runbooks, wikis, or architecture diagrams
+- **Build and release metadata:** Git commit hashes, CI pipeline URLs, deployment timestamps
+- **Tool configuration:** Ingress controllers, monitoring systems, and GitOps tools often read annotations to configure behavior
 
 For example, an Ingress controller might read:
 
 ```yaml
 annotations:
   nginx.ingress.kubernetes.io/rewrite-target: /
-  nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  nginx.ingress.kubernetes.io/ssl-redirect: 'true'
 ```
 
 :::info

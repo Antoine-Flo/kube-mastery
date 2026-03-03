@@ -18,8 +18,8 @@ Think of the node as a filing cabinet. Each Pod gets a folder, each container ge
 
 Logs can grow quickly — a busy application can generate gigabytes of output. Without management, logs would fill up the node's disk and cause serious problems. The kubelet handles this with two configuration options:
 
-- **`--container-log-max-size`:**  Maximum size of each log file before rotation (default: 10Mi)
-- **`--container-log-max-files`:**  Maximum number of rotated files to keep (default: 5)
+- **`--container-log-max-size`:** Maximum size of each log file before rotation (default: 10Mi)
+- **`--container-log-max-files`:** Maximum number of rotated files to keep (default: 5)
 
 When a log file exceeds the max size, the kubelet rotates it — the current file becomes `1.log`, and a new `0.log` starts. Older files beyond the max count are deleted.
 
@@ -55,8 +55,8 @@ cat /host/var/log/pods/default_my-pod_abc123/app/0.log
 
 It's not just application containers that produce logs. Kubernetes system components write logs too:
 
-- **kubelet:**  Managed by systemd on most distributions; use `journalctl -u kubelet`
-- **kube-proxy:**  Also a systemd service or runs as a DaemonSet Pod
+- **kubelet:** Managed by systemd on most distributions; use `journalctl -u kubelet`
+- **kube-proxy:** Also a systemd service or runs as a DaemonSet Pod
 - **Container runtime** (containerd, CRI-O) — Check with `journalctl -u containerd`
 - **Static Pods** (API server, etcd, scheduler, controller-manager) — These write to the same `/var/log/pods/` structure in the `kube-system` namespace
 

@@ -27,12 +27,12 @@ nginx-deployment   3/3     3            3           10m
 
 Each column answers a specific question:
 
-| Column | What it tells you |
-|---|---|
-| **READY** | How many Pods are running and ready vs. how many are desired. `2/3` means one Pod is not yet ready. |
-| **UP-TO-DATE** | How many Pods match the *latest* Pod template. During a rollout, this number climbs from 0 to the desired count. |
-| **AVAILABLE** | How many Pods are actually available to serve traffic — they have passed readiness probes and meet the minimum availability window. |
-| **AGE** | Time since the Deployment was first created (not since the last update). |
+| Column         | What it tells you                                                                                                                   |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **READY**      | How many Pods are running and ready vs. how many are desired. `2/3` means one Pod is not yet ready.                                 |
+| **UP-TO-DATE** | How many Pods match the _latest_ Pod template. During a rollout, this number climbs from 0 to the desired count.                    |
+| **AVAILABLE**  | How many Pods are actually available to serve traffic — they have passed readiness probes and meet the minimum availability window. |
+| **AGE**        | Time since the Deployment was first created (not since the last update).                                                            |
 
 During an active rollout, you might see something like:
 
@@ -62,7 +62,7 @@ spec:
     type: RollingUpdate
 ```
 
-"Progress" here means any change in the rollout state — a new Pod becoming ready, an old Pod being terminated. As long as *something* is moving forward, the clock resets. But if the rollout is completely stuck for 600 seconds, Kubernetes flags it. A failed rollout produces an error exit code when you run `kubectl rollout status`, with a message like `error: deployment "nginx-deployment" exceeded its progress deadline`.
+"Progress" here means any change in the rollout state — a new Pod becoming ready, an old Pod being terminated. As long as _something_ is moving forward, the clock resets. But if the rollout is completely stuck for 600 seconds, Kubernetes flags it. A failed rollout produces an error exit code when you run `kubectl rollout status`, with a message like `error: deployment "nginx-deployment" exceeded its progress deadline`.
 
 :::warning
 A "successful" rollout means the controller finished replacing Pods — it does not guarantee your application is healthy. A Pod can pass its readiness probe but still serve errors. Always validate with application-level health checks, logs, and metrics after every rollout.

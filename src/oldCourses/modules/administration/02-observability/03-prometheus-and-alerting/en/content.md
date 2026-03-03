@@ -23,7 +23,7 @@ flowchart LR
 
 Prometheus needs to know which targets to scrape. In Kubernetes, there are two common approaches:
 
-**Pod annotations:**  Add annotations to your Pod that tell Prometheus "scrape me":
+**Pod annotations:** Add annotations to your Pod that tell Prometheus "scrape me":
 
 ```yaml
 apiVersion: v1
@@ -31,9 +31,9 @@ kind: Pod
 metadata:
   name: my-app
   annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "8080"
-    prometheus.io/path: "/metrics"
+    prometheus.io/scrape: 'true'
+    prometheus.io/port: '8080'
+    prometheus.io/path: '/metrics'
 spec:
   containers:
     - name: app
@@ -42,7 +42,7 @@ spec:
         - containerPort: 8080
 ```
 
-**ServiceMonitor (Prometheus Operator):**  If you're using the <a target="_blank" href="https://github.com/prometheus-operator/prometheus-operator">Prometheus Operator</a>, you define ServiceMonitor resources that tell Prometheus which Services to scrape. This is the more structured approach and scales better for large clusters.
+**ServiceMonitor (Prometheus Operator):** If you're using the <a target="_blank" href="https://github.com/prometheus-operator/prometheus-operator">Prometheus Operator</a>, you define ServiceMonitor resources that tell Prometheus which Services to scrape. This is the more structured approach and scales better for large clusters.
 
 :::info
 The Prometheus Operator is the most popular way to run Prometheus in Kubernetes. It uses custom resources (Prometheus, ServiceMonitor, AlertmanagerConfig) to manage the entire monitoring stack declaratively. If you're starting fresh, it's worth considering from the start.
@@ -62,8 +62,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Deployment {{ $labels.deployment }} has fewer replicas than desired"
-          description: "{{ $labels.deployment }} in {{ $labels.namespace }} has been missing replicas for 5 minutes."
+          summary: 'Deployment {{ $labels.deployment }} has fewer replicas than desired'
+          description: '{{ $labels.deployment }} in {{ $labels.namespace }} has been missing replicas for 5 minutes.'
 ```
 
 This rule says: "If any Deployment has fewer available replicas than desired, and this persists for 5 minutes, fire a warning alert." Prometheus evaluates this expression periodically and sends matching alerts to Alertmanager.

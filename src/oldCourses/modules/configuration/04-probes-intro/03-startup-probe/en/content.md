@@ -54,6 +54,7 @@ containers:
 ```
 
 In this example:
+
 - **Startup window**: 30 × 10 = **300 seconds (5 minutes)** to become healthy
 - Once the startup probe succeeds, the liveness probe takes over with its 10-second interval
 - The readiness probe also activates, controlling traffic flow
@@ -67,11 +68,13 @@ Startup probes run once to completion, then hand off to liveness and readiness. 
 ## When to Use Startup Probes
 
 Use a startup probe when:
+
 - Your application has a **long initialization** phase (JVM warmup, migrations, data loading)
 - You want aggressive liveness checks **after** startup but need patience **during** startup
 - The startup and liveness endpoints are the same but need different timing
 
 When you **don't** need one:
+
 - Fast-starting containers (nginx, simple Go binaries) that are ready within seconds
 - Applications where a generous `initialDelaySeconds` on liveness is sufficient
 
@@ -79,11 +82,11 @@ When you **don't** need one:
 
 Start by measuring your application's worst-case startup time, then add buffer:
 
-| Scenario | Startup Time | failureThreshold | periodSeconds | Window |
-|----------|-------------|-------------------|---------------|--------|
-| Fast app | 10s | 5 | 2 | 10s |
-| Medium app | 60s | 12 | 10 | 120s |
-| Slow app (JVM) | 180s | 30 | 10 | 300s |
+| Scenario       | Startup Time | failureThreshold | periodSeconds | Window |
+| -------------- | ------------ | ---------------- | ------------- | ------ |
+| Fast app       | 10s          | 5                | 2             | 10s    |
+| Medium app     | 60s          | 12               | 10            | 120s   |
+| Slow app (JVM) | 180s         | 30               | 10            | 300s   |
 
 :::warning
 If `failureThreshold × periodSeconds` is shorter than your app's startup time, the container will be killed before it finishes starting — causing an infinite restart loop. Always add buffer for variability (cold caches, slow I/O, resource contention).

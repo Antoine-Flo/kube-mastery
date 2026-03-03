@@ -50,12 +50,12 @@ The `schedule` field uses the classic **five-field cron format**:
 
 Here are a few common examples:
 
-| Schedule | Meaning |
-|---|---|
-| `0 * * * *` | Every hour, at minute 0 |
-| `0 2 * * *` | Every day at 2:00 AM |
-| `*/5 * * * *` | Every 5 minutes |
-| `0 9 * * 1-5` | Weekdays at 9:00 AM |
+| Schedule      | Meaning                 |
+| ------------- | ----------------------- |
+| `0 * * * *`   | Every hour, at minute 0 |
+| `0 2 * * *`   | Every day at 2:00 AM    |
+| `*/5 * * * *` | Every 5 minutes         |
+| `0 9 * * 1-5` | Weekdays at 9:00 AM     |
 
 :::info
 If you are not comfortable writing cron expressions by hand, tools like <a target="_blank" href="https://crontab.guru/">crontab.guru</a> let you build and validate schedules interactively.
@@ -71,7 +71,7 @@ kind: CronJob
 metadata:
   name: hello
 spec:
-  schedule: "0 * * * *"
+  schedule: '0 * * * *'
   jobTemplate:
     spec:
       template:
@@ -79,11 +79,11 @@ spec:
           containers:
             - name: hello
               image: busybox
-              command: ["echo", "Hello from CronJob"]
+              command: ['echo', 'Hello from CronJob']
           restartPolicy: OnFailure
 ```
 
-Notice the structure: the **CronJob** wraps a **jobTemplate**, which itself contains a **Pod template:**  exactly the same nesting you saw with Jobs. The `restartPolicy` must be either `Never` or `OnFailure`, just like a regular Job.
+Notice the structure: the **CronJob** wraps a **jobTemplate**, which itself contains a **Pod template:** exactly the same nesting you saw with Jobs. The `restartPolicy` must be either `Never` or `OnFailure`, just like a regular Job.
 
 After applying it, the `LAST SCHEDULE` column in `kubectl get cronjobs` tells you when the last Job was triggered. If you do not see any Jobs being created, verify that the `kube-controller-manager` is running and that your schedule syntax is correct.
 
@@ -95,9 +95,9 @@ By default, CronJobs interpret the schedule using the **kube-controller-manager'
 
 CronJobs are ideal for any task that is:
 
-- **Periodic:**  it needs to happen on a regular schedule.
-- **Independent:**  each run can complete on its own without depending on the previous one.
-- **Short-lived:**  it starts, does its work, and finishes (as opposed to a long-running server).
+- **Periodic:** it needs to happen on a regular schedule.
+- **Independent:** each run can complete on its own without depending on the previous one.
+- **Short-lived:** it starts, does its work, and finishes (as opposed to a long-running server).
 
 Common real-world use cases include database backups, certificate renewal checks, cache warming, report generation, and stale-data cleanup.
 

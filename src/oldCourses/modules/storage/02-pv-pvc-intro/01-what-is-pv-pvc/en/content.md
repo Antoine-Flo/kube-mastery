@@ -9,7 +9,7 @@ That's what the **PersistentVolume (PV)** and **PersistentVolumeClaim (PVC)** sy
 Kubernetes separates the "providing storage" concern from the "using storage" concern:
 
 - A **PersistentVolume (PV)** is a piece of actual storage — a cloud disk, an NFS export, a local SSD — that has been made available to the cluster. Typically, a cluster administrator or an automated provisioner creates PVs.
-- A **PersistentVolumeClaim (PVC)** is a request from a user: "I need 10Gi of storage with read-write access." The user doesn't need to know *where* the storage comes from.
+- A **PersistentVolumeClaim (PVC)** is a request from a user: "I need 10Gi of storage with read-write access." The user doesn't need to know _where_ the storage comes from.
 
 Think of it like renting an apartment. The building owner (admin) makes apartments (PVs) available. Tenants (users) submit rental applications (PVCs) specifying their needs — size, location preferences. The system matches each application to an available apartment.
 
@@ -29,9 +29,9 @@ The PV/PVC pattern decouples storage provisioning from consumption. Users don't 
 
 When requesting storage, you specify how it should be accessible. Kubernetes supports three access modes:
 
-- **ReadWriteOnce (RWO):**  The volume can be mounted as read-write by a single node. This is the most common mode, used by block storage like AWS EBS or GCE Persistent Disks.
-- **ReadOnlyMany (ROX):**  The volume can be mounted read-only by multiple nodes simultaneously. Useful for shared configuration or static assets.
-- **ReadWriteMany (RWX):**  The volume can be mounted read-write by multiple nodes. Fewer backends support this (NFS, CephFS, some CSI drivers).
+- **ReadWriteOnce (RWO):** The volume can be mounted as read-write by a single node. This is the most common mode, used by block storage like AWS EBS or GCE Persistent Disks.
+- **ReadOnlyMany (ROX):** The volume can be mounted read-only by multiple nodes simultaneously. Useful for shared configuration or static assets.
+- **ReadWriteMany (RWX):** The volume can be mounted read-write by multiple nodes. Fewer backends support this (NFS, CephFS, some CSI drivers).
 
 The access mode must match between the PV and the PVC for binding to succeed.
 
@@ -76,8 +76,8 @@ The PVC requests 5Gi with RWO access. The PV offers 10Gi with RWO — it matches
 
 What happens to the PV when the PVC is deleted? That depends on the **reclaim policy**:
 
-- **Retain:**  The PV keeps its data and stays in a "Released" state. An admin must manually clean it up. Safe for important data.
-- **Delete:**  The PV and its underlying storage are deleted automatically. Common with dynamic provisioning.
+- **Retain:** The PV keeps its data and stays in a "Released" state. An admin must manually clean it up. Safe for important data.
+- **Delete:** The PV and its underlying storage are deleted automatically. Common with dynamic provisioning.
 
 ## Checking PVs and PVCs
 

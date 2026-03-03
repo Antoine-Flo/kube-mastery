@@ -12,8 +12,8 @@ kind: ConfigMap
 metadata:
   name: game-demo
 data:
-  player_initial_lives: "3"
-  ui_properties_file_name: "user-interface.properties"
+  player_initial_lives: '3'
+  ui_properties_file_name: 'user-interface.properties'
   game.properties: |
     enemy.types=aliens,monsters
     player.maximum-lives=5
@@ -63,6 +63,7 @@ When using `--from-file` with a directory, only top-level files are included. Su
 ## Key Naming Rules
 
 ConfigMap keys must follow these rules:
+
 - Alphanumeric characters, hyphens (`-`), underscores (`_`), or dots (`.`)
 - No overlap between `data` and `binaryData` keys
 

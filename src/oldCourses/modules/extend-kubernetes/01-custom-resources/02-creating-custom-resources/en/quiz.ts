@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'Do CRDs alone execute business logic when you create a custom resource?',
+      question:
+        'Do CRDs alone execute business logic when you create a custom resource?',
       options: [
         'Yes, they run controllers automatically',
         'No, they only store data; a controller must implement logic',
@@ -21,7 +22,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'How do you list custom resources for cronjobs.stable.example.com?',
+      question:
+        'How do you list custom resources for cronjobs.stable.example.com?',
       options: [
         'kubectl get cronjob',
         'kubectl get cronjobs.stable.example.com',

@@ -14,7 +14,9 @@ export interface SimSystemWorkloadsControllerOptions {
   creationTimestamp: string
 }
 
-export type SimSystemWorkloads = ReturnType<typeof materializeSimSystemWorkloads>
+export type SimSystemWorkloads = ReturnType<
+  typeof materializeSimSystemWorkloads
+>
 
 export const createSimSystemWorkloads = (
   options: SimSystemWorkloadsControllerOptions
@@ -24,8 +26,5 @@ export const createSimSystemWorkloads = (
     nodeRoles: options.nodeRoles,
     policy: options.policy
   })
-  return materializeSimSystemWorkloads(
-    workloadSpecs,
-    options.creationTimestamp
-  )
+  return materializeSimSystemWorkloads(workloadSpecs, options.creationTimestamp)
 }

@@ -9,7 +9,8 @@ export const quiz: Quiz = {
     {
       id: 'q1',
       type: 'multiple-choice',
-      question: 'What is the main difference between LimitRange and ResourceQuota?',
+      question:
+        'What is the main difference between LimitRange and ResourceQuota?',
       options: [
         'LimitRange applies cluster-wide; ResourceQuota is per namespace',
         'LimitRange applies to individual objects; ResourceQuota limits aggregate namespace usage',
@@ -21,7 +22,8 @@ export const quiz: Quiz = {
     {
       id: 'q2',
       type: 'multiple-choice',
-      question: 'When does a LimitRange apply default requests/limits to a container?',
+      question:
+        'When does a LimitRange apply default requests/limits to a container?',
       options: [
         'When the Pod is deleted',
         'When the container omits requests or limits',

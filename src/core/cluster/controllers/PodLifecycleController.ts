@@ -8,13 +8,13 @@ import type { ClusterEvent } from '../events/types'
 import type { PodBoundEvent } from '../events/types'
 import { createPodUpdatedEvent } from '../events/types'
 import type { Pod } from '../ressources/Pod'
-import { createImageRegistry, type ImageRegistry } from '../../containers/registry/ImageRegistry'
+import {
+  createImageRegistry,
+  type ImageRegistry
+} from '../../containers/registry/ImageRegistry'
 import { reconcileInitContainers } from '../initContainers/reconciler'
 import type { PodVolumeReadiness } from '../../volumes/VolumeState'
-import {
-  startPeriodicResync,
-  subscribeToEvents
-} from './helpers'
+import { startPeriodicResync, subscribeToEvents } from './helpers'
 import type {
   ClusterEventType,
   ControllerResyncOptions,
@@ -59,7 +59,10 @@ const shouldProgressPod = (pod: Pod): boolean => {
   )
 }
 
-const buildPodHostIP = (pod: Pod, state: ControllerState): string | undefined => {
+const buildPodHostIP = (
+  pod: Pod,
+  state: ControllerState
+): string | undefined => {
   const nodeName = pod.spec.nodeName
   if (nodeName == null || nodeName.length === 0) {
     return undefined
@@ -81,7 +84,9 @@ const buildPodHostIP = (pod: Pod, state: ControllerState): string | undefined =>
   return internalAddress.address
 }
 
-const ensureHostIPs = (hostIP: string | undefined): Array<{ ip: string }> | undefined => {
+const ensureHostIPs = (
+  hostIP: string | undefined
+): Array<{ ip: string }> | undefined => {
   if (hostIP == null || hostIP.length === 0) {
     return undefined
   }
@@ -92,13 +97,21 @@ const countInitContainers = (pod: Pod): number => {
   return pod.spec.initContainers?.length ?? 0
 }
 
-const buildPodConditions = (pod: Pod, transitionTime: string): Pod['status']['conditions'] => {
-  const regularContainerNames = new Set(pod.spec.containers.map((container) => container.name))
-  const regularStatuses = (pod.status.containerStatuses ?? []).filter((status) => {
-    return regularContainerNames.has(status.name)
-  })
+const buildPodConditions = (
+  pod: Pod,
+  transitionTime: string
+): Pod['status']['conditions'] => {
+  const regularContainerNames = new Set(
+    pod.spec.containers.map((container) => container.name)
+  )
+  const regularStatuses = (pod.status.containerStatuses ?? []).filter(
+    (status) => {
+      return regularContainerNames.has(status.name)
+    }
+  )
   const allRegularReady =
-    regularStatuses.length > 0 && regularStatuses.every((status) => status.ready === true)
+    regularStatuses.length > 0 &&
+    regularStatuses.every((status) => status.ready === true)
   const initialized =
     countInitContainers(pod) === 0 ||
     pod.status.phase === 'Running' ||
@@ -167,9 +180,8 @@ export class PodLifecycleController implements ReconcilerController {
       WATCHED_EVENTS,
       (event) => this.handleEvent(event)
     )
-    this.unsubscribePodBound = this.eventBus.subscribe(
-      'PodBound',
-      (event) => this.handlePodBound(event as PodBoundEvent)
+    this.unsubscribePodBound = this.eventBus.subscribe('PodBound', (event) =>
+      this.handlePodBound(event as PodBoundEvent)
     )
     this.workQueue.start((key) => this.reconcile(key))
     this.initialSync()
@@ -268,7 +280,8 @@ export class PodLifecycleController implements ReconcilerController {
       if (!shouldProgressPod(latestPod)) {
         return
       }
-      const latestVolumeReadiness = this.options.volumeReadinessProbe?.(latestPod)
+      const latestVolumeReadiness =
+        this.options.volumeReadinessProbe?.(latestPod)
       if (latestVolumeReadiness != null && !latestVolumeReadiness.ready) {
         this.emitPodWaitingForVolume(latestPod, latestVolumeReadiness.reason)
         return
@@ -281,7 +294,9 @@ export class PodLifecycleController implements ReconcilerController {
   private handleEvent(event: ClusterEvent): void {
     if (event.type === 'PodDeleted') {
       const pod = event.payload.deletedPod
-      this.clearPendingTimeout(makePodKey(pod.metadata.namespace, pod.metadata.name))
+      this.clearPendingTimeout(
+        makePodKey(pod.metadata.namespace, pod.metadata.name)
+      )
       return
     }
     if (event.type !== 'PodCreated' && event.type !== 'PodUpdated') {
@@ -323,7 +338,9 @@ export class PodLifecycleController implements ReconcilerController {
       ...runningPod,
       status: {
         ...runningPod.status,
-        ...(runningPod.status.startTime == null ? { startTime: transitionTime } : {}),
+        ...(runningPod.status.startTime == null
+          ? { startTime: transitionTime }
+          : {}),
         ...(hostIP != null ? { hostIP } : {}),
         ...(hostIP != null ? { hostIPs: ensureHostIPs(hostIP) } : {}),
         observedGeneration: runningPod.metadata.generation ?? 1,
@@ -420,7 +437,9 @@ export class PodLifecycleController implements ReconcilerController {
   private emitPodContainerWaitingReason(pod: Pod, waitingReason: string): void {
     const transitionTime = new Date().toISOString()
     const currentStatuses = pod.status.containerStatuses ?? []
-    const regularContainerNames = new Set(pod.spec.containers.map((container) => container.name))
+    const regularContainerNames = new Set(
+      pod.spec.containers.map((container) => container.name)
+    )
     const updatedStatuses = currentStatuses.map((status) => {
       if (!regularContainerNames.has(status.name)) {
         return status
