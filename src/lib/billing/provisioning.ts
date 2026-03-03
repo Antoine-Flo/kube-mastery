@@ -18,6 +18,7 @@ import {
   type TransactionUpdatedEvent
 } from '@paddle/paddle-node-sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { readAppEnv } from '../env'
 
 const INDIVIDUAL_MONTHLY_PRICE_ID = 'pri_01kjfgeb1amgf8ht2fxaqsshhg'
 const INDIVIDUAL_YEARLY_PRICE_ID = 'pri_01kjfgg9mz5586yyaxkepp4aa3'
@@ -216,9 +217,9 @@ export function parsePaddleWebhookEvent(
   return null
 }
 
-function getAppBaseUrl(request: Request): string {
-  const configured = process.env.APP_BASE_URL ?? ''
-  if (configured !== '') {
+function getAppBaseUrl(request: Request, locals?: unknown): string {
+  const configured = readAppEnv('APP_BASE_URL', locals)
+  if (configured != null) {
     return configured.replace(/\/+$/, '')
   }
   return new URL(request.url).origin
@@ -229,9 +230,10 @@ export async function sendCheckoutMagicLink(args: {
   email: string
   lang: string
   request: Request
+  locals?: unknown
 }): Promise<{ ok: boolean; error: string | null }> {
   const lang = normalizeLang(args.lang)
-  const baseUrl = getAppBaseUrl(args.request)
+  const baseUrl = getAppBaseUrl(args.request, args.locals)
   const confirmUrl = new URL('/api/auth/confirm', baseUrl)
   confirmUrl.searchParams.set('lang', lang)
   confirmUrl.searchParams.set('redirect', `/${lang}/courses`)

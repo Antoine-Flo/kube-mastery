@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 import {
-  createBrowserClient,
   createServerClient,
   parseCookieHeader
 } from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { readAppEnv } from './env'
 
 export type SupabaseEnv = {
   SUPABASE_URL?: string
@@ -17,8 +17,28 @@ type AstroCookies = {
   delete?: (name: string, options?: { path?: string }) => void
 }
 
-function readSupabaseEnv(): SupabaseEnv {
-  return process.env as SupabaseEnv
+function readSupabaseEnv(locals: unknown): SupabaseEnv {
+  return {
+    SUPABASE_URL: readAppEnv('SUPABASE_URL', locals),
+    SUPABASE_PUBLISHABLE_DEFAULT_KEY: readAppEnv(
+      'SUPABASE_PUBLISHABLE_DEFAULT_KEY',
+      locals
+    ),
+    SUPABASE_SERVICE_ROLE_KEY: readAppEnv(
+      'SUPABASE_SERVICE_ROLE_KEY',
+      locals
+    )
+  }
+}
+
+function listMissingEnv(
+  env: SupabaseEnv,
+  requiredKeys: Array<keyof SupabaseEnv>
+): string[] {
+  return requiredKeys.filter((key) => {
+    const value = env[key]
+    return typeof value !== 'string' || value.trim() === ''
+  })
 }
 
 /**
@@ -26,8 +46,7 @@ function readSupabaseEnv(): SupabaseEnv {
  * Never expose this client or the service role key to the browser.
  */
 export function getSupabaseAdmin(locals: unknown): SupabaseClient | null {
-  void locals
-  const env = readSupabaseEnv()
+  const env = readSupabaseEnv(locals)
   const url = env?.SUPABASE_URL
   const key = env?.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) {
@@ -38,8 +57,7 @@ export function getSupabaseAdmin(locals: unknown): SupabaseClient | null {
 
 /** Public server client – no session cookies, used for server-side auth flows like magic links. */
 export function getSupabasePublic(locals: unknown): SupabaseClient | null {
-  void locals
-  const env = readSupabaseEnv()
+  const env = readSupabaseEnv(locals)
   const url = env?.SUPABASE_URL
   const key = env?.SUPABASE_PUBLISHABLE_DEFAULT_KEY
   if (!url || !key) {
@@ -54,12 +72,17 @@ export function getSupabaseServer(
   request: Request,
   cookies: AstroCookies
 ): SupabaseClient {
-  void locals
-  const env = readSupabaseEnv()
+  const env = readSupabaseEnv(locals)
   const url = env?.SUPABASE_URL
   const key = env?.SUPABASE_PUBLISHABLE_DEFAULT_KEY
   if (!url || !key) {
-    throw new Error('Supabase env vars missing.')
+    const missing = listMissingEnv(env, [
+      'SUPABASE_URL',
+      'SUPABASE_PUBLISHABLE_DEFAULT_KEY'
+    ])
+    throw new Error(
+      `Supabase env vars missing: ${missing.join(', ')}. Checked locals.runtime.env and process.env.`
+    )
   }
   const cookieHeader = request.headers.get('Cookie') ?? ''
 

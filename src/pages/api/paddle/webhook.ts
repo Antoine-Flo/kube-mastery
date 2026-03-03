@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
 import { getSupabaseAdmin, getSupabasePublic } from '../../../lib/supabase'
+import { readAppEnv } from '../../../lib/env'
 import {
   getPendingSubscriptionForMagicLink,
   insertBillingEvent,
@@ -18,8 +19,11 @@ const json = (body: Record<string, unknown>, status: number) =>
   })
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const paddleApiKey = process.env.PADDLE_API_KEY as string
-  const webhookSecret = process.env.PADDLE_WEBHOOK_SECRET as string
+  const paddleApiKey = readAppEnv('PADDLE_API_KEY', locals) as string
+  const webhookSecret = readAppEnv(
+    'PADDLE_WEBHOOK_SECRET',
+    locals
+  ) as string
   const signatureHeader = request.headers.get('paddle-signature') as string
 
   try {
@@ -81,7 +85,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
           supabasePublic,
           email: paddleEvent.email,
           lang: paddleEvent.lang,
-          request
+          request,
+          locals
         })
 
         if (!sent.ok) {

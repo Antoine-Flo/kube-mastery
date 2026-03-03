@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
+import { readAppEnv } from '../../lib/env'
 import Button from '../../components/ui/Button.astro'
 import Dialog from '../../components/ui/Dialog.astro'
 import guaranteeBadge from '../../assets/guarantee-badge.svg'
@@ -14,12 +15,13 @@ const lang = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
-const runtimeEnv = process.env as Record<string, string | undefined>
-const environment = (runtimeEnv.ENVIRONMENT ?? '').toLowerCase().trim()
+const environment = (readAppEnv('ENVIRONMENT', Astro.locals) ?? '')
+  .toLowerCase()
+  .trim()
 const isProduction = environment === 'production'
 const paddleClientToken = isProduction
-  ? (runtimeEnv.PADDLE_CLIENT_TOKEN ?? '')
-  : (runtimeEnv.PADDLE_CLIENT_TOKEN_STAGING ?? '')
+  ? (readAppEnv('PADDLE_CLIENT_TOKEN', Astro.locals) ?? '')
+  : (readAppEnv('PADDLE_CLIENT_TOKEN_STAGING', Astro.locals) ?? '')
 if (paddleClientToken === '') {
   throw new Error(
     'Missing Paddle client token. Set PADDLE_CLIENT_TOKEN[_STAGING].'
