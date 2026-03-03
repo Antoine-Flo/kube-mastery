@@ -157,7 +157,9 @@ function getLessonLocation(
       }
 
       const topicDirs =
-        getAdapter().getLessonDirsByTopic().get(`${module.moduleId}:${lessonId}`) ?? []
+        getAdapter()
+          .getLessonDirsByTopic()
+          .get(`${module.moduleId}:${lessonId}`) ?? []
       const topicDir = topicDirs[0]
       if (!topicDir) {
         return null

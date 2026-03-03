@@ -16,13 +16,13 @@ update_strategy: git_submodule
 
 ## Catalog
 
-| key | path | upstream | focus | tags |
-|---|---|---|---|---|
-| k8s-api | `refs/k8s/api` | https://github.com/kubernetes/api.git | Types API Kubernetes (group/version/kind) | api, types, schemas |
-| k8s-apimachinery | `refs/k8s/apimachinery` | https://github.com/kubernetes/apimachinery.git | Primitives communes (runtime, meta, labels, selectors) | runtime, meta, conversion |
-| k8s-client-go | `refs/k8s/client-go` | https://github.com/kubernetes/client-go.git | Client Go officiel Kubernetes | client, informers, workqueue |
-| k8s-kubectl | `refs/k8s/kubectl` | https://github.com/kubernetes/kubectl.git | Logique de la CLI kubectl | cli, commands, printers |
-| k8s-controller-runtime | `refs/k8s/controller-runtime` | https://github.com/kubernetes-sigs/controller-runtime.git | Base pour operators/controllers | controller, reconcile, manager |
+| key                    | path                          | upstream                                                  | focus                                                  | tags                           |
+| ---------------------- | ----------------------------- | --------------------------------------------------------- | ------------------------------------------------------ | ------------------------------ |
+| k8s-api                | `refs/k8s/api`                | https://github.com/kubernetes/api.git                     | Types API Kubernetes (group/version/kind)              | api, types, schemas            |
+| k8s-apimachinery       | `refs/k8s/apimachinery`       | https://github.com/kubernetes/apimachinery.git            | Primitives communes (runtime, meta, labels, selectors) | runtime, meta, conversion      |
+| k8s-client-go          | `refs/k8s/client-go`          | https://github.com/kubernetes/client-go.git               | Client Go officiel Kubernetes                          | client, informers, workqueue   |
+| k8s-kubectl            | `refs/k8s/kubectl`            | https://github.com/kubernetes/kubectl.git                 | Logique de la CLI kubectl                              | cli, commands, printers        |
+| k8s-controller-runtime | `refs/k8s/controller-runtime` | https://github.com/kubernetes-sigs/controller-runtime.git | Base pour operators/controllers                        | controller, reconcile, manager |
 
 ## Prompt hints (IA)
 

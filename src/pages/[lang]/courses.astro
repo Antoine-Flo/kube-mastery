@@ -11,13 +11,18 @@ const localePath = useLocalePath(locale)
 
 const courses = getCourses(locale)
 
-type CourseVisualVariant = 'fundamentals' | 'developer' | 'operator' | 'platform' | 'full'
+type CourseVisualVariant =
+  | 'fundamentals'
+  | 'developer'
+  | 'operator'
+  | 'platform'
+  | 'full'
 
 const visualVariantByCourseId: Partial<Record<string, CourseVisualVariant>> = {
   'common-core': 'fundamentals',
-  'ckad': 'developer',
-  'cka': 'operator',
-  'kcna': 'platform',
+  ckad: 'developer',
+  cka: 'operator',
+  kcna: 'platform',
   'kcna-to-ckad-delta': 'developer',
   'ckad-to-cka-delta': 'full'
 }
@@ -106,7 +111,7 @@ const visualVariantByCourseId: Partial<Record<string, CourseVisualVariant>> = {
     margin-top: 3rem;
     color: var(--color-gray-9);
   }
-  
+
   .modules-link a {
     font-size: var(--text-sm);
     color: var(--color-gray-9);

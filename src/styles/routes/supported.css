@@ -19,8 +19,7 @@
 .supported-hero {
   padding: 5rem 0 3rem;
   border-bottom: 1px solid var(--color-gray-6);
-  background:
-    radial-gradient(
+  background: radial-gradient(
       ellipse 50% 60% at 50% 0%,
       var(--color-cyan-3) 0%,
       transparent 70%
@@ -29,8 +28,7 @@
 }
 
 :global([data-theme='dark']) .supported-hero {
-  background:
-    radial-gradient(
+  background: radial-gradient(
       ellipse 50% 60% at 50% 0%,
       rgba(0, 162, 199, 0.2) 0%,
       transparent 70%
@@ -235,7 +233,6 @@
     grid-template-columns: 1fr 1fr;
   }
 }
-
 
 /* ─── Prerequisites flow ─────────────────────────────────────── */
 

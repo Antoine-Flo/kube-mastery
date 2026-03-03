@@ -83,10 +83,7 @@ function buildTopicDirsByModule(): Map<
     seen.get(moduleId)!.add(JSON.stringify({ topicDir, topicId }))
   }
 
-  const out = new Map<
-    string,
-    Array<{ topicDir: string; topicId: string }>
-  >()
+  const out = new Map<string, Array<{ topicDir: string; topicId: string }>>()
 
   for (const [moduleId, set] of seen) {
     const arr = Array.from(set).map(

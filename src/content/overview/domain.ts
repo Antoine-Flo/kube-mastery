@@ -4,10 +4,7 @@ import type { OverviewModule, OverviewLesson } from './types'
 
 export function getOrderedModuleTopicPairs(
   structure: CourseStructure,
-  topicDirsByModule: Map<
-    string,
-    Array<{ topicDir: string; topicId: string }>
-  >
+  topicDirsByModule: Map<string, Array<{ topicDir: string; topicId: string }>>
 ): Array<{ moduleId: string; topicId: string }> {
   const out: Array<{ moduleId: string; topicId: string }> = []
 
@@ -33,8 +30,7 @@ export function buildModule(
   lang: UiLang
 ): OverviewModule {
   const lessons: OverviewLesson[] = topicIdsInOrder.map(({ topicId }) => {
-    const title =
-      lessonTitles.get(`${moduleId}:${topicId}:${lang}`) ?? topicId
+    const title = lessonTitles.get(`${moduleId}:${topicId}:${lang}`) ?? topicId
     return {
       id: topicId,
       title,
