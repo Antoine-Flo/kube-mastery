@@ -27,7 +27,12 @@ describe('kubectl get pods -A wide output', () => {
         namespace: 'kube-system',
         labels: { tier: 'control-plane', component: 'kube-apiserver' },
         nodeName: 'conformance-control-plane',
-        containers: [{ name: 'kube-apiserver', image: 'registry.k8s.io/kube-apiserver:v1.35.0' }],
+        containers: [
+          {
+            name: 'kube-apiserver',
+            image: 'registry.k8s.io/kube-apiserver:v1.35.0'
+          }
+        ],
         phase: 'Running'
       }),
       createPod({
@@ -35,7 +40,9 @@ describe('kubectl get pods -A wide output', () => {
         namespace: 'kube-system',
         labels: { 'k8s-app': 'kube-dns' },
         nodeName: 'conformance-control-plane',
-        containers: [{ name: 'coredns', image: 'registry.k8s.io/coredns/coredns:v1.13.1' }],
+        containers: [
+          { name: 'coredns', image: 'registry.k8s.io/coredns/coredns:v1.13.1' }
+        ],
         phase: 'Running'
       }),
       createPod({
@@ -73,7 +80,9 @@ describe('kubectl get pods -A wide output', () => {
         name: 'dns-a',
         namespace: 'kube-system',
         nodeName: 'sim-control-plane',
-        containers: [{ name: 'coredns', image: 'registry.k8s.io/coredns/coredns:v1.13.1' }],
+        containers: [
+          { name: 'coredns', image: 'registry.k8s.io/coredns/coredns:v1.13.1' }
+        ],
         phase: 'Running'
       })
     ]
@@ -103,7 +112,9 @@ describe('kubectl get pods -A wide output', () => {
         name: 'dns',
         namespace: 'kube-system',
         nodeName: 'sim-control-plane',
-        containers: [{ name: 'coredns', image: 'registry.k8s.io/coredns/coredns:v1.13.1' }],
+        containers: [
+          { name: 'coredns', image: 'registry.k8s.io/coredns/coredns:v1.13.1' }
+        ],
         phase: 'Running'
       })
     ]
@@ -127,7 +138,9 @@ describe('kubectl get pods -A wide output', () => {
         name: 'coredns-22h9q09vnb-oqbh3',
         namespace: 'kube-system',
         nodeName: 'sim-worker2',
-        containers: [{ name: 'coredns', image: 'registry.k8s.io/coredns/coredns:v1.13.1' }],
+        containers: [
+          { name: 'coredns', image: 'registry.k8s.io/coredns/coredns:v1.13.1' }
+        ],
         phase: 'Running'
       }),
       createPod({
@@ -137,7 +150,8 @@ describe('kubectl get pods -A wide output', () => {
         containers: [
           {
             name: 'local-path-provisioner',
-            image: 'docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88'
+            image:
+              'docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88'
           }
         ],
         phase: 'Running'

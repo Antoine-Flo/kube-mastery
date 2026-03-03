@@ -496,7 +496,9 @@ describe('resourceHelpers', () => {
         const result = createResourceWithEvents(ingress, clusterState, eventBus)
         expect(result.ok).toBe(true)
         if (result.ok) {
-          expect(result.value).toContain('ingress.networking.k8s.io/demo-ingress created')
+          expect(result.value).toContain(
+            'ingress.networking.k8s.io/demo-ingress created'
+          )
         }
       })
     })

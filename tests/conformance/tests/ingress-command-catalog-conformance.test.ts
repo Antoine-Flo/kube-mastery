@@ -46,6 +46,8 @@ describe('Ingress Command Catalog Conformance', () => {
 
     expect(commands).toContain('kubectl get --raw /openapi/v3')
     expect(commands).toContain('kubectl get --raw /apis/networking.k8s.io/v1')
-    expect(commands).toContain('kubectl get --raw /openapi/v3/apis/networking.k8s.io/v1')
+    expect(commands).toContain(
+      'kubectl get --raw /openapi/v3/apis/networking.k8s.io/v1'
+    )
   })
 })

@@ -156,7 +156,9 @@ describe('kubectl describe handler - services and error semantics', () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain('deployments.apps "missing-deploy" not found')
+      expect(result.error).toContain(
+        'deployments.apps "missing-deploy" not found'
+      )
     }
   })
 })

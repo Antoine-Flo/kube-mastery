@@ -279,7 +279,9 @@ describe('kubectl delete handler', () => {
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
-        expect(result.error).toContain('deployments.apps "missing-deploy" not found')
+        expect(result.error).toContain(
+          'deployments.apps "missing-deploy" not found'
+        )
       }
     })
 

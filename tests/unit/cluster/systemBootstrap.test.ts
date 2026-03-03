@@ -23,7 +23,9 @@ describe('systemBootstrap', () => {
     })
 
     expect(resources.nodes).toHaveLength(3)
-    expect(resources.namespaces.map((namespace) => namespace.metadata.name)).toEqual([
+    expect(
+      resources.namespaces.map((namespace) => namespace.metadata.name)
+    ).toEqual([
       'default',
       'kube-system',
       'kube-public',
@@ -44,35 +46,39 @@ describe('systemBootstrap', () => {
         effect: 'NoSchedule'
       }
     ])
-    expect(resources.nodes.every((node) => {
-      const readyCondition = (node.status.conditions ?? []).find((condition) => {
-        return condition.type === 'Ready'
+    expect(
+      resources.nodes.every((node) => {
+        const readyCondition = (node.status.conditions ?? []).find(
+          (condition) => {
+            return condition.type === 'Ready'
+          }
+        )
+        return readyCondition?.status === 'True'
       })
-      return readyCondition?.status === 'True'
-    })).toBe(true)
+    ).toBe(true)
     expect(resources.configMaps).toHaveLength(2)
-    expect(resources.configMaps.map((configMap) => configMap.metadata.name)).toEqual([
-      'kube-root-ca.crt',
-      'cluster-info'
-    ])
-    expect(resources.configMaps.map((configMap) => configMap.metadata.namespace)).toEqual([
-      'default',
-      'kube-public'
-    ])
+    expect(
+      resources.configMaps.map((configMap) => configMap.metadata.name)
+    ).toEqual(['kube-root-ca.crt', 'cluster-info'])
+    expect(
+      resources.configMaps.map((configMap) => configMap.metadata.namespace)
+    ).toEqual(['default', 'kube-public'])
     expect(resources.services.map((service) => service.metadata.name)).toEqual([
       'kubernetes',
       'kube-dns'
     ])
-    expect(resources.services.map((service) => service.metadata.namespace)).toEqual([
-      'default',
-      'kube-system'
-    ])
+    expect(
+      resources.services.map((service) => service.metadata.namespace)
+    ).toEqual(['default', 'kube-system'])
     expect(resources.pods).toHaveLength(4)
     expect(resources.staticPods).toHaveLength(4)
     const staticControlPlanePods = [
       createControlPlaneStaticPodName(controlPlaneNodeName, 'etcd'),
       createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-apiserver'),
-      createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-controller-manager'),
+      createControlPlaneStaticPodName(
+        controlPlaneNodeName,
+        'kube-controller-manager'
+      ),
       createControlPlaneStaticPodName(controlPlaneNodeName, 'kube-scheduler')
     ]
     const expectedComponentLabelByPodName: Record<string, string> = {
@@ -114,9 +120,13 @@ describe('systemBootstrap', () => {
     expect(kubeApiserverPod?.spec.containers[0].livenessProbe).toBeDefined()
     expect(kubeApiserverPod?.spec.containers[0].readinessProbe).toBeDefined()
     expect(kubeApiserverPod?.spec.volumes?.length).toBeGreaterThan(0)
-    expect(kubeApiserverPod?.spec.tolerations?.some((toleration) => {
-      return toleration.operator === 'Exists' && toleration.effect === 'NoExecute'
-    })).toBe(true)
+    expect(
+      kubeApiserverPod?.spec.tolerations?.some((toleration) => {
+        return (
+          toleration.operator === 'Exists' && toleration.effect === 'NoExecute'
+        )
+      })
+    ).toBe(true)
     expect(
       kubeApiserverPod?.metadata.annotations?.[
         'kubeadm.kubernetes.io/kube-apiserver.advertise-address.endpoint'
@@ -130,25 +140,31 @@ describe('systemBootstrap', () => {
     expect(corednsDeployment?.spec.template.spec.nodeSelector).toEqual({
       'node-role.kubernetes.io/control-plane': ''
     })
-    expect(corednsDeployment?.spec.template.spec.tolerations?.some((toleration) => {
-      return (
-        toleration.key === 'node-role.kubernetes.io/control-plane' &&
-        toleration.operator === 'Exists' &&
-        toleration.effect === 'NoSchedule'
-      )
-    })).toBe(true)
+    expect(
+      corednsDeployment?.spec.template.spec.tolerations?.some((toleration) => {
+        return (
+          toleration.key === 'node-role.kubernetes.io/control-plane' &&
+          toleration.operator === 'Exists' &&
+          toleration.effect === 'NoSchedule'
+        )
+      })
+    ).toBe(true)
     const localPathDeployment = resources.deployments.find((item) => {
       return item.metadata.name === 'local-path-provisioner'
     })
     expect(localPathDeployment).toBeDefined()
     expect(localPathDeployment?.spec.replicas).toBe(1)
-    expect(localPathDeployment?.spec.template.spec.tolerations?.some((toleration) => {
-      return (
-        toleration.key === 'node-role.kubernetes.io/control-plane' &&
-        toleration.operator === 'Exists' &&
-        toleration.effect === 'NoSchedule'
+    expect(
+      localPathDeployment?.spec.template.spec.tolerations?.some(
+        (toleration) => {
+          return (
+            toleration.key === 'node-role.kubernetes.io/control-plane' &&
+            toleration.operator === 'Exists' &&
+            toleration.effect === 'NoSchedule'
+          )
+        }
       )
-    })).toBe(true)
+    ).toBe(true)
     expect(resources.daemonSets.map((item) => item.metadata.name)).toEqual([
       'kindnet',
       'kube-proxy'
@@ -168,12 +184,20 @@ describe('systemBootstrap', () => {
     applySystemBootstrap(clusterState, { clusterName: 'conformance', clock })
 
     expect(clusterState.getNodes()).toHaveLength(expected.nodes.length)
-    expect(clusterState.getNamespaces()).toHaveLength(expected.namespaces.length)
-    expect(clusterState.getConfigMaps()).toHaveLength(expected.configMaps.length)
+    expect(clusterState.getNamespaces()).toHaveLength(
+      expected.namespaces.length
+    )
+    expect(clusterState.getConfigMaps()).toHaveLength(
+      expected.configMaps.length
+    )
     expect(clusterState.getServices()).toHaveLength(expected.services.length)
     expect(clusterState.getPods()).toHaveLength(expected.pods.length)
-    expect(clusterState.getDeployments()).toHaveLength(expected.deployments.length)
-    expect(clusterState.getDaemonSets()).toHaveLength(expected.daemonSets.length)
+    expect(clusterState.getDeployments()).toHaveLength(
+      expected.deployments.length
+    )
+    expect(clusterState.getDaemonSets()).toHaveLength(
+      expected.daemonSets.length
+    )
   })
 
   it('supports topology with extra workers without magic strings', () => {
@@ -189,13 +213,15 @@ describe('systemBootstrap', () => {
       'conformance-worker2',
       'conformance-worker3'
     ])
-    expect(resources.nodes.map((node) => {
-      const addresses = node.status.addresses ?? []
-      const internal = addresses.find((address) => {
-        return address.type === 'InternalIP'
+    expect(
+      resources.nodes.map((node) => {
+        const addresses = node.status.addresses ?? []
+        const internal = addresses.find((address) => {
+          return address.type === 'InternalIP'
+        })
+        return internal?.address
       })
-      return internal?.address
-    })).toEqual(['172.18.0.2', '172.18.0.3', '172.18.0.4', '172.18.0.5'])
+    ).toEqual(['172.18.0.2', '172.18.0.3', '172.18.0.4', '172.18.0.5'])
     const daemonSets = resources.daemonSets
     expect(daemonSets).toHaveLength(2)
     const kubeProxyDaemonSet = daemonSets.find((daemonSet) => {
@@ -206,12 +232,14 @@ describe('systemBootstrap', () => {
     })
     expect(kubeProxyDaemonSet).toBeDefined()
     expect(kindnetDaemonSet).toBeDefined()
-    expect(kubeProxyDaemonSet?.spec.template.spec.tolerations?.some((toleration) => {
-      return (
-        toleration.key === 'node-role.kubernetes.io/control-plane' &&
-        toleration.operator === 'Exists' &&
-        toleration.effect === 'NoSchedule'
-      )
-    })).toBe(true)
+    expect(
+      kubeProxyDaemonSet?.spec.template.spec.tolerations?.some((toleration) => {
+        return (
+          toleration.key === 'node-role.kubernetes.io/control-plane' &&
+          toleration.operator === 'Exists' &&
+          toleration.effect === 'NoSchedule'
+        )
+      })
+    ).toBe(true)
   })
 })

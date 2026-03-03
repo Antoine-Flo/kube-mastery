@@ -58,7 +58,9 @@ describe('conformance reporter', () => {
   })
 
   it('should split reports by inferred command bucket', () => {
-    const outputDir = mkdtempSync(join(tmpdir(), 'conformance-reporter-bucket-'))
+    const outputDir = mkdtempSync(
+      join(tmpdir(), 'conformance-reporter-bucket-')
+    )
     tempDirs.push(outputDir)
 
     const reporter = createConformanceReporter(outputDir)
@@ -136,7 +138,9 @@ describe('conformance reporter', () => {
   })
 
   it('should bucket kubectl config commands under config', () => {
-    const outputDir = mkdtempSync(join(tmpdir(), 'conformance-reporter-config-'))
+    const outputDir = mkdtempSync(
+      join(tmpdir(), 'conformance-reporter-config-')
+    )
     tempDirs.push(outputDir)
 
     const reporter = createConformanceReporter(outputDir)
@@ -164,7 +168,10 @@ describe('conformance reporter', () => {
     })
     reporter.flush()
 
-    const configKindLog = readFileSync(join(outputDir, 'config', 'kind.log'), 'utf-8')
+    const configKindLog = readFileSync(
+      join(outputDir, 'config', 'kind.log'),
+      'utf-8'
+    )
     const configRunnerLog = readFileSync(
       join(outputDir, 'config', 'runner.log'),
       'utf-8'

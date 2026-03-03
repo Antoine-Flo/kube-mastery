@@ -621,7 +621,9 @@ data:
         expect(duplicate.ok).toBe(false)
         if (!duplicate.ok) {
           expect(duplicate.error).toContain('Error from server (AlreadyExists)')
-          expect(duplicate.error).toContain('namespaces "my-team" already exists')
+          expect(duplicate.error).toContain(
+            'namespaces "my-team" already exists'
+          )
         }
 
         const deleted = executor.execute('kubectl delete namespace my-team')
@@ -1082,7 +1084,9 @@ data:
 
         expect(result.ok).toBe(false)
         if (!result.ok) {
-          expect(result.error).toContain('--raw and --output are mutually exclusive')
+          expect(result.error).toContain(
+            '--raw and --output are mutually exclusive'
+          )
         }
       })
 
@@ -1259,7 +1263,9 @@ data:
         }
 
         expect(result.value).toContain('current-context: kind-conformance')
-        expect(result.value).toContain('certificate-authority-data: DATA+OMITTED')
+        expect(result.value).toContain(
+          'certificate-authority-data: DATA+OMITTED'
+        )
       })
 
       it('should set current context namespace and use it implicitly', () => {
@@ -1440,7 +1446,10 @@ data:
           return
         }
 
-        expect(podResult.value.spec.containers[0].args).toEqual(['sleep', '3600'])
+        expect(podResult.value.spec.containers[0].args).toEqual([
+          'sleep',
+          '3600'
+        ])
       })
 
       it('should create pod with labels env and port for kubectl run', () => {
@@ -1465,9 +1474,9 @@ data:
           app: 'hazelcast',
           env: 'prod'
         })
-        expect(podResult.value.spec.containers[0].ports?.[0]?.containerPort).toBe(
-          5701
-        )
+        expect(
+          podResult.value.spec.containers[0].ports?.[0]?.containerPort
+        ).toBe(5701)
         expect(podResult.value.spec.containers[0].env).toEqual([
           {
             name: 'DNS_DOMAIN',
@@ -1535,7 +1544,10 @@ data:
       })
 
       it('should execute nslookup in kubectl run --rm -it flow', () => {
-        const networkRuntime = initializeSimNetworkRuntime(eventBus, clusterState)
+        const networkRuntime = initializeSimNetworkRuntime(
+          eventBus,
+          clusterState
+        )
         const executor = createKubectlExecutor(
           clusterState,
           fileSystem,
@@ -1543,7 +1555,9 @@ data:
           eventBus,
           networkRuntime
         )
-        executor.execute('kubectl create deployment web --image=nginx --port=8080')
+        executor.execute(
+          'kubectl create deployment web --image=nginx --port=8080'
+        )
         executor.execute('kubectl expose deployment web --port=80')
 
         const result = executor.execute(

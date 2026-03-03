@@ -54,7 +54,11 @@ describe('DaemonSet OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(daemonSet, 'apps/v1', 'DaemonSet')
+      const result = validator.validateResource(
+        daemonSet,
+        'apps/v1',
+        'DaemonSet'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -105,7 +109,11 @@ describe('DaemonSet OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(daemonSet, 'apps/v1', 'DaemonSet')
+      const result = validator.validateResource(
+        daemonSet,
+        'apps/v1',
+        'DaemonSet'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -157,7 +165,11 @@ describe('DaemonSet OpenAPI Conformance', () => {
         }
       }
 
-      const result = validator.validateResource(daemonSet, 'apps/v1', 'DaemonSet')
+      const result = validator.validateResource(
+        daemonSet,
+        'apps/v1',
+        'DaemonSet'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }

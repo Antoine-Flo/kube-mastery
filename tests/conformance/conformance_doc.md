@@ -26,6 +26,7 @@ Tests → Loader (charge specs) → Validator (Ajv) → Validation JSON Schema �
 - **tests/** : Tests de conformité par type de ressource
 
 Ressources actuellement couvertes par les tests:
+
 - Core v1: Pod, Node, ConfigMap, Secret, Service, PersistentVolume, PersistentVolumeClaim
 - Apps v1: Deployment, ReplicaSet, DaemonSet
 
@@ -150,6 +151,7 @@ npm run conformance:generate
 ```
 
 Suites générées:
+
 - `bin/config/generated/exhaustive-suite.json` (exhaustif par défaut)
 - `bin/config/generated/by-command/<command>.json` (suite ciblée)
 
@@ -167,6 +169,7 @@ npm run conformance:cmd:run
 La matrice runtime est définie dans `bin/config/conformance/command-matrix.ts`.
 
 Pour chaque commande kubectl:
+
 - dimensions minimales: **forme d'entrée**, **contexte de seed/namespace**, **contrat de sortie**,
 - sélection de cas via:
   - pairwise sur flags orthogonaux,

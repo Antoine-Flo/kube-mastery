@@ -42,11 +42,7 @@ describe('kubectl expose handler', () => {
       })
     )
 
-    const result = handleExpose(
-      clusterState,
-      createParsedExpose(),
-      eventBus
-    )
+    const result = handleExpose(clusterState, createParsedExpose(), eventBus)
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return

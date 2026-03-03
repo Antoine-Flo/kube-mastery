@@ -60,9 +60,9 @@ describe('kubectl get raw handler', () => {
     )
     expect(defaultNamespace).toBeDefined()
     if (defaultNamespace) {
-      expect(defaultNamespace.metadata.labels['kubernetes.io/metadata.name']).toBe(
-        'default'
-      )
+      expect(
+        defaultNamespace.metadata.labels['kubernetes.io/metadata.name']
+      ).toBe('default')
     }
   })
 
@@ -74,9 +74,9 @@ describe('kubectl get raw handler', () => {
     }
 
     expect(payload.paths['apis/networking.k8s.io/v1']).toBeDefined()
-    expect(payload.paths['apis/networking.k8s.io/v1'].serverRelativeURL).toContain(
-      '/openapi/v3/apis/networking.k8s.io/v1'
-    )
+    expect(
+      payload.paths['apis/networking.k8s.io/v1'].serverRelativeURL
+    ).toContain('/openapi/v3/apis/networking.k8s.io/v1')
   })
 
   it('returns networking API resources for "/apis/networking.k8s.io/v1"', () => {
@@ -88,7 +88,9 @@ describe('kubectl get raw handler', () => {
     }
 
     expect(payload.kind).toBe('APIResourceList')
-    expect(payload.resources.map((resource) => resource.name)).toContain('ingresses')
+    expect(payload.resources.map((resource) => resource.name)).toContain(
+      'ingresses'
+    )
     expect(payload.resources.map((resource) => resource.name)).toContain(
       'ingressclasses'
     )

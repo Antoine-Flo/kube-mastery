@@ -22,7 +22,10 @@ describe('Network DNS and Traffic', () => {
     })
 
     const resolver = createDnsResolver(networkState)
-    const result = resolver.resolveARecord('web.dev.svc.cluster.local', 'default')
+    const result = resolver.resolveARecord(
+      'web.dev.svc.cluster.local',
+      'default'
+    )
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return

@@ -391,7 +391,9 @@ describe('Scheduler', () => {
     })
 
     it('should reject node with NoSchedule taint when pod has no toleration', () => {
-      mockState.nodes = [createReadyNodeWithNoScheduleTaint('node-1', 'dedicated', 'system')]
+      mockState.nodes = [
+        createReadyNodeWithNoScheduleTaint('node-1', 'dedicated', 'system')
+      ]
       scheduler.start()
 
       const podUpdated = vi.fn()
@@ -404,7 +406,9 @@ describe('Scheduler', () => {
     })
 
     it('should schedule pod when matching toleration exists', () => {
-      mockState.nodes = [createReadyNodeWithNoScheduleTaint('node-1', 'dedicated', 'system')]
+      mockState.nodes = [
+        createReadyNodeWithNoScheduleTaint('node-1', 'dedicated', 'system')
+      ]
       scheduler.start()
 
       let updatedPod: Pod | undefined
@@ -435,7 +439,9 @@ describe('Scheduler', () => {
         updatedPod = event.payload.pod
       })
 
-      const pod = createUnscheduledPodWithNodeSelector('test-pod', { zone: 'b' })
+      const pod = createUnscheduledPodWithNodeSelector('test-pod', {
+        zone: 'b'
+      })
       eventBus.emit(createPodCreatedEvent(pod, 'test'))
 
       expect(updatedPod).toBeDefined()

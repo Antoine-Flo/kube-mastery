@@ -106,7 +106,9 @@ describe('kubectl parser - run', () => {
   })
 
   it('should parse run args without --command', () => {
-    const result = parseCommand('kubectl run test-pod --image=busybox -- sleep 3600')
+    const result = parseCommand(
+      'kubectl run test-pod --image=busybox -- sleep 3600'
+    )
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -150,7 +152,9 @@ describe('kubectl parser - run', () => {
   })
 
   it('should parse run with dry-run client', () => {
-    const result = parseCommand('kubectl run test-pod --image=busybox --dry-run=client')
+    const result = parseCommand(
+      'kubectl run test-pod --image=busybox --dry-run=client'
+    )
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -187,7 +191,9 @@ describe('kubectl parser - run', () => {
   })
 
   it('should accept run when --command has no command after separator', () => {
-    const result = parseCommand('kubectl run test-pod --image=busybox --command --')
+    const result = parseCommand(
+      'kubectl run test-pod --image=busybox --command --'
+    )
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -209,7 +215,9 @@ describe('kubectl parser - run', () => {
   })
 
   it('should reject run when dry-run value is invalid', () => {
-    const result = parseCommand('kubectl run test-pod --image=busybox --dry-run=local')
+    const result = parseCommand(
+      'kubectl run test-pod --image=busybox --dry-run=local'
+    )
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -233,7 +241,9 @@ describe('kubectl parser - run', () => {
 
 describe('kubectl parser - expose', () => {
   it('should parse expose deployment with required port', () => {
-    const result = parseCommand('kubectl expose deployment web --port=80 -n dev')
+    const result = parseCommand(
+      'kubectl expose deployment web --port=80 -n dev'
+    )
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -273,7 +283,9 @@ describe('kubectl parser - expose', () => {
 
 describe('kubectl parser - describe', () => {
   it('should parse name when namespace flag is between resource and name', () => {
-    const result = parseCommand('kubectl describe pod -n kube-system coredns-abc')
+    const result = parseCommand(
+      'kubectl describe pod -n kube-system coredns-abc'
+    )
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -286,7 +298,9 @@ describe('kubectl parser - describe', () => {
   })
 
   it('should parse resource and name when namespace flag is before resource', () => {
-    const result = parseCommand('kubectl describe -n kube-system pod coredns-abc')
+    const result = parseCommand(
+      'kubectl describe -n kube-system pod coredns-abc'
+    )
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -375,7 +389,9 @@ describe('kubectl parser - get and delete flag positions', () => {
   })
 
   it('should parse get short label selector flag', () => {
-    const result = parseCommand('kubectl get pods -n kube-system -l tier=control-plane')
+    const result = parseCommand(
+      'kubectl get pods -n kube-system -l tier=control-plane'
+    )
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -471,7 +487,9 @@ describe('kubectl parser - get raw', () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain('--raw and --output are mutually exclusive')
+      expect(result.error).toContain(
+        '--raw and --output are mutually exclusive'
+      )
     }
   })
 
@@ -541,7 +559,9 @@ describe('kubectl parser - explain', () => {
   })
 
   it('should parse explain recursive flag', () => {
-    const result = parseCommand('kubectl explain pod.spec.containers --recursive')
+    const result = parseCommand(
+      'kubectl explain pod.spec.containers --recursive'
+    )
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -556,7 +576,9 @@ describe('kubectl parser - explain', () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain('you must specify the type of resource to explain')
+      expect(result.error).toContain(
+        'you must specify the type of resource to explain'
+      )
     }
   })
 
@@ -565,7 +587,9 @@ describe('kubectl parser - explain', () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain('We accept only this format: explain RESOURCE')
+      expect(result.error).toContain(
+        'We accept only this format: explain RESOURCE'
+      )
     }
   })
 })
@@ -650,7 +674,9 @@ describe('kubectl parser - config', () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain('config set-context requires flag --namespace')
+      expect(result.error).toContain(
+        'config set-context requires flag --namespace'
+      )
     }
   })
 })

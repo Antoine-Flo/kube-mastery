@@ -67,9 +67,10 @@ describe('podStartupSimulator', () => {
 
     expect(emittedBySimulator.length).toBe(2)
     expect(emittedBySimulator[0].payload.pod.status.phase).toBe('Pending')
-    expect(emittedBySimulator[0].payload.pod.status.containerStatuses?.[0]?.waitingReason).toBe(
-      'ContainerCreating'
-    )
+    expect(
+      emittedBySimulator[0].payload.pod.status.containerStatuses?.[0]
+        ?.waitingReason
+    ).toBe('ContainerCreating')
     expect(emittedBySimulator[1].payload.pod.status.phase).toBe('Running')
   })
 

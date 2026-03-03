@@ -42,7 +42,10 @@ describe('runtime controller invariants', () => {
           const volume = pod.spec.volumes?.find((candidate) => {
             return candidate.source.type === 'persistentVolumeClaim'
           })
-          if (volume == null || volume.source.type !== 'persistentVolumeClaim') {
+          if (
+            volume == null ||
+            volume.source.type !== 'persistentVolumeClaim'
+          ) {
             return { ready: true }
           }
           const pvcResult = clusterState.findPersistentVolumeClaim(
@@ -115,19 +118,22 @@ describe('runtime controller invariants', () => {
       podLifecycle: {
         pendingDelayRangeMs: { minMs: 0, maxMs: 0 },
         volumeReadinessProbe: (pod) => {
-          const persistentVolumeClaimVolume = pod.spec.volumes?.find((volume) => {
-            return volume.source.type === 'persistentVolumeClaim'
-          })
+          const persistentVolumeClaimVolume = pod.spec.volumes?.find(
+            (volume) => {
+              return volume.source.type === 'persistentVolumeClaim'
+            }
+          )
           if (
             persistentVolumeClaimVolume == null ||
             persistentVolumeClaimVolume.source.type !== 'persistentVolumeClaim'
           ) {
             return { ready: true }
           }
-          const persistentVolumeClaimResult = clusterState.findPersistentVolumeClaim(
-            persistentVolumeClaimVolume.source.claimName,
-            pod.metadata.namespace
-          )
+          const persistentVolumeClaimResult =
+            clusterState.findPersistentVolumeClaim(
+              persistentVolumeClaimVolume.source.claimName,
+              pod.metadata.namespace
+            )
           if (
             !persistentVolumeClaimResult.ok ||
             persistentVolumeClaimResult.value == null
@@ -285,19 +291,24 @@ describe('runtime controller invariants', () => {
     })
     flushRuntime()
 
-    const replicaSets = clusterState.getReplicaSets('default').filter((rs) =>
-      rs.metadata.ownerReferences?.some(
-        (owner) => owner.kind === 'Deployment' && owner.name === 'web'
+    const replicaSets = clusterState
+      .getReplicaSets('default')
+      .filter((rs) =>
+        rs.metadata.ownerReferences?.some(
+          (owner) => owner.kind === 'Deployment' && owner.name === 'web'
+        )
       )
-    )
     expect(replicaSets.length).toBe(1)
 
-    const pods = clusterState.getPods('default').filter((pod) =>
-      pod.metadata.ownerReferences?.some(
-        (owner) =>
-          owner.kind === 'ReplicaSet' && owner.name === replicaSets[0].metadata.name
+    const pods = clusterState
+      .getPods('default')
+      .filter((pod) =>
+        pod.metadata.ownerReferences?.some(
+          (owner) =>
+            owner.kind === 'ReplicaSet' &&
+            owner.name === replicaSets[0].metadata.name
+        )
       )
-    )
     expect(pods.length).toBe(2)
     expect(
       pods.every(

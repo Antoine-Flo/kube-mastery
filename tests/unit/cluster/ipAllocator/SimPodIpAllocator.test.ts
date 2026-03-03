@@ -8,7 +8,9 @@ describe('SimPodIpAllocator', () => {
     const podA = createPod({
       name: 'coredns-22h9q09vnb-oqbh3',
       namespace: 'kube-system',
-      containers: [{ name: 'coredns', image: 'registry.k8s.io/coredns/coredns:v1.13.1' }],
+      containers: [
+        { name: 'coredns', image: 'registry.k8s.io/coredns/coredns:v1.13.1' }
+      ],
       phase: 'Running'
     })
     const podB = createPod({
@@ -17,7 +19,8 @@ describe('SimPodIpAllocator', () => {
       containers: [
         {
           name: 'local-path-provisioner',
-          image: 'docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88'
+          image:
+            'docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88'
         }
       ],
       phase: 'Running'

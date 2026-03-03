@@ -4,10 +4,7 @@ import {
   buildExhaustiveSuite,
   listSupportedCommandSuites
 } from '../../../bin/generate-conformance-scenario'
-import {
-  parseCliArgs,
-  resolveSuitePath
-} from '../../../bin/run-conformance'
+import { parseCliArgs, resolveSuitePath } from '../../../bin/run-conformance'
 
 describe('conformance scripts', () => {
   it('should build exhaustive suite with actions', () => {
@@ -65,8 +62,8 @@ describe('conformance scripts', () => {
       list: false
     })
 
-    expect(resolvedPath.endsWith('/bin/config/generated/by-command/get.json')).toBe(
-      true
-    )
+    expect(
+      resolvedPath.endsWith('/bin/config/generated/by-command/get.json')
+    ).toBe(true)
   })
 })

@@ -52,9 +52,8 @@ describe('LogGenerator', () => {
 
     it('should include nginx notice lines after startup sequence', () => {
       const logs = generateLogs('nginx:latest', 50)
-      const hasNginxNotice = logs.some(
-        (log) =>
-          /^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2} \[notice\] 1#1:/.test(log)
+      const hasNginxNotice = logs.some((log) =>
+        /^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2} \[notice\] 1#1:/.test(log)
       )
       expect(hasNginxNotice).toBe(true)
     })

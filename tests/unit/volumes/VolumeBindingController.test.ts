@@ -63,7 +63,9 @@ describe('VolumeBindingController', () => {
       name: 'data'
     })
 
-    expect(volumeState.getBoundVolumeForClaim('default', 'data')).toBe('pv-fast')
+    expect(volumeState.getBoundVolumeForClaim('default', 'data')).toBe(
+      'pv-fast'
+    )
     controller.stop()
   })
 
@@ -99,7 +101,9 @@ describe('VolumeBindingController', () => {
     }
     expect(pvcResult.value.status.phase).toBe('Pending')
     expect(pvcResult.value.spec.volumeName).toBeUndefined()
-    expect(volumeState.getBoundVolumeForClaim('default', 'data')).toBeUndefined()
+    expect(
+      volumeState.getBoundVolumeForClaim('default', 'data')
+    ).toBeUndefined()
     controller.stop()
   })
 })

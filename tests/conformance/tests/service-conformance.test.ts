@@ -36,7 +36,11 @@ describe('Service OpenAPI Conformance', () => {
       })
 
       const serviceForValidation = removeSimulatorFields(service) as Service
-      const result = validator.validateResource(serviceForValidation, 'v1', 'Service')
+      const result = validator.validateResource(
+        serviceForValidation,
+        'v1',
+        'Service'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -53,7 +57,11 @@ describe('Service OpenAPI Conformance', () => {
       })
 
       const serviceForValidation = removeSimulatorFields(service) as Service
-      const result = validator.validateResource(serviceForValidation, 'v1', 'Service')
+      const result = validator.validateResource(
+        serviceForValidation,
+        'v1',
+        'Service'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -70,7 +78,11 @@ describe('Service OpenAPI Conformance', () => {
       })
 
       const serviceForValidation = removeSimulatorFields(service) as Service
-      const result = validator.validateResource(serviceForValidation, 'v1', 'Service')
+      const result = validator.validateResource(
+        serviceForValidation,
+        'v1',
+        'Service'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }
@@ -94,7 +106,11 @@ describe('Service OpenAPI Conformance', () => {
       })
 
       const serviceForValidation = removeSimulatorFields(service) as Service
-      const result = validator.validateResource(serviceForValidation, 'v1', 'Service')
+      const result = validator.validateResource(
+        serviceForValidation,
+        'v1',
+        'Service'
+      )
       if (!result.ok) {
         throw new Error(`Validation failed: ${result.error}`)
       }

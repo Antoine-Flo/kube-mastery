@@ -242,7 +242,7 @@ describe('kubectl logs handler', () => {
       expect(result.ok).toBe(false)
       if (!result.ok) {
         expect(result.error).toContain('invalid argument "invalid"')
-        expect(result.error).toContain("kubectl logs --help")
+        expect(result.error).toContain('kubectl logs --help')
       }
     })
 

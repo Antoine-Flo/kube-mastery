@@ -9,8 +9,12 @@ import {
 describe('command segmentation', () => {
   it('should infer kubectl command names from command strings', () => {
     expect(inferKubectlCommandName('kubectl get pods')).toBe('get')
-    expect(inferKubectlCommandName('kubectl cluster-info dump')).toBe('cluster-info')
-    expect(inferKubectlCommandName('kubectl config get-contexts')).toBe('config')
+    expect(inferKubectlCommandName('kubectl cluster-info dump')).toBe(
+      'cluster-info'
+    )
+    expect(inferKubectlCommandName('kubectl config get-contexts')).toBe(
+      'config'
+    )
     expect(inferKubectlCommandName('kubectl --help')).toBe('help')
     expect(inferKubectlCommandName('echo hello')).toBeUndefined()
   })

@@ -111,7 +111,9 @@ describe('applyCreate handler', () => {
   })
 
   it('should create deployment in provided namespace', () => {
-    const createNamespaceParsed = parseCommand('kubectl create namespace staging')
+    const createNamespaceParsed = parseCommand(
+      'kubectl create namespace staging'
+    )
     expect(createNamespaceParsed.ok).toBe(true)
     if (!createNamespaceParsed.ok) {
       return
@@ -261,7 +263,9 @@ spec:
     if (!result.ok) {
       return
     }
-    expect(result.value).toContain('ingress.networking.k8s.io/demo-ingress created')
+    expect(result.value).toContain(
+      'ingress.networking.k8s.io/demo-ingress created'
+    )
     const ingress = clusterState.findIngress('demo-ingress', 'default')
     expect(ingress.ok).toBe(true)
   })
@@ -273,7 +277,12 @@ spec:
       return
     }
 
-    const firstResult = handleCreate(fileSystem, clusterState, first.value, eventBus)
+    const firstResult = handleCreate(
+      fileSystem,
+      clusterState,
+      first.value,
+      eventBus
+    )
     expect(firstResult.ok).toBe(true)
 
     const second = parseCommand('kubectl create namespace my-team')
@@ -291,7 +300,9 @@ spec:
     expect(secondResult.ok).toBe(false)
     if (!secondResult.ok) {
       expect(secondResult.error).toContain('Error from server (AlreadyExists)')
-      expect(secondResult.error).toContain('namespaces "my-team" already exists')
+      expect(secondResult.error).toContain(
+        'namespaces "my-team" already exists'
+      )
     }
   })
 })

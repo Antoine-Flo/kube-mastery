@@ -73,7 +73,12 @@ describe('initializeSimPodIpAllocation', () => {
     } as any
     const stop = initializeSimPodIpAllocation(eventBus, state)
     eventBus.emit(
-      createPodDeletedEvent(pod.metadata.name, pod.metadata.namespace, pod, 'test')
+      createPodDeletedEvent(
+        pod.metadata.name,
+        pod.metadata.namespace,
+        pod,
+        'test'
+      )
     )
     stop()
   })

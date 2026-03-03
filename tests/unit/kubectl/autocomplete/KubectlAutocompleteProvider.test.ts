@@ -170,7 +170,11 @@ describe('KubectlAutocompleteProvider', () => {
       })
 
       it('should return empty array for ambiguous typed resource token', () => {
-        const results = provider.complete(['kubectl', 'get', 'd'], 'd', mockContext)
+        const results = provider.complete(
+          ['kubectl', 'get', 'd'],
+          'd',
+          mockContext
+        )
         expect(results).toEqual([])
       })
 

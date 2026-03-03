@@ -27,26 +27,37 @@ describe('createClusterState bootstrap policy', () => {
       `${SIMULATOR_CLUSTER_NAME}-worker`,
       `${SIMULATOR_CLUSTER_NAME}-worker2`
     ])
-    expect(clusterState.getConfigMaps('default').some((configMap) => {
-      return configMap.metadata.name === 'kube-root-ca.crt'
-    })).toBe(true)
-    expect(clusterState.getConfigMaps('kube-public').some((configMap) => {
-      return configMap.metadata.name === 'cluster-info'
-    })).toBe(true)
-    const clusterInfoConfigMap = clusterState.getConfigMaps('kube-public').find((configMap) => {
-      return configMap.metadata.name === 'cluster-info'
-    })
+    expect(
+      clusterState.getConfigMaps('default').some((configMap) => {
+        return configMap.metadata.name === 'kube-root-ca.crt'
+      })
+    ).toBe(true)
+    expect(
+      clusterState.getConfigMaps('kube-public').some((configMap) => {
+        return configMap.metadata.name === 'cluster-info'
+      })
+    ).toBe(true)
+    const clusterInfoConfigMap = clusterState
+      .getConfigMaps('kube-public')
+      .find((configMap) => {
+        return configMap.metadata.name === 'cluster-info'
+      })
     expect(clusterInfoConfigMap?.data?.kubeconfig).toContain(
       'server: https://127.0.0.1:34001'
     )
-    expect(clusterState.getServices().some((service) => {
-      return service.metadata.name === 'kubernetes'
-    })).toBe(true)
-    expect(clusterState.getServices().some((service) => {
-      return service.metadata.name === 'kube-dns'
-    })).toBe(true)
-    expect(clusterState.getNamespaces().map((namespace) => namespace.metadata.name))
-      .toContain('local-path-storage')
+    expect(
+      clusterState.getServices().some((service) => {
+        return service.metadata.name === 'kubernetes'
+      })
+    ).toBe(true)
+    expect(
+      clusterState.getServices().some((service) => {
+        return service.metadata.name === 'kube-dns'
+      })
+    ).toBe(true)
+    expect(
+      clusterState.getNamespaces().map((namespace) => namespace.metadata.name)
+    ).toContain('local-path-storage')
   })
 
   it('supports explicit none profile to disable bootstrap', () => {

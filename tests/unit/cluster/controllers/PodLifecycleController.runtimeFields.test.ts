@@ -3,7 +3,10 @@ import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
 import { createPodUpdatedEvent } from '../../../../src/core/cluster/events/types'
 import { createPodLifecycleController } from '../../../../src/core/cluster/controllers/PodLifecycleController'
 import { createNode } from '../../../../src/core/cluster/ressources/Node'
-import { createPod, type Pod } from '../../../../src/core/cluster/ressources/Pod'
+import {
+  createPod,
+  type Pod
+} from '../../../../src/core/cluster/ressources/Pod'
 import type { ControllerState } from '../../../../src/core/cluster/controllers/types'
 
 describe('PodLifecycleController runtime enrichment', () => {
@@ -67,7 +70,9 @@ describe('PodLifecycleController runtime enrichment', () => {
     expect(pod.status.hostIPs?.[0]?.ip).toBe('172.18.0.3')
     expect(pod.status.observedGeneration).toBe(1)
     expect(Array.isArray(pod.status.conditions)).toBe(true)
-    expect(pod.status.conditions?.some((condition) => condition.type === 'Ready')).toBe(true)
+    expect(
+      pod.status.conditions?.some((condition) => condition.type === 'Ready')
+    ).toBe(true)
 
     controller.stop()
   })
@@ -112,10 +117,14 @@ describe('PodLifecycleController runtime enrichment', () => {
 
     controller.reconcile('default/web')
     expect(pod.status.phase).toBe('Pending')
-    expect(pod.status.containerStatuses?.[0]?.waitingReason).toBe('WaitingForPVC')
-    expect(pod.status.conditions?.some((condition) => condition.type === 'PodScheduled')).toBe(
-      true
+    expect(pod.status.containerStatuses?.[0]?.waitingReason).toBe(
+      'WaitingForPVC'
     )
+    expect(
+      pod.status.conditions?.some(
+        (condition) => condition.type === 'PodScheduled'
+      )
+    ).toBe(true)
 
     controller.stop()
   })
