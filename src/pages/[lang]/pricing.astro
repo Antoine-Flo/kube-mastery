@@ -368,6 +368,24 @@ const faqItems = [
     return value.replace(/([.,])00\b/g, '')
   }
 
+  function roundDisplayedPrice(value) {
+    const match = value.match(/(\d+[.,]\d+|\d+)/)
+    if (match == null) {
+      return value
+    }
+
+    const amount = Number.parseFloat(match[0].replace(',', '.'))
+    if (!Number.isFinite(amount)) {
+      return value
+    }
+
+    return value.replace(match[0], String(Math.round(amount)))
+  }
+
+  function moveEuroSymbolAfterAmount(value) {
+    return value.replace(/€\s*(\d+(?:[.,]\d+)?)/g, '$1€')
+  }
+
   function doubleDisplayedPrice(value) {
     const doubled = value.replace(/(\d+[.,]?\d*)/, (_, raw) =>
       String(Math.round(Number.parseFloat(raw.replace(',', '.')) * 2))
@@ -384,7 +402,9 @@ const faqItems = [
 
     lineItems.forEach((lineItem) => {
       const priceId = lineItem.price.id
-      const total = stripTrailingZeroCents(lineItem.formattedTotals.total)
+      const total = moveEuroSymbolAfterAmount(
+        roundDisplayedPrice(stripTrailingZeroCents(lineItem.formattedTotals.total))
+      )
       const banner = bannersByPriceId.get(priceId)
       if (banner == null) {
         return
