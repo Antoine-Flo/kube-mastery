@@ -6,7 +6,7 @@ export const module: LocalModule = {
     fr: 'Services'
   },
   description: {
-    en: 'Exposer des Pods avec un point d\'accès réseau stable.'
+    en: "Exposer des Pods avec un point d'accès réseau stable."
   },
-  tags: ["ckad","cka","beginner"]
+  tags: ['ckad', 'cka', 'beginner']
 }

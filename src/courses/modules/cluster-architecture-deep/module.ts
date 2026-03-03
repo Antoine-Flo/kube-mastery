@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Plongée dans les composants internes du cluster.'
   },
-  tags: ["cka","advanced"]
+  tags: ['cka', 'advanced']
 }

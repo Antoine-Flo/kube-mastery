@@ -59,7 +59,7 @@ graph LR
 
 ## Policies Are Additive
 
-Multiple NetworkPolicies can apply to the same Pod simultaneously. The allowed traffic is the **union** of all applicable policies, traffic is permitted if *any* policy allows it. Policies can never cancel out or override each other; you can only add permission.
+Multiple NetworkPolicies can apply to the same Pod simultaneously. The allowed traffic is the **union** of all applicable policies, traffic is permitted if _any_ policy allows it. Policies can never cancel out or override each other; you can only add permission.
 
 This additive nature lets you build your security model incrementally: start with a blanket deny-all policy, then add targeted allow policies for each specific traffic flow your application requires.
 

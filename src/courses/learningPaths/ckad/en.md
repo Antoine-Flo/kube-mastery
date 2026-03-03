@@ -1,5 +1,5 @@
 ---
-title: "CKAD"
+title: 'CKAD'
 shortDescription: The Kubernetes developer path , build, configure, and operate applications on Kubernetes with confidence.
 isActive: true
 price: 0

@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Le Pod : unité de base de Kubernetes. Créer, inspecter, comprendre le cycle de vie.'
   },
-  tags: ["ckad","cka","beginner"]
+  tags: ['ckad', 'cka', 'beginner']
 }

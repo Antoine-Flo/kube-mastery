@@ -15,7 +15,12 @@ export const courseStructure: CourseStructure = {
     },
     {
       title: { en: 'Scheduling & scaling' },
-      moduleIds: ['daemonsets', 'scheduling-basics', 'advanced-scheduling', 'autoscaling']
+      moduleIds: [
+        'daemonsets',
+        'scheduling-basics',
+        'advanced-scheduling',
+        'autoscaling'
+      ]
     },
     {
       title: { en: 'Networking & storage' },

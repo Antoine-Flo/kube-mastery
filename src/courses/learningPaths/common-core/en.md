@@ -1,5 +1,5 @@
 ---
-title: "Common Core"
+title: 'Common Core'
 shortDescription: A great place to start , covers the shared Kubernetes foundation for KCNA, CKAD and CKA certifications.
 isActive: true
 price: 0

@@ -16,9 +16,9 @@ This strategy is designed for stateless applications that can safely run multipl
 
 ### Recreate
 
-The `Recreate` strategy does exactly what its name suggests. First, it terminates *all* currently running Pods. Then, once all the old Pods are gone, it starts creating the new Pods. There is a deliberate downtime window between the two phases.
+The `Recreate` strategy does exactly what its name suggests. First, it terminates _all_ currently running Pods. Then, once all the old Pods are gone, it starts creating the new Pods. There is a deliberate downtime window between the two phases.
 
-This might sound strictly worse than `RollingUpdate`, and for most applications it is. But there's a significant class of workloads for which `Recreate` is not just acceptable, it's *required*.
+This might sound strictly worse than `RollingUpdate`, and for most applications it is. But there's a significant class of workloads for which `Recreate` is not just acceptable, it's _required_.
 
 ## When Recreate Is the Right Choice
 
@@ -67,12 +67,12 @@ Both `maxUnavailable` and `maxSurge` accept either absolute numbers or percentag
 
 Some useful configurations to know:
 
-| Configuration | Effect |
-|---|---|
-| `maxUnavailable: 0, maxSurge: 1` | Zero-downtime; always at or above desired capacity. Slowest. |
-| `maxUnavailable: 1, maxSurge: 1` | Balanced: one new, one old at a time. The default feel. |
-| `maxUnavailable: 50%, maxSurge: 50%` | Fast; half the fleet updates simultaneously. |
-| `maxUnavailable: 100%, maxSurge: 0` | Essentially Recreate-like behaviour via RollingUpdate. |
+| Configuration                        | Effect                                                       |
+| ------------------------------------ | ------------------------------------------------------------ |
+| `maxUnavailable: 0, maxSurge: 1`     | Zero-downtime; always at or above desired capacity. Slowest. |
+| `maxUnavailable: 1, maxSurge: 1`     | Balanced: one new, one old at a time. The default feel.      |
+| `maxUnavailable: 50%, maxSurge: 50%` | Fast; half the fleet updates simultaneously.                 |
+| `maxUnavailable: 100%, maxSurge: 0`  | Essentially Recreate-like behaviour via RollingUpdate.       |
 
 :::info
 For critical production services, starting with `maxUnavailable: 0` (zero-downtime mode) and gradually increasing `maxSurge` is the safest approach. It costs extra temporary capacity but guarantees your service never operates below its desired replica count during an update.

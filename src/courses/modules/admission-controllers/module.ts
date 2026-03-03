@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Intercepter et modifier les requêtes API avant persistence.'
   },
-  tags: ["ckad","cka","advanced"]
+  tags: ['ckad', 'cka', 'advanced']
 }

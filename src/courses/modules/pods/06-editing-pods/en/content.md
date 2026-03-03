@@ -141,9 +141,9 @@ Open `edit-demo.yaml` and change the image from `nginx:1.25` to `nginx:1.26`. Al
 ```yaml
 env:
   - name: LOG_LEVEL
-    value: "debug"
+    value: 'debug'
   - name: NEW_VAR
-    value: "added"
+    value: 'added'
 ```
 
 Save the file.
@@ -186,4 +186,4 @@ Note: this will cause the container to restart briefly.
 kubectl delete pod edit-demo
 ```
 
-The key insight from this lesson is not just *how* to edit Pods, it's *why* the limitation exists and why the correct production answer is almost always to use a Deployment. Direct Pod editing is a useful skill for debugging and learning, but the moment your workload needs reliability and zero-downtime updates, you reach for a Deployment and let the controller handle the rest.
+The key insight from this lesson is not just _how_ to edit Pods, it's _why_ the limitation exists and why the correct production answer is almost always to use a Deployment. Direct Pod editing is a useful skill for debugging and learning, but the moment your workload needs reliability and zero-downtime updates, you reach for a Deployment and let the controller handle the rest.

@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Réseau interne Kubernetes : CNI, pod networking, service networking.'
   },
-  tags: ["cka","advanced"]
+  tags: ['cka', 'advanced']
 }

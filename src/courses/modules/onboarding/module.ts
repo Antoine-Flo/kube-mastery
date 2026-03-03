@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Prise en main de la plateforme et contexte des certifications.'
   },
-  tags: ["ckad","cka","beginner"]
+  tags: ['ckad', 'cka', 'beginner']
 }

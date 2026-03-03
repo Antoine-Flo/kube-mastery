@@ -1,6 +1,6 @@
 # Object Names, UIDs, and DNS Naming Rules
 
-Names might seem like a trivial detail, after all, you just have to call something *something*, right? But in Kubernetes, names are far more than labels of convenience. They participate directly in networking, access control, and the cluster's internal bookkeeping.
+Names might seem like a trivial detail, after all, you just have to call something _something_, right? But in Kubernetes, names are far more than labels of convenience. They participate directly in networking, access control, and the cluster's internal bookkeeping.
 
 :::info
 Kubernetes enforces strict naming rules at the API level, an invalid name like `my_app` is rejected before any object is created. A Service name also becomes a DNS hostname, so the rules aren't just conventions: they have real operational consequences.
@@ -27,17 +27,17 @@ Most Kubernetes resources , including Pods, Deployments, Services, ConfigMaps, a
 - Must **end with an alphanumeric character**
 - Must be no longer than **253 characters** total
 
-This means several things that trip up newcomers. You cannot use **uppercase letters:**  `MyApp` is invalid; `myapp` is correct. You cannot use **underscores:**  `my_app` is invalid; `my-app` is correct. You cannot **start with a number** in most contexts (though technically DNS subdomain rules allow it, some Kubernetes validators do not). Stick to lowercase letters and hyphens and you will never go wrong.
+This means several things that trip up newcomers. You cannot use **uppercase letters:** `MyApp` is invalid; `myapp` is correct. You cannot use **underscores:** `my_app` is invalid; `my-app` is correct. You cannot **start with a number** in most contexts (though technically DNS subdomain rules allow it, some Kubernetes validators do not). Stick to lowercase letters and hyphens and you will never go wrong.
 
 Common mistakes and their fixes:
 
-| Invalid name | Problem | Fixed name |
-|---|---|---|
-| `MyWebApp` | Uppercase letters | `my-web-app` |
-| `my_app` | Underscore not allowed | `my-app` |
-| `web app` | Space not allowed | `web-app` |
-| `123app` | Starts with a digit (risky) | `app-123` |
-| `.hidden` | Starts with dot | `hidden` |
+| Invalid name | Problem                     | Fixed name   |
+| ------------ | --------------------------- | ------------ |
+| `MyWebApp`   | Uppercase letters           | `my-web-app` |
+| `my_app`     | Underscore not allowed      | `my-app`     |
+| `web app`    | Space not allowed           | `web-app`    |
+| `123app`     | Starts with a digit (risky) | `app-123`    |
+| `.hidden`    | Starts with dot             | `hidden`     |
 
 ## Label Names: A Slightly Different Set of Rules
 
@@ -50,7 +50,7 @@ labels:
   app: web
   app.kubernetes.io/name: web
   team: backend
-  version: "2.1.0"
+  version: '2.1.0'
   environment: production
 ```
 

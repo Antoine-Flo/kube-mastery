@@ -136,11 +136,11 @@ spec:
   replicas: 3
   selector:
     matchLabels:
-      app: web        # <-- must match the template labels below
+      app: web # <-- must match the template labels below
   template:
     metadata:
       labels:
-        app: web      # <-- must match the selector above
+        app: web # <-- must match the selector above
     spec:
       containers:
         - name: nginx

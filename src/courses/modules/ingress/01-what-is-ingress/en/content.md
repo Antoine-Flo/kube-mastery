@@ -86,6 +86,7 @@ kubectl get svc
 ```
 
 Expected output:
+
 ```
 NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
 frontend-service   ClusterIP   10.96.xxx.xxx   <none>        80/TCP     5s
@@ -128,6 +129,7 @@ kubectl describe ingress demo-ingress
 ```
 
 Expected output from `describe`:
+
 ```
 Name:             demo-ingress
 Namespace:        default

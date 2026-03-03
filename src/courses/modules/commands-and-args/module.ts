@@ -6,7 +6,7 @@ export const module: LocalModule = {
     fr: 'Commands And Args'
   },
   description: {
-    en: 'Contrôler le point d\'entrée et les arguments d\'un container.'
+    en: "Contrôler le point d'entrée et les arguments d'un container."
   },
-  tags: ["ckad","cka","beginner"]
+  tags: ['ckad', 'cka', 'beginner']
 }

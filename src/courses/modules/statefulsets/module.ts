@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Applications stateful : identité stable, stockage persistant par pod.'
   },
-  tags: ["ckad","cka","intermediate"]
+  tags: ['ckad', 'cka', 'intermediate']
 }

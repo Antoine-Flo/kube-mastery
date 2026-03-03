@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Patterns multi-containers : sidecar, init containers, ambassador.'
   },
-  tags: ["ckad","cka","intermediate"]
+  tags: ['ckad', 'cka', 'intermediate']
 }

@@ -8,12 +8,12 @@ Kubernetes provides several ways to attach storage to a Pod. The simplest approa
 
 An `emptyDir` volume is created fresh every time a Pod is scheduled onto a node. It shares the Pod's lifetime: when the Pod is deleted, the `emptyDir` is deleted too. This makes it useful for temporary scratch space or sharing files between containers in the same Pod, but completely useless for durable storage.
 
-A `hostPath` volume mounts a directory from the node's own filesystem into the container. The data survives a Pod restart, but only if the Pod comes back to the *same node*. Kubernetes makes no such guarantee:
+A `hostPath` volume mounts a directory from the node's own filesystem into the container. The data survives a Pod restart, but only if the Pod comes back to the _same node_. Kubernetes makes no such guarantee:
 
 - If the Pod is rescheduled to a different node (during maintenance, a node failure, or autoscaling), it starts with an empty `hostPath` directory on the new node.
 - `hostPath` tightly couples your application to the infrastructure of a specific machine, making it fragile and difficult to manage at scale.
 
-Both of these approaches share a deeper design flaw: the storage configuration lives *inside the Pod spec*. This means the developer writing the Pod manifest needs to know details about the underlying infrastructure, which node has the data, what the path is, whether NFS is available. This violates the principle of separation of concerns that makes Kubernetes so powerful.
+Both of these approaches share a deeper design flaw: the storage configuration lives _inside the Pod spec_. This means the developer writing the Pod manifest needs to know details about the underlying infrastructure, which node has the data, what the path is, whether NFS is available. This violates the principle of separation of concerns that makes Kubernetes so powerful.
 
 ## Enter PersistentVolumes and PersistentVolumeClaims
 
@@ -21,7 +21,7 @@ Kubernetes solves these problems with a two-object model: the **PersistentVolume
 
 A **PersistentVolume** is a piece of storage that has been provisioned in the cluster. It could be an NFS share on a file server, a cloud block storage disk (like an AWS EBS volume or a GCP Persistent Disk), a local SSD on a node, or any other storage backend that Kubernetes supports. The PV is a cluster-level resource: it exists independently of any namespace or Pod. Typically, a cluster administrator creates and manages PVs, handling all the low-level infrastructure details.
 
-A **PersistentVolumeClaim** is a *request* for storage made by a user or developer. When you write a PVC, you're not saying "give me this specific NFS share at this IP address." You're saying "I need 10 gigabytes of storage that I can mount as read-write from a single node." Kubernetes then goes looking for a PV that satisfies your requirements and binds the two together.
+A **PersistentVolumeClaim** is a _request_ for storage made by a user or developer. When you write a PVC, you're not saying "give me this specific NFS share at this IP address." You're saying "I need 10 gigabytes of storage that I can mount as read-write from a single node." Kubernetes then goes looking for a PV that satisfies your requirements and binds the two together.
 
 ## The Parking Lot Analogy
 

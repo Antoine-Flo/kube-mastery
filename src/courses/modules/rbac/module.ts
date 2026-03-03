@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Contrôler les permissions : Roles, RoleBindings, ClusterRoles.'
   },
-  tags: ["ckad","cka","intermediate"]
+  tags: ['ckad', 'cka', 'intermediate']
 }

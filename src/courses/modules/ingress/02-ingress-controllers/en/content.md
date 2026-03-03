@@ -29,7 +29,7 @@ graph LR
     IR[Ingress Resource\nin etcd] -->|watches| IC[Ingress Controller Pod\ningress-nginx]
     IC -->|generates| NC[nginx.conf]
     NC -->|reloads| NX[nginx process\ninside controller Pod]
-    
+
     EXT([External Traffic]) --> LB[LoadBalancer Service\ningress-nginx]
     LB --> NX
     NX -->|routes to| SVC1[api-service]
@@ -126,6 +126,7 @@ kubectl get ingressclass
 ```
 
 Expected output:
+
 ```
 NAME    CONTROLLER             PARAMETERS   AGE
 nginx   k8s.io/ingress-nginx   <none>       2m
@@ -138,6 +139,7 @@ kubectl describe ingressclass nginx
 ```
 
 Expected output:
+
 ```
 Name:         nginx
 Labels:       ...
@@ -154,6 +156,7 @@ kubectl get svc -n ingress-nginx
 ```
 
 Expected output:
+
 ```
 NAME                                 TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)
 ingress-nginx-controller             LoadBalancer   10.96.xxx.xxx   203.0.113.50    80:31xxx/TCP,443:32xxx/TCP

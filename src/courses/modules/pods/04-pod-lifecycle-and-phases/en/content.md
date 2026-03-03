@@ -19,7 +19,7 @@ A Pod enters `Pending` when it has been accepted by the API server and stored in
 
 ### `Running`
 
-A Pod enters `Running` when it has been bound to a node and at least one container is running. Note the nuance: *at least one* container. A Pod with three containers is `Running` even if only one has started, or if a container has crashed and is being restarted. This is the normal, healthy state for long-lived workloads.
+A Pod enters `Running` when it has been bound to a node and at least one container is running. Note the nuance: _at least one_ container. A Pod with three containers is `Running` even if only one has started, or if a container has crashed and is being restarted. This is the normal, healthy state for long-lived workloads.
 
 ### `Succeeded`
 

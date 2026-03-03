@@ -35,11 +35,11 @@ spec:
 
 Three port-related fields work together here:
 
-**`nodePort: 30080`:**  The port opened on every Node. External clients connect to `<node-ip>:30080`.
+**`nodePort: 30080`:** The port opened on every Node. External clients connect to `<node-ip>:30080`.
 
-**`port: 80`:**  The Service's internal port. Inside the cluster, Pods still reach this Service at `web-service:80`, just like a regular ClusterIP Service.
+**`port: 80`:** The Service's internal port. Inside the cluster, Pods still reach this Service at `web-service:80`, just like a regular ClusterIP Service.
 
-**`targetPort: 80`:**  The port on the backend Pods where the container is listening.
+**`targetPort: 80`:** The port on the backend Pods where the container is listening.
 
 If you omit `nodePort`, Kubernetes picks an available port from the 30000–32767 range automatically. You can find the assigned port with `kubectl get service`.
 

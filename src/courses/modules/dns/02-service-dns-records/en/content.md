@@ -132,6 +132,7 @@ kubectl get svc -n green
 ```
 
 Expected output (for each):
+
 ```
 NAME   TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
 web    ClusterIP   10.96.xxx.xxx   <none>        80/TCP    10s
@@ -144,6 +145,7 @@ kubectl run test --image=busybox --rm -it --restart=Never -n blue -- nslookup we
 ```
 
 Expected output:
+
 ```
 Server:    10.96.0.10
 Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
@@ -167,6 +169,7 @@ kubectl run test --image=busybox --rm -it --restart=Never -n blue -- nslookup we
 ```
 
 Expected output:
+
 ```
 Name:      web.green
 Address 1: 10.96.yyy.yyy web.green.svc.cluster.local

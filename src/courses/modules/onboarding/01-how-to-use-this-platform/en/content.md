@@ -5,7 +5,6 @@ flowchart TD
     A[Welcome ❤️]
 ```
 
-
 Welcome and thank you so much for using KubeMastery. We work hard to make a pleasing experience for you. If anything is not working as expected, please let us know.
 
 # Let's get into it
@@ -16,7 +15,8 @@ Think back to the first time you learned to ride a bicycle. You probably didn't 
 
 The screen is split into two panels. The **left panel** is where you are right now, displaying lessons in order, organized into modules. Work through them in sequence, especially if Kubernetes is new to you. On the bottom left of your screen you'll find a button to collapse the course outline.
 
-The **right panel** is a fully functional terminal connected to a simulated Kubernetes cluster. Below the terminal you'll find two icons: 
+The **right panel** is a fully functional terminal connected to a simulated Kubernetes cluster. Below the terminal you'll find two icons:
+
 - The **telescope icon** opens the cluster visualizer, a live diagram that shows your nodes, Pods, and containers updating in real time. It's a great way to see the effect of your commands visually, for example watching three Pods appear the moment you create a Deployment. You can hover the visualizer to see the details of the objects.
 - The **speech bubble icon** lets you send feedback or report anything that seems off in a lesson.
 

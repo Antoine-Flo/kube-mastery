@@ -8,7 +8,7 @@ Rollback is not a restore-from-backup operation. Because Kubernetes keeps old Re
 
 ## How Kubernetes Preserves History
 
-Every time you change a Deployment's Pod template, whether you update the image, add an environment variable, or change resource limits, the Deployment controller creates a brand-new ReplicaSet. After the rollout completes, the old ReplicaSet is scaled to zero replicas but is *not deleted*. It stays in the cluster indefinitely (up to the limit set by `revisionHistoryLimit`, which defaults to 10).
+Every time you change a Deployment's Pod template, whether you update the image, add an environment variable, or change resource limits, the Deployment controller creates a brand-new ReplicaSet. After the rollout completes, the old ReplicaSet is scaled to zero replicas but is _not deleted_. It stays in the cluster indefinitely (up to the limit set by `revisionHistoryLimit`, which defaults to 10).
 
 Rollback is therefore instantaneous: Kubernetes reverses the scaling, scale the old ReplicaSet back up, scale the current one back down, using objects that are already there.
 
@@ -111,7 +111,7 @@ Out of the box, the `CHANGE-CAUSE` column in `rollout history` is always empty u
 kubectl annotate deployment/web-app kubernetes.io/change-cause="Update to nginx 1.26 for CVE-2024-12345 fix"
 ```
 
-Run this annotation command *after* applying the change that created the new revision. From then on, `rollout history` is much more useful:
+Run this annotation command _after_ applying the change that created the new revision. From then on, `rollout history` is much more useful:
 
 ```bash
 kubectl rollout history deployment/web-app
@@ -127,7 +127,7 @@ Alternatively, you can bake the annotation directly into the manifest and update
 metadata:
   name: web-app
   annotations:
-    kubernetes.io/change-cause: "Update to nginx 1.26 for CVE-2024-12345 fix"
+    kubernetes.io/change-cause: 'Update to nginx 1.26 for CVE-2024-12345 fix'
 ```
 
 :::info

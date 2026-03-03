@@ -49,13 +49,13 @@ spec:
   containers:
     - name: writer
       image: busybox
-      command: ["sh", "-c", "echo hello > /data/file.txt && sleep 3600"]
+      command: ['sh', '-c', 'echo hello > /data/file.txt && sleep 3600']
       volumeMounts:
         - name: shared-data
           mountPath: /data
     - name: reader
       image: busybox
-      command: ["sh", "-c", "sleep 2 && cat /data/file.txt && sleep 3600"]
+      command: ['sh', '-c', 'sleep 2 && cat /data/file.txt && sleep 3600']
       volumeMounts:
         - name: shared-data
           mountPath: /data

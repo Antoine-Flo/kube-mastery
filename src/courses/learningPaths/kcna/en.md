@@ -1,5 +1,5 @@
 ---
-title: "KCNA"
+title: 'KCNA'
 shortDescription: Conceptual cloud-native path and Kubernetes fundamentals (theory-oriented).
 isActive: false
 price: 0

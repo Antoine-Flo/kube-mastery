@@ -1,5 +1,5 @@
 ---
-title: "KCNA to CKAD Delta"
+title: 'KCNA to CKAD Delta'
 shortDescription: Modules to study after KCNA to cover the CKAD delta.
 isActive: false
 price: 0

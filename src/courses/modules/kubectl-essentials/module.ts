@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Maîtriser les commandes kubectl fondamentales.'
   },
-  tags: ["ckad","cka","beginner"]
+  tags: ['ckad', 'cka', 'beginner']
 }

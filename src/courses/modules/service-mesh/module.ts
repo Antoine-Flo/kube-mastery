@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Service mesh : proxy sidecar, Envoy, Istio.'
   },
-  tags: ["kcna","intermediate"]
+  tags: ['kcna', 'intermediate']
 }

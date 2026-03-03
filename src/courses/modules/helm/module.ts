@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Gestionnaire de packages Kubernetes.'
   },
-  tags: ["ckad","cka","intermediate"]
+  tags: ['ckad', 'cka', 'intermediate']
 }

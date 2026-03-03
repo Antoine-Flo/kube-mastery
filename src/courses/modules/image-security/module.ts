@@ -6,7 +6,7 @@ export const module: LocalModule = {
     fr: 'Image Security'
   },
   description: {
-    en: 'Sécuriser l\'approvisionnement des images container.'
+    en: "Sécuriser l'approvisionnement des images container."
   },
-  tags: ["cka","intermediate"]
+  tags: ['cka', 'intermediate']
 }

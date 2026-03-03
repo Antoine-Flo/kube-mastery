@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Scaling automatique : HPA, VPA, resize in-place.'
   },
-  tags: ["cka","intermediate"]
+  tags: ['cka', 'intermediate']
 }

@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Comprendre la structure des objets Kubernetes et le format YAML.'
   },
-  tags: ["ckad","cka","beginner"]
+  tags: ['ckad', 'cka', 'beginner']
 }

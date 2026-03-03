@@ -6,7 +6,7 @@ export const module: LocalModule = {
     fr: 'Kubernetes Basics'
   },
   description: {
-    en: 'Qu\'est-ce que Kubernetes, pourquoi l\'utiliser, vue d\'ensemble de l\'architecture.'
+    en: "Qu'est-ce que Kubernetes, pourquoi l'utiliser, vue d'ensemble de l'architecture."
   },
-  tags: ["ckad","cka","beginner"]
+  tags: ['ckad', 'cka', 'beginner']
 }

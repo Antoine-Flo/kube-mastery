@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'GitOps : principes, CI/CD cloud-native, ArgoCD.'
   },
-  tags: ["kcna","intermediate"]
+  tags: ['kcna', 'intermediate']
 }

@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Découverte de services via DNS interne.'
   },
-  tags: ["ckad","cka","beginner"]
+  tags: ['ckad', 'cka', 'beginner']
 }

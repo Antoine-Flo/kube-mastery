@@ -1,10 +1,10 @@
 # Spec and Status: Desired State vs. Current State
 
-One of the most elegant ideas in Kubernetes is also one of the simplest to understand once you have the right analogy. Every Kubernetes object has two distinct sections that reflect two different perspectives on the world: **`spec`**, which is what *you* want, and **`status`**, which is what *currently exists*. Mastering this distinction will transform how you think about debugging, troubleshooting, and managing applications in the cluster.
+One of the most elegant ideas in Kubernetes is also one of the simplest to understand once you have the right analogy. Every Kubernetes object has two distinct sections that reflect two different perspectives on the world: **`spec`**, which is what _you_ want, and **`status`**, which is what _currently exists_. Mastering this distinction will transform how you think about debugging, troubleshooting, and managing applications in the cluster.
 
 ## The Thermostat Analogy
 
-Imagine a thermostat in your home. You walk up to it and dial in 22°C. That number , the temperature you *want* , is the `spec`. It is your declaration of intent, your desired state. The actual temperature in the room right now is the `status`. Maybe it's 18°C because the heating system hasn't caught up yet. Maybe a window is open, and the room keeps drifting away from your target despite the heater running.
+Imagine a thermostat in your home. You walk up to it and dial in 22°C. That number , the temperature you _want_ , is the `spec`. It is your declaration of intent, your desired state. The actual temperature in the room right now is the `status`. Maybe it's 18°C because the heating system hasn't caught up yet. Maybe a window is open, and the room keeps drifting away from your target despite the heater running.
 
 The thermostat doesn't give up after one attempt. It continuously checks: "Is the current temperature equal to the desired temperature? If not, turn on the heat. Check again. Still not there? Keep heating. Now it's 22°C? Great , hold steady. Oh, it dropped again? Heat more." This loop runs forever, never stopping, always comparing intent against reality.
 
@@ -32,7 +32,7 @@ spec:
             - containerPort: 80
 ```
 
-This `spec` says: "I want three Pods, each running the `nginx:1.25` container, listening on port 80." That's it. You are not instructing Kubernetes *how* to achieve this , you are simply stating the desired end result. You don't say "schedule a Pod on node-3" or "pull the image at this exact moment." You declare intent, and the system handles the execution.
+This `spec` says: "I want three Pods, each running the `nginx:1.25` container, listening on port 80." That's it. You are not instructing Kubernetes _how_ to achieve this , you are simply stating the desired end result. You don't say "schedule a Pod on node-3" or "pull the image at this exact moment." You declare intent, and the system handles the execution.
 
 :::info
 The `spec` schema is different for every kind of object. A Pod's `spec` has `containers`, `volumes`, and `restartPolicy`. A Service's `spec` has `selector`, `ports`, and `type`. Always refer to the Kubernetes API documentation or use `kubectl explain <resource>.spec` in the terminal to explore the available fields for any object.
@@ -50,11 +50,11 @@ status:
   updatedReplicas: 3
   conditions:
     - type: Available
-      status: "True"
+      status: 'True'
       reason: MinimumReplicasAvailable
       message: Deployment has minimum availability.
     - type: Progressing
-      status: "True"
+      status: 'True'
       reason: NewReplicaSetAvailable
 ```
 
@@ -66,7 +66,7 @@ Never manually edit the `status` field in a manifest and apply it. It will eithe
 
 ## The Reconciliation Loop
 
-The engine that bridges `spec` and `status` is called the **reconciliation loop** (sometimes called the *control loop*). Every Kubernetes controller , the Deployment controller, the ReplicaSet controller, the StatefulSet controller , runs this loop perpetually. The logic is elegantly simple:
+The engine that bridges `spec` and `status` is called the **reconciliation loop** (sometimes called the _control loop_). Every Kubernetes controller , the Deployment controller, the ReplicaSet controller, the StatefulSet controller , runs this loop perpetually. The logic is elegantly simple:
 
 1. **Observe**: Read the current state of the world (the `status` and what's actually running on nodes)
 2. **Compare**: Diff the observed state against the desired state (`spec`)
@@ -119,7 +119,7 @@ Scroll to the bottom of the output to find the complete `status` block. You'll s
 
 ## Why This Design Matters
 
-The spec/status split isn't just an implementation detail, it's a design philosophy. By separating *what you want* from *what exists*, Kubernetes achieves three key properties:
+The spec/status split isn't just an implementation detail, it's a design philosophy. By separating _what you want_ from _what exists_, Kubernetes achieves three key properties:
 
 - **Declarative**, You write down your goal once and don't worry about the sequence of steps to get there.
 - **Resilient**, Controllers always compare spec to reality, so any deviation, node crash, network blip, or accidental change, is automatically corrected.

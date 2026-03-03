@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Isolation logique des ressources dans un cluster.'
   },
-  tags: ["ckad","cka","beginner"]
+  tags: ['ckad', 'cka', 'beginner']
 }

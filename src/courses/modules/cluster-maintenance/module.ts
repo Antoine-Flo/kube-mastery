@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Maintenir un cluster en production : upgrades, drain, eviction.'
   },
-  tags: ["cka","advanced"]
+  tags: ['cka', 'advanced']
 }

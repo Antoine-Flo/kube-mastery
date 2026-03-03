@@ -1,20 +1,20 @@
 # Imperative vs Declarative
 
-When you first start working with Kubernetes, one of the most fundamental concepts to grasp is not about pods or deployments, it is about *how you communicate with the cluster*. Kubernetes gives you two distinct mental models: the **imperative** approach and the **declarative** approach. Understanding the difference will shape how you work with Kubernetes for everything that follows.
+When you first start working with Kubernetes, one of the most fundamental concepts to grasp is not about pods or deployments, it is about _how you communicate with the cluster_. Kubernetes gives you two distinct mental models: the **imperative** approach and the **declarative** approach. Understanding the difference will shape how you work with Kubernetes for everything that follows.
 
 ## The Cooking Analogy
 
 Imagine you want someone to make you a bowl of pasta. You have two options for how to explain what you want.
 
-The first option is step-by-step instructions: "Boil two liters of water. Add a pinch of salt. Cook 100 grams of spaghetti for eight minutes. Drain. Add tomato sauce." You are describing *exactly what to do, and in what order*. That is the imperative approach.
+The first option is step-by-step instructions: "Boil two liters of water. Add a pinch of salt. Cook 100 grams of spaghetti for eight minutes. Drain. Add tomato sauce." You are describing _exactly what to do, and in what order_. That is the imperative approach.
 
-The second option is to hand them a recipe card and say, "Make this." The recipe card describes the finished dish, the desired outcome. The cook figures out the steps themselves. That is the declarative approach, you describe the *desired state*, and let the system figure out how to get there.
+The second option is to hand them a recipe card and say, "Make this." The recipe card describes the finished dish, the desired outcome. The cook figures out the steps themselves. That is the declarative approach, you describe the _desired state_, and let the system figure out how to get there.
 
 Kubernetes supports both, and each has its time and place.
 
 ## The Imperative Approach
 
-When you use kubectl imperatively, you are issuing direct commands that take immediate effect. You are telling Kubernetes *what action to perform right now*.
+When you use kubectl imperatively, you are issuing direct commands that take immediate effect. You are telling Kubernetes _what action to perform right now_.
 
 ```bash
 # Run a pod immediately
@@ -33,7 +33,7 @@ The imperative style is fast and convenient for quick experiments, debugging ("L
 
 ## The Declarative Approach
 
-The declarative approach centers on YAML manifest files. Instead of telling Kubernetes what to *do*, you write a file describing what you *want*, and then tell Kubernetes to make the cluster match that description.
+The declarative approach centers on YAML manifest files. Instead of telling Kubernetes what to _do_, you write a file describing what you _want_, and then tell Kubernetes to make the cluster match that description.
 
 ```bash
 # Apply a manifest file, creates or updates the resource
@@ -58,8 +58,8 @@ spec:
         app: myapp
     spec:
       containers:
-      - name: myapp
-        image: myapp:v1
+        - name: myapp
+          image: myapp:v1
 ```
 
 When you run `kubectl apply -f deployment.yaml`, Kubernetes reads your desired state, compares it to the current cluster state, and makes whatever changes are necessary to reconcile the two. If the deployment already exists with two replicas and you apply a file specifying three, Kubernetes adds one more. If nothing has changed, nothing happens.
@@ -75,18 +75,20 @@ This idempotency, the property that you can run the same command multiple times 
 Neither approach is universally better. They complement each other.
 
 **Use imperative** when:
+
 - Experimenting, debugging, or doing a quick one-off task
 - You do not need a record of the change ("delete that stuck pod", "scale temporarily")
 - Taking a Kubernetes certification exam (CKA/CKAD), speed matters
 
 **Use declarative** when:
+
 - Managing production workloads
 - Working in a team or practicing GitOps (Git as the source of truth)
 - You need version control and auditability, manifests are self-documenting, reviewable in pull requests, and allow full cluster restoration by re-applying files
 
 ## The Bridge: Generating YAML from Imperative Commands
 
-Here is one of the most useful tricks in the Kubernetes toolkit: you can use imperative commands to *generate* declarative YAML, without actually creating anything in the cluster.
+Here is one of the most useful tricks in the Kubernetes toolkit: you can use imperative commands to _generate_ declarative YAML, without actually creating anything in the cluster.
 
 The `--dry-run=client -o yaml` combination tells kubectl to simulate the command locally and print the resulting YAML instead of sending it to the API server.
 
@@ -127,7 +129,7 @@ flowchart LR
     Dev --> D1 --> D2 --> D3 --> ClusterState
 ```
 
-Both paths ultimately change the same cluster state. The difference is in *how* you express your intent and what trail you leave behind.
+Both paths ultimately change the same cluster state. The difference is in _how_ you express your intent and what trail you leave behind.
 
 ## Hands-On Practice
 

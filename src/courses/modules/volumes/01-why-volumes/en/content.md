@@ -40,14 +40,14 @@ Using a volume always involves two separate declarations in your Pod spec, and b
 ```yaml
 spec:
   volumes:
-    - name: my-storage         # Step 1: declare it
+    - name: my-storage # Step 1: declare it
       emptyDir: {}
   containers:
     - name: app
       image: my-app:latest
       volumeMounts:
-        - name: my-storage     # Step 2: mount it (must match the name above)
-          mountPath: /data      # where it appears inside the container
+        - name: my-storage # Step 2: mount it (must match the name above)
+          mountPath: /data # where it appears inside the container
 ```
 
 The `name` field connects the two declarations, it's the glue between the volume definition and the mount. You can mount the same volume into multiple containers in the same Pod, each at the same or different paths.

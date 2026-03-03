@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Health checks : liveness, readiness, startup probes.'
   },
-  tags: ["ckad","cka","beginner"]
+  tags: ['ckad', 'cka', 'beginner']
 }

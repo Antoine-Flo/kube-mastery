@@ -61,10 +61,10 @@ spec:
   ports:
     - name: http
       port: 80
-      targetPort: http     # ← name, not a number
+      targetPort: http # ← name, not a number
     - name: metrics
       port: 9090
-      targetPort: metrics  # ← name, not a number
+      targetPort: metrics # ← name, not a number
 ```
 
 When Kubernetes processes this Service, it looks up the name `http` in the matching Pods' port definitions and resolves it to the actual port number (`80`). If you later change the container's `containerPort` from `80` to `8080`, you only update the Pod template , the Service manifest is untouched, because it refers to the port by name, not by number.
@@ -91,7 +91,7 @@ The usefulness of named ports extends beyond Services. The same names can be ref
 readinessProbe:
   httpGet:
     path: /health
-    port: http   # resolves to containerPort 80
+    port: http # resolves to containerPort 80
 ```
 
 **NetworkPolicy** rules can reference named ports when targeting specific traffic. This is especially useful in policies that need to allow traffic on a semantic port (like "the metrics port") without being tied to a specific number.

@@ -110,6 +110,7 @@ Start with a running ReplicaSet and work through scaling and self-healing exerci
 **1. Create the ReplicaSet**
 
 Create the manifest file:
+
 ```bash
 nano web-rs.yaml
 ```

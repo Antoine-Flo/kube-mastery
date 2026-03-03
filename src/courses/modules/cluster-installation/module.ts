@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Installer un cluster Kubernetes avec kubeadm.'
   },
-  tags: ["cka","advanced"]
+  tags: ['cka', 'advanced']
 }

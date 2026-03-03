@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Étendre Kubernetes avec des CRDs et des controllers custom.'
   },
-  tags: ["ckad","cka","advanced"]
+  tags: ['ckad', 'cka', 'advanced']
 }

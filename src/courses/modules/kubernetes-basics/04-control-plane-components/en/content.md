@@ -47,7 +47,7 @@ When the scheduler has made its decision, it writes the chosen `nodeName` back t
 
 The `kube-controller-manager` is a single binary that runs many control loops simultaneously. Each control loop, called a **controller**, watches a specific type of resource and reconciles its actual state with its desired state.
 
-Think of a controller as a diligent supervisor with a simple job: look at what *should* be happening, look at what *is* happening, and if there is a difference, do something about it. This loop runs continuously, which is why Kubernetes is described as a self-healing system.
+Think of a controller as a diligent supervisor with a simple job: look at what _should_ be happening, look at what _is_ happening, and if there is a difference, do something about it. This loop runs continuously, which is why Kubernetes is described as a self-healing system.
 
 Some of the most important controllers:
 

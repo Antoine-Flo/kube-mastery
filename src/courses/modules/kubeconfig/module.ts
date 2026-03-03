@@ -6,7 +6,7 @@ export const module: LocalModule = {
     fr: 'Kubeconfig'
   },
   description: {
-    en: 'Configurer l\'accès au cluster : contextes, utilisateurs, clusters.'
+    en: "Configurer l'accès au cluster : contextes, utilisateurs, clusters."
   },
-  tags: ["ckad","cka","intermediate"]
+  tags: ['ckad', 'cka', 'intermediate']
 }

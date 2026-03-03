@@ -27,7 +27,7 @@ spec:
   storageClassName: manual
 ```
 
-This manifest is intentionally simple. A PVC describes *requirements*, not *implementation details*. Let's examine what each field does.
+This manifest is intentionally simple. A PVC describes _requirements_, not _implementation details_. Let's examine what each field does.
 
 ### `accessModes`
 
@@ -37,7 +37,7 @@ Just like a PV, the PVC declares which access mode it requires. The binding algo
 
 This is the minimum amount of storage the PVC needs. Kubernetes will bind this PVC to a PV that has at least this much capacity. In the example above, any PV with 5Gi or more (and matching access mode and storage class) would be eligible. If a 10Gi PV is the only available one, the PVC will bind to it and effectively "use" 10Gi of reservation, even though only 5Gi was requested.
 
-This is an important nuance: **a PVC can bind to a PV that is larger than the requested size**. The PVC does not get a dedicated slice of the PV, it gets the entire PV. The `storage` field in the request is a *minimum threshold*, not an exact allocation.
+This is an important nuance: **a PVC can bind to a PV that is larger than the requested size**. The PVC does not get a dedicated slice of the PV, it gets the entire PV. The `storage` field in the request is a _minimum threshold_, not an exact allocation.
 
 ### `storageClassName`
 
@@ -64,7 +64,7 @@ flowchart LR
     G --> H[Pod can now\nmount the PVC]
 ```
 
-All three criteria must match: access mode, capacity (PV storage ≥ PVC request), and storage class. The first PV that satisfies all requirements wins, Kubernetes does not try to find the *smallest* PV that fits, just the first qualifying one.
+All three criteria must match: access mode, capacity (PV storage ≥ PVC request), and storage class. The first PV that satisfies all requirements wins, Kubernetes does not try to find the _smallest_ PV that fits, just the first qualifying one.
 
 ## What Happens When No Match Is Found
 

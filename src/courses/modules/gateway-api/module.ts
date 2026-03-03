@@ -6,7 +6,7 @@ export const module: LocalModule = {
     fr: 'Gateway Api'
   },
   description: {
-    en: 'La nouvelle API de Gateway : remplacement moderne d\'Ingress.'
+    en: "La nouvelle API de Gateway : remplacement moderne d'Ingress."
   },
-  tags: ["cka","intermediate"]
+  tags: ['cka', 'intermediate']
 }

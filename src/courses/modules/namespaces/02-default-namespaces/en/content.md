@@ -83,12 +83,12 @@ You will never need to manage Lease objects manually. They are entirely managed 
 
 ## Comparing the Four Namespaces
 
-| Namespace | Purpose | Managed by | Should you touch it? |
-|-----------|---------|------------|----------------------|
-| `default` | Your workloads | You | Yes , for learning. Use named namespaces for production. |
-| `kube-system` | Kubernetes system components | Kubernetes | Only with care and reason |
-| `kube-public` | World-readable cluster information | Kubernetes | Rarely , read-only is fine |
-| `kube-node-lease` | Node heartbeat Leases | Kubernetes (kubelet) | Never |
+| Namespace         | Purpose                            | Managed by           | Should you touch it?                                     |
+| ----------------- | ---------------------------------- | -------------------- | -------------------------------------------------------- |
+| `default`         | Your workloads                     | You                  | Yes , for learning. Use named namespaces for production. |
+| `kube-system`     | Kubernetes system components       | Kubernetes           | Only with care and reason                                |
+| `kube-public`     | World-readable cluster information | Kubernetes           | Rarely , read-only is fine                               |
+| `kube-node-lease` | Node heartbeat Leases              | Kubernetes (kubelet) | Never                                                    |
 
 ## Hands-On Practice
 

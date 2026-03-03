@@ -1,6 +1,6 @@
 # Viewing Resources with kubectl
 
-Before you can fix anything in a Kubernetes cluster, you need to know how to *look* at it. This lesson covers the two most essential observation tools in kubectl: `kubectl get` and `kubectl describe`. Think of `kubectl get` as the high-altitude dashboard, it shows you what is running, and `kubectl describe` as the magnifying glass you pull out when something looks off.
+Before you can fix anything in a Kubernetes cluster, you need to know how to _look_ at it. This lesson covers the two most essential observation tools in kubectl: `kubectl get` and `kubectl describe`. Think of `kubectl get` as the high-altitude dashboard, it shows you what is running, and `kubectl describe` as the magnifying glass you pull out when something looks off.
 
 :::info
 These two commands form the foundation of your debugging workflow. Together they cover the vast majority of day-to-day Kubernetes investigation.

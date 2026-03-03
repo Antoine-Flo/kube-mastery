@@ -6,7 +6,7 @@ export const module: LocalModule = {
     fr: 'Observability Concepts'
   },
   description: {
-    en: 'Concepts d\'observabilité : métriques, SLO/SLA/SLI, introduction à Prometheus.'
+    en: "Concepts d'observabilité : métriques, SLO/SLA/SLI, introduction à Prometheus."
   },
-  tags: ["kcna","intermediate"]
+  tags: ['kcna', 'intermediate']
 }

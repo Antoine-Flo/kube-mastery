@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Comment Kubernetes identifie les utilisateurs et les pods.'
   },
-  tags: ["ckad","cka","intermediate"]
+  tags: ['ckad', 'cka', 'intermediate']
 }

@@ -5,15 +5,9 @@
 // No barrel: direct imports per seed file.
 
 import type { FsConfig } from '../../core/filesystem/debianFileSystem'
-import {
-  fsConfig as demoFsConfig
-} from './demo'
-import {
-  fsConfig as introFsConfig
-} from './intro'
-import {
-  fsConfig as minimalFsConfig
-} from './minimal'
+import { fsConfig as demoFsConfig } from './demo'
+import { fsConfig as introFsConfig } from './intro'
+import { fsConfig as minimalFsConfig } from './minimal'
 
 export interface SeedData {
   fsConfig: FsConfig

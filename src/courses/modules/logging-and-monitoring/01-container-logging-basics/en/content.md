@@ -82,7 +82,7 @@ One of the most important flags for debugging is `--previous` (or `-p`):
 kubectl logs --previous my-pod
 ```
 
-This shows the logs from the *previous* (now terminated) instance of the container. When a container crashes and Kubernetes restarts it, the new container starts with a fresh log stream, the old logs from before the crash are gone from the current stream. The `--previous` flag lets you look back at what the crashed container wrote before it died.
+This shows the logs from the _previous_ (now terminated) instance of the container. When a container crashes and Kubernetes restarts it, the new container starts with a fresh log stream, the old logs from before the crash are gone from the current stream. The `--previous` flag lets you look back at what the crashed container wrote before it died.
 
 This is essential for debugging `CrashLoopBackOff`. When a container is in a crash loop, it keeps restarting and its current log stream might be nearly empty (if it crashes immediately at startup). `--previous` shows you the last gasp of the previous run.
 

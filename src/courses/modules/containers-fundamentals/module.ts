@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Comprendre les conteneurs, les runtimes et les standards OCI.'
   },
-  tags: ["kcna","beginner"]
+  tags: ['kcna', 'beginner']
 }

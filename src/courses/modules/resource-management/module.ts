@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Contrôler CPU et mémoire : requests, limits, QoS.'
   },
-  tags: ["ckad","cka","beginner"]
+  tags: ['ckad', 'cka', 'beginner']
 }

@@ -10,9 +10,9 @@ NodePort gets traffic from outside the cluster to your Service, but it asks clie
 
 The `LoadBalancer` type is an extension of NodePort. When you create a LoadBalancer Service, Kubernetes actually creates all three layers in sequence:
 
-1. A **ClusterIP:**  the stable internal IP, as always.
-2. A **NodePort:**  a port opened on every cluster node, so traffic can enter the cluster.
-3. A **cloud load balancer:**  provisioned automatically via the cloud provider's API (AWS Elastic Load Balancer, GCP Cloud Load Balancing, Azure Load Balancer, etc.).
+1. A **ClusterIP:** the stable internal IP, as always.
+2. A **NodePort:** a port opened on every cluster node, so traffic can enter the cluster.
+3. A **cloud load balancer:** provisioned automatically via the cloud provider's API (AWS Elastic Load Balancer, GCP Cloud Load Balancing, Azure Load Balancer, etc.).
 
 The cloud load balancer is configured to send traffic to the NodePort on every healthy node. Kubernetes' cloud controller manager handles this orchestration: it watches for `LoadBalancer` Services and calls the cloud provider's API to create and configure the load balancer, then writes the assigned public IP or hostname back into the Service's `status.loadBalancer.ingress` field.
 
@@ -103,16 +103,16 @@ In local development clusters , minikube, kind, k3s , there is no cloud controll
 
 Several solutions exist for local environments:
 
-**`minikube tunnel`:**  Run `minikube tunnel` in a separate terminal. It provisions local routing that makes LoadBalancer Services get a real IP (usually `127.0.0.1` or from minikube's network range).
+**`minikube tunnel`:** Run `minikube tunnel` in a separate terminal. It provisions local routing that makes LoadBalancer Services get a real IP (usually `127.0.0.1` or from minikube's network range).
 
 ```bash
 minikube tunnel  # run in a separate terminal
 kubectl get service web-service  # EXTERNAL-IP will now have a value
 ```
 
-**MetalLB:**  A popular open-source load balancer implementation for bare-metal and local clusters. It watches for LoadBalancer Services and assigns IPs from a pre-configured pool. Many kind and k3s users install MetalLB to get functional LoadBalancer Services.
+**MetalLB:** A popular open-source load balancer implementation for bare-metal and local clusters. It watches for LoadBalancer Services and assigns IPs from a pre-configured pool. Many kind and k3s users install MetalLB to get functional LoadBalancer Services.
 
-**Cloud provider emulation:**  Tools like LocalStack emulate cloud provider APIs locally, including load balancer provisioning.
+**Cloud provider emulation:** Tools like LocalStack emulate cloud provider APIs locally, including load balancer provisioning.
 
 :::info
 For development, NodePort or `kubectl port-forward` are usually simpler than trying to make LoadBalancer work locally. Reserve LoadBalancer Services for staging and production environments where a real cloud provider is available.
@@ -136,11 +136,11 @@ Cloud providers support custom behaviour via annotations on the Service. These v
 metadata:
   annotations:
     # AWS: use an internal (private) load balancer
-    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+    service.beta.kubernetes.io/aws-load-balancer-internal: 'true'
     # AWS: use a Network Load Balancer instead of Classic
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-type: 'nlb'
     # GCP: set a static IP
-    cloud.google.com/load-balancer-ip: "34.102.136.180"
+    cloud.google.com/load-balancer-ip: '34.102.136.180'
 ```
 
 These annotations are the primary way to customize load balancer behaviour for your cloud environment. Check your cloud provider's Kubernetes documentation for the full list.

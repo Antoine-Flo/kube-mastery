@@ -99,7 +99,7 @@ Most of the time you want to ensure that any HTTP request is redirected to HTTPS
 ```yaml
 metadata:
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
 ```
 
 When this annotation is set, the controller will respond to any HTTP request on port 80 with a `301 Moved Permanently` redirect to the equivalent HTTPS URL.
@@ -159,11 +159,13 @@ kubectl create secret tls demo-tls-secret --cert=tls.crt --key=tls.key
 ```
 
 Verify it:
+
 ```bash
 kubectl get secret demo-tls-secret
 ```
 
 Expected output:
+
 ```
 NAME              TYPE                DATA   AGE
 demo-tls-secret   kubernetes.io/tls   2      5s
@@ -217,12 +219,15 @@ curl -k -H "Host: app.example.com" https://$INGRESS_IP/
 ```
 
 Expected output:
+
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-<title>Welcome to nginx!</title>
-...
+  <head>
+    <title>Welcome to nginx!</title>
+    ...
+  </head>
+</html>
 ```
 
 **Step 6: Verify the redirect from HTTP to HTTPS**

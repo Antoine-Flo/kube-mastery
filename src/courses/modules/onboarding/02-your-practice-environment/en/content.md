@@ -6,11 +6,11 @@ The terminal gives you two things: an emulated Kubernetes cluster and a virtual 
 
 Here are the commands available:
 
-| Category | Commands |
-|---|---|
-| Navigation | `pwd`, `ls`, `cd`, `mkdir` |
-| File operations | `cat`, `touch`, `rm`, `nano` |
-| Kubernetes | `kubectl` and all its subcommands |
+| Category        | Commands                          |
+| --------------- | --------------------------------- |
+| Navigation      | `pwd`, `ls`, `cd`, `mkdir`        |
+| File operations | `cat`, `touch`, `rm`, `nano`      |
+| Kubernetes      | `kubectl` and all its subcommands |
 
 `kubectl` is your main tool throughout this course. Think of it as the remote control for your cluster.
 

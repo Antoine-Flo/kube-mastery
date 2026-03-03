@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Pod Security Standards et Pod Security Admission.'
   },
-  tags: ["cka","intermediate"]
+  tags: ['cka', 'intermediate']
 }

@@ -101,7 +101,7 @@ curl http://10.96.45.12
 **Via environment variables (legacy):** Kubernetes automatically injects environment variables for every Service that exists when a Pod starts. For a Service named `web-service`, Pods get variables like `WEB_SERVICE_SERVICE_HOST` and `WEB_SERVICE_SERVICE_PORT`. This mechanism predates in-cluster DNS and is considered legacy , prefer DNS.
 
 :::warning
-Environment variable injection only captures Services that existed *before* the Pod was created. If you create a Pod first and a Service later, the Pod won't have the new Service's variables. DNS works regardless of creation order, which is another reason to prefer it.
+Environment variable injection only captures Services that existed _before_ the Pod was created. If you create a Pod first and a Service later, the Pod won't have the new Service's variables. DNS works regardless of creation order, which is another reason to prefer it.
 :::
 
 ## A Note on Specifying the ClusterIP Explicitly

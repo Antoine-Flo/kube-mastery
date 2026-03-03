@@ -63,13 +63,13 @@ Labels follow a specific syntax enforced by the Kubernetes API. Understanding th
 - **Keys** consist of an optional DNS subdomain prefix and a name, separated by `/`. The name must be 63 characters or fewer, may contain alphanumerics, hyphens (`-`), underscores (`_`), and dots (`.`), and must start and end with an alphanumeric character. The optional prefix (e.g. `app.kubernetes.io`) must be a valid DNS subdomain.
 - **Values** follow the same character rules as key names and are also limited to 63 characters. Values can also be empty strings.
 
-| Key | Value |
-|---|---|
-| `app` | `web` |
-| `env` | `production` |
-| `version` | `1.4.2` |
-| `app.kubernetes.io/name` | `mysql` |
-| `team` | `platform-infra` |
+| Key                      | Value            |
+| ------------------------ | ---------------- |
+| `app`                    | `web`            |
+| `env`                    | `production`     |
+| `version`                | `1.4.2`          |
+| `app.kubernetes.io/name` | `mysql`          |
+| `team`                   | `platform-infra` |
 
 :::warning
 Label keys and values have a 63-character limit and a restricted character set. If you try to use a long URL, a full sentence, or a JSON blob, the API will reject it. Use **annotations** for large or unstructured metadata, covered in lesson 3.

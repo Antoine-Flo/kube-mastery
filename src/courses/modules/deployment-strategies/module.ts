@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Stratégies de déploiement avancées : blue-green, canary.'
   },
-  tags: ["ckad","intermediate"]
+  tags: ['ckad', 'intermediate']
 }

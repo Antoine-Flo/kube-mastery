@@ -1,6 +1,6 @@
 # Formatting kubectl Output and Productivity Tips
 
-Once you are comfortable with the core kubectl commands, the next step is learning to use them *efficiently*. The default table view only scratches the surface of what Kubernetes resources contain. kubectl offers powerful output formatting options, from extracting a single field to building a custom table, and a few shell tricks that can dramatically speed up your daily workflow.
+Once you are comfortable with the core kubectl commands, the next step is learning to use them _efficiently_. The default table view only scratches the surface of what Kubernetes resources contain. kubectl offers powerful output formatting options, from extracting a single field to building a custom table, and a few shell tricks that can dramatically speed up your daily workflow.
 
 :::info
 Mastering `-o jsonpath` and `-o custom-columns` will save you significant time when scripting or investigating complex cluster states. Combined with shell aliases and tab completion, your kubectl workflow becomes noticeably faster.

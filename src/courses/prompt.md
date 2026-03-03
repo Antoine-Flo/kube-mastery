@@ -1,7 +1,6 @@
 Use between minimum 500 words.
 Use a simple tone of voice, friendly (but still professional) and engaging, don't try to make jokes, use analogies and metaphors to explain complex concepts. Use simple words and avoid technical jargon or explain it. Don't over use bullet points, try to make sentences and paragraphs. Esay to digest.
 
-
 Use :::info and :::warning to add callouts to the text. To make it more engaging and easy to digest.
 
 Exemple :

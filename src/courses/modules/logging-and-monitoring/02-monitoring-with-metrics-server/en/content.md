@@ -108,7 +108,7 @@ kubectl top pods --sort-by=cpu
 This sorts by memory or CPU in descending order. The hungriest Pods appear at the top. This is invaluable when a node is under pressure and you need to find out what's eating all the resources.
 
 :::info
-`kubectl top pods` shows the *sum* of all containers within a Pod. To see individual container metrics within a Pod, use the `--containers` flag: `kubectl top pods --containers`. This adds a CONTAINER column showing each container's separate usage.
+`kubectl top pods` shows the _sum_ of all containers within a Pod. To see individual container metrics within a Pod, use the `--containers` flag: `kubectl top pods --containers`. This adds a CONTAINER column showing each container's separate usage.
 :::
 
 ## Metrics Server vs Prometheus: Understanding the Trade-Offs

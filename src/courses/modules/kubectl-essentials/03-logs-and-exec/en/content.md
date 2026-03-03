@@ -1,6 +1,6 @@
 # kubectl logs and kubectl exec, Looking Inside Containers
 
-So far you have learned to observe Kubernetes resources from the outside, listing pods, reading their status, examining their conditions and events. But sometimes the outside view is not enough. You need to look *inside* the container itself: what is the application printing? Is a configuration file in the right place? Can it reach another service?
+So far you have learned to observe Kubernetes resources from the outside, listing pods, reading their status, examining their conditions and events. But sometimes the outside view is not enough. You need to look _inside_ the container itself: what is the application printing? Is a configuration file in the right place? Can it reach another service?
 
 That is where `kubectl logs` and `kubectl exec` come in. They are your windows directly into the running container, and they are indispensable for debugging application-level problems.
 
@@ -55,7 +55,7 @@ kubectl logs my-pod -c sidecar-container
 
 ### Logs from a Crashed Container
 
-This is one of the most important flags: `--previous`. When a container crashes and restarts, Kubernetes starts a fresh container, and the logs of the previous run are no longer in the live view. The `--previous` flag retrieves the logs from the *last terminated* instance, which is exactly what you need when debugging a crash.
+This is one of the most important flags: `--previous`. When a container crashes and restarts, Kubernetes starts a fresh container, and the logs of the previous run are no longer in the live view. The `--previous` flag retrieves the logs from the _last terminated_ instance, which is exactly what you need when debugging a crash.
 
 ```bash
 kubectl logs --previous my-pod
@@ -67,7 +67,7 @@ kubectl logs --previous my-pod
 
 ## kubectl exec: Running Commands Inside a Container
 
-`kubectl exec` lets you execute a command *inside a running container*. The general form is:
+`kubectl exec` lets you execute a command _inside a running container_. The general form is:
 
 ```bash
 kubectl exec <pod-name> -- <command>
@@ -98,6 +98,7 @@ kubectl exec -it my-pod -- /bin/sh
 ```
 
 Once inside, you can:
+
 - Browse the container's filesystem
 - Check running processes
 - Test network connections

@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Gérer les données sensibles (mots de passe, tokens, clés).'
   },
-  tags: ["ckad","cka","beginner"]
+  tags: ['ckad', 'cka', 'beginner']
 }

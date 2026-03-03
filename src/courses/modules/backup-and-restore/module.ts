@@ -6,7 +6,7 @@ export const module: LocalModule = {
     fr: 'Backup And Restore'
   },
   description: {
-    en: 'Sauvegarder et restaurer l\'état du cluster via etcd.'
+    en: "Sauvegarder et restaurer l'état du cluster via etcd."
   },
-  tags: ["cka","advanced"]
+  tags: ['cka', 'advanced']
 }

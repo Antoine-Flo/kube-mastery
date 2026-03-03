@@ -1,6 +1,6 @@
 # Creating a ReplicaSet
 
-Now that you understand *why* ReplicaSets exist, it's time to learn *how* to create one. A ReplicaSet manifest follows the same structure as every other Kubernetes object: `apiVersion`, `kind`, `metadata`, and `spec`. But the `spec` section has a few fields that work together in a specific way, and understanding those relationships will save you from the most common mistakes.
+Now that you understand _why_ ReplicaSets exist, it's time to learn _how_ to create one. A ReplicaSet manifest follows the same structure as every other Kubernetes object: `apiVersion`, `kind`, `metadata`, and `spec`. But the `spec` section has a few fields that work together in a specific way, and understanding those relationships will save you from the most common mistakes.
 
 :::info
 A ReplicaSet has three interdependent `spec` fields: `replicas` (desired Pod count), `selector` (how it finds Pods), and `template` (how it creates them). The labels in `template` must satisfy `selector`, the API server enforces this constraint at creation time.
@@ -60,7 +60,7 @@ The Kubernetes API enforces this. If your selector says `app: web` but your temp
 
 ```
 The ReplicaSet "web-rs" is invalid: spec.template.metadata.labels:
-  Invalid value: map[string]string{"app":"webapp"}: 
+  Invalid value: map[string]string{"app":"webapp"}:
   `selector` does not match template `labels`
 ```
 
@@ -105,7 +105,7 @@ spec:
     metadata:
       labels:
         app: web
-        version: "1.25"
+        version: '1.25'
     spec:
       containers:
         - name: web
@@ -114,11 +114,11 @@ spec:
             - containerPort: 80
           resources:
             requests:
-              cpu: "100m"
-              memory: "64Mi"
+              cpu: '100m'
+              memory: '64Mi'
             limits:
-              cpu: "250m"
-              memory: "128Mi"
+              cpu: '250m'
+              memory: '128Mi'
           readinessProbe:
             httpGet:
               path: /
@@ -144,10 +144,10 @@ NAME     DESIRED   CURRENT   READY   AGE
 web-rs   3         3         3       30s
 ```
 
-- **DESIRED:**  the value of `spec.replicas`; what you asked for.
-- **CURRENT:**  how many Pods have been created (may be equal to DESIRED before they're all Running).
-- **READY:**  how many of those Pods are passing their readiness probes and ready to serve traffic.
-- **AGE:**  how long ago the ReplicaSet was created.
+- **DESIRED:** the value of `spec.replicas`; what you asked for.
+- **CURRENT:** how many Pods have been created (may be equal to DESIRED before they're all Running).
+- **READY:** how many of those Pods are passing their readiness probes and ready to serve traffic.
+- **AGE:** how long ago the ReplicaSet was created.
 
 If `READY` is lower than `DESIRED` for more than a few seconds, something is wrong, typically a bad image name, a failing readiness probe, or insufficient resources on the cluster.
 
@@ -270,7 +270,7 @@ spec:
   template:
     metadata:
       labels:
-        app: different-app   # Intentional mismatch
+        app: different-app # Intentional mismatch
     spec:
       containers:
         - name: nginx

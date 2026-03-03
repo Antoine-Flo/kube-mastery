@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Tâches one-shot et planifiées : Jobs et CronJobs.'
   },
-  tags: ["ckad","cka","beginner"]
+  tags: ['ckad', 'cka', 'beginner']
 }

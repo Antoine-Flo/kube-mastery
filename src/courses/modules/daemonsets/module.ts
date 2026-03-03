@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Un Pod par node : logging, monitoring, networking agents.'
   },
-  tags: ["cka","intermediate"]
+  tags: ['cka', 'intermediate']
 }

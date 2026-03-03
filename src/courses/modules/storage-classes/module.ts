@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Provisionnement dynamique de volumes.'
   },
-  tags: ["ckad","cka","intermediate"]
+  tags: ['ckad', 'cka', 'intermediate']
 }

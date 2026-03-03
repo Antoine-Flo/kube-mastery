@@ -1,6 +1,6 @@
 # Services and Endpoints
 
-In the previous lesson you saw that a Service provides a stable IP and DNS name in front of a dynamic group of Pods. But how does Kubernetes actually keep track of *which* Pod IPs are currently behind a Service? The answer is an object you may never have heard of: the **Endpoints** object (or its modern successor, **EndpointSlices**). Understanding this layer helps you debug Service connectivity issues and opens the door to some advanced patterns.
+In the previous lesson you saw that a Service provides a stable IP and DNS name in front of a dynamic group of Pods. But how does Kubernetes actually keep track of _which_ Pod IPs are currently behind a Service? The answer is an object you may never have heard of: the **Endpoints** object (or its modern successor, **EndpointSlices**). Understanding this layer helps you debug Service connectivity issues and opens the door to some advanced patterns.
 
 :::info
 Every Service with a `selector` automatically gets a companion **Endpoints** object, Kubernetes' internal address book, updated in real time as Pods come and go.
@@ -45,7 +45,7 @@ graph TB
 
 ## Readiness Probes and Endpoints: Only Ready Pods Get Traffic
 
-This is one of Kubernetes' most important safety mechanisms, and it's easy to overlook. A Pod is only added to the Endpoints list if it is **Ready:**  meaning it has passed its readiness probe. A Pod that is still starting up, running its initialization logic, or failing its health check will not appear in the Endpoints list and will not receive any traffic, even if it is technically `Running`.
+This is one of Kubernetes' most important safety mechanisms, and it's easy to overlook. A Pod is only added to the Endpoints list if it is **Ready:** meaning it has passed its readiness probe. A Pod that is still starting up, running its initialization logic, or failing its health check will not appear in the Endpoints list and will not receive any traffic, even if it is technically `Running`.
 
 This ensures safe rolling updates and automatic recovery:
 

@@ -50,7 +50,12 @@ export const courseStructure: CourseStructure = {
     },
     {
       title: { en: 'Observability & extensibility' },
-      moduleIds: ['logging-and-monitoring', 'api-and-versioning', 'custom-resources', 'helm']
+      moduleIds: [
+        'logging-and-monitoring',
+        'api-and-versioning',
+        'custom-resources',
+        'helm'
+      ]
     }
   ]
 }

@@ -33,17 +33,17 @@ Annotations serve as a communication channel between the people who deploy softw
 
 ```yaml
 annotations:
-  contact: "platform-team@example.com"
-  runbook: "https://wiki.example.com/runbooks/web-service"
+  contact: 'platform-team@example.com'
+  runbook: 'https://wiki.example.com/runbooks/web-service'
 ```
 
 **Build and deploy metadata**, a direct audit trail from CI/CD:
 
 ```yaml
 annotations:
-  git-commit: "a3f2c1d"
-  build-number: "1042"
-  deploy-pipeline: "https://ci.example.com/pipelines/1042"
+  git-commit: 'a3f2c1d'
+  build-number: '1042'
+  deploy-pipeline: 'https://ci.example.com/pipelines/1042'
 ```
 
 **Tool configuration**, many ecosystem tools use annotations as their configuration interface, since they can't add new fields to the core Kubernetes API:
@@ -51,15 +51,15 @@ annotations:
 ```yaml
 annotations:
   nginx.ingress.kubernetes.io/rewrite-target: /
-  nginx.ingress.kubernetes.io/ssl-redirect: "true"
-  nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+  nginx.ingress.kubernetes.io/proxy-body-size: '10m'
 ```
 
 ```yaml
 annotations:
-  prometheus.io/scrape: "true"
-  prometheus.io/port: "9090"
-  prometheus.io/path: "/metrics"
+  prometheus.io/scrape: 'true'
+  prometheus.io/port: '9090'
+  prometheus.io/path: '/metrics'
 ```
 
 This pattern is everywhere in the Kubernetes ecosystem:
@@ -82,7 +82,7 @@ annotations:
   team: platform
 
   # Long description
-  description: "This service handles payment processing for the checkout flow."
+  description: 'This service handles payment processing for the checkout flow.'
 
   # JSON config consumed by a sidecar
   sidecar.config/options: '{"timeout": 30, "retries": 3, "circuit_breaker": true}'
@@ -137,9 +137,9 @@ metadata:
   labels:
     app: web
   annotations:
-    contact: "platform-team@example.com"
-    git-commit: "a3f2c1d"
-    runbook: "https://wiki.example.com/runbooks/web-service"
+    contact: 'platform-team@example.com'
+    git-commit: 'a3f2c1d'
+    runbook: 'https://wiki.example.com/runbooks/web-service'
 spec:
   containers:
     - name: nginx

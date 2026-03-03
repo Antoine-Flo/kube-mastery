@@ -150,7 +150,7 @@ from:
         env: production
 ```
 
-This allows traffic only from Pods labeled `app=frontend` that are *also* in a namespace labeled `env=production`. A frontend Pod in a different namespace would be blocked.
+This allows traffic only from Pods labeled `app=frontend` that are _also_ in a namespace labeled `env=production`. A frontend Pod in a different namespace would be blocked.
 
 :::info
 The distinction between one list item with multiple fields (AND) versus multiple list items (OR) is one of the trickiest aspects of NetworkPolicy syntax. Each list item (`-`) is an independent path. Fields within one item all have to match at once.

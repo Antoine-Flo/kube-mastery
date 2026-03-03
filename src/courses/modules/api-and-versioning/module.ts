@@ -6,7 +6,7 @@ export const module: LocalModule = {
     fr: 'Api And Versioning'
   },
   description: {
-    en: 'Groupes d\'API, versions et politique de dépréciation.'
+    en: "Groupes d'API, versions et politique de dépréciation."
   },
-  tags: ["ckad","cka","intermediate"]
+  tags: ['ckad', 'cka', 'intermediate']
 }

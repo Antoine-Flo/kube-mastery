@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'PKI Kubernetes : créer, gérer et renouveler les certificats TLS.'
   },
-  tags: ["cka","advanced"]
+  tags: ['cka', 'advanced']
 }

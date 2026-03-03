@@ -18,7 +18,7 @@ kubectl apply -f web-rs.yaml
 
 The ReplicaSet's Pod template is now updated in the API server. But nothing else happens. The three existing Pods are still running `nginx:1.25`. The ReplicaSet controller looks at the cluster, counts three Pods matching its selector, and concludes: "Desired is 3, actual is 3, nothing to do." It doesn't know, and doesn't care, that those Pods were created from an older version of the template.
 
-ReplicaSets are blind to the contents of their Pods. They count Pods by label; they don't inspect container images. This is a deliberate design choice: the ReplicaSet's scope is quantity, not quality. The new template only takes effect when the ReplicaSet needs to create a *new* Pod, for example, if one of the existing Pods crashes. That crash victim will be replaced with `nginx:1.26`. The other two will keep running `nginx:1.25`. Your fleet is now running a mixture of versions, indefinitely.
+ReplicaSets are blind to the contents of their Pods. They count Pods by label; they don't inspect container images. This is a deliberate design choice: the ReplicaSet's scope is quantity, not quality. The new template only takes effect when the ReplicaSet needs to create a _new_ Pod, for example, if one of the existing Pods crashes. That crash victim will be replaced with `nginx:1.26`. The other two will keep running `nginx:1.25`. Your fleet is now running a mixture of versions, indefinitely.
 
 ## The Manual Workaround, and Its Costs
 

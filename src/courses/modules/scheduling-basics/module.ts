@@ -6,7 +6,7 @@ export const module: LocalModule = {
     fr: 'Scheduling Basics'
   },
   description: {
-    en: 'Contrôler où les Pods s\'exécutent : taints, tolerations, affinity.'
+    en: "Contrôler où les Pods s'exécutent : taints, tolerations, affinity."
   },
-  tags: ["ckad","cka","intermediate"]
+  tags: ['ckad', 'cka', 'intermediate']
 }

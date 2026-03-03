@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Contrôler les privilèges de sécurité des containers.'
   },
-  tags: ["ckad","cka","intermediate"]
+  tags: ['ckad', 'cka', 'intermediate']
 }

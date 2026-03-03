@@ -25,14 +25,14 @@ spec:
         - containerPort: 80
       env:
         - name: ENV_VAR
-          value: "hello"
+          value: 'hello'
       resources:
         requests:
-          memory: "64Mi"
-          cpu: "250m"
+          memory: '64Mi'
+          cpu: '250m'
         limits:
-          memory: "128Mi"
-          cpu: "500m"
+          memory: '128Mi'
+          cpu: '500m'
   restartPolicy: Always
 ```
 
@@ -158,7 +158,7 @@ spec:
   initContainers:
     - name: wait-for-db
       image: busybox:1.36
-      command: ["sh", "-c", "until nc -z db-service 5432; do sleep 2; done"]
+      command: ['sh', '-c', 'until nc -z db-service 5432; do sleep 2; done']
   containers:
     - name: app
       image: myapp:1.0
@@ -216,7 +216,7 @@ spec:
   initContainers:
     - name: init-setup
       image: busybox:1.36
-      command: ["sh", "-c", "echo 'Init container ran' > /init-data/init.txt"]
+      command: ['sh', '-c', "echo 'Init container ran' > /init-data/init.txt"]
       volumeMounts:
         - name: init-volume
           mountPath: /init-data
@@ -228,14 +228,14 @@ spec:
           name: http
       env:
         - name: MY_VAR
-          value: "hello-from-env"
+          value: 'hello-from-env'
       resources:
         requests:
-          memory: "64Mi"
-          cpu: "100m"
+          memory: '64Mi'
+          cpu: '100m'
         limits:
-          memory: "128Mi"
-          cpu: "200m"
+          memory: '128Mi'
+          cpu: '200m'
       volumeMounts:
         - name: init-volume
           mountPath: /usr/share/nginx/html/init

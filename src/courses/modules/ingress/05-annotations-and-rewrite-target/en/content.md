@@ -14,37 +14,37 @@ Here are the most useful ingress-nginx annotations you will encounter regularly.
 
 ```yaml
 annotations:
-  nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  nginx.ingress.kubernetes.io/ssl-redirect: 'true'
 ```
 
 **`proxy-body-size`** controls the maximum size of the request body that nginx will accept. The default is typically 1MB, which is too small for file uploads. Setting it to `"0"` disables the limit:
 
 ```yaml
 annotations:
-  nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+  nginx.ingress.kubernetes.io/proxy-body-size: '50m'
 ```
 
 **`proxy-read-timeout`** and **`proxy-send-timeout`** control how long nginx waits for the backend to respond. Useful for slow API endpoints or long-running operations:
 
 ```yaml
 annotations:
-  nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
-  nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+  nginx.ingress.kubernetes.io/proxy-read-timeout: '120'
+  nginx.ingress.kubernetes.io/proxy-send-timeout: '120'
 ```
 
 **`limit-rps`** enables basic rate limiting on requests per second, implemented via the nginx `limit_req` module:
 
 ```yaml
 annotations:
-  nginx.ingress.kubernetes.io/limit-rps: "10"
+  nginx.ingress.kubernetes.io/limit-rps: '10'
 ```
 
 **`enable-cors`** adds CORS headers automatically, so you do not have to implement CORS in your application:
 
 ```yaml
 annotations:
-  nginx.ingress.kubernetes.io/enable-cors: "true"
-  nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.example.com"
+  nginx.ingress.kubernetes.io/enable-cors: 'true'
+  nginx.ingress.kubernetes.io/cors-allow-origin: 'https://app.example.com'
 ```
 
 ## The Rewrite-Target Annotation
@@ -86,7 +86,7 @@ For a more surgical rewrite that preserves the rest of the path, use a regex in 
 ```yaml
 metadata:
   annotations:
-    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/use-regex: 'true'
     nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   rules:
@@ -127,12 +127,12 @@ metadata:
   name: production-api
   namespace: production
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/use-regex: 'true'
     nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
-    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '60'
+    nginx.ingress.kubernetes.io/limit-rps: '20'
 spec:
   ingressClassName: nginx
   tls:
@@ -194,6 +194,7 @@ EOF
 ```
 
 Test it:
+
 ```bash
 INGRESS_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 curl -s -H "Host: app.example.com" http://$INGRESS_IP/api/users | python3 -m json.tool | grep path
@@ -229,6 +230,7 @@ EOF
 ```
 
 Test again:
+
 ```bash
 curl -s -H "Host: app.example.com" http://$INGRESS_IP/api/users | python3 -m json.tool | grep path
 ```

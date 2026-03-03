@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Scheduling avancé : static pods, priority, multi-schedulers.'
   },
-  tags: ["cka","advanced"]
+  tags: ['cka', 'advanced']
 }

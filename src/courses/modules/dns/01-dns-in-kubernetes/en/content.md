@@ -102,6 +102,7 @@ kubectl get pods -n kube-system -l k8s-app=kube-dns
 ```
 
 Expected output:
+
 ```
 NAME                       READY   STATUS    RESTARTS   AGE
 coredns-7db6d8ff4d-4vk9p   1/1     Running   0          2d
@@ -115,6 +116,7 @@ kubectl get svc kube-dns -n kube-system
 ```
 
 Expected output:
+
 ```
 NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
 kube-dns   ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   2d
@@ -129,6 +131,7 @@ kubectl run dns-demo --image=busybox --rm -it --restart=Never -- cat /etc/resolv
 ```
 
 Expected output:
+
 ```
 nameserver 10.96.0.10
 search default.svc.cluster.local svc.cluster.local cluster.local
@@ -142,6 +145,7 @@ kubectl run dns-demo --image=busybox --rm -it --restart=Never -- nslookup kubern
 ```
 
 Expected output:
+
 ```
 Server:    10.96.0.10
 Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
@@ -161,6 +165,7 @@ kubectl run dns-demo --image=busybox --rm -it --restart=Never -- nslookup hello
 ```
 
 Expected output:
+
 ```
 Server:    10.96.0.10
 Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local

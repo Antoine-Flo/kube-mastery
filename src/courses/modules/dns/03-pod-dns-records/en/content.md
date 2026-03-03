@@ -88,10 +88,10 @@ You can add custom entries using `spec.hostAliases`. This is useful when you nee
 ```yaml
 spec:
   hostAliases:
-    - ip: "192.168.1.100"
+    - ip: '192.168.1.100'
       hostnames:
-        - "legacy-db.corp.local"
-        - "db"
+        - 'legacy-db.corp.local'
+        - 'db'
 ```
 
 :::warning
@@ -121,6 +121,7 @@ kubectl run mypod --image=busybox --rm -it --restart=Never -- sh -c "hostname &&
 ```
 
 Expected output:
+
 ```
 mypod
 # Kubernetes-managed hosts file.
@@ -132,23 +133,27 @@ mypod
 **Step 2: Resolve the default Pod DNS record**
 
 First, get the Pod's IP:
+
 ```bash
 kubectl run mypod --image=busybox --restart=Never -- sleep 3600
 kubectl get pod mypod -o wide
 ```
 
 Example output:
+
 ```
 NAME    READY   STATUS    RESTARTS   AGE   IP            NODE
 mypod   1/1     Running   0          5s    10.244.1.23   node1
 ```
 
 Now resolve the IP-based Pod DNS name from another Pod:
+
 ```bash
 kubectl run resolver --image=busybox --rm -it --restart=Never -- nslookup 10-244-1-23.default.pod.cluster.local
 ```
 
 Expected output:
+
 ```
 Name:      10-244-1-23.default.pod.cluster.local
 Address 1: 10.244.1.23 10-244-1-23.default.pod.cluster.local
@@ -194,6 +199,7 @@ EOF
 ```
 
 Wait for the Pods to be ready:
+
 ```bash
 kubectl get pods -l app=db -w
 ```

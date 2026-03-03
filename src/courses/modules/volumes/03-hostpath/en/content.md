@@ -40,7 +40,7 @@ spec:
   containers:
     - name: log-reader
       image: busybox:1.36
-      command: ["sh", "-c", "ls /host-logs && sleep 3600"]
+      command: ['sh', '-c', 'ls /host-logs && sleep 3600']
       volumeMounts:
         - name: node-logs
           mountPath: /host-logs
@@ -52,15 +52,15 @@ Inside the container, `/host-logs` is actually the node's `/var/log`. Any file t
 
 The `type` field in a `hostPath` definition is optional but highly recommended. It tells Kubernetes to validate that the host path exists and is the right kind of thing before mounting it. Without `type`, Kubernetes will attempt to mount whatever is at that path regardless of whether it exists or what kind of object it is.
 
-| Type | Behavior |
-|------|----------|
-| `Directory` | Must exist as a directory on the host |
-| `File` | Must exist as a file on the host |
+| Type                | Behavior                                                     |
+| ------------------- | ------------------------------------------------------------ |
+| `Directory`         | Must exist as a directory on the host                        |
+| `File`              | Must exist as a file on the host                             |
 | `DirectoryOrCreate` | Creates the directory if it doesn't exist (permissions 0755) |
-| `FileOrCreate` | Creates the file if it doesn't exist (permissions 0644) |
-| `Socket` | Must exist as a Unix socket |
-| `CharDevice` | Must be a character device file |
-| `BlockDevice` | Must be a block device file |
+| `FileOrCreate`      | Creates the file if it doesn't exist (permissions 0644)      |
+| `Socket`            | Must exist as a Unix socket                                  |
+| `CharDevice`        | Must be a character device file                              |
+| `BlockDevice`       | Must be a block device file                                  |
 
 Using `DirectoryOrCreate` or `FileOrCreate` makes your Pod more resilient to path variation across nodes, but use them carefully, as automatically creating directories on node filesystems can be surprising.
 
@@ -82,7 +82,7 @@ graph TD
     style C fill:#4A90D9,color:#fff,stroke:#2c6fad
 ```
 
-The arrows go both ways intentionally: the container can read *and write* to the host path, unless you add `readOnly: true` to the volumeMount. This is a crucial security consideration.
+The arrows go both ways intentionally: the container can read _and write_ to the host path, unless you add `readOnly: true` to the volumeMount. This is a crucial security consideration.
 
 ## Security Warnings
 

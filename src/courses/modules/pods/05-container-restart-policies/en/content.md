@@ -100,7 +100,7 @@ The underlying problem could be anything: a missing environment variable, a misc
 kubectl logs <pod-name> --previous
 ```
 
-The `--previous` flag is critical, it shows logs from the *last* (crashed) container instance, not the current waiting one. Without it, you might get no output at all.
+The `--previous` flag is critical, it shows logs from the _last_ (crashed) container instance, not the current waiting one. Without it, you might get no output at all.
 
 :::warning
 `CrashLoopBackOff` is often a sign that the exponential backoff is actively protecting your cluster. If a container crashes and immediately restarts hundreds of times, it could eat up CPU and memory on the node. The backoff gives you time to notice and act without the cluster being overwhelmed.

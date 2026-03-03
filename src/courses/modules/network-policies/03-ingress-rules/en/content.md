@@ -1,6 +1,6 @@
 # Ingress Rules, Controlling Inbound Traffic
 
-When people talk about "locking down" a Kubernetes workload, they usually mean controlling who can reach it. An ingress rule specifies which traffic is permitted to flow *into* the selected Pods. Every connection attempt that doesn't match a rule is silently dropped.
+When people talk about "locking down" a Kubernetes workload, they usually mean controlling who can reach it. An ingress rule specifies which traffic is permitted to flow _into_ the selected Pods. Every connection attempt that doesn't match a rule is silently dropped.
 
 :::info
 An ingress rule is a **whitelist**: traffic is allowed if it matches at least one rule in the `ingress[]` list. Everything else is dropped silently.
@@ -10,8 +10,8 @@ An ingress rule is a **whitelist**: traffic is allowed if it matches at least on
 
 Each item in the `ingress[]` list represents a single allowed traffic pattern. It has two optional sub-fields:
 
-- `from[]` describes *where* the traffic can come from
-- `ports[]` describes *which ports and protocols* are allowed
+- `from[]` describes _where_ the traffic can come from
+- `ports[]` describes _which ports and protocols_ are allowed
 
 If you include both `from` and `ports` in the same rule, traffic must match both conditions simultaneously: allowed source AND allowed port. If you omit `ports`, that rule matches any port. If you omit `from`, it matches any source. Either omission can be a significant security gap, so be deliberate.
 
@@ -81,7 +81,7 @@ from:
         env: production
 ```
 
-This permits traffic only from Pods labeled `app=frontend` that *also* reside in namespaces labeled `env=production`. A frontend Pod in a development namespace would be blocked. A production namespace Pod without the `app=frontend` label would also be blocked.
+This permits traffic only from Pods labeled `app=frontend` that _also_ reside in namespaces labeled `env=production`. A frontend Pod in a development namespace would be blocked. A production namespace Pod without the `app=frontend` label would also be blocked.
 
 In short: each list item (`-`) is an independent OR path; fields within one item all have to match at once (AND).
 

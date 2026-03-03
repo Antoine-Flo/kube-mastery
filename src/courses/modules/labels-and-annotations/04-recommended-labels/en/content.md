@@ -18,14 +18,14 @@ The prefix `app.kubernetes.io` clearly signals that these are standardized Kuber
 
 ## The Recommended Labels
 
-| Label | Purpose | Example |
-|---|---|---|
-| `app.kubernetes.io/name` | The canonical name of the application | `mysql`, `my-web-app` |
-| `app.kubernetes.io/instance` | A unique name for this specific instance | `mysql-prod`, `my-web-app-eu-west` |
-| `app.kubernetes.io/version` | The version of the application (not the resource version) | `5.7.21`, `1.4.2`, `2024-11-01-gitsha` |
-| `app.kubernetes.io/component` | The role this resource plays in the architecture | `frontend`, `backend`, `database`, `worker` |
-| `app.kubernetes.io/part-of` | The larger application or system this belongs to | `checkout-platform`, `data-pipeline` |
-| `app.kubernetes.io/managed-by` | The tool managing the lifecycle of this resource | `helm`, `kustomize`, `argo-cd`, `kubectl` |
+| Label                          | Purpose                                                   | Example                                     |
+| ------------------------------ | --------------------------------------------------------- | ------------------------------------------- |
+| `app.kubernetes.io/name`       | The canonical name of the application                     | `mysql`, `my-web-app`                       |
+| `app.kubernetes.io/instance`   | A unique name for this specific instance                  | `mysql-prod`, `my-web-app-eu-west`          |
+| `app.kubernetes.io/version`    | The version of the application (not the resource version) | `5.7.21`, `1.4.2`, `2024-11-01-gitsha`      |
+| `app.kubernetes.io/component`  | The role this resource plays in the architecture          | `frontend`, `backend`, `database`, `worker` |
+| `app.kubernetes.io/part-of`    | The larger application or system this belongs to          | `checkout-platform`, `data-pipeline`        |
+| `app.kubernetes.io/managed-by` | The tool managing the lifecycle of this resource          | `helm`, `kustomize`, `argo-cd`, `kubectl`   |
 
 ## Putting It All Together
 
@@ -39,7 +39,7 @@ metadata:
   labels:
     app.kubernetes.io/name: payments-api
     app.kubernetes.io/instance: payments-api-prod
-    app.kubernetes.io/version: "3.2.1"
+    app.kubernetes.io/version: '3.2.1'
     app.kubernetes.io/component: backend
     app.kubernetes.io/part-of: checkout-platform
     app.kubernetes.io/managed-by: helm
@@ -54,7 +54,7 @@ spec:
       labels:
         app.kubernetes.io/name: payments-api
         app.kubernetes.io/instance: payments-api-prod
-        app.kubernetes.io/version: "3.2.1"
+        app.kubernetes.io/version: '3.2.1'
         app.kubernetes.io/component: backend
         app.kubernetes.io/part-of: checkout-platform
         app.kubernetes.io/managed-by: helm

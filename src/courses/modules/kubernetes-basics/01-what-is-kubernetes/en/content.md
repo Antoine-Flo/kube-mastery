@@ -25,7 +25,7 @@ Kubernetes provides a set of capabilities that solve the container management pr
 - **Configuration management**, Separates config from container images. You inject environment variables, config files, and secrets without rebuilding images.
 
 :::info
-A core idea is *desired state*. Instead of "start container X," you say "I want the cluster to look like this." Kubernetes figures out the steps and keeps it there.
+A core idea is _desired state_. Instead of "start container X," you say "I want the cluster to look like this." Kubernetes figures out the steps and keeps it there.
 :::
 
 ## What Kubernetes Does NOT Do
@@ -85,7 +85,6 @@ kubectl api-resources
 ```
 
 Each row is a type of object Kubernetes can manage. You see names like Pods, Deployments, Services, ConfigMaps, and many more: each corresponds to a kind of resource you can create, list, or delete with `kubectl`. Do not worry about memorising them now; we will meet the main ones in later lessons as we build and run workloads.
-
 
 ## Wrapping Up
 

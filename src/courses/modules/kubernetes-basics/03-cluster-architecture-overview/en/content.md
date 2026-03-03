@@ -30,16 +30,16 @@ Here is a map of the key components at each level:
 
 **Control plane components:**
 
-- **kube-apiserver:**  the front door; all communication enters through here
-- **etcd:**  the cluster's database; stores all state as key-value pairs
-- **kube-scheduler:**  assigns new Pods to nodes based on resources and constraints
-- **kube-controller-manager:**  runs the control loops that keep the cluster in its desired state
+- **kube-apiserver:** the front door; all communication enters through here
+- **etcd:** the cluster's database; stores all state as key-value pairs
+- **kube-scheduler:** assigns new Pods to nodes based on resources and constraints
+- **kube-controller-manager:** runs the control loops that keep the cluster in its desired state
 
 **Worker node components:**
 
-- **kubelet:**  the agent on each node; ensures containers specified by the control plane are running
-- **kube-proxy:**  manages network rules so that Pods and Services can communicate
-- **Container runtime:**  the software that actually starts and stops containers (commonly containerd)
+- **kubelet:** the agent on each node; ensures containers specified by the control plane are running
+- **kube-proxy:** manages network rules so that Pods and Services can communicate
+- **Container runtime:** the software that actually starts and stops containers (commonly containerd)
 
 ```mermaid
 graph TB

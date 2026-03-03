@@ -49,7 +49,7 @@ Access modes describe how many nodes can mount the volume simultaneously and whe
 A PV can advertise multiple access modes. When binding, Kubernetes looks for a PV that supports at least the mode requested by the PVC.
 
 :::info
-Access modes describe capabilities at the **node** level, not the Pod level. `ReadWriteOnce` means one node at a time, multiple Pods on the *same* node could theoretically mount it simultaneously if the underlying driver allows it.
+Access modes describe capabilities at the **node** level, not the Pod level. `ReadWriteOnce` means one node at a time, multiple Pods on the _same_ node could theoretically mount it simultaneously if the underlying driver allows it.
 :::
 
 ### `persistentVolumeReclaimPolicy`
@@ -58,7 +58,7 @@ This field determines what happens to the PV, and the underlying storage, when t
 
 **Retain** is the safest choice. When the PVC is deleted, the PV moves to a `Released` state with all its data intact. However, a `Released` PV cannot be automatically re-bound to a new PVC, an administrator must manually inspect the data and either delete the PV or clear the `claimRef` field to make it available again. This is ideal for databases and any data you cannot afford to lose accidentally.
 
-**Delete** is the most common choice when using dynamic provisioning. When the PVC is deleted, Kubernetes automatically deletes the PV *and* the underlying storage resource (calling the AWS or GCP API to delete the actual disk). This is convenient for ephemeral workloads but dangerous if you delete a PVC by mistake.
+**Delete** is the most common choice when using dynamic provisioning. When the PVC is deleted, Kubernetes automatically deletes the PV _and_ the underlying storage resource (calling the AWS or GCP API to delete the actual disk). This is convenient for ephemeral workloads but dangerous if you delete a PVC by mistake.
 
 **Recycle** is deprecated and should not be used in new clusters. It used to scrub the volume with a basic `rm -rf /` and make it available again, but this approach was too crude and has been replaced by dynamic provisioning.
 

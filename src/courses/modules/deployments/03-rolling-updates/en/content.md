@@ -24,7 +24,7 @@ At no point during this process does the total number of healthy, ready Pods dro
 
 There are two common ways to initiate an update.
 
-**Option 1: `kubectl set image`:**  The fastest approach when you just want to change the container image:
+**Option 1: `kubectl set image`:** The fastest approach when you just want to change the container image:
 
 ```bash
 kubectl set image deployment/web-app web=nginx:1.26
@@ -32,7 +32,7 @@ kubectl set image deployment/web-app web=nginx:1.26
 
 The format is `deployment/<name> <container-name>=<new-image>`. The container name matches what's in `spec.template.spec.containers[].name` in your manifest.
 
-**Option 2: Edit the manifest and re-apply:**  The better approach for production, because it keeps your manifest file in sync with reality:
+**Option 2: Edit the manifest and re-apply:** The better approach for production, because it keeps your manifest file in sync with reality:
 
 ```bash
 # Edit deployment.yaml, change nginx:1.25 to nginx:1.26
@@ -56,7 +56,7 @@ spec:
 
 **`maxUnavailable`** defines the maximum number of Pods that can be unavailable (not Ready) during the update. It can be an absolute number (`1`) or a percentage of the desired replica count (`25%`). The default is `25%`.
 
-**`maxSurge`** defines the maximum number of Pods that can exist *above* the desired replica count during the update. If you have 3 replicas and `maxSurge: 1`, Kubernetes can temporarily run 4 Pods while swapping old for new. This is what enables the "create before destroy" behaviour. The default is also `25%`.
+**`maxSurge`** defines the maximum number of Pods that can exist _above_ the desired replica count during the update. If you have 3 replicas and `maxSurge: 1`, Kubernetes can temporarily run 4 Pods while swapping old for new. This is what enables the "create before destroy" behaviour. The default is also `25%`.
 
 These two values interact to determine the rhythm of the rollout. Consider a 4-replica Deployment with `maxUnavailable: 1, maxSurge: 1`:
 

@@ -29,7 +29,7 @@ spec:
           mountPath: /var/lib/postgresql/data
       env:
         - name: POSTGRES_PASSWORD
-          value: "password"
+          value: 'password'
 ```
 
 The `volumes` section defines a volume named `storage` and points it at the PVC named `my-pvc`. The `volumeMounts` section tells Kubernetes to mount that volume at `/var/lib/postgresql/data`, the path PostgreSQL uses to store its database files. The two are linked by the `name` field: `storage` in the volume list matches `storage` in the volumeMount list.
@@ -88,7 +88,7 @@ When you think about stateful workloads, it's important to choose the right high
 
 **Deployments** work fine with PVCs if you're running a single replica (or using RWX storage). You create the PVC separately and reference it by name in the Deployment's Pod template. All replicas of that Deployment will try to mount the same PVC. For stateless applications that happen to need some shared storage, this can work well.
 
-**StatefulSets** are the designed-for-stateful workload type in Kubernetes. Instead of referencing a single shared PVC, StatefulSets have a `volumeClaimTemplates` field that automatically creates a *separate* PVC for each replica. So a StatefulSet with three replicas creates three PVCs, `data-mydb-0`, `data-mydb-1`, `data-mydb-2`, each bound to its own PV. This is ideal for clustered databases (Cassandra, MySQL replicas, Elasticsearch) where each instance needs independent storage.
+**StatefulSets** are the designed-for-stateful workload type in Kubernetes. Instead of referencing a single shared PVC, StatefulSets have a `volumeClaimTemplates` field that automatically creates a _separate_ PVC for each replica. So a StatefulSet with three replicas creates three PVCs, `data-mydb-0`, `data-mydb-1`, `data-mydb-2`, each bound to its own PV. This is ideal for clustered databases (Cassandra, MySQL replicas, Elasticsearch) where each instance needs independent storage.
 
 For this lesson, we focus on the straightforward case: a single Pod referencing a single PVC. StatefulSets and their volume claim templates are covered in a dedicated lesson.
 

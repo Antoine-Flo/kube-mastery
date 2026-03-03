@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Diagnostiquer et résoudre les pannes application et cluster.'
   },
-  tags: ["cka","intermediate"]
+  tags: ['cka', 'intermediate']
 }

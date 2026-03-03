@@ -1,5 +1,5 @@
 ---
-title: "CKA"
+title: 'CKA'
 shortDescription: The complete Kubernetes administrator path , cluster installation, security, networking, storage, and troubleshooting.
 isActive: true
 price: 0

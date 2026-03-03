@@ -41,7 +41,7 @@ The most common is the **sidecar pattern**: your main app writes logs to a file 
 - A metrics agent that collects and exposes data for scraping
 - **Init containers** that run setup tasks before the main container starts (covered in the next lesson)
 
-The key question: *does this second process need to share the same network namespace or storage as the main process?* If yes, a multi-container Pod is appropriate. If the two processes are independent, they should be separate Pods.
+The key question: _does this second process need to share the same network namespace or storage as the main process?_ If yes, a multi-container Pod is appropriate. If the two processes are independent, they should be separate Pods.
 
 Don't put containers in the same Pod just because they're part of the same application. A web frontend and a backend API communicate over the network using Services, they don't need to share `localhost`. Putting them together means they always scale and restart together, which is almost never what you want. Similarly, databases belong in their own Pods with their own storage lifecycle.
 
@@ -101,7 +101,8 @@ spec:
       image: nginx:1.25
     - name: sidecar
       image: busybox:1.36
-      command: ["sh", "-c", "while true; do echo 'sidecar running'; sleep 10; done"]
+      command:
+        ['sh', '-c', "while true; do echo 'sidecar running'; sleep 10; done"]
 ```
 
 Apply it:

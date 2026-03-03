@@ -95,7 +95,7 @@ This matches any TCP connection on ports 8000 through 8999 inclusive. Without `e
 
 ## NetworkPolicies Are Additive: The Union Model
 
-A Pod can be selected by multiple NetworkPolicies simultaneously. The effective rule set is the **union** of all applicable policies, traffic is allowed if *any* policy permits it.
+A Pod can be selected by multiple NetworkPolicies simultaneously. The effective rule set is the **union** of all applicable policies, traffic is allowed if _any_ policy permits it.
 
 This architectural property lets you compose your security posture from many small, focused policies rather than one massive, hard-to-read policy. Each team or service can own its own policy, and the overall behavior is the sum of all of them.
 

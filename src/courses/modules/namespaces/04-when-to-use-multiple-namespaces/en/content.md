@@ -1,6 +1,6 @@
 # When and How to Use Multiple Namespaces
 
-Creating namespaces is easy. Knowing *when* and *how* to use them well is a design question that has a meaningful impact on your cluster's maintainability, security, and operational clarity. This lesson explores the most common patterns for namespace usage, the situations where multiple namespaces add real value, and just as importantly, the situations where they add unnecessary complexity.
+Creating namespaces is easy. Knowing _when_ and _how_ to use them well is a design question that has a meaningful impact on your cluster's maintainability, security, and operational clarity. This lesson explores the most common patterns for namespace usage, the situations where multiple namespaces add real value, and just as importantly, the situations where they add unnecessary complexity.
 
 :::info
 The main use cases for multiple namespaces are: environment separation, team separation, resource quotas, and network isolation. This lesson also covers when a single namespace is the simpler and better choice.
@@ -47,11 +47,11 @@ metadata:
   namespace: frontend
 spec:
   hard:
-    requests.cpu: "4"
+    requests.cpu: '4'
     requests.memory: 8Gi
-    limits.cpu: "8"
+    limits.cpu: '8'
     limits.memory: 16Gi
-    pods: "20"
+    pods: '20'
 ```
 
 With this quota in place, the `frontend` namespace can never consume more than 4 CPU cores (requests) or 8Gi of memory (requests), regardless of how many pods it tries to run. Any pod creation that would push the namespace over quota is rejected with a clear error.
@@ -71,10 +71,10 @@ metadata:
   name: deny-cross-namespace
   namespace: production
 spec:
-  podSelector: {}  # applies to all pods in the namespace
+  podSelector: {} # applies to all pods in the namespace
   ingress:
-  - from:
-    - podSelector: {}  # only from pods in the same namespace
+    - from:
+        - podSelector: {} # only from pods in the same namespace
 ```
 
 This kind of policy ensures that a compromised pod in the `dev` namespace cannot make requests to the `production` database, even though they are in the same cluster.
@@ -115,7 +115,7 @@ This point deserves clear emphasis: namespaces provide **logical isolation**, no
 - A user with cluster-admin privileges can read secrets from any namespace.
 - A misbehaving admission controller can affect the whole cluster.
 
-Namespaces are the *attachment point* for security controls, not the controls themselves. The full picture of namespace-level security requires:
+Namespaces are the _attachment point_ for security controls, not the controls themselves. The full picture of namespace-level security requires:
 
 - **RBAC**: to control who can do what in which namespace
 - **NetworkPolicies**: to control which pods can communicate with which other pods
@@ -227,4 +227,4 @@ kubectl describe namespace backend
 kubectl delete namespace frontend backend shared
 ```
 
-As you practice, think about what structure would make sense for a real project. The goal of namespaces is to make your cluster *easier* to navigate and operate, not harder. If you constantly fight `-n` flags and cross-namespace complexity, the structure is too granular, start coarse-grained and split only when there is a concrete operational reason.
+As you practice, think about what structure would make sense for a real project. The goal of namespaces is to make your cluster _easier_ to navigate and operate, not harder. If you constantly fight `-n` flags and cross-namespace complexity, the structure is too granular, start coarse-grained and split only when there is a concrete operational reason.

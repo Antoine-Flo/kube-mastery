@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Prérequis réseau pour le CKA : switching, routing, DNS, namespaces.'
   },
-  tags: ["cka","advanced"]
+  tags: ['cka', 'advanced']
 }

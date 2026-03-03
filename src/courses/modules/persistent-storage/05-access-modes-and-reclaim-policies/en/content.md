@@ -12,7 +12,7 @@ An access mode describes how many nodes can attach the volume, and whether they 
 
 ### ReadWriteOnce (RWO)
 
-`ReadWriteOnce` is by far the most common access mode. It means the volume can be mounted in **read-write mode by a single node at a time**. It does not mean only one Pod can use it, if multiple Pods are scheduled on the same node and they all reference the same PVC, they can all write to it simultaneously (though you would almost never do this intentionally). The restriction is at the *node* level, not the Pod level.
+`ReadWriteOnce` is by far the most common access mode. It means the volume can be mounted in **read-write mode by a single node at a time**. It does not mean only one Pod can use it, if multiple Pods are scheduled on the same node and they all reference the same PVC, they can all write to it simultaneously (though you would almost never do this intentionally). The restriction is at the _node_ level, not the Pod level.
 
 RWO is supported by virtually every storage backend: AWS Elastic Block Store, GCP Persistent Disk, Azure Disk, and most CSI drivers for local SSDs. It is the right choice for single-replica databases, stateful applications managed by StatefulSets (where each Pod gets its own PVC), and any workload where only one instance runs at a time.
 
@@ -34,7 +34,7 @@ Attempting to use an RWX access mode with a storage backend that only supports R
 
 ### ReadWriteOncePod (RWOP)
 
-Added in Kubernetes 1.22 and graduated to stable in 1.29, `ReadWriteOncePod` is a stricter version of RWO. Where RWO restricts the volume to a single *node*, RWOP restricts it to a single *Pod* across the entire cluster. Only one Pod anywhere in the cluster can mount the volume read-write at a time.
+Added in Kubernetes 1.22 and graduated to stable in 1.29, `ReadWriteOncePod` is a stricter version of RWO. Where RWO restricts the volume to a single _node_, RWOP restricts it to a single _Pod_ across the entire cluster. Only one Pod anywhere in the cluster can mount the volume read-write at a time.
 
 This is particularly useful for workloads that must have exclusive, singleton access to storage, for example, a leader election pattern where you want to guarantee that even if two Pods somehow end up on the same node, only one can mount the volume. RWOP requires CSI driver support.
 
@@ -76,7 +76,7 @@ To manually reclaim a `Retain` PV and make it available for a new PVC, you would
 
 ### Delete
 
-With the `Delete` policy, when a PVC is deleted, Kubernetes automatically deletes the PV *and* calls the underlying storage provider's API to delete the actual storage resource, the cloud disk, the NFS export, the Ceph volume, whatever it is.
+With the `Delete` policy, when a PVC is deleted, Kubernetes automatically deletes the PV _and_ calls the underlying storage provider's API to delete the actual storage resource, the cloud disk, the NFS export, the Ceph volume, whatever it is.
 
 `Delete` is the default reclaim policy for dynamically provisioned PVs in most cloud environments. It makes sense there because the cloud disk was created specifically for this PVC, there is no pre-existing data to worry about, and cleaning up automatically prevents orphaned resources from accumulating. The danger is obvious: if a developer accidentally runs `kubectl delete pvc my-database-pvc`, the storage is gone permanently. There is no recycle bin.
 

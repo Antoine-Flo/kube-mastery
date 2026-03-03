@@ -167,12 +167,12 @@ If you make changes to the CoreDNS ConfigMap, CoreDNS picks them up automaticall
 
 When `nslookup` fails, you will see one of these errors:
 
-| Error | Meaning |
-|---|---|
-| `nslookup: can't resolve '<name>'` | The name does not exist in DNS. Wrong Service name, wrong namespace, or typo. Start at Step 2. |
-| `server can't find <name>: NXDOMAIN` | Same as above, the DNS server explicitly returned "non-existent domain." |
+| Error                                               | Meaning                                                                                                                                       |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nslookup: can't resolve '<name>'`                  | The name does not exist in DNS. Wrong Service name, wrong namespace, or typo. Start at Step 2.                                                |
+| `server can't find <name>: NXDOMAIN`                | Same as above, the DNS server explicitly returned "non-existent domain."                                                                      |
 | `connection timed out; no servers could be reached` | The DNS server is not responding. CoreDNS may be down, or the Pod cannot reach the CoreDNS ClusterIP (network policy issue). Start at Step 1. |
-| `Temporary failure in name resolution` | The resolver tried and received no response. Network connectivity issue between the Pod and CoreDNS. Check network policies. |
+| `Temporary failure in name resolution`              | The resolver tried and received no response. Network connectivity issue between the Pod and CoreDNS. Check network policies.                  |
 
 ## Hands-On Practice
 
@@ -199,6 +199,7 @@ kubectl run dns-test --image=busybox --rm -it --restart=Never -- nslookup backen
 ```
 
 Expected output:
+
 ```
 Server:    10.96.0.10
 Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
@@ -215,6 +216,7 @@ kubectl run dns-test --image=busybox --rm -it --restart=Never -n other -- nslook
 ```
 
 Expected output (failure):
+
 ```
 Server:    10.96.0.10
 Address 1: 10.96.0.10

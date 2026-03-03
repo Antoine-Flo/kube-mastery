@@ -10,7 +10,7 @@ The secret is a combination of two flags: `--dry-run=client` and `-o yaml`.
 
 `-o yaml` tells `kubectl` to print the result in YAML format rather than showing the usual success message.
 
-Together, these two flags transform `kubectl` from a command that *does* things into a command that *shows* you what it *would* do. The output is a complete, valid Kubernetes manifest that you can save to a file, edit, and apply later.
+Together, these two flags transform `kubectl` from a command that _does_ things into a command that _shows_ you what it _would_ do. The output is a complete, valid Kubernetes manifest that you can save to a file, edit, and apply later.
 
 :::info
 There are two dry-run modes: `--dry-run=client` runs entirely in your local `kubectl` process with no API server contact, and `--dry-run=server` sends the request to the API server for validation but still doesn't persist anything. For generating boilerplate manifests quickly, `--dry-run=client` is the one you want. It's fast, works offline, and produces clean output.
@@ -36,9 +36,9 @@ metadata:
   name: mypod
 spec:
   containers:
-  - image: nginx
-    name: mypod
-    resources: {}
+    - image: nginx
+      name: mypod
+      resources: {}
   dnsPolicy: ClusterFirst
   restartPolicy: Always
 status: {}
@@ -83,9 +83,9 @@ spec:
         app: myapp
     spec:
       containers:
-      - image: nginx
-        name: nginx
-        resources: {}
+        - image: nginx
+          name: nginx
+          resources: {}
 status: {}
 ```
 
@@ -167,14 +167,14 @@ containers:
       - containerPort: 80
     env:
       - name: NGINX_HOST
-        value: "example.com"
+        value: 'example.com'
     resources:
       requests:
-        memory: "64Mi"
-        cpu: "100m"
+        memory: '64Mi'
+        cpu: '100m'
       limits:
-        memory: "128Mi"
-        cpu: "200m"
+        memory: '128Mi'
+        cpu: '200m'
 ```
 
 Now apply it:
@@ -237,11 +237,11 @@ Open `myapp-deployment.yaml`. Add a `resources` block to the container spec:
 ```yaml
 resources:
   requests:
-    memory: "64Mi"
-    cpu: "100m"
+    memory: '64Mi'
+    cpu: '100m'
   limits:
-    memory: "128Mi"
-    cpu: "200m"
+    memory: '128Mi'
+    cpu: '200m'
 ```
 
 Then apply:
