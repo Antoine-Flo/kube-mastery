@@ -1,7 +1,0 @@
-{
-  "title": { "en": "Pod Security Standards", "fr": "Pod Security Standards" },
-  "description": {
-    "en": "Learn about Privileged, Baseline, and Restricted security levels for Pods",
-    "fr": "Apprenez les niveaux de sécurité Privileged, Baseline et Restricted pour les Pods"
-  }
-}

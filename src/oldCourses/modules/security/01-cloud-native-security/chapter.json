@@ -1,7 +1,0 @@
-{
-  "title": { "en": "Cloud-Native Security", "fr": "Sécurité cloud-native" },
-  "description": {
-    "en": "Understand the 4C security model: Cloud, Cluster, Container, and Code",
-    "fr": "Comprenez le modèle de sécurité 4C : Cloud, Cluster, Container et Code"
-  }
-}

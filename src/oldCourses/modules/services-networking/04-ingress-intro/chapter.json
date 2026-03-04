@@ -1,8 +1,0 @@
-{
-  "title": { "en": "Introduction to Ingress", "fr": "Introduction à Ingress" },
-  "description": {
-    "en": "Learn about Ingress for HTTP/HTTPS routing and TLS termination",
-    "fr": "Apprenez Ingress pour le routage HTTP/HTTPS et la terminaison TLS"
-  },
-  "environment": "minimal"
-}

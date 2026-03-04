@@ -1,8 +1,0 @@
-{
-  "title": { "en": "Observability", "fr": "Observabilité" },
-  "description": {
-    "en": "Learn about metrics, monitoring, and observability patterns in Kubernetes",
-    "fr": "Apprenez les métriques, le monitoring et les patterns d'observabilité dans Kubernetes"
-  },
-  "environment": "minimal"
-}

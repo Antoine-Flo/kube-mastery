@@ -1,7 +1,0 @@
-{
-  "title": { "en": "Introduction to Probes", "fr": "Introduction aux Probes" },
-  "description": {
-    "en": "Learn about liveness, readiness, and startup probes for container health",
-    "fr": "Apprenez les probes liveness, readiness et startup pour la santé des conteneurs"
-  }
-}

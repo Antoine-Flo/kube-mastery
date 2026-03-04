@@ -1,7 +1,0 @@
-{
-  "title": { "en": "Controlling API Access", "fr": "Contrôle d'accès API" },
-  "description": {
-    "en": "Understand authentication, authorization, and admission control for the Kubernetes API",
-    "fr": "Comprenez l'authentification, l'autorisation et l'admission control pour l'API Kubernetes"
-  }
-}
