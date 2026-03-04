@@ -33,6 +33,8 @@
     "@lucide/astro": "^0.563.0",
     "@paddle/paddle-js": "^1.6.2",
     "@paddle/paddle-node-sdk": "^3.6.0",
+    "@sentry/astro": "^10.42.0",
+    "@sentry/cloudflare": "^10.42.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.93.3",
     "@xterm/addon-fit": "^0.11.0",

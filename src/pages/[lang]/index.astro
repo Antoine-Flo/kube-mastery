@@ -229,6 +229,8 @@ try {
     </div>
   </main>
 </Layout>
+<button id="error-button" type="button">Throw test error</button>
+
 
 <style>
   .landing {
@@ -995,6 +997,14 @@ try {
 </style>
 
 <script>
+  function throwFrontendTestError() {
+    throw new Error("Sentry frontend test error");
+  }
+
+  const errorButton = document.querySelector("#error-button");
+  if (errorButton instanceof HTMLButtonElement) {
+    errorButton.addEventListener("click", throwFrontendTestError);
+  }
   function setupScrollAnim() {
     document.querySelectorAll('.anim').forEach((el) => {
       const observer = new IntersectionObserver(
