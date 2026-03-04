@@ -12,7 +12,7 @@
   // - wrangler secret put <KEY> (production)
   // - wrangler secret put <KEY> --env staging
   "vars": {
-    "ENVIRONMENT": "production",
+    "ENVIRONMENT": "staging",
     "SUPABASE_URL": "https://bijwtiejmopddtargdls.supabase.co",
     "SUPABASE_PUBLISHABLE_DEFAULT_KEY": "sb_publishable__uX4OPHpW9XGPsqaqkg3eQ_-NPU747a",
     "PADDLE_CLIENT_TOKEN_STAGING": "test_89107c06f221b9a6be6c39d52d8"
