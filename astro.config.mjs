@@ -8,8 +8,6 @@ import cloudflare from '@astrojs/cloudflare'
 
 import astroExpressiveCode from 'astro-expressive-code'
 
-import sentry from '@sentry/astro';
-
 export default defineConfig({
   site: 'https://kubemastery.com',
 
@@ -25,11 +23,6 @@ export default defineConfig({
     sitemap(),
     astroExpressiveCode({
       themes: ['one-dark-pro', 'one-light']
-    }),
-    sentry({
-      project: "javascript-astro",
-      org: "kubemastery",
-      authToken: process.env.SENTRY_AUTH_TOKEN,
     })
   ],
 
