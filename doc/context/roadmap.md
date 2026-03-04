@@ -3,6 +3,7 @@
 ## Current Status
 
 - **Language strategy (launch)** : focus EN-only pour accelerer la creation de contenu. FR sera reactive plus tard via flag dans `src/config/i18nConfig.ts`.
+- **Deployment model (current)** : Cloudflare Workers + Wrangler envs (`production` + `staging`) orchestrés localement par Dagger (`ci/dagger`) via `just deploy-staging` / `just deploy-production`.
 
 > Pour les détails de ce qui est implémenté, voir `spec.md` et `architecture.md`
 

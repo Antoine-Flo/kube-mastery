@@ -3,7 +3,9 @@
 ## Tech Stack
 
 - **Frontend**: Astro 5
-- **Hosting**: Cloudflare (adapter `@astrojs/cloudflare`)
+- **Hosting**: Cloudflare Workers (adapter `@astrojs/cloudflare`)
+- **Runtime envs**: Wrangler envs (`production` par défaut + `staging` via `--env staging`)
+- **Deployment orchestration**: Dagger (TypeScript module `ci/dagger`) + recipes `just`
 - **Terminal**: @xterm/xterm 6
 - **Build**: Astro
 - **Styling**: CSS avec variables (`src/styles/`), lightningcss
@@ -15,6 +17,17 @@
 - **Backend**: Supabase (Auth, progress via `src/lib/`)
 - **Tests**: Vitest, `tests/unit/`, `tests/conformance/`, golden files `bin/`
 - **DB**: À migrer (prévu) — Drizzle, `src/db/`
+
+## Delivery Model
+
+- **Branching**: single branch (`main`) for both production and staging flows.
+- **Deploy commands**:
+  - `just deploy-staging` -> Dagger `deploy-staging` -> `wrangler deploy --env staging`
+  - `just deploy-production` -> Dagger `deploy-production` -> `wrangler deploy`
+- **Quality gate before deploy**: module Dagger runs `npm ci`, `npm run check`, `npm run test`, `npm run build` before any publish.
+- **Secrets model**:
+  - local runtime via `.env` (loaded by `just` with `dotenv-load`)
+  - Cloudflare secrets set with `wrangler secret put <KEY>` and `wrangler secret put <KEY> --env staging`
 
 ## Principles
 
@@ -186,6 +199,10 @@ Portee actuelle:
 
 ```
 src/
+├── ci/
+│   └── dagger/                    # module Dagger TS (testAndBuild, deployStaging, deployProduction)
+├── justfile                       # recipes build/check/test/deploy
+├── wrangler.jsonc                 # worker config + env staging
 ├── pages/
 │   ├── [lang]/                    # i18n (index, courses, auth, pricing, privacy, terms)
 │   │   ├── [type]/[id]/          # overview cours/module
