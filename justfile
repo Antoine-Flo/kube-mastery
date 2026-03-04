@@ -1,3 +1,5 @@
+set dotenv-load := true
+
 # Conformance (real vs simulator)
 conformance:
     npx tsx bin/run-conformance.ts
@@ -16,3 +18,23 @@ cluster-down NAME:
 
 compare:
     delta artifacts/conformance/kind.log artifacts/conformance/runner.log --side-by-side
+
+# Build and quality gates
+build:
+    npm run build
+
+check:
+    npm run check
+
+test:
+    npm run test
+
+# Local deploys via Dagger
+dagger-install:
+    npm run dagger:install
+
+deploy-staging:
+    npm run deploy:staging
+
+deploy-production:
+    npm run deploy:production

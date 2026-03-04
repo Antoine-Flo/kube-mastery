@@ -1,0 +1,5 @@
+{
+  "name": "kube-mastery-ci",
+  "sdk": "typescript",
+  "source": "."
+}
