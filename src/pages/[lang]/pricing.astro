@@ -423,7 +423,32 @@ const faqItems = [
   const PRICING_INITED = 'data-pricing-toggle-inited'
   const PADDLE_INITED = 'data-paddle-inited'
   const CHECKOUT_DIALOG_INITED = 'data-pricing-checkout-dialog-inited'
+  const PRICING_VIEW_SENT = 'data-pricing-view-sent'
   const YEAR_MONTHS = 12
+  const PRICING_PAGE_KEY = 'pricing'
+
+  function getCurrentBillingCycle() {
+    const toggle = document.getElementById('pricing-billing-toggle')
+    return toggle?.getAttribute('aria-pressed') === 'true' ? 'yearly' : 'monthly'
+  }
+
+  function capturePricingEvent(eventName, properties = {}) {
+    window.posthog?.capture?.(eventName, {
+      page_key: PRICING_PAGE_KEY,
+      lang: checkoutLang,
+      billing_cycle: getCurrentBillingCycle(),
+      ...properties
+    })
+  }
+
+  function capturePricingViewOnce() {
+    const root = document.documentElement
+    if (root.hasAttribute(PRICING_VIEW_SENT)) {
+      return
+    }
+    root.setAttribute(PRICING_VIEW_SENT, '')
+    capturePricingEvent('pricing_view')
+  }
 
   function toYearlyPerMonth(total) {
     const match = total.trim().match(/(\d+[.,]\d+|\d+)/)
@@ -627,14 +652,16 @@ const faqItems = [
 
   async function openCheckoutForPlan(planName, email) {
     const priceId = getActivePriceIdForPlan(planName)
-    if (priceId == null || priceId === '') {
-      return
-    }
-
     const paddle = await ensurePaddleInitialized()
-    if (paddle == null) {
-      console.error('[Paddle] unavailable for checkout open.')
-      return
+    if (!priceId || !paddle) {
+      capturePricingEvent('checkout_open_failed', {
+        plan: planName,
+        reason: priceId ? 'paddle_unavailable' : 'missing_price_id'
+      })
+      if (!paddle) {
+        console.error('[Paddle] unavailable for checkout open.')
+      }
+      return false
     }
 
     const successUrl = `${window.location.origin}${checkoutSuccessPath}`
@@ -651,6 +678,11 @@ const faqItems = [
         successUrl
       }
     })
+    capturePricingEvent('checkout_opened', {
+      plan: planName,
+      price_id: priceId
+    })
+    return true
   }
 
   /** Réexécuter à chaque chargement / swap (premier load, reload, navigation, changement de langue). */
@@ -716,14 +748,17 @@ const faqItems = [
       toggle.addEventListener('click', () => {
         const isYearly = toggle.getAttribute('aria-pressed') === 'true'
         setBilling(!isYearly)
+        capturePricingEvent('billing_cycle_changed')
       })
 
       optionMonthly.addEventListener('click', () => {
         setBilling(false)
+        capturePricingEvent('billing_cycle_changed')
       })
 
       optionYearly.addEventListener('click', () => {
         setBilling(true)
+        capturePricingEvent('billing_cycle_changed')
       })
 
       setBilling(true)
@@ -774,10 +809,11 @@ const faqItems = [
         return
       }
       trigger.addEventListener('click', () => {
-        const planName = trigger.getAttribute('data-open-checkout')
-        if (planName == null || planName === '') {
+        const planName = trigger.getAttribute('data-open-checkout') ?? ''
+        if (planName === '') {
           return
         }
+        capturePricingEvent('pricing_cta_clicked', { plan: planName })
         dialog.setAttribute('data-checkout-plan', planName)
         hideCheckoutError()
         const emailInput = form.elements.namedItem('email')
@@ -804,18 +840,23 @@ const faqItems = [
         return
       }
 
-      const planName = dialog.getAttribute('data-checkout-plan')
-      if (planName == null || planName === '') {
+      const planName = dialog.getAttribute('data-checkout-plan') ?? ''
+      if (planName === '') {
         return
       }
 
-      await openCheckoutForPlan(planName, email)
-      dialog.close()
+      capturePricingEvent('checkout_started', { plan: planName })
+      const checkoutOpened = await openCheckoutForPlan(planName, email)
+      if (checkoutOpened) {
+        dialog.close()
+      }
     })
   }
 
+  capturePricingViewOnce()
   setupCheckoutDialog()
   document.addEventListener('astro:page-load', setupCheckoutDialog)
+  document.addEventListener('astro:page-load', capturePricingViewOnce)
 </script>
 
 <style>

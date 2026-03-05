@@ -32,6 +32,25 @@ const localePath = useLocalePath(lang)
   </div>
 </Layout>
 
+<script define:vars={{ checkoutLang: lang }}>
+  const CHECKOUT_COMPLETED_SENT = 'data-checkout-completed-sent'
+
+  function captureCheckoutCompleted() {
+    const root = document.documentElement
+    if (root.hasAttribute(CHECKOUT_COMPLETED_SENT)) {
+      return
+    }
+    root.setAttribute(CHECKOUT_COMPLETED_SENT, '')
+    window.posthog?.capture?.('checkout_completed', {
+      page_key: 'checkout_success',
+      lang: checkoutLang
+    })
+  }
+
+  captureCheckoutCompleted()
+  document.addEventListener('astro:page-load', captureCheckoutCompleted)
+</script>
+
 <style>
   .checkout-success-page {
     display: flex;
