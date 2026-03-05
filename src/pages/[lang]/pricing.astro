@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import { readAppEnv } from '../../lib/env'
+import { getLayoutAuthContext } from '../../lib/auth/server'
 import Button from '../../components/ui/Button.astro'
 import Dialog from '../../components/ui/Dialog.astro'
 import guaranteeBadge from '../../assets/guarantee-badge.svg'
@@ -14,6 +15,8 @@ import '../../styles/routes/pricing.css'
 const lang = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
+const auth = await getLayoutAuthContext(Astro.locals, Astro.request, Astro.cookies)
+const loggedInCustomerEmail = auth.user?.email?.trim() ?? ''
 
 const environment = (readAppEnv('ENVIRONMENT', Astro.locals) ?? '')
   .toLowerCase()
@@ -417,7 +420,8 @@ const faqItems = [
     checkoutDialogId: CHECKOUT_EMAIL_DIALOG_ID,
     checkoutInvalidEmailError,
     checkoutSuccessPath,
-    checkoutLang: lang
+    checkoutLang: lang,
+    loggedInCustomerEmail
   }}
 >
   const PRICING_INITED = 'data-pricing-toggle-inited'
@@ -808,12 +812,20 @@ const faqItems = [
       if (!(trigger instanceof HTMLElement)) {
         return
       }
-      trigger.addEventListener('click', () => {
+      trigger.addEventListener('click', async () => {
         const planName = trigger.getAttribute('data-open-checkout') ?? ''
         if (planName === '') {
           return
         }
         capturePricingEvent('pricing_cta_clicked', { plan: planName })
+        if (loggedInCustomerEmail !== '') {
+          capturePricingEvent('checkout_started', {
+            plan: planName,
+            source: 'logged_in_direct'
+          })
+          await openCheckoutForPlan(planName, loggedInCustomerEmail)
+          return
+        }
         dialog.setAttribute('data-checkout-plan', planName)
         hideCheckoutError()
         const emailInput = form.elements.namedItem('email')

@@ -38,3 +38,15 @@ deploy-staging:
 
 deploy-production:
     npm run deploy:production
+
+# Cloudflare Worker logs (live tail)
+logs-tail:
+    npx wrangler tail kubemastery --format pretty
+
+# Focused webhook logs
+logs-tail-webhook:
+    npx wrangler tail kubemastery --format pretty | rg "paddle-webhook|/api/paddle/webhook|billing/webhook-processing|Invalid API key"
+
+# Webhook logs with explicit HTTP status
+logs-tail-webhook-json:
+    npx wrangler tail kubemastery --format json | rg "/api/paddle/webhook|\"status\"|\"message\"|\"exceptions\"|\"logs\"|billing/webhook-processing|Invalid API key|paddle-webhook"

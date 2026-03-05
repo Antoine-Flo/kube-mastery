@@ -22,6 +22,9 @@ const localePath = useLocalePath(lang)
           <p>{t('checkout_success_message')}</p>
           <p>{t('checkout_success_supportHint')}</p>
           <div class="checkout-success-card__actions">
+            <Button href={localePath('/courses')} variant="solid" color="cyan" size="lg">
+              {t('nav_courses')}
+            </Button>
             <Button href={localePath('/contact')} variant="outline" size="lg">
               {t('checkout_success_contactCta')}
             </Button>
@@ -77,5 +80,7 @@ const localePath = useLocalePath(lang)
     margin-top: var(--spacing-2);
     display: flex;
     justify-content: flex-start;
+    gap: var(--spacing-2);
+    flex-wrap: wrap;
   }
 </style>

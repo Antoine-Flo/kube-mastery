@@ -1,4 +1,5 @@
 import {
+  Environment,
   EventName,
   Paddle,
   type EventEntity,
@@ -140,8 +141,11 @@ export async function unmarshalPaddleWebhookEvent(args: {
   rawBody: string
   signatureHeader: string
   webhookSecret: string
+  environment: Environment
 }): Promise<EventEntity> {
-  const paddle = new Paddle(args.apiKey)
+  const paddle = new Paddle(args.apiKey, {
+    environment: args.environment
+  })
   return paddle.webhooks.unmarshal(
     args.rawBody,
     args.webhookSecret,
@@ -290,11 +294,11 @@ function getPaddleBaseUrl(locals?: unknown): string {
 }
 
 function getPaddleApiKey(locals?: unknown): string {
-  const apiKey = readAppEnv('PADDLE_API_KEY_STAGING', locals)
-  if (apiKey == null) {
+  const stagingApiKey = readAppEnv('PADDLE_API_KEY_STAGING', locals)
+  if (stagingApiKey == null) {
     throw new Error('Missing PADDLE_API_KEY_STAGING')
   }
-  return apiKey
+  return stagingApiKey
 }
 
 async function paddleApiRequest(args: {

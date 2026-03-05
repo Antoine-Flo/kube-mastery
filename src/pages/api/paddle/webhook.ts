@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro'
+import { Environment } from '@paddle/paddle-node-sdk'
 import { getSupabaseAdmin, getSupabasePublic } from '../../../lib/supabase'
 import { readAppEnv } from '../../../lib/env'
 import {
@@ -19,13 +20,48 @@ const json = (body: Record<string, unknown>, status: number) =>
     headers: { 'Content-Type': 'application/json' }
   })
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+  return 'unknown'
+}
+
 export const POST: APIRoute = async ({ request, locals }) => {
-  const paddleApiKey = readAppEnv('PADDLE_API_KEY_STAGING', locals) as string
+  const paddleEnvironment = Environment.sandbox
+  const paddleApiKey = readAppEnv('PADDLE_API_KEY_STAGING', locals)
+  if (paddleApiKey == null) {
+    return json(
+      {
+        error: 'billing/webhook-processing',
+        message: 'Missing PADDLE_API_KEY_STAGING'
+      },
+      500
+    )
+  }
   const webhookSecret = readAppEnv(
     'PADDLE_WEBHOOK_SECRET',
     locals
-  ) as string
-  const signatureHeader = request.headers.get('paddle-signature') as string
+  )
+  if (webhookSecret == null) {
+    return json(
+      {
+        error: 'billing/webhook-processing',
+        message: 'Missing PADDLE_WEBHOOK_SECRET'
+      },
+      500
+    )
+  }
+  const signatureHeader = request.headers.get('paddle-signature')
+  if (signatureHeader == null || signatureHeader.trim() === '') {
+    return json(
+      {
+        error: 'billing/webhook-processing',
+        message: 'Missing paddle-signature header'
+      },
+      400
+    )
+  }
 
   try {
     const rawBody = await request.text()
@@ -34,16 +70,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
       apiKey: paddleApiKey,
       rawBody,
       signatureHeader,
-      webhookSecret
+      webhookSecret,
+      environment: paddleEnvironment
     })
     const paddleEvent = parsePaddleWebhookEvent(eventData)
     if (paddleEvent == null) {
       throw new Error('Invalid webhook payload')
     }
 
-    const supabaseAdmin = getSupabaseAdmin(locals) as NonNullable<
-      ReturnType<typeof getSupabaseAdmin>
-    >
+    const supabaseAdmin = getSupabaseAdmin(locals)
+    if (supabaseAdmin == null) {
+      throw new Error('Missing Supabase admin client')
+    }
 
     const eventInsert = await insertBillingEvent(supabaseAdmin, {
       notificationId: paddleEvent.notificationId,
@@ -108,10 +146,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     return new Response('', { status: 200 })
   } catch (error) {
+    const message = getErrorMessage(error)
+    console.error('[paddle-webhook] processing failed', {
+      message,
+      hasSignatureHeader: signatureHeader.trim() !== '',
+      hasWebhookSecret: webhookSecret.trim() !== '',
+      hasApiKey: paddleApiKey.trim() !== ''
+    })
     return json(
       {
         error: 'billing/webhook-processing',
-        message: error instanceof Error ? error.message : 'unknown'
+        message
       },
       500
     )
