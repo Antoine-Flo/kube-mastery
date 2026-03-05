@@ -10,6 +10,12 @@ import {
   isAjaxFormAction
 } from '../../../lib/form-action-server'
 import { cancelPaddleSubscription } from '../../../lib/billing/provisioning'
+import {
+  createApiLogContext,
+  emitApiLog,
+  getDurationMs,
+  startTimer
+} from '../../../lib/observability/otel'
 import { getSupabaseServer } from '../../../lib/supabase'
 
 export const POST: APIRoute = async ({
@@ -19,6 +25,18 @@ export const POST: APIRoute = async ({
   url,
   redirect
 }) => {
+  const startedAt = startTimer()
+  const baseContext = createApiLogContext({
+    request,
+    route: '/api/account/subscription-cancel',
+    locals
+  })
+  emitApiLog({
+    level: 'info',
+    event: 'billing_cancel_requested',
+    message: 'Cancel subscription requested',
+    context: baseContext
+  })
   const isAjax = isAjaxFormAction(request)
   const redirectTo = getSafeRedirectTarget(
     url.searchParams.get('redirect'),
@@ -31,6 +49,15 @@ export const POST: APIRoute = async ({
     error: userError
   } = await supabase.auth.getUser()
   if (userError != null || user == null) {
+    emitApiLog({
+      level: 'warn',
+      event: 'billing_cancel_unauthorized',
+      message: 'Cancel subscription unauthorized',
+      context: baseContext,
+      statusCode: 401,
+      durationMs: getDurationMs(startedAt),
+      errorCode: 'unauthorized'
+    })
     if (isAjax) {
       return actionJsonError({ ok: false, code: 'unauthorized' }, 401)
     }
@@ -41,7 +68,22 @@ export const POST: APIRoute = async ({
     supabase,
     user.id
   )
+  const context = createApiLogContext({
+    request,
+    route: '/api/account/subscription-cancel',
+    locals,
+    userId: user.id
+  })
   if (subscriptionResult.error != null) {
+    emitApiLog({
+      level: 'error',
+      event: 'billing_cancel_failed',
+      message: 'Cancel subscription failed during lookup',
+      context,
+      statusCode: 500,
+      durationMs: getDurationMs(startedAt),
+      errorCode: 'action_failed'
+    })
     if (isAjax) {
       return actionJsonError({ ok: false, code: 'action_failed' }, 500)
     }
@@ -49,6 +91,15 @@ export const POST: APIRoute = async ({
   }
 
   if (subscriptionResult.data == null) {
+    emitApiLog({
+      level: 'warn',
+      event: 'billing_cancel_failed',
+      message: 'Cancel subscription failed: subscription not found',
+      context,
+      statusCode: 404,
+      durationMs: getDurationMs(startedAt),
+      errorCode: 'subscription_not_found'
+    })
     if (isAjax) {
       return actionJsonError(
         { ok: false, code: 'subscription_not_found' },
@@ -65,12 +116,29 @@ export const POST: APIRoute = async ({
     paddleSubscriptionId: subscriptionResult.data.paddleSubscriptionId
   })
   if (!cancelResult.ok) {
+    emitApiLog({
+      level: 'error',
+      event: 'billing_cancel_failed',
+      message: 'Cancel subscription failed on provider call',
+      context,
+      statusCode: 400,
+      durationMs: getDurationMs(startedAt),
+      errorCode: 'cancel_failed'
+    })
     if (isAjax) {
       return actionJsonError({ ok: false, code: 'cancel_failed' }, 400)
     }
     return redirect(addFlashParam(redirectTo, 'billing_error', 'cancel_failed'))
   }
 
+  emitApiLog({
+    level: 'info',
+    event: 'billing_cancel_succeeded',
+    message: 'Cancel subscription succeeded',
+    context,
+    statusCode: 200,
+    durationMs: getDurationMs(startedAt)
+  })
   if (isAjax) {
     return actionJsonSuccess({ ok: true, code: 'ok' }, 200)
   }

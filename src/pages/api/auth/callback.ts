@@ -1,6 +1,12 @@
 import type { APIRoute } from 'astro'
 import { getSupabaseServer } from '../../../lib/supabase'
 import { reconcileBillingForAuthenticatedUser } from '../../../lib/auth/reconcile-billing'
+import {
+  createApiLogContext,
+  emitApiLog,
+  getDurationMs,
+  startTimer
+} from '../../../lib/observability/otel'
 
 const json = (body: Record<string, unknown>, status: number) =>
   new Response(JSON.stringify(body), {
@@ -37,6 +43,18 @@ export const GET: APIRoute = async ({
   redirect,
   locals
 }) => {
+  const startedAt = startTimer()
+  const baseContext = createApiLogContext({
+    request,
+    route: '/api/auth/callback',
+    locals
+  })
+  emitApiLog({
+    level: 'info',
+    event: 'auth_callback_requested',
+    message: 'OAuth callback requested',
+    context: baseContext
+  })
   const lang = url.searchParams.get('lang') || 'en'
   const rawRedirect = url.searchParams.get('redirect') ?? ''
   const redirectTo =
@@ -49,6 +67,15 @@ export const GET: APIRoute = async ({
   const oauthErrorDescription = url.searchParams.get('error_description')
 
   if (oauthError || oauthErrorDescription) {
+    emitApiLog({
+      level: 'warn',
+      event: 'auth_callback_failed',
+      message: 'OAuth callback contains provider error',
+      context: baseContext,
+      statusCode: 302,
+      durationMs: getDurationMs(startedAt),
+      errorCode: 'auth_oauth_failed'
+    })
     return redirect(
       authErrorRedirect(
         lang,
@@ -59,6 +86,15 @@ export const GET: APIRoute = async ({
   }
 
   if (!authCode) {
+    emitApiLog({
+      level: 'warn',
+      event: 'auth_callback_failed',
+      message: 'OAuth callback missing code',
+      context: baseContext,
+      statusCode: 302,
+      durationMs: getDurationMs(startedAt),
+      errorCode: 'auth_oauth_failed'
+    })
     return redirect(
       authErrorRedirect(
         lang,
@@ -72,6 +108,15 @@ export const GET: APIRoute = async ({
   try {
     supabase = getSupabaseServer(locals, request, cookies)
   } catch (e) {
+    emitApiLog({
+      level: 'error',
+      event: 'auth_callback_failed',
+      message: 'OAuth callback missing auth configuration',
+      context: baseContext,
+      statusCode: 500,
+      durationMs: getDurationMs(startedAt),
+      errorCode: 'auth_config'
+    })
     return json(
       {
         error: 'auth/config',
@@ -84,6 +129,15 @@ export const GET: APIRoute = async ({
   const { data, error } = await supabase.auth.exchangeCodeForSession(authCode)
 
   if (error) {
+    emitApiLog({
+      level: 'warn',
+      event: 'auth_callback_failed',
+      message: 'OAuth callback exchange code failed',
+      context: baseContext,
+      statusCode: 302,
+      durationMs: getDurationMs(startedAt),
+      errorCode: 'auth_oauth_failed'
+    })
     return redirect(
       authErrorRedirect(
         lang,
@@ -95,6 +149,15 @@ export const GET: APIRoute = async ({
 
   const session = data?.session
   if (!session?.access_token || !session?.refresh_token) {
+    emitApiLog({
+      level: 'warn',
+      event: 'auth_callback_failed',
+      message: 'OAuth callback missing session tokens',
+      context: baseContext,
+      statusCode: 302,
+      durationMs: getDurationMs(startedAt),
+      errorCode: 'auth_session_missing'
+    })
     return redirect(
       authErrorRedirect(
         lang,
@@ -105,6 +168,20 @@ export const GET: APIRoute = async ({
   }
 
   await reconcileBillingForAuthenticatedUser(locals, data?.user)
+  const successContext = createApiLogContext({
+    request,
+    route: '/api/auth/callback',
+    locals,
+    userId: data?.user?.id
+  })
+  emitApiLog({
+    level: 'info',
+    event: 'auth_callback_succeeded',
+    message: 'OAuth callback succeeded',
+    context: successContext,
+    statusCode: 302,
+    durationMs: getDurationMs(startedAt)
+  })
 
   return redirect(redirectTo || `/${lang}/courses`)
 }

@@ -7,6 +7,12 @@ import {
   actionJsonSuccess,
   isAjaxFormAction
 } from '../../../lib/form-action-server'
+import {
+  createApiLogContext,
+  emitApiLog,
+  getDurationMs,
+  startTimer
+} from '../../../lib/observability/otel'
 
 function buildAuthErrorRedirect(args: {
   lang: string
@@ -28,11 +34,32 @@ export const POST: APIRoute = async ({
   redirect,
   locals
 }) => {
+  const startedAt = startTimer()
+  const baseContext = createApiLogContext({
+    request,
+    route: '/api/auth/signin',
+    locals
+  })
+  emitApiLog({
+    level: 'info',
+    event: 'auth_signin_requested',
+    message: 'Sign-in requested',
+    context: baseContext
+  })
   const isAjax = isAjaxFormAction(request)
   let supabase
   try {
     supabase = getSupabaseServer(locals, request, cookies)
   } catch (e) {
+    emitApiLog({
+      level: 'error',
+      event: 'auth_signin_failed',
+      message: 'Sign-in failed: missing auth configuration',
+      context: baseContext,
+      statusCode: 500,
+      durationMs: getDurationMs(startedAt),
+      errorCode: 'action_failed'
+    })
     if (isAjax) {
       return actionJsonError({ ok: false, code: 'action_failed' }, 500)
     }
@@ -71,6 +98,15 @@ export const POST: APIRoute = async ({
       }
     })
     if (error) {
+      emitApiLog({
+        level: 'error',
+        event: 'auth_signin_failed',
+        message: 'Magic link sign-in failed',
+        context: baseContext,
+        statusCode: 400,
+        durationMs: getDurationMs(startedAt),
+        errorCode: 'auth_signin_failed'
+      })
       if (isAjax) {
         return actionJsonError({ ok: false, code: 'auth_signin_failed' }, 400)
       }
@@ -91,6 +127,14 @@ export const POST: APIRoute = async ({
       params.toString() !== ''
         ? `${checkEmailUrl}?${params.toString()}`
         : checkEmailUrl
+    emitApiLog({
+      level: 'info',
+      event: 'auth_signin_succeeded',
+      message: 'Magic link sign-in initiated',
+      context: baseContext,
+      statusCode: 200,
+      durationMs: getDurationMs(startedAt)
+    })
     if (isAjax) {
       return actionJsonSuccess({ ok: true, code: 'ok', redirectTo: finalRedirect })
     }
@@ -108,6 +152,15 @@ export const POST: APIRoute = async ({
       options: { redirectTo: callbackUrl.toString() }
     })
     if (error) {
+      emitApiLog({
+        level: 'error',
+        event: 'auth_signin_failed',
+        message: 'OAuth sign-in failed',
+        context: baseContext,
+        statusCode: 400,
+        durationMs: getDurationMs(startedAt),
+        errorCode: 'auth_oauth_failed'
+      })
       if (isAjax) {
         return actionJsonError({ ok: false, code: 'auth_oauth_failed' }, 400)
       }
@@ -120,6 +173,15 @@ export const POST: APIRoute = async ({
       )
     }
     if (!data?.url) {
+      emitApiLog({
+        level: 'error',
+        event: 'auth_signin_failed',
+        message: 'OAuth sign-in failed: missing redirect URL',
+        context: baseContext,
+        statusCode: 500,
+        durationMs: getDurationMs(startedAt),
+        errorCode: 'auth_oauth_failed'
+      })
       if (isAjax) {
         return actionJsonError({ ok: false, code: 'auth_oauth_failed' }, 500)
       }
@@ -134,10 +196,27 @@ export const POST: APIRoute = async ({
     if (isAjax) {
       return actionJsonSuccess({ ok: true, code: 'ok', redirectTo: data.url })
     }
+    emitApiLog({
+      level: 'info',
+      event: 'auth_signin_succeeded',
+      message: 'OAuth sign-in initiated',
+      context: baseContext,
+      statusCode: 200,
+      durationMs: getDurationMs(startedAt)
+    })
     return redirect(data.url)
   }
 
   if (!email || !password) {
+    emitApiLog({
+      level: 'warn',
+      event: 'auth_signin_failed',
+      message: 'Sign-in failed: invalid input',
+      context: baseContext,
+      statusCode: 400,
+      durationMs: getDurationMs(startedAt),
+      errorCode: 'invalid_input'
+    })
     if (isAjax) {
       return actionJsonError({ ok: false, code: 'invalid_input' }, 400)
     }
@@ -156,6 +235,15 @@ export const POST: APIRoute = async ({
   })
 
   if (error) {
+    emitApiLog({
+      level: 'warn',
+      event: 'auth_signin_failed',
+      message: 'Password sign-in failed',
+      context: baseContext,
+      statusCode: 401,
+      durationMs: getDurationMs(startedAt),
+      errorCode: 'auth_signin_failed'
+    })
     if (isAjax) {
       return actionJsonError({ ok: false, code: 'auth_signin_failed' }, 401)
     }
@@ -170,6 +258,15 @@ export const POST: APIRoute = async ({
 
   const session = data?.session
   if (!session?.access_token || !session?.refresh_token) {
+    emitApiLog({
+      level: 'error',
+      event: 'auth_signin_failed',
+      message: 'Sign-in failed: session missing',
+      context: baseContext,
+      statusCode: 500,
+      durationMs: getDurationMs(startedAt),
+      errorCode: 'auth_session_missing'
+    })
     if (isAjax) {
       return actionJsonError({ ok: false, code: 'auth_session_missing' }, 500)
     }
@@ -184,6 +281,20 @@ export const POST: APIRoute = async ({
 
   await reconcileBillingForAuthenticatedUser(locals, data?.user)
   const successRedirect = redirectTo || `/${lang}/courses`
+  const successContext = createApiLogContext({
+    request,
+    route: '/api/auth/signin',
+    locals,
+    userId: data?.user?.id
+  })
+  emitApiLog({
+    level: 'info',
+    event: 'auth_signin_succeeded',
+    message: 'Sign-in succeeded',
+    context: successContext,
+    statusCode: 200,
+    durationMs: getDurationMs(startedAt)
+  })
   if (isAjax) {
     return actionJsonSuccess({ ok: true, code: 'ok', redirectTo: successRedirect })
   }
