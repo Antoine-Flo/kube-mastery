@@ -1,5 +1,10 @@
 import type { APIRoute } from 'astro'
 import { deleteCurrentUserAccount } from '../../../lib/auth/server'
+import {
+  actionJsonError,
+  actionJsonSuccess,
+  isAjaxFormAction
+} from '../../../lib/form-action-server'
 
 function getSafeRedirectTarget(
   redirectParam: string | null,
@@ -15,12 +20,6 @@ function getSafeRedirectTarget(
   return path || fallback
 }
 
-const json = (body: { error: string }, status: number) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' }
-  })
-
 export const POST: APIRoute = async ({
   url,
   cookies,
@@ -28,6 +27,7 @@ export const POST: APIRoute = async ({
   locals,
   request
 }) => {
+  const isAjax = isAjaxFormAction(request)
   const redirectTo = getSafeRedirectTarget(
     url.searchParams.get('redirect'),
     '/en'
@@ -36,19 +36,38 @@ export const POST: APIRoute = async ({
   const result = await deleteCurrentUserAccount({ locals, request, cookies })
 
   if (result.ok) {
+    if (isAjax) {
+      return actionJsonSuccess({ ok: true, code: 'ok', redirectTo }, 200)
+    }
     return redirect(redirectTo)
   }
 
   if (result.reason === 'not_authenticated') {
+    if (isAjax) {
+      return actionJsonError({ ok: false, code: 'unauthorized' }, 401)
+    }
     return redirect(redirectTo)
   }
 
   if (result.reason === 'admin_missing') {
-    return json(
-      { error: 'Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY not set.' },
-      500
-    )
+    if (isAjax) {
+      return actionJsonError({ ok: false, code: 'action_failed' }, 500)
+    }
+    const redirectWithError = `${redirectTo}?account_error=delete_failed`
+    return redirect(redirectWithError)
   }
 
-  return json({ error: result.message }, 400)
+  if (result.reason === 'subscription_active') {
+    if (isAjax) {
+      return actionJsonError({ ok: false, code: 'subscription_active' }, 409)
+    }
+    const redirectWithError = `${redirectTo}?account_error=subscription_active`
+    return redirect(redirectWithError)
+  }
+
+  if (isAjax) {
+    return actionJsonError({ ok: false, code: 'delete_failed' }, 400)
+  }
+  const redirectWithError = `${redirectTo}?account_error=delete_failed`
+  return redirect(redirectWithError)
 }

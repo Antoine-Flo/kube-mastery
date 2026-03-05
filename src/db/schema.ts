@@ -131,7 +131,7 @@ export type SelectUserPreferences = typeof userPreferences.$inferSelect
 
 /**
  * Subscriptions table - Stores user subscriptions.
- * plan_tier stores the selected plan tier (e.g. free, standard, individual, enterprise).
+ * plan_tier stores the selected plan tier (basic, pro, enterprise).
  */
 export const subscriptions = pgTable(
   'subscriptions',
@@ -211,7 +211,28 @@ export const billingEvents = pgTable(
   },
   (table) => [
     index('billing_events_notification_id_idx').on(table.notificationId),
-    index('billing_events_event_type_idx').on(table.eventType)
+    index('billing_events_event_type_idx').on(table.eventType),
+    pgPolicy('Users cannot access billing events', {
+      for: 'select',
+      to: authenticatedRole,
+      using: sql`false`
+    }),
+    pgPolicy('Users cannot insert billing events', {
+      for: 'insert',
+      to: authenticatedRole,
+      withCheck: sql`false`
+    }),
+    pgPolicy('Users cannot update billing events', {
+      for: 'update',
+      to: authenticatedRole,
+      using: sql`false`,
+      withCheck: sql`false`
+    }),
+    pgPolicy('Users cannot delete billing events', {
+      for: 'delete',
+      to: authenticatedRole,
+      using: sql`false`
+    })
   ]
 )
 
@@ -253,7 +274,28 @@ export const pendingSubscriptions = pgTable(
     index('pending_subscriptions_status_idx').on(table.status),
     index('pending_subscriptions_paddle_subscription_id_idx').on(
       table.paddleSubscriptionId
-    )
+    ),
+    pgPolicy('Users can view their linked pending subscriptions', {
+      for: 'select',
+      to: authenticatedRole,
+      using: sql`${table.linkedUserId} = ${authUid}`
+    }),
+    pgPolicy('Users can update their linked pending subscriptions', {
+      for: 'update',
+      to: authenticatedRole,
+      using: sql`${table.linkedUserId} = ${authUid}`,
+      withCheck: sql`${table.linkedUserId} = ${authUid}`
+    }),
+    pgPolicy('Users cannot insert pending subscriptions', {
+      for: 'insert',
+      to: authenticatedRole,
+      withCheck: sql`false`
+    }),
+    pgPolicy('Users cannot delete pending subscriptions', {
+      for: 'delete',
+      to: authenticatedRole,
+      using: sql`false`
+    })
   ]
 )
 

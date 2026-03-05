@@ -2,12 +2,25 @@ import type { APIRoute } from 'astro'
 import { getSupabaseServer } from '../../../lib/supabase'
 import type { Provider } from '@supabase/supabase-js'
 import { reconcileBillingForAuthenticatedUser } from '../../../lib/auth/reconcile-billing'
+import {
+  actionJsonError,
+  actionJsonSuccess,
+  isAjaxFormAction
+} from '../../../lib/form-action-server'
 
-const json = (body: { error: string; message: string }, status: number) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' }
-  })
+function buildAuthErrorRedirect(args: {
+  lang: string
+  redirectTo: string
+  messageKey: string
+}): string {
+  const params = new URLSearchParams()
+  params.set('auth_error', '1')
+  params.set('message_key', args.messageKey)
+  if (args.redirectTo !== '') {
+    params.set('redirect', args.redirectTo)
+  }
+  return `/${args.lang}/auth?${params.toString()}`
+}
 
 export const POST: APIRoute = async ({
   request,
@@ -15,16 +28,20 @@ export const POST: APIRoute = async ({
   redirect,
   locals
 }) => {
+  const isAjax = isAjaxFormAction(request)
   let supabase
   try {
     supabase = getSupabaseServer(locals, request, cookies)
   } catch (e) {
-    return json(
-      {
-        error: 'auth/config',
-        message: e instanceof Error ? e.message : 'Missing Supabase env.'
-      },
-      500
+    if (isAjax) {
+      return actionJsonError({ ok: false, code: 'action_failed' }, 500)
+    }
+    return redirect(
+      buildAuthErrorRedirect({
+        lang: 'en',
+        redirectTo: '',
+        messageKey: 'auth_errorUnexpected'
+      })
     )
   }
 
@@ -54,24 +71,30 @@ export const POST: APIRoute = async ({
       }
     })
     if (error) {
-      const params = new URLSearchParams()
-      params.set('auth_error', '1')
-      params.set('message_key', 'auth_magicLinkError')
-      if (redirectTo) {
-        params.set('redirect', redirectTo)
+      if (isAjax) {
+        return actionJsonError({ ok: false, code: 'auth_signin_failed' }, 400)
       }
-      return redirect(`/${lang}/auth?${params.toString()}`)
+      return redirect(
+        buildAuthErrorRedirect({
+          lang,
+          redirectTo,
+          messageKey: 'auth_magicLinkError'
+        })
+      )
     }
     const checkEmailUrl = `/${lang}/auth/check-email`
     const params = new URLSearchParams()
     if (redirectTo) {
       params.set('redirect', redirectTo)
     }
-    return redirect(
-      params.toString()
+    const finalRedirect =
+      params.toString() !== ''
         ? `${checkEmailUrl}?${params.toString()}`
         : checkEmailUrl
-    )
+    if (isAjax) {
+      return actionJsonSuccess({ ok: true, code: 'ok', redirectTo: finalRedirect })
+    }
+    return redirect(finalRedirect)
   }
 
   if (provider === 'github') {
@@ -85,22 +108,46 @@ export const POST: APIRoute = async ({
       options: { redirectTo: callbackUrl.toString() }
     })
     if (error) {
-      return json({ error: 'auth/oauth', message: error.message }, 500)
+      if (isAjax) {
+        return actionJsonError({ ok: false, code: 'auth_oauth_failed' }, 400)
+      }
+      return redirect(
+        buildAuthErrorRedirect({
+          lang,
+          redirectTo,
+          messageKey: 'auth_errorUnexpected'
+        })
+      )
     }
     if (!data?.url) {
-      return json(
-        {
-          error: 'auth/oauth',
-          message: 'No redirect URL returned by Supabase.'
-        },
-        500
+      if (isAjax) {
+        return actionJsonError({ ok: false, code: 'auth_oauth_failed' }, 500)
+      }
+      return redirect(
+        buildAuthErrorRedirect({
+          lang,
+          redirectTo,
+          messageKey: 'auth_errorUnexpected'
+        })
       )
+    }
+    if (isAjax) {
+      return actionJsonSuccess({ ok: true, code: 'ok', redirectTo: data.url })
     }
     return redirect(data.url)
   }
 
   if (!email || !password) {
-    return new Response('Email and password are required', { status: 400 })
+    if (isAjax) {
+      return actionJsonError({ ok: false, code: 'invalid_input' }, 400)
+    }
+    return redirect(
+      buildAuthErrorRedirect({
+        lang,
+        redirectTo,
+        messageKey: 'auth_errorUnexpected'
+      })
+    )
   }
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -109,22 +156,36 @@ export const POST: APIRoute = async ({
   })
 
   if (error) {
-    return json({ error: 'auth/signin', message: error.message }, 500)
+    if (isAjax) {
+      return actionJsonError({ ok: false, code: 'auth_signin_failed' }, 401)
+    }
+    return redirect(
+      buildAuthErrorRedirect({
+        lang,
+        redirectTo,
+        messageKey: 'auth_errorInvalidCredentials'
+      })
+    )
   }
 
   const session = data?.session
   if (!session?.access_token || !session?.refresh_token) {
-    return json(
-      {
-        error: 'auth/session-missing',
-        message:
-          'No session returned (e.g. email not confirmed). Check Supabase auth settings.'
-      },
-      500
+    if (isAjax) {
+      return actionJsonError({ ok: false, code: 'auth_session_missing' }, 500)
+    }
+    return redirect(
+      buildAuthErrorRedirect({
+        lang,
+        redirectTo,
+        messageKey: 'auth_errorUnexpected'
+      })
     )
   }
 
   await reconcileBillingForAuthenticatedUser(locals, data?.user)
-
-  return redirect(redirectTo || `/${lang}/courses`)
+  const successRedirect = redirectTo || `/${lang}/courses`
+  if (isAjax) {
+    return actionJsonSuccess({ ok: true, code: 'ok', redirectTo: successRedirect })
+  }
+  return redirect(successRedirect)
 }

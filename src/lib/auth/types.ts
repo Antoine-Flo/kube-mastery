@@ -30,4 +30,5 @@ export type DeleteAccountResult =
   | { ok: true }
   | { ok: false; reason: 'not_authenticated' }
   | { ok: false; reason: 'admin_missing' }
+  | { ok: false; reason: 'subscription_active'; message: string }
   | { ok: false; reason: 'delete_failed'; message: string }

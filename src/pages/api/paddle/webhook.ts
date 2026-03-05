@@ -7,6 +7,7 @@ import {
   markPendingMagicLinkSent,
   parsePaddleWebhookEvent,
   sendCheckoutMagicLink,
+  syncLinkedSubscriptionFromPaddleEvent,
   shouldSendMagicLink,
   unmarshalPaddleWebhookEvent,
   upsertPendingSubscription
@@ -19,7 +20,7 @@ const json = (body: Record<string, unknown>, status: number) =>
   })
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const paddleApiKey = readAppEnv('PADDLE_API_KEY', locals) as string
+  const paddleApiKey = readAppEnv('PADDLE_API_KEY_STAGING', locals) as string
   const webhookSecret = readAppEnv(
     'PADDLE_WEBHOOK_SECRET',
     locals
@@ -65,6 +66,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
     )
     if (!pendingUpsert.ok) {
       throw new Error(pendingUpsert.error ?? 'billing/pending-upsert')
+    }
+
+    const linkedSync = await syncLinkedSubscriptionFromPaddleEvent({
+      supabaseAdmin,
+      paddleEvent
+    })
+    if (!linkedSync.ok) {
+      throw new Error(linkedSync.error ?? 'billing/subscription-sync')
     }
 
     if (

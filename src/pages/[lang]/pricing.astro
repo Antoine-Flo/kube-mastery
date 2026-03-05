@@ -29,15 +29,15 @@ if (paddleClientToken === '') {
 }
 const paddleEnvironment = isProduction ? 'production' : 'sandbox'
 
-const STANDARD_MONTHLY_PRICE_ID = 'pri_01kjfr83ph95rmgypgrdsc20bs'
-const STANDARD_YEARLY_PRICE_ID = 'pri_01kjfr962x53wh4wnkywjmc94s'
-const INDIVIDUAL_MONTHLY_PRICE_ID = 'pri_01kjfgeb1amgf8ht2fxaqsshhg'
-const INDIVIDUAL_YEARLY_PRICE_ID = 'pri_01kjfgg9mz5586yyaxkepp4aa3'
+const BASIC_MONTHLY_PRICE_ID = 'pri_01kjfr83ph95rmgypgrdsc20bs'
+const BASIC_YEARLY_PRICE_ID = 'pri_01kjfr962x53wh4wnkywjmc94s'
+const PRO_MONTHLY_PRICE_ID = 'pri_01kjfgeb1amgf8ht2fxaqsshhg'
+const PRO_YEARLY_PRICE_ID = 'pri_01kjfgg9mz5586yyaxkepp4aa3'
 
-const standardDetailYearlyText = t('pricing_detail_yearly', {
+const basicDetailYearlyText = t('pricing_detail_yearly', {
   total: '--'
 })
-const standardDetailMonthlyText = t('pricing_detail_monthly')
+const basicDetailMonthlyText = t('pricing_detail_monthly')
 
 const detailYearlyText = t('pricing_detail_yearly', {
   total: '--'
@@ -112,28 +112,28 @@ const faqItems = [
 
       <div class="pricing__promo-wrap" role="status" aria-live="polite">
         <span class="pricing__promo-banner-text">
-          {t('pricing_earlyaccess_badge')}
+          {t('pricing_pro_badge')}
         </span>
       </div>
 
       <div class="pricing__plans">
-        <!-- Standard plan -->
+        <!-- Basic plan -->
         <article
           class="card card--outline pricing__plan-card"
           data-billing="monthly"
         >
           <div class="card__header">
             <h2 class="card__title pricing__plan-title">
-              {t('pricing_standard_name')}
+              {t('pricing_basic_name')}
             </h2>
             <div class="pricing__plan-price">
               <div
                 class="pricing__plan-price-banner"
-                data-detail-yearly={standardDetailYearlyText}
-                data-detail-yearly-template={standardDetailYearlyText}
-                data-detail-monthly={standardDetailMonthlyText}
-                data-price-id-month={STANDARD_MONTHLY_PRICE_ID}
-                data-price-id-year={STANDARD_YEARLY_PRICE_ID}
+                data-detail-yearly={basicDetailYearlyText}
+                data-detail-yearly-template={basicDetailYearlyText}
+                data-detail-monthly={basicDetailMonthlyText}
+                data-price-id-month={BASIC_MONTHLY_PRICE_ID}
+                data-price-id-year={BASIC_YEARLY_PRICE_ID}
               >
                 <div class="pricing__plan-price-current">
                   <span class="pricing__plan-price-struck"> </span>
@@ -144,7 +144,7 @@ const faqItems = [
                 </div>
                 <div class="pricing__plan-price-detail-wrap">
                   <span class="pricing__plan-price-detail">
-                    {standardDetailYearlyText}
+                    {basicDetailYearlyText}
                   </span>
                 </div>
               </div>
@@ -154,16 +154,16 @@ const faqItems = [
             <ul class="pricing__plan-features">
               <li class="pricing__plan-feature">
                 <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_standard_feature1')}
+                {t('pricing_basic_feature1')}
               </li>
               <li class="pricing__plan-feature">
                 <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_standard_feature2')}
+                {t('pricing_basic_feature2')}
               </li>
               <li class="pricing__plan-feature pricing__plan-feature--excluded">
                 <span class="pricing__plan-feature-x" aria-hidden="true">—</span
                 >
-                {t('pricing_standard_feature3')}
+                {t('pricing_basic_feature3')}
               </li>
             </ul>
           </div>
@@ -174,7 +174,7 @@ const faqItems = [
               size="lg"
               class="pricing__plan-button"
             >
-              {t('pricing_standard_cta')}
+              {t('pricing_basic_cta')}
             </Button>
           </div>
         </article>
@@ -186,7 +186,7 @@ const faqItems = [
         >
           <div class="card__header">
             <h2 class="card__title pricing__plan-title">
-              {t('pricing_earlyaccess_name')}
+              {t('pricing_pro_name')}
             </h2>
             <div class="pricing__plan-price">
               <div
@@ -194,8 +194,8 @@ const faqItems = [
                 data-detail-yearly={detailYearlyText}
                 data-detail-yearly-template={detailYearlyText}
                 data-detail-monthly={detailMonthlyText}
-                data-price-id-month={INDIVIDUAL_MONTHLY_PRICE_ID}
-                data-price-id-year={INDIVIDUAL_YEARLY_PRICE_ID}
+                data-price-id-month={PRO_MONTHLY_PRICE_ID}
+                data-price-id-year={PRO_YEARLY_PRICE_ID}
               >
                 <div class="pricing__plan-price-current">
                   <span class="pricing__plan-price-struck"> </span>
@@ -216,15 +216,15 @@ const faqItems = [
             <ul class="pricing__plan-features">
               <li class="pricing__plan-feature">
                 <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_earlyaccess_feature1')}
+                {t('pricing_pro_feature1')}
               </li>
               <li class="pricing__plan-feature">
                 <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_earlyaccess_feature2')}
+                {t('pricing_pro_feature2')}
               </li>
               <li class="pricing__plan-feature">
                 <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_earlyaccess_feature4')}
+                {t('pricing_pro_feature4')}
               </li>
             </ul>
           </div>
@@ -235,9 +235,9 @@ const faqItems = [
               size="lg"
               color="cyan"
               class="pricing__plan-button"
-              data-open-checkout="individual"
+              data-open-checkout="pro"
             >
-              {t('pricing_earlyaccess_cta')}
+              {t('pricing_pro_cta')}
             </Button>
           </div>
         </article>

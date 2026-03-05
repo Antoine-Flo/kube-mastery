@@ -6,7 +6,7 @@
  * Returns whether a subscription row counts as a paid subscription.
  */
 export function isPaidSubscription(planTier: string, status: string): boolean {
-  const paidTiers = ['individual', 'enterprise']
+  const paidTiers = ['basic', 'pro', 'enterprise']
   const activeStatuses = ['active', 'trialing']
   return paidTiers.includes(planTier) && activeStatuses.includes(status)
 }

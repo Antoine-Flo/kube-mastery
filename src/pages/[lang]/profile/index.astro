@@ -35,10 +35,127 @@ if (prefs?.locale === 'en' || prefs?.locale === 'fr') {
 const showLanguagePreferences = enabledLanguages.length > 1
 
 const DELETE_DIALOG_ID = 'profile-delete-dialog'
+const CANCEL_DIALOG_ID = 'profile-cancel-dialog'
+const REFUND_DIALOG_ID = 'profile-refund-dialog'
+
+const { data: subscription } = await supabase
+  .from('subscriptions')
+  .select(
+    'plan_tier, status, paddle_subscription_id, current_period_start, current_period_end, canceled_at, created_at, updated_at'
+  )
+  .eq('user_id', user.id)
+  .order('updated_at', { ascending: false })
+  .limit(1)
+  .maybeSingle()
+
+const formatDate = (value: string | null | undefined): string => {
+  if (value == null || value === '') {
+    return t('profile_subscriptionNotAvailable')
+  }
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return t('profile_subscriptionNotAvailable')
+  }
+  return new Intl.DateTimeFormat(lang === 'fr' ? 'fr-FR' : 'en-US', {
+    dateStyle: 'medium'
+  }).format(date)
+}
+
+const statusValue = (subscription?.status as string | null) ?? 'unknown'
+const planTierValue = (subscription?.plan_tier as string | null) ?? 'unknown'
+
+const planLabelByTier: Record<string, string> = {
+  basic: t('profile_subscriptionPlanBasic'),
+  pro: t('profile_subscriptionPlanPro'),
+  enterprise: t('profile_subscriptionPlanEnterprise'),
+  unknown: t('profile_subscriptionPlanUnknown')
+}
+
+const statusLabelByValue: Record<string, string> = {
+  active: t('profile_subscriptionStatusActive'),
+  trialing: t('profile_subscriptionStatusTrialing'),
+  paused: t('profile_subscriptionStatusPaused'),
+  past_due: t('profile_subscriptionStatusPastDue'),
+  canceled: t('profile_subscriptionStatusCanceled'),
+  unknown: t('profile_subscriptionStatusUnknown')
+}
+
+const hasSubscription =
+  subscription != null &&
+  ((subscription.paddle_subscription_id as string | null) ?? '') !== ''
+const shouldShowPause = hasSubscription && statusValue !== 'paused'
+const shouldShowResume = hasSubscription && statusValue === 'paused'
+
+const nowMs = Date.now()
+const trialDaysRemaining =
+  statusValue === 'trialing'
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(
+            (subscription?.current_period_end as string | null) ?? nowMs
+          ).getTime() -
+            nowMs) /
+            (1000 * 60 * 60 * 24)
+        )
+      )
+    : null
+
+const subscribedDays =
+  hasSubscription && subscription?.created_at != null
+    ? Math.max(
+        0,
+        Math.floor(
+          (nowMs - new Date(subscription.created_at as string).getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
+      )
+    : null
+
+const billingAction = Astro.url.searchParams.get('billing')
+const billingError = Astro.url.searchParams.get('billing_error')
+
+const billingSuccessMessageByAction: Record<string, string> = {
+  paused: t('profile_subscriptionActionPaused'),
+  resumed: t('profile_subscriptionActionResumed'),
+  canceled: t('profile_subscriptionActionCanceled'),
+  refund_requested: t('profile_subscriptionActionRefundRequested')
+}
+const billingErrorMessageByAction: Record<string, string> = {
+  unauthorized: t('profile_subscriptionActionErrorUnauthorized'),
+  subscription_not_found: t('profile_subscriptionActionErrorSubscriptionNotFound'),
+  pause_failed: t('profile_subscriptionActionErrorPause'),
+  resume_failed: t('profile_subscriptionActionErrorResume'),
+  cancel_failed: t('profile_subscriptionActionErrorCancel'),
+  refund_failed: t('profile_subscriptionActionErrorRefund')
+}
+const accountActionMessageByCode: Record<string, string> = {
+  ok: t('profile_actionSuccessDefault'),
+  unauthorized: t('profile_actionErrorUnauthorized'),
+  subscription_not_found: t('profile_subscriptionActionErrorSubscriptionNotFound'),
+  subscription_active: t('profile_deleteBlockedBySubscription'),
+  pause_failed: t('profile_subscriptionActionErrorPause'),
+  resume_failed: t('profile_subscriptionActionErrorResume'),
+  cancel_failed: t('profile_subscriptionActionErrorCancel'),
+  refund_failed: t('profile_subscriptionActionErrorRefund'),
+  delete_failed: t('profile_actionErrorDeleteFailed'),
+  action_failed: t('profile_actionErrorDefault')
+}
+
+const billingSuccessMessage =
+  billingAction != null ? billingSuccessMessageByAction[billingAction] : null
+const billingErrorMessage =
+  billingError != null ? billingErrorMessageByAction[billingError] : null
 ---
 
 <Layout>
-  <div class="profile" data-profile data-current-lang={lang}>
+  <div
+    class="profile"
+    data-profile
+    data-current-lang={lang}
+    data-saved-hint={t('common_save')}
+    data-account-action-messages={JSON.stringify(accountActionMessageByCode)}
+  >
     <h1 class="profile__title">{t('profile_title')}</h1>
 
     {
@@ -74,6 +191,124 @@ const DELETE_DIALOG_ID = 'profile-delete-dialog'
       )
     }
 
+    <section class="profile__section">
+      <h2 class="profile__section-title">{t('profile_subscriptionTitle')}</h2>
+      {
+        hasSubscription ? (
+          <>
+            <p class="profile__section-desc">{t('profile_subscriptionDescription')}</p>
+            {
+              billingSuccessMessage != null && (
+                <p class="profile__flash profile__flash--success">
+                  {billingSuccessMessage}
+                </p>
+              )
+            }
+            {
+              billingErrorMessage != null && (
+                <p class="profile__flash profile__flash--error">
+                  {billingErrorMessage}
+                </p>
+              )
+            }
+            <dl class="profile__subscription-grid">
+              <div>
+                <dt>{t('profile_subscriptionPlanLabel')}</dt>
+                <dd>{planLabelByTier[planTierValue] ?? planLabelByTier.unknown}</dd>
+              </div>
+              <div>
+                <dt>{t('profile_subscriptionStatusLabel')}</dt>
+                <dd>{statusLabelByValue[statusValue] ?? statusLabelByValue.unknown}</dd>
+              </div>
+              <div>
+                <dt>{t('profile_subscriptionTrialEndsLabel')}</dt>
+                <dd>{formatDate(subscription?.current_period_end as string | null)}</dd>
+              </div>
+              <div>
+                <dt>{t('profile_subscriptionSinceLabel')}</dt>
+                <dd>
+                  {
+                    subscribedDays == null
+                      ? t('profile_subscriptionNotAvailable')
+                      : t('profile_subscriptionDaysValue', {
+                          days: String(subscribedDays)
+                        })
+                  }
+                </dd>
+              </div>
+              <div>
+                <dt>{t('profile_subscriptionNextPaymentLabel')}</dt>
+                <dd>{formatDate(subscription?.current_period_end as string | null)}</dd>
+              </div>
+              <div>
+                <dt>{t('profile_subscriptionCanceledAtLabel')}</dt>
+                <dd>{formatDate(subscription?.canceled_at as string | null)}</dd>
+              </div>
+            </dl>
+            {
+              trialDaysRemaining != null && (
+                <p class="profile__hint">
+                  {t('profile_subscriptionTrialRemaining', {
+                    days: String(trialDaysRemaining)
+                  })}
+                </p>
+              )
+            }
+            <div class="profile__billing-actions">
+              {
+                shouldShowPause && (
+                  <form
+                    method="post"
+                    action={`/api/account/subscription-pause?redirect=${encodeURIComponent(profilePath)}`}
+                    data-account-action
+                    data-astro-reload
+                  >
+                    <Button type="submit" variant="outline" color="gray" size="sm">
+                      {t('profile_subscriptionPause')}
+                    </Button>
+                  </form>
+                )
+              }
+              {
+                shouldShowResume && (
+                  <form
+                    method="post"
+                    action={`/api/account/subscription-resume?redirect=${encodeURIComponent(profilePath)}`}
+                    data-account-action
+                    data-astro-reload
+                  >
+                    <Button type="submit" variant="outline" color="green" size="sm">
+                      {t('profile_subscriptionResume')}
+                    </Button>
+                  </form>
+                )
+              }
+              <Button
+                type="button"
+                variant="outline"
+                color="ruby"
+                size="sm"
+                data-dialog-open={CANCEL_DIALOG_ID}
+              >
+                {t('profile_subscriptionCancel')}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                color="amber"
+                size="sm"
+                data-dialog-open={REFUND_DIALOG_ID}
+              >
+                {t('profile_subscriptionRefund')}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <p class="profile__section-desc">{t('profile_subscriptionEmpty')}</p>
+        )
+      }
+    </section>
+
     <section class="profile__section profile__danger">
       <h2 class="profile__section-title">{t('profile_dangerZone')}</h2>
       <p class="profile__section-desc">
@@ -103,6 +338,7 @@ const DELETE_DIALOG_ID = 'profile-delete-dialog'
       id="profile-delete-form"
       method="post"
       action={`/api/account/delete?redirect=${encodeURIComponent(localePath('/'))}`}
+      data-account-action
       data-astro-reload
     >
       <Button type="button" variant="subtle" color="gray" data-dialog-close>
@@ -110,6 +346,62 @@ const DELETE_DIALOG_ID = 'profile-delete-dialog'
       </Button>
       <Button type="submit" variant="solid" color="ruby">
         {t('profile_deleteConfirmButton')}
+      </Button>
+    </form>
+  </Dialog>
+
+  <Dialog
+    id={CANCEL_DIALOG_ID}
+    title={t('profile_subscriptionCancelConfirmTitle')}
+    description={t('profile_subscriptionCancelConfirmMessage')}
+    size="md"
+  >
+    <div slot="footer" class="dialog__footer">
+      <Button type="button" variant="subtle" color="gray" data-dialog-close>
+        {t('profile_cancel')}
+      </Button>
+      <form
+        method="post"
+        action={`/api/account/subscription-pause?redirect=${encodeURIComponent(profilePath)}`}
+        data-account-action
+        data-astro-reload
+      >
+        <Button type="submit" variant="outline" color="gray">
+          {t('profile_subscriptionPauseInstead')}
+        </Button>
+      </form>
+      <form
+        method="post"
+        action={`/api/account/subscription-cancel?redirect=${encodeURIComponent(profilePath)}`}
+        data-account-action
+        data-astro-reload
+      >
+        <Button type="submit" variant="solid" color="ruby">
+          {t('profile_subscriptionCancelConfirmButton')}
+        </Button>
+      </form>
+    </div>
+  </Dialog>
+
+  <Dialog
+    id={REFUND_DIALOG_ID}
+    title={t('profile_subscriptionRefundConfirmTitle')}
+    description={t('profile_subscriptionRefundConfirmMessage')}
+    size="md"
+  >
+    <form
+      slot="footer"
+      class="dialog__footer"
+      method="post"
+      action={`/api/account/subscription-refund?redirect=${encodeURIComponent(profilePath)}`}
+      data-account-action
+      data-astro-reload
+    >
+      <Button type="button" variant="subtle" color="gray" data-dialog-close>
+        {t('profile_cancel')}
+      </Button>
+      <Button type="submit" variant="solid" color="amber">
+        {t('profile_subscriptionRefundConfirmButton')}
       </Button>
     </form>
   </Dialog>
@@ -129,6 +421,20 @@ const DELETE_DIALOG_ID = 'profile-delete-dialog'
   }
   .profile__section {
     margin-bottom: 2rem;
+  }
+  .profile__flash {
+    margin: 0 0 1rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--radius-md);
+    font-size: var(--text-xs);
+  }
+  .profile__flash--success {
+    background: var(--color-green-3);
+    color: var(--color-green-11);
+  }
+  .profile__flash--error {
+    background: var(--color-ruby-3);
+    color: var(--color-ruby-11);
   }
   .profile__section-title {
     font-size: var(--text-lg);
@@ -172,9 +478,37 @@ const DELETE_DIALOG_ID = 'profile-delete-dialog'
     padding-top: 1rem;
     border-top: 1px solid var(--color-gray-6);
   }
+  .profile__subscription-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 0.7rem 1rem;
+    margin: 0 0 1rem;
+  }
+  .profile__subscription-grid dt {
+    font-size: var(--text-xs);
+    color: var(--color-gray-10);
+    margin: 0;
+  }
+  .profile__subscription-grid dd {
+    margin: 0.15rem 0 0;
+    font-size: var(--text-sm);
+    color: var(--color-gray-12);
+    font-weight: var(--font-weight-medium);
+  }
+  .profile__billing-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
 </style>
 
 <script>
+  import {
+    resolveActionMessage,
+    showActionToast,
+    submitFormAction
+  } from '../../../lib/form-action-client'
+
   type UiLocale = 'en' | 'fr'
 
   const PROFILE_CONTAINER_SELECTOR = '[data-profile]'
@@ -187,7 +521,9 @@ const DELETE_DIALOG_ID = 'profile-delete-dialog'
 
   function showSavedHint(hintEl: HTMLElement) {
     hintEl.hidden = false
-    hintEl.textContent = 'Saved.'
+    const container = getProfileContainer()
+    const savedText = container?.getAttribute('data-saved-hint') ?? 'Saved'
+    hintEl.textContent = savedText
     setTimeout(() => {
       hintEl.hidden = true
     }, SAVED_HINT_DURATION_MS)
@@ -274,7 +610,62 @@ const DELETE_DIALOG_ID = 'profile-delete-dialog'
     })
   }
 
+  function getAccountActionMessages(
+    container: HTMLElement | null
+  ): Record<string, string> {
+    const raw = container?.getAttribute('data-account-action-messages') ?? '{}'
+    try {
+      const parsed = JSON.parse(raw) as Record<string, unknown>
+      const normalized: Record<string, string> = {}
+      for (const [key, value] of Object.entries(parsed)) {
+        if (typeof value === 'string') {
+          normalized[key] = value
+        }
+      }
+      return normalized
+    } catch {
+      return {}
+    }
+  }
+
+  function setupAccountActionForms() {
+    const container = getProfileContainer()
+    const messages = getAccountActionMessages(container)
+    const fallbackError = messages.action_failed ?? 'Action failed.'
+    const successDefault = messages.ok ?? 'Saved.'
+
+    document
+      .querySelectorAll<HTMLFormElement>('form[data-account-action]')
+      .forEach((form) => {
+        if (form.hasAttribute('data-account-action-bound')) {
+          return
+        }
+        form.setAttribute('data-account-action-bound', '')
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault()
+          const response = await submitFormAction(form)
+          const message = resolveActionMessage({
+            code: response.code,
+            map: messages,
+            fallback: response.ok ? successDefault : fallbackError
+          })
+          if (!response.ok) {
+            showActionToast({ type: 'error', title: message })
+            return
+          }
+          if (response.redirectTo != null && response.redirectTo !== '') {
+            window.location.href = response.redirectTo
+            return
+          }
+          showActionToast({ type: 'success', title: message })
+          window.location.reload()
+        })
+      })
+  }
+
   setupLocaleButtons()
   setupDialogTriggers()
+  setupAccountActionForms()
   document.addEventListener('astro:page-load', setupDialogTriggers)
+  document.addEventListener('astro:page-load', setupAccountActionForms)
 </script>

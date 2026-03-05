@@ -8,6 +8,7 @@ import {
   getCourseOverview,
   getModuleOverview
 } from '../../../../content/overview/facade'
+import { getLayoutAuthContext } from '../../../../lib/auth/server'
 import { getProgressContext } from '../../../../lib/progress/server'
 import { computeProgress } from '../../../../lib/progress/domain'
 
@@ -34,7 +35,9 @@ const { completed, userId } = await getProgressContext(
   Astro.request,
   Astro.cookies
 )
+const auth = await getLayoutAuthContext(Astro.locals, Astro.request, Astro.cookies)
 const isLoggedIn = !!userId
+const hasPaidSubscription = auth.hasPaidSubscription
 
 const lessonIds = overview.content.sections.flatMap((s) =>
   s.modules.flatMap((m) =>
@@ -52,12 +55,10 @@ const authPath = localePath('/auth')
 
 let ctaHref: string
 let ctaLabel: string
-if (!isLoggedIn) {
+const canStartCourse = isLoggedIn && hasPaidSubscription
+if (!canStartCourse) {
   ctaLabel = t('home_cta_join')
-  ctaHref =
-    firstLessonUrl !== null
-      ? `${authPath}?redirect=${encodeURIComponent(firstLessonUrl)}`
-      : authPath
+  ctaHref = localePath('/pricing')
 } else {
   ctaHref = firstLessonUrl ?? '#'
   ctaLabel = progress.hasStarted

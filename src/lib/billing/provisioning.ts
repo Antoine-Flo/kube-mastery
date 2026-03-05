@@ -20,12 +20,42 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { readAppEnv } from '../env'
 
-const INDIVIDUAL_MONTHLY_PRICE_ID = 'pri_01kjfgeb1amgf8ht2fxaqsshhg'
-const INDIVIDUAL_YEARLY_PRICE_ID = 'pri_01kjfgg9mz5586yyaxkepp4aa3'
-const STANDARD_MONTHLY_PRICE_ID = 'pri_01kjfr83ph95rmgypgrdsc20bs'
-const STANDARD_YEARLY_PRICE_ID = 'pri_01kjfr962x53wh4wnkywjmc94s'
+export const PLAN_TIER = {
+  BASIC: 'basic',
+  PRO: 'pro',
+  ENTERPRISE: 'enterprise',
+  UNKNOWN: 'unknown'
+} as const
 
-const PAID_STATUSES = ['active', 'trialing']
+export type PlanTier = (typeof PLAN_TIER)[keyof typeof PLAN_TIER]
+
+export const SUBSCRIPTION_STATUS = {
+  ACTIVE: 'active',
+  TRIALING: 'trialing',
+  PAUSED: 'paused',
+  PAST_DUE: 'past_due',
+  CANCELED: 'canceled',
+  UNKNOWN: 'unknown'
+} as const
+
+const PADDLE_PRICE_ID = {
+  BASIC_MONTHLY: 'pri_01kjfr83ph95rmgypgrdsc20bs',
+  BASIC_YEARLY: 'pri_01kjfr962x53wh4wnkywjmc94s',
+  PRO_MONTHLY: 'pri_01kjfgeb1amgf8ht2fxaqsshhg',
+  PRO_YEARLY: 'pri_01kjfgg9mz5586yyaxkepp4aa3'
+} as const
+
+const PRICE_ID_TO_PLAN_TIER: Record<string, PlanTier> = {
+  [PADDLE_PRICE_ID.BASIC_MONTHLY]: PLAN_TIER.BASIC,
+  [PADDLE_PRICE_ID.BASIC_YEARLY]: PLAN_TIER.BASIC,
+  [PADDLE_PRICE_ID.PRO_MONTHLY]: PLAN_TIER.PRO,
+  [PADDLE_PRICE_ID.PRO_YEARLY]: PLAN_TIER.PRO
+}
+
+const PAID_STATUSES: string[] = [
+  SUBSCRIPTION_STATUS.ACTIVE,
+  SUBSCRIPTION_STATUS.TRIALING
+]
 
 export type ParsedPaddleEvent = {
   notificationId: string
@@ -33,7 +63,7 @@ export type ParsedPaddleEvent = {
   occurredAt: string
   email: string | null
   status: string
-  planTier: string
+  planTier: PlanTier
   paddleSubscriptionId: string | null
   paddleCustomerId: string | null
   currentPeriodStart: string | null
@@ -132,19 +162,14 @@ function collectPriceIdsFromItems(items: ItemWithOptionalPriceId[]): string[] {
   return ids
 }
 
-function derivePlanTier(priceIds: string[]): string {
-  const individualIds = [
-    INDIVIDUAL_MONTHLY_PRICE_ID,
-    INDIVIDUAL_YEARLY_PRICE_ID
-  ]
-  const standardIds = [STANDARD_MONTHLY_PRICE_ID, STANDARD_YEARLY_PRICE_ID]
-  if (priceIds.some((id) => individualIds.includes(id))) {
-    return 'individual'
+function derivePlanTier(priceIds: string[]): PlanTier {
+  for (const priceId of priceIds) {
+    const planTier = PRICE_ID_TO_PLAN_TIER[priceId]
+    if (planTier != null) {
+      return planTier
+    }
   }
-  if (priceIds.some((id) => standardIds.includes(id))) {
-    return 'standard'
-  }
-  return 'unknown'
+  return PLAN_TIER.UNKNOWN
 }
 
 function toMetadataRecord(value: unknown): Record<string, unknown> {
@@ -254,6 +279,117 @@ export async function sendCheckoutMagicLink(args: {
 
 export function shouldSendMagicLink(status: string): boolean {
   return PAID_STATUSES.includes(status)
+}
+
+function getPaddleBaseUrl(locals?: unknown): string {
+  const environment = (readAppEnv('ENVIRONMENT', locals) ?? '').toLowerCase()
+  if (environment === 'production') {
+    return 'https://api.paddle.com'
+  }
+  return 'https://sandbox-api.paddle.com'
+}
+
+function getPaddleApiKey(locals?: unknown): string {
+  const apiKey = readAppEnv('PADDLE_API_KEY_STAGING', locals)
+  if (apiKey == null) {
+    throw new Error('Missing PADDLE_API_KEY_STAGING')
+  }
+  return apiKey
+}
+
+async function paddleApiRequest(args: {
+  locals?: unknown
+  path: string
+  method?: 'GET' | 'POST'
+  body?: Record<string, unknown>
+}): Promise<{ ok: boolean; error: string | null }> {
+  const url = `${getPaddleBaseUrl(args.locals)}${args.path}`
+  const apiKey = getPaddleApiKey(args.locals)
+  const response = await fetch(url, {
+    method: args.method ?? 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body:
+      args.body == null || Object.keys(args.body).length === 0
+        ? undefined
+        : JSON.stringify(args.body)
+  })
+
+  if (response.ok) {
+    return { ok: true, error: null }
+  }
+
+  let errorMessage = `Paddle API request failed (${response.status})`
+  try {
+    const payload = (await response.json()) as {
+      error?: { detail?: string; code?: string }
+    }
+    const detail = payload.error?.detail ?? payload.error?.code
+    if (detail != null && detail !== '') {
+      errorMessage = detail
+    }
+  } catch {
+    // Keep fallback error message.
+  }
+  return { ok: false, error: errorMessage }
+}
+
+export async function pausePaddleSubscription(args: {
+  locals?: unknown
+  paddleSubscriptionId: string
+}): Promise<{ ok: boolean; error: string | null }> {
+  return paddleApiRequest({
+    locals: args.locals,
+    path: `/subscriptions/${args.paddleSubscriptionId}/pause`,
+    body: { effective_from: 'next_billing_period' }
+  })
+}
+
+export async function resumePaddleSubscription(args: {
+  locals?: unknown
+  paddleSubscriptionId: string
+}): Promise<{ ok: boolean; error: string | null }> {
+  return paddleApiRequest({
+    locals: args.locals,
+    path: `/subscriptions/${args.paddleSubscriptionId}/resume`,
+    body: {}
+  })
+}
+
+export async function cancelPaddleSubscription(args: {
+  locals?: unknown
+  paddleSubscriptionId: string
+}): Promise<{ ok: boolean; error: string | null }> {
+  return paddleApiRequest({
+    locals: args.locals,
+    path: `/subscriptions/${args.paddleSubscriptionId}/cancel`,
+    body: { effective_from: 'next_billing_period' }
+  })
+}
+
+export async function createRefundRequestMessage(args: {
+  supabase: SupabaseClient
+  userId: string
+  paddleSubscriptionId: string
+  status: string
+  planTier: string
+}): Promise<{ ok: boolean; error: string | null }> {
+  const { error } = await args.supabase.from('messages').insert({
+    type: 'support',
+    name: 'billing_refund_request',
+    user_id: args.userId,
+    content: {
+      paddleSubscriptionId: args.paddleSubscriptionId,
+      subscriptionStatus: args.status,
+      planTier: args.planTier
+    }
+  })
+  if (error != null) {
+    return { ok: false, error: error.message }
+  }
+  return { ok: true, error: null }
 }
 
 export async function insertBillingEvent(
@@ -381,8 +517,8 @@ export async function reconcilePendingSubscriptionsForUser(args: {
     await args.supabaseAdmin.from('subscriptions').upsert(
       {
         user_id: args.userId,
-        plan_tier: (pending.plan_tier as string) || 'unknown',
-        status: (pending.status as string) || 'unknown',
+        plan_tier: (pending.plan_tier as string) || PLAN_TIER.UNKNOWN,
+        status: (pending.status as string) || SUBSCRIPTION_STATUS.UNKNOWN,
         paddle_subscription_id: paddleSubscriptionId,
         paddle_customer_id:
           (pending.paddle_customer_id as string | null) ?? null,
@@ -406,4 +542,48 @@ export async function reconcilePendingSubscriptionsForUser(args: {
       })
       .eq('id', pending.id as string)
   }
+}
+
+export async function syncLinkedSubscriptionFromPaddleEvent(args: {
+  supabaseAdmin: SupabaseClient
+  paddleEvent: ParsedPaddleEvent
+}): Promise<{ ok: boolean; error: string | null }> {
+  const paddleSubscriptionId = args.paddleEvent.paddleSubscriptionId
+  if (paddleSubscriptionId == null || paddleSubscriptionId === '') {
+    return { ok: true, error: null }
+  }
+
+  const existing = await args.supabaseAdmin
+    .from('subscriptions')
+    .select('id')
+    .eq('paddle_subscription_id', paddleSubscriptionId)
+    .maybeSingle()
+
+  if (existing.error != null) {
+    return { ok: false, error: existing.error.message }
+  }
+
+  if (existing.data == null) {
+    return { ok: true, error: null }
+  }
+
+  const updateResult = await args.supabaseAdmin
+    .from('subscriptions')
+    .update({
+      plan_tier: args.paddleEvent.planTier,
+      status: args.paddleEvent.status,
+      paddle_customer_id: args.paddleEvent.paddleCustomerId,
+      current_period_start: args.paddleEvent.currentPeriodStart,
+      current_period_end: args.paddleEvent.currentPeriodEnd,
+      canceled_at: args.paddleEvent.canceledAt,
+      metadata: toMetadataRecord(args.paddleEvent.rawData),
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', existing.data.id as string)
+
+  if (updateResult.error != null) {
+    return { ok: false, error: updateResult.error.message }
+  }
+
+  return { ok: true, error: null }
 }

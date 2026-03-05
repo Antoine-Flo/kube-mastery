@@ -21,6 +21,13 @@ const authErrorMessageRaw = Astro.url.searchParams.get('message') ?? ''
 const authErrorMessage = authErrorMessageKey
   ? t(authErrorMessageKey)
   : authErrorMessageRaw
+const authActionMessageByCode: Record<string, string> = {
+  auth_signin_failed: t('auth_toastSignInFailed'),
+  auth_oauth_failed: t('auth_toastOAuthFailed'),
+  auth_session_missing: t('auth_toastSessionMissing'),
+  invalid_input: t('auth_toastInvalidInput'),
+  action_failed: t('auth_toastActionFailed')
+}
 
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
@@ -38,7 +45,11 @@ try {
 <Layout>
   <div class="page-halo">
     <div class="page-halo__bg" aria-hidden="true"></div>
-    <div class="auth-page">
+    <div
+      class="auth-page"
+      data-auth-action-messages={JSON.stringify(authActionMessageByCode)}
+      data-auth-success={t('auth_toastSuccess')}
+    >
       <div class="auth card card--outline">
         <div class="card__header auth__header">
           <h1 class="card__title auth__title">{t('auth_loginTitle')}</h1>
@@ -59,6 +70,7 @@ try {
               action="/api/auth/signin"
               method="post"
               class="auth__provider-form"
+              data-auth-action
               data-astro-reload
             >
               <input type="hidden" name="provider" value="github" />
@@ -130,6 +142,7 @@ try {
               class="auth__form"
               action="/api/auth/signin"
               method="post"
+              data-auth-action
               data-astro-reload
             >
               <input type="hidden" name="magic" value="1" />
@@ -376,10 +389,17 @@ try {
   </style>
 
   <script>
+    import {
+      resolveActionMessage,
+      showActionToast,
+      submitFormAction
+    } from '../../../lib/form-action-client'
+
     const providers = document.getElementById('auth-providers')
     const emailForm = document.getElementById('auth-email-form')
     const showEmailBtn = document.getElementById('auth-show-email')
     const backBtn = document.getElementById('auth-back')
+    const authPage = document.querySelector('.auth-page')
 
     showEmailBtn?.addEventListener('click', () => {
       providers?.setAttribute('hidden', '')
@@ -390,5 +410,57 @@ try {
       emailForm?.setAttribute('hidden', '')
       providers?.removeAttribute('hidden')
     })
+
+    function getAuthMessages(): Record<string, string> {
+      const raw = authPage?.getAttribute('data-auth-action-messages') ?? '{}'
+      try {
+        const parsed = JSON.parse(raw) as Record<string, unknown>
+        const normalized: Record<string, string> = {}
+        for (const [key, value] of Object.entries(parsed)) {
+          if (typeof value === 'string') {
+            normalized[key] = value
+          }
+        }
+        return normalized
+      } catch {
+        return {}
+      }
+    }
+
+    function setupAuthActionForms() {
+      const messages = getAuthMessages()
+      const successText =
+        authPage?.getAttribute('data-auth-success') ?? 'Success.'
+      const fallbackError = messages.action_failed ?? 'Action failed.'
+      document
+        .querySelectorAll<HTMLFormElement>('form[data-auth-action]')
+        .forEach((form) => {
+          if (form.hasAttribute('data-auth-action-bound')) {
+            return
+          }
+          form.setAttribute('data-auth-action-bound', '')
+          form.addEventListener('submit', async (event) => {
+            event.preventDefault()
+            const response = await submitFormAction(form)
+            if (!response.ok) {
+              const message = resolveActionMessage({
+                code: response.code,
+                map: messages,
+                fallback: fallbackError
+              })
+              showActionToast({ type: 'error', title: message })
+              return
+            }
+            if (response.redirectTo != null && response.redirectTo !== '') {
+              window.location.href = response.redirectTo
+              return
+            }
+            showActionToast({ type: 'success', title: successText })
+          })
+        })
+    }
+
+    setupAuthActionForms()
+    document.addEventListener('astro:page-load', setupAuthActionForms)
   </script>
 </Layout>
