@@ -31,12 +31,6 @@ export const POST: APIRoute = async ({
     route: '/api/account/subscription-pause',
     locals
   })
-  emitApiLog({
-    level: 'info',
-    event: 'billing_pause_requested',
-    message: 'Pause subscription requested',
-    context: baseContext
-  })
   const isAjax = isAjaxFormAction(request)
   const redirectTo = getSafeRedirectTarget(
     url.searchParams.get('redirect'),
@@ -51,7 +45,7 @@ export const POST: APIRoute = async ({
   if (userError != null || user == null) {
     emitApiLog({
       level: 'warn',
-      event: 'billing_pause_unauthorized',
+      event: 'billing_pause_failed',
       message: 'Pause subscription unauthorized',
       context: baseContext,
       statusCode: 401,

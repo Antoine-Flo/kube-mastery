@@ -7,10 +7,14 @@ import { readAppEnv } from '../env'
 
 let sdkStarted = false
 const OTEL_SERVICE_NAME = 'kubemastery-backend'
+const OTEL_SERVICE_VERSION = '1'
 const POSTHOG_OTEL_LOGS_ENDPOINT = 'https://eu.i.posthog.com/i/v1/logs'
+const LOG_SCHEMA_VERSION = 1
 const MAX_STRING_LENGTH = 300
 const SECRET_KEY_PATTERN =
   /(authorization|cookie|set-cookie|api[-_]?key|token|secret|password)/i
+const PII_KEY_PATTERN =
+  /(^|_|-)(email|ip|ip_address|phone|address|first_name|last_name|full_name)(_|-|$)/i
 
 function getPosthogProjectToken(locals?: unknown): string | null {
   const token = readAppEnv('POSTHOG_PROJECT_TOKEN', locals)
@@ -30,7 +34,8 @@ export function initOpenTelemetry(locals?: unknown): void {
   }
   const sdk = new NodeSDK({
     resource: resourceFromAttributes({
-      'service.name': OTEL_SERVICE_NAME
+      'service.name': OTEL_SERVICE_NAME,
+      'service.version': OTEL_SERVICE_VERSION
     }),
     logRecordProcessor: new BatchLogRecordProcessor(
       new OTLPLogExporter({
@@ -67,6 +72,9 @@ export type ApiLogContext = {
   route: string
   method: string
   env: string
+  traceId?: string
+  posthogDistinctId?: string
+  posthogSessionId?: string
   userId?: string
 }
 
@@ -81,6 +89,9 @@ export function createApiLogContext(args: {
     route: args.route,
     method: args.request.method,
     env: (readAppEnv('ENVIRONMENT', args.locals) ?? 'unknown').toLowerCase(),
+    traceId: resolveTraceId(args.request),
+    posthogDistinctId: resolvePosthogDistinctId(args.request),
+    posthogSessionId: resolvePosthogSessionId(args.request),
     userId: args.userId
   }
 }
@@ -109,10 +120,26 @@ export function emitApiLog(args: {
 }): void {
   const baseAttributes: Record<string, Primitive> = {
     event: args.event,
+    log_schema_version: LOG_SCHEMA_VERSION,
     request_id: args.context.requestId,
     route: args.context.route,
     method: args.context.method,
     env: args.context.env
+  }
+  if (args.context.traceId != null && args.context.traceId !== '') {
+    baseAttributes.trace_id = args.context.traceId
+  }
+  if (
+    args.context.posthogDistinctId != null &&
+    args.context.posthogDistinctId !== ''
+  ) {
+    baseAttributes.posthog_distinct_id = args.context.posthogDistinctId
+  }
+  if (
+    args.context.posthogSessionId != null &&
+    args.context.posthogSessionId !== ''
+  ) {
+    baseAttributes.posthog_session_id = args.context.posthogSessionId
   }
   if (args.context.userId != null && args.context.userId !== '') {
     baseAttributes.user_id = args.context.userId
@@ -151,12 +178,44 @@ function resolveRequestId(request: Request): string {
   return `req_${Date.now().toString(36)}`
 }
 
+function resolveTraceId(request: Request): string | undefined {
+  const traceParent = request.headers.get('traceparent')
+  if (traceParent == null || traceParent.trim() === '') {
+    return undefined
+  }
+  const parts = traceParent.trim().split('-')
+  if (parts.length < 4) {
+    return undefined
+  }
+  const traceId = parts[1]
+  if (/^[a-f0-9]{32}$/i.test(traceId)) {
+    return traceId.toLowerCase()
+  }
+  return undefined
+}
+
+function resolvePosthogDistinctId(request: Request): string | undefined {
+  const value = request.headers.get('x-posthog-distinct-id')
+  if (value == null || value.trim() === '') {
+    return undefined
+  }
+  return value.trim()
+}
+
+function resolvePosthogSessionId(request: Request): string | undefined {
+  const value = request.headers.get('x-posthog-session-id')
+  if (value == null || value.trim() === '') {
+    return undefined
+  }
+  return value.trim()
+}
+
 function sanitizeLogAttributes(
   input: Record<string, string | number | boolean>
 ): Record<string, string | number | boolean> {
   const output: Record<string, string | number | boolean> = {}
   for (const [key, value] of Object.entries(input)) {
-    if (SECRET_KEY_PATTERN.test(key)) {
+    if (SECRET_KEY_PATTERN.test(key) || PII_KEY_PATTERN.test(key)) {
       output[key] = '[REDACTED]'
       continue
     }

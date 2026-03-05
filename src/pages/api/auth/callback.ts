@@ -49,12 +49,6 @@ export const GET: APIRoute = async ({
     route: '/api/auth/callback',
     locals
   })
-  emitApiLog({
-    level: 'info',
-    event: 'auth_callback_requested',
-    message: 'OAuth callback requested',
-    context: baseContext
-  })
   const lang = url.searchParams.get('lang') || 'en'
   const rawRedirect = url.searchParams.get('redirect') ?? ''
   const redirectTo =

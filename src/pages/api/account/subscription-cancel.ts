@@ -31,12 +31,6 @@ export const POST: APIRoute = async ({
     route: '/api/account/subscription-cancel',
     locals
   })
-  emitApiLog({
-    level: 'info',
-    event: 'billing_cancel_requested',
-    message: 'Cancel subscription requested',
-    context: baseContext
-  })
   const isAjax = isAjaxFormAction(request)
   const redirectTo = getSafeRedirectTarget(
     url.searchParams.get('redirect'),
@@ -51,7 +45,7 @@ export const POST: APIRoute = async ({
   if (userError != null || user == null) {
     emitApiLog({
       level: 'warn',
-      event: 'billing_cancel_unauthorized',
+      event: 'billing_cancel_failed',
       message: 'Cancel subscription unauthorized',
       context: baseContext,
       statusCode: 401,

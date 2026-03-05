@@ -31,12 +31,6 @@ export const POST: APIRoute = async ({
     route: '/api/account/subscription-refund',
     locals
   })
-  emitApiLog({
-    level: 'info',
-    event: 'billing_refund_requested',
-    message: 'Refund request submitted',
-    context: baseContext
-  })
   const isAjax = isAjaxFormAction(request)
   const redirectTo = getSafeRedirectTarget(
     url.searchParams.get('redirect'),
@@ -51,7 +45,7 @@ export const POST: APIRoute = async ({
   if (userError != null || user == null) {
     emitApiLog({
       level: 'warn',
-      event: 'billing_refund_unauthorized',
+      event: 'billing_refund_failed',
       message: 'Refund request unauthorized',
       context: baseContext,
       statusCode: 401,

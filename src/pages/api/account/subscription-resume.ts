@@ -31,12 +31,6 @@ export const POST: APIRoute = async ({
     route: '/api/account/subscription-resume',
     locals
   })
-  emitApiLog({
-    level: 'info',
-    event: 'billing_resume_requested',
-    message: 'Resume subscription requested',
-    context: baseContext
-  })
   const isAjax = isAjaxFormAction(request)
   const redirectTo = getSafeRedirectTarget(
     url.searchParams.get('redirect'),
@@ -51,7 +45,7 @@ export const POST: APIRoute = async ({
   if (userError != null || user == null) {
     emitApiLog({
       level: 'warn',
-      event: 'billing_resume_unauthorized',
+      event: 'billing_resume_failed',
       message: 'Resume subscription unauthorized',
       context: baseContext,
       statusCode: 401,

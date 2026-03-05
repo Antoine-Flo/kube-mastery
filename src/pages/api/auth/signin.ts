@@ -40,12 +40,6 @@ export const POST: APIRoute = async ({
     route: '/api/auth/signin',
     locals
   })
-  emitApiLog({
-    level: 'info',
-    event: 'auth_signin_requested',
-    message: 'Sign-in requested',
-    context: baseContext
-  })
   const isAjax = isAjaxFormAction(request)
   let supabase
   try {

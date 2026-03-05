@@ -42,12 +42,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     route: '/api/paddle/webhook',
     locals
   })
-  emitApiLog({
-    level: 'info',
-    event: 'billing_webhook_received',
-    message: 'Billing webhook received',
-    context: baseContext
-  })
   const paddleEnvironment = Environment.sandbox
   const paddleApiKey = readAppEnv('PADDLE_API_KEY_STAGING', locals)
   if (paddleApiKey == null) {
@@ -124,17 +118,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (paddleEvent == null) {
       throw new Error('Invalid webhook payload')
     }
-    emitApiLog({
-      level: 'info',
-      event: 'billing_webhook_parsed',
-      message: 'Billing webhook payload parsed',
-      context: baseContext,
-      attributes: {
-        event_type: paddleEvent.eventType,
-        notification_id: paddleEvent.notificationId
-      }
-    })
-
     const supabaseAdmin = getSupabaseAdmin(locals)
     if (supabaseAdmin == null) {
       throw new Error('Missing Supabase admin client')
@@ -154,12 +137,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (eventInsert.duplicate) {
       emitApiLog({
         level: 'info',
-        event: 'billing_webhook_duplicate',
+        event: 'billing_webhook_skipped',
         message: 'Duplicate billing webhook ignored',
         context: baseContext,
         statusCode: 200,
         durationMs: getDurationMs(startedAt),
         attributes: {
+          skip_reason: 'duplicate_notification',
           event_type: paddleEvent.eventType,
           notification_id: paddleEvent.notificationId
         }
@@ -215,8 +199,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     emitApiLog({
       level: 'info',
-      event: 'billing_webhook_processed',
-      message: 'Billing webhook processed',
+      event: 'billing_webhook_succeeded',
+      message: 'Billing webhook succeeded',
       context: baseContext,
       statusCode: 200,
       durationMs: getDurationMs(startedAt),

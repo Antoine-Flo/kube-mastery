@@ -2,6 +2,8 @@
 
 This project uses a unified strategy for form actions to prevent navigation to raw JSON pages and provide consistent user feedback.
 
+For backend logging standards and PostHog/OTel conventions, see `docs/logging.md`.
+
 ## Goals
 
 - Never render API JSON directly to users after form submission.

@@ -39,12 +39,6 @@ export const POST: APIRoute = async ({
     route: '/api/account/delete',
     locals
   })
-  emitApiLog({
-    level: 'info',
-    event: 'account_delete_requested',
-    message: 'Account deletion requested',
-    context: baseContext
-  })
   const isAjax = isAjaxFormAction(request)
   const redirectTo = getSafeRedirectTarget(
     url.searchParams.get('redirect'),
@@ -104,7 +98,7 @@ export const POST: APIRoute = async ({
   if (result.reason === 'subscription_active') {
     emitApiLog({
       level: 'warn',
-      event: 'account_delete_blocked_subscription',
+      event: 'account_delete_failed',
       message: 'Account deletion blocked by active subscription',
       context: baseContext,
       statusCode: 409,
