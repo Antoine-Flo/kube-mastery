@@ -30,6 +30,7 @@ export function addFlashParam(
 
 export type BillingActionSubscription = {
   paddleSubscriptionId: string
+  paddleCustomerId: string | null
   status: string
   planTier: string
 }
@@ -43,6 +44,7 @@ function toBillingActionSubscription(
   }
   return {
     paddleSubscriptionId,
+    paddleCustomerId: data?.paddle_customer_id ?? null,
     status: data?.status ?? 'unknown',
     planTier: data?.plan_tier ?? 'unknown'
   }
@@ -57,7 +59,7 @@ export async function getLatestUserSubscriptionForBilling(
 }> {
   const result = await supabase
     .from('subscriptions')
-    .select('paddle_subscription_id, status, plan_tier')
+    .select('paddle_subscription_id, paddle_customer_id, status, plan_tier')
     .eq('user_id', userId)
     .order('updated_at', { ascending: false })
   if (result.error != null) {

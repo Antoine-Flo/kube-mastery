@@ -196,7 +196,6 @@ const billingErrorMessage =
       {
         hasSubscription ? (
           <>
-            <p class="profile__section-desc">{t('profile_subscriptionDescription')}</p>
             {
               billingSuccessMessage != null && (
                 <p class="profile__flash profile__flash--success">
@@ -211,96 +210,119 @@ const billingErrorMessage =
                 </p>
               )
             }
-            <dl class="profile__subscription-grid">
-              <div>
-                <dt>{t('profile_subscriptionPlanLabel')}</dt>
-                <dd>{planLabelByTier[planTierValue] ?? planLabelByTier.unknown}</dd>
-              </div>
-              <div>
-                <dt>{t('profile_subscriptionStatusLabel')}</dt>
-                <dd>{statusLabelByValue[statusValue] ?? statusLabelByValue.unknown}</dd>
-              </div>
-              <div>
-                <dt>{t('profile_subscriptionTrialEndsLabel')}</dt>
-                <dd>{formatDate(subscription?.current_period_end as string | null)}</dd>
-              </div>
-              <div>
-                <dt>{t('profile_subscriptionSinceLabel')}</dt>
-                <dd>
-                  {
-                    subscribedDays == null
-                      ? t('profile_subscriptionNotAvailable')
-                      : t('profile_subscriptionDaysValue', {
-                          days: String(subscribedDays)
-                        })
-                  }
-                </dd>
-              </div>
-              <div>
-                <dt>{t('profile_subscriptionNextPaymentLabel')}</dt>
-                <dd>{formatDate(subscription?.current_period_end as string | null)}</dd>
-              </div>
-              <div>
-                <dt>{t('profile_subscriptionCanceledAtLabel')}</dt>
-                <dd>{formatDate(subscription?.canceled_at as string | null)}</dd>
-              </div>
-            </dl>
-            {
-              trialDaysRemaining != null && (
-                <p class="profile__hint">
-                  {t('profile_subscriptionTrialRemaining', {
-                    days: String(trialDaysRemaining)
-                  })}
-                </p>
-              )
-            }
-            <div class="profile__billing-actions">
+            <div class="profile__subscription-block">
+              <h3 class="profile__actions-title">
+                {t('profile_subscriptionDetailsTitle')}
+              </h3>
+              <dl class="profile__subscription-grid">
+                <div>
+                  <dt>{t('profile_subscriptionPlanLabel')}</dt>
+                  <dd>{planLabelByTier[planTierValue] ?? planLabelByTier.unknown}</dd>
+                </div>
+                <div>
+                  <dt>{t('profile_subscriptionStatusLabel')}</dt>
+                  <dd>{statusLabelByValue[statusValue] ?? statusLabelByValue.unknown}</dd>
+                </div>
+                <div>
+                  <dt>{t('profile_subscriptionTrialEndsLabel')}</dt>
+                  <dd>{formatDate(subscription?.current_period_end as string | null)}</dd>
+                </div>
+                <div>
+                  <dt>{t('profile_subscriptionSinceLabel')}</dt>
+                  <dd>
+                    {
+                      subscribedDays == null
+                        ? t('profile_subscriptionNotAvailable')
+                        : t('profile_subscriptionDaysValue', {
+                            days: String(subscribedDays)
+                          })
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t('profile_subscriptionNextPaymentLabel')}</dt>
+                  <dd>{formatDate(subscription?.current_period_end as string | null)}</dd>
+                </div>
+                <div>
+                  <dt>{t('profile_subscriptionCanceledAtLabel')}</dt>
+                  <dd>{formatDate(subscription?.canceled_at as string | null)}</dd>
+                </div>
+              </dl>
               {
-                shouldShowPause && (
-                  <form
-                    method="post"
-                    action={`/api/account/subscription-pause?redirect=${encodeURIComponent(profilePath)}`}
-                    data-account-action
-                    data-astro-reload
-                  >
-                    <Button type="submit" variant="outline" color="gray" size="sm">
-                      {t('profile_subscriptionPause')}
-                    </Button>
-                  </form>
+                trialDaysRemaining != null && (
+                  <p class="profile__hint">
+                    {t('profile_subscriptionTrialRemaining', {
+                      days: String(trialDaysRemaining)
+                    })}
+                  </p>
                 )
               }
-              {
-                shouldShowResume && (
-                  <form
-                    method="post"
-                    action={`/api/account/subscription-resume?redirect=${encodeURIComponent(profilePath)}`}
-                    data-account-action
-                    data-astro-reload
-                  >
-                    <Button type="submit" variant="outline" color="green" size="sm">
-                      {t('profile_subscriptionResume')}
-                    </Button>
-                  </form>
-                )
-              }
+            </div>
+            <div class="profile__subscription-block profile__portal">
+              <h3 class="profile__actions-title">
+                {t('profile_subscriptionManageTitle')}
+              </h3>
               <Button
-                type="button"
+                href={`/api/account/subscription-portal?redirect=${encodeURIComponent(profilePath)}`}
                 variant="outline"
-                color="ruby"
+                color="cyan"
                 size="sm"
-                data-dialog-open={CANCEL_DIALOG_ID}
               >
-                {t('profile_subscriptionCancel')}
+                {t('profile_subscriptionPortalOpen')}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                color="amber"
-                size="sm"
-                data-dialog-open={REFUND_DIALOG_ID}
-              >
-                {t('profile_subscriptionRefund')}
-              </Button>
+            </div>
+            <div class="profile__subscription-block">
+              <h3 class="profile__actions-title">
+                {t('profile_subscriptionQuickActions')}
+              </h3>
+              <div class="profile__billing-actions">
+                {
+                  shouldShowPause && (
+                    <form
+                      method="post"
+                      action={`/api/account/subscription-pause?redirect=${encodeURIComponent(profilePath)}`}
+                      data-account-action
+                      data-astro-reload
+                    >
+                      <Button type="submit" variant="outline" color="gray" size="sm">
+                        {t('profile_subscriptionPause')}
+                      </Button>
+                    </form>
+                  )
+                }
+                {
+                  shouldShowResume && (
+                    <form
+                      method="post"
+                      action={`/api/account/subscription-resume?redirect=${encodeURIComponent(profilePath)}`}
+                      data-account-action
+                      data-astro-reload
+                    >
+                      <Button type="submit" variant="outline" color="green" size="sm">
+                        {t('profile_subscriptionResume')}
+                      </Button>
+                    </form>
+                  )
+                }
+                <Button
+                  type="button"
+                  variant="outline"
+                  color="ruby"
+                  size="sm"
+                  data-dialog-open={CANCEL_DIALOG_ID}
+                >
+                  {t('profile_subscriptionCancel')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  color="amber"
+                  size="sm"
+                  data-dialog-open={REFUND_DIALOG_ID}
+                >
+                  {t('profile_subscriptionRefund')}
+                </Button>
+              </div>
             </div>
           </>
         ) : (
@@ -499,6 +521,24 @@ const billingErrorMessage =
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+  }
+  .profile__subscription-block {
+    border: 1px solid var(--color-gray-6);
+    background: var(--color-gray-2);
+    border-radius: var(--radius-md);
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+  .profile__portal {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .profile__actions-title {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-12);
+    margin: 0 0 0.5rem;
   }
 </style>
 

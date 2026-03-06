@@ -21,6 +21,7 @@ export const ALLOWED_SUBSCRIPTION_STATUSES = [
 
 export type BillingSubscriptionRow = {
   paddle_subscription_id: string | null
+  paddle_customer_id?: string | null
   status: string | null
   plan_tier: string | null
 }

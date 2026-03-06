@@ -24,6 +24,7 @@ const environment = (readAppEnv('ENVIRONMENT', Astro.locals) ?? '')
   .toLowerCase()
   .trim()
 const isProduction = environment === 'production'
+const isStaging = environment === 'staging'
 const paddleClientToken = isProduction
   ? (readAppEnv('PADDLE_CLIENT_TOKEN', Astro.locals) ?? '')
   : (readAppEnv('PADDLE_CLIENT_TOKEN_STAGING', Astro.locals) ?? '')
@@ -33,8 +34,6 @@ if (paddleClientToken === '') {
     'Missing Paddle client token. Set PADDLE_CLIENT_TOKEN[_STAGING].'
   )
 }
-
-const paddleEnvironment = isProduction ? 'production' : 'sandbox'
 
 const activePaddlePriceIds = isProduction
   ? CONFIG.billing.paddlePriceIds.production
@@ -423,7 +422,7 @@ const faqItems = [
 <script
   define:vars={{
     paddleClientToken,
-    paddleEnvironment,
+    isStaging,
     checkoutDialogId: CHECKOUT_EMAIL_DIALOG_ID,
     checkoutInvalidEmailError,
     checkoutSuccessPath,
@@ -578,24 +577,12 @@ const faqItems = [
       }
     })
 
-    const paddle = window.Paddle
+    const paddle = await ensurePaddleInitialized()
     if (paddle == null) {
       return
     }
 
     try {
-      if (!document.documentElement.hasAttribute(PADDLE_INITED)) {
-        if (
-          paddleEnvironment === 'sandbox' &&
-          paddle.Environment != null &&
-          typeof paddle.Environment.set === 'function'
-        ) {
-          paddle.Environment.set('sandbox')
-        }
-        paddle.Initialize({ token: paddleClientToken })
-        document.documentElement.setAttribute(PADDLE_INITED, '')
-      }
-
       await Promise.all([
         preview(
           paddle,
@@ -625,7 +612,7 @@ const faqItems = [
 
     if (!document.documentElement.hasAttribute(PADDLE_INITED)) {
       if (
-        paddleEnvironment === 'sandbox' &&
+        isStaging &&
         paddle.Environment != null &&
         typeof paddle.Environment.set === 'function'
       ) {

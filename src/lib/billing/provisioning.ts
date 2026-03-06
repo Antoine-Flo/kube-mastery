@@ -335,6 +335,65 @@ async function paddleApiRequest(args: {
   return { ok: false, error: errorMessage }
 }
 
+type PaddlePortalSessionResponse = {
+  data?: {
+    urls?: {
+      general?: {
+        overview?: string
+      }
+    }
+  }
+}
+
+export async function createPaddleCustomerPortalOverviewLink(args: {
+  locals?: unknown
+  paddleCustomerId: string
+  paddleSubscriptionId?: string
+}): Promise<{ ok: boolean; url: string | null; error: string | null }> {
+  const path = `/customers/${args.paddleCustomerId}/portal-sessions`
+  const body =
+    args.paddleSubscriptionId == null || args.paddleSubscriptionId === ''
+      ? {}
+      : { subscription_ids: [args.paddleSubscriptionId] }
+
+  const response = await fetch(`${getPaddleBaseUrl(args.locals)}${path}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${getPaddleApiKey(args.locals)}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  })
+
+  if (!response.ok) {
+    let errorMessage = `Paddle API request failed (${response.status})`
+    try {
+      const payload = (await response.json()) as {
+        error?: { detail?: string; code?: string }
+      }
+      const detail = payload.error?.detail ?? payload.error?.code
+      if (detail != null && detail !== '') {
+        errorMessage = detail
+      }
+    } catch {
+      // Keep fallback error message.
+    }
+    return { ok: false, url: null, error: errorMessage }
+  }
+
+  const payload = (await response.json()) as PaddlePortalSessionResponse
+  const url = payload.data?.urls?.general?.overview ?? null
+  if (url == null || url === '') {
+    return {
+      ok: false,
+      url: null,
+      error: 'Paddle portal session response missing overview URL'
+    }
+  }
+
+  return { ok: true, url, error: null }
+}
+
 export async function pausePaddleSubscription(args: {
   locals?: unknown
   paddleSubscriptionId: string

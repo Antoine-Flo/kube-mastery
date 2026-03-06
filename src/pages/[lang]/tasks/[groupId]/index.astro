@@ -65,17 +65,20 @@ const completedTaskIds = await getCompletedTaskIds(
     margin: 0 auto;
     padding: 2rem 1rem;
   }
+
   .task-overview h1 {
     font-size: 1.875rem;
     font-weight: var(--font-weight-bold);
     color: var(--color-gray-12);
     margin: 0 0 0.5rem;
   }
+
   .task-overview .desc {
     color: var(--color-gray-11);
     font-size: var(--text-lg);
     margin: 0 0 2rem;
   }
+
   .task-list {
     list-style: none;
     margin: 0;
@@ -84,9 +87,11 @@ const completedTaskIds = await getCompletedTaskIds(
     flex-direction: column;
     gap: 0.5rem;
   }
+
   .task-list li {
     margin: 0;
   }
+
   .task-link {
     display: inline-flex;
     align-items: flex-start;
@@ -103,28 +108,34 @@ const completedTaskIds = await getCompletedTaskIds(
     width: 100%;
     box-sizing: border-box;
   }
+
   .task-link:hover {
     border-color: var(--color-primary-6);
     background: var(--color-primary-1);
   }
+
   .task-link :global(svg) {
     flex-shrink: 0;
     color: var(--color-gray-9);
     margin-top: 0.15rem;
   }
+
   .task-link--completed :global(svg) {
     color: var(--color-green-9);
   }
+
   .task-link__text {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
     min-width: 0;
   }
+
   .task-link__title {
     font-weight: var(--font-weight-semibold);
     color: var(--color-gray-12);
   }
+
   .task-link__description {
     font-size: var(--text-sm);
     color: var(--color-gray-11);
