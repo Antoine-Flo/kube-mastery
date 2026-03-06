@@ -21,7 +21,9 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "i18n:unused": "tsx bin/clean-unused-translations.ts",
+    "i18n:clean": "tsx bin/clean-unused-translations.ts --apply"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
