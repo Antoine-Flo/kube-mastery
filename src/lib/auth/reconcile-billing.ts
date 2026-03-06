@@ -1,5 +1,6 @@
 import { reconcilePendingSubscriptionsForUser } from '../billing/provisioning'
 import { getSupabaseAdmin } from '../supabase'
+import { emitOtelLog } from '../observability/otel'
 
 type AuthenticatedUser = {
   id?: string | null
@@ -24,9 +25,33 @@ export async function reconcileBillingForAuthenticatedUser(
     return
   }
 
-  await reconcilePendingSubscriptionsForUser({
-    supabaseAdmin,
-    userId,
-    email: userEmail
-  })
+  try {
+    const result = await reconcilePendingSubscriptionsForUser({
+      supabaseAdmin,
+      userId,
+      email: userEmail
+    })
+    if (!result.ok) {
+      emitOtelLog({
+        severityText: 'error',
+        body: 'billing_reconcile_failed',
+        attributes: {
+          event: 'billing_reconcile_failed',
+          user_id: userId,
+          failure_reason: result.error ?? 'unknown'
+        }
+      })
+      return
+    }
+  } catch (error) {
+    emitOtelLog({
+      severityText: 'error',
+      body: 'billing_reconcile_failed',
+      attributes: {
+        event: 'billing_reconcile_failed',
+        user_id: userId,
+        failure_reason: error instanceof Error ? error.message : 'unknown'
+      }
+    })
+  }
 }

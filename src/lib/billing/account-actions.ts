@@ -1,4 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import {
+  type BillingSubscriptionRow,
+  pickBestBillingSubscription
+} from './domain'
 
 export function getSafeRedirectTarget(
   redirectParam: string | null,
@@ -30,6 +34,20 @@ export type BillingActionSubscription = {
   planTier: string
 }
 
+function toBillingActionSubscription(
+  data: BillingSubscriptionRow | null
+): BillingActionSubscription | null {
+  const paddleSubscriptionId = data?.paddle_subscription_id
+  if (paddleSubscriptionId == null || paddleSubscriptionId === '') {
+    return null
+  }
+  return {
+    paddleSubscriptionId,
+    status: data?.status ?? 'unknown',
+    planTier: data?.plan_tier ?? 'unknown'
+  }
+}
+
 export async function getLatestUserSubscriptionForBilling(
   supabase: SupabaseClient,
   userId: string
@@ -37,30 +55,16 @@ export async function getLatestUserSubscriptionForBilling(
   data: BillingActionSubscription | null
   error: string | null
 }> {
-  const { data, error } = await supabase
+  const result = await supabase
     .from('subscriptions')
     .select('paddle_subscription_id, status, plan_tier')
     .eq('user_id', userId)
     .order('updated_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (error != null) {
-    return { data: null, error: error.message }
+  if (result.error != null) {
+    return { data: null, error: result.error.message }
   }
-
-  const paddleSubscriptionId =
-    (data?.paddle_subscription_id as string | null) ?? null
-  if (paddleSubscriptionId == null || paddleSubscriptionId === '') {
-    return { data: null, error: null }
-  }
-
-  return {
-    data: {
-      paddleSubscriptionId,
-      status: (data?.status as string | null) ?? 'unknown',
-      planTier: (data?.plan_tier as string | null) ?? 'unknown'
-    },
-    error: null
-  }
+  const bestRow = pickBestBillingSubscription(
+    (result.data as BillingSubscriptionRow[] | null) ?? []
+  )
+  return { data: toBillingActionSubscription(bestRow), error: null }
 }

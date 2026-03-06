@@ -2,11 +2,17 @@
  * Auth domain: business rules only (no DB, no Supabase).
  */
 
+const PAID_PLAN_TIERS = ['basic', 'pro', 'enterprise'] as const
+const PAID_SUBSCRIPTION_STATUSES = ['active', 'trialing'] as const
+
 /**
  * Returns whether a subscription row counts as a paid subscription.
  */
 export function isPaidSubscription(planTier: string, status: string): boolean {
-  const paidTiers = ['basic', 'pro', 'enterprise']
-  const activeStatuses = ['active', 'trialing']
-  return paidTiers.includes(planTier) && activeStatuses.includes(status)
+  return (
+    PAID_PLAN_TIERS.includes(planTier as (typeof PAID_PLAN_TIERS)[number]) &&
+    PAID_SUBSCRIPTION_STATUSES.includes(
+      status as (typeof PAID_SUBSCRIPTION_STATUSES)[number]
+    )
+  )
 }

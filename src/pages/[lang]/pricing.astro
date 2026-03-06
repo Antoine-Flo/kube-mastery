@@ -18,6 +18,7 @@ const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 const auth = await getLayoutAuthContext(Astro.locals, Astro.request, Astro.cookies)
 const loggedInCustomerEmail = auth.user?.email?.trim() ?? ''
+const loggedInCustomerUserId = auth.user?.id?.trim() ?? ''
 
 const environment = (readAppEnv('ENVIRONMENT', Astro.locals) ?? '')
   .toLowerCase()
@@ -427,7 +428,8 @@ const faqItems = [
     checkoutInvalidEmailError,
     checkoutSuccessPath,
     checkoutLang: lang,
-    loggedInCustomerEmail
+    loggedInCustomerEmail,
+    loggedInCustomerUserId
   }}
 >
   const PRICING_INITED = 'data-pricing-toggle-inited'
@@ -675,14 +677,18 @@ const faqItems = [
     }
 
     const successUrl = `${window.location.origin}${checkoutSuccessPath}`
+    const checkoutCustomData = {
+      lang: checkoutLang,
+      email
+    }
+    if (loggedInCustomerUserId !== '') {
+      checkoutCustomData.user_id = loggedInCustomerUserId
+    }
 
     paddle.Checkout.open({
       items: [{ priceId, quantity: 1 }],
       customer: { email },
-      customData: {
-        lang: checkoutLang,
-        email
-      },
+      customData: checkoutCustomData,
       settings: {
         displayMode: 'overlay',
         successUrl

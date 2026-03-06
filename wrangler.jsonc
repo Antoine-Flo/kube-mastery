@@ -7,10 +7,6 @@
     "binding": "ASSETS",
     "directory": "./dist"
   },
-  // Non-secret runtime values for production.
-  // Secrets must be managed with:
-  // - wrangler secret put <KEY> (production)
-  // - wrangler secret put <KEY> --env staging
   "vars": {
     "ENVIRONMENT": "staging",
     "SUPABASE_URL": "https://bijwtiejmopddtargdls.supabase.co",
@@ -22,8 +18,6 @@
   },
   "env": {
     "staging": {
-      // Optional: set specific preview domains/routes for staging.
-      // "routes": [{ "pattern": "staging.example.com/*", "zone_name": "example.com" }],
       "vars": {
         "ENVIRONMENT": "staging",
         "SUPABASE_URL": "https://bijwtiejmopddtargdls.supabase.co",

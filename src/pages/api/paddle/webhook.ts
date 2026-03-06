@@ -5,6 +5,7 @@ import { readAppEnv } from '../../../lib/env'
 import {
   getPendingSubscriptionForMagicLink,
   insertBillingEvent,
+  linkSubscriptionToKnownUserFromPaddleEvent,
   markPendingMagicLinkSent,
   parsePaddleWebhookEvent,
   sendCheckoutMagicLink,
@@ -43,187 +44,48 @@ export const POST: APIRoute = async ({ request, locals }) => {
     locals
   })
   const paddleEnvironment = Environment.sandbox
-  const paddleApiKey = readAppEnv('PADDLE_API_KEY', locals)
-  if (paddleApiKey == null) {
-    emitApiLog({
-      level: 'error',
-      event: 'billing_webhook_failed',
-      message: 'Missing Paddle API key',
-      context: baseContext,
-      statusCode: 500,
-      durationMs: getDurationMs(startedAt),
-      errorCode: 'missing_PADDLE_API_KEY'
-    })
-    return json(
-      {
-        error: 'billing/webhook-processing',
-        message: 'Missing PADDLE_API_KEY'
-      },
-      500
-    )
-  }
-  const webhookSecret = readAppEnv(
-    'PADDLE_WEBHOOK_SECRET',
-    locals
-  )
-  if (webhookSecret == null) {
-    emitApiLog({
-      level: 'error',
-      event: 'billing_webhook_failed',
-      message: 'Missing webhook secret',
-      context: baseContext,
-      statusCode: 500,
-      durationMs: getDurationMs(startedAt),
-      errorCode: 'missing_paddle_webhook_secret'
-    })
-    return json(
-      {
-        error: 'billing/webhook-processing',
-        message: 'Missing PADDLE_WEBHOOK_SECRET'
-      },
-      500
-    )
-  }
-  const signatureHeader = request.headers.get('paddle-signature')
-  if (signatureHeader == null || signatureHeader.trim() === '') {
-    emitApiLog({
-      level: 'warn',
-      event: 'billing_webhook_failed',
-      message: 'Missing webhook signature header',
-      context: baseContext,
-      statusCode: 400,
-      durationMs: getDurationMs(startedAt),
-      errorCode: 'missing_signature'
-    })
-    return json(
-      {
-        error: 'billing/webhook-processing',
-        message: 'Missing paddle-signature header'
-      },
-      400
-    )
+  const configResult = resolveWebhookConfig({
+    request,
+    locals,
+    baseContext,
+    startedAt
+  })
+  if (!configResult.ok) {
+    return configResult.response
   }
 
   try {
-    const rawBody = await request.text()
-    const payload = JSON.parse(rawBody) as Record<string, unknown>
-    const eventData = await unmarshalPaddleWebhookEvent({
-      apiKey: paddleApiKey,
-      rawBody,
-      signatureHeader,
-      webhookSecret,
-      environment: paddleEnvironment
+    const processResult = await processWebhookEvent({
+      request,
+      locals,
+      paddleApiKey: configResult.paddleApiKey,
+      webhookSecret: configResult.webhookSecret,
+      signatureHeader: configResult.signatureHeader,
+      paddleEnvironment
     })
-    const paddleEvent = parsePaddleWebhookEvent(eventData)
-    if (paddleEvent == null) {
-      throw new Error('Invalid webhook payload')
-    }
-    const supabaseAdmin = getSupabaseAdmin(locals)
-    if (supabaseAdmin == null) {
-      throw new Error('Missing Supabase admin client')
-    }
-
-    const eventInsert = await insertBillingEvent(supabaseAdmin, {
-      notificationId: paddleEvent.notificationId,
-      eventType: paddleEvent.eventType,
-      occurredAt: paddleEvent.occurredAt,
-      payload
-    })
-
-    if (!eventInsert.ok) {
-      throw new Error(eventInsert.error ?? 'billing/webhook-event-insert')
-    }
-
-    if (eventInsert.duplicate) {
-      emitApiLog({
-        level: 'info',
-        event: 'billing_webhook_skipped',
-        message: 'Duplicate billing webhook ignored',
-        context: baseContext,
-        statusCode: 200,
-        durationMs: getDurationMs(startedAt),
-        attributes: {
-          skip_reason: 'duplicate_notification',
-          event_type: paddleEvent.eventType,
-          notification_id: paddleEvent.notificationId
-        }
+    if (processResult.duplicate) {
+      emitDuplicateWebhookLog({
+        baseContext,
+        startedAt,
+        eventType: processResult.eventType,
+        notificationId: processResult.notificationId
       })
       return new Response('', { status: 200 })
     }
-
-    const pendingUpsert = await upsertPendingSubscription(
-      supabaseAdmin,
-      paddleEvent
-    )
-    if (!pendingUpsert.ok) {
-      throw new Error(pendingUpsert.error ?? 'billing/pending-upsert')
-    }
-
-    const linkedSync = await syncLinkedSubscriptionFromPaddleEvent({
-      supabaseAdmin,
-      paddleEvent
-    })
-    if (!linkedSync.ok) {
-      throw new Error(linkedSync.error ?? 'billing/subscription-sync')
-    }
-
-    if (
-      shouldSendMagicLink(paddleEvent.status) &&
-      paddleEvent.email != null &&
-      paddleEvent.paddleSubscriptionId != null
-    ) {
-      const pending = await getPendingSubscriptionForMagicLink(supabaseAdmin, {
-        email: paddleEvent.email,
-        paddleSubscriptionId: paddleEvent.paddleSubscriptionId
-      })
-
-      if (pending != null && pending.magicLinkSentAt == null) {
-        const supabasePublic = getSupabasePublic(locals) as NonNullable<
-          ReturnType<typeof getSupabasePublic>
-        >
-        const sent = await sendCheckoutMagicLink({
-          supabasePublic,
-          email: paddleEvent.email,
-          lang: paddleEvent.lang,
-          request,
-          locals
-        })
-
-        if (!sent.ok) {
-          throw new Error(sent.error ?? 'billing/magic-link-send')
-        }
-
-        await markPendingMagicLinkSent(supabaseAdmin, pending.id)
-      }
-    }
-
-    emitApiLog({
-      level: 'info',
-      event: 'billing_webhook_succeeded',
-      message: 'Billing webhook succeeded',
-      context: baseContext,
-      statusCode: 200,
-      durationMs: getDurationMs(startedAt),
-      attributes: {
-        event_type: paddleEvent.eventType,
-        notification_id: paddleEvent.notificationId
-      }
+    emitSuccessWebhookLog({
+      baseContext,
+      startedAt,
+      eventType: processResult.eventType,
+      notificationId: processResult.notificationId
     })
     return new Response('', { status: 200 })
   } catch (error) {
     const message = getErrorMessage(error)
-    emitApiLog({
-      level: 'error',
-      event: 'billing_webhook_failed',
-      message: 'Billing webhook processing failed',
-      context: baseContext,
-      statusCode: 500,
-      durationMs: getDurationMs(startedAt),
-      errorCode: 'webhook_processing_failed',
-      attributes: {
-        paddle_environment: paddleEnvironment,
-        failure_reason: message
-      }
+    emitFailedWebhookLog({
+      baseContext,
+      startedAt,
+      paddleEnvironment,
+      message
     })
     return json(
       {
@@ -233,4 +95,293 @@ export const POST: APIRoute = async ({ request, locals }) => {
       500
     )
   }
+}
+
+type WebhookConfigResult =
+  | { ok: true; paddleApiKey: string; webhookSecret: string; signatureHeader: string }
+  | { ok: false; response: Response }
+
+function resolveWebhookConfig(args: {
+  request: Request
+  locals: unknown
+  baseContext: ReturnType<typeof createApiLogContext>
+  startedAt: number
+}): WebhookConfigResult {
+  const paddleApiKey = readAppEnv('PADDLE_API_KEY', args.locals)
+  if (paddleApiKey == null) {
+    emitApiLog({
+      level: 'error',
+      event: 'billing_webhook_failed',
+      message: 'Missing Paddle API key',
+      context: args.baseContext,
+      statusCode: 500,
+      durationMs: getDurationMs(args.startedAt),
+      errorCode: 'missing_PADDLE_API_KEY'
+    })
+    return {
+      ok: false,
+      response: json(
+        {
+          error: 'billing/webhook-processing',
+          message: 'Missing PADDLE_API_KEY'
+        },
+        500
+      )
+    }
+  }
+
+  const webhookSecret = readAppEnv('PADDLE_WEBHOOK_SECRET', args.locals)
+  if (webhookSecret == null) {
+    emitApiLog({
+      level: 'error',
+      event: 'billing_webhook_failed',
+      message: 'Missing webhook secret',
+      context: args.baseContext,
+      statusCode: 500,
+      durationMs: getDurationMs(args.startedAt),
+      errorCode: 'missing_paddle_webhook_secret'
+    })
+    return {
+      ok: false,
+      response: json(
+        {
+          error: 'billing/webhook-processing',
+          message: 'Missing PADDLE_WEBHOOK_SECRET'
+        },
+        500
+      )
+    }
+  }
+
+  const signatureHeader = args.request.headers.get('paddle-signature')
+  if (signatureHeader == null || signatureHeader.trim() === '') {
+    emitApiLog({
+      level: 'warn',
+      event: 'billing_webhook_failed',
+      message: 'Missing webhook signature header',
+      context: args.baseContext,
+      statusCode: 400,
+      durationMs: getDurationMs(args.startedAt),
+      errorCode: 'missing_signature'
+    })
+    return {
+      ok: false,
+      response: json(
+        {
+          error: 'billing/webhook-processing',
+          message: 'Missing paddle-signature header'
+        },
+        400
+      )
+    }
+  }
+
+  return { ok: true, paddleApiKey, webhookSecret, signatureHeader }
+}
+
+async function processWebhookEvent(args: {
+  request: Request
+  locals: unknown
+  paddleApiKey: string
+  webhookSecret: string
+  signatureHeader: string
+  paddleEnvironment: Environment
+}): Promise<{ duplicate: boolean; eventType: string; notificationId: string }> {
+  const { payload, paddleEvent } = await parseIncomingWebhook(args)
+  const supabaseAdmin = getSupabaseAdmin(args.locals)
+  if (supabaseAdmin == null) {
+    throw new Error('Missing Supabase admin client')
+  }
+
+  const eventInsert = await insertBillingEvent(supabaseAdmin, {
+    notificationId: paddleEvent.notificationId,
+    eventType: paddleEvent.eventType,
+    occurredAt: paddleEvent.occurredAt,
+    payload
+  })
+  if (!eventInsert.ok) {
+    throw new Error(eventInsert.error ?? 'billing/webhook-event-insert')
+  }
+  if (eventInsert.duplicate) {
+    return {
+      duplicate: true,
+      eventType: paddleEvent.eventType,
+      notificationId: paddleEvent.notificationId
+    }
+  }
+
+  await syncWebhookSideEffects({
+    request: args.request,
+    locals: args.locals,
+    supabaseAdmin,
+    paddleEvent
+  })
+
+  return {
+    duplicate: false,
+    eventType: paddleEvent.eventType,
+    notificationId: paddleEvent.notificationId
+  }
+}
+
+async function parseIncomingWebhook(args: {
+  request: Request
+  paddleApiKey: string
+  webhookSecret: string
+  signatureHeader: string
+  paddleEnvironment: Environment
+}): Promise<{
+  payload: Record<string, unknown>
+  paddleEvent: NonNullable<ReturnType<typeof parsePaddleWebhookEvent>>
+}> {
+  const rawBody = await args.request.text()
+  const payload = JSON.parse(rawBody) as Record<string, unknown>
+  const eventData = await unmarshalPaddleWebhookEvent({
+    apiKey: args.paddleApiKey,
+    rawBody,
+    signatureHeader: args.signatureHeader,
+    webhookSecret: args.webhookSecret,
+    environment: args.paddleEnvironment
+  })
+  const paddleEvent = parsePaddleWebhookEvent(eventData)
+  if (paddleEvent == null) {
+    throw new Error('Invalid webhook payload')
+  }
+  return { payload, paddleEvent }
+}
+
+async function syncWebhookSideEffects(args: {
+  request: Request
+  locals: unknown
+  supabaseAdmin: NonNullable<ReturnType<typeof getSupabaseAdmin>>
+  paddleEvent: NonNullable<ReturnType<typeof parsePaddleWebhookEvent>>
+}): Promise<void> {
+  const pendingUpsert = await upsertPendingSubscription(
+    args.supabaseAdmin,
+    args.paddleEvent
+  )
+  if (!pendingUpsert.ok) {
+    throw new Error(pendingUpsert.error ?? 'billing/pending-upsert')
+  }
+
+  const directLink = await linkSubscriptionToKnownUserFromPaddleEvent({
+    supabaseAdmin: args.supabaseAdmin,
+    paddleEvent: args.paddleEvent
+  })
+  if (!directLink.ok) {
+    throw new Error(directLink.error ?? 'billing/direct-subscription-link')
+  }
+
+  const linkedSync = await syncLinkedSubscriptionFromPaddleEvent({
+    supabaseAdmin: args.supabaseAdmin,
+    paddleEvent: args.paddleEvent
+  })
+  if (!linkedSync.ok) {
+    throw new Error(linkedSync.error ?? 'billing/subscription-sync')
+  }
+
+  if (directLink.linked) {
+    return
+  }
+  if (!shouldSendMagicLink(args.paddleEvent.status)) {
+    return
+  }
+  if (args.paddleEvent.email == null) {
+    return
+  }
+  if (args.paddleEvent.paddleSubscriptionId == null) {
+    return
+  }
+
+  const pending = await getPendingSubscriptionForMagicLink(args.supabaseAdmin, {
+    email: args.paddleEvent.email,
+    paddleSubscriptionId: args.paddleEvent.paddleSubscriptionId
+  })
+  if (pending == null || pending.magicLinkSentAt != null) {
+    return
+  }
+
+  const supabasePublic = getSupabasePublic(args.locals) as NonNullable<
+    ReturnType<typeof getSupabasePublic>
+  >
+  const sent = await sendCheckoutMagicLink({
+    supabasePublic,
+    email: args.paddleEvent.email,
+    lang: args.paddleEvent.lang,
+    request: args.request,
+    locals: args.locals
+  })
+  if (!sent.ok) {
+    throw new Error(sent.error ?? 'billing/magic-link-send')
+  }
+
+  const pendingMarked = await markPendingMagicLinkSent(
+    args.supabaseAdmin,
+    pending.id
+  )
+  if (!pendingMarked.ok) {
+    throw new Error(pendingMarked.error ?? 'billing/magic-link-mark-pending-sent')
+  }
+}
+
+function emitDuplicateWebhookLog(args: {
+  baseContext: ReturnType<typeof createApiLogContext>
+  startedAt: number
+  eventType: string
+  notificationId: string
+}): void {
+  emitApiLog({
+    level: 'info',
+    event: 'billing_webhook_skipped',
+    message: 'Duplicate billing webhook ignored',
+    context: args.baseContext,
+    statusCode: 200,
+    durationMs: getDurationMs(args.startedAt),
+    attributes: {
+      skip_reason: 'duplicate_notification',
+      event_type: args.eventType,
+      notification_id: args.notificationId
+    }
+  })
+}
+
+function emitSuccessWebhookLog(args: {
+  baseContext: ReturnType<typeof createApiLogContext>
+  startedAt: number
+  eventType: string
+  notificationId: string
+}): void {
+  emitApiLog({
+    level: 'info',
+    event: 'billing_webhook_succeeded',
+    message: 'Billing webhook succeeded',
+    context: args.baseContext,
+    statusCode: 200,
+    durationMs: getDurationMs(args.startedAt),
+    attributes: {
+      event_type: args.eventType,
+      notification_id: args.notificationId
+    }
+  })
+}
+
+function emitFailedWebhookLog(args: {
+  baseContext: ReturnType<typeof createApiLogContext>
+  startedAt: number
+  paddleEnvironment: Environment
+  message: string
+}): void {
+  emitApiLog({
+    level: 'error',
+    event: 'billing_webhook_failed',
+    message: 'Billing webhook processing failed',
+    context: args.baseContext,
+    statusCode: 500,
+    durationMs: getDurationMs(args.startedAt),
+    errorCode: 'webhook_processing_failed',
+    attributes: {
+      paddle_environment: args.paddleEnvironment,
+      failure_reason: args.message
+    }
+  })
 }

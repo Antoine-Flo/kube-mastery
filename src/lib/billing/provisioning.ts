@@ -21,6 +21,11 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { CONFIG } from '../../config'
 import { readAppEnv } from '../env'
+import {
+  isAllowedSubscriptionStatus,
+  isPaidSubscriptionStatus,
+  resolvePendingSubscriptionStatus
+} from './domain'
 
 export const PLAN_TIER = {
   BASIC: 'basic',
@@ -30,15 +35,6 @@ export const PLAN_TIER = {
 } as const
 
 export type PlanTier = (typeof PLAN_TIER)[keyof typeof PLAN_TIER]
-
-export const SUBSCRIPTION_STATUS = {
-  ACTIVE: 'active',
-  TRIALING: 'trialing',
-  PAUSED: 'paused',
-  PAST_DUE: 'past_due',
-  CANCELED: 'canceled',
-  UNKNOWN: 'unknown'
-} as const
 
 const billingEnvironment = (readAppEnv('ENVIRONMENT') ?? '').toLowerCase().trim()
 
@@ -54,16 +50,13 @@ const PRICE_ID_TO_PLAN_TIER: Record<string, PlanTier> = {
   [PADDLE_PRICE_ID.PRO_YEARLY]: PLAN_TIER.PRO
 }
 
-const PAID_STATUSES: string[] = [
-  SUBSCRIPTION_STATUS.ACTIVE,
-  SUBSCRIPTION_STATUS.TRIALING
-]
 
 export type ParsedPaddleEvent = {
   notificationId: string
   eventType: string
   occurredAt: string
   email: string | null
+  customDataUserId: string | null
   status: string
   planTier: PlanTier
   paddleSubscriptionId: string | null
@@ -198,6 +191,7 @@ export function parsePaddleWebhookEvent(
   if (isSubscriptionEvent(eventData)) {
     const data = eventData.data
     const email = getCustomDataString(data.customData, 'email')
+    const customDataUserId = getCustomDataString(data.customData, 'user_id')
     const lang = normalizeLang(
       getCustomDataString(data.customData, 'lang') ?? 'en'
     )
@@ -206,6 +200,7 @@ export function parsePaddleWebhookEvent(
       eventType,
       occurredAt,
       email: email == null ? null : normalizeEmail(email),
+      customDataUserId,
       status: data.status,
       planTier: derivePlanTier(collectPriceIdsFromItems(data.items)),
       paddleSubscriptionId: data.id,
@@ -221,6 +216,7 @@ export function parsePaddleWebhookEvent(
   if (isTransactionEvent(eventData)) {
     const data = eventData.data
     const email = getCustomDataString(data.customData, 'email')
+    const customDataUserId = getCustomDataString(data.customData, 'user_id')
     const lang = normalizeLang(
       getCustomDataString(data.customData, 'lang') ?? 'en'
     )
@@ -229,10 +225,8 @@ export function parsePaddleWebhookEvent(
       eventType,
       occurredAt,
       email: email == null ? null : normalizeEmail(email),
-      status:
-        eventData.eventType === EventName.TransactionCompleted
-          ? 'active'
-          : data.status,
+      customDataUserId,
+      status: data.status,
       planTier: derivePlanTier(collectPriceIdsFromItems(data.items)),
       paddleSubscriptionId: data.subscriptionId,
       paddleCustomerId: data.customerId,
@@ -283,7 +277,7 @@ export async function sendCheckoutMagicLink(args: {
 }
 
 export function shouldSendMagicLink(status: string): boolean {
-  return PAID_STATUSES.includes(status)
+  return isPaidSubscriptionStatus(status)
 }
 
 function getPaddleBaseUrl(locals?: unknown): string {
@@ -443,10 +437,27 @@ export async function upsertPendingSubscription(
     planTier
   } = paddleEvent
 
+  let existingStatus: string | null = null
+  if (!isAllowedSubscriptionStatus(status)) {
+    const existing = await supabaseAdmin
+      .from('pending_subscriptions')
+      .select('status')
+      .eq('paddle_subscription_id', paddleSubscriptionId)
+      .maybeSingle()
+    if (existing.error != null) {
+      return { ok: false, error: existing.error.message }
+    }
+    existingStatus = (existing.data?.status as string | null) ?? null
+  }
+  const resolvedStatus = resolvePendingSubscriptionStatus({
+    incomingStatus: status,
+    existingStatus
+  })
+
   const result = await supabaseAdmin.from('pending_subscriptions').upsert(
     {
       email,
-      status,
+      status: resolvedStatus,
       plan_tier: planTier,
       paddle_subscription_id: paddleSubscriptionId,
       paddle_customer_id: paddleCustomerId,
@@ -486,21 +497,25 @@ export async function getPendingSubscriptionForMagicLink(
 export async function markPendingMagicLinkSent(
   supabaseAdmin: SupabaseClient,
   pendingId: string
-): Promise<void> {
-  await supabaseAdmin
+): Promise<{ ok: boolean; error: string | null }> {
+  const result = await supabaseAdmin
     .from('pending_subscriptions')
     .update({
       magic_link_sent_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
     .eq('id', pendingId)
+  if (result.error != null) {
+    return { ok: false, error: result.error.message }
+  }
+  return { ok: true, error: null }
 }
 
 export async function reconcilePendingSubscriptionsForUser(args: {
   supabaseAdmin: SupabaseClient
   userId: string
   email: string
-}): Promise<void> {
+}): Promise<{ ok: boolean; error: string | null }> {
   const normalizedEmail = normalizeEmail(args.email)
   const { data: pendingRows, error: pendingError } = await args.supabaseAdmin
     .from('pending_subscriptions')
@@ -510,20 +525,24 @@ export async function reconcilePendingSubscriptionsForUser(args: {
     .eq('email', normalizedEmail)
 
   if (pendingError != null || pendingRows == null || pendingRows.length === 0) {
-    return
+    return { ok: pendingError == null, error: pendingError?.message ?? null }
   }
 
   for (const pending of pendingRows) {
     const paddleSubscriptionId = pending.paddle_subscription_id as string | null
+    const pendingStatus = (pending.status as string | null) ?? ''
     if (paddleSubscriptionId == null || paddleSubscriptionId === '') {
       continue
     }
+    if (!isAllowedSubscriptionStatus(pendingStatus)) {
+      continue
+    }
 
-    await args.supabaseAdmin.from('subscriptions').upsert(
+    const upsertResult = await args.supabaseAdmin.from('subscriptions').upsert(
       {
         user_id: args.userId,
         plan_tier: (pending.plan_tier as string) || PLAN_TIER.UNKNOWN,
-        status: (pending.status as string) || SUBSCRIPTION_STATUS.UNKNOWN,
+        status: pendingStatus,
         paddle_subscription_id: paddleSubscriptionId,
         paddle_customer_id:
           (pending.paddle_customer_id as string | null) ?? null,
@@ -537,8 +556,11 @@ export async function reconcilePendingSubscriptionsForUser(args: {
       },
       { onConflict: 'paddle_subscription_id' }
     )
+    if (upsertResult.error != null) {
+      return { ok: false, error: upsertResult.error.message }
+    }
 
-    await args.supabaseAdmin
+    const linkResult = await args.supabaseAdmin
       .from('pending_subscriptions')
       .update({
         linked_user_id: args.userId,
@@ -546,7 +568,61 @@ export async function reconcilePendingSubscriptionsForUser(args: {
         updated_at: new Date().toISOString()
       })
       .eq('id', pending.id as string)
+    if (linkResult.error != null) {
+      return { ok: false, error: linkResult.error.message }
+    }
   }
+  return { ok: true, error: null }
+}
+
+export async function linkSubscriptionToKnownUserFromPaddleEvent(args: {
+  supabaseAdmin: SupabaseClient
+  paddleEvent: ParsedPaddleEvent
+}): Promise<{ ok: boolean; linked: boolean; error: string | null }> {
+  const userId = args.paddleEvent.customDataUserId
+  const paddleSubscriptionId = args.paddleEvent.paddleSubscriptionId
+  if (userId == null || userId === '') {
+    return { ok: true, linked: false, error: null }
+  }
+  if (paddleSubscriptionId == null || paddleSubscriptionId === '') {
+    return { ok: true, linked: false, error: null }
+  }
+  if (!isAllowedSubscriptionStatus(args.paddleEvent.status)) {
+    return { ok: true, linked: false, error: null }
+  }
+
+  const upsertResult = await args.supabaseAdmin.from('subscriptions').upsert(
+    {
+      user_id: userId,
+      plan_tier: args.paddleEvent.planTier,
+      status: args.paddleEvent.status,
+      paddle_subscription_id: paddleSubscriptionId,
+      paddle_customer_id: args.paddleEvent.paddleCustomerId,
+      current_period_start: args.paddleEvent.currentPeriodStart,
+      current_period_end: args.paddleEvent.currentPeriodEnd,
+      canceled_at: args.paddleEvent.canceledAt,
+      metadata: toMetadataRecord(args.paddleEvent.rawData),
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: 'paddle_subscription_id' }
+  )
+  if (upsertResult.error != null) {
+    return { ok: false, linked: false, error: upsertResult.error.message }
+  }
+
+  const pendingLinkResult = await args.supabaseAdmin
+    .from('pending_subscriptions')
+    .update({
+      linked_user_id: userId,
+      linked_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq('paddle_subscription_id', paddleSubscriptionId)
+  if (pendingLinkResult.error != null) {
+    return { ok: false, linked: false, error: pendingLinkResult.error.message }
+  }
+
+  return { ok: true, linked: true, error: null }
 }
 
 export async function syncLinkedSubscriptionFromPaddleEvent(args: {
@@ -555,6 +631,9 @@ export async function syncLinkedSubscriptionFromPaddleEvent(args: {
 }): Promise<{ ok: boolean; error: string | null }> {
   const paddleSubscriptionId = args.paddleEvent.paddleSubscriptionId
   if (paddleSubscriptionId == null || paddleSubscriptionId === '') {
+    return { ok: true, error: null }
+  }
+  if (!isAllowedSubscriptionStatus(args.paddleEvent.status)) {
     return { ok: true, error: null }
   }
 
