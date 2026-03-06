@@ -1,0 +1,54 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import ContentWithTerminalLayout from '../../components/lesson/ContentWithTerminalLayout.astro'
+import { useLocalePath, useTranslations } from '../../i18n/utils'
+import { getLayoutAuthContext } from '../../lib/auth/server'
+import '../../styles/components/lesson-content.css'
+import '../../styles/components/cluster-visualization.css'
+import QuickRefContent from '../../courses/cheat-sheets/kubectl-quick-ref.md'
+
+const lang = Astro.params.lang as 'en' | 'fr'
+const t = useTranslations(lang)
+const localePath = useLocalePath(lang)
+
+const auth = await getLayoutAuthContext(Astro.locals, Astro.request, Astro.cookies)
+if (!auth.isLoggedIn) {
+  return Astro.redirect(
+    localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
+  )
+}
+if (!auth.hasPaidSubscription) {
+  return Astro.redirect(localePath('/pricing'))
+}
+
+const contentBarLabels = {
+  labelVisualizer: t('lesson_visualizer'),
+  labelCourse: t('lesson_viewCourse'),
+  labelShowTerminal: t('lesson_showTerminal'),
+  labelHideTerminal: t('lesson_hideTerminal'),
+  labelContactSupport: t('lesson_contactSupport')
+}
+---
+
+<Layout bodyClass="lp-fill navbar-app cheat-sheet-page" showFooter={false}>
+  <ContentWithTerminalLayout
+    seedName="minimal"
+    lang={lang}
+    showSidebar={false}
+    labels={contentBarLabels}
+  >
+    <article class="lesson-content cheat-sheet-content">
+      <QuickRefContent />
+    </article>
+  </ContentWithTerminalLayout>
+</Layout>
+
+<style is:global>
+  body.cheat-sheet-page .lesson-layout__main {
+    max-width: none;
+  }
+
+  body.cheat-sheet-page .cheat-sheet-content {
+    max-width: none;
+  }
+</style>

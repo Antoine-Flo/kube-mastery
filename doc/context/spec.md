@@ -24,6 +24,7 @@ Interactive web application for learning `kubectl` commands through a simulated 
 
 - **Overview** : `/[lang]/[type]/[id]` (type = courses | modules).
 - **Leçon** : `/[lang]/[type]/[id]/[lessonId]`.
+- **Cheat sheet** : `/[lang]/cheat-sheet` (page unique markdown + terminal, acces reserve aux users connectes avec abonnement actif).
 - **Autres** : `/[lang]/courses`, `/[lang]/auth`, `/[lang]/pricing`, etc.
 - **Rollout langue (actuel)** : EN prioritaire. FR reste disponible dans le code mais est desactive via `src/config.ts` (`CONFIG.i18n.enableFrenchUi = false`) ; `/fr/*` redirige vers `/en/*`.
 
@@ -101,6 +102,7 @@ pwd, ls, cd, mkdir (-p), touch, cat, rm (-r), nano/vi/vim, clear, help, debug. D
 - **Persistent state**: Cluster and filesystem saved to localStorage
 - **Full-screen mode**: Terminal only, like real exam environment
 - **Cluster viewer**: Collapsible panel below terminal showing nodes, pods, and containers visually
+- **Cheat sheet access**: `/[lang]/cheat-sheet` is protected at route level; users without paid subscription are redirected (no public terminal preview/overlay).
 
 ## UI Philosophy
 
@@ -336,6 +338,8 @@ All MVP criteria have been met:
 - ✅ Modular architecture
 
 Contenu cours : `src/content/` (facades), `src/courses/` (structure, markdown leçons). Quiz et overview : données build-time, `getLessonContent` / facades.
+
+Cheat sheet content source: `src/courses/cheat-sheets/kubectl-quick-ref.md`.
 
 ## References
 

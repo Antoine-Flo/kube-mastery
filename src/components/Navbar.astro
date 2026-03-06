@@ -16,16 +16,21 @@ interface Props {
   isLoggedIn?: boolean
   user?: NavbarUser | null
   hasPaidSubscription?: boolean
-  /** When true, navbar inner is full width (e.g. landing page). */
-  fullWidth?: boolean
+  /**
+   * 'marketing' = centered navbar, full logo, Pricing/Login visible (default).
+   * 'app'       = full-width navbar, icon-only logo, minimal nav items.
+   */
+  variant?: 'marketing' | 'app'
 }
 
 const {
   isLoggedIn = false,
   user = null,
   hasPaidSubscription = false,
-  fullWidth = false
+  variant = 'marketing'
 } = Astro.props
+
+const isApp = variant === 'app'
 const lang = getLangFromUrl(Astro.url)
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
@@ -33,29 +38,25 @@ const userDisplayName = user?.user_metadata?.full_name ?? ''
 const userEmail = user?.email ?? ''
 ---
 
-<header
-  class:list={{
-    'navbar--logged-in': isLoggedIn,
-    'navbar--full-width': fullWidth
-  }}
->
+<header class:list={{ 'navbar--app': isApp }}>
   <div class="navbar-inner">
     <a
       href={isLoggedIn ? localePath('/courses') : localePath('/')}
       class="logo"
     >
       <Logo size={27} class="logo-icon" />
-      {!isLoggedIn && <span class="logo-name">{t('nav_appName')}</span>}
+      {!isApp && <span class="logo-name">{t('nav_appName')}</span>}
     </a>
 
     <div class="right">
       <nav>
         <a href={localePath('/courses')}>{t('nav_courses')}</a>
-        <a href={localePath('/supported')}>{t('nav_supported')}</a>
-        {!isLoggedIn && <a href={localePath('/pricing')}>{t('nav_pricing')}</a>}
+        {(isLoggedIn && hasPaidSubscription) && <a href={localePath('/cheat-sheet')}>{t('nav_cheatSheet')}</a>}
         {
-          isLoggedIn && !hasPaidSubscription && (
-            <a href={localePath('/pricing')}>{t('nav_upgrade')}</a>
+          !hasPaidSubscription && (
+            <a href={localePath('/pricing')} class="nav-upgrade-link">
+              {isLoggedIn ? t('nav_upgrade') : t('nav_pricing')}
+            </a>
           )
         }
         {
@@ -116,8 +117,7 @@ const userEmail = user?.email ?? ''
     gap: 1rem;
     flex-wrap: wrap;
   }
-  header.navbar--logged-in .navbar-inner,
-  header.navbar--full-width .navbar-inner {
+  header.navbar--app .navbar-inner {
     max-width: none;
   }
 

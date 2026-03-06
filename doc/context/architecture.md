@@ -195,6 +195,21 @@ Portee actuelle:
 
 `src/core/terminal/core/` — TerminalController, InputHandler, LineRenderer. Montage client : `src/components/terminal-mount.ts`, `LessonTerminal.astro`.
 
+### Cheat Sheet Page
+
+Page cheat sheet: `src/pages/[lang]/cheat-sheet.astro`.
+
+- Reutilise `ContentWithTerminalLayout` (meme layout que les pages de lecon, sans duplication),
+- charge le contenu markdown depuis `src/courses/cheat-sheets/kubectl-quick-ref.md`,
+- applique une protection d'acces au niveau route via `getLayoutAuthContext(...)` (abonnement actif requis).
+
+### Navigation Shells
+
+La navbar est pilotee par variante (`marketing` | `app`) dans `src/components/Navbar.astro`:
+
+- `marketing`: navbar centree pour pages publiques,
+- `app`: navbar full-width pour pages applicatives (cours, terminal, cheat sheet).
+
 ## Module Structure
 
 ```
@@ -216,7 +231,7 @@ src/
 │   ├── lesson/                   # LessonQuizNav, LessonTerminal, LessonClusterViewer, etc.
 │   └── overview/
 ├── content/                      # Content collections (courses, overview), facades
-├── courses/                      # course-structure.ts, modules/*, seeds/ (filesystem seeds + getSeed)
+├── courses/                      # course-structure.ts, modules/*, seeds/ (filesystem seeds + getSeed), cheat-sheets/*
 ├── lib/
 │   ├── supabase.ts
 │   └── progress/                 # domain, server, supabase-adapter

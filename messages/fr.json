@@ -24,7 +24,7 @@
   "nav_appName": "KubeMastery",
   "nav_courses": "Cours",
   "nav_pricing": "Tarifs",
-  "nav_supported": "Supporté",
+  "nav_supported": "Couverture",
   "nav_toggleTheme": "Basculer le thème",
   "nav_login": "Connexion",
   "nav_logout": "Déconnexion",
@@ -132,7 +132,7 @@
   "footer_termsOfService": "Conditions d'utilisation",
   "footer_privacyPolicy": "Politique de confidentialité",
   "footer_contact": "Contact",
-  "footer_supported": "Supporté",
+  "footer_supported": "Couverture",
   "termsOfService_title": "Conditions d'utilisation",
   "termsOfService_lastUpdated": "Dernière mise à jour : 4 mars 2026",
   "termsOfService_intro": "Bienvenue sur KubeMastery. En accédant ou en utilisant notre plateforme, vous acceptez d'être lié par ces Conditions d'utilisation. Veuillez les lire attentivement. Pour la manière dont nous traitons vos données personnelles et vos données d'usage analytics, consultez également notre Politique de confidentialité.",
@@ -311,5 +311,6 @@
   "supported_prereq_kubernetes_text": "Commencer Kubernetes avec des fondations solides et se concentrer sur architecture, opérations et troubleshooting.",
   "supported_transparency_note": "KubeMastery est un simulateur local avec une roadmap progressive. La couverture est affichée explicitement pour que vous sachiez toujours à quoi vous attendre.",
   "supported_cta_text": "Envie de vous entraîner avec ce qui est déjà disponible aujourd'hui ?",
-  "supported_cta_button": "Explorer les cours"
+  "supported_cta_button": "Explorer les cours",
+  "nav_cheatSheet": "Cheat Sheet"
 }

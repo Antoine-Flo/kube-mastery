@@ -2,30 +2,30 @@
 
 ---
 
-<div class="ov">
-  <div class="c">
+<div class="overview">
+  <div class="container">
     <slot />
   </div>
 </div>
 
 <style>
-  .ov {
+  .overview {
     max-width: var(--content-max-width);
     margin: 0 auto;
-    padding: 2rem 1rem;
+    padding: 2rem 0;
   }
   @media (min-width: 768px) {
-    .ov {
-      padding: 3rem 2rem;
+    .overview {
+      padding: 3rem 0;
     }
   }
-  .ov .c {
+  .overview .container {
     display: flex;
     flex-direction: column;
     gap: 2rem;
   }
   @media (min-width: 1024px) {
-    .ov .c {
+    .overview .container {
       flex-direction: row;
       gap: 3rem;
       align-items: flex-start;
