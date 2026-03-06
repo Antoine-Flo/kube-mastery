@@ -2,7 +2,8 @@ import { readFileSync, statSync } from 'fs'
 import { basename, join } from 'path'
 import { createClusterState } from '../../../src/core/cluster/ClusterState'
 import { initializeControllers } from '../../../src/core/cluster/controllers/initializers'
-import { type ClusterNodeRole } from '../../../src/config/clusterConfig'
+import { CONFIG } from '../../../src/config'
+import { type ClusterNodeRole } from '../../../src/core/cluster/clusterConfig'
 import { createEventBus } from '../../../src/core/cluster/events/EventBus'
 import { reconcileInitContainers } from '../../../src/core/cluster/initContainers/reconciler'
 import { parseKubernetesYaml } from '../../../src/core/kubectl/yamlParser'
@@ -13,10 +14,7 @@ import { createFileSystem } from '../../../src/core/filesystem/FileSystem'
 import { createDirectory } from '../../../src/core/filesystem/models/Directory'
 import { createFile } from '../../../src/core/filesystem/models/File'
 import { createLogger } from '../../../src/logger/Logger'
-import {
-  CONFORMANCE_CLUSTER_NAME,
-  getConformanceBootstrapConfig
-} from '../../../src/config/runtimeConfig'
+import { createConformanceBootstrapConfig } from '../../../src/core/cluster/systemBootstrap'
 import { parseCommand } from '../../../src/core/kubectl/commands/parser'
 import { listYamlFiles } from '../cluster-manager'
 import { loadClusterNodeRoles } from '../cluster-manager'
@@ -198,7 +196,7 @@ const isPodReadyForWait = (pod: Pod): boolean => {
 }
 
 export const createRunnerExecutor = (
-  clusterName = CONFORMANCE_CLUSTER_NAME
+  clusterName = CONFIG.cluster.conformanceClusterName
 ): RunnerExecutor => {
   const logger = createLogger({ mirrorToConsole: false })
   const eventBus = createEventBus()
@@ -207,7 +205,7 @@ export const createRunnerExecutor = (
     ? nodeRolesResult.value
     : undefined
   const clusterState = createClusterState(eventBus, {
-    bootstrap: getConformanceBootstrapConfig(clusterName, nodeRoles)
+    bootstrap: createConformanceBootstrapConfig(clusterName, nodeRoles)
   })
   const controllers = initializeControllers(eventBus, clusterState)
   const fileSystem = createFileSystem()

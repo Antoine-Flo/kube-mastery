@@ -1,7 +1,12 @@
-import { I18N_CONFIG, type UiLanguage } from '../config/i18nConfig'
+import {
+  defaultLang,
+  enabledLanguages,
+  languages,
+  type UiLanguage
+} from './ui'
 
 function isUiLanguage(value: string): value is UiLanguage {
-  return Object.hasOwn(I18N_CONFIG.languageLabels, value)
+  return Object.hasOwn(languages, value)
 }
 
 export function getDisabledLocaleRedirectPath(
@@ -15,11 +20,11 @@ export function getDisabledLocaleRedirectPath(
   if (!isUiLanguage(firstSegment)) {
     return null
   }
-  if (I18N_CONFIG.enabledLanguages.includes(firstSegment)) {
+  if (enabledLanguages.includes(firstSegment)) {
     return null
   }
 
   const remainingPath =
     remainingSegments.length > 0 ? `/${remainingSegments.join('/')}` : ''
-  return `/${I18N_CONFIG.defaultLang}${remainingPath}${search}`
+  return `/${defaultLang}${remainingPath}${search}`
 }

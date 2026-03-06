@@ -4,6 +4,7 @@ import {
   DEFAULT_CLUSTER_NODE_ROLES,
   type ClusterNodeRole
 } from './clusterConfig'
+import { CONFIG } from '../../config'
 import { getSystemWorkloads } from './systemPods'
 import type { SimSystemWorkloadPolicy } from './systemWorkloads/SimWorkloadSpecs'
 import type { ConfigMap } from './ressources/ConfigMap'
@@ -53,6 +54,25 @@ export const DEFAULT_KIND_LIKE_BOOTSTRAP: Readonly<
   profile: 'kind-like',
   mode: 'missing-only'
 })
+
+export const createSimulatorBootstrapConfig = (): ClusterBootstrapConfig => {
+  return {
+    ...DEFAULT_KIND_LIKE_BOOTSTRAP,
+    clusterName: CONFIG.cluster.simulatorClusterName,
+    nodeRoles: DEFAULT_CLUSTER_NODE_ROLES
+  }
+}
+
+export const createConformanceBootstrapConfig = (
+  clusterName = CONFIG.cluster.conformanceClusterName,
+  nodeRoles: readonly ClusterNodeRole[] = DEFAULT_CLUSTER_NODE_ROLES
+): ClusterBootstrapConfig => {
+  return {
+    ...DEFAULT_KIND_LIKE_BOOTSTRAP,
+    clusterName,
+    nodeRoles
+  }
+}
 
 const createReadyCondition = (): NodeCondition => {
   return {

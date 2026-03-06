@@ -10,7 +10,7 @@
 - **Build**: Astro
 - **Styling**: CSS avec variables (`src/styles/`), lightningcss
 - **Icons**: @lucide/astro
-- **i18n**: `messages/*.json` + `src/i18n/ui.ts`, `src/config/i18nConfig.ts`, `useTranslations(lang)`, `useLocalePath(lang)`, middleware de gate locale (`src/middleware.ts`)
+- **i18n**: `messages/*.json` + `src/i18n/ui.ts`, `src/config.ts`, `useTranslations(lang)`, `useLocalePath(lang)`, middleware de gate locale (`src/middleware.ts`)
 - **Persistence**: localStorage, IndexedDB (`src/core/storage/`)
 - **YAML**: yaml 2.8.2
 - **Markdown**: Astro Content (build-time), astro-expressive-code, astro-mermaid
@@ -221,7 +221,7 @@ src/
 │   ├── supabase.ts
 │   └── progress/                 # domain, server, supabase-adapter
 ├── i18n/                         # ui.ts, utils.ts (useTranslations, useLocalePath)
-├── config/                       # runtime/cluster/storage + i18nConfig (feature flags i18n)
+├── config.ts                     # single runtime config object (i18n/cluster/runtime/storage/billing)
 ├── middleware.ts                 # redirections de locales desactivees
 ├── styles/                       # variables.css, reset, components/, routes/
 ├── core/
@@ -244,7 +244,7 @@ src/
 ## Language Rollout Strategy
 
 - **Focus actuel**: version **EN** uniquement pour accelerer la production de contenu et le lancement.
-- **FR** est conserve dans le code et les messages, mais verrouille via flag dans `src/config/i18nConfig.ts` (`ENABLE_FRENCH_UI`).
+- **FR** est conserve dans le code et les messages, mais verrouille via flag dans `src/config.ts` (`CONFIG.i18n.enableFrenchUi`).
 - Quand FR est desactive:
   - les URLs `/fr/*` sont redirigees vers `/en/*`,
   - le switch de langue est masque dans le footer.

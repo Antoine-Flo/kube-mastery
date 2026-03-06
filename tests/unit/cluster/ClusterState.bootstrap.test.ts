@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { CONFIG } from '../../../src/config'
 import { createClusterState } from '../../../src/core/cluster/ClusterState'
-import { SIMULATOR_CLUSTER_NAME } from '../../../src/config/runtimeConfig'
 import { createEventBus } from '../../../src/core/cluster/events/EventBus'
 import { DEFAULT_KIND_LIKE_BOOTSTRAP } from '../../../src/core/cluster/systemBootstrap'
 
@@ -18,14 +18,14 @@ describe('createClusterState bootstrap policy', () => {
     const clusterState = createClusterState(eventBus, {
       bootstrap: {
         ...DEFAULT_KIND_LIKE_BOOTSTRAP,
-        clusterName: SIMULATOR_CLUSTER_NAME
+        clusterName: CONFIG.cluster.simulatorClusterName
       }
     })
 
     expect(clusterState.getNodes().map((node) => node.metadata.name)).toEqual([
-      `${SIMULATOR_CLUSTER_NAME}-control-plane`,
-      `${SIMULATOR_CLUSTER_NAME}-worker`,
-      `${SIMULATOR_CLUSTER_NAME}-worker2`
+      `${CONFIG.cluster.simulatorClusterName}-control-plane`,
+      `${CONFIG.cluster.simulatorClusterName}-worker`,
+      `${CONFIG.cluster.simulatorClusterName}-worker2`
     ])
     expect(
       clusterState.getConfigMaps('default').some((configMap) => {

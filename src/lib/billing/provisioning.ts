@@ -19,6 +19,7 @@ import {
   type TransactionUpdatedEvent
 } from '@paddle/paddle-node-sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { CONFIG } from '../../config'
 import { readAppEnv } from '../env'
 
 export const PLAN_TIER = {
@@ -39,12 +40,12 @@ export const SUBSCRIPTION_STATUS = {
   UNKNOWN: 'unknown'
 } as const
 
-const PADDLE_PRICE_ID = {
-  BASIC_MONTHLY: 'pri_01kjfr83ph95rmgypgrdsc20bs',
-  BASIC_YEARLY: 'pri_01kjfr962x53wh4wnkywjmc94s',
-  PRO_MONTHLY: 'pri_01kjfgeb1amgf8ht2fxaqsshhg',
-  PRO_YEARLY: 'pri_01kjfgg9mz5586yyaxkepp4aa3'
-} as const
+const billingEnvironment = (readAppEnv('ENVIRONMENT') ?? '').toLowerCase().trim()
+
+export const PADDLE_PRICE_ID =
+  billingEnvironment === 'production'
+    ? CONFIG.billing.paddlePriceIds.production
+    : CONFIG.billing.paddlePriceIds.staging
 
 const PRICE_ID_TO_PLAN_TIER: Record<string, PlanTier> = {
   [PADDLE_PRICE_ID.BASIC_MONTHLY]: PLAN_TIER.BASIC,
@@ -294,9 +295,9 @@ function getPaddleBaseUrl(locals?: unknown): string {
 }
 
 function getPaddleApiKey(locals?: unknown): string {
-  const stagingApiKey = readAppEnv('PADDLE_API_KEY_STAGING', locals)
+  const stagingApiKey = readAppEnv('PADDLE_API_KEY', locals)
   if (stagingApiKey == null) {
-    throw new Error('Missing PADDLE_API_KEY_STAGING')
+    throw new Error('Missing PADDLE_API_KEY')
   }
   return stagingApiKey
 }

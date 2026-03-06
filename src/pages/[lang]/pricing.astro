@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
+import { CONFIG } from '../../config'
 import { readAppEnv } from '../../lib/env'
 import { getLayoutAuthContext } from '../../lib/auth/server'
 import Button from '../../components/ui/Button.astro'
@@ -25,17 +26,22 @@ const isProduction = environment === 'production'
 const paddleClientToken = isProduction
   ? (readAppEnv('PADDLE_CLIENT_TOKEN', Astro.locals) ?? '')
   : (readAppEnv('PADDLE_CLIENT_TOKEN_STAGING', Astro.locals) ?? '')
+
 if (paddleClientToken === '') {
   throw new Error(
     'Missing Paddle client token. Set PADDLE_CLIENT_TOKEN[_STAGING].'
   )
 }
+
 const paddleEnvironment = isProduction ? 'production' : 'sandbox'
 
-const BASIC_MONTHLY_PRICE_ID = 'pri_01kjfr83ph95rmgypgrdsc20bs'
-const BASIC_YEARLY_PRICE_ID = 'pri_01kjfr962x53wh4wnkywjmc94s'
-const PRO_MONTHLY_PRICE_ID = 'pri_01kjfgeb1amgf8ht2fxaqsshhg'
-const PRO_YEARLY_PRICE_ID = 'pri_01kjfgg9mz5586yyaxkepp4aa3'
+const activePaddlePriceIds = isProduction
+  ? CONFIG.billing.paddlePriceIds.production
+  : CONFIG.billing.paddlePriceIds.staging
+const BASIC_MONTHLY_PRICE_ID = activePaddlePriceIds.BASIC_MONTHLY
+const BASIC_YEARLY_PRICE_ID = activePaddlePriceIds.BASIC_YEARLY
+const PRO_MONTHLY_PRICE_ID = activePaddlePriceIds.PRO_MONTHLY
+const PRO_YEARLY_PRICE_ID = activePaddlePriceIds.PRO_YEARLY
 
 const basicDetailYearlyText = t('pricing_detail_yearly', {
   total: '--'

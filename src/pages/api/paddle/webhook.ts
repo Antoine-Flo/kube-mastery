@@ -43,7 +43,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     locals
   })
   const paddleEnvironment = Environment.sandbox
-  const paddleApiKey = readAppEnv('PADDLE_API_KEY_STAGING', locals)
+  const paddleApiKey = readAppEnv('PADDLE_API_KEY', locals)
   if (paddleApiKey == null) {
     emitApiLog({
       level: 'error',
@@ -52,12 +52,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       context: baseContext,
       statusCode: 500,
       durationMs: getDurationMs(startedAt),
-      errorCode: 'missing_paddle_api_key_staging'
+      errorCode: 'missing_PADDLE_API_KEY'
     })
     return json(
       {
         error: 'billing/webhook-processing',
-        message: 'Missing PADDLE_API_KEY_STAGING'
+        message: 'Missing PADDLE_API_KEY'
       },
       500
     )

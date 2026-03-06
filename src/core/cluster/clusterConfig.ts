@@ -1,15 +1,11 @@
 import { parse as parseYaml } from 'yaml'
-import {
-  DEFAULT_CLUSTER_CONFIG_PATH,
-  DEFAULT_CLUSTER_NODE_ROLES,
-  type ClusterNodeRole
-} from '../../config/clusterConfig'
+import { CONFIG } from '../../config'
 
-export {
-  DEFAULT_CLUSTER_CONFIG_PATH,
-  DEFAULT_CLUSTER_NODE_ROLES,
-  type ClusterNodeRole
-}
+export type ClusterNodeRole = 'control-plane' | 'worker'
+
+export const DEFAULT_CLUSTER_CONFIG_PATH = CONFIG.cluster.defaultConfigPath
+export const DEFAULT_CLUSTER_NODE_ROLES: readonly ClusterNodeRole[] =
+  CONFIG.cluster.defaultNodeRoles
 
 interface KindClusterNodeConfig {
   role?: string

@@ -11,18 +11,14 @@ import {
 } from '../cluster/controllers/initializers'
 import { createEventBus, type EventBus } from '../cluster/events/EventBus'
 import { initializeSimPodIpAllocation } from '../cluster/ipAllocator/SimPodIpAllocationService'
+import { createSimulatorBootstrapConfig } from '../cluster/systemBootstrap'
 import type { AppEvent } from '../events/AppEvent'
 import { createHostFileSystem } from '../filesystem/debianFileSystem'
 import { initializeSimNetworkRuntime } from '../network/SimNetworkRuntime'
 import { initializeSimVolumeRuntime } from '../volumes/SimVolumeRuntime'
 import { saveSandboxEnvironment } from '../storage/indexedDBAdapter'
 import { ShellContextStack } from '../terminal/core/ShellContext'
-import {
-  getSimulatorBootstrapConfig,
-  getRuntimeControllerResyncConfig,
-  SIM_POD_PENDING_DELAY_RANGE_MS,
-  SIM_POD_SCHEDULING_DELAY_RANGE_MS
-} from '../../config/runtimeConfig'
+import { CONFIG } from '../../config'
 import type {
   CreateEmulatedEnvironmentOptions,
   EmulatedEnvironment
@@ -67,7 +63,7 @@ export function createEmulatedEnvironment(
   let eventBus: EventBus
   let clusterState
   let storageMode: 'indexeddb' | 'none' = 'none'
-  const bootstrapConfig = getSimulatorBootstrapConfig()
+  const bootstrapConfig = createSimulatorBootstrapConfig()
 
   if (providedFilesystemState) {
     storageMode = userId ? 'indexeddb' : 'none'
@@ -89,17 +85,17 @@ export function createEmulatedEnvironment(
   const volumeRuntime = initializeSimVolumeRuntime(eventBus, clusterState)
   const networkRuntime = initializeSimNetworkRuntime(eventBus, clusterState)
 
-  const resyncConfig = getRuntimeControllerResyncConfig()
+  const resyncConfig = CONFIG.runtime.simRuntimeResyncIntervalMs
   const controllers = initializeControllers(eventBus, clusterState, {
     deployment: { resyncIntervalMs: resyncConfig.deployment },
     daemonSet: { resyncIntervalMs: resyncConfig.daemonSet },
     replicaSet: { resyncIntervalMs: resyncConfig.replicaSet },
     scheduler: {
-      schedulingDelayRangeMs: SIM_POD_SCHEDULING_DELAY_RANGE_MS,
+      schedulingDelayRangeMs: CONFIG.runtime.simPodSchedulingDelayRangeMs,
       resyncIntervalMs: resyncConfig.scheduler
     },
     podLifecycle: {
-      pendingDelayRangeMs: SIM_POD_PENDING_DELAY_RANGE_MS,
+      pendingDelayRangeMs: CONFIG.runtime.simPodPendingDelayRangeMs,
       resyncIntervalMs: resyncConfig.podLifecycle,
       volumeReadinessProbe: (pod) => {
         return (

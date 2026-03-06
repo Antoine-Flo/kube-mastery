@@ -4,7 +4,7 @@ import { join } from 'path'
 import {
   DEFAULT_CLUSTER_CONFIG_PATH,
   type ClusterNodeRole
-} from '../../src/config/clusterConfig'
+} from '../../src/core/cluster/clusterConfig'
 import { parseClusterNodeRolesFromKindConfig } from '../../src/core/cluster/clusterConfig'
 import type { Result } from './types'
 import { error, success } from './types'

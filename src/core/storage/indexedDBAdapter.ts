@@ -8,7 +8,7 @@ import type { ClusterStateData } from '../cluster/ClusterState'
 import type { FileSystemState } from '../filesystem/FileSystem'
 import type { Result } from '../shared/result'
 import { error, success } from '../shared/result'
-import { INDEXED_DB_CONFIG } from '../../config/storageConfig'
+import { CONFIG } from '../../config'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -30,8 +30,8 @@ export interface SandboxEnvironment {
 const openDatabase = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(
-      INDEXED_DB_CONFIG.name,
-      INDEXED_DB_CONFIG.version
+      CONFIG.storage.indexedDb.name,
+      CONFIG.storage.indexedDb.version
     )
 
     request.onerror = () => {
@@ -44,8 +44,8 @@ const openDatabase = (): Promise<IDBDatabase> => {
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result
-      if (!db.objectStoreNames.contains(INDEXED_DB_CONFIG.storeName)) {
-        db.createObjectStore(INDEXED_DB_CONFIG.storeName, {
+      if (!db.objectStoreNames.contains(CONFIG.storage.indexedDb.storeName)) {
+        db.createObjectStore(CONFIG.storage.indexedDb.storeName, {
           keyPath: 'userId'
         })
       }
@@ -64,10 +64,10 @@ export const saveSandboxEnvironment = async (
   try {
     const db = await openDatabase()
     const transaction = db.transaction(
-      [INDEXED_DB_CONFIG.storeName],
+      [CONFIG.storage.indexedDb.storeName],
       'readwrite'
     )
-    const store = transaction.objectStore(INDEXED_DB_CONFIG.storeName)
+    const store = transaction.objectStore(CONFIG.storage.indexedDb.storeName)
 
     const environment: SandboxEnvironment & { userId: string } = {
       userId,

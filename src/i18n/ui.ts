@@ -1,15 +1,17 @@
 import enRaw from '../../messages/en.json'
 import frRaw from '../../messages/fr.json'
-import { I18N_CONFIG, type UiLanguage } from '../config/i18nConfig'
+import { CONFIG } from '../config'
 
 function stripSchema(o: Record<string, unknown>): Record<string, string> {
   const { $schema, ...rest } = o
   return rest as Record<string, string>
 }
 
-export const languages = I18N_CONFIG.languageLabels
-export const enabledLanguages = I18N_CONFIG.enabledLanguages
-export const defaultLang = I18N_CONFIG.defaultLang
+export const languages = CONFIG.i18n.languageLabels
+export type UiLanguage = keyof typeof languages
+export const enabledLanguages: readonly UiLanguage[] =
+  CONFIG.i18n.enabledLanguages
+export const defaultLang = CONFIG.i18n.defaultLang
 export const showDefaultLang = false
 
 export const ui = {

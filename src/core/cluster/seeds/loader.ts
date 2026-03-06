@@ -11,7 +11,10 @@ import { createEventBus } from '../events/EventBus'
 import type { ConfigMap } from '../ressources/ConfigMap'
 import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
+import type { Ingress } from '../ressources/Ingress'
 import type { Node } from '../ressources/Node'
+import type { PersistentVolume } from '../ressources/PersistentVolume'
+import type { PersistentVolumeClaim } from '../ressources/PersistentVolumeClaim'
 import type { Pod } from '../ressources/Pod'
 import type { ReplicaSet } from '../ressources/ReplicaSet'
 import type { Secret } from '../ressources/Secret'
@@ -20,7 +23,7 @@ import { applyResourceWithEvents } from '../../kubectl/commands/handlers/resourc
 import { parseKubernetesYaml } from '../../kubectl/yamlParser'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import { getSimulatorBootstrapConfig } from '../../../config/runtimeConfig'
+import { createSimulatorBootstrapConfig } from '../systemBootstrap'
 import { readdirSync, readFileSync } from 'fs'
 import { join } from 'path'
 
@@ -42,10 +45,13 @@ type ParsedResource =
   | ConfigMap
   | Secret
   | Node
+  | PersistentVolume
+  | PersistentVolumeClaim
   | ReplicaSet
   | Deployment
   | DaemonSet
   | Service
+  | Ingress
 
 /**
  * Parse multi-document YAML, skipping unsupported kinds (e.g. Namespace).
@@ -80,7 +86,7 @@ const loadClusterStateFromYamlContent = (
 ): Result<ClusterState, string> => {
   const bus = eventBus ?? createEventBus()
   const clusterState = createClusterState(bus, {
-    bootstrap: getSimulatorBootstrapConfig()
+    bootstrap: createSimulatorBootstrapConfig()
   })
   const resources = parseMultiDocumentYamlSkipUnsupported(yamlContent)
 
