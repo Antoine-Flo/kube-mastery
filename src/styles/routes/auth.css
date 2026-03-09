@@ -52,30 +52,6 @@
   gap: var(--spacing-4);
 }
 
-.auth__segment {
-  display: flex;
-  gap: 0;
-  border-radius: var(--radius-md);
-  background-color: var(--color-gray-3);
-  padding: 2px;
-}
-
-.auth__segment-btn {
-  flex: 1;
-  padding: var(--spacing-2) var(--spacing-3);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  font-size: var(--text-sm);
-  color: var(--color-gray-11);
-  cursor: pointer;
-}
-
-.auth__segment-btn--active {
-  background-color: var(--color-gray-1);
-  color: var(--color-gray-12);
-}
-
 .auth__field {
   display: flex;
   flex-direction: column;
@@ -151,6 +127,4 @@
 }
 
 /* Auth Confirm Message */
-.auth__confirm-message {
-  color: var(--color-gray-11);
-}
+

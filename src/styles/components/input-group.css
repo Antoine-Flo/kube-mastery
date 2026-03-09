@@ -1,35 +1,14 @@
 /* Input Group Root */
-.input-group {
-  position: relative;
-  width: 100%;
-}
 
 /* Input Group Element (start/end) */
-.input-group__element {
-  align-items: center;
-  color: var(--color-fg-muted);
-  display: flex;
-  height: 100%;
-  justify-content: center;
-  position: absolute;
-  z-index: 2;
-}
 
 .input-group__element .icon {
   color: var(--color-fg-subtle);
 }
 
 /* Input Group Element - Start */
-.input-group__element--start {
-  left: 0;
-  top: 0;
-}
 
 /* Input Group Element - End */
-.input-group__element--end {
-  right: 0;
-  top: 0;
-}
 
 /* Input padding adjustments based on size */
 .input-group--size-xs .input-group__element {

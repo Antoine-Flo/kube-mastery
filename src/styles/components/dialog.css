@@ -34,21 +34,9 @@
   align-items: center;
 }
 
-.dialog__positioner--placement-top {
-  align-items: flex-start;
-}
-
-.dialog__positioner--placement-bottom {
-  align-items: flex-end;
-}
-
 .dialog__positioner--scroll-outside {
   overflow: auto;
   pointer-events: auto;
-}
-
-.dialog__positioner--scroll-inside {
-  overflow: hidden;
 }
 
 /* Dialog Content */
@@ -129,42 +117,6 @@
 }
 
 /* Dialog Content - Sizes */
-.dialog__content--size-xs {
-  max-width: 20rem;
-}
-
-.dialog__content--size-sm {
-  max-width: 24rem;
-}
-
-.dialog__content--size-md {
-  max-width: 28rem;
-}
-
-.dialog__content--size-lg {
-  max-width: 32rem;
-}
-
-.dialog__content--size-xl {
-  max-width: 36rem;
-}
-
-.dialog__content--size-cover {
-  width: 100%;
-  height: 100%;
-  --dialog-margin: 0;
-}
-
-.dialog__positioner--size-cover {
-  padding: 2rem;
-}
-
-.dialog__content--size-full {
-  max-width: 100dvw;
-  min-height: 100dvh;
-  --dialog-margin: 0;
-  border-radius: 0;
-}
 
 /* Dialog Content - Placement */
 .dialog__content--placement-center {
@@ -173,22 +125,7 @@
   margin-right: auto;
 }
 
-.dialog__content--placement-top {
-  --dialog-base-margin: 4rem;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.dialog__content--placement-bottom {
-  --dialog-base-margin: 4rem;
-  margin-left: auto;
-  margin-right: auto;
-}
-
 /* Dialog Content - Scroll Behavior */
-.dialog__content--scroll-inside {
-  max-height: calc(100% - 7.5rem);
-}
 
 /* Dialog Header */
 .dialog__header {
@@ -224,10 +161,6 @@
     padding-left: var(--spacing-6);
     padding-right: var(--spacing-6);
   }
-}
-
-.dialog__body--scroll-inside {
-  overflow: auto;
 }
 
 /* Dialog Footer */
@@ -308,9 +241,6 @@
 }
 
 /* Dialog Trigger */
-.dialog__trigger {
-  /* No specific styles, inherits from parent */
-}
 
 /* Keyframes - will be in animations/keyframes.css later */
 @keyframes fade-in {

@@ -5,39 +5,3 @@
   padding: 4rem 2rem;
 }
 
-.terms-of-service__title {
-  font-size: 1.875rem;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-gray-12);
-  margin-bottom: 2rem;
-}
-
-.terms-of-service__last-updated {
-  color: var(--color-gray-9);
-  font-size: 0.875rem;
-  margin-bottom: 1.5rem;
-}
-
-.terms-of-service__intro {
-  color: var(--color-gray-11);
-  line-height: 1.6;
-  margin-bottom: 2rem;
-  font-size: 1.125rem;
-}
-
-.terms-of-service__section {
-  margin-bottom: 2.5rem;
-}
-
-.terms-of-service__section-title {
-  font-size: 1.25rem;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-gray-12);
-  margin-bottom: 1rem;
-}
-
-.terms-of-service__section-content {
-  color: var(--color-gray-11);
-  line-height: 1.7;
-  margin-bottom: 0;
-}

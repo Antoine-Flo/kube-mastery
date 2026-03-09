@@ -1,9 +1,4 @@
 /* Button Group Base */
-.button-group {
-  display: inline-flex;
-  position: relative;
-  gap: var(--spacing-2);
-}
 
 .button-group > * {
   position: relative;
@@ -14,18 +9,8 @@
 }
 
 /* Button Group Orientation */
-.button-group--horizontal {
-  flex-direction: row;
-}
-
-.button-group--vertical {
-  flex-direction: column;
-}
 
 /* Button Group Attached */
-.button-group--attached {
-  gap: 0;
-}
 
 .button-group--attached.button-group--horizontal > *:first-child {
   border-end-end-radius: 0;
@@ -62,9 +47,6 @@
 }
 
 /* Button Group Grow */
-.button-group--grow {
-  display: flex;
-}
 
 .button-group--grow > * {
   flex: 1;

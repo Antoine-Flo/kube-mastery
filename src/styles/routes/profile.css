@@ -5,11 +5,6 @@
   padding: 4rem 2rem;
 }
 
-.profile__loading {
-  padding: 4rem;
-  text-align: center;
-}
-
 .profile__title {
   font-size: 1.5rem;
   font-weight: var(--font-weight-bold);
@@ -17,27 +12,7 @@
   margin-bottom: 2rem;
 }
 
-.profile__form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-4);
-}
-
-.profile__description {
-  color: var(--color-gray-11);
-  font-size: var(--text-sm);
-  margin-bottom: var(--spacing-3);
-}
-
-.profile__delete-button {
-  color: var(--color-ruby-11);
-  border-color: var(--color-ruby-7);
-}
-
 .profile__delete-button:hover {
   background-color: var(--color-ruby-3);
 }
 
-.profile__confirm-message {
-  color: var(--color-gray-11);
-}

@@ -1,40 +1,10 @@
 /* Segment Group Root */
-.segment-group {
-  background-color: var(--color-gray-2);
-  border-radius: var(--radius-l3);
-  box-shadow: inset 0 0 0 1px var(--color-border);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  isolation: isolate;
-  position: relative;
-}
 
 [data-theme='dark'] .segment-group {
   background-color: var(--color-gray-1);
 }
 
-.segment-group--vertical {
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.segment-group--fitted {
-  display: flex;
-}
-
 /* Segment Group Item */
-.segment-group__item {
-  align-items: center;
-  border-radius: var(--radius-l3);
-  display: inline-flex;
-  flex-shrink: 0;
-  font-weight: var(--font-weight-medium);
-  gap: var(--spacing-2);
-  justify-content: center;
-  position: relative;
-  user-select: none;
-}
 
 .segment-group__item:disabled {
   opacity: 0.5;
@@ -68,55 +38,20 @@
 }
 
 /* Segment Group Indicator */
-.segment-group__indicator {
-  background-color: white;
-  border-width: 1px;
-  border-color: var(--color-border);
-  border-style: solid;
-  border-radius: var(--radius-l3);
-  height: var(--segment-indicator-height);
-  position: absolute;
-  width: var(--segment-indicator-width);
-  left: var(--segment-indicator-left);
-  top: var(--segment-indicator-top);
-  z-index: -1;
-  transition:
-    left var(--duration-normal),
-    top var(--duration-normal),
-    width var(--duration-normal),
-    height var(--duration-normal);
-}
 
 [data-theme='dark'] .segment-group__indicator {
   background-color: var(--color-gray-2);
 }
 
 /* Segment Group Item Text */
-.segment-group__item-text {
-}
 
 /* Segment Group Item Control (label wrapper) */
-.segment-group__item-control {
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-}
 
 .segment-group__item-control:has(input:disabled) {
   cursor: not-allowed;
 }
 
 /* Segment Group Item Hidden Input */
-.segment-group__item-hidden-input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-  width: 0;
-  height: 0;
-}
 
 /* Segment Group Sizes */
 .segment-group--size-xs .segment-group__item {

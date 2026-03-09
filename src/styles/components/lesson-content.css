@@ -52,10 +52,6 @@
   margin-bottom: 0.5rem;
 }
 
-.expressive-code {
-  margin-bottom: 1rem;
-}
-
 .lesson-content pre.astro-code code {
   background: none;
   padding: 0;
@@ -173,12 +169,6 @@
 
 .lesson-content .callout-command .callout-icon {
   color: var(--color-gray-9);
-}
-
-.lesson__content-loading {
-  padding: 2rem;
-  text-align: center;
-  color: var(--color-gray-11);
 }
 
 /* Code block with copy button */

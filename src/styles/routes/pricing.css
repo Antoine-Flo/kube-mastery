@@ -131,51 +131,10 @@
 }
 
 /* Pricing Toggle (monthly / yearly) */
-.pricing__toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 3rem;
-}
-
-.pricing__toggle-option {
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-gray-10);
-  transition: color 0.2s;
-}
 
 .pricing__toggle-option[aria-pressed='true'] {
   color: var(--color-gray-12);
   font-weight: var(--font-weight-semibold);
-}
-
-.pricing__toggle-yearly-wrap {
-  position: relative;
-  display: inline-block;
-}
-
-.pricing__toggle-yearly-badge {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 2px;
-  font-size: var(--text-xs);
-  color: var(--color-cyan-9);
-  font-weight: var(--font-weight-medium);
-  white-space: nowrap;
-}
-
-.pricing__toggle-switch {
-  position: relative;
-  width: 3rem;
-  height: 1.5rem;
-  border-radius: 9999px;
-  background-color: var(--color-gray-6);
-  cursor: pointer;
-  transition: background-color 0.2s;
 }
 
 .pricing__toggle-switch:hover {
@@ -203,19 +162,6 @@
 }
 
 /* Pricing promo banner (full width above cards) */
-.pricing__promo-wrap {
-  width: 100%;
-  margin-bottom: 2rem;
-  padding: var(--spacing-3) var(--spacing-4);
-  background: linear-gradient(
-    135deg,
-    var(--color-cyan-4) 0%,
-    var(--color-green-4) 100%
-  );
-  border-radius: var(--radius-l3);
-  border: 2px solid var(--color-cyan-8);
-  text-align: center;
-}
 
 .pricing__promo-wrap .pricing__promo-banner-text {
   display: block;
@@ -244,40 +190,10 @@
   justify-content: center;
 }
 
-.pricing__plan-price-struck {
-  position: absolute;
-  top: 15px;
-  left: -45px;
-  font-size: var(--text-xl);
-  /* transform: rotate(-10deg); */
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-gray-8);
-  text-decoration: line-through;
-  white-space: nowrap;
-}
-
 .pricing__plan-price-amount {
   font-size: var(--text-5xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-gray-12);
-}
-
-.pricing__plan-price-period {
-  color: var(--color-gray-11);
-  font-size: var(--text-sm);
-}
-
-.pricing__plan-price-detail-wrap {
-  margin-top: 0.25rem;
-  text-align: center;
-}
-
-.pricing__plan-price-detail {
-  display: block;
-  font-size: var(--text-xs);
-  font-weight: var(--font-weight-normal);
-  color: var(--color-gray-9);
-  text-align: center;
 }
 
 /* Pricing Plans Grid */
@@ -318,10 +234,6 @@
   border-width: 2px;
 }
 
-.pricing__plan-card--coming-soon {
-  opacity: 0.7;
-}
-
 /* Pricing Badge */
 .pricing__badge {
   text-align: center;
@@ -340,11 +252,6 @@
 .pricing__badge-text--cyan {
   background-color: var(--color-cyan-3);
   color: var(--color-cyan-11);
-}
-
-.pricing__badge-text--green {
-  background-color: var(--color-green-3);
-  color: var(--color-green-11);
 }
 
 /* Pricing Plan Title */
@@ -368,10 +275,6 @@
 }
 
 /* Spacer in Business card header so body aligns with Standard/Pro cards */
-.pricing__plan-header-spacer {
-  min-height: 6rem;
-  margin-top: var(--spacing-2);
-}
 
 /* Pricing Plan Features */
 .pricing__plan-features {
@@ -390,15 +293,6 @@
 .pricing__plan-feature-check {
   color: var(--color-green-9);
   font-weight: var(--font-weight-bold);
-}
-
-.pricing__plan-feature--excluded {
-  color: var(--color-gray-8);
-}
-
-.pricing__plan-feature-x {
-  color: var(--color-gray-7);
-  font-weight: var(--font-weight-medium);
 }
 
 /* Pricing Plan Footer */

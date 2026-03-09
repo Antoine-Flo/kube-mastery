@@ -2,27 +2,7 @@
    CLUSTER VISUALIZATION
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.cluster-viz {
-  display: flex;
-  flex-direction: column-reverse;
-  background-color: var(--color-gray-1);
-  border-top: 1px solid var(--color-gray-6);
-  margin-top: auto;
-  flex-shrink: 0;
-  max-height: 80vh;
-  overflow: hidden;
-}
-
 /* ─── Header (Toggle Button like sidebar footer) ──────────────────────── */
-
-.cluster-viz__header {
-  padding: var(--spacing-1);
-  padding-right: var(--spacing-3);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
 
 .cluster-viz__header button {
   min-width: 2rem;
@@ -34,46 +14,13 @@
   opacity: 0.8;
 }
 
-.cluster-viz__header-actions {
-  margin-left: auto;
-}
-
-.cluster-viz__header-btn {
-  padding-inline: 0.2rem;
-}
-
-.cluster-viz__title {
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-gray-11);
-  padding-right: var(--spacing-1);
-}
-
 /* ─── Content ──────────────────────────────────────────────────────────── */
-
-.cluster-viz__content {
-  padding: 0;
-  overflow: hidden;
-  transition:
-    max-height var(--duration-normal) ease-out,
-    opacity var(--duration-normal) ease-out,
-    padding var(--duration-normal) ease-out;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
 
 .cluster-viz--collapsed .cluster-viz__content {
   max-height: 0;
   opacity: 0;
   padding-top: 0;
   padding-bottom: 0;
-}
-
-.cluster-viz__scroll-area {
-  height: 100%;
-  flex: 1;
 }
 
 .cluster-viz__scroll-area .scroll-area__content {
@@ -302,10 +249,6 @@
   border-color: var(--color-ruby-8);
   background-color: var(--color-ruby-2);
   color: var(--color-ruby-11);
-}
-
-.cluster-viz__container-name {
-  font-weight: var(--font-weight-medium);
 }
 
 /* ─── Services (Network Layer) ─────────────────────────────────────────── */

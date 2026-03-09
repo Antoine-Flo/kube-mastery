@@ -6,17 +6,6 @@
 }
 
 /* Field Label */
-.field__label {
-  align-items: center;
-  color: var(--color-fg-default);
-  display: flex;
-  gap: var(--spacing-2);
-  text-align: start;
-  user-select: none;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-sm);
-}
 
 .field__label:has(+ *:disabled) {
   opacity: 0.5;
@@ -24,13 +13,6 @@
 }
 
 /* Required Indicator */
-.field__required-indicator {
-  color: var(--color-cyan-9);
-}
 
 /* Error Text */
-.field__error-text {
-  color: var(--color-error);
-  font-size: var(--text-sm);
-  line-height: var(--line-height-sm);
-}
+

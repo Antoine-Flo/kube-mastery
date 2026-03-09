@@ -1,43 +1,6 @@
 /* Terminal Error */
-.terminal__error {
-  padding: 2rem;
-  text-align: center;
-  color: var(--color-ruby-11);
-  background-color: var(--color-ruby-3);
-  border-radius: var(--radius-md);
-}
-
-.terminal__error-full {
-  width: 100%;
-  height: 100%;
-  min-height: 200px;
-  padding: 2rem;
-  text-align: center;
-  color: var(--color-ruby-11);
-  background-color: var(--color-ruby-3);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-ruby-6);
-}
-
-.terminal__error-message {
-  font-size: var(--text-sm);
-  margin-top: 1rem;
-  color: var(--color-ruby-10);
-}
 
 /* Terminal Wrapper - contains terminal and editor overlay */
-.terminal__wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
 
 /* Terminal Container */
-.terminal__container {
-  width: 100%;
-  height: 100%;
-  min-height: 200px;
 
-  background-color: var(--color-gray-1);
-  text-align: left;
-}

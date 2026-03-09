@@ -14,18 +14,8 @@
 }
 
 /* Group Orientation */
-.group--horizontal {
-  flex-direction: row;
-}
-
-.group--vertical {
-  flex-direction: column;
-}
 
 /* Group Attached */
-.group--attached {
-  gap: 0;
-}
 
 .group--attached.group--horizontal > *:first-child {
   border-end-end-radius: 0;
@@ -60,9 +50,6 @@
 }
 
 /* Group Grow */
-.group--grow {
-  display: flex;
-}
 
 .group--grow > * {
   flex: 1;

@@ -1,76 +1,22 @@
 /* Navbar Header */
-.navbar {
-  border-color: var(--color-gray-6);
-  background-color: var(--color-gray-1);
-  border-bottom: 1px solid var(--color-gray-6);
-  padding: 1rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 
 /* Navbar Logo */
-.navbar__logo {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: var(--text-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-gray-12);
-  text-decoration: none;
-}
-
-.navbar__logo-icon {
-  flex-shrink: 0;
-}
-
-.navbar__logo-text {
-  display: inline-block;
-}
 
 /* Navbar Nav */
-.navbar__nav {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-left: auto;
-}
 
 /* Navbar Link */
-.navbar__link {
-  color: var(--color-gray-11);
-  text-decoration: none;
-  transition: color 0.2s;
-}
 
 .navbar__link:hover {
   color: var(--color-gray-12);
 }
 
 /* Navbar Logout Button */
-.navbar__logout-button {
-  color: var(--color-gray-11);
-  text-decoration: none;
-  transition: color 0.2s;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: inherit;
-}
 
 .navbar__logout-button:hover {
   color: var(--color-gray-12);
 }
 
 /* Navbar Actions */
-.navbar__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-left: 12px;
-}
 
 /* Navbar Theme Toggle */
-.navbar__theme-toggle {
-  margin-left: 12px;
-}
+

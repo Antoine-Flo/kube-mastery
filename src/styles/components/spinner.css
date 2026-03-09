@@ -1,69 +1,8 @@
 /* Spinner Base */
-.spinner {
-  display: inline-block;
-  width: var(--spinner-size);
-  height: var(--spinner-size);
-  position: relative;
-}
 
 /* Spinner Sizes */
-.spinner--size-inherit {
-  --spinner-size: 1em;
-  --cube-size: calc(var(--spinner-size) * 0.375);
-  --cube-move: calc(var(--spinner-size) * 1.05);
-}
-
-.spinner--size-xs {
-  --spinner-size: 0.75rem;
-  --cube-size: calc(var(--spinner-size) * 0.375);
-  --cube-move: calc(var(--spinner-size) * 1.05);
-}
-
-.spinner--size-sm {
-  --spinner-size: 1rem;
-  --cube-size: calc(var(--spinner-size) * 0.375);
-  --cube-move: calc(var(--spinner-size) * 1.05);
-}
-
-.spinner--size-md {
-  --spinner-size: 1.25rem;
-  --cube-size: calc(var(--spinner-size) * 0.375);
-  --cube-move: calc(var(--spinner-size) * 1.05);
-}
-
-.spinner--size-lg {
-  --spinner-size: 1.5rem;
-  --cube-size: calc(var(--spinner-size) * 0.375);
-  --cube-move: calc(var(--spinner-size) * 1.05);
-}
-
-.spinner--size-xl {
-  --spinner-size: 2rem;
-  --cube-size: calc(var(--spinner-size) * 0.375);
-  --cube-move: calc(var(--spinner-size) * 1.05);
-}
-
-.spinner--size-2xl {
-  --spinner-size: 2.5rem;
-  --cube-size: calc(var(--spinner-size) * 0.375);
-  --cube-move: calc(var(--spinner-size) * 1.05);
-}
 
 /* Cubes */
-.spinner__cube1,
-.spinner__cube2 {
-  background-color: currentColor;
-  width: var(--cube-size);
-  height: var(--cube-size);
-  position: absolute;
-  top: 0;
-  left: 0;
-  animation: spinner-cubemove 1.8s infinite ease-in-out;
-}
-
-.spinner__cube2 {
-  animation-delay: -0.9s;
-}
 
 @keyframes spinner-cubemove {
   25% {
