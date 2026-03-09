@@ -39,61 +39,15 @@ const REFUND_DIALOG_ID = 'profile-refund-dialog'
 
 const { data: subscription } = await supabase
   .from('subscriptions')
-  .select(
-    'plan_tier, status, paddle_subscription_id, current_period_start, current_period_end, canceled_at, created_at, updated_at'
-  )
+  .select('created_at, updated_at')
   .eq('user_id', user.id)
   .order('updated_at', { ascending: false })
   .limit(1)
   .maybeSingle()
 
-const formatDate = (value: string | null | undefined): string => {
-  if (value == null || value === '') {
-    return t('profile_subscriptionNotAvailable')
-  }
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return t('profile_subscriptionNotAvailable')
-  }
-  return new Intl.DateTimeFormat(lang === 'fr' ? 'fr-FR' : 'en-US', {
-    dateStyle: 'medium'
-  }).format(date)
-}
-
-const statusValue = (subscription?.status as string | null) ?? 'unknown'
-const planTierValue = (subscription?.plan_tier as string | null) ?? 'unknown'
-
-const planLabelByTier: Record<string, string> = {
-  basic: t('profile_subscriptionPlanBasic'),
-  pro: t('profile_subscriptionPlanPro'),
-  enterprise: t('profile_subscriptionPlanEnterprise'),
-  unknown: t('profile_subscriptionPlanUnknown')
-}
-
-const statusLabelByValue: Record<string, string> = {
-  active: t('profile_subscriptionStatusActive'),
-  trialing: t('profile_subscriptionStatusTrialing'),
-  paused: t('profile_subscriptionStatusPaused'),
-  past_due: t('profile_subscriptionStatusPastDue'),
-  canceled: t('profile_subscriptionStatusCanceled'),
-  unknown: t('profile_subscriptionStatusUnknown')
-}
-
-const hasSubscription =
-  subscription != null &&
-  ((subscription.paddle_subscription_id as string | null) ?? '') !== ''
+const hasSubscription = subscription != null
 
 const nowMs = Date.now()
-const subscribedDays =
-  hasSubscription && subscription?.created_at != null
-    ? Math.max(
-        0,
-        Math.floor(
-          (nowMs - new Date(subscription.created_at as string).getTime()) /
-            (1000 * 60 * 60 * 24)
-        )
-      )
-    : null
 const refundWindowMs = 30 * 24 * 60 * 60 * 1000
 const subscriptionCreatedAtMs =
   hasSubscription && subscription?.created_at != null
@@ -174,7 +128,7 @@ const billingErrorMessage =
       )
     }
 
-    <section class="profile__section">
+    <section class="profile__section profile__danger profile__refund">
       <h2 class="profile__section-title">{t('profile_subscriptionTitle')}</h2>
       {
         hasSubscription ? (
@@ -193,80 +147,30 @@ const billingErrorMessage =
                 </p>
               )
             }
-            <div class="profile__subscription-block">
-              <h3 class="profile__actions-title">
-                {t('profile_subscriptionDetailsTitle')}
-              </h3>
-              <dl class="profile__subscription-grid">
-                <div>
-                  <dt>{t('profile_subscriptionPlanLabel')}</dt>
-                  <dd>{planLabelByTier[planTierValue] ?? planLabelByTier.unknown}</dd>
-                </div>
-                <div>
-                  <dt>{t('profile_subscriptionStatusLabel')}</dt>
-                  <dd>{statusLabelByValue[statusValue] ?? statusLabelByValue.unknown}</dd>
-                </div>
-                <div>
-                  <dt>{t('profile_subscriptionTrialEndsLabel')}</dt>
-                  <dd>{formatDate(subscription?.current_period_end as string | null)}</dd>
-                </div>
-                <div>
-                  <dt>{t('profile_subscriptionSinceLabel')}</dt>
-                  <dd>
-                    {
-                      subscribedDays == null
-                        ? t('profile_subscriptionNotAvailable')
-                        : t('profile_subscriptionDaysValue', {
-                            days: String(subscribedDays)
-                          })
-                    }
-                  </dd>
-                </div>
-                <div>
-                  <dt>{t('profile_subscriptionNextPaymentLabel')}</dt>
-                  <dd>{formatDate(subscription?.current_period_end as string | null)}</dd>
-                </div>
-                <div>
-                  <dt>{t('profile_subscriptionCanceledAtLabel')}</dt>
-                  <dd>{formatDate(subscription?.canceled_at as string | null)}</dd>
-                </div>
-              </dl>
-            </div>
-            <div class="profile__subscription-block profile__portal">
-              <h3 class="profile__actions-title">
-                {t('profile_subscriptionManageTitle')}
-              </h3>
-              <Button
-                href={`/api/account/subscription-portal?redirect=${encodeURIComponent(profilePath)}`}
-                variant="outline"
-                color="cyan"
-                size="sm"
-              >
-                {t('profile_subscriptionPortalOpen')}
-              </Button>
-            </div>
-            <div class="profile__subscription-block">
-              <h3 class="profile__actions-title">
-                {t('profile_subscriptionQuickActions')}
-              </h3>
-              <div class="profile__billing-actions">
-                <Button
-                  type="button"
-                  variant="outline"
-                  color="amber"
-                  size="sm"
-                  data-dialog-open={REFUND_DIALOG_ID}
-                  disabled={!canRequestRefund}
-                >
-                  {t('profile_subscriptionRefund')}
-                </Button>
-              </div>
-              {
-                !canRequestRefund && (
-                  <p class="profile__hint">{t('profile_subscriptionRefundWindowExpired')}</p>
-                )
-              }
-            </div>
+            <p class="profile__section-desc">{t('profile_lifetimeAccessActive')}</p>
+            <Button
+              href={`/api/account/subscription-portal?redirect=${encodeURIComponent(profilePath)}`}
+              variant="outline"
+              color="cyan"
+              size="sm"
+            >
+              {t('profile_subscriptionPortalOpen')}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              color="amber"
+              size="sm"
+              data-dialog-open={REFUND_DIALOG_ID}
+              disabled={!canRequestRefund}
+            >
+              {t('profile_subscriptionRefund')}
+            </Button>
+            {
+              !canRequestRefund && (
+                <p class="profile__hint">{t('profile_subscriptionRefundWindowExpired')}</p>
+              )
+            }
           </>
         ) : (
           <p class="profile__section-desc">{t('profile_subscriptionEmpty')}</p>
@@ -424,51 +328,8 @@ const billingErrorMessage =
     border-top: 1px solid var(--color-gray-6);
   }
 
-  .profile__subscription-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-    gap: 0.7rem 1rem;
-    margin: 0 0 1rem;
-  }
-
-  .profile__subscription-grid dt {
-    font-size: var(--text-xs);
-    color: var(--color-gray-10);
-    margin: 0;
-  }
-
-  .profile__subscription-grid dd {
-    margin: 0.15rem 0 0;
-    font-size: var(--text-sm);
-    color: var(--color-gray-12);
-    font-weight: var(--font-weight-medium);
-  }
-
-  .profile__billing-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .profile__subscription-block {
-    border: 1px solid var(--color-gray-6);
-    background: var(--color-gray-2);
-    border-radius: var(--radius-md);
-    padding: 0.8rem;
-    margin-bottom: 0.8rem;
-  }
-
-  .profile__portal {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .profile__actions-title {
-    font-size: var(--text-sm);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-gray-12);
-    margin: 0 0 0.5rem;
+  .profile__refund .profile__section-desc {
+    margin-bottom: 1rem;
   }
 </style>
 

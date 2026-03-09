@@ -100,10 +100,15 @@ export const GET: APIRoute = async ({
     return redirect(addFlashParam(redirectTo, 'billing_error', 'action_failed'))
   }
 
+  const paddleSubscriptionId =
+    subscriptionResult.data.paddleSubscriptionId.startsWith('txn_')
+      ? undefined
+      : subscriptionResult.data.paddleSubscriptionId
+
   const portalResult = await createPaddleCustomerPortalOverviewLink({
     locals,
     paddleCustomerId,
-    paddleSubscriptionId: subscriptionResult.data.paddleSubscriptionId
+    paddleSubscriptionId
   })
   if (!portalResult.ok || portalResult.url == null) {
     emitApiLog({
