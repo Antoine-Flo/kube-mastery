@@ -171,8 +171,8 @@ The `ealen/echo-server` image responds with a JSON body showing the request deta
 
 **Step 2: Create an Ingress without rewrite to observe the problem**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# no-rewrite-ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -190,7 +190,10 @@ spec:
                 name: echo-service
                 port:
                   number: 80
-EOF
+```
+
+```bash
+kubectl apply -f no-rewrite-ingress.yaml
 ```
 
 Test it:
@@ -204,8 +207,8 @@ Notice the backend receives `/api/users`, the full path including the prefix.
 
 **Step 3: Add rewrite-target to strip the prefix**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# with-rewrite-ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -226,7 +229,10 @@ spec:
                 name: echo-service
                 port:
                   number: 80
-EOF
+```
+
+```bash
+kubectl apply -f with-rewrite-ingress.yaml
 ```
 
 Test again:
@@ -239,8 +245,8 @@ Now the backend receives `/users`, the prefix has been stripped. The rewrite wor
 
 **Step 4: Test rate limiting**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# rate-limited-ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -260,7 +266,10 @@ spec:
                 name: echo-service
                 port:
                   number: 80
-EOF
+```
+
+```bash
+kubectl apply -f rate-limited-ingress.yaml
 
 # Fire 10 rapid requests and watch for 503 responses
 for i in $(seq 1 10); do

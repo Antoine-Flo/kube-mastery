@@ -137,8 +137,8 @@ Let's use `hostPath` to read from the node's log directory and verify the data c
 
 **1. Create a Pod that reads from the node's `/var/log` directory:**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# hostpath-demo-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -157,7 +157,10 @@ spec:
         - name: host-logs
           mountPath: /node-logs
           readOnly: true
-EOF
+```
+
+```bash
+kubectl apply -f hostpath-demo-pod.yaml
 ```
 
 **2. Wait for it to start, then list the node's log directory from inside the container:**
@@ -187,8 +190,8 @@ You should see a "Read-only file system" error. The `readOnly: true` on the volu
 
 **5. Create a second Pod using `DirectoryOrCreate` to write to a node path:**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# hostpath-writer-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -206,7 +209,10 @@ spec:
       volumeMounts:
         - name: custom-dir
           mountPath: /custom
-EOF
+```
+
+```bash
+kubectl apply -f hostpath-writer-pod.yaml
 ```
 
 **6. Confirm the file was written and read it back:**

@@ -161,8 +161,8 @@ Address 1: 10.244.1.23 10-244-1-23.default.pod.cluster.local
 
 **Step 3: Deploy a StatefulSet and observe stable DNS**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# db-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -195,7 +195,10 @@ spec:
           image: nginx
           ports:
             - containerPort: 80
-EOF
+```
+
+```bash
+kubectl apply -f db-service.yaml
 ```
 
 Wait for the Pods to be ready:

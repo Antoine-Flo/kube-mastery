@@ -116,8 +116,8 @@ In this exercise you'll deploy a simple Pod that produces log output, and explor
 
 **Step 1: Create a Pod that produces logs**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# logger-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -136,7 +136,10 @@ spec:
             i=$((i+1))
             sleep 2
           done
-EOF
+```
+
+```bash
+kubectl apply -f logger-pod.yaml
 ```
 
 Wait for it to start:
@@ -183,8 +186,8 @@ kubectl logs --since=30s logger-pod
 
 Create a Pod that crashes immediately so it enters CrashLoopBackOff:
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# crasher-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -194,7 +197,10 @@ spec:
     - name: crasher
       image: busybox
       command: ["/bin/sh", "-c", "echo 'About to crash'; exit 1"]
-EOF
+```
+
+```bash
+kubectl apply -f crasher-pod.yaml
 ```
 
 Wait a moment for it to crash and restart, then view the previous container's logs:

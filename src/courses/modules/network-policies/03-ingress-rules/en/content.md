@@ -209,8 +209,8 @@ Both should return the nginx welcome page.
 
 **4. Apply an ingress policy allowing only the allowed client:**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# allow-only-allowed-client-networkpolicy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -230,7 +230,10 @@ spec:
       ports:
         - protocol: TCP
           port: 80
-EOF
+```
+
+```bash
+kubectl apply -f allow-only-allowed-client-networkpolicy.yaml
 ```
 
 **5. Test both clients again:**
@@ -244,8 +247,8 @@ The allowed client should still work. The blocked client should now time out.
 
 **6. Apply the deny-all pattern:**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# default-deny-ingress-networkpolicy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -256,7 +259,10 @@ spec:
   policyTypes:
     - Ingress
   ingress: []
-EOF
+```
+
+```bash
+kubectl apply -f default-deny-ingress-networkpolicy.yaml
 ```
 
 Because NetworkPolicies are **additive**, the allowed client can still reach the app on port 80, the allow policy is still in place and grants that specific path. The deny-all policy has no rules to override it with; it only tightens Pods that had no policy before.

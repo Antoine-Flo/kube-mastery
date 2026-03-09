@@ -300,8 +300,8 @@ kubectl exec -n secured-app intruder -- wget -qO- --timeout=3 <BACKEND-IP>
 
 **4. Apply a deny-all policy:**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# default-deny-all-networkpolicy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -314,13 +314,16 @@ spec:
     - Egress
   ingress: []
   egress: []
-EOF
+```
+
+```bash
+kubectl apply -f default-deny-all-networkpolicy.yaml
 ```
 
 **5. Apply a selective allow: frontend can reach backend:**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# frontend-to-backend-networkpolicy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -340,7 +343,10 @@ spec:
       ports:
         - protocol: TCP
           port: 80
-EOF
+```
+
+```bash
+kubectl apply -f frontend-to-backend-networkpolicy.yaml
 ```
 
 **6. Test access from frontend (should work) and intruder (should fail):**

@@ -180,8 +180,8 @@ kubectl expose deployment web --port=80 --name=web-service
 
 **Step 4: Create a TLS-enabled Ingress**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# tls-demo-ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -205,7 +205,10 @@ spec:
                 name: web-service
                 port:
                   number: 80
-EOF
+```
+
+```bash
+kubectl apply -f tls-demo-ingress.yaml
 ```
 
 **Step 5: Get the Ingress controller IP and test HTTPS**

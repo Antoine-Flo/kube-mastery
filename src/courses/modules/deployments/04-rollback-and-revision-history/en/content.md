@@ -138,8 +138,8 @@ In GitOps workflows, the change-cause annotation is often set automatically by y
 
 **1. Create the Deployment at revision 1**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# web-app-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -160,7 +160,10 @@ spec:
       containers:
         - name: web
           image: nginx:1.25
-EOF
+```
+
+```bash
+kubectl apply -f web-app-deployment.yaml
 kubectl rollout status deployment/web-app
 ```
 

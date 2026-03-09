@@ -123,8 +123,8 @@ You can find your cluster's service IP range by looking at the kube-apiserver fl
 
 **1. Create a Deployment and a ClusterIP Service**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# web-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -154,7 +154,10 @@ spec:
   ports:
     - port: 80
       targetPort: 80
-EOF
+```
+
+```bash
+kubectl apply -f web-deployment.yaml
 kubectl rollout status deployment/web
 ```
 

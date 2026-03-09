@@ -227,8 +227,8 @@ kubectl get pods -o wide
 
 **3. Apply the NetworkPolicy:**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# allow-frontend-to-backend-networkpolicy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -248,7 +248,10 @@ spec:
       ports:
         - protocol: TCP
           port: 80
-EOF
+```
+
+```bash
+kubectl apply -f allow-frontend-to-backend-networkpolicy.yaml
 ```
 
 **4. Test from the frontend (should succeed):**

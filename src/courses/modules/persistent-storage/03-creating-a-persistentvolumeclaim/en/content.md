@@ -94,8 +94,8 @@ In this exercise you'll create a PV and a PVC, watch the binding happen, and inv
 
 **Step 1: Create a PersistentVolume**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# my-pv-persistentvolume.yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -109,13 +109,16 @@ spec:
   storageClassName: manual
   hostPath:
     path: /mnt/data
-EOF
+```
+
+```bash
+kubectl apply -f my-pv-persistentvolume.yaml
 ```
 
 **Step 2: Create a PersistentVolumeClaim**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# my-pvc-persistentvolumeclaim.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -128,7 +131,10 @@ spec:
     requests:
       storage: 5Gi
   storageClassName: manual
-EOF
+```
+
+```bash
+kubectl apply -f my-pvc-persistentvolumeclaim.yaml
 ```
 
 **Step 3: Check binding status**
@@ -163,8 +169,8 @@ The CLAIM column shows `default/my-pvc`, the namespace and name of the bound PVC
 
 Create a PVC that requests more storage than any available PV can provide:
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# my-pvc-pending-persistentvolumeclaim.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -177,7 +183,10 @@ spec:
     requests:
       storage: 100Gi
   storageClassName: manual
-EOF
+```
+
+```bash
+kubectl apply -f my-pvc-pending-persistentvolumeclaim.yaml
 ```
 
 ```bash

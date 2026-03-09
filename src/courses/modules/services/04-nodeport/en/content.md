@@ -138,8 +138,8 @@ Do not expose sensitive internal Services with NodePort unless your cluster node
 
 **1. Create a Deployment and a NodePort Service**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# web-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -171,7 +171,10 @@ spec:
     - port: 80
       targetPort: 80
       nodePort: 30080
-EOF
+```
+
+```bash
+kubectl apply -f web-deployment.yaml
 kubectl rollout status deployment/web
 ```
 
@@ -218,8 +221,8 @@ kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- \
 
 **6. Let Kubernetes pick the port automatically**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# web-nodeport-auto-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -231,7 +234,10 @@ spec:
   ports:
     - port: 80
       targetPort: 80
-EOF
+```
+
+```bash
+kubectl apply -f web-nodeport-auto-service.yaml
 
 kubectl get service web-nodeport-auto
 # PORT(S) column will show something like 80:31423/TCP , Kubernetes picked 31423

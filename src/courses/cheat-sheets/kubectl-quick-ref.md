@@ -59,8 +59,8 @@ kubectl explain pods
 
 Create multiple objects from stdin:
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# busybox-sleep-pods.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -84,13 +84,16 @@ spec:
       args:
         - sleep
         - "1000"
-EOF
+```
+
+```bash
+kubectl apply -f busybox-sleep-pods.yaml
 ```
 
 Create a secret from stdin:
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# mysecret.yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -99,7 +102,10 @@ type: Opaque
 data:
   password: $(echo -n "s33msi4" | base64 -w0)
   username: $(echo -n "jane" | base64 -w0)
-EOF
+```
+
+```bash
+kubectl apply -f mysecret.yaml
 ```
 
 ## Viewing and finding resources

@@ -111,8 +111,8 @@ Let's observe the update limitation of a bare ReplicaSet, then see how a Deploym
 
 **1. Create a ReplicaSet with nginx:1.24**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# web-rs-replicaset.yaml
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
@@ -130,7 +130,10 @@ spec:
       containers:
         - name: web
           image: nginx:1.24
-EOF
+```
+
+```bash
+kubectl apply -f web-rs-replicaset.yaml
 kubectl get pods -l app=web -o wide
 ```
 
@@ -170,8 +173,10 @@ kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.sp
 
 ```bash
 kubectl delete rs web-rs
+```
 
-kubectl apply -f - <<EOF
+```yaml
+# web-deploy-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -189,7 +194,10 @@ spec:
       containers:
         - name: web
           image: nginx:1.24
-EOF
+```
+
+```bash
+kubectl apply -f web-deploy-deployment.yaml
 kubectl rollout status deployment/web-deploy
 ```
 

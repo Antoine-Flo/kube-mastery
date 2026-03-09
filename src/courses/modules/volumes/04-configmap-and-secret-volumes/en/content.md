@@ -222,8 +222,8 @@ kubectl get configmap demo-config -o yaml
 
 **3. Create a Pod that mounts the ConfigMap:**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# config-reader-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -241,7 +241,10 @@ spec:
         - name: config-vol
           mountPath: /config
           readOnly: true
-EOF
+```
+
+```bash
+kubectl apply -f config-reader-pod.yaml
 ```
 
 **4. Wait for it to start, then check the logs:**
@@ -292,8 +295,10 @@ The restart count should still be 0. The configuration updated live.
 kubectl create secret generic demo-secret \
   --from-literal=api-key="super-secret-value-12345" \
   --from-literal=token="eyJhbGciOiJIUzI1NiJ9..."
+```
 
-kubectl apply -f - <<EOF
+```yaml
+# secret-reader-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -311,7 +316,10 @@ spec:
         - name: secret-vol
           mountPath: /secrets
           readOnly: true
-EOF
+```
+
+```bash
+kubectl apply -f secret-reader-pod.yaml
 ```
 
 **10. Read the secret file from inside the container:**

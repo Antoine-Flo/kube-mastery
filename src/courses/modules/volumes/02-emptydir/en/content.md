@@ -131,8 +131,8 @@ Let's recreate the writer-reader pattern and confirm that data survives a contai
 
 **1. Apply the multi-container Pod manifest:**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# writer-reader-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -154,7 +154,10 @@ spec:
       volumeMounts:
         - name: shared-data
           mountPath: /data
-EOF
+```
+
+```bash
+kubectl apply -f writer-reader-pod.yaml
 ```
 
 **2. Wait for the Pod to be running:**
@@ -204,8 +207,8 @@ The file is still there. The volume was not affected by the writer container's r
 
 **7. Now try the memory-backed version:**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# memory-scratch-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -223,7 +226,10 @@ spec:
       volumeMounts:
         - name: ramdisk
           mountPath: /scratch
-EOF
+```
+
+```bash
+kubectl apply -f memory-scratch-pod.yaml
 ```
 
 **8. Check the output, it wrote 10MB to memory:**

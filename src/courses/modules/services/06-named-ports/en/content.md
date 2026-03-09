@@ -181,8 +181,8 @@ If you use the same Service to route to containers with different port names tha
 
 **1. Create a Deployment with named ports**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# web-named-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -209,14 +209,17 @@ spec:
               port: http
             initialDelaySeconds: 2
             periodSeconds: 5
-EOF
+```
+
+```bash
+kubectl apply -f web-named-deployment.yaml
 kubectl rollout status deployment/web-named
 ```
 
 **2. Create a Service using the named port**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# web-named-svc-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -228,7 +231,10 @@ spec:
     - name: http
       port: 80
       targetPort: http
-EOF
+```
+
+```bash
+kubectl apply -f web-named-svc-service.yaml
 ```
 
 **3. Verify the Service works**

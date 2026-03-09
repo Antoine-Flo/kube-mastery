@@ -106,8 +106,8 @@ In this exercise you'll create a PV, inspect its details, and observe its phase.
 
 **Step 1: Create the PersistentVolume**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# my-pv-persistentvolume.yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -121,7 +121,10 @@ spec:
   storageClassName: manual
   hostPath:
     path: /mnt/data
-EOF
+```
+
+```bash
+kubectl apply -f my-pv-persistentvolume.yaml
 ```
 
 **Step 2: List PersistentVolumes**

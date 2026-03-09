@@ -140,8 +140,8 @@ Some platforms and managed Kubernetes services extend the Event retention window
 
 **Step 1: Create a Pod and watch its Events**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# event-demo-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -150,7 +150,10 @@ spec:
   containers:
     - name: nginx
       image: nginx:1.25
-EOF
+```
+
+```bash
+kubectl apply -f event-demo-pod.yaml
 ```
 
 Wait a moment, then describe the Pod and read the Events section:
@@ -169,8 +172,8 @@ kubectl get events --sort-by=.lastTimestamp
 
 **Step 3: Create a Pod with a bad image and observe Warning Events**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# bad-image-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -179,7 +182,10 @@ spec:
   containers:
     - name: app
       image: nginx:this-tag-does-not-exist
-EOF
+```
+
+```bash
+kubectl apply -f bad-image-pod.yaml
 ```
 
 Wait 20 seconds, then:

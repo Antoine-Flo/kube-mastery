@@ -108,8 +108,8 @@ In this exercise you'll observe the reclaim policy in action by creating a PV wi
 
 **Step 1: Create a PV with Retain policy**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# retain-pv-persistentvolume.yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -123,13 +123,16 @@ spec:
   storageClassName: manual
   hostPath:
     path: /tmp/retain-test
-EOF
+```
+
+```bash
+kubectl apply -f retain-pv-persistentvolume.yaml
 ```
 
 **Step 2: Create and bind a PVC**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# retain-pvc-persistentvolumeclaim.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -141,7 +144,10 @@ spec:
     requests:
       storage: 1Gi
   storageClassName: manual
-EOF
+```
+
+```bash
+kubectl apply -f retain-pvc-persistentvolumeclaim.yaml
 
 kubectl get pv retain-pv
 ```
@@ -171,8 +177,8 @@ The PV is now `Released`. The CLAIM column still shows the old PVC's name (the `
 
 **Step 4: Try to create a new PVC that would match**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# new-pvc-persistentvolumeclaim.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -184,7 +190,10 @@ spec:
     requests:
       storage: 1Gi
   storageClassName: manual
-EOF
+```
+
+```bash
+kubectl apply -f new-pvc-persistentvolumeclaim.yaml
 
 kubectl get pvc new-pvc
 ```

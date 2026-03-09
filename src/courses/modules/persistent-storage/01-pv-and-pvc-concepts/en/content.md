@@ -78,8 +78,8 @@ In this exercise you will create a simple PersistentVolume backed by a `hostPath
 
 **Step 1: Create the PersistentVolume**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# demo-pv-persistentvolume.yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -93,7 +93,10 @@ spec:
   storageClassName: manual
   hostPath:
     path: /tmp/demo-pv-data
-EOF
+```
+
+```bash
+kubectl apply -f demo-pv-persistentvolume.yaml
 ```
 
 **Step 2: Check the PV status**
@@ -113,8 +116,8 @@ The status is `Available`, the PV exists and is waiting to be claimed.
 
 **Step 3: Create a PersistentVolumeClaim**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# demo-pvc-persistentvolumeclaim.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -127,7 +130,10 @@ spec:
     requests:
       storage: 1Gi
   storageClassName: manual
-EOF
+```
+
+```bash
+kubectl apply -f demo-pvc-persistentvolumeclaim.yaml
 ```
 
 **Step 4: Observe the binding**

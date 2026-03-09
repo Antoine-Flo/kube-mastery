@@ -84,8 +84,8 @@ Let's create a Deployment and see the problem directly , and then solve it with 
 
 **1. Create a backend Deployment**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# backend-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -103,7 +103,10 @@ spec:
       containers:
         - name: backend
           image: nginx:1.25
-EOF
+```
+
+```bash
+kubectl apply -f backend-deployment.yaml
 kubectl rollout status deployment/backend
 ```
 
@@ -130,8 +133,8 @@ kubectl get pods -l app=backend -o wide
 
 **3. Create a Service to give the backend a stable address**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# backend-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -142,7 +145,10 @@ spec:
   ports:
     - port: 80
       targetPort: 80
-EOF
+```
+
+```bash
+kubectl apply -f backend-service.yaml
 ```
 
 **4. See the stable Service IP**

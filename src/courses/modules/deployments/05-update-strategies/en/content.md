@@ -124,8 +124,8 @@ Before choosing a strategy, ask these questions:
 
 **1. Create a Deployment with the Recreate strategy**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# legacy-app-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -145,7 +145,10 @@ spec:
       containers:
         - name: app
           image: nginx:1.25
-EOF
+```
+
+```bash
+kubectl apply -f legacy-app-deployment.yaml
 kubectl rollout status deployment/legacy-app
 ```
 
@@ -169,8 +172,10 @@ In the second terminal, observe: all three Pods will terminate first (status `Te
 
 ```bash
 kubectl delete deployment legacy-app
+```
 
-kubectl apply -f - <<EOF
+```yaml
+# rolling-app-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -193,7 +198,10 @@ spec:
       containers:
         - name: app
           image: nginx:1.25
-EOF
+```
+
+```bash
+kubectl apply -f rolling-app-deployment.yaml
 kubectl rollout status deployment/rolling-app
 ```
 

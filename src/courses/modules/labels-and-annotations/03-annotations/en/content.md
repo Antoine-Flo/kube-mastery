@@ -156,8 +156,8 @@ Follow along in the terminal to practice viewing and managing annotations.
 
 **1. Create a Pod with annotations in a manifest**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# annotated-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -172,7 +172,10 @@ spec:
   containers:
     - name: nginx
       image: nginx:1.25
-EOF
+```
+
+```bash
+kubectl apply -f annotated-pod.yaml
 ```
 
 **2. View annotations with `kubectl describe`**

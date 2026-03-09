@@ -90,8 +90,8 @@ kubectl get pods
 
 **3. Create a simple ReplicaSet**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# web-rs-replicaset.yaml
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
@@ -109,7 +109,10 @@ spec:
       containers:
         - name: nginx
           image: nginx:1.25
-EOF
+```
+
+```bash
+kubectl apply -f web-rs-replicaset.yaml
 ```
 
 **4. Observe the Pods being created**

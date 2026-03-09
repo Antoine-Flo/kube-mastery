@@ -140,8 +140,8 @@ EndpointSlice is enabled by default in Kubernetes 1.21 and later. For most pract
 
 **1. Create a Deployment and Service**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# web-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -175,7 +175,10 @@ spec:
   ports:
     - port: 80
       targetPort: 80
-EOF
+```
+
+```bash
+kubectl apply -f web-deployment.yaml
 kubectl rollout status deployment/web
 ```
 
@@ -229,8 +232,8 @@ kubectl describe endpoints web-service
 
 **6. Create a headless Service and observe the DNS difference**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# web-headless-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -241,7 +244,10 @@ spec:
     app: web
   ports:
     - port: 80
-EOF
+```
+
+```bash
+kubectl apply -f web-headless-service.yaml
 
 # Query DNS from inside the cluster
 kubectl run dns-test --image=busybox --rm -it --restart=Never -- sh -c \

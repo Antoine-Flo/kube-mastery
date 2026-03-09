@@ -163,8 +163,8 @@ After this deadline, the Deployment's `Progressing` condition is set to `False` 
 
 **1. Create the Deployment**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# web-app-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -189,7 +189,10 @@ spec:
           image: nginx:1.25
           ports:
             - containerPort: 80
-EOF
+```
+
+```bash
+kubectl apply -f web-app-deployment.yaml
 kubectl rollout status deployment/web-app
 ```
 

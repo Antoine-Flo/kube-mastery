@@ -197,8 +197,8 @@ Both should work in a default cluster.
 
 **3. Apply a deny-all egress policy:**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# deny-all-egress-networkpolicy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -211,7 +211,10 @@ spec:
   policyTypes:
     - Egress
   egress: []
-EOF
+```
+
+```bash
+kubectl apply -f deny-all-egress-networkpolicy.yaml
 ```
 
 **4. Try DNS resolution and external access now:**
@@ -225,8 +228,8 @@ Both should fail, DNS is broken too, as visible from the `nslookup` timeout.
 
 **5. Update the policy to re-allow DNS only:**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# deny-all-egress-networkpolicy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -248,7 +251,10 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-EOF
+```
+
+```bash
+kubectl apply -f deny-all-egress-networkpolicy.yaml
 ```
 
 **6. Test again:**

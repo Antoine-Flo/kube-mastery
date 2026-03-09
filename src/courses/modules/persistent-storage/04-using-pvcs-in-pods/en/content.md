@@ -98,8 +98,8 @@ In this exercise you will create a PV, a PVC, and a Pod that uses the PVC. You'l
 
 **Step 1: Set up the PV and PVC**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# demo-pv-persistentvolume.yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -113,9 +113,14 @@ spec:
   storageClassName: manual
   hostPath:
     path: /tmp/demo-storage
-EOF
+```
 
-kubectl apply -f - <<EOF
+```bash
+kubectl apply -f demo-pv-persistentvolume.yaml
+```
+
+```yaml
+# demo-pvc-persistentvolumeclaim.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -128,13 +133,16 @@ spec:
     requests:
       storage: 1Gi
   storageClassName: manual
-EOF
+```
+
+```bash
+kubectl apply -f demo-pvc-persistentvolumeclaim.yaml
 ```
 
 **Step 2: Create a Pod that writes to the volume**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# writer-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -151,7 +159,10 @@ spec:
       volumeMounts:
         - name: storage
           mountPath: /data
-EOF
+```
+
+```bash
+kubectl apply -f writer-pod.yaml
 ```
 
 Wait for the Pod to start:
@@ -182,8 +193,8 @@ The Pod is gone. The PVC and PV still exist, you can verify with `kubectl get pv
 
 **Step 5: Create a new Pod and read the same data**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# reader-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -200,7 +211,10 @@ spec:
       volumeMounts:
         - name: storage
           mountPath: /data
-EOF
+```
+
+```bash
+kubectl apply -f reader-pod.yaml
 
 kubectl wait --for=condition=Ready pod/reader-pod --timeout=60s
 kubectl exec reader-pod -- cat /data/message.txt

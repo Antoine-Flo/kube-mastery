@@ -131,8 +131,8 @@ kubectl exec -it deploy/admin -- sh -c 'echo "ADMIN" > /usr/share/nginx/html/ind
 
 **Step 2: Create the Ingress**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# demo-routing-ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -172,7 +172,10 @@ spec:
                 name: admin-service
                 port:
                   number: 80
-EOF
+```
+
+```bash
+kubectl apply -f demo-routing-ingress.yaml
 ```
 
 **Step 3: Get the Ingress controller's external IP**
@@ -209,8 +212,8 @@ Look at the `Rules` section to confirm path and backend mappings are correct. Al
 
 **Step 6: Test Exact pathType**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# exact-test-ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -228,7 +231,10 @@ spec:
                 name: api-service
                 port:
                   number: 80
-EOF
+```
+
+```bash
+kubectl apply -f exact-test-ingress.yaml
 
 # Should route to api-service
 curl -H "Host: app.example.com" http://<INGRESS-IP>/healthz

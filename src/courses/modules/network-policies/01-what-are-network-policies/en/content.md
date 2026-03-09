@@ -103,8 +103,8 @@ Replace `<BACKEND-IP>` with the actual IP from step 2. You should see the nginx 
 
 **4. Apply a NetworkPolicy that blocks all ingress to the backend:**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# deny-all-ingress-to-backend-networkpolicy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -117,7 +117,10 @@ spec:
   policyTypes:
     - Ingress
   ingress: []
-EOF
+```
+
+```bash
+kubectl apply -f deny-all-ingress-to-backend-networkpolicy.yaml
 ```
 
 **5. Retry the curl from frontend to backend:**

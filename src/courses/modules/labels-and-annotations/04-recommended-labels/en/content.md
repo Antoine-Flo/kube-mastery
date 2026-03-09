@@ -106,8 +106,8 @@ Let's deploy a small application using the recommended label convention and see 
 
 **1. Deploy a frontend component**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# frontend-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -138,13 +138,16 @@ spec:
       containers:
         - name: nginx
           image: nginx:1.25
-EOF
+```
+
+```bash
+kubectl apply -f frontend-deployment.yaml
 ```
 
 **2. Deploy a backend component**
 
-```bash
-kubectl apply -f - <<EOF
+```yaml
+# backend-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -175,7 +178,10 @@ spec:
       containers:
         - name: nginx
           image: nginx:1.25
-EOF
+```
+
+```bash
+kubectl apply -f backend-deployment.yaml
 ```
 
 **3. Query by platform and by component**
