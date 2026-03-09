@@ -135,14 +135,19 @@ export const POST: APIRoute = async ({
     return redirect(finalRedirect)
   }
 
-  if (provider === 'github') {
+  const oauthProvider =
+    provider === 'github' || provider === 'gitlab'
+      ? (provider as Provider)
+      : null
+
+  if (oauthProvider !== null) {
     const callbackUrl = new URL('/api/auth/callback', request.url)
     callbackUrl.searchParams.set('lang', lang)
     if (redirectTo) {
       callbackUrl.searchParams.set('redirect', redirectTo)
     }
     const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'github' as Provider,
+      provider: oauthProvider,
       options: { redirectTo: callbackUrl.toString() }
     })
     if (error) {

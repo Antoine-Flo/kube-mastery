@@ -2,26 +2,13 @@ import {
   Environment,
   EventName,
   Paddle,
-  type EventEntity,
-  type SubscriptionNotification,
-  type TransactionNotification,
-  type SubscriptionActivatedEvent,
-  type SubscriptionCanceledEvent,
-  type SubscriptionCreatedEvent,
-  type SubscriptionPastDueEvent,
-  type SubscriptionPausedEvent,
-  type SubscriptionResumedEvent,
-  type SubscriptionTrialingEvent,
-  type SubscriptionUpdatedEvent,
-  type TransactionCompletedEvent,
-  type TransactionCreatedEvent,
-  type TransactionPaidEvent,
-  type TransactionUpdatedEvent
+  type EventEntity
 } from '@paddle/paddle-node-sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { CONFIG } from '../../config'
 import { readAppEnv } from '../env'
 import {
+  SUBSCRIPTION_STATUS,
   isAllowedSubscriptionStatus,
   isPaidSubscriptionStatus,
   resolvePendingSubscriptionStatus
@@ -63,7 +50,7 @@ export type ParsedPaddleEvent = {
   currentPeriodEnd: string | null
   canceledAt: string | null
   lang: string
-  rawData: SubscriptionNotification | TransactionNotification
+  rawData: Record<string, unknown>
 }
 
 const normalizeEmail = (value: string) => value.trim().toLowerCase()
@@ -76,27 +63,11 @@ const asString = (value: unknown): string | null =>
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value != null && !Array.isArray(value)
 
-type PaddleSubscriptionEvent =
-  | SubscriptionActivatedEvent
-  | SubscriptionCanceledEvent
-  | SubscriptionCreatedEvent
-  | SubscriptionPastDueEvent
-  | SubscriptionPausedEvent
-  | SubscriptionResumedEvent
-  | SubscriptionTrialingEvent
-  | SubscriptionUpdatedEvent
-
-type PaddleTransactionEvent =
-  | TransactionCompletedEvent
-  | TransactionCreatedEvent
-  | TransactionPaidEvent
-  | TransactionUpdatedEvent
-
 function getCustomDataString(
-  customData: Record<string, any> | null | undefined,
+  customData: unknown,
   key: string
 ): string | null {
-  if (customData == null) {
+  if (!isRecord(customData)) {
     return null
   }
   return asString(customData[key])
@@ -104,7 +75,7 @@ function getCustomDataString(
 
 function isSubscriptionEvent(
   event: EventEntity
-): event is PaddleSubscriptionEvent {
+): boolean {
   return (
     event.eventType === EventName.SubscriptionActivated ||
     event.eventType === EventName.SubscriptionCanceled ||
@@ -119,7 +90,10 @@ function isSubscriptionEvent(
 
 function isTransactionEvent(
   event: EventEntity
-): event is PaddleTransactionEvent {
+): boolean {
+  if (event.eventType.startsWith('transaction.')) {
+    return true
+  }
   return (
     event.eventType === EventName.TransactionCompleted ||
     event.eventType === EventName.TransactionCreated ||
@@ -145,14 +119,22 @@ export async function unmarshalPaddleWebhookEvent(args: {
   )
 }
 
-type ItemWithOptionalPriceId = { price: { id: string } | null }
-
-function collectPriceIdsFromItems(items: ItemWithOptionalPriceId[]): string[] {
+function collectPriceIdsFromUnknownItems(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
   const ids: string[] = []
-  for (const item of items) {
-    const id = item.price?.id ?? null
-    if (id != null && id !== '') {
-      ids.push(id)
+  for (const item of value) {
+    if (!isRecord(item)) {
+      continue
+    }
+    const priceValue = item.price
+    if (!isRecord(priceValue)) {
+      continue
+    }
+    const priceId = asString(priceValue.id)
+    if (priceId != null) {
+      ids.push(priceId)
     }
   }
   return ids
@@ -166,6 +148,21 @@ function derivePlanTier(priceIds: string[]): PlanTier {
     }
   }
   return PLAN_TIER.UNKNOWN
+}
+
+function normalizeTransactionStatus(status: string): string {
+  const value = status.toLowerCase()
+  if (value === 'paid' || value === 'completed') {
+    return SUBSCRIPTION_STATUS.ACTIVE
+  }
+  return value
+}
+
+function buildOneTimeReferenceId(transactionId: string | null): string | null {
+  if (transactionId == null || transactionId === '') {
+    return null
+  }
+  return `txn_${transactionId}`
 }
 
 function toMetadataRecord(value: unknown): Record<string, unknown> {
@@ -187,36 +184,45 @@ export function parsePaddleWebhookEvent(
   }
 
   if (isSubscriptionEvent(eventData)) {
-    const data = eventData.data
+    const data = toMetadataRecord(eventData.data)
     const email = getCustomDataString(data.customData, 'email')
     const customDataUserId = getCustomDataString(data.customData, 'user_id')
     const lang = normalizeLang(
       getCustomDataString(data.customData, 'lang') ?? 'en'
     )
+    const currentBillingPeriod = toMetadataRecord(data.currentBillingPeriod)
+    const normalizedStatus = asString(data.status) ?? ''
     return {
       notificationId,
       eventType,
       occurredAt,
       email: email == null ? null : normalizeEmail(email),
       customDataUserId,
-      status: data.status,
-      planTier: derivePlanTier(collectPriceIdsFromItems(data.items)),
-      paddleSubscriptionId: data.id,
-      paddleCustomerId: data.customerId,
-      currentPeriodStart: data.currentBillingPeriod?.startsAt ?? null,
-      currentPeriodEnd: data.currentBillingPeriod?.endsAt ?? null,
-      canceledAt: data.canceledAt,
+      status: normalizedStatus,
+      planTier: derivePlanTier(collectPriceIdsFromUnknownItems(data.items)),
+      paddleSubscriptionId: asString(data.id),
+      paddleCustomerId: asString(data.customerId),
+      currentPeriodStart: asString(currentBillingPeriod.startsAt),
+      currentPeriodEnd: asString(currentBillingPeriod.endsAt),
+      canceledAt: asString(data.canceledAt),
       lang,
       rawData: data
     }
   }
 
   if (isTransactionEvent(eventData)) {
-    const data = eventData.data
+    const data = toMetadataRecord(eventData.data)
     const email = getCustomDataString(data.customData, 'email')
     const customDataUserId = getCustomDataString(data.customData, 'user_id')
     const lang = normalizeLang(
       getCustomDataString(data.customData, 'lang') ?? 'en'
+    )
+    const transactionId = asString(data.id)
+    const paddleSubscriptionId =
+      asString(data.subscriptionId) ?? buildOneTimeReferenceId(transactionId)
+    const billingPeriod = toMetadataRecord(data.billingPeriod)
+    const normalizedStatus = normalizeTransactionStatus(
+      asString(data.status) ?? ''
     )
     return {
       notificationId,
@@ -224,12 +230,12 @@ export function parsePaddleWebhookEvent(
       occurredAt,
       email: email == null ? null : normalizeEmail(email),
       customDataUserId,
-      status: data.status,
-      planTier: derivePlanTier(collectPriceIdsFromItems(data.items)),
-      paddleSubscriptionId: data.subscriptionId,
-      paddleCustomerId: data.customerId,
-      currentPeriodStart: data.billingPeriod?.startsAt ?? null,
-      currentPeriodEnd: data.billingPeriod?.endsAt ?? null,
+      status: normalizedStatus,
+      planTier: derivePlanTier(collectPriceIdsFromUnknownItems(data.items)),
+      paddleSubscriptionId,
+      paddleCustomerId: asString(data.customerId),
+      currentPeriodStart: asString(billingPeriod.startsAt),
+      currentPeriodEnd: asString(billingPeriod.endsAt),
       canceledAt: null,
       lang,
       rawData: data

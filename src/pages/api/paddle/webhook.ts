@@ -35,6 +35,9 @@ function getErrorMessage(error: unknown): string {
   return 'unknown'
 }
 
+const asString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim() !== '' ? value.trim() : null
+
 export const POST: APIRoute = async ({ request, locals }) => {
   initOpenTelemetry(locals)
   const startedAt = startTimer()
@@ -69,6 +72,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
         startedAt,
         eventType: processResult.eventType,
         notificationId: processResult.notificationId
+      })
+      return new Response('', { status: 200 })
+    }
+    if (processResult.skipped) {
+      emitSkippedWebhookLog({
+        baseContext,
+        startedAt,
+        eventType: processResult.eventType,
+        notificationId: processResult.notificationId,
+        skipReason: processResult.skipReason
       })
       return new Response('', { status: 200 })
     }
@@ -186,18 +199,59 @@ async function processWebhookEvent(args: {
   webhookSecret: string
   signatureHeader: string
   paddleEnvironment: Environment
-}): Promise<{ duplicate: boolean; eventType: string; notificationId: string }> {
-  const { payload, paddleEvent } = await parseIncomingWebhook(args)
+}): Promise<{
+  duplicate: boolean
+  skipped: boolean
+  eventType: string
+  notificationId: string
+  skipReason: string | null
+}> {
+  const incoming = await parseIncomingWebhook(args)
   const supabaseAdmin = getSupabaseAdmin(args.locals)
   if (supabaseAdmin == null) {
     throw new Error('Missing Supabase admin client')
   }
 
+  if (incoming.kind === 'skip') {
+    const notificationId = incoming.notificationId ?? 'unknown'
+    const eventType = incoming.eventType ?? 'unknown'
+
+    if (
+      incoming.notificationId != null &&
+      incoming.eventType != null &&
+      incoming.occurredAt != null
+    ) {
+      const eventInsert = await insertBillingEvent(supabaseAdmin, {
+        notificationId: incoming.notificationId,
+        eventType: incoming.eventType,
+        occurredAt: incoming.occurredAt,
+        payload: incoming.payload
+      })
+      if (!eventInsert.ok) {
+        throw new Error(eventInsert.error ?? 'billing/webhook-event-insert')
+      }
+      return {
+        duplicate: eventInsert.duplicate,
+        skipped: true,
+        eventType,
+        notificationId,
+        skipReason: incoming.reason
+      }
+    }
+    return {
+      duplicate: false,
+      skipped: true,
+      eventType,
+      notificationId,
+      skipReason: incoming.reason
+    }
+  }
+
   const eventInsert = await insertBillingEvent(supabaseAdmin, {
-    notificationId: paddleEvent.notificationId,
-    eventType: paddleEvent.eventType,
-    occurredAt: paddleEvent.occurredAt,
-    payload
+    notificationId: incoming.paddleEvent.notificationId,
+    eventType: incoming.paddleEvent.eventType,
+    occurredAt: incoming.paddleEvent.occurredAt,
+    payload: incoming.payload
   })
   if (!eventInsert.ok) {
     throw new Error(eventInsert.error ?? 'billing/webhook-event-insert')
@@ -205,8 +259,10 @@ async function processWebhookEvent(args: {
   if (eventInsert.duplicate) {
     return {
       duplicate: true,
-      eventType: paddleEvent.eventType,
-      notificationId: paddleEvent.notificationId
+      skipped: false,
+      eventType: incoming.paddleEvent.eventType,
+      notificationId: incoming.paddleEvent.notificationId,
+      skipReason: null
     }
   }
 
@@ -214,13 +270,15 @@ async function processWebhookEvent(args: {
     request: args.request,
     locals: args.locals,
     supabaseAdmin,
-    paddleEvent
+    paddleEvent: incoming.paddleEvent
   })
 
   return {
     duplicate: false,
-    eventType: paddleEvent.eventType,
-    notificationId: paddleEvent.notificationId
+    skipped: false,
+    eventType: incoming.paddleEvent.eventType,
+    notificationId: incoming.paddleEvent.notificationId,
+    skipReason: null
   }
 }
 
@@ -231,8 +289,16 @@ async function parseIncomingWebhook(args: {
   signatureHeader: string
   paddleEnvironment: Environment
 }): Promise<{
+  kind: 'handled'
   payload: Record<string, unknown>
   paddleEvent: NonNullable<ReturnType<typeof parsePaddleWebhookEvent>>
+} | {
+  kind: 'skip'
+  payload: Record<string, unknown>
+  reason: string
+  eventType: string | null
+  notificationId: string | null
+  occurredAt: string | null
 }> {
   const rawBody = await args.request.text()
   const payload = JSON.parse(rawBody) as Record<string, unknown>
@@ -245,9 +311,16 @@ async function parseIncomingWebhook(args: {
   })
   const paddleEvent = parsePaddleWebhookEvent(eventData)
   if (paddleEvent == null) {
-    throw new Error('Invalid webhook payload')
+    return {
+      kind: 'skip',
+      payload,
+      reason: 'unsupported_event_payload',
+      eventType: asString(eventData.eventType),
+      notificationId: asString(eventData.notificationId),
+      occurredAt: asString(eventData.occurredAt)
+    }
   }
-  return { payload, paddleEvent }
+  return { kind: 'handled', payload, paddleEvent }
 }
 
 async function syncWebhookSideEffects(args: {
@@ -361,6 +434,28 @@ function emitSuccessWebhookLog(args: {
     attributes: {
       event_type: args.eventType,
       notification_id: args.notificationId
+    }
+  })
+}
+
+function emitSkippedWebhookLog(args: {
+  baseContext: ReturnType<typeof createApiLogContext>
+  startedAt: number
+  eventType: string
+  notificationId: string
+  skipReason: string | null
+}): void {
+  emitApiLog({
+    level: 'info',
+    event: 'billing_webhook_skipped',
+    message: 'Billing webhook skipped',
+    context: args.baseContext,
+    statusCode: 200,
+    durationMs: getDurationMs(args.startedAt),
+    attributes: {
+      event_type: args.eventType,
+      notification_id: args.notificationId,
+      skip_reason: args.skipReason ?? 'unsupported_event_payload'
     }
   })
 }

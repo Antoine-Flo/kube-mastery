@@ -8,6 +8,18 @@ export const CONFIG = {
       fr: 'Français'
     }
   },
+  billing: {
+    paddlePriceIds: {
+      production: {
+        PRO_ONETIME: 'pri_01kk946043kwcxptt6d7zq516s',
+        DISCOUNT_ONETIME: 'pri_01kk946hggdk42gvv17frzbbpv'
+      },
+      staging: {
+        PRO_ONETIME: 'pri_01kk8zz1wknzpxrbg811wcxmxs',
+        DISCOUNT_ONETIME: 'pri_01kk8zzkxbjemkbhvtkcbz0cg2'
+      }
+    }
+  },
   cluster: {
     defaultConfigPath: 'src/courses/seeds/clusterConfig/multi-node.yaml',
     defaultNodeRoles: ['control-plane', 'worker', 'worker'],
@@ -36,18 +48,6 @@ export const CONFIG = {
       name: 'kube-simulator',
       version: 1,
       storeName: 'sandbox-environments'
-    }
-  },
-  billing: {
-    paddlePriceIds: {
-      production: {
-        PRO_ONETIME: 'pri_01kk8zz1wknzpxrbg811wcxmxs',
-        DISCOUNT_ONETIME: 'pri_01kk8zzkxbjemkbhvtkcbz0cg2'
-      },
-      staging: {
-        PRO_ONETIME: 'pri_01kk8zz1wknzpxrbg811wcxmxs',
-        DISCOUNT_ONETIME: 'pri_01kk8zzkxbjemkbhvtkcbz0cg2'
-      }
     }
   }
 } as const

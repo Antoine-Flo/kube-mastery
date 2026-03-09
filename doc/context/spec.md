@@ -99,7 +99,7 @@ pwd, ls, cd, mkdir (-p), touch, cat, rm (-r), nano/vi/vim, clear, help, debug. D
 - **Command history**: Navigate with ↑↓ (max 100 commands)
 - **Tab autocompletion**: Bash-like autocomplete for commands, resources, files, flags
 - **Enhanced prompt**: Format `~/path>` with dynamic path
-- **Persistent state**: Cluster and filesystem saved to localStorage
+- **Course progress**: Saved to user account on the server. Cluster state resets each session.
 - **Full-screen mode**: Terminal only, like real exam environment
 - **Cluster viewer**: Collapsible panel below terminal showing nodes, pods, and containers visually
 - **Cheat sheet access**: `/[lang]/cheat-sheet` is protected at route level; users without paid subscription are redirected (no public terminal preview/overlay).
@@ -264,9 +264,8 @@ interface FileSystemState {
 
 ### Persistence
 
-- **localStorage only** : Simple, synchrone, suffisant
-- Pas de Supabase pour le cluster (trop complexe, pas nécessaire)
-- Reset possible à tout moment
+- **Course progress** : Saved server-side to the user's account (Supabase).
+- **Cluster state** : Not persisted. Resets each session — users always start from a clean environment.
 
 ### Filesystem Constraints
 
