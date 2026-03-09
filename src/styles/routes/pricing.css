@@ -125,7 +125,9 @@
   font-weight: var(--font-weight-bold);
   color: var(--color-gray-12);
   text-align: center;
-  margin-bottom: 1rem;
+  margin: 0 auto;
+  max-width: 800px;
+  margin-bottom: 2rem;
 }
 
 /* Pricing Toggle (monthly / yearly) */

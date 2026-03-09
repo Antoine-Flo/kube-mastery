@@ -38,37 +38,22 @@ if (paddleClientToken === '') {
 const activePaddlePriceIds = isProduction
   ? CONFIG.billing.paddlePriceIds.production
   : CONFIG.billing.paddlePriceIds.staging
-const BASIC_MONTHLY_PRICE_ID = activePaddlePriceIds.BASIC_MONTHLY
-const BASIC_YEARLY_PRICE_ID = activePaddlePriceIds.BASIC_YEARLY
-const PRO_MONTHLY_PRICE_ID = activePaddlePriceIds.PRO_MONTHLY
-const PRO_YEARLY_PRICE_ID = activePaddlePriceIds.PRO_YEARLY
+const PRO_ONETIME_PRICE_ID = activePaddlePriceIds.PRO_ONETIME
+const DISCOUNT_ONETIME_PRICE_ID = activePaddlePriceIds.DISCOUNT_ONETIME
 
-const basicDetailYearlyText = t('pricing_detail_yearly', {
-  total: '--'
-})
-const basicDetailMonthlyText = t('pricing_detail_monthly')
-
-const detailYearlyText = t('pricing_detail_yearly', {
-  total: '--'
-})
-const detailMonthlyText = t('pricing_detail_monthly')
 const CHECKOUT_EMAIL_DIALOG_ID = 'pricing-checkout-email-dialog'
 const checkoutDialogTitle =
-  lang === 'fr' ? 'Continuer vers le paiement' : 'Continue to checkout'
-const checkoutDialogDescription =
-  lang === 'fr'
-    ? 'Renseigne ton email pour ouvrir la page de paiement.'
-    : 'Enter your email to open the checkout page.'
-const checkoutEmailLabel = lang === 'fr' ? 'Adresse email' : 'Email address'
-const checkoutEmailPlaceholder =
-  lang === 'fr' ? 'vous@exemple.com' : 'you@example.com'
-const checkoutCancelLabel = lang === 'fr' ? 'Annuler' : 'Cancel'
-const checkoutContinueLabel =
-  lang === 'fr' ? 'Continuer au paiement' : 'Continue to checkout'
-const checkoutInvalidEmailError =
-  lang === 'fr'
-    ? 'Merci de saisir une adresse email valide.'
-    : 'Please enter a valid email address.'
+  t('pricing_checkout_dialog_title')
+const checkoutDialogDescription = t('pricing_checkout_dialog_description')
+const checkoutEmailLabel = t('pricing_checkout_email_label')
+const checkoutEmailPlaceholder = t('pricing_checkout_email_placeholder')
+const checkoutCancelLabel = t('pricing_checkout_cancel_label')
+const checkoutContinueLabel = t('pricing_checkout_continue_label')
+const checkoutInvalidEmailError = t('pricing_checkout_invalid_email_error')
+const DISCOUNT_INFO_DIALOG_ID = 'pricing-discount-info-dialog'
+const discountInfoTitle = t('pricing_discount_dialog_title')
+const discountInfoCloseLabel = t('pricing_discount_dialog_close_label')
+const discountInfoCheckoutLabel = t('pricing_discount_dialog_checkout_label')
 const checkoutSuccessPath = localePath('/checkout/success')
 
 const faqItems = [
@@ -87,137 +72,30 @@ const faqItems = [
     <div class="page-halo__bg" aria-hidden="true"></div>
     <div class="pricing">
       <h2 class="pricing__title">{t('pricing_title')}</h2>
-
-      <div class="pricing__toggle" role="group" aria-label="Billing period">
-        <span
-          class="pricing__toggle-option"
-          id="pricing-option-monthly"
-          aria-pressed="false"
-        >
-          {t('pricing_toggle_monthly')}
-        </span>
-        <button
-          type="button"
-          class="pricing__toggle-switch"
-          id="pricing-billing-toggle"
-          aria-pressed="true"
-          aria-label="Toggle yearly billing"
-          title={t('pricing_toggle_yearly')}
-        >
-        </button>
-        <span class="pricing__toggle-yearly-wrap">
-          <span
-            class="pricing__toggle-option"
-            id="pricing-option-yearly"
-            aria-pressed="true"
-          >
-            {t('pricing_toggle_yearly')}
-          </span>
-          <span class="pricing__toggle-yearly-badge"
-            >{t('pricing_toggle_yearly_badge')}</span
-          >
-        </span>
-      </div>
-
-      <div class="pricing__promo-wrap" role="status" aria-live="polite">
-        <span class="pricing__promo-banner-text">
-          {t('pricing_pro_badge')}
-        </span>
-      </div>
-
-      <div class="pricing__plans">
-        <!-- Basic plan -->
-        <article
-          class="card card--outline pricing__plan-card"
-          data-billing="monthly"
-        >
-          <div class="card__header">
-            <h2 class="card__title pricing__plan-title">
-              {t('pricing_basic_name')}
-            </h2>
-            <div class="pricing__plan-price">
-              <div
-                class="pricing__plan-price-banner"
-                data-detail-yearly={basicDetailYearlyText}
-                data-detail-yearly-template={basicDetailYearlyText}
-                data-detail-monthly={basicDetailMonthlyText}
-                data-price-id-month={BASIC_MONTHLY_PRICE_ID}
-                data-price-id-year={BASIC_YEARLY_PRICE_ID}
-              >
-                <div class="pricing__plan-price-current">
-                  <span class="pricing__plan-price-struck"> </span>
-                  <span class="pricing__plan-price-amount"> -- </span>
-                  <span class="pricing__plan-price-period">
-                    {t('pricing_per_month')}
-                  </span>
-                </div>
-                <div class="pricing__plan-price-detail-wrap">
-                  <span class="pricing__plan-price-detail">
-                    {basicDetailYearlyText}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="card__body">
-            <ul class="pricing__plan-features">
-              <li class="pricing__plan-feature">
-                <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_basic_feature1')}
-              </li>
-              <li class="pricing__plan-feature">
-                <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_basic_feature2')}
-              </li>
-              <li class="pricing__plan-feature pricing__plan-feature--excluded">
-                <span class="pricing__plan-feature-x" aria-hidden="true">—</span
-                >
-                {t('pricing_basic_feature3')}
-              </li>
-            </ul>
-          </div>
-          <div class="card__footer pricing__plan-footer">
-            <Button
-              href={localePath('/courses')}
-              variant="outline"
-              size="lg"
-              class="pricing__plan-button"
-            >
-              {t('pricing_basic_cta')}
-            </Button>
-          </div>
-        </article>
-
-        <!-- KubeMastery Pro plan -->
+      <div class="pricing__plans pricing__plans--centered">
         <article
           class="card card--outline pricing__plan-card pricing__plan-card--highlighted"
-          data-billing="monthly"
         >
           <div class="card__header">
+            <div class="pricing__badge">
+              <span class="pricing__badge-text pricing__badge-text--cyan">
+                {t('pricing_lifetime_badge')}
+              </span>
+            </div>
             <h2 class="card__title pricing__plan-title">
-              {t('pricing_pro_name')}
+              {t('pricing_lifetime_title')}
             </h2>
             <div class="pricing__plan-price">
               <div
                 class="pricing__plan-price-banner"
-                data-detail-yearly={detailYearlyText}
-                data-detail-yearly-template={detailYearlyText}
-                data-detail-monthly={detailMonthlyText}
-                data-price-id-month={PRO_MONTHLY_PRICE_ID}
-                data-price-id-year={PRO_YEARLY_PRICE_ID}
+                data-price-id-month={PRO_ONETIME_PRICE_ID}
               >
                 <div class="pricing__plan-price-current">
-                  <span class="pricing__plan-price-struck"> </span>
-                  <span class="pricing__plan-price-amount"> -- </span>
-                  <span class="pricing__plan-price-period">
-                    {t('pricing_per_month')}
-                  </span>
+                  <span class="pricing__plan-price-amount">--</span>
                 </div>
-                <div class="pricing__plan-price-detail-wrap">
-                  <span class="pricing__plan-price-detail">
-                    {detailYearlyText}
-                  </span>
-                </div>
+                <p class="pricing__plan-subline">
+                  {t('pricing_lifetime_subline')}
+                </p>
               </div>
             </div>
           </div>
@@ -225,19 +103,23 @@ const faqItems = [
             <ul class="pricing__plan-features">
               <li class="pricing__plan-feature">
                 <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_pro_feature1')}
+                {t('pricing_lifetime_feature_1')}
               </li>
               <li class="pricing__plan-feature">
                 <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_pro_feature2')}
+                {t('pricing_lifetime_feature_2')}
               </li>
               <li class="pricing__plan-feature">
                 <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_pro_feature4')}
+                {t('pricing_lifetime_feature_3')}
+              </li>
+              <li class="pricing__plan-feature">
+                <span class="pricing__plan-feature-check">✓</span>
+                {t('pricing_lifetime_feature_4')}
               </li>
             </ul>
           </div>
-          <div class="card__footer pricing__plan-footer">
+          <div class="card__footer pricing__plan-footer pricing__plan-footer--column">
             <Button
               type="button"
               variant="solid"
@@ -245,48 +127,20 @@ const faqItems = [
               color="cyan"
               class="pricing__plan-button"
               data-open-checkout="pro"
+              data-price-id={PRO_ONETIME_PRICE_ID}
             >
-              {t('pricing_pro_cta')}
+              {t('pricing_lifetime_cta')}
             </Button>
-          </div>
-        </article>
-
-        <!-- Business (coming soon) -->
-        <article
-          class="card card--outline pricing__plan-card pricing__plan-card--coming-soon"
-        >
-          <div class="card__header">
-            <div class="pricing__badge">
-              <span class="pricing__badge-text pricing__badge-text--cyan">
-                {t('pricing_business_comingSoon')}
-              </span>
-            </div>
-            <h2 class="card__title pricing__plan-title">
-              {t('pricing_business_name')}
-            </h2>
-            <div class="pricing__plan-header-spacer" aria-hidden="true"></div>
-          </div>
-          <div class="card__body">
-            <ul class="pricing__plan-features">
-              <li class="pricing__plan-feature">
-                <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_business_feature1')}
-              </li>
-              <li class="pricing__plan-feature">
-                <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_business_feature2')}
-              </li>
-            </ul>
-          </div>
-          <div class="card__footer pricing__plan-footer">
-            <Button
-              variant="outline"
-              size="lg"
-              disabled
-              class="pricing__plan-button"
-            >
-              {t('pricing_business_comingSoon')}
-            </Button>
+            <p class="pricing__accessible-link">
+              {t('pricing_discount_intro')}{' '}
+              <button
+                type="button"
+                class="pricing__accessible-btn"
+                data-open-discount-dialog
+              >
+                {t('pricing_discount_open_cta')}
+              </button>
+            </p>
           </div>
         </article>
       </div>
@@ -413,6 +267,35 @@ const faqItems = [
           </footer>
         </form>
       </Dialog>
+      <Dialog id={DISCOUNT_INFO_DIALOG_ID} title={discountInfoTitle} size="sm">
+        <div class="pricing-discount-dialog">
+          <p>
+            {t('pricing_discount_dialog_paragraph_1')}
+          </p>
+          <p>
+            {t('pricing_discount_dialog_paragraph_2')}
+          </p>
+          <p class="pricing-discount-dialog__price-line">
+            {t('pricing_discount_dialog_price_label')}{' '}
+            <span data-discount-price-id={DISCOUNT_ONETIME_PRICE_ID}>--</span>
+          </p>
+          <footer class="dialog__footer pricing-discount-dialog__footer">
+            <Button type="button" variant="subtle" color="gray" data-dialog-close>
+              {discountInfoCloseLabel}
+            </Button>
+            <Button
+              type="button"
+              variant="solid"
+              color="cyan"
+              data-open-checkout="pro-accessible"
+              data-price-id={DISCOUNT_ONETIME_PRICE_ID}
+              data-dialog-close
+            >
+              {discountInfoCheckoutLabel}
+            </Button>
+          </footer>
+        </div>
+      </Dialog>
     </div>
   </div>
 </Layout>
@@ -431,23 +314,16 @@ const faqItems = [
     loggedInCustomerUserId
   }}
 >
-  const PRICING_INITED = 'data-pricing-toggle-inited'
   const PADDLE_INITED = 'data-paddle-inited'
   const CHECKOUT_DIALOG_INITED = 'data-pricing-checkout-dialog-inited'
+  const DISCOUNT_DIALOG_INITED = 'data-pricing-discount-dialog-inited'
   const PRICING_VIEW_SENT = 'data-pricing-view-sent'
-  const YEAR_MONTHS = 12
   const PRICING_PAGE_KEY = 'pricing'
-
-  function getCurrentBillingCycle() {
-    const toggle = document.getElementById('pricing-billing-toggle')
-    return toggle?.getAttribute('aria-pressed') === 'true' ? 'yearly' : 'monthly'
-  }
 
   function capturePricingEvent(eventName, properties = {}) {
     window.posthog?.capture?.(eventName, {
       page_key: PRICING_PAGE_KEY,
       lang: checkoutLang,
-      billing_cycle: getCurrentBillingCycle(),
       ...properties
     })
   }
@@ -459,18 +335,6 @@ const faqItems = [
     }
     root.setAttribute(PRICING_VIEW_SENT, '')
     capturePricingEvent('pricing_view')
-  }
-
-  function toYearlyPerMonth(total) {
-    const match = total.trim().match(/(\d+[.,]\d+|\d+)/)
-    if (match == null) {
-      return total
-    }
-    const amount = Number.parseFloat(match[0].replace(',', '.'))
-    if (!Number.isFinite(amount)) {
-      return total
-    }
-    return total.replace(match[0], String(Math.round(amount / YEAR_MONTHS)))
   }
 
   function stripTrailingZeroCents(value) {
@@ -513,94 +377,71 @@ const faqItems = [
     errorEl.setAttribute('hidden', '')
   }
 
-  function doubleDisplayedPrice(value) {
-    const doubled = value.replace(/(\d+[.,]?\d*)/, (_, raw) =>
-      String(Math.round(Number.parseFloat(raw.replace(',', '.')) * 2))
+  async function hydratePrices() {
+    const banners = Array.from(
+      document.querySelectorAll('.pricing__plan-price-banner[data-price-id-month]')
     )
-    return doubled === value ? '' : doubled
-  }
-
-  async function preview(
-    paddle,
-    items,
-    valueKey,
-    bannersByPriceId,
-    yearlyMode
-  ) {
-    if (items.length === 0) {
+    const discountAmountEls = Array.from(
+      document.querySelectorAll('[data-discount-price-id]')
+    )
+    if (banners.length === 0 && discountAmountEls.length === 0) {
       return
     }
-    const result = await paddle.PricePreview({ items })
-    const lineItems = result.data.details.lineItems
-
-    lineItems.forEach((lineItem) => {
-      const priceId = lineItem.price.id
-      const total = moveEuroSymbolAfterAmount(
-        roundDisplayedPrice(
-          stripTrailingZeroCents(lineItem.formattedTotals.total)
-        )
-      )
-      const banner = bannersByPriceId.get(priceId)
-      if (banner == null) {
-        return
-      }
-      const value = yearlyMode ? toYearlyPerMonth(total) : total
-      banner.setAttribute(valueKey, value)
-      if (yearlyMode) {
-        const template =
-          banner.getAttribute('data-detail-yearly-template') ?? ''
-        banner.setAttribute('data-detail-yearly', template.replace('--', total))
-      }
-    })
-  }
-
-  async function hydrateLocalizedPrices(banners) {
-    if (banners.length === 0) {
-      return
-    }
-
-    const monthlyItems = []
-    const yearlyItems = []
-    const monthBanners = new Map()
-    const yearBanners = new Map()
-
-    banners.forEach((banner) => {
-      const monthId = banner.getAttribute('data-price-id-month') ?? ''
-      const yearId = banner.getAttribute('data-price-id-year') ?? ''
-      if (monthId !== '') {
-        monthlyItems.push({ priceId: monthId, quantity: 1 })
-        monthBanners.set(monthId, banner)
-      }
-      if (yearId !== '') {
-        yearlyItems.push({ priceId: yearId, quantity: 1 })
-        yearBanners.set(yearId, banner)
-      }
-    })
-
     const paddle = await ensurePaddleInitialized()
     if (paddle == null) {
       return
     }
-
+    const priceIds = new Set()
+    banners.forEach((banner) => {
+      const id = banner.getAttribute('data-price-id-month') ?? ''
+      if (id !== '') {
+        priceIds.add(id)
+      }
+    })
+      discountAmountEls.forEach((priceEl) => {
+        const id = priceEl.getAttribute('data-discount-price-id') ?? ''
+      if (id !== '') {
+        priceIds.add(id)
+      }
+    })
+    if (priceIds.size === 0) {
+      return
+    }
+    const items = Array.from(priceIds).map((priceId) => ({
+      priceId,
+      quantity: 1
+    }))
     try {
-      await Promise.all([
-        preview(
-          paddle,
-          monthlyItems,
-          'data-month-price-localized',
-          monthBanners,
-          false
-        ),
-        preview(
-          paddle,
-          yearlyItems,
-          'data-year-price-localized',
-          yearBanners,
-          true
+      const result = await paddle.PricePreview({ items })
+      const totalsByPriceId = new Map()
+      result.data.details.lineItems.forEach((lineItem) => {
+        totalsByPriceId.set(lineItem.price.id, lineItem.formattedTotals.total)
+      })
+      banners.forEach((banner) => {
+        const priceId = banner.getAttribute('data-price-id-month') ?? ''
+        const total = totalsByPriceId.get(priceId)
+        if (total == null) {
+          return
+        }
+        const amountEl = banner.querySelector('.pricing__plan-price-amount')
+        if (amountEl != null) {
+          amountEl.textContent = moveEuroSymbolAfterAmount(
+            roundDisplayedPrice(stripTrailingZeroCents(total))
+          )
+        }
+      })
+      discountAmountEls.forEach((priceEl) => {
+        const priceId = priceEl.getAttribute('data-discount-price-id') ?? ''
+        const total = totalsByPriceId.get(priceId)
+        if (total == null) {
+          return
+        }
+        priceEl.textContent = moveEuroSymbolAfterAmount(
+          roundDisplayedPrice(stripTrailingZeroCents(total))
         )
-      ])
+      })
     } catch (error) {
-      console.error('[Paddle] localized prices hydration failed', error)
+      console.error('[Paddle] price hydration failed', error)
     }
   }
 
@@ -630,23 +471,7 @@ const faqItems = [
     if (!(button instanceof HTMLElement)) {
       return null
     }
-
-    const planCard = button.closest('.pricing__plan-card')
-    if (!(planCard instanceof HTMLElement)) {
-      return null
-    }
-
-    const banner = planCard.querySelector('.pricing__plan-price-banner')
-    if (!(banner instanceof HTMLElement)) {
-      return null
-    }
-
-    const toggle = document.getElementById('pricing-billing-toggle')
-    const isYearly = toggle?.getAttribute('aria-pressed') === 'true'
-    const attributeName = isYearly
-      ? 'data-price-id-year'
-      : 'data-price-id-month'
-    return banner.getAttribute(attributeName)
+    return button.getAttribute('data-price-id')
   }
 
   async function openCheckoutForPlan(planName, email) {
@@ -688,96 +513,8 @@ const faqItems = [
     return true
   }
 
-  /** Réexécuter à chaque chargement / swap (premier load, reload, navigation, changement de langue). */
-  function initPricingToggle() {
-    const toggle = document.getElementById('pricing-billing-toggle')
-    const optionMonthly = document.getElementById('pricing-option-monthly')
-    const optionYearly = document.getElementById('pricing-option-yearly')
-    const banners = document.querySelectorAll('.pricing__plan-price-banner')
-
-    if (!toggle || !optionMonthly || !optionYearly || banners.length === 0) {
-      return
-    }
-    /** @param {boolean} yearly */
-    // @ts-expect-error - inline script, yearly is boolean at runtime
-    function setBilling(yearly) {
-      const isYearly = Boolean(yearly)
-      toggle?.setAttribute('aria-pressed', String(isYearly))
-      optionMonthly?.setAttribute('aria-pressed', String(!isYearly))
-      optionYearly?.setAttribute('aria-pressed', String(isYearly))
-
-      banners.forEach((banner) => {
-        const monthPriceLocalized = banner.getAttribute(
-          'data-month-price-localized'
-        )
-        const yearPriceLocalized = banner.getAttribute(
-          'data-year-price-localized'
-        )
-        const detailYearly = banner.getAttribute('data-detail-yearly') ?? ''
-        const detailMonthly = banner.getAttribute('data-detail-monthly') ?? ''
-
-        const currentEl = banner.querySelector('.pricing__plan-price-amount')
-        const struckEl = banner.querySelector('.pricing__plan-price-struck')
-        const detailEl = banner.querySelector('.pricing__plan-price-detail')
-
-        if (currentEl) {
-          if (isYearly) {
-            currentEl.textContent = yearPriceLocalized ?? '--'
-          } else {
-            currentEl.textContent = monthPriceLocalized ?? '--'
-          }
-        }
-        if (struckEl) {
-          const shownPrice = isYearly
-            ? (yearPriceLocalized ?? '')
-            : (monthPriceLocalized ?? '')
-          const struckValue = doubleDisplayedPrice(shownPrice)
-          if (struckValue === '') {
-            struckEl.style.display = 'none'
-          } else {
-            struckEl.style.display = ''
-            struckEl.textContent = struckValue
-          }
-        }
-        if (detailEl) {
-          detailEl.textContent = isYearly ? detailYearly : detailMonthly
-        }
-      })
-    }
-
-    if (!toggle.hasAttribute(PRICING_INITED)) {
-      toggle.setAttribute(PRICING_INITED, '')
-
-      toggle.addEventListener('click', () => {
-        const isYearly = toggle.getAttribute('aria-pressed') === 'true'
-        setBilling(!isYearly)
-        capturePricingEvent('billing_cycle_changed')
-      })
-
-      optionMonthly.addEventListener('click', () => {
-        setBilling(false)
-        capturePricingEvent('billing_cycle_changed')
-      })
-
-      optionYearly.addEventListener('click', () => {
-        setBilling(true)
-        capturePricingEvent('billing_cycle_changed')
-      })
-
-      setBilling(true)
-    }
-
-    hydrateLocalizedPrices(Array.from(banners)).finally(() => {
-      const isYearly = toggle.getAttribute('aria-pressed') === 'true'
-      setBilling(isYearly)
-    })
-  }
-
-  /** First load/reload: wait until the DOM is ready. */
   function runWhenReady() {
-    const run = () => {
-      requestAnimationFrame(initPricingToggle)
-    }
+    const run = () => requestAnimationFrame(hydratePrices)
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', run)
     } else {
@@ -788,10 +525,10 @@ const faqItems = [
   runWhenReady()
   const paddleScript = document.getElementById('paddle-js')
   if (paddleScript != null) {
-    paddleScript.addEventListener('load', initPricingToggle)
+    paddleScript.addEventListener('load', hydratePrices)
   }
-  document.addEventListener('astro:after-swap', initPricingToggle)
-  document.addEventListener('astro:page-load', initPricingToggle)
+  document.addEventListener('astro:after-swap', hydratePrices)
+  document.addEventListener('astro:page-load', hydratePrices)
 
   function setupCheckoutDialog() {
     const dialog = document.getElementById(checkoutDialogId)
@@ -864,13 +601,36 @@ const faqItems = [
     })
   }
 
+  function setupDiscountInfoDialog() {
+    const dialog = document.getElementById('pricing-discount-info-dialog')
+    if (!(dialog instanceof HTMLDialogElement)) {
+      return
+    }
+    if (dialog.hasAttribute(DISCOUNT_DIALOG_INITED)) {
+      return
+    }
+    dialog.setAttribute(DISCOUNT_DIALOG_INITED, '')
+
+    document.querySelectorAll('[data-open-discount-dialog]').forEach((trigger) => {
+      if (!(trigger instanceof HTMLElement)) {
+        return
+      }
+      trigger.addEventListener('click', () => {
+        dialog.showModal()
+      })
+    })
+  }
+
   capturePricingViewOnce()
   setupCheckoutDialog()
+  setupDiscountInfoDialog()
   document.addEventListener('astro:page-load', setupCheckoutDialog)
+  document.addEventListener('astro:page-load', setupDiscountInfoDialog)
   document.addEventListener('astro:page-load', capturePricingViewOnce)
 </script>
 
 <style>
+
   .pricing-checkout-form {
     display: grid;
     gap: var(--spacing-3);
@@ -910,6 +670,59 @@ const faqItems = [
   }
 
   .pricing-checkout-form__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-2);
+  }
+
+  .pricing__plans--centered {
+    max-width: 420px;
+    margin-bottom: 3rem;
+    grid-template-columns: 1fr;
+  }
+
+  .pricing__plan-footer--column {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-3);
+  }
+
+  .pricing__accessible-link {
+    font-size: var(--text-xs);
+    color: var(--color-gray-9);
+    text-align: center;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .pricing__accessible-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+    font-family: inherit;
+    color: var(--color-cyan-10);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .pricing__accessible-btn:hover {
+    color: var(--color-cyan-11);
+  }
+
+  .pricing-discount-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3);
+  }
+
+  .pricing-discount-dialog__price-line {
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .pricing-discount-dialog__footer {
+    margin-top: var(--spacing-3);
     display: flex;
     justify-content: flex-end;
     gap: var(--spacing-2);

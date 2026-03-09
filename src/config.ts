@@ -41,16 +41,12 @@ export const CONFIG = {
   billing: {
     paddlePriceIds: {
       production: {
-        BASIC_MONTHLY: 'pri_01kk19a0xpmxppknwqs4s6x92r',
-        BASIC_YEARLY: 'pri_01kk1954dx0qy5bze4ndcy3r2z',
-        PRO_MONTHLY: 'pri_01kk19hgyx476qxaewqx90zjex',
-        PRO_YEARLY: 'pri_01kk19g1tkb4hjvyj9dpcrbrda'
+        PRO_ONETIME: 'pri_01kk8zz1wknzpxrbg811wcxmxs',
+        DISCOUNT_ONETIME: 'pri_01kk8zzkxbjemkbhvtkcbz0cg2'
       },
       staging: {
-        BASIC_MONTHLY: 'pri_01kjfr83ph95rmgypgrdsc20bs',
-        BASIC_YEARLY: 'pri_01kjfr962x53wh4wnkywjmc94s',
-        PRO_MONTHLY: 'pri_01kjfgeb1amgf8ht2fxaqsshhg',
-        PRO_YEARLY: 'pri_01kjfgg9mz5586yyaxkepp4aa3'
+        PRO_ONETIME: 'pri_01kk8zz1wknzpxrbg811wcxmxs',
+        DISCOUNT_ONETIME: 'pri_01kk8zzkxbjemkbhvtkcbz0cg2'
       }
     }
   }

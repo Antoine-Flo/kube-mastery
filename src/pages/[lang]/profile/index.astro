@@ -35,7 +35,6 @@ if (prefs?.locale === 'en' || prefs?.locale === 'fr') {
 const showLanguagePreferences = enabledLanguages.length > 1
 
 const DELETE_DIALOG_ID = 'profile-delete-dialog'
-const CANCEL_DIALOG_ID = 'profile-cancel-dialog'
 const REFUND_DIALOG_ID = 'profile-refund-dialog'
 
 const { data: subscription } = await supabase
@@ -83,24 +82,8 @@ const statusLabelByValue: Record<string, string> = {
 const hasSubscription =
   subscription != null &&
   ((subscription.paddle_subscription_id as string | null) ?? '') !== ''
-const shouldShowPause = hasSubscription && statusValue !== 'paused'
-const shouldShowResume = hasSubscription && statusValue === 'paused'
 
 const nowMs = Date.now()
-const trialDaysRemaining =
-  statusValue === 'trialing'
-    ? Math.max(
-        0,
-        Math.ceil(
-          (new Date(
-            (subscription?.current_period_end as string | null) ?? nowMs
-          ).getTime() -
-            nowMs) /
-            (1000 * 60 * 60 * 24)
-        )
-      )
-    : null
-
 const subscribedDays =
   hasSubscription && subscription?.created_at != null
     ? Math.max(
@@ -111,22 +94,25 @@ const subscribedDays =
         )
       )
     : null
+const refundWindowMs = 30 * 24 * 60 * 60 * 1000
+const subscriptionCreatedAtMs =
+  hasSubscription && subscription?.created_at != null
+    ? new Date(subscription.created_at as string).getTime()
+    : null
+const canRequestRefund =
+  subscriptionCreatedAtMs != null &&
+  Number.isFinite(subscriptionCreatedAtMs) &&
+  nowMs - subscriptionCreatedAtMs <= refundWindowMs
 
 const billingAction = Astro.url.searchParams.get('billing')
 const billingError = Astro.url.searchParams.get('billing_error')
 
 const billingSuccessMessageByAction: Record<string, string> = {
-  paused: t('profile_subscriptionActionPaused'),
-  resumed: t('profile_subscriptionActionResumed'),
-  canceled: t('profile_subscriptionActionCanceled'),
   refund_requested: t('profile_subscriptionActionRefundRequested')
 }
 const billingErrorMessageByAction: Record<string, string> = {
   unauthorized: t('profile_subscriptionActionErrorUnauthorized'),
   subscription_not_found: t('profile_subscriptionActionErrorSubscriptionNotFound'),
-  pause_failed: t('profile_subscriptionActionErrorPause'),
-  resume_failed: t('profile_subscriptionActionErrorResume'),
-  cancel_failed: t('profile_subscriptionActionErrorCancel'),
   refund_failed: t('profile_subscriptionActionErrorRefund')
 }
 const accountActionMessageByCode: Record<string, string> = {
@@ -134,9 +120,6 @@ const accountActionMessageByCode: Record<string, string> = {
   unauthorized: t('profile_actionErrorUnauthorized'),
   subscription_not_found: t('profile_subscriptionActionErrorSubscriptionNotFound'),
   subscription_active: t('profile_deleteBlockedBySubscription'),
-  pause_failed: t('profile_subscriptionActionErrorPause'),
-  resume_failed: t('profile_subscriptionActionErrorResume'),
-  cancel_failed: t('profile_subscriptionActionErrorCancel'),
   refund_failed: t('profile_subscriptionActionErrorRefund'),
   delete_failed: t('profile_actionErrorDeleteFailed'),
   action_failed: t('profile_actionErrorDefault')
@@ -248,15 +231,6 @@ const billingErrorMessage =
                   <dd>{formatDate(subscription?.canceled_at as string | null)}</dd>
                 </div>
               </dl>
-              {
-                trialDaysRemaining != null && (
-                  <p class="profile__hint">
-                    {t('profile_subscriptionTrialRemaining', {
-                      days: String(trialDaysRemaining)
-                    })}
-                  </p>
-                )
-              }
             </div>
             <div class="profile__subscription-block profile__portal">
               <h3 class="profile__actions-title">
@@ -276,53 +250,22 @@ const billingErrorMessage =
                 {t('profile_subscriptionQuickActions')}
               </h3>
               <div class="profile__billing-actions">
-                {
-                  shouldShowPause && (
-                    <form
-                      method="post"
-                      action={`/api/account/subscription-pause?redirect=${encodeURIComponent(profilePath)}`}
-                      data-account-action
-                      data-astro-reload
-                    >
-                      <Button type="submit" variant="outline" color="gray" size="sm">
-                        {t('profile_subscriptionPause')}
-                      </Button>
-                    </form>
-                  )
-                }
-                {
-                  shouldShowResume && (
-                    <form
-                      method="post"
-                      action={`/api/account/subscription-resume?redirect=${encodeURIComponent(profilePath)}`}
-                      data-account-action
-                      data-astro-reload
-                    >
-                      <Button type="submit" variant="outline" color="green" size="sm">
-                        {t('profile_subscriptionResume')}
-                      </Button>
-                    </form>
-                  )
-                }
-                <Button
-                  type="button"
-                  variant="outline"
-                  color="ruby"
-                  size="sm"
-                  data-dialog-open={CANCEL_DIALOG_ID}
-                >
-                  {t('profile_subscriptionCancel')}
-                </Button>
                 <Button
                   type="button"
                   variant="outline"
                   color="amber"
                   size="sm"
                   data-dialog-open={REFUND_DIALOG_ID}
+                  disabled={!canRequestRefund}
                 >
                   {t('profile_subscriptionRefund')}
                 </Button>
               </div>
+              {
+                !canRequestRefund && (
+                  <p class="profile__hint">{t('profile_subscriptionRefundWindowExpired')}</p>
+                )
+              }
             </div>
           </>
         ) : (
@@ -373,39 +316,6 @@ const billingErrorMessage =
   </Dialog>
 
   <Dialog
-    id={CANCEL_DIALOG_ID}
-    title={t('profile_subscriptionCancelConfirmTitle')}
-    description={t('profile_subscriptionCancelConfirmMessage')}
-    size="md"
-  >
-    <div slot="footer" class="dialog__footer">
-      <Button type="button" variant="subtle" color="gray" data-dialog-close>
-        {t('profile_cancel')}
-      </Button>
-      <form
-        method="post"
-        action={`/api/account/subscription-pause?redirect=${encodeURIComponent(profilePath)}`}
-        data-account-action
-        data-astro-reload
-      >
-        <Button type="submit" variant="outline" color="gray">
-          {t('profile_subscriptionPauseInstead')}
-        </Button>
-      </form>
-      <form
-        method="post"
-        action={`/api/account/subscription-cancel?redirect=${encodeURIComponent(profilePath)}`}
-        data-account-action
-        data-astro-reload
-      >
-        <Button type="submit" variant="solid" color="ruby">
-          {t('profile_subscriptionCancelConfirmButton')}
-        </Button>
-      </form>
-    </div>
-  </Dialog>
-
-  <Dialog
     id={REFUND_DIALOG_ID}
     title={t('profile_subscriptionRefundConfirmTitle')}
     description={t('profile_subscriptionRefundConfirmMessage')}
@@ -422,7 +332,7 @@ const billingErrorMessage =
       <Button type="button" variant="subtle" color="gray" data-dialog-close>
         {t('profile_cancel')}
       </Button>
-      <Button type="submit" variant="solid" color="amber">
+      <Button type="submit" variant="solid" color="amber" disabled={!canRequestRefund}>
         {t('profile_subscriptionRefundConfirmButton')}
       </Button>
     </form>
@@ -435,44 +345,53 @@ const billingErrorMessage =
     margin: 0 auto;
     padding: 2rem 1rem;
   }
+
   .profile__title {
     font-size: var(--text-2xl);
     font-weight: var(--font-weight-bold);
     color: var(--color-gray-12);
     margin-bottom: 1.5rem;
   }
+
   .profile__section {
     margin-bottom: 2rem;
   }
+
   .profile__flash {
     margin: 0 0 1rem;
     padding: 0.6rem 0.8rem;
     border-radius: var(--radius-md);
     font-size: var(--text-xs);
   }
+
   .profile__flash--success {
     background: var(--color-green-3);
     color: var(--color-green-11);
   }
+
   .profile__flash--error {
     background: var(--color-ruby-3);
     color: var(--color-ruby-11);
   }
+
   .profile__section-title {
     font-size: var(--text-lg);
     font-weight: var(--font-weight-semibold);
     color: var(--color-gray-12);
     margin-bottom: 0.5rem;
   }
+
   .profile__section-desc {
     font-size: var(--text-sm);
     color: var(--color-gray-11);
     margin-bottom: 0.75rem;
   }
+
   .profile__locale-options {
     display: flex;
     gap: 0.5rem;
   }
+
   .profile__locale-opt {
     padding: 0.5rem 1rem;
     border: 1px solid var(--color-gray-6);
@@ -482,46 +401,55 @@ const billingErrorMessage =
     font-size: var(--text-sm);
     cursor: pointer;
   }
+
   .profile__locale-opt:hover {
     background: var(--color-gray-4);
     color: var(--color-gray-12);
   }
+
   .profile__locale-opt[aria-pressed='true'] {
     border-color: var(--color-cyan-8);
     background: var(--color-cyan-3);
     color: var(--color-cyan-11);
   }
+
   .profile__hint {
     font-size: var(--text-xs);
     color: var(--color-cyan-11);
     margin-top: 0.35rem;
   }
+
   .profile__danger {
     padding-top: 1rem;
     border-top: 1px solid var(--color-gray-6);
   }
+
   .profile__subscription-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
     gap: 0.7rem 1rem;
     margin: 0 0 1rem;
   }
+
   .profile__subscription-grid dt {
     font-size: var(--text-xs);
     color: var(--color-gray-10);
     margin: 0;
   }
+
   .profile__subscription-grid dd {
     margin: 0.15rem 0 0;
     font-size: var(--text-sm);
     color: var(--color-gray-12);
     font-weight: var(--font-weight-medium);
   }
+
   .profile__billing-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
   }
+
   .profile__subscription-block {
     border: 1px solid var(--color-gray-6);
     background: var(--color-gray-2);
@@ -529,11 +457,13 @@ const billingErrorMessage =
     padding: 0.8rem;
     margin-bottom: 0.8rem;
   }
+
   .profile__portal {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
   }
+
   .profile__actions-title {
     font-size: var(--text-sm);
     font-weight: var(--font-weight-semibold);
