@@ -245,6 +245,33 @@ function isKnownExternalClassName(className: string): boolean {
   return KNOWN_EXTERNAL_CLASS_PATTERNS.some((pattern) => pattern.test(className))
 }
 
+function extractDynamicClassPrefixes(content: string): Set<string> {
+  const prefixes = new Set<string>()
+  const literalRegex = /(["'`])((?:\\.|(?!\1)[\s\S])*?)\1/g
+
+  for (const match of content.matchAll(literalRegex)) {
+    const quote = match[1]
+    const raw = match[2] ?? ''
+    if (quote !== '`') {
+      continue
+    }
+    if (!raw.includes('${')) {
+      continue
+    }
+
+    const prefix = raw.split('${', 1)[0]?.trim() ?? ''
+    if (prefix.length < 3) {
+      continue
+    }
+    if (!/[_a-zA-Z]/.test(prefix)) {
+      continue
+    }
+    prefixes.add(prefix)
+  }
+
+  return prefixes
+}
+
 function removeSafelyRemovableRules(
   cssContent: string,
   unusedClassSet: Set<string>
@@ -406,9 +433,14 @@ async function run(): Promise<void> {
   }
 
   const usedClasses = new Set<string>()
+  const dynamicClassPrefixes = new Set<string>()
   const undefinedClassesByFile = new Map<string, Set<string>>()
   for (const filePath of sourceFiles) {
     const content = await readFile(filePath, 'utf8')
+    const prefixes = extractDynamicClassPrefixes(content)
+    for (const prefix of prefixes) {
+      dynamicClassPrefixes.add(prefix)
+    }
     const classReferences = extractClassReferences(content)
     for (const className of classReferences) {
       if (allDefinedClasses.has(className)) {
@@ -438,7 +470,20 @@ async function run(): Promise<void> {
 
   for (const filePath of reportFiles) {
     const defined = definitionsByFile.get(filePath) ?? new Set<string>()
-    const unused = [...defined].filter((name) => !usedClasses.has(name)).sort()
+    const unused = [...defined]
+      .filter((name) => {
+        if (usedClasses.has(name)) {
+          return false
+        }
+        const matchedDynamicPrefix = [...dynamicClassPrefixes].some((prefix) =>
+          name.startsWith(prefix)
+        )
+        if (matchedDynamicPrefix) {
+          return false
+        }
+        return true
+      })
+      .sort()
     totalDefined += defined.size
     totalUnused += unused.length
 
@@ -450,24 +495,6 @@ async function run(): Promise<void> {
         removedRuleCount = result.removedRuleCount
         if (removedRuleCount > 0 && result.content !== rawContent) {
           await writeFile(filePath, result.content, 'utf8')
-        }
-      } else if (filePath.endsWith('.astro')) {
-        const rawContent = await readFile(filePath, 'utf8')
-        const blocks = extractAstroStyleBlocks(rawContent)
-        if (blocks.length > 0) {
-          let cursor = 0
-          let nextContent = ''
-          for (const block of blocks) {
-            nextContent += rawContent.slice(cursor, block.cssStart)
-            const result = removeSafelyRemovableRules(block.cssContent, new Set(unused))
-            removedRuleCount += result.removedRuleCount
-            nextContent += result.content
-            cursor = block.cssEnd
-          }
-          nextContent += rawContent.slice(cursor)
-          if (removedRuleCount > 0 && nextContent !== rawContent) {
-            await writeFile(filePath, nextContent, 'utf8')
-          }
         }
       }
     }
@@ -537,6 +564,7 @@ async function run(): Promise<void> {
   console.log(`- scanned source files: ${sourceFiles.length}`)
   console.log(`- total CSS classes: ${totalDefined}`)
   console.log(`- used classes: ${usedClasses.size}`)
+  console.log(`- dynamic class prefixes detected: ${dynamicClassPrefixes.size}`)
   console.log(`- unused classes: ${totalUnused}`)
   console.log(`- undefined class references in source: ${totalUndefinedClassRefs}`)
   if (options.apply) {
