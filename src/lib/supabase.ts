@@ -1,8 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import {
-  createServerClient,
-  parseCookieHeader
-} from '@supabase/ssr'
+import { createServerClient, parseCookieHeader } from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { readAppEnv } from './env'
 
@@ -24,10 +21,7 @@ function readSupabaseEnv(locals: unknown): SupabaseEnv {
       'SUPABASE_PUBLISHABLE_DEFAULT_KEY',
       locals
     ),
-    SUPABASE_SERVICE_ROLE_KEY: readAppEnv(
-      'SUPABASE_SERVICE_ROLE_KEY',
-      locals
-    )
+    SUPABASE_SERVICE_ROLE_KEY: readAppEnv('SUPABASE_SERVICE_ROLE_KEY', locals)
   }
 }
 

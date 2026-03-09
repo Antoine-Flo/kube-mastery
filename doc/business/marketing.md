@@ -142,11 +142,11 @@ Donc pour te faire une paye avec du one-time : compter **environ 60–100 ventes
 
 ## Différenciation vs Concurrence
 
-| Aspect         | KubeMastery                      | Killer.sh | KodeKloud |
-| -------------- | -------------------------------- | --------- | --------- |
-| Modèle         | One-time lifetime, 30j money-back | Sessions  | Abonnement |
-| Simulateur     | Local (rapide, sans latence)     | N/A       | Payant    |
-| Points forts   | Zéro friction, accès permanent   | Officiel  | Contenu   |
+| Aspect       | KubeMastery                       | Killer.sh | KodeKloud  |
+| ------------ | --------------------------------- | --------- | ---------- |
+| Modèle       | One-time lifetime, 30j money-back | Sessions  | Abonnement |
+| Simulateur   | Local (rapide, sans latence)      | N/A       | Payant     |
+| Points forts | Zéro friction, accès permanent    | Officiel  | Contenu    |
 
 ## Principes Directeurs
 

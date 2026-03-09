@@ -236,7 +236,12 @@ spec:
   containers:
     - name: reader
       image: busybox:1.36
-      command: ["sh", "-c", "while true; do echo '---'; ls /config; cat /config/greeting.txt; sleep 10; done"]
+      command:
+        [
+          'sh',
+          '-c',
+          "while true; do echo '---'; ls /config; cat /config/greeting.txt; sleep 10; done"
+        ]
       volumeMounts:
         - name: config-vol
           mountPath: /config
@@ -311,7 +316,7 @@ spec:
   containers:
     - name: reader
       image: busybox:1.36
-      command: ["sh", "-c", "ls /secrets && cat /secrets/api-key && sleep 3600"]
+      command: ['sh', '-c', 'ls /secrets && cat /secrets/api-key && sleep 3600']
       volumeMounts:
         - name: secret-vol
           mountPath: /secrets

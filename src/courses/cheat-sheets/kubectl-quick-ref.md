@@ -71,7 +71,7 @@ spec:
       image: busybox:1.28
       args:
         - sleep
-        - "1000000"
+        - '1000000'
 ---
 apiVersion: v1
 kind: Pod
@@ -83,7 +83,7 @@ spec:
       image: busybox:1.28
       args:
         - sleep
-        - "1000"
+        - '1000'
 ```
 
 ```bash
@@ -290,19 +290,19 @@ kubectl api-resources --api-group=extensions
 
 ### Formatting output
 
-| Output format | Description |
-| --- | --- |
-| `-o=custom-columns=<spec>` | Print table using custom columns |
-| `-o=custom-columns-file=<filename>` | Print table from custom columns file |
-| `-o=go-template=<template>` | Print fields from golang template |
-| `-o=go-template-file=<filename>` | Print fields from golang template file |
-| `-o=json` | Output JSON API object |
-| `-o=jsonpath=<template>` | Print fields from jsonpath expression |
-| `-o=jsonpath-file=<filename>` | Print fields from jsonpath file |
-| `-o=kyaml` | Output KYAML API object |
-| `-o=name` | Print resource name only |
-| `-o=wide` | Output in extended table format |
-| `-o=yaml` | Output YAML API object |
+| Output format                       | Description                            |
+| ----------------------------------- | -------------------------------------- |
+| `-o=custom-columns=<spec>`          | Print table using custom columns       |
+| `-o=custom-columns-file=<filename>` | Print table from custom columns file   |
+| `-o=go-template=<template>`         | Print fields from golang template      |
+| `-o=go-template-file=<filename>`    | Print fields from golang template file |
+| `-o=json`                           | Output JSON API object                 |
+| `-o=jsonpath=<template>`            | Print fields from jsonpath expression  |
+| `-o=jsonpath-file=<filename>`       | Print fields from jsonpath file        |
+| `-o=kyaml`                          | Output KYAML API object                |
+| `-o=name`                           | Print resource name only               |
+| `-o=wide`                           | Output in extended table format        |
+| `-o=yaml`                           | Output YAML API object                 |
 
 Examples:
 
@@ -315,15 +315,15 @@ kubectl get pods -A -o=custom-columns='DATA:metadata.*'
 
 ### Kubectl output verbosity and debugging
 
-| Verbosity | Description |
-| --- | --- |
-| `--v=0` | Always-visible operator information |
-| `--v=1` | Reasonable default log level |
-| `--v=2` | Recommended default for most systems |
-| `--v=3` | Extended information about changes |
-| `--v=4` | Debug level verbosity |
-| `--v=5` | Trace level verbosity |
-| `--v=6` | Display requested resources |
-| `--v=7` | Display HTTP request headers |
-| `--v=8` | Display HTTP request contents |
-| `--v=9` | Display full HTTP request contents |
+| Verbosity | Description                          |
+| --------- | ------------------------------------ |
+| `--v=0`   | Always-visible operator information  |
+| `--v=1`   | Reasonable default log level         |
+| `--v=2`   | Recommended default for most systems |
+| `--v=3`   | Extended information about changes   |
+| `--v=4`   | Debug level verbosity                |
+| `--v=5`   | Trace level verbosity                |
+| `--v=6`   | Display requested resources          |
+| `--v=7`   | Display HTTP request headers         |
+| `--v=8`   | Display HTTP request contents        |
+| `--v=9`   | Display full HTTP request contents   |

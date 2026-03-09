@@ -165,9 +165,9 @@ metadata:
   labels:
     app: web
   annotations:
-    contact: "platform-team@example.com"
-    runbook: "https://wiki.example.com/runbooks/web"
-    git-commit: "a3f2c1d"
+    contact: 'platform-team@example.com'
+    runbook: 'https://wiki.example.com/runbooks/web'
+    git-commit: 'a3f2c1d'
 spec:
   containers:
     - name: nginx

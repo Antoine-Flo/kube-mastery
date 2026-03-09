@@ -1,9 +1,4 @@
-import {
-  defaultLang,
-  enabledLanguages,
-  languages,
-  type UiLanguage
-} from './ui'
+import { defaultLang, enabledLanguages, languages, type UiLanguage } from './ui'
 
 function isUiLanguage(value: string): value is UiLanguage {
   return Object.hasOwn(languages, value)

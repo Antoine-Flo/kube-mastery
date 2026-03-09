@@ -6,10 +6,7 @@ type RuntimeEnvLocals = {
   }
 }
 
-export function readAppEnv(
-  key: string,
-  locals?: unknown
-): string | undefined {
+export function readAppEnv(key: string, locals?: unknown): string | undefined {
   const runtimeEnv = (locals as RuntimeEnvLocals | undefined)?.runtime?.env as
     | Record<string, unknown>
     | undefined

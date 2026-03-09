@@ -214,7 +214,7 @@ kind: Ingress
 metadata:
   name: with-rewrite
   annotations:
-    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/use-regex: 'true'
     nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   ingressClassName: nginx
@@ -252,7 +252,7 @@ kind: Ingress
 metadata:
   name: rate-limited
   annotations:
-    nginx.ingress.kubernetes.io/limit-rps: "2"
+    nginx.ingress.kubernetes.io/limit-rps: '2'
 spec:
   ingressClassName: nginx
   rules:

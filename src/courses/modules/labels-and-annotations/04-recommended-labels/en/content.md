@@ -115,7 +115,7 @@ metadata:
   labels:
     app.kubernetes.io/name: my-web-app
     app.kubernetes.io/instance: my-web-app-prod
-    app.kubernetes.io/version: "2.0.0"
+    app.kubernetes.io/version: '2.0.0'
     app.kubernetes.io/component: frontend
     app.kubernetes.io/part-of: checkout-platform
     app.kubernetes.io/managed-by: kubectl
@@ -130,7 +130,7 @@ spec:
       labels:
         app.kubernetes.io/name: my-web-app
         app.kubernetes.io/instance: my-web-app-prod
-        app.kubernetes.io/version: "2.0.0"
+        app.kubernetes.io/version: '2.0.0'
         app.kubernetes.io/component: frontend
         app.kubernetes.io/part-of: checkout-platform
         app.kubernetes.io/managed-by: kubectl
@@ -155,7 +155,7 @@ metadata:
   labels:
     app.kubernetes.io/name: payments-api
     app.kubernetes.io/instance: payments-api-prod
-    app.kubernetes.io/version: "3.1.0"
+    app.kubernetes.io/version: '3.1.0'
     app.kubernetes.io/component: backend
     app.kubernetes.io/part-of: checkout-platform
     app.kubernetes.io/managed-by: kubectl
@@ -170,7 +170,7 @@ spec:
       labels:
         app.kubernetes.io/name: payments-api
         app.kubernetes.io/instance: payments-api-prod
-        app.kubernetes.io/version: "3.1.0"
+        app.kubernetes.io/version: '3.1.0'
         app.kubernetes.io/component: backend
         app.kubernetes.io/part-of: checkout-platform
         app.kubernetes.io/managed-by: kubectl

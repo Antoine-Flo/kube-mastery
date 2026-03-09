@@ -1,29 +1,25 @@
 // @ts-nocheck
-import {
-  dag,
-  Directory,
-  func,
-  object,
-  Secret
-} from "@dagger.io/dagger";
+import { dag, Directory, func, object, Secret } from '@dagger.io/dagger'
 
 @object()
 export class KubeMasteryCi {
   private qualityGate(source: Directory) {
-    return dag
-      .container()
-      .from("node:22")
-      .withDirectory("/src", source)
-      .withWorkdir("/src")
-      .withExec(["npm", "ci"])
-      // .withExec(["npm", "run", "check"])
-      .withExec(["npm", "run", "test"])
-      .withExec(["npm", "run", "build"]);
+    return (
+      dag
+        .container()
+        .from('node:22')
+        .withDirectory('/src', source)
+        .withWorkdir('/src')
+        .withExec(['npm', 'ci'])
+        // .withExec(["npm", "run", "check"])
+        .withExec(['npm', 'run', 'test'])
+        .withExec(['npm', 'run', 'build'])
+    )
   }
 
   @func()
   testAndBuild(source: Directory): Directory {
-    return this.qualityGate(source).directory("/src/dist");
+    return this.qualityGate(source).directory('/src/dist')
   }
 
   private deployContainer(
@@ -32,9 +28,9 @@ export class KubeMasteryCi {
     cloudflareApiToken: Secret
   ) {
     return this.qualityGate(source)
-      .withExec(["npx", "--yes", "wrangler", "--version"])
-      .withEnvVariable("CLOUDFLARE_ACCOUNT_ID", cloudflareAccountId)
-      .withSecretVariable("CLOUDFLARE_API_TOKEN", cloudflareApiToken);
+      .withExec(['npx', '--yes', 'wrangler', '--version'])
+      .withEnvVariable('CLOUDFLARE_ACCOUNT_ID', cloudflareAccountId)
+      .withSecretVariable('CLOUDFLARE_API_TOKEN', cloudflareApiToken)
   }
 
   @func()
@@ -44,8 +40,8 @@ export class KubeMasteryCi {
     cloudflareApiToken: Secret
   ): Promise<string> {
     return this.deployContainer(source, cloudflareAccountId, cloudflareApiToken)
-      .withExec(["npx", "--yes", "wrangler", "deploy", "--env", "staging"])
-      .stdout();
+      .withExec(['npx', '--yes', 'wrangler', 'deploy', '--env', 'staging'])
+      .stdout()
   }
 
   @func()
@@ -55,7 +51,7 @@ export class KubeMasteryCi {
     cloudflareApiToken: Secret
   ): Promise<string> {
     return this.deployContainer(source, cloudflareAccountId, cloudflareApiToken)
-      .withExec(["npx", "--yes", "wrangler", "deploy"])
-      .stdout();
+      .withExec(['npx', '--yes', 'wrangler', 'deploy'])
+      .stdout()
   }
 }

@@ -130,7 +130,11 @@ export const POST: APIRoute = async ({
       durationMs: getDurationMs(startedAt)
     })
     if (isAjax) {
-      return actionJsonSuccess({ ok: true, code: 'ok', redirectTo: finalRedirect })
+      return actionJsonSuccess({
+        ok: true,
+        code: 'ok',
+        redirectTo: finalRedirect
+      })
     }
     return redirect(finalRedirect)
   }
@@ -295,7 +299,11 @@ export const POST: APIRoute = async ({
     durationMs: getDurationMs(startedAt)
   })
   if (isAjax) {
-    return actionJsonSuccess({ ok: true, code: 'ok', redirectTo: successRedirect })
+    return actionJsonSuccess({
+      ok: true,
+      code: 'ok',
+      redirectTo: successRedirect
+    })
   }
   return redirect(successRedirect)
 }

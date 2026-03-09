@@ -23,7 +23,9 @@ export const PLAN_TIER = {
 
 export type PlanTier = (typeof PLAN_TIER)[keyof typeof PLAN_TIER]
 
-const billingEnvironment = (readAppEnv('ENVIRONMENT') ?? '').toLowerCase().trim()
+const billingEnvironment = (readAppEnv('ENVIRONMENT') ?? '')
+  .toLowerCase()
+  .trim()
 
 export const PADDLE_PRICE_ID =
   billingEnvironment === 'production'
@@ -34,7 +36,6 @@ const PRICE_ID_TO_PLAN_TIER: Record<string, PlanTier> = {
   [PADDLE_PRICE_ID.PRO_ONETIME]: PLAN_TIER.PRO,
   [PADDLE_PRICE_ID.DISCOUNT_ONETIME]: PLAN_TIER.PRO
 }
-
 
 export type ParsedPaddleEvent = {
   notificationId: string
@@ -63,19 +64,14 @@ const asString = (value: unknown): string | null =>
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value != null && !Array.isArray(value)
 
-function getCustomDataString(
-  customData: unknown,
-  key: string
-): string | null {
+function getCustomDataString(customData: unknown, key: string): string | null {
   if (!isRecord(customData)) {
     return null
   }
   return asString(customData[key])
 }
 
-function isSubscriptionEvent(
-  event: EventEntity
-): boolean {
+function isSubscriptionEvent(event: EventEntity): boolean {
   return (
     event.eventType === EventName.SubscriptionActivated ||
     event.eventType === EventName.SubscriptionCanceled ||
@@ -88,9 +84,7 @@ function isSubscriptionEvent(
   )
 }
 
-function isTransactionEvent(
-  event: EventEntity
-): boolean {
+function isTransactionEvent(event: EventEntity): boolean {
   if (event.eventType.startsWith('transaction.')) {
     return true
   }

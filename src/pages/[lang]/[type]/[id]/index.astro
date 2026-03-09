@@ -35,7 +35,11 @@ const { completed, userId } = await getProgressContext(
   Astro.request,
   Astro.cookies
 )
-const auth = await getLayoutAuthContext(Astro.locals, Astro.request, Astro.cookies)
+const auth = await getLayoutAuthContext(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
 const isLoggedIn = !!userId
 const hasPaidSubscription = auth.hasPaidSubscription
 

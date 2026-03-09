@@ -155,7 +155,12 @@ spec:
   containers:
     - name: writer
       image: busybox
-      command: ["/bin/sh", "-c", "echo 'Hello from the first pod' > /data/message.txt && sleep 3600"]
+      command:
+        [
+          '/bin/sh',
+          '-c',
+          "echo 'Hello from the first pod' > /data/message.txt && sleep 3600"
+        ]
       volumeMounts:
         - name: storage
           mountPath: /data
@@ -207,7 +212,7 @@ spec:
   containers:
     - name: reader
       image: busybox
-      command: ["/bin/sh", "-c", "sleep 3600"]
+      command: ['/bin/sh', '-c', 'sleep 3600']
       volumeMounts:
         - name: storage
           mountPath: /data

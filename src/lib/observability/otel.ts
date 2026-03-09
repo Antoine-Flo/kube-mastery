@@ -172,7 +172,10 @@ function resolveRequestId(request: Request): string {
   if (fromCfRay != null && fromCfRay.trim() !== '') {
     return fromCfRay.trim()
   }
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+  ) {
     return crypto.randomUUID()
   }
   return `req_${Date.now().toString(36)}`
@@ -220,7 +223,10 @@ function sanitizeLogAttributes(
       continue
     }
     if (typeof value === 'string') {
-      output[key] = value.length > MAX_STRING_LENGTH ? `${value.slice(0, MAX_STRING_LENGTH)}...` : value
+      output[key] =
+        value.length > MAX_STRING_LENGTH
+          ? `${value.slice(0, MAX_STRING_LENGTH)}...`
+          : value
       continue
     }
     output[key] = value

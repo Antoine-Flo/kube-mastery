@@ -155,7 +155,10 @@ function extractStringLiterals(content: string): string[] {
   return literals
 }
 
-function normalizeMessageObject(data: unknown, filePath: string): Record<string, string> {
+function normalizeMessageObject(
+  data: unknown,
+  filePath: string
+): Record<string, string> {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
     throw new Error(`Invalid message file format: ${filePath}`)
   }
@@ -234,7 +237,11 @@ async function run(): Promise<void> {
         return usedKeys.has(key)
       })
       const cleanedObject = Object.fromEntries(cleanedEntries)
-      await writeFile(filePath, `${JSON.stringify(cleanedObject, null, 2)}\n`, 'utf8')
+      await writeFile(
+        filePath,
+        `${JSON.stringify(cleanedObject, null, 2)}\n`,
+        'utf8'
+      )
     }
   }
 

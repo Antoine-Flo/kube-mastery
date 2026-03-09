@@ -6,7 +6,6 @@
 }
 
 @media (min-width: 768px) {
-
 }
 
 .card--outline.courses__card--free {
@@ -25,19 +24,15 @@
 /* Course Overview Page */
 
 @media (min-width: 768px) {
-
 }
 
 @media (min-width: 1024px) {
-
 }
 
 @media (min-width: 1024px) {
-
 }
 
 @media (min-width: 768px) {
-
 }
 
 .course-overview__description p {
@@ -69,4 +64,3 @@
 .course-overview__lesson--current:hover {
   background-color: var(--color-cyan-2);
 }
-

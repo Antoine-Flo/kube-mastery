@@ -47,7 +47,12 @@ const SKIP_DIRS = new Set([
   'coverage',
   'refs'
 ])
-const KNOWN_EXTERNAL_CLASS_PATTERNS = [/^xterm-/, /^cm-/, /^astro-/, /^language-/]
+const KNOWN_EXTERNAL_CLASS_PATTERNS = [
+  /^xterm-/,
+  /^cm-/,
+  /^astro-/,
+  /^language-/
+]
 const IGNORED_CSS_CLASS_LITERALS = new Set(['css', 'js', 'ts', 'map'])
 
 function printHelp(): void {
@@ -159,7 +164,8 @@ async function collectSourceFiles(sourceDirs: string[]): Promise<string[]> {
 
 function extractDefinedClasses(cssContent: string): Set<string> {
   const classes = new Set<string>()
-  const classRegex = /(^|[^a-zA-Z0-9_-])\.([_a-zA-Z]+[_a-zA-Z0-9-]*)(?=[^a-zA-Z0-9_-]|$)/g
+  const classRegex =
+    /(^|[^a-zA-Z0-9_-])\.([_a-zA-Z]+[_a-zA-Z0-9-]*)(?=[^a-zA-Z0-9_-]|$)/g
 
   for (const match of cssContent.matchAll(classRegex)) {
     const className = match[2]
@@ -203,7 +209,8 @@ function tokenizePotentialClasses(literal: string): string[] {
 
 function extractClassReferences(content: string): Set<string> {
   const found = new Set<string>()
-  const attributeRegex = /\bclass(?::list|Name)?\s*=\s*(\{[\s\S]*?\}|(["'`])([\s\S]*?)\2)/g
+  const attributeRegex =
+    /\bclass(?::list|Name)?\s*=\s*(\{[\s\S]*?\}|(["'`])([\s\S]*?)\2)/g
 
   for (const match of content.matchAll(attributeRegex)) {
     const fullValue = match[1] ?? ''
@@ -226,7 +233,8 @@ function extractClassReferences(content: string): Set<string> {
     }
   }
 
-  const classListRegex = /classList\.(?:add|remove|toggle|contains)\(([\s\S]*?)\)/g
+  const classListRegex =
+    /classList\.(?:add|remove|toggle|contains)\(([\s\S]*?)\)/g
   for (const match of content.matchAll(classListRegex)) {
     const args = match[1] ?? ''
     const literals = extractStringLiterals(args)
@@ -242,7 +250,9 @@ function extractClassReferences(content: string): Set<string> {
 }
 
 function isKnownExternalClassName(className: string): boolean {
-  return KNOWN_EXTERNAL_CLASS_PATTERNS.some((pattern) => pattern.test(className))
+  return KNOWN_EXTERNAL_CLASS_PATTERNS.some((pattern) =>
+    pattern.test(className)
+  )
 }
 
 function extractDynamicClassPrefixes(content: string): Set<string> {
@@ -283,7 +293,9 @@ function removeSafelyRemovableRules(
   const nextContent = cssContent.replace(
     simpleRuleRegex,
     (fullMatch: string, lineStart: string, selectorGroup: string) => {
-      const selectors = selectorGroup.split(',').map((selector) => selector.trim())
+      const selectors = selectorGroup
+        .split(',')
+        .map((selector) => selector.trim())
       if (selectors.length === 0) {
         return fullMatch
       }
@@ -299,7 +311,9 @@ function removeSafelyRemovableRules(
         return fullMatch
       }
 
-      const allUnused = selectorClasses.every((className) => unusedClassSet.has(className))
+      const allUnused = selectorClasses.every((className) =>
+        unusedClassSet.has(className)
+      )
       if (!allUnused) {
         return fullMatch
       }
@@ -309,7 +323,9 @@ function removeSafelyRemovableRules(
     }
   )
 
-  const cleaned = nextContent.replace(/\n{3,}/g, '\n\n').replace(/[ \t]+\n/g, '\n')
+  const cleaned = nextContent
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]+\n/g, '\n')
 
   return { content: cleaned, removedRuleCount }
 }
@@ -406,14 +422,18 @@ async function collectAstroInlineCssDefinitions(
 
 async function run(): Promise<void> {
   const options = parseArgs(process.argv.slice(2))
-  const cssFiles = await collectFilesByExtension(options.cssDir, new Set(['.css']))
+  const cssFiles = await collectFilesByExtension(
+    options.cssDir,
+    new Set(['.css'])
+  )
   if (cssFiles.length === 0) {
     throw new Error(`No CSS files found in ${options.cssDir}`)
   }
 
   const sourceFiles = await collectSourceFiles(options.sourceDirs)
   const definitionsByFile = new Map<string, Set<string>>()
-  const astroInlineDefinitionsByFile = await collectAstroInlineCssDefinitions(sourceFiles)
+  const astroInlineDefinitionsByFile =
+    await collectAstroInlineCssDefinitions(sourceFiles)
   const allDefinedClasses = new Set<string>()
 
   for (const filePath of cssFiles) {
@@ -464,9 +484,10 @@ async function run(): Promise<void> {
   let totalUndefinedClassRefs = 0
   let totalRemovedEmptyClassAttributes = 0
 
-  const reportFiles = [...cssFiles, ...astroInlineDefinitionsByFile.keys()].sort((a, b) =>
-    a.localeCompare(b)
-  )
+  const reportFiles = [
+    ...cssFiles,
+    ...astroInlineDefinitionsByFile.keys()
+  ].sort((a, b) => a.localeCompare(b))
 
   for (const filePath of reportFiles) {
     const defined = definitionsByFile.get(filePath) ?? new Set<string>()
@@ -523,9 +544,13 @@ async function run(): Promise<void> {
     }
   }
 
-  const sourceReports: SourceClassReport[] = [...undefinedClassesByFile.entries()]
+  const sourceReports: SourceClassReport[] = [
+    ...undefinedClassesByFile.entries()
+  ]
     .map(([filePath, classSet]) => {
-      const undefinedClasses = [...classSet].sort((left, right) => left.localeCompare(right))
+      const undefinedClasses = [...classSet].sort((left, right) =>
+        left.localeCompare(right)
+      )
       totalUndefinedClassRefs += undefinedClasses.length
       return { filePath, undefinedClasses }
     })
@@ -536,7 +561,9 @@ async function run(): Promise<void> {
     for (const report of sourceReports) {
       const relativeFile = path.relative(process.cwd(), report.filePath)
       console.log(`\n${relativeFile}`)
-      console.log(`- undefined class references: ${report.undefinedClasses.length}`)
+      console.log(
+        `- undefined class references: ${report.undefinedClasses.length}`
+      )
       for (const className of report.undefinedClasses) {
         console.log(`  - ${className}`)
       }
@@ -560,16 +587,22 @@ async function run(): Promise<void> {
 
   console.log('\nSummary')
   console.log(`- scanned CSS files: ${cssFiles.length}`)
-  console.log(`- scanned Astro inline style files: ${astroInlineDefinitionsByFile.size}`)
+  console.log(
+    `- scanned Astro inline style files: ${astroInlineDefinitionsByFile.size}`
+  )
   console.log(`- scanned source files: ${sourceFiles.length}`)
   console.log(`- total CSS classes: ${totalDefined}`)
   console.log(`- used classes: ${usedClasses.size}`)
   console.log(`- dynamic class prefixes detected: ${dynamicClassPrefixes.size}`)
   console.log(`- unused classes: ${totalUnused}`)
-  console.log(`- undefined class references in source: ${totalUndefinedClassRefs}`)
+  console.log(
+    `- undefined class references in source: ${totalUndefinedClassRefs}`
+  )
   if (options.apply) {
     console.log(`- removed rules: ${totalRemovedRules}`)
-    console.log(`- removed empty class attributes: ${totalRemovedEmptyClassAttributes}`)
+    console.log(
+      `- removed empty class attributes: ${totalRemovedEmptyClassAttributes}`
+    )
     console.log(
       '- apply mode removes only simple class rules, complex selectors are reported but kept'
     )

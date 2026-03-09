@@ -111,7 +111,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
 }
 
 type WebhookConfigResult =
-  | { ok: true; paddleApiKey: string; webhookSecret: string; signatureHeader: string }
+  | {
+      ok: true
+      paddleApiKey: string
+      webhookSecret: string
+      signatureHeader: string
+    }
   | { ok: false; response: Response }
 
 function resolveWebhookConfig(args: {
@@ -288,18 +293,21 @@ async function parseIncomingWebhook(args: {
   webhookSecret: string
   signatureHeader: string
   paddleEnvironment: Environment
-}): Promise<{
-  kind: 'handled'
-  payload: Record<string, unknown>
-  paddleEvent: NonNullable<ReturnType<typeof parsePaddleWebhookEvent>>
-} | {
-  kind: 'skip'
-  payload: Record<string, unknown>
-  reason: string
-  eventType: string | null
-  notificationId: string | null
-  occurredAt: string | null
-}> {
+}): Promise<
+  | {
+      kind: 'handled'
+      payload: Record<string, unknown>
+      paddleEvent: NonNullable<ReturnType<typeof parsePaddleWebhookEvent>>
+    }
+  | {
+      kind: 'skip'
+      payload: Record<string, unknown>
+      reason: string
+      eventType: string | null
+      notificationId: string | null
+      occurredAt: string | null
+    }
+> {
   const rawBody = await args.request.text()
   const payload = JSON.parse(rawBody) as Record<string, unknown>
   const eventData = await unmarshalPaddleWebhookEvent({
@@ -393,7 +401,9 @@ async function syncWebhookSideEffects(args: {
     pending.id
   )
   if (!pendingMarked.ok) {
-    throw new Error(pendingMarked.error ?? 'billing/magic-link-mark-pending-sent')
+    throw new Error(
+      pendingMarked.error ?? 'billing/magic-link-mark-pending-sent'
+    )
   }
 }
 

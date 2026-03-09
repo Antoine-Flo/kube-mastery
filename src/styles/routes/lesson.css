@@ -8,8 +8,8 @@
 }
 
 .lesson__sidebar:not(.lesson__sidebar--collapsed)
-
-.lesson__sidebar--collapsed .lesson__sidebar-icon--expand {
+  .lesson__sidebar--collapsed
+  .lesson__sidebar-icon--expand {
   display: inline-flex;
 }
 
@@ -35,7 +35,6 @@
 }
 
 @media (max-width: 1024px) {
-
 }
 
 .lesson__suggest-textarea {

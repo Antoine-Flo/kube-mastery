@@ -11,7 +11,11 @@ const lang = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
-const auth = await getLayoutAuthContext(Astro.locals, Astro.request, Astro.cookies)
+const auth = await getLayoutAuthContext(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
 if (!auth.isLoggedIn) {
   return Astro.redirect(
     localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)

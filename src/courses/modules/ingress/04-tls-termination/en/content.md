@@ -187,7 +187,7 @@ kind: Ingress
 metadata:
   name: tls-demo
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
 spec:
   ingressClassName: nginx
   tls:

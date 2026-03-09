@@ -145,7 +145,7 @@ kind: Deployment
 metadata:
   name: web-app
   annotations:
-    kubernetes.io/change-cause: "Initial deployment: nginx 1.25"
+    kubernetes.io/change-cause: 'Initial deployment: nginx 1.25'
 spec:
   replicas: 3
   revisionHistoryLimit: 10

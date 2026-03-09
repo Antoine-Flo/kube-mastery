@@ -66,13 +66,17 @@ const billingSuccessMessageByAction: Record<string, string> = {
 }
 const billingErrorMessageByAction: Record<string, string> = {
   unauthorized: t('profile_subscriptionActionErrorUnauthorized'),
-  subscription_not_found: t('profile_subscriptionActionErrorSubscriptionNotFound'),
+  subscription_not_found: t(
+    'profile_subscriptionActionErrorSubscriptionNotFound'
+  ),
   refund_failed: t('profile_subscriptionActionErrorRefund')
 }
 const accountActionMessageByCode: Record<string, string> = {
   ok: t('profile_actionSuccessDefault'),
   unauthorized: t('profile_actionErrorUnauthorized'),
-  subscription_not_found: t('profile_subscriptionActionErrorSubscriptionNotFound'),
+  subscription_not_found: t(
+    'profile_subscriptionActionErrorSubscriptionNotFound'
+  ),
   subscription_active: t('profile_deleteBlockedBySubscription'),
   refund_failed: t('profile_subscriptionActionErrorRefund'),
   delete_failed: t('profile_actionErrorDeleteFailed'),
@@ -133,21 +137,19 @@ const billingErrorMessage =
       {
         hasSubscription ? (
           <>
-            {
-              billingSuccessMessage != null && (
-                <p class="profile__flash profile__flash--success">
-                  {billingSuccessMessage}
-                </p>
-              )
-            }
-            {
-              billingErrorMessage != null && (
-                <p class="profile__flash profile__flash--error">
-                  {billingErrorMessage}
-                </p>
-              )
-            }
-            <p class="profile__section-desc">{t('profile_lifetimeAccessActive')}</p>
+            {billingSuccessMessage != null && (
+              <p class="profile__flash profile__flash--success">
+                {billingSuccessMessage}
+              </p>
+            )}
+            {billingErrorMessage != null && (
+              <p class="profile__flash profile__flash--error">
+                {billingErrorMessage}
+              </p>
+            )}
+            <p class="profile__section-desc">
+              {t('profile_lifetimeAccessActive')}
+            </p>
             <Button
               href={`/api/account/subscription-portal?redirect=${encodeURIComponent(profilePath)}`}
               variant="outline"
@@ -166,11 +168,11 @@ const billingErrorMessage =
             >
               {t('profile_subscriptionRefund')}
             </Button>
-            {
-              !canRequestRefund && (
-                <p class="profile__hint">{t('profile_subscriptionRefundWindowExpired')}</p>
-              )
-            }
+            {!canRequestRefund && (
+              <p class="profile__hint">
+                {t('profile_subscriptionRefundWindowExpired')}
+              </p>
+            )}
           </>
         ) : (
           <p class="profile__section-desc">{t('profile_subscriptionEmpty')}</p>
@@ -236,7 +238,12 @@ const billingErrorMessage =
       <Button type="button" variant="subtle" color="gray" data-dialog-close>
         {t('profile_cancel')}
       </Button>
-      <Button type="submit" variant="solid" color="amber" disabled={!canRequestRefund}>
+      <Button
+        type="submit"
+        variant="solid"
+        color="amber"
+        disabled={!canRequestRefund}
+      >
         {t('profile_subscriptionRefundConfirmButton')}
       </Button>
     </form>

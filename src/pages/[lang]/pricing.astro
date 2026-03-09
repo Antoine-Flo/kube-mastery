@@ -16,7 +16,11 @@ import '../../styles/routes/pricing.css'
 const lang = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
-const auth = await getLayoutAuthContext(Astro.locals, Astro.request, Astro.cookies)
+const auth = await getLayoutAuthContext(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
 const loggedInCustomerEmail = auth.user?.email?.trim() ?? ''
 const loggedInCustomerUserId = auth.user?.id?.trim() ?? ''
 
@@ -42,8 +46,7 @@ const PRO_ONETIME_PRICE_ID = activePaddlePriceIds.PRO_ONETIME
 const DISCOUNT_ONETIME_PRICE_ID = activePaddlePriceIds.DISCOUNT_ONETIME
 
 const CHECKOUT_EMAIL_DIALOG_ID = 'pricing-checkout-email-dialog'
-const checkoutDialogTitle =
-  t('pricing_checkout_dialog_title')
+const checkoutDialogTitle = t('pricing_checkout_dialog_title')
 const checkoutDialogDescription = t('pricing_checkout_dialog_description')
 const checkoutEmailLabel = t('pricing_checkout_email_label')
 const checkoutEmailPlaceholder = t('pricing_checkout_email_placeholder')
@@ -120,7 +123,9 @@ const faqItems = [
               </li>
             </ul>
           </div>
-          <div class="card__footer pricing__plan-footer pricing__plan-footer--column">
+          <div
+            class="card__footer pricing__plan-footer pricing__plan-footer--column"
+          >
             <Button
               type="button"
               variant="solid"
@@ -281,7 +286,12 @@ const faqItems = [
             <span data-discount-price-id={DISCOUNT_ONETIME_PRICE_ID}>--</span>
           </p>
           <footer class="dialog__footer pricing-discount-dialog__footer">
-            <Button type="button" variant="subtle" color="gray" data-dialog-close>
+            <Button
+              type="button"
+              variant="subtle"
+              color="gray"
+              data-dialog-close
+            >
               {discountInfoCloseLabel}
             </Button>
             <Button
@@ -380,7 +390,9 @@ const faqItems = [
 
   async function hydratePrices() {
     const banners = Array.from(
-      document.querySelectorAll('.pricing__plan-price-banner[data-price-id-month]')
+      document.querySelectorAll(
+        '.pricing__plan-price-banner[data-price-id-month]'
+      )
     )
     const discountAmountEls = Array.from(
       document.querySelectorAll('[data-discount-price-id]')
@@ -399,8 +411,8 @@ const faqItems = [
         priceIds.add(id)
       }
     })
-      discountAmountEls.forEach((priceEl) => {
-        const id = priceEl.getAttribute('data-discount-price-id') ?? ''
+    discountAmountEls.forEach((priceEl) => {
+      const id = priceEl.getAttribute('data-discount-price-id') ?? ''
       if (id !== '') {
         priceIds.add(id)
       }
@@ -612,14 +624,16 @@ const faqItems = [
     }
     dialog.setAttribute(DISCOUNT_DIALOG_INITED, '')
 
-    document.querySelectorAll('[data-open-discount-dialog]').forEach((trigger) => {
-      if (!(trigger instanceof HTMLElement)) {
-        return
-      }
-      trigger.addEventListener('click', () => {
-        dialog.showModal()
+    document
+      .querySelectorAll('[data-open-discount-dialog]')
+      .forEach((trigger) => {
+        if (!(trigger instanceof HTMLElement)) {
+          return
+        }
+        trigger.addEventListener('click', () => {
+          dialog.showModal()
+        })
       })
-    })
   }
 
   capturePricingViewOnce()
@@ -631,7 +645,6 @@ const faqItems = [
 </script>
 
 <style>
-
   .pricing-checkout-form {
     display: grid;
     gap: var(--spacing-3);

@@ -95,10 +95,7 @@ export const POST: APIRoute = async ({
       errorCode: 'subscription_not_found'
     })
     if (isAjax) {
-      return actionJsonError(
-        { ok: false, code: 'subscription_not_found' },
-        404
-      )
+      return actionJsonError({ ok: false, code: 'subscription_not_found' }, 404)
     }
     return redirect(
       addFlashParam(redirectTo, 'billing_error', 'subscription_not_found')

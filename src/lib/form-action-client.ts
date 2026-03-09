@@ -41,7 +41,8 @@ async function readActionPayload(
       return {
         ok: true,
         code: typeof json.code === 'string' ? json.code : 'ok',
-        redirectTo: typeof json.redirectTo === 'string' ? json.redirectTo : undefined
+        redirectTo:
+          typeof json.redirectTo === 'string' ? json.redirectTo : undefined
       }
     }
     if (json.ok === false) {

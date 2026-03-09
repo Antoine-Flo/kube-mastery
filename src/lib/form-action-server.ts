@@ -39,7 +39,10 @@ export function actionJsonSuccess(
   })
 }
 
-export function actionJsonError(body: ActionErrorBody, status: number): Response {
+export function actionJsonError(
+  body: ActionErrorBody,
+  status: number
+): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { 'Content-Type': 'application/json' }

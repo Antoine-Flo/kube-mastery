@@ -152,7 +152,7 @@ spec:
   containers:
     - name: log-browser
       image: busybox:1.36
-      command: ["sh", "-c", "ls /node-logs && sleep 3600"]
+      command: ['sh', '-c', 'ls /node-logs && sleep 3600']
       volumeMounts:
         - name: host-logs
           mountPath: /node-logs
@@ -205,7 +205,8 @@ spec:
   containers:
     - name: writer
       image: busybox:1.36
-      command: ["sh", "-c", "echo 'Node-level data' > /custom/data.txt && sleep 3600"]
+      command:
+        ['sh', '-c', "echo 'Node-level data' > /custom/data.txt && sleep 3600"]
       volumeMounts:
         - name: custom-dir
           mountPath: /custom

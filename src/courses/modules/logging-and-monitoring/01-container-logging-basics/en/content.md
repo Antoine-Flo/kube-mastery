@@ -196,7 +196,7 @@ spec:
   containers:
     - name: crasher
       image: busybox
-      command: ["/bin/sh", "-c", "echo 'About to crash'; exit 1"]
+      command: ['/bin/sh', '-c', "echo 'About to crash'; exit 1"]
 ```
 
 ```bash

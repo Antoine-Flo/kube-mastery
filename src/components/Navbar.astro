@@ -51,7 +51,11 @@ const userEmail = user?.email ?? ''
     <div class="right">
       <nav>
         <a href={localePath('/courses')}>{t('nav_courses')}</a>
-        {(isLoggedIn && hasPaidSubscription) && <a href={localePath('/cheat-sheet')}>{t('nav_cheatSheet')}</a>}
+        {
+          isLoggedIn && hasPaidSubscription && (
+            <a href={localePath('/cheat-sheet')}>{t('nav_cheatSheet')}</a>
+          )
+        }
         {
           !hasPaidSubscription && (
             <a href={localePath('/pricing')} class="nav-upgrade-link">

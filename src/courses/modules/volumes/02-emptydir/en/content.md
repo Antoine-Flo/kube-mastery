@@ -144,13 +144,23 @@ spec:
   containers:
     - name: writer
       image: busybox:1.36
-      command: ["sh", "-c", "echo 'Written by writer container' > /data/message.txt && sleep 3600"]
+      command:
+        [
+          'sh',
+          '-c',
+          "echo 'Written by writer container' > /data/message.txt && sleep 3600"
+        ]
       volumeMounts:
         - name: shared-data
           mountPath: /data
     - name: reader
       image: busybox:1.36
-      command: ["sh", "-c", "sleep 2 && while true; do cat /data/message.txt; sleep 10; done"]
+      command:
+        [
+          'sh',
+          '-c',
+          'sleep 2 && while true; do cat /data/message.txt; sleep 10; done'
+        ]
       volumeMounts:
         - name: shared-data
           mountPath: /data
@@ -222,7 +232,12 @@ spec:
   containers:
     - name: app
       image: busybox:1.36
-      command: ["sh", "-c", "dd if=/dev/zero of=/scratch/bigfile bs=1M count=10 && ls -lh /scratch/ && sleep 3600"]
+      command:
+        [
+          'sh',
+          '-c',
+          'dd if=/dev/zero of=/scratch/bigfile bs=1M count=10 && ls -lh /scratch/ && sleep 3600'
+        ]
       volumeMounts:
         - name: ramdisk
           mountPath: /scratch
