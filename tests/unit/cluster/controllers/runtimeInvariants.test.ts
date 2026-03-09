@@ -8,6 +8,7 @@ import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
 import { createDaemonSet } from '../../../../src/core/cluster/ressources/DaemonSet'
 import { createDeployment } from '../../../../src/core/cluster/ressources/Deployment'
 import { createNode } from '../../../../src/core/cluster/ressources/Node'
+import type { NodeStatus } from '../../../../src/core/cluster/ressources/Node'
 import { createPersistentVolumeClaim } from '../../../../src/core/cluster/ressources/PersistentVolumeClaim'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 
@@ -171,7 +172,7 @@ describe('runtime controller invariants', () => {
     const clusterState = createClusterState(eventBus, {
       bootstrap: { profile: 'none', mode: 'never' }
     })
-    const nodeStatus = {
+    const nodeStatus: NodeStatus = {
       nodeInfo: {
         architecture: 'amd64',
         containerRuntimeVersion: 'containerd://1.7.0',
@@ -180,7 +181,7 @@ describe('runtime controller invariants', () => {
         operatingSystem: 'linux',
         osImage: 'Fedora'
       },
-      conditions: [{ type: 'Ready', status: 'True' as const }]
+      conditions: [{ type: 'Ready', status: 'True' }]
     }
     clusterState.addNode(
       createNode({

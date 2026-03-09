@@ -38,8 +38,7 @@ describe('command segmentation', () => {
 
     for (const segment of runSegments) {
       for (const commandInput of segment.commands) {
-        const commandText =
-          typeof commandInput === 'string' ? commandInput : commandInput.command
+        const commandText = commandInput
         expect(inferKubectlCommandName(commandText)).toBe('run')
       }
     }

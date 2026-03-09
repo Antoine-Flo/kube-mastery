@@ -59,7 +59,8 @@ describe('conformance scripts', () => {
   it('should resolve suite path for command mode', () => {
     const resolvedPath = resolveSuitePath({
       command: 'get',
-      list: false
+      list: false,
+      quiet: false
     })
 
     expect(

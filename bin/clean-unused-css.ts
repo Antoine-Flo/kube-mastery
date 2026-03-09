@@ -282,7 +282,7 @@ function removeSafelyRemovableRules(
 
   const nextContent = cssContent.replace(
     simpleRuleRegex,
-    (fullMatch: string, lineStart: string, indentation: string, selectorGroup: string) => {
+    (fullMatch: string, lineStart: string, selectorGroup: string) => {
       const selectors = selectorGroup.split(',').map((selector) => selector.trim())
       if (selectors.length === 0) {
         return fullMatch

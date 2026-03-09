@@ -1,4 +1,4 @@
-import type { LocalModule } from '../../../oldCourses/types'
+import type { LocalModule } from '../types'
 
 export const module: LocalModule = {
   title: {

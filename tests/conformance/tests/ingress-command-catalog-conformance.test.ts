@@ -13,11 +13,8 @@ describe('Ingress Command Catalog Conformance', () => {
       return
     }
 
-    const commands = ingressSegment.commands.map((commandInput) => {
-      if (typeof commandInput === 'string') {
-        return commandInput
-      }
-      return commandInput.command
+    const commands = ingressSegment.commands.map((commandText) => {
+      return commandText
     })
 
     expect(commands).toContain('kubectl get ingress')
@@ -37,11 +34,8 @@ describe('Ingress Command Catalog Conformance', () => {
       return
     }
 
-    const commands = platformSegment.commands.map((commandInput) => {
-      if (typeof commandInput === 'string') {
-        return commandInput
-      }
-      return commandInput.command
+    const commands = platformSegment.commands.map((commandText) => {
+      return commandText
     })
 
     expect(commands).toContain('kubectl get --raw /openapi/v3')

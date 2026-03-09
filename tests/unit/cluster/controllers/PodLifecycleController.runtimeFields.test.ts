@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
-import { createPodUpdatedEvent } from '../../../../src/core/cluster/events/types'
 import { createPodLifecycleController } from '../../../../src/core/cluster/controllers/PodLifecycleController'
+import type { PodUpdatedEvent } from '../../../../src/core/cluster/events/types'
 import { createNode } from '../../../../src/core/cluster/ressources/Node'
 import {
   createPod,
@@ -57,7 +57,7 @@ describe('PodLifecycleController runtime enrichment', () => {
       findPersistentVolumeClaim: () => ({ ok: false })
     }
 
-    eventBus.subscribe('PodUpdated', (event) => {
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
       pod = event.payload.pod
     })
 
@@ -102,7 +102,7 @@ describe('PodLifecycleController runtime enrichment', () => {
       findPersistentVolumeClaim: () => ({ ok: false })
     }
 
-    eventBus.subscribe('PodUpdated', (event) => {
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
       pod = event.payload.pod
     })
 

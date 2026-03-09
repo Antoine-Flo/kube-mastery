@@ -30,7 +30,19 @@ const BASE_RESOURCE_TARGETS: Record<Resource, BaseTarget | undefined> = {
   configmaps: { group: '', version: 'v1', kind: 'ConfigMap' },
   secrets: { group: '', version: 'v1', kind: 'Secret' },
   nodes: { group: '', version: 'v1', kind: 'Node' },
-  replicasets: { group: 'apps', version: 'v1', kind: 'ReplicaSet' }
+  replicasets: { group: 'apps', version: 'v1', kind: 'ReplicaSet' },
+  ingresses: { group: 'networking.k8s.io', version: 'v1', kind: 'Ingress' },
+  ingressclasses: {
+    group: 'networking.k8s.io',
+    version: 'v1',
+    kind: 'IngressClass'
+  },
+  persistentvolumes: { group: '', version: 'v1', kind: 'PersistentVolume' },
+  persistentvolumeclaims: {
+    group: '',
+    version: 'v1',
+    kind: 'PersistentVolumeClaim'
+  }
 }
 
 const parseApiVersion = (

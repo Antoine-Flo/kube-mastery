@@ -1,5 +1,5 @@
 import type { MarkdownInstance } from 'astro'
-import type { LocalModule } from '../../oldCourses/types'
+import type { LocalModule } from '../../courses/modules/types'
 import type { CourseStructure } from './types'
 import type { CourseDataPort } from './port'
 import type { CourseFrontmatter, UiLang } from './types'
