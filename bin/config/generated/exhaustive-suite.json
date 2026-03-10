@@ -233,145 +233,195 @@
     {
       "id": "deploy-cm-cmd-24",
       "type": "command",
-      "command": "kubectl get daemonsets -A"
+      "command": "kubectl get daemonset -n kube-system"
     },
     {
       "id": "deploy-cm-cmd-25",
       "type": "command",
-      "command": "kubectl diff -f src/courses/seeds/deployment-with-configmap/configmap.yaml"
+      "command": "kubectl get daemonsets -n kube-system"
     },
     {
       "id": "deploy-cm-cmd-26",
       "type": "command",
-      "command": "kubectl diff -f src/courses/seeds/deployment-with-configmap/secret.yaml"
+      "command": "kubectl get daemonset kube-proxy -n kube-system"
     },
     {
       "id": "deploy-cm-cmd-27",
       "type": "command",
-      "command": "kubectl diff -f src/courses/seeds/diff-fixtures/configmap-changed.yaml"
+      "command": "kubectl describe daemonset kube-proxy -n kube-system"
     },
     {
       "id": "deploy-cm-cmd-28",
       "type": "command",
-      "command": "kubectl diff -f src/courses/seeds/diff-fixtures/secret-changed.yaml"
+      "command": "kubectl get daemonsets -A"
     },
     {
       "id": "deploy-cm-cmd-29",
       "type": "command",
-      "command": "kubectl create deployment exhaustive-web --image=nginx:latest"
+      "command": "kubectl diff -f src/courses/seeds/deployment-with-configmap/configmap.yaml"
     },
     {
       "id": "deploy-cm-cmd-30",
       "type": "command",
-      "command": "kubectl describe deployment exhaustive-web"
+      "command": "kubectl diff -f src/courses/seeds/deployment-with-configmap/secret.yaml"
     },
     {
       "id": "deploy-cm-cmd-31",
       "type": "command",
-      "command": "kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080"
+      "command": "kubectl diff -f src/courses/seeds/diff-fixtures/configmap-changed.yaml"
     },
     {
       "id": "deploy-cm-cmd-32",
       "type": "command",
-      "command": "kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date"
+      "command": "kubectl diff -f src/courses/seeds/diff-fixtures/secret-changed.yaml"
     },
     {
       "id": "deploy-cm-cmd-33",
       "type": "command",
-      "command": "kubectl expose deployment web --port=80 --target-port=80 --name=web-svc"
+      "command": "kubectl create deployment exhaustive-web --image=nginx:latest"
     },
     {
       "id": "deploy-cm-cmd-34",
       "type": "command",
-      "command": "kubectl get svc web-svc"
+      "command": "kubectl describe deployment exhaustive-web"
     },
     {
       "id": "deploy-cm-cmd-35",
       "type": "command",
-      "command": "kubectl describe svc web-svc"
+      "command": "kubectl create daemonset exhaustive-ds --image=nginx:latest"
     },
     {
       "id": "deploy-cm-cmd-36",
       "type": "command",
-      "command": "kubectl exec web -- nslookup web-svc.default.svc.cluster.local"
+      "command": "kubectl get daemonset exhaustive-ds"
     },
     {
       "id": "deploy-cm-cmd-37",
       "type": "command",
-      "command": "kubectl exec web -- curl http://web-svc"
+      "command": "kubectl get daemonset exhaustive-ds -o yaml"
     },
     {
       "id": "deploy-cm-cmd-38",
       "type": "command",
-      "command": "kubectl expose deployment web --port=80 --target-port=80 --type=NodePort --name=web-nodeport --selector=app=web"
+      "command": "kubectl describe daemonset exhaustive-ds"
     },
     {
       "id": "deploy-cm-cmd-39",
       "type": "command",
-      "command": "kubectl get svc web-nodeport"
+      "command": "kubectl create deployment exhaustive-api --image=nginx:latest --replicas=2 --port=8080"
     },
     {
       "id": "deploy-cm-cmd-40",
       "type": "command",
-      "command": "kubectl get svc web-nodeport -o yaml"
+      "command": "kubectl create deployment exhaustive-multi --image=busybox --image=nginx -- date"
     },
     {
       "id": "deploy-cm-cmd-41",
       "type": "command",
-      "command": "kubectl describe svc web-nodeport"
+      "command": "kubectl expose deployment web --port=80 --target-port=80 --name=web-svc"
     },
     {
       "id": "deploy-cm-cmd-42",
       "type": "command",
-      "command": "kubectl get svc -A"
+      "command": "kubectl get svc web-svc"
     },
     {
       "id": "deploy-cm-cmd-43",
       "type": "command",
-      "command": "kubectl get all"
+      "command": "kubectl describe svc web-svc"
     },
     {
       "id": "deploy-cm-cmd-44",
       "type": "command",
-      "command": "kubectl get all -A"
+      "command": "kubectl exec web -- nslookup web-svc.default.svc.cluster.local"
     },
     {
       "id": "deploy-cm-cmd-45",
       "type": "command",
-      "command": "kubectl scale deployments exhaustive-web --replicas=3"
+      "command": "kubectl exec web -- curl http://web-svc"
     },
     {
       "id": "deploy-cm-cmd-46",
       "type": "command",
-      "command": "kubectl get deployments"
+      "command": "kubectl expose deployment web --port=80 --target-port=80 --type=NodePort --name=web-nodeport --selector=app=web"
     },
     {
       "id": "deploy-cm-cmd-47",
       "type": "command",
-      "command": "kubectl delete svc web-svc"
+      "command": "kubectl get svc web-nodeport"
     },
     {
       "id": "deploy-cm-cmd-48",
       "type": "command",
-      "command": "kubectl delete svc web-nodeport"
+      "command": "kubectl get svc web-nodeport -o yaml"
     },
     {
       "id": "deploy-cm-cmd-49",
       "type": "command",
-      "command": "kubectl describe svc web-svc"
+      "command": "kubectl describe svc web-nodeport"
     },
     {
       "id": "deploy-cm-cmd-50",
       "type": "command",
-      "command": "kubectl delete deployments exhaustive-api"
+      "command": "kubectl get svc -A"
     },
     {
       "id": "deploy-cm-cmd-51",
       "type": "command",
-      "command": "kubectl delete deployments exhaustive-multi"
+      "command": "kubectl get all"
     },
     {
       "id": "deploy-cm-cmd-52",
+      "type": "command",
+      "command": "kubectl get all -A"
+    },
+    {
+      "id": "deploy-cm-cmd-53",
+      "type": "command",
+      "command": "kubectl scale deployments exhaustive-web --replicas=3"
+    },
+    {
+      "id": "deploy-cm-cmd-54",
+      "type": "command",
+      "command": "kubectl get deployments"
+    },
+    {
+      "id": "deploy-cm-cmd-55",
+      "type": "command",
+      "command": "kubectl delete svc web-svc"
+    },
+    {
+      "id": "deploy-cm-cmd-56",
+      "type": "command",
+      "command": "kubectl delete svc web-nodeport"
+    },
+    {
+      "id": "deploy-cm-cmd-57",
+      "type": "command",
+      "command": "kubectl describe svc web-svc"
+    },
+    {
+      "id": "deploy-cm-cmd-58",
+      "type": "command",
+      "command": "kubectl delete daemonset exhaustive-ds"
+    },
+    {
+      "id": "deploy-cm-cmd-59",
+      "type": "command",
+      "command": "kubectl describe daemonset exhaustive-ds"
+    },
+    {
+      "id": "deploy-cm-cmd-60",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-api"
+    },
+    {
+      "id": "deploy-cm-cmd-61",
+      "type": "command",
+      "command": "kubectl delete deployments exhaustive-multi"
+    },
+    {
+      "id": "deploy-cm-cmd-62",
       "type": "command",
       "command": "kubectl delete deployments exhaustive-web"
     },

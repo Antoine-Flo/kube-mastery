@@ -2,8 +2,6 @@
 
 If the control plane is the brain that plans and decides, the worker nodes are the hands that actually do the work. Every container your application runs in lives on a worker node, but a worker node is not just a machine with containers on it. It has a specific set of software components that allow it to participate in the cluster, receive instructions from the control plane, run workloads correctly, and handle network traffic.
 
-This lesson dives into the three essential components present on every worker node: the `kubelet`, `kube-proxy`, and the container runtime. Understanding what each one does, and how they cooperate, will give you a complete picture of what happens between the moment you run `kubectl apply` and the moment your container is actually serving traffic.
-
 ## kubelet: The Node Agent
 
 The `kubelet` is the most important component on a worker node. It is a long-running agent that acts as the liaison between the node and the control plane.
@@ -105,40 +103,37 @@ sim-worker          Ready    ...   containerd://2.2.0
 sim-worker2         Ready    ...   containerd://2.2.0
 ```
 
-Let's deploy a simple pod and watch the kubelet bring it to life:
+Let's deploy a simple pod and watch the kubelet bring it to life in the visualizer (telescope icon):
 
 ```bash
 kubectl run test-pod --image=nginx
 ```
 
-Then watch the pod status change in real time in the visualizer (telescope icon):
-
 Expected progression: Pending -> ContainerCreating -> Running
 
-`Pending` means the scheduler has assigned the pod but the kubelet has not yet pulled the image. `ContainerCreating` means the kubelet has instructed the runtime to pull and start the container. `Running` means the container is live. Press `Ctrl+C` to stop watching.
+`Pending` means the scheduler has assigned the pod but the kubelet has not yet pulled the image. `ContainerCreating` means the kubelet has instructed the runtime to pull and start the container. `Running` means the container is live.
 
 Describe the pod to see the full event trace:
 
-```
+```bash
 kubectl describe pod test-pod
 ```
 
 Scroll to the `Events` section at the bottom:
 
-```
+```bash
 Events:
   Type    Reason     Age   From               Message
   ----    ------     ----  ----               -------
-  Normal  Scheduled  30s   default-scheduler  Successfully assigned default/test-pod to node01
-  Normal  Pulling    29s   kubelet            Pulling image "busybox"
-  Normal  Pulled     27s   kubelet            Successfully pulled image "busybox"
-  Normal  Created    27s   kubelet            Created container test-pod
-  Normal  Started    27s   kubelet            Started container test-pod
+  Normal  Scheduled  6s    default-scheduler  Successfully assigned default/test-pod to sim-worker
+  Normal  Pulled     6s    kubelet            spec.containers{test-pod}: Container image "nginx" already present onmachine and can be accessed by the pod
+  Normal  Created    6s    kubelet            spec.containers{test-pod}: Container created
+  Normal  Started    6s    kubelet            spec.containers{test-pod}: Container started
 ```
 
 This event log is a perfect trace of the lifecycle: the scheduler assigned it, the kubelet pulled the image, created the container, and started it. Clean up when done:
 
-```
+```bash
 kubectl delete pod test-pod
 ```
 

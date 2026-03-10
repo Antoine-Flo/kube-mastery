@@ -20,6 +20,61 @@ export interface ImageManifest {
 
 export const SEED_IMAGES: ImageManifest[] = [
   {
+    name: 'pause',
+    registry: 'k8s.gcr.io',
+    tags: ['3.9'],
+    description: 'Kubernetes pod infrastructure container',
+    defaultPorts: [],
+    behavior: {
+      startupTime: 100,
+      defaultStatus: 'Running'
+    }
+  },
+  {
+    name: 'etcd',
+    registry: 'registry.k8s.io',
+    tags: ['3.5.21-0'],
+    description: 'Kubernetes etcd control plane component',
+    defaultPorts: [2379, 2381],
+    behavior: {
+      startupTime: 1500,
+      defaultStatus: 'Running'
+    }
+  },
+  {
+    name: 'kube-apiserver',
+    registry: 'registry.k8s.io',
+    tags: ['v1.35.0'],
+    description: 'Kubernetes API server control plane component',
+    defaultPorts: [6443],
+    behavior: {
+      startupTime: 1500,
+      defaultStatus: 'Running'
+    }
+  },
+  {
+    name: 'kube-controller-manager',
+    registry: 'registry.k8s.io',
+    tags: ['v1.35.0'],
+    description: 'Kubernetes controller manager control plane component',
+    defaultPorts: [10257],
+    behavior: {
+      startupTime: 1500,
+      defaultStatus: 'Running'
+    }
+  },
+  {
+    name: 'kube-scheduler',
+    registry: 'registry.k8s.io',
+    tags: ['v1.35.0'],
+    description: 'Kubernetes scheduler control plane component',
+    defaultPorts: [10259],
+    behavior: {
+      startupTime: 1500,
+      defaultStatus: 'Running'
+    }
+  },
+  {
     name: 'nginx',
     registry: 'docker.io/library',
     tags: ['latest', '1.25', '1.21'],

@@ -5,11 +5,9 @@ import { initializeControllers } from '../../../src/core/cluster/controllers/ini
 import { CONFIG } from '../../../src/config'
 import { type ClusterNodeRole } from '../../../src/core/cluster/clusterConfig'
 import { createEventBus } from '../../../src/core/cluster/events/EventBus'
-import { reconcileInitContainers } from '../../../src/core/cluster/initContainers/reconciler'
 import { parseKubernetesYaml } from '../../../src/core/kubectl/yamlParser'
 import { createKubectlExecutor } from '../../../src/core/kubectl/commands/executor'
 import type { Pod } from '../../../src/core/cluster/ressources/Pod'
-import { isNodeEligibleForPod } from '../../../src/core/cluster/scheduler/SimSchedulingPredicates'
 import { createFileSystem } from '../../../src/core/filesystem/FileSystem'
 import { createDirectory } from '../../../src/core/filesystem/models/Directory'
 import { createFile } from '../../../src/core/filesystem/models/File'
@@ -281,49 +279,27 @@ export const createRunnerExecutor = (
     }
   }
 
-  const schedulePendingPodIfPossible = (pod: Pod): boolean => {
-    if (pod.spec.nodeName != null && pod.spec.nodeName.length > 0) {
-      return false
-    }
-    const nodes = clusterState.getNodes()
-    const eligibleNode = nodes.find((node) => {
-      return isNodeEligibleForPod(pod, node)
-    })
-    if (eligibleNode == null) {
-      return false
-    }
-    const updatedPod: Pod = {
-      ...pod,
-      spec: {
-        ...pod.spec,
-        nodeName: eligibleNode.metadata.name
-      }
-    }
-    const updateResult = clusterState.updatePod(
-      pod.metadata.name,
-      pod.metadata.namespace,
-      () => updatedPod
-    )
-    return updateResult.ok
-  }
-
-  const progressScheduledPendingPod = (pod: Pod): boolean => {
-    if (pod.status.phase !== 'Pending') {
-      return false
-    }
-    if (pod.spec.nodeName == null || pod.spec.nodeName.length === 0) {
-      return false
-    }
-    const updatedPod = reconcileInitContainers(pod)
-    const updateResult = clusterState.updatePod(
-      pod.metadata.name,
-      pod.metadata.namespace,
-      () => updatedPod
-    )
-    return updateResult.ok
-  }
-
   const convergePodsToReady = (namespace?: string): string | undefined => {
+    const formatWaitTimeoutError = (): string => {
+      const unresolvedPods = listScopedPods(namespace).filter((pod) => {
+        return !isPodReadyForWait(pod)
+      })
+      const renderedPods = unresolvedPods
+        .slice(0, MAX_PENDING_IN_ERROR)
+        .map((pod) => {
+          return `${pod.metadata.namespace}/${pod.metadata.name}:${pod.status.phase}`
+        })
+        .join(', ')
+      const hasMore = unresolvedPods.length > MAX_PENDING_IN_ERROR
+      const suffix = hasMore ? ', ...' : ''
+      const details = renderedPods.length > 0 ? renderedPods : '<none>'
+      const scope =
+        namespace != null && namespace.length > 0
+          ? `namespace "${namespace}"`
+          : 'all namespaces'
+      return `Timed out waiting for pods to become Ready in ${scope}. Not ready: ${details}${suffix}`
+    }
+
     for (let pass = 0; pass < MAX_READY_PASSES; pass++) {
       const beforeDigest = getStateDigest(namespace)
       reconcileWorkloadControllersOnce(namespace)
@@ -336,47 +312,12 @@ export const createRunnerExecutor = (
       if (notReadyPods.length === 0) {
         return undefined
       }
-      let changed = false
-      for (const pod of notReadyPods) {
-        if (schedulePendingPodIfPossible(pod)) {
-          changed = true
-          continue
-        }
-        if (progressScheduledPendingPod(pod)) {
-          changed = true
-        }
-      }
       const afterDigest = getStateDigest(namespace)
-      if (beforeDigest !== afterDigest) {
-        changed = true
-      }
-      if (!changed) {
-        const unresolvedPods = listScopedPods(namespace).filter((pod) => {
-          return !isPodReadyForWait(pod)
-        })
-        const renderedPods = unresolvedPods
-          .slice(0, MAX_PENDING_IN_ERROR)
-          .map((pod) => {
-            return `${pod.metadata.namespace}/${pod.metadata.name}:${pod.status.phase}`
-          })
-          .join(', ')
-        const hasMore = unresolvedPods.length > MAX_PENDING_IN_ERROR
-        const suffix = hasMore ? ', ...' : ''
-        return `Pods not ready after convergence: ${renderedPods}${suffix}`
+      if (beforeDigest === afterDigest) {
+        return formatWaitTimeoutError()
       }
     }
-    const unresolvedPods = listScopedPods(namespace).filter((pod) => {
-      return !isPodReadyForWait(pod)
-    })
-    const renderedPods = unresolvedPods
-      .slice(0, MAX_PENDING_IN_ERROR)
-      .map((pod) => {
-        return `${pod.metadata.namespace}/${pod.metadata.name}:${pod.status.phase}`
-      })
-      .join(', ')
-    const hasMore = unresolvedPods.length > MAX_PENDING_IN_ERROR
-    const suffix = hasMore ? ', ...' : ''
-    return `Pods not ready after ${MAX_READY_PASSES} passes: ${renderedPods}${suffix}`
+    return formatWaitTimeoutError()
   }
 
   return {

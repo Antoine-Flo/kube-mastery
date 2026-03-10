@@ -108,40 +108,65 @@
     {
       "id": "deploy-cm-cmd-8",
       "type": "command",
-      "command": "kubectl get daemonsets -A"
+      "command": "kubectl get daemonset -n kube-system"
     },
     {
       "id": "deploy-cm-cmd-9",
       "type": "command",
-      "command": "kubectl get svc web-svc"
+      "command": "kubectl get daemonsets -n kube-system"
     },
     {
       "id": "deploy-cm-cmd-10",
       "type": "command",
-      "command": "kubectl get svc web-nodeport"
+      "command": "kubectl get daemonset kube-proxy -n kube-system"
     },
     {
       "id": "deploy-cm-cmd-11",
       "type": "command",
-      "command": "kubectl get svc web-nodeport -o yaml"
+      "command": "kubectl get daemonsets -A"
     },
     {
       "id": "deploy-cm-cmd-12",
       "type": "command",
-      "command": "kubectl get svc -A"
+      "command": "kubectl get daemonset exhaustive-ds"
     },
     {
       "id": "deploy-cm-cmd-13",
       "type": "command",
-      "command": "kubectl get all"
+      "command": "kubectl get daemonset exhaustive-ds -o yaml"
     },
     {
       "id": "deploy-cm-cmd-14",
       "type": "command",
-      "command": "kubectl get all -A"
+      "command": "kubectl get svc web-svc"
     },
     {
       "id": "deploy-cm-cmd-15",
+      "type": "command",
+      "command": "kubectl get svc web-nodeport"
+    },
+    {
+      "id": "deploy-cm-cmd-16",
+      "type": "command",
+      "command": "kubectl get svc web-nodeport -o yaml"
+    },
+    {
+      "id": "deploy-cm-cmd-17",
+      "type": "command",
+      "command": "kubectl get svc -A"
+    },
+    {
+      "id": "deploy-cm-cmd-18",
+      "type": "command",
+      "command": "kubectl get all"
+    },
+    {
+      "id": "deploy-cm-cmd-19",
+      "type": "command",
+      "command": "kubectl get all -A"
+    },
+    {
+      "id": "deploy-cm-cmd-20",
       "type": "command",
       "command": "kubectl get deployments"
     },

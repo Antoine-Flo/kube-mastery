@@ -86,6 +86,10 @@
   color: #000 !important;
 }
 
+.lesson-content .expressive-code {
+  margin-bottom: 1rem;
+}
+
 /* Callouts */
 .lesson-content .callout {
   display: flex;

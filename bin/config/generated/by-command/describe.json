@@ -48,22 +48,37 @@
     {
       "id": "deploy-cm-cmd-2",
       "type": "command",
-      "command": "kubectl describe deployment exhaustive-web"
+      "command": "kubectl describe daemonset kube-proxy -n kube-system"
     },
     {
       "id": "deploy-cm-cmd-3",
       "type": "command",
-      "command": "kubectl describe svc web-svc"
+      "command": "kubectl describe deployment exhaustive-web"
     },
     {
       "id": "deploy-cm-cmd-4",
       "type": "command",
-      "command": "kubectl describe svc web-nodeport"
+      "command": "kubectl describe daemonset exhaustive-ds"
     },
     {
       "id": "deploy-cm-cmd-5",
       "type": "command",
       "command": "kubectl describe svc web-svc"
+    },
+    {
+      "id": "deploy-cm-cmd-6",
+      "type": "command",
+      "command": "kubectl describe svc web-nodeport"
+    },
+    {
+      "id": "deploy-cm-cmd-7",
+      "type": "command",
+      "command": "kubectl describe svc web-svc"
+    },
+    {
+      "id": "deploy-cm-cmd-8",
+      "type": "command",
+      "command": "kubectl describe daemonset exhaustive-ds"
     },
     {
       "id": "deploy-cm-cleanup",

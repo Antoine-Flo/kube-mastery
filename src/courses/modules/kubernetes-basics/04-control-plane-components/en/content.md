@@ -144,12 +144,6 @@ kubectl logs kube-scheduler-sim-control-plane -n kube-system --tail=20
 
 The output will show recent events, potentially including pod scheduling decisions with node names. This is the live activity log of the scheduler doing its job.
 
-Finally, look at the controller manager's logs to observe reconciliation loops in action:
-
-```
-kubectl logs kube-controller-manager-controlplane -n kube-system --tail=10
-```
-
 ## Wrapping Up
 
 The control plane is composed of four core components: the `kube-apiserver` as the central gateway, `etcd` as the persistent store of cluster state, the `kube-scheduler` for pod placement decisions, and the `kube-controller-manager` running all the reconciliation loops that keep the cluster healthy. An optional `cloud-controller-manager` handles cloud-provider integrations. In the next lesson, we shift to the other side of the cluster and explore what runs on every worker node.
