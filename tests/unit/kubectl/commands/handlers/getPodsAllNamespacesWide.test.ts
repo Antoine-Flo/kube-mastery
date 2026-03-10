@@ -50,7 +50,7 @@ describe('kubectl get pods -A wide output', () => {
         namespace: 'default',
         labels: { app: 'web' },
         nodeName: 'conformance-worker',
-        containers: [{ name: 'nginx', image: 'nginx:1.25' }],
+        containers: [{ name: 'nginx', image: 'nginx:1.28' }],
         phase: 'Running'
       })
     ]
@@ -73,7 +73,7 @@ describe('kubectl get pods -A wide output', () => {
         name: 'web-a',
         namespace: 'default',
         nodeName: 'sim-worker',
-        containers: [{ name: 'nginx', image: 'nginx:1.25' }],
+        containers: [{ name: 'nginx', image: 'nginx:1.28' }],
         phase: 'Running'
       }),
       createPod({
@@ -105,7 +105,7 @@ describe('kubectl get pods -A wide output', () => {
         name: 'web',
         namespace: 'default',
         nodeName: 'sim-worker',
-        containers: [{ name: 'nginx', image: 'nginx:1.25' }],
+        containers: [{ name: 'nginx', image: 'nginx:1.28' }],
         phase: 'Running'
       }),
       createPod({

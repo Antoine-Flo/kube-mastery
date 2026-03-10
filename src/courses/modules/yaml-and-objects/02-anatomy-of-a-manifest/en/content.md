@@ -117,31 +117,16 @@ Scroll to the bottom of the output to find the complete `status` block. You'll s
 
 **4. Observe self-healing in action:**
 
-List the Pods and delete one:
+List the Pods, delete one and watch what happens in the visualizer:
 
 ```bash
 kubectl get pods -l app=demo
 kubectl delete pod <one-of-the-pod-names>
 ```
 
-Then immediately run:
+Watch as the deleted Pod disappears and a new one appears within seconds. The Deployment's `spec.replicas` said 3 , Kubernetes made it so.
 
-```bash
-kubectl get pods -l app=demo --watch
-```
-
-Watch as the deleted Pod disappears and a new one appears within seconds. Press `Ctrl+C` to stop watching. The Deployment's `spec.replicas` said 3 , Kubernetes made it so.
-
-**5. Scale the Deployment and watch status update:**
-
-```bash
-kubectl scale deployment demo --replicas=5
-kubectl get deployment demo --watch
-```
-
-You'll see `READY` and `AVAILABLE` columns tick upward in real time as new Pods become ready. Press `Ctrl+C` when done.
-
-**6. Clean up:**
+**5. Clean up:**
 
 ```bash
 kubectl delete deployment demo

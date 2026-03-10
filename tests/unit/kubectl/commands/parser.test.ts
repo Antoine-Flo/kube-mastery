@@ -139,7 +139,7 @@ describe('kubectl parser - run', () => {
 
   it('should parse run labels with quoted value', () => {
     const result = parseCommand(
-      'kubectl run intruder --image=nginx:1.25 --labels="app=web"'
+      'kubectl run intruder --image=nginx:1.28 --labels="app=web"'
     )
 
     expect(result.ok).toBe(true)

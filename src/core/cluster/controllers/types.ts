@@ -118,7 +118,19 @@ export interface ReconcilerController extends Controller {
 
 export interface ControllerResyncOptions {
   resyncIntervalMs?: number
+  observer?: ControllerObserver
 }
+
+export interface ControllerObservation {
+  controller: string
+  action: 'enqueue' | 'reconcile' | 'skip'
+  key: string
+  reason?: string
+  eventType?: ClusterEventType
+  timestamp: string
+}
+
+export type ControllerObserver = (observation: ControllerObservation) => void
 
 // ─── Event Types for Controllers ─────────────────────────────────────────
 

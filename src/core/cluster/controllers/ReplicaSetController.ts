@@ -21,6 +21,7 @@ import {
   findOwnerByRef,
   generateSuffix,
   getOwnedResources,
+  reportControllerObservation,
   startPeriodicResync,
   statusEquals,
   subscribeToEvents
@@ -44,6 +45,7 @@ const WATCHED_EVENTS: ClusterEventType[] = [
   'ReplicaSetUpdated',
   'ReplicaSetDeleted',
   'PodCreated',
+  'PodUpdated',
   'PodDeleted'
 ]
 
@@ -95,8 +97,17 @@ const createPodFromTemplate = (rs: ReplicaSet): Pod => {
 /**
  * Compute ReplicaSet status from owned pods
  */
+const isPodReady = (pod: Pod): boolean => {
+  const conditions = pod.status.conditions ?? []
+  const readyCondition = conditions.find((condition) => condition.type === 'Ready')
+  if (readyCondition != null) {
+    return readyCondition.status === 'True'
+  }
+  return pod.status.phase === 'Running'
+}
+
 const computeReplicaSetStatus = (ownedPods: Pod[]): ReplicaSetStatus => {
-  const readyPods = ownedPods.filter((p) => p.status.phase === 'Running')
+  const readyPods = ownedPods.filter((pod) => isPodReady(pod))
 
   return {
     replicas: ownedPods.length,
@@ -173,7 +184,7 @@ export class ReplicaSetController implements ReconcilerController {
       case 'ReplicaSetCreated':
       case 'ReplicaSetUpdated':
         // Enqueue the ReplicaSet itself
-        this.enqueueReplicaSet(event.payload.replicaSet)
+        this.enqueueReplicaSet(event.payload.replicaSet, event.type)
         break
 
       case 'ReplicaSetDeleted':
@@ -183,14 +194,17 @@ export class ReplicaSetController implements ReconcilerController {
         break
 
       case 'PodCreated':
+      case 'PodUpdated':
       case 'PodDeleted':
         // Find and enqueue the owning ReplicaSet
         const pod =
           event.type === 'PodCreated'
             ? event.payload.pod
+            : event.type === 'PodUpdated'
+              ? event.payload.pod
             : event.payload.deletedPod
-        this.enqueueOwnerReplicaSet(pod)
-        this.enqueueMatchingReplicaSets(pod)
+        this.enqueueOwnerReplicaSet(pod, event.type)
+        this.enqueueMatchingReplicaSets(pod, event.type)
         break
     }
   }
@@ -198,16 +212,26 @@ export class ReplicaSetController implements ReconcilerController {
   /**
    * Enqueue a ReplicaSet for reconciliation
    */
-  private enqueueReplicaSet(rs: ReplicaSet): void {
+  private enqueueReplicaSet(
+    rs: ReplicaSet,
+    eventType?: ClusterEventType,
+    reason?: string
+  ): void {
     const key = makeKey(rs.metadata.namespace, rs.metadata.name)
     this.workQueue.add(key)
+    this.observe({
+      action: 'enqueue',
+      key,
+      eventType,
+      reason
+    })
   }
 
   initialSync(): void {
     const state = this.getState()
     const replicaSets = state.getReplicaSets()
     for (const replicaSet of replicaSets) {
-      this.enqueueReplicaSet(replicaSet)
+      this.enqueueReplicaSet(replicaSet, undefined, 'InitialSync')
     }
   }
 
@@ -218,14 +242,24 @@ export class ReplicaSetController implements ReconcilerController {
   /**
    * Find and enqueue the ReplicaSet that owns this pod
    */
-  private enqueueOwnerReplicaSet(pod: Pod): void {
+  private enqueueOwnerReplicaSet(
+    pod: Pod,
+    eventType?: ClusterEventType
+  ): void {
     const state = this.getState()
     const ownerRs = findOwnerByRef(pod, 'ReplicaSet', () =>
       state.getReplicaSets(pod.metadata.namespace)
     )
 
     if (ownerRs) {
-      this.enqueueReplicaSet(ownerRs)
+      this.enqueueReplicaSet(ownerRs, eventType, 'OwnerReference')
+    } else {
+      this.observe({
+        action: 'skip',
+        key: makeKey(pod.metadata.namespace, pod.metadata.name),
+        eventType,
+        reason: 'OwnerMissing'
+      })
     }
   }
 
@@ -233,14 +267,17 @@ export class ReplicaSetController implements ReconcilerController {
    * Enqueue all ReplicaSets in the pod namespace whose selector matches pod labels.
    * This allows reconciliation for "orphan" pods that still match a ReplicaSet selector.
    */
-  private enqueueMatchingReplicaSets(pod: Pod): void {
+  private enqueueMatchingReplicaSets(
+    pod: Pod,
+    eventType?: ClusterEventType
+  ): void {
     const state = this.getState()
     const replicaSets = state.getReplicaSets(pod.metadata.namespace)
     for (const replicaSet of replicaSets) {
       if (
         selectorMatchesLabels(replicaSet.spec.selector, pod.metadata.labels)
       ) {
-        this.enqueueReplicaSet(replicaSet)
+        this.enqueueReplicaSet(replicaSet, eventType, 'SelectorMatch')
       }
     }
   }
@@ -270,6 +307,11 @@ export class ReplicaSetController implements ReconcilerController {
    * This is idempotent: reads current state and converges to desired state
    */
   reconcile(key: string): void {
+    this.observe({
+      action: 'reconcile',
+      key,
+      reason: 'Start'
+    })
     const { namespace, name } = parseKey(key)
     const state = this.getState()
 
@@ -277,6 +319,11 @@ export class ReplicaSetController implements ReconcilerController {
     const rsResult = state.findReplicaSet(name, namespace)
     if (!rsResult.ok || !rsResult.value) {
       // ReplicaSet was deleted, nothing to reconcile
+      this.observe({
+        action: 'skip',
+        key,
+        reason: 'NotFound'
+      })
       return
     }
 
@@ -352,7 +399,30 @@ export class ReplicaSetController implements ReconcilerController {
           'replicaset-controller'
         )
       )
+    } else {
+      this.observe({
+        action: 'skip',
+        key,
+        reason: 'NoStatusChange'
+      })
     }
+  }
+
+  private observe(
+    input: {
+      action: 'enqueue' | 'reconcile' | 'skip'
+      key: string
+      reason?: string
+      eventType?: ClusterEventType
+    }
+  ): void {
+    reportControllerObservation(this.options, {
+      controller: 'ReplicaSetController',
+      action: input.action,
+      key: input.key,
+      reason: input.reason,
+      eventType: input.eventType
+    })
   }
 }
 

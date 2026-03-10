@@ -17,6 +17,17 @@ const createParsedGetAll = (
   }
 }
 
+const createParsedGetDeployments = (
+  overrides: Partial<ParsedCommand> = {}
+): ParsedCommand => {
+  return {
+    action: 'get',
+    resource: 'deployments',
+    flags: {},
+    ...overrides
+  }
+}
+
 describe('kubectl get handler - all', () => {
   it('should render services table with service-prefixed names', () => {
     const kubernetesService = createService({
@@ -113,5 +124,75 @@ describe('kubectl get handler - all', () => {
     expect(result).toContain('kube-system')
     expect(result).toContain('pod/web')
     expect(result).toContain('service/web-svc')
+  })
+
+  it('should render deployment READY from status readyReplicas', () => {
+    const deploymentZero = createDeployment({
+      name: 'deploy-zero',
+      namespace: 'default',
+      replicas: 2,
+      selector: { matchLabels: { app: 'deploy-zero' } },
+      template: {
+        metadata: { labels: { app: 'deploy-zero' } },
+        spec: {
+          containers: [{ name: 'nginx', image: 'nginx:latest' }]
+        }
+      },
+      status: {
+        replicas: 2,
+        readyReplicas: 0,
+        availableReplicas: 0,
+        updatedReplicas: 2
+      }
+    })
+    const deploymentPartial = createDeployment({
+      name: 'deploy-partial',
+      namespace: 'default',
+      replicas: 2,
+      selector: { matchLabels: { app: 'deploy-partial' } },
+      template: {
+        metadata: { labels: { app: 'deploy-partial' } },
+        spec: {
+          containers: [{ name: 'nginx', image: 'nginx:latest' }]
+        }
+      },
+      status: {
+        replicas: 2,
+        readyReplicas: 1,
+        availableReplicas: 1,
+        updatedReplicas: 2
+      }
+    })
+    const deploymentReady = createDeployment({
+      name: 'deploy-ready',
+      namespace: 'default',
+      replicas: 2,
+      selector: { matchLabels: { app: 'deploy-ready' } },
+      template: {
+        metadata: { labels: { app: 'deploy-ready' } },
+        spec: {
+          containers: [{ name: 'nginx', image: 'nginx:latest' }]
+        }
+      },
+      status: {
+        replicas: 2,
+        readyReplicas: 2,
+        availableReplicas: 2,
+        updatedReplicas: 2
+      }
+    })
+    const state = createClusterStateData({
+      deployments: [deploymentZero, deploymentPartial, deploymentReady]
+    })
+    const parsed = createParsedGetDeployments()
+
+    const result = handleGet(state, parsed)
+
+    expect(result).toContain('deploy-zero')
+    expect(result).toContain('0/2')
+    expect(result).toContain('deploy-partial')
+    expect(result).toContain('1/2')
+    expect(result).toContain('deploy-ready')
+    expect(result).toContain('2/2')
   })
 })

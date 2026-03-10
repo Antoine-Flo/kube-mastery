@@ -311,4 +311,62 @@ describe('DeploymentController', () => {
       expect(rsCreated).toHaveBeenCalledTimes(1)
     })
   })
+
+  describe('periodic resync', () => {
+    it('should heal stale Deployment status without new ReplicaSet events', () => {
+      vi.useFakeTimers()
+      const deployment = {
+        ...createTestDeployment('my-deploy', 2),
+        status: {
+          replicas: 2,
+          readyReplicas: 0,
+          availableReplicas: 0,
+          updatedReplicas: 2
+        }
+      }
+      const replicaSet = {
+        ...createTestReplicaSet(deployment),
+        status: {
+          replicas: 2,
+          readyReplicas: 2,
+          availableReplicas: 2,
+          fullyLabeledReplicas: 2
+        }
+      }
+      mockState.deployments = [deployment]
+      mockState.replicaSets = [replicaSet]
+      controller = new DeploymentController(eventBus, getState, {
+        resyncIntervalMs: 50
+      })
+
+      const updates: number[] = []
+      eventBus.subscribe('DeploymentUpdated', (event: DeploymentUpdatedEvent) => {
+        updates.push(event.payload.deployment.status.readyReplicas ?? 0)
+        mockState.deployments = [event.payload.deployment]
+      })
+
+      controller.start()
+      vi.advanceTimersByTime(1)
+
+      mockState.deployments = [
+        {
+          ...mockState.deployments[0],
+          status: {
+            replicas: 2,
+            readyReplicas: 0,
+            availableReplicas: 0,
+            updatedReplicas: 2
+          }
+        }
+      ]
+
+      vi.advanceTimersByTime(50)
+      controller.stop()
+      vi.useRealTimers()
+
+      expect(updates.filter((value) => value === 2).length).toBeGreaterThanOrEqual(
+        2
+      )
+    })
+  })
 })

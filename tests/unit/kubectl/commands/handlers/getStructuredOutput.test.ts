@@ -53,7 +53,7 @@ describe('kubectl get handler - structured output parity', () => {
     const webPod = createPod({
       name: 'web',
       namespace: 'default',
-      containers: [{ name: 'nginx', image: 'nginx:1.25' }],
+      containers: [{ name: 'nginx', image: 'nginx:1.28' }],
       phase: 'Running'
     })
     const state = createClusterStateData({ pods: [webPod] })
@@ -79,7 +79,7 @@ describe('kubectl get handler - structured output parity', () => {
     const webPod = createPod({
       name: 'web',
       namespace: 'default',
-      containers: [{ name: 'nginx', image: 'nginx:1.25' }],
+      containers: [{ name: 'nginx', image: 'nginx:1.28' }],
       phase: 'Running'
     })
     const state = createClusterStateData({ pods: [webPod] })

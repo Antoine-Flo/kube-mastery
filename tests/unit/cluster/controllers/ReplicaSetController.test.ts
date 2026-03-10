@@ -5,6 +5,7 @@ import {
 } from '../../../../src/core/cluster/events/EventBus'
 import {
   createPodCreatedEvent,
+  createPodUpdatedEvent,
   type PodCreatedEvent,
   type PodDeletedEvent,
   type ReplicaSetUpdatedEvent
@@ -312,6 +313,117 @@ describe('ReplicaSetController', () => {
       controller.stop()
 
       expect(deletedPods).toContain('intruder')
+    })
+
+    it('should reconcile owning ReplicaSet when a pod transitions via PodUpdated', async () => {
+      const rs = {
+        ...createTestReplicaSet('my-rs', 1),
+        status: {
+          replicas: 1,
+          readyReplicas: 0,
+          availableReplicas: 0,
+          fullyLabeledReplicas: 1
+        }
+      }
+      const pendingPod = createPod({
+        name: 'my-rs-pending',
+        namespace: 'default',
+        containers: [{ name: 'nginx', image: 'nginx:latest' }],
+        labels: { app: 'my-rs' },
+        phase: 'Pending',
+        ownerReferences: [
+          {
+            apiVersion: 'apps/v1',
+            kind: 'ReplicaSet',
+            name: 'my-rs',
+            uid: 'default-my-rs',
+            controller: true
+          }
+        ]
+      })
+      mockState.replicaSets = [rs]
+      mockState.pods = [pendingPod]
+
+      const updatedStatuses: number[] = []
+      eventBus.subscribe('ReplicaSetUpdated', (event: ReplicaSetUpdatedEvent) => {
+        updatedStatuses.push(event.payload.replicaSet.status.readyReplicas ?? 0)
+      })
+
+      controller.start()
+
+      const runningPod = createPod({
+        name: pendingPod.metadata.name,
+        namespace: pendingPod.metadata.namespace,
+        containers: [{ name: 'nginx', image: 'nginx:latest' }],
+        labels: pendingPod.metadata.labels,
+        phase: 'Running',
+        ownerReferences: pendingPod.metadata.ownerReferences
+      })
+      mockState.pods = [runningPod]
+      eventBus.emit(
+        createPodUpdatedEvent(
+          runningPod.metadata.name,
+          runningPod.metadata.namespace,
+          runningPod,
+          pendingPod,
+          'test'
+        )
+      )
+
+      await new Promise((resolve) => setTimeout(resolve, 25))
+      controller.stop()
+
+      expect(updatedStatuses).toContain(1)
+    })
+  })
+
+  describe('periodic resync', () => {
+    it('should heal stale ReplicaSet status without new pod events', () => {
+      vi.useFakeTimers()
+      const rs = {
+        ...createTestReplicaSet('my-rs', 1),
+        status: {
+          replicas: 1,
+          readyReplicas: 0,
+          availableReplicas: 0,
+          fullyLabeledReplicas: 1
+        }
+      }
+      const runningPod = createTestPod('my-rs-a', 'my-rs')
+      mockState.replicaSets = [rs]
+      mockState.pods = [runningPod]
+      controller = new ReplicaSetController(eventBus, getState, {
+        resyncIntervalMs: 50
+      })
+
+      const updates: number[] = []
+      eventBus.subscribe('ReplicaSetUpdated', (event: ReplicaSetUpdatedEvent) => {
+        updates.push(event.payload.replicaSet.status.readyReplicas ?? 0)
+        mockState.replicaSets = [event.payload.replicaSet]
+      })
+
+      controller.start()
+      vi.advanceTimersByTime(1)
+
+      mockState.replicaSets = [
+        {
+          ...mockState.replicaSets[0],
+          status: {
+            replicas: 1,
+            readyReplicas: 0,
+            availableReplicas: 0,
+            fullyLabeledReplicas: 1
+          }
+        }
+      ]
+
+      vi.advanceTimersByTime(50)
+      controller.stop()
+      vi.useRealTimers()
+
+      expect(updates.filter((value) => value === 1).length).toBeGreaterThanOrEqual(
+        2
+      )
     })
   })
 })

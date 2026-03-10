@@ -40,6 +40,14 @@ get (pods, deploy, rs, services, ingresses, ingressclasses, configmaps, secrets,
   - collection queries in `-o json|-o yaml` return a `List` shape (`apiVersion`, `kind`, `metadata.resourceVersion`, `items`), including empty results,
   - named queries (`kubectl get <resource> <name> -o json|-o yaml`) return a single object shape.
   - `Deployment` named queries are projected with Kubernetes-like metadata and status fields (`uid`, `resourceVersion`, `generation`, `observedGeneration`, conditions), while stripping simulator-only annotations.
+- Deployment readiness semantics are explicit:
+  - `kubectl get deployments` must read `READY` from `deployment.status.readyReplicas` only,
+  - `deployment.status` is derived from owned `ReplicaSet.status`,
+  - `replicaset.status` is derived from owned Pods and must react to `PodUpdated` events (phase/conditions transitions),
+  - simulator display layers must not patch or recompute readiness ad hoc.
+- Runtime reconciliation resilience is explicit:
+  - critical controllers use `event + initialSync + periodic resync`,
+  - controllers expose lightweight runtime observability (`enqueue`, `reconcile`, `skipReason`) to simplify root-cause analysis on stale status.
 - `kubectl get pods -A` and `kubectl get pods -A -o wide` include `NAMESPACE` as first column.
 - JSON output indentation for structured `get` output follows a stable 4-space formatting.
 - Table rendering for `kubectl get` uses consistent spacing tuned against `kind` output to reduce visual drift.

@@ -23,7 +23,7 @@ describe('kubectl get --show-labels', () => {
           name: 'web-a',
           namespace: 'default',
           labels: { app: 'web', tier: 'frontend' },
-          containers: [{ name: 'nginx', image: 'nginx:1.25' }],
+          containers: [{ name: 'nginx', image: 'nginx:1.28' }],
           phase: 'Running'
         })
       ]
@@ -46,7 +46,7 @@ describe('kubectl get --show-labels', () => {
           namespace: 'default',
           labels: { app: 'web' },
           nodeName: 'sim-worker',
-          containers: [{ name: 'nginx', image: 'nginx:1.25' }],
+          containers: [{ name: 'nginx', image: 'nginx:1.28' }],
           phase: 'Running'
         }),
         createPod({

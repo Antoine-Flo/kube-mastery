@@ -42,6 +42,7 @@ import {
   createOwnerRef,
   findOwnerByRef,
   getOwnedResources,
+  reportControllerObservation,
   startPeriodicResync,
   statusEquals,
   subscribeToEvents
@@ -289,7 +290,7 @@ export class DeploymentController implements ReconcilerController {
       case 'DeploymentCreated':
       case 'DeploymentUpdated':
         // Enqueue the Deployment itself
-        this.enqueueDeployment(event.payload.deployment)
+        this.enqueueDeployment(event.payload.deployment, event.type)
         break
 
       case 'DeploymentDeleted':
@@ -299,7 +300,7 @@ export class DeploymentController implements ReconcilerController {
 
       case 'ReplicaSetUpdated':
         // Find and enqueue the owning Deployment
-        this.enqueueOwnerDeployment(event.payload.replicaSet)
+        this.enqueueOwnerDeployment(event.payload.replicaSet, event.type)
         break
     }
   }
@@ -307,16 +308,26 @@ export class DeploymentController implements ReconcilerController {
   /**
    * Enqueue a Deployment for reconciliation
    */
-  private enqueueDeployment(deploy: Deployment): void {
+  private enqueueDeployment(
+    deploy: Deployment,
+    eventType?: ClusterEventType,
+    reason?: string
+  ): void {
     const key = makeKey(deploy.metadata.namespace, deploy.metadata.name)
     this.workQueue.add(key)
+    this.observe({
+      action: 'enqueue',
+      key,
+      eventType,
+      reason
+    })
   }
 
   initialSync(): void {
     const state = this.getState()
     const deployments = state.getDeployments()
     for (const deployment of deployments) {
-      this.enqueueDeployment(deployment)
+      this.enqueueDeployment(deployment, undefined, 'InitialSync')
     }
   }
 
@@ -327,14 +338,24 @@ export class DeploymentController implements ReconcilerController {
   /**
    * Find and enqueue the Deployment that owns this ReplicaSet
    */
-  private enqueueOwnerDeployment(rs: ReplicaSet): void {
+  private enqueueOwnerDeployment(
+    rs: ReplicaSet,
+    eventType?: ClusterEventType
+  ): void {
     const state = this.getState()
     const ownerDeploy = findOwnerByRef(rs, 'Deployment', () =>
       state.getDeployments(rs.metadata.namespace)
     )
 
     if (ownerDeploy) {
-      this.enqueueDeployment(ownerDeploy)
+      this.enqueueDeployment(ownerDeploy, eventType, 'OwnerReference')
+    } else {
+      this.observe({
+        action: 'skip',
+        key: makeKey(rs.metadata.namespace, rs.metadata.name),
+        eventType,
+        reason: 'OwnerMissing'
+      })
     }
   }
 
@@ -363,11 +384,21 @@ export class DeploymentController implements ReconcilerController {
    * This is idempotent: reads current state and converges to desired state
    */
   reconcile(key: string): void {
+    this.observe({
+      action: 'reconcile',
+      key,
+      reason: 'Start'
+    })
     const { namespace, name } = parseKey(key)
     const state = this.getState()
 
     const deployResult = state.findDeployment(name, namespace)
     if (!deployResult.ok || !deployResult.value) {
+      this.observe({
+        action: 'skip',
+        key,
+        reason: 'NotFound'
+      })
       return
     }
 
@@ -522,6 +553,11 @@ export class DeploymentController implements ReconcilerController {
         'updatedReplicas'
       ])
     ) {
+      this.observe({
+        action: 'skip',
+        key: makeKey(deploy.metadata.namespace, deploy.metadata.name),
+        reason: 'NoStatusChange'
+      })
       return
     }
 
@@ -538,6 +574,23 @@ export class DeploymentController implements ReconcilerController {
         'deployment-controller'
       )
     )
+  }
+
+  private observe(
+    input: {
+      action: 'enqueue' | 'reconcile' | 'skip'
+      key: string
+      reason?: string
+      eventType?: ClusterEventType
+    }
+  ): void {
+    reportControllerObservation(this.options, {
+      controller: 'DeploymentController',
+      action: input.action,
+      key: input.key,
+      reason: input.reason,
+      eventType: input.eventType
+    })
   }
 }
 

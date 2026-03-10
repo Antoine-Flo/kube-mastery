@@ -320,6 +320,15 @@ describe('runtime controller invariants', () => {
       )
     ).toBe(true)
 
+    const deploymentResult = clusterState.findDeployment('web', 'default')
+    expect(deploymentResult.ok).toBe(true)
+    if (!deploymentResult.ok || deploymentResult.value == null) {
+      stopRuntimeControllers(controllers)
+      return
+    }
+    expect(deploymentResult.value.status.readyReplicas).toBe(2)
+    expect(deploymentResult.value.status.availableReplicas).toBe(2)
+
     stopRuntimeControllers(controllers)
   })
 })

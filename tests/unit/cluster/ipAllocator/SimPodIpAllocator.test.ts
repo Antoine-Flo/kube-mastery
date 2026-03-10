@@ -37,7 +37,7 @@ describe('SimPodIpAllocator', () => {
     const pod = createPod({
       name: 'web',
       namespace: 'default',
-      containers: [{ name: 'nginx', image: 'nginx:1.25' }],
+      containers: [{ name: 'nginx', image: 'nginx:1.28' }],
       phase: 'Running'
     })
 
@@ -52,7 +52,7 @@ describe('SimPodIpAllocator', () => {
     const pod = createPod({
       name: 'api',
       namespace: 'default',
-      containers: [{ name: 'nginx', image: 'nginx:1.25' }],
+      containers: [{ name: 'nginx', image: 'nginx:1.28' }],
       phase: 'Running'
     })
 

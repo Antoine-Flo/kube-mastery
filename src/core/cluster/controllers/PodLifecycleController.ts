@@ -14,7 +14,11 @@ import {
 } from '../../containers/registry/ImageRegistry'
 import { reconcileInitContainers } from '../initContainers/reconciler'
 import type { PodVolumeReadiness } from '../../volumes/VolumeState'
-import { startPeriodicResync, subscribeToEvents } from './helpers'
+import {
+  reportControllerObservation,
+  startPeriodicResync,
+  subscribeToEvents
+} from './helpers'
 import type {
   ClusterEventType,
   ControllerResyncOptions,
@@ -225,33 +229,63 @@ export class PodLifecycleController implements ReconcilerController {
   }
 
   reconcile(key: string): void {
+    this.observe({
+      action: 'reconcile',
+      key,
+      reason: 'Start'
+    })
     const { namespace, name } = parsePodKey(key)
     const state = this.getState()
     const podResult = state.findPod(name, namespace)
     if (!podResult.ok || podResult.value == null) {
+      this.observe({
+        action: 'skip',
+        key,
+        reason: 'NotFound'
+      })
       this.clearPendingTimeout(key)
       return
     }
 
     const pod = podResult.value
     if (!shouldProgressPod(pod)) {
+      this.observe({
+        action: 'skip',
+        key,
+        reason: 'NotSchedulable'
+      })
       this.clearPendingTimeout(key)
       return
     }
 
     const volumeReadiness = this.options.volumeReadinessProbe?.(pod)
     if (volumeReadiness != null && !volumeReadiness.ready) {
+      this.observe({
+        action: 'skip',
+        key,
+        reason: 'VolumeNotReady'
+      })
       this.clearPendingTimeout(key)
       this.emitPodWaitingForVolume(pod, volumeReadiness.reason)
       return
     }
     const startupIssueReason = this.detectStartupIssueReason(pod)
     if (startupIssueReason != null) {
+      this.observe({
+        action: 'skip',
+        key,
+        reason: startupIssueReason
+      })
       this.clearPendingTimeout(key)
       this.emitPodStartupIssue(pod, startupIssueReason)
       return
     }
     if (this.pendingTimeouts.has(key)) {
+      this.observe({
+        action: 'skip',
+        key,
+        reason: 'AlreadyPending'
+      })
       return
     }
     this.emitPodContainerCreating(pod)
@@ -318,7 +352,12 @@ export class PodLifecycleController implements ReconcilerController {
   }
 
   private enqueuePod(pod: Pod): void {
-    this.workQueue.add(makePodKey(pod.metadata.namespace, pod.metadata.name))
+    const key = makePodKey(pod.metadata.namespace, pod.metadata.name)
+    this.workQueue.add(key)
+    this.observe({
+      action: 'enqueue',
+      key
+    })
   }
 
   private clearPendingTimeout(key: string): void {
@@ -506,6 +545,23 @@ export class PodLifecycleController implements ReconcilerController {
         this.options.eventSource ?? 'pod-lifecycle-controller'
       )
     )
+  }
+
+  private observe(
+    input: {
+      action: 'enqueue' | 'reconcile' | 'skip'
+      key: string
+      reason?: string
+      eventType?: ClusterEventType
+    }
+  ): void {
+    reportControllerObservation(this.options, {
+      controller: 'PodLifecycleController',
+      action: input.action,
+      key: input.key,
+      reason: input.reason,
+      eventType: input.eventType
+    })
   }
 }
 

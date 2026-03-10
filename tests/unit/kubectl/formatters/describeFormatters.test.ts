@@ -508,7 +508,7 @@ describe('describeFormatters', () => {
         template: {
           metadata: { labels: { app: 'web-app' } },
           spec: {
-            containers: [{ name: 'nginx', image: 'nginx:1.25' }]
+            containers: [{ name: 'nginx', image: 'nginx:1.28' }]
           }
         },
         labels: { app: 'web-app' },
@@ -528,7 +528,7 @@ describe('describeFormatters', () => {
       expect(result).toContain('MinReadySeconds:  0')
       expect(result).toContain('Pod Template:')
       expect(result).toContain('Containers:')
-      expect(result).toContain('Image:      nginx:1.25')
+      expect(result).toContain('Image:      nginx:1.28')
     })
 
     it('should format replica counters from deployment status', () => {

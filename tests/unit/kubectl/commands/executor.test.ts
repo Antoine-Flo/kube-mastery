@@ -141,7 +141,7 @@ describe('kubectl Executor', () => {
           eventBus
         )
         const created = executor.execute(
-          'kubectl create deployment web-app --image=nginx:1.25 --replicas=3'
+          'kubectl create deployment web-app --image=nginx:1.28 --replicas=3'
         )
         expect(created.ok).toBe(true)
 

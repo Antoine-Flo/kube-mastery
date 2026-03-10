@@ -5,7 +5,13 @@
 
 import type { EventBus } from '../events/EventBus'
 import type { ClusterEvent } from '../events/types'
-import type { ClusterEventType, OwnedResource, OwnerResource } from './types'
+import type {
+  ClusterEventType,
+  ControllerObservation,
+  ControllerResyncOptions,
+  OwnedResource,
+  OwnerResource
+} from './types'
 
 // ─── Owner Reference Helpers ─────────────────────────────────────────────
 
@@ -134,6 +140,19 @@ export const startPeriodicResync = (
   return () => {
     clearInterval(intervalId)
   }
+}
+
+export const reportControllerObservation = (
+  options: Pick<ControllerResyncOptions, 'observer'>,
+  observation: Omit<ControllerObservation, 'timestamp'>
+): void => {
+  if (options.observer == null) {
+    return
+  }
+  options.observer({
+    ...observation,
+    timestamp: new Date().toISOString()
+  })
 }
 
 // ─── Status Computation Helpers ──────────────────────────────────────────

@@ -131,6 +131,16 @@ Checklist obligatoire pour tout nouveau composant runtime critique:
 5. `resyncAll()` implemente (periodic resync configurable).
 6. Tests d'invariants agnostiques a l'ordre des evenements (create avant/apres start, restart, replay partiel).
 
+### Status Propagation Invariants
+
+Invariants explicites pour eviter les derives `READY 0/x`:
+
+1. `Pod -> ReplicaSet -> Deployment` est la seule chaine de verite pour les compteurs `readyReplicas` et `availableReplicas`.
+2. `ReplicaSetController` doit watch les transitions `PodUpdated` (pas seulement create/delete), car le readiness evolue principalement pendant le lifecycle Pod.
+3. Le calcul `ready` des ReplicaSets privilegie `PodCondition Ready=True`, avec fallback `phase=Running` pour compatibilite.
+4. Les controllers runtime critiques exposent une observabilite minimale (`enqueue`, `reconcile`, `skipReason`) pour diagnostiquer rapidement les divergences d'etat.
+5. Le periodic resync reste un filet de securite, pas une substitution a une couverture complete des evenements.
+
 ### Autocomplete
 
 `src/core/terminal/autocomplete/` — `AutocompleteProvider`, `AutocompleteEngine`. Providers: kubectl, shell, filesystem.

@@ -38,7 +38,7 @@ describe('PodLifecycleController runtime enrichment', () => {
       namespace: 'default',
       phase: 'Pending',
       nodeName: 'conformance-worker',
-      containers: [{ name: 'nginx', image: 'nginx:1.25' }]
+      containers: [{ name: 'nginx', image: 'nginx:1.28' }]
     })
 
     const state: ControllerState = {
@@ -84,7 +84,7 @@ describe('PodLifecycleController runtime enrichment', () => {
       namespace: 'default',
       phase: 'Pending',
       nodeName: 'conformance-worker',
-      containers: [{ name: 'nginx', image: 'nginx:1.25' }]
+      containers: [{ name: 'nginx', image: 'nginx:1.28' }]
     })
     const state: ControllerState = {
       getDeployments: () => [],

@@ -69,7 +69,7 @@ describe('Event Types', () => {
       const updatedPod = createPod({
         name: 'test-pod',
         namespace: 'default',
-        containers: [{ name: 'main', image: 'nginx:1.25' }]
+        containers: [{ name: 'main', image: 'nginx:1.28' }]
       })
 
       const event = createPodUpdatedEvent(
