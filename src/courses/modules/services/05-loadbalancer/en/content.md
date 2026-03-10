@@ -169,7 +169,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: nginx:1.25
+          image: nginx:1.28
           ports:
             - containerPort: 80
 apiVersion: v1

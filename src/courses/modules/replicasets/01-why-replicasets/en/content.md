@@ -75,7 +75,7 @@ Let's observe the fragility of a bare Pod first, then see how a ReplicaSet fixes
 **1. Create a bare Pod**
 
 ```bash
-kubectl run bare-pod --image=nginx:1.25
+kubectl run bare-pod --image=nginx:1.28
 kubectl get pod bare-pod
 ```
 
@@ -108,7 +108,7 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:1.25
+          image: nginx:1.28
 ```
 
 ```bash

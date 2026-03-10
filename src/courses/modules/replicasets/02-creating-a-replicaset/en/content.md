@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: nginx:1.25
+          image: nginx:1.28
           ports:
             - containerPort: 80
 ```
@@ -109,7 +109,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: nginx:1.25
+          image: nginx:1.28
           ports:
             - containerPort: 80
           resources:
@@ -205,7 +205,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: nginx:1.25
+          image: nginx:1.28
           ports:
             - containerPort: 80
 ```
@@ -274,7 +274,7 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:1.25
+          image: nginx:1.28
 ```
 
 ```bash

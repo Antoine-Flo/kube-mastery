@@ -102,7 +102,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: nginx:1.25
+          image: nginx:1.28
 ```
 
 ```bash

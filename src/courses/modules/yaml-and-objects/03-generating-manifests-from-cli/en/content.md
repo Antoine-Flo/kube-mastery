@@ -132,12 +132,6 @@ flowchart LR
     YAML --> EDIT
     EDIT --> APPLY
     APPLY --> CLUSTER
-
-    style CMD fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style YAML fill:#F5A623,color:#fff,stroke:#c77d00
-    style EDIT fill:#9B59B6,color:#fff,stroke:#7d3f9a
-    style APPLY fill:#7ED321,color:#fff,stroke:#5a9c18
-    style CLUSTER fill:#E74C3C,color:#fff,stroke:#c0392b
 ```
 
 ## Why This Is So Useful
@@ -154,7 +148,7 @@ The `--dry-run=client -o yaml` combination solves several real problems at once:
 Suppose you generate a Pod manifest and want to add resource limits and an environment variable. Start with:
 
 ```bash
-kubectl run webserver --image=nginx:1.25 --port=80 --dry-run=client -o yaml > webserver.yaml
+kubectl run webserver --image=nginx:1.28 --port=80 --dry-run=client -o yaml > webserver.yaml
 ```
 
 Then open `webserver.yaml` and edit the container section to look like this:
@@ -162,7 +156,7 @@ Then open `webserver.yaml` and edit the container section to look like this:
 ```yaml
 containers:
   - name: webserver
-    image: nginx:1.25
+    image: nginx:1.28
     ports:
       - containerPort: 80
     env:
@@ -212,14 +206,14 @@ Let's put this into practice in your terminal.
 **1. Generate a Pod manifest and save it:**
 
 ```bash
-kubectl run mypod --image=nginx:1.25 --port=80 --dry-run=client -o yaml > mypod.yaml
+kubectl run mypod --image=nginx:1.28 --port=80 --dry-run=client -o yaml > mypod.yaml
 cat mypod.yaml
 ```
 
 **2. Generate a Deployment manifest with 3 replicas:**
 
 ```bash
-kubectl create deployment myapp --image=nginx:1.25 --replicas=3 --dry-run=client -o yaml > myapp-deployment.yaml
+kubectl create deployment myapp --image=nginx:1.28 --replicas=3 --dry-run=client -o yaml > myapp-deployment.yaml
 cat myapp-deployment.yaml
 ```
 

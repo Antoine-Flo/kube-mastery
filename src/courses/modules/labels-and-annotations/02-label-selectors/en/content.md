@@ -144,7 +144,7 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:1.25
+          image: nginx:1.28
 ```
 
 If the selector says `app: web` but the template labels say `app: webapp`, the Deployment will fail validation. For Services, there's no such validation: the Service will be created successfully, but its Endpoints list will be empty and no traffic will ever reach your Pods, a maddening situation where everything exists but requests simply time out.
@@ -164,10 +164,10 @@ Open the terminal and work through these exercises to see selectors in action.
 **1. Create Pods with varied labels**
 
 ```bash
-kubectl run web-prod --image=nginx:1.25 --labels="app=web,env=production,track=stable"
-kubectl run web-staging --image=nginx:1.25 --labels="app=web,env=staging,track=stable"
-kubectl run api-prod --image=nginx:1.25 --labels="app=api,env=production,track=stable"
-kubectl run web-canary --image=nginx:1.25 --labels="app=web,env=production,track=canary"
+kubectl run web-prod --image=nginx:1.28 --labels="app=web,env=production,track=stable"
+kubectl run web-staging --image=nginx:1.28 --labels="app=web,env=staging,track=stable"
+kubectl run api-prod --image=nginx:1.28 --labels="app=api,env=production,track=stable"
+kubectl run web-canary --image=nginx:1.28 --labels="app=web,env=production,track=canary"
 ```
 
 **2. Practice equality-based selectors**

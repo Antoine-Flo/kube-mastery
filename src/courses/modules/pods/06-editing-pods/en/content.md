@@ -116,7 +116,7 @@ Let's experience Pod immutability first-hand and practice the correct workaround
 **1. Create a Pod:**
 
 ```bash
-kubectl run edit-demo --image=nginx:1.25 --env="LOG_LEVEL=info"
+kubectl run edit-demo --image=nginx:1.28 --env="LOG_LEVEL=info"
 kubectl get pod edit-demo
 ```
 
@@ -136,7 +136,7 @@ kubectl get pod edit-demo -o yaml > edit-demo.yaml
 
 **4. Edit the exported file:**
 
-Open `edit-demo.yaml` and change the image from `nginx:1.25` to `nginx:1.26`. Also add a new environment variable:
+Open `edit-demo.yaml` and change the image from `nginx:1.28` to `nginx:1.26`. Also add a new environment variable:
 
 ```yaml
 env:

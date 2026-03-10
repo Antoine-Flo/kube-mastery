@@ -66,7 +66,7 @@ Let's get familiar with Pods in your cluster. Open the terminal on the right.
 **1. Create a simple single-container Pod:**
 
 ```bash
-kubectl run nginx-pod --image=nginx:1.25
+kubectl run nginx-pod --image=nginx:1.28
 ```
 
 **2. Check that it's running:**
@@ -99,7 +99,7 @@ metadata:
 spec:
   containers:
     - name: main-app
-      image: nginx:1.25
+      image: nginx:1.28
     - name: sidecar
       image: busybox:1.36
       command:

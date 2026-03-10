@@ -26,7 +26,7 @@ metadata:
 spec:
   containers:
     - name: nginx
-      image: nginx:1.25
+      image: nginx:1.28
 ```
 
 You can attach labels to any Kubernetes resource: Pods, Deployments, Services, Nodes, Namespaces, ConfigMaps, anything at all.
@@ -106,7 +106,7 @@ Open the built-in terminal and follow along with these exercises.
 **1. Create a Pod with labels**
 
 ```bash
-kubectl run web --image=nginx:1.25 --labels="app=web,env=production,team=platform"
+kubectl run web --image=nginx:1.28 --labels="app=web,env=production,team=platform"
 ```
 
 **2. Verify the labels are attached**
@@ -118,7 +118,7 @@ kubectl get pod web --show-labels
 **3. Create a second Pod with different labels**
 
 ```bash
-kubectl run api --image=nginx:1.25 --labels="app=api,env=production,team=backend"
+kubectl run api --image=nginx:1.28 --labels="app=api,env=production,team=backend"
 ```
 
 **4. Filter Pods by label**

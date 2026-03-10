@@ -281,8 +281,8 @@ Let's apply a multi-policy setup to a real namespace and verify isolation. Use t
 
 ```bash
 kubectl create namespace secured-app
-kubectl run frontend -n secured-app --image=nginx:1.25 --labels="app=frontend"
-kubectl run backend -n secured-app --image=nginx:1.25 --labels="app=backend"
+kubectl run frontend -n secured-app --image=nginx:1.28 --labels="app=frontend"
+kubectl run backend -n secured-app --image=nginx:1.28 --labels="app=backend"
 kubectl run intruder -n secured-app --image=busybox:1.36 --labels="app=intruder" -- sleep 3600
 ```
 

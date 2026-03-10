@@ -20,7 +20,7 @@ metadata:
 spec:
   containers:
     - name: main-container
-      image: nginx:1.25
+      image: nginx:1.28
       ports:
         - containerPort: 80
       env:
@@ -44,7 +44,7 @@ The heart of a Pod manifest is the `spec.containers` field, a list of containers
 
 ### `name` and `image`
 
-The `name` must be unique within the Pod (you can't have two containers with the same name in one Pod). The `image` is the container image to pull from a registry, just like you'd pass to `docker run`. You should always specify a version tag (like `nginx:1.25`) rather than relying on `latest`, which can cause unexpected behavior when a new image version is pulled without you realizing it.
+The `name` must be unique within the Pod (you can't have two containers with the same name in one Pod). The `image` is the container image to pull from a registry, just like you'd pass to `docker run`. You should always specify a version tag (like `nginx:1.28`) rather than relying on `latest`, which can cause unexpected behavior when a new image version is pulled without you realizing it.
 
 ### `ports`
 
@@ -222,7 +222,7 @@ spec:
           mountPath: /init-data
   containers:
     - name: main-container
-      image: nginx:1.25
+      image: nginx:1.28
       ports:
         - containerPort: 80
           name: http

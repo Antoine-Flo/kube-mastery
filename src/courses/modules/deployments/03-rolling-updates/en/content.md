@@ -8,7 +8,7 @@ A rolling update is triggered automatically whenever you change the Deployment's
 
 ## What a Rolling Update Actually Does
 
-Imagine you have three Pods running `nginx:1.25` and you want to upgrade to `nginx:1.26`. A naive approach would be to terminate all three Pods and then start three new ones, but during that gap, your service is completely down. A rolling update avoids this entirely.
+Imagine you have three Pods running `nginx:1.28` and you want to upgrade to `nginx:1.26`. A naive approach would be to terminate all three Pods and then start three new ones, but during that gap, your service is completely down. A rolling update avoids this entirely.
 
 Instead, Kubernetes follows a carefully coordinated sequence:
 
@@ -35,7 +35,7 @@ The format is `deployment/<name> <container-name>=<new-image>`. The container na
 **Option 2: Edit the manifest and re-apply:** The better approach for production, because it keeps your manifest file in sync with reality:
 
 ```bash
-# Edit deployment.yaml, change nginx:1.25 to nginx:1.26
+# Edit deployment.yaml, change nginx:1.28 to nginx:1.26
 kubectl apply -f deployment.yaml
 ```
 
@@ -186,7 +186,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: nginx:1.25
+          image: nginx:1.28
           ports:
             - containerPort: 80
 ```
@@ -236,7 +236,7 @@ kubectl rollout status deployment/web-app
 
 ```bash
 # First reset back to 1.25 to have something to update
-kubectl set image deployment/web-app web=nginx:1.25
+kubectl set image deployment/web-app web=nginx:1.28
 kubectl rollout status deployment/web-app
 
 # Now update to 1.26 and immediately pause

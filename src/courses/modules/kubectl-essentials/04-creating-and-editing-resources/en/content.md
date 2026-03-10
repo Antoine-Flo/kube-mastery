@@ -145,7 +145,7 @@ spec:
     spec:
       containers:
       - name: my-app
-        image: nginx:1.25
+        image: nginx:1.28
 EOF
 
 # Apply it (creates the deployment)

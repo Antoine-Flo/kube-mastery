@@ -7,17 +7,17 @@ There are two fundamental ways to create resources in Kubernetes: the **imperati
 The imperative approach means issuing a direct command to Kubernetes: "Create this thing, now." It's fast, requires no files, and is ideal for quick experiments or debugging sessions.
 
 ```bash
-kubectl run nginx-pod --image=nginx:1.25
+kubectl run nginx-pod --image=nginx:1.28
 ```
 
 That's it. One command, one Pod. The `kubectl run` command has a few commonly used flags worth knowing:
 
 ```bash
 # Run with a specific port documented on the container
-kubectl run nginx-pod --image=nginx:1.25 --port=80
+kubectl run nginx-pod --image=nginx:1.28 --port=80
 
 # Add labels to the Pod
-kubectl run nginx-pod --image=nginx:1.25 --labels="app=web,tier=frontend"
+kubectl run nginx-pod --image=nginx:1.28 --labels="app=web,tier=frontend"
 
 # Override the command the container runs
 kubectl run debug-pod --image=busybox:1.36 --command -- sh -c "sleep 3600"
@@ -50,7 +50,7 @@ metadata:
 spec:
   containers:
     - name: web
-      image: nginx:1.25
+      image: nginx:1.28
       ports:
         - containerPort: 80
       resources:
@@ -146,7 +146,7 @@ You can use `kubectl get pods --watch` in the terminal to stream live updates as
 **1. Create a Pod imperatively:**
 
 ```bash
-kubectl run imperative-pod --image=nginx:1.25 --port=80
+kubectl run imperative-pod --image=nginx:1.28 --port=80
 kubectl get pod imperative-pod
 kubectl describe pod imperative-pod
 ```
@@ -166,7 +166,7 @@ metadata:
 spec:
   containers:
     - name: web
-      image: nginx:1.25
+      image: nginx:1.28
       ports:
         - containerPort: 80
       resources:
@@ -196,7 +196,7 @@ kubectl get pods --watch
 In another (or after opening a second tab), create a new Pod:
 
 ```bash
-kubectl run watch-pod --image=nginx:1.25
+kubectl run watch-pod --image=nginx:1.28
 ```
 
 Observe the status transitions: `Pending` → `ContainerCreating` → `Running`. Press `Ctrl+C` to stop watching.

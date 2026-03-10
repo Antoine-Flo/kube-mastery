@@ -11,7 +11,7 @@ spec:
   restartPolicy: Always
   containers:
     - name: web
-      image: nginx:1.25
+      image: nginx:1.28
 ```
 
 There are exactly three valid values: `Always`, `OnFailure`, and `Never`.
@@ -132,7 +132,7 @@ Let's explore all three restart policies with real examples.
 **1. `Always` in action, observe self-healing:**
 
 ```bash
-kubectl run always-pod --image=nginx:1.25 --restart=Always
+kubectl run always-pod --image=nginx:1.28 --restart=Always
 kubectl get pod always-pod
 ```
 

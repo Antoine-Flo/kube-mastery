@@ -39,7 +39,7 @@ The `metadata` field is where you give your object an identity and context. At m
 
 ### `spec`
 
-The `spec` field is where you describe the **desired state:** what you actually want this object to do or be. For a Deployment, `spec` might say: "I want three replicas of a container running nginx:1.25." For a Service, `spec` might say: "I want to expose port 80 and route traffic to Pods with the label `app: web`." The `spec` schema varies considerably from object to object, because a Pod has very different needs from, say, a PersistentVolume.
+The `spec` field is where you describe the **desired state:** what you actually want this object to do or be. For a Deployment, `spec` might say: "I want three replicas of a container running nginx:1.28." For a Service, `spec` might say: "I want to expose port 80 and route traffic to Pods with the label `app: web`." The `spec` schema varies considerably from object to object, because a Pod has very different needs from, say, a PersistentVolume.
 
 :::warning
 There is a fifth top-level field you will encounter called `status`. Unlike the other four, you should **never** write `status` yourself. It is managed entirely by Kubernetes to reflect the current state of the object. Writing it manually has no effect and can cause confusion.
@@ -69,10 +69,10 @@ spec:
     spec:
       containers:
         - name: web
-          image: nginx:1.25
+          image: nginx:1.28
 ```
 
-Reading this from top to bottom, you can trace the four required fields clearly: the API group and version (`apps/v1`), the object type (`Deployment`), its identity (`name: web-app` in `namespace: default` with a label), and finally the desired state in `spec` , three replicas of a Pod running the `nginx:1.25` container image.
+Reading this from top to bottom, you can trace the four required fields clearly: the API group and version (`apps/v1`), the object type (`Deployment`), its identity (`name: web-app` in `namespace: default` with a label), and finally the desired state in `spec` , three replicas of a Pod running the `nginx:1.28` container image.
 
 
 ```mermaid
@@ -139,7 +139,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: nginx:1.25
+          image: nginx:1.28
 ```
 
 Then apply it (watch the visualizer to see the deployment appear):

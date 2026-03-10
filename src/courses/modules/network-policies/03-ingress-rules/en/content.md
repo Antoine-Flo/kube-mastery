@@ -187,7 +187,7 @@ Let's experiment with ingress rules and observe exactly how the policies filter 
 **1. Create three Pods with different labels:**
 
 ```bash
-kubectl run app-pod --image=nginx:1.25 --labels="app=app"
+kubectl run app-pod --image=nginx:1.28 --labels="app=app"
 kubectl run allowed-client --image=busybox:1.36 --labels="role=allowed" -- sleep 3600
 kubectl run blocked-client --image=busybox:1.36 --labels="role=blocked" -- sleep 3600
 ```

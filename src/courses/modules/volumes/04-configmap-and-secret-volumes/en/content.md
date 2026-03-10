@@ -174,7 +174,7 @@ spec:
         name: nginx-config
   containers:
     - name: nginx
-      image: nginx:1.25
+      image: nginx:1.28
       volumeMounts:
         - name: nginx-config
           mountPath: /etc/nginx/nginx.conf

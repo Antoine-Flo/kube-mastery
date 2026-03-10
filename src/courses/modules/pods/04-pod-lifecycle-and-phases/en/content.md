@@ -114,7 +114,7 @@ Let's observe phases, container states, and conditions live in the cluster.
 **1. Create a normal Pod and watch its phase transitions:**
 
 ```bash
-kubectl run lifecycle-pod --image=nginx:1.25
+kubectl run lifecycle-pod --image=nginx:1.28
 kubectl get pod lifecycle-pod --watch
 ```
 

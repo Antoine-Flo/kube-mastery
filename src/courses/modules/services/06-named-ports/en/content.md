@@ -199,7 +199,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: nginx:1.25
+          image: nginx:1.28
           ports:
             - name: http
               containerPort: 80
@@ -276,7 +276,7 @@ Note: nginx listens on port 80 by default, so if you test connectivity after thi
 **6. Restore and verify**
 
 ```bash
-kubectl set image deployment/web-named web=nginx:1.25
+kubectl set image deployment/web-named web=nginx:1.28
 kubectl patch deployment web-named --type='json' -p='[
   {"op": "replace", "path": "/spec/template/spec/containers/0/ports/0/containerPort", "value": 80}
 ]'

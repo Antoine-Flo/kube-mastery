@@ -73,7 +73,7 @@ This is particularly useful in multi-step debugging scenarios: you've tried seve
 
 ```mermaid
 graph LR
-    R1["Revision 1\nnginx:1.25\nRS-abc (replicas:3)"]
+    R1["Revision 1\nnginx:1.28\nRS-abc (replicas:3)"]
     R2["Revision 2\nnginx:1.26\nRS-def (replicas:3)"]
     R3["Revision 3\nnginx:1.27\nRS-ghi (replicas:3 → 0)"]
     R4["Revision 4\nnginx:1.26\nRS-def (replicas:0 → 3)"]
@@ -159,7 +159,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: nginx:1.25
+          image: nginx:1.28
 ```
 
 ```bash
@@ -244,7 +244,7 @@ kubectl rollout undo deployment/web-app --to-revision=1
 kubectl rollout status deployment/web-app
 kubectl get pods -l app=web \
   -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
-# All pods should show nginx:1.25
+# All pods should show nginx:1.28
 ```
 
 **11. Clean up**

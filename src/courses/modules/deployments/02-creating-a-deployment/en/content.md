@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: nginx:1.25
+          image: nginx:1.28
           ports:
             - containerPort: 80
 ```
@@ -84,9 +84,9 @@ At the Pod level, you list Pods with the same label selector. Each Pod name incl
 graph TB
     DEP["Deployment\nweb-app\nreplicas: 3"]
     RS["ReplicaSet\nweb-app-6d4b9c7f8\nreplicas: 3"]
-    P1["Pod\nweb-app-6d4b9c7f8-abc12\nnginx:1.25"]
-    P2["Pod\nweb-app-6d4b9c7f8-def34\nnginx:1.25"]
-    P3["Pod\nweb-app-6d4b9c7f8-ghi56\nnginx:1.25"]
+    P1["Pod\nweb-app-6d4b9c7f8-abc12\nnginx:1.28"]
+    P2["Pod\nweb-app-6d4b9c7f8-def34\nnginx:1.28"]
+    P3["Pod\nweb-app-6d4b9c7f8-ghi56\nnginx:1.28"]
 
     DEP --> RS
     RS --> P1
@@ -158,7 +158,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: nginx:1.25
+          image: nginx:1.28
           ports:
             - containerPort: 80
 ```

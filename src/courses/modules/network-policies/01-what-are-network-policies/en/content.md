@@ -83,8 +83,8 @@ Let's see the default open networking behavior and then apply a policy to see th
 **1. Create two test Pods in the default namespace:**
 
 ```bash
-kubectl run frontend --image=nginx:1.25 --labels="app=frontend"
-kubectl run backend --image=nginx:1.25 --labels="app=backend"
+kubectl run frontend --image=nginx:1.28 --labels="app=frontend"
+kubectl run backend --image=nginx:1.28 --labels="app=backend"
 ```
 
 **2. Wait for them to be running, then note the backend's IP:**

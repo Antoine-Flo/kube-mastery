@@ -82,7 +82,7 @@ Here's a behavior that often surprises newcomers: if you create a bare Pod with 
 Imagine you have a ReplicaSet with `replicas: 3` and `selector: app=web`. Three Pods are running. Now you create a fourth Pod independently with the label `app=web`:
 
 ```bash
-kubectl run extra-pod --image=nginx:1.25 --labels="app=web"
+kubectl run extra-pod --image=nginx:1.28 --labels="app=web"
 ```
 
 The ReplicaSet controller sees this new Pod match its selector. Its count goes from 3 to 4, but it only wants 3. So it selects one Pod to delete, possibly your `extra-pod`, possibly one of the original three, and terminates it. The result is still three Pods.
@@ -134,7 +134,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: nginx:1.25
+          image: nginx:1.28
 ```
 
 Apply the manifest:
@@ -187,7 +187,7 @@ kubectl scale rs web-rs --replicas=3
 kubectl get pods -l app=web
 
 # Create an extra Pod with the matching label
-kubectl run intruder --image=nginx:1.25 --labels="app=web"
+kubectl run intruder --image=nginx:1.28 --labels="app=web"
 
 # Watch what happens (the RS will delete one Pod to maintain count=3)
 kubectl get pods -l app=web -w

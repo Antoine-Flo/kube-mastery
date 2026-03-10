@@ -214,9 +214,9 @@ Let's apply the `allow-frontend-to-backend` policy and verify it works. Use the 
 **1. Create test Pods with the correct labels:**
 
 ```bash
-kubectl run frontend --image=nginx:1.25 --labels="app=frontend"
-kubectl run backend --image=nginx:1.25 --labels="app=backend"
-kubectl run other --image=nginx:1.25 --labels="app=other"
+kubectl run frontend --image=nginx:1.28 --labels="app=frontend"
+kubectl run backend --image=nginx:1.28 --labels="app=backend"
+kubectl run other --image=nginx:1.28 --labels="app=other"
 ```
 
 **2. Get the backend Pod's IP:**

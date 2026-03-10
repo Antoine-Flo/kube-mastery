@@ -33,8 +33,8 @@ Events:
   Type     Reason            Age   From               Message
   ----     ------            ---   ----                -------
   Normal   Scheduled         45s   default-scheduler  Successfully assigned default/my-pod to node-1
-  Normal   Pulling           43s   kubelet            Pulling image "nginx:1.25"
-  Normal   Pulled            38s   kubelet            Successfully pulled image "nginx:1.25"
+  Normal   Pulling           43s   kubelet            Pulling image "nginx:1.28"
+  Normal   Pulled            38s   kubelet            Successfully pulled image "nginx:1.28"
   Normal   Created           38s   kubelet            Created container nginx
   Normal   Started           37s   kubelet            Started container nginx
 ```
@@ -149,7 +149,7 @@ metadata:
 spec:
   containers:
     - name: nginx
-      image: nginx:1.25
+      image: nginx:1.28
 ```
 
 ```bash

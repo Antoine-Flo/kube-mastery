@@ -10,15 +10,15 @@ The answer comes down to one fundamental question: what happens when you need to
 Updating a ReplicaSet's Pod template **does not restart existing Pods**. Running Pods keep their old image until they are replaced for some other reason, leaving you with a mixed-version fleet, indefinitely.
 :::
 
-Imagine you're running `nginx:1.25` across three replicas and you need to upgrade to `nginx:1.26`. You edit the ReplicaSet manifest, change the image tag, and apply it:
+Imagine you're running `nginx:1.28` across three replicas and you need to upgrade to `nginx:1.26`. You edit the ReplicaSet manifest, change the image tag, and apply it:
 
 ```bash
 kubectl apply -f web-rs.yaml
 ```
 
-The ReplicaSet's Pod template is now updated in the API server. But nothing else happens. The three existing Pods are still running `nginx:1.25`. The ReplicaSet controller looks at the cluster, counts three Pods matching its selector, and concludes: "Desired is 3, actual is 3, nothing to do." It doesn't know, and doesn't care, that those Pods were created from an older version of the template.
+The ReplicaSet's Pod template is now updated in the API server. But nothing else happens. The three existing Pods are still running `nginx:1.28`. The ReplicaSet controller looks at the cluster, counts three Pods matching its selector, and concludes: "Desired is 3, actual is 3, nothing to do." It doesn't know, and doesn't care, that those Pods were created from an older version of the template.
 
-ReplicaSets are blind to the contents of their Pods. They count Pods by label; they don't inspect container images. This is a deliberate design choice: the ReplicaSet's scope is quantity, not quality. The new template only takes effect when the ReplicaSet needs to create a _new_ Pod, for example, if one of the existing Pods crashes. That crash victim will be replaced with `nginx:1.26`. The other two will keep running `nginx:1.25`. Your fleet is now running a mixture of versions, indefinitely.
+ReplicaSets are blind to the contents of their Pods. They count Pods by label; they don't inspect container images. This is a deliberate design choice: the ReplicaSet's scope is quantity, not quality. The new template only takes effect when the ReplicaSet needs to create a _new_ Pod, for example, if one of the existing Pods crashes. That crash victim will be replaced with `nginx:1.26`. The other two will keep running `nginx:1.28`. Your fleet is now running a mixture of versions, indefinitely.
 
 ## The Manual Workaround, and Its Costs
 
@@ -46,22 +46,22 @@ graph TB
     DEP["Deployment\nweb-deployment"]
 
     subgraph "Before Update"
-        RS1_before["ReplicaSet v1\nnginx:1.25\nreplicas: 3"]
-        P1["Pod nginx:1.25"]
-        P2["Pod nginx:1.25"]
-        P3["Pod nginx:1.25"]
+        RS1_before["ReplicaSet v1\nnginx:1.28\nreplicas: 3"]
+        P1["Pod nginx:1.28"]
+        P2["Pod nginx:1.28"]
+        P3["Pod nginx:1.28"]
         RS1_before --> P1 & P2 & P3
     end
 
     subgraph "During Rolling Update"
-        RS1_mid["ReplicaSet v1\nnginx:1.25\nreplicas: 1 ↓"]
+        RS1_mid["ReplicaSet v1\nnginx:1.28\nreplicas: 1 ↓"]
         RS2_mid["ReplicaSet v2\nnginx:1.26\nreplicas: 2 ↑"]
-        RS1_mid --> PA["Pod nginx:1.25"]
+        RS1_mid --> PA["Pod nginx:1.28"]
         RS2_mid --> PB["Pod nginx:1.26"] & PC["Pod nginx:1.26"]
     end
 
     subgraph "After Update"
-        RS1_after["ReplicaSet v1\nnginx:1.25\nreplicas: 0 (kept for rollback)"]
+        RS1_after["ReplicaSet v1\nnginx:1.28\nreplicas: 0 (kept for rollback)"]
         RS2_after["ReplicaSet v2\nnginx:1.26\nreplicas: 3"]
         RS2_after --> PD["Pod nginx:1.26"] & PE["Pod nginx:1.26"] & PF["Pod nginx:1.26"]
     end
@@ -143,11 +143,11 @@ kubectl get pods -l app=web -o wide
 kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
 ```
 
-**3. Update the ReplicaSet image to nginx:1.25 and observe that nothing changes**
+**3. Update the ReplicaSet image to nginx:1.28 and observe that nothing changes**
 
 ```bash
 kubectl patch rs web-rs --type='json' \
-  -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/image", "value": "nginx:1.25"}]'
+  -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/image", "value": "nginx:1.28"}]'
 
 # Check the RS spec, it now says 1.25
 kubectl get rs web-rs -o jsonpath='{.spec.template.spec.containers[0].image}'
@@ -166,7 +166,7 @@ kubectl delete $POD
 # Wait for the replacement, then check images again
 sleep 5
 kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
-# Mixed fleet: 2x nginx:1.24, 1x nginx:1.25
+# Mixed fleet: 2x nginx:1.24, 1x nginx:1.28
 ```
 
 **5. Clean up the ReplicaSet and create a Deployment instead**
@@ -204,12 +204,12 @@ kubectl rollout status deployment/web-deploy
 **6. Update the Deployment image and observe the rolling update**
 
 ```bash
-kubectl set image deployment/web-deploy web=nginx:1.25
+kubectl set image deployment/web-deploy web=nginx:1.28
 
 # Watch the rolling update happen automatically
 kubectl rollout status deployment/web-deploy
 
-# All Pods are now on nginx:1.25
+# All Pods are now on nginx:1.28
 kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
 ```
 

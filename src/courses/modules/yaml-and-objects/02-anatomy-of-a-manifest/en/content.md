@@ -19,12 +19,12 @@ spec:
     spec:
       containers:
         - name: web
-          image: nginx:1.25
+          image: nginx:1.28
           ports:
             - containerPort: 80
 ```
 
-This `spec` says: "I want three Pods, each running the `nginx:1.25` container, listening on port 80." That's it. You are not instructing Kubernetes _how_ to achieve this , you are simply stating the desired end result. You don't say "schedule a Pod on node-3" or "pull the image at this exact moment." You declare intent, and the system handles the execution.
+This `spec` says: "I want three Pods, each running the `nginx:1.28` container, listening on port 80." That's it. You are not instructing Kubernetes _how_ to achieve this , you are simply stating the desired end result. You don't say "schedule a Pod on node-3" or "pull the image at this exact moment." You declare intent, and the system handles the execution.
 
 :::info
 The `spec` schema is different for every kind of object. A Pod's `spec` has `containers`, `volumes`, and `restartPolicy`. A Service's `spec` has `selector`, `ports`, and `type`. Always refer to the Kubernetes API documentation or use `kubectl explain <resource>.spec` in the terminal to explore the available fields for any object.
@@ -67,47 +67,14 @@ The engine that bridges `spec` and `status` is called the **reconciliation loop*
 
 This loop runs in the background at all times. It's why Kubernetes is described as **self-healing**. If you have a Deployment with `replicas: 3` and a node fails, taking one Pod with it, the ReplicaSet controller will notice that only two Pods are running (observed state) versus the three you requested (desired state), and it will immediately schedule a new Pod somewhere else. You didn't have to do anything.
 
-The diagram below illustrates this loop:
-
 ```mermaid
-flowchart LR
-    You["👤 You\n(kubectl apply)"]
-    APIServer["API Server\n+ etcd"]
-    Controller["Controller\n(e.g., Deployment\nController)"]
-    Cluster["Cluster\n(Nodes, Pods)"]
-    Status["status\n(written back)"]
-
-    You -->|"writes spec"| APIServer
-    APIServer -->|"stores object"| Controller
-    Controller -->|"reads spec\nobserves world"| Cluster
-    Cluster -->|"current state"| Controller
-    Controller -->|"takes action\n(create/delete Pod)"| Cluster
+flowchart TB
+    You["You (kubectl apply)"] -->|"writes spec"| APIServer["API Server + etcd"]
+    APIServer -->|"stores object"| Controller["Controller"]
+    Controller -->|"acts on cluster"| Cluster["Cluster (Nodes, Pods)"]
+    Cluster -->|"reports current state"| Controller
     Controller -->|"updates status"| APIServer
-
-    style You fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style APIServer fill:#F5A623,color:#fff,stroke:#c77d00
-    style Controller fill:#7ED321,color:#fff,stroke:#5a9c18
-    style Cluster fill:#9B59B6,color:#fff,stroke:#7d3f9a
-    style Status fill:#E74C3C,color:#fff,stroke:#c0392b
 ```
-
-## Reading `status` in Practice
-
-The easiest way to see `status` in action is with `kubectl get` and `kubectl describe`. The `get` command gives you a quick summary, while `describe` gives you a human-readable breakdown of both `spec` and `status` merged together:
-
-```bash
-kubectl describe deployment web-app
-```
-
-Look for the `Conditions` section in the output , that comes directly from `status.conditions`. Look for `Replicas` and `Available` lines , those come from `status.replicas` and `status.availableReplicas`. When things go wrong, `status.conditions` is often the first place you should look for an explanation.
-
-You can also retrieve the raw YAML and see `status` in its full form:
-
-```bash
-kubectl get deployment web-app -o yaml
-```
-
-Scroll to the bottom of the output to find the complete `status` block. You'll see things like `observedGeneration` (the generation of the spec the controller has processed) and `conditions` with timestamps and messages explaining the current health.
 
 ## Why This Design Matters
 
@@ -121,12 +88,12 @@ When you understand that your job is to write `spec` and Kubernetes' job is to r
 
 ## Hands-On Practice
 
-Let's observe the spec/status duality directly.
+The easiest way to see status in action is with kubectl get and kubectl describe. The get command gives you a quick summary, while describe gives you a human-readable breakdown of both spec and status merged together:
 
 **1. Create a Deployment:**
 
 ```bash
-kubectl create deployment demo --image=nginx:1.25 --replicas=3
+kubectl create deployment demo --image=nginx:1.28 --replicas=3
 ```
 
 **2. Inspect the live status:**
@@ -136,15 +103,17 @@ kubectl get deployment demo
 kubectl describe deployment demo
 ```
 
-Notice the `Replicas` and `Conditions` sections in the describe output. These reflect `status`.
+Look for the `Conditions` section in the output , that comes directly from `status.conditions`. Look for `Replicas` and `Available` lines , those come from `status.replicas` and `status.availableReplicas`. When things go wrong, `status.conditions` is often the first place you should look for an explanation.
 
 **3. View the raw spec and status together:**
+
+You can also retrieve the raw YAML and see `status` in its full form:
 
 ```bash
 kubectl get deployment demo -o yaml
 ```
 
-Scroll through the output. Find where `spec` ends and `status` begins. Note that you wrote everything in `spec` and Kubernetes wrote everything in `status`.
+Scroll to the bottom of the output to find the complete `status` block. You'll see things like `observedGeneration` (the generation of the spec the controller has processed) and `conditions` with timestamps and messages explaining the current health..
 
 **4. Observe self-healing in action:**
 

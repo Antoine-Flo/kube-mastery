@@ -143,7 +143,7 @@ metadata:
 spec:
   containers:
     - name: nginx
-      image: nginx:1.25
+      image: nginx:1.28
 ```
 
 :::warning
@@ -171,7 +171,7 @@ metadata:
 spec:
   containers:
     - name: nginx
-      image: nginx:1.25
+      image: nginx:1.28
 ```
 
 ```bash
