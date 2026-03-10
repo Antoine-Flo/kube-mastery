@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
-import { createPodUpdatedEvent } from '../../../../src/core/cluster/events/types'
+import {
+  createPodUpdatedEvent,
+  type ReplicaSetUpdatedEvent
+} from '../../../../src/core/cluster/events/types'
 import { PodLifecycleController } from '../../../../src/core/cluster/controllers/PodLifecycleController'
 import { ReplicaSetController } from '../../../../src/core/cluster/controllers/ReplicaSetController'
 import type {
@@ -86,7 +89,7 @@ describe('controller observability', () => {
     }
 
     const observations: ControllerObservation[] = []
-    eventBus.subscribe('ReplicaSetUpdated', (event) => {
+    eventBus.subscribe('ReplicaSetUpdated', (event: ReplicaSetUpdatedEvent) => {
       mockState.replicaSets = [event.payload.replicaSet]
     })
     const controller = new ReplicaSetController(eventBus, getState, {

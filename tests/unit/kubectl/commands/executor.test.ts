@@ -242,6 +242,43 @@ data:
         }
       })
 
+      it('should return yaml for create -f dry-run client without creating resource', () => {
+        const yaml = `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-config-dry-run
+data:
+  key: value
+`
+        fileSystem.createFile('configmap-dry-run.yaml')
+        fileSystem.writeFile('configmap-dry-run.yaml', yaml)
+
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create -f configmap-dry-run.yaml --dry-run=client -o yaml'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('apiVersion: v1')
+        expect(result.value).toContain('kind: ConfigMap')
+        expect(result.value).toContain('name: test-config-dry-run')
+
+        const configMap = clusterState.findConfigMap(
+          'test-config-dry-run',
+          'default'
+        )
+        expect(configMap.ok).toBe(false)
+      })
+
       it('should route "kubectl diff -f" to diff handler', () => {
         const yaml = `apiVersion: v1
 kind: ConfigMap
@@ -328,6 +365,32 @@ data:
 
         expect(result.value).toContain('namespace/my-team created')
       })
+
+      it('should return namespace yaml for create namespace dry-run client', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create namespace dry-run-ns --dry-run=client -o yaml'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('apiVersion: v1')
+        expect(result.value).toContain('kind: Namespace')
+        expect(result.value).toContain('name: dry-run-ns')
+        expect(result.value).toContain('creationTimestamp: null')
+        expect(result.value).toContain('status: {}')
+
+        const namespace = clusterState.findNamespace('dry-run-ns')
+        expect(namespace.ok).toBe(false)
+      })
     })
 
     describe('create deployment (imperative)', () => {
@@ -394,6 +457,34 @@ data:
         }
 
         expect(deployment.value.spec.replicas).toBe(3)
+      })
+
+      it('should return deployment yaml for create deployment dry-run client', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create deployment myapp --image=nginx --replicas=3 --dry-run=client -o yaml'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('apiVersion: apps/v1')
+        expect(result.value).toContain('kind: Deployment')
+        expect(result.value).toContain('name: myapp')
+        expect(result.value).toContain('replicas: 3')
+        expect(result.value).toContain('creationTimestamp: null')
+        expect(result.value).toContain('status: {}')
+        expect(result.value).not.toContain('readyReplicas: 0')
+
+        const deployment = clusterState.findDeployment('myapp', 'default')
+        expect(deployment.ok).toBe(false)
       })
 
       it('should create a deployment with exposed container port', () => {
@@ -1507,6 +1598,32 @@ data:
         expect(result.value).toContain('pod/dry-run-pod created (dry run)')
 
         const podResult = clusterState.findPod('dry-run-pod', 'default')
+        expect(podResult.ok).toBe(false)
+      })
+
+      it('should return yaml manifest for kubectl run dry-run client output yaml', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl run mypod --image=nginx --dry-run=client -o yaml'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('apiVersion: v1')
+        expect(result.value).toContain('kind: Pod')
+        expect(result.value).toContain('name: mypod')
+        expect(result.value).toContain('image: nginx')
+        expect(result.value).toContain('restartPolicy: Always')
+
+        const podResult = clusterState.findPod('mypod', 'default')
         expect(podResult.ok).toBe(false)
       })
 

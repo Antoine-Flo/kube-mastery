@@ -137,6 +137,41 @@ describe('CommandDispatcher', () => {
       // Pod n'existe pas
       expect(renderer.getOutput()).toContain('not found')
     })
+
+    it('should support kubectl output redirection to file', () => {
+      const result = dispatcher.execute(
+        'kubectl run mypod --image=nginx --dry-run=client -o yaml > pod.yaml'
+      )
+      expect(result.ok).toBe(true)
+
+      const fileResult = fileSystem.readFile('pod.yaml')
+      expect(fileResult.ok).toBe(true)
+      if (!fileResult.ok) {
+        return
+      }
+      expect(fileResult.value).toContain('apiVersion: v1')
+      expect(fileResult.value).toContain('kind: Pod')
+      expect(fileResult.value).toContain('name: mypod')
+
+      expect(renderer.getOutput()).toBe('')
+    })
+
+    it('should support create deployment dry-run yaml redirection', () => {
+      const result = dispatcher.execute(
+        'kubectl create deployment myapp --image=nginx --replicas=3 --dry-run=client -o yaml > deployment.yaml'
+      )
+      expect(result.ok).toBe(true)
+
+      const fileResult = fileSystem.readFile('deployment.yaml')
+      expect(fileResult.ok).toBe(true)
+      if (!fileResult.ok) {
+        return
+      }
+      expect(fileResult.value).toContain('kind: Deployment')
+      expect(fileResult.value).toContain('name: myapp')
+      expect(fileResult.value).toContain('replicas: 3')
+      expect(fileResult.value).toContain('status: {}')
+    })
   })
 
   describe('Error handling', () => {

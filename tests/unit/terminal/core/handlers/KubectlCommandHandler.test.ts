@@ -112,5 +112,73 @@ describe('KubectlCommandHandler', () => {
       const result = handler.execute('kubectl get pods', context)
       expect(result.ok).toBe(true)
     })
+
+    it('should redirect kubectl output to a file', () => {
+      const result = handler.execute(
+        'kubectl run mypod --image=nginx --dry-run=client -o yaml > pod.yaml',
+        context
+      )
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      const output = renderer.getOutput()
+      expect(output).toBe('')
+
+      const fileResult = context.fileSystem.readFile('pod.yaml')
+      expect(fileResult.ok).toBe(true)
+      if (!fileResult.ok) {
+        return
+      }
+      expect(fileResult.value).toContain('apiVersion: v1')
+      expect(fileResult.value).toContain('kind: Pod')
+      expect(fileResult.value).toContain('name: mypod')
+    })
+
+    it('should redirect create deployment dry-run yaml output to a file', () => {
+      const result = handler.execute(
+        'kubectl create deployment myapp --image=nginx --replicas=3 --dry-run=client -o yaml > deployment.yaml',
+        context
+      )
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      const fileResult = context.fileSystem.readFile('deployment.yaml')
+      expect(fileResult.ok).toBe(true)
+      if (!fileResult.ok) {
+        return
+      }
+      expect(fileResult.value).toContain('kind: Deployment')
+      expect(fileResult.value).toContain('name: myapp')
+      expect(fileResult.value).toContain('replicas: 3')
+      expect(fileResult.value).toContain('status: {}')
+      expect(fileResult.value).not.toContain('readyReplicas: 0')
+
+      const deployment = context.clusterState.findDeployment('myapp', 'default')
+      expect(deployment.ok).toBe(false)
+    })
+
+    it('should not write redirected file when kubectl command fails', () => {
+      const result = handler.execute(
+        'kubectl describe pod missing-pod > missing.yaml',
+        context
+      )
+      expect(result.ok).toBe(false)
+      expect(renderer.getOutput()).toContain('not found')
+
+      const fileResult = context.fileSystem.readFile('missing.yaml')
+      expect(fileResult.ok).toBe(false)
+    })
+
+    it('should return error for missing output file after redirection', () => {
+      const result = handler.execute('kubectl get pods >', context)
+      expect(result.ok).toBe(false)
+      expect(renderer.getOutput()).toContain(
+        'missing output file after redirection operator'
+      )
+    })
   })
 })

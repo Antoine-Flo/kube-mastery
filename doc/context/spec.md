@@ -48,6 +48,10 @@ get (pods, deploy, rs, services, ingresses, ingressclasses, configmaps, secrets,
 - Runtime reconciliation resilience is explicit:
   - critical controllers use `event + initialSync + periodic resync`,
   - controllers expose lightweight runtime observability (`enqueue`, `reconcile`, `skipReason`) to simplify root-cause analysis on stale status.
+- DaemonSet readiness semantics are explicit:
+  - `daemonset.status.numberReady` is derived from owned Pods readiness (condition `Ready=True`, fallback `Running`),
+  - DaemonSet reconciliation reacts to `PodCreated`, `PodUpdated`, and `PodDeleted`,
+  - selector matching and ownerReference are both considered to avoid stale status in edge cases.
 - `kubectl get pods -A` and `kubectl get pods -A -o wide` include `NAMESPACE` as first column.
 - JSON output indentation for structured `get` output follows a stable 4-space formatting.
 - Table rendering for `kubectl get` uses consistent spacing tuned against `kind` output to reduce visual drift.
@@ -67,6 +71,8 @@ get (pods, deploy, rs, services, ingresses, ingressclasses, configmaps, secrets,
   - supports `kubectl run NAME --image=<image>`,
   - supports `--command -- <cmd> [args...]` and `-- <arg1> <arg2> ...`,
   - supports `--env`, `--labels`, `--port`, `--dry-run=client`, `-i/--stdin`, `-t/--tty`, `--rm`,
+  - supports `kubectl run ... --dry-run=client -o yaml` to emit a Pod manifest without creating a Pod,
+  - supports terminal output redirection for kubectl commands with a single target (`kubectl ... > file`) to persist command output in the virtual filesystem,
   - current simulator scope limits restart policy handling to `--restart=Never` (other values return explicit error).
 - `kubectl logs` baseline:
   - generates deterministic logs using workload profiles (control-plane components, nginx startup/runtime, db-like and generic app logs),

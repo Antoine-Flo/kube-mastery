@@ -71,6 +71,19 @@ describe('kubectl parser - create deployment', () => {
     expect(result.value.resource).toBe('namespaces')
     expect(result.value.name).toBe('my-team')
   })
+
+  it('should reject create when dry-run value is invalid', () => {
+    const result = parseCommand(
+      'kubectl create deployment my-dep --image=nginx --dry-run=local'
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'error: Invalid dry-run value (local). Must be "none", "server", or "client".'
+      )
+    }
+  })
 })
 
 describe('kubectl parser - run', () => {

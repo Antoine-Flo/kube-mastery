@@ -571,6 +571,17 @@ const validateCommandSemantics = (
       return `error: invalid restart policy: ${String(restartFlag)}`
     }
   }
+  if (action === 'create') {
+    const dryRunFlag = flags['dry-run']
+    if (
+      dryRunFlag !== undefined &&
+      dryRunFlag !== 'client' &&
+      dryRunFlag !== 'server' &&
+      dryRunFlag !== 'none'
+    ) {
+      return `error: Invalid dry-run value (${String(dryRunFlag)}). Must be "none", "server", or "client".`
+    }
+  }
   if (action === 'diff') {
     const hasFilename =
       typeof flags['filename'] === 'string' || typeof flags['f'] === 'string'

@@ -138,8 +138,9 @@ Invariants explicites pour eviter les derives `READY 0/x`:
 1. `Pod -> ReplicaSet -> Deployment` est la seule chaine de verite pour les compteurs `readyReplicas` et `availableReplicas`.
 2. `ReplicaSetController` doit watch les transitions `PodUpdated` (pas seulement create/delete), car le readiness evolue principalement pendant le lifecycle Pod.
 3. Le calcul `ready` des ReplicaSets privilegie `PodCondition Ready=True`, avec fallback `phase=Running` pour compatibilite.
-4. Les controllers runtime critiques exposent une observabilite minimale (`enqueue`, `reconcile`, `skipReason`) pour diagnostiquer rapidement les divergences d'etat.
-5. Le periodic resync reste un filet de securite, pas une substitution a une couverture complete des evenements.
+4. Les DaemonSets suivent le meme contrat de propagation status (`Pod -> DaemonSet`) et doivent aussi reagir a `PodUpdated`.
+5. Les controllers runtime critiques exposent une observabilite minimale (`enqueue`, `reconcile`, `skipReason`) pour diagnostiquer rapidement les divergences d'etat.
+6. Le periodic resync reste un filet de securite, pas une substitution a une couverture complete des evenements.
 
 ### Autocomplete
 
@@ -200,7 +201,18 @@ Le flux `kubectl run` repose sur la meme architecture parseur/transformer/handle
 Portee actuelle:
 
 - support de `--image`, `--command -- <cmd>`, `-- <args...>`, `--env`, `--labels`, `--port`, `--dry-run=client`, `-i/--stdin`, `-t/--tty`, `--rm`,
+- `kubectl run ... --dry-run=client -o yaml` retourne un manifeste Pod YAML sans persister de ressource,
 - `--restart` accepte uniquement `Never` (les autres valeurs sont explicitement rejetees pour rester coherentes avec le modele Pod-only du simulateur).
+
+### Terminal kubectl output redirection
+
+La redirection de sortie `>` est prise en charge au niveau handler kubectl (`src/core/terminal/core/handlers/KubectlCommandHandler.ts`) avec un scope volontairement limite:
+
+- parsing local d'une redirection simple `kubectl ... > file`,
+- execution de la commande kubectl sans la partie redirection,
+- ecriture de la sortie standard dans le filesystem virtuel via `FileSystem.writeFile(...)`,
+- en cas de redirection active, la sortie standard n'est pas affichee dans le terminal,
+- les erreurs kubectl ou redirection restent affichees comme erreurs terminal.
 
 ### Cluster-Info Dump Behavior
 

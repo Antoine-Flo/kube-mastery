@@ -50,6 +50,10 @@ You can redirect this output to a file with a simple `>`:
 kubectl run mypod --image=nginx --dry-run=client -o yaml > pod.yaml
 ```
 
+:::warning
+In this simulator, output redirection with `>` is currently partial. It is supported for `kubectl` commands (like this example), but not yet as full shell-wide redirection behavior.
+:::
+
 Now you have a file called `pod.yaml` that you can open, clean up, and customize to your needs , adding environment variables, resource requests, labels, or anything else , before applying it to the cluster.
 
 ## Generating a Deployment Manifest

@@ -14,12 +14,148 @@ import type { FileSystem } from '../../../filesystem/FileSystem'
 import type { SimNetworkRuntime } from '../../../network/SimNetworkRuntime'
 import type { ExecutionResult } from '../../../shared/result'
 import { error } from '../../../shared/result'
+import { stringify as yamlStringify } from 'yaml'
 import { parseKubernetesYaml } from '../../yamlParser'
 import type { ParsedCommand } from '../types'
 import {
   applyResourceWithEvents,
   createResourceWithEvents
 } from './resourceHelpers'
+
+const isDryRunClient = (parsed: ParsedCommand): boolean => {
+  return parsed.flags['dry-run'] === 'client'
+}
+
+const isSupportedDryRunValue = (value: unknown): boolean => {
+  if (value === undefined) {
+    return true
+  }
+  if (value === 'none' || value === 'server' || value === 'client') {
+    return true
+  }
+  return false
+}
+
+const sanitizeForDryRunOutput = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeForDryRunOutput(item))
+  }
+  if (value == null || typeof value !== 'object') {
+    return value
+  }
+  const entries = Object.entries(value as Record<string, unknown>)
+  const sanitizedEntries = entries
+    .filter(([key]) => key !== '_simulator')
+    .map(([key, item]) => [key, sanitizeForDryRunOutput(item)] as const)
+  return Object.fromEntries(sanitizedEntries)
+}
+
+const buildDryRunCreatedMessage = (resource: any): string => {
+  const kindRaw = resource?.kind
+  const nameRaw = resource?.metadata?.name
+  if (typeof kindRaw !== 'string' || typeof nameRaw !== 'string') {
+    return 'resource created (dry run)'
+  }
+  const kind = kindRaw.toLowerCase()
+  return `${kind}/${nameRaw} created (dry run)`
+}
+
+const buildDryRunResponse = (
+  resource: any,
+  parsed: ParsedCommand
+): ExecutionResult => {
+  const output = parsed.output ?? 'table'
+  const sanitized = sanitizeForDryRunOutput(resource)
+
+  if (output === 'yaml') {
+    return {
+      ok: true,
+      value: yamlStringify(sanitized, {
+        indentSeq: false,
+        aliasDuplicateObjects: false
+      }).trimEnd()
+    }
+  }
+  if (output === 'json') {
+    return {
+      ok: true,
+      value: JSON.stringify(sanitized, null, 4)
+    }
+  }
+
+  return {
+    ok: true,
+    value: buildDryRunCreatedMessage(resource)
+  }
+}
+
+const buildCreateDeploymentDryRunManifest = (
+  parsed: ParsedCommand & { name: string }
+): Record<string, unknown> => {
+  const images = getCreateImages(parsed)
+  if (images.length === 0) {
+    return {}
+  }
+
+  const metadataLabels = { app: parsed.name }
+  const container = {
+    image: images[0],
+    name: images[0].split('/').pop()?.split(':')[0] || parsed.name,
+    resources: {}
+  } as Record<string, unknown>
+
+  if (parsed.port != null) {
+    container['ports'] = [{ containerPort: parsed.port }]
+  }
+  if (parsed.createCommand != null && parsed.createCommand.length > 0) {
+    container['command'] = parsed.createCommand
+  }
+
+  return {
+    apiVersion: 'apps/v1',
+    kind: 'Deployment',
+    metadata: {
+      creationTimestamp: null,
+      labels: metadataLabels,
+      name: parsed.name,
+      ...(parsed.namespace != null && parsed.namespace !== 'default'
+        ? { namespace: parsed.namespace }
+        : {})
+    },
+    spec: {
+      replicas: parsed.replicas ?? 1,
+      selector: { matchLabels: metadataLabels },
+      strategy: {},
+      template: {
+        metadata: {
+          creationTimestamp: null,
+          labels: metadataLabels
+        },
+        spec: {
+          containers: [container]
+        }
+      }
+    },
+    status: {}
+  }
+}
+
+const buildCreateNamespaceDryRunManifest = (
+  parsed: ParsedCommand & { name: string }
+): Record<string, unknown> => {
+  return {
+    apiVersion: 'v1',
+    kind: 'Namespace',
+    metadata: {
+      creationTimestamp: null,
+      labels: {
+        'kubernetes.io/metadata.name': parsed.name
+      },
+      name: parsed.name
+    },
+    status: {}
+  }
+}
 
 const getFilenameFromFlags = (parsed: ParsedCommand): string | undefined => {
   const filename = parsed.flags.f || parsed.flags.filename
@@ -181,6 +317,68 @@ const createNamespaceFromFlags = (
   return createResourceWithEvents(namespace, clusterState, eventBus)
 }
 
+const buildRunDryRunManifest = (
+  podName: string,
+  parsed: ParsedCommand,
+  image: string,
+  envVars: EnvVar[],
+  runCommand?: string[],
+  runArgs?: string[]
+): Record<string, unknown> => {
+  const restartPolicy = parsed.runRestart ?? 'Always'
+  const metadataLabels = {
+    run: podName,
+    ...(parsed.runLabels ?? {})
+  }
+  const env = envVars.map((envVar) => {
+    if (envVar.source.type !== 'value') {
+      return undefined
+    }
+    return {
+      name: envVar.name,
+      value: envVar.source.value
+    }
+  }).filter((entry): entry is { name: string; value: string } => entry != null)
+  const containerSpec: Record<string, unknown> = {
+    image,
+    name: podName,
+    resources: {}
+  }
+
+  if (parsed.runUseCommand && runCommand != null) {
+    containerSpec['command'] = runCommand
+  }
+  if (!parsed.runUseCommand && runArgs != null) {
+    containerSpec['args'] = runArgs
+  }
+  if (typeof parsed.port === 'number') {
+    containerSpec['ports'] = [
+      {
+        containerPort: parsed.port
+      }
+    ]
+  }
+  if (env.length > 0) {
+    containerSpec['env'] = env
+  }
+
+  return {
+    apiVersion: 'v1',
+    kind: 'Pod',
+    metadata: {
+      creationTimestamp: null,
+      labels: metadataLabels,
+      name: podName
+    },
+    spec: {
+      containers: [containerSpec],
+      dnsPolicy: 'ClusterFirst',
+      restartPolicy
+    },
+    status: {}
+  }
+}
+
 /**
  * Shared helper to load and parse YAML from filesystem
  */
@@ -238,22 +436,41 @@ export const handleCreate = (
   parsed: ParsedCommand,
   eventBus: EventBus
 ): ExecutionResult => {
+  const dryRunFlag = parsed.flags['dry-run']
+  if (!isSupportedDryRunValue(dryRunFlag)) {
+    return error(
+      `error: Invalid dry-run value (${String(dryRunFlag)}). Must be "none", "server", or "client".`
+    )
+  }
+
   const validationResult = validateCreateDeploymentCommand(parsed)
   if (validationResult) {
     return validationResult
   }
 
   if (isCreateDeploymentImperative(parsed)) {
+    if (isDryRunClient(parsed)) {
+      const dryRunManifest = buildCreateDeploymentDryRunManifest(parsed)
+      return buildDryRunResponse(dryRunManifest, parsed)
+    }
     return createDeploymentFromFlags(parsed, clusterState, eventBus)
   }
 
   if (isCreateNamespaceImperative(parsed)) {
+    if (isDryRunClient(parsed)) {
+      const dryRunManifest = buildCreateNamespaceDryRunManifest(parsed)
+      return buildDryRunResponse(dryRunManifest, parsed)
+    }
     return createNamespaceFromFlags(parsed, clusterState, eventBus)
   }
 
   const loadResult = loadAndParseYaml(fileSystem, parsed)
   if (!loadResult.ok) {
     return loadResult
+  }
+
+  if (isDryRunClient(parsed)) {
+    return buildDryRunResponse(loadResult.resource, parsed)
   }
 
   return createResourceWithEvents(loadResult.resource, clusterState, eventBus)
@@ -345,6 +562,23 @@ export const handleRun = (
   })
 
   if (parsed.runDryRunClient) {
+    if (parsed.output === 'yaml') {
+      const dryRunManifest = buildRunDryRunManifest(
+        podName,
+        parsed,
+        image,
+        envVars,
+        runCommand,
+        runArgs
+      )
+      return {
+        ok: true,
+        value: yamlStringify(dryRunManifest, {
+          indentSeq: false,
+          aliasDuplicateObjects: false
+        }).trimEnd()
+      }
+    }
     return { ok: true, value: `pod/${podName} created (dry run)` }
   }
 

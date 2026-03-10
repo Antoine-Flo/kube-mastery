@@ -20,6 +20,7 @@ import {
   findOwnerByRef,
   generateSuffix,
   getOwnedResources,
+  reportControllerObservation,
   startPeriodicResync,
   statusEquals,
   subscribeToEvents
@@ -87,10 +88,18 @@ const computeDaemonSetStatus = (
   ownedPods: Pod[],
   desiredNumberScheduled: number
 ): DaemonSetStatus => {
+  const isPodReady = (pod: Pod): boolean => {
+    const conditions = pod.status.conditions ?? []
+    const readyCondition = conditions.find((condition) => {
+      return condition.type === 'Ready'
+    })
+    if (readyCondition != null) {
+      return readyCondition.status === 'True'
+    }
+    return pod.status.phase === 'Running'
+  }
   const currentNumberScheduled = ownedPods.length
-  const numberReady = ownedPods.filter(
-    (pod) => pod.status.phase === 'Running'
-  ).length
+  const numberReady = ownedPods.filter((pod) => isPodReady(pod)).length
 
   return {
     currentNumberScheduled,
@@ -148,7 +157,7 @@ export class DaemonSetController implements ReconcilerController {
       event.type === 'DaemonSetCreated' ||
       event.type === 'DaemonSetUpdated'
     ) {
-      this.enqueueDaemonSet(event.payload.daemonSet)
+      this.enqueueDaemonSet(event.payload.daemonSet, event.type)
       return
     }
 
@@ -158,25 +167,37 @@ export class DaemonSetController implements ReconcilerController {
     }
 
     if (event.type === 'PodCreated' || event.type === 'PodUpdated') {
-      this.enqueueOwnerDaemonSet(event.payload.pod)
+      this.enqueueOwnerDaemonSet(event.payload.pod, event.type)
+      this.enqueueMatchingDaemonSets(event.payload.pod, event.type)
       return
     }
 
     if (event.type === 'PodDeleted') {
-      this.enqueueOwnerDaemonSet(event.payload.deletedPod)
+      this.enqueueOwnerDaemonSet(event.payload.deletedPod, event.type)
+      this.enqueueMatchingDaemonSets(event.payload.deletedPod, event.type)
     }
   }
 
-  private enqueueDaemonSet(daemonSet: DaemonSet): void {
+  private enqueueDaemonSet(
+    daemonSet: DaemonSet,
+    eventType?: ClusterEventType,
+    reason?: string
+  ): void {
     const key = makeKey(daemonSet.metadata.namespace, daemonSet.metadata.name)
     this.workQueue.add(key)
+    this.observe({
+      action: 'enqueue',
+      key,
+      eventType,
+      reason
+    })
   }
 
   initialSync(): void {
     const state = this.getState()
     const daemonSets = state.getDaemonSets()
     for (const daemonSet of daemonSets) {
-      this.enqueueDaemonSet(daemonSet)
+      this.enqueueDaemonSet(daemonSet, undefined, 'InitialSync')
     }
   }
 
@@ -184,13 +205,36 @@ export class DaemonSetController implements ReconcilerController {
     this.initialSync()
   }
 
-  private enqueueOwnerDaemonSet(pod: Pod): void {
+  private enqueueOwnerDaemonSet(
+    pod: Pod,
+    eventType?: ClusterEventType
+  ): void {
     const state = this.getState()
     const ownerDaemonSet = findOwnerByRef(pod, 'DaemonSet', () =>
       state.getDaemonSets(pod.metadata.namespace)
     )
     if (ownerDaemonSet) {
-      this.enqueueDaemonSet(ownerDaemonSet)
+      this.enqueueDaemonSet(ownerDaemonSet, eventType, 'OwnerReference')
+    } else {
+      this.observe({
+        action: 'skip',
+        key: makeKey(pod.metadata.namespace, pod.metadata.name),
+        eventType,
+        reason: 'OwnerMissing'
+      })
+    }
+  }
+
+  private enqueueMatchingDaemonSets(
+    pod: Pod,
+    eventType?: ClusterEventType
+  ): void {
+    const state = this.getState()
+    const daemonSets = state.getDaemonSets(pod.metadata.namespace)
+    for (const daemonSet of daemonSets) {
+      if (selectorMatchesLabels(daemonSet.spec.selector, pod.metadata.labels)) {
+        this.enqueueDaemonSet(daemonSet, eventType, 'SelectorMatch')
+      }
     }
   }
 
@@ -211,10 +255,20 @@ export class DaemonSetController implements ReconcilerController {
   }
 
   reconcile(key: string): void {
+    this.observe({
+      action: 'reconcile',
+      key,
+      reason: 'Start'
+    })
     const { namespace, name } = parseKey(key)
     const state = this.getState()
     const daemonSetResult = state.findDaemonSet(name, namespace)
     if (!daemonSetResult.ok || daemonSetResult.value == null) {
+      this.observe({
+        action: 'skip',
+        key,
+        reason: 'NotFound'
+      })
       return
     }
 
@@ -291,6 +345,11 @@ export class DaemonSetController implements ReconcilerController {
         'numberReady'
       ])
     ) {
+      this.observe({
+        action: 'skip',
+        key,
+        reason: 'NoStatusChange'
+      })
       return
     }
 
@@ -307,6 +366,23 @@ export class DaemonSetController implements ReconcilerController {
         'daemonset-controller'
       )
     )
+  }
+
+  private observe(
+    input: {
+      action: 'enqueue' | 'reconcile' | 'skip'
+      key: string
+      reason?: string
+      eventType?: ClusterEventType
+    }
+  ): void {
+    reportControllerObservation(this.options, {
+      controller: 'DaemonSetController',
+      action: input.action,
+      key: input.key,
+      reason: input.reason,
+      eventType: input.eventType
+    })
   }
 }
 
