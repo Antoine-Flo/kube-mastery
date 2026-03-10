@@ -65,7 +65,15 @@ export type VolumeSource =
   | { type: 'emptyDir'; medium?: 'Memory'; sizeLimit?: string }
   | { type: 'hostPath'; path: string; hostPathType?: string }
   | { type: 'persistentVolumeClaim'; claimName: string; readOnly?: boolean }
-  | { type: 'configMap'; name: string }
+  | {
+      type: 'configMap'
+      name: string
+      defaultMode?: number
+      items?: Array<{
+        key: string
+        path: string
+      }>
+    }
   | { type: 'secret'; secretName: string }
 
 export interface Volume {
@@ -96,12 +104,14 @@ interface ResourceRequirements {
 
 interface ContainerPort {
   containerPort: number
+  name?: string
   protocol?: 'TCP' | 'UDP'
 }
 
 export interface Container {
   name: string
   image: string
+  imagePullPolicy?: string
   command?: string[]
   args?: string[]
   ports?: ContainerPort[]
@@ -111,6 +121,9 @@ export interface Container {
   livenessProbe?: Probe
   readinessProbe?: Probe
   startupProbe?: Probe
+  securityContext?: Record<string, unknown>
+  terminationMessagePath?: string
+  terminationMessagePolicy?: string
 }
 
 // ─── Pod Structure ───────────────────────────────────────────────────────
@@ -575,12 +588,14 @@ export const createPod = (config: PodConfig): Pod => {
 const ContainerSchema = z.object({
   name: z.string().min(1, 'Container name is required'),
   image: z.string().min(1, 'Container image is required'),
+  imagePullPolicy: z.string().optional(),
   command: z.array(z.string()).optional(),
   args: z.array(z.string()).optional(),
   ports: z
     .array(
       z.object({
         containerPort: z.number().int().positive(),
+        name: z.string().optional(),
         protocol: z.enum(['TCP', 'UDP']).optional()
       })
     )
@@ -605,7 +620,10 @@ const ContainerSchema = z.object({
   volumeMounts: z.array(z.any()).optional(),
   livenessProbe: z.any().optional(),
   readinessProbe: z.any().optional(),
-  startupProbe: z.any().optional()
+  startupProbe: z.any().optional(),
+  securityContext: z.any().optional(),
+  terminationMessagePath: z.string().optional(),
+  terminationMessagePolicy: z.string().optional()
 })
 
 const PodManifestSchema = z.object({

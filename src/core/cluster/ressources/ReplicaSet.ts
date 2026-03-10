@@ -9,7 +9,7 @@ import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import type { KubernetesResource } from '../repositories/types'
-import type { OwnerReference, PodToleration } from './Pod'
+import type { OwnerReference, PodAffinity, PodToleration } from './Pod'
 import type { EnvVar, Probe, Volume, VolumeMount } from './Pod'
 
 // ─── Label Selector ───────────────────────────────────────────────────────
@@ -36,13 +36,24 @@ export interface PodTemplateSpec {
   spec: {
     nodeSelector?: Record<string, string>
     tolerations?: PodToleration[]
+    affinity?: PodAffinity
+    dnsPolicy?: 'ClusterFirst' | 'Default'
+    priorityClassName?: string
+    restartPolicy?: 'Always' | 'OnFailure' | 'Never'
+    schedulerName?: string
+    securityContext?: Record<string, unknown>
+    serviceAccount?: string
+    serviceAccountName?: string
+    terminationGracePeriodSeconds?: number
     containers: Array<{
       name: string
       image: string
+      imagePullPolicy?: string
       command?: string[]
       args?: string[]
       ports?: Array<{
         containerPort: number
+        name?: string
         protocol?: 'TCP' | 'UDP'
       }>
       resources?: {
@@ -57,9 +68,12 @@ export interface PodTemplateSpec {
       }
       env?: EnvVar[]
       volumeMounts?: VolumeMount[]
-      livenessProbe?: Probe
-      readinessProbe?: Probe
-      startupProbe?: Probe
+      livenessProbe?: Probe | Record<string, unknown>
+      readinessProbe?: Probe | Record<string, unknown>
+      startupProbe?: Probe | Record<string, unknown>
+      securityContext?: Record<string, unknown>
+      terminationMessagePath?: string
+      terminationMessagePolicy?: string
     }>
     initContainers?: Array<{
       name: string
@@ -194,12 +208,14 @@ const LabelSelectorSchema = z.object({
 const ContainerSchema = z.object({
   name: z.string().min(1, 'Container name is required'),
   image: z.string().min(1, 'Container image is required'),
+  imagePullPolicy: z.string().optional(),
   command: z.array(z.string()).optional(),
   args: z.array(z.string()).optional(),
   ports: z
     .array(
       z.object({
         containerPort: z.number().int().positive(),
+        name: z.string().optional(),
         protocol: z.enum(['TCP', 'UDP']).optional()
       })
     )
@@ -224,7 +240,10 @@ const ContainerSchema = z.object({
   volumeMounts: z.array(z.any()).optional(),
   livenessProbe: z.any().optional(),
   readinessProbe: z.any().optional(),
-  startupProbe: z.any().optional()
+  startupProbe: z.any().optional(),
+  securityContext: z.any().optional(),
+  terminationMessagePath: z.string().optional(),
+  terminationMessagePolicy: z.string().optional()
 })
 
 const PodTemplateSpecSchema = z.object({
@@ -236,6 +255,15 @@ const PodTemplateSpecSchema = z.object({
     .optional(),
   spec: z.object({
     nodeSelector: z.record(z.string(), z.string()).optional(),
+    affinity: z.any().optional(),
+    dnsPolicy: z.enum(['ClusterFirst', 'Default']).optional(),
+    priorityClassName: z.string().optional(),
+    restartPolicy: z.enum(['Always', 'OnFailure', 'Never']).optional(),
+    schedulerName: z.string().optional(),
+    securityContext: z.any().optional(),
+    serviceAccount: z.string().optional(),
+    serviceAccountName: z.string().optional(),
+    terminationGracePeriodSeconds: z.number().int().min(0).optional(),
     tolerations: z
       .array(
         z.object({

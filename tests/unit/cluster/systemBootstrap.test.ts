@@ -137,9 +137,25 @@ describe('systemBootstrap', () => {
     })
     expect(corednsDeployment).toBeDefined()
     expect(corednsDeployment?.spec.replicas).toBe(2)
+    expect(corednsDeployment?.spec.progressDeadlineSeconds).toBe(600)
+    expect(corednsDeployment?.spec.revisionHistoryLimit).toBe(10)
+    expect(corednsDeployment?.spec.strategy).toEqual({
+      type: 'RollingUpdate',
+      rollingUpdate: {
+        maxSurge: '25%',
+        maxUnavailable: 1
+      }
+    })
     expect(corednsDeployment?.spec.template.spec.nodeSelector).toEqual({
       'node-role.kubernetes.io/control-plane': ''
     })
+    expect(corednsDeployment?.spec.template.spec.priorityClassName).toBe(
+      'system-cluster-critical'
+    )
+    expect(corednsDeployment?.spec.template.spec.dnsPolicy).toBe('Default')
+    expect(
+      corednsDeployment?.spec.template.spec.containers[0].image
+    ).toBe('registry.k8s.io/coredns/coredns:v1.13.1')
     expect(
       corednsDeployment?.spec.template.spec.tolerations?.some((toleration) => {
         return (

@@ -51,55 +51,60 @@
     {
       "id": "minimal-cmd-9",
       "type": "command",
-      "command": "kubectl describe pod kube-apiserver-conformance-control-plane -n kube-system"
+      "command": "kubectl get deployment -n kube-system coredns -o yaml"
     },
     {
       "id": "minimal-cmd-10",
       "type": "command",
-      "command": "kubectl get pv"
+      "command": "kubectl describe pod kube-apiserver-conformance-control-plane -n kube-system"
     },
     {
       "id": "minimal-cmd-11",
       "type": "command",
-      "command": "kubectl get pvc -A"
+      "command": "kubectl get pv"
     },
     {
       "id": "minimal-cmd-12",
       "type": "command",
-      "command": "kubectl delete pod web-00063e839a-chadq"
+      "command": "kubectl get pvc -A"
     },
     {
       "id": "minimal-cmd-13",
       "type": "command",
-      "command": "kubectl logs web-00063e839a-chadq"
+      "command": "kubectl delete pod web-00063e839a-chadq"
     },
     {
       "id": "minimal-cmd-14",
       "type": "command",
-      "command": "kubectl get nodes"
+      "command": "kubectl logs web-00063e839a-chadq"
     },
     {
       "id": "minimal-cmd-15",
       "type": "command",
-      "command": "kubectl describe node conformance-worker"
+      "command": "kubectl get nodes"
     },
     {
       "id": "minimal-cmd-16",
       "type": "command",
-      "command": "kubectl get configmaps"
+      "command": "kubectl describe node conformance-worker"
     },
     {
       "id": "minimal-cmd-17",
       "type": "command",
-      "command": "kubectl get secrets"
+      "command": "kubectl get configmaps"
     },
     {
       "id": "minimal-cmd-18",
       "type": "command",
-      "command": "kubectl describe pv missing-pv"
+      "command": "kubectl get secrets"
     },
     {
       "id": "minimal-cmd-19",
+      "type": "command",
+      "command": "kubectl describe pv missing-pv"
+    },
+    {
+      "id": "minimal-cmd-20",
       "type": "command",
       "command": "kubectl describe pvc missing-pvc"
     },

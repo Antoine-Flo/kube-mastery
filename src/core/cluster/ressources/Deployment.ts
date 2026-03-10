@@ -75,6 +75,7 @@ interface DeploymentMetadata {
   labels?: Record<string, string>
   annotations?: Record<string, string>
   creationTimestamp: string
+  generation?: number
 }
 
 // ─── Deployment Resource ──────────────────────────────────────────────────
@@ -96,12 +97,26 @@ interface DeploymentConfig {
   selector: LabelSelector
   template: PodTemplateSpec
   strategy?: DeploymentStrategy
+  minReadySeconds?: number
+  revisionHistoryLimit?: number
+  paused?: boolean
+  progressDeadlineSeconds?: number
   labels?: Record<string, string>
   annotations?: Record<string, string>
   creationTimestamp?: string
+  generation?: number
+  status?: DeploymentStatus
 }
 
 export const createDeployment = (config: DeploymentConfig): Deployment => {
+  const initialGeneration = config.generation ?? 1
+  const initialStatus = config.status ?? {
+    replicas: 0,
+    readyReplicas: 0,
+    availableReplicas: 0,
+    updatedReplicas: 0,
+    observedGeneration: initialGeneration
+  }
   const deployment: Deployment = {
     apiVersion: 'apps/v1',
     kind: 'Deployment',
@@ -109,6 +124,7 @@ export const createDeployment = (config: DeploymentConfig): Deployment => {
       name: config.name,
       namespace: config.namespace,
       creationTimestamp: config.creationTimestamp || new Date().toISOString(),
+      generation: initialGeneration,
       ...(config.labels && { labels: config.labels }),
       ...(config.annotations && { annotations: config.annotations })
     },
@@ -116,14 +132,21 @@ export const createDeployment = (config: DeploymentConfig): Deployment => {
       replicas: config.replicas ?? 1,
       selector: config.selector,
       template: config.template,
-      ...(config.strategy && { strategy: config.strategy })
+      ...(config.strategy && { strategy: config.strategy }),
+      ...(config.minReadySeconds != null && {
+        minReadySeconds: config.minReadySeconds
+      }),
+      ...(config.revisionHistoryLimit != null && {
+        revisionHistoryLimit: config.revisionHistoryLimit
+      }),
+      ...(config.paused != null && {
+        paused: config.paused
+      }),
+      ...(config.progressDeadlineSeconds != null && {
+        progressDeadlineSeconds: config.progressDeadlineSeconds
+      })
     },
-    status: {
-      replicas: 0,
-      readyReplicas: 0,
-      availableReplicas: 0,
-      updatedReplicas: 0
-    }
+    status: initialStatus
   }
 
   return deepFreeze(deployment)
@@ -265,13 +288,26 @@ export const parseDeploymentManifest = (data: unknown): Result<Deployment> => {
     selector: manifest.spec.selector,
     template: manifest.spec.template as PodTemplateSpec,
     strategy: manifest.spec.strategy as DeploymentStrategy | undefined,
+    ...(manifest.spec.minReadySeconds != null && {
+      minReadySeconds: manifest.spec.minReadySeconds
+    }),
+    ...(manifest.spec.revisionHistoryLimit != null && {
+      revisionHistoryLimit: manifest.spec.revisionHistoryLimit
+    }),
+    ...(manifest.spec.paused != null && {
+      paused: manifest.spec.paused
+    }),
+    ...(manifest.spec.progressDeadlineSeconds != null && {
+      progressDeadlineSeconds: manifest.spec.progressDeadlineSeconds
+    }),
     ...(manifest.metadata.labels && { labels: manifest.metadata.labels }),
     ...(manifest.metadata.annotations && {
       annotations: manifest.metadata.annotations
     }),
     ...(manifest.metadata.creationTimestamp && {
       creationTimestamp: manifest.metadata.creationTimestamp
-    })
+    }),
+    generation: 1
   })
 
   return success(deployment)

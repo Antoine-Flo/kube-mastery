@@ -39,6 +39,7 @@ get (pods, deploy, rs, services, ingresses, ingressclasses, configmaps, secrets,
 - Structured outputs for `kubectl get` are explicit:
   - collection queries in `-o json|-o yaml` return a `List` shape (`apiVersion`, `kind`, `metadata.resourceVersion`, `items`), including empty results,
   - named queries (`kubectl get <resource> <name> -o json|-o yaml`) return a single object shape.
+  - `Deployment` named queries are projected with Kubernetes-like metadata and status fields (`uid`, `resourceVersion`, `generation`, `observedGeneration`, conditions), while stripping simulator-only annotations.
 - `kubectl get pods -A` and `kubectl get pods -A -o wide` include `NAMESPACE` as first column.
 - JSON output indentation for structured `get` output follows a stable 4-space formatting.
 - Table rendering for `kubectl get` uses consistent spacing tuned against `kind` output to reduce visual drift.

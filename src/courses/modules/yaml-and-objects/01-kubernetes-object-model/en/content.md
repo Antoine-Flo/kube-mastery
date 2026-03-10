@@ -74,23 +74,14 @@ spec:
 
 Reading this from top to bottom, you can trace the four required fields clearly: the API group and version (`apps/v1`), the object type (`Deployment`), its identity (`name: web-app` in `namespace: default` with a label), and finally the desired state in `spec` , three replicas of a Pod running the `nginx:1.25` container image.
 
-## Structure at a Glance
-
-The diagram below shows how the four required fields relate to each other and what kind of information each one carries:
 
 ```mermaid
 graph TD
-    Manifest["📄 Kubernetes Manifest"]
-    Manifest --> apiVersion["apiVersion\n──────────\nAPI group + version\nexamples: v1, apps/v1\napiextensions.k8s.io/v1"]
-    Manifest --> kind["kind\n──────────\nResource type\nexamples: Pod\nDeployment, Service\nConfigMap, Secret"]
-    Manifest --> metadata["metadata\n──────────\nname\nnamespace\nlabels: key/value tags\nannotations: extra info"]
-    Manifest --> spec["spec\n──────────\nDesired state\n(varies by kind)\nreplicas, containers\nports, volumes, etc."]
-
-    style Manifest fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style apiVersion fill:#F5A623,color:#fff,stroke:#c77d00
-    style kind fill:#7ED321,color:#fff,stroke:#5a9c18
-    style metadata fill:#9B59B6,color:#fff,stroke:#7d3f9a
-    style spec fill:#E74C3C,color:#fff,stroke:#c0392b
+    Manifest["Kubernetes Manifest"]
+    Manifest --> apiVersion["apiVersion: API group + version"]
+    Manifest --> kind["kind: Resource type"]
+    Manifest --> metadata["metadata: name, namespace, labels"]
+    Manifest --> spec["spec: Desired state"]
 ```
 
 ## How Kubernetes Processes an Object
@@ -122,7 +113,13 @@ Scroll through the output. Notice `apiVersion`, `kind`, `metadata`, and `spec`. 
 
 Save the following to a file called `web-app.yaml`:
 
+```bash
+nano web-app.yaml
+```
+
+Copy and paste the following content into the file:
 ```yaml
+# web-app.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -145,7 +142,7 @@ spec:
           image: nginx:1.25
 ```
 
-Then apply it:
+Then apply it (watch the visualizer to see the deployment appear):
 
 ```bash
 kubectl apply -f web-app.yaml
@@ -161,9 +158,7 @@ kubectl describe deployment web-app
 
 Pay attention to how the `spec` you wrote is reflected back, and how `status` has been filled in by Kubernetes with information about ready replicas and conditions.
 
-**5. Open the cluster visualizer** (telescope icon, top right) to see the Deployment and its Pods appear in the cluster graph.
-
-**6. Clean up:**
+**5. Clean up:**
 
 ```bash
 kubectl delete -f web-app.yaml

@@ -36,25 +36,30 @@
     {
       "id": "minimal-cmd-6",
       "type": "command",
-      "command": "kubectl get pv"
+      "command": "kubectl get deployment -n kube-system coredns -o yaml"
     },
     {
       "id": "minimal-cmd-7",
       "type": "command",
-      "command": "kubectl get pvc -A"
+      "command": "kubectl get pv"
     },
     {
       "id": "minimal-cmd-8",
       "type": "command",
-      "command": "kubectl get nodes"
+      "command": "kubectl get pvc -A"
     },
     {
       "id": "minimal-cmd-9",
       "type": "command",
-      "command": "kubectl get configmaps"
+      "command": "kubectl get nodes"
     },
     {
       "id": "minimal-cmd-10",
+      "type": "command",
+      "command": "kubectl get configmaps"
+    },
+    {
+      "id": "minimal-cmd-11",
       "type": "command",
       "command": "kubectl get secrets"
     },

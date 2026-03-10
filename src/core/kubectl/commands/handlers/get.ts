@@ -23,6 +23,7 @@ import type { Service } from '../../../cluster/ressources/Service'
 import { getServiceType } from '../../../cluster/ressources/Service'
 import { formatAge, formatTable } from '../../../shared/formatter'
 import type { ParsedCommand, Resource } from '../types'
+import { shapeDeploymentForStructuredOutput } from './deploymentOutputShaper'
 import { handleGetRaw } from './getRaw'
 import { shapePodForStructuredOutput } from './podOutputShaper'
 
@@ -307,19 +308,27 @@ const serializeStructuredOutput = (
   if (outputFormat === 'json') {
     return JSON.stringify(payload, null, KUBECTL_JSON_INDENT)
   }
-  return yamlStringify(payload, { indentSeq: false }).trimEnd()
+  return yamlStringify(payload, {
+    indentSeq: false,
+    aliasDuplicateObjects: false
+  }).trimEnd()
 }
 
 const shapeStructuredItemsForOutput = (
   resourceType: StructuredResource,
   items: unknown[]
 ): unknown[] => {
-  if (resourceType !== 'pods') {
-    return items
+  if (resourceType === 'pods') {
+    return items.map((item) => {
+      return shapePodForStructuredOutput(item as Pod)
+    })
   }
-  return items.map((item) => {
-    return shapePodForStructuredOutput(item as Pod)
-  })
+  if (resourceType === 'deployments') {
+    return items.map((item) => {
+      return shapeDeploymentForStructuredOutput(item as Deployment)
+    })
+  }
+  return items
 }
 
 /**

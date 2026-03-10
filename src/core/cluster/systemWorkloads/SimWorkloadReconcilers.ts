@@ -77,23 +77,12 @@ const materializeDeployment = (
   spec: SimDeploymentWorkloadSpec,
   creationTimestamp: string
 ): Deployment => {
-  return createDeployment({
-    name: spec.name,
-    namespace: spec.namespace,
-    labels: spec.labels,
-    annotations: spec.annotations,
-    replicas: spec.replicas,
-    selector: {
-      matchLabels: spec.selectorLabels
-    },
-    template: {
-      metadata: {
-        labels: spec.selectorLabels
-      },
-      spec: {
-        ...(spec.nodeSelector != null && { nodeSelector: spec.nodeSelector }),
-        ...(spec.tolerations != null && { tolerations: spec.tolerations }),
-        containers: [
+  const selectorLabels = { ...spec.selectorLabels }
+  const templateLabels = { ...spec.selectorLabels }
+  const deploymentContainers =
+    spec.containers != null
+      ? spec.containers
+      : [
           {
             ...minimalContainer(spec.containerName),
             ...(spec.containerResources != null && {
@@ -101,8 +90,52 @@ const materializeDeployment = (
             })
           }
         ]
+  return createDeployment({
+    name: spec.name,
+    namespace: spec.namespace,
+    labels: spec.labels,
+    annotations: spec.annotations,
+    replicas: spec.replicas,
+    selector: {
+      matchLabels: selectorLabels
+    },
+    template: {
+      metadata: {
+        labels: templateLabels
+      },
+      spec: {
+        ...(spec.nodeSelector != null && { nodeSelector: spec.nodeSelector }),
+        ...(spec.tolerations != null && { tolerations: spec.tolerations }),
+        ...(spec.affinity != null && { affinity: spec.affinity }),
+        ...(spec.dnsPolicy != null && { dnsPolicy: spec.dnsPolicy }),
+        ...(spec.priorityClassName != null && {
+          priorityClassName: spec.priorityClassName
+        }),
+        ...(spec.restartPolicy != null && { restartPolicy: spec.restartPolicy }),
+        ...(spec.schedulerName != null && { schedulerName: spec.schedulerName }),
+        ...(spec.securityContext != null && {
+          securityContext: spec.securityContext
+        }),
+        ...(spec.serviceAccount != null && {
+          serviceAccount: spec.serviceAccount
+        }),
+        ...(spec.serviceAccountName != null && {
+          serviceAccountName: spec.serviceAccountName
+        }),
+        ...(spec.terminationGracePeriodSeconds != null && {
+          terminationGracePeriodSeconds: spec.terminationGracePeriodSeconds
+        }),
+        containers: deploymentContainers,
+        ...(spec.volumes != null && { volumes: spec.volumes })
       }
     },
+    ...(spec.strategy != null && { strategy: spec.strategy }),
+    ...(spec.revisionHistoryLimit != null && {
+      revisionHistoryLimit: spec.revisionHistoryLimit
+    }),
+    ...(spec.progressDeadlineSeconds != null && {
+      progressDeadlineSeconds: spec.progressDeadlineSeconds
+    }),
     creationTimestamp
   })
 }

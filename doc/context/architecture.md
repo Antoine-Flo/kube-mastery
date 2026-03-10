@@ -147,6 +147,15 @@ Le flux help est resolu en pre-parse dans la couche commandes kubectl (`src/core
 - `exitCode=0` en mode help,
 - absence d'effet de bord (pas d'execution des handlers metier).
 
+### Structured Get Projection
+
+Le rendu structure (`-o json|-o yaml`) pour `kubectl get` passe par une projection dediee par type de ressource:
+
+- `Pod`: projection via `shapePodForStructuredOutput(...)`,
+- `Deployment`: projection via `shapeDeploymentForStructuredOutput(...)`, avec metadata/status Kubernetes-like et suppression des annotations internes `sim.kubernetes.io/*`.
+
+Cette couche evite les derives de format depuis les objets runtime internes et stabilise la parite conformance sans code path specifique aux scenarios.
+
 ### API Discovery Catalog
 
 `kubectl api-resources` repose sur un catalogue discovery dedie pour decoupler:

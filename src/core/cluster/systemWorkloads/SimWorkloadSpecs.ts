@@ -1,4 +1,6 @@
 import { buildNodeRoleSlotNames, type ClusterNodeRole } from '../clusterConfig'
+import type { DeploymentStrategy } from '../ressources/Deployment'
+import type { PodAffinity } from '../ressources/Pod'
 import type { Container, PodToleration, Volume } from '../ressources/Pod'
 
 export type SimSystemWorkloadPolicy = 'conformance'
@@ -45,6 +47,20 @@ export interface SimDeploymentWorkloadSpec {
   tolerations?: PodToleration[]
   annotations?: Record<string, string>
   containerResources?: Container['resources']
+  containers?: Container[]
+  volumes?: Volume[]
+  affinity?: PodAffinity
+  strategy?: DeploymentStrategy
+  revisionHistoryLimit?: number
+  progressDeadlineSeconds?: number
+  priorityClassName?: string
+  restartPolicy?: 'Always' | 'OnFailure' | 'Never'
+  schedulerName?: string
+  securityContext?: Record<string, unknown>
+  serviceAccount?: string
+  serviceAccountName?: string
+  terminationGracePeriodSeconds?: number
+  dnsPolicy?: 'ClusterFirst' | 'Default'
 }
 
 export type SimSystemWorkloadSpec =
@@ -484,17 +500,95 @@ const createDeploymentSpecs = (
             effect: 'NoSchedule'
           }
         ],
+        strategy: {
+          type: 'RollingUpdate',
+          rollingUpdate: {
+            maxSurge: '25%',
+            maxUnavailable: 1
+          }
+        },
+        revisionHistoryLimit: 10,
+        progressDeadlineSeconds: 600,
+        containers: [
+          {
+            name: 'coredns',
+            image: 'registry.k8s.io/coredns/coredns:v1.13.1',
+            imagePullPolicy: 'IfNotPresent',
+            args: ['-conf', '/etc/coredns/Corefile'],
+            ports: [
+              { containerPort: 53, name: 'dns', protocol: 'UDP' },
+              { containerPort: 53, name: 'dns-tcp', protocol: 'TCP' },
+              { containerPort: 9153, name: 'metrics', protocol: 'TCP' },
+              { containerPort: 8080, name: 'liveness-probe', protocol: 'TCP' },
+              { containerPort: 8181, name: 'readiness-probe', protocol: 'TCP' }
+            ],
+            livenessProbe: {
+              type: 'httpGet',
+              path: '/health',
+              port: 8080,
+              initialDelaySeconds: 60,
+              periodSeconds: 10
+            },
+            readinessProbe: {
+              type: 'httpGet',
+              path: '/ready',
+              port: 8181,
+              periodSeconds: 10
+            },
+            resources: {
+              requests: {
+                cpu: '100m',
+                memory: '70Mi'
+              },
+              limits: {
+                memory: '170Mi'
+              }
+            },
+            securityContext: {
+              allowPrivilegeEscalation: false,
+              capabilities: {
+                add: ['NET_BIND_SERVICE'],
+                drop: ['ALL']
+              },
+              readOnlyRootFilesystem: true
+            },
+            terminationMessagePath: '/dev/termination-log',
+            terminationMessagePolicy: 'File',
+            volumeMounts: [
+              {
+                name: 'config-volume',
+                mountPath: '/etc/coredns',
+                readOnly: true
+              }
+            ]
+          }
+        ],
+        volumes: [
+          {
+            name: 'config-volume',
+            source: {
+              type: 'configMap',
+              name: 'coredns',
+              defaultMode: 420,
+              items: [
+                {
+                  key: 'Corefile',
+                  path: 'Corefile'
+                }
+              ]
+            }
+          }
+        ],
+        dnsPolicy: 'Default',
+        priorityClassName: 'system-cluster-critical',
+        restartPolicy: 'Always',
+        schedulerName: 'default-scheduler',
+        securityContext: {},
+        serviceAccount: 'coredns',
+        serviceAccountName: 'coredns',
+        terminationGracePeriodSeconds: 30,
         annotations: {
           'sim.kubernetes.io/preferred-node': controlPlaneNodeName
-        },
-        containerResources: {
-          requests: {
-            cpu: '100m',
-            memory: '70Mi'
-          },
-          limits: {
-            memory: '170Mi'
-          }
         }
       }
     ]

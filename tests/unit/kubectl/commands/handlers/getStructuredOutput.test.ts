@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { handleGet } from '../../../../../src/core/kubectl/commands/handlers/get'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
@@ -98,5 +99,55 @@ describe('kubectl get handler - structured output parity', () => {
     expect(parsedJson.spec.schedulerName).toBe('default-scheduler')
     expect(parsedJson.status.qosClass).toBeDefined()
     expect(Array.isArray(parsedJson.status.conditions)).toBe(true)
+  })
+
+  it('returns Deployment object YAML when querying by name', () => {
+    const deployment = createDeployment({
+      name: 'coredns',
+      namespace: 'kube-system',
+      replicas: 2,
+      selector: {
+        matchLabels: {
+          'k8s-app': 'kube-dns'
+        }
+      },
+      template: {
+        metadata: {
+          labels: {
+            'k8s-app': 'kube-dns'
+          }
+        },
+        spec: {
+          containers: [
+            {
+              name: 'coredns',
+              image: 'registry.k8s.io/coredns/coredns:v1.13.1'
+            }
+          ]
+        }
+      },
+      annotations: {
+        'sim.kubernetes.io/preferred-node': 'conformance-control-plane'
+      }
+    })
+    const state = createClusterStateData({ deployments: [deployment] })
+    const parsed = createParsedGetCommand({
+      resource: 'deployments',
+      name: 'coredns',
+      namespace: 'kube-system',
+      flags: { output: 'yaml' }
+    })
+
+    const result = handleGet(state, parsed)
+
+    expect(result).toContain('apiVersion: apps/v1')
+    expect(result).toContain('kind: Deployment')
+    expect(result).toContain('name: coredns')
+    expect(result).toContain('uid:')
+    expect(result).toContain('resourceVersion:')
+    expect(result).toContain('observedGeneration:')
+    expect(result).toContain('deployment.kubernetes.io/revision: "1"')
+    expect(result).not.toContain('sim.kubernetes.io/preferred-node')
+    expect(result).not.toContain('&a1')
   })
 })

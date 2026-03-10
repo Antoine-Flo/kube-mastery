@@ -63,6 +63,8 @@ const WATCHED_EVENTS: ClusterEventType[] = [
   'ReplicaSetUpdated'
 ]
 
+const DEPLOYMENT_REVISION_ANNOTATION = 'deployment.kubernetes.io/revision'
+
 // ─── Helper Functions ─────────────────────────────────────────────────────
 
 /**
@@ -87,6 +89,30 @@ const generateReplicaSetName = (
   templateHash: string
 ): string => {
   return `${deploymentName}-${templateHash.substring(0, 10)}`
+}
+
+const parseRevision = (value: string | undefined): number => {
+  if (value == null) {
+    return 0
+  }
+  const parsed = Number.parseInt(value, 10)
+  if (Number.isNaN(parsed) || parsed < 0) {
+    return 0
+  }
+  return parsed
+}
+
+const computeNextRevision = (replicaSets: ReplicaSet[]): number => {
+  let maxRevision = 0
+  for (const replicaSet of replicaSets) {
+    const revision = parseRevision(
+      replicaSet.metadata.annotations?.[DEPLOYMENT_REVISION_ANNOTATION]
+    )
+    if (revision > maxRevision) {
+      maxRevision = revision
+    }
+  }
+  return maxRevision + 1
 }
 
 /**
@@ -125,6 +151,7 @@ const createReplicaSetFromDeployment = (deploy: Deployment): ReplicaSet => {
       }
     },
     labels,
+    annotations: deploy.metadata.annotations,
     ownerReferences: [createOwnerRef(deploy)]
   })
 }
@@ -133,25 +160,65 @@ const createReplicaSetFromDeployment = (deploy: Deployment): ReplicaSet => {
  * Compute Deployment status from owned ReplicaSets
  */
 const computeDeploymentStatus = (
-  ownedReplicaSets: ReplicaSet[]
+  deployment: Deployment,
+  ownedReplicaSets: ReplicaSet[],
+  currentReplicaSet: ReplicaSet | undefined
 ): DeploymentStatus => {
+  const desiredReplicas = deployment.spec.replicas ?? 1
   let totalReplicas = 0
   let readyReplicas = 0
   let availableReplicas = 0
-  let updatedReplicas = 0
+  const updatedReplicas = currentReplicaSet?.status.replicas ?? 0
 
   for (const rs of ownedReplicaSets) {
     totalReplicas += rs.status.replicas || 0
     readyReplicas += rs.status.readyReplicas || 0
     availableReplicas += rs.status.availableReplicas || 0
-    updatedReplicas += rs.status.replicas || 0
   }
 
+  const now = new Date().toISOString()
+  const progressingConditionStatus: 'True' = 'True'
+  const progressingReason =
+    updatedReplicas < desiredReplicas ? 'ReplicaSetUpdating' : 'NewReplicaSetAvailable'
+  const progressingMessage =
+    updatedReplicas < desiredReplicas
+      ? 'ReplicaSet is updating replicas.'
+      : `ReplicaSet "${currentReplicaSet?.metadata.name ?? deployment.metadata.name}" has successfully progressed.`
+  const availableConditionStatus =
+    availableReplicas >= desiredReplicas ? 'True' : 'False'
+  const availableReason =
+    availableReplicas >= desiredReplicas
+      ? 'MinimumReplicasAvailable'
+      : 'MinimumReplicasUnavailable'
+  const availableMessage =
+    availableReplicas >= desiredReplicas
+      ? 'Deployment has minimum availability.'
+      : 'Deployment does not have minimum availability.'
+
   return {
+    observedGeneration: deployment.metadata.generation ?? 1,
     replicas: totalReplicas,
     readyReplicas,
     availableReplicas,
-    updatedReplicas
+    updatedReplicas,
+    conditions: [
+      {
+        type: 'Progressing',
+        status: progressingConditionStatus,
+        reason: progressingReason,
+        message: progressingMessage,
+        lastTransitionTime: now,
+        lastUpdateTime: now
+      },
+      {
+        type: 'Available',
+        status: availableConditionStatus,
+        reason: availableReason,
+        message: availableMessage,
+        lastTransitionTime: now,
+        lastUpdateTime: now
+      }
+    ]
   }
 }
 
@@ -342,9 +409,40 @@ export class DeploymentController implements ReconcilerController {
     deploy: Deployment,
     oldReplicaSets: ReplicaSet[]
   ): void {
-    const newRs = createReplicaSetFromDeployment(deploy)
+    const nextRevision = computeNextRevision(oldReplicaSets)
+    const nextRevisionAnnotationValue = String(nextRevision)
+    const deploymentWithRevision: Deployment = {
+      ...deploy,
+      metadata: {
+        ...deploy.metadata,
+        annotations: {
+          ...(deploy.metadata.annotations ?? {}),
+          [DEPLOYMENT_REVISION_ANNOTATION]: nextRevisionAnnotationValue
+        }
+      }
+    }
+    const newRsBase = createReplicaSetFromDeployment(deploymentWithRevision)
+    const newRs: ReplicaSet = {
+      ...newRsBase,
+      metadata: {
+        ...newRsBase.metadata,
+        annotations: {
+          ...(newRsBase.metadata.annotations ?? {}),
+          [DEPLOYMENT_REVISION_ANNOTATION]: nextRevisionAnnotationValue
+        }
+      }
+    }
     this.eventBus.emit(
       createReplicaSetCreatedEvent(newRs, 'deployment-controller')
+    )
+    this.eventBus.emit(
+      createDeploymentUpdatedEvent(
+        deploy.metadata.name,
+        deploy.metadata.namespace,
+        deploymentWithRevision,
+        deploy,
+        'deployment-controller'
+      )
     )
     this.scaleDownReplicaSets(oldReplicaSets)
   }
@@ -408,13 +506,20 @@ export class DeploymentController implements ReconcilerController {
       deploy,
       state.getReplicaSets(namespace)
     )
-    const newStatus = computeDeploymentStatus(ownedReplicaSets)
+    const currentReplicaSet = this.findCurrentReplicaSet(deploy, ownedReplicaSets)
+    const newStatus = computeDeploymentStatus(
+      deploy,
+      ownedReplicaSets,
+      currentReplicaSet
+    )
 
     if (
       statusEquals(deploy.status, newStatus, [
+        'observedGeneration',
         'replicas',
         'readyReplicas',
-        'availableReplicas'
+        'availableReplicas',
+        'updatedReplicas'
       ])
     ) {
       return
