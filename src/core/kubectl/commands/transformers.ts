@@ -27,6 +27,11 @@ export type ParseContext = {
   execCommand?: string[]
   createImages?: string[]
   createCommand?: string[]
+  createServiceType?: 'clusterip' | 'nodeport' | 'loadbalancer' | 'externalname'
+  createSecretType?: 'generic' | 'tls' | 'docker-registry'
+  createFromLiterals?: string[]
+  createFromFiles?: string[]
+  createFromEnvFiles?: string[]
   runImage?: string
   runCommand?: string[]
   runArgs?: string[]
@@ -69,8 +74,28 @@ const FLAGS_REQUIRING_VALUES = new Set([
   'target-port',
   'type',
   'name',
-  'node-port'
+  'node-port',
+  'tcp',
+  'external-name',
+  'from-literal',
+  'from-file',
+  'from-env-file',
+  'cert',
+  'key',
+  'docker-server',
+  'docker-username',
+  'docker-password',
+  'docker-email'
 ])
+
+const CREATE_SERVICE_TYPES = new Set([
+  'clusterip',
+  'nodeport',
+  'loadbalancer',
+  'externalname'
+])
+
+const CREATE_SECRET_TYPES = new Set(['generic', 'tls', 'docker-registry'])
 
 // ─── Helper Functions ────────────────────────────────────────────────────
 
@@ -316,6 +341,62 @@ const createTransformer: ActionTransformer = (ctx) => {
   const name = findNameSkippingFlags(beforeSeparator, 3)
   const createImages = extractFlagValues(beforeSeparator, 'image')
   const hasCreateImages = createImages.length > 0
+  const createFromLiterals = extractFlagValues(beforeSeparator, 'from-literal')
+  const hasCreateFromLiterals = createFromLiterals.length > 0
+  const createFromFiles = extractFlagValues(beforeSeparator, 'from-file')
+  const hasCreateFromFiles = createFromFiles.length > 0
+  const createFromEnvFiles = extractFlagValues(beforeSeparator, 'from-env-file')
+  const hasCreateFromEnvFiles = createFromEnvFiles.length > 0
+
+  if (resource === 'services') {
+    const rawServiceType = findNameSkippingFlags(beforeSeparator, 3)
+    const normalizedServiceType = rawServiceType?.toLowerCase()
+    const createServiceType =
+      normalizedServiceType != null &&
+      CREATE_SERVICE_TYPES.has(normalizedServiceType)
+        ? (normalizedServiceType as
+            | 'clusterip'
+            | 'nodeport'
+            | 'loadbalancer'
+            | 'externalname')
+        : undefined
+    const serviceName =
+      createServiceType != null
+        ? findNameSkippingFlags(beforeSeparator, 4)
+        : undefined
+    return success({
+      ...ctx,
+      resource,
+      name: serviceName,
+      tokens: beforeSeparator,
+      createServiceType,
+      createCommand
+    })
+  }
+
+  if (resource === 'secrets') {
+    const rawSecretType = findNameSkippingFlags(beforeSeparator, 3)
+    const normalizedSecretType = rawSecretType?.toLowerCase()
+    const createSecretType =
+      normalizedSecretType != null && CREATE_SECRET_TYPES.has(normalizedSecretType)
+        ? (normalizedSecretType as 'generic' | 'tls' | 'docker-registry')
+        : undefined
+    const secretName =
+      createSecretType != null
+        ? findNameSkippingFlags(beforeSeparator, 4)
+        : undefined
+    return success({
+      ...ctx,
+      resource,
+      name: secretName,
+      tokens: beforeSeparator,
+      createSecretType,
+      createFromLiterals: hasCreateFromLiterals ? createFromLiterals : undefined,
+      createFromFiles: hasCreateFromFiles ? createFromFiles : undefined,
+      createFromEnvFiles: hasCreateFromEnvFiles ? createFromEnvFiles : undefined,
+      createCommand
+    })
+  }
 
   return success({
     ...ctx,
@@ -323,6 +404,9 @@ const createTransformer: ActionTransformer = (ctx) => {
     name,
     tokens: beforeSeparator,
     createImages: hasCreateImages ? createImages : undefined,
+    createFromLiterals: hasCreateFromLiterals ? createFromLiterals : undefined,
+    createFromFiles: hasCreateFromFiles ? createFromFiles : undefined,
+    createFromEnvFiles: hasCreateFromEnvFiles ? createFromEnvFiles : undefined,
     createCommand
   })
 }

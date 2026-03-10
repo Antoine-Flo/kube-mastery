@@ -28,6 +28,8 @@
   align-items: center;
   overscroll-behavior-y: none;
   width: 100%;
+  padding: var(--spacing-3);
+  box-sizing: border-box;
 }
 
 .dialog__positioner--placement-center {
@@ -42,6 +44,7 @@
 /* Dialog Content */
 .dialog__content {
   --dialog-z-index: var(--z-index-modal);
+  --dialog-content-max-width: 32rem;
   background-color: var(--color-palette-gray-surface-bg);
   border-radius: var(--radius-l3);
   box-shadow: var(--shadow-lg);
@@ -52,7 +55,8 @@
   position: relative;
   font-size: var(--text-sm);
   line-height: var(--line-height-sm);
-  width: 100%;
+  width: min(100%, var(--dialog-content-max-width));
+  max-width: var(--dialog-content-max-width);
   z-index: calc(var(--dialog-z-index) + var(--layer-index, 0));
   padding-top: var(--spacing-4);
   padding-bottom: var(--spacing-4);
@@ -60,6 +64,9 @@
 }
 
 @media (min-width: 768px) {
+  .dialog__positioner {
+    padding: var(--spacing-4);
+  }
   .dialog__content {
     padding-top: var(--spacing-6);
     padding-bottom: var(--spacing-6);
@@ -117,6 +124,21 @@
 }
 
 /* Dialog Content - Sizes */
+.dialog__content--size-sm {
+  --dialog-content-max-width: 32rem;
+}
+
+.dialog__content--size-md {
+  --dialog-content-max-width: 40rem;
+}
+
+.dialog__content--size-lg {
+  --dialog-content-max-width: 48rem;
+}
+
+.dialog__content--size-xl {
+  --dialog-content-max-width: 64rem;
+}
 
 /* Dialog Content - Placement */
 .dialog__content--placement-center {

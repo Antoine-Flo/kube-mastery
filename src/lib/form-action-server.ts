@@ -7,6 +7,7 @@ export type ActionCode =
   | 'resume_failed'
   | 'cancel_failed'
   | 'refund_failed'
+  | 'rate_limited'
   | 'delete_failed'
   | 'auth_oauth_failed'
   | 'auth_signin_failed'

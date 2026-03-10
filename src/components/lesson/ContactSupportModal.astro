@@ -32,7 +32,7 @@ const {
 <Dialog id={CONTACT_SUPPORT_DIALOG_ID} title={title} size="lg">
   <form
     id="contact-support-form"
-    class="contact-support-form"
+    class="contact-support-form contact-support-form--in-dialog"
     data-lesson-id={lessonId}
     method="post"
     action="#"
@@ -193,6 +193,9 @@ const {
   .contact-support-form {
     width: 100%;
     box-sizing: border-box;
+  }
+  .contact-support-form--in-dialog {
+    min-width: 0;
   }
   .contact-support-form__types {
     display: flex;

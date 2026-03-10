@@ -152,13 +152,15 @@ describe('ShellCommandHandler', () => {
       const result = handler.execute('invalid-command', context)
       expect(result.ok).toBe(false)
       // L'erreur est affichée dans le renderer
-      expect(renderer.getOutput()).toContain('Error:')
+      expect(renderer.getOutput()).toContain('Unknown command: invalid-command')
     })
 
     it('should display error message when command fails', () => {
       const result = handler.execute('cd /invalid/path', context)
       expect(result.ok).toBe(false)
-      expect(renderer.getOutput()).toContain('Error:')
+      expect(renderer.getOutput()).toContain(
+        'cd: /invalid/path: No such file or directory'
+      )
     })
 
     it('should not update prompt for non-cd commands', () => {

@@ -5,11 +5,14 @@
 
 import type { ClusterState } from '../../../cluster/ClusterState'
 import type { EventBus } from '../../../cluster/events/EventBus'
+import { createConfigMap } from '../../../cluster/ressources/ConfigMap'
 import { createDeployment } from '../../../cluster/ressources/Deployment'
 import { createNamespace } from '../../../cluster/ressources/Namespace'
+import { createSecret, encodeBase64 } from '../../../cluster/ressources/Secret'
 import type { EnvVar } from '../../../cluster/ressources/Pod'
 import { createPod } from '../../../cluster/ressources/Pod'
 import type { PodTemplateSpec } from '../../../cluster/ressources/ReplicaSet'
+import { createService } from '../../../cluster/ressources/Service'
 import type { FileSystem } from '../../../filesystem/FileSystem'
 import type { SimNetworkRuntime } from '../../../network/SimNetworkRuntime'
 import type { ExecutionResult } from '../../../shared/result'
@@ -21,6 +24,8 @@ import {
   applyResourceWithEvents,
   createResourceWithEvents
 } from './resourceHelpers'
+
+type ErrorResult = { ok: false; error: string }
 
 const isDryRunClient = (parsed: ParsedCommand): boolean => {
   return parsed.flags['dry-run'] === 'client'
@@ -147,13 +152,591 @@ const buildCreateNamespaceDryRunManifest = (
     apiVersion: 'v1',
     kind: 'Namespace',
     metadata: {
-      creationTimestamp: null,
-      labels: {
-        'kubernetes.io/metadata.name': parsed.name
-      },
       name: parsed.name
     },
+    spec: {},
     status: {}
+  }
+}
+
+const parseConfigMapDataFromLiterals = (
+  literals: string[]
+): Record<string, string> | (ExecutionResult & { ok: false }) => {
+  const data: Record<string, string> = {}
+  for (const literal of literals) {
+    const separatorIndex = literal.indexOf('=')
+    if (separatorIndex <= 0) {
+      return {
+        ok: false,
+        error: `error: invalid --from-literal value: ${literal}, expected key=value`
+      }
+    }
+    const key = literal.slice(0, separatorIndex).trim()
+    const value = literal.slice(separatorIndex + 1)
+    if (key.length === 0) {
+      return {
+        ok: false,
+        error: `error: invalid --from-literal value: ${literal}, expected key=value`
+      }
+    }
+    data[key] = value
+  }
+  return data
+}
+
+const isExecutionErrorResult = (
+  value: unknown
+): value is ErrorResult => {
+  if (value == null || typeof value !== 'object') {
+    return false
+  }
+  if (!('ok' in value)) {
+    return false
+  }
+  return (value as { ok?: unknown }).ok === false
+}
+
+const getCreateConfigMapLiterals = (parsed: ParsedCommand): string[] => {
+  if (
+    Array.isArray(parsed.createFromLiterals) &&
+    parsed.createFromLiterals.length > 0
+  ) {
+    return parsed.createFromLiterals
+  }
+  const fromLiteral = parsed.flags['from-literal']
+  if (typeof fromLiteral === 'string' && fromLiteral.length > 0) {
+    return [fromLiteral]
+  }
+  return []
+}
+
+const buildCreateConfigMapDryRunManifest = (
+  parsed: ParsedCommand & { name: string }
+): Record<string, unknown> | ExecutionResult => {
+  const literals = getCreateConfigMapLiterals(parsed)
+  if (literals.length === 0) {
+    return error(
+      'error: create configmap requires at least one --from-literal=key=value'
+    )
+  }
+  const data = parseConfigMapDataFromLiterals(literals)
+  if (isExecutionErrorResult(data)) {
+    return data
+  }
+  return {
+    apiVersion: 'v1',
+    kind: 'ConfigMap',
+    metadata: {
+      creationTimestamp: null,
+      name: parsed.name,
+      ...(parsed.namespace != null && parsed.namespace !== 'default'
+        ? { namespace: parsed.namespace }
+        : {})
+    },
+    data
+  }
+}
+
+type CreateServiceType = NonNullable<ParsedCommand['createServiceType']>
+type CreateSecretType = NonNullable<ParsedCommand['createSecretType']>
+type SecretTypeConfig = Parameters<typeof createSecret>[0]['secretType']
+
+type ImperativeCreateServiceConfig = {
+  apiVersion: 'v1'
+  kind: 'Service'
+  metadata: {
+    name: string
+    namespace?: string
+    labels?: Record<string, string>
+  }
+  spec: {
+    type: 'ClusterIP' | 'NodePort' | 'LoadBalancer' | 'ExternalName'
+    selector?: Record<string, string>
+    externalName?: string
+    ports: Array<{
+      protocol: 'TCP'
+      port: number
+      targetPort?: number
+      nodePort?: number
+    }>
+  }
+  status: {
+    loadBalancer: Record<string, never>
+  }
+}
+
+type ImperativeCreateSecretConfig = {
+  apiVersion: 'v1'
+  kind: 'Secret'
+  metadata: {
+    name: string
+    namespace?: string
+  }
+  type?: 'Opaque' | 'kubernetes.io/tls' | 'kubernetes.io/dockerconfigjson'
+  data: Record<string, string>
+}
+
+type PreparedSecret = {
+  secretType: SecretTypeConfig
+  data: Record<string, string>
+  manifestType: 'Opaque' | 'kubernetes.io/tls' | 'kubernetes.io/dockerconfigjson'
+}
+
+const toApiServiceType = (
+  serviceType: CreateServiceType
+): 'ClusterIP' | 'NodePort' | 'LoadBalancer' | 'ExternalName' => {
+  if (serviceType === 'clusterip') {
+    return 'ClusterIP'
+  }
+  if (serviceType === 'nodeport') {
+    return 'NodePort'
+  }
+  if (serviceType === 'loadbalancer') {
+    return 'LoadBalancer'
+  }
+  return 'ExternalName'
+}
+
+const parsePositivePortNumber = (
+  rawValue: string,
+  flagName: string
+): number | ExecutionResult => {
+  const parsed = Number.parseInt(rawValue, 10)
+  if (Number.isNaN(parsed) || parsed <= 0 || parsed > 65535) {
+    return error(`error: ${flagName} must be a valid port number`)
+  }
+  return parsed
+}
+
+const getFileBaseName = (path: string): string => {
+  const normalized = path.replace(/\\/g, '/')
+  const parts = normalized.split('/')
+  return parts[parts.length - 1] || normalized
+}
+
+const parseFromFileEntry = (
+  rawEntry: string
+): { key: string; sourcePath: string } | ErrorResult => {
+  const equalsIndex = rawEntry.indexOf('=')
+  if (equalsIndex === -1) {
+    const sourcePath = rawEntry.trim()
+    if (sourcePath.length === 0) {
+      return { ok: false, error: 'error: invalid --from-file value' }
+    }
+    return {
+      key: getFileBaseName(sourcePath),
+      sourcePath
+    }
+  }
+
+  const key = rawEntry.slice(0, equalsIndex).trim()
+  const sourcePath = rawEntry.slice(equalsIndex + 1).trim()
+  if (key.length === 0 || sourcePath.length === 0) {
+    return {
+      ok: false,
+      error: 'error: invalid --from-file value, expected [key=]path'
+    }
+  }
+  return { key, sourcePath }
+}
+
+const parseKeyValueLiteral = (
+  rawLiteral: string,
+  flagName: string
+): { key: string; value: string } | ErrorResult => {
+  const separatorIndex = rawLiteral.indexOf('=')
+  if (separatorIndex <= 0) {
+    return {
+      ok: false,
+      error: `error: invalid ${flagName} value: ${rawLiteral}, expected key=value`
+    }
+  }
+  const key = rawLiteral.slice(0, separatorIndex).trim()
+  const value = rawLiteral.slice(separatorIndex + 1)
+  if (key.length === 0) {
+    return {
+      ok: false,
+      error: `error: invalid ${flagName} value: ${rawLiteral}, expected key=value`
+    }
+  }
+  return { key, value }
+}
+
+const parseEnvFileContent = (
+  content: string,
+  sourcePath: string
+): Record<string, string> | ErrorResult => {
+  const result: Record<string, string> = {}
+  const lines = content.split('\n')
+  for (const lineRaw of lines) {
+    const line = lineRaw.trim()
+    if (line.length === 0 || line.startsWith('#')) {
+      continue
+    }
+    const parsed = parseKeyValueLiteral(line, '--from-env-file')
+    if (isExecutionErrorResult(parsed)) {
+      return parsed
+    }
+    result[parsed.key] = parsed.value
+  }
+  if (Object.keys(result).length === 0) {
+    return { ok: false, error: `error: no data found in env file: ${sourcePath}` }
+  }
+  return result
+}
+
+const getCreateSecretLiterals = (parsed: ParsedCommand): string[] => {
+  if (
+    Array.isArray(parsed.createFromLiterals) &&
+    parsed.createFromLiterals.length > 0
+  ) {
+    return parsed.createFromLiterals
+  }
+  const fromLiteral = parsed.flags['from-literal']
+  if (typeof fromLiteral === 'string' && fromLiteral.length > 0) {
+    return [fromLiteral]
+  }
+  return []
+}
+
+const getCreateSecretFromFiles = (parsed: ParsedCommand): string[] => {
+  if (Array.isArray(parsed.createFromFiles) && parsed.createFromFiles.length > 0) {
+    return parsed.createFromFiles
+  }
+  const fromFile = parsed.flags['from-file']
+  if (typeof fromFile === 'string' && fromFile.length > 0) {
+    return [fromFile]
+  }
+  return []
+}
+
+const getCreateSecretFromEnvFiles = (parsed: ParsedCommand): string[] => {
+  if (
+    Array.isArray(parsed.createFromEnvFiles) &&
+    parsed.createFromEnvFiles.length > 0
+  ) {
+    return parsed.createFromEnvFiles
+  }
+  const fromEnvFile = parsed.flags['from-env-file']
+  if (typeof fromEnvFile === 'string' && fromEnvFile.length > 0) {
+    return [fromEnvFile]
+  }
+  return []
+}
+
+const prepareGenericSecretData = (
+  fileSystem: FileSystem,
+  parsed: ParsedCommand
+): PreparedSecret | ErrorResult => {
+  const data: Record<string, string> = {}
+  const literals = getCreateSecretLiterals(parsed)
+  const fromFiles = getCreateSecretFromFiles(parsed)
+  const fromEnvFiles = getCreateSecretFromEnvFiles(parsed)
+
+  if (literals.length === 0 && fromFiles.length === 0 && fromEnvFiles.length === 0) {
+    return {
+      ok: false,
+      error:
+        'error: create secret generic requires at least one of: --from-literal, --from-file, --from-env-file'
+    }
+  }
+
+  for (const literal of literals) {
+    const parsedLiteral = parseKeyValueLiteral(literal, '--from-literal')
+    if (isExecutionErrorResult(parsedLiteral)) {
+      return parsedLiteral
+    }
+    data[parsedLiteral.key] = encodeBase64(parsedLiteral.value)
+  }
+
+  for (const fromFileEntry of fromFiles) {
+    const parsedFromFile = parseFromFileEntry(fromFileEntry)
+    if (isExecutionErrorResult(parsedFromFile)) {
+      return parsedFromFile
+    }
+    const fileReadResult = fileSystem.readFile(parsedFromFile.sourcePath)
+    if (!fileReadResult.ok) {
+      return { ok: false, error: `error: ${fileReadResult.error}` }
+    }
+    data[parsedFromFile.key] = encodeBase64(fileReadResult.value)
+  }
+
+  for (const envFilePath of fromEnvFiles) {
+    const envFileReadResult = fileSystem.readFile(envFilePath)
+    if (!envFileReadResult.ok) {
+      return { ok: false, error: `error: ${envFileReadResult.error}` }
+    }
+    const parsedEnvFile = parseEnvFileContent(envFileReadResult.value, envFilePath)
+    if (isExecutionErrorResult(parsedEnvFile)) {
+      return parsedEnvFile
+    }
+    for (const [key, value] of Object.entries(parsedEnvFile)) {
+      data[key] = encodeBase64(value)
+    }
+  }
+
+  return {
+    secretType: { type: 'Opaque' },
+    data,
+    manifestType: 'Opaque'
+  }
+}
+
+const prepareTlsSecretData = (
+  fileSystem: FileSystem,
+  parsed: ParsedCommand
+): PreparedSecret | ErrorResult => {
+  const certPath = parsed.flags.cert
+  const keyPath = parsed.flags.key
+  if (typeof certPath !== 'string' || certPath.trim().length === 0) {
+    return { ok: false, error: 'error: create secret tls requires flag --cert' }
+  }
+  if (typeof keyPath !== 'string' || keyPath.trim().length === 0) {
+    return { ok: false, error: 'error: create secret tls requires flag --key' }
+  }
+  const certReadResult = fileSystem.readFile(certPath)
+  if (!certReadResult.ok) {
+    return { ok: false, error: `error: ${certReadResult.error}` }
+  }
+  const keyReadResult = fileSystem.readFile(keyPath)
+  if (!keyReadResult.ok) {
+    return { ok: false, error: `error: ${keyReadResult.error}` }
+  }
+  return {
+    secretType: { type: 'kubernetes.io/tls' },
+    manifestType: 'kubernetes.io/tls',
+    data: {
+      'tls.crt': encodeBase64(certReadResult.value),
+      'tls.key': encodeBase64(keyReadResult.value)
+    }
+  }
+}
+
+const prepareDockerRegistrySecretData = (
+  parsed: ParsedCommand
+): PreparedSecret | ErrorResult => {
+  const server = parsed.flags['docker-server']
+  const username = parsed.flags['docker-username']
+  const password = parsed.flags['docker-password']
+  const email = parsed.flags['docker-email']
+  if (typeof server !== 'string' || server.trim().length === 0) {
+    return {
+      ok: false,
+      error: 'error: create secret docker-registry requires flag --docker-server'
+    }
+  }
+  if (typeof username !== 'string' || username.trim().length === 0) {
+    return {
+      ok: false,
+      error: 'error: create secret docker-registry requires flag --docker-username'
+    }
+  }
+  if (typeof password !== 'string' || password.trim().length === 0) {
+    return {
+      ok: false,
+      error: 'error: create secret docker-registry requires flag --docker-password'
+    }
+  }
+  const auth = encodeBase64(`${username}:${password}`)
+  const dockerConfig = {
+    auths: {
+      [server]: {
+        username,
+        password,
+        auth,
+        ...(typeof email === 'string' && email.length > 0 ? { email } : {})
+      }
+    }
+  }
+  const dockerConfigJson = JSON.stringify(dockerConfig)
+  return {
+    secretType: {
+      type: 'kubernetes.io/dockerconfigjson',
+      dockerConfigJson
+    },
+    manifestType: 'kubernetes.io/dockerconfigjson',
+    data: {
+      '.dockerconfigjson': encodeBase64(dockerConfigJson)
+    }
+  }
+}
+
+const prepareSecretData = (
+  fileSystem: FileSystem,
+  parsed: ParsedCommand & { createSecretType: CreateSecretType }
+): PreparedSecret | ErrorResult => {
+  if (parsed.createSecretType === 'generic') {
+    return prepareGenericSecretData(fileSystem, parsed)
+  }
+  if (parsed.createSecretType === 'tls') {
+    return prepareTlsSecretData(fileSystem, parsed)
+  }
+  return prepareDockerRegistrySecretData(parsed)
+}
+
+const buildCreateSecretDryRunManifest = (
+  fileSystem: FileSystem,
+  parsed: ParsedCommand & { name: string; createSecretType: CreateSecretType }
+): ImperativeCreateSecretConfig | ErrorResult => {
+  const prepared = prepareSecretData(fileSystem, parsed)
+  if (isExecutionErrorResult(prepared)) {
+    return prepared
+  }
+  return {
+    apiVersion: 'v1',
+    kind: 'Secret',
+    metadata: {
+      name: parsed.name,
+      ...(parsed.namespace != null && parsed.namespace !== 'default'
+        ? { namespace: parsed.namespace }
+        : {})
+    },
+    ...(parsed.createSecretType === 'generic'
+      ? {}
+      : { type: prepared.manifestType }),
+    data: prepared.data
+  }
+}
+
+const parseTcpFlag = (
+  rawTcpFlag: string
+): Array<{ port: number; targetPort?: number }> | ExecutionResult => {
+  const entries = rawTcpFlag
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0)
+
+  if (entries.length === 0) {
+    return error('error: create service requires flag --tcp')
+  }
+
+  const ports: Array<{ port: number; targetPort?: number }> = []
+  for (const entry of entries) {
+    const parts = entry.split(':')
+    if (parts.length > 2) {
+      return error('error: invalid --tcp format, expected port[:targetPort]')
+    }
+    const parsedPort = parsePositivePortNumber(parts[0], '--tcp')
+    if (typeof parsedPort !== 'number') {
+      return parsedPort
+    }
+
+    if (parts.length === 1 || parts[1].trim().length === 0) {
+      ports.push({ port: parsedPort, targetPort: parsedPort })
+      continue
+    }
+
+    const parsedTargetPort = parsePositivePortNumber(parts[1], '--tcp')
+    if (typeof parsedTargetPort !== 'number') {
+      return parsedTargetPort
+    }
+    ports.push({ port: parsedPort, targetPort: parsedTargetPort })
+  }
+
+  return ports
+}
+
+const parseNodePortFlag = (
+  rawNodePortFlag: string | boolean | undefined
+): number | undefined | ExecutionResult => {
+  if (rawNodePortFlag == null) {
+    return undefined
+  }
+  if (typeof rawNodePortFlag !== 'string' || rawNodePortFlag.trim().length === 0) {
+    return error('error: --node-port must be a valid port number')
+  }
+  const parsed = parsePositivePortNumber(rawNodePortFlag, '--node-port')
+  if (typeof parsed !== 'number') {
+    return parsed
+  }
+  return parsed
+}
+
+const buildCreateServiceConfig = (
+  parsed: ParsedCommand & { name: string; createServiceType: CreateServiceType }
+): ImperativeCreateServiceConfig | ExecutionResult => {
+  const namespace = parsed.namespace ?? 'default'
+  const serviceType = parsed.createServiceType
+  const apiServiceType = toApiServiceType(serviceType)
+  const nodePortFlag = parseNodePortFlag(parsed.flags['node-port'])
+  if (typeof nodePortFlag !== 'number' && nodePortFlag !== undefined) {
+    return nodePortFlag
+  }
+
+  if (
+    serviceType !== 'nodeport' &&
+    typeof nodePortFlag === 'number'
+  ) {
+    return error(`error: create service ${serviceType} does not support flag --node-port`)
+  }
+
+  const metadata = {
+    name: parsed.name,
+    labels: { app: parsed.name },
+    ...(namespace !== 'default' ? { namespace } : {})
+  }
+
+  if (serviceType === 'externalname') {
+    const externalName = parsed.flags['external-name']
+    if (typeof externalName !== 'string' || externalName.trim().length === 0) {
+      return error('error: create service externalname requires flag --external-name')
+    }
+    return {
+      apiVersion: 'v1',
+      kind: 'Service',
+      metadata,
+      spec: {
+        type: apiServiceType,
+        externalName,
+        ports: []
+      },
+      status: {
+        loadBalancer: {}
+      }
+    }
+  }
+
+  const tcpFlag = parsed.flags.tcp
+  if (typeof tcpFlag !== 'string' || tcpFlag.trim().length === 0) {
+    return error('error: create service requires flag --tcp')
+  }
+  const parsedPorts = parseTcpFlag(tcpFlag)
+  if (!Array.isArray(parsedPorts)) {
+    return parsedPorts
+  }
+
+  const ports = parsedPorts.map((port, index) => {
+    const targetPort = port.targetPort ?? port.port
+    const portName = `${port.port}-${targetPort}`
+    if (index === 0 && typeof nodePortFlag === 'number') {
+      return {
+        name: portName,
+        protocol: 'TCP' as const,
+        port: port.port,
+        ...(port.targetPort != null ? { targetPort: port.targetPort } : {}),
+        nodePort: nodePortFlag
+      }
+    }
+    return {
+      name: portName,
+      protocol: 'TCP' as const,
+      port: port.port,
+      ...(port.targetPort != null ? { targetPort: port.targetPort } : {})
+    }
+  })
+
+  return {
+    apiVersion: 'v1',
+    kind: 'Service',
+    metadata,
+    spec: {
+      type: apiServiceType,
+      selector: { app: parsed.name },
+      ports
+    },
+    status: {
+      loadBalancer: {}
+    }
   }
 }
 
@@ -246,6 +829,48 @@ const isCreateNamespaceImperative = (
   return parsed.name.length > 0
 }
 
+const isCreateServiceImperative = (
+  parsed: ParsedCommand
+): parsed is ParsedCommand & { name: string; createServiceType: CreateServiceType } => {
+  if (parsed.resource !== 'services') {
+    return false
+  }
+  if (typeof parsed.createServiceType !== 'string') {
+    return false
+  }
+  if (typeof parsed.name !== 'string') {
+    return false
+  }
+  return parsed.name.length > 0
+}
+
+const isCreateConfigMapImperative = (
+  parsed: ParsedCommand
+): parsed is ParsedCommand & { name: string } => {
+  if (parsed.resource !== 'configmaps') {
+    return false
+  }
+  if (typeof parsed.name !== 'string') {
+    return false
+  }
+  return parsed.name.length > 0
+}
+
+const isCreateSecretImperative = (
+  parsed: ParsedCommand
+): parsed is ParsedCommand & { name: string; createSecretType: CreateSecretType } => {
+  if (parsed.resource !== 'secrets') {
+    return false
+  }
+  if (typeof parsed.createSecretType !== 'string') {
+    return false
+  }
+  if (typeof parsed.name !== 'string') {
+    return false
+  }
+  return parsed.name.length > 0
+}
+
 const isCreateDeploymentCommand = (parsed: ParsedCommand): boolean => {
   return parsed.resource === 'deployments'
 }
@@ -315,6 +940,75 @@ const createNamespaceFromFlags = (
   })
 
   return createResourceWithEvents(namespace, clusterState, eventBus)
+}
+
+const createServiceFromFlags = (
+  parsed: ParsedCommand & { name: string; createServiceType: CreateServiceType },
+  clusterState: ClusterState,
+  eventBus: EventBus
+): ExecutionResult => {
+  const serviceConfig = buildCreateServiceConfig(parsed)
+  if (!('kind' in serviceConfig)) {
+    return serviceConfig
+  }
+
+  const namespace = parsed.namespace ?? 'default'
+  const service = createService({
+    name: parsed.name,
+    namespace,
+    type: serviceConfig.spec.type,
+    ...(serviceConfig.spec.selector != null
+      ? { selector: serviceConfig.spec.selector }
+      : {}),
+    ...(serviceConfig.spec.externalName != null
+      ? { externalName: serviceConfig.spec.externalName }
+      : {}),
+    ports: serviceConfig.spec.ports
+  })
+
+  return createResourceWithEvents(service, clusterState, eventBus)
+}
+
+const createConfigMapFromFlags = (
+  parsed: ParsedCommand & { name: string },
+  clusterState: ClusterState,
+  eventBus: EventBus
+): ExecutionResult => {
+  const literals = getCreateConfigMapLiterals(parsed)
+  if (literals.length === 0) {
+    return error(
+      'error: create configmap requires at least one --from-literal=key=value'
+    )
+  }
+  const data = parseConfigMapDataFromLiterals(literals)
+  if (isExecutionErrorResult(data)) {
+    return data
+  }
+  const configMap = createConfigMap({
+    name: parsed.name,
+    namespace: parsed.namespace ?? 'default',
+    data
+  })
+  return createResourceWithEvents(configMap, clusterState, eventBus)
+}
+
+const createSecretFromFlags = (
+  fileSystem: FileSystem,
+  parsed: ParsedCommand & { name: string; createSecretType: CreateSecretType },
+  clusterState: ClusterState,
+  eventBus: EventBus
+): ExecutionResult => {
+  const prepared = prepareSecretData(fileSystem, parsed)
+  if (isExecutionErrorResult(prepared)) {
+    return prepared
+  }
+  const secret = createSecret({
+    name: parsed.name,
+    namespace: parsed.namespace ?? 'default',
+    secretType: prepared.secretType,
+    data: prepared.data
+  })
+  return createResourceWithEvents(secret, clusterState, eventBus)
 }
 
 const buildRunDryRunManifest = (
@@ -462,6 +1156,39 @@ export const handleCreate = (
       return buildDryRunResponse(dryRunManifest, parsed)
     }
     return createNamespaceFromFlags(parsed, clusterState, eventBus)
+  }
+
+  if (isCreateServiceImperative(parsed)) {
+    const serviceConfig = buildCreateServiceConfig(parsed)
+    if (!('kind' in serviceConfig)) {
+      return serviceConfig
+    }
+    if (isDryRunClient(parsed)) {
+      return buildDryRunResponse(serviceConfig, parsed)
+    }
+    return createServiceFromFlags(parsed, clusterState, eventBus)
+  }
+
+  if (isCreateConfigMapImperative(parsed)) {
+    if (isDryRunClient(parsed)) {
+      const dryRunManifest = buildCreateConfigMapDryRunManifest(parsed)
+      if (isExecutionErrorResult(dryRunManifest)) {
+        return dryRunManifest
+      }
+      return buildDryRunResponse(dryRunManifest, parsed)
+    }
+    return createConfigMapFromFlags(parsed, clusterState, eventBus)
+  }
+
+  if (isCreateSecretImperative(parsed)) {
+    if (isDryRunClient(parsed)) {
+      const dryRunManifest = buildCreateSecretDryRunManifest(fileSystem, parsed)
+      if (isExecutionErrorResult(dryRunManifest)) {
+        return dryRunManifest
+      }
+      return buildDryRunResponse(dryRunManifest, parsed)
+    }
+    return createSecretFromFlags(fileSystem, parsed, clusterState, eventBus)
   }
 
   const loadResult = loadAndParseYaml(fileSystem, parsed)

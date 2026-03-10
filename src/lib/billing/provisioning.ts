@@ -27,6 +27,72 @@ const billingEnvironment = (readAppEnv('ENVIRONMENT') ?? '')
   .toLowerCase()
   .trim()
 
+const SWEEGO_SEND_ENDPOINT = 'https://api.sweego.io/send'
+const SWEEGO_PROVIDER = 'sweego'
+const SWEEGO_ERROR_EXCERPT_MAX_LENGTH = 240
+
+export type RefundRequestFailureReason =
+  | 'missing_sweego_api_key'
+  | 'sweego_send_failed'
+  | 'sweego_email_channel_disabled'
+
+export type RefundRequestMessageResult =
+  | { ok: true; error: null }
+  | {
+      ok: false
+      error: string
+      reason: RefundRequestFailureReason
+      providerStatus: number | null
+      providerErrorExcerpt: string | null
+    }
+
+function toErrorExcerpt(value: string): string | null {
+  const trimmedValue = value.trim()
+  if (trimmedValue === '') {
+    return null
+  }
+  if (trimmedValue.length <= SWEEGO_ERROR_EXCERPT_MAX_LENGTH) {
+    return trimmedValue
+  }
+  return `${trimmedValue.slice(0, SWEEGO_ERROR_EXCERPT_MAX_LENGTH)}...`
+}
+
+function hasSmsOnlyConstraint(errorText: string): boolean {
+  let parsedError: unknown = null
+  try {
+    parsedError = JSON.parse(errorText) as unknown
+  } catch {
+    return false
+  }
+  if (
+    parsedError == null ||
+    typeof parsedError !== 'object' ||
+    !('detail' in parsedError)
+  ) {
+    return false
+  }
+  const detail = (parsedError as { detail?: unknown }).detail
+  if (!Array.isArray(detail)) {
+    return false
+  }
+  return detail.some((entry) => {
+    if (entry == null || typeof entry !== 'object' || !('ctx' in entry)) {
+      return false
+    }
+    const ctx = (entry as { ctx?: unknown }).ctx
+    if (
+      ctx == null ||
+      typeof ctx !== 'object' ||
+      !('permitted' in ctx) ||
+      !Array.isArray((ctx as { permitted?: unknown }).permitted)
+    ) {
+      return false
+    }
+    const permitted = (ctx as { permitted?: unknown[] }).permitted ?? []
+    return permitted.includes('sms')
+  })
+}
+
 export const PADDLE_PRICE_ID =
   billingEnvironment === 'production'
     ? CONFIG.billing.paddlePriceIds.production
@@ -156,7 +222,7 @@ function buildOneTimeReferenceId(transactionId: string | null): string | null {
   if (transactionId == null || transactionId === '') {
     return null
   }
-  return `txn_${transactionId}`
+  return transactionId
 }
 
 function toMetadataRecord(value: unknown): Record<string, unknown> {
@@ -426,24 +492,80 @@ export async function cancelPaddleSubscription(args: {
 }
 
 export async function createRefundRequestMessage(args: {
-  supabase: SupabaseClient
+  locals?: unknown
   userId: string
+  userEmail: string | null
   paddleSubscriptionId: string
   status: string
   planTier: string
-}): Promise<{ ok: boolean; error: string | null }> {
-  const { error } = await args.supabase.from('messages').insert({
-    type: 'support',
-    name: 'billing_refund_request',
-    user_id: args.userId,
-    content: {
-      paddleSubscriptionId: args.paddleSubscriptionId,
-      subscriptionStatus: args.status,
-      planTier: args.planTier
+  departureReason: string | null
+}): Promise<RefundRequestMessageResult> {
+  const sweegoApiKey = readAppEnv('SWEEGO_API_KEY', args.locals)
+  if (sweegoApiKey == null) {
+    return {
+      ok: false,
+      error: 'Missing SWEEGO_API_KEY',
+      reason: 'missing_sweego_api_key',
+      providerStatus: null,
+      providerErrorExcerpt: null
     }
+  }
+  const normalizedEmail =
+    args.userEmail != null && args.userEmail.trim() !== ''
+      ? args.userEmail.trim()
+      : 'n/a'
+  const normalizedDepartureReason =
+    args.departureReason != null && args.departureReason.trim() !== ''
+      ? args.departureReason.trim()
+      : 'n/a'
+  const subject = `Refund`
+  const messageTxt = [
+    `${normalizedDepartureReason}`,
+    '',
+    `userId: ${args.userId}`,
+    `userEmail: ${normalizedEmail}`,
+    `paddleSubscriptionId: ${args.paddleSubscriptionId}`,
+  ].join('\n')
+
+  const response = await fetch(SWEEGO_SEND_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Api-Key': sweegoApiKey,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      channel: 'email',
+      provider: SWEEGO_PROVIDER,
+      recipients: [{ email: CONFIG.contact.email.to }],
+      from: {
+        name: CONFIG.contact.email.from.name,
+        email: CONFIG.contact.email.from.email
+      },
+      subject,
+      'message-txt': messageTxt
+    })
   })
-  if (error != null) {
-    return { ok: false, error: error.message }
+  if (!response.ok) {
+    const errorText = await response.text()
+    const errorMessage =
+      errorText.trim() === '' ? response.statusText : errorText.trim()
+    if (hasSmsOnlyConstraint(errorText)) {
+      return {
+        ok: false,
+        error: 'Sweego API key is SMS-only or email channel is not enabled',
+        reason: 'sweego_email_channel_disabled',
+        providerStatus: response.status,
+        providerErrorExcerpt: toErrorExcerpt(errorText)
+      }
+    }
+    return {
+      ok: false,
+      error: errorMessage,
+      reason: 'sweego_send_failed',
+      providerStatus: response.status,
+      providerErrorExcerpt: toErrorExcerpt(errorText)
+    }
   }
   return { ok: true, error: null }
 }

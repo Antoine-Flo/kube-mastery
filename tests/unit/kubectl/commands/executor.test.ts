@@ -385,11 +385,192 @@ data:
         expect(result.value).toContain('apiVersion: v1')
         expect(result.value).toContain('kind: Namespace')
         expect(result.value).toContain('name: dry-run-ns')
-        expect(result.value).toContain('creationTimestamp: null')
+        expect(result.value).toContain('spec: {}')
         expect(result.value).toContain('status: {}')
 
         const namespace = clusterState.findNamespace('dry-run-ns')
         expect(namespace.ok).toBe(false)
+      })
+
+      it('should create service clusterip from imperative create command', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create service clusterip my-svc --tcp=80:8080'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('service/my-svc created')
+        const service = clusterState.findService('my-svc', 'default')
+        expect(service.ok).toBe(true)
+        if (!service.ok) {
+          return
+        }
+        expect(service.value.spec.type).toBe('ClusterIP')
+        expect(service.value.spec.selector).toEqual({ app: 'my-svc' })
+        expect(service.value.spec.ports[0].port).toBe(80)
+        expect(service.value.spec.ports[0].targetPort).toBe(8080)
+      })
+
+      it('should return service yaml for create service nodeport dry-run client', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create service nodeport my-svc --tcp=80:8080 --node-port=30080 --dry-run=client -o yaml'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('kind: Service')
+        expect(result.value).toContain('name: my-svc')
+        expect(result.value).toContain('type: NodePort')
+        expect(result.value).toContain('nodePort: 30080')
+        expect(result.value).toContain('labels:')
+        expect(result.value).toContain('app: my-svc')
+        expect(result.value).toContain('name: 80-8080')
+        expect(result.value).toContain('loadBalancer: {}')
+
+        const service = clusterState.findService('my-svc', 'default')
+        expect(service.ok).toBe(false)
+      })
+
+      it('should create service externalname with external-name flag', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create service externalname ext-svc --external-name=example.com'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        const service = clusterState.findService('ext-svc', 'default')
+        expect(service.ok).toBe(true)
+        if (!service.ok) {
+          return
+        }
+        expect(service.value.spec.type).toBe('ExternalName')
+        expect(service.value.spec.externalName).toBe('example.com')
+      })
+
+      it('should return configmap yaml for create configmap dry-run client', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create configmap app-config --from-literal=LOG_LEVEL=info --dry-run=client -o yaml'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('kind: ConfigMap')
+        expect(result.value).toContain('name: app-config')
+        expect(result.value).toContain('creationTimestamp: null')
+        expect(result.value).toContain('LOG_LEVEL: info')
+
+        const configMap = clusterState.findConfigMap('app-config', 'default')
+        expect(configMap.ok).toBe(false)
+      })
+
+      it('should return secret generic yaml for create secret dry-run client', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create secret generic mysecret --from-literal=password=s3cr3t --dry-run=client -o yaml'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('kind: Secret')
+        expect(result.value).toContain('name: mysecret')
+        expect(result.value).not.toContain('type: Opaque')
+        expect(result.value).toContain('password: czNjcjN0')
+        const secret = clusterState.findSecret('mysecret', 'default')
+        expect(secret.ok).toBe(false)
+      })
+
+      it('should create secret tls from cert and key files', () => {
+        fileSystem.createFile('tls.crt')
+        fileSystem.writeFile('tls.crt', 'CERTDATA')
+        fileSystem.createFile('tls.key')
+        fileSystem.writeFile('tls.key', 'KEYDATA')
+
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create secret tls tls-secret --cert=tls.crt --key=tls.key'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        const secret = clusterState.findSecret('tls-secret', 'default')
+        expect(secret.ok).toBe(true)
+        if (!secret.ok) {
+          return
+        }
+        expect(secret.value.type.type).toBe('kubernetes.io/tls')
+      })
+
+      it('should return docker-registry secret yaml for dry-run client', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create secret docker-registry regcred --docker-server=docker.io --docker-username=alice --docker-password=s3cr3t --dry-run=client -o yaml'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('kind: Secret')
+        expect(result.value).toContain('name: regcred')
+        expect(result.value).toContain('type: kubernetes.io/dockerconfigjson')
       })
     })
 

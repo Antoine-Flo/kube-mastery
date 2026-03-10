@@ -125,14 +125,14 @@ The typical workflow for using this technique looks like this:
 4. **Apply** the finalized manifest to the cluster
 
 ```mermaid
-flowchart LR
-    CMD["kubectl create / run\n--dry-run=client -o yaml"]
-    YAML["Generated YAML\n(saved to file)"]
-    EDIT["Edit the file\n(add resources, labels,\nenv vars, etc.)"]
-    APPLY["kubectl apply -f file.yaml"]
-    CLUSTER["Object created\nin cluster"]
+flowchart TB
+    CMD["kubectl create/run\n--dry-run=client -o yaml"]
+    YAML["YAML file"]
+    EDIT["Edit\n(labels, env, etc.)"]
+    APPLY["kubectl apply -f"]
+    CLUSTER["Cluster"]
 
-    CMD -->|"> output.yaml"| YAML
+    CMD -->|"> file.yaml"| YAML
     YAML --> EDIT
     EDIT --> APPLY
     APPLY --> CLUSTER

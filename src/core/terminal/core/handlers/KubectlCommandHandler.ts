@@ -71,7 +71,7 @@ export class KubectlCommandHandler implements CommandHandler {
       const redirectionError = parseRedirectionResult.ok
         ? 'invalid output redirection'
         : parseRedirectionResult.error
-      context.output.writeError(redirectionError)
+      context.output.writeOutput(redirectionError)
       return error(redirectionError)
     }
 
@@ -91,7 +91,7 @@ export class KubectlCommandHandler implements CommandHandler {
 
     if (parsedRedirection.outputFile != null) {
       if (!result.ok) {
-        context.output.writeError(result.error)
+        context.output.writeOutput(result.error)
         return result
       }
 
@@ -101,7 +101,7 @@ export class KubectlCommandHandler implements CommandHandler {
         outputToWrite
       )
       if (!writeResult.ok) {
-        context.output.writeError(writeResult.error)
+        context.output.writeOutput(writeResult.error)
         return error(writeResult.error)
       }
 
@@ -114,7 +114,7 @@ export class KubectlCommandHandler implements CommandHandler {
         context.output.writeOutput(result.value)
       }
     } else {
-      context.output.writeError(result.error)
+      context.output.writeOutput(result.error)
     }
 
     return result

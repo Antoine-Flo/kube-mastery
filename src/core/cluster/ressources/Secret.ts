@@ -14,6 +14,7 @@ import { convertYamlSecretType } from './yamlConverters'
 // ADT for Secret types - discriminated union prevents invalid states
 export type SecretType =
   | { type: 'Opaque' }
+  | { type: 'kubernetes.io/tls' }
   | { type: 'kubernetes.io/service-account-token'; serviceAccountName: string }
   | { type: 'kubernetes.io/dockerconfigjson'; dockerConfigJson: string }
 

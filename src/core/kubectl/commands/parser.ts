@@ -85,7 +85,18 @@ const FLAGS_REQUIRING_VALUES = [
   'target-port',
   'type',
   'name',
-  'node-port'
+  'node-port',
+  'tcp',
+  'external-name',
+  'from-literal',
+  'from-file',
+  'from-env-file',
+  'cert',
+  'key',
+  'docker-server',
+  'docker-username',
+  'docker-password',
+  'docker-email'
 ]
 // Note: 'filename' is required for apply/create, but 'f' and 'follow' are boolean for logs
 
@@ -172,6 +183,11 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     execCommand: ctx.execCommand,
     createImages: ctx.createImages,
     createCommand: ctx.createCommand,
+    createServiceType: ctx.createServiceType,
+    createSecretType: ctx.createSecretType,
+    createFromLiterals: ctx.createFromLiterals,
+    createFromFiles: ctx.createFromFiles,
+    createFromEnvFiles: ctx.createFromEnvFiles,
     runImage: ctx.runImage,
     runCommand: ctx.runCommand,
     runArgs: ctx.runArgs,
@@ -302,6 +318,21 @@ const extractName = (ctx: ParseContext): Result<ParseContext> => {
     return success(ctx)
   }
 
+  if (
+    ctx.action === 'create' &&
+    ctx.resource === 'services' &&
+    ctx.createServiceType != null
+  ) {
+    return success(ctx)
+  }
+  if (
+    ctx.action === 'create' &&
+    ctx.resource === 'secrets' &&
+    ctx.createSecretType != null
+  ) {
+    return success(ctx)
+  }
+
   // Actions with custom transformers parse name differently
   const actionsWithCustomParsing = [
     'exec',
@@ -340,7 +371,9 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
       ctx.tokens || [],
       ctx.runCommand,
       ctx.runArgs,
-      ctx.runHasSeparator
+      ctx.runHasSeparator,
+      ctx.createServiceType,
+      ctx.createSecretType
     )
     if (validationError) {
       return error(validationError)
@@ -358,7 +391,9 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
       ctx.tokens || [],
       ctx.runCommand,
       ctx.runArgs,
-      ctx.runHasSeparator
+      ctx.runHasSeparator,
+      ctx.createServiceType,
+      ctx.createSecretType
     )
     if (validationError) {
       return error(validationError)
@@ -378,7 +413,9 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
     ctx.tokens || [],
     ctx.runCommand,
     ctx.runArgs,
-    ctx.runHasSeparator
+    ctx.runHasSeparator,
+    ctx.createServiceType,
+    ctx.createSecretType
   )
   if (validationError) {
     return error(validationError)
@@ -515,13 +552,15 @@ const getConfigNamespaceFromFlags = (
  */
 const validateCommandSemantics = (
   action: Action,
-  _resource: Resource | undefined,
+  resource: Resource | undefined,
   name?: string,
   flags: Record<string, string | boolean> = {},
   tokens: string[] = [],
   runCommand?: string[],
   runArgs?: string[],
-  runHasSeparator?: boolean
+  runHasSeparator?: boolean,
+  createServiceType?: 'clusterip' | 'nodeport' | 'loadbalancer' | 'externalname',
+  createSecretType?: 'generic' | 'tls' | 'docker-registry'
 ): string | undefined => {
   const rawValidationError = validateGetRawSemantics(action, flags, tokens)
   if (rawValidationError !== undefined) {
@@ -580,6 +619,99 @@ const validateCommandSemantics = (
       dryRunFlag !== 'none'
     ) {
       return `error: Invalid dry-run value (${String(dryRunFlag)}). Must be "none", "server", or "client".`
+    }
+    if (resource === 'services') {
+      if (createServiceType == null) {
+        return 'create service requires one of: clusterip, nodeport, loadbalancer, externalname'
+      }
+      if (name == null || name.length === 0) {
+        return 'create service requires a service name'
+      }
+      const tcpFlag = flags['tcp']
+      const externalNameFlag = flags['external-name']
+      if (createServiceType === 'externalname') {
+        if (
+          typeof externalNameFlag !== 'string' ||
+          externalNameFlag.trim().length === 0
+        ) {
+          return 'create service externalname requires flag --external-name'
+        }
+        if (tcpFlag !== undefined) {
+          return 'create service externalname does not support flag --tcp'
+        }
+      } else {
+        if (typeof tcpFlag !== 'string' || tcpFlag.trim().length === 0) {
+          return 'create service requires flag --tcp'
+        }
+        if (externalNameFlag !== undefined) {
+          return `create service ${createServiceType} does not support flag --external-name`
+        }
+      }
+    }
+    if (resource === 'configmaps') {
+      if (name == null || name.length === 0) {
+        return 'create configmap requires a name'
+      }
+      const fromLiteralFlag = flags['from-literal']
+      if (
+        typeof fromLiteralFlag !== 'string' ||
+        fromLiteralFlag.trim().length === 0
+      ) {
+        return 'create configmap requires at least one --from-literal=key=value'
+      }
+    }
+    if (resource === 'secrets') {
+      if (createSecretType == null) {
+        return 'create secret requires one of: generic, tls, docker-registry'
+      }
+      if (name == null || name.length === 0) {
+        return 'create secret requires a name'
+      }
+      if (createSecretType === 'generic') {
+        const fromLiteralFlag = flags['from-literal']
+        const fromFileFlag = flags['from-file']
+        const fromEnvFileFlag = flags['from-env-file']
+        if (
+          fromLiteralFlag === undefined &&
+          fromFileFlag === undefined &&
+          fromEnvFileFlag === undefined
+        ) {
+          return 'create secret generic requires at least one of: --from-literal, --from-file, --from-env-file'
+        }
+      }
+      if (createSecretType === 'tls') {
+        const certFlag = flags.cert
+        const keyFlag = flags.key
+        if (typeof certFlag !== 'string' || certFlag.trim().length === 0) {
+          return 'create secret tls requires flag --cert'
+        }
+        if (typeof keyFlag !== 'string' || keyFlag.trim().length === 0) {
+          return 'create secret tls requires flag --key'
+        }
+      }
+      if (createSecretType === 'docker-registry') {
+        const dockerServerFlag = flags['docker-server']
+        const dockerUsernameFlag = flags['docker-username']
+        const dockerPasswordFlag = flags['docker-password']
+        if (
+          typeof dockerServerFlag !== 'string' ||
+          dockerServerFlag.trim().length === 0
+        ) {
+          return 'create secret docker-registry requires flag --docker-server'
+        }
+        if (
+          typeof dockerUsernameFlag !== 'string' ||
+          dockerUsernameFlag.trim().length === 0
+        ) {
+          return 'create secret docker-registry requires flag --docker-username'
+        }
+        if (
+          typeof dockerPasswordFlag !== 'string' ||
+          dockerPasswordFlag.trim().length === 0
+        ) {
+          return 'create secret docker-registry requires flag --docker-password'
+        }
+      }
     }
   }
   if (action === 'diff') {

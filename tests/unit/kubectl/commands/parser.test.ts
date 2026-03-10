@@ -84,6 +84,139 @@ describe('kubectl parser - create deployment', () => {
       )
     }
   })
+
+  it('should parse imperative create service clusterip', () => {
+    const result = parseCommand(
+      'kubectl create service clusterip my-svc --tcp=80:8080 -n staging'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('services')
+    expect(result.value.createServiceType).toBe('clusterip')
+    expect(result.value.name).toBe('my-svc')
+    expect(result.value.namespace).toBe('staging')
+  })
+
+  it('should reject create service when subtype is missing', () => {
+    const result = parseCommand('kubectl create service my-svc --tcp=80:8080')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'create service requires one of: clusterip, nodeport, loadbalancer, externalname'
+      )
+    }
+  })
+
+  it('should reject create service externalname without external-name flag', () => {
+    const result = parseCommand('kubectl create service externalname my-svc')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'create service externalname requires flag --external-name'
+      )
+    }
+  })
+
+  it('should parse create configmap from literals', () => {
+    const result = parseCommand(
+      'kubectl create configmap app-config --from-literal=LOG_LEVEL=info --from-literal=MODE=prod --dry-run=client -o yaml'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('configmaps')
+    expect(result.value.name).toBe('app-config')
+    expect(result.value.createFromLiterals).toEqual([
+      'LOG_LEVEL=info',
+      'MODE=prod'
+    ])
+  })
+
+  it('should parse create secret generic with mixed sources', () => {
+    const result = parseCommand(
+      'kubectl create secret generic mysecret --from-literal=password=s3cr3t --from-file=username=creds.txt --from-env-file=app.env --dry-run=client -o yaml'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('secrets')
+    expect(result.value.createSecretType).toBe('generic')
+    expect(result.value.name).toBe('mysecret')
+    expect(result.value.createFromLiterals).toEqual(['password=s3cr3t'])
+    expect(result.value.createFromFiles).toEqual(['username=creds.txt'])
+    expect(result.value.createFromEnvFiles).toEqual(['app.env'])
+  })
+
+  it('should parse create secret tls', () => {
+    const result = parseCommand(
+      'kubectl create secret tls tls-secret --cert=tls.crt --key=tls.key'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('secrets')
+    expect(result.value.createSecretType).toBe('tls')
+    expect(result.value.name).toBe('tls-secret')
+  })
+
+  it('should reject create secret without subtype', () => {
+    const result = parseCommand('kubectl create secret mysecret --from-literal=a=b')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'create secret requires one of: generic, tls, docker-registry'
+      )
+    }
+  })
+
+  it('should reject create secret tls when cert is missing', () => {
+    const result = parseCommand('kubectl create secret tls tls-secret --key=tls.key')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('create secret tls requires flag --cert')
+    }
+  })
+
+  it('should reject create secret generic when no source flags are provided', () => {
+    const result = parseCommand('kubectl create secret generic mysecret')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'create secret generic requires at least one of: --from-literal, --from-file, --from-env-file'
+      )
+    }
+  })
+
+  it('should reject create secret docker-registry when required flags are missing', () => {
+    const result = parseCommand(
+      'kubectl create secret docker-registry regcred --docker-server=docker.io --docker-username=alice'
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'create secret docker-registry requires flag --docker-password'
+      )
+    }
+  })
 })
 
 describe('kubectl parser - run', () => {

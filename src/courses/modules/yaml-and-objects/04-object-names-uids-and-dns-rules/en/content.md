@@ -112,11 +112,6 @@ flowchart LR
     SVC -->|"Kubernetes\ncreates"| DNS
     APP -->|"resolves"| DNS
     APP --> CONNECT
-
-    style SVC fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style DNS fill:#F5A623,color:#fff,stroke:#c77d00
-    style APP fill:#7ED321,color:#fff,stroke:#5a9c18
-    style CONNECT fill:#9B59B6,color:#fff,stroke:#7d3f9a
 ```
 
 Within the same namespace, applications can use a short name , just `web-app` , and DNS resolution will automatically expand it to the full form. Across namespaces, you need to use `web-app.production` or the fully qualified form.

@@ -90,10 +90,10 @@ describe('TerminalOutput', () => {
   })
 
   describe('writeError', () => {
-    it('should write error with "Error: " prefix and newline', () => {
+    it('should write error message with newline', () => {
       const output = createTerminalOutput(mockRenderer)
       output.writeError('something went wrong')
-      expect(writtenText).toBe('Error: something went wrong\r\n')
+      expect(writtenText).toBe('something went wrong\r\n')
     })
   })
 

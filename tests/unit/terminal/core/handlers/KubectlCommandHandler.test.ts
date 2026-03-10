@@ -161,6 +161,117 @@ describe('KubectlCommandHandler', () => {
       expect(deployment.ok).toBe(false)
     })
 
+    it('should redirect create service dry-run yaml output to a file', () => {
+      const result = handler.execute(
+        'kubectl create service nodeport my-svc --tcp=80:8080 --node-port=30080 --dry-run=client -o yaml > service.yaml',
+        context
+      )
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      const fileResult = context.fileSystem.readFile('service.yaml')
+      expect(fileResult.ok).toBe(true)
+      if (!fileResult.ok) {
+        return
+      }
+      expect(fileResult.value).toContain('kind: Service')
+      expect(fileResult.value).toContain('name: my-svc')
+      expect(fileResult.value).toContain('type: NodePort')
+      expect(fileResult.value).toContain('nodePort: 30080')
+      expect(fileResult.value).toContain('name: 80-8080')
+      expect(fileResult.value).toContain('loadBalancer: {}')
+
+      const service = context.clusterState.findService('my-svc', 'default')
+      expect(service.ok).toBe(false)
+    })
+
+    it('should redirect create configmap dry-run yaml output to a file', () => {
+      const result = handler.execute(
+        'kubectl create configmap app-config --from-literal=LOG_LEVEL=info --dry-run=client -o yaml > app-config.yaml',
+        context
+      )
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      const fileResult = context.fileSystem.readFile('app-config.yaml')
+      expect(fileResult.ok).toBe(true)
+      if (!fileResult.ok) {
+        return
+      }
+      expect(fileResult.value).toContain('kind: ConfigMap')
+      expect(fileResult.value).toContain('name: app-config')
+      expect(fileResult.value).toContain('LOG_LEVEL: info')
+    })
+
+    it('should redirect create secret generic dry-run yaml output to a file', () => {
+      const result = handler.execute(
+        'kubectl create secret generic mysecret --from-literal=password=s3cr3t --dry-run=client -o yaml > mysecret.yaml',
+        context
+      )
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      const fileResult = context.fileSystem.readFile('mysecret.yaml')
+      expect(fileResult.ok).toBe(true)
+      if (!fileResult.ok) {
+        return
+      }
+      expect(fileResult.value).toContain('kind: Secret')
+      expect(fileResult.value).toContain('name: mysecret')
+      expect(fileResult.value).not.toContain('type: Opaque')
+    })
+
+    it('should redirect create secret tls dry-run yaml output to a file', () => {
+      context.fileSystem.createFile('tls.crt')
+      context.fileSystem.writeFile('tls.crt', 'CERTDATA')
+      context.fileSystem.createFile('tls.key')
+      context.fileSystem.writeFile('tls.key', 'KEYDATA')
+
+      const result = handler.execute(
+        'kubectl create secret tls tls-secret --cert=tls.crt --key=tls.key --dry-run=client -o yaml > tls-secret.yaml',
+        context
+      )
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      const fileResult = context.fileSystem.readFile('tls-secret.yaml')
+      expect(fileResult.ok).toBe(true)
+      if (!fileResult.ok) {
+        return
+      }
+      expect(fileResult.value).toContain('kind: Secret')
+      expect(fileResult.value).toContain('name: tls-secret')
+      expect(fileResult.value).toContain('type: kubernetes.io/tls')
+    })
+
+    it('should redirect create secret docker-registry dry-run yaml output to a file', () => {
+      const result = handler.execute(
+        'kubectl create secret docker-registry regcred --docker-server=docker.io --docker-username=alice --docker-password=s3cr3t --dry-run=client -o yaml > regcred.yaml',
+        context
+      )
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      const fileResult = context.fileSystem.readFile('regcred.yaml')
+      expect(fileResult.ok).toBe(true)
+      if (!fileResult.ok) {
+        return
+      }
+      expect(fileResult.value).toContain('kind: Secret')
+      expect(fileResult.value).toContain('name: regcred')
+      expect(fileResult.value).toContain('type: kubernetes.io/dockerconfigjson')
+    })
+
     it('should not write redirected file when kubectl command fails', () => {
       const result = handler.execute(
         'kubectl describe pod missing-pod > missing.yaml',

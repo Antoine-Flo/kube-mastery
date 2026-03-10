@@ -47,6 +47,11 @@ export interface ParsedCommand {
   port?: number // For create deployment: --port=N
   createImages?: string[] // For create deployment: repeated --image flags
   createCommand?: string[] // For create deployment: command after --
+  createServiceType?: 'clusterip' | 'nodeport' | 'loadbalancer' | 'externalname' // For create service: subtype token after "service"
+  createSecretType?: 'generic' | 'tls' | 'docker-registry' // For create secret: subtype token after "secret"
+  createFromLiterals?: string[] // For create configmap: repeated --from-literal values
+  createFromFiles?: string[] // For create secret generic: repeated --from-file values
+  createFromEnvFiles?: string[] // For create secret generic: repeated --from-env-file values
   explainPath?: string[] // For kubectl explain: field path segments after resource
   runImage?: string // For kubectl run: --image value
   runCommand?: string[] // For kubectl run: command after --

@@ -17,6 +17,64 @@ import {
   startTimer
 } from '../../../lib/observability/otel'
 import { getSupabaseServer } from '../../../lib/supabase'
+import { CONFIG } from '../../../config'
+
+const refundRateLimitStore = new Map<
+  string,
+  { count: number; windowStartedAt: number }
+>()
+
+function getClientIp(request: Request): string | null {
+  const forwardedFor = request.headers.get('x-forwarded-for')
+  if (forwardedFor != null && forwardedFor.trim() !== '') {
+    const firstIp = forwardedFor.split(',')[0]
+    const normalizedIp = firstIp.trim()
+    if (normalizedIp !== '') {
+      return normalizedIp
+    }
+  }
+  const realIp = request.headers.get('x-real-ip')
+  if (realIp != null && realIp.trim() !== '') {
+    return realIp.trim()
+  }
+  return null
+}
+
+function getRateLimitKey(args: { userId: string; clientIp: string | null }): string {
+  if (args.clientIp != null && args.clientIp !== '') {
+    return `user:${args.userId}:ip:${args.clientIp}`
+  }
+  return `user:${args.userId}`
+}
+
+function isRateLimited(args: {
+  key: string
+  now: number
+  windowMs: number
+  maxRequests: number
+}): boolean {
+  const current = refundRateLimitStore.get(args.key)
+  if (current == null) {
+    refundRateLimitStore.set(args.key, {
+      count: 1,
+      windowStartedAt: args.now
+    })
+    return false
+  }
+  if (args.now - current.windowStartedAt >= args.windowMs) {
+    refundRateLimitStore.set(args.key, {
+      count: 1,
+      windowStartedAt: args.now
+    })
+    return false
+  }
+  if (current.count >= args.maxRequests) {
+    return true
+  }
+  current.count += 1
+  refundRateLimitStore.set(args.key, current)
+  return false
+}
 
 export const POST: APIRoute = async ({
   request,
@@ -36,6 +94,12 @@ export const POST: APIRoute = async ({
     url.searchParams.get('redirect'),
     '/en/profile'
   )
+  const formData = await request.formData()
+  const departureReasonRaw = formData.get('departureReason')
+  const departureReason =
+    typeof departureReasonRaw === 'string'
+      ? departureReasonRaw.trim().slice(0, 1500)
+      : ''
 
   const supabase = getSupabaseServer(locals, request, cookies)
   const {
@@ -68,6 +132,30 @@ export const POST: APIRoute = async ({
     locals,
     userId: user.id
   })
+  const rateLimitNow = Date.now()
+  const clientIp = getClientIp(request)
+  const rateLimitKey = getRateLimitKey({ userId: user.id, clientIp })
+  const isLimited = isRateLimited({
+    key: rateLimitKey,
+    now: rateLimitNow,
+    windowMs: CONFIG.billing.refundRateLimit.windowMs,
+    maxRequests: CONFIG.billing.refundRateLimit.maxRequests
+  })
+  if (isLimited) {
+    emitApiLog({
+      level: 'warn',
+      event: 'billing_refund_failed',
+      message: 'Refund request failed: rate limit exceeded',
+      context,
+      statusCode: 429,
+      durationMs: getDurationMs(startedAt),
+      errorCode: 'rate_limited'
+    })
+    if (isAjax) {
+      return actionJsonError({ ok: false, code: 'rate_limited' }, 429)
+    }
+    return redirect(addFlashParam(redirectTo, 'billing_error', 'rate_limited'))
+  }
   if (subscriptionResult.error != null) {
     emitApiLog({
       level: 'error',
@@ -103,24 +191,46 @@ export const POST: APIRoute = async ({
   }
 
   const refundResult = await createRefundRequestMessage({
-    supabase,
+    locals,
     userId: user.id,
+    userEmail: user.email ?? null,
     paddleSubscriptionId: subscriptionResult.data.paddleSubscriptionId,
     status: subscriptionResult.data.status,
-    planTier: subscriptionResult.data.planTier
+    planTier: subscriptionResult.data.planTier,
+    departureReason
   })
+
   if (!refundResult.ok) {
+    const isMissingApiKey = refundResult.reason === 'missing_sweego_api_key'
+    const isEmailChannelDisabled =
+      refundResult.reason === 'sweego_email_channel_disabled'
+    const failureStatusCode = isMissingApiKey ? 500 : 400
+    const failureErrorCode = isMissingApiKey
+      ? 'missing_sweego_api_key'
+      : isEmailChannelDisabled
+        ? 'sweego_email_channel_disabled'
+        : 'refund_failed'
+
     emitApiLog({
       level: 'error',
       event: 'billing_refund_failed',
       message: 'Refund request failed on provider call',
       context,
-      statusCode: 400,
+      statusCode: failureStatusCode,
       durationMs: getDurationMs(startedAt),
-      errorCode: 'refund_failed'
+      errorCode: failureErrorCode,
+      attributes: {
+        refund_reason: refundResult.reason,
+        provider_status: refundResult.providerStatus ?? -1,
+        provider_error_excerpt:
+          refundResult.providerErrorExcerpt ?? refundResult.error
+      }
     })
     if (isAjax) {
-      return actionJsonError({ ok: false, code: 'refund_failed' }, 400)
+      return actionJsonError(
+        { ok: false, code: 'refund_failed' },
+        failureStatusCode
+      )
     }
     return redirect(addFlashParam(redirectTo, 'billing_error', 'refund_failed'))
   }
@@ -128,7 +238,7 @@ export const POST: APIRoute = async ({
   emitApiLog({
     level: 'info',
     event: 'billing_refund_succeeded',
-    message: 'Refund request stored',
+    message: 'Refund request sent',
     context,
     statusCode: 200,
     durationMs: getDurationMs(startedAt)

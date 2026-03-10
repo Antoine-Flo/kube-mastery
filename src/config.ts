@@ -18,6 +18,23 @@ export const CONFIG = {
         PRO_ONETIME: 'pri_01kk8zz1wknzpxrbg811wcxmxs',
         DISCOUNT_ONETIME: 'pri_01kk8zzkxbjemkbhvtkcbz0cg2'
       }
+    },
+    refundRateLimit: {
+      windowMs: 10 * 60 * 1000,
+      maxRequests: 2
+    }
+  },
+  contact: {
+    email: {
+      to: 'antoineflouzat@mailbox.org',
+      from: {
+        name: 'KubeMastery Support',
+        email: 'no-reply@kubemastery.com'
+      }
+    },
+    rateLimit: {
+      windowMs: 5 * 60 * 1000,
+      maxRequests: 3
     }
   },
   cluster: {

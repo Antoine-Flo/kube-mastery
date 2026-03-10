@@ -38,7 +38,7 @@ export interface TerminalOutput {
   /** Écrit plusieurs lignes avec sauts de ligne entre chaque */
   writeLines(lines: string[]): void
 
-  /** Écrit un message d'erreur formaté avec préfixe "Error: " */
+  /** Écrit un message d'erreur avec saut de ligne */
   writeError(message: string): void
 
   /** Écrit une sortie de commande (avec saut de ligne si non vide) */
@@ -84,7 +84,7 @@ export const createTerminalOutput = (
     },
 
     writeError(message: string): void {
-      renderer.write(`Error: ${message}${EOL}`)
+      renderer.write(`${message}${EOL}`)
     },
 
     writeOutput(output: string): void {
