@@ -329,6 +329,31 @@ const KIND_REFERENCE_BY_RESOURCE: Record<Resource, string> = {
   persistentvolumeclaims: 'persistentvolumeclaim'
 }
 
+const PLURAL_KIND_REFERENCE_BY_RESOURCE: Record<Resource, string> = {
+  all: 'resources',
+  pods: 'pods',
+  configmaps: 'configmaps',
+  secrets: 'secrets',
+  nodes: 'nodes',
+  replicasets: 'replicasets.apps',
+  daemonsets: 'daemonsets.apps',
+  deployments: 'deployments.apps',
+  services: 'services',
+  ingresses: 'ingresses.networking.k8s.io',
+  ingressclasses: 'ingressclasses.networking.k8s.io',
+  namespaces: 'namespaces',
+  persistentvolumes: 'persistentvolumes',
+  persistentvolumeclaims: 'persistentvolumeclaims'
+}
+
+const buildNotFoundErrorMessage = (
+  resourceType: Resource,
+  name: string
+): string => {
+  const pluralReference = PLURAL_KIND_REFERENCE_BY_RESOURCE[resourceType]
+  return `Error from server (NotFound): ${pluralReference} "${name}" not found`
+}
+
 const buildNameOutput = (
   resourceType: Resource,
   resources: ResourceWithMetadata[]
@@ -769,16 +794,34 @@ export const handleGet = (
     outputDirective.kind === 'jsonpath'
   const items = handler.getItems(state)
   const isClusterScoped = handler.isClusterScoped || false
-  const filtered = applyFilters(
+  const queryNames =
+    parsed.names != null && parsed.names.length > 0 ? parsed.names : undefined
+  const baseFiltered = applyFilters(
     items,
     filterNamespace,
     parsed.selector,
     isClusterScoped,
-    parsed.name
+    queryNames == null ? parsed.name : undefined
   )
+  const missingNameErrors: string[] = []
+  const filtered = queryNames != null
+    ? queryNames.reduce<typeof baseFiltered>((acc, name) => {
+        const matched = baseFiltered.find((resource) => {
+          return resource.metadata.name === name
+        })
+        if (matched == null) {
+          missingNameErrors.push(buildNotFoundErrorMessage(resourceType, name))
+          return acc
+        }
+        return [...acc, matched]
+      }, [])
+    : baseFiltered
 
   // Empty result (use effectiveNamespace for message unless --all-namespaces was explicitly set)
   if (filtered.length === 0) {
+    if (missingNameErrors.length > 0) {
+      return missingNameErrors.join('\n')
+    }
     if (resourceType === 'namespaces' && parsed.name !== undefined) {
       return `Error from server (NotFound): namespaces "${parsed.name}" not found`
     }
@@ -803,7 +846,8 @@ export const handleGet = (
   const sanitized = filtered.map(sanitizeForOutput)
 
   if (isStructuredOutput) {
-    const asSingleObject = parsed.name !== undefined
+    const asSingleObject =
+      queryNames != null ? queryNames.length === 1 : parsed.name !== undefined
     const structuredResourceType = resourceType as StructuredResource
     const shaped = shapeStructuredItemsForOutput(
       structuredResourceType,
@@ -819,11 +863,18 @@ export const handleGet = (
     if (!renderResult.ok) {
       return renderResult.error
     }
+    if (missingNameErrors.length > 0) {
+      return `${renderResult.value}\n${missingNameErrors.join('\n')}`
+    }
     return renderResult.value
   }
 
   if (outputDirective.kind === 'name') {
-    return buildNameOutput(resourceType, filtered)
+    const nameOutput = buildNameOutput(resourceType, filtered)
+    if (missingNameErrors.length > 0) {
+      return `${nameOutput}\n${missingNameErrors.join('\n')}`
+    }
+    return nameOutput
   }
 
   // Default: table format
@@ -893,11 +944,15 @@ export const handleGet = (
       }
       return defaultRow
     })
-    return formatTable(
+    const tableOutput = formatTable(
       headersAllNs,
       rowsAllNs,
       withKubectlTableSpacing({ align: buildLeftAlign(headersAllNs.length) })
     )
+    if (missingNameErrors.length > 0) {
+      return `${tableOutput}\n${missingNameErrors.join('\n')}`
+    }
+    return tableOutput
   }
 
   if (allNamespacesFlag && !isClusterScoped) {
@@ -923,11 +978,15 @@ export const handleGet = (
     if (showLabels) {
       headers.push('labels')
     }
-    return formatTable(
+    const tableOutput = formatTable(
       headers,
       rows,
       withKubectlTableSpacing({ align: buildLeftAlign(headers.length) })
     )
+    if (missingNameErrors.length > 0) {
+      return `${tableOutput}\n${missingNameErrors.join('\n')}`
+    }
+    return tableOutput
   }
 
   // Handle wide format
@@ -945,11 +1004,15 @@ export const handleGet = (
     if (showLabels) {
       headers.push('labels')
     }
-    return formatTable(
+    const tableOutput = formatTable(
       headers,
       rows,
       withKubectlTableSpacing({ align: buildLeftAlign(headers.length) })
     )
+    if (missingNameErrors.length > 0) {
+      return `${tableOutput}\n${missingNameErrors.join('\n')}`
+    }
+    return tableOutput
   }
 
   const rowsSource =
@@ -974,7 +1037,11 @@ export const handleGet = (
   const tableOptions = withKubectlTableSpacing({
     align: buildLeftAlign(headers.length)
   })
-  return formatTable(headers, rows, tableOptions)
+  const tableOutput = formatTable(headers, rows, tableOptions)
+  if (missingNameErrors.length > 0) {
+    return `${tableOutput}\n${missingNameErrors.join('\n')}`
+  }
+  return tableOutput
 }
 
 type GetAllResourceType =

@@ -917,6 +917,34 @@ data:
         expect(result.ok).toBe(true)
       })
 
+      it('should report not found per extra positional name in get', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const created = executor.execute(
+          'kubectl create deployment my-app --image=nginx'
+        )
+        expect(created.ok).toBe(true)
+
+        const result = executor.execute(
+          "kubectl get deployments my-app o jsonpath='{.metadata.labels}'"
+        )
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+        expect(result.value).toContain('my-app')
+        expect(result.value).toContain(
+          'Error from server (NotFound): deployments.apps "o" not found'
+        )
+        expect(result.value).toContain(
+          `Error from server (NotFound): deployments.apps "jsonpath='{.metadata.labels}'" not found`
+        )
+      })
+
       it('should handle "kubectl get services"', () => {
         const executor = createKubectlExecutor(
           clusterState,

@@ -143,7 +143,6 @@ The API server will reject this with a validation error explaining the naming co
 ```bash
 kubectl create deployment my-app --image=nginx
 kubectl get deployment my-app -o jsonpath='{.metadata.uid}'
-echo ""
 ```
 
 Note the UID. It's a UUID assigned at creation time.
@@ -154,7 +153,6 @@ Note the UID. It's a UUID assigned at creation time.
 kubectl delete deployment my-app
 kubectl create deployment my-app --image=nginx
 kubectl get deployment my-app -o jsonpath='{.metadata.uid}'
-echo ""
 ```
 
 Compare the new UID to the previous one. Same name, completely different identity.
@@ -172,16 +170,9 @@ The DNS name for this service is `my-app.default.svc.cluster.local`. Any Pod in 
 
 ```bash
 kubectl get deployment my-app -o jsonpath='{.metadata.labels}'
-echo ""
 ```
 
-**6. Explore name and UID in full YAML:**
-
-```bash
-kubectl get deployment my-app -o yaml | grep -E "name:|uid:|namespace:"
-```
-
-**7. Clean up:**
+**6. Clean up:**
 
 ```bash
 kubectl delete deployment my-app

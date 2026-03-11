@@ -169,6 +169,12 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
   }
 
   const normalizedFlags = ctx.normalizedFlags || ctx.flags
+  const parsedNames = getNamesFromTokens(
+    ctx.action,
+    ctx.tokens || [],
+    normalizedFlags,
+    ctx.resourceTokenIndex
+  )
 
   return success({
     action: ctx.action,
@@ -176,6 +182,7 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     resource: ctx.resource, // May be undefined for commands like 'version'
     rawPath: getRawPathFromFlags(normalizedFlags),
     name: ctx.name,
+    names: parsedNames,
     namespace: getNamespaceFromFlags(normalizedFlags),
     output: getOutputFromFlags(normalizedFlags),
     selector: getSelectorFromFlags(normalizedFlags),
@@ -520,6 +527,44 @@ const getRawPathFromFlags = (
     return raw
   }
   return undefined
+}
+
+const getNamesFromTokens = (
+  action: Action,
+  tokens: string[],
+  flags: Record<string, string | boolean>,
+  resourceTokenIndex?: number
+): string[] | undefined => {
+  if (action !== 'get') {
+    return undefined
+  }
+  if (getRawPathFromFlags(flags) !== undefined) {
+    return undefined
+  }
+  if (resourceTokenIndex == null) {
+    return undefined
+  }
+
+  const names: string[] = []
+  for (let index = resourceTokenIndex + 1; index < tokens.length; index++) {
+    const token = tokens[index]
+    if (token === '--') {
+      break
+    }
+    if (token.startsWith('-')) {
+      const flagName = getFlagName(token)
+      if (FLAGS_REQUIRING_VALUES.includes(flagName) && !token.includes('=')) {
+        index = index + 1
+      }
+      continue
+    }
+    names.push(token)
+  }
+
+  if (names.length === 0) {
+    return undefined
+  }
+  return names
 }
 
 const getConfigCurrentFromFlags = (

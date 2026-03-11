@@ -531,7 +531,27 @@ describe('kubectl parser - get and delete flag positions', () => {
 
     expect(result.value.resource).toBe('pods')
     expect(result.value.name).toBe('coredns-abc')
+    expect(result.value.names).toEqual(['coredns-abc'])
     expect(result.value.namespace).toBe('kube-system')
+  })
+
+  it('should parse all positional names for get command', () => {
+    const result = parseCommand(
+      "kubectl get deployments my-app o jsonpath='{.metadata.labels}'"
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('deployments')
+    expect(result.value.name).toBe('my-app')
+    expect(result.value.names).toEqual([
+      'my-app',
+      'o',
+      "jsonpath='{.metadata.labels}'"
+    ])
   })
 
   it('should parse get show-labels flag', () => {
