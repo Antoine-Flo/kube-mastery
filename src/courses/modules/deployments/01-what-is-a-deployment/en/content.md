@@ -32,10 +32,6 @@ graph TB
     RS2 --> P1
     RS2 --> P2
     RS2 --> P3
-
-    style RS1 fill:#f5f5f5,stroke:#aaa,color:#999
-    style DEP fill:#326ce5,color:#fff
-    style RS2 fill:#326ce5,color:#fff
 ```
 
 ## What a Deployment Adds

@@ -117,8 +117,6 @@ graph LR
     EP --> P2["Pod\napp=web\n10.0.0.6"]
     EP --> P3["Pod\napp=web\n10.0.0.7"]
     SVC -.-|no match| P4["Pod\napp=api"]
-
-    style P4 fill:#f5f5f5,stroke:#ccc,color:#999
 ```
 
 The design is entirely dynamic: scale from 3 Pods to 10 and the Endpoints list grows automatically. A Pod crashes and within seconds it's removed from the list. The Service itself never changes, only its backing Endpoints do.

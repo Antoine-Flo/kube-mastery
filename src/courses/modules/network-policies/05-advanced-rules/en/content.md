@@ -114,12 +114,6 @@ graph TD
     P3 -->|contributes to| B
 
     B --> ALLOW["Effective allowed traffic:\n• Ingress from frontend on :8080\n• Ingress from monitoring on :9090\n• Egress to database on :5432\n• Egress to DNS on :53\n• All other traffic blocked"]
-
-    style B fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style P1 fill:#7ED321,color:#fff,stroke:#5a9c18
-    style P2 fill:#F5A623,color:#fff,stroke:#c77d00
-    style P3 fill:#9B59B6,color:#fff,stroke:#7d3f9a
-    style ALLOW fill:#1ABC9C,color:#fff,stroke:#148f77
 ```
 
 There's no way to use one policy to "block" what another policy has allowed. Once traffic is permitted by any policy, it goes through.

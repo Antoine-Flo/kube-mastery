@@ -46,15 +46,6 @@ graph LR
         C2["Other Pod"] -->|"❌ blocked"| B2
         D2["Any other source"] -->|"❌ blocked"| B2
     end
-
-    style A1 fill:#7ED321,color:#fff,stroke:#5a9c18
-    style B1 fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style C1 fill:#F5A623,color:#fff,stroke:#c77d00
-    style D1 fill:#9B59B6,color:#fff,stroke:#7d3f9a
-    style A2 fill:#7ED321,color:#fff,stroke:#5a9c18
-    style B2 fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style C2 fill:#E74C3C,color:#fff,stroke:#b03a2e
-    style D2 fill:#E74C3C,color:#fff,stroke:#b03a2e
 ```
 
 ## Policies Are Additive

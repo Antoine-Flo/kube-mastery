@@ -87,16 +87,6 @@ graph TD
         H["Container restart\n✅ Volume survives"]
         I["Pod deletion\n❌ emptyDir gone\n✅ PersistentVolume survives"]
     end
-
-    style A fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style B fill:#7ED321,color:#fff,stroke:#5a9c18
-    style C fill:#F5A623,color:#fff,stroke:#c77d00
-    style D fill:#E74C3C,color:#fff,stroke:#b03a2e
-    style E fill:#F5A623,color:#fff,stroke:#c77d00
-    style F fill:#E74C3C,color:#fff,stroke:#b03a2e
-    style G fill:#95A5A6,color:#fff,stroke:#7f8c8d
-    style H fill:#7ED321,color:#fff,stroke:#5a9c18
-    style I fill:#9B59B6,color:#fff,stroke:#7d3f9a
 ```
 
 ## Types of Volumes You'll Encounter

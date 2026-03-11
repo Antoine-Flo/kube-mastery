@@ -63,8 +63,6 @@ graph TB
     SVC --> P1
     SVC --> P2
     SVC --> P3
-
-    style SVC fill:#326ce5,color:#fff
 ```
 
 ## Accessing the Service

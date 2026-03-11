@@ -46,8 +46,6 @@ graph TB
     SVC -->|"load balanced"| P1
     SVC -->|"load balanced"| P2
     SVC -->|"load balanced"| P3
-
-    style SVC fill:#326ce5,color:#fff
 ```
 
 When one of those Pods is replaced , say Pod `10.244.1.5` becomes `10.244.1.9` after a restart , the Service automatically updates its internal routing. The client doesn't notice. It still sends requests to `web-service`, and the Service figures out which Pods are healthy and available behind the scenes.

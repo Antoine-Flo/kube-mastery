@@ -106,10 +106,6 @@ flowchart LR
     Context -->|"Default namespace\n(no -n flag)"| NS_dev["dev namespace"]
     Context -->|"-n production\n(explicit override)"| NS_prod["production namespace"]
     Context -->|"-A flag"| ALL["All namespaces"]
-
-    style NS_dev fill:#d4edda,stroke:#28a745
-    style NS_prod fill:#fff3cd,stroke:#ffc107
-    style ALL fill:#d1ecf1,stroke:#17a2b8
 ```
 
 The context sets your "home base." The `-n` flag is an explicit override. The `-A` flag ignores the context namespace entirely and queries everything.

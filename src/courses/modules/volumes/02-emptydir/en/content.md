@@ -76,10 +76,6 @@ graph LR
         W -->|"writes to"| V
         V -->|"read by"| R
     end
-
-    style W fill:#7ED321,color:#fff,stroke:#5a9c18
-    style R fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style V fill:#F5A623,color:#fff,stroke:#c77d00
 ```
 
 The volume is the single source of truth. There's no network call, no serialization overhead, no API to agree on, just a shared filesystem path.

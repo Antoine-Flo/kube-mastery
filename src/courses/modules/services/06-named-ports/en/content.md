@@ -77,8 +77,6 @@ graph LR
 
     SVC -->|"looks up name"| RESOLVE
     RESOLVE -->|"forwards to"| POD
-
-    style RESOLVE fill:#f0f4ff,stroke:#326ce5
 ```
 
 ## Named Ports Beyond Services

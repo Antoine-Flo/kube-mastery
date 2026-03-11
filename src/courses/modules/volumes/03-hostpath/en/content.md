@@ -77,9 +77,6 @@ graph TD
     end
 
     NL <-->|"hostPath volume\nsame actual files"| C
-
-    style NL fill:#F5A623,color:#fff,stroke:#c77d00
-    style C fill:#4A90D9,color:#fff,stroke:#2c6fad
 ```
 
 The arrows go both ways intentionally: the container can read _and write_ to the host path, unless you add `readOnly: true` to the volumeMount. This is a crucial security consideration.

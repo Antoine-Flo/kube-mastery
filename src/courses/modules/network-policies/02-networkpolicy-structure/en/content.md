@@ -178,21 +178,6 @@ graph TD
     EG --> EGR["Rule (item in list)"]
     EGR --> TO["to[]\nAllowed destinations"]
     EGR --> PORTS2["ports[]"]
-
-    style NP fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style PS fill:#7ED321,color:#fff,stroke:#5a9c18
-    style PT fill:#7ED321,color:#fff,stroke:#5a9c18
-    style IG fill:#F5A623,color:#fff,stroke:#c77d00
-    style EG fill:#9B59B6,color:#fff,stroke:#7d3f9a
-    style IGR fill:#F5A623,color:#fff,stroke:#c77d00
-    style EGR fill:#9B59B6,color:#fff,stroke:#7d3f9a
-    style FROM fill:#E74C3C,color:#fff,stroke:#b03a2e
-    style TO fill:#E74C3C,color:#fff,stroke:#b03a2e
-    style PORTS fill:#1ABC9C,color:#fff,stroke:#148f77
-    style PORTS2 fill:#1ABC9C,color:#fff,stroke:#148f77
-    style PS2 fill:#BDC3C7,color:#333,stroke:#95a5a6
-    style NS2 fill:#BDC3C7,color:#333,stroke:#95a5a6
-    style IP2 fill:#BDC3C7,color:#333,stroke:#95a5a6
 ```
 
 ## Ports: Restricting Further

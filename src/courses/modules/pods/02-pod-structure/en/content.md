@@ -187,15 +187,6 @@ graph TD
     Containers --> ContFields["• name\n• image\n• ports[]\n• env[]\n• resources\n  (requests + limits)\n• volumeMounts[]"]
 
     Volumes --> VolTypes["• emptyDir\n• configMap\n• secret\n• persistentVolumeClaim\n• hostPath"]
-
-    style PodSpec fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style IC fill:#9B59B6,color:#fff,stroke:#7d3f9a
-    style Containers fill:#7ED321,color:#fff,stroke:#5a9c18
-    style Volumes fill:#F5A623,color:#fff,stroke:#c77d00
-    style RP fill:#E74C3C,color:#fff,stroke:#c0392b
-    style Sched fill:#1ABC9C,color:#fff,stroke:#17a589
-    style ContFields fill:#ecf0f1,color:#333,stroke:#bdc3c7
-    style VolTypes fill:#ecf0f1,color:#333,stroke:#bdc3c7
 ```
 
 ## Hands-On Practice

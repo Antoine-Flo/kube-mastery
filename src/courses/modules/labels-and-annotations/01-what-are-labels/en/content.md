@@ -49,9 +49,6 @@ graph LR
     SVC -->|label match| P2["Pod\napp=web\nenv=prod"]
     SVC -.-|no match| P3["Pod\napp=api\nenv=prod"]
     SVC -.-|no match| P4["Pod\napp=web-v2\nenv=staging"]
-
-    style P3 fill:#f5f5f5,stroke:#ccc,color:#999
-    style P4 fill:#f5f5f5,stroke:#ccc,color:#999
 ```
 
 The Service sees four Pods in the namespace but only forwards traffic to the two that carry `app=web`. The others are invisible to it.

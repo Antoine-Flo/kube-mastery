@@ -70,9 +70,6 @@ graph TB
     SVC --> P1
     SVC --> P2
     SVC --> P3
-
-    style LB fill:#ff9900,color:#fff
-    style SVC fill:#326ce5,color:#fff
 ```
 
 The cloud load balancer health-checks the nodes at the NodePort level. If a Node becomes unhealthy, the load balancer stops sending traffic to it , providing resilience that bare NodePort doesn't offer. This is one of the key advantages over using NodePort directly.

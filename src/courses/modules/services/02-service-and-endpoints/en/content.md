@@ -38,9 +38,6 @@ graph TB
     KP -->|"programs iptables/IPVS"| P1
     KP -->|"programs iptables/IPVS"| P2
     KP -->|"programs iptables/IPVS"| P3
-
-    style SVC fill:#326ce5,color:#fff
-    style EP fill:#326ce5,color:#fff
 ```
 
 ## Readiness Probes and Endpoints: Only Ready Pods Get Traffic

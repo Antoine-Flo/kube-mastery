@@ -92,9 +92,6 @@ graph TB
     RS --> P1
     RS --> P2
     RS --> P3
-
-    style DEP fill:#326ce5,color:#fff
-    style RS fill:#326ce5,color:#fff
 ```
 
 ## Describing the Deployment

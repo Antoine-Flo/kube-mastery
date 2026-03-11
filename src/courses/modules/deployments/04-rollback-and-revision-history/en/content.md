@@ -81,9 +81,6 @@ graph LR
     R1 -->|"set image 1.26"| R2
     R2 -->|"set image 1.27"| R3
     R3 -->|"rollout undo"| R4
-
-    style R3 fill:#fee,stroke:#c00
-    style R4 fill:#efe,stroke:#090
 ```
 
 Notice in the diagram above that "undo" doesn't rewind the revision counter, it creates a forward revision that reuses an old ReplicaSet. This is important to understand when you're reading `rollout history` after a rollback.

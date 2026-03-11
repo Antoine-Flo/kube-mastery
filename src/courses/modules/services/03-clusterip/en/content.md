@@ -71,8 +71,6 @@ graph LR
     VIP -->|"iptables DNAT\n(random selection)"| PB1
     VIP -.->|"or"| PB2
     VIP -.->|"or"| PB3
-
-    style VIP fill:#f0f4ff,stroke:#326ce5,stroke-dasharray:4
 ```
 
 ## Reaching a ClusterIP Service from Inside the Cluster

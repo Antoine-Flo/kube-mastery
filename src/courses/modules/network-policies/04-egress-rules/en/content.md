@@ -84,12 +84,6 @@ graph TD
     B -->|"✅ UDP/TCP:53"| DNS["CoreDNS\n(kube-system namespace)"]
     B -->|"❌ blocked"| EXT["External Internet\napi.example.com"]
     B -->|"❌ blocked"| OTHER["Other Cluster Services\n(payment, auth, etc.)"]
-
-    style B fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style DB fill:#7ED321,color:#fff,stroke:#5a9c18
-    style DNS fill:#F5A623,color:#fff,stroke:#c77d00
-    style EXT fill:#E74C3C,color:#fff,stroke:#b03a2e
-    style OTHER fill:#E74C3C,color:#fff,stroke:#b03a2e
 ```
 
 ## The Deny-All Egress Pattern

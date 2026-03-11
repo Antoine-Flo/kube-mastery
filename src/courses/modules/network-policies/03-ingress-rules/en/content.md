@@ -107,12 +107,6 @@ graph LR
     M -->|"✅ port 8080"| B
     O -->|"❌ blocked"| B
     EXT -->|"❌ blocked"| B
-
-    style F fill:#7ED321,color:#fff,stroke:#5a9c18
-    style M fill:#7ED321,color:#fff,stroke:#5a9c18
-    style O fill:#E74C3C,color:#fff,stroke:#b03a2e
-    style EXT fill:#E74C3C,color:#fff,stroke:#b03a2e
-    style B fill:#4A90D9,color:#fff,stroke:#2c6fad
 ```
 
 ## The Deny-All Ingress Pattern

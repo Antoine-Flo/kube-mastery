@@ -71,14 +71,6 @@ flowchart TD
     Q1 -->|"code ≠ 0\n(failure)"| AlwaysF["Always → Restart"]
     Q1 -->|"code ≠ 0\n(failure)"| OnFailureF["OnFailure → Restart"]
     Q1 -->|"code ≠ 0\n(failure)"| NeverF["Never → Do NOT restart\n(Pod becomes Failed)"]
-
-    style Exit fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style Always0 fill:#7ED321,color:#fff,stroke:#5a9c18
-    style OnFailure0 fill:#F5A623,color:#fff,stroke:#c77d00
-    style Never0 fill:#E74C3C,color:#fff,stroke:#c0392b
-    style AlwaysF fill:#7ED321,color:#fff,stroke:#5a9c18
-    style OnFailureF fill:#F5A623,color:#fff,stroke:#c77d00
-    style NeverF fill:#E74C3C,color:#fff,stroke:#c0392b
 ```
 
 ## The Exponential Backoff: CrashLoopBackOff
