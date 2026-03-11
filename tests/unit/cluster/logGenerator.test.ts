@@ -34,10 +34,10 @@ describe('LogGenerator', () => {
       const logs = generateLogs('nginx:latest', 5)
 
       expect(logs).toHaveLength(5)
-      const hasEntrypointContent = logs.some((log) => {
-        return log.includes('/docker-entrypoint.sh')
+      const hasStartupNotice = logs.some((log) => {
+        return log.includes('[notice] 1#1: start worker process')
       })
-      expect(hasEntrypointContent).toBe(true)
+      expect(hasStartupNotice).toBe(true)
     })
 
     it('should recognize nginx image with different tags', () => {
@@ -61,19 +61,18 @@ describe('LogGenerator', () => {
 
   describe('generateLogs - redis image', () => {
     it('should generate redis-style logs for redis image', () => {
-      const logs = generateLogs('redis:6', 5)
+      const logs = generateLogs('redis:7.0', 5)
 
       expect(logs).toHaveLength(5)
-      // First logs should contain startup messages
-      expect(logs[0]).toContain('Redis')
+      expect(logs[0]).toContain('Warning: no config file specified')
     })
 
     it('should include redis startup messages in first logs', () => {
-      const logs = generateLogs('redis:alpine', 3)
+      const logs = generateLogs('redis:latest', 3)
 
       const hasStartupMessage = logs.some(
         (log) =>
-          log.includes('Redis server started') ||
+          log.includes('Warning: no config file specified') ||
           log.includes('Server initialized') ||
           log.includes('Ready to accept connections')
       )

@@ -1,5 +1,5 @@
 import { error, success, type Result } from '../../shared/result'
-import { SEED_IMAGES, type ImageManifest } from './seedRegistry'
+import { SEED_IMAGES, type ImageManifest, type LogProfile } from './seedRegistry'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONTAINER IMAGE REGISTRY
@@ -16,6 +16,8 @@ export interface ImageRegistry {
   parseImageString: (imageString: string) => Result<ParsedImage>
   validateImage: (imageString: string) => Result<ImageManifest>
   getImage: (name: string, tag?: string) => Result<ImageManifest>
+  getStartupLogs: (imageString: string) => Result<string[]>
+  getLogProfile: (imageString: string) => Result<LogProfile>
   listAllImages: () => ImageManifest[]
 }
 
@@ -127,10 +129,30 @@ export const createImageRegistry = (): ImageRegistry => {
     return [...images]
   }
 
+  const getStartupLogs = (imageString: string): Result<string[]> => {
+    const imageResult = validateImage(imageString)
+    if (!imageResult.ok) {
+      return imageResult
+    }
+
+    return success([...(imageResult.value.startupLogs || [])])
+  }
+
+  const getLogProfile = (imageString: string): Result<LogProfile> => {
+    const imageResult = validateImage(imageString)
+    if (!imageResult.ok) {
+      return imageResult
+    }
+
+    return success(imageResult.value.logProfile || 'generic')
+  }
+
   return {
     parseImageString,
     validateImage,
     getImage,
+    getStartupLogs,
+    getLogProfile,
     listAllImages
   }
 }

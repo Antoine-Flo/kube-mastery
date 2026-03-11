@@ -11,24 +11,23 @@ The reason Pods exist is **co-location**: sometimes you need two or more process
 Think of it like an apartment building. Each **apartment** is a Pod; the **roommates** inside are containers. They share the same street address (the Pod's IP) and the same mailbox. When the building manager (the scheduler) assigns an apartment, all roommates move in together, always on the same floor, always on the same node.
 
 ```mermaid
-graph TD
-    Pod["🏠 Pod\n(shared IP: 10.244.1.15)"]
+flowchart TB
+    subgraph Pod["Pod"]
+        direction TB
 
-    Pod --> NetNS["Shared Network Namespace\n• Same IP address\n• Same port space\n• localhost communication"]
-    Pod --> Vol["Shared Volume (optional)\n• emptyDir, configMap, etc.\n• both containers can read/write"]
-    Pod --> C1["Container A\n(main app)"]
-    Pod --> C2["Container B\n(sidecar)"]
+        subgraph Containers["Containers"]
+            App["Container A<br/>(main app)"]
+            Sidecar["Container B<br/>(sidecar)"]
+        end
 
-    C1 --> NetNS
-    C2 --> NetNS
-    C1 --> Vol
-    C2 --> Vol
+        Net["Shared network namespace<br/>one Pod IP<br/>shared port space<br/>localhost between containers"]
+        Vol["Shared volume<br/>(optional)"]
+    end
 
-    style Pod fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style NetNS fill:#F5A623,color:#fff,stroke:#c77d00
-    style Vol fill:#9B59B6,color:#fff,stroke:#7d3f9a
-    style C1 fill:#7ED321,color:#fff,stroke:#5a9c18
-    style C2 fill:#7ED321,color:#fff,stroke:#5a9c18
+    App --> Net
+    Sidecar --> Net
+    App -. can read/write .-> Vol
+    Sidecar -. can read/write .-> Vol
 ```
 
 ## Single vs. Multi-Container Pods
@@ -101,9 +100,7 @@ spec:
     - name: main-app
       image: nginx:1.28
     - name: sidecar
-      image: busybox:1.36
-      command:
-        ['sh', '-c', "while true; do echo 'sidecar running'; sleep 10; done"]
+      image: redis:7.0
 ```
 
 Apply it:
@@ -116,24 +113,21 @@ kubectl get pod multi-container-pod
 **5. Check the logs of each container separately:**
 
 ```bash
-kubectl logs multi-container-pod -c main-app
-kubectl logs multi-container-pod -c sidecar
+kubectl logs multi-container-pod -c main-app --tail=5
+kubectl logs multi-container-pod -c sidecar --tail=5
 ```
 
-Notice you need to specify the container name with `-c` when a Pod has more than one container.
+You should see different output patterns for nginx and redis. Notice you need to specify the container name with `-c` when a Pod has more than one container.
 
 **6. Confirm they share the same IP:**
 
 ```bash
 kubectl get pod multi-container-pod -o jsonpath='{.status.podIP}'
-echo ""
 ```
 
 Both containers in this Pod communicate on this single IP address.
 
-**7. Open the cluster visualizer** (telescope icon) to see your Pods appear as nodes in the visual graph.
-
-**8. Clean up:**
+**7. Clean up:**
 
 ```bash
 kubectl delete pod nginx-pod

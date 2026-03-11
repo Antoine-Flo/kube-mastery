@@ -2,51 +2,27 @@ import { mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import type { ActionExecutionRecord } from './conformance-types'
 
-const normalizeToken = (value: string): string => {
-  return value.trim().toLowerCase()
-}
-
 const sanitizeBucketName = (value: string): string => {
-  const sanitized = value.replace(/[^a-z0-9-]/g, '-')
+  const sanitized = value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-')
   if (sanitized.length === 0) {
     return 'misc'
   }
   return sanitized
 }
 
-const inferCommandBucketFromCommand = (command: string): string => {
-  const tokens = command
-    .trim()
-    .split(/\s+/)
-    .filter((token) => token.length > 0)
-  if (tokens.length < 2) {
-    return 'misc'
-  }
-  if (normalizeToken(tokens[0]) !== 'kubectl') {
-    return 'misc'
-  }
-  for (let index = 1; index < tokens.length; index++) {
-    const token = normalizeToken(tokens[index])
-    if (token === '--') {
-      break
-    }
-    if (token.startsWith('-')) {
-      continue
-    }
-    return sanitizeBucketName(token)
-  }
-  return 'misc'
+const inferScenarioBucketFromRecord = (record: ActionExecutionRecord): string => {
+  return sanitizeBucketName(record.suiteName)
 }
 
-const inferCommandBucketFromDiffEntry = (entry: string): string => {
-  const commandLine = entry
+const inferScenarioBucketFromDiffEntry = (entry: string): string => {
+  const suiteLine = entry
     .split('\n')
-    .find((line) => line.startsWith('[command] '))
-  if (!commandLine) {
+    .find((line) => line.startsWith('[suite] '))
+  if (!suiteLine) {
     return 'misc'
   }
-  const command = commandLine.slice('[command] '.length)
-  return inferCommandBucketFromCommand(command)
+  const suiteName = suiteLine.slice('[suite] '.length)
+  return sanitizeBucketName(suiteName)
 }
 
 const formatRecord = (record: ActionExecutionRecord): string => {
@@ -84,7 +60,7 @@ export interface ConformanceReporter {
 }
 
 export const createConformanceReporter = (
-  outputDir = join(process.cwd(), 'artifacts', 'conformance')
+  outputDir = join(process.cwd(), 'conformance', 'results')
 ): ConformanceReporter => {
   const kindRecords: ActionExecutionRecord[] = []
   const runnerRecords: ActionExecutionRecord[] = []
@@ -93,10 +69,10 @@ export const createConformanceReporter = (
   const getBuckets = (): string[] => {
     const buckets = new Set<string>()
     for (const record of kindRecords) {
-      buckets.add(inferCommandBucketFromCommand(record.command))
+      buckets.add(inferScenarioBucketFromRecord(record))
     }
     for (const record of runnerRecords) {
-      buckets.add(inferCommandBucketFromCommand(record.command))
+      buckets.add(inferScenarioBucketFromRecord(record))
     }
     for (const record of diffRecords) {
       buckets.add(record.bucket)
@@ -114,7 +90,7 @@ export const createConformanceReporter = (
     recordDiff(entry: string): void {
       diffRecords.push({
         entry,
-        bucket: inferCommandBucketFromDiffEntry(entry)
+        bucket: inferScenarioBucketFromDiffEntry(entry)
       })
     },
     flush(): void {
@@ -141,10 +117,10 @@ export const createConformanceReporter = (
         mkdirSync(bucketDir, { recursive: true })
 
         const bucketKindRecords = kindRecords.filter((record) => {
-          return inferCommandBucketFromCommand(record.command) === bucket
+          return inferScenarioBucketFromRecord(record) === bucket
         })
         const bucketRunnerRecords = runnerRecords.filter((record) => {
-          return inferCommandBucketFromCommand(record.command) === bucket
+          return inferScenarioBucketFromRecord(record) === bucket
         })
         const bucketDiffRecords = diffRecords
           .filter((record) => record.bucket === bucket)

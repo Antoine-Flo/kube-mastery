@@ -89,18 +89,9 @@ export const handleLogs = (
 
   // Get or generate logs
   let logs = pod._simulator.logs || []
-
-  if (logs.length === 0) {
-    // Generate logs based on target container image
-    logs = generateLogs(targetContainer.image, DEFAULT_LOG_COUNT, {
-      namespace,
-      podName,
-      containerName: targetContainer.name
-    })
-  }
-
-  // Apply --tail flag if present
   const tailValue = parsed.flags.tail
+  let parsedTailCount: number | undefined
+
   if (tailValue !== undefined) {
     const tailText = String(tailValue)
     const validInteger = /^-?\d+$/.test(tailText)
@@ -109,12 +100,28 @@ export const handleLogs = (
         `error: invalid argument "${tailText}" for "--tail" flag: strconv.ParseInt: parsing "${tailText}": invalid syntax\nSee 'kubectl logs --help' for usage.`
       )
     }
-    const tailCount = parseInt(tailText, 10)
+    parsedTailCount = parseInt(tailText, 10)
+  }
 
-    if (tailCount === 0) {
+  if (logs.length === 0) {
+    const generatedCount =
+      parsedTailCount !== undefined && parsedTailCount > 0
+        ? parsedTailCount
+        : DEFAULT_LOG_COUNT
+    // Generate logs based on target container image
+    logs = generateLogs(targetContainer.image, generatedCount, {
+      namespace,
+      podName,
+      containerName: targetContainer.name
+    })
+  }
+
+  // Apply --tail flag if present
+  if (parsedTailCount !== undefined) {
+    if (parsedTailCount === 0) {
       logs = []
-    } else if (tailCount > 0) {
-      logs = logs.slice(-tailCount)
+    } else if (parsedTailCount > 0) {
+      logs = logs.slice(-parsedTailCount)
     }
   }
 

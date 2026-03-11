@@ -17,4 +17,29 @@ describe('system image registry coverage', () => {
       expect(validation.ok).toBe(true)
     }
   })
+
+  it('returns startup logs for images that define them', () => {
+    const registry = createImageRegistry()
+    const logsResult = registry.getStartupLogs('redis:7.0')
+
+    expect(logsResult.ok).toBe(true)
+    if (!logsResult.ok) {
+      return
+    }
+
+    expect(logsResult.value.length).toBeGreaterThan(0)
+    expect(logsResult.value[0]).toContain('Warning: no config file specified')
+  })
+
+  it('returns empty startup logs for images without startup profile', () => {
+    const registry = createImageRegistry()
+    const logsResult = registry.getStartupLogs('k8s.gcr.io/pause:3.9')
+
+    expect(logsResult.ok).toBe(true)
+    if (!logsResult.ok) {
+      return
+    }
+
+    expect(logsResult.value).toEqual([])
+  })
 })

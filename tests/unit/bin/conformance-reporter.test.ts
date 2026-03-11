@@ -57,7 +57,7 @@ describe('conformance reporter', () => {
     expect(diffLog).toContain('mismatch-example')
   })
 
-  it('should split reports by inferred command bucket', () => {
+  it('should split reports by scenario key bucket', () => {
     const outputDir = mkdtempSync(
       join(tmpdir(), 'conformance-reporter-bucket-')
     )
@@ -65,7 +65,7 @@ describe('conformance reporter', () => {
 
     const reporter = createConformanceReporter(outputDir)
     reporter.recordKind({
-      suiteName: 'suite',
+      suiteName: 'scenario-alpha',
       actionId: 'pod-step',
       actionType: 'command',
       backend: 'kind',
@@ -76,7 +76,7 @@ describe('conformance reporter', () => {
       normalized: 'pod-output'
     })
     reporter.recordRunner({
-      suiteName: 'suite',
+      suiteName: 'scenario-alpha',
       actionId: 'pod-step',
       actionType: 'command',
       backend: 'runner',
@@ -87,7 +87,7 @@ describe('conformance reporter', () => {
       normalized: 'pod-output'
     })
     reporter.recordKind({
-      suiteName: 'suite',
+      suiteName: 'scenario-beta',
       actionId: 'describe-step',
       actionType: 'command',
       backend: 'kind',
@@ -98,7 +98,7 @@ describe('conformance reporter', () => {
       normalized: 'describe-output'
     })
     reporter.recordRunner({
-      suiteName: 'suite',
+      suiteName: 'scenario-beta',
       actionId: 'describe-step',
       actionType: 'command',
       backend: 'runner',
@@ -108,44 +108,52 @@ describe('conformance reporter', () => {
       stderr: '',
       normalized: 'describe-output'
     })
-    reporter.recordDiff('[command] kubectl get pods\n[mismatch]')
-    reporter.recordDiff('[command] kubectl describe pod demo\n[mismatch]')
+    reporter.recordDiff(
+      '[suite] scenario-alpha\n[command] kubectl get pods\n[mismatch]'
+    )
+    reporter.recordDiff(
+      '[suite] scenario-beta\n[command] kubectl describe pod demo\n[mismatch]'
+    )
     reporter.flush()
 
-    const getKindLog = readFileSync(join(outputDir, 'get', 'kind.log'), 'utf-8')
-    const getRunnerLog = readFileSync(
-      join(outputDir, 'get', 'runner.log'),
+    const alphaKindLog = readFileSync(
+      join(outputDir, 'scenario-alpha', 'kind.log'),
       'utf-8'
     )
-    const getDiffLog = readFileSync(join(outputDir, 'get', 'diff.log'), 'utf-8')
-    const describeKindLog = readFileSync(
-      join(outputDir, 'describe', 'kind.log'),
+    const alphaRunnerLog = readFileSync(
+      join(outputDir, 'scenario-alpha', 'runner.log'),
       'utf-8'
     )
-    const describeDiffLog = readFileSync(
-      join(outputDir, 'describe', 'diff.log'),
+    const alphaDiffLog = readFileSync(
+      join(outputDir, 'scenario-alpha', 'diff.log'),
+      'utf-8'
+    )
+    const betaKindLog = readFileSync(
+      join(outputDir, 'scenario-beta', 'kind.log'),
+      'utf-8'
+    )
+    const betaDiffLog = readFileSync(
+      join(outputDir, 'scenario-beta', 'diff.log'),
       'utf-8'
     )
 
-    expect(getKindLog).toContain('kubectl get pods')
-    expect(getKindLog).not.toContain('kubectl describe pod demo')
-    expect(getRunnerLog).toContain('kubectl get pods')
-    expect(getDiffLog).toContain('kubectl get pods')
+    expect(alphaKindLog).toContain('kubectl get pods')
+    expect(alphaKindLog).not.toContain('kubectl describe pod demo')
+    expect(alphaRunnerLog).toContain('kubectl get pods')
+    expect(alphaDiffLog).toContain('kubectl get pods')
 
-    expect(describeKindLog).toContain('kubectl describe pod demo')
-    expect(describeKindLog).not.toContain('kubectl get pods')
-    expect(describeDiffLog).toContain('kubectl describe pod demo')
+    expect(betaKindLog).toContain('kubectl describe pod demo')
+    expect(betaKindLog).not.toContain('kubectl get pods')
+    expect(betaDiffLog).toContain('kubectl describe pod demo')
   })
 
-  it('should bucket kubectl config commands under config', () => {
-    const outputDir = mkdtempSync(
-      join(tmpdir(), 'conformance-reporter-config-')
-    )
+  it('should bucket logs under sanitized scenario key', () => {
+    const outputDir = mkdtempSync(join(tmpdir(), 'conformance-reporter-scenario-'))
     tempDirs.push(outputDir)
 
     const reporter = createConformanceReporter(outputDir)
     reporter.recordKind({
-      suiteName: 'suite',
+      suiteName: 'Scenario Config',
       actionId: 'config-step',
       actionType: 'command',
       backend: 'kind',
@@ -156,7 +164,7 @@ describe('conformance reporter', () => {
       normalized: 'kubernetes-admin@kubernetes'
     })
     reporter.recordRunner({
-      suiteName: 'suite',
+      suiteName: 'Scenario Config',
       actionId: 'config-step',
       actionType: 'command',
       backend: 'runner',
@@ -168,16 +176,13 @@ describe('conformance reporter', () => {
     })
     reporter.flush()
 
-    const configKindLog = readFileSync(
-      join(outputDir, 'config', 'kind.log'),
-      'utf-8'
-    )
-    const configRunnerLog = readFileSync(
-      join(outputDir, 'config', 'runner.log'),
+    const scenarioKindLog = readFileSync(join(outputDir, 'scenario-config', 'kind.log'), 'utf-8')
+    const scenarioRunnerLog = readFileSync(
+      join(outputDir, 'scenario-config', 'runner.log'),
       'utf-8'
     )
 
-    expect(configKindLog).toContain('kubectl config current-context')
-    expect(configRunnerLog).toContain('kubectl config current-context')
+    expect(scenarioKindLog).toContain('kubectl config current-context')
+    expect(scenarioRunnerLog).toContain('kubectl config current-context')
   })
 })

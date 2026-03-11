@@ -147,6 +147,72 @@ describe('kubectl logs handler', () => {
       expect(result.ok).toBe(true)
     })
 
+    it('should return startup profile logs for nginx main-app with tail', () => {
+      const pod = createPod({
+        name: 'multi-container-pod',
+        namespace: 'default',
+        containers: [
+          { name: 'main-app', image: 'nginx:1.28' },
+          { name: 'sidecar', image: 'redis:7.0' }
+        ]
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'multi-container-pod',
+        flags: { c: 'main-app', tail: '5' }
+      })
+
+      const result = handleLogs(state, parsed)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value).toBe(
+        [
+          '2026/03/11 12:18:12 [notice] 1#1: start worker process 55',
+          '2026/03/11 12:18:12 [notice] 1#1: start worker process 56',
+          '2026/03/11 12:18:12 [notice] 1#1: start worker process 57',
+          '2026/03/11 12:18:12 [notice] 1#1: start worker process 58',
+          '2026/03/11 12:18:12 [notice] 1#1: start worker process 59'
+        ].join('\n')
+      )
+    })
+
+    it('should return startup profile logs for redis sidecar with tail', () => {
+      const pod = createPod({
+        name: 'multi-container-pod',
+        namespace: 'default',
+        containers: [
+          { name: 'main-app', image: 'nginx:1.28' },
+          { name: 'sidecar', image: 'redis:7.0' }
+        ]
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'multi-container-pod',
+        flags: { c: 'sidecar', tail: '5' }
+      })
+
+      const result = handleLogs(state, parsed)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value).toBe(
+        [
+          '1:C 11 Mar 2026 12:18:16.565 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf',
+          '1:M 11 Mar 2026 12:18:16.565 * monotonic clock: POSIX clock_gettime',
+          '1:M 11 Mar 2026 12:18:16.566 * Running mode=standalone, port=6379.',
+          '1:M 11 Mar 2026 12:18:16.566 # Server initialized',
+          '1:M 11 Mar 2026 12:18:16.566 * Ready to accept connections'
+        ].join('\n')
+      )
+    })
+
     it('should return error for non-existent container', () => {
       const pod = createPod({
         name: 'multi-pod',

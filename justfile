@@ -2,7 +2,7 @@ set dotenv-load := true
 
 # Conformance (real vs simulator)
 conformance:
-    npx tsx bin/run-conformance.ts
+    npx tsx conformance/run.ts
 
 # Démarrer un seed (ex: minimal, deployment-with-configmap, multi-namespace, pods-errors)
 cluster-start NAME:
@@ -17,7 +17,7 @@ cluster-down NAME:
     kind delete cluster --name {{NAME}}
 
 compare:
-    delta artifacts/conformance/kind.log artifacts/conformance/runner.log --side-by-side
+    delta conformance/results/kind.log conformance/results/runner.log --side-by-side
 
 # Build and quality gates
 build:

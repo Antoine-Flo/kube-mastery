@@ -2,25 +2,36 @@
 // LOG GENERATOR
 // ═══════════════════════════════════════════════════════════════════════════
 // Generates deterministic logs with workload-specific profiles.
+import { createImageRegistry } from '../containers/registry/ImageRegistry'
+import type { LogProfile } from '../containers/registry/seedRegistry'
 
 const MAX_LOGS = 200
 const BASE_TIME_EPOCH = Date.parse('2026-02-28T16:00:00Z')
 
 type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'DEBUG'
-type WorkloadProfile =
-  | 'control-plane-scheduler'
-  | 'control-plane-apiserver'
-  | 'control-plane-controller'
-  | 'nginx'
-  | 'redis'
-  | 'mysql'
-  | 'postgres'
-  | 'generic'
+type WorkloadProfile = LogProfile
 
 export interface LogGenerationContext {
   podName?: string
   namespace?: string
   containerName?: string
+}
+const imageRegistry = createImageRegistry()
+
+const getStartupLogsForImage = (containerImage: string): string[] => {
+  const startupLogsResult = imageRegistry.getStartupLogs(containerImage)
+  if (!startupLogsResult.ok) {
+    return []
+  }
+  return startupLogsResult.value
+}
+
+const getProfileFromRegistry = (containerImage: string): WorkloadProfile | null => {
+  const logProfileResult = imageRegistry.getLogProfile(containerImage)
+  if (!logProfileResult.ok) {
+    return null
+  }
+  return logProfileResult.value
 }
 
 type DeterministicRandom = () => number
@@ -57,19 +68,15 @@ const randomInt = (
   return Math.floor(rng() * (max - min + 1)) + min
 }
 
-const getProfile = (
-  image: string,
-  context?: LogGenerationContext
-): WorkloadProfile => {
+const detectProfileFromImage = (image: string): WorkloadProfile => {
   const imageLower = image.toLowerCase()
-  const podName = context?.podName?.toLowerCase() || ''
-  if (podName.includes('kube-scheduler')) {
+  if (imageLower.includes('kube-scheduler')) {
     return 'control-plane-scheduler'
   }
-  if (podName.includes('kube-apiserver')) {
+  if (imageLower.includes('kube-apiserver')) {
     return 'control-plane-apiserver'
   }
-  if (podName.includes('kube-controller-manager')) {
+  if (imageLower.includes('kube-controller-manager')) {
     return 'control-plane-controller'
   }
   if (imageLower.includes('nginx')) {
@@ -217,21 +224,7 @@ const generateNginxLog = (
   _rng: DeterministicRandom
 ): string => {
   const ts = formatNginxTimestamp(time)
-  const startup = [
-    '/docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration',
-    '/docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/',
-    '/docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh',
-    '10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf',
-    '10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf',
-    '/docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh',
-    '/docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh',
-    '/docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh',
-    '/docker-entrypoint.sh: Configuration complete; ready for start up'
-  ]
-  if (index < startup.length) {
-    return startup[index]
-  }
-  if (index < startup.length + 8) {
+  if (index < 8) {
     const startupNotice = [
       'using the "epoll" event method',
       'nginx/1.25.5',
@@ -240,7 +233,7 @@ const generateNginxLog = (
       'getrlimit(RLIMIT_NOFILE): 2147483584:2147483584',
       'start worker processes'
     ]
-    const startupNoticeIndex = index - startup.length
+    const startupNoticeIndex = index
     if (startupNoticeIndex < startupNotice.length) {
       return `${ts} [notice] 1#1: ${startupNotice[startupNoticeIndex]}`
     }
@@ -253,25 +246,17 @@ const generateNginxLog = (
     'worker process 60 exited with code 0',
     'start worker process 61'
   ]
-  const runtimeIndex = (index - (startup.length + 8)) % runtimeNotice.length
+  const runtimeIndex = (index - 8) % runtimeNotice.length
   return `${ts} [notice] 1#1: ${runtimeNotice[runtimeIndex]}`
 }
 
 const generateRedisLog = (
   level: LogLevel,
   time: Date,
-  index: number,
+  _index: number,
   rng: DeterministicRandom
 ): string => {
   const ts = formatIsoTimestamp(time)
-  if (index < 3) {
-    const startup = [
-      'Redis server started, Redis version 6.2.6',
-      'Server initialized',
-      'Ready to accept connections on port 6379'
-    ]
-    return `${ts} INFO ${startup[index]}`
-  }
   const infoMessages = [
     'Accepted connection from 127.0.0.1:6379',
     'Background saving started by pid 42',
@@ -291,18 +276,10 @@ const generateRedisLog = (
 const generateMysqlLog = (
   level: LogLevel,
   time: Date,
-  index: number,
+  _index: number,
   rng: DeterministicRandom
 ): string => {
   const ts = formatIsoTimestamp(time)
-  if (index < 3) {
-    const startup = [
-      'mysqld: ready for connections. Version: 8.0.27  port: 3306',
-      `InnoDB: Buffer pool(s) load completed at ${ts}`,
-      'MySQL Community Server - GPL initialized'
-    ]
-    return `${ts} INFO ${startup[index]}`
-  }
   if (level === 'WARN') {
     return `${ts} WARN Query took longer than long_query_time: ${randomInt(rng, 2, 4)}.${randomInt(rng, 1, 9)}s`
   }
@@ -321,18 +298,10 @@ const generateMysqlLog = (
 const generatePostgresLog = (
   level: LogLevel,
   time: Date,
-  index: number,
+  _index: number,
   rng: DeterministicRandom
 ): string => {
   const ts = formatIsoTimestamp(time)
-  if (index < 3) {
-    const startup = [
-      'database system is ready to accept connections',
-      'PostgreSQL 13.4 on x86_64-pc-linux-gnu, compiled by gcc',
-      'listening on IPv4 address "0.0.0.0", port 5432'
-    ]
-    return `${ts} INFO ${startup[index]}`
-  }
   if (level === 'WARN') {
     return `${ts} WARN could not receive data from client: Connection reset by peer`
   }
@@ -435,6 +404,12 @@ export const generateLogs = (
     return []
   }
   const actualCount = Math.min(count, MAX_LOGS)
+  const startupLogs = getStartupLogsForImage(containerImage)
+  const selectedStartupLogs = startupLogs.slice(0, actualCount)
+  const remainingCount = actualCount - selectedStartupLogs.length
+  if (remainingCount === 0) {
+    return selectedStartupLogs
+  }
   const seed = [
     containerImage,
     context?.namespace ?? 'default',
@@ -442,12 +417,15 @@ export const generateLogs = (
     context?.containerName ?? 'container'
   ].join('|')
   const rng = createDeterministicRandom(seed)
-  const profile = getProfile(containerImage, context)
+  const profile =
+    getProfileFromRegistry(containerImage) ?? detectProfileFromImage(containerImage)
   const baseTime = resolveBaseTime(seed)
-  const logs: string[] = []
+  const logs: string[] = [...selectedStartupLogs]
 
   let currentOffsetSeconds = 0
-  for (let index = 0; index < actualCount; index++) {
+  const startIndex = selectedStartupLogs.length
+  const endIndex = startIndex + remainingCount
+  for (let index = startIndex; index < endIndex; index++) {
     currentOffsetSeconds += randomInt(rng, 1, 7)
     const lineTime = new Date(baseTime.getTime() + currentOffsetSeconds * 1000)
     const level = getLogLevel(rng, index, profile)

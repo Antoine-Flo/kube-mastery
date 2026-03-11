@@ -197,8 +197,8 @@ const appendMismatch = (
     '[diff]',
     ...renderedDiffLines,
     '[details]',
-    '[kind-log] artifacts/conformance/kind.log',
-    '[runner-log] artifacts/conformance/runner.log',
+    '[kind-log] conformance/results/kind.log',
+    '[runner-log] conformance/results/runner.log',
     '---'
   ].join('\n')
 }
