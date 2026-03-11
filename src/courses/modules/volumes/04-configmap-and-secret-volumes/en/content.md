@@ -98,11 +98,6 @@ graph LR
 
     K1 -->|"becomes"| F1
     K2 -->|"becomes"| F2
-
-    style K1 fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style K2 fill:#4A90D9,color:#fff,stroke:#2c6fad
-    style F1 fill:#7ED321,color:#fff,stroke:#5a9c18
-    style F2 fill:#7ED321,color:#fff,stroke:#5a9c18
 ```
 
 ## Mounting Only Specific Keys
