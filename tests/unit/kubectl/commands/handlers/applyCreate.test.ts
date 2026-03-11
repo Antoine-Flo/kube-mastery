@@ -44,6 +44,10 @@ describe('applyCreate handler', () => {
     expect(result.value).toContain('deployment.apps/my-dep created')
     const deployment = clusterState.findDeployment('my-dep', 'default')
     expect(deployment.ok).toBe(true)
+    if (!deployment.ok) {
+      return
+    }
+    expect(deployment.value.metadata.labels).toEqual({ app: 'my-dep' })
   })
 
   it('should return explicit error when image is missing', () => {

@@ -596,6 +596,28 @@ data:
         expect(deployment.ok).toBe(true)
       })
 
+      it('should expose app label on deployment metadata after imperative create', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const created = executor.execute(
+          'kubectl create deployment my-app --image=nginx'
+        )
+        expect(created.ok).toBe(true)
+
+        const labels = executor.execute(
+          "kubectl get deployment my-app -o jsonpath='{.metadata.labels}'"
+        )
+        expect(labels.ok).toBe(true)
+        if (!labels.ok) {
+          return
+        }
+        expect(labels.value).toBe('{"app":"my-app"}')
+      })
+
       it('should reject plural resource token in imperative create', () => {
         const executor = createKubectlExecutor(
           clusterState,

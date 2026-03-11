@@ -932,6 +932,7 @@ const createDeploymentFromFlags = (
   const deployment = createDeployment({
     name: deploymentName,
     namespace,
+    labels: { app: deploymentName },
     replicas: parsed.replicas,
     selector: { matchLabels: { app: deploymentName } },
     template
