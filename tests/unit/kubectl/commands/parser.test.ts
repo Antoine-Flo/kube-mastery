@@ -72,6 +72,18 @@ describe('kubectl parser - create deployment', () => {
     expect(result.value.name).toBe('my-team')
   })
 
+  it('should reject plural resource token for imperative create deployment', () => {
+    const result = parseCommand(
+      'kubectl create deployments my-dep --dry-run=client -o json'
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('Unexpected args: [deployments my-dep]')
+      expect(result.error).toContain("See 'kubectl create -h' for help and examples")
+    }
+  })
+
   it('should reject create when dry-run value is invalid', () => {
     const result = parseCommand(
       'kubectl create deployment my-dep --image=nginx --dry-run=local'
@@ -532,6 +544,50 @@ describe('kubectl parser - get and delete flag positions', () => {
 
     expect(result.value.resource).toBe('pods')
     expect(result.value.flags['show-labels']).toBe(true)
+  })
+
+  it('should parse get jsonpath output flag', () => {
+    const result = parseCommand(
+      "kubectl get pod mypod -o jsonpath='{.metadata.uid}'"
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBe('mypod')
+    expect(result.value.flags.o).toBe("jsonpath='{.metadata.uid}'")
+  })
+
+  it('should parse get long output jsonpath flag', () => {
+    const result = parseCommand(
+      "kubectl get pod mypod --output=jsonpath='{.metadata.uid}'"
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.flags.output).toBe("jsonpath='{.metadata.uid}'")
+  })
+
+  it('should parse get jsonpath template with spaces', () => {
+    const result = parseCommand(
+      "kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}{\"\\n\"}{end}'"
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.flags.o).toBe(
+      "jsonpath='{range .items[*]}{.metadata.name}{\"\\n\"}{end}'"
+    )
   })
 
   it('should parse get short label selector flag', () => {

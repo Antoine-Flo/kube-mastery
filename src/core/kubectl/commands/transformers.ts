@@ -96,6 +96,13 @@ const CREATE_SERVICE_TYPES = new Set([
 ])
 
 const CREATE_SECRET_TYPES = new Set(['generic', 'tls', 'docker-registry'])
+const CREATE_IMPERATIVE_PLURAL_TOKENS = new Set([
+  'deployments',
+  'namespaces',
+  'services',
+  'configmaps',
+  'secrets'
+])
 
 // ─── Helper Functions ────────────────────────────────────────────────────
 
@@ -318,6 +325,16 @@ const createTransformer: ActionTransformer = (ctx) => {
   const { beforeSeparator, afterSeparator } = splitTokensBySeparator(ctx.tokens)
   const createCommand =
     afterSeparator && afterSeparator.length > 0 ? afterSeparator : undefined
+  const positionalTokens = extractPositionalTokensAfterAction(beforeSeparator)
+  const firstPositional = positionalTokens[0]
+  if (
+    firstPositional != null &&
+    CREATE_IMPERATIVE_PLURAL_TOKENS.has(firstPositional)
+  ) {
+    return error(
+      `error: Unexpected args: [${positionalTokens.join(' ')}]\nSee 'kubectl create -h' for help and examples`
+    )
+  }
   const resourceToken = beforeSeparator[2]
 
   if (!resourceToken || resourceToken.startsWith('-')) {

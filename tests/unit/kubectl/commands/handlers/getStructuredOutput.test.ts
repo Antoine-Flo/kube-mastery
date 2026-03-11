@@ -150,4 +150,47 @@ describe('kubectl get handler - structured output parity', () => {
     expect(result).not.toContain('sim.kubernetes.io/preferred-node')
     expect(result).not.toContain('&a1')
   })
+
+  it('returns scalar value with jsonpath output', () => {
+    const webPod = createPod({
+      name: 'web',
+      namespace: 'default',
+      containers: [{ name: 'nginx', image: 'nginx:1.28' }],
+      phase: 'Running'
+    })
+    const state = createClusterStateData({ pods: [webPod] })
+    const parsed = createParsedGetCommand({
+      name: 'web',
+      flags: { output: "jsonpath='{.metadata.uid}'" }
+    })
+
+    const result = handleGet(state, parsed)
+
+    expect(result.length).toBeGreaterThan(10)
+    expect(result).toContain('-')
+  })
+
+  it('returns joined values with jsonpath list extraction', () => {
+    const webPod = createPod({
+      name: 'web',
+      namespace: 'default',
+      containers: [{ name: 'nginx', image: 'nginx:1.28' }],
+      phase: 'Running'
+    })
+    const apiPod = createPod({
+      name: 'api',
+      namespace: 'default',
+      containers: [{ name: 'nginx', image: 'nginx:1.28' }],
+      phase: 'Running'
+    })
+    const state = createClusterStateData({ pods: [webPod, apiPod] })
+    const parsed = createParsedGetCommand({
+      flags: { output: "jsonpath='{.items[*].metadata.name}'" }
+    })
+
+    const result = handleGet(state, parsed)
+
+    expect(result).toContain('web')
+    expect(result).toContain('api')
+  })
 })

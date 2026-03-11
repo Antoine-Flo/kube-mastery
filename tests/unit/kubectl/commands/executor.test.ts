@@ -596,6 +596,23 @@ data:
         expect(deployment.ok).toBe(true)
       })
 
+      it('should reject plural resource token in imperative create', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl create deployments my-dep --dry-run=client -o json'
+        )
+
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+          expect(result.error).toContain('Unexpected args: [deployments my-dep]')
+        }
+      })
+
       it('should create a deployment with command after --', () => {
         const executor = createKubectlExecutor(
           clusterState,
@@ -806,6 +823,43 @@ data:
         expect(result.ok).toBe(true)
       })
 
+      it('should handle kubectl get pod with jsonpath output', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          "kubectl get pod nginx-pod -o jsonpath='{.metadata.uid}'"
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value.length).toBeGreaterThan(10)
+        expect(result.value).toContain('-')
+      })
+
+      it('should fail kubectl get with invalid output format', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl get pods -o banana')
+
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+          expect(result.error).toContain(
+            '--output must be one of: json|yaml|wide|name|jsonpath'
+          )
+        }
+      })
+
       it('should handle "kubectl get all"', () => {
         clusterState.addService(
           createService({
@@ -863,6 +917,108 @@ data:
         const result = executor.execute('kubectl get namespaces')
 
         expect(result.ok).toBe(true)
+      })
+
+      it('should support kubectl get nodes with filtered jsonpath', () => {
+        clusterState.addNode(
+          createNode({
+            name: 'sim-worker-ext',
+            status: {
+              nodeInfo: {
+                architecture: 'amd64',
+                containerRuntimeVersion: 'containerd://2.2.0',
+                kernelVersion: '6.6.87.2-microsoft-standard-WSL2',
+                kubeletVersion: 'v1.35.0',
+                operatingSystem: 'linux',
+                osImage: 'Debian GNU/Linux 12 (bookworm)'
+              },
+              addresses: [
+                {
+                  type: 'InternalIP',
+                  address: '172.18.0.4'
+                },
+                {
+                  type: 'ExternalIP',
+                  address: '35.1.1.9'
+                },
+                {
+                  type: 'Hostname',
+                  address: 'sim-worker-ext'
+                }
+              ],
+              allocatable: {
+                cpu: '4000m',
+                memory: '8Gi'
+              },
+              conditions: [
+                {
+                  type: 'Ready',
+                  status: 'True'
+                }
+              ]
+            }
+          })
+        )
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          "kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type==\"ExternalIP\")].address}'"
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+        expect(result.value).toBe('35.1.1.9')
+      })
+
+      it('should support kubectl get nodes with nested range template', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          "kubectl get nodes -o jsonpath='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'"
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+        expect(result.value).toContain('sim-worker:Ready=True;')
+      })
+
+      it('should support kubectl get pods initContainerStatuses range template', () => {
+        clusterState.addPod(
+          createPod({
+            name: 'pod-with-init',
+            namespace: 'default',
+            initContainers: [{ name: 'init-db', image: 'busybox:1.36' }],
+            containers: [{ name: 'app', image: 'nginx:latest' }],
+            phase: 'Running'
+          })
+        )
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          "kubectl get pods -o jsonpath='{range .items[*].status.initContainerStatuses[*]}{.containerID}{\"\\n\"}{end}'"
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+        expect(result.value).toContain('containerd://')
       })
     })
 
@@ -1213,7 +1369,11 @@ data:
           '- name: kind-conformance',
           '  user:',
           '    client-certificate-data: DATA+OMITTED',
-          '    client-key-data: DATA+OMITTED'
+          '    client-key-data: DATA+OMITTED',
+          '- name: e2e',
+          '  user:',
+          '    username: admin',
+          '    password: secret'
         ].join('\n')
         const updateResult = clusterState.updateConfigMap(
           'cluster-info',
@@ -1540,6 +1700,66 @@ data:
         )
       })
 
+      it('should handle kubectl config view with jsonpath output', () => {
+        seedConfigCommandKubeconfig()
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          "kubectl config view -o jsonpath='{.current-context}'"
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toBe('kind-conformance')
+      })
+
+      it('should support kubectl config view jsonpath first-user shortcut', () => {
+        seedConfigCommandKubeconfig()
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          "kubectl config view -o jsonpath='{.users[].name}'"
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toBe('kind-conformance')
+      })
+
+      it('should support kubectl config view jsonpath wildcard users list', () => {
+        seedConfigCommandKubeconfig()
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          "kubectl config view -o jsonpath='{.users[*].name}'"
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toBe('kind-conformance e2e')
+      })
+
       it('should set current context namespace and use it implicitly', () => {
         seedConfigCommandKubeconfig()
         const executor = createKubectlExecutor(
@@ -1782,6 +2002,23 @@ data:
         expect(podResult.ok).toBe(false)
       })
 
+      it('should reject kubectl run with invalid pod name', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          'kubectl run My_App --image=busybox --dry-run=client -o yaml'
+        )
+
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+          expect(result.error).toContain('metadata.name: Invalid value: "My_App"')
+        }
+      })
+
       it('should return yaml manifest for kubectl run dry-run client output yaml', () => {
         const executor = createKubectlExecutor(
           clusterState,
@@ -1804,6 +2041,27 @@ data:
         expect(result.value).toContain('image: nginx')
         expect(result.value).toContain('restartPolicy: Always')
 
+        const podResult = clusterState.findPod('mypod', 'default')
+        expect(podResult.ok).toBe(false)
+      })
+
+      it('should return jsonpath value for kubectl run dry-run client', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute(
+          "kubectl run mypod --image=nginx --dry-run=client -o jsonpath='{.metadata.name}'"
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toBe('mypod')
         const podResult = clusterState.findPod('mypod', 'default')
         expect(podResult.ok).toBe(false)
       })

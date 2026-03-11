@@ -1,4 +1,3 @@
-import { stringify as yamlStringify } from 'yaml'
 import type {
   ClusterState,
   ClusterStateData
@@ -7,6 +6,11 @@ import { formatTable } from '../../../shared/formatter'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
+import {
+  renderStructuredPayload,
+  resolveOutputDirective,
+  validateOutputDirective
+} from '../output/outputHelpers'
 import {
   readKubeconfigFromState,
   type SimKubeconfig,
@@ -56,58 +60,78 @@ const handleConfigView = (
   kubeconfig: SimKubeconfig,
   parsed: ParsedCommand
 ): ExecutionResult => {
+  const hasExplicitOutput =
+    typeof parsed.flags.output === 'string' || typeof parsed.flags['o'] === 'string'
+  const fallbackOutput = hasExplicitOutput ? parsed.output : 'yaml'
+  const outputDirectiveResult = validateOutputDirective(
+    resolveOutputDirective(parsed.flags, fallbackOutput),
+    ['yaml', 'json', 'jsonpath'],
+    "--output must be one of: json|yaml|jsonpath"
+  )
+  if (!outputDirectiveResult.ok) {
+    return error(outputDirectiveResult.error)
+  }
+  const outputDirective = outputDirectiveResult.value
+
+  let payload: unknown
   if (parsed.configMinify !== true) {
-    return success(yamlStringify(kubeconfig).trimEnd())
+    payload = kubeconfig
   }
-
   const currentContext = kubeconfig['current-context']
-  if (currentContext.length === 0) {
-    return error('current-context is not set')
-  }
-
-  const currentContextEntry = getCurrentContextEntry(kubeconfig)
-  if (!currentContextEntry) {
-    return error(`context "${currentContext}" not found`)
-  }
-
-  const clusterName = currentContextEntry.context.cluster
-  const userName = currentContextEntry.context.user
-  const minifiedClusters = kubeconfig.clusters
-    .filter((clusterEntry) => {
-      return clusterEntry.name === clusterName
-    })
-    .map((clusterEntry) => {
-      return {
-        cluster: { ...clusterEntry.cluster },
-        name: clusterEntry.name
-      }
-    })
-  const minifiedContexts = [
-    {
-      context: { ...currentContextEntry.context },
-      name: currentContextEntry.name
+  if (parsed.configMinify === true) {
+    if (currentContext.length === 0) {
+      return error('current-context is not set')
     }
-  ]
-  const minifiedUsers = kubeconfig.users
-    .filter((userEntry) => {
-      return userEntry.name === userName
-    })
-    .map((userEntry) => {
-      return {
-        name: userEntry.name,
-        user: { ...userEntry.user }
-      }
-    })
 
-  const minifiedConfig = {
-    apiVersion: kubeconfig.apiVersion,
-    clusters: minifiedClusters,
-    contexts: minifiedContexts,
-    'current-context': currentContext,
-    kind: kubeconfig.kind,
-    users: minifiedUsers
+    const currentContextEntry = getCurrentContextEntry(kubeconfig)
+    if (!currentContextEntry) {
+      return error(`context "${currentContext}" not found`)
+    }
+
+    const clusterName = currentContextEntry.context.cluster
+    const userName = currentContextEntry.context.user
+    const minifiedClusters = kubeconfig.clusters
+      .filter((clusterEntry) => {
+        return clusterEntry.name === clusterName
+      })
+      .map((clusterEntry) => {
+        return {
+          cluster: { ...clusterEntry.cluster },
+          name: clusterEntry.name
+        }
+      })
+    const minifiedContexts = [
+      {
+        context: { ...currentContextEntry.context },
+        name: currentContextEntry.name
+      }
+    ]
+    const minifiedUsers = kubeconfig.users
+      .filter((userEntry) => {
+        return userEntry.name === userName
+      })
+      .map((userEntry) => {
+        return {
+          name: userEntry.name,
+          user: { ...userEntry.user }
+        }
+      })
+
+    payload = {
+      apiVersion: kubeconfig.apiVersion,
+      clusters: minifiedClusters,
+      contexts: minifiedContexts,
+      'current-context': currentContext,
+      kind: kubeconfig.kind,
+      users: minifiedUsers
+    }
   }
-  return success(yamlStringify(minifiedConfig).trimEnd())
+
+  const renderResult = renderStructuredPayload(payload, outputDirective)
+  if (!renderResult.ok) {
+    return error(renderResult.error)
+  }
+  return success(renderResult.value)
 }
 
 const handleConfigSetContext = (

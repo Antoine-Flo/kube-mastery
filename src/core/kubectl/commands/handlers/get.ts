@@ -1,4 +1,3 @@
-import { stringify as yamlStringify } from 'yaml'
 import type { ClusterStateData } from '../../../cluster/ClusterState'
 import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
 import type { DaemonSet } from '../../../cluster/ressources/DaemonSet'
@@ -23,6 +22,11 @@ import type { Service } from '../../../cluster/ressources/Service'
 import { getServiceType } from '../../../cluster/ressources/Service'
 import { formatAge, formatTable } from '../../../shared/formatter'
 import type { ParsedCommand, Resource } from '../types'
+import {
+  renderStructuredPayload,
+  resolveOutputDirective,
+  validateOutputDirective
+} from '../output/outputHelpers'
 import { shapeDeploymentForStructuredOutput } from './deploymentOutputShaper'
 import { handleGetRaw } from './getRaw'
 import { shapePodForStructuredOutput } from './podOutputShaper'
@@ -73,7 +77,6 @@ interface ResourceListOutput<T> {
 }
 
 const KUBECTL_TABLE_SPACING = 3
-const KUBECTL_JSON_INDENT = 4
 
 const withKubectlTableSpacing = (options?: {
   align?: ('left' | 'right')[]
@@ -292,28 +295,6 @@ const buildListOutput = <T>(
   }
 }
 
-const isStructuredOutput = (outputFormat: string): boolean => {
-  return outputFormat === 'json' || outputFormat === 'yaml'
-}
-
-const serializeStructuredOutput = (
-  outputFormat: string,
-  resourceType: StructuredResource,
-  items: unknown[],
-  asSingleObject: boolean
-): string => {
-  const payload = asSingleObject
-    ? items[0]
-    : buildListOutput(resourceType, items)
-  if (outputFormat === 'json') {
-    return JSON.stringify(payload, null, KUBECTL_JSON_INDENT)
-  }
-  return yamlStringify(payload, {
-    indentSeq: false,
-    aliasDuplicateObjects: false
-  }).trimEnd()
-}
-
 const shapeStructuredItemsForOutput = (
   resourceType: StructuredResource,
   items: unknown[]
@@ -329,6 +310,34 @@ const shapeStructuredItemsForOutput = (
     })
   }
   return items
+}
+
+const KIND_REFERENCE_BY_RESOURCE: Record<Resource, string> = {
+  all: 'resource',
+  pods: 'pod',
+  configmaps: 'configmap',
+  secrets: 'secret',
+  nodes: 'node',
+  replicasets: 'replicaset.apps',
+  daemonsets: 'daemonset.apps',
+  deployments: 'deployment.apps',
+  services: 'service',
+  ingresses: 'ingress.networking.k8s.io',
+  ingressclasses: 'ingressclass.networking.k8s.io',
+  namespaces: 'namespace',
+  persistentvolumes: 'persistentvolume',
+  persistentvolumeclaims: 'persistentvolumeclaim'
+}
+
+const buildNameOutput = (
+  resourceType: Resource,
+  resources: ResourceWithMetadata[]
+): string => {
+  const kindReference = KIND_REFERENCE_BY_RESOURCE[resourceType]
+  const lines = resources.map((resource) => {
+    return `${kindReference}/${resource.metadata.name}`
+  })
+  return lines.join('\n')
 }
 
 /**
@@ -745,11 +754,19 @@ export const handleGet = (
     parsed.flags['all-namespaces'] === true || parsed.flags['A'] === true
   const effectiveNamespace = parsed.namespace ?? 'default'
   const filterNamespace = allNamespacesFlag ? undefined : effectiveNamespace
-  const explicitOutput = parsed.flags.output || parsed.flags['o']
-  const outputFormat = explicitOutput
-    ? (explicitOutput as string)
-    : (parsed.output ?? 'table')
-  const structuredOutput = isStructuredOutput(outputFormat)
+  const outputDirectiveResult = validateOutputDirective(
+    resolveOutputDirective(parsed.flags, parsed.output),
+    ['table', 'json', 'yaml', 'wide', 'name', 'jsonpath'],
+    "--output must be one of: json|yaml|wide|name|jsonpath"
+  )
+  if (!outputDirectiveResult.ok) {
+    return `error: ${outputDirectiveResult.error}`
+  }
+  const outputDirective = outputDirectiveResult.value
+  const isStructuredOutput =
+    outputDirective.kind === 'json' ||
+    outputDirective.kind === 'yaml' ||
+    outputDirective.kind === 'jsonpath'
   const items = handler.getItems(state)
   const isClusterScoped = handler.isClusterScoped || false
   const filtered = applyFilters(
@@ -765,8 +782,16 @@ export const handleGet = (
     if (resourceType === 'namespaces' && parsed.name !== undefined) {
       return `Error from server (NotFound): namespaces "${parsed.name}" not found`
     }
-    if (structuredOutput && parsed.name === undefined) {
-      return serializeStructuredOutput(outputFormat, resourceType, [], false)
+    if (isStructuredOutput && parsed.name === undefined) {
+      const structuredPayload = buildListOutput(resourceType, [])
+      const renderResult = renderStructuredPayload(
+        structuredPayload,
+        outputDirective
+      )
+      if (!renderResult.ok) {
+        return renderResult.error
+      }
+      return renderResult.value
     }
     return noResourcesMessage(
       allNamespacesFlag ? undefined : effectiveNamespace,
@@ -777,25 +802,34 @@ export const handleGet = (
   // Sanitize resources for output (remove _simulator)
   const sanitized = filtered.map(sanitizeForOutput)
 
-  if (structuredOutput) {
+  if (isStructuredOutput) {
     const asSingleObject = parsed.name !== undefined
     const structuredResourceType = resourceType as StructuredResource
     const shaped = shapeStructuredItemsForOutput(
       structuredResourceType,
       sanitized
     )
-    return serializeStructuredOutput(
-      outputFormat,
-      structuredResourceType,
-      shaped,
-      asSingleObject
+    const structuredPayload = asSingleObject
+      ? shaped[0]
+      : buildListOutput(structuredResourceType, shaped)
+    const renderResult = renderStructuredPayload(
+      structuredPayload,
+      outputDirective
     )
+    if (!renderResult.ok) {
+      return renderResult.error
+    }
+    return renderResult.value
+  }
+
+  if (outputDirective.kind === 'name') {
+    return buildNameOutput(resourceType, filtered)
   }
 
   // Default: table format
   // For pods with --all-namespaces (-A), add NAMESPACE column and sort by namespace then name.
   // Applies to both default and wide formats.
-  const isWide = outputFormat === 'wide' || parsed.flags.wide === true
+  const isWide = outputDirective.kind === 'wide' || parsed.flags.wide === true
   const showLabels = parsed.flags['show-labels'] === true
   if (resourceType === ('pods' as Resource) && allNamespacesFlag) {
     const sorted = [...filtered].sort((a, b) => {

@@ -58,7 +58,15 @@ const HELP_TEXTS: Record<HelpTopic, string> = {
   get: `Display one or many resources.
 
 Usage:
-  kubectl get [(-o|--output=)json|yaml|wide|name] (TYPE [NAME | -l label] | TYPE/NAME)
+  kubectl get [(-o|--output=)json|yaml|wide|name|jsonpath=JSONPATH] (TYPE [NAME | -l label] | TYPE/NAME)
+
+Examples:
+  kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="ExternalIP")].address}'
+  kubectl get nodes -o jsonpath='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'
+  kubectl get pods -o jsonpath='{range .items[*].status.initContainerStatuses[*]}{.containerID}{"\\n"}{end}'
+
+Notes:
+  JSONPath regular expressions (=~) are not supported.
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`,
   diff: `Diff configurations specified by file name between the current online configuration, and the configuration as it would be if applied.
@@ -176,8 +184,12 @@ Use "kubectl options" for a list of global command-line options (applies to all 
 Usage:
   kubectl config get-contexts
   kubectl config current-context
-  kubectl config view --minify
+  kubectl config view [--minify] [--output=json|yaml|jsonpath=JSONPATH]
   kubectl config set-context --current --namespace=NAME
+
+Examples:
+  kubectl config view -o jsonpath='{.users[].name}'
+  kubectl config view -o jsonpath='{.users[*].name}'
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`,
   run: `Run a particular image on the cluster.
@@ -188,7 +200,7 @@ Usage:
   kubectl run NAME --image=image -- <arg1> <arg2> ... <argN>
   kubectl run NAME --image=image --command -- COMMAND [args...]
   kubectl run NAME --image=image --env=KEY=VALUE --labels=key=value --port=PORT
-  kubectl run NAME --image=image --dry-run=client
+  kubectl run NAME --image=image --dry-run=client [-o json|yaml|jsonpath=JSONPATH]
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`
 }

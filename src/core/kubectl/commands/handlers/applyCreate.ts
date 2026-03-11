@@ -17,9 +17,17 @@ import type { FileSystem } from '../../../filesystem/FileSystem'
 import type { SimNetworkRuntime } from '../../../network/SimNetworkRuntime'
 import type { ExecutionResult } from '../../../shared/result'
 import { error } from '../../../shared/result'
-import { stringify as yamlStringify } from 'yaml'
 import { parseKubernetesYaml } from '../../yamlParser'
+import {
+  validateMetadataNameByKind,
+  validateMetadataNameForResource
+} from '../metadataNameValidation'
 import type { ParsedCommand } from '../types'
+import {
+  renderStructuredPayload,
+  resolveOutputDirective,
+  validateOutputDirective
+} from '../output/outputHelpers'
 import {
   applyResourceWithEvents,
   createResourceWithEvents
@@ -69,22 +77,34 @@ const buildDryRunResponse = (
   resource: any,
   parsed: ParsedCommand
 ): ExecutionResult => {
-  const output = parsed.output ?? 'table'
+  const metadataNameValidation = validateMetadataNameForResource(resource)
+  if (metadataNameValidation != null) {
+    return metadataNameValidation
+  }
+
+  const outputDirectiveResult = validateOutputDirective(
+    resolveOutputDirective(parsed.flags, parsed.output),
+    ['table', 'yaml', 'json', 'jsonpath'],
+    "--output must be one of: json|yaml|jsonpath"
+  )
+  if (!outputDirectiveResult.ok) {
+    return error(outputDirectiveResult.error)
+  }
+  const outputDirective = outputDirectiveResult.value
   const sanitized = sanitizeForDryRunOutput(resource)
 
-  if (output === 'yaml') {
-    return {
-      ok: true,
-      value: yamlStringify(sanitized, {
-        indentSeq: false,
-        aliasDuplicateObjects: false
-      }).trimEnd()
+  if (
+    outputDirective.kind === 'yaml' ||
+    outputDirective.kind === 'json' ||
+    outputDirective.kind === 'jsonpath'
+  ) {
+    const renderResult = renderStructuredPayload(sanitized, outputDirective)
+    if (!renderResult.ok) {
+      return error(renderResult.error)
     }
-  }
-  if (output === 'json') {
     return {
       ok: true,
-      value: JSON.stringify(sanitized, null, 4)
+      value: renderResult.value
     }
   }
 
@@ -98,10 +118,6 @@ const buildCreateDeploymentDryRunManifest = (
   parsed: ParsedCommand & { name: string }
 ): Record<string, unknown> => {
   const images = getCreateImages(parsed)
-  if (images.length === 0) {
-    return {}
-  }
-
   const metadataLabels = { app: parsed.name }
   const container = {
     image: images[0],
@@ -886,6 +902,14 @@ const validateCreateDeploymentCommand = (
     return error('error: create deployment requires a name')
   }
 
+  const images = getCreateImages(parsed)
+  if (images.length === 0) {
+    return error('error: required flag(s) "image" not set')
+  }
+  if (images.length > 1 && parsed.createCommand && parsed.createCommand.length > 0) {
+    return error('error: cannot specify multiple --image options and command')
+  }
+
   return undefined
 }
 
@@ -895,17 +919,6 @@ const createDeploymentFromFlags = (
   eventBus: EventBus
 ): ExecutionResult => {
   const images = getCreateImages(parsed)
-  if (
-    images.length > 1 &&
-    parsed.createCommand &&
-    parsed.createCommand.length > 0
-  ) {
-    return error('error: cannot specify multiple --image options and command')
-  }
-
-  if (images.length === 0) {
-    return error('error: required flag(s) "image" not set')
-  }
 
   const deploymentName = parsed.name
   const namespace = parsed.namespace || 'default'
@@ -1222,6 +1235,10 @@ export const handleRun = (
   if (typeof podName !== 'string' || podName.length === 0) {
     return error('run requires a resource name')
   }
+  const podNameValidation = validateMetadataNameByKind('Pod', podName)
+  if (podNameValidation != null) {
+    return podNameValidation
+  }
 
   const dryRunFlag = parsed.flags['dry-run']
   if (
@@ -1289,24 +1306,15 @@ export const handleRun = (
   })
 
   if (parsed.runDryRunClient) {
-    if (parsed.output === 'yaml') {
-      const dryRunManifest = buildRunDryRunManifest(
-        podName,
-        parsed,
-        image,
-        envVars,
-        runCommand,
-        runArgs
-      )
-      return {
-        ok: true,
-        value: yamlStringify(dryRunManifest, {
-          indentSeq: false,
-          aliasDuplicateObjects: false
-        }).trimEnd()
-      }
-    }
-    return { ok: true, value: `pod/${podName} created (dry run)` }
+    const dryRunManifest = buildRunDryRunManifest(
+      podName,
+      parsed,
+      image,
+      envVars,
+      runCommand,
+      runArgs
+    )
+    return buildDryRunResponse(dryRunManifest, parsed)
   }
 
   const runCommandHead = runCommand?.[0]

@@ -32,10 +32,55 @@ export const trim = <Ctx extends { input: string }>(ctx: Ctx): Result<Ctx> => {
 export const tokenize = <Ctx extends { input: string }>(
   ctx: Ctx
 ): Result<Ctx & { tokens: string[] }> => {
-  const tokens = ctx.input
-    .trim()
-    .split(/\s+/)
-    .filter((t) => t.length > 0)
+  const input = ctx.input.trim()
+  const tokens: string[] = []
+  let current = ''
+  let inSingleQuote = false
+  let inDoubleQuote = false
+  let escaping = false
+
+  for (let index = 0; index < input.length; index++) {
+    const char = input[index]
+
+    if (escaping) {
+      current += char
+      escaping = false
+      continue
+    }
+
+    if (char === '\\') {
+      current += char
+      escaping = true
+      continue
+    }
+
+    if (char === "'" && !inDoubleQuote) {
+      inSingleQuote = !inSingleQuote
+      current += char
+      continue
+    }
+
+    if (char === '"' && !inSingleQuote) {
+      inDoubleQuote = !inDoubleQuote
+      current += char
+      continue
+    }
+
+    if (!inSingleQuote && !inDoubleQuote && /\s/.test(char)) {
+      if (current.length > 0) {
+        tokens.push(current)
+        current = ''
+      }
+      continue
+    }
+
+    current += char
+  }
+
+  if (current.length > 0) {
+    tokens.push(current)
+  }
+
   if (tokens.length === 0) {
     return error('Command cannot be empty')
   }

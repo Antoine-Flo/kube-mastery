@@ -40,6 +40,7 @@ import type { Secret } from '../../../cluster/ressources/Secret'
 import type { Service } from '../../../cluster/ressources/Service'
 import type { ExecutionResult, Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
+import { validateMetadataNameByKind } from '../metadataNameValidation'
 
 // ─── Event-Driven Resource Operations ───────────────────────────────────
 
@@ -414,6 +415,11 @@ export const applyResourceWithEvents = (
     )
   }
 
+  const metadataNameValidation = validateMetadataNameByKind(kind, name)
+  if (metadataNameValidation != null) {
+    return metadataNameValidation
+  }
+
   const namespaceValidation = validateNamespaceExists(
     clusterState,
     kind,
@@ -463,6 +469,11 @@ export const createResourceWithEvents = (
     return error(
       `error: the server doesn't have a resource type "${kind.toLowerCase()}s"`
     )
+  }
+
+  const metadataNameValidation = validateMetadataNameByKind(kind, name)
+  if (metadataNameValidation != null) {
+    return metadataNameValidation
   }
 
   const namespaceValidation = validateNamespaceExists(

@@ -33,7 +33,7 @@ import type { ParsedCommand } from './types'
 type ActionHandler = (parsed: ParsedCommand) => ExecutionResult
 
 const toGetExecutionResult = (output: string): ExecutionResult => {
-  if (output.startsWith('Error from server')) {
+  if (output.startsWith('Error from server') || output.startsWith('error:')) {
     return error(output)
   }
   return success(output)

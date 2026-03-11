@@ -219,6 +219,16 @@ export const shapePodForStructuredOutput = (
     'kubectl.kubernetes.io/last-applied-configuration':
       buildLastAppliedAnnotation(pod)
   }
+  const specInitContainers = (pod.spec.initContainers ?? []).map((container) => {
+    return {
+      image: container.image,
+      imagePullPolicy: 'IfNotPresent',
+      name: container.name,
+      resources: container.resources ?? {},
+      terminationMessagePath: '/dev/termination-log',
+      terminationMessagePolicy: 'File'
+    }
+  })
   const specContainers = pod.spec.containers.map((container) => {
     const ports = (container.ports ?? []).map((port) => {
       return {
@@ -243,7 +253,7 @@ export const shapePodForStructuredOutput = (
       ]
     }
   })
-  const containerStatuses = (pod.status.containerStatuses ?? []).map(
+  const allContainerStatuses = (pod.status.containerStatuses ?? []).map(
     (status) => {
       return {
         containerID:
@@ -278,6 +288,15 @@ export const shapePodForStructuredOutput = (
       }
     }
   )
+  const initContainerNames = new Set(
+    (pod.spec.initContainers ?? []).map((container) => container.name)
+  )
+  const initContainerStatuses = allContainerStatuses.filter((status) => {
+    return initContainerNames.has(status.name)
+  })
+  const containerStatuses = allContainerStatuses.filter((status) => {
+    return initContainerNames.has(status.name) === false
+  })
   return {
     apiVersion: pod.apiVersion,
     kind: pod.kind,
@@ -296,6 +315,9 @@ export const shapePodForStructuredOutput = (
     },
     spec: {
       containers: specContainers,
+      ...(specInitContainers.length > 0
+        ? { initContainers: specInitContainers }
+        : {}),
       dnsPolicy: 'ClusterFirst',
       enableServiceLinks: true,
       ...(pod.spec.nodeName != null ? { nodeName: pod.spec.nodeName } : {}),
@@ -362,6 +384,9 @@ export const shapePodForStructuredOutput = (
     status: {
       conditions: ensurePodConditions(pod),
       containerStatuses,
+      ...(initContainerStatuses.length > 0
+        ? { initContainerStatuses }
+        : {}),
       ...(hostIP != null ? { hostIP } : {}),
       ...(hostIP != null ? { hostIPs: [{ ip: hostIP }] } : {}),
       observedGeneration,

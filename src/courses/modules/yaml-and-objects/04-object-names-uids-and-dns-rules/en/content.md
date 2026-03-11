@@ -14,10 +14,6 @@ Across namespaces, names can repeat freely. A Deployment named `backend` can exi
 
 The maximum length for an object name is **253 characters**, but in practice you should aim for short, descriptive names. Long names are harder to type, harder to read in `kubectl get` output, and harder to work with in shell scripts.
 
-:::info
-For most resource types, names must follow **DNS subdomain** rules, which are strict. Some resources , like ConfigMaps and Secrets , may follow slightly relaxed rules (called DNS label names), but DNS subdomain rules are the safe default to apply universally.
-:::
-
 ## DNS Subdomain Naming Rules
 
 Most Kubernetes resources , including Pods, Deployments, Services, ConfigMaps, and many others , require their names to be valid **DNS subdomain names**. The rules are:
@@ -62,7 +58,7 @@ Don't confuse label key rules with object name rules. An object name like `my_ap
 
 ## UIDs: The Cluster's Internal Identity
 
-While names are your human-readable handle for an object, **UIDs** are Kubernetes' internal, permanent identity. Every object that has ever existed in a cluster , past or present , gets a globally unique UID assigned at creation time. UIDs are UUID v4 strings that look like this:
+While names are your human-readable handle for an object, **UIDs** are Kubernetes' internal, permanent identity. Every object that has ever existed in a cluster, past or present , gets a globally unique UID assigned at creation time. UIDs are UUID v4 strings that look like this:
 
 ```
 a3b4c5d6-1234-5678-abcd-ef0123456789
@@ -83,6 +79,10 @@ Or in the full YAML output:
 ```bash
 kubectl get pod mypod -o yaml | grep uid
 ```
+
+:::warning
+The pipe and grep are not yet supported in the terminal.
+:::
 
 ## How Names Feed Into DNS
 

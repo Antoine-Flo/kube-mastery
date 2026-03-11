@@ -66,6 +66,28 @@ describe('applyCreate handler', () => {
     }
   })
 
+  it('should return explicit error when image is missing in dry-run client mode', () => {
+    const parsed = parseCommand(
+      'kubectl create deployment my-dep --dry-run=client -o json'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('required flag(s) "image" not set')
+    }
+  })
+
   it('should return error when multiple images are used with command', () => {
     const parsed = parseCommand(
       'kubectl create deployment my-dep --image=busybox --image=nginx -- date'
@@ -144,6 +166,95 @@ describe('applyCreate handler', () => {
     expect(result.ok).toBe(true)
     const deployment = clusterState.findDeployment('my-dep', 'staging')
     expect(deployment.ok).toBe(true)
+  })
+
+  it('should reject deployment with invalid metadata.name for dry-run client', () => {
+    const parsed = parseCommand(
+      'kubectl create deployment My_App --image=nginx --dry-run=client -o yaml'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('metadata.name: Invalid value: "My_App"')
+      expect(result.error).toContain('regex used for validation')
+    }
+  })
+
+  it('should reject service with invalid metadata.name in dry-run client', () => {
+    const parsed = parseCommand(
+      'kubectl create service clusterip My_App --tcp=80:80 --dry-run=client -o yaml'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('metadata.name: Invalid value: "My_App"')
+    }
+  })
+
+  it('should reject namespace with invalid metadata.name in dry-run client', () => {
+    const parsed = parseCommand(
+      'kubectl create namespace My_App --dry-run=client -o yaml'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('metadata.name: Invalid value: "My_App"')
+    }
+  })
+
+  it('should reject deployment with invalid metadata.name in dry-run server', () => {
+    const parsed = parseCommand(
+      'kubectl create deployment My_App --image=nginx --dry-run=server'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('metadata.name: Invalid value: "My_App"')
+    }
   })
 
   it('should fail when deployment namespace does not exist', () => {
@@ -423,6 +534,31 @@ spec:
     expect(result.value).toContain('creationTimestamp: null')
     expect(result.value).toContain('LOG_LEVEL: info')
 
+    const configMap = clusterState.findConfigMap('app-config', 'default')
+    expect(configMap.ok).toBe(false)
+  })
+
+  it('should return jsonpath value for create configmap dry-run client', () => {
+    const parsed = parseCommand(
+      "kubectl create configmap app-config --from-literal=LOG_LEVEL=info --dry-run=client -o jsonpath='{.metadata.name}'"
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(
+      fileSystem,
+      clusterState,
+      parsed.value,
+      eventBus
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toBe('app-config')
     const configMap = clusterState.findConfigMap('app-config', 'default')
     expect(configMap.ok).toBe(false)
   })
