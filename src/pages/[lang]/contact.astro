@@ -1,10 +1,24 @@
 ---
 import Layout from '../../layouts/Layout.astro'
-import { useTranslations } from '../../i18n/utils'
+import { useTranslations, useLocalePath } from '../../i18n/utils'
+import { getSupabaseServer } from '../../lib/supabase'
 
 const locale = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(locale)
-const contactEmail = 'contact@kubemastery.com'
+const localePath = useLocalePath(locale)
+const contactPath = localePath('/contact')
+const authPath = localePath('/auth')
+
+const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
+const {
+  data: { user }
+} = await supabase.auth.getUser()
+
+if (!user) {
+  return Astro.redirect(
+    `${authPath}?redirect=${encodeURIComponent(contactPath)}`
+  )
+}
 ---
 
 <Layout>
@@ -12,12 +26,155 @@ const contactEmail = 'contact@kubemastery.com'
     <h1>{t('contact_title')}</h1>
     <p class="lead">{t('contact_intro')}</p>
 
-    <section class="contact-card">
-      <h2>{t('contact_email_label')}</h2>
-      <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
-    </section>
+    <form id="contact-form" class="contact-card" method="post" action="#">
+      <fieldset class="contact-types">
+        <legend>{t('contact_type_label')}</legend>
+        <label class="contact-type">
+          <input type="radio" name="contactType" value="support" checked />
+          <span>{t('lesson_contactTypeSupport')}</span>
+        </label>
+        <label class="contact-type">
+          <input type="radio" name="contactType" value="suggestion" />
+          <span>{t('lesson_contactTypeSuggestion')}</span>
+        </label>
+        <label class="contact-type">
+          <input type="radio" name="contactType" value="other" />
+          <span>{t('lesson_contactTypeOther')}</span>
+        </label>
+      </fieldset>
+      <textarea
+        id="contact-message"
+        name="message"
+        rows={6}
+        maxlength={3000}
+        placeholder={t('contact_message_placeholder')}
+        required
+      ></textarea>
+      <p id="contact-form-feedback" aria-live="polite" hidden></p>
+      <button type="submit" class="contact-submit">
+        {t('contact_submit')}
+      </button>
+    </form>
   </div>
 </Layout>
+
+<script define:vars={{
+  successMessage: t('contact_success'),
+  defaultErrorMessage: t('contact_error_default')
+}}>
+  function getContactForm() {
+    return document.getElementById('contact-form')
+  }
+
+  function getFeedbackElement() {
+    return document.getElementById('contact-form-feedback')
+  }
+
+  function setFeedback(type, text) {
+    const feedbackEl = getFeedbackElement()
+    if (!(feedbackEl instanceof HTMLElement)) {
+      return
+    }
+    feedbackEl.hidden = false
+    feedbackEl.classList.remove('is-success', 'is-error')
+    if (type === 'success') {
+      feedbackEl.classList.add('is-success')
+    }
+    if (type === 'error') {
+      feedbackEl.classList.add('is-error')
+    }
+    feedbackEl.textContent = text
+  }
+
+  function clearFeedback() {
+    const feedbackEl = getFeedbackElement()
+    if (!(feedbackEl instanceof HTMLElement)) {
+      return
+    }
+    feedbackEl.hidden = true
+    feedbackEl.classList.remove('is-success', 'is-error')
+    feedbackEl.textContent = ''
+  }
+
+  function getPayload(formEl) {
+    const checkedType = formEl.querySelector("input[name='contactType']:checked")
+    const messageEl = formEl.querySelector("textarea[name='message']")
+    const type = checkedType instanceof HTMLInputElement ? checkedType.value : 'support'
+    const message = messageEl instanceof HTMLTextAreaElement ? messageEl.value.trim() : ''
+    return { type, message }
+  }
+
+  async function submitContact(payload) {
+    const response = await fetch('/api/contact', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      const errorMessage =
+        typeof data.error === 'string' && data.error.trim() !== ''
+          ? data.error
+          : defaultErrorMessage
+      throw new Error(errorMessage)
+    }
+  }
+
+  async function onContactSubmit(event) {
+    event.preventDefault()
+    const formEl = event.target
+    if (!(formEl instanceof HTMLFormElement)) {
+      return
+    }
+    clearFeedback()
+    const payload = getPayload(formEl)
+    if (payload.message === '') {
+      setFeedback('error', defaultErrorMessage)
+      return
+    }
+    const submitButton = formEl.querySelector("button[type='submit']")
+    if (submitButton instanceof HTMLButtonElement) {
+      submitButton.disabled = true
+    }
+    try {
+      await submitContact(payload)
+      formEl.reset()
+      const defaultType = formEl.querySelector(
+        "input[name='contactType'][value='support']"
+      )
+      if (defaultType instanceof HTMLInputElement) {
+        defaultType.checked = true
+      }
+      setFeedback('success', successMessage)
+    } catch (error) {
+      setFeedback(
+        'error',
+        error instanceof Error ? error.message : defaultErrorMessage
+      )
+    } finally {
+      if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = false
+      }
+    }
+  }
+
+  function bindContactForm() {
+    const formEl = getContactForm()
+    if (!(formEl instanceof HTMLFormElement)) {
+      return
+    }
+    if (formEl.hasAttribute('data-bound')) {
+      return
+    }
+    formEl.setAttribute('data-bound', 'true')
+    formEl.addEventListener('submit', onContactSubmit)
+  }
+
+  bindContactForm()
+  document.addEventListener('astro:page-load', bindContactForm)
+</script>
 
 <style>
   .doc {
@@ -45,22 +202,74 @@ const contactEmail = 'contact@kubemastery.com'
     border-radius: 12px;
     padding: 1.5rem;
     background: var(--color-gray-a2);
+    display: grid;
+    gap: 1rem;
   }
 
-  .contact-card h2 {
-    font-size: 1.125rem;
+  .contact-types {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .contact-types legend {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
     font-weight: var(--font-weight-semibold);
     color: var(--color-gray-12);
-    margin-bottom: 0.75rem;
   }
 
-  .contact-card a {
-    color: var(--color-cyan-11);
-    font-weight: var(--font-weight-medium);
-    text-decoration: none;
+  .contact-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-gray-12);
+    font-size: 0.95rem;
   }
 
-  .contact-card a:hover {
-    text-decoration: underline;
+  textarea[name='message'] {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--color-gray-7);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 1rem;
+    color: var(--color-gray-12);
+    background: var(--color-gray-1);
+    resize: vertical;
+  }
+
+  .contact-submit {
+    width: fit-content;
+    border: 1px solid var(--color-cyan-8);
+    background: var(--color-cyan-9);
+    color: var(--color-gray-1);
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    font-size: 0.95rem;
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+  }
+
+  .contact-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  #contact-form-feedback {
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  #contact-form-feedback.is-success {
+    color: var(--color-green-11);
+  }
+
+  #contact-form-feedback.is-error {
+    color: var(--color-ruby-11);
   }
 </style>
