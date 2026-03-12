@@ -13,6 +13,8 @@ import {
   getDurationMs,
   startTimer
 } from '../../../lib/observability/otel'
+import { getSafeLocalRedirectTarget } from '../../../lib/redirects'
+import { coerceUiLang } from '../../../i18n/utils'
 
 function buildAuthErrorRedirect(args: {
   lang: string
@@ -71,12 +73,9 @@ export const POST: APIRoute = async ({
   const password = formData.get('password')?.toString()
   const provider = formData.get('provider')?.toString()
   const magic = formData.get('magic')?.toString() === '1'
-  const lang = (formData.get('lang')?.toString() || 'en') as string
+  const lang = coerceUiLang(formData.get('lang')?.toString())
   const rawRedirect = formData.get('redirect')?.toString() ?? ''
-  const redirectTo =
-    rawRedirect.startsWith('/') && !rawRedirect.includes('//')
-      ? rawRedirect
-      : ''
+  const redirectTo = getSafeLocalRedirectTarget(rawRedirect, '')
 
   if (magic && email) {
     const confirmUrl = new URL('/api/auth/confirm', request.url)

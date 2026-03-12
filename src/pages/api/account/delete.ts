@@ -1,6 +1,10 @@
 import type { APIRoute } from 'astro'
 import { deleteCurrentUserAccount } from '../../../lib/auth/server'
 import {
+  addFlashParam,
+  getSafeRedirectTarget
+} from '../../../lib/billing/account-actions'
+import {
   actionJsonError,
   actionJsonSuccess,
   isAjaxFormAction
@@ -11,20 +15,6 @@ import {
   getDurationMs,
   startTimer
 } from '../../../lib/observability/otel'
-
-function getSafeRedirectTarget(
-  redirectParam: string | null,
-  fallback: string
-): string {
-  if (!redirectParam) {
-    return fallback
-  }
-  const path =
-    redirectParam.startsWith('/') && !redirectParam.includes('//')
-      ? redirectParam
-      : ''
-  return path || fallback
-}
 
 export const POST: APIRoute = async ({
   url,
@@ -91,7 +81,11 @@ export const POST: APIRoute = async ({
     if (isAjax) {
       return actionJsonError({ ok: false, code: 'action_failed' }, 500)
     }
-    const redirectWithError = `${redirectTo}?account_error=delete_failed`
+    const redirectWithError = addFlashParam(
+      redirectTo,
+      'account_error',
+      'delete_failed'
+    )
     return redirect(redirectWithError)
   }
 
@@ -108,7 +102,11 @@ export const POST: APIRoute = async ({
     if (isAjax) {
       return actionJsonError({ ok: false, code: 'subscription_active' }, 409)
     }
-    const redirectWithError = `${redirectTo}?account_error=subscription_active`
+    const redirectWithError = addFlashParam(
+      redirectTo,
+      'account_error',
+      'subscription_active'
+    )
     return redirect(redirectWithError)
   }
 
@@ -124,6 +122,10 @@ export const POST: APIRoute = async ({
   if (isAjax) {
     return actionJsonError({ ok: false, code: 'delete_failed' }, 400)
   }
-  const redirectWithError = `${redirectTo}?account_error=delete_failed`
+  const redirectWithError = addFlashParam(
+    redirectTo,
+    'account_error',
+    'delete_failed'
+  )
   return redirect(redirectWithError)
 }

@@ -4,6 +4,7 @@ import { Github, Gitlab } from '@lucide/astro'
 
 import Button from '../../../components/ui/Button.astro'
 import { useTranslations, useLocalePath } from '../../../i18n/utils'
+import { getSafeLocalRedirectTarget } from '../../../lib/redirects'
 import { getSupabaseServer } from '../../../lib/supabase'
 import '../../../styles/components/card.css'
 import '../../../styles/components/page-halo.css'
@@ -13,8 +14,7 @@ const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
 const rawRedirect = Astro.url.searchParams.get('redirect') ?? ''
-const redirect =
-  rawRedirect.startsWith('/') && !rawRedirect.includes('//') ? rawRedirect : ''
+const redirect = getSafeLocalRedirectTarget(rawRedirect, '')
 
 const authError = Astro.url.searchParams.get('auth_error') === '1'
 const authErrorMessageKey = Astro.url.searchParams.get('message_key') ?? ''

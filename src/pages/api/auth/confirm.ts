@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro'
 import { getSupabaseServer } from '../../../lib/supabase'
 import { reconcileBillingForAuthenticatedUser } from '../../../lib/auth/reconcile-billing'
+import { getSafeLocalRedirectTarget } from '../../../lib/redirects'
+import { coerceUiLang } from '../../../i18n/utils'
 
 const json = (body: Record<string, unknown>, status: number) =>
   new Response(JSON.stringify(body), {
@@ -37,12 +39,9 @@ export const GET: APIRoute = async ({
   redirect,
   locals
 }) => {
-  const lang = url.searchParams.get('lang') || 'en'
+  const lang = coerceUiLang(url.searchParams.get('lang'))
   const rawRedirect = url.searchParams.get('redirect') ?? ''
-  const redirectTo =
-    rawRedirect.startsWith('/') && !rawRedirect.includes('//')
-      ? rawRedirect
-      : ''
+  const redirectTo = getSafeLocalRedirectTarget(rawRedirect, '')
   const tokenHash = url.searchParams.get('token_hash')
   const type = url.searchParams.get('type')
 

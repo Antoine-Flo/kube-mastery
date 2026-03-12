@@ -7,6 +7,7 @@ import {
   getDurationMs,
   startTimer
 } from '../../../lib/observability/otel'
+import { getSafeLocalRedirectTarget } from '../../../lib/redirects'
 
 /**
  * GET /api/progress/complete
@@ -30,9 +31,10 @@ export const GET: APIRoute = async ({
   const lessonId = url.searchParams.get('lessonId')
   const type = url.searchParams.get('type')
   const targetId = url.searchParams.get('targetId')
-  let redirectTo = url.searchParams.get('redirect')
+  const redirectParam = url.searchParams.get('redirect')
+  const redirectTo = getSafeLocalRedirectTarget(redirectParam, '')
 
-  if (!redirectTo || !redirectTo.startsWith('/')) {
+  if (redirectTo === '') {
     emitApiLog({
       level: 'warn',
       event: 'progress_complete_failed',

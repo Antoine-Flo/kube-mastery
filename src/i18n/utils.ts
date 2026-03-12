@@ -71,3 +71,10 @@ export function useLocalePath(locale: UiLang) {
 export function isEnabledUiLang(lang: UiLang): boolean {
   return enabledLanguages.includes(lang)
 }
+
+export function coerceUiLang(value: string | null | undefined): UiLang {
+  if (value && isUiLanguage(value) && isEnabledUiLang(value)) {
+    return value
+  }
+  return defaultLang
+}

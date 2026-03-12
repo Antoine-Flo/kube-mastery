@@ -1,6 +1,7 @@
 ---
 import Layout from '../../../layouts/Layout.astro'
 import { useTranslations, useLocalePath } from '../../../i18n/utils'
+import { getSafeLocalRedirectTarget } from '../../../lib/redirects'
 import { getSupabaseServer } from '../../../lib/supabase'
 
 const lang = (Astro.params.lang || 'en') as 'en' | 'fr'
@@ -8,8 +9,7 @@ const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
 const redirect = Astro.url.searchParams.get('redirect') ?? ''
-const redirectTo =
-  redirect.startsWith('/') && !redirect.includes('//') ? redirect : ''
+const redirectTo = getSafeLocalRedirectTarget(redirect, '')
 
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)

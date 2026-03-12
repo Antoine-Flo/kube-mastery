@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
 import { getSupabaseServer } from '../../../lib/supabase'
+import { coerceUiLang } from '../../../i18n/utils'
 
 const json = (body: { error: string; message: string }, status: number) =>
   new Response(JSON.stringify(body), {
@@ -29,7 +30,7 @@ export const POST: APIRoute = async ({
   const formData = await request.formData()
   const email = formData.get('email')?.toString()
   const password = formData.get('password')?.toString()
-  const lang = (formData.get('lang')?.toString() || 'en') as string
+  const lang = coerceUiLang(formData.get('lang')?.toString())
 
   if (!email || !password) {
     return new Response('Email and password are required', { status: 400 })

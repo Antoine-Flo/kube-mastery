@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro'
 import { getSupabaseServer } from '../../../lib/supabase'
 import { reconcileBillingForAuthenticatedUser } from '../../../lib/auth/reconcile-billing'
+import { getSafeLocalRedirectTarget } from '../../../lib/redirects'
+import { coerceUiLang } from '../../../i18n/utils'
 import {
   createApiLogContext,
   emitApiLog,
@@ -49,12 +51,9 @@ export const GET: APIRoute = async ({
     route: '/api/auth/callback',
     locals
   })
-  const lang = url.searchParams.get('lang') || 'en'
+  const lang = coerceUiLang(url.searchParams.get('lang'))
   const rawRedirect = url.searchParams.get('redirect') ?? ''
-  const redirectTo =
-    rawRedirect.startsWith('/') && !rawRedirect.includes('//')
-      ? rawRedirect
-      : ''
+  const redirectTo = getSafeLocalRedirectTarget(rawRedirect, '')
 
   const authCode = url.searchParams.get('code')
   const oauthError = url.searchParams.get('error')

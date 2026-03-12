@@ -3,19 +3,13 @@ import {
   type BillingSubscriptionRow,
   pickBestBillingSubscription
 } from './domain'
+import { getSafeLocalRedirectTarget } from '../redirects'
 
 export function getSafeRedirectTarget(
   redirectParam: string | null,
   fallback: string
 ): string {
-  if (!redirectParam) {
-    return fallback
-  }
-  const path =
-    redirectParam.startsWith('/') && !redirectParam.includes('//')
-      ? redirectParam
-      : ''
-  return path || fallback
+  return getSafeLocalRedirectTarget(redirectParam, fallback)
 }
 
 export function addFlashParam(
