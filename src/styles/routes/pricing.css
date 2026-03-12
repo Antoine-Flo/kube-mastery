@@ -1,7 +1,27 @@
 /* Pricing Page */
 .pricing {
+  width: 100%;
+}
+
+.pricing__section {
+  width: 100%;
+}
+
+.pricing__section + .pricing__section {
+  border-top: 1px solid var(--color-gray-6);
+}
+
+.pricing__content {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 4rem 2rem;
+}
+
+.pricing__section--stats .pricing__content {
+  padding: 2rem 0;
+}
+
+.pricing__section--faq .pricing__content {
   padding: 4rem 2rem;
 }
 
@@ -306,7 +326,7 @@
 
 /* Pricing FAQ Section */
 .pricing__faq-section {
-  margin-top: 5rem;
+  margin-top: 0;
 }
 
 .pricing__faq-title {

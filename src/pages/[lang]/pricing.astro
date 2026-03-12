@@ -75,159 +75,174 @@ const faqItems = [
   <div class="page-halo">
     <div class="page-halo__bg" aria-hidden="true"></div>
     <div class="pricing">
-      <h2 class="pricing__title">{t('pricing_title')}</h2>
-      <div class="pricing__plans pricing__plans--centered">
-        <article
-          class="card card--outline pricing__plan-card pricing__plan-card--highlighted"
-        >
-          <div class="card__header">
-            <div class="pricing__badge">
-              <span class="pricing__badge-text pricing__badge-text--cyan">
-                {t('pricing_lifetime_badge')}
-              </span>
-            </div>
-            <h2 class="card__title pricing__plan-title">
-              {t('pricing_lifetime_title')}
-            </h2>
-            <div class="pricing__plan-price">
-              <div
-                class="pricing__plan-price-banner"
-                data-price-id-month={PRO_ONETIME_PRICE_ID}
-              >
-                <div class="pricing__plan-price-current">
-                  <span class="pricing__plan-price-amount">--</span>
+      <section class="pricing__section pricing__section--hero">
+        <div class="pricing__content">
+          <h2 class="pricing__title">{t('pricing_title')}</h2>
+          <div class="pricing__plans pricing__plans--centered">
+            <article
+              class="card card--outline pricing__plan-card pricing__plan-card--highlighted"
+            >
+              <div class="card__header">
+                <div class="pricing__badge">
+                  <span class="pricing__badge-text pricing__badge-text--cyan">
+                    {t('pricing_lifetime_badge')}
+                  </span>
                 </div>
-                <p class="pricing__plan-subline">
-                  {t('pricing_lifetime_subline')}
+                <h2 class="card__title pricing__plan-title">
+                  {t('pricing_lifetime_title')}
+                </h2>
+                <div class="pricing__plan-price">
+                  <div
+                    class="pricing__plan-price-banner"
+                    data-price-id-month={PRO_ONETIME_PRICE_ID}
+                  >
+                    <div class="pricing__plan-price-current">
+                      <span class="pricing__plan-price-amount">--</span>
+                    </div>
+                    <p class="pricing__plan-subline">
+                      {t('pricing_lifetime_subline')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="card__body">
+                <ul class="pricing__plan-features">
+                  <li class="pricing__plan-feature">
+                    <span class="pricing__plan-feature-check">✓</span>
+                    {t('pricing_lifetime_feature_1')}
+                  </li>
+                  <li class="pricing__plan-feature">
+                    <span class="pricing__plan-feature-check">✓</span>
+                    {t('pricing_lifetime_feature_2')}
+                  </li>
+                  <li class="pricing__plan-feature">
+                    <span class="pricing__plan-feature-check">✓</span>
+                    {t('pricing_lifetime_feature_3')}
+                  </li>
+                  <li class="pricing__plan-feature">
+                    <span class="pricing__plan-feature-check">✓</span>
+                    {t('pricing_lifetime_feature_4')}
+                  </li>
+                </ul>
+              </div>
+              <div
+                class="card__footer pricing__plan-footer pricing__plan-footer--column"
+              >
+                <Button
+                  type="button"
+                  variant="solid"
+                  size="lg"
+                  color="cyan"
+                  class="pricing__plan-button"
+                  data-open-checkout="pro"
+                  data-price-id={PRO_ONETIME_PRICE_ID}
+                >
+                  {t('pricing_lifetime_cta')}
+                </Button>
+                <p class="pricing__accessible-link">
+                  {t('pricing_discount_intro')}{' '}
+                  <button
+                    type="button"
+                    class="pricing__accessible-btn"
+                    data-open-discount-dialog
+                  >
+                    {t('pricing_discount_open_cta')}
+                  </button>
                 </p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="pricing__section pricing__section--guarantee">
+        <div class="guarantee">
+          <div class="content">
+            <div class="guarantee-row">
+              <div class="guarantee-badge">
+                <img
+                  src={guaranteeBadge.src}
+                  alt={t('home_guarantee_image_alt')}
+                  loading="lazy"
+                />
+              </div>
+              <div class="guarantee-text">
+                <h2>{t('home_guarantee_title')}</h2>
+                <p>{t('home_guarantee_subtitle')}</p>
+                <ul class="guarantee-bullets">
+                  <li>{t('home_guarantee_point1')}</li>
+                </ul>
               </div>
             </div>
           </div>
-          <div class="card__body">
-            <ul class="pricing__plan-features">
-              <li class="pricing__plan-feature">
-                <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_lifetime_feature_1')}
-              </li>
-              <li class="pricing__plan-feature">
-                <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_lifetime_feature_2')}
-              </li>
-              <li class="pricing__plan-feature">
-                <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_lifetime_feature_3')}
-              </li>
-              <li class="pricing__plan-feature">
-                <span class="pricing__plan-feature-check">✓</span>
-                {t('pricing_lifetime_feature_4')}
-              </li>
-            </ul>
-          </div>
-          <div
-            class="card__footer pricing__plan-footer pricing__plan-footer--column"
-          >
-            <Button
-              type="button"
-              variant="solid"
-              size="lg"
-              color="cyan"
-              class="pricing__plan-button"
-              data-open-checkout="pro"
-              data-price-id={PRO_ONETIME_PRICE_ID}
-            >
-              {t('pricing_lifetime_cta')}
-            </Button>
-            <p class="pricing__accessible-link">
-              {t('pricing_discount_intro')}{' '}
-              <button
-                type="button"
-                class="pricing__accessible-btn"
-                data-open-discount-dialog
-              >
-                {t('pricing_discount_open_cta')}
-              </button>
-            </p>
-          </div>
-        </article>
-      </div>
-
-      <div class="guarantee">
-        <div class="content">
-          <div class="guarantee-row">
-            <div class="guarantee-badge">
-              <img
-                src={guaranteeBadge.src}
-                alt={t('home_guarantee_image_alt')}
-                loading="lazy"
-              />
-            </div>
-            <div class="guarantee-text">
-              <h2>{t('home_guarantee_title')}</h2>
-              <p>{t('home_guarantee_subtitle')}</p>
-              <ul class="guarantee-bullets">
-                <li>{t('home_guarantee_point1')}</li>
-              </ul>
-            </div>
-          </div>
         </div>
-      </div>
+      </section>
 
-      <section class="pricing__stats">
-        <h2 class="pricing__stats-title">{t('home_stats_title')}</h2>
-        <p class="pricing__stats-subtitle">{t('home_stats_subtitle')}</p>
-        <div class="pricing__stats-grid">
-          <div class="pricing__stats-card">
-            <div class="pricing__stats-val">
-              {t('home_stats_adoption_value')}
+      <section class="pricing__section pricing__section--stats">
+        <div class="pricing__content">
+          <div class="pricing__stats">
+            <h2 class="pricing__stats-title">{t('home_stats_title')}</h2>
+            <p class="pricing__stats-subtitle">{t('home_stats_subtitle')}</p>
+            <div class="pricing__stats-grid">
+              <div class="pricing__stats-card">
+                <div class="pricing__stats-val">
+                  {t('home_stats_adoption_value')}
+                </div>
+                <h3>{t('home_stats_adoption_label')}</h3>
+                <p>{t('home_stats_adoption_description')}</p>
+                <p class="pricing__stats-src">{t('home_stats_adoption_source')}</p>
+              </div>
+              <div class="pricing__stats-card">
+                <div class="pricing__stats-val">{t('home_stats_market_value')}</div>
+                <h3>{t('home_stats_market_label')}</h3>
+                <p>{t('home_stats_market_description')}</p>
+                <p class="pricing__stats-src">{t('home_stats_market_source')}</p>
+              </div>
+              <div class="pricing__stats-card">
+                <div class="pricing__stats-val">
+                  {t('home_stats_companies_value')}
+                </div>
+                <h3>{t('home_stats_companies_label')}</h3>
+                <p>{t('home_stats_companies_description')}</p>
+                <p class="pricing__stats-src">{t('home_stats_companies_source')}</p>
+              </div>
             </div>
-            <h3>{t('home_stats_adoption_label')}</h3>
-            <p>{t('home_stats_adoption_description')}</p>
-            <p class="pricing__stats-src">{t('home_stats_adoption_source')}</p>
-          </div>
-          <div class="pricing__stats-card">
-            <div class="pricing__stats-val">{t('home_stats_market_value')}</div>
-            <h3>{t('home_stats_market_label')}</h3>
-            <p>{t('home_stats_market_description')}</p>
-            <p class="pricing__stats-src">{t('home_stats_market_source')}</p>
-          </div>
-          <div class="pricing__stats-card">
-            <div class="pricing__stats-val">
-              {t('home_stats_companies_value')}
-            </div>
-            <h3>{t('home_stats_companies_label')}</h3>
-            <p>{t('home_stats_companies_description')}</p>
-            <p class="pricing__stats-src">{t('home_stats_companies_source')}</p>
           </div>
         </div>
       </section>
 
-      <section class="pricing__faq-section">
-        <h2 class="pricing__faq-title">{t('pricing_faq_title')}</h2>
-        <div class="pricing__faq-container">
-          <div class="accordion accordion--size-md pricing__faq-accordion">
-            {
-              faqItems.map((faq) => (
-                <details
-                  class="accordion__item accordion__item--variant-outline"
-                  id={faq.id}
-                >
-                  <summary class="accordion__item-trigger">
-                    <span class="pricing__faq-question">{faq.q}</span>
-                    <span class="accordion__item-indicator" aria-hidden="true">
-                      ▼
-                    </span>
-                  </summary>
-                  <div class="accordion__item-content">
-                    <div class="accordion__item-body">
-                      <p class="pricing__faq-answer">{faq.a}</p>
-                    </div>
-                  </div>
-                </details>
-              ))
-            }
-          </div>
+      <section class="pricing__section pricing__section--faq">
+        <div class="pricing__content">
+          <section class="pricing__faq-section">
+            <h2 class="pricing__faq-title">{t('pricing_faq_title')}</h2>
+            <div class="pricing__faq-container">
+              <div class="accordion accordion--size-md pricing__faq-accordion">
+                {
+                  faqItems.map((faq) => (
+                    <details
+                      class="accordion__item accordion__item--variant-outline"
+                      id={faq.id}
+                    >
+                      <summary class="accordion__item-trigger">
+                        <span class="pricing__faq-question">{faq.q}</span>
+                        <span class="accordion__item-indicator" aria-hidden="true">
+                          ▼
+                        </span>
+                      </summary>
+                      <div class="accordion__item-content">
+                        <div class="accordion__item-body">
+                          <p class="pricing__faq-answer">{faq.a}</p>
+                        </div>
+                      </div>
+                    </details>
+                  ))
+                }
+              </div>
+            </div>
+          </section>
         </div>
       </section>
+
       <Dialog
         id={CHECKOUT_EMAIL_DIALOG_ID}
         title={checkoutDialogTitle}

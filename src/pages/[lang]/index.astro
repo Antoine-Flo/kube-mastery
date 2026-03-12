@@ -96,27 +96,12 @@ try {
       </div>
     </div>
 
-    <!-- <div class="try-it">
-      <div class="content">
-        <h2 class="try-it-title anim">{t('home_try_title')}</h2>
-        <div class="try-it-terminal anim">
-          <Terminal rows={20} lang={locale} />
-        </div>
-      </div>
-    </div> -->
     <div class="concerns">
       <div class="content">
         <div class="section-header anim">
           <h2>{t('home_concerns_title')}</h2>
           <p>{t('home_concerns_subtitle')}</p>
-          <div class="cta">
-            <Button
-              href={localePath('/courses')}
-              variant="solid"
-              color="cyan"
-              size="xl">{t('home_cta_explore')}</Button
-            >
-          </div>
+
         </div>
         <div class="section-body">
           <div class="concern-rows">
@@ -156,34 +141,6 @@ try {
                   aria-label={t('home_concerns_section1_image_alt')}></video>
               </div>
             </div>
-            <div class="concern-row reverse anim">
-              <div class="text">
-                <span class="eyebrow">{t('home_concerns_section3_label')}</span>
-                <h3>{t('home_concerns_section3_title')}</h3>
-                <p>{t('home_concerns_section3_intro')}</p>
-                <ul class="concern-bullets">
-                  <li class="concern-bullet">
-                    <CircleCheck size={20} class="icon g" />
-                    <span>{t('home_concerns_section3_point1')}</span>
-                  </li>
-                  <li class="concern-bullet">
-                    <CircleCheck size={20} class="icon g" />
-                    <span>{t('home_concerns_section3_point2')}</span>
-                  </li>
-                  <li class="concern-bullet">
-                    <CircleCheck size={20} class="icon g" />
-                    <span>{t('home_concerns_section3_point3')}</span>
-                  </li>
-                </ul>
-              </div>
-              <div class="media">
-                <img
-                  src={networkImg.src}
-                  alt={t('home_concerns_section1_image_alt')}
-                  loading="lazy"
-                />
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -193,26 +150,8 @@ try {
       <div class="content">
         <h2 class="fit-title anim">{t('home_fit_title')}</h2>
         <div class="fit-columns anim">
-          <div class="fit-col fit-yes">
-            <div class="fit-col-header">
-              <CircleCheck size={22} />
-              <span>{t('home_fit_yes_title')}</span>
-            </div>
-            <ul class="fit-list">
-              <li><CircleCheck size={18} /><span>{t('home_fit_yes_1')}</span></li>
-              <li><CircleCheck size={18} /><span>{t('home_fit_yes_2')}</span></li>
-              <li><CircleCheck size={18} /><span>{t('home_fit_yes_3')}</span></li>
-              <li><CircleCheck size={18} /><span>{t('home_fit_yes_4')}</span></li>
-            </ul>
-            <div class="cta">
-              <Button href={localePath('/pricing')} variant="solid" color="cyan" size="xl">
-                {t('home_cta_join')}
-              </Button>
-            </div>
-          </div>
           <div class="fit-col fit-no">
             <div class="fit-col-header">
-              <CircleX size={22} />
               <span>{t('home_fit_no_title')}</span>
             </div>
             <ul class="fit-list">
@@ -222,6 +161,23 @@ try {
               <li><CircleX size={18} /><span>{t('home_fit_no_4')} (<a href="https://kodekloud.com/" target="_blank" rel="noopener">{t('home_fit_no_4_link')}</a>)</span></li>
             </ul>
           </div>
+          <div class="fit-col fit-yes">
+            <div class="fit-col-header">
+              <span>{t('home_fit_yes_title')}</span>
+            </div>
+            <ul class="fit-list">
+              <li><CircleCheck size={18} /><span>{t('home_fit_yes_1')}</span></li>
+              <li><CircleCheck size={18} /><span>{t('home_fit_yes_2')}</span></li>
+              <li><CircleCheck size={18} /><span>{t('home_fit_yes_4')}</span></li>
+              <li><CircleCheck size={18} /><span>{t('home_fit_yes_5')} <span class="fit-extra">({t('home_fit_yes_5_extra')})</span></span></li>
+            </ul>
+            <div class="cta">
+              <Button href={localePath('/pricing')} variant="solid" color="cyan" size="xl">
+                {t('home_cta_join')}
+              </Button>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -378,7 +334,7 @@ try {
         var(--color-gray-1);
     }
 
-    [data-theme='light'] .bg-halo {
+    :global([data-theme='light']) .bg-halo {
       background:
         radial-gradient(
             ellipse 90% 86% at 72% 10%,
@@ -1044,26 +1000,19 @@ try {
 
   .fit-col-header {
     display: flex;
-    align-items: center;
-    gap: 0.6rem;
+    justify-content: center;
     font-size: var(--text-lg);
     font-weight: var(--font-weight-semibold);
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid currentColor;
   }
 
   .fit-yes .fit-col-header {
     color: var(--color-green-11);
   }
-  .fit-yes .fit-col-header svg {
-    color: var(--color-green-9);
-    flex-shrink: 0;
-  }
 
   .fit-no .fit-col-header {
     color: var(--color-red-11);
-  }
-  .fit-no .fit-col-header svg {
-    color: var(--color-red-9);
-    flex-shrink: 0;
   }
 
   .fit-list {
@@ -1110,6 +1059,10 @@ try {
   }
   .fit-list a:hover {
     color: var(--color-gray-12);
+  }
+  .fit-extra {
+    color: var(--color-gray-9);
+    font-size: 0.875em;
   }
 
   .platform-features {
