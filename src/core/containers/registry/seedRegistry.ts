@@ -94,6 +94,18 @@ export const SEED_IMAGES: ImageManifest[] = [
     }
   },
   {
+    name: 'coredns/coredns',
+    registry: 'registry.k8s.io',
+    tags: ['v1.13.1'],
+    description: 'Kubernetes CoreDNS cluster DNS server',
+    defaultPorts: [53, 9153],
+    logProfile: 'generic',
+    behavior: {
+      startupTime: 1200,
+      defaultStatus: 'Running'
+    }
+  },
+  {
     name: 'nginx',
     registry: 'docker.io/library',
     tags: ['latest', '1.28', '1.21'],

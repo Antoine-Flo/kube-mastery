@@ -3,8 +3,6 @@ import type { DeploymentStrategy } from '../ressources/Deployment'
 import type { PodAffinity } from '../ressources/Pod'
 import type { Container, PodToleration, Volume } from '../ressources/Pod'
 
-export type SimSystemWorkloadPolicy = 'conformance'
-
 export interface SimSystemWorkloadNode {
   role: ClusterNodeRole
   name: string
@@ -71,7 +69,6 @@ export type SimSystemWorkloadSpec =
 export interface SimSystemWorkloadSpecsOptions {
   clusterName: string
   nodeRoles: readonly ClusterNodeRole[]
-  policy?: SimSystemWorkloadPolicy
 }
 
 const buildNodes = (
@@ -477,123 +474,119 @@ const createDaemonSetSpecs = (): SimSystemWorkloadSpec[] => {
 }
 
 const createDeploymentSpecs = (
-  controlPlaneNodeName: string,
-  policy: SimSystemWorkloadPolicy
+  controlPlaneNodeName: string
 ): SimSystemWorkloadSpec[] => {
-  if (policy === 'conformance') {
-    return [
-      {
-        kind: 'deployment',
-        name: 'coredns',
-        namespace: 'kube-system',
-        containerName: 'coredns',
-        labels: { 'k8s-app': 'kube-dns' },
-        selectorLabels: { 'k8s-app': 'kube-dns' },
-        replicas: 2,
-        nodeSelector: {
-          'node-role.kubernetes.io/control-plane': ''
-        },
-        tolerations: [
-          {
-            key: 'node-role.kubernetes.io/control-plane',
-            operator: 'Exists',
-            effect: 'NoSchedule'
-          }
-        ],
-        strategy: {
-          type: 'RollingUpdate',
-          rollingUpdate: {
-            maxSurge: '25%',
-            maxUnavailable: 1
-          }
-        },
-        revisionHistoryLimit: 10,
-        progressDeadlineSeconds: 600,
-        containers: [
-          {
+  return [
+    {
+      kind: 'deployment',
+      name: 'coredns',
+      namespace: 'kube-system',
+      containerName: 'coredns',
+      labels: { 'k8s-app': 'kube-dns' },
+      selectorLabels: { 'k8s-app': 'kube-dns' },
+      replicas: 2,
+      nodeSelector: {
+        'node-role.kubernetes.io/control-plane': ''
+      },
+      tolerations: [
+        {
+          key: 'node-role.kubernetes.io/control-plane',
+          operator: 'Exists',
+          effect: 'NoSchedule'
+        }
+      ],
+      strategy: {
+        type: 'RollingUpdate',
+        rollingUpdate: {
+          maxSurge: '25%',
+          maxUnavailable: 1
+        }
+      },
+      revisionHistoryLimit: 10,
+      progressDeadlineSeconds: 600,
+      containers: [
+        {
+          name: 'coredns',
+          image: 'registry.k8s.io/coredns/coredns:v1.13.1',
+          imagePullPolicy: 'IfNotPresent',
+          args: ['-conf', '/etc/coredns/Corefile'],
+          ports: [
+            { containerPort: 53, name: 'dns', protocol: 'UDP' },
+            { containerPort: 53, name: 'dns-tcp', protocol: 'TCP' },
+            { containerPort: 9153, name: 'metrics', protocol: 'TCP' },
+            { containerPort: 8080, name: 'liveness-probe', protocol: 'TCP' },
+            { containerPort: 8181, name: 'readiness-probe', protocol: 'TCP' }
+          ],
+          livenessProbe: {
+            type: 'httpGet',
+            path: '/health',
+            port: 8080,
+            initialDelaySeconds: 60,
+            periodSeconds: 10
+          },
+          readinessProbe: {
+            type: 'httpGet',
+            path: '/ready',
+            port: 8181,
+            periodSeconds: 10
+          },
+          resources: {
+            requests: {
+              cpu: '100m',
+              memory: '70Mi'
+            },
+            limits: {
+              memory: '170Mi'
+            }
+          },
+          securityContext: {
+            allowPrivilegeEscalation: false,
+            capabilities: {
+              add: ['NET_BIND_SERVICE'],
+              drop: ['ALL']
+            },
+            readOnlyRootFilesystem: true
+          },
+          terminationMessagePath: '/dev/termination-log',
+          terminationMessagePolicy: 'File',
+          volumeMounts: [
+            {
+              name: 'config-volume',
+              mountPath: '/etc/coredns',
+              readOnly: true
+            }
+          ]
+        }
+      ],
+      volumes: [
+        {
+          name: 'config-volume',
+          source: {
+            type: 'configMap',
             name: 'coredns',
-            image: 'registry.k8s.io/coredns/coredns:v1.13.1',
-            imagePullPolicy: 'IfNotPresent',
-            args: ['-conf', '/etc/coredns/Corefile'],
-            ports: [
-              { containerPort: 53, name: 'dns', protocol: 'UDP' },
-              { containerPort: 53, name: 'dns-tcp', protocol: 'TCP' },
-              { containerPort: 9153, name: 'metrics', protocol: 'TCP' },
-              { containerPort: 8080, name: 'liveness-probe', protocol: 'TCP' },
-              { containerPort: 8181, name: 'readiness-probe', protocol: 'TCP' }
-            ],
-            livenessProbe: {
-              type: 'httpGet',
-              path: '/health',
-              port: 8080,
-              initialDelaySeconds: 60,
-              periodSeconds: 10
-            },
-            readinessProbe: {
-              type: 'httpGet',
-              path: '/ready',
-              port: 8181,
-              periodSeconds: 10
-            },
-            resources: {
-              requests: {
-                cpu: '100m',
-                memory: '70Mi'
-              },
-              limits: {
-                memory: '170Mi'
-              }
-            },
-            securityContext: {
-              allowPrivilegeEscalation: false,
-              capabilities: {
-                add: ['NET_BIND_SERVICE'],
-                drop: ['ALL']
-              },
-              readOnlyRootFilesystem: true
-            },
-            terminationMessagePath: '/dev/termination-log',
-            terminationMessagePolicy: 'File',
-            volumeMounts: [
+            defaultMode: 420,
+            items: [
               {
-                name: 'config-volume',
-                mountPath: '/etc/coredns',
-                readOnly: true
+                key: 'Corefile',
+                path: 'Corefile'
               }
             ]
           }
-        ],
-        volumes: [
-          {
-            name: 'config-volume',
-            source: {
-              type: 'configMap',
-              name: 'coredns',
-              defaultMode: 420,
-              items: [
-                {
-                  key: 'Corefile',
-                  path: 'Corefile'
-                }
-              ]
-            }
-          }
-        ],
-        dnsPolicy: 'Default',
-        priorityClassName: 'system-cluster-critical',
-        restartPolicy: 'Always',
-        schedulerName: 'default-scheduler',
-        securityContext: {},
-        serviceAccount: 'coredns',
-        serviceAccountName: 'coredns',
-        terminationGracePeriodSeconds: 30,
-        annotations: {
-          'sim.kubernetes.io/preferred-node': controlPlaneNodeName
         }
+      ],
+      dnsPolicy: 'Default',
+      priorityClassName: 'system-cluster-critical',
+      restartPolicy: 'Always',
+      schedulerName: 'default-scheduler',
+      securityContext: {},
+      serviceAccount: 'coredns',
+      serviceAccountName: 'coredns',
+      terminationGracePeriodSeconds: 30,
+      annotations: {
+        'sim.kubernetes.io/preferred-node': controlPlaneNodeName
       }
-    ]
-  }
-  return []
+    }
+  ]
 }
 
 const createStorageSpecs = (
@@ -628,13 +621,12 @@ const createStorageSpecs = (
 export const createSimSystemWorkloadSpecs = (
   options: SimSystemWorkloadSpecsOptions
 ): SimSystemWorkloadSpec[] => {
-  const policy = options.policy ?? 'conformance'
   const nodes = buildNodes(options.clusterName, options.nodeRoles)
   const controlPlaneNodeName = getControlPlaneNodeName(nodes)
   return [
     ...createStaticSpecs(controlPlaneNodeName),
     ...createDaemonSetSpecs(),
-    ...createDeploymentSpecs(controlPlaneNodeName, policy),
+    ...createDeploymentSpecs(controlPlaneNodeName),
     ...createStorageSpecs(controlPlaneNodeName)
   ]
 }

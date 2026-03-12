@@ -678,6 +678,19 @@ describe('kubectl parser - get and delete flag positions', () => {
     expect(result.value.name).toBe('coredns-abc')
     expect(result.value.namespace).toBe('kube-system')
   })
+
+  it('should parse delete with multiple positional names', () => {
+    const result = parseCommand('kubectl delete pod pod-1 pod-2 pod-3')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBe('pod-1')
+    expect(result.value.names).toEqual(['pod-1', 'pod-2', 'pod-3'])
+  })
 })
 
 describe('kubectl parser - get raw', () => {

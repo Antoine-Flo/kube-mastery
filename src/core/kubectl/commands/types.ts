@@ -36,7 +36,7 @@ export interface ParsedCommand {
   resource?: Resource // Optional for commands like 'version' that don't require a resource
   rawPath?: string // For kubectl get --raw: direct API path (e.g. /api/v1/namespaces)
   name?: string
-  names?: string[] // For kubectl get: positional names after resource (e.g. get pods a b c)
+  names?: string[] // Positional names after resource (e.g. get/delete pods a b c)
   namespace?: string
   output?: 'table' | 'yaml' | 'json'
   selector?: Record<string, string> // Parsed label selector (e.g., -l app=nginx,env=prod)

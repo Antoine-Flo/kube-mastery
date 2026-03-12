@@ -211,7 +211,7 @@
 }
 
 .pricing__plan-price-amount {
-  font-size: var(--text-5xl);
+  font-size: var(--text-6xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-gray-12);
 }
@@ -291,10 +291,7 @@
 /* Pricing Plan Price (container) */
 .pricing__plan-price {
   text-align: center;
-  margin-top: var(--spacing-2);
 }
-
-/* Spacer in Business card header so body aligns with Standard/Pro cards */
 
 /* Pricing Plan Features */
 .pricing__plan-features {
@@ -322,6 +319,11 @@
 
 .pricing__plan-button {
   width: 100%;
+}
+
+.pricing__plan-button--coming-soon {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 /* Pricing FAQ Section */

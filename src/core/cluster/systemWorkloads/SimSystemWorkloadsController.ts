@@ -1,16 +1,10 @@
 import type { ClusterNodeRole } from '../clusterConfig'
 import { materializeSimSystemWorkloads } from './SimWorkloadReconcilers'
-import {
-  createSimSystemWorkloadSpecs,
-  type SimSystemWorkloadPolicy
-} from './SimWorkloadSpecs'
-
-export type { SimSystemWorkloadPolicy } from './SimWorkloadSpecs'
+import { createSimSystemWorkloadSpecs } from './SimWorkloadSpecs'
 
 export interface SimSystemWorkloadsControllerOptions {
   clusterName: string
   nodeRoles: readonly ClusterNodeRole[]
-  policy?: SimSystemWorkloadPolicy
   creationTimestamp: string
 }
 
@@ -23,8 +17,7 @@ export const createSimSystemWorkloads = (
 ): SimSystemWorkloads => {
   const workloadSpecs = createSimSystemWorkloadSpecs({
     clusterName: options.clusterName,
-    nodeRoles: options.nodeRoles,
-    policy: options.policy
+    nodeRoles: options.nodeRoles
   })
   return materializeSimSystemWorkloads(workloadSpecs, options.creationTimestamp)
 }

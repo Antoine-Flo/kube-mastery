@@ -7,4 +7,5 @@ export interface LocalModule {
   title: LocalModuleText
   description: LocalModuleText
   tags: string[]
+  draft?: boolean
 }

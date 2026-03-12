@@ -6,7 +6,6 @@ import {
 } from './clusterConfig'
 import { CONFIG } from '../../config'
 import { getSystemWorkloads } from './systemPods'
-import type { SimSystemWorkloadPolicy } from './systemWorkloads/SimWorkloadSpecs'
 import type { ConfigMap } from './ressources/ConfigMap'
 import { createConfigMap } from './ressources/ConfigMap'
 import type { DaemonSet } from './ressources/DaemonSet'
@@ -23,7 +22,6 @@ export interface SystemBootstrapOptions {
   clusterName?: string
   clock?: () => string
   nodeRoles?: readonly ClusterNodeRole[]
-  systemWorkloadPolicy?: SimSystemWorkloadPolicy
 }
 
 export type ClusterBootstrapProfile = 'kind-like' | 'none'
@@ -340,7 +338,6 @@ export const createSystemBootstrapResources = (
   const workloads = getSystemWorkloads({
     clusterName,
     nodeRoles,
-    policy: options.systemWorkloadPolicy,
     clock: () => creationTimestamp
   })
 

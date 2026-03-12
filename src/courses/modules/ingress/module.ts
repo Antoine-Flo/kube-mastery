@@ -8,5 +8,6 @@ export const module: LocalModule = {
   description: {
     en: 'Router le trafic HTTP/HTTPS externe vers les Services.'
   },
-  tags: ['ckad', 'cka', 'intermediate']
+  tags: ['ckad', 'cka', 'intermediate'],
+  draft: true
 }

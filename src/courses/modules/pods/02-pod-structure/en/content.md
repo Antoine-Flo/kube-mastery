@@ -99,7 +99,7 @@ Always set both `requests` and `limits` in production. Without `requests`, the s
 
 ### `volumeMounts`
 
-If the Pod declares volumes (more on that below), containers can mount them using `volumeMounts`. Each mount specifies the volume name and where in the container's filesystem to attach it:
+If the Pod declares volumes (more on that later), containers can mount them using `volumeMounts`. Each mount specifies the volume name and where in the container's filesystem to attach it:
 
 ```yaml
 volumeMounts:

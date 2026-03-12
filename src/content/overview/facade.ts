@@ -61,6 +61,7 @@ export function getCourseOverview(
       const mod = getModule(moduleId)
       const title = mod?.title?.[lang] ?? mod?.title?.en ?? moduleId
       const topics = topicDirsByModule.get(moduleId) ?? []
+      const isDraft = mod?.draft ?? false
       return buildModule(
         moduleId,
         topics.map((t) => ({ topicId: t.topicId })),
@@ -68,7 +69,8 @@ export function getCourseOverview(
         lessonTitles,
         placeholderLessonIdsByModule.get(moduleId) ?? new Set<string>(),
         lessonDirsByTopic,
-        lang
+        lang,
+        isDraft
       )
     })
     return {
@@ -110,6 +112,7 @@ export function getModuleOverview(
   const lessonDirsByTopic = index.getLessonDirsByTopic()
   const placeholderLessonIdsByModule = index.getPlaceholderLessonIdsByModule()
   const title = mod.title[lang] ?? mod.title.en
+  const isDraft = mod.draft ?? false
   const overviewModule = buildModule(
     moduleId,
     topics.map((t) => ({ topicId: t.topicId })),
@@ -117,7 +120,8 @@ export function getModuleOverview(
     lessonTitles,
     placeholderLessonIdsByModule.get(moduleId) ?? new Set<string>(),
     lessonDirsByTopic,
-    lang
+    lang,
+    isDraft
   )
 
   return {

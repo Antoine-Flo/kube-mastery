@@ -8,5 +8,6 @@ export const module: LocalModule = {
   description: {
     en: 'Contrôler le trafic réseau entre Pods.'
   },
-  tags: ['ckad', 'cka', 'intermediate']
+  tags: ['ckad', 'cka', 'intermediate'],
+  draft: true
 }

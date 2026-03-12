@@ -27,7 +27,8 @@ export function buildModule(
   lessonTitles: Map<string, string>,
   placeholderLessonIds: Set<string>,
   _lessonDirsByTopic: Map<string, string[]>,
-  lang: UiLang
+  lang: UiLang,
+  isDraft: boolean = false
 ): OverviewModule {
   const lessons: OverviewLesson[] = topicIdsInOrder.map(({ topicId }) => {
     const title = lessonTitles.get(`${moduleId}:${topicId}:${lang}`) ?? topicId
@@ -35,7 +36,7 @@ export function buildModule(
       id: topicId,
       title,
       hasEnvironment: false,
-      isPlaceholder: placeholderLessonIds.has(topicId)
+      isPlaceholder: isDraft || placeholderLessonIds.has(topicId)
     }
   })
 

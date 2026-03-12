@@ -122,6 +122,50 @@ describe('kubectl delete handler', () => {
 
       expect(result.ok).toBe(true)
     })
+
+    it('should delete multiple pods passed as positional names', () => {
+      clusterState.addPod(
+        createPod({
+          name: 'pod-1',
+          namespace: 'default',
+          containers: [{ name: 'main', image: 'nginx:latest' }]
+        })
+      )
+      clusterState.addPod(
+        createPod({
+          name: 'pod-2',
+          namespace: 'default',
+          containers: [{ name: 'main', image: 'nginx:latest' }]
+        })
+      )
+      clusterState.addPod(
+        createPod({
+          name: 'pod-3',
+          namespace: 'default',
+          containers: [{ name: 'main', image: 'nginx:latest' }]
+        })
+      )
+
+      const parsed = createParsedCommand({
+        name: 'pod-1',
+        names: ['pod-1', 'pod-2', 'pod-3'],
+        resource: 'pods'
+      })
+
+      const result = handleDelete(clusterState, parsed, eventBus)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value).toContain('pod "pod-1" deleted from default namespace')
+      expect(result.value).toContain('pod "pod-2" deleted from default namespace')
+      expect(result.value).toContain('pod "pod-3" deleted from default namespace')
+      expect(clusterState.findPod('pod-1', 'default').ok).toBe(false)
+      expect(clusterState.findPod('pod-2', 'default').ok).toBe(false)
+      expect(clusterState.findPod('pod-3', 'default').ok).toBe(false)
+    })
   })
 
   describe('deleting configmaps', () => {

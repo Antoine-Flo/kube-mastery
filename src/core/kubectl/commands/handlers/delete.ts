@@ -175,8 +175,14 @@ export const handleDelete = (
   eventBus: EventBus
 ): ExecutionResult => {
   const namespace = parsed.namespace || 'default'
+  const names =
+    parsed.names != null && parsed.names.length > 0
+      ? parsed.names
+      : parsed.name != null
+        ? [parsed.name]
+        : []
 
-  if (!parsed.name) {
+  if (names.length === 0) {
     return error(`error: you must specify the name of the resource to delete`)
   }
 
@@ -191,131 +197,138 @@ export const handleDelete = (
     resource === 'secrets'
   ) {
     const deleteConfig = NAMESPACED_EVENT_DELETE_CONFIG[resource]
-    const findResult = clusterState.findByKind(
-      deleteConfig.kind,
-      parsed.name,
-      namespace
-    )
-    if (!findResult.ok) {
-      return error(findResult.error)
+    const messages: string[] = []
+    for (const name of names) {
+      const findResult = clusterState.findByKind(deleteConfig.kind, name, namespace)
+      if (!findResult.ok) {
+        return error(findResult.error)
+      }
+      deleteConfig.emit(eventBus, name, namespace, findResult.value)
+      messages.push(
+        formatDeletedMessage(deleteConfig.kindRef, name, namespace, true)
+      )
     }
-    deleteConfig.emit(eventBus, parsed.name, namespace, findResult.value)
-    return success(
-      formatDeletedMessage(deleteConfig.kindRef, parsed.name, namespace, true)
-    )
+    return success(messages.join('\n'))
   }
 
   if (resource === 'deployments') {
-    const deleteResult = clusterState.deleteDeployment(parsed.name, namespace)
-    if (!deleteResult.ok) {
-      return formatNotFoundMessage('deployments.apps', parsed.name)
+    const messages: string[] = []
+    for (const name of names) {
+      const deleteResult = clusterState.deleteDeployment(name, namespace)
+      if (!deleteResult.ok) {
+        return formatNotFoundMessage('deployments.apps', name)
+      }
+      messages.push(
+        formatDeletedMessage('deployment.apps', name, namespace, true)
+      )
     }
-    return success(
-      formatDeletedMessage('deployment.apps', parsed.name, namespace, true)
-    )
+    return success(messages.join('\n'))
   }
 
   if (resource === 'daemonsets') {
-    const deleteResult = clusterState.deleteDaemonSet(parsed.name, namespace)
-    if (!deleteResult.ok) {
-      return formatNotFoundMessage('daemonsets.apps', parsed.name)
+    const messages: string[] = []
+    for (const name of names) {
+      const deleteResult = clusterState.deleteDaemonSet(name, namespace)
+      if (!deleteResult.ok) {
+        return formatNotFoundMessage('daemonsets.apps', name)
+      }
+      messages.push(formatDeletedMessage('daemonset.apps', name, namespace, true))
     }
-    return success(
-      formatDeletedMessage('daemonset.apps', parsed.name, namespace, true)
-    )
+    return success(messages.join('\n'))
   }
 
   if (resource === 'services') {
-    const deleteResult = clusterState.deleteService(parsed.name, namespace)
-    if (!deleteResult.ok) {
-      return error(deleteResult.error)
+    const messages: string[] = []
+    for (const name of names) {
+      const deleteResult = clusterState.deleteService(name, namespace)
+      if (!deleteResult.ok) {
+        return error(deleteResult.error)
+      }
+      messages.push(formatDeletedMessage('service', name, namespace, true))
     }
-    return success(
-      formatDeletedMessage('service', parsed.name, namespace, true)
-    )
+    return success(messages.join('\n'))
   }
 
   if (resource === 'ingresses') {
-    const deleteResult = clusterState.deleteIngress(parsed.name, namespace)
-    if (!deleteResult.ok) {
-      return formatNotFoundMessage('ingresses.networking.k8s.io', parsed.name)
-    }
-    return success(
-      formatDeletedMessage(
-        'ingress.networking.k8s.io',
-        parsed.name,
-        namespace,
-        true
+    const messages: string[] = []
+    for (const name of names) {
+      const deleteResult = clusterState.deleteIngress(name, namespace)
+      if (!deleteResult.ok) {
+        return formatNotFoundMessage('ingresses.networking.k8s.io', name)
+      }
+      messages.push(
+        formatDeletedMessage(
+          'ingress.networking.k8s.io',
+          name,
+          namespace,
+          true
+        )
       )
-    )
+    }
+    return success(messages.join('\n'))
   }
 
   if (resource === 'persistentvolumes') {
-    const findResult = clusterState.findPersistentVolume(parsed.name)
-    if (!findResult.ok) {
-      return formatNotFoundMessage('persistentvolumes', parsed.name)
-    }
-    eventBus.emit(
-      createPersistentVolumeDeletedEvent(
-        parsed.name,
-        findResult.value,
-        'kubectl'
+    const messages: string[] = []
+    for (const name of names) {
+      const findResult = clusterState.findPersistentVolume(name)
+      if (!findResult.ok) {
+        return formatNotFoundMessage('persistentvolumes', name)
+      }
+      eventBus.emit(
+        createPersistentVolumeDeletedEvent(name, findResult.value, 'kubectl')
       )
-    )
-    return success(
-      formatDeletedMessage('persistentvolume', parsed.name, namespace, false)
-    )
+      messages.push(
+        formatDeletedMessage('persistentvolume', name, namespace, false)
+      )
+    }
+    return success(messages.join('\n'))
   }
 
   if (resource === 'persistentvolumeclaims') {
-    const findResult = clusterState.findPersistentVolumeClaim(
-      parsed.name,
-      namespace
-    )
-    if (!findResult.ok) {
-      return formatNotFoundMessage('persistentvolumeclaims', parsed.name)
+    const messages: string[] = []
+    for (const name of names) {
+      const findResult = clusterState.findPersistentVolumeClaim(name, namespace)
+      if (!findResult.ok) {
+        return formatNotFoundMessage('persistentvolumeclaims', name)
+      }
+      eventBus.emit(
+        createPersistentVolumeClaimDeletedEvent(
+          name,
+          namespace,
+          findResult.value,
+          'kubectl'
+        )
+      )
+      messages.push(
+        formatDeletedMessage('persistentvolumeclaim', name, namespace, true)
+      )
     }
-    eventBus.emit(
-      createPersistentVolumeClaimDeletedEvent(
-        parsed.name,
-        namespace,
-        findResult.value,
-        'kubectl'
-      )
-    )
-    return success(
-      formatDeletedMessage(
-        'persistentvolumeclaim',
-        parsed.name,
-        namespace,
-        true
-      )
-    )
+    return success(messages.join('\n'))
   }
 
   if (resource === 'namespaces') {
-    const existingNamespace = clusterState.findNamespace(parsed.name)
-    if (!existingNamespace.ok) {
-      return formatNotFoundMessage('namespaces', parsed.name)
+    const messages: string[] = []
+    for (const name of names) {
+      const existingNamespace = clusterState.findNamespace(name)
+      if (!existingNamespace.ok) {
+        return formatNotFoundMessage('namespaces', name)
+      }
+      const cascadeResult = deleteNamespacedResourcesForNamespace(clusterState, name)
+      if (cascadeResult != null) {
+        return cascadeResult
+      }
+      const deleteResult = clusterState.deleteNamespace(name)
+      if (!deleteResult.ok) {
+        return formatNotFoundMessage('namespaces', name)
+      }
+      messages.push(formatDeletedMessage('namespace', name, namespace, false))
     }
-
-    const cascadeResult = deleteNamespacedResourcesForNamespace(
-      clusterState,
-      parsed.name
-    )
-    if (cascadeResult != null) {
-      return cascadeResult
-    }
-
-    const deleteResult = clusterState.deleteNamespace(parsed.name)
-    if (!deleteResult.ok) {
-      return formatNotFoundMessage('namespaces', parsed.name)
-    }
-
-    return success(
-      formatDeletedMessage('namespace', parsed.name, namespace, false)
-    )
+    return success(messages.join('\n'))
   }
 
-  return success(formatDeletedMessage(resource, parsed.name, namespace, false))
+  const messages = names.map((name) => {
+    return formatDeletedMessage(resource, name, namespace, false)
+  })
+  return success(messages.join('\n'))
 }

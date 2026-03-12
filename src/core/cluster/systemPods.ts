@@ -10,15 +10,11 @@ import {
 import type { DaemonSet } from './ressources/DaemonSet'
 import type { Deployment } from './ressources/Deployment'
 import type { Pod } from './ressources/Pod'
-import {
-  createSimSystemWorkloads,
-  type SimSystemWorkloadPolicy
-} from './systemWorkloads/SimSystemWorkloadsController'
+import { createSimSystemWorkloads } from './systemWorkloads/SimSystemWorkloadsController'
 
 export interface GetSystemPodsOptions {
   clusterName: string
   nodeRoles?: readonly ClusterNodeRole[]
-  policy?: SimSystemWorkloadPolicy
   /** Optional clock for creationTimestamp (e.g. for tests/conformance). Default: now */
   clock?: () => string
 }
@@ -43,7 +39,6 @@ export const getSystemWorkloads = (
   const workloads = createSimSystemWorkloads({
     clusterName,
     nodeRoles,
-    policy: options?.policy,
     creationTimestamp
   })
   return {

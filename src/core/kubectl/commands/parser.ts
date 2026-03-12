@@ -535,10 +535,10 @@ const getNamesFromTokens = (
   flags: Record<string, string | boolean>,
   resourceTokenIndex?: number
 ): string[] | undefined => {
-  if (action !== 'get') {
+  if (action !== 'get' && action !== 'delete') {
     return undefined
   }
-  if (getRawPathFromFlags(flags) !== undefined) {
+  if (action === 'get' && getRawPathFromFlags(flags) !== undefined) {
     return undefined
   }
   if (resourceTokenIndex == null) {

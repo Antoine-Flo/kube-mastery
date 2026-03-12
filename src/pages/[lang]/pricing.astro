@@ -45,6 +45,10 @@ const activePaddlePriceIds = isProduction
 const PRO_ONETIME_PRICE_ID = activePaddlePriceIds.PRO_ONETIME
 const DISCOUNT_ONETIME_PRICE_ID = activePaddlePriceIds.DISCOUNT_ONETIME
 
+const isLaunched =
+  (readAppEnv('IS_LAUNCHED', Astro.locals) ?? '').toLowerCase().trim() ===
+  'true'
+
 const CHECKOUT_EMAIL_DIALOG_ID = 'pricing-checkout-email-dialog'
 const checkoutDialogTitle = t('pricing_checkout_dialog_title')
 const checkoutDialogDescription = t('pricing_checkout_dialog_description')
@@ -128,17 +132,30 @@ const faqItems = [
               <div
                 class="card__footer pricing__plan-footer pricing__plan-footer--column"
               >
-                <Button
-                  type="button"
-                  variant="solid"
-                  size="lg"
-                  color="cyan"
-                  class="pricing__plan-button"
-                  data-open-checkout="pro"
-                  data-price-id={PRO_ONETIME_PRICE_ID}
-                >
-                  {t('pricing_lifetime_cta')}
-                </Button>
+                {isLaunched ? (
+                  <Button
+                    type="button"
+                    variant="solid"
+                    size="lg"
+                    color="cyan"
+                    class="pricing__plan-button"
+                    data-open-checkout="pro"
+                    data-price-id={PRO_ONETIME_PRICE_ID}
+                  >
+                    {t('pricing_lifetime_cta')}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="solid"
+                    size="lg"
+                    color="gray"
+                    class="pricing__plan-button pricing__plan-button--coming-soon"
+                    disabled
+                  >
+                    {t('courses_comingSoon')}
+                  </Button>
+                )}
                 <p class="pricing__accessible-link">
                   {t('pricing_discount_intro')}{' '}
                   <button
