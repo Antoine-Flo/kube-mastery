@@ -168,4 +168,33 @@ describe('WorkQueue', () => {
       expect(handler).toHaveBeenCalledWith('default/pod-1')
     })
   })
+
+  describe('timer scheduling', () => {
+    it('should not create multiple concurrent timers while processing', () => {
+      vi.useFakeTimers()
+
+      try {
+        const delayedQueue = createWorkQueue({ processDelay: 10 })
+        let count = 0
+
+        delayedQueue.start(() => {
+          count++
+          if (count < 10) {
+            delayedQueue.add(`item-${count + 1}`)
+          }
+        })
+
+        delayedQueue.add('item-1')
+
+        expect(vi.getTimerCount()).toBe(1)
+
+        for (let i = 0; i < 4; i++) {
+          vi.advanceTimersByTime(10)
+          expect(vi.getTimerCount()).toBeLessThanOrEqual(1)
+        }
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+  })
 })

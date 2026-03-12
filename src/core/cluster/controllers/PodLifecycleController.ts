@@ -492,7 +492,10 @@ export class PodLifecycleController implements ReconcilerController {
         ...(waitingReason === 'CrashLoopBackOff'
           ? {
               terminatedReason: 'Error',
-              restartCount: (status.restartCount ?? 0) + 1
+              restartCount:
+                status.waitingReason === 'CrashLoopBackOff'
+                  ? status.restartCount
+                  : (status.restartCount ?? 0) + 1
             }
           : { terminatedReason: undefined })
       }

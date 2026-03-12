@@ -106,4 +106,124 @@ describe('VolumeBindingController', () => {
     ).toBeUndefined()
     controller.stop()
   })
+
+  it('does not bind multiple claims to the same volume in one reconcile', () => {
+    const eventBus = createEventBus()
+    const clusterState = createClusterState(eventBus)
+    const volumeState = createVolumeState()
+    const controller = createVolumeBindingController(
+      eventBus,
+      clusterState,
+      volumeState
+    )
+
+    clusterState.addPersistentVolume(
+      createPersistentVolume({
+        name: 'pv-1',
+        spec: {
+          capacity: { storage: '1Gi' },
+          accessModes: ['ReadWriteOnce'],
+          storageClassName: 'standard'
+        }
+      })
+    )
+
+    clusterState.addPersistentVolumeClaim(
+      createPersistentVolumeClaim({
+        name: 'pvc-1',
+        namespace: 'default',
+        spec: {
+          accessModes: ['ReadWriteOnce'],
+          resources: { requests: { storage: '1Gi' } },
+          storageClassName: 'standard'
+        }
+      })
+    )
+
+    clusterState.addPersistentVolumeClaim(
+      createPersistentVolumeClaim({
+        name: 'pvc-2',
+        namespace: 'default',
+        spec: {
+          accessModes: ['ReadWriteOnce'],
+          resources: { requests: { storage: '1Gi' } },
+          storageClassName: 'standard'
+        }
+      })
+    )
+
+    controller.start()
+
+    const pvc1Result = clusterState.findPersistentVolumeClaim('pvc-1', 'default')
+    const pvc2Result = clusterState.findPersistentVolumeClaim('pvc-2', 'default')
+
+    expect(pvc1Result.ok).toBe(true)
+    expect(pvc2Result.ok).toBe(true)
+
+    if (
+      !pvc1Result.ok ||
+      pvc1Result.value == null ||
+      !pvc2Result.ok ||
+      pvc2Result.value == null
+    ) {
+      controller.stop()
+      return
+    }
+
+    const claims = [pvc1Result.value, pvc2Result.value]
+    const boundClaims = claims.filter((claim) => claim.status.phase === 'Bound')
+
+    expect(boundClaims).toHaveLength(1)
+    expect(boundClaims[0].spec.volumeName).toBe('pv-1')
+
+    const pendingClaim = claims.find((claim) => claim.status.phase === 'Pending')
+    expect(pendingClaim).toBeDefined()
+    expect(pendingClaim?.spec.volumeName).toBeUndefined()
+
+    controller.stop()
+  })
+
+  it('resets pre-bound claim when referenced volume is missing', () => {
+    const eventBus = createEventBus()
+    const clusterState = createClusterState(eventBus)
+    const volumeState = createVolumeState()
+    const controller = createVolumeBindingController(
+      eventBus,
+      clusterState,
+      volumeState
+    )
+
+    clusterState.addPersistentVolumeClaim(
+      createPersistentVolumeClaim({
+        name: 'dangling',
+        namespace: 'default',
+        spec: {
+          accessModes: ['ReadWriteOnce'],
+          resources: { requests: { storage: '1Gi' } },
+          storageClassName: 'standard',
+          volumeName: 'missing-pv'
+        },
+        status: {
+          phase: 'Bound'
+        }
+      })
+    )
+
+    controller.start()
+
+    const pvcResult = clusterState.findPersistentVolumeClaim('dangling', 'default')
+    expect(pvcResult.ok).toBe(true)
+    if (!pvcResult.ok || pvcResult.value == null) {
+      controller.stop()
+      return
+    }
+
+    expect(pvcResult.value.status.phase).toBe('Pending')
+    expect(pvcResult.value.spec.volumeName).toBeUndefined()
+    expect(
+      volumeState.getBoundVolumeForClaim('default', 'dangling')
+    ).toBeUndefined()
+
+    controller.stop()
+  })
 })

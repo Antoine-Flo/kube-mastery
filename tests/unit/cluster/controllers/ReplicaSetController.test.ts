@@ -41,13 +41,17 @@ describe('ReplicaSetController', () => {
     })
   }
 
-  const createTestPod = (name: string, ownerRsName: string): Pod => {
+  const createTestPod = (
+    name: string,
+    ownerRsName: string,
+    phase: Pod['status']['phase'] = 'Running'
+  ): Pod => {
     return createPod({
       name,
       namespace: 'default',
       containers: [{ name: 'nginx', image: 'nginx:latest' }],
       labels: { app: ownerRsName },
-      phase: 'Running',
+      phase,
       ownerReferences: [
         {
           apiVersion: 'apps/v1',
@@ -164,6 +168,22 @@ describe('ReplicaSetController', () => {
       expect(podDeleted).not.toHaveBeenCalled()
     })
 
+    it('should ignore Failed pods and create new ones to reach desired replicas', () => {
+      const rs = createTestReplicaSet('my-rs', 1)
+      mockState.replicaSets = [rs]
+      mockState.pods = [createTestPod('my-rs-failed', 'my-rs', 'Failed')]
+
+      const createdPods: Pod[] = []
+      eventBus.subscribe('PodCreated', (event: PodCreatedEvent) => {
+        createdPods.push(event.payload.pod)
+      })
+
+      controller.reconcile('default/my-rs')
+
+      expect(createdPods).toHaveLength(1)
+      expect(createdPods[0].metadata.ownerReferences?.[0].name).toBe('my-rs')
+    })
+
     it('should handle non-existent ReplicaSet gracefully', () => {
       mockState.replicaSets = []
 
@@ -204,6 +224,33 @@ describe('ReplicaSetController', () => {
       expect(updatedRs).toBeDefined()
       expect(updatedRs!.status.replicas).toBe(2)
       expect(updatedRs!.status.readyReplicas).toBe(2)
+    })
+
+    it('should exclude terminal pods from ReplicaSet status replicas', () => {
+      const rs = {
+        ...createTestReplicaSet('my-rs', 1),
+        status: {
+          replicas: 1,
+          readyReplicas: 1,
+          availableReplicas: 1,
+          fullyLabeledReplicas: 1
+        }
+      }
+      mockState.replicaSets = [rs]
+      mockState.pods = [createTestPod('my-rs-failed', 'my-rs', 'Failed')]
+
+      let updatedRs: ReplicaSet | undefined
+      eventBus.subscribe('ReplicaSetUpdated', (event: ReplicaSetUpdatedEvent) => {
+        updatedRs = event.payload.replicaSet
+      })
+
+      controller.reconcile('default/my-rs')
+
+      expect(updatedRs).toBeDefined()
+      expect(updatedRs!.status.replicas).toBe(0)
+      expect(updatedRs!.status.readyReplicas).toBe(0)
+      expect(updatedRs!.status.availableReplicas).toBe(0)
+      expect(updatedRs!.status.fullyLabeledReplicas).toBe(0)
     })
 
     it('should ignore unowned pods that do not match the ReplicaSet selector', () => {

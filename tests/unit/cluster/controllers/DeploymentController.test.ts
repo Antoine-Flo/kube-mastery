@@ -288,6 +288,103 @@ describe('DeploymentController', () => {
       expect(updatedDeploy).toBeDefined()
       expect(updatedDeploy!.status.readyReplicas).toBe(2)
     })
+
+    it('should scale down non-current ReplicaSets and sync revision on rollback', () => {
+      const deploymentTemplateA = createDeployment({
+        name: 'my-deploy',
+        namespace: 'default',
+        replicas: 3,
+        selector: { matchLabels: { app: 'my-deploy' } },
+        template: {
+          metadata: { labels: { app: 'my-deploy' } },
+          spec: {
+            containers: [{ name: 'nginx', image: 'nginx:1.18' }]
+          }
+        },
+        annotations: {
+          'deployment.kubernetes.io/revision': '2'
+        }
+      })
+      const deploymentTemplateB = createDeployment({
+        name: 'my-deploy',
+        namespace: 'default',
+        replicas: 3,
+        selector: { matchLabels: { app: 'my-deploy' } },
+        template: {
+          metadata: { labels: { app: 'my-deploy' } },
+          spec: {
+            containers: [{ name: 'nginx', image: 'nginx:1.19' }]
+          }
+        }
+      })
+
+      const baseCurrentRsA = createTestReplicaSet(deploymentTemplateA)
+      const baseOldActiveRsB = createTestReplicaSet(deploymentTemplateB)
+      const currentRsA: ReplicaSet = {
+        ...baseCurrentRsA,
+        spec: {
+          ...baseCurrentRsA.spec,
+          replicas: 0
+        },
+        metadata: {
+          ...baseCurrentRsA.metadata,
+          annotations: {
+            'deployment.kubernetes.io/revision': '1'
+          }
+        }
+      }
+      const oldActiveRsB: ReplicaSet = {
+        ...baseOldActiveRsB,
+        spec: {
+          ...baseOldActiveRsB.spec,
+          replicas: 3
+        },
+        metadata: {
+          ...baseOldActiveRsB.metadata,
+          annotations: {
+            'deployment.kubernetes.io/revision': '2'
+          }
+        }
+      }
+
+      mockState.deployments = [deploymentTemplateA]
+      mockState.replicaSets = [currentRsA, oldActiveRsB]
+
+      const updatedReplicaSets: ReplicaSet[] = []
+      const updatedDeployments: Deployment[] = []
+
+      eventBus.subscribe(
+        'ReplicaSetUpdated',
+        (event: ReplicaSetUpdatedEvent) => {
+          updatedReplicaSets.push(event.payload.replicaSet)
+        }
+      )
+      eventBus.subscribe(
+        'DeploymentUpdated',
+        (event: DeploymentUpdatedEvent) => {
+          updatedDeployments.push(event.payload.deployment)
+        }
+      )
+
+      controller.reconcile('default/my-deploy')
+
+      const rsAUpdatedTo3 = updatedReplicaSets.some((rs) => {
+        return rs.metadata.name === currentRsA.metadata.name && rs.spec.replicas === 3
+      })
+      const rsBUpdatedTo0 = updatedReplicaSets.some((rs) => {
+        return rs.metadata.name === oldActiveRsB.metadata.name && rs.spec.replicas === 0
+      })
+      const deploymentRevisionUpdated = updatedDeployments.some((deployment) => {
+        return (
+          deployment.metadata.annotations?.['deployment.kubernetes.io/revision'] ===
+          '1'
+        )
+      })
+
+      expect(rsAUpdatedTo3).toBe(true)
+      expect(rsBUpdatedTo0).toBe(true)
+      expect(deploymentRevisionUpdated).toBe(true)
+    })
   })
 
   describe('start and stop', () => {

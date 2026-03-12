@@ -106,6 +106,10 @@ const isPodReady = (pod: Pod): boolean => {
   return pod.status.phase === 'Running'
 }
 
+const isTerminalPod = (pod: Pod): boolean => {
+  return pod.status.phase === 'Succeeded' || pod.status.phase === 'Failed'
+}
+
 const computeReplicaSetStatus = (ownedPods: Pod[]): ReplicaSetStatus => {
   const readyPods = ownedPods.filter((pod) => isPodReady(pod))
 
@@ -335,18 +339,19 @@ export class ReplicaSetController implements ReconcilerController {
     const matchingPods = allPods.filter((pod) =>
       selectorMatchesLabels(rs.spec.selector, pod.metadata.labels)
     )
-    const ownedPods = getOwnedResources(rs, matchingPods)
+    const activeMatchingPods = matchingPods.filter((pod) => !isTerminalPod(pod))
+    const ownedPods = getOwnedResources(rs, activeMatchingPods)
     const ownedPodNames = new Set(
       ownedPods.map((pod) => `${pod.metadata.namespace}/${pod.metadata.name}`)
     )
-    const unownedMatchingPods = matchingPods.filter((pod) => {
+    const unownedMatchingPods = activeMatchingPods.filter((pod) => {
       const podKey = `${pod.metadata.namespace}/${pod.metadata.name}`
       return !ownedPodNames.has(podKey)
     })
 
     // Reconcile replica count
     const desiredReplicas = rs.spec.replicas ?? 1
-    const currentReplicas = matchingPods.length
+    const currentReplicas = activeMatchingPods.length
 
     if (currentReplicas < desiredReplicas) {
       // Create missing pods
@@ -378,7 +383,7 @@ export class ReplicaSetController implements ReconcilerController {
     }
 
     // Update ReplicaSet status if changed
-    const newStatus = computeReplicaSetStatus(matchingPods)
+    const newStatus = computeReplicaSetStatus(activeMatchingPods)
     if (
       !statusEquals(rs.status, newStatus, [
         'replicas',

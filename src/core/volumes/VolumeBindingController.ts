@@ -47,6 +47,7 @@ export const createVolumeBindingController = (
   const reconcileVolumeClaims = (): void => {
     const persistentVolumes = clusterState.getPersistentVolumes()
     const persistentVolumeClaims = clusterState.getPersistentVolumeClaims()
+    const assignedVolumeNames = new Set<string>()
     const claimByKey = new Map<
       string,
       (typeof persistentVolumeClaims)[number]
@@ -61,6 +62,9 @@ export const createVolumeBindingController = (
       if (claimRef == null) {
         continue
       }
+
+      assignedVolumeNames.add(persistentVolume.metadata.name)
+
       const claimKey = `${claimRef.namespace}/${claimRef.name}`
       if (claimByKey.has(claimKey)) {
         continue
@@ -98,9 +102,31 @@ export const createVolumeBindingController = (
           !matchingPersistentVolume.ok ||
           matchingPersistentVolume.value == null
         ) {
+          volumeState.unbindClaim(claimNamespace, claimName)
+          const pendingPersistentVolumeClaim = {
+            ...persistentVolumeClaim,
+            spec: {
+              ...persistentVolumeClaim.spec,
+              volumeName: undefined
+            },
+            status: {
+              ...persistentVolumeClaim.status,
+              phase: 'Pending' as const
+            }
+          }
+          eventBus.emit(
+            createPersistentVolumeClaimUpdatedEvent(
+              claimName,
+              claimNamespace,
+              pendingPersistentVolumeClaim,
+              persistentVolumeClaim,
+              'volume-binding-controller'
+            )
+          )
           continue
         }
         const persistentVolume = matchingPersistentVolume.value
+        assignedVolumeNames.add(persistentVolume.metadata.name)
         const sameClaim =
           persistentVolume.spec.claimRef?.name === claimName &&
           persistentVolume.spec.claimRef?.namespace === claimNamespace
@@ -155,7 +181,10 @@ export const createVolumeBindingController = (
       }
 
       const candidatePersistentVolume = bindingPolicy.findCandidateVolume(
-        persistentVolumes,
+        persistentVolumes.filter(
+          (persistentVolume) =>
+            !assignedVolumeNames.has(persistentVolume.metadata.name)
+        ),
         persistentVolumeClaim
       )
 
@@ -185,6 +214,8 @@ export const createVolumeBindingController = (
         }
         continue
       }
+
+      assignedVolumeNames.add(candidatePersistentVolume.metadata.name)
 
       const boundPersistentVolume = {
         ...candidatePersistentVolume,

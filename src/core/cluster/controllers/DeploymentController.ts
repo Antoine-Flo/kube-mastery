@@ -408,14 +408,24 @@ export class DeploymentController implements ReconcilerController {
       state.getReplicaSets(namespace)
     )
     const currentRs = this.findCurrentReplicaSet(deploy, ownedReplicaSets)
+    let deploymentForStatus = deploy
 
     if (currentRs) {
       this.reconcileExistingReplicaSet(deploy, currentRs)
+      this.scaleDownReplicaSets(
+        ownedReplicaSets.filter((replicaSet) => {
+          return replicaSet.metadata.name !== currentRs.metadata.name
+        })
+      )
+      deploymentForStatus = this.syncDeploymentRevisionAnnotation(
+        deploy,
+        currentRs
+      )
     } else {
       this.createNewReplicaSet(deploy, ownedReplicaSets)
     }
 
-    this.updateDeploymentStatus(deploy, namespace)
+    this.updateDeploymentStatus(deploymentForStatus, namespace)
   }
 
   /**
@@ -483,7 +493,9 @@ export class DeploymentController implements ReconcilerController {
    */
   private scaleDownReplicaSets(replicaSets: ReplicaSet[]): void {
     for (const rs of replicaSets) {
-      if (rs.spec.replicas === 0) continue
+      if (rs.spec.replicas === 0) {
+        continue
+      }
 
       const scaledDownRs: ReplicaSet = {
         ...rs,
@@ -499,6 +511,44 @@ export class DeploymentController implements ReconcilerController {
         )
       )
     }
+  }
+
+  /**
+   * Sync Deployment revision annotation with the active ReplicaSet revision.
+   */
+  private syncDeploymentRevisionAnnotation(
+    deploy: Deployment,
+    currentRs: ReplicaSet
+  ): Deployment {
+    const currentRevision =
+      currentRs.metadata.annotations?.[DEPLOYMENT_REVISION_ANNOTATION]
+    const deploymentRevision =
+      deploy.metadata.annotations?.[DEPLOYMENT_REVISION_ANNOTATION]
+
+    if (currentRevision == null || currentRevision === deploymentRevision) {
+      return deploy
+    }
+
+    const updatedDeployment: Deployment = {
+      ...deploy,
+      metadata: {
+        ...deploy.metadata,
+        annotations: {
+          ...(deploy.metadata.annotations ?? {}),
+          [DEPLOYMENT_REVISION_ANNOTATION]: currentRevision
+        }
+      }
+    }
+    this.eventBus.emit(
+      createDeploymentUpdatedEvent(
+        deploy.metadata.name,
+        deploy.metadata.namespace,
+        updatedDeployment,
+        deploy,
+        'deployment-controller'
+      )
+    )
+    return updatedDeployment
   }
 
   /**

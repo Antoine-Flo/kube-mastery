@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
-import { createPodLifecycleController } from '../../../../src/core/cluster/controllers/PodLifecycleController'
+import {
+  createPodLifecycleController,
+  PodLifecycleController
+} from '../../../../src/core/cluster/controllers/PodLifecycleController'
 import type { PodUpdatedEvent } from '../../../../src/core/cluster/events/types'
 import { createNode } from '../../../../src/core/cluster/ressources/Node'
 import {
@@ -127,5 +130,52 @@ describe('PodLifecycleController runtime enrichment', () => {
     ).toBe(true)
 
     controller.stop()
+  })
+
+  it('increments restartCount only once while staying in CrashLoopBackOff', () => {
+    const eventBus = createEventBus()
+    let pod: Pod = createPod({
+      name: 'broken-web',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      containers: [{ name: 'app', image: 'myregistry.io/broken-app:latest' }]
+    })
+    let podUpdatedEvents = 0
+    const state: ControllerState = {
+      getDeployments: () => [],
+      findDeployment: () => ({ ok: false }),
+      getDaemonSets: () => [],
+      findDaemonSet: () => ({ ok: false }),
+      getReplicaSets: () => [],
+      findReplicaSet: () => ({ ok: false }),
+      getPods: () => [pod],
+      findPod: () => ({ ok: true, value: pod }),
+      getNodes: () => [],
+      getPersistentVolumes: () => [],
+      findPersistentVolume: () => ({ ok: false }),
+      getPersistentVolumeClaims: () => [],
+      findPersistentVolumeClaim: () => ({ ok: false })
+    }
+
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+      podUpdatedEvents += 1
+    })
+
+    const controller = new PodLifecycleController(eventBus, () => state)
+
+    controller.reconcile('default/broken-web')
+    const firstRestartCount = pod.status.containerStatuses?.[0]?.restartCount
+
+    controller.reconcile('default/broken-web')
+    const secondRestartCount = pod.status.containerStatuses?.[0]?.restartCount
+
+    expect(pod.status.containerStatuses?.[0]?.waitingReason).toBe(
+      'CrashLoopBackOff'
+    )
+    expect(firstRestartCount).toBe(1)
+    expect(secondRestartCount).toBe(1)
+    expect(podUpdatedEvents).toBe(1)
   })
 })

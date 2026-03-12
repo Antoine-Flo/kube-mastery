@@ -53,6 +53,11 @@ export const createWorkQueue = (options: WorkQueueOptions = {}): WorkQueue => {
       return
     }
 
+    // Ensure only one pending callback is scheduled at a time.
+    if (timeoutId !== null || rafId !== null) {
+      return
+    }
+
     if (useRAF && typeof requestAnimationFrame !== 'undefined') {
       rafId = requestAnimationFrame(processNext)
     } else {
@@ -64,6 +69,10 @@ export const createWorkQueue = (options: WorkQueueOptions = {}): WorkQueue => {
    * Process the next item in the queue
    */
   const processNext = (): void => {
+    // Clear pending handles first since this callback is now executing.
+    timeoutId = null
+    rafId = null
+
     if (!running || !handler || queue.size === 0) {
       return
     }
