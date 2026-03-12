@@ -12,9 +12,9 @@ const POSTHOG_OTEL_LOGS_ENDPOINT = 'https://eu.i.posthog.com/i/v1/logs'
 const LOG_SCHEMA_VERSION = 1
 const MAX_STRING_LENGTH = 300
 const SECRET_KEY_PATTERN =
-  /(authorization|cookie|set-cookie|api[-_]?key|token|secret|password)/i
+  /(^|_)(authorization|cookie|set_cookie|api_key|access_key|stripe_key|token|secret|password|credential|client_secret|private_key)(_|$)/
 const PII_KEY_PATTERN =
-  /(^|_|-)(email|ip|ip_address|phone|address|first_name|last_name|full_name)(_|-|$)/i
+  /(^|_)(email|ip|ip_address|phone|phone_number|address|first_name|last_name|full_name|name)(_|$)/
 
 function getPosthogProjectToken(locals?: unknown): string | null {
   const token = readAppEnv('POSTHOG_PROJECT_TOKEN', locals)
@@ -218,7 +218,7 @@ function sanitizeLogAttributes(
 ): Record<string, string | number | boolean> {
   const output: Record<string, string | number | boolean> = {}
   for (const [key, value] of Object.entries(input)) {
-    if (SECRET_KEY_PATTERN.test(key) || PII_KEY_PATTERN.test(key)) {
+    if (isSensitiveLogKey(key)) {
       output[key] = '[REDACTED]'
       continue
     }
@@ -232,4 +232,18 @@ function sanitizeLogAttributes(
     output[key] = value
   }
   return output
+}
+
+function isSensitiveLogKey(key: string): boolean {
+  const normalizedKey = normalizeLogKey(key)
+  return (
+    SECRET_KEY_PATTERN.test(normalizedKey) || PII_KEY_PATTERN.test(normalizedKey)
+  )
+}
+
+function normalizeLogKey(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/[-.\s]+/g, '_')
+    .toLowerCase()
 }
