@@ -1,6 +1,9 @@
 import type { Service } from '../cluster/ressources/Service'
 
 const SERVICE_CIDR_PREFIX = '10.96'
+const OCTET_RANGE_START = 10
+const OCTET_RANGE_SIZE = 240
+const SERVICE_IP_POOL_SIZE = OCTET_RANGE_SIZE * OCTET_RANGE_SIZE
 
 const serviceKey = (service: Service): string => {
   return `${service.metadata.namespace}/${service.metadata.name}`
@@ -15,13 +18,29 @@ const baseCandidateFromKey = (
     hash = hash & hash
   }
   return {
-    thirdOctet: (Math.abs(hash) % 240) + 10,
-    fourthOctet: (Math.abs(hash >> 4) % 240) + 10
+    thirdOctet: (Math.abs(hash) % OCTET_RANGE_SIZE) + OCTET_RANGE_START,
+    fourthOctet: (Math.abs(hash >> 4) % OCTET_RANGE_SIZE) + OCTET_RANGE_START
   }
 }
 
 const formatIp = (thirdOctet: number, fourthOctet: number): string => {
   return `${SERVICE_CIDR_PREFIX}.${thirdOctet}.${fourthOctet}`
+}
+
+const toPoolIndex = (thirdOctet: number, fourthOctet: number): number => {
+  return (
+    (thirdOctet - OCTET_RANGE_START) * OCTET_RANGE_SIZE +
+    (fourthOctet - OCTET_RANGE_START)
+  )
+}
+
+const fromPoolIndex = (
+  index: number
+): { thirdOctet: number; fourthOctet: number } => {
+  return {
+    thirdOctet: Math.floor(index / OCTET_RANGE_SIZE) + OCTET_RANGE_START,
+    fourthOctet: (index % OCTET_RANGE_SIZE) + OCTET_RANGE_START
+  }
 }
 
 export interface ServiceIpAllocator {
@@ -42,20 +61,23 @@ export const createServiceIpAllocator = (): ServiceIpAllocator => {
     }
 
     const base = baseCandidateFromKey(key)
-    let thirdOctet = base.thirdOctet
-    let fourthOctet = base.fourthOctet
-    let candidate = formatIp(thirdOctet, fourthOctet)
+    const baseIndex = toPoolIndex(base.thirdOctet, base.fourthOctet)
     let attempt = 0
-    while (usedIps.has(candidate)) {
+    while (attempt < SERVICE_IP_POOL_SIZE) {
+      const candidateIndex = (baseIndex + attempt) % SERVICE_IP_POOL_SIZE
+      const candidateOctets = fromPoolIndex(candidateIndex)
+      const candidate = formatIp(
+        candidateOctets.thirdOctet,
+        candidateOctets.fourthOctet
+      )
+      if (!usedIps.has(candidate)) {
+        usedIps.add(candidate)
+        assignedByServiceKey.set(key, candidate)
+        return candidate
+      }
       attempt = attempt + 1
-      thirdOctet = ((base.thirdOctet + attempt) % 240) + 10
-      fourthOctet = ((base.fourthOctet + attempt * 7) % 240) + 10
-      candidate = formatIp(thirdOctet, fourthOctet)
     }
-
-    usedIps.add(candidate)
-    assignedByServiceKey.set(key, candidate)
-    return candidate
+    throw new Error('No available Service cluster IP addresses in allocation range')
   }
 
   const release = (service: Service): void => {
