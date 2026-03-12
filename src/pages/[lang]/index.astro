@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro'
 import Button from '../../components/ui/Button.astro'
 import Terminal from '../../components/Terminal.astro'
-import { Zap, Shield, Euro, CircleCheck } from '@lucide/astro'
+import { Zap, Shield, Euro, CircleCheck, CircleX } from '@lucide/astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import { getSupabaseServer } from '../../lib/supabase'
 import astronautTrainingGif from '../../assets/astronaut-training.gif'
@@ -184,6 +184,43 @@ try {
                 />
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fit">
+      <div class="content">
+        <h2 class="fit-title anim">{t('home_fit_title')}</h2>
+        <div class="fit-columns anim">
+          <div class="fit-col fit-yes">
+            <div class="fit-col-header">
+              <CircleCheck size={22} />
+              <span>{t('home_fit_yes_title')}</span>
+            </div>
+            <ul class="fit-list">
+              <li><CircleCheck size={18} /><span>{t('home_fit_yes_1')}</span></li>
+              <li><CircleCheck size={18} /><span>{t('home_fit_yes_2')}</span></li>
+              <li><CircleCheck size={18} /><span>{t('home_fit_yes_3')}</span></li>
+              <li><CircleCheck size={18} /><span>{t('home_fit_yes_4')}</span></li>
+            </ul>
+            <div class="cta">
+              <Button href={localePath('/pricing')} variant="solid" color="cyan" size="xl">
+                {t('home_cta_join')}
+              </Button>
+            </div>
+          </div>
+          <div class="fit-col fit-no">
+            <div class="fit-col-header">
+              <CircleX size={22} />
+              <span>{t('home_fit_no_title')}</span>
+            </div>
+            <ul class="fit-list">
+              <li><CircleX size={18} /><span>{t('home_fit_no_1')} (<a href="https://labs.iximiuz.com/tutorials?category=kubernetes" target="_blank" rel="noopener">{t('home_fit_no_1_link')}</a>)</span></li>
+              <li><CircleX size={18} /><span>{t('home_fit_no_2')} (<a href="https://killer.sh/" target="_blank" rel="noopener">{t('home_fit_no_2_link')}</a>)</span></li>
+              <li><CircleX size={18} /><span>{t('home_fit_no_3')} (<a href="https://kind.sigs.k8s.io/" target="_blank" rel="noopener">{t('home_fit_no_3_link')}</a>, {t('home_fit_no_3_extra')})</span></li>
+              <li><CircleX size={18} /><span>{t('home_fit_no_4')} (<a href="https://kodekloud.com/" target="_blank" rel="noopener">{t('home_fit_no_4_link')}</a>)</span></li>
+            </ul>
           </div>
         </div>
       </div>
@@ -948,6 +985,131 @@ try {
     .media-openapi img {
       height: auto;
     }
+  }
+
+  .fit {
+    width: 100%;
+    padding: 6rem 0;
+    border-top: 1px solid var(--color-gray-6);
+    border-bottom: 1px solid var(--color-gray-6);
+  }
+
+  .fit .content {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+  @media (min-width: 768px) {
+    .fit .content {
+      padding: 0 2rem;
+    }
+  }
+
+  .fit-title {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-12);
+    text-align: center;
+  }
+  @media (min-width: 768px) {
+    .fit-title {
+      font-size: 1.875rem;
+    }
+  }
+
+  .fit-columns {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .fit-columns {
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+  }
+
+  .fit-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.75rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-gray-6);
+    background: var(--color-gray-2);
+  }
+
+  .fit-col-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .fit-yes .fit-col-header {
+    color: var(--color-green-11);
+  }
+  .fit-yes .fit-col-header svg {
+    color: var(--color-green-9);
+    flex-shrink: 0;
+  }
+
+  .fit-no .fit-col-header {
+    color: var(--color-red-11);
+  }
+  .fit-no .fit-col-header svg {
+    color: var(--color-red-9);
+    flex-shrink: 0;
+  }
+
+  .fit-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .fit-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: var(--text-sm);
+    color: var(--color-gray-11);
+    line-height: 1.5;
+  }
+  @media (min-width: 768px) {
+    .fit-list li {
+      font-size: var(--text-base);
+    }
+  }
+
+  .fit-yes .fit-list svg {
+    color: var(--color-green-9);
+    flex-shrink: 0;
+    margin-top: 0.1em;
+  }
+
+  .fit-no .fit-list svg {
+    color: var(--color-red-9);
+    flex-shrink: 0;
+    margin-top: 0.1em;
+  }
+
+  .fit-list a {
+    color: var(--color-gray-11);
+    text-decoration: underline;
+    text-decoration-color: var(--color-gray-7);
+    text-underline-offset: 2px;
+    transition: color 0.15s ease;
+  }
+  .fit-list a:hover {
+    color: var(--color-gray-12);
   }
 
   .platform-features {
