@@ -1994,6 +1994,25 @@ data:
         ])
       })
 
+      it('should create pod with positional args when separator is omitted', () => {
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+        const result = executor.execute('kubectl run test-typo --image=nginx pod')
+
+        expect(result.ok).toBe(true)
+        const podResult = clusterState.findPod('test-typo', 'default')
+        expect(podResult.ok).toBe(true)
+        if (!podResult.ok) {
+          return
+        }
+
+        expect(podResult.value.spec.containers[0].args).toEqual(['pod'])
+      })
+
       it('should create pod with labels env and port for kubectl run', () => {
         const executor = createKubectlExecutor(
           clusterState,
@@ -2147,6 +2166,10 @@ data:
         expect(result.ok).toBe(true)
         const podResult = clusterState.findPod('busybox', 'default')
         expect(podResult.ok).toBe(true)
+        if (!podResult.ok) {
+          return
+        }
+        expect(podResult.value.spec.restartPolicy).toBe('Never')
       })
 
       it('should execute nslookup in kubectl run --rm -it flow', () => {
@@ -2195,6 +2218,43 @@ data:
         }
         const podResult = clusterState.findPod('nginx', 'default')
         expect(podResult.ok).toBe(true)
+      })
+
+      it('should display restart age in get pods output', () => {
+        const lastRestartAt = new Date(Date.now() - 75_000).toISOString()
+        clusterState.addPod(
+          createPod({
+            name: 'crashy',
+            namespace: 'default',
+            phase: 'Pending',
+            nodeName: 'sim-worker',
+            containers: [{ name: 'nginx', image: 'nginx:latest' }],
+            containerStatusOverrides: [
+              {
+                name: 'nginx',
+                ready: false,
+                restartCount: 5,
+                waitingReason: 'CrashLoopBackOff',
+                lastRestartAt
+              }
+            ]
+          })
+        )
+        const executor = createKubectlExecutor(
+          clusterState,
+          fileSystem,
+          logger,
+          eventBus
+        )
+
+        const result = executor.execute('kubectl get pods')
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('CrashLoopBackOff')
+        expect(result.value).toMatch(/\b5 \(\d+m\d+s ago\)/)
       })
     })
   })

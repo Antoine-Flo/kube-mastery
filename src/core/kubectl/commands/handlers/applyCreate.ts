@@ -1290,6 +1290,7 @@ export const handleRun = (
   const pod = createPod({
     name: podName,
     namespace: parsed.namespace || 'default',
+    restartPolicy: parsed.runRestart ?? 'Always',
     ...(parsed.runLabels && { labels: parsed.runLabels }),
     containers: [
       {

@@ -30,14 +30,20 @@ try {
 <Layout>
   <main class="landing">
     <div class="bg-halo" aria-hidden="true"></div>
+    <div class="early-access-wrapper">
+      <div class="early-access-badge">
+        <span class="badge-dot"></span>
+        Early Access
+      </div>
+    </div>
     <section class="hero">
       <div class="content">
         <div class="left">
-          <h1>{t('home_title')}</h1>
-          <p class="sub">
-            {t('home_subtitle')}
-            <br />
-          </p>
+
+          <div class="hero-text">
+            <h1>{t('home_title')} <span class="start-here">{t('home_title_cta')}</span></h1>
+            <p class="sub">{t('home_subtitle')}</p>
+          </div>
           <div class="cta">
             <Button
               href={localePath('/pricing')}
@@ -49,7 +55,10 @@ try {
             </Button>
           </div>
         </div>
-        <div class="hero-media">
+        <div class="hero-terminal">
+          <Terminal rows={20} lang={locale} />
+        </div>
+        {/* <div class="hero-media">
           <video
             src={demoVideo}
             autoplay
@@ -59,7 +68,7 @@ try {
             class="hero-demo-video"
             data-playback-rate="1.5"
             aria-label={t('home_subtitle')}></video>
-        </div>
+        </div> */}
       </div>
     </section>
 
@@ -87,14 +96,14 @@ try {
       </div>
     </div>
 
-    <div class="try-it">
+    <!-- <div class="try-it">
       <div class="content">
         <h2 class="try-it-title anim">{t('home_try_title')}</h2>
         <div class="try-it-terminal anim">
           <Terminal rows={20} lang={locale} />
         </div>
       </div>
-    </div>
+    </div> -->
     <div class="concerns">
       <div class="content">
         <div class="section-header anim">
@@ -132,11 +141,19 @@ try {
                 </ul>
               </div>
               <div class="media">
-                <img
+                {/* <img
                   src={astronautTrainingGif.src}
                   alt={t('home_concerns_section1_image_alt')}
                   loading="lazy"
-                />
+                /> */}
+                <video
+                  src={demoVideo}
+                  autoplay
+                  loop
+                  muted
+                  playsinline
+                  data-playback-rate="1.5"
+                  aria-label={t('home_concerns_section1_image_alt')}></video>
               </div>
             </div>
             <div class="concern-row reverse anim">
@@ -375,15 +392,52 @@ try {
     transform: translateY(0);
   }
 
+  .early-access-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem 0;
+  }
+
   .hero {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1.5rem;
     justify-content: center;
-    min-height: 80vh;
+    min-height: 70vh;
     position: relative;
-    padding: 4rem 1rem;
+    padding: 1rem 1rem;
+  }
+
+  .early-access-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35em 2em;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--color-cyan-9) 40%, transparent);
+    background: color-mix(in srgb, var(--color-cyan-9) 10%, transparent);
+    color: var(--color-cyan-11);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    animation: fadeInUp 0.6s ease-out 0s both;
+  }
+
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-cyan-9);
+    box-shadow: 0 0 6px var(--color-cyan-9);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.75); }
   }
 
   .hero .content {
@@ -394,6 +448,13 @@ try {
     width: 100%;
     max-width: var(--content-max-width);
   }
+  @media (min-width: 1024px) {
+    .hero .content {
+      flex-direction: row;
+      align-items: center;
+      gap: 3rem;
+    }
+  }
 
   .left {
     display: flex;
@@ -402,32 +463,70 @@ try {
     gap: 1.5rem;
     width: 100%;
   }
+  @media (min-width: 1024px) {
+    .left {
+      align-items: flex-start;
+      flex: 0 0 auto;
+      width: 44%;
+    }
+  }
+
+  .hero-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    animation: fadeInUp 0.8s ease-out 0s both;
+  }
 
   .hero h1 {
     font-family: 'Zalando Sans SemiExpanded', sans-serif;
     font-optical-sizing: auto;
-    font-size: 4rem;
+    font-size: clamp(2.25rem, 5.5vw, 4.25rem);
     font-weight: var(--font-weight-bold);
-    color: var(--color-gray-12);
-    line-height: 1.2;
+    line-height: 1.15;
     text-align: center;
-    flex: 1;
-    min-width: 100%;
+  }
+  @media (min-width: 1024px) {
+    .hero h1 {
+      text-align: left;
+    }
   }
 
   .sub {
     font-size: var(--text-lg);
-    color: var(--color-gray-12);
-    font-style: italic;
+    color: var(--color-gray-11);
     line-height: 1.6;
     text-align: center;
-    max-width: 700px;
     animation: fadeInUp 0.8s ease-out 0.2s both;
   }
   @media (min-width: 768px) {
     .sub {
       font-size: var(--text-xl);
     }
+  }
+  @media (min-width: 1024px) {
+    .sub {
+      text-align: left;
+    }
+  }
+
+  .hero h1 {
+    color: var(--color-gray-12);
+  }
+
+  .start-here {
+    color: var(--color-cyan-9);
+  }
+
+  .hero-terminal {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    animation: fadeInUp 0.5s ease-out 0.3s both;
+    background-color: var(--color-gray-1);
+    border: 1px solid var(--color-gray-6);
+    border-radius: var(--radius-md);
+    overflow: hidden;
   }
 
   .cta {
@@ -650,6 +749,8 @@ try {
     padding: 6rem 0;
     border-top: 1px solid var(--color-gray-6);
     border-bottom: 1px solid var(--color-gray-6);
+    position: relative;
+    z-index: 2;
   }
 
   .concerns .content {
@@ -791,7 +892,7 @@ try {
 
   .media {
     width: 100%;
-    flex: 1;
+    flex: 1.4;
   }
 
   .media img,
@@ -803,6 +904,22 @@ try {
     border-radius: var(--radius-lg);
     border: 1px solid var(--color-gray-6);
     background: var(--color-gray-2);
+  }
+
+  .media video {
+    height: auto;
+    object-fit: unset;
+    cursor: zoom-in;
+    position: relative;
+    z-index: 1;
+    transition:
+      transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      box-shadow 0.45s ease;
+  }
+
+  .media video.zoomed {
+    z-index: 100;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6);
   }
 
   .media-conformance img {
@@ -823,6 +940,9 @@ try {
     .media img,
     .media video {
       height: 360px;
+    }
+    .media video {
+      height: auto;
     }
     .media-conformance img,
     .media-openapi img {
@@ -954,38 +1074,6 @@ try {
     }
   }
 
-  /* Hero Media */
-  .hero-media {
-    width: 100%;
-    border-radius: var(--radius-lg);
-    margin: 0 auto;
-    margin-top: 2rem;
-    animation: fadeInUp 0.5s ease-out 0.3s both;
-    overflow: hidden;
-  }
-
-  .hero-demo-video {
-    width: 100%;
-    height: 100%;
-    border-radius: var(--radius-sm);
-    object-fit: cover;
-    display: block;
-  }
-
-  @media (max-width: 768px) {
-    .hero-media {
-      margin-top: 1.25rem;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .hero-media {
-      max-width: 1000px;
-    }
-
-    .hero-demo-video {
-    }
-  }
 </style>
 
 <script>
@@ -1016,8 +1104,34 @@ try {
       }
     })
   }
+  function setupVideoZoom() {
+    const SCALE = 1.5
+    document.querySelectorAll('.media video').forEach((el) => {
+      const video = el as HTMLVideoElement
+
+      video.addEventListener('mouseenter', () => {
+        const rect = video.getBoundingClientRect()
+        const videoCenterX = rect.left + rect.width / 2
+        const videoCenterY = rect.top + rect.height / 2
+        const viewportCenterX = window.innerWidth / 2
+        const viewportCenterY = window.innerHeight / 2
+        const tx = (viewportCenterX - videoCenterX) * 0.6
+        const ty = (viewportCenterY - videoCenterY) * 0.4
+        video.classList.add('zoomed')
+        video.style.transform = `scale(${SCALE}) translate(${tx / SCALE}px, ${ty / SCALE}px)`
+      })
+
+      video.addEventListener('mouseleave', () => {
+        video.classList.remove('zoomed')
+        video.style.transform = ''
+      })
+    })
+  }
+
   setupScrollAnim()
   setupMediaPlayback()
+  setupVideoZoom()
   document.addEventListener('astro:page-load', setupScrollAnim)
   document.addEventListener('astro:page-load', setupMediaPlayback)
+  document.addEventListener('astro:page-load', setupVideoZoom)
 </script>

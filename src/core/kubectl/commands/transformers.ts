@@ -642,7 +642,8 @@ const runTransformer: ActionTransformer = (ctx) => {
 
   const { beforeSeparator, afterSeparator } = splitTokensBySeparator(ctx.tokens)
   const runHasSeparator = ctx.tokens.includes('--')
-  const name = findNameSkippingFlags(beforeSeparator, 2)
+  const positionalTokens = extractPositionalTokensAfterAction(beforeSeparator)
+  const name = positionalTokens[0]
   const runImages = extractFlagValues(beforeSeparator, 'image')
   const runImage = runImages.length > 0 ? runImages[0] : undefined
   const runEnvs = extractFlagValues(beforeSeparator, 'env')
@@ -662,10 +663,14 @@ const runTransformer: ActionTransformer = (ctx) => {
   const runRemove = beforeSeparator.includes('--rm')
   const separatorTokens =
     afterSeparator && afterSeparator.length > 0 ? afterSeparator : undefined
+  const positionalArgsWithoutSeparator =
+    positionalTokens.length > 1 ? positionalTokens.slice(1) : undefined
   const runCommand =
     runUseCommand && separatorTokens ? separatorTokens : undefined
   const runArgs =
-    !runUseCommand && separatorTokens ? separatorTokens : undefined
+    !runUseCommand
+      ? separatorTokens || positionalArgsWithoutSeparator
+      : undefined
 
   return success({
     ...ctx,

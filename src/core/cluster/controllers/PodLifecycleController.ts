@@ -32,6 +32,10 @@ export interface PodLifecycleControllerOptions extends ControllerResyncOptions {
     minMs: number
     maxMs: number
   }
+  restartBackoffMs?: {
+    initialMs: number
+    maxMs: number
+  }
   eventSource?: string
   volumeReadinessProbe?: (pod: Pod) => PodVolumeReadiness
 }
@@ -41,6 +45,11 @@ const WATCHED_EVENTS: ClusterEventType[] = [
   'PodUpdated',
   'PodDeleted'
 ]
+
+const DEFAULT_RESTART_BACKOFF = {
+  initialMs: 1000,
+  maxMs: 30000
+} as const
 
 const makePodKey = (namespace: string, name: string): string => {
   return `${namespace}/${name}`
@@ -165,6 +174,8 @@ export class PodLifecycleController implements ReconcilerController {
   private stopPeriodicResync: () => void = () => {}
   private options: PodLifecycleControllerOptions
   private pendingTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+  private restartTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+  private restartAttempts = new Map<string, number>()
 
   constructor(
     eventBus: EventBus,
@@ -211,6 +222,11 @@ export class PodLifecycleController implements ReconcilerController {
       clearTimeout(timeoutId)
     }
     this.pendingTimeouts.clear()
+    for (const timeoutId of this.restartTimeouts.values()) {
+      clearTimeout(timeoutId)
+    }
+    this.restartTimeouts.clear()
+    this.restartAttempts.clear()
   }
 
   initialSync(): void {
@@ -244,6 +260,8 @@ export class PodLifecycleController implements ReconcilerController {
         reason: 'NotFound'
       })
       this.clearPendingTimeout(key)
+      this.clearRestartTimeout(key)
+      this.restartAttempts.delete(key)
       return
     }
 
@@ -255,6 +273,7 @@ export class PodLifecycleController implements ReconcilerController {
         reason: 'NotSchedulable'
       })
       this.clearPendingTimeout(key)
+      this.clearRestartTimeout(key)
       return
     }
 
@@ -271,6 +290,10 @@ export class PodLifecycleController implements ReconcilerController {
     }
     const startupIssueReason = this.detectStartupIssueReason(pod)
     if (startupIssueReason != null) {
+      if (startupIssueReason === 'CrashLoopBackOff') {
+        this.handleCrashLoopBackOff(key, pod)
+        return
+      }
       this.observe({
         action: 'skip',
         key,
@@ -280,6 +303,8 @@ export class PodLifecycleController implements ReconcilerController {
       this.emitPodStartupIssue(pod, startupIssueReason)
       return
     }
+    this.clearRestartTimeout(key)
+    this.restartAttempts.delete(key)
     if (this.pendingTimeouts.has(key)) {
       this.observe({
         action: 'skip',
@@ -328,9 +353,10 @@ export class PodLifecycleController implements ReconcilerController {
   private handleEvent(event: ClusterEvent): void {
     if (event.type === 'PodDeleted') {
       const pod = event.payload.deletedPod
-      this.clearPendingTimeout(
-        makePodKey(pod.metadata.namespace, pod.metadata.name)
-      )
+      const key = makePodKey(pod.metadata.namespace, pod.metadata.name)
+      this.clearPendingTimeout(key)
+      this.clearRestartTimeout(key)
+      this.restartAttempts.delete(key)
       return
     }
     if (event.type !== 'PodCreated' && event.type !== 'PodUpdated') {
@@ -367,6 +393,82 @@ export class PodLifecycleController implements ReconcilerController {
     }
     clearTimeout(timeoutId)
     this.pendingTimeouts.delete(key)
+  }
+
+  private clearRestartTimeout(key: string): void {
+    const timeoutId = this.restartTimeouts.get(key)
+    if (timeoutId == null) {
+      return
+    }
+    clearTimeout(timeoutId)
+    this.restartTimeouts.delete(key)
+  }
+
+  private computeRestartBackoffMs(key: string): number {
+    const configuredInitialMs = this.options.restartBackoffMs?.initialMs
+    const configuredMaxMs = this.options.restartBackoffMs?.maxMs
+    const initialMs = Math.max(
+      1,
+      Math.floor(configuredInitialMs ?? DEFAULT_RESTART_BACKOFF.initialMs)
+    )
+    const maxMs = Math.max(initialMs, Math.floor(configuredMaxMs ?? DEFAULT_RESTART_BACKOFF.maxMs))
+    const previousAttempts = this.restartAttempts.get(key) ?? 0
+    const nextAttempts = previousAttempts + 1
+    this.restartAttempts.set(key, nextAttempts)
+    const exponentialDelay = initialMs * 2 ** (nextAttempts - 1)
+    return Math.min(maxMs, exponentialDelay)
+  }
+
+  private handleCrashLoopBackOff(key: string, pod: Pod): void {
+    const restartPolicy = pod.spec.restartPolicy ?? 'Always'
+    const restartAllowed = restartPolicy === 'Always' || restartPolicy === 'OnFailure'
+    if (!restartAllowed) {
+      this.observe({
+        action: 'skip',
+        key,
+        reason: 'RestartPolicyDisallowsRestart'
+      })
+      this.clearPendingTimeout(key)
+      this.clearRestartTimeout(key)
+      this.emitPodStartupIssue(pod, 'Error')
+      return
+    }
+
+    if (this.restartTimeouts.has(key)) {
+      this.observe({
+        action: 'skip',
+        key,
+        reason: 'RestartBackoffActive'
+      })
+      return
+    }
+
+    this.observe({
+      action: 'skip',
+      key,
+      reason: 'CrashLoopBackOff'
+    })
+    this.clearPendingTimeout(key)
+    this.emitPodContainerWaitingReason(pod, 'CrashLoopBackOff', {
+      incrementRestartOnCrash: true
+    })
+
+    const delayMs = this.computeRestartBackoffMs(key)
+    const timeoutId = setTimeout(() => {
+      this.restartTimeouts.delete(key)
+      const { namespace, name } = parsePodKey(key)
+      const latestPodResult = this.getState().findPod(name, namespace)
+      if (!latestPodResult.ok || latestPodResult.value == null) {
+        return
+      }
+      const latestPod = latestPodResult.value
+      if (!shouldProgressPod(latestPod)) {
+        return
+      }
+      this.emitPodContainerCreating(latestPod)
+      this.enqueuePod(latestPod)
+    }, delayMs)
+    this.restartTimeouts.set(key, timeoutId)
   }
 
   private emitPodRunning(pod: Pod): void {
@@ -458,11 +560,44 @@ export class PodLifecycleController implements ReconcilerController {
       if (!imageValidation.ok) {
         return 'ImagePullBackOff'
       }
+      if (
+        this.hasInvalidRuntimeArgs(
+          container,
+          imageValidation.value.behavior.runtimeValidation
+        )
+      ) {
+        return 'CrashLoopBackOff'
+      }
       if (imageValidation.value.behavior.defaultStatus === 'Failed') {
         return 'CrashLoopBackOff'
       }
     }
     return undefined
+  }
+
+  private hasInvalidRuntimeArgs(
+    container: Pod['spec']['containers'][number],
+    runtimeValidation:
+      | {
+          rejectNonFlagArgsWithoutCommand?: boolean
+        }
+      | undefined
+  ): boolean {
+    if (runtimeValidation?.rejectNonFlagArgsWithoutCommand !== true) {
+      return false
+    }
+    if (container.command != null && container.command.length > 0) {
+      return false
+    }
+    if (container.args == null || container.args.length === 0) {
+      return false
+    }
+
+    const firstArg = container.args[0]
+    if (firstArg == null) {
+      return false
+    }
+    return !firstArg.startsWith('-')
   }
 
   private emitPodContainerCreating(pod: Pod): void {
@@ -473,7 +608,11 @@ export class PodLifecycleController implements ReconcilerController {
     this.emitPodContainerWaitingReason(pod, waitingReason)
   }
 
-  private emitPodContainerWaitingReason(pod: Pod, waitingReason: string): void {
+  private emitPodContainerWaitingReason(
+    pod: Pod,
+    waitingReason: string,
+    options?: { incrementRestartOnCrash?: boolean }
+  ): void {
     const transitionTime = new Date().toISOString()
     const currentStatuses = pod.status.containerStatuses ?? []
     const regularContainerNames = new Set(
@@ -492,10 +631,13 @@ export class PodLifecycleController implements ReconcilerController {
         ...(waitingReason === 'CrashLoopBackOff'
           ? {
               terminatedReason: 'Error',
-              restartCount:
-                status.waitingReason === 'CrashLoopBackOff'
-                  ? status.restartCount
-                  : (status.restartCount ?? 0) + 1
+              lastRestartAt:
+                options?.incrementRestartOnCrash === true
+                  ? transitionTime
+                  : status.lastRestartAt,
+              restartCount: options?.incrementRestartOnCrash === true
+                ? (status.restartCount ?? 0) + 1
+                : status.restartCount
             }
           : { terminatedReason: undefined })
       }

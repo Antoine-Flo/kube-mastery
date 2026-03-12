@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
 import {
   createPodLifecycleController,
@@ -13,6 +13,10 @@ import {
 import type { ControllerState } from '../../../../src/core/cluster/controllers/types'
 
 describe('PodLifecycleController runtime enrichment', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('sets runtime fields when scheduled pod moves to Running', () => {
     const eventBus = createEventBus()
     const node = createNode({
@@ -177,5 +181,181 @@ describe('PodLifecycleController runtime enrichment', () => {
     expect(firstRestartCount).toBe(1)
     expect(secondRestartCount).toBe(1)
     expect(podUpdatedEvents).toBe(1)
+  })
+
+  it('marks nginx pod as CrashLoopBackOff with invalid positional args', () => {
+    const eventBus = createEventBus()
+    let pod: Pod = createPod({
+      name: 'bad-nginx',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      containers: [{ name: 'nginx', image: 'nginx:1.28', args: ['pod'] }]
+    })
+    const state: ControllerState = {
+      getDeployments: () => [],
+      findDeployment: () => ({ ok: false }),
+      getDaemonSets: () => [],
+      findDaemonSet: () => ({ ok: false }),
+      getReplicaSets: () => [],
+      findReplicaSet: () => ({ ok: false }),
+      getPods: () => [pod],
+      findPod: () => ({ ok: true, value: pod }),
+      getNodes: () => [],
+      getPersistentVolumes: () => [],
+      findPersistentVolume: () => ({ ok: false }),
+      getPersistentVolumeClaims: () => [],
+      findPersistentVolumeClaim: () => ({ ok: false })
+    }
+
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+    })
+
+    const controller = createPodLifecycleController(eventBus, () => state)
+    controller.reconcile('default/bad-nginx')
+
+    expect(pod.status.phase).toBe('Pending')
+    expect(pod.status.containerStatuses?.[0]?.waitingReason).toBe(
+      'CrashLoopBackOff'
+    )
+
+    controller.stop()
+  })
+
+  it('does not mark unrelated image as CrashLoopBackOff for positional args', () => {
+    const eventBus = createEventBus()
+    let pod: Pod = createPod({
+      name: 'busybox-args',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      containers: [{ name: 'busybox', image: 'busybox:1.36', args: ['pod'] }]
+    })
+    const state: ControllerState = {
+      getDeployments: () => [],
+      findDeployment: () => ({ ok: false }),
+      getDaemonSets: () => [],
+      findDaemonSet: () => ({ ok: false }),
+      getReplicaSets: () => [],
+      findReplicaSet: () => ({ ok: false }),
+      getPods: () => [pod],
+      findPod: () => ({ ok: true, value: pod }),
+      getNodes: () => [],
+      getPersistentVolumes: () => [],
+      findPersistentVolume: () => ({ ok: false }),
+      getPersistentVolumeClaims: () => [],
+      findPersistentVolumeClaim: () => ({ ok: false })
+    }
+
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+    })
+
+    const controller = createPodLifecycleController(eventBus, () => state)
+    controller.reconcile('default/busybox-args')
+
+    expect(pod.status.containerStatuses?.[0]?.waitingReason).toBeUndefined()
+    expect(pod.status.phase).toBe('Running')
+
+    controller.stop()
+  })
+
+  it('restarts crashing pod with exponential backoff', () => {
+    vi.useFakeTimers()
+    const eventBus = createEventBus()
+    let pod: Pod = createPod({
+      name: 'looping-nginx',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      containers: [{ name: 'nginx', image: 'nginx:1.28', args: ['pod'] }]
+    })
+    const state: ControllerState = {
+      getDeployments: () => [],
+      findDeployment: () => ({ ok: false }),
+      getDaemonSets: () => [],
+      findDaemonSet: () => ({ ok: false }),
+      getReplicaSets: () => [],
+      findReplicaSet: () => ({ ok: false }),
+      getPods: () => [pod],
+      findPod: () => ({ ok: true, value: pod }),
+      getNodes: () => [],
+      getPersistentVolumes: () => [],
+      findPersistentVolume: () => ({ ok: false }),
+      getPersistentVolumeClaims: () => [],
+      findPersistentVolumeClaim: () => ({ ok: false })
+    }
+
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+    })
+
+    const controller = createPodLifecycleController(eventBus, () => state, {
+      restartBackoffMs: {
+        initialMs: 10,
+        maxMs: 40
+      }
+    })
+
+    controller.reconcile('default/looping-nginx')
+    expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(1)
+    expect(pod.status.containerStatuses?.[0]?.waitingReason).toBe(
+      'CrashLoopBackOff'
+    )
+    expect(pod.status.containerStatuses?.[0]?.lastRestartAt).toBeDefined()
+
+    vi.advanceTimersByTime(10)
+    vi.runOnlyPendingTimers()
+    expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(2)
+
+    vi.advanceTimersByTime(20)
+    vi.runOnlyPendingTimers()
+    expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(3)
+
+    controller.stop()
+  })
+
+  it('does not restart crashing pod when restartPolicy is Never', () => {
+    vi.useFakeTimers()
+    const eventBus = createEventBus()
+    let pod: Pod = createPod({
+      name: 'no-restart-nginx',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      restartPolicy: 'Never',
+      containers: [{ name: 'nginx', image: 'nginx:1.28', args: ['pod'] }]
+    })
+    const state: ControllerState = {
+      getDeployments: () => [],
+      findDeployment: () => ({ ok: false }),
+      getDaemonSets: () => [],
+      findDaemonSet: () => ({ ok: false }),
+      getReplicaSets: () => [],
+      findReplicaSet: () => ({ ok: false }),
+      getPods: () => [pod],
+      findPod: () => ({ ok: true, value: pod }),
+      getNodes: () => [],
+      getPersistentVolumes: () => [],
+      findPersistentVolume: () => ({ ok: false }),
+      getPersistentVolumeClaims: () => [],
+      findPersistentVolumeClaim: () => ({ ok: false })
+    }
+
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+    })
+
+    const controller = createPodLifecycleController(eventBus, () => state)
+    controller.reconcile('default/no-restart-nginx')
+
+    expect(pod.status.containerStatuses?.[0]?.waitingReason).toBe('Error')
+    expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(0)
+
+    vi.runOnlyPendingTimers()
+    expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(0)
+
+    controller.stop()
   })
 })

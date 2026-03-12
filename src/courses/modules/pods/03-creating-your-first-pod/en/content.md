@@ -19,22 +19,12 @@ kubectl run nginx-pod --image=nginx:1.28 --port=80
 # Add labels to the Pod
 kubectl run nginx-pod --image=nginx:1.28 --labels="app=web,tier=frontend"
 
-# Override the command the container runs
+# Override the command the container runs (not supported in the simulator)
 kubectl run debug-pod --image=busybox:1.36 --command -- sh -c "sleep 3600"
 ```
 
 :::warning
 The imperative approach leaves no record. There is no file you can commit to version control, no history of exactly what was applied. It's perfect for throwaway experimentation but not for production workflows.
-:::
-
-:::tip
-`kubectl run` accepts a `--dry-run=client -o yaml` flag that prints the manifest Kubernetes *would* create, without actually creating anything. It is one of the fastest ways to scaffold a declarative manifest from an imperative command:
-
-```bash
-kubectl run nginx-pod --image=nginx:1.28 --port=80 --dry-run=client -o yaml > pod.yaml
-```
-
-Edit the generated file as needed, then apply it with `kubectl apply -f pod.yaml`. Best of both worlds.
 :::
 
 ## The Declarative Approach: `kubectl apply -f`
@@ -118,9 +108,10 @@ kubectl get pod imperative-pod
 
 **2. Create a Pod declaratively:**
 
-Save the following to `declarative-pod.yaml`:
+Save the following file:
 
 ```yaml
+# declarative-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -145,19 +136,13 @@ kubectl get pod declarative-pod
 
 **3. Watch a Pod being created in real time:**
 
-In one terminal, start watching:
-
-```bash
-kubectl get pods --watch
-```
-
-In another (or after opening a second tab), create a new Pod:
+Open the visualizer (telescope icon) and create a new Pod.
 
 ```bash
 kubectl run watch-pod --image=nginx:1.28
 ```
 
-Observe the status transitions: `Pending` → `ContainerCreating` → `Running`. Press `Ctrl+C` to stop watching.
+Observe the status transitions: `Pending` → `ContainerCreating` → `Running`.
 
 **4. Check the full raw YAML of a running Pod:**
 
@@ -179,11 +164,9 @@ kubectl get pod declarative-pod -o jsonpath='{.status.podIP}'
 kubectl describe pod declarative-pod
 ```
 
- Look at the `Events:` section at the bottom. You should see events like `Scheduled`, `Pulling`, `Pulled`, `Created`, and `Started`.
+Look at the `Events:` section at the bottom. You should see events like `Scheduled`, `Pulling`, `Pulled`, `Created`, and `Started`.
 
-**7. Open the cluster visualizer** (telescope icon) to see your Pods placed on nodes.
-
-**8. Clean up:**
+**7. Clean up:**
 
 ```bash
 kubectl delete pod imperative-pod declarative-pod watch-pod

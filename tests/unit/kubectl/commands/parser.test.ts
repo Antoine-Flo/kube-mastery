@@ -277,6 +277,19 @@ describe('kubectl parser - run', () => {
     expect(result.value.runArgs).toEqual(['sleep', '3600'])
   })
 
+  it('should parse positional run args without separator', () => {
+    const result = parseCommand('kubectl run test-pod pod --image=nginx')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.name).toBe('test-pod')
+    expect(result.value.runUseCommand).toBe(false)
+    expect(result.value.runArgs).toEqual(['pod'])
+  })
+
   it('should parse run labels/env/port flags', () => {
     const result = parseCommand(
       'kubectl run test-pod --image=busybox --port=5701 --env=DNS_DOMAIN=cluster --env=POD_NAMESPACE=default --labels=app=hazelcast,env=prod'

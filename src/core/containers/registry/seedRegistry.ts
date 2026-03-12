@@ -27,6 +27,9 @@ export interface ImageManifest {
   behavior: {
     startupTime: number
     defaultStatus: PodPhase
+    runtimeValidation?: {
+      rejectNonFlagArgsWithoutCommand?: boolean
+    }
   }
 }
 
@@ -106,7 +109,10 @@ export const SEED_IMAGES: ImageManifest[] = [
     ],
     behavior: {
       startupTime: 1000,
-      defaultStatus: 'Running'
+      defaultStatus: 'Running',
+      runtimeValidation: {
+        rejectNonFlagArgsWithoutCommand: true
+      }
     }
   },
   {

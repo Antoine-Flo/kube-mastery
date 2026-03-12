@@ -88,7 +88,7 @@ Neither approach is universally better. They complement each other.
 
 ## The Bridge: Generating YAML from Imperative Commands
 
-Here is one of the most useful tricks in the Kubernetes toolkit: you can use imperative commands to _generate_ declarative YAML, without actually creating anything in the cluster.
+This is a trick we already covered in the Yaml and Objects module: you can use imperative commands to _generate_ declarative YAML, without actually creating anything in the cluster.
 
 The `--dry-run=client -o yaml` combination tells kubectl to simulate the command locally and print the resulting YAML instead of sending it to the API server.
 

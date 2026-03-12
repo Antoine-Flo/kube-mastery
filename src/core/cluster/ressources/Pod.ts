@@ -178,6 +178,7 @@ interface PodSpec {
   nodeSelector?: Record<string, string>
   tolerations?: PodToleration[]
   affinity?: PodAffinity
+  restartPolicy?: 'Always' | 'OnFailure' | 'Never'
   initContainers?: readonly Container[]
   containers: readonly Container[]
   volumes?: Volume[]
@@ -188,6 +189,7 @@ export interface ContainerStatus {
   image: string
   ready: boolean
   restartCount: number
+  lastRestartAt?: string
   state?: 'Waiting' | 'Running' | 'Terminated'
   started?: boolean
   startedAt?: string
@@ -251,6 +253,7 @@ interface ContainerStatusOverride {
   name: string
   ready?: boolean
   restartCount?: number
+  lastRestartAt?: string
   waitingReason?: string
   terminatedReason?: string
 }
@@ -262,6 +265,7 @@ interface PodConfig {
   nodeSelector?: Record<string, string>
   tolerations?: PodToleration[]
   affinity?: PodAffinity
+  restartPolicy?: 'Always' | 'OnFailure' | 'Never'
   initContainers?: Container[]
   containers: Container[]
   volumes?: Volume[]
@@ -480,6 +484,9 @@ export const createPod = (config: PodConfig): Pod => {
       ...(override?.waitingReason != null && {
         waitingReason: override.waitingReason
       }),
+      ...(override?.lastRestartAt != null && {
+        lastRestartAt: override.lastRestartAt
+      }),
       ...(override?.terminatedReason != null && {
         terminatedReason: override.terminatedReason
       })
@@ -557,6 +564,7 @@ export const createPod = (config: PodConfig): Pod => {
       ...(config.nodeSelector && { nodeSelector: config.nodeSelector }),
       ...(config.tolerations && { tolerations: config.tolerations }),
       ...(config.affinity && { affinity: config.affinity }),
+      ...(config.restartPolicy && { restartPolicy: config.restartPolicy }),
       ...(config.initContainers && { initContainers: config.initContainers }),
       containers: config.containers,
       ...(config.volumes && { volumes: config.volumes })
@@ -639,6 +647,7 @@ const PodManifestSchema = z.object({
   spec: z.object({
     nodeName: z.string().optional(),
     nodeSelector: z.record(z.string(), z.string()).optional(),
+    restartPolicy: z.enum(['Always', 'OnFailure', 'Never']).optional(),
     initContainers: z.array(ContainerSchema).optional(),
     containers: z
       .array(ContainerSchema)
@@ -813,6 +822,9 @@ export const parsePodManifest = (data: unknown): Result<Pod> => {
       tolerations: manifest.spec.tolerations
     }),
     ...(manifest.spec.affinity && { affinity: manifest.spec.affinity }),
+    ...(manifest.spec.restartPolicy && {
+      restartPolicy: manifest.spec.restartPolicy
+    }),
     ...(initContainers && { initContainers }),
     containers,
     ...(volumes && { volumes }),

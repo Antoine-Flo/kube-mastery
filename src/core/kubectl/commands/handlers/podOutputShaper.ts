@@ -323,7 +323,7 @@ export const shapePodForStructuredOutput = (
       ...(pod.spec.nodeName != null ? { nodeName: pod.spec.nodeName } : {}),
       preemptionPolicy: 'PreemptLowerPriority',
       priority: 0,
-      restartPolicy: 'Always',
+      restartPolicy: pod.spec.restartPolicy ?? 'Always',
       schedulerName: 'default-scheduler',
       securityContext: {},
       serviceAccount: 'default',

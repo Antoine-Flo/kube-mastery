@@ -386,6 +386,61 @@ const getPodRestarts = (pod: Pod): number => {
   return statuses.reduce((sum, cs) => sum + (cs.restartCount ?? 0), 0)
 }
 
+const formatRestartAge = (timestamp: string): string => {
+  const nowMs = Date.now()
+  const eventMs = new Date(timestamp).getTime()
+  const diffMs = Math.max(0, nowMs - eventMs)
+  const diffSecs = Math.floor(diffMs / 1000)
+  if (diffSecs < 60) {
+    return `${diffSecs}s`
+  }
+  const minutes = Math.floor(diffSecs / 60)
+  const seconds = diffSecs % 60
+  if (minutes < 60) {
+    return seconds > 0 ? `${minutes}m${seconds}s` : `${minutes}m`
+  }
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  if (hours < 24) {
+    return remainingMinutes > 0 ? `${hours}h${remainingMinutes}m` : `${hours}h`
+  }
+  const days = Math.floor(hours / 24)
+  const remainingHours = hours % 24
+  return remainingHours > 0 ? `${days}d${remainingHours}h` : `${days}d`
+}
+
+const getPodLastRestartAt = (pod: Pod): string | undefined => {
+  const statuses = pod.status.containerStatuses ?? []
+  let latestMs = -1
+  let latestTimestamp: string | undefined = undefined
+  for (const status of statuses) {
+    if ((status.restartCount ?? 0) <= 0 || status.lastRestartAt == null) {
+      continue
+    }
+    const currentMs = new Date(status.lastRestartAt).getTime()
+    if (Number.isNaN(currentMs)) {
+      continue
+    }
+    if (currentMs > latestMs) {
+      latestMs = currentMs
+      latestTimestamp = status.lastRestartAt
+    }
+  }
+  return latestTimestamp
+}
+
+const getPodRestartsDisplay = (pod: Pod): string => {
+  const totalRestarts = getPodRestarts(pod)
+  if (totalRestarts <= 0) {
+    return '0'
+  }
+  const lastRestartAt = getPodLastRestartAt(pod)
+  if (lastRestartAt == null) {
+    return String(totalRestarts)
+  }
+  return `${totalRestarts} (${formatRestartAge(lastRestartAt)} ago)`
+}
+
 /**
  * STATUS column: phase or container state reason (e.g. Pending, Running, CrashLoopBackOff)
  */
@@ -495,7 +550,7 @@ const RESOURCE_HANDLERS: Record<string, ResourceHandler<any>> = {
       pod.metadata.name,
       getPodReady(pod),
       getPodDisplayStatus(pod),
-      String(getPodRestarts(pod)),
+      getPodRestartsDisplay(pod),
       formatAge(pod.metadata.creationTimestamp)
     ],
     supportsFiltering: true,
@@ -515,7 +570,7 @@ const RESOURCE_HANDLERS: Record<string, ResourceHandler<any>> = {
       pod.metadata.name,
       getPodReady(pod),
       getPodDisplayStatus(pod),
-      String(getPodRestarts(pod)),
+      getPodRestartsDisplay(pod),
       formatAge(pod.metadata.creationTimestamp),
       getPodIP(pod),
       getPodNodeName(pod),
@@ -919,7 +974,7 @@ export const handleGet = (
           p.metadata.name,
           getPodReady(p),
           getPodDisplayStatus(p),
-          String(getPodRestarts(p)),
+          getPodRestartsDisplay(p),
           formatAge(p.metadata.creationTimestamp),
           ipMap.get(key) ?? getPodIP(p),
           getPodNodeName(p),
@@ -936,7 +991,7 @@ export const handleGet = (
         p.metadata.name,
         getPodReady(p),
         getPodDisplayStatus(p),
-        String(getPodRestarts(p)),
+        getPodRestartsDisplay(p),
         formatAge(p.metadata.creationTimestamp)
       ]
       if (showLabels) {

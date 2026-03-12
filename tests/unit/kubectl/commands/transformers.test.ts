@@ -797,6 +797,25 @@ describe('kubectl transformers', () => {
       expect(result.value.runCommand).toBeUndefined()
     })
 
+    it('should extract positional args without separator when provided after name', () => {
+      const transformer = getTransformerForAction('run')
+      const ctx = createContext({
+        input: 'kubectl run test-pod pod --image=nginx',
+        tokens: ['kubectl', 'run', 'test-pod', 'pod', '--image=nginx']
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value.name).toBe('test-pod')
+      expect(result.value.runUseCommand).toBe(false)
+      expect(result.value.runArgs).toEqual(['pod'])
+    })
+
     it('should extract env labels and dry-run client', () => {
       const transformer = getTransformerForAction('run')
       const ctx = createContext({
