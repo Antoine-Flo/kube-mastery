@@ -70,6 +70,20 @@ env:
 
 This keeps sensitive data out of your manifests and decouples configuration from code.
 
+### `command` and `args`
+
+By default, a container runs whatever command is baked into its image (the Docker `ENTRYPOINT` and `CMD`). You can override both fields:
+
+```yaml
+containers:
+  - name: debug
+    image: busybox:1.36
+    command: ['sh', '-c']
+    args: ['echo started && sleep 3600']
+```
+
+`command` replaces the entrypoint, `args` replaces the default command. This is especially useful for debug pods or utility containers where you need a specific behavior from a generic image without rebuilding it.
+
 ### `resources`
 
 Resource management is critical for running a stable cluster. The `resources` field has two sub-fields:
@@ -95,6 +109,10 @@ volumeMounts:
     mountPath: /etc/config
     readOnly: true
 ```
+
+### Probes
+
+Kubernetes supports `livenessProbe` and `readinessProbe` fields inside the container spec to actively check container health. A failing liveness probe triggers a container restart; a failing readiness probe removes the Pod from Service traffic without restarting it. Both sit at the same level as `env` and `resources` inside a container definition. Probes are covered in their own lesson.
 
 ## `spec.volumes[]`
 
@@ -172,45 +190,44 @@ If an init container fails (exits with a non-zero code), Kubernetes will restart
 
 ## Full Structural Overview
 
-The diagram below shows how the major sections of a Pod spec relate to each other:
+The diagrams below show the same structure in three compact layouts, pick the one that feels clearest to you:
 
 ```mermaid
-graph TD
-    PodSpec["spec (Pod)"]
+stateDiagram-v2
+    state "spec (Pod)" as Spec3
+    state "initContainers[]" as IC3
+    state "containers[]" as C3
+    state "volumes[]" as V3
+    state "restartPolicy" as RP3
+    state "nodeSelector / nodeName" as S3
+    state "name, image, ports[], env[], resources, volumeMounts[]" as CFields3
+    state "emptyDir, configMap, secret, persistentVolumeClaim, hostPath" as VTypes3
 
-    PodSpec --> IC["initContainers[]\n(run before main, in order)"]
-    PodSpec --> Containers["containers[]\n(main workload)"]
-    PodSpec --> Volumes["volumes[]\n(storage declarations)"]
-    PodSpec --> RP["restartPolicy\nAlways | OnFailure | Never"]
-    PodSpec --> Sched["nodeSelector / nodeName\n(scheduling hints)"]
-
-    Containers --> ContFields["• name\n• image\n• ports[]\n• env[]\n• resources\n  (requests + limits)\n• volumeMounts[]"]
-
-    Volumes --> VolTypes["• emptyDir\n• configMap\n• secret\n• persistentVolumeClaim\n• hostPath"]
+    Spec3 --> IC3
+    Spec3 --> C3
+    Spec3 --> V3
+    Spec3 --> RP3
+    Spec3 --> S3
+    C3 --> CFields3
+    V3 --> VTypes3
 ```
 
 ## Hands-On Practice
 
-Let's build and inspect a detailed Pod manifest in the cluster.
+In this exercise, you will practice the core Pod fields with a concise manifest and a few essential `kubectl` checks.
 
-**1. Create the following manifest and save it as `detailed-pod.yaml`:**
+**1. Create the following manifest and save it as `simple-pod.yaml`:**
 
 ```yaml
+# simple-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: detailed-pod
+  name: simple-pod
   labels:
     app: my-app
     tier: frontend
 spec:
-  initContainers:
-    - name: init-setup
-      image: busybox:1.36
-      command: ['sh', '-c', "echo 'Init container ran' > /init-data/init.txt"]
-      volumeMounts:
-        - name: init-volume
-          mountPath: /init-data
   containers:
     - name: main-container
       image: nginx:1.28
@@ -227,62 +244,40 @@ spec:
         limits:
           memory: '128Mi'
           cpu: '200m'
-      volumeMounts:
-        - name: init-volume
-          mountPath: /usr/share/nginx/html/init
-  volumes:
-    - name: init-volume
-      emptyDir: {}
   restartPolicy: Always
 ```
 
 Apply it:
 
 ```bash
-kubectl apply -f detailed-pod.yaml
+kubectl apply -f simple-pod.yaml
 ```
 
-**2. Watch the Pod start (observe the init container phase):**
+**2. Confirm the Pod is created:**
 
 ```bash
-kubectl get pod detailed-pod --watch
+kubectl get pod simple-pod
 ```
 
-You'll briefly see the Pod in `Init:0/1` state while the init container runs, then transition to `Running`. Press `Ctrl+C` when the Pod is running.
+Wait until the Pod reaches `Running`.
 
-**3. Describe the Pod to see all sections:**
+**3. Describe the Pod to inspect its structure:**
 
 ```bash
-kubectl describe pod detailed-pod
+kubectl describe pod simple-pod
 ```
 
-Notice the `Init Containers:` section, the `Containers:` section, the `Volumes:` section, and the `Environment:` and `Mounts:` details for each container.
+Focus on these sections in the output:
 
-**4. Verify the init container wrote its file:**
+- `Containers:`
+- `Environment:`
+- `Limits` and `Requests`
+- `Mounts`
+
+**4. Clean up:**
 
 ```bash
-kubectl exec detailed-pod -c main-container -- cat /usr/share/nginx/html/init/init.txt
+kubectl delete pod simple-pod
 ```
 
-The init container wrote to the shared volume, and the main container can read it.
-
-**5. Check the environment variable inside the container:**
-
-```bash
-kubectl exec detailed-pod -- env | grep MY_VAR
-```
-
-**6. View resource requests and limits:**
-
-```bash
-kubectl get pod detailed-pod -o jsonpath='{.spec.containers[0].resources}'
-echo ""
-```
-
-**7. Clean up:**
-
-```bash
-kubectl delete pod detailed-pod
-```
-
-You now have a thorough understanding of every major section of a Pod manifest. In the next lesson, we'll actually create Pods in the cluster using both imperative and declarative approaches.
+You now know how to read the essential sections of a Pod manifest and verify them live with `kubectl get` and `kubectl describe`. In the next lesson, you'll dig into the full live object, including its `status` section populated by the kubelet.

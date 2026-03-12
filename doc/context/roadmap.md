@@ -27,6 +27,7 @@
 - [x] **Lot I - volumes runtime foundations (v1)** : module `src/core/volumes` (VolumeState, VolumeBindingController, PodVolumeController), support `emptyDir|hostPath|PVC`, ressources `PV/PVC`, support `kubectl get/describe/apply/delete pv,pvc`, gate `Pending -> Running` base sur readiness volumes.
 - [x] **Lot I.1 - binding policy extraction (v2)** : logique de matching PV/PVC extraite dans `VolumeBindingPolicy` pour separer policy et orchestration controller.
 - [x] **Lot J - ingress API baseline + conformance** : support `Ingress` (`apply/create/get/describe/delete`), `get ingressclass` (empty state), endpoints raw/OpenAPI networking cibles conformance et scenario `command-catalog` dedie.
+- [x] **Lot K - jsonpath output parity baseline** : support centralise `-o jsonpath=...` (`get`, `config view`, `create/run --dry-run=client`) avec templates `range/end`, filtres `?()`, `@`, litteraux interpretes et suite de tests dediee.
 
 ### Améliorations Nodes (Post-MVP)
 

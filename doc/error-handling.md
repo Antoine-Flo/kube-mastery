@@ -61,5 +61,5 @@ Server checks this header and:
 ## Recommended Codes
 
 - Generic: `ok`, `invalid_input`, `unauthorized`, `action_failed`
-- Billing/account: `subscription_not_found`, `subscription_active`, `pause_failed`, `resume_failed`, `cancel_failed`, `refund_failed`, `delete_failed`
+- Billing/account: `subscription_not_found`, `subscription_active`, `refund_failed`, `delete_failed`
 - Auth: `auth_signin_failed`, `auth_oauth_failed`, `auth_session_missing`

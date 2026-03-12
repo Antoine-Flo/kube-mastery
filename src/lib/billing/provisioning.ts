@@ -360,45 +360,6 @@ function getPaddleApiKey(locals?: unknown): string {
   return stagingApiKey
 }
 
-async function paddleApiRequest(args: {
-  locals?: unknown
-  path: string
-  method?: 'GET' | 'POST'
-  body?: Record<string, unknown>
-}): Promise<{ ok: boolean; error: string | null }> {
-  const url = `${getPaddleBaseUrl(args.locals)}${args.path}`
-  const apiKey = getPaddleApiKey(args.locals)
-  const response = await fetch(url, {
-    method: args.method ?? 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body:
-      args.body == null || Object.keys(args.body).length === 0
-        ? undefined
-        : JSON.stringify(args.body)
-  })
-
-  if (response.ok) {
-    return { ok: true, error: null }
-  }
-
-  let errorMessage = `Paddle API request failed (${response.status})`
-  try {
-    const payload = (await response.json()) as {
-      error?: { detail?: string; code?: string }
-    }
-    const detail = payload.error?.detail ?? payload.error?.code
-    if (detail != null && detail !== '') {
-      errorMessage = detail
-    }
-  } catch {
-    // Keep fallback error message.
-  }
-  return { ok: false, error: errorMessage }
-}
-
 type PaddlePortalSessionResponse = {
   data?: {
     urls?: {
@@ -456,39 +417,6 @@ export async function createPaddleCustomerPortalOverviewLink(args: {
   }
 
   return { ok: true, url, error: null }
-}
-
-export async function pausePaddleSubscription(args: {
-  locals?: unknown
-  paddleSubscriptionId: string
-}): Promise<{ ok: boolean; error: string | null }> {
-  return paddleApiRequest({
-    locals: args.locals,
-    path: `/subscriptions/${args.paddleSubscriptionId}/pause`,
-    body: { effective_from: 'next_billing_period' }
-  })
-}
-
-export async function resumePaddleSubscription(args: {
-  locals?: unknown
-  paddleSubscriptionId: string
-}): Promise<{ ok: boolean; error: string | null }> {
-  return paddleApiRequest({
-    locals: args.locals,
-    path: `/subscriptions/${args.paddleSubscriptionId}/resume`,
-    body: {}
-  })
-}
-
-export async function cancelPaddleSubscription(args: {
-  locals?: unknown
-  paddleSubscriptionId: string
-}): Promise<{ ok: boolean; error: string | null }> {
-  return paddleApiRequest({
-    locals: args.locals,
-    path: `/subscriptions/${args.paddleSubscriptionId}/cancel`,
-    body: { effective_from: 'next_billing_period' }
-  })
 }
 
 export async function createRefundRequestMessage(args: {

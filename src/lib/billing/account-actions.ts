@@ -28,7 +28,7 @@ export function addFlashParam(
   return `${targetUrl.pathname}${targetUrl.search}`
 }
 
-export type BillingActionSubscription = {
+type BillingActionSubscription = {
   paddleSubscriptionId: string
   paddleCustomerId: string | null
   status: string

@@ -167,7 +167,6 @@ Press `Ctrl+C` when the new Pod is `Running`.
 ```bash
 kubectl exec edit-demo -- env | grep -E "LOG_LEVEL|NEW_VAR"
 kubectl get pod edit-demo -o jsonpath='{.spec.containers[0].image}'
-echo ""
 ```
 
 **7. Try `kubectl set image` directly on the Pod:**
@@ -175,7 +174,6 @@ echo ""
 ```bash
 kubectl set image pod/edit-demo edit-demo=nginx:1.27
 kubectl get pod edit-demo -o jsonpath='{.spec.containers[0].image}'
-echo ""
 ```
 
 Note: this will cause the container to restart briefly.

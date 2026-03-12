@@ -151,7 +151,6 @@ kubectl patch rs web-rs --type='json' \
 
 # Check the RS spec, it now says 1.25
 kubectl get rs web-rs -o jsonpath='{.spec.template.spec.containers[0].image}'
-echo ""
 
 # But the Pods are STILL running 1.24
 kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'

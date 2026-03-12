@@ -167,22 +167,6 @@ export const subscriptions = pgTable(
       for: 'select',
       to: authenticatedRole,
       using: sql`${table.userId} = ${authUid}`
-    }),
-    pgPolicy('Users can insert their own subscriptions', {
-      for: 'insert',
-      to: authenticatedRole,
-      withCheck: sql`${table.userId} = ${authUid}`
-    }),
-    pgPolicy('Users can update their own subscriptions', {
-      for: 'update',
-      to: authenticatedRole,
-      using: sql`${table.userId} = ${authUid}`,
-      withCheck: sql`${table.userId} = ${authUid}`
-    }),
-    pgPolicy('Users can delete their own subscriptions', {
-      for: 'delete',
-      to: authenticatedRole,
-      using: sql`${table.userId} = ${authUid}`
     })
   ]
 )

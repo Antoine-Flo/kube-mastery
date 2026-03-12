@@ -246,7 +246,6 @@ kubectl get pods -l app=web --show-labels
 ```bash
 kubectl get pod $(kubectl get pods -l app=web -o name | head -1 | cut -d/ -f2) \
   -o jsonpath='{.metadata.ownerReferences[0].name}'
-echo ""
 # Should print: web-rs
 ```
 

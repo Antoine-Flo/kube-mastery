@@ -169,7 +169,6 @@ Watch it go from `Pending` to `Running` to `Completed`. The `Completed` status c
 
 ```bash
 kubectl get pod success-pod -o jsonpath='{.status.containerStatuses[0].state.terminated.exitCode}'
-echo ""
 ```
 
 The exit code should be `0`.

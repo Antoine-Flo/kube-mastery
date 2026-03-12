@@ -167,6 +167,26 @@ Le rendu structure (`-o json|-o yaml`) pour `kubectl get` passe par une projecti
 
 Cette couche evite les derives de format depuis les objets runtime internes et stabilise la parite conformance sans code path specifique aux scenarios.
 
+### kubectl JSONPath Output Engine
+
+Le rendu `-o jsonpath=...` repose sur une couche centralisee dans `src/core/kubectl/commands/output/`:
+
+- facade commune: `outputHelpers.ts` (resolution `--output`, validation par commande, dispatch renderer),
+- moteur JSONPath template: `output/jsonpath/templateParser.ts` + `output/jsonpath/renderer.ts`,
+- evaluateur d'expressions: `output/jsonpath/jsonPathEvaluator.ts` (base `jsonpath-plus`),
+- integration unique dans les handlers (`get`, `config view`, `create/run --dry-run=client`) sans duplication.
+
+Capacites documentees:
+
+- templates `range/end` (y compris imbriques),
+- `@` (current object) et expressions `{@.field}`,
+- litteraux interpretes dans template (`{"\\n"}`, `{"\\t"}`, `{'\\n'}`),
+- filtres JSONPath `?(@.field=="value")`, wildcard, recursive descent, union.
+
+Contrainte explicite:
+
+- les regex JSONPath (`=~`) ne sont pas prises en charge.
+
 ### API Discovery Catalog
 
 `kubectl api-resources` repose sur un catalogue discovery dedie pour decoupler:
@@ -213,6 +233,10 @@ La redirection de sortie `>` est prise en charge au niveau handler kubectl (`src
 - ecriture de la sortie standard dans le filesystem virtuel via `FileSystem.writeFile(...)`,
 - en cas de redirection active, la sortie standard n'est pas affichee dans le terminal,
 - les erreurs kubectl ou redirection restent affichees comme erreurs terminal.
+
+### Tokenization Contract for kubectl Templates
+
+Le tokenizer partage (`src/core/shared/parsing.ts`) preserve desormais les segments quotes (simples et doubles) pour eviter la casse des templates `-o jsonpath='...'` contenant des espaces.
 
 ### Cluster-Info Dump Behavior
 

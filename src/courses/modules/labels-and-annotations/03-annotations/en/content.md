@@ -189,9 +189,7 @@ kubectl describe pod annotated-pod
 
 ```bash
 kubectl get pod annotated-pod -o jsonpath='{.metadata.annotations.contact}'
-echo ""
 kubectl get pod annotated-pod -o jsonpath='{.metadata.annotations.runbook}'
-echo ""
 ```
 
 **4. Add a new annotation to the running Pod**
@@ -206,7 +204,6 @@ kubectl describe pod annotated-pod | grep -A5 Annotations
 ```bash
 kubectl annotate pod annotated-pod contact="new-team@example.com" --overwrite
 kubectl get pod annotated-pod -o jsonpath='{.metadata.annotations.contact}'
-echo ""
 ```
 
 **6. Remove an annotation**

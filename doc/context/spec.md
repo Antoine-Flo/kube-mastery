@@ -40,6 +40,13 @@ get (pods, deploy, rs, services, ingresses, ingressclasses, configmaps, secrets,
   - collection queries in `-o json|-o yaml` return a `List` shape (`apiVersion`, `kind`, `metadata.resourceVersion`, `items`), including empty results,
   - named queries (`kubectl get <resource> <name> -o json|-o yaml`) return a single object shape.
   - `Deployment` named queries are projected with Kubernetes-like metadata and status fields (`uid`, `resourceVersion`, `generation`, `observedGeneration`, conditions), while stripping simulator-only annotations.
+- JSONPath output baseline is explicit:
+  - `kubectl get` supports `-o jsonpath=...` on structured payloads (collection and named queries),
+  - `kubectl config view` supports `-o jsonpath=...`,
+  - `kubectl create ... --dry-run=client` and `kubectl run ... --dry-run=client` support `-o jsonpath=...`,
+  - supported template patterns include `range/end`, nested `range`, `@` current object, literals like `{"\\n"}`,
+  - supported JSONPath operators include wildcard, child selectors, filters `?()`, unions and recursive descent via the shared evaluator,
+  - regex filters (`=~`) are intentionally not supported (aligned with kubectl docs guidance).
 - Deployment readiness semantics are explicit:
   - `kubectl get deployments` must read `READY` from `deployment.status.readyReplicas` only,
   - `deployment.status` is derived from owned `ReplicaSet.status`,
@@ -71,7 +78,7 @@ get (pods, deploy, rs, services, ingresses, ingressclasses, configmaps, secrets,
   - supports `kubectl run NAME --image=<image>`,
   - supports `--command -- <cmd> [args...]` and `-- <arg1> <arg2> ...`,
   - supports `--env`, `--labels`, `--port`, `--dry-run=client`, `-i/--stdin`, `-t/--tty`, `--rm`,
-  - supports `kubectl run ... --dry-run=client -o yaml` to emit a Pod manifest without creating a Pod,
+  - supports `kubectl run ... --dry-run=client -o yaml|json|jsonpath=...` to emit a manifest view without creating a Pod,
   - supports terminal output redirection for kubectl commands with a single target (`kubectl ... > file`) to persist command output in the virtual filesystem,
   - current simulator scope limits restart policy handling to `--restart=Never` (other values return explicit error).
 - `kubectl logs` baseline:
