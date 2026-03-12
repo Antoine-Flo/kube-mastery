@@ -46,7 +46,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     route: '/api/paddle/webhook',
     locals
   })
-  const paddleEnvironment = Environment.sandbox
+  const environment = (readAppEnv('ENVIRONMENT', locals) ?? '')
+    .toLowerCase()
+    .trim()
+  const paddleEnvironment =
+    environment === 'production' ? Environment.production : Environment.sandbox
   const configResult = resolveWebhookConfig({
     request,
     locals,
@@ -66,23 +70,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
       signatureHeader: configResult.signatureHeader,
       paddleEnvironment
     })
-    if (processResult.duplicate) {
-      emitDuplicateWebhookLog({
-        baseContext,
-        startedAt,
-        eventType: processResult.eventType,
-        notificationId: processResult.notificationId
-      })
-      return new Response('', { status: 200 })
-    }
     if (processResult.skipped) {
-      emitSkippedWebhookLog({
-        baseContext,
-        startedAt,
-        eventType: processResult.eventType,
-        notificationId: processResult.notificationId,
-        skipReason: processResult.skipReason
-      })
+      if (processResult.duplicate) {
+        emitDuplicateWebhookLog({
+          baseContext,
+          startedAt,
+          eventType: processResult.eventType,
+          notificationId: processResult.notificationId
+        })
+      } else {
+        emitSkippedWebhookLog({
+          baseContext,
+          startedAt,
+          eventType: processResult.eventType,
+          notificationId: processResult.notificationId,
+          skipReason: processResult.skipReason
+        })
+      }
       return new Response('', { status: 200 })
     }
     emitSuccessWebhookLog({
@@ -261,16 +265,6 @@ async function processWebhookEvent(args: {
   if (!eventInsert.ok) {
     throw new Error(eventInsert.error ?? 'billing/webhook-event-insert')
   }
-  if (eventInsert.duplicate) {
-    return {
-      duplicate: true,
-      skipped: false,
-      eventType: incoming.paddleEvent.eventType,
-      notificationId: incoming.paddleEvent.notificationId,
-      skipReason: null
-    }
-  }
-
   await syncWebhookSideEffects({
     request: args.request,
     locals: args.locals,
@@ -279,7 +273,7 @@ async function processWebhookEvent(args: {
   })
 
   return {
-    duplicate: false,
+    duplicate: eventInsert.duplicate,
     skipped: false,
     eventType: incoming.paddleEvent.eventType,
     notificationId: incoming.paddleEvent.notificationId,
