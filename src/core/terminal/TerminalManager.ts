@@ -29,6 +29,7 @@ export interface AttachOptions {
   /** Optional text written at top when terminal loads (e.g. home banner). Omitted = none. */
   topPrompt?: string
   onCommand?: (command: string) => void
+  onInterrupt?: () => boolean
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -46,6 +47,7 @@ interface TerminalManagerState {
   fitAddon: FitAddon | null
   options: TerminalManagerOptions | null
   onCommandCallback: ((command: string) => void) | null
+  onInterruptCallback: (() => boolean) | null
   attachId: number
 }
 
@@ -60,6 +62,7 @@ const state: TerminalManagerState = {
   fitAddon: null,
   options: null,
   onCommandCallback: null,
+  onInterruptCallback: null,
   attachId: 0
 }
 
@@ -72,6 +75,15 @@ const getThemeColors = (theme: 'dark' | 'light') => ({
   foreground: theme === 'dark' ? '#b4b4b4' : '#1a1a1a',
   cursor: theme === 'dark' ? '#b4b4b4' : '#1a1a1a'
 })
+
+const restoreCaretAfterInterrupt = (): void => {
+  if (state.controller == null) {
+    return
+  }
+  // Ensure cursor is visible and focused right after Ctrl+C stream interruption.
+  state.controller.write('\x1b[?25h')
+  state.controller.focus()
+}
 
 const cleanup = () => {
   if (state.resizeObserver) {
@@ -199,7 +211,14 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
         navigator.clipboard.writeText(selection)
         return false
       }
+      const interruptHandled = state.onInterruptCallback?.() === true
+      if (interruptHandled) {
+        state.controller?.cancelInput()
+        restoreCaretAfterInterrupt()
+        return false
+      }
       state.controller?.cancelInput()
+      restoreCaretAfterInterrupt()
       return false
     }
     return true
@@ -247,7 +266,7 @@ export const initTerminalManager = (options: TerminalManagerOptions): void => {
 }
 
 export const attachTerminal = (options: AttachOptions): number => {
-  const { container, environment, topPrompt, onCommand } = options
+  const { container, environment, topPrompt, onCommand, onInterrupt } = options
 
   // Increment attach ID to track this attachment
   state.attachId++
@@ -265,6 +284,7 @@ export const attachTerminal = (options: AttachOptions): number => {
 
   // Store new context
   state.onCommandCallback = onCommand ?? null
+  state.onInterruptCallback = onInterrupt ?? null
   state.currentEnvironment = environment
 
   // Setup terminal - use RAF to ensure container is in DOM after render
@@ -291,6 +311,7 @@ export const detachTerminal = (attachId?: number): void => {
   cleanup()
   state.currentEnvironment = null
   state.onCommandCallback = null
+  state.onInterruptCallback = null
 }
 
 export const updateTerminalTheme = (): void => {

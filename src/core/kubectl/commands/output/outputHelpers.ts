@@ -1,7 +1,10 @@
 import { stringify as yamlStringify } from 'yaml'
 import type { Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
+import { formatTable } from '../../../shared/formatter'
 import { renderKubectlJsonPath } from './jsonpath/renderer'
+import type { TabColumnAlign } from './statefulTabWriter'
+import { createStatefulTabWriter } from './statefulTabWriter'
 
 export type OutputKind =
   | 'table'
@@ -18,6 +21,14 @@ export interface OutputDirective {
 }
 
 const KUBECTL_JSON_INDENT = 4
+
+export interface KubectlTableRenderOptions {
+  align?: TabColumnAlign[]
+  spacing?: number
+  uppercase?: boolean
+  noHeaders?: boolean
+  minColumnWidthsByHeader?: Record<string, number>
+}
 
 const stripMatchingQuotes = (raw: string): string => {
   const trimmed = raw.trim()
@@ -154,4 +165,37 @@ export const renderStructuredPayload = (
     return renderKubectlJsonPath(payload, directive.jsonPathExpression ?? '')
   }
   return error('error: structured payload requires json, yaml, or jsonpath output')
+}
+
+export const formatKubectlTable = (
+  headers: string[],
+  rows: string[][],
+  options: KubectlTableRenderOptions = {}
+): string => {
+  const uppercase = options.uppercase ?? true
+  const spacing = options.spacing ?? 3
+  const normalizedHeaders = uppercase ? headers.map((header) => header.toUpperCase()) : headers
+  if (options.minColumnWidthsByHeader != null) {
+    const writer = createStatefulTabWriter({
+      align: options.align,
+      spacing,
+      minColumnWidthsByHeader: options.minColumnWidthsByHeader
+    })
+    const formattedLines = writer.ingestHeaderAndRows(normalizedHeaders, rows)
+    writer.reset()
+    if (options.noHeaders === true) {
+      return formattedLines.slice(1).join('\n')
+    }
+    return formattedLines.join('\n')
+  }
+
+  const formatted = formatTable(normalizedHeaders, rows, {
+    align: options.align,
+    spacing,
+    uppercase: false
+  })
+  if (options.noHeaders === true) {
+    return formatted.split('\n').slice(1).join('\n')
+  }
+  return formatted
 }

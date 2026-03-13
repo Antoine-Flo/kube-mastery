@@ -607,6 +607,11 @@ const validateCommandSemantics = (
   createServiceType?: 'clusterip' | 'nodeport' | 'loadbalancer' | 'externalname',
   createSecretType?: 'generic' | 'tls' | 'docker-registry'
 ): string | undefined => {
+  const watchValidationError = validateGetWatchSemantics(action, flags)
+  if (watchValidationError !== undefined) {
+    return watchValidationError
+  }
+
   const rawValidationError = validateGetRawSemantics(action, flags, tokens)
   if (rawValidationError !== undefined) {
     return rawValidationError
@@ -776,6 +781,23 @@ const validateCommandSemantics = (
     if (typeof namespace !== 'string' || namespace.length === 0) {
       return 'config set-context requires flag --namespace'
     }
+  }
+
+  return undefined
+}
+
+const validateGetWatchSemantics = (
+  action: Action,
+  flags: Record<string, string | boolean>
+): string | undefined => {
+  if (action !== 'get') {
+    return undefined
+  }
+
+  const hasWatch = flags['watch'] === true || flags['w'] === true
+  const hasWatchOnly = flags['watch-only'] === true
+  if (hasWatch && hasWatchOnly) {
+    return '--watch and --watch-only are mutually exclusive'
   }
 
   return undefined

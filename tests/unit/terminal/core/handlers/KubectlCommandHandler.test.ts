@@ -1,4 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import {
+  createPodCreatedEvent,
+  createPodUpdatedEvent
+} from '../../../../../src/core/cluster/events/types'
+import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createClusterState } from '../../../../../src/core/cluster/ClusterState'
 import { createEventBus } from '../../../../../src/core/cluster/events/EventBus'
 import type { CommandContext } from '../../../../../src/core/terminal/core/CommandContext'
@@ -13,6 +18,7 @@ describe('KubectlCommandHandler', () => {
   let handler: KubectlCommandHandler
   let context: CommandContext
   let renderer: ReturnType<typeof createMockRenderer>
+  let streamStop: (() => void) | null
 
   beforeEach(() => {
     // Créer la structure de base /home/kube dans l'arbre
@@ -64,10 +70,14 @@ describe('KubectlCommandHandler', () => {
       shellContextStack,
       clusterState,
       logger,
-      eventBus
+      eventBus,
+      startStream: (stop) => {
+        streamStop = stop
+      }
     }
 
     handler = new KubectlCommandHandler()
+    streamStop = null
   })
 
   describe('canHandle', () => {
@@ -97,6 +107,10 @@ describe('KubectlCommandHandler', () => {
   })
 
   describe('execute', () => {
+    const getCellStartIndex = (line: string, value: string): number => {
+      return line.indexOf(value)
+    }
+
     it('should execute kubectl get pods and return success', () => {
       const result = handler.execute('kubectl get pods', context)
       expect(result.ok).toBe(true)
@@ -290,6 +304,178 @@ describe('KubectlCommandHandler', () => {
       expect(renderer.getOutput()).toContain(
         'missing output file after redirection operator'
       )
+    })
+
+    it('should render initial snapshot and updates in watch mode', () => {
+      const createResult = handler.execute(
+        'kubectl run watch-one --image=nginx',
+        context
+      )
+      expect(createResult.ok).toBe(true)
+      renderer.clearOutput()
+
+      const watchResult = handler.execute('kubectl get pods --watch', context)
+      expect(watchResult.ok).toBe(true)
+      const initialOutput = renderer.getOutput()
+      expect(initialOutput).toContain('NAME')
+      expect(initialOutput).toContain('watch-one')
+      expect(streamStop).not.toBeNull()
+      renderer.clearOutput()
+
+      const otherPod = createPod({
+        name: 'watch-two',
+        namespace: 'default',
+        phase: 'Pending',
+        containers: [{ name: 'watch-two', image: 'nginx:latest' }]
+      })
+      context.eventBus.emit(createPodCreatedEvent(otherPod, 'test'))
+      const watchUpdateOutput = renderer.getOutput()
+      expect(watchUpdateOutput).toContain('watch-two')
+      expect(watchUpdateOutput).not.toContain('NAME')
+
+      streamStop?.()
+      renderer.clearOutput()
+      const thirdPod = createPod({
+        name: 'watch-three',
+        namespace: 'default',
+        phase: 'Pending',
+        containers: [{ name: 'watch-three', image: 'nginx:latest' }]
+      })
+      context.eventBus.emit(createPodCreatedEvent(thirdPod, 'test'))
+      expect(renderer.getOutput()).toBe('')
+    })
+
+    it('should not print initial output in watch-only mode', () => {
+      const createResult = handler.execute(
+        'kubectl run watch-only-pod --image=nginx',
+        context
+      )
+      expect(createResult.ok).toBe(true)
+      renderer.clearOutput()
+
+      const watchOnlyResult = handler.execute(
+        'kubectl get pods --watch-only',
+        context
+      )
+      expect(watchOnlyResult.ok).toBe(true)
+      expect(renderer.getOutput()).toBe('')
+
+      const updatedPod = createPod({
+        name: 'watch-only-next',
+        namespace: 'default',
+        phase: 'Pending',
+        containers: [{ name: 'watch-only-next', image: 'nginx:latest' }]
+      })
+      context.eventBus.emit(createPodCreatedEvent(updatedPod, 'test'))
+      expect(renderer.getOutput()).toContain('watch-only-next')
+    })
+
+    it('should keep watch columns stable after status width growth', () => {
+      const watchResult = handler.execute('kubectl get pods --watch', context)
+      expect(watchResult.ok).toBe(true)
+      renderer.clearOutput()
+
+      const basePod = createPod({
+        name: 'status-demo',
+        namespace: 'default',
+        phase: 'Pending',
+        containers: [{ name: 'status-demo', image: 'nginx:latest' }],
+        containerStatusOverrides: [
+          {
+            name: 'status-demo',
+            restartCount: 11,
+            waitingReason: 'Pending'
+          }
+        ]
+      })
+      context.eventBus.emit(createPodCreatedEvent(basePod, 'test'))
+      renderer.clearOutput()
+
+      const longStatusPod = createPod({
+        name: 'status-demo',
+        namespace: 'default',
+        phase: 'Pending',
+        containers: [{ name: 'status-demo', image: 'nginx:latest' }],
+        containerStatusOverrides: [
+          {
+            name: 'status-demo',
+            restartCount: 22,
+            waitingReason: 'ImagePullBackOff'
+          }
+        ]
+      })
+      context.eventBus.emit(
+        createPodUpdatedEvent('status-demo', 'default', longStatusPod, basePod, 'test')
+      )
+      const longLine = renderer
+        .getOutput()
+        .split('\n')
+        .find((line) => line.includes('status-demo'))
+      expect(longLine).toBeTruthy()
+      if (longLine == null) {
+        return
+      }
+      const longRestartsIndex = getCellStartIndex(longLine, '22')
+      expect(longRestartsIndex).toBeGreaterThan(0)
+      renderer.clearOutput()
+
+      const shortAfterLongPod = createPod({
+        name: 'status-demo',
+        namespace: 'default',
+        phase: 'Pending',
+        containers: [{ name: 'status-demo', image: 'nginx:latest' }],
+        containerStatusOverrides: [
+          {
+            name: 'status-demo',
+            restartCount: 33,
+            waitingReason: 'ErrImagePull'
+          }
+        ]
+      })
+      context.eventBus.emit(
+        createPodUpdatedEvent(
+          'status-demo',
+          'default',
+          shortAfterLongPod,
+          longStatusPod,
+          'test'
+        )
+      )
+      const shortAfterLongLine = renderer
+        .getOutput()
+        .split('\n')
+        .find((line) => line.includes('status-demo'))
+      expect(shortAfterLongLine).toBeTruthy()
+      if (shortAfterLongLine == null) {
+        return
+      }
+      const shortAfterLongRestartsIndex = getCellStartIndex(shortAfterLongLine, '33')
+      expect(shortAfterLongRestartsIndex).toBe(longRestartsIndex)
+    })
+
+    it('should ignore unrelated pods when watching a named pod', () => {
+      const createResult = handler.execute(
+        'kubectl run only-this --image=nginx',
+        context
+      )
+      expect(createResult.ok).toBe(true)
+      renderer.clearOutput()
+
+      const watchResult = handler.execute(
+        'kubectl get pod only-this --watch',
+        context
+      )
+      expect(watchResult.ok).toBe(true)
+      renderer.clearOutput()
+
+      const unrelated = createPod({
+        name: 'other-pod',
+        namespace: 'default',
+        phase: 'Pending',
+        containers: [{ name: 'other-pod', image: 'nginx:latest' }]
+      })
+      context.eventBus.emit(createPodCreatedEvent(unrelated, 'test'))
+      expect(renderer.getOutput()).toBe('')
     })
   })
 })

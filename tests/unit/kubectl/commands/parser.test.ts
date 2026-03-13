@@ -927,4 +927,15 @@ describe('kubectl parser - config', () => {
       )
     }
   })
+
+  it('should reject get when --watch and --watch-only are both set', () => {
+    const result = parseCommand('kubectl get pods --watch --watch-only')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        '--watch and --watch-only are mutually exclusive'
+      )
+    }
+  })
 })

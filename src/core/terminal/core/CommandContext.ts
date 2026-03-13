@@ -49,6 +49,15 @@ export interface CommandContext {
   /** Verrouille l'entrée utilisateur (mode démo) */
   lockInput?: () => void
 
+  /** Déverrouille l'entrée utilisateur */
+  unlockInput?: () => void
+
   /** Indique si l'entrée est verrouillée */
   isInputLocked?: () => boolean
+
+  /** Register cleanup callback for long-running stream command */
+  startStream?: (stop: () => void) => void
+
+  /** Stop currently active stream command */
+  stopStream?: () => void
 }

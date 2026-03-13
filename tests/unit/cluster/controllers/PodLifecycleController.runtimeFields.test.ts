@@ -136,6 +136,137 @@ describe('PodLifecycleController runtime enrichment', () => {
     controller.stop()
   })
 
+  it('starts with ContainerCreating then transitions to ErrImagePull and ImagePullBackOff', () => {
+    vi.useFakeTimers()
+    const eventBus = createEventBus()
+    let pod: Pod = createPod({
+      name: 'missing-image',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      containers: [{ name: 'app', image: 'toto' }]
+    })
+    const waitingReasons: string[] = []
+    const state: ControllerState = {
+      getDeployments: () => [],
+      findDeployment: () => ({ ok: false }),
+      getDaemonSets: () => [],
+      findDaemonSet: () => ({ ok: false }),
+      getReplicaSets: () => [],
+      findReplicaSet: () => ({ ok: false }),
+      getPods: () => [pod],
+      findPod: () => ({ ok: true, value: pod }),
+      getNodes: () => [],
+      getPersistentVolumes: () => [],
+      findPersistentVolume: () => ({ ok: false }),
+      getPersistentVolumeClaims: () => [],
+      findPersistentVolumeClaim: () => ({ ok: false })
+    }
+
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+      const waitingReason = pod.status.containerStatuses?.[0]?.waitingReason
+      if (waitingReason != null) {
+        waitingReasons.push(waitingReason)
+      }
+    })
+
+    const controller = createPodLifecycleController(eventBus, () => state, {
+      imagePullTimingMs: {
+        initialPullMs: 5,
+        retryPullMs: 2,
+        errTransitionMs: 3
+      },
+      imagePullBackoffMs: {
+        initialMs: 10,
+        maxMs: 40
+      }
+    })
+
+    controller.reconcile('default/missing-image')
+    expect(waitingReasons).toEqual(['ContainerCreating'])
+
+    vi.advanceTimersByTime(5)
+    vi.runOnlyPendingTimers()
+    expect(waitingReasons).toContain('ErrImagePull')
+    expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(0)
+
+    vi.advanceTimersByTime(3)
+    vi.runOnlyPendingTimers()
+    expect(waitingReasons).toContain('ImagePullBackOff')
+    expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(0)
+
+    controller.stop()
+  })
+
+  it('retries missing image without increasing restartCount', () => {
+    vi.useFakeTimers()
+    const eventBus = createEventBus()
+    let pod: Pod = createPod({
+      name: 'missing-image-retry',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      containers: [{ name: 'app', image: 'toto' }]
+    })
+    const waitingReasons: string[] = []
+    const state: ControllerState = {
+      getDeployments: () => [],
+      findDeployment: () => ({ ok: false }),
+      getDaemonSets: () => [],
+      findDaemonSet: () => ({ ok: false }),
+      getReplicaSets: () => [],
+      findReplicaSet: () => ({ ok: false }),
+      getPods: () => [pod],
+      findPod: () => ({ ok: true, value: pod }),
+      getNodes: () => [],
+      getPersistentVolumes: () => [],
+      findPersistentVolume: () => ({ ok: false }),
+      getPersistentVolumeClaims: () => [],
+      findPersistentVolumeClaim: () => ({ ok: false })
+    }
+
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+      const waitingReason = pod.status.containerStatuses?.[0]?.waitingReason
+      if (waitingReason != null) {
+        waitingReasons.push(waitingReason)
+      }
+    })
+
+    const controller = createPodLifecycleController(eventBus, () => state, {
+      imagePullTimingMs: {
+        initialPullMs: 1,
+        retryPullMs: 1,
+        errTransitionMs: 1
+      },
+      imagePullBackoffMs: {
+        initialMs: 5,
+        maxMs: 10
+      }
+    })
+
+    controller.reconcile('default/missing-image-retry')
+    vi.advanceTimersByTime(1)
+    vi.runOnlyPendingTimers()
+    vi.advanceTimersByTime(1)
+    vi.runOnlyPendingTimers()
+    vi.advanceTimersByTime(5)
+    vi.runOnlyPendingTimers()
+    vi.advanceTimersByTime(1)
+    vi.runOnlyPendingTimers()
+
+    const errCount = waitingReasons.filter((reason) => reason === 'ErrImagePull').length
+    const backoffCount = waitingReasons.filter(
+      (reason) => reason === 'ImagePullBackOff'
+    ).length
+    expect(errCount).toBeGreaterThanOrEqual(2)
+    expect(backoffCount).toBeGreaterThanOrEqual(1)
+    expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(0)
+
+    controller.stop()
+  })
+
   it('increments restartCount only once while staying in CrashLoopBackOff', () => {
     const eventBus = createEventBus()
     let pod: Pod = createPod({
@@ -167,7 +298,11 @@ describe('PodLifecycleController runtime enrichment', () => {
       podUpdatedEvents += 1
     })
 
-    const controller = new PodLifecycleController(eventBus, () => state)
+    const controller = new PodLifecycleController(eventBus, () => state, {
+      crashLoopTimingMs: {
+        errorToBackoffMs: 0
+      }
+    })
 
     controller.reconcile('default/broken-web')
     const firstRestartCount = pod.status.containerStatuses?.[0]?.restartCount
@@ -180,7 +315,62 @@ describe('PodLifecycleController runtime enrichment', () => {
     )
     expect(firstRestartCount).toBe(1)
     expect(secondRestartCount).toBe(1)
-    expect(podUpdatedEvents).toBe(1)
+    expect(podUpdatedEvents).toBe(2)
+  })
+
+  it('emits Error before CrashLoopBackOff for crashing pod', () => {
+    vi.useFakeTimers()
+    const eventBus = createEventBus()
+    let pod: Pod = createPod({
+      name: 'broken-sequence',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      containers: [{ name: 'app', image: 'myregistry.io/broken-app:latest' }]
+    })
+    const waitingReasons: string[] = []
+    const terminatedReasons: string[] = []
+    const states: string[] = []
+    const state: ControllerState = {
+      getDeployments: () => [],
+      findDeployment: () => ({ ok: false }),
+      getDaemonSets: () => [],
+      findDaemonSet: () => ({ ok: false }),
+      getReplicaSets: () => [],
+      findReplicaSet: () => ({ ok: false }),
+      getPods: () => [pod],
+      findPod: () => ({ ok: true, value: pod }),
+      getNodes: () => [],
+      getPersistentVolumes: () => [],
+      findPersistentVolume: () => ({ ok: false }),
+      getPersistentVolumeClaims: () => [],
+      findPersistentVolumeClaim: () => ({ ok: false })
+    }
+
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+      const status = pod.status.containerStatuses?.[0]
+      states.push(status?.state ?? 'Unknown')
+      waitingReasons.push(status?.waitingReason ?? '')
+      terminatedReasons.push(status?.terminatedReason ?? '')
+    })
+
+    const controller = createPodLifecycleController(eventBus, () => state, {
+      crashLoopTimingMs: {
+        errorToBackoffMs: 5
+      }
+    })
+    controller.reconcile('default/broken-sequence')
+
+    expect(states).toEqual(['Terminated'])
+    expect(terminatedReasons[0]).toBe('Error')
+
+    vi.advanceTimersByTime(5)
+    vi.runOnlyPendingTimers()
+    expect(states).toContain('Waiting')
+    expect(waitingReasons).toContain('CrashLoopBackOff')
+
+    controller.stop()
   })
 
   it('marks nginx pod as CrashLoopBackOff with invalid positional args', () => {
@@ -212,7 +402,11 @@ describe('PodLifecycleController runtime enrichment', () => {
       pod = event.payload.pod
     })
 
-    const controller = createPodLifecycleController(eventBus, () => state)
+    const controller = createPodLifecycleController(eventBus, () => state, {
+      crashLoopTimingMs: {
+        errorToBackoffMs: 0
+      }
+    })
     controller.reconcile('default/bad-nginx')
 
     expect(pod.status.phase).toBe('Pending')
@@ -295,6 +489,9 @@ describe('PodLifecycleController runtime enrichment', () => {
       restartBackoffMs: {
         initialMs: 10,
         maxMs: 40
+      },
+      crashLoopTimingMs: {
+        errorToBackoffMs: 0
       }
     })
 
@@ -350,7 +547,10 @@ describe('PodLifecycleController runtime enrichment', () => {
     const controller = createPodLifecycleController(eventBus, () => state)
     controller.reconcile('default/no-restart-nginx')
 
-    expect(pod.status.containerStatuses?.[0]?.waitingReason).toBe('Error')
+    expect(pod.status.phase).toBe('Failed')
+    expect(pod.status.containerStatuses?.[0]?.state).toBe('Terminated')
+    expect(pod.status.containerStatuses?.[0]?.terminatedReason).toBe('Error')
+    expect(pod.status.containerStatuses?.[0]?.waitingReason).toBeUndefined()
     expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(0)
 
     vi.runOnlyPendingTimers()

@@ -111,6 +111,7 @@ export function mountTerminal(
             commandLimit,
             commandLimitMessage,
             lockInput: () => controller.lockInput(),
+            unlockInput: () => controller.unlockInput(),
             isInputLocked: () => controller.isInputLocked()
           })
         } catch (err) {
@@ -120,6 +121,16 @@ export function mountTerminal(
       }
       dispatcher.execute(command)
       getTerminalController()?.updatePrompt()
+    },
+    onInterrupt() {
+      if (dispatcher == null) {
+        return false
+      }
+      if (!dispatcher.hasActiveStream()) {
+        return false
+      }
+      dispatcher.stopActiveStream()
+      return true
     }
   })
 

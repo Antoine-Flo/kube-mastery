@@ -122,6 +122,10 @@ export class TerminalController {
     this.inputLocked = true
   }
 
+  unlockInput(): void {
+    this.inputLocked = false
+  }
+
   isInputLocked(): boolean {
     return this.inputLocked
   }

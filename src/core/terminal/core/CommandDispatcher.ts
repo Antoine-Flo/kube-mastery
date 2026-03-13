@@ -32,6 +32,7 @@ interface CommandDispatcherOptions {
   commandLimit?: number
   commandLimitMessage?: string
   lockInput?: () => void
+  unlockInput?: () => void
   isInputLocked?: () => boolean
 }
 
@@ -41,6 +42,7 @@ export class CommandDispatcher {
   private commandCount = 0
   private commandLimit?: number
   private commandLimitMessage?: string
+  private activeStreamStop: (() => void) | null = null
 
   constructor(options: CommandDispatcherOptions) {
     // Créer l'abstraction TerminalOutput pour une gestion propre des lignes
@@ -57,6 +59,13 @@ export class CommandDispatcher {
       networkRuntime: options.networkRuntime,
       logger: options.logger,
       lockInput: options.lockInput,
+      unlockInput: options.unlockInput,
+      startStream: (stop) => {
+        this.registerStream(stop)
+      },
+      stopStream: () => {
+        this.stopActiveStream()
+      },
       isInputLocked: options.isInputLocked
     }
     this.commandLimit = options.commandLimit
@@ -65,6 +74,27 @@ export class CommandDispatcher {
     // Ordre important : les handlers sont testés dans l'ordre
     // ShellCommandHandler en premier car il peut parser rapidement
     this.handlers = [new ShellCommandHandler(), new KubectlCommandHandler()]
+  }
+
+  private registerStream(stop: () => void): void {
+    if (this.activeStreamStop != null) {
+      this.activeStreamStop()
+    }
+    this.activeStreamStop = stop
+    this.context.lockInput?.()
+  }
+
+  stopActiveStream(): void {
+    if (this.activeStreamStop == null) {
+      return
+    }
+    this.activeStreamStop()
+    this.activeStreamStop = null
+    this.context.unlockInput?.()
+  }
+
+  hasActiveStream(): boolean {
+    return this.activeStreamStop != null
   }
 
   /**
@@ -93,6 +123,10 @@ export class CommandDispatcher {
     this.commandCount += 1
     // Exécuter la commande via le handler
     const result = handler.execute(command, this.context)
+
+    if (!this.hasActiveStream()) {
+      this.context.unlockInput?.()
+    }
 
     if (shouldLock && this.commandLimitMessage) {
       this.context.output.newLine()

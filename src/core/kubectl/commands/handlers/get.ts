@@ -20,9 +20,10 @@ import { getReplicaSetDesiredReplicas } from '../../../cluster/ressources/Replic
 import type { Secret, SecretType } from '../../../cluster/ressources/Secret'
 import type { Service } from '../../../cluster/ressources/Service'
 import { getServiceType } from '../../../cluster/ressources/Service'
-import { formatAge, formatTable } from '../../../shared/formatter'
+import { formatAge } from '../../../shared/formatter'
 import type { ParsedCommand, Resource } from '../types'
 import {
+  formatKubectlTable,
   renderStructuredPayload,
   resolveOutputDirective,
   validateOutputDirective
@@ -390,7 +391,7 @@ const formatRestartAge = (timestamp: string): string => {
   const nowMs = Date.now()
   const eventMs = new Date(timestamp).getTime()
   const diffMs = Math.max(0, nowMs - eventMs)
-  const diffSecs = Math.floor(diffMs / 1000)
+  const diffSecs = Math.max(0, Math.round(diffMs / 1000))
   if (diffSecs < 60) {
     return `${diffSecs}s`
   }
@@ -445,18 +446,21 @@ const getPodRestartsDisplay = (pod: Pod): string => {
  * STATUS column: phase or container state reason (e.g. Pending, Running, CrashLoopBackOff)
  */
 const getPodDisplayStatus = (pod: Pod): string => {
+  const statuses = pod.status.containerStatuses ?? []
+  const waitingStatus = statuses.find((status) => {
+    return status.state === 'Waiting' && status.waitingReason != null
+  })
+  if (waitingStatus?.waitingReason != null) {
+    return waitingStatus.waitingReason
+  }
+  const terminatedStatus = statuses.find((status) => {
+    return status.state === 'Terminated' && status.terminatedReason != null
+  })
+  if (terminatedStatus?.terminatedReason != null) {
+    return terminatedStatus.terminatedReason
+  }
   if (pod.status.phase === 'Running') {
     return 'Running'
-  }
-  const statuses = pod.status.containerStatuses ?? []
-  const withReason = statuses.find(
-    (cs) => cs.waitingReason != null || cs.terminatedReason != null
-  )
-  if (withReason?.waitingReason != null) {
-    return withReason.waitingReason
-  }
-  if (withReason?.terminatedReason != null) {
-    return withReason.terminatedReason
   }
   return pod.status.phase
 }
@@ -999,7 +1003,7 @@ export const handleGet = (
       }
       return defaultRow
     })
-    const tableOutput = formatTable(
+    const tableOutput = formatKubectlTable(
       headersAllNs,
       rowsAllNs,
       withKubectlTableSpacing({ align: buildLeftAlign(headersAllNs.length) })
@@ -1033,7 +1037,7 @@ export const handleGet = (
     if (showLabels) {
       headers.push('labels')
     }
-    const tableOutput = formatTable(
+    const tableOutput = formatKubectlTable(
       headers,
       rows,
       withKubectlTableSpacing({ align: buildLeftAlign(headers.length) })
@@ -1059,7 +1063,7 @@ export const handleGet = (
     if (showLabels) {
       headers.push('labels')
     }
-    const tableOutput = formatTable(
+    const tableOutput = formatKubectlTable(
       headers,
       rows,
       withKubectlTableSpacing({ align: buildLeftAlign(headers.length) })
@@ -1092,7 +1096,7 @@ export const handleGet = (
   const tableOptions = withKubectlTableSpacing({
     align: buildLeftAlign(headers.length)
   })
-  const tableOutput = formatTable(headers, rows, tableOptions)
+  const tableOutput = formatKubectlTable(headers, rows, tableOptions)
   if (missingNameErrors.length > 0) {
     return `${tableOutput}\n${missingNameErrors.join('\n')}`
   }
@@ -1253,7 +1257,7 @@ const buildGetAllSection = (
     handler,
     showLabels
   )
-  return formatTable(headers, rows, tableOptions)
+  return formatKubectlTable(headers, rows, tableOptions)
 }
 
 const handleGetAll = (

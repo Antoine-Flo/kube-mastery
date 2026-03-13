@@ -111,14 +111,13 @@ The `Ready` condition is what Kubernetes uses to determine whether a Pod should 
 
 Let's observe phases, container states, and conditions live in the cluster.
 
-**1. Create a normal Pod and watch its phase transitions:**
+**1. Create a normal Pod and watch its phase transitions in the visualizer:**
 
 ```bash
 kubectl run lifecycle-pod --image=nginx:1.28
-kubectl get pod lifecycle-pod --watch
 ```
 
-You should see the phase go from `Pending` to `ContainerCreating` to `Running`. Press `Ctrl+C` when done.
+You should see the phase go from `Pending` to `ContainerCreating` to `Running`.
 
 **2. Inspect the full status including conditions:**
 
@@ -131,13 +130,13 @@ Look for the `Conditions:` section and the `State:` field under `Containers:`.
 **3. View conditions in raw form:**
 
 ```bash
-kubectl get pod lifecycle-pod -o jsonpath='{.status.conditions}' | python3 -m json.tool
+kubectl get pod lifecycle-pod -o jsonpath='{.status.conditions}'
 ```
 
 **4. Simulate a failing container to observe CrashLoopBackOff:**
 
 ```bash
-kubectl run crash-pod --image=busybox:1.36 --restart=Always -- sh -c "exit 1"
+kubectl run crash-pod --image=myregistry.io/broken-app:latest --restart=Always
 ```
 
 Then watch it:
@@ -146,7 +145,7 @@ Then watch it:
 kubectl get pod crash-pod --watch
 ```
 
-You'll see it cycle through `Error` → `CrashLoopBackOff` → `Error` repeatedly. Press `Ctrl+C` after a minute.
+You'll see it cycle through `Error` → `CrashLoopBackOff` repeatedly, with increasing backoff delays.
 
 **5. Describe the crash Pod for details:**
 

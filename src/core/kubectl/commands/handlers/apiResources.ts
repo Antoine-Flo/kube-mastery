@@ -2,7 +2,7 @@ import { stringify as yamlStringify } from 'yaml'
 import type { ParsedCommand } from '../types'
 import type { Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
-import { formatTable } from '../../../shared/formatter'
+import { formatKubectlTable } from '../output/outputHelpers'
 import {
   API_DISCOVERY_CATALOG,
   type APIResourceDiscovery
@@ -125,8 +125,11 @@ const formatTableOutput = (
     resource.kind
   ])
 
-  const formatted = formatTable(headers, rows, { spacing: 3, uppercase: false })
-  return noHeaders ? formatted.split('\n').slice(1).join('\n') : formatted
+  return formatKubectlTable(headers, rows, {
+    spacing: 3,
+    uppercase: false,
+    noHeaders
+  })
 }
 
 /**
@@ -156,8 +159,11 @@ const formatWideOutput = (
     formatCategories(resource.categories)
   ])
 
-  const formatted = formatTable(headers, rows, { spacing: 3, uppercase: false })
-  return noHeaders ? formatted.split('\n').slice(1).join('\n') : formatted
+  return formatKubectlTable(headers, rows, {
+    spacing: 3,
+    uppercase: false,
+    noHeaders
+  })
 }
 
 /**

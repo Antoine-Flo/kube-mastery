@@ -36,6 +36,18 @@ export interface PodLifecycleControllerOptions extends ControllerResyncOptions {
     initialMs: number
     maxMs: number
   }
+  imagePullBackoffMs?: {
+    initialMs: number
+    maxMs: number
+  }
+  imagePullTimingMs?: {
+    initialPullMs: number
+    retryPullMs: number
+    errTransitionMs: number
+  }
+  crashLoopTimingMs?: {
+    errorToBackoffMs: number
+  }
   eventSource?: string
   volumeReadinessProbe?: (pod: Pod) => PodVolumeReadiness
 }
@@ -47,8 +59,23 @@ const WATCHED_EVENTS: ClusterEventType[] = [
 ]
 
 const DEFAULT_RESTART_BACKOFF = {
-  initialMs: 1000,
-  maxMs: 30000
+  initialMs: 10000,
+  maxMs: 300000
+} as const
+
+const DEFAULT_IMAGE_PULL_BACKOFF = {
+  initialMs: 10000,
+  maxMs: 300000
+} as const
+
+const DEFAULT_IMAGE_PULL_TIMING = {
+  initialPullMs: 3000,
+  retryPullMs: 1200,
+  errTransitionMs: 1500
+} as const
+
+const DEFAULT_CRASH_LOOP_TIMING = {
+  errorToBackoffMs: 1800
 } as const
 
 const makePodKey = (namespace: string, name: string): string => {
@@ -176,6 +203,8 @@ export class PodLifecycleController implements ReconcilerController {
   private pendingTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
   private restartTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
   private restartAttempts = new Map<string, number>()
+  private imagePullTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+  private imagePullAttempts = new Map<string, number>()
 
   constructor(
     eventBus: EventBus,
@@ -227,6 +256,11 @@ export class PodLifecycleController implements ReconcilerController {
     }
     this.restartTimeouts.clear()
     this.restartAttempts.clear()
+    for (const timeoutId of this.imagePullTimeouts.values()) {
+      clearTimeout(timeoutId)
+    }
+    this.imagePullTimeouts.clear()
+    this.imagePullAttempts.clear()
   }
 
   initialSync(): void {
@@ -262,6 +296,7 @@ export class PodLifecycleController implements ReconcilerController {
       this.clearPendingTimeout(key)
       this.clearRestartTimeout(key)
       this.restartAttempts.delete(key)
+      this.clearImagePullState(key)
       return
     }
 
@@ -274,6 +309,7 @@ export class PodLifecycleController implements ReconcilerController {
       })
       this.clearPendingTimeout(key)
       this.clearRestartTimeout(key)
+      this.clearImagePullTimeout(key)
       return
     }
 
@@ -286,11 +322,17 @@ export class PodLifecycleController implements ReconcilerController {
       })
       this.clearPendingTimeout(key)
       this.emitPodWaitingForVolume(pod, volumeReadiness.reason)
+      this.clearImagePullTimeout(key)
       return
     }
     const startupIssueReason = this.detectStartupIssueReason(pod)
     if (startupIssueReason != null) {
+      if (startupIssueReason === 'ImagePullBackOff') {
+        this.handleImagePullBackOff(key, pod)
+        return
+      }
       if (startupIssueReason === 'CrashLoopBackOff') {
+        this.clearImagePullState(key)
         this.handleCrashLoopBackOff(key, pod)
         return
       }
@@ -303,6 +345,7 @@ export class PodLifecycleController implements ReconcilerController {
       this.emitPodStartupIssue(pod, startupIssueReason)
       return
     }
+    this.clearImagePullState(key)
     this.clearRestartTimeout(key)
     this.restartAttempts.delete(key)
     if (this.pendingTimeouts.has(key)) {
@@ -357,6 +400,7 @@ export class PodLifecycleController implements ReconcilerController {
       this.clearPendingTimeout(key)
       this.clearRestartTimeout(key)
       this.restartAttempts.delete(key)
+      this.clearImagePullState(key)
       return
     }
     if (event.type !== 'PodCreated' && event.type !== 'PodUpdated') {
@@ -404,6 +448,20 @@ export class PodLifecycleController implements ReconcilerController {
     this.restartTimeouts.delete(key)
   }
 
+  private clearImagePullTimeout(key: string): void {
+    const timeoutId = this.imagePullTimeouts.get(key)
+    if (timeoutId == null) {
+      return
+    }
+    clearTimeout(timeoutId)
+    this.imagePullTimeouts.delete(key)
+  }
+
+  private clearImagePullState(key: string): void {
+    this.clearImagePullTimeout(key)
+    this.imagePullAttempts.delete(key)
+  }
+
   private computeRestartBackoffMs(key: string): number {
     const configuredInitialMs = this.options.restartBackoffMs?.initialMs
     const configuredMaxMs = this.options.restartBackoffMs?.maxMs
@@ -419,6 +477,157 @@ export class PodLifecycleController implements ReconcilerController {
     return Math.min(maxMs, exponentialDelay)
   }
 
+  private computeImagePullBackoffMs(key: string): number {
+    const configuredInitialMs = this.options.imagePullBackoffMs?.initialMs
+    const configuredMaxMs = this.options.imagePullBackoffMs?.maxMs
+    const initialMs = Math.max(
+      1,
+      Math.floor(configuredInitialMs ?? DEFAULT_IMAGE_PULL_BACKOFF.initialMs)
+    )
+    const maxMs = Math.max(
+      initialMs,
+      Math.floor(configuredMaxMs ?? DEFAULT_IMAGE_PULL_BACKOFF.maxMs)
+    )
+    const previousAttempts = this.imagePullAttempts.get(key) ?? 0
+    const nextAttempts = previousAttempts + 1
+    this.imagePullAttempts.set(key, nextAttempts)
+    const exponentialDelay = initialMs * 2 ** (nextAttempts - 1)
+    return Math.min(maxMs, exponentialDelay)
+  }
+
+  private getImagePullInitialDelayMs(): number {
+    const configuredDelayMs = this.options.imagePullTimingMs?.initialPullMs
+    return Math.max(
+      0,
+      Math.floor(configuredDelayMs ?? DEFAULT_IMAGE_PULL_TIMING.initialPullMs)
+    )
+  }
+
+  private getImagePullRetryDelayMs(): number {
+    const configuredDelayMs = this.options.imagePullTimingMs?.retryPullMs
+    return Math.max(
+      0,
+      Math.floor(configuredDelayMs ?? DEFAULT_IMAGE_PULL_TIMING.retryPullMs)
+    )
+  }
+
+  private getImagePullErrTransitionMs(): number {
+    const configuredDelayMs = this.options.imagePullTimingMs?.errTransitionMs
+    return Math.max(
+      0,
+      Math.floor(configuredDelayMs ?? DEFAULT_IMAGE_PULL_TIMING.errTransitionMs)
+    )
+  }
+
+  private getCrashLoopErrorToBackoffMs(): number {
+    const configuredDelayMs = this.options.crashLoopTimingMs?.errorToBackoffMs
+    return Math.max(
+      0,
+      Math.floor(configuredDelayMs ?? DEFAULT_CRASH_LOOP_TIMING.errorToBackoffMs)
+    )
+  }
+
+  private emitCrashLoopWaitingReasonForLatestPod(
+    fallbackPod: Pod
+  ): void {
+    const latestCrashedPodResult = this.getState().findPod(
+      fallbackPod.metadata.name,
+      fallbackPod.metadata.namespace
+    )
+    const latestCrashedPod =
+      latestCrashedPodResult.ok && latestCrashedPodResult.value != null
+        ? latestCrashedPodResult.value
+        : fallbackPod
+    this.emitPodContainerWaitingReason(latestCrashedPod, 'CrashLoopBackOff')
+  }
+
+  private handleImagePullBackOff(key: string, pod: Pod): void {
+    if (this.imagePullTimeouts.has(key)) {
+      this.observe({
+        action: 'skip',
+        key,
+        reason: 'ImagePullRetryActive'
+      })
+      return
+    }
+
+    this.observe({
+      action: 'skip',
+      key,
+      reason: 'ImagePullBackOff'
+    })
+    this.clearPendingTimeout(key)
+    this.clearRestartTimeout(key)
+    this.restartAttempts.delete(key)
+
+    const attempts = this.imagePullAttempts.get(key) ?? 0
+    if (attempts === 0) {
+      this.emitPodContainerCreating(pod)
+    }
+    const pullDelayMs =
+      attempts === 0
+        ? this.getImagePullInitialDelayMs()
+        : this.getImagePullRetryDelayMs()
+
+    const pullTimeoutId = setTimeout(() => {
+      this.imagePullTimeouts.delete(key)
+      const { namespace, name } = parsePodKey(key)
+      const latestPodResult = this.getState().findPod(name, namespace)
+      if (!latestPodResult.ok || latestPodResult.value == null) {
+        return
+      }
+      const latestPod = latestPodResult.value
+      if (!shouldProgressPod(latestPod)) {
+        return
+      }
+      const latestReason = this.detectStartupIssueReason(latestPod)
+      if (latestReason !== 'ImagePullBackOff') {
+        this.clearImagePullState(key)
+        this.enqueuePod(latestPod)
+        return
+      }
+
+      this.emitPodStartupIssue(latestPod, 'ErrImagePull')
+
+      const transitionDelayMs = this.getImagePullErrTransitionMs()
+      const transitionTimeoutId = setTimeout(() => {
+        this.imagePullTimeouts.delete(key)
+        const transitionedPodResult = this.getState().findPod(name, namespace)
+        if (!transitionedPodResult.ok || transitionedPodResult.value == null) {
+          return
+        }
+        const transitionedPod = transitionedPodResult.value
+        if (!shouldProgressPod(transitionedPod)) {
+          return
+        }
+        const transitionedReason = this.detectStartupIssueReason(transitionedPod)
+        if (transitionedReason !== 'ImagePullBackOff') {
+          this.clearImagePullState(key)
+          this.enqueuePod(transitionedPod)
+          return
+        }
+
+        this.emitPodStartupIssue(transitionedPod, 'ImagePullBackOff')
+        const backoffMs = this.computeImagePullBackoffMs(key)
+        const retryTimeoutId = setTimeout(() => {
+          this.imagePullTimeouts.delete(key)
+          const retryPodResult = this.getState().findPod(name, namespace)
+          if (!retryPodResult.ok || retryPodResult.value == null) {
+            return
+          }
+          const retryPod = retryPodResult.value
+          if (!shouldProgressPod(retryPod)) {
+            return
+          }
+          this.enqueuePod(retryPod)
+        }, backoffMs)
+        this.imagePullTimeouts.set(key, retryTimeoutId)
+      }, transitionDelayMs)
+      this.imagePullTimeouts.set(key, transitionTimeoutId)
+    }, pullDelayMs)
+    this.imagePullTimeouts.set(key, pullTimeoutId)
+  }
+
   private handleCrashLoopBackOff(key: string, pod: Pod): void {
     const restartPolicy = pod.spec.restartPolicy ?? 'Always'
     const restartAllowed = restartPolicy === 'Always' || restartPolicy === 'OnFailure'
@@ -430,7 +639,9 @@ export class PodLifecycleController implements ReconcilerController {
       })
       this.clearPendingTimeout(key)
       this.clearRestartTimeout(key)
-      this.emitPodStartupIssue(pod, 'Error')
+      this.emitPodContainerTerminatedReason(pod, 'Error', {
+        phase: 'Failed'
+      })
       return
     }
 
@@ -449,26 +660,53 @@ export class PodLifecycleController implements ReconcilerController {
       reason: 'CrashLoopBackOff'
     })
     this.clearPendingTimeout(key)
-    this.emitPodContainerWaitingReason(pod, 'CrashLoopBackOff', {
+    this.emitPodContainerTerminatedReason(pod, 'Error', {
       incrementRestartOnCrash: true
     })
-
     const delayMs = this.computeRestartBackoffMs(key)
-    const timeoutId = setTimeout(() => {
-      this.restartTimeouts.delete(key)
-      const { namespace, name } = parsePodKey(key)
-      const latestPodResult = this.getState().findPod(name, namespace)
+    const errorPhaseMs = Math.min(this.getCrashLoopErrorToBackoffMs(), delayMs)
+    const scheduleRestart = (remainingDelayMs: number): void => {
+      const restartTimeoutId = setTimeout(() => {
+        this.restartTimeouts.delete(key)
+        const { namespace, name } = parsePodKey(key)
+        const latestPodResult = this.getState().findPod(name, namespace)
+        if (!latestPodResult.ok || latestPodResult.value == null) {
+          return
+        }
+        const latestPod = latestPodResult.value
+        if (!shouldProgressPod(latestPod)) {
+          return
+        }
+        this.enqueuePod(latestPod)
+      }, remainingDelayMs)
+      this.restartTimeouts.set(key, restartTimeoutId)
+    }
+
+    if (errorPhaseMs <= 0) {
+      this.emitCrashLoopWaitingReasonForLatestPod(pod)
+      scheduleRestart(delayMs)
+      return
+    }
+
+    const transitionTimeoutId = setTimeout(() => {
+      const latestPodResult = this.getState().findPod(
+        pod.metadata.name,
+        pod.metadata.namespace
+      )
       if (!latestPodResult.ok || latestPodResult.value == null) {
+        this.restartTimeouts.delete(key)
         return
       }
       const latestPod = latestPodResult.value
       if (!shouldProgressPod(latestPod)) {
+        this.restartTimeouts.delete(key)
         return
       }
-      this.emitPodContainerCreating(latestPod)
-      this.enqueuePod(latestPod)
-    }, delayMs)
-    this.restartTimeouts.set(key, timeoutId)
+      this.emitCrashLoopWaitingReasonForLatestPod(latestPod)
+      const remainingDelayMs = Math.max(0, delayMs - errorPhaseMs)
+      scheduleRestart(remainingDelayMs)
+    }, errorPhaseMs)
+    this.restartTimeouts.set(key, transitionTimeoutId)
   }
 
   private emitPodRunning(pod: Pod): void {
@@ -608,10 +846,101 @@ export class PodLifecycleController implements ReconcilerController {
     this.emitPodContainerWaitingReason(pod, waitingReason)
   }
 
+  private emitPodContainerTerminatedReason(
+    pod: Pod,
+    terminatedReason: string,
+    options?: {
+      incrementRestartOnCrash?: boolean
+      phase?: Pod['status']['phase']
+    }
+  ): void {
+    const transitionTime = new Date().toISOString()
+    const currentStatuses = pod.status.containerStatuses ?? []
+    const regularContainerNames = new Set(
+      pod.spec.containers.map((container) => container.name)
+    )
+    const updatedStatuses = currentStatuses.map((status) => {
+      if (!regularContainerNames.has(status.name)) {
+        return status
+      }
+      return {
+        ...status,
+        ready: false,
+        state: 'Terminated' as const,
+        lastState: status.state,
+        started: false,
+        waitingReason: undefined,
+        terminatedReason,
+        ...(options?.incrementRestartOnCrash === true
+          ? {
+              // Keep the first observed restart timestamp for a crash loop series
+              // so "RESTARTS (x ago)" keeps increasing instead of resetting each cycle.
+              lastRestartAt: status.lastRestartAt ?? transitionTime,
+              restartCount: (status.restartCount ?? 0) + 1
+            }
+          : {})
+      }
+    })
+    const hasChanged = updatedStatuses.some((updatedStatus, index) => {
+      const previousStatus = currentStatuses[index]
+      if (previousStatus == null) {
+        return true
+      }
+      if (previousStatus.state !== updatedStatus.state) {
+        return true
+      }
+      if (previousStatus.waitingReason !== updatedStatus.waitingReason) {
+        return true
+      }
+      if (previousStatus.terminatedReason !== updatedStatus.terminatedReason) {
+        return true
+      }
+      if (previousStatus.restartCount !== updatedStatus.restartCount) {
+        return true
+      }
+      return previousStatus.lastRestartAt !== updatedStatus.lastRestartAt
+    })
+    if (!hasChanged) {
+      return
+    }
+    const phase = options?.phase ?? 'Pending'
+    const updatedPod: Pod = {
+      ...pod,
+      status: {
+        ...pod.status,
+        phase,
+        observedGeneration: pod.metadata.generation ?? 1,
+        conditions: buildPodConditions(
+          {
+            ...pod,
+            status: {
+              ...pod.status,
+              phase,
+              containerStatuses: updatedStatuses
+            }
+          },
+          transitionTime
+        ),
+        containerStatuses: updatedStatuses
+      }
+    }
+    this.eventBus.emit(
+      createPodUpdatedEvent(
+        pod.metadata.name,
+        pod.metadata.namespace,
+        updatedPod,
+        pod,
+        this.options.eventSource ?? 'pod-lifecycle-controller'
+      )
+    )
+  }
+
   private emitPodContainerWaitingReason(
     pod: Pod,
     waitingReason: string,
-    options?: { incrementRestartOnCrash?: boolean }
+    options?: {
+      incrementRestartOnCrash?: boolean
+    }
   ): void {
     const transitionTime = new Date().toISOString()
     const currentStatuses = pod.status.containerStatuses ?? []
@@ -626,20 +955,16 @@ export class PodLifecycleController implements ReconcilerController {
         ...status,
         ready: false,
         state: 'Waiting' as const,
+        lastState: status.state,
         started: false,
         waitingReason,
-        ...(waitingReason === 'CrashLoopBackOff'
+        terminatedReason: undefined,
+        ...(options?.incrementRestartOnCrash === true
           ? {
-              terminatedReason: 'Error',
-              lastRestartAt:
-                options?.incrementRestartOnCrash === true
-                  ? transitionTime
-                  : status.lastRestartAt,
-              restartCount: options?.incrementRestartOnCrash === true
-                ? (status.restartCount ?? 0) + 1
-                : status.restartCount
+              lastRestartAt: transitionTime,
+              restartCount: (status.restartCount ?? 0) + 1
             }
-          : { terminatedReason: undefined })
+          : {})
       }
     })
     const hasChanged = updatedStatuses.some((updatedStatus, index) => {
@@ -653,10 +978,16 @@ export class PodLifecycleController implements ReconcilerController {
       if (previousStatus.state !== updatedStatus.state) {
         return true
       }
+      if (previousStatus.lastState !== updatedStatus.lastState) {
+        return true
+      }
+      if (previousStatus.terminatedReason !== updatedStatus.terminatedReason) {
+        return true
+      }
       if (previousStatus.restartCount !== updatedStatus.restartCount) {
         return true
       }
-      return previousStatus.terminatedReason !== updatedStatus.terminatedReason
+      return previousStatus.lastRestartAt !== updatedStatus.lastRestartAt
     })
     if (!hasChanged) {
       return
