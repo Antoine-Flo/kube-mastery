@@ -45,13 +45,13 @@
 
 ### Kubernetes Controllers
 
-`src/core/cluster/controllers/` — socle unique `ReconcilerController` (`start`, `stop`, `reconcile`, `initialSync`, `resyncAll`) + `WorkQueue`.
+`src/core/control-plane/controllers/` + `src/core/kubelet/controllers/` — socle unique `ReconcilerController` (`start`, `stop`, `reconcile`, `initialSync`, `resyncAll`) + `WorkQueue`.
 
 - DeploymentController -> ReplicaSets
 - ReplicaSetController -> Pods
 - DaemonSetController -> 1 Pod par node eligible
 - SchedulerController -> binding (`nodeName`) uniquement
-- PodLifecycleController -> progression de phase (`Pending -> Running`)
+- PodLifecycleController -> progression de phase (`Pending -> Running`) + enrichment runtime
 
 Tous les controllers runtime critiques sont level-triggered, idempotents, et appliquent la strategie `event + initial sync + periodic resync`.
 
@@ -101,7 +101,7 @@ Points d'integration:
 
 ### Cluster Bootstrap Policy
 
-Le bootstrap cluster est centralise dans `src/core/cluster/ClusterState.ts` via `createClusterState(...)`.
+Le bootstrap cluster est centralise dans `src/core/cluster/systemBootstrap.ts` et applique via `ApiServerFacade`.
 
 - Point unique de verite: tous les callsites passent par la meme policy.
 - Configuration explicite:
@@ -119,6 +119,14 @@ Le bootstrap cluster est centralise dans `src/core/cluster/ClusterState.ts` via 
   - `src/core/cluster/seeds/loader.ts`
   - `bin/lib/executors/runner-executor.ts`
   - ordre runtime: bootstrap -> controllers runtime -> ip allocation service -> network runtime
+
+### API-First Access Contract
+
+L acces runtime est API-only:
+
+- lecture via `apiServer.findResource(...)`, `apiServer.listResources(...)`, `apiServer.snapshotState()`,
+- ecriture via `apiServer.createResource(...)`, `apiServer.updateResource(...)`, `apiServer.deleteResource(...)`, `apiServer.emitEvent(...)`,
+- `ApiServerFacade` n expose plus `getClusterState()` et le code applicatif ne depend plus de `etcd.clusterState`.
 
 ### Runtime Controller Contract Checklist
 
@@ -296,7 +304,12 @@ src/
 ├── styles/                       # variables.css, reset, components/, routes/
 ├── core/
 │   ├── events/
-│   ├── cluster/                  # EventBus, ressources, controllers, scheduler, repositories, seeds/loader, initContainers
+│   ├── cluster/                  # EventBus, ressources, repositories, seeds/loader, initContainers
+│   ├── api/                      # ApiServerFacade, watch hub, lifecycle event store
+│   ├── etcd/                     # EtcdLikeStore (revision, event log, snapshots)
+│   ├── control-plane/            # controllers + runtime manager + initializers
+│   ├── kubelet/                  # kubelet runtime controllers
+│   ├── runtime/                  # container runtime simulator
 │   ├── containers/registry/
 │   ├── filesystem/               # FileSystem, models, events, autocomplete
 │   ├── kubectl/                  # commands (parser, executor, handlers), formatters, autocomplete

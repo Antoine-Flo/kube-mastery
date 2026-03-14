@@ -1,5 +1,4 @@
-import type { ClusterState } from '../ClusterState'
-import type { EventBus } from '../events/EventBus'
+import type { ApiServerFacade } from '../../api/ApiServerFacade'
 import {
   createPodUpdatedEvent,
   type PodDeletedEvent,
@@ -20,7 +19,7 @@ const withAssignedPodIP = (pod: Pod, podIP: string): Pod => {
 }
 
 const ensurePodIpIfRunning = (
-  eventBus: EventBus,
+  emitEvent: ApiServerFacade['emitEvent'],
   pod: Pod,
   allocator: ReturnType<typeof createSimPodIpAllocator>,
   source: string
@@ -35,7 +34,7 @@ const ensurePodIpIfRunning = (
       pod.status.podIPs.length === 0 ||
       pod.status.podIPs[0]?.ip !== pod.status.podIP
     ) {
-      eventBus.emit(
+      emitEvent(
         createPodUpdatedEvent(
           pod.metadata.name,
           pod.metadata.namespace,
@@ -48,7 +47,7 @@ const ensurePodIpIfRunning = (
     return
   }
   const allocated = allocator.assign(pod)
-  eventBus.emit(
+  emitEvent(
     createPodUpdatedEvent(
       pod.metadata.name,
       pod.metadata.namespace,
@@ -60,20 +59,21 @@ const ensurePodIpIfRunning = (
 }
 
 export const initializeSimPodIpAllocation = (
-  eventBus: EventBus,
-  clusterState: ClusterState
+  apiServer: ApiServerFacade
 ): (() => void) => {
+  const eventBus = apiServer.getEventBus()
+  const emitEvent = apiServer.emitEvent
   const allocator = createSimPodIpAllocator()
-  const existingPods = clusterState.getPods()
+  const existingPods = apiServer.listResources('Pod')
   for (const pod of existingPods) {
-    ensurePodIpIfRunning(eventBus, pod, allocator, 'sim-ip-allocator-initial')
+    ensurePodIpIfRunning(emitEvent, pod, allocator, 'sim-ip-allocator-initial')
   }
 
   const unsubscribePodUpdated = eventBus.subscribe(
     'PodUpdated',
     (event: PodUpdatedEvent) => {
       ensurePodIpIfRunning(
-        eventBus,
+        emitEvent,
         event.payload.pod,
         allocator,
         'sim-ip-allocator'

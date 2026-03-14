@@ -1,12 +1,5 @@
-import type { ClusterState, ResourceKind } from '../../../cluster/ClusterState'
-import type { EventBus } from '../../../cluster/events/EventBus'
-import {
-  createConfigMapDeletedEvent,
-  createPersistentVolumeClaimDeletedEvent,
-  createPersistentVolumeDeletedEvent,
-  createPodDeletedEvent,
-  createSecretDeletedEvent
-} from '../../../cluster/events/types'
+import type { ResourceKind } from '../../../cluster/ClusterState'
+import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
@@ -37,29 +30,24 @@ type NamespacedEventDeleteResource = 'pods' | 'configmaps' | 'secrets'
 interface NamespacedDeleteConfig {
   kind: ResourceKind
   kindRef: string
-  emit: (
-    eventBus: EventBus,
-    name: string,
-    namespace: string,
-    resource: unknown
-  ) => void
 }
 
 const deleteNamespacedResourcesForNamespace = (
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   namespace: string
 ): ExecutionResult | undefined => {
-  const pods = clusterState.getPods(namespace)
+  const pods = apiServer.listResources('Pod', namespace)
   for (const pod of pods) {
-    const result = clusterState.deletePod(pod.metadata.name, namespace)
+    const result = apiServer.deleteResource('Pod', pod.metadata.name, namespace)
     if (!result.ok) {
       return result
     }
   }
 
-  const configMaps = clusterState.getConfigMaps(namespace)
+  const configMaps = apiServer.listResources('ConfigMap', namespace)
   for (const configMap of configMaps) {
-    const result = clusterState.deleteConfigMap(
+    const result = apiServer.deleteResource(
+      'ConfigMap',
       configMap.metadata.name,
       namespace
     )
@@ -68,17 +56,18 @@ const deleteNamespacedResourcesForNamespace = (
     }
   }
 
-  const secrets = clusterState.getSecrets(namespace)
+  const secrets = apiServer.listResources('Secret', namespace)
   for (const secret of secrets) {
-    const result = clusterState.deleteSecret(secret.metadata.name, namespace)
+    const result = apiServer.deleteResource('Secret', secret.metadata.name, namespace)
     if (!result.ok) {
       return result
     }
   }
 
-  const deployments = clusterState.getDeployments(namespace)
+  const deployments = apiServer.listResources('Deployment', namespace)
   for (const deployment of deployments) {
-    const result = clusterState.deleteDeployment(
+    const result = apiServer.deleteResource(
+      'Deployment',
       deployment.metadata.name,
       namespace
     )
@@ -87,9 +76,10 @@ const deleteNamespacedResourcesForNamespace = (
     }
   }
 
-  const daemonSets = clusterState.getDaemonSets(namespace)
+  const daemonSets = apiServer.listResources('DaemonSet', namespace)
   for (const daemonSet of daemonSets) {
-    const result = clusterState.deleteDaemonSet(
+    const result = apiServer.deleteResource(
+      'DaemonSet',
       daemonSet.metadata.name,
       namespace
     )
@@ -98,9 +88,10 @@ const deleteNamespacedResourcesForNamespace = (
     }
   }
 
-  const replicaSets = clusterState.getReplicaSets(namespace)
+  const replicaSets = apiServer.listResources('ReplicaSet', namespace)
   for (const replicaSet of replicaSets) {
-    const result = clusterState.deleteReplicaSet(
+    const result = apiServer.deleteResource(
+      'ReplicaSet',
       replicaSet.metadata.name,
       namespace
     )
@@ -109,18 +100,21 @@ const deleteNamespacedResourcesForNamespace = (
     }
   }
 
-  const services = clusterState.getServices(namespace)
+  const services = apiServer.listResources('Service', namespace)
   for (const service of services) {
-    const result = clusterState.deleteService(service.metadata.name, namespace)
+    const result = apiServer.deleteResource('Service', service.metadata.name, namespace)
     if (!result.ok) {
       return result
     }
   }
 
-  const persistentVolumeClaims =
-    clusterState.getPersistentVolumeClaims(namespace)
+  const persistentVolumeClaims = apiServer.listResources(
+    'PersistentVolumeClaim',
+    namespace
+  )
   for (const persistentVolumeClaim of persistentVolumeClaims) {
-    const result = clusterState.deletePersistentVolumeClaim(
+    const result = apiServer.deleteResource(
+      'PersistentVolumeClaim',
       persistentVolumeClaim.metadata.name,
       namespace
     )
@@ -138,30 +132,15 @@ const NAMESPACED_EVENT_DELETE_CONFIG: Record<
 > = {
   pods: {
     kind: 'Pod',
-    kindRef: 'pod',
-    emit: (eventBus, name, namespace, resource) => {
-      eventBus.emit(
-        createPodDeletedEvent(name, namespace, resource as any, 'kubectl')
-      )
-    }
+    kindRef: 'pod'
   },
   configmaps: {
     kind: 'ConfigMap',
-    kindRef: 'configmap',
-    emit: (eventBus, name, namespace, resource) => {
-      eventBus.emit(
-        createConfigMapDeletedEvent(name, namespace, resource as any, 'kubectl')
-      )
-    }
+    kindRef: 'configmap'
   },
   secrets: {
     kind: 'Secret',
-    kindRef: 'secret',
-    emit: (eventBus, name, namespace, resource) => {
-      eventBus.emit(
-        createSecretDeletedEvent(name, namespace, resource as any, 'kubectl')
-      )
-    }
+    kindRef: 'secret'
   }
 }
 
@@ -170,9 +149,8 @@ const NAMESPACED_EVENT_DELETE_CONFIG: Record<
  * Uses event-driven architecture to delete resources
  */
 export const handleDelete = (
-  clusterState: ClusterState,
-  parsed: ParsedCommand,
-  eventBus: EventBus
+  apiServer: ApiServerFacade,
+  parsed: ParsedCommand
 ): ExecutionResult => {
   const namespace = parsed.namespace || 'default'
   const names =
@@ -199,11 +177,10 @@ export const handleDelete = (
     const deleteConfig = NAMESPACED_EVENT_DELETE_CONFIG[resource]
     const messages: string[] = []
     for (const name of names) {
-      const findResult = clusterState.findByKind(deleteConfig.kind, name, namespace)
-      if (!findResult.ok) {
-        return error(findResult.error)
+      const deleteResult = apiServer.deleteResource(deleteConfig.kind, name, namespace)
+      if (!deleteResult.ok) {
+        return error(deleteResult.error)
       }
-      deleteConfig.emit(eventBus, name, namespace, findResult.value)
       messages.push(
         formatDeletedMessage(deleteConfig.kindRef, name, namespace, true)
       )
@@ -214,7 +191,7 @@ export const handleDelete = (
   if (resource === 'deployments') {
     const messages: string[] = []
     for (const name of names) {
-      const deleteResult = clusterState.deleteDeployment(name, namespace)
+      const deleteResult = apiServer.deleteResource('Deployment', name, namespace)
       if (!deleteResult.ok) {
         return formatNotFoundMessage('deployments.apps', name)
       }
@@ -228,7 +205,7 @@ export const handleDelete = (
   if (resource === 'daemonsets') {
     const messages: string[] = []
     for (const name of names) {
-      const deleteResult = clusterState.deleteDaemonSet(name, namespace)
+      const deleteResult = apiServer.deleteResource('DaemonSet', name, namespace)
       if (!deleteResult.ok) {
         return formatNotFoundMessage('daemonsets.apps', name)
       }
@@ -240,7 +217,7 @@ export const handleDelete = (
   if (resource === 'services') {
     const messages: string[] = []
     for (const name of names) {
-      const deleteResult = clusterState.deleteService(name, namespace)
+      const deleteResult = apiServer.deleteResource('Service', name, namespace)
       if (!deleteResult.ok) {
         return error(deleteResult.error)
       }
@@ -252,7 +229,7 @@ export const handleDelete = (
   if (resource === 'ingresses') {
     const messages: string[] = []
     for (const name of names) {
-      const deleteResult = clusterState.deleteIngress(name, namespace)
+      const deleteResult = apiServer.deleteResource('Ingress', name, namespace)
       if (!deleteResult.ok) {
         return formatNotFoundMessage('ingresses.networking.k8s.io', name)
       }
@@ -271,13 +248,10 @@ export const handleDelete = (
   if (resource === 'persistentvolumes') {
     const messages: string[] = []
     for (const name of names) {
-      const findResult = clusterState.findPersistentVolume(name)
-      if (!findResult.ok) {
+      const deleteResult = apiServer.deleteResource('PersistentVolume', name)
+      if (!deleteResult.ok) {
         return formatNotFoundMessage('persistentvolumes', name)
       }
-      eventBus.emit(
-        createPersistentVolumeDeletedEvent(name, findResult.value, 'kubectl')
-      )
       messages.push(
         formatDeletedMessage('persistentvolume', name, namespace, false)
       )
@@ -288,18 +262,14 @@ export const handleDelete = (
   if (resource === 'persistentvolumeclaims') {
     const messages: string[] = []
     for (const name of names) {
-      const findResult = clusterState.findPersistentVolumeClaim(name, namespace)
-      if (!findResult.ok) {
+      const deleteResult = apiServer.deleteResource(
+        'PersistentVolumeClaim',
+        name,
+        namespace
+      )
+      if (!deleteResult.ok) {
         return formatNotFoundMessage('persistentvolumeclaims', name)
       }
-      eventBus.emit(
-        createPersistentVolumeClaimDeletedEvent(
-          name,
-          namespace,
-          findResult.value,
-          'kubectl'
-        )
-      )
       messages.push(
         formatDeletedMessage('persistentvolumeclaim', name, namespace, true)
       )
@@ -310,15 +280,15 @@ export const handleDelete = (
   if (resource === 'namespaces') {
     const messages: string[] = []
     for (const name of names) {
-      const existingNamespace = clusterState.findNamespace(name)
+      const existingNamespace = apiServer.findResource('Namespace', name)
       if (!existingNamespace.ok) {
         return formatNotFoundMessage('namespaces', name)
       }
-      const cascadeResult = deleteNamespacedResourcesForNamespace(clusterState, name)
+      const cascadeResult = deleteNamespacedResourcesForNamespace(apiServer, name)
       if (cascadeResult != null) {
         return cascadeResult
       }
-      const deleteResult = clusterState.deleteNamespace(name)
+      const deleteResult = apiServer.deleteResource('Namespace', name)
       if (!deleteResult.ok) {
         return formatNotFoundMessage('namespaces', name)
       }

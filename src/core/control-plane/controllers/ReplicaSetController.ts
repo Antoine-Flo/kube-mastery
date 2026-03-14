@@ -5,17 +5,13 @@
 // and reconciles to ensure correct number of pods are running.
 // Follows Kubernetes controller pattern: watch -> enqueue -> reconcile
 
-import type { EventBus } from '../events/EventBus'
-import type { ClusterEvent } from '../events/types'
-import {
-  createPodCreatedEvent,
-  createPodDeletedEvent,
-  createReplicaSetUpdatedEvent
-} from '../events/types'
-import type { Pod } from '../ressources/Pod'
-import { createPod } from '../ressources/Pod'
-import type { ReplicaSet, ReplicaSetStatus } from '../ressources/ReplicaSet'
-import { selectorMatchesLabels } from '../ressources/ReplicaSet'
+import type { ApiServerFacade } from '../../api/ApiServerFacade'
+import type { EventBus } from '../../cluster/events/EventBus'
+import type { ClusterEvent } from '../../cluster/events/types'
+import type { Pod } from '../../cluster/ressources/Pod'
+import { createPod } from '../../cluster/ressources/Pod'
+import type { ReplicaSet, ReplicaSetStatus } from '../../cluster/ressources/ReplicaSet'
+import { selectorMatchesLabels } from '../../cluster/ressources/ReplicaSet'
 import {
   createOwnerRef,
   findOwnerByRef,
@@ -25,7 +21,8 @@ import {
   startPeriodicResync,
   statusEquals,
   subscribeToEvents
-} from './helpers'
+} from '../controller-runtime/helpers'
+import { createControllerStateFromApi } from '../controller-runtime/stateFromApi'
 import {
   convertTemplateContainers,
   convertTemplateInitContainers
@@ -35,8 +32,8 @@ import type {
   ControllerResyncOptions,
   ControllerState,
   ReconcilerController
-} from './types'
-import { createWorkQueue, type WorkQueue } from './WorkQueue'
+} from '../controller-runtime/types'
+import { createWorkQueue, type WorkQueue } from '../controller-runtime/WorkQueue'
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
@@ -128,6 +125,7 @@ const computeReplicaSetStatus = (ownedPods: Pod[]): ReplicaSetStatus => {
  * Ensures the correct number of pods are running for each ReplicaSet
  */
 export class ReplicaSetController implements ReconcilerController {
+  private apiServer: ApiServerFacade
   private eventBus: EventBus
   private getState: () => ControllerState
   private workQueue: WorkQueue
@@ -136,12 +134,12 @@ export class ReplicaSetController implements ReconcilerController {
   private options: ControllerResyncOptions
 
   constructor(
-    eventBus: EventBus,
-    getState: () => ControllerState,
+    apiServer: ApiServerFacade,
     options: ControllerResyncOptions = {}
   ) {
-    this.eventBus = eventBus
-    this.getState = getState
+    this.apiServer = apiServer
+    this.eventBus = apiServer.getEventBus()
+    this.getState = () => createControllerStateFromApi(apiServer)
     this.options = options
     this.workQueue = createWorkQueue({ processDelay: 0 })
   }
@@ -295,13 +293,10 @@ export class ReplicaSetController implements ReconcilerController {
     const ownedPods = getOwnedResources(rs, allPods)
 
     for (const pod of ownedPods) {
-      this.eventBus.emit(
-        createPodDeletedEvent(
-          pod.metadata.name,
-          pod.metadata.namespace,
-          pod,
-          'replicaset-controller'
-        )
+      this.apiServer.deleteResource(
+        'Pod',
+        pod.metadata.name,
+        pod.metadata.namespace
       )
     }
   }
@@ -358,7 +353,7 @@ export class ReplicaSetController implements ReconcilerController {
       const podsToCreate = desiredReplicas - currentReplicas
       for (let i = 0; i < podsToCreate; i++) {
         const pod = createPodFromTemplate(rs)
-        this.eventBus.emit(createPodCreatedEvent(pod, 'replicaset-controller'))
+        this.apiServer.createResource('Pod', pod, pod.metadata.namespace)
       }
     } else if (currentReplicas > desiredReplicas) {
       // Delete excess pods
@@ -371,13 +366,10 @@ export class ReplicaSetController implements ReconcilerController {
       )
 
       for (const pod of podsToRemove) {
-        this.eventBus.emit(
-          createPodDeletedEvent(
-            pod.metadata.name,
-            pod.metadata.namespace,
-            pod,
-            'replicaset-controller'
-          )
+        this.apiServer.deleteResource(
+          'Pod',
+          pod.metadata.name,
+          pod.metadata.namespace
         )
       }
     }
@@ -395,14 +387,11 @@ export class ReplicaSetController implements ReconcilerController {
         ...rs,
         status: newStatus
       }
-      this.eventBus.emit(
-        createReplicaSetUpdatedEvent(
-          rs.metadata.name,
-          rs.metadata.namespace,
-          updatedRs,
-          rs,
-          'replicaset-controller'
-        )
+      this.apiServer.updateResource(
+        'ReplicaSet',
+        rs.metadata.name,
+        updatedRs,
+        rs.metadata.namespace
       )
     } else {
       this.observe({
@@ -435,11 +424,10 @@ export class ReplicaSetController implements ReconcilerController {
  * Create and start a ReplicaSet controller
  */
 export const createReplicaSetController = (
-  eventBus: EventBus,
-  getState: () => ControllerState,
+  apiServer: ApiServerFacade,
   options: ControllerResyncOptions = {}
 ): ReplicaSetController => {
-  const controller = new ReplicaSetController(eventBus, getState, options)
+  const controller = new ReplicaSetController(apiServer, options)
   controller.start()
   return controller
 }

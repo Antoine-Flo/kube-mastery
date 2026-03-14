@@ -31,10 +31,11 @@ Checklist complète pour intégrer une nouvelle ressource Kubernetes dans le sys
 - Mettre à jour `createEmptyState()`: inclure `{resources: { items: [] }}`
 - Mettre à jour `toJSON()`: inclure `{resources: { items: [...state.{resources}.items] }}`
 - Mettre à jour `loadState()`: inclure `{resources: newState.{resources} || { items: [] }}`
+- Mettre à jour `findByKind/listByKind/createByKind/updateByKind/deleteByKind`
 
 **Note cluster-scoped:** Si ressource sans namespace (ex: Node), utiliser `namespace: ''` et ignorer namespace dans `find`/`delete`/`update`.
 
-## 3. Événements (optionnel si pas encore implémenté)
+## 3. Événements (obligatoire)
 
 **Fichiers:**
 
@@ -42,13 +43,10 @@ Checklist complète pour intégrer une nouvelle ressource Kubernetes dans le sys
 - `src/core/cluster/events/handlers.ts`
 - `src/core/cluster/ClusterState.ts`
 
-Si événements pas encore créés:
-
-- Utiliser événements placeholder (ex: `createSecretCreatedEvent()`)
-- Ajouter directement au state dans `add{Resource}()` (bypass events)
-- Ajouter handlers dans `EVENT_HANDLERS` quand événements seront créés
-
-**Référence:** Node utilise placeholders pour l'instant.
+- Ajouter les types d événements `{Resource}Created|Updated|Deleted`
+- Ajouter les factories `create{Resource}CreatedEvent(...)` etc.
+- Brancher les handlers dans `src/core/cluster/events/handlers.ts`
+- Ajouter le type dans le set des mutations store `EtcdLikeStore`
 
 ## 4. Parser YAML
 
@@ -71,7 +69,7 @@ Si événements pas encore créés:
 - Ajouter dans `RESOURCE_HANDLERS`:
   ```typescript
   '{resources}': {
-      getItems: (state) => state.{resources}.items,
+      getItems: (_state) => apiServer.listResources('{Resource}', namespace?),
       headers: ['name', 'status', 'age'],
       formatRow: (resource: {Resource}) => [...],
       supportsFiltering: true,
@@ -107,7 +105,7 @@ Si événements pas encore créés:
   '{resource}': '{resources}',
   '{alias}': '{resources}'
   ```
-- Mettre à jour `getResourceNames()` pour inclure `context.clusterState.get{Resources}()`
+- Mettre à jour `getResourceNames()` pour inclure le getter API d autocomplete correspondant
 - Vérifier `KUBECTL_ACTIONS` si nécessaire
 
 ## 9. Resource Helpers
@@ -118,14 +116,14 @@ Si événements pas encore créés:
 - Dans `applyResourceWithEvents()`:
   ```typescript
   else if (kind === '{Resource}') {
-      existing = clusterState.find{Resource}(name, namespace)
+      existing = apiServer.findResource('{Resource}', name, namespace)
   }
   // ...
   else if (kind === '{Resource}') {
-      clusterState.add{Resource}(resource as {Resource})
+      apiServer.createResource('{Resource}', resource as {Resource}, namespace)
   }
   ```
-- Dans `createResourceWithEvents()`: même logique
+- Dans `createResourceWithEvents()`: même logique, API CRUD uniquement
 
 ## 10. Seeds/Exemples
 
@@ -152,7 +150,7 @@ Si événements pas encore créés:
 
 ## 13. Controller (si ressource workload)
 
-**Fichier:** `src/core/cluster/controllers/{Resource}Controller.ts`
+**Fichier:** `src/core/control-plane/controllers/{Resource}Controller.ts`
 
 Si la ressource gère d'autres ressources (ex: Deployment → ReplicaSet → Pod):
 
@@ -174,20 +172,20 @@ Si la ressource gère d'autres ressources (ex: Deployment → ReplicaSet → Pod
 5. Créer les enfants avec `ownerReferences: [createOwnerRef(parent)]`
 6. Utiliser `getOwnedResources()` pour trouver les enfants
 7. Utiliser `findOwnerByRef()` pour mettre à jour le status du parent
-8. Ajouter dans `initializeControllers()` (`controllers/index.ts`)
+8. Ajouter dans `initializeControlPlane(...)` (`src/core/control-plane/initializers.ts`)
 
 **Référence:** `DeploymentController.ts`, `ReplicaSetController.ts`
 
 ## Checklist rapide
 
 - [ ] Modèle TypeScript créé
-- [ ] ClusterState mis à jour (collection, repository, méthodes)
+- [ ] ClusterState mis à jour (collection, repository, méthodes, CRUD by kind)
 - [ ] Parser YAML mis à jour
 - [ ] Handler `kubectl get` implémenté
 - [ ] Types `Resource` mis à jour
 - [ ] Parser `KUBECTL_RESOURCES` mis à jour
 - [ ] Autocomplete mis à jour
-- [ ] Resource helpers mis à jour
+- [ ] Resource helpers mis à jour (API CRUD, pas de mutation directe)
 - [ ] Seeds créés
 - [ ] Tests ajoutés
 - [ ] Controller créé (si workload)

@@ -1,25 +1,20 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { handleClusterInfo } from '../../../../../src/core/kubectl/commands/handlers/clusterInfo'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createNamespace } from '../../../../../src/core/cluster/ressources/Namespace'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
-import { createEventBus } from '../../../../../src/core/cluster/events/EventBus'
-import {
-  createClusterState,
-  type ClusterState
-} from '../../../../../src/core/cluster/ClusterState'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 import type { ClusterStateData } from '../../../../../src/core/cluster/ClusterState'
 import { createClusterStateData } from '../../../helpers/utils'
 
 describe('kubectl cluster-info handler (with dump subcommand)', () => {
-  let clusterState: ClusterState
+  let apiServer: ReturnType<typeof createApiServerFacade>
   let stateData: ClusterStateData
 
   beforeEach(() => {
-    const eventBus = createEventBus()
-    clusterState = createClusterState(eventBus)
+    apiServer = createApiServerFacade()
 
     // Add some test resources
     const pod = createPod({
@@ -29,14 +24,14 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
       phase: 'Running',
       logs: ['Log line 1', 'Log line 2']
     })
-    clusterState.addPod(pod)
+    apiServer.createResource('Pod', pod)
 
     const configMap = createConfigMap({
       name: 'test-cm',
       namespace: 'default',
       data: { key1: 'value1' }
     })
-    clusterState.addConfigMap(configMap)
+    apiServer.createResource('ConfigMap', configMap)
 
     const secret = createSecret({
       name: 'test-secret',
@@ -44,9 +39,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
       secretType: { type: 'Opaque' },
       data: { password: Buffer.from('secret123').toString('base64') }
     })
-    clusterState.addSecret(secret)
+    apiServer.createResource('Secret', secret)
 
-    stateData = clusterState.toJSON()
+    stateData = apiServer.snapshotState()
   })
 
   const createParsedCommand = (
@@ -63,7 +58,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
         flags: { dump: true }
       })
 
-      const result = handleClusterInfo(stateData, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(stateData)
+      const result = handleClusterInfo(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -84,7 +81,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
         flags: { dump: true }
       })
 
-      const result = handleClusterInfo(stateData, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(stateData)
+      const result = handleClusterInfo(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -123,7 +122,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
       })
 
       const parsed = createParsedCommand()
-      const result = handleClusterInfo(stateWithClusterInfo, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(stateWithClusterInfo)
+      const result = handleClusterInfo(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -138,7 +139,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
 
     it('should return explicit error when cluster-info ConfigMap is missing', () => {
       const parsed = createParsedCommand()
-      const result = handleClusterInfo(stateData, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(stateData)
+      const result = handleClusterInfo(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -162,7 +165,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
       })
 
       const parsed = createParsedCommand()
-      const result = handleClusterInfo(stateWithInvalidClusterInfo, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(stateWithInvalidClusterInfo)
+      const result = handleClusterInfo(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -176,16 +181,17 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
   describe('--all-namespaces flag', () => {
     it('should dump all namespaces when --all-namespaces is set', () => {
       // Add resources in different namespace
-      const eventBus = createEventBus()
-      const multiNsState = createClusterState(eventBus)
-      multiNsState.addPod(
+      const multiNsApiServer = createApiServerFacade()
+      multiNsApiServer.createResource(
+        'Pod',
         createPod({
           name: 'pod1',
           namespace: 'default',
           containers: [{ name: 'nginx', image: 'nginx:latest' }]
         })
       )
-      multiNsState.addPod(
+      multiNsApiServer.createResource(
+        'Pod',
         createPod({
           name: 'pod2',
           namespace: 'kube-system',
@@ -197,7 +203,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
         flags: { dump: true, 'all-namespaces': true }
       })
 
-      const result = handleClusterInfo(multiNsState.toJSON(), parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(multiNsApiServer.snapshotState())
+      const result = handleClusterInfo(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -216,7 +224,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
         flags: { dump: true, A: true }
       })
 
-      const result = handleClusterInfo(stateData, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(stateData)
+      const result = handleClusterInfo(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -229,25 +239,33 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
   describe('--namespaces flag', () => {
     it('should dump only specified namespaces', () => {
       // Add resources in multiple namespaces
-      const eventBus = createEventBus()
-      const multiNsState = createClusterState(eventBus)
-      multiNsState.addNamespace(createNamespace({ name: 'production' }))
-      multiNsState.addNamespace(createNamespace({ name: 'staging' }))
-      multiNsState.addPod(
+      const multiNsApiServer = createApiServerFacade()
+      multiNsApiServer.createResource(
+        'Namespace',
+        createNamespace({ name: 'production' })
+      )
+      multiNsApiServer.createResource(
+        'Namespace',
+        createNamespace({ name: 'staging' })
+      )
+      multiNsApiServer.createResource(
+        'Pod',
         createPod({
           name: 'pod1',
           namespace: 'default',
           containers: [{ name: 'nginx', image: 'nginx:latest' }]
         })
       )
-      multiNsState.addPod(
+      multiNsApiServer.createResource(
+        'Pod',
         createPod({
           name: 'pod2',
           namespace: 'production',
           containers: [{ name: 'app', image: 'app:latest' }]
         })
       )
-      multiNsState.addPod(
+      multiNsApiServer.createResource(
+        'Pod',
         createPod({
           name: 'pod3',
           namespace: 'staging',
@@ -259,7 +277,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
         flags: { dump: true, namespaces: 'default,production' }
       })
 
-      const result = handleClusterInfo(multiNsState.toJSON(), parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(multiNsApiServer.snapshotState())
+      const result = handleClusterInfo(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -277,7 +297,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
         flags: { dump: true, output: 'json' }
       })
 
-      const result = handleClusterInfo(stateData, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(stateData)
+      const result = handleClusterInfo(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -292,7 +314,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
         flags: { dump: true, output: 'yaml' }
       })
 
-      const result = handleClusterInfo(stateData, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(stateData)
+      const result = handleClusterInfo(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -307,7 +331,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
         flags: { dump: true, o: 'json' }
       })
 
-      const result = handleClusterInfo(stateData, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(stateData)
+      const result = handleClusterInfo(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -322,7 +348,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
         flags: { dump: true, 'output-directory': '/tmp/dump' }
       })
 
-      const result = handleClusterInfo(stateData, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(stateData)
+      const result = handleClusterInfo(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -335,7 +363,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
         flags: { dump: true, 'output-directory': '-' }
       })
 
-      const result = handleClusterInfo(stateData, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(stateData)
+      const result = handleClusterInfo(apiServer, parsed)
 
       // Should succeed (stdout is allowed)
       expect(result.ok).toBe(true)
@@ -350,7 +380,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
         flags: { dump: true }
       })
 
-      const result = handleClusterInfo(emptyState, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(emptyState)
+      const result = handleClusterInfo(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -367,9 +399,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
 
   describe('pods without logs', () => {
     it('should skip logs section when pod has no logs', () => {
-      const eventBus = createEventBus()
-      const state = createClusterState(eventBus)
-      state.addPod(
+      const apiServerWithState = createApiServerFacade()
+      apiServerWithState.createResource(
+        'Pod',
         createPod({
           name: 'no-logs-pod',
           namespace: 'default',
@@ -382,7 +414,9 @@ describe('kubectl cluster-info handler (with dump subcommand)', () => {
         flags: { dump: true }
       })
 
-      const result = handleClusterInfo(state.toJSON(), parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(apiServerWithState.snapshotState())
+      const result = handleClusterInfo(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {

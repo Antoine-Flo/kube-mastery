@@ -1,4 +1,4 @@
-import type { ClusterStateData } from '../../../cluster/ClusterState'
+import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
@@ -20,9 +20,10 @@ const DEFAULT_LOG_COUNT = 50
  * - kubectl logs <pod> -f/--follow
  */
 export const handleLogs = (
-  state: ClusterStateData,
+  apiServer: ApiServerFacade,
   parsed: ParsedCommand
 ): ExecutionResult => {
+  const state = apiServer.snapshotState()
   // Validate pod name is provided
   if (!parsed.name) {
     return error('error: pod name is required')

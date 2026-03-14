@@ -4,13 +4,9 @@ import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
 import {
-  createEventBus,
-  type EventBus
-} from '../../../../../src/core/cluster/events/EventBus'
-import {
-  createClusterState,
-  type ClusterState
-} from '../../../../../src/core/cluster/ClusterState'
+  createApiServerFacade,
+  type ApiServerFacade
+} from '../../../../../src/core/api/ApiServerFacade'
 import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
 import { createIngress } from '../../../../../src/core/cluster/ressources/Ingress'
 import { createService } from '../../../../../src/core/cluster/ressources/Service'
@@ -18,12 +14,12 @@ import { createNamespace } from '../../../../../src/core/cluster/ressources/Name
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 
 describe('kubectl delete handler', () => {
-  let eventBus: EventBus
-  let clusterState: ClusterState
+  let apiServer: ApiServerFacade
+  let eventBus: ApiServerFacade['eventBus']
 
   beforeEach(() => {
-    eventBus = createEventBus()
-    clusterState = createClusterState(eventBus)
+    apiServer = createApiServerFacade()
+    eventBus = apiServer.eventBus
   })
 
   const createParsedCommand = (
@@ -39,7 +35,7 @@ describe('kubectl delete handler', () => {
     it('should return error when name is not provided', () => {
       const parsed = createParsedCommand({ name: undefined })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -55,14 +51,14 @@ describe('kubectl delete handler', () => {
         namespace: 'default',
         containers: [{ name: 'main', image: 'nginx:latest' }]
       })
-      clusterState.addPod(pod)
+      apiServer.createResource('Pod', pod)
 
       const parsed = createParsedCommand({
         name: 'my-pod',
         resource: 'pods'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -80,14 +76,14 @@ describe('kubectl delete handler', () => {
         namespace: 'default',
         containers: [{ name: 'main', image: 'nginx:latest' }]
       })
-      clusterState.addPod(pod)
+      apiServer.createResource('Pod', pod)
 
       const parsed = createParsedCommand({
         name: 'my-pod',
         resource: 'pods'
       })
 
-      handleDelete(clusterState, parsed, eventBus)
+      handleDelete(apiServer, parsed)
 
       expect(subscriber).toHaveBeenCalled()
     })
@@ -98,19 +94,19 @@ describe('kubectl delete handler', () => {
         resource: 'pods'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(false)
     })
 
     it('should delete pod in specified namespace', () => {
-      clusterState.addNamespace(createNamespace({ name: 'production' }))
+      apiServer.createResource('Namespace', createNamespace({ name: 'production' }))
       const pod = createPod({
         name: 'my-pod',
         namespace: 'production',
         containers: [{ name: 'main', image: 'nginx:latest' }]
       })
-      clusterState.addPod(pod)
+      apiServer.createResource('Pod', pod)
 
       const parsed = createParsedCommand({
         name: 'my-pod',
@@ -118,27 +114,30 @@ describe('kubectl delete handler', () => {
         resource: 'pods'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(true)
     })
 
     it('should delete multiple pods passed as positional names', () => {
-      clusterState.addPod(
+      apiServer.createResource(
+        'Pod',
         createPod({
           name: 'pod-1',
           namespace: 'default',
           containers: [{ name: 'main', image: 'nginx:latest' }]
         })
       )
-      clusterState.addPod(
+      apiServer.createResource(
+        'Pod',
         createPod({
           name: 'pod-2',
           namespace: 'default',
           containers: [{ name: 'main', image: 'nginx:latest' }]
         })
       )
-      clusterState.addPod(
+      apiServer.createResource(
+        'Pod',
         createPod({
           name: 'pod-3',
           namespace: 'default',
@@ -152,7 +151,7 @@ describe('kubectl delete handler', () => {
         resource: 'pods'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (!result.ok) {
@@ -162,9 +161,9 @@ describe('kubectl delete handler', () => {
       expect(result.value).toContain('pod "pod-1" deleted from default namespace')
       expect(result.value).toContain('pod "pod-2" deleted from default namespace')
       expect(result.value).toContain('pod "pod-3" deleted from default namespace')
-      expect(clusterState.findPod('pod-1', 'default').ok).toBe(false)
-      expect(clusterState.findPod('pod-2', 'default').ok).toBe(false)
-      expect(clusterState.findPod('pod-3', 'default').ok).toBe(false)
+      expect(apiServer.findResource('Pod', 'pod-1', 'default').ok).toBe(false)
+      expect(apiServer.findResource('Pod', 'pod-2', 'default').ok).toBe(false)
+      expect(apiServer.findResource('Pod', 'pod-3', 'default').ok).toBe(false)
     })
   })
 
@@ -175,14 +174,14 @@ describe('kubectl delete handler', () => {
         namespace: 'default',
         data: { key: 'value' }
       })
-      clusterState.addConfigMap(cm)
+      apiServer.createResource('ConfigMap', cm)
 
       const parsed = createParsedCommand({
         name: 'my-config',
         resource: 'configmaps'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -200,14 +199,14 @@ describe('kubectl delete handler', () => {
         namespace: 'default',
         data: {}
       })
-      clusterState.addConfigMap(cm)
+      apiServer.createResource('ConfigMap', cm)
 
       const parsed = createParsedCommand({
         name: 'my-config',
         resource: 'configmaps'
       })
 
-      handleDelete(clusterState, parsed, eventBus)
+      handleDelete(apiServer, parsed)
 
       expect(subscriber).toHaveBeenCalled()
     })
@@ -218,7 +217,7 @@ describe('kubectl delete handler', () => {
         resource: 'configmaps'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(false)
     })
@@ -232,14 +231,14 @@ describe('kubectl delete handler', () => {
         secretType: { type: 'Opaque' },
         data: {}
       })
-      clusterState.addSecret(secret)
+      apiServer.createResource('Secret', secret)
 
       const parsed = createParsedCommand({
         name: 'my-secret',
         resource: 'secrets'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -258,14 +257,14 @@ describe('kubectl delete handler', () => {
         secretType: { type: 'Opaque' },
         data: {}
       })
-      clusterState.addSecret(secret)
+      apiServer.createResource('Secret', secret)
 
       const parsed = createParsedCommand({
         name: 'my-secret',
         resource: 'secrets'
       })
 
-      handleDelete(clusterState, parsed, eventBus)
+      handleDelete(apiServer, parsed)
 
       expect(subscriber).toHaveBeenCalled()
     })
@@ -276,7 +275,7 @@ describe('kubectl delete handler', () => {
         resource: 'secrets'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(false)
     })
@@ -284,7 +283,8 @@ describe('kubectl delete handler', () => {
 
   describe('deleting other resources', () => {
     it('should delete deployment with kind-like message', () => {
-      clusterState.addDeployment(
+      apiServer.createResource(
+        'Deployment',
         createDeployment({
           name: 'my-deploy',
           namespace: 'default',
@@ -304,7 +304,7 @@ describe('kubectl delete handler', () => {
         resource: 'deployments'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -319,7 +319,7 @@ describe('kubectl delete handler', () => {
         resource: 'deployments'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -330,7 +330,8 @@ describe('kubectl delete handler', () => {
     })
 
     it('should delete service with namespace suffix', () => {
-      clusterState.addService(
+      apiServer.createResource(
+        'Service',
         createService({
           name: 'my-service',
           namespace: 'default',
@@ -344,7 +345,7 @@ describe('kubectl delete handler', () => {
         resource: 'services'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -355,7 +356,8 @@ describe('kubectl delete handler', () => {
     })
 
     it('should delete ingress with networking kind reference', () => {
-      clusterState.addIngress(
+      apiServer.createResource(
+        'Ingress',
         createIngress({
           name: 'demo-ingress',
           namespace: 'default',
@@ -388,7 +390,7 @@ describe('kubectl delete handler', () => {
         resource: 'ingresses'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -398,13 +400,13 @@ describe('kubectl delete handler', () => {
     })
 
     it('should handle namespace delete (simulated)', () => {
-      clusterState.addNamespace(createNamespace({ name: 'my-namespace' }))
+      apiServer.createResource('Namespace', createNamespace({ name: 'my-namespace' }))
       const parsed = createParsedCommand({
         name: 'my-namespace',
         resource: 'namespaces'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -413,22 +415,25 @@ describe('kubectl delete handler', () => {
     })
 
     it('should cascade delete namespaced resources when deleting namespace', () => {
-      clusterState.addNamespace(createNamespace({ name: 'project-x' }))
-      clusterState.addPod(
+      apiServer.createResource('Namespace', createNamespace({ name: 'project-x' }))
+      apiServer.createResource(
+        'Pod',
         createPod({
           name: 'app-pod',
           namespace: 'project-x',
           containers: [{ name: 'main', image: 'nginx:latest' }]
         })
       )
-      clusterState.addConfigMap(
+      apiServer.createResource(
+        'ConfigMap',
         createConfigMap({
           name: 'app-config',
           namespace: 'project-x',
           data: { key: 'value' }
         })
       )
-      clusterState.addService(
+      apiServer.createResource(
+        'Service',
         createService({
           name: 'app-service',
           namespace: 'project-x',
@@ -442,13 +447,13 @@ describe('kubectl delete handler', () => {
         resource: 'namespaces'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(true)
-      expect(clusterState.findNamespace('project-x').ok).toBe(false)
-      expect(clusterState.getPods('project-x')).toHaveLength(0)
-      expect(clusterState.getConfigMaps('project-x')).toHaveLength(0)
-      expect(clusterState.getServices('project-x')).toHaveLength(0)
+      expect(apiServer.findResource('Namespace', 'project-x').ok).toBe(false)
+      expect(apiServer.listResources('Pod', 'project-x')).toHaveLength(0)
+      expect(apiServer.listResources('ConfigMap', 'project-x')).toHaveLength(0)
+      expect(apiServer.listResources('Service', 'project-x')).toHaveLength(0)
     })
 
     it('should handle unknown resource type', () => {
@@ -457,7 +462,7 @@ describe('kubectl delete handler', () => {
         resource: 'unknown' as any
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -473,7 +478,7 @@ describe('kubectl delete handler', () => {
         namespace: 'default',
         containers: [{ name: 'main', image: 'nginx:latest' }]
       })
-      clusterState.addPod(pod)
+      apiServer.createResource('Pod', pod)
 
       const parsed = createParsedCommand({
         name: 'my-pod',
@@ -481,19 +486,19 @@ describe('kubectl delete handler', () => {
         // no namespace specified
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(true)
     })
 
     it('should not find pod in wrong namespace', () => {
-      clusterState.addNamespace(createNamespace({ name: 'production' }))
+      apiServer.createResource('Namespace', createNamespace({ name: 'production' }))
       const pod = createPod({
         name: 'my-pod',
         namespace: 'production',
         containers: [{ name: 'main', image: 'nginx:latest' }]
       })
-      clusterState.addPod(pod)
+      apiServer.createResource('Pod', pod)
 
       const parsed = createParsedCommand({
         name: 'my-pod',
@@ -501,7 +506,7 @@ describe('kubectl delete handler', () => {
         resource: 'pods'
       })
 
-      const result = handleDelete(clusterState, parsed, eventBus)
+      const result = handleDelete(apiServer, parsed)
 
       expect(result.ok).toBe(false)
     })

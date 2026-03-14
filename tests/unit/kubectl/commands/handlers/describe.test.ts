@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createClusterStateData } from '../../../helpers/utils'
 import { createNode } from '../../../../../src/core/cluster/ressources/Node'
+import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createService } from '../../../../../src/core/cluster/ressources/Service'
 import { handleDescribe } from '../../../../../src/core/kubectl/commands/handlers/describe'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
@@ -61,8 +63,10 @@ const createParsedCommand = (
 describe('kubectl describe handler - nodes', () => {
   it('should describe an existing node', () => {
     const state = createState()
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
     const parsed = createParsedCommand()
-    const result = handleDescribe(state, parsed)
+    const result = handleDescribe(apiServer, parsed)
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -76,8 +80,10 @@ describe('kubectl describe handler - nodes', () => {
 
   it('should ignore namespace filter for nodes (cluster-scoped)', () => {
     const state = createState()
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
     const parsed = createParsedCommand({ namespace: 'kube-system' })
-    const result = handleDescribe(state, parsed)
+    const result = handleDescribe(apiServer, parsed)
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -90,8 +96,10 @@ describe('kubectl describe handler - nodes', () => {
 
   it('should return not found for unknown node', () => {
     const state = createState()
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
     const parsed = createParsedCommand({ name: 'missing-node' })
-    const result = handleDescribe(state, parsed)
+    const result = handleDescribe(apiServer, parsed)
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -101,8 +109,10 @@ describe('kubectl describe handler - nodes', () => {
 
   it('should return error when node name is missing', () => {
     const state = createState()
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
     const parsed = createParsedCommand({ name: undefined })
-    const result = handleDescribe(state, parsed)
+    const result = handleDescribe(apiServer, parsed)
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -131,7 +141,9 @@ describe('kubectl describe handler - services and error semantics', () => {
       namespace: 'default',
       flags: {}
     }
-    const result = handleDescribe(state, parsed)
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+    const result = handleDescribe(apiServer, parsed)
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -152,7 +164,9 @@ describe('kubectl describe handler - services and error semantics', () => {
       namespace: 'default',
       flags: {}
     }
-    const result = handleDescribe(state, parsed)
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+    const result = handleDescribe(apiServer, parsed)
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -160,5 +174,60 @@ describe('kubectl describe handler - services and error semantics', () => {
         'deployments.apps "missing-deploy" not found'
       )
     }
+  })
+})
+
+describe('kubectl describe handler - pods with event store', () => {
+  it('uses injected pod lifecycle events when provided', () => {
+    const pod = createPod({
+      name: 'api-pod',
+      namespace: 'default',
+      nodeName: 'worker-a',
+      containers: [{ name: 'api', image: 'nginx:latest' }],
+      phase: 'Running'
+    })
+    const state = createClusterStateData({
+      pods: [pod]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'pods',
+      name: 'api-pod',
+      namespace: 'default',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+    const result = handleDescribe(apiServer, parsed, {
+      listPodEvents: () => {
+        return [
+          {
+            type: 'Normal',
+            reason: 'Scheduled',
+            source: 'default-scheduler',
+            message: 'Successfully assigned default/api-pod to worker-a',
+            timestamp: '2026-03-13T10:00:00.000Z'
+          },
+          {
+            type: 'Warning',
+            reason: 'BackOff',
+            source: 'kubelet',
+            message:
+              'Back-off restarting failed container api in pod default/api-pod',
+            timestamp: '2026-03-13T10:00:05.000Z'
+          }
+        ]
+      }
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Events:')
+    expect(result.value).toContain('Successfully assigned default/api-pod')
+    expect(result.value).toContain(
+      'Back-off restarting failed container api in pod default/api-pod'
+    )
   })
 })

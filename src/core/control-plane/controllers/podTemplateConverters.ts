@@ -1,4 +1,4 @@
-import type { Container } from '../ressources/Pod'
+import type { Container } from '../../cluster/ressources/Pod'
 
 type TemplateProbeLike = Container['livenessProbe'] | Record<string, unknown>
 

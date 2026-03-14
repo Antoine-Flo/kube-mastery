@@ -26,13 +26,23 @@ const updateContainerStatus = (
   pod: Pod,
   containerName: string,
   updates: {
-    state?: 'Waiting' | 'Running' | 'Terminated'
+    stateDetails?: {
+      state: 'Waiting' | 'Running' | 'Terminated'
+      reason?: string
+      exitCode?: number
+      startedAt?: string
+      finishedAt?: string
+    }
     ready?: boolean
     started?: boolean
     startedAt?: string
-    lastState?: 'Waiting' | 'Running' | 'Terminated'
-    waitingReason?: string
-    terminatedReason?: string
+    lastStateDetails?: {
+      state: 'Waiting' | 'Running' | 'Terminated'
+      reason?: string
+      exitCode?: number
+      startedAt?: string
+      finishedAt?: string
+    }
   }
 ): Pod => {
   const updatedStatuses = pod.status.containerStatuses?.map((cs) => {
@@ -89,12 +99,19 @@ const startRegularContainers = (pod: Pod): Pod => {
       }
     )
     updatedPod = updateContainerStatus(updatedPod, containerName, {
-      state: 'Running',
+      stateDetails: {
+        state: 'Running',
+        startedAt
+      },
       ready: true,
       started: true,
       startedAt,
-      lastState: currentStatus?.state ?? 'Waiting',
-      waitingReason: undefined
+      lastStateDetails:
+        currentStatus?.stateDetails ??
+        {
+          state: 'Waiting',
+          reason: 'ContainerCreating'
+        }
     })
   }
 
@@ -120,11 +137,16 @@ export const reconcileInitContainers = (pod: Pod): Pod => {
   for (const initContainer of pod.spec.initContainers) {
     // Validate image
     if (!isImageValid(initContainer.image)) {
+      const finishedAt = new Date().toISOString()
       // Mark init container as Terminated (failed)
       currentPod = updateContainerStatus(currentPod, initContainer.name, {
-        state: 'Terminated',
-        started: false,
-        terminatedReason: 'ImagePullBackOff'
+        stateDetails: {
+          state: 'Terminated',
+          reason: 'ImagePullBackOff',
+          exitCode: 1,
+          finishedAt
+        },
+        started: false
       })
 
       // Mark pod as Failed
@@ -146,22 +168,32 @@ export const reconcileInitContainers = (pod: Pod): Pod => {
     )
 
     if (!result.ok) {
+      const finishedAt = new Date().toISOString()
       // Execution failed - mark as Terminated and fail pod
       currentPod = updateContainerStatus(currentPod, initContainer.name, {
-        state: 'Terminated',
-        started: false,
-        terminatedReason: 'InitContainerFailed'
+        stateDetails: {
+          state: 'Terminated',
+          reason: 'InitContainerFailed',
+          exitCode: 1,
+          finishedAt
+        },
+        started: false
       })
 
       return updatePodPhase(currentPod, 'Failed')
     }
 
     // Success - update filesystem in _simulator and mark as Terminated (success)
+    const finishedAt = new Date().toISOString()
     currentPod = {
       ...updateContainerStatus(currentPod, initContainer.name, {
-        state: 'Terminated',
-        started: false,
-        terminatedReason: undefined
+        stateDetails: {
+          state: 'Terminated',
+          reason: 'Completed',
+          exitCode: 0,
+          finishedAt
+        },
+        started: false
       }),
       _simulator: {
         ...currentPod._simulator,

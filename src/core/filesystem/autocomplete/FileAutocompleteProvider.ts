@@ -11,6 +11,7 @@ import type {
 
 // Commandes qui acceptent des fichiers/dossiers comme arguments
 const FILE_COMMANDS = ['cd', 'ls', 'cat', 'nano', 'rm', 'vi', 'vim'] as const
+const FILE_COMMAND_SET = new Set<string>(FILE_COMMANDS)
 
 /**
  * Get file/directory completions from filesystem (current directory only)
@@ -41,7 +42,7 @@ export class FileAutocompleteProvider extends AutocompleteProvider {
       return false
     }
     const command = tokens[0]
-    return FILE_COMMANDS.includes(command as any)
+    return FILE_COMMAND_SET.has(command)
   }
 
   complete(

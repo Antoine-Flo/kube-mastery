@@ -21,7 +21,7 @@ describe('InitContainer Reconciler', () => {
       const mainStatus = result.status.containerStatuses?.find(
         (cs) => cs.name === 'main'
       )
-      expect(mainStatus?.state).toBe('Running')
+      expect(mainStatus?.stateDetails?.state).toBe('Running')
       expect(mainStatus?.ready).toBe(true)
       expect(mainStatus?.started).toBe(true)
       expect(mainStatus?.startedAt).toBeDefined()
@@ -61,9 +61,9 @@ describe('InitContainer Reconciler', () => {
         (cs) => cs.name === 'redis'
       )
 
-      expect(nginxStatus?.state).toBe('Running')
+      expect(nginxStatus?.stateDetails?.state).toBe('Running')
       expect(nginxStatus?.ready).toBe(true)
-      expect(redisStatus?.state).toBe('Running')
+      expect(redisStatus?.stateDetails?.state).toBe('Running')
       expect(redisStatus?.ready).toBe(true)
     })
   })
@@ -84,7 +84,7 @@ describe('InitContainer Reconciler', () => {
       const initStatus = result.status.containerStatuses?.find(
         (cs) => cs.name === 'init'
       )
-      expect(initStatus?.state).toBe('Terminated')
+      expect(initStatus?.stateDetails?.state).toBe('Terminated')
     })
 
     it('should not start regular containers when init fails', () => {
@@ -103,7 +103,7 @@ describe('InitContainer Reconciler', () => {
         (cs) => cs.name === 'main'
       )
       // Regular container should not have started
-      expect(mainStatus?.state).not.toBe('Running')
+      expect(mainStatus?.stateDetails?.state).not.toBe('Running')
     })
   })
 
@@ -130,7 +130,7 @@ describe('InitContainer Reconciler', () => {
       const initStatus = result.status.containerStatuses?.find(
         (cs) => cs.name === 'init'
       )
-      expect(initStatus?.state).toBe('Terminated')
+      expect(initStatus?.stateDetails?.state).toBe('Terminated')
     })
   })
 
@@ -157,12 +157,12 @@ describe('InitContainer Reconciler', () => {
       const initStatus = result.status.containerStatuses?.find(
         (cs) => cs.name === 'init'
       )
-      expect(initStatus?.state).toBe('Terminated')
+      expect(initStatus?.stateDetails?.state).toBe('Terminated')
 
       const mainStatus = result.status.containerStatuses?.find(
         (cs) => cs.name === 'main'
       )
-      expect(mainStatus?.state).toBe('Running')
+      expect(mainStatus?.stateDetails?.state).toBe('Running')
       expect(mainStatus?.ready).toBe(true)
     })
 
@@ -243,8 +243,8 @@ describe('InitContainer Reconciler', () => {
         (cs) => cs.name === 'init-2'
       )
 
-      expect(init1Status?.state).toBe('Terminated')
-      expect(init2Status?.state).toBe('Terminated')
+      expect(init1Status?.stateDetails?.state).toBe('Terminated')
+      expect(init2Status?.stateDetails?.state).toBe('Terminated')
     })
 
     it('should stop on first init container failure', () => {
@@ -287,9 +287,9 @@ describe('InitContainer Reconciler', () => {
       )
 
       // First completed, second failed, third never ran
-      expect(init1Status?.state).toBe('Terminated')
-      expect(init2Status?.state).toBe('Terminated')
-      expect(init3Status?.state).toBe('Waiting') // Never started
+      expect(init1Status?.stateDetails?.state).toBe('Terminated')
+      expect(init2Status?.stateDetails?.state).toBe('Terminated')
+      expect(init3Status?.stateDetails?.state).toBe('Waiting') // Never started
     })
   })
 })

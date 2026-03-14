@@ -1,4 +1,6 @@
 import type { ClusterStateData } from '../../../cluster/ClusterState'
+import type { ApiServerFacade } from '../../../api/ApiServerFacade'
+import type { PodLifecycleDescribeEvent } from '../../../api/PodLifecycleEventStore'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import {
@@ -25,7 +27,11 @@ import type { ParsedCommand } from '../types'
  */
 interface DescribeConfig {
   items: keyof ClusterStateData
-  formatter: (item: any, state: ClusterStateData) => string
+  formatter: (
+    item: any,
+    state: ClusterStateData,
+    dependencies: DescribeDependencies
+  ) => string
   type: string
   isClusterScoped?: boolean
 }
@@ -35,6 +41,13 @@ interface DescribeableResource {
     name: string
     namespace: string
   }
+}
+
+interface DescribeDependencies {
+  listPodEvents?: (
+    namespace: string,
+    podName: string
+  ) => readonly PodLifecycleDescribeEvent[]
 }
 
 const findDescribeResource = (
@@ -56,8 +69,12 @@ const findDescribeResource = (
 const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
   pods: {
     items: 'pods',
-    formatter: (item) => {
-      return describePod(item)
+    formatter: (item, _state, dependencies) => {
+      const podEvents = dependencies.listPodEvents?.(
+        item.metadata.namespace,
+        item.metadata.name
+      )
+      return describePod(item, podEvents)
     },
     type: 'Pod'
   },
@@ -133,9 +150,15 @@ const getNotFoundResourceReference = (resourceType: string): string => {
  * Provides detailed multi-line output for pods, configmaps, and secrets
  */
 export const handleDescribe = (
-  state: ClusterStateData,
-  parsed: ParsedCommand
+  apiServer: ApiServerFacade,
+  parsed: ParsedCommand,
+  dependencies: DescribeDependencies = {}
 ): ExecutionResult => {
+  const state = apiServer.snapshotState()
+  const resolvedDependencies: DescribeDependencies = {
+    listPodEvents:
+      dependencies.listPodEvents ?? apiServer.podLifecycleEventStore.listPodEvents
+  }
   if (!parsed.resource) {
     return error(`error: you must specify the resource type to describe`)
   }
@@ -171,5 +194,5 @@ export const handleDescribe = (
     )
   }
 
-  return success(config.formatter(resource, state))
+  return success(config.formatter(resource, state, resolvedDependencies))
 }

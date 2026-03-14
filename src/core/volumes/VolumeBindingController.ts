@@ -1,10 +1,5 @@
-import { startPeriodicResync } from '../cluster/controllers/helpers'
-import type { ClusterState } from '../cluster/ClusterState'
-import type { EventBus } from '../cluster/events/EventBus'
-import {
-  createPersistentVolumeClaimUpdatedEvent,
-  createPersistentVolumeUpdatedEvent
-} from '../cluster/events/types'
+import { startPeriodicResync } from '../control-plane/controller-runtime/helpers'
+import type { ApiServerFacade } from '../api/ApiServerFacade'
 import type { AppEventType } from '../events/AppEvent'
 import { type VolumeState } from './VolumeState'
 import {
@@ -34,19 +29,19 @@ const VOLUME_BINDING_EVENTS: AppEventType[] = [
 ]
 
 export const createVolumeBindingController = (
-  eventBus: EventBus,
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   volumeState: VolumeState,
   options: VolumeBindingControllerOptions = {}
 ): VolumeBindingController => {
+  const eventBus = apiServer.getEventBus()
   const bindingPolicy = options.policy ?? createVolumeBindingPolicy()
   let started = false
   let unsubscribeEvents: (() => void) | undefined
   let stopResync: (() => void) | undefined
 
   const reconcileVolumeClaims = (): void => {
-    const persistentVolumes = clusterState.getPersistentVolumes()
-    const persistentVolumeClaims = clusterState.getPersistentVolumeClaims()
+    const persistentVolumes = apiServer.listResources('PersistentVolume')
+    const persistentVolumeClaims = apiServer.listResources('PersistentVolumeClaim')
     const assignedVolumeNames = new Set<string>()
     const claimByKey = new Map<
       string,
@@ -80,13 +75,10 @@ export const createVolumeBindingController = (
           phase: 'Available' as const
         }
       }
-      eventBus.emit(
-        createPersistentVolumeUpdatedEvent(
-          persistentVolume.metadata.name,
-          releasedPersistentVolume,
-          persistentVolume,
-          'volume-binding-controller'
-        )
+      apiServer.updateResource(
+        'PersistentVolume',
+        persistentVolume.metadata.name,
+        releasedPersistentVolume
       )
     }
 
@@ -96,8 +88,10 @@ export const createVolumeBindingController = (
 
       const preBoundVolumeName = persistentVolumeClaim.spec.volumeName
       if (preBoundVolumeName != null && preBoundVolumeName.length > 0) {
-        const matchingPersistentVolume =
-          clusterState.findPersistentVolume(preBoundVolumeName)
+        const matchingPersistentVolume = apiServer.findResource(
+          'PersistentVolume',
+          preBoundVolumeName
+        )
         if (
           !matchingPersistentVolume.ok ||
           matchingPersistentVolume.value == null
@@ -114,14 +108,11 @@ export const createVolumeBindingController = (
               phase: 'Pending' as const
             }
           }
-          eventBus.emit(
-            createPersistentVolumeClaimUpdatedEvent(
-              claimName,
-              claimNamespace,
-              pendingPersistentVolumeClaim,
-              persistentVolumeClaim,
-              'volume-binding-controller'
-            )
+          apiServer.updateResource(
+            'PersistentVolumeClaim',
+            claimName,
+            pendingPersistentVolumeClaim,
+            claimNamespace
           )
           continue
         }
@@ -145,13 +136,10 @@ export const createVolumeBindingController = (
               phase: 'Bound' as const
             }
           }
-          eventBus.emit(
-            createPersistentVolumeUpdatedEvent(
-              persistentVolume.metadata.name,
-              updatedPersistentVolume,
-              persistentVolume,
-              'volume-binding-controller'
-            )
+          apiServer.updateResource(
+            'PersistentVolume',
+            persistentVolume.metadata.name,
+            updatedPersistentVolume
           )
         }
         if (persistentVolumeClaim.status.phase !== 'Bound') {
@@ -162,14 +150,11 @@ export const createVolumeBindingController = (
               phase: 'Bound' as const
             }
           }
-          eventBus.emit(
-            createPersistentVolumeClaimUpdatedEvent(
-              claimName,
-              claimNamespace,
-              updatedPersistentVolumeClaim,
-              persistentVolumeClaim,
-              'volume-binding-controller'
-            )
+          apiServer.updateResource(
+            'PersistentVolumeClaim',
+            claimName,
+            updatedPersistentVolumeClaim,
+            claimNamespace
           )
         }
         volumeState.bindClaimToVolume(
@@ -202,14 +187,11 @@ export const createVolumeBindingController = (
               phase: 'Pending' as const
             }
           }
-          eventBus.emit(
-            createPersistentVolumeClaimUpdatedEvent(
-              claimName,
-              claimNamespace,
-              pendingPersistentVolumeClaim,
-              persistentVolumeClaim,
-              'volume-binding-controller'
-            )
+          apiServer.updateResource(
+            'PersistentVolumeClaim',
+            claimName,
+            pendingPersistentVolumeClaim,
+            claimNamespace
           )
         }
         continue
@@ -231,13 +213,10 @@ export const createVolumeBindingController = (
           phase: 'Bound' as const
         }
       }
-      eventBus.emit(
-        createPersistentVolumeUpdatedEvent(
-          candidatePersistentVolume.metadata.name,
-          boundPersistentVolume,
-          candidatePersistentVolume,
-          'volume-binding-controller'
-        )
+      apiServer.updateResource(
+        'PersistentVolume',
+        candidatePersistentVolume.metadata.name,
+        boundPersistentVolume
       )
 
       const boundPersistentVolumeClaim = {
@@ -251,14 +230,11 @@ export const createVolumeBindingController = (
           phase: 'Bound' as const
         }
       }
-      eventBus.emit(
-        createPersistentVolumeClaimUpdatedEvent(
-          claimName,
-          claimNamespace,
-          boundPersistentVolumeClaim,
-          persistentVolumeClaim,
-          'volume-binding-controller'
-        )
+      apiServer.updateResource(
+        'PersistentVolumeClaim',
+        claimName,
+        boundPersistentVolumeClaim,
+        claimNamespace
       )
 
       volumeState.bindClaimToVolume(

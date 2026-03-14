@@ -1,6 +1,5 @@
-import { startPeriodicResync } from '../cluster/controllers/helpers'
-import type { ClusterState } from '../cluster/ClusterState'
-import type { EventBus } from '../cluster/events/EventBus'
+import { startPeriodicResync } from '../control-plane/controller-runtime/helpers'
+import type { ApiServerFacade } from '../api/ApiServerFacade'
 import type { AppEventType } from '../events/AppEvent'
 import type { Pod } from '../cluster/ressources/Pod'
 import { type PodVolumeReadiness, type VolumeState } from './VolumeState'
@@ -30,7 +29,7 @@ const POD_VOLUME_EVENTS: AppEventType[] = [
 
 const evaluatePodVolumeReadiness = (
   pod: Pod,
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   volumeState: VolumeState
 ): PodVolumeReadiness => {
   const volumes = pod.spec.volumes ?? []
@@ -55,11 +54,11 @@ const evaluatePodVolumeReadiness = (
       continue
     }
     if (volume.source.type === 'persistentVolumeClaim') {
-      const persistentVolumeClaimResult =
-        clusterState.findPersistentVolumeClaim(
-          volume.source.claimName,
-          pod.metadata.namespace
-        )
+      const persistentVolumeClaimResult = apiServer.findResource(
+        'PersistentVolumeClaim',
+        volume.source.claimName,
+        pod.metadata.namespace
+      )
       if (
         !persistentVolumeClaimResult.ok ||
         persistentVolumeClaimResult.value == null
@@ -86,8 +85,10 @@ const evaluatePodVolumeReadiness = (
           reason: 'PersistentVolumeClaimPending'
         }
       }
-      const persistentVolumeResult =
-        clusterState.findPersistentVolume(boundVolumeName)
+      const persistentVolumeResult = apiServer.findResource(
+        'PersistentVolume',
+        boundVolumeName
+      )
       if (!persistentVolumeResult.ok || persistentVolumeResult.value == null) {
         return {
           ready: false,
@@ -107,23 +108,19 @@ const evaluatePodVolumeReadiness = (
 }
 
 export const createPodVolumeController = (
-  eventBus: EventBus,
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   volumeState: VolumeState,
   options: PodVolumeControllerOptions = {}
 ): PodVolumeController => {
+  const eventBus = apiServer.getEventBus()
   let started = false
   let unsubscribeEvents: (() => void) | undefined
   let stopResync: (() => void) | undefined
 
   const reconcilePods = (): void => {
-    const pods = clusterState.getPods()
+    const pods = apiServer.listResources('Pod')
     for (const pod of pods) {
-      const readiness = evaluatePodVolumeReadiness(
-        pod,
-        clusterState,
-        volumeState
-      )
+      const readiness = evaluatePodVolumeReadiness(pod, apiServer, volumeState)
       volumeState.setPodReadiness(
         pod.metadata.namespace,
         pod.metadata.name,

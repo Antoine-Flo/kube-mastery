@@ -3,18 +3,14 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Reconciles DaemonSet resources to one Pod per node.
 
-import type { EventBus } from '../events/EventBus'
-import type { ClusterEvent } from '../events/types'
-import {
-  createDaemonSetUpdatedEvent,
-  createPodCreatedEvent,
-  createPodDeletedEvent
-} from '../events/types'
-import type { DaemonSet, DaemonSetStatus } from '../ressources/DaemonSet'
-import type { Node } from '../ressources/Node'
-import type { Pod } from '../ressources/Pod'
-import { createPod } from '../ressources/Pod'
-import { selectorMatchesLabels } from '../ressources/ReplicaSet'
+import type { ApiServerFacade } from '../../api/ApiServerFacade'
+import type { EventBus } from '../../cluster/events/EventBus'
+import type { ClusterEvent } from '../../cluster/events/types'
+import type { DaemonSet, DaemonSetStatus } from '../../cluster/ressources/DaemonSet'
+import type { Node } from '../../cluster/ressources/Node'
+import type { Pod } from '../../cluster/ressources/Pod'
+import { createPod } from '../../cluster/ressources/Pod'
+import { selectorMatchesLabels } from '../../cluster/ressources/ReplicaSet'
 import {
   createOwnerRef,
   findOwnerByRef,
@@ -24,7 +20,8 @@ import {
   startPeriodicResync,
   statusEquals,
   subscribeToEvents
-} from './helpers'
+} from '../controller-runtime/helpers'
+import { createControllerStateFromApi } from '../controller-runtime/stateFromApi'
 import {
   convertTemplateContainers,
   convertTemplateInitContainers
@@ -34,8 +31,8 @@ import type {
   ControllerResyncOptions,
   ControllerState,
   ReconcilerController
-} from './types'
-import { createWorkQueue, type WorkQueue } from './WorkQueue'
+} from '../controller-runtime/types'
+import { createWorkQueue, type WorkQueue } from '../controller-runtime/WorkQueue'
 
 const WATCHED_EVENTS: ClusterEventType[] = [
   'DaemonSetCreated',
@@ -109,6 +106,7 @@ const computeDaemonSetStatus = (
 }
 
 export class DaemonSetController implements ReconcilerController {
+  private apiServer: ApiServerFacade
   private eventBus: EventBus
   private getState: () => ControllerState
   private workQueue: WorkQueue
@@ -117,12 +115,12 @@ export class DaemonSetController implements ReconcilerController {
   private options: ControllerResyncOptions
 
   constructor(
-    eventBus: EventBus,
-    getState: () => ControllerState,
+    apiServer: ApiServerFacade,
     options: ControllerResyncOptions = {}
   ) {
-    this.eventBus = eventBus
-    this.getState = getState
+    this.apiServer = apiServer
+    this.eventBus = apiServer.getEventBus()
+    this.getState = () => createControllerStateFromApi(apiServer)
     this.options = options
     this.workQueue = createWorkQueue({ processDelay: 0 })
   }
@@ -243,13 +241,10 @@ export class DaemonSetController implements ReconcilerController {
     const allPods = state.getPods(daemonSet.metadata.namespace)
     const ownedPods = getOwnedResources(daemonSet, allPods)
     for (const pod of ownedPods) {
-      this.eventBus.emit(
-        createPodDeletedEvent(
-          pod.metadata.name,
-          pod.metadata.namespace,
-          pod,
-          'daemonset-controller'
-        )
+      this.apiServer.deleteResource(
+        'Pod',
+        pod.metadata.name,
+        pod.metadata.namespace
       )
     }
   }
@@ -303,17 +298,14 @@ export class DaemonSetController implements ReconcilerController {
       const podsForNode = podsByNode.get(node.metadata.name) ?? []
       if (podsForNode.length === 0) {
         const pod = createPodFromTemplate(daemonSet, node)
-        this.eventBus.emit(createPodCreatedEvent(pod, 'daemonset-controller'))
+        this.apiServer.createResource('Pod', pod, pod.metadata.namespace)
       } else if (podsForNode.length > 1) {
         const podsToDelete = podsForNode.slice(1)
         for (const podToDelete of podsToDelete) {
-          this.eventBus.emit(
-            createPodDeletedEvent(
-              podToDelete.metadata.name,
-              podToDelete.metadata.namespace,
-              podToDelete,
-              'daemonset-controller'
-            )
+          this.apiServer.deleteResource(
+            'Pod',
+            podToDelete.metadata.name,
+            podToDelete.metadata.namespace
           )
         }
       }
@@ -325,13 +317,10 @@ export class DaemonSetController implements ReconcilerController {
         continue
       }
       if (!nodesByName.has(nodeName)) {
-        this.eventBus.emit(
-          createPodDeletedEvent(
-            pod.metadata.name,
-            pod.metadata.namespace,
-            pod,
-            'daemonset-controller'
-          )
+        this.apiServer.deleteResource(
+          'Pod',
+          pod.metadata.name,
+          pod.metadata.namespace
         )
       }
     }
@@ -357,14 +346,11 @@ export class DaemonSetController implements ReconcilerController {
       ...daemonSet,
       status: newStatus
     }
-    this.eventBus.emit(
-      createDaemonSetUpdatedEvent(
-        daemonSet.metadata.name,
-        daemonSet.metadata.namespace,
-        updatedDaemonSet,
-        daemonSet,
-        'daemonset-controller'
-      )
+    this.apiServer.updateResource(
+      'DaemonSet',
+      daemonSet.metadata.name,
+      updatedDaemonSet,
+      daemonSet.metadata.namespace
     )
   }
 
@@ -387,11 +373,10 @@ export class DaemonSetController implements ReconcilerController {
 }
 
 export const createDaemonSetController = (
-  eventBus: EventBus,
-  getState: () => ControllerState,
+  apiServer: ApiServerFacade,
   options: ControllerResyncOptions = {}
 ): DaemonSetController => {
-  const controller = new DaemonSetController(eventBus, getState, options)
+  const controller = new DaemonSetController(apiServer, options)
   controller.start()
   return controller
 }

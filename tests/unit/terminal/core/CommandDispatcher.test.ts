@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { createClusterState } from '../../../../src/core/cluster/ClusterState'
 import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
+import { createApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
 import type { FileSystem } from '../../../../src/core/shell/commands'
 import { createCommandDispatcher } from '../../../../src/core/terminal/core/CommandDispatcher'
 import { createFileSystem } from '../../../../src/core/filesystem/FileSystem'
@@ -55,14 +55,13 @@ describe('CommandDispatcher', () => {
     // Créer les dépendances kubectl
     const logger = createLogger()
     const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus)
+    const apiServer = createApiServerFacade({ eventBus })
 
     dispatcher = createCommandDispatcher({
       fileSystem,
       renderer,
       shellContextStack,
-      clusterState,
-      eventBus,
+      apiServer,
       logger
     })
   })

@@ -1,4 +1,5 @@
 import type { ClusterStateData } from '../../../cluster/ClusterState'
+import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { EnvVar } from '../../../cluster/ressources/Pod'
 import type { SimNetworkRuntime } from '../../../network/SimNetworkRuntime'
 import type { ParsedCommand } from '../types'
@@ -64,10 +65,11 @@ const handleEnvCommand = (
  * Simulates command execution in a pod container
  */
 export const handleExec = (
-  state: ClusterStateData,
+  apiServer: ApiServerFacade,
   parsed: ParsedCommand,
   networkRuntime?: SimNetworkRuntime
 ): string => {
+  const state = apiServer.snapshotState()
   // Validate pod name is provided
   if (!parsed.name) {
     return 'Error: pod name is required'

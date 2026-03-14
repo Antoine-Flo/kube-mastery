@@ -4,9 +4,8 @@
 // An EmulatedEnvironment represents a complete environment: cluster state + filesystem
 // This is what gets loaded into the terminal and needs to be managed.
 
-import type { ClusterState } from '../cluster/ClusterState'
-import type { RuntimeControllers } from '../cluster/controllers/initializers'
-import type { EventBus } from '../cluster/events/EventBus'
+import type { ApiServerFacade } from '../api/ApiServerFacade'
+import type { ControlPlaneRuntime } from '../control-plane/ControllerManager'
 import type { FileSystemState } from '../filesystem/FileSystem'
 import type { SimNetworkRuntime } from '../network/SimNetworkRuntime'
 import type { SimVolumeRuntime } from '../volumes/SimVolumeRuntime'
@@ -21,23 +20,11 @@ import { ShellContextStack } from '../terminal/core/ShellContext'
  * This is the unit of work that gets loaded into the terminal
  */
 export interface EmulatedEnvironment {
-  /** Emulated environment ID (always undefined now, kept for compatibility) */
-  emulatedEnvironmentId: string | undefined
-
-  /** Filesystem ID (always undefined now, kept for compatibility) */
-  filesystemId: string | undefined
-
-  /** Cluster ID (always undefined now, kept for compatibility) */
-  clusterId: string | undefined
-
-  /** Kubernetes cluster state */
-  clusterState: ClusterState
-
   /** Filesystem state */
   fileSystemState: FileSystemState
 
-  /** Event bus for cluster events */
-  eventBus: EventBus
+  /** API facade (apiserver + watch + store) */
+  apiServer: ApiServerFacade
 
   /** Shell context stack for terminal navigation */
   shellContextStack: ShellContextStack
@@ -48,8 +35,8 @@ export interface EmulatedEnvironment {
   /** Pod IP allocation unsubscribe function */
   unsubscribePodIpAllocation?: () => void
 
-  /** Runtime controllers to stop on destroy */
-  runtimeControllers?: RuntimeControllers
+  /** Control-plane runtime to stop on destroy */
+  controlPlaneRuntime?: ControlPlaneRuntime
 
   /** Simulated network runtime */
   networkRuntime?: SimNetworkRuntime

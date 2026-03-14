@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { handleLogs } from '../../../../../src/core/kubectl/commands/handlers/logs'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
+import { handleLogs as handleLogsApi } from '../../../../../src/core/kubectl/commands/handlers/logs'
 import { createNamespace } from '../../../../../src/core/cluster/ressources/Namespace'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 import { createClusterStateData } from '../../../helpers/utils'
 
 describe('kubectl logs handler', () => {
+
   const createState = (pods: ReturnType<typeof createPod>[]) =>
     createClusterStateData({ pods })
 
@@ -23,7 +25,9 @@ describe('kubectl logs handler', () => {
       const state = createState([])
       const parsed = createParsedCommand({ name: undefined })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -35,7 +39,9 @@ describe('kubectl logs handler', () => {
       const state = createState([])
       const parsed = createParsedCommand({ name: 'nonexistent' })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -57,7 +63,9 @@ describe('kubectl logs handler', () => {
         namespace: 'other-namespace'
       })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -75,7 +83,9 @@ describe('kubectl logs handler', () => {
       const state = createState([pod])
       const parsed = createParsedCommand({ name: 'nginx-pod' })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -97,7 +107,9 @@ describe('kubectl logs handler', () => {
       const state = createState([pod])
       const parsed = createParsedCommand({ name: 'multi-pod' })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -122,7 +134,9 @@ describe('kubectl logs handler', () => {
         flags: { c: 'app' }
       })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(true)
     })
@@ -142,7 +156,9 @@ describe('kubectl logs handler', () => {
         flags: { container: 'sidecar' }
       })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(true)
     })
@@ -162,7 +178,9 @@ describe('kubectl logs handler', () => {
         flags: { c: 'main-app', tail: '5' }
       })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (!result.ok) {
@@ -195,7 +213,9 @@ describe('kubectl logs handler', () => {
         flags: { c: 'sidecar', tail: '5' }
       })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (!result.ok) {
@@ -225,7 +245,9 @@ describe('kubectl logs handler', () => {
         flags: { c: 'nonexistent' }
       })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -248,7 +270,9 @@ describe('kubectl logs handler', () => {
         flags: { c: 'init' }
       })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(true)
     })
@@ -268,7 +292,9 @@ describe('kubectl logs handler', () => {
         flags: { tail: '2' }
       })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result).toEqual({ ok: true, value: 'line4\nline5' })
     })
@@ -286,7 +312,9 @@ describe('kubectl logs handler', () => {
         flags: { tail: '0' }
       })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result).toEqual({ ok: true, value: '' })
     })
@@ -303,7 +331,9 @@ describe('kubectl logs handler', () => {
         flags: { tail: 'invalid' }
       })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -324,7 +354,9 @@ describe('kubectl logs handler', () => {
         flags: { tail: '-5' }
       })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -343,7 +375,9 @@ describe('kubectl logs handler', () => {
       const state = createState([pod])
       const parsed = createParsedCommand({ name: 'nginx-pod' })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(true)
     })
@@ -360,7 +394,9 @@ describe('kubectl logs handler', () => {
         namespace: 'production'
       })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(true)
     })
@@ -380,7 +416,9 @@ describe('kubectl logs handler', () => {
         namespace: 'dev'
       })
 
-      const result = handleLogs(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {

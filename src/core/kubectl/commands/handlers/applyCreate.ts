@@ -3,8 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Unified handlers for apply and create commands using event-driven architecture
 
-import type { ClusterState } from '../../../cluster/ClusterState'
-import type { EventBus } from '../../../cluster/events/EventBus'
+import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import { createConfigMap } from '../../../cluster/ressources/ConfigMap'
 import { createDeployment } from '../../../cluster/ressources/Deployment'
 import { createNamespace } from '../../../cluster/ressources/Namespace'
@@ -915,8 +914,7 @@ const validateCreateDeploymentCommand = (
 
 const createDeploymentFromFlags = (
   parsed: ParsedCommand & { name: string },
-  clusterState: ClusterState,
-  eventBus: EventBus
+  apiServer: ApiServerFacade
 ): ExecutionResult => {
   const images = getCreateImages(parsed)
 
@@ -938,13 +936,12 @@ const createDeploymentFromFlags = (
     template
   })
 
-  return createResourceWithEvents(deployment, clusterState, eventBus)
+  return createResourceWithEvents(deployment, apiServer)
 }
 
 const createNamespaceFromFlags = (
   parsed: ParsedCommand & { name: string },
-  clusterState: ClusterState,
-  eventBus: EventBus
+  apiServer: ApiServerFacade
 ): ExecutionResult => {
   const namespace = createNamespace({
     name: parsed.name,
@@ -953,13 +950,12 @@ const createNamespaceFromFlags = (
     }
   })
 
-  return createResourceWithEvents(namespace, clusterState, eventBus)
+  return createResourceWithEvents(namespace, apiServer)
 }
 
 const createServiceFromFlags = (
   parsed: ParsedCommand & { name: string; createServiceType: CreateServiceType },
-  clusterState: ClusterState,
-  eventBus: EventBus
+  apiServer: ApiServerFacade
 ): ExecutionResult => {
   const serviceConfig = buildCreateServiceConfig(parsed)
   if (!('kind' in serviceConfig)) {
@@ -980,13 +976,12 @@ const createServiceFromFlags = (
     ports: serviceConfig.spec.ports
   })
 
-  return createResourceWithEvents(service, clusterState, eventBus)
+  return createResourceWithEvents(service, apiServer)
 }
 
 const createConfigMapFromFlags = (
   parsed: ParsedCommand & { name: string },
-  clusterState: ClusterState,
-  eventBus: EventBus
+  apiServer: ApiServerFacade
 ): ExecutionResult => {
   const literals = getCreateConfigMapLiterals(parsed)
   if (literals.length === 0) {
@@ -1003,14 +998,13 @@ const createConfigMapFromFlags = (
     namespace: parsed.namespace ?? 'default',
     data
   })
-  return createResourceWithEvents(configMap, clusterState, eventBus)
+  return createResourceWithEvents(configMap, apiServer)
 }
 
 const createSecretFromFlags = (
   fileSystem: FileSystem,
   parsed: ParsedCommand & { name: string; createSecretType: CreateSecretType },
-  clusterState: ClusterState,
-  eventBus: EventBus
+  apiServer: ApiServerFacade
 ): ExecutionResult => {
   const prepared = prepareSecretData(fileSystem, parsed)
   if (isExecutionErrorResult(prepared)) {
@@ -1022,7 +1016,7 @@ const createSecretFromFlags = (
     secretType: prepared.secretType,
     data: prepared.data
   })
-  return createResourceWithEvents(secret, clusterState, eventBus)
+  return createResourceWithEvents(secret, apiServer)
 }
 
 const buildRunDryRunManifest = (
@@ -1122,16 +1116,15 @@ const loadAndParseYaml = (
  */
 export const handleApply = (
   fileSystem: FileSystem,
-  clusterState: ClusterState,
-  parsed: ParsedCommand,
-  eventBus: EventBus
+  apiServer: ApiServerFacade,
+  parsed: ParsedCommand
 ): ExecutionResult => {
   const loadResult = loadAndParseYaml(fileSystem, parsed)
   if (!loadResult.ok) {
     return loadResult
   }
 
-  return applyResourceWithEvents(loadResult.resource, clusterState, eventBus)
+  return applyResourceWithEvents(loadResult.resource, apiServer)
 }
 
 /**
@@ -1140,9 +1133,8 @@ export const handleApply = (
  */
 export const handleCreate = (
   fileSystem: FileSystem,
-  clusterState: ClusterState,
-  parsed: ParsedCommand,
-  eventBus: EventBus
+  apiServer: ApiServerFacade,
+  parsed: ParsedCommand
 ): ExecutionResult => {
   const dryRunFlag = parsed.flags['dry-run']
   if (!isSupportedDryRunValue(dryRunFlag)) {
@@ -1161,7 +1153,7 @@ export const handleCreate = (
       const dryRunManifest = buildCreateDeploymentDryRunManifest(parsed)
       return buildDryRunResponse(dryRunManifest, parsed)
     }
-    return createDeploymentFromFlags(parsed, clusterState, eventBus)
+    return createDeploymentFromFlags(parsed, apiServer)
   }
 
   if (isCreateNamespaceImperative(parsed)) {
@@ -1169,7 +1161,7 @@ export const handleCreate = (
       const dryRunManifest = buildCreateNamespaceDryRunManifest(parsed)
       return buildDryRunResponse(dryRunManifest, parsed)
     }
-    return createNamespaceFromFlags(parsed, clusterState, eventBus)
+    return createNamespaceFromFlags(parsed, apiServer)
   }
 
   if (isCreateServiceImperative(parsed)) {
@@ -1180,7 +1172,7 @@ export const handleCreate = (
     if (isDryRunClient(parsed)) {
       return buildDryRunResponse(serviceConfig, parsed)
     }
-    return createServiceFromFlags(parsed, clusterState, eventBus)
+    return createServiceFromFlags(parsed, apiServer)
   }
 
   if (isCreateConfigMapImperative(parsed)) {
@@ -1191,7 +1183,7 @@ export const handleCreate = (
       }
       return buildDryRunResponse(dryRunManifest, parsed)
     }
-    return createConfigMapFromFlags(parsed, clusterState, eventBus)
+    return createConfigMapFromFlags(parsed, apiServer)
   }
 
   if (isCreateSecretImperative(parsed)) {
@@ -1202,7 +1194,7 @@ export const handleCreate = (
       }
       return buildDryRunResponse(dryRunManifest, parsed)
     }
-    return createSecretFromFlags(fileSystem, parsed, clusterState, eventBus)
+    return createSecretFromFlags(fileSystem, parsed, apiServer)
   }
 
   const loadResult = loadAndParseYaml(fileSystem, parsed)
@@ -1214,7 +1206,7 @@ export const handleCreate = (
     return buildDryRunResponse(loadResult.resource, parsed)
   }
 
-  return createResourceWithEvents(loadResult.resource, clusterState, eventBus)
+  return createResourceWithEvents(loadResult.resource, apiServer)
 }
 
 /**
@@ -1222,9 +1214,8 @@ export const handleCreate = (
  * Creates a single Pod with one container and command from `--command -- ...`.
  */
 export const handleRun = (
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   parsed: ParsedCommand,
-  eventBus: EventBus,
   networkRuntime?: SimNetworkRuntime
 ): ExecutionResult => {
   const image = parsed.runImage
@@ -1371,5 +1362,5 @@ export const handleRun = (
     }
   }
 
-  return createResourceWithEvents(pod, clusterState, eventBus)
+  return createResourceWithEvents(pod, apiServer)
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { handleExec } from '../../../../../src/core/kubectl/commands/handlers/exec'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
+import { handleExec as handleExecApi } from '../../../../../src/core/kubectl/commands/handlers/exec'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createDnsResolver } from '../../../../../src/core/network/DnsResolver'
 import { createNetworkState } from '../../../../../src/core/network/NetworkState'
@@ -28,7 +29,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['ls']
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toBe('Error: pod name is required')
     })
@@ -40,7 +43,9 @@ describe('kubectl exec handler', () => {
         execCommand: undefined
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toContain('command must be specified')
     })
@@ -52,7 +57,9 @@ describe('kubectl exec handler', () => {
         execCommand: []
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toContain('command must be specified')
     })
@@ -64,7 +71,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['ls']
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toContain('NotFound')
       expect(result).toContain('nonexistent')
@@ -83,7 +92,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['ls']
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toContain('not running')
       expect(result).toContain('Pending')
@@ -107,7 +118,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['ls']
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toContain('container name must be specified')
       expect(result).toContain('app')
@@ -131,7 +144,9 @@ describe('kubectl exec handler', () => {
         flags: { c: 'app' }
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).not.toContain('Error')
     })
@@ -153,7 +168,9 @@ describe('kubectl exec handler', () => {
         flags: { container: 'sidecar' }
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).not.toContain('Error')
     })
@@ -172,7 +189,9 @@ describe('kubectl exec handler', () => {
         flags: { c: 'nonexistent' }
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toContain('container nonexistent not found')
       expect(result).toContain('Available containers')
@@ -193,7 +212,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['sh']
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toBe('ENTER_CONTAINER:my-pod:main:default')
     })
@@ -211,7 +232,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['bash']
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toBe('ENTER_CONTAINER:my-pod:main:default')
     })
@@ -229,7 +252,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['/bin/sh']
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toContain('ENTER_CONTAINER')
     })
@@ -247,7 +272,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['/bin/bash']
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toContain('ENTER_CONTAINER')
     })
@@ -269,7 +296,9 @@ describe('kubectl exec handler', () => {
         flags: { c: 'sidecar' }
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toBe('ENTER_CONTAINER:my-pod:sidecar:default')
     })
@@ -289,7 +318,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['env']
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toContain('PATH=')
       expect(result).toContain('HOME=/root')
@@ -322,7 +353,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['nslookup', 'web.default.svc.cluster.local']
       })
 
-      const result = handleExec(state, parsed, {
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed, {
         state: networkState,
         dnsResolver,
         trafficEngine,
@@ -369,7 +402,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['curl', 'http://web.default.svc.cluster.local']
       })
 
-      const result = handleExec(state, parsed, {
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed, {
         state: networkState,
         dnsResolver,
         trafficEngine,
@@ -399,7 +434,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['ls', '-la']
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toBe('SHELL_COMMAND:ls -la')
     })
@@ -417,7 +454,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['cat', '/etc/nginx/nginx.conf']
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toBe('SHELL_COMMAND:cat /etc/nginx/nginx.conf')
     })
@@ -437,7 +476,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['sh']
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toContain(':default')
     })
@@ -456,7 +497,9 @@ describe('kubectl exec handler', () => {
         execCommand: ['sh']
       })
 
-      const result = handleExec(state, parsed)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
 
       expect(result).toBe('ENTER_CONTAINER:my-pod:main:production')
     })

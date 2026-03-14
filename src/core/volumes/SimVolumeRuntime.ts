@@ -1,5 +1,4 @@
-import type { ClusterState } from '../cluster/ClusterState'
-import type { EventBus } from '../cluster/events/EventBus'
+import type { ApiServerFacade } from '../api/ApiServerFacade'
 import {
   createPodVolumeController,
   type PodVolumeController
@@ -17,20 +16,11 @@ export interface SimVolumeRuntime {
 }
 
 export const initializeSimVolumeRuntime = (
-  eventBus: EventBus,
-  clusterState: ClusterState
+  apiServer: ApiServerFacade
 ): SimVolumeRuntime => {
   const state = createVolumeState()
-  const volumeBindingController = createVolumeBindingController(
-    eventBus,
-    clusterState,
-    state
-  )
-  const podVolumeController = createPodVolumeController(
-    eventBus,
-    clusterState,
-    state
-  )
+  const volumeBindingController = createVolumeBindingController(apiServer, state)
+  const podVolumeController = createPodVolumeController(apiServer, state)
   volumeBindingController.start()
   podVolumeController.start()
   return {

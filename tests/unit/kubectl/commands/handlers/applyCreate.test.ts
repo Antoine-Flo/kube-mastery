@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { createClusterState } from '../../../../../src/core/cluster/ClusterState'
-import { createEventBus } from '../../../../../src/core/cluster/events/EventBus'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createHostFileSystem } from '../../../../../src/core/filesystem/debianFileSystem'
 import {
   createFileSystem,
@@ -10,13 +9,11 @@ import { parseCommand } from '../../../../../src/core/kubectl/commands/parser'
 import { handleCreate } from '../../../../../src/core/kubectl/commands/handlers/applyCreate'
 
 describe('applyCreate handler', () => {
+  let apiServer: ReturnType<typeof createApiServerFacade>
   let fileSystem: FileSystem
-  let eventBus: ReturnType<typeof createEventBus>
-  let clusterState: ReturnType<typeof createClusterState>
 
   beforeEach(() => {
-    eventBus = createEventBus()
-    clusterState = createClusterState(eventBus)
+    apiServer = createApiServerFacade()
     fileSystem = createFileSystem(createHostFileSystem())
   })
 
@@ -31,9 +28,8 @@ describe('applyCreate handler', () => {
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
 
     expect(result.ok).toBe(true)
@@ -42,7 +38,7 @@ describe('applyCreate handler', () => {
     }
 
     expect(result.value).toContain('deployment.apps/my-dep created')
-    const deployment = clusterState.findDeployment('my-dep', 'default')
+    const deployment = apiServer.findResource('Deployment', 'my-dep', 'default')
     expect(deployment.ok).toBe(true)
     if (!deployment.ok) {
       return
@@ -59,9 +55,8 @@ describe('applyCreate handler', () => {
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
 
     expect(result.ok).toBe(false)
@@ -81,9 +76,8 @@ describe('applyCreate handler', () => {
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
 
     expect(result.ok).toBe(false)
@@ -103,9 +97,8 @@ describe('applyCreate handler', () => {
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
 
     expect(result.ok).toBe(false)
@@ -125,9 +118,8 @@ describe('applyCreate handler', () => {
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
 
     expect(result.ok).toBe(false)
@@ -146,9 +138,8 @@ describe('applyCreate handler', () => {
     }
     const createNamespaceResult = handleCreate(
       fileSystem,
-      clusterState,
-      createNamespaceParsed.value,
-      eventBus
+      apiServer,
+      createNamespaceParsed.value
     )
     expect(createNamespaceResult.ok).toBe(true)
 
@@ -162,13 +153,12 @@ describe('applyCreate handler', () => {
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
 
     expect(result.ok).toBe(true)
-    const deployment = clusterState.findDeployment('my-dep', 'staging')
+    const deployment = apiServer.findResource('Deployment', 'my-dep', 'staging')
     expect(deployment.ok).toBe(true)
   })
 
@@ -183,9 +173,8 @@ describe('applyCreate handler', () => {
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
 
     expect(result.ok).toBe(false)
@@ -206,9 +195,8 @@ describe('applyCreate handler', () => {
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
 
     expect(result.ok).toBe(false)
@@ -228,9 +216,8 @@ describe('applyCreate handler', () => {
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
 
     expect(result.ok).toBe(false)
@@ -250,9 +237,8 @@ describe('applyCreate handler', () => {
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
 
     expect(result.ok).toBe(false)
@@ -272,9 +258,8 @@ describe('applyCreate handler', () => {
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
 
     expect(result.ok).toBe(false)
@@ -304,9 +289,8 @@ data:
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
 
     expect(result.ok).toBe(true)
@@ -326,9 +310,8 @@ data:
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
 
     expect(result.ok).toBe(true)
@@ -369,9 +352,8 @@ spec:
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
 
     expect(result.ok).toBe(true)
@@ -381,7 +363,7 @@ spec:
     expect(result.value).toContain(
       'ingress.networking.k8s.io/demo-ingress created'
     )
-    const ingress = clusterState.findIngress('demo-ingress', 'default')
+    const ingress = apiServer.findResource('Ingress', 'demo-ingress', 'default')
     expect(ingress.ok).toBe(true)
   })
 
@@ -394,9 +376,8 @@ spec:
 
     const firstResult = handleCreate(
       fileSystem,
-      clusterState,
-      first.value,
-      eventBus
+      apiServer,
+      first.value
     )
     expect(firstResult.ok).toBe(true)
 
@@ -408,9 +389,8 @@ spec:
 
     const secondResult = handleCreate(
       fileSystem,
-      clusterState,
-      second.value,
-      eventBus
+      apiServer,
+      second.value
     )
     expect(secondResult.ok).toBe(false)
     if (!secondResult.ok) {
@@ -432,9 +412,8 @@ spec:
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -442,7 +421,7 @@ spec:
     }
 
     expect(result.value).toContain('service/my-svc created')
-    const service = clusterState.findService('my-svc', 'default')
+    const service = apiServer.findResource('Service', 'my-svc', 'default')
     expect(service.ok).toBe(true)
     if (!service.ok) {
       return
@@ -464,9 +443,8 @@ spec:
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -479,7 +457,7 @@ spec:
     expect(result.value).toContain('app: my-svc')
     expect(result.value).toContain('name: 80-8080')
     expect(result.value).toContain('loadBalancer: {}')
-    const createdService = clusterState.findService('my-svc', 'default')
+    const createdService = apiServer.findResource('Service', 'my-svc', 'default')
     expect(createdService.ok).toBe(false)
   })
 
@@ -494,16 +472,15 @@ spec:
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return
     }
 
-    const service = clusterState.findService('ext-svc', 'default')
+    const service = apiServer.findResource('Service', 'ext-svc', 'default')
     expect(service.ok).toBe(true)
     if (!service.ok) {
       return
@@ -524,9 +501,8 @@ spec:
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -538,7 +514,7 @@ spec:
     expect(result.value).toContain('creationTimestamp: null')
     expect(result.value).toContain('LOG_LEVEL: info')
 
-    const configMap = clusterState.findConfigMap('app-config', 'default')
+    const configMap = apiServer.findResource('ConfigMap', 'app-config', 'default')
     expect(configMap.ok).toBe(false)
   })
 
@@ -553,9 +529,8 @@ spec:
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -563,7 +538,7 @@ spec:
     }
 
     expect(result.value).toBe('app-config')
-    const configMap = clusterState.findConfigMap('app-config', 'default')
+    const configMap = apiServer.findResource('ConfigMap', 'app-config', 'default')
     expect(configMap.ok).toBe(false)
   })
 
@@ -578,9 +553,8 @@ spec:
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -592,7 +566,7 @@ spec:
     expect(result.value).not.toContain('type: Opaque')
     expect(result.value).toContain('password: czNjcjN0')
 
-    const secret = clusterState.findSecret('mysecret', 'default')
+    const secret = apiServer.findResource('Secret', 'mysecret', 'default')
     expect(secret.ok).toBe(false)
   })
 
@@ -612,16 +586,15 @@ spec:
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return
     }
 
-    const secret = clusterState.findSecret('tls-secret', 'default')
+    const secret = apiServer.findResource('Secret', 'tls-secret', 'default')
     expect(secret.ok).toBe(true)
     if (!secret.ok) {
       return
@@ -642,9 +615,8 @@ spec:
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -672,16 +644,15 @@ spec:
 
     const result = handleCreate(
       fileSystem,
-      clusterState,
-      parsed.value,
-      eventBus
+      apiServer,
+      parsed.value
     )
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return
     }
 
-    const secret = clusterState.findSecret('app-secret', 'default')
+    const secret = apiServer.findResource('Secret', 'app-secret', 'default')
     expect(secret.ok).toBe(true)
     if (!secret.ok) {
       return

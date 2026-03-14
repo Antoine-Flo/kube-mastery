@@ -1,5 +1,4 @@
-import type { ClusterStateData } from '../../../cluster/ClusterState'
-import type { EventBus } from '../../../cluster/events/EventBus'
+import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { ExecutionResult } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
 import { handleMetadataChange } from './metadataHelpers'
@@ -16,19 +15,17 @@ import { handleMetadataChange } from './metadataHelpers'
  * Uses event-driven architecture
  */
 export const handleAnnotate = (
-  state: ClusterStateData,
-  parsed: ParsedCommand,
-  eventBus: EventBus
-): ExecutionResult & { state?: ClusterStateData } => {
+  apiServer: ApiServerFacade,
+  parsed: ParsedCommand
+): ExecutionResult => {
   return handleMetadataChange(
-    state,
+    apiServer,
     parsed,
     {
       metadataType: 'annotations',
       commandName: 'annotate',
       changesKey: 'annotationChanges',
       actionPastTense: 'annotated'
-    },
-    eventBus
+    }
   )
 }

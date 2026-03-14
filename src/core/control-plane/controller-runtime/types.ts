@@ -3,14 +3,14 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Shared types for all Kubernetes controllers
 
-import type { DaemonSet } from '../ressources/DaemonSet'
-import type { Deployment } from '../ressources/Deployment'
-import type { Node } from '../ressources/Node'
-import type { PersistentVolume } from '../ressources/PersistentVolume'
-import type { PersistentVolumeClaim } from '../ressources/PersistentVolumeClaim'
-import type { OwnerReference } from '../ressources/Pod'
-import type { Pod } from '../ressources/Pod'
-import type { ReplicaSet } from '../ressources/ReplicaSet'
+import type { DaemonSet } from '../../cluster/ressources/DaemonSet'
+import type { Deployment } from '../../cluster/ressources/Deployment'
+import type { Node } from '../../cluster/ressources/Node'
+import type { PersistentVolume } from '../../cluster/ressources/PersistentVolume'
+import type { PersistentVolumeClaim } from '../../cluster/ressources/PersistentVolumeClaim'
+import type { OwnerReference } from '../../cluster/ressources/Pod'
+import type { Pod } from '../../cluster/ressources/Pod'
+import type { ReplicaSet } from '../../cluster/ressources/ReplicaSet'
 
 // ─── Kubernetes Resource with Owner References ───────────────────────────
 

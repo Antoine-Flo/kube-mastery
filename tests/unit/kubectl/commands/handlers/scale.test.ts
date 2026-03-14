@@ -4,22 +4,18 @@ import { createDeployment } from '../../../../../src/core/cluster/ressources/Dep
 import { createReplicaSet } from '../../../../../src/core/cluster/ressources/ReplicaSet'
 import { createNamespace } from '../../../../../src/core/cluster/ressources/Namespace'
 import {
-  createEventBus,
-  type EventBus
-} from '../../../../../src/core/cluster/events/EventBus'
-import {
-  createClusterState,
-  type ClusterState
-} from '../../../../../src/core/cluster/ClusterState'
+  createApiServerFacade,
+  type ApiServerFacade
+} from '../../../../../src/core/api/ApiServerFacade'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 
 describe('kubectl scale handler', () => {
-  let eventBus: EventBus
-  let clusterState: ClusterState
+  let apiServer: ApiServerFacade
+  let eventBus: ApiServerFacade['eventBus']
 
   beforeEach(() => {
-    eventBus = createEventBus()
-    clusterState = createClusterState(eventBus)
+    apiServer = createApiServerFacade()
+    eventBus = apiServer.eventBus
   })
 
   const createParsedCommand = (
@@ -38,7 +34,7 @@ describe('kubectl scale handler', () => {
         replicas: undefined
       })
 
-      const result = handleScale(clusterState, parsed, eventBus)
+      const result = handleScale(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -52,7 +48,7 @@ describe('kubectl scale handler', () => {
         replicas: -1
       })
 
-      const result = handleScale(clusterState, parsed, eventBus)
+      const result = handleScale(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -66,7 +62,7 @@ describe('kubectl scale handler', () => {
         replicas: 3
       })
 
-      const result = handleScale(clusterState, parsed, eventBus)
+      const result = handleScale(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -81,7 +77,7 @@ describe('kubectl scale handler', () => {
         replicas: 3
       })
 
-      const result = handleScale(clusterState, parsed, eventBus)
+      const result = handleScale(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -96,7 +92,7 @@ describe('kubectl scale handler', () => {
         replicas: 3
       })
 
-      const result = handleScale(clusterState, parsed, eventBus)
+      const result = handleScale(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -117,7 +113,7 @@ describe('kubectl scale handler', () => {
           spec: { containers: [{ name: 'nginx', image: 'nginx:latest' }] }
         }
       })
-      clusterState.addDeployment(deployment)
+      apiServer.createResource('Deployment', deployment)
 
       const parsed = createParsedCommand({
         name: 'nginx-deployment',
@@ -125,7 +121,7 @@ describe('kubectl scale handler', () => {
         replicas: 5
       })
 
-      const result = handleScale(clusterState, parsed, eventBus)
+      const result = handleScale(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -147,7 +143,7 @@ describe('kubectl scale handler', () => {
           spec: { containers: [{ name: 'nginx', image: 'nginx:latest' }] }
         }
       })
-      clusterState.addDeployment(deployment)
+      apiServer.createResource('Deployment', deployment)
 
       const parsed = createParsedCommand({
         name: 'nginx-deployment',
@@ -155,7 +151,7 @@ describe('kubectl scale handler', () => {
         replicas: 5
       })
 
-      handleScale(clusterState, parsed, eventBus)
+      handleScale(apiServer, parsed)
 
       expect(subscriber).toHaveBeenCalled()
       const event = subscriber.mock.calls[0][0]
@@ -170,7 +166,7 @@ describe('kubectl scale handler', () => {
         replicas: 3
       })
 
-      const result = handleScale(clusterState, parsed, eventBus)
+      const result = handleScale(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -179,7 +175,7 @@ describe('kubectl scale handler', () => {
     })
 
     it('should scale deployment in specified namespace', () => {
-      clusterState.addNamespace(createNamespace({ name: 'production' }))
+      apiServer.createResource('Namespace', createNamespace({ name: 'production' }))
       const deployment = createDeployment({
         name: 'nginx-deployment',
         namespace: 'production',
@@ -190,7 +186,7 @@ describe('kubectl scale handler', () => {
           spec: { containers: [{ name: 'nginx', image: 'nginx:latest' }] }
         }
       })
-      clusterState.addDeployment(deployment)
+      apiServer.createResource('Deployment', deployment)
 
       const parsed = createParsedCommand({
         name: 'nginx-deployment',
@@ -199,13 +195,13 @@ describe('kubectl scale handler', () => {
         replicas: 10
       })
 
-      const result = handleScale(clusterState, parsed, eventBus)
+      const result = handleScale(apiServer, parsed)
 
       expect(result.ok).toBe(true)
     })
 
     it('should not find deployment in wrong namespace', () => {
-      clusterState.addNamespace(createNamespace({ name: 'production' }))
+      apiServer.createResource('Namespace', createNamespace({ name: 'production' }))
       const deployment = createDeployment({
         name: 'nginx-deployment',
         namespace: 'production',
@@ -216,7 +212,7 @@ describe('kubectl scale handler', () => {
           spec: { containers: [{ name: 'nginx', image: 'nginx:latest' }] }
         }
       })
-      clusterState.addDeployment(deployment)
+      apiServer.createResource('Deployment', deployment)
 
       const parsed = createParsedCommand({
         name: 'nginx-deployment',
@@ -225,7 +221,7 @@ describe('kubectl scale handler', () => {
         replicas: 5
       })
 
-      const result = handleScale(clusterState, parsed, eventBus)
+      const result = handleScale(apiServer, parsed)
 
       expect(result.ok).toBe(false)
     })
@@ -241,7 +237,7 @@ describe('kubectl scale handler', () => {
           spec: { containers: [{ name: 'nginx', image: 'nginx:latest' }] }
         }
       })
-      clusterState.addDeployment(deployment)
+      apiServer.createResource('Deployment', deployment)
 
       const parsed = createParsedCommand({
         name: 'nginx-deployment',
@@ -249,7 +245,7 @@ describe('kubectl scale handler', () => {
         replicas: 0
       })
 
-      const result = handleScale(clusterState, parsed, eventBus)
+      const result = handleScale(apiServer, parsed)
 
       expect(result.ok).toBe(true)
     })
@@ -267,7 +263,7 @@ describe('kubectl scale handler', () => {
           spec: { containers: [{ name: 'nginx', image: 'nginx:latest' }] }
         }
       })
-      clusterState.addReplicaSet(replicaSet)
+      apiServer.createResource('ReplicaSet', replicaSet)
 
       const parsed = createParsedCommand({
         name: 'nginx-rs',
@@ -275,7 +271,7 @@ describe('kubectl scale handler', () => {
         replicas: 5
       })
 
-      const result = handleScale(clusterState, parsed, eventBus)
+      const result = handleScale(apiServer, parsed)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -297,7 +293,7 @@ describe('kubectl scale handler', () => {
           spec: { containers: [{ name: 'nginx', image: 'nginx:latest' }] }
         }
       })
-      clusterState.addReplicaSet(replicaSet)
+      apiServer.createResource('ReplicaSet', replicaSet)
 
       const parsed = createParsedCommand({
         name: 'nginx-rs',
@@ -305,7 +301,7 @@ describe('kubectl scale handler', () => {
         replicas: 8
       })
 
-      handleScale(clusterState, parsed, eventBus)
+      handleScale(apiServer, parsed)
 
       expect(subscriber).toHaveBeenCalled()
       const event = subscriber.mock.calls[0][0]
@@ -320,7 +316,7 @@ describe('kubectl scale handler', () => {
         replicas: 3
       })
 
-      const result = handleScale(clusterState, parsed, eventBus)
+      const result = handleScale(apiServer, parsed)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -341,7 +337,7 @@ describe('kubectl scale handler', () => {
           spec: { containers: [{ name: 'nginx', image: 'nginx:latest' }] }
         }
       })
-      clusterState.addDeployment(deployment)
+      apiServer.createResource('Deployment', deployment)
 
       const parsed = createParsedCommand({
         name: 'nginx-deployment',
@@ -350,7 +346,7 @@ describe('kubectl scale handler', () => {
         // no namespace specified
       })
 
-      const result = handleScale(clusterState, parsed, eventBus)
+      const result = handleScale(apiServer, parsed)
 
       expect(result.ok).toBe(true)
     })

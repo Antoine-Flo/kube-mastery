@@ -66,8 +66,8 @@ function getPodWorkloadType(pod: Pod, env: EmulatedEnvironment): string {
 
   const replicaSetOwnerRef = ownerRefs.find((ref) => ref.kind === 'ReplicaSet')
   if (replicaSetOwnerRef != null) {
-    const replicaSet = env.clusterState
-      .getReplicaSets(pod.metadata.namespace)
+    const replicaSet = env.apiServer
+      .listResources('ReplicaSet', pod.metadata.namespace)
       .find((item) => item.metadata.name === replicaSetOwnerRef.name)
     if (replicaSet != null) {
       const replicaSetOwnerRefs = replicaSet.metadata.ownerReferences ?? []
@@ -105,10 +105,9 @@ function formatContainerTooltip(
   },
   status?: NonNullable<Pod['status']['containerStatuses']>[number]
 ): string {
-  const state = status?.state ?? 'Waiting'
+  const state = status?.stateDetails?.state ?? 'Waiting'
   const reason =
-    status?.waitingReason ??
-    status?.terminatedReason ??
+    status?.stateDetails?.reason ??
     (state === 'Running' ? 'Started' : 'ContainerCreating')
   return `Container\n${container.name}\nImage: ${container.image}\nState: ${state}\nReason: ${reason}\nRestarts: ${status?.restartCount ?? 0}`
 }
@@ -119,13 +118,10 @@ function getPodDisplayStatus(pod: Pod): string {
   }
   const statuses = pod.status.containerStatuses ?? []
   const statusWithReason = statuses.find((status) => {
-    return status.waitingReason != null || status.terminatedReason != null
+    return status.stateDetails?.reason != null
   })
-  if (statusWithReason?.waitingReason != null) {
-    return statusWithReason.waitingReason
-  }
-  if (statusWithReason?.terminatedReason != null) {
-    return statusWithReason.terminatedReason
+  if (statusWithReason?.stateDetails?.reason != null) {
+    return statusWithReason.stateDetails.reason
   }
   return pod.status.phase
 }
@@ -147,7 +143,7 @@ export interface MountClusterViewerOptions {
 }
 
 function getSortedNamespaces(env: EmulatedEnvironment): string[] {
-  const namespaces = env.clusterState.getNamespaces().map((namespace) => {
+  const namespaces = env.apiServer.listResources('Namespace').map((namespace) => {
     return namespace.metadata.name
   })
   return namespaces.sort((a, b) => {
@@ -537,8 +533,8 @@ function renderCluster(
   selectedLayer: ClusterVizLayer,
   focus: ClusterVizFocus | null
 ): void {
-  const nodes = env.clusterState.getNodes()
-  const allPods = [...env.clusterState.getPods()].sort((a, b) => {
+  const nodes = env.apiServer.listResources('Node')
+  const allPods = [...env.apiServer.listResources('Pod')].sort((a, b) => {
     const namespaceDiff = a.metadata.namespace.localeCompare(
       b.metadata.namespace
     )
@@ -600,10 +596,11 @@ function createPodEl(
   const containersEl = div.querySelector('.cluster-viz__containers')!
   for (const c of containers) {
     const containerStatus = statusesByName.get(c.name)
+    const containerState = containerStatus?.stateDetails?.state
     const containerStateClass =
-      containerStatus?.state === 'Running'
+      containerState === 'Running'
         ? 'cluster-viz__container--running'
-        : containerStatus?.state === 'Terminated'
+        : containerState === 'Terminated'
           ? 'cluster-viz__container--terminated'
           : 'cluster-viz__container--waiting'
     const cEl = document.createElement('span')
@@ -780,18 +777,19 @@ export function mountClusterViewer(
   contentElement.addEventListener('click', onLayerChange)
   contentElement.addEventListener('click', onFocusClick)
 
-  const unsub = env.eventBus.subscribeFiltered(
-    (e) =>
-      e.type.startsWith('Pod') ||
-      e.type.startsWith('Node') ||
-      e.type.startsWith('Service') ||
-      e.type.startsWith('Deployment') ||
-      e.type.startsWith('ReplicaSet') ||
-      e.type.startsWith('DaemonSet'),
-    () => {
-      render()
+  const unsub = env.apiServer.watchHub.watchAllClusterEvents((event) => {
+    const shouldRender =
+      event.type.startsWith('Pod') ||
+      event.type.startsWith('Node') ||
+      event.type.startsWith('Service') ||
+      event.type.startsWith('Deployment') ||
+      event.type.startsWith('ReplicaSet') ||
+      event.type.startsWith('DaemonSet')
+    if (!shouldRender) {
+      return
     }
-  )
+    render()
+  })
 
   return () => {
     unsub()

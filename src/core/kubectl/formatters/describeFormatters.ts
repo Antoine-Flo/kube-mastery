@@ -6,6 +6,7 @@
 
 import type { ConfigMap } from '../../cluster/ressources/ConfigMap'
 import type { ClusterStateData } from '../../cluster/ClusterState'
+import type { PodLifecycleDescribeEvent } from '../../api/PodLifecycleEventStore'
 import type {
   Deployment,
   DeploymentCondition,
@@ -21,6 +22,7 @@ import { getNodeRoles } from '../../cluster/ressources/Node'
 import type { PersistentVolume } from '../../cluster/ressources/PersistentVolume'
 import type { PersistentVolumeClaim } from '../../cluster/ressources/PersistentVolumeClaim'
 import type {
+  ContainerRuntimeStateDetails,
   ContainerStatus,
   EnvVar,
   Pod,
@@ -714,6 +716,41 @@ const formatNodePodResources = (node: Node, pods: Pod[]): string[] => {
   return lines
 }
 
+const resolveContainerStateDetails = (
+  status: ContainerStatus | undefined
+): ContainerRuntimeStateDetails | undefined => {
+  return status?.stateDetails
+}
+
+const resolveContainerLastStateDetails = (
+  status: ContainerStatus | undefined
+): ContainerRuntimeStateDetails | undefined => {
+  if (status == null) {
+    return undefined
+  }
+  return status.lastStateDetails
+}
+
+const appendContainerStateBlock = (
+  lines: string[],
+  label: 'State' | 'Last State',
+  stateDetails: ContainerRuntimeStateDetails
+): void => {
+  lines.push(`    ${label}:          ${stateDetails.state}`)
+  if (stateDetails.reason != null && stateDetails.reason.length > 0) {
+    lines.push(`      Reason:       ${stateDetails.reason}`)
+  }
+  if (stateDetails.exitCode != null) {
+    lines.push(`      Exit Code:    ${stateDetails.exitCode}`)
+  }
+  if (stateDetails.startedAt != null) {
+    lines.push(`      Started:      ${formatDescribeDate(stateDetails.startedAt)}`)
+  }
+  if (stateDetails.finishedAt != null) {
+    lines.push(`      Finished:     ${formatDescribeDate(stateDetails.finishedAt)}`)
+  }
+}
+
 // ─── Container Formatter ─────────────────────────────────────────────────
 
 /**
@@ -728,8 +765,8 @@ const formatContainer = (
   lines.push(indent(`${container.name}:`, 1))
 
   // Container state (for init containers)
-  if (containerStatus?.state) {
-    lines.push(indent(kv('State', containerStatus.state), 2))
+  if (containerStatus?.stateDetails?.state != null) {
+    lines.push(indent(kv('State', containerStatus.stateDetails.state), 2))
   }
 
   lines.push(indent(kv('Image', container.image), 2))
@@ -883,6 +920,160 @@ const formatDefaultPodEvents = (pod: Pod, nodeName: string): string[] => {
   ]
 }
 
+const getPrimaryContainerStatus = (pod: Pod): ContainerStatus | undefined => {
+  const primaryContainer = pod.spec.containers[0]
+  if (primaryContainer == null) {
+    return undefined
+  }
+  return (pod.status.containerStatuses ?? []).find((status) => {
+    return status.name === primaryContainer.name
+  })
+}
+
+const formatPodLifecycleWarningEvents = (
+  pod: Pod,
+  status: ContainerStatus | undefined,
+  age: string
+): string[] => {
+  const lines: string[] = []
+  const primaryContainer = pod.spec.containers[0]
+  const containerName = primaryContainer?.name ?? 'container'
+  const containerImage = primaryContainer?.image ?? '<unknown>'
+  const reason = status?.stateDetails?.reason
+  if (reason == null) {
+    return lines
+  }
+  if (reason === 'ErrImagePull') {
+    lines.push(
+      `  Warning Failed     ${age}    kubelet            Failed to pull image "${containerImage}": image not found`
+    )
+    return lines
+  }
+  if (reason === 'ImagePullBackOff') {
+    lines.push(
+      `  Warning BackOff    ${age}    kubelet            Back-off pulling image "${containerImage}"`
+    )
+    return lines
+  }
+  if (reason === 'CrashLoopBackOff') {
+    lines.push(
+      `  Warning BackOff    ${age}    kubelet            Back-off restarting failed container ${containerName} in pod ${pod.metadata.namespace}/${pod.metadata.name}`
+    )
+    return lines
+  }
+  if (
+    reason === 'VolumesNotReady' ||
+    reason === 'WaitingForPVC' ||
+    reason === 'PersistentVolumeClaimPending' ||
+    reason === 'PersistentVolumeClaimNotFound'
+  ) {
+    lines.push(
+      `  Warning FailedMount ${age}   kubelet            Unable to attach or mount volumes: timed out waiting for condition`
+    )
+    return lines
+  }
+  return lines
+}
+
+const formatPodEvents = (pod: Pod, nodeName: string): string[] => {
+  const age = formatAge(pod.metadata.creationTimestamp)
+  const primaryStatus = getPrimaryContainerStatus(pod)
+  const warnings = formatPodLifecycleWarningEvents(pod, primaryStatus, age)
+  if (pod.status.phase !== 'Running') {
+    if (warnings.length === 0) {
+      return ['Events:            <none>']
+    }
+    return [
+      'Events:',
+      '  Type    Reason      Age   From               Message',
+      '  ----    ------      ----  ----               -------',
+      ...warnings
+    ]
+  }
+  return [...formatDefaultPodEvents(pod, nodeName), ...warnings]
+}
+
+const formatStoredPodEvents = (
+  events: readonly PodLifecycleDescribeEvent[]
+): string[] => {
+  if (events.length === 0) {
+    return ['Events:            <none>']
+  }
+  const parseTimestamp = (value: string): number => {
+    const parsed = Date.parse(value)
+    if (Number.isNaN(parsed)) {
+      return 0
+    }
+    return parsed
+  }
+  const aggregatedByKey = new Map<
+    string,
+    {
+      type: PodLifecycleDescribeEvent['type']
+      reason: string
+      source: string
+      message: string
+      firstTimestamp: string
+      lastTimestamp: string
+      count: number
+      firstSeenAtMs: number
+    }
+  >()
+  for (const event of events) {
+    const key = [event.type, event.reason, event.source, event.message].join('|')
+    const eventTs = parseTimestamp(event.timestamp)
+    const existing = aggregatedByKey.get(key)
+    if (existing == null) {
+      aggregatedByKey.set(key, {
+        type: event.type,
+        reason: event.reason,
+        source: event.source,
+        message: event.message,
+        firstTimestamp: event.timestamp,
+        lastTimestamp: event.timestamp,
+        count: 1,
+        firstSeenAtMs: eventTs
+      })
+      continue
+    }
+    if (eventTs >= parseTimestamp(existing.lastTimestamp)) {
+      existing.lastTimestamp = event.timestamp
+    }
+    if (eventTs < existing.firstSeenAtMs) {
+      existing.firstSeenAtMs = eventTs
+      existing.firstTimestamp = event.timestamp
+    }
+    existing.count += 1
+  }
+  const aggregatedEvents = Array.from(aggregatedByKey.values()).sort(
+    (left, right) => {
+      return left.firstSeenAtMs - right.firstSeenAtMs
+    }
+  )
+  const maxReasonLength = aggregatedEvents.reduce((currentMax, event) => {
+    return Math.max(currentMax, event.reason.length)
+  }, 6)
+  const maxCountLength = aggregatedEvents.reduce((currentMax, event) => {
+    return Math.max(currentMax, String(event.count).length)
+  }, 5)
+  const lines: string[] = [
+    'Events:',
+    '  Type    Reason      First Seen  Last Seen   Count   From               Message',
+    '  ----    ------      ----------  ---------   -----   ----               -------'
+  ]
+  for (const event of aggregatedEvents) {
+    const firstSeen = formatAge(event.firstTimestamp)
+    const lastSeen = formatAge(event.lastTimestamp)
+    const reason = event.reason.padEnd(maxReasonLength)
+    const count = String(event.count).padEnd(maxCountLength)
+    const source = event.source.padEnd(18)
+    lines.push(
+      `  ${event.type.padEnd(7)} ${reason}  ${firstSeen.padEnd(10)}  ${lastSeen.padEnd(9)}   ${count}   ${source} ${event.message}`
+    )
+  }
+  return lines
+}
+
 const formatStaticControlPlaneHeader = (
   pod: Pod
 ): {
@@ -936,7 +1127,10 @@ const formatProbeInline = (
 /**
  * Format detailed pod description
  */
-export const describePod = (pod: Pod): string => {
+export const describePod = (
+  pod: Pod,
+  podLifecycleEvents?: readonly PodLifecycleDescribeEvent[]
+): string => {
   const lines: string[] = []
   const podIP = pod.status.podIP ?? simulatePodIP(pod.metadata.name)
   const nodeName = pod.spec.nodeName ?? '<none>'
@@ -1035,11 +1229,15 @@ export const describePod = (pod: Pod): string => {
         lines.push(`      ${arg}`)
       })
     }
-    const state =
-      status?.state ?? (pod.status.phase === 'Running' ? 'Running' : 'Waiting')
-    lines.push(`    State:          ${state}`)
-    if (status?.startedAt != null) {
-      lines.push(`      Started:      ${formatDescribeDate(status.startedAt)}`)
+    const currentStateDetails =
+      resolveContainerStateDetails(status) ??
+      ({
+        state: pod.status.phase === 'Running' ? 'Running' : 'Waiting'
+      } as ContainerRuntimeStateDetails)
+    appendContainerStateBlock(lines, 'State', currentStateDetails)
+    const lastStateDetails = resolveContainerLastStateDetails(status)
+    if (lastStateDetails != null) {
+      appendContainerStateBlock(lines, 'Last State', lastStateDetails)
     }
     lines.push(
       `    Ready:          ${status?.ready === true ? 'True' : 'False'}`
@@ -1145,12 +1343,12 @@ export const describePod = (pod: Pod): string => {
           ]
         : undefined)
   lines.push(...formatPodTolerations(effectiveTolerations))
-  if (
-    isStaticControlPlanePod === false &&
-    hasNodeAssignment &&
-    pod.status.phase === 'Running'
-  ) {
-    lines.push(...formatDefaultPodEvents(pod, nodeName))
+  if (isStaticControlPlanePod === false && hasNodeAssignment) {
+    if (podLifecycleEvents != null && podLifecycleEvents.length > 0) {
+      lines.push(...formatStoredPodEvents(podLifecycleEvents))
+    } else {
+      lines.push(...formatPodEvents(pod, nodeName))
+    }
   } else {
     lines.push('Events:            <none>')
   }

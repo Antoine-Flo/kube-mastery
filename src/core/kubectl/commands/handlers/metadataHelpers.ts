@@ -1,10 +1,7 @@
 import {
-  createClusterState,
-  type ClusterStateData,
   type ResourceKind
 } from '../../../cluster/ClusterState'
-import type { EventBus } from '../../../cluster/events/EventBus'
-import { createEventBus } from '../../../cluster/events/EventBus'
+import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import {
   createConfigMapAnnotatedEvent,
   createConfigMapLabeledEvent,
@@ -130,11 +127,10 @@ const RESOURCE_ACCESSORS: Record<
  * Uses event-driven architecture to apply changes
  */
 export const handleMetadataChange = (
-  state: ClusterStateData,
+  apiServer: ApiServerFacade,
   parsed: ParsedCommand,
-  config: MetadataOperationConfig,
-  eventBus: EventBus
-): ExecutionResult & { state?: ClusterStateData } => {
+  config: MetadataOperationConfig
+): ExecutionResult => {
   const namespace = parsed.namespace || 'default'
 
   // Validate resource type
@@ -161,14 +157,13 @@ export const handleMetadataChange = (
   const overwrite = parsed.flags['overwrite'] === true
 
   return handleMetadataChangeWithEvents(
-    state,
     parsed.resource,
     parsed.name,
     namespace,
     changes,
     overwrite,
     config,
-    eventBus
+    apiServer
   )
 }
 
@@ -177,32 +172,26 @@ export const handleMetadataChange = (
  * Event-driven approach that emits appropriate events
  */
 const handleMetadataChangeWithEvents = (
-  state: ClusterStateData,
   resourceType: string,
   name: string,
   namespace: string,
   changes: Record<string, string | null>,
   overwrite: boolean,
   config: MetadataOperationConfig,
-  eventBus: EventBus
-): ExecutionResult & { state?: ClusterStateData } => {
+  apiServer: ApiServerFacade
+): ExecutionResult => {
   const accessor = RESOURCE_ACCESSORS[resourceType]
   if (!accessor) {
     return error(`Resource type "${resourceType}" is not supported`)
   }
 
-  const lookupState = createClusterState(createEventBus())
-  lookupState.loadState(state)
-  const resourceResult = lookupState.findByKind(accessor.kind, name, namespace)
-  const resource = resourceResult.ok
-    ? (resourceResult.value as ResourceWithMetadata)
-    : undefined
-
-  if (!resource) {
+  const resourceResult = apiServer.findResource(accessor.kind, name, namespace)
+  if (!resourceResult.ok) {
     return error(
       `Error from server (NotFound): ${resourceType} "${name}" not found`
     )
   }
+  const resource = resourceResult.value as ResourceWithMetadata
 
   // Apply metadata changes
   const updateResult = applyMetadataChanges(
@@ -220,33 +209,72 @@ const handleMetadataChangeWithEvents = (
   const metadataValue = updatedResource.metadata[metadataKey] || {}
 
   // Emit appropriate event based on resource type and metadata type
-  const eventFactoryMap = {
-    pods: {
-      labels: createPodLabeledEvent,
-      annotations: createPodAnnotatedEvent
-    },
-    configmaps: {
-      labels: createConfigMapLabeledEvent,
-      annotations: createConfigMapAnnotatedEvent
-    },
-    secrets: {
-      labels: createSecretLabeledEvent,
-      annotations: createSecretAnnotatedEvent
-    }
-  }
-
-  const factory =
-    eventFactoryMap[resourceType as keyof typeof eventFactoryMap]?.[metadataKey]
-  if (factory) {
-    const event = factory(
-      name,
-      namespace,
-      metadataValue,
-      updatedResource as any,
-      resource as any,
-      'kubectl'
-    )
-    eventBus.emit(event)
+  if (accessor.kind === 'Pod') {
+    const pod = resource as Pod
+    const updatedPod = updatedResource as Pod
+    const event =
+      metadataKey === 'labels'
+        ? createPodLabeledEvent(
+            name,
+            namespace,
+            metadataValue,
+            updatedPod,
+            pod,
+            'kubectl'
+          )
+        : createPodAnnotatedEvent(
+            name,
+            namespace,
+            metadataValue,
+            updatedPod,
+            pod,
+            'kubectl'
+          )
+    apiServer.emitEvent(event)
+  } else if (accessor.kind === 'ConfigMap') {
+    const configMap = resource as ConfigMap
+    const updatedConfigMap = updatedResource as ConfigMap
+    const event =
+      metadataKey === 'labels'
+        ? createConfigMapLabeledEvent(
+            name,
+            namespace,
+            metadataValue,
+            updatedConfigMap,
+            configMap,
+            'kubectl'
+          )
+        : createConfigMapAnnotatedEvent(
+            name,
+            namespace,
+            metadataValue,
+            updatedConfigMap,
+            configMap,
+            'kubectl'
+          )
+    apiServer.emitEvent(event)
+  } else if (accessor.kind === 'Secret') {
+    const secret = resource as Secret
+    const updatedSecret = updatedResource as Secret
+    const event =
+      metadataKey === 'labels'
+        ? createSecretLabeledEvent(
+            name,
+            namespace,
+            metadataValue,
+            updatedSecret,
+            secret,
+            'kubectl'
+          )
+        : createSecretAnnotatedEvent(
+            name,
+            namespace,
+            metadataValue,
+            updatedSecret,
+            secret,
+            'kubectl'
+          )
+    apiServer.emitEvent(event)
   }
 
   return {

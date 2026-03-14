@@ -1,17 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { handleMetadataChange } from '../../../../../src/core/kubectl/commands/handlers/metadataHelpers'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
-import {
-  createEventBus,
-  type EventBus
-} from '../../../../../src/core/cluster/events/EventBus'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 import { createClusterStateData } from '../../../helpers/utils'
 
 describe('metadataHelpers', () => {
-  let eventBus: EventBus
+  let apiServer: ReturnType<typeof createApiServerFacade>
 
   const labelConfig = {
     metadataType: 'labels' as const,
@@ -28,7 +25,7 @@ describe('metadataHelpers', () => {
   }
 
   beforeEach(() => {
-    eventBus = createEventBus()
+    apiServer = createApiServerFacade()
   })
 
   const createState = (
@@ -54,7 +51,8 @@ describe('metadataHelpers', () => {
         labelChanges: { app: 'test' }
       })
 
-      const result = handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -69,7 +67,8 @@ describe('metadataHelpers', () => {
         labelChanges: undefined
       })
 
-      const result = handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -84,7 +83,8 @@ describe('metadataHelpers', () => {
         labelChanges: {}
       })
 
-      const result = handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(false)
     })
@@ -97,7 +97,8 @@ describe('metadataHelpers', () => {
         labelChanges: { app: 'test' }
       })
 
-      const result = handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -112,7 +113,8 @@ describe('metadataHelpers', () => {
         labelChanges: { app: 'test' }
       })
 
-      const result = handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -134,7 +136,8 @@ describe('metadataHelpers', () => {
         labelChanges: { app: 'web' }
       })
 
-      const result = handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -155,7 +158,8 @@ describe('metadataHelpers', () => {
         labelChanges: { app: 'new-value' }
       })
 
-      const result = handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
@@ -178,7 +182,8 @@ describe('metadataHelpers', () => {
         flags: { overwrite: true }
       })
 
-      const result = handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(true)
     })
@@ -196,14 +201,15 @@ describe('metadataHelpers', () => {
         labelChanges: { app: null }
       })
 
-      const result = handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(true)
     })
 
     it('should emit PodLabeled event', () => {
       const subscriber = vi.fn()
-      eventBus.subscribe('PodLabeled', subscriber)
+      apiServer.eventBus.subscribe('PodLabeled', subscriber)
 
       const pod = createPod({
         name: 'my-pod',
@@ -216,7 +222,8 @@ describe('metadataHelpers', () => {
         labelChanges: { app: 'web' }
       })
 
-      handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(subscriber).toHaveBeenCalled()
     })
@@ -236,12 +243,8 @@ describe('metadataHelpers', () => {
         annotationChanges: { description: 'My app' }
       })
 
-      const result = handleMetadataChange(
-        state,
-        parsed,
-        annotateConfig,
-        eventBus
-      )
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, annotateConfig)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -251,7 +254,7 @@ describe('metadataHelpers', () => {
 
     it('should emit PodAnnotated event', () => {
       const subscriber = vi.fn()
-      eventBus.subscribe('PodAnnotated', subscriber)
+      apiServer.eventBus.subscribe('PodAnnotated', subscriber)
 
       const pod = createPod({
         name: 'my-pod',
@@ -265,7 +268,8 @@ describe('metadataHelpers', () => {
         annotationChanges: { note: 'important' }
       })
 
-      handleMetadataChange(state, parsed, annotateConfig, eventBus)
+      apiServer.etcd.restore(state)
+      handleMetadataChange(apiServer, parsed, annotateConfig)
 
       expect(subscriber).toHaveBeenCalled()
     })
@@ -285,7 +289,8 @@ describe('metadataHelpers', () => {
         labelChanges: { env: 'prod' }
       })
 
-      const result = handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -296,7 +301,7 @@ describe('metadataHelpers', () => {
 
     it('should emit ConfigMapLabeled event', () => {
       const subscriber = vi.fn()
-      eventBus.subscribe('ConfigMapLabeled', subscriber)
+      apiServer.eventBus.subscribe('ConfigMapLabeled', subscriber)
 
       const cm = createConfigMap({
         name: 'my-config',
@@ -310,7 +315,8 @@ describe('metadataHelpers', () => {
         labelChanges: { app: 'test' }
       })
 
-      handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(subscriber).toHaveBeenCalled()
     })
@@ -331,7 +337,8 @@ describe('metadataHelpers', () => {
         labelChanges: { type: 'credentials' }
       })
 
-      const result = handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(true)
       if (result.ok) {
@@ -342,7 +349,7 @@ describe('metadataHelpers', () => {
 
     it('should emit SecretLabeled event', () => {
       const subscriber = vi.fn()
-      eventBus.subscribe('SecretLabeled', subscriber)
+      apiServer.eventBus.subscribe('SecretLabeled', subscriber)
 
       const secret = createSecret({
         name: 'my-secret',
@@ -357,7 +364,8 @@ describe('metadataHelpers', () => {
         labelChanges: { app: 'test' }
       })
 
-      handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(subscriber).toHaveBeenCalled()
     })
@@ -376,7 +384,8 @@ describe('metadataHelpers', () => {
         labelChanges: { app: 'test' }
       })
 
-      const result = handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(true)
     })
@@ -394,7 +403,8 @@ describe('metadataHelpers', () => {
         labelChanges: { app: 'test' }
       })
 
-      const result = handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(true)
     })
@@ -412,7 +422,8 @@ describe('metadataHelpers', () => {
         labelChanges: { app: 'test' }
       })
 
-      const result = handleMetadataChange(state, parsed, labelConfig, eventBus)
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(false)
     })

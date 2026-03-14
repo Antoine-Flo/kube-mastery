@@ -3,20 +3,22 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Reconciles unscheduled pods by assigning an eligible node.
 
-import type { EventBus } from '../events/EventBus'
-import type { ClusterEvent } from '../events/types'
-import { createPodBoundEvent, createPodUpdatedEvent } from '../events/types'
-import type { Node } from '../ressources/Node'
-import type { Pod } from '../ressources/Pod'
-import { isNodeEligibleForPod } from '../scheduler/SimSchedulingPredicates'
-import { startPeriodicResync, subscribeToEvents } from './helpers'
+import type { ApiServerFacade } from '../../api/ApiServerFacade'
+import type { EventBus } from '../../cluster/events/EventBus'
+import type { ClusterEvent } from '../../cluster/events/types'
+import { createPodBoundEvent } from '../../cluster/events/types'
+import type { Node } from '../../cluster/ressources/Node'
+import type { Pod } from '../../cluster/ressources/Pod'
+import { isNodeEligibleForPod } from '../../cluster/scheduler/SimSchedulingPredicates'
+import { startPeriodicResync, subscribeToEvents } from '../controller-runtime/helpers'
+import { createControllerStateFromApi } from '../controller-runtime/stateFromApi'
 import type {
   ClusterEventType,
-  ControllerResyncOptions,
   ControllerState,
+  ControllerResyncOptions,
   ReconcilerController
-} from './types'
-import { createWorkQueue, type WorkQueue } from './WorkQueue'
+} from '../controller-runtime/types'
+import { createWorkQueue, type WorkQueue } from '../controller-runtime/WorkQueue'
 
 export interface SchedulerControllerOptions extends ControllerResyncOptions {
   schedulingDelayRangeMs?: {
@@ -49,7 +51,9 @@ const randomInRange = (min: number, max: number): number => {
 }
 
 export class SchedulerController implements ReconcilerController {
+  private apiServer: ApiServerFacade
   private eventBus: EventBus
+  private emitEvent: ApiServerFacade['emitEvent']
   private getState: () => ControllerState
   private workQueue: WorkQueue
   private unsubscribe: (() => void) | null = null
@@ -59,12 +63,13 @@ export class SchedulerController implements ReconcilerController {
   private pendingTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
   constructor(
-    eventBus: EventBus,
-    getState: () => ControllerState,
+    apiServer: ApiServerFacade,
     options: SchedulerControllerOptions = {}
   ) {
-    this.eventBus = eventBus
-    this.getState = getState
+    this.apiServer = apiServer
+    this.eventBus = apiServer.getEventBus()
+    this.emitEvent = apiServer.emitEvent
+    this.getState = () => createControllerStateFromApi(apiServer)
     this.options = options
     this.workQueue = createWorkQueue({ processDelay: 0 })
   }
@@ -212,16 +217,13 @@ export class SchedulerController implements ReconcilerController {
       }
     }
 
-    this.eventBus.emit(
-      createPodUpdatedEvent(
-        pod.metadata.name,
-        pod.metadata.namespace,
-        updatedPod,
-        pod,
-        'scheduler-controller'
-      )
+    this.apiServer.updateResource(
+      'Pod',
+      pod.metadata.name,
+      updatedPod,
+      pod.metadata.namespace
     )
-    this.eventBus.emit(
+    this.emitEvent(
       createPodBoundEvent(
         pod.metadata.name,
         pod.metadata.namespace,
@@ -250,11 +252,10 @@ export class SchedulerController implements ReconcilerController {
 }
 
 export const createSchedulerController = (
-  eventBus: EventBus,
-  getState: () => ControllerState,
+  apiServer: ApiServerFacade,
   options: SchedulerControllerOptions = {}
 ): SchedulerController => {
-  const controller = new SchedulerController(eventBus, getState, options)
+  const controller = new SchedulerController(apiServer, options)
   controller.start()
   return controller
 }

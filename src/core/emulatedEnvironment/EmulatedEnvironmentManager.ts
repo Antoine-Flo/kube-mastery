@@ -4,15 +4,17 @@
 // Manages emulated environment lifecycle: create, switch, destroy
 // Handles memory cleanup and auto-save logic
 
-import { createClusterState } from '../cluster/ClusterState'
 import {
-  initializeControllers,
-  stopRuntimeControllers
-} from '../cluster/controllers/initializers'
-import { createEventBus, type EventBus } from '../cluster/events/EventBus'
+  createApiServerFacade,
+  type ApiServerFacade
+} from '../api/ApiServerFacade'
+import {
+  startControlPlaneRuntime,
+  type ControlPlaneRuntime
+} from '../control-plane/ControllerManager'
 import { initializeSimPodIpAllocation } from '../cluster/ipAllocator/SimPodIpAllocationService'
 import { createSimulatorBootstrapConfig } from '../cluster/systemBootstrap'
-import type { AppEvent } from '../events/AppEvent'
+import type { FileSystemState } from '../filesystem/FileSystem'
 import { createHostFileSystem } from '../filesystem/debianFileSystem'
 import { initializeSimNetworkRuntime } from '../network/SimNetworkRuntime'
 import { initializeSimVolumeRuntime } from '../volumes/SimVolumeRuntime'
@@ -59,34 +61,24 @@ export function createEmulatedEnvironment(
     autoSaveDelay = 2000
   } = options
 
-  let fileSystemState
-  let eventBus: EventBus
-  let clusterState
-  let storageMode: 'indexeddb' | 'none' = 'none'
+  let fileSystemState: FileSystemState
+  let apiServer: ApiServerFacade
+  let controlPlaneRuntime: ControlPlaneRuntime
+  const storageMode: 'indexeddb' | 'none' =
+    providedFilesystemState != null && userId != null ? 'indexeddb' : 'none'
   const bootstrapConfig = createSimulatorBootstrapConfig()
-
-  if (providedFilesystemState) {
-    storageMode = userId ? 'indexeddb' : 'none'
-    fileSystemState = providedFilesystemState
-    eventBus = createEventBus()
-    clusterState = createClusterState(eventBus, {
-      bootstrap: bootstrapConfig
-    })
-  } else {
-    storageMode = 'none'
-    fileSystemState = createHostFileSystem()
-    eventBus = createEventBus()
-    clusterState = createClusterState(eventBus, {
-      bootstrap: bootstrapConfig
-    })
-  }
+  fileSystemState = providedFilesystemState ?? createHostFileSystem()
+  apiServer = createApiServerFacade({
+    bootstrap: bootstrapConfig
+  })
+  const eventBus = apiServer.getEventBus()
 
   const shellContextStack = new ShellContextStack(fileSystemState)
-  const volumeRuntime = initializeSimVolumeRuntime(eventBus, clusterState)
-  const networkRuntime = initializeSimNetworkRuntime(eventBus, clusterState)
+  const volumeRuntime = initializeSimVolumeRuntime(apiServer)
+  const networkRuntime = initializeSimNetworkRuntime(apiServer)
 
   const resyncConfig = CONFIG.runtime.simRuntimeResyncIntervalMs
-  const controllers = initializeControllers(eventBus, clusterState, {
+  controlPlaneRuntime = startControlPlaneRuntime(apiServer, {
     deployment: { resyncIntervalMs: resyncConfig.deployment },
     daemonSet: { resyncIntervalMs: resyncConfig.daemonSet },
     replicaSet: { resyncIntervalMs: resyncConfig.replicaSet },
@@ -109,10 +101,7 @@ export function createEmulatedEnvironment(
   })
 
   // Keep pod IP allocation unique and stable across lifecycle events
-  const unsubscribePodIpAllocation = initializeSimPodIpAllocation(
-    eventBus,
-    clusterState
-  )
+  const unsubscribePodIpAllocation = initializeSimPodIpAllocation(apiServer)
 
   // Setup auto-save if enabled
   let unsubscribeAutoSave: (() => void) | undefined
@@ -128,7 +117,7 @@ export function createEmulatedEnvironment(
         const result = await saveSandboxEnvironment(
           userId,
           fileSystemState,
-          clusterState.toJSON()
+          apiServer.snapshotState()
         )
         if (!result.ok) {
           throw new Error(`Failed to save environment: ${result.error}`)
@@ -136,7 +125,7 @@ export function createEmulatedEnvironment(
       }, autoSaveDelay)
 
       // Listen to all events and save to IndexedDB
-      unsubscribeAutoSave = eventBus.subscribeAll((event: AppEvent) => {
+      unsubscribeAutoSave = eventBus.subscribeAll(() => {
         saveToIndexedDB()
         if (onStateChange) {
           onStateChange()
@@ -146,16 +135,12 @@ export function createEmulatedEnvironment(
   }
 
   return {
-    emulatedEnvironmentId: undefined,
-    filesystemId: undefined,
-    clusterId: undefined,
-    clusterState,
     fileSystemState,
-    eventBus,
+    apiServer,
     shellContextStack,
     unsubscribeAutoSave,
     unsubscribePodIpAllocation,
-    runtimeControllers: controllers,
+    controlPlaneRuntime,
     networkRuntime,
     volumeRuntime
   }
@@ -179,13 +164,14 @@ export function destroyEmulatedEnvironment(
     emulatedEnvironment.unsubscribePodIpAllocation = undefined
   }
 
-  stopRuntimeControllers(emulatedEnvironment.runtimeControllers)
-  emulatedEnvironment.runtimeControllers = undefined
+  emulatedEnvironment.controlPlaneRuntime?.stop()
+  emulatedEnvironment.controlPlaneRuntime = undefined
   emulatedEnvironment.networkRuntime?.controller.stop()
   emulatedEnvironment.networkRuntime = undefined
   emulatedEnvironment.volumeRuntime?.volumeBindingController.stop()
   emulatedEnvironment.volumeRuntime?.podVolumeController.stop()
   emulatedEnvironment.volumeRuntime = undefined
+  emulatedEnvironment.apiServer.stop()
 
   // Note: We don't explicitly clean up clusterState, fileSystemState, eventBus, or shellContextStack
   // as they will be garbage collected when the emulated environment object is no longer referenced.

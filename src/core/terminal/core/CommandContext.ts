@@ -4,8 +4,7 @@
 // Contexte partagé pour l'exécution des commandes.
 // Contient toutes les dépendances nécessaires aux handlers.
 
-import type { ClusterState } from '~/core/cluster/ClusterState'
-import type { EventBus } from '~/core/cluster/events/EventBus'
+import type { ApiServerFacade } from '~/core/api/ApiServerFacade'
 import type { FileSystem } from '../../../core/filesystem/FileSystem'
 import type { SimNetworkRuntime } from '../../../core/network/SimNetworkRuntime'
 import type { Logger } from '../../../logger/Logger'
@@ -34,11 +33,8 @@ export interface CommandContext {
   /** Stack de contextes shell pour gérer le prompt et le filesystem */
   shellContextStack: ShellContextStack
 
-  /** État du cluster Kubernetes */
-  clusterState: ClusterState
-
-  /** Bus d'événements pour l'architecture event-driven */
-  eventBus: EventBus
+  /** API facade for apiserver-like access */
+  apiServer: ApiServerFacade
 
   /** Simulated network runtime (DNS, service routing, traffic) */
   networkRuntime?: SimNetworkRuntime

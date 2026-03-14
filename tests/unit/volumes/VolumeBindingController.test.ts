@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createClusterState } from '../../../src/core/cluster/ClusterState'
-import { createEventBus } from '../../../src/core/cluster/events/EventBus'
+import { createApiServerFacade } from '../../../src/core/api/ApiServerFacade'
 import { createPersistentVolume } from '../../../src/core/cluster/ressources/PersistentVolume'
 import { createPersistentVolumeClaim } from '../../../src/core/cluster/ressources/PersistentVolumeClaim'
 import { createVolumeBindingController } from '../../../src/core/volumes/VolumeBindingController'
@@ -8,16 +7,12 @@ import { createVolumeState } from '../../../src/core/volumes/VolumeState'
 
 describe('VolumeBindingController', () => {
   it('binds available persistent volume to claim', () => {
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus)
+    const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()
-    const controller = createVolumeBindingController(
-      eventBus,
-      clusterState,
-      volumeState
-    )
+    const controller = createVolumeBindingController(apiServer, volumeState)
 
-    clusterState.addPersistentVolume(
+    apiServer.createResource(
+      'PersistentVolume',
       createPersistentVolume({
         name: 'pv-fast',
         spec: {
@@ -28,7 +23,8 @@ describe('VolumeBindingController', () => {
         }
       })
     )
-    clusterState.addPersistentVolumeClaim(
+    apiServer.createResource(
+      'PersistentVolumeClaim',
       createPersistentVolumeClaim({
         name: 'data',
         namespace: 'default',
@@ -42,7 +38,11 @@ describe('VolumeBindingController', () => {
 
     controller.start()
 
-    const pvcResult = clusterState.findPersistentVolumeClaim('data', 'default')
+    const pvcResult = apiServer.findResource(
+      'PersistentVolumeClaim',
+      'data',
+      'default'
+    )
     expect(pvcResult.ok).toBe(true)
     if (!pvcResult.ok || pvcResult.value == null) {
       controller.stop()
@@ -51,7 +51,7 @@ describe('VolumeBindingController', () => {
     expect(pvcResult.value.status.phase).toBe('Bound')
     expect(pvcResult.value.spec.volumeName).toBe('pv-fast')
 
-    const pvResult = clusterState.findPersistentVolume('pv-fast')
+    const pvResult = apiServer.findResource('PersistentVolume', 'pv-fast')
     expect(pvResult.ok).toBe(true)
     if (!pvResult.ok || pvResult.value == null) {
       controller.stop()
@@ -70,16 +70,12 @@ describe('VolumeBindingController', () => {
   })
 
   it('keeps claim pending when no matching volume is available', () => {
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus)
+    const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()
-    const controller = createVolumeBindingController(
-      eventBus,
-      clusterState,
-      volumeState
-    )
+    const controller = createVolumeBindingController(apiServer, volumeState)
 
-    clusterState.addPersistentVolumeClaim(
+    apiServer.createResource(
+      'PersistentVolumeClaim',
       createPersistentVolumeClaim({
         name: 'data',
         namespace: 'default',
@@ -93,7 +89,11 @@ describe('VolumeBindingController', () => {
 
     controller.start()
 
-    const pvcResult = clusterState.findPersistentVolumeClaim('data', 'default')
+    const pvcResult = apiServer.findResource(
+      'PersistentVolumeClaim',
+      'data',
+      'default'
+    )
     expect(pvcResult.ok).toBe(true)
     if (!pvcResult.ok || pvcResult.value == null) {
       controller.stop()
@@ -108,16 +108,12 @@ describe('VolumeBindingController', () => {
   })
 
   it('does not bind multiple claims to the same volume in one reconcile', () => {
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus)
+    const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()
-    const controller = createVolumeBindingController(
-      eventBus,
-      clusterState,
-      volumeState
-    )
+    const controller = createVolumeBindingController(apiServer, volumeState)
 
-    clusterState.addPersistentVolume(
+    apiServer.createResource(
+      'PersistentVolume',
       createPersistentVolume({
         name: 'pv-1',
         spec: {
@@ -128,7 +124,8 @@ describe('VolumeBindingController', () => {
       })
     )
 
-    clusterState.addPersistentVolumeClaim(
+    apiServer.createResource(
+      'PersistentVolumeClaim',
       createPersistentVolumeClaim({
         name: 'pvc-1',
         namespace: 'default',
@@ -140,7 +137,8 @@ describe('VolumeBindingController', () => {
       })
     )
 
-    clusterState.addPersistentVolumeClaim(
+    apiServer.createResource(
+      'PersistentVolumeClaim',
       createPersistentVolumeClaim({
         name: 'pvc-2',
         namespace: 'default',
@@ -154,8 +152,16 @@ describe('VolumeBindingController', () => {
 
     controller.start()
 
-    const pvc1Result = clusterState.findPersistentVolumeClaim('pvc-1', 'default')
-    const pvc2Result = clusterState.findPersistentVolumeClaim('pvc-2', 'default')
+    const pvc1Result = apiServer.findResource(
+      'PersistentVolumeClaim',
+      'pvc-1',
+      'default'
+    )
+    const pvc2Result = apiServer.findResource(
+      'PersistentVolumeClaim',
+      'pvc-2',
+      'default'
+    )
 
     expect(pvc1Result.ok).toBe(true)
     expect(pvc2Result.ok).toBe(true)
@@ -184,16 +190,12 @@ describe('VolumeBindingController', () => {
   })
 
   it('resets pre-bound claim when referenced volume is missing', () => {
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus)
+    const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()
-    const controller = createVolumeBindingController(
-      eventBus,
-      clusterState,
-      volumeState
-    )
+    const controller = createVolumeBindingController(apiServer, volumeState)
 
-    clusterState.addPersistentVolumeClaim(
+    apiServer.createResource(
+      'PersistentVolumeClaim',
       createPersistentVolumeClaim({
         name: 'dangling',
         namespace: 'default',
@@ -211,7 +213,11 @@ describe('VolumeBindingController', () => {
 
     controller.start()
 
-    const pvcResult = clusterState.findPersistentVolumeClaim('dangling', 'default')
+    const pvcResult = apiServer.findResource(
+      'PersistentVolumeClaim',
+      'dangling',
+      'default'
+    )
     expect(pvcResult.ok).toBe(true)
     if (!pvcResult.ok || pvcResult.value == null) {
       controller.stop()

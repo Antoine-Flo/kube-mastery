@@ -1,5 +1,4 @@
-import type { ClusterState } from '../cluster/ClusterState'
-import type { EventBus } from '../cluster/events/EventBus'
+import type { ApiServerFacade } from '../api/ApiServerFacade'
 import { createDnsResolver, type DnsResolver } from './DnsResolver'
 import {
   createNetworkController,
@@ -16,10 +15,9 @@ export interface SimNetworkRuntime {
 }
 
 export const initializeSimNetworkRuntime = (
-  eventBus: EventBus,
-  clusterState: ClusterState
+  apiServer: ApiServerFacade
 ): SimNetworkRuntime => {
-  const controller = createNetworkController(eventBus, clusterState)
+  const controller = createNetworkController(apiServer)
   const state = controller.getState()
   const dnsResolver = createDnsResolver(state)
   const trafficEngine = createTrafficEngine(state, dnsResolver)

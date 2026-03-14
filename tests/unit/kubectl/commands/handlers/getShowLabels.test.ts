@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { handleGet } from '../../../../../src/core/kubectl/commands/handlers/get'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
@@ -16,6 +17,12 @@ const createParsedCommand = (
 }
 
 describe('kubectl get --show-labels', () => {
+  let apiServer: ReturnType<typeof createApiServerFacade>
+
+  beforeEach(() => {
+    apiServer = createApiServerFacade()
+  })
+
   it('adds LABELS column for pods default table output', () => {
     const state = createClusterStateData({
       pods: [
@@ -32,7 +39,8 @@ describe('kubectl get --show-labels', () => {
       flags: { 'show-labels': true }
     })
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
 
     expect(result).toContain('LABELS')
     expect(result).toContain('app=web,tier=frontend')
@@ -63,7 +71,8 @@ describe('kubectl get --show-labels', () => {
       flags: { 'show-labels': true, 'all-namespaces': true, output: 'wide' }
     })
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
 
     expect(result).toContain('LABELS')
     expect(result).toContain('app=web')

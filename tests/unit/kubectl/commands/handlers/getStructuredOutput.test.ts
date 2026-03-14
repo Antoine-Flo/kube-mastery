@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { handleGet } from '../../../../../src/core/kubectl/commands/handlers/get'
@@ -17,18 +18,25 @@ const createParsedGetCommand = (
 }
 
 describe('kubectl get handler - structured output parity', () => {
+  let apiServer: ReturnType<typeof createApiServerFacade>
+
+  beforeEach(() => {
+    apiServer = createApiServerFacade()
+  })
+
   it('returns PodList YAML for empty collection', () => {
     const state = createClusterStateData()
     const parsed = createParsedGetCommand({
       flags: { output: 'yaml' }
     })
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
 
     expect(result).toContain('apiVersion: v1')
     expect(result).toContain('kind: List')
     expect(result).toContain('metadata:')
-    expect(result).toContain('resourceVersion: ""')
+    expect(result).toContain('resourceVersion: "2"')
     expect(result).toContain('items: []')
   })
 
@@ -38,15 +46,16 @@ describe('kubectl get handler - structured output parity', () => {
       flags: { output: 'json' }
     })
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
     const parsedJson = JSON.parse(result)
 
     expect(parsedJson.apiVersion).toBe('v1')
     expect(parsedJson.kind).toBe('List')
-    expect(parsedJson.metadata.resourceVersion).toBe('')
+    expect(parsedJson.metadata.resourceVersion).toBe('2')
     expect(parsedJson.items).toEqual([])
     expect(result).toContain('\n    "apiVersion": "v1"')
-    expect(result).toContain('\n        "resourceVersion": ""')
+    expect(result).toContain('\n        "resourceVersion": "2"')
   })
 
   it('returns Pod object YAML when querying by name', () => {
@@ -62,7 +71,8 @@ describe('kubectl get handler - structured output parity', () => {
       flags: { output: 'yaml' }
     })
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
 
     expect(result).toContain('apiVersion: v1')
     expect(result).toContain('kind: Pod')
@@ -88,7 +98,8 @@ describe('kubectl get handler - structured output parity', () => {
       flags: { output: 'json' }
     })
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
     const parsedJson = JSON.parse(result)
 
     expect(parsedJson.apiVersion).toBe('v1')
@@ -138,7 +149,8 @@ describe('kubectl get handler - structured output parity', () => {
       flags: { output: 'yaml' }
     })
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
 
     expect(result).toContain('apiVersion: apps/v1')
     expect(result).toContain('kind: Deployment')
@@ -164,7 +176,8 @@ describe('kubectl get handler - structured output parity', () => {
       flags: { output: "jsonpath='{.metadata.uid}'" }
     })
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
 
     expect(result.length).toBeGreaterThan(10)
     expect(result).toContain('-')
@@ -188,9 +201,25 @@ describe('kubectl get handler - structured output parity', () => {
       flags: { output: "jsonpath='{.items[*].metadata.name}'" }
     })
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
 
     expect(result).toContain('web')
     expect(result).toContain('api')
+  })
+
+  it('uses provided resourceVersion for structured list output', () => {
+    const state = createClusterStateData()
+    const parsed = createParsedGetCommand({
+      flags: { output: 'json' }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed, {
+      getResourceVersion: () => '42'
+    })
+    const parsedJson = JSON.parse(result)
+
+    expect(parsedJson.metadata.resourceVersion).toBe('42')
   })
 })

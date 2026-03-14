@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createClusterState } from '../../../src/core/cluster/ClusterState'
-import { createEventBus } from '../../../src/core/cluster/events/EventBus'
+import { createApiServerFacade } from '../../../src/core/api/ApiServerFacade'
 import { createPersistentVolume } from '../../../src/core/cluster/ressources/PersistentVolume'
 import { createPersistentVolumeClaim } from '../../../src/core/cluster/ressources/PersistentVolumeClaim'
 import { createPod } from '../../../src/core/cluster/ressources/Pod'
@@ -8,11 +7,11 @@ import { initializeSimVolumeRuntime } from '../../../src/core/volumes/SimVolumeR
 
 describe('PodVolumeController', () => {
   it('marks pod volumes not ready when claim is missing', () => {
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus)
-    const runtime = initializeSimVolumeRuntime(eventBus, clusterState)
+    const apiServer = createApiServerFacade()
+    const runtime = initializeSimVolumeRuntime(apiServer)
 
-    clusterState.addPod(
+    apiServer.createResource(
+      'Pod',
       createPod({
         name: 'app',
         namespace: 'default',
@@ -42,11 +41,11 @@ describe('PodVolumeController', () => {
   })
 
   it('marks pod volumes ready once claim is bound', () => {
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus)
-    const runtime = initializeSimVolumeRuntime(eventBus, clusterState)
+    const apiServer = createApiServerFacade()
+    const runtime = initializeSimVolumeRuntime(apiServer)
 
-    clusterState.addPersistentVolume(
+    apiServer.createResource(
+      'PersistentVolume',
       createPersistentVolume({
         name: 'pv-data',
         spec: {
@@ -57,7 +56,8 @@ describe('PodVolumeController', () => {
         }
       })
     )
-    clusterState.addPersistentVolumeClaim(
+    apiServer.createResource(
+      'PersistentVolumeClaim',
       createPersistentVolumeClaim({
         name: 'data-claim',
         namespace: 'default',
@@ -68,7 +68,8 @@ describe('PodVolumeController', () => {
         }
       })
     )
-    clusterState.addPod(
+    apiServer.createResource(
+      'Pod',
       createPod({
         name: 'app',
         namespace: 'default',

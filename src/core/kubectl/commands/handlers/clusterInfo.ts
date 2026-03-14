@@ -1,6 +1,7 @@
 import { stringify as yamlStringify } from 'yaml'
 import type { ParsedCommand } from '../types'
 import type { ClusterStateData } from '../../../cluster/ClusterState'
+import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 
@@ -393,9 +394,10 @@ const handleDump = (
  * - kubectl cluster-info dump (dumps cluster information for debugging)
  */
 export const handleClusterInfo = (
-  clusterState: ClusterStateData,
+  apiServer: ApiServerFacade,
   parsed: ParsedCommand
 ): Result<string> => {
+  const clusterState = apiServer.snapshotState()
   // Check if dump subcommand is present
   if (parsed.flags.dump === true) {
     return handleDump(clusterState, parsed)

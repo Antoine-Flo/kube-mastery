@@ -368,184 +368,414 @@ const isSystemPodNamespace = (namespace: string): boolean => {
   return isSystemNamespace(namespace)
 }
 
-const upsertNamespaces = (
-  clusterState: ClusterState,
-  namespaces: Namespace[]
-): void => {
-  for (const namespace of namespaces) {
-    const findNamespaceResult = clusterState.findNamespace(
-      namespace.metadata.name
-    )
-    if (!findNamespaceResult.ok) {
-      clusterState.addNamespace(namespace)
-      continue
-    }
-    clusterState.updateNamespace(namespace.metadata.name, () => namespace)
+type BootstrapKind =
+  | 'Namespace'
+  | 'Node'
+  | 'ConfigMap'
+  | 'Service'
+  | 'Deployment'
+  | 'DaemonSet'
+  | 'Pod'
+
+interface BootstrapResource {
+  metadata: {
+    name: string
+    namespace?: string
   }
 }
 
-const removeExistingSystemPods = (clusterState: ClusterState): void => {
-  const pods = clusterState.getPods()
+type BootstrapResult<T> =
+  | {
+      ok: true
+      value: T
+    }
+  | {
+      ok: false
+      error: string
+    }
+
+interface BootstrapStore {
+  findByKind: (
+    kind: BootstrapKind,
+    name: string,
+    namespace?: string
+  ) => BootstrapResult<BootstrapResource>
+  listByKind: (
+    kind: BootstrapKind,
+    namespace?: string
+  ) => readonly BootstrapResource[]
+  createByKind: (
+    kind: BootstrapKind,
+    resource: BootstrapResource,
+    namespace?: string
+  ) => BootstrapResult<BootstrapResource>
+  updateByKind: (
+    kind: BootstrapKind,
+    name: string,
+    resource: BootstrapResource,
+    namespace?: string
+  ) => BootstrapResult<BootstrapResource>
+  deleteByKind: (
+    kind: BootstrapKind,
+    name: string,
+    namespace?: string
+  ) => BootstrapResult<BootstrapResource>
+}
+
+export interface BootstrapApiLike {
+  findResource: (
+    kind: BootstrapKind,
+    name: string,
+    namespace?: string
+  ) => BootstrapResult<BootstrapResource>
+  listResources: (
+    kind: BootstrapKind,
+    namespace?: string
+  ) => readonly BootstrapResource[]
+  createResource: (
+    kind: BootstrapKind,
+    resource: BootstrapResource,
+    namespace?: string
+  ) => BootstrapResult<BootstrapResource>
+  updateResource: (
+    kind: BootstrapKind,
+    name: string,
+    resource: BootstrapResource,
+    namespace?: string
+  ) => BootstrapResult<BootstrapResource>
+  deleteResource: (
+    kind: BootstrapKind,
+    name: string,
+    namespace?: string
+  ) => BootstrapResult<BootstrapResource>
+}
+
+const assertBootstrapWriteResult = <T>(
+  result: BootstrapResult<T>,
+  operation: string
+): void => {
+  if (result.ok) {
+    return
+  }
+  throw new Error(`Bootstrap ${operation} failed: ${result.error}`)
+}
+
+const createBootstrapStoreFromClusterState = (
+  clusterState: ClusterState
+): BootstrapStore => {
+  const createByKind = (
+    kind: BootstrapKind,
+    resource: BootstrapResource,
+    namespace?: string
+  ): BootstrapResult<BootstrapResource> => {
+    if (kind === 'Namespace') {
+      return clusterState.createByKind('Namespace', resource as Namespace)
+    }
+    if (kind === 'Node') {
+      return clusterState.createByKind('Node', resource as Node)
+    }
+    if (kind === 'ConfigMap') {
+      return clusterState.createByKind(
+        'ConfigMap',
+        resource as ConfigMap,
+        namespace
+      )
+    }
+    if (kind === 'Service') {
+      return clusterState.createByKind('Service', resource as Service, namespace)
+    }
+    if (kind === 'Deployment') {
+      return clusterState.createByKind(
+        'Deployment',
+        resource as Deployment,
+        namespace
+      )
+    }
+    if (kind === 'DaemonSet') {
+      return clusterState.createByKind(
+        'DaemonSet',
+        resource as DaemonSet,
+        namespace
+      )
+    }
+    return clusterState.createByKind('Pod', resource as Pod, namespace)
+  }
+
+  const updateByKind = (
+    kind: BootstrapKind,
+    name: string,
+    resource: BootstrapResource,
+    namespace?: string
+  ): BootstrapResult<BootstrapResource> => {
+    if (kind === 'Namespace') {
+      return clusterState.updateByKind('Namespace', name, resource as Namespace)
+    }
+    if (kind === 'Node') {
+      return clusterState.updateByKind('Node', name, resource as Node)
+    }
+    if (kind === 'ConfigMap') {
+      return clusterState.updateByKind(
+        'ConfigMap',
+        name,
+        resource as ConfigMap,
+        namespace
+      )
+    }
+    if (kind === 'Service') {
+      return clusterState.updateByKind(
+        'Service',
+        name,
+        resource as Service,
+        namespace
+      )
+    }
+    if (kind === 'Deployment') {
+      return clusterState.updateByKind(
+        'Deployment',
+        name,
+        resource as Deployment,
+        namespace
+      )
+    }
+    if (kind === 'DaemonSet') {
+      return clusterState.updateByKind(
+        'DaemonSet',
+        name,
+        resource as DaemonSet,
+        namespace
+      )
+    }
+    return clusterState.updateByKind('Pod', name, resource as Pod, namespace)
+  }
+
+  const deleteByKind = (
+    kind: BootstrapKind,
+    name: string,
+    namespace?: string
+  ): BootstrapResult<BootstrapResource> => {
+    if (kind === 'Namespace') {
+      return clusterState.deleteByKind('Namespace', name)
+    }
+    if (kind === 'Node') {
+      return clusterState.deleteByKind('Node', name)
+    }
+    if (kind === 'ConfigMap') {
+      return clusterState.deleteByKind('ConfigMap', name, namespace)
+    }
+    if (kind === 'Service') {
+      return clusterState.deleteByKind('Service', name, namespace)
+    }
+    if (kind === 'Deployment') {
+      return clusterState.deleteByKind('Deployment', name, namespace)
+    }
+    if (kind === 'DaemonSet') {
+      return clusterState.deleteByKind('DaemonSet', name, namespace)
+    }
+    return clusterState.deleteByKind('Pod', name, namespace)
+  }
+
+  return {
+    findByKind: (kind, name, namespace) => {
+      return clusterState.findByKind(kind, name, namespace) as BootstrapResult<
+        BootstrapResource
+      >
+    },
+    listByKind: (kind, namespace) => {
+      return clusterState.listByKind(kind, namespace) as readonly BootstrapResource[]
+    },
+    createByKind: (kind, resource, namespace) => {
+      return createByKind(kind, resource, namespace)
+    },
+    updateByKind: (kind, name, resource, namespace) => {
+      return updateByKind(kind, name, resource, namespace)
+    },
+    deleteByKind: (kind, name, namespace) => {
+      return deleteByKind(kind, name, namespace)
+    }
+  }
+}
+
+const createBootstrapStoreFromApi = (api: BootstrapApiLike): BootstrapStore => {
+  return {
+    findByKind: (kind, name, namespace) => {
+      return api.findResource(kind, name, namespace) as BootstrapResult<
+        BootstrapResource
+      >
+    },
+    listByKind: (kind, namespace) => {
+      return api.listResources(kind, namespace) as readonly BootstrapResource[]
+    },
+    createByKind: (kind, resource, namespace) => {
+      return api.createResource(
+        kind,
+        resource,
+        namespace
+      ) as BootstrapResult<BootstrapResource>
+    },
+    updateByKind: (kind, name, resource, namespace) => {
+      return api.updateResource(
+        kind,
+        name,
+        resource,
+        namespace
+      ) as BootstrapResult<BootstrapResource>
+    },
+    deleteByKind: (kind, name, namespace) => {
+      return api.deleteResource(kind, name, namespace) as BootstrapResult<
+        BootstrapResource
+      >
+    }
+  }
+}
+
+const upsertResourcesByKind = <T extends BootstrapResource>(
+  store: BootstrapStore,
+  kind: BootstrapKind,
+  resources: readonly T[]
+): void => {
+  for (const resource of resources) {
+    const resourceNamespace = resource.metadata.namespace
+    const findResult =
+      resourceNamespace == null
+        ? store.findByKind(kind, resource.metadata.name)
+        : store.findByKind(kind, resource.metadata.name, resourceNamespace)
+    if (!findResult.ok) {
+      if (resourceNamespace == null) {
+        assertBootstrapWriteResult(
+          store.createByKind(kind, resource),
+          `create ${kind}/${resource.metadata.name}`
+        )
+      } else {
+        assertBootstrapWriteResult(
+          store.createByKind(kind, resource, resourceNamespace),
+          `create ${kind}/${resourceNamespace}/${resource.metadata.name}`
+        )
+      }
+      continue
+    }
+    if (resourceNamespace == null) {
+      assertBootstrapWriteResult(
+        store.updateByKind(kind, resource.metadata.name, resource),
+        `update ${kind}/${resource.metadata.name}`
+      )
+    } else {
+      assertBootstrapWriteResult(
+        store.updateByKind(
+          kind,
+          resource.metadata.name,
+          resource,
+          resourceNamespace
+        ),
+        `update ${kind}/${resourceNamespace}/${resource.metadata.name}`
+      )
+    }
+  }
+}
+
+const removeExistingSystemPods = (store: BootstrapStore): void => {
+  const pods = store.listByKind('Pod') as readonly Pod[]
   for (const pod of pods) {
     if (!isSystemPodNamespace(pod.metadata.namespace)) {
       continue
     }
-    const deleteResult = clusterState.deletePod(
-      pod.metadata.name,
-      pod.metadata.namespace
+    assertBootstrapWriteResult(
+      store.deleteByKind('Pod', pod.metadata.name, pod.metadata.namespace),
+      `delete Pod/${pod.metadata.namespace}/${pod.metadata.name}`
     )
-    if (!deleteResult.ok) {
-      continue
-    }
   }
 }
 
-const upsertNodes = (clusterState: ClusterState, nodes: Node[]): void => {
-  for (const node of nodes) {
-    const findNodeResult = clusterState.findNode(node.metadata.name)
-    if (!findNodeResult.ok) {
-      clusterState.addNode(node)
-      continue
-    }
-    clusterState.updateNode(node.metadata.name, () => node)
-  }
+const upsertNodes = (store: BootstrapStore, nodes: Node[]): void => {
+  upsertResourcesByKind(store, 'Node', nodes)
+}
+
+const upsertNamespaces = (
+  store: BootstrapStore,
+  namespaces: Namespace[]
+): void => {
+  upsertResourcesByKind(store, 'Namespace', namespaces)
 }
 
 const upsertConfigMaps = (
-  clusterState: ClusterState,
+  store: BootstrapStore,
   configMaps: ConfigMap[]
 ): void => {
-  for (const configMap of configMaps) {
-    const findConfigMapResult = clusterState.findConfigMap(
-      configMap.metadata.name,
-      configMap.metadata.namespace
-    )
-    if (!findConfigMapResult.ok) {
-      clusterState.addConfigMap(configMap)
-      continue
-    }
-    clusterState.updateConfigMap(
-      configMap.metadata.name,
-      configMap.metadata.namespace,
-      () => configMap
-    )
-  }
+  upsertResourcesByKind(store, 'ConfigMap', configMaps)
 }
 
 const upsertServices = (
-  clusterState: ClusterState,
+  store: BootstrapStore,
   services: Service[]
 ): void => {
-  for (const service of services) {
-    const findServiceResult = clusterState.findService(
-      service.metadata.name,
-      service.metadata.namespace
-    )
-    if (!findServiceResult.ok) {
-      clusterState.addService(service)
-      continue
-    }
-    clusterState.updateService(
-      service.metadata.name,
-      service.metadata.namespace,
-      () => service
-    )
-  }
+  upsertResourcesByKind(store, 'Service', services)
 }
 
 const upsertDeployments = (
-  clusterState: ClusterState,
+  store: BootstrapStore,
   deployments: Deployment[]
 ): void => {
-  for (const deployment of deployments) {
-    const findDeploymentResult = clusterState.findDeployment(
-      deployment.metadata.name,
-      deployment.metadata.namespace
-    )
-    if (!findDeploymentResult.ok) {
-      clusterState.addDeployment(deployment)
-      continue
-    }
-    clusterState.updateDeployment(
-      deployment.metadata.name,
-      deployment.metadata.namespace,
-      () => deployment
-    )
-  }
+  upsertResourcesByKind(store, 'Deployment', deployments)
 }
 
 const upsertDaemonSets = (
-  clusterState: ClusterState,
+  store: BootstrapStore,
   daemonSets: DaemonSet[]
 ): void => {
-  for (const daemonSet of daemonSets) {
-    const findDaemonSetResult = clusterState.findDaemonSet(
-      daemonSet.metadata.name,
-      daemonSet.metadata.namespace
-    )
-    if (!findDaemonSetResult.ok) {
-      clusterState.addDaemonSet(daemonSet)
-      continue
-    }
-    clusterState.updateDaemonSet(
-      daemonSet.metadata.name,
-      daemonSet.metadata.namespace,
-      () => daemonSet
-    )
-  }
+  upsertResourcesByKind(store, 'DaemonSet', daemonSets)
 }
 
-const ensureSystemPods = (clusterState: ClusterState, pods: Pod[]): void => {
+const addMissingPods = (store: BootstrapStore, pods: readonly Pod[]): void => {
   for (const pod of pods) {
-    const findPodResult = clusterState.findPod(
+    const findPodResult = store.findByKind(
+      'Pod',
       pod.metadata.name,
       pod.metadata.namespace
     )
     if (!findPodResult.ok) {
-      clusterState.addPod(pod)
+      assertBootstrapWriteResult(
+        store.createByKind('Pod', pod, pod.metadata.namespace),
+        `create Pod/${pod.metadata.namespace}/${pod.metadata.name}`
+      )
     }
   }
 }
 
-const replaceSystemPods = (clusterState: ClusterState, pods: Pod[]): void => {
-  removeExistingSystemPods(clusterState)
-  for (const pod of pods) {
-    const findPodResult = clusterState.findPod(
-      pod.metadata.name,
-      pod.metadata.namespace
-    )
-    if (!findPodResult.ok) {
-      clusterState.addPod(pod)
-    }
-  }
+const ensureSystemPods = (store: BootstrapStore, pods: Pod[]): void => {
+  addMissingPods(store, pods)
+}
+
+const replaceSystemPods = (store: BootstrapStore, pods: Pod[]): void => {
+  removeExistingSystemPods(store)
+  addMissingPods(store, pods)
 }
 
 const applyKindLikeBootstrap = (
-  clusterState: ClusterState,
+  store: BootstrapStore,
   options: ClusterBootstrapConfig
 ): void => {
   const resources = createSystemBootstrapResources(options)
   const mode = options.mode ?? 'missing-only'
 
-  upsertNamespaces(clusterState, resources.namespaces)
-  upsertNodes(clusterState, resources.nodes)
-  upsertConfigMaps(clusterState, resources.configMaps)
-  upsertServices(clusterState, resources.services)
-  upsertDeployments(clusterState, resources.deployments)
-  upsertDaemonSets(clusterState, resources.daemonSets)
+  upsertNamespaces(store, resources.namespaces)
+  upsertNodes(store, resources.nodes)
+  upsertConfigMaps(store, resources.configMaps)
+  upsertServices(store, resources.services)
+  upsertDeployments(store, resources.deployments)
+  upsertDaemonSets(store, resources.daemonSets)
 
   if (mode === 'always') {
-    replaceSystemPods(clusterState, resources.staticPods)
+    replaceSystemPods(store, resources.staticPods)
     return
   }
 
-  ensureSystemPods(clusterState, resources.staticPods)
+  ensureSystemPods(store, resources.staticPods)
 }
 
 export const applyClusterBootstrap = (
   clusterState: ClusterState,
   config: ClusterBootstrapConfig
 ): void => {
+  const store = createBootstrapStoreFromClusterState(clusterState)
   const mode = config.mode ?? 'missing-only'
   if (mode === 'never') {
     return
@@ -557,7 +787,27 @@ export const applyClusterBootstrap = (
   }
 
   if (profile === 'kind-like') {
-    applyKindLikeBootstrap(clusterState, config)
+    applyKindLikeBootstrap(store, config)
+  }
+}
+
+export const applyClusterBootstrapViaApi = (
+  api: BootstrapApiLike,
+  config: ClusterBootstrapConfig
+): void => {
+  const store = createBootstrapStoreFromApi(api)
+  const mode = config.mode ?? 'missing-only'
+  if (mode === 'never') {
+    return
+  }
+
+  const profile = config.profile ?? 'kind-like'
+  if (profile === 'none') {
+    return
+  }
+
+  if (profile === 'kind-like') {
+    applyKindLikeBootstrap(store, config)
   }
 }
 

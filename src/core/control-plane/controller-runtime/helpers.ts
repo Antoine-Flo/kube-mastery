@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Shared helper functions for all Kubernetes controllers
 
-import type { EventBus } from '../events/EventBus'
-import type { ClusterEvent } from '../events/types'
+import type { EventBus } from '../../cluster/events/EventBus'
+import type { ClusterEvent } from '../../cluster/events/types'
 import type {
   ClusterEventType,
   ControllerObservation,

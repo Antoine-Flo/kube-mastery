@@ -497,6 +497,139 @@ describe('describeFormatters', () => {
       expect(ipMatch1?.[1]).toBe(ipMatch2?.[1])
       expect(ipMatch1?.[1]).toMatch(/^172\.17\.0\.\d+$/)
     })
+
+    it('should show detailed state and last state for crashing container', () => {
+      const basePod = createPod({
+        name: 'crash-pod',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'nginx:latest' }]
+      })
+      const pod = {
+        ...basePod,
+        status: {
+          ...basePod.status,
+          containerStatuses: (basePod.status.containerStatuses ?? []).map(
+            (status) => {
+              return {
+                ...status,
+                state: 'Waiting' as const,
+                stateDetails: {
+                  state: 'Waiting' as const,
+                  reason: 'CrashLoopBackOff'
+                },
+                lastStateDetails: {
+                  state: 'Terminated' as const,
+                  reason: 'Error',
+                  exitCode: 1,
+                  startedAt: '2026-03-13T10:00:00.000Z',
+                  finishedAt: '2026-03-13T10:00:05.000Z'
+                },
+                
+              }
+            }
+          )
+        }
+      }
+
+      const result = describePod(pod)
+
+      expect(result).toContain('State:          Waiting')
+      expect(result).toContain('Reason:       CrashLoopBackOff')
+      expect(result).toContain('Last State:          Terminated')
+      expect(result).toContain('Reason:       Error')
+      expect(result).toContain('Exit Code:    1')
+      expect(result).toContain('Finished:')
+    })
+
+    it('should render kubelet warning event for CrashLoopBackOff', () => {
+      const basePod = createPod({
+        name: 'crashloop-pod',
+        namespace: 'default',
+        nodeName: 'worker-a',
+        containers: [{ name: 'app', image: 'nginx:latest' }]
+      })
+      const pod = {
+        ...basePod,
+        status: {
+          ...basePod.status,
+          phase: 'Pending' as const,
+          containerStatuses: (basePod.status.containerStatuses ?? []).map(
+            (status) => {
+              return {
+                ...status,
+                stateDetails: {
+                  state: 'Waiting' as const,
+                  reason: 'CrashLoopBackOff'
+                }
+              }
+            }
+          )
+        }
+      }
+
+      const result = describePod(pod)
+
+      expect(result).toContain('Events:')
+      expect(result).toContain('Warning BackOff')
+      expect(result).toContain('Back-off restarting failed container')
+    })
+
+    it('shows Last Seen and Count columns for stored pod events', () => {
+      const pod = createPod({
+        name: 'api-pod',
+        namespace: 'default',
+        nodeName: 'worker-a',
+        containers: [{ name: 'api', image: 'nginx:latest' }],
+        phase: 'Running'
+      })
+
+      const result = describePod(pod, [
+        {
+          type: 'Normal',
+          reason: 'Scheduled',
+          source: 'default-scheduler',
+          message: 'Successfully assigned default/api-pod to worker-a',
+          timestamp: '2026-03-13T10:00:00.000Z'
+        }
+      ])
+
+      expect(result).toContain('First Seen')
+      expect(result).toContain('Last Seen')
+      expect(result).toContain('Count')
+      expect(result).toContain('Successfully assigned default/api-pod')
+    })
+
+    it('aggregates repeated stored pod events and increments count', () => {
+      const pod = createPod({
+        name: 'api-pod',
+        namespace: 'default',
+        nodeName: 'worker-a',
+        containers: [{ name: 'api', image: 'nginx:latest' }],
+        phase: 'Running'
+      })
+
+      const result = describePod(pod, [
+        {
+          type: 'Warning',
+          reason: 'BackOff',
+          source: 'kubelet',
+          message:
+            'Back-off restarting failed container api in pod default/api-pod',
+          timestamp: '2026-03-13T10:00:00.000Z'
+        },
+        {
+          type: 'Warning',
+          reason: 'BackOff',
+          source: 'kubelet',
+          message:
+            'Back-off restarting failed container api in pod default/api-pod',
+          timestamp: '2026-03-13T10:00:10.000Z'
+        }
+      ])
+
+      expect(result).toContain('Back-off restarting failed container api')
+      expect(result).toContain('2')
+    })
   })
 
   describe('describeDeployment', () => {

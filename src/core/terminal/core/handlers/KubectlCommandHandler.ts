@@ -117,7 +117,9 @@ const getEffectiveNamespace = (
   if (parsed.namespace != null) {
     return parsed.namespace
   }
-  return getCurrentNamespaceFromKubeconfig(context.clusterState.toJSON()) ?? 'default'
+  return (
+    getCurrentNamespaceFromKubeconfig(context.apiServer) ?? 'default'
+  )
 }
 
 const matchesSelector = (
@@ -512,10 +514,9 @@ export class KubectlCommandHandler implements CommandHandler {
 
     // Créer l'executor avec les dépendances du contexte
     const executor = createKubectlExecutor(
-      context.clusterState,
+      context.apiServer,
       context.fileSystem,
       context.logger,
-      context.eventBus,
       context.networkRuntime
     )
 
@@ -627,12 +628,7 @@ export class KubectlCommandHandler implements CommandHandler {
         }
       }
 
-      const unsubscribe = context.eventBus.subscribeFiltered(
-        (appEvent) => {
-          const clusterEvent = appEvent as ClusterEvent
-          return shouldRenderEvent(clusterEvent, parsedCommand, effectiveNamespace)
-        },
-        () => {
+      const onWatchEvent = () => {
           const next = executor.execute(parsedRedirection.command)
           const nextOutput = next.ok ? next.value || '' : next.error
           if (nextOutput === lastOutput) {
@@ -674,6 +670,15 @@ export class KubectlCommandHandler implements CommandHandler {
             return
           }
           context.output.writeOutput(deltaOutput)
+      }
+      const unsubscribe = context.apiServer.watchHub.watchAllClusterEvents(
+        (clusterEvent) => {
+          if (
+            !shouldRenderEvent(clusterEvent, parsedCommand, effectiveNamespace)
+          ) {
+            return
+          }
+          onWatchEvent()
         }
       )
       context.startStream(() => {

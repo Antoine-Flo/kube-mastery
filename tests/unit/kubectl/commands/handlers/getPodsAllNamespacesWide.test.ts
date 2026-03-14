@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { handleGet } from '../../../../../src/core/kubectl/commands/handlers/get'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
@@ -20,6 +21,12 @@ const splitTableLine = (line: string): string[] => {
 }
 
 describe('kubectl get pods -A wide output', () => {
+  let apiServer: ReturnType<typeof createApiServerFacade>
+
+  beforeEach(() => {
+    apiServer = createApiServerFacade()
+  })
+
   it('filters kube-system pods by tier=control-plane label selector', () => {
     const pods = [
       createPod({
@@ -60,7 +67,8 @@ describe('kubectl get pods -A wide output', () => {
       selector: { tier: 'control-plane' }
     })
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
 
     expect(result).toContain('kube-apiserver-conformance-control-plane')
     expect(result).not.toContain('coredns-abcd')
@@ -91,7 +99,8 @@ describe('kubectl get pods -A wide output', () => {
       flags: { output: 'wide', 'all-namespaces': true }
     })
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
     const [header] = result.split('\n')
 
     expect(header).toContain('NAMESPACE')
@@ -123,7 +132,8 @@ describe('kubectl get pods -A wide output', () => {
       flags: { output: 'wide', A: true }
     })
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
     const lines = result.split('\n').filter((line) => line.trim().length > 0)
     const row1 = splitTableLine(lines[1])
     const row2 = splitTableLine(lines[2])
@@ -162,7 +172,8 @@ describe('kubectl get pods -A wide output', () => {
       flags: { output: 'wide', 'all-namespaces': true }
     })
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
     const lines = result.split('\n').filter((line) => line.trim().length > 0)
     const rows = lines.slice(1).map(splitTableLine)
     const ipColumnIndex = 6

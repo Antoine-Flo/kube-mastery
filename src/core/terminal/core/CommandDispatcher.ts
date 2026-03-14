@@ -4,8 +4,7 @@
 // Dispatcher de commandes utilisant le Strategy Pattern.
 // Route les commandes vers le premier handler qui peut les traiter.
 
-import type { ClusterState } from '../../cluster/ClusterState'
-import type { EventBus } from '../../cluster/events/EventBus'
+import type { ApiServerFacade } from '../../api/ApiServerFacade'
 import type { FileSystem } from '../../../core/filesystem/FileSystem'
 import type { SimNetworkRuntime } from '../../../core/network/SimNetworkRuntime'
 import type { Logger } from '../../../logger/Logger'
@@ -25,8 +24,7 @@ interface CommandDispatcherOptions {
   editorModal?: EditorModal
   renderer: TerminalRenderer
   shellContextStack: ShellContextStack
-  clusterState: ClusterState
-  eventBus: EventBus
+  apiServer: ApiServerFacade
   networkRuntime?: SimNetworkRuntime
   logger: Logger
   commandLimit?: number
@@ -54,8 +52,7 @@ export class CommandDispatcher {
       renderer: options.renderer,
       output,
       shellContextStack: options.shellContextStack,
-      clusterState: options.clusterState,
-      eventBus: options.eventBus,
+      apiServer: options.apiServer,
       networkRuntime: options.networkRuntime,
       logger: options.logger,
       lockInput: options.lockInput,

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createClusterStateData } from '../../../helpers/utils'
 import { createIngress } from '../../../../../src/core/cluster/ressources/Ingress'
 import { handleDescribe } from '../../../../../src/core/kubectl/commands/handlers/describe'
@@ -54,7 +55,9 @@ describe('kubectl describe handler - ingresses', () => {
       }
     })
     const state = createClusterStateData({ ingresses: [ingress] })
-    const result = handleDescribe(state, createParsedCommand())
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+    const result = handleDescribe(apiServer, createParsedCommand())
 
     expect(result.ok).toBe(true)
     if (!result.ok) {

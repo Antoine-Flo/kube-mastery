@@ -34,6 +34,12 @@ Interactive web application for learning `kubectl` commands through a simulated 
 
 get (pods, deploy, rs, services, ingresses, ingressclasses, configmaps, secrets, nodes, pv, pvc), describe, delete, create -f, apply -f, run, expose, logs, exec -it, label, annotate, version (--client, --output json/yaml), cluster-info, cluster-info dump, api-resources (--output wide, --namespaced, --sort-by). Détail : voir `src/core/kubectl/commands/handlers/`.
 
+### API-first architecture baseline
+
+- All command and runtime flows go through `ApiServerFacade`.
+- Reads are performed via `findResource`, `listResources`, `snapshotState`.
+- Direct access to internal read model state is removed from application code and unit tests.
+
 ### kubectl Realism Guarantees (current baseline)
 
 - Structured outputs for `kubectl get` are explicit:
@@ -354,7 +360,7 @@ All MVP criteria have been met:
 - ✅ In-terminal editor (nano/vim emulation)
 - ✅ Quiz system with multiple question types
 - ✅ Terminal command validation in quizzes
-- ✅ Tests à migrer (Vitest, coverage cible ~94%)
+- ✅ Tests migrés API-first (Vitest)
 - ✅ TypeScript strict mode
 - ✅ Modular architecture
 

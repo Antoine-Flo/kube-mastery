@@ -1,4 +1,5 @@
 import type { ClusterStateData } from '../../../cluster/ClusterState'
+import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
 import type { DaemonSet } from '../../../cluster/ressources/DaemonSet'
 import type { Deployment } from '../../../cluster/ressources/Deployment'
@@ -24,6 +25,7 @@ import { formatAge } from '../../../shared/formatter'
 import type { ParsedCommand, Resource } from '../types'
 import {
   formatKubectlTable,
+  type OutputDirective,
   renderStructuredPayload,
   resolveOutputDirective,
   validateOutputDirective
@@ -283,7 +285,8 @@ const getResourceOutputMetadata = (
 
 const buildListOutput = <T>(
   resourceType: StructuredResource,
-  items: T[]
+  items: T[],
+  resourceVersion: string
 ): ResourceListOutput<T> => {
   const metadata = getResourceOutputMetadata(resourceType)
   return {
@@ -291,7 +294,21 @@ const buildListOutput = <T>(
     items,
     kind: 'List',
     metadata: {
-      resourceVersion: ''
+      resourceVersion
+    }
+  }
+}
+
+const buildGenericListOutput = <T>(
+  items: T[],
+  resourceVersion: string
+): ResourceListOutput<T> => {
+  return {
+    apiVersion: 'v1',
+    items,
+    kind: 'List',
+    metadata: {
+      resourceVersion
     }
   }
 }
@@ -448,16 +465,22 @@ const getPodRestartsDisplay = (pod: Pod): string => {
 const getPodDisplayStatus = (pod: Pod): string => {
   const statuses = pod.status.containerStatuses ?? []
   const waitingStatus = statuses.find((status) => {
-    return status.state === 'Waiting' && status.waitingReason != null
+    return (
+      status.stateDetails?.state === 'Waiting' &&
+      status.stateDetails.reason != null
+    )
   })
-  if (waitingStatus?.waitingReason != null) {
-    return waitingStatus.waitingReason
+  if (waitingStatus?.stateDetails?.reason != null) {
+    return waitingStatus.stateDetails.reason
   }
   const terminatedStatus = statuses.find((status) => {
-    return status.state === 'Terminated' && status.terminatedReason != null
+    return (
+      status.stateDetails?.state === 'Terminated' &&
+      status.stateDetails.reason != null
+    )
   })
-  if (terminatedStatus?.terminatedReason != null) {
-    return terminatedStatus.terminatedReason
+  if (terminatedStatus?.stateDetails?.reason != null) {
+    return terminatedStatus.stateDetails.reason
   }
   if (pod.status.phase === 'Running') {
     return 'Running'
@@ -803,15 +826,32 @@ const SPECIAL_HANDLERS: Record<string, () => string> = {}
  * Strategy pattern: delegate to resource-specific handler configuration
  */
 export const handleGet = (
-  state: ClusterStateData,
-  parsed: ParsedCommand
+  apiServer: ApiServerFacade,
+  parsed: ParsedCommand,
+  dependencies: {
+    getResourceVersion?: () => string
+  } = {}
 ): string => {
+  const state = apiServer.snapshotState()
+  const getResourceVersion =
+    dependencies.getResourceVersion ?? apiServer.getResourceVersion
+  const resourceVersion = getResourceVersion?.() ?? ''
   if (typeof parsed.rawPath === 'string') {
     return handleGetRaw(state, parsed.rawPath)
   }
 
+  const outputDirectiveResult = validateOutputDirective(
+    resolveOutputDirective(parsed.flags, parsed.output),
+    ['table', 'json', 'yaml', 'wide', 'name', 'jsonpath'],
+    "--output must be one of: json|yaml|wide|name|jsonpath"
+  )
+  if (!outputDirectiveResult.ok) {
+    return `error: ${outputDirectiveResult.error}`
+  }
+  const outputDirective = outputDirectiveResult.value
+
   if (parsed.resource === 'all') {
-    return handleGetAll(state, parsed)
+    return handleGetAll(state, parsed, outputDirective, resourceVersion)
   }
 
   // Validate resource type
@@ -838,15 +878,6 @@ export const handleGet = (
     parsed.flags['all-namespaces'] === true || parsed.flags['A'] === true
   const effectiveNamespace = parsed.namespace ?? 'default'
   const filterNamespace = allNamespacesFlag ? undefined : effectiveNamespace
-  const outputDirectiveResult = validateOutputDirective(
-    resolveOutputDirective(parsed.flags, parsed.output),
-    ['table', 'json', 'yaml', 'wide', 'name', 'jsonpath'],
-    "--output must be one of: json|yaml|wide|name|jsonpath"
-  )
-  if (!outputDirectiveResult.ok) {
-    return `error: ${outputDirectiveResult.error}`
-  }
-  const outputDirective = outputDirectiveResult.value
   const isStructuredOutput =
     outputDirective.kind === 'json' ||
     outputDirective.kind === 'yaml' ||
@@ -885,7 +916,7 @@ export const handleGet = (
       return `Error from server (NotFound): namespaces "${parsed.name}" not found`
     }
     if (isStructuredOutput && parsed.name === undefined) {
-      const structuredPayload = buildListOutput(resourceType, [])
+      const structuredPayload = buildListOutput(resourceType, [], resourceVersion)
       const renderResult = renderStructuredPayload(
         structuredPayload,
         outputDirective
@@ -914,7 +945,7 @@ export const handleGet = (
     )
     const structuredPayload = asSingleObject
       ? shaped[0]
-      : buildListOutput(structuredResourceType, shaped)
+      : buildListOutput(structuredResourceType, shaped, resourceVersion)
     const renderResult = renderStructuredPayload(
       structuredPayload,
       outputDirective
@@ -1260,19 +1291,86 @@ const buildGetAllSection = (
   return formatKubectlTable(headers, rows, tableOptions)
 }
 
-const handleGetAll = (
+const collectGetAllItems = (
   state: ClusterStateData,
-  parsed: ParsedCommand
-): string => {
-  const context = buildGetAllContext(parsed)
-  const sections: string[] = []
-
+  parsed: ParsedCommand,
+  context: GetAllContext
+): Array<{
+  resourceType: GetAllResourceType
+  items: ResourceWithMetadata[]
+}> => {
+  const collected: Array<{
+    resourceType: GetAllResourceType
+    items: ResourceWithMetadata[]
+  }> = []
   for (const resourceType of GET_ALL_RESOURCE_ORDER) {
-    const section = buildGetAllSection(state, parsed, context, resourceType)
-    if (section != null) {
-      sections.push(section)
+    const handler = RESOURCE_HANDLERS[
+      resourceType
+    ] as ResourceHandler<ResourceWithMetadata>
+    const items = handler.getItems(state)
+    const filteredItems = applyFilters(
+      items,
+      context.filterNamespace,
+      parsed.selector,
+      false,
+      parsed.name
+    )
+    if (filteredItems.length > 0) {
+      collected.push({
+        resourceType,
+        items: filteredItems
+      })
     }
   }
+  return collected
+}
+
+const handleGetAll = (
+  state: ClusterStateData,
+  parsed: ParsedCommand,
+  outputDirective: OutputDirective,
+  resourceVersion: string
+): string => {
+  const context = buildGetAllContext(parsed)
+  const collected = collectGetAllItems(state, parsed, context)
+  const isStructuredOutput =
+    outputDirective.kind === 'json' ||
+    outputDirective.kind === 'yaml' ||
+    outputDirective.kind === 'jsonpath'
+
+  if (isStructuredOutput) {
+    const mixedItems = collected.flatMap((entry) => {
+      const sanitized = entry.items.map((item) => {
+        return sanitizeForOutput(item as unknown as Record<string, unknown>)
+      })
+      return shapeStructuredItemsForOutput(
+        entry.resourceType as StructuredResource,
+        sanitized
+      )
+    })
+    if (mixedItems.length === 0) {
+      const payload = buildGenericListOutput([], resourceVersion)
+      const renderResult = renderStructuredPayload(payload, outputDirective)
+      if (!renderResult.ok) {
+        return renderResult.error
+      }
+      return renderResult.value
+    }
+    const payload = buildGenericListOutput(mixedItems, resourceVersion)
+    const renderResult = renderStructuredPayload(payload, outputDirective)
+    if (!renderResult.ok) {
+      return renderResult.error
+    }
+    return renderResult.value
+  }
+
+  const sections = collected
+    .map((entry) => {
+      return buildGetAllSection(state, parsed, context, entry.resourceType)
+    })
+    .filter((section): section is string => {
+      return section != null
+    })
 
   if (sections.length === 0) {
     return noResourcesMessage(

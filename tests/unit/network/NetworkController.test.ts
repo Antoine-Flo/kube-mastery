@@ -1,17 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { createClusterState } from '../../../src/core/cluster/ClusterState'
-import { createEventBus } from '../../../src/core/cluster/events/EventBus'
+import { createApiServerFacade } from '../../../src/core/api/ApiServerFacade'
 import { createPod } from '../../../src/core/cluster/ressources/Pod'
 import { createService } from '../../../src/core/cluster/ressources/Service'
 import { createNetworkController } from '../../../src/core/network/NetworkController'
 
 describe('NetworkController', () => {
   it('should allocate clusterIP and nodePort and build endpoints', () => {
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus)
-    const controller = createNetworkController(eventBus, clusterState)
+    const apiServer = createApiServerFacade()
+    const controller = createNetworkController(apiServer)
 
-    clusterState.addPod(
+    apiServer.createResource(
+      'Pod',
       createPod({
         name: 'web-1',
         namespace: 'default',
@@ -27,7 +26,8 @@ describe('NetworkController', () => {
         ]
       })
     )
-    clusterState.addService(
+    apiServer.createResource(
+      'Service',
       createService({
         name: 'web',
         namespace: 'default',
@@ -39,7 +39,7 @@ describe('NetworkController', () => {
 
     controller.start()
 
-    const serviceResult = clusterState.findService('web', 'default')
+    const serviceResult = apiServer.findResource('Service', 'web', 'default')
     expect(serviceResult.ok).toBe(true)
     if (!serviceResult.ok) {
       controller.stop()
@@ -60,11 +60,11 @@ describe('NetworkController', () => {
   })
 
   it('should remove endpoints when selected pod is deleted', () => {
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus)
-    const controller = createNetworkController(eventBus, clusterState)
+    const apiServer = createApiServerFacade()
+    const controller = createNetworkController(apiServer)
 
-    clusterState.addPod(
+    apiServer.createResource(
+      'Pod',
       createPod({
         name: 'web-1',
         namespace: 'default',
@@ -74,7 +74,8 @@ describe('NetworkController', () => {
         containers: [{ name: 'web', image: 'nginx' }]
       })
     )
-    clusterState.addService(
+    apiServer.createResource(
+      'Service',
       createService({
         name: 'web',
         namespace: 'default',
@@ -84,7 +85,7 @@ describe('NetworkController', () => {
     )
 
     controller.start()
-    clusterState.deletePod('web-1', 'default')
+    apiServer.deleteResource('Pod', 'web-1', 'default')
 
     const runtime = controller.getState().getServiceRuntime('default', 'web')
     expect(runtime).toBeDefined()

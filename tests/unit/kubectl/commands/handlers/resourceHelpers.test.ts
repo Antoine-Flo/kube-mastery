@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import {
   applyResourceWithEvents,
   createResourceWithEvents
@@ -7,22 +8,12 @@ import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
 import { createIngress } from '../../../../../src/core/cluster/ressources/Ingress'
-import {
-  createEventBus,
-  type EventBus
-} from '../../../../../src/core/cluster/events/EventBus'
-import {
-  createClusterState,
-  type ClusterState
-} from '../../../../../src/core/cluster/ClusterState'
 
 describe('resourceHelpers', () => {
-  let eventBus: EventBus
-  let clusterState: ClusterState
+  let apiServer: ReturnType<typeof createApiServerFacade>
 
   beforeEach(() => {
-    eventBus = createEventBus()
-    clusterState = createClusterState(eventBus)
+    apiServer = createApiServerFacade()
   })
 
   describe('applyResourceWithEvents', () => {
@@ -34,7 +25,7 @@ describe('resourceHelpers', () => {
           containers: [{ name: 'main', image: 'nginx:latest' }]
         })
 
-        const result = applyResourceWithEvents(pod, clusterState, eventBus)
+        const result = applyResourceWithEvents(pod, apiServer)
 
         expect(result.ok).toBe(true)
         if (result.ok) {
@@ -44,7 +35,7 @@ describe('resourceHelpers', () => {
 
       it('should emit PodCreated event for new pod', () => {
         const subscriber = vi.fn()
-        eventBus.subscribe('PodCreated', subscriber)
+        apiServer.eventBus.subscribe('PodCreated', subscriber)
 
         const pod = createPod({
           name: 'new-pod',
@@ -52,7 +43,7 @@ describe('resourceHelpers', () => {
           containers: [{ name: 'main', image: 'nginx:latest' }]
         })
 
-        applyResourceWithEvents(pod, clusterState, eventBus)
+        applyResourceWithEvents(pod, apiServer)
 
         expect(subscriber).toHaveBeenCalled()
       })
@@ -63,7 +54,7 @@ describe('resourceHelpers', () => {
           namespace: 'default',
           containers: [{ name: 'main', image: 'nginx:1.0' }]
         })
-        clusterState.addPod(existingPod)
+        apiServer.createResource('Pod', existingPod)
 
         const updatedPod = createPod({
           name: 'existing-pod',
@@ -71,11 +62,7 @@ describe('resourceHelpers', () => {
           containers: [{ name: 'main', image: 'nginx:2.0' }]
         })
 
-        const result = applyResourceWithEvents(
-          updatedPod,
-          clusterState,
-          eventBus
-        )
+        const result = applyResourceWithEvents(updatedPod, apiServer)
 
         expect(result.ok).toBe(true)
         if (result.ok) {
@@ -89,10 +76,10 @@ describe('resourceHelpers', () => {
           namespace: 'default',
           containers: [{ name: 'main', image: 'nginx:latest' }]
         })
-        clusterState.addPod(existingPod)
+        apiServer.createResource('Pod', existingPod)
 
         const subscriber = vi.fn()
-        eventBus.subscribe('PodUpdated', subscriber)
+        apiServer.eventBus.subscribe('PodUpdated', subscriber)
 
         const updatedPod = createPod({
           name: 'existing-pod',
@@ -100,7 +87,7 @@ describe('resourceHelpers', () => {
           containers: [{ name: 'main', image: 'nginx:2.0' }]
         })
 
-        applyResourceWithEvents(updatedPod, clusterState, eventBus)
+        applyResourceWithEvents(updatedPod, apiServer)
 
         expect(subscriber).toHaveBeenCalled()
       })
@@ -114,7 +101,7 @@ describe('resourceHelpers', () => {
           data: { key: 'value' }
         })
 
-        const result = applyResourceWithEvents(cm, clusterState, eventBus)
+        const result = applyResourceWithEvents(cm, apiServer)
 
         expect(result.ok).toBe(true)
         if (result.ok) {
@@ -124,7 +111,7 @@ describe('resourceHelpers', () => {
 
       it('should emit ConfigMapCreated event', () => {
         const subscriber = vi.fn()
-        eventBus.subscribe('ConfigMapCreated', subscriber)
+        apiServer.eventBus.subscribe('ConfigMapCreated', subscriber)
 
         const cm = createConfigMap({
           name: 'new-config',
@@ -132,7 +119,7 @@ describe('resourceHelpers', () => {
           data: {}
         })
 
-        applyResourceWithEvents(cm, clusterState, eventBus)
+        applyResourceWithEvents(cm, apiServer)
 
         expect(subscriber).toHaveBeenCalled()
       })
@@ -143,7 +130,7 @@ describe('resourceHelpers', () => {
           namespace: 'default',
           data: { key: 'old' }
         })
-        clusterState.addConfigMap(existingCm)
+        apiServer.createResource('ConfigMap', existingCm)
 
         const updatedCm = createConfigMap({
           name: 'existing-config',
@@ -151,11 +138,7 @@ describe('resourceHelpers', () => {
           data: { key: 'new' }
         })
 
-        const result = applyResourceWithEvents(
-          updatedCm,
-          clusterState,
-          eventBus
-        )
+        const result = applyResourceWithEvents(updatedCm, apiServer)
 
         expect(result.ok).toBe(true)
         if (result.ok) {
@@ -169,10 +152,10 @@ describe('resourceHelpers', () => {
           namespace: 'default',
           data: {}
         })
-        clusterState.addConfigMap(existingCm)
+        apiServer.createResource('ConfigMap', existingCm)
 
         const subscriber = vi.fn()
-        eventBus.subscribe('ConfigMapUpdated', subscriber)
+        apiServer.eventBus.subscribe('ConfigMapUpdated', subscriber)
 
         const updatedCm = createConfigMap({
           name: 'existing-config',
@@ -180,7 +163,7 @@ describe('resourceHelpers', () => {
           data: { new: 'data' }
         })
 
-        applyResourceWithEvents(updatedCm, clusterState, eventBus)
+        applyResourceWithEvents(updatedCm, apiServer)
 
         expect(subscriber).toHaveBeenCalled()
       })
@@ -195,7 +178,7 @@ describe('resourceHelpers', () => {
           data: { password: 'secret' }
         })
 
-        const result = applyResourceWithEvents(secret, clusterState, eventBus)
+        const result = applyResourceWithEvents(secret, apiServer)
 
         expect(result.ok).toBe(true)
         if (result.ok) {
@@ -205,7 +188,7 @@ describe('resourceHelpers', () => {
 
       it('should emit SecretCreated event', () => {
         const subscriber = vi.fn()
-        eventBus.subscribe('SecretCreated', subscriber)
+        apiServer.eventBus.subscribe('SecretCreated', subscriber)
 
         const secret = createSecret({
           name: 'new-secret',
@@ -214,7 +197,7 @@ describe('resourceHelpers', () => {
           data: {}
         })
 
-        applyResourceWithEvents(secret, clusterState, eventBus)
+        applyResourceWithEvents(secret, apiServer)
 
         expect(subscriber).toHaveBeenCalled()
       })
@@ -226,7 +209,7 @@ describe('resourceHelpers', () => {
           secretType: { type: 'Opaque' },
           data: { key: 'old' }
         })
-        clusterState.addSecret(existingSecret)
+        apiServer.createResource('Secret', existingSecret)
 
         const updatedSecret = createSecret({
           name: 'existing-secret',
@@ -235,11 +218,7 @@ describe('resourceHelpers', () => {
           data: { key: 'new' }
         })
 
-        const result = applyResourceWithEvents(
-          updatedSecret,
-          clusterState,
-          eventBus
-        )
+        const result = applyResourceWithEvents(updatedSecret, apiServer)
 
         expect(result.ok).toBe(true)
         if (result.ok) {
@@ -254,10 +233,10 @@ describe('resourceHelpers', () => {
           secretType: { type: 'Opaque' },
           data: {}
         })
-        clusterState.addSecret(existingSecret)
+        apiServer.createResource('Secret', existingSecret)
 
         const subscriber = vi.fn()
-        eventBus.subscribe('SecretUpdated', subscriber)
+        apiServer.eventBus.subscribe('SecretUpdated', subscriber)
 
         const updatedSecret = createSecret({
           name: 'existing-secret',
@@ -266,7 +245,7 @@ describe('resourceHelpers', () => {
           data: { new: 'data' }
         })
 
-        applyResourceWithEvents(updatedSecret, clusterState, eventBus)
+        applyResourceWithEvents(updatedSecret, apiServer)
 
         expect(subscriber).toHaveBeenCalled()
       })
@@ -280,11 +259,7 @@ describe('resourceHelpers', () => {
           metadata: { name: 'test', namespace: 'default' }
         } as any
 
-        const result = applyResourceWithEvents(
-          unknownResource,
-          clusterState,
-          eventBus
-        )
+        const result = applyResourceWithEvents(unknownResource, apiServer)
 
         expect(result.ok).toBe(false)
         if (!result.ok) {
@@ -303,7 +278,7 @@ describe('resourceHelpers', () => {
           containers: [{ name: 'main', image: 'nginx:latest' }]
         })
 
-        const result = createResourceWithEvents(pod, clusterState, eventBus)
+        const result = createResourceWithEvents(pod, apiServer)
 
         expect(result.ok).toBe(true)
         if (result.ok) {
@@ -313,7 +288,7 @@ describe('resourceHelpers', () => {
 
       it('should emit PodCreated event', () => {
         const subscriber = vi.fn()
-        eventBus.subscribe('PodCreated', subscriber)
+        apiServer.eventBus.subscribe('PodCreated', subscriber)
 
         const pod = createPod({
           name: 'new-pod',
@@ -321,7 +296,7 @@ describe('resourceHelpers', () => {
           containers: [{ name: 'main', image: 'nginx:latest' }]
         })
 
-        createResourceWithEvents(pod, clusterState, eventBus)
+        createResourceWithEvents(pod, apiServer)
 
         expect(subscriber).toHaveBeenCalled()
       })
@@ -332,7 +307,7 @@ describe('resourceHelpers', () => {
           namespace: 'default',
           containers: [{ name: 'main', image: 'nginx:latest' }]
         })
-        clusterState.addPod(existingPod)
+        apiServer.createResource('Pod', existingPod)
 
         const newPod = createPod({
           name: 'existing-pod',
@@ -340,7 +315,7 @@ describe('resourceHelpers', () => {
           containers: [{ name: 'main', image: 'nginx:2.0' }]
         })
 
-        const result = createResourceWithEvents(newPod, clusterState, eventBus)
+        const result = createResourceWithEvents(newPod, apiServer)
 
         expect(result.ok).toBe(false)
         if (!result.ok) {
@@ -357,7 +332,7 @@ describe('resourceHelpers', () => {
           data: { key: 'value' }
         })
 
-        const result = createResourceWithEvents(cm, clusterState, eventBus)
+        const result = createResourceWithEvents(cm, apiServer)
 
         expect(result.ok).toBe(true)
         if (result.ok) {
@@ -367,7 +342,7 @@ describe('resourceHelpers', () => {
 
       it('should emit ConfigMapCreated event', () => {
         const subscriber = vi.fn()
-        eventBus.subscribe('ConfigMapCreated', subscriber)
+        apiServer.eventBus.subscribe('ConfigMapCreated', subscriber)
 
         const cm = createConfigMap({
           name: 'new-config',
@@ -375,7 +350,7 @@ describe('resourceHelpers', () => {
           data: {}
         })
 
-        createResourceWithEvents(cm, clusterState, eventBus)
+        createResourceWithEvents(cm, apiServer)
 
         expect(subscriber).toHaveBeenCalled()
       })
@@ -386,7 +361,7 @@ describe('resourceHelpers', () => {
           namespace: 'default',
           data: {}
         })
-        clusterState.addConfigMap(existingCm)
+        apiServer.createResource('ConfigMap', existingCm)
 
         const newCm = createConfigMap({
           name: 'existing-config',
@@ -394,7 +369,7 @@ describe('resourceHelpers', () => {
           data: { new: 'data' }
         })
 
-        const result = createResourceWithEvents(newCm, clusterState, eventBus)
+        const result = createResourceWithEvents(newCm, apiServer)
 
         expect(result.ok).toBe(false)
         if (!result.ok) {
@@ -412,7 +387,7 @@ describe('resourceHelpers', () => {
           data: {}
         })
 
-        const result = createResourceWithEvents(secret, clusterState, eventBus)
+        const result = createResourceWithEvents(secret, apiServer)
 
         expect(result.ok).toBe(true)
         if (result.ok) {
@@ -422,7 +397,7 @@ describe('resourceHelpers', () => {
 
       it('should emit SecretCreated event', () => {
         const subscriber = vi.fn()
-        eventBus.subscribe('SecretCreated', subscriber)
+        apiServer.eventBus.subscribe('SecretCreated', subscriber)
 
         const secret = createSecret({
           name: 'new-secret',
@@ -431,7 +406,7 @@ describe('resourceHelpers', () => {
           data: {}
         })
 
-        createResourceWithEvents(secret, clusterState, eventBus)
+        createResourceWithEvents(secret, apiServer)
 
         expect(subscriber).toHaveBeenCalled()
       })
@@ -443,7 +418,7 @@ describe('resourceHelpers', () => {
           secretType: { type: 'Opaque' },
           data: {}
         })
-        clusterState.addSecret(existingSecret)
+        apiServer.createResource('Secret', existingSecret)
 
         const newSecret = createSecret({
           name: 'existing-secret',
@@ -452,11 +427,7 @@ describe('resourceHelpers', () => {
           data: { new: 'data' }
         })
 
-        const result = createResourceWithEvents(
-          newSecret,
-          clusterState,
-          eventBus
-        )
+        const result = createResourceWithEvents(newSecret, apiServer)
 
         expect(result.ok).toBe(false)
         if (!result.ok) {
@@ -493,7 +464,7 @@ describe('resourceHelpers', () => {
           }
         })
 
-        const result = createResourceWithEvents(ingress, clusterState, eventBus)
+        const result = createResourceWithEvents(ingress, apiServer)
         expect(result.ok).toBe(true)
         if (result.ok) {
           expect(result.value).toContain(
@@ -511,11 +482,7 @@ describe('resourceHelpers', () => {
           metadata: { name: 'test', namespace: 'default' }
         } as any
 
-        const result = createResourceWithEvents(
-          unknownResource,
-          clusterState,
-          eventBus
-        )
+        const result = createResourceWithEvents(unknownResource, apiServer)
 
         expect(result.ok).toBe(false)
         if (!result.ok) {

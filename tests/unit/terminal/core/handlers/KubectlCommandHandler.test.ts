@@ -4,8 +4,8 @@ import {
   createPodUpdatedEvent
 } from '../../../../../src/core/cluster/events/types'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
-import { createClusterState } from '../../../../../src/core/cluster/ClusterState'
 import { createEventBus } from '../../../../../src/core/cluster/events/EventBus'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import type { CommandContext } from '../../../../../src/core/terminal/core/CommandContext'
 import { createFileSystem } from '../../../../../src/core/filesystem/FileSystem'
 import { KubectlCommandHandler } from '../../../../../src/core/terminal/core/handlers/KubectlCommandHandler'
@@ -60,7 +60,7 @@ describe('KubectlCommandHandler', () => {
     })
     renderer = createMockRenderer()
     const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus)
+    const apiServer = createApiServerFacade({ eventBus })
     const logger = createLogger()
 
     context = {
@@ -68,9 +68,8 @@ describe('KubectlCommandHandler', () => {
       renderer,
       output: createTerminalOutput(renderer),
       shellContextStack,
-      clusterState,
       logger,
-      eventBus,
+      apiServer,
       startStream: (stop) => {
         streamStop = stop
       }
@@ -171,7 +170,11 @@ describe('KubectlCommandHandler', () => {
       expect(fileResult.value).toContain('status: {}')
       expect(fileResult.value).not.toContain('readyReplicas: 0')
 
-      const deployment = context.clusterState.findDeployment('myapp', 'default')
+      const deployment = context.apiServer.findResource(
+        'Deployment',
+        'myapp',
+        'default'
+      )
       expect(deployment.ok).toBe(false)
     })
 
@@ -197,7 +200,7 @@ describe('KubectlCommandHandler', () => {
       expect(fileResult.value).toContain('name: 80-8080')
       expect(fileResult.value).toContain('loadBalancer: {}')
 
-      const service = context.clusterState.findService('my-svc', 'default')
+      const service = context.apiServer.findResource('Service', 'my-svc', 'default')
       expect(service.ok).toBe(false)
     })
 
@@ -328,7 +331,7 @@ describe('KubectlCommandHandler', () => {
         phase: 'Pending',
         containers: [{ name: 'watch-two', image: 'nginx:latest' }]
       })
-      context.eventBus.emit(createPodCreatedEvent(otherPod, 'test'))
+      context.apiServer.eventBus.emit(createPodCreatedEvent(otherPod, 'test'))
       const watchUpdateOutput = renderer.getOutput()
       expect(watchUpdateOutput).toContain('watch-two')
       expect(watchUpdateOutput).not.toContain('NAME')
@@ -341,7 +344,7 @@ describe('KubectlCommandHandler', () => {
         phase: 'Pending',
         containers: [{ name: 'watch-three', image: 'nginx:latest' }]
       })
-      context.eventBus.emit(createPodCreatedEvent(thirdPod, 'test'))
+      context.apiServer.eventBus.emit(createPodCreatedEvent(thirdPod, 'test'))
       expect(renderer.getOutput()).toBe('')
     })
 
@@ -366,7 +369,7 @@ describe('KubectlCommandHandler', () => {
         phase: 'Pending',
         containers: [{ name: 'watch-only-next', image: 'nginx:latest' }]
       })
-      context.eventBus.emit(createPodCreatedEvent(updatedPod, 'test'))
+      context.apiServer.eventBus.emit(createPodCreatedEvent(updatedPod, 'test'))
       expect(renderer.getOutput()).toContain('watch-only-next')
     })
 
@@ -384,11 +387,11 @@ describe('KubectlCommandHandler', () => {
           {
             name: 'status-demo',
             restartCount: 11,
-            waitingReason: 'Pending'
+            stateDetails: { state: 'Waiting', reason: 'Pending' }
           }
         ]
       })
-      context.eventBus.emit(createPodCreatedEvent(basePod, 'test'))
+      context.apiServer.eventBus.emit(createPodCreatedEvent(basePod, 'test'))
       renderer.clearOutput()
 
       const longStatusPod = createPod({
@@ -400,11 +403,11 @@ describe('KubectlCommandHandler', () => {
           {
             name: 'status-demo',
             restartCount: 22,
-            waitingReason: 'ImagePullBackOff'
+            stateDetails: { state: 'Waiting', reason: 'ImagePullBackOff' }
           }
         ]
       })
-      context.eventBus.emit(
+      context.apiServer.eventBus.emit(
         createPodUpdatedEvent('status-demo', 'default', longStatusPod, basePod, 'test')
       )
       const longLine = renderer
@@ -428,11 +431,11 @@ describe('KubectlCommandHandler', () => {
           {
             name: 'status-demo',
             restartCount: 33,
-            waitingReason: 'ErrImagePull'
+            stateDetails: { state: 'Waiting', reason: 'ErrImagePull' }
           }
         ]
       })
-      context.eventBus.emit(
+      context.apiServer.eventBus.emit(
         createPodUpdatedEvent(
           'status-demo',
           'default',
@@ -474,7 +477,7 @@ describe('KubectlCommandHandler', () => {
         phase: 'Pending',
         containers: [{ name: 'other-pod', image: 'nginx:latest' }]
       })
-      context.eventBus.emit(createPodCreatedEvent(unrelated, 'test'))
+      context.apiServer.eventBus.emit(createPodCreatedEvent(unrelated, 'test'))
       expect(renderer.getOutput()).toBe('')
     })
   })

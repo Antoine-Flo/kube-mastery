@@ -1,7 +1,7 @@
 import type {
-  ClusterState,
   ClusterStateData
 } from '../../../cluster/ClusterState'
+import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import { formatTable } from '../../../shared/formatter'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
@@ -135,7 +135,7 @@ const handleConfigView = (
 }
 
 const handleConfigSetContext = (
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   kubeconfig: SimKubeconfig,
   parsed: ParsedCommand
 ): ExecutionResult => {
@@ -176,7 +176,7 @@ const handleConfigSetContext = (
     })
   }
   const writeResult = writeKubeconfigToClusterInfo(
-    clusterState,
+    apiServer,
     updatedKubeconfig
   )
   if (!writeResult.ok) {
@@ -186,8 +186,9 @@ const handleConfigSetContext = (
 }
 
 export const getCurrentNamespaceFromKubeconfig = (
-  state: ClusterStateData
+  apiServer: ApiServerFacade
 ): string | undefined => {
+  const state: ClusterStateData = apiServer.snapshotState()
   const kubeconfigResult = readKubeconfigFromState(state)
   if (!kubeconfigResult.ok) {
     return undefined
@@ -215,10 +216,10 @@ export const getCurrentNamespaceFromKubeconfig = (
 }
 
 export const handleConfig = (
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   parsed: ParsedCommand
 ): ExecutionResult => {
-  const kubeconfigResult = readKubeconfigFromState(clusterState.toJSON())
+  const kubeconfigResult = readKubeconfigFromState(apiServer.snapshotState())
   if (!kubeconfigResult.ok) {
     return error(kubeconfigResult.error)
   }
@@ -236,7 +237,7 @@ export const handleConfig = (
   }
 
   if (parsed.action === 'config-set-context') {
-    return handleConfigSetContext(clusterState, kubeconfigResult.value, parsed)
+    return handleConfigSetContext(apiServer, kubeconfigResult.value, parsed)
   }
 
   return error(`Unknown config action: ${parsed.action}`)

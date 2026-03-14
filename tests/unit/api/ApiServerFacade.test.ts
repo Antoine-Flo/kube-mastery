@@ -1,0 +1,114 @@
+import { describe, expect, it } from 'vitest'
+import { createApiServerFacade } from '../../../src/core/api/ApiServerFacade'
+import { createPodCreatedEvent } from '../../../src/core/cluster/events/types'
+import { createNode } from '../../../src/core/cluster/ressources/Node'
+import { createPod } from '../../../src/core/cluster/ressources/Pod'
+
+describe('ApiServerFacade', () => {
+  it('delegates resource version to etcd-like revision', () => {
+    const apiServer = createApiServerFacade()
+    expect(apiServer.getResourceVersion()).toBe('1')
+
+    apiServer.createResource(
+      'Pod',
+      createPod({
+        name: 'api-pod',
+        namespace: 'default',
+        containers: [{ name: 'api', image: 'nginx:latest' }]
+      })
+    )
+    expect(apiServer.getResourceVersion()).toBe('2')
+
+    apiServer.stop()
+  })
+
+  it('is safe to stop more than once', () => {
+    const apiServer = createApiServerFacade()
+    apiServer.stop()
+    apiServer.stop()
+    expect(apiServer.getResourceVersion()).toBe('1')
+  })
+
+  it('routes emitted events through etcd-like store', () => {
+    const apiServer = createApiServerFacade()
+    const pod = createPod({
+      name: 'emit-api-pod',
+      namespace: 'default',
+      containers: [{ name: 'api', image: 'nginx:latest' }]
+    })
+
+    apiServer.emitEvent(createPodCreatedEvent(pod, 'api-server-test'))
+
+    expect(apiServer.getResourceVersion()).toBe('2')
+    expect(apiServer.etcd.getEventLog().at(-1)?.event.type).toBe('PodCreated')
+    expect(apiServer.etcd.getEventLog().at(-1)?.resourceVersion).toBe('2')
+    expect(apiServer.etcd.getEventLog().at(-1)?.source).toBe('api-server-test')
+
+    apiServer.stop()
+  })
+
+  it('writes node mutations through etcd-backed events', () => {
+    const apiServer = createApiServerFacade()
+    const node = createNode({
+      name: 'worker-a',
+      status: {
+        nodeInfo: {
+          architecture: 'amd64',
+          containerRuntimeVersion: 'containerd://2.2.0',
+          kernelVersion: '6.18.9-200.fc43.x86_64',
+          kubeletVersion: 'v1.35.0',
+          operatingSystem: 'linux',
+          osImage: 'Debian GNU/Linux 12 (bookworm)'
+        }
+      }
+    })
+
+    expect(apiServer.getResourceVersion()).toBe('1')
+    const createResult = apiServer.createResource('Node', node)
+    expect(createResult.ok).toBe(true)
+    expect(apiServer.getResourceVersion()).toBe('2')
+    expect(apiServer.etcd.getEventLog().at(-1)?.event.type).toBe('NodeCreated')
+
+    const updatedNode = {
+      ...node,
+      metadata: {
+        ...node.metadata,
+        labels: {
+          'kubernetes.io/hostname': 'worker-a'
+        }
+      }
+    }
+    const updateResult = apiServer.updateResource('Node', 'worker-a', updatedNode)
+    expect(updateResult.ok).toBe(true)
+    expect(apiServer.getResourceVersion()).toBe('3')
+    expect(apiServer.etcd.getEventLog().at(-1)?.event.type).toBe('NodeUpdated')
+
+    const deleteResult = apiServer.deleteResource('Node', 'worker-a')
+    expect(deleteResult.ok).toBe(true)
+    expect(apiServer.getResourceVersion()).toBe('4')
+    expect(apiServer.etcd.getEventLog().at(-1)?.event.type).toBe('NodeDeleted')
+
+    apiServer.stop()
+  })
+
+  it('applies bootstrap via api write path', () => {
+    const apiServer = createApiServerFacade({
+      bootstrap: {
+        profile: 'kind-like',
+        mode: 'missing-only',
+        clusterName: 'conformance',
+        clock: () => '2026-03-13T12:00:00.000Z'
+      }
+    })
+
+    const nodes = apiServer.listResources('Node')
+    const namespaces = apiServer.listResources('Namespace')
+    const services = apiServer.listResources('Service')
+    expect(nodes.length).toBeGreaterThanOrEqual(3)
+    expect(namespaces.some((item) => item.metadata.name === 'kube-system')).toBe(true)
+    expect(services.some((item) => item.metadata.name === 'kubernetes')).toBe(true)
+    expect(Number(apiServer.getResourceVersion())).toBeGreaterThan(1)
+
+    apiServer.stop()
+  })
+})

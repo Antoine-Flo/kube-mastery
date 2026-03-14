@@ -1,18 +1,22 @@
 import { createTwoFilesPatch } from 'diff'
 import { stringify as yamlStringify } from 'yaml'
 import {
-  createClusterState,
-  type ClusterState,
   type ClusterStateData,
   type ResourceKind
 } from '../../../cluster/ClusterState'
-import { createEventBus } from '../../../cluster/events/EventBus'
+import {
+  createApiServerFacade,
+  type ApiServerFacade
+} from '../../../api/ApiServerFacade'
 import type { FileSystem } from '../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import { parseKubernetesYaml } from '../../yamlParser'
 import type { ParsedCommand } from '../types'
-import { applyResourceWithEvents } from './resourceHelpers'
+import {
+  applyResourceWithEvents,
+  type KubernetesResource
+} from './resourceHelpers'
 
 type GenericObject = Record<string, unknown>
 
@@ -153,16 +157,55 @@ const isResourceKind = (kind: string): kind is ResourceKind => {
 }
 
 const findByKindNameAndNamespace = (
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   kind: ResourceKind,
   name: string,
   namespace?: string
 ): GenericObject | undefined => {
-  const resourceResult = clusterState.findByKind(kind, name, namespace)
+  const resourceResult = apiServer.findResource(kind, name, namespace)
   if (!resourceResult.ok) {
     return undefined
   }
   return resourceResult.value as unknown as GenericObject
+}
+
+const hydrateApiServerFromSnapshot = (
+  apiServer: ApiServerFacade,
+  snapshot: ClusterStateData
+): void => {
+  for (const namespace of snapshot.namespaces.items) {
+    apiServer.createResource('Namespace', namespace)
+  }
+  for (const node of snapshot.nodes.items) {
+    apiServer.createResource('Node', node)
+  }
+  for (const persistentVolume of snapshot.persistentVolumes.items) {
+    apiServer.createResource('PersistentVolume', persistentVolume)
+  }
+  for (const persistentVolumeClaim of snapshot.persistentVolumeClaims.items) {
+    apiServer.createResource('PersistentVolumeClaim', persistentVolumeClaim)
+  }
+  for (const configMap of snapshot.configMaps.items) {
+    apiServer.createResource('ConfigMap', configMap)
+  }
+  for (const secret of snapshot.secrets.items) {
+    apiServer.createResource('Secret', secret)
+  }
+  for (const service of snapshot.services.items) {
+    apiServer.createResource('Service', service)
+  }
+  for (const deployment of snapshot.deployments.items) {
+    apiServer.createResource('Deployment', deployment)
+  }
+  for (const daemonSet of snapshot.daemonSets.items) {
+    apiServer.createResource('DaemonSet', daemonSet)
+  }
+  for (const replicaSet of snapshot.replicaSets.items) {
+    apiServer.createResource('ReplicaSet', replicaSet)
+  }
+  for (const pod of snapshot.pods.items) {
+    apiServer.createResource('Pod', pod)
+  }
 }
 
 const getNestedDataMap = (
@@ -323,9 +366,8 @@ const computeMergedResource = (
   name: string,
   namespace: string | undefined
 ): GenericObject | undefined => {
-  const eventBus = createEventBus()
-  const dryRunState = createClusterState(eventBus)
-  dryRunState.loadState(cloneObject(stateSnapshot))
+  const dryRunApiServer = createApiServerFacade()
+  hydrateApiServerFromSnapshot(dryRunApiServer, cloneObject(stateSnapshot))
   const localResource = cloneObject(parsedResource)
   const localMetadata = localResource.metadata
   const liveMetadata = liveResource?.metadata
@@ -340,16 +382,16 @@ const computeMergedResource = (
     }
   }
 
-  applyResourceWithEvents(localResource as any, dryRunState, eventBus)
+  applyResourceWithEvents(localResource as KubernetesResource, dryRunApiServer)
   if (!isResourceKind(kind)) {
     return undefined
   }
-  return findByKindNameAndNamespace(dryRunState, kind, name, namespace)
+  return findByKindNameAndNamespace(dryRunApiServer, kind, name, namespace)
 }
 
 export const handleDiff = (
   fileSystem: FileSystem,
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   parsed: ParsedCommand
 ): ExecutionResult => {
   const filename = getFilenameFromFlags(parsed)
@@ -382,8 +424,8 @@ export const handleDiff = (
     return error(`error: unsupported resource kind for diff: ${kind}`)
   }
 
-  const snapshot = clusterState.toJSON()
-  const live = findByKindNameAndNamespace(clusterState, kind, name, namespace)
+  const snapshot = apiServer.snapshotState()
+  const live = findByKindNameAndNamespace(apiServer, kind, name, namespace)
   const merged = computeMergedResource(
     snapshot,
     parsedResource,

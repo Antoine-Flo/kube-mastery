@@ -1,10 +1,17 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createNode } from '../../../../../src/core/cluster/ressources/Node'
 import { handleGet } from '../../../../../src/core/kubectl/commands/handlers/get'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 import { createClusterStateData } from '../../../helpers/utils'
 
 describe('kubectl get handler - nodes', () => {
+  let apiServer: ReturnType<typeof createApiServerFacade>
+
+  beforeEach(() => {
+    apiServer = createApiServerFacade()
+  })
+
   const createState = () => {
     // Create nodes directly in ClusterStateData for testing
     // (since Node events are not yet implemented)
@@ -97,7 +104,8 @@ describe('kubectl get handler - nodes', () => {
       const state = createState()
       const parsed = createParsedCommand()
 
-      const result = handleGet(state, parsed)
+      apiServer.etcd.restore(state)
+      const result = handleGet(apiServer, parsed)
 
       expect(result).toContain('NAME')
       expect(result).toContain('STATUS')
@@ -118,7 +126,8 @@ describe('kubectl get handler - nodes', () => {
       const state = createClusterStateData()
       const parsed = createParsedCommand()
 
-      const result = handleGet(state, parsed)
+      apiServer.etcd.restore(state)
+      const result = handleGet(apiServer, parsed)
 
       expect(result).toBe('No resources found')
     })
@@ -131,7 +140,8 @@ describe('kubectl get handler - nodes', () => {
         flags: { output: 'wide' }
       })
 
-      const result = handleGet(state, parsed)
+      apiServer.etcd.restore(state)
+      const result = handleGet(apiServer, parsed)
 
       expect(result).toContain('NAME')
       expect(result).toContain('STATUS')
@@ -160,7 +170,8 @@ describe('kubectl get handler - nodes', () => {
         flags: { output: 'json' }
       })
 
-      const result = handleGet(state, parsed)
+      apiServer.etcd.restore(state)
+      const result = handleGet(apiServer, parsed)
 
       expect(result).toContain('"apiVersion": "v1"')
       expect(result).toContain('"kind": "List"')
@@ -186,7 +197,8 @@ describe('kubectl get handler - nodes', () => {
         flags: { output: 'yaml' }
       })
 
-      const result = handleGet(state, parsed)
+      apiServer.etcd.restore(state)
+      const result = handleGet(apiServer, parsed)
 
       expect(result).toContain('apiVersion: v1')
       expect(result).toContain('kind: List')
@@ -205,7 +217,8 @@ describe('kubectl get handler - nodes', () => {
         namespace: 'default' // Should be ignored for nodes
       })
 
-      const result = handleGet(state, parsed)
+      apiServer.etcd.restore(state)
+      const result = handleGet(apiServer, parsed)
 
       // Should still return all nodes regardless of namespace
       expect(result).toContain('control-plane')
@@ -220,7 +233,8 @@ describe('kubectl get handler - nodes', () => {
         selector: { 'node-role.kubernetes.io/control-plane': '' }
       })
 
-      const result = handleGet(state, parsed)
+      apiServer.etcd.restore(state)
+      const result = handleGet(apiServer, parsed)
 
       expect(result).toContain('control-plane')
       expect(result).not.toContain('worker-node-1')
@@ -232,7 +246,8 @@ describe('kubectl get handler - nodes', () => {
         selector: { 'node-role.kubernetes.io/worker': '' }
       })
 
-      const result = handleGet(state, parsed)
+      apiServer.etcd.restore(state)
+      const result = handleGet(apiServer, parsed)
 
       expect(result).toContain('worker-node-1')
       expect(result).not.toContain('control-plane')

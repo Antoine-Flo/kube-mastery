@@ -1,22 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { handleAnnotate } from '../../../../../src/core/kubectl/commands/handlers/annotate'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
-import {
-  createEventBus,
-  type EventBus
-} from '../../../../../src/core/cluster/events/EventBus'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
-import { createClusterStateData } from '../../../helpers/utils'
 
 describe('kubectl annotate handler', () => {
-  let eventBus: EventBus
+  let apiServer: ReturnType<typeof createApiServerFacade>
 
   beforeEach(() => {
-    eventBus = createEventBus()
+    apiServer = createApiServerFacade()
   })
-
-  const createState = (pods: ReturnType<typeof createPod>[] = []) =>
-    createClusterStateData({ pods })
 
   const createParsedCommand = (
     overrides: Partial<ParsedCommand> = {}
@@ -33,13 +26,13 @@ describe('kubectl annotate handler', () => {
       namespace: 'default',
       containers: [{ name: 'main', image: 'nginx:latest' }]
     })
-    const state = createState([pod])
+    apiServer.createResource('Pod', pod)
     const parsed = createParsedCommand({
       name: 'my-pod',
       annotationChanges: { description: 'My application' }
     })
 
-    const result = handleAnnotate(state, parsed, eventBus)
+    const result = handleAnnotate(apiServer, parsed)
 
     expect(result.ok).toBe(true)
     if (result.ok) {
@@ -48,23 +41,21 @@ describe('kubectl annotate handler', () => {
   })
 
   it('should return error when name is missing', () => {
-    const state = createState()
     const parsed = createParsedCommand({
       annotationChanges: { key: 'value' }
     })
 
-    const result = handleAnnotate(state, parsed, eventBus)
+    const result = handleAnnotate(apiServer, parsed)
 
     expect(result.ok).toBe(false)
   })
 
   it('should return error when no annotation changes provided', () => {
-    const state = createState()
     const parsed = createParsedCommand({
       name: 'my-pod'
     })
 
-    const result = handleAnnotate(state, parsed, eventBus)
+    const result = handleAnnotate(apiServer, parsed)
 
     expect(result.ok).toBe(false)
   })

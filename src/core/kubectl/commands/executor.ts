@@ -1,5 +1,5 @@
-import type { ClusterState } from '../../cluster/ClusterState'
-import type { EventBus } from '../../cluster/events/EventBus'
+import type { ApiServerFacade } from '../../api/ApiServerFacade'
+import type { PodLifecycleDescribeEvent } from '../../api/PodLifecycleEventStore'
 import type { FileSystem } from '../../filesystem/FileSystem'
 import type { SimNetworkRuntime } from '../../network/SimNetworkRuntime'
 import type { Logger } from '../../../logger/Logger'
@@ -40,7 +40,7 @@ const toGetExecutionResult = (output: string): ExecutionResult => {
 }
 
 const applyImplicitNamespaceFromKubeconfig = (
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   parsed: ParsedCommand
 ): ParsedCommand => {
   if (parsed.namespace !== undefined) {
@@ -57,7 +57,7 @@ const applyImplicitNamespaceFromKubeconfig = (
     return parsed
   }
 
-  const namespace = getCurrentNamespaceFromKubeconfig(clusterState.toJSON())
+  const namespace = getCurrentNamespaceFromKubeconfig(apiServer)
   if (namespace === undefined) {
     return parsed
   }
@@ -72,96 +72,65 @@ const applyImplicitNamespaceFromKubeconfig = (
  * Create action handlers Map with dependencies captured in closures
  */
 const createHandlers = (
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   fileSystem: FileSystem,
   _logger: Logger,
-  eventBus: EventBus,
+  getResourceVersion: () => string,
+  listPodEvents: (
+    namespace: string,
+    podName: string
+  ) => readonly PodLifecycleDescribeEvent[],
   networkRuntime?: SimNetworkRuntime
 ): Map<string, ActionHandler> => {
   const handlers = new Map<string, ActionHandler>()
 
   // Direct handler mapping - logging is handled centrally by event system
   handlers.set('get', (parsed) =>
-    toGetExecutionResult(handleGet(clusterState.toJSON(), parsed))
+    toGetExecutionResult(handleGet(apiServer, parsed, { getResourceVersion }))
   )
-  handlers.set('diff', (parsed) => handleDiff(fileSystem, clusterState, parsed))
+  handlers.set('diff', (parsed) => handleDiff(fileSystem, apiServer, parsed))
   handlers.set('explain', (parsed) => handleExplain(parsed))
   handlers.set('describe', (parsed) =>
-    handleDescribe(clusterState.toJSON(), parsed)
+    handleDescribe(apiServer, parsed, {
+      listPodEvents
+    })
   )
-  handlers.set('delete', (parsed) =>
-    handleDelete(clusterState, parsed, eventBus)
-  )
+  handlers.set('delete', (parsed) => handleDelete(apiServer, parsed))
   handlers.set('apply', (parsed) =>
-    handleApply(fileSystem, clusterState, parsed, eventBus)
+    handleApply(fileSystem, apiServer, parsed)
   )
   handlers.set('create', (parsed) =>
-    handleCreate(fileSystem, clusterState, parsed, eventBus)
+    handleCreate(fileSystem, apiServer, parsed)
   )
-  handlers.set('logs', (parsed) => handleLogs(clusterState.toJSON(), parsed))
+  handlers.set('logs', (parsed) => handleLogs(apiServer, parsed))
   handlers.set('exec', (parsed) =>
-    success(handleExec(clusterState.toJSON(), parsed, networkRuntime))
+    success(handleExec(apiServer, parsed, networkRuntime))
   )
-  handlers.set('label', (parsed) =>
-    handleLabelAdapter(clusterState, fileSystem, eventBus, parsed)
-  )
-  handlers.set('annotate', (parsed) =>
-    handleAnnotateAdapter(clusterState, fileSystem, eventBus, parsed)
-  )
+  handlers.set('label', (parsed) => handleLabel(apiServer, parsed))
+  handlers.set('annotate', (parsed) => handleAnnotate(apiServer, parsed))
   handlers.set('version', (parsed) => handleVersion(parsed))
   handlers.set('cluster-info', (parsed) =>
-    handleClusterInfo(clusterState.toJSON(), parsed)
+    handleClusterInfo(apiServer, parsed)
   )
   handlers.set('api-versions', (parsed) => success(handleAPIVersions(parsed)))
   handlers.set('api-resources', (parsed) => handleAPIResources(parsed))
-  handlers.set('scale', (parsed) => handleScale(clusterState, parsed, eventBus))
+  handlers.set('scale', (parsed) => handleScale(apiServer, parsed))
   handlers.set('run', (parsed) =>
-    handleRun(clusterState, parsed, eventBus, networkRuntime)
+    handleRun(apiServer, parsed, networkRuntime)
   )
-  handlers.set('expose', (parsed) =>
-    handleExpose(clusterState, parsed, eventBus)
-  )
+  handlers.set('expose', (parsed) => handleExpose(apiServer, parsed))
   handlers.set('config-get-contexts', (parsed) =>
-    handleConfig(clusterState, parsed)
+    handleConfig(apiServer, parsed)
   )
   handlers.set('config-current-context', (parsed) =>
-    handleConfig(clusterState, parsed)
+    handleConfig(apiServer, parsed)
   )
-  handlers.set('config-view', (parsed) => handleConfig(clusterState, parsed))
+  handlers.set('config-view', (parsed) => handleConfig(apiServer, parsed))
   handlers.set('config-set-context', (parsed) =>
-    handleConfig(clusterState, parsed)
+    handleConfig(apiServer, parsed)
   )
 
   return handlers
-}
-
-// ─── Handler Adapters ────────────────────────────────────────────────────
-
-// Adapters for handlers that need state management
-const handleLabelAdapter = (
-  cluster: ClusterState,
-  _fs: FileSystem,
-  eventBus: EventBus,
-  parsed: ParsedCommand
-): ExecutionResult => {
-  const result = handleLabel(cluster.toJSON(), parsed, eventBus)
-  if (result.ok && result.state) {
-    cluster.loadState(result.state)
-  }
-  return result.ok && result.state ? { ok: true, value: result.value } : result
-}
-
-const handleAnnotateAdapter = (
-  cluster: ClusterState,
-  _fs: FileSystem,
-  eventBus: EventBus,
-  parsed: ParsedCommand
-): ExecutionResult => {
-  const result = handleAnnotate(cluster.toJSON(), parsed, eventBus)
-  if (result.ok && result.state) {
-    cluster.loadState(result.state)
-  }
-  return result.ok && result.state ? { ok: true, value: result.value } : result
 }
 
 /**
@@ -184,20 +153,18 @@ const routeCommand = (
 
 /**
  * Create a kubectl executor
- * Factory function that encapsulates ClusterState, Logger, and EventBus in closures
+ * Factory function that encapsulates api server runtime dependencies in closures
  * FileSystem is passed per-execution to support dynamic filesystem context (host vs container)
  *
- * @param clusterState - The cluster state to operate on
+ * @param apiServer - API server facade exposing clusterState and eventBus
  * @param defaultFileSystem - The default filesystem (used if none provided)
  * @param logger - Application logger for tracking commands
- * @param eventBus - EventBus for event-driven architecture
  * @returns Executor with execute method that accepts optional filesystem
  */
 export const createKubectlExecutor = (
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   defaultFileSystem: FileSystem,
   logger: Logger,
-  eventBus: EventBus,
   networkRuntime?: SimNetworkRuntime
 ) => {
   const execute = (input: string, fileSystem?: FileSystem): ExecutionResult => {
@@ -217,14 +184,15 @@ export const createKubectlExecutor = (
     // Use provided filesystem or fallback to default
     const fs = fileSystem || defaultFileSystem
     const handlers = createHandlers(
-      clusterState,
+      apiServer,
       fs,
       logger,
-      eventBus,
+      apiServer.getResourceVersion,
+      apiServer.podLifecycleEventStore.listPodEvents,
       networkRuntime
     )
     const parsedWithNamespace = applyImplicitNamespaceFromKubeconfig(
-      clusterState,
+      apiServer,
       parseResult.value
     )
 

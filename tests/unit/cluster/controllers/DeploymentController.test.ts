@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
 import {
   createEventBus,
   type EventBus
 } from '../../../../src/core/cluster/events/EventBus'
-import type {
-  DeploymentUpdatedEvent,
-  ReplicaSetCreatedEvent,
-  ReplicaSetUpdatedEvent
+import {
+  createDeploymentUpdatedEvent,
+  createReplicaSetCreatedEvent,
+  createReplicaSetDeletedEvent,
+  createReplicaSetUpdatedEvent,
+  type DeploymentUpdatedEvent,
+  type ReplicaSetCreatedEvent,
+  type ReplicaSetUpdatedEvent
 } from '../../../../src/core/cluster/events/types'
 import type { Deployment } from '../../../../src/core/cluster/ressources/Deployment'
 import {
@@ -15,8 +20,8 @@ import {
 } from '../../../../src/core/cluster/ressources/Deployment'
 import type { ReplicaSet } from '../../../../src/core/cluster/ressources/ReplicaSet'
 import { createReplicaSet } from '../../../../src/core/cluster/ressources/ReplicaSet'
-import { DeploymentController } from '../../../../src/core/cluster/controllers/DeploymentController'
-import type { ControllerState } from '../../../../src/core/cluster/controllers/types'
+import { DeploymentController } from '../../../../src/core/control-plane/controllers/DeploymentController'
+import type { AppEvent } from '../../../../src/core/events/AppEvent'
 
 describe('DeploymentController', () => {
   let eventBus: EventBus
@@ -25,7 +30,7 @@ describe('DeploymentController', () => {
     deployments: Deployment[]
     replicaSets: ReplicaSet[]
   }
-  let getState: () => ControllerState
+  let apiServer: ApiServerFacade
 
   const createTestDeployment = (name: string, replicas: number): Deployment => {
     return createDeployment({
@@ -76,45 +81,183 @@ describe('DeploymentController', () => {
       replicaSets: []
     }
 
-    getState = () => ({
-      getDeployments: (namespace?: string) =>
-        namespace
-          ? mockState.deployments.filter(
-              (d) => d.metadata.namespace === namespace
-            )
-          : mockState.deployments,
-      getReplicaSets: (namespace?: string) =>
-        namespace
-          ? mockState.replicaSets.filter(
-              (rs) => rs.metadata.namespace === namespace
-            )
-          : mockState.replicaSets,
-      findDeployment: (name: string, namespace: string) => {
-        const deploy = mockState.deployments.find(
-          (d) => d.metadata.name === name && d.metadata.namespace === namespace
-        )
-        return deploy
-          ? { ok: true, value: deploy }
-          : { ok: false, error: 'not found' }
+    apiServer = {
+      eventBus,
+      getEventBus: () => eventBus,
+      emitEvent: (event: AppEvent) => {
+        eventBus.emit(event)
       },
-      findReplicaSet: (name: string, namespace: string) => {
-        const rs = mockState.replicaSets.find(
-          (r) => r.metadata.name === name && r.metadata.namespace === namespace
-        )
-        return rs ? { ok: true, value: rs } : { ok: false, error: 'not found' }
+      createResource: (kind, resource) => {
+        if (kind === 'ReplicaSet') {
+          const replicaSet = resource as ReplicaSet
+          mockState.replicaSets.push(replicaSet)
+          eventBus.emit(createReplicaSetCreatedEvent(replicaSet, 'api-server'))
+          return { ok: true, value: replicaSet }
+        }
+        return { ok: false, error: 'unsupported kind' }
       },
-      getDaemonSets: () => [],
-      findDaemonSet: () => ({ ok: false, error: 'not found' }),
-      getPods: () => [],
-      findPod: () => ({ ok: false, error: 'not found' }),
-      getNodes: () => [],
-      getPersistentVolumes: () => [],
-      findPersistentVolume: () => ({ ok: false, error: 'not found' }),
-      getPersistentVolumeClaims: () => [],
-      findPersistentVolumeClaim: () => ({ ok: false, error: 'not found' })
-    })
+      updateResource: (kind, name, resource, namespace) => {
+        if (kind === 'Deployment') {
+          const deployment = resource as Deployment
+          const index = mockState.deployments.findIndex((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (index < 0) {
+            return { ok: false, error: 'not found' }
+          }
+          const previous = mockState.deployments[index]
+          mockState.deployments[index] = deployment
+          eventBus.emit(
+            createDeploymentUpdatedEvent(
+              name,
+              namespace ?? 'default',
+              deployment,
+              previous,
+              'api-server'
+            )
+          )
+          return { ok: true, value: deployment }
+        }
+        if (kind === 'ReplicaSet') {
+          const replicaSet = resource as ReplicaSet
+          const index = mockState.replicaSets.findIndex((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (index < 0) {
+            return { ok: false, error: 'not found' }
+          }
+          const previous = mockState.replicaSets[index]
+          mockState.replicaSets[index] = replicaSet
+          eventBus.emit(
+            createReplicaSetUpdatedEvent(
+              name,
+              namespace ?? 'default',
+              replicaSet,
+              previous,
+              'api-server'
+            )
+          )
+          return { ok: true, value: replicaSet }
+        }
+        return { ok: false, error: 'unsupported kind' }
+      },
+      deleteResource: (kind, name, namespace) => {
+        if (kind === 'ReplicaSet') {
+          const index = mockState.replicaSets.findIndex((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (index < 0) {
+            return { ok: false, error: 'not found' }
+          }
+          const [deletedReplicaSet] = mockState.replicaSets.splice(index, 1)
+          eventBus.emit(
+            createReplicaSetDeletedEvent(
+              name,
+              namespace ?? 'default',
+              deletedReplicaSet,
+              'api-server'
+            )
+          )
+          return { ok: true, value: deletedReplicaSet }
+        }
+        return { ok: false, error: 'unsupported kind' }
+      },
+      listResources: (kind, namespace) => {
+        if (kind === 'Deployment') {
+          if (namespace == null) {
+            return mockState.deployments
+          }
+          return mockState.deployments.filter((entry) => {
+            return entry.metadata.namespace === namespace
+          })
+        }
+        if (kind === 'ReplicaSet') {
+          if (namespace == null) {
+            return mockState.replicaSets
+          }
+          return mockState.replicaSets.filter((entry) => {
+            return entry.metadata.namespace === namespace
+          })
+        }
+        return []
+      },
+      findResource: (kind, name, namespace) => {
+        if (kind === 'Deployment') {
+          const deployment = mockState.deployments.find((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (deployment == null) {
+            return { ok: false, error: 'not found' }
+          }
+          return { ok: true, value: deployment }
+        }
+        if (kind === 'ReplicaSet') {
+          const replicaSet = mockState.replicaSets.find((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (replicaSet == null) {
+            return { ok: false, error: 'not found' }
+          }
+          return { ok: true, value: replicaSet }
+        }
+        return { ok: false, error: 'not found' }
+      },
+      clusterState: {
+        getDeployments: (namespace?: string) =>
+          namespace
+            ? mockState.deployments.filter(
+                (d) => d.metadata.namespace === namespace
+              )
+            : mockState.deployments,
+        getReplicaSets: (namespace?: string) =>
+          namespace
+            ? mockState.replicaSets.filter(
+                (rs) => rs.metadata.namespace === namespace
+              )
+            : mockState.replicaSets,
+        findDeployment: (name: string, namespace: string) => {
+          const deploy = mockState.deployments.find(
+            (d) => d.metadata.name === name && d.metadata.namespace === namespace
+          )
+          return deploy
+            ? { ok: true, value: deploy }
+            : { ok: false, error: 'not found' }
+        },
+        findReplicaSet: (name: string, namespace: string) => {
+          const rs = mockState.replicaSets.find(
+            (r) => r.metadata.name === name && r.metadata.namespace === namespace
+          )
+          return rs ? { ok: true, value: rs } : { ok: false, error: 'not found' }
+        },
+        getDaemonSets: () => [],
+        findDaemonSet: () => ({ ok: false, error: 'not found' }),
+        getPods: () => [],
+        findPod: () => ({ ok: false, error: 'not found' }),
+        getNodes: () => [],
+        getPersistentVolumes: () => [],
+        findPersistentVolume: () => ({ ok: false, error: 'not found' }),
+        getPersistentVolumeClaims: () => [],
+        findPersistentVolumeClaim: () => ({ ok: false, error: 'not found' })
+      }
+    } as unknown as ApiServerFacade
+    apiServer.getClusterState = () => (apiServer as any).clusterState
 
-    controller = new DeploymentController(eventBus, getState)
+    controller = new DeploymentController(apiServer)
   })
 
   describe('reconcile', () => {
@@ -432,7 +575,7 @@ describe('DeploymentController', () => {
       }
       mockState.deployments = [deployment]
       mockState.replicaSets = [replicaSet]
-      controller = new DeploymentController(eventBus, getState, {
+      controller = new DeploymentController(apiServer, {
         resyncIntervalMs: 50
       })
 

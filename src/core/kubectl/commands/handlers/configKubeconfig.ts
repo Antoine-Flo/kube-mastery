@@ -1,8 +1,8 @@
 import { parse as yamlParse, stringify as yamlStringify } from 'yaml'
 import type {
-  ClusterState,
   ClusterStateData
 } from '../../../cluster/ClusterState'
+import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
 import type { Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
@@ -177,22 +177,29 @@ export const readKubeconfigFromState = (
 }
 
 export const writeKubeconfigToClusterInfo = (
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   kubeconfig: SimKubeconfig
 ): Result<void> => {
   const serializedKubeconfig = yamlStringify(kubeconfig).trimEnd()
-  const updateResult = clusterState.updateConfigMap(
+  const currentConfigMap = apiServer.findResource(
+    'ConfigMap',
     CLUSTER_INFO_CONFIGMAP_NAME,
-    CLUSTER_INFO_NAMESPACE,
-    (configMap) => {
-      return {
-        ...configMap,
-        data: {
-          ...(configMap.data || {}),
-          kubeconfig: serializedKubeconfig
-        }
+    CLUSTER_INFO_NAMESPACE
+  )
+  if (!currentConfigMap.ok) {
+    return error(currentConfigMap.error)
+  }
+  const updateResult = apiServer.updateResource(
+    'ConfigMap',
+    CLUSTER_INFO_CONFIGMAP_NAME,
+    {
+      ...currentConfigMap.value,
+      data: {
+        ...(currentConfigMap.value.data || {}),
+        kubeconfig: serializedKubeconfig
       }
-    }
+    },
+    CLUSTER_INFO_NAMESPACE
   )
   if (!updateResult.ok) {
     return error(updateResult.error)

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createWorkQueue,
   type WorkQueue
-} from '../../../../src/core/cluster/controllers/WorkQueue'
+} from '../../../../src/core/control-plane/controller-runtime/WorkQueue'
 
 describe('WorkQueue', () => {
   let queue: WorkQueue

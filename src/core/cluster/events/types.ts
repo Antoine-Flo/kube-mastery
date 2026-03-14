@@ -8,6 +8,9 @@ import type { BaseEvent } from '../../events/types'
 import type { ConfigMap } from '../ressources/ConfigMap'
 import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
+import type { Ingress } from '../ressources/Ingress'
+import type { Namespace } from '../ressources/Namespace'
+import type { Node } from '../ressources/Node'
 import type { PersistentVolume } from '../ressources/PersistentVolume'
 import type { PersistentVolumeClaim } from '../ressources/PersistentVolumeClaim'
 import type { Pod } from '../ressources/Pod'
@@ -366,6 +369,86 @@ export interface ServiceAnnotatedEvent extends BaseEvent {
   }
 }
 
+// ─── Node Events ─────────────────────────────────────────────────────────
+
+export interface NodeCreatedEvent extends BaseEvent {
+  type: 'NodeCreated'
+  payload: {
+    node: Node
+  }
+}
+
+export interface NodeDeletedEvent extends BaseEvent {
+  type: 'NodeDeleted'
+  payload: {
+    name: string
+    deletedNode: Node
+  }
+}
+
+export interface NodeUpdatedEvent extends BaseEvent {
+  type: 'NodeUpdated'
+  payload: {
+    name: string
+    node: Node
+    previousNode: Node
+  }
+}
+
+// ─── Namespace Events ────────────────────────────────────────────────────
+
+export interface NamespaceCreatedEvent extends BaseEvent {
+  type: 'NamespaceCreated'
+  payload: {
+    namespace: Namespace
+  }
+}
+
+export interface NamespaceDeletedEvent extends BaseEvent {
+  type: 'NamespaceDeleted'
+  payload: {
+    name: string
+    deletedNamespace: Namespace
+  }
+}
+
+export interface NamespaceUpdatedEvent extends BaseEvent {
+  type: 'NamespaceUpdated'
+  payload: {
+    name: string
+    namespace: Namespace
+    previousNamespace: Namespace
+  }
+}
+
+// ─── Ingress Events ──────────────────────────────────────────────────────
+
+export interface IngressCreatedEvent extends BaseEvent {
+  type: 'IngressCreated'
+  payload: {
+    ingress: Ingress
+  }
+}
+
+export interface IngressDeletedEvent extends BaseEvent {
+  type: 'IngressDeleted'
+  payload: {
+    name: string
+    namespace: string
+    deletedIngress: Ingress
+  }
+}
+
+export interface IngressUpdatedEvent extends BaseEvent {
+  type: 'IngressUpdated'
+  payload: {
+    name: string
+    namespace: string
+    ingress: Ingress
+    previousIngress: Ingress
+  }
+}
+
 // ─── Event Union Type ────────────────────────────────────────────────
 
 export type ClusterEvent =
@@ -405,6 +488,15 @@ export type ClusterEvent =
   | PersistentVolumeClaimUpdatedEvent
   | ServiceLabeledEvent
   | ServiceAnnotatedEvent
+  | NodeCreatedEvent
+  | NodeDeletedEvent
+  | NodeUpdatedEvent
+  | NamespaceCreatedEvent
+  | NamespaceDeletedEvent
+  | NamespaceUpdatedEvent
+  | IngressCreatedEvent
+  | IngressDeletedEvent
+  | IngressUpdatedEvent
 
 // ─── Event Factory Helpers ───────────────────────────────────────────────
 
@@ -924,4 +1016,132 @@ export const createPersistentVolumeClaimUpdatedEvent = (
     persistentVolumeClaim,
     previousPersistentVolumeClaim
   }
+})
+
+/**
+ * Create NodeCreated event
+ */
+export const createNodeCreatedEvent = (
+  node: Node,
+  source?: string
+): NodeCreatedEvent => ({
+  type: 'NodeCreated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { node }
+})
+
+/**
+ * Create NodeDeleted event
+ */
+export const createNodeDeletedEvent = (
+  name: string,
+  deletedNode: Node,
+  source?: string
+): NodeDeletedEvent => ({
+  type: 'NodeDeleted',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, deletedNode }
+})
+
+/**
+ * Create NodeUpdated event
+ */
+export const createNodeUpdatedEvent = (
+  name: string,
+  node: Node,
+  previousNode: Node,
+  source?: string
+): NodeUpdatedEvent => ({
+  type: 'NodeUpdated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, node, previousNode }
+})
+
+/**
+ * Create NamespaceCreated event
+ */
+export const createNamespaceCreatedEvent = (
+  namespace: Namespace,
+  source?: string
+): NamespaceCreatedEvent => ({
+  type: 'NamespaceCreated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { namespace }
+})
+
+/**
+ * Create NamespaceDeleted event
+ */
+export const createNamespaceDeletedEvent = (
+  name: string,
+  deletedNamespace: Namespace,
+  source?: string
+): NamespaceDeletedEvent => ({
+  type: 'NamespaceDeleted',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, deletedNamespace }
+})
+
+/**
+ * Create NamespaceUpdated event
+ */
+export const createNamespaceUpdatedEvent = (
+  name: string,
+  namespace: Namespace,
+  previousNamespace: Namespace,
+  source?: string
+): NamespaceUpdatedEvent => ({
+  type: 'NamespaceUpdated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, previousNamespace }
+})
+
+/**
+ * Create IngressCreated event
+ */
+export const createIngressCreatedEvent = (
+  ingress: Ingress,
+  source?: string
+): IngressCreatedEvent => ({
+  type: 'IngressCreated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { ingress }
+})
+
+/**
+ * Create IngressDeleted event
+ */
+export const createIngressDeletedEvent = (
+  name: string,
+  namespace: string,
+  deletedIngress: Ingress,
+  source?: string
+): IngressDeletedEvent => ({
+  type: 'IngressDeleted',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, deletedIngress }
+})
+
+/**
+ * Create IngressUpdated event
+ */
+export const createIngressUpdatedEvent = (
+  name: string,
+  namespace: string,
+  ingress: Ingress,
+  previousIngress: Ingress,
+  source?: string
+): IngressUpdatedEvent => ({
+  type: 'IngressUpdated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, ingress, previousIngress }
 })

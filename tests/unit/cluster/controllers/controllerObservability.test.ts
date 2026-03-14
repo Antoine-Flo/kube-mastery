@@ -1,17 +1,20 @@
 import { describe, expect, it } from 'vitest'
+import { createApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
+import type { ApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
 import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
 import {
+  createPodCreatedEvent,
+  createPodDeletedEvent,
   createPodUpdatedEvent,
+  createReplicaSetUpdatedEvent,
   type ReplicaSetUpdatedEvent
 } from '../../../../src/core/cluster/events/types'
-import { PodLifecycleController } from '../../../../src/core/cluster/controllers/PodLifecycleController'
-import { ReplicaSetController } from '../../../../src/core/cluster/controllers/ReplicaSetController'
-import type {
-  ControllerObservation,
-  ControllerState
-} from '../../../../src/core/cluster/controllers/types'
+import { createPodLifecycleController } from '../../../../src/core/kubelet/controllers/PodLifecycleController'
+import { ReplicaSetController } from '../../../../src/core/control-plane/controllers/ReplicaSetController'
+import type { ControllerObservation } from '../../../../src/core/control-plane/controller-runtime/types'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 import { createReplicaSet } from '../../../../src/core/cluster/ressources/ReplicaSet'
+import type { AppEvent } from '../../../../src/core/events/AppEvent'
 
 describe('controller observability', () => {
   it('emits enqueue, reconcile and skip observations in ReplicaSetController', async () => {
@@ -48,8 +51,128 @@ describe('controller observability', () => {
       replicaSets: [replicaSet],
       pods: [pod]
     }
-    const getState = (): ControllerState => {
-      return {
+    const apiServer = {
+      eventBus,
+      getEventBus: () => eventBus,
+      emitEvent: (event: AppEvent) => {
+        eventBus.emit(event)
+      },
+      createResource: (kind: string, resource: unknown) => {
+        if (kind === 'Pod') {
+          const podResource = resource as typeof pod
+          mockState.pods.push(podResource)
+          eventBus.emit(createPodCreatedEvent(podResource, 'api-server'))
+          return { ok: true, value: podResource }
+        }
+        return { ok: false, error: 'unsupported kind' }
+      },
+      deleteResource: (
+        kind: string,
+        name: string,
+        namespace?: string
+      ) => {
+        if (kind === 'Pod') {
+          const index = mockState.pods.findIndex((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (index < 0) {
+            return { ok: false, error: 'not found' }
+          }
+          const [deletedPod] = mockState.pods.splice(index, 1)
+          eventBus.emit(
+            createPodDeletedEvent(
+              name,
+              namespace ?? 'default',
+              deletedPod,
+              'api-server'
+            )
+          )
+          return { ok: true, value: deletedPod }
+        }
+        return { ok: false, error: 'unsupported kind' }
+      },
+      updateResource: (
+        kind: string,
+        name: string,
+        resource: unknown,
+        namespace?: string
+      ) => {
+        if (kind === 'ReplicaSet') {
+          const replicaSetResource = resource as typeof replicaSet
+          const index = mockState.replicaSets.findIndex((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (index < 0) {
+            return { ok: false, error: 'not found' }
+          }
+          const previous = mockState.replicaSets[index]
+          mockState.replicaSets[index] = replicaSetResource
+          eventBus.emit(
+            createReplicaSetUpdatedEvent(
+              name,
+              namespace ?? 'default',
+              replicaSetResource,
+              previous,
+              'api-server'
+            )
+          )
+          return { ok: true, value: replicaSetResource }
+        }
+        return { ok: false, error: 'unsupported kind' }
+      },
+      listResources: (kind: string, namespace?: string) => {
+        if (kind === 'ReplicaSet') {
+          if (namespace == null) {
+            return mockState.replicaSets
+          }
+          return mockState.replicaSets.filter((entry) => {
+            return entry.metadata.namespace === namespace
+          })
+        }
+        if (kind === 'Pod') {
+          if (namespace == null) {
+            return mockState.pods
+          }
+          return mockState.pods.filter((entry) => {
+            return entry.metadata.namespace === namespace
+          })
+        }
+        return []
+      },
+      findResource: (kind: string, name: string, namespace?: string) => {
+        if (kind === 'ReplicaSet') {
+          const current = mockState.replicaSets.find((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (current == null) {
+            return { ok: false }
+          }
+          return { ok: true, value: current }
+        }
+        if (kind === 'Pod') {
+          const current = mockState.pods.find((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (current == null) {
+            return { ok: false }
+          }
+          return { ok: true, value: current }
+        }
+        return { ok: false }
+      },
+      clusterState: {
         getReplicaSets: (namespace?: string) => {
           if (namespace == null) {
             return mockState.replicaSets
@@ -86,13 +209,13 @@ describe('controller observability', () => {
         getPersistentVolumeClaims: () => [],
         findPersistentVolumeClaim: () => ({ ok: false })
       }
-    }
+    } as unknown as ApiServerFacade
 
     const observations: ControllerObservation[] = []
     eventBus.subscribe('ReplicaSetUpdated', (event: ReplicaSetUpdatedEvent) => {
       mockState.replicaSets = [event.payload.replicaSet]
     })
-    const controller = new ReplicaSetController(eventBus, getState, {
+    const controller = new ReplicaSetController(apiServer, {
       observer: (observation) => {
         observations.push(observation)
       }
@@ -141,7 +264,8 @@ describe('controller observability', () => {
   })
 
   it('emits VolumeNotReady skip reason in PodLifecycleController', () => {
-    const eventBus = createEventBus()
+    const apiServer = createApiServerFacade()
+    const eventBus = apiServer.eventBus
     const pod = createPod({
       name: 'pending-pod',
       namespace: 'default',
@@ -149,40 +273,10 @@ describe('controller observability', () => {
       nodeName: 'worker-1',
       containers: [{ name: 'nginx', image: 'nginx:latest' }]
     })
-    const mockState = {
-      pods: [pod]
-    }
-    const getState = (): ControllerState => {
-      return {
-        getPods: () => mockState.pods,
-        findPod: (name: string, namespace: string) => {
-          const current = mockState.pods.find((entry) => {
-            return (
-              entry.metadata.name === name &&
-              entry.metadata.namespace === namespace
-            )
-          })
-          if (current == null) {
-            return { ok: false }
-          }
-          return { ok: true, value: current }
-        },
-        getReplicaSets: () => [],
-        findReplicaSet: () => ({ ok: false }),
-        getDeployments: () => [],
-        findDeployment: () => ({ ok: false }),
-        getDaemonSets: () => [],
-        findDaemonSet: () => ({ ok: false }),
-        getNodes: () => [],
-        getPersistentVolumes: () => [],
-        findPersistentVolume: () => ({ ok: false }),
-        getPersistentVolumeClaims: () => [],
-        findPersistentVolumeClaim: () => ({ ok: false })
-      }
-    }
+    apiServer.createResource('Pod', pod)
 
     const observations: ControllerObservation[] = []
-    const controller = new PodLifecycleController(eventBus, getState, {
+    const controller = createPodLifecycleController(apiServer, {
       observer: (observation) => {
         observations.push(observation)
       },

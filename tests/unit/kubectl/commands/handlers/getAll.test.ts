@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createService } from '../../../../../src/core/cluster/ressources/Service'
@@ -29,6 +30,12 @@ const createParsedGetDeployments = (
 }
 
 describe('kubectl get handler - all', () => {
+  let apiServer: ReturnType<typeof createApiServerFacade>
+
+  beforeEach(() => {
+    apiServer = createApiServerFacade()
+  })
+
   it('should render services table with service-prefixed names', () => {
     const kubernetesService = createService({
       name: 'kubernetes',
@@ -39,7 +46,8 @@ describe('kubectl get handler - all', () => {
     const state = createClusterStateData({ services: [kubernetesService] })
     const parsed = createParsedGetAll()
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
 
     expect(result).toContain('NAME')
     expect(result).toContain('TYPE')
@@ -82,7 +90,8 @@ describe('kubectl get handler - all', () => {
     })
     const parsed = createParsedGetAll()
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
 
     expect(result).toContain('pod/web')
     expect(result).toContain('service/web-svc')
@@ -93,7 +102,8 @@ describe('kubectl get handler - all', () => {
     const state = createClusterStateData()
     const parsed = createParsedGetAll()
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
 
     expect(result).toBe('No resources found in default namespace.')
   })
@@ -118,7 +128,8 @@ describe('kubectl get handler - all', () => {
       flags: { 'all-namespaces': true, A: true }
     })
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
 
     expect(result).toContain('NAMESPACE')
     expect(result).toContain('kube-system')
@@ -186,7 +197,8 @@ describe('kubectl get handler - all', () => {
     })
     const parsed = createParsedGetDeployments()
 
-    const result = handleGet(state, parsed)
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
 
     expect(result).toContain('deploy-zero')
     expect(result).toContain('0/2')
@@ -194,5 +206,58 @@ describe('kubectl get handler - all', () => {
     expect(result).toContain('1/2')
     expect(result).toContain('deploy-ready')
     expect(result).toContain('2/2')
+  })
+
+  it('should return structured list for get all -o json', () => {
+    const webPod = createPod({
+      name: 'web',
+      namespace: 'default',
+      containers: [{ name: 'nginx', image: 'nginx:latest' }]
+    })
+    const webService = createService({
+      name: 'web-svc',
+      namespace: 'default',
+      clusterIP: '10.96.10.10',
+      ports: [{ port: 80, protocol: 'TCP' }]
+    })
+    const state = createClusterStateData({
+      pods: [webPod],
+      services: [webService]
+    })
+    const parsed = createParsedGetAll({
+      flags: { output: 'json' }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed, {
+      getResourceVersion: () => '77'
+    })
+    const payload = JSON.parse(result)
+    const names = payload.items.map((item: { metadata: { name: string } }) => {
+      return item.metadata.name
+    })
+
+    expect(payload.apiVersion).toBe('v1')
+    expect(payload.kind).toBe('List')
+    expect(payload.metadata.resourceVersion).toBe('77')
+    expect(names).toContain('web')
+    expect(names).toContain('web-svc')
+  })
+
+  it('should return empty structured list for get all -o yaml', () => {
+    const state = createClusterStateData()
+    const parsed = createParsedGetAll({
+      flags: { output: 'yaml' }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed, {
+      getResourceVersion: () => '88'
+    })
+
+    expect(result).toContain('apiVersion: v1')
+    expect(result).toContain('kind: List')
+    expect(result).toContain('resourceVersion: "88"')
+    expect(result).toContain('items: []')
   })
 })

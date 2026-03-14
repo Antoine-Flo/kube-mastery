@@ -1,10 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createClusterState } from '../../../../src/core/cluster/ClusterState'
+import { createApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
 import {
-  initializeControllers,
-  stopRuntimeControllers
-} from '../../../../src/core/cluster/controllers/initializers'
-import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
+  initializeControlPlane,
+  stopControlPlane
+} from '../../../../src/core/control-plane/initializers'
 import { createDaemonSet } from '../../../../src/core/cluster/ressources/DaemonSet'
 import { createDeployment } from '../../../../src/core/cluster/ressources/Deployment'
 import { createNode } from '../../../../src/core/cluster/ressources/Node'
@@ -23,8 +22,7 @@ describe('runtime controller invariants', () => {
 
   it('converges Pending+scheduled pod to Running even when created before controller start', () => {
     vi.useFakeTimers()
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus, {
+    const apiServer = createApiServerFacade({
       bootstrap: { profile: 'none', mode: 'never' }
     })
     const pod = createPod({
@@ -34,9 +32,9 @@ describe('runtime controller invariants', () => {
       nodeName: 'sim-worker',
       containers: [{ name: 'nginx', image: 'nginx:latest' }]
     })
-    clusterState.addPod(pod)
+    apiServer.createResource('Pod', pod)
 
-    const controllers = initializeControllers(eventBus, clusterState, {
+    const controllers = initializeControlPlane(apiServer, {
       podLifecycle: {
         pendingDelayRangeMs: { minMs: 0, maxMs: 0 },
         volumeReadinessProbe: (pod) => {
@@ -49,7 +47,8 @@ describe('runtime controller invariants', () => {
           ) {
             return { ready: true }
           }
-          const pvcResult = clusterState.findPersistentVolumeClaim(
+          const pvcResult = apiServer.findResource(
+            'PersistentVolumeClaim',
             volume.source.claimName,
             pod.metadata.namespace
           )
@@ -68,25 +67,25 @@ describe('runtime controller invariants', () => {
     })
 
     flushRuntime()
-    const stored = clusterState.findPod('prebound-pod', 'default')
+    const stored = apiServer.findResource('Pod', 'prebound-pod', 'default')
     expect(stored.ok).toBe(true)
     if (!stored.ok || stored.value == null) {
-      stopRuntimeControllers(controllers)
+      stopControlPlane(controllers)
       return
     }
     expect(stored.value.status.phase).toBe('Running')
 
-    stopRuntimeControllers(controllers)
+    stopControlPlane(controllers)
   })
 
   it('keeps pod Pending when referenced PVC is not bound', () => {
     vi.useFakeTimers()
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus, {
+    const apiServer = createApiServerFacade({
       bootstrap: { profile: 'none', mode: 'never' }
     })
 
-    clusterState.addPersistentVolumeClaim(
+    apiServer.createResource(
+      'PersistentVolumeClaim',
       createPersistentVolumeClaim({
         name: 'data-claim',
         namespace: 'default',
@@ -96,7 +95,8 @@ describe('runtime controller invariants', () => {
         }
       })
     )
-    clusterState.addPod(
+    apiServer.createResource(
+      'Pod',
       createPod({
         name: 'pod-with-pvc',
         namespace: 'default',
@@ -115,7 +115,7 @@ describe('runtime controller invariants', () => {
       })
     )
 
-    const controllers = initializeControllers(eventBus, clusterState, {
+    const controllers = initializeControlPlane(apiServer, {
       podLifecycle: {
         pendingDelayRangeMs: { minMs: 0, maxMs: 0 },
         volumeReadinessProbe: (pod) => {
@@ -130,8 +130,8 @@ describe('runtime controller invariants', () => {
           ) {
             return { ready: true }
           }
-          const persistentVolumeClaimResult =
-            clusterState.findPersistentVolumeClaim(
+          const persistentVolumeClaimResult = apiServer.findResource(
+            'PersistentVolumeClaim',
               persistentVolumeClaimVolume.source.claimName,
               pod.metadata.namespace
             )
@@ -153,23 +153,22 @@ describe('runtime controller invariants', () => {
     })
 
     flushRuntime()
-    const stored = clusterState.findPod('pod-with-pvc', 'default')
+    const stored = apiServer.findResource('Pod', 'pod-with-pvc', 'default')
     expect(stored.ok).toBe(true)
     if (!stored.ok || stored.value == null) {
-      stopRuntimeControllers(controllers)
+      stopControlPlane(controllers)
       return
     }
     expect(stored.value.status.phase).toBe('Pending')
     const statuses = stored.value.status.containerStatuses ?? []
-    expect(statuses[0]?.waitingReason).toBe('PersistentVolumeClaimPending')
+    expect(statuses[0]?.stateDetails?.reason).toBe('PersistentVolumeClaimPending')
 
-    stopRuntimeControllers(controllers)
+    stopControlPlane(controllers)
   })
 
   it('keeps DaemonSet at one pod per eligible node across restart', () => {
     vi.useFakeTimers()
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus, {
+    const apiServer = createApiServerFacade({
       bootstrap: { profile: 'none', mode: 'never' }
     })
     const nodeStatus: NodeStatus = {
@@ -183,21 +182,24 @@ describe('runtime controller invariants', () => {
       },
       conditions: [{ type: 'Ready', status: 'True' }]
     }
-    clusterState.addNode(
+    apiServer.createResource(
+      'Node',
       createNode({
         name: 'n1',
         labels: { 'node-role.kubernetes.io/worker': '' },
         status: nodeStatus
       })
     )
-    clusterState.addNode(
+    apiServer.createResource(
+      'Node',
       createNode({
         name: 'n2',
         labels: { 'node-role.kubernetes.io/worker': '' },
         status: nodeStatus
       })
     )
-    clusterState.addDaemonSet(
+    apiServer.createResource(
+      'DaemonSet',
       createDaemonSet({
         name: 'ds-test',
         namespace: 'kube-system',
@@ -212,23 +214,23 @@ describe('runtime controller invariants', () => {
       })
     )
 
-    let controllers = initializeControllers(eventBus, clusterState, {
+    let controllers = initializeControlPlane(apiServer, {
       podLifecycle: {
         pendingDelayRangeMs: { minMs: 0, maxMs: 0 }
       }
     })
     flushRuntime()
-    stopRuntimeControllers(controllers)
+    stopControlPlane(controllers)
 
-    controllers = initializeControllers(eventBus, clusterState, {
+    controllers = initializeControlPlane(apiServer, {
       podLifecycle: {
         pendingDelayRangeMs: { minMs: 0, maxMs: 0 }
       }
     })
     flushRuntime()
 
-    const pods = clusterState
-      .getPods('kube-system')
+    const pods = apiServer
+      .listResources('Pod', 'kube-system')
       .filter((pod) =>
         pod.metadata.ownerReferences?.some(
           (owner) => owner.kind === 'DaemonSet' && owner.name === 'ds-test'
@@ -240,16 +242,16 @@ describe('runtime controller invariants', () => {
     )
     expect(nodeNames.size).toBe(2)
 
-    stopRuntimeControllers(controllers)
+    stopControlPlane(controllers)
   })
 
   it('converges Deployment to ReplicaSet and Running pods from pre-existing state', () => {
     vi.useFakeTimers()
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus, {
+    const apiServer = createApiServerFacade({
       bootstrap: { profile: 'none', mode: 'never' }
     })
-    clusterState.addNode(
+    apiServer.createResource(
+      'Node',
       createNode({
         name: 'worker-1',
         labels: { 'node-role.kubernetes.io/worker': '' },
@@ -266,7 +268,8 @@ describe('runtime controller invariants', () => {
         }
       })
     )
-    clusterState.addDeployment(
+    apiServer.createResource(
+      'Deployment',
       createDeployment({
         name: 'web',
         namespace: 'default',
@@ -282,7 +285,7 @@ describe('runtime controller invariants', () => {
       })
     )
 
-    const controllers = initializeControllers(eventBus, clusterState, {
+    const controllers = initializeControlPlane(apiServer, {
       scheduler: {
         schedulingDelayRangeMs: { minMs: 0, maxMs: 0 }
       },
@@ -292,8 +295,8 @@ describe('runtime controller invariants', () => {
     })
     flushRuntime()
 
-    const replicaSets = clusterState
-      .getReplicaSets('default')
+    const replicaSets = apiServer
+      .listResources('ReplicaSet', 'default')
       .filter((rs) =>
         rs.metadata.ownerReferences?.some(
           (owner) => owner.kind === 'Deployment' && owner.name === 'web'
@@ -301,8 +304,8 @@ describe('runtime controller invariants', () => {
       )
     expect(replicaSets.length).toBe(1)
 
-    const pods = clusterState
-      .getPods('default')
+    const pods = apiServer
+      .listResources('Pod', 'default')
       .filter((pod) =>
         pod.metadata.ownerReferences?.some(
           (owner) =>
@@ -320,15 +323,15 @@ describe('runtime controller invariants', () => {
       )
     ).toBe(true)
 
-    const deploymentResult = clusterState.findDeployment('web', 'default')
+    const deploymentResult = apiServer.findResource('Deployment', 'web', 'default')
     expect(deploymentResult.ok).toBe(true)
     if (!deploymentResult.ok || deploymentResult.value == null) {
-      stopRuntimeControllers(controllers)
+      stopControlPlane(controllers)
       return
     }
     expect(deploymentResult.value.status.readyReplicas).toBe(2)
     expect(deploymentResult.value.status.availableReplicas).toBe(2)
 
-    stopRuntimeControllers(controllers)
+    stopControlPlane(controllers)
   })
 })

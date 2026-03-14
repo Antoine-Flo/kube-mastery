@@ -1,13 +1,14 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // SEED LOADER
 // ═══════════════════════════════════════════════════════════════════════════
-// Load K8s resources from YAML (directory or content) and create ClusterState.
+// Load K8s resources from YAML (directory or content) and create ApiServerFacade.
 // Single source of truth: seeds in src/courses/seeds/<seedName>/*.yaml
 
-import type { ClusterState } from '../ClusterState'
-import { createClusterState } from '../ClusterState'
 import type { EventBus } from '../events/EventBus'
-import { createEventBus } from '../events/EventBus'
+import {
+  createApiServerFacade,
+  type ApiServerFacade
+} from '../../api/ApiServerFacade'
 import type { ConfigMap } from '../ressources/ConfigMap'
 import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
@@ -77,27 +78,27 @@ const parseMultiDocumentYamlSkipUnsupported = (
 // ─── Load from YAML content ──────────────────────────────────────────────
 
 /**
- * Create ClusterState from concatenated YAML content.
+ * Create ApiServerFacade from concatenated YAML content.
  * Skips unsupported resource kinds.
  */
-const loadClusterStateFromYamlContent = (
+const loadApiServerFromYamlContent = (
   yamlContent: string,
   eventBus?: EventBus
-): Result<ClusterState, string> => {
-  const bus = eventBus ?? createEventBus()
-  const clusterState = createClusterState(bus, {
+): Result<ApiServerFacade, string> => {
+  const apiServer = createApiServerFacade({
+    eventBus,
     bootstrap: createSimulatorBootstrapConfig()
   })
   const resources = parseMultiDocumentYamlSkipUnsupported(yamlContent)
 
   for (const resource of resources) {
-    const applyResult = applyResourceWithEvents(resource, clusterState, bus)
+    const applyResult = applyResourceWithEvents(resource, apiServer)
     if (!applyResult.ok) {
       return error(`Failed to apply resource: ${applyResult.error}`)
     }
   }
 
-  return success(clusterState)
+  return success(apiServer)
 }
 
 /**
@@ -128,16 +129,16 @@ const loadSeedYamlFromPath = (absolutePath: string): string => {
 }
 
 /**
- * Create ClusterState from a seed directory path (absolute).
+ * Create ApiServerFacade from a seed directory path (absolute).
  * Reads all .yaml/.yml files from the directory, then loads as YAML content.
  */
-export const loadClusterStateFromSeedPath = (
+export const loadApiServerFromSeedPath = (
   seedPath: string,
   eventBus?: EventBus
-): Result<ClusterState, string> => {
+): Result<ApiServerFacade, string> => {
   try {
     const yamlContent = loadSeedYamlFromPath(seedPath)
-    return loadClusterStateFromYamlContent(yamlContent, eventBus)
+    return loadApiServerFromYamlContent(yamlContent, eventBus)
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     return error(`Failed to load seed from ${seedPath}: ${message}`)

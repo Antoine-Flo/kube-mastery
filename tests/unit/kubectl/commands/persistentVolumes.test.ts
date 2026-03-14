@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createClusterState } from '../../../../src/core/cluster/ClusterState'
-import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
+import { createApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
 import {
   createFileSystem,
   type FileSystem
@@ -42,19 +41,17 @@ const PVC_YAML = [
 
 describe('kubectl PV/PVC support', () => {
   it('supports apply/get/describe/delete for pv and pvc', () => {
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus)
+    const apiServer = createApiServerFacade()
     const logger = createLogger()
     const fileSystem: FileSystem = createFileSystem(createHostFileSystem())
-    const volumeRuntime = initializeSimVolumeRuntime(eventBus, clusterState)
+    const volumeRuntime = initializeSimVolumeRuntime(apiServer)
     fileSystem.writeFile('/home/kube/pv.yaml', PV_YAML)
     fileSystem.writeFile('/home/kube/pvc.yaml', PVC_YAML)
 
     const executor = createKubectlExecutor(
-      clusterState,
+      apiServer,
       fileSystem,
-      logger,
-      eventBus
+      logger
     )
 
     const applyPv = executor.execute('kubectl apply -f /home/kube/pv.yaml')

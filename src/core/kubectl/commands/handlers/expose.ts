@@ -1,5 +1,4 @@
-import type { ClusterState } from '../../../cluster/ClusterState'
-import type { EventBus } from '../../../cluster/events/EventBus'
+import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import {
   createService,
   type ServiceSpec
@@ -67,11 +66,12 @@ const parseTargetPort = (
 }
 
 const resolveSelectorFromDeployment = (
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   deploymentName: string,
   namespace: string
 ): Result<Record<string, string>, string> => {
-  const deploymentResult = clusterState.findDeployment(
+  const deploymentResult = apiServer.findResource(
+    'Deployment',
     deploymentName,
     namespace
   )
@@ -90,11 +90,12 @@ const resolveSelectorFromDeployment = (
 }
 
 const resolveDefaultTargetPortFromDeployment = (
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   deploymentName: string,
   namespace: string
 ): number | undefined => {
-  const deploymentResult = clusterState.findDeployment(
+  const deploymentResult = apiServer.findResource(
+    'Deployment',
     deploymentName,
     namespace
   )
@@ -110,9 +111,8 @@ const resolveDefaultTargetPortFromDeployment = (
 }
 
 export const handleExpose = (
-  clusterState: ClusterState,
-  parsed: ParsedCommand,
-  eventBus: EventBus
+  apiServer: ApiServerFacade,
+  parsed: ParsedCommand
 ): ExecutionResult => {
   if (!parsed.resource || !parsed.name) {
     return error('expose requires a resource type and name')
@@ -155,7 +155,7 @@ export const handleExpose = (
     selector = parsed.selector
   } else {
     const selectorResult = resolveSelectorFromDeployment(
-      clusterState,
+      apiServer,
       parsed.name,
       namespace
     )
@@ -166,7 +166,7 @@ export const handleExpose = (
   }
 
   const defaultTargetPort = resolveDefaultTargetPortFromDeployment(
-    clusterState,
+    apiServer,
     parsed.name,
     namespace
   )
@@ -186,5 +186,5 @@ export const handleExpose = (
     ]
   })
 
-  return createResourceWithEvents(service, clusterState, eventBus)
+  return createResourceWithEvents(service, apiServer)
 }

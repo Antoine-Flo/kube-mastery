@@ -1,128 +1,15 @@
-// ═══════════════════════════════════════════════════════════════════════════
-// RESOURCE HELPERS
-// ═══════════════════════════════════════════════════════════════════════════
-// Generic functions for apply/create operations to avoid code duplication
-// Now supports event-driven architecture with EventBus
-
-import type { ClusterState } from '../../../cluster/ClusterState'
-import type { EventBus } from '../../../cluster/events/EventBus'
-import {
-  createConfigMapCreatedEvent,
-  createConfigMapUpdatedEvent,
-  createDaemonSetCreatedEvent,
-  createDaemonSetUpdatedEvent,
-  createDeploymentCreatedEvent,
-  createDeploymentUpdatedEvent,
-  createPodCreatedEvent,
-  createPodUpdatedEvent,
-  createPersistentVolumeClaimCreatedEvent,
-  createPersistentVolumeClaimUpdatedEvent,
-  createPersistentVolumeCreatedEvent,
-  createPersistentVolumeUpdatedEvent,
-  createReplicaSetCreatedEvent,
-  createReplicaSetUpdatedEvent,
-  createSecretCreatedEvent,
-  createSecretUpdatedEvent,
-  createServiceCreatedEvent,
-  createServiceUpdatedEvent
-} from '../../../cluster/events/types'
-import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
-import type { DaemonSet } from '../../../cluster/ressources/DaemonSet'
-import type { Deployment } from '../../../cluster/ressources/Deployment'
-import type { Ingress } from '../../../cluster/ressources/Ingress'
-import type { Node } from '../../../cluster/ressources/Node'
-import type { Namespace } from '../../../cluster/ressources/Namespace'
-import type { PersistentVolume } from '../../../cluster/ressources/PersistentVolume'
-import type { PersistentVolumeClaim } from '../../../cluster/ressources/PersistentVolumeClaim'
-import type { Pod } from '../../../cluster/ressources/Pod'
-import type { ReplicaSet } from '../../../cluster/ressources/ReplicaSet'
-import type { Secret } from '../../../cluster/ressources/Secret'
-import type { Service } from '../../../cluster/ressources/Service'
-import type { ExecutionResult, Result } from '../../../shared/result'
+import type { KindToResource, ResourceKind } from '../../../cluster/ClusterState'
+import type { ApiServerFacade } from '../../../api/ApiServerFacade'
+import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import { validateMetadataNameByKind } from '../metadataNameValidation'
 
-// ─── Event-Driven Resource Operations ───────────────────────────────────
-
-type KubernetesResource =
-  | Pod
-  | ConfigMap
-  | Secret
-  | Node
-  | Namespace
-  | Ingress
-  | ReplicaSet
-  | Deployment
-  | DaemonSet
-  | PersistentVolume
-  | PersistentVolumeClaim
-  | Service
-
-type ResourceKind =
-  | 'Pod'
-  | 'ConfigMap'
-  | 'Secret'
-  | 'Node'
-  | 'Namespace'
-  | 'Ingress'
-  | 'ReplicaSet'
-  | 'Deployment'
-  | 'DaemonSet'
-  | 'PersistentVolume'
-  | 'PersistentVolumeClaim'
-  | 'Service'
-
-const NAMESPACED_RESOURCE_KINDS: ResourceKind[] = [
-  'Pod',
-  'ConfigMap',
-  'Secret',
-  'ReplicaSet',
-  'Deployment',
-  'DaemonSet',
-  'PersistentVolumeClaim',
-  'Service',
-  'Ingress'
-]
-
-const resourceRequiresNamespace = (kind: ResourceKind): boolean => {
-  return NAMESPACED_RESOURCE_KINDS.includes(kind)
-}
-
-const validateNamespaceExists = (
-  clusterState: ClusterState,
-  kind: ResourceKind,
-  namespace: string
-): ExecutionResult | undefined => {
-  if (!resourceRequiresNamespace(kind)) {
-    return undefined
+export type KubernetesResource = {
+  kind: string
+  metadata: {
+    name: string
+    namespace: string
   }
-
-  const namespaceResult = clusterState.findNamespace(namespace)
-  if (namespaceResult.ok) {
-    return undefined
-  }
-
-  return error(
-    `Error from server (NotFound): namespaces "${namespace}" not found`
-  )
-}
-
-interface ResourceHandler {
-  find: (state: ClusterState, name: string, namespace: string) => Result<any>
-  emitCreated: (eventBus: EventBus, resource: KubernetesResource) => void
-  emitUpdated: (
-    eventBus: EventBus,
-    name: string,
-    namespace: string,
-    resource: KubernetesResource,
-    previous: any
-  ) => void
-  updateDirect?: (
-    state: ClusterState,
-    name: string,
-    resource: KubernetesResource
-  ) => void
-  addDirect?: (state: ClusterState, resource: KubernetesResource) => void
 }
 
 const KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
@@ -161,239 +48,56 @@ const toPluralKindReference = (kind: ResourceKind): string => {
   return `${kind.toLowerCase()}s`
 }
 
-// ─── Resource Handlers Configuration ─────────────────────────────────────
+const SUPPORTED_RESOURCE_KINDS: ResourceKind[] = [
+  'Pod',
+  'ConfigMap',
+  'Secret',
+  'Node',
+  'Namespace',
+  'Ingress',
+  'ReplicaSet',
+  'Deployment',
+  'DaemonSet',
+  'PersistentVolume',
+  'PersistentVolumeClaim',
+  'Service'
+]
 
-const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
-  Pod: {
-    find: (state, name, namespace) => state.findByKind('Pod', name, namespace),
-    emitCreated: (eventBus, resource) => {
-      eventBus.emit(createPodCreatedEvent(resource as Pod, 'kubectl'))
-    },
-    emitUpdated: (eventBus, name, namespace, resource, previous) => {
-      eventBus.emit(
-        createPodUpdatedEvent(
-          name,
-          namespace,
-          resource as Pod,
-          previous,
-          'kubectl'
-        )
-      )
-    }
-  },
-  ConfigMap: {
-    find: (state, name, namespace) =>
-      state.findByKind('ConfigMap', name, namespace),
-    emitCreated: (eventBus, resource) => {
-      eventBus.emit(
-        createConfigMapCreatedEvent(resource as ConfigMap, 'kubectl')
-      )
-    },
-    emitUpdated: (eventBus, name, namespace, resource, previous) => {
-      eventBus.emit(
-        createConfigMapUpdatedEvent(
-          name,
-          namespace,
-          resource as ConfigMap,
-          previous,
-          'kubectl'
-        )
-      )
-    }
-  },
-  Secret: {
-    find: (state, name, namespace) =>
-      state.findByKind('Secret', name, namespace),
-    emitCreated: (eventBus, resource) => {
-      eventBus.emit(createSecretCreatedEvent(resource as Secret, 'kubectl'))
-    },
-    emitUpdated: (eventBus, name, namespace, resource, previous) => {
-      eventBus.emit(
-        createSecretUpdatedEvent(
-          name,
-          namespace,
-          resource as Secret,
-          previous,
-          'kubectl'
-        )
-      )
-    }
-  },
-  Node: {
-    find: (state, name, _namespace) => state.findByKind('Node', name), // Nodes are cluster-scoped, ignore namespace
-    emitCreated: (_eventBus, _resource) => {
-      // Nodes use direct state update for now (placeholder events not yet implemented)
-    },
-    emitUpdated: (_eventBus, _name, _namespace, _resource, _previous) => {
-      // Nodes use direct state update for now (placeholder events not yet implemented)
-    },
-    updateDirect: (state, name, resource: KubernetesResource) => {
-      state.updateNode(name, () => resource as Node)
-    },
-    addDirect: (state, resource: KubernetesResource) => {
-      state.addNode(resource as Node)
-    }
-  },
-  Namespace: {
-    find: (state, name, _namespace) => state.findByKind('Namespace', name),
-    emitCreated: (_eventBus, _resource) => {
-      // Namespaces use direct state updates in this simulator.
-    },
-    emitUpdated: (_eventBus, _name, _namespace, _resource, _previous) => {
-      // Namespaces use direct state updates in this simulator.
-    },
-    updateDirect: (state, name, resource: KubernetesResource) => {
-      state.updateNamespace(name, () => resource as Namespace)
-    },
-    addDirect: (state, resource: KubernetesResource) => {
-      state.addNamespace(resource as Namespace)
-    }
-  },
-  Ingress: {
-    find: (state, name, namespace) =>
-      state.findByKind('Ingress', name, namespace),
-    emitCreated: (_eventBus, _resource) => {
-      // Ingresses use direct state updates in this simulator.
-    },
-    emitUpdated: (_eventBus, _name, _namespace, _resource, _previous) => {
-      // Ingresses use direct state updates in this simulator.
-    },
-    updateDirect: (state, name, resource: KubernetesResource) => {
-      state.updateIngress(
-        name,
-        (resource as Ingress).metadata.namespace,
-        () => {
-          return resource as Ingress
-        }
-      )
-    },
-    addDirect: (state, resource: KubernetesResource) => {
-      state.addIngress(resource as Ingress)
-    }
-  },
-  ReplicaSet: {
-    find: (state, name, namespace) =>
-      state.findByKind('ReplicaSet', name, namespace),
-    emitCreated: (eventBus, resource) => {
-      eventBus.emit(
-        createReplicaSetCreatedEvent(resource as ReplicaSet, 'kubectl')
-      )
-    },
-    emitUpdated: (eventBus, name, namespace, resource, previous) => {
-      eventBus.emit(
-        createReplicaSetUpdatedEvent(
-          name,
-          namespace,
-          resource as ReplicaSet,
-          previous,
-          'kubectl'
-        )
-      )
-    }
-  },
-  Deployment: {
-    find: (state, name, namespace) =>
-      state.findByKind('Deployment', name, namespace),
-    emitCreated: (eventBus, resource) => {
-      eventBus.emit(
-        createDeploymentCreatedEvent(resource as Deployment, 'kubectl')
-      )
-    },
-    emitUpdated: (eventBus, name, namespace, resource, previous) => {
-      eventBus.emit(
-        createDeploymentUpdatedEvent(
-          name,
-          namespace,
-          resource as Deployment,
-          previous,
-          'kubectl'
-        )
-      )
-    }
-  },
-  DaemonSet: {
-    find: (state, name, namespace) =>
-      state.findByKind('DaemonSet', name, namespace),
-    emitCreated: (eventBus, resource) => {
-      eventBus.emit(
-        createDaemonSetCreatedEvent(resource as DaemonSet, 'kubectl')
-      )
-    },
-    emitUpdated: (eventBus, name, namespace, resource, previous) => {
-      eventBus.emit(
-        createDaemonSetUpdatedEvent(
-          name,
-          namespace,
-          resource as DaemonSet,
-          previous,
-          'kubectl'
-        )
-      )
-    }
-  },
-  PersistentVolume: {
-    find: (state, name, _namespace) =>
-      state.findByKind('PersistentVolume', name),
-    emitCreated: (eventBus, resource) => {
-      eventBus.emit(
-        createPersistentVolumeCreatedEvent(
-          resource as PersistentVolume,
-          'kubectl'
-        )
-      )
-    },
-    emitUpdated: (eventBus, name, _namespace, resource, previous) => {
-      eventBus.emit(
-        createPersistentVolumeUpdatedEvent(
-          name,
-          resource as PersistentVolume,
-          previous,
-          'kubectl'
-        )
-      )
-    }
-  },
-  PersistentVolumeClaim: {
-    find: (state, name, namespace) =>
-      state.findByKind('PersistentVolumeClaim', name, namespace),
-    emitCreated: (eventBus, resource) => {
-      eventBus.emit(
-        createPersistentVolumeClaimCreatedEvent(
-          resource as PersistentVolumeClaim,
-          'kubectl'
-        )
-      )
-    },
-    emitUpdated: (eventBus, name, namespace, resource, previous) => {
-      eventBus.emit(
-        createPersistentVolumeClaimUpdatedEvent(
-          name,
-          namespace,
-          resource as PersistentVolumeClaim,
-          previous,
-          'kubectl'
-        )
-      )
-    }
-  },
-  Service: {
-    find: (state, name, namespace) =>
-      state.findByKind('Service', name, namespace),
-    emitCreated: (eventBus, resource) => {
-      eventBus.emit(createServiceCreatedEvent(resource as Service, 'kubectl'))
-    },
-    emitUpdated: (eventBus, name, namespace, resource, previous) => {
-      eventBus.emit(
-        createServiceUpdatedEvent(
-          name,
-          namespace,
-          resource as Service,
-          previous,
-          'kubectl'
-        )
-      )
-    }
+const NAMESPACED_RESOURCE_KINDS: ResourceKind[] = [
+  'Pod',
+  'ConfigMap',
+  'Secret',
+  'ReplicaSet',
+  'Deployment',
+  'DaemonSet',
+  'PersistentVolumeClaim',
+  'Service',
+  'Ingress'
+]
+
+const resourceRequiresNamespace = (kind: ResourceKind): boolean => {
+  return NAMESPACED_RESOURCE_KINDS.includes(kind)
+}
+
+const validateNamespaceExists = (
+  apiServer: ApiServerFacade,
+  kind: ResourceKind,
+  namespace: string
+): ExecutionResult | undefined => {
+  if (!resourceRequiresNamespace(kind)) {
+    return undefined
   }
+  const namespaceResult = apiServer.findResource('Namespace', namespace)
+  if (namespaceResult.ok) {
+    return undefined
+  }
+  return error(
+    `Error from server (NotFound): namespaces "${namespace}" not found`
+  )
+}
+
+const isSupportedKind = (kind: ResourceKind): boolean => {
+  return SUPPORTED_RESOURCE_KINDS.includes(kind)
 }
 
 /**
@@ -402,14 +106,12 @@ const resourceHandlers: Record<ResourceKind, ResourceHandler> = {
  */
 export const applyResourceWithEvents = (
   resource: KubernetesResource,
-  clusterState: ClusterState,
-  eventBus: EventBus
+  apiServer: ApiServerFacade
 ): ExecutionResult => {
   const { name, namespace } = resource.metadata
   const kind = resource.kind as ResourceKind
 
-  const handler = resourceHandlers[kind]
-  if (!handler) {
+  if (!isSupportedKind(kind)) {
     return error(
       `error: the server doesn't have a resource type "${kind.toLowerCase()}s"`
     )
@@ -420,32 +122,32 @@ export const applyResourceWithEvents = (
     return metadataNameValidation
   }
 
-  const namespaceValidation = validateNamespaceExists(
-    clusterState,
-    kind,
-    namespace
-  )
+  const namespaceValidation = validateNamespaceExists(apiServer, kind, namespace)
   if (namespaceValidation != null) {
     return namespaceValidation
   }
 
-  // Check if resource exists (Nodes ignore namespace)
-  const existing = handler.find(clusterState, name, namespace)
+  const existing = apiServer.findResource(kind, name, namespace)
 
   if (existing.ok) {
-    // Update: emit updated event or update directly
-    if (handler.updateDirect) {
-      handler.updateDirect(clusterState, name, resource)
-    } else {
-      handler.emitUpdated(eventBus, name, namespace, resource, existing.value)
+    const updateResult = apiServer.updateResource(
+      kind,
+      name,
+      resource as unknown as KindToResource<typeof kind>,
+      namespace
+    )
+    if (!updateResult.ok) {
+      return error(updateResult.error)
     }
     return success(`${toKindReference(kind)}/${name} configured`)
   } else {
-    // Create: emit created event or add directly
-    if (handler.addDirect) {
-      handler.addDirect(clusterState, resource)
-    } else {
-      handler.emitCreated(eventBus, resource)
+    const createResult = apiServer.createResource(
+      kind,
+      resource as unknown as KindToResource<typeof kind>,
+      namespace
+    )
+    if (!createResult.ok) {
+      return error(createResult.error)
     }
     return success(`${toKindReference(kind)}/${name} created`)
   }
@@ -458,14 +160,12 @@ export const applyResourceWithEvents = (
  */
 export const createResourceWithEvents = (
   resource: KubernetesResource,
-  clusterState: ClusterState,
-  eventBus: EventBus
+  apiServer: ApiServerFacade
 ): ExecutionResult => {
   const { name, namespace } = resource.metadata
   const kind = resource.kind as ResourceKind
 
-  const handler = resourceHandlers[kind]
-  if (!handler) {
+  if (!isSupportedKind(kind)) {
     return error(
       `error: the server doesn't have a resource type "${kind.toLowerCase()}s"`
     )
@@ -476,17 +176,12 @@ export const createResourceWithEvents = (
     return metadataNameValidation
   }
 
-  const namespaceValidation = validateNamespaceExists(
-    clusterState,
-    kind,
-    namespace
-  )
+  const namespaceValidation = validateNamespaceExists(apiServer, kind, namespace)
   if (namespaceValidation != null) {
     return namespaceValidation
   }
 
-  // Check if resource exists (Nodes ignore namespace)
-  const existing = handler.find(clusterState, name, namespace)
+  const existing = apiServer.findResource(kind, name, namespace)
 
   if (existing.ok) {
     return error(
@@ -494,11 +189,13 @@ export const createResourceWithEvents = (
     )
   }
 
-  // Emit created event or add directly
-  if (handler.addDirect) {
-    handler.addDirect(clusterState, resource)
-  } else {
-    handler.emitCreated(eventBus, resource)
+  const createResult = apiServer.createResource(
+    kind,
+    resource as unknown as KindToResource<typeof kind>,
+    namespace
+  )
+  if (!createResult.ok) {
+    return error(createResult.error)
   }
 
   return success(`${toKindReference(kind)}/${name} created`)

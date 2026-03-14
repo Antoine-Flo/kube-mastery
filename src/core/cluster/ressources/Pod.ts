@@ -190,16 +190,20 @@ export interface ContainerStatus {
   ready: boolean
   restartCount: number
   lastRestartAt?: string
-  state?: 'Waiting' | 'Running' | 'Terminated'
+  stateDetails?: ContainerRuntimeStateDetails
   started?: boolean
   startedAt?: string
   containerID?: string
   imageID?: string
-  lastState?: 'Waiting' | 'Running' | 'Terminated'
-  /** Reason shown in kubectl get pods STATUS (e.g. ContainerCreating, ImagePullBackOff) */
-  waitingReason?: string
-  /** Reason when terminated (e.g. CrashLoopBackOff) */
-  terminatedReason?: string
+  lastStateDetails?: ContainerRuntimeStateDetails
+}
+
+export interface ContainerRuntimeStateDetails {
+  state: 'Waiting' | 'Running' | 'Terminated'
+  reason?: string
+  exitCode?: number
+  startedAt?: string
+  finishedAt?: string
 }
 
 export type PodQosClass = 'Guaranteed' | 'Burstable' | 'BestEffort'
@@ -254,8 +258,7 @@ interface ContainerStatusOverride {
   ready?: boolean
   restartCount?: number
   lastRestartAt?: string
-  waitingReason?: string
-  terminatedReason?: string
+  stateDetails?: ContainerRuntimeStateDetails
 }
 
 interface PodConfig {
@@ -442,7 +445,10 @@ export const createPod = (config: PodConfig): Pod => {
       image: container.image,
       ready: false,
       restartCount: 0,
-      state: 'Waiting' as const,
+      stateDetails: {
+        state: 'Waiting' as const,
+        reason: 'ContainerCreating'
+      },
       started: false,
       imageID: computeContainerImageId(container.image)
     })
@@ -456,22 +462,35 @@ export const createPod = (config: PodConfig): Pod => {
     const override = overridesByName.get(container.name)
     const ready = override?.ready ?? initialPhase === 'Running'
     const restartCount = override?.restartCount ?? 0
+    const overrideState = override?.stateDetails?.state
     const state: 'Waiting' | 'Running' | 'Terminated' =
-      override?.terminatedReason != null
-        ? 'Terminated'
-        : override?.waitingReason != null
-          ? 'Waiting'
-          : initialPhase === 'Running'
-            ? 'Running'
-            : 'Waiting'
+      overrideState ?? (initialPhase === 'Running' ? 'Running' : 'Waiting')
     const isStarted = state === 'Running'
     const startedAt = isStarted ? creationTimestamp : undefined
+    const stateDetails: ContainerRuntimeStateDetails =
+      override?.stateDetails != null
+        ? override.stateDetails
+        : state === 'Running'
+        ? {
+            state: 'Running',
+            startedAt
+          }
+        : state === 'Terminated'
+          ? {
+              state: 'Terminated',
+              reason: 'Completed',
+              exitCode: 0
+            }
+          : {
+              state: 'Waiting',
+              reason: 'ContainerCreating'
+            }
     return {
       name: container.name,
       image: container.image,
       ready,
       restartCount,
-      state,
+      stateDetails,
       started: isStarted,
       ...(startedAt != null ? { startedAt } : {}),
       containerID: computeContainerId(
@@ -480,15 +499,16 @@ export const createPod = (config: PodConfig): Pod => {
         container.name
       ),
       imageID: computeContainerImageId(container.image),
-      ...(state !== 'Waiting' ? { lastState: 'Waiting' as const } : {}),
-      ...(override?.waitingReason != null && {
-        waitingReason: override.waitingReason
-      }),
+      ...(state !== 'Waiting'
+        ? {
+            lastStateDetails: {
+              state: 'Waiting' as const,
+              reason: 'ContainerCreating'
+            }
+          }
+        : {}),
       ...(override?.lastRestartAt != null && {
         lastRestartAt: override.lastRestartAt
-      }),
-      ...(override?.terminatedReason != null && {
-        terminatedReason: override.terminatedReason
       })
     }
   })
@@ -712,7 +732,12 @@ const PodManifestSchema = z.object({
             state: z
               .object({
                 waiting: z.object({ reason: z.string() }).optional(),
-                terminated: z.object({ reason: z.string() }).optional()
+                terminated: z
+                  .object({
+                    reason: z.string(),
+                    exitCode: z.number().optional()
+                  })
+                  .optional()
               })
               .optional()
           })
@@ -802,12 +827,23 @@ export const parsePodManifest = (data: unknown): Result<Pod> => {
       name: cs.name,
       ...(cs.ready !== undefined && { ready: cs.ready }),
       ...(cs.restartCount !== undefined && { restartCount: cs.restartCount }),
-      ...(cs.state?.waiting?.reason != null && {
-        waitingReason: cs.state.waiting.reason
-      }),
-      ...(cs.state?.terminated?.reason != null && {
-        terminatedReason: cs.state.terminated.reason
-      })
+      ...(cs.state?.waiting?.reason != null
+        ? {
+            stateDetails: {
+              state: 'Waiting' as const,
+              reason: cs.state.waiting.reason
+            }
+          }
+        : {}),
+      ...(cs.state?.terminated?.reason != null
+        ? {
+            stateDetails: {
+              state: 'Terminated' as const,
+              reason: cs.state.terminated.reason,
+              exitCode: cs.state.terminated.exitCode ?? 1
+            }
+          }
+        : {})
     })
   )
 

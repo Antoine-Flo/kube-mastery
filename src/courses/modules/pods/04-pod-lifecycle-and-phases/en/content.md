@@ -88,10 +88,10 @@ The container has finished, either successfully or with an error. The `Terminate
 You can view container states directly with:
 
 ```bash
-kubectl get pod <name> -o jsonpath='{.status.containerStatuses[*].state}'
+kubectl describe pod <name>
 ```
 
-Or more readably, via `kubectl describe pod <name>`, look for the `State:` and `Last State:` fields under each container.
+Look for the `State:` and `Last State:` fields under each container.
 :::
 
 ## Pod Conditions

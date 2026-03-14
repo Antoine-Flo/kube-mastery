@@ -7,6 +7,7 @@ import { FitAddon } from '@xterm/addon-fit'
 import { Terminal as XTermTerminal, type IDisposable } from '@xterm/xterm'
 import type { EmulatedEnvironment } from '../emulatedEnvironment/EmulatedEnvironment'
 import { createDefaultAutocompleteEngine } from './autocomplete'
+import type { AutocompleteClusterState } from './autocomplete/types'
 import {
   createTerminalController,
   type TerminalController
@@ -51,6 +52,10 @@ interface TerminalManagerState {
   attachId: number
 }
 
+interface TerminalContainer extends HTMLElement {
+  __terminalResizeCleanup?: () => void
+}
+
 const state: TerminalManagerState = {
   terminal: null,
   renderer: null,
@@ -83,6 +88,35 @@ const restoreCaretAfterInterrupt = (): void => {
   // Ensure cursor is visible and focused right after Ctrl+C stream interruption.
   state.controller.write('\x1b[?25h')
   state.controller.focus()
+}
+
+const createAutocompleteClusterState = (
+  environment: EmulatedEnvironment
+): AutocompleteClusterState => {
+  const apiServer = environment.apiServer
+  return {
+    getPods: (namespace?: string) => {
+      return apiServer.listResources('Pod', namespace)
+    },
+    getConfigMaps: (namespace?: string) => {
+      return apiServer.listResources('ConfigMap', namespace)
+    },
+    getSecrets: (namespace?: string) => {
+      return apiServer.listResources('Secret', namespace)
+    },
+    getNodes: () => {
+      return apiServer.listResources('Node')
+    },
+    getReplicaSets: (namespace?: string) => {
+      return apiServer.listResources('ReplicaSet', namespace)
+    },
+    getDaemonSets: (namespace?: string) => {
+      return apiServer.listResources('DaemonSet', namespace)
+    },
+    getDeployments: (namespace?: string) => {
+      return apiServer.listResources('Deployment', namespace)
+    }
+  }
 }
 
 const cleanup = () => {
@@ -183,7 +217,7 @@ const setupTerminal = (container: HTMLElement, topPrompt?: string) => {
   state.controller = createTerminalController({
     renderer: state.renderer,
     shellContextStack: state.currentEnvironment.shellContextStack,
-    clusterState: state.currentEnvironment.clusterState,
+    clusterState: createAutocompleteClusterState(state.currentEnvironment),
     autocompleteEngine: createDefaultAutocompleteEngine()
   })
 
@@ -249,7 +283,8 @@ const createResizeObserver = (
   window.addEventListener('resize', handleWindowResize)
 
   // Store cleanup function
-  ;(container as any).__terminalResizeCleanup = () => {
+  const terminalContainer = container as TerminalContainer
+  terminalContainer.__terminalResizeCleanup = () => {
     if (resizeTimeout) {
       clearTimeout(resizeTimeout)
     }

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createClusterState } from '../../../../../src/core/cluster/ClusterState'
-import { createEventBus } from '../../../../../src/core/cluster/events/EventBus'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
 import { handleExpose } from '../../../../../src/core/kubectl/commands/handlers/expose'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
@@ -20,9 +19,9 @@ const createParsedExpose = (
 
 describe('kubectl expose handler', () => {
   it('should create a service from deployment expose', () => {
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus)
-    clusterState.addDeployment(
+    const apiServer = createApiServerFacade()
+    apiServer.createResource(
+      'Deployment',
       createDeployment({
         name: 'web',
         namespace: 'default',
@@ -42,14 +41,14 @@ describe('kubectl expose handler', () => {
       })
     )
 
-    const result = handleExpose(clusterState, createParsedExpose(), eventBus)
+    const result = handleExpose(apiServer, createParsedExpose())
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return
     }
     expect(result.value).toContain('service/web created')
 
-    const serviceResult = clusterState.findService('web', 'default')
+    const serviceResult = apiServer.findResource('Service', 'web', 'default')
     expect(serviceResult.ok).toBe(true)
     if (!serviceResult.ok) {
       return
@@ -60,13 +59,8 @@ describe('kubectl expose handler', () => {
   })
 
   it('should return not found when deployment does not exist', () => {
-    const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus)
-    const result = handleExpose(
-      clusterState,
-      createParsedExpose({ name: 'missing' }),
-      eventBus
-    )
+    const apiServer = createApiServerFacade()
+    const result = handleExpose(apiServer, createParsedExpose({ name: 'missing' }))
     expect(result.ok).toBe(false)
     if (!result.ok) {
       expect(result.error).toContain('deployments.apps "missing" not found')

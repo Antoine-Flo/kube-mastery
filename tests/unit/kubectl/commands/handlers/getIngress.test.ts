@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createClusterStateData } from '../../../helpers/utils'
 import { createIngress } from '../../../../../src/core/cluster/ressources/Ingress'
 import { handleGet } from '../../../../../src/core/kubectl/commands/handlers/get'
@@ -16,6 +17,12 @@ const createParsedCommand = (
 }
 
 describe('kubectl get handler - ingresses', () => {
+  let apiServer: ReturnType<typeof createApiServerFacade>
+
+  beforeEach(() => {
+    apiServer = createApiServerFacade()
+  })
+
   it('should render ingress table output', () => {
     const ingress = createIngress({
       name: 'demo-ingress',
@@ -43,7 +50,8 @@ describe('kubectl get handler - ingresses', () => {
       }
     })
     const state = createClusterStateData({ ingresses: [ingress] })
-    const output = handleGet(state, createParsedCommand())
+    apiServer.etcd.restore(state)
+    const output = handleGet(apiServer, createParsedCommand())
 
     expect(output).toContain('NAME')
     expect(output).toContain('CLASS')
@@ -80,8 +88,9 @@ describe('kubectl get handler - ingresses', () => {
       }
     })
     const state = createClusterStateData({ ingresses: [ingress] })
+    apiServer.etcd.restore(state)
     const output = handleGet(
-      state,
+      apiServer,
       createParsedCommand({
         flags: { output: 'json' }
       })
@@ -94,7 +103,8 @@ describe('kubectl get handler - ingresses', () => {
 
   it('should return no resources for ingressclass when none exist', () => {
     const state = createClusterStateData()
-    const output = handleGet(state, {
+    apiServer.etcd.restore(state)
+    const output = handleGet(apiServer, {
       action: 'get',
       resource: 'ingressclasses',
       flags: {}

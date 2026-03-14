@@ -1,10 +1,9 @@
 import { readFileSync, statSync } from 'fs'
 import { basename, join } from 'path'
-import { createClusterState } from '../../../src/core/cluster/ClusterState'
-import { initializeControllers } from '../../../src/core/cluster/controllers/initializers'
+import { createApiServerFacade } from '../../../src/core/api/ApiServerFacade'
+import { initializeControlPlane } from '../../../src/core/control-plane/initializers'
 import { CONFIG } from '../../../src/config'
 import { type ClusterNodeRole } from '../../../src/core/cluster/clusterConfig'
-import { createEventBus } from '../../../src/core/cluster/events/EventBus'
 import { parseKubernetesYaml } from '../../../src/core/kubectl/yamlParser'
 import { createKubectlExecutor } from '../../../src/core/kubectl/commands/executor'
 import type { Pod } from '../../../src/core/cluster/ressources/Pod'
@@ -197,28 +196,26 @@ export const createRunnerExecutor = (
   clusterName = CONFIG.cluster.conformanceClusterName
 ): RunnerExecutor => {
   const logger = createLogger({ mirrorToConsole: false })
-  const eventBus = createEventBus()
   const nodeRolesResult = loadClusterNodeRoles()
   const nodeRoles: readonly ClusterNodeRole[] | undefined = nodeRolesResult.ok
     ? nodeRolesResult.value
     : undefined
-  const clusterState = createClusterState(eventBus, {
+  const apiServer = createApiServerFacade({
     bootstrap: createConformanceBootstrapConfig(clusterName, nodeRoles)
   })
-  const controllers = initializeControllers(eventBus, clusterState)
+  const controllers = initializeControlPlane(apiServer)
   const fileSystem = createFileSystem()
   const executor = createKubectlExecutor(
-    clusterState,
+    apiServer,
     fileSystem,
-    logger,
-    eventBus
+    logger
   )
 
   const listScopedPods = (namespace?: string): Pod[] => {
     if (namespace != null && namespace.length > 0) {
-      return clusterState.getPods(namespace)
+      return apiServer.listResources('Pod', namespace)
     }
-    return clusterState.getPods()
+    return apiServer.listResources('Pod')
   }
 
   const countReadyContainers = (pod: Pod): number => {
@@ -241,28 +238,28 @@ export const createRunnerExecutor = (
       })
       .sort()
       .join('|')
-    const deploymentsCount = clusterState.getDeployments(namespace).length
-    const replicaSetsCount = clusterState.getReplicaSets(namespace).length
-    const daemonSetsCount = clusterState.getDaemonSets(namespace).length
+    const deploymentsCount = apiServer.listResources('Deployment', namespace).length
+    const replicaSetsCount = apiServer.listResources('ReplicaSet', namespace).length
+    const daemonSetsCount = apiServer.listResources('DaemonSet', namespace).length
     return `${deploymentsCount};${replicaSetsCount};${daemonSetsCount};${pods}`
   }
 
   const reconcileWorkloadControllersOnce = (namespace?: string): void => {
-    const deployments = clusterState.getDeployments(namespace)
+    const deployments = apiServer.listResources('Deployment', namespace)
     for (const deployment of deployments) {
       controllers.deploymentController.reconcile(
         `${deployment.metadata.namespace}/${deployment.metadata.name}`
       )
     }
 
-    const replicaSets = clusterState.getReplicaSets(namespace)
+    const replicaSets = apiServer.listResources('ReplicaSet', namespace)
     for (const replicaSet of replicaSets) {
       controllers.replicaSetController.reconcile(
         `${replicaSet.metadata.namespace}/${replicaSet.metadata.name}`
       )
     }
 
-    const daemonSets = clusterState.getDaemonSets(namespace)
+    const daemonSets = apiServer.listResources('DaemonSet', namespace)
     for (const daemonSet of daemonSets) {
       controllers.daemonSetController.reconcile(
         `${daemonSet.metadata.namespace}/${daemonSet.metadata.name}`

@@ -184,25 +184,75 @@ const ensurePodConditions = (pod: Pod): PodCondition[] => {
 const toContainerState = (
   status: NonNullable<Pod['status']['containerStatuses']>[number]
 ): Record<string, unknown> => {
-  if (status.state === 'Running') {
+  if (status.stateDetails?.state === 'Running') {
     return {
       running: {
-        startedAt: status.startedAt ?? new Date().toISOString()
+        startedAt: status.stateDetails.startedAt ?? new Date().toISOString()
       }
     }
   }
-  if (status.state === 'Terminated') {
+  if (status.stateDetails?.state === 'Terminated') {
     return {
       terminated: {
-        reason: status.terminatedReason ?? 'Completed'
+        reason: status.stateDetails.reason ?? 'Completed',
+        exitCode: status.stateDetails.exitCode ?? 0,
+        ...(status.stateDetails.startedAt != null
+          ? { startedAt: status.stateDetails.startedAt }
+          : {}),
+        ...(status.stateDetails.finishedAt != null
+          ? { finishedAt: status.stateDetails.finishedAt }
+          : {})
+      }
+    }
+  }
+  if (status.stateDetails?.state === 'Waiting') {
+    return {
+      waiting: {
+        reason: status.stateDetails.reason ?? 'ContainerCreating'
       }
     }
   }
   return {
     waiting: {
-      reason: status.waitingReason ?? 'ContainerCreating'
+      reason: 'ContainerCreating'
     }
   }
+}
+
+const toLastContainerState = (
+  status: NonNullable<Pod['status']['containerStatuses']>[number]
+): Record<string, unknown> => {
+  if (status.lastStateDetails?.state === 'Running') {
+    return {
+      running: {
+        ...(status.lastStateDetails.startedAt != null
+          ? { startedAt: status.lastStateDetails.startedAt }
+          : {})
+      }
+    }
+  }
+  if (status.lastStateDetails?.state === 'Terminated') {
+    return {
+      terminated: {
+        reason: status.lastStateDetails.reason ?? 'Completed',
+        exitCode: status.lastStateDetails.exitCode ?? 0,
+        ...(status.lastStateDetails.startedAt != null
+          ? { startedAt: status.lastStateDetails.startedAt }
+          : {}),
+        ...(status.lastStateDetails.finishedAt != null
+          ? { finishedAt: status.lastStateDetails.finishedAt }
+          : {})
+      }
+    }
+  }
+  if (status.lastStateDetails?.state === 'Waiting') {
+    return {
+      waiting: {
+        reason: status.lastStateDetails.reason ?? 'ContainerCreating'
+      }
+    }
+  }
+  return {}
 }
 
 export const shapePodForStructuredOutput = (
@@ -263,12 +313,12 @@ export const shapePodForStructuredOutput = (
         imageID:
           status.imageID ??
           `${status.image}@sha256:${stableHash(status.image).repeat(8).slice(0, 64)}`,
-        lastState: {},
+        lastState: toLastContainerState(status),
         name: status.name,
         ready: status.ready,
         resources: {},
         restartCount: status.restartCount,
-        started: status.started ?? status.state === 'Running',
+        started: status.started ?? status.stateDetails?.state === 'Running',
         state: toContainerState(status),
         user: {
           linux: {

@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { createClusterState } from '../../../../../src/core/cluster/ClusterState'
-import { createEventBus } from '../../../../../src/core/cluster/events/EventBus'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
 import { createHostFileSystem } from '../../../../../src/core/filesystem/debianFileSystem'
@@ -12,13 +11,11 @@ import { parseCommand } from '../../../../../src/core/kubectl/commands/parser'
 import { handleDiff } from '../../../../../src/core/kubectl/commands/handlers/diff'
 
 describe('kubectl diff handler', () => {
+  let apiServer: ReturnType<typeof createApiServerFacade>
   let fileSystem: FileSystem
-  let eventBus: ReturnType<typeof createEventBus>
-  let clusterState: ReturnType<typeof createClusterState>
 
   beforeEach(() => {
-    eventBus = createEventBus()
-    clusterState = createClusterState(eventBus)
+    apiServer = createApiServerFacade()
     fileSystem = createFileSystem(createHostFileSystem())
   })
 
@@ -28,7 +25,7 @@ describe('kubectl diff handler', () => {
     if (!parsed.ok) {
       throw new Error(parsed.error)
     }
-    return handleDiff(fileSystem, clusterState, parsed.value)
+    return handleDiff(fileSystem, apiServer, parsed.value)
   }
 
   it('should return diff when resource does not exist in live state', () => {
@@ -55,7 +52,8 @@ data:
   })
 
   it('should return empty output when live and merged are identical', () => {
-    clusterState.addConfigMap(
+    apiServer.createResource(
+      'ConfigMap',
       createConfigMap({
         name: 'app-config',
         namespace: 'default',
@@ -84,7 +82,8 @@ data:
   })
 
   it('should return unified diff when resource changes', () => {
-    clusterState.addConfigMap(
+    apiServer.createResource(
+      'ConfigMap',
       createConfigMap({
         name: 'app-config',
         namespace: 'default',
@@ -114,7 +113,8 @@ data:
   })
 
   it('should mask secret values in diff output', () => {
-    clusterState.addSecret(
+    apiServer.createResource(
+      'Secret',
       createSecret({
         name: 'app-secret',
         namespace: 'default',

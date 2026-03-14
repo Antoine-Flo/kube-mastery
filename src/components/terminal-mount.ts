@@ -96,7 +96,7 @@ export function mountTerminal(
         try {
           const fileSystem = createFileSystem(
             env.fileSystemState,
-            env.eventBus,
+            env.apiServer.eventBus,
             { mutable: true }
           )
           dispatcher = createCommandDispatcher({
@@ -104,8 +104,7 @@ export function mountTerminal(
             editorModal,
             renderer: controller.getRenderer(),
             shellContextStack: env.shellContextStack,
-            clusterState: env.clusterState,
-            eventBus: env.eventBus,
+            apiServer: env.apiServer,
             networkRuntime: env.networkRuntime,
             logger,
             commandLimit,

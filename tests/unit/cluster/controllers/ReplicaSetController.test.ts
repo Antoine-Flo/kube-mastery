@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
 import {
   createEventBus,
   type EventBus
 } from '../../../../src/core/cluster/events/EventBus'
 import {
   createPodCreatedEvent,
+  createPodDeletedEvent,
+  createReplicaSetUpdatedEvent,
   createPodUpdatedEvent,
   type PodCreatedEvent,
   type PodDeletedEvent,
@@ -14,8 +17,8 @@ import type { Pod } from '../../../../src/core/cluster/ressources/Pod'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 import type { ReplicaSet } from '../../../../src/core/cluster/ressources/ReplicaSet'
 import { createReplicaSet } from '../../../../src/core/cluster/ressources/ReplicaSet'
-import { ReplicaSetController } from '../../../../src/core/cluster/controllers/ReplicaSetController'
-import type { ControllerState } from '../../../../src/core/cluster/controllers/types'
+import { ReplicaSetController } from '../../../../src/core/control-plane/controllers/ReplicaSetController'
+import type { AppEvent } from '../../../../src/core/events/AppEvent'
 
 describe('ReplicaSetController', () => {
   let eventBus: EventBus
@@ -24,7 +27,7 @@ describe('ReplicaSetController', () => {
     replicaSets: ReplicaSet[]
     pods: Pod[]
   }
-  let getState: () => ControllerState
+  let apiServer: ApiServerFacade
 
   const createTestReplicaSet = (name: string, replicas: number): ReplicaSet => {
     return createReplicaSet({
@@ -71,43 +74,157 @@ describe('ReplicaSetController', () => {
       pods: []
     }
 
-    getState = () => ({
-      getReplicaSets: (namespace?: string) =>
-        namespace
-          ? mockState.replicaSets.filter(
-              (rs) => rs.metadata.namespace === namespace
+    apiServer = {
+      eventBus,
+      getEventBus: () => eventBus,
+      emitEvent: (event: AppEvent) => {
+        eventBus.emit(event)
+      },
+      createResource: (kind, resource) => {
+        if (kind === 'Pod') {
+          const pod = resource as Pod
+          mockState.pods.push(pod)
+          eventBus.emit(createPodCreatedEvent(pod, 'api-server'))
+          return { ok: true, value: pod }
+        }
+        return { ok: false, error: 'unsupported kind' }
+      },
+      deleteResource: (kind, name, namespace) => {
+        if (kind === 'Pod') {
+          const index = mockState.pods.findIndex((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
             )
-          : mockState.replicaSets,
-      getPods: (namespace?: string) =>
-        namespace
-          ? mockState.pods.filter((p) => p.metadata.namespace === namespace)
-          : mockState.pods,
-      findReplicaSet: (name: string, namespace: string) => {
-        const rs = mockState.replicaSets.find(
-          (r) => r.metadata.name === name && r.metadata.namespace === namespace
-        )
-        return rs ? { ok: true, value: rs } : { ok: false, error: 'not found' }
+          })
+          if (index < 0) {
+            return { ok: false, error: 'not found' }
+          }
+          const [deletedPod] = mockState.pods.splice(index, 1)
+          eventBus.emit(
+            createPodDeletedEvent(
+              name,
+              namespace ?? 'default',
+              deletedPod,
+              'api-server'
+            )
+          )
+          return { ok: true, value: deletedPod }
+        }
+        return { ok: false, error: 'unsupported kind' }
       },
-      findPod: (name: string, namespace: string) => {
-        const pod = mockState.pods.find(
-          (p) => p.metadata.name === name && p.metadata.namespace === namespace
-        )
-        return pod
-          ? { ok: true, value: pod }
-          : { ok: false, error: 'not found' }
+      updateResource: (kind, name, resource, namespace) => {
+        if (kind === 'ReplicaSet') {
+          const replicaSet = resource as ReplicaSet
+          const index = mockState.replicaSets.findIndex((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (index < 0) {
+            return { ok: false, error: 'not found' }
+          }
+          const previous = mockState.replicaSets[index]
+          mockState.replicaSets[index] = replicaSet
+          eventBus.emit(
+            createReplicaSetUpdatedEvent(
+              name,
+              namespace ?? 'default',
+              replicaSet,
+              previous,
+              'api-server'
+            )
+          )
+          return { ok: true, value: replicaSet }
+        }
+        return { ok: false, error: 'unsupported kind' }
       },
-      getDeployments: () => [],
-      findDeployment: () => ({ ok: false, error: 'not found' }),
-      getDaemonSets: () => [],
-      findDaemonSet: () => ({ ok: false, error: 'not found' }),
-      getNodes: () => [],
-      getPersistentVolumes: () => [],
-      findPersistentVolume: () => ({ ok: false, error: 'not found' }),
-      getPersistentVolumeClaims: () => [],
-      findPersistentVolumeClaim: () => ({ ok: false, error: 'not found' })
-    })
+      listResources: (kind, namespace) => {
+        if (kind === 'ReplicaSet') {
+          if (namespace == null) {
+            return mockState.replicaSets
+          }
+          return mockState.replicaSets.filter((entry) => {
+            return entry.metadata.namespace === namespace
+          })
+        }
+        if (kind === 'Pod') {
+          if (namespace == null) {
+            return mockState.pods
+          }
+          return mockState.pods.filter((entry) => {
+            return entry.metadata.namespace === namespace
+          })
+        }
+        return []
+      },
+      findResource: (kind, name, namespace) => {
+        if (kind === 'ReplicaSet') {
+          const replicaSet = mockState.replicaSets.find((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (replicaSet == null) {
+            return { ok: false, error: 'not found' }
+          }
+          return { ok: true, value: replicaSet }
+        }
+        if (kind === 'Pod') {
+          const pod = mockState.pods.find((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (pod == null) {
+            return { ok: false, error: 'not found' }
+          }
+          return { ok: true, value: pod }
+        }
+        return { ok: false, error: 'not found' }
+      },
+      clusterState: {
+        getReplicaSets: (namespace?: string) =>
+          namespace
+            ? mockState.replicaSets.filter(
+                (rs) => rs.metadata.namespace === namespace
+              )
+            : mockState.replicaSets,
+        getPods: (namespace?: string) =>
+          namespace
+            ? mockState.pods.filter((p) => p.metadata.namespace === namespace)
+            : mockState.pods,
+        findReplicaSet: (name: string, namespace: string) => {
+          const rs = mockState.replicaSets.find(
+            (r) => r.metadata.name === name && r.metadata.namespace === namespace
+          )
+          return rs ? { ok: true, value: rs } : { ok: false, error: 'not found' }
+        },
+        findPod: (name: string, namespace: string) => {
+          const pod = mockState.pods.find(
+            (p) => p.metadata.name === name && p.metadata.namespace === namespace
+          )
+          return pod
+            ? { ok: true, value: pod }
+            : { ok: false, error: 'not found' }
+        },
+        getDeployments: () => [],
+        findDeployment: () => ({ ok: false, error: 'not found' }),
+        getDaemonSets: () => [],
+        findDaemonSet: () => ({ ok: false, error: 'not found' }),
+        getNodes: () => [],
+        getPersistentVolumes: () => [],
+        findPersistentVolume: () => ({ ok: false, error: 'not found' }),
+        getPersistentVolumeClaims: () => [],
+        findPersistentVolumeClaim: () => ({ ok: false, error: 'not found' })
+      }
+    } as unknown as ApiServerFacade
+    apiServer.getClusterState = () => (apiServer as any).clusterState
 
-    controller = new ReplicaSetController(eventBus, getState)
+    controller = new ReplicaSetController(apiServer)
   })
 
   describe('reconcile', () => {
@@ -439,7 +556,7 @@ describe('ReplicaSetController', () => {
       const runningPod = createTestPod('my-rs-a', 'my-rs')
       mockState.replicaSets = [rs]
       mockState.pods = [runningPod]
-      controller = new ReplicaSetController(eventBus, getState, {
+      controller = new ReplicaSetController(apiServer, {
         resyncIntervalMs: 50
       })
 

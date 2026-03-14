@@ -1,9 +1,8 @@
-import type { ClusterState } from '../cluster/ClusterState'
-import type { EventBus } from '../cluster/events/EventBus'
+import type { ApiServerFacade } from '../api/ApiServerFacade'
 import type { ServiceDeletedEvent } from '../cluster/events/types'
 import type { Pod } from '../cluster/ressources/Pod'
 import type { Service } from '../cluster/ressources/Service'
-import { startPeriodicResync } from '../cluster/controllers/helpers'
+import { startPeriodicResync } from '../control-plane/controller-runtime/helpers'
 import type { AppEventType } from '../events/AppEvent'
 import { createNodePortAllocator } from './NodePortAllocator'
 import {
@@ -157,10 +156,10 @@ const serviceChanged = (left: Service, right: Service): boolean => {
 }
 
 export const createNetworkController = (
-  eventBus: EventBus,
-  clusterState: ClusterState,
+  apiServer: ApiServerFacade,
   options: NetworkControllerOptions = {}
 ): NetworkController => {
+  const eventBus = apiServer.getEventBus()
   const networkState = createNetworkState()
   const serviceIpAllocator = createServiceIpAllocator()
   const nodePortAllocator = createNodePortAllocator()
@@ -169,8 +168,8 @@ export const createNetworkController = (
   let stopResync: (() => void) | undefined
 
   const reconcileServices = (): void => {
-    const pods = clusterState.getPods()
-    const services = clusterState.getServices()
+    const pods = apiServer.listResources('Pod')
+    const services = apiServer.listResources('Service')
     for (const service of services) {
       serviceIpAllocator.reserve(service)
       for (const port of service.spec.ports) {
@@ -190,10 +189,11 @@ export const createNetworkController = (
         nodePortAllocator
       )
       if (serviceChanged(service, allocatedService)) {
-        clusterState.updateService(
+        apiServer.updateResource(
+          'Service',
           service.metadata.name,
-          service.metadata.namespace,
-          () => allocatedService
+          allocatedService,
+          service.metadata.namespace
         )
       }
 

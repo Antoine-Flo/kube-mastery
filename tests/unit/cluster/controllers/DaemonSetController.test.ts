@@ -1,17 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
 import {
   createEventBus,
   type EventBus
 } from '../../../../src/core/cluster/events/EventBus'
 import {
+  createDaemonSetUpdatedEvent,
+  createPodCreatedEvent,
+  createPodDeletedEvent,
   createPodUpdatedEvent,
   type DaemonSetUpdatedEvent
 } from '../../../../src/core/cluster/events/types'
-import { DaemonSetController } from '../../../../src/core/cluster/controllers/DaemonSetController'
-import type {
-  ControllerObservation,
-  ControllerState
-} from '../../../../src/core/cluster/controllers/types'
+import { DaemonSetController } from '../../../../src/core/control-plane/controllers/DaemonSetController'
+import type { ControllerObservation } from '../../../../src/core/control-plane/controller-runtime/types'
+import type { AppEvent } from '../../../../src/core/events/AppEvent'
 import { createDaemonSet, type DaemonSet } from '../../../../src/core/cluster/ressources/DaemonSet'
 import { createNode, type NodeStatus } from '../../../../src/core/cluster/ressources/Node'
 import { createPod, type Pod } from '../../../../src/core/cluster/ressources/Pod'
@@ -24,7 +26,7 @@ describe('DaemonSetController', () => {
     pods: Pod[]
     nodes: ReturnType<typeof createNode>[]
   }
-  let getState: () => ControllerState
+  let apiServer: ApiServerFacade
 
   const nodeStatus: NodeStatus = {
     nodeInfo: {
@@ -85,8 +87,131 @@ describe('DaemonSetController', () => {
       pods: [],
       nodes: []
     }
-    getState = (): ControllerState => {
-      return {
+    apiServer = {
+      eventBus,
+      getEventBus: () => eventBus,
+      emitEvent: (event: AppEvent) => {
+        eventBus.emit(event)
+      },
+      createResource: (kind, resource) => {
+        if (kind === 'Pod') {
+          const pod = resource as Pod
+          mockState.pods.push(pod)
+          eventBus.emit(createPodCreatedEvent(pod, 'api-server'))
+          return { ok: true, value: pod }
+        }
+        return { ok: false, error: 'unsupported kind' }
+      },
+      deleteResource: (kind, name, namespace) => {
+        if (kind === 'Pod') {
+          const index = mockState.pods.findIndex((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (index < 0) {
+            return { ok: false, error: 'not found' }
+          }
+          const [deletedPod] = mockState.pods.splice(index, 1)
+          eventBus.emit(
+            createPodDeletedEvent(
+              name,
+              namespace ?? 'default',
+              deletedPod,
+              'api-server'
+            )
+          )
+          return { ok: true, value: deletedPod }
+        }
+        return { ok: false, error: 'unsupported kind' }
+      },
+      updateResource: (kind, name, resource, namespace) => {
+        if (kind === 'DaemonSet') {
+          const daemonSet = resource as DaemonSet
+          const index = mockState.daemonSets.findIndex((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (index < 0) {
+            return { ok: false, error: 'not found' }
+          }
+          const previous = mockState.daemonSets[index]
+          mockState.daemonSets[index] = daemonSet
+          eventBus.emit(
+            createDaemonSetUpdatedEvent(
+              name,
+              namespace ?? 'default',
+              daemonSet,
+              previous,
+              'api-server'
+            )
+          )
+          return { ok: true, value: daemonSet }
+        }
+        return { ok: false, error: 'unsupported kind' }
+      },
+      listResources: (kind, namespace) => {
+        if (kind === 'DaemonSet') {
+          if (namespace == null) {
+            return mockState.daemonSets
+          }
+          return mockState.daemonSets.filter((entry) => {
+            return entry.metadata.namespace === namespace
+          })
+        }
+        if (kind === 'Pod') {
+          if (namespace == null) {
+            return mockState.pods
+          }
+          return mockState.pods.filter((entry) => {
+            return entry.metadata.namespace === namespace
+          })
+        }
+        if (kind === 'Node') {
+          return mockState.nodes
+        }
+        return []
+      },
+      findResource: (kind, name, namespace) => {
+        if (kind === 'DaemonSet') {
+          const daemonSet = mockState.daemonSets.find((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (daemonSet == null) {
+            return { ok: false, error: 'not found' }
+          }
+          return { ok: true, value: daemonSet }
+        }
+        if (kind === 'Pod') {
+          const pod = mockState.pods.find((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (pod == null) {
+            return { ok: false, error: 'not found' }
+          }
+          return { ok: true, value: pod }
+        }
+        if (kind === 'Node') {
+          const node = mockState.nodes.find((entry) => {
+            return entry.metadata.name === name
+          })
+          if (node == null) {
+            return { ok: false, error: 'not found' }
+          }
+          return { ok: true, value: node }
+        }
+        return { ok: false, error: 'not found' }
+      },
+      clusterState: {
         getDaemonSets: (namespace?: string) => {
           if (namespace == null) {
             return mockState.daemonSets
@@ -136,8 +261,9 @@ describe('DaemonSetController', () => {
         getPersistentVolumeClaims: () => [],
         findPersistentVolumeClaim: () => ({ ok: false })
       }
-    }
-    controller = new DaemonSetController(eventBus, getState)
+    } as unknown as ApiServerFacade
+    apiServer.getClusterState = () => (apiServer as any).clusterState
+    controller = new DaemonSetController(apiServer)
   })
 
   it('reconciles numberReady when a managed pod transitions through PodUpdated', async () => {
@@ -201,7 +327,7 @@ describe('DaemonSetController', () => {
     mockState.daemonSets = [daemonSet]
     mockState.pods = [runningPod]
     mockState.nodes = [createNode({ name: 'n1', status: nodeStatus })]
-    controller = new DaemonSetController(eventBus, getState, {
+    controller = new DaemonSetController(apiServer, {
       resyncIntervalMs: 50
     })
 
@@ -240,7 +366,7 @@ describe('DaemonSetController', () => {
     mockState.nodes = [createNode({ name: 'n1', status: nodeStatus })]
 
     const observations: ControllerObservation[] = []
-    controller = new DaemonSetController(eventBus, getState, {
+    controller = new DaemonSetController(apiServer, {
       observer: (observation) => {
         observations.push(observation)
       }

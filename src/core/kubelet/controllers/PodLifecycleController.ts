@@ -3,29 +3,35 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Reconciles pod phase transitions (Pending -> Running) for scheduled pods.
 
-import type { EventBus } from '../events/EventBus'
-import type { ClusterEvent } from '../events/types'
-import type { PodBoundEvent } from '../events/types'
-import { createPodUpdatedEvent } from '../events/types'
-import type { Pod } from '../ressources/Pod'
+import type { ApiServerFacade } from '../../api/ApiServerFacade'
+import type { EventBus } from '../../cluster/events/EventBus'
+import type { ClusterEvent } from '../../cluster/events/types'
+import type { PodBoundEvent } from '../../cluster/events/types'
+import { createPodUpdatedEvent } from '../../cluster/events/types'
+import type {
+  ContainerRuntimeStateDetails,
+  Pod
+} from '../../cluster/ressources/Pod'
+import type { ContainerRuntimeSimulator } from '../../runtime/ContainerRuntimeSimulator'
 import {
   createImageRegistry,
   type ImageRegistry
 } from '../../containers/registry/ImageRegistry'
-import { reconcileInitContainers } from '../initContainers/reconciler'
+import { reconcileInitContainers } from '../../cluster/initContainers/reconciler'
 import type { PodVolumeReadiness } from '../../volumes/VolumeState'
 import {
   reportControllerObservation,
   startPeriodicResync,
   subscribeToEvents
-} from './helpers'
+} from '../../control-plane/controller-runtime/helpers'
+import { createControllerStateFromApi } from '../../control-plane/controller-runtime/stateFromApi'
 import type {
   ClusterEventType,
   ControllerResyncOptions,
   ControllerState,
   ReconcilerController
-} from './types'
-import { createWorkQueue, type WorkQueue } from './WorkQueue'
+} from '../../control-plane/controller-runtime/types'
+import { createWorkQueue, type WorkQueue } from '../../control-plane/controller-runtime/WorkQueue'
 
 export interface PodLifecycleControllerOptions extends ControllerResyncOptions {
   pendingDelayRangeMs?: {
@@ -50,6 +56,7 @@ export interface PodLifecycleControllerOptions extends ControllerResyncOptions {
   }
   eventSource?: string
   volumeReadinessProbe?: (pod: Pod) => PodVolumeReadiness
+  containerRuntime?: ContainerRuntimeSimulator
 }
 
 const WATCHED_EVENTS: ClusterEventType[] = [
@@ -133,6 +140,14 @@ const ensureHostIPs = (
   return [{ ip: hostIP }]
 }
 
+const createControllerStateAccessor = (
+  apiServer: ApiServerFacade
+): (() => ControllerState) => {
+  return () => {
+    return createControllerStateFromApi(apiServer)
+  }
+}
+
 const countInitContainers = (pod: Pod): number => {
   return pod.spec.initContainers?.length ?? 0
 }
@@ -193,6 +208,7 @@ const buildPodConditions = (
 
 export class PodLifecycleController implements ReconcilerController {
   private eventBus: EventBus
+  private emitEvent: ApiServerFacade['emitEvent']
   private getState: () => ControllerState
   private workQueue: WorkQueue
   private imageRegistry: ImageRegistry
@@ -207,12 +223,12 @@ export class PodLifecycleController implements ReconcilerController {
   private imagePullAttempts = new Map<string, number>()
 
   constructor(
-    eventBus: EventBus,
-    getState: () => ControllerState,
+    apiServer: ApiServerFacade,
     options: PodLifecycleControllerOptions = {}
   ) {
-    this.eventBus = eventBus
-    this.getState = getState
+    this.eventBus = apiServer.getEventBus()
+    this.emitEvent = apiServer.emitEvent
+    this.getState = createControllerStateAccessor(apiServer)
     this.imageRegistry = createImageRegistry()
     this.options = options
     this.workQueue = createWorkQueue({ processDelay: 0 })
@@ -396,6 +412,10 @@ export class PodLifecycleController implements ReconcilerController {
   private handleEvent(event: ClusterEvent): void {
     if (event.type === 'PodDeleted') {
       const pod = event.payload.deletedPod
+      this.stopRuntimeContainersForPod(pod, {
+        reason: 'PodDeleted',
+        exitCode: 0
+      })
       const key = makePodKey(pod.metadata.namespace, pod.metadata.name)
       this.clearPendingTimeout(key)
       this.clearRestartTimeout(key)
@@ -460,6 +480,135 @@ export class PodLifecycleController implements ReconcilerController {
   private clearImagePullState(key: string): void {
     this.clearImagePullTimeout(key)
     this.imagePullAttempts.delete(key)
+  }
+
+  private isRegularContainer(
+    pod: Pod,
+    status: NonNullable<Pod['status']['containerStatuses']>[number]
+  ): boolean {
+    return pod.spec.containers.some((container) => {
+      return container.name === status.name
+    })
+  }
+
+  private syncRuntimeForRunningPod(pod: Pod): Pod {
+    const runtime = this.options.containerRuntime
+    if (runtime == null) {
+      return pod
+    }
+    const nodeName = pod.spec.nodeName
+    if (nodeName == null || nodeName.length === 0) {
+      return pod
+    }
+    const statuses = pod.status.containerStatuses ?? []
+    let hasChanged = false
+    const updatedStatuses = statuses.map((status) => {
+      if (!this.isRegularContainer(pod, status)) {
+        return status
+      }
+      if (status.stateDetails?.state !== 'Running') {
+        return status
+      }
+      const running = runtime.listContainers({
+        nodeName,
+        namespace: pod.metadata.namespace,
+        podName: pod.metadata.name,
+        containerName: status.name,
+        state: 'Running'
+      })
+      const record =
+        running[0] ??
+        runtime.startContainer({
+          nodeName,
+          namespace: pod.metadata.namespace,
+          podName: pod.metadata.name,
+          containerName: status.name,
+          image: status.image
+        })
+      const nextStateDetails: ContainerRuntimeStateDetails = {
+        ...status.stateDetails,
+        state: 'Running',
+        startedAt: record.startedAt
+      }
+      const nextStatus = {
+        ...status,
+        stateDetails: nextStateDetails,
+        startedAt: record.startedAt,
+        containerID: record.containerId
+      }
+      if (
+        nextStatus.containerID !== status.containerID ||
+        nextStatus.startedAt !== status.startedAt ||
+        JSON.stringify(nextStatus.stateDetails) !== JSON.stringify(status.stateDetails)
+      ) {
+        hasChanged = true
+      }
+      return nextStatus
+    })
+    if (!hasChanged) {
+      return pod
+    }
+    return {
+      ...pod,
+      status: {
+        ...pod.status,
+        containerStatuses: updatedStatuses
+      }
+    }
+  }
+
+  private stopRuntimeContainersForPod(
+    pod: Pod,
+    options: { reason: string; exitCode: number }
+  ): Map<string, {
+    containerId: string
+    startedAt: string
+    finishedAt?: string
+    exitCode?: number
+    reason?: string
+  }> {
+    const terminatedByName = new Map<
+      string,
+      {
+        containerId: string
+        startedAt: string
+        finishedAt?: string
+        exitCode?: number
+        reason?: string
+      }
+    >()
+    const runtime = this.options.containerRuntime
+    if (runtime == null) {
+      return terminatedByName
+    }
+    const nodeName = pod.spec.nodeName
+    if (nodeName == null || nodeName.length === 0) {
+      return terminatedByName
+    }
+    const runningContainers = runtime.listContainers({
+      nodeName,
+      namespace: pod.metadata.namespace,
+      podName: pod.metadata.name,
+      state: 'Running'
+    })
+    for (const record of runningContainers) {
+      runtime.stopContainer({
+        containerId: record.containerId,
+        exitCode: options.exitCode,
+        reason: options.reason
+      })
+      const terminated = runtime.getContainer(record.containerId)
+      if (terminated != null) {
+        terminatedByName.set(record.containerName, {
+          containerId: terminated.containerId,
+          startedAt: terminated.startedAt,
+          finishedAt: terminated.finishedAt,
+          exitCode: terminated.exitCode,
+          reason: terminated.reason
+        })
+      }
+    }
+    return terminatedByName
   }
 
   private computeRestartBackoffMs(key: string): number {
@@ -712,21 +861,22 @@ export class PodLifecycleController implements ReconcilerController {
   private emitPodRunning(pod: Pod): void {
     const transitionTime = new Date().toISOString()
     const runningPod = reconcileInitContainers(pod)
-    const hostIP = buildPodHostIP(runningPod, this.getState())
+    const runtimeSyncedPod = this.syncRuntimeForRunningPod(runningPod)
+    const hostIP = buildPodHostIP(runtimeSyncedPod, this.getState())
     const updated: Pod = {
-      ...runningPod,
+      ...runtimeSyncedPod,
       status: {
-        ...runningPod.status,
-        ...(runningPod.status.startTime == null
+        ...runtimeSyncedPod.status,
+        ...(runtimeSyncedPod.status.startTime == null
           ? { startTime: transitionTime }
           : {}),
         ...(hostIP != null ? { hostIP } : {}),
         ...(hostIP != null ? { hostIPs: ensureHostIPs(hostIP) } : {}),
-        observedGeneration: runningPod.metadata.generation ?? 1,
-        conditions: buildPodConditions(runningPod, transitionTime)
+        observedGeneration: runtimeSyncedPod.metadata.generation ?? 1,
+        conditions: buildPodConditions(runtimeSyncedPod, transitionTime)
       }
     }
-    this.eventBus.emit(
+    this.emitEvent(
       createPodUpdatedEvent(
         pod.metadata.name,
         pod.metadata.namespace,
@@ -744,19 +894,28 @@ export class PodLifecycleController implements ReconcilerController {
     const updatedStatuses = currentStatuses.map((status) => ({
       ...status,
       ready: false,
-      state: 'Waiting' as const,
+      stateDetails: {
+        state: 'Waiting' as const,
+        reason: waitingReason
+      },
       started: false,
-      waitingReason
+      lastStateDetails:
+        status.stateDetails ??
+        ({
+          state: 'Waiting',
+          reason: 'ContainerCreating'
+        } as ContainerRuntimeStateDetails),
+      startedAt: undefined
     }))
     const hasChanged = updatedStatuses.some((updatedStatus, index) => {
       const previousStatus = currentStatuses[index]
       if (previousStatus == null) {
         return true
       }
-      if (previousStatus.waitingReason !== updatedStatus.waitingReason) {
-        return true
-      }
-      return previousStatus.state !== updatedStatus.state
+      return (
+        JSON.stringify(previousStatus.stateDetails) !==
+        JSON.stringify(updatedStatus.stateDetails)
+      )
     })
     if (!hasChanged) {
       return
@@ -781,7 +940,7 @@ export class PodLifecycleController implements ReconcilerController {
         containerStatuses: updatedStatuses
       }
     }
-    this.eventBus.emit(
+    this.emitEvent(
       createPodUpdatedEvent(
         pod.metadata.name,
         pod.metadata.namespace,
@@ -855,6 +1014,11 @@ export class PodLifecycleController implements ReconcilerController {
     }
   ): void {
     const transitionTime = new Date().toISOString()
+    const terminatedExitCode = terminatedReason === 'Completed' ? 0 : 1
+    const terminatedRuntimeRecords = this.stopRuntimeContainersForPod(pod, {
+      reason: terminatedReason,
+      exitCode: terminatedExitCode
+    })
     const currentStatuses = pod.status.containerStatuses ?? []
     const regularContainerNames = new Set(
       pod.spec.containers.map((container) => container.name)
@@ -863,14 +1027,27 @@ export class PodLifecycleController implements ReconcilerController {
       if (!regularContainerNames.has(status.name)) {
         return status
       }
+      const previousStateDetails =
+        status.stateDetails ??
+        ({
+          state: 'Waiting',
+          reason: 'ContainerCreating'
+        } as ContainerRuntimeStateDetails)
+      const terminatedRuntimeRecord = terminatedRuntimeRecords.get(status.name)
       return {
         ...status,
         ready: false,
-        state: 'Terminated' as const,
-        lastState: status.state,
+        containerID: terminatedRuntimeRecord?.containerId ?? status.containerID,
+        stateDetails: {
+          state: 'Terminated' as const,
+          reason: terminatedRuntimeRecord?.reason ?? terminatedReason,
+          exitCode: terminatedRuntimeRecord?.exitCode ?? terminatedExitCode,
+          startedAt: terminatedRuntimeRecord?.startedAt ?? status.startedAt,
+          finishedAt: terminatedRuntimeRecord?.finishedAt ?? transitionTime
+        },
+        lastStateDetails: previousStateDetails,
         started: false,
-        waitingReason: undefined,
-        terminatedReason,
+        startedAt: undefined,
         ...(options?.incrementRestartOnCrash === true
           ? {
               // Keep the first observed restart timestamp for a crash loop series
@@ -886,13 +1063,16 @@ export class PodLifecycleController implements ReconcilerController {
       if (previousStatus == null) {
         return true
       }
-      if (previousStatus.state !== updatedStatus.state) {
+      if (
+        JSON.stringify(previousStatus.stateDetails) !==
+        JSON.stringify(updatedStatus.stateDetails)
+      ) {
         return true
       }
-      if (previousStatus.waitingReason !== updatedStatus.waitingReason) {
-        return true
-      }
-      if (previousStatus.terminatedReason !== updatedStatus.terminatedReason) {
+      if (
+        JSON.stringify(previousStatus.lastStateDetails) !==
+        JSON.stringify(updatedStatus.lastStateDetails)
+      ) {
         return true
       }
       if (previousStatus.restartCount !== updatedStatus.restartCount) {
@@ -924,7 +1104,7 @@ export class PodLifecycleController implements ReconcilerController {
         containerStatuses: updatedStatuses
       }
     }
-    this.eventBus.emit(
+    this.emitEvent(
       createPodUpdatedEvent(
         pod.metadata.name,
         pod.metadata.namespace,
@@ -951,14 +1131,22 @@ export class PodLifecycleController implements ReconcilerController {
       if (!regularContainerNames.has(status.name)) {
         return status
       }
+      const previousStateDetails =
+        status.stateDetails ??
+        ({
+          state: 'Waiting',
+          reason: 'ContainerCreating'
+        } as ContainerRuntimeStateDetails)
       return {
         ...status,
         ready: false,
-        state: 'Waiting' as const,
-        lastState: status.state,
+        stateDetails: {
+          state: 'Waiting' as const,
+          reason: waitingReason
+        },
+        lastStateDetails: previousStateDetails,
         started: false,
-        waitingReason,
-        terminatedReason: undefined,
+        startedAt: undefined,
         ...(options?.incrementRestartOnCrash === true
           ? {
               lastRestartAt: transitionTime,
@@ -972,16 +1160,16 @@ export class PodLifecycleController implements ReconcilerController {
       if (previousStatus == null) {
         return true
       }
-      if (previousStatus.waitingReason !== updatedStatus.waitingReason) {
+      if (
+        JSON.stringify(previousStatus.stateDetails) !==
+        JSON.stringify(updatedStatus.stateDetails)
+      ) {
         return true
       }
-      if (previousStatus.state !== updatedStatus.state) {
-        return true
-      }
-      if (previousStatus.lastState !== updatedStatus.lastState) {
-        return true
-      }
-      if (previousStatus.terminatedReason !== updatedStatus.terminatedReason) {
+      if (
+        JSON.stringify(previousStatus.lastStateDetails) !==
+        JSON.stringify(updatedStatus.lastStateDetails)
+      ) {
         return true
       }
       if (previousStatus.restartCount !== updatedStatus.restartCount) {
@@ -1012,7 +1200,7 @@ export class PodLifecycleController implements ReconcilerController {
         containerStatuses: updatedStatuses
       }
     }
-    this.eventBus.emit(
+    this.emitEvent(
       createPodUpdatedEvent(
         pod.metadata.name,
         pod.metadata.namespace,
@@ -1042,11 +1230,10 @@ export class PodLifecycleController implements ReconcilerController {
 }
 
 export const createPodLifecycleController = (
-  eventBus: EventBus,
-  getState: () => ControllerState,
+  apiServer: ApiServerFacade,
   options: PodLifecycleControllerOptions = {}
 ): PodLifecycleController => {
-  const controller = new PodLifecycleController(eventBus, getState, options)
+  const controller = new PodLifecycleController(apiServer, options)
   controller.start()
   return controller
 }

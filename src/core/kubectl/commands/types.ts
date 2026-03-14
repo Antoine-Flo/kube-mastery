@@ -40,7 +40,7 @@ export interface ParsedCommand {
   namespace?: string
   output?: 'table' | 'yaml' | 'json'
   selector?: Record<string, string> // Parsed label selector (e.g., -l app=nginx,env=prod)
-  flags: Record<string, string | boolean> // Raw flags for backward compatibility
+  flags: Record<string, string | boolean> // Raw normalized flags map
   execCommand?: string[] // For kubectl exec: command after --
   labelChanges?: Record<string, string | null> // For kubectl label: key=value or key- (null = removal)
   annotationChanges?: Record<string, string | null> // For kubectl annotate: key=value or key- (null = removal)

@@ -1,5 +1,4 @@
-import type { ClusterState } from '../../../cluster/ClusterState'
-import type { EventBus } from '../../../cluster/events/EventBus'
+import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import {
   createDeploymentUpdatedEvent,
   createReplicaSetUpdatedEvent
@@ -25,9 +24,8 @@ const SCALABLE_RESOURCES = ['deployments', 'replicasets'] as const
  *           kubectl scale deployment name --replicas=N
  */
 export const handleScale = (
-  clusterState: ClusterState,
-  parsed: ParsedCommand,
-  eventBus: EventBus
+  apiServer: ApiServerFacade,
+  parsed: ParsedCommand
 ): ExecutionResult => {
   const namespace = parsed.namespace || 'default'
   const { resource, name, replicas } = parsed
@@ -62,12 +60,12 @@ export const handleScale = (
 
   // Scale deployment
   if (resource === 'deployments') {
-    return scaleDeployment(clusterState, eventBus, name, namespace, replicas)
+    return scaleDeployment(apiServer, name, namespace, replicas)
   }
 
   // Scale replicaset
   if (resource === 'replicasets') {
-    return scaleReplicaSet(clusterState, eventBus, name, namespace, replicas)
+    return scaleReplicaSet(apiServer, name, namespace, replicas)
   }
 
   return error(`error: the resource type "${resource}" is not scalable`)
@@ -77,13 +75,12 @@ export const handleScale = (
  * Scale a Deployment
  */
 const scaleDeployment = (
-  clusterState: ClusterState,
-  eventBus: EventBus,
+  apiServer: ApiServerFacade,
   name: string,
   namespace: string,
   replicas: number
 ): ExecutionResult => {
-  const findResult = clusterState.findDeployment(name, namespace)
+  const findResult = apiServer.findResource('Deployment', name, namespace)
   if (!findResult.ok) {
     return error(`deployments.apps "${name}" not found`)
   }
@@ -101,7 +98,7 @@ const scaleDeployment = (
   }
 
   // Emit update event - DeploymentController will handle ReplicaSet/Pod reconciliation
-  eventBus.emit(
+  apiServer.emitEvent(
     createDeploymentUpdatedEvent(
       name,
       namespace,
@@ -118,13 +115,12 @@ const scaleDeployment = (
  * Scale a ReplicaSet
  */
 const scaleReplicaSet = (
-  clusterState: ClusterState,
-  eventBus: EventBus,
+  apiServer: ApiServerFacade,
   name: string,
   namespace: string,
   replicas: number
 ): ExecutionResult => {
-  const findResult = clusterState.findReplicaSet(name, namespace)
+  const findResult = apiServer.findResource('ReplicaSet', name, namespace)
   if (!findResult.ok) {
     return error(`replicasets.apps "${name}" not found`)
   }
@@ -142,7 +138,7 @@ const scaleReplicaSet = (
   }
 
   // Emit update event - ReplicaSetController will handle Pod reconciliation
-  eventBus.emit(
+  apiServer.emitEvent(
     createReplicaSetUpdatedEvent(
       name,
       namespace,

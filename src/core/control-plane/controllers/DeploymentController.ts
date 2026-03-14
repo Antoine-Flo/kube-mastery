@@ -26,18 +26,13 @@
 //
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { EventBus } from '../events/EventBus'
-import type { ClusterEvent } from '../events/types'
-import {
-  createDeploymentUpdatedEvent,
-  createReplicaSetCreatedEvent,
-  createReplicaSetDeletedEvent,
-  createReplicaSetUpdatedEvent
-} from '../events/types'
-import type { Deployment, DeploymentStatus } from '../ressources/Deployment'
-import { generateTemplateHash } from '../ressources/Deployment'
-import type { ReplicaSet } from '../ressources/ReplicaSet'
-import { createReplicaSet } from '../ressources/ReplicaSet'
+import type { ApiServerFacade } from '../../api/ApiServerFacade'
+import type { EventBus } from '../../cluster/events/EventBus'
+import type { ClusterEvent } from '../../cluster/events/types'
+import type { Deployment, DeploymentStatus } from '../../cluster/ressources/Deployment'
+import { generateTemplateHash } from '../../cluster/ressources/Deployment'
+import type { ReplicaSet } from '../../cluster/ressources/ReplicaSet'
+import { createReplicaSet } from '../../cluster/ressources/ReplicaSet'
 import {
   createOwnerRef,
   findOwnerByRef,
@@ -46,14 +41,15 @@ import {
   startPeriodicResync,
   statusEquals,
   subscribeToEvents
-} from './helpers'
+} from '../controller-runtime/helpers'
+import { createControllerStateFromApi } from '../controller-runtime/stateFromApi'
 import type {
   ClusterEventType,
   ControllerResyncOptions,
   ControllerState,
   ReconcilerController
-} from './types'
-import { createWorkQueue, type WorkQueue } from './WorkQueue'
+} from '../controller-runtime/types'
+import { createWorkQueue, type WorkQueue } from '../controller-runtime/WorkQueue'
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
@@ -230,6 +226,7 @@ const computeDeploymentStatus = (
  * Manages ReplicaSets for each Deployment
  */
 export class DeploymentController implements ReconcilerController {
+  private apiServer: ApiServerFacade
   private eventBus: EventBus
   private getState: () => ControllerState
   private workQueue: WorkQueue
@@ -238,12 +235,12 @@ export class DeploymentController implements ReconcilerController {
   private options: ControllerResyncOptions
 
   constructor(
-    eventBus: EventBus,
-    getState: () => ControllerState,
+    apiServer: ApiServerFacade,
     options: ControllerResyncOptions = {}
   ) {
-    this.eventBus = eventBus
-    this.getState = getState
+    this.apiServer = apiServer
+    this.eventBus = apiServer.getEventBus()
+    this.getState = () => createControllerStateFromApi(apiServer)
     this.options = options
     this.workQueue = createWorkQueue({ processDelay: 0 })
   }
@@ -368,13 +365,10 @@ export class DeploymentController implements ReconcilerController {
     const ownedReplicaSets = getOwnedResources(deploy, allReplicaSets)
 
     for (const rs of ownedReplicaSets) {
-      this.eventBus.emit(
-        createReplicaSetDeletedEvent(
-          rs.metadata.name,
-          rs.metadata.namespace,
-          rs,
-          'deployment-controller'
-        )
+      this.apiServer.deleteResource(
+        'ReplicaSet',
+        rs.metadata.name,
+        rs.metadata.namespace
       )
     }
   }
@@ -473,17 +467,16 @@ export class DeploymentController implements ReconcilerController {
         }
       }
     }
-    this.eventBus.emit(
-      createReplicaSetCreatedEvent(newRs, 'deployment-controller')
+    this.apiServer.createResource(
+      'ReplicaSet',
+      newRs,
+      newRs.metadata.namespace
     )
-    this.eventBus.emit(
-      createDeploymentUpdatedEvent(
-        deploy.metadata.name,
-        deploy.metadata.namespace,
-        deploymentWithRevision,
-        deploy,
-        'deployment-controller'
-      )
+    this.apiServer.updateResource(
+      'Deployment',
+      deploy.metadata.name,
+      deploymentWithRevision,
+      deploy.metadata.namespace
     )
     this.scaleDownReplicaSets(oldReplicaSets)
   }
@@ -501,14 +494,11 @@ export class DeploymentController implements ReconcilerController {
         ...rs,
         spec: { ...rs.spec, replicas: 0 }
       }
-      this.eventBus.emit(
-        createReplicaSetUpdatedEvent(
-          rs.metadata.name,
-          rs.metadata.namespace,
-          scaledDownRs,
-          rs,
-          'deployment-controller'
-        )
+      this.apiServer.updateResource(
+        'ReplicaSet',
+        rs.metadata.name,
+        scaledDownRs,
+        rs.metadata.namespace
       )
     }
   }
@@ -539,14 +529,11 @@ export class DeploymentController implements ReconcilerController {
         }
       }
     }
-    this.eventBus.emit(
-      createDeploymentUpdatedEvent(
-        deploy.metadata.name,
-        deploy.metadata.namespace,
-        updatedDeployment,
-        deploy,
-        'deployment-controller'
-      )
+    this.apiServer.updateResource(
+      'Deployment',
+      deploy.metadata.name,
+      updatedDeployment,
+      deploy.metadata.namespace
     )
     return updatedDeployment
   }
@@ -567,14 +554,11 @@ export class DeploymentController implements ReconcilerController {
       ...currentRs,
       spec: { ...currentRs.spec, replicas: desiredReplicas }
     }
-    this.eventBus.emit(
-      createReplicaSetUpdatedEvent(
-        currentRs.metadata.name,
-        currentRs.metadata.namespace,
-        updatedRs,
-        currentRs,
-        'deployment-controller'
-      )
+    this.apiServer.updateResource(
+      'ReplicaSet',
+      currentRs.metadata.name,
+      updatedRs,
+      currentRs.metadata.namespace
     )
   }
 
@@ -615,14 +599,11 @@ export class DeploymentController implements ReconcilerController {
       ...deploy,
       status: newStatus
     }
-    this.eventBus.emit(
-      createDeploymentUpdatedEvent(
-        deploy.metadata.name,
-        deploy.metadata.namespace,
-        updatedDeploy,
-        deploy,
-        'deployment-controller'
-      )
+    this.apiServer.updateResource(
+      'Deployment',
+      deploy.metadata.name,
+      updatedDeploy,
+      deploy.metadata.namespace
     )
   }
 
@@ -648,11 +629,10 @@ export class DeploymentController implements ReconcilerController {
  * Create and start a Deployment controller
  */
 export const createDeploymentController = (
-  eventBus: EventBus,
-  getState: () => ControllerState,
+  apiServer: ApiServerFacade,
   options: ControllerResyncOptions = {}
 ): DeploymentController => {
-  const controller = new DeploymentController(eventBus, getState, options)
+  const controller = new DeploymentController(apiServer, options)
   controller.start()
   return controller
 }
