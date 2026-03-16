@@ -691,6 +691,30 @@ describe('kubectl parser - get and delete flag positions', () => {
     expect(result.value.name).toBe('pod-1')
     expect(result.value.names).toEqual(['pod-1', 'pod-2', 'pod-3'])
   })
+
+  it('should parse delete with short filename flag', () => {
+    const result = parseCommand('kubectl delete -f pod.yaml')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('delete')
+    expect(result.value.flags.f).toBe('pod.yaml')
+  })
+
+  it('should parse delete with long filename flag', () => {
+    const result = parseCommand('kubectl delete --filename pod.yaml')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('delete')
+    expect(result.value.flags.filename).toBe('pod.yaml')
+  })
 })
 
 describe('kubectl parser - get raw', () => {

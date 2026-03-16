@@ -18,6 +18,12 @@ kubectl apply -f deployment.yaml
 
 When you run `kubectl apply`, kubectl stores a copy of the applied configuration as an annotation on the resource itself (called the "last-applied-configuration"). This is what allows it to calculate what changed the next time you apply, enabling it to detect fields that should be removed as well as fields that should be added or updated.
 
+In this simulator, the apply status follows the same high-level behavior:
+
+- first apply prints `created`
+- re-applying the same manifest prints `unchanged`
+- re-applying with manifest changes prints `configured`
+
 ### Applying an Entire Directory
 
 If your manifests are organized across multiple files in a directory, a common pattern in real projects, you can apply all of them at once:

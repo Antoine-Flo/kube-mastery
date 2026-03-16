@@ -128,13 +128,13 @@ In practice, these commands form a natural progression when something is wrong. 
 
 ```mermaid
 flowchart TD
-    A["kubectl get pods\n(spot the problem)"] --> B{Status OK?}
+    A["kubectl get pods (spot the problem)"] --> B{Status OK?}
     B -- Yes --> Z["All good"]
-    B -- No --> C["kubectl get pods -o wide\n(check node, IP)"]
-    C --> D["kubectl describe pod name\n(read conditions and events)"]
+    B -- No --> C["kubectl get pods -o wide (check node, IP)"]
+    C --> D["kubectl describe pod name (read conditions and events)"]
     D --> E{Events explain it?}
     E -- Yes --> F["Fix the root cause"]
-    E -- No --> G["kubectl logs pod-name\n(check container output)"]
+    E -- No --> G["kubectl logs pod-name (check container output)"]
     G --> F
 ```
 
@@ -174,7 +174,7 @@ kubectl describe pod my-pod
 
 # Describe a node to see its capacity and allocated resources
 kubectl get nodes
-kubectl describe node $(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
+kubectl describe node sim-worker
 
 # Discover all resource types in the cluster
 kubectl api-resources

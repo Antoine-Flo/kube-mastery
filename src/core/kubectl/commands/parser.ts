@@ -607,6 +607,9 @@ const validateCommandSemantics = (
   createServiceType?: 'clusterip' | 'nodeport' | 'loadbalancer' | 'externalname',
   createSecretType?: 'generic' | 'tls' | 'docker-registry'
 ): string | undefined => {
+  const hasFilename =
+    typeof flags['filename'] === 'string' || typeof flags['f'] === 'string'
+
   const watchValidationError = validateGetWatchSemantics(action, flags)
   if (watchValidationError !== undefined) {
     return watchValidationError
@@ -617,17 +620,17 @@ const validateCommandSemantics = (
     return rawValidationError
   }
 
-  if (
-    (action === 'delete' ||
-      action === 'describe' ||
-      action === 'logs' ||
-      action === 'exec' ||
-      action === 'label' ||
-      action === 'annotate' ||
-      action === 'scale' ||
-      action === 'expose') &&
-    !name
-  ) {
+  const requiresNameAction =
+    action === 'describe' ||
+    action === 'logs' ||
+    action === 'exec' ||
+    action === 'label' ||
+    action === 'annotate' ||
+    action === 'scale' ||
+    action === 'expose' ||
+    (action === 'delete' && !hasFilename)
+
+  if (requiresNameAction && !name) {
     return `${action} requires a resource name`
   }
   if (action === 'run') {

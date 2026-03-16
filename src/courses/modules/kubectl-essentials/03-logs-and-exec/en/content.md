@@ -115,9 +115,7 @@ Just like with logs, if a pod has multiple containers, specify which one to exec
 kubectl exec -it my-pod -c my-container -- /bin/sh
 ```
 
-:::warning
 Not all container images include a shell. Minimal images built on distroless base images or the `scratch` layer deliberately exclude shells and package managers to reduce the attack surface and image size. If you get "executable file not found," that is why. In those cases, use `kubectl debug` (covered in a later lesson) to attach a debug container to the pod.
-:::
 
 :::warning
 `kubectl exec` gives you direct access to a running container. In production, treat this with the same care you would give SSH access to a production server. Container filesystems are ephemeral, any changes made inside are lost when the container restarts. Use exec for observation and diagnosis, not for making permanent changes.
@@ -129,13 +127,13 @@ These tools slot into a natural diagnostic sequence. You start with the broad cl
 
 ```mermaid
 flowchart TD
-    A["kubectl get pods\n(identify the troubled pod)"] --> B["kubectl describe pod\n(read events, conditions)"]
+    A["kubectl get pods (identify the troubled pod)"] --> B["kubectl describe pod (read events, conditions)"]
     B --> C{Container running?}
-    C -- No, CrashLoopBackOff --> D["kubectl logs --previous my-pod\n(read the last crash output)"]
-    C -- Yes, but misbehaving --> E["kubectl logs -f my-pod\n(watch live output)"]
+    C -- No, CrashLoopBackOff --> D["kubectl logs --previous my-pod (read the last crash output)"]
+    C -- Yes, but misbehaving --> E["kubectl logs -f my-pod (watch live output)"]
     D --> F{Problem found?}
     E --> F
-    F -- No --> G["kubectl exec -it my-pod -- /bin/sh\n(explore the container directly)"]
+    F -- No --> G["kubectl exec -it my-pod -- /bin/sh (explore the container directly)"]
     F -- Yes --> H["Fix the root cause in the manifest"]
     G --> H
 ```

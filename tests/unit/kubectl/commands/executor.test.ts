@@ -1273,6 +1273,41 @@ data:
         ).toBeUndefined()
       })
 
+      it('should delete pod from manifest file with -f', () => {
+        fileSystem.createFile('delete-pod.yaml')
+        fileSystem.writeFile(
+          'delete-pod.yaml',
+          `apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+  namespace: default
+spec:
+  containers:
+    - name: nginx
+      image: nginx:latest
+`
+        )
+
+        const executor = createKubectlExecutor(
+          apiServer,
+          fileSystem,
+          logger
+        )
+        const result = executor.execute('kubectl delete -f delete-pod.yaml')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+        expect(result.value).toContain('pod "nginx-pod" deleted from default namespace')
+
+        const pods = apiServer.listResources('Pod', 'default')
+        expect(
+          pods.find((p) => p.metadata.name === 'nginx-pod')
+        ).toBeUndefined()
+      })
+
       it('should return error when deleting nonexistent pod', () => {
         const executor = createKubectlExecutor(
           apiServer,

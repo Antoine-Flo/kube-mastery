@@ -159,6 +159,38 @@ describe('kubectl transformers', () => {
     })
   })
 
+  describe('delete transformer', () => {
+    it('should set resource to pods for delete -f', () => {
+      const transformer = getTransformerForAction('delete')
+      const ctx = createContext({
+        input: 'kubectl delete -f pod.yaml',
+        tokens: ['kubectl', 'delete', '-f', 'pod.yaml']
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.resource).toBe('pods')
+      }
+    })
+
+    it('should keep imperative delete resource unchanged', () => {
+      const transformer = getTransformerForAction('delete')
+      const ctx = createContext({
+        input: 'kubectl delete pod my-pod',
+        tokens: ['kubectl', 'delete', 'pod', 'my-pod']
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.resource).toBeUndefined()
+      }
+    })
+  })
+
   describe('create transformer', () => {
     it('should keep create -f behavior and set resource to pods', () => {
       const transformer = getTransformerForAction('create')

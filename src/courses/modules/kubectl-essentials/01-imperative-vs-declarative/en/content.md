@@ -154,6 +154,7 @@ kubectl apply -f /tmp/demo-app.yaml
 
 # Apply it again, no error, no duplicate
 kubectl apply -f /tmp/demo-app.yaml
+# Expected: deployment.apps/demo-app unchanged
 
 # Check the deployment
 kubectl get deployments

@@ -7,6 +7,7 @@ import {
   createApiServerFacade,
   type ApiServerFacade
 } from '../../../../../src/core/api/ApiServerFacade'
+import { createFileSystem, type FileSystem } from '../../../../../src/core/filesystem/FileSystem'
 import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
 import { createIngress } from '../../../../../src/core/cluster/ressources/Ingress'
 import { createService } from '../../../../../src/core/cluster/ressources/Service'
@@ -16,10 +17,12 @@ import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/typ
 describe('kubectl delete handler', () => {
   let apiServer: ApiServerFacade
   let eventBus: ApiServerFacade['eventBus']
+  let fileSystem: FileSystem
 
   beforeEach(() => {
     apiServer = createApiServerFacade()
     eventBus = apiServer.eventBus
+    fileSystem = createFileSystem()
   })
 
   const createParsedCommand = (
@@ -40,6 +43,100 @@ describe('kubectl delete handler', () => {
       expect(result.ok).toBe(false)
       if (!result.ok) {
         expect(result.error).toContain('must specify the name')
+      }
+    })
+  })
+
+  describe('declarative delete with -f', () => {
+    it('should delete pod declared in manifest file', () => {
+      apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'decl-pod',
+          namespace: 'default',
+          containers: [{ name: 'main', image: 'nginx:latest' }]
+        })
+      )
+      fileSystem.createFile('pod.yaml')
+      fileSystem.writeFile(
+        'pod.yaml',
+        `apiVersion: v1
+kind: Pod
+metadata:
+  name: decl-pod
+  namespace: default
+spec:
+  containers:
+    - name: main
+      image: nginx:latest
+`
+      )
+
+      const parsed = createParsedCommand({
+        flags: { f: 'pod.yaml' }
+      })
+
+      const result = handleDelete(apiServer, parsed, fileSystem)
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value).toContain('pod "decl-pod" deleted from default namespace')
+      expect(apiServer.findResource('Pod', 'decl-pod', 'default').ok).toBe(false)
+    })
+
+    it('should return not found for manifest resource that does not exist', () => {
+      fileSystem.createFile('missing-pod.yaml')
+      fileSystem.writeFile(
+        'missing-pod.yaml',
+        `apiVersion: v1
+kind: Pod
+metadata:
+  name: missing-pod
+  namespace: default
+spec:
+  containers:
+    - name: main
+      image: nginx:latest
+`
+      )
+
+      const parsed = createParsedCommand({
+        flags: { filename: 'missing-pod.yaml' }
+      })
+
+      const result = handleDelete(apiServer, parsed, fileSystem)
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('pods "missing-pod" not found')
+      }
+    })
+
+    it('should return error when manifest file cannot be read', () => {
+      const parsed = createParsedCommand({
+        flags: { f: 'does-not-exist.yaml' }
+      })
+
+      const result = handleDelete(apiServer, parsed, fileSystem)
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('No such file or directory')
+      }
+    })
+
+    it('should return error when manifest content is invalid', () => {
+      fileSystem.createFile('invalid.yaml')
+      fileSystem.writeFile('invalid.yaml', 'not: [valid')
+
+      const parsed = createParsedCommand({
+        flags: { f: 'invalid.yaml' }
+      })
+
+      const result = handleDelete(apiServer, parsed, fileSystem)
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('YAML parse error')
       }
     })
   })

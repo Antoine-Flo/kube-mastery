@@ -1,7 +1,9 @@
 import type { ResourceKind } from '../../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
+import type { FileSystem } from '../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
+import { parseKubernetesYaml } from '../../yamlParser'
 import type { ParsedCommand } from '../types'
 
 const formatDeletedMessage = (
@@ -30,6 +32,12 @@ type NamespacedEventDeleteResource = 'pods' | 'configmaps' | 'secrets'
 interface NamespacedDeleteConfig {
   kind: ResourceKind
   kindRef: string
+}
+
+type DeleteManifestTargetConfig = {
+  kindRef: string
+  kindRefPlural: string
+  namespaced: boolean
 }
 
 const deleteNamespacedResourcesForNamespace = (
@@ -144,14 +152,186 @@ const NAMESPACED_EVENT_DELETE_CONFIG: Record<
   }
 }
 
+const DELETE_TARGET_BY_KIND: Partial<
+  Record<ResourceKind, DeleteManifestTargetConfig>
+> = {
+  Pod: {
+    kindRef: 'pod',
+    kindRefPlural: 'pods',
+    namespaced: true
+  },
+  ConfigMap: {
+    kindRef: 'configmap',
+    kindRefPlural: 'configmaps',
+    namespaced: true
+  },
+  Secret: {
+    kindRef: 'secret',
+    kindRefPlural: 'secrets',
+    namespaced: true
+  },
+  Deployment: {
+    kindRef: 'deployment.apps',
+    kindRefPlural: 'deployments.apps',
+    namespaced: true
+  },
+  DaemonSet: {
+    kindRef: 'daemonset.apps',
+    kindRefPlural: 'daemonsets.apps',
+    namespaced: true
+  },
+  ReplicaSet: {
+    kindRef: 'replicaset.apps',
+    kindRefPlural: 'replicasets.apps',
+    namespaced: true
+  },
+  Ingress: {
+    kindRef: 'ingress.networking.k8s.io',
+    kindRefPlural: 'ingresses.networking.k8s.io',
+    namespaced: true
+  },
+  Service: {
+    kindRef: 'service',
+    kindRefPlural: 'services',
+    namespaced: true
+  },
+  PersistentVolumeClaim: {
+    kindRef: 'persistentvolumeclaim',
+    kindRefPlural: 'persistentvolumeclaims',
+    namespaced: true
+  },
+  PersistentVolume: {
+    kindRef: 'persistentvolume',
+    kindRefPlural: 'persistentvolumes',
+    namespaced: false
+  },
+  Namespace: {
+    kindRef: 'namespace',
+    kindRefPlural: 'namespaces',
+    namespaced: false
+  },
+  Node: {
+    kindRef: 'node',
+    kindRefPlural: 'nodes',
+    namespaced: false
+  }
+}
+
+const getFilenameFromFlags = (parsed: ParsedCommand): string | undefined => {
+  const filename = parsed.flags.f || parsed.flags.filename
+  if (typeof filename !== 'string') {
+    return undefined
+  }
+  return filename
+}
+
+const loadAndParseYaml = (
+  fileSystem: FileSystem,
+  parsed: ParsedCommand
+): ExecutionResult & { resource?: any } => {
+  const filename = getFilenameFromFlags(parsed)
+  if (!filename) {
+    return error('error: must specify one of -f or --filename')
+  }
+
+  const fileResult = fileSystem.readFile(filename)
+  if (!fileResult.ok) {
+    return error(`error: ${fileResult.error}`)
+  }
+
+  const parseResult = parseKubernetesYaml(fileResult.value)
+  if (!parseResult.ok) {
+    return error(`error: ${parseResult.error}`)
+  }
+
+  return { ok: true, value: '', resource: parseResult.value }
+}
+
+const deleteFromManifest = (
+  apiServer: ApiServerFacade,
+  parsed: ParsedCommand,
+  resource: any
+): ExecutionResult => {
+  const kindRaw = resource?.kind
+  const nameRaw = resource?.metadata?.name
+
+  if (typeof kindRaw !== 'string' || typeof nameRaw !== 'string') {
+    return error('error: invalid manifest: missing kind or metadata.name')
+  }
+
+  const kind = kindRaw as ResourceKind
+  const targetConfig = DELETE_TARGET_BY_KIND[kind]
+  if (!targetConfig) {
+    return error(
+      `error: the server doesn't have a resource type "${kind.toLowerCase()}s"`
+    )
+  }
+
+  const namespaceRaw = resource?.metadata?.namespace
+  const namespaceFromManifest =
+    typeof namespaceRaw === 'string' && namespaceRaw.length > 0
+      ? namespaceRaw
+      : undefined
+  const namespace = parsed.namespace ?? namespaceFromManifest ?? 'default'
+
+  if (kind === 'Namespace') {
+    const existingNamespace = apiServer.findResource('Namespace', nameRaw)
+    if (!existingNamespace.ok) {
+      return formatNotFoundMessage(targetConfig.kindRefPlural, nameRaw)
+    }
+    const cascadeResult = deleteNamespacedResourcesForNamespace(apiServer, nameRaw)
+    if (cascadeResult != null) {
+      return cascadeResult
+    }
+    const deleteNamespaceResult = apiServer.deleteResource('Namespace', nameRaw)
+    if (!deleteNamespaceResult.ok) {
+      return formatNotFoundMessage(targetConfig.kindRefPlural, nameRaw)
+    }
+    return success(
+      formatDeletedMessage(targetConfig.kindRef, nameRaw, namespace, false)
+    )
+  }
+
+  if (targetConfig.namespaced) {
+    const deleteResult = apiServer.deleteResource(kind, nameRaw, namespace)
+    if (!deleteResult.ok) {
+      return formatNotFoundMessage(targetConfig.kindRefPlural, nameRaw)
+    }
+    return success(
+      formatDeletedMessage(targetConfig.kindRef, nameRaw, namespace, true)
+    )
+  }
+
+  const deleteResult = apiServer.deleteResource(kind, nameRaw)
+  if (!deleteResult.ok) {
+    return formatNotFoundMessage(targetConfig.kindRefPlural, nameRaw)
+  }
+  return success(
+    formatDeletedMessage(targetConfig.kindRef, nameRaw, namespace, false)
+  )
+}
+
 /**
  * Handle kubectl delete command
  * Uses event-driven architecture to delete resources
  */
 export const handleDelete = (
   apiServer: ApiServerFacade,
-  parsed: ParsedCommand
+  parsed: ParsedCommand,
+  fileSystem?: FileSystem
 ): ExecutionResult => {
+  const filename = getFilenameFromFlags(parsed)
+  if (filename != null) {
+    if (fileSystem == null) {
+      return error('error: internal error: filesystem is not available')
+    }
+    const loadResult = loadAndParseYaml(fileSystem, parsed)
+    if (!loadResult.ok) {
+      return loadResult
+    }
+    return deleteFromManifest(apiServer, parsed, loadResult.resource)
+  }
+
   const namespace = parsed.namespace || 'default'
   const names =
     parsed.names != null && parsed.names.length > 0

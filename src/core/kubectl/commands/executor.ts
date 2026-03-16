@@ -95,7 +95,7 @@ const createHandlers = (
       listPodEvents
     })
   )
-  handlers.set('delete', (parsed) => handleDelete(apiServer, parsed))
+  handlers.set('delete', (parsed) => handleDelete(apiServer, parsed, fileSystem))
   handlers.set('apply', (parsed) =>
     handleApply(fileSystem, apiServer, parsed)
   )

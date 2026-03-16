@@ -692,6 +692,39 @@ const runTransformer: ActionTransformer = (ctx) => {
   })
 }
 
+/**
+ * Transformer for delete:
+ * - delete -f file.yaml
+ * - delete <resource> <name>
+ */
+const deleteTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens) {
+    return success(ctx)
+  }
+
+  let hasFilenameFlag = false
+  for (let index = 2; index < ctx.tokens.length; index++) {
+    const token = ctx.tokens[index]
+    if (token === '-f' || token.startsWith('-f=')) {
+      hasFilenameFlag = true
+      break
+    }
+    if (token === '--filename' || token.startsWith('--filename=')) {
+      hasFilenameFlag = true
+      break
+    }
+  }
+
+  if (!hasFilenameFlag) {
+    return success(ctx)
+  }
+
+  return success({
+    ...ctx,
+    resource: 'pods' as Resource
+  })
+}
+
 const exposeTransformer: ActionTransformer = (ctx) => {
   if (!ctx.tokens) {
     return success(ctx)
@@ -785,6 +818,7 @@ const identityTransformer: ActionTransformer = (ctx) => success(ctx)
 const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
   exec: execTransformer,
   logs: logsTransformer,
+  delete: deleteTransformer,
   apply: applyTransformer,
   create: createTransformer,
   label: labelTransformer,

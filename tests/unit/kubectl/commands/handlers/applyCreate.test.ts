@@ -12,6 +12,9 @@ import {
   handleRun
 } from '../../../../../src/core/kubectl/commands/handlers/applyCreate'
 
+const LAST_APPLIED_CONFIGURATION_ANNOTATION =
+  'kubectl.kubernetes.io/last-applied-configuration'
+
 describe('applyCreate handler', () => {
   let apiServer: ReturnType<typeof createApiServerFacade>
   let fileSystem: FileSystem
@@ -347,6 +350,160 @@ data:
     }
 
     expect(result.value).toContain('created')
+  })
+
+  it('should return unchanged when applying same deployment manifest twice', () => {
+    const yaml = `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-unchanged
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo-unchanged
+  template:
+    metadata:
+      labels:
+        app: demo-unchanged
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+`
+
+    fileSystem.createFile('demo-unchanged.yaml')
+    fileSystem.writeFile('demo-unchanged.yaml', yaml)
+
+    const parsedFirstApply = parseCommand('kubectl apply -f demo-unchanged.yaml')
+    expect(parsedFirstApply.ok).toBe(true)
+    if (!parsedFirstApply.ok) {
+      return
+    }
+
+    const firstApplyResult = handleApply(
+      fileSystem,
+      apiServer,
+      parsedFirstApply.value
+    )
+    expect(firstApplyResult.ok).toBe(true)
+    if (!firstApplyResult.ok) {
+      return
+    }
+    expect(firstApplyResult.value).toContain('deployment.apps/demo-unchanged created')
+    const createdDeployment = apiServer.findResource(
+      'Deployment',
+      'demo-unchanged',
+      'default'
+    )
+    expect(createdDeployment.ok).toBe(true)
+    if (!createdDeployment.ok) {
+      return
+    }
+    expect(
+      createdDeployment.value.metadata.annotations?.[
+        LAST_APPLIED_CONFIGURATION_ANNOTATION
+      ]
+    ).toBeTypeOf('string')
+
+    const parsedSecondApply = parseCommand('kubectl apply -f demo-unchanged.yaml')
+    expect(parsedSecondApply.ok).toBe(true)
+    if (!parsedSecondApply.ok) {
+      return
+    }
+
+    const secondApplyResult = handleApply(
+      fileSystem,
+      apiServer,
+      parsedSecondApply.value
+    )
+    expect(secondApplyResult.ok).toBe(true)
+    if (!secondApplyResult.ok) {
+      return
+    }
+    expect(secondApplyResult.value).toContain(
+      'deployment.apps/demo-unchanged unchanged'
+    )
+  })
+
+  it('should return configured when applying changed deployment manifest', () => {
+    const initialYaml = `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-configured
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-configured
+  template:
+    metadata:
+      labels:
+        app: demo-configured
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+`
+    const updatedYaml = `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-configured
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: demo-configured
+  template:
+    metadata:
+      labels:
+        app: demo-configured
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+`
+
+    fileSystem.createFile('demo-configured.yaml')
+    fileSystem.writeFile('demo-configured.yaml', initialYaml)
+
+    const parsedFirstApply = parseCommand('kubectl apply -f demo-configured.yaml')
+    expect(parsedFirstApply.ok).toBe(true)
+    if (!parsedFirstApply.ok) {
+      return
+    }
+
+    const firstApplyResult = handleApply(
+      fileSystem,
+      apiServer,
+      parsedFirstApply.value
+    )
+    expect(firstApplyResult.ok).toBe(true)
+    if (!firstApplyResult.ok) {
+      return
+    }
+    expect(firstApplyResult.value).toContain('deployment.apps/demo-configured created')
+
+    fileSystem.writeFile('demo-configured.yaml', updatedYaml)
+
+    const parsedSecondApply = parseCommand('kubectl apply -f demo-configured.yaml')
+    expect(parsedSecondApply.ok).toBe(true)
+    if (!parsedSecondApply.ok) {
+      return
+    }
+
+    const secondApplyResult = handleApply(
+      fileSystem,
+      apiServer,
+      parsedSecondApply.value
+    )
+    expect(secondApplyResult.ok).toBe(true)
+    if (!secondApplyResult.ok) {
+      return
+    }
+    expect(secondApplyResult.value).toContain(
+      'deployment.apps/demo-configured configured'
+    )
   })
 
   it('should create namespace imperatively with name', () => {
