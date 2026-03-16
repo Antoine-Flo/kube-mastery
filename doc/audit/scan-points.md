@@ -19,4 +19,4 @@ Définition des zones à parcourir et des types d’analyse, sans exécuter l’
 - **Auth** : `src/lib/supabase.ts`, `src/pages/[lang]/auth/index.astro`, `src/pages/api/auth/*`.
 - **DB / serveur** : À migrer (Drizzle) — `src/db/index.ts`, `src/db/schema.ts`, `drizzle.config.ts`, `supabase/migrations/*.sql`.
 - **Front / XSS** : `src/components/lesson/` (LessonQuizNav, contenu leçon), pages `[lang]/[type]/[id]/[lessonId]/index.astro`, rendu markdown.
-- **Conventions** : `doc/context/conventions.md` pour les règles (max indentation, Result types, pas d’exceptions, etc.).
+- **Conventions** : `.cursor/rules/kubemastery-conventions.mdc` pour les règles (max indentation, Result types, pas d’exceptions, etc.).

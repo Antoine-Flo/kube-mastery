@@ -33,13 +33,6 @@ const createMockKindExecutor = (output: string): KindExecutor => {
       stdout: 'deleted',
       stderr: '',
       combined: 'deleted'
-    }),
-    waitPodsReady: () => ({
-      command: 'kubectl wait',
-      exitCode: 0,
-      stdout: 'pods ready',
-      stderr: '',
-      combined: 'pods ready'
     })
   }
 }
@@ -66,13 +59,6 @@ const createMockRunnerExecutor = (output: string): RunnerExecutor => {
       stdout: 'deleted',
       stderr: '',
       combined: 'deleted'
-    }),
-    waitPodsReady: () => ({
-      command: 'runner wait',
-      exitCode: 0,
-      stdout: 'pods ready',
-      stderr: '',
-      combined: 'pods ready'
     })
   }
 }

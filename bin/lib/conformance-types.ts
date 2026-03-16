@@ -21,7 +21,6 @@ export interface ConformanceActionBase {
 export interface ApplyYamlAction extends ConformanceActionBase {
   type: 'applyYaml'
   targetPath: string
-  waitForPods?: boolean
   namespace?: string
 }
 
@@ -29,11 +28,6 @@ export interface DeleteYamlAction extends ConformanceActionBase {
   type: 'deleteYaml'
   targetPath: string
   ignoreNotFound?: boolean
-}
-
-export interface WaitPodsReadyAction extends ConformanceActionBase {
-  type: 'waitPodsReady'
-  namespace?: string
 }
 
 export interface CommandAction extends ConformanceActionBase {
@@ -44,7 +38,6 @@ export interface CommandAction extends ConformanceActionBase {
 export type ConformanceAction =
   | ApplyYamlAction
   | DeleteYamlAction
-  | WaitPodsReadyAction
   | CommandAction
 
 export interface ConformanceSuite {

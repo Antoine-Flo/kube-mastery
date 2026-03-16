@@ -1,3 +1,8 @@
+---
+description: KubeMastery coding conventions and controller checklist (agent context)
+alwaysApply: true
+---
+
 # KubeMastery Coding Conventions, Agent Short Context
 
 ## Mandatory Rules
@@ -42,9 +47,3 @@ For any critical runtime controller:
 - Prioritize unit tests for pure logic and parser/handler contracts
 - Add regression tests for kubectl output and error semantics
 - Keep conformance tests green for shared behavior
-
-## Related Docs
-
-- `doc/context/spec.md`
-- `doc/context/architecture.md`
-- `doc/context/roadmap.md`

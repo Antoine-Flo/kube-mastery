@@ -2,8 +2,7 @@
 import {
   applyYamlTarget,
   ensureCluster,
-  getSeedPath,
-  waitForPodsReady
+  getSeedPath
 } from './lib/cluster-manager'
 import type { Result } from './lib/types'
 
@@ -16,7 +15,6 @@ if (!name) {
 }
 
 const seedName = name
-const waitForPods = false
 
 console.log(`Starting: ${name} (seed: ${seedName})\n`)
 
@@ -32,14 +30,6 @@ const a = applyYamlTarget(getSeedPath(seedName))
 if (isError(a)) {
   console.error(a.error)
   process.exit(1)
-}
-
-if (waitForPods) {
-  console.log('Waiting for pods...')
-  const w = waitForPodsReady()
-  if (isError(w)) {
-    console.warn(w.error)
-  }
 }
 
 console.log(`\nCluster "${seedName}" up. kubectl context: kind-${seedName}`)

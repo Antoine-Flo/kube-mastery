@@ -277,8 +277,14 @@ const handleMetadataChangeWithEvents = (
     apiServer.emitEvent(event)
   }
 
+  const allRemovals = Object.values(changes).every((value) => value === null)
+  const pastTense =
+    allRemovals && config.metadataType === 'labels'
+      ? 'unlabeled'
+      : config.actionPastTense
+
   return {
     ok: true,
-    value: `${accessor.singularName}/${name} ${config.actionPastTense}`
+    value: `${accessor.singularName}/${name} ${pastTense}`
   }
 }

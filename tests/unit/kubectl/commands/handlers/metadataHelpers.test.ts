@@ -205,6 +205,9 @@ describe('metadataHelpers', () => {
       const result = handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toContain('unlabeled')
+      }
     })
 
     it('should emit PodLabeled event', () => {

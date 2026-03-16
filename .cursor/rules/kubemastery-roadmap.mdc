@@ -1,3 +1,8 @@
+---
+description: KubeMastery roadmap and priorities (agent context)
+alwaysApply: true
+---
+
 # KubeMastery Roadmap, Agent Short Context
 
 ## Current State
@@ -38,9 +43,3 @@
 - Keep terminal-first experience
 - Prefer realism and consistency over feature quantity
 - Preserve deterministic behavior for tests and conformance
-
-## Related Docs
-
-- `doc/context/spec.md`
-- `doc/context/architecture.md`
-- `doc/context/conventions.md`

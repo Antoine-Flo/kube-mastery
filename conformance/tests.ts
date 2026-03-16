@@ -67,7 +67,10 @@ export const conformanceTests: ConformanceScenarioCatalog = {
     cleanup: ['kubectl delete configmap myconfig', 'kubectl delete secret my-secret']
   },
   'pod': {
-    setup: ['kubectl run web --image=busybox --command -- sleep 3600'],
+    setup: [
+      'kubectl run web --image=busybox --command -- sleep 3600',
+      'kubectl wait --for=condition=Ready pod/web --timeout=60s'
+    ],
     cmds: [
       'kubectl get pod web',
       'kubectl describe pod web',

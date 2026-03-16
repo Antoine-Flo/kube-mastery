@@ -64,10 +64,7 @@ const renderActionLabel = (event: ConformanceProgressEvent): string => {
   if (event.action.type === 'deleteYaml') {
     return `kubectl delete -f ${event.action.targetPath}`
   }
-  if (event.action.namespace != null && event.action.namespace.length > 0) {
-    return `kubectl wait --for=condition=Ready pod --all -n ${event.action.namespace}`
-  }
-  return 'kubectl wait --for=condition=Ready pod --all --all-namespaces'
+  return ''
 }
 
 const createConsoleProgressListener = (): ConformanceProgressListener => {

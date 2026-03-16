@@ -71,33 +71,17 @@ const buildKubeApiAccessVolumeName = (pod: Pod): string => {
   return `kube-api-access-${token}`
 }
 
-const buildLastAppliedAnnotation = (pod: Pod): string => {
-  const raw = {
-    apiVersion: pod.apiVersion,
-    kind: pod.kind,
-    metadata: {
-      annotations: {},
-      name: pod.metadata.name,
-      namespace: pod.metadata.namespace
-    },
-    spec: {
-      containers: pod.spec.containers.map((container) => {
-        const ports = container.ports?.map((port) => {
-          return { containerPort: port.containerPort }
-        })
-        return {
-          image: container.image,
-          name: container.name,
-          ...(ports != null ? { ports } : {})
-        }
-      })
-    }
+const ensureTransitionTimeString = (value: string | undefined): string => {
+  if (value == null) {
+    return new Date().toISOString()
   }
-  return JSON.stringify(raw)
+  return typeof value === 'string' ? value : new Date(value).toISOString()
 }
 
 const ensurePodConditions = (pod: Pod): PodCondition[] => {
-  const transitionTime = pod.status.startTime ?? pod.metadata.creationTimestamp
+  const transitionTime = ensureTransitionTimeString(
+    pod.status.startTime ?? pod.metadata.creationTimestamp
+  )
   const regularNames = new Set(
     pod.spec.containers.map((container) => container.name)
   )
@@ -161,7 +145,9 @@ const ensurePodConditions = (pod: Pod): PodCondition[] => {
   for (const condition of pod.status.conditions) {
     byType.set(condition.type, {
       lastProbeTime: condition.lastProbeTime ?? null,
-      lastTransitionTime: condition.lastTransitionTime ?? transitionTime,
+      lastTransitionTime: ensureTransitionTimeString(
+        condition.lastTransitionTime ?? transitionTime
+      ),
       observedGeneration: condition.observedGeneration ?? observedGeneration,
       status: condition.status,
       type: condition.type
@@ -264,15 +250,17 @@ export const shapePodForStructuredOutput = (
   const observedGeneration =
     pod.status.observedGeneration ?? pod.metadata.generation ?? 1
   const kubeApiAccessVolumeName = buildKubeApiAccessVolumeName(pod)
-  const metadataAnnotations = {
-    ...(pod.metadata.annotations ?? {}),
-    'kubectl.kubernetes.io/last-applied-configuration':
-      buildLastAppliedAnnotation(pod)
-  }
+  const metadataAnnotations = pod.metadata.annotations ?? {}
   const specInitContainers = (pod.spec.initContainers ?? []).map((container) => {
     return {
+      ...(container.command != null && container.command.length > 0
+        ? { command: container.command }
+        : {}),
+      ...(container.args != null && container.args.length > 0
+        ? { args: container.args }
+        : {}),
       image: container.image,
-      imagePullPolicy: 'IfNotPresent',
+      imagePullPolicy: container.imagePullPolicy ?? 'IfNotPresent',
       name: container.name,
       resources: container.resources ?? {},
       terminationMessagePath: '/dev/termination-log',
@@ -287,8 +275,14 @@ export const shapePodForStructuredOutput = (
       }
     })
     return {
+      ...(container.command != null && container.command.length > 0
+        ? { command: container.command }
+        : {}),
+      ...(container.args != null && container.args.length > 0
+        ? { args: container.args }
+        : {}),
       image: container.image,
-      imagePullPolicy: 'IfNotPresent',
+      imagePullPolicy: container.imagePullPolicy ?? 'IfNotPresent',
       name: container.name,
       ...(ports.length > 0 ? { ports } : {}),
       resources: container.resources ?? {},
@@ -347,22 +341,29 @@ export const shapePodForStructuredOutput = (
   const containerStatuses = allContainerStatuses.filter((status) => {
     return initContainerNames.has(status.name) === false
   })
+  const metadataKeysOrder: Record<string, unknown> = {
+    creationTimestamp: pod.metadata.creationTimestamp,
+    generation: pod.metadata.generation ?? 1,
+    ...(pod.metadata.labels != null &&
+    Object.keys(pod.metadata.labels).length > 0
+      ? { labels: pod.metadata.labels }
+      : {}),
+    name: pod.metadata.name,
+    namespace: pod.metadata.namespace,
+    resourceVersion: buildResourceVersion(pod),
+    uid: buildUid(pod)
+  }
+  if (Object.keys(metadataAnnotations).length > 0) {
+    metadataKeysOrder.annotations = metadataAnnotations
+  }
+  if (pod.metadata.ownerReferences != null) {
+    metadataKeysOrder.ownerReferences = pod.metadata.ownerReferences
+  }
+
   return {
     apiVersion: pod.apiVersion,
     kind: pod.kind,
-    metadata: {
-      annotations: metadataAnnotations,
-      creationTimestamp: pod.metadata.creationTimestamp,
-      generation: pod.metadata.generation ?? 1,
-      name: pod.metadata.name,
-      namespace: pod.metadata.namespace,
-      resourceVersion: buildResourceVersion(pod),
-      uid: buildUid(pod),
-      ...(pod.metadata.labels != null ? { labels: pod.metadata.labels } : {}),
-      ...(pod.metadata.ownerReferences != null
-        ? { ownerReferences: pod.metadata.ownerReferences }
-        : {})
-    },
+    metadata: metadataKeysOrder,
     spec: {
       containers: specContainers,
       ...(specInitContainers.length > 0

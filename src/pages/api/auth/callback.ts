@@ -1,8 +1,14 @@
 import type { APIRoute } from 'astro'
-import { getSupabaseServer } from '../../../lib/supabase'
+import { getSupabaseServer, getSupabaseAdmin } from '../../../lib/supabase'
 import { reconcileBillingForAuthenticatedUser } from '../../../lib/auth/reconcile-billing'
 import { getSafeLocalRedirectTarget } from '../../../lib/redirects'
 import { coerceUiLang } from '../../../i18n/utils'
+import { readAppEnv } from '../../../lib/env'
+import {
+  EARLY_ACCESS_CAP,
+  getAuthUserCount,
+  ensureEarlyAccessSubscription
+} from '../../../lib/auth/early-access-cap'
 import {
   createApiLogContext,
   emitApiLog,
@@ -158,6 +164,26 @@ export const GET: APIRoute = async ({
         redirectTo
       )
     )
+  }
+
+  const isEarlyStage =
+    readAppEnv('EARLY_STAGE', locals)?.toLowerCase().trim() === 'true'
+  if (isEarlyStage) {
+    const count = await getAuthUserCount(locals)
+    if (count != null && count > EARLY_ACCESS_CAP) {
+      const admin = getSupabaseAdmin(locals)
+      if (admin != null) {
+        await admin.auth.admin.deleteUser(session.user.id)
+      }
+      return redirect(
+        authErrorRedirect(
+          lang,
+          { messageKey: 'auth_registrations_closed' },
+          redirectTo
+        )
+      )
+    }
+    await ensureEarlyAccessSubscription(locals, session.user.id)
   }
 
   await reconcileBillingForAuthenticatedUser(locals, data?.user)

@@ -184,7 +184,7 @@ src/core/cluster/
 
 ## 8. Références
 
-- Architecture projet : `doc/context/architecture.md`
+- Architecture projet : `.cursor/rules/kubemastery-architecture.mdc`
 - Controllers existants : `src/core/cluster/controllers/` (DeploymentController, ReplicaSetController, types Controller / ControllerState)
 - Scheduler : `src/core/cluster/scheduler/Scheduler.ts`
 - Pod lifecycle actuel : `src/core/cluster/podStartupSimulator.ts`

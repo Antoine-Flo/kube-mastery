@@ -43,13 +43,13 @@ Pas de `entry-client.tsx` / `entry-server.tsx` Vinxi. Middleware Astro : redirec
 
 ## Alignement doc / code
 
-- **doc/context/architecture.md** : Structure à jour (Astro, pages, content, lib, core). Référence à `src/db/` et tests comme « à migrer ».
-- **doc/context/spec.md**, **conventions.md**, **roadmap.md** : Références pour périmètre et règles de code.
+- **.cursor/rules/kubemastery-architecture.mdc** : Structure à jour (Astro, pages, content, lib, core). Référence à `src/db/` et tests comme « à migrer ».
+- **.cursor/rules/kubemastery-spec.mdc**, **kubemastery-conventions.mdc**, **kubemastery-roadmap.mdc** : Références pour périmètre et règles de code (toujours en contexte Cursor).
 
 ## Références
 
-- [doc/context/architecture.md](../context/architecture.md) — Structure technique, patterns, modules.
-- [doc/context/spec.md](../context/spec.md) — Fonctionnalités et comportements attendus.
-- [doc/context/conventions.md](../context/conventions.md) — Standards de code.
+- `.cursor/rules/kubemastery-architecture.mdc` — Structure technique, patterns, modules.
+- `.cursor/rules/kubemastery-spec.mdc` — Fonctionnalités et comportements attendus.
+- `.cursor/rules/kubemastery-conventions.mdc` — Standards de code.
 - [doc/audit/scan-points.md](scan-points.md) — Zones et types d’analyse pour le scan.
 - [doc/audit/security-inventory.md](security-inventory.md) — Inventaire env, API, Supabase.

@@ -1,3 +1,8 @@
+---
+description: KubeMastery architecture, stack, and integration points (agent context)
+alwaysApply: true
+---
+
 # KubeMastery Architecture, Agent Short Context
 
 ## Stack
@@ -52,9 +57,3 @@ Simulation is split into clear domains:
 - Lesson pages: `src/pages/[lang]/[type]/[id]/[lessonId]/index.astro`
 - Cheat sheet page: `src/pages/[lang]/cheat-sheet.astro`
 - Course content and seeds: `src/courses/`
-
-## Related Docs
-
-- `doc/context/spec.md`
-- `doc/context/conventions.md`
-- `doc/context/roadmap.md`

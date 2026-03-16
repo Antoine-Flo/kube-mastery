@@ -1,12 +1,25 @@
 import type { APIRoute } from 'astro'
 import { getSupabaseServer } from '../../../lib/supabase'
 import { coerceUiLang } from '../../../i18n/utils'
+import { readAppEnv } from '../../../lib/env'
+import {
+  EARLY_ACCESS_CAP,
+  getAuthUserCount,
+  ensureEarlyAccessSubscription
+} from '../../../lib/auth/early-access-cap'
+import { getSupabaseAdmin } from '../../../lib/supabase'
 
-const json = (body: { error: string; message: string }, status: number) =>
+const json = (body: Record<string, unknown>, status: number) =>
   new Response(JSON.stringify(body), {
     status,
     headers: { 'Content-Type': 'application/json' }
   })
+
+function isEarlyStage(locals: unknown): boolean {
+  return (
+    readAppEnv('EARLY_STAGE', locals)?.toLowerCase().trim() === 'true'
+  )
+}
 
 export const POST: APIRoute = async ({
   request,
@@ -36,10 +49,24 @@ export const POST: APIRoute = async ({
     return new Response('Email and password are required', { status: 400 })
   }
 
-  const { error } = await supabase.auth.signUp({ email, password })
+  if (isEarlyStage(locals)) {
+    const count = await getAuthUserCount(locals)
+    if (count != null && count >= EARLY_ACCESS_CAP) {
+      return json(
+        { ok: false, code: 'auth_registrations_closed' },
+        503
+      )
+    }
+  }
+
+  const { data, error } = await supabase.auth.signUp({ email, password })
 
   if (error) {
     return json({ error: 'auth/register', message: error.message }, 500)
+  }
+
+  if (isEarlyStage(locals) && data?.user?.id != null) {
+    await ensureEarlyAccessSubscription(locals, data.user.id)
   }
 
   return redirect(`/${lang}/auth`)

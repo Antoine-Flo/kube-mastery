@@ -1986,6 +1986,7 @@ spec:
         }
 
         expect(podResult.value.metadata.labels).toEqual({
+          run: 'hazelcast',
           app: 'hazelcast',
           env: 'prod'
         })

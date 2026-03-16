@@ -2,7 +2,7 @@
  * Auth domain: business rules only (no DB, no Supabase).
  */
 
-const PAID_PLAN_TIERS = ['basic', 'pro', 'enterprise'] as const
+const PAID_PLAN_TIERS = ['basic', 'pro', 'enterprise', 'early_access'] as const
 const PAID_SUBSCRIPTION_STATUSES = ['active', 'trialing'] as const
 
 /**

@@ -3,15 +3,13 @@ import {
   ensureCurrentContextNamespace,
   deleteYamlTarget,
   ensureCluster,
-  resetConformanceClusterState,
-  waitForPodsReady
+  resetConformanceClusterState
 } from '../cluster-manager'
 import { runShellCommandDetailed } from '../command-runner'
 import type {
   ApplyYamlAction,
   CommandExecutionResult,
-  DeleteYamlAction,
-  WaitPodsReadyAction
+  DeleteYamlAction
 } from '../conformance-types'
 import type { Result } from '../types'
 import { error, success } from '../types'
@@ -22,7 +20,6 @@ export interface KindExecutor {
   executeCommand: (command: string) => CommandExecutionResult
   applyYaml: (action: ApplyYamlAction) => CommandExecutionResult
   deleteYaml: (action: DeleteYamlAction) => CommandExecutionResult
-  waitPodsReady: (action: WaitPodsReadyAction) => CommandExecutionResult
 }
 
 const toExecutionResult = (
@@ -77,24 +74,6 @@ export const createKindExecutor = (clusterName: string): KindExecutor => {
     applyYaml(action: ApplyYamlAction): CommandExecutionResult {
       const command = `kubectl apply -f ${action.targetPath}`
       const applyResult = applyYamlTarget(action.targetPath)
-      if (!applyResult.ok) {
-        return toExecutionResult(command, applyResult)
-      }
-      if (action.waitForPods) {
-        const waitResult = waitForPodsReady(action.namespace)
-        if (!waitResult.ok) {
-          return {
-            command,
-            exitCode: 1,
-            stdout: applyResult.value,
-            stderr: waitResult.error,
-            combined:
-              applyResult.value.length > 0
-                ? `${applyResult.value}\n${waitResult.error}`
-                : waitResult.error
-          }
-        }
-      }
       return toExecutionResult(command, applyResult)
     },
     deleteYaml(action: DeleteYamlAction): CommandExecutionResult {
@@ -104,28 +83,6 @@ export const createKindExecutor = (clusterName: string): KindExecutor => {
         action.ignoreNotFound ?? true
       )
       return toExecutionResult(command, deleteResult)
-    },
-    waitPodsReady(action: WaitPodsReadyAction): CommandExecutionResult {
-      const command = action.namespace
-        ? `kubectl wait --for=condition=Ready pod --all -n ${action.namespace}`
-        : 'kubectl wait --for=condition=Ready pod --all --all-namespaces'
-      const waitResult = waitForPodsReady(action.namespace)
-      if (!waitResult.ok) {
-        return {
-          command,
-          exitCode: 1,
-          stdout: '',
-          stderr: waitResult.error,
-          combined: waitResult.error
-        }
-      }
-      return {
-        command,
-        exitCode: 0,
-        stdout: 'pods ready',
-        stderr: '',
-        combined: 'pods ready'
-      }
     }
   }
 }

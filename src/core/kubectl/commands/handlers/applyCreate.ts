@@ -1284,7 +1284,7 @@ export const handleRun = (
     name: podName,
     namespace: parsed.namespace || 'default',
     restartPolicy: parsed.runRestart ?? 'Always',
-    ...(parsed.runLabels && { labels: parsed.runLabels }),
+    labels: { run: podName, ...(parsed.runLabels ?? {}) },
     containers: [
       {
         name: podName,

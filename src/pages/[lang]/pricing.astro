@@ -24,6 +24,10 @@ const auth = await getLayoutAuthContext(
 const loggedInCustomerEmail = auth.user?.email?.trim() ?? ''
 const loggedInCustomerUserId = auth.user?.id?.trim() ?? ''
 
+const isEarlyStage =
+  (readAppEnv('EARLY_STAGE', Astro.locals) ?? '').toLowerCase().trim() ===
+  'true'
+
 const environment = (readAppEnv('ENVIRONMENT', Astro.locals) ?? '')
   .toLowerCase()
   .trim()
@@ -33,7 +37,7 @@ const paddleClientToken = isProduction
   ? (readAppEnv('PADDLE_CLIENT_TOKEN', Astro.locals) ?? '')
   : (readAppEnv('PADDLE_CLIENT_TOKEN_STAGING', Astro.locals) ?? '')
 
-if (paddleClientToken === '') {
+if (!isEarlyStage && paddleClientToken === '') {
   throw new Error(
     'Missing Paddle client token. Set PADDLE_CLIENT_TOKEN[_STAGING].'
   )
@@ -71,7 +75,7 @@ const faqItems = [
   { id: 'q6', q: t('pricing_faq_q6'), a: t('pricing_faq_a6') },
   { id: 'q7', q: t('pricing_faq_q7'), a: t('pricing_faq_a7') },
   { id: 'q8', q: t('pricing_faq_q8'), a: t('pricing_faq_a8') },
-  { id: 'q9', q: t('pricing_faq_q9'), a: t('pricing_faq_a9') }
+  // { id: 'q9', q: t('pricing_faq_q9'), a: t('pricing_faq_a9') }
 ]
 ---
 
@@ -82,16 +86,23 @@ const faqItems = [
       <section class="pricing__section pricing__section--hero">
         <div class="pricing__content">
           <h2 class="pricing__title">{t('pricing_title')}</h2>
+          {isEarlyStage && (
+            <div class="pricing__badge">
+              <span class="pricing__badge-text pricing__badge-text--cyan">
+                {t('pricing_early_stage_limit')}
+              </span>
+            </div>
+          )}
+          {isEarlyStage && (
+            <p class="pricing__early-stage-count" id="pricing-early-count" aria-live="polite">
+              <span id="pricing-early-count-value"></span>
+            </p>
+          )}
           <div class="pricing__plans pricing__plans--centered">
             <article
               class="card card--outline pricing__plan-card pricing__plan-card--highlighted"
             >
               <div class="card__header">
-                <div class="pricing__badge">
-                  <span class="pricing__badge-text pricing__badge-text--cyan">
-                    {t('pricing_lifetime_badge')}
-                  </span>
-                </div>
                 <h2 class="card__title pricing__plan-title">
                   {t('pricing_lifetime_title')}
                 </h2>
@@ -101,11 +112,11 @@ const faqItems = [
                     data-price-id-month={PRO_ONETIME_PRICE_ID}
                   >
                     <div class="pricing__plan-price-current">
-                      <span class="pricing__plan-price-amount">--</span>
+                      <span class="pricing__plan-price-amount">{isEarlyStage ? t('pricing_free') : '--'}</span>
                     </div>
-                    <p class="pricing__plan-subline">
+                    <!-- <p class="pricing__plan-subline">
                       {t('pricing_lifetime_subline')}
-                    </p>
+                    </p> -->
                   </div>
                 </div>
               </div>
@@ -132,7 +143,17 @@ const faqItems = [
               <div
                 class="card__footer pricing__plan-footer pricing__plan-footer--column"
               >
-                {isLaunched ? (
+                {isEarlyStage ? (
+                  <Button
+                    href={localePath('/auth')}
+                    variant="solid"
+                    size="lg"
+                    color="cyan"
+                    class="pricing__plan-button"
+                  >
+                    {t('pricing_cta_early')}
+                  </Button>
+                ) : isLaunched ? (
                   <Button
                     type="button"
                     variant="solid"
@@ -156,23 +177,25 @@ const faqItems = [
                     {t('courses_comingSoon')}
                   </Button>
                 )}
-                <p class="pricing__accessible-link">
-                  {t('pricing_discount_intro')}{' '}
-                  <button
-                    type="button"
-                    class="pricing__accessible-btn"
-                    data-open-discount-dialog
-                  >
-                    {t('pricing_discount_open_cta')}
-                  </button>
-                </p>
+                {!isEarlyStage && (
+                  <p class="pricing__accessible-link">
+                    {t('pricing_discount_intro')}{' '}
+                    <button
+                      type="button"
+                      class="pricing__accessible-btn"
+                      data-open-discount-dialog
+                    >
+                      {t('pricing_discount_open_cta')}
+                    </button>
+                  </p>
+                )}
               </div>
             </article>
           </div>
         </div>
       </section>
 
-      <section class="pricing__section pricing__section--guarantee">
+      <!-- <section class="pricing__section pricing__section--guarantee">
         <div class="guarantee">
           <div class="content">
             <div class="guarantee-row">
@@ -193,7 +216,7 @@ const faqItems = [
             </div>
           </div>
         </div>
-      </section>
+      </section> -->
 
       <section class="pricing__section pricing__section--stats">
         <div class="pricing__content">
@@ -342,10 +365,12 @@ const faqItems = [
   </div>
 </Layout>
 
-<script id="paddle-js" src="https://cdn.paddle.com/paddle/v2/paddle.js"
-></script>
+{!isEarlyStage && (
+  <script id="paddle-js" src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+)}
 <script
   define:vars={{
+    isEarlyStage,
     paddleClientToken,
     isStaging,
     checkoutDialogId: CHECKOUT_EMAIL_DIALOG_ID,
@@ -356,6 +381,19 @@ const faqItems = [
     loggedInCustomerUserId
   }}
 >
+  if (isEarlyStage) {
+    const countEl = document.getElementById('pricing-early-count-value')
+    if (countEl != null) {
+      fetch('/api/stats/early-access-count')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data != null && typeof data.count === 'number' && typeof data.cap === 'number') {
+            countEl.textContent = `${data.count} / ${data.cap}`
+          }
+        })
+        .catch(() => {})
+    }
+  } else {
   const PADDLE_INITED = 'data-paddle-inited'
   const CHECKOUT_DIALOG_INITED = 'data-pricing-checkout-dialog-inited'
   const DISCOUNT_DIALOG_INITED = 'data-pricing-discount-dialog-inited'
@@ -673,6 +711,7 @@ const faqItems = [
   document.addEventListener('astro:page-load', setupCheckoutDialog)
   document.addEventListener('astro:page-load', setupDiscountInfoDialog)
   document.addEventListener('astro:page-load', capturePricingViewOnce)
+  }
 </script>
 
 <style>
@@ -718,6 +757,21 @@ const faqItems = [
     display: flex;
     justify-content: flex-end;
     gap: var(--spacing-2);
+  }
+
+  .pricing__early-stage-message {
+    margin: 0 0 var(--spacing-2);
+    font-size: var(--text-md);
+    color: var(--color-gray-11);
+    text-align: center;
+  }
+
+  .pricing__early-stage-count {
+    margin: 0 0 var(--spacing-4);
+    font-size: var(--text-md);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-cyan-11);
+    text-align: center;
   }
 
   .pricing__plans--centered {

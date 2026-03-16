@@ -1,3 +1,8 @@
+---
+description: KubeMastery product spec, runtime rules, and command baseline (agent context)
+alwaysApply: true
+---
+
 # KubeMastery Spec, Agent Short Context
 
 ## Product
@@ -54,9 +59,3 @@ Important contracts:
 - `src/core/control-plane/` and `src/core/kubelet/` controllers
 - `src/core/terminal/` terminal runtime
 - `src/courses/` lessons, seeds, cheat sheets
-
-## Related Docs
-
-- `doc/context/architecture.md`
-- `doc/context/conventions.md`
-- `doc/context/roadmap.md`

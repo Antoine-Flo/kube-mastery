@@ -5,6 +5,7 @@ import Terminal from '../../components/Terminal.astro'
 import { Zap, Shield, Euro, CircleCheck, CircleX } from '@lucide/astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import { getSupabaseServer } from '../../lib/supabase'
+import { readAppEnv } from '../../lib/env'
 import astronautTrainingGif from '../../assets/astronaut-training.gif'
 import networkImg from '../../assets/network.jpg'
 import demoVideo from '../../assets/demo.mp4'
@@ -13,6 +14,9 @@ import openapiLogo from '../../assets/openapi_logo.svg'
 const locale = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(locale)
 const localePath = useLocalePath(locale)
+const isEarlyStage =
+  (readAppEnv('EARLY_STAGE', Astro.locals) ?? '').toLowerCase().trim() === 'true'
+const homeCtaLabel = isEarlyStage ? t('home_cta_join_early') : t('home_cta_join')
 
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
@@ -51,7 +55,7 @@ try {
               color="cyan"
               size="xl"
             >
-              {t('home_cta_join')}
+              {homeCtaLabel}
             </Button>
           </div>
         </div>
@@ -173,7 +177,7 @@ try {
             </ul>
             <div class="cta">
               <Button href={localePath('/pricing')} variant="solid" color="cyan" size="xl">
-                {t('home_cta_join')}
+                {homeCtaLabel}
               </Button>
             </div>
           </div>
@@ -230,7 +234,7 @@ try {
                 color="cyan"
                 size="xl"
               >
-                {t('home_cta_join')}
+                {homeCtaLabel}
               </Button>
             </div>
           </div>

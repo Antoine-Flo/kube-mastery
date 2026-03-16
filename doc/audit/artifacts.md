@@ -26,7 +26,7 @@ Commandes reproductibles et emplacements des rapports pour l’audit.
 
 État actuel : golden files et script dans `bin/` ; migration des tests (Vitest, chemins vers `src/core/`) à venir.
 
-**Rapports (après migration)** : Couverture dans `coverage/` (HTML, JSON). Seuil documenté (non bloquant) : ~94% (voir doc/context/spec.md).
+**Rapports (après migration)** : Couverture dans `coverage/` (HTML, JSON). Seuil documenté (non bloquant) : ~94% (voir .cursor/rules/kubemastery-spec.mdc).
 
 ## Build
 

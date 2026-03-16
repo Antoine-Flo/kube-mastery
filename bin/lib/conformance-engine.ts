@@ -162,12 +162,6 @@ const executeAction = (
       runner: runnerExecutor.deleteYaml(action)
     }
   }
-  if (action.type === 'waitPodsReady') {
-    return {
-      kind: kindExecutor.waitPodsReady(action),
-      runner: runnerExecutor.waitPodsReady(action)
-    }
-  }
   return {
     kind: kindExecutor.executeCommand(action.command),
     runner: runnerExecutor.executeCommand(action.command)
