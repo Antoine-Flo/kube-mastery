@@ -96,6 +96,16 @@ export const conformanceTests: ConformanceScenarioCatalog = {
       'kubectl run run-ok-dry-run --image=busybox --dry-run=client'
     ]
   },
+  'imperative-dry-run-yaml': {
+    cmds: [
+      'kubectl create namespace dryrun-demo --dry-run=client -o yaml',
+      'kubectl create deployment dryrun-dep --image=nginx --replicas=2 --dry-run=client -o yaml',
+      'kubectl create service clusterip dryrun-svc --tcp=80:80 --dry-run=client -o yaml',
+      'kubectl create configmap dryrun-cm --from-literal=mode=dev --dry-run=client -o yaml',
+      'kubectl create secret generic dryrun-secret --from-literal=password=s3cr3t --dry-run=client -o yaml',
+      'kubectl run dryrun-pod --image=busybox --dry-run=client -o yaml'
+    ]
+  },
   'daemonset-and-replicaset': {
     setup: [
       'kubectl create deployment rs-source --image=nginx:latest',

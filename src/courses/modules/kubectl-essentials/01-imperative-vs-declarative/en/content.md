@@ -2,16 +2,6 @@
 
 When you first start working with Kubernetes, one of the most fundamental concepts to grasp is not about pods or deployments, it is about _how you communicate with the cluster_. Kubernetes gives you two distinct mental models: the **imperative** approach and the **declarative** approach. Understanding the difference will shape how you work with Kubernetes for everything that follows.
 
-## The Cooking Analogy
-
-Imagine you want someone to make you a bowl of pasta. You have two options for how to explain what you want.
-
-The first option is step-by-step instructions: "Boil two liters of water. Add a pinch of salt. Cook 100 grams of spaghetti for eight minutes. Drain. Add tomato sauce." You are describing _exactly what to do, and in what order_. That is the imperative approach.
-
-The second option is to hand them a recipe card and say, "Make this." The recipe card describes the finished dish, the desired outcome. The cook figures out the steps themselves. That is the declarative approach, you describe the _desired state_, and let the system figure out how to get there.
-
-Kubernetes supports both, and each has its time and place.
-
 ## The Imperative Approach
 
 When you use kubectl imperatively, you are issuing direct commands that take immediate effect. You are telling Kubernetes _what action to perform right now_.
@@ -149,16 +139,10 @@ kubectl delete pod demo-pod
 
 # --- Generate YAML without creating anything ---
 
-kubectl create deployment demo-app \
-  --image=nginx \
-  --replicas=2 \
-  --dry-run=client -o yaml
+kubectl create deployment demo-app --image=nginx --replicas=2 --dry-run=client -o yaml
 
 # Save the YAML to a file
-kubectl create deployment demo-app \
-  --image=nginx \
-  --replicas=2 \
-  --dry-run=client -o yaml > /tmp/demo-app.yaml
+kubectl create deployment demo-app --image=nginx --replicas=2 --dry-run=client -o yaml > /tmp/demo-app.yaml
 
 # Inspect the generated file
 cat /tmp/demo-app.yaml

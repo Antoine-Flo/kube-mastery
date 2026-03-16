@@ -6,7 +6,11 @@ import {
   type FileSystem
 } from '../../../../../src/core/filesystem/FileSystem'
 import { parseCommand } from '../../../../../src/core/kubectl/commands/parser'
-import { handleCreate } from '../../../../../src/core/kubectl/commands/handlers/applyCreate'
+import {
+  handleApply,
+  handleCreate,
+  handleRun
+} from '../../../../../src/core/kubectl/commands/handlers/applyCreate'
 
 describe('applyCreate handler', () => {
   let apiServer: ReturnType<typeof createApiServerFacade>
@@ -182,6 +186,50 @@ describe('applyCreate handler', () => {
       expect(result.error).toContain('metadata.name: Invalid value: "My_App"')
       expect(result.error).toContain('regex used for validation')
     }
+  })
+
+  it('should generate deployment dry-run yaml without null creationTimestamp and apply it', () => {
+    const parsedCreate = parseCommand(
+      'kubectl create deployment demo-app --image=nginx --replicas=2 --dry-run=client -o yaml'
+    )
+    expect(parsedCreate.ok).toBe(true)
+    if (!parsedCreate.ok) {
+      return
+    }
+
+    const dryRunResult = handleCreate(
+      fileSystem,
+      apiServer,
+      parsedCreate.value
+    )
+    expect(dryRunResult.ok).toBe(true)
+    if (!dryRunResult.ok) {
+      return
+    }
+
+    expect(dryRunResult.value).not.toContain('creationTimestamp: null')
+
+    fileSystem.createFile('demo-app.yaml')
+    fileSystem.writeFile('demo-app.yaml', dryRunResult.value)
+
+    const parsedApply = parseCommand('kubectl apply -f demo-app.yaml')
+    expect(parsedApply.ok).toBe(true)
+    if (!parsedApply.ok) {
+      return
+    }
+
+    const applyResult = handleApply(
+      fileSystem,
+      apiServer,
+      parsedApply.value
+    )
+    expect(applyResult.ok).toBe(true)
+    if (!applyResult.ok) {
+      return
+    }
+
+    const deployment = apiServer.findResource('Deployment', 'demo-app', 'default')
+    expect(deployment.ok).toBe(true)
   })
 
   it('should reject service with invalid metadata.name in dry-run client', () => {
@@ -511,11 +559,30 @@ spec:
 
     expect(result.value).toContain('kind: ConfigMap')
     expect(result.value).toContain('name: app-config')
-    expect(result.value).toContain('creationTimestamp: null')
+    expect(result.value).not.toContain('creationTimestamp: null')
     expect(result.value).toContain('LOG_LEVEL: info')
 
     const configMap = apiServer.findResource('ConfigMap', 'app-config', 'default')
     expect(configMap.ok).toBe(false)
+  })
+
+  it('should return pod yaml for run dry-run client without null creationTimestamp', () => {
+    const parsed = parseCommand(
+      'kubectl run run-dry-run --image=busybox --dry-run=client -o yaml'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleRun(apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toContain('kind: Pod')
+    expect(result.value).not.toContain('creationTimestamp: null')
   })
 
   it('should return jsonpath value for create configmap dry-run client', () => {

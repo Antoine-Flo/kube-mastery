@@ -509,4 +509,97 @@ describe('PodLifecycleController runtime enrichment', () => {
 
     controller.stop()
   })
+
+  it('transitions busybox pod from Running to Succeeded with Completed reason', () => {
+    vi.useFakeTimers()
+    const apiServer = createApiServerFacade()
+    const eventBus = apiServer.eventBus
+    let pod: Pod = createPod({
+      name: 'success-pod',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      restartPolicy: 'Never',
+      containers: [{ name: 'busybox', image: 'busybox:1.36' }]
+    })
+    apiServer.createResource('Pod', pod)
+
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+    })
+
+    const controller = createPodLifecycleController(apiServer, {
+      pendingDelayRangeMs: {
+        minMs: 0,
+        maxMs: 0
+      },
+      completionDelayRangeMs: {
+        minMs: 5,
+        maxMs: 5
+      }
+    })
+
+    controller.reconcile('default/success-pod')
+    expect(pod.status.phase).toBe('Running')
+
+    vi.advanceTimersByTime(5)
+    vi.runOnlyPendingTimers()
+
+    expect(pod.status.phase).toBe('Succeeded')
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.state).toBe('Terminated')
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.reason).toBe('Completed')
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.exitCode).toBe(0)
+
+    controller.stop()
+  })
+
+  it('clears success completion timer when pod is deleted before completion', () => {
+    vi.useFakeTimers()
+    const apiServer = createApiServerFacade()
+    const eventBus = apiServer.eventBus
+    let pod: Pod = createPod({
+      name: 'success-delete',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      restartPolicy: 'Never',
+      containers: [{ name: 'busybox', image: 'busybox:1.36' }]
+    })
+    apiServer.createResource('Pod', pod)
+
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+    })
+
+    const controller = createPodLifecycleController(apiServer, {
+      pendingDelayRangeMs: {
+        minMs: 0,
+        maxMs: 0
+      },
+      completionDelayRangeMs: {
+        minMs: 25,
+        maxMs: 25
+      }
+    })
+
+    controller.reconcile('default/success-delete')
+    expect(pod.status.phase).toBe('Running')
+
+    eventBus.emit(
+      createPodDeletedEvent(
+        pod.metadata.name,
+        pod.metadata.namespace,
+        pod,
+        'test'
+      )
+    )
+
+    vi.advanceTimersByTime(30)
+    vi.runOnlyPendingTimers()
+
+    expect(pod.status.phase).toBe('Running')
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.reason).toBeUndefined()
+
+    controller.stop()
+  })
 })

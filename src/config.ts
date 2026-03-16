@@ -48,6 +48,10 @@ export const CONFIG = {
       minMs: 3000,
       maxMs: 4000
     },
+    simPodCompletionDelayRangeMs: {
+      minMs: 1800,
+      maxMs: 2600
+    },
     simPodSchedulingDelayRangeMs: {
       minMs: 900,
       maxMs: 2200

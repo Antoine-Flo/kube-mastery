@@ -88,6 +88,7 @@ export function createEmulatedEnvironment(
     },
     podLifecycle: {
       pendingDelayRangeMs: CONFIG.runtime.simPodPendingDelayRangeMs,
+      completionDelayRangeMs: CONFIG.runtime.simPodCompletionDelayRangeMs,
       resyncIntervalMs: resyncConfig.podLifecycle,
       volumeReadinessProbe: (pod) => {
         return (

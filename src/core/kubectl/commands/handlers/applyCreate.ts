@@ -50,15 +50,21 @@ const isSupportedDryRunValue = (value: unknown): boolean => {
 
 const sanitizeForDryRunOutput = (value: unknown): unknown => {
   if (Array.isArray(value)) {
-    return value.map((item) => sanitizeForDryRunOutput(item))
+    return value
+      .map((item) => sanitizeForDryRunOutput(item))
+      .filter((item) => item !== undefined)
   }
   if (value == null || typeof value !== 'object') {
+    if (value === null) {
+      return undefined
+    }
     return value
   }
   const entries = Object.entries(value as Record<string, unknown>)
   const sanitizedEntries = entries
     .filter(([key]) => key !== '_simulator')
     .map(([key, item]) => [key, sanitizeForDryRunOutput(item)] as const)
+    .filter(([, item]) => item !== undefined)
   return Object.fromEntries(sanitizedEntries)
 }
 
@@ -135,7 +141,6 @@ const buildCreateDeploymentDryRunManifest = (
     apiVersion: 'apps/v1',
     kind: 'Deployment',
     metadata: {
-      creationTimestamp: null,
       labels: metadataLabels,
       name: parsed.name,
       ...(parsed.namespace != null && parsed.namespace !== 'default'
@@ -148,7 +153,6 @@ const buildCreateDeploymentDryRunManifest = (
       strategy: {},
       template: {
         metadata: {
-          creationTimestamp: null,
           labels: metadataLabels
         },
         spec: {
@@ -242,7 +246,6 @@ const buildCreateConfigMapDryRunManifest = (
     apiVersion: 'v1',
     kind: 'ConfigMap',
     metadata: {
-      creationTimestamp: null,
       name: parsed.name,
       ...(parsed.namespace != null && parsed.namespace !== 'default'
         ? { namespace: parsed.namespace }
@@ -1068,7 +1071,6 @@ const buildRunDryRunManifest = (
     apiVersion: 'v1',
     kind: 'Pod',
     metadata: {
-      creationTimestamp: null,
       labels: metadataLabels,
       name: podName
     },

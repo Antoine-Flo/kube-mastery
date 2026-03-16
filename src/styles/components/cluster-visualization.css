@@ -251,6 +251,12 @@
   color: var(--color-ruby-11);
 }
 
+.cluster-viz__container--completed {
+  border-color: var(--color-gray-8);
+  background-color: var(--color-gray-2);
+  color: var(--color-gray-11);
+}
+
 /* ─── Services (Network Layer) ─────────────────────────────────────────── */
 
 .cluster-viz__services {

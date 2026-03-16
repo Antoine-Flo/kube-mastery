@@ -113,6 +113,9 @@ function formatContainerTooltip(
 }
 
 function getPodDisplayStatus(pod: Pod): string {
+  if (pod.status.phase === 'Succeeded') {
+    return 'Completed'
+  }
   if (pod.status.phase === 'Running') {
     return 'Running'
   }
@@ -124,6 +127,25 @@ function getPodDisplayStatus(pod: Pod): string {
     return statusWithReason.stateDetails.reason
   }
   return pod.status.phase
+}
+
+function getContainerStateClass(
+  status: NonNullable<Pod['status']['containerStatuses']>[number] | undefined
+): string {
+  const state = status?.stateDetails?.state
+  if (state === 'Running') {
+    return 'cluster-viz__container--running'
+  }
+  if (state === 'Terminated') {
+    const reason = status?.stateDetails?.reason
+    const exitCode = status?.stateDetails?.exitCode
+    const isCompleted = reason === 'Completed' || exitCode === 0
+    if (isCompleted) {
+      return 'cluster-viz__container--completed'
+    }
+    return 'cluster-viz__container--terminated'
+  }
+  return 'cluster-viz__container--waiting'
 }
 
 function setTooltipContent(tooltipEl: HTMLElement, raw: string): void {
@@ -596,13 +618,7 @@ function createPodEl(
   const containersEl = div.querySelector('.cluster-viz__containers')!
   for (const c of containers) {
     const containerStatus = statusesByName.get(c.name)
-    const containerState = containerStatus?.stateDetails?.state
-    const containerStateClass =
-      containerState === 'Running'
-        ? 'cluster-viz__container--running'
-        : containerState === 'Terminated'
-          ? 'cluster-viz__container--terminated'
-          : 'cluster-viz__container--waiting'
+    const containerStateClass = getContainerStateClass(containerStatus)
     const cEl = document.createElement('span')
     cEl.className = `cluster-viz__container ${containerStateClass}`
     cEl.textContent = c.name

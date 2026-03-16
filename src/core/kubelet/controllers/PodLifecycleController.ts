@@ -38,6 +38,10 @@ export interface PodLifecycleControllerOptions extends ControllerResyncOptions {
     minMs: number
     maxMs: number
   }
+  completionDelayRangeMs?: {
+    minMs: number
+    maxMs: number
+  }
   restartBackoffMs?: {
     initialMs: number
     maxMs: number
@@ -217,6 +221,7 @@ export class PodLifecycleController implements ReconcilerController {
   private stopPeriodicResync: () => void = () => {}
   private options: PodLifecycleControllerOptions
   private pendingTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+  private completionTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
   private restartTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
   private restartAttempts = new Map<string, number>()
   private imagePullTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
@@ -267,6 +272,10 @@ export class PodLifecycleController implements ReconcilerController {
       clearTimeout(timeoutId)
     }
     this.pendingTimeouts.clear()
+    for (const timeoutId of this.completionTimeouts.values()) {
+      clearTimeout(timeoutId)
+    }
+    this.completionTimeouts.clear()
     for (const timeoutId of this.restartTimeouts.values()) {
       clearTimeout(timeoutId)
     }
@@ -310,6 +319,7 @@ export class PodLifecycleController implements ReconcilerController {
         reason: 'NotFound'
       })
       this.clearPendingTimeout(key)
+      this.clearCompletionTimeout(key)
       this.clearRestartTimeout(key)
       this.restartAttempts.delete(key)
       this.clearImagePullState(key)
@@ -324,6 +334,9 @@ export class PodLifecycleController implements ReconcilerController {
         reason: 'NotSchedulable'
       })
       this.clearPendingTimeout(key)
+      if (pod.status.phase !== 'Running') {
+        this.clearCompletionTimeout(key)
+      }
       this.clearRestartTimeout(key)
       this.clearImagePullTimeout(key)
       return
@@ -376,14 +389,14 @@ export class PodLifecycleController implements ReconcilerController {
 
     const delayRange = this.options.pendingDelayRangeMs
     if (delayRange == null) {
-      this.emitPodRunning(pod)
+      this.emitPodRunning(key, pod)
       return
     }
 
     const minDelayMs = Math.max(0, Math.floor(delayRange.minMs))
     const maxDelayMs = Math.max(minDelayMs, Math.floor(delayRange.maxMs))
     if (maxDelayMs === 0) {
-      this.emitPodRunning(pod)
+      this.emitPodRunning(key, pod)
       return
     }
 
@@ -404,7 +417,7 @@ export class PodLifecycleController implements ReconcilerController {
         this.emitPodWaitingForVolume(latestPod, latestVolumeReadiness.reason)
         return
       }
-      this.emitPodRunning(latestPod)
+      this.emitPodRunning(key, latestPod)
     }, delayMs)
     this.pendingTimeouts.set(key, timeoutId)
   }
@@ -418,6 +431,7 @@ export class PodLifecycleController implements ReconcilerController {
       })
       const key = makePodKey(pod.metadata.namespace, pod.metadata.name)
       this.clearPendingTimeout(key)
+      this.clearCompletionTimeout(key)
       this.clearRestartTimeout(key)
       this.restartAttempts.delete(key)
       this.clearImagePullState(key)
@@ -457,6 +471,15 @@ export class PodLifecycleController implements ReconcilerController {
     }
     clearTimeout(timeoutId)
     this.pendingTimeouts.delete(key)
+  }
+
+  private clearCompletionTimeout(key: string): void {
+    const timeoutId = this.completionTimeouts.get(key)
+    if (timeoutId == null) {
+      return
+    }
+    clearTimeout(timeoutId)
+    this.completionTimeouts.delete(key)
   }
 
   private clearRestartTimeout(key: string): void {
@@ -858,7 +881,65 @@ export class PodLifecycleController implements ReconcilerController {
     this.restartTimeouts.set(key, transitionTimeoutId)
   }
 
-  private emitPodRunning(pod: Pod): void {
+  private shouldCompleteSuccessfully(pod: Pod): boolean {
+    const restartPolicy = pod.spec.restartPolicy ?? 'Always'
+    if (restartPolicy === 'Always') {
+      return false
+    }
+    if (pod.spec.containers.length === 0) {
+      return false
+    }
+    for (const container of pod.spec.containers) {
+      const imageValidation = this.imageRegistry.validateImage(container.image)
+      if (!imageValidation.ok) {
+        return false
+      }
+      if (imageValidation.value.behavior.defaultStatus !== 'Succeeded') {
+        return false
+      }
+    }
+    return true
+  }
+
+  private schedulePodSucceededTransition(key: string, pod: Pod): void {
+    if (!this.shouldCompleteSuccessfully(pod)) {
+      this.clearCompletionTimeout(key)
+      return
+    }
+    if (this.completionTimeouts.has(key)) {
+      return
+    }
+    const delayRange = this.options.completionDelayRangeMs
+    if (delayRange == null) {
+      return
+    }
+    const minDelayMs = Math.max(0, Math.floor(delayRange.minMs))
+    const maxDelayMs = Math.max(minDelayMs, Math.floor(delayRange.maxMs))
+    const delayMs = randomInRange(minDelayMs, maxDelayMs)
+    const timeoutId = setTimeout(() => {
+      this.completionTimeouts.delete(key)
+      const { namespace, name } = parsePodKey(key)
+      const latestPodResult = this.getState().findPod(name, namespace)
+      if (!latestPodResult.ok || latestPodResult.value == null) {
+        return
+      }
+      const latestPod = latestPodResult.value
+      if (latestPod.status.phase === 'Succeeded' || latestPod.status.phase === 'Failed') {
+        return
+      }
+      if (!this.shouldCompleteSuccessfully(latestPod)) {
+        return
+      }
+      const podToComplete =
+        latestPod.status.phase === 'Running' ? latestPod : pod
+      this.emitPodContainerTerminatedReason(podToComplete, 'Completed', {
+        phase: 'Succeeded'
+      })
+    }, delayMs)
+    this.completionTimeouts.set(key, timeoutId)
+  }
+
+  private emitPodRunning(key: string, pod: Pod): void {
     const transitionTime = new Date().toISOString()
     const runningPod = reconcileInitContainers(pod)
     const runtimeSyncedPod = this.syncRuntimeForRunningPod(runningPod)
@@ -885,6 +966,7 @@ export class PodLifecycleController implements ReconcilerController {
         this.options.eventSource ?? 'pod-lifecycle-controller'
       )
     )
+    this.schedulePodSucceededTransition(key, updated)
   }
 
   private emitPodWaitingForVolume(pod: Pod, reason?: string): void {
