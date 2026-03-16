@@ -426,4 +426,82 @@ describe('kubectl logs handler', () => {
       }
     })
   })
+
+  describe('--previous flag', () => {
+    it('should return error when --previous is used but container has no restarts', () => {
+      const pod = createPod({
+        name: 'crashy',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'nginx:latest' }]
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'crashy',
+        flags: { previous: true }
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('unable to retrieve container logs for')
+        expect(result.error).toContain('containerd://')
+      }
+    })
+
+    it('should return previous logs when --previous is used and container has restarted', () => {
+      const previousLogLines = ['[previous] error at startup', '[previous] exit code 1']
+      const pod = createPod({
+        name: 'crashy',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'nginx:latest' }],
+        containerStatusOverrides: [{ name: 'app', restartCount: 1 }],
+        previousLogs: previousLogLines
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'crashy',
+        flags: { previous: true }
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toBe(previousLogLines.join('\n'))
+      }
+    })
+  })
+
+  describe('crash-style logs (sh -c "exit 1")', () => {
+    it('should end generated logs with crash line for busybox exit 1', () => {
+      const pod = createPod({
+        name: 'crashy',
+        namespace: 'default',
+        containers: [
+          {
+            name: 'app',
+            image: 'busybox:1.36',
+            command: ['sh'],
+            args: ['-c', 'exit 1']
+          }
+        ]
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({ name: 'crashy' })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.trim().endsWith('/bin/sh: exit 1')).toBe(true)
+      }
+    })
+  })
 })

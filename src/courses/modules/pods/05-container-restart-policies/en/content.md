@@ -143,15 +143,7 @@ kubectl run crashy --image=busybox:1.36 --restart=OnFailure -- sh -c "exit 1"
 
 Watch the status cycle between `Error` and `CrashLoopBackOff`.
 
-**5. Check logs from the previous (crashed) container:**
-
-```bash
-kubectl logs crashy --previous
-```
-
-(In this case the container outputs nothing, but this is the command you'd use for a real crashing container.)
-
-**6. Describe the crashy pod to see exit code and restart count:**
+**5. Describe the crashy pod to see exit code and restart count:**
 
 ```bash
 kubectl describe pod crashy
@@ -159,7 +151,7 @@ kubectl describe pod crashy
 
 Find `Last State`, `Exit Code`, and `Restart Count` in the output.
 
-**7. Clean up:**
+**6. Clean up:**
 
 ```bash
 kubectl delete pod always-pod success-never fail-never crashy

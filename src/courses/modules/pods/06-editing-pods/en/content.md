@@ -42,7 +42,7 @@ kubectl get pod my-pod -o yaml > pod.yaml
 **Step 2**: Edit the file with your desired changes:
 
 ```bash
-vim pod.yaml
+vi pod.yaml
 ```
 
 **Step 3**: Delete the existing Pod:

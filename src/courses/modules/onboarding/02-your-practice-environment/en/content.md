@@ -16,10 +16,10 @@ Here are the commands available:
 
 ## Mistakes Are Free
 
-If you break something or want to start fresh, just reload the page. The cluster resets to its initial state in a few seconds. Use that freedom deliberately: change values, apply broken manifests, delete things and watch what happens. Every failure is feedback, and nothing here has consequences.
+If you break something or want to start fresh, use the **reload icon** below the terminal (or reload the page). The cluster and terminal reset to their initial state. Use that freedom deliberately: change values, apply broken manifests, delete things and watch what happens. Every failure is feedback, and nothing here has consequences.
 
 :::warning
-Reloading discards any files you created in the terminal. If you wrote a manifest you want to keep, copy it somewhere before reloading.
+Resetting (reload icon or page reload) discards any files you created in the terminal. If you wrote a manifest you want to keep, copy it somewhere first.
 :::
 
 ## Limitations

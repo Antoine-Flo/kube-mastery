@@ -477,7 +477,7 @@ data:
 
         expect(result.value).toContain('kind: ConfigMap')
         expect(result.value).toContain('name: app-config')
-        expect(result.value).toContain('creationTimestamp: null')
+        expect(result.value).not.toContain('creationTimestamp: null')
         expect(result.value).toContain('LOG_LEVEL: info')
 
         const configMap = apiServer.findResource('ConfigMap', 'app-config', 'default')
@@ -675,7 +675,7 @@ data:
         expect(result.value).toContain('kind: Deployment')
         expect(result.value).toContain('name: myapp')
         expect(result.value).toContain('replicas: 3')
-        expect(result.value).toContain('creationTimestamp: null')
+        expect(result.value).not.toContain('creationTimestamp: null')
         expect(result.value).toContain('status: {}')
         expect(result.value).not.toContain('readyReplicas: 0')
 

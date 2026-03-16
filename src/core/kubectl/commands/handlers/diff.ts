@@ -23,6 +23,8 @@ type GenericObject = Record<string, unknown>
 const SENSITIVE_MASK_DEFAULT = '***'
 const SENSITIVE_MASK_BEFORE = '*** (before)'
 const SENSITIVE_MASK_AFTER = '*** (after)'
+const LAST_APPLIED_CONFIGURATION_ANNOTATION =
+  'kubectl.kubernetes.io/last-applied-configuration'
 const DIFF_TOP_LEVEL_KEY_ORDER = [
   'apiVersion',
   'data',
@@ -281,6 +283,32 @@ const maskSecretData = (
   return { fromMasked, toMasked }
 }
 
+const removeSystemAnnotations = (
+  resource: GenericObject | undefined
+): GenericObject | undefined => {
+  if (resource == null) {
+    return undefined
+  }
+  const cloned = cloneObject(resource)
+  const metadata = cloned.metadata
+  if (metadata == null || typeof metadata !== 'object') {
+    return cloned
+  }
+  const annotations = (metadata as GenericObject).annotations
+  if (annotations == null || typeof annotations !== 'object') {
+    return cloned
+  }
+  const filteredEntries = Object.entries(annotations as GenericObject).filter(
+    ([key]) => key !== LAST_APPLIED_CONFIGURATION_ANNOTATION
+  )
+  if (filteredEntries.length === 0) {
+    delete (metadata as GenericObject).annotations
+    return cloned
+  }
+  ;(metadata as GenericObject).annotations = Object.fromEntries(filteredEntries)
+  return cloned
+}
+
 const sanitizeBeforeDiff = (
   liveResource: GenericObject | undefined,
   mergedResource: GenericObject | undefined,
@@ -289,17 +317,22 @@ const sanitizeBeforeDiff = (
   liveSanitized: GenericObject | undefined
   mergedSanitized: GenericObject | undefined
 } => {
+  const liveWithoutSystemAnnotations = removeSystemAnnotations(liveResource)
+  const mergedWithoutSystemAnnotations = removeSystemAnnotations(mergedResource)
+
   if (kind === 'Secret') {
-    const masked = maskSecretData(liveResource, mergedResource)
+    const masked = maskSecretData(
+      liveWithoutSystemAnnotations,
+      mergedWithoutSystemAnnotations
+    )
     return {
       liveSanitized: masked.fromMasked,
       mergedSanitized: masked.toMasked
     }
   }
   return {
-    liveSanitized: liveResource == null ? undefined : cloneObject(liveResource),
-    mergedSanitized:
-      mergedResource == null ? undefined : cloneObject(mergedResource)
+    liveSanitized: liveWithoutSystemAnnotations,
+    mergedSanitized: mergedWithoutSystemAnnotations
   }
 }
 

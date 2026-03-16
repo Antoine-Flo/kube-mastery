@@ -243,6 +243,8 @@ export interface Pod extends KubernetesResource {
   status: PodStatus
   _simulator: {
     logs?: string[]
+    /** Logs from the previous container instance (before last restart), for kubectl logs --previous */
+    previousLogs?: string[]
     containers: {
       [containerName: string]: {
         fileSystem: FileSystemState
@@ -286,6 +288,8 @@ interface PodConfig {
   conditions?: PodCondition[]
   restartCount?: number
   logs?: string[]
+  /** Logs from the previous container instance (for tests / kubectl logs --previous) */
+  previousLogs?: string[]
   ownerReferences?: OwnerReference[]
   /** Override container statuses (from YAML status) for display */
   containerStatusOverrides?: ContainerStatusOverride[]
@@ -604,6 +608,7 @@ export const createPod = (config: PodConfig): Pod => {
     },
     _simulator: {
       ...(config.logs && { logs: config.logs }),
+      ...(config.previousLogs && { previousLogs: config.previousLogs }),
       containers: simulatorContainers
     }
   }

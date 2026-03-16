@@ -326,6 +326,11 @@ const executeProcessCommandDirective = (
       phase: 'Pending',
       restartCount: pod.status.restartCount + 1,
       containerStatuses: updatedStatuses
+    },
+    _simulator: {
+      ...pod._simulator,
+      previousLogs: pod._simulator.logs ?? [],
+      logs: []
     }
   }
   const updateResult = context.apiServer.updateResource(

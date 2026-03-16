@@ -17,6 +17,7 @@ interface Props {
     labelShowTerminal: string
     labelHideTerminal: string
     labelContactSupport: string
+    labelReloadTerminal: string
   }
   supportContextId?: string
 }
@@ -97,6 +98,7 @@ const t = useTranslations(lang)
               labelShowTerminal={labels.labelShowTerminal}
               labelHideTerminal={labels.labelHideTerminal}
               labelContactSupport={labels.labelContactSupport}
+              labelReloadTerminal={labels.labelReloadTerminal}
               terminalAction="show"
             />
           </div>
@@ -119,6 +121,7 @@ const t = useTranslations(lang)
             labelShowTerminal={labels.labelShowTerminal}
             labelHideTerminal={labels.labelHideTerminal}
             labelContactSupport={labels.labelContactSupport}
+            labelReloadTerminal={labels.labelReloadTerminal}
             terminalAction="hide"
           />
         </div>
@@ -296,6 +299,11 @@ const t = useTranslations(lang)
       root.setAttribute('data-terminal-open', !open ? 'true' : 'false')
       termWrap.classList.toggle('lesson-layout__terminal-wrap--hidden', open)
       showTerm.setAttribute('aria-hidden', !open ? 'true' : 'false')
+    })
+
+    document.addEventListener('lesson-terminal-reload', () => {
+      cleanupLessonEnv()
+      setupLessonEnv()
     })
 
     document.addEventListener('click', (e) => {

@@ -2,6 +2,7 @@ import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
+import { getSimulatedCommandExitCode } from '../../../cluster/containerCommand'
 import { generateLogs } from '../../../cluster/logGenerator'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -18,6 +19,7 @@ const DEFAULT_LOG_COUNT = 50
  * - kubectl logs <pod> -n <namespace>
  * - kubectl logs <pod> --tail=20
  * - kubectl logs <pod> -f/--follow
+ * - kubectl logs <pod> --previous (logs from the last terminated instance)
  */
 export const handleLogs = (
   apiServer: ApiServerFacade,
@@ -88,8 +90,21 @@ export const handleLogs = (
     return error(`error: pod ${podName} has no containers`)
   }
 
-  // Get or generate logs
-  let logs = pod._simulator.logs || []
+  const usePrevious = parsed.flags.previous === true
+  if (usePrevious) {
+    const containerStatus = pod.status.containerStatuses?.find(
+      (s) => s.name === targetContainer.name
+    )
+    const restartCount = containerStatus?.restartCount ?? 0
+    if (restartCount === 0) {
+      const containerID = containerStatus?.containerID ?? 'unknown'
+      return error(`unable to retrieve container logs for ${containerID}`)
+    }
+  }
+
+  // Get or generate logs (current or previous instance)
+  const logSource = usePrevious ? pod._simulator.previousLogs : pod._simulator.logs
+  let logs = logSource || []
   const tailValue = parsed.flags.tail
   let parsedTailCount: number | undefined
 
@@ -109,11 +124,12 @@ export const handleLogs = (
       parsedTailCount !== undefined && parsedTailCount > 0
         ? parsedTailCount
         : DEFAULT_LOG_COUNT
-    // Generate logs based on target container image
+    const simulatedExitCode = getSimulatedCommandExitCode(targetContainer)
     logs = generateLogs(targetContainer.image, generatedCount, {
       namespace,
       podName,
-      containerName: targetContainer.name
+      containerName: targetContainer.name,
+      ...(simulatedExitCode !== undefined && { simulatedExitCode })
     })
   }
 

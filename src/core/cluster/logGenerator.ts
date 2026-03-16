@@ -15,6 +15,8 @@ export interface LogGenerationContext {
   podName?: string
   namespace?: string
   containerName?: string
+  /** When set and non-zero, generated logs end with crash-style lines (e.g. exit 1) */
+  simulatedExitCode?: number
 }
 const imageRegistry = createImageRegistry()
 
@@ -389,6 +391,21 @@ const resolveBaseTime = (seed: string): Date => {
 }
 
 /**
+ * Generate short crash-style log lines for a container that exited with a non-zero code.
+ * Used for kubectl run crashy -- sh -c "exit 1" and similar so logs reflect what happened.
+ */
+export function generateCrashLogLines(
+  exitCode: number,
+  containerImage?: string
+): string[] {
+  const image = (containerImage ?? '').toLowerCase()
+  if (image.includes('busybox')) {
+    return [`/bin/sh: exit ${exitCode}`]
+  }
+  return [`Process exited with code ${exitCode}`]
+}
+
+/**
  * Generate realistic logs for a container based on image/profile context.
  * @param containerImage - Image name (e.g., "nginx:latest", "redis:6")
  * @param count - Number of log lines to generate (max 200)
@@ -430,6 +447,15 @@ export const generateLogs = (
     const lineTime = new Date(baseTime.getTime() + currentOffsetSeconds * 1000)
     const level = getLogLevel(rng, index, profile)
     logs.push(generateLogLine(profile, level, lineTime, index, rng))
+  }
+
+  const simulatedExit = context?.simulatedExitCode
+  if (
+    simulatedExit != null &&
+    simulatedExit !== 0 &&
+    Number.isInteger(simulatedExit)
+  ) {
+    logs.push(...generateCrashLogLines(simulatedExit, containerImage))
   }
 
   return logs

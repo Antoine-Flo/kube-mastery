@@ -158,7 +158,7 @@ Look at the `Last State:` field under the container, it will show `Terminated` w
 **6. Create a short-lived Pod that succeeds:**
 
 ```bash
-kubectl run success-pod --image=busybox:1.36 --restart=Never
+kubectl run success-pod --image=busybox:1.36 --restart=Never -- sh -c "exit 1"
 kubectl get pod success-pod --watch
 ```
 

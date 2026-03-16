@@ -330,6 +330,29 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
   init()
   document.addEventListener('astro:page-load', init)
 
+  document.addEventListener('lesson-terminal-reload', () => {
+    const lessonRoots: Element[] = []
+    cleanups.forEach((_, root) => {
+      const el = root as HTMLElement
+      if (el.dataset.lessonTerminal === 'true') {
+        lessonRoots.push(root)
+      }
+    })
+    lessonRoots.forEach((root) => {
+      const cleanup = cleanups.get(root)
+      if (cleanup) {
+        cleanup()
+        cleanups.delete(root)
+        lessonPending.delete(root)
+        const pid = persistIdByRoot.get(root)
+        if (pid) {
+          persistIdByRoot.delete(root)
+        }
+      }
+    })
+    init()
+  })
+
   document.addEventListener('astro:before-swap', (ev: Event) => {
     const newDoc = (ev as { newDocument?: Document }).newDocument
     cleanups.forEach((cleanup, root) => {
