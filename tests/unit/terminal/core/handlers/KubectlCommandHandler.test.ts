@@ -126,6 +126,95 @@ describe('KubectlCommandHandler', () => {
       expect(result.ok).toBe(true)
     })
 
+    it('should enter container context for exec shell directive', () => {
+      const pod = createPod({
+        name: 'exec-pod',
+        namespace: 'default',
+        phase: 'Running',
+        containers: [{ name: 'main', image: 'nginx:latest' }]
+      })
+      context.apiServer.etcd.restore({
+        ...context.apiServer.snapshotState(),
+        pods: {
+          ...context.apiServer.snapshotState().pods,
+          items: [pod]
+        }
+      })
+
+      const result = handler.execute('kubectl exec exec-pod -- sh', context)
+      expect(result.ok).toBe(true)
+      expect(context.shellContextStack.isInContainer()).toBe(true)
+      expect(context.shellContextStack.getCurrentContainerInfo()).toEqual({
+        podName: 'exec-pod',
+        containerName: 'main',
+        namespace: 'default'
+      })
+    })
+
+    it('should execute one-off shell command in target container', () => {
+      const pod = createPod({
+        name: 'exec-pod',
+        namespace: 'default',
+        phase: 'Running',
+        containers: [{ name: 'main', image: 'nginx:latest' }]
+      })
+      context.apiServer.etcd.restore({
+        ...context.apiServer.snapshotState(),
+        pods: {
+          ...context.apiServer.snapshotState().pods,
+          items: [pod]
+        }
+      })
+      renderer.clearOutput()
+
+      const result = handler.execute('kubectl exec exec-pod -- ls /', context)
+      expect(result.ok).toBe(true)
+      const output = renderer.getOutput()
+      expect(output).not.toContain('SHELL_COMMAND:')
+      expect(output.length).toBeGreaterThan(0)
+    })
+
+    it('should update pod status when nginx -s stop is executed', () => {
+      const pod = createPod({
+        name: 'always-pod',
+        namespace: 'default',
+        phase: 'Running',
+        restartPolicy: 'Always',
+        containers: [{ name: 'always-pod', image: 'nginx:1.28' }]
+      })
+      context.apiServer.etcd.restore({
+        ...context.apiServer.snapshotState(),
+        pods: {
+          ...context.apiServer.snapshotState().pods,
+          items: [pod]
+        }
+      })
+
+      const result = handler.execute(
+        'kubectl exec always-pod -- nginx -s stop',
+        context
+      )
+      expect(result.ok).toBe(true)
+
+      const updatedPodResult = context.apiServer.findResource(
+        'Pod',
+        'always-pod',
+        'default'
+      )
+      expect(updatedPodResult.ok).toBe(true)
+      if (!updatedPodResult.ok) {
+        return
+      }
+      expect(updatedPodResult.value.status.phase).toBe('Pending')
+      expect(updatedPodResult.value.status.restartCount).toBe(1)
+      const targetStatus = updatedPodResult.value.status.containerStatuses?.find(
+        (status) => status.name === 'always-pod'
+      )
+      expect(targetStatus?.restartCount).toBe(1)
+      expect(targetStatus?.stateDetails?.state).toBe('Waiting')
+      expect(targetStatus?.stateDetails?.reason).toBe('ContainerCreating')
+    })
+
     it('should redirect kubectl output to a file', () => {
       const result = handler.execute(
         'kubectl run mypod --image=nginx --dry-run=client -o yaml > pod.yaml',

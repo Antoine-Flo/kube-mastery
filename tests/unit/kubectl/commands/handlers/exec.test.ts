@@ -216,7 +216,7 @@ describe('kubectl exec handler', () => {
       apiServer.etcd.restore(state)
       const result = handleExecApi(apiServer, parsed)
 
-      expect(result).toBe('ENTER_CONTAINER:my-pod:main:default')
+      expect(result).toBe('ENTER_CONTAINER:default:my-pod:main')
     })
 
     it('should return ENTER_CONTAINER for bash command', () => {
@@ -236,7 +236,7 @@ describe('kubectl exec handler', () => {
       apiServer.etcd.restore(state)
       const result = handleExecApi(apiServer, parsed)
 
-      expect(result).toBe('ENTER_CONTAINER:my-pod:main:default')
+      expect(result).toBe('ENTER_CONTAINER:default:my-pod:main')
     })
 
     it('should return ENTER_CONTAINER for /bin/sh command', () => {
@@ -300,7 +300,7 @@ describe('kubectl exec handler', () => {
       apiServer.etcd.restore(state)
       const result = handleExecApi(apiServer, parsed)
 
-      expect(result).toBe('ENTER_CONTAINER:my-pod:sidecar:default')
+      expect(result).toBe('ENTER_CONTAINER:default:my-pod:sidecar')
     })
   })
 
@@ -421,6 +421,26 @@ describe('kubectl exec handler', () => {
   })
 
   describe('other commands', () => {
+    it('should return PROCESS_COMMAND for nginx -s stop', () => {
+      const pod = createPod({
+        name: 'nginx-pod',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'nginx:latest' }],
+        phase: 'Running'
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'nginx-pod',
+        execCommand: ['nginx', '-s', 'stop']
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
+
+      expect(result).toBe('PROCESS_COMMAND:nginx:stop:default:nginx-pod:main')
+    })
+
     it('should return SHELL_COMMAND for ls', () => {
       const pod = createPod({
         name: 'my-pod',
@@ -438,7 +458,9 @@ describe('kubectl exec handler', () => {
       apiServer.etcd.restore(state)
       const result = handleExecApi(apiServer, parsed)
 
-      expect(result).toBe('SHELL_COMMAND:ls -la')
+      expect(result).toBe(
+        'SHELL_COMMAND:default:my-pod:main:ls%20-la'
+      )
     })
 
     it('should return SHELL_COMMAND for cat', () => {
@@ -458,7 +480,9 @@ describe('kubectl exec handler', () => {
       apiServer.etcd.restore(state)
       const result = handleExecApi(apiServer, parsed)
 
-      expect(result).toBe('SHELL_COMMAND:cat /etc/nginx/nginx.conf')
+      expect(result).toBe(
+        'SHELL_COMMAND:default:my-pod:main:cat%20%2Fetc%2Fnginx%2Fnginx.conf'
+      )
     })
   })
 
@@ -501,7 +525,7 @@ describe('kubectl exec handler', () => {
       apiServer.etcd.restore(state)
       const result = handleExecApi(apiServer, parsed)
 
-      expect(result).toBe('ENTER_CONTAINER:my-pod:main:production')
+      expect(result).toBe('ENTER_CONTAINER:production:my-pod:main')
     })
   })
 })

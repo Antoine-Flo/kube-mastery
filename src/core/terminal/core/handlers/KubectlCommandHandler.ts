@@ -12,6 +12,9 @@ import {
 } from '../../../kubectl/commands/output/statefulTabWriter'
 import { parseCommand } from '../../../kubectl/commands/parser'
 import type { ParsedCommand, Resource } from '../../../kubectl/commands/types'
+import type { Pod } from '../../../cluster/ressources/Pod'
+import { createFileSystem } from '../../../filesystem/FileSystem'
+import { createShellExecutor } from '../../../shell/commands'
 import type { ClusterEvent } from '../../../cluster/events/types'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
@@ -27,6 +30,333 @@ type ResourceMeta = {
   name: string
   namespace: string
   labels?: Record<string, string>
+}
+
+type EnterContainerDirective = {
+  namespace: string
+  podName: string
+  containerName: string
+}
+
+type ShellCommandDirective = {
+  namespace: string
+  podName: string
+  containerName: string
+  command: string
+}
+
+type ProcessCommandDirective = {
+  processName: string
+  processAction: string
+  namespace: string
+  podName: string
+  containerName: string
+}
+
+const ENTER_CONTAINER_PREFIX = 'ENTER_CONTAINER:'
+const SHELL_COMMAND_PREFIX = 'SHELL_COMMAND:'
+const PROCESS_COMMAND_PREFIX = 'PROCESS_COMMAND:'
+
+const parseEnterContainerDirective = (
+  output: string
+): EnterContainerDirective | undefined => {
+  if (!output.startsWith(ENTER_CONTAINER_PREFIX)) {
+    return undefined
+  }
+  const payload = output.slice(ENTER_CONTAINER_PREFIX.length)
+  const parts = payload.split(':')
+  if (parts.length !== 3) {
+    return undefined
+  }
+  const [namespace, podName, containerName] = parts
+  if (
+    namespace.length === 0 ||
+    podName.length === 0 ||
+    containerName.length === 0
+  ) {
+    return undefined
+  }
+  return { namespace, podName, containerName }
+}
+
+const parseShellCommandDirective = (
+  output: string
+): ShellCommandDirective | undefined => {
+  if (!output.startsWith(SHELL_COMMAND_PREFIX)) {
+    return undefined
+  }
+  const payload = output.slice(SHELL_COMMAND_PREFIX.length)
+  const separatorIndex = payload.indexOf(':')
+  if (separatorIndex === -1) {
+    return undefined
+  }
+  const namespace = payload.slice(0, separatorIndex)
+  const remainderAfterNamespace = payload.slice(separatorIndex + 1)
+  const secondSeparatorIndex = remainderAfterNamespace.indexOf(':')
+  if (secondSeparatorIndex === -1) {
+    return undefined
+  }
+  const podName = remainderAfterNamespace.slice(0, secondSeparatorIndex)
+  const remainderAfterPod = remainderAfterNamespace.slice(secondSeparatorIndex + 1)
+  const thirdSeparatorIndex = remainderAfterPod.indexOf(':')
+  if (thirdSeparatorIndex === -1) {
+    return undefined
+  }
+  const containerName = remainderAfterPod.slice(0, thirdSeparatorIndex)
+  const encodedCommand = remainderAfterPod.slice(thirdSeparatorIndex + 1)
+  if (
+    namespace.length === 0 ||
+    podName.length === 0 ||
+    containerName.length === 0 ||
+    encodedCommand.length === 0
+  ) {
+    return undefined
+  }
+  let command = ''
+  try {
+    command = decodeURIComponent(encodedCommand)
+  } catch {
+    return undefined
+  }
+  return { namespace, podName, containerName, command }
+}
+
+const parseProcessCommandDirective = (
+  output: string
+): ProcessCommandDirective | undefined => {
+  if (!output.startsWith(PROCESS_COMMAND_PREFIX)) {
+    return undefined
+  }
+  const payload = output.slice(PROCESS_COMMAND_PREFIX.length)
+  const parts = payload.split(':')
+  if (parts.length !== 5) {
+    return undefined
+  }
+  const [processName, processAction, namespace, podName, containerName] = parts
+  if (
+    processName.length === 0 ||
+    processAction.length === 0 ||
+    namespace.length === 0 ||
+    podName.length === 0 ||
+    containerName.length === 0
+  ) {
+    return undefined
+  }
+  return {
+    processName,
+    processAction,
+    namespace,
+    podName,
+    containerName
+  }
+}
+
+const findPodForDirective = (
+  context: CommandContext,
+  namespace: string,
+  podName: string
+): ExecutionResult & { pod?: Pod } => {
+  const podResult = context.apiServer.findResource('Pod', podName, namespace)
+  if (!podResult.ok) {
+    return error(`Error from server (NotFound): pods "${podName}" not found`)
+  }
+  return {
+    ok: true,
+    value: '',
+    pod: podResult.value
+  }
+}
+
+const executeEnterContainerDirective = (
+  context: CommandContext,
+  directive: EnterContainerDirective
+): ExecutionResult => {
+  const podLookup = findPodForDirective(
+    context,
+    directive.namespace,
+    directive.podName
+  )
+  if (!podLookup.ok || podLookup.pod == null) {
+    return error(podLookup.ok ? 'pod not found' : podLookup.error)
+  }
+  const containerEntry =
+    podLookup.pod._simulator.containers[directive.containerName]
+  if (containerEntry == null) {
+    return error(
+      `Error: container ${directive.containerName} not found in pod ${directive.podName}`
+    )
+  }
+  context.shellContextStack.pushContainerContext(
+    directive.podName,
+    directive.containerName,
+    directive.namespace,
+    containerEntry.fileSystem
+  )
+  context.shellContextStack.updateCurrentPrompt()
+  return success('')
+}
+
+const executeShellCommandDirective = (
+  context: CommandContext,
+  directive: ShellCommandDirective
+): ExecutionResult => {
+  const podLookup = findPodForDirective(
+    context,
+    directive.namespace,
+    directive.podName
+  )
+  if (!podLookup.ok || podLookup.pod == null) {
+    return error(podLookup.ok ? 'pod not found' : podLookup.error)
+  }
+  const containerEntry =
+    podLookup.pod._simulator.containers[directive.containerName]
+  if (containerEntry == null) {
+    return error(
+      `Error: container ${directive.containerName} not found in pod ${directive.podName}`
+    )
+  }
+  const containerFileSystem = createFileSystem(containerEntry.fileSystem, undefined, {
+    mutable: true
+  })
+  const shellExecutor = createShellExecutor(
+    containerFileSystem,
+    context.editorModal,
+    {
+      resolveNamespace: () => {
+        return directive.namespace
+      },
+      runDnsLookup: (query, namespace) => {
+        if (context.networkRuntime == null) {
+          return error('network runtime is not available')
+        }
+        const dnsResult = context.networkRuntime.dnsResolver.resolveARecord(
+          query,
+          namespace
+        )
+        if (!dnsResult.ok) {
+          return error(dnsResult.error)
+        }
+        const address = dnsResult.value.addresses[0]
+        return success(
+          [
+            'Server:\t10.96.0.10',
+            'Address:\t10.96.0.10:53',
+            '',
+            `Name:\t${dnsResult.value.fqdn}`,
+            `Address:\t${address}`
+          ].join('\n')
+        )
+      },
+      runCurl: (target, namespace) => {
+        if (context.networkRuntime == null) {
+          return error('network runtime is not available')
+        }
+        const curlResult = context.networkRuntime.trafficEngine.simulateHttpGet(
+          target,
+          {
+            sourceNamespace: namespace
+          }
+        )
+        if (!curlResult.ok) {
+          return error(curlResult.error)
+        }
+        return success(curlResult.value)
+      }
+    }
+  )
+  return shellExecutor.execute(directive.command)
+}
+
+const executeProcessCommandDirective = (
+  context: CommandContext,
+  directive: ProcessCommandDirective
+): ExecutionResult => {
+  if (
+    directive.processName !== 'nginx' ||
+    directive.processAction !== 'stop'
+  ) {
+    return error(
+      `unsupported process command: ${directive.processName} ${directive.processAction}`
+    )
+  }
+  const podLookup = findPodForDirective(
+    context,
+    directive.namespace,
+    directive.podName
+  )
+  if (!podLookup.ok || podLookup.pod == null) {
+    return error(podLookup.ok ? 'pod not found' : podLookup.error)
+  }
+  const pod = podLookup.pod
+  const containerSpec = pod.spec.containers.find((container) => {
+    return container.name === directive.containerName
+  })
+  if (containerSpec == null) {
+    return error(
+      `Error: container ${directive.containerName} not found in pod ${directive.podName}`
+    )
+  }
+  if (!containerSpec.image.includes('nginx')) {
+    return error('nginx: command not found')
+  }
+  const transitionTime = new Date().toISOString()
+  const currentStatuses = pod.status.containerStatuses ?? []
+  const updatedStatuses = currentStatuses.map((status) => {
+    if (status.name !== directive.containerName) {
+      return status
+    }
+    return {
+      ...status,
+      ready: false,
+      started: false,
+      restartCount: status.restartCount + 1,
+      lastRestartAt: transitionTime,
+      lastStateDetails:
+        status.stateDetails ?? status.lastStateDetails,
+      stateDetails: {
+        state: 'Waiting' as const,
+        reason: 'ContainerCreating'
+      }
+    }
+  })
+  const updatedPod: Pod = {
+    ...pod,
+    status: {
+      ...pod.status,
+      phase: 'Pending',
+      restartCount: pod.status.restartCount + 1,
+      containerStatuses: updatedStatuses
+    }
+  }
+  const updateResult = context.apiServer.updateResource(
+    'Pod',
+    directive.podName,
+    updatedPod,
+    directive.namespace
+  )
+  if (!updateResult.ok) {
+    return error(updateResult.error)
+  }
+  return success('')
+}
+
+const executeKubectlDirective = (
+  context: CommandContext,
+  output: string
+): ExecutionResult | undefined => {
+  const enterContainerDirective = parseEnterContainerDirective(output)
+  if (enterContainerDirective != null) {
+    return executeEnterContainerDirective(context, enterContainerDirective)
+  }
+  const shellCommandDirective = parseShellCommandDirective(output)
+  if (shellCommandDirective != null) {
+    return executeShellCommandDirective(context, shellCommandDirective)
+  }
+  const processCommandDirective = parseProcessCommandDirective(output)
+  if (processCommandDirective != null) {
+    return executeProcessCommandDirective(context, processCommandDirective)
+  }
+  return undefined
 }
 
 const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
@@ -548,6 +878,20 @@ export class KubectlCommandHandler implements CommandHandler {
 
     // Exécuter la commande kubectl
     const result = executor.execute(parsedRedirection.command)
+
+    if (result.ok && typeof result.value === 'string') {
+      const directiveResult = executeKubectlDirective(context, result.value)
+      if (directiveResult != null) {
+        if (!directiveResult.ok) {
+          context.output.writeOutput(directiveResult.error)
+          return directiveResult
+        }
+        if (directiveResult.value.length > 0) {
+          context.output.writeOutput(directiveResult.value)
+        }
+        return directiveResult
+      }
+    }
 
     if (parsedRedirection.outputFile != null) {
       if (!result.ok) {

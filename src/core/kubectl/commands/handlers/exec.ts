@@ -60,6 +60,33 @@ const handleEnvCommand = (
   return [...standardEnvVars, ...customEnvVars].join('\n')
 }
 
+const buildEnterContainerDirective = (
+  podName: string,
+  containerName: string,
+  namespace: string
+): string => {
+  return `ENTER_CONTAINER:${namespace}:${podName}:${containerName}`
+}
+
+const buildShellCommandDirective = (
+  podName: string,
+  containerName: string,
+  namespace: string,
+  command: string
+): string => {
+  return `SHELL_COMMAND:${namespace}:${podName}:${containerName}:${encodeURIComponent(command)}`
+}
+
+const buildProcessCommandDirective = (
+  processName: string,
+  processAction: string,
+  podName: string,
+  containerName: string,
+  namespace: string
+): string => {
+  return `PROCESS_COMMAND:${processName}:${processAction}:${namespace}:${podName}:${containerName}`
+}
+
 /**
  * Handle kubectl exec command
  * Simulates command execution in a pod container
@@ -138,7 +165,7 @@ export const handleExec = (
     command === '/bin/bash'
   ) {
     // This will be handled by the main dispatcher to enter container mode
-    return `ENTER_CONTAINER:${podName}:${containerName}:${namespace}`
+    return buildEnterContainerDirective(podName, containerName, namespace)
   }
 
   // env command - show environment variables
@@ -191,8 +218,25 @@ export const handleExec = (
     return curlResult.value
   }
 
+  if (command === 'nginx') {
+    if (parsed.execCommand[1] === '-s' && parsed.execCommand[2] === 'stop') {
+      return buildProcessCommandDirective(
+        'nginx',
+        'stop',
+        podName,
+        containerName,
+        namespace
+      )
+    }
+  }
+
   // For all other commands, let the shell executor handle them
   // This will be processed by the main dispatcher
   const fullCommand = args.join(' ')
-  return `SHELL_COMMAND:${fullCommand}`
+  return buildShellCommandDirective(
+    podName,
+    containerName,
+    namespace,
+    fullCommand
+  )
 }

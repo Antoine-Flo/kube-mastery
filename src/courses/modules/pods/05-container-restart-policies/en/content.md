@@ -56,23 +56,6 @@ spec:
       image: my-migrator:1.0
 ```
 
-## The Three Policies at a Glance
-
-```mermaid
-flowchart TD
-    Exit["Container exits"]
-
-    Exit --> Q1{Exit code?}
-
-    Q1 -->|"code = 0\n(success)"| Always0["Always → Restart"]
-    Q1 -->|"code = 0\n(success)"| OnFailure0["OnFailure → Do NOT restart\n(Pod becomes Succeeded)"]
-    Q1 -->|"code = 0\n(success)"| Never0["Never → Do NOT restart\n(Pod becomes Succeeded)"]
-
-    Q1 -->|"code ≠ 0\n(failure)"| AlwaysF["Always → Restart"]
-    Q1 -->|"code ≠ 0\n(failure)"| OnFailureF["OnFailure → Restart"]
-    Q1 -->|"code ≠ 0\n(failure)"| NeverF["Never → Do NOT restart\n(Pod becomes Failed)"]
-```
-
 ## The Exponential Backoff: CrashLoopBackOff
 
 When Kubernetes restarts a container under `Always` or `OnFailure`, it doesn't retry immediately every time. If a container keeps crashing, Kubernetes uses an **exponential backoff** delay between restart attempts to avoid wasting resources and flooding logs:
@@ -121,7 +104,7 @@ Restart Count: 47
 
 Let's explore all three restart policies with real examples.
 
-**1. `Always` in action, observe self-healing:**
+**1. `Always` in action, observe self-healing in the visualizer:**
 
 ```bash
 kubectl run always-pod --image=nginx:1.28 --restart=Always
@@ -134,40 +117,31 @@ Now trigger a restart by killing the nginx process inside the container:
 kubectl exec always-pod -- nginx -s stop
 ```
 
-Then immediately watch:
-
-```bash
-kubectl get pod always-pod --watch
-```
-
-You'll see the restart count increment as Kubernetes restarts the container. Press `Ctrl+C` when you see it come back to `Running`.
+You'll see the container immediately restart and go back to `Running`.
 
 **2. `Never` with success, Pod becomes Completed:**
 
 ```bash
-kubectl run success-never --image=busybox:1.36 --restart=Never -- sh -c "echo done; exit 0"
-kubectl get pod success-never --watch
+kubectl run success-never --image=busybox:1.36 --restart=Never
 ```
 
-Watch it complete and reach `Completed` status. Press `Ctrl+C`.
+Watch it complete and reach `Completed` status.
 
 **3. `Never` with failure, Pod becomes Failed:**
 
 ```bash
 kubectl run fail-never --image=busybox:1.36 --restart=Never -- sh -c "exit 1"
-kubectl get pod fail-never --watch
 ```
 
-Watch it reach `Error` status (which represents the `Failed` phase). Press `Ctrl+C`.
+Watch it reach `Error` status (which represents the `Failed` phase)
 
 **4. `OnFailure` cycling, observe backoff:**
 
 ```bash
 kubectl run crashy --image=busybox:1.36 --restart=OnFailure -- sh -c "exit 1"
-kubectl get pod crashy --watch
 ```
 
-Watch the RESTARTS column increase and STATUS cycle between `Error` and `CrashLoopBackOff`. Press `Ctrl+C` after 2–3 restarts.
+Watch the status cycle between `Error` and `CrashLoopBackOff`.
 
 **5. Check logs from the previous (crashed) container:**
 

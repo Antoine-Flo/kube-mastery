@@ -196,12 +196,12 @@ export const SEED_IMAGES: ImageManifest[] = [
     name: 'broken-app',
     registry: 'myregistry.io',
     tags: ['v1.0', 'latest'],
-    description: 'Intentionally broken app for debugging practice',
+    description: 'Generic app image used for debugging practice',
     defaultPorts: [8080],
     logProfile: 'generic',
     behavior: {
       startupTime: 500,
-      defaultStatus: 'Failed'
+      defaultStatus: 'Running'
     }
   },
   {

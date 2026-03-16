@@ -24,7 +24,9 @@ Reloading discards any files you created in the terminal. If you wrote a manifes
 
 ## Limitations
 
-Not every Kubernetes feature is available here. You can find the available features in the [supported features page](https://kubemastery.com/en/supported). When a lesson touches something unavailable, we'll say so explicitly.
+Not every Kubernetes feature is available here. You can find the available features in the [supported features page](https://kubemastery.com/en/supported). When a lesson touches something unavailable, we'll say so explicitly. In some lessons you will run advanced commands that behave like on a real cluster; that does not mean the whole system behind them is implemented. If you use a slightly different command or flag, the output may differ from what you would see on a real Kubernetes cluster.
+
+The goal here is to understand the concepts and practice the main commands. To explore commands further on your own machine, we recommend [kind](https://kind.sigs.k8s.io/) (Kubernetes in Docker). You can follow the course entirely with kind: the simulator outputs are aligned with kind, so what you see in the lessons will match what you get locally.
 
 ## Hands-On
 

@@ -894,6 +894,13 @@ export class PodLifecycleController implements ReconcilerController {
       if (!imageValidation.ok) {
         return false
       }
+      const commandExitCode = this.getSimulatedCommandExitCode(container)
+      if (commandExitCode != null) {
+        if (commandExitCode !== 0) {
+          return false
+        }
+        continue
+      }
       if (imageValidation.value.behavior.defaultStatus !== 'Succeeded') {
         return false
       }
@@ -1039,6 +1046,10 @@ export class PodLifecycleController implements ReconcilerController {
       if (!imageValidation.ok) {
         return 'ImagePullBackOff'
       }
+      const commandExitCode = this.getSimulatedCommandExitCode(container)
+      if (commandExitCode != null && commandExitCode !== 0) {
+        return 'CrashLoopBackOff'
+      }
       if (
         this.hasInvalidRuntimeArgs(
           container,
@@ -1047,11 +1058,66 @@ export class PodLifecycleController implements ReconcilerController {
       ) {
         return 'CrashLoopBackOff'
       }
-      if (imageValidation.value.behavior.defaultStatus === 'Failed') {
-        return 'CrashLoopBackOff'
-      }
     }
     return undefined
+  }
+
+  private getSimulatedCommandExitCode(
+    container: Pod['spec']['containers'][number]
+  ): number | undefined {
+    const command = container.command ?? []
+    const args = container.args ?? []
+    const parseExitCode = (script: string): number | undefined => {
+      const normalizedScript = this.stripMatchingQuotes(script).trim()
+      const exitMatch = normalizedScript.match(/^exit\s+(-?\d+)\s*$/)
+      if (exitMatch == null) {
+        return undefined
+      }
+      const parsed = Number.parseInt(exitMatch[1], 10)
+      if (Number.isNaN(parsed)) {
+        return undefined
+      }
+      return parsed
+    }
+    const isShellCommand = (value: string): boolean => {
+      return value === 'sh' || value === '/bin/sh'
+    }
+
+    if (
+      command.length > 0 &&
+      isShellCommand(command[0]) &&
+      args.length >= 2 &&
+      args[0] === '-c'
+    ) {
+      return parseExitCode(args.slice(1).join(' '))
+    }
+    if (
+      command.length === 0 &&
+      args.length >= 3 &&
+      isShellCommand(args[0]) &&
+      args[1] === '-c'
+    ) {
+      return parseExitCode(args.slice(2).join(' '))
+    }
+    return undefined
+  }
+
+  private stripMatchingQuotes(raw: string): string {
+    const trimmed = raw.trim()
+    if (trimmed.length < 2) {
+      return trimmed
+    }
+    const startsWithDoubleQuote = trimmed.startsWith('"')
+    const endsWithDoubleQuote = trimmed.endsWith('"')
+    if (startsWithDoubleQuote && endsWithDoubleQuote) {
+      return trimmed.slice(1, -1).trim()
+    }
+    const startsWithSingleQuote = trimmed.startsWith("'")
+    const endsWithSingleQuote = trimmed.endsWith("'")
+    if (startsWithSingleQuote && endsWithSingleQuote) {
+      return trimmed.slice(1, -1).trim()
+    }
+    return trimmed
   }
 
   private hasInvalidRuntimeArgs(

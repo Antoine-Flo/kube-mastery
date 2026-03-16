@@ -296,7 +296,13 @@ describe('PodLifecycleController runtime enrichment', () => {
       namespace: 'default',
       phase: 'Pending',
       nodeName: 'conformance-worker',
-      containers: [{ name: 'app', image: 'myregistry.io/broken-app:latest' }]
+      containers: [
+        {
+          name: 'app',
+          image: 'busybox:1.36',
+          args: ['sh', '-c', 'exit 1']
+        }
+      ]
     })
     let podUpdatedEvents = 0
     apiServer.createResource('Pod', pod)
@@ -336,7 +342,13 @@ describe('PodLifecycleController runtime enrichment', () => {
       namespace: 'default',
       phase: 'Pending',
       nodeName: 'conformance-worker',
-      containers: [{ name: 'app', image: 'myregistry.io/broken-app:latest' }]
+      containers: [
+        {
+          name: 'app',
+          image: 'busybox:1.36',
+          args: ['sh', '-c', 'exit 1']
+        }
+      ]
     })
     const waitingReasons: string[] = []
     const terminatedReasons: string[] = []
@@ -477,7 +489,7 @@ describe('PodLifecycleController runtime enrichment', () => {
     controller.stop()
   })
 
-  it('does not restart crashing pod when restartPolicy is Never', () => {
+  it('does not restart command-driven crashing pod when restartPolicy is Never', () => {
     vi.useFakeTimers()
     const apiServer = createApiServerFacade()
     const eventBus = apiServer.eventBus
@@ -487,7 +499,13 @@ describe('PodLifecycleController runtime enrichment', () => {
       phase: 'Pending',
       nodeName: 'conformance-worker',
       restartPolicy: 'Never',
-      containers: [{ name: 'nginx', image: 'nginx:1.28', args: ['pod'] }]
+      containers: [
+        {
+          name: 'busybox',
+          image: 'busybox:1.36',
+          args: ['sh', '-c', 'exit 1']
+        }
+      ]
     })
     apiServer.createResource('Pod', pod)
 
@@ -505,6 +523,104 @@ describe('PodLifecycleController runtime enrichment', () => {
     expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(0)
 
     vi.runOnlyPendingTimers()
+    expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(0)
+
+    controller.stop()
+  })
+
+  it('restarts command-driven crashing pod when restartPolicy is OnFailure', () => {
+    vi.useFakeTimers()
+    const apiServer = createApiServerFacade()
+    const eventBus = apiServer.eventBus
+    let pod: Pod = createPod({
+      name: 'onfailure-crashy',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      restartPolicy: 'OnFailure',
+      containers: [
+        {
+          name: 'busybox',
+          image: 'busybox:1.36',
+          args: ['sh', '-c', 'exit 1']
+        }
+      ]
+    })
+    apiServer.createResource('Pod', pod)
+
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+    })
+
+    const controller = createPodLifecycleController(apiServer, {
+      restartBackoffMs: {
+        initialMs: 10,
+        maxMs: 40
+      },
+      crashLoopTimingMs: {
+        errorToBackoffMs: 0
+      }
+    })
+    controller.reconcile('default/onfailure-crashy')
+
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.reason).toBe(
+      'CrashLoopBackOff'
+    )
+    expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(1)
+
+    vi.advanceTimersByTime(10)
+    vi.runOnlyPendingTimers()
+    expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(2)
+
+    controller.stop()
+  })
+
+  it('transitions command-driven success pod to Succeeded with OnFailure policy', () => {
+    vi.useFakeTimers()
+    const apiServer = createApiServerFacade()
+    const eventBus = apiServer.eventBus
+    let pod: Pod = createPod({
+      name: 'onfailure-success',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      restartPolicy: 'OnFailure',
+      containers: [
+        {
+          name: 'busybox',
+          image: 'busybox:1.36',
+          args: ['sh', '-c', 'exit 0']
+        }
+      ]
+    })
+    apiServer.createResource('Pod', pod)
+
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+    })
+
+    const controller = createPodLifecycleController(apiServer, {
+      pendingDelayRangeMs: {
+        minMs: 0,
+        maxMs: 0
+      },
+      completionDelayRangeMs: {
+        minMs: 5,
+        maxMs: 5
+      }
+    })
+
+    controller.reconcile('default/onfailure-success')
+    expect(pod.status.phase).toBe('Running')
+
+    vi.advanceTimersByTime(5)
+    vi.runOnlyPendingTimers()
+
+    expect(pod.status.phase).toBe('Succeeded')
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.reason).toBe(
+      'Completed'
+    )
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.exitCode).toBe(0)
     expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(0)
 
     controller.stop()

@@ -136,7 +136,7 @@ kubectl get pod lifecycle-pod -o jsonpath='{.status.conditions}'
 **4. Simulate a failing container to observe CrashLoopBackOff:**
 
 ```bash
-kubectl run crash-pod --image=myregistry.io/broken-app:latest --restart=Always
+kubectl run crash-pod --image=busybox:1.36 --restart=Always -- sh -c "exit 1"
 ```
 
 Then watch it:
