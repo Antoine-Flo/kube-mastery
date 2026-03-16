@@ -181,11 +181,6 @@ export const createRunnerExecutor = (
   })
   const controllers = initializeControlPlane(apiServer)
   const fileSystem = createFileSystem()
-  const executor = createKubectlExecutor(
-    apiServer,
-    fileSystem,
-    logger
-  )
 
   const listScopedPods = (namespace?: string): Pod[] => {
     if (namespace != null && namespace.length > 0) {
@@ -225,6 +220,19 @@ export const createRunnerExecutor = (
       controllers.podLifecycleController.reconcile(podKey)
     }
   }
+
+  const reconcileForWait = (namespace?: string): void => {
+    reconcileWorkloadControllersOnce(namespace)
+    reconcileSchedulingControllersOnce(namespace)
+  }
+
+  const executor = createKubectlExecutor(
+    apiServer,
+    fileSystem,
+    logger,
+    undefined,
+    reconcileForWait
+  )
 
   return {
     executeCommand(command: string): CommandExecutionResult {

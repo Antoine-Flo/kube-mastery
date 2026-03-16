@@ -20,6 +20,7 @@ export type Action =
   | 'scale'
   | 'run'
   | 'expose'
+  | 'wait'
   | 'config'
   | 'config-get-contexts'
   | 'config-current-context'
@@ -69,4 +70,6 @@ export interface ParsedCommand {
   configCurrent?: boolean // For kubectl config set-context --current
   configMinify?: boolean // For kubectl config view --minify
   configNamespace?: string // For kubectl config set-context --namespace
+  waitForCondition?: string // For kubectl wait: --for=condition=Ready
+  waitTimeoutSeconds?: number // For kubectl wait: --timeout=60s
 }

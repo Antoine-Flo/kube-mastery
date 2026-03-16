@@ -51,6 +51,8 @@ export type ParseContext = {
   explainPath?: string[]
   labelChanges?: Record<string, string | null>
   annotationChanges?: Record<string, string | null>
+  waitForCondition?: string
+  waitTimeoutSeconds?: number
 }
 
 type ActionTransformer = (ctx: ParseContext) => Result<ParseContext>
@@ -85,7 +87,9 @@ const FLAGS_REQUIRING_VALUES = new Set([
   'docker-server',
   'docker-username',
   'docker-password',
-  'docker-email'
+  'docker-email',
+  'for',
+  'timeout'
 ])
 
 const CREATE_SERVICE_TYPES = new Set([
@@ -806,6 +810,95 @@ const configTransformer: ActionTransformer = (ctx) => {
   return error(`unknown config subcommand: ${subcommandToken}`)
 }
 
+const parseWaitTimeoutSeconds = (value: string): number => {
+  const trimmed = value.trim()
+  if (trimmed.endsWith('s')) {
+    return parseInt(trimmed.slice(0, -1), 10) || 60
+  }
+  if (trimmed.endsWith('m')) {
+    return (parseInt(trimmed.slice(0, -1), 10) || 1) * 60
+  }
+  if (trimmed.endsWith('h')) {
+    return (parseInt(trimmed.slice(0, -1), 10) || 1) * 3600
+  }
+  return parseInt(trimmed, 10) || 60
+}
+
+const waitTransformer: ActionTransformer = (ctx) => {
+  const tokens = ctx.tokens
+  if (!tokens || tokens.length < 3) {
+    return error('wait requires resource/name and --for')
+  }
+
+  let waitForCondition: string | undefined
+  let waitTimeoutSeconds = 60
+  let firstPositional: string | undefined
+
+  // First pass: collect --for and --timeout from any position in the token list
+  for (let i = 2; i < tokens.length; i++) {
+    const token = tokens[i]
+    if (token === '--') {
+      break
+    }
+    if (token.startsWith('--for=')) {
+      waitForCondition = token.slice('--for='.length).trim()
+      continue
+    }
+    if (token.startsWith('--timeout=')) {
+      waitTimeoutSeconds = parseWaitTimeoutSeconds(
+        token.slice('--timeout='.length)
+      )
+      continue
+    }
+    if (token === '-n' || token === '--namespace') {
+      i++
+      continue
+    }
+    if (token.startsWith('-')) {
+      const eq = token.indexOf('=')
+      if (eq > 0) {
+        const flagName = token.slice(0, eq).replace(/^-+/, '')
+        if (flagName === 'for') {
+          waitForCondition = token.slice(eq + 1).trim()
+        }
+        if (flagName === 'timeout') {
+          waitTimeoutSeconds = parseWaitTimeoutSeconds(token.slice(eq + 1))
+        }
+      } else if (FLAGS_REQUIRING_VALUES.has(token.replace(/^-+/, ''))) {
+        i++
+      }
+      continue
+    }
+    if (firstPositional === undefined) {
+      firstPositional = token
+    }
+  }
+
+  if (firstPositional === undefined) {
+    return error('wait requires resource/name')
+  }
+
+  const slashIndex = firstPositional.indexOf('/')
+  if (slashIndex <= 0 || slashIndex === firstPositional.length - 1) {
+    return error('wait requires resource/name format')
+  }
+
+  const typePart = firstPositional.slice(0, slashIndex)
+  const namePart = firstPositional.slice(slashIndex + 1)
+  const resource = RESOURCE_ALIAS_MAP[typePart] as Resource | undefined
+  if (!resource) {
+    return error(`Invalid or missing resource type: ${typePart}`)
+  }
+
+  return success({
+    ...ctx,
+    resource,
+    name: namePart,
+    waitForCondition: waitForCondition ?? 'condition=Ready',
+    waitTimeoutSeconds
+  })
+}
+
 /**
  * Default transformer: no-op, returns context as-is
  */
@@ -831,6 +924,7 @@ const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
   scale: scaleTransformer,
   run: runTransformer,
   expose: exposeTransformer,
+  wait: waitTransformer,
   config: configTransformer
 }
 

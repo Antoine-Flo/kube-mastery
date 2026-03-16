@@ -43,6 +43,7 @@ const VALID_ACTIONS: Action[] = [
   'scale',
   'run',
   'expose',
+  'wait',
   'config'
 ]
 
@@ -214,7 +215,9 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     labelChanges: ctx.labelChanges,
     annotationChanges: ctx.annotationChanges,
     replicas: getReplicasFromFlags(normalizedFlags),
-    port: getPortFromFlags(normalizedFlags)
+    port: getPortFromFlags(normalizedFlags),
+    waitForCondition: ctx.waitForCondition,
+    waitTimeoutSeconds: ctx.waitTimeoutSeconds
   })
 }
 
@@ -628,6 +631,7 @@ const validateCommandSemantics = (
     action === 'annotate' ||
     action === 'scale' ||
     action === 'expose' ||
+    action === 'wait' ||
     (action === 'delete' && !hasFilename)
 
   if (requiresNameAction && !name) {

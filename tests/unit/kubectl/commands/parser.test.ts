@@ -963,3 +963,36 @@ describe('kubectl parser - config', () => {
     }
   })
 })
+
+describe('kubectl parser - wait', () => {
+  it('parses kubectl wait --for=condition=Ready pod/web --timeout=60s', () => {
+    const result = parseCommand(
+      'kubectl wait --for=condition=Ready pod/web --timeout=60s'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value.action).toBe('wait')
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBe('web')
+    expect(result.value.waitForCondition).toBe('condition=Ready')
+    expect(result.value.waitTimeoutSeconds).toBe(60)
+  })
+
+  it('parses wait with -n namespace', () => {
+    const result = parseCommand(
+      'kubectl wait --for=condition=Ready pod/my-pod -n default --timeout=30s'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value.action).toBe('wait')
+    expect(result.value.name).toBe('my-pod')
+    expect(result.value.namespace).toBe('default')
+    expect(result.value.waitTimeoutSeconds).toBe(30)
+  })
+})

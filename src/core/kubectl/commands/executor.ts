@@ -25,6 +25,7 @@ import { handleLabel } from './handlers/label'
 import { handleLogs } from './handlers/logs'
 import { handleScale } from './handlers/scale'
 import { handleVersion } from './handlers/version'
+import { handleWait } from './handlers/wait'
 import { resolveKubectlHelp } from './help'
 import { parseCommand } from './parser'
 import type { ParsedCommand } from './types'
@@ -80,7 +81,8 @@ const createHandlers = (
     namespace: string,
     podName: string
   ) => readonly PodLifecycleDescribeEvent[],
-  networkRuntime?: SimNetworkRuntime
+  networkRuntime?: SimNetworkRuntime,
+  reconcileForWait?: (namespace?: string) => void
 ): Map<string, ActionHandler> => {
   const handlers = new Map<string, ActionHandler>()
 
@@ -119,6 +121,9 @@ const createHandlers = (
     handleRun(apiServer, parsed, networkRuntime)
   )
   handlers.set('expose', (parsed) => handleExpose(apiServer, parsed))
+  handlers.set('wait', (parsed) =>
+    handleWait(apiServer, parsed, reconcileForWait)
+  )
   handlers.set('config-get-contexts', (parsed) =>
     handleConfig(apiServer, parsed)
   )
@@ -165,7 +170,8 @@ export const createKubectlExecutor = (
   apiServer: ApiServerFacade,
   defaultFileSystem: FileSystem,
   logger: Logger,
-  networkRuntime?: SimNetworkRuntime
+  networkRuntime?: SimNetworkRuntime,
+  reconcileForWait?: (namespace?: string) => void
 ) => {
   const execute = (input: string, fileSystem?: FileSystem): ExecutionResult => {
     logger.info('COMMAND', `Kubectl: ${input}`)
@@ -189,7 +195,8 @@ export const createKubectlExecutor = (
       logger,
       apiServer.getResourceVersion,
       apiServer.podLifecycleEventStore.listPodEvents,
-      networkRuntime
+      networkRuntime,
+      reconcileForWait
     )
     const parsedWithNamespace = applyImplicitNamespaceFromKubeconfig(
       apiServer,

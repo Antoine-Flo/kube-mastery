@@ -2025,6 +2025,32 @@ spec:
         expect(podResult.ok).toBe(false)
       })
 
+      it('should succeed kubectl wait when pod is already Ready', () => {
+        apiServer.createResource(
+          'Pod',
+          createPod({
+            name: 'web',
+            namespace: 'default',
+            containers: [{ name: 'web', image: 'busybox' }],
+            phase: 'Running'
+          })
+        )
+        const executor = createKubectlExecutor(
+          apiServer,
+          fileSystem,
+          logger
+        )
+        const result = executor.execute(
+          'kubectl wait --for=condition=Ready pod/web --timeout=60s'
+        )
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+        expect(result.value).toContain('condition met')
+      })
+
       it('should reject kubectl run with invalid pod name', () => {
         const executor = createKubectlExecutor(
           apiServer,
