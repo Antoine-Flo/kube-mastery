@@ -29,8 +29,11 @@ const VALID_ACTIONS: Action[] = [
   'diff',
   'explain',
   'describe',
+  'edit',
+  'set',
   'delete',
   'apply',
+  'replace',
   'create',
   'logs',
   'exec',
@@ -111,6 +114,8 @@ const ACTIONS_WITHOUT_RESOURCE: Action[] = [
   'api-versions',
   'api-resources',
   'diff',
+  'replace',
+  'set',
   'config-get-contexts',
   'config-current-context',
   'config-view',
@@ -208,6 +213,8 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     runStdin: ctx.runStdin,
     runTty: ctx.runTty,
     runRemove: ctx.runRemove,
+    setSubcommand: ctx.setSubcommand,
+    setImageAssignments: ctx.setImageAssignments,
     configCurrent: getConfigCurrentFromFlags(normalizedFlags),
     configMinify: getConfigMinifyFromFlags(normalizedFlags),
     configNamespace: getConfigNamespaceFromFlags(normalizedFlags),
@@ -348,6 +355,8 @@ const extractName = (ctx: ParseContext): Result<ParseContext> => {
     'exec',
     'logs',
     'apply',
+    'replace',
+    'set',
     'label',
     'annotate',
     'explain',
@@ -625,6 +634,7 @@ const validateCommandSemantics = (
 
   const requiresNameAction =
     action === 'describe' ||
+    action === 'edit' ||
     action === 'logs' ||
     action === 'exec' ||
     action === 'label' ||
@@ -778,6 +788,38 @@ const validateCommandSemantics = (
       return 'diff requires one of -f or --filename'
     }
   }
+  if (action === 'replace') {
+    if (!hasFilename) {
+      return 'replace requires one of -f or --filename'
+    }
+  }
+  if (action === 'set') {
+    if (tokens[2] !== 'image') {
+      return 'set currently supports only the image subcommand'
+    }
+    if (!resource) {
+      return 'set image requires a resource type'
+    }
+    if (!name) {
+      return 'set image requires a resource name'
+    }
+    if (
+      resource !== 'pods' &&
+      resource !== 'deployments' &&
+      resource !== 'replicasets' &&
+      resource !== 'daemonsets'
+    ) {
+      return `set image does not support resource type "${resource}"`
+    }
+
+    const positionalTokens = getPositionalTokensAfterIndex(tokens, 3)
+    const hasContainerAssignment = positionalTokens.some((token) =>
+      isContainerImageAssignmentToken(token)
+    )
+    if (!hasContainerAssignment) {
+      return 'set image requires at least one container=image assignment'
+    }
+  }
 
   if (action === 'config-set-context') {
     const isCurrent = flags['current'] === true
@@ -877,4 +919,37 @@ const isValidRawPath = (rawPath: string): boolean => {
   } catch {
     return false
   }
+}
+
+const getPositionalTokensAfterIndex = (
+  tokens: string[],
+  startIndex: number
+): string[] => {
+  const positionalTokens: string[] = []
+  for (let index = startIndex; index < tokens.length; index++) {
+    const token = tokens[index]
+    if (token === '--') {
+      break
+    }
+    if (token.startsWith('-')) {
+      const flagName = getFlagName(token)
+      if (FLAGS_REQUIRING_VALUES.includes(flagName) && !token.includes('=')) {
+        index += 1
+      }
+      continue
+    }
+    positionalTokens.push(token)
+  }
+  return positionalTokens
+}
+
+const isContainerImageAssignmentToken = (token: string): boolean => {
+  const separatorIndex = token.indexOf('=')
+  if (separatorIndex <= 0) {
+    return false
+  }
+  if (separatorIndex === token.length - 1) {
+    return false
+  }
+  return true
 }

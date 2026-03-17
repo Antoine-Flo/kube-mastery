@@ -8,12 +8,6 @@ import {
   createFileCreatedEvent,
   createFileDeletedEvent,
   createFileModifiedEvent,
-  type DirectoryChangedEvent,
-  type DirectoryCreatedEvent,
-  type DirectoryDeletedEvent,
-  type FileCreatedEvent,
-  type FileDeletedEvent,
-  type FileModifiedEvent
 } from '../../../../src/core/filesystem/events/types'
 
 describe('Filesystem Event Types', () => {

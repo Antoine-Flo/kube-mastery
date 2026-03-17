@@ -84,6 +84,16 @@ export const conformanceTests: ConformanceScenarioCatalog = {
     ],
     cleanup: ['kubectl delete pod web']
   },
+  'replace-force': {
+    setup: [
+      'kubectl run replace-target --image=nginx --restart=Never -- sleep 3600'
+    ],
+    cmds: [
+      'kubectl replace --force -f conformance/fixtures/replace-force-pod.yaml',
+      "kubectl get pod replace-target -o jsonpath='{.metadata.name}'"
+    ],
+    cleanup: ['kubectl delete pod replace-target']
+  },
   'run': {
     cmds: [
       'kubectl run run-ok-image-only --image=busybox',

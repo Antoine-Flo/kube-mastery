@@ -194,11 +194,6 @@ describe('LogGenerator', () => {
       // Generate many logs to have a chance of getting different levels
       const logs = generateLogs('nginx:latest', 200)
 
-      const hasVariedLevels =
-        logs.some((log) => log.includes('WARN')) ||
-        logs.some((log) => log.includes('ERROR')) ||
-        logs.some((log) => log.includes('DEBUG'))
-
       // Due to randomness, this should usually be true for 200 logs
       // but might occasionally fail - that's expected behavior
       expect(logs.length).toBe(200)

@@ -24,6 +24,11 @@ import { getServiceType } from '../../../cluster/ressources/Service'
 import { formatAge } from '../../../shared/formatter'
 import type { ParsedCommand, Resource } from '../types'
 import {
+  RESOURCE_OUTPUT_METADATA_BY_RESOURCE,
+  toPluralResourceKindReference,
+  toResourceKindReference
+} from './resourceHelpers'
+import {
   formatKubectlTable,
   type OutputDirective,
   renderStructuredPayload,
@@ -258,29 +263,10 @@ const sanitizeForOutput = <T extends Record<string, unknown>>(
   return rest as Omit<T, '_simulator'>
 }
 
-const RESOURCE_OUTPUT_METADATA: Record<
-  StructuredResource,
-  ResourceOutputMetadata
-> = {
-  pods: { apiVersion: 'v1', kind: 'Pod' },
-  configmaps: { apiVersion: 'v1', kind: 'ConfigMap' },
-  secrets: { apiVersion: 'v1', kind: 'Secret' },
-  nodes: { apiVersion: 'v1', kind: 'Node' },
-  replicasets: { apiVersion: 'apps/v1', kind: 'ReplicaSet' },
-  deployments: { apiVersion: 'apps/v1', kind: 'Deployment' },
-  daemonsets: { apiVersion: 'apps/v1', kind: 'DaemonSet' },
-  services: { apiVersion: 'v1', kind: 'Service' },
-  ingresses: { apiVersion: 'networking.k8s.io/v1', kind: 'Ingress' },
-  ingressclasses: { apiVersion: 'networking.k8s.io/v1', kind: 'IngressClass' },
-  namespaces: { apiVersion: 'v1', kind: 'Namespace' },
-  persistentvolumes: { apiVersion: 'v1', kind: 'PersistentVolume' },
-  persistentvolumeclaims: { apiVersion: 'v1', kind: 'PersistentVolumeClaim' }
-}
-
 const getResourceOutputMetadata = (
   resourceType: StructuredResource
 ): ResourceOutputMetadata => {
-  return RESOURCE_OUTPUT_METADATA[resourceType]
+  return RESOURCE_OUTPUT_METADATA_BY_RESOURCE[resourceType]
 }
 
 const buildListOutput = <T>(
@@ -330,45 +316,11 @@ const shapeStructuredItemsForOutput = (
   return items
 }
 
-const KIND_REFERENCE_BY_RESOURCE: Record<Resource, string> = {
-  all: 'resource',
-  pods: 'pod',
-  configmaps: 'configmap',
-  secrets: 'secret',
-  nodes: 'node',
-  replicasets: 'replicaset.apps',
-  daemonsets: 'daemonset.apps',
-  deployments: 'deployment.apps',
-  services: 'service',
-  ingresses: 'ingress.networking.k8s.io',
-  ingressclasses: 'ingressclass.networking.k8s.io',
-  namespaces: 'namespace',
-  persistentvolumes: 'persistentvolume',
-  persistentvolumeclaims: 'persistentvolumeclaim'
-}
-
-const PLURAL_KIND_REFERENCE_BY_RESOURCE: Record<Resource, string> = {
-  all: 'resources',
-  pods: 'pods',
-  configmaps: 'configmaps',
-  secrets: 'secrets',
-  nodes: 'nodes',
-  replicasets: 'replicasets.apps',
-  daemonsets: 'daemonsets.apps',
-  deployments: 'deployments.apps',
-  services: 'services',
-  ingresses: 'ingresses.networking.k8s.io',
-  ingressclasses: 'ingressclasses.networking.k8s.io',
-  namespaces: 'namespaces',
-  persistentvolumes: 'persistentvolumes',
-  persistentvolumeclaims: 'persistentvolumeclaims'
-}
-
 const buildNotFoundErrorMessage = (
   resourceType: Resource,
   name: string
 ): string => {
-  const pluralReference = PLURAL_KIND_REFERENCE_BY_RESOURCE[resourceType]
+  const pluralReference = toPluralResourceKindReference(resourceType)
   return `Error from server (NotFound): ${pluralReference} "${name}" not found`
 }
 
@@ -376,7 +328,7 @@ const buildNameOutput = (
   resourceType: Resource,
   resources: ResourceWithMetadata[]
 ): string => {
-  const kindReference = KIND_REFERENCE_BY_RESOURCE[resourceType]
+  const kindReference = toResourceKindReference(resourceType)
   const lines = resources.map((resource) => {
     return `${kindReference}/${resource.metadata.name}`
   })
@@ -1149,14 +1101,6 @@ const GET_ALL_RESOURCE_ORDER: GetAllResourceType[] = [
   'replicasets'
 ]
 
-const GET_ALL_REFERENCE_BY_RESOURCE: Record<GetAllResourceType, string> = {
-  pods: 'pod',
-  services: 'service',
-  deployments: 'deployment.apps',
-  daemonsets: 'daemonset.apps',
-  replicasets: 'replicaset.apps'
-}
-
 interface GetAllContext {
   allNamespacesFlag: boolean
   effectiveNamespace: string
@@ -1206,7 +1150,7 @@ const buildGetAllRows = (
   const rowsSource = sortGetAllItems(resourceType, items, allNamespacesFlag)
   return rowsSource.map((item) => {
     const row = handler.formatRow(item)
-    const nameReference = GET_ALL_REFERENCE_BY_RESOURCE[resourceType]
+    const nameReference = toResourceKindReference(resourceType)
     const rowWithReference = [...row]
     rowWithReference[0] = `${nameReference}/${item.metadata.name}`
     if (showLabels) {

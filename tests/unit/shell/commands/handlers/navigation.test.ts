@@ -326,7 +326,7 @@ describe('Navigation Handlers', () => {
 
     it('should handle listing a specific file', () => {
       const fileSystem = createMockFileSystem({
-        listDirectory: (path?: string) => {
+        listDirectory: () => {
           // In real shell, ls on a file just lists that file
           return success([createFileNode('file.txt', '/home/kube/file.txt')])
         }

@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
+import type {
+  KindToResource,
+  ResourceKind
+} from '../../../../src/core/cluster/ClusterState'
 import {
   createEventBus,
   type EventBus
@@ -80,7 +84,11 @@ describe('ReplicaSetController', () => {
       emitEvent: (event: AppEvent) => {
         eventBus.emit(event)
       },
-      createResource: (kind, resource) => {
+      createResource: <TKind extends ResourceKind>(
+        kind: TKind,
+        resource: KindToResource<TKind>,
+        _namespace?: string
+      ) => {
         if (kind === 'Pod') {
           const pod = resource as Pod
           mockState.pods.push(pod)
@@ -89,7 +97,11 @@ describe('ReplicaSetController', () => {
         }
         return { ok: false, error: 'unsupported kind' }
       },
-      deleteResource: (kind, name, namespace) => {
+      deleteResource: <TKind extends ResourceKind>(
+        kind: TKind,
+        name: string,
+        namespace?: string
+      ) => {
         if (kind === 'Pod') {
           const index = mockState.pods.findIndex((entry) => {
             return (
@@ -113,7 +125,12 @@ describe('ReplicaSetController', () => {
         }
         return { ok: false, error: 'unsupported kind' }
       },
-      updateResource: (kind, name, resource, namespace) => {
+      updateResource: <TKind extends ResourceKind>(
+        kind: TKind,
+        name: string,
+        resource: KindToResource<TKind>,
+        namespace?: string
+      ) => {
         if (kind === 'ReplicaSet') {
           const replicaSet = resource as ReplicaSet
           const index = mockState.replicaSets.findIndex((entry) => {
@@ -140,7 +157,10 @@ describe('ReplicaSetController', () => {
         }
         return { ok: false, error: 'unsupported kind' }
       },
-      listResources: (kind, namespace) => {
+      listResources: <TKind extends ResourceKind>(
+        kind: TKind,
+        namespace?: string
+      ) => {
         if (kind === 'ReplicaSet') {
           if (namespace == null) {
             return mockState.replicaSets
@@ -159,7 +179,11 @@ describe('ReplicaSetController', () => {
         }
         return []
       },
-      findResource: (kind, name, namespace) => {
+      findResource: <TKind extends ResourceKind>(
+        kind: TKind,
+        name: string,
+        namespace?: string
+      ) => {
         if (kind === 'ReplicaSet') {
           const replicaSet = mockState.replicaSets.find((entry) => {
             return (
@@ -222,7 +246,8 @@ describe('ReplicaSetController', () => {
         findPersistentVolumeClaim: () => ({ ok: false, error: 'not found' })
       }
     } as unknown as ApiServerFacade
-    apiServer.getClusterState = () => (apiServer as any).clusterState
+    ;(apiServer as unknown as Record<string, unknown>).getClusterState = () =>
+      (apiServer as unknown as Record<string, unknown>).clusterState
 
     controller = new ReplicaSetController(apiServer)
   })

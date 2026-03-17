@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { createClusterState } from '../../../../../src/core/cluster/ClusterState'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createEventBus } from '../../../../../src/core/cluster/events/EventBus'
 import type { CommandContext } from '../../../../../src/core/terminal/core/CommandContext'
 import { createFileSystem } from '../../../../../src/core/filesystem/FileSystem'
@@ -55,7 +55,7 @@ describe('ShellCommandHandler', () => {
     })
     renderer = createMockRenderer()
     const eventBus = createEventBus()
-    const clusterState = createClusterState(eventBus)
+    const apiServer = createApiServerFacade({ eventBus })
     const logger = createLogger()
 
     context = {
@@ -63,8 +63,7 @@ describe('ShellCommandHandler', () => {
       renderer,
       output: createTerminalOutput(renderer),
       shellContextStack,
-      clusterState,
-      eventBus,
+      apiServer,
       logger
     }
 

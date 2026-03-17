@@ -1,5 +1,7 @@
 import type { ExecutionResult } from '../../shared/result'
 import { error } from '../../shared/result'
+import type { ResourceKind } from '../../cluster/ClusterState'
+import { toKindReferenceForValidation } from './resourceSchema'
 
 type NameRule = {
   maxLength: number
@@ -29,19 +31,7 @@ const DNS1123_SUBDOMAIN_RULE: NameRule = {
   example: 'example.com'
 }
 
-type SupportedKind =
-  | 'Pod'
-  | 'ConfigMap'
-  | 'Secret'
-  | 'Node'
-  | 'Namespace'
-  | 'Ingress'
-  | 'ReplicaSet'
-  | 'Deployment'
-  | 'DaemonSet'
-  | 'PersistentVolume'
-  | 'PersistentVolumeClaim'
-  | 'Service'
+type SupportedKind = ResourceKind
 
 const NAME_RULE_BY_KIND: Record<SupportedKind, NameRule> = {
   Pod: DNS1123_SUBDOMAIN_RULE,
@@ -58,17 +48,6 @@ const NAME_RULE_BY_KIND: Record<SupportedKind, NameRule> = {
   Service: DNS1123_LABEL_RULE
 }
 
-const KIND_REFERENCE_BY_KIND: Partial<Record<SupportedKind, string>> = {
-  Deployment: 'Deployment.apps',
-  DaemonSet: 'DaemonSet.apps',
-  ReplicaSet: 'ReplicaSet.apps',
-  Ingress: 'Ingress.networking.k8s.io'
-}
-
-const toKindReference = (kind: SupportedKind): string => {
-  return KIND_REFERENCE_BY_KIND[kind] ?? kind
-}
-
 const formatMetadataNameInvalidError = (
   kind: SupportedKind,
   name: string,
@@ -77,7 +56,7 @@ const formatMetadataNameInvalidError = (
   const detail =
     `${rule.message} (e.g. '${rule.example}', regex used for validation is '${rule.regexSource}')`
   return error(
-    `Error from server (Invalid): ${toKindReference(kind)} "${name}" is invalid: metadata.name: Invalid value: "${name}": ${detail}`
+    `Error from server (Invalid): ${toKindReferenceForValidation(kind)} "${name}" is invalid: metadata.name: Invalid value: "${name}": ${detail}`
   )
 }
 

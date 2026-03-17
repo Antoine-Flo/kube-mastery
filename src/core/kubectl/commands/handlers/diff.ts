@@ -15,6 +15,7 @@ import { parseKubernetesYaml } from '../../yamlParser'
 import type { ParsedCommand } from '../types'
 import {
   applyResourceWithEvents,
+  isSupportedResourceKind,
   type KubernetesResource
 } from './resourceHelpers'
 
@@ -146,16 +147,22 @@ const getMetadataString = (
 }
 
 const isResourceKind = (kind: string): kind is ResourceKind => {
-  return (
-    kind === 'Pod' ||
-    kind === 'ConfigMap' ||
-    kind === 'Secret' ||
-    kind === 'Node' ||
-    kind === 'ReplicaSet' ||
-    kind === 'Deployment' ||
-    kind === 'DaemonSet' ||
-    kind === 'Service'
-  )
+  if (!isSupportedResourceKind(kind)) {
+    return false
+  }
+  if (kind === 'Namespace') {
+    return false
+  }
+  if (kind === 'Ingress') {
+    return false
+  }
+  if (kind === 'PersistentVolume') {
+    return false
+  }
+  if (kind === 'PersistentVolumeClaim') {
+    return false
+  }
+  return true
 }
 
 const findByKindNameAndNamespace = (

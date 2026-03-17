@@ -409,7 +409,7 @@ describe('File Operations Handlers', () => {
 
     it('should handle rm -r on a file (should work or fail gracefully)', () => {
       const fileSystem = createMockFileSystem({
-        deleteFile: (target: string) => {
+        deleteFile: () => {
           // In some shells, rm -r on file works, in others it fails
           return success(undefined)
         }

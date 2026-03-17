@@ -889,6 +889,139 @@ describe('kubectl parser - diff', () => {
   })
 })
 
+describe('kubectl parser - replace', () => {
+  it('should parse replace command with filename', () => {
+    const result = parseCommand('kubectl replace -f pod.yaml')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('replace')
+    expect(result.value.flags.f).toBe('pod.yaml')
+  })
+
+  it('should parse replace command with force and long filename', () => {
+    const result = parseCommand('kubectl replace --force --filename pod.yaml')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('replace')
+    expect(result.value.flags.force).toBe(true)
+    expect(result.value.flags.filename).toBe('pod.yaml')
+  })
+
+  it('should reject replace without filename flag', () => {
+    const result = parseCommand('kubectl replace')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('replace requires one of -f or --filename')
+    }
+  })
+})
+
+describe('kubectl parser - set image', () => {
+  it('should parse set image command with type/name syntax', () => {
+    const result = parseCommand('kubectl set image pod/my-pod web=nginx:1.26')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('set')
+    expect(result.value.setSubcommand).toBe('image')
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBe('my-pod')
+    expect(result.value.setImageAssignments).toEqual({
+      web: 'nginx:1.26'
+    })
+  })
+
+  it('should parse set image command with resource name syntax', () => {
+    const result = parseCommand(
+      'kubectl set image deployment my-deploy app=nginx:1.26 sidecar=busybox:1.36'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('deployments')
+    expect(result.value.name).toBe('my-deploy')
+    expect(result.value.setImageAssignments).toEqual({
+      app: 'nginx:1.26',
+      sidecar: 'busybox:1.36'
+    })
+  })
+
+  it('should reject set command without image subcommand', () => {
+    const result = parseCommand('kubectl set')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'set currently supports only the image subcommand'
+      )
+    }
+  })
+
+  it('should reject set image command without container assignment', () => {
+    const result = parseCommand('kubectl set image pod/my-pod')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'set image requires at least one container=image assignment'
+      )
+    }
+  })
+})
+
+describe('kubectl parser - edit', () => {
+  it('should parse edit command with resource and name', () => {
+    const result = parseCommand('kubectl edit pod edit-demo')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('edit')
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBe('edit-demo')
+  })
+
+  it('should parse edit command with type/name syntax', () => {
+    const result = parseCommand('kubectl edit deployment/my-app -n staging')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('edit')
+    expect(result.value.resource).toBe('deployments')
+    expect(result.value.name).toBe('my-app')
+    expect(result.value.namespace).toBe('staging')
+  })
+
+  it('should reject edit command without resource name', () => {
+    const result = parseCommand('kubectl edit pod')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('edit requires a resource name')
+    }
+  })
+})
+
 describe('kubectl parser - config', () => {
   it('should parse config get-contexts command', () => {
     const result = parseCommand('kubectl config get-contexts')

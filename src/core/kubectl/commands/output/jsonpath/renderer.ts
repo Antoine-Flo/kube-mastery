@@ -1,5 +1,5 @@
 import type { Result } from '../../../../shared/result'
-import { error, success } from '../../../../shared/result'
+import { success } from '../../../../shared/result'
 import { evaluateKubectlJsonPathValues } from './jsonPathEvaluator'
 import { parseKubectlJsonPathTemplate } from './templateParser'
 import type { TemplateNode } from './types'

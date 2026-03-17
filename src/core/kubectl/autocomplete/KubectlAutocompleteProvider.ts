@@ -5,6 +5,7 @@
 // Gère les actions, types de ressources et noms de ressources
 
 import { AutocompleteProvider } from '../../terminal/autocomplete/AutocompleteProvider'
+import { RESOURCE_ALIAS_MAP } from '../commands/resources'
 import type {
   AutocompleteClusterState,
   AutocompleteContext,
@@ -17,8 +18,11 @@ const KUBECTL_ACTIONS = [
   'diff',
   'explain',
   'describe',
+  'edit',
+  'set',
   'delete',
   'apply',
+  'replace',
   'create',
   'logs',
   'exec',
@@ -41,39 +45,20 @@ const KUBECTL_CONFIG_SUBCOMMANDS = [
   'set-context'
 ] as const
 
-// Resource type aliases (for kubectl completion)
-const RESOURCE_ALIASES: Record<string, string> = {
-  pods: 'pods',
-  pod: 'pods',
-  po: 'pods',
-  configmaps: 'configmaps',
-  configmap: 'configmaps',
-  cm: 'configmaps',
-  secrets: 'secrets',
-  secret: 'secrets',
-  nodes: 'nodes',
-  node: 'nodes',
-  no: 'nodes',
-  replicasets: 'replicasets',
-  replicaset: 'replicasets',
-  rs: 'replicasets',
-  daemonsets: 'daemonsets',
-  daemonset: 'daemonsets',
-  ds: 'daemonsets',
-  deployments: 'deployments',
-  deployment: 'deployments',
-  deploy: 'deployments'
+const RESOURCE_GETTERS: Record<
+  string,
+  (state: AutocompleteClusterState) => unknown[]
+> = {
+  pods: (state) => (state.getPods ? state.getPods() : []),
+  configmaps: (state) => (state.getConfigMaps ? state.getConfigMaps() : []),
+  secrets: (state) => (state.getSecrets ? state.getSecrets() : []),
+  nodes: (state) => (state.getNodes ? state.getNodes() : []),
+  replicasets: (state) => (state.getReplicaSets ? state.getReplicaSets() : []),
+  daemonsets: (state) => (state.getDaemonSets ? state.getDaemonSets() : []),
+  deployments: (state) => (state.getDeployments ? state.getDeployments() : [])
 }
 
-const CANONICAL_RESOURCE_TYPES = [
-  'pods',
-  'configmaps',
-  'secrets',
-  'nodes',
-  'replicasets',
-  'daemonsets',
-  'deployments'
-] as const
+const CANONICAL_RESOURCE_TYPES = Object.keys(RESOURCE_GETTERS)
 
 /**
  * Filter array to items that start with prefix (case-sensitive)
@@ -113,22 +98,7 @@ const getResourceNames = (
     return []
   }
 
-  // Map resource types to their getter functions
-  const resourceGetters: Record<
-    string,
-    (state: AutocompleteClusterState) => unknown[]
-  > = {
-    pods: (state) => (state.getPods ? state.getPods() : []),
-    configmaps: (state) => (state.getConfigMaps ? state.getConfigMaps() : []),
-    secrets: (state) => (state.getSecrets ? state.getSecrets() : []),
-    nodes: (state) => (state.getNodes ? state.getNodes() : []),
-    replicasets: (state) =>
-      state.getReplicaSets ? state.getReplicaSets() : [],
-    daemonsets: (state) => (state.getDaemonSets ? state.getDaemonSets() : []),
-    deployments: (state) => (state.getDeployments ? state.getDeployments() : [])
-  }
-
-  const getter = resourceGetters[resourceType]
+  const getter = RESOURCE_GETTERS[resourceType]
   if (!getter) {
     return []
   }
@@ -247,7 +217,7 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
     } else if (tokens.length >= 3) {
       // Map resource alias to canonical name
       const resource = tokens[2]
-      resourceType = RESOURCE_ALIASES[resource] || resource
+      resourceType = RESOURCE_ALIAS_MAP[resource] || resource
     }
 
     return getResourceNames(resourceType, currentToken, context)

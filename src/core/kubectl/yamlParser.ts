@@ -27,8 +27,13 @@ import type { Secret } from '../cluster/ressources/Secret'
 import { parseSecretManifest } from '../cluster/ressources/Secret'
 import type { Service } from '../cluster/ressources/Service'
 import { parseServiceManifest } from '../cluster/ressources/Service'
+import type { ResourceKind } from '../cluster/ClusterState'
 import type { Result } from '../shared/result'
 import { error, success } from '../shared/result'
+import {
+  isSupportedResourceKind,
+  SUPPORTED_RESOURCE_KINDS
+} from './commands/resourceSchema'
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -45,18 +50,11 @@ type ParsedResource =
   | Service
   | Ingress
 
-type ResourceKind =
-  | 'Pod'
-  | 'ConfigMap'
-  | 'Secret'
-  | 'Node'
-  | 'PersistentVolume'
-  | 'PersistentVolumeClaim'
-  | 'ReplicaSet'
-  | 'Deployment'
-  | 'DaemonSet'
-  | 'Service'
-  | 'Ingress'
+type YamlSupportedKind = Exclude<ResourceKind, 'Namespace'>
+
+const YAML_SUPPORTED_RESOURCE_KINDS = SUPPORTED_RESOURCE_KINDS.filter((kind) => {
+  return kind !== 'Namespace'
+}) as YamlSupportedKind[]
 
 // ─── YAML Parsing ────────────────────────────────────────────────────────
 
@@ -80,27 +78,18 @@ const parseYaml = (yamlContent: string): Result<unknown> => {
 /**
  * Check if kind is supported
  */
-const isSupportedKind = (kind: string): kind is ResourceKind => {
-  return (
-    kind === 'Pod' ||
-    kind === 'ConfigMap' ||
-    kind === 'Secret' ||
-    kind === 'Node' ||
-    kind === 'PersistentVolume' ||
-    kind === 'PersistentVolumeClaim' ||
-    kind === 'ReplicaSet' ||
-    kind === 'Deployment' ||
-    kind === 'DaemonSet' ||
-    kind === 'Service' ||
-    kind === 'Ingress'
-  )
+const isSupportedKind = (kind: string): kind is YamlSupportedKind => {
+  if (!isSupportedResourceKind(kind)) {
+    return false
+  }
+  return YAML_SUPPORTED_RESOURCE_KINDS.includes(kind as YamlSupportedKind)
 }
 
 /**
  * Manifest parser lookup table (object lookup pattern)
  */
 const MANIFEST_PARSERS: Record<
-  ResourceKind,
+  YamlSupportedKind,
   (obj: any) => Result<ParsedResource>
 > = {
   Pod: parsePodManifest,
@@ -126,12 +115,13 @@ const validateResource = (obj: any): Result<ParsedResource> => {
   }
 
   if (!isSupportedKind(obj.kind)) {
+    const supportedKinds = YAML_SUPPORTED_RESOURCE_KINDS.join(', ')
     return error(
-      `Unsupported resource kind: ${obj.kind} (supported: Pod, ConfigMap, Secret, Node, PersistentVolume, PersistentVolumeClaim, ReplicaSet, Deployment, DaemonSet, Service, Ingress)`
+      `Unsupported resource kind: ${obj.kind} (supported: ${supportedKinds})`
     )
   }
 
-  const parser = MANIFEST_PARSERS[obj.kind as ResourceKind]
+  const parser = MANIFEST_PARSERS[obj.kind as YamlSupportedKind]
   return parser(obj)
 }
 

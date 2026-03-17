@@ -17,6 +17,7 @@ import { deepFreeze } from '../../../shared/deepFreeze'
 import type { ExecutionResult, Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
+import { RESOURCE_KIND_BY_RESOURCE } from './resourceHelpers'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // METADATA HELPERS (LABELS & ANNOTATIONS)
@@ -106,17 +107,17 @@ const RESOURCE_ACCESSORS: Record<
   ResourceCollectionAccessor<ResourceWithMetadata>
 > = {
   pods: {
-    kind: 'Pod',
+    kind: RESOURCE_KIND_BY_RESOURCE.pods ?? 'Pod',
     resourceTypeName: 'Pod',
     singularName: 'pod'
   },
   configmaps: {
-    kind: 'ConfigMap',
+    kind: RESOURCE_KIND_BY_RESOURCE.configmaps ?? 'ConfigMap',
     resourceTypeName: 'ConfigMap',
     singularName: 'configmap'
   },
   secrets: {
-    kind: 'Secret',
+    kind: RESOURCE_KIND_BY_RESOURCE.secrets ?? 'Secret',
     resourceTypeName: 'Secret',
     singularName: 'secret'
   }

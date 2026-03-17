@@ -4,7 +4,6 @@
 // Gère toute la logique de traitement des inputs du terminal
 // Découplé du TerminalController pour une meilleure séparation des responsabilités
 
-import type { TabCompletionCallbacks } from '../autocomplete/types'
 import type { InputHandlerContext } from './InputHandlerContext'
 import { LineRenderer } from './LineRenderer'
 

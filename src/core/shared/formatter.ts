@@ -25,12 +25,6 @@ export interface FileEntry {
   modified: string // ISO timestamp
 }
 
-interface KeyValueOptions {
-  indent?: number // Indentation (default: 2)
-  separator?: string // Separator (default: ':  ' with 2 spaces)
-  maxKeyWidth?: number // Max key width for alignment
-}
-
 // ─── String Comparison ───────────────────────────────────────────────────
 
 /**

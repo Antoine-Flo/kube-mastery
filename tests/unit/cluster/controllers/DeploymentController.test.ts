@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
+import type {
+  KindToResource,
+  ResourceKind
+} from '../../../../src/core/cluster/ClusterState'
 import {
   createEventBus,
   type EventBus
@@ -87,7 +91,11 @@ describe('DeploymentController', () => {
       emitEvent: (event: AppEvent) => {
         eventBus.emit(event)
       },
-      createResource: (kind, resource) => {
+      createResource: <TKind extends ResourceKind>(
+        kind: TKind,
+        resource: KindToResource<TKind>,
+        _namespace?: string
+      ) => {
         if (kind === 'ReplicaSet') {
           const replicaSet = resource as ReplicaSet
           mockState.replicaSets.push(replicaSet)
@@ -96,7 +104,12 @@ describe('DeploymentController', () => {
         }
         return { ok: false, error: 'unsupported kind' }
       },
-      updateResource: (kind, name, resource, namespace) => {
+      updateResource: <TKind extends ResourceKind>(
+        kind: TKind,
+        name: string,
+        resource: KindToResource<TKind>,
+        namespace?: string
+      ) => {
         if (kind === 'Deployment') {
           const deployment = resource as Deployment
           const index = mockState.deployments.findIndex((entry) => {
@@ -147,7 +160,11 @@ describe('DeploymentController', () => {
         }
         return { ok: false, error: 'unsupported kind' }
       },
-      deleteResource: (kind, name, namespace) => {
+      deleteResource: <TKind extends ResourceKind>(
+        kind: TKind,
+        name: string,
+        namespace?: string
+      ) => {
         if (kind === 'ReplicaSet') {
           const index = mockState.replicaSets.findIndex((entry) => {
             return (
@@ -171,7 +188,10 @@ describe('DeploymentController', () => {
         }
         return { ok: false, error: 'unsupported kind' }
       },
-      listResources: (kind, namespace) => {
+      listResources: <TKind extends ResourceKind>(
+        kind: TKind,
+        namespace?: string
+      ) => {
         if (kind === 'Deployment') {
           if (namespace == null) {
             return mockState.deployments
@@ -190,7 +210,11 @@ describe('DeploymentController', () => {
         }
         return []
       },
-      findResource: (kind, name, namespace) => {
+      findResource: <TKind extends ResourceKind>(
+        kind: TKind,
+        name: string,
+        namespace?: string
+      ) => {
         if (kind === 'Deployment') {
           const deployment = mockState.deployments.find((entry) => {
             return (
@@ -255,7 +279,8 @@ describe('DeploymentController', () => {
         findPersistentVolumeClaim: () => ({ ok: false, error: 'not found' })
       }
     } as unknown as ApiServerFacade
-    apiServer.getClusterState = () => (apiServer as any).clusterState
+    ;(apiServer as unknown as Record<string, unknown>).getClusterState = () =>
+      (apiServer as unknown as Record<string, unknown>).clusterState
 
     controller = new DeploymentController(apiServer)
   })

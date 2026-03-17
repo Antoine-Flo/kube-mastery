@@ -3,6 +3,7 @@ import type { PodLifecycleDescribeEvent } from '../../api/PodLifecycleEventStore
 import type { FileSystem } from '../../filesystem/FileSystem'
 import type { SimNetworkRuntime } from '../../network/SimNetworkRuntime'
 import type { Logger } from '../../../logger/Logger'
+import type { EditorModal } from '../../shell/commands'
 import type { ExecutionResult } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import { handleAnnotate } from './handlers/annotate'
@@ -17,6 +18,7 @@ import {
 import { handleDelete } from './handlers/delete'
 import { handleDiff } from './handlers/diff'
 import { handleDescribe } from './handlers/describe'
+import { handleEdit } from './handlers/edit'
 import { handleExplain } from './handlers/explain'
 import { handleExpose } from './handlers/expose'
 import { handleExec } from './handlers/exec'
@@ -24,6 +26,8 @@ import { handleGet } from './handlers/get'
 import { handleLabel } from './handlers/label'
 import { handleLogs } from './handlers/logs'
 import { handleScale } from './handlers/scale'
+import { handleSetImage } from './handlers/setImage'
+import { handleReplace } from './handlers/replace'
 import { handleVersion } from './handlers/version'
 import { handleWait } from './handlers/wait'
 import { resolveKubectlHelp } from './help'
@@ -32,6 +36,11 @@ import type { ParsedCommand } from './types'
 
 // Action handler signature (dependencies captured in closure)
 type ActionHandler = (parsed: ParsedCommand) => ExecutionResult
+
+type KubectlExecutorOptions = {
+  editorModal?: EditorModal
+  onAsyncOutput?: (message: string) => void
+}
 
 const toGetExecutionResult = (output: string): ExecutionResult => {
   if (output.startsWith('Error from server') || output.startsWith('error:')) {
@@ -82,7 +91,8 @@ const createHandlers = (
     podName: string
   ) => readonly PodLifecycleDescribeEvent[],
   networkRuntime?: SimNetworkRuntime,
-  reconcileForWait?: (namespace?: string) => void
+  reconcileForWait?: (namespace?: string) => void,
+  options: KubectlExecutorOptions = {}
 ): Map<string, ActionHandler> => {
   const handlers = new Map<string, ActionHandler>()
 
@@ -97,9 +107,19 @@ const createHandlers = (
       listPodEvents
     })
   )
+  handlers.set('edit', (parsed) =>
+    handleEdit(apiServer, parsed, {
+      editorModal: options.editorModal,
+      onAsyncOutput: options.onAsyncOutput
+    })
+  )
+  handlers.set('set', (parsed) => handleSetImage(apiServer, parsed))
   handlers.set('delete', (parsed) => handleDelete(apiServer, parsed, fileSystem))
   handlers.set('apply', (parsed) =>
     handleApply(fileSystem, apiServer, parsed)
+  )
+  handlers.set('replace', (parsed) =>
+    handleReplace(fileSystem, apiServer, parsed)
   )
   handlers.set('create', (parsed) =>
     handleCreate(fileSystem, apiServer, parsed)
@@ -171,7 +191,8 @@ export const createKubectlExecutor = (
   defaultFileSystem: FileSystem,
   logger: Logger,
   networkRuntime?: SimNetworkRuntime,
-  reconcileForWait?: (namespace?: string) => void
+  reconcileForWait?: (namespace?: string) => void,
+  options: KubectlExecutorOptions = {}
 ) => {
   const execute = (input: string, fileSystem?: FileSystem): ExecutionResult => {
     logger.info('COMMAND', `Kubectl: ${input}`)
@@ -196,7 +217,8 @@ export const createKubectlExecutor = (
       apiServer.getResourceVersion,
       apiServer.podLifecycleEventStore.listPodEvents,
       networkRuntime,
-      reconcileForWait
+      reconcileForWait,
+      options
     )
     const parsedWithNamespace = applyImplicitNamespaceFromKubeconfig(
       apiServer,

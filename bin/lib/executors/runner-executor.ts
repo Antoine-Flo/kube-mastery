@@ -126,12 +126,21 @@ const executionFromOutput = (
   }
 }
 
-const getDiffFilenameFromCommand = (command: string): string | undefined => {
+const getManifestFilenameFromCommand = (
+  command: string
+): { action: string; filename: string } | undefined => {
   const parsed = parseCommand(command)
   if (!parsed.ok) {
     return undefined
   }
-  if (parsed.value.action !== 'diff') {
+  const action = parsed.value.action
+  const supportsManifest =
+    action === 'diff' ||
+    action === 'replace' ||
+    action === 'apply' ||
+    action === 'create' ||
+    action === 'delete'
+  if (!supportsManifest) {
     return undefined
   }
 
@@ -139,7 +148,10 @@ const getDiffFilenameFromCommand = (command: string): string | undefined => {
   if (typeof filename !== 'string') {
     return undefined
   }
-  return filename
+  return {
+    action,
+    filename
+  }
 }
 
 const rewriteDiffCommandForMountedFile = (
@@ -237,17 +249,17 @@ export const createRunnerExecutor = (
   return {
     executeCommand(command: string): CommandExecutionResult {
       reconcileWorkloadControllersOnce()
-      const diffFilename = getDiffFilenameFromCommand(command)
+      const manifestTarget = getManifestFilenameFromCommand(command)
       let result
-      if (diffFilename != null) {
-        const filePath = diffFilename.startsWith('/')
-          ? diffFilename
-          : join(process.cwd(), diffFilename)
+      if (manifestTarget != null) {
+        const filePath = manifestTarget.filename.startsWith('/')
+          ? manifestTarget.filename
+          : join(process.cwd(), manifestTarget.filename)
         const mountedPath = `/${basename(filePath)}`
         const fs = createSingleFileSystem(filePath)
         const rewrittenCommand = rewriteDiffCommandForMountedFile(
           command,
-          diffFilename,
+          manifestTarget.filename,
           mountedPath
         )
         result = executor.execute(rewrittenCommand, fs)
@@ -257,7 +269,7 @@ export const createRunnerExecutor = (
 
       if (result.ok) {
         const value = result.value ?? ''
-        if (diffFilename != null) {
+        if (manifestTarget?.action === 'diff') {
           const exitCode = value.trim().length === 0 ? 0 : 1
           return executionFromOutput(command, exitCode, value, '')
         }

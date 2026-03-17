@@ -44,6 +44,8 @@ export type ParseContext = {
   runStdin?: boolean
   runTty?: boolean
   runRemove?: boolean
+  setSubcommand?: 'image'
+  setImageAssignments?: Record<string, string>
   configSubcommand?: 'get-contexts' | 'current-context' | 'view' | 'set-context'
   configCurrent?: boolean
   configMinify?: boolean
@@ -197,6 +199,31 @@ const extractPositionalTokensAfterAction = (tokens: string[]): string[] => {
       continue
     }
 
+    positionalTokens.push(token)
+  }
+
+  return positionalTokens
+}
+
+const extractPositionalTokensFromIndex = (
+  tokens: string[],
+  startIndex: number
+): string[] => {
+  const positionalTokens: string[] = []
+
+  for (let index = startIndex; index < tokens.length; index++) {
+    const token = tokens[index]
+    if (token === '--') {
+      break
+    }
+    if (token.startsWith('-')) {
+      const flagName = token.replace(/^-+/, '').split('=')[0]
+      const hasInlineValue = token.includes('=')
+      if (FLAGS_REQUIRING_VALUES.has(flagName) && !hasInlineValue) {
+        index += 1
+      }
+      continue
+    }
     positionalTokens.push(token)
   }
 
@@ -729,6 +756,138 @@ const deleteTransformer: ActionTransformer = (ctx) => {
   })
 }
 
+/**
+ * Transformer for replace:
+ * - replace -f file.yaml
+ * - replace --force -f file.yaml
+ */
+const replaceTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens) {
+    return success(ctx)
+  }
+
+  let hasFilenameFlag = false
+  for (let index = 2; index < ctx.tokens.length; index++) {
+    const token = ctx.tokens[index]
+    if (token === '-f' || token.startsWith('-f=')) {
+      hasFilenameFlag = true
+      break
+    }
+    if (token === '--filename' || token.startsWith('--filename=')) {
+      hasFilenameFlag = true
+      break
+    }
+  }
+
+  if (!hasFilenameFlag) {
+    return success(ctx)
+  }
+
+  return success({
+    ...ctx,
+    resource: 'pods' as Resource
+  })
+}
+
+const parseSetImageAssignments = (
+  assignmentTokens: string[]
+): Record<string, string> | undefined => {
+  const assignments: Record<string, string> = {}
+  for (const assignmentToken of assignmentTokens) {
+    const separatorIndex = assignmentToken.indexOf('=')
+    if (separatorIndex <= 0) {
+      continue
+    }
+    const containerName = assignmentToken.slice(0, separatorIndex).trim()
+    const image = assignmentToken.slice(separatorIndex + 1).trim()
+    if (containerName.length === 0 || image.length === 0) {
+      continue
+    }
+    assignments[containerName] = image
+  }
+  if (Object.keys(assignments).length === 0) {
+    return undefined
+  }
+  return assignments
+}
+
+const setTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens) {
+    return success(ctx)
+  }
+  const subcommandToken = ctx.tokens[2]
+  if (subcommandToken !== 'image') {
+    return success(ctx)
+  }
+
+  const positionalTokens = extractPositionalTokensFromIndex(ctx.tokens, 3)
+  const targetToken = positionalTokens[0]
+  if (targetToken == null) {
+    return success({
+      ...ctx,
+      setSubcommand: 'image'
+    })
+  }
+
+  let resource: Resource | undefined
+  let name: string | undefined
+  let assignmentStartIndex = 1
+  if (targetToken.includes('/')) {
+    const [resourceToken, nameToken] = targetToken.split('/', 2)
+    resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
+    name = nameToken
+  } else {
+    resource = RESOURCE_ALIAS_MAP[targetToken] as Resource | undefined
+    name = positionalTokens[1]
+    assignmentStartIndex = 2
+  }
+
+  const assignmentTokens = positionalTokens.slice(assignmentStartIndex)
+  return success({
+    ...ctx,
+    setSubcommand: 'image',
+    resource,
+    name,
+    setImageAssignments: parseSetImageAssignments(assignmentTokens)
+  })
+}
+
+const editTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens) {
+    return success(ctx)
+  }
+
+  const positionalTokens = extractPositionalTokensAfterAction(ctx.tokens)
+  const targetToken = positionalTokens[0]
+  if (targetToken == null) {
+    return success(ctx)
+  }
+
+  if (targetToken.includes('/')) {
+    const [resourceToken, nameToken] = targetToken.split('/', 2)
+    const resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
+    if (!resource) {
+      return error('Invalid or missing resource type')
+    }
+    return success({
+      ...ctx,
+      resource,
+      name: nameToken
+    })
+  }
+
+  const resource = RESOURCE_ALIAS_MAP[targetToken] as Resource | undefined
+  if (!resource) {
+    return error('Invalid or missing resource type')
+  }
+
+  return success({
+    ...ctx,
+    resource,
+    name: positionalTokens[1]
+  })
+}
+
 const exposeTransformer: ActionTransformer = (ctx) => {
   if (!ctx.tokens) {
     return success(ctx)
@@ -912,6 +1071,7 @@ const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
   exec: execTransformer,
   logs: logsTransformer,
   delete: deleteTransformer,
+  replace: replaceTransformer,
   apply: applyTransformer,
   create: createTransformer,
   label: labelTransformer,
@@ -923,6 +1083,8 @@ const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
   explain: explainTransformer,
   scale: scaleTransformer,
   run: runTransformer,
+  set: setTransformer,
+  edit: editTransformer,
   expose: exposeTransformer,
   wait: waitTransformer,
   config: configTransformer

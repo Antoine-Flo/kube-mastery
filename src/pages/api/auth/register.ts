@@ -7,7 +7,6 @@ import {
   getAuthUserCount,
   ensureEarlyAccessSubscription
 } from '../../../lib/auth/early-access-cap'
-import { getSupabaseAdmin } from '../../../lib/supabase'
 
 const json = (body: Record<string, unknown>, status: number) =>
   new Response(JSON.stringify(body), {

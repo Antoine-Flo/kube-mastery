@@ -6,8 +6,11 @@ export type Action =
   | 'diff'
   | 'explain'
   | 'describe'
+  | 'edit'
+  | 'set'
   | 'delete'
   | 'apply'
+  | 'replace'
   | 'create'
   | 'logs'
   | 'exec'
@@ -67,6 +70,8 @@ export interface ParsedCommand {
   runStdin?: boolean // For kubectl run: -i/--stdin
   runTty?: boolean // For kubectl run: -t/--tty
   runRemove?: boolean // For kubectl run: --rm
+  setSubcommand?: 'image' // For kubectl set: supported subcommand
+  setImageAssignments?: Record<string, string> // For kubectl set image: container=image pairs
   configCurrent?: boolean // For kubectl config set-context --current
   configMinify?: boolean // For kubectl config view --minify
   configNamespace?: string // For kubectl config set-context --namespace

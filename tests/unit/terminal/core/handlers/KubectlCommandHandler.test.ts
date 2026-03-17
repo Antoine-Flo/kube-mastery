@@ -13,6 +13,7 @@ import { ShellContextStack } from '../../../../../src/core/terminal/core/ShellCo
 import { createTerminalOutput } from '../../../../../src/core/terminal/core/TerminalOutput'
 import { createMockRenderer } from '../../../helpers/mockRenderer'
 import { createLogger } from '../../../../../src/logger/Logger'
+import type { EditorModal } from '../../../../../src/core/shell/commands'
 
 describe('KubectlCommandHandler', () => {
   let handler: KubectlCommandHandler
@@ -124,6 +125,43 @@ describe('KubectlCommandHandler', () => {
     it('should return success for valid get command', () => {
       const result = handler.execute('kubectl get pods', context)
       expect(result.ok).toBe(true)
+    })
+
+    it('should open editor for kubectl edit and persist saved changes', () => {
+      context.apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'edit-demo',
+          namespace: 'default',
+          containers: [{ name: 'web', image: 'nginx:1.25' }]
+        })
+      )
+
+      let capturedContent = ''
+      let capturedSave: ((newContent: string) => void) | undefined
+      const editorModal: EditorModal = {
+        open: (_filename, content, onSave) => {
+          capturedContent = content
+          capturedSave = onSave
+        }
+      }
+      context.editorModal = editorModal
+
+      const result = handler.execute('kubectl edit pod edit-demo', context)
+      expect(result.ok).toBe(true)
+      expect(capturedSave).toBeDefined()
+      if (capturedSave == null) {
+        return
+      }
+
+      capturedSave(capturedContent.replace('nginx:1.25', 'nginx:1.26'))
+      const podResult = context.apiServer.findResource('Pod', 'edit-demo', 'default')
+      expect(podResult.ok).toBe(true)
+      if (!podResult.ok) {
+        return
+      }
+      expect(podResult.value.spec.containers[0].image).toBe('nginx:1.26')
+      expect(renderer.getOutput()).toContain('pod/edit-demo edited')
     })
 
     it('should enter container context for exec shell directive', () => {

@@ -852,7 +852,22 @@ export class KubectlCommandHandler implements CommandHandler {
       context.apiServer,
       context.fileSystem,
       context.logger,
-      context.networkRuntime
+      context.networkRuntime,
+      undefined,
+      {
+        editorModal: context.editorModal,
+        onAsyncOutput: (message: string) => {
+          if (message.length === 0) {
+            return
+          }
+          // Async editor save happens after prompt is already rendered.
+          // Replace current prompt line to avoid inserting an extra blank line.
+          context.output.write('\r')
+          context.renderer.clearLine()
+          context.output.writeOutput(message)
+          context.output.write(context.shellContextStack.getCurrentPrompt())
+        }
+      }
     )
 
     const parsedCommandResult = parseCommand(parsedRedirection.command)

@@ -1,0 +1,145 @@
+import { beforeEach, describe, expect, it } from 'vitest'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
+import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
+import { createHostFileSystem } from '../../../../../src/core/filesystem/debianFileSystem'
+import {
+  createFileSystem,
+  type FileSystem
+} from '../../../../../src/core/filesystem/FileSystem'
+import { handleReplace } from '../../../../../src/core/kubectl/commands/handlers/replace'
+import { parseCommand } from '../../../../../src/core/kubectl/commands/parser'
+
+describe('kubectl replace handler', () => {
+  let apiServer: ReturnType<typeof createApiServerFacade>
+  let fileSystem: FileSystem
+
+  beforeEach(() => {
+    apiServer = createApiServerFacade()
+    fileSystem = createFileSystem(createHostFileSystem())
+  })
+
+  it('should replace an existing pod from manifest', () => {
+    apiServer.createResource(
+      'Pod',
+      createPod({
+        name: 'replace-me',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'nginx:1.28' }]
+      })
+    )
+
+    fileSystem.createFile('replace-pod.yaml')
+    fileSystem.writeFile(
+      'replace-pod.yaml',
+      `apiVersion: v1
+kind: Pod
+metadata:
+  name: replace-me
+  namespace: default
+spec:
+  containers:
+    - name: main
+      image: busybox:latest
+`
+    )
+
+    const parsed = parseCommand('kubectl replace -f replace-pod.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleReplace(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toContain('pod/replace-me replaced')
+    const pod = apiServer.findResource('Pod', 'replace-me', 'default')
+    expect(pod.ok).toBe(true)
+    if (!pod.ok) {
+      return
+    }
+    expect(pod.value.spec.containers[0].image).toBe('busybox:latest')
+  })
+
+  it('should force replace an existing pod', () => {
+    apiServer.createResource(
+      'Pod',
+      createPod({
+        name: 'force-replace-me',
+        namespace: 'default',
+        labels: { app: 'old' },
+        containers: [{ name: 'main', image: 'nginx:1.28' }]
+      })
+    )
+
+    fileSystem.createFile('force-replace-pod.yaml')
+    fileSystem.writeFile(
+      'force-replace-pod.yaml',
+      `apiVersion: v1
+kind: Pod
+metadata:
+  name: force-replace-me
+  namespace: default
+  labels:
+    app: new
+spec:
+  containers:
+    - name: main
+      image: busybox:latest
+`
+    )
+
+    const parsed = parseCommand('kubectl replace --force -f force-replace-pod.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleReplace(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toContain('pod/force-replace-me replaced')
+    const pod = apiServer.findResource('Pod', 'force-replace-me', 'default')
+    expect(pod.ok).toBe(true)
+    if (!pod.ok) {
+      return
+    }
+    expect(pod.value.metadata.labels?.app).toBe('new')
+    expect(pod.value.spec.containers[0].image).toBe('busybox:latest')
+  })
+
+  it('should return not found when replacing non existing resource', () => {
+    fileSystem.createFile('missing-pod.yaml')
+    fileSystem.writeFile(
+      'missing-pod.yaml',
+      `apiVersion: v1
+kind: Pod
+metadata:
+  name: not-there
+  namespace: default
+spec:
+  containers:
+    - name: main
+      image: nginx:latest
+`
+    )
+
+    const parsed = parseCommand('kubectl replace -f missing-pod.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleReplace(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('pods "not-there" not found')
+    }
+  })
+})

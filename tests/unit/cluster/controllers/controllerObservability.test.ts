@@ -265,7 +265,6 @@ describe('controller observability', () => {
 
   it('emits VolumeNotReady skip reason in PodLifecycleController', () => {
     const apiServer = createApiServerFacade()
-    const eventBus = apiServer.eventBus
     const pod = createPod({
       name: 'pending-pod',
       namespace: 'default',

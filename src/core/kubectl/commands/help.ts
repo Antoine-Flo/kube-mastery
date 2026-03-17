@@ -6,9 +6,13 @@ type HelpTopic =
   | 'diff'
   | 'create'
   | 'create deployment'
+  | 'replace'
   | 'delete'
   | 'explain'
   | 'describe'
+  | 'edit'
+  | 'set'
+  | 'set image'
   | 'scale'
   | 'version'
   | 'cluster-info'
@@ -27,6 +31,7 @@ Find more information at: https://kubernetes.io/docs/reference/kubectl/
 
 Basic Commands (Beginner):
   create          Create a resource from a file or from stdin
+  replace         Replace a resource by file name or stdin
   run             Run a particular image on the cluster
   get             Display one or many resources
   delete          Delete resources by file names, stdin, resources and names
@@ -34,6 +39,8 @@ Basic Commands (Beginner):
 Troubleshooting and Debugging Commands:
   explain         Get documentation for a resource
   describe        Show details of a specific resource or group of resources
+  edit            Edit a resource on the server
+  set             Set specific features on objects
   logs            Print the logs for a container in a pod
   exec            Execute a command in a container
 
@@ -90,6 +97,13 @@ Usage:
   kubectl create deployment NAME --image=image [--replicas=COUNT] [--port=PORT]
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`,
+  replace: `Replace a resource from a file or from stdin.
+
+Usage:
+  kubectl replace -f FILENAME
+  kubectl replace --force -f FILENAME
+
+Use "kubectl options" for a list of global command-line options (applies to all commands).`,
   'create deployment': `Create a deployment with the specified name.
 
 Usage:
@@ -117,6 +131,36 @@ Use "kubectl options" for a list of global command-line options (applies to all 
 
 Usage:
   kubectl describe TYPE NAME
+
+Use "kubectl options" for a list of global command-line options (applies to all commands).`,
+  edit: `Edit a resource from the default editor.
+
+Usage:
+  kubectl edit TYPE NAME
+  kubectl edit TYPE/NAME
+
+Examples:
+  kubectl edit pod edit-demo
+  kubectl edit deployment/my-app
+
+Use "kubectl options" for a list of global command-line options (applies to all commands).`,
+  set: `Set specific features on objects.
+
+Available Commands:
+  image           Update the image of a pod template or pod
+
+Usage:
+  kubectl set image TYPE/NAME CONTAINER=IMAGE [CONTAINER=IMAGE...]
+
+Use "kubectl options" for a list of global command-line options (applies to all commands).`,
+  'set image': `Update the image of a pod template or pod.
+
+Usage:
+  kubectl set image TYPE/NAME CONTAINER=IMAGE [CONTAINER=IMAGE...]
+
+Examples:
+  kubectl set image pod/my-pod web=nginx:1.26
+  kubectl set image deployment/my-deploy app=nginx:1.26 sidecar=busybox:1.36
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`,
   scale: `Set a new size for a deployment, replica set, or replication controller.
@@ -232,6 +276,10 @@ const resolveTopic = (tokens: string[]): HelpTopic => {
     tokens[2] === 'deployment'
   ) {
     return 'create deployment'
+  }
+
+  if (actionToken === 'set' && tokens.length >= 3 && tokens[2] === 'image') {
+    return 'set image'
   }
 
   if (actionToken === 'config') {

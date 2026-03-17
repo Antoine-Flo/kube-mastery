@@ -38,16 +38,6 @@ const getCurrentToken = (input: string): string => {
 }
 
 /**
- * Filter array to items that start with prefix (case-sensitive)
- */
-const filterMatches = (items: string[], prefix: string): string[] => {
-  if (!prefix) {
-    return items
-  }
-  return items.filter((item) => item.startsWith(prefix))
-}
-
-/**
  * Alphabetical string comparison using localeCompare for reliable sorting
  */
 const compareStrings = (a: string, b: string): number => {

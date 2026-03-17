@@ -12,6 +12,7 @@ import {
 } from '../../../../src/core/filesystem/FileSystem'
 import { createKubectlExecutor } from '../../../../src/core/kubectl/commands/executor'
 import { initializeSimNetworkRuntime } from '../../../../src/core/network/SimNetworkRuntime'
+import type { EditorModal } from '../../../../src/core/shell/commands'
 import { createLogger } from '../../../../src/logger/Logger'
 
 describe('kubectl Executor', () => {
@@ -234,6 +235,105 @@ data:
         if (result.ok) {
           expect(result.value).toContain('created')
         }
+      })
+
+      it('should route "kubectl replace -f" to replace handler', () => {
+        const initialYaml = `apiVersion: v1
+kind: Pod
+metadata:
+  name: replace-pod
+  namespace: default
+spec:
+  containers:
+    - name: app
+      image: nginx:1.28
+`
+        const updatedYaml = `apiVersion: v1
+kind: Pod
+metadata:
+  name: replace-pod
+  namespace: default
+spec:
+  containers:
+    - name: app
+      image: busybox:latest
+`
+
+        fileSystem.createFile('replace-pod-initial.yaml')
+        fileSystem.writeFile('replace-pod-initial.yaml', initialYaml)
+        fileSystem.createFile('replace-pod-updated.yaml')
+        fileSystem.writeFile('replace-pod-updated.yaml', updatedYaml)
+
+        const executor = createKubectlExecutor(
+          apiServer,
+          fileSystem,
+          logger
+        )
+        const createResult = executor.execute('kubectl create -f replace-pod-initial.yaml')
+        expect(createResult.ok).toBe(true)
+
+        const replaceResult = executor.execute('kubectl replace -f replace-pod-updated.yaml')
+        expect(replaceResult.ok).toBe(true)
+        if (!replaceResult.ok) {
+          return
+        }
+
+        expect(replaceResult.value).toContain('pod/replace-pod replaced')
+      })
+
+      it('should route "kubectl set image" to set image handler', () => {
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const createResult = executor.execute(
+          'kubectl create deployment web-app --image=nginx:1.25'
+        )
+        expect(createResult.ok).toBe(true)
+
+        const setResult = executor.execute(
+          'kubectl set image deployment/web-app nginx=nginx:1.26'
+        )
+        expect(setResult.ok).toBe(true)
+        if (!setResult.ok) {
+          return
+        }
+        expect(setResult.value).toContain('deployment.apps/web-app image updated')
+
+        const deployment = apiServer.findResource('Deployment', 'web-app', 'default')
+        expect(deployment.ok).toBe(true)
+        if (!deployment.ok) {
+          return
+        }
+        expect(deployment.value.spec.template.spec.containers[0].image).toBe(
+          'nginx:1.26'
+        )
+      })
+
+      it('should route "kubectl edit" to edit handler and persist saved changes', () => {
+        let capturedContent = ''
+        let capturedSave: ((newContent: string) => void) | undefined
+        const editorModal: EditorModal = {
+          open: (_filename, content, onSave) => {
+            capturedContent = content
+            capturedSave = onSave
+          }
+        }
+
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger, undefined, undefined, {
+          editorModal
+        })
+        const result = executor.execute('kubectl edit pod nginx-pod')
+        expect(result.ok).toBe(true)
+        expect(capturedSave).toBeDefined()
+        if (capturedSave == null) {
+          return
+        }
+
+        capturedSave(capturedContent.replace('nginx:latest', 'nginx:1.26'))
+        const pod = apiServer.findResource('Pod', 'nginx-pod', 'default')
+        expect(pod.ok).toBe(true)
+        if (!pod.ok) {
+          return
+        }
+        expect(pod.value.spec.containers[0].image).toBe('nginx:1.26')
       })
 
       it('should return yaml for create -f dry-run client without creating resource', () => {

@@ -46,4 +46,51 @@ describe('kubectl help resolver', () => {
     expect(output).toBeDefined()
     expect(output).toContain('config')
   })
+
+  it('should return replace help text', () => {
+    const output = resolveKubectlHelp('kubectl replace --help')
+
+    expect(output).toBeDefined()
+    expect(output).toContain('Replace a resource from a file or from stdin.')
+    expect(output).toContain('kubectl replace -f FILENAME')
+  })
+
+  it('should include replace command in root help', () => {
+    const output = resolveKubectlHelp('kubectl --help')
+
+    expect(output).toBeDefined()
+    expect(output).toContain('replace')
+  })
+
+  it('should return set image help text', () => {
+    const output = resolveKubectlHelp('kubectl set image --help')
+
+    expect(output).toBeDefined()
+    expect(output).toContain('Update the image of a pod template or pod.')
+    expect(output).toContain(
+      'kubectl set image TYPE/NAME CONTAINER=IMAGE [CONTAINER=IMAGE...]'
+    )
+  })
+
+  it('should include set command in root help', () => {
+    const output = resolveKubectlHelp('kubectl --help')
+
+    expect(output).toBeDefined()
+    expect(output).toContain('set')
+  })
+
+  it('should return edit help text', () => {
+    const output = resolveKubectlHelp('kubectl edit --help')
+
+    expect(output).toBeDefined()
+    expect(output).toContain('Edit a resource from the default editor.')
+    expect(output).toContain('kubectl edit TYPE NAME')
+  })
+
+  it('should include edit command in root help', () => {
+    const output = resolveKubectlHelp('kubectl --help')
+
+    expect(output).toBeDefined()
+    expect(output).toContain('edit')
+  })
 })

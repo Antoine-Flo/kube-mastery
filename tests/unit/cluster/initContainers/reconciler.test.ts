@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { reconcileInitContainers } from '../../../../src/core/cluster/initContainers/reconciler'
 import {
-  createPod,
-  type Pod
+  createPod
 } from '../../../../src/core/cluster/ressources/Pod'
 
 describe('InitContainer Reconciler', () => {

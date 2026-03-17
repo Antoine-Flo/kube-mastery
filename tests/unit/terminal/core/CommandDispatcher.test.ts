@@ -269,7 +269,7 @@ describe('CommandDispatcher', () => {
     })
 
     it('should display error message for invalid shell command', () => {
-      const result = dispatcher.execute('ls /invalid/path')
+      dispatcher.execute('ls /invalid/path')
       // Le résultat dépend de l'implémentation, mais l'erreur doit être affichée
       expect(renderer.getOutput()).toBeTruthy()
     })

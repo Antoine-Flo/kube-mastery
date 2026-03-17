@@ -151,6 +151,21 @@ describe('KubectlAutocompleteProvider', () => {
         const results = provider.complete(['kubectl'], 'cre', mockContext)
         expect(results).toEqual([{ text: 'create', suffix: ' ' }])
       })
+
+      it('should complete replace action with unique prefix', () => {
+        const results = provider.complete(['kubectl'], 'rep', mockContext)
+        expect(results).toEqual([{ text: 'replace', suffix: ' ' }])
+      })
+
+      it('should complete set action with unique prefix', () => {
+        const results = provider.complete(['kubectl'], 'se', mockContext)
+        expect(results).toEqual([{ text: 'set', suffix: ' ' }])
+      })
+
+      it('should complete edit action with unique prefix', () => {
+        const results = provider.complete(['kubectl'], 'ed', mockContext)
+        expect(results).toEqual([{ text: 'edit', suffix: ' ' }])
+      })
     })
 
     describe('position 2 (resource type) for non-logs/exec actions', () => {

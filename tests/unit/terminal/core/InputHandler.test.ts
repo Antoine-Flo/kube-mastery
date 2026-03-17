@@ -219,7 +219,7 @@ describe('InputHandler', () => {
 
     it('should not reset history if historyIndex is -1', () => {
       state.historyIndex = -1
-      const resetSpy = vi.spyOn(state, 'resetHistoryNavigation')
+      vi.spyOn(state, 'resetHistoryNavigation')
 
       inputHandler.handleInput('x')
 

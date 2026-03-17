@@ -1,13 +1,12 @@
 ---
 import Layout from '../../../../layouts/Layout.astro'
-import { useTranslations, useLocalePath } from '../../../../i18n/utils'
+import { useLocalePath } from '../../../../i18n/utils'
 import { getTaskGroupOverview } from '../../../../content/tasks/facade'
 import { getCompletedTaskIds } from '../../../../lib/progress/server'
 import { CirclePlay, CircleCheck } from '@lucide/astro'
 
 const lang = Astro.params.lang as 'en' | 'fr'
 const groupId = Astro.params.groupId!
-const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
 const overview = getTaskGroupOverview(groupId, lang)

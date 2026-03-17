@@ -129,11 +129,20 @@ export const createApiServerFacade = (
     podLifecycleEventStore,
     getEventBus: () => eventBus,
     snapshotState: () => clusterState.toJSON(),
-    findResource: (kind, name, namespace) => {
-      return clusterState.findByKind(kind, name, namespace)
+    findResource: <TKind extends ResourceKind>(
+      kind: TKind,
+      name: string,
+      namespace?: string
+    ) => {
+      return clusterState.findByKind(kind, name, namespace) as Result<
+        KindToResource<TKind>
+      >
     },
-    listResources: (kind, namespace) => {
-      return clusterState.listByKind(kind, namespace)
+    listResources: <TKind extends ResourceKind>(
+      kind: TKind,
+      namespace?: string
+    ) => {
+      return clusterState.listByKind(kind, namespace) as KindToResource<TKind>[]
     },
     deleteResource: (kind, name, namespace) => {
       const effectiveNamespace = namespace ?? 'default'
@@ -146,7 +155,7 @@ export const createApiServerFacade = (
           createPodDeletedEvent(
             name,
             effectiveNamespace,
-            findResult.value,
+            findResult.value as Pod,
             'api-server'
           )
         )
@@ -165,7 +174,7 @@ export const createApiServerFacade = (
           createConfigMapDeletedEvent(
             name,
             effectiveNamespace,
-            findResult.value,
+            findResult.value as ConfigMap,
             'api-server'
           )
         )
@@ -184,7 +193,7 @@ export const createApiServerFacade = (
           createSecretDeletedEvent(
             name,
             effectiveNamespace,
-            findResult.value,
+            findResult.value as Secret,
             'api-server'
           )
         )
@@ -196,7 +205,11 @@ export const createApiServerFacade = (
           return findResult as Result<KindToResource<typeof kind>>
         }
         etcd.appendEvent(
-          createPersistentVolumeDeletedEvent(name, findResult.value, 'api-server')
+          createPersistentVolumeDeletedEvent(
+            name,
+            findResult.value as PersistentVolume,
+            'api-server'
+          )
         )
         return findResult as Result<KindToResource<typeof kind>>
       }
@@ -213,7 +226,7 @@ export const createApiServerFacade = (
           createPersistentVolumeClaimDeletedEvent(
             name,
             effectiveNamespace,
-            findResult.value,
+            findResult.value as PersistentVolumeClaim,
             'api-server'
           )
         )
@@ -242,7 +255,7 @@ export const createApiServerFacade = (
           createReplicaSetDeletedEvent(
             name,
             effectiveNamespace,
-            findResult.value,
+            findResult.value as ReplicaSet,
             'api-server'
           )
         )
@@ -261,7 +274,7 @@ export const createApiServerFacade = (
           createDeploymentDeletedEvent(
             name,
             effectiveNamespace,
-            findResult.value,
+            findResult.value as Deployment,
             'api-server'
           )
         )
@@ -280,7 +293,7 @@ export const createApiServerFacade = (
           createDaemonSetDeletedEvent(
             name,
             effectiveNamespace,
-            findResult.value,
+            findResult.value as DaemonSet,
             'api-server'
           )
         )
@@ -299,7 +312,7 @@ export const createApiServerFacade = (
           createServiceDeletedEvent(
             name,
             effectiveNamespace,
-            findResult.value,
+            findResult.value as Service,
             'api-server'
           )
         )
@@ -430,7 +443,7 @@ export const createApiServerFacade = (
             name,
             effectiveNamespace,
             resource as Pod,
-            previous.value,
+            previous.value as Pod,
             'api-server'
           )
         )
@@ -446,7 +459,7 @@ export const createApiServerFacade = (
             name,
             effectiveNamespace,
             resource as ConfigMap,
-            previous.value,
+            previous.value as ConfigMap,
             'api-server'
           )
         )
@@ -462,7 +475,7 @@ export const createApiServerFacade = (
             name,
             effectiveNamespace,
             resource as Secret,
-            previous.value,
+            previous.value as Secret,
             'api-server'
           )
         )
@@ -478,7 +491,7 @@ export const createApiServerFacade = (
             name,
             effectiveNamespace,
             resource as ReplicaSet,
-            previous.value,
+            previous.value as ReplicaSet,
             'api-server'
           )
         )
@@ -494,7 +507,7 @@ export const createApiServerFacade = (
             name,
             effectiveNamespace,
             resource as Deployment,
-            previous.value,
+            previous.value as Deployment,
             'api-server'
           )
         )
@@ -510,7 +523,7 @@ export const createApiServerFacade = (
             name,
             effectiveNamespace,
             resource as DaemonSet,
-            previous.value,
+            previous.value as DaemonSet,
             'api-server'
           )
         )
@@ -526,7 +539,7 @@ export const createApiServerFacade = (
             name,
             effectiveNamespace,
             resource as Service,
-            previous.value,
+            previous.value as Service,
             'api-server'
           )
         )
@@ -541,7 +554,7 @@ export const createApiServerFacade = (
           createPersistentVolumeUpdatedEvent(
             name,
             resource as PersistentVolume,
-            previous.value,
+            previous.value as PersistentVolume,
             'api-server'
           )
         )
@@ -561,7 +574,7 @@ export const createApiServerFacade = (
             name,
             effectiveNamespace,
             resource as PersistentVolumeClaim,
-            previous.value,
+            previous.value as PersistentVolumeClaim,
             'api-server'
           )
         )

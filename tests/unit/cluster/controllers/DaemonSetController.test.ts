@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
+import type {
+  KindToResource,
+  ResourceKind
+} from '../../../../src/core/cluster/ClusterState'
 import {
   createEventBus,
   type EventBus
@@ -93,7 +97,11 @@ describe('DaemonSetController', () => {
       emitEvent: (event: AppEvent) => {
         eventBus.emit(event)
       },
-      createResource: (kind, resource) => {
+      createResource: <TKind extends ResourceKind>(
+        kind: TKind,
+        resource: KindToResource<TKind>,
+        _namespace?: string
+      ) => {
         if (kind === 'Pod') {
           const pod = resource as Pod
           mockState.pods.push(pod)
@@ -102,7 +110,11 @@ describe('DaemonSetController', () => {
         }
         return { ok: false, error: 'unsupported kind' }
       },
-      deleteResource: (kind, name, namespace) => {
+      deleteResource: <TKind extends ResourceKind>(
+        kind: TKind,
+        name: string,
+        namespace?: string
+      ) => {
         if (kind === 'Pod') {
           const index = mockState.pods.findIndex((entry) => {
             return (
@@ -126,7 +138,12 @@ describe('DaemonSetController', () => {
         }
         return { ok: false, error: 'unsupported kind' }
       },
-      updateResource: (kind, name, resource, namespace) => {
+      updateResource: <TKind extends ResourceKind>(
+        kind: TKind,
+        name: string,
+        resource: KindToResource<TKind>,
+        namespace?: string
+      ) => {
         if (kind === 'DaemonSet') {
           const daemonSet = resource as DaemonSet
           const index = mockState.daemonSets.findIndex((entry) => {
@@ -153,7 +170,10 @@ describe('DaemonSetController', () => {
         }
         return { ok: false, error: 'unsupported kind' }
       },
-      listResources: (kind, namespace) => {
+      listResources: <TKind extends ResourceKind>(
+        kind: TKind,
+        namespace?: string
+      ) => {
         if (kind === 'DaemonSet') {
           if (namespace == null) {
             return mockState.daemonSets
@@ -175,7 +195,11 @@ describe('DaemonSetController', () => {
         }
         return []
       },
-      findResource: (kind, name, namespace) => {
+      findResource: <TKind extends ResourceKind>(
+        kind: TKind,
+        name: string,
+        namespace?: string
+      ) => {
         if (kind === 'DaemonSet') {
           const daemonSet = mockState.daemonSets.find((entry) => {
             return (
@@ -262,7 +286,8 @@ describe('DaemonSetController', () => {
         findPersistentVolumeClaim: () => ({ ok: false })
       }
     } as unknown as ApiServerFacade
-    apiServer.getClusterState = () => (apiServer as any).clusterState
+    ;(apiServer as unknown as Record<string, unknown>).getClusterState = () =>
+      (apiServer as unknown as Record<string, unknown>).clusterState
     controller = new DaemonSetController(apiServer)
   })
 
