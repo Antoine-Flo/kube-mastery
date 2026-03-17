@@ -2,6 +2,9 @@
 interface Props {
   bodyClass?: string
   showFooter?: boolean
+  title?: string
+  description?: string
+  robots?: string
 }
 
 import { ClientRouter } from 'astro:transitions'
@@ -16,6 +19,9 @@ import { getLayoutAuthContext } from '../lib/auth/server'
 const lang = getLangFromUrl(Astro.url)
 const bodyClass = Astro.props.bodyClass
 const showFooter = Astro.props.showFooter ?? true
+const pageTitle = Astro.props.title ?? 'KubeMastery'
+const pageDescription = Astro.props.description ?? null
+const robots = Astro.props.robots ?? null
 const navbarVariant = bodyClass?.includes('navbar-app') ? 'app' : 'marketing'
 
 const auth = await getLayoutAuthContext(
@@ -44,7 +50,9 @@ const auth = await getLayoutAuthContext(
     <link rel="icon" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <title>KubeMastery</title>
+    <title>{pageTitle}</title>
+    {pageDescription && <meta name="description" content={pageDescription} />}
+    {robots && <meta name="robots" content={robots} />}
     <PostHog />
     <ClientRouter />
   </head>

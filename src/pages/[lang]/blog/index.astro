@@ -1,0 +1,54 @@
+---
+export const prerender = true
+
+import Layout from '../../../layouts/Layout.astro'
+import { getPublishedBlogSummaries } from '../../../blog/facade'
+import type { BlogLang } from '../../../blog/types'
+import { enabledLanguages } from '../../../i18n/ui'
+import { useLocalePath, useTranslations } from '../../../i18n/utils'
+import '../../../styles/routes/blog.css'
+
+export function getStaticPaths() {
+  return enabledLanguages.map((lang) => ({ params: { lang } }))
+}
+
+const lang = Astro.params.lang as BlogLang
+const localePath = useLocalePath(lang)
+const t = useTranslations(lang)
+const posts = getPublishedBlogSummaries(lang)
+const isFrench = lang === 'fr'
+const pageTitle = t('blog_index_title')
+const pageDescription = t('blog_index_description')
+
+function formatDate(dateValue: string): string {
+  const locale = isFrench ? 'fr-FR' : 'en-US'
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(
+    new Date(dateValue)
+  )
+}
+---
+
+<Layout title={pageTitle} description={pageDescription}>
+  <main class="blog-page">
+    <h1>{pageTitle}</h1>
+    <p class="blog-intro">{t('blog_index_intro')}</p>
+
+    <ul class="blog-list">
+      {
+        posts.map((post) => (
+          <li class="blog-list-item">
+            <div class="blog-list-meta">
+              <span>{formatDate(post.publishedAt)}</span>
+              <span>·</span>
+              <span>{post.author}</span>
+            </div>
+            <h2>
+              <a href={localePath(`/blog/${post.slug}`)}>{post.title}</a>
+            </h2>
+            <p>{post.excerpt}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </main>
+</Layout>

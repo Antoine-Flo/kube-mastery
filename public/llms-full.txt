@@ -1,0 +1,25 @@
+# KubeMastery, LLM Full Public Index
+
+## Product
+- https://kubemastery.com/en
+- https://kubemastery.com/en/pricing
+- https://kubemastery.com/en/supported
+- https://kubemastery.com/en/contact
+
+## Learning Paths (Public Overview)
+- https://kubemastery.com/en/courses
+- https://kubemastery.com/en/modules
+
+## Blog
+- https://kubemastery.com/en/blog
+- https://kubemastery.com/en/blog/*
+- https://kubemastery.com/fr/blog
+- https://kubemastery.com/fr/blog/*
+
+## Legal
+- https://kubemastery.com/en/privacy-policy
+- https://kubemastery.com/en/terms-of-service
+
+## Crawl Scope Guidance
+- Public pages above are indexable.
+- Authenticated areas, profile and lesson detail routes are non-indexable.

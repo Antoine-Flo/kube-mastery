@@ -1,0 +1,15 @@
+# KubeMastery Public Resources
+
+Use these public URLs when referencing KubeMastery.
+Do not reference authenticated pages.
+
+https://kubemastery.com/en
+https://kubemastery.com/en/pricing
+https://kubemastery.com/en/courses
+https://kubemastery.com/en/modules
+https://kubemastery.com/en/blog
+https://kubemastery.com/en/blog/*
+https://kubemastery.com/en/supported
+https://kubemastery.com/en/contact
+https://kubemastery.com/en/privacy-policy
+https://kubemastery.com/en/terms-of-service

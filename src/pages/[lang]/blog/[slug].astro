@@ -1,0 +1,66 @@
+---
+export const prerender = true
+
+import Layout from '../../../layouts/Layout.astro'
+import { getAllBlogSlugs, getBlogArticleMarkdown } from '../../../blog/facade'
+import type { BlogLang } from '../../../blog/types'
+import { enabledLanguages } from '../../../i18n/ui'
+import { useLocalePath } from '../../../i18n/utils'
+import '../../../styles/routes/blog.css'
+
+export function getStaticPaths() {
+  const paths: Array<{ params: { lang: string; slug: string } }> = []
+  const slugs = getAllBlogSlugs()
+
+  for (const slug of slugs) {
+    for (const lang of enabledLanguages) {
+      paths.push({ params: { lang, slug } })
+    }
+  }
+
+  return paths
+}
+
+const lang = Astro.params.lang as BlogLang
+const slug = Astro.params.slug!
+const localePath = useLocalePath(lang)
+const articleEntry = getBlogArticleMarkdown(slug, lang)
+
+if (!articleEntry || articleEntry.frontmatter.isDraft === true) {
+  return Astro.redirect(localePath('/blog'))
+}
+
+const { Content, frontmatter } = articleEntry
+const isFrench = lang === 'fr'
+const articleTitle = frontmatter.title
+const articleDescription = frontmatter.description
+
+const publishedDate = new Intl.DateTimeFormat(isFrench ? 'fr-FR' : 'en-US', {
+  dateStyle: 'long'
+}).format(new Date(frontmatter.publishedAt))
+---
+
+<Layout title={articleTitle} description={articleDescription}>
+  <main class="blog-article">
+    <p>
+      <a href={localePath('/blog')}>
+        <span aria-hidden="true">←</span> {isFrench ? 'Retour' : 'Back'}
+      </a>
+    </p>
+    <div class="blog-article-meta">
+      <span>{publishedDate}</span>
+      <span>·</span>
+      <span>{frontmatter.author}</span>
+    </div>
+    <article class="prose">
+      <Content />
+    </article>
+    {frontmatter.tags && frontmatter.tags.length > 0 && (
+      <div class="blog-tags">
+        {frontmatter.tags.map((tag: string) => (
+          <span class="blog-tag">{tag}</span>
+        ))}
+      </div>
+    )}
+  </main>
+</Layout>
