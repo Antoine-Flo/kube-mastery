@@ -50,6 +50,7 @@ import type { Node } from '../cluster/ressources/Node'
 import type { PersistentVolume } from '../cluster/ressources/PersistentVolume'
 import type { PersistentVolumeClaim } from '../cluster/ressources/PersistentVolumeClaim'
 import type { Pod } from '../cluster/ressources/Pod'
+import { computeContainerImageId } from '../cluster/ressources/Pod'
 import type { ReplicaSet } from '../cluster/ressources/ReplicaSet'
 import type { Secret } from '../cluster/ressources/Secret'
 import type { Service } from '../cluster/ressources/Service'
@@ -219,6 +220,7 @@ const resetPodToContainerCreating = (
         ...previousStatus,
         name: container.name,
         image: container.image,
+        imageID: computeContainerImageId(container.image),
         ready: false,
         restartCount: previousStatus?.restartCount ?? 0,
         stateDetails: {
@@ -243,6 +245,7 @@ const resetPodToContainerCreating = (
       ...previousStatus,
       name: container.name,
       image: container.image,
+      imageID: computeContainerImageId(container.image),
       ready: false,
       restartCount: previousStatus?.restartCount ?? 0,
       stateDetails: {

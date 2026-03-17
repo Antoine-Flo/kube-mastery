@@ -1196,11 +1196,8 @@ export const describePod = (
     lines.push(`  ${container.name}:`)
     lines.push(`    Container ID:  ${status?.containerID ?? '<none>'}`)
     lines.push(`    Image:         ${container.image}`)
-    const rawImageId = status?.imageID ?? '<none>'
-    const imageId =
-      header.priorityClassName != null && rawImageId.includes('@sha256:')
-        ? `sha256:${rawImageId.split('@sha256:')[1]}`
-        : rawImageId
+    // Image ID: full path with digest (e.g. docker.io/library/busybox@sha256:...), like kind/kubectl
+    const imageId = status?.imageID ?? '<none>'
     lines.push(`    Image ID:      ${imageId}`)
     if (container.ports != null && container.ports.length > 0) {
       const firstPort = container.ports[0]

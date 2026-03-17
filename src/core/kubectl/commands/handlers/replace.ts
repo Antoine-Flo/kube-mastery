@@ -1,6 +1,7 @@
 import type { KindToResource, ResourceKind } from '../../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { Pod } from '../../../cluster/ressources/Pod'
+import { computeContainerImageId } from '../../../cluster/ressources/Pod'
 import type { FileSystem } from '../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
@@ -44,6 +45,7 @@ const resetPodManifestForReplacement = (
       ...previousStatus,
       name: container.name,
       image: container.image,
+      imageID: computeContainerImageId(container.image),
       ready: false,
       restartCount: previousStatus?.restartCount ?? 0,
       stateDetails: {

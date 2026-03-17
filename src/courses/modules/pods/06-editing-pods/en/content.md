@@ -115,7 +115,6 @@ Let's experience Pod immutability first-hand and practice the correct workaround
 
 ```bash
 kubectl run edit-demo --image=nginx:1.28 --env="LOG_LEVEL=info"
-kubectl get pod edit-demo
 ```
 
 **2. Try to edit an immutable field:**
@@ -124,7 +123,7 @@ kubectl get pod edit-demo
 kubectl edit pod edit-demo
 ```
 
-In the editor, find the `name` field of the container (e.g. change `edit-demo` to `web`) and save. You'll see an error message at the bottom: the change is rejected. Press `:q!` in vim (or `Ctrl+X` in nano) to exit without saving.
+In the editor, find the `name` field of the container (e.g. change `edit-demo` to `web`) and save. You'll see an error message at the bottom: the change is rejected.
 
 **3. Export the manifest:**
 
@@ -134,7 +133,7 @@ kubectl get pod edit-demo -o yaml > edit-demo.yaml
 
 **4. Edit the exported file:**
 
-Open `edit-demo.yaml` and change the image from `nginx:1.28` to `nginx:1.26`. Also add a new environment variable:
+Open `edit-demo.yaml` and change the image from `nginx:1.28` to `nginx:1.21`. Also add a new environment variable:
 
 ```yaml
 env:

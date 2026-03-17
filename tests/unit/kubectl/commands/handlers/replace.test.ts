@@ -169,6 +169,10 @@ status:
     expect(pod.value.status.containerStatuses?.[0]?.stateDetails?.reason).toBe(
       'ContainerCreating'
     )
+    expect(pod.value.status.containerStatuses?.[0]?.image).toBe('not-a-real-image:9.9')
+    expect(pod.value.status.containerStatuses?.[0]?.imageID).toContain(
+      'docker.io/library/not-a-real-image@sha256:'
+    )
   })
 
   it('should return not found when replacing non existing resource', () => {

@@ -146,5 +146,11 @@ describe('ApiServerFacade', () => {
     expect(updateResult.value.status.containerStatuses?.[0]?.stateDetails?.reason).toBe(
       'ContainerCreating'
     )
+    expect(updateResult.value.status.containerStatuses?.[0]?.image).toBe(
+      'invalid-registry.local/web:latest'
+    )
+    expect(updateResult.value.status.containerStatuses?.[0]?.imageID).toContain(
+      'invalid-registry.local/web@sha256:'
+    )
   })
 })

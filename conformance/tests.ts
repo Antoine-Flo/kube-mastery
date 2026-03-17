@@ -69,11 +69,14 @@ export const conformanceTests: ConformanceScenarioCatalog = {
   'pod': {
     setup: [
       'kubectl run web --image=busybox --command -- sleep 3600',
-      'kubectl wait --for=condition=Ready pod/web --timeout=60s'
+      'kubectl wait --for=condition=Ready pod/web --timeout=60s',
+      'kubectl run edit-demo --image=nginx:1.28 --env="LOG_LEVEL=info"',
+      'kubectl wait --for=condition=Ready pod/edit-demo --timeout=60s'
     ],
     cmds: [
       'kubectl get pod web',
       'kubectl describe pod web',
+      'kubectl describe pod edit-demo',
       'kubectl logs web --tail=5',
       'kubectl exec web -- env',
       'kubectl label pod web team=platform',

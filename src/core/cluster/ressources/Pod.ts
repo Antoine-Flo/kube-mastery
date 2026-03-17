@@ -301,14 +301,41 @@ const stableHash = (value: string): string => {
     hash = (hash << 5) - hash + value.charCodeAt(index)
     hash |= 0
   }
-  const normalized = (hash >>> 0).toString(16).padStart(8, '0')
-  return normalized
+  return (hash >>> 0).toString(16).padStart(8, '0')
 }
 
-const computeContainerImageId = (image: string): string => {
-  const normalizedImage = image.includes(':') ? image : `${image}:latest`
-  const digest = stableHash(normalizedImage).repeat(8).slice(0, 64)
-  return `${normalizedImage}@sha256:${digest}`
+/**
+ * Image reference to path without tag (e.g. nginx:1.28 -> docker.io/library/nginx).
+ * Matches kubectl/kind style: default registry docker.io/library, no tag in path.
+ */
+const imageRefToPath = (image: string): string => {
+  const trimmed = image.trim()
+  let registry = 'docker.io/library'
+  let nameWithTag = trimmed
+  const firstSlash = trimmed.indexOf('/')
+  const firstColon = trimmed.indexOf(':')
+  if (firstSlash !== -1 && (firstColon === -1 || firstSlash < firstColon)) {
+    registry = trimmed.substring(0, firstSlash)
+    nameWithTag = trimmed.substring(firstSlash + 1)
+  }
+  const colonIndex = nameWithTag.indexOf(':')
+  const name = colonIndex !== -1 ? nameWithTag.substring(0, colonIndex) : nameWithTag
+  return `${registry}/${name}`
+}
+
+/** 64-char hex digest from image string (deterministic, kind-style). */
+const imageToSha256Digest = (image: string): string => {
+  const parts: string[] = []
+  for (let i = 0; i < 8; i++) {
+    parts.push(stableHash(image + String(i)))
+  }
+  return parts.join('')
+}
+
+export const computeContainerImageId = (image: string): string => {
+  const path = imageRefToPath(image)
+  const digest = imageToSha256Digest(image)
+  return `${path}@sha256:${digest}`
 }
 
 const computeContainerId = (
