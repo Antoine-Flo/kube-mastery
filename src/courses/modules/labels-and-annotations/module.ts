@@ -8,5 +8,6 @@ export const module: LocalModule = {
   description: {
     en: 'Labels, sélecteurs et annotations : organiser et filtrer les objets.'
   },
-  tags: ['ckad', 'cka', 'beginner']
+  tags: ['ckad', 'cka', 'beginner'],
+  draft: true
 }

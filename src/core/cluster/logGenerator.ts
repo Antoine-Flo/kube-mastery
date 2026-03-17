@@ -6,7 +6,9 @@ import { createImageRegistry } from '../containers/registry/ImageRegistry'
 import type { LogProfile } from '../containers/registry/seedRegistry'
 
 const MAX_LOGS = 200
-const BASE_TIME_EPOCH = Date.parse('2026-02-28T16:00:00Z')
+const DEFAULT_INTERVAL_SECONDS_MIN = 1
+const DEFAULT_INTERVAL_SECONDS_MAX = 7
+const DEFAULT_BASE_LOOKBACK_SECONDS = 120
 
 type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'DEBUG'
 type WorkloadProfile = LogProfile
@@ -17,6 +19,21 @@ export interface LogGenerationContext {
   containerName?: string
   /** When set and non-zero, generated logs end with crash-style lines (e.g. exit 1) */
   simulatedExitCode?: number
+  /** Optional baseline timestamp used when creating a new stream */
+  baseTimeMs?: number
+  /** Optional current time override for deterministic tests */
+  nowMs?: number
+}
+
+export interface GeneratedLogEntry {
+  timestamp: string
+  line: string
+}
+
+export interface LogStreamState {
+  seed: string
+  lastGeneratedAtMs: number
+  nextSequence: number
 }
 const imageRegistry = createImageRegistry()
 
@@ -55,6 +72,18 @@ const createDeterministicRandom = (seedValue: string): DeterministicRandom => {
     seed ^= seed << 5
     return (seed >>> 0) / 4294967296
   }
+}
+
+export const buildLogSeed = (
+  containerImage: string,
+  context?: LogGenerationContext
+): string => {
+  return [
+    containerImage,
+    context?.namespace ?? 'default',
+    context?.podName ?? 'pod',
+    context?.containerName ?? 'container'
+  ].join('|')
 }
 
 const randomChoice = <T>(rng: DeterministicRandom, items: T[]): T => {
@@ -385,9 +414,16 @@ const generateLogLine = (
   return generateGenericLog(level, time, index, rng)
 }
 
-const resolveBaseTime = (seed: string): Date => {
-  const seedOffsetSeconds = stringHash(seed) % 10800
-  return new Date(BASE_TIME_EPOCH - seedOffsetSeconds * 1000)
+const resolveBaseTime = (
+  seed: string,
+  context?: LogGenerationContext
+): Date => {
+  if (context?.baseTimeMs != null) {
+    return new Date(context.baseTimeMs)
+  }
+  const referenceNowMs = context?.nowMs ?? Date.now()
+  const seedOffsetSeconds = stringHash(seed) % DEFAULT_BASE_LOOKBACK_SECONDS
+  return new Date(referenceNowMs - seedOffsetSeconds * 1000)
 }
 
 /**
@@ -403,6 +439,169 @@ export function generateCrashLogLines(
     return [`/bin/sh: exit ${exitCode}`]
   }
   return [`Process exited with code ${exitCode}`]
+}
+
+interface GenerateLogEntriesOptions {
+  context?: LogGenerationContext
+  startTimeMs?: number
+  startSequence?: number
+  seed?: string
+}
+
+interface AppendLogEntriesOptions {
+  context?: LogGenerationContext
+  existingEntries?: GeneratedLogEntry[]
+  streamState?: LogStreamState
+  nowMs?: number
+  minimumTotalEntries?: number
+  maxEntries?: number
+}
+
+interface AppendLogEntriesResult {
+  entries: GeneratedLogEntry[]
+  streamState: LogStreamState
+}
+
+const createSequenceRandom = (
+  seed: string,
+  sequence: number
+): DeterministicRandom => {
+  return createDeterministicRandom(`${seed}|${sequence}`)
+}
+
+const resolveProfile = (containerImage: string): WorkloadProfile => {
+  return getProfileFromRegistry(containerImage) ?? detectProfileFromImage(containerImage)
+}
+
+const generateEntryAtSequence = (
+  containerImage: string,
+  profile: WorkloadProfile,
+  seed: string,
+  sequence: number,
+  previousTimeMs: number
+): { entry: GeneratedLogEntry; nextTimeMs: number } => {
+  const rng = createSequenceRandom(seed, sequence)
+  const intervalSeconds = randomInt(
+    rng,
+    DEFAULT_INTERVAL_SECONDS_MIN,
+    DEFAULT_INTERVAL_SECONDS_MAX
+  )
+  const currentTimeMs = previousTimeMs + intervalSeconds * 1000
+  const lineTime = new Date(currentTimeMs)
+  const startupLogs = getStartupLogsForImage(containerImage)
+  const startupLine = startupLogs[sequence]
+  if (startupLine != null) {
+    return {
+      entry: {
+        timestamp: lineTime.toISOString(),
+        line: startupLine
+      },
+      nextTimeMs: currentTimeMs
+    }
+  }
+
+  const level = getLogLevel(rng, sequence, profile)
+  return {
+    entry: {
+      timestamp: lineTime.toISOString(),
+      line: generateLogLine(profile, level, lineTime, sequence, rng)
+    },
+    nextTimeMs: currentTimeMs
+  }
+}
+
+export const generateLogEntries = (
+  containerImage: string,
+  count: number,
+  options?: GenerateLogEntriesOptions
+): GeneratedLogEntry[] => {
+  if (count <= 0) {
+    return []
+  }
+  const actualCount = Math.min(count, MAX_LOGS)
+  const seed = options?.seed ?? buildLogSeed(containerImage, options?.context)
+  const baseTimeMs =
+    options?.startTimeMs ?? resolveBaseTime(seed, options?.context).getTime()
+  const startSequence = options?.startSequence ?? 0
+  const profile = resolveProfile(containerImage)
+  const entries: GeneratedLogEntry[] = []
+  let currentTimeMs = baseTimeMs
+
+  for (let offset = 0; offset < actualCount; offset++) {
+    const sequence = startSequence + offset
+    const generated = generateEntryAtSequence(
+      containerImage,
+      profile,
+      seed,
+      sequence,
+      currentTimeMs
+    )
+    entries.push(generated.entry)
+    currentTimeMs = generated.nextTimeMs
+  }
+
+  return entries
+}
+
+export const appendLogEntriesUntil = (
+  containerImage: string,
+  options?: AppendLogEntriesOptions
+): AppendLogEntriesResult => {
+  const existingEntries = options?.existingEntries ?? []
+  const streamState = options?.streamState
+  const maxEntries = Math.max(1, options?.maxEntries ?? MAX_LOGS)
+  const minimumTotalEntries = Math.max(0, options?.minimumTotalEntries ?? 0)
+  const seed = streamState?.seed ?? buildLogSeed(containerImage, options?.context)
+  const profile = resolveProfile(containerImage)
+  const nowMs = options?.nowMs ?? options?.context?.nowMs ?? Date.now()
+  const resolvedBaseTimeMs = resolveBaseTime(seed, options?.context).getTime()
+  const requiredLookbackMs =
+    minimumTotalEntries * DEFAULT_INTERVAL_SECONDS_MAX * 1000
+  const fallbackBaseTimeMs =
+    existingEntries.length === 0 &&
+    streamState == null &&
+    requiredLookbackMs > 0 &&
+    resolvedBaseTimeMs > nowMs - requiredLookbackMs
+      ? nowMs - requiredLookbackMs
+      : resolvedBaseTimeMs
+
+  let currentTimeMs = streamState?.lastGeneratedAtMs ?? fallbackBaseTimeMs
+  let nextSequence = streamState?.nextSequence ?? existingEntries.length
+  const entries = existingEntries.slice()
+  let appendedCount = 0
+
+  const shouldContinue = (): boolean => {
+    if (entries.length < minimumTotalEntries) {
+      return true
+    }
+    return currentTimeMs < nowMs
+  }
+
+  while (shouldContinue() && appendedCount < maxEntries) {
+    const generated = generateEntryAtSequence(
+      containerImage,
+      profile,
+      seed,
+      nextSequence,
+      currentTimeMs
+    )
+    if (entries.length >= maxEntries) {
+      entries.shift()
+    }
+    entries.push(generated.entry)
+    currentTimeMs = generated.nextTimeMs
+    nextSequence += 1
+    appendedCount += 1
+  }
+
+  return {
+    entries,
+    streamState: {
+      seed,
+      lastGeneratedAtMs: currentTimeMs,
+      nextSequence
+    }
+  }
 }
 
 /**
@@ -421,33 +620,15 @@ export const generateLogs = (
     return []
   }
   const actualCount = Math.min(count, MAX_LOGS)
-  const startupLogs = getStartupLogsForImage(containerImage)
-  const selectedStartupLogs = startupLogs.slice(0, actualCount)
-  const remainingCount = actualCount - selectedStartupLogs.length
-  if (remainingCount === 0) {
-    return selectedStartupLogs
-  }
-  const seed = [
-    containerImage,
-    context?.namespace ?? 'default',
-    context?.podName ?? 'pod',
-    context?.containerName ?? 'container'
-  ].join('|')
-  const rng = createDeterministicRandom(seed)
-  const profile =
-    getProfileFromRegistry(containerImage) ?? detectProfileFromImage(containerImage)
-  const baseTime = resolveBaseTime(seed)
-  const logs: string[] = [...selectedStartupLogs]
-
-  let currentOffsetSeconds = 0
-  const startIndex = selectedStartupLogs.length
-  const endIndex = startIndex + remainingCount
-  for (let index = startIndex; index < endIndex; index++) {
-    currentOffsetSeconds += randomInt(rng, 1, 7)
-    const lineTime = new Date(baseTime.getTime() + currentOffsetSeconds * 1000)
-    const level = getLogLevel(rng, index, profile)
-    logs.push(generateLogLine(profile, level, lineTime, index, rng))
-  }
+  const seed = buildLogSeed(containerImage, context)
+  const baseTime = resolveBaseTime(seed, context)
+  const entries = generateLogEntries(containerImage, actualCount, {
+    context,
+    seed,
+    startSequence: 0,
+    startTimeMs: baseTime.getTime()
+  })
+  const logs: string[] = entries.map((entry) => entry.line)
 
   const simulatedExit = context?.simulatedExitCode
   if (

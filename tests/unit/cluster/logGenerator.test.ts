@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { generateLogs } from '../../../src/core/cluster/logGenerator'
+import {
+  appendLogEntriesUntil,
+  generateLogEntries,
+  generateLogs
+} from '../../../src/core/cluster/logGenerator'
 
 describe('LogGenerator', () => {
   describe('generateLogs - count validation', () => {
@@ -215,6 +219,84 @@ describe('LogGenerator', () => {
       const logs = generateLogs('nginx:latest', 1)
       expect(logs).toHaveLength(1)
       expect(logs[0]).toBeTruthy()
+    })
+  })
+
+  describe('generateLogEntries', () => {
+    it('should generate entries with timestamps and lines', () => {
+      const entries = generateLogEntries('generic:latest', 5, {
+        context: {
+          namespace: 'default',
+          podName: 'demo',
+          containerName: 'app',
+          baseTimeMs: Date.parse('2026-03-17T12:00:00Z'),
+          nowMs: Date.parse('2026-03-17T12:00:00Z')
+        }
+      })
+
+      expect(entries).toHaveLength(5)
+      expect(entries[0]).toHaveProperty('timestamp')
+      expect(entries[0]).toHaveProperty('line')
+    })
+
+    it('should keep timestamps increasing', () => {
+      const entries = generateLogEntries('generic:latest', 8, {
+        context: {
+          namespace: 'default',
+          podName: 'demo',
+          containerName: 'app',
+          baseTimeMs: Date.parse('2026-03-17T12:00:00Z'),
+          nowMs: Date.parse('2026-03-17T12:00:00Z')
+        }
+      })
+      const timestamps = entries.map((entry) => {
+        return Date.parse(entry.timestamp)
+      })
+
+      for (let index = 1; index < timestamps.length; index++) {
+        expect(timestamps[index]).toBeGreaterThan(timestamps[index - 1])
+      }
+    })
+  })
+
+  describe('appendLogEntriesUntil', () => {
+    it('should append entries until now and expose stream state', () => {
+      const baseTimeMs = Date.parse('2026-03-17T12:00:00Z')
+      const firstAppend = appendLogEntriesUntil('generic:latest', {
+        context: {
+          namespace: 'default',
+          podName: 'demo',
+          containerName: 'app',
+          baseTimeMs,
+          nowMs: baseTimeMs + 20_000
+        },
+        existingEntries: [],
+        nowMs: baseTimeMs + 20_000,
+        minimumTotalEntries: 5
+      })
+
+      expect(firstAppend.entries.length).toBeGreaterThanOrEqual(5)
+      expect(firstAppend.streamState.nextSequence).toBe(firstAppend.entries.length)
+
+      const secondAppend = appendLogEntriesUntil('generic:latest', {
+        context: {
+          namespace: 'default',
+          podName: 'demo',
+          containerName: 'app',
+          baseTimeMs,
+          nowMs: baseTimeMs + 60_000
+        },
+        existingEntries: firstAppend.entries,
+        streamState: firstAppend.streamState,
+        nowMs: baseTimeMs + 60_000
+      })
+
+      expect(secondAppend.entries.length).toBeGreaterThanOrEqual(
+        firstAppend.entries.length
+      )
+      expect(secondAppend.streamState.nextSequence).toBeGreaterThan(
+        firstAppend.streamState.nextSequence
+      )
     })
   })
 })

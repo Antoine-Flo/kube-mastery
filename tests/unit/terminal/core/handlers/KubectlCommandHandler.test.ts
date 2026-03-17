@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createPodCreatedEvent,
   createPodUpdatedEvent
@@ -659,6 +659,50 @@ describe('KubectlCommandHandler', () => {
       })
       context.apiServer.eventBus.emit(createPodCreatedEvent(unrelated, 'test'))
       expect(renderer.getOutput()).toBe('')
+    })
+
+    it('should stream new lines for kubectl logs -f', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-03-17T15:00:00Z'))
+      context.apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'log-demo',
+          namespace: 'default',
+          containers: [{ name: 'app', image: 'generic:latest' }]
+        })
+      )
+
+      const result = handler.execute('kubectl logs -f log-demo', context)
+      expect(result.ok).toBe(true)
+      expect(streamStop).not.toBeNull()
+      renderer.clearOutput()
+
+      vi.advanceTimersByTime(30000)
+      const streamedOutput = renderer.getOutput()
+      expect(streamedOutput.length).toBeGreaterThan(0)
+
+      streamStop?.()
+      renderer.clearOutput()
+      vi.advanceTimersByTime(30000)
+      expect(renderer.getOutput()).toBe('')
+      vi.useRealTimers()
+    })
+
+    it('should reject output redirection in logs follow mode', () => {
+      context.apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'log-demo',
+          namespace: 'default',
+          containers: [{ name: 'app', image: 'generic:latest' }]
+        })
+      )
+      const result = handler.execute('kubectl logs -f log-demo > out.txt', context)
+      expect(result.ok).toBe(false)
+      expect(renderer.getOutput()).toContain(
+        'unsupported output redirection syntax for follow mode'
+      )
     })
   })
 })

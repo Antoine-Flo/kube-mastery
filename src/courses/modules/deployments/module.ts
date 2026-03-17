@@ -8,5 +8,6 @@ export const module: LocalModule = {
   description: {
     en: 'Déployer, scaler et mettre à jour des applications de manière déclarative.'
   },
-  tags: ['ckad', 'cka', 'beginner']
+  tags: ['ckad', 'cka', 'beginner'],
+  draft: true
 }

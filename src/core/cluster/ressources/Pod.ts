@@ -235,6 +235,17 @@ interface PodStatus {
   containerStatuses?: ContainerStatus[]
 }
 
+export interface PodLogEntry {
+  timestamp: string
+  line: string
+}
+
+export interface PodLogStreamState {
+  seed: string
+  lastGeneratedAtMs: number
+  nextSequence: number
+}
+
 export interface Pod extends KubernetesResource {
   apiVersion: 'v1'
   kind: 'Pod'
@@ -245,6 +256,9 @@ export interface Pod extends KubernetesResource {
     logs?: string[]
     /** Logs from the previous container instance (before last restart), for kubectl logs --previous */
     previousLogs?: string[]
+    logEntries?: PodLogEntry[]
+    previousLogEntries?: PodLogEntry[]
+    logStreamState?: PodLogStreamState
     containers: {
       [containerName: string]: {
         fileSystem: FileSystemState
@@ -290,6 +304,9 @@ interface PodConfig {
   logs?: string[]
   /** Logs from the previous container instance (for tests / kubectl logs --previous) */
   previousLogs?: string[]
+  logEntries?: PodLogEntry[]
+  previousLogEntries?: PodLogEntry[]
+  logStreamState?: PodLogStreamState
   ownerReferences?: OwnerReference[]
   /** Override container statuses (from YAML status) for display */
   containerStatusOverrides?: ContainerStatusOverride[]
@@ -636,6 +653,11 @@ export const createPod = (config: PodConfig): Pod => {
     _simulator: {
       ...(config.logs && { logs: config.logs }),
       ...(config.previousLogs && { previousLogs: config.previousLogs }),
+      ...(config.logEntries && { logEntries: config.logEntries }),
+      ...(config.previousLogEntries && {
+        previousLogEntries: config.previousLogEntries
+      }),
+      ...(config.logStreamState && { logStreamState: config.logStreamState }),
       containers: simulatorContainers
     }
   }

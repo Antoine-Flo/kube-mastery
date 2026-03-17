@@ -8,5 +8,6 @@ export const module: LocalModule = {
   description: {
     en: "Exposer des Pods avec un point d'accès réseau stable."
   },
-  tags: ['ckad', 'cka', 'beginner']
+  tags: ['ckad', 'cka', 'beginner'],
+  draft: true
 }

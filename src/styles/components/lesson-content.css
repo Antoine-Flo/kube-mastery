@@ -63,6 +63,14 @@
   text-decoration: underline;
 }
 
+.lesson-content .meme {
+  max-width: 500px;
+  border-radius: var(--radius-l3);
+  margin: 0 auto;
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+}
+
 .lesson-content .mermaid-card-body {
   text-align: center;
 }

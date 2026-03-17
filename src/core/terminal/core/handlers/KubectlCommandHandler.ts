@@ -331,6 +331,9 @@ const executeProcessCommandDirective = (
     _simulator: {
       ...pod._simulator,
       previousLogs: pod._simulator.logs ?? [],
+      previousLogEntries: pod._simulator.logEntries ?? [],
+      logEntries: [],
+      logStreamState: undefined,
       logs: []
     }
   }
@@ -786,6 +789,46 @@ const buildWatchDeltaOutput = (
   return changedRows.join('\n')
 }
 
+const isLogsFollowEnabled = (parsedCommand: ParsedCommand): boolean => {
+  if (parsedCommand.action !== 'logs') {
+    return false
+  }
+  if (parsedCommand.flags.follow === true) {
+    return true
+  }
+  return parsedCommand.flags.f !== undefined
+}
+
+const buildLogsFollowDeltaOutput = (
+  previousOutput: string,
+  nextOutput: string
+): string => {
+  if (nextOutput.length === 0) {
+    return ''
+  }
+  if (previousOutput.length === 0) {
+    return nextOutput
+  }
+  const previousLines = previousOutput.split('\n').filter((line) => line.length > 0)
+  const nextLines = nextOutput.split('\n').filter((line) => line.length > 0)
+  if (nextLines.length <= previousLines.length) {
+    return ''
+  }
+  const sharedLength = Math.min(previousLines.length, nextLines.length)
+  let firstChangedIndex = sharedLength
+  for (let index = 0; index < sharedLength; index++) {
+    if (previousLines[index] !== nextLines[index]) {
+      firstChangedIndex = index
+      break
+    }
+  }
+  const newLines = nextLines.slice(firstChangedIndex)
+  if (newLines.length === 0) {
+    return ''
+  }
+  return newLines.join('\n')
+}
+
 const parseKubectlOutputRedirection = (
   command: string
 ): ExecutionResult & { parsed?: ParsedRedirection } => {
@@ -900,12 +943,25 @@ export class KubectlCommandHandler implements CommandHandler {
       parsedCommand.action === 'get' &&
       parsedCommand.rawPath == null &&
       isWatchEnabled(parsedCommand)
+    const logsFollowEnabled = isLogsFollowEnabled(parsedCommand)
 
     if (watchEnabled && parsedRedirection.outputFile != null) {
       const watchRedirectionError =
         'unsupported output redirection syntax for watch mode'
       context.output.writeOutput(watchRedirectionError)
       return error(watchRedirectionError)
+    }
+    if (logsFollowEnabled && parsedRedirection.outputFile != null) {
+      const followRedirectionError =
+        'unsupported output redirection syntax for follow mode'
+      context.output.writeOutput(followRedirectionError)
+      return error(followRedirectionError)
+    }
+    if (logsFollowEnabled && parsedCommand.flags.previous === true) {
+      const previousWithFollowError =
+        'error: only one of follow (-f) or previous (-p) is allowed'
+      context.output.writeOutput(previousWithFollowError)
+      return error(previousWithFollowError)
     }
     if (watchEnabled && parsedCommand.resource != null) {
       const supportedWatchEvents = getWatchEventTypes(parsedCommand.resource)
@@ -1068,6 +1124,45 @@ export class KubectlCommandHandler implements CommandHandler {
       context.startStream(() => {
         unsubscribe()
         watchTableWriter.reset()
+      })
+      return success('')
+    }
+
+    if (logsFollowEnabled && context.startStream != null) {
+      if (!result.ok) {
+        context.output.writeOutput(result.error)
+        return result
+      }
+      if (result.value != null && result.value.length > 0) {
+        context.output.writeOutput(result.value)
+      }
+
+      let lastOutput = result.value || ''
+      const intervalId = setInterval(() => {
+        const next = executor.execute(parsedRedirection.command)
+        const nextOutput = next.ok ? next.value || '' : next.error
+        if (!next.ok) {
+          context.output.writeOutput(next.error)
+          if (context.stopStream != null) {
+            context.stopStream()
+          } else {
+            clearInterval(intervalId)
+          }
+          return
+        }
+        if (nextOutput === lastOutput) {
+          return
+        }
+        const deltaOutput = buildLogsFollowDeltaOutput(lastOutput, nextOutput)
+        lastOutput = nextOutput
+        if (deltaOutput.length === 0) {
+          return
+        }
+        context.output.writeOutput(deltaOutput)
+      }, 1000)
+
+      context.startStream(() => {
+        clearInterval(intervalId)
       })
       return success('')
     }

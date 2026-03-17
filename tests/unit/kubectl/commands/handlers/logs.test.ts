@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { vi } from 'vitest'
 import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { handleLogs as handleLogsApi } from '../../../../../src/core/kubectl/commands/handlers/logs'
 import { createNamespace } from '../../../../../src/core/cluster/ressources/Namespace'
@@ -187,15 +188,12 @@ describe('kubectl logs handler', () => {
         return
       }
 
-      expect(result.value).toBe(
-        [
-          '2026/03/11 12:18:12 [notice] 1#1: start worker process 55',
-          '2026/03/11 12:18:12 [notice] 1#1: start worker process 56',
-          '2026/03/11 12:18:12 [notice] 1#1: start worker process 57',
-          '2026/03/11 12:18:12 [notice] 1#1: start worker process 58',
-          '2026/03/11 12:18:12 [notice] 1#1: start worker process 59'
-        ].join('\n')
-      )
+      const lines = result.value.split('\n')
+      expect(lines).toHaveLength(5)
+      const hasNginxNoticeLines = lines.every((line) => {
+        return line.includes('[notice] 1#1:')
+      })
+      expect(hasNginxNoticeLines).toBe(true)
     })
 
     it('should return startup profile logs for redis sidecar with tail', () => {
@@ -222,15 +220,17 @@ describe('kubectl logs handler', () => {
         return
       }
 
-      expect(result.value).toBe(
-        [
-          '1:C 11 Mar 2026 12:18:16.565 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf',
-          '1:M 11 Mar 2026 12:18:16.565 * monotonic clock: POSIX clock_gettime',
-          '1:M 11 Mar 2026 12:18:16.566 * Running mode=standalone, port=6379.',
-          '1:M 11 Mar 2026 12:18:16.566 # Server initialized',
-          '1:M 11 Mar 2026 12:18:16.566 * Ready to accept connections'
-        ].join('\n')
-      )
+      const lines = result.value.split('\n')
+      expect(lines).toHaveLength(5)
+      const hasRedisContent = lines.some((line) => {
+        return (
+          line.includes('Background saving') ||
+          line.includes('Ready to accept') ||
+          line.includes('DB 0:') ||
+          line.includes('Accepted connection')
+        )
+      })
+      expect(hasRedisContent).toBe(true)
     })
 
     it('should return error for non-existent container', () => {
@@ -362,6 +362,142 @@ describe('kubectl logs handler', () => {
       if (result.ok) {
         expect(result.value.length).toBeGreaterThan(0)
       }
+    })
+  })
+
+  describe('--since flag', () => {
+    it('should filter logs newer than duration', () => {
+      const nowMs = Date.now()
+      const oldLine = `${new Date(nowMs - 2 * 60 * 1000).toISOString().substring(0, 19)}Z INFO old`
+      const recentLine = `${new Date(nowMs - 10 * 1000).toISOString().substring(0, 19)}Z INFO recent`
+      const pod = createPod({
+        name: 'since-pod',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'nginx:latest' }],
+        logs: [oldLine, recentLine]
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'since-pod',
+        flags: { since: '30s' }
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
+
+      expect(result).toEqual({ ok: true, value: recentLine })
+    })
+
+    it('should return kubectl-like error for invalid duration', () => {
+      const pod = createPod({
+        name: 'since-invalid',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'nginx:latest' }]
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'since-invalid',
+        flags: { since: 'abc' }
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('invalid argument "abc"')
+        expect(result.error).toContain('"--since"')
+      }
+    })
+
+    it('should apply --since before --tail', () => {
+      const nowMs = Date.now()
+      const staleLine = `${new Date(nowMs - 5 * 60 * 1000).toISOString().substring(0, 19)}Z INFO stale`
+      const recent1 = `${new Date(nowMs - 25 * 1000).toISOString().substring(0, 19)}Z INFO r1`
+      const recent2 = `${new Date(nowMs - 15 * 1000).toISOString().substring(0, 19)}Z INFO r2`
+      const recent3 = `${new Date(nowMs - 5 * 1000).toISOString().substring(0, 19)}Z INFO r3`
+      const pod = createPod({
+        name: 'since-tail',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'nginx:latest' }],
+        logs: [staleLine, recent1, recent2, recent3]
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'since-tail',
+        flags: { since: '30s', tail: '2' }
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
+
+      expect(result).toEqual({ ok: true, value: `${recent2}\n${recent3}` })
+    })
+
+    it('should support --previous with --since', () => {
+      const nowMs = Date.now()
+      const oldPrevious = `${new Date(nowMs - 4 * 60 * 1000).toISOString().substring(0, 19)}Z INFO old-previous`
+      const recentPrevious = `${new Date(nowMs - 10 * 1000).toISOString().substring(0, 19)}Z INFO recent-previous`
+      const pod = createPod({
+        name: 'previous-since',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'nginx:latest' }],
+        containerStatusOverrides: [{ name: 'app', restartCount: 1 }],
+        previousLogs: [oldPrevious, recentPrevious]
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'previous-since',
+        flags: { previous: true, since: '30s' }
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
+
+      expect(result).toEqual({ ok: true, value: recentPrevious })
+    })
+
+    it('should not leak old lines on first generation with --since', () => {
+      const fixedNow = Date.parse('2026-03-17T14:21:47Z')
+      vi.useFakeTimers()
+      vi.setSystemTime(fixedNow)
+
+      const pod = createPod({
+        name: 'log-demo',
+        namespace: 'default',
+        creationTimestamp: '2026-03-17T14:19:30Z',
+        startTime: '2026-03-17T14:19:30Z',
+        containers: [{ name: 'app', image: 'generic:latest' }]
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'log-demo',
+        flags: { since: '1m' }
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        const lines = result.value.length === 0 ? [] : result.value.split('\n')
+        for (const line of lines) {
+          const match = line.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)/)
+          expect(match).not.toBeNull()
+          if (match != null) {
+            const timestampMs = Date.parse(match[1])
+            expect(timestampMs).toBeGreaterThanOrEqual(fixedNow - 60_000)
+            expect(timestampMs).toBeLessThanOrEqual(fixedNow)
+          }
+        }
+      }
+
+      vi.useRealTimers()
     })
   })
 

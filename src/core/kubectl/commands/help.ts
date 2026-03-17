@@ -202,7 +202,13 @@ Use "kubectl options" for a list of global command-line options (applies to all 
   logs: `Print the logs for a container in a pod or specified resource.
 
 Usage:
-  kubectl logs POD [-c CONTAINER]
+  kubectl logs POD [-c CONTAINER] [--tail=N] [--since=30s]
+
+Examples:
+  kubectl logs my-pod
+  kubectl logs my-pod --tail=20
+  kubectl logs my-pod --since=5m
+  kubectl logs my-pod --previous
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`,
   exec: `Execute a command in a container.

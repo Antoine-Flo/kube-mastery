@@ -1,19 +1,12 @@
-# How to Use This Platform
+# Welcome 👋
 
-```mermaid
-flowchart TD
-    A[Welcome ❤️]
-```
+<img class="meme" src="https://i.imgflip.com/amuq3d.jpg" title="made at imgflip.com"/>
 
 Welcome and thank you so much for using KubeMastery. We work hard to make a pleasing experience for you. If anything is not working as expected, please let us know.
 
-# Let's get into it
-
-Think back to the first time you learned to ride a bicycle. You probably didn't master it by reading a manual. You got on the bike, wobbled, fell a few times, and eventually found your balance. Kubernetes is no different. The fastest path to real understanding is to type commands, watch what happens, and build muscle memory along the way.
-
 ## Navigating the Interface
 
-The screen is split into two panels. The **left panel** is where you are right now, displaying lessons in order, organized into modules. Work through them in sequence, especially if Kubernetes is new to you. On the bottom left of your screen you'll find a button to collapse the course outline.
+The screen is split into two panels. The **central panel** is where you are right now, displaying lessons in order, organized into modules. Work through them in sequence, especially if Kubernetes is new to you. On the bottom left of your screen you'll find a button to collapse the course outline.
 
 The **right panel** is a fully functional terminal connected to a simulated Kubernetes cluster. Below the terminal you'll find a few icons:
 

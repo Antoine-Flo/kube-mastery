@@ -1204,11 +1204,21 @@ export class PodLifecycleController implements ReconcilerController {
                 : 1
             const image = firstContainer?.image
             const existingLogs = pod._simulator.logs ?? []
+            const existingLogEntries = pod._simulator.logEntries ?? []
             const crashLines = generateCrashLogLines(exitCode, image)
+            const crashLogEntries = crashLines.map((line) => {
+              return {
+                timestamp: transitionTime,
+                line
+              }
+            })
             return {
               _simulator: {
                 ...pod._simulator,
                 previousLogs: [...existingLogs, ...crashLines],
+                previousLogEntries: [...existingLogEntries, ...crashLogEntries],
+                logEntries: [],
+                logStreamState: undefined,
                 logs: [] as string[]
               }
             }
@@ -1319,11 +1329,21 @@ export class PodLifecycleController implements ReconcilerController {
                 : 1
             const image = firstContainer?.image
             const existingLogs = pod._simulator.logs ?? []
+            const existingLogEntries = pod._simulator.logEntries ?? []
             const crashLines = generateCrashLogLines(exitCode, image)
+            const crashLogEntries = crashLines.map((line) => {
+              return {
+                timestamp: transitionTime,
+                line
+              }
+            })
             return {
               _simulator: {
                 ...pod._simulator,
                 previousLogs: [...existingLogs, ...crashLines],
+                previousLogEntries: [...existingLogEntries, ...crashLogEntries],
+                logEntries: [],
+                logStreamState: undefined,
                 logs: [] as string[]
               }
             }

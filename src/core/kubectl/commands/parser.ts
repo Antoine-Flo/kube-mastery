@@ -73,6 +73,7 @@ const FLAGS_REQUIRING_VALUES = [
   'selector',
   'filename',
   'tail',
+  'since',
   'c',
   'container',
   'namespaces',

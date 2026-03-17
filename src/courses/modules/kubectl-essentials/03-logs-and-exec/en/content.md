@@ -4,10 +4,6 @@ So far you have learned to observe Kubernetes resources from the outside, listin
 
 That is where `kubectl logs` and `kubectl exec` come in. They are your windows directly into the running container, and they are indispensable for debugging application-level problems.
 
-:::info
-`kubectl logs` reads what your application writes to stdout/stderr. `kubectl exec` lets you run commands directly inside a container, similar to SSH-ing into a server.
-:::
-
 ## kubectl logs: Reading What Your Application Says
 
 Every well-behaved application writes its output to stdout and stderr. In Kubernetes, the container runtime captures those streams, and `kubectl logs` makes them available to you.
@@ -146,7 +142,7 @@ Open the terminal on the right and follow along. First, create a simple pod to w
 
 ```bash
 # Create a test pod
-kubectl run log-demo --image=busybox -- /bin/sh -c "while true; do echo 'Hello from log-demo' $(date); sleep 2; done"
+kubectl run log-demo --image=busybox
 
 # Wait a moment for it to start
 kubectl get pods -w
