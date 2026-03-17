@@ -56,6 +56,7 @@ type ProcessCommandDirective = {
 const ENTER_CONTAINER_PREFIX = 'ENTER_CONTAINER:'
 const SHELL_COMMAND_PREFIX = 'SHELL_COMMAND:'
 const PROCESS_COMMAND_PREFIX = 'PROCESS_COMMAND:'
+const KUBECTL_EDIT_TMP_DIR = '/tmp'
 
 const parseEnterContainerDirective = (
   output: string
@@ -866,6 +867,25 @@ export class KubectlCommandHandler implements CommandHandler {
           context.renderer.clearLine()
           context.output.writeOutput(message)
           context.output.write(context.shellContextStack.getCurrentPrompt())
+        },
+        preserveFailedEditCopy: (content: string) => {
+          const createTmpDirectoryResult = context.fileSystem.createDirectory(
+            KUBECTL_EDIT_TMP_DIR,
+            true
+          )
+          if (
+            !createTmpDirectoryResult.ok &&
+            !createTmpDirectoryResult.error.includes('File exists')
+          ) {
+            return undefined
+          }
+          const uniqueId = Math.floor(Math.random() * 10000000000)
+          const copyPath = `${KUBECTL_EDIT_TMP_DIR}/kubectl-edit-${uniqueId}.yaml`
+          const writeCopyResult = context.fileSystem.writeFile(copyPath, content)
+          if (!writeCopyResult.ok) {
+            return undefined
+          }
+          return copyPath
         }
       }
     )

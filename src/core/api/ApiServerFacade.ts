@@ -110,6 +110,176 @@ export interface CreateApiServerFacadeOptions {
   bootstrap?: ClusterBootstrapConfig
 }
 
+const buildPendingPodConditions = (
+  pod: Pod,
+  transitionTime: string
+): Pod['status']['conditions'] => {
+  const hasInitContainers = (pod.spec.initContainers?.length ?? 0) > 0
+  const isScheduled =
+    pod.spec.nodeName != null && pod.spec.nodeName.length > 0
+  const observedGeneration = pod.metadata.generation ?? 1
+  return [
+    {
+      type: 'Initialized',
+      status: hasInitContainers ? 'False' : 'True',
+      lastTransitionTime: transitionTime,
+      lastProbeTime: null,
+      observedGeneration
+    },
+    {
+      type: 'Ready',
+      status: 'False',
+      lastTransitionTime: transitionTime,
+      lastProbeTime: null,
+      observedGeneration
+    },
+    {
+      type: 'ContainersReady',
+      status: 'False',
+      lastTransitionTime: transitionTime,
+      lastProbeTime: null,
+      observedGeneration
+    },
+    {
+      type: 'PodScheduled',
+      status: isScheduled ? 'True' : 'False',
+      lastTransitionTime: transitionTime,
+      lastProbeTime: null,
+      observedGeneration
+    }
+  ]
+}
+
+const buildContainerImageMap = (
+  containers:
+    | ReadonlyArray<{ name: string; image: string }>
+    | undefined
+): Map<string, string> => {
+  const imageByName = new Map<string, string>()
+  if (containers == null) {
+    return imageByName
+  }
+  for (const container of containers) {
+    imageByName.set(container.name, container.image)
+  }
+  return imageByName
+}
+
+const hasContainerImageChanges = (
+  previous:
+    | ReadonlyArray<{ name: string; image: string }>
+    | undefined,
+  next:
+    | ReadonlyArray<{ name: string; image: string }>
+    | undefined
+): boolean => {
+  const previousByName = buildContainerImageMap(previous)
+  const nextByName = buildContainerImageMap(next)
+  if (previousByName.size !== nextByName.size) {
+    return true
+  }
+  for (const [name, image] of previousByName.entries()) {
+    const nextImage = nextByName.get(name)
+    if (nextImage == null || nextImage !== image) {
+      return true
+    }
+  }
+  return false
+}
+
+const shouldResetPodRuntimeAfterSpecUpdate = (
+  previous: Pod,
+  next: Pod
+): boolean => {
+  return (
+    hasContainerImageChanges(previous.spec.containers, next.spec.containers) ||
+    hasContainerImageChanges(previous.spec.initContainers, next.spec.initContainers)
+  )
+}
+
+const resetPodToContainerCreating = (
+  previous: Pod,
+  next: Pod
+): Pod => {
+  const transitionTime = new Date().toISOString()
+  const previousStatuses = previous.status.containerStatuses ?? []
+  const previousStatusByName = new Map(
+    previousStatuses.map((status) => [status.name, status] as const)
+  )
+
+  const initContainerStatuses = (next.spec.initContainers ?? []).map(
+    (container) => {
+      const previousStatus = previousStatusByName.get(container.name)
+      const previousStateDetails =
+        previousStatus?.stateDetails ?? {
+          state: 'Waiting' as const,
+          reason: 'ContainerCreating'
+        }
+      return {
+        ...previousStatus,
+        name: container.name,
+        image: container.image,
+        ready: false,
+        restartCount: previousStatus?.restartCount ?? 0,
+        stateDetails: {
+          state: 'Waiting' as const,
+          reason: 'ContainerCreating'
+        },
+        lastStateDetails: previousStateDetails,
+        started: false,
+        startedAt: undefined
+      }
+    }
+  )
+
+  const regularContainerStatuses = next.spec.containers.map((container) => {
+    const previousStatus = previousStatusByName.get(container.name)
+    const previousStateDetails =
+      previousStatus?.stateDetails ?? {
+        state: 'Waiting' as const,
+        reason: 'ContainerCreating'
+      }
+    return {
+      ...previousStatus,
+      name: container.name,
+      image: container.image,
+      ready: false,
+      restartCount: previousStatus?.restartCount ?? 0,
+      stateDetails: {
+        state: 'Waiting' as const,
+        reason: 'ContainerCreating'
+      },
+      lastStateDetails: previousStateDetails,
+      started: false,
+      startedAt: undefined
+    }
+  })
+
+  const pendingPod: Pod = {
+    ...next,
+    _simulator: next._simulator ?? previous._simulator,
+    status: {
+      ...previous.status,
+      phase: 'Pending',
+      observedGeneration: next.metadata.generation ?? 1,
+      conditions: buildPendingPodConditions(next, transitionTime),
+      containerStatuses: [...initContainerStatuses, ...regularContainerStatuses]
+    }
+  }
+  return pendingPod
+}
+
+const normalizePodUpdateResource = (previous: Pod, next: Pod): Pod => {
+  const withSimulator: Pod = {
+    ...next,
+    _simulator: next._simulator ?? previous._simulator
+  }
+  if (!shouldResetPodRuntimeAfterSpecUpdate(previous, withSimulator)) {
+    return withSimulator
+  }
+  return resetPodToContainerCreating(previous, withSimulator)
+}
+
 export const createApiServerFacade = (
   options: CreateApiServerFacadeOptions = {}
 ): ApiServerFacade => {
@@ -438,16 +608,20 @@ export const createApiServerFacade = (
         if (!previous.ok) {
           return previous as Result<KindToResource<typeof kind>>
         }
+        const normalizedPod = normalizePodUpdateResource(
+          previous.value as Pod,
+          resource as Pod
+        )
         etcd.appendEvent(
           createPodUpdatedEvent(
             name,
             effectiveNamespace,
-            resource as Pod,
+            normalizedPod,
             previous.value as Pod,
             'api-server'
           )
         )
-        return success(resource as KindToResource<typeof kind>)
+        return success(normalizedPod as KindToResource<typeof kind>)
       }
       if (kind === 'ConfigMap') {
         const previous = clusterState.findByKind('ConfigMap', name, effectiveNamespace)

@@ -1,5 +1,6 @@
 import type { KindToResource, ResourceKind } from '../../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
+import type { Pod } from '../../../cluster/ressources/Pod'
 import type { FileSystem } from '../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
@@ -18,6 +19,90 @@ type KubernetesResource = {
   metadata?: {
     name?: string
     namespace?: string
+  }
+}
+
+const resetPodManifestForReplacement = (
+  previousPod: Pod,
+  nextPod: Pod
+): Pod => {
+  const transitionTime = new Date().toISOString()
+  const previousStatuses = previousPod.status.containerStatuses ?? []
+  const previousStatusByName = new Map(
+    previousStatuses.map((status) => [status.name, status] as const)
+  )
+  const buildWaitingStatus = (
+    container: { name: string; image: string }
+  ): NonNullable<Pod['status']['containerStatuses']>[number] => {
+    const previousStatus = previousStatusByName.get(container.name)
+    const previousStateDetails =
+      previousStatus?.stateDetails ?? {
+        state: 'Waiting' as const,
+        reason: 'ContainerCreating'
+      }
+    return {
+      ...previousStatus,
+      name: container.name,
+      image: container.image,
+      ready: false,
+      restartCount: previousStatus?.restartCount ?? 0,
+      stateDetails: {
+        state: 'Waiting',
+        reason: 'ContainerCreating'
+      },
+      lastStateDetails: previousStateDetails,
+      started: false,
+      startedAt: undefined
+    }
+  }
+  const initStatuses = (nextPod.spec.initContainers ?? []).map((container) =>
+    buildWaitingStatus(container)
+  )
+  const regularStatuses = nextPod.spec.containers.map((container) =>
+    buildWaitingStatus(container)
+  )
+  const isScheduled =
+    nextPod.spec.nodeName != null && nextPod.spec.nodeName.length > 0
+  const observedGeneration = nextPod.metadata.generation ?? 1
+  return {
+    ...nextPod,
+    _simulator: nextPod._simulator ?? previousPod._simulator,
+    status: {
+      ...previousPod.status,
+      phase: 'Pending',
+      observedGeneration,
+      conditions: [
+        {
+          type: 'Initialized',
+          status: (nextPod.spec.initContainers?.length ?? 0) > 0 ? 'False' : 'True',
+          lastTransitionTime: transitionTime,
+          lastProbeTime: null,
+          observedGeneration
+        },
+        {
+          type: 'Ready',
+          status: 'False',
+          lastTransitionTime: transitionTime,
+          lastProbeTime: null,
+          observedGeneration
+        },
+        {
+          type: 'ContainersReady',
+          status: 'False',
+          lastTransitionTime: transitionTime,
+          lastProbeTime: null,
+          observedGeneration
+        },
+        {
+          type: 'PodScheduled',
+          status: isScheduled ? 'True' : 'False',
+          lastTransitionTime: transitionTime,
+          lastProbeTime: null,
+          observedGeneration
+        }
+      ],
+      containerStatuses: [...initStatuses, ...regularStatuses]
+    }
   }
 }
 
@@ -191,15 +276,23 @@ const forceReplace = (
     return error(deleteResult.error)
   }
 
+  const resourceForCreate =
+    kind === 'Pod'
+      ? resetPodManifestForReplacement(
+          existing.value as unknown as Pod,
+          resource as unknown as Pod
+        )
+      : resource
+
   const createResult = isNamespacedKind(kind)
     ? apiServer.createResource(
         kind,
-        resource as unknown as KindToResource<typeof kind>,
+        resourceForCreate as unknown as KindToResource<typeof kind>,
         namespace
       )
     : apiServer.createResource(
         kind,
-        resource as unknown as KindToResource<typeof kind>
+        resourceForCreate as unknown as KindToResource<typeof kind>
       )
   if (!createResult.ok) {
     return error(createResult.error)

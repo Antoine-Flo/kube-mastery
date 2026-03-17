@@ -145,7 +145,8 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
     editorBoxEl: HTMLElement
   ): EditorModalWithLifecycle {
     let currentEditor: CodeMirrorEditor | null = null
-    let currentOnSave: ((content: string) => void) | null = null
+    let currentOnSave: ((content: string) => boolean | void) | null = null
+    let currentOnCancel: (() => void) | null = null
     const filenameEl = overlayEl.querySelector('.t-editor-filename')
     const closeBtn = overlayEl.querySelector('.t-editor-btn-close')
     const saveBtn = overlayEl.querySelector('.t-editor-btn-save')
@@ -157,13 +158,17 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
       }
     }
 
-    const close = () => {
+    const close = (reason: 'save' | 'cancel' = 'cancel') => {
       overlayEl.removeEventListener('keydown', handleKeydown, true)
+      if (reason === 'cancel') {
+        currentOnCancel?.()
+      }
       if (currentEditor) {
         currentEditor.destroy()
         currentEditor = null
       }
       currentOnSave = null
+      currentOnCancel = null
       overlayEl.hidden = true
       focusTerminal()
     }
@@ -174,12 +179,13 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
       }
     }
 
-    const open: EditorModal['open'] = (filename, content, onSave) => {
+    const open: EditorModal['open'] = (filename, content, onSave, onCancel) => {
       if (currentEditor) {
         currentEditor.destroy()
         currentEditor = null
       }
       currentOnSave = onSave
+      currentOnCancel = onCancel ?? null
       if (filenameEl) {
         filenameEl.textContent = filename
       }
@@ -193,9 +199,12 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
         onSave: () => {
           if (currentEditor) {
             const value = currentEditor.getValue()
-            onSave(value)
+            const shouldClose = onSave(value)
+            if (shouldClose === false) {
+              return
+            }
           }
-          close()
+          close('save')
         }
       })
       currentEditor = editor
@@ -210,9 +219,12 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
 
     saveBtn?.addEventListener('click', () => {
       if (currentEditor) {
-        currentOnSave?.(currentEditor.getValue())
+        const shouldClose = currentOnSave?.(currentEditor.getValue())
+        if (shouldClose === false) {
+          return
+        }
       }
-      close()
+      close('save')
     })
 
     return { open, close, updateThemeIfOpen }

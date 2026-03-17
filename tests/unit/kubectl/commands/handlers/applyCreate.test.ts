@@ -8,9 +8,9 @@ import {
 import { parseCommand } from '../../../../../src/core/kubectl/commands/parser'
 import {
   handleApply,
-  handleCreate,
-  handleRun
+  handleCreate
 } from '../../../../../src/core/kubectl/commands/handlers/applyCreate'
+import { handleRun } from '../../../../../src/core/kubectl/commands/handlers/run'
 
 const LAST_APPLIED_CONFIGURATION_ANNOTATION =
   'kubectl.kubernetes.io/last-applied-configuration'

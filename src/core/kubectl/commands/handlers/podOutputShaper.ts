@@ -71,6 +71,44 @@ const buildKubeApiAccessVolumeName = (pod: Pod): string => {
   return `kube-api-access-${token}`
 }
 
+const mapContainerEnvForOutput = (
+  container: Pod['spec']['containers'][number]
+): Array<Record<string, unknown>> => {
+  const env = container.env ?? []
+  if (env.length === 0) {
+    return []
+  }
+
+  return env.map((envVar) => {
+    if (envVar.source.type === 'value') {
+      return {
+        name: envVar.name,
+        value: envVar.source.value
+      }
+    }
+    if (envVar.source.type === 'configMapKeyRef') {
+      return {
+        name: envVar.name,
+        valueFrom: {
+          configMapKeyRef: {
+            key: envVar.source.key,
+            name: envVar.source.name
+          }
+        }
+      }
+    }
+    return {
+      name: envVar.name,
+      valueFrom: {
+        secretKeyRef: {
+          key: envVar.source.key,
+          name: envVar.source.name
+        }
+      }
+    }
+  })
+}
+
 const ensureTransitionTimeString = (value: string | undefined): string => {
   if (value == null) {
     return new Date().toISOString()
@@ -274,6 +312,7 @@ export const shapePodForStructuredOutput = (
         protocol: port.protocol ?? 'TCP'
       }
     })
+    const env = mapContainerEnvForOutput(container)
     return {
       ...(container.command != null && container.command.length > 0
         ? { command: container.command }
@@ -284,6 +323,7 @@ export const shapePodForStructuredOutput = (
       image: container.image,
       imagePullPolicy: container.imagePullPolicy ?? 'IfNotPresent',
       name: container.name,
+      ...(env.length > 0 ? { env } : {}),
       ...(ports.length > 0 ? { ports } : {}),
       resources: container.resources ?? {},
       terminationMessagePath: '/dev/termination-log',

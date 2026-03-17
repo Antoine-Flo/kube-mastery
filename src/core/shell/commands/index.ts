@@ -40,7 +40,8 @@ export type EditorModal = {
   open: (
     filename: string,
     content: string,
-    onSave: (newContent: string) => void
+    onSave: (newContent: string) => boolean | void,
+    onCancel?: () => void
   ) => void
 }
 

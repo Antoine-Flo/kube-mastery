@@ -12,7 +12,8 @@ export type EditorModal = {
   open: (
     filename: string,
     content: string,
-    onSave: (newContent: string) => void
+    onSave: (newContent: string) => boolean | void,
+    onCancel?: () => void
   ) => void
 }
 
@@ -47,7 +48,7 @@ export const createNanoHandler = (
           const createResult = fileSystem.createFile(filename)
           if (!createResult.ok) {
             // Error creating file - could log here later
-            return
+            return true
           }
         }
 
@@ -55,6 +56,7 @@ export const createNanoHandler = (
         if (!writeResult.ok) {
           // Error writing file - could log here later
         }
+        return true
       })
 
       // Return success immediately - modal handles UI

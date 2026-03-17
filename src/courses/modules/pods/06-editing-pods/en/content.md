@@ -124,7 +124,7 @@ kubectl get pod edit-demo
 kubectl edit pod edit-demo
 ```
 
-In the editor, find the `image` field and change it to `nginx:1.26`, then save. You'll see an error message at the bottom: the change is rejected. Press `:q!` in vim (or `Ctrl+X` in nano) to exit without saving.
+In the editor, find the `name` field of the container (e.g. change `edit-demo` to `web`) and save. You'll see an error message at the bottom: the change is rejected. Press `:q!` in vim (or `Ctrl+X` in nano) to exit without saving.
 
 **3. Export the manifest:**
 
@@ -146,31 +146,22 @@ env:
 
 Save the file.
 
-**5. Use `kubectl replace --force` to recreate:**
+**5. Use `kubectl replace --force` to recreate (watch in the visualizer):**
 
 ```bash
 kubectl replace --force -f edit-demo.yaml
 ```
 
-Watch the Pod be deleted and recreated:
-
-```bash
-kubectl get pods --watch
-```
-
-Press `Ctrl+C` when the new Pod is `Running`.
-
 **6. Verify the changes took effect:**
 
 ```bash
-kubectl exec edit-demo -- env | grep -E "LOG_LEVEL|NEW_VAR"
-kubectl get pod edit-demo -o jsonpath='{.spec.containers[0].image}'
+kubectl describe pod edit-demo
 ```
 
 **7. Try `kubectl set image` directly on the Pod:**
 
 ```bash
-kubectl set image pod/edit-demo edit-demo=nginx:1.27
+kubectl set image pod/edit-demo edit-demo=nginx:1.21
 kubectl get pod edit-demo -o jsonpath='{.spec.containers[0].image}'
 ```
 

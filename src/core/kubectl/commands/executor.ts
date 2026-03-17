@@ -9,7 +9,7 @@ import { error, success } from '../../shared/result'
 import { handleAnnotate } from './handlers/annotate'
 import { handleAPIVersions } from './handlers/apiVersions'
 import { handleAPIResources } from './handlers/apiResources'
-import { handleApply, handleCreate, handleRun } from './handlers/applyCreate'
+import { handleApply, handleCreate } from './handlers/applyCreate'
 import { handleClusterInfo } from './handlers/clusterInfo'
 import {
   getCurrentNamespaceFromKubeconfig,
@@ -28,6 +28,7 @@ import { handleLogs } from './handlers/logs'
 import { handleScale } from './handlers/scale'
 import { handleSetImage } from './handlers/setImage'
 import { handleReplace } from './handlers/replace'
+import { handleRun } from './handlers/run'
 import { handleVersion } from './handlers/version'
 import { handleWait } from './handlers/wait'
 import { resolveKubectlHelp } from './help'
@@ -40,6 +41,7 @@ type ActionHandler = (parsed: ParsedCommand) => ExecutionResult
 type KubectlExecutorOptions = {
   editorModal?: EditorModal
   onAsyncOutput?: (message: string) => void
+  preserveFailedEditCopy?: (content: string) => string | undefined
 }
 
 const toGetExecutionResult = (output: string): ExecutionResult => {
@@ -110,7 +112,8 @@ const createHandlers = (
   handlers.set('edit', (parsed) =>
     handleEdit(apiServer, parsed, {
       editorModal: options.editorModal,
-      onAsyncOutput: options.onAsyncOutput
+      onAsyncOutput: options.onAsyncOutput,
+      preserveFailedEditCopy: options.preserveFailedEditCopy
     })
   )
   handlers.set('set', (parsed) => handleSetImage(apiServer, parsed))

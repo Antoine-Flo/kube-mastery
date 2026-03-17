@@ -114,6 +114,63 @@ spec:
     expect(pod.value.spec.containers[0].image).toBe('busybox:latest')
   })
 
+  it('should reset pod to ContainerCreating on force replace even when manifest has running status', () => {
+    apiServer.createResource(
+      'Pod',
+      createPod({
+        name: 'force-replace-running',
+        namespace: 'default',
+        phase: 'Running',
+        containers: [{ name: 'main', image: 'nginx:1.28' }]
+      })
+    )
+
+    fileSystem.createFile('force-replace-running.yaml')
+    fileSystem.writeFile(
+      'force-replace-running.yaml',
+      `apiVersion: v1
+kind: Pod
+metadata:
+  name: force-replace-running
+  namespace: default
+spec:
+  containers:
+    - name: main
+      image: not-a-real-image:9.9
+status:
+  phase: Running
+  containerStatuses:
+    - name: main
+      ready: true
+      state:
+        waiting:
+          reason: Running
+`
+    )
+
+    const parsed = parseCommand('kubectl replace --force -f force-replace-running.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleReplace(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    const pod = apiServer.findResource('Pod', 'force-replace-running', 'default')
+    expect(pod.ok).toBe(true)
+    if (!pod.ok) {
+      return
+    }
+    expect(pod.value.status.phase).toBe('Pending')
+    expect(pod.value.status.containerStatuses?.[0]?.stateDetails?.reason).toBe(
+      'ContainerCreating'
+    )
+  })
+
   it('should return not found when replacing non existing resource', () => {
     fileSystem.createFile('missing-pod.yaml')
     fileSystem.writeFile(

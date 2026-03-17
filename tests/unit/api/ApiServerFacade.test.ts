@@ -111,4 +111,40 @@ describe('ApiServerFacade', () => {
 
     apiServer.stop()
   })
+
+  it('resets pod runtime state when pod image is updated', () => {
+    const apiServer = createApiServerFacade()
+    const pod = createPod({
+      name: 'runtime-reset',
+      namespace: 'default',
+      phase: 'Running',
+      containers: [{ name: 'web', image: 'nginx:1.25' }]
+    })
+    apiServer.createResource('Pod', pod, 'default')
+
+    const updatedPod = {
+      ...pod,
+      spec: {
+        ...pod.spec,
+        containers: [{ name: 'web', image: 'invalid-registry.local/web:latest' }]
+      }
+    }
+    const updateResult = apiServer.updateResource(
+      'Pod',
+      'runtime-reset',
+      updatedPod,
+      'default'
+    )
+    expect(updateResult.ok).toBe(true)
+    if (!updateResult.ok) {
+      return
+    }
+    expect(updateResult.value.status.phase).toBe('Pending')
+    expect(updateResult.value.status.containerStatuses?.[0]?.stateDetails?.state).toBe(
+      'Waiting'
+    )
+    expect(updateResult.value.status.containerStatuses?.[0]?.stateDetails?.reason).toBe(
+      'ContainerCreating'
+    )
+  })
 })

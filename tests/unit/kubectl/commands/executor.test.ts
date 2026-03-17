@@ -2105,6 +2105,55 @@ spec:
         ])
       })
 
+      it('should include run env in kubectl get pod -o yaml output', () => {
+        const executor = createKubectlExecutor(
+          apiServer,
+          fileSystem,
+          logger
+        )
+        const runResult = executor.execute(
+          'kubectl run edit-demo --image=nginx:1.28 --env=LOG_LEVEL=info'
+        )
+        expect(runResult.ok).toBe(true)
+
+        const getResult = executor.execute('kubectl get pod edit-demo -o yaml')
+        expect(getResult.ok).toBe(true)
+        if (!getResult.ok) {
+          return
+        }
+
+        expect(getResult.value).toContain('name: LOG_LEVEL')
+        expect(getResult.value).toContain('value: info')
+      })
+
+      it('should parse quoted --env value for kubectl run', () => {
+        const executor = createKubectlExecutor(
+          apiServer,
+          fileSystem,
+          logger
+        )
+        const runResult = executor.execute(
+          'kubectl run edit-demo-quoted --image=nginx:1.28 --env="LOG_LEVEL=info"'
+        )
+        expect(runResult.ok).toBe(true)
+        if (!runResult.ok) {
+          return
+        }
+
+        const podResult = apiServer.findResource('Pod', 'edit-demo-quoted', 'default')
+        expect(podResult.ok).toBe(true)
+        if (!podResult.ok) {
+          return
+        }
+
+        expect(podResult.value.spec.containers[0].env).toEqual([
+          {
+            name: 'LOG_LEVEL',
+            source: { type: 'value', value: 'info' }
+          }
+        ])
+      })
+
       it('should return dry-run message without creating pod', () => {
         const executor = createKubectlExecutor(
           apiServer,

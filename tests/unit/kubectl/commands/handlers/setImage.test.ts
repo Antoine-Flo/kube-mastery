@@ -20,6 +20,7 @@ describe('kubectl set image handler', () => {
       createPod({
         name: 'my-pod',
         namespace: 'default',
+        phase: 'Running',
         containers: [{ name: 'web', image: 'nginx:1.25' }]
       })
     )
@@ -43,6 +44,13 @@ describe('kubectl set image handler', () => {
       return
     }
     expect(pod.value.spec.containers[0].image).toBe('nginx:1.26')
+    expect(pod.value.status.phase).toBe('Pending')
+    expect(pod.value.status.containerStatuses?.[0]?.stateDetails?.state).toBe(
+      'Waiting'
+    )
+    expect(pod.value.status.containerStatuses?.[0]?.stateDetails?.reason).toBe(
+      'ContainerCreating'
+    )
   })
 
   it('should update deployment template container image', () => {

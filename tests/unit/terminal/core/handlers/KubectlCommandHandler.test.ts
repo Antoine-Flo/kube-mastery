@@ -164,6 +164,59 @@ describe('KubectlCommandHandler', () => {
       expect(renderer.getOutput()).toContain('pod/edit-demo edited')
     })
 
+    it('should preserve failed kubectl edit content in temporary file', () => {
+      context.apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'edit-demo',
+          namespace: 'default',
+          containers: [{ name: 'edit-demo', image: 'nginx:1.25' }]
+        })
+      )
+
+      let capturedContent = ''
+      let capturedSave: ((newContent: string) => void) | undefined
+      const editorModal: EditorModal = {
+        open: (_filename, content, onSave) => {
+          capturedContent = content
+          capturedSave = onSave
+        }
+      }
+      context.editorModal = editorModal
+
+      const result = handler.execute('kubectl edit pod edit-demo', context)
+      expect(result.ok).toBe(true)
+      expect(capturedSave).toBeDefined()
+      if (capturedSave == null) {
+        return
+      }
+
+      capturedSave(
+        capturedContent.replace(
+          'name: edit-demo',
+          'name: edit-demoo'
+        )
+      )
+
+      const output = renderer.getOutput()
+      expect(output).toContain('A copy of your changes has been stored to')
+      const copiedPathMatch = output.match(/"([^"]*kubectl-edit-[^"]*\.yaml)"/)
+      expect(copiedPathMatch).not.toBeNull()
+      if (copiedPathMatch == null) {
+        return
+      }
+      const copiedFileResult = context.fileSystem.readFile(copiedPathMatch[1])
+      expect(copiedFileResult.ok).toBe(true)
+      if (!copiedFileResult.ok) {
+        return
+      }
+      expect(copiedFileResult.value).toContain('name: edit-demoo')
+      expect(output).toContain(
+        'error: pods "edit-demo" is invalid'
+      )
+      expect(output).toContain('error: Edit cancelled, no valid changes were saved.')
+    })
+
     it('should enter container context for exec shell directive', () => {
       const pod = createPod({
         name: 'exec-pod',
