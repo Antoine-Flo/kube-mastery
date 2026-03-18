@@ -1,8 +1,7 @@
-import { defaultLang, enabledLanguages, languages, type UiLanguage } from './ui'
+import { defaultLang, enabledLanguages, type UiLanguage } from './ui'
 
-function isUiLanguage(value: string): value is UiLanguage {
-  return Object.hasOwn(languages, value)
-}
+/** Path prefixes that must not get a locale redirect (e.g. API). */
+const LOCALE_SKIP_PREFIXES = ['api']
 
 export function getDisabledLocaleRedirectPath(
   pathname: string,
@@ -12,10 +11,16 @@ export function getDisabledLocaleRedirectPath(
   if (!firstSegment) {
     return null
   }
-  if (!isUiLanguage(firstSegment)) {
+  if (LOCALE_SKIP_PREFIXES.includes(firstSegment)) {
     return null
   }
-  if (enabledLanguages.includes(firstSegment)) {
+  if (
+    remainingSegments.length === 0 &&
+    firstSegment.includes('.')
+  ) {
+    return null
+  }
+  if (enabledLanguages.includes(firstSegment as UiLanguage)) {
     return null
   }
 

@@ -8,8 +8,18 @@ describe('getDisabledLocaleRedirectPath', () => {
     )
   })
 
-  it('does not redirect enabled locale or non-locale routes', () => {
+  it('redirects invalid first segment to default lang', () => {
+    expect(getDisabledLocaleRedirectPath('/docs/intro', '?lang=fr')).toBe(
+      '/en/docs/intro?lang=fr'
+    )
+    expect(getDisabledLocaleRedirectPath('/robots.txt/courses/common-core', '')).toBe(
+      '/en/courses/common-core'
+    )
+  })
+
+  it('does not redirect enabled locale, API, or root static-like paths', () => {
     expect(getDisabledLocaleRedirectPath('/en/courses', '')).toBeNull()
-    expect(getDisabledLocaleRedirectPath('/docs/intro', '?lang=fr')).toBeNull()
+    expect(getDisabledLocaleRedirectPath('/api/auth/callback', '')).toBeNull()
+    expect(getDisabledLocaleRedirectPath('/robots.txt', '')).toBeNull()
   })
 })
