@@ -1,6 +1,6 @@
 /**
  * Early access cap: user count RPC and automatic early_access subscription.
- * Used when EARLY_STAGE=true to limit signups and grant lifetime access.
+ * Used when EARLY_ACCESS=true to limit signups and grant lifetime access.
  */
 
 import { getSupabaseAdmin } from '../supabase'

@@ -101,7 +101,7 @@ export const GET: APIRoute = async ({
   }
 
   const isEarlyStage =
-    readAppEnv('EARLY_STAGE', locals)?.toLowerCase().trim() === 'true'
+    readAppEnv('EARLY_ACCESS', locals)?.toLowerCase().trim() === 'true'
   if (isEarlyStage) {
     const count = await getAuthUserCount(locals)
     if (count != null && count > EARLY_ACCESS_CAP) {

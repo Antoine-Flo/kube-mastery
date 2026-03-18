@@ -24,7 +24,7 @@ const loggedInCustomerEmail = auth.user?.email?.trim() ?? ''
 const loggedInCustomerUserId = auth.user?.id?.trim() ?? ''
 
 const isEarlyStage =
-  (readAppEnv('EARLY_STAGE', Astro.locals) ?? '').toLowerCase().trim() ===
+  (readAppEnv('EARLY_ACCESS', Astro.locals) ?? '').toLowerCase().trim() ===
   'true'
 
 const environment = (readAppEnv('ENVIRONMENT', Astro.locals) ?? '')

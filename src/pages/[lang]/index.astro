@@ -13,7 +13,7 @@ const locale = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(locale)
 const localePath = useLocalePath(locale)
 const isEarlyStage =
-  (readAppEnv('EARLY_STAGE', Astro.locals) ?? '').toLowerCase().trim() === 'true'
+  (readAppEnv('EARLY_ACCESS', Astro.locals) ?? '').toLowerCase().trim() === 'true'
 const homeCtaLabel = isEarlyStage ? t('home_cta_join_early') : t('home_cta_join')
 
 try {

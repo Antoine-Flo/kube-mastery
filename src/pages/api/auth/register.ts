@@ -16,7 +16,7 @@ const json = (body: Record<string, unknown>, status: number) =>
 
 function isEarlyStage(locals: unknown): boolean {
   return (
-    readAppEnv('EARLY_STAGE', locals)?.toLowerCase().trim() === 'true'
+    readAppEnv('EARLY_ACCESS', locals)?.toLowerCase().trim() === 'true'
   )
 }
 
