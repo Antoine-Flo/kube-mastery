@@ -97,28 +97,16 @@ export function createSupabaseDeleteAccountAdapter(): DeleteAccountPort {
         return { ok: false, reason: 'not_authenticated' }
       }
 
-      const { data: subscriptions, error: subscriptionsError } = await supabase
+      const { error: deleteSubsError } = await supabase
         .from('subscriptions')
-        .select('plan_tier, status')
+        .delete()
         .eq('user_id', user.id)
-
-      if (subscriptionsError != null) {
+        .eq('plan_tier', 'early_access')
+      if (deleteSubsError) {
         return {
           ok: false,
           reason: 'delete_failed',
-          message: subscriptionsError.message
-        }
-      }
-
-      const hasPaidSubscription = (subscriptions ?? []).some((subscription) =>
-        isPaidSubscription(subscription.plan_tier, subscription.status)
-      )
-      if (hasPaidSubscription) {
-        return {
-          ok: false,
-          reason: 'subscription_active',
-          message:
-            'You must cancel your active subscription before deleting your account.'
+          message: deleteSubsError.message
         }
       }
 

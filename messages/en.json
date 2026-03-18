@@ -286,7 +286,7 @@
   "home_reliability_openapi_title": "Checked against official Kubernetes schemas",
   "home_reliability_openapi_description": "Every resource the simulator creates is validated against official Kubernetes OpenAPI specs. Same fields, same shapes, no surprises when you move to the real thing.",
   "home_reliability_openapi_alt": "OpenAPI-based Kubernetes schema validation",
-  "home_reliability_cta_intro": "One payment. Lifetime access. 30-day money-back guarantee.",
+  "home_reliability_cta_intro": "Free during early access",
   "home_terminal_limit_message": "Like what you see? Create an account to unlock the full experience 🙂",
   "modules_title": "Modules",
   "modules_subtitle": "Learn at your own pace by choosing the topics that interest you",
