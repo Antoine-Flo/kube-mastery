@@ -40,6 +40,7 @@ export const VALID_COMMANDS: ShellCommand[] = [
   'clear',
   'help',
   'debug',
+  'env',
   'nano',
   'vi',
   'vim',

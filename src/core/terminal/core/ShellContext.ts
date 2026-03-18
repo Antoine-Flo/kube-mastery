@@ -3,19 +3,11 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Gestion des contextes shell (host/container) + filesystem + prompt
 
-import type { FileSystemState } from '../../../core/filesystem/FileSystem'
-
-// Type minimal pour FileSystem (utilisé par ShellContextStack)
-export interface FileSystem {
-  getCurrentPath(): string
-}
-
-// Factory function pour créer un filesystem minimal (temporaire)
-const createFileSystem = (state: FileSystemState): FileSystem => {
-  return {
-    getCurrentPath: () => state.currentPath || '/home/kube'
-  }
-}
+import {
+  createFileSystem,
+  type FileSystem,
+  type FileSystemState
+} from '../../filesystem/FileSystem'
 
 interface ShellContext {
   id: string
@@ -42,7 +34,7 @@ export class ShellContextStack {
     this.contexts.push({
       id: 'host',
       type: 'host',
-      fileSystem: createFileSystem(hostFileSystem),
+      fileSystem: createFileSystem(hostFileSystem, undefined, { mutable: true }),
       prompt: '~>'
     })
   }
@@ -63,7 +55,9 @@ export class ShellContextStack {
       podName,
       containerName,
       namespace,
-      fileSystem: createFileSystem(containerFileSystem),
+      fileSystem: createFileSystem(containerFileSystem, undefined, {
+        mutable: true
+      }),
       prompt: `[${podName}:${containerName}] />`
     }
 

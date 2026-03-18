@@ -15,6 +15,7 @@ export type ShellCommand =
   | 'clear'
   | 'help'
   | 'debug'
+  | 'env'
   | 'nano'
   | 'vi'
   | 'vim'

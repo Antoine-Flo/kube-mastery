@@ -600,7 +600,7 @@ export const createPod = (config: PodConfig): Pod => {
   // Add init containers
   for (const container of config.initContainers || []) {
     simulatorContainers[container.name] = {
-      fileSystem: createDebianFileSystem(),
+      fileSystem: createDebianFileSystem({ hostname: config.name }),
       containerType: 'init'
     }
   }
@@ -608,7 +608,7 @@ export const createPod = (config: PodConfig): Pod => {
   // Add regular containers
   for (const container of config.containers) {
     simulatorContainers[container.name] = {
-      fileSystem: createDebianFileSystem(),
+      fileSystem: createDebianFileSystem({ hostname: config.name }),
       containerType: 'regular'
     }
   }

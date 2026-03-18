@@ -7,6 +7,7 @@
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import { createShellExecutor, parseShellCommand } from '../../../shell/commands'
+import { buildContainerEnvironmentVariables, buildHostEnvironmentVariables } from './containerEnvironment'
 import type { CommandContext } from '../CommandContext'
 import type { CommandHandler } from '../CommandHandler'
 
@@ -26,8 +27,9 @@ export class ShellCommandHandler implements CommandHandler {
     }
 
     // Créer l'executor avec le filesystem et l'editor modal
+    const activeFileSystem = context.shellContextStack.getCurrentFileSystem()
     const executor = createShellExecutor(
-      context.fileSystem,
+      activeFileSystem,
       context.editorModal,
       {
         resolveNamespace: () => {
@@ -69,6 +71,27 @@ export class ShellCommandHandler implements CommandHandler {
             return error(curlResult.error)
           }
           return success(curlResult.value)
+        },
+        getEnvironmentVariables: () => {
+          const containerInfo =
+            context.shellContextStack.getCurrentContainerInfo()
+          if (containerInfo == null) {
+            return success(buildHostEnvironmentVariables())
+          }
+          const podResult = context.apiServer.findResource(
+            'Pod',
+            containerInfo.podName,
+            containerInfo.namespace
+          )
+          if (!podResult.ok) {
+            return error(
+              `Error from server (NotFound): pods "${containerInfo.podName}" not found`
+            )
+          }
+          return buildContainerEnvironmentVariables(
+            podResult.value,
+            containerInfo.containerName
+          )
         },
         onExit: () => {
           if (!context.shellContextStack.isInContainer()) {

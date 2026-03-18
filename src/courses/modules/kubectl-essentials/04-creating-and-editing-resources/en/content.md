@@ -127,14 +127,11 @@ flowchart LR
 Your manifest travels through the API server (where it is validated and persisted), then the relevant controllers and schedulers act on it to bring actual resources into the desired state. This chain is the Kubernetes control loop in action.
 
 ## Hands-On Practice
-
-Work through these exercises in the terminal on the right to feel the difference between the various creation and editing tools:
-
-```bash
 # --- kubectl apply ---
 
 # Create a simple manifest file
-cat <<EOF > /tmp/my-deployment.yaml
+```yaml
+#my-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -152,19 +149,20 @@ spec:
       containers:
       - name: my-app
         image: nginx:1.28
-EOF
+```
 
+```bash
 # Apply it (creates the deployment)
-kubectl apply -f /tmp/my-deployment.yaml
+kubectl apply -f my-deployment.yaml
 
 # Apply it again, idempotent, no error
-kubectl apply -f /tmp/my-deployment.yaml
+kubectl apply -f my-deployment.yaml
 
 # Check the deployment
 kubectl get deployments
 
 # --- kubectl create: see the AlreadyExists error ---
-kubectl create -f /tmp/my-deployment.yaml
+kubectl create -f my-deployment.yaml
 # Expected: Error from server (AlreadyExists)
 
 # --- Scale using patch ---
@@ -181,11 +179,11 @@ kubectl rollout status deployment/my-app
 
 # --- Apply from a directory ---
 mkdir -p /tmp/k8s-manifests
-cp /tmp/my-deployment.yaml /tmp/k8s-manifests/
+cp my-deployment.yaml /tmp/k8s-manifests/
 kubectl apply -f /tmp/k8s-manifests/
 
 # --- Clean up ---
-kubectl delete -f /tmp/my-deployment.yaml
+kubectl delete -f my-deployment.yaml
 ```
 
 Notice how `kubectl apply` smoothly handles both the initial creation and subsequent updates. The workflow, write a manifest, apply it, modify the manifest, apply again, is the backbone of production Kubernetes operations.

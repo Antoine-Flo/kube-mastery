@@ -10,6 +10,7 @@ import {
 import type { ShellCommandHandler } from './core/ShellCommandHandler'
 import { parseShellCommand } from './core/ShellCommandParser'
 import type { ExecutionResult } from '../../shared/result'
+import type { Result } from '../../shared/result'
 import type { ParsedShellCommand, ShellCommand } from './core/types'
 
 // Handlers
@@ -25,6 +26,7 @@ import { createCurlHandler } from './handlers/network/curl'
 import { createNslookupHandler } from './handlers/network/nslookup'
 import { createClearHandler } from './handlers/system/clear'
 import { createDebugHandler } from './handlers/system/debug'
+import { createEnvHandler } from './handlers/system/env'
 import { createExitHandler } from './handlers/system/exit'
 import { createHelpHandler } from './handlers/system/help'
 
@@ -49,6 +51,7 @@ export interface ShellRuntimeOptions {
   resolveNamespace?: () => string
   runDnsLookup?: (query: string, namespace: string) => ExecutionResult
   runCurl?: (target: string, namespace: string) => ExecutionResult
+  getEnvironmentVariables?: () => Result<string[]>
   onExit?: () => ExecutionResult
 }
 
@@ -82,6 +85,12 @@ const createHandlers = (
   handlers.set('clear', createClearHandler())
   handlers.set('help', createHelpHandler())
   handlers.set('debug', createDebugHandler())
+  handlers.set(
+    'env',
+    createEnvHandler({
+      getEnvironmentVariables: runtimeOptions.getEnvironmentVariables
+    })
+  )
   handlers.set('exit', createExitHandler({ onExit: runtimeOptions.onExit }))
   handlers.set(
     'nslookup',

@@ -18,6 +18,9 @@ import { createShellExecutor } from '../../../shell/commands'
 import type { ClusterEvent } from '../../../cluster/events/types'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
+import {
+  buildContainerEnvironmentVariables
+} from './containerEnvironment'
 import type { CommandContext } from '../CommandContext'
 import type { CommandHandler } from '../CommandHandler'
 
@@ -216,6 +219,7 @@ const executeShellCommandDirective = (
       `Error: container ${directive.containerName} not found in pod ${directive.podName}`
     )
   }
+  const pod = podLookup.pod
   const containerFileSystem = createFileSystem(containerEntry.fileSystem, undefined, {
     mutable: true
   })
@@ -262,6 +266,12 @@ const executeShellCommandDirective = (
           return error(curlResult.error)
         }
         return success(curlResult.value)
+      },
+      getEnvironmentVariables: () => {
+        return buildContainerEnvironmentVariables(
+          pod,
+          directive.containerName
+        )
       }
     }
   )

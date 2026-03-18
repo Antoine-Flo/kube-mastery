@@ -305,7 +305,7 @@ describe('kubectl exec handler', () => {
   })
 
   describe('env command', () => {
-    it('should return environment variables for env command', () => {
+    it('should route env command through shell directive', () => {
       const pod = createPod({
         name: 'my-pod',
         namespace: 'default',
@@ -322,9 +322,7 @@ describe('kubectl exec handler', () => {
       apiServer.etcd.restore(state)
       const result = handleExecApi(apiServer, parsed)
 
-      expect(result).toContain('PATH=')
-      expect(result).toContain('HOME=/root')
-      expect(result).toContain('HOSTNAME=my-pod')
+      expect(result).toBe('SHELL_COMMAND:default:my-pod:main:env')
     })
   })
 

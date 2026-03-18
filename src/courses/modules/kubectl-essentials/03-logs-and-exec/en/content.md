@@ -176,7 +176,7 @@ kubectl exec -it log-demo -- /bin/sh
 #   exit
 
 # Now simulate a crash to see --previous in action
-kubectl run crash-demo --image=busybox -- /bin/sh -c "echo 'Starting up'; sleep 2; echo 'About to crash'; exit 1"
+kubectl run crash-demo --image=busybox -- /bin/sh -c "exit 1"
 
 # Watch it enter CrashLoopBackOff
 kubectl get pods -w

@@ -28,6 +28,19 @@ describe('ShellCommandExecutor', () => {
     }
   })
 
+  it('should execute env command with handler', () => {
+    const mockHandler: ShellCommandHandler = {
+      execute: () => success('PATH=/bin')
+    }
+    handlers.set('env', mockHandler)
+
+    const result = executor.execute('env')
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.value).toBe('PATH=/bin')
+    }
+  })
+
   it('should pass args and flags to handler', () => {
     let receivedArgs: string[] = []
     let receivedFlags: Record<string, boolean | string> = {}

@@ -81,6 +81,7 @@ describe('ShellCommandHandler', () => {
       expect(handler.canHandle('rm file.txt')).toBe(true)
       expect(handler.canHandle('clear')).toBe(true)
       expect(handler.canHandle('help')).toBe(true)
+      expect(handler.canHandle('env')).toBe(true)
       expect(handler.canHandle('nano file.txt')).toBe(true)
     })
 
@@ -132,6 +133,12 @@ describe('ShellCommandHandler', () => {
       const result = handler.execute('help', context)
       expect(result.ok).toBe(true)
       expect(renderer.getOutput().length).toBeGreaterThan(0)
+    })
+
+    it('should execute env command in host shell', () => {
+      const result = handler.execute('env', context)
+      expect(result.ok).toBe(true)
+      expect(renderer.getOutput()).toContain('HOME=/home/kube')
     })
 
     it('should handle commands with flags', () => {

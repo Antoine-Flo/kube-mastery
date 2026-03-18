@@ -14,6 +14,10 @@ type FileSystemConfig = {
   [path: string]: string | FileSystemConfig
 }
 
+interface DebianFileSystemOptions {
+  hostname?: string
+}
+
 // ─── Base Configuration ────────────────────────────────────────────────────
 
 const DEBIAN_FILESYSTEM_CONFIG: FileSystemConfig = {
@@ -217,9 +221,22 @@ spec:
  * Create a new Debian-like filesystem instance
  * Returns a minimal filesystem without any extras
  */
-export const createDebianFileSystem = (): FileSystemState => {
+export const createDebianFileSystem = (
+  options: DebianFileSystemOptions = {}
+): FileSystemState => {
+  const hostname = options.hostname ?? 'container-hostname'
+  const etcConfig = DEBIAN_FILESYSTEM_CONFIG.etc
+  if (etcConfig == null || typeof etcConfig === 'string') {
+    throw new Error('Invalid Debian filesystem config for /etc')
+  }
   const root = createDirectory('root', '/')
-  const children = createFileSystemFromConfig(DEBIAN_FILESYSTEM_CONFIG)
+  const children = createFileSystemFromConfig({
+    ...DEBIAN_FILESYSTEM_CONFIG,
+    etc: {
+      ...etcConfig,
+      hostname
+    }
+  })
 
   children.forEach((value, key) => {
     root.children.set(key, value)

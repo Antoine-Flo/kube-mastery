@@ -14,6 +14,7 @@ import { createTerminalOutput } from '../../../../../src/core/terminal/core/Term
 import { createMockRenderer } from '../../../helpers/mockRenderer'
 import { createLogger } from '../../../../../src/logger/Logger'
 import type { EditorModal } from '../../../../../src/core/shell/commands'
+import { ShellCommandHandler } from '../../../../../src/core/terminal/core/handlers/ShellCommandHandler'
 
 describe('KubectlCommandHandler', () => {
   let handler: KubectlCommandHandler
@@ -263,6 +264,89 @@ describe('KubectlCommandHandler', () => {
       const output = renderer.getOutput()
       expect(output).not.toContain('SHELL_COMMAND:')
       expect(output.length).toBeGreaterThan(0)
+    })
+
+    it('should expose pod name in /etc/hostname inside container', () => {
+      const pod = createPod({
+        name: 'realistic-hostname',
+        namespace: 'default',
+        phase: 'Running',
+        containers: [{ name: 'main', image: 'nginx:latest' }]
+      })
+      context.apiServer.etcd.restore({
+        ...context.apiServer.snapshotState(),
+        pods: {
+          ...context.apiServer.snapshotState().pods,
+          items: [pod]
+        }
+      })
+      renderer.clearOutput()
+
+      const result = handler.execute(
+        'kubectl exec realistic-hostname -- cat /etc/hostname',
+        context
+      )
+
+      expect(result.ok).toBe(true)
+      expect(renderer.getOutput()).toContain('realistic-hostname')
+    })
+
+    it('should keep container file changes isolated from host after exit', () => {
+      const pod = createPod({
+        name: 'log-demo',
+        namespace: 'default',
+        phase: 'Running',
+        containers: [{ name: 'log-demo', image: 'busybox:latest' }]
+      })
+      context.apiServer.etcd.restore({
+        ...context.apiServer.snapshotState(),
+        pods: {
+          ...context.apiServer.snapshotState().pods,
+          items: [pod]
+        }
+      })
+
+      const hostTouchResult = new ShellCommandHandler().execute('touch test1', context)
+      expect(hostTouchResult.ok).toBe(true)
+      expect(context.fileSystem.readFile('test1').ok).toBe(true)
+
+      const enterContainerResult = handler.execute(
+        'kubectl exec -it log-demo -- /bin/sh',
+        context
+      )
+      expect(enterContainerResult.ok).toBe(true)
+      expect(context.shellContextStack.isInContainer()).toBe(true)
+
+      const containerTouchResult = new ShellCommandHandler().execute(
+        'touch test2',
+        context
+      )
+      expect(containerTouchResult.ok).toBe(true)
+      expect(context.fileSystem.readFile('test2').ok).toBe(false)
+
+      const podResult = context.apiServer.findResource('Pod', 'log-demo', 'default')
+      expect(podResult.ok).toBe(true)
+      if (!podResult.ok) {
+        return
+      }
+      const containerEntry = podResult.value._simulator.containers['log-demo']
+      const containerFileSystem = createFileSystem(
+        containerEntry.fileSystem,
+        undefined,
+        { mutable: true }
+      )
+      expect(containerFileSystem.readFile('test2').ok).toBe(true)
+
+      const exitResult = new ShellCommandHandler().execute('exit', context)
+      expect(exitResult.ok).toBe(true)
+      expect(context.shellContextStack.isInContainer()).toBe(false)
+
+      renderer.clearOutput()
+      const hostLsResult = new ShellCommandHandler().execute('ls', context)
+      expect(hostLsResult.ok).toBe(true)
+      const hostOutput = renderer.getOutput()
+      expect(hostOutput).toContain('test1')
+      expect(hostOutput).not.toContain('test2')
     })
 
     it('should update pod status when nginx -s stop is executed', () => {

@@ -16,6 +16,16 @@ describe('ShellCommandParser', () => {
       }
     })
 
+    it('should parse env command without args', () => {
+      const result = parseShellCommand('env')
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.command).toBe('env')
+        expect(result.value.args).toEqual([])
+        expect(result.value.flags).toEqual({})
+      }
+    })
+
     it('should parse command with single arg', () => {
       const result = parseShellCommand('cd /home')
       expect(result.ok).toBe(true)

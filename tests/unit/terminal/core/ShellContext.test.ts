@@ -109,6 +109,37 @@ describe('ShellContextStack', () => {
       expect(shellContextStack.isInContainer()).toBe(false)
       expect(shellContextStack.getCurrentPrompt()).toBe('~>')
     })
+
+    it('should isolate container filesystem from host filesystem', () => {
+      const hostFileSystem = shellContextStack.getCurrentFileSystem()
+      const hostCreateResult = hostFileSystem.createFile('host.txt')
+      expect(hostCreateResult.ok).toBe(true)
+
+      const isolatedContainerFs: FileSystemState = {
+        currentPath: '/',
+        tree: {
+          type: 'directory',
+          name: 'root',
+          path: '/',
+          children: new Map()
+        }
+      }
+      shellContextStack.pushContainerContext(
+        'isolated-pod',
+        'main',
+        'default',
+        isolatedContainerFs
+      )
+
+      const containerFileSystem = shellContextStack.getCurrentFileSystem()
+      const containerCreateResult = containerFileSystem.createFile('container.txt')
+      expect(containerCreateResult.ok).toBe(true)
+
+      shellContextStack.popContext()
+
+      expect(hostFileSystem.readFile('host.txt').ok).toBe(true)
+      expect(hostFileSystem.readFile('container.txt').ok).toBe(false)
+    })
   })
 
   describe('popContext', () => {
