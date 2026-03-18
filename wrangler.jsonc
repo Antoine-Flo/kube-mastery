@@ -20,6 +20,7 @@
   "env": {
     "staging": {
       "vars": {
+        "EARLY_ACCESS": "true",
         "ENVIRONMENT": "staging",
         "SUPABASE_URL": "https://bijwtiejmopddtargdls.supabase.co",
         "SUPABASE_PUBLISHABLE_DEFAULT_KEY": "sb_publishable__uX4OPHpW9XGPsqaqkg3eQ_-NPU747a",

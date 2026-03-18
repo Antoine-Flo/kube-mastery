@@ -83,7 +83,7 @@ kubectl patch deployment myapp --type=merge -p '{"spec":{"replicas":5}}'
 kubectl patch pod my-pod --type=merge -p '{"metadata":{"labels":{"env":"production"}}}'
 ```
 
-The `--type=merge` flag merges the patch with the existing object, any fields you do not mention are left unchanged. There is also `--type=json` for RFC 6902 JSON patch operations (add, remove, replace, copy, move, test), which gives you more surgical control.
+The `--type=merge` flag merges the patch with the existing object, any fields you do not mention are left unchanged. There is also `--type=json` for <a href="https://jsonpatch.com/" target="_blank">RFC 6902 JSON  patch operations</a> (add, remove, replace, copy, move, test), which gives you more surgical control.
 
 `kubectl patch` is particularly valuable in automation scripts and operators where you need to update a single field programmatically without reading and re-writing the entire resource.
 
@@ -95,24 +95,20 @@ Updating a container's image is one of the most common operations during a deplo
 kubectl set image deployment/myapp container-name=myimage:newtag
 ```
 
-The format is `kubectl set image <resource>/<name> <container-name>=<image>:<tag>`. This triggers a rolling update of the deployment immediately. You can watch the rollout progress with:
-
-```bash
-kubectl rollout status deployment/myapp
-```
+The format is `kubectl set image <resource>/<name> <container-name>=<image>:<tag>`. This triggers a rolling update of the deployment immediately.
 
 ## The Apply Flow: What Happens Under the Hood
 
 It helps to understand what actually happens when you run `kubectl apply`. The command makes a series of well-defined API calls to the Kubernetes API server.
 
 ```mermaid
-flowchart LR
-    Dev([You run\nkubectl apply])
-    API["API Server\n(validates + stores)"]
-    etcd["etcd\n(source of truth)"]
-    Controller["Controller Manager\n(watches for changes)"]
-    Scheduler["Scheduler\n(places pods)"]
-    Kubelet["Kubelet\n(starts containers)"]
+flowchart TB
+    Dev([You run kubectl apply])
+    API["API Server (validates + stores)"]
+    etcd["etcd (source of truth)"]
+    Controller["Controller Manager (watches for changes)"]
+    Scheduler["Scheduler (places pods)"]
+    Kubelet["Kubelet (starts containers)"]
 
     Dev -->|"PATCH or PUT"| API
     API -->|"Writes desired state"| etcd
@@ -127,9 +123,10 @@ flowchart LR
 Your manifest travels through the API server (where it is validated and persisted), then the relevant controllers and schedulers act on it to bring actual resources into the desired state. This chain is the Kubernetes control loop in action.
 
 ## Hands-On Practice
-# --- kubectl apply ---
 
-# Create a simple manifest file
+Watch the effect of the commands in the visualizer.
+
+Create a simple manifest file
 ```yaml
 #my-deployment.yaml
 apiVersion: apps/v1
@@ -171,7 +168,6 @@ kubectl get deployment my-app
 
 # --- Update the image ---
 kubectl set image deployment/my-app my-app=nginx:1.26
-kubectl rollout status deployment/my-app
 
 # --- Edit live (opens vi/nano) ---
 kubectl edit deployment my-app

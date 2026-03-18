@@ -196,6 +196,19 @@
     font-variation-settings: normal;
   }
 
+
+  :not(pre) > code,
+  kbd,
+  samp {
+    padding: 0.15em 0.4em;
+    border-radius: 0.25rem;
+    background-color: var(--color-gray-3);
+    color: var(--color-gray-12);
+    font-size: var(--text-sm);
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+  }
+
   progress {
     vertical-align: baseline;
   }
