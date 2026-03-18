@@ -93,4 +93,21 @@ describe('kubectl help resolver', () => {
     expect(output).toBeDefined()
     expect(output).toContain('edit')
   })
+
+  it('should return patch help text', () => {
+    const output = resolveKubectlHelp('kubectl patch --help')
+
+    expect(output).toBeDefined()
+    expect(output).toContain('Update fields of a resource.')
+    expect(output).toContain(
+      'kubectl patch (TYPE NAME | TYPE/NAME) --type=merge -p PATCH'
+    )
+  })
+
+  it('should include patch command in root help', () => {
+    const output = resolveKubectlHelp('kubectl --help')
+
+    expect(output).toBeDefined()
+    expect(output).toContain('patch')
+  })
 })

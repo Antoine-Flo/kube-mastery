@@ -174,8 +174,7 @@ kubectl set image deployment/my-app my-app=nginx:1.26
 kubectl rollout status deployment/my-app
 
 # --- Edit live (opens vi/nano) ---
-# Uncomment the next line to try it
-# kubectl edit deployment my-app
+kubectl edit deployment my-app
 
 # --- Apply from a directory ---
 mkdir -p /tmp/k8s-manifests

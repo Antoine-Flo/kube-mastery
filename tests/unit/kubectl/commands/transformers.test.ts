@@ -951,4 +951,55 @@ describe('kubectl transformers', () => {
       expect(result.value.name).toBe('web')
     })
   })
+
+  describe('patch transformer', () => {
+    it('should extract resource and name from resource name syntax', () => {
+      const transformer = getTransformerForAction('patch')
+      const ctx = createContext({
+        input: `kubectl patch deployment my-app --type=merge -p '{"spec":{"replicas":4}}'`,
+        tokens: [
+          'kubectl',
+          'patch',
+          'deployment',
+          'my-app',
+          '--type=merge',
+          '-p',
+          '{"spec":{"replicas":4}}'
+        ]
+      })
+
+      const result = transformer(ctx)
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value.resource).toBe('deployments')
+      expect(result.value.name).toBe('my-app')
+    })
+
+    it('should extract resource and name from type/name syntax', () => {
+      const transformer = getTransformerForAction('patch')
+      const ctx = createContext({
+        input: `kubectl patch deployment/my-app --type=merge -p '{"spec":{"replicas":4}}'`,
+        tokens: [
+          'kubectl',
+          'patch',
+          'deployment/my-app',
+          '--type=merge',
+          '-p',
+          '{"spec":{"replicas":4}}'
+        ]
+      })
+
+      const result = transformer(ctx)
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value.resource).toBe('deployments')
+      expect(result.value.name).toBe('my-app')
+    })
+  })
 })

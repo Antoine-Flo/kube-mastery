@@ -21,6 +21,7 @@ import { getReplicaSetDesiredReplicas } from '../../../cluster/ressources/Replic
 import type { Secret, SecretType } from '../../../cluster/ressources/Secret'
 import type { Service } from '../../../cluster/ressources/Service'
 import { getServiceType } from '../../../cluster/ressources/Service'
+import type { StatefulSet } from '../../../cluster/ressources/StatefulSet'
 import { formatAge } from '../../../shared/formatter'
 import type { ParsedCommand, Resource } from '../types'
 import {
@@ -653,6 +654,17 @@ const RESOURCE_HANDLERS: Record<string, ResourceHandler<any>> = {
       String(daemonSet.status.numberReady ?? 0),
       formatNodeSelector(daemonSet.spec.template.spec.nodeSelector),
       formatAge(daemonSet.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true
+  },
+
+  statefulsets: {
+    getItems: (state) => state.statefulSets.items,
+    headers: ['name', 'ready', 'age'],
+    formatRow: (statefulSet: StatefulSet) => [
+      statefulSet.metadata.name,
+      `${statefulSet.status.readyReplicas ?? 0}/${statefulSet.spec.replicas ?? 1}`,
+      formatAge(statefulSet.metadata.creationTimestamp)
     ],
     supportsFiltering: true
   },

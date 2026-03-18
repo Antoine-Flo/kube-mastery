@@ -35,7 +35,10 @@ import {
   createSecretUpdatedEvent,
   createServiceCreatedEvent,
   createServiceDeletedEvent,
-  createServiceUpdatedEvent
+  createServiceUpdatedEvent,
+  createStatefulSetCreatedEvent,
+  createStatefulSetDeletedEvent,
+  createStatefulSetUpdatedEvent
 } from '../cluster/events/types'
 import type {
   KindToResource,
@@ -54,6 +57,7 @@ import { computeContainerImageId } from '../cluster/ressources/Pod'
 import type { ReplicaSet } from '../cluster/ressources/ReplicaSet'
 import type { Secret } from '../cluster/ressources/Secret'
 import type { Service } from '../cluster/ressources/Service'
+import type { StatefulSet } from '../cluster/ressources/StatefulSet'
 import type {
   BootstrapApiLike,
   ClusterBootstrapConfig
@@ -472,6 +476,25 @@ export const createApiServerFacade = (
         )
         return findResult as Result<KindToResource<typeof kind>>
       }
+      if (kind === 'StatefulSet') {
+        const findResult = clusterState.findByKind(
+          'StatefulSet',
+          name,
+          effectiveNamespace
+        )
+        if (!findResult.ok) {
+          return findResult as Result<KindToResource<typeof kind>>
+        }
+        etcd.appendEvent(
+          createStatefulSetDeletedEvent(
+            name,
+            effectiveNamespace,
+            findResult.value as StatefulSet,
+            'api-server'
+          )
+        )
+        return findResult as Result<KindToResource<typeof kind>>
+      }
       if (kind === 'Service') {
         const findResult = clusterState.findByKind(
           'Service',
@@ -559,6 +582,12 @@ export const createApiServerFacade = (
       if (kind === 'DaemonSet') {
         etcd.appendEvent(
           createDaemonSetCreatedEvent(resource as DaemonSet, 'api-server')
+        )
+        return success(resource as KindToResource<typeof kind>)
+      }
+      if (kind === 'StatefulSet') {
+        etcd.appendEvent(
+          createStatefulSetCreatedEvent(resource as StatefulSet, 'api-server')
         )
         return success(resource as KindToResource<typeof kind>)
       }
@@ -701,6 +730,26 @@ export const createApiServerFacade = (
             effectiveNamespace,
             resource as DaemonSet,
             previous.value as DaemonSet,
+            'api-server'
+          )
+        )
+        return success(resource as KindToResource<typeof kind>)
+      }
+      if (kind === 'StatefulSet') {
+        const previous = clusterState.findByKind(
+          'StatefulSet',
+          name,
+          effectiveNamespace
+        )
+        if (!previous.ok) {
+          return previous as Result<KindToResource<typeof kind>>
+        }
+        etcd.appendEvent(
+          createStatefulSetUpdatedEvent(
+            name,
+            effectiveNamespace,
+            resource as StatefulSet,
+            previous.value as StatefulSet,
             'api-server'
           )
         )

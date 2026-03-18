@@ -477,8 +477,8 @@ describe('resourceHelpers', () => {
     describe('unsupported resource types', () => {
       it('should return error for unknown resource type', () => {
         const unknownResource = {
-          apiVersion: 'apps/v1',
-          kind: 'StatefulSet',
+          apiVersion: 'batch/v1',
+          kind: 'CronJob',
           metadata: { name: 'test', namespace: 'default' }
         } as any
 

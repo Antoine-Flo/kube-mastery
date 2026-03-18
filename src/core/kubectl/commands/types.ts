@@ -21,6 +21,7 @@ export type Action =
   | 'api-versions'
   | 'api-resources'
   | 'scale'
+  | 'patch'
   | 'run'
   | 'expose'
   | 'wait'
@@ -77,4 +78,6 @@ export interface ParsedCommand {
   configNamespace?: string // For kubectl config set-context --namespace
   waitForCondition?: string // For kubectl wait: --for=condition=Ready
   waitTimeoutSeconds?: number // For kubectl wait: --timeout=60s
+  patchPayload?: string // For kubectl patch: -p/--patch JSON payload
+  patchType?: 'merge' // For kubectl patch: --type (v1 supports merge only)
 }

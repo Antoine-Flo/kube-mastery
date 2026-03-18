@@ -18,6 +18,7 @@ export interface AutocompleteClusterState {
   getNodes?: () => AutocompleteResource[]
   getReplicaSets?: (namespace?: string) => AutocompleteResource[]
   getDaemonSets?: (namespace?: string) => AutocompleteResource[]
+  getStatefulSets?: (namespace?: string) => AutocompleteResource[]
   getDeployments?: (namespace?: string) => AutocompleteResource[]
 }
 

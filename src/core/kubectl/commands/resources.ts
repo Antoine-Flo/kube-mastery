@@ -9,6 +9,7 @@ export const KUBECTL_RESOURCES = {
   secrets: ['secrets', 'secret'],
   nodes: ['nodes', 'node', 'no'],
   daemonsets: ['daemonsets', 'daemonset', 'ds'],
+  statefulsets: ['statefulsets', 'statefulset', 'sts'],
   replicasets: ['replicasets', 'replicaset', 'rs'],
   ingresses: ['ingresses', 'ingress', 'ing'],
   ingressclasses: ['ingressclasses', 'ingressclass'],

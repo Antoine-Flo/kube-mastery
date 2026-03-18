@@ -91,7 +91,9 @@ const FLAGS_REQUIRING_VALUES = new Set([
   'docker-password',
   'docker-email',
   'for',
-  'timeout'
+  'timeout',
+  'p',
+  'patch'
 ])
 
 const CREATE_SERVICE_TYPES = new Set([
@@ -924,6 +926,42 @@ const exposeTransformer: ActionTransformer = (ctx) => {
   })
 }
 
+const patchTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens) {
+    return success(ctx)
+  }
+
+  const positionalTokens = extractPositionalTokensAfterAction(ctx.tokens)
+  const targetToken = positionalTokens[0]
+  if (targetToken == null) {
+    return success(ctx)
+  }
+
+  if (targetToken.includes('/')) {
+    const [resourceToken, nameToken] = targetToken.split('/', 2)
+    const resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
+    if (!resource) {
+      return error('Invalid or missing resource type')
+    }
+    return success({
+      ...ctx,
+      resource,
+      name: nameToken
+    })
+  }
+
+  const resource = RESOURCE_ALIAS_MAP[targetToken] as Resource | undefined
+  if (!resource) {
+    return error('Invalid or missing resource type')
+  }
+
+  return success({
+    ...ctx,
+    resource,
+    name: positionalTokens[1]
+  })
+}
+
 const configTransformer: ActionTransformer = (ctx) => {
   if (!ctx.tokens || ctx.tokens.length < 3) {
     return error('config requires a subcommand')
@@ -1086,6 +1124,7 @@ const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
   set: setTransformer,
   edit: editTransformer,
   expose: exposeTransformer,
+  patch: patchTransformer,
   wait: waitTransformer,
   config: configTransformer
 }

@@ -17,6 +17,7 @@ import type { Pod } from '../ressources/Pod'
 import type { ReplicaSet } from '../ressources/ReplicaSet'
 import type { Secret } from '../ressources/Secret'
 import type { Service } from '../ressources/Service'
+import type { StatefulSet } from '../ressources/StatefulSet'
 
 // ─── Pod Events ──────────────────────────────────────────────────────────
 
@@ -192,6 +193,32 @@ export interface DaemonSetUpdatedEvent extends BaseEvent {
     namespace: string
     daemonSet: DaemonSet
     previousDaemonSet: DaemonSet
+  }
+}
+
+export interface StatefulSetCreatedEvent extends BaseEvent {
+  type: 'StatefulSetCreated'
+  payload: {
+    statefulSet: StatefulSet
+  }
+}
+
+export interface StatefulSetDeletedEvent extends BaseEvent {
+  type: 'StatefulSetDeleted'
+  payload: {
+    name: string
+    namespace: string
+    deletedStatefulSet: StatefulSet
+  }
+}
+
+export interface StatefulSetUpdatedEvent extends BaseEvent {
+  type: 'StatefulSetUpdated'
+  payload: {
+    name: string
+    namespace: string
+    statefulSet: StatefulSet
+    previousStatefulSet: StatefulSet
   }
 }
 
@@ -471,6 +498,9 @@ export type ClusterEvent =
   | DaemonSetCreatedEvent
   | DaemonSetDeletedEvent
   | DaemonSetUpdatedEvent
+  | StatefulSetCreatedEvent
+  | StatefulSetDeletedEvent
+  | StatefulSetUpdatedEvent
   | PodLabeledEvent
   | ConfigMapLabeledEvent
   | SecretLabeledEvent
@@ -779,6 +809,41 @@ export const createDaemonSetUpdatedEvent = (
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
   payload: { name, namespace, daemonSet, previousDaemonSet }
+})
+
+export const createStatefulSetCreatedEvent = (
+  statefulSet: StatefulSet,
+  source?: string
+): StatefulSetCreatedEvent => ({
+  type: 'StatefulSetCreated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { statefulSet }
+})
+
+export const createStatefulSetDeletedEvent = (
+  name: string,
+  namespace: string,
+  deletedStatefulSet: StatefulSet,
+  source?: string
+): StatefulSetDeletedEvent => ({
+  type: 'StatefulSetDeleted',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, deletedStatefulSet }
+})
+
+export const createStatefulSetUpdatedEvent = (
+  name: string,
+  namespace: string,
+  statefulSet: StatefulSet,
+  previousStatefulSet: StatefulSet,
+  source?: string
+): StatefulSetUpdatedEvent => ({
+  type: 'StatefulSetUpdated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, statefulSet, previousStatefulSet }
 })
 
 /**

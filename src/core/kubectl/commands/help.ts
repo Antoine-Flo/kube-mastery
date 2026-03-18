@@ -14,6 +14,7 @@ type HelpTopic =
   | 'set'
   | 'set image'
   | 'scale'
+  | 'patch'
   | 'version'
   | 'cluster-info'
   | 'api-versions'
@@ -56,6 +57,7 @@ Other Commands:
   api-versions    Print the supported API versions on the server
   api-resources   Print the supported API resources on the server
   scale           Set a new size for a deployment, replica set, or replication controller
+  patch           Update fields of a resource
 
 Use "kubectl <command> --help" for more information about a given command.
 Use "kubectl options" for a list of global command-line options (applies to all commands).`
@@ -167,6 +169,15 @@ Use "kubectl options" for a list of global command-line options (applies to all 
 
 Usage:
   kubectl scale (TYPE NAME | TYPE/NAME) --replicas=COUNT
+
+Use "kubectl options" for a list of global command-line options (applies to all commands).`,
+  patch: `Update fields of a resource.
+
+Usage:
+  kubectl patch (TYPE NAME | TYPE/NAME) --type=merge -p PATCH
+
+Examples:
+  kubectl patch deployment my-app --type=merge -p '{"spec":{"replicas":4}}'
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`,
   version: `Print the client and server version information.

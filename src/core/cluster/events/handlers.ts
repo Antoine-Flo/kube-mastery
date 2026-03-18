@@ -17,6 +17,7 @@ import type { Pod } from '../ressources/Pod'
 import type { ReplicaSet } from '../ressources/ReplicaSet'
 import type { Secret } from '../ressources/Secret'
 import type { Service } from '../ressources/Service'
+import type { StatefulSet } from '../ressources/StatefulSet'
 import type {
   ClusterEvent,
   ConfigMapAnnotatedEvent,
@@ -62,7 +63,10 @@ import type {
   ServiceCreatedEvent,
   ServiceDeletedEvent,
   ServiceLabeledEvent,
-  ServiceUpdatedEvent
+  ServiceUpdatedEvent,
+  StatefulSetCreatedEvent,
+  StatefulSetDeletedEvent,
+  StatefulSetUpdatedEvent
 } from './types'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -78,6 +82,7 @@ const secretRepo = createResourceRepository<Secret>('Secret')
 const replicaSetRepo = createResourceRepository<ReplicaSet>('ReplicaSet')
 const deploymentRepo = createResourceRepository<Deployment>('Deployment')
 const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
+const statefulSetRepo = createResourceRepository<StatefulSet>('StatefulSet')
 const serviceRepo = createResourceRepository<Service>('Service')
 const ingressRepo = createResourceRepository<Ingress>('Ingress')
 const namespaceRepo = createResourceRepository<Namespace>('Namespace')
@@ -98,6 +103,7 @@ type RepoStateKey =
   | 'replicaSets'
   | 'deployments'
   | 'daemonSets'
+  | 'statefulSets'
   | 'services'
   | 'ingresses'
   | 'namespaces'
@@ -111,6 +117,7 @@ type RepoResourceByStateKey = {
   replicaSets: ReplicaSet
   deployments: Deployment
   daemonSets: DaemonSet
+  statefulSets: StatefulSet
   services: Service
   ingresses: Ingress
   namespaces: Namespace
@@ -194,6 +201,7 @@ const secretHandler = createRepoHandler(secretRepo, 'secrets')
 const replicaSetHandler = createRepoHandler(replicaSetRepo, 'replicaSets')
 const deploymentHandler = createRepoHandler(deploymentRepo, 'deployments')
 const daemonSetHandler = createRepoHandler(daemonSetRepo, 'daemonSets')
+const statefulSetHandler = createRepoHandler(statefulSetRepo, 'statefulSets')
 const serviceHandler = createRepoHandler(serviceRepo, 'services')
 const ingressHandler = createRepoHandler(ingressRepo, 'ingresses')
 const namespaceHandler = createRepoHandler(namespaceRepo, 'namespaces')
@@ -415,6 +423,32 @@ export const handleDaemonSetUpdated = (
     event.payload.daemonSet
   )
 
+export const handleStatefulSetCreated = (
+  state: ClusterStateData,
+  event: StatefulSetCreatedEvent
+) => statefulSetHandler.created(state, event.payload.statefulSet)
+
+export const handleStatefulSetDeleted = (
+  state: ClusterStateData,
+  event: StatefulSetDeletedEvent
+) =>
+  statefulSetHandler.deleted(
+    state,
+    event.payload.name,
+    event.payload.namespace
+  )
+
+export const handleStatefulSetUpdated = (
+  state: ClusterStateData,
+  event: StatefulSetUpdatedEvent
+) =>
+  statefulSetHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.statefulSet
+  )
+
 // ─── Service Handlers ──────────────────────────────────────────────────────
 
 export const handleServiceCreated = (
@@ -596,6 +630,9 @@ export const CLUSTER_EVENT_HANDLERS: {
   DaemonSetCreated: handleDaemonSetCreated,
   DaemonSetDeleted: handleDaemonSetDeleted,
   DaemonSetUpdated: handleDaemonSetUpdated,
+  StatefulSetCreated: handleStatefulSetCreated,
+  StatefulSetDeleted: handleStatefulSetDeleted,
+  StatefulSetUpdated: handleStatefulSetUpdated,
   PodLabeled: handlePodLabeled,
   ConfigMapLabeled: handleConfigMapLabeled,
   SecretLabeled: handleSecretLabeled,

@@ -307,6 +307,30 @@ spec:
         )
       })
 
+      it('should route "kubectl patch" to patch handler', () => {
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const createResult = executor.execute(
+          'kubectl create deployment my-app --image=nginx:1.28 --replicas=2'
+        )
+        expect(createResult.ok).toBe(true)
+
+        const patchResult = executor.execute(
+          `kubectl patch deployment my-app --type=merge -p '{"spec":{"replicas":4}}'`
+        )
+        expect(patchResult.ok).toBe(true)
+        if (!patchResult.ok) {
+          return
+        }
+        expect(patchResult.value).toContain('deployment.apps/my-app patched')
+
+        const deployment = apiServer.findResource('Deployment', 'my-app', 'default')
+        expect(deployment.ok).toBe(true)
+        if (!deployment.ok) {
+          return
+        }
+        expect(deployment.value.spec.replicas).toBe(4)
+      })
+
       it('should route "kubectl edit" to edit handler and persist saved changes', () => {
         let capturedContent = ''
         let capturedSave: ((newContent: string) => void) | undefined

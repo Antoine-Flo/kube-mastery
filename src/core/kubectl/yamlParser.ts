@@ -27,6 +27,8 @@ import type { Secret } from '../cluster/ressources/Secret'
 import { parseSecretManifest } from '../cluster/ressources/Secret'
 import type { Service } from '../cluster/ressources/Service'
 import { parseServiceManifest } from '../cluster/ressources/Service'
+import type { StatefulSet } from '../cluster/ressources/StatefulSet'
+import { parseStatefulSetManifest } from '../cluster/ressources/StatefulSet'
 import type { ResourceKind } from '../cluster/ClusterState'
 import type { Result } from '../shared/result'
 import { error, success } from '../shared/result'
@@ -47,6 +49,7 @@ type ParsedResource =
   | ReplicaSet
   | Deployment
   | DaemonSet
+  | StatefulSet
   | Service
   | Ingress
 
@@ -101,6 +104,7 @@ const MANIFEST_PARSERS: Record<
   ReplicaSet: parseReplicaSetManifest,
   Deployment: parseDeploymentManifest,
   DaemonSet: parseDaemonSetManifest,
+  StatefulSet: parseStatefulSetManifest,
   Service: parseServiceManifest,
   Ingress: parseIngressManifest
 }

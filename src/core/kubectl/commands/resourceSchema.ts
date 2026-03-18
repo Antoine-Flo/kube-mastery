@@ -11,6 +11,7 @@ export const SUPPORTED_RESOURCE_KINDS: ResourceKind[] = [
   'ReplicaSet',
   'Deployment',
   'DaemonSet',
+  'StatefulSet',
   'PersistentVolume',
   'PersistentVolumeClaim',
   'Service'
@@ -23,6 +24,7 @@ export const NAMESPACED_RESOURCE_KINDS: ResourceKind[] = [
   'ReplicaSet',
   'Deployment',
   'DaemonSet',
+  'StatefulSet',
   'PersistentVolumeClaim',
   'Service',
   'Ingress'
@@ -38,6 +40,7 @@ export const RESOURCE_KIND_BY_RESOURCE: Record<Resource, ResourceKind | undefine
   secrets: 'Secret',
   nodes: 'Node',
   daemonsets: 'DaemonSet',
+  statefulsets: 'StatefulSet',
   replicasets: 'ReplicaSet',
   ingresses: 'Ingress',
   ingressclasses: undefined,
@@ -48,6 +51,7 @@ export const RESOURCE_KIND_BY_RESOURCE: Record<Resource, ResourceKind | undefine
 const KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
   Deployment: 'deployment.apps',
   DaemonSet: 'daemonset.apps',
+  StatefulSet: 'statefulset.apps',
   ReplicaSet: 'replicaset.apps',
   Ingress: 'ingress.networking.k8s.io'
 }
@@ -55,6 +59,7 @@ const KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
 const PLURAL_KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
   Deployment: 'deployments.apps',
   DaemonSet: 'daemonsets.apps',
+  StatefulSet: 'statefulsets.apps',
   ReplicaSet: 'replicasets.apps',
   Ingress: 'ingresses.networking.k8s.io',
   Namespace: 'namespaces',
@@ -76,6 +81,7 @@ export const RESOURCE_OUTPUT_METADATA_BY_RESOURCE: Record<
   replicasets: { apiVersion: 'apps/v1', kind: 'ReplicaSet' },
   deployments: { apiVersion: 'apps/v1', kind: 'Deployment' },
   daemonsets: { apiVersion: 'apps/v1', kind: 'DaemonSet' },
+  statefulsets: { apiVersion: 'apps/v1', kind: 'StatefulSet' },
   services: { apiVersion: 'v1', kind: 'Service' },
   ingresses: { apiVersion: 'networking.k8s.io/v1', kind: 'Ingress' },
   ingressclasses: { apiVersion: 'networking.k8s.io/v1', kind: 'IngressClass' },

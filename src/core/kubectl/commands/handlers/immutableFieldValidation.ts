@@ -41,6 +41,14 @@ const ALLOWED_EDIT_PATHS_BY_KIND: Partial<Record<ResourceKind, readonly string[]
     'spec.template.spec.containers.*.image',
     'spec.template.spec.initContainers.*.image'
   ],
+  StatefulSet: [
+    ...DEFAULT_ALLOWED_EDIT_PATHS,
+    'spec.replicas',
+    'spec.template.metadata.labels',
+    'spec.template.metadata.annotations',
+    'spec.template.spec.containers.*.image',
+    'spec.template.spec.initContainers.*.image'
+  ],
   Service: [...DEFAULT_ALLOWED_EDIT_PATHS],
   ConfigMap: [...DEFAULT_ALLOWED_EDIT_PATHS, 'data', 'binaryData'],
   Secret: [...DEFAULT_ALLOWED_EDIT_PATHS, 'data', 'stringData', 'type'],
@@ -315,7 +323,12 @@ export const validateImmutableFieldsForEdit = (
     }
   }
 
-  if (kind === 'Deployment' || kind === 'ReplicaSet' || kind === 'DaemonSet') {
+  if (
+    kind === 'Deployment' ||
+    kind === 'ReplicaSet' ||
+    kind === 'DaemonSet' ||
+    kind === 'StatefulSet'
+  ) {
     const selectorValidationError = validateImmutablePath(
       existingResource,
       editedResource,

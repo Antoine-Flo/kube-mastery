@@ -1129,3 +1129,55 @@ describe('kubectl parser - wait', () => {
     expect(result.value.waitTimeoutSeconds).toBe(30)
   })
 })
+
+describe('kubectl parser - patch', () => {
+  it('should parse merge patch payload with --patch', () => {
+    const result = parseCommand(
+      `kubectl patch deployment my-app --type=merge --patch '{"spec":{"replicas":4}}'`
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('patch')
+    expect(result.value.resource).toBe('deployments')
+    expect(result.value.name).toBe('my-app')
+    expect(result.value.patchType).toBe('merge')
+    expect(result.value.patchPayload).toBe('{"spec":{"replicas":4}}')
+  })
+
+  it('should parse merge patch payload with -p shorthand', () => {
+    const result = parseCommand(
+      `kubectl patch deployment my-app -p '{"spec":{"replicas":4}}'`
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.patchPayload).toBe('{"spec":{"replicas":4}}')
+  })
+
+  it('should reject patch command without payload', () => {
+    const result = parseCommand('kubectl patch deployment my-app --type=merge')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('required flag(s) "patch" not set')
+    }
+  })
+
+  it('should reject patch command with unsupported --type', () => {
+    const result = parseCommand(
+      `kubectl patch deployment my-app --type=json -p '{"spec":{"replicas":4}}'`
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('--type must be "merge"')
+    }
+  })
+})

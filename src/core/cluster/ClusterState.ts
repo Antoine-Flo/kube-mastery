@@ -35,6 +35,9 @@ import {
   createReplicaSetCreatedEvent,
   createReplicaSetDeletedEvent,
   createReplicaSetUpdatedEvent,
+  createStatefulSetCreatedEvent,
+  createStatefulSetDeletedEvent,
+  createStatefulSetUpdatedEvent,
   createSecretCreatedEvent,
   createSecretDeletedEvent,
   createSecretUpdatedEvent,
@@ -59,6 +62,7 @@ import type { Pod } from './ressources/Pod'
 import type { ReplicaSet } from './ressources/ReplicaSet'
 import type { Secret } from './ressources/Secret'
 import type { Service } from './ressources/Service'
+import type { StatefulSet } from './ressources/StatefulSet'
 import type { ClusterBootstrapConfig } from './systemBootstrap'
 import { applyClusterBootstrap } from './systemBootstrap'
 import { createSystemNamespaces } from './systemNamespaces'
@@ -78,6 +82,7 @@ export interface ClusterStateData {
   replicaSets: ResourceCollection<ReplicaSet>
   deployments: ResourceCollection<Deployment>
   daemonSets: ResourceCollection<DaemonSet>
+  statefulSets: ResourceCollection<StatefulSet>
   services: ResourceCollection<Service>
   ingresses: ResourceCollection<Ingress>
   persistentVolumes: ResourceCollection<PersistentVolume>
@@ -93,6 +98,7 @@ type ResourceByKind = {
   ReplicaSet: ReplicaSet
   Deployment: Deployment
   DaemonSet: DaemonSet
+  StatefulSet: StatefulSet
   Service: Service
   Ingress: Ingress
   PersistentVolume: PersistentVolume
@@ -116,6 +122,7 @@ export const createClusterStateData = (
     replicaSets: ReplicaSet[]
     deployments: Deployment[]
     daemonSets: DaemonSet[]
+    statefulSets: StatefulSet[]
     services: Service[]
     ingresses: Ingress[]
     persistentVolumes: PersistentVolume[]
@@ -130,6 +137,7 @@ export const createClusterStateData = (
   replicaSets: { items: collections.replicaSets ?? [] },
   deployments: { items: collections.deployments ?? [] },
   daemonSets: { items: collections.daemonSets ?? [] },
+  statefulSets: { items: collections.statefulSets ?? [] },
   services: { items: collections.services ?? [] },
   ingresses: { items: collections.ingresses ?? [] },
   persistentVolumes: { items: collections.persistentVolumes ?? [] },
@@ -147,6 +155,7 @@ const nodeRepo = createResourceRepository<Node>('Node')
 const replicaSetRepo = createResourceRepository<ReplicaSet>('ReplicaSet')
 const deploymentRepo = createResourceRepository<Deployment>('Deployment')
 const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
+const statefulSetRepo = createResourceRepository<StatefulSet>('StatefulSet')
 const serviceRepo = createResourceRepository<Service>('Service')
 const ingressRepo = createResourceRepository<Ingress>('Ingress')
 const persistentVolumeRepo =
@@ -256,6 +265,7 @@ const createEmptyState = (): ClusterStateData => ({
   replicaSets: replicaSetRepo.createEmpty(),
   deployments: deploymentRepo.createEmpty(),
   daemonSets: daemonSetRepo.createEmpty(),
+  statefulSets: statefulSetRepo.createEmpty(),
   services: serviceRepo.createEmpty(),
   ingresses: ingressRepo.createEmpty(),
   persistentVolumes: persistentVolumeRepo.createEmpty(),
@@ -285,6 +295,10 @@ const deploymentOps = createResourceOperations<Deployment>(
 const daemonSetOps = createResourceOperations<DaemonSet>(
   daemonSetRepo,
   'daemonSets'
+)
+const statefulSetOps = createResourceOperations<StatefulSet>(
+  statefulSetRepo,
+  'statefulSets'
 )
 const serviceOps = createResourceOperations<Service>(serviceRepo, 'services')
 const ingressOps = createResourceOperations<Ingress>(ingressRepo, 'ingresses')
@@ -368,6 +382,15 @@ export interface ClusterState {
     namespace: string,
     updateFn: (daemonSet: DaemonSet) => DaemonSet
   ) => Result<DaemonSet>
+  getStatefulSets: (namespace?: string) => StatefulSet[]
+  addStatefulSet: (statefulSet: StatefulSet) => void
+  findStatefulSet: (name: string, namespace: string) => Result<StatefulSet>
+  deleteStatefulSet: (name: string, namespace: string) => Result<StatefulSet>
+  updateStatefulSet: (
+    name: string,
+    namespace: string,
+    updateFn: (statefulSet: StatefulSet) => StatefulSet
+  ) => Result<StatefulSet>
   getServices: (namespace?: string) => Service[]
   addService: (service: Service) => void
   findService: (name: string, namespace: string) => Result<Service>
@@ -491,6 +514,11 @@ const EVENT_FACTORIES = {
     created: createDaemonSetCreatedEvent,
     deleted: createDaemonSetDeletedEvent,
     updated: createDaemonSetUpdatedEvent
+  },
+  StatefulSet: {
+    created: createStatefulSetCreatedEvent,
+    deleted: createStatefulSetDeletedEvent,
+    updated: createStatefulSetUpdatedEvent
   },
   Service: {
     created: createServiceCreatedEvent,
@@ -679,6 +707,13 @@ export function createClusterState(
     eventBus,
     'DaemonSet'
   )
+  const statefulSetMethods = createFacadeMethods(
+    statefulSetOps,
+    getState,
+    setState,
+    eventBus,
+    'StatefulSet'
+  )
   const serviceMethods = createFacadeMethods(
     serviceOps,
     getState,
@@ -863,6 +898,11 @@ export function createClusterState(
           resourceName,
           resourceNamespace
         ) as Result<KubernetesResource>,
+      StatefulSet: (resourceName, resourceNamespace) =>
+        statefulSetMethods.find(
+          resourceName,
+          resourceNamespace
+        ) as Result<KubernetesResource>,
       Service: (resourceName, resourceNamespace) =>
         serviceMethods.find(
           resourceName,
@@ -917,6 +957,8 @@ export function createClusterState(
         deploymentMethods.getAll(resourceNamespace) as KubernetesResource[],
       DaemonSet: (resourceNamespace) =>
         daemonSetMethods.getAll(resourceNamespace) as KubernetesResource[],
+      StatefulSet: (resourceNamespace) =>
+        statefulSetMethods.getAll(resourceNamespace) as KubernetesResource[],
       Service: (resourceNamespace) =>
         serviceMethods.getAll(resourceNamespace) as KubernetesResource[],
       Ingress: (resourceNamespace) =>
@@ -983,6 +1025,10 @@ export function createClusterState(
     }
     if (kind === 'DaemonSet') {
       daemonSetMethods.add(resource as DaemonSet)
+      return { ok: true, value: resource as KindToResource<TKind> }
+    }
+    if (kind === 'StatefulSet') {
+      statefulSetMethods.add(resource as StatefulSet)
       return { ok: true, value: resource as KindToResource<TKind> }
     }
     if (kind === 'Service') {
@@ -1067,6 +1113,13 @@ export function createClusterState(
         () => resource as DaemonSet
       ) as Result<KindToResource<TKind>>
     }
+    if (kind === 'StatefulSet') {
+      return statefulSetMethods.update(
+        name,
+        effectiveNamespace,
+        () => resource as StatefulSet
+      ) as Result<KindToResource<TKind>>
+    }
     if (kind === 'Service') {
       return serviceMethods.update(
         name,
@@ -1134,6 +1187,11 @@ export function createClusterState(
         KindToResource<TKind>
       >
     }
+    if (kind === 'StatefulSet') {
+      return statefulSetMethods.delete(name, effectiveNamespace) as Result<
+        KindToResource<TKind>
+      >
+    }
     if (kind === 'Service') {
       return serviceMethods.delete(name, effectiveNamespace) as Result<
         KindToResource<TKind>
@@ -1189,6 +1247,11 @@ export function createClusterState(
     findDaemonSet: daemonSetMethods.find,
     deleteDaemonSet: daemonSetMethods.delete,
     updateDaemonSet: daemonSetMethods.update,
+    getStatefulSets: statefulSetMethods.getAll,
+    addStatefulSet: statefulSetMethods.add,
+    findStatefulSet: statefulSetMethods.find,
+    deleteStatefulSet: statefulSetMethods.delete,
+    updateStatefulSet: statefulSetMethods.update,
 
     getServices: serviceMethods.getAll,
     addService: serviceMethods.add,
@@ -1234,6 +1297,7 @@ export function createClusterState(
       replicaSets: { items: [...state.replicaSets.items] },
       deployments: { items: [...state.deployments.items] },
       daemonSets: { items: [...state.daemonSets.items] },
+      statefulSets: { items: [...state.statefulSets.items] },
       services: { items: [...state.services.items] },
       ingresses: { items: [...state.ingresses.items] },
       persistentVolumes: { items: [...state.persistentVolumes.items] },
@@ -1252,6 +1316,7 @@ export function createClusterState(
         replicaSets: newState.replicaSets || { items: [] },
         deployments: newState.deployments || { items: [] },
         daemonSets: newState.daemonSets || { items: [] },
+        statefulSets: newState.statefulSets || { items: [] },
         services: newState.services || { items: [] },
         ingresses: newState.ingresses || { items: [] },
         persistentVolumes: newState.persistentVolumes || { items: [] },

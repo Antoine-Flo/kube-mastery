@@ -44,6 +44,7 @@ const VALID_ACTIONS: Action[] = [
   'api-versions',
   'api-resources',
   'scale',
+  'patch',
   'run',
   'expose',
   'wait',
@@ -56,6 +57,7 @@ const FLAG_ALIASES: Record<string, string> = {
   o: 'output',
   l: 'selector',
   f: 'filename', // Note: -f is also used for --follow in logs, but filename takes precedence
+  p: 'patch',
   A: 'all-namespaces',
   c: 'container', // Container name for logs/exec
   R: 'recursive',
@@ -101,7 +103,9 @@ const FLAGS_REQUIRING_VALUES = [
   'docker-server',
   'docker-username',
   'docker-password',
-  'docker-email'
+  'docker-email',
+  'p',
+  'patch'
 ]
 // Note: 'filename' is required for apply/create, but 'f' and 'follow' are boolean for logs
 
@@ -225,7 +229,9 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     replicas: getReplicasFromFlags(normalizedFlags),
     port: getPortFromFlags(normalizedFlags),
     waitForCondition: ctx.waitForCondition,
-    waitTimeoutSeconds: ctx.waitTimeoutSeconds
+    waitTimeoutSeconds: ctx.waitTimeoutSeconds,
+    patchPayload: getPatchPayloadFromFlags(normalizedFlags),
+    patchType: getPatchTypeFromFlags(normalizedFlags)
   })
 }
 
@@ -602,6 +608,41 @@ const getConfigNamespaceFromFlags = (
   return undefined
 }
 
+const getPatchPayloadFromFlags = (
+  flags: Record<string, string | boolean>
+): string | undefined => {
+  const patch = flags['patch']
+  if (typeof patch === 'string') {
+    return stripWrappingQuotes(patch)
+  }
+  return undefined
+}
+
+const stripWrappingQuotes = (value: string): string => {
+  if (value.length < 2) {
+    return value
+  }
+  const startsWithSingleQuote = value.startsWith("'") && value.endsWith("'")
+  if (startsWithSingleQuote) {
+    return value.slice(1, -1)
+  }
+  const startsWithDoubleQuote = value.startsWith('"') && value.endsWith('"')
+  if (startsWithDoubleQuote) {
+    return value.slice(1, -1)
+  }
+  return value
+}
+
+const getPatchTypeFromFlags = (
+  flags: Record<string, string | boolean>
+): 'merge' | undefined => {
+  const patchType = flags['type']
+  if (patchType === 'merge') {
+    return 'merge'
+  }
+  return undefined
+}
+
 // ─── Validation ──────────────────────────────────────────────────────────
 
 /**
@@ -641,6 +682,7 @@ const validateCommandSemantics = (
     action === 'label' ||
     action === 'annotate' ||
     action === 'scale' ||
+    action === 'patch' ||
     action === 'expose' ||
     action === 'wait' ||
     (action === 'delete' && !hasFilename)
@@ -819,6 +861,18 @@ const validateCommandSemantics = (
     )
     if (!hasContainerAssignment) {
       return 'set image requires at least one container=image assignment'
+    }
+  }
+
+  if (action === 'patch') {
+    const patchPayload = flags['patch']
+    if (typeof patchPayload !== 'string' || patchPayload.length === 0) {
+      return 'error: required flag(s) "patch" not set'
+    }
+
+    const patchType = flags['type']
+    if (patchType !== undefined && patchType !== 'merge') {
+      return 'error: --type must be "merge"'
     }
   }
 

@@ -33,6 +33,7 @@ const KUBECTL_ACTIONS = [
   'api-versions',
   'api-resources',
   'scale',
+  'patch',
   'run',
   'expose',
   'config'
@@ -55,6 +56,8 @@ const RESOURCE_GETTERS: Record<
   nodes: (state) => (state.getNodes ? state.getNodes() : []),
   replicasets: (state) => (state.getReplicaSets ? state.getReplicaSets() : []),
   daemonsets: (state) => (state.getDaemonSets ? state.getDaemonSets() : []),
+  statefulsets: (state) =>
+    state.getStatefulSets ? state.getStatefulSets() : [],
   deployments: (state) => (state.getDeployments ? state.getDeployments() : [])
 }
 

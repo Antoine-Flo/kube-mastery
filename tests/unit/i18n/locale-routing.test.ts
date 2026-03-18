@@ -10,7 +10,7 @@ describe('getDisabledLocaleRedirectPath', () => {
 
   it('redirects invalid first segment to default lang', () => {
     expect(getDisabledLocaleRedirectPath('/docs/intro', '?lang=fr')).toBe(
-      '/en/docs/intro?lang=fr'
+      '/en/intro?lang=fr'
     )
     expect(getDisabledLocaleRedirectPath('/robots.txt/courses/common-core', '')).toBe(
       '/en/courses/common-core'

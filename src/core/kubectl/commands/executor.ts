@@ -25,6 +25,7 @@ import { handleExec } from './handlers/exec'
 import { handleGet } from './handlers/get'
 import { handleLabel } from './handlers/label'
 import { handleLogs } from './handlers/logs'
+import { handlePatch } from './handlers/patch'
 import { handleScale } from './handlers/scale'
 import { handleSetImage } from './handlers/setImage'
 import { handleReplace } from './handlers/replace'
@@ -140,6 +141,7 @@ const createHandlers = (
   handlers.set('api-versions', (parsed) => success(handleAPIVersions(parsed)))
   handlers.set('api-resources', (parsed) => handleAPIResources(parsed))
   handlers.set('scale', (parsed) => handleScale(apiServer, parsed))
+  handlers.set('patch', (parsed) => handlePatch(apiServer, parsed))
   handlers.set('run', (parsed) =>
     handleRun(apiServer, parsed, networkRuntime)
   )

@@ -22,7 +22,8 @@ describe('KubectlAutocompleteProvider', () => {
         getSecrets: () => [
           { metadata: { name: 'db-secret' } },
           { metadata: { name: 'api-secret' } }
-        ]
+        ],
+        getStatefulSets: () => [{ metadata: { name: 'web-sts' } }]
       },
       fileSystem: {
         getCurrentPath: () => '/home/kube'
@@ -166,6 +167,11 @@ describe('KubectlAutocompleteProvider', () => {
         const results = provider.complete(['kubectl'], 'ed', mockContext)
         expect(results).toEqual([{ text: 'edit', suffix: ' ' }])
       })
+
+      it('should complete patch action with unique prefix', () => {
+        const results = provider.complete(['kubectl'], 'pat', mockContext)
+        expect(results).toEqual([{ text: 'patch', suffix: ' ' }])
+      })
     })
 
     describe('position 2 (resource type) for non-logs/exec actions', () => {
@@ -200,6 +206,15 @@ describe('KubectlAutocompleteProvider', () => {
           mockContext
         )
         expect(results).toEqual([{ text: 'deployments', suffix: ' ' }])
+      })
+
+      it('should complete statefulsets resource type with unique prefix', () => {
+        const results = provider.complete(
+          ['kubectl', 'get', 'statef'],
+          'statef',
+          mockContext
+        )
+        expect(results).toEqual([{ text: 'statefulsets', suffix: ' ' }])
       })
     })
 
@@ -315,6 +330,15 @@ describe('KubectlAutocompleteProvider', () => {
           mockContext
         )
         expect(results).toContainEqual({ text: 'db-secret', suffix: ' ' })
+      })
+
+      it('should return statefulset names for statefulsets resource type', () => {
+        const results = provider.complete(
+          ['kubectl', 'get', 'statefulsets'],
+          '',
+          mockContext
+        )
+        expect(results).toContainEqual({ text: 'web-sts', suffix: ' ' })
       })
 
       it('should return node names for nodes resource type', () => {

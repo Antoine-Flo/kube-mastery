@@ -96,6 +96,18 @@ const deleteNamespacedResourcesForNamespace = (
     }
   }
 
+  const statefulSets = apiServer.listResources('StatefulSet', namespace)
+  for (const statefulSet of statefulSets) {
+    const result = apiServer.deleteResource(
+      'StatefulSet',
+      statefulSet.metadata.name,
+      namespace
+    )
+    if (!result.ok) {
+      return result
+    }
+  }
+
   const replicaSets = apiServer.listResources('ReplicaSet', namespace)
   for (const replicaSet of replicaSets) {
     const result = apiServer.deleteResource(
@@ -178,6 +190,11 @@ const DELETE_TARGET_BY_KIND: Partial<
   DaemonSet: {
     kindRef: 'daemonset.apps',
     kindRefPlural: 'daemonsets.apps',
+    namespaced: true
+  },
+  StatefulSet: {
+    kindRef: 'statefulset.apps',
+    kindRefPlural: 'statefulsets.apps',
     namespaced: true
   },
   ReplicaSet: {
@@ -390,6 +407,20 @@ export const handleDelete = (
         return formatNotFoundMessage('daemonsets.apps', name)
       }
       messages.push(formatDeletedMessage('daemonset.apps', name, namespace, true))
+    }
+    return success(messages.join('\n'))
+  }
+
+  if (resource === 'statefulsets') {
+    const messages: string[] = []
+    for (const name of names) {
+      const deleteResult = apiServer.deleteResource('StatefulSet', name, namespace)
+      if (!deleteResult.ok) {
+        return formatNotFoundMessage('statefulsets.apps', name)
+      }
+      messages.push(
+        formatDeletedMessage('statefulset.apps', name, namespace, true)
+      )
     }
     return success(messages.join('\n'))
   }

@@ -43,6 +43,7 @@ const NAME_RULE_BY_KIND: Record<SupportedKind, NameRule> = {
   ReplicaSet: DNS1123_SUBDOMAIN_RULE,
   Deployment: DNS1123_SUBDOMAIN_RULE,
   DaemonSet: DNS1123_SUBDOMAIN_RULE,
+  StatefulSet: DNS1123_SUBDOMAIN_RULE,
   PersistentVolume: DNS1123_SUBDOMAIN_RULE,
   PersistentVolumeClaim: DNS1123_SUBDOMAIN_RULE,
   Service: DNS1123_LABEL_RULE
