@@ -268,10 +268,6 @@ function createLayerToggleEl(selectedLayer: ClusterVizLayer): HTMLElement {
   return wrapper
 }
 
-function getPodFocusId(pod: Pod): string {
-  return `${pod.metadata.namespace}/${pod.metadata.name}`
-}
-
 function getServiceFocusId(service: SimServiceRuntime): string {
   return `${service.namespace}/${service.serviceName}`
 }

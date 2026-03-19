@@ -2,7 +2,6 @@ import type { ClusterStateData } from '../ClusterState'
 import { addPod, deletePod, updatePod } from '../ClusterState'
 import { createResourceRepository } from '../repositories/resourceRepository'
 import type {
-  KubernetesResource,
   ResourceCollection
 } from '../repositories/types'
 import type { ConfigMap } from '../ressources/ConfigMap'

@@ -93,7 +93,7 @@ interface MetadataOperationConfig {
 /**
  * Resource collection accessor - declarative mapping
  */
-interface ResourceCollectionAccessor<T extends ResourceWithMetadata> {
+interface ResourceCollectionAccessor {
   kind: ResourceKind
   resourceTypeName: string // For error messages (capitalized: "Pod")
   singularName: string // For success messages (lowercase: "pod")
@@ -104,7 +104,7 @@ interface ResourceCollectionAccessor<T extends ResourceWithMetadata> {
  */
 const RESOURCE_ACCESSORS: Record<
   string,
-  ResourceCollectionAccessor<ResourceWithMetadata>
+  ResourceCollectionAccessor
 > = {
   pods: {
     kind: RESOURCE_KIND_BY_RESOURCE.pods ?? 'Pod',

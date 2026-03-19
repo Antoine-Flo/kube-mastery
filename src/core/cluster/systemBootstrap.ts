@@ -465,8 +465,7 @@ const createBootstrapStoreFromClusterState = (
 ): BootstrapStore => {
   const createByKind = (
     kind: BootstrapKind,
-    resource: BootstrapResource,
-    namespace?: string
+    resource: BootstrapResource
   ): BootstrapResult<BootstrapResource> => {
     if (kind === 'Namespace') {
       return clusterState.createByKind('Namespace', resource as Namespace)
@@ -478,27 +477,24 @@ const createBootstrapStoreFromClusterState = (
       return clusterState.createByKind(
         'ConfigMap',
         resource as ConfigMap,
-        namespace
       )
     }
     if (kind === 'Service') {
-      return clusterState.createByKind('Service', resource as Service, namespace)
+      return clusterState.createByKind('Service', resource as Service)
     }
     if (kind === 'Deployment') {
       return clusterState.createByKind(
         'Deployment',
         resource as Deployment,
-        namespace
       )
     }
     if (kind === 'DaemonSet') {
       return clusterState.createByKind(
         'DaemonSet',
         resource as DaemonSet,
-        namespace
       )
     }
-    return clusterState.createByKind('Pod', resource as Pod, namespace)
+    return clusterState.createByKind('Pod', resource as Pod)
   }
 
   const updateByKind = (
@@ -583,8 +579,8 @@ const createBootstrapStoreFromClusterState = (
     listByKind: (kind, namespace) => {
       return clusterState.listByKind(kind, namespace) as readonly BootstrapResource[]
     },
-    createByKind: (kind, resource, namespace) => {
-      return createByKind(kind, resource, namespace)
+    createByKind: (kind, resource) => {
+      return createByKind(kind, resource)
     },
     updateByKind: (kind, name, resource, namespace) => {
       return updateByKind(kind, name, resource, namespace)

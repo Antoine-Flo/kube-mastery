@@ -8,7 +8,6 @@ import type {
 import type { TaskGlobAdapter } from './port'
 import { buildTaskGroupOverview, buildTaskGroupList } from './domain'
 import { createTaskGlobAdapter } from './glob-adapter'
-import { stripNumericPrefix } from '../utils'
 import { DEMO_TASK_GROUP_ID } from './constants'
 
 let adapter: TaskGlobAdapter | null = null

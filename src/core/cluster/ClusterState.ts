@@ -456,7 +456,6 @@ export interface ClusterState {
   createByKind: <TKind extends ResourceKind>(
     kind: TKind,
     resource: KindToResource<TKind>,
-    namespace?: string
   ) => Result<KindToResource<TKind>>
   updateByKind: <TKind extends ResourceKind>(
     kind: TKind,
@@ -984,9 +983,7 @@ export function createClusterState(
   const createByKind = <TKind extends ResourceKind>(
     kind: TKind,
     resource: KindToResource<TKind>,
-    namespace?: string
   ): Result<KindToResource<TKind>> => {
-    const effectiveNamespace = namespace ?? resource.metadata.namespace ?? 'default'
     if (kind === 'Node') {
       nodeMethods.add(resource as Node)
       return { ok: true, value: resource as KindToResource<TKind> }

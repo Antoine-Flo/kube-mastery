@@ -95,7 +95,7 @@ export const createCodeMirrorEditor = (
   let changeCallback: ((value: string) => void) | null = null
   let currentTheme = options.theme ?? 'dark'
 
-  const createExtensions = (content: string) => {
+  const createExtensions = () => {
     const languageExtension = options.filename
       ? detectLanguage(options.filename)
       : []
@@ -153,7 +153,7 @@ export const createCodeMirrorEditor = (
   const createEditorState = (content: string) => {
     return EditorState.create({
       doc: content,
-      extensions: createExtensions(content)
+      extensions: createExtensions()
     })
   }
 

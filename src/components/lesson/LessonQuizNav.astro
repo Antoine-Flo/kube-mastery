@@ -167,7 +167,6 @@ const completeUrl =
     }
 
     const questionCount = parseInt(container.dataset.questionCount ?? '0', 10)
-    const isLast = container.dataset.isLast === 'true'
     const questions = container.querySelectorAll<HTMLElement>(
       '[data-question-index]'
     )
@@ -205,11 +204,6 @@ const completeUrl =
 
     function getCurrentQuestion(): HTMLElement | null {
       return container.querySelector(`[data-question-index="${currentIndex}"]`)
-    }
-
-    function isCurrentAnsweredCorrectly(): boolean {
-      const q = getCurrentQuestion()
-      return q?.dataset.result === 'correct'
     }
 
     function isQuizCompleted(): boolean {

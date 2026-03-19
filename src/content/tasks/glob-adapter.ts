@@ -85,38 +85,6 @@ function getTaskDirsByGroup(): Map<string, string[]> {
   return out
 }
 
-function getTaskTitle(groupId: string, taskId: string, lang: UiLang): string {
-  const rawGlob = lang === 'fr' ? contentFrRawGlob : contentRawGlob
-  const suffix = `tasks/${groupId}/${taskId.replace(/^\d+-/, '')}/${lang}/content.md`
-  const prefix = `tasks/${groupId}/`
-  const foundKey = Object.keys(rawGlob).find((k) => {
-    const normalized = k.replace(/\\/g, '/')
-    if (!normalized.includes(prefix)) {
-      return false
-    }
-    const afterGroup = normalized.split(prefix)[1]
-    if (!afterGroup) {
-      return false
-    }
-    const taskDir = afterGroup.split('/')[0]
-    const taskIdNorm = stripNumericPrefix(taskDir)
-    return taskIdNorm === taskId && afterGroup.endsWith(`/${lang}/content.md`)
-  })
-  if (!foundKey) {
-    const fallbackKey = Object.keys(rawGlob).find(
-      (k) =>
-        k.includes(`tasks/${groupId}/`) && k.includes(`/${lang}/content.md`)
-    )
-    if (!fallbackKey) {
-      return taskId
-    }
-    const raw = rawGlob[fallbackKey]
-    return parseH1(raw ?? '')
-  }
-  const raw = rawGlob[foundKey]
-  return parseH1(raw ?? '') || taskId
-}
-
 function contentPath(groupId: string, taskDir: string, lang: UiLang): string {
   return `tasks/${groupId}/${taskDir}/${lang}/content.md`
 }

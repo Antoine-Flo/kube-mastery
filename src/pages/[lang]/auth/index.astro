@@ -11,7 +11,6 @@ import '../../../styles/components/page-halo.css'
 
 const lang = (Astro.params.lang || 'en') as 'en' | 'fr'
 const t = useTranslations(lang)
-const localePath = useLocalePath(lang)
 
 const rawRedirect = Astro.url.searchParams.get('redirect') ?? ''
 const redirect = getSafeLocalRedirectTarget(rawRedirect, '')
@@ -37,7 +36,7 @@ try {
     data: { user }
   } = await supabase.auth.getUser()
   if (user) {
-    return Astro.redirect(redirect || localePath('/courses'))
+    return Astro.redirect(redirect || useLocalePath(lang)('/courses'))
   }
 } catch {
   // Missing Supabase env or other error → show login page

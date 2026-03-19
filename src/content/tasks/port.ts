@@ -1,5 +1,5 @@
 import type { UiLang } from '../courses/types'
-import type { TaskGroupMeta, TaskLocation } from './types'
+import type { TaskGroupMeta } from './types'
 
 export interface TaskIndexPort {
   getGroupIds(): string[]

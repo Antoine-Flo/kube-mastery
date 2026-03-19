@@ -56,7 +56,6 @@ export function mountTerminal(
   const {
     rows = 20,
     scrollback = 1000,
-    lang = 'en',
     seedName,
     topPrompt,
     env: providedEnv,

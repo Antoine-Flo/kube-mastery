@@ -551,8 +551,7 @@ export const createApiServerFacade = (
         KindToResource<typeof kind>
       >
     },
-    createResource: (kind, resource, namespace) => {
-      const effectiveNamespace = namespace ?? resource.metadata.namespace ?? 'default'
+    createResource: (kind, resource) => {
       if (kind === 'Pod') {
         etcd.appendEvent(createPodCreatedEvent(resource as Pod, 'api-server'))
         return success(resource as KindToResource<typeof kind>)
