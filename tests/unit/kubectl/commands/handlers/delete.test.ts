@@ -139,6 +139,92 @@ spec:
         expect(result.error).toContain('YAML parse error')
       }
     })
+
+    it('should delete resources from sorted manifests in a directory', () => {
+      apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'alpha-del',
+          namespace: 'default',
+          containers: [{ name: 'main', image: 'nginx:latest' }]
+        })
+      )
+      apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'zulu-del',
+          namespace: 'default',
+          containers: [{ name: 'main', image: 'nginx:latest' }]
+        })
+      )
+
+      const podYaml = (name: string) => `apiVersion: v1
+kind: Pod
+metadata:
+  name: ${name}
+  namespace: default
+spec:
+  containers:
+    - name: main
+      image: nginx:latest
+`
+
+      fileSystem.createDirectory('delete-manifests-dir')
+      fileSystem.createFile('delete-manifests-dir/z.yaml')
+      fileSystem.writeFile('delete-manifests-dir/z.yaml', podYaml('zulu-del'))
+      fileSystem.createFile('delete-manifests-dir/a.yaml')
+      fileSystem.writeFile('delete-manifests-dir/a.yaml', podYaml('alpha-del'))
+
+      const parsed = createParsedCommand({
+        flags: { f: 'delete-manifests-dir' }
+      })
+
+      const result = handleDelete(apiServer, parsed, fileSystem)
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+      expect(result.value.split('\n')).toEqual([
+        'pod "alpha-del" deleted from default namespace',
+        'pod "zulu-del" deleted from default namespace'
+      ])
+      expect(apiServer.findResource('Pod', 'alpha-del', 'default').ok).toBe(
+        false
+      )
+      expect(apiServer.findResource('Pod', 'zulu-del', 'default').ok).toBe(
+        false
+      )
+    })
+
+    it('should error when delete directory has no manifest files', () => {
+      fileSystem.createDirectory('empty-delete-dir')
+
+      const parsed = createParsedCommand({
+        flags: { f: 'empty-delete-dir' }
+      })
+
+      const result = handleDelete(apiServer, parsed, fileSystem)
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toBe('error: no objects passed to delete')
+      }
+    })
+
+    it('should error when delete directory has only non-manifest files', () => {
+      fileSystem.createDirectory('txt-only-delete-dir')
+      fileSystem.createFile('txt-only-delete-dir/note.txt')
+      fileSystem.writeFile('txt-only-delete-dir/note.txt', 'hello')
+
+      const parsed = createParsedCommand({
+        flags: { f: 'txt-only-delete-dir' }
+      })
+
+      const result = handleDelete(apiServer, parsed, fileSystem)
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toBe('error: no objects passed to delete')
+      }
+    })
   })
 
   describe('deleting pods', () => {

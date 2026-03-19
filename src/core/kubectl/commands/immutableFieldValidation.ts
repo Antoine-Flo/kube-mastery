@@ -1,4 +1,4 @@
-import type { ResourceKind } from '../../../cluster/ClusterState'
+import type { ResourceKind } from '../../cluster/ClusterState'
 
 type GenericResource = Record<string, unknown>
 type PathSegment = string

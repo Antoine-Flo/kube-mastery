@@ -6,10 +6,8 @@ import { getSupabaseServer } from '../../../lib/supabase'
 
 const lang = (Astro.params.lang || 'en') as 'en' | 'fr'
 const t = useTranslations(lang)
-const localePath = useLocalePath(lang)
 
 const redirect = Astro.url.searchParams.get('redirect') ?? ''
-const redirectTo = getSafeLocalRedirectTarget(redirect, '')
 
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
@@ -17,7 +15,7 @@ try {
     data: { user }
   } = await supabase.auth.getUser()
   if (user) {
-    return Astro.redirect(redirectTo || localePath('/courses'))
+    return Astro.redirect(getSafeLocalRedirectTarget(redirect, '') || useLocalePath(lang)('/courses'))
   }
 } catch {
   // Missing Supabase env or other error → show page

@@ -28,7 +28,7 @@ import {
   RESOURCE_OUTPUT_METADATA_BY_RESOURCE,
   toPluralResourceKindReference,
   toResourceKindReference
-} from './resourceHelpers'
+} from '../resourceHelpers'
 import {
   formatKubectlTable,
   type OutputDirective,
@@ -36,9 +36,9 @@ import {
   resolveOutputDirective,
   validateOutputDirective
 } from '../output/outputHelpers'
-import { shapeDeploymentForStructuredOutput } from './deploymentOutputShaper'
+import { shapeDeploymentForStructuredOutput } from '../output/deploymentOutputShaper'
 import { handleGetRaw } from './getRaw'
-import { shapePodForStructuredOutput } from './podOutputShaper'
+import { shapePodForStructuredOutput } from '../output/podOutputShaper'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL GET HANDLER

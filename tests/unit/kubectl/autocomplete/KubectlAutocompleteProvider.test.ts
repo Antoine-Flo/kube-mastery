@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { AutocompleteContext } from '../../../../src/core/terminal/autocomplete/types'
 import { KubectlAutocompleteProvider } from '../../../../src/core/kubectl/autocomplete/KubectlAutocompleteProvider'
+import { createAutocompleteTestContext } from '../../helpers/mockFileSystem'
 
 describe('KubectlAutocompleteProvider', () => {
   let provider: KubectlAutocompleteProvider
@@ -8,7 +9,7 @@ describe('KubectlAutocompleteProvider', () => {
 
   beforeEach(() => {
     provider = new KubectlAutocompleteProvider()
-    mockContext = {
+    mockContext = createAutocompleteTestContext({
       clusterState: {
         getPods: () => [
           { metadata: { name: 'nginx-1' } },
@@ -24,11 +25,8 @@ describe('KubectlAutocompleteProvider', () => {
           { metadata: { name: 'api-secret' } }
         ],
         getStatefulSets: () => [{ metadata: { name: 'web-sts' } }]
-      },
-      fileSystem: {
-        getCurrentPath: () => '/home/kube'
       }
-    }
+    })
   })
 
   describe('priority', () => {

@@ -10,7 +10,6 @@ const lang = (Astro.params.lang ?? 'en') as 'en' | 'fr'
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 const profilePath = localePath('/profile')
-const authPath = localePath('/auth')
 
 const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
 const {
@@ -18,9 +17,7 @@ const {
 } = await supabase.auth.getUser()
 
 if (!user) {
-  return Astro.redirect(
-    `${authPath}?redirect=${encodeURIComponent(profilePath)}`
-  )
+  return Astro.redirect(`${localePath('/auth')}?redirect=${encodeURIComponent(profilePath)}`)
 }
 
 let preferredLocale: 'en' | 'fr' = lang
@@ -58,20 +55,20 @@ const canRequestRefund =
   Number.isFinite(subscriptionCreatedAtMs) &&
   nowMs - subscriptionCreatedAtMs <= refundWindowMs
 
-const billingAction = Astro.url.searchParams.get('billing')
-const billingError = Astro.url.searchParams.get('billing_error')
+// const billingAction = Astro.url.searchParams.get('billing')
+// const billingError = Astro.url.searchParams.get('billing_error')
 
-const billingSuccessMessageByAction: Record<string, string> = {
-  refund_requested: t('profile_subscriptionActionRefundRequested')
-}
-const billingErrorMessageByAction: Record<string, string> = {
-  unauthorized: t('profile_subscriptionActionErrorUnauthorized'),
-  subscription_not_found: t(
-    'profile_subscriptionActionErrorSubscriptionNotFound'
-  ),
-  rate_limited: t('profile_subscriptionActionErrorRateLimited'),
-  refund_failed: t('profile_subscriptionActionErrorRefund')
-}
+// const billingSuccessMessageByAction: Record<string, string> = {
+//   refund_requested: t('profile_subscriptionActionRefundRequested')
+// }
+// const billingErrorMessageByAction: Record<string, string> = {
+//   unauthorized: t('profile_subscriptionActionErrorUnauthorized'),
+//   subscription_not_found: t(
+//     'profile_subscriptionActionErrorSubscriptionNotFound'
+//   ),
+//   rate_limited: t('profile_subscriptionActionErrorRateLimited'),
+//   refund_failed: t('profile_subscriptionActionErrorRefund')
+// }
 const accountActionMessageByCode: Record<string, string> = {
   ok: t('profile_actionSuccessDefault'),
   unauthorized: t('profile_actionErrorUnauthorized'),
@@ -85,10 +82,10 @@ const accountActionMessageByCode: Record<string, string> = {
   action_failed: t('profile_actionErrorDefault')
 }
 
-const billingSuccessMessage =
-  billingAction != null ? billingSuccessMessageByAction[billingAction] : null
-const billingErrorMessage =
-  billingError != null ? billingErrorMessageByAction[billingError] : null
+// const billingSuccessMessage =
+//   billingAction != null ? billingSuccessMessageByAction[billingAction] : null
+// const billingErrorMessage =
+//   billingError != null ? billingErrorMessageByAction[billingError] : null
 const refundConfirmMessage = t('profile_subscriptionRefundConfirmMessage')
 const refundFeedbackPrompt = t('profile_subscriptionRefundFeedbackPrompt')
 const refundFeedbackPlaceholder = t('profile_subscriptionRefundFeedbackPlaceholder')

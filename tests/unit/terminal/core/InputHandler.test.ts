@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { AutocompleteContext } from '../../../../src/core/terminal/autocomplete/types'
 import { InputHandler } from '../../../../src/core/terminal/core/InputHandler'
 import type { InputHandlerContext } from '../../../../src/core/terminal/core/InputHandlerContext'
 import {
   createTerminalState,
   TerminalState
 } from '../../../../src/core/terminal/core/TerminalState'
+import { createAutocompleteTestContext } from '../../helpers/mockFileSystem'
 import { createMockRenderer } from '../../helpers/mockRenderer'
 
 describe('InputHandler', () => {
@@ -21,10 +23,9 @@ describe('InputHandler', () => {
       renderer,
       getAutocompleteEngine: vi.fn(() => undefined),
       getCommandCallback: vi.fn(() => undefined),
-      createAutocompleteContext: vi.fn(() => ({
-        clusterState: {},
-        fileSystem: { getCurrentPath: () => '/home/kube' }
-      })),
+      createAutocompleteContext: vi.fn(
+        (): AutocompleteContext => createAutocompleteTestContext()
+      ),
       showPrompt: vi.fn(),
       replaceLineWithCommand: vi.fn(),
       updateLineAndRender: vi.fn(),

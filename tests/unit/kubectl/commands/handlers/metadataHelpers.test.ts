@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { handleMetadataChange } from '../../../../../src/core/kubectl/commands/handlers/metadataHelpers'
+import { handleMetadataChange } from '../../../../../src/core/kubectl/commands/metadataHelpers'
 import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'

@@ -20,7 +20,7 @@ import type { Pod } from '../ressources/Pod'
 import type { ReplicaSet } from '../ressources/ReplicaSet'
 import type { Secret } from '../ressources/Secret'
 import type { Service } from '../ressources/Service'
-import { applyResourceWithEvents } from '../../kubectl/commands/handlers/resourceHelpers'
+import { applyResourceWithEvents } from '../../kubectl/commands/resourceHelpers'
 import { parseKubernetesYaml } from '../../kubectl/yamlParser'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
@@ -67,7 +67,7 @@ const parseMultiDocumentYamlSkipUnsupported = (
   for (const doc of documents) {
     const result = parseKubernetesYaml(doc.trim())
     if (result.ok) {
-      resources.push(result.value)
+      resources.push(result.value as ParsedResource)
     }
     // Skip unsupported kinds (e.g. Namespace) without failing
   }

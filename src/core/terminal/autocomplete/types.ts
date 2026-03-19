@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Types partagés pour le système d'autocomplete modulaire
 
-import type { FileSystem } from '../core/ShellContext'
+import type { FileSystem } from '../../filesystem/FileSystem'
 
 export interface AutocompleteResource {
   metadata: {

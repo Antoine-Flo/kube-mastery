@@ -5,14 +5,14 @@ import type { EditorModal } from '../../../shell/commands'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import { validateMetadataNameByKind } from '../metadataNameValidation'
-import type { ParsedCommand, Resource } from '../types'
+import type { ParsedCommand } from '../types'
 import {
   isNamespacedResourceKind,
   RESOURCE_KIND_BY_RESOURCE,
   toKindReference,
   toPluralKindReference
-} from './resourceHelpers'
-import { validateImmutableFieldsForEdit } from './immutableFieldValidation'
+} from '../resourceHelpers'
+import { validateImmutableFieldsForEdit } from '../immutableFieldValidation'
 
 type GenericResource = Record<string, unknown>
 

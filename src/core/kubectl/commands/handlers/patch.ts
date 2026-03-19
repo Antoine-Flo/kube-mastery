@@ -1,14 +1,14 @@
 import type { KindToResource, ResourceKind } from '../../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
-import type { ExecutionResult } from '../../../shared/result'
+import type { ExecutionResult, Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand, Resource } from '../types'
 import {
   RESOURCE_KIND_BY_RESOURCE,
   toKindReference,
   toPluralKindReference
-} from './resourceHelpers'
-import { validateImmutableFieldsForEdit } from './immutableFieldValidation'
+} from '../resourceHelpers'
+import { validateImmutableFieldsForEdit } from '../immutableFieldValidation'
 
 const PATCHABLE_RESOURCES: Resource[] = [
   'deployments',
@@ -90,13 +90,13 @@ const stripWrappingQuotes = (value: string): string => {
   return value
 }
 
-const parsePatchPayload = (payload: string): JsonRecord | ExecutionResult => {
+const parsePatchPayload = (payload: string): Result<JsonRecord> => {
   try {
     const parsed = JSON.parse(payload) as unknown
     if (!isJsonRecord(parsed)) {
       return error('error: invalid JSON patch: patch must be a JSON object')
     }
-    return parsed
+    return success(parsed)
   } catch (parseError) {
     const message =
       parseError instanceof Error ? parseError.message : 'invalid JSON payload'
@@ -136,7 +136,7 @@ export const handlePatch = (
   }
 
   const patchResult = parsePatchPayload(payloadResult)
-  if ('ok' in patchResult) {
+  if (!patchResult.ok) {
     return patchResult
   }
 
@@ -152,10 +152,10 @@ export const handlePatch = (
     )
   }
 
-  const patchedResource = mergePatchValue(existingResult.value, patchResult)
+  const patchedResource = mergePatchValue(existingResult.value, patchResult.value)
   const immutableError = validateImmutableFieldsForEdit(
     kindResult.kind,
-    existingResult.value as JsonRecord,
+    existingResult.value as unknown as JsonRecord,
     patchedResource as JsonRecord
   )
   if (immutableError != null) {

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AutocompleteEngine } from '../../../../src/core/terminal/autocomplete/AutocompleteEngine'
+import { createAutocompleteTestContext } from '../../helpers/mockFileSystem'
 import { AutocompleteProvider } from '../../../../src/core/terminal/autocomplete/AutocompleteProvider'
 import type {
   AutocompleteContext,
@@ -40,12 +41,7 @@ describe('AutocompleteEngine', () => {
 
   beforeEach(() => {
     engine = new AutocompleteEngine()
-    mockContext = {
-      clusterState: {},
-      fileSystem: {
-        getCurrentPath: () => '/home/kube'
-      }
-    }
+    mockContext = createAutocompleteTestContext()
   })
 
   describe('registerProvider', () => {

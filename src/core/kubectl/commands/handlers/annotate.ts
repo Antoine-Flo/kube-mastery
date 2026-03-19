@@ -1,7 +1,7 @@
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { ExecutionResult } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
-import { handleMetadataChange } from './metadataHelpers'
+import { handleMetadataChange } from '../metadataHelpers'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL ANNOTATE HANDLER

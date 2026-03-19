@@ -6,7 +6,7 @@ import {
 import type { ExecutionResult, Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
-import { createResourceWithEvents } from './resourceHelpers'
+import { createResourceWithEvents } from '../resourceHelpers'
 
 type ExposeServiceType = NonNullable<ServiceSpec['type']>
 

@@ -6,8 +6,6 @@ import { getSupabaseServer } from '../../lib/supabase'
 const locale = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(locale)
 const localePath = useLocalePath(locale)
-const contactPath = localePath('/contact')
-const authPath = localePath('/auth')
 
 const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
 const {
@@ -16,7 +14,7 @@ const {
 
 if (!user) {
   return Astro.redirect(
-    `${authPath}?redirect=${encodeURIComponent(contactPath)}`
+    `${localePath('/auth')}?redirect=${encodeURIComponent(localePath('/contact'))}`
   )
 }
 ---
@@ -58,7 +56,7 @@ if (!user) {
   </div>
 </Layout>
 
-<script define:vars={{
+<script is:inline define:vars={{
   successMessage: t('contact_success'),
   defaultErrorMessage: t('contact_error_default')
 }}>

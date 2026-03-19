@@ -1,14 +1,14 @@
-import type { KindToResource, ResourceKind } from '../../../cluster/ClusterState'
-import type { ApiServerFacade } from '../../../api/ApiServerFacade'
-import type { ExecutionResult } from '../../../shared/result'
-import { error, success } from '../../../shared/result'
-import { validateMetadataNameByKind } from '../metadataNameValidation'
+import type { KindToResource, ResourceKind } from '../../cluster/ClusterState'
+import type { ApiServerFacade } from '../../api/ApiServerFacade'
+import type { ExecutionResult } from '../../shared/result'
+import { error, success } from '../../shared/result'
+import { validateMetadataNameByKind } from './metadataNameValidation'
 import {
   isNamespacedResourceKind,
   isSupportedResourceKind,
   toKindReference,
   toPluralKindReference
-} from '../resourceSchema'
+} from './resourceSchema'
 
 export {
   RESOURCE_KIND_BY_RESOURCE,
@@ -20,7 +20,7 @@ export {
   toPluralKindReference,
   toPluralResourceKindReference,
   toResourceKindReference
-} from '../resourceSchema'
+} from './resourceSchema'
 
 export type KubernetesResource = {
   kind: string

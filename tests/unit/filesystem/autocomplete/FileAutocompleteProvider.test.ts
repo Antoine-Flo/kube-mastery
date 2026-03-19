@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { FileAutocompleteProvider } from '../../../../src/core/filesystem/autocomplete/FileAutocompleteProvider'
 import type { AutocompleteContext } from '../../../../src/core/terminal/autocomplete/types'
+import { createAutocompleteTestContext } from '../../helpers/mockFileSystem'
 
 describe('FileAutocompleteProvider', () => {
   let provider: FileAutocompleteProvider
@@ -8,12 +9,7 @@ describe('FileAutocompleteProvider', () => {
 
   beforeEach(() => {
     provider = new FileAutocompleteProvider()
-    mockContext = {
-      clusterState: {},
-      fileSystem: {
-        getCurrentPath: () => '/home/kube'
-      }
-    }
+    mockContext = createAutocompleteTestContext()
   })
 
   describe('priority', () => {
@@ -102,41 +98,30 @@ describe('FileAutocompleteProvider', () => {
     })
 
     it('should handle getCurrentPath error gracefully', () => {
-      const contextWithError: AutocompleteContext = {
-        clusterState: {},
-        fileSystem: {
-          getCurrentPath: () => {
-            throw new Error('Filesystem error')
+      const contextWithError: AutocompleteContext = createAutocompleteTestContext(
+        {
+          fileSystemOverrides: {
+            getCurrentPath: () => {
+              throw new Error('Filesystem error')
+            }
           }
         }
-      }
+      )
       const results = provider.complete(['cd'], '', contextWithError)
       expect(results).toEqual([])
     })
 
     it('should call getCurrentPath when completing', () => {
       const getCurrentPathSpy = vi.fn(() => '/home/kube')
-      const contextWithSpy: AutocompleteContext = {
-        clusterState: {},
-        fileSystem: {
-          getCurrentPath: getCurrentPathSpy
+      const contextWithSpy: AutocompleteContext = createAutocompleteTestContext(
+        {
+          fileSystemOverrides: {
+            getCurrentPath: getCurrentPathSpy
+          }
         }
-      }
+      )
       provider.complete(['cd'], '', contextWithSpy)
       expect(getCurrentPathSpy).toHaveBeenCalled()
-    })
-
-    it('should pass directoriesOnly=true for cd command', () => {
-      // Since getFileCompletions is private, we test indirectly
-      // The fact that it's called with directoriesOnly=true is tested via the behavior
-      // For now, we just verify it doesn't throw
-      expect(() => provider.complete(['cd'], '', mockContext)).not.toThrow()
-    })
-
-    it('should pass directoriesOnly=false for non-cd commands', () => {
-      expect(() => provider.complete(['ls'], '', mockContext)).not.toThrow()
-      expect(() => provider.complete(['cat'], '', mockContext)).not.toThrow()
-      expect(() => provider.complete(['nano'], '', mockContext)).not.toThrow()
     })
   })
 

@@ -365,9 +365,10 @@ const faqItems = [
 </Layout>
 
 {!isEarlyStage && (
-  <script id="paddle-js" src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+  <script is:inline id="paddle-js" src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 )}
 <script
+  is:inline
   define:vars={{
     isEarlyStage,
     paddleClientToken,

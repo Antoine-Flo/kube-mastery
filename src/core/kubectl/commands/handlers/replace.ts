@@ -13,7 +13,7 @@ import {
   isSupportedResourceKind,
   toKindReference,
   toPluralKindReference
-} from './resourceHelpers'
+} from '../resourceHelpers'
 
 type KubernetesResource = {
   kind: string

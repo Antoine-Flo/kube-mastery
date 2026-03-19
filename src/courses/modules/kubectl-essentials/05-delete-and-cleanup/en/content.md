@@ -153,25 +153,16 @@ kubectl expose deployment cleanup-demo --port=80
 kubectl get all
 
 # --- Delete by name ---
-# First get a pod name
-POD_NAME=$(kubectl get pods -l app=cleanup-demo -o jsonpath='{.items[0].metadata.name}')
-echo "Pod to delete: $POD_NAME"
 
-# Delete the pod, watch the Deployment immediately create a replacement
-kubectl delete pod $POD_NAME &
-kubectl get pods -w
-
-# Press Ctrl+C after the new pod reaches Running
+# Delete a pod, watch the Deployment immediately create a replacement
+kubectl delete pod <POD_NAME>
 
 # --- Watch the termination grace period ---
 # Run a pod that ignores SIGTERM (sleep runs for a long time)
 kubectl run grace-demo --image=busybox -- sleep 3600
 
 # Delete it and watch, you will see it in Terminating state
-kubectl delete pod grace-demo &
-kubectl get pods -w
-
-# Press Ctrl+C after it disappears
+kubectl delete pod grace-demo
 
 # --- Force delete a stuck pod ---
 kubectl run stuck-demo --image=busybox -- sleep 3600

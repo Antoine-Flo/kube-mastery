@@ -5,6 +5,10 @@ import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import { parseKubernetesYaml } from '../../yamlParser'
 import type { ParsedCommand } from '../types'
+import {
+  NO_OBJECTS_PASSED_TO_DELETE,
+  resolveManifestFilePathsFromFilenameFlag
+} from '../manifestFilePathsFromFlag'
 
 const formatDeletedMessage = (
   kindRef: string,
@@ -242,28 +246,6 @@ const getFilenameFromFlags = (parsed: ParsedCommand): string | undefined => {
   return filename
 }
 
-const loadAndParseYaml = (
-  fileSystem: FileSystem,
-  parsed: ParsedCommand
-): ExecutionResult & { resource?: any } => {
-  const filename = getFilenameFromFlags(parsed)
-  if (!filename) {
-    return error('error: must specify one of -f or --filename')
-  }
-
-  const fileResult = fileSystem.readFile(filename)
-  if (!fileResult.ok) {
-    return error(`error: ${fileResult.error}`)
-  }
-
-  const parseResult = parseKubernetesYaml(fileResult.value)
-  if (!parseResult.ok) {
-    return error(`error: ${parseResult.error}`)
-  }
-
-  return { ok: true, value: '', resource: parseResult.value }
-}
-
 const deleteFromManifest = (
   apiServer: ApiServerFacade,
   parsed: ParsedCommand,
@@ -342,11 +324,35 @@ export const handleDelete = (
     if (fileSystem == null) {
       return error('error: internal error: filesystem is not available')
     }
-    const loadResult = loadAndParseYaml(fileSystem, parsed)
-    if (!loadResult.ok) {
-      return loadResult
+    const pathsResult = resolveManifestFilePathsFromFilenameFlag(
+      fileSystem,
+      filename,
+      NO_OBJECTS_PASSED_TO_DELETE
+    )
+    if (!pathsResult.ok) {
+      return pathsResult
     }
-    return deleteFromManifest(apiServer, parsed, loadResult.resource)
+    const filesResult = fileSystem.readFiles(pathsResult.value)
+    if (!filesResult.ok) {
+      return error(`error: ${filesResult.error}`)
+    }
+    const lines: string[] = []
+    for (let i = 0; i < filesResult.value.length; i++) {
+      const parseResult = parseKubernetesYaml(filesResult.value[i])
+      if (!parseResult.ok) {
+        return error(`error: ${parseResult.error}`)
+      }
+      const deleteResult = deleteFromManifest(
+        apiServer,
+        parsed,
+        parseResult.value
+      )
+      if (!deleteResult.ok) {
+        return deleteResult
+      }
+      lines.push(deleteResult.value)
+    }
+    return success(lines.join('\n'))
   }
 
   const namespace = parsed.namespace || 'default'

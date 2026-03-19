@@ -1,7 +1,7 @@
 import {
   type ResourceKind
-} from '../../../cluster/ClusterState'
-import type { ApiServerFacade } from '../../../api/ApiServerFacade'
+} from '../../cluster/ClusterState'
+import type { ApiServerFacade } from '../../api/ApiServerFacade'
 import {
   createConfigMapAnnotatedEvent,
   createConfigMapLabeledEvent,
@@ -9,14 +9,14 @@ import {
   createPodLabeledEvent,
   createSecretAnnotatedEvent,
   createSecretLabeledEvent
-} from '../../../cluster/events/types'
-import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
-import type { Pod } from '../../../cluster/ressources/Pod'
-import type { Secret } from '../../../cluster/ressources/Secret'
-import { deepFreeze } from '../../../shared/deepFreeze'
-import type { ExecutionResult, Result } from '../../../shared/result'
-import { error, success } from '../../../shared/result'
-import type { ParsedCommand } from '../types'
+} from '../../cluster/events/types'
+import type { ConfigMap } from '../../cluster/ressources/ConfigMap'
+import type { Pod } from '../../cluster/ressources/Pod'
+import type { Secret } from '../../cluster/ressources/Secret'
+import { deepFreeze } from '../../shared/deepFreeze'
+import type { ExecutionResult, Result } from '../../shared/result'
+import { error, success } from '../../shared/result'
+import type { ParsedCommand } from './types'
 import { RESOURCE_KIND_BY_RESOURCE } from './resourceHelpers'
 
 // ═══════════════════════════════════════════════════════════════════════════

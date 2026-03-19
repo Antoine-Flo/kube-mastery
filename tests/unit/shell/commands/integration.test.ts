@@ -277,6 +277,19 @@ describe('Shell Commands Integration', () => {
           }
           return error('File not found')
         },
+        readFiles: (paths: string[]) => {
+          const contents: string[] = []
+          for (const filePath of paths) {
+            const fullPath = filePath.startsWith('/')
+              ? filePath
+              : `${currentPath}/${filePath}`
+            if (files[fullPath] === undefined) {
+              return error('File not found')
+            }
+            contents.push('test content')
+          }
+          return success(contents)
+        },
         writeFile: () => success(undefined),
         deleteFile: () => success(undefined),
         deleteDirectory: () => success(undefined),
@@ -346,6 +359,7 @@ describe('Shell Commands Integration', () => {
         },
         createFile: () => success(createFileNode('test', '/home/kube/test')),
         readFile: () => success(''),
+        readFiles: (paths: string[]) => success(paths.map(() => '')),
         writeFile: () => success(undefined),
         deleteFile: () => success(undefined),
         deleteDirectory: () => success(undefined),
@@ -391,6 +405,7 @@ describe('Shell Commands Integration', () => {
           return success(createFileNode(fileName, `/home/kube/${fileName}`))
         },
         readFile: () => success(''),
+        readFiles: (paths: string[]) => success(paths.map(() => '')),
         writeFile: () => success(undefined),
         deleteFile: () => success(undefined),
         deleteDirectory: () => success(undefined),
@@ -431,6 +446,7 @@ describe('Shell Commands Integration', () => {
         },
         createFile: () => success(createFileNode('test', '/home/kube/test')),
         readFile: () => success(''),
+        readFiles: (paths: string[]) => success(paths.map(() => '')),
         writeFile: () => success(undefined),
         deleteFile: (target: string) => {
           if (files.has(target)) {
@@ -505,6 +521,7 @@ describe('Shell Commands Integration', () => {
         },
         createFile: () => success(createFileNode('test', '/home/kube/test')),
         readFile: () => success(''),
+        readFiles: (paths: string[]) => success(paths.map(() => '')),
         writeFile: () => success(undefined),
         deleteFile: () => success(undefined),
         deleteDirectory: () => success(undefined),

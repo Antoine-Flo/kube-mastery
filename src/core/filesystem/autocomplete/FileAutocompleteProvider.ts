@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // FILESYSTEM AUTOCOMPLETE PROVIDER
 // ═══════════════════════════════════════════════════════════════════════════
-// Provider d'autocomplete pour les fichiers et dossiers
+// Autocomplete provider for file and directory arguments
 
 import { AutocompleteProvider } from '../../terminal/autocomplete/AutocompleteProvider'
 import type {
@@ -9,7 +9,7 @@ import type {
   CompletionResult
 } from '../../terminal/autocomplete/types'
 
-// Commandes qui acceptent des fichiers/dossiers comme arguments
+// Shell commands that take file or directory path arguments
 const FILE_COMMANDS = ['cd', 'ls', 'cat', 'nano', 'rm', 'vi', 'vim'] as const
 const FILE_COMMAND_SET = new Set<string>(FILE_COMMANDS)
 
@@ -17,15 +17,12 @@ const FILE_COMMAND_SET = new Set<string>(FILE_COMMANDS)
  * Get file/directory completions from filesystem (current directory only)
  */
 const getFileCompletions = (
-  currentToken: string,
-  fileSystem: AutocompleteContext['fileSystem'],
-  directoriesOnly: boolean
+  fileSystem: AutocompleteContext['fileSystem']
 ): CompletionResult[] => {
-  // Pour l'instant, on retourne un tableau vide car le filesystem n'est pas encore complètement migré
-  // TODO: Implémenter quand FileSystem sera migré avec listDirectory
+  // Returns empty until listDirectory exists on the virtual filesystem
+  // TODO: When implemented, use current token prefix and directories-only mode for `cd`
   try {
-    const currentPath = fileSystem.getCurrentPath()
-    // Le filesystem actuel n'a pas encore listDirectory, donc on retourne vide pour l'instant
+    void fileSystem.getCurrentPath()
     return []
   } catch {
     return []
@@ -34,7 +31,7 @@ const getFileCompletions = (
 
 export class FileAutocompleteProvider extends AutocompleteProvider {
   priority(): number {
-    return 50 // Priorité haute = exécuté après les commandes et kubectl
+    return 50 // Higher number: runs after shell and kubectl providers
   }
 
   match(tokens: string[], _currentToken: string, _line: string): boolean {
@@ -46,12 +43,10 @@ export class FileAutocompleteProvider extends AutocompleteProvider {
   }
 
   complete(
-    tokens: string[],
-    currentToken: string,
+    _tokens: string[],
+    _currentToken: string,
     context: AutocompleteContext
   ): CompletionResult[] {
-    const command = tokens[0]
-    const directoriesOnly = command === 'cd'
-    return getFileCompletions(currentToken, context.fileSystem, directoriesOnly)
+    return getFileCompletions(context.fileSystem)
   }
 }

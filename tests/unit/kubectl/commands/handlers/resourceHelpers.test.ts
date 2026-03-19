@@ -3,7 +3,7 @@ import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFaca
 import {
   applyResourceWithEvents,
   createResourceWithEvents
-} from '../../../../../src/core/kubectl/commands/handlers/resourceHelpers'
+} from '../../../../../src/core/kubectl/commands/resourceHelpers'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'

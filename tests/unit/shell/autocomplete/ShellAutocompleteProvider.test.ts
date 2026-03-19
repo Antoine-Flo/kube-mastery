@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ShellAutocompleteProvider } from '../../../../src/core/shell/autocomplete/ShellAutocompleteProvider'
 import type { AutocompleteContext } from '../../../../src/core/terminal/autocomplete/types'
+import { createAutocompleteTestContext } from '../../helpers/mockFileSystem'
 
 describe('ShellAutocompleteProvider', () => {
   let provider: ShellAutocompleteProvider
@@ -8,12 +9,7 @@ describe('ShellAutocompleteProvider', () => {
 
   beforeEach(() => {
     provider = new ShellAutocompleteProvider()
-    mockContext = {
-      clusterState: {},
-      fileSystem: {
-        getCurrentPath: () => '/home/kube'
-      }
-    }
+    mockContext = createAutocompleteTestContext()
   })
 
   describe('priority', () => {

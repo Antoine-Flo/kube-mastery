@@ -10,7 +10,7 @@ import type { ParsedCommand, Resource } from '../types'
 import {
   toKindReference,
   toPluralKindReference
-} from './resourceHelpers'
+} from '../resourceHelpers'
 
 type ContainerLike = {
   name: string

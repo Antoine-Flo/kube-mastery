@@ -7,7 +7,7 @@ import { error } from '../../../shared/result'
 import { validateMetadataNameByKind } from '../metadataNameValidation'
 import type { ParsedCommand } from '../types'
 import { buildDryRunResponse } from './applyCreate'
-import { createResourceWithEvents } from './resourceHelpers'
+import { createResourceWithEvents } from '../resourceHelpers'
 
 const stripMatchingQuotes = (raw: string): string => {
   const trimmed = raw.trim()

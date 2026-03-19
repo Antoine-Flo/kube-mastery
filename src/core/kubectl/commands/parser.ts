@@ -395,9 +395,6 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
       ctx.name,
       ctx.normalizedFlags || ctx.flags || {},
       ctx.tokens || [],
-      ctx.runCommand,
-      ctx.runArgs,
-      ctx.runHasSeparator,
       ctx.createServiceType,
       ctx.createSecretType
     )
@@ -415,9 +412,6 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
       ctx.name,
       ctx.normalizedFlags || ctx.flags || {},
       ctx.tokens || [],
-      ctx.runCommand,
-      ctx.runArgs,
-      ctx.runHasSeparator,
       ctx.createServiceType,
       ctx.createSecretType
     )
@@ -437,9 +431,6 @@ const checkSemantics = (ctx: ParseContext): Result<ParseContext> => {
     ctx.name,
     ctx.normalizedFlags || ctx.flags || {},
     ctx.tokens || [],
-    ctx.runCommand,
-    ctx.runArgs,
-    ctx.runHasSeparator,
     ctx.createServiceType,
     ctx.createSecretType
   )
@@ -655,9 +646,6 @@ const validateCommandSemantics = (
   name?: string,
   flags: Record<string, string | boolean> = {},
   tokens: string[] = [],
-  runCommand?: string[],
-  runArgs?: string[],
-  runHasSeparator?: boolean,
   createServiceType?: 'clusterip' | 'nodeport' | 'loadbalancer' | 'externalname',
   createSecretType?: 'generic' | 'tls' | 'docker-registry'
 ): string | undefined => {

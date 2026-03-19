@@ -398,6 +398,9 @@ const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
     'DeploymentCreated',
     'DeploymentUpdated',
     'DeploymentDeleted',
+    'StatefulSetCreated',
+    'StatefulSetUpdated',
+    'StatefulSetDeleted',
     'ServiceCreated',
     'ServiceUpdated',
     'ServiceDeleted',
@@ -415,6 +418,11 @@ const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
   replicasets: ['ReplicaSetCreated', 'ReplicaSetUpdated', 'ReplicaSetDeleted'],
   daemonsets: ['DaemonSetCreated', 'DaemonSetUpdated', 'DaemonSetDeleted'],
   deployments: ['DeploymentCreated', 'DeploymentUpdated', 'DeploymentDeleted'],
+  statefulsets: [
+    'StatefulSetCreated',
+    'StatefulSetUpdated',
+    'StatefulSetDeleted'
+  ],
   services: ['ServiceCreated', 'ServiceUpdated', 'ServiceDeleted'],
   ingresses: [],
   ingressclasses: [],

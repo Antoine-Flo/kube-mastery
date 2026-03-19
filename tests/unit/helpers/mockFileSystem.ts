@@ -10,10 +10,15 @@ import {
   createDirectory
 } from '../../../src/core/filesystem/models'
 import type { FileSystemState } from '../../../src/core/filesystem/FileSystem'
+import type {
+  AutocompleteClusterState,
+  AutocompleteContext
+} from '../../../src/core/terminal/autocomplete/types'
 
 /**
- * Create a minimal mock FileSystem with default implementations
- * All methods can be overridden via the overrides parameter
+ * Full FileSystem-shaped stub for tests. When `AutocompleteContext.fileSystem`
+ * or similar requires every method, use this (or `createAutocompleteTestContext`)
+ * instead of inline partials.
  */
 export const createMockFileSystem = (
   overrides: Partial<FileSystem> = {}
@@ -34,4 +39,17 @@ export const createMockFileSystem = (
   }),
   loadState: () => {},
   ...overrides
+})
+
+/**
+ * Default AutocompleteContext for unit tests: empty cluster snapshot and a
+ * FileSystem stub from `createMockFileSystem`. Keeps autocomplete tests aligned
+ * when `AutocompleteContext` or `FileSystem` evolve.
+ */
+export const createAutocompleteTestContext = (options?: {
+  clusterState?: AutocompleteClusterState
+  fileSystemOverrides?: Partial<FileSystem>
+}): AutocompleteContext => ({
+  clusterState: options?.clusterState ?? {},
+  fileSystem: createMockFileSystem(options?.fileSystemOverrides ?? {})
 })

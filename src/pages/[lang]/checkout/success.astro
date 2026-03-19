@@ -40,7 +40,7 @@ const localePath = useLocalePath(lang)
   </div>
 </Layout>
 
-<script define:vars={{ checkoutLang: lang }}>
+<script is:inline define:vars={{ checkoutLang: lang }}>
   const CHECKOUT_COMPLETED_SENT = 'data-checkout-completed-sent'
 
   function captureCheckoutCompleted() {
