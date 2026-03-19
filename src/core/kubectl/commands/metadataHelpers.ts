@@ -1,6 +1,4 @@
-import {
-  type ResourceKind
-} from '../../cluster/ClusterState'
+import type { KindToResource, ResourceKind } from '../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../api/ApiServerFacade'
 import {
   createConfigMapAnnotatedEvent,
@@ -24,7 +22,14 @@ import { RESOURCE_KIND_BY_RESOURCE } from './resourceHelpers'
 // ═══════════════════════════════════════════════════════════════════════════
 // Generic helpers for handling labels and annotations on Kubernetes resources
 
-type ResourceWithMetadata = Pod | ConfigMap | Secret
+type ResourceWithMetadata = {
+  metadata: {
+    labels?: Record<string, string>
+    annotations?: Record<string, string>
+    namespace: string
+    name: string
+  }
+}
 type MetadataType = 'labels' | 'annotations'
 
 /**
@@ -95,31 +100,65 @@ interface MetadataOperationConfig {
  */
 interface ResourceCollectionAccessor {
   kind: ResourceKind
-  resourceTypeName: string // For error messages (capitalized: "Pod")
   singularName: string // For success messages (lowercase: "pod")
 }
 
 /**
  * Resource collection accessors (object lookup pattern)
  */
-const RESOURCE_ACCESSORS: Record<
-  string,
-  ResourceCollectionAccessor
-> = {
+const RESOURCE_ACCESSORS: Partial<Record<string, ResourceCollectionAccessor>> = {
   pods: {
     kind: RESOURCE_KIND_BY_RESOURCE.pods ?? 'Pod',
-    resourceTypeName: 'Pod',
     singularName: 'pod'
   },
   configmaps: {
     kind: RESOURCE_KIND_BY_RESOURCE.configmaps ?? 'ConfigMap',
-    resourceTypeName: 'ConfigMap',
     singularName: 'configmap'
   },
   secrets: {
     kind: RESOURCE_KIND_BY_RESOURCE.secrets ?? 'Secret',
-    resourceTypeName: 'Secret',
     singularName: 'secret'
+  },
+  deployments: {
+    kind: RESOURCE_KIND_BY_RESOURCE.deployments ?? 'Deployment',
+    singularName: 'deployment'
+  },
+  services: {
+    kind: RESOURCE_KIND_BY_RESOURCE.services ?? 'Service',
+    singularName: 'service'
+  },
+  namespaces: {
+    kind: RESOURCE_KIND_BY_RESOURCE.namespaces ?? 'Namespace',
+    singularName: 'namespace'
+  },
+  nodes: {
+    kind: RESOURCE_KIND_BY_RESOURCE.nodes ?? 'Node',
+    singularName: 'node'
+  },
+  daemonsets: {
+    kind: RESOURCE_KIND_BY_RESOURCE.daemonsets ?? 'DaemonSet',
+    singularName: 'daemonset'
+  },
+  statefulsets: {
+    kind: RESOURCE_KIND_BY_RESOURCE.statefulsets ?? 'StatefulSet',
+    singularName: 'statefulset'
+  },
+  replicasets: {
+    kind: RESOURCE_KIND_BY_RESOURCE.replicasets ?? 'ReplicaSet',
+    singularName: 'replicaset'
+  },
+  ingresses: {
+    kind: RESOURCE_KIND_BY_RESOURCE.ingresses ?? 'Ingress',
+    singularName: 'ingress'
+  },
+  persistentvolumes: {
+    kind: RESOURCE_KIND_BY_RESOURCE.persistentvolumes ?? 'PersistentVolume',
+    singularName: 'persistentvolume'
+  },
+  persistentvolumeclaims: {
+    kind:
+      RESOURCE_KIND_BY_RESOURCE.persistentvolumeclaims ?? 'PersistentVolumeClaim',
+    singularName: 'persistentvolumeclaim'
   }
 }
 
@@ -186,7 +225,12 @@ const handleMetadataChangeWithEvents = (
     return error(`Resource type "${resourceType}" is not supported`)
   }
 
-  const resourceResult = apiServer.findResource(accessor.kind, name, namespace)
+  const resourceResult =
+    accessor.kind === 'Node' ||
+    accessor.kind === 'Namespace' ||
+    accessor.kind === 'PersistentVolume'
+      ? apiServer.findResource(accessor.kind, name)
+      : apiServer.findResource(accessor.kind, name, namespace)
   if (!resourceResult.ok) {
     return error(
       `Error from server (NotFound): ${resourceType} "${name}" not found`
@@ -205,7 +249,7 @@ const handleMetadataChangeWithEvents = (
     return updateResult
   }
 
-  const updatedResource = updateResult.value
+  const updatedResource = updateResult.value as KindToResource<typeof accessor.kind>
   const metadataKey = config.metadataType
   const metadataValue = updatedResource.metadata[metadataKey] || {}
 
@@ -276,6 +320,13 @@ const handleMetadataChangeWithEvents = (
             'kubectl'
           )
     apiServer.emitEvent(event)
+  } else {
+    const updateResult = isClusterScopedKind(accessor.kind)
+      ? apiServer.updateResource(accessor.kind, name, updatedResource)
+      : apiServer.updateResource(accessor.kind, name, updatedResource, namespace)
+    if (!updateResult.ok) {
+      return error(updateResult.error)
+    }
   }
 
   const allRemovals = Object.values(changes).every((value) => value === null)
@@ -288,4 +339,11 @@ const handleMetadataChangeWithEvents = (
     ok: true,
     value: `${accessor.singularName}/${name} ${pastTense}`
   }
+}
+
+const isClusterScopedKind = (kind: ResourceKind): boolean => {
+  if (kind === 'Node' || kind === 'Namespace' || kind === 'PersistentVolume') {
+    return true
+  }
+  return false
 }

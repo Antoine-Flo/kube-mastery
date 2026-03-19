@@ -80,4 +80,6 @@ export interface ParsedCommand {
   waitTimeoutSeconds?: number // For kubectl wait: --timeout=60s
   patchPayload?: string // For kubectl patch: -p/--patch JSON payload
   patchType?: 'merge' // For kubectl patch: --type (v1 supports merge only)
+  deleteGracePeriodSeconds?: number // For kubectl delete: --grace-period=N
+  deleteForce?: boolean // For kubectl delete: --force
 }

@@ -13,6 +13,7 @@ import type {
   Pod
 } from '../../cluster/ressources/Pod'
 import type { ContainerRuntimeSimulator } from '../../runtime/ContainerRuntimeSimulator'
+import type { ContainerProcessRuntime } from '../../runtime/ContainerProcessRuntime'
 import {
   createImageRegistry,
   type ImageRegistry
@@ -34,6 +35,20 @@ import type {
   ReconcilerController
 } from '../../control-plane/controller-runtime/types'
 import { createWorkQueue, type WorkQueue } from '../../control-plane/controller-runtime/WorkQueue'
+import {
+  buildTerminatedContainerStatuses,
+  buildWaitingContainerStatuses,
+  hasContainerStatusChanged
+} from './podLifecycle/statusBuilders'
+import { syncRunningPodRuntimeState } from './podLifecycle/runtimeSyncService'
+import {
+  clearPodProcessRuntimeState,
+  hasRunningPodProcessRuntime,
+  signalPodProcessRuntime,
+  terminatePodRuntimeContainers
+} from './podLifecycle/runtimeTerminationService'
+import { PodLifecycleTimeoutRegistry } from './podLifecycle/PodLifecycleTimeoutRegistry'
+import { buildReconcileDecision } from './podLifecycle/reconcileDecisionEngine'
 
 export interface PodLifecycleControllerOptions extends ControllerResyncOptions {
   pendingDelayRangeMs?: {
@@ -63,6 +78,7 @@ export interface PodLifecycleControllerOptions extends ControllerResyncOptions {
   eventSource?: string
   volumeReadinessProbe?: (pod: Pod) => PodVolumeReadiness
   containerRuntime?: ContainerRuntimeSimulator
+  processRuntime?: ContainerProcessRuntime
 }
 
 const WATCHED_EVENTS: ClusterEventType[] = [
@@ -222,12 +238,7 @@ export class PodLifecycleController implements ReconcilerController {
   private unsubscribePodBound: (() => void) | null = null
   private stopPeriodicResync: () => void = () => {}
   private options: PodLifecycleControllerOptions
-  private pendingTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
-  private completionTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
-  private restartTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
-  private restartAttempts = new Map<string, number>()
-  private imagePullTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
-  private imagePullAttempts = new Map<string, number>()
+  private timeoutRegistry = new PodLifecycleTimeoutRegistry()
 
   constructor(
     apiServer: ApiServerFacade,
@@ -270,24 +281,7 @@ export class PodLifecycleController implements ReconcilerController {
     this.stopPeriodicResync()
     this.stopPeriodicResync = () => {}
     this.workQueue.stop()
-    for (const timeoutId of this.pendingTimeouts.values()) {
-      clearTimeout(timeoutId)
-    }
-    this.pendingTimeouts.clear()
-    for (const timeoutId of this.completionTimeouts.values()) {
-      clearTimeout(timeoutId)
-    }
-    this.completionTimeouts.clear()
-    for (const timeoutId of this.restartTimeouts.values()) {
-      clearTimeout(timeoutId)
-    }
-    this.restartTimeouts.clear()
-    this.restartAttempts.clear()
-    for (const timeoutId of this.imagePullTimeouts.values()) {
-      clearTimeout(timeoutId)
-    }
-    this.imagePullTimeouts.clear()
-    this.imagePullAttempts.clear()
+    this.timeoutRegistry.clearAll()
   }
 
   initialSync(): void {
@@ -314,7 +308,24 @@ export class PodLifecycleController implements ReconcilerController {
     const { namespace, name } = parsePodKey(key)
     const state = this.getState()
     const podResult = state.findPod(name, namespace)
-    if (!podResult.ok || podResult.value == null) {
+    const pod = podResult.ok ? podResult.value : undefined
+    const decision = buildReconcileDecision({
+      pod: pod ?? undefined,
+      hasPendingTimeout: this.timeoutRegistry.hasTimeout('pending', key),
+      shouldProgressPod,
+      volumeReadinessProbe: this.options.volumeReadinessProbe,
+      detectStartupIssueReason: (value) => this.detectStartupIssueReason(value)
+    })
+    this.applyReconcileDecision(key, namespace, name, decision)
+  }
+
+  private applyReconcileDecision(
+    key: string,
+    namespace: string,
+    name: string,
+    decision: ReturnType<typeof buildReconcileDecision>
+  ): void {
+    if (decision.type === 'NotFound') {
       this.observe({
         action: 'skip',
         key,
@@ -323,13 +334,17 @@ export class PodLifecycleController implements ReconcilerController {
       this.clearPendingTimeout(key)
       this.clearCompletionTimeout(key)
       this.clearRestartTimeout(key)
-      this.restartAttempts.delete(key)
+      this.timeoutRegistry.deleteAttempt('restart', key)
       this.clearImagePullState(key)
       return
     }
 
-    const pod = podResult.value
-    if (!shouldProgressPod(pod)) {
+    const pod = decision.pod
+    if (decision.type === 'Terminating') {
+      this.handleTerminatingPod(key, pod)
+      return
+    }
+    if (decision.type === 'NotSchedulable') {
       this.observe({
         action: 'skip',
         key,
@@ -343,26 +358,23 @@ export class PodLifecycleController implements ReconcilerController {
       this.clearImagePullTimeout(key)
       return
     }
-
-    const volumeReadiness = this.options.volumeReadinessProbe?.(pod)
-    if (volumeReadiness != null && !volumeReadiness.ready) {
+    if (decision.type === 'VolumeBlocked') {
       this.observe({
         action: 'skip',
         key,
         reason: 'VolumeNotReady'
       })
       this.clearPendingTimeout(key)
-      this.emitPodWaitingForVolume(pod, volumeReadiness.reason)
+      this.emitPodWaitingForVolume(pod, decision.reason)
       this.clearImagePullTimeout(key)
       return
     }
-    const startupIssueReason = this.detectStartupIssueReason(pod)
-    if (startupIssueReason != null) {
-      if (startupIssueReason === 'ImagePullBackOff') {
+    if (decision.type === 'StartupIssue') {
+      if (decision.reason === 'ImagePullBackOff') {
         this.handleImagePullBackOff(key, pod)
         return
       }
-      if (startupIssueReason === 'CrashLoopBackOff') {
+      if (decision.reason === 'CrashLoopBackOff') {
         this.clearImagePullState(key)
         this.handleCrashLoopBackOff(key, pod)
         return
@@ -370,16 +382,16 @@ export class PodLifecycleController implements ReconcilerController {
       this.observe({
         action: 'skip',
         key,
-        reason: startupIssueReason
+        reason: decision.reason
       })
       this.clearPendingTimeout(key)
-      this.emitPodStartupIssue(pod, startupIssueReason)
+      this.emitPodStartupIssue(pod, decision.reason)
       return
     }
-    this.clearImagePullState(key)
-    this.clearRestartTimeout(key)
-    this.restartAttempts.delete(key)
-    if (this.pendingTimeouts.has(key)) {
+    if (decision.type === 'AlreadyPending') {
+      this.clearImagePullState(key)
+      this.clearRestartTimeout(key)
+      this.timeoutRegistry.deleteAttempt('restart', key)
       this.observe({
         action: 'skip',
         key,
@@ -387,6 +399,10 @@ export class PodLifecycleController implements ReconcilerController {
       })
       return
     }
+
+    this.clearImagePullState(key)
+    this.clearRestartTimeout(key)
+    this.timeoutRegistry.deleteAttempt('restart', key)
     this.emitPodContainerCreating(pod)
 
     const delayRange = this.options.pendingDelayRangeMs
@@ -404,7 +420,7 @@ export class PodLifecycleController implements ReconcilerController {
 
     const delayMs = randomInRange(minDelayMs, maxDelayMs)
     const timeoutId = setTimeout(() => {
-      this.pendingTimeouts.delete(key)
+      this.timeoutRegistry.deleteTimeout('pending', key)
       const latestPodResult = this.getState().findPod(name, namespace)
       if (!latestPodResult.ok || latestPodResult.value == null) {
         return
@@ -413,29 +429,31 @@ export class PodLifecycleController implements ReconcilerController {
       if (!shouldProgressPod(latestPod)) {
         return
       }
-      const latestVolumeReadiness =
-        this.options.volumeReadinessProbe?.(latestPod)
+      const latestVolumeReadiness = this.options.volumeReadinessProbe?.(latestPod)
       if (latestVolumeReadiness != null && !latestVolumeReadiness.ready) {
         this.emitPodWaitingForVolume(latestPod, latestVolumeReadiness.reason)
         return
       }
       this.emitPodRunning(key, latestPod)
     }, delayMs)
-    this.pendingTimeouts.set(key, timeoutId)
+    this.timeoutRegistry.setTimeout('pending', key, timeoutId)
   }
 
   private handleEvent(event: ClusterEvent): void {
     if (event.type === 'PodDeleted') {
       const pod = event.payload.deletedPod
+      const isForceDeletion = this.isForcedPodDeletion(pod)
+      this.signalPodProcesses(pod, isForceDeletion ? 'SIGKILL' : 'SIGTERM')
       this.stopRuntimeContainersForPod(pod, {
-        reason: 'PodDeleted',
-        exitCode: 0
+        reason: isForceDeletion ? 'Killed' : 'PodDeleted',
+        exitCode: isForceDeletion ? 137 : 0
       })
+      this.clearProcessRuntimeStateForPod(pod)
       const key = makePodKey(pod.metadata.namespace, pod.metadata.name)
       this.clearPendingTimeout(key)
       this.clearCompletionTimeout(key)
       this.clearRestartTimeout(key)
-      this.restartAttempts.delete(key)
+      this.timeoutRegistry.deleteAttempt('restart', key)
       this.clearImagePullState(key)
       return
     }
@@ -467,119 +485,89 @@ export class PodLifecycleController implements ReconcilerController {
   }
 
   private clearPendingTimeout(key: string): void {
-    const timeoutId = this.pendingTimeouts.get(key)
+    const timeoutId = this.timeoutRegistry.getTimeout('pending', key)
     if (timeoutId == null) {
       return
     }
-    clearTimeout(timeoutId)
-    this.pendingTimeouts.delete(key)
+    this.timeoutRegistry.clearTimeout('pending', key)
   }
 
   private clearCompletionTimeout(key: string): void {
-    const timeoutId = this.completionTimeouts.get(key)
+    const timeoutId = this.timeoutRegistry.getTimeout('completion', key)
     if (timeoutId == null) {
       return
     }
-    clearTimeout(timeoutId)
-    this.completionTimeouts.delete(key)
+    this.timeoutRegistry.clearTimeout('completion', key)
   }
 
   private clearRestartTimeout(key: string): void {
-    const timeoutId = this.restartTimeouts.get(key)
+    const timeoutId = this.timeoutRegistry.getTimeout('restart', key)
     if (timeoutId == null) {
       return
     }
-    clearTimeout(timeoutId)
-    this.restartTimeouts.delete(key)
+    this.timeoutRegistry.clearTimeout('restart', key)
   }
 
   private clearImagePullTimeout(key: string): void {
-    const timeoutId = this.imagePullTimeouts.get(key)
+    const timeoutId = this.timeoutRegistry.getTimeout('imagePull', key)
     if (timeoutId == null) {
       return
     }
-    clearTimeout(timeoutId)
-    this.imagePullTimeouts.delete(key)
+    this.timeoutRegistry.clearTimeout('imagePull', key)
   }
 
   private clearImagePullState(key: string): void {
     this.clearImagePullTimeout(key)
-    this.imagePullAttempts.delete(key)
+    this.timeoutRegistry.deleteAttempt('imagePull', key)
   }
 
-  private isRegularContainer(
+  private hasProcessCommand(container: Pod['spec']['containers'][number]): boolean {
+    if (container.command != null && container.command.length > 0) {
+      return true
+    }
+    if (container.args != null && container.args.length > 0) {
+      return true
+    }
+    return false
+  }
+
+  private getProcessRuntimeIdentity(
     pod: Pod,
-    status: NonNullable<Pod['status']['containerStatuses']>[number]
-  ): boolean {
-    return pod.spec.containers.some((container) => {
-      return container.name === status.name
-    })
+    containerName: string
+  ): {
+    nodeName: string
+    namespace: string
+    podName: string
+    containerName: string
+  } | null {
+    const nodeName = pod.spec.nodeName
+    if (nodeName == null || nodeName.length === 0) {
+      return null
+    }
+    return {
+      nodeName,
+      namespace: pod.metadata.namespace,
+      podName: pod.metadata.name,
+      containerName
+    }
+  }
+
+  private clearProcessRuntimeStateForPod(pod: Pod): void {
+    clearPodProcessRuntimeState(pod, this.options.processRuntime)
+  }
+
+  private signalPodProcesses(
+    pod: Pod,
+    signal: 'SIGTERM' | 'SIGKILL'
+  ): void {
+    signalPodProcessRuntime(pod, this.options.processRuntime, signal)
   }
 
   private syncRuntimeForRunningPod(pod: Pod): Pod {
-    const runtime = this.options.containerRuntime
-    if (runtime == null) {
-      return pod
-    }
-    const nodeName = pod.spec.nodeName
-    if (nodeName == null || nodeName.length === 0) {
-      return pod
-    }
-    const statuses = pod.status.containerStatuses ?? []
-    let hasChanged = false
-    const updatedStatuses = statuses.map((status) => {
-      if (!this.isRegularContainer(pod, status)) {
-        return status
-      }
-      if (status.stateDetails?.state !== 'Running') {
-        return status
-      }
-      const running = runtime.listContainers({
-        nodeName,
-        namespace: pod.metadata.namespace,
-        podName: pod.metadata.name,
-        containerName: status.name,
-        state: 'Running'
-      })
-      const record =
-        running[0] ??
-        runtime.startContainer({
-          nodeName,
-          namespace: pod.metadata.namespace,
-          podName: pod.metadata.name,
-          containerName: status.name,
-          image: status.image
-        })
-      const nextStateDetails: ContainerRuntimeStateDetails = {
-        ...status.stateDetails,
-        state: 'Running',
-        startedAt: record.startedAt
-      }
-      const nextStatus = {
-        ...status,
-        stateDetails: nextStateDetails,
-        startedAt: record.startedAt,
-        containerID: record.containerId
-      }
-      if (
-        nextStatus.containerID !== status.containerID ||
-        nextStatus.startedAt !== status.startedAt ||
-        JSON.stringify(nextStatus.stateDetails) !== JSON.stringify(status.stateDetails)
-      ) {
-        hasChanged = true
-      }
-      return nextStatus
+    return syncRunningPodRuntimeState(pod, {
+      containerRuntime: this.options.containerRuntime,
+      processRuntime: this.options.processRuntime
     })
-    if (!hasChanged) {
-      return pod
-    }
-    return {
-      ...pod,
-      status: {
-        ...pod.status,
-        containerStatuses: updatedStatuses
-      }
-    }
   }
 
   private stopRuntimeContainersForPod(
@@ -592,48 +580,10 @@ export class PodLifecycleController implements ReconcilerController {
     exitCode?: number
     reason?: string
   }> {
-    const terminatedByName = new Map<
-      string,
-      {
-        containerId: string
-        startedAt: string
-        finishedAt?: string
-        exitCode?: number
-        reason?: string
-      }
-    >()
-    const runtime = this.options.containerRuntime
-    if (runtime == null) {
-      return terminatedByName
-    }
-    const nodeName = pod.spec.nodeName
-    if (nodeName == null || nodeName.length === 0) {
-      return terminatedByName
-    }
-    const runningContainers = runtime.listContainers({
-      nodeName,
-      namespace: pod.metadata.namespace,
-      podName: pod.metadata.name,
-      state: 'Running'
+    return terminatePodRuntimeContainers(pod, this.options.containerRuntime, {
+      reason: options.reason,
+      exitCode: options.exitCode
     })
-    for (const record of runningContainers) {
-      runtime.stopContainer({
-        containerId: record.containerId,
-        exitCode: options.exitCode,
-        reason: options.reason
-      })
-      const terminated = runtime.getContainer(record.containerId)
-      if (terminated != null) {
-        terminatedByName.set(record.containerName, {
-          containerId: terminated.containerId,
-          startedAt: terminated.startedAt,
-          finishedAt: terminated.finishedAt,
-          exitCode: terminated.exitCode,
-          reason: terminated.reason
-        })
-      }
-    }
-    return terminatedByName
   }
 
   private computeRestartBackoffMs(key: string): number {
@@ -644,9 +594,9 @@ export class PodLifecycleController implements ReconcilerController {
       Math.floor(configuredInitialMs ?? DEFAULT_RESTART_BACKOFF.initialMs)
     )
     const maxMs = Math.max(initialMs, Math.floor(configuredMaxMs ?? DEFAULT_RESTART_BACKOFF.maxMs))
-    const previousAttempts = this.restartAttempts.get(key) ?? 0
+    const previousAttempts = this.timeoutRegistry.getAttempt('restart', key) ?? 0
     const nextAttempts = previousAttempts + 1
-    this.restartAttempts.set(key, nextAttempts)
+    this.timeoutRegistry.setAttempt('restart', key, nextAttempts)
     const exponentialDelay = initialMs * 2 ** (nextAttempts - 1)
     return Math.min(maxMs, exponentialDelay)
   }
@@ -662,9 +612,9 @@ export class PodLifecycleController implements ReconcilerController {
       initialMs,
       Math.floor(configuredMaxMs ?? DEFAULT_IMAGE_PULL_BACKOFF.maxMs)
     )
-    const previousAttempts = this.imagePullAttempts.get(key) ?? 0
+    const previousAttempts = this.timeoutRegistry.getAttempt('imagePull', key) ?? 0
     const nextAttempts = previousAttempts + 1
-    this.imagePullAttempts.set(key, nextAttempts)
+    this.timeoutRegistry.setAttempt('imagePull', key, nextAttempts)
     const exponentialDelay = initialMs * 2 ** (nextAttempts - 1)
     return Math.min(maxMs, exponentialDelay)
   }
@@ -716,7 +666,7 @@ export class PodLifecycleController implements ReconcilerController {
   }
 
   private handleImagePullBackOff(key: string, pod: Pod): void {
-    if (this.imagePullTimeouts.has(key)) {
+    if (this.timeoutRegistry.hasTimeout('imagePull', key)) {
       this.observe({
         action: 'skip',
         key,
@@ -732,9 +682,9 @@ export class PodLifecycleController implements ReconcilerController {
     })
     this.clearPendingTimeout(key)
     this.clearRestartTimeout(key)
-    this.restartAttempts.delete(key)
+    this.timeoutRegistry.deleteAttempt('restart', key)
 
-    const attempts = this.imagePullAttempts.get(key) ?? 0
+    const attempts = this.timeoutRegistry.getAttempt('imagePull', key) ?? 0
     if (attempts === 0) {
       this.emitPodContainerCreating(pod)
     }
@@ -744,7 +694,7 @@ export class PodLifecycleController implements ReconcilerController {
         : this.getImagePullRetryDelayMs()
 
     const pullTimeoutId = setTimeout(() => {
-      this.imagePullTimeouts.delete(key)
+      this.timeoutRegistry.deleteTimeout('imagePull', key)
       const { namespace, name } = parsePodKey(key)
       const latestPodResult = this.getState().findPod(name, namespace)
       if (!latestPodResult.ok || latestPodResult.value == null) {
@@ -765,7 +715,7 @@ export class PodLifecycleController implements ReconcilerController {
 
       const transitionDelayMs = this.getImagePullErrTransitionMs()
       const transitionTimeoutId = setTimeout(() => {
-        this.imagePullTimeouts.delete(key)
+        this.timeoutRegistry.deleteTimeout('imagePull', key)
         const transitionedPodResult = this.getState().findPod(name, namespace)
         if (!transitionedPodResult.ok || transitionedPodResult.value == null) {
           return
@@ -784,7 +734,7 @@ export class PodLifecycleController implements ReconcilerController {
         this.emitPodStartupIssue(transitionedPod, 'ImagePullBackOff')
         const backoffMs = this.computeImagePullBackoffMs(key)
         const retryTimeoutId = setTimeout(() => {
-          this.imagePullTimeouts.delete(key)
+          this.timeoutRegistry.deleteTimeout('imagePull', key)
           const retryPodResult = this.getState().findPod(name, namespace)
           if (!retryPodResult.ok || retryPodResult.value == null) {
             return
@@ -795,11 +745,11 @@ export class PodLifecycleController implements ReconcilerController {
           }
           this.enqueuePod(retryPod)
         }, backoffMs)
-        this.imagePullTimeouts.set(key, retryTimeoutId)
+        this.timeoutRegistry.setTimeout('imagePull', key, retryTimeoutId)
       }, transitionDelayMs)
-      this.imagePullTimeouts.set(key, transitionTimeoutId)
+      this.timeoutRegistry.setTimeout('imagePull', key, transitionTimeoutId)
     }, pullDelayMs)
-    this.imagePullTimeouts.set(key, pullTimeoutId)
+    this.timeoutRegistry.setTimeout('imagePull', key, pullTimeoutId)
   }
 
   private handleCrashLoopBackOff(key: string, pod: Pod): void {
@@ -819,7 +769,7 @@ export class PodLifecycleController implements ReconcilerController {
       return
     }
 
-    if (this.restartTimeouts.has(key)) {
+    if (this.timeoutRegistry.hasTimeout('restart', key)) {
       this.observe({
         action: 'skip',
         key,
@@ -841,7 +791,7 @@ export class PodLifecycleController implements ReconcilerController {
     const errorPhaseMs = Math.min(this.getCrashLoopErrorToBackoffMs(), delayMs)
     const scheduleRestart = (remainingDelayMs: number): void => {
       const restartTimeoutId = setTimeout(() => {
-        this.restartTimeouts.delete(key)
+        this.timeoutRegistry.deleteTimeout('restart', key)
         const { namespace, name } = parsePodKey(key)
         const latestPodResult = this.getState().findPod(name, namespace)
         if (!latestPodResult.ok || latestPodResult.value == null) {
@@ -853,7 +803,7 @@ export class PodLifecycleController implements ReconcilerController {
         }
         this.enqueuePod(latestPod)
       }, remainingDelayMs)
-      this.restartTimeouts.set(key, restartTimeoutId)
+      this.timeoutRegistry.setTimeout('restart', key, restartTimeoutId)
     }
 
     if (errorPhaseMs <= 0) {
@@ -868,19 +818,19 @@ export class PodLifecycleController implements ReconcilerController {
         pod.metadata.namespace
       )
       if (!latestPodResult.ok || latestPodResult.value == null) {
-        this.restartTimeouts.delete(key)
+        this.timeoutRegistry.deleteTimeout('restart', key)
         return
       }
       const latestPod = latestPodResult.value
       if (!shouldProgressPod(latestPod)) {
-        this.restartTimeouts.delete(key)
+        this.timeoutRegistry.deleteTimeout('restart', key)
         return
       }
       this.emitCrashLoopWaitingReasonForLatestPod(latestPod)
       const remainingDelayMs = Math.max(0, delayMs - errorPhaseMs)
       scheduleRestart(remainingDelayMs)
     }, errorPhaseMs)
-    this.restartTimeouts.set(key, transitionTimeoutId)
+    this.timeoutRegistry.setTimeout('restart', key, transitionTimeoutId)
   }
 
   private shouldCompleteSuccessfully(pod: Pod): boolean {
@@ -891,7 +841,30 @@ export class PodLifecycleController implements ReconcilerController {
     if (pod.spec.containers.length === 0) {
       return false
     }
+    const processRuntime = this.options.processRuntime
+    const nodeName = pod.spec.nodeName
+    const canUseProcessRuntime =
+      processRuntime != null && nodeName != null && nodeName.length > 0
     for (const container of pod.spec.containers) {
+      if (canUseProcessRuntime && this.hasProcessCommand(container)) {
+        const identity = this.getProcessRuntimeIdentity(pod, container.name)
+        if (identity == null) {
+          return false
+        }
+        const processRecord = processRuntime.ensureMainProcess({
+          ...identity,
+          command: container.command,
+          args: container.args
+        })
+        if (processRecord.state === 'Running') {
+          return false
+        }
+        const processExitCode = processRecord.exitCode ?? 0
+        if (processExitCode !== 0) {
+          return false
+        }
+        continue
+      }
       const imageValidation = this.imageRegistry.validateImage(container.image)
       if (!imageValidation.ok) {
         return false
@@ -910,12 +883,57 @@ export class PodLifecycleController implements ReconcilerController {
     return true
   }
 
+  private handleTerminatingPod(key: string, pod: Pod): void {
+    this.observe({
+      action: 'skip',
+      key,
+      reason: 'Terminating'
+    })
+    this.clearPendingTimeout(key)
+    this.clearCompletionTimeout(key)
+    this.clearRestartTimeout(key)
+    this.timeoutRegistry.deleteAttempt('restart', key)
+    this.clearImagePullState(key)
+    this.signalPodProcesses(pod, 'SIGTERM')
+    const hasRunningProcess = hasRunningPodProcessRuntime(
+      pod,
+      this.options.processRuntime
+    )
+    if (hasRunningProcess) {
+      return
+    }
+    this.stopRuntimeContainersForPod(pod, {
+      reason: 'Terminated',
+      exitCode: 143
+    })
+  }
+
+  private isForcedPodDeletion(pod: Pod): boolean {
+    const configuredGracePeriod = pod.metadata.deletionGracePeriodSeconds
+    if (configuredGracePeriod === 0) {
+      return true
+    }
+    const deletionTimestamp = pod.metadata.deletionTimestamp
+    if (deletionTimestamp == null) {
+      return false
+    }
+    if (configuredGracePeriod == null || configuredGracePeriod <= 0) {
+      return false
+    }
+    const deletionStartMs = Date.parse(deletionTimestamp)
+    if (Number.isNaN(deletionStartMs)) {
+      return false
+    }
+    const graceDeadlineMs = deletionStartMs + configuredGracePeriod * 1000
+    return Date.now() >= graceDeadlineMs
+  }
+
   private schedulePodSucceededTransition(key: string, pod: Pod): void {
     if (!this.shouldCompleteSuccessfully(pod)) {
       this.clearCompletionTimeout(key)
       return
     }
-    if (this.completionTimeouts.has(key)) {
+    if (this.timeoutRegistry.hasTimeout('completion', key)) {
       return
     }
     const delayRange = this.options.completionDelayRangeMs
@@ -926,7 +944,7 @@ export class PodLifecycleController implements ReconcilerController {
     const maxDelayMs = Math.max(minDelayMs, Math.floor(delayRange.maxMs))
     const delayMs = randomInRange(minDelayMs, maxDelayMs)
     const timeoutId = setTimeout(() => {
-      this.completionTimeouts.delete(key)
+      this.timeoutRegistry.deleteTimeout('completion', key)
       const { namespace, name } = parsePodKey(key)
       const latestPodResult = this.getState().findPod(name, namespace)
       if (!latestPodResult.ok || latestPodResult.value == null) {
@@ -945,7 +963,7 @@ export class PodLifecycleController implements ReconcilerController {
         phase: 'Succeeded'
       })
     }, delayMs)
-    this.completionTimeouts.set(key, timeoutId)
+    this.timeoutRegistry.setTimeout('completion', key, timeoutId)
   }
 
   private emitPodRunning(key: string, pod: Pod): void {
@@ -1115,62 +1133,20 @@ export class PodLifecycleController implements ReconcilerController {
     const regularContainerNames = new Set(
       pod.spec.containers.map((container) => container.name)
     )
-    const updatedStatuses = currentStatuses.map((status) => {
-      if (!regularContainerNames.has(status.name)) {
-        return status
+    const updatedStatuses = buildTerminatedContainerStatuses(
+      currentStatuses,
+      regularContainerNames,
+      transitionTime,
+      terminatedReason,
+      terminatedExitCode,
+      terminatedRuntimeRecords,
+      {
+        incrementRestartOnCrash: options?.incrementRestartOnCrash
       }
-      const previousStateDetails =
-        status.stateDetails ??
-        ({
-          state: 'Waiting',
-          reason: 'ContainerCreating'
-        } as ContainerRuntimeStateDetails)
-      const terminatedRuntimeRecord = terminatedRuntimeRecords.get(status.name)
-      return {
-        ...status,
-        ready: false,
-        containerID: terminatedRuntimeRecord?.containerId ?? status.containerID,
-        stateDetails: {
-          state: 'Terminated' as const,
-          reason: terminatedRuntimeRecord?.reason ?? terminatedReason,
-          exitCode: terminatedRuntimeRecord?.exitCode ?? terminatedExitCode,
-          startedAt: terminatedRuntimeRecord?.startedAt ?? status.startedAt,
-          finishedAt: terminatedRuntimeRecord?.finishedAt ?? transitionTime
-        },
-        lastStateDetails: previousStateDetails,
-        started: false,
-        startedAt: undefined,
-        ...(options?.incrementRestartOnCrash === true
-          ? {
-              // Keep the first observed restart timestamp for a crash loop series
-              // so "RESTARTS (x ago)" keeps increasing instead of resetting each cycle.
-              lastRestartAt: status.lastRestartAt ?? transitionTime,
-              restartCount: (status.restartCount ?? 0) + 1
-            }
-          : {})
-      }
-    })
+    )
     const hasChanged = updatedStatuses.some((updatedStatus, index) => {
       const previousStatus = currentStatuses[index]
-      if (previousStatus == null) {
-        return true
-      }
-      if (
-        JSON.stringify(previousStatus.stateDetails) !==
-        JSON.stringify(updatedStatus.stateDetails)
-      ) {
-        return true
-      }
-      if (
-        JSON.stringify(previousStatus.lastStateDetails) !==
-        JSON.stringify(updatedStatus.lastStateDetails)
-      ) {
-        return true
-      }
-      if (previousStatus.restartCount !== updatedStatus.restartCount) {
-        return true
-      }
-      return previousStatus.lastRestartAt !== updatedStatus.lastRestartAt
+      return hasContainerStatusChanged(previousStatus, updatedStatus)
     })
     if (!hasChanged) {
       return
@@ -1248,55 +1224,18 @@ export class PodLifecycleController implements ReconcilerController {
     const regularContainerNames = new Set(
       pod.spec.containers.map((container) => container.name)
     )
-    const updatedStatuses = currentStatuses.map((status) => {
-      if (!regularContainerNames.has(status.name)) {
-        return status
+    const updatedStatuses = buildWaitingContainerStatuses(
+      currentStatuses,
+      regularContainerNames,
+      waitingReason,
+      transitionTime,
+      {
+        incrementRestartOnCrash: options?.incrementRestartOnCrash
       }
-      const previousStateDetails =
-        status.stateDetails ??
-        ({
-          state: 'Waiting',
-          reason: 'ContainerCreating'
-        } as ContainerRuntimeStateDetails)
-      return {
-        ...status,
-        ready: false,
-        stateDetails: {
-          state: 'Waiting' as const,
-          reason: waitingReason
-        },
-        lastStateDetails: previousStateDetails,
-        started: false,
-        startedAt: undefined,
-        ...(options?.incrementRestartOnCrash === true
-          ? {
-              lastRestartAt: transitionTime,
-              restartCount: (status.restartCount ?? 0) + 1
-            }
-          : {})
-      }
-    })
+    )
     const hasChanged = updatedStatuses.some((updatedStatus, index) => {
       const previousStatus = currentStatuses[index]
-      if (previousStatus == null) {
-        return true
-      }
-      if (
-        JSON.stringify(previousStatus.stateDetails) !==
-        JSON.stringify(updatedStatus.stateDetails)
-      ) {
-        return true
-      }
-      if (
-        JSON.stringify(previousStatus.lastStateDetails) !==
-        JSON.stringify(updatedStatus.lastStateDetails)
-      ) {
-        return true
-      }
-      if (previousStatus.restartCount !== updatedStatus.restartCount) {
-        return true
-      }
-      return previousStatus.lastRestartAt !== updatedStatus.lastRestartAt
+      return hasContainerStatusChanged(previousStatus, updatedStatus)
     })
     if (!hasChanged) {
       return

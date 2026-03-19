@@ -722,6 +722,36 @@ data:
         expect(labels.value).toBe('{"app":"my-app"}')
       })
 
+      it('should label deployment after imperative create', () => {
+        const executor = createKubectlExecutor(
+          apiServer,
+          fileSystem,
+          logger
+        )
+        const created = executor.execute(
+          'kubectl create deployment label-demo --image=nginx'
+        )
+        expect(created.ok).toBe(true)
+
+        const labeled = executor.execute(
+          'kubectl label deployment label-demo tier=experiment'
+        )
+        expect(labeled.ok).toBe(true)
+        if (!labeled.ok) {
+          return
+        }
+        expect(labeled.value).toBe('deployment/label-demo labeled')
+
+        const labels = executor.execute(
+          "kubectl get deployment label-demo -o jsonpath='{.metadata.labels}'"
+        )
+        expect(labels.ok).toBe(true)
+        if (!labels.ok) {
+          return
+        }
+        expect(labels.value).toBe('{"app":"label-demo","tier":"experiment"}')
+      })
+
       it('should reject plural resource token in imperative create', () => {
         const executor = createKubectlExecutor(
           apiServer,
@@ -1354,11 +1384,14 @@ data:
 
         expect(result.ok).toBe(true)
 
-        // Verify pod is actually deleted
+        // Verify pod is marked for deletion (kubernetes-like two-phase deletion)
         const pods = apiServer.listResources('Pod', 'default')
-        expect(
-          pods.find((p) => p.metadata.name === 'nginx-pod')
-        ).toBeUndefined()
+        const remainingPod = pods.find((p) => p.metadata.name === 'nginx-pod')
+        expect(remainingPod).toBeDefined()
+        if (remainingPod == null) {
+          return
+        }
+        expect(remainingPod.metadata.deletionTimestamp).toBeDefined()
       })
 
       it('should delete pod with namespace specified', () => {
@@ -1374,9 +1407,12 @@ data:
         expect(result.ok).toBe(true)
 
         const pods = apiServer.listResources('Pod', 'kube-system')
-        expect(
-          pods.find((p) => p.metadata.name === 'redis-pod')
-        ).toBeUndefined()
+        const remainingPod = pods.find((p) => p.metadata.name === 'redis-pod')
+        expect(remainingPod).toBeDefined()
+        if (remainingPod == null) {
+          return
+        }
+        expect(remainingPod.metadata.deletionTimestamp).toBeDefined()
       })
 
       it('should delete pod when namespace flag is before resource', () => {
@@ -1392,9 +1428,12 @@ data:
         expect(result.ok).toBe(true)
 
         const pods = apiServer.listResources('Pod', 'kube-system')
-        expect(
-          pods.find((p) => p.metadata.name === 'redis-pod')
-        ).toBeUndefined()
+        const remainingPod = pods.find((p) => p.metadata.name === 'redis-pod')
+        expect(remainingPod).toBeDefined()
+        if (remainingPod == null) {
+          return
+        }
+        expect(remainingPod.metadata.deletionTimestamp).toBeDefined()
       })
 
       it('should delete pod from manifest file with -f', () => {
@@ -1427,9 +1466,12 @@ spec:
         expect(result.value).toContain('pod "nginx-pod" deleted from default namespace')
 
         const pods = apiServer.listResources('Pod', 'default')
-        expect(
-          pods.find((p) => p.metadata.name === 'nginx-pod')
-        ).toBeUndefined()
+        const remainingPod = pods.find((p) => p.metadata.name === 'nginx-pod')
+        expect(remainingPod).toBeDefined()
+        if (remainingPod == null) {
+          return
+        }
+        expect(remainingPod.metadata.deletionTimestamp).toBeDefined()
       })
 
       it('should return error when deleting nonexistent pod', () => {
@@ -1444,6 +1486,43 @@ spec:
         if (!result.ok) {
           expect(result.error).toContain('not found')
         }
+      })
+
+      it('should support delete all from label selector', () => {
+        const executor = createKubectlExecutor(
+          apiServer,
+          fileSystem,
+          logger
+        )
+        const created = executor.execute(
+          'kubectl create deployment label-demo --image=nginx'
+        )
+        expect(created.ok).toBe(true)
+        const labeled = executor.execute(
+          'kubectl label deployment label-demo tier=experiment'
+        )
+        expect(labeled.ok).toBe(true)
+
+        const deleted = executor.execute('kubectl delete all -l tier=experiment')
+        expect(deleted.ok).toBe(true)
+        if (!deleted.ok) {
+          return
+        }
+        expect(deleted.value).toContain('deployment.apps "label-demo" deleted')
+      })
+
+      it('should return "No resources found" for delete all label with no match', () => {
+        const executor = createKubectlExecutor(
+          apiServer,
+          fileSystem,
+          logger
+        )
+        const result = executor.execute('kubectl delete all -l tier=experiment')
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+        expect(result.value).toBe('No resources found')
       })
     })
 

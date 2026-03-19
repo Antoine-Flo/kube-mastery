@@ -230,4 +230,34 @@ describe('kubectl describe handler - pods with event store', () => {
       'Back-off restarting failed container api in pod default/api-pod'
     )
   })
+
+  it('prints Terminating status when deletion metadata is present', () => {
+    const pod = createPod({
+      name: 'api-pod',
+      namespace: 'default',
+      nodeName: 'worker-a',
+      deletionTimestamp: '2026-03-19T12:00:00.000Z',
+      containers: [{ name: 'api', image: 'nginx:latest' }],
+      phase: 'Running'
+    })
+    const state = createClusterStateData({
+      pods: [pod]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'pods',
+      name: 'api-pod',
+      namespace: 'default',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+    const result = handleDescribe(apiServer, parsed)
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Status:               Terminating')
+  })
 })

@@ -105,7 +105,8 @@ const FLAGS_REQUIRING_VALUES = [
   'docker-password',
   'docker-email',
   'p',
-  'patch'
+  'patch',
+  'grace-period'
 ]
 // Note: 'filename' is required for apply/create, but 'f' and 'follow' are boolean for logs
 
@@ -231,7 +232,9 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     waitForCondition: ctx.waitForCondition,
     waitTimeoutSeconds: ctx.waitTimeoutSeconds,
     patchPayload: getPatchPayloadFromFlags(normalizedFlags),
-    patchType: getPatchTypeFromFlags(normalizedFlags)
+    patchType: getPatchTypeFromFlags(normalizedFlags),
+    deleteGracePeriodSeconds: getDeleteGracePeriodSecondsFromFlags(normalizedFlags),
+    deleteForce: getDeleteForceFromFlags(normalizedFlags)
   })
 }
 
@@ -634,6 +637,26 @@ const getPatchTypeFromFlags = (
   return undefined
 }
 
+const getDeleteGracePeriodSecondsFromFlags = (
+  flags: Record<string, string | boolean>
+): number | undefined => {
+  const gracePeriod = flags['grace-period']
+  if (typeof gracePeriod !== 'string') {
+    return undefined
+  }
+  const parsed = Number.parseInt(gracePeriod, 10)
+  if (Number.isNaN(parsed) || parsed < 0) {
+    return undefined
+  }
+  return parsed
+}
+
+const getDeleteForceFromFlags = (
+  flags: Record<string, string | boolean>
+): boolean => {
+  return flags.force === true
+}
+
 // ─── Validation ──────────────────────────────────────────────────────────
 
 /**
@@ -651,6 +674,10 @@ const validateCommandSemantics = (
 ): string | undefined => {
   const hasFilename =
     typeof flags['filename'] === 'string' || typeof flags['f'] === 'string'
+  const hasSelector =
+    typeof flags['selector'] === 'string' || typeof flags['l'] === 'string'
+  const canDeleteWithoutName =
+    action === 'delete' && !hasFilename && (hasSelector || resource === 'all')
 
   const watchValidationError = validateGetWatchSemantics(action, flags)
   if (watchValidationError !== undefined) {
@@ -673,7 +700,7 @@ const validateCommandSemantics = (
     action === 'patch' ||
     action === 'expose' ||
     action === 'wait' ||
-    (action === 'delete' && !hasFilename)
+    (action === 'delete' && !hasFilename && !canDeleteWithoutName)
 
   if (requiresNameAction && !name) {
     return `${action} requires a resource name`
@@ -822,6 +849,18 @@ const validateCommandSemantics = (
   if (action === 'replace') {
     if (!hasFilename) {
       return 'replace requires one of -f or --filename'
+    }
+  }
+  if (action === 'delete') {
+    const gracePeriodFlag = flags['grace-period']
+    if (gracePeriodFlag !== undefined) {
+      if (typeof gracePeriodFlag !== 'string') {
+        return 'error: flag --grace-period requires a numeric value'
+      }
+      const parsedGracePeriod = Number.parseInt(gracePeriodFlag, 10)
+      if (Number.isNaN(parsedGracePeriod) || parsedGracePeriod < 0) {
+        return `error: invalid --grace-period value: ${gracePeriodFlag}`
+      }
     }
   }
   if (action === 'set') {

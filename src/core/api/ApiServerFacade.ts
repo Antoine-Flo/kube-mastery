@@ -92,8 +92,26 @@ export interface ApiServerFacade {
   deleteResource: <TKind extends ResourceKind>(
     kind: TKind,
     name: string,
-    namespace?: string
+    namespace?: string,
+    options?: {
+      gracePeriodSeconds?: number
+      force?: boolean
+    }
   ) => Result<KindToResource<TKind>>
+  requestPodDeletion: (
+    name: string,
+    namespace?: string,
+    options?: {
+      gracePeriodSeconds?: number
+      force?: boolean
+      source?: string
+    }
+  ) => Result<Pod>
+  finalizePodDeletion: (
+    name: string,
+    namespace?: string,
+    options?: { source?: string }
+  ) => Result<Pod>
   createResource: <TKind extends ResourceKind>(
     kind: TKind,
     resource: KindToResource<TKind>,
@@ -114,6 +132,8 @@ export interface CreateApiServerFacadeOptions {
   eventBus?: EventBus
   bootstrap?: ClusterBootstrapConfig
 }
+
+const DEFAULT_POD_DELETION_GRACE_PERIOD_SECONDS = 30
 
 const buildPendingPodConditions = (
   pod: Pod,
@@ -190,6 +210,45 @@ const hasContainerImageChanges = (
     }
   }
   return false
+}
+
+const normalizeDeletionGracePeriodSeconds = (
+  gracePeriodSeconds: number | undefined
+): number => {
+  if (gracePeriodSeconds == null) {
+    return DEFAULT_POD_DELETION_GRACE_PERIOD_SECONDS
+  }
+  if (!Number.isFinite(gracePeriodSeconds)) {
+    return DEFAULT_POD_DELETION_GRACE_PERIOD_SECONDS
+  }
+  const normalized = Math.floor(gracePeriodSeconds)
+  if (normalized < 0) {
+    return DEFAULT_POD_DELETION_GRACE_PERIOD_SECONDS
+  }
+  return normalized
+}
+
+const withTerminatingPodConditions = (pod: Pod, transitionTime: string): Pod => {
+  const nextConditions = (pod.status.conditions ?? []).map((condition) => {
+    if (condition.type === 'Ready' || condition.type === 'ContainersReady') {
+      if (condition.status === 'False') {
+        return condition
+      }
+      return {
+        ...condition,
+        status: 'False' as const,
+        lastTransitionTime: transitionTime
+      }
+    }
+    return condition
+  })
+  return {
+    ...pod,
+    status: {
+      ...pod.status,
+      conditions: nextConditions
+    }
+  }
 }
 
 const shouldResetPodRuntimeAfterSpecUpdate = (
@@ -321,22 +380,78 @@ export const createApiServerFacade = (
     ) => {
       return clusterState.listByKind(kind, namespace) as KindToResource<TKind>[]
     },
-    deleteResource: (kind, name, namespace) => {
+    requestPodDeletion: (name, namespace, options) => {
+      const effectiveNamespace = namespace ?? 'default'
+      const findResult = clusterState.findByKind('Pod', name, effectiveNamespace)
+      if (!findResult.ok) {
+        return findResult as Result<Pod>
+      }
+
+      const source = options?.source ?? 'api-server'
+      const shouldForceDelete = options?.force === true
+      const configuredGracePeriod = shouldForceDelete
+        ? 0
+        : normalizeDeletionGracePeriodSeconds(options?.gracePeriodSeconds)
+      const currentPod = findResult.value as Pod
+      const alreadyTerminating = currentPod.metadata.deletionTimestamp != null
+      if (alreadyTerminating) {
+        return findResult as Result<Pod>
+      }
+
+      const deletionTimestamp = new Date().toISOString()
+      const podWithTerminationConditions = withTerminatingPodConditions(
+        currentPod,
+        deletionTimestamp
+      )
+      const updatedPod: Pod = {
+        ...podWithTerminationConditions,
+        metadata: {
+          ...podWithTerminationConditions.metadata,
+          deletionTimestamp,
+          deletionGracePeriodSeconds: configuredGracePeriod
+        }
+      }
+      etcd.appendEvent(
+        createPodUpdatedEvent(
+          name,
+          effectiveNamespace,
+          updatedPod,
+          currentPod,
+          source
+        )
+      )
+
+      return success(updatedPod)
+    },
+    finalizePodDeletion: (name, namespace, options) => {
+      const effectiveNamespace = namespace ?? 'default'
+      const findResult = clusterState.findByKind('Pod', name, effectiveNamespace)
+      if (!findResult.ok) {
+        return findResult as Result<Pod>
+      }
+      etcd.appendEvent(
+        createPodDeletedEvent(
+          name,
+          effectiveNamespace,
+          findResult.value as Pod,
+          options?.source ?? 'api-server'
+        )
+      )
+      return findResult as Result<Pod>
+    },
+    deleteResource: (kind, name, namespace, options) => {
       const effectiveNamespace = namespace ?? 'default'
       if (kind === 'Pod') {
-        const findResult = clusterState.findByKind('Pod', name, effectiveNamespace)
-        if (!findResult.ok) {
-          return findResult as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createPodDeletedEvent(
-            name,
-            effectiveNamespace,
-            findResult.value as Pod,
-            'api-server'
-          )
+        const podDeletionResult = apiServer.requestPodDeletion(
+          name,
+          effectiveNamespace,
+          {
+            gracePeriodSeconds: options?.gracePeriodSeconds,
+            force: options?.force,
+            source: 'api-server'
+          }
         )
-        return findResult as Result<KindToResource<typeof kind>>
+        return podDeletionResult as Result<KindToResource<typeof kind>>
       }
       if (kind === 'ConfigMap') {
         const findResult = clusterState.findByKind(

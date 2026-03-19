@@ -31,6 +31,7 @@ import type {
   Volume,
   VolumeMount
 } from '../../cluster/ressources/Pod'
+import { isPodTerminating } from '../../cluster/ressources/Pod'
 import type { Secret } from '../../cluster/ressources/Secret'
 import type { Service } from '../../cluster/ressources/Service'
 import { formatAge } from '../../shared/formatter'
@@ -123,6 +124,13 @@ const formatDescribeDate = (isoDate: string): string => {
     return isoDate
   }
   return parsed.toUTCString()
+}
+
+const getDescribePodStatus = (pod: Pod): string => {
+  if (isPodTerminating(pod)) {
+    return 'Terminating'
+  }
+  return pod.status.phase
 }
 
 const formatSelector = (deployment: Deployment): string => {
@@ -1163,7 +1171,7 @@ export const describePod = (
       'colon'
     )
   )
-  lines.push(`Status:               ${pod.status.phase}`)
+  lines.push(`Status:               ${getDescribePodStatus(pod)}`)
   if (header.seccompProfile != null) {
     lines.push(`SeccompProfile:       ${header.seccompProfile}`)
   }

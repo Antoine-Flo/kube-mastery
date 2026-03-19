@@ -15,7 +15,7 @@ import {
   getNodeRoles,
   getNodeStatus
 } from '../../../cluster/ressources/Node'
-import type { Pod } from '../../../cluster/ressources/Pod'
+import { isPodTerminating, type Pod } from '../../../cluster/ressources/Pod'
 import type { ReplicaSet } from '../../../cluster/ressources/ReplicaSet'
 import { getReplicaSetDesiredReplicas } from '../../../cluster/ressources/ReplicaSet'
 import type { Secret, SecretType } from '../../../cluster/ressources/Secret'
@@ -416,6 +416,9 @@ const getPodRestartsDisplay = (pod: Pod): string => {
  * STATUS column: phase or container state reason (e.g. Pending, Running, CrashLoopBackOff)
  */
 const getPodDisplayStatus = (pod: Pod): string => {
+  if (isPodTerminating(pod)) {
+    return 'Terminating'
+  }
   const statuses = pod.status.containerStatuses ?? []
   const waitingStatus = statuses.find((status) => {
     return (

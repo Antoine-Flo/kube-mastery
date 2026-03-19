@@ -11,6 +11,10 @@ import {
   createPodLifecycleController,
   type PodLifecycleControllerOptions
 } from '../kubelet/controllers/PodLifecycleController'
+import {
+  createPodTerminationController,
+  type PodTerminationControllerOptions
+} from '../kubelet/controllers/PodTerminationController'
 
 export interface ControlPlaneControllers {
   deploymentController: Controller
@@ -18,6 +22,7 @@ export interface ControlPlaneControllers {
   replicaSetController: Controller
   schedulerController: Controller
   podLifecycleController: Controller
+  podTerminationController: Controller
 }
 
 export interface InitializeControlPlaneOptions {
@@ -25,6 +30,7 @@ export interface InitializeControlPlaneOptions {
   daemonSet?: { resyncIntervalMs?: number }
   replicaSet?: { resyncIntervalMs?: number }
   podLifecycle?: PodLifecycleControllerOptions
+  podTermination?: PodTerminationControllerOptions
   scheduler?: SchedulerControllerOptions
 }
 
@@ -52,12 +58,17 @@ export const initializeControlPlane = (
     apiServer,
     options.podLifecycle
   )
+  const podTerminationController = createPodTerminationController(
+    apiServer,
+    options.podTermination
+  )
   return {
     deploymentController,
     daemonSetController,
     replicaSetController,
     schedulerController,
-    podLifecycleController
+    podLifecycleController,
+    podTerminationController
   }
 }
 
@@ -72,4 +83,5 @@ export const stopControlPlane = (
   controllers.replicaSetController.stop()
   controllers.schedulerController.stop()
   controllers.podLifecycleController.stop()
+  controllers.podTerminationController.stop()
 }

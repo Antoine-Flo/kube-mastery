@@ -173,12 +173,12 @@ kubectl set image deployment/my-app my-app=nginx:1.26
 kubectl edit deployment my-app
 
 # --- Apply from a directory ---
-mkdir -p /tmp/k8s-manifests
-cp my-deployment.yaml /tmp/k8s-manifests/
-kubectl apply -f /tmp/k8s-manifests/
+# Create one or more manifest in a directory
+kubectl apply -f /my-manifests/
 
 # --- Clean up ---
 kubectl delete -f my-deployment.yaml
+kubectl delete -f /my-manifests/
 ```
 
 Notice how `kubectl apply` smoothly handles both the initial creation and subsequent updates. The workflow, write a manifest, apply it, modify the manifest, apply again, is the backbone of production Kubernetes operations.

@@ -179,22 +179,11 @@ kubectl get replicasets
 kubectl delete deployment cleanup-demo
 kubectl get all
 
-# --- Delete from manifest ---
-kubectl apply -f /tmp/my-deployment.yaml 2>/dev/null || \
-  kubectl create deployment manifest-demo --image=nginx
-
-kubectl delete -f /tmp/my-deployment.yaml 2>/dev/null || \
-  kubectl delete deployment manifest-demo
-
 # --- Delete by label ---
 kubectl create deployment label-demo --image=nginx
 kubectl label deployment label-demo tier=experiment
 
 kubectl delete all -l tier=experiment
-kubectl get all
-
-# Clean up remaining resources
-kubectl delete service cleanup-demo 2>/dev/null; true
 ```
 
-Pay attention to the pod status transitions in `kubectl get pods -w`. Watching a pod move from `Running` to `Terminating` to disappearing gives you a concrete feel for the termination lifecycle, knowledge that will serve you well when troubleshooting stuck deletions.
+Pay attention to the pod status transitions in the visualizer. Watching a pod move from `Running` to `Terminating` to disappearing gives you a concrete feel for the termination lifecycle, knowledge that will serve you well when troubleshooting stuck deletions.

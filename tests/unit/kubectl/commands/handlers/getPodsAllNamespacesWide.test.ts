@@ -181,4 +181,25 @@ describe('kubectl get pods -A wide output', () => {
 
     expect(new Set(ips).size).toBe(ips.length)
   })
+
+  it('shows Terminating status when pod has deletion timestamp', () => {
+    const pods = [
+      createPod({
+        name: 'terminating-web',
+        namespace: 'default',
+        nodeName: 'sim-worker',
+        phase: 'Running',
+        deletionTimestamp: '2026-03-19T10:00:00.000Z',
+        containers: [{ name: 'nginx', image: 'nginx:1.28' }]
+      })
+    ]
+    const state = createClusterStateData({ pods })
+    const parsed = createParsedCommand()
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    expect(result).toContain('terminating-web')
+    expect(result).toContain('Terminating')
+  })
 })

@@ -692,6 +692,32 @@ describe('kubectl parser - get and delete flag positions', () => {
     expect(result.value.names).toEqual(['pod-1', 'pod-2', 'pod-3'])
   })
 
+  it('should parse delete all with label selector and no name', () => {
+    const result = parseCommand('kubectl delete all -l tier=experiment')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('all')
+    expect(result.value.name).toBeUndefined()
+    expect(result.value.selector).toEqual({ tier: 'experiment' })
+  })
+
+  it('should parse delete pods with label selector and no name', () => {
+    const result = parseCommand('kubectl delete pods -l app=demo')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBeUndefined()
+    expect(result.value.selector).toEqual({ app: 'demo' })
+  })
+
   it('should parse delete with short filename flag', () => {
     const result = parseCommand('kubectl delete -f pod.yaml')
 
@@ -714,6 +740,31 @@ describe('kubectl parser - get and delete flag positions', () => {
 
     expect(result.value.action).toBe('delete')
     expect(result.value.flags.filename).toBe('pod.yaml')
+  })
+
+  it('should parse delete grace period and force flags', () => {
+    const result = parseCommand(
+      'kubectl delete pod demo --grace-period=0 --force'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBe('demo')
+    expect(result.value.deleteGracePeriodSeconds).toBe(0)
+    expect(result.value.deleteForce).toBe(true)
+  })
+
+  it('should reject delete with invalid grace period value', () => {
+    const result = parseCommand('kubectl delete pod demo --grace-period=oops')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('invalid --grace-period value')
+    }
   })
 })
 

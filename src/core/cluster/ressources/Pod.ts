@@ -142,6 +142,8 @@ interface PodMetadata {
   labels?: Record<string, string>
   annotations?: Record<string, string>
   creationTimestamp: string
+  deletionTimestamp?: string
+  deletionGracePeriodSeconds?: number
   generation?: number
   ownerReferences?: OwnerReference[]
 }
@@ -291,6 +293,8 @@ interface PodConfig {
   labels?: Record<string, string>
   annotations?: Record<string, string>
   creationTimestamp?: string
+  deletionTimestamp?: string
+  deletionGracePeriodSeconds?: number
   phase?: PodPhase
   podIP?: string
   podIPs?: Array<{ ip: string }>
@@ -353,6 +357,32 @@ export const computeContainerImageId = (image: string): string => {
   const path = imageRefToPath(image)
   const digest = imageToSha256Digest(image)
   return `${path}@sha256:${digest}`
+}
+
+export const isPodTerminating = (pod: Pod): boolean => {
+  const deletionTimestamp = pod.metadata.deletionTimestamp
+  if (deletionTimestamp == null) {
+    return false
+  }
+  return deletionTimestamp.length > 0
+}
+
+export const getPodDeletionGracePeriodSeconds = (
+  pod: Pod,
+  fallbackSeconds: number
+): number => {
+  const configured = pod.metadata.deletionGracePeriodSeconds
+  if (configured == null) {
+    return fallbackSeconds
+  }
+  if (!Number.isFinite(configured)) {
+    return fallbackSeconds
+  }
+  const normalized = Math.floor(configured)
+  if (normalized < 0) {
+    return fallbackSeconds
+  }
+  return normalized
 }
 
 const computeContainerId = (
@@ -620,6 +650,12 @@ export const createPod = (config: PodConfig): Pod => {
       name: config.name,
       namespace: config.namespace,
       creationTimestamp,
+      ...(config.deletionTimestamp != null && {
+        deletionTimestamp: config.deletionTimestamp
+      }),
+      ...(config.deletionGracePeriodSeconds != null && {
+        deletionGracePeriodSeconds: config.deletionGracePeriodSeconds
+      }),
       ...(config.labels && { labels: config.labels }),
       ...(config.annotations && { annotations: config.annotations }),
       ...(config.ownerReferences && {

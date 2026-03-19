@@ -93,7 +93,8 @@ const FLAGS_REQUIRING_VALUES = new Set([
   'for',
   'timeout',
   'p',
-  'patch'
+  'patch',
+  'grace-period'
 ])
 
 const CREATE_SERVICE_TYPES = new Set([

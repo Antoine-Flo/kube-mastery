@@ -34,6 +34,15 @@ describe('kubectl delete handler', () => {
     ...overrides
   })
 
+  const expectPodMarkedTerminating = (name: string, namespace = 'default'): void => {
+    const podResult = apiServer.findResource('Pod', name, namespace)
+    expect(podResult.ok).toBe(true)
+    if (!podResult.ok) {
+      return
+    }
+    expect(podResult.value.metadata.deletionTimestamp).toBeDefined()
+  }
+
   describe('validation', () => {
     it('should return error when name is not provided', () => {
       const parsed = createParsedCommand({ name: undefined })
@@ -83,7 +92,7 @@ spec:
       }
 
       expect(result.value).toContain('pod "decl-pod" deleted from default namespace')
-      expect(apiServer.findResource('Pod', 'decl-pod', 'default').ok).toBe(false)
+      expectPodMarkedTerminating('decl-pod')
     })
 
     it('should return not found for manifest resource that does not exist', () => {
@@ -188,12 +197,8 @@ spec:
         'pod "alpha-del" deleted from default namespace',
         'pod "zulu-del" deleted from default namespace'
       ])
-      expect(apiServer.findResource('Pod', 'alpha-del', 'default').ok).toBe(
-        false
-      )
-      expect(apiServer.findResource('Pod', 'zulu-del', 'default').ok).toBe(
-        false
-      )
+      expectPodMarkedTerminating('alpha-del')
+      expectPodMarkedTerminating('zulu-del')
     })
 
     it('should error when delete directory has no manifest files', () => {
@@ -250,9 +255,9 @@ spec:
       }
     })
 
-    it('should emit PodDeleted event', () => {
+    it('should emit PodUpdated event with deletion metadata', () => {
       const subscriber = vi.fn()
-      eventBus.subscribe('PodDeleted', subscriber)
+      eventBus.subscribe('PodUpdated', subscriber)
 
       const pod = createPod({
         name: 'my-pod',
@@ -269,6 +274,7 @@ spec:
       handleDelete(apiServer, parsed)
 
       expect(subscriber).toHaveBeenCalled()
+      expectPodMarkedTerminating('my-pod')
     })
 
     it('should return error for non-existent pod', () => {
@@ -344,9 +350,37 @@ spec:
       expect(result.value).toContain('pod "pod-1" deleted from default namespace')
       expect(result.value).toContain('pod "pod-2" deleted from default namespace')
       expect(result.value).toContain('pod "pod-3" deleted from default namespace')
-      expect(apiServer.findResource('Pod', 'pod-1', 'default').ok).toBe(false)
-      expect(apiServer.findResource('Pod', 'pod-2', 'default').ok).toBe(false)
-      expect(apiServer.findResource('Pod', 'pod-3', 'default').ok).toBe(false)
+      expectPodMarkedTerminating('pod-1')
+      expectPodMarkedTerminating('pod-2')
+      expectPodMarkedTerminating('pod-3')
+    })
+
+    it('should mark force deleted pod as Terminating before final removal', () => {
+      apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'force-pod',
+          namespace: 'default',
+          containers: [{ name: 'main', image: 'busybox' }]
+        })
+      )
+      const parsed = createParsedCommand({
+        name: 'force-pod',
+        resource: 'pods',
+        deleteGracePeriodSeconds: 0,
+        deleteForce: true
+      })
+
+      const result = handleDelete(apiServer, parsed)
+
+      expect(result.ok).toBe(true)
+      const podResult = apiServer.findResource('Pod', 'force-pod', 'default')
+      expect(podResult.ok).toBe(true)
+      if (!podResult.ok) {
+        return
+      }
+      expect(podResult.value.metadata.deletionTimestamp).toBeDefined()
+      expect(podResult.value.metadata.deletionGracePeriodSeconds).toBe(0)
     })
   })
 
@@ -651,6 +685,61 @@ spec:
       if (result.ok) {
         expect(result.value).toContain('deleted')
       }
+    })
+  })
+
+  describe('delete by selector', () => {
+    it('should return "No resources found" when selector matches nothing', () => {
+      const parsed = createParsedCommand({
+        resource: 'all',
+        selector: { tier: 'experiment' }
+      })
+
+      const result = handleDelete(apiServer, parsed)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+      expect(result.value).toBe('No resources found')
+    })
+
+    it('should delete matching resources for delete all -l', () => {
+      apiServer.createResource(
+        'Deployment',
+        createDeployment({
+          name: 'label-demo',
+          namespace: 'default',
+          replicas: 1,
+          labels: { app: 'label-demo', tier: 'experiment' },
+          selector: { matchLabels: { app: 'label-demo' } },
+          template: {
+            metadata: { labels: { app: 'label-demo' } },
+            spec: {
+              containers: [{ name: 'main', image: 'nginx:latest' }]
+            }
+          }
+        })
+      )
+
+      const parsed = createParsedCommand({
+        resource: 'all',
+        selector: { tier: 'experiment' }
+      })
+
+      const result = handleDelete(apiServer, parsed)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+      expect(result.value).toContain('deployment.apps "label-demo" deleted')
+      const deploymentResult = apiServer.findResource(
+        'Deployment',
+        'label-demo',
+        'default'
+      )
+      expect(deploymentResult.ok).toBe(false)
     })
   })
 

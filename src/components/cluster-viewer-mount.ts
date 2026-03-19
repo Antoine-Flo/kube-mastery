@@ -7,6 +7,7 @@ import type { EmulatedEnvironment } from '../core/emulatedEnvironment/EmulatedEn
 import type { Node } from '../core/cluster/ressources/Node'
 import type { Pod } from '../core/cluster/ressources/Pod'
 import { getNodeStatus } from '../core/cluster/ressources/Node'
+import { isPodTerminating } from '../core/cluster/ressources/Pod'
 import type { SimServiceRuntime } from '../core/network/NetworkState'
 
 const POD_PHASE_CLASS: Record<Pod['status']['phase'], string> = {
@@ -113,6 +114,9 @@ function formatContainerTooltip(
 }
 
 function getPodDisplayStatus(pod: Pod): string {
+  if (isPodTerminating(pod)) {
+    return 'Terminating'
+  }
   if (pod.status.phase === 'Succeeded') {
     return 'Completed'
   }
@@ -589,6 +593,9 @@ function createPodEl(
   const phase = pod.status.phase
   const displayStatus = getPodDisplayStatus(pod)
   const phaseClass = POD_PHASE_CLASS[phase]
+  const terminatingClass = isPodTerminating(pod)
+    ? 'cluster-viz__pod--terminating'
+    : ''
   const name = `${pod.metadata.namespace}/${pod.metadata.name}`
   const containers = pod.spec.containers ?? []
   const statusesByName = new Map(
@@ -597,7 +604,7 @@ function createPodEl(
     })
   )
   const div = document.createElement('div')
-  div.className = `cluster-viz__pod ${phaseClass}`
+  div.className = `cluster-viz__pod ${phaseClass} ${terminatingClass}`.trim()
   div.setAttribute('data-focus-kind', 'pod')
   div.setAttribute('data-focus-id', name)
   if (isFocused(focus, 'pod', name)) {

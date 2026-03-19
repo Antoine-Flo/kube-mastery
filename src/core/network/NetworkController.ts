@@ -1,6 +1,6 @@
 import type { ApiServerFacade } from '../api/ApiServerFacade'
 import type { ServiceDeletedEvent } from '../cluster/events/types'
-import type { Pod } from '../cluster/ressources/Pod'
+import { isPodTerminating, type Pod } from '../cluster/ressources/Pod'
 import type { Service } from '../cluster/ressources/Service'
 import { startPeriodicResync } from '../control-plane/controller-runtime/helpers'
 import type { AppEventType } from '../events/AppEvent'
@@ -90,6 +90,9 @@ const getServiceEndpoints = (
       continue
     }
     if (pod.status.phase !== 'Running' || pod.status.podIP == null) {
+      continue
+    }
+    if (isPodTerminating(pod)) {
       continue
     }
 

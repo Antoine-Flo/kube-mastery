@@ -13,11 +13,16 @@ import {
   createContainerRuntimeSimulator,
   type ContainerRuntimeSimulator
 } from '../runtime/ContainerRuntimeSimulator'
+import {
+  createContainerProcessRuntime,
+  type ContainerProcessRuntime
+} from '../runtime/ContainerProcessRuntime'
 
 export interface ControlPlaneRuntime {
   readonly runtimeControllers: ControlPlaneControllers
   readonly kubeletNode: KubeletNodeManager
   readonly containerRuntime: ContainerRuntimeSimulator
+  readonly processRuntime: ContainerProcessRuntime
   stop: () => void
 }
 
@@ -50,11 +55,17 @@ export const startControlPlaneRuntime = (
   options: InitializeControlPlaneOptions = {}
 ): ControlPlaneRuntime => {
   const containerRuntime = createContainerRuntimeSimulator()
+  const processRuntime = createContainerProcessRuntime()
   const runtimeControllers = initializeControlPlane(apiServer, {
     ...options,
     podLifecycle: {
       ...options.podLifecycle,
-      containerRuntime
+      containerRuntime,
+      processRuntime
+    },
+    podTermination: {
+      ...options.podTermination,
+      processRuntime
     }
   })
   syncNodeRuntimeVersion(apiServer, containerRuntime)
@@ -70,6 +81,7 @@ export const startControlPlaneRuntime = (
     runtimeControllers,
     kubeletNode,
     containerRuntime,
+    processRuntime,
     stop: () => {
       kubeletNode.stop()
       stopControlPlane(runtimeControllers)

@@ -271,11 +271,26 @@ const forceReplace = (
     return formatNotFound(kind, name)
   }
 
-  const deleteResult = isNamespacedKind(kind)
-    ? apiServer.deleteResource(kind, name, namespace)
-    : apiServer.deleteResource(kind, name)
+  const deleteResult =
+    kind === 'Pod'
+      ? apiServer.requestPodDeletion(name, namespace, {
+          gracePeriodSeconds: 0,
+          force: true,
+          source: 'kubectl-replace-force'
+        })
+      : isNamespacedKind(kind)
+        ? apiServer.deleteResource(kind, name, namespace)
+        : apiServer.deleteResource(kind, name)
   if (!deleteResult.ok) {
     return error(deleteResult.error)
+  }
+  if (kind === 'Pod') {
+    const finalizeResult = apiServer.finalizePodDeletion(name, namespace, {
+      source: 'kubectl-replace-force'
+    })
+    if (!finalizeResult.ok) {
+      return error(finalizeResult.error)
+    }
   }
 
   const resourceForCreate =

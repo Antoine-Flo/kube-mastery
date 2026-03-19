@@ -195,6 +195,12 @@
   border-left: 3px solid var(--color-gray-7);
 }
 
+.cluster-viz__pod--terminating {
+  border-left: 3px solid var(--color-amber-10);
+  border-style: dashed;
+  background-color: var(--color-amber-2);
+}
+
 .cluster-viz__pod-header {
   display: flex;
   align-items: center;

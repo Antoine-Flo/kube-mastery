@@ -4,6 +4,7 @@ import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFaca
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
+import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 import { createClusterStateData } from '../../../helpers/utils'
 
@@ -31,8 +32,9 @@ describe('metadataHelpers', () => {
   const createState = (
     pods: ReturnType<typeof createPod>[] = [],
     configMaps: ReturnType<typeof createConfigMap>[] = [],
-    secrets: ReturnType<typeof createSecret>[] = []
-  ) => createClusterStateData({ pods, configMaps, secrets })
+    secrets: ReturnType<typeof createSecret>[] = [],
+    deployments: ReturnType<typeof createDeployment>[] = []
+  ) => createClusterStateData({ pods, configMaps, secrets, deployments })
 
   const createParsedCommand = (
     overrides: Partial<ParsedCommand> = {}
@@ -92,8 +94,8 @@ describe('metadataHelpers', () => {
     it('should return error for unsupported resource type', () => {
       const state = createState()
       const parsed = createParsedCommand({
-        name: 'my-deploy',
-        resource: 'deployments',
+        name: 'my-ingress-class',
+        resource: 'ingressclasses',
         labelChanges: { app: 'test' }
       })
 
@@ -371,6 +373,37 @@ describe('metadataHelpers', () => {
       handleMetadataChange(apiServer, parsed, labelConfig)
 
       expect(subscriber).toHaveBeenCalled()
+    })
+  })
+
+  describe('labeling deployments', () => {
+    it('should add label to deployment', () => {
+      const deployment = createDeployment({
+        name: 'my-deployment',
+        namespace: 'default',
+        selector: { matchLabels: { app: 'demo' } },
+        template: {
+          metadata: { labels: { app: 'demo' } },
+          spec: {
+            containers: [{ name: 'nginx', image: 'nginx:latest' }]
+          }
+        }
+      })
+      const state = createState([], [], [], [deployment])
+      const parsed = createParsedCommand({
+        name: 'my-deployment',
+        resource: 'deployments',
+        labelChanges: { tier: 'experiment' }
+      })
+
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, labelConfig)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toContain('deployment')
+        expect(result.value).toContain('labeled')
+      }
     })
   })
 

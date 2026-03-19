@@ -11,6 +11,7 @@ import {
   type Pod
 } from '../../../../src/core/cluster/ressources/Pod'
 import { createContainerRuntimeSimulator } from '../../../../src/core/runtime/ContainerRuntimeSimulator'
+import { createContainerProcessRuntime } from '../../../../src/core/runtime/ContainerProcessRuntime'
 
 describe('PodLifecycleController runtime enrichment', () => {
   afterEach(() => {
@@ -136,6 +137,109 @@ describe('PodLifecycleController runtime enrichment', () => {
     })
     expect(terminatedAfterDelete.length).toBe(1)
     expect(terminatedAfterDelete[0]?.reason).toBe('PodDeleted')
+
+    controller.stop()
+  })
+
+  it('clears process runtime state on force pod deletion event', () => {
+    const apiServer = createApiServerFacade()
+    const eventBus = apiServer.eventBus
+    const runtime = createContainerRuntimeSimulator()
+    const processRuntime = createContainerProcessRuntime()
+    let pod: Pod = createPod({
+      name: 'force-delete-web',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      containers: [{ name: 'nginx', image: 'busybox', command: ['sleep', '3600'] }]
+    })
+    apiServer.createResource('Pod', pod)
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+    })
+
+    const controller = createPodLifecycleController(apiServer, {
+      containerRuntime: runtime,
+      processRuntime
+    })
+    controller.reconcile('default/force-delete-web')
+    const processBeforeDelete = processRuntime.getMainProcess({
+      nodeName: 'conformance-worker',
+      namespace: 'default',
+      podName: 'force-delete-web',
+      containerName: 'nginx'
+    })
+    expect(processBeforeDelete?.state).toBe('Running')
+
+    apiServer.requestPodDeletion('force-delete-web', 'default', {
+      gracePeriodSeconds: 0,
+      force: true,
+      source: 'test'
+    })
+    apiServer.finalizePodDeletion('force-delete-web', 'default', {
+      source: 'test'
+    })
+
+    const processAfterDelete = processRuntime.getMainProcess({
+      nodeName: 'conformance-worker',
+      namespace: 'default',
+      podName: 'force-delete-web',
+      containerName: 'nginx'
+    })
+    expect(processAfterDelete).toBeUndefined()
+
+    controller.stop()
+  })
+
+  it('uses SIGKILL when pod deletion grace deadline is exceeded', () => {
+    const apiServer = createApiServerFacade()
+    const eventBus = apiServer.eventBus
+    const runtime = createContainerRuntimeSimulator()
+    const processRuntime = createContainerProcessRuntime()
+    let pod: Pod = createPod({
+      name: 'grace-expired-web',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      containers: [{ name: 'nginx', image: 'busybox', command: ['sleep', '3600'] }]
+    })
+    apiServer.createResource('Pod', pod)
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+    })
+
+    const controller = createPodLifecycleController(apiServer, {
+      containerRuntime: runtime,
+      processRuntime
+    })
+    const signalSpy = vi.spyOn(processRuntime, 'signalMainProcess')
+    controller.reconcile('default/grace-expired-web')
+
+    const expiredDeletionTimestamp = new Date(Date.now() - 31_000).toISOString()
+    const terminatingPod: Pod = {
+      ...pod,
+      metadata: {
+        ...pod.metadata,
+        deletionTimestamp: expiredDeletionTimestamp,
+        deletionGracePeriodSeconds: 30
+      }
+    }
+    eventBus.emit(
+      createPodDeletedEvent(
+        terminatingPod.metadata.name,
+        terminatingPod.metadata.namespace,
+        terminatingPod,
+        'test'
+      )
+    )
+
+    expect(signalSpy).toHaveBeenCalledWith({
+      nodeName: 'conformance-worker',
+      namespace: 'default',
+      podName: 'grace-expired-web',
+      containerName: 'nginx',
+      signal: 'SIGKILL'
+    })
 
     controller.stop()
   })
@@ -716,6 +820,51 @@ describe('PodLifecycleController runtime enrichment', () => {
     expect(pod.status.phase).toBe('Running')
     expect(pod.status.containerStatuses?.[0]?.stateDetails?.reason).toBeUndefined()
 
+    controller.stop()
+  })
+
+  it('keeps sleep process running without forced pod completion', () => {
+    vi.useFakeTimers()
+    const apiServer = createApiServerFacade()
+    const eventBus = apiServer.eventBus
+    const runtime = createContainerRuntimeSimulator()
+    const processRuntime = createContainerProcessRuntime()
+    let pod: Pod = createPod({
+      name: 'sleep-pod',
+      namespace: 'default',
+      phase: 'Pending',
+      nodeName: 'conformance-worker',
+      restartPolicy: 'Never',
+      containers: [
+        {
+          name: 'main',
+          image: 'busybox',
+          command: ['sleep', '3600']
+        }
+      ]
+    })
+    apiServer.createResource('Pod', pod)
+    eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+      pod = event.payload.pod
+    })
+
+    const controller = createPodLifecycleController(apiServer, {
+      containerRuntime: runtime,
+      processRuntime,
+      completionDelayRangeMs: {
+        minMs: 5,
+        maxMs: 5
+      }
+    })
+
+    controller.reconcile('default/sleep-pod')
+    expect(pod.status.phase).toBe('Running')
+
+    vi.advanceTimersByTime(60000)
+    controller.reconcile('default/sleep-pod')
+
+    expect(pod.status.phase).toBe('Running')
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.state).toBe('Running')
     controller.stop()
   })
 })
