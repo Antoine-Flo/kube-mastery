@@ -11,8 +11,8 @@ import { createSecret, encodeBase64 } from '../../../cluster/ressources/Secret'
 import type { PodTemplateSpec } from '../../../cluster/ressources/ReplicaSet'
 import { createService } from '../../../cluster/ressources/Service'
 import type { FileSystem } from '../../../filesystem/FileSystem'
-import type { ExecutionResult } from '../../../shared/result'
-import { error } from '../../../shared/result'
+import type { ExecutionResult, Result } from '../../../shared/result'
+import { error, success } from '../../../shared/result'
 import { parseKubernetesYaml } from '../../yamlParser'
 import {
   validateMetadataNameForResource
@@ -762,6 +762,68 @@ const getFilenameFromFlags = (parsed: ParsedCommand): string | undefined => {
   return filename
 }
 
+const MANIFEST_FILENAME_EXTENSIONS = [
+  '.yaml',
+  '.yml',
+  '.json',
+  '.kyaml'
+] as const
+
+const NO_OBJECTS_PASSED_TO_APPLY = 'error: no objects passed to apply'
+
+const hasManifestFilenameExtension = (fileName: string): boolean => {
+  const lower = fileName.toLowerCase()
+  for (const ext of MANIFEST_FILENAME_EXTENSIONS) {
+    if (lower.endsWith(ext)) {
+      return true
+    }
+  }
+  return false
+}
+
+const joinDirectoryAndFilename = (
+  directoryPath: string,
+  fileName: string
+): string => {
+  const trimmed = directoryPath.replace(/\/+$/, '')
+  if (trimmed === '' || trimmed === '/') {
+    return `/${fileName}`
+  }
+  return `${trimmed}/${fileName}`
+}
+
+/**
+ * Resolve -f path to one or more manifest file paths (directory expands to sorted files).
+ */
+const resolveApplyManifestFilePaths = (
+  fileSystem: FileSystem,
+  filename: string
+): Result<string[]> => {
+  const listResult = fileSystem.listDirectory(filename)
+  if (listResult.ok) {
+    const paths: string[] = []
+    for (const child of listResult.value) {
+      if (child.type !== 'file') {
+        continue
+      }
+      const baseName = child.path.split('/').filter(Boolean).pop() || child.name
+      if (!hasManifestFilenameExtension(baseName)) {
+        continue
+      }
+      paths.push(joinDirectoryAndFilename(filename, baseName))
+    }
+    paths.sort((left, right) => left.localeCompare(right))
+    if (paths.length === 0) {
+      return error(NO_OBJECTS_PASSED_TO_APPLY)
+    }
+    return success(paths)
+  }
+  if (listResult.error.includes('Not a directory')) {
+    return success([filename])
+  }
+  return error(`error: ${listResult.error}`)
+}
+
 const getCreateImages = (parsed: ParsedCommand): string[] => {
   if (parsed.createImages && parsed.createImages.length > 0) {
     return parsed.createImages
@@ -1056,12 +1118,35 @@ export const handleApply = (
   apiServer: ApiServerFacade,
   parsed: ParsedCommand
 ): ExecutionResult => {
-  const loadResult = loadAndParseYaml(fileSystem, parsed)
-  if (!loadResult.ok) {
-    return loadResult
+  const filename = getFilenameFromFlags(parsed)
+  if (!filename) {
+    return error('error: must specify one of -f or --filename')
   }
 
-  return applyResourceWithEvents(loadResult.resource, apiServer)
+  const pathsResult = resolveApplyManifestFilePaths(fileSystem, filename)
+  if (!pathsResult.ok) {
+    return pathsResult
+  }
+
+  const filesResult = fileSystem.readFiles(pathsResult.value)
+  if (!filesResult.ok) {
+    return error(`error: ${filesResult.error}`)
+  }
+
+  const lines: string[] = []
+  for (let i = 0; i < filesResult.value.length; i++) {
+    const parseResult = parseKubernetesYaml(filesResult.value[i])
+    if (!parseResult.ok) {
+      return error(`error: ${parseResult.error}`)
+    }
+    const applyResult = applyResourceWithEvents(parseResult.value, apiServer)
+    if (!applyResult.ok) {
+      return applyResult
+    }
+    lines.push(applyResult.value)
+  }
+
+  return success(lines.join('\n'))
 }
 
 /**

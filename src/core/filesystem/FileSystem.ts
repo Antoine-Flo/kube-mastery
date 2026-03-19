@@ -429,31 +429,8 @@ const createDirectoryOps = (
 const createFileOps = (
   getState: () => FileSystemState,
   eventBus?: EventBus
-) => ({
-  createFile: (name: string, content = ''): Result<FileNode> => {
-    const state = getState()
-    const absolutePath = resolvePath(state.currentPath, name)
-
-    const validation = validateFileCreation(name, absolutePath, state.tree)
-    if (!validation.ok) {
-      return validation
-    }
-
-    try {
-      const file = createFile(name, absolutePath, content)
-      insertNode(state.tree, absolutePath, file)
-
-      if (eventBus) {
-        eventBus.emit(createFileCreatedEvent(file, absolutePath, 'filesystem'))
-      }
-
-      return success(file)
-    } catch (err) {
-      return error((err as Error).message)
-    }
-  },
-
-  readFile: (path: string): Result<string> => {
+) => {
+  const readFileAtPath = (path: string): Result<string> => {
     const state = getState()
     const absolutePath = resolvePath(state.currentPath, path)
     const node = findNode(state.tree, absolutePath)
@@ -464,94 +441,137 @@ const createFileOps = (
     }
 
     return success(validation.value.content)
-  },
+  }
 
-  writeFile: (path: string, content: string): Result<void> => {
-    const state = getState()
-    const absolutePath = resolvePath(state.currentPath, path)
-    const node = findNode(state.tree, absolutePath)
+  return {
+    createFile: (name: string, content = ''): Result<FileNode> => {
+      const state = getState()
+      const absolutePath = resolvePath(state.currentPath, name)
 
-    // Si le fichier n'existe pas, le créer
-    if (!node) {
-      const parentPath = dirname(absolutePath)
-      const parent = findNode(state.tree, parentPath)
-
-      if (!parent || parent.type !== 'directory') {
-        return error(
-          `nano: cannot create file '${path}': No such file or directory`
-        )
+      const validation = validateFileCreation(name, absolutePath, state.tree)
+      if (!validation.ok) {
+        return validation
       }
 
-      const fileName = absolutePath.split('/').pop() || path
-      if (parent.children.has(fileName)) {
-        return error(`nano: cannot create file '${path}': File exists`)
+      try {
+        const file = createFile(name, absolutePath, content)
+        insertNode(state.tree, absolutePath, file)
+
+        if (eventBus) {
+          eventBus.emit(createFileCreatedEvent(file, absolutePath, 'filesystem'))
+        }
+
+        return success(file)
+      } catch (err) {
+        return error((err as Error).message)
+      }
+    },
+
+    readFile: (path: string): Result<string> => readFileAtPath(path),
+
+    /**
+     * Read several files in order (same resolution rules as readFile).
+     * Fails on the first path that cannot be read as a file.
+     */
+    readFiles: (paths: string[]): Result<string[]> => {
+      const contents: string[] = []
+      for (const path of paths) {
+        const fileResult = readFileAtPath(path)
+        if (!fileResult.ok) {
+          return error(fileResult.error)
+        }
+        contents.push(fileResult.value)
+      }
+      return success(contents)
+    },
+
+    writeFile: (path: string, content: string): Result<void> => {
+      const state = getState()
+      const absolutePath = resolvePath(state.currentPath, path)
+      const node = findNode(state.tree, absolutePath)
+
+      // Si le fichier n'existe pas, le créer
+      if (!node) {
+        const parentPath = dirname(absolutePath)
+        const parent = findNode(state.tree, parentPath)
+
+        if (!parent || parent.type !== 'directory') {
+          return error(
+            `nano: cannot create file '${path}': No such file or directory`
+          )
+        }
+
+        const fileName = absolutePath.split('/').pop() || path
+        if (parent.children.has(fileName)) {
+          return error(`nano: cannot create file '${path}': File exists`)
+        }
+
+        const newFile = createFile(fileName, absolutePath, content)
+        insertNode(state.tree, absolutePath, newFile)
+
+        if (eventBus) {
+          eventBus.emit(
+            createFileCreatedEvent(newFile, absolutePath, 'filesystem')
+          )
+        }
+
+        return success(undefined)
       }
 
-      const newFile = createFile(fileName, absolutePath, content)
-      insertNode(state.tree, absolutePath, newFile)
+      // Si le fichier existe, le modifier
+      const validation = validateIsFile(node, absolutePath, 'nano')
+      if (!validation.ok) {
+        return validation
+      }
+
+      const previousFile = validation.value
+
+      // Side effect: Update file with new content and modifiedAt timestamp
+      const updatedFile = createFile(
+        previousFile.name,
+        previousFile.path,
+        content
+      )
+      removeNode(state.tree, absolutePath)
+      insertNode(state.tree, absolutePath, updatedFile)
 
       if (eventBus) {
         eventBus.emit(
-          createFileCreatedEvent(newFile, absolutePath, 'filesystem')
+          createFileModifiedEvent(
+            absolutePath,
+            updatedFile,
+            previousFile,
+            'filesystem'
+          )
+        )
+      }
+
+      return success(undefined)
+    },
+
+    deleteFile: (path: string): Result<void> => {
+      const state = getState()
+      const absolutePath = resolvePath(state.currentPath, path)
+      const node = findNode(state.tree, absolutePath)
+
+      const validation = validateIsFile(node, absolutePath, 'rm')
+      if (!validation.ok) {
+        return validation
+      }
+
+      const deletedFile = validation.value
+      removeNode(state.tree, absolutePath)
+
+      if (eventBus) {
+        eventBus.emit(
+          createFileDeletedEvent(absolutePath, deletedFile, 'filesystem')
         )
       }
 
       return success(undefined)
     }
-
-    // Si le fichier existe, le modifier
-    const validation = validateIsFile(node, absolutePath, 'nano')
-    if (!validation.ok) {
-      return validation
-    }
-
-    const previousFile = validation.value
-
-    // Side effect: Update file with new content and modifiedAt timestamp
-    const updatedFile = createFile(
-      previousFile.name,
-      previousFile.path,
-      content
-    )
-    removeNode(state.tree, absolutePath)
-    insertNode(state.tree, absolutePath, updatedFile)
-
-    if (eventBus) {
-      eventBus.emit(
-        createFileModifiedEvent(
-          absolutePath,
-          updatedFile,
-          previousFile,
-          'filesystem'
-        )
-      )
-    }
-
-    return success(undefined)
-  },
-
-  deleteFile: (path: string): Result<void> => {
-    const state = getState()
-    const absolutePath = resolvePath(state.currentPath, path)
-    const node = findNode(state.tree, absolutePath)
-
-    const validation = validateIsFile(node, absolutePath, 'rm')
-    if (!validation.ok) {
-      return validation
-    }
-
-    const deletedFile = validation.value
-    removeNode(state.tree, absolutePath)
-
-    if (eventBus) {
-      eventBus.emit(
-        createFileDeletedEvent(absolutePath, deletedFile, 'filesystem')
-      )
-    }
-
-    return success(undefined)
   }
-})
+}
 
 // ─── State Management ────────────────────────────────────────────────────
 

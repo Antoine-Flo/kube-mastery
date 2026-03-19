@@ -262,7 +262,6 @@
   "home_fit_yes_2": "I want to learn Kubernetes without setting up a home lab",
   "home_fit_yes_4": "I'm a visual learner and want to see the cluster while I practice",
   "home_fit_yes_5": "I'm not ready to invest in expensive cloud labs yet",
-  "home_fit_yes_5_extra": "we have special pricing for students and job seekers",
   "home_fit_no_title": "It's not for me if...",
   "home_fit_no_1": "I already know Kubernetes and need advanced topics",
   "home_fit_no_1_link": "iximiuz Labs",

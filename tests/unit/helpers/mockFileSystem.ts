@@ -25,6 +25,7 @@ export const createMockFileSystem = (
   deleteDirectory: () => success(undefined),
   createFile: () => success(createFileNode('test', '/home/kube/test')),
   readFile: () => success(''),
+  readFiles: (paths: string[]) => success(paths.map(() => '')),
   writeFile: () => success(undefined),
   deleteFile: () => success(undefined),
   toJSON: (): FileSystemState => ({

@@ -171,7 +171,11 @@ try {
               <li><CircleCheck size={18} /><span>{t('home_fit_yes_1')}</span></li>
               <li><CircleCheck size={18} /><span>{t('home_fit_yes_2')}</span></li>
               <li><CircleCheck size={18} /><span>{t('home_fit_yes_4')}</span></li>
-              <li><CircleCheck size={18} /><span>{t('home_fit_yes_5')} <span class="fit-extra">({t('home_fit_yes_5_extra')})</span></span></li>
+              <li><CircleCheck size={18} />
+                <span>{t('home_fit_yes_5')} 
+                <!-- <span class="fit-extra">({t('home_fit_yes_5_extra')})</span> "we have special pricing for students and job seekers" -->
+              </span>
+              </li>
             </ul>
             <div class="cta">
               <Button href={localePath('/pricing')} variant="solid" color="cyan" size="xl">

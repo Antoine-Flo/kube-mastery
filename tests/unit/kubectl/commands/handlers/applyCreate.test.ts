@@ -426,6 +426,108 @@ spec:
     )
   })
 
+  it('should apply sorted manifests from a directory with one line per file', () => {
+    const dirResult = fileSystem.createDirectory('manifests-apply-dir')
+    expect(dirResult.ok).toBe(true)
+
+    const deploymentTemplate = (name: string) => `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${name}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${name}
+  template:
+    metadata:
+      labels:
+        app: ${name}
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+`
+
+    fileSystem.createFile('manifests-apply-dir/z-dep.yaml')
+    fileSystem.writeFile(
+      'manifests-apply-dir/z-dep.yaml',
+      deploymentTemplate('zulu-dep')
+    )
+    fileSystem.createFile('manifests-apply-dir/a-dep.yaml')
+    fileSystem.writeFile(
+      'manifests-apply-dir/a-dep.yaml',
+      deploymentTemplate('alpha-dep')
+    )
+
+    const parsedFirst = parseCommand('kubectl apply -f manifests-apply-dir')
+    expect(parsedFirst.ok).toBe(true)
+    if (!parsedFirst.ok) {
+      return
+    }
+
+    const first = handleApply(fileSystem, apiServer, parsedFirst.value)
+    expect(first.ok).toBe(true)
+    if (!first.ok) {
+      return
+    }
+    expect(first.value.split('\n')).toEqual([
+      'deployment.apps/alpha-dep created',
+      'deployment.apps/zulu-dep created'
+    ])
+
+    const parsedSecond = parseCommand('kubectl apply -f manifests-apply-dir')
+    expect(parsedSecond.ok).toBe(true)
+    if (!parsedSecond.ok) {
+      return
+    }
+    const second = handleApply(fileSystem, apiServer, parsedSecond.value)
+    expect(second.ok).toBe(true)
+    if (!second.ok) {
+      return
+    }
+    expect(second.value.split('\n')).toEqual([
+      'deployment.apps/alpha-dep unchanged',
+      'deployment.apps/zulu-dep unchanged'
+    ])
+  })
+
+  it('should error when apply directory has no manifest files', () => {
+    const dirResult = fileSystem.createDirectory('empty-apply-dir')
+    expect(dirResult.ok).toBe(true)
+
+    const parsed = parseCommand('kubectl apply -f empty-apply-dir')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleApply(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toBe('error: no objects passed to apply')
+    }
+  })
+
+  it('should error when apply directory has only non-manifest files', () => {
+    const dirResult = fileSystem.createDirectory('txt-only-apply-dir')
+    expect(dirResult.ok).toBe(true)
+    fileSystem.createFile('txt-only-apply-dir/readme.txt')
+    fileSystem.writeFile('txt-only-apply-dir/readme.txt', 'hello')
+
+    const parsed = parseCommand('kubectl apply -f txt-only-apply-dir')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleApply(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toBe('error: no objects passed to apply')
+    }
+  })
+
   it('should return configured when applying changed deployment manifest', () => {
     const initialYaml = `apiVersion: apps/v1
 kind: Deployment
