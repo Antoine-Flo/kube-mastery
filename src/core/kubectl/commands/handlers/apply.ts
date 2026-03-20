@@ -2,16 +2,16 @@ import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { FileSystem } from '../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
-import { handleDelete as handleDeleteEntrypoint } from './internal/delete/entrypoint'
+import { handleApply as handleApplyEntrypoint } from './internal/apply/entrypoint'
 
 /**
- * Public kubectl delete facade.
+ * Public kubectl apply facade.
  * Keeps stable export while delegating implementation to internal modules.
  */
-export const handleDelete = (
+export const handleApply = (
+  fileSystem: FileSystem,
   apiServer: ApiServerFacade,
-  parsed: ParsedCommand,
-  fileSystem?: FileSystem
+  parsed: ParsedCommand
 ): ExecutionResult => {
-  return handleDeleteEntrypoint(apiServer, parsed, fileSystem)
+  return handleApplyEntrypoint(fileSystem, apiServer, parsed)
 }

@@ -98,6 +98,50 @@ describe('kubectl get handler - all', () => {
     expect(result).toContain('deployment.apps/web-deploy')
   })
 
+  it('should keep stable section order for get all output', () => {
+    const webPod = createPod({
+      name: 'web',
+      namespace: 'default',
+      containers: [{ name: 'nginx', image: 'nginx:latest' }]
+    })
+    const webService = createService({
+      name: 'web-svc',
+      namespace: 'default',
+      clusterIP: '10.96.10.10',
+      ports: [{ port: 80, protocol: 'TCP' }]
+    })
+    const webDeployment = createDeployment({
+      name: 'web-deploy',
+      namespace: 'default',
+      selector: { matchLabels: { app: 'web' } },
+      template: {
+        metadata: { labels: { app: 'web' } },
+        spec: {
+          containers: [{ name: 'nginx', image: 'nginx:latest' }]
+        }
+      }
+    })
+    const state = createClusterStateData({
+      pods: [webPod],
+      services: [webService],
+      deployments: [webDeployment]
+    })
+    const parsed = createParsedGetAll()
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    const podIndex = result.indexOf('pod/web')
+    const serviceIndex = result.indexOf('service/web-svc')
+    const deploymentIndex = result.indexOf('deployment.apps/web-deploy')
+
+    expect(podIndex).toBeGreaterThanOrEqual(0)
+    expect(serviceIndex).toBeGreaterThanOrEqual(0)
+    expect(deploymentIndex).toBeGreaterThanOrEqual(0)
+    expect(podIndex).toBeLessThan(serviceIndex)
+    expect(serviceIndex).toBeLessThan(deploymentIndex)
+  })
+
   it('should return no resources message when no services match', () => {
     const state = createClusterStateData()
     const parsed = createParsedGetAll()
@@ -259,5 +303,68 @@ describe('kubectl get handler - all', () => {
     expect(result).toContain('kind: List')
     expect(result).toContain('resourceVersion: "88"')
     expect(result).toContain('items: []')
+  })
+
+  it('should return names joined with get all -o jsonpath', () => {
+    const webPod = createPod({
+      name: 'web',
+      namespace: 'default',
+      containers: [{ name: 'nginx', image: 'nginx:latest' }]
+    })
+    const webService = createService({
+      name: 'web-svc',
+      namespace: 'default',
+      clusterIP: '10.96.10.10',
+      ports: [{ port: 80, protocol: 'TCP' }]
+    })
+    const state = createClusterStateData({
+      pods: [webPod],
+      services: [webService]
+    })
+    const parsed = createParsedGetAll({
+      flags: { output: "jsonpath='{.items[*].metadata.name}'" }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    expect(result).toContain('web')
+    expect(result).toContain('web-svc')
+  })
+
+  it('should render custom columns for get all output', () => {
+    const webPod = createPod({
+      name: 'web',
+      namespace: 'default',
+      containers: [{ name: 'nginx', image: 'nginx:latest' }]
+    })
+    const state = createClusterStateData({ pods: [webPod] })
+    const parsed = createParsedGetAll({
+      flags: {
+        output: 'custom-columns=NAME:.metadata.name,KIND:.kind'
+      }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    expect(result).toContain('NAME')
+    expect(result).toContain('KIND')
+    expect(result).toContain('web')
+    expect(result).toContain('Pod')
+  })
+
+  it('should return no resources message for empty get all custom-columns', () => {
+    const state = createClusterStateData()
+    const parsed = createParsedGetAll({
+      flags: {
+        output: 'custom-columns=NAME:.metadata.name'
+      }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    expect(result).toBe('No resources found in default namespace.')
   })
 })

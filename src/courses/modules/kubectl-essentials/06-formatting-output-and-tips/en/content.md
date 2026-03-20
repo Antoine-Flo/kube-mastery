@@ -121,6 +121,7 @@ Each change to a resource in the list produces a new line in the output. Press `
 Power kubectl users rarely type the full word "kubectl". They set up shell aliases for their most common commands:
 
 ```bash
+# Not supported by the simulator
 # Add to your ~/.bashrc or ~/.zshrc
 alias k='kubectl'
 alias kgp='kubectl get pods'
@@ -169,7 +170,6 @@ Open the terminal on the right and explore these output formatting tools. Start 
 ```bash
 # Make sure you have some resources to inspect
 kubectl create deployment format-demo --image=nginx --replicas=3
-kubectl expose deployment format-demo --port=80
 
 # Wait for pods to be ready
 kubectl get pods -w
@@ -201,27 +201,8 @@ kubectl explain deployment
 kubectl explain deployment.spec.replicas
 kubectl explain pod.spec.containers.resources
 
-# --- Watch mode ---
-# In one terminal, watch the pods
-kubectl get pods -w &
-
-# Scale the deployment (in the same terminal after a moment)
-kubectl scale deployment format-demo --replicas=5
-
-# Press Ctrl+C to stop watching after you see the new pods appear
-
-# --- Shell completion (run these, then reload your shell) ---
-kubectl completion bash >> ~/.bashrc
-echo "alias k='kubectl'" >> ~/.bashrc
-echo "complete -F __start_kubectl k" >> ~/.bashrc
-source ~/.bashrc
-
-# Test the alias
-k get pods
-
 # --- Clean up ---
 kubectl delete deployment format-demo
-kubectl delete service format-demo
 ```
 
 These formatting tools and productivity shortcuts become essential as your Kubernetes environments grow in complexity. A well-crafted JSONPath query or custom-columns output can turn a five-minute debugging task into a five-second one.

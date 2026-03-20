@@ -7,9 +7,9 @@ import {
 } from '../../../../../src/core/filesystem/FileSystem'
 import { parseCommand } from '../../../../../src/core/kubectl/commands/parser'
 import {
-  handleApply,
-  handleCreate
-} from '../../../../../src/core/kubectl/commands/handlers/applyCreate'
+  handleApply
+} from '../../../../../src/core/kubectl/commands/handlers/apply'
+import { handleCreate } from '../../../../../src/core/kubectl/commands/handlers/create'
 import { handleRun } from '../../../../../src/core/kubectl/commands/handlers/run'
 
 const LAST_APPLIED_CONFIGURATION_ANNOTATION =

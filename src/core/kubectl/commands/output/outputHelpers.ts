@@ -13,10 +13,12 @@ export type OutputKind =
   | 'wide'
   | 'name'
   | 'jsonpath'
+  | 'custom-columns'
 
 export interface OutputDirective {
   kind: OutputKind
   jsonPathExpression?: string
+  customColumnsSpec?: string
   rawValue?: string
 }
 
@@ -91,6 +93,24 @@ const parseOutputFromRawValue = (rawValue: string): OutputDirective => {
     return { kind: 'table', rawValue }
   }
 
+  if (normalizedValue.startsWith('custom-columns=')) {
+    const rawSpec = rawValue.slice(rawValue.indexOf('=') + 1).trim()
+    const spec = stripMatchingQuotes(rawSpec)
+    return {
+      kind: 'custom-columns',
+      customColumnsSpec: spec,
+      rawValue
+    }
+  }
+
+  if (normalizedValue === 'custom-columns') {
+    return {
+      kind: 'custom-columns',
+      customColumnsSpec: '',
+      rawValue
+    }
+  }
+
   return {
     kind: 'table',
     rawValue
@@ -135,6 +155,30 @@ export const validateOutputDirective = (
       directive.jsonPathExpression.trim().length === 0)
   ) {
     return error('error: jsonpath output requires an expression')
+  }
+  if (directive.kind === 'custom-columns') {
+    const spec = directive.customColumnsSpec ?? ''
+    if (spec.trim().length === 0) {
+      return error(
+        'error: custom-columns format specified but no custom columns given'
+      )
+    }
+    const parts = spec.split(',')
+    for (const part of parts) {
+      const trimmedPart = part.trim()
+      const colonIndex = trimmedPart.indexOf(':')
+      if (colonIndex === -1) {
+        return error(
+          `error: unexpected custom-columns spec: ${trimmedPart}, expected <header>:<json-path-expr>`
+        )
+      }
+      const pathExpr = trimmedPart.slice(colonIndex + 1).trim()
+      if (pathExpr.length === 0) {
+        return error(
+          `error: unexpected custom-columns spec: ${trimmedPart}, expected <header>:<json-path-expr>`
+        )
+      }
+    }
   }
   if (
     directive.rawValue != null &&

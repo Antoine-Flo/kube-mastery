@@ -224,6 +224,20 @@ describe('kubectl get handler - nodes', () => {
       expect(result).toContain('control-plane')
       expect(result).toContain('worker-node-1')
     })
+
+    it('should render resource references with output name', () => {
+      const state = createState()
+      const parsed = createParsedCommand({
+        flags: { output: 'name' }
+      })
+
+      apiServer.etcd.restore(state)
+      const result = handleGet(apiServer, parsed)
+      const lines = result.split('\n')
+
+      expect(lines).toContain('node/control-plane')
+      expect(lines).toContain('node/worker-node-1')
+    })
   })
 
   describe('label selector', () => {

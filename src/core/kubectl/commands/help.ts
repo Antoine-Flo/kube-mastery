@@ -67,12 +67,13 @@ const HELP_TEXTS: Record<HelpTopic, string> = {
   get: `Display one or many resources.
 
 Usage:
-  kubectl get [(-o|--output=)json|yaml|wide|name|jsonpath=JSONPATH] (TYPE [NAME | -l label] | TYPE/NAME)
+  kubectl get [(-o|--output=)json|yaml|wide|name|jsonpath=JSONPATH|custom-columns=SPEC] (TYPE [NAME | -l label] | TYPE/NAME)
 
 Examples:
   kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="ExternalIP")].address}'
   kubectl get nodes -o jsonpath='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'
   kubectl get pods -o jsonpath='{range .items[*].status.initContainerStatuses[*]}{.containerID}{"\\n"}{end}'
+  kubectl get pods -o custom-columns='NAME:.metadata.name,STATUS:.status.phase,NODE:.spec.nodeName'
 
 Notes:
   JSONPath regular expressions (=~) are not supported.

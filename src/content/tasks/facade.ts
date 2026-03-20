@@ -3,7 +3,6 @@ import type { UiLang } from '../courses/types'
 import type {
   TaskGroupOverview,
   TaskGroupListItem,
-  TaskLocation
 } from './types'
 import type { TaskGlobAdapter } from './port'
 import { buildTaskGroupOverview, buildTaskGroupList } from './domain'

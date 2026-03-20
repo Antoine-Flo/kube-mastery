@@ -6,7 +6,7 @@ import type { ExecutionResult } from '../../../shared/result'
 import { error } from '../../../shared/result'
 import { validateMetadataNameByKind } from '../metadataNameValidation'
 import type { ParsedCommand } from '../types'
-import { buildDryRunResponse } from './applyCreate'
+import { buildDryRunResponse } from './create'
 import { createResourceWithEvents } from '../resourceHelpers'
 
 const stripMatchingQuotes = (raw: string): string => {

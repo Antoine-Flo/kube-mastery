@@ -223,3 +223,75 @@ describe('kubectl get handler - structured output parity', () => {
     expect(parsedJson.metadata.resourceVersion).toBe('42')
   })
 })
+
+describe('kubectl get handler - custom-columns output', () => {
+  let apiServer: ReturnType<typeof createApiServerFacade>
+
+  beforeEach(() => {
+    apiServer = createApiServerFacade()
+  })
+
+  it('returns table with custom columns for pods', () => {
+    const webPod = createPod({
+      name: 'web',
+      namespace: 'default',
+      containers: [{ name: 'nginx', image: 'nginx:1.28' }],
+      phase: 'Running'
+    })
+    const state = createClusterStateData({ pods: [webPod] })
+    const parsed = createParsedGetCommand({
+      flags: {
+        output: "custom-columns='NAME:.metadata.name,STATUS:.status.phase'"
+      }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    expect(result).toContain('NAME')
+    expect(result).toContain('STATUS')
+    expect(result).toContain('web')
+    expect(result).toContain('Running')
+  })
+
+  it('errors when custom-columns has no spec', () => {
+    const state = createClusterStateData()
+    const parsed = createParsedGetCommand({
+      flags: { output: 'custom-columns' }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    expect(result).toContain('error:')
+    expect(result).toContain('custom-columns format specified but no custom columns given')
+  })
+
+  it('errors when custom-columns segment has no colon', () => {
+    const state = createClusterStateData()
+    const parsed = createParsedGetCommand({
+      flags: { output: "custom-columns='NAME.metadata.name'" }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    expect(result).toContain('error:')
+    expect(result).toContain('expected <header>:<json-path-expr>')
+  })
+
+  it('returns no resources message for empty list with custom-columns', () => {
+    const state = createClusterStateData()
+    const parsed = createParsedGetCommand({
+      flags: {
+        output: "custom-columns='NAME:.metadata.name'"
+      }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    expect(result).not.toContain('NAME')
+    expect(result).toMatch(/no resources found|No resources found/i)
+  })
+})

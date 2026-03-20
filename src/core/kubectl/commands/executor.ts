@@ -9,7 +9,8 @@ import { error, success } from '../../shared/result'
 import { handleAnnotate } from './handlers/annotate'
 import { handleAPIVersions } from './handlers/apiVersions'
 import { handleAPIResources } from './handlers/apiResources'
-import { handleApply, handleCreate } from './handlers/applyCreate'
+import { handleApply } from './handlers/apply'
+import { handleCreate } from './handlers/create'
 import { handleClusterInfo } from './handlers/clusterInfo'
 import {
   getCurrentNamespaceFromKubeconfig,
