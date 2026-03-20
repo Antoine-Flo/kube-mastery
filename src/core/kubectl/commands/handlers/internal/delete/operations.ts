@@ -466,6 +466,26 @@ export const deleteNamedResources = (
     return success(messages.join('\n'))
   }
 
+  if (resource === 'leases') {
+    const messages: string[] = []
+    for (const name of names) {
+      const result = deleteWithNotFoundMessage(
+        apiServer,
+        'Lease',
+        name,
+        namespace,
+        'leases',
+        'lease',
+        true
+      )
+      if (!result.ok) {
+        return result
+      }
+      messages.push(result.value)
+    }
+    return success(messages.join('\n'))
+  }
+
   const messages = names.map((name) => {
     return formatDeletedMessage(resource, name, namespace, false)
   })

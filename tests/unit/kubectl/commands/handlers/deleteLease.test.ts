@@ -78,8 +78,9 @@ describe('kubectl delete handler - leases', () => {
         name: 'node-lease-1',
         namespace: 'kube-node-lease'
       })
-      handleDelete(apiServer, parsed)
+      const result = handleDelete(apiServer, parsed)
 
+      expect(result.ok).toBe(true)
       expect(subscriber).toHaveBeenCalled()
       const event = subscriber.mock.calls[0][0]
       expect(event.type).toBe('LeaseDeleted')
@@ -96,7 +97,8 @@ describe('kubectl delete handler - leases', () => {
 
       expect(result.ok).toBe(false)
       if (!result.ok) {
-        expect(result.error).toContain('not found')
+        expect(result.error).toContain('NotFound')
+        expect(result.error).toContain('non-existent-lease')
       }
     })
 
@@ -121,6 +123,9 @@ describe('kubectl delete handler - leases', () => {
       if (!result.ok) {
         return
       }
+
+      expect(result.value).toContain('lease "lease-1" deleted')
+      expect(result.value).toContain('default')
 
       const findResult = apiServer.findResource('Lease', 'lease-1', 'default')
       expect(findResult.ok).toBe(false)
@@ -192,7 +197,8 @@ spec:
       const result = handleDelete(apiServer, parsed, fileSystem)
       expect(result.ok).toBe(false)
       if (!result.ok) {
-        expect(result.error).toContain('not found')
+        expect(result.error).toContain('NotFound')
+        expect(result.error).toContain('missing-lease')
       }
     })
   })

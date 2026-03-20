@@ -70,7 +70,7 @@ import { applyClusterBootstrapViaApi } from '../cluster/systemBootstrap'
 import { createEtcdLikeStore, type EtcdLikeStore } from '../etcd/EtcdLikeStore'
 import type { AppEvent } from '../events/AppEvent'
 import type { Result } from '../shared/result'
-import { success, error } from '../shared/result'
+import { success } from '../shared/result'
 import {
   createPodLifecycleEventStore,
   type PodLifecycleEventStore
@@ -350,6 +350,182 @@ const normalizePodUpdateResource = (previous: Pod, next: Pod): Pod => {
   return resetPodToContainerCreating(previous, withSimulator)
 }
 
+interface ResourceMutationEventFactory {
+  create: (resource: KindToResource<ResourceKind>, source: string) => AppEvent
+  update: (
+    name: string,
+    namespace: string | undefined,
+    resource: KindToResource<ResourceKind>,
+    previous: KindToResource<ResourceKind>,
+    source: string
+  ) => AppEvent
+  delete: (
+    name: string,
+    namespace: string | undefined,
+    resource: KindToResource<ResourceKind>,
+    source: string
+  ) => AppEvent
+}
+
+const createNamespacedMutationEvents = <TResource>(
+  createEvent: (resource: TResource, source: string) => AppEvent,
+  updateEvent: (
+    name: string,
+    namespace: string,
+    resource: TResource,
+    previous: TResource,
+    source: string
+  ) => AppEvent,
+  deleteEvent: (
+    name: string,
+    namespace: string,
+    resource: TResource,
+    source: string
+  ) => AppEvent
+): ResourceMutationEventFactory => {
+  return {
+    create: (resource, source) => {
+      return createEvent(resource as TResource, source)
+    },
+    update: (name, namespace, resource, previous, source) => {
+      const targetNamespace = namespace ?? 'default'
+      return updateEvent(
+        name,
+        targetNamespace,
+        resource as TResource,
+        previous as TResource,
+        source
+      )
+    },
+    delete: (name, namespace, resource, source) => {
+      const targetNamespace = namespace ?? 'default'
+      return deleteEvent(name, targetNamespace, resource as TResource, source)
+    }
+  }
+}
+
+const createClusterScopedMutationEvents = <TResource>(
+  createEvent: (resource: TResource, source: string) => AppEvent,
+  updateEvent: (
+    name: string,
+    resource: TResource,
+    previous: TResource,
+    source: string
+  ) => AppEvent,
+  deleteEvent: (name: string, resource: TResource, source: string) => AppEvent
+): ResourceMutationEventFactory => {
+  return {
+    create: (resource, source) => {
+      return createEvent(resource as TResource, source)
+    },
+    update: (name, _namespace, resource, previous, source) => {
+      return updateEvent(
+        name,
+        resource as TResource,
+        previous as TResource,
+        source
+      )
+    },
+    delete: (name, _namespace, resource, source) => {
+      return deleteEvent(name, resource as TResource, source)
+    }
+  }
+}
+
+const RESOURCE_MUTATION_EVENTS: Record<ResourceKind, ResourceMutationEventFactory> = {
+  Pod: createNamespacedMutationEvents<Pod>(
+    createPodCreatedEvent,
+    createPodUpdatedEvent,
+    createPodDeletedEvent
+  ),
+  ConfigMap: createNamespacedMutationEvents<ConfigMap>(
+    createConfigMapCreatedEvent,
+    createConfigMapUpdatedEvent,
+    createConfigMapDeletedEvent
+  ),
+  Secret: createNamespacedMutationEvents<Secret>(
+    createSecretCreatedEvent,
+    createSecretUpdatedEvent,
+    createSecretDeletedEvent
+  ),
+  Node: createClusterScopedMutationEvents<Node>(
+    createNodeCreatedEvent,
+    createNodeUpdatedEvent,
+    createNodeDeletedEvent
+  ),
+  ReplicaSet: createNamespacedMutationEvents<ReplicaSet>(
+    createReplicaSetCreatedEvent,
+    createReplicaSetUpdatedEvent,
+    createReplicaSetDeletedEvent
+  ),
+  Deployment: createNamespacedMutationEvents<Deployment>(
+    createDeploymentCreatedEvent,
+    createDeploymentUpdatedEvent,
+    createDeploymentDeletedEvent
+  ),
+  DaemonSet: createNamespacedMutationEvents<DaemonSet>(
+    createDaemonSetCreatedEvent,
+    createDaemonSetUpdatedEvent,
+    createDaemonSetDeletedEvent
+  ),
+  StatefulSet: createNamespacedMutationEvents<StatefulSet>(
+    createStatefulSetCreatedEvent,
+    createStatefulSetUpdatedEvent,
+    createStatefulSetDeletedEvent
+  ),
+  Service: createNamespacedMutationEvents<Service>(
+    createServiceCreatedEvent,
+    createServiceUpdatedEvent,
+    createServiceDeletedEvent
+  ),
+  Ingress: createNamespacedMutationEvents<Ingress>(
+    createIngressCreatedEvent,
+    createIngressUpdatedEvent,
+    createIngressDeletedEvent
+  ),
+  PersistentVolume: createClusterScopedMutationEvents<PersistentVolume>(
+    createPersistentVolumeCreatedEvent,
+    createPersistentVolumeUpdatedEvent,
+    createPersistentVolumeDeletedEvent
+  ),
+  PersistentVolumeClaim: createNamespacedMutationEvents<PersistentVolumeClaim>(
+    createPersistentVolumeClaimCreatedEvent,
+    createPersistentVolumeClaimUpdatedEvent,
+    createPersistentVolumeClaimDeletedEvent
+  ),
+  Namespace: createClusterScopedMutationEvents<Namespace>(
+    createNamespaceCreatedEvent,
+    createNamespaceUpdatedEvent,
+    createNamespaceDeletedEvent
+  ),
+  Lease: createNamespacedMutationEvents<Lease>(
+    createLeaseCreatedEvent,
+    createLeaseUpdatedEvent,
+    createLeaseDeletedEvent
+  )
+}
+
+const CLUSTER_SCOPED_KINDS = new Set<ResourceKind>([
+  'Node',
+  'Namespace',
+  'PersistentVolume'
+])
+
+const isClusterScopedKind = (kind: ResourceKind): boolean => {
+  return CLUSTER_SCOPED_KINDS.has(kind)
+}
+
+const resolveResourceNamespace = (
+  kind: ResourceKind,
+  namespace: string | undefined,
+  resourceNamespace?: string
+): string | undefined => {
+  if (isClusterScopedKind(kind)) {
+    return undefined
+  }
+  return namespace ?? resourceNamespace ?? 'default'
+}
+
 export const createApiServerFacade = (
   options: CreateApiServerFacadeOptions = {}
 ): ApiServerFacade => {
@@ -362,6 +538,67 @@ export const createApiServerFacade = (
   }
   const watchHub = createWatchHub(eventBus)
   const podLifecycleEventStore = createPodLifecycleEventStore(etcd)
+  const findResourceForMutation = <TKind extends ResourceKind>(
+    kind: TKind,
+    name: string,
+    namespace: string | undefined
+  ): Result<KindToResource<TKind>> => {
+    if (namespace == null) {
+      return clusterState.findByKind(kind, name) as Result<KindToResource<TKind>>
+    }
+    return clusterState.findByKind(kind, name, namespace) as Result<
+      KindToResource<TKind>
+    >
+  }
+
+  const emitResourceMutationEvent = <TKind extends ResourceKind>(
+    kind: TKind,
+    operation: 'create' | 'update' | 'delete',
+    input: {
+      name?: string
+      namespace?: string
+      resource: KindToResource<TKind>
+      previous?: KindToResource<TKind>
+    }
+  ): void => {
+    const mutationFactory = RESOURCE_MUTATION_EVENTS[kind]
+    if (operation === 'create') {
+      etcd.appendEvent(
+        mutationFactory.create(
+          input.resource as KindToResource<ResourceKind>,
+          'api-server'
+        )
+      )
+      return
+    }
+    if (operation === 'update') {
+      if (input.name == null || input.previous == null) {
+        return
+      }
+      etcd.appendEvent(
+        mutationFactory.update(
+          input.name,
+          input.namespace,
+          input.resource as KindToResource<ResourceKind>,
+          input.previous as KindToResource<ResourceKind>,
+          'api-server'
+        )
+      )
+      return
+    }
+    if (input.name == null) {
+      return
+    }
+    etcd.appendEvent(
+      mutationFactory.delete(
+        input.name,
+        input.namespace,
+        input.resource as KindToResource<ResourceKind>,
+        'api-server'
+      )
+    )
+  }
+
   const apiServer: ApiServerFacade = {
     eventBus,
     etcd,
@@ -444,8 +681,8 @@ export const createApiServerFacade = (
       return findResult as Result<Pod>
     },
     deleteResource: (kind, name, namespace, options) => {
-      const effectiveNamespace = namespace ?? 'default'
       if (kind === 'Pod') {
+        const effectiveNamespace = resolveResourceNamespace(kind, namespace)
         const podDeletionResult = apiServer.requestPodDeletion(
           name,
           effectiveNamespace,
@@ -457,571 +694,48 @@ export const createApiServerFacade = (
         )
         return podDeletionResult as Result<KindToResource<typeof kind>>
       }
-      if (kind === 'ConfigMap') {
-        const findResult = clusterState.findByKind(
-          'ConfigMap',
-          name,
-          effectiveNamespace
-        )
-        if (!findResult.ok) {
-          return findResult as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createConfigMapDeletedEvent(
-            name,
-            effectiveNamespace,
-            findResult.value as ConfigMap,
-            'api-server'
-          )
-        )
+      const effectiveNamespace = resolveResourceNamespace(kind, namespace)
+      const findResult = findResourceForMutation(kind, name, effectiveNamespace)
+      if (!findResult.ok) {
         return findResult as Result<KindToResource<typeof kind>>
       }
-      if (kind === 'Secret') {
-        const findResult = clusterState.findByKind(
-          'Secret',
-          name,
-          effectiveNamespace
-        )
-        if (!findResult.ok) {
-          return findResult as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createSecretDeletedEvent(
-            name,
-            effectiveNamespace,
-            findResult.value as Secret,
-            'api-server'
-          )
-        )
-        return findResult as Result<KindToResource<typeof kind>>
-      }
-      if (kind === 'PersistentVolume') {
-        const findResult = clusterState.findByKind('PersistentVolume', name)
-        if (!findResult.ok) {
-          return findResult as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createPersistentVolumeDeletedEvent(
-            name,
-            findResult.value as PersistentVolume,
-            'api-server'
-          )
-        )
-        return findResult as Result<KindToResource<typeof kind>>
-      }
-      if (kind === 'PersistentVolumeClaim') {
-        const findResult = clusterState.findByKind(
-          'PersistentVolumeClaim',
-          name,
-          effectiveNamespace
-        )
-        if (!findResult.ok) {
-          return findResult as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createPersistentVolumeClaimDeletedEvent(
-            name,
-            effectiveNamespace,
-            findResult.value as PersistentVolumeClaim,
-            'api-server'
-          )
-        )
-        return findResult as Result<KindToResource<typeof kind>>
-      }
-      if (kind === 'Node') {
-        const findResult = clusterState.findByKind('Node', name)
-        if (!findResult.ok) {
-          return findResult as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createNodeDeletedEvent(name, findResult.value as Node, 'api-server')
-        )
-        return findResult as Result<KindToResource<typeof kind>>
-      }
-      if (kind === 'ReplicaSet') {
-        const findResult = clusterState.findByKind(
-          'ReplicaSet',
-          name,
-          effectiveNamespace
-        )
-        if (!findResult.ok) {
-          return findResult as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createReplicaSetDeletedEvent(
-            name,
-            effectiveNamespace,
-            findResult.value as ReplicaSet,
-            'api-server'
-          )
-        )
-        return findResult as Result<KindToResource<typeof kind>>
-      }
-      if (kind === 'Deployment') {
-        const findResult = clusterState.findByKind(
-          'Deployment',
-          name,
-          effectiveNamespace
-        )
-        if (!findResult.ok) {
-          return findResult as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createDeploymentDeletedEvent(
-            name,
-            effectiveNamespace,
-            findResult.value as Deployment,
-            'api-server'
-          )
-        )
-        return findResult as Result<KindToResource<typeof kind>>
-      }
-      if (kind === 'DaemonSet') {
-        const findResult = clusterState.findByKind(
-          'DaemonSet',
-          name,
-          effectiveNamespace
-        )
-        if (!findResult.ok) {
-          return findResult as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createDaemonSetDeletedEvent(
-            name,
-            effectiveNamespace,
-            findResult.value as DaemonSet,
-            'api-server'
-          )
-        )
-        return findResult as Result<KindToResource<typeof kind>>
-      }
-      if (kind === 'StatefulSet') {
-        const findResult = clusterState.findByKind(
-          'StatefulSet',
-          name,
-          effectiveNamespace
-        )
-        if (!findResult.ok) {
-          return findResult as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createStatefulSetDeletedEvent(
-            name,
-            effectiveNamespace,
-            findResult.value as StatefulSet,
-            'api-server'
-          )
-        )
-        return findResult as Result<KindToResource<typeof kind>>
-      }
-      if (kind === 'Service') {
-        const findResult = clusterState.findByKind(
-          'Service',
-          name,
-          effectiveNamespace
-        )
-        if (!findResult.ok) {
-          return findResult as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createServiceDeletedEvent(
-            name,
-            effectiveNamespace,
-            findResult.value as Service,
-            'api-server'
-          )
-        )
-        return findResult as Result<KindToResource<typeof kind>>
-      }
-      if (kind === 'Ingress') {
-        const findResult = clusterState.findByKind(
-          'Ingress',
-          name,
-          effectiveNamespace
-        )
-        if (!findResult.ok) {
-          return findResult as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createIngressDeletedEvent(
-            name,
-            effectiveNamespace,
-            findResult.value as Ingress,
-            'api-server'
-          )
-        )
-        return findResult as Result<KindToResource<typeof kind>>
-      }
-      if (kind === 'Namespace') {
-        const findResult = clusterState.findByKind('Namespace', name)
-        if (!findResult.ok) {
-          return findResult as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createNamespaceDeletedEvent(
-            name,
-            findResult.value as Namespace,
-            'api-server'
-          )
-        )
-        return findResult as Result<KindToResource<typeof kind>>
-      }
-      if (kind === 'Lease') {
-        const findResult = clusterState.findByKind(
-          'Lease',
-          name,
-          effectiveNamespace
-        )
-        if (!findResult.ok) {
-          return findResult as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createLeaseDeletedEvent(
-            name,
-            effectiveNamespace,
-            findResult.value as Lease,
-            'api-server'
-          )
-        )
-        return findResult as Result<KindToResource<typeof kind>>
-      }
-      return error(`Unsupported resource kind: ${kind}`) as Result<
-        KindToResource<typeof kind>
-      >
+      emitResourceMutationEvent(kind, 'delete', {
+        name,
+        namespace: effectiveNamespace,
+        resource: findResult.value as KindToResource<typeof kind>
+      })
+      return findResult as Result<KindToResource<typeof kind>>
     },
     createResource: (kind, resource) => {
-      if (kind === 'Pod') {
-        etcd.appendEvent(createPodCreatedEvent(resource as Pod, 'api-server'))
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'ConfigMap') {
-        etcd.appendEvent(
-          createConfigMapCreatedEvent(resource as ConfigMap, 'api-server')
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'Secret') {
-        etcd.appendEvent(createSecretCreatedEvent(resource as Secret, 'api-server'))
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'ReplicaSet') {
-        etcd.appendEvent(
-          createReplicaSetCreatedEvent(resource as ReplicaSet, 'api-server')
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'Deployment') {
-        etcd.appendEvent(
-          createDeploymentCreatedEvent(resource as Deployment, 'api-server')
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'DaemonSet') {
-        etcd.appendEvent(
-          createDaemonSetCreatedEvent(resource as DaemonSet, 'api-server')
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'StatefulSet') {
-        etcd.appendEvent(
-          createStatefulSetCreatedEvent(resource as StatefulSet, 'api-server')
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'Service') {
-        etcd.appendEvent(createServiceCreatedEvent(resource as Service, 'api-server'))
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'PersistentVolume') {
-        etcd.appendEvent(
-          createPersistentVolumeCreatedEvent(
-            resource as PersistentVolume,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'PersistentVolumeClaim') {
-        etcd.appendEvent(
-          createPersistentVolumeClaimCreatedEvent(
-            resource as PersistentVolumeClaim,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'Node') {
-        etcd.appendEvent(createNodeCreatedEvent(resource as Node, 'api-server'))
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'Namespace') {
-        etcd.appendEvent(
-          createNamespaceCreatedEvent(resource as Namespace, 'api-server')
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'Ingress') {
-        etcd.appendEvent(
-          createIngressCreatedEvent(resource as Ingress, 'api-server')
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'Lease') {
-        etcd.appendEvent(
-          createLeaseCreatedEvent(resource as Lease, 'api-server')
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      return error(`Unsupported resource kind: ${kind}`) as Result<
-        KindToResource<typeof kind>
-      >
+      emitResourceMutationEvent(kind, 'create', {
+        resource: resource as KindToResource<typeof kind>
+      })
+      return success(resource as KindToResource<typeof kind>)
     },
     updateResource: (kind, name, resource, namespace) => {
-      const effectiveNamespace = namespace ?? resource.metadata.namespace ?? 'default'
-      if (kind === 'Pod') {
-        const previous = clusterState.findByKind('Pod', name, effectiveNamespace)
-        if (!previous.ok) {
-          return previous as Result<KindToResource<typeof kind>>
-        }
-        const normalizedPod = normalizePodUpdateResource(
-          previous.value as Pod,
-          resource as Pod
-        )
-        etcd.appendEvent(
-          createPodUpdatedEvent(
-            name,
-            effectiveNamespace,
-            normalizedPod,
-            previous.value as Pod,
-            'api-server'
-          )
-        )
-        return success(normalizedPod as KindToResource<typeof kind>)
+      const effectiveNamespace = resolveResourceNamespace(
+        kind,
+        namespace,
+        resource.metadata.namespace
+      )
+      const previous = findResourceForMutation(kind, name, effectiveNamespace)
+      if (!previous.ok) {
+        return previous as Result<KindToResource<typeof kind>>
       }
-      if (kind === 'ConfigMap') {
-        const previous = clusterState.findByKind('ConfigMap', name, effectiveNamespace)
-        if (!previous.ok) {
-          return previous as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createConfigMapUpdatedEvent(
-            name,
-            effectiveNamespace,
-            resource as ConfigMap,
-            previous.value as ConfigMap,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'Secret') {
-        const previous = clusterState.findByKind('Secret', name, effectiveNamespace)
-        if (!previous.ok) {
-          return previous as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createSecretUpdatedEvent(
-            name,
-            effectiveNamespace,
-            resource as Secret,
-            previous.value as Secret,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'ReplicaSet') {
-        const previous = clusterState.findByKind('ReplicaSet', name, effectiveNamespace)
-        if (!previous.ok) {
-          return previous as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createReplicaSetUpdatedEvent(
-            name,
-            effectiveNamespace,
-            resource as ReplicaSet,
-            previous.value as ReplicaSet,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'Deployment') {
-        const previous = clusterState.findByKind('Deployment', name, effectiveNamespace)
-        if (!previous.ok) {
-          return previous as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createDeploymentUpdatedEvent(
-            name,
-            effectiveNamespace,
-            resource as Deployment,
-            previous.value as Deployment,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'DaemonSet') {
-        const previous = clusterState.findByKind('DaemonSet', name, effectiveNamespace)
-        if (!previous.ok) {
-          return previous as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createDaemonSetUpdatedEvent(
-            name,
-            effectiveNamespace,
-            resource as DaemonSet,
-            previous.value as DaemonSet,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'StatefulSet') {
-        const previous = clusterState.findByKind(
-          'StatefulSet',
-          name,
-          effectiveNamespace
-        )
-        if (!previous.ok) {
-          return previous as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createStatefulSetUpdatedEvent(
-            name,
-            effectiveNamespace,
-            resource as StatefulSet,
-            previous.value as StatefulSet,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'Service') {
-        const previous = clusterState.findByKind('Service', name, effectiveNamespace)
-        if (!previous.ok) {
-          return previous as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createServiceUpdatedEvent(
-            name,
-            effectiveNamespace,
-            resource as Service,
-            previous.value as Service,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'PersistentVolume') {
-        const previous = clusterState.findByKind('PersistentVolume', name)
-        if (!previous.ok) {
-          return previous as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createPersistentVolumeUpdatedEvent(
-            name,
-            resource as PersistentVolume,
-            previous.value as PersistentVolume,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'PersistentVolumeClaim') {
-        const previous = clusterState.findByKind(
-          'PersistentVolumeClaim',
-          name,
-          effectiveNamespace
-        )
-        if (!previous.ok) {
-          return previous as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createPersistentVolumeClaimUpdatedEvent(
-            name,
-            effectiveNamespace,
-            resource as PersistentVolumeClaim,
-            previous.value as PersistentVolumeClaim,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'Node') {
-        const previous = clusterState.findByKind('Node', name)
-        if (!previous.ok) {
-          return previous as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createNodeUpdatedEvent(
-            name,
-            resource as Node,
-            previous.value as Node,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'Namespace') {
-        const previous = clusterState.findByKind('Namespace', name)
-        if (!previous.ok) {
-          return previous as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createNamespaceUpdatedEvent(
-            name,
-            resource as Namespace,
-            previous.value as Namespace,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'Ingress') {
-        const previous = clusterState.findByKind(
-          'Ingress',
-          name,
-          effectiveNamespace
-        )
-        if (!previous.ok) {
-          return previous as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createIngressUpdatedEvent(
-            name,
-            effectiveNamespace,
-            resource as Ingress,
-            previous.value as Ingress,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      if (kind === 'Lease') {
-        const previous = clusterState.findByKind(
-          'Lease',
-          name,
-          effectiveNamespace
-        )
-        if (!previous.ok) {
-          return previous as Result<KindToResource<typeof kind>>
-        }
-        etcd.appendEvent(
-          createLeaseUpdatedEvent(
-            name,
-            effectiveNamespace,
-            resource as Lease,
-            previous.value as Lease,
-            'api-server'
-          )
-        )
-        return success(resource as KindToResource<typeof kind>)
-      }
-      return error(`Unsupported resource kind: ${kind}`) as Result<
-        KindToResource<typeof kind>
-      >
+      const normalizedResource =
+        kind === 'Pod'
+          ? (normalizePodUpdateResource(
+              previous.value as Pod,
+              resource as Pod
+            ) as KindToResource<typeof kind>)
+          : (resource as KindToResource<typeof kind>)
+      emitResourceMutationEvent(kind, 'update', {
+        name,
+        namespace: effectiveNamespace,
+        resource: normalizedResource,
+        previous: previous.value as KindToResource<typeof kind>
+      })
+      return success(normalizedResource)
     },
     emitEvent: (event) => {
       etcd.appendEvent(event)
@@ -1035,8 +749,8 @@ export const createApiServerFacade = (
   if (options.bootstrap != null) {
     const bootstrapApi: BootstrapApiLike = {
       findResource: (kind, name, namespace) => {
-        const targetNamespace = namespace ?? 'default'
-        if (kind === 'Node' || kind === 'Namespace') {
+        const targetNamespace = resolveResourceNamespace(kind, namespace)
+        if (targetNamespace == null) {
           return apiServer.findResource(kind, name) as ReturnType<
             BootstrapApiLike['findResource']
           >
@@ -1046,8 +760,8 @@ export const createApiServerFacade = (
         >
       },
       listResources: (kind, namespace) => {
-        const targetNamespace = namespace ?? 'default'
-        if (kind === 'Node' || kind === 'Namespace') {
+        const targetNamespace = resolveResourceNamespace(kind, namespace)
+        if (targetNamespace == null) {
           return apiServer.listResources(kind) as ReturnType<
             BootstrapApiLike['listResources']
           >
@@ -1057,8 +771,12 @@ export const createApiServerFacade = (
         >
       },
       createResource: (kind, resource, namespace) => {
-        const targetNamespace = namespace ?? resource.metadata.namespace ?? 'default'
-        if (kind === 'Node' || kind === 'Namespace') {
+        const targetNamespace = resolveResourceNamespace(
+          kind,
+          namespace,
+          resource.metadata.namespace
+        )
+        if (targetNamespace == null) {
           return apiServer.createResource(
             kind,
             resource as KindToResource<typeof kind>
@@ -1071,8 +789,12 @@ export const createApiServerFacade = (
         ) as ReturnType<BootstrapApiLike['createResource']>
       },
       updateResource: (kind, name, resource, namespace) => {
-        const targetNamespace = namespace ?? resource.metadata.namespace ?? 'default'
-        if (kind === 'Node' || kind === 'Namespace') {
+        const targetNamespace = resolveResourceNamespace(
+          kind,
+          namespace,
+          resource.metadata.namespace
+        )
+        if (targetNamespace == null) {
           return apiServer.updateResource(
             kind,
             name,
@@ -1087,8 +809,8 @@ export const createApiServerFacade = (
         ) as ReturnType<BootstrapApiLike['updateResource']>
       },
       deleteResource: (kind, name, namespace) => {
-        const targetNamespace = namespace ?? 'default'
-        if (kind === 'Node' || kind === 'Namespace') {
+        const targetNamespace = resolveResourceNamespace(kind, namespace)
+        if (targetNamespace == null) {
           return apiServer.deleteResource(kind, name) as ReturnType<
             BootstrapApiLike['deleteResource']
           >

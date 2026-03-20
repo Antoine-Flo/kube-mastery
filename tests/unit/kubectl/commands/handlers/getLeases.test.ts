@@ -161,14 +161,16 @@ describe('kubectl get handler - leases', () => {
       expect(result).toContain('node-1')
     })
 
-    it('should return error when lease not found', () => {
+    it('should return "No resources found" when lease not found', () => {
       const parsed = createParsedCommand({
         name: 'non-existent-lease',
         namespace: 'kube-node-lease'
       })
       const result = handleGet(apiServer, parsed)
 
-      expect(result).toContain('not found')
+      // When a specific name is queried but not found, kubectl returns "No resources found"
+      expect(result).toContain('No resources found')
+      expect(result).toContain('kube-node-lease')
     })
   })
 

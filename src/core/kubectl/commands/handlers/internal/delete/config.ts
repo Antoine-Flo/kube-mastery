@@ -105,6 +105,12 @@ export const DELETE_TARGET_BY_KIND: Partial<
     kindRef: 'node',
     kindRefPlural: 'nodes',
     namespaced: false
+  },
+  Lease: {
+    kind: 'Lease',
+    kindRef: 'lease',
+    kindRefPlural: 'leases',
+    namespaced: true
   }
 }
 
@@ -123,7 +129,8 @@ export const DELETE_TARGET_BY_RESOURCE: Partial<
   persistentvolumes: DELETE_TARGET_BY_KIND.PersistentVolume,
   persistentvolumeclaims: DELETE_TARGET_BY_KIND.PersistentVolumeClaim,
   namespaces: DELETE_TARGET_BY_KIND.Namespace,
-  nodes: DELETE_TARGET_BY_KIND.Node
+  nodes: DELETE_TARGET_BY_KIND.Node,
+  leases: DELETE_TARGET_BY_KIND.Lease
 }
 
 export const DELETE_ALL_RESOURCE_ORDER: DeletableResource[] = [

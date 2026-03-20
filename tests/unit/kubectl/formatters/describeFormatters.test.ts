@@ -1240,7 +1240,8 @@ describe('describeFormatters', () => {
       const result = describeLease(lease)
 
       expect(result).toContain('Creation Timestamp:')
-      expect(result).toContain('2024-01-01')
+      // formatDescribeDate converts to UTC string format like "Mon, 01 Jan 2024 00:00:00 GMT"
+      expect(result).toContain('01 Jan 2024')
     })
 
     it('should format owner references', () => {
