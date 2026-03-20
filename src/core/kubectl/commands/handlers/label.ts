@@ -18,14 +18,10 @@ export const handleLabel = (
   apiServer: ApiServerFacade,
   parsed: ParsedCommand
 ): ExecutionResult => {
-  return handleMetadataChange(
-    apiServer,
-    parsed,
-    {
-      metadataType: 'labels',
-      commandName: 'label',
-      changesKey: 'labelChanges',
-      actionPastTense: 'labeled'
-    }
-  )
+  return handleMetadataChange(apiServer, parsed, {
+    metadataType: 'labels',
+    commandName: 'label',
+    changesKey: 'labelChanges',
+    actionPastTense: 'labeled'
+  })
 }

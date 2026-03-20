@@ -97,7 +97,10 @@ export interface EtcdEventRecord {
   event: AppEvent
 }
 
-const buildEventRecord = (revision: number, event: AppEvent): EtcdEventRecord => {
+const buildEventRecord = (
+  revision: number,
+  event: AppEvent
+): EtcdEventRecord => {
   const withTimestamp = event as { timestamp?: string }
   const withMetadata = event as { metadata?: { source?: string } }
   return {

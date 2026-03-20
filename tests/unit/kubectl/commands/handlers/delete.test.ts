@@ -7,7 +7,10 @@ import {
   createApiServerFacade,
   type ApiServerFacade
 } from '../../../../../src/core/api/ApiServerFacade'
-import { createFileSystem, type FileSystem } from '../../../../../src/core/filesystem/FileSystem'
+import {
+  createFileSystem,
+  type FileSystem
+} from '../../../../../src/core/filesystem/FileSystem'
 import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
 import { createIngress } from '../../../../../src/core/cluster/ressources/Ingress'
 import { createService } from '../../../../../src/core/cluster/ressources/Service'
@@ -34,7 +37,10 @@ describe('kubectl delete handler', () => {
     ...overrides
   })
 
-  const expectPodMarkedTerminating = (name: string, namespace = 'default'): void => {
+  const expectPodMarkedTerminating = (
+    name: string,
+    namespace = 'default'
+  ): void => {
     const podResult = apiServer.findResource('Pod', name, namespace)
     expect(podResult.ok).toBe(true)
     if (!podResult.ok) {
@@ -91,7 +97,9 @@ spec:
         return
       }
 
-      expect(result.value).toContain('pod "decl-pod" deleted from default namespace')
+      expect(result.value).toContain(
+        'pod "decl-pod" deleted from default namespace'
+      )
       expectPodMarkedTerminating('decl-pod')
     })
 
@@ -289,7 +297,10 @@ spec:
     })
 
     it('should delete pod in specified namespace', () => {
-      apiServer.createResource('Namespace', createNamespace({ name: 'production' }))
+      apiServer.createResource(
+        'Namespace',
+        createNamespace({ name: 'production' })
+      )
       const pod = createPod({
         name: 'my-pod',
         namespace: 'production',
@@ -347,9 +358,15 @@ spec:
         return
       }
 
-      expect(result.value).toContain('pod "pod-1" deleted from default namespace')
-      expect(result.value).toContain('pod "pod-2" deleted from default namespace')
-      expect(result.value).toContain('pod "pod-3" deleted from default namespace')
+      expect(result.value).toContain(
+        'pod "pod-1" deleted from default namespace'
+      )
+      expect(result.value).toContain(
+        'pod "pod-2" deleted from default namespace'
+      )
+      expect(result.value).toContain(
+        'pod "pod-3" deleted from default namespace'
+      )
       expectPodMarkedTerminating('pod-1')
       expectPodMarkedTerminating('pod-2')
       expectPodMarkedTerminating('pod-3')
@@ -617,7 +634,10 @@ spec:
     })
 
     it('should handle namespace delete (simulated)', () => {
-      apiServer.createResource('Namespace', createNamespace({ name: 'my-namespace' }))
+      apiServer.createResource(
+        'Namespace',
+        createNamespace({ name: 'my-namespace' })
+      )
       const parsed = createParsedCommand({
         name: 'my-namespace',
         resource: 'namespaces'
@@ -632,7 +652,10 @@ spec:
     })
 
     it('should cascade delete namespaced resources when deleting namespace', () => {
-      apiServer.createResource('Namespace', createNamespace({ name: 'project-x' }))
+      apiServer.createResource(
+        'Namespace',
+        createNamespace({ name: 'project-x' })
+      )
       apiServer.createResource(
         'Pod',
         createPod({
@@ -764,7 +787,10 @@ spec:
     })
 
     it('should not find pod in wrong namespace', () => {
-      apiServer.createResource('Namespace', createNamespace({ name: 'production' }))
+      apiServer.createResource(
+        'Namespace',
+        createNamespace({ name: 'production' })
+      )
       const pod = createPod({
         name: 'my-pod',
         namespace: 'production',

@@ -40,7 +40,10 @@ function getClientIp(request: Request): string | null {
   return null
 }
 
-function getRateLimitKey(args: { userId: string; clientIp: string | null }): string {
+function getRateLimitKey(args: {
+  userId: string
+  clientIp: string | null
+}): string {
   if (args.clientIp != null && args.clientIp !== '') {
     return `user:${args.userId}:ip:${args.clientIp}`
   }

@@ -18,7 +18,9 @@ describe('kubernetes-like architecture chain', () => {
     const executor = createKubectlExecutor(apiServer, fileSystem, logger)
 
     const initialVersion = apiServer.getResourceVersion()
-    const createNamespaceResult = executor.execute('kubectl create namespace team-a')
+    const createNamespaceResult = executor.execute(
+      'kubectl create namespace team-a'
+    )
     expect(createNamespaceResult.ok).toBe(true)
 
     const createDeploymentResult = executor.execute(
@@ -28,15 +30,23 @@ describe('kubernetes-like architecture chain', () => {
     if (!createDeploymentResult.ok) {
       return
     }
-    expect(createDeploymentResult.value).toContain('deployment.apps/web created')
+    expect(createDeploymentResult.value).toContain(
+      'deployment.apps/web created'
+    )
 
-    const deploymentResult = apiServer.findResource('Deployment', 'web', 'team-a')
+    const deploymentResult = apiServer.findResource(
+      'Deployment',
+      'web',
+      'team-a'
+    )
     expect(deploymentResult.ok).toBe(true)
 
     const currentVersion = apiServer.getResourceVersion()
     expect(Number(currentVersion)).toBeGreaterThan(Number(initialVersion))
 
-    const getResult = executor.execute('kubectl get deployments -n team-a -o json')
+    const getResult = executor.execute(
+      'kubectl get deployments -n team-a -o json'
+    )
     expect(getResult.ok).toBe(true)
     if (!getResult.ok) {
       return
@@ -108,7 +118,9 @@ describe('kubernetes-like architecture chain', () => {
       return
     }
     expect(describeResult.value).toContain('Scheduled')
-    expect(describeResult.value).toContain('Successfully assigned default/demo-pod')
+    expect(describeResult.value).toContain(
+      'Successfully assigned default/demo-pod'
+    )
     expect(describeResult.value).toContain('Started')
     expect(describeResult.value).toContain('Container started')
   })

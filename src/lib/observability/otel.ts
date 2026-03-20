@@ -237,7 +237,8 @@ function sanitizeLogAttributes(
 function isSensitiveLogKey(key: string): boolean {
   const normalizedKey = normalizeLogKey(key)
   return (
-    SECRET_KEY_PATTERN.test(normalizedKey) || PII_KEY_PATTERN.test(normalizedKey)
+    SECRET_KEY_PATTERN.test(normalizedKey) ||
+    PII_KEY_PATTERN.test(normalizedKey)
   )
 }
 

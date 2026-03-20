@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { buildSuiteFromScenario, buildSuiteFromSingleCommand } from '../../../conformance/engine'
+import {
+  buildSuiteFromScenario,
+  buildSuiteFromSingleCommand
+} from '../../../conformance/engine'
 
 describe('conformance suite builder', () => {
   it('should build setup, cmds and cleanup actions in order', () => {

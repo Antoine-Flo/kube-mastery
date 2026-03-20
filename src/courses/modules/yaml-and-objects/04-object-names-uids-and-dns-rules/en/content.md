@@ -104,12 +104,12 @@ Pods also get DNS records based on their IP address and namespace, though this i
 
 ```mermaid
 flowchart LR
-    SVC["Service\nname: web-app\nnamespace: production"]
-    DNS["DNS Record\nweb-app.production\n.svc.cluster.local"]
-    APP["Other Pod\nin the cluster"]
-    CONNECT["curl http://web-app.production\n.svc.cluster.local"]
+    SVC["Service<br/>name: web-app<br/>namespace: production"]
+    DNS["DNS Record<br/>web-app.production<br/>.svc.cluster.local"]
+    APP["Other Pod<br/>in the cluster"]
+    CONNECT["curl http://web-app.production<br/>.svc.cluster.local"]
 
-    SVC -->|"Kubernetes\ncreates"| DNS
+    SVC -->|"Kubernetes<br/>creates"| DNS
     APP -->|"resolves"| DNS
     APP --> CONNECT
 ```

@@ -106,61 +106,63 @@ interface ResourceCollectionAccessor {
 /**
  * Resource collection accessors (object lookup pattern)
  */
-const RESOURCE_ACCESSORS: Partial<Record<string, ResourceCollectionAccessor>> = {
-  pods: {
-    kind: RESOURCE_KIND_BY_RESOURCE.pods ?? 'Pod',
-    singularName: 'pod'
-  },
-  configmaps: {
-    kind: RESOURCE_KIND_BY_RESOURCE.configmaps ?? 'ConfigMap',
-    singularName: 'configmap'
-  },
-  secrets: {
-    kind: RESOURCE_KIND_BY_RESOURCE.secrets ?? 'Secret',
-    singularName: 'secret'
-  },
-  deployments: {
-    kind: RESOURCE_KIND_BY_RESOURCE.deployments ?? 'Deployment',
-    singularName: 'deployment'
-  },
-  services: {
-    kind: RESOURCE_KIND_BY_RESOURCE.services ?? 'Service',
-    singularName: 'service'
-  },
-  namespaces: {
-    kind: RESOURCE_KIND_BY_RESOURCE.namespaces ?? 'Namespace',
-    singularName: 'namespace'
-  },
-  nodes: {
-    kind: RESOURCE_KIND_BY_RESOURCE.nodes ?? 'Node',
-    singularName: 'node'
-  },
-  daemonsets: {
-    kind: RESOURCE_KIND_BY_RESOURCE.daemonsets ?? 'DaemonSet',
-    singularName: 'daemonset'
-  },
-  statefulsets: {
-    kind: RESOURCE_KIND_BY_RESOURCE.statefulsets ?? 'StatefulSet',
-    singularName: 'statefulset'
-  },
-  replicasets: {
-    kind: RESOURCE_KIND_BY_RESOURCE.replicasets ?? 'ReplicaSet',
-    singularName: 'replicaset'
-  },
-  ingresses: {
-    kind: RESOURCE_KIND_BY_RESOURCE.ingresses ?? 'Ingress',
-    singularName: 'ingress'
-  },
-  persistentvolumes: {
-    kind: RESOURCE_KIND_BY_RESOURCE.persistentvolumes ?? 'PersistentVolume',
-    singularName: 'persistentvolume'
-  },
-  persistentvolumeclaims: {
-    kind:
-      RESOURCE_KIND_BY_RESOURCE.persistentvolumeclaims ?? 'PersistentVolumeClaim',
-    singularName: 'persistentvolumeclaim'
+const RESOURCE_ACCESSORS: Partial<Record<string, ResourceCollectionAccessor>> =
+  {
+    pods: {
+      kind: RESOURCE_KIND_BY_RESOURCE.pods ?? 'Pod',
+      singularName: 'pod'
+    },
+    configmaps: {
+      kind: RESOURCE_KIND_BY_RESOURCE.configmaps ?? 'ConfigMap',
+      singularName: 'configmap'
+    },
+    secrets: {
+      kind: RESOURCE_KIND_BY_RESOURCE.secrets ?? 'Secret',
+      singularName: 'secret'
+    },
+    deployments: {
+      kind: RESOURCE_KIND_BY_RESOURCE.deployments ?? 'Deployment',
+      singularName: 'deployment'
+    },
+    services: {
+      kind: RESOURCE_KIND_BY_RESOURCE.services ?? 'Service',
+      singularName: 'service'
+    },
+    namespaces: {
+      kind: RESOURCE_KIND_BY_RESOURCE.namespaces ?? 'Namespace',
+      singularName: 'namespace'
+    },
+    nodes: {
+      kind: RESOURCE_KIND_BY_RESOURCE.nodes ?? 'Node',
+      singularName: 'node'
+    },
+    daemonsets: {
+      kind: RESOURCE_KIND_BY_RESOURCE.daemonsets ?? 'DaemonSet',
+      singularName: 'daemonset'
+    },
+    statefulsets: {
+      kind: RESOURCE_KIND_BY_RESOURCE.statefulsets ?? 'StatefulSet',
+      singularName: 'statefulset'
+    },
+    replicasets: {
+      kind: RESOURCE_KIND_BY_RESOURCE.replicasets ?? 'ReplicaSet',
+      singularName: 'replicaset'
+    },
+    ingresses: {
+      kind: RESOURCE_KIND_BY_RESOURCE.ingresses ?? 'Ingress',
+      singularName: 'ingress'
+    },
+    persistentvolumes: {
+      kind: RESOURCE_KIND_BY_RESOURCE.persistentvolumes ?? 'PersistentVolume',
+      singularName: 'persistentvolume'
+    },
+    persistentvolumeclaims: {
+      kind:
+        RESOURCE_KIND_BY_RESOURCE.persistentvolumeclaims ??
+        'PersistentVolumeClaim',
+      singularName: 'persistentvolumeclaim'
+    }
   }
-}
 
 /**
  * Generic handler for metadata changes (labels or annotations)
@@ -249,7 +251,9 @@ const handleMetadataChangeWithEvents = (
     return updateResult
   }
 
-  const updatedResource = updateResult.value as KindToResource<typeof accessor.kind>
+  const updatedResource = updateResult.value as KindToResource<
+    typeof accessor.kind
+  >
   const metadataKey = config.metadataType
   const metadataValue = updatedResource.metadata[metadataKey] || {}
 
@@ -323,7 +327,12 @@ const handleMetadataChangeWithEvents = (
   } else {
     const updateResult = isClusterScopedKind(accessor.kind)
       ? apiServer.updateResource(accessor.kind, name, updatedResource)
-      : apiServer.updateResource(accessor.kind, name, updatedResource, namespace)
+      : apiServer.updateResource(
+          accessor.kind,
+          name,
+          updatedResource,
+          namespace
+        )
     if (!updateResult.ok) {
       return error(updateResult.error)
     }

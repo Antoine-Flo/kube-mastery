@@ -289,22 +289,24 @@ export const shapePodForStructuredOutput = (
     pod.status.observedGeneration ?? pod.metadata.generation ?? 1
   const kubeApiAccessVolumeName = buildKubeApiAccessVolumeName(pod)
   const metadataAnnotations = pod.metadata.annotations ?? {}
-  const specInitContainers = (pod.spec.initContainers ?? []).map((container) => {
-    return {
-      ...(container.command != null && container.command.length > 0
-        ? { command: container.command }
-        : {}),
-      ...(container.args != null && container.args.length > 0
-        ? { args: container.args }
-        : {}),
-      image: container.image,
-      imagePullPolicy: container.imagePullPolicy ?? 'IfNotPresent',
-      name: container.name,
-      resources: container.resources ?? {},
-      terminationMessagePath: '/dev/termination-log',
-      terminationMessagePolicy: 'File'
+  const specInitContainers = (pod.spec.initContainers ?? []).map(
+    (container) => {
+      return {
+        ...(container.command != null && container.command.length > 0
+          ? { command: container.command }
+          : {}),
+        ...(container.args != null && container.args.length > 0
+          ? { args: container.args }
+          : {}),
+        image: container.image,
+        imagePullPolicy: container.imagePullPolicy ?? 'IfNotPresent',
+        name: container.name,
+        resources: container.resources ?? {},
+        terminationMessagePath: '/dev/termination-log',
+        terminationMessagePolicy: 'File'
+      }
     }
-  })
+  )
   const specContainers = pod.spec.containers.map((container) => {
     const ports = (container.ports ?? []).map((port) => {
       return {
@@ -475,9 +477,7 @@ export const shapePodForStructuredOutput = (
     status: {
       conditions: ensurePodConditions(pod),
       containerStatuses,
-      ...(initContainerStatuses.length > 0
-        ? { initContainerStatuses }
-        : {}),
+      ...(initContainerStatuses.length > 0 ? { initContainerStatuses } : {}),
       ...(hostIP != null ? { hostIP } : {}),
       ...(hostIP != null ? { hostIPs: [{ ip: hostIP }] } : {}),
       observedGeneration,

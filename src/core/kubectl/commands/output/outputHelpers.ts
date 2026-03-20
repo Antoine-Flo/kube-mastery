@@ -208,7 +208,9 @@ export const renderStructuredPayload = (
   if (directive.kind === 'jsonpath') {
     return renderKubectlJsonPath(payload, directive.jsonPathExpression ?? '')
   }
-  return error('error: structured payload requires json, yaml, or jsonpath output')
+  return error(
+    'error: structured payload requires json, yaml, or jsonpath output'
+  )
 }
 
 export const formatKubectlTable = (
@@ -218,7 +220,9 @@ export const formatKubectlTable = (
 ): string => {
   const uppercase = options.uppercase ?? true
   const spacing = options.spacing ?? 3
-  const normalizedHeaders = uppercase ? headers.map((header) => header.toUpperCase()) : headers
+  const normalizedHeaders = uppercase
+    ? headers.map((header) => header.toUpperCase())
+    : headers
   if (options.minColumnWidthsByHeader != null) {
     const writer = createStatefulTabWriter({
       align: options.align,

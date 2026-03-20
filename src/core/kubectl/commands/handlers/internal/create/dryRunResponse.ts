@@ -64,7 +64,7 @@ export const buildDryRunResponse = (
   const outputDirectiveResult = validateOutputDirective(
     resolveOutputDirective(parsed.flags, parsed.output),
     ['table', 'yaml', 'json', 'jsonpath'],
-    "--output must be one of: json|yaml|jsonpath"
+    '--output must be one of: json|yaml|jsonpath'
   )
   if (!outputDirectiveResult.ok) {
     return error(outputDirectiveResult.error)

@@ -111,8 +111,12 @@ const materializeDeployment = (
         ...(spec.priorityClassName != null && {
           priorityClassName: spec.priorityClassName
         }),
-        ...(spec.restartPolicy != null && { restartPolicy: spec.restartPolicy }),
-        ...(spec.schedulerName != null && { schedulerName: spec.schedulerName }),
+        ...(spec.restartPolicy != null && {
+          restartPolicy: spec.restartPolicy
+        }),
+        ...(spec.schedulerName != null && {
+          schedulerName: spec.schedulerName
+        }),
         ...(spec.securityContext != null && {
           securityContext: spec.securityContext
         }),

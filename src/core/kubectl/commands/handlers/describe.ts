@@ -165,7 +165,8 @@ export const handleDescribe = (
   const state = apiServer.snapshotState()
   const resolvedDependencies: DescribeDependencies = {
     listPodEvents:
-      dependencies.listPodEvents ?? apiServer.podLifecycleEventStore.listPodEvents
+      dependencies.listPodEvents ??
+      apiServer.podLifecycleEventStore.listPodEvents
   }
   if (!parsed.resource) {
     return error(`error: you must specify the resource type to describe`)

@@ -18,7 +18,10 @@ import type {
   ControllerState,
   ReconcilerController
 } from '../../control-plane/controller-runtime/types'
-import { createWorkQueue, type WorkQueue } from '../../control-plane/controller-runtime/WorkQueue'
+import {
+  createWorkQueue,
+  type WorkQueue
+} from '../../control-plane/controller-runtime/WorkQueue'
 import type { ContainerProcessRuntime } from '../../runtime/ContainerProcessRuntime'
 import { hasRunningPodProcessRuntime } from './podLifecycle/runtimeTerminationService'
 
@@ -198,7 +201,8 @@ export class PodTerminationController implements ReconcilerController {
     const minVisibleTerminatingMs = Math.max(
       0,
       Math.floor(
-        this.options.minVisibleTerminatingMs ?? DEFAULT_MIN_VISIBLE_TERMINATING_MS
+        this.options.minVisibleTerminatingMs ??
+          DEFAULT_MIN_VISIBLE_TERMINATING_MS
       )
     )
     const deadlineMs = getPodDeletionDeadlineMs(
@@ -243,7 +247,7 @@ export class PodTerminationController implements ReconcilerController {
     )
     const nextCheckDeadlineMs = hasRunningProcess
       ? Math.min(deadlineMs, nowMs + processCheckIntervalMs)
-      : minVisibleDeadlineMs ?? deadlineMs
+      : (minVisibleDeadlineMs ?? deadlineMs)
     this.scheduleFinalizeAt(key, nextCheckDeadlineMs)
   }
 
@@ -303,14 +307,12 @@ export class PodTerminationController implements ReconcilerController {
     this.workQueue.add(key)
   }
 
-  private observe(
-    input: {
-      action: 'enqueue' | 'reconcile' | 'skip'
-      key: string
-      reason?: string
-      eventType?: ClusterEventType
-    }
-  ): void {
+  private observe(input: {
+    action: 'enqueue' | 'reconcile' | 'skip'
+    key: string
+    reason?: string
+    eventType?: ClusterEventType
+  }): void {
     reportControllerObservation(this.options, {
       controller: 'PodTerminationController',
       action: input.action,

@@ -18,9 +18,18 @@ import {
 import { DaemonSetController } from '../../../../src/core/control-plane/controllers/DaemonSetController'
 import type { ControllerObservation } from '../../../../src/core/control-plane/controller-runtime/types'
 import type { AppEvent } from '../../../../src/core/events/AppEvent'
-import { createDaemonSet, type DaemonSet } from '../../../../src/core/cluster/ressources/DaemonSet'
-import { createNode, type NodeStatus } from '../../../../src/core/cluster/ressources/Node'
-import { createPod, type Pod } from '../../../../src/core/cluster/ressources/Pod'
+import {
+  createDaemonSet,
+  type DaemonSet
+} from '../../../../src/core/cluster/ressources/DaemonSet'
+import {
+  createNode,
+  type NodeStatus
+} from '../../../../src/core/cluster/ressources/Node'
+import {
+  createPod,
+  type Pod
+} from '../../../../src/core/cluster/ressources/Pod'
 
 describe('DaemonSetController', () => {
   let eventBus: EventBus
@@ -267,7 +276,8 @@ describe('DaemonSetController', () => {
         findPod: (name: string, namespace: string) => {
           const pod = mockState.pods.find((entry) => {
             return (
-              entry.metadata.name === name && entry.metadata.namespace === namespace
+              entry.metadata.name === name &&
+              entry.metadata.namespace === namespace
             )
           })
           if (pod == null) {
@@ -380,7 +390,9 @@ describe('DaemonSetController', () => {
     controller.stop()
     vi.useRealTimers()
 
-    expect(updates.filter((value) => value === 1).length).toBeGreaterThanOrEqual(2)
+    expect(
+      updates.filter((value) => value === 1).length
+    ).toBeGreaterThanOrEqual(2)
   })
 
   it('emits observability events for enqueue, reconcile and skip', async () => {

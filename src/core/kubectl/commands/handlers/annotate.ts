@@ -18,14 +18,10 @@ export const handleAnnotate = (
   apiServer: ApiServerFacade,
   parsed: ParsedCommand
 ): ExecutionResult => {
-  return handleMetadataChange(
-    apiServer,
-    parsed,
-    {
-      metadataType: 'annotations',
-      commandName: 'annotate',
-      changesKey: 'annotationChanges',
-      actionPastTense: 'annotated'
-    }
-  )
+  return handleMetadataChange(apiServer, parsed, {
+    metadataType: 'annotations',
+    commandName: 'annotate',
+    changesKey: 'annotationChanges',
+    actionPastTense: 'annotated'
+  })
 }

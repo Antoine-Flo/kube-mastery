@@ -42,15 +42,15 @@ This is particularly useful for workloads that must have exclusive, singleton ac
 
 ```mermaid
 flowchart TD
-    A[Volume Access Mode] --> B[ReadWriteOnce\nRWO]
-    A --> C[ReadOnlyMany\nROX]
-    A --> D[ReadWriteMany\nRWX]
-    A --> E[ReadWriteOncePod\nRWOP]
+    A[Volume Access Mode] --> B[ReadWriteOnce<br/>RWO]
+    A --> C[ReadOnlyMany<br/>ROX]
+    A --> D[ReadWriteMany<br/>RWX]
+    A --> E[ReadWriteOncePod<br/>RWOP]
 
-    B --> B1["✓ Single node, read-write\n✓ AWS EBS, GCP PD, Azure Disk\n✗ Cannot span multiple nodes"]
-    C --> C1["✓ Multiple nodes, read-only\n✓ For shared config / static data\n✗ No writes from any node"]
-    D --> D1["✓ Multiple nodes, read-write\n✓ Requires NFS, CephFS, EFS\n✗ Not supported by block storage"]
-    E --> E1["✓ Single Pod, read-write\n✓ Strongest exclusivity guarantee\n✓ Requires CSI driver support"]
+    B --> B1["✓ Single node, read-write<br/>✓ AWS EBS, GCP PD, Azure Disk<br/>✗ Cannot span multiple nodes"]
+    C --> C1["✓ Multiple nodes, read-only<br/>✓ For shared config / static data<br/>✗ No writes from any node"]
+    D --> D1["✓ Multiple nodes, read-write<br/>✓ Requires NFS, CephFS, EFS<br/>✗ Not supported by block storage"]
+    E --> E1["✓ Single Pod, read-write<br/>✓ Strongest exclusivity guarantee<br/>✓ Requires CSI driver support"]
 ```
 
 ## Reclaim Policies
@@ -97,9 +97,9 @@ stateDiagram-v2
     [*] --> Available : PV created
     Available --> Bound : PVC bound
     Bound --> Released : PVC deleted
-    Released --> Available : Admin clears claimRef\n(Retain policy)
-    Released --> [*] : PV and storage deleted\n(Delete policy)
-    Bound --> [*] : PV deleted\nwhile bound\n(rare / forced)
+    Released --> Available : Admin clears claimRef<br/>(Retain policy)
+    Released --> [*] : PV and storage deleted<br/>(Delete policy)
+    Bound --> [*] : PV deleted<br/>while bound<br/>(rare / forced)
 ```
 
 ## Hands-On Practice

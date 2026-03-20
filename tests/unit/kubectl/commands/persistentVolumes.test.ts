@@ -48,11 +48,7 @@ describe('kubectl PV/PVC support', () => {
     fileSystem.writeFile('/home/kube/pv.yaml', PV_YAML)
     fileSystem.writeFile('/home/kube/pvc.yaml', PVC_YAML)
 
-    const executor = createKubectlExecutor(
-      apiServer,
-      fileSystem,
-      logger
-    )
+    const executor = createKubectlExecutor(apiServer, fileSystem, logger)
 
     const applyPv = executor.execute('kubectl apply -f /home/kube/pv.yaml')
     expect(applyPv.ok).toBe(true)

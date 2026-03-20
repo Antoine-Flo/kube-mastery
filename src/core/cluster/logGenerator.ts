@@ -45,7 +45,9 @@ const getStartupLogsForImage = (containerImage: string): string[] => {
   return startupLogsResult.value
 }
 
-const getProfileFromRegistry = (containerImage: string): WorkloadProfile | null => {
+const getProfileFromRegistry = (
+  containerImage: string
+): WorkloadProfile | null => {
   const logProfileResult = imageRegistry.getLogProfile(containerImage)
   if (!logProfileResult.ok) {
     return null
@@ -470,7 +472,10 @@ const createSequenceRandom = (
 }
 
 const resolveProfile = (containerImage: string): WorkloadProfile => {
-  return getProfileFromRegistry(containerImage) ?? detectProfileFromImage(containerImage)
+  return (
+    getProfileFromRegistry(containerImage) ??
+    detectProfileFromImage(containerImage)
+  )
 }
 
 const generateEntryAtSequence = (
@@ -551,7 +556,8 @@ export const appendLogEntriesUntil = (
   const streamState = options?.streamState
   const maxEntries = Math.max(1, options?.maxEntries ?? MAX_LOGS)
   const minimumTotalEntries = Math.max(0, options?.minimumTotalEntries ?? 0)
-  const seed = streamState?.seed ?? buildLogSeed(containerImage, options?.context)
+  const seed =
+    streamState?.seed ?? buildLogSeed(containerImage, options?.context)
   const profile = resolveProfile(containerImage)
   const nowMs = options?.nowMs ?? options?.context?.nowMs ?? Date.now()
   const resolvedBaseTimeMs = resolveBaseTime(seed, options?.context).getTime()

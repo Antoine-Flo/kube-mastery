@@ -1,7 +1,7 @@
 import type { ConformanceScenarioCatalog } from './types'
 
 export const conformanceTests: ConformanceScenarioCatalog = {
-  'base': {
+  base: {
     cmds: [
       'kubectl version --client',
       'kubectl version',
@@ -22,7 +22,7 @@ export const conformanceTests: ConformanceScenarioCatalog = {
       'kubectl explain pod.spec.containers'
     ]
   },
-  'deployment': {
+  deployment: {
     setup: ['kubectl create deployment web --image=nginx:latest'],
     cmds: [
       'kubectl get deployments',
@@ -33,7 +33,7 @@ export const conformanceTests: ConformanceScenarioCatalog = {
     ],
     cleanup: ['kubectl delete deployment web']
   },
-  'service': {
+  service: {
     setup: [
       'kubectl create deployment web --image=nginx:latest',
       'kubectl expose deployment web --name=web-svc --port=80 --target-port=80',
@@ -52,7 +52,7 @@ export const conformanceTests: ConformanceScenarioCatalog = {
       'kubectl delete deployment web'
     ]
   },
-  'configmap': {
+  configmap: {
     setup: [
       'kubectl create configmap myconfig --from-literal=ca.crt=dummy-ca --from-literal=mode=prod',
       'kubectl create secret generic my-secret --from-literal=username=jane --from-literal=password=s33msi4'
@@ -64,9 +64,12 @@ export const conformanceTests: ConformanceScenarioCatalog = {
       'kubectl get secrets',
       'kubectl get secret my-secret -o yaml'
     ],
-    cleanup: ['kubectl delete configmap myconfig', 'kubectl delete secret my-secret']
+    cleanup: [
+      'kubectl delete configmap myconfig',
+      'kubectl delete secret my-secret'
+    ]
   },
-  'pod': {
+  pod: {
     setup: [
       'kubectl run web --image=busybox --command -- sleep 3600',
       'kubectl wait --for=condition=Ready pod/web --timeout=60s',
@@ -97,7 +100,7 @@ export const conformanceTests: ConformanceScenarioCatalog = {
     ],
     cleanup: ['kubectl delete pod replace-target']
   },
-  'run': {
+  run: {
     cmds: [
       'kubectl run run-ok-image-only --image=busybox',
       'kubectl get pod run-ok-image-only',
@@ -134,7 +137,10 @@ export const conformanceTests: ConformanceScenarioCatalog = {
       'kubectl get daemonset ds-sample -o yaml',
       'kubectl describe daemonset ds-sample'
     ],
-    cleanup: ['kubectl delete daemonset ds-sample', 'kubectl delete deployment rs-source']
+    cleanup: [
+      'kubectl delete daemonset ds-sample',
+      'kubectl delete deployment rs-source'
+    ]
   },
   'storage-pv-pvc': {
     cmds: [
@@ -144,7 +150,7 @@ export const conformanceTests: ConformanceScenarioCatalog = {
       'kubectl describe pvc missing-pvc'
     ]
   },
-  'namespace': {
+  namespace: {
     setup: [
       'kubectl create namespace conformance-team',
       'kubectl create deployment web --image=nginx:latest -n conformance-team'
@@ -159,7 +165,7 @@ export const conformanceTests: ConformanceScenarioCatalog = {
       'kubectl delete namespace conformance-team'
     ]
   },
-  'ingress': {
+  ingress: {
     setup: [
       'kubectl create deployment api --image=nginx:latest',
       'kubectl create deployment frontend --image=nginx:latest',

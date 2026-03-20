@@ -39,7 +39,7 @@ kubectl get pod my-pod -o jsonpath='{.status.podIP}'
 kubectl get pod my-pod -o jsonpath='{.spec.containers[0].image}'
 
 # Get the name and status phase of all pods (iterating over a list)
-kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.phase}{"\n"}{end}'
+kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.phase}{"<br/>"}{end}'
 ```
 
 The `{range .items[*]}...{end}` pattern iterates over a list, which is essential when working with multiple resources. JSONPath takes a little practice to write fluently, but once you can read and write it, you will use it constantly in scripts and automation.
@@ -74,13 +74,13 @@ You can combine output format flags freely. For example, `kubectl get pods -A -o
 
 ```mermaid
 flowchart LR
-    Resource["Single Resource\n(e.g. a Pod)"]
+    Resource["Single Resource<br/>(e.g. a Pod)"]
 
-    Resource --> YAML["-o yaml\nFull YAML spec+status"]
-    Resource --> JSON["-o json\nFull JSON spec+status"]
-    Resource --> JP["-o jsonpath='...'\nExtract one field"]
-    Resource --> CC["-o custom-columns\nYour own table"]
-    Resource --> Table["Default table\nCompact, human-readable"]
+    Resource --> YAML["-o yaml<br/>Full YAML spec+status"]
+    Resource --> JSON["-o json<br/>Full JSON spec+status"]
+    Resource --> JP["-o jsonpath='...'<br/>Extract one field"]
+    Resource --> CC["-o custom-columns<br/>Your own table"]
+    Resource --> Table["Default table<br/>Compact, human-readable"]
 ```
 
 Each format serves a different audience: the default table for quick human scanning, YAML and JSON for deep inspection and scripting, JSONPath and custom-columns for extracting exactly what you need.
@@ -187,7 +187,7 @@ kubectl get deployment format-demo -o json
 kubectl get deployment format-demo -o jsonpath='{.spec.replicas}'
 
 # Extract pod IPs for all pods
-kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.podIP}{"\n"}{end}'
+kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.podIP}{"<br/>"}{end}'
 
 # Custom columns table
 kubectl get pods -o custom-columns='NAME:.metadata.name,STATUS:.status.phase,IP:.status.podIP,NODE:.spec.nodeName'

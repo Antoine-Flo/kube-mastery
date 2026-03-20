@@ -162,21 +162,21 @@ The distinction between one list item with multiple fields (AND) versus multiple
 graph TD
     NP["NetworkPolicy"]
 
-    NP --> PS["podSelector\nWhich Pods this governs"]
-    NP --> PT["policyTypes\n[Ingress, Egress]"]
-    NP --> IG["ingress[]\nList of inbound rules"]
-    NP --> EG["egress[]\nList of outbound rules"]
+    NP --> PS["podSelector<br/>Which Pods this governs"]
+    NP --> PT["policyTypes<br/>[Ingress, Egress]"]
+    NP --> IG["ingress[]<br/>List of inbound rules"]
+    NP --> EG["egress[]<br/>List of outbound rules"]
 
-    IG --> IGR["Rule (item in list)\n— OR with other rules"]
-    IGR --> FROM["from[]\nAllowed sources\n(OR between items)"]
-    IGR --> PORTS["ports[]\nAllowed ports/protocols"]
+    IG --> IGR["Rule (item in list)<br/>— OR with other rules"]
+    IGR --> FROM["from[]<br/>Allowed sources<br/>(OR between items)"]
+    IGR --> PORTS["ports[]<br/>Allowed ports/protocols"]
 
     FROM --> PS2["podSelector"]
     FROM --> NS2["namespaceSelector"]
     FROM --> IP2["ipBlock (CIDR)"]
 
     EG --> EGR["Rule (item in list)"]
-    EGR --> TO["to[]\nAllowed destinations"]
+    EGR --> TO["to[]<br/>Allowed destinations"]
     EGR --> PORTS2["ports[]"]
 ```
 

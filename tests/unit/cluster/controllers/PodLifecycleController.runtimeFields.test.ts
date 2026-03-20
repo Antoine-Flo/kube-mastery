@@ -69,7 +69,9 @@ describe('PodLifecycleController runtime enrichment', () => {
     expect(
       pod.status.conditions?.some((condition) => condition.type === 'Ready')
     ).toBe(true)
-    expect(pod.status.containerStatuses?.[0]?.stateDetails?.state).toBe('Running')
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.state).toBe(
+      'Running'
+    )
 
     controller.stop()
   })
@@ -151,7 +153,9 @@ describe('PodLifecycleController runtime enrichment', () => {
       namespace: 'default',
       phase: 'Pending',
       nodeName: 'conformance-worker',
-      containers: [{ name: 'nginx', image: 'busybox', command: ['sleep', '3600'] }]
+      containers: [
+        { name: 'nginx', image: 'busybox', command: ['sleep', '3600'] }
+      ]
     })
     apiServer.createResource('Pod', pod)
     eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
@@ -201,7 +205,9 @@ describe('PodLifecycleController runtime enrichment', () => {
       namespace: 'default',
       phase: 'Pending',
       nodeName: 'conformance-worker',
-      containers: [{ name: 'nginx', image: 'busybox', command: ['sleep', '3600'] }]
+      containers: [
+        { name: 'nginx', image: 'busybox', command: ['sleep', '3600'] }
+      ]
     })
     apiServer.createResource('Pod', pod)
     eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
@@ -274,7 +280,9 @@ describe('PodLifecycleController runtime enrichment', () => {
     expect(pod.status.containerStatuses?.[0]?.stateDetails?.reason).toBe(
       'WaitingForPVC'
     )
-    expect(pod.status.containerStatuses?.[0]?.stateDetails?.state).toBe('Waiting')
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.state).toBe(
+      'Waiting'
+    )
     expect(pod.status.containerStatuses?.[0]?.stateDetails?.reason).toBe(
       'WaitingForPVC'
     )
@@ -303,7 +311,8 @@ describe('PodLifecycleController runtime enrichment', () => {
 
     eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
       pod = event.payload.pod
-      const waitingReason = pod.status.containerStatuses?.[0]?.stateDetails?.reason
+      const waitingReason =
+        pod.status.containerStatuses?.[0]?.stateDetails?.reason
       if (waitingReason != null) {
         waitingReasons.push(waitingReason)
       }
@@ -353,7 +362,8 @@ describe('PodLifecycleController runtime enrichment', () => {
 
     eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
       pod = event.payload.pod
-      const waitingReason = pod.status.containerStatuses?.[0]?.stateDetails?.reason
+      const waitingReason =
+        pod.status.containerStatuses?.[0]?.stateDetails?.reason
       if (waitingReason != null) {
         waitingReasons.push(waitingReason)
       }
@@ -381,7 +391,9 @@ describe('PodLifecycleController runtime enrichment', () => {
     vi.advanceTimersByTime(1)
     vi.runOnlyPendingTimers()
 
-    const errCount = waitingReasons.filter((reason) => reason === 'ErrImagePull').length
+    const errCount = waitingReasons.filter(
+      (reason) => reason === 'ErrImagePull'
+    ).length
     const backoffCount = waitingReasons.filter(
       (reason) => reason === 'ImagePullBackOff'
     ).length
@@ -542,7 +554,9 @@ describe('PodLifecycleController runtime enrichment', () => {
     const controller = createPodLifecycleController(apiServer)
     controller.reconcile('default/busybox-args')
 
-    expect(pod.status.containerStatuses?.[0]?.stateDetails?.reason).toBeUndefined()
+    expect(
+      pod.status.containerStatuses?.[0]?.stateDetails?.reason
+    ).toBeUndefined()
     expect(pod.status.phase).toBe('Running')
 
     controller.stop()
@@ -621,8 +635,12 @@ describe('PodLifecycleController runtime enrichment', () => {
     controller.reconcile('default/no-restart-nginx')
 
     expect(pod.status.phase).toBe('Failed')
-    expect(pod.status.containerStatuses?.[0]?.stateDetails?.state).toBe('Terminated')
-    expect(pod.status.containerStatuses?.[0]?.stateDetails?.reason).toBe('Error')
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.state).toBe(
+      'Terminated'
+    )
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.reason).toBe(
+      'Error'
+    )
     expect(pod.status.containerStatuses?.[0]?.lastStateDetails).toBeDefined()
     expect(pod.status.containerStatuses?.[0]?.restartCount).toBe(0)
 
@@ -766,8 +784,12 @@ describe('PodLifecycleController runtime enrichment', () => {
     vi.runOnlyPendingTimers()
 
     expect(pod.status.phase).toBe('Succeeded')
-    expect(pod.status.containerStatuses?.[0]?.stateDetails?.state).toBe('Terminated')
-    expect(pod.status.containerStatuses?.[0]?.stateDetails?.reason).toBe('Completed')
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.state).toBe(
+      'Terminated'
+    )
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.reason).toBe(
+      'Completed'
+    )
     expect(pod.status.containerStatuses?.[0]?.stateDetails?.exitCode).toBe(0)
 
     controller.stop()
@@ -818,7 +840,9 @@ describe('PodLifecycleController runtime enrichment', () => {
     vi.runOnlyPendingTimers()
 
     expect(pod.status.phase).toBe('Running')
-    expect(pod.status.containerStatuses?.[0]?.stateDetails?.reason).toBeUndefined()
+    expect(
+      pod.status.containerStatuses?.[0]?.stateDetails?.reason
+    ).toBeUndefined()
 
     controller.stop()
   })
@@ -864,7 +888,9 @@ describe('PodLifecycleController runtime enrichment', () => {
     controller.reconcile('default/sleep-pod')
 
     expect(pod.status.phase).toBe('Running')
-    expect(pod.status.containerStatuses?.[0]?.stateDetails?.state).toBe('Running')
+    expect(pod.status.containerStatuses?.[0]?.stateDetails?.state).toBe(
+      'Running'
+    )
     controller.stop()
   })
 })

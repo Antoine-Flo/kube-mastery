@@ -13,13 +13,15 @@ describe('getSafeLocalRedirectTarget', () => {
   })
 
   it('keeps safe local paths with query string', () => {
-    expect(getSafeLocalRedirectTarget('/en/profile?tab=billing', fallback)).toBe(
-      '/en/profile?tab=billing'
-    )
+    expect(
+      getSafeLocalRedirectTarget('/en/profile?tab=billing', fallback)
+    ).toBe('/en/profile?tab=billing')
   })
 
   it('rejects protocol-relative redirects', () => {
-    expect(getSafeLocalRedirectTarget('//evil.com/path', fallback)).toBe(fallback)
+    expect(getSafeLocalRedirectTarget('//evil.com/path', fallback)).toBe(
+      fallback
+    )
   })
 
   it('rejects backslash external redirects', () => {

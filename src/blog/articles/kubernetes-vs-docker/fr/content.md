@@ -1,10 +1,10 @@
 ---
-title: "Kubernetes vs Docker : quelle est la vraie difference ?"
+title: 'Kubernetes vs Docker : quelle est la vraie difference ?'
 description: "Une explication claire et technique de la difference entre Docker et Kubernetes. Ce que fait chaque outil, quand l'utiliser, les idées reçues courantes, et le bon ordre d'apprentissage en 2026."
-excerpt: "Docker construit et execute des conteneurs sur une seule machine. Kubernetes orchestre des conteneurs sur de nombreuses machines a grande echelle. Ils resolvent des problemes differents et fonctionnent mieux ensemble, pas en tant que concurrents."
-publishedAt: "2026-03-17"
-updatedAt: "2026-03-17"
-author: "KubeMastery"
+excerpt: 'Docker construit et execute des conteneurs sur une seule machine. Kubernetes orchestre des conteneurs sur de nombreuses machines a grande echelle. Ils resolvent des problemes differents et fonctionnent mieux ensemble, pas en tant que concurrents.'
+publishedAt: '2026-03-17'
+updatedAt: '2026-03-17'
+author: 'KubeMastery'
 tags:
   - kubernetes
   - docker
@@ -82,18 +82,18 @@ Kubernetes resout les problemes operationnels a grande echelle :
 
 ### Les objets Kubernetes fondamentaux
 
-| Objet | Role |
-|-------|------|
-| Pod | Plus petite unite deployable, enveloppe un ou plusieurs conteneurs |
-| Deployment | Gere l'etat desire et les mises a jour progressives d'un groupe de Pods |
-| ReplicaSet | Garantit qu'un nombre specifique de copies de Pod tournent |
-| Service | Point d'entree reseau stable qui route le trafic vers les Pods correspondants |
-| Ingress | Route le trafic HTTP/HTTPS externe vers les Services |
-| ConfigMap | Stocke des donnees de configuration non sensibles |
-| Secret | Stocke des donnees sensibles comme les mots de passe et tokens |
-| Namespace | Cluster virtuel pour isoler des ressources au sein d'un cluster |
-| PersistentVolume | Represente un espace de stockage dans le cluster |
-| HorizontalPodAutoscaler | Scale automatiquement les replicas selon des metriques observees |
+| Objet                   | Role                                                                          |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| Pod                     | Plus petite unite deployable, enveloppe un ou plusieurs conteneurs            |
+| Deployment              | Gere l'etat desire et les mises a jour progressives d'un groupe de Pods       |
+| ReplicaSet              | Garantit qu'un nombre specifique de copies de Pod tournent                    |
+| Service                 | Point d'entree reseau stable qui route le trafic vers les Pods correspondants |
+| Ingress                 | Route le trafic HTTP/HTTPS externe vers les Services                          |
+| ConfigMap               | Stocke des donnees de configuration non sensibles                             |
+| Secret                  | Stocke des donnees sensibles comme les mots de passe et tokens                |
+| Namespace               | Cluster virtuel pour isoler des ressources au sein d'un cluster               |
+| PersistentVolume        | Represente un espace de stockage dans le cluster                              |
+| HorizontalPodAutoscaler | Scale automatiquement les replicas selon des metriques observees              |
 
 ## Comment Docker et Kubernetes fonctionnent ensemble en pratique
 
@@ -113,17 +113,17 @@ Une precision technique importante : Kubernetes ne requiert pas Docker comme run
 
 Docker Compose est souvent le premier outil d'orchestration que les developpeurs rencontrent. Il definit des applications multi-conteneurs dans un seul fichier YAML et les fait tourner localement sur une machine. Cette comparaison revient frequemment :
 
-| Fonctionnalite | Docker Compose | Kubernetes |
-|----------------|---------------|------------|
-| Environnement cible | Machine unique | Cluster multi-machines |
-| Auto-guerison (redemarrage auto) | Non | Oui |
-| Scaling horizontal automatique | Non | Oui |
-| Mises a jour progressives | Non | Oui |
-| Load balancing | Basique | Avance (health-aware) |
-| Planification multi-noeuds | Non | Oui |
-| Decouverte de services integree | Basique | DNS complet |
-| Complexite | Faible | Elevee |
-| Meilleur cas d'usage | Dev local, deploiements simples | Production a grande echelle |
+| Fonctionnalite                   | Docker Compose                  | Kubernetes                  |
+| -------------------------------- | ------------------------------- | --------------------------- |
+| Environnement cible              | Machine unique                  | Cluster multi-machines      |
+| Auto-guerison (redemarrage auto) | Non                             | Oui                         |
+| Scaling horizontal automatique   | Non                             | Oui                         |
+| Mises a jour progressives        | Non                             | Oui                         |
+| Load balancing                   | Basique                         | Avance (health-aware)       |
+| Planification multi-noeuds       | Non                             | Oui                         |
+| Decouverte de services integree  | Basique                         | DNS complet                 |
+| Complexite                       | Faible                          | Elevee                      |
+| Meilleur cas d'usage             | Dev local, deploiements simples | Production a grande echelle |
 
 Docker Compose est un excellent outil de developpement local. Il n'est pas concu pour la fiabilite de production a grande echelle. Des que la haute disponibilite, le basculement automatique, ou le routage de trafic sur plusieurs machines deviennent des besoins, Kubernetes est le bon outil.
 

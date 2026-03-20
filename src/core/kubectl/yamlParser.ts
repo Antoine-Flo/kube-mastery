@@ -58,9 +58,11 @@ type ParsedResource =
 
 type YamlSupportedKind = Exclude<ResourceKind, 'Namespace'>
 
-const YAML_SUPPORTED_RESOURCE_KINDS = SUPPORTED_RESOURCE_KINDS.filter((kind) => {
-  return kind !== 'Namespace'
-}) as YamlSupportedKind[]
+const YAML_SUPPORTED_RESOURCE_KINDS = SUPPORTED_RESOURCE_KINDS.filter(
+  (kind) => {
+    return kind !== 'Namespace'
+  }
+) as YamlSupportedKind[]
 
 // ─── YAML Parsing ────────────────────────────────────────────────────────
 

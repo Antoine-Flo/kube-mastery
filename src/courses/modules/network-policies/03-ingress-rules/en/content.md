@@ -90,17 +90,17 @@ In short: each list item (`-`) is an independent OR path; fields within one item
 ```mermaid
 graph LR
     subgraph "Allowed Sources"
-        F["Frontend Pod\napp=frontend"]
-        M["Monitoring Pod\napp=monitoring"]
+        F["Frontend Pod<br/>app=frontend"]
+        M["Monitoring Pod<br/>app=monitoring"]
     end
 
     subgraph "Blocked Sources"
-        O["Other Pod\napp=other"]
-        EXT["External Request\nfrom unknown CIDR"]
+        O["Other Pod<br/>app=other"]
+        EXT["External Request<br/>from unknown CIDR"]
     end
 
     subgraph "Target Namespace"
-        B["Backend Pod\napp=backend\n(NetworkPolicy applied)"]
+        B["Backend Pod<br/>app=backend<br/>(NetworkPolicy applied)"]
     end
 
     F -->|"✅ port 8080"| B

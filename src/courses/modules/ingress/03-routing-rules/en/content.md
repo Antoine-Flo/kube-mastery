@@ -6,9 +6,9 @@ The true power of Ingress lies in its routing rules, the precise, declarative wa
 graph TD
     Client([HTTP Request]) --> IC[Ingress Controller]
 
-    IC -->|Host: app.example.com\nPath: /api/*| API[api-service:80]
-    IC -->|Host: app.example.com\nPath: /\nall other paths| FE[frontend-service:80]
-    IC -->|Host: admin.example.com\nPath: /| ADMIN[admin-service:80]
+    IC -->|Host: app.example.com<br/>Path: /api/*| API[api-service:80]
+    IC -->|Host: app.example.com<br/>Path: /<br/>all other paths| FE[frontend-service:80]
+    IC -->|Host: admin.example.com<br/>Path: /| ADMIN[admin-service:80]
 
     API --> AP[api Pods]
     FE --> FP[frontend Pods]

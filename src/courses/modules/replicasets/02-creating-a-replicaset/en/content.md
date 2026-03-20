@@ -68,12 +68,12 @@ This validation happens at the server level before anything gets scheduled, a he
 
 ```mermaid
 graph TB
-    RS["ReplicaSet\nweb-rs"]
-    SEL["spec.selector\nmatchLabels:\n  app: web"]
-    TMPL["spec.template\nmetadata:\n  labels:\n    app: web    ✓"]
-    P1["Pod web-rs-x7k2p\nlabels:\n  app: web"]
-    P2["Pod web-rs-9nqrt\nlabels:\n  app: web"]
-    P3["Pod web-rs-mn4r2\nlabels:\n  app: web"]
+    RS["ReplicaSet<br/>web-rs"]
+    SEL["spec.selector<br/>matchLabels:<br/>  app: web"]
+    TMPL["spec.template<br/>metadata:<br/>  labels:<br/>    app: web    ✓"]
+    P1["Pod web-rs-x7k2p<br/>labels:<br/>  app: web"]
+    P2["Pod web-rs-9nqrt<br/>labels:<br/>  app: web"]
+    P3["Pod web-rs-mn4r2<br/>labels:<br/>  app: web"]
 
     RS --> SEL
     RS --> TMPL

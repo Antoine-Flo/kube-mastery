@@ -27,7 +27,10 @@ const evaluateExpression = (
   if (trimmedExpression === '@') {
     return success(stringifyNodeValue(contextValue))
   }
-  const valuesResult = evaluateKubectlJsonPathValues(contextValue, trimmedExpression)
+  const valuesResult = evaluateKubectlJsonPathValues(
+    contextValue,
+    trimmedExpression
+  )
   if (!valuesResult.ok) {
     return valuesResult
   }
@@ -37,7 +40,9 @@ const evaluateExpression = (
   if (valuesResult.value.length === 1) {
     return success(stringifyNodeValue(valuesResult.value[0]))
   }
-  return success(valuesResult.value.map((value) => stringifyNodeValue(value)).join(' '))
+  return success(
+    valuesResult.value.map((value) => stringifyNodeValue(value)).join(' ')
+  )
 }
 
 const renderNodes = (

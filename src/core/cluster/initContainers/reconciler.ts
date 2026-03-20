@@ -106,12 +106,10 @@ const startRegularContainers = (pod: Pod): Pod => {
       ready: true,
       started: true,
       startedAt,
-      lastStateDetails:
-        currentStatus?.stateDetails ??
-        {
-          state: 'Waiting',
-          reason: 'ContainerCreating'
-        }
+      lastStateDetails: currentStatus?.stateDetails ?? {
+        state: 'Waiting',
+        reason: 'ContainerCreating'
+      }
     })
   }
 

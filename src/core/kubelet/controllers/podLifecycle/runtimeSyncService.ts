@@ -6,7 +6,9 @@ import type { ContainerProcessRuntime } from '../../../runtime/ContainerProcessR
 import type { ContainerRuntimeSimulator } from '../../../runtime/ContainerRuntimeSimulator'
 import { hasContainerStatusChanged } from './statusBuilders'
 
-const hasProcessCommand = (container: Pod['spec']['containers'][number]): boolean => {
+const hasProcessCommand = (
+  container: Pod['spec']['containers'][number]
+): boolean => {
   if (container.command != null && container.command.length > 0) {
     return true
   }

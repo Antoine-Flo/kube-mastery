@@ -458,7 +458,9 @@ const createFileOps = (
         insertNode(state.tree, absolutePath, file)
 
         if (eventBus) {
-          eventBus.emit(createFileCreatedEvent(file, absolutePath, 'filesystem'))
+          eventBus.emit(
+            createFileCreatedEvent(file, absolutePath, 'filesystem')
+          )
         }
 
         return success(file)

@@ -73,7 +73,7 @@ const faqItems = [
   { id: 'q4', q: t('pricing_faq_q4'), a: t('pricing_faq_a4') },
   { id: 'q6', q: t('pricing_faq_q6'), a: t('pricing_faq_a6') },
   { id: 'q7', q: t('pricing_faq_q7'), a: t('pricing_faq_a7') },
-  { id: 'q8', q: t('pricing_faq_q8'), a: t('pricing_faq_a8') },
+  { id: 'q8', q: t('pricing_faq_q8'), a: t('pricing_faq_a8') }
   // { id: 'q9', q: t('pricing_faq_q9'), a: t('pricing_faq_a9') }
 ]
 ---
@@ -85,18 +85,26 @@ const faqItems = [
       <section class="pricing__section pricing__section--hero">
         <div class="pricing__content">
           <h2 class="pricing__title">{t('pricing_title')}</h2>
-          {isEarlyStage && (
-            <div class="pricing__badge">
-              <span class="pricing__badge-text pricing__badge-text--cyan">
-                {t('pricing_early_stage_limit')}
-              </span>
-            </div>
-          )}
-          {isEarlyStage && (
-            <p class="pricing__early-stage-count" id="pricing-early-count" aria-live="polite">
-              <span id="pricing-early-count-value"></span>
-            </p>
-          )}
+          {
+            isEarlyStage && (
+              <div class="pricing__badge">
+                <span class="pricing__badge-text pricing__badge-text--cyan">
+                  {t('pricing_early_stage_limit')}
+                </span>
+              </div>
+            )
+          }
+          {
+            isEarlyStage && (
+              <p
+                class="pricing__early-stage-count"
+                id="pricing-early-count"
+                aria-live="polite"
+              >
+                <span id="pricing-early-count-value" />
+              </p>
+            )
+          }
           <div class="pricing__plans pricing__plans--centered">
             <article
               class="card card--outline pricing__plan-card pricing__plan-card--highlighted"
@@ -111,7 +119,9 @@ const faqItems = [
                     data-price-id-month={PRO_ONETIME_PRICE_ID}
                   >
                     <div class="pricing__plan-price-current">
-                      <span class="pricing__plan-price-amount">{isEarlyStage ? t('pricing_free') : '--'}</span>
+                      <span class="pricing__plan-price-amount"
+                        >{isEarlyStage ? t('pricing_free') : '--'}</span
+                      >
                     </div>
                     <!-- <p class="pricing__plan-subline">
                       {t('pricing_lifetime_subline')}
@@ -142,52 +152,56 @@ const faqItems = [
               <div
                 class="card__footer pricing__plan-footer pricing__plan-footer--column"
               >
-                {isEarlyStage ? (
-                  <Button
-                    href={localePath('/auth')}
-                    variant="solid"
-                    size="lg"
-                    color="cyan"
-                    class="pricing__plan-button"
-                  >
-                    {t('pricing_cta_early')}
-                  </Button>
-                ) : isLaunched ? (
-                  <Button
-                    type="button"
-                    variant="solid"
-                    size="lg"
-                    color="cyan"
-                    class="pricing__plan-button"
-                    data-open-checkout="pro"
-                    data-price-id={PRO_ONETIME_PRICE_ID}
-                  >
-                    {t('pricing_lifetime_cta')}
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="solid"
-                    size="lg"
-                    color="gray"
-                    class="pricing__plan-button pricing__plan-button--coming-soon"
-                    disabled
-                  >
-                    {t('courses_comingSoon')}
-                  </Button>
-                )}
-                {!isEarlyStage && (
-                  <p class="pricing__accessible-link">
-                    {t('pricing_discount_intro')}{' '}
-                    <button
-                      type="button"
-                      class="pricing__accessible-btn"
-                      data-open-discount-dialog
+                {
+                  isEarlyStage ? (
+                    <Button
+                      href={localePath('/auth')}
+                      variant="solid"
+                      size="lg"
+                      color="cyan"
+                      class="pricing__plan-button"
                     >
-                      {t('pricing_discount_open_cta')}
-                    </button>
-                  </p>
-                )}
+                      {t('pricing_cta_early')}
+                    </Button>
+                  ) : isLaunched ? (
+                    <Button
+                      type="button"
+                      variant="solid"
+                      size="lg"
+                      color="cyan"
+                      class="pricing__plan-button"
+                      data-open-checkout="pro"
+                      data-price-id={PRO_ONETIME_PRICE_ID}
+                    >
+                      {t('pricing_lifetime_cta')}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="solid"
+                      size="lg"
+                      color="gray"
+                      class="pricing__plan-button pricing__plan-button--coming-soon"
+                      disabled
+                    >
+                      {t('courses_comingSoon')}
+                    </Button>
+                  )
+                }
+                {
+                  !isEarlyStage && (
+                    <p class="pricing__accessible-link">
+                      {t('pricing_discount_intro')}{' '}
+                      <button
+                        type="button"
+                        class="pricing__accessible-btn"
+                        data-open-discount-dialog
+                      >
+                        {t('pricing_discount_open_cta')}
+                      </button>
+                    </p>
+                  )
+                }
               </div>
             </article>
           </div>
@@ -229,13 +243,19 @@ const faqItems = [
                 </div>
                 <h3>{t('home_stats_adoption_label')}</h3>
                 <p>{t('home_stats_adoption_description')}</p>
-                <p class="pricing__stats-src">{t('home_stats_adoption_source')}</p>
+                <p class="pricing__stats-src">
+                  {t('home_stats_adoption_source')}
+                </p>
               </div>
               <div class="pricing__stats-card">
-                <div class="pricing__stats-val">{t('home_stats_market_value')}</div>
+                <div class="pricing__stats-val">
+                  {t('home_stats_market_value')}
+                </div>
                 <h3>{t('home_stats_market_label')}</h3>
                 <p>{t('home_stats_market_description')}</p>
-                <p class="pricing__stats-src">{t('home_stats_market_source')}</p>
+                <p class="pricing__stats-src">
+                  {t('home_stats_market_source')}
+                </p>
               </div>
               <div class="pricing__stats-card">
                 <div class="pricing__stats-val">
@@ -243,7 +263,9 @@ const faqItems = [
                 </div>
                 <h3>{t('home_stats_companies_label')}</h3>
                 <p>{t('home_stats_companies_description')}</p>
-                <p class="pricing__stats-src">{t('home_stats_companies_source')}</p>
+                <p class="pricing__stats-src">
+                  {t('home_stats_companies_source')}
+                </p>
               </div>
             </div>
           </div>
@@ -264,7 +286,10 @@ const faqItems = [
                     >
                       <summary class="accordion__item-trigger">
                         <span class="pricing__faq-question">{faq.q}</span>
-                        <span class="accordion__item-indicator" aria-hidden="true">
+                        <span
+                          class="accordion__item-indicator"
+                          aria-hidden="true"
+                        >
                           ▼
                         </span>
                       </summary>
@@ -364,9 +389,15 @@ const faqItems = [
   </div>
 </Layout>
 
-{!isEarlyStage && (
-  <script is:inline id="paddle-js" src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
-)}
+{
+  !isEarlyStage && (
+    <script
+      is:inline
+      id="paddle-js"
+      src="https://cdn.paddle.com/paddle/v2/paddle.js"
+    />
+  )
+}
 <script
   is:inline
   define:vars={{
@@ -387,330 +418,336 @@ const faqItems = [
       fetch('/api/stats/early-access-count')
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
-          if (data != null && typeof data.count === 'number' && typeof data.cap === 'number') {
+          if (
+            data != null &&
+            typeof data.count === 'number' &&
+            typeof data.cap === 'number'
+          ) {
             countEl.textContent = `${data.count} / ${data.cap}`
           }
         })
         .catch(() => {})
     }
   } else {
-  const PADDLE_INITED = 'data-paddle-inited'
-  const CHECKOUT_DIALOG_INITED = 'data-pricing-checkout-dialog-inited'
-  const DISCOUNT_DIALOG_INITED = 'data-pricing-discount-dialog-inited'
-  const PRICING_VIEW_SENT = 'data-pricing-view-sent'
-  const PRICING_PAGE_KEY = 'pricing'
+    const PADDLE_INITED = 'data-paddle-inited'
+    const CHECKOUT_DIALOG_INITED = 'data-pricing-checkout-dialog-inited'
+    const DISCOUNT_DIALOG_INITED = 'data-pricing-discount-dialog-inited'
+    const PRICING_VIEW_SENT = 'data-pricing-view-sent'
+    const PRICING_PAGE_KEY = 'pricing'
 
-  function capturePricingEvent(eventName, properties = {}) {
-    window.posthog?.capture?.(eventName, {
-      page_key: PRICING_PAGE_KEY,
-      lang: checkoutLang,
-      ...properties
-    })
-  }
-
-  function capturePricingViewOnce() {
-    const root = document.documentElement
-    if (root.hasAttribute(PRICING_VIEW_SENT)) {
-      return
-    }
-    root.setAttribute(PRICING_VIEW_SENT, '')
-    capturePricingEvent('pricing_view')
-  }
-
-  function stripTrailingZeroCents(value) {
-    return value.replace(/([.,])00\b/g, '')
-  }
-
-  function roundDisplayedPrice(value) {
-    const match = value.match(/(\d+[.,]\d+|\d+)/)
-    if (match == null) {
-      return value
-    }
-
-    const amount = Number.parseFloat(match[0].replace(',', '.'))
-    if (!Number.isFinite(amount)) {
-      return value
-    }
-
-    return value.replace(match[0], String(Math.round(amount)))
-  }
-
-  function moveEuroSymbolAfterAmount(value) {
-    return value.replace(/€\s*(\d+(?:[.,]\d+)?)/g, '$1€')
-  }
-
-  function showCheckoutError(message) {
-    const errorEl = document.getElementById('pricing-checkout-email-error')
-    if (errorEl == null) {
-      return
-    }
-    errorEl.textContent = message
-    errorEl.removeAttribute('hidden')
-  }
-
-  function hideCheckoutError() {
-    const errorEl = document.getElementById('pricing-checkout-email-error')
-    if (errorEl == null) {
-      return
-    }
-    errorEl.textContent = ''
-    errorEl.setAttribute('hidden', '')
-  }
-
-  async function hydratePrices() {
-    const banners = Array.from(
-      document.querySelectorAll(
-        '.pricing__plan-price-banner[data-price-id-month]'
-      )
-    )
-    const discountAmountEls = Array.from(
-      document.querySelectorAll('[data-discount-price-id]')
-    )
-    if (banners.length === 0 && discountAmountEls.length === 0) {
-      return
-    }
-    const paddle = await ensurePaddleInitialized()
-    if (paddle == null) {
-      return
-    }
-    const priceIds = new Set()
-    banners.forEach((banner) => {
-      const id = banner.getAttribute('data-price-id-month') ?? ''
-      if (id !== '') {
-        priceIds.add(id)
-      }
-    })
-    discountAmountEls.forEach((priceEl) => {
-      const id = priceEl.getAttribute('data-discount-price-id') ?? ''
-      if (id !== '') {
-        priceIds.add(id)
-      }
-    })
-    if (priceIds.size === 0) {
-      return
-    }
-    const items = Array.from(priceIds).map((priceId) => ({
-      priceId,
-      quantity: 1
-    }))
-    try {
-      const result = await paddle.PricePreview({ items })
-      const totalsByPriceId = new Map()
-      result.data.details.lineItems.forEach((lineItem) => {
-        totalsByPriceId.set(lineItem.price.id, lineItem.formattedTotals.total)
+    function capturePricingEvent(eventName, properties = {}) {
+      window.posthog?.capture?.(eventName, {
+        page_key: PRICING_PAGE_KEY,
+        lang: checkoutLang,
+        ...properties
       })
+    }
+
+    function capturePricingViewOnce() {
+      const root = document.documentElement
+      if (root.hasAttribute(PRICING_VIEW_SENT)) {
+        return
+      }
+      root.setAttribute(PRICING_VIEW_SENT, '')
+      capturePricingEvent('pricing_view')
+    }
+
+    function stripTrailingZeroCents(value) {
+      return value.replace(/([.,])00\b/g, '')
+    }
+
+    function roundDisplayedPrice(value) {
+      const match = value.match(/(\d+[.,]\d+|\d+)/)
+      if (match == null) {
+        return value
+      }
+
+      const amount = Number.parseFloat(match[0].replace(',', '.'))
+      if (!Number.isFinite(amount)) {
+        return value
+      }
+
+      return value.replace(match[0], String(Math.round(amount)))
+    }
+
+    function moveEuroSymbolAfterAmount(value) {
+      return value.replace(/€\s*(\d+(?:[.,]\d+)?)/g, '$1€')
+    }
+
+    function showCheckoutError(message) {
+      const errorEl = document.getElementById('pricing-checkout-email-error')
+      if (errorEl == null) {
+        return
+      }
+      errorEl.textContent = message
+      errorEl.removeAttribute('hidden')
+    }
+
+    function hideCheckoutError() {
+      const errorEl = document.getElementById('pricing-checkout-email-error')
+      if (errorEl == null) {
+        return
+      }
+      errorEl.textContent = ''
+      errorEl.setAttribute('hidden', '')
+    }
+
+    async function hydratePrices() {
+      const banners = Array.from(
+        document.querySelectorAll(
+          '.pricing__plan-price-banner[data-price-id-month]'
+        )
+      )
+      const discountAmountEls = Array.from(
+        document.querySelectorAll('[data-discount-price-id]')
+      )
+      if (banners.length === 0 && discountAmountEls.length === 0) {
+        return
+      }
+      const paddle = await ensurePaddleInitialized()
+      if (paddle == null) {
+        return
+      }
+      const priceIds = new Set()
       banners.forEach((banner) => {
-        const priceId = banner.getAttribute('data-price-id-month') ?? ''
-        const total = totalsByPriceId.get(priceId)
-        if (total == null) {
-          return
-        }
-        const amountEl = banner.querySelector('.pricing__plan-price-amount')
-        if (amountEl != null) {
-          amountEl.textContent = moveEuroSymbolAfterAmount(
-            roundDisplayedPrice(stripTrailingZeroCents(total))
-          )
+        const id = banner.getAttribute('data-price-id-month') ?? ''
+        if (id !== '') {
+          priceIds.add(id)
         }
       })
       discountAmountEls.forEach((priceEl) => {
-        const priceId = priceEl.getAttribute('data-discount-price-id') ?? ''
-        const total = totalsByPriceId.get(priceId)
-        if (total == null) {
-          return
+        const id = priceEl.getAttribute('data-discount-price-id') ?? ''
+        if (id !== '') {
+          priceIds.add(id)
         }
-        priceEl.textContent = moveEuroSymbolAfterAmount(
-          roundDisplayedPrice(stripTrailingZeroCents(total))
-        )
       })
-    } catch (error) {
-      console.error('[Paddle] price hydration failed', error)
-    }
-  }
-
-  async function ensurePaddleInitialized() {
-    const paddle = window.Paddle
-    if (paddle == null) {
-      return null
-    }
-
-    if (!document.documentElement.hasAttribute(PADDLE_INITED)) {
-      if (
-        isStaging &&
-        paddle.Environment != null &&
-        typeof paddle.Environment.set === 'function'
-      ) {
-        paddle.Environment.set('sandbox')
+      if (priceIds.size === 0) {
+        return
       }
-      paddle.Initialize({ token: paddleClientToken })
-      document.documentElement.setAttribute(PADDLE_INITED, '')
+      const items = Array.from(priceIds).map((priceId) => ({
+        priceId,
+        quantity: 1
+      }))
+      try {
+        const result = await paddle.PricePreview({ items })
+        const totalsByPriceId = new Map()
+        result.data.details.lineItems.forEach((lineItem) => {
+          totalsByPriceId.set(lineItem.price.id, lineItem.formattedTotals.total)
+        })
+        banners.forEach((banner) => {
+          const priceId = banner.getAttribute('data-price-id-month') ?? ''
+          const total = totalsByPriceId.get(priceId)
+          if (total == null) {
+            return
+          }
+          const amountEl = banner.querySelector('.pricing__plan-price-amount')
+          if (amountEl != null) {
+            amountEl.textContent = moveEuroSymbolAfterAmount(
+              roundDisplayedPrice(stripTrailingZeroCents(total))
+            )
+          }
+        })
+        discountAmountEls.forEach((priceEl) => {
+          const priceId = priceEl.getAttribute('data-discount-price-id') ?? ''
+          const total = totalsByPriceId.get(priceId)
+          if (total == null) {
+            return
+          }
+          priceEl.textContent = moveEuroSymbolAfterAmount(
+            roundDisplayedPrice(stripTrailingZeroCents(total))
+          )
+        })
+      } catch (error) {
+        console.error('[Paddle] price hydration failed', error)
+      }
     }
 
-    return paddle
-  }
+    async function ensurePaddleInitialized() {
+      const paddle = window.Paddle
+      if (paddle == null) {
+        return null
+      }
 
-  function getActivePriceIdForPlan(planName) {
-    const button = document.querySelector(`[data-open-checkout="${planName}"]`)
-    if (!(button instanceof HTMLElement)) {
-      return null
+      if (!document.documentElement.hasAttribute(PADDLE_INITED)) {
+        if (
+          isStaging &&
+          paddle.Environment != null &&
+          typeof paddle.Environment.set === 'function'
+        ) {
+          paddle.Environment.set('sandbox')
+        }
+        paddle.Initialize({ token: paddleClientToken })
+        document.documentElement.setAttribute(PADDLE_INITED, '')
+      }
+
+      return paddle
     }
-    return button.getAttribute('data-price-id')
-  }
 
-  async function openCheckoutForPlan(planName, email) {
-    const priceId = getActivePriceIdForPlan(planName)
-    const paddle = await ensurePaddleInitialized()
-    if (!priceId || !paddle) {
-      capturePricingEvent('checkout_open_failed', {
+    function getActivePriceIdForPlan(planName) {
+      const button = document.querySelector(
+        `[data-open-checkout="${planName}"]`
+      )
+      if (!(button instanceof HTMLElement)) {
+        return null
+      }
+      return button.getAttribute('data-price-id')
+    }
+
+    async function openCheckoutForPlan(planName, email) {
+      const priceId = getActivePriceIdForPlan(planName)
+      const paddle = await ensurePaddleInitialized()
+      if (!priceId || !paddle) {
+        capturePricingEvent('checkout_open_failed', {
+          plan: planName,
+          reason: priceId ? 'paddle_unavailable' : 'missing_price_id'
+        })
+        if (!paddle) {
+          console.error('[Paddle] unavailable for checkout open.')
+        }
+        return false
+      }
+
+      const successUrl = `${window.location.origin}${checkoutSuccessPath}`
+      const checkoutCustomData = {
+        lang: checkoutLang,
+        email
+      }
+      if (loggedInCustomerUserId !== '') {
+        checkoutCustomData.user_id = loggedInCustomerUserId
+      }
+
+      paddle.Checkout.open({
+        items: [{ priceId, quantity: 1 }],
+        customer: { email },
+        customData: checkoutCustomData,
+        settings: {
+          displayMode: 'overlay',
+          successUrl
+        }
+      })
+      capturePricingEvent('checkout_opened', {
         plan: planName,
-        reason: priceId ? 'paddle_unavailable' : 'missing_price_id'
+        price_id: priceId
       })
-      if (!paddle) {
-        console.error('[Paddle] unavailable for checkout open.')
+      return true
+    }
+
+    function runWhenReady() {
+      const run = () => requestAnimationFrame(hydratePrices)
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', run)
+      } else {
+        run()
       }
-      return false
     }
 
-    const successUrl = `${window.location.origin}${checkoutSuccessPath}`
-    const checkoutCustomData = {
-      lang: checkoutLang,
-      email
+    runWhenReady()
+    const paddleScript = document.getElementById('paddle-js')
+    if (paddleScript != null) {
+      paddleScript.addEventListener('load', hydratePrices)
     }
-    if (loggedInCustomerUserId !== '') {
-      checkoutCustomData.user_id = loggedInCustomerUserId
-    }
+    document.addEventListener('astro:after-swap', hydratePrices)
+    document.addEventListener('astro:page-load', hydratePrices)
 
-    paddle.Checkout.open({
-      items: [{ priceId, quantity: 1 }],
-      customer: { email },
-      customData: checkoutCustomData,
-      settings: {
-        displayMode: 'overlay',
-        successUrl
-      }
-    })
-    capturePricingEvent('checkout_opened', {
-      plan: planName,
-      price_id: priceId
-    })
-    return true
-  }
-
-  function runWhenReady() {
-    const run = () => requestAnimationFrame(hydratePrices)
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', run)
-    } else {
-      run()
-    }
-  }
-
-  runWhenReady()
-  const paddleScript = document.getElementById('paddle-js')
-  if (paddleScript != null) {
-    paddleScript.addEventListener('load', hydratePrices)
-  }
-  document.addEventListener('astro:after-swap', hydratePrices)
-  document.addEventListener('astro:page-load', hydratePrices)
-
-  function setupCheckoutDialog() {
-    const dialog = document.getElementById(checkoutDialogId)
-    const form = document.getElementById('pricing-checkout-email-form')
-    if (
-      !(dialog instanceof HTMLDialogElement) ||
-      !(form instanceof HTMLFormElement)
-    ) {
-      return
-    }
-    if (dialog.hasAttribute(CHECKOUT_DIALOG_INITED)) {
-      return
-    }
-    dialog.setAttribute(CHECKOUT_DIALOG_INITED, '')
-
-    document.querySelectorAll('[data-open-checkout]').forEach((trigger) => {
-      if (!(trigger instanceof HTMLElement)) {
+    function setupCheckoutDialog() {
+      const dialog = document.getElementById(checkoutDialogId)
+      const form = document.getElementById('pricing-checkout-email-form')
+      if (
+        !(dialog instanceof HTMLDialogElement) ||
+        !(form instanceof HTMLFormElement)
+      ) {
         return
       }
-      trigger.addEventListener('click', async () => {
-        const planName = trigger.getAttribute('data-open-checkout') ?? ''
-        if (planName === '') {
-          return
-        }
-        capturePricingEvent('pricing_cta_clicked', { plan: planName })
-        if (loggedInCustomerEmail !== '') {
-          capturePricingEvent('checkout_started', {
-            plan: planName,
-            source: 'logged_in_direct'
-          })
-          await openCheckoutForPlan(planName, loggedInCustomerEmail)
-          return
-        }
-        dialog.setAttribute('data-checkout-plan', planName)
-        hideCheckoutError()
-        const emailInput = form.elements.namedItem('email')
-        if (emailInput instanceof HTMLInputElement) {
-          emailInput.value = ''
-        }
-        dialog.showModal()
-      })
-    })
-
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault()
-      hideCheckoutError()
-
-      const emailInput = form.elements.namedItem('email')
-      if (!(emailInput instanceof HTMLInputElement)) {
-        showCheckoutError(checkoutInvalidEmailError)
+      if (dialog.hasAttribute(CHECKOUT_DIALOG_INITED)) {
         return
       }
+      dialog.setAttribute(CHECKOUT_DIALOG_INITED, '')
 
-      const email = emailInput.value.trim()
-      if (!emailInput.checkValidity()) {
-        showCheckoutError(checkoutInvalidEmailError)
-        return
-      }
-
-      const planName = dialog.getAttribute('data-checkout-plan') ?? ''
-      if (planName === '') {
-        return
-      }
-
-      capturePricingEvent('checkout_started', { plan: planName })
-      const checkoutOpened = await openCheckoutForPlan(planName, email)
-      if (checkoutOpened) {
-        dialog.close()
-      }
-    })
-  }
-
-  function setupDiscountInfoDialog() {
-    const dialog = document.getElementById('pricing-discount-info-dialog')
-    if (!(dialog instanceof HTMLDialogElement)) {
-      return
-    }
-    if (dialog.hasAttribute(DISCOUNT_DIALOG_INITED)) {
-      return
-    }
-    dialog.setAttribute(DISCOUNT_DIALOG_INITED, '')
-
-    document
-      .querySelectorAll('[data-open-discount-dialog]')
-      .forEach((trigger) => {
+      document.querySelectorAll('[data-open-checkout]').forEach((trigger) => {
         if (!(trigger instanceof HTMLElement)) {
           return
         }
-        trigger.addEventListener('click', () => {
+        trigger.addEventListener('click', async () => {
+          const planName = trigger.getAttribute('data-open-checkout') ?? ''
+          if (planName === '') {
+            return
+          }
+          capturePricingEvent('pricing_cta_clicked', { plan: planName })
+          if (loggedInCustomerEmail !== '') {
+            capturePricingEvent('checkout_started', {
+              plan: planName,
+              source: 'logged_in_direct'
+            })
+            await openCheckoutForPlan(planName, loggedInCustomerEmail)
+            return
+          }
+          dialog.setAttribute('data-checkout-plan', planName)
+          hideCheckoutError()
+          const emailInput = form.elements.namedItem('email')
+          if (emailInput instanceof HTMLInputElement) {
+            emailInput.value = ''
+          }
           dialog.showModal()
         })
       })
-  }
 
-  capturePricingViewOnce()
-  setupCheckoutDialog()
-  setupDiscountInfoDialog()
-  document.addEventListener('astro:page-load', setupCheckoutDialog)
-  document.addEventListener('astro:page-load', setupDiscountInfoDialog)
-  document.addEventListener('astro:page-load', capturePricingViewOnce)
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault()
+        hideCheckoutError()
+
+        const emailInput = form.elements.namedItem('email')
+        if (!(emailInput instanceof HTMLInputElement)) {
+          showCheckoutError(checkoutInvalidEmailError)
+          return
+        }
+
+        const email = emailInput.value.trim()
+        if (!emailInput.checkValidity()) {
+          showCheckoutError(checkoutInvalidEmailError)
+          return
+        }
+
+        const planName = dialog.getAttribute('data-checkout-plan') ?? ''
+        if (planName === '') {
+          return
+        }
+
+        capturePricingEvent('checkout_started', { plan: planName })
+        const checkoutOpened = await openCheckoutForPlan(planName, email)
+        if (checkoutOpened) {
+          dialog.close()
+        }
+      })
+    }
+
+    function setupDiscountInfoDialog() {
+      const dialog = document.getElementById('pricing-discount-info-dialog')
+      if (!(dialog instanceof HTMLDialogElement)) {
+        return
+      }
+      if (dialog.hasAttribute(DISCOUNT_DIALOG_INITED)) {
+        return
+      }
+      dialog.setAttribute(DISCOUNT_DIALOG_INITED, '')
+
+      document
+        .querySelectorAll('[data-open-discount-dialog]')
+        .forEach((trigger) => {
+          if (!(trigger instanceof HTMLElement)) {
+            return
+          }
+          trigger.addEventListener('click', () => {
+            dialog.showModal()
+          })
+        })
+    }
+
+    capturePricingViewOnce()
+    setupCheckoutDialog()
+    setupDiscountInfoDialog()
+    document.addEventListener('astro:page-load', setupCheckoutDialog)
+    document.addEventListener('astro:page-load', setupDiscountInfoDialog)
+    document.addEventListener('astro:page-load', capturePricingViewOnce)
   }
 </script>
 

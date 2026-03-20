@@ -24,13 +24,13 @@ Those three IP:port pairs are the current backend Pods. The Endpoints controller
 
 ```mermaid
 graph TB
-    SVC["Service\nweb-service\nSelector: app=web"]
-    EP["Endpoints\nweb-service\n10.244.1.5:80\n10.244.2.11:80\n10.244.3.8:80"]
-    EC["Endpoints Controller\n(kube-controller-manager)"]
-    KP["kube-proxy\n(on each node)"]
-    P1["Pod\napp=web\n10.244.1.5"]
-    P2["Pod\napp=web\n10.244.2.11"]
-    P3["Pod\napp=web\n10.244.3.8"]
+    SVC["Service<br/>web-service<br/>Selector: app=web"]
+    EP["Endpoints<br/>web-service<br/>10.244.1.5:80<br/>10.244.2.11:80<br/>10.244.3.8:80"]
+    EC["Endpoints Controller<br/>(kube-controller-manager)"]
+    KP["kube-proxy<br/>(on each node)"]
+    P1["Pod<br/>app=web<br/>10.244.1.5"]
+    P2["Pod<br/>app=web<br/>10.244.2.11"]
+    P3["Pod<br/>app=web<br/>10.244.3.8"]
 
     SVC -->|"defines selector"| EC
     EC -->|"watches Pods, writes"| EP

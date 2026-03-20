@@ -42,7 +42,11 @@ describe('addFlashParam', () => {
 
   it('preserves existing query params', () => {
     expect(
-      addFlashParam('/en/profile?tab=security', 'account_error', 'delete_failed')
+      addFlashParam(
+        '/en/profile?tab=security',
+        'account_error',
+        'delete_failed'
+      )
     ).toBe('/en/profile?tab=security&account_error=delete_failed')
   })
 })

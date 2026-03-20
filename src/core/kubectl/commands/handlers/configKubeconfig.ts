@@ -1,7 +1,5 @@
 import { parse as yamlParse, stringify as yamlStringify } from 'yaml'
-import type {
-  ClusterStateData
-} from '../../../cluster/ClusterState'
+import type { ClusterStateData } from '../../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
 import type { Result } from '../../../shared/result'

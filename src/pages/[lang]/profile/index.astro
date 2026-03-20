@@ -17,7 +17,9 @@ const {
 } = await supabase.auth.getUser()
 
 if (!user) {
-  return Astro.redirect(`${localePath('/auth')}?redirect=${encodeURIComponent(profilePath)}`)
+  return Astro.redirect(
+    `${localePath('/auth')}?redirect=${encodeURIComponent(profilePath)}`
+  )
 }
 
 let preferredLocale: 'en' | 'fr' = lang
@@ -88,7 +90,9 @@ const accountActionMessageByCode: Record<string, string> = {
 //   billingError != null ? billingErrorMessageByAction[billingError] : null
 const refundConfirmMessage = t('profile_subscriptionRefundConfirmMessage')
 const refundFeedbackPrompt = t('profile_subscriptionRefundFeedbackPrompt')
-const refundFeedbackPlaceholder = t('profile_subscriptionRefundFeedbackPlaceholder')
+const refundFeedbackPlaceholder = t(
+  'profile_subscriptionRefundFeedbackPlaceholder'
+)
 ---
 
 <Layout>
@@ -237,8 +241,7 @@ const refundFeedbackPlaceholder = t('profile_subscriptionRefundFeedbackPlacehold
         class="profile__refund-feedback-input"
         rows="4"
         maxlength="1500"
-        placeholder={refundFeedbackPlaceholder}
-      ></textarea>
+        placeholder={refundFeedbackPlaceholder}></textarea>
       <p class="profile__section-desc">{refundConfirmMessage}</p>
     </div>
     <form
@@ -380,7 +383,6 @@ const refundFeedbackPlaceholder = t('profile_subscriptionRefundFeedbackPlacehold
     outline: 2px solid var(--color-cyan-8);
     outline-offset: 2px;
   }
-
 </style>
 
 <script>

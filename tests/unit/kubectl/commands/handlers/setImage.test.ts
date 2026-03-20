@@ -115,7 +115,9 @@ describe('kubectl set image handler', () => {
       })
     )
 
-    const rsParsed = parseCommand('kubectl set image replicaset/my-rs app=nginx:1.26')
+    const rsParsed = parseCommand(
+      'kubectl set image replicaset/my-rs app=nginx:1.26'
+    )
     expect(rsParsed.ok).toBe(true)
     if (rsParsed.ok) {
       const rsResult = handleSetImage(apiServer, rsParsed.value)
@@ -125,7 +127,9 @@ describe('kubectl set image handler', () => {
       }
     }
 
-    const dsParsed = parseCommand('kubectl set image daemonset/my-ds agent=busybox:1.36')
+    const dsParsed = parseCommand(
+      'kubectl set image daemonset/my-ds agent=busybox:1.36'
+    )
     expect(dsParsed.ok).toBe(true)
     if (dsParsed.ok) {
       const dsResult = handleSetImage(apiServer, dsParsed.value)
@@ -137,7 +141,9 @@ describe('kubectl set image handler', () => {
   })
 
   it('should return not found when target resource does not exist', () => {
-    const parsed = parseCommand('kubectl set image pod/not-there web=nginx:1.26')
+    const parsed = parseCommand(
+      'kubectl set image pod/not-there web=nginx:1.26'
+    )
     expect(parsed.ok).toBe(true)
     if (!parsed.ok) {
       return
@@ -160,7 +166,9 @@ describe('kubectl set image handler', () => {
       })
     )
 
-    const parsed = parseCommand('kubectl set image pod/my-pod sidecar=busybox:1.36')
+    const parsed = parseCommand(
+      'kubectl set image pod/my-pod sidecar=busybox:1.36'
+    )
     expect(parsed.ok).toBe(true)
     if (!parsed.ok) {
       return

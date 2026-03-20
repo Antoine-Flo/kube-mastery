@@ -9,7 +9,11 @@ import type {
   ConformanceProgressListener
 } from '../bin/lib/conformance-engine'
 import type { ConformanceAction } from './types'
-import type { BuildSuiteOptions, BuiltScenarioSuite, ConformanceScenario } from './types'
+import type {
+  BuildSuiteOptions,
+  BuiltScenarioSuite,
+  ConformanceScenario
+} from './types'
 
 const createCommandAction = (
   scenarioName: string,
@@ -41,8 +45,16 @@ const toCommandActions = (
 export const buildSuiteFromScenario = (
   options: BuildSuiteOptions
 ): BuiltScenarioSuite => {
-  const setupActions = toCommandActions(options.name, 'setup', options.scenario.setup)
-  const commandActions = toCommandActions(options.name, 'cmds', options.scenario.cmds)
+  const setupActions = toCommandActions(
+    options.name,
+    'setup',
+    options.scenario.setup
+  )
+  const commandActions = toCommandActions(
+    options.name,
+    'cmds',
+    options.scenario.cmds
+  )
   const cleanupActions = toCommandActions(
     options.name,
     'cleanup',

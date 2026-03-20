@@ -169,9 +169,11 @@ export interface MountClusterViewerOptions {
 }
 
 function getSortedNamespaces(env: EmulatedEnvironment): string[] {
-  const namespaces = env.apiServer.listResources('Namespace').map((namespace) => {
-    return namespace.metadata.name
-  })
+  const namespaces = env.apiServer
+    .listResources('Namespace')
+    .map((namespace) => {
+      return namespace.metadata.name
+    })
   return namespaces.sort((a, b) => {
     return a.localeCompare(b)
   })

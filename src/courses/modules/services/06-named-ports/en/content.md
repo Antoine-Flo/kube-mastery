@@ -71,9 +71,9 @@ When Kubernetes processes this Service, it looks up the name `http` in the match
 
 ```mermaid
 graph LR
-    SVC["Service\ntargetPort: http"]
-    RESOLVE["Kubernetes resolves\n'http' → containerPort 80"]
-    POD["Pod\nports:\n  - name: http\n    containerPort: 80"]
+    SVC["Service<br/>targetPort: http"]
+    RESOLVE["Kubernetes resolves<br/>'http' → containerPort 80"]
+    POD["Pod<br/>ports:<br/>  - name: http<br/>    containerPort: 80"]
 
     SVC -->|"looks up name"| RESOLVE
     RESOLVE -->|"forwards to"| POD

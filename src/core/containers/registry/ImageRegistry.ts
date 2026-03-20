@@ -1,5 +1,9 @@
 import { error, success, type Result } from '../../shared/result'
-import { SEED_IMAGES, type ImageManifest, type LogProfile } from './seedRegistry'
+import {
+  SEED_IMAGES,
+  type ImageManifest,
+  type LogProfile
+} from './seedRegistry'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONTAINER IMAGE REGISTRY

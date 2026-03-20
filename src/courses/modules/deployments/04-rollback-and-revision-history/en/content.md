@@ -73,10 +73,10 @@ This is particularly useful in multi-step debugging scenarios: you've tried seve
 
 ```mermaid
 graph LR
-    R1["Revision 1\nnginx:1.28\nRS-abc (replicas:3)"]
-    R2["Revision 2\nnginx:1.26\nRS-def (replicas:3)"]
-    R3["Revision 3\nnginx:1.27\nRS-ghi (replicas:3 → 0)"]
-    R4["Revision 4\nnginx:1.26\nRS-def (replicas:0 → 3)"]
+    R1["Revision 1<br/>nginx:1.28<br/>RS-abc (replicas:3)"]
+    R2["Revision 2<br/>nginx:1.26<br/>RS-def (replicas:3)"]
+    R3["Revision 3<br/>nginx:1.27<br/>RS-ghi (replicas:3 → 0)"]
+    R4["Revision 4<br/>nginx:1.26<br/>RS-def (replicas:0 → 3)"]
 
     R1 -->|"set image 1.26"| R2
     R2 -->|"set image 1.27"| R3
@@ -219,7 +219,7 @@ kubectl rollout status deployment/web-app
 
 ```bash
 kubectl get pods -l app=web \
-  -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
+  -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"<br/>"}{end}'
 # All pods should show nginx:1.26
 ```
 
@@ -240,7 +240,7 @@ kubectl rollout history deployment/web-app
 kubectl rollout undo deployment/web-app --to-revision=1
 kubectl rollout status deployment/web-app
 kubectl get pods -l app=web \
-  -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
+  -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"<br/>"}{end}'
 # All pods should show nginx:1.28
 ```
 

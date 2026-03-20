@@ -51,8 +51,7 @@ export const resolveManifestFilePathsFromFilenameFlag = (
       if (child.type !== 'file') {
         continue
       }
-      const baseName =
-        child.path.split('/').filter(Boolean).pop() || child.name
+      const baseName = child.path.split('/').filter(Boolean).pop() || child.name
       if (!hasManifestFilenameExtension(baseName)) {
         continue
       }

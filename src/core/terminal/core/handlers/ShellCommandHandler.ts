@@ -7,7 +7,10 @@
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import { createShellExecutor, parseShellCommand } from '../../../shell/commands'
-import { buildContainerEnvironmentVariables, buildHostEnvironmentVariables } from './containerEnvironment'
+import {
+  buildContainerEnvironmentVariables,
+  buildHostEnvironmentVariables
+} from './containerEnvironment'
 import type { CommandContext } from '../CommandContext'
 import type { CommandHandler } from '../CommandHandler'
 

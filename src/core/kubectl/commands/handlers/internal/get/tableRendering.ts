@@ -144,9 +144,11 @@ const renderWideTable = (
   showLabels: boolean
 ): string => {
   const headers = [...(handler.headersWide ?? [])]
-  const rows = ((handler.formatRowWide != null
-    ? filtered.map(handler.formatRowWide)
-    : []) as string[][]).map((row, index) => {
+  const rows = (
+    (handler.formatRowWide != null
+      ? filtered.map(handler.formatRowWide)
+      : []) as string[][]
+  ).map((row, index) => {
     if (!showLabels) {
       return row
     }

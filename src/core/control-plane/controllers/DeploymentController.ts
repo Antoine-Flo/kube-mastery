@@ -29,7 +29,10 @@
 import type { ApiServerFacade } from '../../api/ApiServerFacade'
 import type { EventBus } from '../../cluster/events/EventBus'
 import type { ClusterEvent } from '../../cluster/events/types'
-import type { Deployment, DeploymentStatus } from '../../cluster/ressources/Deployment'
+import type {
+  Deployment,
+  DeploymentStatus
+} from '../../cluster/ressources/Deployment'
 import { generateTemplateHash } from '../../cluster/ressources/Deployment'
 import type { ReplicaSet } from '../../cluster/ressources/ReplicaSet'
 import { createReplicaSet } from '../../cluster/ressources/ReplicaSet'
@@ -49,7 +52,10 @@ import type {
   ControllerState,
   ReconcilerController
 } from '../controller-runtime/types'
-import { createWorkQueue, type WorkQueue } from '../controller-runtime/WorkQueue'
+import {
+  createWorkQueue,
+  type WorkQueue
+} from '../controller-runtime/WorkQueue'
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
@@ -176,7 +182,9 @@ const computeDeploymentStatus = (
   const now = new Date().toISOString()
   const progressingConditionStatus: 'True' = 'True'
   const progressingReason =
-    updatedReplicas < desiredReplicas ? 'ReplicaSetUpdating' : 'NewReplicaSetAvailable'
+    updatedReplicas < desiredReplicas
+      ? 'ReplicaSetUpdating'
+      : 'NewReplicaSetAvailable'
   const progressingMessage =
     updatedReplicas < desiredReplicas
       ? 'ReplicaSet is updating replicas.'
@@ -467,11 +475,7 @@ export class DeploymentController implements ReconcilerController {
         }
       }
     }
-    this.apiServer.createResource(
-      'ReplicaSet',
-      newRs,
-      newRs.metadata.namespace
-    )
+    this.apiServer.createResource('ReplicaSet', newRs, newRs.metadata.namespace)
     this.apiServer.updateResource(
       'Deployment',
       deploy.metadata.name,
@@ -571,7 +575,10 @@ export class DeploymentController implements ReconcilerController {
       deploy,
       state.getReplicaSets(namespace)
     )
-    const currentReplicaSet = this.findCurrentReplicaSet(deploy, ownedReplicaSets)
+    const currentReplicaSet = this.findCurrentReplicaSet(
+      deploy,
+      ownedReplicaSets
+    )
     const newStatus = computeDeploymentStatus(
       deploy,
       ownedReplicaSets,
@@ -607,14 +614,12 @@ export class DeploymentController implements ReconcilerController {
     )
   }
 
-  private observe(
-    input: {
-      action: 'enqueue' | 'reconcile' | 'skip'
-      key: string
-      reason?: string
-      eventType?: ClusterEventType
-    }
-  ): void {
+  private observe(input: {
+    action: 'enqueue' | 'reconcile' | 'skip'
+    key: string
+    reason?: string
+    eventType?: ClusterEventType
+  }): void {
     reportControllerObservation(this.options, {
       controller: 'DeploymentController',
       action: input.action,

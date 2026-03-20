@@ -1,7 +1,11 @@
 import type { ClusterStateData } from '../../../../../cluster/ClusterState'
 import type { ParsedCommand } from '../../../types'
 import { toResourceKindReference } from '../../../resourceHelpers'
-import { formatKubectlTable, type OutputDirective, renderStructuredPayload } from '../../../output/outputHelpers'
+import {
+  formatKubectlTable,
+  type OutputDirective,
+  renderStructuredPayload
+} from '../../../output/outputHelpers'
 import { renderCustomColumnsTable } from '../../../output/customColumns'
 import { applyFilters, noResourcesMessage } from './filters'
 import { formatLabelsForDisplay } from './podPresentation'

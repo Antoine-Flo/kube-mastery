@@ -60,7 +60,10 @@ describe('kubectl expose handler', () => {
 
   it('should return not found when deployment does not exist', () => {
     const apiServer = createApiServerFacade()
-    const result = handleExpose(apiServer, createParsedExpose({ name: 'missing' }))
+    const result = handleExpose(
+      apiServer,
+      createParsedExpose({ name: 'missing' })
+    )
     expect(result.ok).toBe(false)
     if (!result.ok) {
       expect(result.error).toContain('deployments.apps "missing" not found')

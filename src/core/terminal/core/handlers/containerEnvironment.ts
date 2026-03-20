@@ -36,5 +36,10 @@ export const buildContainerEnvironmentVariables = (
     )
   }
   const customEnvVars = (container.env ?? []).map(resolveEnvVarValue)
-  return success([CONTAINER_PATH, 'HOME=/root', `HOSTNAME=${pod.metadata.name}`, ...customEnvVars])
+  return success([
+    CONTAINER_PATH,
+    'HOME=/root',
+    `HOSTNAME=${pod.metadata.name}`,
+    ...customEnvVars
+  ])
 }

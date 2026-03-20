@@ -47,7 +47,7 @@ stateDiagram-v2
     Pending --> Running: Scheduled + at least one container starts
     Pending --> Failed: Scheduling fails (permanently)
     Running --> Succeeded: All containers exit 0
-    Running --> Failed: Container exits non-zero\n(no more restarts)
+    Running --> Failed: Container exits non-zero<br/>(no more restarts)
     Running --> Unknown: Node communication lost
     Unknown --> Running: Node reconnects
     Unknown --> Failed: Node confirmed lost, Pod evicted

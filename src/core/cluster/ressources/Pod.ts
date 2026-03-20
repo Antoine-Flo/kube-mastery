@@ -340,7 +340,8 @@ const imageRefToPath = (image: string): string => {
     nameWithTag = trimmed.substring(firstSlash + 1)
   }
   const colonIndex = nameWithTag.indexOf(':')
-  const name = colonIndex !== -1 ? nameWithTag.substring(0, colonIndex) : nameWithTag
+  const name =
+    colonIndex !== -1 ? nameWithTag.substring(0, colonIndex) : nameWithTag
   return `${registry}/${name}`
 }
 
@@ -549,20 +550,20 @@ export const createPod = (config: PodConfig): Pod => {
       override?.stateDetails != null
         ? override.stateDetails
         : state === 'Running'
-        ? {
-            state: 'Running',
-            startedAt
-          }
-        : state === 'Terminated'
           ? {
-              state: 'Terminated',
-              reason: 'Completed',
-              exitCode: 0
+              state: 'Running',
+              startedAt
             }
-          : {
-              state: 'Waiting',
-              reason: 'ContainerCreating'
-            }
+          : state === 'Terminated'
+            ? {
+                state: 'Terminated',
+                reason: 'Completed',
+                exitCode: 0
+              }
+            : {
+                state: 'Waiting',
+                reason: 'ContainerCreating'
+              }
     return {
       name: container.name,
       image: container.image,

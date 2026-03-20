@@ -525,8 +525,7 @@ describe('describeFormatters', () => {
                   exitCode: 1,
                   startedAt: '2026-03-13T10:00:00.000Z',
                   finishedAt: '2026-03-13T10:00:05.000Z'
-                },
-                
+                }
               }
             }
           )

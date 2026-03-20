@@ -3,9 +3,7 @@ import type { FileSystem } from '../../../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
 import { parseKubernetesYaml } from '../../../../yamlParser'
-import {
-  createResourceWithEvents
-} from '../../../resourceHelpers'
+import { createResourceWithEvents } from '../../../resourceHelpers'
 import type { ParsedCommand } from '../../../types'
 import {
   buildCreateConfigMapDryRunManifest,

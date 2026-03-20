@@ -91,10 +91,10 @@ Each Event contains several fields that help you understand what happened and wh
 
 ```mermaid
 flowchart TD
-    A["Controller /\nKubelet\n(source)"] -->|"creates or updates"| B[Event Object\nin etcd]
-    B -->|"stored for ~1 hour"| C{Retention\nwindow}
-    C -->|"within 1 hour"| D["kubectl get events\nkubectl describe pod"]
-    C -->|"after 1 hour"| E[Garbage collected\nEvent lost]
+    A["Controller /<br/>Kubelet<br/>(source)"] -->|"creates or updates"| B[Event Object<br/>in etcd]
+    B -->|"stored for ~1 hour"| C{Retention<br/>window}
+    C -->|"within 1 hour"| D["kubectl get events<br/>kubectl describe pod"]
+    C -->|"after 1 hour"| E[Garbage collected<br/>Event lost]
     D --> F[Your terminal]
 ```
 

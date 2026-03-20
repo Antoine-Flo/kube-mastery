@@ -44,7 +44,8 @@ const publishedDate = new Intl.DateTimeFormat(isFrench ? 'fr-FR' : 'en-US', {
   <main class="blog-article">
     <p>
       <a href={localePath('/blog')}>
-        <span aria-hidden="true">←</span> {isFrench ? 'Retour' : 'Back'}
+        <span aria-hidden="true">←</span>
+        {isFrench ? 'Retour' : 'Back'}
       </a>
     </p>
     <div class="blog-article-meta">
@@ -55,12 +56,14 @@ const publishedDate = new Intl.DateTimeFormat(isFrench ? 'fr-FR' : 'en-US', {
     <article class="prose">
       <Content />
     </article>
-    {frontmatter.tags && frontmatter.tags.length > 0 && (
-      <div class="blog-tags">
-        {frontmatter.tags.map((tag: string) => (
-          <span class="blog-tag">{tag}</span>
-        ))}
-      </div>
-    )}
+    {
+      frontmatter.tags && frontmatter.tags.length > 0 && (
+        <div class="blog-tags">
+          {frontmatter.tags.map((tag: string) => (
+            <span class="blog-tag">{tag}</span>
+          ))}
+        </div>
+      )
+    }
   </main>
 </Layout>

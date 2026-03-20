@@ -26,11 +26,11 @@ The controller reads the Ingress rules and translates them into its underlying p
 
 ```mermaid
 graph LR
-    IR[Ingress Resource\nin etcd] -->|watches| IC[Ingress Controller Pod\ningress-nginx]
+    IR[Ingress Resource<br/>in etcd] -->|watches| IC[Ingress Controller Pod<br/>ingress-nginx]
     IC -->|generates| NC[nginx.conf]
-    NC -->|reloads| NX[nginx process\ninside controller Pod]
+    NC -->|reloads| NX[nginx process<br/>inside controller Pod]
 
-    EXT([External Traffic]) --> LB[LoadBalancer Service\ningress-nginx]
+    EXT([External Traffic]) --> LB[LoadBalancer Service<br/>ingress-nginx]
     LB --> NX
     NX -->|routes to| SVC1[api-service]
     NX -->|routes to| SVC2[frontend-service]

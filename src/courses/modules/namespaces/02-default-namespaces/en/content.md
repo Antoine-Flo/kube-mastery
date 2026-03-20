@@ -7,16 +7,16 @@ Every Kubernetes cluster starts its life with four namespaces already created. T
 ```mermaid
 flowchart TD
     Cluster["Kubernetes Cluster"]
-    
+
     Cluster --> NS1["default"]
     NS1 --> DESC1["Where your workloads go when no namespace is specified"]
-    
+
     Cluster --> NS2["kube-system"]
     NS2 --> DESC2["CoreDNS, kube-proxy, API server, scheduler, controller manager"]
-    
+
     Cluster --> NS3["kube-public"]
     NS3 --> DESC3["cluster-info ConfigMap, Readable by everyone including unauthenticated users"]
-    
+
     Cluster --> NS4["kube-node-lease"]
     NS4 --> DESC4["Node heartbeat Lease objects, Used by control plane only"]
 ```

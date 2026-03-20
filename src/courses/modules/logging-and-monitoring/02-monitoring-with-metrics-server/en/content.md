@@ -28,11 +28,11 @@ After installing, wait about 60 seconds for the Metrics Server to collect its fi
 
 ```mermaid
 flowchart LR
-    A["kubelet\n(Node 1)"] -->|"resource metrics\n/metrics/resource"| C[Metrics Server]
-    B["kubelet\n(Node 2)"] -->|"resource metrics\n/metrics/resource"| C
-    C -->|"aggregates and exposes\nmetrics.k8s.io API"| D[Kubernetes\nAPI Server]
-    D --> E["kubectl top\nnodes / pods"]
-    D --> F[Horizontal Pod\nAutoscaler HPA]
+    A["kubelet<br/>(Node 1)"] -->|"resource metrics<br/>/metrics/resource"| C[Metrics Server]
+    B["kubelet<br/>(Node 2)"] -->|"resource metrics<br/>/metrics/resource"| C
+    C -->|"aggregates and exposes<br/>metrics.k8s.io API"| D[Kubernetes<br/>API Server]
+    D --> E["kubectl top<br/>nodes / pods"]
+    D --> F[Horizontal Pod<br/>Autoscaler HPA]
 ```
 
 The kubelet on each node exposes a `/metrics/resource` endpoint. Metrics Server scrapes these endpoints every 60 seconds by default, aggregates the data, and makes it available via the standard Kubernetes API. This data is held entirely in memory, Metrics Server does not write to any database or disk. If the Metrics Server Pod is restarted, the metrics history resets.

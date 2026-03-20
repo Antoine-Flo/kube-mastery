@@ -330,10 +330,7 @@ const createSystemServices = (creationTimestamp: string): Service[] => {
   ]
 }
 
-const createBootstrapLease = (
-  node: Node,
-  creationTimestamp: string
-): Lease => {
+const createBootstrapLease = (node: Node, creationTimestamp: string): Lease => {
   return createLease({
     name: node.metadata.name,
     namespace: 'kube-node-lease',
@@ -505,25 +502,16 @@ const createBootstrapStoreFromClusterState = (
       return clusterState.createByKind('Node', resource as Node)
     }
     if (kind === 'ConfigMap') {
-      return clusterState.createByKind(
-        'ConfigMap',
-        resource as ConfigMap,
-      )
+      return clusterState.createByKind('ConfigMap', resource as ConfigMap)
     }
     if (kind === 'Service') {
       return clusterState.createByKind('Service', resource as Service)
     }
     if (kind === 'Deployment') {
-      return clusterState.createByKind(
-        'Deployment',
-        resource as Deployment,
-      )
+      return clusterState.createByKind('Deployment', resource as Deployment)
     }
     if (kind === 'DaemonSet') {
-      return clusterState.createByKind(
-        'DaemonSet',
-        resource as DaemonSet,
-      )
+      return clusterState.createByKind('DaemonSet', resource as DaemonSet)
     }
     if (kind === 'Lease') {
       return clusterState.createByKind('Lease', resource as Lease)
@@ -576,7 +564,12 @@ const createBootstrapStoreFromClusterState = (
       )
     }
     if (kind === 'Lease') {
-      return clusterState.updateByKind('Lease', name, resource as Lease, namespace)
+      return clusterState.updateByKind(
+        'Lease',
+        name,
+        resource as Lease,
+        namespace
+      )
     }
     return clusterState.updateByKind('Pod', name, resource as Pod, namespace)
   }
@@ -612,12 +605,17 @@ const createBootstrapStoreFromClusterState = (
 
   return {
     findByKind: (kind, name, namespace) => {
-      return clusterState.findByKind(kind, name, namespace) as BootstrapResult<
-        BootstrapResource
-      >
+      return clusterState.findByKind(
+        kind,
+        name,
+        namespace
+      ) as BootstrapResult<BootstrapResource>
     },
     listByKind: (kind, namespace) => {
-      return clusterState.listByKind(kind, namespace) as readonly BootstrapResource[]
+      return clusterState.listByKind(
+        kind,
+        namespace
+      ) as readonly BootstrapResource[]
     },
     createByKind: (kind, resource) => {
       return createByKind(kind, resource)
@@ -634,9 +632,11 @@ const createBootstrapStoreFromClusterState = (
 const createBootstrapStoreFromApi = (api: BootstrapApiLike): BootstrapStore => {
   return {
     findByKind: (kind, name, namespace) => {
-      return api.findResource(kind, name, namespace) as BootstrapResult<
-        BootstrapResource
-      >
+      return api.findResource(
+        kind,
+        name,
+        namespace
+      ) as BootstrapResult<BootstrapResource>
     },
     listByKind: (kind, namespace) => {
       return api.listResources(kind, namespace) as readonly BootstrapResource[]
@@ -657,9 +657,11 @@ const createBootstrapStoreFromApi = (api: BootstrapApiLike): BootstrapStore => {
       ) as BootstrapResult<BootstrapResource>
     },
     deleteByKind: (kind, name, namespace) => {
-      return api.deleteResource(kind, name, namespace) as BootstrapResult<
-        BootstrapResource
-      >
+      return api.deleteResource(
+        kind,
+        name,
+        namespace
+      ) as BootstrapResult<BootstrapResource>
     }
   }
 }
@@ -739,10 +741,7 @@ const upsertConfigMaps = (
   upsertResourcesByKind(store, 'ConfigMap', configMaps)
 }
 
-const upsertServices = (
-  store: BootstrapStore,
-  services: Service[]
-): void => {
+const upsertServices = (store: BootstrapStore, services: Service[]): void => {
   upsertResourcesByKind(store, 'Service', services)
 }
 

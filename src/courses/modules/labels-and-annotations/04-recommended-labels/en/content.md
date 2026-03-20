@@ -72,13 +72,13 @@ The diagram below shows a single resource set labeled following the convention, 
 
 ```mermaid
 graph LR
-    RS["Resource Set\napp.kubernetes.io/name: payments-api\napp.kubernetes.io/instance: payments-api-prod\napp.kubernetes.io/version: 3.2.1\napp.kubernetes.io/component: backend\napp.kubernetes.io/part-of: checkout-platform\napp.kubernetes.io/managed-by: helm"]
+    RS["Resource Set<br/>app.kubernetes.io/name: payments-api<br/>app.kubernetes.io/instance: payments-api-prod<br/>app.kubernetes.io/version: 3.2.1<br/>app.kubernetes.io/component: backend<br/>app.kubernetes.io/part-of: checkout-platform<br/>app.kubernetes.io/managed-by: helm"]
 
-    RS --> LENS["Lens / Headlamp\nGroups resources by part-of\nShows component roles"]
-    RS --> ARGO["Argo CD\nTracks managed-by=helm apps\nDisplays app hierarchy"]
-    RS --> GRAF["Grafana\nDimensions dashboards by name,\ninstance, version, component"]
-    RS --> PROM["Prometheus\nLabel cardinality:\nversion for SLO tracking"]
-    RS --> COST["Cost Tools\nAllocates spend by part-of\nand component"]
+    RS --> LENS["Lens / Headlamp<br/>Groups resources by part-of<br/>Shows component roles"]
+    RS --> ARGO["Argo CD<br/>Tracks managed-by=helm apps<br/>Displays app hierarchy"]
+    RS --> GRAF["Grafana<br/>Dimensions dashboards by name,<br/>instance, version, component"]
+    RS --> PROM["Prometheus<br/>Label cardinality:<br/>version for SLO tracking"]
+    RS --> COST["Cost Tools<br/>Allocates spend by part-of<br/>and component"]
 ```
 
 Each tool benefits in a specific way:

@@ -17,7 +17,9 @@ import {
 
 const DEFAULT_LOG_COUNT = 50
 
-const parseTailCount = (tailValue: string | boolean | undefined): ExecutionResult => {
+const parseTailCount = (
+  tailValue: string | boolean | undefined
+): ExecutionResult => {
   if (tailValue === undefined) {
     return success('')
   }
@@ -71,13 +73,18 @@ const parseSinceDurationMs = (
   return success(String(totalMs))
 }
 
-const parseTimestampFromLogLine = (line: string, fallbackYear: number): number => {
+const parseTimestampFromLogLine = (
+  line: string,
+  fallbackYear: number
+): number => {
   const isoMatch = line.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)/)
   if (isoMatch != null) {
     return Date.parse(isoMatch[1])
   }
 
-  const nginxMatch = line.match(/^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})/)
+  const nginxMatch = line.match(
+    /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})/
+  )
   if (nginxMatch != null) {
     const parsed = Date.parse(
       `${nginxMatch[1]}-${nginxMatch[2]}-${nginxMatch[3]}T${nginxMatch[4]}:${nginxMatch[5]}:${nginxMatch[6]}Z`
@@ -87,7 +94,9 @@ const parseTimestampFromLogLine = (line: string, fallbackYear: number): number =
     }
   }
 
-  const kubeMatch = line.match(/^[IWE](\d{2})(\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d{6})/)
+  const kubeMatch = line.match(
+    /^[IWE](\d{2})(\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d{6})/
+  )
   if (kubeMatch != null) {
     const parsed = Date.parse(
       `${fallbackYear}-${kubeMatch[1]}-${kubeMatch[2]}T${kubeMatch[3]}:${kubeMatch[4]}:${kubeMatch[5]}Z`
@@ -273,7 +282,9 @@ export const handleLogs = (
   }
 
   const parsedTailCount =
-    tailParseResult.value.length > 0 ? Number.parseInt(tailParseResult.value, 10) : undefined
+    tailParseResult.value.length > 0
+      ? Number.parseInt(tailParseResult.value, 10)
+      : undefined
   const parsedSinceDurationMs =
     sinceParseResult.value.length > 0
       ? Number.parseInt(sinceParseResult.value, 10)
@@ -363,7 +374,10 @@ export const handleLogs = (
       simulatedExitCode !== 0 &&
       Number.isInteger(simulatedExitCode)
     ) {
-      const crashLines = generateCrashLogLines(simulatedExitCode, targetContainer.image)
+      const crashLines = generateCrashLogLines(
+        simulatedExitCode,
+        targetContainer.image
+      )
       const hasCrashLine = sourceLines.some((line) => {
         return crashLines.includes(line)
       })

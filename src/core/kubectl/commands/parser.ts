@@ -233,7 +233,8 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     waitTimeoutSeconds: ctx.waitTimeoutSeconds,
     patchPayload: getPatchPayloadFromFlags(normalizedFlags),
     patchType: getPatchTypeFromFlags(normalizedFlags),
-    deleteGracePeriodSeconds: getDeleteGracePeriodSecondsFromFlags(normalizedFlags),
+    deleteGracePeriodSeconds:
+      getDeleteGracePeriodSecondsFromFlags(normalizedFlags),
     deleteForce: getDeleteForceFromFlags(normalizedFlags)
   })
 }
@@ -669,7 +670,11 @@ const validateCommandSemantics = (
   name?: string,
   flags: Record<string, string | boolean> = {},
   tokens: string[] = [],
-  createServiceType?: 'clusterip' | 'nodeport' | 'loadbalancer' | 'externalname',
+  createServiceType?:
+    | 'clusterip'
+    | 'nodeport'
+    | 'loadbalancer'
+    | 'externalname',
   createSecretType?: 'generic' | 'tls' | 'docker-registry'
 ): string | undefined => {
   const hasFilename =

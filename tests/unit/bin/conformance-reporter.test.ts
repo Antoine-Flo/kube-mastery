@@ -148,7 +148,9 @@ describe('conformance reporter', () => {
   })
 
   it('should bucket logs under sanitized scenario key', () => {
-    const outputDir = mkdtempSync(join(tmpdir(), 'conformance-reporter-scenario-'))
+    const outputDir = mkdtempSync(
+      join(tmpdir(), 'conformance-reporter-scenario-')
+    )
     tempDirs.push(outputDir)
 
     const reporter = createConformanceReporter(outputDir)
@@ -176,7 +178,10 @@ describe('conformance reporter', () => {
     })
     reporter.flush()
 
-    const scenarioKindLog = readFileSync(join(outputDir, 'scenario-config', 'kind.log'), 'utf-8')
+    const scenarioKindLog = readFileSync(
+      join(outputDir, 'scenario-config', 'kind.log'),
+      'utf-8'
+    )
     const scenarioRunnerLog = readFileSync(
       join(outputDir, 'scenario-config', 'runner.log'),
       'utf-8'

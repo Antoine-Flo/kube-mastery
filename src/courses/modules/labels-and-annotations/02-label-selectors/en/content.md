@@ -111,12 +111,12 @@ When you create a Service with a selector, Kubernetes starts a continuous watch.
 
 ```mermaid
 graph LR
-    Client([Client]) --> SVC["Service\nselector: app=web"]
-    SVC --> EP["Endpoints\n10.0.0.5:8080\n10.0.0.6:8080\n10.0.0.7:8080"]
-    EP --> P1["Pod\napp=web\n10.0.0.5"]
-    EP --> P2["Pod\napp=web\n10.0.0.6"]
-    EP --> P3["Pod\napp=web\n10.0.0.7"]
-    SVC -.-|no match| P4["Pod\napp=api"]
+    Client([Client]) --> SVC["Service<br/>selector: app=web"]
+    SVC --> EP["Endpoints<br/>10.0.0.5:8080<br/>10.0.0.6:8080<br/>10.0.0.7:8080"]
+    EP --> P1["Pod<br/>app=web<br/>10.0.0.5"]
+    EP --> P2["Pod<br/>app=web<br/>10.0.0.6"]
+    EP --> P3["Pod<br/>app=web<br/>10.0.0.7"]
+    SVC -.-|no match| P4["Pod<br/>app=api"]
 ```
 
 The design is entirely dynamic: scale from 3 Pods to 10 and the Endpoints list grows automatically. A Pod crashes and within seconds it's removed from the list. The Service itself never changes, only its backing Endpoints do.

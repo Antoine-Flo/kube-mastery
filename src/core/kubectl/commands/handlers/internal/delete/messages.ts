@@ -24,7 +24,9 @@ export const formatNotFoundMessage = (
   )
 }
 
-export const getPodDeleteOptions = (parsed: ParsedCommand): PodDeleteOptions => {
+export const getPodDeleteOptions = (
+  parsed: ParsedCommand
+): PodDeleteOptions => {
   const options: PodDeleteOptions = {}
   if (parsed.deleteGracePeriodSeconds != null) {
     options.gracePeriodSeconds = parsed.deleteGracePeriodSeconds

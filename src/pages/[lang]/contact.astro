@@ -46,8 +46,7 @@ if (!user) {
         rows={6}
         maxlength={3000}
         placeholder={t('contact_message_placeholder')}
-        required
-      ></textarea>
+        required></textarea>
       <p id="contact-form-feedback" aria-live="polite" hidden></p>
       <button type="submit" class="contact-submit">
         {t('contact_submit')}
@@ -56,10 +55,13 @@ if (!user) {
   </div>
 </Layout>
 
-<script is:inline define:vars={{
-  successMessage: t('contact_success'),
-  defaultErrorMessage: t('contact_error_default')
-}}>
+<script
+  is:inline
+  define:vars={{
+    successMessage: t('contact_success'),
+    defaultErrorMessage: t('contact_error_default')
+  }}
+>
   function getContactForm() {
     return document.getElementById('contact-form')
   }
@@ -95,10 +97,14 @@ if (!user) {
   }
 
   function getPayload(formEl) {
-    const checkedType = formEl.querySelector("input[name='contactType']:checked")
+    const checkedType = formEl.querySelector(
+      "input[name='contactType']:checked"
+    )
     const messageEl = formEl.querySelector("textarea[name='message']")
-    const type = checkedType instanceof HTMLInputElement ? checkedType.value : 'support'
-    const message = messageEl instanceof HTMLTextAreaElement ? messageEl.value.trim() : ''
+    const type =
+      checkedType instanceof HTMLInputElement ? checkedType.value : 'support'
+    const message =
+      messageEl instanceof HTMLTextAreaElement ? messageEl.value.trim() : ''
     return { type, message }
   }
 

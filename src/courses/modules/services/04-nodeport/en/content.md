@@ -45,14 +45,14 @@ If you omit `nodePort`, Kubernetes picks an available port from the 30000–3276
 
 ```mermaid
 graph TB
-    EXT["External Client\n(browser, curl, etc.)"]
-    N1["Node 1\n<node-1-ip>:30080"]
-    N2["Node 2\n<node-2-ip>:30080"]
-    N3["Node 3\n<node-3-ip>:30080"]
-    SVC["ClusterIP\n(internal)\n10.96.45.12:80"]
-    P1["Pod\n10.244.1.5:80"]
-    P2["Pod\n10.244.2.11:80"]
-    P3["Pod\n10.244.3.8:80"]
+    EXT["External Client<br/>(browser, curl, etc.)"]
+    N1["Node 1<br/><node-1-ip>:30080"]
+    N2["Node 2<br/><node-2-ip>:30080"]
+    N3["Node 3<br/><node-3-ip>:30080"]
+    SVC["ClusterIP<br/>(internal)<br/>10.96.45.12:80"]
+    P1["Pod<br/>10.244.1.5:80"]
+    P2["Pod<br/>10.244.2.11:80"]
+    P3["Pod<br/>10.244.3.8:80"]
 
     EXT -->|"hits any node"| N1
     EXT -.->|"or"| N2

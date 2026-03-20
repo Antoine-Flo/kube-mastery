@@ -83,7 +83,7 @@ kubectl patch deployment myapp --type=merge -p '{"spec":{"replicas":5}}'
 kubectl patch pod my-pod --type=merge -p '{"metadata":{"labels":{"env":"production"}}}'
 ```
 
-The `--type=merge` flag merges the patch with the existing object, any fields you do not mention are left unchanged. There is also `--type=json` for <a href="https://jsonpatch.com/" target="_blank">RFC 6902 JSON  patch operations</a> (add, remove, replace, copy, move, test), which gives you more surgical control.
+The `--type=merge` flag merges the patch with the existing object, any fields you do not mention are left unchanged. There is also `--type=json` for <a href="https://jsonpatch.com/" target="_blank">RFC 6902 JSON patch operations</a> (add, remove, replace, copy, move, test), which gives you more surgical control.
 
 `kubectl patch` is particularly valuable in automation scripts and operators where you need to update a single field programmatically without reading and re-writing the entire resource.
 
@@ -127,6 +127,7 @@ Your manifest travels through the API server (where it is validated and persiste
 Watch the effect of the commands in the visualizer.
 
 Create a simple manifest file
+
 ```yaml
 #my-deployment.yaml
 apiVersion: apps/v1
@@ -144,8 +145,8 @@ spec:
         app: my-app
     spec:
       containers:
-      - name: my-app
-        image: nginx:1.28
+        - name: my-app
+          image: nginx:1.28
 ```
 
 ```bash

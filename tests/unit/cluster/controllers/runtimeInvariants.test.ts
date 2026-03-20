@@ -132,9 +132,9 @@ describe('runtime controller invariants', () => {
           }
           const persistentVolumeClaimResult = apiServer.findResource(
             'PersistentVolumeClaim',
-              persistentVolumeClaimVolume.source.claimName,
-              pod.metadata.namespace
-            )
+            persistentVolumeClaimVolume.source.claimName,
+            pod.metadata.namespace
+          )
           if (
             !persistentVolumeClaimResult.ok ||
             persistentVolumeClaimResult.value == null
@@ -161,7 +161,9 @@ describe('runtime controller invariants', () => {
     }
     expect(stored.value.status.phase).toBe('Pending')
     const statuses = stored.value.status.containerStatuses ?? []
-    expect(statuses[0]?.stateDetails?.reason).toBe('PersistentVolumeClaimPending')
+    expect(statuses[0]?.stateDetails?.reason).toBe(
+      'PersistentVolumeClaimPending'
+    )
 
     stopControlPlane(controllers)
   })
@@ -323,7 +325,11 @@ describe('runtime controller invariants', () => {
       )
     ).toBe(true)
 
-    const deploymentResult = apiServer.findResource('Deployment', 'web', 'default')
+    const deploymentResult = apiServer.findResource(
+      'Deployment',
+      'web',
+      'default'
+    )
     expect(deploymentResult.ok).toBe(true)
     if (!deploymentResult.ok || deploymentResult.value == null) {
       stopControlPlane(controllers)

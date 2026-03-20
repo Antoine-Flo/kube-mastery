@@ -1,9 +1,7 @@
 import type { ClusterStateData } from '../ClusterState'
 import { addPod, deletePod, updatePod } from '../ClusterState'
 import { createResourceRepository } from '../repositories/resourceRepository'
-import type {
-  ResourceCollection
-} from '../repositories/types'
+import type { ResourceCollection } from '../repositories/types'
 import type { ConfigMap } from '../ressources/ConfigMap'
 import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
@@ -137,10 +135,15 @@ type RepoCollectionByStateKey = {
 }
 
 const createRepoHandler = <TKey extends RepoStateKey>(
-  repo: ReturnType<typeof createResourceRepository<RepoResourceByStateKey[TKey]>>,
+  repo: ReturnType<
+    typeof createResourceRepository<RepoResourceByStateKey[TKey]>
+  >,
   stateKey: TKey
 ) => ({
-  created: (state: ClusterStateData, resource: RepoResourceByStateKey[TKey]) => {
+  created: (
+    state: ClusterStateData,
+    resource: RepoResourceByStateKey[TKey]
+  ) => {
     const collection = repo.add(
       state[stateKey] as RepoCollectionByStateKey[TKey],
       resource
@@ -439,11 +442,7 @@ export const handleStatefulSetDeleted = (
   state: ClusterStateData,
   event: StatefulSetDeletedEvent
 ) =>
-  statefulSetHandler.deleted(
-    state,
-    event.payload.name,
-    event.payload.namespace
-  )
+  statefulSetHandler.deleted(state, event.payload.name, event.payload.namespace)
 
 export const handleStatefulSetUpdated = (
   state: ClusterStateData,
@@ -556,7 +555,13 @@ export const handleNamespaceDeleted = (
 export const handleNamespaceUpdated = (
   state: ClusterStateData,
   event: NamespaceUpdatedEvent
-) => namespaceHandler.updated(state, event.payload.name, '', event.payload.namespace)
+) =>
+  namespaceHandler.updated(
+    state,
+    event.payload.name,
+    '',
+    event.payload.namespace
+  )
 
 export const handleNodeCreated = (
   state: ClusterStateData,

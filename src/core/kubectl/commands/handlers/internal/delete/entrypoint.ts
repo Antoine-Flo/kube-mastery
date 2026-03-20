@@ -27,7 +27,11 @@ export const handleDelete = (
   parsed: ParsedCommand,
   fileSystem?: FileSystem
 ): ExecutionResult => {
-  const manifestResult = handleDeleteFromManifestFiles(apiServer, parsed, fileSystem)
+  const manifestResult = handleDeleteFromManifestFiles(
+    apiServer,
+    parsed,
+    fileSystem
+  )
   if (manifestResult != null) {
     return manifestResult
   }

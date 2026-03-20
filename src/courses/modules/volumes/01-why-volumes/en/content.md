@@ -75,17 +75,17 @@ Let's visualize what happens to volumes across different events:
 ```mermaid
 graph TD
     subgraph "Pod Lifecycle"
-        A["Pod Created"] --> B["Volume Created\n(empty at start)"]
-        B --> C["Container A runs\nwrites to volume"]
-        C --> D["Container A crashes\nor is restarted"]
-        D --> E["New Container A starts\nvolume still there\ndata still present"]
+        A["Pod Created"] --> B["Volume Created<br/>(empty at start)"]
+        B --> C["Container A runs<br/>writes to volume"]
+        C --> D["Container A crashes<br/>or is restarted"]
+        D --> E["New Container A starts<br/>volume still there<br/>data still present"]
         E --> F["Pod is deleted"]
-        F --> G["emptyDir volume destroyed\ndata lost"]
+        F --> G["emptyDir volume destroyed<br/>data lost"]
     end
 
     subgraph "Key Insight"
-        H["Container restart\n✅ Volume survives"]
-        I["Pod deletion\n❌ emptyDir gone\n✅ PersistentVolume survives"]
+        H["Container restart<br/>✅ Volume survives"]
+        I["Pod deletion<br/>❌ emptyDir gone<br/>✅ PersistentVolume survives"]
     end
 ```
 

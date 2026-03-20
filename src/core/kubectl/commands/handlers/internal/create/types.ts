@@ -45,5 +45,8 @@ export type ImperativeCreateSecretConfig = {
 export type PreparedSecret = {
   secretType: SecretTypeConfig
   data: Record<string, string>
-  manifestType: 'Opaque' | 'kubernetes.io/tls' | 'kubernetes.io/dockerconfigjson'
+  manifestType:
+    | 'Opaque'
+    | 'kubernetes.io/tls'
+    | 'kubernetes.io/dockerconfigjson'
 }

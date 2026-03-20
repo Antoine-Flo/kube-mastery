@@ -264,7 +264,9 @@ describe('kubectl get handler - custom-columns output', () => {
     const result = handleGet(apiServer, parsed)
 
     expect(result).toContain('error:')
-    expect(result).toContain('custom-columns format specified but no custom columns given')
+    expect(result).toContain(
+      'custom-columns format specified but no custom columns given'
+    )
   })
 
   it('errors when custom-columns segment has no colon', () => {

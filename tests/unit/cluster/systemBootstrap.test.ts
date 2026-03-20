@@ -153,9 +153,9 @@ describe('systemBootstrap', () => {
       'system-cluster-critical'
     )
     expect(corednsDeployment?.spec.template.spec.dnsPolicy).toBe('Default')
-    expect(
-      corednsDeployment?.spec.template.spec.containers[0].image
-    ).toBe('registry.k8s.io/coredns/coredns:v1.13.1')
+    expect(corednsDeployment?.spec.template.spec.containers[0].image).toBe(
+      'registry.k8s.io/coredns/coredns:v1.13.1'
+    )
     expect(
       corednsDeployment?.spec.template.spec.tolerations?.some((toleration) => {
         return (

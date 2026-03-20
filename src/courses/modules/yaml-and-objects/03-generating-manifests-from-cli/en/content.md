@@ -126,9 +126,9 @@ The typical workflow for using this technique looks like this:
 
 ```mermaid
 flowchart TB
-    CMD["kubectl create/run\n--dry-run=client -o yaml"]
+    CMD["kubectl create/run<br/>--dry-run=client -o yaml"]
     YAML["YAML file"]
-    EDIT["Edit\n(labels, env, etc.)"]
+    EDIT["Edit<br/>(labels, env, etc.)"]
     APPLY["kubectl apply -f"]
     CLUSTER["Cluster"]
 

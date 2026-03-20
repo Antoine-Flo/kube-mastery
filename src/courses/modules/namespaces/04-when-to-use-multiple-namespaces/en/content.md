@@ -26,15 +26,6 @@ In organizations where multiple teams share a Kubernetes cluster, giving each te
 
 Combined with RBAC (Role-Based Access Control), you can grant each team full admin rights within their own namespace while preventing them from modifying other namespaces. This creates a self-service model: teams are autonomous within their space, and the platform team owns the cluster-level configuration.
 
-```bash
-# Grant a team admin rights in their own namespace
-# (using a Role and RoleBinding within the namespace)
-kubectl create rolebinding team-admin \
-  --clusterrole=admin \
-  --group=frontend-team \
-  -n frontend
-```
-
 ## Use Case 3: Resource Quotas
 
 Without constraints, any single namespace , or the workloads running in it , can consume all the CPU and memory in the cluster, starving everyone else. Kubernetes **ResourceQuotas** solve this by setting hard limits on what a namespace is allowed to consume.
@@ -85,16 +76,16 @@ This kind of policy ensures that a compromised pod in the `dev` namespace cannot
 flowchart TD
     Cluster["Production Cluster"]
 
-    Cluster --> NS_fe["namespace: frontend-team\n─────────────────────\nDeployments, Services\nResourceQuota\nRBAC: frontend-team only"]
+    Cluster --> NS_fe["namespace: frontend-team<br/>─────────────────────<br/>Deployments, Services<br/>ResourceQuota<br/>RBAC: frontend-team only"]
 
-    Cluster --> NS_be["namespace: backend-team\n─────────────────────\nDeployments, Services\nResourceQuota\nRBAC: backend-team only"]
+    Cluster --> NS_be["namespace: backend-team<br/>─────────────────────<br/>Deployments, Services<br/>ResourceQuota<br/>RBAC: backend-team only"]
 
-    Cluster --> NS_data["namespace: data-team\n─────────────────────\nStatefulSets, Services\nResourceQuota\nRBAC: data-team only"]
+    Cluster --> NS_data["namespace: data-team<br/>─────────────────────<br/>StatefulSets, Services<br/>ResourceQuota<br/>RBAC: data-team only"]
 
-    Cluster --> NS_shared["namespace: shared-infra\n─────────────────────\nMonitoring, Logging\nIngress controllers\nRBAC: platform-team"]
+    Cluster --> NS_shared["namespace: shared-infra<br/>─────────────────────<br/>Monitoring, Logging<br/>Ingress controllers<br/>RBAC: platform-team"]
 
-    NS_fe <-->|"NetworkPolicy\nallows only specific traffic"| NS_be
-    NS_be <-->|"NetworkPolicy\nallows only specific traffic"| NS_data
+    NS_fe <-->|"NetworkPolicy<br/>allows only specific traffic"| NS_be
+    NS_be <-->|"NetworkPolicy<br/>allows only specific traffic"| NS_data
 ```
 
 ## When NOT to Use Multiple Namespaces

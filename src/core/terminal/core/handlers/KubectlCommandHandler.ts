@@ -18,9 +18,7 @@ import { createShellExecutor } from '../../../shell/commands'
 import type { ClusterEvent } from '../../../cluster/events/types'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
-import {
-  buildContainerEnvironmentVariables
-} from './containerEnvironment'
+import { buildContainerEnvironmentVariables } from './containerEnvironment'
 import type { CommandContext } from '../CommandContext'
 import type { CommandHandler } from '../CommandHandler'
 
@@ -101,7 +99,9 @@ const parseShellCommandDirective = (
     return undefined
   }
   const podName = remainderAfterNamespace.slice(0, secondSeparatorIndex)
-  const remainderAfterPod = remainderAfterNamespace.slice(secondSeparatorIndex + 1)
+  const remainderAfterPod = remainderAfterNamespace.slice(
+    secondSeparatorIndex + 1
+  )
   const thirdSeparatorIndex = remainderAfterPod.indexOf(':')
   if (thirdSeparatorIndex === -1) {
     return undefined
@@ -220,9 +220,13 @@ const executeShellCommandDirective = (
     )
   }
   const pod = podLookup.pod
-  const containerFileSystem = createFileSystem(containerEntry.fileSystem, undefined, {
-    mutable: true
-  })
+  const containerFileSystem = createFileSystem(
+    containerEntry.fileSystem,
+    undefined,
+    {
+      mutable: true
+    }
+  )
   const shellExecutor = createShellExecutor(
     containerFileSystem,
     context.editorModal,
@@ -268,10 +272,7 @@ const executeShellCommandDirective = (
         return success(curlResult.value)
       },
       getEnvironmentVariables: () => {
-        return buildContainerEnvironmentVariables(
-          pod,
-          directive.containerName
-        )
+        return buildContainerEnvironmentVariables(pod, directive.containerName)
       }
     }
   )
@@ -282,10 +283,7 @@ const executeProcessCommandDirective = (
   context: CommandContext,
   directive: ProcessCommandDirective
 ): ExecutionResult => {
-  if (
-    directive.processName !== 'nginx' ||
-    directive.processAction !== 'stop'
-  ) {
+  if (directive.processName !== 'nginx' || directive.processAction !== 'stop') {
     return error(
       `unsupported process command: ${directive.processName} ${directive.processAction}`
     )
@@ -322,8 +320,7 @@ const executeProcessCommandDirective = (
       started: false,
       restartCount: status.restartCount + 1,
       lastRestartAt: transitionTime,
-      lastStateDetails:
-        status.stateDetails ?? status.lastStateDetails,
+      lastStateDetails: status.stateDetails ?? status.lastStateDetails,
       stateDetails: {
         state: 'Waiting' as const,
         reason: 'ContainerCreating'
@@ -463,9 +460,7 @@ const getWatchEventTypes = (resource: Resource | undefined): string[] => {
 }
 
 const isAllNamespaces = (parsed: ParsedCommand): boolean => {
-  return (
-    parsed.flags['all-namespaces'] === true || parsed.flags['A'] === true
-  )
+  return parsed.flags['all-namespaces'] === true || parsed.flags['A'] === true
 }
 
 const getEffectiveNamespace = (
@@ -478,9 +473,7 @@ const getEffectiveNamespace = (
   if (parsed.namespace != null) {
     return parsed.namespace
   }
-  return (
-    getCurrentNamespaceFromKubeconfig(context.apiServer) ?? 'default'
-  )
+  return getCurrentNamespaceFromKubeconfig(context.apiServer) ?? 'default'
 }
 
 const matchesSelector = (
@@ -831,7 +824,9 @@ const buildLogsFollowDeltaOutput = (
   if (previousOutput.length === 0) {
     return nextOutput
   }
-  const previousLines = previousOutput.split('\n').filter((line) => line.length > 0)
+  const previousLines = previousOutput
+    .split('\n')
+    .filter((line) => line.length > 0)
   const nextLines = nextOutput.split('\n').filter((line) => line.length > 0)
   if (nextLines.length <= previousLines.length) {
     return ''
@@ -946,7 +941,10 @@ export class KubectlCommandHandler implements CommandHandler {
           }
           const uniqueId = Math.floor(Math.random() * 10000000000)
           const copyPath = `${KUBECTL_EDIT_TMP_DIR}/kubectl-edit-${uniqueId}.yaml`
-          const writeCopyResult = context.fileSystem.writeFile(copyPath, content)
+          const writeCopyResult = context.fileSystem.writeFile(
+            copyPath,
+            content
+          )
           if (!writeCopyResult.ok) {
             return undefined
           }
@@ -1035,7 +1033,8 @@ export class KubectlCommandHandler implements CommandHandler {
       context.startStream != null &&
       parsedCommand.resource != null
     ) {
-      const outputDirective = parsedCommand.flags['output'] ?? parsedCommand.flags['o']
+      const outputDirective =
+        parsedCommand.flags['output'] ?? parsedCommand.flags['o']
       const isStructuredOutput =
         typeof outputDirective === 'string' &&
         (outputDirective === 'json' ||
@@ -1091,47 +1090,49 @@ export class KubectlCommandHandler implements CommandHandler {
       }
 
       const onWatchEvent = () => {
-          const next = executor.execute(parsedRedirection.command)
-          const nextOutput = next.ok ? next.value || '' : next.error
-          if (nextOutput === lastOutput) {
-            return
-          }
-          if (useStatefulTableWriter) {
-            const parsedTableOutput = tryParseTableOutput(nextOutput)
-            if (parsedTableOutput != null) {
-              if (!hasSeededWatchTable) {
-                const seededLines = watchTableWriter.ingestHeaderAndRows(
-                  parsedTableOutput.header,
-                  parsedTableOutput.rows
-                )
-                hasSeededWatchTable = true
-                lastOutput = nextOutput
-                const firstRows = seededLines.slice(1)
-                if (firstRows.length === 0) {
-                  return
-                }
-                context.output.writeOutput(firstRows.join('\n'))
-                return
-              }
-              const changedRows = watchTableWriter.formatDelta(parsedTableOutput.rows)
+        const next = executor.execute(parsedRedirection.command)
+        const nextOutput = next.ok ? next.value || '' : next.error
+        if (nextOutput === lastOutput) {
+          return
+        }
+        if (useStatefulTableWriter) {
+          const parsedTableOutput = tryParseTableOutput(nextOutput)
+          if (parsedTableOutput != null) {
+            if (!hasSeededWatchTable) {
+              const seededLines = watchTableWriter.ingestHeaderAndRows(
+                parsedTableOutput.header,
+                parsedTableOutput.rows
+              )
+              hasSeededWatchTable = true
               lastOutput = nextOutput
-              if (changedRows.length === 0) {
+              const firstRows = seededLines.slice(1)
+              if (firstRows.length === 0) {
                 return
               }
-              context.output.writeOutput(changedRows.join('\n'))
+              context.output.writeOutput(firstRows.join('\n'))
               return
             }
-          }
-          const deltaOutput = buildWatchDeltaOutput(
-            lastOutput,
-            nextOutput,
-            stripTableHeader
-          )
-          lastOutput = nextOutput
-          if (deltaOutput.length === 0) {
+            const changedRows = watchTableWriter.formatDelta(
+              parsedTableOutput.rows
+            )
+            lastOutput = nextOutput
+            if (changedRows.length === 0) {
+              return
+            }
+            context.output.writeOutput(changedRows.join('\n'))
             return
           }
-          context.output.writeOutput(deltaOutput)
+        }
+        const deltaOutput = buildWatchDeltaOutput(
+          lastOutput,
+          nextOutput,
+          stripTableHeader
+        )
+        lastOutput = nextOutput
+        if (deltaOutput.length === 0) {
+          return
+        }
+        context.output.writeOutput(deltaOutput)
       }
       const unsubscribe = context.apiServer.watchHub.watchAllClusterEvents(
         (clusterEvent) => {

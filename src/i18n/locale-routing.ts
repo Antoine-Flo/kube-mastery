@@ -14,10 +14,7 @@ export function getDisabledLocaleRedirectPath(
   if (LOCALE_SKIP_PREFIXES.includes(firstSegment)) {
     return null
   }
-  if (
-    remainingSegments.length === 0 &&
-    firstSegment.includes('.')
-  ) {
+  if (remainingSegments.length === 0 && firstSegment.includes('.')) {
     return null
   }
   if (enabledLanguages.includes(firstSegment as UiLanguage)) {

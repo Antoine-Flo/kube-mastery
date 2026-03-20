@@ -82,11 +82,11 @@ At the Pod level, you list Pods with the same label selector. Each Pod name incl
 
 ```mermaid
 graph TB
-    DEP["Deployment\nweb-app\nreplicas: 3"]
-    RS["ReplicaSet\nweb-app-6d4b9c7f8\nreplicas: 3"]
-    P1["Pod\nweb-app-6d4b9c7f8-abc12\nnginx:1.28"]
-    P2["Pod\nweb-app-6d4b9c7f8-def34\nnginx:1.28"]
-    P3["Pod\nweb-app-6d4b9c7f8-ghi56\nnginx:1.28"]
+    DEP["Deployment<br/>web-app<br/>replicas: 3"]
+    RS["ReplicaSet<br/>web-app-6d4b9c7f8<br/>replicas: 3"]
+    P1["Pod<br/>web-app-6d4b9c7f8-abc12<br/>nginx:1.28"]
+    P2["Pod<br/>web-app-6d4b9c7f8-def34<br/>nginx:1.28"]
+    P3["Pod<br/>web-app-6d4b9c7f8-ghi56<br/>nginx:1.28"]
 
     DEP --> RS
     RS --> P1

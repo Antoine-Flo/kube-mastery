@@ -68,19 +68,19 @@ One of the most valuable things you can learn is the mapping between a cluster s
 ```mermaid
 flowchart TD
     A[Observed Symptom] --> B{Which component?}
-    B --> C["Pod stuck in Pending\nNo node available"]
-    B --> D["Pod scheduled but\ncontainer won't start"]
-    B --> E["API requests failing\nor very slow"]
-    B --> F["Node shows NotReady\nor disconnects"]
-    B --> G["Deployment not scaling\nHPA not working"]
-    B --> H["DNS resolution failing\ninside cluster"]
+    B --> C["Pod stuck in Pending<br/>No node available"]
+    B --> D["Pod scheduled but<br/>container won't start"]
+    B --> E["API requests failing<br/>or very slow"]
+    B --> F["Node shows NotReady<br/>or disconnects"]
+    B --> G["Deployment not scaling<br/>HPA not working"]
+    B --> H["DNS resolution failing<br/>inside cluster"]
 
-    C --> C1["kube-scheduler logs\n(scheduling decisions)"]
-    D --> D1["kubelet logs on that node\n(image pull, runtime errors)"]
-    E --> E1["kube-apiserver logs\n(request handling, auth)"]
-    F --> F1["kubelet on that node\n(node heartbeat, health)"]
-    G --> G1["kube-controller-manager logs\n(reconciliation loops)"]
-    H --> H1["coredns Pod logs\n(DNS queries, upstream errors)"]
+    C --> C1["kube-scheduler logs<br/>(scheduling decisions)"]
+    D --> D1["kubelet logs on that node<br/>(image pull, runtime errors)"]
+    E --> E1["kube-apiserver logs<br/>(request handling, auth)"]
+    F --> F1["kubelet on that node<br/>(node heartbeat, health)"]
+    G --> G1["kube-controller-manager logs<br/>(reconciliation loops)"]
+    H --> H1["coredns Pod logs<br/>(DNS queries, upstream errors)"]
 ```
 
 When a Pod is stuck in `Pending`, the scheduler is the first place to look, it logs the exact reason it couldn't place the Pod. When the API server is throwing 503 errors, the apiserver logs will contain details about overload, authentication failures, or webhook timeouts. When a Deployment isn't reconciling properly, the controller-manager logs contain the reconciliation loop output.

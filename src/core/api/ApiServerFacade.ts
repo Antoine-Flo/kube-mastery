@@ -43,10 +43,7 @@ import {
   createStatefulSetDeletedEvent,
   createStatefulSetUpdatedEvent
 } from '../cluster/events/types'
-import type {
-  KindToResource,
-  ResourceKind
-} from '../cluster/ClusterState'
+import type { KindToResource, ResourceKind } from '../cluster/ClusterState'
 import type { ConfigMap } from '../cluster/ressources/ConfigMap'
 import type { DaemonSet } from '../cluster/ressources/DaemonSet'
 import type { Deployment } from '../cluster/ressources/Deployment'
@@ -144,8 +141,7 @@ const buildPendingPodConditions = (
   transitionTime: string
 ): Pod['status']['conditions'] => {
   const hasInitContainers = (pod.spec.initContainers?.length ?? 0) > 0
-  const isScheduled =
-    pod.spec.nodeName != null && pod.spec.nodeName.length > 0
+  const isScheduled = pod.spec.nodeName != null && pod.spec.nodeName.length > 0
   const observedGeneration = pod.metadata.generation ?? 1
   return [
     {
@@ -180,9 +176,7 @@ const buildPendingPodConditions = (
 }
 
 const buildContainerImageMap = (
-  containers:
-    | ReadonlyArray<{ name: string; image: string }>
-    | undefined
+  containers: ReadonlyArray<{ name: string; image: string }> | undefined
 ): Map<string, string> => {
   const imageByName = new Map<string, string>()
   if (containers == null) {
@@ -195,12 +189,8 @@ const buildContainerImageMap = (
 }
 
 const hasContainerImageChanges = (
-  previous:
-    | ReadonlyArray<{ name: string; image: string }>
-    | undefined,
-  next:
-    | ReadonlyArray<{ name: string; image: string }>
-    | undefined
+  previous: ReadonlyArray<{ name: string; image: string }> | undefined,
+  next: ReadonlyArray<{ name: string; image: string }> | undefined
 ): boolean => {
   const previousByName = buildContainerImageMap(previous)
   const nextByName = buildContainerImageMap(next)
@@ -232,7 +222,10 @@ const normalizeDeletionGracePeriodSeconds = (
   return normalized
 }
 
-const withTerminatingPodConditions = (pod: Pod, transitionTime: string): Pod => {
+const withTerminatingPodConditions = (
+  pod: Pod,
+  transitionTime: string
+): Pod => {
   const nextConditions = (pod.status.conditions ?? []).map((condition) => {
     if (condition.type === 'Ready' || condition.type === 'ContainersReady') {
       if (condition.status === 'False') {
@@ -261,14 +254,14 @@ const shouldResetPodRuntimeAfterSpecUpdate = (
 ): boolean => {
   return (
     hasContainerImageChanges(previous.spec.containers, next.spec.containers) ||
-    hasContainerImageChanges(previous.spec.initContainers, next.spec.initContainers)
+    hasContainerImageChanges(
+      previous.spec.initContainers,
+      next.spec.initContainers
+    )
   )
 }
 
-const resetPodToContainerCreating = (
-  previous: Pod,
-  next: Pod
-): Pod => {
+const resetPodToContainerCreating = (previous: Pod, next: Pod): Pod => {
   const transitionTime = new Date().toISOString()
   const previousStatuses = previous.status.containerStatuses ?? []
   const previousStatusByName = new Map(
@@ -278,11 +271,10 @@ const resetPodToContainerCreating = (
   const initContainerStatuses = (next.spec.initContainers ?? []).map(
     (container) => {
       const previousStatus = previousStatusByName.get(container.name)
-      const previousStateDetails =
-        previousStatus?.stateDetails ?? {
-          state: 'Waiting' as const,
-          reason: 'ContainerCreating'
-        }
+      const previousStateDetails = previousStatus?.stateDetails ?? {
+        state: 'Waiting' as const,
+        reason: 'ContainerCreating'
+      }
       return {
         ...previousStatus,
         name: container.name,
@@ -303,11 +295,10 @@ const resetPodToContainerCreating = (
 
   const regularContainerStatuses = next.spec.containers.map((container) => {
     const previousStatus = previousStatusByName.get(container.name)
-    const previousStateDetails =
-      previousStatus?.stateDetails ?? {
-        state: 'Waiting' as const,
-        reason: 'ContainerCreating'
-      }
+    const previousStateDetails = previousStatus?.stateDetails ?? {
+      state: 'Waiting' as const,
+      reason: 'ContainerCreating'
+    }
     return {
       ...previousStatus,
       name: container.name,
@@ -432,7 +423,10 @@ const createClusterScopedMutationEvents = <TResource>(
   }
 }
 
-const RESOURCE_MUTATION_EVENTS: Record<ResourceKind, ResourceMutationEventFactory> = {
+const RESOURCE_MUTATION_EVENTS: Record<
+  ResourceKind,
+  ResourceMutationEventFactory
+> = {
   Pod: createNamespacedMutationEvents<Pod>(
     createPodCreatedEvent,
     createPodUpdatedEvent,
@@ -544,7 +538,9 @@ export const createApiServerFacade = (
     namespace: string | undefined
   ): Result<KindToResource<TKind>> => {
     if (namespace == null) {
-      return clusterState.findByKind(kind, name) as Result<KindToResource<TKind>>
+      return clusterState.findByKind(kind, name) as Result<
+        KindToResource<TKind>
+      >
     }
     return clusterState.findByKind(kind, name, namespace) as Result<
       KindToResource<TKind>
@@ -623,7 +619,11 @@ export const createApiServerFacade = (
     },
     requestPodDeletion: (name, namespace, options) => {
       const effectiveNamespace = namespace ?? 'default'
-      const findResult = clusterState.findByKind('Pod', name, effectiveNamespace)
+      const findResult = clusterState.findByKind(
+        'Pod',
+        name,
+        effectiveNamespace
+      )
       if (!findResult.ok) {
         return findResult as Result<Pod>
       }
@@ -666,7 +666,11 @@ export const createApiServerFacade = (
     },
     finalizePodDeletion: (name, namespace, options) => {
       const effectiveNamespace = namespace ?? 'default'
-      const findResult = clusterState.findByKind('Pod', name, effectiveNamespace)
+      const findResult = clusterState.findByKind(
+        'Pod',
+        name,
+        effectiveNamespace
+      )
       if (!findResult.ok) {
         return findResult as Result<Pod>
       }
@@ -755,9 +759,11 @@ export const createApiServerFacade = (
             BootstrapApiLike['findResource']
           >
         }
-        return apiServer.findResource(kind, name, targetNamespace) as ReturnType<
-          BootstrapApiLike['findResource']
-        >
+        return apiServer.findResource(
+          kind,
+          name,
+          targetNamespace
+        ) as ReturnType<BootstrapApiLike['findResource']>
       },
       listResources: (kind, namespace) => {
         const targetNamespace = resolveResourceNamespace(kind, namespace)
@@ -815,9 +821,11 @@ export const createApiServerFacade = (
             BootstrapApiLike['deleteResource']
           >
         }
-        return apiServer.deleteResource(kind, name, targetNamespace) as ReturnType<
-          BootstrapApiLike['deleteResource']
-        >
+        return apiServer.deleteResource(
+          kind,
+          name,
+          targetNamespace
+        ) as ReturnType<BootstrapApiLike['deleteResource']>
       }
     }
     applyClusterBootstrapViaApi(bootstrapApi, options.bootstrap)

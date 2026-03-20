@@ -1,10 +1,10 @@
 ---
-title: "How to Learn Kubernetes in 2026: A Complete Roadmap"
-description: "A complete, practical roadmap to learn Kubernetes in 2026. Step-by-step progression from Linux basics to CKA-level troubleshooting, with the best tools and a realistic practice plan."
-excerpt: "Most engineers get productive with Kubernetes in 4 to 8 weeks. The path is clear: Linux and Docker foundations, then progressive kubectl practice, then real troubleshooting scenarios. Here is the exact sequence."
-publishedAt: "2026-03-17"
-updatedAt: "2026-03-17"
-author: "KubeMastery"
+title: 'How to Learn Kubernetes in 2026: A Complete Roadmap'
+description: 'A complete, practical roadmap to learn Kubernetes in 2026. Step-by-step progression from Linux basics to CKA-level troubleshooting, with the best tools and a realistic practice plan.'
+excerpt: 'Most engineers get productive with Kubernetes in 4 to 8 weeks. The path is clear: Linux and Docker foundations, then progressive kubectl practice, then real troubleshooting scenarios. Here is the exact sequence.'
+publishedAt: '2026-03-17'
+updatedAt: '2026-03-17'
+author: 'KubeMastery'
 tags:
   - kubernetes
   - learning

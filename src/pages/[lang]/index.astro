@@ -13,8 +13,11 @@ const locale = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(locale)
 const localePath = useLocalePath(locale)
 const isEarlyStage =
-  (readAppEnv('EARLY_ACCESS', Astro.locals) ?? '').toLowerCase().trim() === 'true'
-const homeCtaLabel = isEarlyStage ? t('home_cta_join_early') : t('home_cta_join')
+  (readAppEnv('EARLY_ACCESS', Astro.locals) ?? '').toLowerCase().trim() ===
+  'true'
+const homeCtaLabel = isEarlyStage
+  ? t('home_cta_join_early')
+  : t('home_cta_join')
 
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
@@ -41,9 +44,11 @@ try {
     <section class="hero">
       <div class="content">
         <div class="left">
-
           <div class="hero-text">
-            <h1>{t('home_title')} <span class="start-here">{t('home_title_cta')}</span></h1>
+            <h1>
+              {t('home_title')}
+              <span class="start-here">{t('home_title_cta')}</span>
+            </h1>
             <p class="sub">{t('home_subtitle')}</p>
           </div>
           <div class="cta">
@@ -60,7 +65,8 @@ try {
         <div class="hero-terminal">
           <Terminal rows={20} lang={locale} />
         </div>
-        {/* <div class="hero-media">
+        {
+          /* <div class="hero-media">
           <video
             src={demoVideo}
             autoplay
@@ -70,7 +76,8 @@ try {
             class="hero-demo-video"
             data-playback-rate="1.5"
             aria-label={t('home_subtitle')}></video>
-        </div> */}
+        </div> */
+        }
       </div>
     </section>
 
@@ -103,7 +110,6 @@ try {
         <div class="section-header anim">
           <h2>{t('home_concerns_title')}</h2>
           <p>{t('home_concerns_subtitle')}</p>
-
         </div>
         <div class="section-body">
           <div class="concern-rows">
@@ -128,11 +134,13 @@ try {
                 </ul>
               </div>
               <div class="media">
-                {/* <img
+                {
+                  /* <img
                   src={astronautTrainingGif.src}
                   alt={t('home_concerns_section1_image_alt')}
                   loading="lazy"
-                /> */}
+                /> */
+                }
                 <video
                   src={demoVideo}
                   autoplay
@@ -157,10 +165,38 @@ try {
               <span>{t('home_fit_no_title')}</span>
             </div>
             <ul class="fit-list">
-              <li><CircleX size={18} /><span>{t('home_fit_no_1')} (<a href="https://labs.iximiuz.com/tutorials?category=kubernetes" target="_blank" rel="noopener">{t('home_fit_no_1_link')}</a>)</span></li>
-              <li><CircleX size={18} /><span>{t('home_fit_no_2')} (<a href="https://killer.sh/" target="_blank" rel="noopener">{t('home_fit_no_2_link')}</a>)</span></li>
-              <li><CircleX size={18} /><span>{t('home_fit_no_3')} (<a href="https://kind.sigs.k8s.io/" target="_blank" rel="noopener">{t('home_fit_no_3_link')}</a>, {t('home_fit_no_3_extra')})</span></li>
-              <li><CircleX size={18} /><span>{t('home_fit_no_4')} (<a href="https://kodekloud.com/" target="_blank" rel="noopener">{t('home_fit_no_4_link')}</a>)</span></li>
+              <li>
+                <CircleX size={18} /><span
+                  >{t('home_fit_no_1')} (<a
+                    href="https://labs.iximiuz.com/tutorials?category=kubernetes"
+                    target="_blank"
+                    rel="noopener">{t('home_fit_no_1_link')}</a
+                  >)</span>
+              </li>
+              <li>
+                <CircleX size={18} /><span
+                  >{t('home_fit_no_2')} (<a
+                    href="https://killer.sh/"
+                    target="_blank"
+                    rel="noopener">{t('home_fit_no_2_link')}</a
+                  >)</span>
+              </li>
+              <li>
+                <CircleX size={18} /><span
+                  >{t('home_fit_no_3')} (<a
+                    href="https://kind.sigs.k8s.io/"
+                    target="_blank"
+                    rel="noopener">{t('home_fit_no_3_link')}</a
+                  >, {t('home_fit_no_3_extra')})</span>
+              </li>
+              <li>
+                <CircleX size={18} /><span
+                  >{t('home_fit_no_4')} (<a
+                    href="https://kodekloud.com/"
+                    target="_blank"
+                    rel="noopener">{t('home_fit_no_4_link')}</a
+                  >)</span>
+              </li>
             </ul>
           </div>
           <div class="fit-col fit-yes">
@@ -168,22 +204,34 @@ try {
               <span>{t('home_fit_yes_title')}</span>
             </div>
             <ul class="fit-list">
-              <li><CircleCheck size={18} /><span>{t('home_fit_yes_1')}</span></li>
-              <li><CircleCheck size={18} /><span>{t('home_fit_yes_2')}</span></li>
-              <li><CircleCheck size={18} /><span>{t('home_fit_yes_4')}</span></li>
-              <li><CircleCheck size={18} />
-                <span>{t('home_fit_yes_5')} 
-                <!-- <span class="fit-extra">({t('home_fit_yes_5_extra')})</span> "we have special pricing for students and job seekers" -->
-              </span>
+              <li>
+                <CircleCheck size={18} /><span>{t('home_fit_yes_1')}</span>
+              </li>
+              <li>
+                <CircleCheck size={18} /><span>{t('home_fit_yes_2')}</span>
+              </li>
+              <li>
+                <CircleCheck size={18} /><span>{t('home_fit_yes_4')}</span>
+              </li>
+              <li>
+                <CircleCheck size={18} />
+                <span
+                  >{t('home_fit_yes_5')}
+                  <!-- <span class="fit-extra">({t('home_fit_yes_5_extra')})</span> "we have special pricing for students and job seekers" -->
+                </span>
               </li>
             </ul>
             <div class="cta">
-              <Button href={localePath('/pricing')} variant="solid" color="cyan" size="xl">
+              <Button
+                href={localePath('/pricing')}
+                variant="solid"
+                color="cyan"
+                size="xl"
+              >
                 {homeCtaLabel}
               </Button>
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -435,8 +483,15 @@ try {
   }
 
   @keyframes pulse-dot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.75); }
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(0.75);
+    }
   }
 
   .hero .content {
@@ -1194,7 +1249,6 @@ try {
       font-size: var(--text-lg);
     }
   }
-
 </style>
 
 <script>

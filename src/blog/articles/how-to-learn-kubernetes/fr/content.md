@@ -1,10 +1,10 @@
 ---
-title: "Comment apprendre Kubernetes en 2026 : la feuille de route complete"
+title: 'Comment apprendre Kubernetes en 2026 : la feuille de route complete'
 description: "Une feuille de route complète et pratique pour apprendre Kubernetes en 2026. Progression étape par étape des bases Linux jusqu'au troubleshooting niveau CKA, avec les meilleurs outils et un plan d'entraînement réaliste."
-excerpt: "La plupart des ingénieurs deviennent productifs avec Kubernetes en 4 à 8 semaines. Le chemin est clair : bases Linux et Docker, puis pratique kubectl progressive, puis scénarios de troubleshooting réels. Voici la séquence exacte."
-publishedAt: "2026-03-17"
-updatedAt: "2026-03-17"
-author: "KubeMastery"
+excerpt: 'La plupart des ingénieurs deviennent productifs avec Kubernetes en 4 à 8 semaines. Le chemin est clair : bases Linux et Docker, puis pratique kubectl progressive, puis scénarios de troubleshooting réels. Voici la séquence exacte.'
+publishedAt: '2026-03-17'
+updatedAt: '2026-03-17'
+author: 'KubeMastery'
 tags:
   - kubernetes
   - apprentissage

@@ -34,7 +34,9 @@ export class ShellContextStack {
     this.contexts.push({
       id: 'host',
       type: 'host',
-      fileSystem: createFileSystem(hostFileSystem, undefined, { mutable: true }),
+      fileSystem: createFileSystem(hostFileSystem, undefined, {
+        mutable: true
+      }),
       prompt: '~>'
     })
   }

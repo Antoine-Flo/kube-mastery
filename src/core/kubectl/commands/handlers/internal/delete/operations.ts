@@ -2,14 +2,8 @@ import type { ApiServerFacade } from '../../../../../api/ApiServerFacade'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error, success } from '../../../../../shared/result'
 import type { Resource } from '../../../types'
-import {
-  DELETE_ALL_RESOURCE_ORDER,
-  DELETE_TARGET_BY_RESOURCE
-} from './config'
-import {
-  formatDeletedMessage,
-  formatNotFoundMessage
-} from './messages'
+import { DELETE_ALL_RESOURCE_ORDER, DELETE_TARGET_BY_RESOURCE } from './config'
+import { formatDeletedMessage, formatNotFoundMessage } from './messages'
 import type { DeleteManifestTargetConfig, PodDeleteOptions } from './types'
 
 export const deleteNamespacedResourcesForNamespace = (
@@ -18,17 +12,25 @@ export const deleteNamespacedResourcesForNamespace = (
 ): ExecutionResult | undefined => {
   const pods = apiServer.listResources('Pod', namespace)
   for (const pod of pods) {
-    const requestResult = apiServer.requestPodDeletion(pod.metadata.name, namespace, {
-      gracePeriodSeconds: 0,
-      force: true,
-      source: 'namespace-cascade-delete'
-    })
+    const requestResult = apiServer.requestPodDeletion(
+      pod.metadata.name,
+      namespace,
+      {
+        gracePeriodSeconds: 0,
+        force: true,
+        source: 'namespace-cascade-delete'
+      }
+    )
     if (!requestResult.ok) {
       return requestResult
     }
-    const finalizeResult = apiServer.finalizePodDeletion(pod.metadata.name, namespace, {
-      source: 'namespace-cascade-delete'
-    })
+    const finalizeResult = apiServer.finalizePodDeletion(
+      pod.metadata.name,
+      namespace,
+      {
+        source: 'namespace-cascade-delete'
+      }
+    )
     if (!finalizeResult.ok) {
       return finalizeResult
     }
@@ -48,7 +50,11 @@ export const deleteNamespacedResourcesForNamespace = (
 
   const secrets = apiServer.listResources('Secret', namespace)
   for (const secret of secrets) {
-    const result = apiServer.deleteResource('Secret', secret.metadata.name, namespace)
+    const result = apiServer.deleteResource(
+      'Secret',
+      secret.metadata.name,
+      namespace
+    )
     if (!result.ok) {
       return result
     }
@@ -104,7 +110,11 @@ export const deleteNamespacedResourcesForNamespace = (
 
   const services = apiServer.listResources('Service', namespace)
   for (const service of services) {
-    const result = apiServer.deleteResource('Service', service.metadata.name, namespace)
+    const result = apiServer.deleteResource(
+      'Service',
+      service.metadata.name,
+      namespace
+    )
     if (!result.ok) {
       return result
     }
@@ -190,7 +200,12 @@ export const deleteSingleResource = (
   if (config.namespaced) {
     const deleteResult =
       config.kind === 'Pod'
-        ? apiServer.deleteResource(config.kind, name, namespace, podDeleteOptions)
+        ? apiServer.deleteResource(
+            config.kind,
+            name,
+            namespace,
+            podDeleteOptions
+          )
         : apiServer.deleteResource(config.kind, name, namespace)
     if (!deleteResult.ok) {
       return formatNotFoundMessage(config.kindRefPlural, name)
@@ -212,7 +227,12 @@ export const deleteMatchingResourcesForType = (
   selector: Record<string, string> | undefined,
   podDeleteOptions: PodDeleteOptions
 ): ExecutionResult => {
-  const names = listMatchingResourceNames(apiServer, config, namespace, selector)
+  const names = listMatchingResourceNames(
+    apiServer,
+    config,
+    namespace,
+    selector
+  )
   if (names.length === 0) {
     return success('No resources found')
   }
@@ -245,7 +265,12 @@ export const deleteAllMatchingResources = (
     if (!config) {
       continue
     }
-    const names = listMatchingResourceNames(apiServer, config, namespace, selector)
+    const names = listMatchingResourceNames(
+      apiServer,
+      config,
+      namespace,
+      selector
+    )
     for (const name of names) {
       const deleteResult = deleteSingleResource(
         apiServer,
@@ -291,7 +316,11 @@ export const deleteNamedResources = (
   namespace: string,
   podDeleteOptions: PodDeleteOptions
 ): ExecutionResult => {
-  if (resource === 'pods' || resource === 'configmaps' || resource === 'secrets') {
+  if (
+    resource === 'pods' ||
+    resource === 'configmaps' ||
+    resource === 'secrets'
+  ) {
     const kind =
       resource === 'pods'
         ? 'Pod'
@@ -299,7 +328,11 @@ export const deleteNamedResources = (
           ? 'ConfigMap'
           : 'Secret'
     const kindRef =
-      resource === 'pods' ? 'pod' : resource === 'configmaps' ? 'configmap' : 'secret'
+      resource === 'pods'
+        ? 'pod'
+        : resource === 'configmaps'
+          ? 'configmap'
+          : 'secret'
     const messages: string[] = []
     for (const name of names) {
       const deleteResult =
@@ -453,7 +486,10 @@ export const deleteNamedResources = (
       if (!existingNamespace.ok) {
         return formatNotFoundMessage('namespaces', name)
       }
-      const cascadeResult = deleteNamespacedResourcesForNamespace(apiServer, name)
+      const cascadeResult = deleteNamespacedResourcesForNamespace(
+        apiServer,
+        name
+      )
       if (cascadeResult != null) {
         return cascadeResult
       }

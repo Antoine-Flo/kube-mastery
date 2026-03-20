@@ -193,7 +193,9 @@ export const parseStatefulSetManifest = (
     selector: manifest.spec.selector,
     serviceName: manifest.spec.serviceName,
     template: manifest.spec.template as PodTemplateSpec,
-    ...(manifest.metadata.labels != null && { labels: manifest.metadata.labels }),
+    ...(manifest.metadata.labels != null && {
+      labels: manifest.metadata.labels
+    }),
     ...(manifest.metadata.annotations != null && {
       annotations: manifest.metadata.annotations
     }),

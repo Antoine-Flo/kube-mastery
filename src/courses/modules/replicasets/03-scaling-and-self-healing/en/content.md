@@ -46,10 +46,10 @@ graph LR
     CMD1["kubectl scale --replicas=5"] --> RS
     CMD2["kubectl scale --replicas=2"] --> RS
 
-    RS["ReplicaSet\nDesired: variable"]
-    RS -->|"desired > actual\ncreate Pods"| CREATE["Create Pods\n(reconcile up)"]
-    RS -->|"desired < actual\ndelete Pods"| DELETE["Delete Pods\n(reconcile down)"]
-    RS -->|"desired == actual\ndo nothing"| NOOP["No action"]
+    RS["ReplicaSet<br/>Desired: variable"]
+    RS -->|"desired > actual<br/>create Pods"| CREATE["Create Pods<br/>(reconcile up)"]
+    RS -->|"desired < actual<br/>delete Pods"| DELETE["Delete Pods<br/>(reconcile down)"]
+    RS -->|"desired == actual<br/>do nothing"| NOOP["No action"]
 
     CREATE --> P1["Pod 1"] & P2["Pod 2"] & P3["Pod 3"] & P4["Pod 4"] & P5["Pod 5"]
     DELETE --> GONE["Pods terminated"]

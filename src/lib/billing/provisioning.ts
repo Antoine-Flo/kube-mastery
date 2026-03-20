@@ -452,7 +452,7 @@ export async function createRefundRequestMessage(args: {
     '',
     `userId: ${args.userId}`,
     `userEmail: ${normalizedEmail}`,
-    `paddleSubscriptionId: ${args.paddleSubscriptionId}`,
+    `paddleSubscriptionId: ${args.paddleSubscriptionId}`
   ].join('\n')
 
   const response = await fetch(SWEEGO_SEND_ENDPOINT, {

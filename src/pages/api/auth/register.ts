@@ -15,9 +15,7 @@ const json = (body: Record<string, unknown>, status: number) =>
   })
 
 function isEarlyStage(locals: unknown): boolean {
-  return (
-    readAppEnv('EARLY_ACCESS', locals)?.toLowerCase().trim() === 'true'
-  )
+  return readAppEnv('EARLY_ACCESS', locals)?.toLowerCase().trim() === 'true'
 }
 
 export const POST: APIRoute = async ({
@@ -51,10 +49,7 @@ export const POST: APIRoute = async ({
   if (isEarlyStage(locals)) {
     const count = await getAuthUserCount(locals)
     if (count != null && count >= EARLY_ACCESS_CAP) {
-      return json(
-        { ok: false, code: 'auth_registrations_closed' },
-        503
-      )
+      return json({ ok: false, code: 'auth_registrations_closed' }, 503)
     }
   }
 

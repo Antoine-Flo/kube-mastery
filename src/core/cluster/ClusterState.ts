@@ -1,8 +1,6 @@
 import type { Result } from '../../core/shared/result'
 import type { EventBus } from './events/EventBus'
-import {
-  applyClusterEventToState
-} from './events/handlers'
+import { applyClusterEventToState } from './events/handlers'
 import type { ClusterEvent } from './events/types'
 import {
   createConfigMapCreatedEvent,
@@ -475,7 +473,7 @@ export interface ClusterState {
   ) => KindToResource<TKind>[]
   createByKind: <TKind extends ResourceKind>(
     kind: TKind,
-    resource: KindToResource<TKind>,
+    resource: KindToResource<TKind>
   ) => Result<KindToResource<TKind>>
   updateByKind: <TKind extends ResourceKind>(
     kind: TKind,
@@ -823,7 +821,9 @@ export function createClusterState(
       if (!findResult.ok) {
         return findResult
       }
-      eventBus.emit(createNamespaceDeletedEvent(name, findResult.value, 'direct'))
+      eventBus.emit(
+        createNamespaceDeletedEvent(name, findResult.value, 'direct')
+      )
       return { ok: true, value: findResult.value }
     },
     update: (
@@ -1022,7 +1022,7 @@ export function createClusterState(
 
   const createByKind = <TKind extends ResourceKind>(
     kind: TKind,
-    resource: KindToResource<TKind>,
+    resource: KindToResource<TKind>
   ): Result<KindToResource<TKind>> => {
     if (kind === 'Node') {
       nodeMethods.add(resource as Node)
@@ -1089,16 +1089,18 @@ export function createClusterState(
     resource: KindToResource<TKind>,
     namespace?: string
   ): Result<KindToResource<TKind>> => {
-    const effectiveNamespace = namespace ?? resource.metadata.namespace ?? 'default'
+    const effectiveNamespace =
+      namespace ?? resource.metadata.namespace ?? 'default'
     if (kind === 'Node') {
       return nodeMethods.update(name, () => resource as Node) as Result<
         KindToResource<TKind>
       >
     }
     if (kind === 'Namespace') {
-      return namespaceMethods.update(name, () => resource as Namespace) as Result<
-        KindToResource<TKind>
-      >
+      return namespaceMethods.update(
+        name,
+        () => resource as Namespace
+      ) as Result<KindToResource<TKind>>
     }
     if (kind === 'PersistentVolume') {
       return persistentVolumeMethods.update(
@@ -1115,9 +1117,11 @@ export function createClusterState(
       ) as Result<KindToResource<TKind>>
     }
     if (kind === 'Pod') {
-      return podMethods.update(name, effectiveNamespace, () => resource as Pod) as Result<
-        KindToResource<TKind>
-      >
+      return podMethods.update(
+        name,
+        effectiveNamespace,
+        () => resource as Pod
+      ) as Result<KindToResource<TKind>>
     }
     if (kind === 'ConfigMap') {
       return configMapMethods.update(
@@ -1198,7 +1202,9 @@ export function createClusterState(
       return namespaceMethods.delete(name) as Result<KindToResource<TKind>>
     }
     if (kind === 'PersistentVolume') {
-      return persistentVolumeMethods.delete(name, '') as Result<KindToResource<TKind>>
+      return persistentVolumeMethods.delete(name, '') as Result<
+        KindToResource<TKind>
+      >
     }
     if (kind === 'Ingress') {
       return ingressMethods.delete(name, effectiveNamespace) as Result<
@@ -1246,9 +1252,10 @@ export function createClusterState(
       >
     }
     if (kind === 'PersistentVolumeClaim') {
-      return persistentVolumeClaimMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
+      return persistentVolumeClaimMethods.delete(
+        name,
+        effectiveNamespace
+      ) as Result<KindToResource<TKind>>
     }
     if (kind === 'Lease') {
       return leaseMethods.delete(name, effectiveNamespace) as Result<

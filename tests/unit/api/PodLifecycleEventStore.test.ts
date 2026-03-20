@@ -108,9 +108,9 @@ describe('PodLifecycleEventStore', () => {
       'Started',
       'BackOff'
     ])
-    expect(messages.some((message) => message.includes('Successfully assigned'))).toBe(
-      true
-    )
+    expect(
+      messages.some((message) => message.includes('Successfully assigned'))
+    ).toBe(true)
     expect(
       messages.some((message) =>
         message.includes('Back-off restarting failed container')

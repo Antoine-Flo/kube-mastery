@@ -136,7 +136,9 @@ const areResourcesEquivalentForApply = (
     undefined,
     true
   )
-  return JSON.stringify(currentComparable) === JSON.stringify(incomingComparable)
+  return (
+    JSON.stringify(currentComparable) === JSON.stringify(incomingComparable)
+  )
 }
 
 const withLastAppliedConfigurationAnnotation = (
@@ -187,7 +189,11 @@ export const applyResourceWithEvents = (
     return metadataNameValidation
   }
 
-  const namespaceValidation = validateNamespaceExists(apiServer, kind, namespace)
+  const namespaceValidation = validateNamespaceExists(
+    apiServer,
+    kind,
+    namespace
+  )
   if (namespaceValidation != null) {
     return namespaceValidation
   }
@@ -248,7 +254,11 @@ export const createResourceWithEvents = (
     return metadataNameValidation
   }
 
-  const namespaceValidation = validateNamespaceExists(apiServer, kind, namespace)
+  const namespaceValidation = validateNamespaceExists(
+    apiServer,
+    kind,
+    namespace
+  )
   if (namespaceValidation != null) {
     return namespaceValidation
   }

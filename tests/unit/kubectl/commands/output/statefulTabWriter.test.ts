@@ -35,7 +35,9 @@ describe('statefulTabWriter', () => {
       ['NAME', 'STATUS', 'RESTARTS'],
       [['pod-a', 'Run', '1']]
     )
-    const withoutMinLine = withoutMinWidth.formatRows([['pod-b', 'Run', '2']])[0]
+    const withoutMinLine = withoutMinWidth.formatRows([
+      ['pod-b', 'Run', '2']
+    ])[0]
 
     const withMinWidth = createStatefulTabWriter({
       spacing: 3,
@@ -47,7 +49,9 @@ describe('statefulTabWriter', () => {
     )
     const withMinLine = withMinWidth.formatRows([['pod-b', 'Run', '2']])[0]
 
-    expect(withMinLine.indexOf('2')).toBeGreaterThan(withoutMinLine.indexOf('2'))
+    expect(withMinLine.indexOf('2')).toBeGreaterThan(
+      withoutMinLine.indexOf('2')
+    )
   })
 
   it('returns only newly introduced rows in delta mode', () => {

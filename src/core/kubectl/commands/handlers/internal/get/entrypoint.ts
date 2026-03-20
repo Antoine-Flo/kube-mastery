@@ -63,7 +63,11 @@ const resolveMissingNameErrors = (
     })
     if (matched == null) {
       missingNameErrors.push(
-        buildNotFoundErrorMessage(resourceType, name, toPluralResourceKindReference)
+        buildNotFoundErrorMessage(
+          resourceType,
+          name,
+          toPluralResourceKindReference
+        )
       )
       return acc
     }
@@ -77,10 +81,12 @@ const resolveMissingNameErrors = (
 
 const resolveHandler = (
   resource: Resource | undefined
-): {
-  resourceType: GetSupportedResource
-  handler: ResourceHandler<ResourceWithMetadata>
-} | undefined => {
+):
+  | {
+      resourceType: GetSupportedResource
+      handler: ResourceHandler<ResourceWithMetadata>
+    }
+  | undefined => {
   if (resource == null) {
     return undefined
   }
@@ -114,7 +120,7 @@ export const handleGet = (
   const outputDirectiveResult = validateOutputDirective(
     resolveOutputDirective(parsed.flags, parsed.output),
     ['table', 'json', 'yaml', 'wide', 'name', 'jsonpath', 'custom-columns'],
-    "--output must be one of: json|yaml|wide|name|jsonpath|custom-columns"
+    '--output must be one of: json|yaml|wide|name|jsonpath|custom-columns'
   )
   if (!outputDirectiveResult.ok) {
     return `error: ${outputDirectiveResult.error}`

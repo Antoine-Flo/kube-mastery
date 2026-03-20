@@ -175,7 +175,10 @@ describe('kubectl scale handler', () => {
     })
 
     it('should scale deployment in specified namespace', () => {
-      apiServer.createResource('Namespace', createNamespace({ name: 'production' }))
+      apiServer.createResource(
+        'Namespace',
+        createNamespace({ name: 'production' })
+      )
       const deployment = createDeployment({
         name: 'nginx-deployment',
         namespace: 'production',
@@ -201,7 +204,10 @@ describe('kubectl scale handler', () => {
     })
 
     it('should not find deployment in wrong namespace', () => {
-      apiServer.createResource('Namespace', createNamespace({ name: 'production' }))
+      apiServer.createResource(
+        'Namespace',
+        createNamespace({ name: 'production' })
+      )
       const deployment = createDeployment({
         name: 'nginx-deployment',
         namespace: 'production',

@@ -4,10 +4,7 @@ import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
 import { createResourceWithEvents } from '../../../resourceHelpers'
 import type { ParsedCommand } from '../../../types'
-import type {
-  CreateServiceType,
-  ImperativeCreateServiceConfig
-} from './types'
+import type { CreateServiceType, ImperativeCreateServiceConfig } from './types'
 
 const toApiServiceType = (
   serviceType: CreateServiceType
@@ -79,7 +76,10 @@ const parseNodePortFlag = (
   if (rawNodePortFlag == null) {
     return undefined
   }
-  if (typeof rawNodePortFlag !== 'string' || rawNodePortFlag.trim().length === 0) {
+  if (
+    typeof rawNodePortFlag !== 'string' ||
+    rawNodePortFlag.trim().length === 0
+  ) {
     return error('error: --node-port must be a valid port number')
   }
   const parsed = parsePositivePortNumber(rawNodePortFlag, '--node-port')
@@ -101,7 +101,9 @@ export const buildCreateServiceConfig = (
   }
 
   if (serviceType !== 'nodeport' && typeof nodePortFlag === 'number') {
-    return error(`error: create service ${serviceType} does not support flag --node-port`)
+    return error(
+      `error: create service ${serviceType} does not support flag --node-port`
+    )
   }
 
   const metadata = {
@@ -113,7 +115,9 @@ export const buildCreateServiceConfig = (
   if (serviceType === 'externalname') {
     const externalName = parsed.flags['external-name']
     if (typeof externalName !== 'string' || externalName.trim().length === 0) {
-      return error('error: create service externalname requires flag --external-name')
+      return error(
+        'error: create service externalname requires flag --external-name'
+      )
     }
     return {
       apiVersion: 'v1',
@@ -176,7 +180,10 @@ export const buildCreateServiceConfig = (
 
 export const isCreateServiceImperative = (
   parsed: ParsedCommand
-): parsed is ParsedCommand & { name: string; createServiceType: CreateServiceType } => {
+): parsed is ParsedCommand & {
+  name: string
+  createServiceType: CreateServiceType
+} => {
   if (parsed.resource !== 'services') {
     return false
   }
@@ -190,7 +197,10 @@ export const isCreateServiceImperative = (
 }
 
 export const createServiceFromFlags = (
-  parsed: ParsedCommand & { name: string; createServiceType: CreateServiceType },
+  parsed: ParsedCommand & {
+    name: string
+    createServiceType: CreateServiceType
+  },
   apiServer: ApiServerFacade
 ): ExecutionResult => {
   const serviceConfig = buildCreateServiceConfig(parsed)

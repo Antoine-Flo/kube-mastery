@@ -98,15 +98,14 @@ describe('FileAutocompleteProvider', () => {
     })
 
     it('should handle getCurrentPath error gracefully', () => {
-      const contextWithError: AutocompleteContext = createAutocompleteTestContext(
-        {
+      const contextWithError: AutocompleteContext =
+        createAutocompleteTestContext({
           fileSystemOverrides: {
             getCurrentPath: () => {
               throw new Error('Filesystem error')
             }
           }
-        }
-      )
+        })
       const results = provider.complete(['cd'], '', contextWithError)
       expect(results).toEqual([])
     })

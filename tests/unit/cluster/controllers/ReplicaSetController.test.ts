@@ -223,13 +223,17 @@ describe('ReplicaSetController', () => {
             : mockState.pods,
         findReplicaSet: (name: string, namespace: string) => {
           const rs = mockState.replicaSets.find(
-            (r) => r.metadata.name === name && r.metadata.namespace === namespace
+            (r) =>
+              r.metadata.name === name && r.metadata.namespace === namespace
           )
-          return rs ? { ok: true, value: rs } : { ok: false, error: 'not found' }
+          return rs
+            ? { ok: true, value: rs }
+            : { ok: false, error: 'not found' }
         },
         findPod: (name: string, namespace: string) => {
           const pod = mockState.pods.find(
-            (p) => p.metadata.name === name && p.metadata.namespace === namespace
+            (p) =>
+              p.metadata.name === name && p.metadata.namespace === namespace
           )
           return pod
             ? { ok: true, value: pod }
@@ -382,9 +386,12 @@ describe('ReplicaSetController', () => {
       mockState.pods = [createTestPod('my-rs-failed', 'my-rs', 'Failed')]
 
       let updatedRs: ReplicaSet | undefined
-      eventBus.subscribe('ReplicaSetUpdated', (event: ReplicaSetUpdatedEvent) => {
-        updatedRs = event.payload.replicaSet
-      })
+      eventBus.subscribe(
+        'ReplicaSetUpdated',
+        (event: ReplicaSetUpdatedEvent) => {
+          updatedRs = event.payload.replicaSet
+        }
+      )
 
       controller.reconcile('default/my-rs')
 
@@ -534,9 +541,14 @@ describe('ReplicaSetController', () => {
       mockState.pods = [pendingPod]
 
       const updatedStatuses: number[] = []
-      eventBus.subscribe('ReplicaSetUpdated', (event: ReplicaSetUpdatedEvent) => {
-        updatedStatuses.push(event.payload.replicaSet.status.readyReplicas ?? 0)
-      })
+      eventBus.subscribe(
+        'ReplicaSetUpdated',
+        (event: ReplicaSetUpdatedEvent) => {
+          updatedStatuses.push(
+            event.payload.replicaSet.status.readyReplicas ?? 0
+          )
+        }
+      )
 
       controller.start()
 
@@ -586,10 +598,13 @@ describe('ReplicaSetController', () => {
       })
 
       const updates: number[] = []
-      eventBus.subscribe('ReplicaSetUpdated', (event: ReplicaSetUpdatedEvent) => {
-        updates.push(event.payload.replicaSet.status.readyReplicas ?? 0)
-        mockState.replicaSets = [event.payload.replicaSet]
-      })
+      eventBus.subscribe(
+        'ReplicaSetUpdated',
+        (event: ReplicaSetUpdatedEvent) => {
+          updates.push(event.payload.replicaSet.status.readyReplicas ?? 0)
+          mockState.replicaSets = [event.payload.replicaSet]
+        }
+      )
 
       controller.start()
       vi.advanceTimersByTime(1)
@@ -610,9 +625,9 @@ describe('ReplicaSetController', () => {
       controller.stop()
       vi.useRealTimers()
 
-      expect(updates.filter((value) => value === 1).length).toBeGreaterThanOrEqual(
-        2
-      )
+      expect(
+        updates.filter((value) => value === 1).length
+      ).toBeGreaterThanOrEqual(2)
     })
   })
 })

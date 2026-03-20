@@ -6,9 +6,7 @@ import {
   type FileSystem
 } from '../../../../../src/core/filesystem/FileSystem'
 import { parseCommand } from '../../../../../src/core/kubectl/commands/parser'
-import {
-  handleApply
-} from '../../../../../src/core/kubectl/commands/handlers/apply'
+import { handleApply } from '../../../../../src/core/kubectl/commands/handlers/apply'
 import { handleCreate } from '../../../../../src/core/kubectl/commands/handlers/create'
 import { handleRun } from '../../../../../src/core/kubectl/commands/handlers/run'
 
@@ -33,11 +31,7 @@ describe('applyCreate handler', () => {
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -60,11 +54,7 @@ describe('applyCreate handler', () => {
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -81,11 +71,7 @@ describe('applyCreate handler', () => {
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -102,11 +88,7 @@ describe('applyCreate handler', () => {
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -123,11 +105,7 @@ describe('applyCreate handler', () => {
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -158,11 +136,7 @@ describe('applyCreate handler', () => {
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
 
     expect(result.ok).toBe(true)
     const deployment = apiServer.findResource('Deployment', 'my-dep', 'staging')
@@ -178,11 +152,7 @@ describe('applyCreate handler', () => {
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -200,11 +170,7 @@ describe('applyCreate handler', () => {
       return
     }
 
-    const dryRunResult = handleCreate(
-      fileSystem,
-      apiServer,
-      parsedCreate.value
-    )
+    const dryRunResult = handleCreate(fileSystem, apiServer, parsedCreate.value)
     expect(dryRunResult.ok).toBe(true)
     if (!dryRunResult.ok) {
       return
@@ -221,17 +187,17 @@ describe('applyCreate handler', () => {
       return
     }
 
-    const applyResult = handleApply(
-      fileSystem,
-      apiServer,
-      parsedApply.value
-    )
+    const applyResult = handleApply(fileSystem, apiServer, parsedApply.value)
     expect(applyResult.ok).toBe(true)
     if (!applyResult.ok) {
       return
     }
 
-    const deployment = apiServer.findResource('Deployment', 'demo-app', 'default')
+    const deployment = apiServer.findResource(
+      'Deployment',
+      'demo-app',
+      'default'
+    )
     expect(deployment.ok).toBe(true)
   })
 
@@ -244,11 +210,7 @@ describe('applyCreate handler', () => {
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -265,11 +227,7 @@ describe('applyCreate handler', () => {
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -286,11 +244,7 @@ describe('applyCreate handler', () => {
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -307,11 +261,7 @@ describe('applyCreate handler', () => {
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -338,11 +288,7 @@ data:
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -375,7 +321,9 @@ spec:
     fileSystem.createFile('demo-unchanged.yaml')
     fileSystem.writeFile('demo-unchanged.yaml', yaml)
 
-    const parsedFirstApply = parseCommand('kubectl apply -f demo-unchanged.yaml')
+    const parsedFirstApply = parseCommand(
+      'kubectl apply -f demo-unchanged.yaml'
+    )
     expect(parsedFirstApply.ok).toBe(true)
     if (!parsedFirstApply.ok) {
       return
@@ -390,7 +338,9 @@ spec:
     if (!firstApplyResult.ok) {
       return
     }
-    expect(firstApplyResult.value).toContain('deployment.apps/demo-unchanged created')
+    expect(firstApplyResult.value).toContain(
+      'deployment.apps/demo-unchanged created'
+    )
     const createdDeployment = apiServer.findResource(
       'Deployment',
       'demo-unchanged',
@@ -406,7 +356,9 @@ spec:
       ]
     ).toBeTypeOf('string')
 
-    const parsedSecondApply = parseCommand('kubectl apply -f demo-unchanged.yaml')
+    const parsedSecondApply = parseCommand(
+      'kubectl apply -f demo-unchanged.yaml'
+    )
     expect(parsedSecondApply.ok).toBe(true)
     if (!parsedSecondApply.ok) {
       return
@@ -569,7 +521,9 @@ spec:
     fileSystem.createFile('demo-configured.yaml')
     fileSystem.writeFile('demo-configured.yaml', initialYaml)
 
-    const parsedFirstApply = parseCommand('kubectl apply -f demo-configured.yaml')
+    const parsedFirstApply = parseCommand(
+      'kubectl apply -f demo-configured.yaml'
+    )
     expect(parsedFirstApply.ok).toBe(true)
     if (!parsedFirstApply.ok) {
       return
@@ -584,11 +538,15 @@ spec:
     if (!firstApplyResult.ok) {
       return
     }
-    expect(firstApplyResult.value).toContain('deployment.apps/demo-configured created')
+    expect(firstApplyResult.value).toContain(
+      'deployment.apps/demo-configured created'
+    )
 
     fileSystem.writeFile('demo-configured.yaml', updatedYaml)
 
-    const parsedSecondApply = parseCommand('kubectl apply -f demo-configured.yaml')
+    const parsedSecondApply = parseCommand(
+      'kubectl apply -f demo-configured.yaml'
+    )
     expect(parsedSecondApply.ok).toBe(true)
     if (!parsedSecondApply.ok) {
       return
@@ -615,11 +573,7 @@ spec:
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -657,11 +611,7 @@ spec:
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
 
     expect(result.ok).toBe(true)
     if (!result.ok) {
@@ -681,11 +631,7 @@ spec:
       return
     }
 
-    const firstResult = handleCreate(
-      fileSystem,
-      apiServer,
-      first.value
-    )
+    const firstResult = handleCreate(fileSystem, apiServer, first.value)
     expect(firstResult.ok).toBe(true)
 
     const second = parseCommand('kubectl create namespace my-team')
@@ -694,11 +640,7 @@ spec:
       return
     }
 
-    const secondResult = handleCreate(
-      fileSystem,
-      apiServer,
-      second.value
-    )
+    const secondResult = handleCreate(fileSystem, apiServer, second.value)
     expect(secondResult.ok).toBe(false)
     if (!secondResult.ok) {
       expect(secondResult.error).toContain('Error from server (AlreadyExists)')
@@ -717,11 +659,7 @@ spec:
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return
@@ -748,11 +686,7 @@ spec:
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return
@@ -764,7 +698,11 @@ spec:
     expect(result.value).toContain('app: my-svc')
     expect(result.value).toContain('name: 80-8080')
     expect(result.value).toContain('loadBalancer: {}')
-    const createdService = apiServer.findResource('Service', 'my-svc', 'default')
+    const createdService = apiServer.findResource(
+      'Service',
+      'my-svc',
+      'default'
+    )
     expect(createdService.ok).toBe(false)
   })
 
@@ -777,11 +715,7 @@ spec:
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return
@@ -806,11 +740,7 @@ spec:
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return
@@ -821,7 +751,11 @@ spec:
     expect(result.value).not.toContain('creationTimestamp: null')
     expect(result.value).toContain('LOG_LEVEL: info')
 
-    const configMap = apiServer.findResource('ConfigMap', 'app-config', 'default')
+    const configMap = apiServer.findResource(
+      'ConfigMap',
+      'app-config',
+      'default'
+    )
     expect(configMap.ok).toBe(false)
   })
 
@@ -853,18 +787,18 @@ spec:
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return
     }
 
     expect(result.value).toBe('app-config')
-    const configMap = apiServer.findResource('ConfigMap', 'app-config', 'default')
+    const configMap = apiServer.findResource(
+      'ConfigMap',
+      'app-config',
+      'default'
+    )
     expect(configMap.ok).toBe(false)
   })
 
@@ -877,11 +811,7 @@ spec:
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return
@@ -910,11 +840,7 @@ spec:
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return
@@ -939,11 +865,7 @@ spec:
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return
@@ -968,11 +890,7 @@ spec:
       return
     }
 
-    const result = handleCreate(
-      fileSystem,
-      apiServer,
-      parsed.value
-    )
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return

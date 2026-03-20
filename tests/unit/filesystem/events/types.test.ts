@@ -7,7 +7,7 @@ import {
   createDirectoryDeletedEvent,
   createFileCreatedEvent,
   createFileDeletedEvent,
-  createFileModifiedEvent,
+  createFileModifiedEvent
 } from '../../../../src/core/filesystem/events/types'
 
 describe('Filesystem Event Types', () => {

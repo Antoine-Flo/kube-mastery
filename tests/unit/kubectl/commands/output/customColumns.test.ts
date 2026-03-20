@@ -44,7 +44,9 @@ describe('parseCustomColumnsSpec', () => {
     const result = parseCustomColumnsSpec('NAME:.metadata.name')
     expect(result.ok).toBe(true)
     if (result.ok) {
-      expect(result.value).toEqual([{ header: 'NAME', pathExpr: '.metadata.name' }])
+      expect(result.value).toEqual([
+        { header: 'NAME', pathExpr: '.metadata.name' }
+      ])
     }
   })
 
@@ -98,10 +100,7 @@ describe('renderCustomColumnsTable', () => {
   })
 
   it('returns empty string for zero items', () => {
-    const result = renderCustomColumnsTable(
-      'NAME:.metadata.name',
-      []
-    )
+    const result = renderCustomColumnsTable('NAME:.metadata.name', [])
     expect(result.ok).toBe(true)
     if (result.ok) {
       expect(result.value).toBe('')

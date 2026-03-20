@@ -44,11 +44,11 @@ The diagram below illustrates the most common relationship, a Service using a la
 
 ```mermaid
 graph LR
-    Client([Client]) --> SVC["Service\nselector: app=web"]
-    SVC -->|label match| P1["Pod\napp=web\nenv=prod"]
-    SVC -->|label match| P2["Pod\napp=web\nenv=prod"]
-    SVC -.-|no match| P3["Pod\napp=api\nenv=prod"]
-    SVC -.-|no match| P4["Pod\napp=web-v2\nenv=staging"]
+    Client([Client]) --> SVC["Service<br/>selector: app=web"]
+    SVC -->|label match| P1["Pod<br/>app=web<br/>env=prod"]
+    SVC -->|label match| P2["Pod<br/>app=web<br/>env=prod"]
+    SVC -.-|no match| P3["Pod<br/>app=api<br/>env=prod"]
+    SVC -.-|no match| P4["Pod<br/>app=web-v2<br/>env=staging"]
 ```
 
 The Service sees four Pods in the namespace but only forwards traffic to the two that carry `app=web`. The others are invisible to it.

@@ -1,26 +1,26 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  creationTimestamp: "2026-03-16T14:04:39Z"
+  creationTimestamp: '2026-03-16T14:04:39Z'
   generation: 1
   labels:
     run: my-pod
   name: my-pod
   namespace: default
-  resourceVersion: "467321"
+  resourceVersion: '467321'
   uid: b8edebca-3e25-4e54-befe-15e900350234
 spec:
   containers:
-  - image: nginx
-    imagePullPolicy: Always
-    name: my-pod
-    resources: {}
-    terminationMessagePath: /dev/termination-log
-    terminationMessagePolicy: File
-    volumeMounts:
-    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-      name: kube-api-access-g5c6x
-      readOnly: true
+    - image: nginx
+      imagePullPolicy: Always
+      name: my-pod
+      resources: {}
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          name: kube-api-access-g5c6x
+          readOnly: true
   dnsPolicy: ClusterFirst
   enableServiceLinks: true
   nodeName: conformance-worker
@@ -33,91 +33,91 @@ spec:
   serviceAccountName: default
   terminationGracePeriodSeconds: 30
   tolerations:
-  - effect: NoExecute
-    key: node.kubernetes.io/not-ready
-    operator: Exists
-    tolerationSeconds: 300
-  - effect: NoExecute
-    key: node.kubernetes.io/unreachable
-    operator: Exists
-    tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
   volumes:
-  - name: kube-api-access-g5c6x
-    projected:
-      defaultMode: 420
-      sources:
-      - serviceAccountToken:
-          expirationSeconds: 3607
-          path: token
-      - configMap:
-          items:
-          - key: ca.crt
-            path: ca.crt
-          name: kube-root-ca.crt
-      - downwardAPI:
-          items:
-          - fieldRef:
-              apiVersion: v1
-              fieldPath: metadata.namespace
-            path: namespace
+    - name: kube-api-access-g5c6x
+      projected:
+        defaultMode: 420
+        sources:
+          - serviceAccountToken:
+              expirationSeconds: 3607
+              path: token
+          - configMap:
+              items:
+                - key: ca.crt
+                  path: ca.crt
+              name: kube-root-ca.crt
+          - downwardAPI:
+              items:
+                - fieldRef:
+                    apiVersion: v1
+                    fieldPath: metadata.namespace
+                  path: namespace
 status:
   conditions:
-  - lastProbeTime: null
-    lastTransitionTime: "2026-03-16T14:04:40Z"
-    observedGeneration: 1
-    status: "True"
-    type: PodReadyToStartContainers
-  - lastProbeTime: null
-    lastTransitionTime: "2026-03-16T14:04:39Z"
-    observedGeneration: 1
-    status: "True"
-    type: Initialized
-  - lastProbeTime: null
-    lastTransitionTime: "2026-03-16T14:04:40Z"
-    observedGeneration: 1
-    status: "True"
-    type: Ready
-  - lastProbeTime: null
-    lastTransitionTime: "2026-03-16T14:04:40Z"
-    observedGeneration: 1
-    status: "True"
-    type: ContainersReady
-  - lastProbeTime: null
-    lastTransitionTime: "2026-03-16T14:04:39Z"
-    observedGeneration: 1
-    status: "True"
-    type: PodScheduled
+    - lastProbeTime: null
+      lastTransitionTime: '2026-03-16T14:04:40Z'
+      observedGeneration: 1
+      status: 'True'
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: '2026-03-16T14:04:39Z'
+      observedGeneration: 1
+      status: 'True'
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: '2026-03-16T14:04:40Z'
+      observedGeneration: 1
+      status: 'True'
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: '2026-03-16T14:04:40Z'
+      observedGeneration: 1
+      status: 'True'
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: '2026-03-16T14:04:39Z'
+      observedGeneration: 1
+      status: 'True'
+      type: PodScheduled
   containerStatuses:
-  - containerID: containerd://88761030e8b17da2bdec3135212a441ff10355c3c85f07d988c528a28726e6de
-    image: docker.io/library/nginx:latest
-    imageID: docker.io/library/nginx@sha256:bc45d248c4e1d1709321de61566eb2b64d4f0e32765239d66573666be7f13349
-    lastState: {}
-    name: my-pod
-    ready: true
-    resources: {}
-    restartCount: 0
-    started: true
-    state:
-      running:
-        startedAt: "2026-03-16T14:04:40Z"
-    user:
-      linux:
-        gid: 0
-        supplementalGroups:
-        - 0
-        uid: 0
-    volumeMounts:
-    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-      name: kube-api-access-g5c6x
-      readOnly: true
-      recursiveReadOnly: Disabled
+    - containerID: containerd://88761030e8b17da2bdec3135212a441ff10355c3c85f07d988c528a28726e6de
+      image: docker.io/library/nginx:latest
+      imageID: docker.io/library/nginx@sha256:bc45d248c4e1d1709321de61566eb2b64d4f0e32765239d66573666be7f13349
+      lastState: {}
+      name: my-pod
+      ready: true
+      resources: {}
+      restartCount: 0
+      started: true
+      state:
+        running:
+          startedAt: '2026-03-16T14:04:40Z'
+      user:
+        linux:
+          gid: 0
+          supplementalGroups:
+            - 0
+          uid: 0
+      volumeMounts:
+        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          name: kube-api-access-g5c6x
+          readOnly: true
+          recursiveReadOnly: Disabled
   hostIP: 172.18.0.2
   hostIPs:
-  - ip: 172.18.0.2
+    - ip: 172.18.0.2
   observedGeneration: 1
   phase: Running
   podIP: 10.244.1.10
   podIPs:
-  - ip: 10.244.1.10
+    - ip: 10.244.1.10
   qosClass: BestEffort
-  startTime: "2026-03-16T14:04:39Z"
+  startTime: '2026-03-16T14:04:39Z'

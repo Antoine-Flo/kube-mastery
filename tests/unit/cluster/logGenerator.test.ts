@@ -276,7 +276,9 @@ describe('LogGenerator', () => {
       })
 
       expect(firstAppend.entries.length).toBeGreaterThanOrEqual(5)
-      expect(firstAppend.streamState.nextSequence).toBe(firstAppend.entries.length)
+      expect(firstAppend.streamState.nextSequence).toBe(
+        firstAppend.entries.length
+      )
 
       const secondAppend = appendLogEntriesUntil('generic:latest', {
         context: {

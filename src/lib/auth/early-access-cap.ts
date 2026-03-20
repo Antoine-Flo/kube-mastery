@@ -14,7 +14,9 @@ const RPC_NAME = 'get_auth_user_count'
  * Returns the current number of users in auth.users, or null on error.
  * Must be called with admin client (service role).
  */
-export async function getAuthUserCount(locals: unknown): Promise<number | null> {
+export async function getAuthUserCount(
+  locals: unknown
+): Promise<number | null> {
   const admin = getSupabaseAdmin(locals)
   if (admin == null) {
     return null

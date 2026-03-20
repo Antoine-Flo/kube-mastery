@@ -14,7 +14,7 @@ sequenceDiagram
     participant Pod
 
     Browser->>IC: HTTPS (TLS encrypted)
-    Note over IC: TLS terminates here\nCertificate validated
+    Note over IC: TLS terminates here<br/>Certificate validated
     IC->>SVC: HTTP (plain, internal)
     SVC->>Pod: HTTP (plain, internal)
     Pod-->>SVC: HTTP response

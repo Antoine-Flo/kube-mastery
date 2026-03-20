@@ -78,7 +78,11 @@ describe('ApiServerFacade', () => {
         }
       }
     }
-    const updateResult = apiServer.updateResource('Node', 'worker-a', updatedNode)
+    const updateResult = apiServer.updateResource(
+      'Node',
+      'worker-a',
+      updatedNode
+    )
     expect(updateResult.ok).toBe(true)
     expect(apiServer.getResourceVersion()).toBe('3')
     expect(apiServer.etcd.getEventLog().at(-1)?.event.type).toBe('NodeUpdated')
@@ -105,8 +109,12 @@ describe('ApiServerFacade', () => {
     const namespaces = apiServer.listResources('Namespace')
     const services = apiServer.listResources('Service')
     expect(nodes.length).toBeGreaterThanOrEqual(3)
-    expect(namespaces.some((item) => item.metadata.name === 'kube-system')).toBe(true)
-    expect(services.some((item) => item.metadata.name === 'kubernetes')).toBe(true)
+    expect(
+      namespaces.some((item) => item.metadata.name === 'kube-system')
+    ).toBe(true)
+    expect(services.some((item) => item.metadata.name === 'kubernetes')).toBe(
+      true
+    )
     expect(Number(apiServer.getResourceVersion())).toBeGreaterThan(1)
 
     apiServer.stop()
@@ -126,7 +134,9 @@ describe('ApiServerFacade', () => {
       ...pod,
       spec: {
         ...pod.spec,
-        containers: [{ name: 'web', image: 'invalid-registry.local/web:latest' }]
+        containers: [
+          { name: 'web', image: 'invalid-registry.local/web:latest' }
+        ]
       }
     }
     const updateResult = apiServer.updateResource(
@@ -140,12 +150,12 @@ describe('ApiServerFacade', () => {
       return
     }
     expect(updateResult.value.status.phase).toBe('Pending')
-    expect(updateResult.value.status.containerStatuses?.[0]?.stateDetails?.state).toBe(
-      'Waiting'
-    )
-    expect(updateResult.value.status.containerStatuses?.[0]?.stateDetails?.reason).toBe(
-      'ContainerCreating'
-    )
+    expect(
+      updateResult.value.status.containerStatuses?.[0]?.stateDetails?.state
+    ).toBe('Waiting')
+    expect(
+      updateResult.value.status.containerStatuses?.[0]?.stateDetails?.reason
+    ).toBe('ContainerCreating')
     expect(updateResult.value.status.containerStatuses?.[0]?.image).toBe(
       'invalid-registry.local/web:latest'
     )

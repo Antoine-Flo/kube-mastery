@@ -61,14 +61,14 @@ In clusters configured to use IPVS mode, kube-proxy uses the kernel's IPVS (IP V
 
 ```mermaid
 graph LR
-    PA["Pod A\n(client)"]
-    VIP["ClusterIP\n10.96.45.12:80\n(virtual, in iptables)"]
-    PB1["Pod B-1\n10.244.1.5:80"]
-    PB2["Pod B-2\n10.244.2.11:80"]
-    PB3["Pod B-3\n10.244.3.8:80"]
+    PA["Pod A<br/>(client)"]
+    VIP["ClusterIP<br/>10.96.45.12:80<br/>(virtual, in iptables)"]
+    PB1["Pod B-1<br/>10.244.1.5:80"]
+    PB2["Pod B-2<br/>10.244.2.11:80"]
+    PB3["Pod B-3<br/>10.244.3.8:80"]
 
     PA -->|"connect to 10.96.45.12:80"| VIP
-    VIP -->|"iptables DNAT\n(random selection)"| PB1
+    VIP -->|"iptables DNAT<br/>(random selection)"| PB1
     VIP -.->|"or"| PB2
     VIP -.->|"or"| PB3
 ```

@@ -156,7 +156,11 @@ describe('KubectlCommandHandler', () => {
       }
 
       capturedSave(capturedContent.replace('nginx:1.25', 'nginx:1.26'))
-      const podResult = context.apiServer.findResource('Pod', 'edit-demo', 'default')
+      const podResult = context.apiServer.findResource(
+        'Pod',
+        'edit-demo',
+        'default'
+      )
       expect(podResult.ok).toBe(true)
       if (!podResult.ok) {
         return
@@ -193,10 +197,7 @@ describe('KubectlCommandHandler', () => {
       }
 
       capturedSave(
-        capturedContent.replace(
-          'name: edit-demo',
-          'name: edit-demoo'
-        )
+        capturedContent.replace('name: edit-demo', 'name: edit-demoo')
       )
 
       const output = renderer.getOutput()
@@ -212,10 +213,10 @@ describe('KubectlCommandHandler', () => {
         return
       }
       expect(copiedFileResult.value).toContain('name: edit-demoo')
+      expect(output).toContain('error: pods "edit-demo" is invalid')
       expect(output).toContain(
-        'error: pods "edit-demo" is invalid'
+        'error: Edit cancelled, no valid changes were saved.'
       )
-      expect(output).toContain('error: Edit cancelled, no valid changes were saved.')
     })
 
     it('should enter container context for exec shell directive', () => {
@@ -306,7 +307,10 @@ describe('KubectlCommandHandler', () => {
         }
       })
 
-      const hostTouchResult = new ShellCommandHandler().execute('touch test1', context)
+      const hostTouchResult = new ShellCommandHandler().execute(
+        'touch test1',
+        context
+      )
       expect(hostTouchResult.ok).toBe(true)
       expect(context.fileSystem.readFile('test1').ok).toBe(true)
 
@@ -324,7 +328,11 @@ describe('KubectlCommandHandler', () => {
       expect(containerTouchResult.ok).toBe(true)
       expect(context.fileSystem.readFile('test2').ok).toBe(false)
 
-      const podResult = context.apiServer.findResource('Pod', 'log-demo', 'default')
+      const podResult = context.apiServer.findResource(
+        'Pod',
+        'log-demo',
+        'default'
+      )
       expect(podResult.ok).toBe(true)
       if (!podResult.ok) {
         return
@@ -382,9 +390,10 @@ describe('KubectlCommandHandler', () => {
       }
       expect(updatedPodResult.value.status.phase).toBe('Pending')
       expect(updatedPodResult.value.status.restartCount).toBe(1)
-      const targetStatus = updatedPodResult.value.status.containerStatuses?.find(
-        (status) => status.name === 'always-pod'
-      )
+      const targetStatus =
+        updatedPodResult.value.status.containerStatuses?.find(
+          (status) => status.name === 'always-pod'
+        )
       expect(targetStatus?.restartCount).toBe(1)
       expect(targetStatus?.stateDetails?.state).toBe('Waiting')
       expect(targetStatus?.stateDetails?.reason).toBe('ContainerCreating')
@@ -464,7 +473,11 @@ describe('KubectlCommandHandler', () => {
       expect(fileResult.value).toContain('name: 80-8080')
       expect(fileResult.value).toContain('loadBalancer: {}')
 
-      const service = context.apiServer.findResource('Service', 'my-svc', 'default')
+      const service = context.apiServer.findResource(
+        'Service',
+        'my-svc',
+        'default'
+      )
       expect(service.ok).toBe(false)
     })
 
@@ -672,7 +685,13 @@ describe('KubectlCommandHandler', () => {
         ]
       })
       context.apiServer.eventBus.emit(
-        createPodUpdatedEvent('status-demo', 'default', longStatusPod, basePod, 'test')
+        createPodUpdatedEvent(
+          'status-demo',
+          'default',
+          longStatusPod,
+          basePod,
+          'test'
+        )
       )
       const longLine = renderer
         .getOutput()
@@ -716,7 +735,10 @@ describe('KubectlCommandHandler', () => {
       if (shortAfterLongLine == null) {
         return
       }
-      const shortAfterLongRestartsIndex = getCellStartIndex(shortAfterLongLine, '33')
+      const shortAfterLongRestartsIndex = getCellStartIndex(
+        shortAfterLongLine,
+        '33'
+      )
       expect(shortAfterLongRestartsIndex).toBe(longRestartsIndex)
     })
 
@@ -782,7 +804,10 @@ describe('KubectlCommandHandler', () => {
           containers: [{ name: 'app', image: 'generic:latest' }]
         })
       )
-      const result = handler.execute('kubectl logs -f log-demo > out.txt', context)
+      const result = handler.execute(
+        'kubectl logs -f log-demo > out.txt',
+        context
+      )
       expect(result.ok).toBe(false)
       expect(renderer.getOutput()).toContain(
         'unsupported output redirection syntax for follow mode'

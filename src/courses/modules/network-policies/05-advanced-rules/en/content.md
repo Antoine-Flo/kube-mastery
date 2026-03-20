@@ -102,18 +102,18 @@ This architectural property lets you compose your security posture from many sma
 ```mermaid
 graph TD
     subgraph "Policies selecting the Backend Pod"
-        P1["Policy A\nAllow ingress from frontend:8080"]
-        P2["Policy B\nAllow ingress from monitoring:9090"]
-        P3["Policy C\nAllow egress to database:5432\nAllow egress to DNS:53"]
+        P1["Policy A<br/>Allow ingress from frontend:8080"]
+        P2["Policy B<br/>Allow ingress from monitoring:9090"]
+        P3["Policy C<br/>Allow egress to database:5432<br/>Allow egress to DNS:53"]
     end
 
-    B["Backend Pod\n(app=backend)"]
+    B["Backend Pod<br/>(app=backend)"]
 
     P1 -->|contributes to| B
     P2 -->|contributes to| B
     P3 -->|contributes to| B
 
-    B --> ALLOW["Effective allowed traffic:\n• Ingress from frontend on :8080\n• Ingress from monitoring on :9090\n• Egress to database on :5432\n• Egress to DNS on :53\n• All other traffic blocked"]
+    B --> ALLOW["Effective allowed traffic:<br/>• Ingress from frontend on :8080<br/>• Ingress from monitoring on :9090<br/>• Egress to database on :5432<br/>• Egress to DNS on :53<br/>• All other traffic blocked"]
 ```
 
 There's no way to use one policy to "block" what another policy has allowed. Once traffic is permitted by any policy, it goes through.

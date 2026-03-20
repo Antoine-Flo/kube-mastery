@@ -17,11 +17,14 @@ export const hasContainerStatusChanged = (
   if (previous == null) {
     return true
   }
-  if (JSON.stringify(previous.stateDetails) !== JSON.stringify(next.stateDetails)) {
+  if (
+    JSON.stringify(previous.stateDetails) !== JSON.stringify(next.stateDetails)
+  ) {
     return true
   }
   if (
-    JSON.stringify(previous.lastStateDetails) !== JSON.stringify(next.lastStateDetails)
+    JSON.stringify(previous.lastStateDetails) !==
+    JSON.stringify(next.lastStateDetails)
   ) {
     return true
   }
@@ -53,7 +56,8 @@ export const buildWaitingContainerStatuses = (
     if (!regularContainerNames.has(status.name)) {
       return status
     }
-    const previousStateDetails = status.stateDetails ?? buildFallbackWaitingState()
+    const previousStateDetails =
+      status.stateDetails ?? buildFallbackWaitingState()
     return {
       ...status,
       ready: false,
@@ -98,7 +102,8 @@ export const buildTerminatedContainerStatuses = (
     if (!regularContainerNames.has(status.name)) {
       return status
     }
-    const previousStateDetails = status.stateDetails ?? buildFallbackWaitingState()
+    const previousStateDetails =
+      status.stateDetails ?? buildFallbackWaitingState()
     const terminatedRuntimeRecord = terminatedRuntimeRecords.get(status.name)
     return {
       ...status,

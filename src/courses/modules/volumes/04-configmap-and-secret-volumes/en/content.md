@@ -87,13 +87,13 @@ Setting `readOnly: true` on the volumeMount is a best practice for both ConfigMa
 ```mermaid
 graph LR
     subgraph "ConfigMap: app-config"
-        K1["Key: database.conf\nValue: host=postgres..."]
-        K2["Key: logging.conf\nValue: level=INFO..."]
+        K1["Key: database.conf<br/>Value: host=postgres..."]
+        K2["Key: logging.conf<br/>Value: level=INFO..."]
     end
 
     subgraph "Container filesystem at /etc/config"
-        F1["/etc/config/database.conf\n(file contents = key value)"]
-        F2["/etc/config/logging.conf\n(file contents = key value)"]
+        F1["/etc/config/database.conf<br/>(file contents = key value)"]
+        F2["/etc/config/logging.conf<br/>(file contents = key value)"]
     end
 
     K1 -->|"becomes"| F1
@@ -148,7 +148,7 @@ data:
       server {
         listen 80;
         location / {
-          return 200 "Hello from configmap-driven nginx!\n";
+          return 200 "Hello from configmap-driven nginx!<br/>";
           add_header Content-Type text/plain;
         }
       }
@@ -206,7 +206,7 @@ Let's mount a ConfigMap as files and then update the ConfigMap to see the live r
 ```bash
 kubectl create configmap demo-config \
   --from-literal=greeting.txt="Hello from ConfigMap!" \
-  --from-literal=settings.conf="color=blue\nsize=large"
+  --from-literal=settings.conf="color=blue<br/>size=large"
 ```
 
 **2. Verify the ConfigMap was created:**
@@ -269,7 +269,7 @@ kubectl exec config-reader -- cat /config/settings.conf
 ```bash
 kubectl create configmap demo-config \
   --from-literal=greeting.txt="Updated greeting, no restart needed!" \
-  --from-literal=settings.conf="color=green\nsize=small" \
+  --from-literal=settings.conf="color=green<br/>size=small" \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 

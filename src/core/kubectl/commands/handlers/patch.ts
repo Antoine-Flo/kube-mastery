@@ -1,4 +1,7 @@
-import type { KindToResource, ResourceKind } from '../../../cluster/ClusterState'
+import type {
+  KindToResource,
+  ResourceKind
+} from '../../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { ExecutionResult, Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
@@ -34,7 +37,9 @@ const mergePatchValue = (target: unknown, patch: unknown): unknown => {
     return cloneValue(patch)
   }
 
-  const targetRecord: JsonRecord = isJsonRecord(target) ? cloneValue(target) : {}
+  const targetRecord: JsonRecord = isJsonRecord(target)
+    ? cloneValue(target)
+    : {}
   const merged: JsonRecord = { ...targetRecord }
   for (const [key, patchValue] of Object.entries(patch)) {
     if (patchValue === null) {
@@ -104,7 +109,9 @@ const parsePatchPayload = (payload: string): Result<JsonRecord> => {
   }
 }
 
-const validatePatchType = (parsed: ParsedCommand): ExecutionResult | undefined => {
+const validatePatchType = (
+  parsed: ParsedCommand
+): ExecutionResult | undefined => {
   const patchType = parsed.flags['type']
   if (patchType !== undefined && patchType !== 'merge') {
     return error('error: --type must be "merge"')
@@ -152,7 +159,10 @@ export const handlePatch = (
     )
   }
 
-  const patchedResource = mergePatchValue(existingResult.value, patchResult.value)
+  const patchedResource = mergePatchValue(
+    existingResult.value,
+    patchResult.value
+  )
   const immutableError = validateImmutableFieldsForEdit(
     kindResult.kind,
     existingResult.value as unknown as JsonRecord,

@@ -1,4 +1,7 @@
-import type { KindToResource, ResourceKind } from '../../../cluster/ClusterState'
+import type {
+  KindToResource,
+  ResourceKind
+} from '../../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { DaemonSet } from '../../../cluster/ressources/DaemonSet'
 import type { Deployment } from '../../../cluster/ressources/Deployment'
@@ -7,17 +10,16 @@ import type { ReplicaSet } from '../../../cluster/ressources/ReplicaSet'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand, Resource } from '../types'
-import {
-  toKindReference,
-  toPluralKindReference
-} from '../resourceHelpers'
+import { toKindReference, toPluralKindReference } from '../resourceHelpers'
 
 type ContainerLike = {
   name: string
   image: string
 }
 
-const SET_IMAGE_RESOURCE_KIND_BY_RESOURCE: Partial<Record<Resource, ResourceKind>> = {
+const SET_IMAGE_RESOURCE_KIND_BY_RESOURCE: Partial<
+  Record<Resource, ResourceKind>
+> = {
   pods: 'Pod',
   deployments: 'Deployment',
   daemonsets: 'DaemonSet',
@@ -32,12 +34,15 @@ const getContainersFromResource = (
     return (resource as Pod).spec.containers as ContainerLike[]
   }
   if (kind === 'Deployment') {
-    return (resource as Deployment).spec.template.spec.containers as ContainerLike[]
+    return (resource as Deployment).spec.template.spec
+      .containers as ContainerLike[]
   }
   if (kind === 'ReplicaSet') {
-    return (resource as ReplicaSet).spec.template.spec.containers as ContainerLike[]
+    return (resource as ReplicaSet).spec.template.spec
+      .containers as ContainerLike[]
   }
-  return (resource as DaemonSet).spec.template.spec.containers as ContainerLike[]
+  return (resource as DaemonSet).spec.template.spec
+    .containers as ContainerLike[]
 }
 
 const withUpdatedContainers = (
@@ -112,7 +117,9 @@ const parseSetImageTarget = (
   }
   const kind = SET_IMAGE_RESOURCE_KIND_BY_RESOURCE[parsed.resource]
   if (kind == null) {
-    return error(`error: set image does not support resource type "${parsed.resource}"`)
+    return error(
+      `error: set image does not support resource type "${parsed.resource}"`
+    )
   }
   if (parsed.name == null || parsed.name.length === 0) {
     return error('error: set image requires a resource name')
@@ -128,7 +135,9 @@ const parseImageAssignments = (
 ): Record<string, string> | ExecutionResult => {
   const assignments = parsed.setImageAssignments
   if (assignments == null || Object.keys(assignments).length === 0) {
-    return error('error: set image requires at least one container=image assignment')
+    return error(
+      'error: set image requires at least one container=image assignment'
+    )
   }
   return assignments
 }
@@ -167,7 +176,10 @@ export const handleSetImage = (
     )
   }
 
-  const containers = getContainersFromResource(targetResult.kind, existing.value)
+  const containers = getContainersFromResource(
+    targetResult.kind,
+    existing.value
+  )
   const updatedContainers = containers.map((container) => ({ ...container }))
   for (const [containerName, image] of Object.entries(assignmentsResult)) {
     const targetContainer = updatedContainers.find(
@@ -194,5 +206,7 @@ export const handleSetImage = (
     return error(updateResult.error)
   }
 
-  return success(`${toKindReference(targetResult.kind)}/${targetResult.name} image updated`)
+  return success(
+    `${toKindReference(targetResult.kind)}/${targetResult.name} image updated`
+  )
 }

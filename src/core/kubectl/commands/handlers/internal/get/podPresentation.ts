@@ -1,4 +1,7 @@
-import { isPodTerminating, type Pod } from '../../../../../cluster/ressources/Pod'
+import {
+  isPodTerminating,
+  type Pod
+} from '../../../../../cluster/ressources/Pod'
 
 const buildPodVirtualIP = (hashSource: string): string => {
   let hash = 0
@@ -17,7 +20,9 @@ export const getPodReady = (pod: Pod): string => {
   if (regular === 0) {
     return '0/0'
   }
-  const ready = statuses.filter((containerStatus) => containerStatus.ready).length
+  const ready = statuses.filter(
+    (containerStatus) => containerStatus.ready
+  ).length
   return `${ready}/${regular}`
 }
 

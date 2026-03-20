@@ -3,14 +3,19 @@ import { join } from 'path'
 import type { ActionExecutionRecord } from './conformance-types'
 
 const sanitizeBucketName = (value: string): string => {
-  const sanitized = value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-')
+  const sanitized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
   if (sanitized.length === 0) {
     return 'misc'
   }
   return sanitized
 }
 
-const inferScenarioBucketFromRecord = (record: ActionExecutionRecord): string => {
+const inferScenarioBucketFromRecord = (
+  record: ActionExecutionRecord
+): string => {
   return sanitizeBucketName(record.suiteName)
 }
 

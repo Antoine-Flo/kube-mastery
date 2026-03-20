@@ -1,5 +1,8 @@
 import type { ApiServerFacade } from '../../../../../api/ApiServerFacade'
-import { createSecret, encodeBase64 } from '../../../../../cluster/ressources/Secret'
+import {
+  createSecret,
+  encodeBase64
+} from '../../../../../cluster/ressources/Secret'
 import type { FileSystem } from '../../../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { createResourceWithEvents } from '../../../resourceHelpers'
@@ -84,7 +87,10 @@ const parseEnvFileContent = (
     result[parsed.key] = parsed.value
   }
   if (Object.keys(result).length === 0) {
-    return { ok: false, error: `error: no data found in env file: ${sourcePath}` }
+    return {
+      ok: false,
+      error: `error: no data found in env file: ${sourcePath}`
+    }
   }
   return result
 }
@@ -104,7 +110,10 @@ const getCreateSecretLiterals = (parsed: ParsedCommand): string[] => {
 }
 
 const getCreateSecretFromFiles = (parsed: ParsedCommand): string[] => {
-  if (Array.isArray(parsed.createFromFiles) && parsed.createFromFiles.length > 0) {
+  if (
+    Array.isArray(parsed.createFromFiles) &&
+    parsed.createFromFiles.length > 0
+  ) {
     return parsed.createFromFiles
   }
   const fromFile = parsed.flags['from-file']
@@ -137,7 +146,11 @@ const prepareGenericSecretData = (
   const fromFiles = getCreateSecretFromFiles(parsed)
   const fromEnvFiles = getCreateSecretFromEnvFiles(parsed)
 
-  if (literals.length === 0 && fromFiles.length === 0 && fromEnvFiles.length === 0) {
+  if (
+    literals.length === 0 &&
+    fromFiles.length === 0 &&
+    fromEnvFiles.length === 0
+  ) {
     return {
       ok: false,
       error:
@@ -170,7 +183,10 @@ const prepareGenericSecretData = (
     if (!envFileReadResult.ok) {
       return { ok: false, error: `error: ${envFileReadResult.error}` }
     }
-    const parsedEnvFile = parseEnvFileContent(envFileReadResult.value, envFilePath)
+    const parsedEnvFile = parseEnvFileContent(
+      envFileReadResult.value,
+      envFilePath
+    )
     if (isExecutionErrorResult(parsedEnvFile)) {
       return parsedEnvFile
     }
@@ -226,19 +242,22 @@ const prepareDockerRegistrySecretData = (
   if (typeof server !== 'string' || server.trim().length === 0) {
     return {
       ok: false,
-      error: 'error: create secret docker-registry requires flag --docker-server'
+      error:
+        'error: create secret docker-registry requires flag --docker-server'
     }
   }
   if (typeof username !== 'string' || username.trim().length === 0) {
     return {
       ok: false,
-      error: 'error: create secret docker-registry requires flag --docker-username'
+      error:
+        'error: create secret docker-registry requires flag --docker-username'
     }
   }
   if (typeof password !== 'string' || password.trim().length === 0) {
     return {
       ok: false,
-      error: 'error: create secret docker-registry requires flag --docker-password'
+      error:
+        'error: create secret docker-registry requires flag --docker-password'
     }
   }
   const auth = encodeBase64(`${username}:${password}`)
@@ -304,7 +323,10 @@ export const buildCreateSecretDryRunManifest = (
 
 export const isCreateSecretImperative = (
   parsed: ParsedCommand
-): parsed is ParsedCommand & { name: string; createSecretType: CreateSecretType } => {
+): parsed is ParsedCommand & {
+  name: string
+  createSecretType: CreateSecretType
+} => {
   if (parsed.resource !== 'secrets') {
     return false
   }

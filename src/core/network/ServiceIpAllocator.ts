@@ -77,7 +77,9 @@ export const createServiceIpAllocator = (): ServiceIpAllocator => {
       }
       attempt = attempt + 1
     }
-    throw new Error('No available Service cluster IP addresses in allocation range')
+    throw new Error(
+      'No available Service cluster IP addresses in allocation range'
+    )
   }
 
   const release = (service: Service): void => {

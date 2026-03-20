@@ -106,9 +106,9 @@ The path regex `/api(/|$)(.*)` captures everything after `/api/` in capture grou
 
 ```mermaid
 graph LR
-    A["Client request:\n/api/v1/users"] --> IC[Ingress Controller]
-    IC -->|path matches /api/...| RW["Rewrite:\n/$2 = /v1/users"]
-    RW --> B["Backend receives:\n/v1/users"]
+    A["Client request:<br/>/api/v1/users"] --> IC[Ingress Controller]
+    IC -->|path matches /api/...| RW["Rewrite:<br/>/$2 = /v1/users"]
+    RW --> B["Backend receives:<br/>/v1/users"]
     B --> POD[api Pod]
 ```
 
@@ -273,7 +273,7 @@ kubectl apply -f rate-limited-ingress.yaml
 
 # Fire 10 rapid requests and watch for 503 responses
 for i in $(seq 1 10); do
-  curl -s -o /dev/null -w "%{http_code}\n" -H "Host: app.example.com" http://$INGRESS_IP/
+  curl -s -o /dev/null -w "%{http_code}<br/>" -H "Host: app.example.com" http://$INGRESS_IP/
 done
 ```
 

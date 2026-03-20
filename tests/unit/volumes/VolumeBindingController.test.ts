@@ -182,7 +182,9 @@ describe('VolumeBindingController', () => {
     expect(boundClaims).toHaveLength(1)
     expect(boundClaims[0].spec.volumeName).toBe('pv-1')
 
-    const pendingClaim = claims.find((claim) => claim.status.phase === 'Pending')
+    const pendingClaim = claims.find(
+      (claim) => claim.status.phase === 'Pending'
+    )
     expect(pendingClaim).toBeDefined()
     expect(pendingClaim?.spec.volumeName).toBeUndefined()
 

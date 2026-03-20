@@ -1,4 +1,7 @@
-import type { KindToResource, ResourceKind } from '../../../cluster/ClusterState'
+import type {
+  KindToResource,
+  ResourceKind
+} from '../../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { Pod } from '../../../cluster/ressources/Pod'
 import { computeContainerImageId } from '../../../cluster/ressources/Pod'
@@ -32,15 +35,15 @@ const resetPodManifestForReplacement = (
   const previousStatusByName = new Map(
     previousStatuses.map((status) => [status.name, status] as const)
   )
-  const buildWaitingStatus = (
-    container: { name: string; image: string }
-  ): NonNullable<Pod['status']['containerStatuses']>[number] => {
+  const buildWaitingStatus = (container: {
+    name: string
+    image: string
+  }): NonNullable<Pod['status']['containerStatuses']>[number] => {
     const previousStatus = previousStatusByName.get(container.name)
-    const previousStateDetails =
-      previousStatus?.stateDetails ?? {
-        state: 'Waiting' as const,
-        reason: 'ContainerCreating'
-      }
+    const previousStateDetails = previousStatus?.stateDetails ?? {
+      state: 'Waiting' as const,
+      reason: 'ContainerCreating'
+    }
     return {
       ...previousStatus,
       name: container.name,
@@ -76,7 +79,8 @@ const resetPodManifestForReplacement = (
       conditions: [
         {
           type: 'Initialized',
-          status: (nextPod.spec.initContainers?.length ?? 0) > 0 ? 'False' : 'True',
+          status:
+            (nextPod.spec.initContainers?.length ?? 0) > 0 ? 'False' : 'True',
           lastTransitionTime: transitionTime,
           lastProbeTime: null,
           observedGeneration
@@ -196,7 +200,8 @@ const getManifestTarget = (
   const namespaceFromManifest = resource.metadata?.namespace
   const namespace =
     parsed.namespace ??
-    (typeof namespaceFromManifest === 'string' && namespaceFromManifest.length > 0
+    (typeof namespaceFromManifest === 'string' &&
+    namespaceFromManifest.length > 0
       ? namespaceFromManifest
       : undefined) ??
     'default'
@@ -221,7 +226,11 @@ const replaceWithoutForce = (
   namespace: string,
   resource: KubernetesResource
 ): ExecutionResult => {
-  const namespaceValidation = validateNamespaceExists(apiServer, kind, namespace)
+  const namespaceValidation = validateNamespaceExists(
+    apiServer,
+    kind,
+    namespace
+  )
   if (namespaceValidation != null) {
     return namespaceValidation
   }
@@ -259,7 +268,11 @@ const forceReplace = (
   namespace: string,
   resource: KubernetesResource
 ): ExecutionResult => {
-  const namespaceValidation = validateNamespaceExists(apiServer, kind, namespace)
+  const namespaceValidation = validateNamespaceExists(
+    apiServer,
+    kind,
+    namespace
+  )
   if (namespaceValidation != null) {
     return namespaceValidation
   }

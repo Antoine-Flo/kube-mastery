@@ -68,14 +68,14 @@ These four namespaces are covered in depth in the next lesson.
 flowchart TD
     Cluster["Kubernetes Cluster"]
 
-    Cluster --> NS_default["namespace: default\n─────────────────\nPods, Deployments\nServices, ConfigMaps"]
-    Cluster --> NS_dev["namespace: dev\n─────────────────\nPods, Deployments\nServices, ConfigMaps"]
-    Cluster --> NS_prod["namespace: production\n─────────────────\nPods, Deployments\nServices, ConfigMaps"]
-    Cluster --> NS_system["namespace: kube-system\n─────────────────\nCoreDNS, kube-proxy\nmetrics-server"]
+    Cluster --> NS_default["namespace: default<br/>─────────────────<br/>Pods, Deployments<br/>Services, ConfigMaps"]
+    Cluster --> NS_dev["namespace: dev<br/>─────────────────<br/>Pods, Deployments<br/>Services, ConfigMaps"]
+    Cluster --> NS_prod["namespace: production<br/>─────────────────<br/>Pods, Deployments<br/>Services, ConfigMaps"]
+    Cluster --> NS_system["namespace: kube-system<br/>─────────────────<br/>CoreDNS, kube-proxy<br/>metrics-server"]
 
-    Cluster --> Node1["Node 1\n(cluster-scoped)"]
-    Cluster --> Node2["Node 2\n(cluster-scoped)"]
-    Cluster --> PV["PersistentVolumes\n(cluster-scoped)"]
+    Cluster --> Node1["Node 1<br/>(cluster-scoped)"]
+    Cluster --> Node2["Node 2<br/>(cluster-scoped)"]
+    Cluster --> PV["PersistentVolumes<br/>(cluster-scoped)"]
 ```
 
 Each namespace is its own isolated environment within the same cluster. Pods in the `dev` namespace cannot directly reference services in the `production` namespace by their short name , they need to use the full DNS name. Nodes and PersistentVolumes, being cluster-scoped, are shared across all namespaces.

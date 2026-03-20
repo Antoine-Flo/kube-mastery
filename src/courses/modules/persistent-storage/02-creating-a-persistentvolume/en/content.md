@@ -85,10 +85,10 @@ stateDiagram-v2
     [*] --> Available : PV created
     Available --> Bound : PVC binds to PV
     Bound --> Released : PVC deleted
-    Released --> Available : Admin clears claimRef\n(manual reclaim)
-    Released --> [*] : Admin deletes PV\nor policy=Delete
-    Available --> Failed : Error during\nreclaim
-    Released --> Failed : Error during\nreclaim
+    Released --> Available : Admin clears claimRef<br/>(manual reclaim)
+    Released --> [*] : Admin deletes PV<br/>or policy=Delete
+    Available --> Failed : Error during<br/>reclaim
+    Released --> Failed : Error during<br/>reclaim
 ```
 
 - **Available**: The PV has been created and is not yet bound to any PVC. It is ready to be claimed.

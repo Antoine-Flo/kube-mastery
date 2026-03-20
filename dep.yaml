@@ -13,5 +13,5 @@ spec:
         app: my-app
     spec:
       containers:
-      - name: my-app
-        image: nginx:1.28
+        - name: my-app
+          image: nginx:1.28

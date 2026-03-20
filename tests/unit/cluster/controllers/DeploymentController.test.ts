@@ -256,7 +256,8 @@ describe('DeploymentController', () => {
             : mockState.replicaSets,
         findDeployment: (name: string, namespace: string) => {
           const deploy = mockState.deployments.find(
-            (d) => d.metadata.name === name && d.metadata.namespace === namespace
+            (d) =>
+              d.metadata.name === name && d.metadata.namespace === namespace
           )
           return deploy
             ? { ok: true, value: deploy }
@@ -264,9 +265,12 @@ describe('DeploymentController', () => {
         },
         findReplicaSet: (name: string, namespace: string) => {
           const rs = mockState.replicaSets.find(
-            (r) => r.metadata.name === name && r.metadata.namespace === namespace
+            (r) =>
+              r.metadata.name === name && r.metadata.namespace === namespace
           )
-          return rs ? { ok: true, value: rs } : { ok: false, error: 'not found' }
+          return rs
+            ? { ok: true, value: rs }
+            : { ok: false, error: 'not found' }
         },
         getDaemonSets: () => [],
         findDaemonSet: () => ({ ok: false, error: 'not found' }),
@@ -537,17 +541,26 @@ describe('DeploymentController', () => {
       controller.reconcile('default/my-deploy')
 
       const rsAUpdatedTo3 = updatedReplicaSets.some((rs) => {
-        return rs.metadata.name === currentRsA.metadata.name && rs.spec.replicas === 3
-      })
-      const rsBUpdatedTo0 = updatedReplicaSets.some((rs) => {
-        return rs.metadata.name === oldActiveRsB.metadata.name && rs.spec.replicas === 0
-      })
-      const deploymentRevisionUpdated = updatedDeployments.some((deployment) => {
         return (
-          deployment.metadata.annotations?.['deployment.kubernetes.io/revision'] ===
-          '1'
+          rs.metadata.name === currentRsA.metadata.name &&
+          rs.spec.replicas === 3
         )
       })
+      const rsBUpdatedTo0 = updatedReplicaSets.some((rs) => {
+        return (
+          rs.metadata.name === oldActiveRsB.metadata.name &&
+          rs.spec.replicas === 0
+        )
+      })
+      const deploymentRevisionUpdated = updatedDeployments.some(
+        (deployment) => {
+          return (
+            deployment.metadata.annotations?.[
+              'deployment.kubernetes.io/revision'
+            ] === '1'
+          )
+        }
+      )
 
       expect(rsAUpdatedTo3).toBe(true)
       expect(rsBUpdatedTo0).toBe(true)
@@ -605,10 +618,13 @@ describe('DeploymentController', () => {
       })
 
       const updates: number[] = []
-      eventBus.subscribe('DeploymentUpdated', (event: DeploymentUpdatedEvent) => {
-        updates.push(event.payload.deployment.status.readyReplicas ?? 0)
-        mockState.deployments = [event.payload.deployment]
-      })
+      eventBus.subscribe(
+        'DeploymentUpdated',
+        (event: DeploymentUpdatedEvent) => {
+          updates.push(event.payload.deployment.status.readyReplicas ?? 0)
+          mockState.deployments = [event.payload.deployment]
+        }
+      )
 
       controller.start()
       vi.advanceTimersByTime(1)
@@ -629,9 +645,9 @@ describe('DeploymentController', () => {
       controller.stop()
       vi.useRealTimers()
 
-      expect(updates.filter((value) => value === 2).length).toBeGreaterThanOrEqual(
-        2
-      )
+      expect(
+        updates.filter((value) => value === 2).length
+      ).toBeGreaterThanOrEqual(2)
     })
   })
 })

@@ -32,7 +32,10 @@ export const NAMESPACED_RESOURCE_KINDS: ResourceKind[] = [
   'Lease'
 ]
 
-export const RESOURCE_KIND_BY_RESOURCE: Record<Resource, ResourceKind | undefined> = {
+export const RESOURCE_KIND_BY_RESOURCE: Record<
+  Resource,
+  ResourceKind | undefined
+> = {
   all: undefined,
   pods: 'Pod',
   deployments: 'Deployment',

@@ -1,6 +1,9 @@
 import { parse as parseYaml, stringify as yamlStringify } from 'yaml'
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
-import type { KindToResource, ResourceKind } from '../../../cluster/ClusterState'
+import type {
+  KindToResource,
+  ResourceKind
+} from '../../../cluster/ClusterState'
 import type { EditorModal } from '../../../shell/commands'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
@@ -64,7 +67,9 @@ const parseEditedResource = (
     parsed = parseYaml(yamlContent)
   } catch (editError) {
     const message =
-      editError instanceof Error ? editError.message : 'Unknown YAML parse error'
+      editError instanceof Error
+        ? editError.message
+        : 'Unknown YAML parse error'
     return error(`error: YAML parse error: ${message}`)
   }
 
@@ -82,7 +87,9 @@ const resolveEditTarget = (
   }
   const kind = RESOURCE_KIND_BY_RESOURCE[parsed.resource]
   if (kind == null) {
-    return error(`error: edit does not support resource type "${parsed.resource}"`)
+    return error(
+      `error: edit does not support resource type "${parsed.resource}"`
+    )
   }
   if (parsed.name == null || parsed.name.length === 0) {
     return error('error: edit requires a resource name')
@@ -136,9 +143,7 @@ const emitAsyncPreservedCopyNotice = (
   }
   emitAsync(
     options,
-    success(
-      `A copy of your changes has been stored to "${preservedPath}"`
-    )
+    success(`A copy of your changes has been stored to "${preservedPath}"`)
   )
 }
 
@@ -188,7 +193,10 @@ const buildRetryDiffCommentLines = (
     }
     firstDiffIndex += 1
   }
-  if (firstDiffIndex === previousLines.length && firstDiffIndex === nextLines.length) {
+  if (
+    firstDiffIndex === previousLines.length &&
+    firstDiffIndex === nextLines.length
+  ) {
     return []
   }
 
@@ -260,7 +268,9 @@ export const handleEdit = (
   options: EditHandlerOptions = {}
 ): ExecutionResult => {
   if (options.editorModal == null) {
-    return error('error: interactive editor is not available in this environment')
+    return error(
+      'error: interactive editor is not available in this environment'
+    )
   }
   const editorModal = options.editorModal
 
@@ -332,9 +342,14 @@ export const handleEdit = (
 
         const editedName = getMetadataString(parsedEditedResource, 'name')
         if (editedName == null || editedName.length === 0) {
-          return reopenWithError('error: invalid manifest: missing metadata.name')
+          return reopenWithError(
+            'error: invalid manifest: missing metadata.name'
+          )
         }
-        const nameValidation = validateMetadataNameByKind(target.kind, editedName)
+        const nameValidation = validateMetadataNameByKind(
+          target.kind,
+          editedName
+        )
         if (nameValidation != null && !nameValidation.ok) {
           return reopenWithError(nameValidation.error)
         }
@@ -343,19 +358,26 @@ export const handleEdit = (
           ? apiServer.updateResource(
               target.kind,
               target.name,
-              parsedEditedResource as unknown as KindToResource<typeof target.kind>,
+              parsedEditedResource as unknown as KindToResource<
+                typeof target.kind
+              >,
               namespace
             )
           : apiServer.updateResource(
               target.kind,
               target.name,
-              parsedEditedResource as unknown as KindToResource<typeof target.kind>
+              parsedEditedResource as unknown as KindToResource<
+                typeof target.kind
+              >
             )
         if (!updateResult.ok) {
           return reopenWithError(updateResult.error)
         }
 
-        emitAsync(options, success(`${toKindReference(target.kind)}/${target.name} edited`))
+        emitAsync(
+          options,
+          success(`${toKindReference(target.kind)}/${target.name} edited`)
+        )
         return true
       },
       () => {

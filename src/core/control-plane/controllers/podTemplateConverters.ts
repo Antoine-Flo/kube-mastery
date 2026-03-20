@@ -62,7 +62,9 @@ const convertTemplateContainer = (
   return {
     name: container.name,
     image: container.image,
-    ...(container.imagePullPolicy && { imagePullPolicy: container.imagePullPolicy }),
+    ...(container.imagePullPolicy && {
+      imagePullPolicy: container.imagePullPolicy
+    }),
     ...(container.command && { command: container.command }),
     ...(container.args && { args: container.args }),
     ...(container.ports && { ports: container.ports }),
@@ -78,7 +80,9 @@ const convertTemplateContainer = (
     ...(isTemplateProbe(container.startupProbe) && {
       startupProbe: container.startupProbe
     }),
-    ...(container.securityContext && { securityContext: container.securityContext }),
+    ...(container.securityContext && {
+      securityContext: container.securityContext
+    }),
     ...(container.terminationMessagePath && {
       terminationMessagePath: container.terminationMessagePath
     }),

@@ -753,10 +753,14 @@ const appendContainerStateBlock = (
     lines.push(`      Exit Code:    ${stateDetails.exitCode}`)
   }
   if (stateDetails.startedAt != null) {
-    lines.push(`      Started:      ${formatDescribeDate(stateDetails.startedAt)}`)
+    lines.push(
+      `      Started:      ${formatDescribeDate(stateDetails.startedAt)}`
+    )
   }
   if (stateDetails.finishedAt != null) {
-    lines.push(`      Finished:     ${formatDescribeDate(stateDetails.finishedAt)}`)
+    lines.push(
+      `      Finished:     ${formatDescribeDate(stateDetails.finishedAt)}`
+    )
   }
 }
 
@@ -1029,7 +1033,9 @@ const formatStoredPodEvents = (
     }
   >()
   for (const event of events) {
-    const key = [event.type, event.reason, event.source, event.message].join('|')
+    const key = [event.type, event.reason, event.source, event.message].join(
+      '|'
+    )
     const eventTs = parseTimestamp(event.timestamp)
     const existing = aggregatedByKey.get(key)
     if (existing == null) {
@@ -1807,7 +1813,10 @@ export const describeLease = (lease: Lease): string => {
   )
 
   // Owner References
-  if (lease.metadata.ownerReferences && lease.metadata.ownerReferences.length > 0) {
+  if (
+    lease.metadata.ownerReferences &&
+    lease.metadata.ownerReferences.length > 0
+  ) {
     lines.push('  Owner References:')
     for (const ownerRef of lease.metadata.ownerReferences) {
       lines.push(`    API Version:     ${ownerRef.apiVersion}`)

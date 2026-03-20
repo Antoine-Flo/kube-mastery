@@ -8,7 +8,6 @@ import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/typ
 import { createClusterStateData } from '../../../helpers/utils'
 
 describe('kubectl logs handler', () => {
-
   const createState = (pods: ReturnType<typeof createPod>[]) =>
     createClusterStateData({ pods })
 
@@ -588,7 +587,10 @@ describe('kubectl logs handler', () => {
     })
 
     it('should return previous logs when --previous is used and container has restarted', () => {
-      const previousLogLines = ['[previous] error at startup', '[previous] exit code 1']
+      const previousLogLines = [
+        '[previous] error at startup',
+        '[previous] exit code 1'
+      ]
       const pod = createPod({
         name: 'crashy',
         namespace: 'default',

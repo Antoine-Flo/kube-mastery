@@ -3,13 +3,18 @@ import type { ResourceKind } from '../../cluster/ClusterState'
 type GenericResource = Record<string, unknown>
 type PathSegment = string
 
-const DEFAULT_ALLOWED_EDIT_PATHS = ['metadata.labels', 'metadata.annotations'] as const
+const DEFAULT_ALLOWED_EDIT_PATHS = [
+  'metadata.labels',
+  'metadata.annotations'
+] as const
 const KUBECTL_IDENTITY_CHANGE_ERROR =
   'error: At least one of apiVersion, kind and name was changed'
 const POD_SPEC_FORBIDDEN_UPDATE_ERROR =
   'Error from server (Invalid): spec: Forbidden: pod updates may not change fields other than `spec.containers[*].image`,`spec.initContainers[*].image`,`spec.activeDeadlineSeconds`,`spec.tolerations` (only additions to existing tolerations),`spec.terminationGracePeriodSeconds` (allow it to be set to 1 if it was previously negative)'
 
-const ALLOWED_EDIT_PATHS_BY_KIND: Partial<Record<ResourceKind, readonly string[]>> = {
+const ALLOWED_EDIT_PATHS_BY_KIND: Partial<
+  Record<ResourceKind, readonly string[]>
+> = {
   Pod: [
     ...DEFAULT_ALLOWED_EDIT_PATHS,
     'spec.containers.*.image',
@@ -52,7 +57,10 @@ const ALLOWED_EDIT_PATHS_BY_KIND: Partial<Record<ResourceKind, readonly string[]
   Service: [...DEFAULT_ALLOWED_EDIT_PATHS],
   ConfigMap: [...DEFAULT_ALLOWED_EDIT_PATHS, 'data', 'binaryData'],
   Secret: [...DEFAULT_ALLOWED_EDIT_PATHS, 'data', 'stringData', 'type'],
-  PersistentVolumeClaim: [...DEFAULT_ALLOWED_EDIT_PATHS, 'spec.resources.requests.storage'],
+  PersistentVolumeClaim: [
+    ...DEFAULT_ALLOWED_EDIT_PATHS,
+    'spec.resources.requests.storage'
+  ],
   PersistentVolume: [...DEFAULT_ALLOWED_EDIT_PATHS],
   Namespace: [...DEFAULT_ALLOWED_EDIT_PATHS],
   Node: [...DEFAULT_ALLOWED_EDIT_PATHS],
@@ -311,7 +319,12 @@ export const validateImmutableFieldsForEdit = (
     return KUBECTL_IDENTITY_CHANGE_ERROR
   }
 
-  const baseImmutablePaths = ['apiVersion', 'kind', 'metadata.name', 'metadata.namespace']
+  const baseImmutablePaths = [
+    'apiVersion',
+    'kind',
+    'metadata.name',
+    'metadata.namespace'
+  ]
   for (const fieldPath of baseImmutablePaths) {
     const validationError = validateImmutablePath(
       existingResource,
@@ -370,8 +383,14 @@ export const validateImmutableFieldsForEdit = (
   }
 
   if (kind === 'Pod') {
-    const existingContainerNames = getContainerNames(existingResource, 'spec.containers')
-    const editedContainerNames = getContainerNames(editedResource, 'spec.containers')
+    const existingContainerNames = getContainerNames(
+      existingResource,
+      'spec.containers'
+    )
+    const editedContainerNames = getContainerNames(
+      editedResource,
+      'spec.containers'
+    )
     if (!isSameValue(existingContainerNames, editedContainerNames)) {
       return buildImmutableError('spec.containers[*].name')
     }
@@ -388,7 +407,10 @@ export const validateImmutableFieldsForEdit = (
       return buildImmutableError('spec.initContainers[*].name')
     }
 
-    const existingTolerations = getNestedValue(existingResource, 'spec.tolerations')
+    const existingTolerations = getNestedValue(
+      existingResource,
+      'spec.tolerations'
+    )
     const editedTolerations = getNestedValue(editedResource, 'spec.tolerations')
     if (
       !isSameValue(existingTolerations, editedTolerations) &&
@@ -415,7 +437,8 @@ export const validateImmutableFieldsForEdit = (
     }
   }
 
-  const allowedEditPaths = ALLOWED_EDIT_PATHS_BY_KIND[kind] ?? DEFAULT_ALLOWED_EDIT_PATHS
+  const allowedEditPaths =
+    ALLOWED_EDIT_PATHS_BY_KIND[kind] ?? DEFAULT_ALLOWED_EDIT_PATHS
   const normalizedExisting = stripSimulatorFields(existingResource)
   const normalizedEdited = stripSimulatorFields(editedResource)
   const disallowedPath = findFirstDisallowedChangedPath(

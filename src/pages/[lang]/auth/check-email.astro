@@ -15,7 +15,10 @@ try {
     data: { user }
   } = await supabase.auth.getUser()
   if (user) {
-    return Astro.redirect(getSafeLocalRedirectTarget(redirect, '') || useLocalePath(lang)('/courses'))
+    return Astro.redirect(
+      getSafeLocalRedirectTarget(redirect, '') ||
+        useLocalePath(lang)('/courses')
+    )
   }
 } catch {
   // Missing Supabase env or other error → show page

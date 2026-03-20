@@ -14,9 +14,13 @@ describe('Ingress Conformance Catalog', () => {
     }
 
     expect(ingressScenario.cmds).toContain('kubectl get ingress')
-    expect(ingressScenario.cmds).toContain('kubectl describe ingress demo-ingress')
+    expect(ingressScenario.cmds).toContain(
+      'kubectl describe ingress demo-ingress'
+    )
     expect(ingressScenario.cmds).toContain('kubectl get ingressclass')
-    expect(ingressScenario.cleanup).toContain('kubectl delete ingress demo-ingress')
+    expect(ingressScenario.cleanup).toContain(
+      'kubectl delete ingress demo-ingress'
+    )
   })
 
   it('should include openapi/networking raw commands in at least one scenario', () => {
@@ -24,8 +28,12 @@ describe('Ingress Conformance Catalog', () => {
     const scenarioWithRawOpenApi = allScenarios.find((scenario) => {
       return (
         scenario.cmds.includes('kubectl get --raw /openapi/v3') &&
-        scenario.cmds.includes('kubectl get --raw /apis/networking.k8s.io/v1') &&
-        scenario.cmds.includes('kubectl get --raw /openapi/v3/apis/networking.k8s.io/v1')
+        scenario.cmds.includes(
+          'kubectl get --raw /apis/networking.k8s.io/v1'
+        ) &&
+        scenario.cmds.includes(
+          'kubectl get --raw /openapi/v3/apis/networking.k8s.io/v1'
+        )
       )
     })
 

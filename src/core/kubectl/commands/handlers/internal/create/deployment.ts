@@ -139,7 +139,11 @@ export const validateCreateDeploymentCommand = (
   if (images.length === 0) {
     return error('error: required flag(s) "image" not set')
   }
-  if (images.length > 1 && parsed.createCommand && parsed.createCommand.length > 0) {
+  if (
+    images.length > 1 &&
+    parsed.createCommand &&
+    parsed.createCommand.length > 0
+  ) {
     return error('error: cannot specify multiple --image options and command')
   }
 

@@ -60,10 +60,12 @@ describe('kubectl edit handler', () => {
     }
     expect(updated.value.spec.containers[0].image).toBe('nginx:1.26')
     expect(updated.value.status.phase).toBe('Pending')
-    expect(updated.value.status.containerStatuses?.[0]?.stateDetails?.reason).toBe(
-      'ContainerCreating'
-    )
-    expect(messages.some((entry) => entry.includes('pod/edit-demo edited'))).toBe(true)
+    expect(
+      updated.value.status.containerStatuses?.[0]?.stateDetails?.reason
+    ).toBe('ContainerCreating')
+    expect(
+      messages.some((entry) => entry.includes('pod/edit-demo edited'))
+    ).toBe(true)
   })
 
   it('should reject immutable metadata.name changes', () => {
@@ -103,9 +105,13 @@ describe('kubectl edit handler', () => {
       return
     }
 
-    capturedSave(capturedContent.replace('name: edit-demo', 'name: edit-demo-new'))
+    capturedSave(
+      capturedContent.replace('name: edit-demo', 'name: edit-demo-new')
+    )
     expect(
-      messages.some((entry) => entry.includes('error: pods "edit-demo" is invalid'))
+      messages.some((entry) =>
+        entry.includes('error: pods "edit-demo" is invalid')
+      )
     ).toBe(true)
     expect(
       messages.some((entry) =>
@@ -154,7 +160,9 @@ describe('kubectl edit handler', () => {
     )
     capturedSave(editedManifest)
     expect(capturedContent).toContain('# pods "edit-demo" was not valid:')
-    expect(capturedContent).toContain('spec.containers[*].name: field is immutable')
+    expect(capturedContent).toContain(
+      'spec.containers[*].name: field is immutable'
+    )
   })
 
   it('should return kubectl-like pod spec forbidden message for unsupported spec edits', () => {
@@ -200,10 +208,14 @@ describe('kubectl edit handler', () => {
     )
     capturedSave(editedManifest)
     expect(
-      messages.some((entry) => entry.includes('error: pods "edit-demo" is invalid'))
+      messages.some((entry) =>
+        entry.includes('error: pods "edit-demo" is invalid')
+      )
     ).toBe(true)
     expect(capturedContent).toContain('# pods "edit-demo" was not valid:')
-    expect(capturedContent).toContain('pod updates may not change fields other than')
+    expect(capturedContent).toContain(
+      'pod updates may not change fields other than'
+    )
     expect(capturedContent).toContain('# @@ -')
   })
 
@@ -303,7 +315,9 @@ describe('kubectl edit handler', () => {
       'spec:\n  activeDeadlineSeconds: 30\n'
     )
     capturedSave(editedManifest)
-    expect(messages.some((entry) => entry.includes('pod/edit-demo edited'))).toBe(true)
+    expect(
+      messages.some((entry) => entry.includes('pod/edit-demo edited'))
+    ).toBe(true)
   })
 
   it('should reject pod tolerations modifications that are not additions', () => {
@@ -344,7 +358,9 @@ describe('kubectl edit handler', () => {
     const editedManifest = capturedContent.replace('value: a', 'value: b')
     capturedSave(editedManifest)
     expect(capturedContent).toContain('# pods "edit-demo" was not valid:')
-    expect(capturedContent).toContain('pod updates may not change fields other than')
+    expect(capturedContent).toContain(
+      'pod updates may not change fields other than'
+    )
   })
 
   it('should reopen editor for invalid yaml payloads', () => {

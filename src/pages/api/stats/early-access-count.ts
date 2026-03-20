@@ -7,19 +7,13 @@ import {
 export const GET: APIRoute = async ({ locals }) => {
   const count = await getAuthUserCount(locals)
   if (count == null) {
-    return new Response(
-      JSON.stringify({ error: 'unavailable' }),
-      {
-        status: 503,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    )
-  }
-  return new Response(
-    JSON.stringify({ count, cap: EARLY_ACCESS_CAP }),
-    {
-      status: 200,
+    return new Response(JSON.stringify({ error: 'unavailable' }), {
+      status: 503,
       headers: { 'Content-Type': 'application/json' }
-    }
-  )
+    })
+  }
+  return new Response(JSON.stringify({ count, cap: EARLY_ACCESS_CAP }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' }
+  })
 }

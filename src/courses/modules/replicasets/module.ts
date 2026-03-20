@@ -8,5 +8,5 @@ export const module: LocalModule = {
   description: {
     en: 'Maintenir un nombre stable de répliques de Pods.'
   },
-  tags: ['ckad', 'cka', 'beginner'],
+  tags: ['ckad', 'cka', 'beginner']
 }

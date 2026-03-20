@@ -63,7 +63,5 @@ export const handleWait = (
     }
   }
 
-  return error(
-    `error: timed out waiting for condition on ${resourceKey}`
-  )
+  return error(`error: timed out waiting for condition on ${resourceKey}`)
 }

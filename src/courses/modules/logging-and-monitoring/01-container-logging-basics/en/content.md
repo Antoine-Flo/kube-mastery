@@ -24,9 +24,9 @@ Once a container writes to stdout or stderr, the **kubelet** running on that nod
 
 ```mermaid
 flowchart LR
-    A[Container\nProcess] -->|"writes to\nstdout / stderr"| B[Container\nRuntime]
-    B -->|"captures stream"| C[kubelet\non Node]
-    C -->|"writes to"| D["/var/log/pods/...\nNode filesystem"]
+    A[Container<br/>Process] -->|"writes to<br/>stdout / stderr"| B[Container<br/>Runtime]
+    B -->|"captures stream"| C[kubelet<br/>on Node]
+    C -->|"writes to"| D["/var/log/pods/...<br/>Node filesystem"]
     D -->|"reads"| E["kubectl logs"]
     E -->|"streams to"| F[Your Terminal]
 ```

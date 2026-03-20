@@ -32,12 +32,12 @@ Together, these three capabilities let you run a complex multi-service applicati
 
 ```mermaid
 graph TD
-    Client([Internet Client]) --> LB[Cloud Load Balancer\nsingle external IP]
-    LB --> IC[Ingress Controller\nPod in cluster]
+    Client([Internet Client]) --> LB[Cloud Load Balancer<br/>single external IP]
+    LB --> IC[Ingress Controller<br/>Pod in cluster]
 
-    IC -->|app.example.com/api| API[api-service\nClusterIP]
-    IC -->|app.example.com/| FE[frontend-service\nClusterIP]
-    IC -->|admin.example.com/| ADMIN[admin-service\nClusterIP]
+    IC -->|app.example.com/api| API[api-service<br/>ClusterIP]
+    IC -->|app.example.com/| FE[frontend-service<br/>ClusterIP]
+    IC -->|admin.example.com/| ADMIN[admin-service<br/>ClusterIP]
 
     API --> AP1[api Pod]
     API --> AP2[api Pod]

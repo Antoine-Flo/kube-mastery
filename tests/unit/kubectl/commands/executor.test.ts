@@ -107,11 +107,7 @@ describe('kubectl Executor', () => {
 
     describe('command routing', () => {
       it('should route "kubectl get pods" to get handler', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get pods')
         expect(result.ok).toBe(true)
         if (result.ok) {
@@ -120,11 +116,7 @@ describe('kubectl Executor', () => {
       })
 
       it('should route "kubectl describe pod" to describe handler', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl describe pod nginx-pod')
 
         expect(result.ok).toBe(true)
@@ -134,11 +126,7 @@ describe('kubectl Executor', () => {
       })
 
       it('should route "kubectl describe deployment" to describe handler', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const created = executor.execute(
           'kubectl create deployment web-app --image=nginx:1.28 --replicas=3'
         )
@@ -154,11 +142,7 @@ describe('kubectl Executor', () => {
       })
 
       it('should route "kubectl describe node" to describe handler', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl describe node sim-worker')
 
         expect(result.ok).toBe(true)
@@ -172,11 +156,7 @@ describe('kubectl Executor', () => {
       })
 
       it('should route "kubectl delete pod" to delete handler', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl delete pod nginx-pod')
 
         expect(result.ok).toBe(true)
@@ -199,11 +179,7 @@ spec:
         fileSystem.createFile('pod.yaml')
         fileSystem.writeFile('pod.yaml', yaml)
 
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl apply -f pod.yaml')
 
         expect(result.ok).toBe(true)
@@ -224,11 +200,7 @@ data:
         fileSystem.createFile('deployment.yaml')
         fileSystem.writeFile('deployment.yaml', yaml)
 
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl create -f deployment.yaml')
 
         expect(result.ok).toBe(true)
@@ -264,15 +236,15 @@ spec:
         fileSystem.createFile('replace-pod-updated.yaml')
         fileSystem.writeFile('replace-pod-updated.yaml', updatedYaml)
 
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const createResult = executor.execute(
+          'kubectl create -f replace-pod-initial.yaml'
         )
-        const createResult = executor.execute('kubectl create -f replace-pod-initial.yaml')
         expect(createResult.ok).toBe(true)
 
-        const replaceResult = executor.execute('kubectl replace -f replace-pod-updated.yaml')
+        const replaceResult = executor.execute(
+          'kubectl replace -f replace-pod-updated.yaml'
+        )
         expect(replaceResult.ok).toBe(true)
         if (!replaceResult.ok) {
           return
@@ -295,9 +267,15 @@ spec:
         if (!setResult.ok) {
           return
         }
-        expect(setResult.value).toContain('deployment.apps/web-app image updated')
+        expect(setResult.value).toContain(
+          'deployment.apps/web-app image updated'
+        )
 
-        const deployment = apiServer.findResource('Deployment', 'web-app', 'default')
+        const deployment = apiServer.findResource(
+          'Deployment',
+          'web-app',
+          'default'
+        )
         expect(deployment.ok).toBe(true)
         if (!deployment.ok) {
           return
@@ -323,7 +301,11 @@ spec:
         }
         expect(patchResult.value).toContain('deployment.apps/my-app patched')
 
-        const deployment = apiServer.findResource('Deployment', 'my-app', 'default')
+        const deployment = apiServer.findResource(
+          'Deployment',
+          'my-app',
+          'default'
+        )
         expect(deployment.ok).toBe(true)
         if (!deployment.ok) {
           return
@@ -341,9 +323,16 @@ spec:
           }
         }
 
-        const executor = createKubectlExecutor(apiServer, fileSystem, logger, undefined, undefined, {
-          editorModal
-        })
+        const executor = createKubectlExecutor(
+          apiServer,
+          fileSystem,
+          logger,
+          undefined,
+          undefined,
+          {
+            editorModal
+          }
+        )
         const result = executor.execute('kubectl edit pod nginx-pod')
         expect(result.ok).toBe(true)
         expect(capturedSave).toBeDefined()
@@ -371,11 +360,7 @@ data:
         fileSystem.createFile('configmap-dry-run.yaml')
         fileSystem.writeFile('configmap-dry-run.yaml', yaml)
 
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create -f configmap-dry-run.yaml --dry-run=client -o yaml'
         )
@@ -409,11 +394,7 @@ data:
         fileSystem.createFile('configmap.yaml')
         fileSystem.writeFile('configmap.yaml', yaml)
 
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl diff -f configmap.yaml')
 
         expect(result.ok).toBe(true)
@@ -426,11 +407,7 @@ data:
       })
 
       it('should route "kubectl run" to run handler', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl run test-pod --image=busybox --command -- sleep 3600'
         )
@@ -444,11 +421,7 @@ data:
       })
 
       it('should route "kubectl expose deployment" to expose handler', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const createResult = executor.execute(
           'kubectl create deployment web --image=nginx --port=8080'
         )
@@ -465,11 +438,7 @@ data:
       })
 
       it('should route "kubectl create namespace" to create handler', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl create namespace my-team')
 
         expect(result.ok).toBe(true)
@@ -481,11 +450,7 @@ data:
       })
 
       it('should return namespace yaml for create namespace dry-run client', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create namespace dry-run-ns --dry-run=client -o yaml'
         )
@@ -506,11 +471,7 @@ data:
       })
 
       it('should create service clusterip from imperative create command', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create service clusterip my-svc --tcp=80:8080'
         )
@@ -533,11 +494,7 @@ data:
       })
 
       it('should return service yaml for create service nodeport dry-run client', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create service nodeport my-svc --tcp=80:8080 --node-port=30080 --dry-run=client -o yaml'
         )
@@ -561,11 +518,7 @@ data:
       })
 
       it('should create service externalname with external-name flag', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create service externalname ext-svc --external-name=example.com'
         )
@@ -585,11 +538,7 @@ data:
       })
 
       it('should return configmap yaml for create configmap dry-run client', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create configmap app-config --from-literal=LOG_LEVEL=info --dry-run=client -o yaml'
         )
@@ -604,16 +553,16 @@ data:
         expect(result.value).not.toContain('creationTimestamp: null')
         expect(result.value).toContain('LOG_LEVEL: info')
 
-        const configMap = apiServer.findResource('ConfigMap', 'app-config', 'default')
+        const configMap = apiServer.findResource(
+          'ConfigMap',
+          'app-config',
+          'default'
+        )
         expect(configMap.ok).toBe(false)
       })
 
       it('should return secret generic yaml for create secret dry-run client', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create secret generic mysecret --from-literal=password=s3cr3t --dry-run=client -o yaml'
         )
@@ -637,11 +586,7 @@ data:
         fileSystem.createFile('tls.key')
         fileSystem.writeFile('tls.key', 'KEYDATA')
 
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create secret tls tls-secret --cert=tls.crt --key=tls.key'
         )
@@ -660,11 +605,7 @@ data:
       })
 
       it('should return docker-registry secret yaml for dry-run client', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create secret docker-registry regcred --docker-server=docker.io --docker-username=alice --docker-password=s3cr3t --dry-run=client -o yaml'
         )
@@ -682,11 +623,7 @@ data:
 
     describe('create deployment (imperative)', () => {
       it('should create a deployment with one image', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create deployment my-dep --image=busybox'
         )
@@ -697,16 +634,16 @@ data:
         }
 
         expect(result.value).toContain('deployment.apps/my-dep created')
-        const deployment = apiServer.findResource('Deployment', 'my-dep', 'default')
+        const deployment = apiServer.findResource(
+          'Deployment',
+          'my-dep',
+          'default'
+        )
         expect(deployment.ok).toBe(true)
       })
 
       it('should expose app label on deployment metadata after imperative create', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const created = executor.execute(
           'kubectl create deployment my-app --image=nginx'
         )
@@ -723,11 +660,7 @@ data:
       })
 
       it('should label deployment after imperative create', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const created = executor.execute(
           'kubectl create deployment label-demo --image=nginx'
         )
@@ -753,33 +686,31 @@ data:
       })
 
       it('should reject plural resource token in imperative create', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create deployments my-dep --dry-run=client -o json'
         )
 
         expect(result.ok).toBe(false)
         if (!result.ok) {
-          expect(result.error).toContain('Unexpected args: [deployments my-dep]')
+          expect(result.error).toContain(
+            'Unexpected args: [deployments my-dep]'
+          )
         }
       })
 
       it('should create a deployment with command after --', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create deployment my-dep --image=busybox -- date'
         )
 
         expect(result.ok).toBe(true)
-        const deployment = apiServer.findResource('Deployment', 'my-dep', 'default')
+        const deployment = apiServer.findResource(
+          'Deployment',
+          'my-dep',
+          'default'
+        )
         expect(deployment.ok).toBe(true)
         if (!deployment.ok) {
           return
@@ -791,17 +722,17 @@ data:
       })
 
       it('should create a deployment with replicas', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create deployment my-dep --image=nginx --replicas=3'
         )
 
         expect(result.ok).toBe(true)
-        const deployment = apiServer.findResource('Deployment', 'my-dep', 'default')
+        const deployment = apiServer.findResource(
+          'Deployment',
+          'my-dep',
+          'default'
+        )
         expect(deployment.ok).toBe(true)
         if (!deployment.ok) {
           return
@@ -811,11 +742,7 @@ data:
       })
 
       it('should return deployment yaml for create deployment dry-run client', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create deployment myapp --image=nginx --replicas=3 --dry-run=client -o yaml'
         )
@@ -833,22 +760,26 @@ data:
         expect(result.value).toContain('status: {}')
         expect(result.value).not.toContain('readyReplicas: 0')
 
-        const deployment = apiServer.findResource('Deployment', 'myapp', 'default')
+        const deployment = apiServer.findResource(
+          'Deployment',
+          'myapp',
+          'default'
+        )
         expect(deployment.ok).toBe(false)
       })
 
       it('should create a deployment with exposed container port', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create deployment my-dep --image=busybox --port=5701'
         )
 
         expect(result.ok).toBe(true)
-        const deployment = apiServer.findResource('Deployment', 'my-dep', 'default')
+        const deployment = apiServer.findResource(
+          'Deployment',
+          'my-dep',
+          'default'
+        )
         expect(deployment.ok).toBe(true)
         if (!deployment.ok) {
           return
@@ -861,17 +792,17 @@ data:
       })
 
       it('should create a deployment with multiple images', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create deployment my-dep --image=busybox:latest --image=ubuntu:latest --image=nginx'
         )
 
         expect(result.ok).toBe(true)
-        const deployment = apiServer.findResource('Deployment', 'my-dep', 'default')
+        const deployment = apiServer.findResource(
+          'Deployment',
+          'my-dep',
+          'default'
+        )
         expect(deployment.ok).toBe(true)
         if (!deployment.ok) {
           return
@@ -884,11 +815,7 @@ data:
       })
 
       it('should fail when multiple images are combined with command', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create deployment my-dep --image=busybox --image=nginx -- date'
         )
@@ -902,17 +829,17 @@ data:
       })
 
       it('should support --image with separate value', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create deployment my-dep --image busybox'
         )
 
         expect(result.ok).toBe(true)
-        const deployment = apiServer.findResource('Deployment', 'my-dep', 'default')
+        const deployment = apiServer.findResource(
+          'Deployment',
+          'my-dep',
+          'default'
+        )
         expect(deployment.ok).toBe(true)
         if (!deployment.ok) {
           return
@@ -924,56 +851,54 @@ data:
       })
 
       it('should create deployment in a specific namespace', () => {
-        apiServer.createResource('Namespace', createNamespace({ name: 'staging' }))
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
+        apiServer.createResource(
+          'Namespace',
+          createNamespace({ name: 'staging' })
         )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create deployment my-dep --image=busybox -n staging'
         )
 
         expect(result.ok).toBe(true)
-        const deployment = apiServer.findResource('Deployment', 'my-dep', 'staging')
+        const deployment = apiServer.findResource(
+          'Deployment',
+          'my-dep',
+          'staging'
+        )
         expect(deployment.ok).toBe(true)
       })
 
       it('should parse name correctly when namespace flag is before name', () => {
-        apiServer.createResource('Namespace', createNamespace({ name: 'staging' }))
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
+        apiServer.createResource(
+          'Namespace',
+          createNamespace({ name: 'staging' })
         )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl create deployment -n staging my-dep --image=busybox'
         )
 
         expect(result.ok).toBe(true)
-        const deployment = apiServer.findResource('Deployment', 'my-dep', 'staging')
+        const deployment = apiServer.findResource(
+          'Deployment',
+          'my-dep',
+          'staging'
+        )
         expect(deployment.ok).toBe(true)
       })
     })
 
     describe('get command with different resources', () => {
       it('should handle "kubectl get pods"', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get pods')
 
         expect(result.ok).toBe(true)
       })
 
       it('should handle kubectl get pod with jsonpath output', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           "kubectl get pod nginx-pod -o jsonpath='{.metadata.uid}'"
         )
@@ -988,11 +913,7 @@ data:
       })
 
       it('should fail kubectl get with invalid output format', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get pods -o banana')
 
         expect(result.ok).toBe(false)
@@ -1013,11 +934,7 @@ data:
             ports: [{ port: 443, protocol: 'TCP' }]
           })
         )
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get all')
 
         expect(result.ok).toBe(true)
@@ -1027,22 +944,14 @@ data:
       })
 
       it('should handle "kubectl get deployments"', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get deployments')
 
         expect(result.ok).toBe(true)
       })
 
       it('should report not found per extra positional name in get', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const created = executor.execute(
           'kubectl create deployment my-app --image=nginx'
         )
@@ -1065,22 +974,14 @@ data:
       })
 
       it('should handle "kubectl get services"', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get services')
 
         expect(result.ok).toBe(true)
       })
 
       it('should handle "kubectl get namespaces"', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get namespaces')
 
         expect(result.ok).toBe(true)
@@ -1127,13 +1028,9 @@ data:
             }
           })
         )
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
-          "kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type==\"ExternalIP\")].address}'"
+          'kubectl get nodes -o jsonpath=\'{.items[*].status.addresses[?(@.type=="ExternalIP")].address}\''
         )
 
         expect(result.ok).toBe(true)
@@ -1144,11 +1041,7 @@ data:
       })
 
       it('should support kubectl get nodes with nested range template', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           "kubectl get nodes -o jsonpath='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'"
         )
@@ -1171,13 +1064,9 @@ data:
             phase: 'Running'
           })
         )
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
-          "kubectl get pods -o jsonpath='{range .items[*].status.initContainerStatuses[*]}{.containerID}{\"\\n\"}{end}'"
+          'kubectl get pods -o jsonpath=\'{range .items[*].status.initContainerStatuses[*]}{.containerID}{"\\n"}{end}\''
         )
 
         expect(result.ok).toBe(true)
@@ -1190,11 +1079,7 @@ data:
 
     describe('namespace handling', () => {
       it('should handle namespace lifecycle create duplicate delete and not found', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
 
         const created = executor.execute('kubectl create namespace my-team')
         expect(created.ok).toBe(true)
@@ -1236,11 +1121,7 @@ data:
       })
 
       it('should pass namespace to get handler from -n flag', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get pods -n kube-system')
 
         expect(result.ok).toBe(true)
@@ -1251,11 +1132,7 @@ data:
       })
 
       it('should parse get when namespace flag is before resource', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get -n kube-system pods')
 
         expect(result.ok).toBe(true)
@@ -1266,11 +1143,7 @@ data:
       })
 
       it('should pass namespace to describe handler', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl describe pod redis-pod -n kube-system'
         )
@@ -1282,11 +1155,7 @@ data:
       })
 
       it('should parse describe when namespace flag is before pod name', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl describe pod -n kube-system redis-pod'
         )
@@ -1298,11 +1167,7 @@ data:
       })
 
       it('should use default namespace when not specified', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get pods')
 
         expect(result.ok).toBe(true)
@@ -1315,11 +1180,7 @@ data:
 
     describe('error handling', () => {
       it('should return error for invalid command syntax', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('invalid command')
 
         expect(result.ok).toBe(false)
@@ -1329,11 +1190,7 @@ data:
       })
 
       it('should return error for empty command', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('')
 
         expect(result.ok).toBe(false)
@@ -1343,11 +1200,7 @@ data:
       })
 
       it('should return error when pod not found', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl describe pod nonexistent')
 
         expect(result.ok).toBe(false)
@@ -1357,11 +1210,7 @@ data:
       })
 
       it('should return error for pod in wrong namespace', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl describe pod nginx-pod -n kube-system'
         )
@@ -1375,11 +1224,7 @@ data:
 
     describe('delete command', () => {
       it('should delete pod and return success message', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl delete pod nginx-pod')
 
         expect(result.ok).toBe(true)
@@ -1395,11 +1240,7 @@ data:
       })
 
       it('should delete pod with namespace specified', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl delete pod redis-pod -n kube-system'
         )
@@ -1416,11 +1257,7 @@ data:
       })
 
       it('should delete pod when namespace flag is before resource', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl delete -n kube-system pod redis-pod'
         )
@@ -1452,18 +1289,16 @@ spec:
 `
         )
 
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl delete -f delete-pod.yaml')
 
         expect(result.ok).toBe(true)
         if (!result.ok) {
           return
         }
-        expect(result.value).toContain('pod "nginx-pod" deleted from default namespace')
+        expect(result.value).toContain(
+          'pod "nginx-pod" deleted from default namespace'
+        )
 
         const pods = apiServer.listResources('Pod', 'default')
         const remainingPod = pods.find((p) => p.metadata.name === 'nginx-pod')
@@ -1475,11 +1310,7 @@ spec:
       })
 
       it('should return error when deleting nonexistent pod', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl delete pod nonexistent')
 
         expect(result.ok).toBe(false)
@@ -1489,11 +1320,7 @@ spec:
       })
 
       it('should support delete all from label selector', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const created = executor.execute(
           'kubectl create deployment label-demo --image=nginx'
         )
@@ -1503,7 +1330,9 @@ spec:
         )
         expect(labeled.ok).toBe(true)
 
-        const deleted = executor.execute('kubectl delete all -l tier=experiment')
+        const deleted = executor.execute(
+          'kubectl delete all -l tier=experiment'
+        )
         expect(deleted.ok).toBe(true)
         if (!deleted.ok) {
           return
@@ -1512,11 +1341,7 @@ spec:
       })
 
       it('should return "No resources found" for delete all label with no match', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl delete all -l tier=experiment')
         expect(result.ok).toBe(true)
         if (!result.ok) {
@@ -1528,11 +1353,7 @@ spec:
 
     describe('resource aliases', () => {
       it('should handle "kubectl get po" (pods alias)', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get po')
 
         expect(result.ok).toBe(true)
@@ -1542,11 +1363,7 @@ spec:
       })
 
       it('should handle "kubectl describe po nginx-pod" (pod alias)', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl describe po nginx-pod')
 
         expect(result.ok).toBe(true)
@@ -1556,11 +1373,7 @@ spec:
       })
 
       it('should handle "kubectl describe no sim-worker" (node alias)', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl describe no sim-worker')
 
         expect(result.ok).toBe(true)
@@ -1570,11 +1383,7 @@ spec:
       })
 
       it('should handle "kubectl delete po nginx-pod" (pod alias)', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl delete po nginx-pod')
 
         expect(result.ok).toBe(true)
@@ -1630,11 +1439,7 @@ spec:
       }
 
       it('should return root help for kubectl -h', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl -h')
 
         expect(result.ok).toBe(true)
@@ -1648,11 +1453,7 @@ spec:
       })
 
       it('should return subcommand help for kubectl get --help', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get --help')
 
         expect(result.ok).toBe(true)
@@ -1665,11 +1466,7 @@ spec:
       })
 
       it('should return create deployment help without executing command', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const before = apiServer.listResources('Deployment', 'default').length
         const result = executor.execute('kubectl create deployment --help')
         const after = apiServer.listResources('Deployment', 'default').length
@@ -1686,11 +1483,7 @@ spec:
       })
 
       it('should handle complete command flow: parse → route → execute', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get pods -n default')
 
         expect(result.ok).toBe(true)
@@ -1701,11 +1494,7 @@ spec:
       })
 
       it('should execute kubectl get --raw / and return discovery root JSON', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get --raw /')
 
         expect(result.ok).toBe(true)
@@ -1719,11 +1508,7 @@ spec:
       })
 
       it('should execute kubectl get --raw /api/v1/namespaces and return NamespaceList', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get --raw /api/v1/namespaces')
 
         expect(result.ok).toBe(true)
@@ -1738,11 +1523,7 @@ spec:
       })
 
       it('should reject kubectl get --raw when output is also provided', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get --raw / -o json')
 
         expect(result.ok).toBe(false)
@@ -1754,11 +1535,7 @@ spec:
       })
 
       it('should propagate parser errors correctly', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl get invalidresource')
 
         expect(result.ok).toBe(false)
@@ -1768,11 +1545,7 @@ spec:
       })
 
       it('should handle kubectl version --client command', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl version --client')
 
         expect(result.ok).toBe(true)
@@ -1784,11 +1557,7 @@ spec:
       })
 
       it('should handle kubectl version command without --client flag', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl version')
 
         expect(result.ok).toBe(true)
@@ -1800,11 +1569,7 @@ spec:
       })
 
       it('should handle kubectl version --output json', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl version --output json')
 
         expect(result.ok).toBe(true)
@@ -1817,11 +1582,7 @@ spec:
       })
 
       it('should handle kubectl version --output yaml', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl version --output yaml')
 
         expect(result.ok).toBe(true)
@@ -1833,11 +1594,7 @@ spec:
       })
 
       it('should return error for invalid --output value', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl version --output table')
 
         expect(result.ok).toBe(false)
@@ -1847,11 +1604,7 @@ spec:
       })
 
       it('should handle kubectl cluster-info command', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl cluster-info')
 
         expect(result.ok).toBe(true)
@@ -1867,11 +1620,7 @@ spec:
 
       it('should handle kubectl config current-context command', () => {
         seedConfigCommandKubeconfig()
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl config current-context')
 
         expect(result.ok).toBe(true)
@@ -1884,11 +1633,7 @@ spec:
 
       it('should handle kubectl config get-contexts command', () => {
         seedConfigCommandKubeconfig()
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl config get-contexts')
 
         expect(result.ok).toBe(true)
@@ -1903,11 +1648,7 @@ spec:
 
       it('should handle kubectl config view --minify command', () => {
         seedConfigCommandKubeconfig()
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl config view --minify')
 
         expect(result.ok).toBe(true)
@@ -1923,11 +1664,7 @@ spec:
 
       it('should handle kubectl config view with jsonpath output', () => {
         seedConfigCommandKubeconfig()
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           "kubectl config view -o jsonpath='{.current-context}'"
         )
@@ -1942,11 +1679,7 @@ spec:
 
       it('should support kubectl config view jsonpath first-user shortcut', () => {
         seedConfigCommandKubeconfig()
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           "kubectl config view -o jsonpath='{.users[].name}'"
         )
@@ -1961,11 +1694,7 @@ spec:
 
       it('should support kubectl config view jsonpath wildcard users list', () => {
         seedConfigCommandKubeconfig()
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           "kubectl config view -o jsonpath='{.users[*].name}'"
         )
@@ -1980,11 +1709,7 @@ spec:
 
       it('should set current context namespace and use it implicitly', () => {
         seedConfigCommandKubeconfig()
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
 
         const setContextResult = executor.execute(
           'kubectl config set-context --current --namespace=kube-system'
@@ -2007,11 +1732,7 @@ spec:
       })
 
       it('should handle kubectl cluster-info dump command', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl cluster-info dump')
 
         expect(result.ok).toBe(true)
@@ -2024,11 +1745,7 @@ spec:
       })
 
       it('should handle kubectl cluster-info dump with --all-namespaces', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl cluster-info dump --all-namespaces'
         )
@@ -2040,11 +1757,7 @@ spec:
       })
 
       it('should handle kubectl api-versions command', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl api-versions')
 
         expect(result.ok).toBe(true)
@@ -2056,11 +1769,7 @@ spec:
       })
 
       it('should handle kubectl explain pod.spec.containers command', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl explain pod.spec.containers')
 
         expect(result.ok).toBe(true)
@@ -2075,11 +1784,7 @@ spec:
       })
 
       it('should return field not found for unknown explain path', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl explain pod.spec.unknownField')
 
         expect(result.ok).toBe(false)
@@ -2089,11 +1794,7 @@ spec:
       })
 
       it('should create pod with command for kubectl run', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl run test-pod --image=busybox --command -- sleep 3600'
         )
@@ -2114,12 +1815,11 @@ spec:
       })
 
       it('should create pod in provided namespace for kubectl run', () => {
-        apiServer.createResource('Namespace', createNamespace({ name: 'tools' }))
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
+        apiServer.createResource(
+          'Namespace',
+          createNamespace({ name: 'tools' })
         )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl run test-pod-ns --image=busybox --command -n tools -- sleep 3600'
         )
@@ -2131,17 +1831,17 @@ spec:
       })
 
       it('should create pod with args when --command is not set', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl run test-pod-args --image=busybox -- sleep 3600'
         )
 
         expect(result.ok).toBe(true)
-        const podResult = apiServer.findResource('Pod', 'test-pod-args', 'default')
+        const podResult = apiServer.findResource(
+          'Pod',
+          'test-pod-args',
+          'default'
+        )
         expect(podResult.ok).toBe(true)
         if (!podResult.ok) {
           return
@@ -2154,12 +1854,10 @@ spec:
       })
 
       it('should create pod with positional args when separator is omitted', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const result = executor.execute(
+          'kubectl run test-typo --image=nginx pod'
         )
-        const result = executor.execute('kubectl run test-typo --image=nginx pod')
 
         expect(result.ok).toBe(true)
         const podResult = apiServer.findResource('Pod', 'test-typo', 'default')
@@ -2172,11 +1870,7 @@ spec:
       })
 
       it('should create pod with labels env and port for kubectl run', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl run hazelcast --image=hazelcast/hazelcast --port=5701 --env=DNS_DOMAIN=cluster --env=POD_NAMESPACE=default --labels=app=hazelcast,env=prod'
         )
@@ -2209,11 +1903,7 @@ spec:
       })
 
       it('should include run env in kubectl get pod -o yaml output', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const runResult = executor.execute(
           'kubectl run edit-demo --image=nginx:1.28 --env=LOG_LEVEL=info'
         )
@@ -2230,11 +1920,7 @@ spec:
       })
 
       it('should parse quoted --env value for kubectl run', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const runResult = executor.execute(
           'kubectl run edit-demo-quoted --image=nginx:1.28 --env="LOG_LEVEL=info"'
         )
@@ -2243,7 +1929,11 @@ spec:
           return
         }
 
-        const podResult = apiServer.findResource('Pod', 'edit-demo-quoted', 'default')
+        const podResult = apiServer.findResource(
+          'Pod',
+          'edit-demo-quoted',
+          'default'
+        )
         expect(podResult.ok).toBe(true)
         if (!podResult.ok) {
           return
@@ -2258,11 +1948,7 @@ spec:
       })
 
       it('should return dry-run message without creating pod', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl run dry-run-pod --image=busybox --dry-run=client'
         )
@@ -2273,7 +1959,11 @@ spec:
         }
         expect(result.value).toContain('pod/dry-run-pod created (dry run)')
 
-        const podResult = apiServer.findResource('Pod', 'dry-run-pod', 'default')
+        const podResult = apiServer.findResource(
+          'Pod',
+          'dry-run-pod',
+          'default'
+        )
         expect(podResult.ok).toBe(false)
       })
 
@@ -2287,11 +1977,7 @@ spec:
             phase: 'Running'
           })
         )
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl wait --for=condition=Ready pod/web --timeout=60s'
         )
@@ -2304,27 +1990,21 @@ spec:
       })
 
       it('should reject kubectl run with invalid pod name', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl run My_App --image=busybox --dry-run=client -o yaml'
         )
 
         expect(result.ok).toBe(false)
         if (!result.ok) {
-          expect(result.error).toContain('metadata.name: Invalid value: "My_App"')
+          expect(result.error).toContain(
+            'metadata.name: Invalid value: "My_App"'
+          )
         }
       })
 
       it('should return yaml manifest for kubectl run dry-run client output yaml', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl run mypod --image=nginx --dry-run=client -o yaml'
         )
@@ -2345,11 +2025,7 @@ spec:
       })
 
       it('should return jsonpath value for kubectl run dry-run client', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           "kubectl run mypod --image=nginx --dry-run=client -o jsonpath='{.metadata.name}'"
         )
@@ -2365,11 +2041,7 @@ spec:
       })
 
       it('should fail kubectl run when env format is invalid', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl run bad-env --image=busybox --env INVALID'
         )
@@ -2381,11 +2053,7 @@ spec:
       })
 
       it('should support kubectl run with -i -t --restart=Never --rm', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl run -i -t busybox --image=busybox --restart=Never --rm'
         )
@@ -2425,11 +2093,7 @@ spec:
       })
 
       it('should allow kubectl run when restart is Always', () => {
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute(
           'kubectl run nginx --image=nginx --restart=Always'
         )
@@ -2463,11 +2127,7 @@ spec:
             ]
           })
         )
-        const executor = createKubectlExecutor(
-          apiServer,
-          fileSystem,
-          logger
-        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
 
         const result = executor.execute('kubectl get pods')
         expect(result.ok).toBe(true)

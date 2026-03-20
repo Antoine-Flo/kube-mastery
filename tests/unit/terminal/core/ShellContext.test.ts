@@ -132,7 +132,8 @@ describe('ShellContextStack', () => {
       )
 
       const containerFileSystem = shellContextStack.getCurrentFileSystem()
-      const containerCreateResult = containerFileSystem.createFile('container.txt')
+      const containerCreateResult =
+        containerFileSystem.createFile('container.txt')
       expect(containerCreateResult.ok).toBe(true)
 
       shellContextStack.popContext()

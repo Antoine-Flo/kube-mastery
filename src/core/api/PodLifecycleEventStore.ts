@@ -195,7 +195,10 @@ const trimEvents = (
 export const createPodLifecycleEventStore = (
   etcd: EtcdLikeStore
 ): PodLifecycleEventStore => {
-  const podEventHistory = new Map<string, readonly PodLifecycleDescribeEvent[]>()
+  const podEventHistory = new Map<
+    string,
+    readonly PodLifecycleDescribeEvent[]
+  >()
   let stopped = false
   let cachedRevision = 0
 

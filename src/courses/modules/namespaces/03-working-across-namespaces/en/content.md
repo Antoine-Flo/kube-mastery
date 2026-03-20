@@ -101,10 +101,10 @@ Changing your default namespace persists until you change it again. If you switc
 
 ```mermaid
 flowchart LR
-    Context["kubectl context\n(cluster + user + namespace)"]
+    Context["kubectl context<br/>(cluster + user + namespace)"]
 
-    Context -->|"Default namespace\n(no -n flag)"| NS_dev["dev namespace"]
-    Context -->|"-n production\n(explicit override)"| NS_prod["production namespace"]
+    Context -->|"Default namespace<br/>(no -n flag)"| NS_dev["dev namespace"]
+    Context -->|"-n production<br/>(explicit override)"| NS_prod["production namespace"]
     Context -->|"-A flag"| ALL["All namespaces"]
 ```
 

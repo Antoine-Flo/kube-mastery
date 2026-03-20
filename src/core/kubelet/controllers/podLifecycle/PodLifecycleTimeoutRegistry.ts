@@ -20,7 +20,11 @@ export class PodLifecycleTimeoutRegistry {
     return this.getTimeoutMap(kind).get(key)
   }
 
-  setTimeout(kind: TimeoutKind, key: string, timeoutId: ReturnType<typeof setTimeout>): void {
+  setTimeout(
+    kind: TimeoutKind,
+    key: string,
+    timeoutId: ReturnType<typeof setTimeout>
+  ): void {
     this.getTimeoutMap(kind).set(key, timeoutId)
   }
 
@@ -75,7 +79,9 @@ export class PodLifecycleTimeoutRegistry {
     this.imagePullTimeouts.clear()
   }
 
-  private getTimeoutMap(kind: TimeoutKind): Map<string, ReturnType<typeof setTimeout>> {
+  private getTimeoutMap(
+    kind: TimeoutKind
+  ): Map<string, ReturnType<typeof setTimeout>> {
     if (kind === 'pending') {
       return this.pendingTimeouts
     }

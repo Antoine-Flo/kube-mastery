@@ -90,7 +90,11 @@ export const handleDeleteFromManifestFiles = (
     if (!parseResult.ok) {
       return error(`error: ${parseResult.error}`)
     }
-    const deleteResult = deleteFromManifest(apiServer, parsed, parseResult.value)
+    const deleteResult = deleteFromManifest(
+      apiServer,
+      parsed,
+      parseResult.value
+    )
     if (!deleteResult.ok) {
       return deleteResult
     }

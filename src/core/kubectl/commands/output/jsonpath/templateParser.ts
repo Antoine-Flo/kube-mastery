@@ -155,7 +155,9 @@ export const parseKubectlJsonPathTemplate = (
     if (expression.startsWith('range ')) {
       const rangeExpression = expression.slice('range '.length).trim()
       if (rangeExpression.length === 0) {
-        return error('error: invalid jsonpath template, range expression is empty')
+        return error(
+          'error: invalid jsonpath template, range expression is empty'
+        )
       }
       const rangeNode: Extract<TemplateNode, { type: 'range' }> = {
         type: 'range',

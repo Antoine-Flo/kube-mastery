@@ -81,7 +81,9 @@ export const listScenarioKeys = (): string[] => {
   })
 }
 
-export const resolveScenario = (options: CliOptions): {
+export const resolveScenario = (
+  options: CliOptions
+): {
   name: string
   scenario: ConformanceScenario
 } => {

@@ -66,11 +66,7 @@ describe('controller observability', () => {
         }
         return { ok: false, error: 'unsupported kind' }
       },
-      deleteResource: (
-        kind: string,
-        name: string,
-        namespace?: string
-      ) => {
+      deleteResource: (kind: string, name: string, namespace?: string) => {
         if (kind === 'Pod') {
           const index = mockState.pods.findIndex((entry) => {
             return (
@@ -183,7 +179,9 @@ describe('controller observability', () => {
         },
         findReplicaSet: (name: string, namespace: string) => {
           const current = mockState.replicaSets.find((rs) => {
-            return rs.metadata.name === name && rs.metadata.namespace === namespace
+            return (
+              rs.metadata.name === name && rs.metadata.namespace === namespace
+            )
           })
           if (current == null) {
             return { ok: false }

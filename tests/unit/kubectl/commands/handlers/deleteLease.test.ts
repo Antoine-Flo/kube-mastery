@@ -5,7 +5,10 @@ import {
   createApiServerFacade,
   type ApiServerFacade
 } from '../../../../../src/core/api/ApiServerFacade'
-import { createFileSystem, type FileSystem } from '../../../../../src/core/filesystem/FileSystem'
+import {
+  createFileSystem,
+  type FileSystem
+} from '../../../../../src/core/filesystem/FileSystem'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 
 describe('kubectl delete handler - leases', () => {
@@ -55,7 +58,11 @@ describe('kubectl delete handler - leases', () => {
       expect(result.value).toContain('lease "node-lease-1" deleted')
       expect(result.value).toContain('kube-node-lease')
 
-      const findResult = apiServer.findResource('Lease', 'node-lease-1', 'kube-node-lease')
+      const findResult = apiServer.findResource(
+        'Lease',
+        'node-lease-1',
+        'kube-node-lease'
+      )
       expect(findResult.ok).toBe(false)
     })
 
@@ -171,7 +178,11 @@ spec:
       expect(result.value).toContain('lease "node-lease-1" deleted')
       expect(result.value).toContain('kube-node-lease')
 
-      const findResult = apiServer.findResource('Lease', 'node-lease-1', 'kube-node-lease')
+      const findResult = apiServer.findResource(
+        'Lease',
+        'node-lease-1',
+        'kube-node-lease'
+      )
       expect(findResult.ok).toBe(false)
     })
 

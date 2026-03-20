@@ -69,14 +69,14 @@ Using `DirectoryOrCreate` or `FileOrCreate` makes your Pod more resilient to pat
 ```mermaid
 graph TD
     subgraph "Node Filesystem"
-        NL["/var/log/\n├── containers/\n├── pods/\n└── syslog"]
+        NL["/var/log/<br/>├── containers/<br/>├── pods/<br/>└── syslog"]
     end
 
     subgraph "Pod: log-reader"
-        C["log-reader Container\n/host-logs/\n├── containers/\n├── pods/\n└── syslog"]
+        C["log-reader Container<br/>/host-logs/<br/>├── containers/<br/>├── pods/<br/>└── syslog"]
     end
 
-    NL <-->|"hostPath volume\nsame actual files"| C
+    NL <-->|"hostPath volume<br/>same actual files"| C
 ```
 
 The arrows go both ways intentionally: the container can read _and write_ to the host path, unless you add `readOnly: true` to the volumeMount. This is a crucial security consideration.

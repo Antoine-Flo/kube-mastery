@@ -12,9 +12,9 @@ describe('getDisabledLocaleRedirectPath', () => {
     expect(getDisabledLocaleRedirectPath('/docs/intro', '?lang=fr')).toBe(
       '/en/intro?lang=fr'
     )
-    expect(getDisabledLocaleRedirectPath('/robots.txt/courses/common-core', '')).toBe(
-      '/en/courses/common-core'
-    )
+    expect(
+      getDisabledLocaleRedirectPath('/robots.txt/courses/common-core', '')
+    ).toBe('/en/courses/common-core')
   })
 
   it('does not redirect enabled locale, API, or root static-like paths', () => {

@@ -79,7 +79,9 @@ export const createLease = (config: LeaseConfig): Lease => {
       creationTimestamp: config.creationTimestamp || new Date().toISOString(),
       ...(config.labels && { labels: config.labels }),
       ...(config.annotations && { annotations: config.annotations }),
-      ...(config.resourceVersion && { resourceVersion: config.resourceVersion }),
+      ...(config.resourceVersion && {
+        resourceVersion: config.resourceVersion
+      }),
       ...(config.uid && { uid: config.uid }),
       ...(config.ownerReferences && { ownerReferences: config.ownerReferences })
     },

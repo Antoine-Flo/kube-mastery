@@ -429,7 +429,8 @@ const createTransformer: ActionTransformer = (ctx) => {
     const rawSecretType = findNameSkippingFlags(beforeSeparator, 3)
     const normalizedSecretType = rawSecretType?.toLowerCase()
     const createSecretType =
-      normalizedSecretType != null && CREATE_SECRET_TYPES.has(normalizedSecretType)
+      normalizedSecretType != null &&
+      CREATE_SECRET_TYPES.has(normalizedSecretType)
         ? (normalizedSecretType as 'generic' | 'tls' | 'docker-registry')
         : undefined
     const secretName =
@@ -442,9 +443,13 @@ const createTransformer: ActionTransformer = (ctx) => {
       name: secretName,
       tokens: beforeSeparator,
       createSecretType,
-      createFromLiterals: hasCreateFromLiterals ? createFromLiterals : undefined,
+      createFromLiterals: hasCreateFromLiterals
+        ? createFromLiterals
+        : undefined,
       createFromFiles: hasCreateFromFiles ? createFromFiles : undefined,
-      createFromEnvFiles: hasCreateFromEnvFiles ? createFromEnvFiles : undefined,
+      createFromEnvFiles: hasCreateFromEnvFiles
+        ? createFromEnvFiles
+        : undefined,
       createCommand
     })
   }
@@ -701,10 +706,9 @@ const runTransformer: ActionTransformer = (ctx) => {
     positionalTokens.length > 1 ? positionalTokens.slice(1) : undefined
   const runCommand =
     runUseCommand && separatorTokens ? separatorTokens : undefined
-  const runArgs =
-    !runUseCommand
-      ? separatorTokens || positionalArgsWithoutSeparator
-      : undefined
+  const runArgs = !runUseCommand
+    ? separatorTokens || positionalArgsWithoutSeparator
+    : undefined
 
   return success({
     ...ctx,

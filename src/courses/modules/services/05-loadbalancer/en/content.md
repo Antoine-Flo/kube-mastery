@@ -50,15 +50,15 @@ The `EXTERNAL-IP` column shows the public IP assigned by the cloud provider. Ext
 
 ```mermaid
 graph TB
-    Internet["Internet\n(external clients)"]
-    LB["Cloud Load Balancer\n34.102.136.180:80\n(AWS ELB / GCP LB / Azure LB)"]
-    N1["Node 1\n:31234"]
-    N2["Node 2\n:31234"]
-    N3["Node 3\n:31234"]
-    SVC["ClusterIP\n10.96.45.12:80"]
-    P1["Pod\napp=web"]
-    P2["Pod\napp=web"]
-    P3["Pod\napp=web"]
+    Internet["Internet<br/>(external clients)"]
+    LB["Cloud Load Balancer<br/>34.102.136.180:80<br/>(AWS ELB / GCP LB / Azure LB)"]
+    N1["Node 1<br/>:31234"]
+    N2["Node 2<br/>:31234"]
+    N3["Node 3<br/>:31234"]
+    SVC["ClusterIP<br/>10.96.45.12:80"]
+    P1["Pod<br/>app=web"]
+    P2["Pod<br/>app=web"]
+    P3["Pod<br/>app=web"]
 
     Internet -->|"public IP"| LB
     LB -->|"health-checked NodePort"| N1

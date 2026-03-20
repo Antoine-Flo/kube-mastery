@@ -456,9 +456,7 @@ describe('kubectl exec handler', () => {
       apiServer.etcd.restore(state)
       const result = handleExecApi(apiServer, parsed)
 
-      expect(result).toBe(
-        'SHELL_COMMAND:default:my-pod:main:ls%20-la'
-      )
+      expect(result).toBe('SHELL_COMMAND:default:my-pod:main:ls%20-la')
     })
 
     it('should return SHELL_COMMAND for cat', () => {

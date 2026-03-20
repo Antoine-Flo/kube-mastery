@@ -10,7 +10,10 @@ import type { EventBus } from '../../cluster/events/EventBus'
 import type { ClusterEvent } from '../../cluster/events/types'
 import type { Pod } from '../../cluster/ressources/Pod'
 import { createPod } from '../../cluster/ressources/Pod'
-import type { ReplicaSet, ReplicaSetStatus } from '../../cluster/ressources/ReplicaSet'
+import type {
+  ReplicaSet,
+  ReplicaSetStatus
+} from '../../cluster/ressources/ReplicaSet'
 import { selectorMatchesLabels } from '../../cluster/ressources/ReplicaSet'
 import {
   createOwnerRef,
@@ -33,7 +36,10 @@ import type {
   ControllerState,
   ReconcilerController
 } from '../controller-runtime/types'
-import { createWorkQueue, type WorkQueue } from '../controller-runtime/WorkQueue'
+import {
+  createWorkQueue,
+  type WorkQueue
+} from '../controller-runtime/WorkQueue'
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
@@ -96,7 +102,9 @@ const createPodFromTemplate = (rs: ReplicaSet): Pod => {
  */
 const isPodReady = (pod: Pod): boolean => {
   const conditions = pod.status.conditions ?? []
-  const readyCondition = conditions.find((condition) => condition.type === 'Ready')
+  const readyCondition = conditions.find(
+    (condition) => condition.type === 'Ready'
+  )
   if (readyCondition != null) {
     return readyCondition.status === 'True'
   }
@@ -204,7 +212,7 @@ export class ReplicaSetController implements ReconcilerController {
             ? event.payload.pod
             : event.type === 'PodUpdated'
               ? event.payload.pod
-            : event.payload.deletedPod
+              : event.payload.deletedPod
         this.enqueueOwnerReplicaSet(pod, event.type)
         this.enqueueMatchingReplicaSets(pod, event.type)
         break
@@ -244,10 +252,7 @@ export class ReplicaSetController implements ReconcilerController {
   /**
    * Find and enqueue the ReplicaSet that owns this pod
    */
-  private enqueueOwnerReplicaSet(
-    pod: Pod,
-    eventType?: ClusterEventType
-  ): void {
+  private enqueueOwnerReplicaSet(pod: Pod, eventType?: ClusterEventType): void {
     const state = this.getState()
     const ownerRs = findOwnerByRef(pod, 'ReplicaSet', () =>
       state.getReplicaSets(pod.metadata.namespace)
@@ -402,14 +407,12 @@ export class ReplicaSetController implements ReconcilerController {
     }
   }
 
-  private observe(
-    input: {
-      action: 'enqueue' | 'reconcile' | 'skip'
-      key: string
-      reason?: string
-      eventType?: ClusterEventType
-    }
-  ): void {
+  private observe(input: {
+    action: 'enqueue' | 'reconcile' | 'skip'
+    key: string
+    reason?: string
+    eventType?: ClusterEventType
+  }): void {
     reportControllerObservation(this.options, {
       controller: 'ReplicaSetController',
       action: input.action,

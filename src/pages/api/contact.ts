@@ -33,7 +33,10 @@ function getClientIp(request: Request): string | null {
   return null
 }
 
-function getRateLimitKey(args: { userId: string; clientIp: string | null }): string {
+function getRateLimitKey(args: {
+  userId: string
+  clientIp: string | null
+}): string {
   if (args.clientIp != null && args.clientIp !== '') {
     return `user:${args.userId}:ip:${args.clientIp}`
   }
@@ -230,7 +233,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     '',
     `userId: ${user.id}`,
     `userEmail: ${userEmail}`,
-    `lessonId: ${normalizedLessonId ?? 'n/a'}`,
+    `lessonId: ${normalizedLessonId ?? 'n/a'}`
   ].join('\n')
 
   const sweegoResponse = await fetch(SWEEGO_SEND_ENDPOINT, {

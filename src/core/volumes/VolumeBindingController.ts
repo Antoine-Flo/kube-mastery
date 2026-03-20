@@ -41,7 +41,9 @@ export const createVolumeBindingController = (
 
   const reconcileVolumeClaims = (): void => {
     const persistentVolumes = apiServer.listResources('PersistentVolume')
-    const persistentVolumeClaims = apiServer.listResources('PersistentVolumeClaim')
+    const persistentVolumeClaims = apiServer.listResources(
+      'PersistentVolumeClaim'
+    )
     const assignedVolumeNames = new Set<string>()
     const claimByKey = new Map<
       string,

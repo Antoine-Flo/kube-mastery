@@ -53,15 +53,15 @@ Once a PVC is submitted, the Kubernetes control plane's **PersistentVolume contr
 
 ```mermaid
 flowchart LR
-    A[PVC Submitted\nPending] --> B{Find matching PV}
-    B --> C{Check accessMode\ncompatibility}
-    C -->|No match| D[PVC stays Pending\ncheck describe]
-    C -->|Match| E{Check storage\nsize ≥ request}
+    A[PVC Submitted<br/>Pending] --> B{Find matching PV}
+    B --> C{Check accessMode<br/>compatibility}
+    C -->|No match| D[PVC stays Pending<br/>check describe]
+    C -->|Match| E{Check storage<br/>size ≥ request}
     E -->|Too small| D
-    E -->|Large enough| F{Check storageClass\nmatch}
+    E -->|Large enough| F{Check storageClass<br/>match}
     F -->|Mismatch| D
-    F -->|Match| G[Bind PVC to PV\nBoth become Bound]
-    G --> H[Pod can now\nmount the PVC]
+    F -->|Match| G[Bind PVC to PV<br/>Both become Bound]
+    G --> H[Pod can now<br/>mount the PVC]
 ```
 
 All three criteria must match: access mode, capacity (PV storage ≥ PVC request), and storage class. The first PV that satisfies all requirements wins, Kubernetes does not try to find the _smallest_ PV that fits, just the first qualifying one.

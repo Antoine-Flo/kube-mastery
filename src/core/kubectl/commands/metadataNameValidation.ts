@@ -22,8 +22,7 @@ const DNS1123_LABEL_RULE: NameRule = {
 
 const DNS1123_SUBDOMAIN_RULE: NameRule = {
   maxLength: 253,
-  regex:
-    /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/,
+  regex: /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/,
   regexSource:
     '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*',
   message:
@@ -55,8 +54,7 @@ const formatMetadataNameInvalidError = (
   name: string,
   rule: NameRule
 ): ExecutionResult => {
-  const detail =
-    `${rule.message} (e.g. '${rule.example}', regex used for validation is '${rule.regexSource}')`
+  const detail = `${rule.message} (e.g. '${rule.example}', regex used for validation is '${rule.regexSource}')`
   return error(
     `Error from server (Invalid): ${toKindReferenceForValidation(kind)} "${name}" is invalid: metadata.name: Invalid value: "${name}": ${detail}`
   )

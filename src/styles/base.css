@@ -1,5 +1,6 @@
 /* Styles de base : une fois pour tout le site */
-p, ul {
+p,
+ul {
   color: var(--color-gray-11);
   font-size: var(--text-md);
   line-height: 1.6;

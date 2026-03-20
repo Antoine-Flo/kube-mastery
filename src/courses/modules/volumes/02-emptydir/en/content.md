@@ -68,10 +68,10 @@ The writer writes `hello` to `/data/file.txt`. The reader waits two seconds, the
 ```mermaid
 graph LR
     subgraph "Pod: writer-reader"
-        W["Writer Container\n/data/file.txt ← writes"]
-        R["Reader Container\n/data/file.txt → reads"]
+        W["Writer Container<br/>/data/file.txt ← writes"]
+        R["Reader Container<br/>/data/file.txt → reads"]
 
-        V["emptyDir Volume\nshared-data\n/data/file.txt"]
+        V["emptyDir Volume<br/>shared-data<br/>/data/file.txt"]
 
         W -->|"writes to"| V
         V -->|"read by"| R

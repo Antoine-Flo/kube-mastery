@@ -1,9 +1,6 @@
 import type { MarkdownInstance } from 'astro'
 import type { UiLang } from '../courses/types'
-import type {
-  TaskGroupOverview,
-  TaskGroupListItem,
-} from './types'
+import type { TaskGroupOverview, TaskGroupListItem } from './types'
 import type { TaskGlobAdapter } from './port'
 import { buildTaskGroupOverview, buildTaskGroupList } from './domain'
 import { createTaskGlobAdapter } from './glob-adapter'

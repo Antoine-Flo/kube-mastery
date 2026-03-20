@@ -45,13 +45,13 @@ When a matching PV is found, Kubernetes binds the PVC to it. The PV's status cha
 
 ```mermaid
 flowchart TD
-    A[Cluster Admin] -->|"kubectl apply -f pv.yaml"| B[PersistentVolume\nAvailable]
-    C[Developer] -->|"kubectl apply -f pvc.yaml"| D[PersistentVolumeClaim\nPending]
-    D --> E{Kubernetes Binding\nController}
+    A[Cluster Admin] -->|"kubectl apply -f pv.yaml"| B[PersistentVolume<br/>Available]
+    C[Developer] -->|"kubectl apply -f pvc.yaml"| D[PersistentVolumeClaim<br/>Pending]
+    D --> E{Kubernetes Binding<br/>Controller}
     B --> E
-    E -->|"Match found:\nsize ✓ accessMode ✓ storageClass ✓"| F[PVC Bound\nPV Bound]
+    E -->|"Match found:<br/>size ✓ accessMode ✓ storageClass ✓"| F[PVC Bound<br/>PV Bound]
     F --> G[Pod]
-    G -->|"volumes.persistentVolumeClaim\n.claimName: my-pvc"| F
+    G -->|"volumes.persistentVolumeClaim<br/>.claimName: my-pvc"| F
 ```
 
 ## Dynamic Provisioning: The Modern Approach

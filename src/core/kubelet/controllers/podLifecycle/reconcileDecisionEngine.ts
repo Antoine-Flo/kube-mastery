@@ -10,15 +10,13 @@ export type ReconcileDecision =
   | { type: 'AlreadyPending'; pod: Pod }
   | { type: 'ReadyToStart'; pod: Pod }
 
-export const buildReconcileDecision = (
-  input: {
-    pod: Pod | undefined
-    hasPendingTimeout: boolean
-    shouldProgressPod: (pod: Pod) => boolean
-    volumeReadinessProbe?: (pod: Pod) => PodVolumeReadiness
-    detectStartupIssueReason: (pod: Pod) => string | undefined
-  }
-): ReconcileDecision => {
+export const buildReconcileDecision = (input: {
+  pod: Pod | undefined
+  hasPendingTimeout: boolean
+  shouldProgressPod: (pod: Pod) => boolean
+  volumeReadinessProbe?: (pod: Pod) => PodVolumeReadiness
+  detectStartupIssueReason: (pod: Pod) => string | undefined
+}): ReconcileDecision => {
   const pod = input.pod
   if (pod == null) {
     return { type: 'NotFound' }

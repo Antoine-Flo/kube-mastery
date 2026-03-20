@@ -119,10 +119,10 @@ const createHandlers = (
     })
   )
   handlers.set('set', (parsed) => handleSetImage(apiServer, parsed))
-  handlers.set('delete', (parsed) => handleDelete(apiServer, parsed, fileSystem))
-  handlers.set('apply', (parsed) =>
-    handleApply(fileSystem, apiServer, parsed)
+  handlers.set('delete', (parsed) =>
+    handleDelete(apiServer, parsed, fileSystem)
   )
+  handlers.set('apply', (parsed) => handleApply(fileSystem, apiServer, parsed))
   handlers.set('replace', (parsed) =>
     handleReplace(fileSystem, apiServer, parsed)
   )
@@ -136,16 +136,12 @@ const createHandlers = (
   handlers.set('label', (parsed) => handleLabel(apiServer, parsed))
   handlers.set('annotate', (parsed) => handleAnnotate(apiServer, parsed))
   handlers.set('version', (parsed) => handleVersion(parsed))
-  handlers.set('cluster-info', (parsed) =>
-    handleClusterInfo(apiServer, parsed)
-  )
+  handlers.set('cluster-info', (parsed) => handleClusterInfo(apiServer, parsed))
   handlers.set('api-versions', (parsed) => success(handleAPIVersions(parsed)))
   handlers.set('api-resources', (parsed) => handleAPIResources(parsed))
   handlers.set('scale', (parsed) => handleScale(apiServer, parsed))
   handlers.set('patch', (parsed) => handlePatch(apiServer, parsed))
-  handlers.set('run', (parsed) =>
-    handleRun(apiServer, parsed, networkRuntime)
-  )
+  handlers.set('run', (parsed) => handleRun(apiServer, parsed, networkRuntime))
   handlers.set('expose', (parsed) => handleExpose(apiServer, parsed))
   handlers.set('wait', (parsed) =>
     handleWait(apiServer, parsed, reconcileForWait)

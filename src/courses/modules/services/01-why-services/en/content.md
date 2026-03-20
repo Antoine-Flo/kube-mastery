@@ -36,11 +36,11 @@ This means the relationship between a Service and its Pods is completely dynamic
 
 ```mermaid
 graph TB
-    Client["Client\n(another Pod or external user)"]
-    SVC["Service\nweb-service\nStable IP: 10.96.45.12\nDNS: web-service.default.svc.cluster.local"]
-    P1["Pod\napp=web\nIP: 10.244.1.5"]
-    P2["Pod\napp=web\nIP: 10.244.2.11"]
-    P3["Pod\napp=web\nIP: 10.244.3.8"]
+    Client["Client<br/>(another Pod or external user)"]
+    SVC["Service<br/>web-service<br/>Stable IP: 10.96.45.12<br/>DNS: web-service.default.svc.cluster.local"]
+    P1["Pod<br/>app=web<br/>IP: 10.244.1.5"]
+    P2["Pod<br/>app=web<br/>IP: 10.244.2.11"]
+    P3["Pod<br/>app=web<br/>IP: 10.244.3.8"]
 
     Client -->|"always the same address"| SVC
     SVC -->|"load balanced"| P1

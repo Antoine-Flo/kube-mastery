@@ -103,7 +103,9 @@ describe('PodTerminationController', () => {
         namespace: 'default',
         nodeName: 'conformance-worker',
         phase: 'Running',
-        containers: [{ name: 'main', image: 'busybox', command: ['sleep', '3600'] }]
+        containers: [
+          { name: 'main', image: 'busybox', command: ['sleep', '3600'] }
+        ]
       })
     )
     const processRuntime = {
@@ -127,10 +129,14 @@ describe('PodTerminationController', () => {
         ]
       })
     }
-    const requestResult = apiServer.requestPodDeletion('sleeping-pod', 'default', {
-      gracePeriodSeconds: 2,
-      source: 'test'
-    })
+    const requestResult = apiServer.requestPodDeletion(
+      'sleeping-pod',
+      'default',
+      {
+        gracePeriodSeconds: 2,
+        source: 'test'
+      }
+    )
     expect(requestResult.ok).toBe(true)
     const controller = createPodTerminationController(apiServer, {
       minVisibleTerminatingMs: 200,
@@ -138,10 +144,14 @@ describe('PodTerminationController', () => {
     })
 
     vi.advanceTimersByTime(1200)
-    expect(apiServer.findResource('Pod', 'sleeping-pod', 'default').ok).toBe(true)
+    expect(apiServer.findResource('Pod', 'sleeping-pod', 'default').ok).toBe(
+      true
+    )
 
     vi.advanceTimersByTime(1000)
-    expect(apiServer.findResource('Pod', 'sleeping-pod', 'default').ok).toBe(false)
+    expect(apiServer.findResource('Pod', 'sleeping-pod', 'default').ok).toBe(
+      false
+    )
 
     controller.stop()
   })
@@ -159,20 +169,28 @@ describe('PodTerminationController', () => {
         containers: [{ name: 'main', image: 'busybox' }]
       })
     )
-    const requestResult = apiServer.requestPodDeletion('quick-delete-pod', 'default', {
-      gracePeriodSeconds: 30,
-      source: 'test'
-    })
+    const requestResult = apiServer.requestPodDeletion(
+      'quick-delete-pod',
+      'default',
+      {
+        gracePeriodSeconds: 30,
+        source: 'test'
+      }
+    )
     expect(requestResult.ok).toBe(true)
     const controller = createPodTerminationController(apiServer, {
       minVisibleTerminatingMs: 600
     })
 
     vi.advanceTimersByTime(300)
-    expect(apiServer.findResource('Pod', 'quick-delete-pod', 'default').ok).toBe(true)
+    expect(
+      apiServer.findResource('Pod', 'quick-delete-pod', 'default').ok
+    ).toBe(true)
 
     vi.advanceTimersByTime(400)
-    expect(apiServer.findResource('Pod', 'quick-delete-pod', 'default').ok).toBe(false)
+    expect(
+      apiServer.findResource('Pod', 'quick-delete-pod', 'default').ok
+    ).toBe(false)
 
     controller.stop()
   })
@@ -188,7 +206,9 @@ describe('PodTerminationController', () => {
         namespace: 'default',
         nodeName: 'conformance-worker',
         phase: 'Running',
-        containers: [{ name: 'main', image: 'busybox', command: ['sleep', '2'] }]
+        containers: [
+          { name: 'main', image: 'busybox', command: ['sleep', '2'] }
+        ]
       })
     )
     processRuntime.ensureMainProcess({
@@ -198,10 +218,14 @@ describe('PodTerminationController', () => {
       containerName: 'main',
       command: ['sleep', '2']
     })
-    const requestResult = apiServer.requestPodDeletion('short-sleep-pod', 'default', {
-      gracePeriodSeconds: 30,
-      source: 'test'
-    })
+    const requestResult = apiServer.requestPodDeletion(
+      'short-sleep-pod',
+      'default',
+      {
+        gracePeriodSeconds: 30,
+        source: 'test'
+      }
+    )
     expect(requestResult.ok).toBe(true)
     const controller = createPodTerminationController(apiServer, {
       minVisibleTerminatingMs: 500,
@@ -210,7 +234,9 @@ describe('PodTerminationController', () => {
     })
 
     vi.advanceTimersByTime(5000)
-    expect(apiServer.findResource('Pod', 'short-sleep-pod', 'default').ok).toBe(false)
+    expect(apiServer.findResource('Pod', 'short-sleep-pod', 'default').ok).toBe(
+      false
+    )
 
     controller.stop()
   })
@@ -241,7 +267,11 @@ describe('PodTerminationController', () => {
       )
     )
     vi.advanceTimersByTime(6000)
-    const deleted = apiServer.findResource('Pod', 'deleted-event-pod', 'default')
+    const deleted = apiServer.findResource(
+      'Pod',
+      'deleted-event-pod',
+      'default'
+    )
     expect(deleted.ok).toBe(false)
 
     controller.stop()

@@ -179,14 +179,20 @@ const maybeAutoCompleteFiniteSleep = (
   }
 }
 
-const randomIntInRange = (minInclusive: number, maxInclusive: number): number => {
+const randomIntInRange = (
+  minInclusive: number,
+  maxInclusive: number
+): number => {
   const normalizedMin = Math.floor(minInclusive)
   const normalizedMax = Math.floor(maxInclusive)
   if (normalizedMax <= normalizedMin) {
     return normalizedMin
   }
   const randomValue = Math.random()
-  return normalizedMin + Math.floor(randomValue * (normalizedMax - normalizedMin + 1))
+  return (
+    normalizedMin +
+    Math.floor(randomValue * (normalizedMax - normalizedMin + 1))
+  )
 }
 
 const applyTermSignal = (
@@ -221,11 +227,15 @@ const applyTermSignal = (
 }
 
 export interface ContainerProcessRuntime {
-  ensureMainProcess: (input: EnsureContainerProcessInput) => ContainerProcessRecord
+  ensureMainProcess: (
+    input: EnsureContainerProcessInput
+  ) => ContainerProcessRecord
   getMainProcess: (
     identity: ContainerProcessIdentity
   ) => ContainerProcessRecord | undefined
-  listProcesses: (filter?: Partial<ContainerProcessIdentity>) => ContainerProcessRecord[]
+  listProcesses: (
+    filter?: Partial<ContainerProcessIdentity>
+  ) => ContainerProcessRecord[]
   signalMainProcess: (
     input: ProcessSignalInput
   ) => ContainerProcessRecord | undefined
@@ -276,7 +286,10 @@ export const createContainerProcessRuntime = (): ContainerProcessRuntime => {
         if (filter?.nodeName != null && record.nodeName !== filter.nodeName) {
           continue
         }
-        if (filter?.namespace != null && record.namespace !== filter.namespace) {
+        if (
+          filter?.namespace != null &&
+          record.namespace !== filter.namespace
+        ) {
           continue
         }
         if (filter?.podName != null && record.podName !== filter.podName) {

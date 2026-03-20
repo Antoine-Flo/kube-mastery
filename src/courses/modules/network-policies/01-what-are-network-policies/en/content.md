@@ -42,7 +42,7 @@ graph LR
     end
 
     subgraph "NetworkPolicy Applied to Backend"
-        A2["Frontend Pod\n(app=frontend)"] -->|"✅ allowed\n(matches policy)"| B2["Backend Pod\n(app=backend)"]
+        A2["Frontend Pod<br/>(app=frontend)"] -->|"✅ allowed<br/>(matches policy)"| B2["Backend Pod<br/>(app=backend)"]
         C2["Other Pod"] -->|"❌ blocked"| B2
         D2["Any other source"] -->|"❌ blocked"| B2
     end

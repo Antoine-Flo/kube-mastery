@@ -87,29 +87,34 @@ const growWidths = (
     ...rows.map((row) => row.length)
   )
 
-  const nextWidths = Array.from({ length: maxColumnCount }, (_, columnIndex) => {
-    let maxWidth = currentWidths[columnIndex] ?? 0
-    const headerCell = header[columnIndex] ?? ''
-    if (headerCell.length > maxWidth) {
-      maxWidth = headerCell.length
-    }
-    for (const row of rows) {
-      const cell = row[columnIndex] ?? ''
-      if (cell.length > maxWidth) {
-        maxWidth = cell.length
+  const nextWidths = Array.from(
+    { length: maxColumnCount },
+    (_, columnIndex) => {
+      let maxWidth = currentWidths[columnIndex] ?? 0
+      const headerCell = header[columnIndex] ?? ''
+      if (headerCell.length > maxWidth) {
+        maxWidth = headerCell.length
       }
+      for (const row of rows) {
+        const cell = row[columnIndex] ?? ''
+        if (cell.length > maxWidth) {
+          maxWidth = cell.length
+        }
+      }
+      const minWidth = minColumnWidthsByHeader[headerCell] ?? 0
+      if (minWidth > maxWidth) {
+        maxWidth = minWidth
+      }
+      return maxWidth
     }
-    const minWidth = minColumnWidthsByHeader[headerCell] ?? 0
-    if (minWidth > maxWidth) {
-      maxWidth = minWidth
-    }
-    return maxWidth
-  })
+  )
 
   return nextWidths
 }
 
-export const tryParseTableOutput = (output: string): ParsedTableOutput | null => {
+export const tryParseTableOutput = (
+  output: string
+): ParsedTableOutput | null => {
   const lines = output.split('\n').filter((line) => line.length > 0)
   if (lines.length === 0) {
     return null
@@ -138,7 +143,10 @@ export const createStatefulTabWriter = (
   let currentWidths: number[] = []
   let previousRowKeys = new Set<string>()
 
-  const ingestHeaderAndRows = (header: string[], rows: string[][]): string[] => {
+  const ingestHeaderAndRows = (
+    header: string[],
+    rows: string[][]
+  ): string[] => {
     currentHeader = [...header]
     currentWidths = growWidths(
       currentWidths,
@@ -148,7 +156,12 @@ export const createStatefulTabWriter = (
     )
     previousRowKeys = new Set(rows.map((row) => buildRowKey(row)))
 
-    const formattedHeader = formatCells(currentHeader, currentWidths, spacing, align)
+    const formattedHeader = formatCells(
+      currentHeader,
+      currentWidths,
+      spacing,
+      align
+    )
     const formattedRows = rows.map((row) =>
       formatCells(row, currentWidths, spacing, align)
     )

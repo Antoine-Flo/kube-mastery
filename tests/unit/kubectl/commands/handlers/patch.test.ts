@@ -17,7 +17,9 @@ describe('kubectl patch handler', () => {
     apiServer = createApiServerFacade()
   })
 
-  const createParsed = (overrides: Partial<ParsedCommand> = {}): ParsedCommand => {
+  const createParsed = (
+    overrides: Partial<ParsedCommand> = {}
+  ): ParsedCommand => {
     return {
       action: 'patch',
       resource: 'deployments',
@@ -99,12 +101,18 @@ describe('kubectl patch handler', () => {
       return
     }
 
-    const daemonSet = apiServer.findResource('DaemonSet', 'my-daemonset', 'default')
+    const daemonSet = apiServer.findResource(
+      'DaemonSet',
+      'my-daemonset',
+      'default'
+    )
     expect(daemonSet.ok).toBe(true)
     if (!daemonSet.ok) {
       return
     }
-    expect(daemonSet.value.spec.template.spec.containers[0].image).toBe('nginx:1.29')
+    expect(daemonSet.value.spec.template.spec.containers[0].image).toBe(
+      'nginx:1.29'
+    )
   })
 
   it('should patch statefulset replicas with merge patch', () => {

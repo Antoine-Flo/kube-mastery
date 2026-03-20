@@ -80,7 +80,9 @@ describe('kubectl parser - create deployment', () => {
     expect(result.ok).toBe(false)
     if (!result.ok) {
       expect(result.error).toContain('Unexpected args: [deployments my-dep]')
-      expect(result.error).toContain("See 'kubectl create -h' for help and examples")
+      expect(result.error).toContain(
+        "See 'kubectl create -h' for help and examples"
+      )
     }
   })
 
@@ -187,7 +189,9 @@ describe('kubectl parser - create deployment', () => {
   })
 
   it('should reject create secret without subtype', () => {
-    const result = parseCommand('kubectl create secret mysecret --from-literal=a=b')
+    const result = parseCommand(
+      'kubectl create secret mysecret --from-literal=a=b'
+    )
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -198,7 +202,9 @@ describe('kubectl parser - create deployment', () => {
   })
 
   it('should reject create secret tls when cert is missing', () => {
-    const result = parseCommand('kubectl create secret tls tls-secret --key=tls.key')
+    const result = parseCommand(
+      'kubectl create secret tls tls-secret --key=tls.key'
+    )
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -609,7 +615,7 @@ describe('kubectl parser - get and delete flag positions', () => {
 
   it('should parse get jsonpath template with spaces', () => {
     const result = parseCommand(
-      "kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}{\"\\n\"}{end}'"
+      'kubectl get pods -o jsonpath=\'{range .items[*]}{.metadata.name}{"\\n"}{end}\''
     )
 
     expect(result.ok).toBe(true)
@@ -619,7 +625,7 @@ describe('kubectl parser - get and delete flag positions', () => {
 
     expect(result.value.resource).toBe('pods')
     expect(result.value.flags.o).toBe(
-      "jsonpath='{range .items[*]}{.metadata.name}{\"\\n\"}{end}'"
+      'jsonpath=\'{range .items[*]}{.metadata.name}{"\\n"}{end}\''
     )
   })
 

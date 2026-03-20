@@ -43,10 +43,10 @@ This is called a **rolling update**, and it gives you zero-downtime upgrades out
 
 ```mermaid
 graph TB
-    DEP["Deployment\nweb-deployment"]
+    DEP["Deployment<br/>web-deployment"]
 
     subgraph "Before Update"
-        RS1_before["ReplicaSet v1\nnginx:1.28\nreplicas: 3"]
+        RS1_before["ReplicaSet v1<br/>nginx:1.28<br/>replicas: 3"]
         P1["Pod nginx:1.28"]
         P2["Pod nginx:1.28"]
         P3["Pod nginx:1.28"]
@@ -54,15 +54,15 @@ graph TB
     end
 
     subgraph "During Rolling Update"
-        RS1_mid["ReplicaSet v1\nnginx:1.28\nreplicas: 1 ↓"]
-        RS2_mid["ReplicaSet v2\nnginx:1.26\nreplicas: 2 ↑"]
+        RS1_mid["ReplicaSet v1<br/>nginx:1.28<br/>replicas: 1 ↓"]
+        RS2_mid["ReplicaSet v2<br/>nginx:1.26<br/>replicas: 2 ↑"]
         RS1_mid --> PA["Pod nginx:1.28"]
         RS2_mid --> PB["Pod nginx:1.26"] & PC["Pod nginx:1.26"]
     end
 
     subgraph "After Update"
-        RS1_after["ReplicaSet v1\nnginx:1.28\nreplicas: 0 (kept for rollback)"]
-        RS2_after["ReplicaSet v2\nnginx:1.26\nreplicas: 3"]
+        RS1_after["ReplicaSet v1<br/>nginx:1.28<br/>replicas: 0 (kept for rollback)"]
+        RS2_after["ReplicaSet v2<br/>nginx:1.26<br/>replicas: 3"]
         RS2_after --> PD["Pod nginx:1.26"] & PE["Pod nginx:1.26"] & PF["Pod nginx:1.26"]
     end
 
@@ -140,7 +140,7 @@ kubectl get pods -l app=web -o wide
 **2. Check which image the Pods are running**
 
 ```bash
-kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
+kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"<br/>"}{end}'
 ```
 
 **3. Update the ReplicaSet image to nginx:1.28 and observe that nothing changes**
@@ -153,7 +153,7 @@ kubectl patch rs web-rs --type='json' \
 kubectl get rs web-rs -o jsonpath='{.spec.template.spec.containers[0].image}'
 
 # But the Pods are STILL running 1.24
-kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
+kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"<br/>"}{end}'
 ```
 
 **4. Delete one Pod and see that its replacement uses the new image**
@@ -164,7 +164,7 @@ kubectl delete $POD
 
 # Wait for the replacement, then check images again
 sleep 5
-kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
+kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"<br/>"}{end}'
 # Mixed fleet: 2x nginx:1.24, 1x nginx:1.28
 ```
 
@@ -209,7 +209,7 @@ kubectl set image deployment/web-deploy web=nginx:1.28
 kubectl rollout status deployment/web-deploy
 
 # All Pods are now on nginx:1.28
-kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
+kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"<br/>"}{end}'
 ```
 
 **7. Observe the two ReplicaSets the Deployment created**
@@ -226,7 +226,7 @@ kubectl rollout undo deployment/web-deploy
 kubectl rollout status deployment/web-deploy
 
 # Pods are back on nginx:1.24
-kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
+kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"<br/>"}{end}'
 ```
 
 **9. Clean up**

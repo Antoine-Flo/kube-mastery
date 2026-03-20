@@ -313,6 +313,8 @@ export const RESOURCE_HANDLERS: ResourceHandlerRegistry = {
   }
 }
 
-export const hasResourceHandler = (resource: string): resource is GetSupportedResource => {
+export const hasResourceHandler = (
+  resource: string
+): resource is GetSupportedResource => {
   return resource in RESOURCE_HANDLERS
 }

@@ -6,7 +6,10 @@
 import type { ApiServerFacade } from '../../api/ApiServerFacade'
 import type { EventBus } from '../../cluster/events/EventBus'
 import type { ClusterEvent } from '../../cluster/events/types'
-import type { DaemonSet, DaemonSetStatus } from '../../cluster/ressources/DaemonSet'
+import type {
+  DaemonSet,
+  DaemonSetStatus
+} from '../../cluster/ressources/DaemonSet'
 import type { Node } from '../../cluster/ressources/Node'
 import type { Pod } from '../../cluster/ressources/Pod'
 import { createPod } from '../../cluster/ressources/Pod'
@@ -32,7 +35,10 @@ import type {
   ControllerState,
   ReconcilerController
 } from '../controller-runtime/types'
-import { createWorkQueue, type WorkQueue } from '../controller-runtime/WorkQueue'
+import {
+  createWorkQueue,
+  type WorkQueue
+} from '../controller-runtime/WorkQueue'
 
 const WATCHED_EVENTS: ClusterEventType[] = [
   'DaemonSetCreated',
@@ -203,10 +209,7 @@ export class DaemonSetController implements ReconcilerController {
     this.initialSync()
   }
 
-  private enqueueOwnerDaemonSet(
-    pod: Pod,
-    eventType?: ClusterEventType
-  ): void {
+  private enqueueOwnerDaemonSet(pod: Pod, eventType?: ClusterEventType): void {
     const state = this.getState()
     const ownerDaemonSet = findOwnerByRef(pod, 'DaemonSet', () =>
       state.getDaemonSets(pod.metadata.namespace)
@@ -354,14 +357,12 @@ export class DaemonSetController implements ReconcilerController {
     )
   }
 
-  private observe(
-    input: {
-      action: 'enqueue' | 'reconcile' | 'skip'
-      key: string
-      reason?: string
-      eventType?: ClusterEventType
-    }
-  ): void {
+  private observe(input: {
+    action: 'enqueue' | 'reconcile' | 'skip'
+    key: string
+    reason?: string
+    eventType?: ClusterEventType
+  }): void {
     reportControllerObservation(this.options, {
       controller: 'DaemonSetController',
       action: input.action,

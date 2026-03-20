@@ -74,7 +74,6 @@ spec:
 
 Reading this from top to bottom, you can trace the four required fields clearly: the API group and version (`apps/v1`), the object type (`Deployment`), its identity (`name: web-app` in `namespace: default` with a label), and finally the desired state in `spec` , three replicas of a Pod running the `nginx:1.28` container image.
 
-
 ```mermaid
 graph TD
     Manifest["Kubernetes Manifest"]
@@ -118,6 +117,7 @@ nano web-app.yaml
 ```
 
 Copy and paste the following content into the file:
+
 ```yaml
 # web-app.yaml
 apiVersion: apps/v1

@@ -1,6 +1,4 @@
-import type {
-  ClusterStateData
-} from '../../../cluster/ClusterState'
+import type { ClusterStateData } from '../../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import { formatTable } from '../../../shared/formatter'
 import type { ExecutionResult } from '../../../shared/result'
@@ -61,12 +59,13 @@ const handleConfigView = (
   parsed: ParsedCommand
 ): ExecutionResult => {
   const hasExplicitOutput =
-    typeof parsed.flags.output === 'string' || typeof parsed.flags['o'] === 'string'
+    typeof parsed.flags.output === 'string' ||
+    typeof parsed.flags['o'] === 'string'
   const fallbackOutput = hasExplicitOutput ? parsed.output : 'yaml'
   const outputDirectiveResult = validateOutputDirective(
     resolveOutputDirective(parsed.flags, fallbackOutput),
     ['yaml', 'json', 'jsonpath'],
-    "--output must be one of: json|yaml|jsonpath"
+    '--output must be one of: json|yaml|jsonpath'
   )
   if (!outputDirectiveResult.ok) {
     return error(outputDirectiveResult.error)
@@ -175,10 +174,7 @@ const handleConfigSetContext = (
       }
     })
   }
-  const writeResult = writeKubeconfigToClusterInfo(
-    apiServer,
-    updatedKubeconfig
-  )
+  const writeResult = writeKubeconfigToClusterInfo(apiServer, updatedKubeconfig)
   if (!writeResult.ok) {
     return error(writeResult.error)
   }

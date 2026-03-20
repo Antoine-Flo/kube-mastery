@@ -10,7 +10,10 @@ import { createPodBoundEvent } from '../../cluster/events/types'
 import type { Node } from '../../cluster/ressources/Node'
 import type { Pod } from '../../cluster/ressources/Pod'
 import { isNodeEligibleForPod } from '../../cluster/scheduler/SimSchedulingPredicates'
-import { startPeriodicResync, subscribeToEvents } from '../controller-runtime/helpers'
+import {
+  startPeriodicResync,
+  subscribeToEvents
+} from '../controller-runtime/helpers'
 import { createControllerStateFromApi } from '../controller-runtime/stateFromApi'
 import type {
   ClusterEventType,
@@ -18,7 +21,10 @@ import type {
   ControllerResyncOptions,
   ReconcilerController
 } from '../controller-runtime/types'
-import { createWorkQueue, type WorkQueue } from '../controller-runtime/WorkQueue'
+import {
+  createWorkQueue,
+  type WorkQueue
+} from '../controller-runtime/WorkQueue'
 
 export interface SchedulerControllerOptions extends ControllerResyncOptions {
   schedulingDelayRangeMs?: {

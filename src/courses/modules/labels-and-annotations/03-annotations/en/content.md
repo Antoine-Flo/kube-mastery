@@ -18,11 +18,11 @@ The fundamental rule is simple:
 ```mermaid
 graph TB
     OBJ["Kubernetes Object"]
-    OBJ --> LBL["Labels\n(metadata.labels)\n• Short key-value pairs\n• 63 char limit\n• Used by selectors\n• Services, RS, Deployments read them"]
-    OBJ --> ANN["Annotations\n(metadata.annotations)\n• Arbitrary key-value pairs\n• Values up to 256 KB\n• NOT used by selectors\n• Tools, controllers, humans read them"]
+    OBJ --> LBL["Labels<br/>(metadata.labels)<br/>• Short key-value pairs<br/>• 63 char limit<br/>• Used by selectors<br/>• Services, RS, Deployments read them"]
+    OBJ --> ANN["Annotations<br/>(metadata.annotations)<br/>• Arbitrary key-value pairs<br/>• Values up to 256 KB<br/>• NOT used by selectors<br/>• Tools, controllers, humans read them"]
 
-    LBL --> SEL["Label Selectors\n(Services, Deployments, kubectl -l)"]
-    ANN --> TOOLS["External Tools\n(Ingress controllers, monitoring,\nCI/CD, documentation)"]
+    LBL --> SEL["Label Selectors<br/>(Services, Deployments, kubectl -l)"]
+    ANN --> TOOLS["External Tools<br/>(Ingress controllers, monitoring,<br/>CI/CD, documentation)"]
 ```
 
 ## What Annotations Are Used For

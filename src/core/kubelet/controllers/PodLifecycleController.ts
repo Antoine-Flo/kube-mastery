@@ -34,7 +34,10 @@ import type {
   ControllerState,
   ReconcilerController
 } from '../../control-plane/controller-runtime/types'
-import { createWorkQueue, type WorkQueue } from '../../control-plane/controller-runtime/WorkQueue'
+import {
+  createWorkQueue,
+  type WorkQueue
+} from '../../control-plane/controller-runtime/WorkQueue'
 import {
   buildTerminatedContainerStatuses,
   buildWaitingContainerStatuses,
@@ -429,7 +432,8 @@ export class PodLifecycleController implements ReconcilerController {
       if (!shouldProgressPod(latestPod)) {
         return
       }
-      const latestVolumeReadiness = this.options.volumeReadinessProbe?.(latestPod)
+      const latestVolumeReadiness =
+        this.options.volumeReadinessProbe?.(latestPod)
       if (latestVolumeReadiness != null && !latestVolumeReadiness.ready) {
         this.emitPodWaitingForVolume(latestPod, latestVolumeReadiness.reason)
         return
@@ -521,7 +525,9 @@ export class PodLifecycleController implements ReconcilerController {
     this.timeoutRegistry.deleteAttempt('imagePull', key)
   }
 
-  private hasProcessCommand(container: Pod['spec']['containers'][number]): boolean {
+  private hasProcessCommand(
+    container: Pod['spec']['containers'][number]
+  ): boolean {
     if (container.command != null && container.command.length > 0) {
       return true
     }
@@ -556,10 +562,7 @@ export class PodLifecycleController implements ReconcilerController {
     clearPodProcessRuntimeState(pod, this.options.processRuntime)
   }
 
-  private signalPodProcesses(
-    pod: Pod,
-    signal: 'SIGTERM' | 'SIGKILL'
-  ): void {
+  private signalPodProcesses(pod: Pod, signal: 'SIGTERM' | 'SIGKILL'): void {
     signalPodProcessRuntime(pod, this.options.processRuntime, signal)
   }
 
@@ -573,13 +576,16 @@ export class PodLifecycleController implements ReconcilerController {
   private stopRuntimeContainersForPod(
     pod: Pod,
     options: { reason: string; exitCode: number }
-  ): Map<string, {
-    containerId: string
-    startedAt: string
-    finishedAt?: string
-    exitCode?: number
-    reason?: string
-  }> {
+  ): Map<
+    string,
+    {
+      containerId: string
+      startedAt: string
+      finishedAt?: string
+      exitCode?: number
+      reason?: string
+    }
+  > {
     return terminatePodRuntimeContainers(pod, this.options.containerRuntime, {
       reason: options.reason,
       exitCode: options.exitCode
@@ -593,8 +599,12 @@ export class PodLifecycleController implements ReconcilerController {
       1,
       Math.floor(configuredInitialMs ?? DEFAULT_RESTART_BACKOFF.initialMs)
     )
-    const maxMs = Math.max(initialMs, Math.floor(configuredMaxMs ?? DEFAULT_RESTART_BACKOFF.maxMs))
-    const previousAttempts = this.timeoutRegistry.getAttempt('restart', key) ?? 0
+    const maxMs = Math.max(
+      initialMs,
+      Math.floor(configuredMaxMs ?? DEFAULT_RESTART_BACKOFF.maxMs)
+    )
+    const previousAttempts =
+      this.timeoutRegistry.getAttempt('restart', key) ?? 0
     const nextAttempts = previousAttempts + 1
     this.timeoutRegistry.setAttempt('restart', key, nextAttempts)
     const exponentialDelay = initialMs * 2 ** (nextAttempts - 1)
@@ -612,7 +622,8 @@ export class PodLifecycleController implements ReconcilerController {
       initialMs,
       Math.floor(configuredMaxMs ?? DEFAULT_IMAGE_PULL_BACKOFF.maxMs)
     )
-    const previousAttempts = this.timeoutRegistry.getAttempt('imagePull', key) ?? 0
+    const previousAttempts =
+      this.timeoutRegistry.getAttempt('imagePull', key) ?? 0
     const nextAttempts = previousAttempts + 1
     this.timeoutRegistry.setAttempt('imagePull', key, nextAttempts)
     const exponentialDelay = initialMs * 2 ** (nextAttempts - 1)
@@ -647,13 +658,13 @@ export class PodLifecycleController implements ReconcilerController {
     const configuredDelayMs = this.options.crashLoopTimingMs?.errorToBackoffMs
     return Math.max(
       0,
-      Math.floor(configuredDelayMs ?? DEFAULT_CRASH_LOOP_TIMING.errorToBackoffMs)
+      Math.floor(
+        configuredDelayMs ?? DEFAULT_CRASH_LOOP_TIMING.errorToBackoffMs
+      )
     )
   }
 
-  private emitCrashLoopWaitingReasonForLatestPod(
-    fallbackPod: Pod
-  ): void {
+  private emitCrashLoopWaitingReasonForLatestPod(fallbackPod: Pod): void {
     const latestCrashedPodResult = this.getState().findPod(
       fallbackPod.metadata.name,
       fallbackPod.metadata.namespace
@@ -724,7 +735,8 @@ export class PodLifecycleController implements ReconcilerController {
         if (!shouldProgressPod(transitionedPod)) {
           return
         }
-        const transitionedReason = this.detectStartupIssueReason(transitionedPod)
+        const transitionedReason =
+          this.detectStartupIssueReason(transitionedPod)
         if (transitionedReason !== 'ImagePullBackOff') {
           this.clearImagePullState(key)
           this.enqueuePod(transitionedPod)
@@ -754,7 +766,8 @@ export class PodLifecycleController implements ReconcilerController {
 
   private handleCrashLoopBackOff(key: string, pod: Pod): void {
     const restartPolicy = pod.spec.restartPolicy ?? 'Always'
-    const restartAllowed = restartPolicy === 'Always' || restartPolicy === 'OnFailure'
+    const restartAllowed =
+      restartPolicy === 'Always' || restartPolicy === 'OnFailure'
     if (!restartAllowed) {
       this.observe({
         action: 'skip',
@@ -951,7 +964,10 @@ export class PodLifecycleController implements ReconcilerController {
         return
       }
       const latestPod = latestPodResult.value
-      if (latestPod.status.phase === 'Succeeded' || latestPod.status.phase === 'Failed') {
+      if (
+        latestPod.status.phase === 'Succeeded' ||
+        latestPod.status.phase === 'Failed'
+      ) {
         return
       }
       if (!this.shouldCompleteSuccessfully(latestPod)) {
@@ -1176,7 +1192,7 @@ export class PodLifecycleController implements ReconcilerController {
             const firstContainer = pod.spec.containers[0]
             const exitCode =
               firstContainer != null
-                ? getSimulatedCommandExitCode(firstContainer) ?? 1
+                ? (getSimulatedCommandExitCode(firstContainer) ?? 1)
                 : 1
             const image = firstContainer?.image
             const existingLogs = pod._simulator.logs ?? []
@@ -1264,7 +1280,7 @@ export class PodLifecycleController implements ReconcilerController {
             const firstContainer = pod.spec.containers[0]
             const exitCode =
               firstContainer != null
-                ? getSimulatedCommandExitCode(firstContainer) ?? 1
+                ? (getSimulatedCommandExitCode(firstContainer) ?? 1)
                 : 1
             const image = firstContainer?.image
             const existingLogs = pod._simulator.logs ?? []
@@ -1300,14 +1316,12 @@ export class PodLifecycleController implements ReconcilerController {
     )
   }
 
-  private observe(
-    input: {
-      action: 'enqueue' | 'reconcile' | 'skip'
-      key: string
-      reason?: string
-      eventType?: ClusterEventType
-    }
-  ): void {
+  private observe(input: {
+    action: 'enqueue' | 'reconcile' | 'skip'
+    key: string
+    reason?: string
+    eventType?: ClusterEventType
+  }): void {
     reportControllerObservation(this.options, {
       controller: 'PodLifecycleController',
       action: input.action,
