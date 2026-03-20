@@ -9,5 +9,4 @@ export const module: LocalModule = {
     en: 'Déployer, scaler et mettre à jour des applications de manière déclarative.'
   },
   tags: ['ckad', 'cka', 'beginner'],
-  draft: true
 }

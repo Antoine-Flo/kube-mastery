@@ -14,7 +14,8 @@ export const SUPPORTED_RESOURCE_KINDS: ResourceKind[] = [
   'StatefulSet',
   'PersistentVolume',
   'PersistentVolumeClaim',
-  'Service'
+  'Service',
+  'Lease'
 ]
 
 export const NAMESPACED_RESOURCE_KINDS: ResourceKind[] = [
@@ -27,7 +28,8 @@ export const NAMESPACED_RESOURCE_KINDS: ResourceKind[] = [
   'StatefulSet',
   'PersistentVolumeClaim',
   'Service',
-  'Ingress'
+  'Ingress',
+  'Lease'
 ]
 
 export const RESOURCE_KIND_BY_RESOURCE: Record<Resource, ResourceKind | undefined> = {
@@ -45,7 +47,8 @@ export const RESOURCE_KIND_BY_RESOURCE: Record<Resource, ResourceKind | undefine
   ingresses: 'Ingress',
   ingressclasses: undefined,
   persistentvolumes: 'PersistentVolume',
-  persistentvolumeclaims: 'PersistentVolumeClaim'
+  persistentvolumeclaims: 'PersistentVolumeClaim',
+  leases: 'Lease'
 }
 
 const KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
@@ -53,7 +56,8 @@ const KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
   DaemonSet: 'daemonset.apps',
   StatefulSet: 'statefulset.apps',
   ReplicaSet: 'replicaset.apps',
-  Ingress: 'ingress.networking.k8s.io'
+  Ingress: 'ingress.networking.k8s.io',
+  Lease: 'lease.coordination.k8s.io'
 }
 
 const PLURAL_KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
@@ -64,7 +68,8 @@ const PLURAL_KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
   Ingress: 'ingresses.networking.k8s.io',
   Namespace: 'namespaces',
   PersistentVolume: 'persistentvolumes',
-  PersistentVolumeClaim: 'persistentvolumeclaims'
+  PersistentVolumeClaim: 'persistentvolumeclaims',
+  Lease: 'leases.coordination.k8s.io'
 }
 
 export const RESOURCE_OUTPUT_METADATA_BY_RESOURCE: Record<
@@ -87,7 +92,8 @@ export const RESOURCE_OUTPUT_METADATA_BY_RESOURCE: Record<
   ingressclasses: { apiVersion: 'networking.k8s.io/v1', kind: 'IngressClass' },
   namespaces: { apiVersion: 'v1', kind: 'Namespace' },
   persistentvolumes: { apiVersion: 'v1', kind: 'PersistentVolume' },
-  persistentvolumeclaims: { apiVersion: 'v1', kind: 'PersistentVolumeClaim' }
+  persistentvolumeclaims: { apiVersion: 'v1', kind: 'PersistentVolumeClaim' },
+  leases: { apiVersion: 'coordination.k8s.io/v1', kind: 'Lease' }
 }
 
 export const isSupportedResourceKind = (kind: string): kind is ResourceKind => {

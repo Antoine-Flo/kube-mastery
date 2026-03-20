@@ -409,7 +409,10 @@ const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
     'PersistentVolumeDeleted',
     'PersistentVolumeClaimCreated',
     'PersistentVolumeClaimUpdated',
-    'PersistentVolumeClaimDeleted'
+    'PersistentVolumeClaimDeleted',
+    'LeaseCreated',
+    'LeaseUpdated',
+    'LeaseDeleted'
   ],
   pods: ['PodCreated', 'PodUpdated', 'PodDeleted', 'PodBound'],
   configmaps: ['ConfigMapCreated', 'ConfigMapUpdated', 'ConfigMapDeleted'],
@@ -436,7 +439,8 @@ const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
     'PersistentVolumeClaimCreated',
     'PersistentVolumeClaimUpdated',
     'PersistentVolumeClaimDeleted'
-  ]
+  ],
+  leases: ['LeaseCreated', 'LeaseUpdated', 'LeaseDeleted']
 }
 
 const isWatchEnabled = (parsed: ParsedCommand): boolean => {

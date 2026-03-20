@@ -9,5 +9,4 @@ export const module: LocalModule = {
     en: 'Maintenir un nombre stable de répliques de Pods.'
   },
   tags: ['ckad', 'cka', 'beginner'],
-  draft: true
 }

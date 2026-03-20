@@ -8,6 +8,7 @@ import type { ConfigMap } from '../ressources/ConfigMap'
 import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
 import type { Ingress } from '../ressources/Ingress'
+import type { Lease } from '../ressources/Lease'
 import type { Namespace } from '../ressources/Namespace'
 import type { Node } from '../ressources/Node'
 import type { PersistentVolume } from '../ressources/PersistentVolume'
@@ -33,6 +34,9 @@ import type {
   IngressCreatedEvent,
   IngressDeletedEvent,
   IngressUpdatedEvent,
+  LeaseCreatedEvent,
+  LeaseDeletedEvent,
+  LeaseUpdatedEvent,
   NamespaceCreatedEvent,
   NamespaceDeletedEvent,
   NamespaceUpdatedEvent,
@@ -84,6 +88,7 @@ const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
 const statefulSetRepo = createResourceRepository<StatefulSet>('StatefulSet')
 const serviceRepo = createResourceRepository<Service>('Service')
 const ingressRepo = createResourceRepository<Ingress>('Ingress')
+const leaseRepo = createResourceRepository<Lease>('Lease')
 const namespaceRepo = createResourceRepository<Namespace>('Namespace')
 const nodeRepo = createResourceRepository<Node>('Node')
 const persistentVolumeRepo =
@@ -105,6 +110,7 @@ type RepoStateKey =
   | 'statefulSets'
   | 'services'
   | 'ingresses'
+  | 'leases'
   | 'namespaces'
   | 'nodes'
   | 'persistentVolumes'
@@ -119,6 +125,7 @@ type RepoResourceByStateKey = {
   statefulSets: StatefulSet
   services: Service
   ingresses: Ingress
+  leases: Lease
   namespaces: Namespace
   nodes: Node
   persistentVolumes: PersistentVolume
@@ -203,6 +210,7 @@ const daemonSetHandler = createRepoHandler(daemonSetRepo, 'daemonSets')
 const statefulSetHandler = createRepoHandler(statefulSetRepo, 'statefulSets')
 const serviceHandler = createRepoHandler(serviceRepo, 'services')
 const ingressHandler = createRepoHandler(ingressRepo, 'ingresses')
+const leaseHandler = createRepoHandler(leaseRepo, 'leases')
 const namespaceHandler = createRepoHandler(namespaceRepo, 'namespaces')
 const nodeHandler = createRepoHandler(nodeRepo, 'nodes')
 const persistentVolumeHandler = createRepoHandler(
@@ -514,6 +522,27 @@ export const handleIngressUpdated = (
     event.payload.ingress
   )
 
+export const handleLeaseCreated = (
+  state: ClusterStateData,
+  event: LeaseCreatedEvent
+) => leaseHandler.created(state, event.payload.lease)
+
+export const handleLeaseDeleted = (
+  state: ClusterStateData,
+  event: LeaseDeletedEvent
+) => leaseHandler.deleted(state, event.payload.name, event.payload.namespace)
+
+export const handleLeaseUpdated = (
+  state: ClusterStateData,
+  event: LeaseUpdatedEvent
+) =>
+  leaseHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.lease
+  )
+
 export const handleNamespaceCreated = (
   state: ClusterStateData,
   event: NamespaceCreatedEvent
@@ -657,7 +686,10 @@ export const CLUSTER_EVENT_HANDLERS: {
   PersistentVolumeUpdated: handlePersistentVolumeUpdated,
   PersistentVolumeClaimCreated: handlePersistentVolumeClaimCreated,
   PersistentVolumeClaimDeleted: handlePersistentVolumeClaimDeleted,
-  PersistentVolumeClaimUpdated: handlePersistentVolumeClaimUpdated
+  PersistentVolumeClaimUpdated: handlePersistentVolumeClaimUpdated,
+  LeaseCreated: handleLeaseCreated,
+  LeaseDeleted: handleLeaseDeleted,
+  LeaseUpdated: handleLeaseUpdated
 }
 
 /**

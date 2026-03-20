@@ -7,6 +7,7 @@ import {
   describeConfigMap,
   describeDeployment,
   describeIngress,
+  describeLease,
   describeNode,
   describePersistentVolume,
   describePersistentVolumeClaim,
@@ -135,6 +136,13 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
       return describePersistentVolumeClaim(item)
     },
     type: 'PersistentVolumeClaim'
+  },
+  leases: {
+    items: 'leases',
+    formatter: (item) => {
+      return describeLease(item)
+    },
+    type: 'Lease'
   }
 } as const
 

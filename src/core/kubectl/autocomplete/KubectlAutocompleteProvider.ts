@@ -58,7 +58,8 @@ const RESOURCE_GETTERS: Record<
   daemonsets: (state) => (state.getDaemonSets ? state.getDaemonSets() : []),
   statefulsets: (state) =>
     state.getStatefulSets ? state.getStatefulSets() : [],
-  deployments: (state) => (state.getDeployments ? state.getDeployments() : [])
+  deployments: (state) => (state.getDeployments ? state.getDeployments() : []),
+  leases: (state) => (state.getLeases ? state.getLeases() : [])
 }
 
 const CANONICAL_RESOURCE_TYPES = Object.keys(RESOURCE_GETTERS)

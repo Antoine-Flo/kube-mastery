@@ -18,7 +18,8 @@ export const KUBECTL_RESOURCES = {
     'persistentvolumeclaims',
     'persistentvolumeclaim',
     'pvc'
-  ]
+  ],
+  leases: ['leases', 'lease']
 } as const
 
 export type KubectlResource = keyof typeof KUBECTL_RESOURCES

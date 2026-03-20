@@ -9,6 +9,7 @@ import type { ConfigMap } from '../ressources/ConfigMap'
 import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
 import type { Ingress } from '../ressources/Ingress'
+import type { Lease } from '../ressources/Lease'
 import type { Namespace } from '../ressources/Namespace'
 import type { Node } from '../ressources/Node'
 import type { PersistentVolume } from '../ressources/PersistentVolume'
@@ -476,6 +477,34 @@ export interface IngressUpdatedEvent extends BaseEvent {
   }
 }
 
+// ─── Lease Events ────────────────────────────────────────────────────────
+
+export interface LeaseCreatedEvent extends BaseEvent {
+  type: 'LeaseCreated'
+  payload: {
+    lease: Lease
+  }
+}
+
+export interface LeaseDeletedEvent extends BaseEvent {
+  type: 'LeaseDeleted'
+  payload: {
+    name: string
+    namespace: string
+    deletedLease: Lease
+  }
+}
+
+export interface LeaseUpdatedEvent extends BaseEvent {
+  type: 'LeaseUpdated'
+  payload: {
+    name: string
+    namespace: string
+    lease: Lease
+    previousLease: Lease
+  }
+}
+
 // ─── Event Union Type ────────────────────────────────────────────────
 
 export type ClusterEvent =
@@ -527,6 +556,9 @@ export type ClusterEvent =
   | IngressCreatedEvent
   | IngressDeletedEvent
   | IngressUpdatedEvent
+  | LeaseCreatedEvent
+  | LeaseDeletedEvent
+  | LeaseUpdatedEvent
 
 // ─── Event Factory Helpers ───────────────────────────────────────────────
 
@@ -1209,4 +1241,48 @@ export const createIngressUpdatedEvent = (
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
   payload: { name, namespace, ingress, previousIngress }
+})
+
+/**
+ * Create LeaseCreated event
+ */
+export const createLeaseCreatedEvent = (
+  lease: Lease,
+  source?: string
+): LeaseCreatedEvent => ({
+  type: 'LeaseCreated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { lease }
+})
+
+/**
+ * Create LeaseDeleted event
+ */
+export const createLeaseDeletedEvent = (
+  name: string,
+  namespace: string,
+  deletedLease: Lease,
+  source?: string
+): LeaseDeletedEvent => ({
+  type: 'LeaseDeleted',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, deletedLease }
+})
+
+/**
+ * Create LeaseUpdated event
+ */
+export const createLeaseUpdatedEvent = (
+  name: string,
+  namespace: string,
+  lease: Lease,
+  previousLease: Lease,
+  source?: string
+): LeaseUpdatedEvent => ({
+  type: 'LeaseUpdated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, lease, previousLease }
 })

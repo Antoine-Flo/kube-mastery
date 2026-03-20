@@ -44,7 +44,12 @@ const getSchemaName = (apiVersion: string, kind: string): string => {
   if (apiVersion.startsWith('apps/v1')) {
     return `io.k8s.api.apps.v1.${kind}`
   }
-  return `io.k8s.api.${apiVersion.replace('/', '.')}.${kind}`
+  if (apiVersion === 'coordination.k8s.io/v1') {
+    return `io.k8s.api.coordination.v1.${kind}`
+  }
+  // For other API groups, replace / with . but handle .k8s.io specially
+  const normalized = apiVersion.replace('k8s.io/', 'k8s.io.').replace('/', '.')
+  return `io.k8s.api.${normalized}.${kind}`
 }
 
 // ─── Schema Extraction ──────────────────────────────────────────────────────

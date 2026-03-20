@@ -13,6 +13,8 @@ import type { Deployment } from '../cluster/ressources/Deployment'
 import { parseDeploymentManifest } from '../cluster/ressources/Deployment'
 import type { Ingress } from '../cluster/ressources/Ingress'
 import { parseIngressManifest } from '../cluster/ressources/Ingress'
+import type { Lease } from '../cluster/ressources/Lease'
+import { parseLeaseManifest } from '../cluster/ressources/Lease'
 import type { Node } from '../cluster/ressources/Node'
 import { parseNodeManifest } from '../cluster/ressources/Node'
 import type { PersistentVolume } from '../cluster/ressources/PersistentVolume'
@@ -52,6 +54,7 @@ type ParsedResource =
   | StatefulSet
   | Service
   | Ingress
+  | Lease
 
 type YamlSupportedKind = Exclude<ResourceKind, 'Namespace'>
 
@@ -106,7 +109,8 @@ const MANIFEST_PARSERS: Record<
   DaemonSet: parseDaemonSetManifest,
   StatefulSet: parseStatefulSetManifest,
   Service: parseServiceManifest,
-  Ingress: parseIngressManifest
+  Ingress: parseIngressManifest,
+  Lease: parseLeaseManifest
 }
 
 /**

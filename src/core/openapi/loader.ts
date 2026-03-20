@@ -8,6 +8,7 @@ import { error, success } from '../shared/result'
 
 import apiV1Spec from './specs/api__v1_openapi.json'
 import appsV1Spec from './specs/apis__apps__v1_openapi.json'
+import coordinationV1Spec from './specs/apis__coordination.k8s.io__v1_openapi.json'
 
 export interface OpenAPISpec {
   openapi?: string
@@ -39,7 +40,8 @@ export type JSONSchema = {
 
 const RAW_SPECS: Record<string, unknown> = {
   'api__v1_openapi.json': apiV1Spec,
-  'apis__apps__v1_openapi.json': appsV1Spec
+  'apis__apps__v1_openapi.json': appsV1Spec,
+  'apis__coordination.k8s.io__v1_openapi.json': coordinationV1Spec
 }
 
 const cache = new Map<string, OpenAPISpec>()

@@ -14,11 +14,15 @@ import {
   createSecretLabeledEvent,
   createPodAnnotatedEvent,
   createConfigMapAnnotatedEvent,
-  createSecretAnnotatedEvent
+  createSecretAnnotatedEvent,
+  createLeaseCreatedEvent,
+  createLeaseDeletedEvent,
+  createLeaseUpdatedEvent
 } from '../../../../src/core/cluster/events/types'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../src/core/cluster/ressources/Secret'
+import { createLease } from '../../../../src/core/cluster/ressources/Lease'
 
 describe('Event Types', () => {
   const testPod = createPod({
@@ -38,6 +42,16 @@ describe('Event Types', () => {
     namespace: 'default',
     secretType: { type: 'Opaque' },
     data: { password: 'secret' }
+  })
+
+  const testLease = createLease({
+    name: 'node-lease-1',
+    namespace: 'kube-node-lease',
+    spec: {
+      holderIdentity: 'node-1',
+      leaseDurationSeconds: 40,
+      renewTime: new Date().toISOString()
+    }
   })
 
   describe('Pod events', () => {
@@ -288,6 +302,61 @@ describe('Event Types', () => {
       expect(event.payload.annotations).toEqual({
         'rotation-date': '2024-01-01'
       })
+    })
+  })
+
+  describe('Lease events', () => {
+    it('should create LeaseCreated event', () => {
+      const event = createLeaseCreatedEvent(testLease)
+
+      expect(event.type).toBe('LeaseCreated')
+      expect(event.payload.lease).toEqual(testLease)
+      expect(event.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+      expect(event.metadata?.correlationId).toBeTruthy()
+    })
+
+    it('should create LeaseCreated event with source', () => {
+      const event = createLeaseCreatedEvent(testLease, 'kubectl')
+
+      expect(event.metadata?.source).toBe('kubectl')
+    })
+
+    it('should create LeaseDeleted event', () => {
+      const event = createLeaseDeletedEvent(
+        'node-lease-1',
+        'kube-node-lease',
+        testLease
+      )
+
+      expect(event.type).toBe('LeaseDeleted')
+      expect(event.payload.name).toBe('node-lease-1')
+      expect(event.payload.namespace).toBe('kube-node-lease')
+      expect(event.payload.deletedLease).toEqual(testLease)
+    })
+
+    it('should create LeaseUpdated event', () => {
+      const updatedLease = createLease({
+        name: 'node-lease-1',
+        namespace: 'kube-node-lease',
+        spec: {
+          holderIdentity: 'node-1',
+          leaseDurationSeconds: 40,
+          renewTime: new Date().toISOString()
+        }
+      })
+
+      const event = createLeaseUpdatedEvent(
+        'node-lease-1',
+        'kube-node-lease',
+        updatedLease,
+        testLease
+      )
+
+      expect(event.type).toBe('LeaseUpdated')
+      expect(event.payload.name).toBe('node-lease-1')
+      expect(event.payload.namespace).toBe('kube-node-lease')
+      expect(event.payload.lease).toEqual(updatedLease)
+      expect(event.payload.previousLease).toEqual(testLease)
     })
   })
 

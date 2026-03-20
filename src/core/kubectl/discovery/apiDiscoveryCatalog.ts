@@ -370,6 +370,7 @@ export const API_DISCOVERY_CATALOG: APIResourceDiscovery[] = [
   {
     name: 'leases',
     singularName: 'lease',
+    shortNames: ['lease'],
     namespaced: true,
     kind: 'Lease',
     groupVersion: 'coordination.k8s.io/v1',

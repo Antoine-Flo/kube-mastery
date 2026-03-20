@@ -12,6 +12,9 @@ import {
   createIngressCreatedEvent,
   createIngressDeletedEvent,
   createIngressUpdatedEvent,
+  createLeaseCreatedEvent,
+  createLeaseDeletedEvent,
+  createLeaseUpdatedEvent,
   createNamespaceCreatedEvent,
   createNamespaceDeletedEvent,
   createNamespaceUpdatedEvent,
@@ -48,6 +51,7 @@ import type { ConfigMap } from '../cluster/ressources/ConfigMap'
 import type { DaemonSet } from '../cluster/ressources/DaemonSet'
 import type { Deployment } from '../cluster/ressources/Deployment'
 import type { Ingress } from '../cluster/ressources/Ingress'
+import type { Lease } from '../cluster/ressources/Lease'
 import type { Namespace } from '../cluster/ressources/Namespace'
 import type { Node } from '../cluster/ressources/Node'
 import type { PersistentVolume } from '../cluster/ressources/PersistentVolume'
@@ -662,6 +666,25 @@ export const createApiServerFacade = (
         )
         return findResult as Result<KindToResource<typeof kind>>
       }
+      if (kind === 'Lease') {
+        const findResult = clusterState.findByKind(
+          'Lease',
+          name,
+          effectiveNamespace
+        )
+        if (!findResult.ok) {
+          return findResult as Result<KindToResource<typeof kind>>
+        }
+        etcd.appendEvent(
+          createLeaseDeletedEvent(
+            name,
+            effectiveNamespace,
+            findResult.value as Lease,
+            'api-server'
+          )
+        )
+        return findResult as Result<KindToResource<typeof kind>>
+      }
       return error(`Unsupported resource kind: ${kind}`) as Result<
         KindToResource<typeof kind>
       >
@@ -740,6 +763,12 @@ export const createApiServerFacade = (
       if (kind === 'Ingress') {
         etcd.appendEvent(
           createIngressCreatedEvent(resource as Ingress, 'api-server')
+        )
+        return success(resource as KindToResource<typeof kind>)
+      }
+      if (kind === 'Lease') {
+        etcd.appendEvent(
+          createLeaseCreatedEvent(resource as Lease, 'api-server')
         )
         return success(resource as KindToResource<typeof kind>)
       }
@@ -965,6 +994,26 @@ export const createApiServerFacade = (
             effectiveNamespace,
             resource as Ingress,
             previous.value as Ingress,
+            'api-server'
+          )
+        )
+        return success(resource as KindToResource<typeof kind>)
+      }
+      if (kind === 'Lease') {
+        const previous = clusterState.findByKind(
+          'Lease',
+          name,
+          effectiveNamespace
+        )
+        if (!previous.ok) {
+          return previous as Result<KindToResource<typeof kind>>
+        }
+        etcd.appendEvent(
+          createLeaseUpdatedEvent(
+            name,
+            effectiveNamespace,
+            resource as Lease,
+            previous.value as Lease,
             'api-server'
           )
         )

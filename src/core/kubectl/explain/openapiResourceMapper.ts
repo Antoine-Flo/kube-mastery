@@ -5,6 +5,7 @@ import type { Resource } from '../commands/types'
 export type OpenAPISpecFile =
   | 'api__v1_openapi.json'
   | 'apis__apps__v1_openapi.json'
+  | 'apis__coordination.k8s.io__v1_openapi.json'
 
 export interface OpenAPIResourceTarget {
   group: string
@@ -43,6 +44,11 @@ const BASE_RESOURCE_TARGETS: Record<Resource, BaseTarget | undefined> = {
     group: '',
     version: 'v1',
     kind: 'PersistentVolumeClaim'
+  },
+  leases: {
+    group: 'coordination.k8s.io',
+    version: 'v1',
+    kind: 'Lease'
   }
 }
 
@@ -73,6 +79,9 @@ const buildSchemaName = (
   if (group.length === 0 && version === 'v1') {
     return `io.k8s.api.core.v1.${kind}`
   }
+  if (group === 'coordination.k8s.io' && version === 'v1') {
+    return `io.k8s.api.coordination.v1.${kind}`
+  }
   return `io.k8s.api.${group}.${version}.${kind}`
 }
 
@@ -85,6 +94,9 @@ const resolveSpecFile = (
   }
   if (group === 'apps' && version === 'v1') {
     return success('apis__apps__v1_openapi.json')
+  }
+  if (group === 'coordination.k8s.io' && version === 'v1') {
+    return success('apis__coordination.k8s.io__v1_openapi.json')
   }
   return error(
     `api-version ${group}/${version} is not supported in this simulator`

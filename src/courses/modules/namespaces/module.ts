@@ -9,5 +9,4 @@ export const module: LocalModule = {
     en: 'Isolation logique des ressources dans un cluster.'
   },
   tags: ['ckad', 'cka', 'beginner'],
-  draft: true
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   describeConfigMap,
   describeDeployment,
+  describeLease,
   describeNode,
   describePod,
   describeSecret
@@ -14,6 +15,7 @@ import { createNode } from '../../../../src/core/cluster/ressources/Node'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../src/core/cluster/ressources/Secret'
+import { createLease } from '../../../../src/core/cluster/ressources/Lease'
 import { createClusterStateData } from '../../helpers/utils'
 
 describe('describeFormatters', () => {
@@ -1143,6 +1145,222 @@ describe('describeFormatters', () => {
       expect(result).toContain('Allocated resources:')
       expect(result).toContain('cpu')
       expect(result).toContain('memory')
+    })
+  })
+
+  describe('describeLease', () => {
+    it('should format basic lease info', () => {
+      const lease = createLease({
+        name: 'node-lease-1',
+        namespace: 'kube-node-lease',
+        spec: {
+          holderIdentity: 'node-1',
+          leaseDurationSeconds: 40,
+          renewTime: '2024-01-01T00:00:00Z'
+        }
+      })
+
+      const result = describeLease(lease)
+
+      expect(result).toContain('Name:')
+      expect(result).toContain('node-lease-1')
+      expect(result).toContain('Namespace:')
+      expect(result).toContain('kube-node-lease')
+      expect(result).toContain('API Version:')
+      expect(result).toContain('coordination.k8s.io/v1')
+      expect(result).toContain('Kind:')
+      expect(result).toContain('Lease')
+    })
+
+    it('should format labels', () => {
+      const lease = createLease({
+        name: 'node-lease-1',
+        namespace: 'kube-node-lease',
+        labels: {
+          'kubernetes.io/node-name': 'node-1'
+        },
+        spec: {
+          holderIdentity: 'node-1',
+          leaseDurationSeconds: 40
+        }
+      })
+
+      const result = describeLease(lease)
+
+      expect(result).toContain('Labels:')
+      expect(result).toContain('kubernetes.io/node-name=node-1')
+    })
+
+    it('should show <none> for empty labels', () => {
+      const lease = createLease({
+        name: 'node-lease-1',
+        namespace: 'kube-node-lease',
+        spec: {
+          holderIdentity: 'node-1',
+          leaseDurationSeconds: 40
+        }
+      })
+
+      const result = describeLease(lease)
+
+      expect(result).toContain('Labels:')
+      expect(result).toContain('<none>')
+    })
+
+    it('should format annotations', () => {
+      const lease = createLease({
+        name: 'node-lease-1',
+        namespace: 'kube-node-lease',
+        annotations: {
+          'lease.example.com/custom': 'value'
+        },
+        spec: {
+          holderIdentity: 'node-1',
+          leaseDurationSeconds: 40
+        }
+      })
+
+      const result = describeLease(lease)
+
+      expect(result).toContain('Annotations:')
+      expect(result).toContain('lease.example.com/custom=value')
+    })
+
+    it('should format creation timestamp', () => {
+      const lease = createLease({
+        name: 'node-lease-1',
+        namespace: 'kube-node-lease',
+        creationTimestamp: '2024-01-01T00:00:00Z',
+        spec: {
+          holderIdentity: 'node-1',
+          leaseDurationSeconds: 40
+        }
+      })
+
+      const result = describeLease(lease)
+
+      expect(result).toContain('Creation Timestamp:')
+      expect(result).toContain('2024-01-01')
+    })
+
+    it('should format owner references', () => {
+      const lease = createLease({
+        name: 'node-lease-1',
+        namespace: 'kube-node-lease',
+        ownerReferences: [
+          {
+            apiVersion: 'v1',
+            kind: 'Node',
+            name: 'node-1',
+            uid: 'node-uid-123'
+          }
+        ],
+        spec: {
+          holderIdentity: 'node-1',
+          leaseDurationSeconds: 40
+        }
+      })
+
+      const result = describeLease(lease)
+
+      expect(result).toContain('Owner References:')
+      expect(result).toContain('API Version:')
+      expect(result).toContain('v1')
+      expect(result).toContain('Kind:')
+      expect(result).toContain('Node')
+      expect(result).toContain('Name:')
+      expect(result).toContain('node-1')
+      expect(result).toContain('UID:')
+      expect(result).toContain('node-uid-123')
+    })
+
+    it('should show <none> for empty owner references', () => {
+      const lease = createLease({
+        name: 'node-lease-1',
+        namespace: 'kube-node-lease',
+        spec: {
+          holderIdentity: 'node-1',
+          leaseDurationSeconds: 40
+        }
+      })
+
+      const result = describeLease(lease)
+
+      expect(result).toContain('Owner References:')
+      expect(result).toContain('<none>')
+    })
+
+    it('should format spec fields', () => {
+      const lease = createLease({
+        name: 'node-lease-1',
+        namespace: 'kube-node-lease',
+        spec: {
+          holderIdentity: 'node-1',
+          leaseDurationSeconds: 40,
+          renewTime: '2024-01-01T00:00:00Z'
+        }
+      })
+
+      const result = describeLease(lease)
+
+      expect(result).toContain('Spec:')
+      expect(result).toContain('Holder Identity:')
+      expect(result).toContain('node-1')
+      expect(result).toContain('Lease Duration Seconds:')
+      expect(result).toContain('40')
+      expect(result).toContain('Renew Time:')
+      expect(result).toContain('2024-01-01T00:00:00Z')
+    })
+
+    it('should show <none> for missing holderIdentity', () => {
+      const lease = createLease({
+        name: 'node-lease-1',
+        namespace: 'kube-node-lease',
+        spec: {
+          leaseDurationSeconds: 40
+        }
+      })
+
+      const result = describeLease(lease)
+
+      expect(result).toContain('Holder Identity:')
+      expect(result).toContain('<none>')
+    })
+
+    it('should format resource version and uid when present', () => {
+      const lease = createLease({
+        name: 'node-lease-1',
+        namespace: 'kube-node-lease',
+        resourceVersion: '12345',
+        uid: 'lease-uid-123',
+        spec: {
+          holderIdentity: 'node-1',
+          leaseDurationSeconds: 40
+        }
+      })
+
+      const result = describeLease(lease)
+
+      expect(result).toContain('Resource Version:')
+      expect(result).toContain('12345')
+      expect(result).toContain('UID:')
+      expect(result).toContain('lease-uid-123')
+    })
+
+    it('should always show Events section', () => {
+      const lease = createLease({
+        name: 'node-lease-1',
+        namespace: 'kube-node-lease',
+        spec: {
+          holderIdentity: 'node-1',
+          leaseDurationSeconds: 40
+        }
+      })
+
+      const result = describeLease(lease)
+
+      expect(result).toContain('Events:')
+      expect(result).toContain('<none>')
     })
   })
 })

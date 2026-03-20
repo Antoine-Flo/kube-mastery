@@ -46,7 +46,8 @@ const NAME_RULE_BY_KIND: Record<SupportedKind, NameRule> = {
   StatefulSet: DNS1123_SUBDOMAIN_RULE,
   PersistentVolume: DNS1123_SUBDOMAIN_RULE,
   PersistentVolumeClaim: DNS1123_SUBDOMAIN_RULE,
-  Service: DNS1123_LABEL_RULE
+  Service: DNS1123_LABEL_RULE,
+  Lease: DNS1123_SUBDOMAIN_RULE
 }
 
 const formatMetadataNameInvalidError = (

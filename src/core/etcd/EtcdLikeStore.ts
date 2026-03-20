@@ -54,7 +54,10 @@ const CLUSTER_MUTATION_EVENT_TYPES = new Set<string>([
   'NamespaceDeleted',
   'IngressCreated',
   'IngressUpdated',
-  'IngressDeleted'
+  'IngressDeleted',
+  'LeaseCreated',
+  'LeaseUpdated',
+  'LeaseDeleted'
 ])
 
 const isClusterMutationEvent = (event: AppEvent): boolean => {

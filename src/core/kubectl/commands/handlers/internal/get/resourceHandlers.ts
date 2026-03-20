@@ -3,6 +3,7 @@ import type { DaemonSet } from '../../../../../cluster/ressources/DaemonSet'
 import type { Deployment } from '../../../../../cluster/ressources/Deployment'
 import { getDeploymentDesiredReplicas } from '../../../../../cluster/ressources/Deployment'
 import type { Ingress } from '../../../../../cluster/ressources/Ingress'
+import type { Lease } from '../../../../../cluster/ressources/Lease'
 import type { Namespace } from '../../../../../cluster/ressources/Namespace'
 import type { Node } from '../../../../../cluster/ressources/Node'
 import {
@@ -54,6 +55,7 @@ interface ResourceHandlerRegistry {
   namespaces: ResourceHandler<Namespace>
   persistentvolumes: ResourceHandler<PersistentVolume>
   persistentvolumeclaims: ResourceHandler<PersistentVolumeClaim>
+  leases: ResourceHandler<Lease>
 }
 
 export type GetSupportedResource = keyof ResourceHandlerRegistry
@@ -296,6 +298,16 @@ export const RESOURCE_HANDLERS: ResourceHandlerRegistry = {
       persistentVolumeClaim.spec.accessModes.join(','),
       persistentVolumeClaim.spec.storageClassName ?? '<none>',
       formatAge(persistentVolumeClaim.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true
+  },
+  leases: {
+    getItems: (state) => state.leases.items,
+    headers: ['name', 'holder', 'age'],
+    formatRow: (lease) => [
+      lease.metadata.name,
+      lease.spec.holderIdentity || '<none>',
+      formatAge(lease.metadata.creationTimestamp)
     ],
     supportsFiltering: true
   }

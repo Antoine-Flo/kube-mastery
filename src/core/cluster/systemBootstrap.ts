@@ -9,6 +9,8 @@ import { getSystemWorkloads } from './systemPods'
 import type { ConfigMap } from './ressources/ConfigMap'
 import { createConfigMap } from './ressources/ConfigMap'
 import type { DaemonSet } from './ressources/DaemonSet'
+import type { Lease } from './ressources/Lease'
+import { createLease } from './ressources/Lease'
 import type { Node, NodeCondition } from './ressources/Node'
 import { createNode } from './ressources/Node'
 import type { Namespace } from './ressources/Namespace'
@@ -42,6 +44,7 @@ export interface SystemBootstrapResources {
   staticPods: Pod[]
   deployments: Deployment[]
   daemonSets: DaemonSet[]
+  leases: Lease[]
 }
 
 const DEFAULT_CLUSTER_NAME = 'conformance'
@@ -327,6 +330,30 @@ const createSystemServices = (creationTimestamp: string): Service[] => {
   ]
 }
 
+const createBootstrapLease = (
+  node: Node,
+  creationTimestamp: string
+): Lease => {
+  return createLease({
+    name: node.metadata.name,
+    namespace: 'kube-node-lease',
+    creationTimestamp,
+    spec: {
+      holderIdentity: node.metadata.name,
+      leaseDurationSeconds: 40,
+      renewTime: creationTimestamp
+    },
+    ownerReferences: [
+      {
+        apiVersion: 'v1',
+        kind: 'Node',
+        name: node.metadata.name,
+        uid: node.metadata.uid || ''
+      }
+    ]
+  })
+}
+
 export const createSystemBootstrapResources = (
   options: SystemBootstrapOptions = {}
 ): SystemBootstrapResources => {
@@ -341,17 +368,19 @@ export const createSystemBootstrapResources = (
     clock: () => creationTimestamp
   })
 
+  const nodes = nodeRoles.map((role, index) => {
+    return createBootstrapNode(
+      clusterName,
+      role,
+      roleSlotNames[index],
+      index,
+      creationTimestamp
+    )
+  })
+
   return {
     namespaces: createSystemNamespaces(creationTimestamp),
-    nodes: nodeRoles.map((role, index) => {
-      return createBootstrapNode(
-        clusterName,
-        role,
-        roleSlotNames[index],
-        index,
-        creationTimestamp
-      )
-    }),
+    nodes,
     configMaps: [
       createKubeRootCAConfigMap(creationTimestamp),
       createClusterInfoConfigMap(creationTimestamp, clusterName)
@@ -360,7 +389,8 @@ export const createSystemBootstrapResources = (
     pods: workloads.staticPods,
     staticPods: workloads.staticPods,
     deployments: workloads.deployments,
-    daemonSets: workloads.daemonSets
+    daemonSets: workloads.daemonSets,
+    leases: nodes.map((node) => createBootstrapLease(node, creationTimestamp))
   }
 }
 
@@ -376,6 +406,7 @@ type BootstrapKind =
   | 'Deployment'
   | 'DaemonSet'
   | 'Pod'
+  | 'Lease'
 
 interface BootstrapResource {
   metadata: {
@@ -494,6 +525,9 @@ const createBootstrapStoreFromClusterState = (
         resource as DaemonSet,
       )
     }
+    if (kind === 'Lease') {
+      return clusterState.createByKind('Lease', resource as Lease)
+    }
     return clusterState.createByKind('Pod', resource as Pod)
   }
 
@@ -541,6 +575,9 @@ const createBootstrapStoreFromClusterState = (
         namespace
       )
     }
+    if (kind === 'Lease') {
+      return clusterState.updateByKind('Lease', name, resource as Lease, namespace)
+    }
     return clusterState.updateByKind('Pod', name, resource as Pod, namespace)
   }
 
@@ -566,6 +603,9 @@ const createBootstrapStoreFromClusterState = (
     }
     if (kind === 'DaemonSet') {
       return clusterState.deleteByKind('DaemonSet', name, namespace)
+    }
+    if (kind === 'Lease') {
+      return clusterState.deleteByKind('Lease', name, namespace)
     }
     return clusterState.deleteByKind('Pod', name, namespace)
   }
@@ -720,6 +760,10 @@ const upsertDaemonSets = (
   upsertResourcesByKind(store, 'DaemonSet', daemonSets)
 }
 
+const upsertLeases = (store: BootstrapStore, leases: Lease[]): void => {
+  upsertResourcesByKind(store, 'Lease', leases)
+}
+
 const addMissingPods = (store: BootstrapStore, pods: readonly Pod[]): void => {
   for (const pod of pods) {
     const findPodResult = store.findByKind(
@@ -758,6 +802,7 @@ const applyKindLikeBootstrap = (
   upsertServices(store, resources.services)
   upsertDeployments(store, resources.deployments)
   upsertDaemonSets(store, resources.daemonSets)
+  upsertLeases(store, resources.leases)
 
   if (mode === 'always') {
     replaceSystemPods(store, resources.staticPods)

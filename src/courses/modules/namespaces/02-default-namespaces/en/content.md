@@ -7,11 +7,18 @@ Every Kubernetes cluster starts its life with four namespaces already created. T
 ```mermaid
 flowchart TD
     Cluster["Kubernetes Cluster"]
-
-    Cluster --> NS1["default\n──────────────────────\nWhere your workloads go\nwhen no namespace is specified"]
-    Cluster --> NS2["kube-system\n──────────────────────\nCoreDNS, kube-proxy\nAPI server, scheduler\ncontroller manager"]
-    Cluster --> NS3["kube-public\n──────────────────────\ncluster-info ConfigMap\nReadable by everyone\n(including unauthenticated users)"]
-    Cluster --> NS4["kube-node-lease\n──────────────────────\nNode heartbeat Lease objects\nUsed by control plane only"]
+    
+    Cluster --> NS1["default"]
+    NS1 --> DESC1["Where your workloads go when no namespace is specified"]
+    
+    Cluster --> NS2["kube-system"]
+    NS2 --> DESC2["CoreDNS, kube-proxy, API server, scheduler, controller manager"]
+    
+    Cluster --> NS3["kube-public"]
+    NS3 --> DESC3["cluster-info ConfigMap, Readable by everyone including unauthenticated users"]
+    
+    Cluster --> NS4["kube-node-lease"]
+    NS4 --> DESC4["Node heartbeat Lease objects, Used by control plane only"]
 ```
 
 Let us walk through each one in detail.
@@ -134,8 +141,8 @@ kubectl cluster-info
 kubectl get leases -n kube-node-lease
 
 # Describe a Lease to see the heartbeat timestamp
-NODE_LEASE=$(kubectl get leases -n kube-node-lease -o jsonpath='{.items[0].metadata.name}')
-kubectl describe lease $NODE_LEASE -n kube-node-lease
+kubectl get leases -n kube-node-lease -o jsonpath='{.items[0].metadata.name}'
+kubectl describe lease <lease-name> -n kube-node-lease
 ```
 
 After working through these commands, you should have a clear picture of what each built-in namespace contains and why it exists. The most important takeaway: leave `kube-system` and `kube-node-lease` alone unless you have a specific, well-understood reason to interact with them.

@@ -13,6 +13,7 @@ import type {
   DeploymentStrategyType
 } from '../../cluster/ressources/Deployment'
 import type { Ingress } from '../../cluster/ressources/Ingress'
+import type { Lease } from '../../cluster/ressources/Lease'
 import type {
   Node,
   NodeCondition,
@@ -1784,5 +1785,62 @@ export const describeIngress = (ingress: Ingress): string => {
 
   lines.push('')
   lines.push('Events:           <none>')
+  return lines.join('\n')
+}
+
+/**
+ * Format detailed lease description
+ */
+export const describeLease = (lease: Lease): string => {
+  const lines: string[] = []
+
+  // Basic metadata
+  lines.push(`Name:         ${lease.metadata.name}`)
+  lines.push(`Namespace:    ${lease.metadata.namespace}`)
+  lines.push(`Labels:       ${formatLabels(lease.metadata.labels)}`)
+  lines.push(`Annotations:  ${formatLabels(lease.metadata.annotations)}`)
+  lines.push(`API Version:  ${lease.apiVersion}`)
+  lines.push(`Kind:         ${lease.kind}`)
+  lines.push('Metadata:')
+  lines.push(
+    `  Creation Timestamp:  ${formatDescribeDate(lease.metadata.creationTimestamp)}`
+  )
+
+  // Owner References
+  if (lease.metadata.ownerReferences && lease.metadata.ownerReferences.length > 0) {
+    lines.push('  Owner References:')
+    for (const ownerRef of lease.metadata.ownerReferences) {
+      lines.push(`    API Version:     ${ownerRef.apiVersion}`)
+      lines.push(`    Kind:            ${ownerRef.kind}`)
+      lines.push(`    Name:            ${ownerRef.name}`)
+      lines.push(`    UID:             ${ownerRef.uid}`)
+    }
+  } else {
+    lines.push('  Owner References:  <none>')
+  }
+
+  if (lease.metadata.resourceVersion) {
+    lines.push(`  Resource Version:  ${lease.metadata.resourceVersion}`)
+  }
+  if (lease.metadata.uid) {
+    lines.push(`  UID:               ${lease.metadata.uid}`)
+  }
+
+  // Spec
+  lines.push('Spec:')
+  if (lease.spec.holderIdentity) {
+    lines.push(`  Holder Identity:         ${lease.spec.holderIdentity}`)
+  } else {
+    lines.push('  Holder Identity:         <none>')
+  }
+  if (lease.spec.leaseDurationSeconds != null) {
+    lines.push(`  Lease Duration Seconds:  ${lease.spec.leaseDurationSeconds}`)
+  }
+  if (lease.spec.renewTime) {
+    lines.push(`  Renew Time:              ${lease.spec.renewTime}`)
+  }
+
+  lines.push('Events:                    <none>')
+
   return lines.join('\n')
 }
