@@ -2,17 +2,19 @@
 import Layout from '../../layouts/Layout.astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import { getSupabaseServer } from '../../lib/supabase'
+import { isOpenLearningEnabled } from '../../lib/env'
 
 const locale = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(locale)
 const localePath = useLocalePath(locale)
 
+const openLearning = isOpenLearningEnabled(Astro.locals)
 const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
 const {
   data: { user }
 } = await supabase.auth.getUser()
 
-if (!user) {
+if (!user && !openLearning) {
   return Astro.redirect(
     `${localePath('/auth')}?redirect=${encodeURIComponent(localePath('/contact'))}`
   )

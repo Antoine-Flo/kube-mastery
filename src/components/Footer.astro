@@ -1,6 +1,7 @@
 ---
 interface Props {
   isLoggedIn?: boolean
+  openLearning?: boolean
 }
 
 import {
@@ -12,7 +13,7 @@ import {
 } from '../i18n/utils'
 import { enabledLanguages } from '../i18n/ui'
 
-const { isLoggedIn = false } = Astro.props
+const { isLoggedIn = false, openLearning = false } = Astro.props
 const lang = getLangFromUrl(Astro.url)
 const t = useTranslations(lang)
 const translatePath = useTranslatedPath(lang)
@@ -26,7 +27,11 @@ const currentPath = getPathWithoutLocale(Astro.url)
     <a href={localePath('/blog')}>{t('footer_blog')}</a>
     <a href={localePath('/terms-of-service')}>{t('footer_termsOfService')}</a>
     <a href={localePath('/privacy-policy')}>{t('footer_privacyPolicy')}</a>
-    {isLoggedIn && <a href={localePath('/contact')}>{t('footer_contact')}</a>}
+    {
+      (openLearning || isLoggedIn) && (
+        <a href={localePath('/contact')}>{t('footer_contact')}</a>
+      )
+    }
   </nav>
   {
     enabledLanguages.length > 1 && (

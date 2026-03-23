@@ -23,8 +23,3 @@ Your essential starting point for Kubernetes. This learning path walks you throu
 
 Every Kubernetes journey , whether you're preparing for the KCNA, CKAD, or CKA , begins with the same foundation. This Common Core gives you the shared vocabulary, hands-on comfort with `kubectl`, and real cluster experience that all three certifications build on. Rather than repeating the same basics three times, this path covers them once, deeply and practically.
 
-**Course structure:**
-
-74 lessons across 16 modules, progressing from "what is Kubernetes?" all the way to persistent storage and observability. Each lesson includes clear explanations, YAML examples, kubectl commands, and a Hands-On section to practice directly in the built-in terminal.
-
-Recommended next steps: **CKAD** (application developer path), **CKA** (cluster administrator path), or **KCNA** (cloud native associate).

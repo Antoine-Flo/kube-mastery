@@ -12,6 +12,7 @@ import {
   type OverviewType
 } from '../../../../../content/overview/facade'
 import { getProgressContext } from '../../../../../lib/progress/server'
+import { isOpenLearningEnabled } from '../../../../../lib/env'
 import '../../../../../styles/components/lesson-content.css'
 import '../../../../../styles/components/cluster-visualization.css'
 
@@ -34,7 +35,8 @@ const { completed, userId } = await getProgressContext(
   Astro.request,
   Astro.cookies
 )
-if (!userId) {
+const openLearning = isOpenLearningEnabled(Astro.locals)
+if (!userId && !openLearning) {
   return Astro.redirect(
     localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
   )

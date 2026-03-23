@@ -4,6 +4,7 @@ import Button from '../../../../components/ui/Button.astro'
 import { Star } from '@lucide/astro'
 import { useTranslations, useLocalePath } from '../../../../i18n/utils'
 import { getProgressContext } from '../../../../lib/progress/server'
+import { isOpenLearningEnabled } from '../../../../lib/env'
 
 const lang = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(lang)
@@ -14,80 +15,90 @@ const { userId } = await getProgressContext(
   Astro.request,
   Astro.cookies
 )
-if (!userId) {
+const openLearning = isOpenLearningEnabled(Astro.locals)
+if (!userId && !openLearning) {
   return Astro.redirect(
     localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
   )
 }
 
 const coursesHref = localePath('/courses')
+const showSurvey = userId != null && userId !== ''
 ---
 
 <Layout>
   <main class="complete-page">
     <h1 class="complete-page__title">{t('courseComplete_congrats')}</h1>
-    <form id="complete-survey-form" class="complete-survey-form">
-      <div class="complete-survey-form__field">
-        <textarea
-          id="complete-survey-comment"
-          name="comment"
-          class="complete-survey-form__comment"
-          placeholder={t('survey_placeholder')}
-          rows={6}
-          aria-label={t('survey_placeholder')}></textarea>
-      </div>
-      <div class="complete-survey-form__field">
-        <span
-          class="complete-survey-form__label"
-          id="complete-survey-rating-label"
-        >
-          {t('survey_ratingLabel')}
-        </span>
-        <input
-          type="hidden"
-          name="rating"
-          id="complete-survey-rating"
-          value=""
-          required
-          aria-required="true"
-          aria-describedby="complete-survey-rating-label"
-        />
-        <div
-          class="complete-survey-form__stars"
-          role="group"
-          aria-labelledby="complete-survey-rating-label"
-        >
-          {
-            [1, 2, 3, 4, 5].map((value) => (
-              <button
-                type="button"
-                class="complete-survey-form__star"
-                data-value={value}
-                aria-label={`${value} ${value === 1 ? 'star' : 'stars'}`}
-                aria-pressed="false"
-              >
-                <Star size={32} stroke-width={1.5} />
-              </button>
-            ))
-          }
+    {
+      showSurvey ? (
+        <form id="complete-survey-form" class="complete-survey-form">
+          <div class="complete-survey-form__field">
+            <textarea
+              id="complete-survey-comment"
+              name="comment"
+              class="complete-survey-form__comment"
+              placeholder={t('survey_placeholder')}
+              rows={6}
+              aria-label={t('survey_placeholder')}
+            />
+          </div>
+          <div class="complete-survey-form__field">
+            <span
+              class="complete-survey-form__label"
+              id="complete-survey-rating-label"
+            >
+              {t('survey_ratingLabel')}
+            </span>
+            <input
+              type="hidden"
+              name="rating"
+              id="complete-survey-rating"
+              value=""
+              required
+              aria-required="true"
+              aria-describedby="complete-survey-rating-label"
+            />
+            <div
+              class="complete-survey-form__stars"
+              role="group"
+              aria-labelledby="complete-survey-rating-label"
+            >
+              {[1, 2, 3, 4, 5].map((value) => (
+                <button
+                  type="button"
+                  class="complete-survey-form__star"
+                  data-value={value}
+                  aria-label={`${value} ${value === 1 ? 'star' : 'stars'}`}
+                  aria-pressed="false"
+                >
+                  <Star size={32} stroke-width={1.5} />
+                </button>
+              ))}
+            </div>
+          </div>
+          <p
+            id="complete-survey-error"
+            class="complete-survey-form__error"
+            aria-live="polite"
+            hidden
+          />
+          <div class="complete-survey-form__footer">
+            <Button href={coursesHref} variant="subtle" color="gray" size="sm">
+              {t('courseComplete_backToCourses')}
+            </Button>
+            <Button type="submit" variant="solid" color="cyan" size="sm">
+              {t('survey_submit')}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <div class="complete-page__actions">
+          <Button href={coursesHref} variant="solid" color="cyan" size="sm">
+            {t('courseComplete_backToCourses')}
+          </Button>
         </div>
-      </div>
-      <p
-        id="complete-survey-error"
-        class="complete-survey-form__error"
-        aria-live="polite"
-        hidden
-      >
-      </p>
-      <div class="complete-survey-form__footer">
-        <Button href={coursesHref} variant="subtle" color="gray" size="sm">
-          {t('courseComplete_backToCourses')}
-        </Button>
-        <Button type="submit" variant="solid" color="cyan" size="sm">
-          {t('survey_submit')}
-        </Button>
-      </div>
-    </form>
+      )
+    }
   </main>
 </Layout>
 
@@ -282,6 +293,10 @@ const coursesHref = localePath('/courses')
     flex-wrap: wrap;
     align-items: center;
     gap: var(--spacing-3);
+    margin-top: var(--spacing-6);
+  }
+
+  .complete-page__actions {
     margin-top: var(--spacing-6);
   }
 </style>

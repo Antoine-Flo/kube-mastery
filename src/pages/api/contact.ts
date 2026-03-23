@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
 import { getSupabaseServer } from '../../lib/supabase'
-import { readAppEnv } from '../../lib/env'
+import { isOpenLearningEnabled, readAppEnv } from '../../lib/env'
 import { CONFIG } from '../../config'
 import {
   createApiLogContext,
@@ -43,6 +43,13 @@ function getRateLimitKey(args: {
   return `user:${args.userId}`
 }
 
+function getAnonymousContactRateLimitKey(clientIp: string | null): string {
+  if (clientIp != null && clientIp !== '') {
+    return `anon:ip:${clientIp}`
+  }
+  return 'anon:ip:unknown'
+}
+
 function isRateLimited(args: {
   key: string
   now: number
@@ -75,7 +82,7 @@ function isRateLimited(args: {
 /**
  * POST /api/contact
  * Body: { type: "support" | "suggestion" | "other", message: string, lessonId?: string }
- * Inserts into messages. User must be authenticated.
+ * Authenticated users: always allowed. Unauthenticated: allowed only when OPEN_LEARNING=true (rate limit by IP).
  */
 export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const startedAt = startTimer()
@@ -145,12 +152,13 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     })
   }
 
+  const openLearning = isOpenLearningEnabled(locals)
   const supabase = getSupabaseServer(locals, request, cookies)
   const {
     data: { user },
     error: userError
   } = await supabase.auth.getUser()
-  if (userError || !user) {
+  if ((userError || !user) && !openLearning) {
     emitApiLog({
       level: 'warn',
       event: 'contact_submit_failed',
@@ -167,15 +175,18 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
   }
 
   const sweegoApiKey = readAppEnv('SWEEGO_API_KEY', locals)
+  const rateLimitNow = Date.now()
+  const clientIp = getClientIp(request)
+  const rateLimitKey =
+    user != null
+      ? getRateLimitKey({ userId: user.id, clientIp })
+      : getAnonymousContactRateLimitKey(clientIp)
   const userContext = createApiLogContext({
     request,
     route: '/api/contact',
     locals,
-    userId: user.id
+    userId: user?.id
   })
-  const rateLimitNow = Date.now()
-  const clientIp = getClientIp(request)
-  const rateLimitKey = getRateLimitKey({ userId: user.id, clientIp })
   const isLimited = isRateLimited({
     key: rateLimitKey,
     now: rateLimitNow,
@@ -223,16 +234,19 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     typeof body.lessonId === 'string' && body.lessonId.trim()
       ? body.lessonId.trim()
       : null
-  const userEmail =
-    typeof user.email === 'string' && user.email.trim() !== ''
+  const userIdForEmail = user != null ? user.id : 'anonymous'
+  const userEmailForBody =
+    user != null &&
+    typeof user.email === 'string' &&
+    user.email.trim() !== ''
       ? user.email.trim()
       : 'n/a'
   const sweegoSubject = `${type} : ${normalizedLessonId ?? 'no-lesson'}`
   const sweegoMessage = [
     message,
     '',
-    `userId: ${user.id}`,
-    `userEmail: ${userEmail}`,
+    `userId: ${userIdForEmail}`,
+    `userEmail: ${userEmailForBody}`,
     `lessonId: ${normalizedLessonId ?? 'n/a'}`
   ].join('\n')
 

@@ -5,7 +5,7 @@ import Terminal from '../../components/Terminal.astro'
 import { Zap, Shield, Euro, CircleCheck, CircleX } from '@lucide/astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import { getSupabaseServer } from '../../lib/supabase'
-import { readAppEnv } from '../../lib/env'
+import { isOpenLearningEnabled, readAppEnv } from '../../lib/env'
 import demoVideo from '../../assets/demo.mp4'
 import conformanceImage from '../../assets/conformance.png'
 import openapiLogo from '../../assets/openapi_logo.svg'
@@ -18,6 +18,10 @@ const isEarlyStage =
 const homeCtaLabel = isEarlyStage
   ? t('home_cta_join_early')
   : t('home_cta_join')
+const openLearning = isOpenLearningEnabled(Astro.locals)
+const homeCtaHref = openLearning
+  ? localePath('/courses')
+  : localePath('/pricing')
 
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
@@ -53,7 +57,7 @@ try {
           </div>
           <div class="cta">
             <Button
-              href={localePath('/pricing')}
+              href={homeCtaHref}
               variant="solid"
               color="cyan"
               size="xl"
@@ -223,7 +227,7 @@ try {
             </ul>
             <div class="cta">
               <Button
-                href={localePath('/pricing')}
+                href={homeCtaHref}
                 variant="solid"
                 color="cyan"
                 size="xl"
@@ -279,7 +283,7 @@ try {
             <p>{t('home_reliability_cta_intro')}</p>
             <div class="cta">
               <Button
-                href={localePath('/pricing')}
+                href={homeCtaHref}
                 variant="solid"
                 color="cyan"
                 size="xl"

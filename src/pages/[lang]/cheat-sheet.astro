@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro'
 import ContentWithTerminalLayout from '../../components/lesson/ContentWithTerminalLayout.astro'
 import { useLocalePath, useTranslations } from '../../i18n/utils'
 import { getLayoutAuthContext } from '../../lib/auth/server'
+import { isOpenLearningEnabled } from '../../lib/env'
 import '../../styles/components/lesson-content.css'
 import '../../styles/components/cluster-visualization.css'
 import QuickRefContent from '../../courses/cheat-sheets/kubectl-quick-ref.md'
@@ -11,18 +12,21 @@ const lang = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
 
+const openLearning = isOpenLearningEnabled(Astro.locals)
 const auth = await getLayoutAuthContext(
   Astro.locals,
   Astro.request,
   Astro.cookies
 )
-if (!auth.isLoggedIn) {
-  return Astro.redirect(
-    localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
-  )
-}
-if (!auth.hasPaidSubscription) {
-  return Astro.redirect(localePath('/pricing'))
+if (!openLearning) {
+  if (!auth.isLoggedIn) {
+    return Astro.redirect(
+      localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
+    )
+  }
+  if (!auth.hasPaidSubscription) {
+    return Astro.redirect(localePath('/pricing'))
+  }
 }
 
 const contentBarLabels = {

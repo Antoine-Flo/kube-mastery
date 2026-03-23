@@ -1,6 +1,6 @@
 # kubectl quick Reference
 
-This cheat sheet is adapted from the official Kubernetes quick reference and focused on hands-on practice in the simulator.
+This cheat sheet is adapted from the official Kubernetes quick reference and focused on hands-on practice in the simulator. Not every command is supported in the simulator.
 
 Practicing these commands repeatedly in the terminal helps build muscle memory for real troubleshooting and exam-like workflows.
 

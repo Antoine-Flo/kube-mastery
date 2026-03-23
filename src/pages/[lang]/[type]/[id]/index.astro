@@ -11,6 +11,7 @@ import {
 import { getLayoutAuthContext } from '../../../../lib/auth/server'
 import { getProgressContext } from '../../../../lib/progress/server'
 import { computeProgress } from '../../../../lib/progress/domain'
+import { isOpenLearningEnabled } from '../../../../lib/env'
 
 const TYPE_COURSES = 'courses'
 const TYPE_MODULES = 'modules'
@@ -42,6 +43,7 @@ const auth = await getLayoutAuthContext(
 )
 const isLoggedIn = !!userId
 const hasPaidSubscription = auth.hasPaidSubscription
+const openLearning = isOpenLearningEnabled(Astro.locals)
 
 const lessonIds = overview.content.sections.flatMap((s) =>
   s.modules.flatMap((m) =>
@@ -58,7 +60,8 @@ const firstLessonUrl = targetLessonId
 
 let ctaHref: string
 let ctaLabel: string
-const canStartCourse = isLoggedIn && hasPaidSubscription
+const canStartCourse =
+  openLearning || (isLoggedIn && hasPaidSubscription)
 if (!canStartCourse) {
   ctaLabel = t('home_cta_join')
   ctaHref = localePath('/pricing')

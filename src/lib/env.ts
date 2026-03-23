@@ -32,3 +32,8 @@ export function readAppEnv(key: string, locals?: unknown): string | undefined {
   }
   return trimmed
 }
+
+export function isOpenLearningEnabled(locals?: unknown): boolean {
+  return (readAppEnv('OPEN_LEARNING', locals) ?? '').toLowerCase().trim() ===
+    'true'
+}
