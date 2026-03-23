@@ -266,5 +266,47 @@ describe('kubectl get handler - nodes', () => {
       expect(result).toContain('worker-node-1')
       expect(result).not.toContain('control-plane')
     })
+
+    it('should filter nodes with set-based in selector', () => {
+      const state = createState()
+      const parsed = createParsedCommand({
+        selector: {
+          requirements: [
+            {
+              key: 'node-role.kubernetes.io/worker',
+              operator: 'In',
+              values: ['']
+            }
+          ]
+        }
+      })
+
+      apiServer.etcd.restore(state)
+      const result = handleGet(apiServer, parsed)
+
+      expect(result).toContain('worker-node-1')
+      expect(result).not.toContain('control-plane')
+    })
+
+    it('should filter nodes with does-not-exist selector', () => {
+      const state = createState()
+      const parsed = createParsedCommand({
+        selector: {
+          requirements: [
+            {
+              key: 'node-role.kubernetes.io/worker',
+              operator: 'DoesNotExist',
+              values: []
+            }
+          ]
+        }
+      })
+
+      apiServer.etcd.restore(state)
+      const result = handleGet(apiServer, parsed)
+
+      expect(result).toContain('control-plane')
+      expect(result).not.toContain('worker-node-1')
+    })
   })
 })

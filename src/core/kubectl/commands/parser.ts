@@ -2,11 +2,14 @@ import {
   checkFlags,
   extract,
   parseFlags,
-  parseSelector,
   pipeResult,
   tokenize,
   trim
 } from '../../shared/parsing'
+import {
+  parseKubectlLabelSelector,
+  type LabelSelector
+} from '../../shared/labelSelector'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import { RESOURCE_ALIAS_MAP } from './resources'
@@ -187,6 +190,10 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     normalizedFlags,
     ctx.resourceTokenIndex
   )
+  const parsedSelector = getSelectorFromFlags(normalizedFlags)
+  if (!parsedSelector.ok) {
+    return error(parsedSelector.error)
+  }
 
   return success({
     action: ctx.action,
@@ -197,7 +204,7 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     names: parsedNames,
     namespace: getNamespaceFromFlags(normalizedFlags),
     output: getOutputFromFlags(normalizedFlags),
-    selector: getSelectorFromFlags(normalizedFlags),
+    selector: parsedSelector.value,
     flags: ctx.flags,
     execCommand: ctx.execCommand,
     createImages: ctx.createImages,
@@ -491,14 +498,18 @@ const getOutputFromFlags = (
  */
 const getSelectorFromFlags = (
   flags: Record<string, string | boolean>
-): Record<string, string> | undefined => {
+): Result<LabelSelector | undefined> => {
   const selector = flags['selector']
 
   if (typeof selector === 'string') {
-    return parseSelector(selector)
+    const parsedSelector = parseKubectlLabelSelector(selector)
+    if (!parsedSelector.ok) {
+      return error(`error: ${parsedSelector.error}`)
+    }
+    return success(parsedSelector.value)
   }
 
-  return undefined
+  return success(undefined)
 }
 
 /**

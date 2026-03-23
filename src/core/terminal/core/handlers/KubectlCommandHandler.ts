@@ -16,6 +16,7 @@ import type { Pod } from '../../../cluster/ressources/Pod'
 import { createFileSystem } from '../../../filesystem/FileSystem'
 import { createShellExecutor } from '../../../shell/commands'
 import type { ClusterEvent } from '../../../cluster/events/types'
+import { matchesLabelSelector } from '../../../shared/labelSelector'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import { buildContainerEnvironmentVariables } from './containerEnvironment'
@@ -476,24 +477,6 @@ const getEffectiveNamespace = (
   return getCurrentNamespaceFromKubeconfig(context.fileSystem) ?? 'default'
 }
 
-const matchesSelector = (
-  selector: Record<string, string> | undefined,
-  labels: Record<string, string> | undefined
-): boolean => {
-  if (selector == null) {
-    return true
-  }
-  if (labels == null) {
-    return true
-  }
-  for (const [key, value] of Object.entries(selector)) {
-    if (labels[key] !== value) {
-      return false
-    }
-  }
-  return true
-}
-
 const extractMetaFromClusterEvent = (
   event: ClusterEvent,
   parsedResource: Resource
@@ -744,7 +727,7 @@ const shouldRenderEvent = (
   if (queryNames != null && !queryNames.includes(meta.name)) {
     return false
   }
-  if (!matchesSelector(parsed.selector, meta.labels)) {
+  if (!matchesLabelSelector(parsed.selector, meta.labels)) {
     return false
   }
   return true

@@ -152,6 +152,46 @@ describe('kubectl get handler - all', () => {
     expect(result).toBe('No resources found in default namespace.')
   })
 
+  it('should support set-based and existence selectors for get all', () => {
+    const selectedPod = createPod({
+      name: 'web-staging',
+      namespace: 'default',
+      labels: { app: 'web', env: 'staging', version: 'v1' },
+      containers: [{ name: 'nginx', image: 'nginx:latest' }]
+    })
+    const filteredOutPod = createPod({
+      name: 'web-qa',
+      namespace: 'default',
+      labels: { app: 'web', env: 'qa' },
+      containers: [{ name: 'nginx', image: 'nginx:latest' }]
+    })
+    const state = createClusterStateData({
+      pods: [selectedPod, filteredOutPod]
+    })
+    const parsed = createParsedGetAll({
+      selector: {
+        requirements: [
+          {
+            key: 'env',
+            operator: 'In',
+            values: ['staging', 'production']
+          },
+          {
+            key: 'version',
+            operator: 'Exists',
+            values: []
+          }
+        ]
+      }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    expect(result).toContain('pod/web-staging')
+    expect(result).not.toContain('pod/web-qa')
+  })
+
   it('should include namespace column with --all-namespaces', () => {
     const webPod = createPod({
       name: 'web',

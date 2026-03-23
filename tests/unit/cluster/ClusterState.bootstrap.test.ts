@@ -43,7 +43,7 @@ describe('createClusterState bootstrap policy', () => {
         return configMap.metadata.name === 'cluster-info'
       })
     expect(clusterInfoConfigMap?.data?.kubeconfig).toContain(
-      'server: https://127.0.0.1:34001'
+      `server: ${CONFIG.cluster.kubeconfigServerUrl}`
     )
     expect(
       clusterState.getServices().some((service) => {

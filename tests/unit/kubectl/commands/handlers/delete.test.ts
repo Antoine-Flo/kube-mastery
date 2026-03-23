@@ -764,6 +764,74 @@ spec:
       )
       expect(deploymentResult.ok).toBe(false)
     })
+
+    it('should delete resources matching notin and exists selectors', () => {
+      apiServer.createResource(
+        'Deployment',
+        createDeployment({
+          name: 'stable-app',
+          namespace: 'default',
+          replicas: 1,
+          labels: { app: 'stable-app', track: 'stable', version: 'v1' },
+          selector: { matchLabels: { app: 'stable-app' } },
+          template: {
+            metadata: { labels: { app: 'stable-app' } },
+            spec: {
+              containers: [{ name: 'main', image: 'nginx:latest' }]
+            }
+          }
+        })
+      )
+      apiServer.createResource(
+        'Deployment',
+        createDeployment({
+          name: 'canary-app',
+          namespace: 'default',
+          replicas: 1,
+          labels: { app: 'canary-app', track: 'canary' },
+          selector: { matchLabels: { app: 'canary-app' } },
+          template: {
+            metadata: { labels: { app: 'canary-app' } },
+            spec: {
+              containers: [{ name: 'main', image: 'nginx:latest' }]
+            }
+          }
+        })
+      )
+
+      const parsed = createParsedCommand({
+        resource: 'deployments',
+        selector: {
+          requirements: [
+            {
+              key: 'track',
+              operator: 'NotIn',
+              values: ['canary']
+            },
+            {
+              key: 'version',
+              operator: 'Exists',
+              values: []
+            }
+          ]
+        }
+      })
+
+      const result = handleDelete(apiServer, parsed)
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value).toContain('stable-app')
+      expect(result.value).not.toContain('canary-app')
+      expect(apiServer.findResource('Deployment', 'stable-app', 'default').ok).toBe(
+        false
+      )
+      expect(apiServer.findResource('Deployment', 'canary-app', 'default').ok).toBe(
+        true
+      )
+    })
   })
 
   describe('namespace handling', () => {

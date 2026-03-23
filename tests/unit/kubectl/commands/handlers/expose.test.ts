@@ -69,4 +69,50 @@ describe('kubectl expose handler', () => {
       expect(result.error).toContain('deployments.apps "missing" not found')
     }
   })
+
+  it('should reject non equality selector for expose', () => {
+    const apiServer = createApiServerFacade()
+    apiServer.createResource(
+      'Deployment',
+      createDeployment({
+        name: 'web',
+        namespace: 'default',
+        selector: { matchLabels: { app: 'web' } },
+        template: {
+          metadata: { labels: { app: 'web' } },
+          spec: {
+            containers: [
+              {
+                name: 'web',
+                image: 'nginx',
+                ports: [{ containerPort: 8080 }]
+              }
+            ]
+          }
+        }
+      })
+    )
+
+    const result = handleExpose(
+      apiServer,
+      createParsedExpose({
+        selector: {
+          requirements: [
+            {
+              key: 'track',
+              operator: 'NotIn',
+              values: ['canary']
+            }
+          ]
+        }
+      })
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'selector for expose must be equality-based'
+      )
+    }
+  })
 })

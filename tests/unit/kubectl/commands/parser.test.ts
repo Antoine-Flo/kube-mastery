@@ -658,7 +658,15 @@ describe('kubectl parser - get and delete flag positions', () => {
 
     expect(result.value.resource).toBe('pods')
     expect(result.value.namespace).toBe('kube-system')
-    expect(result.value.selector).toEqual({ tier: 'control-plane' })
+    expect(result.value.selector).toEqual({
+      requirements: [
+        {
+          key: 'tier',
+          operator: 'Equals',
+          values: ['control-plane']
+        }
+      ]
+    })
   })
 
   it('should parse get long label selector flag', () => {
@@ -673,7 +681,102 @@ describe('kubectl parser - get and delete flag positions', () => {
 
     expect(result.value.resource).toBe('pods')
     expect(result.value.namespace).toBe('kube-system')
-    expect(result.value.selector).toEqual({ tier: 'control-plane' })
+    expect(result.value.selector).toEqual({
+      requirements: [
+        {
+          key: 'tier',
+          operator: 'Equals',
+          values: ['control-plane']
+        }
+      ]
+    })
+  })
+
+  it('should parse set-based in selector', () => {
+    const result = parseCommand(
+      'kubectl get pods -l "env in (staging,production)"'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.selector).toEqual({
+      requirements: [
+        {
+          key: 'env',
+          operator: 'In',
+          values: ['staging', 'production']
+        }
+      ]
+    })
+  })
+
+  it('should parse set-based notin selector', () => {
+    const result = parseCommand('kubectl get pods -l "track notin (canary)"')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.selector).toEqual({
+      requirements: [
+        {
+          key: 'track',
+          operator: 'NotIn',
+          values: ['canary']
+        }
+      ]
+    })
+  })
+
+  it('should parse exists selector', () => {
+    const result = parseCommand('kubectl get pods -l version')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.selector).toEqual({
+      requirements: [
+        {
+          key: 'version',
+          operator: 'Exists',
+          values: []
+        }
+      ]
+    })
+  })
+
+  it('should parse does-not-exist selector', () => {
+    const result = parseCommand("kubectl get pods -l '!version'")
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.selector).toEqual({
+      requirements: [
+        {
+          key: 'version',
+          operator: 'DoesNotExist',
+          values: []
+        }
+      ]
+    })
+  })
+
+  it('should reject invalid selector syntax', () => {
+    const result = parseCommand('kubectl get pods -l "env in (staging,)"')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('invalid label selector')
+    }
   })
 
   it('should parse delete when namespace flag is before resource', () => {
@@ -725,7 +828,15 @@ describe('kubectl parser - get and delete flag positions', () => {
 
     expect(result.value.resource).toBe('all')
     expect(result.value.name).toBeUndefined()
-    expect(result.value.selector).toEqual({ tier: 'experiment' })
+    expect(result.value.selector).toEqual({
+      requirements: [
+        {
+          key: 'tier',
+          operator: 'Equals',
+          values: ['experiment']
+        }
+      ]
+    })
   })
 
   it('should parse delete pods with label selector and no name', () => {
@@ -738,7 +849,15 @@ describe('kubectl parser - get and delete flag positions', () => {
 
     expect(result.value.resource).toBe('pods')
     expect(result.value.name).toBeUndefined()
-    expect(result.value.selector).toEqual({ app: 'demo' })
+    expect(result.value.selector).toEqual({
+      requirements: [
+        {
+          key: 'app',
+          operator: 'Equals',
+          values: ['demo']
+        }
+      ]
+    })
   })
 
   it('should parse delete with short filename flag', () => {

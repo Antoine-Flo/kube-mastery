@@ -162,24 +162,24 @@ Open the terminal and work through these exercises to see selectors in action.
 **1. Create Pods with varied labels**
 
 ```bash
-kubectl run web-prod --image=nginx:1.28 --labels="app=web,env=production,track=stable"
+kubectl run web-prod --image=nginx:1.28 --labels="app=web,env=prod,track=stable"
 kubectl run web-staging --image=nginx:1.28 --labels="app=web,env=staging,track=stable"
-kubectl run api-prod --image=nginx:1.28 --labels="app=api,env=production,track=stable"
-kubectl run web-canary --image=nginx:1.28 --labels="app=web,env=production,track=canary"
+kubectl run api-prod --image=nginx:1.28 --labels="app=api,env=prod,track=stable"
+kubectl run web-canary --image=nginx:1.28 --labels="app=web,env=prod,track=canary"
 ```
 
 **2. Practice equality-based selectors**
 
 ```bash
 kubectl get pods -l app=web
-kubectl get pods -l env=production
-kubectl get pods -l app=web,env=production
+kubectl get pods -l env=prod
+kubectl get pods -l app=web,env=prod
 ```
 
 **3. Practice set-based selectors**
 
 ```bash
-kubectl get pods -l "env in (staging,production)"
+kubectl get pods -l "env in (staging,prod)"
 kubectl get pods -l "track notin (canary)"
 kubectl get pods -l "track notin (canary),app=web"
 ```
@@ -187,7 +187,7 @@ kubectl get pods -l "track notin (canary),app=web"
 **4. Create a Service and inspect its Endpoints**
 
 ```bash
-kubectl expose pod web-prod --name=web-svc --port=80 --selector="app=web,env=production,track=stable"
+kubectl expose pod web-prod --name=web-svc --port=80 --selector="app=web,env=prod,track=stable"
 kubectl describe service web-svc
 # Look at the Endpoints line, it should list the IPs of matching Pods
 kubectl get endpoints web-svc

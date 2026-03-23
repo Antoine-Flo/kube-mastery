@@ -1,6 +1,10 @@
 import type { ApiServerFacade } from '../../../../../api/ApiServerFacade'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error, success } from '../../../../../shared/result'
+import {
+  matchesLabelSelector,
+  type LabelSelectorLike
+} from '../../../../../shared/labelSelector'
 import type { Resource } from '../../../types'
 import { DELETE_ALL_RESOURCE_ORDER, DELETE_TARGET_BY_RESOURCE } from './config'
 import { formatDeletedMessage, formatNotFoundMessage } from './messages'
@@ -140,27 +144,16 @@ export const deleteNamespacedResourcesForNamespace = (
 
 const matchesSelector = (
   labels: Record<string, string> | undefined,
-  selector: Record<string, string> | undefined
+  selector: LabelSelectorLike | undefined
 ): boolean => {
-  if (selector == null) {
-    return true
-  }
-  if (labels == null) {
-    return false
-  }
-  for (const [key, value] of Object.entries(selector)) {
-    if (labels[key] !== value) {
-      return false
-    }
-  }
-  return true
+  return matchesLabelSelector(selector, labels)
 }
 
 const listMatchingResourceNames = (
   apiServer: ApiServerFacade,
   config: DeleteManifestTargetConfig,
   namespace: string,
-  selector: Record<string, string> | undefined
+  selector: LabelSelectorLike | undefined
 ): string[] => {
   const resources = config.namespaced
     ? apiServer.listResources(config.kind, namespace)
@@ -224,7 +217,7 @@ export const deleteMatchingResourcesForType = (
   apiServer: ApiServerFacade,
   config: DeleteManifestTargetConfig,
   namespace: string,
-  selector: Record<string, string> | undefined,
+  selector: LabelSelectorLike | undefined,
   podDeleteOptions: PodDeleteOptions
 ): ExecutionResult => {
   const names = listMatchingResourceNames(
@@ -256,7 +249,7 @@ export const deleteMatchingResourcesForType = (
 export const deleteAllMatchingResources = (
   apiServer: ApiServerFacade,
   namespace: string,
-  selector: Record<string, string> | undefined,
+  selector: LabelSelectorLike | undefined,
   podDeleteOptions: PodDeleteOptions
 ): ExecutionResult => {
   const messages: string[] = []

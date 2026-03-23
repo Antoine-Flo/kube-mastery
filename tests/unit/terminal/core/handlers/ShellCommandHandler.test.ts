@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createEventBus } from '../../../../../src/core/cluster/events/EventBus'
 import type { CommandContext } from '../../../../../src/core/terminal/core/CommandContext'
@@ -8,6 +8,7 @@ import { ShellContextStack } from '../../../../../src/core/terminal/core/ShellCo
 import { createTerminalOutput } from '../../../../../src/core/terminal/core/TerminalOutput'
 import { createMockRenderer } from '../../../helpers/mockRenderer'
 import { createLogger } from '../../../../../src/logger/Logger'
+import { initializeSimNetworkRuntime } from '../../../../../src/core/network/SimNetworkRuntime'
 
 describe('ShellCommandHandler', () => {
   let handler: ShellCommandHandler
@@ -56,6 +57,7 @@ describe('ShellCommandHandler', () => {
     renderer = createMockRenderer()
     const eventBus = createEventBus()
     const apiServer = createApiServerFacade({ eventBus })
+    const networkRuntime = initializeSimNetworkRuntime(apiServer)
     const logger = createLogger()
 
     context = {
@@ -64,10 +66,15 @@ describe('ShellCommandHandler', () => {
       output: createTerminalOutput(renderer),
       shellContextStack,
       apiServer,
+      networkRuntime,
       logger
     }
 
     handler = new ShellCommandHandler()
+  })
+
+  afterEach(() => {
+    context.networkRuntime.controller.stop()
   })
 
   describe('canHandle', () => {

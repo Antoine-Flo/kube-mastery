@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createPodCreatedEvent,
   createPodUpdatedEvent
@@ -13,6 +13,7 @@ import { ShellContextStack } from '../../../../../src/core/terminal/core/ShellCo
 import { createTerminalOutput } from '../../../../../src/core/terminal/core/TerminalOutput'
 import { createMockRenderer } from '../../../helpers/mockRenderer'
 import { createLogger } from '../../../../../src/logger/Logger'
+import { initializeSimNetworkRuntime } from '../../../../../src/core/network/SimNetworkRuntime'
 import type { EditorModal } from '../../../../../src/core/shell/commands'
 import { ShellCommandHandler } from '../../../../../src/core/terminal/core/handlers/ShellCommandHandler'
 
@@ -63,6 +64,7 @@ describe('KubectlCommandHandler', () => {
     renderer = createMockRenderer()
     const eventBus = createEventBus()
     const apiServer = createApiServerFacade({ eventBus })
+    const networkRuntime = initializeSimNetworkRuntime(apiServer)
     const logger = createLogger()
 
     context = {
@@ -72,6 +74,7 @@ describe('KubectlCommandHandler', () => {
       shellContextStack,
       logger,
       apiServer,
+      networkRuntime,
       startStream: (stop) => {
         streamStop = stop
       }
@@ -79,6 +82,10 @@ describe('KubectlCommandHandler', () => {
 
     handler = new KubectlCommandHandler()
     streamStop = null
+  })
+
+  afterEach(() => {
+    context.networkRuntime.controller.stop()
   })
 
   describe('canHandle', () => {
@@ -765,6 +772,36 @@ describe('KubectlCommandHandler', () => {
       })
       context.apiServer.eventBus.emit(createPodCreatedEvent(unrelated, 'test'))
       expect(renderer.getOutput()).toBe('')
+    })
+
+    it('should apply set-based selector filtering in watch mode', () => {
+      const watchResult = handler.execute(
+        'kubectl get pods --watch -l "track notin (canary)"',
+        context
+      )
+      expect(watchResult.ok).toBe(true)
+      renderer.clearOutput()
+
+      const canaryPod = createPod({
+        name: 'watch-canary',
+        namespace: 'default',
+        labels: { app: 'web', track: 'canary' },
+        phase: 'Pending',
+        containers: [{ name: 'watch-canary', image: 'nginx:latest' }]
+      })
+      context.apiServer.eventBus.emit(createPodCreatedEvent(canaryPod, 'test'))
+      expect(renderer.getOutput()).toBe('')
+
+      const stablePod = createPod({
+        name: 'watch-stable',
+        namespace: 'default',
+        labels: { app: 'web', track: 'stable' },
+        phase: 'Pending',
+        containers: [{ name: 'watch-stable', image: 'nginx:latest' }]
+      })
+      context.apiServer.eventBus.emit(createPodCreatedEvent(stablePod, 'test'))
+      expect(renderer.getOutput()).toContain('watch-stable')
+      expect(renderer.getOutput()).not.toContain('watch-canary')
     })
 
     it('should stream new lines for kubectl logs -f', () => {

@@ -1,14 +1,15 @@
 import type { ResourceWithMetadata } from './types'
+import {
+  matchesLabelSelector,
+  type LabelSelectorLike
+} from '../../../../../shared/labelSelector'
 
 export const filterByLabels = <T extends ResourceWithMetadata>(
   resources: T[],
-  selector: Record<string, string>
+  selector: LabelSelectorLike
 ): T[] => {
   return resources.filter((resource) => {
-    const labels = resource.metadata.labels || {}
-    return Object.entries(selector).every(
-      ([key, value]) => labels[key] === value
-    )
+    return matchesLabelSelector(selector, resource.metadata.labels)
   })
 }
 
@@ -24,7 +25,7 @@ export const filterByNamespace = <T extends ResourceWithMetadata>(
 export const applyFilters = <T extends ResourceWithMetadata>(
   resources: T[],
   namespace: string | undefined,
-  selector?: Record<string, string>,
+  selector?: LabelSelectorLike,
   isClusterScoped: boolean = false,
   name?: string
 ): T[] => {

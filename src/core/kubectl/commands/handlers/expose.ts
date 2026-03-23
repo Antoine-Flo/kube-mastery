@@ -5,6 +5,7 @@ import {
 } from '../../../cluster/ressources/Service'
 import type { ExecutionResult, Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
+import { toEqualitySelectorMap } from '../../../shared/labelSelector'
 import type { ParsedCommand } from '../types'
 import { createResourceWithEvents } from '../resourceHelpers'
 
@@ -152,7 +153,11 @@ export const handleExpose = (
 
   let selector: Record<string, string>
   if (parsed.selector != null) {
-    selector = parsed.selector
+    const selectorMapResult = toEqualitySelectorMap(parsed.selector)
+    if (!selectorMapResult.ok) {
+      return selectorMapResult
+    }
+    selector = selectorMapResult.value
   } else {
     const selectorResult = resolveSelectorFromDeployment(
       apiServer,

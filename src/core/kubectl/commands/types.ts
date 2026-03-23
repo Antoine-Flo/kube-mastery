@@ -1,4 +1,5 @@
 import type { KubectlResource } from './resources'
+import type { LabelSelectorLike } from '../../shared/labelSelector'
 
 // Action types supported by kubectl parser
 export type Action =
@@ -44,7 +45,7 @@ export interface ParsedCommand {
   names?: string[] // Positional names after resource (e.g. get/delete pods a b c)
   namespace?: string
   output?: 'table' | 'yaml' | 'json'
-  selector?: Record<string, string> // Parsed label selector (e.g., -l app=nginx,env=prod)
+  selector?: LabelSelectorLike // Parsed label selector for -l/--selector
   flags: Record<string, string | boolean> // Raw normalized flags map
   execCommand?: string[] // For kubectl exec: command after --
   labelChanges?: Record<string, string | null> // For kubectl label: key=value or key- (null = removal)
