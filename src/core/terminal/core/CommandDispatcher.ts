@@ -25,7 +25,7 @@ interface CommandDispatcherOptions {
   renderer: TerminalRenderer
   shellContextStack: ShellContextStack
   apiServer: ApiServerFacade
-  networkRuntime?: SimNetworkRuntime
+  networkRuntime: SimNetworkRuntime
   logger: Logger
   commandLimit?: number
   commandLimitMessage?: string

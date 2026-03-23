@@ -358,6 +358,23 @@ describe('kubectl parser - run', () => {
     expect(result.value.runRestart).toBe('Never')
   })
 
+  it('should parse bundled short interactive flags -it for run', () => {
+    const result = parseCommand(
+      'kubectl run -it busybox --image=busybox --restart=Never --rm'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.name).toBe('busybox')
+    expect(result.value.runStdin).toBe(true)
+    expect(result.value.runTty).toBe(true)
+    expect(result.value.runRemove).toBe(true)
+    expect(result.value.runRestart).toBe('Never')
+  })
+
   it('should reject run when image is missing', () => {
     const result = parseCommand('kubectl run test-pod --command -- sleep 3600')
 

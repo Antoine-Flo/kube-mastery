@@ -1,5 +1,4 @@
-import type { ClusterStateData } from '../../../cluster/ClusterState'
-import type { ApiServerFacade } from '../../../api/ApiServerFacade'
+import type { FileSystem } from '../../../filesystem/FileSystem'
 import { formatTable } from '../../../shared/formatter'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
@@ -10,9 +9,9 @@ import {
   validateOutputDirective
 } from '../output/outputHelpers'
 import {
-  readKubeconfigFromState,
+  readKubeconfigFromFileSystem,
   type SimKubeconfig,
-  writeKubeconfigToClusterInfo
+  writeKubeconfigToFileSystem
 } from './configKubeconfig'
 
 const getCurrentContextEntry = (
@@ -134,7 +133,7 @@ const handleConfigView = (
 }
 
 const handleConfigSetContext = (
-  apiServer: ApiServerFacade,
+  fileSystem: FileSystem,
   kubeconfig: SimKubeconfig,
   parsed: ParsedCommand
 ): ExecutionResult => {
@@ -174,7 +173,7 @@ const handleConfigSetContext = (
       }
     })
   }
-  const writeResult = writeKubeconfigToClusterInfo(apiServer, updatedKubeconfig)
+  const writeResult = writeKubeconfigToFileSystem(fileSystem, updatedKubeconfig)
   if (!writeResult.ok) {
     return error(writeResult.error)
   }
@@ -182,10 +181,9 @@ const handleConfigSetContext = (
 }
 
 export const getCurrentNamespaceFromKubeconfig = (
-  apiServer: ApiServerFacade
+  fileSystem: FileSystem
 ): string | undefined => {
-  const state: ClusterStateData = apiServer.snapshotState()
-  const kubeconfigResult = readKubeconfigFromState(state)
+  const kubeconfigResult = readKubeconfigFromFileSystem(fileSystem)
   if (!kubeconfigResult.ok) {
     return undefined
   }
@@ -212,10 +210,10 @@ export const getCurrentNamespaceFromKubeconfig = (
 }
 
 export const handleConfig = (
-  apiServer: ApiServerFacade,
+  fileSystem: FileSystem,
   parsed: ParsedCommand
 ): ExecutionResult => {
-  const kubeconfigResult = readKubeconfigFromState(apiServer.snapshotState())
+  const kubeconfigResult = readKubeconfigFromFileSystem(fileSystem)
   if (!kubeconfigResult.ok) {
     return error(kubeconfigResult.error)
   }
@@ -233,7 +231,7 @@ export const handleConfig = (
   }
 
   if (parsed.action === 'config-set-context') {
-    return handleConfigSetContext(apiServer, kubeconfigResult.value, parsed)
+    return handleConfigSetContext(fileSystem, kubeconfigResult.value, parsed)
   }
 
   return error(`Unknown config action: ${parsed.action}`)

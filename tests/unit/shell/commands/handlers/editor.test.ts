@@ -27,6 +27,28 @@ describe('Editor Handler (nano)', () => {
     )
   })
 
+  it('should pass tilde kubeconfig path to filesystem (home expanded in FileSystem)', () => {
+    const openCallback = vi.fn()
+    const editorModal = {
+      open: openCallback
+    }
+    const fileSystem = createMockFileSystem({
+      readFile: (filename: string) => {
+        expect(filename).toBe('~/.kube/config')
+        return success('kubeconfig-content')
+      }
+    })
+    const handler = createNanoHandler(fileSystem, editorModal)
+    const result = handler.execute(['~/.kube/config'], {})
+
+    expect(result.ok).toBe(true)
+    expect(openCallback).toHaveBeenCalledWith(
+      '~/.kube/config',
+      'kubeconfig-content',
+      expect.any(Function)
+    )
+  })
+
   it('should open editor for new file', () => {
     const openCallback = vi.fn()
     const editorModal = {

@@ -311,6 +311,26 @@ const parseRunLabels = (
   return parsed
 }
 
+const hasShortFlag = (tokens: string[], shortFlag: string): boolean => {
+  for (const token of tokens) {
+    if (token === `-${shortFlag}`) {
+      return true
+    }
+    const isBundledShortFlag =
+      token.startsWith('-') &&
+      !token.startsWith('--') &&
+      token.length > 2 &&
+      !token.includes('=')
+    if (!isBundledShortFlag) {
+      continue
+    }
+    if (token.slice(1).includes(shortFlag)) {
+      return true
+    }
+  }
+  return false
+}
+
 // ─── Transformers ────────────────────────────────────────────────────────
 
 /**
@@ -679,8 +699,9 @@ const runTransformer: ActionTransformer = (ctx) => {
     return success(ctx)
   }
 
-  const { beforeSeparator, afterSeparator } = splitTokensBySeparator(ctx.tokens)
-  const runHasSeparator = ctx.tokens.includes('--')
+  const tokens = ctx.tokens
+  const { beforeSeparator, afterSeparator } = splitTokensBySeparator(tokens)
+  const runHasSeparator = tokens.includes('--')
   const positionalTokens = extractPositionalTokensAfterAction(beforeSeparator)
   const name = positionalTokens[0]
   const runImages = extractFlagValues(beforeSeparator, 'image')
@@ -696,9 +717,9 @@ const runTransformer: ActionTransformer = (ctx) => {
       : undefined
   const runUseCommand = beforeSeparator.includes('--command')
   const runStdin =
-    beforeSeparator.includes('-i') || beforeSeparator.includes('--stdin')
+    beforeSeparator.includes('--stdin') || hasShortFlag(beforeSeparator, 'i')
   const runTty =
-    beforeSeparator.includes('-t') || beforeSeparator.includes('--tty')
+    beforeSeparator.includes('--tty') || hasShortFlag(beforeSeparator, 't')
   const runRemove = beforeSeparator.includes('--rm')
   const separatorTokens =
     afterSeparator && afterSeparator.length > 0 ? afterSeparator : undefined

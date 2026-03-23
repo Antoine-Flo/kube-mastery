@@ -416,6 +416,7 @@ describe('kubectl exec handler', () => {
       })
       expect(result).toContain('200 OK')
     })
+
   })
 
   describe('other commands', () => {

@@ -37,7 +37,7 @@ export interface CommandContext {
   apiServer: ApiServerFacade
 
   /** Simulated network runtime (DNS, service routing, traffic) */
-  networkRuntime?: SimNetworkRuntime
+  networkRuntime: SimNetworkRuntime
 
   /** Logger pour le suivi des commandes */
   logger: Logger

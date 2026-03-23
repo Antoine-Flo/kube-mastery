@@ -140,9 +140,6 @@ kubectl cluster-info
 # See the Lease objects , one per node
 kubectl get leases -n kube-node-lease
 
-# Describe a Lease to see the heartbeat timestamp
-kubectl get leases -n kube-node-lease -o jsonpath='{.items[0].metadata.name}'
-kubectl describe lease <lease-name> -n kube-node-lease
 ```
 
 After working through these commands, you should have a clear picture of what each built-in namespace contains and why it exists. The most important takeaway: leave `kube-system` and `kube-node-lease` alone unless you have a specific, well-understood reason to interact with them.

@@ -906,6 +906,35 @@ describe('kubectl transformers', () => {
       expect(result.value.runRestart).toBe('Never')
     })
 
+    it('should extract bundled short run interactive flags -it', () => {
+      const transformer = getTransformerForAction('run')
+      const ctx = createContext({
+        input: 'kubectl run -it busybox --image=busybox --restart=Never --rm',
+        tokens: [
+          'kubectl',
+          'run',
+          '-it',
+          'busybox',
+          '--image=busybox',
+          '--restart=Never',
+          '--rm'
+        ]
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value.name).toBe('busybox')
+      expect(result.value.runStdin).toBe(true)
+      expect(result.value.runTty).toBe(true)
+      expect(result.value.runRemove).toBe(true)
+      expect(result.value.runRestart).toBe('Never')
+    })
+
     it('should handle missing tokens gracefully', () => {
       const transformer = getTransformerForAction('run')
       const ctx = createContext({ tokens: undefined })

@@ -169,7 +169,7 @@ Open the terminal on the right and practice switching between and working across
 # --- Inspect your current context ---
 kubectl config get-contexts
 kubectl config current-context
-kubectl config view --minify | grep namespace
+kubectl config view --minify
 
 # --- Create namespaces ---
 kubectl create namespace dev
@@ -217,8 +217,7 @@ kubectl expose deployment web --port=80 -n dev
 # http://web.dev.svc.cluster.local
 
 # You can verify the DNS name resolves from inside a pod
-kubectl run dns-test --image=busybox --rm -it --restart=Never -- \
-  nslookup web.dev.svc.cluster.local
+kubectl run dns-test --image=busybox --rm -it --restart=Never -- nslookup web.dev.svc.cluster.local
 
 # --- Clean up ---
 kubectl delete namespace dev staging

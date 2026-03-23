@@ -3,11 +3,12 @@ import type { EnvVar } from '../../../cluster/ressources/Pod'
 import { createPod } from '../../../cluster/ressources/Pod'
 import type { SimNetworkRuntime } from '../../../network/SimNetworkRuntime'
 import type { ExecutionResult } from '../../../shared/result'
-import { error } from '../../../shared/result'
+import { error, success } from '../../../shared/result'
 import { validateMetadataNameByKind } from '../metadataNameValidation'
 import type { ParsedCommand } from '../types'
 import { buildDryRunResponse } from './create'
 import { createResourceWithEvents } from '../resourceHelpers'
+import { executeRuntimeNetworkCommand } from './internal/runtimeCommand'
 
 const stripMatchingQuotes = (raw: string): string => {
   const trimmed = raw.trim()
@@ -125,6 +126,14 @@ export const handleRun = (
 
   const runCommand = parsed.runCommand
   const runArgs = parsed.runArgs
+  const runtimeNamespace = parsed.namespace || 'default'
+  const isAttachLike =
+    parsed.runStdin === true ||
+    parsed.runTty === true ||
+    parsed.flags.attach === true
+  if (parsed.runRemove === true && !isAttachLike) {
+    return error('error: --rm should only be used for attached containers')
+  }
   if (
     parsed.runRestart != null &&
     parsed.runRestart !== 'Always' &&
@@ -160,7 +169,7 @@ export const handleRun = (
 
   const pod = createPod({
     name: podName,
-    namespace: parsed.namespace || 'default',
+    namespace: runtimeNamespace,
     restartPolicy: parsed.runRestart ?? 'Always',
     labels: { run: podName, ...(parsed.runLabels ?? {}) },
     containers: [
@@ -190,55 +199,54 @@ export const handleRun = (
     return buildDryRunResponse(dryRunManifest, parsed)
   }
 
-  const runCommandHead = runCommand?.[0]
-  if (
-    parsed.runUseCommand &&
-    parsed.runRemove === true &&
-    parsed.runStdin === true &&
-    parsed.runTty === true &&
-    runCommandHead != null &&
-    networkRuntime != null
-  ) {
-    const runtimeNamespace = parsed.namespace || 'default'
-    if (runCommandHead === 'nslookup') {
-      const lookupQuery = runCommand?.[1]
-      if (lookupQuery == null) {
-        return error('** server can not find : NXDOMAIN')
+  const commandToExecute = runCommand ?? runArgs
+  const hasInlineCommand =
+    commandToExecute != null && commandToExecute.length > 0 && isAttachLike
+  if (hasInlineCommand) {
+    const runtimeResult = executeRuntimeNetworkCommand(
+      commandToExecute,
+      runtimeNamespace,
+      networkRuntime
+    )
+    if (runtimeResult != null) {
+      const createResult = apiServer.createResource('Pod', pod, runtimeNamespace)
+      if (!createResult.ok) {
+        return createResult
       }
-      const dnsResult = networkRuntime.dnsResolver.resolveARecord(
-        lookupQuery,
-        runtimeNamespace
-      )
-      if (!dnsResult.ok) {
-        return error(dnsResult.error)
-      }
-      const address = dnsResult.value.addresses[0]
-      return {
-        ok: true,
-        value: [
-          'Server:\t10.96.0.10',
-          'Address:\t10.96.0.10:53',
-          '',
-          `Name:\t${dnsResult.value.fqdn}`,
-          `Address:\t${address}`
-        ].join('\n')
-      }
-    }
-    if (runCommandHead === 'curl') {
-      const curlTarget = runCommand?.[1]
-      if (curlTarget == null) {
-        return error('curl: try "curl <url>"')
-      }
-      const curlResult = networkRuntime.trafficEngine.simulateHttpGet(
-        curlTarget,
-        {
-          sourceNamespace: runtimeNamespace
+
+      let commandResult = runtimeResult
+      if (parsed.runRemove === true) {
+        const deleteResult = apiServer.deleteResource(
+          'Pod',
+          podName,
+          runtimeNamespace,
+          { gracePeriodSeconds: 0, force: true }
+        )
+        if (!deleteResult.ok) {
+          return deleteResult
         }
-      )
-      if (!curlResult.ok) {
-        return error(curlResult.error)
+        const finalizeResult = apiServer.finalizePodDeletion(
+          podName,
+          runtimeNamespace,
+          { source: 'kubectl-run-rm' }
+        )
+        if (!finalizeResult.ok) {
+          return finalizeResult
+        }
+        if (!commandResult.ok) {
+          return commandResult
+        }
+        const deleteMessage = `pod "${podName}" deleted from ${runtimeNamespace} namespace`
+        if (commandResult.value.length === 0) {
+          return success(deleteMessage)
+        }
+        return success(`${commandResult.value}\n\n${deleteMessage}`)
       }
-      return { ok: true, value: curlResult.value }
+
+      if (!commandResult.ok) {
+        return commandResult
+      }
+      return success(commandResult.value)
     }
   }
 

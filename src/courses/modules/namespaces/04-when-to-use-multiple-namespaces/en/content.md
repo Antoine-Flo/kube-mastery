@@ -152,7 +152,6 @@ Open the terminal on the right and practice building a multi-namespace structure
 # --- Create a team namespace structure ---
 kubectl create namespace frontend
 kubectl create namespace backend
-kubectl create namespace shared
 
 # Verify
 kubectl get namespaces
@@ -160,62 +159,24 @@ kubectl get namespaces
 # --- Deploy workloads into each namespace ---
 kubectl create deployment web --image=nginx -n frontend
 kubectl create deployment api --image=nginx -n backend
-kubectl create deployment monitoring --image=prom/prometheus -n shared
 
 # Check all pods across namespaces
 kubectl get pods -A
 
-# --- Apply a ResourceQuota to the frontend namespace ---
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: ResourceQuota
-metadata:
-  name: frontend-quota
-  namespace: frontend
-spec:
-  hard:
-    pods: "10"
-    requests.cpu: "2"
-    requests.memory: 4Gi
-    limits.cpu: "4"
-    limits.memory: 8Gi
-EOF
-
-# Check the quota
-kubectl describe quota -n frontend
-
-# --- Apply a basic NetworkPolicy to isolate the backend namespace ---
-cat <<EOF | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: deny-cross-namespace-ingress
-  namespace: backend
-spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  ingress:
-  - from:
-    - podSelector: {}
-EOF
-
 # --- Check what is running in each namespace ---
 kubectl get all -n frontend
 kubectl get all -n backend
-kubectl get all -n shared
 
 # --- Check cross-namespace DNS resolution ---
 kubectl expose deployment api --port=80 -n backend
-kubectl run test --image=busybox --rm -it --restart=Never -n frontend -- \
-  nslookup api.backend.svc.cluster.local
+kubectl run test --image=busybox --rm -it --restart=Never -n frontend --  nslookup api.backend.svc.cluster.local
 
 # --- View namespace details ---
 kubectl describe namespace frontend
 kubectl describe namespace backend
 
 # --- Clean up ---
-kubectl delete namespace frontend backend shared
+kubectl delete namespace frontend backend
 ```
 
 As you practice, think about what structure would make sense for a real project. The goal of namespaces is to make your cluster _easier_ to navigate and operate, not harder. If you constantly fight `-n` flags and cross-namespace complexity, the structure is too granular, start coarse-grained and split only when there is a concrete operational reason.

@@ -1,12 +1,9 @@
 import { parse as yamlParse, stringify as yamlStringify } from 'yaml'
-import type { ClusterStateData } from '../../../cluster/ClusterState'
-import type { ApiServerFacade } from '../../../api/ApiServerFacade'
-import type { ConfigMap } from '../../../cluster/ressources/ConfigMap'
+import type { FileSystem } from '../../../filesystem/FileSystem'
 import type { Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 
-const CLUSTER_INFO_NAMESPACE = 'kube-public'
-const CLUSTER_INFO_CONFIGMAP_NAME = 'cluster-info'
+const KUBECONFIG_PATH = '/home/kube/.kube/config'
 
 export interface KubeconfigNamedCluster {
   name: string
@@ -98,7 +95,7 @@ const toNamedContext = (value: unknown): KubeconfigNamedContext | undefined => {
 
 const toSimKubeconfig = (value: unknown): Result<SimKubeconfig> => {
   if (!isRecord(value)) {
-    return error('cluster-info kubeconfig is invalid: expected object')
+    return error('kubeconfig is invalid: expected object')
   }
 
   const apiVersion =
@@ -134,73 +131,36 @@ const toSimKubeconfig = (value: unknown): Result<SimKubeconfig> => {
   })
 }
 
-export const getClusterInfoConfigMapFromState = (
-  state: ClusterStateData
-): Result<ConfigMap> => {
-  const clusterInfoConfigMap = state.configMaps.items.find((configMap) => {
-    return (
-      configMap.metadata.name === CLUSTER_INFO_CONFIGMAP_NAME &&
-      configMap.metadata.namespace === CLUSTER_INFO_NAMESPACE
-    )
-  })
-  if (!clusterInfoConfigMap) {
-    return error('cluster-info ConfigMap is missing in kube-public namespace')
-  }
-  return success(clusterInfoConfigMap)
-}
-
-export const readKubeconfigFromState = (
-  state: ClusterStateData
+export const readKubeconfigFromFileSystem = (
+  fileSystem: FileSystem
 ): Result<SimKubeconfig> => {
-  const clusterInfoResult = getClusterInfoConfigMapFromState(state)
-  if (!clusterInfoResult.ok) {
-    return clusterInfoResult
+  const kubeconfigReadResult = fileSystem.readFile(KUBECONFIG_PATH)
+  if (!kubeconfigReadResult.ok) {
+    return error(`kubeconfig file is missing: ${KUBECONFIG_PATH}`)
   }
-
-  const kubeconfigRaw = clusterInfoResult.value.data?.kubeconfig
-  if (typeof kubeconfigRaw !== 'string' || kubeconfigRaw.length === 0) {
-    return error(
-      'cluster-info ConfigMap in kube-public is invalid: missing data.kubeconfig'
-    )
+  const kubeconfigRaw = kubeconfigReadResult.value
+  if (kubeconfigRaw.length === 0) {
+    return error(`kubeconfig file is empty: ${KUBECONFIG_PATH}`)
   }
 
   let parsedYaml: unknown
   try {
     parsedYaml = yamlParse(kubeconfigRaw)
   } catch {
-    return error('cluster-info kubeconfig is invalid YAML')
+    return error(`kubeconfig file is invalid YAML: ${KUBECONFIG_PATH}`)
   }
 
   return toSimKubeconfig(parsedYaml)
 }
 
-export const writeKubeconfigToClusterInfo = (
-  apiServer: ApiServerFacade,
+export const writeKubeconfigToFileSystem = (
+  fileSystem: FileSystem,
   kubeconfig: SimKubeconfig
 ): Result<void> => {
   const serializedKubeconfig = yamlStringify(kubeconfig).trimEnd()
-  const currentConfigMap = apiServer.findResource(
-    'ConfigMap',
-    CLUSTER_INFO_CONFIGMAP_NAME,
-    CLUSTER_INFO_NAMESPACE
-  )
-  if (!currentConfigMap.ok) {
-    return error(currentConfigMap.error)
-  }
-  const updateResult = apiServer.updateResource(
-    'ConfigMap',
-    CLUSTER_INFO_CONFIGMAP_NAME,
-    {
-      ...currentConfigMap.value,
-      data: {
-        ...(currentConfigMap.value.data || {}),
-        kubeconfig: serializedKubeconfig
-      }
-    },
-    CLUSTER_INFO_NAMESPACE
-  )
-  if (!updateResult.ok) {
-    return error(updateResult.error)
+  const writeResult = fileSystem.writeFile(KUBECONFIG_PATH, serializedKubeconfig)
+  if (!writeResult.ok) {
+    return error(writeResult.error)
   }
   return success(undefined)
 }

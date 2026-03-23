@@ -93,6 +93,9 @@ export function mountTerminal(
           return
         }
         try {
+          if (env.networkRuntime == null) {
+            throw new Error('Terminal environment is missing network runtime')
+          }
           const fileSystem = createFileSystem(
             env.fileSystemState,
             env.apiServer.eventBus,

@@ -13,8 +13,11 @@ import {
   type ControlPlaneRuntime
 } from '../control-plane/ControllerManager'
 import { initializeSimPodIpAllocation } from '../cluster/ipAllocator/SimPodIpAllocationService'
-import { createSimulatorBootstrapConfig } from '../cluster/systemBootstrap'
-import type { FileSystemState } from '../filesystem/FileSystem'
+import {
+  createBootstrapKubeconfig,
+  createSimulatorBootstrapConfig
+} from '../cluster/systemBootstrap'
+import { createFileSystem, type FileSystemState } from '../filesystem/FileSystem'
 import { createHostFileSystem } from '../filesystem/debianFileSystem'
 import { initializeSimNetworkRuntime } from '../network/SimNetworkRuntime'
 import { initializeSimVolumeRuntime } from '../volumes/SimVolumeRuntime'
@@ -43,6 +46,30 @@ const debounce = <T extends (...args: Parameters<T>) => void>(
   }
 }
 
+const KUBECONFIG_DIRECTORY = '/home/kube/.kube'
+const KUBECONFIG_PATH = '/home/kube/.kube/config'
+
+const ensureKubeconfigFile = (
+  fileSystemState: FileSystemState,
+  kubeconfigContent: string
+): void => {
+  const fileSystem = createFileSystem(fileSystemState, undefined, {
+    mutable: true
+  })
+  const existingKubeconfig = fileSystem.readFile(KUBECONFIG_PATH)
+  if (existingKubeconfig.ok) {
+    return
+  }
+  const createDirectoryResult = fileSystem.createDirectory(
+    KUBECONFIG_DIRECTORY,
+    true
+  )
+  if (!createDirectoryResult.ok) {
+    return
+  }
+  fileSystem.writeFile(KUBECONFIG_PATH, kubeconfigContent)
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // EMULATED ENVIRONMENT MANAGER
 // ═══════════════════════════════════════════════════════════════════════════
@@ -67,7 +94,17 @@ export function createEmulatedEnvironment(
   const storageMode: 'indexeddb' | 'none' =
     providedFilesystemState != null && userId != null ? 'indexeddb' : 'none'
   const bootstrapConfig = createSimulatorBootstrapConfig()
-  fileSystemState = providedFilesystemState ?? createHostFileSystem()
+  const kubeconfigClusterName =
+    bootstrapConfig.clusterName ?? CONFIG.cluster.simulatorClusterName
+  fileSystemState =
+    providedFilesystemState ??
+    createHostFileSystem({
+      kubeconfigContent: createBootstrapKubeconfig(kubeconfigClusterName)
+    })
+  ensureKubeconfigFile(
+    fileSystemState,
+    createBootstrapKubeconfig(kubeconfigClusterName)
+  )
   apiServer = createApiServerFacade({
     bootstrap: bootstrapConfig
   })
@@ -168,7 +205,6 @@ export function destroyEmulatedEnvironment(
   emulatedEnvironment.controlPlaneRuntime?.stop()
   emulatedEnvironment.controlPlaneRuntime = undefined
   emulatedEnvironment.networkRuntime?.controller.stop()
-  emulatedEnvironment.networkRuntime = undefined
   emulatedEnvironment.volumeRuntime?.volumeBindingController.stop()
   emulatedEnvironment.volumeRuntime?.podVolumeController.stop()
   emulatedEnvironment.volumeRuntime = undefined

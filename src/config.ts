@@ -41,7 +41,8 @@ export const CONFIG = {
     defaultConfigPath: 'src/courses/seeds/clusterConfig/multi-node.yaml',
     defaultNodeRoles: ['control-plane', 'worker', 'worker'],
     simulatorClusterName: 'sim',
-    conformanceClusterName: 'conformance'
+    conformanceClusterName: 'conformance',
+    kubeconfigServerUrl: 'https://127.0.0.1:34719'
   },
   runtime: {
     simPodPendingDelayRangeMs: {

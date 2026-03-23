@@ -87,6 +87,16 @@ describe('FileSystemAdapter', () => {
       expect(fileSystem.getCurrentPath()).toBe(initialPath)
     })
 
+    it('should expand ~ to simulated kube home', () => {
+      fileSystem.createDirectory('nested')
+      fileSystem.changeDirectory('nested')
+      expect(fileSystem.getCurrentPath()).toBe('/home/kube/nested')
+
+      const cdHome = fileSystem.changeDirectory('~')
+      expect(cdHome.ok).toBe(true)
+      expect(fileSystem.getCurrentPath()).toBe('/home/kube')
+    })
+
     it('should return error for non-existent directory', () => {
       const result = fileSystem.changeDirectory('/invalid/path')
       expect(result.ok).toBe(false)
@@ -210,6 +220,17 @@ describe('FileSystemAdapter', () => {
       fileSystem.createDirectory('test')
       const result = fileSystem.readFile('test')
       expect(result.ok).toBe(false)
+    })
+
+    it('should expand ~/ relative to simulated kube home', () => {
+      fileSystem.createFile('~/note.txt')
+      fileSystem.writeFile('~/note.txt', 'home note')
+
+      const readTilde = fileSystem.readFile('~/note.txt')
+      expect(readTilde.ok).toBe(true)
+      if (readTilde.ok) {
+        expect(readTilde.value).toBe('home note')
+      }
     })
   })
 

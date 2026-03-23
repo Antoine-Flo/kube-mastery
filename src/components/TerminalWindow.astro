@@ -362,7 +362,10 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
         }
       }
     })
-    init()
+    // Defer remount so lesson env reset listeners run first.
+    setTimeout(() => {
+      init()
+    }, 0)
   })
 
   document.addEventListener('astro:before-swap', (ev: Event) => {

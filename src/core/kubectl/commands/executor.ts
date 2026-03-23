@@ -55,6 +55,7 @@ const toGetExecutionResult = (output: string): ExecutionResult => {
 
 const applyImplicitNamespaceFromKubeconfig = (
   apiServer: ApiServerFacade,
+  fileSystem: FileSystem,
   parsed: ParsedCommand
 ): ParsedCommand => {
   if (parsed.namespace !== undefined) {
@@ -71,7 +72,7 @@ const applyImplicitNamespaceFromKubeconfig = (
     return parsed
   }
 
-  const namespace = getCurrentNamespaceFromKubeconfig(apiServer)
+  const namespace = getCurrentNamespaceFromKubeconfig(fileSystem)
   if (namespace === undefined) {
     return parsed
   }
@@ -147,14 +148,14 @@ const createHandlers = (
     handleWait(apiServer, parsed, reconcileForWait)
   )
   handlers.set('config-get-contexts', (parsed) =>
-    handleConfig(apiServer, parsed)
+    handleConfig(fileSystem, parsed)
   )
   handlers.set('config-current-context', (parsed) =>
-    handleConfig(apiServer, parsed)
+    handleConfig(fileSystem, parsed)
   )
-  handlers.set('config-view', (parsed) => handleConfig(apiServer, parsed))
+  handlers.set('config-view', (parsed) => handleConfig(fileSystem, parsed))
   handlers.set('config-set-context', (parsed) =>
-    handleConfig(apiServer, parsed)
+    handleConfig(fileSystem, parsed)
   )
 
   return handlers
@@ -224,6 +225,7 @@ export const createKubectlExecutor = (
     )
     const parsedWithNamespace = applyImplicitNamespaceFromKubeconfig(
       apiServer,
+      fs,
       parseResult.value
     )
 

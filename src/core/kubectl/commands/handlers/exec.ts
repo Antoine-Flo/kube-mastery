@@ -1,6 +1,7 @@
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { SimNetworkRuntime } from '../../../network/SimNetworkRuntime'
 import type { ParsedCommand } from '../types'
+import { executeRuntimeNetworkCommand } from './internal/runtimeCommand'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL EXEC HANDLER
@@ -115,49 +116,16 @@ export const handleExec = (
     return buildEnterContainerDirective(podName, containerName, namespace)
   }
 
-  if (command === 'nslookup') {
-    const lookupQuery = parsed.execCommand[1]
-    if (lookupQuery == null) {
-      return '** server can not find : NXDOMAIN'
+  const runtimeNetworkResult = executeRuntimeNetworkCommand(
+    parsed.execCommand,
+    namespace,
+    networkRuntime
+  )
+  if (runtimeNetworkResult != null) {
+    if (!runtimeNetworkResult.ok) {
+      return runtimeNetworkResult.error
     }
-    if (networkRuntime == null) {
-      return 'Error: network runtime is not available'
-    }
-    const dnsResult = networkRuntime.dnsResolver.resolveARecord(
-      lookupQuery,
-      namespace
-    )
-    if (!dnsResult.ok) {
-      return dnsResult.error
-    }
-    const address = dnsResult.value.addresses[0]
-    return [
-      'Server:\t10.96.0.10',
-      'Address:\t10.96.0.10:53',
-      '',
-      `Name:\t${dnsResult.value.fqdn}`,
-      `Address:\t${address}`
-    ].join('\n')
-  }
-
-  if (command === 'curl') {
-    const curlTarget = parsed.execCommand[1]
-    if (curlTarget == null) {
-      return 'curl: try "curl <url>"'
-    }
-    if (networkRuntime == null) {
-      return 'Error: network runtime is not available'
-    }
-    const curlResult = networkRuntime.trafficEngine.simulateHttpGet(
-      curlTarget,
-      {
-        sourceNamespace: namespace
-      }
-    )
-    if (!curlResult.ok) {
-      return curlResult.error
-    }
-    return curlResult.value
+    return runtimeNetworkResult.value
   }
 
   if (command === 'nginx') {

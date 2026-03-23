@@ -7,6 +7,7 @@ import { createFileSystem } from '../../../../src/core/filesystem/FileSystem'
 import { ShellContextStack } from '../../../../src/core/terminal/core/ShellContext'
 import { createMockRenderer } from '../../helpers/mockRenderer'
 import { createLogger } from '../../../../src/logger/Logger'
+import { initializeSimNetworkRuntime } from '../../../../src/core/network/SimNetworkRuntime'
 
 describe('CommandDispatcher', () => {
   let fileSystem: FileSystem
@@ -56,12 +57,14 @@ describe('CommandDispatcher', () => {
     const logger = createLogger()
     const eventBus = createEventBus()
     const apiServer = createApiServerFacade({ eventBus })
+    const networkRuntime = initializeSimNetworkRuntime(apiServer)
 
     dispatcher = createCommandDispatcher({
       fileSystem,
       renderer,
       shellContextStack,
       apiServer,
+      networkRuntime,
       logger
     })
   })

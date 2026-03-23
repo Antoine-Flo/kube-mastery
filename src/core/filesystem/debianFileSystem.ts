@@ -18,6 +18,32 @@ interface DebianFileSystemOptions {
   hostname?: string
 }
 
+interface HostFileSystemOptions {
+  kubeconfigContent?: string
+}
+
+const DEFAULT_KUBECONFIG_PATH = '/home/kube/.kube/config'
+const DEFAULT_KUBECONFIG_CONTENT = [
+  'apiVersion: v1',
+  'kind: Config',
+  'clusters:',
+  '- cluster:',
+  '    certificate-authority-data: DATA+OMITTED',
+  '    server: https://127.0.0.1:34001',
+  '  name: kind-sim',
+  'contexts:',
+  '- context:',
+  '    cluster: kind-sim',
+  '    user: kind-sim',
+  '  name: kind-sim',
+  'current-context: kind-sim',
+  'users:',
+  '- name: kind-sim',
+  '  user:',
+  '    client-certificate-data: DATA+OMITTED',
+  '    client-key-data: DATA+OMITTED'
+].join('\n')
+
 // ─── Base Configuration ────────────────────────────────────────────────────
 
 const DEBIAN_FILESYSTEM_CONFIG: FileSystemConfig = {
@@ -268,9 +294,16 @@ const addFiles = (state: FileSystemState, files: FilesPreset): void => {
  * Create host filesystem with kube user and examples
  * Convenience function for the most common use case
  */
-export const createHostFileSystem = (): FileSystemState => {
+export const createHostFileSystem = (
+  options: HostFileSystemOptions = {}
+): FileSystemState => {
   const state = createDebianFileSystem()
-  addFiles(state, EXAMPLE_FILES)
+  const kubeconfigContent =
+    options.kubeconfigContent ?? DEFAULT_KUBECONFIG_CONTENT
+  addFiles(state, {
+    ...EXAMPLE_FILES,
+    [DEFAULT_KUBECONFIG_PATH]: kubeconfigContent
+  })
   state.currentPath = '/home/kube'
   return state
 }

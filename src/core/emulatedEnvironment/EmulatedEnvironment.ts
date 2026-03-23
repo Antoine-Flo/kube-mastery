@@ -39,7 +39,7 @@ export interface EmulatedEnvironment {
   controlPlaneRuntime?: ControlPlaneRuntime
 
   /** Simulated network runtime */
-  networkRuntime?: SimNetworkRuntime
+  networkRuntime: SimNetworkRuntime
 
   /** Simulated volumes runtime */
   volumeRuntime?: SimVolumeRuntime

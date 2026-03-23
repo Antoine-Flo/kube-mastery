@@ -31,6 +31,25 @@ export interface FileSystemState {
 // ─── Path Operations ─────────────────────────────────────────────────────
 
 /**
+ * Simulated login home for the kube user (matches env and default cwd).
+ */
+const SIMULATED_HOME_DIRECTORY = '/home/kube'
+
+/**
+ * Expand leading ~ to the simulated home directory (POSIX-style).
+ * Only `~` and `~/...` are expanded, not `~otheruser`.
+ */
+const expandTildeInTargetPath = (targetPath: string): string => {
+  if (targetPath === '~') {
+    return SIMULATED_HOME_DIRECTORY
+  }
+  if (targetPath.startsWith('~/')) {
+    return `${SIMULATED_HOME_DIRECTORY}/${targetPath.slice(2)}`
+  }
+  return targetPath
+}
+
+/**
  * Get directory name from a path (POSIX-compatible, works in browser)
  * Example: '/path/to/file' -> '/path/to', '/file' -> '/', '/' -> '/'
  */
@@ -50,12 +69,13 @@ const dirname = (path: string): string => {
  * Supports '..' (parent) and '.' (current) navigation
  */
 const resolvePath = (currentPath: string, targetPath: string): string => {
-  if (targetPath.startsWith('/')) {
-    return normalizePath(targetPath)
+  const expandedTargetPath = expandTildeInTargetPath(targetPath)
+  if (expandedTargetPath.startsWith('/')) {
+    return normalizePath(expandedTargetPath)
   }
 
   const parts = currentPath.split('/').filter((p) => p.length > 0)
-  const targetParts = targetPath.split('/').filter((p) => p.length > 0)
+  const targetParts = expandedTargetPath.split('/').filter((p) => p.length > 0)
 
   for (const part of targetParts) {
     if (part === '..') {

@@ -1416,26 +1416,8 @@ spec:
           '    username: admin',
           '    password: secret'
         ].join('\n')
-        const configMapResult = apiServer.findResource(
-          'ConfigMap',
-          'cluster-info',
-          'kube-public'
-        )
-        const updateResult = configMapResult.ok
-          ? apiServer.updateResource(
-              'ConfigMap',
-              'cluster-info',
-              {
-                ...configMapResult.value,
-                data: {
-                  ...(configMapResult.value.data || {}),
-                  kubeconfig
-                }
-              },
-              'kube-public'
-            )
-          : { ok: false, error: 'cluster-info configmap not found' }
-        expect(updateResult.ok).toBe(true)
+        const writeResult = fileSystem.writeFile('/home/kube/.kube/config', kubeconfig)
+        expect(writeResult.ok).toBe(true)
       }
 
       it('should return root help for kubectl -h', () => {
@@ -1721,6 +1703,11 @@ spec:
         expect(setContextResult.value).toContain(
           'Context "kind-conformance" modified.'
         )
+        const kubeconfigReadResult = fileSystem.readFile('/home/kube/.kube/config')
+        expect(kubeconfigReadResult.ok).toBe(true)
+        if (kubeconfigReadResult.ok) {
+          expect(kubeconfigReadResult.value).toContain('namespace: kube-system')
+        }
 
         const getPodsResult = executor.execute('kubectl get pods')
         expect(getPodsResult.ok).toBe(true)
@@ -2081,7 +2068,7 @@ spec:
         executor.execute('kubectl expose deployment web --port=80')
 
         const result = executor.execute(
-          'kubectl run dns-test --image=busybox -i -t --restart=Never --rm --command -- nslookup web.default.svc.cluster.local'
+          'kubectl run dns-test --image=busybox -it --restart=Never --rm --command -- nslookup web.default.svc.cluster.local'
         )
         expect(result.ok).toBe(true)
         if (!result.ok) {
@@ -2089,7 +2076,54 @@ spec:
           return
         }
         expect(result.value).toContain('Name:\tweb.default.svc.cluster.local')
+        expect(result.value).toContain('pod "dns-test" deleted from default namespace')
+        const podResult = apiServer.findResource('Pod', 'dns-test', 'default')
+        expect(podResult.ok).toBe(false)
         networkRuntime.controller.stop()
+      })
+
+      it('should execute nslookup in kubectl run --rm -it flow without --command', () => {
+        const networkRuntime = initializeSimNetworkRuntime(apiServer)
+        const executor = createKubectlExecutor(
+          apiServer,
+          fileSystem,
+          logger,
+          networkRuntime
+        )
+        executor.execute(
+          'kubectl create deployment web --image=nginx --port=8080'
+        )
+        executor.execute('kubectl expose deployment web --port=80')
+
+        const result = executor.execute(
+          'kubectl run dns-test-args --image=busybox -it --restart=Never --rm -- nslookup web.default.svc.cluster.local'
+        )
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          networkRuntime.controller.stop()
+          return
+        }
+        expect(result.value).toContain('Name:\tweb.default.svc.cluster.local')
+        expect(result.value).toContain(
+          'pod "dns-test-args" deleted from default namespace'
+        )
+        const podResult = apiServer.findResource('Pod', 'dns-test-args', 'default')
+        expect(podResult.ok).toBe(false)
+        networkRuntime.controller.stop()
+      })
+
+      it('should reject kubectl run --rm without attached mode', () => {
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const result = executor.execute(
+          'kubectl run dns-test-no-attach --image=busybox --restart=Never --rm -- nslookup web.default.svc.cluster.local'
+        )
+
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+          expect(result.error).toBe(
+            'error: --rm should only be used for attached containers'
+          )
+        }
       })
 
       it('should allow kubectl run when restart is Always', () => {

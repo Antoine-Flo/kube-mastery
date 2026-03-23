@@ -473,7 +473,7 @@ const getEffectiveNamespace = (
   if (parsed.namespace != null) {
     return parsed.namespace
   }
-  return getCurrentNamespaceFromKubeconfig(context.apiServer) ?? 'default'
+  return getCurrentNamespaceFromKubeconfig(context.fileSystem) ?? 'default'
 }
 
 const matchesSelector = (
