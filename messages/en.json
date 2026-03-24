@@ -223,6 +223,8 @@
   "courses_resume": "Resume",
   "courses_lesson": "lesson",
   "courses_lessons": "lessons",
+  "courses_module": "module",
+  "courses_modules": "modules",
   "courses_level": "Level",
   "home_stats_title": "Why learn Kubernetes in 2026?",
   "home_stats_subtitle": "Kubernetes is here to stay: massive adoption, a booming market, and trusted by thousands of companies",

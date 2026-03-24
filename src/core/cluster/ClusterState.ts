@@ -12,6 +12,12 @@ import {
   createDeploymentCreatedEvent,
   createDeploymentDeletedEvent,
   createDeploymentUpdatedEvent,
+  createEndpointSliceCreatedEvent,
+  createEndpointSliceDeletedEvent,
+  createEndpointSliceUpdatedEvent,
+  createEndpointsCreatedEvent,
+  createEndpointsDeletedEvent,
+  createEndpointsUpdatedEvent,
   createIngressCreatedEvent,
   createIngressDeletedEvent,
   createIngressUpdatedEvent,
@@ -54,6 +60,8 @@ import type {
 import type { ConfigMap } from './ressources/ConfigMap'
 import type { DaemonSet } from './ressources/DaemonSet'
 import type { Deployment } from './ressources/Deployment'
+import type { EndpointSlice } from './ressources/EndpointSlice'
+import type { Endpoints } from './ressources/Endpoints'
 import type { Ingress } from './ressources/Ingress'
 import type { Lease } from './ressources/Lease'
 import { type Namespace } from './ressources/Namespace'
@@ -86,6 +94,8 @@ export interface ClusterStateData {
   daemonSets: ResourceCollection<DaemonSet>
   statefulSets: ResourceCollection<StatefulSet>
   services: ResourceCollection<Service>
+  endpointSlices: ResourceCollection<EndpointSlice>
+  endpoints: ResourceCollection<Endpoints>
   ingresses: ResourceCollection<Ingress>
   persistentVolumes: ResourceCollection<PersistentVolume>
   persistentVolumeClaims: ResourceCollection<PersistentVolumeClaim>
@@ -103,6 +113,8 @@ type ResourceByKind = {
   DaemonSet: DaemonSet
   StatefulSet: StatefulSet
   Service: Service
+  EndpointSlice: EndpointSlice
+  Endpoints: Endpoints
   Ingress: Ingress
   PersistentVolume: PersistentVolume
   PersistentVolumeClaim: PersistentVolumeClaim
@@ -128,6 +140,8 @@ export const createClusterStateData = (
     daemonSets: DaemonSet[]
     statefulSets: StatefulSet[]
     services: Service[]
+    endpointSlices: EndpointSlice[]
+    endpoints: Endpoints[]
     ingresses: Ingress[]
     persistentVolumes: PersistentVolume[]
     persistentVolumeClaims: PersistentVolumeClaim[]
@@ -144,6 +158,8 @@ export const createClusterStateData = (
   daemonSets: { items: collections.daemonSets ?? [] },
   statefulSets: { items: collections.statefulSets ?? [] },
   services: { items: collections.services ?? [] },
+  endpointSlices: { items: collections.endpointSlices ?? [] },
+  endpoints: { items: collections.endpoints ?? [] },
   ingresses: { items: collections.ingresses ?? [] },
   persistentVolumes: { items: collections.persistentVolumes ?? [] },
   persistentVolumeClaims: { items: collections.persistentVolumeClaims ?? [] },
@@ -163,6 +179,8 @@ const deploymentRepo = createResourceRepository<Deployment>('Deployment')
 const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
 const statefulSetRepo = createResourceRepository<StatefulSet>('StatefulSet')
 const serviceRepo = createResourceRepository<Service>('Service')
+const endpointSliceRepo = createResourceRepository<EndpointSlice>('EndpointSlice')
+const endpointsRepo = createResourceRepository<Endpoints>('Endpoints')
 const ingressRepo = createResourceRepository<Ingress>('Ingress')
 const persistentVolumeRepo =
   createResourceRepository<PersistentVolume>('PersistentVolume')
@@ -274,6 +292,8 @@ const createEmptyState = (): ClusterStateData => ({
   daemonSets: daemonSetRepo.createEmpty(),
   statefulSets: statefulSetRepo.createEmpty(),
   services: serviceRepo.createEmpty(),
+  endpointSlices: endpointSliceRepo.createEmpty(),
+  endpoints: endpointsRepo.createEmpty(),
   ingresses: ingressRepo.createEmpty(),
   persistentVolumes: persistentVolumeRepo.createEmpty(),
   persistentVolumeClaims: persistentVolumeClaimRepo.createEmpty(),
@@ -309,6 +329,11 @@ const statefulSetOps = createResourceOperations<StatefulSet>(
   'statefulSets'
 )
 const serviceOps = createResourceOperations<Service>(serviceRepo, 'services')
+const endpointSliceOps = createResourceOperations<EndpointSlice>(
+  endpointSliceRepo,
+  'endpointSlices'
+)
+const endpointsOps = createResourceOperations<Endpoints>(endpointsRepo, 'endpoints')
 const ingressOps = createResourceOperations<Ingress>(ingressRepo, 'ingresses')
 const persistentVolumeOps = createResourceOperations<PersistentVolume>(
   persistentVolumeRepo,
@@ -409,6 +434,30 @@ export interface ClusterState {
     namespace: string,
     updateFn: (service: Service) => Service
   ) => Result<Service>
+  getEndpointSlices: (namespace?: string) => EndpointSlice[]
+  addEndpointSlice: (endpointSlice: EndpointSlice) => void
+  findEndpointSlice: (
+    name: string,
+    namespace: string
+  ) => Result<EndpointSlice>
+  deleteEndpointSlice: (
+    name: string,
+    namespace: string
+  ) => Result<EndpointSlice>
+  updateEndpointSlice: (
+    name: string,
+    namespace: string,
+    updateFn: (endpointSlice: EndpointSlice) => EndpointSlice
+  ) => Result<EndpointSlice>
+  getEndpoints: (namespace?: string) => Endpoints[]
+  addEndpoints: (endpoints: Endpoints) => void
+  findEndpoints: (name: string, namespace: string) => Result<Endpoints>
+  deleteEndpoints: (name: string, namespace: string) => Result<Endpoints>
+  updateEndpoints: (
+    name: string,
+    namespace: string,
+    updateFn: (endpoints: Endpoints) => Endpoints
+  ) => Result<Endpoints>
   getIngresses: (namespace?: string) => Ingress[]
   addIngress: (ingress: Ingress) => void
   findIngress: (name: string, namespace: string) => Result<Ingress>
@@ -541,6 +590,16 @@ const EVENT_FACTORIES = {
     created: createServiceCreatedEvent,
     deleted: createServiceDeletedEvent,
     updated: createServiceUpdatedEvent
+  },
+  EndpointSlice: {
+    created: createEndpointSliceCreatedEvent,
+    deleted: createEndpointSliceDeletedEvent,
+    updated: createEndpointSliceUpdatedEvent
+  },
+  Endpoints: {
+    created: createEndpointsCreatedEvent,
+    deleted: createEndpointsDeletedEvent,
+    updated: createEndpointsUpdatedEvent
   },
   Ingress: {
     created: createIngressCreatedEvent,
@@ -743,6 +802,20 @@ export function createClusterState(
     eventBus,
     'Service'
   )
+  const endpointSliceMethods = createFacadeMethods(
+    endpointSliceOps,
+    getState,
+    setState,
+    eventBus,
+    'EndpointSlice'
+  )
+  const endpointsMethods = createFacadeMethods(
+    endpointsOps,
+    getState,
+    setState,
+    eventBus,
+    'Endpoints'
+  )
   const ingressMethods = {
     getAll: (namespace?: string) => ingressOps.getAll(getState(), namespace),
     add: (ingress: Ingress) => {
@@ -940,6 +1013,16 @@ export function createClusterState(
           resourceName,
           resourceNamespace
         ) as Result<KubernetesResource>,
+      EndpointSlice: (resourceName, resourceNamespace) =>
+        endpointSliceMethods.find(
+          resourceName,
+          resourceNamespace
+        ) as Result<KubernetesResource>,
+      Endpoints: (resourceName, resourceNamespace) =>
+        endpointsMethods.find(
+          resourceName,
+          resourceNamespace
+        ) as Result<KubernetesResource>,
       Ingress: (resourceName, resourceNamespace) =>
         ingressMethods.find(
           resourceName,
@@ -998,6 +1081,10 @@ export function createClusterState(
         statefulSetMethods.getAll(resourceNamespace) as KubernetesResource[],
       Service: (resourceNamespace) =>
         serviceMethods.getAll(resourceNamespace) as KubernetesResource[],
+      EndpointSlice: (resourceNamespace) =>
+        endpointSliceMethods.getAll(resourceNamespace) as KubernetesResource[],
+      Endpoints: (resourceNamespace) =>
+        endpointsMethods.getAll(resourceNamespace) as KubernetesResource[],
       Ingress: (resourceNamespace) =>
         ingressMethods.getAll(resourceNamespace) as KubernetesResource[],
       PersistentVolume: (_resourceNamespace) =>
@@ -1070,6 +1157,14 @@ export function createClusterState(
     }
     if (kind === 'Service') {
       serviceMethods.add(resource as Service)
+      return { ok: true, value: resource as KindToResource<TKind> }
+    }
+    if (kind === 'EndpointSlice') {
+      endpointSliceMethods.add(resource as EndpointSlice)
+      return { ok: true, value: resource as KindToResource<TKind> }
+    }
+    if (kind === 'Endpoints') {
+      endpointsMethods.add(resource as Endpoints)
       return { ok: true, value: resource as KindToResource<TKind> }
     }
     if (kind === 'PersistentVolumeClaim') {
@@ -1172,6 +1267,20 @@ export function createClusterState(
         () => resource as Service
       ) as Result<KindToResource<TKind>>
     }
+    if (kind === 'EndpointSlice') {
+      return endpointSliceMethods.update(
+        name,
+        effectiveNamespace,
+        () => resource as EndpointSlice
+      ) as Result<KindToResource<TKind>>
+    }
+    if (kind === 'Endpoints') {
+      return endpointsMethods.update(
+        name,
+        effectiveNamespace,
+        () => resource as Endpoints
+      ) as Result<KindToResource<TKind>>
+    }
     if (kind === 'PersistentVolumeClaim') {
       return persistentVolumeClaimMethods.update(
         name,
@@ -1251,6 +1360,16 @@ export function createClusterState(
         KindToResource<TKind>
       >
     }
+    if (kind === 'EndpointSlice') {
+      return endpointSliceMethods.delete(name, effectiveNamespace) as Result<
+        KindToResource<TKind>
+      >
+    }
+    if (kind === 'Endpoints') {
+      return endpointsMethods.delete(name, effectiveNamespace) as Result<
+        KindToResource<TKind>
+      >
+    }
     if (kind === 'PersistentVolumeClaim') {
       return persistentVolumeClaimMethods.delete(
         name,
@@ -1318,6 +1437,16 @@ export function createClusterState(
     findService: serviceMethods.find,
     deleteService: serviceMethods.delete,
     updateService: serviceMethods.update,
+    getEndpointSlices: endpointSliceMethods.getAll,
+    addEndpointSlice: endpointSliceMethods.add,
+    findEndpointSlice: endpointSliceMethods.find,
+    deleteEndpointSlice: endpointSliceMethods.delete,
+    updateEndpointSlice: endpointSliceMethods.update,
+    getEndpoints: endpointsMethods.getAll,
+    addEndpoints: endpointsMethods.add,
+    findEndpoints: endpointsMethods.find,
+    deleteEndpoints: endpointsMethods.delete,
+    updateEndpoints: endpointsMethods.update,
     getIngresses: ingressMethods.getAll,
     addIngress: ingressMethods.add,
     findIngress: ingressMethods.find,
@@ -1365,6 +1494,8 @@ export function createClusterState(
       daemonSets: { items: [...state.daemonSets.items] },
       statefulSets: { items: [...state.statefulSets.items] },
       services: { items: [...state.services.items] },
+      endpointSlices: { items: [...state.endpointSlices.items] },
+      endpoints: { items: [...state.endpoints.items] },
       ingresses: { items: [...state.ingresses.items] },
       persistentVolumes: { items: [...state.persistentVolumes.items] },
       persistentVolumeClaims: {
@@ -1385,6 +1516,8 @@ export function createClusterState(
         daemonSets: newState.daemonSets || { items: [] },
         statefulSets: newState.statefulSets || { items: [] },
         services: newState.services || { items: [] },
+        endpointSlices: newState.endpointSlices || { items: [] },
+        endpoints: newState.endpoints || { items: [] },
         ingresses: newState.ingresses || { items: [] },
         persistentVolumes: newState.persistentVolumes || { items: [] },
         persistentVolumeClaims: newState.persistentVolumeClaims || {

@@ -129,8 +129,14 @@ EndpointSlices are created and managed automatically. You don't need to interact
 kubectl get endpointslices -l kubernetes.io/service-name=web-service
 ```
 
+For compatibility and troubleshooting, you can still inspect the legacy object:
+
+```bash
+kubectl get endpoints web-service
+```
+
 :::info
-EndpointSlice is enabled by default in Kubernetes 1.21 and later. For most practical purposes you can use `kubectl get endpoints` for day-to-day inspection and debugging , kube-proxy reads from EndpointSlices under the hood, but the classic Endpoints API is still kept in sync for compatibility.
+EndpointSlice is enabled by default in Kubernetes 1.21 and later. Kubernetes now treats Endpoints as a legacy API, but keeps it synchronized for compatibility and debugging workflows.
 :::
 
 ## Hands-On Practice

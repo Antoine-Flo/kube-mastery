@@ -9,6 +9,12 @@ import {
   createDeploymentCreatedEvent,
   createDeploymentDeletedEvent,
   createDeploymentUpdatedEvent,
+  createEndpointSliceCreatedEvent,
+  createEndpointSliceDeletedEvent,
+  createEndpointSliceUpdatedEvent,
+  createEndpointsCreatedEvent,
+  createEndpointsDeletedEvent,
+  createEndpointsUpdatedEvent,
   createIngressCreatedEvent,
   createIngressDeletedEvent,
   createIngressUpdatedEvent,
@@ -47,6 +53,8 @@ import type { KindToResource, ResourceKind } from '../cluster/ClusterState'
 import type { ConfigMap } from '../cluster/ressources/ConfigMap'
 import type { DaemonSet } from '../cluster/ressources/DaemonSet'
 import type { Deployment } from '../cluster/ressources/Deployment'
+import type { EndpointSlice } from '../cluster/ressources/EndpointSlice'
+import type { Endpoints } from '../cluster/ressources/Endpoints'
 import type { Ingress } from '../cluster/ressources/Ingress'
 import type { Lease } from '../cluster/ressources/Lease'
 import type { Namespace } from '../cluster/ressources/Namespace'
@@ -471,6 +479,16 @@ const RESOURCE_MUTATION_EVENTS: Record<
     createServiceCreatedEvent,
     createServiceUpdatedEvent,
     createServiceDeletedEvent
+  ),
+  Endpoints: createNamespacedMutationEvents<Endpoints>(
+    createEndpointsCreatedEvent,
+    createEndpointsUpdatedEvent,
+    createEndpointsDeletedEvent
+  ),
+  EndpointSlice: createNamespacedMutationEvents<EndpointSlice>(
+    createEndpointSliceCreatedEvent,
+    createEndpointSliceUpdatedEvent,
+    createEndpointSliceDeletedEvent
   ),
   Ingress: createNamespacedMutationEvents<Ingress>(
     createIngressCreatedEvent,

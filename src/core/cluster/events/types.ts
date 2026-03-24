@@ -8,6 +8,8 @@ import type { BaseEvent } from '../../events/types'
 import type { ConfigMap } from '../ressources/ConfigMap'
 import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
+import type { EndpointSlice } from '../ressources/EndpointSlice'
+import type { Endpoints } from '../ressources/Endpoints'
 import type { Ingress } from '../ressources/Ingress'
 import type { Lease } from '../ressources/Lease'
 import type { Namespace } from '../ressources/Namespace'
@@ -248,6 +250,58 @@ export interface ServiceUpdatedEvent extends BaseEvent {
     namespace: string
     service: Service
     previousService: Service
+  }
+}
+
+export interface EndpointsCreatedEvent extends BaseEvent {
+  type: 'EndpointsCreated'
+  payload: {
+    endpoints: Endpoints
+  }
+}
+
+export interface EndpointsDeletedEvent extends BaseEvent {
+  type: 'EndpointsDeleted'
+  payload: {
+    name: string
+    namespace: string
+    deletedEndpoints: Endpoints
+  }
+}
+
+export interface EndpointsUpdatedEvent extends BaseEvent {
+  type: 'EndpointsUpdated'
+  payload: {
+    name: string
+    namespace: string
+    endpoints: Endpoints
+    previousEndpoints: Endpoints
+  }
+}
+
+export interface EndpointSliceCreatedEvent extends BaseEvent {
+  type: 'EndpointSliceCreated'
+  payload: {
+    endpointSlice: EndpointSlice
+  }
+}
+
+export interface EndpointSliceDeletedEvent extends BaseEvent {
+  type: 'EndpointSliceDeleted'
+  payload: {
+    name: string
+    namespace: string
+    deletedEndpointSlice: EndpointSlice
+  }
+}
+
+export interface EndpointSliceUpdatedEvent extends BaseEvent {
+  type: 'EndpointSliceUpdated'
+  payload: {
+    name: string
+    namespace: string
+    endpointSlice: EndpointSlice
+    previousEndpointSlice: EndpointSlice
   }
 }
 
@@ -539,6 +593,12 @@ export type ClusterEvent =
   | ServiceCreatedEvent
   | ServiceDeletedEvent
   | ServiceUpdatedEvent
+  | EndpointsCreatedEvent
+  | EndpointsDeletedEvent
+  | EndpointsUpdatedEvent
+  | EndpointSliceCreatedEvent
+  | EndpointSliceDeletedEvent
+  | EndpointSliceUpdatedEvent
   | PersistentVolumeCreatedEvent
   | PersistentVolumeDeletedEvent
   | PersistentVolumeUpdatedEvent
@@ -1022,6 +1082,76 @@ export const createServiceUpdatedEvent = (
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
   payload: { name, namespace, service, previousService }
+})
+
+export const createEndpointsCreatedEvent = (
+  endpoints: Endpoints,
+  source?: string
+): EndpointsCreatedEvent => ({
+  type: 'EndpointsCreated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { endpoints }
+})
+
+export const createEndpointsDeletedEvent = (
+  name: string,
+  namespace: string,
+  deletedEndpoints: Endpoints,
+  source?: string
+): EndpointsDeletedEvent => ({
+  type: 'EndpointsDeleted',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, deletedEndpoints }
+})
+
+export const createEndpointsUpdatedEvent = (
+  name: string,
+  namespace: string,
+  endpoints: Endpoints,
+  previousEndpoints: Endpoints,
+  source?: string
+): EndpointsUpdatedEvent => ({
+  type: 'EndpointsUpdated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, endpoints, previousEndpoints }
+})
+
+export const createEndpointSliceCreatedEvent = (
+  endpointSlice: EndpointSlice,
+  source?: string
+): EndpointSliceCreatedEvent => ({
+  type: 'EndpointSliceCreated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { endpointSlice }
+})
+
+export const createEndpointSliceDeletedEvent = (
+  name: string,
+  namespace: string,
+  deletedEndpointSlice: EndpointSlice,
+  source?: string
+): EndpointSliceDeletedEvent => ({
+  type: 'EndpointSliceDeleted',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, deletedEndpointSlice }
+})
+
+export const createEndpointSliceUpdatedEvent = (
+  name: string,
+  namespace: string,
+  endpointSlice: EndpointSlice,
+  previousEndpointSlice: EndpointSlice,
+  source?: string
+): EndpointSliceUpdatedEvent => ({
+  type: 'EndpointSliceUpdated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, endpointSlice, previousEndpointSlice }
 })
 
 /**

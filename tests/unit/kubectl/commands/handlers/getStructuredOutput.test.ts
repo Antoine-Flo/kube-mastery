@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
+import { createServiceEndpointSlice } from '../../../../../src/core/cluster/ressources/EndpointSlice'
+import { createEndpoints } from '../../../../../src/core/cluster/ressources/Endpoints'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { handleGet } from '../../../../../src/core/kubectl/commands/handlers/get'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
@@ -221,6 +223,62 @@ describe('kubectl get handler - structured output parity', () => {
     const parsedJson = JSON.parse(result)
 
     expect(parsedJson.metadata.resourceVersion).toBe('42')
+  })
+
+  it('returns EndpointsList metadata for endpoints json output', () => {
+    const webEndpoints = createEndpoints({
+      name: 'web-svc',
+      namespace: 'default',
+      subsets: [
+        {
+          addresses: [{ ip: '10.244.0.10' }],
+          ports: [{ port: 8080, protocol: 'TCP' }]
+        }
+      ]
+    })
+    const state = createClusterStateData({ endpoints: [webEndpoints] })
+    const parsed = createParsedGetCommand({
+      resource: 'endpoints',
+      flags: { output: 'json' }
+    })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(apiServer, parsed)
+    const parsedJson = JSON.parse(result)
+
+    expect(parsedJson.apiVersion).toBe('v1')
+    expect(parsedJson.kind).toBe('List')
+    expect(parsedJson.items).toHaveLength(1)
+    expect(parsedJson.items[0].kind).toBe('Endpoints')
+  })
+
+  it('returns EndpointSliceList metadata for endpointslices json output', () => {
+    const endpointSlice = createServiceEndpointSlice({
+      serviceName: 'web-svc',
+      namespace: 'default',
+      backends: [
+        {
+          podName: 'web-prod',
+          namespace: 'default',
+          podIP: '10.244.0.10',
+          targetPort: 8080
+        }
+      ]
+    })
+    const state = createClusterStateData({ endpointSlices: [endpointSlice] })
+    const parsed = createParsedGetCommand({
+      resource: 'endpointslices',
+      flags: { output: 'json' }
+    })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(apiServer, parsed)
+    const parsedJson = JSON.parse(result)
+
+    expect(parsedJson.apiVersion).toBe('discovery.k8s.io/v1')
+    expect(parsedJson.kind).toBe('List')
+    expect(parsedJson.items).toHaveLength(1)
+    expect(parsedJson.items[0].kind).toBe('EndpointSlice')
   })
 })
 

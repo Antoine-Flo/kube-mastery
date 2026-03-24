@@ -12,9 +12,11 @@ export const SUPPORTED_RESOURCE_KINDS: ResourceKind[] = [
   'Deployment',
   'DaemonSet',
   'StatefulSet',
+  'EndpointSlice',
   'PersistentVolume',
   'PersistentVolumeClaim',
   'Service',
+  'Endpoints',
   'Lease'
 ]
 
@@ -28,6 +30,8 @@ export const NAMESPACED_RESOURCE_KINDS: ResourceKind[] = [
   'StatefulSet',
   'PersistentVolumeClaim',
   'Service',
+  'EndpointSlice',
+  'Endpoints',
   'Ingress',
   'Lease'
 ]
@@ -40,6 +44,8 @@ export const RESOURCE_KIND_BY_RESOURCE: Record<
   pods: 'Pod',
   deployments: 'Deployment',
   services: 'Service',
+  endpointslices: 'EndpointSlice',
+  endpoints: 'Endpoints',
   namespaces: 'Namespace',
   configmaps: 'ConfigMap',
   secrets: 'Secret',
@@ -55,6 +61,8 @@ export const RESOURCE_KIND_BY_RESOURCE: Record<
 }
 
 const KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
+  EndpointSlice: 'endpointslice.discovery.k8s.io',
+  Endpoints: 'endpoints',
   Deployment: 'deployment.apps',
   DaemonSet: 'daemonset.apps',
   StatefulSet: 'statefulset.apps',
@@ -64,6 +72,8 @@ const KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
 }
 
 const PLURAL_KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
+  EndpointSlice: 'endpointslices.discovery.k8s.io',
+  Endpoints: 'endpoints',
   Deployment: 'deployments.apps',
   DaemonSet: 'daemonsets.apps',
   StatefulSet: 'statefulsets.apps',
@@ -91,9 +101,11 @@ export const RESOURCE_OUTPUT_METADATA_BY_RESOURCE: Record<
   daemonsets: { apiVersion: 'apps/v1', kind: 'DaemonSet' },
   statefulsets: { apiVersion: 'apps/v1', kind: 'StatefulSet' },
   services: { apiVersion: 'v1', kind: 'Service' },
+  endpointslices: { apiVersion: 'discovery.k8s.io/v1', kind: 'EndpointSlice' },
   ingresses: { apiVersion: 'networking.k8s.io/v1', kind: 'Ingress' },
   ingressclasses: { apiVersion: 'networking.k8s.io/v1', kind: 'IngressClass' },
   namespaces: { apiVersion: 'v1', kind: 'Namespace' },
+  endpoints: { apiVersion: 'v1', kind: 'Endpoints' },
   persistentvolumes: { apiVersion: 'v1', kind: 'PersistentVolume' },
   persistentvolumeclaims: { apiVersion: 'v1', kind: 'PersistentVolumeClaim' },
   leases: { apiVersion: 'coordination.k8s.io/v1', kind: 'Lease' }

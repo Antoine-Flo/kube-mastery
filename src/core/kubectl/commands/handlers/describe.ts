@@ -6,6 +6,8 @@ import { error, success } from '../../../shared/result'
 import {
   describeConfigMap,
   describeDeployment,
+  describeEndpointSlice,
+  describeEndpoints,
   describeIngress,
   describeLease,
   describeNode,
@@ -99,6 +101,20 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
       return describeService(item, state)
     },
     type: 'Service'
+  },
+  endpoints: {
+    items: 'endpoints',
+    formatter: (item) => {
+      return describeEndpoints(item)
+    },
+    type: 'Endpoints'
+  },
+  endpointslices: {
+    items: 'endpointSlices',
+    formatter: (item) => {
+      return describeEndpointSlice(item)
+    },
+    type: 'EndpointSlice'
   },
   deployments: {
     items: 'deployments',

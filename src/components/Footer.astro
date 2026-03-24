@@ -47,6 +47,10 @@ const currentPath = getPathWithoutLocale(Astro.url)
       </div>
     )
   }
+  <div class="credit">
+    Developed by{' '}
+    <a href="https://antoineflouzat.com" rel="noopener noreferrer" target="_blank">Antoine</a>
+  </div>
 </footer>
 
 <style>
@@ -82,5 +86,9 @@ const currentPath = getPathWithoutLocale(Astro.url)
   }
   .lang :global(.select) {
     width: auto;
+  }
+  .credit {
+    font-size: var(--text-sm);
+    color: var(--color-gray-10);
   }
 </style>

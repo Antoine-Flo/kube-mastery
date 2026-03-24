@@ -12,6 +12,8 @@ import type {
   DeploymentCondition,
   DeploymentStrategyType
 } from '../../cluster/ressources/Deployment'
+import type { EndpointSlice } from '../../cluster/ressources/EndpointSlice'
+import type { Endpoints } from '../../cluster/ressources/Endpoints'
 import type { Ingress } from '../../cluster/ressources/Ingress'
 import type { Lease } from '../../cluster/ressources/Lease'
 import type {
@@ -1677,19 +1679,6 @@ export const describePersistentVolumeClaim = (
   return lines.join('\n')
 }
 
-const podMatchesSelector = (
-  pod: Pod,
-  selector: Record<string, string> | undefined
-): boolean => {
-  if (selector == null) {
-    return false
-  }
-  const labels = pod.metadata.labels ?? {}
-  return Object.entries(selector).every(([key, value]) => {
-    return labels[key] === value
-  })
-}
-
 const renderServicePort = (service: Service, portIndex: number): string => {
   const port = service.spec.ports[portIndex]
   if (port == null) {
@@ -1715,23 +1704,85 @@ const renderServiceEndpoints = (
   service: Service,
   state: ClusterStateData
 ): string => {
-  const selectedPods = state.pods.items.filter((pod) => {
-    return podMatchesSelector(pod, service.spec.selector)
+  const endpointsResource = state.endpoints.items.find((endpoints) => {
+    return (
+      endpoints.metadata.name === service.metadata.name &&
+      endpoints.metadata.namespace === service.metadata.namespace
+    )
   })
-  if (selectedPods.length === 0) {
+  if (endpointsResource == null) {
     return '<none>'
   }
-  const targetPort =
-    service.spec.ports[0]?.targetPort ?? service.spec.ports[0]?.port
-  const endpointPort =
-    typeof targetPort === 'number'
-      ? targetPort
-      : (service.spec.ports[0]?.port ?? 80)
-  const endpoints = selectedPods.map((pod) => {
-    const podIP = pod.status.podIP ?? simulatePodIP(pod.metadata.name)
-    return `${podIP}:${endpointPort}`
+  return renderEndpointsInline(endpointsResource)
+}
+
+const renderEndpointsInline = (endpoints: Endpoints): string => {
+  const subsets = endpoints.subsets ?? []
+  const values: string[] = []
+  for (const subset of subsets) {
+    const addresses = subset.addresses ?? []
+    const ports = subset.ports ?? []
+    for (const address of addresses) {
+      if (ports.length === 0) {
+        values.push(address.ip)
+        continue
+      }
+      for (const port of ports) {
+        values.push(`${address.ip}:${port.port}`)
+      }
+    }
+  }
+  if (values.length === 0) {
+    return '<none>'
+  }
+  return values.join(',')
+}
+
+export const describeEndpoints = (endpoints: Endpoints): string => {
+  const lines: string[] = []
+  lines.push(`Name:         ${endpoints.metadata.name}`)
+  lines.push(`Namespace:    ${endpoints.metadata.namespace}`)
+  lines.push(`Labels:       ${formatLabels(endpoints.metadata.labels)}`)
+  lines.push(`Annotations:  ${formatLabels(endpoints.metadata.annotations)}`)
+  lines.push(`Subsets:      ${renderEndpointsInline(endpoints)}`)
+  lines.push('Events:       <none>')
+  return lines.join('\n')
+}
+
+const renderEndpointSliceEndpointAddresses = (
+  endpointSlice: EndpointSlice
+): string => {
+  const values = endpointSlice.endpoints.flatMap((endpoint) => endpoint.addresses)
+  if (values.length === 0) {
+    return '<none>'
+  }
+  return values.join(',')
+}
+
+const renderEndpointSlicePorts = (endpointSlice: EndpointSlice): string => {
+  const ports = endpointSlice.ports ?? []
+  if (ports.length === 0) {
+    return '<none>'
+  }
+  const rendered = ports.map((port) => {
+    const protocol = port.protocol ?? 'TCP'
+    const portNumber = port.port != null ? String(port.port) : '<unset>'
+    return `${portNumber}/${protocol}`
   })
-  return endpoints.join(',')
+  return rendered.join(',')
+}
+
+export const describeEndpointSlice = (endpointSlice: EndpointSlice): string => {
+  const lines: string[] = []
+  lines.push(`Name:         ${endpointSlice.metadata.name}`)
+  lines.push(`Namespace:    ${endpointSlice.metadata.namespace}`)
+  lines.push(`Labels:       ${formatLabels(endpointSlice.metadata.labels)}`)
+  lines.push(`Annotations:  ${formatLabels(endpointSlice.metadata.annotations)}`)
+  lines.push(`AddressType:  ${endpointSlice.addressType}`)
+  lines.push(`Ports:        ${renderEndpointSlicePorts(endpointSlice)}`)
+  lines.push(`Endpoints:    ${renderEndpointSliceEndpointAddresses(endpointSlice)}`)
+  lines.push('Events:       <none>')
+  return lines.join('\n')
 }
 
 export const describeService = (

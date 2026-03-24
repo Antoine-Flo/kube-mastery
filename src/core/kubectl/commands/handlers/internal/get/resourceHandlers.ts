@@ -2,6 +2,8 @@ import type { ConfigMap } from '../../../../../cluster/ressources/ConfigMap'
 import type { DaemonSet } from '../../../../../cluster/ressources/DaemonSet'
 import type { Deployment } from '../../../../../cluster/ressources/Deployment'
 import { getDeploymentDesiredReplicas } from '../../../../../cluster/ressources/Deployment'
+import type { EndpointSlice } from '../../../../../cluster/ressources/EndpointSlice'
+import type { Endpoints } from '../../../../../cluster/ressources/Endpoints'
 import type { Ingress } from '../../../../../cluster/ressources/Ingress'
 import type { Lease } from '../../../../../cluster/ressources/Lease'
 import type { Namespace } from '../../../../../cluster/ressources/Namespace'
@@ -50,6 +52,8 @@ interface ResourceHandlerRegistry {
   statefulsets: ResourceHandler<StatefulSet>
   deployments: ResourceHandler<Deployment>
   services: ResourceHandler<Service>
+  endpointslices: ResourceHandler<EndpointSlice>
+  endpoints: ResourceHandler<Endpoints>
   ingresses: ResourceHandler<Ingress>
   ingressclasses: ResourceHandler<Namespace>
   namespaces: ResourceHandler<Namespace>
@@ -223,6 +227,60 @@ export const RESOURCE_HANDLERS: ResourceHandlerRegistry = {
       formatServicePorts(service),
       formatAge(service.metadata.creationTimestamp)
     ],
+    supportsFiltering: true
+  },
+  endpointslices: {
+    getItems: (state) => state.endpointSlices.items,
+    headers: ['name', 'address-type', 'ports', 'endpoints', 'age'],
+    formatRow: (endpointSlice) => {
+      const ports = (endpointSlice.ports ?? [])
+        .map((port) => {
+          if (port.port == null) {
+            return '<unset>'
+          }
+          return String(port.port)
+        })
+        .join(',')
+      const renderedEndpoints = endpointSlice.endpoints
+        .map((endpoint) => endpoint.addresses.join(','))
+        .filter((value) => value.length > 0)
+      return [
+        endpointSlice.metadata.name,
+        endpointSlice.addressType,
+        ports.length > 0 ? ports : '<none>',
+        renderedEndpoints.length > 0 ? renderedEndpoints.join(',') : '<none>',
+        formatAge(endpointSlice.metadata.creationTimestamp)
+      ]
+    },
+    supportsFiltering: true
+  },
+  endpoints: {
+    getItems: (state) => state.endpoints.items,
+    headers: ['name', 'endpoints', 'age'],
+    formatRow: (endpoints) => {
+      const subsets = endpoints.subsets ?? []
+      const renderedEndpoints: string[] = []
+      for (const subset of subsets) {
+        const addresses = subset.addresses ?? []
+        const ports = subset.ports ?? []
+        for (const address of addresses) {
+          if (ports.length === 0) {
+            renderedEndpoints.push(address.ip)
+            continue
+          }
+          for (const port of ports) {
+            renderedEndpoints.push(`${address.ip}:${port.port}`)
+          }
+        }
+      }
+      const endpointsColumn =
+        renderedEndpoints.length > 0 ? renderedEndpoints.join(',') : '<none>'
+      return [
+        endpoints.metadata.name,
+        endpointsColumn,
+        formatAge(endpoints.metadata.creationTimestamp)
+      ]
+    },
     supportsFiltering: true
   },
   ingresses: {

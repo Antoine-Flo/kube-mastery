@@ -162,10 +162,10 @@ Open the terminal and work through these exercises to see selectors in action.
 **1. Create Pods with varied labels**
 
 ```bash
-kubectl run web-prod --image=nginx:1.28 --labels="app=web,env=prod,track=stable"
-kubectl run web-staging --image=nginx:1.28 --labels="app=web,env=staging,track=stable"
-kubectl run api-prod --image=nginx:1.28 --labels="app=api,env=prod,track=stable"
-kubectl run web-canary --image=nginx:1.28 --labels="app=web,env=prod,track=canary"
+kubectl run web-prod --image=nginx --labels="app=web,env=prod,track=stable"
+kubectl run web-staging --image=nginx --labels="app=web,env=staging,track=stable"
+kubectl run api-prod --image=nginx --labels="app=api,env=prod,track=stable"
+kubectl run web-canary --image=nginx --labels="app=web,env=prod,track=canary"
 ```
 
 **2. Practice equality-based selectors**
@@ -180,6 +180,8 @@ kubectl get pods -l app=web,env=prod
 
 ```bash
 kubectl get pods -l "env in (staging,prod)"
+kubectl get pods -l "env in (staging)"
+
 kubectl get pods -l "track notin (canary)"
 kubectl get pods -l "track notin (canary),app=web"
 ```
@@ -190,7 +192,9 @@ kubectl get pods -l "track notin (canary),app=web"
 kubectl expose pod web-prod --name=web-svc --port=80 --selector="app=web,env=prod,track=stable"
 kubectl describe service web-svc
 # Look at the Endpoints line, it should list the IPs of matching Pods
-kubectl get endpoints web-svc
+kubectl get endpoints web-svc # Old way deprecated v1.33+
+# Modern resource used by Kubernetes internals
+kubectl get endpointslices -l kubernetes.io/service-name=web-svc
 ```
 
 **5. Deliberately break the selector and observe empty Endpoints**
@@ -198,7 +202,8 @@ kubectl get endpoints web-svc
 ```bash
 kubectl delete service web-svc
 kubectl expose pod web-prod --name=web-svc --port=80 --selector="app=doesnotexist"
-kubectl get endpoints web-svc
+kubectl get endpoints web-svc 
+kubectl get endpointslices -l kubernetes.io/service-name=web-svc
 # Endpoints should show <none>
 ```
 

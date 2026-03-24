@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
+import { createServiceEndpointSlice } from '../../../../../src/core/cluster/ressources/EndpointSlice'
+import { createEndpoints } from '../../../../../src/core/cluster/ressources/Endpoints'
 import { createNode } from '../../../../../src/core/cluster/ressources/Node'
 import { handleGet } from '../../../../../src/core/kubectl/commands/handlers/get'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
@@ -308,5 +310,139 @@ describe('kubectl get handler - nodes', () => {
       expect(result).toContain('control-plane')
       expect(result).not.toContain('worker-node-1')
     })
+  })
+})
+
+describe('kubectl get handler - endpoints', () => {
+  let apiServer: ReturnType<typeof createApiServerFacade>
+
+  beforeEach(() => {
+    apiServer = createApiServerFacade()
+  })
+
+  const createParsedCommand = (
+    overrides: Partial<ParsedCommand> = {}
+  ): ParsedCommand => {
+    return {
+      action: 'get',
+      resource: 'endpoints',
+      flags: {},
+      ...overrides
+    }
+  }
+
+  it('should list endpoints in table format', () => {
+    const webEndpoints = createEndpoints({
+      name: 'web-svc',
+      namespace: 'default',
+      subsets: [
+        {
+          addresses: [{ ip: '10.244.0.10' }],
+          ports: [{ port: 8080, protocol: 'TCP' }]
+        }
+      ],
+      creationTimestamp: '2024-01-16T18:03:00Z'
+    })
+    const state = createClusterStateData({ endpoints: [webEndpoints] })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(apiServer, createParsedCommand())
+
+    expect(result).toContain('NAME')
+    expect(result).toContain('ENDPOINTS')
+    expect(result).toContain('web-svc')
+    expect(result).toContain('10.244.0.10:8080')
+  })
+
+  it('should return endpoints in json format', () => {
+    const emptyEndpoints = createEndpoints({
+      name: 'web-svc',
+      namespace: 'default',
+      subsets: undefined
+    })
+    const state = createClusterStateData({ endpoints: [emptyEndpoints] })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(
+      apiServer,
+      createParsedCommand({ flags: { output: 'json' } })
+    )
+
+    expect(result).toContain('"apiVersion": "v1"')
+    expect(result).toContain('"kind": "List"')
+    expect(result).toContain('"name": "web-svc"')
+    const payload = JSON.parse(result)
+    expect(payload.items).toHaveLength(1)
+    expect(payload.items[0].kind).toBe('Endpoints')
+  })
+})
+
+describe('kubectl get handler - endpointslices', () => {
+  let apiServer: ReturnType<typeof createApiServerFacade>
+
+  beforeEach(() => {
+    apiServer = createApiServerFacade()
+  })
+
+  const createParsedCommand = (
+    overrides: Partial<ParsedCommand> = {}
+  ): ParsedCommand => {
+    return {
+      action: 'get',
+      resource: 'endpointslices',
+      flags: {},
+      ...overrides
+    }
+  }
+
+  it('should list endpointslices in table format', () => {
+    const endpointSlice = createServiceEndpointSlice({
+      serviceName: 'web-svc',
+      namespace: 'default',
+      backends: [
+        {
+          podName: 'web-prod',
+          namespace: 'default',
+          podIP: '10.244.0.10',
+          targetPort: 8080
+        }
+      ],
+      creationTimestamp: '2024-01-16T18:03:00Z'
+    })
+    const state = createClusterStateData({ endpointSlices: [endpointSlice] })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(apiServer, createParsedCommand())
+
+    expect(result).toContain('NAME')
+    expect(result).toContain('ADDRESS-TYPE')
+    expect(result).toContain('PORTS')
+    expect(result).toContain('ENDPOINTS')
+    expect(result).toContain('web-svc-')
+    expect(result).toContain('IPv4')
+    expect(result).toContain('8080')
+    expect(result).toContain('10.244.0.10')
+  })
+
+  it('should return endpointslices in json format', () => {
+    const endpointSlice = createServiceEndpointSlice({
+      serviceName: 'web-svc',
+      namespace: 'default',
+      backends: []
+    })
+    const state = createClusterStateData({ endpointSlices: [endpointSlice] })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(
+      apiServer,
+      createParsedCommand({ flags: { output: 'json' } })
+    )
+
+    expect(result).toContain('"apiVersion": "discovery.k8s.io/v1"')
+    expect(result).toContain('"kind": "List"')
+    const payload = JSON.parse(result)
+    expect(payload.items).toHaveLength(1)
+    expect(payload.items[0].metadata.name).toMatch(/^web-svc-[a-z0-9]{5}$/)
+    expect(payload.items[0].kind).toBe('EndpointSlice')
   })
 })

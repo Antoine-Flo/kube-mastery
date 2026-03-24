@@ -10,6 +10,11 @@ import type { ParsedCommand } from '../types'
 import { createResourceWithEvents } from '../resourceHelpers'
 
 type ExposeServiceType = NonNullable<ServiceSpec['type']>
+type ExposeTargetResource = 'deployments' | 'pods'
+const SUPPORTED_EXPOSE_RESOURCES: readonly ExposeTargetResource[] = [
+  'deployments',
+  'pods'
+]
 
 const parseExposeServiceType = (
   rawType: string | boolean | undefined
@@ -111,6 +116,120 @@ const resolveDefaultTargetPortFromDeployment = (
   return undefined
 }
 
+const resolveSelectorFromPod = (
+  apiServer: ApiServerFacade,
+  podName: string,
+  namespace: string
+): Result<Record<string, string>, string> => {
+  const podResult = apiServer.findResource('Pod', podName, namespace)
+  if (!podResult.ok) {
+    return error(`Error from server (NotFound): pods "${podName}" not found`)
+  }
+  const labels = podResult.value.metadata.labels
+  if (labels == null || Object.keys(labels).length === 0) {
+    return error(`error: pod "${podName}" has no labels to expose`)
+  }
+  return success(labels)
+}
+
+const resolveDefaultTargetPortFromPod = (
+  apiServer: ApiServerFacade,
+  podName: string,
+  namespace: string
+): number | undefined => {
+  const podResult = apiServer.findResource('Pod', podName, namespace)
+  if (!podResult.ok) {
+    return undefined
+  }
+  const firstContainer = podResult.value.spec.containers[0]
+  const firstContainerPort = firstContainer?.ports?.[0]?.containerPort
+  if (typeof firstContainerPort === 'number') {
+    return firstContainerPort
+  }
+  return undefined
+}
+
+const resolveLabelsFromDeployment = (
+  apiServer: ApiServerFacade,
+  deploymentName: string,
+  namespace: string
+): Result<Record<string, string> | undefined, string> => {
+  const deploymentResult = apiServer.findResource(
+    'Deployment',
+    deploymentName,
+    namespace
+  )
+  if (!deploymentResult.ok) {
+    return error(
+      `Error from server (NotFound): deployments.apps "${deploymentName}" not found`
+    )
+  }
+  return success(deploymentResult.value.metadata.labels)
+}
+
+const resolveLabelsFromPod = (
+  apiServer: ApiServerFacade,
+  podName: string,
+  namespace: string
+): Result<Record<string, string> | undefined, string> => {
+  const podResult = apiServer.findResource('Pod', podName, namespace)
+  if (!podResult.ok) {
+    return error(`Error from server (NotFound): pods "${podName}" not found`)
+  }
+  return success(podResult.value.metadata.labels)
+}
+
+const parseExposeResource = (
+  resource: ParsedCommand['resource']
+): ExposeTargetResource | ExecutionResult => {
+  if (resource == null) {
+    return error('expose requires a resource type and name')
+  }
+  const isSupportedResource = SUPPORTED_EXPOSE_RESOURCES.includes(
+    resource as ExposeTargetResource
+  )
+  if (!isSupportedResource) {
+    return error('expose currently supports only deployment and pod resources')
+  }
+  return resource as ExposeTargetResource
+}
+
+const resolveSelectorFromResource = (
+  apiServer: ApiServerFacade,
+  resource: ExposeTargetResource,
+  resourceName: string,
+  namespace: string
+): Result<Record<string, string>, string> => {
+  if (resource === 'deployments') {
+    return resolveSelectorFromDeployment(apiServer, resourceName, namespace)
+  }
+  return resolveSelectorFromPod(apiServer, resourceName, namespace)
+}
+
+const resolveDefaultTargetPortFromResource = (
+  apiServer: ApiServerFacade,
+  resource: ExposeTargetResource,
+  resourceName: string,
+  namespace: string
+): number | undefined => {
+  if (resource === 'deployments') {
+    return resolveDefaultTargetPortFromDeployment(apiServer, resourceName, namespace)
+  }
+  return resolveDefaultTargetPortFromPod(apiServer, resourceName, namespace)
+}
+
+const resolveLabelsFromResource = (
+  apiServer: ApiServerFacade,
+  resource: ExposeTargetResource,
+  resourceName: string,
+  namespace: string
+): Result<Record<string, string> | undefined, string> => {
+  if (resource === 'deployments') {
+    return resolveLabelsFromDeployment(apiServer, resourceName, namespace)
+  }
+  return resolveLabelsFromPod(apiServer, resourceName, namespace)
+}
+
 export const handleExpose = (
   apiServer: ApiServerFacade,
   parsed: ParsedCommand
@@ -118,8 +237,9 @@ export const handleExpose = (
   if (!parsed.resource || !parsed.name) {
     return error('expose requires a resource type and name')
   }
-  if (parsed.resource !== 'deployments') {
-    return error('expose currently supports only deployment resources')
+  const exposeResource = parseExposeResource(parsed.resource)
+  if (typeof exposeResource !== 'string') {
+    return exposeResource
   }
   if (parsed.port == null) {
     return error('expose requires flag --port')
@@ -151,6 +271,16 @@ export const handleExpose = (
     return parsedTargetPort
   }
 
+  const sourceLabelsResult = resolveLabelsFromResource(
+    apiServer,
+    exposeResource,
+    parsed.name,
+    namespace
+  )
+  if (!sourceLabelsResult.ok) {
+    return sourceLabelsResult
+  }
+
   let selector: Record<string, string>
   if (parsed.selector != null) {
     const selectorMapResult = toEqualitySelectorMap(parsed.selector)
@@ -159,8 +289,9 @@ export const handleExpose = (
     }
     selector = selectorMapResult.value
   } else {
-    const selectorResult = resolveSelectorFromDeployment(
+    const selectorResult = resolveSelectorFromResource(
       apiServer,
+      exposeResource,
       parsed.name,
       namespace
     )
@@ -170,14 +301,16 @@ export const handleExpose = (
     selector = selectorResult.value
   }
 
-  const defaultTargetPort = resolveDefaultTargetPortFromDeployment(
+  const defaultTargetPort = resolveDefaultTargetPortFromResource(
     apiServer,
+    exposeResource,
     parsed.name,
     namespace
   )
   const service = createService({
     name: serviceName,
     namespace,
+    labels: sourceLabelsResult.value,
     selector,
     type: parsedType,
     ports: [

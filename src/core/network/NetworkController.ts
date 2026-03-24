@@ -1,5 +1,13 @@
 import type { ApiServerFacade } from '../api/ApiServerFacade'
 import type { ServiceDeletedEvent } from '../cluster/events/types'
+import {
+  createServiceEndpointSlice,
+  type EndpointSlice
+} from '../cluster/ressources/EndpointSlice'
+import {
+  createServiceEndpoints,
+  type Endpoints
+} from '../cluster/ressources/Endpoints'
 import { isPodTerminating, type Pod } from '../cluster/ressources/Pod'
 import type { Service } from '../cluster/ressources/Service'
 import { startPeriodicResync } from '../control-plane/controller-runtime/helpers'
@@ -117,6 +125,39 @@ const getServiceEndpoints = (
   return endpoints
 }
 
+const endpointsChanged = (
+  previous: Endpoints,
+  next: Endpoints
+): boolean => {
+  const previousSubsets = previous.subsets ?? []
+  const nextSubsets = next.subsets ?? []
+  return JSON.stringify(previousSubsets) !== JSON.stringify(nextSubsets)
+}
+
+const endpointSliceChanged = (
+  previous: EndpointSlice,
+  next: EndpointSlice
+): boolean => {
+  const previousPayload = {
+    ports: previous.ports ?? [],
+    endpoints: previous.endpoints
+  }
+  const nextPayload = {
+    ports: next.ports ?? [],
+    endpoints: next.endpoints
+  }
+  return JSON.stringify(previousPayload) !== JSON.stringify(nextPayload)
+}
+
+const isSliceForService = (
+  endpointSlice: EndpointSlice,
+  serviceName: string
+): boolean => {
+  return (
+    endpointSlice.metadata.labels?.['kubernetes.io/service-name'] === serviceName
+  )
+}
+
 const withNetworkAllocations = (
   service: Service,
   serviceIpAllocator: ReturnType<typeof createServiceIpAllocator>,
@@ -203,6 +244,7 @@ export const createNetworkController = (
       const effectiveService = serviceChanged(service, allocatedService)
         ? allocatedService
         : service
+      const serviceEndpoints = getServiceEndpoints(effectiveService, pods)
 
       networkState.upsertServiceRuntime({
         namespace: effectiveService.metadata.namespace,
@@ -218,8 +260,69 @@ export const createNetworkController = (
           targetPort: port.targetPort ?? port.port,
           ...(port.nodePort != null && { nodePort: port.nodePort })
         })),
-        endpoints: getServiceEndpoints(effectiveService, pods)
+        endpoints: serviceEndpoints
       })
+
+      const existingEndpoints = apiServer.findResource(
+        'Endpoints',
+        effectiveService.metadata.name,
+        effectiveService.metadata.namespace
+      )
+      const nextEndpoints = createServiceEndpoints({
+        serviceName: effectiveService.metadata.name,
+        namespace: effectiveService.metadata.namespace,
+        backends: serviceEndpoints,
+        ...(existingEndpoints.ok && {
+          creationTimestamp: existingEndpoints.value.metadata.creationTimestamp
+        })
+      })
+      if (existingEndpoints.ok) {
+        if (endpointsChanged(existingEndpoints.value, nextEndpoints)) {
+          apiServer.updateResource(
+            'Endpoints',
+            effectiveService.metadata.name,
+            nextEndpoints,
+            effectiveService.metadata.namespace
+          )
+        }
+      } else {
+        apiServer.createResource(
+          'Endpoints',
+          nextEndpoints,
+          effectiveService.metadata.namespace
+        )
+      }
+
+      const existingEndpointSlice = apiServer
+        .listResources('EndpointSlice', effectiveService.metadata.namespace)
+        .find((endpointSlice) =>
+          isSliceForService(endpointSlice, effectiveService.metadata.name)
+        )
+      const nextEndpointSlice = createServiceEndpointSlice({
+        serviceName: effectiveService.metadata.name,
+        namespace: effectiveService.metadata.namespace,
+        backends: serviceEndpoints,
+        ...(existingEndpointSlice != null && {
+          name: existingEndpointSlice.metadata.name,
+          creationTimestamp: existingEndpointSlice.metadata.creationTimestamp
+        })
+      })
+      if (existingEndpointSlice != null) {
+        if (endpointSliceChanged(existingEndpointSlice, nextEndpointSlice)) {
+          apiServer.updateResource(
+            'EndpointSlice',
+            existingEndpointSlice.metadata.name,
+            nextEndpointSlice,
+            effectiveService.metadata.namespace
+          )
+        }
+      } else {
+        apiServer.createResource(
+          'EndpointSlice',
+          nextEndpointSlice,
+          effectiveService.metadata.namespace
+        )
+      }
     }
   }
 
@@ -232,6 +335,25 @@ export const createNetworkController = (
         deleted.payload.namespace,
         deleted.payload.name
       )
+      apiServer.deleteResource(
+        'Endpoints',
+        deleted.payload.name,
+        deleted.payload.namespace
+      )
+      const endpointSlices = apiServer.listResources(
+        'EndpointSlice',
+        deleted.payload.namespace
+      )
+      for (const endpointSlice of endpointSlices) {
+        if (!isSliceForService(endpointSlice, deleted.payload.name)) {
+          continue
+        }
+        apiServer.deleteResource(
+          'EndpointSlice',
+          endpointSlice.metadata.name,
+          deleted.payload.namespace
+        )
+      }
       reconcileServices()
       return
     }

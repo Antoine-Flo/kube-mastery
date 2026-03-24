@@ -14,6 +14,51 @@ import {
   writeKubeconfigToFileSystem
 } from './configKubeconfig'
 
+const OMITTED_CERTIFICATE_DATA = 'DATA+OMITTED'
+
+const maskClusterCertificateData = (
+  clusters: SimKubeconfig['clusters']
+): SimKubeconfig['clusters'] => {
+  return clusters.map((clusterEntry) => {
+    const maskedCluster = { ...clusterEntry.cluster }
+    if (typeof maskedCluster['certificate-authority-data'] === 'string') {
+      maskedCluster['certificate-authority-data'] = OMITTED_CERTIFICATE_DATA
+    }
+    return {
+      ...clusterEntry,
+      cluster: maskedCluster
+    }
+  })
+}
+
+const maskUserCertificateData = (
+  users: SimKubeconfig['users']
+): SimKubeconfig['users'] => {
+  return users.map((userEntry) => {
+    const maskedUser = { ...userEntry.user }
+    if (typeof maskedUser['client-certificate-data'] === 'string') {
+      maskedUser['client-certificate-data'] = OMITTED_CERTIFICATE_DATA
+    }
+    if (typeof maskedUser['client-key-data'] === 'string') {
+      maskedUser['client-key-data'] = OMITTED_CERTIFICATE_DATA
+    }
+    return {
+      ...userEntry,
+      user: maskedUser
+    }
+  })
+}
+
+const maskKubeconfigCertificateData = (
+  kubeconfig: SimKubeconfig
+): SimKubeconfig => {
+  return {
+    ...kubeconfig,
+    clusters: maskClusterCertificateData(kubeconfig.clusters),
+    users: maskUserCertificateData(kubeconfig.users)
+  }
+}
+
 const getCurrentContextEntry = (
   kubeconfig: SimKubeconfig
 ): SimKubeconfig['contexts'][number] | undefined => {
@@ -73,7 +118,7 @@ const handleConfigView = (
 
   let payload: unknown
   if (parsed.configMinify !== true) {
-    payload = kubeconfig
+    payload = maskKubeconfigCertificateData(kubeconfig)
   }
   const currentContext = kubeconfig['current-context']
   if (parsed.configMinify === true) {
@@ -117,11 +162,11 @@ const handleConfigView = (
 
     payload = {
       apiVersion: kubeconfig.apiVersion,
-      clusters: minifiedClusters,
+      clusters: maskClusterCertificateData(minifiedClusters),
       contexts: minifiedContexts,
       'current-context': currentContext,
       kind: kubeconfig.kind,
-      users: minifiedUsers
+      users: maskUserCertificateData(minifiedUsers)
     }
   }
 

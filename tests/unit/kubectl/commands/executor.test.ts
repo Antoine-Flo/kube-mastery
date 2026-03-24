@@ -437,6 +437,140 @@ data:
         expect(exposeResult.value).toContain('service/web created')
       })
 
+      it('should route "kubectl expose pod" to expose handler', () => {
+        apiServer.createResource(
+          'Pod',
+          createPod({
+            name: 'web-prod',
+            namespace: 'default',
+            labels: { app: 'web', env: 'prod', track: 'stable' },
+            containers: [{ name: 'web', image: 'nginx', ports: [{ containerPort: 8080 }] }]
+          })
+        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const exposeResult = executor.execute(
+          'kubectl expose pod web-prod --name=web-svc --port=80 --selector="app=web,env=prod,track=stable"'
+        )
+
+        expect(exposeResult.ok).toBe(true)
+        if (!exposeResult.ok) {
+          return
+        }
+        expect(exposeResult.value).toContain('service/web-svc created')
+
+        const service = apiServer.findResource('Service', 'web-svc', 'default')
+        expect(service.ok).toBe(true)
+        if (!service.ok) {
+          return
+        }
+        expect(service.value.spec.selector).toEqual({
+          app: 'web',
+          env: 'prod',
+          track: 'stable'
+        })
+      })
+
+      it('should update endpoints according to expose selector', () => {
+        const networkRuntime = initializeSimNetworkRuntime(apiServer)
+        apiServer.createResource(
+          'Pod',
+          createPod({
+            name: 'web-prod',
+            namespace: 'default',
+            labels: { app: 'web', env: 'prod', track: 'stable' },
+            phase: 'Running',
+            podIP: '10.244.0.10',
+            containers: [
+              { name: 'web', image: 'nginx', ports: [{ containerPort: 8080 }] }
+            ]
+          })
+        )
+        apiServer.createResource(
+          'Pod',
+          createPod({
+            name: 'web-canary',
+            namespace: 'default',
+            labels: { app: 'web', env: 'prod', track: 'canary' },
+            phase: 'Running',
+            podIP: '10.244.0.11',
+            containers: [
+              { name: 'web', image: 'nginx', ports: [{ containerPort: 8080 }] }
+            ]
+          })
+        )
+
+        const executor = createKubectlExecutor(
+          apiServer,
+          fileSystem,
+          logger,
+          networkRuntime
+        )
+        const exposeResult = executor.execute(
+          'kubectl expose pod web-prod --name=web-svc --port=80 --selector="app=web,env=prod,track=stable"'
+        )
+        expect(exposeResult.ok).toBe(true)
+        if (!exposeResult.ok) {
+          networkRuntime.controller.stop()
+          return
+        }
+
+        const describeService = executor.execute('kubectl describe service web-svc')
+        expect(describeService.ok).toBe(true)
+        if (!describeService.ok) {
+          networkRuntime.controller.stop()
+          return
+        }
+        expect(describeService.value).toContain('Endpoints:                10.244.0.10:8080')
+        expect(describeService.value).not.toContain('10.244.0.11:8080')
+
+        const getEndpoints = executor.execute('kubectl get endpoints web-svc')
+        expect(getEndpoints.ok).toBe(true)
+        if (!getEndpoints.ok) {
+          networkRuntime.controller.stop()
+          return
+        }
+        expect(getEndpoints.value).toContain('10.244.0.10:8080')
+        expect(getEndpoints.value).not.toContain('10.244.0.11:8080')
+
+        const getEndpointSlices = executor.execute(
+          'kubectl get endpointslices -l kubernetes.io/service-name=web-svc'
+        )
+        expect(getEndpointSlices.ok).toBe(true)
+        if (!getEndpointSlices.ok) {
+          networkRuntime.controller.stop()
+          return
+        }
+        expect(getEndpointSlices.value).toContain('web-svc-')
+        expect(getEndpointSlices.value).toContain('10.244.0.10')
+        expect(getEndpointSlices.value).not.toContain('10.244.0.11')
+
+        const deleteService = executor.execute('kubectl delete service web-svc')
+        expect(deleteService.ok).toBe(true)
+        const exposeBrokenSelector = executor.execute(
+          'kubectl expose pod web-prod --name=web-svc --port=80 --selector="app=doesnotexist"'
+        )
+        expect(exposeBrokenSelector.ok).toBe(true)
+        const getBrokenEndpoints = executor.execute('kubectl get endpoints web-svc')
+        expect(getBrokenEndpoints.ok).toBe(true)
+        if (!getBrokenEndpoints.ok) {
+          networkRuntime.controller.stop()
+          return
+        }
+        expect(getBrokenEndpoints.value).toContain('<none>')
+
+        const getBrokenEndpointSlices = executor.execute(
+          'kubectl get endpointslices -l kubernetes.io/service-name=web-svc'
+        )
+        expect(getBrokenEndpointSlices.ok).toBe(true)
+        if (!getBrokenEndpointSlices.ok) {
+          networkRuntime.controller.stop()
+          return
+        }
+        expect(getBrokenEndpointSlices.value).toContain('web-svc-')
+        expect(getBrokenEndpointSlices.value).toContain('<none>')
+        networkRuntime.controller.stop()
+      })
+
       it('should route "kubectl create namespace" to create handler', () => {
         const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const result = executor.execute('kubectl create namespace my-team')
@@ -1641,6 +1775,56 @@ spec:
         expect(result.value).toContain('current-context: kind-conformance')
         expect(result.value).toContain(
           'certificate-authority-data: DATA+OMITTED'
+        )
+      })
+
+      it('should redact kubeconfig certificate fields in config view --minify', () => {
+        const kubeconfigWithCertificates = [
+          'apiVersion: v1',
+          'kind: Config',
+          'clusters:',
+          '- cluster:',
+          '    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t',
+          '    server: https://127.0.0.1:34001',
+          '  name: kind-conformance',
+          'contexts:',
+          '- context:',
+          '    cluster: kind-conformance',
+          '    user: kind-conformance',
+          '  name: kind-conformance',
+          'current-context: kind-conformance',
+          'users:',
+          '- name: kind-conformance',
+          '  user:',
+          '    client-certificate-data: LS0tLS1CRUdJTiBDTElFTlQtQ0VSVC0tLS0t',
+          '    client-key-data: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0t'
+        ].join('\n')
+        const writeResult = fileSystem.writeFile(
+          '/home/kube/.kube/config',
+          kubeconfigWithCertificates
+        )
+        expect(writeResult.ok).toBe(true)
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const result = executor.execute('kubectl config view --minify')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain(
+          'certificate-authority-data: DATA+OMITTED'
+        )
+        expect(result.value).toContain('client-certificate-data: DATA+OMITTED')
+        expect(result.value).toContain('client-key-data: DATA+OMITTED')
+        expect(result.value).not.toContain(
+          'LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t'
+        )
+        expect(result.value).not.toContain(
+          'LS0tLS1CRUdJTiBDTElFTlQtQ0VSVC0tLS0t'
+        )
+        expect(result.value).not.toContain(
+          'LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0t'
         )
       })
 

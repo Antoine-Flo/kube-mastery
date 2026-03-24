@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createClusterStateData } from '../../../helpers/utils'
+import { createServiceEndpointSlice } from '../../../../../src/core/cluster/ressources/EndpointSlice'
+import { createEndpoints } from '../../../../../src/core/cluster/ressources/Endpoints'
 import { createNode } from '../../../../../src/core/cluster/ressources/Node'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createService } from '../../../../../src/core/cluster/ressources/Service'
@@ -174,6 +176,123 @@ describe('kubectl describe handler - services and error semantics', () => {
         'deployments.apps "missing-deploy" not found'
       )
     }
+  })
+
+  it('should read Endpoints line from endpoints resource', () => {
+    const state = createClusterStateData({
+      services: [
+        createService({
+          name: 'web-svc',
+          namespace: 'default',
+          clusterIP: '10.96.0.10',
+          selector: { app: 'web' },
+          ports: [{ port: 80, protocol: 'TCP', targetPort: 8080 }]
+        })
+      ],
+      endpoints: [
+        createEndpoints({
+          name: 'web-svc',
+          namespace: 'default',
+          subsets: [
+            {
+              addresses: [{ ip: '10.244.0.10' }],
+              ports: [{ port: 8080, protocol: 'TCP' }]
+            }
+          ]
+        })
+      ]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'services',
+      name: 'web-svc',
+      namespace: 'default',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+
+    const result = handleDescribe(apiServer, parsed)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Endpoints:                10.244.0.10:8080')
+  })
+})
+
+describe('kubectl describe handler - endpoints', () => {
+  it('should describe an existing endpoints resource', () => {
+    const state = createClusterStateData({
+      endpoints: [
+        createEndpoints({
+          name: 'web-svc',
+          namespace: 'default',
+          subsets: [
+            {
+              addresses: [{ ip: '10.244.0.10' }],
+              ports: [{ port: 8080, protocol: 'TCP' }]
+            }
+          ]
+        })
+      ]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'endpoints',
+      name: 'web-svc',
+      namespace: 'default',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+
+    const result = handleDescribe(apiServer, parsed)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Name:         web-svc')
+    expect(result.value).toContain('Subsets:      10.244.0.10:8080')
+  })
+})
+
+describe('kubectl describe handler - endpointslices', () => {
+  it('should describe an existing endpointslice resource', () => {
+    const endpointSlice = createServiceEndpointSlice({
+      serviceName: 'web-svc',
+      namespace: 'default',
+      backends: [
+        {
+          podName: 'web-prod',
+          namespace: 'default',
+          podIP: '10.244.0.10',
+          targetPort: 8080
+        }
+      ]
+    })
+    const state = createClusterStateData({
+      endpointSlices: [endpointSlice]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'endpointslices',
+      name: endpointSlice.metadata.name,
+      namespace: 'default',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+
+    const result = handleDescribe(apiServer, parsed)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain(`Name:         ${endpointSlice.metadata.name}`)
+    expect(result.value).toContain('AddressType:  IPv4')
+    expect(result.value).toContain('Ports:        8080/TCP')
+    expect(result.value).toContain('Endpoints:    10.244.0.10')
   })
 })
 
