@@ -106,23 +106,17 @@ For a deeper view than `kubectl get`, use `kubectl describe deployment <name>`. 
 
 - **Conditions:** High-level health: `Available` (can the Deployment serve traffic?) and `Progressing` (is a rollout in progress?). A stuck rollout will show one of these as `False` with a reason.
 
-- **Events:** A chronological log of what the Deployment controller did: scaled up a ReplicaSet, scaled down an old one, etc. When a rollout is stuck, the Events section usually explains why—image pull errors, insufficient cluster resources, or failing readiness probes. Get into the habit of scrolling to Events when something doesn't match your expectations.
-
-:::info
-In real clusters, `kubectl describe` and its Events are among the first tools you use to debug Deployments. If Pods are not becoming Ready, the Events will often point you to the exact cause.
-:::
+- **Events:** A chronological log of what the Deployment controller did: scaled up a ReplicaSet, scaled down an old one, etc. When a rollout is stuck, the Events section usually explains why. Image pull errors, insufficient cluster resources, or failing readiness probes. Get into the habit of scrolling to Events when something doesn't match your expectations.
 
 ## The Imperative Alternative: When and Why
 
-Sometimes you need a Deployment in seconds—during the CKA exam, in a demo, or when prototyping. Kubernetes lets you create a Deployment **imperatively** with `kubectl create deployment <name> --image=<image> --replicas=<n>`. No YAML file: the API server creates the object from the flags. It's fast, but limited: you cannot set container ports, environment variables, resource requests, volume mounts, or any non-default strategy through the command line alone. For anything beyond a quick smoke test, use a manifest.
+Sometimes you need a Deployment in seconds—during the CKA exam, in a demo, or when prototyping. Kubernetes lets you create a Deployment **imperatively** with `kubectl create deployment <name> --image=<image> --replicas=<n>`.
 
-A very useful **hybrid** is to let kubectl generate the YAML for you, then edit it. Using `--dry-run=client -o yaml` with `kubectl create deployment` tells kubectl to build the object in memory and print the YAML without sending anything to the API server. You get a valid, ready-to-edit manifest in one command. You can then add ports, env, resources, and apply the file. This pattern is especially valuable when time is limited (e.g. CKA) or when you want a correct skeleton for Deployments, Services, ConfigMaps, and more without memorizing every field.
-
-So you have three practical ways to create a Deployment: **declarative** (write a YAML file and `apply` it—best for production and version control), **imperative** (one `kubectl create deployment` command—best for quick tests), and **hybrid** (generate YAML with `create ... --dry-run=client -o yaml`, edit, then `apply`—best when you want speed plus full control). Choose according to context.
+A very useful **hybrid** is to let kubectl generate the YAML for you, then edit it. Using `--dry-run=client -o yaml` with `kubectl create deployment` tells kubectl to build the object in memory and print the YAML without sending anything to the API server. You get a valid, ready-to-edit manifest in one command. You can then add ports, env, resources, and apply the file. This pattern is especially valuable when time is limited (e.g. CKA) or when you want a correct skeleton.
 
 ## Checking Rollout Status
 
-After you apply a Deployment (or an update to it), the rollout may take a few seconds or longer. It's good practice to wait until the rollout is complete before moving on, for example before running integration tests or switching traffic.
+After you apply a Deployment (or an update to it), the rollout may take a few seconds or longer.
 
 The command is `kubectl rollout status deployment/<name>`. It blocks until all new Pods are up and old ones are terminated according to the strategy, or exits with a non-zero code if the rollout fails or times out. This makes it useful in CI/CD pipelines: run `kubectl apply -f ...` followed by `kubectl rollout status ...` to automatically fail the pipeline if the new version doesn't become healthy.
 
@@ -134,9 +128,8 @@ Put the theory into practice with the following steps. Use the manifest from the
 
 **1. Write the manifest to a file**
 
-Save the following to `deployment.yaml` (same as the Anatomy section):
-
 ```yaml
+# deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -220,7 +213,6 @@ kubectl get pods -l app=web
 
 ```bash
 kubectl delete deployment web-app
-kubectl delete -f deployment.yaml  # if needed
 ```
 
 :::info

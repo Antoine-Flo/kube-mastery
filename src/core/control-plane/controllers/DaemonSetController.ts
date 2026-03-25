@@ -13,6 +13,7 @@ import type {
 import type { Node } from '../../cluster/ressources/Node'
 import type { Pod } from '../../cluster/ressources/Pod'
 import { createPod } from '../../cluster/ressources/Pod'
+import { generateTemplateHash } from '../../cluster/ressources/Deployment'
 import { selectorMatchesLabels } from '../../cluster/ressources/ReplicaSet'
 import {
   createOwnerRef,
@@ -49,6 +50,8 @@ const WATCHED_EVENTS: ClusterEventType[] = [
   'PodDeleted'
 ]
 
+const CONTROLLER_REVISION_HASH_ANNOTATION = 'controller-revision-hash'
+
 const makeKey = (namespace: string, name: string): string => {
   return `${namespace}/${name}`
 }
@@ -58,7 +61,11 @@ const parseKey = (key: string): { namespace: string; name: string } => {
   return { namespace, name }
 }
 
-const createPodFromTemplate = (daemonSet: DaemonSet, node: Node): Pod => {
+const createPodFromTemplate = (
+  daemonSet: DaemonSet,
+  node: Node,
+  templateHash: string
+): Pod => {
   const podName = `${daemonSet.metadata.name}-${generateSuffix()}`
   const templateLabels = daemonSet.spec.template.metadata?.labels || {}
   const initContainers = convertTemplateInitContainers(
@@ -72,7 +79,10 @@ const createPodFromTemplate = (daemonSet: DaemonSet, node: Node): Pod => {
     labels: {
       ...templateLabels
     },
-    annotations: daemonSet.spec.template.metadata?.annotations,
+    annotations: {
+      ...(daemonSet.spec.template.metadata?.annotations ?? {}),
+      [CONTROLLER_REVISION_HASH_ANNOTATION]: templateHash
+    },
     nodeSelector: daemonSet.spec.template.spec.nodeSelector,
     tolerations: daemonSet.spec.template.spec.tolerations,
     ...(initContainers && { initContainers }),
@@ -273,6 +283,7 @@ export class DaemonSetController implements ReconcilerController {
     const daemonSet = daemonSetResult.value
     const allNodes = state.getNodes()
     const allPods = state.getPods(namespace)
+    const templateHash = generateTemplateHash(daemonSet.spec.template).slice(0, 10)
 
     const ownedPods = getOwnedResources(daemonSet, allPods).filter((pod) => {
       return selectorMatchesLabels(daemonSet.spec.selector, pod.metadata.labels)
@@ -300,7 +311,7 @@ export class DaemonSetController implements ReconcilerController {
     for (const node of allNodes) {
       const podsForNode = podsByNode.get(node.metadata.name) ?? []
       if (podsForNode.length === 0) {
-        const pod = createPodFromTemplate(daemonSet, node)
+        const pod = createPodFromTemplate(daemonSet, node, templateHash)
         this.apiServer.createResource('Pod', pod, pod.metadata.namespace)
       } else if (podsForNode.length > 1) {
         const podsToDelete = podsForNode.slice(1)
@@ -309,6 +320,23 @@ export class DaemonSetController implements ReconcilerController {
             'Pod',
             podToDelete.metadata.name,
             podToDelete.metadata.namespace
+          )
+        }
+      } else {
+        const pod = podsForNode[0]
+        const podHash =
+          pod.metadata.annotations?.[CONTROLLER_REVISION_HASH_ANNOTATION]
+        if (podHash !== templateHash) {
+          this.apiServer.deleteResource('Pod', pod.metadata.name, pod.metadata.namespace)
+          const replacementPod = createPodFromTemplate(
+            daemonSet,
+            node,
+            templateHash
+          )
+          this.apiServer.createResource(
+            'Pod',
+            replacementPod,
+            replacementPod.metadata.namespace
           )
         }
       }

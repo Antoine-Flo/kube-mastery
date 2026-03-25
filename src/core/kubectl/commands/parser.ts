@@ -51,6 +51,7 @@ const VALID_ACTIONS: Action[] = [
   'run',
   'expose',
   'wait',
+  'rollout',
   'config'
 ]
 
@@ -109,6 +110,8 @@ const FLAGS_REQUIRING_VALUES = [
   'docker-email',
   'p',
   'patch',
+  'revision',
+  'timeout',
   'grace-period'
 ]
 // Note: 'filename' is required for apply/create, but 'f' and 'follow' are boolean for logs
@@ -228,6 +231,10 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     runRemove: ctx.runRemove,
     setSubcommand: ctx.setSubcommand,
     setImageAssignments: ctx.setImageAssignments,
+    rolloutSubcommand: ctx.rolloutSubcommand,
+    rolloutRevision: ctx.rolloutRevision,
+    rolloutTimeoutSeconds: ctx.rolloutTimeoutSeconds,
+    rolloutWatch: ctx.rolloutWatch,
     configCurrent: getConfigCurrentFromFlags(normalizedFlags),
     configMinify: getConfigMinifyFromFlags(normalizedFlags),
     configNamespace: getConfigNamespaceFromFlags(normalizedFlags),
@@ -378,7 +385,8 @@ const extractName = (ctx: ParseContext): Result<ParseContext> => {
     'label',
     'annotate',
     'explain',
-    'run'
+    'run',
+    'rollout'
   ]
   const hasTransformer =
     ctx.action && actionsWithCustomParsing.includes(ctx.action)
@@ -716,6 +724,7 @@ const validateCommandSemantics = (
     action === 'patch' ||
     action === 'expose' ||
     action === 'wait' ||
+    action === 'rollout' ||
     (action === 'delete' && !hasFilename && !canDeleteWithoutName)
 
   if (requiresNameAction && !name) {
@@ -927,6 +936,64 @@ const validateCommandSemantics = (
     }
     if (typeof namespace !== 'string' || namespace.length === 0) {
       return 'config set-context requires flag --namespace'
+    }
+  }
+
+  if (action === 'rollout') {
+    const rolloutSubcommand = tokens[2]
+    const isValidRolloutSubcommand =
+      rolloutSubcommand === 'status' ||
+      rolloutSubcommand === 'history' ||
+      rolloutSubcommand === 'restart' ||
+      rolloutSubcommand === 'undo'
+    if (!isValidRolloutSubcommand) {
+      return `error: invalid subcommand for rollout: ${rolloutSubcommand ?? '<none>'}`
+    }
+
+    if (
+      resource !== 'deployments' &&
+      resource !== 'daemonsets' &&
+      resource !== 'statefulsets'
+    ) {
+      return 'error: rollout supports only deployments, daemonsets, and statefulsets'
+    }
+
+    if (name == null || name.length === 0) {
+      return 'rollout requires a resource name'
+    }
+
+    const revisionValue = flags.revision
+    if (revisionValue !== undefined) {
+      const parsedRevision = Number.parseInt(String(revisionValue), 10)
+      if (Number.isNaN(parsedRevision) || parsedRevision <= 0) {
+        return `error: invalid value "${String(revisionValue)}" for --revision: must be a positive integer`
+      }
+      if (rolloutSubcommand !== 'history' && rolloutSubcommand !== 'undo') {
+        return 'error: --revision is only supported by rollout history and rollout undo'
+      }
+    }
+
+    const timeoutValue = flags.timeout
+    if (timeoutValue !== undefined && rolloutSubcommand !== 'status') {
+      return 'error: --timeout is only supported by rollout status'
+    }
+    if (timeoutValue !== undefined) {
+      const normalizedTimeout = String(timeoutValue).trim()
+      const isDurationLike = /^[0-9]+(s|m|h)?$/.test(normalizedTimeout)
+      if (!isDurationLike) {
+        return `error: invalid value "${String(timeoutValue)}" for --timeout`
+      }
+    }
+
+    const watchValue = flags.watch
+    if (watchValue !== undefined && rolloutSubcommand !== 'status') {
+      return 'error: --watch is only supported by rollout status'
+    }
+    if (watchValue !== undefined) {
+      const normalizedWatch = String(watchValue)
+      if (normalizedWatch !== 'true' && normalizedWatch !== 'false') {
+        return 'error: --watch must be either true or false'
+      }
     }
   }
 

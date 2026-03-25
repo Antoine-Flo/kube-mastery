@@ -17,6 +17,12 @@ export const createControllerStateFromApi = (
     findDaemonSet: (name: string, namespace: string) => {
       return apiServer.findResource('DaemonSet', name, namespace)
     },
+    getStatefulSets: (namespace?: string) => {
+      return apiServer.listResources('StatefulSet', namespace)
+    },
+    findStatefulSet: (name: string, namespace: string) => {
+      return apiServer.findResource('StatefulSet', name, namespace)
+    },
     getReplicaSets: (namespace?: string) => {
       return apiServer.listResources('ReplicaSet', namespace)
     },

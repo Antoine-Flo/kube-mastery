@@ -47,6 +47,10 @@ export type ParseContext = {
   setSubcommand?: 'image'
   setImageAssignments?: Record<string, string>
   configSubcommand?: 'get-contexts' | 'current-context' | 'view' | 'set-context'
+  rolloutSubcommand?: 'status' | 'history' | 'restart' | 'undo'
+  rolloutRevision?: number
+  rolloutTimeoutSeconds?: number
+  rolloutWatch?: boolean
   configCurrent?: boolean
   configMinify?: boolean
   configNamespace?: string
@@ -92,6 +96,7 @@ const FLAGS_REQUIRING_VALUES = new Set([
   'docker-email',
   'for',
   'timeout',
+  'revision',
   'p',
   'patch',
   'grace-period'
@@ -1123,6 +1128,117 @@ const waitTransformer: ActionTransformer = (ctx) => {
   })
 }
 
+const parseDurationSeconds = (value: string): number => {
+  const trimmed = value.trim()
+  if (trimmed.endsWith('s')) {
+    return parseInt(trimmed.slice(0, -1), 10) || 60
+  }
+  if (trimmed.endsWith('m')) {
+    return (parseInt(trimmed.slice(0, -1), 10) || 1) * 60
+  }
+  if (trimmed.endsWith('h')) {
+    return (parseInt(trimmed.slice(0, -1), 10) || 1) * 3600
+  }
+  return parseInt(trimmed, 10) || 60
+}
+
+const parseBooleanFlagValue = (value: string | boolean): boolean | undefined => {
+  if (typeof value === 'boolean') {
+    return value
+  }
+  if (value === 'true') {
+    return true
+  }
+  if (value === 'false') {
+    return false
+  }
+  return undefined
+}
+
+const rolloutTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens) {
+    return success(ctx)
+  }
+
+  const subcommandToken = ctx.tokens[2]
+  if (subcommandToken == null) {
+    return success(ctx)
+  }
+  if (
+    subcommandToken !== 'status' &&
+    subcommandToken !== 'history' &&
+    subcommandToken !== 'restart' &&
+    subcommandToken !== 'undo'
+  ) {
+    return error(`error: invalid subcommand for rollout: ${subcommandToken}`)
+  }
+
+  const positionalTokens = extractPositionalTokensFromIndex(ctx.tokens, 3)
+  const targetToken = positionalTokens[0]
+  if (targetToken == null) {
+    return success({
+      ...ctx,
+      rolloutSubcommand: subcommandToken
+    })
+  }
+
+  let resource: Resource | undefined
+  let name: string | undefined
+  if (targetToken.includes('/')) {
+    const [resourceToken, nameToken] = targetToken.split('/', 2)
+    resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
+    name = nameToken
+  } else {
+    resource = RESOURCE_ALIAS_MAP[targetToken] as Resource | undefined
+    name = positionalTokens[1]
+  }
+
+  let rolloutRevision: number | undefined
+  let rolloutTimeoutSeconds: number | undefined
+  let rolloutWatch: boolean | undefined
+
+  for (let index = 3; index < ctx.tokens.length; index++) {
+    const token = ctx.tokens[index]
+    if (token === '--') {
+      break
+    }
+    if (token.startsWith('--revision=')) {
+      rolloutRevision = parseInt(token.slice('--revision='.length), 10)
+      continue
+    }
+    if (token.startsWith('--timeout=')) {
+      rolloutTimeoutSeconds = parseDurationSeconds(
+        token.slice('--timeout='.length)
+      )
+      continue
+    }
+    if (token.startsWith('--watch=')) {
+      rolloutWatch = parseBooleanFlagValue(token.slice('--watch='.length))
+      continue
+    }
+    if (token === '--watch') {
+      const nextToken = ctx.tokens[index + 1]
+      if (nextToken == null || nextToken.startsWith('-')) {
+        rolloutWatch = true
+      } else {
+        rolloutWatch = parseBooleanFlagValue(nextToken)
+        index += 1
+      }
+      continue
+    }
+  }
+
+  return success({
+    ...ctx,
+    rolloutSubcommand: subcommandToken,
+    resource,
+    name,
+    rolloutRevision,
+    rolloutTimeoutSeconds,
+    rolloutWatch
+  })
+}
+
 /**
  * Default transformer: no-op, returns context as-is
  */
@@ -1153,6 +1269,7 @@ const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
   expose: exposeTransformer,
   patch: patchTransformer,
   wait: waitTransformer,
+  rollout: rolloutTransformer,
   config: configTransformer
 }
 

@@ -3,6 +3,7 @@ import { addPod, deletePod, updatePod } from '../ClusterState'
 import { createResourceRepository } from '../repositories/resourceRepository'
 import type { ResourceCollection } from '../repositories/types'
 import type { ConfigMap } from '../ressources/ConfigMap'
+import type { ControllerRevision } from '../ressources/ControllerRevision'
 import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
 import type { EndpointSlice } from '../ressources/EndpointSlice'
@@ -25,6 +26,9 @@ import type {
   ConfigMapDeletedEvent,
   ConfigMapLabeledEvent,
   ConfigMapUpdatedEvent,
+  ControllerRevisionCreatedEvent,
+  ControllerRevisionDeletedEvent,
+  ControllerRevisionUpdatedEvent,
   DaemonSetCreatedEvent,
   DaemonSetDeletedEvent,
   DaemonSetUpdatedEvent,
@@ -87,6 +91,8 @@ import type {
 // ─── Repositories ────────────────────────────────────────────────────────
 
 const configMapRepo = createResourceRepository<ConfigMap>('ConfigMap')
+const controllerRevisionRepo =
+  createResourceRepository<ControllerRevision>('ControllerRevision')
 const secretRepo = createResourceRepository<Secret>('Secret')
 const replicaSetRepo = createResourceRepository<ReplicaSet>('ReplicaSet')
 const deploymentRepo = createResourceRepository<Deployment>('Deployment')
@@ -111,6 +117,7 @@ const persistentVolumeClaimRepo =
  */
 type RepoStateKey =
   | 'configMaps'
+  | 'controllerRevisions'
   | 'secrets'
   | 'replicaSets'
   | 'deployments'
@@ -128,6 +135,7 @@ type RepoStateKey =
 
 type RepoResourceByStateKey = {
   configMaps: ConfigMap
+  controllerRevisions: ControllerRevision
   secrets: Secret
   replicaSets: ReplicaSet
   deployments: Deployment
@@ -220,6 +228,10 @@ const createPodHandler = () => ({
 
 const podHandler = createPodHandler()
 const configMapHandler = createRepoHandler(configMapRepo, 'configMaps')
+const controllerRevisionHandler = createRepoHandler(
+  controllerRevisionRepo,
+  'controllerRevisions'
+)
 const secretHandler = createRepoHandler(secretRepo, 'secrets')
 const replicaSetHandler = createRepoHandler(replicaSetRepo, 'replicaSets')
 const deploymentHandler = createRepoHandler(deploymentRepo, 'deployments')
@@ -335,6 +347,33 @@ export const handleConfigMapAnnotated = (
     event.payload.name,
     event.payload.namespace,
     event.payload.configMap
+  )
+
+export const handleControllerRevisionCreated = (
+  state: ClusterStateData,
+  event: ControllerRevisionCreatedEvent
+) =>
+  controllerRevisionHandler.created(state, event.payload.controllerRevision)
+
+export const handleControllerRevisionDeleted = (
+  state: ClusterStateData,
+  event: ControllerRevisionDeletedEvent
+) =>
+  controllerRevisionHandler.deleted(
+    state,
+    event.payload.name,
+    event.payload.namespace
+  )
+
+export const handleControllerRevisionUpdated = (
+  state: ClusterStateData,
+  event: ControllerRevisionUpdatedEvent
+) =>
+  controllerRevisionHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.controllerRevision
   )
 
 // ─── Secret Handlers ─────────────────────────────────────────────────────
@@ -713,6 +752,9 @@ export const CLUSTER_EVENT_HANDLERS: {
   ConfigMapCreated: handleConfigMapCreated,
   ConfigMapDeleted: handleConfigMapDeleted,
   ConfigMapUpdated: handleConfigMapUpdated,
+  ControllerRevisionCreated: handleControllerRevisionCreated,
+  ControllerRevisionDeleted: handleControllerRevisionDeleted,
+  ControllerRevisionUpdated: handleControllerRevisionUpdated,
   SecretCreated: handleSecretCreated,
   SecretDeleted: handleSecretDeleted,
   SecretUpdated: handleSecretUpdated,

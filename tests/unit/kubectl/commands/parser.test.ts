@@ -433,6 +433,51 @@ describe('kubectl parser - run', () => {
   })
 })
 
+describe('kubectl parser - rollout', () => {
+  it('should parse rollout status using type/name syntax', () => {
+    const result = parseCommand(
+      'kubectl rollout status deployment/web-app --timeout=45s --watch=false'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('rollout')
+    expect(result.value.rolloutSubcommand).toBe('status')
+    expect(result.value.resource).toBe('deployments')
+    expect(result.value.name).toBe('web-app')
+    expect(result.value.rolloutTimeoutSeconds).toBe(45)
+    expect(result.value.rolloutWatch).toBe(false)
+  })
+
+  it('should parse rollout history revision flag', () => {
+    const result = parseCommand(
+      'kubectl rollout history statefulset web --revision=2'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.rolloutSubcommand).toBe('history')
+    expect(result.value.resource).toBe('statefulsets')
+    expect(result.value.name).toBe('web')
+    expect(result.value.rolloutRevision).toBe(2)
+  })
+
+  it('should reject invalid rollout subcommand', () => {
+    const result = parseCommand('kubectl rollout pause deployment/web-app')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('invalid subcommand for rollout')
+    }
+  })
+})
+
 describe('kubectl parser - expose', () => {
   it('should parse expose deployment with required port', () => {
     const result = parseCommand(

@@ -6,6 +6,7 @@
 
 import type { BaseEvent } from '../../events/types'
 import type { ConfigMap } from '../ressources/ConfigMap'
+import type { ControllerRevision } from '../ressources/ControllerRevision'
 import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
 import type { EndpointSlice } from '../ressources/EndpointSlice'
@@ -86,6 +87,32 @@ export interface ConfigMapUpdatedEvent extends BaseEvent {
     namespace: string
     configMap: ConfigMap
     previousConfigMap: ConfigMap
+  }
+}
+
+export interface ControllerRevisionCreatedEvent extends BaseEvent {
+  type: 'ControllerRevisionCreated'
+  payload: {
+    controllerRevision: ControllerRevision
+  }
+}
+
+export interface ControllerRevisionDeletedEvent extends BaseEvent {
+  type: 'ControllerRevisionDeleted'
+  payload: {
+    name: string
+    namespace: string
+    deletedControllerRevision: ControllerRevision
+  }
+}
+
+export interface ControllerRevisionUpdatedEvent extends BaseEvent {
+  type: 'ControllerRevisionUpdated'
+  payload: {
+    name: string
+    namespace: string
+    controllerRevision: ControllerRevision
+    previousControllerRevision: ControllerRevision
   }
 }
 
@@ -569,6 +596,9 @@ export type ClusterEvent =
   | ConfigMapCreatedEvent
   | ConfigMapDeletedEvent
   | ConfigMapUpdatedEvent
+  | ControllerRevisionCreatedEvent
+  | ControllerRevisionDeletedEvent
+  | ControllerRevisionUpdatedEvent
   | SecretCreatedEvent
   | SecretDeletedEvent
   | SecretUpdatedEvent
@@ -734,6 +764,46 @@ export const createConfigMapUpdatedEvent = (
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
   payload: { name, namespace, configMap, previousConfigMap }
+})
+
+export const createControllerRevisionCreatedEvent = (
+  controllerRevision: ControllerRevision,
+  source?: string
+): ControllerRevisionCreatedEvent => ({
+  type: 'ControllerRevisionCreated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { controllerRevision }
+})
+
+export const createControllerRevisionDeletedEvent = (
+  name: string,
+  namespace: string,
+  deletedControllerRevision: ControllerRevision,
+  source?: string
+): ControllerRevisionDeletedEvent => ({
+  type: 'ControllerRevisionDeleted',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, deletedControllerRevision }
+})
+
+export const createControllerRevisionUpdatedEvent = (
+  name: string,
+  namespace: string,
+  controllerRevision: ControllerRevision,
+  previousControllerRevision: ControllerRevision,
+  source?: string
+): ControllerRevisionUpdatedEvent => ({
+  type: 'ControllerRevisionUpdated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: {
+    name,
+    namespace,
+    controllerRevision,
+    previousControllerRevision
+  }
 })
 
 /**

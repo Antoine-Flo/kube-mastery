@@ -3,6 +3,9 @@ import {
   createConfigMapCreatedEvent,
   createConfigMapDeletedEvent,
   createConfigMapUpdatedEvent,
+  createControllerRevisionCreatedEvent,
+  createControllerRevisionDeletedEvent,
+  createControllerRevisionUpdatedEvent,
   createDaemonSetCreatedEvent,
   createDaemonSetDeletedEvent,
   createDaemonSetUpdatedEvent,
@@ -51,6 +54,7 @@ import {
 } from '../cluster/events/types'
 import type { KindToResource, ResourceKind } from '../cluster/ClusterState'
 import type { ConfigMap } from '../cluster/ressources/ConfigMap'
+import type { ControllerRevision } from '../cluster/ressources/ControllerRevision'
 import type { DaemonSet } from '../cluster/ressources/DaemonSet'
 import type { Deployment } from '../cluster/ressources/Deployment'
 import type { EndpointSlice } from '../cluster/ressources/EndpointSlice'
@@ -444,6 +448,11 @@ const RESOURCE_MUTATION_EVENTS: Record<
     createConfigMapCreatedEvent,
     createConfigMapUpdatedEvent,
     createConfigMapDeletedEvent
+  ),
+  ControllerRevision: createNamespacedMutationEvents<ControllerRevision>(
+    createControllerRevisionCreatedEvent,
+    createControllerRevisionUpdatedEvent,
+    createControllerRevisionDeletedEvent
   ),
   Secret: createNamespacedMutationEvents<Secret>(
     createSecretCreatedEvent,

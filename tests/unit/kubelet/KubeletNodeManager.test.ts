@@ -17,6 +17,7 @@ const createControllers = (): ControlPlaneControllers => {
   return {
     deploymentController: controller,
     daemonSetController: controller,
+    statefulSetController: controller,
     replicaSetController: controller,
     schedulerController: controller,
     podLifecycleController: controller,

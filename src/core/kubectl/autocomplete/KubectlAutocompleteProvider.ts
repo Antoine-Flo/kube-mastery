@@ -36,6 +36,7 @@ const KUBECTL_ACTIONS = [
   'patch',
   'run',
   'expose',
+  'rollout',
   'config'
 ] as const
 
@@ -44,6 +45,13 @@ const KUBECTL_CONFIG_SUBCOMMANDS = [
   'current-context',
   'view',
   'set-context'
+] as const
+
+const KUBECTL_ROLLOUT_SUBCOMMANDS = [
+  'status',
+  'history',
+  'restart',
+  'undo'
 ] as const
 
 const RESOURCE_GETTERS: Record<
@@ -140,6 +148,9 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
       }
       return false
     }
+    if (action === 'rollout') {
+      return tokens.length >= 2
+    }
 
     // Type de ressource (position 2) - sauf pour logs/exec/run
     if (action === 'logs' || action === 'exec' || action === 'run') {
@@ -169,6 +180,45 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
     }
 
     const action = tokens[1]
+
+    if (action === 'rollout') {
+      if (tokens.length === 2) {
+        return filterMatches([...KUBECTL_ROLLOUT_SUBCOMMANDS], currentToken).map(
+          (subcommand) => ({ text: subcommand, suffix: ' ' })
+        )
+      }
+      if (
+        tokens.length === 3 &&
+        currentToken !== '' &&
+        tokens[2] === currentToken
+      ) {
+        return filterMatches([...KUBECTL_ROLLOUT_SUBCOMMANDS], currentToken).map(
+          (subcommand) => ({ text: subcommand, suffix: ' ' })
+        )
+      }
+
+      const rolloutSubcommand = tokens[2]
+      if (!KUBECTL_ROLLOUT_SUBCOMMANDS.includes(rolloutSubcommand as never)) {
+        return []
+      }
+
+      const rolloutResourceTypes = ['deployments', 'daemonsets', 'statefulsets']
+      const isResourceTypePosition =
+        tokens.length === 3 ||
+        (tokens.length === 4 &&
+          currentToken !== '' &&
+          tokens[3] === currentToken)
+      if (isResourceTypePosition) {
+        return completeOnlyWhenUnique(rolloutResourceTypes, currentToken, ' ')
+      }
+
+      if (tokens.length < 4) {
+        return []
+      }
+
+      const resourceType = RESOURCE_ALIAS_MAP[tokens[3]] || tokens[3]
+      return getResourceNames(resourceType, currentToken, context)
+    }
 
     if (action === 'config') {
       if (tokens.length === 2) {

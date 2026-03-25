@@ -110,4 +110,19 @@ describe('kubectl help resolver', () => {
     expect(output).toBeDefined()
     expect(output).toContain('patch')
   })
+
+  it('should return rollout help text', () => {
+    const output = resolveKubectlHelp('kubectl rollout --help')
+
+    expect(output).toBeDefined()
+    expect(output).toContain('Manage the rollout of a resource.')
+    expect(output).toContain('kubectl rollout status')
+  })
+
+  it('should include rollout command in root help', () => {
+    const output = resolveKubectlHelp('kubectl --help')
+
+    expect(output).toBeDefined()
+    expect(output).toContain('rollout')
+  })
 })

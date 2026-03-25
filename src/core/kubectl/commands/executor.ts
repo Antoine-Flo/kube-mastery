@@ -31,6 +31,7 @@ import { handleScale } from './handlers/scale'
 import { handleSetImage } from './handlers/setImage'
 import { handleReplace } from './handlers/replace'
 import { handleRun } from './handlers/run'
+import { handleRollout } from './handlers/rollout'
 import { handleVersion } from './handlers/version'
 import { handleWait } from './handlers/wait'
 import { resolveKubectlHelp } from './help'
@@ -146,6 +147,9 @@ const createHandlers = (
   handlers.set('expose', (parsed) => handleExpose(apiServer, parsed))
   handlers.set('wait', (parsed) =>
     handleWait(apiServer, parsed, reconcileForWait)
+  )
+  handlers.set('rollout', (parsed) =>
+    handleRollout(apiServer, parsed, reconcileForWait)
   )
   handlers.set('config-get-contexts', (parsed) =>
     handleConfig(fileSystem, parsed)

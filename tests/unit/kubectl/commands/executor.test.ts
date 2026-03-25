@@ -286,6 +286,25 @@ spec:
         )
       })
 
+      it('should route "kubectl rollout status" to rollout handler', () => {
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const createResult = executor.execute(
+          'kubectl create deployment web-app --image=nginx:1.28 --replicas=3'
+        )
+        expect(createResult.ok).toBe(true)
+
+        const rolloutResult = executor.execute(
+          'kubectl rollout status deployment/web-app --watch=false'
+        )
+        expect(rolloutResult.ok).toBe(true)
+        if (!rolloutResult.ok) {
+          return
+        }
+        expect(rolloutResult.value).toContain(
+          'Waiting for deployment.apps/web-app rollout'
+        )
+      })
+
       it('should route "kubectl patch" to patch handler', () => {
         const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const createResult = executor.execute(

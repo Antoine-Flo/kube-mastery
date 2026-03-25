@@ -26,6 +26,7 @@ export type Action =
   | 'run'
   | 'expose'
   | 'wait'
+  | 'rollout'
   | 'config'
   | 'config-get-contexts'
   | 'config-current-context'
@@ -39,6 +40,7 @@ export type Resource = KubectlResource
 export interface ParsedCommand {
   action: Action
   configSubcommand?: 'get-contexts' | 'current-context' | 'view' | 'set-context'
+  rolloutSubcommand?: 'status' | 'history' | 'restart' | 'undo'
   resource?: Resource // Optional for commands like 'version' that don't require a resource
   rawPath?: string // For kubectl get --raw: direct API path (e.g. /api/v1/namespaces)
   name?: string
@@ -79,6 +81,9 @@ export interface ParsedCommand {
   configNamespace?: string // For kubectl config set-context --namespace
   waitForCondition?: string // For kubectl wait: --for=condition=Ready
   waitTimeoutSeconds?: number // For kubectl wait: --timeout=60s
+  rolloutRevision?: number // For kubectl rollout: --revision=N
+  rolloutTimeoutSeconds?: number // For kubectl rollout status: --timeout=60s
+  rolloutWatch?: boolean // For kubectl rollout status: --watch=false
   patchPayload?: string // For kubectl patch: -p/--patch JSON payload
   patchType?: 'merge' // For kubectl patch: --type (v1 supports merge only)
   deleteGracePeriodSeconds?: number // For kubectl delete: --grace-period=N

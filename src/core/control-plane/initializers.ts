@@ -3,6 +3,7 @@ import type { Controller } from './controller-runtime/types'
 import { createDaemonSetController } from './controllers/DaemonSetController'
 import { createDeploymentController } from './controllers/DeploymentController'
 import { createReplicaSetController } from './controllers/ReplicaSetController'
+import { createStatefulSetController } from './controllers/StatefulSetController'
 import {
   createSchedulerController,
   type SchedulerControllerOptions
@@ -19,6 +20,7 @@ import {
 export interface ControlPlaneControllers {
   deploymentController: Controller
   daemonSetController: Controller
+  statefulSetController: Controller
   replicaSetController: Controller
   schedulerController: Controller
   podLifecycleController: Controller
@@ -28,6 +30,7 @@ export interface ControlPlaneControllers {
 export interface InitializeControlPlaneOptions {
   deployment?: { resyncIntervalMs?: number }
   daemonSet?: { resyncIntervalMs?: number }
+  statefulSet?: { resyncIntervalMs?: number }
   replicaSet?: { resyncIntervalMs?: number }
   podLifecycle?: PodLifecycleControllerOptions
   podTermination?: PodTerminationControllerOptions
@@ -45,6 +48,10 @@ export const initializeControlPlane = (
   const daemonSetController = createDaemonSetController(
     apiServer,
     options.daemonSet
+  )
+  const statefulSetController = createStatefulSetController(
+    apiServer,
+    options.statefulSet
   )
   const replicaSetController = createReplicaSetController(
     apiServer,
@@ -65,6 +72,7 @@ export const initializeControlPlane = (
   return {
     deploymentController,
     daemonSetController,
+    statefulSetController,
     replicaSetController,
     schedulerController,
     podLifecycleController,
@@ -80,6 +88,7 @@ export const stopControlPlane = (
   }
   controllers.deploymentController.stop()
   controllers.daemonSetController.stop()
+  controllers.statefulSetController.stop()
   controllers.replicaSetController.stop()
   controllers.schedulerController.stop()
   controllers.podLifecycleController.stop()

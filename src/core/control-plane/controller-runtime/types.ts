@@ -11,6 +11,7 @@ import type { PersistentVolumeClaim } from '../../cluster/ressources/PersistentV
 import type { OwnerReference } from '../../cluster/ressources/Pod'
 import type { Pod } from '../../cluster/ressources/Pod'
 import type { ReplicaSet } from '../../cluster/ressources/ReplicaSet'
+import type { StatefulSet } from '../../cluster/ressources/StatefulSet'
 
 // ─── Kubernetes Resource with Owner References ───────────────────────────
 
@@ -57,6 +58,13 @@ export interface ControllerState {
     name: string,
     namespace: string
   ) => { ok: boolean; value?: DaemonSet }
+
+  // StatefulSets
+  getStatefulSets: (namespace?: string) => StatefulSet[]
+  findStatefulSet: (
+    name: string,
+    namespace: string
+  ) => { ok: boolean; value?: StatefulSet }
 
   // ReplicaSets
   getReplicaSets: (namespace?: string) => ReplicaSet[]

@@ -24,6 +24,7 @@ type HelpTopic =
   | 'label'
   | 'annotate'
   | 'run'
+  | 'rollout'
   | 'config'
 
 const ROOT_HELP = `kubectl controls the Kubernetes cluster manager.
@@ -58,6 +59,7 @@ Other Commands:
   api-resources   Print the supported API resources on the server
   scale           Set a new size for a deployment, replica set, or replication controller
   patch           Update fields of a resource
+  rollout         Manage the rollout of a resource
 
 Use "kubectl <command> --help" for more information about a given command.
 Use "kubectl options" for a list of global command-line options (applies to all commands).`
@@ -181,6 +183,21 @@ Examples:
   kubectl patch deployment my-app --type=merge -p '{"spec":{"replicas":4}}'
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`,
+  rollout: `Manage the rollout of a resource.
+
+Available Commands:
+  status      Show the status of the rollout
+  history     View rollout history
+  restart     Restart a resource
+  undo        Roll back to a previous revision
+
+Usage:
+  kubectl rollout status (TYPE NAME | TYPE/NAME) [--watch=true|false] [--timeout=60s]
+  kubectl rollout history (TYPE NAME | TYPE/NAME) [--revision=N]
+  kubectl rollout restart (TYPE NAME | TYPE/NAME)
+  kubectl rollout undo (TYPE NAME | TYPE/NAME) [--revision=N]
+
+Use "kubectl options" for a list of global command-line options (applies to all commands).`,
   version: `Print the client and server version information.
 
 Usage:
@@ -302,6 +319,10 @@ const resolveTopic = (tokens: string[]): HelpTopic => {
 
   if (actionToken === 'config') {
     return 'config'
+  }
+
+  if (actionToken === 'rollout') {
+    return 'rollout'
   }
 
   const topic = actionToken as HelpTopic

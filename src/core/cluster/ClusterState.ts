@@ -6,6 +6,9 @@ import {
   createConfigMapCreatedEvent,
   createConfigMapDeletedEvent,
   createConfigMapUpdatedEvent,
+  createControllerRevisionCreatedEvent,
+  createControllerRevisionDeletedEvent,
+  createControllerRevisionUpdatedEvent,
   createDaemonSetCreatedEvent,
   createDaemonSetDeletedEvent,
   createDaemonSetUpdatedEvent,
@@ -58,6 +61,7 @@ import type {
   ResourceCollection
 } from './repositories/types'
 import type { ConfigMap } from './ressources/ConfigMap'
+import type { ControllerRevision } from './ressources/ControllerRevision'
 import type { DaemonSet } from './ressources/DaemonSet'
 import type { Deployment } from './ressources/Deployment'
 import type { EndpointSlice } from './ressources/EndpointSlice'
@@ -87,6 +91,7 @@ import { createSystemNamespaces } from './systemNamespaces'
 export interface ClusterStateData {
   pods: ResourceCollection<Pod>
   configMaps: ResourceCollection<ConfigMap>
+  controllerRevisions: ResourceCollection<ControllerRevision>
   secrets: ResourceCollection<Secret>
   nodes: ResourceCollection<Node>
   replicaSets: ResourceCollection<ReplicaSet>
@@ -106,6 +111,7 @@ export interface ClusterStateData {
 type ResourceByKind = {
   Pod: Pod
   ConfigMap: ConfigMap
+  ControllerRevision: ControllerRevision
   Secret: Secret
   Node: Node
   ReplicaSet: ReplicaSet
@@ -133,6 +139,7 @@ export const createClusterStateData = (
   collections: Partial<{
     pods: Pod[]
     configMaps: ConfigMap[]
+    controllerRevisions: ControllerRevision[]
     secrets: Secret[]
     nodes: Node[]
     replicaSets: ReplicaSet[]
@@ -151,6 +158,7 @@ export const createClusterStateData = (
 ): ClusterStateData => ({
   pods: { items: collections.pods ?? [] },
   configMaps: { items: collections.configMaps ?? [] },
+  controllerRevisions: { items: collections.controllerRevisions ?? [] },
   secrets: { items: collections.secrets ?? [] },
   nodes: { items: collections.nodes ?? [] },
   replicaSets: { items: collections.replicaSets ?? [] },
@@ -172,6 +180,8 @@ export const createClusterStateData = (
 // Create resource-specific repositories (singletons)
 const podRepo = createResourceRepository<Pod>('Pod')
 const configMapRepo = createResourceRepository<ConfigMap>('ConfigMap')
+const controllerRevisionRepo =
+  createResourceRepository<ControllerRevision>('ControllerRevision')
 const secretRepo = createResourceRepository<Secret>('Secret')
 const nodeRepo = createResourceRepository<Node>('Node')
 const replicaSetRepo = createResourceRepository<ReplicaSet>('ReplicaSet')
@@ -285,6 +295,7 @@ const createResourceOperations = <T extends KubernetesResource>(
 const createEmptyState = (): ClusterStateData => ({
   pods: podRepo.createEmpty(),
   configMaps: configMapRepo.createEmpty(),
+  controllerRevisions: controllerRevisionRepo.createEmpty(),
   secrets: secretRepo.createEmpty(),
   nodes: nodeRepo.createEmpty(),
   replicaSets: replicaSetRepo.createEmpty(),
@@ -309,6 +320,10 @@ const podOps = createResourceOperations<Pod>(podRepo, 'pods')
 const configMapOps = createResourceOperations<ConfigMap>(
   configMapRepo,
   'configMaps'
+)
+const controllerRevisionOps = createResourceOperations<ControllerRevision>(
+  controllerRevisionRepo,
+  'controllerRevisions'
 )
 const secretOps = createResourceOperations<Secret>(secretRepo, 'secrets')
 const nodeOps = createResourceOperations<Node>(nodeRepo, 'nodes')
@@ -375,6 +390,21 @@ export interface ClusterState {
     namespace: string,
     updateFn: (configMap: ConfigMap) => ConfigMap
   ) => Result<ConfigMap>
+  getControllerRevisions: (namespace?: string) => ControllerRevision[]
+  addControllerRevision: (controllerRevision: ControllerRevision) => void
+  findControllerRevision: (
+    name: string,
+    namespace: string
+  ) => Result<ControllerRevision>
+  deleteControllerRevision: (
+    name: string,
+    namespace: string
+  ) => Result<ControllerRevision>
+  updateControllerRevision: (
+    name: string,
+    namespace: string,
+    updateFn: (controllerRevision: ControllerRevision) => ControllerRevision
+  ) => Result<ControllerRevision>
   getSecrets: (namespace?: string) => Secret[]
   addSecret: (secret: Secret) => void
   findSecret: (name: string, namespace: string) => Result<Secret>
@@ -555,6 +585,11 @@ const EVENT_FACTORIES = {
     created: createConfigMapCreatedEvent,
     deleted: createConfigMapDeletedEvent,
     updated: createConfigMapUpdatedEvent
+  },
+  ControllerRevision: {
+    created: createControllerRevisionCreatedEvent,
+    deleted: createControllerRevisionDeletedEvent,
+    updated: createControllerRevisionUpdatedEvent
   },
   Secret: {
     created: createSecretCreatedEvent,
@@ -759,6 +794,13 @@ export function createClusterState(
     setState,
     eventBus,
     'ConfigMap'
+  )
+  const controllerRevisionMethods = createFacadeMethods(
+    controllerRevisionOps,
+    getState,
+    setState,
+    eventBus,
+    'ControllerRevision'
   )
   const secretMethods = createFacadeMethods(
     secretOps,
@@ -981,6 +1023,11 @@ export function createClusterState(
           resourceName,
           resourceNamespace
         ) as Result<KubernetesResource>,
+      ControllerRevision: (resourceName, resourceNamespace) =>
+        controllerRevisionMethods.find(
+          resourceName,
+          resourceNamespace
+        ) as Result<KubernetesResource>,
       Secret: (resourceName, resourceNamespace) =>
         secretMethods.find(
           resourceName,
@@ -1067,6 +1114,8 @@ export function createClusterState(
         podMethods.getAll(resourceNamespace) as KubernetesResource[],
       ConfigMap: (resourceNamespace) =>
         configMapMethods.getAll(resourceNamespace) as KubernetesResource[],
+      ControllerRevision: (resourceNamespace) =>
+        controllerRevisionMethods.getAll(resourceNamespace) as KubernetesResource[],
       Secret: (resourceNamespace) =>
         secretMethods.getAll(resourceNamespace) as KubernetesResource[],
       Node: (_resourceNamespace) =>
@@ -1133,6 +1182,10 @@ export function createClusterState(
     }
     if (kind === 'ConfigMap') {
       configMapMethods.add(resource as ConfigMap)
+      return { ok: true, value: resource as KindToResource<TKind> }
+    }
+    if (kind === 'ControllerRevision') {
+      controllerRevisionMethods.add(resource as ControllerRevision)
       return { ok: true, value: resource as KindToResource<TKind> }
     }
     if (kind === 'Secret') {
@@ -1223,6 +1276,13 @@ export function createClusterState(
         name,
         effectiveNamespace,
         () => resource as ConfigMap
+      ) as Result<KindToResource<TKind>>
+    }
+    if (kind === 'ControllerRevision') {
+      return controllerRevisionMethods.update(
+        name,
+        effectiveNamespace,
+        () => resource as ControllerRevision
       ) as Result<KindToResource<TKind>>
     }
     if (kind === 'Secret') {
@@ -1330,6 +1390,11 @@ export function createClusterState(
         KindToResource<TKind>
       >
     }
+    if (kind === 'ControllerRevision') {
+      return controllerRevisionMethods.delete(name, effectiveNamespace) as Result<
+        KindToResource<TKind>
+      >
+    }
     if (kind === 'Secret') {
       return secretMethods.delete(name, effectiveNamespace) as Result<
         KindToResource<TKind>
@@ -1396,6 +1461,11 @@ export function createClusterState(
     findConfigMap: configMapMethods.find,
     deleteConfigMap: configMapMethods.delete,
     updateConfigMap: configMapMethods.update,
+    getControllerRevisions: controllerRevisionMethods.getAll,
+    addControllerRevision: controllerRevisionMethods.add,
+    findControllerRevision: controllerRevisionMethods.find,
+    deleteControllerRevision: controllerRevisionMethods.delete,
+    updateControllerRevision: controllerRevisionMethods.update,
 
     getSecrets: secretMethods.getAll,
     addSecret: secretMethods.add,
@@ -1487,6 +1557,7 @@ export function createClusterState(
     toJSON: () => ({
       pods: { items: [...state.pods.items] },
       configMaps: { items: [...state.configMaps.items] },
+      controllerRevisions: { items: [...state.controllerRevisions.items] },
       secrets: { items: [...state.secrets.items] },
       nodes: { items: [...state.nodes.items] },
       replicaSets: { items: [...state.replicaSets.items] },
@@ -1509,6 +1580,7 @@ export function createClusterState(
       state = {
         pods: newState.pods || { items: [] },
         configMaps: newState.configMaps || { items: [] },
+        controllerRevisions: newState.controllerRevisions || { items: [] },
         secrets: newState.secrets || { items: [] },
         nodes: newState.nodes || { items: [] },
         replicaSets: newState.replicaSets || { items: [] },
