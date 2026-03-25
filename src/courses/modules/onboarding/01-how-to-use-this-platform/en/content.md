@@ -2,7 +2,7 @@
 
 <!-- <img class="meme" src="https://i.imgflip.com/amuq3d.jpg" title="made at imgflip.com"/> -->
 
-Welcome and thank you so much for using KubeMastery. We work hard to make a pleasing experience for you. If anything is not working as expected, please let us know. You don't have to create an account to use the platform, but you can do so to if you want to track your progress.
+Welcome and thank you so much for using KubeMastery. If anything is not working as expected, please let us know. You don't have to create an account to use the platform, but you can do so to if you want to track your progress.
 
 ## Navigating the Interface
 
