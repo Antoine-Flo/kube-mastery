@@ -213,7 +213,7 @@ const normalizeFlags = (
  * parseSelector("app=nginx,env=prod,tier=backend")
  * // => { app: "nginx", env: "prod", tier: "backend" }
  */
-const stripMatchingQuotes = (raw: string): string => {
+export const stripMatchingQuotes = (raw: string): string => {
   const trimmed = raw.trim()
   if (trimmed.length < 2) {
     return trimmed

@@ -1,6 +1,6 @@
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import { parseSelector } from '../../shared/parsing'
+import { parseSelector, stripMatchingQuotes } from '../../shared/parsing'
 import { RESOURCE_ALIAS_MAP } from './resources'
 import type { Action, Resource } from './types'
 
@@ -269,7 +269,7 @@ const parseChanges = (tokens: string[]): Record<string, string | null> => {
 
     // Check for removal syntax: key-
     if (token.endsWith('-') && !token.includes('=')) {
-      const key = token.slice(0, -1)
+      const key = stripMatchingQuotes(token.slice(0, -1))
       if (key) {
         changes[key] = null
       }
@@ -279,9 +279,10 @@ const parseChanges = (tokens: string[]): Record<string, string | null> => {
     // Check for key=value syntax
     if (token.includes('=')) {
       const [key, ...valueParts] = token.split('=')
-      const value = valueParts.join('=') // Handle values with = in them
-      if (key && value !== undefined) {
-        changes[key] = value
+      const normalizedKey = stripMatchingQuotes(key)
+      const value = stripMatchingQuotes(valueParts.join('=')) // Handle values with = in them
+      if (normalizedKey && value !== undefined) {
+        changes[normalizedKey] = value
       }
     }
   }

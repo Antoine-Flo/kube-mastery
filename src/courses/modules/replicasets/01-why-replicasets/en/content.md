@@ -126,9 +126,8 @@ kubectl get rs web-rs
 
 ```bash
 # Get one of the Pod names
-POD=$(kubectl get pods -l app=web -o name | head -1)
-echo "Deleting $POD"
-kubectl delete $POD
+kubectl get pods -l app=web -o name
+kubectl delete POD_NAME
 
 # Watch the ReplicaSet immediately create a replacement
 kubectl get pods -l app=web -w
@@ -147,5 +146,3 @@ kubectl describe rs web-rs
 ```bash
 kubectl delete rs web-rs
 ```
-
-Open the cluster visualizer (telescope icon) after step 3 to see the three Pods appear simultaneously, all linked to the ReplicaSet. After step 5, watch the visualizer as one Pod disappears and a replacement appears in near real-time.

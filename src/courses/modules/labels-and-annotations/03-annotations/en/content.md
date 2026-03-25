@@ -2,12 +2,6 @@
 
 Labels and annotations are often introduced together, and for good reason, they're siblings, not twins. Both live in the `metadata` section of a Kubernetes object, and both store key-value pairs. But they serve completely different purposes, and confusing the two leads to subtle bugs and a messier cluster.
 
-## The Library Book Analogy
-
-Every library book has a call number, a short, structured code like `QA76.73.P98`, printed on the spine. Librarians use it to shelve books and patrons use it to find them. It's designed to be searched and sorted: the library's equivalent of a label.
-
-But a book also carries richer context: the ISBN, publisher notes, margin annotations, a branch stamp, due dates. None of that information is used to locate the book on the shelf, it's there for humans and systems that need more detail once they've already found it. Annotations are exactly those richer notes: metadata attached to a Kubernetes object that is not meant for selecting or filtering, but for informing tools, operators, and humans.
-
 ## Labels vs. Annotations at a Glance
 
 The fundamental rule is simple:
@@ -111,7 +105,7 @@ To extract a specific annotation value programmatically, use `kubectl get` with 
 kubectl get pod my-pod -o jsonpath='{.metadata.annotations.contact}'
 ```
 
-For nested or prefixed keys, use the bracket notation:
+For prefixed keys containing dots, escape the dots in the jsonpath key path:
 
 ```bash
 kubectl get pod my-pod -o jsonpath='{.metadata.annotations.nginx\.ingress\.kubernetes\.io/rewrite-target}'
@@ -128,6 +122,8 @@ kubectl annotate pod my-pod contact-
 ```
 
 Defining annotations directly in YAML manifests is the preferred approach for anything that should be version-controlled:
+
+In this simulator, annotations declared in `metadata.annotations` are interpreted during `kubectl apply -f ...` and persisted on the created or updated resource.
 
 ```yaml
 apiVersion: v1
@@ -196,7 +192,7 @@ kubectl get pod annotated-pod -o jsonpath='{.metadata.annotations.runbook}'
 
 ```bash
 kubectl annotate pod annotated-pod build-number="1042"
-kubectl describe pod annotated-pod | grep -A5 Annotations
+kubectl describe pod annotated-pod
 ```
 
 **5. Update an existing annotation**
@@ -210,13 +206,13 @@ kubectl get pod annotated-pod -o jsonpath='{.metadata.annotations.contact}'
 
 ```bash
 kubectl annotate pod annotated-pod build-number-
-kubectl describe pod annotated-pod | grep -A5 Annotations
+kubectl describe pod annotated-pod
 ```
 
-**7. View all annotations as JSON**
+**7. View all annotations**
 
 ```bash
-kubectl get pod annotated-pod -o jsonpath='{.metadata.annotations}' | python3 -m json.tool
+kubectl get pod annotated-pod -o jsonpath='{.metadata.annotations}'
 ```
 
 **8. Clean up**

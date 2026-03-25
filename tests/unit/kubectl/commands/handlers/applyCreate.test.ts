@@ -10,9 +10,6 @@ import { handleApply } from '../../../../../src/core/kubectl/commands/handlers/a
 import { handleCreate } from '../../../../../src/core/kubectl/commands/handlers/create'
 import { handleRun } from '../../../../../src/core/kubectl/commands/handlers/run'
 
-const LAST_APPLIED_CONFIGURATION_ANNOTATION =
-  'kubectl.kubernetes.io/last-applied-configuration'
-
 describe('applyCreate handler', () => {
   let apiServer: ReturnType<typeof createApiServerFacade>
   let fileSystem: FileSystem
@@ -352,9 +349,9 @@ spec:
     }
     expect(
       createdDeployment.value.metadata.annotations?.[
-        LAST_APPLIED_CONFIGURATION_ANNOTATION
+        'kubectl.kubernetes.io/last-applied-configuration'
       ]
-    ).toBeTypeOf('string')
+    ).toBeUndefined()
 
     const parsedSecondApply = parseCommand(
       'kubectl apply -f demo-unchanged.yaml'
@@ -376,6 +373,54 @@ spec:
     expect(secondApplyResult.value).toContain(
       'deployment.apps/demo-unchanged unchanged'
     )
+  })
+
+  it('should apply pod annotations from manifest and persist them on resource metadata', () => {
+    const yaml = `apiVersion: v1
+kind: Pod
+metadata:
+  name: annotated-pod
+  annotations:
+    contact: platform-team@example.com
+    runbook: https://wiki.example.com/runbooks/web
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.28
+`
+    fileSystem.createFile('annotated-pod.yaml')
+    fileSystem.writeFile('annotated-pod.yaml', yaml)
+
+    const parsed = parseCommand('kubectl apply -f annotated-pod.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const applyResult = handleApply(fileSystem, apiServer, parsed.value)
+    expect(applyResult.ok).toBe(true)
+    if (!applyResult.ok) {
+      return
+    }
+    expect(applyResult.value).toContain('pod/annotated-pod created')
+
+    const pod = apiServer.findResource('Pod', 'annotated-pod', 'default')
+    expect(pod.ok).toBe(true)
+    if (!pod.ok) {
+      return
+    }
+
+    expect(pod.value.metadata.annotations?.contact).toBe(
+      'platform-team@example.com'
+    )
+    expect(pod.value.metadata.annotations?.runbook).toBe(
+      'https://wiki.example.com/runbooks/web'
+    )
+    expect(
+      pod.value.metadata.annotations?.[
+        'kubectl.kubernetes.io/last-applied-configuration'
+      ]
+    ).toBeUndefined()
   })
 
   it('should apply sorted manifests from a directory with one line per file', () => {

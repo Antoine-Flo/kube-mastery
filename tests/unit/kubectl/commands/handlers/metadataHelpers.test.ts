@@ -278,6 +278,88 @@ describe('metadataHelpers', () => {
 
       expect(subscriber).toHaveBeenCalled()
     })
+
+    it('should return error when overwriting annotation without --overwrite flag', () => {
+      const pod = createPod({
+        name: 'my-pod',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'nginx:latest' }],
+        annotations: { contact: 'platform-team@example.com' }
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        action: 'annotate',
+        name: 'my-pod',
+        annotationChanges: { contact: 'new-team@example.com' }
+      })
+
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, annotateConfig)
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('annotation "contact" already exists')
+        expect(result.error).toContain('--overwrite')
+      }
+    })
+
+    it('should overwrite annotation value with --overwrite flag', () => {
+      const pod = createPod({
+        name: 'my-pod',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'nginx:latest' }],
+        annotations: { contact: 'platform-team@example.com' }
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        action: 'annotate',
+        name: 'my-pod',
+        annotationChanges: { contact: 'new-team@example.com' },
+        flags: { overwrite: true }
+      })
+
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, annotateConfig)
+
+      expect(result.ok).toBe(true)
+      const updatedPod = apiServer.findResource('Pod', 'my-pod', 'default')
+      expect(updatedPod.ok).toBe(true)
+      if (updatedPod.ok) {
+        expect(updatedPod.value.metadata.annotations?.contact).toBe(
+          'new-team@example.com'
+        )
+      }
+    })
+
+    it('should remove annotation with null value', () => {
+      const pod = createPod({
+        name: 'my-pod',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'nginx:latest' }],
+        annotations: {
+          contact: 'platform-team@example.com',
+          runbook: 'https://wiki.example.com/runbooks/web'
+        }
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        action: 'annotate',
+        name: 'my-pod',
+        annotationChanges: { contact: null }
+      })
+
+      apiServer.etcd.restore(state)
+      const result = handleMetadataChange(apiServer, parsed, annotateConfig)
+
+      expect(result.ok).toBe(true)
+      const updatedPod = apiServer.findResource('Pod', 'my-pod', 'default')
+      expect(updatedPod.ok).toBe(true)
+      if (updatedPod.ok) {
+        expect(updatedPod.value.metadata.annotations).toEqual({
+          runbook: 'https://wiki.example.com/runbooks/web'
+        })
+      }
+    })
   })
 
   describe('labeling configmaps', () => {

@@ -517,11 +517,11 @@ describe('kubectl transformers', () => {
   })
 
   describe('annotate transformer', () => {
-    it('should extract resource, name and annotation changes', () => {
+    it('should extract resource, name and strip quoted annotation values', () => {
       const transformer = getTransformerForAction('annotate')
       const ctx = createContext({
         input: 'kubectl annotate pods my-pod description="My app"',
-        tokens: ['kubectl', 'annotate', 'pods', 'my-pod', 'description=My app']
+        tokens: ['kubectl', 'annotate', 'pods', 'my-pod', 'description="My app"']
       })
 
       const result = transformer(ctx)
@@ -548,6 +548,46 @@ describe('kubectl transformers', () => {
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.annotationChanges).toEqual({ description: null })
+      }
+    })
+
+    it('should skip flags in annotation changes', () => {
+      const transformer = getTransformerForAction('annotate')
+      const ctx = createContext({
+        input:
+          'kubectl annotate pods my-pod contact="team@example.com" --overwrite',
+        tokens: [
+          'kubectl',
+          'annotate',
+          'pods',
+          'my-pod',
+          'contact="team@example.com"',
+          '--overwrite'
+        ]
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.annotationChanges).toEqual({
+          contact: 'team@example.com'
+        })
+      }
+    })
+
+    it('should handle annotation value with equals sign', () => {
+      const transformer = getTransformerForAction('annotate')
+      const ctx = createContext({
+        input: 'kubectl annotate pods my-pod config="key=value"',
+        tokens: ['kubectl', 'annotate', 'pods', 'my-pod', 'config="key=value"']
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.annotationChanges).toEqual({ config: 'key=value' })
       }
     })
 

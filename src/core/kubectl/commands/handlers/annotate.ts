@@ -11,7 +11,7 @@ import { handleMetadataChange } from '../metadataHelpers'
 
 /**
  * Handle kubectl annotate command
- * Supports pods, configmaps, and secrets
+ * Supports metadata-capable resources exposed by metadataHelpers
  * Uses event-driven architecture
  */
 export const handleAnnotate = (

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { handleAnnotate } from '../../../../../src/core/kubectl/commands/handlers/annotate'
 import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
+import { parseCommand } from '../../../../../src/core/kubectl/commands/parser'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 
 describe('kubectl annotate handler', () => {
@@ -58,5 +59,34 @@ describe('kubectl annotate handler', () => {
     const result = handleAnnotate(apiServer, parsed)
 
     expect(result.ok).toBe(false)
+  })
+
+  it('should parse and apply annotate command with quoted value and overwrite', () => {
+    const pod = createPod({
+      name: 'my-pod',
+      namespace: 'default',
+      containers: [{ name: 'main', image: 'nginx:latest' }],
+      annotations: { contact: 'platform-team@example.com' }
+    })
+    apiServer.createResource('Pod', pod)
+
+    const parsed = parseCommand(
+      'kubectl annotate pod my-pod contact="new-team@example.com" --overwrite'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleAnnotate(apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+
+    const updatedPod = apiServer.findResource('Pod', 'my-pod', 'default')
+    expect(updatedPod.ok).toBe(true)
+    if (updatedPod.ok) {
+      expect(updatedPod.value.metadata.annotations?.contact).toBe(
+        'new-team@example.com'
+      )
+    }
   })
 })

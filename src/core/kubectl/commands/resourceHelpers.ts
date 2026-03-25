@@ -141,31 +141,6 @@ const areResourcesEquivalentForApply = (
   )
 }
 
-const withLastAppliedConfigurationAnnotation = (
-  resource: KubernetesResource
-): KubernetesResource => {
-  const cloned = cloneResource(resource) as Record<string, unknown>
-  const metadataRaw = cloned['metadata']
-  if (metadataRaw == null || typeof metadataRaw !== 'object') {
-    return cloned as KubernetesResource
-  }
-
-  const metadata = metadataRaw as Record<string, unknown>
-  const comparable = buildComparableResource(cloned, undefined, true)
-  const serialized = JSON.stringify(comparable)
-
-  const currentAnnotationsRaw = metadata['annotations']
-  const annotations: Record<string, unknown> =
-    currentAnnotationsRaw != null && typeof currentAnnotationsRaw === 'object'
-      ? { ...(currentAnnotationsRaw as Record<string, unknown>) }
-      : {}
-
-  annotations[LAST_APPLIED_CONFIGURATION_ANNOTATION] = serialized
-  metadata['annotations'] = annotations
-
-  return cloned as KubernetesResource
-}
-
 /**
  * Apply resource using event-driven architecture
  * Emits PodCreated/Updated, ConfigMapCreated/Updated, or SecretCreated/Updated events
@@ -204,12 +179,10 @@ export const applyResourceWithEvents = (
     if (areResourcesEquivalentForApply(existing.value, resource)) {
       return success(`${toKindReference(kind)}/${name} unchanged`)
     }
-    const resourceToPersist = withLastAppliedConfigurationAnnotation(resource)
-
     const updateResult = apiServer.updateResource(
       kind,
       name,
-      resourceToPersist as unknown as KindToResource<typeof kind>,
+      resource as unknown as KindToResource<typeof kind>,
       namespace
     )
     if (!updateResult.ok) {
@@ -217,10 +190,9 @@ export const applyResourceWithEvents = (
     }
     return success(`${toKindReference(kind)}/${name} configured`)
   } else {
-    const resourceToPersist = withLastAppliedConfigurationAnnotation(resource)
     const createResult = apiServer.createResource(
       kind,
-      resourceToPersist as unknown as KindToResource<typeof kind>,
+      resource as unknown as KindToResource<typeof kind>,
       namespace
     )
     if (!createResult.ok) {
