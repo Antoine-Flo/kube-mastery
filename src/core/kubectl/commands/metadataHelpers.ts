@@ -261,6 +261,17 @@ const handleMetadataChangeWithEvents = (
   if (accessor.kind === 'Pod') {
     const pod = resource as Pod
     const updatedPod = updatedResource as Pod
+    // Kubernetes watches observe Pod metadata edits as Pod update events.
+    // Emit PodUpdated through the API facade first so controllers reconcile immediately.
+    const podUpdateResult = apiServer.updateResource(
+      'Pod',
+      name,
+      updatedPod,
+      namespace
+    )
+    if (!podUpdateResult.ok) {
+      return error(podUpdateResult.error)
+    }
     const event =
       metadataKey === 'labels'
         ? createPodLabeledEvent(

@@ -8,7 +8,7 @@ import type { EventBus } from '../../cluster/events/EventBus'
 import type { ClusterEvent } from '../../cluster/events/types'
 import { createPodBoundEvent } from '../../cluster/events/types'
 import type { Node } from '../../cluster/ressources/Node'
-import type { Pod } from '../../cluster/ressources/Pod'
+import { isPodTerminating, type Pod } from '../../cluster/ressources/Pod'
 import { isNodeEligibleForPod } from '../../cluster/scheduler/SimSchedulingPredicates'
 import {
   startPeriodicResync,
@@ -56,6 +56,103 @@ const randomInRange = (min: number, max: number): number => {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
+const isTerminalPhase = (pod: Pod): boolean => {
+  return pod.status.phase === 'Succeeded' || pod.status.phase === 'Failed'
+}
+
+const isActivePodForPlacement = (pod: Pod): boolean => {
+  if (isTerminalPhase(pod)) {
+    return false
+  }
+  if (isPodTerminating(pod)) {
+    return false
+  }
+  return true
+}
+
+const getControllerOwnerKey = (pod: Pod): string | undefined => {
+  const owners = pod.metadata.ownerReferences ?? []
+  if (owners.length === 0) {
+    return undefined
+  }
+  const controllerOwner =
+    owners.find((ownerReference) => ownerReference.controller === true) ??
+    owners[0]
+  if (controllerOwner.uid != null && controllerOwner.uid.length > 0) {
+    return `${controllerOwner.kind}/${controllerOwner.uid}`
+  }
+  return `${controllerOwner.kind}/${pod.metadata.namespace}/${controllerOwner.name}`
+}
+
+type NodePlacementScore = {
+  totalPodsOnNode: number
+  sameOwnerPodsOnNode: number
+}
+
+const getNodePlacementScore = (
+  candidateNode: Node,
+  activeScheduledPods: Pod[],
+  incomingOwnerKey: string | undefined
+): NodePlacementScore => {
+  let totalPodsOnNode = 0
+  let sameOwnerPodsOnNode = 0
+  for (const existingPod of activeScheduledPods) {
+    if (existingPod.spec.nodeName !== candidateNode.metadata.name) {
+      continue
+    }
+    totalPodsOnNode += 1
+    if (incomingOwnerKey == null) {
+      continue
+    }
+    if (getControllerOwnerKey(existingPod) === incomingOwnerKey) {
+      sameOwnerPodsOnNode += 1
+    }
+  }
+  return { totalPodsOnNode, sameOwnerPodsOnNode }
+}
+
+const selectBestNodeForPlacement = (
+  feasibleNodes: Node[],
+  activeScheduledPods: Pod[],
+  incomingOwnerKey: string | undefined
+): Node => {
+  const initialNode = feasibleNodes[0]
+  let selectedNode = initialNode
+  let selectedScore: NodePlacementScore = {
+    totalPodsOnNode: Number.POSITIVE_INFINITY,
+    sameOwnerPodsOnNode: Number.POSITIVE_INFINITY
+  }
+
+  for (const candidateNode of feasibleNodes) {
+    const candidateScore = getNodePlacementScore(
+      candidateNode,
+      activeScheduledPods,
+      incomingOwnerKey
+    )
+    const hasBetterSpread =
+      candidateScore.sameOwnerPodsOnNode < selectedScore.sameOwnerPodsOnNode
+    const hasEqualSpread =
+      candidateScore.sameOwnerPodsOnNode === selectedScore.sameOwnerPodsOnNode
+    const hasBetterLoad =
+      candidateScore.totalPodsOnNode < selectedScore.totalPodsOnNode
+    const hasEqualLoad =
+      candidateScore.totalPodsOnNode === selectedScore.totalPodsOnNode
+    const hasStableTieBreak =
+      candidateNode.metadata.name < selectedNode.metadata.name
+
+    if (
+      hasBetterSpread ||
+      (hasEqualSpread && hasBetterLoad) ||
+      (hasEqualSpread && hasEqualLoad && hasStableTieBreak)
+    ) {
+      selectedNode = candidateNode
+      selectedScore = candidateScore
+    }
+  }
+
+  return selectedNode
+}
+
 export class SchedulerController implements ReconcilerController {
   private apiServer: ApiServerFacade
   private eventBus: EventBus
@@ -65,7 +162,6 @@ export class SchedulerController implements ReconcilerController {
   private unsubscribe: (() => void) | null = null
   private stopPeriodicResync: () => void = () => {}
   private options: SchedulerControllerOptions
-  private nextNodeIndex = 0
   private pendingTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
   constructor(
@@ -207,7 +303,7 @@ export class SchedulerController implements ReconcilerController {
     if (feasibleNodes.length === 0) {
       return
     }
-    const selectedNode = this.selectNode(feasibleNodes)
+    const selectedNode = this.selectNode(feasibleNodes, pod)
     if (selectedNode == null) {
       return
     }
@@ -247,13 +343,27 @@ export class SchedulerController implements ReconcilerController {
     })
   }
 
-  private selectNode(feasibleNodes: Node[]): Node | null {
+  private selectNode(feasibleNodes: Node[], pod: Pod): Node | null {
     if (feasibleNodes.length === 0) {
       return null
     }
-    const node = feasibleNodes[this.nextNodeIndex % feasibleNodes.length]
-    this.nextNodeIndex = (this.nextNodeIndex + 1) % feasibleNodes.length
-    return node
+    const allPodsInNamespace = this.getState().getPods(pod.metadata.namespace)
+    const activeScheduledPods = allPodsInNamespace.filter((existingPod) => {
+      if (!isActivePodForPlacement(existingPod)) {
+        return false
+      }
+      const assignedNodeName = existingPod.spec.nodeName
+      if (assignedNodeName == null || assignedNodeName.length === 0) {
+        return false
+      }
+      return true
+    })
+    const incomingOwnerKey = getControllerOwnerKey(pod)
+    return selectBestNodeForPlacement(
+      feasibleNodes,
+      activeScheduledPods,
+      incomingOwnerKey
+    )
   }
 }
 

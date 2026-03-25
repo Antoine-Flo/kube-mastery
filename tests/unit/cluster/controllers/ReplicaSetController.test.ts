@@ -15,6 +15,7 @@ import {
   createPodUpdatedEvent,
   type PodCreatedEvent,
   type PodDeletedEvent,
+  type PodUpdatedEvent,
   type ReplicaSetUpdatedEvent
 } from '../../../../src/core/cluster/events/types'
 import type { Pod } from '../../../../src/core/cluster/ressources/Pod'
@@ -131,6 +132,30 @@ describe('ReplicaSetController', () => {
         resource: KindToResource<TKind>,
         namespace?: string
       ) => {
+        if (kind === 'Pod') {
+          const pod = resource as Pod
+          const index = mockState.pods.findIndex((entry) => {
+            return (
+              entry.metadata.name === name &&
+              entry.metadata.namespace === (namespace ?? 'default')
+            )
+          })
+          if (index < 0) {
+            return { ok: false, error: 'not found' }
+          }
+          const previous = mockState.pods[index]
+          mockState.pods[index] = pod
+          eventBus.emit(
+            createPodUpdatedEvent(
+              name,
+              namespace ?? 'default',
+              pod,
+              previous,
+              'api-server'
+            )
+          )
+          return { ok: true, value: pod }
+        }
         if (kind === 'ReplicaSet') {
           const replicaSet = resource as ReplicaSet
           const index = mockState.replicaSets.findIndex((entry) => {
@@ -431,6 +456,47 @@ describe('ReplicaSetController', () => {
       expect(createdPodsCount).toBe(1)
     })
 
+    it('should release ownerReference when owned pod no longer matches selector', () => {
+      const rs = createTestReplicaSet('my-rs', 1)
+      const detachedOwnedPod = createPod({
+        name: 'my-rs-detached',
+        namespace: 'default',
+        containers: [{ name: 'nginx', image: 'nginx:latest' }],
+        labels: { detached: 'true' },
+        phase: 'Running',
+        ownerReferences: [
+          {
+            apiVersion: 'apps/v1',
+            kind: 'ReplicaSet',
+            name: 'my-rs',
+            uid: 'default-my-rs',
+            controller: true
+          }
+        ]
+      })
+      mockState.replicaSets = [rs]
+      mockState.pods = [detachedOwnedPod]
+
+      const updatedPods: Pod[] = []
+      const createdPods: Pod[] = []
+      eventBus.subscribe('PodUpdated', (event: PodUpdatedEvent) => {
+        updatedPods.push(event.payload.pod)
+      })
+      eventBus.subscribe('PodCreated', (event: PodCreatedEvent) => {
+        createdPods.push(event.payload.pod)
+      })
+
+      controller.reconcile('default/my-rs')
+
+      expect(updatedPods.length).toBeGreaterThan(0)
+      const releasedPod = updatedPods.find((pod) => {
+        return pod.metadata.name === 'my-rs-detached'
+      })
+      expect(releasedPod).toBeDefined()
+      expect(releasedPod?.metadata.ownerReferences).toBeUndefined()
+      expect(createdPods.length).toBe(1)
+    })
+
     it('should prefer deleting unowned matching pods when above desired replicas', () => {
       const rs = createTestReplicaSet('my-rs', 2)
       mockState.replicaSets = [rs]
@@ -575,6 +641,44 @@ describe('ReplicaSetController', () => {
       controller.stop()
 
       expect(updatedStatuses).toContain(1)
+    })
+
+    it('should create a replacement immediately when pod labels stop matching selector', async () => {
+      const rs = createTestReplicaSet('my-rs', 1)
+      const matchingPod = createTestPod('my-rs-a', 'my-rs')
+      mockState.replicaSets = [rs]
+      mockState.pods = [matchingPod]
+
+      const createdPodNames: string[] = []
+      eventBus.subscribe('PodCreated', (event: PodCreatedEvent) => {
+        createdPodNames.push(event.payload.pod.metadata.name)
+      })
+
+      controller.start()
+
+      const unlabeledPod = createPod({
+        name: matchingPod.metadata.name,
+        namespace: matchingPod.metadata.namespace,
+        containers: [{ name: 'nginx', image: 'nginx:latest' }],
+        labels: { detached: 'true' },
+        phase: 'Running',
+        ownerReferences: matchingPod.metadata.ownerReferences
+      })
+      mockState.pods = [unlabeledPod]
+      eventBus.emit(
+        createPodUpdatedEvent(
+          unlabeledPod.metadata.name,
+          unlabeledPod.metadata.namespace,
+          unlabeledPod,
+          matchingPod,
+          'test'
+        )
+      )
+
+      await new Promise((resolve) => setTimeout(resolve, 25))
+      controller.stop()
+
+      expect(createdPodNames.length).toBeGreaterThan(0)
     })
   })
 

@@ -1,6 +1,6 @@
 # Scaling and Self-Healing with ReplicaSets
 
-A ReplicaSet isn't a static configuration, it's a living controller that continuously responds to what's happening in your cluster. In this lesson you'll see two of its most powerful behaviors in action: scaling the number of replicas up or down on demand, and automatically healing from Pod failures without any human intervention. You'll also encounter a surprising behavior called adoption, which is a direct consequence of how ReplicaSets find their Pods.
+A ReplicaSet is a living controller that continuously responds to cluster state. In this lesson you'll see two of its most powerful behaviors: scaling replicas up or down on demand, and automatically healing from Pod failures. You'll also encounter a surprising behavior called adoption, a direct consequence of how ReplicaSets find their Pods.
 
 ## The Reconciliation Loop
 
@@ -8,17 +8,17 @@ A ReplicaSet isn't a static configuration, it's a living controller that continu
 The reconciliation loop is simple: compare **desired** (`spec.replicas`) to **observed** (Pods currently matching the selector). Too few → create. Too many → delete. Equal → do nothing. This loop runs continuously and reacts to any change automatically.
 :::
 
-The ReplicaSet controller is constantly running this cycle. It reads the desired state (the `spec.replicas` count you declared) and compares it to the observed state (the number of Pods currently matching the selector). If those two numbers differ, for any reason, it takes action to make them equal. This reactive, loop-based design is a core pattern in Kubernetes and is what makes controllers so robust.
+If those numbers differ for any reason, the controller takes immediate action to make them equal. This reactive design is what makes controllers robust.
 
 ## Scaling Up
 
-When traffic to your application increases and you need more capacity, scaling up is a single command:
+Scaling up to handle more load is a single command:
 
 ```bash
 kubectl scale rs web-rs --replicas=5
 ```
 
-The ReplicaSet's `spec.replicas` field is updated to 5. The controller immediately sees that desired (5) exceeds actual (3), and creates two new Pods from the same template. The new Pods come up in parallel, there's no sequential queue. Within seconds, assuming the container image is already cached on the nodes, all five Pods are running and serving traffic.
+The ReplicaSet's `spec.replicas` field is updated to 5. The controller sees that desired (5) exceeds actual (3) and creates two new Pods from the same template in parallel. Within seconds, all five Pods are running.
 
 You can also scale by editing the YAML file and re-applying it:
 
@@ -27,11 +27,11 @@ You can also scale by editing the YAML file and re-applying it:
 kubectl apply -f web-rs.yaml
 ```
 
-Both approaches have the same effect: they update `spec.replicas` in the API server, which the controller observes and acts upon. The `kubectl scale` command is faster for quick adjustments; updating the file is better for changes you want to commit to version control.
+`kubectl scale` is faster for quick adjustments; updating the file is better for changes you want to commit to version control.
 
 ## Scaling Down
 
-Scaling down works identically, you simply specify a lower replica count:
+Scaling down works the same way:
 
 ```bash
 kubectl scale rs web-rs --replicas=2
@@ -57,7 +57,7 @@ graph LR
 
 ## Self-Healing
 
-Self-healing is where the reconciliation loop truly shines. Delete a Pod that belongs to a ReplicaSet, and the controller replaces it before you've even had time to run `kubectl get pods` again.
+Delete a Pod that belongs to a ReplicaSet, and the controller replaces it almost immediately.
 
 ```bash
 # With 3 replicas running, delete one Pod manually
@@ -67,7 +67,7 @@ kubectl delete pod web-rs-x7k2p
 kubectl get pods -l app=web
 ```
 
-You'll see one Pod in `Terminating` status and a brand-new Pod already in `ContainerCreating`. Within a few seconds, the count is back to three. The ReplicaSet has no memory of the specific Pod that was deleted, it just sees that the count dropped from 3 to 2 and creates a replacement from the template.
+You'll see one Pod in `Terminating` status and a new Pod already in `ContainerCreating`. Within a few seconds, the count is back to three.
 
 This same mechanism handles node failures. When a Node becomes unreachable, the node lifecycle controller eventually marks the Pods on that node as `Unknown`. After a configurable timeout, those Pods are forcibly deleted from the API server, which causes the ReplicaSet to detect the shortfall and create replacements on healthy nodes.
 
@@ -95,13 +95,13 @@ Label collisions between different ReplicaSets can cause chaotic behavior. If tw
 
 ## Watching the Reconciliation in Real Time
 
-`kubectl get` with the `-w` flag (watch) streams updates to the terminal as Kubernetes events occur. This is the best way to observe the reconciliation loop live:
+The `-w` flag streams live updates as events occur, and is the best way to observe the reconciliation loop in real time:
 
 ```bash
 kubectl get pods -l app=web -w
 ```
 
-Leave this running while you perform operations in another terminal, scale up, scale down, delete a Pod, and you'll see the events stream in: `Pending`, `ContainerCreating`, `Running`, `Terminating`. The speed of the reconciliation becomes viscerally clear.
+Leave this running while you operate in another terminal. You'll see each state transition stream in: `Pending`, `ContainerCreating`, `Running`, `Terminating`.
 
 ## Hands-On Practice
 
@@ -109,15 +109,8 @@ Start with a running ReplicaSet and work through scaling and self-healing exerci
 
 **1. Create the ReplicaSet**
 
-Create the manifest file:
-
-```bash
-nano web-rs.yaml
-```
-
-Paste the manifest from above, save, and exit.
-
 ```yaml
+#web-rs.yaml
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
@@ -135,12 +128,6 @@ spec:
       containers:
         - name: web
           image: nginx:1.28
-```
-
-Apply the manifest:
-
-```bash
-kubectl apply -f web-rs.yaml
 ```
 
 Check the ReplicaSet:
@@ -172,26 +159,15 @@ kubectl get pods -l app=web
 kubectl scale rs web-rs --replicas=3
 kubectl get pods -l app=web
 
-# Pick one Pod name from the list above
-# Then replace <pod-name> below
+# Delete a Pod and watch it be replaced in the visualizer
 kubectl delete pod <pod-name>
-kubectl get pods -l app=web -w
-# Ctrl+C after watching the replacement appear
 ```
 
 **5. Demonstrate Pod adoption**
 
 ```bash
-# Scale to 3 first
-kubectl scale rs web-rs --replicas=3
-kubectl get pods -l app=web
-
-# Create an extra Pod with the matching label
+# Create an extra Pod with the matching label and watch it be replaced in the visualizer
 kubectl run intruder --image=nginx:1.28 --labels="app=web"
-
-# Watch what happens (the RS will delete one Pod to maintain count=3)
-kubectl get pods -l app=web -w
-# Ctrl+C after a few seconds
 ```
 
 **6. Extract a Pod from the fleet by changing its label**
@@ -199,7 +175,6 @@ kubectl get pods -l app=web -w
 ```bash
 # Pick one Pod name from this command output
 kubectl get pods -l app=web
-# Then replace <pod-name> below
 
 # Remove the label that the RS watches
 kubectl label pod <pod-name> app-

@@ -125,6 +125,34 @@ const computeReplicaSetStatus = (ownedPods: Pod[]): ReplicaSetStatus => {
   }
 }
 
+const hasOwnerReference = (pod: Pod, rs: ReplicaSet): boolean => {
+  const ownerReferences = pod.metadata.ownerReferences ?? []
+  return ownerReferences.some((ownerReference) => {
+    return (
+      ownerReference.kind === rs.kind &&
+      ownerReference.name === rs.metadata.name
+    )
+  })
+}
+
+const removeReplicaSetOwnerReference = (pod: Pod, rs: ReplicaSet): Pod => {
+  const ownerReferences = pod.metadata.ownerReferences ?? []
+  const nextOwnerReferences = ownerReferences.filter((ownerReference) => {
+    return !(
+      ownerReference.kind === rs.kind &&
+      ownerReference.name === rs.metadata.name
+    )
+  })
+  return {
+    ...pod,
+    metadata: {
+      ...pod.metadata,
+      ownerReferences:
+        nextOwnerReferences.length > 0 ? nextOwnerReferences : undefined
+    }
+  }
+}
+
 // ─── Controller ───────────────────────────────────────────────────────────
 
 /**
@@ -331,6 +359,30 @@ export class ReplicaSetController implements ReconcilerController {
     }
 
     const rs = rsResult.value
+
+    // Release pods still owned by this ReplicaSet but no longer matching selector.
+    // Kubernetes controllers clear ownerReferences in this case.
+    const allPodsInNamespace = state.getPods(namespace)
+    const ownedPodsInNamespace = getOwnedResources(rs, allPodsInNamespace)
+    for (const ownedPod of ownedPodsInNamespace) {
+      const matchesSelector = selectorMatchesLabels(
+        rs.spec.selector,
+        ownedPod.metadata.labels
+      )
+      if (matchesSelector) {
+        continue
+      }
+      if (!hasOwnerReference(ownedPod, rs)) {
+        continue
+      }
+      const releasedPod = removeReplicaSetOwnerReference(ownedPod, rs)
+      this.apiServer.updateResource(
+        'Pod',
+        ownedPod.metadata.name,
+        releasedPod,
+        ownedPod.metadata.namespace
+      )
+    }
 
     // Get all pods in namespace matching this ReplicaSet selector.
     // We reconcile against all matching pods (owned or not), like Kubernetes does for selector overlap.

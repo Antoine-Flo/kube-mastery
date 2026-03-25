@@ -232,6 +232,28 @@ describe('metadataHelpers', () => {
 
       expect(subscriber).toHaveBeenCalled()
     })
+
+    it('should emit PodUpdated event for pod label changes', () => {
+      const subscriber = vi.fn()
+      apiServer.eventBus.subscribe('PodUpdated', subscriber)
+
+      const pod = createPod({
+        name: 'my-pod',
+        namespace: 'default',
+        labels: { app: 'web' },
+        containers: [{ name: 'main', image: 'nginx:latest' }]
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'my-pod',
+        labelChanges: { app: null }
+      })
+
+      apiServer.etcd.restore(state)
+      handleMetadataChange(apiServer, parsed, labelConfig)
+
+      expect(subscriber).toHaveBeenCalled()
+    })
   })
 
   describe('annotating pods', () => {
