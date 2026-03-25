@@ -214,7 +214,3 @@ kubectl get pods -l app=web
 ```bash
 kubectl delete deployment web-app
 ```
-
-:::info
-Open the cluster visualizer (telescope icon) after step 2. Expand the Deployment node to see the ReplicaSet and then the three Pod nodes beneath it. Repeat after step 6 to see two more Pods appear under the same ReplicaSet.
-:::

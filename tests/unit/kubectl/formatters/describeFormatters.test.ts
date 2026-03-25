@@ -9,10 +9,12 @@ import {
 } from '../../../../src/core/kubectl/formatters/describeFormatters'
 import {
   createDeployment,
+  generateTemplateHash,
   type DeploymentCondition
 } from '../../../../src/core/cluster/ressources/Deployment'
 import { createNode } from '../../../../src/core/cluster/ressources/Node'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
+import { createReplicaSet } from '../../../../src/core/cluster/ressources/ReplicaSet'
 import { createConfigMap } from '../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../src/core/cluster/ressources/Secret'
 import { createLease } from '../../../../src/core/cluster/ressources/Lease'
@@ -755,7 +757,115 @@ describe('describeFormatters', () => {
 
       expect(result).toContain('Labels:           <none>')
       expect(result).toContain('Annotations:      <none>')
+      expect(result).toContain('OldReplicaSets:    <none>')
+      expect(result).toContain('NewReplicaSet:     <none>')
       expect(result).toContain('Events:             <none>')
+    })
+
+    it('should format new and old replica sets from cluster state', () => {
+      const deployment = createDeployment({
+        name: 'web-app',
+        namespace: 'default',
+        replicas: 3,
+        selector: { matchLabels: { app: 'web' } },
+        template: {
+          metadata: { labels: { app: 'web' } },
+          spec: {
+            containers: [{ name: 'web', image: 'nginx:1.28' }]
+          }
+        }
+      })
+      const templateHash = generateTemplateHash(deployment.spec.template)
+      const newReplicaSetName = `web-app-${templateHash.substring(0, 10)}`
+
+      const newReplicaSet = createReplicaSet({
+        name: newReplicaSetName,
+        namespace: 'default',
+        replicas: 3,
+        selector: { matchLabels: { app: 'web' } },
+        template: deployment.spec.template,
+        ownerReferences: [
+          {
+            apiVersion: 'apps/v1',
+            kind: 'Deployment',
+            name: 'web-app',
+            uid: 'default-web-app',
+            controller: true
+          }
+        ]
+      })
+      const oldReplicaSet = createReplicaSet({
+        name: 'web-app-old123456',
+        namespace: 'default',
+        replicas: 0,
+        selector: { matchLabels: { app: 'web' } },
+        template: deployment.spec.template,
+        ownerReferences: [
+          {
+            apiVersion: 'apps/v1',
+            kind: 'Deployment',
+            name: 'web-app',
+            uid: 'default-web-app',
+            controller: true
+          }
+        ]
+      })
+
+      const state = createClusterStateData({
+        deployments: [deployment],
+        replicaSets: [
+          {
+            ...newReplicaSet,
+            status: {
+              ...newReplicaSet.status,
+              replicas: 3
+            }
+          },
+          {
+            ...oldReplicaSet,
+            status: {
+              ...oldReplicaSet.status,
+              replicas: 0
+            }
+          }
+        ]
+      })
+
+      const result = describeDeployment(deployment, state)
+
+      expect(result).toContain('OldReplicaSets:    web-app-old123456 (0/0 replicas created)')
+      expect(result).toContain(
+        `NewReplicaSet:     ${newReplicaSetName} (3/3 replicas created)`
+      )
+    })
+
+    it('should render deployment lifecycle events table', () => {
+      const deployment = createDeployment({
+        name: 'web-app',
+        namespace: 'default',
+        selector: { matchLabels: { app: 'web' } },
+        template: {
+          metadata: { labels: { app: 'web' } },
+          spec: {
+            containers: [{ name: 'web', image: 'nginx:1.28' }]
+          }
+        }
+      })
+
+      const result = describeDeployment(deployment, undefined, [
+        {
+          type: 'Normal',
+          reason: 'ScalingReplicaSet',
+          source: 'deployment-controller',
+          message: 'Scaled up replica set web-app-5c8584f7ff from 0 to 3',
+          timestamp: '2026-03-25T10:00:00.000Z'
+        }
+      ])
+
+      expect(result).toContain('Events:')
+      expect(result).toContain('ScalingReplicaSet')
+      expect(result).toContain('deployment-controller')
+      expect(result).toContain('Scaled up replica set web-app-5c8584f7ff from 0 to 3')
     })
 
     it('should format template environment variables and conditions', () => {

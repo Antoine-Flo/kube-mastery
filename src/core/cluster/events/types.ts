@@ -200,6 +200,19 @@ export interface DeploymentUpdatedEvent extends BaseEvent {
   }
 }
 
+export interface DeploymentScaledEvent extends BaseEvent {
+  type: 'DeploymentScaled'
+  payload: {
+    namespace: string
+    deploymentName: string
+    replicaSetName: string
+    fromReplicas: number
+    toReplicas: number
+    reason: 'ScalingReplicaSet'
+    message: string
+  }
+}
+
 export interface DaemonSetCreatedEvent extends BaseEvent {
   type: 'DaemonSetCreated'
   payload: {
@@ -608,6 +621,7 @@ export type ClusterEvent =
   | DeploymentCreatedEvent
   | DeploymentDeletedEvent
   | DeploymentUpdatedEvent
+  | DeploymentScaledEvent
   | DaemonSetCreatedEvent
   | DaemonSetDeletedEvent
   | DaemonSetUpdatedEvent
@@ -936,6 +950,31 @@ export const createDeploymentUpdatedEvent = (
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
   payload: { name, namespace, deployment, previousDeployment }
+})
+
+export const createDeploymentScaledEvent = (
+  namespace: string,
+  deploymentName: string,
+  replicaSetName: string,
+  fromReplicas: number,
+  toReplicas: number,
+  source?: string
+): DeploymentScaledEvent => ({
+  type: 'DeploymentScaled',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: {
+    namespace,
+    deploymentName,
+    replicaSetName,
+    fromReplicas,
+    toReplicas,
+    reason: 'ScalingReplicaSet',
+    message:
+      toReplicas >= fromReplicas
+        ? `Scaled up replica set ${replicaSetName} from ${fromReplicas} to ${toReplicas}`
+        : `Scaled down replica set ${replicaSetName} from ${fromReplicas} to ${toReplicas}`
+  }
 })
 
 export const createDaemonSetCreatedEvent = (

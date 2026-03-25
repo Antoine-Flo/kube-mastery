@@ -28,6 +28,7 @@
 
 import type { ApiServerFacade } from '../../api/ApiServerFacade'
 import type { EventBus } from '../../cluster/events/EventBus'
+import { createDeploymentScaledEvent } from '../../cluster/events/types'
 import type { ClusterEvent } from '../../cluster/events/types'
 import type {
   Deployment,
@@ -67,6 +68,9 @@ const WATCHED_EVENTS: ClusterEventType[] = [
 ]
 
 const DEPLOYMENT_REVISION_ANNOTATION = 'deployment.kubernetes.io/revision'
+
+const DEFAULT_ROLLING_MAX_SURGE = '25%'
+const DEFAULT_ROLLING_MAX_UNAVAILABLE = '25%'
 
 // ─── Helper Functions ─────────────────────────────────────────────────────
 
@@ -116,6 +120,73 @@ const computeNextRevision = (replicaSets: ReplicaSet[]): number => {
     }
   }
   return maxRevision + 1
+}
+
+const sumReplicaSetReplicas = (replicaSets: ReplicaSet[]): number => {
+  let total = 0
+  for (const replicaSet of replicaSets) {
+    total += replicaSet.spec.replicas ?? 0
+  }
+  return total
+}
+
+const sumReplicaSetAvailableReplicas = (replicaSets: ReplicaSet[]): number => {
+  let total = 0
+  for (const replicaSet of replicaSets) {
+    total += replicaSet.status.availableReplicas ?? 0
+  }
+  return total
+}
+
+const parseIntOrPercent = (
+  value: number | string | undefined,
+  desiredReplicas: number,
+  roundUp: boolean
+): number => {
+  if (typeof value === 'number') {
+    return Math.max(0, Math.floor(value))
+  }
+  if (typeof value === 'string' && value.endsWith('%')) {
+    const percent = Number.parseInt(value.slice(0, -1), 10)
+    if (Number.isNaN(percent) || percent < 0) {
+      return 0
+    }
+    const raw = (desiredReplicas * percent) / 100
+    return roundUp ? Math.ceil(raw) : Math.floor(raw)
+  }
+  if (typeof value === 'string') {
+    const parsed = Number.parseInt(value, 10)
+    if (!Number.isNaN(parsed) && parsed >= 0) {
+      return parsed
+    }
+  }
+  return 0
+}
+
+const resolveRollingUpdateLimits = (
+  deploy: Deployment
+): { maxSurge: number; maxUnavailable: number } => {
+  const desiredReplicas = deploy.spec.replicas ?? 1
+  const strategy = deploy.spec.strategy
+  const maxSurgeValue =
+    strategy?.rollingUpdate?.maxSurge ?? DEFAULT_ROLLING_MAX_SURGE
+  const maxUnavailableValue =
+    strategy?.rollingUpdate?.maxUnavailable ?? DEFAULT_ROLLING_MAX_UNAVAILABLE
+  let maxSurge = parseIntOrPercent(maxSurgeValue, desiredReplicas, true)
+  let maxUnavailable = parseIntOrPercent(
+    maxUnavailableValue,
+    desiredReplicas,
+    false
+  )
+
+  if (maxSurge === 0 && maxUnavailable === 0 && desiredReplicas > 0) {
+    maxSurge = 1
+  }
+  if (maxUnavailable > desiredReplicas) {
+    maxUnavailable = desiredReplicas
+  }
+
+  return { maxSurge, maxUnavailable }
 }
 
 /**
@@ -413,12 +484,10 @@ export class DeploymentController implements ReconcilerController {
     let deploymentForStatus = deploy
 
     if (currentRs) {
-      this.reconcileExistingReplicaSet(deploy, currentRs)
-      this.scaleDownReplicaSets(
-        ownedReplicaSets.filter((replicaSet) => {
-          return replicaSet.metadata.name !== currentRs.metadata.name
-        })
-      )
+      const oldReplicaSets = ownedReplicaSets.filter((replicaSet) => {
+        return replicaSet.metadata.name !== currentRs.metadata.name
+      })
+      this.reconcileExistingReplicaSet(deploy, currentRs, oldReplicaSets)
       deploymentForStatus = this.syncDeploymentRevisionAnnotation(
         deploy,
         currentRs
@@ -464,9 +533,23 @@ export class DeploymentController implements ReconcilerController {
         }
       }
     }
+    const isInitialDeployment = oldReplicaSets.length === 0
+    const desiredReplicas = deploy.spec.replicas ?? 1
+    const rollingLimits = resolveRollingUpdateLimits(deploy)
+    const oldReplicasTotal = sumReplicaSetReplicas(oldReplicaSets)
+    const maxTotalReplicas = desiredReplicas + rollingLimits.maxSurge
+    const initialRollingReplicas = Math.max(0, maxTotalReplicas - oldReplicasTotal)
+    const initialReplicas = isInitialDeployment
+      ? desiredReplicas
+      : Math.min(desiredReplicas, initialRollingReplicas)
+
     const newRsBase = createReplicaSetFromDeployment(deploymentWithRevision)
     const newRs: ReplicaSet = {
       ...newRsBase,
+      spec: {
+        ...newRsBase.spec,
+        replicas: initialReplicas
+      },
       metadata: {
         ...newRsBase.metadata,
         annotations: {
@@ -476,19 +559,31 @@ export class DeploymentController implements ReconcilerController {
       }
     }
     this.apiServer.createResource('ReplicaSet', newRs, newRs.metadata.namespace)
+    this.emitScalingReplicaSetEvent(
+      deploy.metadata.namespace,
+      deploy.metadata.name,
+      newRs.metadata.name,
+      0,
+      initialReplicas
+    )
     this.apiServer.updateResource(
       'Deployment',
       deploy.metadata.name,
       deploymentWithRevision,
       deploy.metadata.namespace
     )
-    this.scaleDownReplicaSets(oldReplicaSets)
+    if (oldReplicaSets.length > 0) {
+      this.enqueueDeployment(deploy, undefined, 'RollingUpdateProgress')
+    }
   }
 
   /**
    * Scale down all ReplicaSets to 0
    */
-  private scaleDownReplicaSets(replicaSets: ReplicaSet[]): void {
+  private scaleDownReplicaSets(
+    deploy: Deployment,
+    replicaSets: ReplicaSet[]
+  ): void {
     for (const rs of replicaSets) {
       if (rs.spec.replicas === 0) {
         continue
@@ -503,6 +598,13 @@ export class DeploymentController implements ReconcilerController {
         rs.metadata.name,
         scaledDownRs,
         rs.metadata.namespace
+      )
+      this.emitScalingReplicaSetEvent(
+        deploy.metadata.namespace,
+        deploy.metadata.name,
+        rs.metadata.name,
+        rs.spec.replicas ?? 0,
+        0
       )
     }
   }
@@ -547,22 +649,201 @@ export class DeploymentController implements ReconcilerController {
    */
   private reconcileExistingReplicaSet(
     deploy: Deployment,
-    currentRs: ReplicaSet
+    currentRs: ReplicaSet,
+    oldReplicaSets: ReplicaSet[]
+  ): void {
+    const strategyType = deploy.spec.strategy?.type ?? 'RollingUpdate'
+    if (strategyType === 'Recreate') {
+      this.reconcileRecreateStrategy(deploy, currentRs, oldReplicaSets)
+      return
+    }
+
+    this.reconcileRollingUpdateStrategy(deploy, currentRs, oldReplicaSets)
+  }
+
+  private reconcileRecreateStrategy(
+    deploy: Deployment,
+    currentRs: ReplicaSet,
+    oldReplicaSets: ReplicaSet[]
   ): void {
     const desiredReplicas = deploy.spec.replicas ?? 1
+    const oldReplicasTotal = sumReplicaSetReplicas(oldReplicaSets)
+    if (oldReplicasTotal > 0) {
+      this.scaleDownReplicaSets(deploy, oldReplicaSets)
+      this.enqueueDeployment(deploy, undefined, 'RecreateScaleDown')
+      return
+    }
+
     if (currentRs.spec.replicas === desiredReplicas) {
       return
     }
 
-    const updatedRs: ReplicaSet = {
+    const scaledCurrentReplicaSet: ReplicaSet = {
       ...currentRs,
       spec: { ...currentRs.spec, replicas: desiredReplicas }
     }
     this.apiServer.updateResource(
       'ReplicaSet',
       currentRs.metadata.name,
-      updatedRs,
+      scaledCurrentReplicaSet,
       currentRs.metadata.namespace
+    )
+    this.emitScalingReplicaSetEvent(
+      deploy.metadata.namespace,
+      deploy.metadata.name,
+      currentRs.metadata.name,
+      currentRs.spec.replicas ?? 0,
+      desiredReplicas
+    )
+  }
+
+  private reconcileRollingUpdateStrategy(
+    deploy: Deployment,
+    currentRs: ReplicaSet,
+    oldReplicaSets: ReplicaSet[]
+  ): void {
+    const desiredReplicas = deploy.spec.replicas ?? 1
+    const rollingLimits = resolveRollingUpdateLimits(deploy)
+    const oldReplicasTotal = sumReplicaSetReplicas(oldReplicaSets)
+    const currentReplicas = currentRs.spec.replicas ?? 0
+    const totalReplicas = oldReplicasTotal + currentReplicas
+    const maxTotalReplicas = desiredReplicas + rollingLimits.maxSurge
+    const minAvailableReplicas = Math.max(
+      0,
+      desiredReplicas - rollingLimits.maxUnavailable
+    )
+    const oldAvailableReplicas = sumReplicaSetAvailableReplicas(oldReplicaSets)
+    const currentAvailableReplicas = currentRs.status.availableReplicas ?? 0
+    const totalAvailableReplicas =
+      oldAvailableReplicas + currentAvailableReplicas
+
+    const scaleUpCapacity = Math.max(0, maxTotalReplicas - totalReplicas)
+    const scaleUpDelta = Math.min(
+      Math.max(0, desiredReplicas - currentReplicas),
+      scaleUpCapacity
+    )
+    const targetCurrentReplicas = currentReplicas + scaleUpDelta
+    const canScaleDownOldReplicaSets =
+      currentAvailableReplicas >= targetCurrentReplicas
+    if (targetCurrentReplicas !== currentReplicas) {
+      const scaledCurrentReplicaSet: ReplicaSet = {
+        ...currentRs,
+        spec: { ...currentRs.spec, replicas: targetCurrentReplicas }
+      }
+      this.apiServer.updateResource(
+        'ReplicaSet',
+        currentRs.metadata.name,
+        scaledCurrentReplicaSet,
+        currentRs.metadata.namespace
+      )
+      this.emitScalingReplicaSetEvent(
+        deploy.metadata.namespace,
+        deploy.metadata.name,
+        currentRs.metadata.name,
+        currentReplicas,
+        targetCurrentReplicas
+      )
+    }
+
+    const totalAfterScaleUp = oldReplicasTotal + targetCurrentReplicas
+    const maxScaleDownByReplicaBudget = Math.max(
+      0,
+      totalAfterScaleUp - minAvailableReplicas
+    )
+    const maxScaleDownByAvailability = Math.max(
+      0,
+      totalAvailableReplicas - minAvailableReplicas
+    )
+    const maxScaleDown = Math.min(
+      maxScaleDownByReplicaBudget,
+      maxScaleDownByAvailability
+    )
+    const targetOldTotalReplicas = Math.max(0, oldReplicasTotal - maxScaleDown)
+    if (canScaleDownOldReplicaSets && targetOldTotalReplicas < oldReplicasTotal) {
+      this.scaleDownReplicaSetsToTotal(
+        deploy,
+        oldReplicaSets,
+        targetOldTotalReplicas
+      )
+    }
+
+    const hasPendingProgress =
+      targetCurrentReplicas < desiredReplicas || targetOldTotalReplicas > 0
+    if (hasPendingProgress) {
+      this.enqueueDeployment(deploy, undefined, 'RollingUpdateProgress')
+    }
+  }
+
+  private scaleDownReplicaSetsToTotal(
+    deploy: Deployment,
+    replicaSets: ReplicaSet[],
+    targetTotalReplicas: number
+  ): void {
+    const sortedReplicaSets = [...replicaSets].sort((left, right) => {
+      const leftRevision = parseRevision(
+        left.metadata.annotations?.[DEPLOYMENT_REVISION_ANNOTATION]
+      )
+      const rightRevision = parseRevision(
+        right.metadata.annotations?.[DEPLOYMENT_REVISION_ANNOTATION]
+      )
+      return rightRevision - leftRevision
+    })
+
+    let remainingReplicas = sumReplicaSetReplicas(sortedReplicaSets)
+    for (const replicaSet of sortedReplicaSets) {
+      if (remainingReplicas <= targetTotalReplicas) {
+        break
+      }
+      const replicaSetReplicas = replicaSet.spec.replicas ?? 0
+      if (replicaSetReplicas === 0) {
+        continue
+      }
+
+      const removableReplicas = Math.min(
+        replicaSetReplicas,
+        remainingReplicas - targetTotalReplicas
+      )
+      const targetReplicas = replicaSetReplicas - removableReplicas
+      const scaledDownReplicaSet: ReplicaSet = {
+        ...replicaSet,
+        spec: { ...replicaSet.spec, replicas: targetReplicas }
+      }
+      this.apiServer.updateResource(
+        'ReplicaSet',
+        replicaSet.metadata.name,
+        scaledDownReplicaSet,
+        replicaSet.metadata.namespace
+      )
+      this.emitScalingReplicaSetEvent(
+        deploy.metadata.namespace,
+        deploy.metadata.name,
+        replicaSet.metadata.name,
+        replicaSetReplicas,
+        targetReplicas
+      )
+      remainingReplicas -= removableReplicas
+    }
+  }
+
+  private emitScalingReplicaSetEvent(
+    namespace: string,
+    deploymentName: string,
+    replicaSetName: string,
+    fromReplicas: number,
+    toReplicas: number
+  ): void {
+    if (fromReplicas === toReplicas) {
+      return
+    }
+    this.apiServer.emitEvent(
+      createDeploymentScaledEvent(
+        namespace,
+        deploymentName,
+        replicaSetName,
+        fromReplicas,
+        toReplicas,
+        'deployment-controller'
+      )
     )
   }
 

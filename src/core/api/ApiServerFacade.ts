@@ -81,6 +81,10 @@ import type { AppEvent } from '../events/AppEvent'
 import type { Result } from '../shared/result'
 import { success } from '../shared/result'
 import {
+  createDeploymentLifecycleEventStore,
+  type DeploymentLifecycleEventStore
+} from './DeploymentLifecycleEventStore'
+import {
   createPodLifecycleEventStore,
   type PodLifecycleEventStore
 } from './PodLifecycleEventStore'
@@ -91,6 +95,7 @@ export interface ApiServerFacade {
   readonly etcd: EtcdLikeStore
   readonly watchHub: WatchHub
   readonly podLifecycleEventStore: PodLifecycleEventStore
+  readonly deploymentLifecycleEventStore: DeploymentLifecycleEventStore
   getEventBus: () => EventBus
   snapshotState: () => ReturnType<EtcdLikeStore['snapshot']>
   findResource: <TKind extends ResourceKind>(
@@ -559,6 +564,7 @@ export const createApiServerFacade = (
   }
   const watchHub = createWatchHub(eventBus)
   const podLifecycleEventStore = createPodLifecycleEventStore(etcd)
+  const deploymentLifecycleEventStore = createDeploymentLifecycleEventStore(etcd)
   const findResourceForMutation = <TKind extends ResourceKind>(
     kind: TKind,
     name: string,
@@ -627,6 +633,7 @@ export const createApiServerFacade = (
     etcd,
     watchHub,
     podLifecycleEventStore,
+    deploymentLifecycleEventStore,
     getEventBus: () => eventBus,
     snapshotState: () => clusterState.toJSON(),
     findResource: <TKind extends ResourceKind>(
@@ -774,6 +781,7 @@ export const createApiServerFacade = (
     getResourceVersion: () => etcd.getResourceVersion(),
     stop: () => {
       podLifecycleEventStore.stop()
+      deploymentLifecycleEventStore.stop()
       etcd.dispose()
     }
   }

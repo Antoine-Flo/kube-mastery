@@ -1,5 +1,6 @@
 import type { ClusterStateData } from '../../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
+import type { DeploymentLifecycleDescribeEvent } from '../../../api/DeploymentLifecycleEventStore'
 import type { PodLifecycleDescribeEvent } from '../../../api/PodLifecycleEventStore'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
@@ -52,6 +53,10 @@ interface DescribeDependencies {
     namespace: string,
     podName: string
   ) => readonly PodLifecycleDescribeEvent[]
+  listDeploymentEvents?: (
+    namespace: string,
+    deploymentName: string
+  ) => readonly DeploymentLifecycleDescribeEvent[]
 }
 
 const findDescribeResource = (
@@ -119,8 +124,12 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
   },
   deployments: {
     items: 'deployments',
-    formatter: (item) => {
-      return describeDeployment(item)
+    formatter: (item, state, dependencies) => {
+      const deploymentEvents = dependencies.listDeploymentEvents?.(
+        item.metadata.namespace,
+        item.metadata.name
+      )
+      return describeDeployment(item, state, deploymentEvents)
     },
     type: 'Deployment'
   },
@@ -193,7 +202,10 @@ export const handleDescribe = (
   const resolvedDependencies: DescribeDependencies = {
     listPodEvents:
       dependencies.listPodEvents ??
-      apiServer.podLifecycleEventStore.listPodEvents
+      apiServer.podLifecycleEventStore.listPodEvents,
+    listDeploymentEvents:
+      dependencies.listDeploymentEvents ??
+      apiServer.deploymentLifecycleEventStore.listDeploymentEvents
   }
   if (!parsed.resource) {
     return error(`error: you must specify the resource type to describe`)

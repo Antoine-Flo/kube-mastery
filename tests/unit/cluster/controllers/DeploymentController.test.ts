@@ -13,6 +13,7 @@ import {
   createReplicaSetCreatedEvent,
   createReplicaSetDeletedEvent,
   createReplicaSetUpdatedEvent,
+  type DeploymentScaledEvent,
   type DeploymentUpdatedEvent,
   type ReplicaSetCreatedEvent,
   type ReplicaSetUpdatedEvent
@@ -311,6 +312,25 @@ describe('DeploymentController', () => {
       expect(createdRs!.metadata.ownerReferences?.[0].name).toBe('my-deploy')
     })
 
+    it('should emit scaling event when creating a new ReplicaSet', () => {
+      const deploy = createTestDeployment('my-deploy', 3)
+      mockState.deployments = [deploy]
+      mockState.replicaSets = []
+      let scalingEvent: DeploymentScaledEvent | undefined
+      eventBus.subscribe('DeploymentScaled', (event: DeploymentScaledEvent) => {
+        scalingEvent = event
+      })
+
+      controller.reconcile('default/my-deploy')
+
+      expect(scalingEvent).toBeDefined()
+      expect(scalingEvent?.payload.reason).toBe('ScalingReplicaSet')
+      expect(scalingEvent?.payload.replicaSetName).toContain('my-deploy-')
+      expect(scalingEvent?.payload.fromReplicas).toBe(0)
+      expect(scalingEvent?.payload.toReplicas).toBe(3)
+      expect(scalingEvent?.metadata.source).toBe('deployment-controller')
+    })
+
     it('should update ReplicaSet replicas when Deployment replicas change', () => {
       const deploy = createTestDeployment('my-deploy', 5)
       const baseRs = createTestReplicaSet(deploy)
@@ -399,7 +419,7 @@ describe('DeploymentController', () => {
         'ReplicaSetCreated',
         (event: ReplicaSetCreatedEvent) => {
           createdRsCount++
-          expect(event.payload.replicaSet.spec.replicas).toBe(3)
+          expect(event.payload.replicaSet.spec.replicas).toBe(1)
         }
       )
       eventBus.subscribe(
@@ -407,7 +427,7 @@ describe('DeploymentController', () => {
         (event: ReplicaSetUpdatedEvent) => {
           if (
             event.payload.replicaSet.metadata.name === 'my-deploy-oldhashttt' &&
-            event.payload.replicaSet.spec.replicas === 0
+            event.payload.replicaSet.spec.replicas < 3
           ) {
             scaleDownUpdate = event.payload.replicaSet
           }
@@ -417,8 +437,7 @@ describe('DeploymentController', () => {
       controller.reconcile('default/my-deploy')
 
       expect(createdRsCount).toBe(1)
-      expect(scaleDownUpdate).toBeDefined()
-      expect(scaleDownUpdate?.spec.replicas).toBe(0)
+      expect(scaleDownUpdate).toBeUndefined()
     })
 
     it('should update Deployment status from ReplicaSet status', () => {
@@ -459,6 +478,62 @@ describe('DeploymentController', () => {
 
       expect(updatedDeploy).toBeDefined()
       expect(updatedDeploy!.status.readyReplicas).toBe(2)
+    })
+
+    it('should not scale down old ReplicaSets before new ReplicaSet is available', () => {
+      const deploy = createTestDeployment('my-deploy', 3)
+      const oldRs = createReplicaSet({
+        name: 'my-deploy-oldhashttt',
+        namespace: 'default',
+        replicas: 3,
+        selector: { matchLabels: { app: 'my-deploy' } },
+        template: {
+          metadata: { labels: { app: 'my-deploy' } },
+          spec: {
+            containers: [{ name: 'nginx', image: 'nginx:1.18' }]
+          }
+        },
+        ownerReferences: [
+          {
+            apiVersion: 'apps/v1',
+            kind: 'Deployment',
+            name: 'my-deploy',
+            uid: 'default-my-deploy',
+            controller: true
+          }
+        ]
+      })
+      const currentRsBase = createTestReplicaSet(deploy)
+      const currentRs: ReplicaSet = {
+        ...currentRsBase,
+        spec: {
+          ...currentRsBase.spec,
+          replicas: 1
+        },
+        status: {
+          ...currentRsBase.status,
+          replicas: 1,
+          readyReplicas: 0,
+          availableReplicas: 0
+        }
+      }
+
+      mockState.deployments = [deploy]
+      mockState.replicaSets = [currentRs, oldRs]
+
+      const oldScaleDownUpdates: ReplicaSet[] = []
+      eventBus.subscribe(
+        'ReplicaSetUpdated',
+        (event: ReplicaSetUpdatedEvent) => {
+          if (event.payload.replicaSet.metadata.name === oldRs.metadata.name) {
+            oldScaleDownUpdates.push(event.payload.replicaSet)
+          }
+        }
+      )
+
+      controller.reconcile('default/my-deploy')
+
+      expect(oldScaleDownUpdates.length).toBe(0)
     })
 
     it('should scale down non-current ReplicaSets and sync revision on rollback', () => {
@@ -540,16 +615,16 @@ describe('DeploymentController', () => {
 
       controller.reconcile('default/my-deploy')
 
-      const rsAUpdatedTo3 = updatedReplicaSets.some((rs) => {
+      const rsAUpdatedTo1 = updatedReplicaSets.some((rs) => {
         return (
           rs.metadata.name === currentRsA.metadata.name &&
-          rs.spec.replicas === 3
+          rs.spec.replicas === 1
         )
       })
-      const rsBUpdatedTo0 = updatedReplicaSets.some((rs) => {
+      const rsBUpdatedTo2 = updatedReplicaSets.some((rs) => {
         return (
           rs.metadata.name === oldActiveRsB.metadata.name &&
-          rs.spec.replicas === 0
+          rs.spec.replicas === 2
         )
       })
       const deploymentRevisionUpdated = updatedDeployments.some(
@@ -562,8 +637,8 @@ describe('DeploymentController', () => {
         }
       )
 
-      expect(rsAUpdatedTo3).toBe(true)
-      expect(rsBUpdatedTo0).toBe(true)
+      expect(rsAUpdatedTo1).toBe(true)
+      expect(rsBUpdatedTo2).toBe(false)
       expect(deploymentRevisionUpdated).toBe(true)
     })
   })

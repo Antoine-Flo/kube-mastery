@@ -6,12 +6,14 @@
 
 import type { ConfigMap } from '../../cluster/ressources/ConfigMap'
 import type { ClusterStateData } from '../../cluster/ClusterState'
+import type { DeploymentLifecycleDescribeEvent } from '../../api/DeploymentLifecycleEventStore'
 import type { PodLifecycleDescribeEvent } from '../../api/PodLifecycleEventStore'
 import type {
   Deployment,
   DeploymentCondition,
   DeploymentStrategyType
 } from '../../cluster/ressources/Deployment'
+import { generateTemplateHash } from '../../cluster/ressources/Deployment'
 import type { EndpointSlice } from '../../cluster/ressources/EndpointSlice'
 import type { Endpoints } from '../../cluster/ressources/Endpoints'
 import type { Ingress } from '../../cluster/ressources/Ingress'
@@ -278,12 +280,121 @@ const formatDeploymentConditions = (
   }
 
   lines.push('  Type           Status  Reason')
+  lines.push('  ----           ------  ------')
   for (const condition of conditions) {
     lines.push(
       `  ${condition.type.padEnd(14)} ${condition.status.padEnd(7)} ${condition.reason ?? '<none>'}`
     )
   }
 
+  return lines
+}
+
+const hasDeploymentOwnerReference = (
+  replicaSet: ReplicaSet,
+  deployment: Deployment
+): boolean => {
+  const ownerReferences = replicaSet.metadata.ownerReferences ?? []
+  return ownerReferences.some((ownerReference) => {
+    return (
+      ownerReference.kind === 'Deployment' &&
+      ownerReference.name === deployment.metadata.name
+    )
+  })
+}
+
+const compareReplicaSetsByCreationDate = (
+  left: ReplicaSet,
+  right: ReplicaSet
+): number => {
+  const leftTimestamp = Date.parse(left.metadata.creationTimestamp)
+  const rightTimestamp = Date.parse(right.metadata.creationTimestamp)
+  if (leftTimestamp === rightTimestamp) {
+    return left.metadata.name.localeCompare(right.metadata.name)
+  }
+  return leftTimestamp - rightTimestamp
+}
+
+const findDeploymentReplicaSets = (
+  deployment: Deployment,
+  state: ClusterStateData | undefined
+): {
+  newReplicaSet: ReplicaSet | undefined
+  oldReplicaSets: ReplicaSet[]
+} => {
+  if (state == null) {
+    return {
+      newReplicaSet: undefined,
+      oldReplicaSets: []
+    }
+  }
+  const ownedReplicaSets = state.replicaSets.items
+    .filter((replicaSet) => {
+      if (replicaSet.metadata.namespace !== deployment.metadata.namespace) {
+        return false
+      }
+      return hasDeploymentOwnerReference(replicaSet, deployment)
+    })
+    .sort(compareReplicaSetsByCreationDate)
+
+  const templateHash = generateTemplateHash(deployment.spec.template)
+  const expectedReplicaSetName = `${deployment.metadata.name}-${templateHash.substring(0, 10)}`
+  const newReplicaSet = ownedReplicaSets.find((replicaSet) => {
+    return replicaSet.metadata.name === expectedReplicaSetName
+  })
+  const oldReplicaSets = ownedReplicaSets.filter((replicaSet) => {
+    return replicaSet.metadata.name !== expectedReplicaSetName
+  })
+
+  return {
+    newReplicaSet,
+    oldReplicaSets
+  }
+}
+
+const formatDeploymentReplicaSetReference = (
+  replicaSet: ReplicaSet | undefined
+): string => {
+  if (replicaSet == null) {
+    return '<none>'
+  }
+  const currentReplicas = replicaSet.status.replicas ?? 0
+  const desiredReplicas = replicaSet.spec.replicas ?? 0
+  return `${replicaSet.metadata.name} (${currentReplicas}/${desiredReplicas} replicas created)`
+}
+
+const formatDeploymentOldReplicaSets = (
+  replicaSets: readonly ReplicaSet[]
+): string => {
+  if (replicaSets.length === 0) {
+    return '<none>'
+  }
+  return replicaSets
+    .map((replicaSet) => {
+      return formatDeploymentReplicaSetReference(replicaSet)
+    })
+    .join(', ')
+}
+
+const formatDeploymentEvents = (
+  events: readonly DeploymentLifecycleDescribeEvent[] | undefined
+): string[] => {
+  if (events == null || events.length === 0) {
+    return ['Events:             <none>']
+  }
+  const sortedEvents = [...events].sort((left, right) => {
+    return Date.parse(left.timestamp) - Date.parse(right.timestamp)
+  })
+  const lines: string[] = [
+    'Events:',
+    '  Type    Reason             Age   From                   Message',
+    '  ----    ------             ----  ----                   -------'
+  ]
+  for (const event of sortedEvents) {
+    lines.push(
+      `  ${event.type.padEnd(6)}  ${event.reason.padEnd(17)}  ${formatAge(event.timestamp).padEnd(4)}  ${event.source.padEnd(21)}  ${event.message}`
+    )
+  }
   return lines
 }
 
@@ -1422,7 +1533,11 @@ export const describeNode = (node: Node, state?: ClusterStateData): string => {
 /**
  * Format detailed Deployment description
  */
-export const describeDeployment = (deployment: Deployment): string => {
+export const describeDeployment = (
+  deployment: Deployment,
+  state?: ClusterStateData,
+  deploymentLifecycleEvents?: readonly DeploymentLifecycleDescribeEvent[]
+): string => {
   const lines: string[] = []
   const strategyType = formatStrategyType(deployment.spec.strategy?.type)
 
@@ -1439,7 +1554,7 @@ export const describeDeployment = (deployment: Deployment): string => {
   lines.push(`Replicas:         ${formatDeploymentReplicas(deployment)}`)
   lines.push(`StrategyType:     ${strategyType}`)
   lines.push(`MinReadySeconds:  ${deployment.spec.minReadySeconds ?? 0}`)
-  if (strategyType === 'RollingUpdate') {
+  if (deployment.spec.strategy?.rollingUpdate != null) {
     const rollingUpdate = deployment.spec.strategy?.rollingUpdate
     lines.push(
       `RollingUpdateStrategy: ${formatIntOrString(rollingUpdate?.maxUnavailable)} max unavailable, ${formatIntOrString(rollingUpdate?.maxSurge)} max surge`
@@ -1526,7 +1641,14 @@ export const describeDeployment = (deployment: Deployment): string => {
   lines.push(blank())
   lines.push(...formatDeploymentConditions(deployment.status.conditions))
   lines.push(blank())
-  lines.push('Events:             <none>')
+  const deploymentReplicaSets = findDeploymentReplicaSets(deployment, state)
+  lines.push(
+    `OldReplicaSets:    ${formatDeploymentOldReplicaSets(deploymentReplicaSets.oldReplicaSets)}`
+  )
+  lines.push(
+    `NewReplicaSet:     ${formatDeploymentReplicaSetReference(deploymentReplicaSets.newReplicaSet)}`
+  )
+  lines.push(...formatDeploymentEvents(deploymentLifecycleEvents))
 
   return lines.join('\n')
 }
