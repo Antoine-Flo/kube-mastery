@@ -3,6 +3,7 @@ import { createApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 import { createNode } from '../../../../src/core/cluster/ressources/Node'
 import { createNamespace } from '../../../../src/core/cluster/ressources/Namespace'
+import { createReplicaSet } from '../../../../src/core/cluster/ressources/ReplicaSet'
 import { createService } from '../../../../src/core/cluster/ressources/Service'
 import { createConfigMap } from '../../../../src/core/cluster/ressources/ConfigMap'
 import { createHostFileSystem } from '../../../../src/core/filesystem/debianFileSystem'
@@ -1513,6 +1514,58 @@ spec:
         expect(result.ok).toBe(true)
         if (result.ok) {
           expect(result.value).toContain('sim-worker')
+        }
+      })
+
+      it('should handle "kubectl describe rs web-rs" (replicaset alias)', () => {
+        apiServer.createResource(
+          'ReplicaSet',
+          createReplicaSet({
+            name: 'web-rs',
+            namespace: 'default',
+            replicas: 2,
+            selector: { matchLabels: { app: 'web' } },
+            template: {
+              metadata: { labels: { app: 'web' } },
+              spec: {
+                containers: [{ name: 'nginx', image: 'nginx:1.28' }]
+              }
+            }
+          })
+        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const result = executor.execute('kubectl describe rs web-rs')
+
+        expect(result.ok).toBe(true)
+        if (result.ok) {
+          expect(result.value).toContain('Name:         web-rs')
+          expect(result.value).toContain('Replicas:     0 current / 2 desired')
+        }
+      })
+
+      it('should handle "kubectl describe replicaset web-rs" (singular alias)', () => {
+        apiServer.createResource(
+          'ReplicaSet',
+          createReplicaSet({
+            name: 'web-rs',
+            namespace: 'default',
+            replicas: 1,
+            selector: { matchLabels: { app: 'web' } },
+            template: {
+              metadata: { labels: { app: 'web' } },
+              spec: {
+                containers: [{ name: 'nginx', image: 'nginx:1.28' }]
+              }
+            }
+          })
+        )
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const result = executor.execute('kubectl describe replicaset web-rs')
+
+        expect(result.ok).toBe(true)
+        if (result.ok) {
+          expect(result.value).toContain('Name:         web-rs')
+          expect(result.value).toContain('Replicas:     0 current / 1 desired')
         }
       })
 

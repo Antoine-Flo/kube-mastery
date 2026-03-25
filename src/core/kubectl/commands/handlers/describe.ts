@@ -14,6 +14,7 @@ import {
   describePersistentVolume,
   describePersistentVolumeClaim,
   describePod,
+  describeReplicaSet,
   describeSecret,
   describeService
 } from '../../formatters/describeFormatters'
@@ -123,6 +124,13 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
     },
     type: 'Deployment'
   },
+  replicasets: {
+    items: 'replicaSets',
+    formatter: (item, state) => {
+      return describeReplicaSet(item, state)
+    },
+    type: 'ReplicaSet'
+  },
   ingresses: {
     items: 'ingresses',
     formatter: (item) => {
@@ -165,6 +173,9 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
 const getNotFoundResourceReference = (resourceType: string): string => {
   if (resourceType === 'deployments') {
     return 'deployments.apps'
+  }
+  if (resourceType === 'replicasets') {
+    return 'replicasets.apps'
   }
   return resourceType
 }

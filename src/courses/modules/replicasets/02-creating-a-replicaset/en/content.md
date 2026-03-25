@@ -168,10 +168,6 @@ Notice the auto-generated names: each Pod gets the ReplicaSet's name as a prefix
 
 For deeper inspection, `kubectl describe rs web-rs` shows the full status, the events log, and the current Pod template. Look at the `Events:` section at the bottom, it will show a creation event for each Pod, with a timestamp. If something went wrong, the events section is often the first place to find out why.
 
-:::info
-The cluster visualizer (telescope icon in the right panel) gives you a visual representation of the ReplicaSet and its three Pods. You can see the hierarchy at a glance: one ReplicaSet node connected to three Pod nodes, each showing its current status in real time.
-:::
-
 :::warning
 Never edit the `spec.selector` of a ReplicaSet after it has been created, the API will reject the change because selectors are immutable on ReplicaSets (and Deployments). If you need a different selector, delete the ReplicaSet and create a new one. If you delete the ReplicaSet without the `--cascade=orphan` flag, Kubernetes will also delete all the Pods it manages.
 :::
@@ -182,13 +178,10 @@ Let's create a ReplicaSet step by step and explore the output at each stage.
 
 **1. Save the manifest to a file**
 
-Create the manifest file:
-
-```bash
-nano web-rs.yaml
-```
+Create the replicaset:
 
 ```yaml
+#web-rs.yaml
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
@@ -211,7 +204,7 @@ spec:
 ```
 
 **2. Apply the manifest**
-
+Watch the ReplicaSet and the Pods being created in the visualizer:
 ```bash
 kubectl apply -f web-rs.yaml
 ```
@@ -222,38 +215,29 @@ kubectl apply -f web-rs.yaml
 kubectl get rs web-rs
 ```
 
-**4. Watch the Pods come up**
-
-```bash
-kubectl get pods -l app=web -w
-# Ctrl+C once all 3 are Running
-```
-
-**5. Inspect the ReplicaSet in detail**
+**4. Inspect the ReplicaSet in detail**
 
 ```bash
 kubectl describe rs web-rs
 ```
 
-**6. Look at the automatically assigned labels on one of the Pods**
+**5. Look at the automatically assigned labels on one of the Pods**
 
 ```bash
 kubectl get pods -l app=web --show-labels
 ```
 
-**7. Confirm Pod ownership via ownerReferences**
+**6. Confirm Pod ownership via ownerReferences**
 
 ```bash
-kubectl get pod $(kubectl get pods -l app=web -o name | head -1 | cut -d/ -f2) \
-  -o jsonpath='{.metadata.ownerReferences[0].name}'
+kubectl get pod <pod-name> -o jsonpath='{.metadata.ownerReferences[0].name}'
 # Should print: web-rs
 ```
 
-**8. Try to deliberately break the selector (observe the error)**
+**7. Try to deliberately break the selector (observe the error)**
 
 ```bash
 nano broken-rs.yaml
-# Paste the YAML below, then save and exit nano
 ```
 
 ```yaml
@@ -278,14 +262,11 @@ spec:
 
 ```bash
 kubectl apply -f broken-rs.yaml
-# Observe the validation error from the API server
 ```
+Observe the validation error from the API server
 
-**9. Clean up**
+**8. Clean up**
 
 ```bash
 kubectl delete rs web-rs
-rm web-rs.yaml broken-rs.yaml
 ```
-
-Open the cluster visualizer right after step 2, you'll see the ReplicaSet node and the three Pod nodes appearing in real time as they are scheduled and start running.

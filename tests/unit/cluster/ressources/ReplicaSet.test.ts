@@ -188,6 +188,7 @@ describe('parseReplicaSetManifest', () => {
       spec: {
         selector: { matchLabels: { app: 'nginx' } },
         template: {
+          metadata: { labels: { app: 'nginx' } },
           spec: { containers: [{ name: 'nginx', image: 'nginx' }] }
         }
       }
@@ -198,6 +199,40 @@ describe('parseReplicaSetManifest', () => {
     expect(result.ok).toBe(true)
     if (result.ok) {
       expect(result.value.metadata.namespace).toBe('default')
+    }
+  })
+
+  it('should reject manifest when selector does not match template labels', () => {
+    const manifest = {
+      apiVersion: 'apps/v1',
+      kind: 'ReplicaSet',
+      metadata: {
+        name: 'broken-rs',
+        namespace: 'default'
+      },
+      spec: {
+        replicas: 3,
+        selector: { matchLabels: { app: 'web' } },
+        template: {
+          metadata: { labels: { app: 'different-app' } },
+          spec: {
+            containers: [{ name: 'nginx', image: 'nginx:latest' }]
+          }
+        }
+      }
+    }
+
+    const result = parseReplicaSetManifest(manifest)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('The ReplicaSet "broken-rs" is invalid')
+      expect(result.error).toContain(
+        'spec.template.metadata.labels: Invalid value: {"app":"different-app"}'
+      )
+      expect(result.error).toContain(
+        '`selector` does not match template `labels`'
+      )
     }
   })
 })

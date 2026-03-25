@@ -267,6 +267,48 @@ describe('applyCreate handler', () => {
     }
   })
 
+  it('should reject ReplicaSet apply when selector does not match template labels', () => {
+    const yaml = `apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: broken-rs
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: different-app
+    spec:
+      containers:
+      - name: web
+        image: nginx:1.28
+`
+    fileSystem.createFile('broken-rs.yaml')
+    fileSystem.writeFile('broken-rs.yaml', yaml)
+
+    const parsed = parseCommand('kubectl apply -f broken-rs.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleApply(fileSystem, apiServer, parsed.value)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('The ReplicaSet "broken-rs" is invalid')
+      expect(result.error).toContain(
+        'spec.template.metadata.labels: Invalid value: {"app":"different-app"}'
+      )
+      expect(result.error).toContain(
+        '`selector` does not match template `labels`'
+      )
+    }
+  })
+
   it('should keep create from file flow', () => {
     const yaml = `apiVersion: v1
 kind: ConfigMap

@@ -316,6 +316,16 @@ export const parseReplicaSetManifest = (data: unknown): Result<ReplicaSet> => {
   }
 
   const manifest = result.data
+  const templateLabels = manifest.spec.template.metadata?.labels
+  const selectorMatchesTemplateLabels = selectorMatchesLabels(
+    manifest.spec.selector,
+    templateLabels
+  )
+  if (!selectorMatchesTemplateLabels) {
+    return error(
+      `The ReplicaSet "${manifest.metadata.name}" is invalid: spec.template.metadata.labels: Invalid value: ${JSON.stringify(templateLabels ?? {})}: \`selector\` does not match template \`labels\``
+    )
+  }
 
   const replicaSet = createReplicaSet({
     name: manifest.metadata.name,

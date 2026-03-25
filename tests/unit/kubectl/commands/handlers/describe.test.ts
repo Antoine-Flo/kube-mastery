@@ -5,6 +5,7 @@ import { createServiceEndpointSlice } from '../../../../../src/core/cluster/ress
 import { createEndpoints } from '../../../../../src/core/cluster/ressources/Endpoints'
 import { createNode } from '../../../../../src/core/cluster/ressources/Node'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
+import { createReplicaSet } from '../../../../../src/core/cluster/ressources/ReplicaSet'
 import { createService } from '../../../../../src/core/cluster/ressources/Service'
 import { handleDescribe } from '../../../../../src/core/kubectl/commands/handlers/describe'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
@@ -218,6 +219,137 @@ describe('kubectl describe handler - services and error semantics', () => {
       return
     }
     expect(result.value).toContain('Endpoints:                10.244.0.10:8080')
+  })
+})
+
+describe('kubectl describe handler - replicasets', () => {
+  it('should describe an existing replicaset', () => {
+    const state = createClusterStateData({
+      replicaSets: [
+        createReplicaSet({
+          name: 'web-rs',
+          namespace: 'default',
+          replicas: 3,
+          selector: {
+            matchLabels: { app: 'web' }
+          },
+          template: {
+            metadata: {
+              labels: { app: 'web' }
+            },
+            spec: {
+              containers: [{ name: 'nginx', image: 'nginx:1.28' }]
+            }
+          },
+          labels: { app: 'web' }
+        })
+      ]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'replicasets',
+      name: 'web-rs',
+      namespace: 'default',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+    const result = handleDescribe(apiServer, parsed)
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Name:         web-rs')
+    expect(result.value).toContain('Namespace:    default')
+    expect(result.value).toContain('Selector:     app=web')
+    expect(result.value).toContain('Replicas:     0 current / 3 desired')
+    expect(result.value).toContain(
+      'Pods Status:  0 Running / 0 Waiting / 0 Succeeded / 0 Failed'
+    )
+    expect(result.value).toContain('Events:            <none>')
+  })
+
+  it('should use replicasets.apps in not found message', () => {
+    const state = createClusterStateData()
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'replicasets',
+      name: 'missing-rs',
+      namespace: 'default',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+    const result = handleDescribe(apiServer, parsed)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('replicasets.apps "missing-rs" not found')
+    }
+  })
+
+  it('should render kind like events from managed pods', () => {
+    const state = createClusterStateData({
+      replicaSets: [
+        createReplicaSet({
+          name: 'web-rs',
+          namespace: 'default',
+          replicas: 2,
+          selector: {
+            matchLabels: { app: 'web' }
+          },
+          template: {
+            metadata: {
+              labels: { app: 'web' }
+            },
+            spec: {
+              containers: [{ name: 'web', image: 'nginx:1.28' }]
+            }
+          }
+        })
+      ],
+      pods: [
+        createPod({
+          name: 'web-rs-a1b2c',
+          namespace: 'default',
+          phase: 'Running',
+          creationTimestamp: '2026-03-25T09:00:00.000Z',
+          containers: [{ name: 'web', image: 'nginx:1.28' }],
+          labels: { app: 'web' }
+        }),
+        createPod({
+          name: 'web-rs-d3e4f',
+          namespace: 'default',
+          phase: 'Running',
+          creationTimestamp: '2026-03-25T09:00:05.000Z',
+          containers: [{ name: 'web', image: 'nginx:1.28' }],
+          labels: { app: 'web' }
+        })
+      ]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'replicasets',
+      name: 'web-rs',
+      namespace: 'default',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+    const result = handleDescribe(apiServer, parsed)
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Replicas:     2 current / 2 desired')
+    expect(result.value).toContain(
+      'Pods Status:  2 Running / 0 Waiting / 0 Succeeded / 0 Failed'
+    )
+    expect(result.value).toContain('Normal  SuccessfulCreate')
+    expect(result.value).toContain('Created pod: web-rs-a1b2c')
+    expect(result.value).toContain('Created pod: web-rs-d3e4f')
   })
 })
 

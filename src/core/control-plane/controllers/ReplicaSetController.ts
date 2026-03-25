@@ -82,8 +82,7 @@ const createPodFromTemplate = (rs: ReplicaSet): Pod => {
     name: podName,
     namespace: rs.metadata.namespace,
     labels: {
-      ...templateLabels,
-      'pod-template-hash': rs.metadata.name.split('-').pop() || ''
+      ...templateLabels
     },
     nodeSelector: rs.spec.template.spec.nodeSelector,
     tolerations: rs.spec.template.spec.tolerations,
