@@ -12,7 +12,7 @@ import {
 } from '../../shared/labelSelector'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import { RESOURCE_ALIAS_MAP } from './resources'
+import { parseResourceTargetToken } from './resourceTarget'
 import { getTransformerForAction, type ParseContext } from './transformers'
 import type { Action, ParsedCommand, Resource } from './types'
 
@@ -288,18 +288,15 @@ const extractResource = (ctx: ParseContext): Result<ParseContext> => {
     return error('Invalid or missing resource type')
   }
 
-  // Lookup canonical resource from alias map
-  const resource = RESOURCE_ALIAS_MAP[resourceCandidate.token] as
-    | Resource
-    | undefined
-
-  if (!resource) {
-    return error('Invalid or missing resource type')
+  const parsedTarget = parseResourceTargetToken(resourceCandidate.token)
+  if (!parsedTarget.ok) {
+    return parsedTarget
   }
 
   return success({
     ...ctx,
-    resource,
+    resource: parsedTarget.value.resource,
+    name: parsedTarget.value.name,
     resourceTokenIndex: resourceCandidate.index
   })
 }
@@ -579,6 +576,13 @@ const getNamesFromTokens = (
   }
 
   const names: string[] = []
+  const resourceToken = tokens[resourceTokenIndex]
+  if (resourceToken != null && resourceToken.includes('/')) {
+    const [, inlineName] = resourceToken.split('/', 2)
+    if (inlineName != null && inlineName.length > 0) {
+      names.push(inlineName)
+    }
+  }
   for (let index = resourceTokenIndex + 1; index < tokens.length; index++) {
     const token = tokens[index]
     if (token === '--') {

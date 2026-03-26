@@ -15,6 +15,7 @@ import { toKindReference, toPluralKindReference } from '../resourceHelpers'
 import type { ParsedCommand, Resource } from '../types'
 
 const RESTART_ANNOTATION = 'kubectl.kubernetes.io/restartedAt'
+const CHANGE_CAUSE_ANNOTATION = 'kubernetes.io/change-cause'
 
 const ROLLOUT_RESOURCE_KIND_BY_RESOURCE: Partial<Record<Resource, ResourceKind>> = {
   deployments: 'Deployment',
@@ -261,17 +262,44 @@ const rolloutStatusComplete = (
   }
 }
 
+const formatRolloutWaitingMessage = (
+  resource: KindToResource<ResourceKind>,
+  name: string
+): string => {
+  if (resource.kind === 'Deployment') {
+    const deployment = resource as Deployment
+    const desired = deployment.spec.replicas ?? 1
+    const updated = deployment.status.updatedReplicas ?? 0
+    const oldPendingTermination = Math.max(0, desired - updated)
+    if (updated < desired) {
+      return `Waiting for deployment "${name}" rollout to finish: ${updated} out of ${desired} new replicas have been updated...`
+    }
+    if (oldPendingTermination > 0) {
+      return `Waiting for deployment "${name}" rollout to finish: ${oldPendingTermination} old replicas are pending termination...`
+    }
+    return `Waiting for deployment "${name}" rollout to finish: deployment is progressing...`
+  }
+  return `Waiting for ${toKindReference(resource.kind as ResourceKind)}/${name} rollout to finish...`
+}
+
+type HistorySummaryRow = {
+  revision: number
+  changeCause?: string
+}
+
 const formatHistorySummary = (
   kind: ResourceKind,
   name: string,
-  revisions: number[]
+  rows: HistorySummaryRow[]
 ): string => {
   const header = `${toKindReference(kind)}/${name} rollout history`
-  if (revisions.length === 0) {
+  if (rows.length === 0) {
     return `${header}\nREVISION  CHANGE-CAUSE\n<none>    <none>`
   }
-  const rows = revisions.map((revision) => `${String(revision).padEnd(8)}<none>`)
-  return `${header}\nREVISION  CHANGE-CAUSE\n${rows.join('\n')}`
+  const formattedRows = rows.map((row) => {
+    return `${String(row.revision).padEnd(8)}${row.changeCause ?? '<none>'}`
+  })
+  return `${header}\nREVISION  CHANGE-CAUSE\n${formattedRows.join('\n')}`
 }
 
 const formatHistoryDetails = (
@@ -294,6 +322,21 @@ const handleRolloutStatus = (
 ): ExecutionResult => {
   const watch = parsed.rolloutWatch ?? true
   const timeoutSeconds = parsed.rolloutTimeoutSeconds ?? 60
+
+  if (reconcileForWait == null) {
+    const resourceResult = apiServer.findResource(kind, name, namespace)
+    if (!resourceResult.ok) {
+      return error(
+        `Error from server (NotFound): ${toPluralKindReference(kind)} "${name}" not found`
+      )
+    }
+    const status = rolloutStatusComplete(resourceResult.value)
+    if (status.done) {
+      return success(`${toKindReference(kind)} "${name}" successfully rolled out`)
+    }
+    return success(formatRolloutWaitingMessage(resourceResult.value, name))
+  }
+
   const maxIterations = Math.max(1, Math.min(timeoutSeconds, 240))
 
   for (let iteration = 0; iteration < maxIterations; iteration++) {
@@ -311,9 +354,7 @@ const handleRolloutStatus = (
       return success(`${toKindReference(kind)} "${name}" successfully rolled out`)
     }
     if (!watch) {
-      return success(
-        `Waiting for ${toKindReference(kind)}/${name} rollout to finish: ${status.details}`
-      )
+      return success(formatRolloutWaitingMessage(resourceResult.value, name))
     }
   }
 
@@ -338,9 +379,10 @@ const handleRolloutHistory = (
     const sorted = [...ownedReplicaSets].sort((a, b) => {
       return getDeploymentRevisionFromReplicaSet(a) - getDeploymentRevisionFromReplicaSet(b)
     })
-    const revisions = sorted.map((replicaSet) =>
-      getDeploymentRevisionFromReplicaSet(replicaSet)
-    )
+    const revisionRows: HistorySummaryRow[] = sorted.map((replicaSet) => ({
+      revision: getDeploymentRevisionFromReplicaSet(replicaSet),
+      changeCause: replicaSet.metadata.annotations?.[CHANGE_CAUSE_ANNOTATION]
+    }))
     if (parsed.rolloutRevision != null) {
       const targetReplicaSet = sorted.find((replicaSet) => {
         return getDeploymentRevisionFromReplicaSet(replicaSet) === parsed.rolloutRevision
@@ -357,7 +399,7 @@ const handleRolloutHistory = (
         )
       )
     }
-    return success(formatHistorySummary(kind, name, revisions))
+    return success(formatHistorySummary(kind, name, revisionRows))
   }
 
   const workloadResult =
@@ -387,7 +429,10 @@ const handleRolloutHistory = (
     formatHistorySummary(
       kind,
       name,
-      revisions.map((revision) => revision.revision)
+      revisions.map((revision) => ({
+        revision: revision.revision,
+        changeCause: revision.metadata.annotations?.[CHANGE_CAUSE_ANNOTATION]
+      }))
     )
   )
 }

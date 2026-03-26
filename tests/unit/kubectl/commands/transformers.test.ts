@@ -392,6 +392,23 @@ describe('kubectl transformers', () => {
       }
     })
 
+    it('should parse type/name syntax', () => {
+      const transformer = getTransformerForAction('label')
+      const ctx = createContext({
+        input: 'kubectl label deployment/web app=api',
+        tokens: ['kubectl', 'label', 'deployment/web', 'app=api']
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.resource).toBe('deployments')
+        expect(result.value.name).toBe('web')
+        expect(result.value.labelChanges).toEqual({ app: 'api' })
+      }
+    })
+
     it('should handle configmap alias', () => {
       const transformer = getTransformerForAction('label')
       const ctx = createContext({
@@ -548,6 +565,31 @@ describe('kubectl transformers', () => {
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.annotationChanges).toEqual({ description: null })
+      }
+    })
+
+    it('should parse type/name syntax', () => {
+      const transformer = getTransformerForAction('annotate')
+      const ctx = createContext({
+        input:
+          'kubectl annotate deployment/web kubernetes.io/change-cause="upgrade"',
+        tokens: [
+          'kubectl',
+          'annotate',
+          'deployment/web',
+          'kubernetes.io/change-cause="upgrade"'
+        ]
+      })
+
+      const result = transformer(ctx)
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.resource).toBe('deployments')
+        expect(result.value.name).toBe('web')
+        expect(result.value.annotationChanges).toEqual({
+          'kubernetes.io/change-cause': 'upgrade'
+        })
       }
     })
 

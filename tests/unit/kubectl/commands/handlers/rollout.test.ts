@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createDaemonSet } from '../../../../../src/core/cluster/ressources/DaemonSet'
 import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
+import { createReplicaSet } from '../../../../../src/core/cluster/ressources/ReplicaSet'
 import { createStatefulSet } from '../../../../../src/core/cluster/ressources/StatefulSet'
 import { handleRollout } from '../../../../../src/core/kubectl/commands/handlers/rollout'
 import { parseCommand } from '../../../../../src/core/kubectl/commands/parser'
@@ -83,6 +84,93 @@ describe('kubectl rollout handler', () => {
 
     const revisions = apiServer.listResources('ControllerRevision', 'default')
     expect(revisions.length).toBe(1)
+  })
+
+  it('renders deployment rollout history change-cause when present', () => {
+    apiServer.createResource(
+      'Deployment',
+      createDeployment({
+        name: 'web-app',
+        namespace: 'default',
+        replicas: 3,
+        selector: { matchLabels: { app: 'web' } },
+        template: {
+          metadata: { labels: { app: 'web' } },
+          spec: {
+            containers: [{ name: 'web', image: 'nginx:1.28' }]
+          }
+        }
+      })
+    )
+    apiServer.createResource(
+      'ReplicaSet',
+      createReplicaSet({
+        name: 'web-app-rs-v1',
+        namespace: 'default',
+        replicas: 0,
+        selector: { matchLabels: { app: 'web', version: 'v1' } },
+        template: {
+          metadata: { labels: { app: 'web', version: 'v1' } },
+          spec: {
+            containers: [{ name: 'web', image: 'nginx:1.28' }]
+          }
+        },
+        annotations: {
+          'deployment.kubernetes.io/revision': '1',
+          'kubernetes.io/change-cause': 'Initial deployment: nginx 1.28'
+        },
+        ownerReferences: [
+          {
+            apiVersion: 'apps/v1',
+            kind: 'Deployment',
+            name: 'web-app',
+            uid: 'default-web-app',
+            controller: true
+          }
+        ]
+      })
+    )
+    apiServer.createResource(
+      'ReplicaSet',
+      createReplicaSet({
+        name: 'web-app-rs-v2',
+        namespace: 'default',
+        replicas: 3,
+        selector: { matchLabels: { app: 'web', version: 'v2' } },
+        template: {
+          metadata: { labels: { app: 'web', version: 'v2' } },
+          spec: {
+            containers: [{ name: 'web', image: 'nginx:1.26' }]
+          }
+        },
+        annotations: {
+          'deployment.kubernetes.io/revision': '2',
+          'kubernetes.io/change-cause': 'Upgrade to nginx 1.26'
+        },
+        ownerReferences: [
+          {
+            apiVersion: 'apps/v1',
+            kind: 'Deployment',
+            name: 'web-app',
+            uid: 'default-web-app',
+            controller: true
+          }
+        ]
+      })
+    )
+
+    const parsed = parseCommand('kubectl rollout history deployment/web-app')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+    const result = handleRollout(apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('1       Initial deployment: nginx 1.28')
+    expect(result.value).toContain('2       Upgrade to nginx 1.26')
   })
 
   it('restarts and undoes a statefulset rollout', () => {

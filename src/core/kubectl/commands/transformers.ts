@@ -2,6 +2,7 @@ import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import { parseSelector, stripMatchingQuotes } from '../../shared/parsing'
 import { RESOURCE_ALIAS_MAP } from './resources'
+import { parseResourceTargetToken } from './resourceTarget'
 import type { Action, Resource } from './types'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -508,27 +509,26 @@ const labelTransformer: ActionTransformer = (ctx) => {
     return success(ctx)
   }
 
-  // Extract resource from position 2
-  const resourceToken = ctx.tokens[2]
-  if (!resourceToken || resourceToken.startsWith('-')) {
-    return error('Invalid or missing resource type')
+  const parsedTarget = parseResourceTargetToken(ctx.tokens[2])
+  if (!parsedTarget.ok) {
+    return parsedTarget
   }
 
-  // Map resource alias to canonical
-  const resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
-  if (!resource) {
-    return error('Invalid or missing resource type')
-  }
-
-  // Extract name from position 3 (skip flags)
-  const name = findNameSkippingFlags(ctx.tokens, 3)
+  const name =
+    parsedTarget.value.name ?? findNameSkippingFlags(ctx.tokens, 3)
 
   // Parse label changes from tokens after name
-  // Skip: kubectl (0), label (1), resource (2), name (3)
-  const changesTokens = ctx.tokens.slice(4)
+  // type/name uses index 2 as target, resource name syntax uses index 3
+  const changesStartIndex = parsedTarget.value.usesTypeNameSyntax ? 3 : 4
+  const changesTokens = ctx.tokens.slice(changesStartIndex)
   const labelChanges = parseChanges(changesTokens)
 
-  return success({ ...ctx, resource, name, labelChanges })
+  return success({
+    ...ctx,
+    resource: parsedTarget.value.resource,
+    name,
+    labelChanges
+  })
 }
 
 /**
@@ -539,27 +539,26 @@ const annotateTransformer: ActionTransformer = (ctx) => {
     return success(ctx)
   }
 
-  // Extract resource from position 2
-  const resourceToken = ctx.tokens[2]
-  if (!resourceToken || resourceToken.startsWith('-')) {
-    return error('Invalid or missing resource type')
+  const parsedTarget = parseResourceTargetToken(ctx.tokens[2])
+  if (!parsedTarget.ok) {
+    return parsedTarget
   }
 
-  // Map resource alias to canonical
-  const resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
-  if (!resource) {
-    return error('Invalid or missing resource type')
-  }
-
-  // Extract name from position 3 (skip flags)
-  const name = findNameSkippingFlags(ctx.tokens, 3)
+  const name =
+    parsedTarget.value.name ?? findNameSkippingFlags(ctx.tokens, 3)
 
   // Parse annotation changes from tokens after name
-  // Skip: kubectl (0), annotate (1), resource (2), name (3)
-  const changesTokens = ctx.tokens.slice(4)
+  // type/name uses index 2 as target, resource name syntax uses index 3
+  const changesStartIndex = parsedTarget.value.usesTypeNameSyntax ? 3 : 4
+  const changesTokens = ctx.tokens.slice(changesStartIndex)
   const annotationChanges = parseChanges(changesTokens)
 
-  return success({ ...ctx, resource, name, annotationChanges })
+  return success({
+    ...ctx,
+    resource: parsedTarget.value.resource,
+    name,
+    annotationChanges
+  })
 }
 
 /**

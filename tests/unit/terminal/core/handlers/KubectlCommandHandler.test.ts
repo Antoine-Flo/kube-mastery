@@ -850,5 +850,35 @@ describe('KubectlCommandHandler', () => {
         'unsupported output redirection syntax for follow mode'
       )
     })
+
+    it('should keep rollout status attached to stream by default', () => {
+      const applyResult = handler.execute(
+        'kubectl create deployment stream-rollout --image=nginx --replicas=3',
+        context
+      )
+      expect(applyResult.ok).toBe(true)
+      renderer.clearOutput()
+
+      const rolloutResult = handler.execute(
+        'kubectl rollout status deployment/stream-rollout',
+        context
+      )
+      expect(rolloutResult.ok).toBe(true)
+      expect(streamStop).not.toBeNull()
+      expect(renderer.getOutput()).toContain(
+        'Waiting for deployment "stream-rollout" rollout to finish'
+      )
+    })
+
+    it('should reject output redirection in rollout follow mode', () => {
+      const result = handler.execute(
+        'kubectl rollout status deployment/web-app > out.txt',
+        context
+      )
+      expect(result.ok).toBe(false)
+      expect(renderer.getOutput()).toContain(
+        'unsupported output redirection syntax for rollout follow mode'
+      )
+    })
   })
 })

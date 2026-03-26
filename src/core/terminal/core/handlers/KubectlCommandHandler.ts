@@ -797,6 +797,20 @@ const isLogsFollowEnabled = (parsedCommand: ParsedCommand): boolean => {
   return parsedCommand.flags.f !== undefined
 }
 
+const isRolloutStatusFollowEnabled = (parsedCommand: ParsedCommand): boolean => {
+  if (parsedCommand.action !== 'rollout') {
+    return false
+  }
+  if (parsedCommand.rolloutSubcommand !== 'status') {
+    return false
+  }
+  return parsedCommand.rolloutWatch !== false
+}
+
+const isRolloutStatusSuccessOutput = (output: string): boolean => {
+  return output.includes('successfully rolled out')
+}
+
 const buildLogsFollowDeltaOutput = (
   previousOutput: string,
   nextOutput: string
@@ -947,6 +961,8 @@ export class KubectlCommandHandler implements CommandHandler {
       parsedCommand.rawPath == null &&
       isWatchEnabled(parsedCommand)
     const logsFollowEnabled = isLogsFollowEnabled(parsedCommand)
+    const rolloutStatusFollowEnabled =
+      isRolloutStatusFollowEnabled(parsedCommand)
 
     if (watchEnabled && parsedRedirection.outputFile != null) {
       const watchRedirectionError =
@@ -959,6 +975,12 @@ export class KubectlCommandHandler implements CommandHandler {
         'unsupported output redirection syntax for follow mode'
       context.output.writeOutput(followRedirectionError)
       return error(followRedirectionError)
+    }
+    if (rolloutStatusFollowEnabled && parsedRedirection.outputFile != null) {
+      const rolloutFollowRedirectionError =
+        'unsupported output redirection syntax for rollout follow mode'
+      context.output.writeOutput(rolloutFollowRedirectionError)
+      return error(rolloutFollowRedirectionError)
     }
     if (logsFollowEnabled && parsedCommand.flags.previous === true) {
       const previousWithFollowError =
@@ -1165,6 +1187,53 @@ export class KubectlCommandHandler implements CommandHandler {
           return
         }
         context.output.writeOutput(deltaOutput)
+      }, 1000)
+
+      context.startStream(() => {
+        clearInterval(intervalId)
+      })
+      return success('')
+    }
+
+    if (rolloutStatusFollowEnabled && context.startStream != null) {
+      if (!result.ok) {
+        context.output.writeOutput(result.error)
+        return result
+      }
+      if (result.value != null && result.value.length > 0) {
+        context.output.writeOutput(result.value)
+      }
+      if (isRolloutStatusSuccessOutput(result.value || '')) {
+        return success('')
+      }
+
+      let lastOutput = result.value || ''
+      const intervalId = setInterval(() => {
+        const next = executor.execute(parsedRedirection.command)
+        const nextOutput = next.ok ? next.value || '' : next.error
+        if (!next.ok) {
+          context.output.writeOutput(next.error)
+          if (context.stopStream != null) {
+            context.stopStream()
+          } else {
+            clearInterval(intervalId)
+          }
+          return
+        }
+        if (nextOutput === lastOutput) {
+          return
+        }
+        lastOutput = nextOutput
+        if (nextOutput.length > 0) {
+          context.output.writeOutput(nextOutput)
+        }
+        if (isRolloutStatusSuccessOutput(nextOutput)) {
+          if (context.stopStream != null) {
+            context.stopStream()
+          } else {
+            clearInterval(intervalId)
+          }
+        }
       }, 1000)
 
       context.startStream(() => {

@@ -68,6 +68,7 @@ const WATCHED_EVENTS: ClusterEventType[] = [
 ]
 
 const DEPLOYMENT_REVISION_ANNOTATION = 'deployment.kubernetes.io/revision'
+const CHANGE_CAUSE_ANNOTATION = 'kubernetes.io/change-cause'
 
 const DEFAULT_ROLLING_MAX_SURGE = '25%'
 const DEFAULT_ROLLING_MAX_UNAVAILABLE = '25%'
@@ -620,6 +621,32 @@ export class DeploymentController implements ReconcilerController {
       currentRs.metadata.annotations?.[DEPLOYMENT_REVISION_ANNOTATION]
     const deploymentRevision =
       deploy.metadata.annotations?.[DEPLOYMENT_REVISION_ANNOTATION]
+
+    const deploymentChangeCause =
+      deploy.metadata.annotations?.[CHANGE_CAUSE_ANNOTATION]
+    const replicaSetChangeCause =
+      currentRs.metadata.annotations?.[CHANGE_CAUSE_ANNOTATION]
+    if (
+      deploymentChangeCause != null &&
+      deploymentChangeCause !== replicaSetChangeCause
+    ) {
+      const updatedCurrentReplicaSet: ReplicaSet = {
+        ...currentRs,
+        metadata: {
+          ...currentRs.metadata,
+          annotations: {
+            ...(currentRs.metadata.annotations ?? {}),
+            [CHANGE_CAUSE_ANNOTATION]: deploymentChangeCause
+          }
+        }
+      }
+      this.apiServer.updateResource(
+        'ReplicaSet',
+        currentRs.metadata.name,
+        updatedCurrentReplicaSet,
+        currentRs.metadata.namespace
+      )
+    }
 
     if (currentRevision == null || currentRevision === deploymentRevision) {
       return deploy

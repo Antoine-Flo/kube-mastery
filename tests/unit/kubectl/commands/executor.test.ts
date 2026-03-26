@@ -301,7 +301,7 @@ spec:
           return
         }
         expect(rolloutResult.value).toContain(
-          'Waiting for deployment.apps/web-app rollout'
+          'Waiting for deployment "web-app" rollout to finish'
         )
       })
 

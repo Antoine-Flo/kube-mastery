@@ -586,6 +586,18 @@ describe('kubectl parser - describe', () => {
     expect(result.value.resource).toBe('ingresses')
     expect(result.value.name).toBe('demo-ingress')
   })
+
+  it('should parse describe command with type/name syntax', () => {
+    const result = parseCommand('kubectl describe deployment/web-app')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('deployments')
+    expect(result.value.name).toBe('web-app')
+  })
 })
 
 describe('kubectl parser - get and delete flag positions', () => {
@@ -614,6 +626,19 @@ describe('kubectl parser - get and delete flag positions', () => {
     expect(result.value.name).toBe('coredns-abc')
     expect(result.value.names).toEqual(['coredns-abc'])
     expect(result.value.namespace).toBe('kube-system')
+  })
+
+  it('should parse get with type/name syntax', () => {
+    const result = parseCommand('kubectl get pod/coredns-abc')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBe('coredns-abc')
+    expect(result.value.names).toEqual(['coredns-abc'])
   })
 
   it('should parse all positional names for get command', () => {
@@ -863,6 +888,19 @@ describe('kubectl parser - get and delete flag positions', () => {
     expect(result.value.names).toEqual(['pod-1', 'pod-2', 'pod-3'])
   })
 
+  it('should parse delete with type/name syntax', () => {
+    const result = parseCommand('kubectl delete pod/pod-1')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBe('pod-1')
+    expect(result.value.names).toEqual(['pod-1'])
+  })
+
   it('should parse delete all with label selector and no name', () => {
     const result = parseCommand('kubectl delete all -l tier=experiment')
 
@@ -952,6 +990,39 @@ describe('kubectl parser - get and delete flag positions', () => {
     if (!result.ok) {
       expect(result.error).toContain('invalid --grace-period value')
     }
+  })
+})
+
+describe('kubectl parser - metadata commands', () => {
+  it('should parse label with type/name syntax', () => {
+    const result = parseCommand('kubectl label deployment/web app=api')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('deployments')
+    expect(result.value.name).toBe('web')
+    expect(result.value.labelChanges).toEqual({ app: 'api' })
+  })
+
+  it('should parse annotate with type/name syntax', () => {
+    const result = parseCommand(
+      'kubectl annotate deployment/web kubernetes.io/change-cause="upgrade" --overwrite'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('deployments')
+    expect(result.value.name).toBe('web')
+    expect(result.value.annotationChanges).toEqual({
+      'kubernetes.io/change-cause': 'upgrade'
+    })
+    expect(result.value.flags.overwrite).toBe(true)
   })
 })
 
