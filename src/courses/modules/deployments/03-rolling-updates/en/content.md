@@ -213,8 +213,7 @@ Switch to the second terminal and watch the `DESIRED` / `CURRENT` / `READY` colu
 **4. Confirm all Pods are now on the new image**
 
 ```bash
-kubectl get pods -l app=web \
-  -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
+kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
 # web-app-7e5c0d9a1-xxxxx: nginx:1.26
 # web-app-7e5c0d9a1-yyyyy: nginx:1.26
 # web-app-7e5c0d9a1-zzzzz: nginx:1.26
@@ -223,8 +222,7 @@ kubectl get pods -l app=web \
 **5. Try a fast (but risky) update by increasing surge and unavailability**
 
 ```bash
-kubectl patch deployment web-app -p \
-  '{"spec":{"strategy":{"rollingUpdate":{"maxSurge":3,"maxUnavailable":3}}}}'
+kubectl patch deployment web-app -p '{"spec":{"strategy":{"rollingUpdate":{"maxSurge":3,"maxUnavailable":3}}}}'
 
 kubectl set image deployment/web-app web=nginx:1.27
 
@@ -245,8 +243,7 @@ kubectl rollout pause deployment/web-app
 
 # Check the mixed state
 kubectl get rs -l app=web
-kubectl get pods -l app=web \
-  -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
+kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
 
 # Resume
 kubectl rollout resume deployment/web-app

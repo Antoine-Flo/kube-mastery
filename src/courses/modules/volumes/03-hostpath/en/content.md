@@ -172,7 +172,7 @@ You should see the real contents of the node's `/var/log` directory.
 **3. Read a system log file directly from the container:**
 
 ```bash
-kubectl exec hostpath-demo -- ls /node-logs/pods/ 2>/dev/null | head -5
+kubectl exec hostpath-demo -- ls /node-logs/pods/ 2>/dev/null
 ```
 
 These are the actual log directories that kubelet writes for each Pod running on this node, real host data, visible inside your container.

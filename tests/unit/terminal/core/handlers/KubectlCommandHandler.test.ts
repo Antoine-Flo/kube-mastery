@@ -880,5 +880,58 @@ describe('KubectlCommandHandler', () => {
         'unsupported output redirection syntax for rollout follow mode'
       )
     })
+
+    it('should allow > character inside quoted jsonpath literal', () => {
+      context.apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'web-a',
+          namespace: 'default',
+          labels: { app: 'web' },
+          containers: [{ name: 'web', image: 'nginx:1.26' }]
+        })
+      )
+      context.apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'web-b',
+          namespace: 'default',
+          labels: { app: 'web' },
+          containers: [{ name: 'web', image: 'nginx:1.26' }]
+        })
+      )
+
+      const result = handler.execute(
+        `kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"<br/>"}{end}'`,
+        context
+      )
+
+      expect(result.ok).toBe(true)
+      expect(renderer.getOutput()).toContain('<br/>')
+      expect(renderer.getOutput()).not.toContain(
+        'invalid jsonpath template, missing closing brace'
+      )
+    })
+
+    it('should ignore inline shell comment after kubectl command', () => {
+      context.apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'web-c',
+          namespace: 'default',
+          labels: { app: 'web' },
+          containers: [{ name: 'web', image: 'nginx:1.26' }]
+        })
+      )
+
+      const result = handler.execute(
+        `kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\\n"}{end}'# All pods should show nginx:1.26`,
+        context
+      )
+
+      expect(result.ok).toBe(true)
+      expect(renderer.getOutput()).toContain('web-c: nginx:1.26')
+      expect(renderer.getOutput()).not.toContain('Error from server (NotFound)')
+    })
   })
 })

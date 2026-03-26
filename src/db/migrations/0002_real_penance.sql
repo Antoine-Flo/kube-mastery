@@ -1,0 +1,1 @@
+DROP POLICY "Users can update their linked pending subscriptions" ON "pending_subscriptions" CASCADE;

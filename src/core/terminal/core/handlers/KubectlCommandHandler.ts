@@ -59,6 +59,7 @@ const ENTER_CONTAINER_PREFIX = 'ENTER_CONTAINER:'
 const SHELL_COMMAND_PREFIX = 'SHELL_COMMAND:'
 const PROCESS_COMMAND_PREFIX = 'PROCESS_COMMAND:'
 const KUBECTL_EDIT_TMP_DIR = '/tmp'
+const LOGS_FOLLOW_POLL_INTERVAL_MS = 1000
 
 const parseEnterContainerDirective = (
   output: string
@@ -425,6 +426,12 @@ const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
     'StatefulSetDeleted'
   ],
   services: ['ServiceCreated', 'ServiceUpdated', 'ServiceDeleted'],
+  endpoints: ['EndpointsCreated', 'EndpointsUpdated', 'EndpointsDeleted'],
+  endpointslices: [
+    'EndpointSliceCreated',
+    'EndpointSliceUpdated',
+    'EndpointSliceDeleted'
+  ],
   ingresses: [],
   ingressclasses: [],
   namespaces: [],
@@ -811,6 +818,118 @@ const isRolloutStatusSuccessOutput = (output: string): boolean => {
   return output.includes('successfully rolled out')
 }
 
+type RolloutProgressSnapshot = {
+  deploymentName: string
+  current: number
+  desired: number
+  mode: 'available' | 'updated'
+}
+
+const parseRolloutProgress = (
+  output: string
+): RolloutProgressSnapshot | undefined => {
+  const availableMatch = output.match(
+    /^Waiting for deployment "([^"]+)" rollout to finish: (\d+) of (\d+) updated replicas are available\.\.\.$/
+  )
+  if (availableMatch != null) {
+    const current = Number.parseInt(availableMatch[2], 10)
+    const desired = Number.parseInt(availableMatch[3], 10)
+    if (!Number.isFinite(current) || !Number.isFinite(desired)) {
+      return undefined
+    }
+    return {
+      deploymentName: availableMatch[1],
+      current,
+      desired,
+      mode: 'available'
+    }
+  }
+  const updatedMatch = output.match(
+    /^Waiting for deployment "([^"]+)" rollout to finish: (\d+) out of (\d+) new replicas have been updated\.\.\.$/
+  )
+  if (updatedMatch == null) {
+    return undefined
+  }
+  const current = Number.parseInt(updatedMatch[2], 10)
+  const desired = Number.parseInt(updatedMatch[3], 10)
+  if (!Number.isFinite(current) || !Number.isFinite(desired)) {
+    return undefined
+  }
+  return {
+    deploymentName: updatedMatch[1],
+    current,
+    desired,
+    mode: 'updated'
+  }
+}
+
+const buildRolloutProgressLine = (
+  deploymentName: string,
+  current: number,
+  desired: number,
+  mode: 'available' | 'updated'
+): string => {
+  if (mode === 'updated') {
+    return `Waiting for deployment "${deploymentName}" rollout to finish: ${current} out of ${desired} new replicas have been updated...`
+  }
+  return `Waiting for deployment "${deploymentName}" rollout to finish: ${current} of ${desired} updated replicas are available...`
+}
+
+const expandRolloutStatusOutput = (
+  previousOutput: string,
+  nextOutput: string
+): string[] => {
+  const previous = parseRolloutProgress(previousOutput)
+  if (previous == null) {
+    return [nextOutput]
+  }
+
+  const next = parseRolloutProgress(nextOutput)
+  if (next != null) {
+    if (
+      next.deploymentName !== previous.deploymentName ||
+      next.mode !== previous.mode ||
+      next.desired !== previous.desired ||
+      next.current <= previous.current + 1
+    ) {
+      return [nextOutput]
+    }
+    const expanded: string[] = []
+    for (let value = previous.current + 1; value <= next.current; value++) {
+      expanded.push(
+        buildRolloutProgressLine(next.deploymentName, value, next.desired, next.mode)
+      )
+    }
+    return expanded
+  }
+
+  if (!isRolloutStatusSuccessOutput(nextOutput)) {
+    return [nextOutput]
+  }
+  if (previous.current >= previous.desired) {
+    return [nextOutput]
+  }
+  const expanded: string[] = []
+  for (let value = previous.current + 1; value < previous.desired; value++) {
+    expanded.push(
+      buildRolloutProgressLine(
+        previous.deploymentName,
+        value,
+        previous.desired,
+        previous.mode
+      )
+    )
+  }
+  expanded.push(nextOutput)
+  return expanded
+}
+
+const restorePromptAfterStreamStop = (context: CommandContext): void => {
+  context.output.showCursor()
+  context.renderer.write(context.shellContextStack.getCurrentPrompt())
+  context.renderer.focus()
+}
+
 const buildLogsFollowDeltaOutput = (
   previousOutput: string,
   nextOutput: string
@@ -847,9 +966,34 @@ const parseKubectlOutputRedirection = (
   command: string
 ): ExecutionResult & { parsed?: ParsedRedirection } => {
   const trimmed = command.trim()
-  const segments = trimmed.split('>')
+  let inSingleQuote = false
+  let inDoubleQuote = false
+  let escaping = false
+  const redirectIndexes: number[] = []
+  for (let index = 0; index < trimmed.length; index++) {
+    const char = trimmed[index]
+    if (escaping) {
+      escaping = false
+      continue
+    }
+    if (char === '\\') {
+      escaping = true
+      continue
+    }
+    if (char === "'" && !inDoubleQuote) {
+      inSingleQuote = !inSingleQuote
+      continue
+    }
+    if (char === '"' && !inSingleQuote) {
+      inDoubleQuote = !inDoubleQuote
+      continue
+    }
+    if (char === '>' && !inSingleQuote && !inDoubleQuote) {
+      redirectIndexes.push(index)
+    }
+  }
 
-  if (segments.length === 1) {
+  if (redirectIndexes.length === 0) {
     return {
       ok: true,
       value: '',
@@ -859,12 +1003,13 @@ const parseKubectlOutputRedirection = (
     }
   }
 
-  if (segments.length !== 2) {
+  if (redirectIndexes.length !== 1) {
     return error('unsupported output redirection syntax')
   }
 
-  const commandPart = segments[0].trim()
-  const outputFile = segments[1].trim()
+  const redirectIndex = redirectIndexes[0]
+  const commandPart = trimmed.slice(0, redirectIndex).trim()
+  const outputFile = trimmed.slice(redirectIndex + 1).trim()
 
   if (commandPart.length === 0) {
     return error('missing kubectl command before output redirection')
@@ -886,6 +1031,35 @@ const parseKubectlOutputRedirection = (
   }
 }
 
+const stripInlineShellComment = (command: string): string => {
+  let inSingleQuote = false
+  let inDoubleQuote = false
+  let escaping = false
+  for (let index = 0; index < command.length; index++) {
+    const char = command[index]
+    if (escaping) {
+      escaping = false
+      continue
+    }
+    if (char === '\\') {
+      escaping = true
+      continue
+    }
+    if (char === "'" && !inDoubleQuote) {
+      inSingleQuote = !inSingleQuote
+      continue
+    }
+    if (char === '"' && !inSingleQuote) {
+      inDoubleQuote = !inDoubleQuote
+      continue
+    }
+    if (char === '#' && !inSingleQuote && !inDoubleQuote) {
+      return command.slice(0, index).trimEnd()
+    }
+  }
+  return command
+}
+
 export class KubectlCommandHandler implements CommandHandler {
   canHandle(command: string): boolean {
     // Vérifie si la commande commence par "kubectl" suivi d'un espace ou fin de ligne
@@ -894,7 +1068,9 @@ export class KubectlCommandHandler implements CommandHandler {
   }
 
   execute(command: string, context: CommandContext): ExecutionResult {
-    const parseRedirectionResult = parseKubectlOutputRedirection(command)
+    const commandWithoutComment = stripInlineShellComment(command)
+    const parseRedirectionResult =
+      parseKubectlOutputRedirection(commandWithoutComment)
     if (!parseRedirectionResult.ok || parseRedirectionResult.parsed == null) {
       const redirectionError = parseRedirectionResult.ok
         ? 'invalid output redirection'
@@ -1173,6 +1349,7 @@ export class KubectlCommandHandler implements CommandHandler {
           context.output.writeOutput(next.error)
           if (context.stopStream != null) {
             context.stopStream()
+            restorePromptAfterStreamStop(context)
           } else {
             clearInterval(intervalId)
           }
@@ -1187,7 +1364,7 @@ export class KubectlCommandHandler implements CommandHandler {
           return
         }
         context.output.writeOutput(deltaOutput)
-      }, 1000)
+      }, LOGS_FOLLOW_POLL_INTERVAL_MS)
 
       context.startStream(() => {
         clearInterval(intervalId)
@@ -1208,36 +1385,46 @@ export class KubectlCommandHandler implements CommandHandler {
       }
 
       let lastOutput = result.value || ''
-      const intervalId = setInterval(() => {
+      const effectiveNamespace = getEffectiveNamespace(parsedCommand, context)
+      const onRolloutStatusEvent = () => {
         const next = executor.execute(parsedRedirection.command)
         const nextOutput = next.ok ? next.value || '' : next.error
         if (!next.ok) {
           context.output.writeOutput(next.error)
           if (context.stopStream != null) {
             context.stopStream()
-          } else {
-            clearInterval(intervalId)
           }
           return
         }
         if (nextOutput === lastOutput) {
           return
         }
+        const expandedOutputs = expandRolloutStatusOutput(lastOutput, nextOutput)
         lastOutput = nextOutput
-        if (nextOutput.length > 0) {
-          context.output.writeOutput(nextOutput)
+        if (expandedOutputs.length > 0) {
+          context.output.writeOutput(expandedOutputs.join('\n'))
         }
         if (isRolloutStatusSuccessOutput(nextOutput)) {
           if (context.stopStream != null) {
             context.stopStream()
-          } else {
-            clearInterval(intervalId)
+            restorePromptAfterStreamStop(context)
           }
         }
-      }, 1000)
+      }
+
+      const unsubscribe = context.apiServer.watchHub.watchAllClusterEvents(
+        (clusterEvent) => {
+          if (
+            !shouldRenderEvent(clusterEvent, parsedCommand, effectiveNamespace)
+          ) {
+            return
+          }
+          onRolloutStatusEvent()
+        }
+      )
 
       context.startStream(() => {
-        clearInterval(intervalId)
+        unsubscribe()
       })
       return success('')
     }

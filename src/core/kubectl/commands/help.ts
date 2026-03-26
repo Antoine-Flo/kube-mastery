@@ -195,7 +195,7 @@ Usage:
   kubectl rollout status (TYPE NAME | TYPE/NAME) [--watch=true|false] [--timeout=60s]
   kubectl rollout history (TYPE NAME | TYPE/NAME) [--revision=N]
   kubectl rollout restart (TYPE NAME | TYPE/NAME)
-  kubectl rollout undo (TYPE NAME | TYPE/NAME) [--revision=N]
+  kubectl rollout undo (TYPE NAME | TYPE/NAME) [--revision=N|--to-revision=N]
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`,
   version: `Print the client and server version information.

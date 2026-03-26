@@ -15,6 +15,13 @@
       "when": 1773308817484,
       "tag": "0001_glamorous_nuke",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774518527383,
+      "tag": "0002_real_penance",
+      "breakpoints": true
     }
   ]
 }

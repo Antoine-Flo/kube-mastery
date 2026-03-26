@@ -213,7 +213,7 @@ minikube service web-nodeport --url
 
 ```bash
 kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- \
-  curl -s http://web-nodeport:80 | head -3
+  curl -s http://web-nodeport:80
 # Still works via ClusterIP internally
 ```
 

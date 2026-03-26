@@ -468,6 +468,22 @@ describe('kubectl parser - rollout', () => {
     expect(result.value.rolloutRevision).toBe(2)
   })
 
+  it('should parse rollout undo to-revision flag as rolloutRevision', () => {
+    const result = parseCommand(
+      'kubectl rollout undo deployment/web-app --to-revision=1'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.rolloutSubcommand).toBe('undo')
+    expect(result.value.resource).toBe('deployments')
+    expect(result.value.name).toBe('web-app')
+    expect(result.value.rolloutRevision).toBe(1)
+  })
+
   it('should reject invalid rollout subcommand', () => {
     const result = parseCommand('kubectl rollout pause deployment/web-app')
 

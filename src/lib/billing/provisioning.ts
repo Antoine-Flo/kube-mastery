@@ -630,6 +630,7 @@ export async function reconcilePendingSubscriptionsForUser(args: {
       'id, plan_tier, status, paddle_subscription_id, paddle_customer_id, current_period_start, current_period_end, canceled_at, raw_data'
     )
     .eq('email', normalizedEmail)
+    .is('linked_user_id', null)
 
   if (pendingError != null || pendingRows == null || pendingRows.length === 0) {
     return { ok: pendingError == null, error: pendingError?.message ?? null }
@@ -675,6 +676,7 @@ export async function reconcilePendingSubscriptionsForUser(args: {
         updated_at: new Date().toISOString()
       })
       .eq('id', pending.id as string)
+      .is('linked_user_id', null)
     if (linkResult.error != null) {
       return { ok: false, error: linkResult.error.message }
     }

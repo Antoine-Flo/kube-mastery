@@ -75,7 +75,12 @@
   text-align: center;
 }
 
+.lesson-content .mermaid {
+  position: relative;
+}
+
 .lesson-content pre.mermaid {
+  position: relative;
   padding: 0;
   background-color: transparent !important;
   margin-bottom: 1rem;
@@ -88,6 +93,104 @@
 .lesson-content .mermaid svg {
   margin: 0 auto;
   display: block;
+}
+
+.lesson-content .mermaid-zoom-btn {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 1px solid var(--color-gray-6);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-gray-1) 65%, transparent);
+  color: var(--color-gray-12);
+  cursor: pointer;
+  opacity: 0.82;
+  transition:
+    opacity 0.15s ease,
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.lesson-content .mermaid-zoom-btn:hover {
+  border-color: var(--color-gray-8);
+  background: var(--color-gray-3);
+}
+
+.lesson-content .mermaid-zoom-btn svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  fill: currentColor;
+}
+
+.mermaid-zoom-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: none;
+}
+
+.mermaid-zoom-modal--open {
+  display: block;
+}
+
+.mermaid-zoom-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, #000 65%, transparent);
+}
+
+.mermaid-zoom-modal__panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(99.5vw, 2200px);
+  height: auto;
+  max-height: 95vh;
+  padding: 2.25rem 0.125rem 0.25rem;
+  border-radius: var(--radius-l2);
+  border: 1px solid var(--color-gray-6);
+  background: var(--color-gray-1);
+  box-shadow: var(--shadow-xl);
+}
+
+.mermaid-zoom-modal__close {
+  position: absolute;
+  top: 0.625rem;
+  right: 0.625rem;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--color-gray-6);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-gray-12);
+  cursor: pointer;
+}
+
+.mermaid-zoom-modal__content {
+  width: 100%;
+  height: auto;
+  max-height: calc(95vh - 3.5rem);
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mermaid-zoom-modal__content svg {
+  display: block;
+  margin: 0 auto;
+}
+
+body.mermaid-zoom-open {
+  overflow: hidden;
 }
 
 [data-theme='dark'] .lesson-content .mermaid .mindmap-node .nodeLabel {

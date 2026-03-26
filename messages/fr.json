@@ -48,6 +48,7 @@
   "auth_checkEmailTitle": "Lien envoyé !",
   "auth_checkEmail": "Ouvrez votre boîte mail et cliquez sur le lien pour vous connecter.",
   "auth_magicLinkError": "Une erreur s'est produite avec le lien. Veuillez réessayer.",
+  "auth_magicLinkRateLimited": "Trop de demandes de lien magique, veuillez attendre quelques minutes avant de réessayer.",
   "auth_registrations_closed": "Les inscriptions sont fermées. La limite early access est atteinte.",
   "auth_errorUnexpected": "Une erreur est survenue. Veuillez réessayer.",
   "auth_errorInvalidCredentials": "Email ou mot de passe invalide.",

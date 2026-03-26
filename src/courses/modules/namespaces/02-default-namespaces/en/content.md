@@ -120,7 +120,7 @@ kubectl get pods -n kube-system
 kubectl get pods -n kube-system -l k8s-app=kube-dns
 
 # Describe a CoreDNS pod to see its configuration
-kubectl describe pod -n kube-system -l k8s-app=kube-dns | head -80
+kubectl describe pod -n kube-system -l k8s-app=kube-dns
 
 # Check kube-proxy daemonset
 kubectl get daemonset -n kube-system

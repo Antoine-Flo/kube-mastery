@@ -182,7 +182,7 @@ kubectl get endpoints web-service
 
 ```bash
 kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- \
-  curl -s http://web-service | head -5
+  curl -s http://web-service
 # Should return nginx's HTML , the request was load-balanced to one of the three Pods
 ```
 
@@ -190,15 +190,15 @@ kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- \
 
 ```bash
 kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never \
-  -n kube-system -- curl -s http://web-service.default.svc.cluster.local | head -5
+  -n kube-system -- curl -s http://web-service.default.svc.cluster.local
 # Should also return nginx's HTML , crossing namespace boundary via FQDN
 ```
 
 **6. Confirm the environment variables injected into a Pod**
 
 ```bash
-POD=$(kubectl get pods -l app=web -o name | head -1)
-kubectl exec $POD -- env | grep WEB_SERVICE
+# Run kubectl get pods -l app=web, pick one pod NAME, then:
+kubectl exec <POD-NAME> -- env | grep WEB_SERVICE
 # WEB_SERVICE_SERVICE_HOST=10.96.45.12
 # WEB_SERVICE_SERVICE_PORT=80
 # WEB_SERVICE_PORT=tcp://10.96.45.12:80

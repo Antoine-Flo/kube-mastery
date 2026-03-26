@@ -264,12 +264,6 @@ export const pendingSubscriptions = pgTable(
       to: authenticatedRole,
       using: sql`${table.linkedUserId} = ${authUid}`
     }),
-    pgPolicy('Users can update their linked pending subscriptions', {
-      for: 'update',
-      to: authenticatedRole,
-      using: sql`${table.linkedUserId} = ${authUid}`,
-      withCheck: sql`${table.linkedUserId} = ${authUid}`
-    }),
     pgPolicy('Users cannot insert pending subscriptions', {
       for: 'insert',
       to: authenticatedRole,

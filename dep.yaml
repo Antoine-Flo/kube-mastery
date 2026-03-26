@@ -2,10 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web-app
-  labels:
-    app: web
+  annotations:
+    kubernetes.io/change-cause: 'Initial deployment: nginx 1.25'
 spec:
   replicas: 3
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
       app: web
@@ -17,5 +18,3 @@ spec:
       containers:
         - name: web
           image: nginx:1.28
-          ports:
-            - containerPort: 80

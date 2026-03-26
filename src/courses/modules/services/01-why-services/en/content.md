@@ -121,8 +121,8 @@ kubectl get pods -l app=backend -o wide
 Now delete one Pod and watch it get replaced with a new IP:
 
 ```bash
-POD=$(kubectl get pods -l app=backend -o name | head -1)
-kubectl delete $POD
+# Run kubectl get pods -l app=backend, pick one pod NAME from the output, then:
+kubectl delete pod <POD-NAME>
 
 sleep 5
 kubectl get pods -l app=backend -o wide

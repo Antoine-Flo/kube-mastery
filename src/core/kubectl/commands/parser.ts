@@ -967,10 +967,19 @@ const validateCommandSemantics = (
     }
 
     const revisionValue = flags.revision
-    if (revisionValue !== undefined) {
-      const parsedRevision = Number.parseInt(String(revisionValue), 10)
+    const toRevisionValue = flags['to-revision']
+    if (
+      revisionValue !== undefined &&
+      toRevisionValue !== undefined &&
+      String(revisionValue) !== String(toRevisionValue)
+    ) {
+      return 'error: --revision and --to-revision must target the same value'
+    }
+    const effectiveRevisionValue = revisionValue ?? toRevisionValue
+    if (effectiveRevisionValue !== undefined) {
+      const parsedRevision = Number.parseInt(String(effectiveRevisionValue), 10)
       if (Number.isNaN(parsedRevision) || parsedRevision <= 0) {
-        return `error: invalid value "${String(revisionValue)}" for --revision: must be a positive integer`
+        return `error: invalid value "${String(effectiveRevisionValue)}" for --revision: must be a positive integer`
       }
       if (rolloutSubcommand !== 'history' && rolloutSubcommand !== 'undo') {
         return 'error: --revision is only supported by rollout history and rollout undo'

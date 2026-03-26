@@ -8,6 +8,12 @@ export const CONFIG = {
       fr: 'Français'
     }
   },
+  auth: {
+    magicLinkRateLimit: {
+      windowMs: 5 * 60 * 1000,
+      maxRequests: 5
+    }
+  },
   billing: {
     paddlePriceIds: {
       production: {

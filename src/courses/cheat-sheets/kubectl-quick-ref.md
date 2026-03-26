@@ -144,7 +144,7 @@ kubectl events --types=Warning
 kubectl diff -f ./my-manifest.yaml
 kubectl get nodes -o json | jq -c 'paths|join(".")'
 kubectl get pods -o json | jq -c 'paths|join(".")'
-for pod in $(kubectl get po --output=jsonpath={.items..metadata.name}); do echo $pod && kubectl exec -it $pod -- env; done
+# List pods, then run per pod: kubectl exec -it <POD-NAME> -- env
 kubectl get deployment nginx-deployment --subresource=status
 ```
 

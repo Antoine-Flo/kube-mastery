@@ -195,7 +195,7 @@ kubectl get pods -l app=web
 ```bash
 kubectl rollout history deployment/web-app
 # REVISION  CHANGE-CAUSE
-# 1         Initial deployment: nginx 1.25
+# 1         <none>
 # 2         Upgrade to nginx 1.26
 # 3         Upgrade to nginx (broken)
 ```
@@ -218,8 +218,7 @@ kubectl rollout status deployment/web-app
 **8. Confirm the active image**
 
 ```bash
-kubectl get pods -l app=web \
-  -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"<br/>"}{end}'
+kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
 # All pods should show nginx:1.26
 ```
 
@@ -229,9 +228,9 @@ kubectl get pods -l app=web \
 kubectl rollout history deployment/web-app
 # REVISION  CHANGE-CAUSE
 # 1         Initial deployment: nginx 1.25
-# 2         Upgrade to nginx (broken)       ← this was revision 3, now renumbered
-# 3         Upgrade to nginx 1.26           ← the undo, same config as old revision 2
-# Wait, actually history advances: rollback = new revision
+# 2         Upgrade to nginx 1.26
+# 3         Upgrade to nginx (broken)
+# 4         <none> or previous change-cause  ← undo creates a new revision with revision 2 config
 ```
 
 **10. Roll back all the way to revision 1**
@@ -239,8 +238,7 @@ kubectl rollout history deployment/web-app
 ```bash
 kubectl rollout undo deployment/web-app --to-revision=1
 kubectl rollout status deployment/web-app
-kubectl get pods -l app=web \
-  -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"<br/>"}{end}'
+kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
 # All pods should show nginx:1.28
 ```
 

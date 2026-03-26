@@ -52,6 +52,103 @@ describe('kubectl rollout handler', () => {
     }
   })
 
+  it('renders deployment rollout availability progress like kubectl', () => {
+    apiServer.createResource(
+      'Deployment',
+      createDeployment({
+        name: 'web-app',
+        namespace: 'default',
+        replicas: 3,
+        selector: { matchLabels: { app: 'web-app' } },
+        template: {
+          metadata: { labels: { app: 'web-app' } },
+          spec: {
+            containers: [{ name: 'web', image: 'nginx:1.28' }]
+          }
+        },
+        status: {
+          observedGeneration: 2,
+          replicas: 3,
+          readyReplicas: 1,
+          updatedReplicas: 3,
+          availableReplicas: 1,
+          conditions: []
+        }
+      })
+    )
+
+    const parsed = parseCommand('kubectl rollout status deployment/web-app --watch=false')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleRollout(apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.value).toContain('1 of 3 updated replicas are available')
+    }
+  })
+
+  it('renders intermediate rollout status steps before success when watching', () => {
+    const deployment = createDeployment({
+      name: 'web-app',
+      namespace: 'default',
+      replicas: 3,
+      selector: { matchLabels: { app: 'web-app' } },
+      template: {
+        metadata: { labels: { app: 'web-app' } },
+        spec: {
+          containers: [{ name: 'web', image: 'nginx:1.28' }]
+        }
+      },
+      status: {
+        observedGeneration: 2,
+        replicas: 3,
+        readyReplicas: 0,
+        updatedReplicas: 3,
+        availableReplicas: 0,
+        conditions: []
+      }
+    })
+    apiServer.createResource('Deployment', deployment)
+
+    const parsed = parseCommand('kubectl rollout status deployment/web-app')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    let currentAvailable = 0
+    const result = handleRollout(apiServer, parsed.value, () => {
+      if (currentAvailable >= 3) {
+        return
+      }
+      currentAvailable += 1
+      const currentResult = apiServer.findResource('Deployment', 'web-app', 'default')
+      if (!currentResult.ok) {
+        return
+      }
+      const updatedDeployment = {
+        ...currentResult.value,
+        status: {
+          ...currentResult.value.status,
+          availableReplicas: currentAvailable,
+          readyReplicas: currentAvailable
+        }
+      }
+      apiServer.updateResource('Deployment', 'web-app', updatedDeployment, 'default')
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('1 of 3 updated replicas are available')
+    expect(result.value).toContain('2 of 3 updated replicas are available')
+    expect(result.value).toContain('deployment.apps "web-app" successfully rolled out')
+  })
+
   it('creates rollout history for daemonset using controller revisions', () => {
     apiServer.createResource(
       'DaemonSet',
@@ -79,7 +176,7 @@ describe('kubectl rollout handler', () => {
     if (!result.ok) {
       return
     }
-    expect(result.value).toContain('daemonset.apps/node-agent rollout history')
+    expect(result.value).toContain('daemonset.apps/node-agent')
     expect(result.value).toContain('REVISION')
 
     const revisions = apiServer.listResources('ControllerRevision', 'default')
@@ -169,8 +266,76 @@ describe('kubectl rollout handler', () => {
     if (!result.ok) {
       return
     }
-    expect(result.value).toContain('1       Initial deployment: nginx 1.28')
-    expect(result.value).toContain('2       Upgrade to nginx 1.26')
+    expect(result.value).toContain('1         Initial deployment: nginx 1.28')
+    expect(result.value).toContain('2         Upgrade to nginx 1.26')
+  })
+
+  it('renders rollout history revision details in kubectl-like template format', () => {
+    apiServer.createResource(
+      'Deployment',
+      createDeployment({
+        name: 'web-app',
+        namespace: 'default',
+        replicas: 3,
+        selector: { matchLabels: { app: 'web' } },
+        template: {
+          metadata: { labels: { app: 'web' } },
+          spec: {
+            containers: [{ name: 'web', image: 'nginx:1.26' }]
+          }
+        }
+      })
+    )
+    apiServer.createResource(
+      'ReplicaSet',
+      createReplicaSet({
+        name: 'web-app-rs-v2',
+        namespace: 'default',
+        replicas: 3,
+        selector: { matchLabels: { app: 'web', version: 'v2' } },
+        template: {
+          metadata: {
+            labels: { app: 'web', 'pod-template-hash': '587db7fb6f' }
+          },
+          spec: {
+            containers: [{ name: 'web', image: 'nginx:1.26' }]
+          }
+        },
+        annotations: {
+          'deployment.kubernetes.io/revision': '2'
+        },
+        ownerReferences: [
+          {
+            apiVersion: 'apps/v1',
+            kind: 'Deployment',
+            name: 'web-app',
+            uid: 'default-web-app',
+            controller: true
+          }
+        ]
+      })
+    )
+
+    const parsed = parseCommand(
+      'kubectl rollout history deployment/web-app --revision=2'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleRollout(apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Pod Template:')
+    expect(result.value).toContain('Labels:       app=web')
+    expect(result.value).toContain('pod-template-hash=587db7fb6f')
+    expect(result.value).toContain('Containers:')
+    expect(result.value).toContain('web:')
+    expect(result.value).toContain('Image:      nginx:1.26')
+    expect(result.value).not.toContain('{')
   })
 
   it('restarts and undoes a statefulset rollout', () => {
@@ -216,5 +381,105 @@ describe('kubectl rollout handler', () => {
       return
     }
     expect(undoResult.value).toContain('statefulset.apps/db rolled back')
+  })
+
+  it('undoes deployment to explicit revision with --to-revision', () => {
+    apiServer.createResource(
+      'Deployment',
+      createDeployment({
+        name: 'web-app',
+        namespace: 'default',
+        replicas: 3,
+        selector: { matchLabels: { app: 'web' } },
+        template: {
+          metadata: { labels: { app: 'web' } },
+          spec: {
+            containers: [{ name: 'web', image: 'nginx:broken' }]
+          }
+        }
+      })
+    )
+    apiServer.createResource(
+      'ReplicaSet',
+      createReplicaSet({
+        name: 'web-app-rs-v1',
+        namespace: 'default',
+        replicas: 0,
+        selector: { matchLabels: { app: 'web', version: 'v1' } },
+        template: {
+          metadata: { labels: { app: 'web', version: 'v1' } },
+          spec: {
+            containers: [{ name: 'web', image: 'nginx:1.26' }]
+          }
+        },
+        annotations: {
+          'deployment.kubernetes.io/revision': '1'
+        },
+        ownerReferences: [
+          {
+            apiVersion: 'apps/v1',
+            kind: 'Deployment',
+            name: 'web-app',
+            uid: 'default-web-app',
+            controller: true
+          }
+        ]
+      })
+    )
+    apiServer.createResource(
+      'ReplicaSet',
+      createReplicaSet({
+        name: 'web-app-rs-v2',
+        namespace: 'default',
+        replicas: 3,
+        selector: { matchLabels: { app: 'web', version: 'v2' } },
+        template: {
+          metadata: { labels: { app: 'web', version: 'v2' } },
+          spec: {
+            containers: [{ name: 'web', image: 'nginx:broken' }]
+          }
+        },
+        annotations: {
+          'deployment.kubernetes.io/revision': '2'
+        },
+        ownerReferences: [
+          {
+            apiVersion: 'apps/v1',
+            kind: 'Deployment',
+            name: 'web-app',
+            uid: 'default-web-app',
+            controller: true
+          }
+        ]
+      })
+    )
+
+    const undoParsed = parseCommand(
+      'kubectl rollout undo deployment/web-app --to-revision=1'
+    )
+    expect(undoParsed.ok).toBe(true)
+    if (!undoParsed.ok) {
+      return
+    }
+
+    const undoResult = handleRollout(apiServer, undoParsed.value)
+    expect(undoResult.ok).toBe(true)
+    if (!undoResult.ok) {
+      return
+    }
+    expect(undoResult.value).toContain('deployment.apps/web-app rolled back')
+
+    const deploymentResult = apiServer.findResource(
+      'Deployment',
+      'web-app',
+      'default'
+    )
+    expect(deploymentResult.ok).toBe(true)
+    if (!deploymentResult.ok) {
+      return
+    }
+    expect(
+      deploymentResult.value.spec.template.spec.containers[0]?.image
+    ).toBe('nginx:1.26')
   })
 })

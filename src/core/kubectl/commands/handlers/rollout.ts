@@ -269,15 +269,20 @@ const formatRolloutWaitingMessage = (
   if (resource.kind === 'Deployment') {
     const deployment = resource as Deployment
     const desired = deployment.spec.replicas ?? 1
+    const replicas = deployment.status.replicas ?? desired
     const updated = deployment.status.updatedReplicas ?? 0
-    const oldPendingTermination = Math.max(0, desired - updated)
+    const available = deployment.status.availableReplicas ?? 0
+    const oldPendingTermination = Math.max(0, replicas - updated)
     if (updated < desired) {
       return `Waiting for deployment "${name}" rollout to finish: ${updated} out of ${desired} new replicas have been updated...`
+    }
+    if (available < desired) {
+      return `Waiting for deployment "${name}" rollout to finish: ${available} of ${desired} updated replicas are available...`
     }
     if (oldPendingTermination > 0) {
       return `Waiting for deployment "${name}" rollout to finish: ${oldPendingTermination} old replicas are pending termination...`
     }
-    return `Waiting for deployment "${name}" rollout to finish: deployment is progressing...`
+    return `Waiting for deployment "${name}" rollout to finish...`
   }
   return `Waiting for ${toKindReference(resource.kind as ResourceKind)}/${name} rollout to finish...`
 }
@@ -292,14 +297,19 @@ const formatHistorySummary = (
   name: string,
   rows: HistorySummaryRow[]
 ): string => {
-  const header = `${toKindReference(kind)}/${name} rollout history`
+  const header = `${toKindReference(kind)}/${name}`
+  const maxRevisionDigits = rows.reduce((maxDigits, row) => {
+    return Math.max(maxDigits, String(row.revision).length)
+  }, 1)
+  const revisionColumnWidth = Math.max('REVISION'.length, maxRevisionDigits) + 2
+  const headerRow = `${'REVISION'.padEnd(revisionColumnWidth)}CHANGE-CAUSE`
   if (rows.length === 0) {
-    return `${header}\nREVISION  CHANGE-CAUSE\n<none>    <none>`
+    return `${header}\n${headerRow}\n${'<none>'.padEnd(revisionColumnWidth)}<none>`
   }
   const formattedRows = rows.map((row) => {
-    return `${String(row.revision).padEnd(8)}${row.changeCause ?? '<none>'}`
+    return `${String(row.revision).padEnd(revisionColumnWidth)}${row.changeCause ?? '<none>'}`
   })
-  return `${header}\nREVISION  CHANGE-CAUSE\n${formattedRows.join('\n')}`
+  return `${header}\n${headerRow}\n${formattedRows.join('\n')}`
 }
 
 const formatHistoryDetails = (
@@ -308,8 +318,83 @@ const formatHistoryDetails = (
   revision: number,
   template: unknown
 ): string => {
-  const renderedTemplate = JSON.stringify(template, null, 2)
-  return `${toKindReference(kind)}/${name} with revision #${revision}\nPod Template:\n${renderedTemplate}`
+  const renderTemplateMap = (value: unknown): Record<string, unknown> => {
+    if (value == null || typeof value !== 'object' || Array.isArray(value)) {
+      return {}
+    }
+    return value as Record<string, unknown>
+  }
+  const formatLabelMap = (labels: Record<string, unknown>): string[] => {
+    const entries = Object.entries(labels).filter((entry) => {
+      return typeof entry[1] === 'string'
+    }) as Array<[string, string]>
+    if (entries.length === 0) {
+      return ['  Labels:       <none>']
+    }
+    const [firstKey, firstValue] = entries[0]
+    const lines = [`  Labels:       ${firstKey}=${firstValue}`]
+    for (let index = 1; index < entries.length; index++) {
+      const [key, value] = entries[index]
+      lines.push(`                ${key}=${value}`)
+    }
+    return lines
+  }
+
+  const templateMap = renderTemplateMap(template)
+  const metadataMap = renderTemplateMap(templateMap.metadata)
+  const specMap = renderTemplateMap(templateMap.spec)
+  const labelsMap = renderTemplateMap(metadataMap.labels)
+  const containers = Array.isArray(specMap.containers)
+    ? specMap.containers
+    : []
+  const nodeSelectorsMap = renderTemplateMap(specMap.nodeSelector)
+  const tolerations = Array.isArray(specMap.tolerations)
+    ? specMap.tolerations
+    : []
+  const volumes = Array.isArray(specMap.volumes) ? specMap.volumes : []
+
+  const lines: string[] = []
+  lines.push(...formatLabelMap(labelsMap))
+  lines.push('  Containers:')
+  if (containers.length === 0) {
+    lines.push('   <none>')
+  } else {
+    for (const container of containers) {
+      const containerMap = renderTemplateMap(container)
+      const containerName =
+        typeof containerMap.name === 'string' ? containerMap.name : 'container'
+      const containerImage =
+        typeof containerMap.image === 'string' ? containerMap.image : '<none>'
+      lines.push(`   ${containerName}:`)
+      lines.push(`    Image:      ${containerImage}`)
+      const ports = Array.isArray(containerMap.ports) ? containerMap.ports : []
+      if (ports.length > 0) {
+        const firstPort = renderTemplateMap(ports[0])
+        const portValue =
+          typeof firstPort.containerPort === 'number'
+            ? String(firstPort.containerPort)
+            : '<none>'
+        const protocol =
+          typeof firstPort.protocol === 'string' ? firstPort.protocol : 'TCP'
+        const hostPortValue =
+          typeof firstPort.hostPort === 'number'
+            ? String(firstPort.hostPort)
+            : '0'
+        lines.push(`    Port:       ${portValue}/${protocol}`)
+        lines.push(`    Host Port:  ${hostPortValue}/${protocol}`)
+      }
+      lines.push('    Environment:  <none>')
+      lines.push('    Mounts:       <none>')
+    }
+  }
+
+  lines.push(`  Volumes:      ${volumes.length > 0 ? '<set>' : '<none>'}`)
+  lines.push(
+    `  Node-Selectors: ${Object.keys(nodeSelectorsMap).length > 0 ? '<set>' : '<none>'}`
+  )
+  lines.push(`  Tolerations:  ${tolerations.length > 0 ? '<set>' : '<none>'}`)
+
+  return `${toKindReference(kind)}/${name} with revision #${revision}\nPod Template:\n${lines.join('\n')}`
 }
 
 const handleRolloutStatus = (
@@ -322,6 +407,7 @@ const handleRolloutStatus = (
 ): ExecutionResult => {
   const watch = parsed.rolloutWatch ?? true
   const timeoutSeconds = parsed.rolloutTimeoutSeconds ?? 60
+  const successMessage = `${toKindReference(kind)} "${name}" successfully rolled out`
 
   if (reconcileForWait == null) {
     const resourceResult = apiServer.findResource(kind, name, namespace)
@@ -332,12 +418,14 @@ const handleRolloutStatus = (
     }
     const status = rolloutStatusComplete(resourceResult.value)
     if (status.done) {
-      return success(`${toKindReference(kind)} "${name}" successfully rolled out`)
+      return success(successMessage)
     }
     return success(formatRolloutWaitingMessage(resourceResult.value, name))
   }
 
   const maxIterations = Math.max(1, Math.min(timeoutSeconds, 240))
+  const progressLines: string[] = []
+  let previousWaitingMessage: string | undefined
 
   for (let iteration = 0; iteration < maxIterations; iteration++) {
     if (reconcileForWait != null) {
@@ -351,10 +439,18 @@ const handleRolloutStatus = (
     }
     const status = rolloutStatusComplete(resourceResult.value)
     if (status.done) {
-      return success(`${toKindReference(kind)} "${name}" successfully rolled out`)
+      if (progressLines.length === 0) {
+        return success(successMessage)
+      }
+      return success([...progressLines, successMessage].join('\n'))
     }
     if (!watch) {
       return success(formatRolloutWaitingMessage(resourceResult.value, name))
+    }
+    const waitingMessage = formatRolloutWaitingMessage(resourceResult.value, name)
+    if (waitingMessage !== previousWaitingMessage) {
+      progressLines.push(waitingMessage)
+      previousWaitingMessage = waitingMessage
     }
   }
 

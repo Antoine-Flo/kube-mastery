@@ -1,6 +1,6 @@
 # Update Strategies, RollingUpdate vs Recreate
 
-When you update a Deployment, Kubernetes doesn't just decide on its own how to replace the Pods. You get to choose the strategy. Kubernetes offers two built-in update strategies, each suited to a different class of application. Choosing the wrong one can either cause unnecessary downtime or create subtle and painful data consistency problems.
+A Deployment update does not pick how Pods are replaced for you: you choose the strategy. Kubernetes ships two built-ins, each for a different class of application. The wrong choice means either avoidable downtime or subtle, painful data consistency problems.
 
 :::info
 For most stateless applications, `RollingUpdate` is the right default. `Recreate` is reserved for applications that cannot safely run two versions simultaneously.
@@ -10,25 +10,25 @@ For most stateless applications, `RollingUpdate` is the right default. `Recreate
 
 ### RollingUpdate (Default)
 
-The `RollingUpdate` strategy is what you've been working with throughout this module. It replaces Pods incrementally: a few new Pods come up, a few old Pods go down, then the cycle repeats until all Pods are running the new version. At no point does the total number of healthy Pods drop to zero.
+This is the default you have been using in this module. Pods are replaced in waves: new Pods come up, old Pods go down, repeat until every Pod runs the new revision. The number of healthy Pods never drops to zero.
 
-This strategy is designed for stateless applications that can safely run multiple versions simultaneously. Think of a web server: a user's HTTP request might be handled by a Pod running version 1.25, and their next request might hit a Pod running version 1.26. For a well-designed stateless API, this is perfectly fine, each request is independent and the two versions are compatible enough to serve them interchangeably during the brief transition window.
+Use it for stateless apps where two versions may run at once. Example: a web server where one HTTP request hits a Pod on 1.25 and the next hits 1.26. For a solid stateless API that is acceptable: requests are independent, and both versions stay compatible enough during the short overlap.
 
 ### Recreate
 
-The `Recreate` strategy does exactly what its name suggests. First, it terminates _all_ currently running Pods. Then, once all the old Pods are gone, it starts creating the new Pods. There is a deliberate downtime window between the two phases.
+`Recreate` matches its name: it terminates _all_ running Pods first, waits until they are gone, then creates the new Pods. You get a deliberate downtime gap between those phases.
 
-This might sound strictly worse than `RollingUpdate`, and for most applications it is. But there's a significant class of workloads for which `Recreate` is not just acceptable, it's _required_.
+For most apps this is worse than `RollingUpdate`, but a real set of workloads need `Recreate`, not merely tolerate it.
 
 ## When Recreate Is the Right Choice
 
-Some workloads cannot safely run two versions simultaneously:
+Some workloads cannot safely run two versions at the same time:
 
-- An application that holds an **exclusive lock** on a resource, such as a database engine that memory-maps a data file.
-- A **single-instance service** (e.g. a legacy message queue) that doesn't support concurrent instances.
-- An application with **backward-incompatible database migrations** that the old version can't understand.
+- An app that holds an **exclusive lock** on a resource, for example a database engine that memory-maps a data file.
+- A **single-instance service** (e.g. a legacy message queue) that does not support concurrent instances.
+- An app with **backward-incompatible database migrations** the old version cannot read.
 
-Using `RollingUpdate` in these cases would briefly run both versions at once, risking lock contention, schema conflicts, or corrupted data. `Recreate` ensures a clean break: the old version is completely gone before the new version ever starts. Yes, there's downtime, but it's a controlled, predictable window, not a race condition.
+`RollingUpdate` would overlap versions and invite lock fights, schema clashes, or corruption. `Recreate` forces a clean cut: the old version is gone before the new one starts. You accept downtime, but it is bounded and predictable instead of a race.
 
 :::warning
 If your application uses a database schema migration that is not backward-compatible with the previous application version, use `Recreate`. Using `RollingUpdate` in this scenario means your old Pods will be trying to read data written in a schema they don't understand. This can cause cascading failures that are difficult to diagnose.
@@ -36,7 +36,7 @@ If your application uses a database schema migration that is not backward-compat
 
 ## Setting the Strategy in Your Manifest
 
-The strategy is configured under `spec.strategy`:
+Configure the strategy under `spec.strategy`:
 
 ```yaml
 # Recreate, no additional parameters needed
@@ -55,17 +55,17 @@ spec:
       maxSurge: 1
 ```
 
-Note that `rollingUpdate` sub-fields (`maxUnavailable`, `maxSurge`) are only valid when `type: RollingUpdate`. If you specify them alongside `type: Recreate`, the API server will reject the manifest.
+`rollingUpdate` fields (`maxUnavailable`, `maxSurge`) apply only when `type: RollingUpdate`. Pairing them with `type: Recreate` makes the API server reject the manifest.
 
 ## Tuning RollingUpdate: Percentages vs Absolute Numbers
 
-Both `maxUnavailable` and `maxSurge` accept either absolute numbers or percentages of the desired replica count. Each has its place.
+`maxUnavailable` and `maxSurge` each accept an absolute count or a percentage of desired replicas.
 
-**Absolute numbers** are predictable and easy to reason about. `maxUnavailable: 1` means exactly one Pod can be unavailable at any time, regardless of how many total replicas you have. This is good for small Deployments (3–10 replicas) where you want fine-grained control.
+**Absolute numbers** stay easy to read: `maxUnavailable: 1` always allows at most one unavailable Pod, whatever the replica total. Handy for smaller Deployments (roughly 3 to 10 replicas) when you want tight control.
 
-**Percentages** scale with your replica count. `maxUnavailable: 25%` means one quarter of your Pods can be unavailable at any time, automatically scaling as you grow from 10 to 100 to 1000 replicas. Kubernetes always rounds down for `maxUnavailable` (to avoid going below capacity) and rounds up for `maxSurge` (to ensure progress is always possible).
+**Percentages** track fleet size: `maxUnavailable: 25%` lets one quarter of Pods be unavailable and scales as replicas grow from 10 to 100 to 1000. Kubernetes rounds **down** for `maxUnavailable` (to avoid dipping below capacity) and **up** for `maxSurge` (so the rollout can always move forward).
 
-Some useful configurations to know:
+Reference combinations:
 
 | Configuration                        | Effect                                                       |
 | ------------------------------------ | ------------------------------------------------------------ |
@@ -80,45 +80,73 @@ For critical production services, starting with `maxUnavailable: 0` (zero-downti
 
 ## Visual Comparison: The Two Timelines
 
-To make the difference concrete, here's how the two strategies behave over time for a 3-replica Deployment:
+Timeline for a 3-replica Deployment:
 
 ```mermaid
+---
+config:
+  theme: base
+  themeVariables:
+    textColor: "#f1f5f9"
+    titleColor: "#ffffff"
+    gridColor: "#475569"
+    sectionBkgColor: "#020617"
+    sectionBkgColor2: "#0b1220"
+    altSectionBkgColor: "#111827"
+    taskBkgColor: "#475569"
+    taskBorderColor: "#cbd5e1"
+    taskTextColor: "#ffffff"
+    taskTextDarkColor: "#ffffff"
+    taskTextOutsideColor: "#e2e8f0"
+    activeTaskBkgColor: "#2563eb"
+    activeTaskBorderColor: "#93c5fd"
+    doneTaskBkgColor: "#334155"
+    doneTaskBorderColor: "#cbd5e1"
+    critBkgColor: "#dc2626"
+    critBorderColor: "#fca5a5"
+    todayLineColor: "#f59e0b"
+  gantt:
+    fontSize: 15
+    sectionFontSize: 15
+    barHeight: 24
+    barGap: 8
+---
 gantt
-    title RollingUpdate vs Recreate, 3 replica deployment
-    dateFormat  mm:ss
-    axisFormat  %M:%S
+    title RollingUpdate vs Recreate, 3 replicas
+    dateFormat HH:mm:ss
+    axisFormat %M:%S
 
     section RollingUpdate
-    Old Pod 1 (running)   :done,    r1, 00:00, 00:20
-    Old Pod 2 (running)   :done,    r2, 00:00, 00:30
-    Old Pod 3 (running)   :done,    r3, 00:00, 00:40
-    New Pod 1 (starting)  :active,  n1, 00:10, 00:30
-    New Pod 2 (starting)  :active,  n2, 00:20, 00:40
-    New Pod 3 (starting)  :active,  n3, 00:30, 00:50
+    Old pod 1 running  :done,   ro1, 00:00:00, 00:00:20
+    Old pod 2 running  :done,   ro2, 00:00:00, 00:00:30
+    Old pod 3 running  :done,   ro3, 00:00:00, 00:00:40
+    New pod 1 starting :active, rn1, 00:00:10, 00:00:35
+    New pod 2 starting :active, rn2, 00:00:20, 00:00:45
+    New pod 3 starting :active, rn3, 00:00:30, 00:00:55
 
     section Recreate
-    Old Pod 1 (running)   :done,    c1, 00:00, 00:10
-    Old Pod 2 (running)   :done,    c2, 00:00, 00:10
-    Old Pod 3 (running)   :done,    c3, 00:00, 00:10
-    DOWNTIME              :crit,    dw, 00:10, 00:20
-    New Pod 1 (starting)  :active,  cn1, 00:20, 00:35
-    New Pod 2 (starting)  :active,  cn2, 00:20, 00:35
-    New Pod 3 (starting)  :active,  cn3, 00:20, 00:35
+    Old pod 1 running  :done,   rc1, 00:00:00, 00:00:12
+    Old pod 2 running  :done,   rc2, 00:00:00, 00:00:12
+    Old pod 3 running  :done,   rc3, 00:00:00, 00:00:12
+    Downtime           :crit,   rcd, 00:00:12, 00:00:24
+    New pod 1 starting :active, rcn1, 00:00:24, 00:00:44
+    New pod 2 starting :active, rcn2, 00:00:24, 00:00:44
+    New pod 3 starting :active, rcn3, 00:00:24, 00:00:44
 ```
 
-With `RollingUpdate`, old and new Pods overlap. There is never a moment with zero healthy Pods. With `Recreate`, there's a gap, all old Pods terminate before any new ones start.
+Under `RollingUpdate`, old and new Pods overlap; healthy count never hits zero. Under `Recreate`, old Pods finish terminating before any new Pods start, so you see a gap.
 
 ## Thinking Through Your Application's Needs
 
-Before choosing a strategy, ask these questions:
+Before you commit, sanity-check the workload:
 
-**Can two versions of my application run simultaneously?** If yes, `RollingUpdate` is almost certainly the right choice. If no, due to exclusive resource locking, incompatible schema versions, or licensing constraints, use `Recreate`.
+**Can two versions run at once?** If yes, default to `RollingUpdate`. If no, because of exclusive resource locking, incompatible schema versions, or licensing constraints, pick `Recreate`.
 
-**Can my application handle connections being dropped mid-request?** `Recreate` terminates Pods abruptly (with a configurable graceful period). Long-running connections (WebSockets, streaming APIs) will be dropped. `RollingUpdate` gives you time to drain connections gradually with the right configuration.
+**Can the app handle connections dropped mid-request?** `Recreate` terminates Pods abruptly (within the configurable grace period). Long-running connections (WebSockets, streaming APIs) are dropped. `RollingUpdate` can drain traffic gradually when tuned.
 
-**Is brief downtime acceptable?** If your SLA requires 99.9%+ uptime and your application handles more than a handful of requests per second, `Recreate` may not be acceptable. `RollingUpdate` with `maxUnavailable: 0` is your answer.
+**Is a short outage allowed?** If the SLA targets 99.9%+ uptime and the app serves more than a handful of requests per second, `Recreate` is often a bad fit. Prefer `RollingUpdate` with `maxUnavailable: 0`.
 
-**How quickly do I need to complete the update?** `RollingUpdate` can be slow for large fleets with conservative settings. `Recreate` is always "all at once," which may actually be faster if you have enough cluster capacity.
+**How fast must the rollout finish?** Conservative `RollingUpdate` settings feel slow on big fleets. `Recreate` is always "all at once" and can finish sooner when the cluster has spare capacity.
 
 ## Hands-On Practice
 

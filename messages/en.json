@@ -48,6 +48,7 @@
   "auth_checkEmailTitle": "Link sent!",
   "auth_checkEmail": "Open your inbox and click the link to sign in.",
   "auth_magicLinkError": "Something went wrong with the magic link. Please try again.",
+  "auth_magicLinkRateLimited": "Too many magic link requests, please wait a few minutes and try again.",
   "auth_registrations_closed": "Registrations are currently closed. The early access limit has been reached.",
   "auth_errorUnexpected": "Something went wrong. Please try again.",
   "auth_errorInvalidCredentials": "Invalid email or password.",

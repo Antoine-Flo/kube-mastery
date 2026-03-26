@@ -1205,6 +1205,10 @@ const rolloutTransformer: ActionTransformer = (ctx) => {
       rolloutRevision = parseInt(token.slice('--revision='.length), 10)
       continue
     }
+    if (token.startsWith('--to-revision=')) {
+      rolloutRevision = parseInt(token.slice('--to-revision='.length), 10)
+      continue
+    }
     if (token.startsWith('--timeout=')) {
       rolloutTimeoutSeconds = parseDurationSeconds(
         token.slice('--timeout='.length)

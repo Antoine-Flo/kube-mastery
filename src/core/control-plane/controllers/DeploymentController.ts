@@ -68,7 +68,6 @@ const WATCHED_EVENTS: ClusterEventType[] = [
 ]
 
 const DEPLOYMENT_REVISION_ANNOTATION = 'deployment.kubernetes.io/revision'
-const CHANGE_CAUSE_ANNOTATION = 'kubernetes.io/change-cause'
 
 const DEFAULT_ROLLING_MAX_SURGE = '25%'
 const DEFAULT_ROLLING_MAX_UNAVAILABLE = '25%'
@@ -135,6 +134,16 @@ const sumReplicaSetAvailableReplicas = (replicaSets: ReplicaSet[]): number => {
   let total = 0
   for (const replicaSet of replicaSets) {
     total += replicaSet.status.availableReplicas ?? 0
+  }
+  return total
+}
+
+const sumReplicaSetUnavailableReplicas = (replicaSets: ReplicaSet[]): number => {
+  let total = 0
+  for (const replicaSet of replicaSets) {
+    const statusReplicas = replicaSet.status.replicas ?? 0
+    const availableReplicas = replicaSet.status.availableReplicas ?? 0
+    total += Math.max(0, statusReplicas - availableReplicas)
   }
   return total
 }
@@ -491,7 +500,8 @@ export class DeploymentController implements ReconcilerController {
       this.reconcileExistingReplicaSet(deploy, currentRs, oldReplicaSets)
       deploymentForStatus = this.syncDeploymentRevisionAnnotation(
         deploy,
-        currentRs
+        currentRs,
+        ownedReplicaSets
       )
     } else {
       this.createNewReplicaSet(deploy, ownedReplicaSets)
@@ -615,29 +625,46 @@ export class DeploymentController implements ReconcilerController {
    */
   private syncDeploymentRevisionAnnotation(
     deploy: Deployment,
-    currentRs: ReplicaSet
+    currentRs: ReplicaSet,
+    ownedReplicaSets: ReplicaSet[]
   ): Deployment {
     const currentRevision =
       currentRs.metadata.annotations?.[DEPLOYMENT_REVISION_ANNOTATION]
     const deploymentRevision =
       deploy.metadata.annotations?.[DEPLOYMENT_REVISION_ANNOTATION]
+    const currentRevisionNumber = parseRevision(currentRevision)
+    const deploymentRevisionNumber = parseRevision(deploymentRevision)
+    let highestRevision = deploymentRevisionNumber
+    for (const replicaSet of ownedReplicaSets) {
+      const replicaSetRevision = parseRevision(
+        replicaSet.metadata.annotations?.[DEPLOYMENT_REVISION_ANNOTATION]
+      )
+      if (replicaSetRevision > highestRevision) {
+        highestRevision = replicaSetRevision
+      }
+    }
 
-    const deploymentChangeCause =
-      deploy.metadata.annotations?.[CHANGE_CAUSE_ANNOTATION]
-    const replicaSetChangeCause =
-      currentRs.metadata.annotations?.[CHANGE_CAUSE_ANNOTATION]
-    if (
-      deploymentChangeCause != null &&
-      deploymentChangeCause !== replicaSetChangeCause
-    ) {
+    const shouldPromoteRevision = currentRevisionNumber < highestRevision
+    const targetRevision = shouldPromoteRevision
+      ? String(highestRevision + 1)
+      : currentRevision
+
+    const nextReplicaSetAnnotations = {
+      ...(currentRs.metadata.annotations ?? {}),
+      ...(targetRevision != null && {
+        [DEPLOYMENT_REVISION_ANNOTATION]: targetRevision
+      })
+    }
+    const replicaSetNeedsUpdate =
+      (targetRevision != null &&
+        currentRs.metadata.annotations?.[DEPLOYMENT_REVISION_ANNOTATION] !==
+          targetRevision)
+    if (replicaSetNeedsUpdate) {
       const updatedCurrentReplicaSet: ReplicaSet = {
         ...currentRs,
         metadata: {
           ...currentRs.metadata,
-          annotations: {
-            ...(currentRs.metadata.annotations ?? {}),
-            [CHANGE_CAUSE_ANNOTATION]: deploymentChangeCause
-          }
+          annotations: nextReplicaSetAnnotations
         }
       }
       this.apiServer.updateResource(
@@ -648,7 +675,11 @@ export class DeploymentController implements ReconcilerController {
       )
     }
 
-    if (currentRevision == null || currentRevision === deploymentRevision) {
+    const deploymentTargetRevision = targetRevision ?? currentRevision
+    if (
+      deploymentTargetRevision == null ||
+      deploymentTargetRevision === deploymentRevision
+    ) {
       return deploy
     }
 
@@ -658,7 +689,7 @@ export class DeploymentController implements ReconcilerController {
         ...deploy.metadata,
         annotations: {
           ...(deploy.metadata.annotations ?? {}),
-          [DEPLOYMENT_REVISION_ANNOTATION]: currentRevision
+          [DEPLOYMENT_REVISION_ANNOTATION]: deploymentTargetRevision
         }
       }
     }
@@ -740,6 +771,8 @@ export class DeploymentController implements ReconcilerController {
       desiredReplicas - rollingLimits.maxUnavailable
     )
     const oldAvailableReplicas = sumReplicaSetAvailableReplicas(oldReplicaSets)
+    const oldUnavailableReplicas =
+      sumReplicaSetUnavailableReplicas(oldReplicaSets)
     const currentAvailableReplicas = currentRs.status.availableReplicas ?? 0
     const totalAvailableReplicas =
       oldAvailableReplicas + currentAvailableReplicas
@@ -781,12 +814,20 @@ export class DeploymentController implements ReconcilerController {
       0,
       totalAvailableReplicas - minAvailableReplicas
     )
-    const maxScaleDown = Math.min(
+    const maxScaleDownRespectingAvailability = Math.min(
       maxScaleDownByReplicaBudget,
       maxScaleDownByAvailability
     )
+    const maxScaleDown = Math.min(
+      oldReplicasTotal,
+      Math.max(maxScaleDownRespectingAvailability, oldUnavailableReplicas)
+    )
     const targetOldTotalReplicas = Math.max(0, oldReplicasTotal - maxScaleDown)
-    if (canScaleDownOldReplicaSets && targetOldTotalReplicas < oldReplicasTotal) {
+    const canScaleDownUnavailableReplicaSets = oldUnavailableReplicas > 0
+    if (
+      (canScaleDownOldReplicaSets || canScaleDownUnavailableReplicaSets) &&
+      targetOldTotalReplicas < oldReplicasTotal
+    ) {
       this.scaleDownReplicaSetsToTotal(
         deploy,
         oldReplicaSets,

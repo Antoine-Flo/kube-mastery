@@ -536,6 +536,76 @@ describe('DeploymentController', () => {
       expect(oldScaleDownUpdates.length).toBe(0)
     })
 
+    it('should scale down unavailable old ReplicaSets during rollback progress', () => {
+      const deploy = createTestDeployment('my-deploy', 3)
+      const currentRsBase = createTestReplicaSet(deploy)
+      const currentRs: ReplicaSet = {
+        ...currentRsBase,
+        spec: {
+          ...currentRsBase.spec,
+          replicas: 3
+        },
+        status: {
+          ...currentRsBase.status,
+          replicas: 3,
+          readyReplicas: 3,
+          availableReplicas: 3
+        }
+      }
+      const oldUnavailableRs = createReplicaSet({
+        name: 'my-deploy-oldhashzz',
+        namespace: 'default',
+        replicas: 1,
+        selector: { matchLabels: { app: 'my-deploy' } },
+        template: {
+          metadata: { labels: { app: 'my-deploy' } },
+          spec: {
+            containers: [{ name: 'nginx', image: 'nginx:this-tag-does-not-exist' }]
+          }
+        },
+        ownerReferences: [
+          {
+            apiVersion: 'apps/v1',
+            kind: 'Deployment',
+            name: 'my-deploy',
+            uid: 'default-my-deploy',
+            controller: true
+          }
+        ]
+      })
+      const oldUnavailableRsWithStatus: ReplicaSet = {
+        ...oldUnavailableRs,
+        status: {
+          ...oldUnavailableRs.status,
+          replicas: 1,
+          readyReplicas: 0,
+          availableReplicas: 0
+        }
+      }
+
+      mockState.deployments = [deploy]
+      mockState.replicaSets = [currentRs, oldUnavailableRsWithStatus]
+
+      const oldScaleDownUpdates: ReplicaSet[] = []
+      eventBus.subscribe(
+        'ReplicaSetUpdated',
+        (event: ReplicaSetUpdatedEvent) => {
+          if (
+            event.payload.replicaSet.metadata.name ===
+            oldUnavailableRsWithStatus.metadata.name
+          ) {
+            oldScaleDownUpdates.push(event.payload.replicaSet)
+          }
+        }
+      )
+
+      controller.reconcile('default/my-deploy')
+
+      expect(
+        oldScaleDownUpdates.some((replicaSet) => replicaSet.spec.replicas === 0)
+      ).toBe(true)
+    })
+
     it('should scale down non-current ReplicaSets and sync revision on rollback', () => {
       const deploymentTemplateA = createDeployment({
         name: 'my-deploy',
@@ -632,7 +702,7 @@ describe('DeploymentController', () => {
           return (
             deployment.metadata.annotations?.[
               'deployment.kubernetes.io/revision'
-            ] === '1'
+            ] === '3'
           )
         }
       )

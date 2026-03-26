@@ -204,8 +204,8 @@ kubectl get endpoints web-service -w
 In your primary terminal:
 
 ```bash
-POD=$(kubectl get pods -l app=web -o name | head -1)
-kubectl delete $POD
+# Run kubectl get pods -l app=web, pick one pod NAME from the output, then:
+kubectl delete pod <POD-NAME>
 ```
 
 In the second terminal you'll see the Endpoints object flash to two IPs (Pod being deleted), then back to three as the replacement Pod comes up and passes its readiness probe.
@@ -214,8 +214,8 @@ In the second terminal you'll see the Endpoints object flash to two IPs (Pod bei
 
 ```bash
 # Exec into a Pod and remove the index.html (nginx will return 403/404, failing the probe)
-POD=$(kubectl get pods -l app=web -o name | head -1)
-kubectl exec $POD -- rm /usr/share/nginx/html/index.html
+# Run kubectl get pods -l app=web, pick one pod NAME, then:
+kubectl exec <POD-NAME> -- rm /usr/share/nginx/html/index.html
 
 sleep 15  # wait for the probe to detect the failure
 
@@ -226,7 +226,8 @@ kubectl describe endpoints web-service
 **5. Restore the file and see the Pod re-added**
 
 ```bash
-kubectl exec $POD -- bash -c 'echo "ok" > /usr/share/nginx/html/index.html'
+# Use the same pod NAME as in the previous step:
+kubectl exec <POD-NAME> -- bash -c 'echo "ok" > /usr/share/nginx/html/index.html'
 sleep 10
 
 kubectl describe endpoints web-service
