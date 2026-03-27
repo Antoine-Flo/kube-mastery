@@ -114,7 +114,7 @@
   "blog_index_title": "Kubernetes Blog",
   "blog_index_description": "Practical Kubernetes articles to help you learn faster.",
   "blog_index_intro": "Practical guides to improve your Kubernetes skills.",
-  "news_index_title": "Kubernetes News Today",
+  "news_index_title": "Kubernetes News Feed",
   "news_index_description": "Daily Kubernetes updates with short TLDR and practical impact.",
   "termsOfService_title": "Terms of Service",
   "termsOfService_lastUpdated": "Last updated: March 4, 2026",

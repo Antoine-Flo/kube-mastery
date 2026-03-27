@@ -108,9 +108,8 @@
   text-underline-offset: 2px;
 }
 
-.news-why {
-  margin-top: 0.45rem;
-  color: var(--color-gray-12);
+.news-page .news-why {
+  margin-top: 0.7rem;
 }
 
 .news-tags {
