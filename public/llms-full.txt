@@ -10,11 +10,11 @@
 - https://kubemastery.com/en/courses
 - https://kubemastery.com/en/modules
 
-## Blog
-- https://kubemastery.com/en/blog
-- https://kubemastery.com/en/blog/*
-- https://kubemastery.com/fr/blog
-- https://kubemastery.com/fr/blog/*
+## News
+- https://kubemastery.com/en/news
+- https://kubemastery.com/en/news/*
+- https://kubemastery.com/fr/news
+- https://kubemastery.com/fr/news/*
 
 ## Legal
 - https://kubemastery.com/en/privacy-policy

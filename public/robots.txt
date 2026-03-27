@@ -11,10 +11,10 @@ Allow: /en/modules
 Allow: /fr/modules
 Allow: /en/modules/
 Allow: /fr/modules/
-Allow: /en/blog
-Allow: /fr/blog
-Allow: /en/blog/
-Allow: /fr/blog/
+Allow: /en/news
+Allow: /fr/news
+Allow: /en/news/
+Allow: /fr/news/
 Allow: /en/privacy-policy
 Allow: /fr/privacy-policy
 Allow: /en/terms-of-service

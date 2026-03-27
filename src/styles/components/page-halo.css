@@ -1,6 +1,7 @@
 .page-halo {
   position: relative;
   overflow: hidden;
+  padding-inline: 1rem;
 }
 
 .page-halo > *:not(.page-halo__bg) {

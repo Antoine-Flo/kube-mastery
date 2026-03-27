@@ -3,7 +3,12 @@
 ---
 
 <script is:inline>
-  !(function (t, e) {
+  ;(function () {
+    var host = typeof location !== 'undefined' && location.hostname
+    if (!host || host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+      return
+    }
+    !(function (t, e) {
     var o, n, p, r
     e.__SV ||
       ((window.posthog = e),
@@ -56,8 +61,9 @@
       }),
       (e.__SV = 1))
   })(document, window.posthog || [])
-  posthog.init('phc_2OeUKI2w1Hg3XWDQC1bVlvCdXc7wSndffTUCaQI9EFo', {
-    api_host: 'https://eu.i.posthog.com',
-    defaults: '2026-01-30'
-  })
+    posthog.init('phc_2OeUKI2w1Hg3XWDQC1bVlvCdXc7wSndffTUCaQI9EFo', {
+      api_host: 'https://eu.i.posthog.com',
+      defaults: '2026-01-30'
+    })
+  })()
 </script>
