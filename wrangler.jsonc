@@ -8,7 +8,7 @@
     "directory": "./dist"
   },
   "vars": {
-    "OPEN_LEARNING": "true",
+    "OPEN_LEARNING": "false",
     "EARLY_ACCESS": "true",
     "ENVIRONMENT": "staging",
     "SUPABASE_URL": "https://bijwtiejmopddtargdls.supabase.co",
@@ -21,7 +21,7 @@
   "env": {
     "staging": {
       "vars": {
-        "OPEN_LEARNING": "true",
+        "OPEN_LEARNING": "false",
         "EARLY_ACCESS": "true",
         "ENVIRONMENT": "staging",
         "SUPABASE_URL": "https://bijwtiejmopddtargdls.supabase.co",
