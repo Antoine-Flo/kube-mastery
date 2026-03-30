@@ -1,28 +1,5 @@
 User-agent: *
-Allow: /en
-Allow: /fr
-Allow: /en/pricing
-Allow: /fr/pricing
-Allow: /en/courses
-Allow: /fr/courses
-Allow: /en/courses/
-Allow: /fr/courses/
-Allow: /en/modules
-Allow: /fr/modules
-Allow: /en/modules/
-Allow: /fr/modules/
-Allow: /en/news
-Allow: /fr/news
-Allow: /en/news/
-Allow: /fr/news/
-Allow: /en/privacy-policy
-Allow: /fr/privacy-policy
-Allow: /en/terms-of-service
-Allow: /fr/terms-of-service
-Allow: /en/contact
-Allow: /fr/contact
-Allow: /en/supported
-Allow: /fr/supported
+Allow: /
 
 Disallow: /api/
 Disallow: /en/auth
@@ -33,7 +10,3 @@ Disallow: /en/tasks
 Disallow: /fr/tasks
 Disallow: /en/checkout/success
 Disallow: /fr/checkout/success
-Disallow: /en/courses/*/*
-Disallow: /fr/courses/*/*
-Disallow: /en/modules/*/*
-Disallow: /fr/modules/*/*
