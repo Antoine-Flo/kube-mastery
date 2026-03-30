@@ -1,29 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import { isOpenLearningEnabled } from '../../../src/lib/env'
+import { readAppEnv } from '../../../src/lib/env'
 
-describe('isOpenLearningEnabled', () => {
-  it('returns false when OPEN_LEARNING is absent in runtime env', () => {
-    expect(isOpenLearningEnabled({ runtime: { env: {} } })).toBe(false)
+describe('readAppEnv', () => {
+  it('returns undefined when key is absent in runtime env', () => {
+    expect(readAppEnv('FOO', { runtime: { env: {} } })).toBeUndefined()
   })
 
-  it('returns true when runtime env OPEN_LEARNING is true', () => {
+  it('returns runtime value when present', () => {
     const locals = {
-      runtime: { env: { OPEN_LEARNING: 'true' } }
+      runtime: { env: { FOO: 'bar' } }
     }
-    expect(isOpenLearningEnabled(locals)).toBe(true)
+    expect(readAppEnv('FOO', locals)).toBe('bar')
   })
 
-  it('treats values case-insensitively and ignores surrounding space', () => {
+  it('trims runtime string values', () => {
     const locals = {
-      runtime: { env: { OPEN_LEARNING: ' TRUE ' } }
+      runtime: { env: { FOO: '  baz  ' } }
     }
-    expect(isOpenLearningEnabled(locals)).toBe(true)
-  })
-
-  it('returns false for non-true strings', () => {
-    const locals = {
-      runtime: { env: { OPEN_LEARNING: 'FALSE' } }
-    }
-    expect(isOpenLearningEnabled(locals)).toBe(false)
+    expect(readAppEnv('FOO', locals)).toBe('baz')
   })
 })

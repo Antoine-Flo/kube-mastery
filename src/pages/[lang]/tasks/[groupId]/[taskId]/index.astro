@@ -8,7 +8,10 @@ import {
   getTaskGroupOverview
 } from '../../../../../content/tasks/facade'
 import { DEMO_TASK_GROUP_ID } from '../../../../../content/tasks/constants'
+import { getCourseOverview } from '../../../../../content/overview/facade'
+import { getLayoutAuthContext } from '../../../../../lib/auth/server'
 import { getProgressContext } from '../../../../../lib/progress/server'
+import { getFirstNonPlaceholderLessonIdFromSections } from '../../../../../lib/courses/lessonTerminalAccess'
 import '../../../../../styles/components/lesson-content.css'
 import '../../../../../styles/components/cluster-visualization.css'
 
@@ -19,6 +22,11 @@ const localePath = useLocalePath(lang)
 const t = useTranslations(lang)
 
 const { userId } = await getProgressContext(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
+const auth = await getLayoutAuthContext(
   Astro.locals,
   Astro.request,
   Astro.cookies
@@ -62,6 +70,22 @@ const contentBarLabels = {
   labelContactSupport: t('lesson_contactSupport'),
   labelReloadTerminal: t('lesson_reloadTerminal')
 }
+
+const terminalInteractive = isDemoTask || auth.hasPaidSubscription
+const crashOverview = getCourseOverview('crash-course', lang)
+const crashFirstLessonId = crashOverview
+  ? getFirstNonPlaceholderLessonIdFromSections(crashOverview.content.sections)
+  : null
+const terminalLockTryFreeHref = crashFirstLessonId
+  ? localePath(`/courses/crash-course/${crashFirstLessonId}`)
+  : localePath('/courses')
+const hasSession = userId != null && userId !== ''
+const terminalLockSecondaryHref = hasSession
+  ? localePath('/pricing')
+  : `${localePath('/auth')}?redirect=${encodeURIComponent(Astro.url.pathname)}`
+const terminalLockSecondaryLabel = hasSession
+  ? t('lesson_terminalLock_ctaPricing')
+  : t('lesson_terminalLock_ctaSignIn')
 ---
 
 <Layout bodyClass="lp-fill navbar-app" showFooter={false}>
@@ -71,6 +95,13 @@ const contentBarLabels = {
     showSidebar={false}
     labels={contentBarLabels}
     supportContextId={`tasks/${groupId}/${taskId}`}
+    terminalInteractive={terminalInteractive}
+    terminalLockTitle={t('lesson_terminalLock_title')}
+    terminalLockBody={t('lesson_terminalLock_body')}
+    terminalLockTryFreeLabel={t('lesson_terminalLock_tryFree')}
+    terminalLockTryFreeHref={terminalLockTryFreeHref}
+    terminalLockSecondaryLabel={terminalLockSecondaryLabel}
+    terminalLockSecondaryHref={terminalLockSecondaryHref}
   >
     <article class="lesson-content">
       <Content />

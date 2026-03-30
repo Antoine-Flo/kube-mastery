@@ -16,8 +16,6 @@ interface Props {
   isLoggedIn?: boolean
   user?: NavbarUser | null
   hasPaidSubscription?: boolean
-  /** When true, hide pricing link and allow cheat sheet without subscription. */
-  openLearning?: boolean
   /**
    * 'marketing' = centered navbar, full logo, Pricing/Login visible (default).
    * 'app'       = full-width navbar, icon-only logo, minimal nav items.
@@ -29,13 +27,11 @@ const {
   isLoggedIn = false,
   user = null,
   hasPaidSubscription = false,
-  openLearning = false,
   variant = 'marketing'
 } = Astro.props
 
-const showCheatSheetNav =
-  openLearning || (isLoggedIn && hasPaidSubscription)
-const showPricingNav = !openLearning && !hasPaidSubscription
+const showCheatSheetNav = isLoggedIn
+const showPricingNav = !hasPaidSubscription
 
 const isApp = variant === 'app'
 const lang = getLangFromUrl(Astro.url)

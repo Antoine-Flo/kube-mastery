@@ -11,8 +11,17 @@ import {
   getLessonQuiz,
   type OverviewType
 } from '../../../../../content/overview/facade'
+import { getLayoutAuthContext } from '../../../../../lib/auth/server'
 import { getProgressContext } from '../../../../../lib/progress/server'
-import { isOpenLearningEnabled } from '../../../../../lib/env'
+import {
+  getCourseMarkdown,
+  getCourses,
+  getCourseStructure
+} from '../../../../../content/courses/facade'
+import {
+  getFirstNonPlaceholderLessonIdFromSections,
+  isLessonTerminalInteractive
+} from '../../../../../lib/courses/lessonTerminalAccess'
 import '../../../../../styles/components/lesson-content.css'
 import '../../../../../styles/components/cluster-visualization.css'
 
@@ -21,6 +30,7 @@ const type = Astro.params.type as OverviewType
 const id = Astro.params.id!
 const lessonId = Astro.params.lessonId!
 const localePath = useLocalePath(lang)
+const t = useTranslations(lang)
 
 const lessonEntry = getLessonContent(type, id, lessonId, lang)
 if (!lessonEntry) {
@@ -35,12 +45,51 @@ const { completed, userId } = await getProgressContext(
   Astro.request,
   Astro.cookies
 )
-const openLearning = isOpenLearningEnabled(Astro.locals)
-if (!userId && !openLearning) {
-  return Astro.redirect(
-    localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
-  )
-}
+const auth = await getLayoutAuthContext(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
+const courseMarkdown = type === 'courses' ? getCourseMarkdown(id, lang) : null
+const courseIsFree = courseMarkdown?.frontmatter.isFree === true
+const moduleIsInFreeCourse =
+  type === 'modules'
+    ? getCourses(lang).some((course) => {
+        if (!course.isFree) {
+          return false
+        }
+        const structure = getCourseStructure(course.id)
+        if (!structure) {
+          return false
+        }
+        return structure.sections.some((section) =>
+          section.moduleIds.includes(id)
+        )
+      })
+    : false
+const learnableIsFree = courseIsFree || moduleIsInFreeCourse
+const terminalInteractive = isLessonTerminalInteractive({
+  overviewType: type,
+  hasUserSession: userId != null && userId !== '',
+  learnableIsFree,
+  hasPaidSubscription: auth.hasPaidSubscription
+})
+
+const crashOverview = getCourseOverview('crash-course', lang)
+const crashFirstLessonId = crashOverview
+  ? getFirstNonPlaceholderLessonIdFromSections(crashOverview.content.sections)
+  : null
+const terminalLockTryFreeHref = crashFirstLessonId
+  ? localePath(`/courses/crash-course/${crashFirstLessonId}`)
+  : localePath('/courses')
+const hasSession = userId != null && userId !== ''
+const terminalLockSecondaryHref = hasSession
+  ? localePath('/pricing')
+  : `${localePath('/auth')}?redirect=${encodeURIComponent(Astro.url.pathname)}`
+const terminalLockSecondaryLabel = hasSession
+  ? t('lesson_terminalLock_ctaPricing')
+  : t('lesson_terminalLock_ctaSignIn')
+
 const allLessons = overview.content.sections.flatMap((s) =>
   s.modules.flatMap((m) => m.lessons)
 )
@@ -52,7 +101,6 @@ const lessonBaseUrl = localePath(`/${type}/${id}`)
 const { Content } = lessonEntry
 
 const seedName = 'minimal'
-const t = useTranslations(lang)
 const quiz = getLessonQuiz(type, id, lessonId, lang)
 const prevLessonHref = prevLesson
   ? localePath(`/${type}/${id}/${prevLesson.id}`)
@@ -90,6 +138,13 @@ const contentBarLabels = {
     showSidebar={true}
     labels={contentBarLabels}
     supportContextId={lessonId}
+    terminalInteractive={terminalInteractive}
+    terminalLockTitle={t('lesson_terminalLock_title')}
+    terminalLockBody={t('lesson_terminalLock_body')}
+    terminalLockTryFreeLabel={t('lesson_terminalLock_tryFree')}
+    terminalLockTryFreeHref={terminalLockTryFreeHref}
+    terminalLockSecondaryLabel={terminalLockSecondaryLabel}
+    terminalLockSecondaryHref={terminalLockSecondaryHref}
   >
     <div slot="sidebar">
       <CourseOutline

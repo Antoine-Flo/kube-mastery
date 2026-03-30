@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
 import { getSupabaseServer } from '../../lib/supabase'
-import { isOpenLearningEnabled, readAppEnv } from '../../lib/env'
+import { readAppEnv } from '../../lib/env'
 import { CONFIG } from '../../config'
 import {
   createApiLogContext,
@@ -82,7 +82,7 @@ function isRateLimited(args: {
 /**
  * POST /api/contact
  * Body: { type: "support" | "suggestion" | "other", message: string, lessonId?: string }
- * Authenticated users: always allowed. Unauthenticated: allowed only when OPEN_LEARNING=true (rate limit by IP).
+ * Authenticated and unauthenticated: allowed (rate limit by user+IP or anonymous IP).
  */
 export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const startedAt = startTimer()
@@ -152,27 +152,10 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     })
   }
 
-  const openLearning = isOpenLearningEnabled(locals)
   const supabase = getSupabaseServer(locals, request, cookies)
   const {
-    data: { user },
-    error: userError
+    data: { user }
   } = await supabase.auth.getUser()
-  if ((userError || !user) && !openLearning) {
-    emitApiLog({
-      level: 'warn',
-      event: 'contact_submit_failed',
-      message: 'Contact submit unauthorized',
-      context: baseContext,
-      statusCode: 401,
-      durationMs: getDurationMs(startedAt),
-      errorCode: 'unauthorized'
-    })
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' }
-    })
-  }
 
   const sweegoApiKey = readAppEnv('SWEEGO_API_KEY', locals)
   const rateLimitNow = Date.now()

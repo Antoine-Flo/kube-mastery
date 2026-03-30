@@ -15,7 +15,6 @@ import Navbar from '../components/Navbar.astro'
 import PostHog from '../components/posthog.astro'
 import Toaster from '../components/ui/Toaster.astro'
 import { getLayoutAuthContext } from '../lib/auth/server'
-import { isOpenLearningEnabled } from '../lib/env'
 
 const lang = getLangFromUrl(Astro.url)
 const bodyClass = Astro.props.bodyClass
@@ -30,7 +29,6 @@ const auth = await getLayoutAuthContext(
   Astro.request,
   Astro.cookies
 )
-const openLearning = isOpenLearningEnabled(Astro.locals)
 ---
 
 <!doctype html>
@@ -66,7 +64,6 @@ const openLearning = isOpenLearningEnabled(Astro.locals)
       isLoggedIn={auth.isLoggedIn}
       user={auth.user}
       hasPaidSubscription={auth.hasPaidSubscription}
-      openLearning={openLearning}
       variant={navbarVariant}
     />
     <main class="layout-main">
@@ -74,7 +71,7 @@ const openLearning = isOpenLearningEnabled(Astro.locals)
     </main>
     {
       showFooter && (
-        <Footer isLoggedIn={auth.isLoggedIn} openLearning={openLearning} />
+        <Footer />
       )
     }
     <Toaster />

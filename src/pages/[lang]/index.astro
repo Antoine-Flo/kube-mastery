@@ -5,7 +5,7 @@ import Terminal from '../../components/Terminal.astro'
 import { Zap, Shield, Euro, CircleCheck, CircleX } from '@lucide/astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import { getSupabaseServer } from '../../lib/supabase'
-import { isOpenLearningEnabled, readAppEnv } from '../../lib/env'
+import { readAppEnv } from '../../lib/env'
 import demoVideo from '../../assets/demo.mp4'
 import conformanceImage from '../../assets/conformance.png'
 import openapiLogo from '../../assets/openapi_logo.svg'
@@ -18,10 +18,7 @@ const isEarlyStage =
 const homeCtaLabel = isEarlyStage
   ? t('home_cta_join_early')
   : t('home_cta_join')
-const openLearning = isOpenLearningEnabled(Astro.locals)
-const homeCtaHref = openLearning
-  ? localePath('/courses')
-  : localePath('/pricing')
+const homeCtaHref = localePath('/courses')
 
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)

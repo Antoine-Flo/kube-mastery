@@ -8,10 +8,8 @@ import {
   getCourseOverview,
   getModuleOverview
 } from '../../../../content/overview/facade'
-import { getLayoutAuthContext } from '../../../../lib/auth/server'
 import { getProgressContext } from '../../../../lib/progress/server'
 import { computeProgress } from '../../../../lib/progress/domain'
-import { isOpenLearningEnabled } from '../../../../lib/env'
 
 const TYPE_COURSES = 'courses'
 const TYPE_MODULES = 'modules'
@@ -31,20 +29,11 @@ if (!overview) {
   return Astro.redirect(localePath('/courses'))
 }
 
-const { completed, userId } = await getProgressContext(
+const { completed } = await getProgressContext(
   Astro.locals,
   Astro.request,
   Astro.cookies
 )
-const auth = await getLayoutAuthContext(
-  Astro.locals,
-  Astro.request,
-  Astro.cookies
-)
-const isLoggedIn = !!userId
-const hasPaidSubscription = auth.hasPaidSubscription
-const openLearning = isOpenLearningEnabled(Astro.locals)
-
 const lessonIds = overview.content.sections.flatMap((s) =>
   s.modules.flatMap((m) =>
     m.lessons
@@ -58,23 +47,14 @@ const firstLessonUrl = targetLessonId
   ? localePath(`/${type}/${id}/${targetLessonId}`)
   : null
 
-let ctaHref: string
-let ctaLabel: string
-const canStartCourse =
-  openLearning || (isLoggedIn && hasPaidSubscription)
-if (!canStartCourse) {
-  ctaLabel = t('home_cta_join')
-  ctaHref = localePath('/pricing')
-} else {
-  ctaHref = firstLessonUrl ?? '#'
-  ctaLabel = progress.hasStarted
-    ? t('courses_resume')
-    : t('courseOverview_startCourse')
-}
+const ctaHref = firstLessonUrl ?? localePath('/courses')
+const ctaLabel = progress.hasStarted
+  ? t('courses_resume')
+  : t('courseOverview_startCourse')
 
 const lessonBaseUrl = localePath(`/${type}/${id}`)
 const breadcrumbHref = localePath(`/${type}`)
-const breadcrumbRootLabel = type
+const breadcrumbRootLabel = `${type.charAt(0).toUpperCase()}${type.slice(1)}`
 ---
 
 <Layout>

@@ -4,6 +4,7 @@ import LessonContentBar from './LessonContentBar.astro'
 import LessonClusterPanel from './LessonClusterPanel.astro'
 import ContactSupportModal from './ContactSupportModal.astro'
 import ScrollArea from '../ui/ScrollArea.astro'
+import Button from '../ui/Button.astro'
 import { useTranslations } from '../../i18n/utils'
 import { ArrowLeftToLine, ArrowRightToLine } from '@lucide/astro'
 
@@ -20,6 +21,14 @@ interface Props {
     labelReloadTerminal: string
   }
   supportContextId?: string
+  /** When false, terminal is a locked placeholder (no cluster simulation). */
+  terminalInteractive?: boolean
+  terminalLockTitle?: string
+  terminalLockBody?: string
+  terminalLockTryFreeLabel?: string
+  terminalLockTryFreeHref?: string
+  terminalLockSecondaryLabel?: string
+  terminalLockSecondaryHref?: string
 }
 
 const {
@@ -27,9 +36,17 @@ const {
   lang,
   showSidebar = false,
   labels,
-  supportContextId
+  supportContextId,
+  terminalInteractive = true,
+  terminalLockTitle = '',
+  terminalLockBody = '',
+  terminalLockTryFreeLabel = '',
+  terminalLockTryFreeHref = '',
+  terminalLockSecondaryLabel = '',
+  terminalLockSecondaryHref = ''
 } = Astro.props
 const t = useTranslations(lang)
+const showTerminalActions = terminalInteractive
 ---
 
 <div class="lesson-layout-page">
@@ -38,6 +55,7 @@ const t = useTranslations(lang)
     data-seed-name={seedName}
     data-lang={lang}
     data-terminal-open="true"
+    data-terminal-interactive={terminalInteractive ? 'true' : 'false'}
   >
     <div class="lesson-layout">
       {
@@ -100,6 +118,7 @@ const t = useTranslations(lang)
               labelContactSupport={labels.labelContactSupport}
               labelReloadTerminal={labels.labelReloadTerminal}
               terminalAction="show"
+              showTerminalActions={showTerminalActions}
             />
           </div>
         </div>
@@ -112,8 +131,55 @@ const t = useTranslations(lang)
         >
         </div>
         <div class="lesson-layout__terminal-wrap" data-lesson-term-wrap>
-          <div class="lesson-layout__terminal">
-            <LessonTerminal seedName={seedName} lang={lang} />
+          <div
+            class:list={[
+              'lesson-layout__terminal',
+              !terminalInteractive && 'lesson-layout__terminal--locked'
+            ]}
+          >
+            {
+              terminalInteractive ? (
+                <LessonTerminal seedName={seedName} lang={lang} />
+              ) : (
+                <div class="lesson-terminal-lock">
+                  <div
+                    class="lesson-terminal-lock__blur"
+                    aria-hidden="true"
+                  >
+                    <div class="lesson-terminal-lock__fake-chrome" />
+                    <div class="lesson-terminal-lock__fake-body">
+                      <span class="lesson-terminal-lock__fake-line" />
+                      <span class="lesson-terminal-lock__fake-line lesson-terminal-lock__fake-line--dim" />
+                      <span class="lesson-terminal-lock__fake-line lesson-terminal-lock__fake-line--short" />
+                    </div>
+                  </div>
+                  <div class="lesson-terminal-lock__card">
+                    <h2 class="lesson-terminal-lock__title">
+                      {terminalLockTitle}
+                    </h2>
+                    <p class="lesson-terminal-lock__body">{terminalLockBody}</p>
+                    <div class="lesson-terminal-lock__ctas">
+                      <Button
+                        href={terminalLockTryFreeHref}
+                        variant="solid"
+                        color="cyan"
+                        size="sm"
+                      >
+                        {terminalLockTryFreeLabel}
+                      </Button>
+                      <Button
+                        href={terminalLockSecondaryHref}
+                        variant="outline"
+                        color="gray"
+                        size="sm"
+                      >
+                        {terminalLockSecondaryLabel}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
           </div>
           <LessonContentBar
             labelVisualizer={labels.labelVisualizer}
@@ -123,6 +189,7 @@ const t = useTranslations(lang)
             labelContactSupport={labels.labelContactSupport}
             labelReloadTerminal={labels.labelReloadTerminal}
             terminalAction="hide"
+            showTerminalActions={showTerminalActions}
           />
         </div>
       </div>
@@ -161,6 +228,28 @@ const t = useTranslations(lang)
   let lessonEnv:
     | import('../../core/emulatedEnvironment/EmulatedEnvironment').EmulatedEnvironment
     | null = null
+
+  function teardownGlobalLessonEnv() {
+    const globalState = globalThis as {
+      __lessonEnv?: import('../../core/emulatedEnvironment/EmulatedEnvironment').EmulatedEnvironment
+      __lessonEnvSeed?: string
+    }
+    if (globalState.__lessonEnv) {
+      destroyEmulatedEnvironment(globalState.__lessonEnv)
+      delete globalState.__lessonEnv
+      delete globalState.__lessonEnvSeed
+    }
+    lessonEnv = null
+  }
+
+  function isTerminalInteractiveFromDom(): boolean {
+    const root = document.querySelector('.lesson-layout-root')
+    if (!root) {
+      return true
+    }
+    return root.getAttribute('data-terminal-interactive') !== 'false'
+  }
+
   let panelResizeBound = false
   let panelResizeState: {
     body: HTMLElement
@@ -211,22 +300,7 @@ const t = useTranslations(lang)
   }
 
   function cleanupLessonEnv() {
-    if (lessonEnv) {
-      destroyEmulatedEnvironment(lessonEnv)
-      lessonEnv = null
-    }
-    delete (
-      globalThis as {
-        __lessonEnv?: import('../../core/emulatedEnvironment/EmulatedEnvironment').EmulatedEnvironment
-        __lessonEnvSeed?: string
-      }
-    ).__lessonEnv
-    delete (
-      globalThis as {
-        __lessonEnv?: import('../../core/emulatedEnvironment/EmulatedEnvironment').EmulatedEnvironment
-        __lessonEnvSeed?: string
-      }
-    ).__lessonEnvSeed
+    teardownGlobalLessonEnv()
   }
 
   function setupSidebarToggle() {
@@ -474,6 +548,9 @@ const t = useTranslations(lang)
     })
 
     document.addEventListener('lesson-terminal-reload', () => {
+      if (!isTerminalInteractiveFromDom()) {
+        return
+      }
       cleanupLessonEnv()
       setupLessonEnv()
     })
@@ -655,17 +732,25 @@ const t = useTranslations(lang)
     })
   }
 
+  function initLessonEmulation() {
+    if (!isTerminalInteractiveFromDom()) {
+      teardownGlobalLessonEnv()
+      return
+    }
+    setupLessonEnv()
+  }
+
   setupSidebarToggle()
   setupTerminalToggle()
   setupPanelResize()
   setupMermaidZoom()
-  requestAnimationFrame(setupLessonEnv)
+  requestAnimationFrame(initLessonEmulation)
   document.addEventListener('astro:page-load', () => {
     setupSidebarToggle()
     setupTerminalToggle()
     setupPanelResize()
     setupMermaidZoom()
-    requestAnimationFrame(setupLessonEnv)
+    requestAnimationFrame(initLessonEmulation)
   })
   // Keep shared env alive across page transitions for persistent lesson terminal.
   window.addEventListener('beforeunload', () => {
@@ -822,6 +907,111 @@ const t = useTranslations(lang)
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+
+  .lesson-layout__terminal--locked {
+    position: relative;
+    min-height: 200px;
+    background: var(--color-gray-2);
+  }
+
+  .lesson-terminal-lock {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .lesson-terminal-lock__blur {
+    flex: 1;
+    min-height: 0;
+    filter: blur(6px);
+    opacity: 0.85;
+    transform: scale(1.02);
+    pointer-events: none;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-2);
+    gap: var(--spacing-2);
+  }
+
+  .lesson-terminal-lock__fake-chrome {
+    height: 28px;
+    border-radius: var(--radius-l2) var(--radius-l2) 0 0;
+    background: var(--color-gray-4);
+    border: 1px solid var(--color-gray-6);
+    border-bottom: none;
+  }
+
+  .lesson-terminal-lock__fake-body {
+    flex: 1;
+    min-height: 120px;
+    border-radius: 0 0 var(--radius-l2) var(--radius-l2);
+    background: var(--color-gray-3);
+    border: 1px solid var(--color-gray-6);
+    padding: var(--spacing-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+
+  .lesson-terminal-lock__fake-line {
+    display: block;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--color-palette-cyan-solid-bg);
+    opacity: 0.35;
+    max-width: 100%;
+  }
+
+  .lesson-terminal-lock__fake-line--dim {
+    opacity: 0.2;
+    max-width: 88%;
+  }
+
+  .lesson-terminal-lock__fake-line--short {
+    max-width: 40%;
+    opacity: 0.28;
+  }
+
+  .lesson-terminal-lock__card {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-4);
+    background: color-mix(in srgb, var(--color-gray-1) 72%, transparent);
+    z-index: 3;
+    text-align: center;
+    pointer-events: auto;
+  }
+
+  .lesson-terminal-lock__title {
+    margin: 0 0 var(--spacing-2);
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-12);
+    max-width: 22rem;
+  }
+
+  .lesson-terminal-lock__body {
+    margin: 0 0 var(--spacing-4);
+    font-size: var(--text-sm);
+    color: var(--color-gray-11);
+    line-height: 1.45;
+    max-width: 24rem;
+  }
+
+  .lesson-terminal-lock__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-2);
+    justify-content: center;
   }
 
   .lesson-layout__resizer {

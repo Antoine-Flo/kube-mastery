@@ -11,6 +11,8 @@ interface Props {
   labelReloadTerminal: string
   /** "show" = barre dans lp__show-term (bouton affiche le terminal), "hide" = barre dans lp__term-wrap (bouton masque le terminal) */
   terminalAction: 'show' | 'hide'
+  /** When false, hide cluster and reload (no emulated environment). */
+  showTerminalActions?: boolean
 }
 const {
   labelVisualizer,
@@ -19,39 +21,48 @@ const {
   labelHideTerminal,
   labelContactSupport,
   labelReloadTerminal,
-  terminalAction
+  terminalAction,
+  showTerminalActions = true
 } = Astro.props
 const labelTerminal =
   terminalAction === 'show' ? labelShowTerminal : labelHideTerminal
 ---
 
 <div class="lp__content-bar">
-  <Button
-    type="button"
-    variant="plain"
-    size="sm"
-    color="gray"
-    class="lp__content-bar-btn lp__content-bar-btn--viz"
-    data-cluster-trigger
-    data-label-visualizer={labelVisualizer}
-    data-label-course={labelCourse}
-    aria-expanded="false"
-    aria-label={labelVisualizer}
-  >
-    <Telescope size={18} />
-  </Button>
-  <Button
-    type="button"
-    variant="plain"
-    size="sm"
-    color="gray"
-    class="lp__content-bar-btn lp__content-bar-btn--reload"
-    data-lesson-terminal-reload
-    aria-label={labelReloadTerminal}
-    title={labelReloadTerminal}
-  >
-    <RefreshCw size={18} />
-  </Button>
+  {
+    showTerminalActions && (
+      <Button
+        type="button"
+        variant="plain"
+        size="sm"
+        color="gray"
+        class="lp__content-bar-btn lp__content-bar-btn--viz"
+        data-cluster-trigger
+        data-label-visualizer={labelVisualizer}
+        data-label-course={labelCourse}
+        aria-expanded="false"
+        aria-label={labelVisualizer}
+      >
+        <Telescope size={18} />
+      </Button>
+    )
+  }
+  {
+    showTerminalActions && (
+      <Button
+        type="button"
+        variant="plain"
+        size="sm"
+        color="gray"
+        class="lp__content-bar-btn lp__content-bar-btn--reload"
+        data-lesson-terminal-reload
+        aria-label={labelReloadTerminal}
+        title={labelReloadTerminal}
+      >
+        <RefreshCw size={18} />
+      </Button>
+    )
+  }
   <Button
     type="button"
     variant="plain"

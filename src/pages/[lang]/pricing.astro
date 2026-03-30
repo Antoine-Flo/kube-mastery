@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import { CONFIG } from '../../config'
-import { isOpenLearningEnabled, readAppEnv } from '../../lib/env'
+import { readAppEnv } from '../../lib/env'
 import { getLayoutAuthContext } from '../../lib/auth/server'
 import Button from '../../components/ui/Button.astro'
 import Dialog from '../../components/ui/Dialog.astro'
@@ -15,9 +15,6 @@ import '../../styles/routes/pricing.css'
 const lang = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(lang)
 const localePath = useLocalePath(lang)
-if (isOpenLearningEnabled(Astro.locals)) {
-  return Astro.redirect(localePath('/courses'))
-}
 const auth = await getLayoutAuthContext(
   Astro.locals,
   Astro.request,

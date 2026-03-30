@@ -4,7 +4,6 @@ import Button from '../../../../components/ui/Button.astro'
 import { Star } from '@lucide/astro'
 import { useTranslations, useLocalePath } from '../../../../i18n/utils'
 import { getProgressContext } from '../../../../lib/progress/server'
-import { isOpenLearningEnabled } from '../../../../lib/env'
 
 const lang = Astro.params.lang as 'en' | 'fr'
 const t = useTranslations(lang)
@@ -15,12 +14,6 @@ const { userId } = await getProgressContext(
   Astro.request,
   Astro.cookies
 )
-const openLearning = isOpenLearningEnabled(Astro.locals)
-if (!userId && !openLearning) {
-  return Astro.redirect(
-    localePath('/auth') + '?redirect=' + encodeURIComponent(Astro.url.pathname)
-  )
-}
 
 const coursesHref = localePath('/courses')
 const showSurvey = userId != null && userId !== ''
