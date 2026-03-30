@@ -8,9 +8,18 @@ interface Props {
   t: (key: string) => string
   ctaHref: string
   ctaLabel: string
+  breadcrumbHref: string
+  breadcrumbRootLabel: string
 }
 
-const { overview, t, ctaHref, ctaLabel } = Astro.props
+const {
+  overview,
+  t,
+  ctaHref,
+  ctaLabel,
+  breadcrumbHref,
+  breadcrumbRootLabel
+} = Astro.props
 const DescriptionContent = overview.descriptionContent?.Content
 
 const totalLessons = overview.content.sections.reduce(
@@ -32,6 +41,11 @@ const modulesLabel =
 ---
 
 <div class="overview-header">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href={breadcrumbHref}>{breadcrumbRootLabel}</a>
+    <span class="separator" aria-hidden="true">/</span>
+    <span aria-current="page">{overview.title}</span>
+  </nav>
   <h1>{overview.title}</h1>
   <div class="meta-row">
     <div class="meta-item">
@@ -51,7 +65,8 @@ const modulesLabel =
           </>
         </div>
       )
-    }
+   
+}
   </div>
   {
     (DescriptionContent || overview.description) && (
@@ -64,6 +79,7 @@ const modulesLabel =
       </div>
     )
   }
+
   <div class="cta">
     <Button href={ctaHref} variant="solid" size="xl" color="cyan">
       {ctaLabel}
@@ -75,16 +91,47 @@ const modulesLabel =
   .overview-header {
     margin-bottom: 0;
   }
+
+  .breadcrumb {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.75rem;
+    color: var(--color-gray-10);
+    font-size: var(--text-sm);
+  }
+
+  .breadcrumb a {
+    color: var(--color-gray-10);
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--color-gray-12);
+  }
+
+  .breadcrumb .separator {
+    color: var(--color-gray-8);
+  }
+
+  .breadcrumb [aria-current='page'] {
+    color: var(--color-gray-11);
+  }
+
   .overview-header h1 {
     font-size: 1.875rem;
     font-weight: var(--font-weight-bold);
     color: var(--color-gray-12);
     margin: 0 0 0.75rem;
   }
+
   @media (min-width: 768px) {
     .overview-header h1 {
       font-size: 2.25rem;
-    }
+   
+ }
   }
   .meta-row {
     margin: 1.5rem 0;
@@ -93,39 +140,110 @@ const modulesLabel =
     align-items: center;
     gap: 1.5rem;
   }
+
   .meta-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
+
   .meta-item :global(svg) {
     flex-shrink: 0;
     color: var(--color-gray-9);
   }
+
   .meta-item span {
     font-size: var(--text-sm);
     color: var(--color-gray-11);
     line-height: 1.5;
   }
+
   .description {
     color: var(--color-gray-11);
     margin-bottom: 1.5rem;
     line-height: 1.7;
     font-size: var(--text-base);
   }
+
   .description :global(p) {
     margin: 0 0 1rem;
   }
+
   .description :global(p:last-child) {
     margin-bottom: 0;
   }
+
+  .description :global(h2),
+  .description :global(h3) {
+    color: var(--color-gray-12);
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    margin: 1.5rem 0 0.75rem;
+  }
+
+  .description :global(h2) {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .description :global(h3) {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .description :global(ul),
+  .description :global(ol) {
+    margin: 0 0 1rem 1.25rem;
+    padding: 0;
+  }
+
+  .description :global(li) {
+    margin: 0 0 0.4rem;
+    padding-left: 0.2rem;
+  }
+
+  .description :global(li:last-child) {
+    margin-bottom: 0;
+  }
+
+  .description :global(code) {
+    font-family: var(--font-family-mono);
+    font-size: 0.92em;
+    background: var(--color-gray-3);
+    border: 1px solid var(--color-gray-5);
+    border-radius: 6px;
+    padding: 0.05rem 0.35rem;
+    color: var(--color-gray-12);
+  }
+
+  .description :global(a) {
+    color: var(--color-cyan-11);
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1.5px;
+  }
+
+  .description :global(a:hover) {
+    color: var(--color-cyan-12);
+  }
+
+  .description :global(blockquote) {
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    border-left: 3px solid var(--color-cyan-8);
+    background: var(--color-cyan-2);
+    border-radius: 0 8px 8px 0;
+    color: var(--color-gray-12);
+  }
+
   .description :global(strong) {
     color: var(--color-gray-12);
     font-weight: var(--font-weight-semibold);
   }
+
   .cta {
     margin-top: 0.5rem;
   }
+
   .cta :global(.btn[data-color='cyan'][data-variant='solid']) {
     background: linear-gradient(
       135deg,
@@ -133,6 +251,7 @@ const modulesLabel =
       var(--color-cyan-7) 100%
     );
   }
+
   .cta
     :global(.btn[data-color='cyan'][data-variant='solid']):hover:not(
       :disabled

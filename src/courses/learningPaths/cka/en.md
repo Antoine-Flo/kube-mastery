@@ -2,7 +2,6 @@
 title: 'CKA'
 shortDescription: The complete Kubernetes administrator path , cluster installation, security, networking, storage, and troubleshooting.
 isActive: true
-price: 0
 comingSoon: false
 inProgress: true
 order: 2
@@ -11,7 +10,7 @@ level: Intermediate
 
 The path for engineers who want to own and operate Kubernetes clusters at a production level. Built on top of the Common Core, this learning path takes you from cluster installation and architecture to advanced security, networking, and troubleshooting , everything the Certified Kubernetes Administrator exam expects you to master.
 
-**What you'll learn:**
+## What you'll learn
 
 - **Cluster architecture & installation**: Deep dive into control plane internals, installing clusters with kubeadm, node maintenance, upgrades, and etcd backup and restore
 - **Workloads & scheduling**: ConfigMaps, Secrets, resource management, DaemonSets, StatefulSets, Jobs, autoscaling, and advanced scheduling with taints, tolerations, and affinity rules
@@ -25,7 +24,3 @@ The path for engineers who want to own and operate Kubernetes clusters at a prod
 Platform engineers, DevOps practitioners, and SREs who deploy and maintain Kubernetes infrastructure. If your job involves keeping clusters healthy, securing workloads, and debugging production issues, this is your path.
 
 **Prerequisites:** Complete the **Common Core** path first , this path builds directly on those foundations.
-
-**Course structure:**
-
-8 sections across 30+ modules, covering every domain of the CKA exam curriculum. Each lesson includes explanations, real YAML manifests, `kubectl` commands, and hands-on exercises in a live cluster.

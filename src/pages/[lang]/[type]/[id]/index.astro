@@ -73,6 +73,8 @@ if (!canStartCourse) {
 }
 
 const lessonBaseUrl = localePath(`/${type}/${id}`)
+const breadcrumbHref = localePath(`/${type}`)
+const breadcrumbRootLabel = type
 ---
 
 <Layout>
@@ -83,6 +85,8 @@ const lessonBaseUrl = localePath(`/${type}/${id}`)
         t={t}
         ctaHref={ctaHref}
         ctaLabel={ctaLabel}
+        breadcrumbHref={breadcrumbHref}
+        breadcrumbRootLabel={breadcrumbRootLabel}
       />
     </div>
     <div class="or">

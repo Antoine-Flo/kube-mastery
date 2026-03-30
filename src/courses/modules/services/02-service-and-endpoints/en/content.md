@@ -197,18 +197,15 @@ You should see three Pod IPs listed under `Addresses`.
 **3. Kill a Pod and watch the Endpoints update**
 
 ```bash
-# In a second terminal, watch the endpoints live
-kubectl get endpoints web-service -w
-```
-
-In your primary terminal:
-
-```bash
 # Run kubectl get pods -l app=web, pick one pod NAME from the output, then:
 kubectl delete pod <POD-NAME>
 ```
 
-In the second terminal you'll see the Endpoints object flash to two IPs (Pod being deleted), then back to three as the replacement Pod comes up and passes its readiness probe.
+Watch the cluster visualizer: the Endpoints object will flash to two IPs while the Pod is being deleted, then return to three as the replacement Pod comes up and passes its readiness probe. You can also confirm with:
+
+```bash
+kubectl get endpoints web-service
+```
 
 **4. Force a Pod to fail its readiness probe**
 

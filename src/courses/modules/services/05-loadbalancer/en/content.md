@@ -195,15 +195,11 @@ kubectl get service web-lb -w
 # In minikube or kind, it will stay <pending>.
 ```
 
-**3. If using minikube, run tunnel in a second terminal**
+**3. Check the service status**
 
 ```bash
-# Second terminal:
-minikube tunnel
-
-# Back in your primary terminal, check the service again:
 kubectl get service web-lb
-# EXTERNAL-IP should now be populated (typically 127.0.0.1 or a minikube IP)
+# EXTERNAL-IP shows the assigned IP, or <pending> in environments without a cloud load balancer
 ```
 
 **4. Test external access**
@@ -248,5 +244,4 @@ kubectl describe service web-lb
 ```bash
 kubectl delete deployment web
 kubectl delete service web-lb
-# In minikube, you can also stop the tunnel (Ctrl+C in the second terminal)
 ```

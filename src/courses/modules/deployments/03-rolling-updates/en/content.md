@@ -196,21 +196,15 @@ kubectl apply -f web-app-deployment.yaml
 kubectl rollout status deployment/web-app
 ```
 
-**2. In a second terminal, watch the ReplicaSets live**
-
-```bash
-kubectl get rs -l app=web -w
-```
-
-**3. In your primary terminal, trigger the update**
+**2. Trigger the update**
 
 ```bash
 kubectl set image deployment/web-app web=nginx:1.26
 ```
 
-Switch to the second terminal and watch the `DESIRED` / `CURRENT` / `READY` columns on the two ReplicaSets shift as the rollout progresses.
+Watch the cluster visualizer: you will see the two ReplicaSets appear side by side as the rollout progresses, with the `DESIRED` / `CURRENT` / `READY` counts shifting in real time.
 
-**4. Confirm all Pods are now on the new image**
+**3. Confirm all Pods are now on the new image**
 
 ```bash
 kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
@@ -219,7 +213,7 @@ kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.sp
 # web-app-7e5c0d9a1-zzzzz: nginx:1.26
 ```
 
-**5. Try a fast (but risky) update by increasing surge and unavailability**
+**4. Try a fast (but risky) update by increasing surge and unavailability**
 
 ```bash
 kubectl patch deployment web-app -p '{"spec":{"strategy":{"rollingUpdate":{"maxSurge":3,"maxUnavailable":3}}}}'
@@ -230,7 +224,7 @@ kubectl set image deployment/web-app web=nginx:1.27
 kubectl rollout status deployment/web-app
 ```
 
-**6. Practice pausing a rollout**
+**5. Practice pausing a rollout**
 
 ```bash
 # First reset back to 1.25 to have something to update

@@ -1,8 +1,7 @@
 ---
 title: 'Common Core'
-shortDescription: A great place to start , covers the shared Kubernetes foundation for KCNA, CKAD and CKA certifications.
+shortDescription: A great place to start , covers the shared Kubernetes foundation for CKA and CKAD certifications.
 isActive: true
-price: 0
 comingSoon: false
 order: 1
 level: Beginner
@@ -10,7 +9,7 @@ level: Beginner
 
 Your essential starting point for Kubernetes. This learning path walks you through every foundational concept , from understanding what Kubernetes is and how clusters are built, to deploying, exposing, and persisting real applications , all with hands-on practice in a live cluster.
 
-**What you'll learn:**
+## What you'll learn
 
 - **Cluster fundamentals**: What Kubernetes is, how it evolved, and how control plane and worker node components fit together
 - **Objects and YAML**: The Kubernetes object model, how to read and write manifests, and how spec and status drive the reconciliation loop
@@ -19,7 +18,7 @@ Your essential starting point for Kubernetes. This learning path walks you throu
 - **Storage**: Volumes (emptyDir, hostPath, ConfigMap/Secret mounts), PersistentVolumes and PersistentVolumeClaims
 - **Observability**: Container logging, Kubernetes events, and resource monitoring with Metrics Server
 
-**Why start here?**
+## Why start here?
 
 Every Kubernetes journey , whether you're preparing for the KCNA, CKAD, or CKA , begins with the same foundation. This Common Core gives you the shared vocabulary, hands-on comfort with `kubectl`, and real cluster experience that all three certifications build on. Rather than repeating the same basics three times, this path covers them once, deeply and practically.
 

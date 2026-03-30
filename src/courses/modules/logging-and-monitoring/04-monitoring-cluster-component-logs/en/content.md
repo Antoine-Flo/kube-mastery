@@ -152,27 +152,25 @@ This command dynamically injects the first node's name into the Pod name. You sh
 kubectl logs -n kube-system kube-scheduler-$(kubectl get node -o jsonpath='{.items[0].metadata.name}') --tail=20
 ```
 
-**Step 4: Create a Pod and watch the scheduler log**
+**Step 4: Create a Pod and check the scheduler log**
 
-Open a second terminal tab and follow the scheduler log:
-
-```bash
-kubectl logs -n kube-system kube-scheduler-$(kubectl get node -o jsonpath='{.items[0].metadata.name}') -f
-```
-
-In your main terminal, create a Pod:
+Create a Pod:
 
 ```bash
 kubectl run scheduler-test --image=nginx
 ```
 
-In the scheduler log you should see lines mentioning the Pod being assigned to a node, such as:
+Then read the scheduler log to see it being assigned to a node:
+
+```bash
+kubectl logs -n kube-system kube-scheduler-$(kubectl get node -o jsonpath='{.items[0].metadata.name}') --tail=30
+```
+
+You should see a line mentioning the Pod being assigned to a node, such as:
 
 ```
 "Successfully assigned default/scheduler-test to node-1"
 ```
-
-Stop the follow with `Ctrl+C`.
 
 **Step 5: View CoreDNS logs**
 

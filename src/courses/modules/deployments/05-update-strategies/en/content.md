@@ -182,19 +182,13 @@ kubectl rollout status deployment/legacy-app
 
 **2. Watch the Recreate behaviour during an update**
 
-Open a second terminal and continuously watch the Pods:
-
-```bash
-kubectl get pods -l app=legacy -w
-```
-
-In your primary terminal, trigger the update:
+Trigger the update:
 
 ```bash
 kubectl set image deployment/legacy-app app=nginx:1.26
 ```
 
-In the second terminal, observe: all three Pods will terminate first (status `Terminating`), then a brief gap with zero Pods, then three new Pods start up (`ContainerCreating` → `Running`).
+Watch the cluster visualizer: all three Pods will terminate first (status `Terminating`), then a brief gap with zero Pods, then three new Pods start up (`ContainerCreating` -> `Running`).
 
 **3. Compare with RollingUpdate**
 
@@ -233,13 +227,7 @@ kubectl apply -f rolling-app-deployment.yaml
 kubectl rollout status deployment/rolling-app
 ```
 
-Again watch the Pods in a second terminal:
-
-```bash
-kubectl get pods -l app=rolling -w
-```
-
-Then trigger the update:
+Trigger the update:
 
 ```bash
 kubectl set image deployment/rolling-app app=nginx:1.26
@@ -250,8 +238,7 @@ This time you'll see a fourth Pod appear before any old one terminates, that's `
 **4. Try the zero-downtime configuration explicitly**
 
 ```bash
-kubectl patch deployment rolling-app -p \
-  '{"spec":{"strategy":{"rollingUpdate":{"maxUnavailable":0,"maxSurge":2}}}}'
+kubectl patch deployment rolling-app -p '{"spec":{"strategy":{"rollingUpdate":{"maxUnavailable":0,"maxSurge":2}}}}'
 
 kubectl set image deployment/rolling-app app=nginx:1.27
 kubectl get pods -l app=rolling -w
