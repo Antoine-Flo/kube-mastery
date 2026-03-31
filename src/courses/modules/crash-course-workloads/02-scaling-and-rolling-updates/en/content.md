@@ -50,6 +50,28 @@ spec:
 
 With this configuration and three replicas, the update proceeds like this: one new Pod starts and Kubernetes waits for it to become Ready. Once it is, one old Pod is terminated. This repeats until all three Pods are running the new version. At no point are fewer than two Pods available.
 
+```mermaid
+sequenceDiagram
+    participant RS1 as ReplicaSet v1<br/>(nginx:1.28)
+    participant RS2 as ReplicaSet v2<br/>(nginx:1.26)
+
+    Note over RS1: replicas: 3
+    Note over RS2: replicas: 0
+
+    RS2->>RS2: +1 Pod, wait Ready
+    RS1->>RS1: -1 Pod
+    Note over RS1,RS2: 2 old · 1 new
+
+    RS2->>RS2: +1 Pod, wait Ready
+    RS1->>RS1: -1 Pod
+    Note over RS1,RS2: 1 old · 2 new
+
+    RS2->>RS2: +1 Pod, wait Ready
+    RS1->>RS1: -1 Pod
+    Note over RS1: replicas: 0 (kept for rollback)
+    Note over RS2: replicas: 3
+```
+
 ## Monitoring and Rolling Back
 
 `kubectl rollout status` gives you a live view of an update in progress. It blocks and prints progress messages until the rollout either succeeds or fails.

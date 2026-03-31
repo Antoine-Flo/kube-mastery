@@ -653,6 +653,63 @@ spec:
     )
   })
 
+  it('should apply all resources from a multi document yaml file', () => {
+    const yaml = `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: nginx:1.28
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 80
+      targetPort: 80
+`
+
+    fileSystem.createFile('backend.yaml')
+    fileSystem.writeFile('backend.yaml', yaml)
+
+    const parsed = parseCommand('kubectl apply -f backend.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const applyResult = handleApply(fileSystem, apiServer, parsed.value)
+    expect(applyResult.ok).toBe(true)
+    if (!applyResult.ok) {
+      return
+    }
+
+    expect(applyResult.value.split('\n')).toEqual([
+      'deployment.apps/backend created',
+      'service/backend-service created'
+    ])
+
+    const deployment = apiServer.findResource('Deployment', 'backend', 'default')
+    expect(deployment.ok).toBe(true)
+    const service = apiServer.findResource('Service', 'backend-service', 'default')
+    expect(service.ok).toBe(true)
+  })
+
   it('should create namespace imperatively with name', () => {
     const parsed = parseCommand('kubectl create namespace my-team')
     expect(parsed.ok).toBe(true)

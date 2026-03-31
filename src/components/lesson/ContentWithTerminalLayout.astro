@@ -338,6 +338,8 @@ const showTerminalActions = terminalInteractive
   let terminalToggleBound = false
   let mermaidZoomBound = false
   let mermaidObserver: MutationObserver | null = null
+  let mermaidZoomHostCounter = 0
+  let mermaidObserverRoot: HTMLElement | null = null
 
   function ensureMermaidZoomModal() {
     const existing = document.querySelector(
@@ -381,8 +383,14 @@ const showTerminalActions = terminalInteractive
     const content = modal.querySelector(
       '.mermaid-zoom-modal__content'
     ) as HTMLElement | null
+    const panel = modal.querySelector(
+      '.mermaid-zoom-modal__panel'
+    ) as HTMLElement | null
     if (content) {
       content.innerHTML = ''
+    }
+    if (panel) {
+      panel.style.removeProperty('width')
     }
     document.body.classList.remove('mermaid-zoom-open')
   }
@@ -397,6 +405,9 @@ const showTerminalActions = terminalInteractive
     const content = modal.querySelector(
       '.mermaid-zoom-modal__content'
     ) as HTMLElement | null
+    const panel = modal.querySelector(
+      '.mermaid-zoom-modal__panel'
+    ) as HTMLElement | null
     if (!content) {
       return
     }
@@ -406,18 +417,42 @@ const showTerminalActions = terminalInteractive
       return
     }
 
-    const sourceWidth = Math.round(sourceSvg.getBoundingClientRect().width)
-    const viewportWidth = Math.max(window.innerWidth, 1024)
-    const targetWidth = Math.max(
-      sourceWidth * 2.4,
-      Math.floor(viewportWidth * 0.97)
+    const sourceRect = sourceSvg.getBoundingClientRect()
+    const sourceWidth = Math.max(1, sourceRect.width)
+    const sourceHeight = Math.max(1, sourceRect.height)
+    const viewportWidth = Math.max(window.innerWidth, 360)
+    const viewportHeight = Math.max(window.innerHeight, 320)
+    const panelHorizontalChrome = 28
+    const panelVerticalChrome = 118
+    const availableWidth = Math.max(
+      260,
+      viewportWidth * 0.995 - panelHorizontalChrome
     )
+    const availableHeight = Math.max(220, viewportHeight - panelVerticalChrome)
+    const scaleByWidth = availableWidth / sourceWidth
+    const scaleByHeight = availableHeight / sourceHeight
+    const maxScaleWithoutScroll = Math.min(scaleByWidth, scaleByHeight)
+    const preferredScale = 1.95
+    const targetScale = Math.min(preferredScale, maxScaleWithoutScroll)
+    const safeScale = Math.max(0.35, targetScale)
+    const targetWidth = Math.floor(sourceWidth * safeScale)
+    const targetHeight = Math.floor(sourceHeight * safeScale)
     clonedSvg.style.maxWidth = 'none'
     clonedSvg.style.width = `${targetWidth}px`
-    clonedSvg.style.height = 'auto'
+    clonedSvg.style.height = `${targetHeight}px`
+
+    if (panel) {
+      const panelWidth = Math.min(
+        Math.floor(viewportWidth * 0.995),
+        targetWidth + panelHorizontalChrome
+      )
+      panel.style.width = `${panelWidth}px`
+    }
 
     content.innerHTML = ''
     content.appendChild(clonedSvg)
+    content.scrollTop = 0
+    content.scrollLeft = 0
 
     modal.classList.add('mermaid-zoom-modal--open')
     modal.setAttribute('aria-hidden', 'false')
@@ -425,15 +460,53 @@ const showTerminalActions = terminalInteractive
   }
 
   function enhanceMermaidBlocks() {
-    const blocks = document.querySelectorAll('.lesson-content pre.mermaid')
-    blocks.forEach((block) => {
-      if (!(block instanceof HTMLElement)) {
+    const mermaidSvgs = document.querySelectorAll('.lesson-content .mermaid svg')
+    mermaidSvgs.forEach((mermaidSvg) => {
+      if (!(mermaidSvg instanceof SVGElement)) {
         return
       }
-      const existingButton = block.querySelector(
+      const hostFromPre = mermaidSvg.closest('pre.mermaid')
+      const hostFromMermaid = mermaidSvg.closest('.mermaid')
+      const host =
+        hostFromPre instanceof HTMLElement
+          ? hostFromPre
+          : hostFromMermaid instanceof HTMLElement
+            ? hostFromMermaid
+            : null
+      if (!host) {
+        return
+      }
+
+      const hostId =
+        host.getAttribute('data-mermaid-zoom-id') ??
+        `mermaid-zoom-host-${String(++mermaidZoomHostCounter)}`
+      host.setAttribute('data-mermaid-zoom-id', hostId)
+      host.setAttribute('data-mermaid-zoom-host', 'true')
+      const parent = host.parentElement
+      if (!parent) {
+        return
+      }
+
+      let anchor: HTMLElement
+      if (
+        parent instanceof HTMLElement &&
+        parent.hasAttribute('data-mermaid-zoom-anchor')
+      ) {
+        anchor = parent
+      } else {
+        anchor = document.createElement('div')
+        anchor.className = 'mermaid-zoom-anchor'
+        anchor.setAttribute('data-mermaid-zoom-anchor', 'true')
+        parent.insertBefore(anchor, host)
+        anchor.appendChild(host)
+      }
+      anchor.setAttribute('data-mermaid-zoom-for', hostId)
+
+      const existingButton = anchor.querySelector(
         '[data-mermaid-zoom-btn]'
       ) as HTMLElement | null
       if (existingButton) {
+        existingButton.setAttribute('data-mermaid-zoom-source', hostId)
         return
       }
 
@@ -442,6 +515,7 @@ const showTerminalActions = terminalInteractive
       button.className = 'mermaid-zoom-btn'
       button.setAttribute('aria-label', 'Zoom diagram')
       button.setAttribute('data-mermaid-zoom-btn', 'true')
+      button.setAttribute('data-mermaid-zoom-source', hostId)
       const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
       icon.setAttribute('viewBox', '0 0 24 24')
       icon.setAttribute('aria-hidden', 'true')
@@ -455,17 +529,26 @@ const showTerminalActions = terminalInteractive
       )
       icon.appendChild(iconPath)
       button.appendChild(icon)
-      block.appendChild(button)
+      anchor.appendChild(button)
     })
   }
 
   function setupMermaidZoom() {
     enhanceMermaidBlocks()
+    requestAnimationFrame(() => {
+      enhanceMermaidBlocks()
+    })
 
-    if (!mermaidObserver) {
-      const observeTarget = document.body
-      if (!observeTarget) {
-        return
+    const observeTarget = document.body
+    if (!observeTarget) {
+      return
+    }
+
+    const shouldResetObserver =
+      !mermaidObserver || mermaidObserverRoot !== observeTarget
+    if (shouldResetObserver) {
+      if (mermaidObserver) {
+        mermaidObserver.disconnect()
       }
       mermaidObserver = new MutationObserver(() => {
         enhanceMermaidBlocks()
@@ -474,6 +557,7 @@ const showTerminalActions = terminalInteractive
         childList: true,
         subtree: true
       })
+      mermaidObserverRoot = observeTarget
     }
 
     if (mermaidZoomBound) {
@@ -497,7 +581,11 @@ const showTerminalActions = terminalInteractive
         return
       }
 
-      const sourceContainer = zoomButton.closest('.lesson-content pre.mermaid')
+      const sourceId = zoomButton.getAttribute('data-mermaid-zoom-source')
+      const sourceSelector = sourceId
+        ? `[data-mermaid-zoom-id="${sourceId}"]`
+        : '[data-mermaid-zoom-host]'
+      const sourceContainer = document.querySelector(sourceSelector)
       if (!sourceContainer) {
         return
       }

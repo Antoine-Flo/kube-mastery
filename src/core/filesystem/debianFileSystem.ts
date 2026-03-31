@@ -16,6 +16,7 @@ type FileSystemConfig = {
 
 interface DebianFileSystemOptions {
   hostname?: string
+  resolvConf?: string
 }
 
 interface HostFileSystemOptions {
@@ -251,6 +252,8 @@ export const createDebianFileSystem = (
   options: DebianFileSystemOptions = {}
 ): FileSystemState => {
   const hostname = options.hostname ?? 'container-hostname'
+  const resolvConf =
+    options.resolvConf ?? 'nameserver 8.8.8.8\nnameserver 8.8.4.4'
   const etcConfig = DEBIAN_FILESYSTEM_CONFIG.etc
   if (etcConfig == null || typeof etcConfig === 'string') {
     throw new Error('Invalid Debian filesystem config for /etc')
@@ -260,7 +263,8 @@ export const createDebianFileSystem = (
     ...DEBIAN_FILESYSTEM_CONFIG,
     etc: {
       ...etcConfig,
-      hostname
+      hostname,
+      'resolv.conf': resolvConf
     }
   })
 

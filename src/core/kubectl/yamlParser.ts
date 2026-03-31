@@ -4,7 +4,7 @@
 // Parse and validate YAML manifests for Kubernetes resources.
 // Uses Zod schemas defined in resource models for validation.
 
-import { parse } from 'yaml'
+import { parseAllDocuments } from 'yaml'
 import type { ConfigMap } from '../cluster/ressources/ConfigMap'
 import { parseConfigMapManifest } from '../cluster/ressources/ConfigMap'
 import type { DaemonSet } from '../cluster/ressources/DaemonSet'
@@ -88,13 +88,27 @@ const YAML_SUPPORTED_RESOURCE_KINDS: YamlSupportedKind[] =
 /**
  * Parse YAML string with error handling
  */
-const parseYaml = (yamlContent: string): Result<unknown> => {
+const parseYamlDocuments = (yamlContent: string): Result<unknown[]> => {
   try {
-    const parsed = parse(yamlContent)
-    if (!parsed || typeof parsed !== 'object') {
+    const yamlDocuments = parseAllDocuments(yamlContent)
+    const parseErrorDocument = yamlDocuments.find((document) => {
+      return document.errors.length > 0
+    })
+    if (parseErrorDocument != null) {
+      const parseError = parseErrorDocument.errors[0]
+      return error(`YAML parse error: ${parseError.message}`)
+    }
+
+    const parsedDocuments = yamlDocuments
+      .map((document) => document.toJSON())
+      .filter((document) => {
+        return document != null
+      })
+
+    if (parsedDocuments.length === 0) {
       return error('YAML content is empty or invalid')
     }
-    return success(parsed)
+    return success(parsedDocuments)
   } catch (err) {
     const message =
       err instanceof Error ? err.message : 'Unknown YAML parse error'
@@ -165,10 +179,42 @@ const validateResource = (obj: any): Result<ParsedResource> => {
 export const parseKubernetesYaml = (
   yamlContent: string
 ): Result<ParsedResource> => {
-  const parseResult = parseYaml(yamlContent)
+  const parseResult = parseYamlDocuments(yamlContent)
   if (!parseResult.ok) {
     return parseResult
   }
 
-  return validateResource(parseResult.value)
+  if (parseResult.value.length !== 1) {
+    return error(
+      'YAML content contains multiple documents; expected a single resource'
+    )
+  }
+
+  return validateResource(parseResult.value[0])
+}
+
+/**
+ * Parse and validate one or many YAML manifests from a single file.
+ *
+ * @param yamlContent - YAML string to parse
+ * @returns Result with validated resources or error message
+ */
+export const parseKubernetesYamlDocuments = (
+  yamlContent: string
+): Result<ParsedResource[]> => {
+  const parseResult = parseYamlDocuments(yamlContent)
+  if (!parseResult.ok) {
+    return parseResult
+  }
+
+  const resources: ParsedResource[] = []
+  for (let index = 0; index < parseResult.value.length; index++) {
+    const validationResult = validateResource(parseResult.value[index])
+    if (!validationResult.ok) {
+      return error(validationResult.error)
+    }
+    resources.push(validationResult.value)
+  }
+
+  return success(resources)
 }

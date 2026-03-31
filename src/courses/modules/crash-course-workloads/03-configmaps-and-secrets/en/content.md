@@ -68,6 +68,17 @@ In most default cluster configurations, Secrets are stored unencrypted in etcd. 
 
 ## Injecting Values as Environment Variables
 
+```mermaid
+graph LR
+    CM["ConfigMap<br/>LOG_LEVEL: info<br/>APP_ENV: prod"]
+    SEC["Secret<br/>DB_PASSWORD: ●●●●"]
+    POD["Pod<br/>Container"]
+
+    CM -->|"env: LOG_LEVEL=info"| POD
+    CM -->|"env: APP_ENV=prod"| POD
+    SEC -->|"env: DB_PASSWORD=●●●●"| POD
+```
+
 The most common way to consume a ConfigMap or Secret in a Pod is to inject individual keys as environment variables. The `valueFrom` field in the `env` section lets you pull a specific key from a ConfigMap or Secret:
 
 ```yaml

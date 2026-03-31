@@ -17,6 +17,18 @@ A namespace is a virtual partition inside the cluster. Resources in one namespac
 
 Every cluster starts with a few built-in namespaces. The `default` namespace is where resources land if you don't specify one. This is convenient for learning, but in real systems you almost never put application workloads in `default` - you create a dedicated namespace for each application or team. The `kube-system` namespace is reserved for Kubernetes internal components: CoreDNS, kube-proxy, the scheduler, and the controller manager all run as Pods here. You should never deploy your own applications into `kube-system`. The `kube-public` namespace is readable by anyone and mostly used for cluster-level public bootstrapping information.
 
+```mermaid
+graph TB
+    CL["Kubernetes Cluster"]
+    NS1["Namespace: staging<br/>Service: api<br/>Deployment: web"]
+    NS2["Namespace: production<br/>Service: api<br/>Deployment: web"]
+    NS3["Namespace: kube-system<br/>CoreDNS · kube-proxy"]
+
+    CL --> NS1
+    CL --> NS2
+    CL --> NS3
+```
+
 Creating a namespace is as simple as:
 
 ```bash
@@ -72,6 +84,18 @@ The `-l` flag lets you filter any `kubectl` command by label. If all your backen
 kubectl get pods -l app=backend
 kubectl logs -l app=backend
 kubectl delete pods -l app=backend
+```
+
+```mermaid
+graph LR
+    SVC["Service<br/>selector: app=web"]
+    P1["Pod<br/>app=web · env=prod"]
+    P2["Pod<br/>app=web · env=prod"]
+    P3["Pod<br/>app=api · env=prod"]
+
+    SVC -->|"matches"| P1
+    SVC -->|"matches"| P2
+    SVC -. "no match" .-> P3
 ```
 
 Beyond `kubectl` filtering, labels are load-bearing. When you write a Service with a `selector: app: web`, Kubernetes finds every Pod in the same namespace that has `app: web` in its labels and routes traffic to them. If a Pod is missing that label, the Service never sends traffic to it - even if it's running the right container image. If a Pod gains that label, it immediately starts receiving traffic. Understanding this selector mechanism is essential because it's how the entire control plane wires resources together.

@@ -299,6 +299,35 @@ describe('KubectlCommandHandler', () => {
       expect(renderer.getOutput()).toContain('realistic-hostname')
     })
 
+    it('should expose kubernetes resolv.conf inside container', () => {
+      const pod = createPod({
+        name: 'dns-pod',
+        namespace: 'default',
+        phase: 'Running',
+        containers: [{ name: 'main', image: 'nginx:latest' }]
+      })
+      context.apiServer.etcd.restore({
+        ...context.apiServer.snapshotState(),
+        pods: {
+          ...context.apiServer.snapshotState().pods,
+          items: [pod]
+        }
+      })
+      renderer.clearOutput()
+
+      const result = handler.execute(
+        'kubectl exec dns-pod -- cat /etc/resolv.conf',
+        context
+      )
+
+      expect(result.ok).toBe(true)
+      expect(renderer.getOutput()).toContain(
+        'search default.svc.cluster.local svc.cluster.local cluster.local'
+      )
+      expect(renderer.getOutput()).toContain('nameserver 10.96.0.10')
+      expect(renderer.getOutput()).toContain('options ndots:5')
+    })
+
     it('should keep container file changes isolated from host after exit', () => {
       const pod = createPod({
         name: 'log-demo',

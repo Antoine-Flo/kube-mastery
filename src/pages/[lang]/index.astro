@@ -439,7 +439,7 @@ try {
   }
 
   .early-access-badge {
-    align-self: flex-start;
+    align-self: center;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -462,6 +462,12 @@ try {
     border-radius: 50%;
     background: var(--color-cyan-9);
     box-shadow: 0 0 8px color-mix(in srgb, var(--color-cyan-9) 55%, transparent);
+  }
+
+  @media (min-width: 1024px) {
+    .early-access-badge {
+      align-self: flex-start;
+    }
   }
 
   .hero .content {

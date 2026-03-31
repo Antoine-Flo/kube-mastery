@@ -70,7 +70,23 @@ For production HTTP and HTTPS traffic, most teams combine a LoadBalancer Service
 
 ## Choosing the Right Type
 
-ClusterIP, NodePort, and LoadBalancer form a hierarchy - each type is a superset of the previous. Every Service starts as a ClusterIP internally, whether or not you asked for it. Understanding which type to use comes down to who needs to reach the Service and what infrastructure is available.
+ClusterIP, NodePort, and LoadBalancer form a hierarchy - each type is a superset of the previous.
+
+```mermaid
+graph TB
+    INTERNET["Internet<br/>(external clients)"]
+    LB["LoadBalancer<br/>External IP: 34.120.45.10<br/>cloud provisioned"]
+    NP["NodePort<br/>node-ip:30080<br/>open on every node"]
+    CIP["ClusterIP<br/>10.96.x.x<br/>internal only"]
+    PODS["Backend Pods"]
+
+    INTERNET --> LB
+    LB --> NP
+    NP --> CIP
+    CIP --> PODS
+``` 
+
+Every Service starts as a ClusterIP internally, whether or not you asked for it. Understanding which type to use comes down to who needs to reach the Service and what infrastructure is available.
 
 For any communication that stays inside the cluster - your frontend calling your backend, your app querying a database - use ClusterIP. For development or bare-metal external access, NodePort works. For production workloads on cloud providers, use LoadBalancer, and combine it with Ingress if you have multiple services to expose.
 

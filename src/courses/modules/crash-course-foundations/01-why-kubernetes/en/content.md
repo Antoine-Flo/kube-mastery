@@ -15,6 +15,19 @@ If a container crashes, Kubernetes restarts it. If a node goes offline, it resch
 
 This loop of observation and correction is called **reconciliation**, and it is the key mental model for Kubernetes. The system never "finishes", it keeps reconciling actual state with desired state for the lifetime of the cluster.
 
+```mermaid
+graph LR
+    DS["Desired State<br/>(your manifest)"]
+    CTL["Kubernetes<br/>Controller"]
+    AS["Actual State<br/>(running cluster)"]
+    ACT["Take Action<br/>(create / delete / update)"]
+
+    DS --> CTL
+    AS --> CTL
+    CTL -->|"gap detected"| ACT
+    ACT --> AS
+```
+
 ## Beyond Self-Healing
 
 Self-healing is the most visible benefit, but growth depends on more. The scheduler uses CPU and memory requests to place containers on nodes with enough capacity, automatically across the cluster. Services provide stable DNS names and IP addresses, so components can reach each other by name even when Pods are replaced. Storage can be provisioned and attached on demand. Configuration and secrets can be injected at runtime without rebuilding images.

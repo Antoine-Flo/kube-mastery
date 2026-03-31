@@ -523,6 +523,14 @@ const buildPodConditions = (
   ]
 }
 
+const buildPodResolvConf = (namespace: string): string => {
+  return [
+    `search ${namespace}.svc.cluster.local svc.cluster.local cluster.local`,
+    'nameserver 10.96.0.10',
+    'options ndots:5'
+  ].join('\n')
+}
+
 export const createPod = (config: PodConfig): Pod => {
   const initialPhase = config.phase || 'Pending'
   const creationTimestamp = config.creationTimestamp || new Date().toISOString()
@@ -629,11 +637,15 @@ export const createPod = (config: PodConfig): Pod => {
 
   // Create _simulator.containers with fileSystem and containerType
   const simulatorContainers: Pod['_simulator']['containers'] = {}
+  const podResolvConf = buildPodResolvConf(config.namespace)
 
   // Add init containers
   for (const container of config.initContainers || []) {
     simulatorContainers[container.name] = {
-      fileSystem: createDebianFileSystem({ hostname: config.name }),
+      fileSystem: createDebianFileSystem({
+        hostname: config.name,
+        resolvConf: podResolvConf
+      }),
       containerType: 'init'
     }
   }
@@ -641,7 +653,10 @@ export const createPod = (config: PodConfig): Pod => {
   // Add regular containers
   for (const container of config.containers) {
     simulatorContainers[container.name] = {
-      fileSystem: createDebianFileSystem({ hostname: config.name }),
+      fileSystem: createDebianFileSystem({
+        hostname: config.name,
+        resolvConf: podResolvConf
+      }),
       containerType: 'regular'
     }
   }

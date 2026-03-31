@@ -21,6 +21,20 @@ Pod IPs come from a pool of addresses managed by the cluster's network plugin. W
 
 In a Deployment with three replicas, this problem compounds. You have three IPs, all of which can change independently at any time, and your clients need to reach all three for load balancing. Even if you somehow tracked the current IPs and kept a configuration file up to date, the window between a Pod being replaced and your configuration being updated would be a window of failures.
 
+```mermaid
+sequenceDiagram
+    participant FE as Frontend Pod
+    participant B1 as Backend Pod<br/>IP: 10.244.1.5
+    participant B2 as New Backend Pod<br/>IP: 10.244.1.9
+
+    FE->>B1: request (works)
+    Note over B1: Pod deleted<br/>(update / crash / eviction)
+    B1-->>B2: replaced with new IP
+
+    FE->>B1: request to 10.244.1.5
+    Note over FE: connection refused<br/>IP no longer exists
+```
+
 This isn't an accident or an oversight - it's a consequence of how Kubernetes works. Pods are meant to be ephemeral. They can be created, destroyed, and replaced at any time, and they're supposed to be. The system is designed around this assumption, and the right answer isn't to fight it by trying to track IPs manually. The right answer is a Service.
 
 A Service gives you a stable address that never changes, regardless of how many times the Pods behind it are replaced. It does this by maintaining a continuously updated list of healthy Pod IPs - the **Endpoints** object - and routing traffic to whichever ones are currently ready. The Service's own address remains constant for its entire lifetime.

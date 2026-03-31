@@ -60,6 +60,17 @@ The `ports` field is mostly documentation - it doesn't open or expose any networ
 
 When you apply this manifest, the Pod moves through a predictable sequence of phases. It starts as `Pending`: the API server has accepted the object and stored it in etcd, but it hasn't been scheduled to a node yet. Once the scheduler assigns it to a node, the kubelet on that node takes over: it pulls the container image, creates the container, and starts it. At that point the Pod transitions to `Running`. If the container exits cleanly with code 0, the Pod becomes `Succeeded`. If it exits with an error, it becomes `Failed`. If the kubelet on the node stops reporting to the API server, the Pod may enter `Unknown`.
 
+```mermaid
+stateDiagram-v2
+    [*] --> Pending
+    Pending --> Running : scheduled + image pulled
+    Running --> Succeeded : exit code 0
+    Running --> Failed : exit code != 0
+    Running --> CrashLoopBackOff : repeated crashes
+    CrashLoopBackOff --> Running : backoff retry
+    Running --> Unknown : node unreachable
+```
+
 The phase you'll see most often in a healthy cluster is `Running`. The one you'll need to debug most often is `CrashLoopBackOff`, which isn't actually a phase but a status message indicating that the container keeps crashing and Kubernetes is restarting it with an exponentially increasing delay between attempts.
 
 ## Inspecting a Running Pod

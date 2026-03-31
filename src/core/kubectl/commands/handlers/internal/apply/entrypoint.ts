@@ -2,7 +2,7 @@ import type { ApiServerFacade } from '../../../../../api/ApiServerFacade'
 import type { FileSystem } from '../../../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error, success } from '../../../../../shared/result'
-import { parseKubernetesYaml } from '../../../../yamlParser'
+import { parseKubernetesYamlDocuments } from '../../../../yamlParser'
 import {
   NO_OBJECTS_PASSED_TO_APPLY,
   resolveManifestFilePathsFromFilenameFlag
@@ -44,15 +44,17 @@ export const handleApply = (
 
   const lines: string[] = []
   for (let i = 0; i < filesResult.value.length; i++) {
-    const parseResult = parseKubernetesYaml(filesResult.value[i])
+    const parseResult = parseKubernetesYamlDocuments(filesResult.value[i])
     if (!parseResult.ok) {
       return error(`error: ${parseResult.error}`)
     }
-    const applyResult = applyResourceWithEvents(parseResult.value, apiServer)
-    if (!applyResult.ok) {
-      return applyResult
+    for (let j = 0; j < parseResult.value.length; j++) {
+      const applyResult = applyResourceWithEvents(parseResult.value[j], apiServer)
+      if (!applyResult.ok) {
+        return applyResult
+      }
+      lines.push(applyResult.value)
     }
-    lines.push(applyResult.value)
   }
 
   return success(lines.join('\n'))

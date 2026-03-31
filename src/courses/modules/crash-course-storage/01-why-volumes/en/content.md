@@ -21,6 +21,27 @@ The Pod itself has a different lifetime. When the Pod is deleted - either explic
 
 Kubernetes handles this distinction explicitly. **Volumes** are declared inside the Pod spec and live for the Pod's lifetime. **PersistentVolumes** are separate cluster resources that can outlive any Pod and be reattached to new Pods. This module covers both.
 
+```mermaid
+sequenceDiagram
+    participant POD as Pod
+    participant FS as Container Filesystem
+    participant VOL as Volume (emptyDir)
+
+    POD->>FS: created (clean slate from image)
+    POD->>VOL: mounted
+
+    FS->>FS: write /tmp/note.txt
+    VOL->>VOL: write /data/record.txt
+
+    Note over FS,VOL: Container crashes
+
+    FS->>FS: wiped, fresh from image
+    Note over VOL: unchanged
+
+    Note over FS: /tmp/note.txt gone
+    Note over VOL: /data/record.txt still there
+```
+
 ## Declaring a Volume Always Requires Two Steps
 
 You can't just declare a volume and expect containers to see it. Every volume in Kubernetes requires two coordinated declarations.
