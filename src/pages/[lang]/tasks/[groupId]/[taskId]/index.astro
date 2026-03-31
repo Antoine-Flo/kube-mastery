@@ -60,7 +60,7 @@ const nextTask =
     : null
 
 const taskTargetId = `${groupId}/${taskId}`
-const completeTaskUrl = `/api/progress/complete?type=task&targetId=${encodeURIComponent(taskTargetId)}&redirect=${encodeURIComponent(localePath(`/tasks/${groupId}/${taskId}/complete`))}`
+const taskCompleteHref = localePath(`/tasks/${groupId}/${taskId}/complete`)
 
 const contentBarLabels = {
   labelVisualizer: t('lesson_visualizer'),
@@ -142,11 +142,47 @@ const terminalLockSecondaryLabel = hasSession
             {t('home_cta_join')}
           </Button>
         ) : (
-          <Button href={completeTaskUrl} variant="solid" color="cyan" size="md">
-            {t('tasks_doneButton')}
-          </Button>
+          <span class="lp__task-done-wrap" data-task-target-id={taskTargetId}>
+            <Button
+              href={taskCompleteHref}
+              variant="solid"
+              color="cyan"
+              size="md"
+            >
+              {t('tasks_doneButton')}
+            </Button>
+          </span>
         )
       }
     </div>
   </ContentWithTerminalLayout>
 </Layout>
+
+<script>
+  import { sendProgressCompleteBeacon } from '../../../../../lib/progress/sendProgressBeacon'
+
+  function initTaskDoneBeacon() {
+    const wrap = document.querySelector<HTMLElement>('.lp__task-done-wrap')
+    const targetId = wrap?.dataset.taskTargetId
+    if (!wrap || !targetId || wrap.dataset.progressBeaconBound === 'true') {
+      return
+    }
+    wrap.dataset.progressBeaconBound = 'true'
+
+    wrap.addEventListener(
+      'click',
+      () => {
+        sendProgressCompleteBeacon({ type: 'task', targetId })
+      },
+      true
+    )
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTaskDoneBeacon)
+  } else {
+    initTaskDoneBeacon()
+  }
+
+  document.addEventListener('astro:page-load', initTaskDoneBeacon)
+</script>

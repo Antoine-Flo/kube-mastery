@@ -17,7 +17,7 @@ interface Props {
     courseComplete: string
     nextQuestion: string
   }
-  /** Current lesson id: used to build "mark complete" API URL. */
+  /** Current lesson id: sent via sendBeacon when navigating to the next lesson. */
   lessonId?: string
 }
 
@@ -30,14 +30,11 @@ const mcQuestions = (quiz?.questions ?? []).filter(
 )
 
 const hasQuiz = mcQuestions.length > 0
-const completeUrl =
-  lessonId && nextHref
-    ? `/api/progress/complete?lessonId=${encodeURIComponent(lessonId)}&redirect=${encodeURIComponent(nextHref)}`
-    : nextHref
 ---
 
 <div
   class="lesson-quiz-nav"
+  data-lesson-id={lessonId}
   data-has-quiz={hasQuiz ? 'true' : 'false'}
   data-question-count={mcQuestions.length}
   data-current-index="0"
@@ -108,11 +105,11 @@ const completeUrl =
     }
 
     <div class="lesson-nav__next" data-nav-next>
-      {/* No quiz or quiz done: link via API (mark complete + redirect) */}
+      {/* No quiz: next lesson link; progress via sendBeacon */}
       {
         !hasQuiz && !isLast && (
           <Button
-            href={completeUrl}
+            href={nextHref}
             variant="solid"
             color="cyan"
             size="sm"
@@ -142,7 +139,7 @@ const completeUrl =
               {labels.nextQuestion}
             </Button>
             <a
-              href={completeUrl}
+              href={nextHref}
               class="btn lesson-nav__btn-lesson"
               data-variant="solid"
               data-size="sm"
@@ -160,6 +157,30 @@ const completeUrl =
 </div>
 
 <script>
+  import { sendProgressCompleteBeacon } from '../../lib/progress/sendProgressBeacon'
+
+  function initLessonProgressBeacon(container: HTMLElement) {
+    const lessonId = container.dataset.lessonId
+    if (!lessonId || container.dataset.progressBeaconBound === 'true') {
+      return
+    }
+    container.dataset.progressBeaconBound = 'true'
+
+    container.addEventListener(
+      'click',
+      (e) => {
+        const el = (e.target as HTMLElement).closest<HTMLElement>(
+          '[data-nav-next-lesson]'
+        )
+        if (!el || el.getAttribute('data-disabled') === 'true') {
+          return
+        }
+        sendProgressCompleteBeacon({ lessonId })
+      },
+      true
+    )
+  }
+
   function initQuizNav(container: HTMLElement) {
     const hasQuiz = container.dataset.hasQuiz === 'true'
     if (!hasQuiz) {
@@ -333,6 +354,7 @@ const completeUrl =
   function init() {
     const container = document.querySelector<HTMLElement>('.lesson-quiz-nav')
     if (container) {
+      initLessonProgressBeacon(container)
       initQuizNav(container)
     }
   }
