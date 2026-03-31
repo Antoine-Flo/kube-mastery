@@ -1,5 +1,5 @@
 ---
-seoTitle: "Expose Kubernetes Apps: NodePort, LoadBalancer, Ingress"
+seoTitle: "Expose Kubernetes Apps, NodePort, LoadBalancer, Ingress"
 seoDescription: "Explore how to expose Kubernetes applications externally using NodePort, LoadBalancer Services, and Ingress for HTTP routing and TLS termination."
 ---
 

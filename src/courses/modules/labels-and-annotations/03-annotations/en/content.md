@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Annotations: Metadata, Tool Configuration
+seoTitle: Kubernetes Annotations - Metadata, Tool Configuration
 seoDescription: Explore how Kubernetes annotations store rich metadata for tools, operators, and CI/CD pipelines, and learn how they differ from labels.
 ---
 

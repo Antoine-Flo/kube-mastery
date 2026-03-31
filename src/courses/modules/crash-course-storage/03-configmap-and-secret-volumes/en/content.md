@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes ConfigMap and Secret Volumes: File Injection"
+seoTitle: "Kubernetes ConfigMap and Secret Volumes, File Injection"
 seoDescription: "Learn how to mount ConfigMaps and Secrets as files in Kubernetes Pods, enabling file-based configuration and automatic live updates when values change."
 ---
 

@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Namespace Navigation: -n Flag, Context, DNS
+seoTitle: Kubernetes Namespace Navigation, -n Flag, Context, DNS
 seoDescription: Learn how to switch namespaces with -n, query all namespaces with -A, set a default namespace via kubectl config, and use cross-namespace DNS.
 ---
 

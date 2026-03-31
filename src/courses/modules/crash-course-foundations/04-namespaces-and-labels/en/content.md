@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes Namespaces and Labels: Isolation, Selectors"
+seoTitle: "Kubernetes Namespaces and Labels, Isolation, Selectors"
 seoDescription: "Understand how Kubernetes namespaces partition cluster resources and how labels enable flexible filtering, querying, and resource connections."
 ---
 

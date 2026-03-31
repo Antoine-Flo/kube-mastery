@@ -1,5 +1,5 @@
 ---
-seoTitle: "kubectl Output Formatting: jsonpath, custom-columns, aliases"
+seoTitle: "kubectl Output Formatting, jsonpath, custom-columns, aliases"
 seoDescription: "Learn to extract Kubernetes resource data with jsonpath, build custom tables, and speed up your workflow with aliases and tab completion."
 ---
 

@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Certifications: KCNA, CKAD, and CKA Overview
+seoTitle: Kubernetes Certifications, KCNA, CKAD, and CKA Overview
 seoDescription: Understand the KCNA, CKAD, and CKA Kubernetes certifications, their format and focus, and how the Common Core course builds the foundation for all three.
 ---
 

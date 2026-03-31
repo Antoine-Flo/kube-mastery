@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes ConfigMap and Secret Volumes: Files, Reload"
+seoTitle: "Kubernetes ConfigMap and Secret Volumes, Files, Reload"
 seoDescription: "Learn how to mount ConfigMaps and Secrets as files in Kubernetes Pods, use selective key mapping, and enable live configuration reload without Pod restarts."
 ---
 

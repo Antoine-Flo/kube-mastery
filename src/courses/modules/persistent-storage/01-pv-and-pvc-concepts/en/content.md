@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Persistent Storage: PVs, PVCs, and Binding
+seoTitle: Kubernetes Persistent Storage, PVs, PVCs, and Binding
 seoDescription: Understand how Kubernetes PersistentVolumes and PersistentVolumeClaims decouple storage from Pods, how binding works, and when to use dynamic provisioning.
 ---
 

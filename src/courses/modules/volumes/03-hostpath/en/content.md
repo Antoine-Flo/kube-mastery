@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes hostPath Volumes: DaemonSets, Types, Security"
-seoDescription: "Understand hostPath volumes in Kubernetes: when to use them for log collection and node monitoring, the type field options, and critical security warnings."
+seoTitle: "Kubernetes hostPath Volumes, DaemonSets, Types, Security"
+seoDescription: "Understand hostPath volumes in Kubernetes, when to use them for log collection and node monitoring, the type field options, and critical security warnings."
 ---
 
 # hostPath Volumes

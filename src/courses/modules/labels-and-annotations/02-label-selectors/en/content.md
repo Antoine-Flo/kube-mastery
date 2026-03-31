@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Label Selectors: Equality, Set-Based Filtering
+seoTitle: Kubernetes Label Selectors - Equality, Set-Based Filtering
 seoDescription: Understand equality-based and set-based label selectors in Kubernetes, and how matchLabels, matchExpressions, and Services use them to connect resources.
 ---
 

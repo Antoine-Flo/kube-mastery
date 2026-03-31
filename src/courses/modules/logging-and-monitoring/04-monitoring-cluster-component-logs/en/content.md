@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Component Logs: API Server, Scheduler, CoreDNS
+seoTitle: Kubernetes Component Logs, API Server, Scheduler, CoreDNS
 seoDescription: Learn how to access Kubernetes control plane logs using kubectl logs for static Pods and journalctl for kubelet, with a per-symptom component guide.
 ---
 

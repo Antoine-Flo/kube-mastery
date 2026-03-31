@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes Scaling and Rolling Updates: replicas, rollout"
+seoTitle: "Kubernetes Scaling and Rolling Updates, replicas, rollout"
 seoDescription: "Learn how to scale Kubernetes Deployments and perform controlled rolling updates, including maxSurge, maxUnavailable, and rollout monitoring."
 ---
 

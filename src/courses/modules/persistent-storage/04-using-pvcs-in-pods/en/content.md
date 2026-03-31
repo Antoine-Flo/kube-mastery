@@ -1,5 +1,5 @@
 ---
-seoTitle: Mount PersistentVolumeClaims in Kubernetes Pods: Storage
+seoTitle: Mount PersistentVolumeClaims in Kubernetes Pods, Storage
 seoDescription: Learn how to reference a PVC in a Kubernetes Pod spec, confirm data survives Pod deletion, and understand access mode constraints for multi-replica workloads.
 ---
 

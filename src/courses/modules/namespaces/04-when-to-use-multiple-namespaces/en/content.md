@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Multi-Namespace: Teams, Quotas, Network Isolation
+seoTitle: Kubernetes Multi-Namespace, Teams, Quotas, Network Isolation
 seoDescription: Explore when to use multiple Kubernetes namespaces for environment separation, team isolation, ResourceQuotas, and NetworkPolicies, and when not to.
 ---
 

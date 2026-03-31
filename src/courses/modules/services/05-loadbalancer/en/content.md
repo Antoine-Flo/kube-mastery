@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes LoadBalancer Service: Cloud Provisioning and Cost"
+seoTitle: "Kubernetes LoadBalancer Service, Cloud Provisioning and Cost"
 seoDescription: "Explore how Kubernetes LoadBalancer Services provision cloud load balancers automatically, expose a stable external IP, and when to use them."
 ---
 

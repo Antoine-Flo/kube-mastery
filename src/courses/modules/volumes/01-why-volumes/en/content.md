@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes Volumes Explained: Lifecycle, Types, Mounts"
+seoTitle: "Kubernetes Volumes Explained, Lifecycle, Types, Mounts"
 seoDescription: "Learn how Kubernetes volumes outlive container restarts, covering the two-step mount declaration, volume lifecycle, and the difference from PersistentVolumes."
 ---
 

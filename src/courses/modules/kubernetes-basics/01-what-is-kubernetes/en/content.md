@@ -1,5 +1,5 @@
 ---
-seoTitle: "What Is Kubernetes: Orchestration, Scheduling, Self-Healing"
+seoTitle: "What Is Kubernetes, Orchestration, Scheduling, Self-Healing"
 seoDescription: "Understand what Kubernetes is, how it solves container management challenges, and the key capabilities it provides including scheduling and self-healing."
 ---
 

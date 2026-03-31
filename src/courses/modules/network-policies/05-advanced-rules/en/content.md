@@ -1,6 +1,6 @@
 ---
-seoTitle: Advanced Kubernetes NetworkPolicy: Deny-All, Port Ranges
-seoDescription: Explore advanced NetworkPolicy patterns in Kubernetes: default deny-all, cross-namespace AND logic, port ranges, and additive policy composition.
+seoTitle: Advanced Kubernetes NetworkPolicy, Deny-All, Port Ranges
+seoDescription: Explore advanced NetworkPolicy patterns in Kubernetes, default deny-all, cross-namespace AND logic, port ranges, and additive policy composition.
 ---
 
 # Advanced NetworkPolicy Patterns

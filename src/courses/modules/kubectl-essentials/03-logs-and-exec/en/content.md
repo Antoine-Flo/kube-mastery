@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes Debugging: kubectl logs, exec, container shells"
+seoTitle: "Kubernetes Debugging, kubectl logs, exec, container shells"
 seoDescription: "Explore how to read container logs, stream live output, and open interactive shell sessions in Kubernetes pods using kubectl logs and exec."
 ---
 

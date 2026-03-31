@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes NetworkPolicies: CNI, Pod Selection, Rules
+seoTitle: Kubernetes NetworkPolicies, CNI, Pod Selection, Rules
 seoDescription: Learn how Kubernetes NetworkPolicies control Pod-level traffic using label selectors, CNI enforcement, and additive allow rules for cluster security.
 ---
 

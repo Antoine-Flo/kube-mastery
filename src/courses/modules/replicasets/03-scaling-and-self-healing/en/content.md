@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes ReplicaSets: Scaling, Self-Healing, Pod Adoption"
+seoTitle: "Kubernetes ReplicaSets, Scaling, Self-Healing, Pod Adoption"
 seoDescription: "Explore how Kubernetes ReplicaSets scale replicas up and down, automatically self-heal from Pod failures, and handle unexpected Pod adoption."
 ---
 

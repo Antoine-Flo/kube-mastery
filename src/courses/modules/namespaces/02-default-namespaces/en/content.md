@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Built-In Namespaces: default, kube-system, Lease
+seoTitle: Kubernetes Built-In Namespaces, default, kube-system, Lease
 seoDescription: Explore the four built-in Kubernetes namespaces, default, kube-system, kube-public, and kube-node-lease, and learn what each one contains and why.
 ---
 

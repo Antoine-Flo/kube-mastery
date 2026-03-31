@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Namespaces: Isolation, Resource Scoping, kubectl
+seoTitle: Kubernetes Namespaces, Isolation, Resource Scoping, kubectl
 seoDescription: Understand how Kubernetes namespaces divide a cluster into isolated virtual spaces, the difference between namespaced and cluster-scoped resources.
 ---
 

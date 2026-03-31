@@ -1,5 +1,5 @@
 ---
-seoTitle: Create a Kubernetes PersistentVolume: Fields and Lifecycle
+seoTitle: Create a Kubernetes PersistentVolume, Fields and Lifecycle
 seoDescription: Learn how to write a Kubernetes PersistentVolume manifest, covering capacity, access modes, reclaim policy, and PV lifecycle phases from Available to Released.
 ---
 

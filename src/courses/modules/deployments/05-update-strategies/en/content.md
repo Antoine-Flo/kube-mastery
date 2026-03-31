@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes Update Strategies: RollingUpdate vs Recreate"
+seoTitle: "Kubernetes Update Strategies, RollingUpdate vs Recreate"
 seoDescription: "Explore the RollingUpdate and Recreate Deployment strategies, understand when each applies, and learn to tune maxUnavailable and maxSurge for your workload."
 ---
 

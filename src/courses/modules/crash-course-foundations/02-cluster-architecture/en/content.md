@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes Cluster Architecture: Control Plane, Nodes"
+seoTitle: "Kubernetes Cluster Architecture, Control Plane, Nodes"
 seoDescription: "Understand the Kubernetes cluster structure, including the API server, etcd, scheduler, controller manager, kubelet, and kube-proxy on worker nodes."
 ---
 

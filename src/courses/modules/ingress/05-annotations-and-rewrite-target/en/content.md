@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes Ingress Annotations: Rewrite, Rate Limit, CORS"
+seoTitle: "Kubernetes Ingress Annotations, Rewrite, Rate Limit, CORS"
 seoDescription: "Explore ingress-nginx annotations including rewrite-target with regex capture groups, rate limiting, CORS headers, and timeout settings for production use."
 ---
 

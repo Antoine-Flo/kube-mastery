@@ -1,5 +1,5 @@
 ---
-seoTitle: "Debugging Kubernetes DNS: CoreDNS, nslookup, resolv.conf"
+seoTitle: "Debugging Kubernetes DNS, CoreDNS, nslookup, resolv.conf"
 seoDescription: "Learn how to systematically debug DNS failures in Kubernetes by checking CoreDNS health, verifying Service endpoints, and testing resolution from inside Pods."
 ---
 

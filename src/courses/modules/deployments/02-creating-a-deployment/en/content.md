@@ -1,5 +1,5 @@
 ---
-seoTitle: "Create a Kubernetes Deployment: Manifest, Apply, Inspect"
+seoTitle: "Create a Kubernetes Deployment, Manifest, Apply, Inspect"
 seoDescription: "Learn how to write a Deployment manifest, apply it with kubectl, inspect the Deployment-ReplicaSet-Pod hierarchy, and monitor rollout status."
 ---
 

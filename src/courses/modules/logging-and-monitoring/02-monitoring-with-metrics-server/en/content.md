@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Metrics Server: kubectl top, CPU, Memory, HPA
+seoTitle: Kubernetes Metrics Server, kubectl top, CPU, Memory, HPA
 seoDescription: Understand how Metrics Server aggregates resource usage in Kubernetes, enabling kubectl top nodes, kubectl top pods, and the Horizontal Pod Autoscaler.
 ---
 

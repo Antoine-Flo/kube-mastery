@@ -1,5 +1,5 @@
 ---
-seoTitle: KubeMastery Practice Environment: Terminal and Filesystem
+seoTitle: KubeMastery Practice Environment, Terminal and Filesystem
 seoDescription: Explore your simulated Kubernetes practice environment, available kubectl commands, virtual filesystem, reset behavior, and supported feature scope.
 ---
 

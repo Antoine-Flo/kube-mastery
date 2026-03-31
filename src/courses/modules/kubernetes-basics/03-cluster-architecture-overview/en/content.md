@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes Cluster Architecture: Control Plane, Worker Nodes"
+seoTitle: "Kubernetes Cluster Architecture, Control Plane, Worker Nodes"
 seoDescription: "Learn how a Kubernetes cluster is structured, with control plane components managing state and worker nodes running application containers."
 ---
 

@@ -1,5 +1,5 @@
 ---
-seoTitle: "Why Use Kubernetes ReplicaSets: Self-Healing and Scaling"
+seoTitle: "Why Use Kubernetes ReplicaSets, Self-Healing and Scaling"
 seoDescription: "Understand why bare Kubernetes Pods are fragile and how ReplicaSets provide self-healing, horizontal scaling, and reliable Pod management."
 ---
 

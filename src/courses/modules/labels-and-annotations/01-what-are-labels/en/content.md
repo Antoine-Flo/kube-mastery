@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Labels: Key-Value Pairs, Syntax, Filtering
+seoTitle: Kubernetes Labels, Key-Value Pairs, Syntax, Filtering
 seoDescription: Learn how to use Kubernetes labels to organize resources, connect Services to Pods, and filter workloads with kubectl selectors.
 ---
 

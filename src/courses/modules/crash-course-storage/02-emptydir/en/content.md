@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes emptyDir: Sidecar Pattern, Shared Scratch Space"
+seoTitle: "Kubernetes emptyDir, Sidecar Pattern, Shared Scratch Space"
 seoDescription: "Explore emptyDir volumes for sharing temporary data between containers in the same Pod, covering the sidecar pattern and memory-backed storage."
 ---
 

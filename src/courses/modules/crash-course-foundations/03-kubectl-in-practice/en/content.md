@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes kubectl in Practice: get, describe, apply"
+seoTitle: "Kubernetes kubectl in Practice, get, describe, apply"
 seoDescription: "Learn how to use kubectl to inspect resources, stream logs, apply manifests, and manage your Kubernetes cluster from the command line."
 ---
 

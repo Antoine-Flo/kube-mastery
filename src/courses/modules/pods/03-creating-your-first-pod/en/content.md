@@ -1,5 +1,5 @@
 ---
-seoTitle: "Create Kubernetes Pods: Imperative vs Declarative, kubectl"
+seoTitle: "Create Kubernetes Pods, Imperative vs Declarative, kubectl"
 seoDescription: "Learn how to create Kubernetes Pods imperatively with kubectl run and declaratively with kubectl apply, and trace the full scheduling flow."
 ---
 

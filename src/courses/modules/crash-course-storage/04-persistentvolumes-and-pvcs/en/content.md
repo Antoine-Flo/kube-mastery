@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes PersistentVolumes and PVCs: Binding, Access Modes"
+seoTitle: "Kubernetes PersistentVolumes and PVCs, Binding, Access Modes"
 seoDescription: "Understand how Kubernetes PersistentVolumes and PVCs decouple durable storage from Pods, covering binding, access modes, and reclaim policies."
 ---
 

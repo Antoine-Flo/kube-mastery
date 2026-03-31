@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes Services: Stable IPs, DNS, and Load Balancing"
+seoTitle: "Kubernetes Services, Stable IPs, DNS, and Load Balancing"
 seoDescription: "Understand why Kubernetes Services exist, how they provide a stable IP and DNS name for dynamic Pods, and how kube-proxy handles load balancing."
 ---
 

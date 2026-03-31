@@ -1,5 +1,5 @@
 ---
-seoTitle: "Evolution of Deployment: Bare Metal, VMs, Containers, K8s"
+seoTitle: "Evolution of Deployment, Bare Metal, VMs, Containers, K8s"
 seoDescription: "Explore the evolution from bare metal servers through virtual machines to containers and Kubernetes orchestration, and why each era emerged."
 ---
 

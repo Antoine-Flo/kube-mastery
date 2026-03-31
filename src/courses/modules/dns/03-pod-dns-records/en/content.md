@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes Pod DNS: Hostnames, StatefulSets, DNS Policy"
+seoTitle: "Kubernetes Pod DNS, Hostnames, StatefulSets, DNS Policy"
 seoDescription: "Explore how Kubernetes assigns DNS records to Pods, configure stable hostnames for StatefulSets via headless Services, and customize DNS policy and host aliases."
 ---
 

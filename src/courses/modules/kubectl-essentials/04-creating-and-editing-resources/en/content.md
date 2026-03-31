@@ -1,5 +1,5 @@
 ---
-seoTitle: "Manage Kubernetes Resources: apply, edit, patch, set image"
+seoTitle: "Manage Kubernetes Resources, apply, edit, patch, set image"
 seoDescription: "Learn how to create and update Kubernetes resources using kubectl apply, edit, patch, and set image for idempotent declarative workflows."
 ---
 

@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Events: Warnings, Field Selectors, Retention
+seoTitle: Kubernetes Events, Warnings, Field Selectors, Retention
 seoDescription: Explore Kubernetes Event objects to understand scheduling, image pull failures, and crash loops using kubectl get events and field selectors.
 ---
 

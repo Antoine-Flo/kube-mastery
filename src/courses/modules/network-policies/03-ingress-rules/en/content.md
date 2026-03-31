@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Ingress Rules: podSelector, Namespaces, Deny-All
+seoTitle: Kubernetes Ingress Rules, podSelector, Namespaces, Deny-All
 seoDescription: Learn how to write Kubernetes NetworkPolicy ingress rules using pod and namespace selectors, ipBlock, and the deny-all pattern for inbound traffic control.
 ---
 

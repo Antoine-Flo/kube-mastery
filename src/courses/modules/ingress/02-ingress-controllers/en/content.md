@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes Ingress Controllers: nginx, Traefik, IngressClass"
+seoTitle: "Kubernetes Ingress Controllers, nginx, Traefik, IngressClass"
 seoDescription: "Explore how Kubernetes Ingress controllers work, compare popular options like ingress-nginx and Traefik, and learn to install a controller and use IngressClass."
 ---
 

@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Logging: stdout, kubectl logs, CrashLoopBackOff
+seoTitle: Kubernetes Logging, stdout, kubectl logs, CrashLoopBackOff
 seoDescription: Learn how Kubernetes container logging works, how to stream and filter logs with kubectl logs, and how to debug CrashLoopBackOff with --previous.
 ---
 

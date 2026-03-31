@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes NetworkPolicy Structure: YAML, Selectors, Ports
+seoTitle: Kubernetes NetworkPolicy Structure, YAML, Selectors, Ports
 seoDescription: Understand the full NetworkPolicy manifest structure, including podSelector, policyTypes, ingress and egress rules, and AND vs OR selector logic.
 ---
 

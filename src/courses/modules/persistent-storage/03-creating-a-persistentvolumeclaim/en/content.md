@@ -1,5 +1,5 @@
 ---
-seoTitle: Create a Kubernetes PersistentVolumeClaim: Binding Process
+seoTitle: Create a Kubernetes PersistentVolumeClaim, Binding Process
 seoDescription: Learn how to write a Kubernetes PersistentVolumeClaim, understand the binding algorithm, diagnose pending PVCs, and see how dynamic provisioning works.
 ---
 

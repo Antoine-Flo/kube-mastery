@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes Control Plane: kube-apiserver, etcd, Controllers"
+seoTitle: "Kubernetes Control Plane, kube-apiserver, etcd, Controllers"
 seoDescription: "Understand the four core Kubernetes control plane components, kube-apiserver, etcd, kube-scheduler, and kube-controller-manager, and how they work together."
 ---
 

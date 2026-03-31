@@ -1,5 +1,5 @@
 ---
-seoTitle: "Kubernetes Object Model: apiVersion, kind, spec, metadata"
+seoTitle: "Kubernetes Object Model, apiVersion, kind, spec, metadata"
 seoDescription: "Understand the Kubernetes object model, how every resource is a persistent declaration in etcd, and the role of apiVersion, kind, metadata, and spec fields."
 ---
 

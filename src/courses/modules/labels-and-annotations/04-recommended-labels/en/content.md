@@ -1,5 +1,5 @@
 ---
-seoTitle: Kubernetes Recommended Labels: app.kubernetes.io Convention
+seoTitle: Kubernetes Recommended Labels, app.kubernetes.io Convention
 seoDescription: Learn the app.kubernetes.io standard label convention to make dashboards, cost tools, and deployment systems work out of the box.
 ---
 
