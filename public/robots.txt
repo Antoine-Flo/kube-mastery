@@ -2,8 +2,6 @@ User-agent: *
 Allow: /
 
 Disallow: /api/
-Disallow: /en/auth
-Disallow: /fr/auth
 Disallow: /en/profile
 Disallow: /fr/profile
 Disallow: /en/tasks
