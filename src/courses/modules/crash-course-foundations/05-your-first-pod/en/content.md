@@ -129,7 +129,7 @@ You should see nginx's startup messages. This is the process's stdout, just as i
 **5. Run a command inside the running container:**
 
 ```bash
-kubectl exec first-pod -- nginx -v
+kubectl exec first-pod -- env
 ```
 
 `kubectl exec` runs a single command in a running container, without needing a shell. For an interactive session, pass `-it` and specify `bash` or `sh`:

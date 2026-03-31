@@ -593,6 +593,14 @@ describe('KubectlCommandHandler', () => {
       )
     })
 
+    it('should return error for missing kubectl command before redirection', () => {
+      const result = handler.execute('> pods.yaml', context)
+      expect(result.ok).toBe(false)
+      expect(renderer.getOutput()).toContain(
+        'missing kubectl command before output redirection'
+      )
+    })
+
     it('should render initial snapshot and updates in watch mode', () => {
       const createResult = handler.execute(
         'kubectl run watch-one --image=nginx',
@@ -848,6 +856,14 @@ describe('KubectlCommandHandler', () => {
       expect(result.ok).toBe(false)
       expect(renderer.getOutput()).toContain(
         'unsupported output redirection syntax for follow mode'
+      )
+    })
+
+    it('should reject kubectl logs with previous and follow together', () => {
+      const result = handler.execute('kubectl logs --previous -f log-demo', context)
+      expect(result.ok).toBe(false)
+      expect(renderer.getOutput()).toContain(
+        'error: only one of follow (-f) or previous (-p) is allowed'
       )
     })
 

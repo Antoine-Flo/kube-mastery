@@ -9,6 +9,7 @@ import { buildModule } from './domain'
 import { createOverviewGlobAdapter } from './glob-adapter'
 import type {
   CourseOverview,
+  LessonFrontmatter,
   LessonLocation,
   OverviewModule,
   OverviewType
@@ -26,6 +27,7 @@ function getAdapter() {
 
 export type {
   CourseOverview,
+  LessonFrontmatter,
   OverviewModule,
   OverviewLesson,
   OverviewType,
@@ -183,7 +185,7 @@ export function getLessonContent(
   id: string,
   lessonId: string,
   lang: UiLang
-): MarkdownInstance<Record<string, unknown>> | null {
+): MarkdownInstance<LessonFrontmatter> | null {
   const overview =
     type === 'courses'
       ? getCourseOverview(id, lang)

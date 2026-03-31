@@ -2,7 +2,7 @@ import type { MarkdownInstance } from 'astro'
 import type { Quiz } from '../../types/quiz'
 import type { UiLang } from '../courses/types'
 import type { OverviewIndexPort, LessonContentPort } from './port'
-import type { LessonLocation } from './types'
+import type { LessonFrontmatter, LessonLocation } from './types'
 import { stripNumericPrefix, parseH1 } from '../utils'
 
 const lessonTitleGlob = import.meta.glob<string>(
@@ -27,9 +27,10 @@ const contentRawGlob = import.meta.glob<string>(
     import: 'default'
   }
 )
-const contentAsMarkdownGlob = import.meta.glob<
-  MarkdownInstance<Record<string, unknown>>
->('../../courses/modules/**/content.md', { eager: true })
+const contentAsMarkdownGlob = import.meta.glob<MarkdownInstance<LessonFrontmatter>>(
+  '../../courses/modules/**/content.md',
+  { eager: true }
+)
 const quizGlob = import.meta.glob<{ quiz?: Quiz }>(
   '../../courses/modules/**/quiz.ts',
   { eager: true }
@@ -239,7 +240,7 @@ const contentPort: LessonContentPort = {
   getLessonContent(
     loc: LessonLocation,
     lang: UiLang
-  ): MarkdownInstance<Record<string, unknown>> | null {
+  ): MarkdownInstance<LessonFrontmatter> | null {
     const found = Object.keys(contentAsMarkdownGlob).find((k) =>
       k.endsWith(contentPath(loc, lang))
     )

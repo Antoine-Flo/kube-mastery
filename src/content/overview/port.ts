@@ -1,5 +1,5 @@
 import type { UiLang } from '../courses/types'
-import type { LessonLocation } from './types'
+import type { LessonFrontmatter, LessonLocation } from './types'
 import type { Quiz } from '../../types/quiz'
 import type { MarkdownInstance } from 'astro'
 
@@ -18,6 +18,6 @@ export interface LessonContentPort {
   getLessonContent(
     loc: LessonLocation,
     lang: UiLang
-  ): MarkdownInstance<Record<string, unknown>> | null
+  ): MarkdownInstance<LessonFrontmatter> | null
   getLessonQuiz(loc: LessonLocation, lang: UiLang): Quiz | null
 }

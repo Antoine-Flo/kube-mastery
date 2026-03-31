@@ -14,9 +14,9 @@ Deployments don't create Pods directly. They manage **ReplicaSets**, and Replica
 
 ```mermaid
 graph TB
-    DEP["Deployment\nweb-app"]
-    RS1["ReplicaSet v1\n(replicas: 0, kept for rollback)"]
-    RS2["ReplicaSet v2\n(replicas: 3, active)"]
+    DEP["Deployment<br>web-app"]
+    RS1["ReplicaSet v1<br>(replicas: 0, kept for rollback)"]
+    RS2["ReplicaSet v2<br>(replicas: 3, active)"]
     P1["Pod"]
     P2["Pod"]
     P3["Pod"]

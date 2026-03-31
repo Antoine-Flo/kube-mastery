@@ -239,23 +239,23 @@ describe('InputHandler', () => {
     })
 
     it('should process escape sequences as single input', () => {
-      const handleInputSpy = vi.spyOn(inputHandler as any, 'handleInput')
+      state.addToHistory('from-history')
       inputHandler.simulateInput('\x1b[A') // Arrow up
 
-      // Should be called once for the entire escape sequence
-      expect(handleInputSpy).toHaveBeenCalledWith('\x1b[A')
+      expect(context.replaceLineWithCommand).toHaveBeenCalledWith('from-history')
     })
 
     it('should handle empty string', () => {
-      expect(() => inputHandler.simulateInput('')).not.toThrow()
+      inputHandler.simulateInput('')
+      expect(state.currentLine).toBe('')
+      expect(state.cursorPosition).toBe(1)
     })
   })
 
   describe('edge cases / error scenarios', () => {
     describe('handleInput() edge cases', () => {
       it('should handle empty data string', () => {
-        expect(() => inputHandler.handleInput('')).not.toThrow()
-        // Empty string should not modify state
+        inputHandler.handleInput('')
         expect(state.currentLine).toBe('')
       })
 
@@ -344,7 +344,7 @@ describe('InputHandler', () => {
         state.updateCurrentLine('')
         state.cursorPosition = 0
 
-        expect(() => inputHandler.handleInput('\x7f')).not.toThrow()
+        inputHandler.handleInput('\x7f')
         expect(state.currentLine).toBe('')
       })
 
@@ -352,8 +352,8 @@ describe('InputHandler', () => {
         state.updateCurrentLine('test')
         state.cursorPosition = 10 // Invalid: > line.length
 
-        // Should handle gracefully
-        expect(() => inputHandler.handleInput('\x7f')).not.toThrow()
+        inputHandler.handleInput('\x7f')
+        expect(state.currentLine.length).toBeLessThanOrEqual(4)
       })
     })
 
@@ -398,7 +398,7 @@ describe('InputHandler', () => {
           handleTabPress: vi.fn(() => {
             throw new Error('Engine error')
           })
-        } as any
+        } as unknown as ReturnType<InputHandlerContext['getAutocompleteEngine']>
 
         context.getAutocompleteEngine = vi.fn(() => throwingEngine)
 
@@ -414,7 +414,7 @@ describe('InputHandler', () => {
             // Call updateLineAndRender which will throw
             callbacks.updateLineAndRender('test', 'test')
           })
-        } as any
+        } as unknown as ReturnType<InputHandlerContext['getAutocompleteEngine']>
 
         context.getAutocompleteEngine = vi.fn(() => mockEngine)
         context.updateLineAndRender = vi.fn(() => {
@@ -430,20 +430,15 @@ describe('InputHandler', () => {
       it('should handle autocompleteEngine undefined gracefully', () => {
         context.getAutocompleteEngine = vi.fn(() => undefined)
 
-        // Should not throw
-        expect(() => {
-          inputHandler.handleInput('\t')
-        }).not.toThrow()
+        inputHandler.handleInput('\t')
+        expect(state.currentLine).toBe('')
       })
     })
 
     describe('simulateInput() edge cases', () => {
       it('should handle very long string (>10000 chars)', () => {
         const longString = 'a'.repeat(15000)
-        expect(() => {
-          inputHandler.simulateInput(longString)
-        }).not.toThrow()
-
+        inputHandler.simulateInput(longString)
         expect(state.currentLine.length).toBe(15000)
       })
 

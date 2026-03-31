@@ -1,19 +1,26 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createEventBus } from '../../../../src/core/cluster/events/EventBus'
 import { createApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
+import type { ApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
+import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 import type { FileSystem } from '../../../../src/core/shell/commands'
 import { createCommandDispatcher } from '../../../../src/core/terminal/core/CommandDispatcher'
 import { createFileSystem } from '../../../../src/core/filesystem/FileSystem'
 import { ShellContextStack } from '../../../../src/core/terminal/core/ShellContext'
 import { createMockRenderer } from '../../helpers/mockRenderer'
 import { createLogger } from '../../../../src/logger/Logger'
+import type { Logger } from '../../../../src/logger/Logger'
 import { initializeSimNetworkRuntime } from '../../../../src/core/network/SimNetworkRuntime'
+import type { SimNetworkRuntime } from '../../../../src/core/network/SimNetworkRuntime'
 
 describe('CommandDispatcher', () => {
   let fileSystem: FileSystem
   let renderer: ReturnType<typeof createMockRenderer>
   let shellContextStack: ShellContextStack
   let dispatcher: ReturnType<typeof createCommandDispatcher>
+  let apiServer: ApiServerFacade
+  let networkRuntime: SimNetworkRuntime
+  let logger: Logger
 
   beforeEach(() => {
     // Créer la structure de base /home/kube dans l'arbre
@@ -54,10 +61,10 @@ describe('CommandDispatcher', () => {
     renderer = createMockRenderer()
 
     // Créer les dépendances kubectl
-    const logger = createLogger()
+    logger = createLogger()
     const eventBus = createEventBus()
-    const apiServer = createApiServerFacade({ eventBus })
-    const networkRuntime = initializeSimNetworkRuntime(apiServer)
+    apiServer = createApiServerFacade({ eventBus })
+    networkRuntime = initializeSimNetworkRuntime(apiServer)
 
     dispatcher = createCommandDispatcher({
       fileSystem,
@@ -291,6 +298,78 @@ describe('CommandDispatcher', () => {
       expect(result.ok).toBe(true)
       // kubectl retourne un vrai résultat maintenant
       expect(renderer.getOutput()).toContain('No resources found')
+    })
+  })
+
+  describe('Dispatcher controls', () => {
+    it('returns Input locked when input is locked', () => {
+      const lockedDispatcher = createCommandDispatcher({
+        fileSystem,
+        renderer,
+        shellContextStack,
+        apiServer,
+        networkRuntime,
+        logger,
+        isInputLocked: () => true
+      })
+      const result = lockedDispatcher.execute('pwd')
+      expect(result.ok).toBe(false)
+      if (result.ok) {
+        return
+      }
+      expect(result.error).toBe('Input locked')
+    })
+
+    it('locks input and prints message at command limit', () => {
+      const lockInput = vi.fn()
+      const unlockInput = vi.fn()
+      const limitedDispatcher = createCommandDispatcher({
+        fileSystem,
+        renderer,
+        shellContextStack,
+        apiServer,
+        networkRuntime,
+        logger,
+        commandLimit: 1,
+        commandLimitMessage: 'exercise complete',
+        lockInput,
+        unlockInput
+      })
+
+      const result = limitedDispatcher.execute('pwd')
+      expect(result.ok).toBe(true)
+      expect(lockInput).toHaveBeenCalled()
+      expect(unlockInput).toHaveBeenCalled()
+      expect(renderer.getOutput()).toContain('exercise complete')
+    })
+
+    it('stops active streams and unlocks input', () => {
+      const unlockInput = vi.fn()
+      const streamingDispatcher = createCommandDispatcher({
+        fileSystem,
+        renderer,
+        shellContextStack,
+        apiServer,
+        networkRuntime,
+        logger,
+        unlockInput
+      })
+
+      apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'log-stream',
+          namespace: 'default',
+          containers: [{ name: 'app', image: 'nginx' }]
+        })
+      )
+      const streamResult = streamingDispatcher.execute('kubectl logs -f log-stream')
+      expect(streamResult.ok).toBe(true)
+      expect(streamingDispatcher.hasActiveStream()).toBe(true)
+
+      streamingDispatcher.stopActiveStream()
+      expect(unlockInput).toHaveBeenCalled()
+      expect(streamingDispatcher.hasActiveStream()).toBe(false)
     })
   })
 })

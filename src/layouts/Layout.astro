@@ -1,27 +1,49 @@
 ---
+import { SEO } from 'astro-seo'
+import { ClientRouter } from 'astro:transitions'
+import Footer from '../components/Footer.astro'
+import GlobalStyles from '../components/GlobalStyles.astro'
+import Navbar from '../components/Navbar.astro'
+import PostHog from '../components/posthog.astro'
+import Toaster from '../components/ui/Toaster.astro'
+import { getLangFromUrl } from '../i18n/utils'
+import { getLayoutAuthContext } from '../lib/auth/server'
+
+interface LayoutSeoProps {
+  title?: string
+  description?: string
+  canonical?: string
+  noindex?: boolean
+  nofollow?: boolean
+  openGraphImage?: string
+  openGraphType?: string
+  twitterImage?: string
+  twitterCard?: 'summary' | 'summary_large_image' | 'app' | 'player'
+}
+
 interface Props {
   bodyClass?: string
   showFooter?: boolean
   title?: string
   description?: string
   robots?: string
+  seo?: LayoutSeoProps
 }
-
-import { ClientRouter } from 'astro:transitions'
-import { getLangFromUrl } from '../i18n/utils'
-import Footer from '../components/Footer.astro'
-import GlobalStyles from '../components/GlobalStyles.astro'
-import Navbar from '../components/Navbar.astro'
-import PostHog from '../components/posthog.astro'
-import Toaster from '../components/ui/Toaster.astro'
-import { getLayoutAuthContext } from '../lib/auth/server'
 
 const lang = getLangFromUrl(Astro.url)
 const bodyClass = Astro.props.bodyClass
 const showFooter = Astro.props.showFooter ?? true
-const pageTitle = Astro.props.title ?? 'KubeMastery'
-const pageDescription = Astro.props.description ?? null
+const seoProps = Astro.props.seo ?? {}
+const pageTitle = seoProps.title ?? Astro.props.title ?? 'KubeMastery'
+const pageDescription = seoProps.description ?? Astro.props.description ?? null
+const canonicalUrl = seoProps.canonical ?? Astro.url.href
 const robots = Astro.props.robots ?? null
+const openGraphType = seoProps.openGraphType ?? 'article'
+const defaultPreviewImage = '/og/default.png'
+const rawOpenGraphImage = seoProps.openGraphImage ?? defaultPreviewImage
+const rawTwitterImage = seoProps.twitterImage ?? rawOpenGraphImage
+const absoluteOpenGraphImage = new URL(rawOpenGraphImage, canonicalUrl).href
+const absoluteTwitterImage = new URL(rawTwitterImage, canonicalUrl).href
 const navbarVariant = bodyClass?.includes('navbar-app') ? 'app' : 'marketing'
 
 const auth = await getLayoutAuthContext(
@@ -52,8 +74,37 @@ const auth = await getLayoutAuthContext(
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <title>{pageTitle}</title>
-    {pageDescription && <meta name="description" content={pageDescription} />}
+    <SEO
+      title={pageTitle}
+      description={pageDescription ?? undefined}
+      canonical={canonicalUrl}
+      noindex={seoProps.noindex}
+      nofollow={seoProps.nofollow}
+      openGraph={{
+        basic: {
+          title: pageTitle,
+          type: openGraphType,
+          image: absoluteOpenGraphImage,
+          url: canonicalUrl
+        },
+        optional: {
+          description: pageDescription ?? undefined,
+          locale: lang === 'fr' ? 'fr_FR' : 'en_US',
+          localeAlternate: lang === 'fr' ? ['en_US'] : ['fr_FR'],
+          siteName: 'KubeMastery'
+        },
+        image: {
+          alt: pageTitle
+        }
+      }}
+      twitter={{
+        card: seoProps.twitterCard ?? 'summary_large_image',
+        title: pageTitle,
+        description: pageDescription ?? undefined,
+        image: absoluteTwitterImage,
+        imageAlt: pageTitle
+      }}
+    />
     {robots && <meta name="robots" content={robots} />}
     <PostHog />
     <ClientRouter />

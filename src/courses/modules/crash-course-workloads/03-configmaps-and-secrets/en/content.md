@@ -104,16 +104,13 @@ spec:
 **1. Create a ConfigMap:**
 
 ```bash
-kubectl create configmap web-config \
-  --from-literal=APP_ENV=crash-course \
-  --from-literal=LOG_LEVEL=debug
+kubectl create configmap web-config --from-literal=APP_ENV=crash-course --from-literal=LOG_LEVEL=debug
 ```
 
 **2. Create a Secret:**
 
 ```bash
-kubectl create secret generic web-secret \
-  --from-literal=API_TOKEN=super-secret-token
+kubectl create secret generic web-secret --from-literal=API_TOKEN=super-secret-token
 ```
 
 **3. Inspect both:**
@@ -121,12 +118,6 @@ kubectl create secret generic web-secret \
 ```bash
 kubectl get configmap web-config -o yaml
 kubectl get secret web-secret -o yaml
-```
-
-In the Secret output, the `data` values are base64-encoded. You can decode one to verify:
-
-```bash
-echo "c3VwZXItc2VjcmV0LXRva2Vu" | base64 --decode
 ```
 
 **4. Create a Pod that consumes both:**

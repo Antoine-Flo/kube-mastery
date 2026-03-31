@@ -16,6 +16,7 @@ import { createIngress } from '../../../../../src/core/cluster/ressources/Ingres
 import { createService } from '../../../../../src/core/cluster/ressources/Service'
 import { createNamespace } from '../../../../../src/core/cluster/ressources/Namespace'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
+import { expectErr, expectOk } from '../../../helpers/resultAssertions'
 
 describe('kubectl delete handler', () => {
   let apiServer: ApiServerFacade
@@ -54,11 +55,8 @@ describe('kubectl delete handler', () => {
       const parsed = createParsedCommand({ name: undefined })
 
       const result = handleDelete(apiServer, parsed)
-
-      expect(result.ok).toBe(false)
-      if (!result.ok) {
-        expect(result.error).toContain('must specify the name')
-      }
+      const errorMessage = expectErr(result)
+      expect(errorMessage).toContain('must specify the name')
     })
   })
 
@@ -699,15 +697,12 @@ spec:
     it('should handle unknown resource type', () => {
       const parsed = createParsedCommand({
         name: 'my-resource',
-        resource: 'unknown' as any
+        resource: 'unknown' as unknown as ParsedCommand['resource']
       })
 
       const result = handleDelete(apiServer, parsed)
-
-      expect(result.ok).toBe(true)
-      if (result.ok) {
-        expect(result.value).toContain('deleted')
-      }
+      const output = expectOk(result)
+      expect(output).toContain('deleted')
     })
   })
 

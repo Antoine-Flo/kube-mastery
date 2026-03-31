@@ -9,6 +9,7 @@ import {
   getModuleOverview,
   getLessonContent,
   getLessonQuiz,
+  type LessonFrontmatter,
   type OverviewType
 } from '../../../../../content/overview/facade'
 import { getLayoutAuthContext } from '../../../../../lib/auth/server'
@@ -94,6 +95,8 @@ const allLessons = overview.content.sections.flatMap((s) =>
   s.modules.flatMap((m) => m.lessons)
 )
 const currentIndex = allLessons.findIndex((l) => l.id === lessonId)
+const currentLesson = currentIndex >= 0 ? allLessons[currentIndex] : null
+const currentLessonTitle = currentLesson?.title ?? overview.title
 const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null
 const nextLesson =
   currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null
@@ -129,9 +132,47 @@ const contentBarLabels = {
   labelContactSupport: t('lesson_contactSupport'),
   labelReloadTerminal: t('lesson_reloadTerminal')
 }
+
+function getOptionalString(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined
+  }
+  const trimmed = value.trim()
+  if (trimmed.length === 0) {
+    return undefined
+  }
+  return trimmed
+}
+
+const lessonFrontmatter = (lessonEntry.frontmatter ?? {}) as LessonFrontmatter
+const frontmatterSeoTitle = getOptionalString(lessonFrontmatter.seoTitle)
+const frontmatterSeoDescription = getOptionalString(
+  lessonFrontmatter.seoDescription
+)
+const frontmatterOpenGraphImage = getOptionalString(lessonFrontmatter.ogImage)
+const frontmatterTwitterImage = getOptionalString(lessonFrontmatter.twitterImage)
+const fallbackDescription =
+  lang === 'fr'
+    ? `Lecon ${currentLessonTitle} dans ${overview.title} sur KubeMastery, avec explications et pratique kubectl.`
+    : `Learn ${currentLessonTitle} in ${overview.title} on KubeMastery with practical kubectl-focused guidance.`
+const lessonSeoTitle =
+  frontmatterSeoTitle ?? `${currentLessonTitle} | ${overview.title} | KubeMastery`
+const lessonSeoDescription =
+  frontmatterSeoDescription ??
+  overview.shortDescription ??
+  overview.description ??
+  fallbackDescription
+const lessonSeo = {
+  title: lessonSeoTitle,
+  description: lessonSeoDescription,
+  canonical: Astro.url.href,
+  openGraphType: 'article',
+  openGraphImage: frontmatterOpenGraphImage,
+  twitterImage: frontmatterTwitterImage
+}
 ---
 
-<Layout bodyClass="lp-fill navbar-app" showFooter={false}>
+<Layout bodyClass="lp-fill navbar-app" showFooter={false} seo={lessonSeo}>
   <ContentWithTerminalLayout
     seedName={seedName}
     lang={lang}

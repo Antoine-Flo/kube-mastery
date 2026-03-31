@@ -446,7 +446,7 @@ describe('KubectlAutocompleteProvider', () => {
     describe('edge cases', () => {
       it('should return empty array when clusterState is missing', () => {
         const contextWithoutClusterState: AutocompleteContext = {
-          clusterState: null as any,
+          clusterState: null as unknown as AutocompleteContext['clusterState'],
           fileSystem: mockContext.fileSystem
         }
         const results = provider.complete(
@@ -459,7 +459,7 @@ describe('KubectlAutocompleteProvider', () => {
 
       it('should return empty array when clusterState does not have getPods method', () => {
         const contextWithoutMethods: AutocompleteContext = {
-          clusterState: {} as any,
+          clusterState: {} as unknown as AutocompleteContext['clusterState'],
           fileSystem: mockContext.fileSystem
         }
         const results = provider.complete(
@@ -492,7 +492,9 @@ describe('KubectlAutocompleteProvider', () => {
   describe('edge cases / error scenarios', () => {
     describe('match() edge cases', () => {
       it('should not match when tokens[0] is undefined', () => {
-        expect(provider.match([undefined as any], '', '')).toBe(false)
+        expect(
+          provider.match([undefined as unknown as string], '', '')
+        ).toBe(false)
       })
 
       it('should not match when tokens is empty array', () => {

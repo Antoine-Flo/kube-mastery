@@ -148,6 +148,47 @@ describe('ShellCommandHandler', () => {
       expect(renderer.getOutput()).toContain('HOME=/home/kube')
     })
 
+    it('should return network runtime error for curl when network is unavailable', () => {
+      const contextWithoutNetwork: CommandContext = {
+        ...context,
+        networkRuntime: undefined as unknown as CommandContext['networkRuntime']
+      }
+      const result = handler.execute('curl svc.default.svc.cluster.local', contextWithoutNetwork)
+      expect(result.ok).toBe(false)
+      if (result.ok) {
+        return
+      }
+      expect(result.error).toContain('network runtime is not available')
+      expect(renderer.getOutput()).toContain('network runtime is not available')
+    })
+
+    it('should return not found when env is requested in stale container context', () => {
+      const containerFsState = {
+        currentPath: '/',
+        tree: {
+          type: 'directory' as const,
+          name: 'root',
+          path: '/',
+          children: new Map(),
+          createdAt: '',
+          modifiedAt: ''
+        }
+      }
+      shellContextStack.pushContainerContext(
+        'missing-pod',
+        'main',
+        'default',
+        containerFsState
+      )
+      const result = handler.execute('env', context)
+      expect(result.ok).toBe(false)
+      if (result.ok) {
+        return
+      }
+      expect(result.error).toContain('pods "missing-pod" not found')
+      expect(renderer.getOutput()).toContain('pods "missing-pod" not found')
+    })
+
     it('should handle commands with flags', () => {
       const result = handler.execute('ls -l', context)
       expect(result.ok).toBe(true)

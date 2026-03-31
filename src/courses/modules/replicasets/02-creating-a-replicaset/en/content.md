@@ -1,3 +1,8 @@
+---
+seoTitle: Create a Kubernetes ReplicaSet, manifest, selector, and verification
+seoDescription: Learn how to create a ReplicaSet in Kubernetes, validate selector and template labels, and verify desired, current, and ready pods with kubectl.
+---
+
 # Creating a ReplicaSet
 
 Now that you understand _why_ ReplicaSets exist, it's time to learn _how_ to create one. A ReplicaSet manifest follows the same structure as every other Kubernetes object: `apiVersion`, `kind`, `metadata`, and `spec`. But the `spec` section has a few fields that work together in a specific way, and understanding those relationships will save you from the most common mistakes.

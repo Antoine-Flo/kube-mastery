@@ -1,5 +1,12 @@
 import type { MarkdownInstance } from 'astro'
 
+export interface LessonFrontmatter {
+  seoTitle?: string
+  seoDescription?: string
+  ogImage?: string
+  twitterImage?: string
+}
+
 export interface OverviewLesson {
   id: string
   title: string
