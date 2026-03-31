@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Multi-Namespace: Teams, Quotas, Network Isolation
+seoDescription: Explore when to use multiple Kubernetes namespaces for environment separation, team isolation, ResourceQuotas, and NetworkPolicies, and when not to.
+---
+
 # When and How to Use Multiple Namespaces
 
 Creating namespaces is easy. Knowing _when_ and _how_ to use them well is a design question that has a meaningful impact on your cluster's maintainability, security, and operational clarity. This lesson explores the most common patterns for namespace usage, the situations where multiple namespaces add real value, and just as importantly, the situations where they add unnecessary complexity.

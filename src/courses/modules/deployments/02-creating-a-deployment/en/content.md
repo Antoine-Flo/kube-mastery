@@ -1,3 +1,8 @@
+---
+seoTitle: "Create a Kubernetes Deployment: Manifest, Apply, Inspect"
+seoDescription: "Learn how to write a Deployment manifest, apply it with kubectl, inspect the Deployment-ReplicaSet-Pod hierarchy, and monitor rollout status."
+---
+
 # Creating a Deployment
 
 Now that you understand what a Deployment is and why it exists, it's time to create one. In this lesson you'll write a complete Deployment manifest, apply it to the cluster, and explore the objects it creates at each level of the hierarchy. You'll also learn the imperative shortcut for when you need to spin something up quickly.

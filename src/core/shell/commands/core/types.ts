@@ -8,6 +8,7 @@ export type ShellCommand =
   | 'cd'
   | 'ls'
   | 'pwd'
+  | 'sleep'
   | 'mkdir'
   | 'touch'
   | 'cat'

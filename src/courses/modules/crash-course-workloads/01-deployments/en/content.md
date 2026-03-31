@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Deployments: ReplicaSets, Updates, Rollbacks"
+seoDescription: "Learn how Kubernetes Deployments manage Pod lifecycle using ReplicaSets, enabling zero-downtime rolling updates and instant rollbacks to previous versions."
+---
+
 # Deployments
 
 In the previous module you created a bare Pod and noticed what happens when you delete it: it stays deleted. There's no controller watching it, no process that notices it's gone and starts a replacement. If the node it ran on goes offline, the Pod is lost with it. Bare Pods are useful for exploration, but they're not how you run real applications in Kubernetes.

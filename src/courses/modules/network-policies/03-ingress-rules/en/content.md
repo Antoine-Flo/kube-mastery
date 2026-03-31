@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Ingress Rules: podSelector, Namespaces, Deny-All
+seoDescription: Learn how to write Kubernetes NetworkPolicy ingress rules using pod and namespace selectors, ipBlock, and the deny-all pattern for inbound traffic control.
+---
+
 # Ingress Rules, Controlling Inbound Traffic
 
 When people talk about "locking down" a Kubernetes workload, they usually mean controlling who can reach it. An ingress rule specifies which traffic is permitted to flow _into_ the selected Pods. Every connection attempt that doesn't match a rule is silently dropped.

@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Ingress: Host Routing, Path Routing, TLS"
+seoDescription: "Learn what Kubernetes Ingress is, how it enables host-based and path-based routing with TLS termination, and why it replaces multiple LoadBalancer Services."
+---
+
 # What Is Ingress?
 
 As soon as a Kubernetes application needs to be accessed from the outside world, you need a strategy for getting external traffic into your cluster. For simple cases, a Service of type `LoadBalancer` does the job. But once your application grows beyond a single component, the LoadBalancer-per-Service approach starts to show its cracks, and that is exactly the problem Ingress was designed to solve.

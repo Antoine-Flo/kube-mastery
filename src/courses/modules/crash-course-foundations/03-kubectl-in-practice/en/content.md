@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes kubectl in Practice: get, describe, apply"
+seoDescription: "Learn how to use kubectl to inspect resources, stream logs, apply manifests, and manage your Kubernetes cluster from the command line."
+---
+
 # kubectl in Practice
 
 `kubectl` is the command-line tool you use to interact with a Kubernetes cluster. Everything you do - creating a Deployment, inspecting a crashed Pod, streaming logs, deleting a Service - goes through this single binary. It translates your commands into HTTP calls to the API server, and formats the responses back into readable output. Knowing how to use it well is probably the most transferable skill in the entire Kubernetes ecosystem.

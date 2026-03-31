@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes ConfigMaps and Secrets: Injection, Best Practices"
+seoDescription: "Learn how to use Kubernetes ConfigMaps for non-sensitive configuration and Secrets for sensitive data, injecting values as environment variables or files."
+---
+
 # ConfigMaps and Secrets
 
 The container image contains your application code and its dependencies. It should not contain configuration values like database URLs, API keys, feature flags, or port numbers. Baking configuration into the image means rebuilding and redeploying every time a configuration value changes - even something as trivial as a log level. It also means the same image can't run in multiple environments without modification, and sensitive values end up embedded in a layer that could be extracted or leaked.
@@ -132,7 +137,7 @@ spec:
   containers:
     - name: app
       image: busybox:1.36
-      command: ['sh', '-c', 'env | sort && sleep 3600']
+      command: ['sleep', '3600']
       env:
         - name: APP_ENV
           valueFrom:
@@ -156,13 +161,14 @@ kubectl apply -f env-pod.yaml
 kubectl get pod env-pod
 ```
 
-**5. Read the container logs to verify the injected values:**
+**5. Verify the environment variables are consumed by the container:**
 
 ```bash
-kubectl logs env-pod
+kubectl describe pod env-pod
+kubectl exec env-pod -- env
 ```
 
-Scroll through the sorted environment variables. You should find `APP_ENV=crash-course`, `LOG_LEVEL=debug`, and `API_TOKEN=super-secret-token` among the output.
+In the `kubectl exec` output, you should find `APP_ENV=crash-course`, `LOG_LEVEL=debug`, and `API_TOKEN=super-secret-token`.
 
 **6. Clean up:**
 

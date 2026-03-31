@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes ConfigMap and Secret Volumes: File Injection"
+seoDescription: "Learn how to mount ConfigMaps and Secrets as files in Kubernetes Pods, enabling file-based configuration and automatic live updates when values change."
+---
+
 # ConfigMap and Secret Volumes
 
 In the workloads module you learned to inject ConfigMap and Secret values as environment variables. That works well for simple scalar values - a log level, a port number, a feature flag. But some applications need their configuration as files. An nginx server expects a `.conf` file in a specific directory. A TLS-enabled application needs certificate and key files on disk. A complex app might have a multi-section configuration file with dozens of settings that are cumbersome to express as individual environment variables.

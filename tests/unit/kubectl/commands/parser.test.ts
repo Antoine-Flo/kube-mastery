@@ -579,6 +579,18 @@ describe('kubectl parser - describe', () => {
     expect(result.value.name).toBe('sim-worker')
   })
 
+  it('should parse node describe command without name', () => {
+    const result = parseCommand('kubectl describe node')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('nodes')
+    expect(result.value.name).toBeUndefined()
+  })
+
   it('should parse node alias "no" for describe', () => {
     const result = parseCommand('kubectl describe no sim-worker')
 
@@ -613,6 +625,36 @@ describe('kubectl parser - describe', () => {
 
     expect(result.value.resource).toBe('deployments')
     expect(result.value.name).toBe('web-app')
+  })
+
+  it('should parse describe command with label selector and no name', () => {
+    const result = parseCommand('kubectl describe pod -l app=probed')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.name).toBeUndefined()
+    expect(result.value.selector).toEqual({
+      requirements: [
+        {
+          key: 'app',
+          operator: 'Equals',
+          values: ['probed']
+        }
+      ]
+    })
+  })
+
+  it('should reject describe command without name or selector', () => {
+    const result = parseCommand('kubectl describe pod')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('describe requires a resource name')
+    }
   })
 })
 

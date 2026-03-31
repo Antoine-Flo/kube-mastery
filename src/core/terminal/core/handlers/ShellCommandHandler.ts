@@ -14,6 +14,40 @@ import {
 import type { CommandContext } from '../CommandContext'
 import type { CommandHandler } from '../CommandHandler'
 
+const parseSleepDurationMs = (
+  args: string[]
+): ExecutionResult & { durationMs?: number } => {
+  if (args.length === 0) {
+    return error('sleep: missing operand')
+  }
+  if (args.length > 1) {
+    return error('sleep: too many arguments')
+  }
+  const rawDuration = args[0].trim()
+  if (rawDuration === 'infinity' || rawDuration === 'inf') {
+    return {
+      ok: true,
+      value: '',
+      durationMs: Number.POSITIVE_INFINITY
+    }
+  }
+  const seconds = Number(rawDuration)
+  if (!Number.isFinite(seconds) || Number.isNaN(seconds) || seconds < 0) {
+    return error(`sleep: invalid time interval '${args[0]}'`)
+  }
+  return {
+    ok: true,
+    value: '',
+    durationMs: Math.floor(seconds * 1000)
+  }
+}
+
+const restorePromptAfterSleep = (context: CommandContext): void => {
+  context.output.showCursor()
+  context.renderer.write(context.shellContextStack.getCurrentPrompt())
+  context.renderer.focus()
+}
+
 export class ShellCommandHandler implements CommandHandler {
   canHandle(command: string): boolean {
     // Vérifie si la commande est une commande shell valide
@@ -27,6 +61,29 @@ export class ShellCommandHandler implements CommandHandler {
     if (!parseResult.ok) {
       context.output.writeError(parseResult.error)
       return error(parseResult.error)
+    }
+    if (parseResult.value.command === 'sleep') {
+      const parsedSleep = parseSleepDurationMs(parseResult.value.args)
+      if (!parsedSleep.ok || parsedSleep.durationMs == null) {
+        const sleepError = parsedSleep.ok ? 'sleep: invalid duration' : parsedSleep.error
+        context.output.writeError(sleepError)
+        return error(sleepError)
+      }
+      if (
+        !Number.isFinite(parsedSleep.durationMs) ||
+        context.startStream == null ||
+        context.stopStream == null
+      ) {
+        return success('')
+      }
+      const timeoutId = setTimeout(() => {
+        context.stopStream?.()
+        restorePromptAfterSleep(context)
+      }, parsedSleep.durationMs)
+      context.startStream(() => {
+        clearTimeout(timeoutId)
+      })
+      return success('')
     }
 
     // Créer l'executor avec le filesystem et l'editor modal
@@ -93,7 +150,8 @@ export class ShellCommandHandler implements CommandHandler {
           }
           return buildContainerEnvironmentVariables(
             podResult.value,
-            containerInfo.containerName
+            containerInfo.containerName,
+            context.apiServer
           )
         },
         onExit: () => {

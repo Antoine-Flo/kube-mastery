@@ -1,3 +1,8 @@
+---
+seoTitle: "Why Kubernetes? Self-Healing, Scheduling, Reconciliation"
+seoDescription: "Learn how Kubernetes solves container orchestration at scale through reconciliation, self-healing, and automated scheduling across a cluster."
+---
+
 # Why Kubernetes?
 
 Running one containerized application is manageable, write a Dockerfile, build an image, run a container. Real systems are usually multiple services that must run together, stay available under load, recover from failure, and roll out updates without downtime. At that point, the challenge is no longer containers themselves, it is orchestration, and that is what Kubernetes is built for.

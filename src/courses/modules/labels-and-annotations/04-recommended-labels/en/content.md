@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Recommended Labels: app.kubernetes.io Convention
+seoDescription: Learn the app.kubernetes.io standard label convention to make dashboards, cost tools, and deployment systems work out of the box.
+---
+
 # Recommended Labels, The `app.kubernetes.io/*` Convention
 
 Labels are flexible by design. Kubernetes doesn't force any particular naming scheme, you're free to call your labels whatever you like. That freedom is powerful, but it creates a common problem: every team invents its own conventions, and the result is a cluster where no two applications look the same to the tools that need to understand them.

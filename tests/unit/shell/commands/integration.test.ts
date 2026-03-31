@@ -169,6 +169,16 @@ describe('Shell Commands Integration', () => {
     }
   })
 
+  it('should execute sleep command', () => {
+    const executor = createShellExecutor(fileSystem)
+    const result = executor.execute('sleep 1')
+
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.value).toBe('')
+    }
+  })
+
   it('should execute debug command', () => {
     const executor = createShellExecutor(fileSystem)
     const result = executor.execute('debug')

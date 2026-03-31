@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Persistent Storage: PVs, PVCs, and Binding
+seoDescription: Understand how Kubernetes PersistentVolumes and PersistentVolumeClaims decouple storage from Pods, how binding works, and when to use dynamic provisioning.
+---
+
 # PersistentVolumes and PersistentVolumeClaims
 
 One of the most fundamental rules of running applications in Kubernetes is that Pods are ephemeral. They get created, they run for a while, and then they disappear, whether because of a crash, a rolling update, or a rescheduling event. When a Pod disappears, everything inside its container filesystem disappears with it. For a stateless web server, that is perfectly fine. But for a database, a message broker, or any application that needs to preserve state between restarts, this is a serious problem.

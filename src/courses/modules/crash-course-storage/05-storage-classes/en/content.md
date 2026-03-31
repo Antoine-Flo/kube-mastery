@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Storage Classes and Dynamic Provisioning"
+seoDescription: "Explore how Kubernetes StorageClasses enable dynamic PersistentVolume provisioning on demand, eliminating the need for manual PV creation by admins."
+---
+
 # Storage Classes and Dynamic Provisioning
 
 In the previous lesson, you created a PersistentVolume manually before creating a PVC. That works, but in practice it creates a problem: someone has to create PVs ahead of time, predict what sizes and access modes applications will need, and manage a pool of pre-provisioned storage. In a cloud environment, where storage can be provisioned programmatically on demand, this manual approach is unnecessary overhead.

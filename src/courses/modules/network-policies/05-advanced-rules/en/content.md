@@ -1,3 +1,8 @@
+---
+seoTitle: Advanced Kubernetes NetworkPolicy: Deny-All, Port Ranges
+seoDescription: Explore advanced NetworkPolicy patterns in Kubernetes: default deny-all, cross-namespace AND logic, port ranges, and additive policy composition.
+---
+
 # Advanced NetworkPolicy Patterns
 
 You now understand the building blocks: how NetworkPolicies select Pods, how ingress rules work, and how egress rules work. Real production clusters don't use a single simple policy, they use layered strategies, multiple overlapping policies, and nuanced selectors. This lesson covers the patterns you'll reach for when you need to go beyond the basics.

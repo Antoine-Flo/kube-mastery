@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Scaling and Rolling Updates: replicas, rollout"
+seoDescription: "Learn how to scale Kubernetes Deployments and perform controlled rolling updates, including maxSurge, maxUnavailable, and rollout monitoring."
+---
+
 # Scaling and Rolling Updates
 
 Once you have a Deployment running, two of the most common operations you'll perform are adjusting the number of replicas and releasing a new version of your application. Kubernetes makes both of these safe and predictable, and understanding how they work under the hood will help you debug them when something goes wrong.

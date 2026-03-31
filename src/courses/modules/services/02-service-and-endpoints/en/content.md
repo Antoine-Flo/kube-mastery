@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Endpoints, Headless Services, and EndpointSlices"
+seoDescription: "Explore how Kubernetes Endpoints track ready Pod IPs behind a Service, how readiness probes gate traffic, and when to use headless Services."
+---
+
 # Services and Endpoints
 
 In the previous lesson you saw that a Service provides a stable IP and DNS name in front of a dynamic group of Pods. But how does Kubernetes actually keep track of _which_ Pod IPs are currently behind a Service? The answer is an object you may never have heard of: the **Endpoints** object (or its modern successor, **EndpointSlices**). Understanding this layer helps you debug Service connectivity issues and opens the door to some advanced patterns.

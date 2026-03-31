@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes ClusterIP: Stable Internal Access, Selectors"
+seoDescription: "Learn how Kubernetes ClusterIP Services provide a stable virtual IP and DNS name for internal service-to-service communication using label selectors."
+---
+
 # ClusterIP: Stable Internal Access
 
 ClusterIP is the default Service type, and the foundation for all other types. It solves the problem you saw in the previous lesson: it provides a stable virtual IP address and DNS name in front of a dynamic group of Pods, so that clients inside the cluster always have a reliable way to reach them, regardless of how many times the Pods are replaced.

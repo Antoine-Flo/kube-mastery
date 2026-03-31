@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Pod DNS: Hostnames, StatefulSets, DNS Policy"
+seoDescription: "Explore how Kubernetes assigns DNS records to Pods, configure stable hostnames for StatefulSets via headless Services, and customize DNS policy and host aliases."
+---
+
 # Pod DNS Records
 
 You have seen how Services get clean, predictable DNS names that your applications can rely on. Pods also participate in the DNS system, but in a more nuanced way. Pod DNS records exist and can be very powerful, but they work differently from Service records and serve specific use cases, most notably giving stateful applications like databases a stable, addressable identity for each individual instance.

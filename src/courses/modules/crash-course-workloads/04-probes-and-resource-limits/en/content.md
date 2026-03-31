@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Probes and Resource Limits: Liveness, Readiness"
+seoDescription: "Explore Kubernetes liveness, readiness, and startup probes alongside resource requests and limits to keep containers healthy and prevent noisy neighbors."
+---
+
 # Probes and Resource Limits
 
 A running container is not necessarily a healthy container. A web server might have started successfully but now be in a deadlock, unable to process any requests. A new container might be starting up and not yet ready to receive traffic. Without any way for Kubernetes to detect these states, it would blindly route traffic to broken containers and keep them running indefinitely. Probes are how you give Kubernetes the ability to actively check the health of your containers, and resource limits are how you prevent one misbehaving container from affecting everything else on the same node.

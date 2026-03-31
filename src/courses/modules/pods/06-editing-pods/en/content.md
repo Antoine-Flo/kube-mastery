@@ -1,3 +1,8 @@
+---
+seoTitle: "Editing Kubernetes Pods: Immutability, replace, set image"
+seoDescription: "Understand Kubernetes Pod spec immutability, when kubectl edit fails, and how to update Pods using replace --force or kubectl set image."
+---
+
 # Editing and Modifying Pods
 
 You've created a Pod, it's running, and now you need to change something, update the container image, fix a typo in an environment variable, or add a resource limit. Your first instinct might be to open the manifest, change the field, and run `kubectl apply -f pod.yaml` again. In many cases this will work, but for Pods specifically, you're going to run into a surprising limitation.

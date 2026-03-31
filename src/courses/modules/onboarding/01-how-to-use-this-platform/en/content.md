@@ -1,3 +1,8 @@
+---
+seoTitle: KubeMastery: Navigate the Terminal and Cluster Interface
+seoDescription: Learn how to use the KubeMastery platform, including the terminal panel, cluster visualizer, reset button, and how to navigate course lessons.
+---
+
 # Welcome 👋
 
 <!-- <img class="meme" src="https://i.imgflip.com/amuq3d.jpg" title="made at imgflip.com"/> -->

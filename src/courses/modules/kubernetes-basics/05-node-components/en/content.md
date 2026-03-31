@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Worker Node Components: kubelet, kube-proxy, CRI"
+seoDescription: "Explore the three components on every Kubernetes worker node: kubelet for pod management, kube-proxy for networking, and the container runtime."
+---
+
 # Worker Node Components
 
 If the control plane is the brain that plans and decides, the worker nodes are the hands that actually do the work. Every container your application runs in lives on a worker node, but a worker node is not just a machine with containers on it. It has a specific set of software components that allow it to participate in the cluster, receive instructions from the control plane, run workloads correctly, and handle network traffic.

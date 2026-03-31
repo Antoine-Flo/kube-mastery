@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Component Logs: API Server, Scheduler, CoreDNS
+seoDescription: Learn how to access Kubernetes control plane logs using kubectl logs for static Pods and journalctl for kubelet, with a per-symptom component guide.
+---
+
 # Monitoring Cluster Component Logs
 
 So far in this module we've looked at logging for your own application containers. But Kubernetes itself is composed of several components that generate their own logs, the API server, the scheduler, the controller manager, etcd, CoreDNS, and the kubelet. When something goes wrong at the infrastructure level, these component logs are where you look for answers.

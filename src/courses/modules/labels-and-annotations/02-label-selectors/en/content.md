@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Label Selectors: Equality, Set-Based Filtering
+seoDescription: Understand equality-based and set-based label selectors in Kubernetes, and how matchLabels, matchExpressions, and Services use them to connect resources.
+---
+
 # Label Selectors
 
 Labels would be little more than decorative metadata without a way to query them. Label selectors are the query language of Kubernetes, the mechanism that turns static key-value pairs into a dynamic, filterable, connectable system. Wherever you see one Kubernetes object pointing at another, a label selector is almost certainly doing the work behind the scenes.

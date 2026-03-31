@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Metrics Server: kubectl top, CPU, Memory, HPA
+seoDescription: Understand how Metrics Server aggregates resource usage in Kubernetes, enabling kubectl top nodes, kubectl top pods, and the Horizontal Pod Autoscaler.
+---
+
 # Monitoring with Metrics Server
 
 Logs tell you what happened. Metrics tell you how much, CPU usage, memory consumption, whether you're trending toward a resource limit. Kubernetes provides `kubectl top` for this, but it requires an add-on called **Metrics Server** to be installed in your cluster. This lesson covers what Metrics Server is, how to install it, and how to use `kubectl top` effectively.

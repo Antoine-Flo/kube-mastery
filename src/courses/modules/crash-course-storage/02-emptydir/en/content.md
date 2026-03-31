@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes emptyDir: Sidecar Pattern, Shared Scratch Space"
+seoDescription: "Explore emptyDir volumes for sharing temporary data between containers in the same Pod, covering the sidecar pattern and memory-backed storage."
+---
+
 # emptyDir: Shared Scratch Space
 
 `emptyDir` is the simplest volume type. When a Pod is scheduled to a node, Kubernetes creates an empty directory on that node's disk and makes it available as a volume. The directory starts empty - hence the name. When the Pod is deleted, the directory is deleted with it. But as long as the Pod is running, the directory persists across any number of container restarts inside that Pod.

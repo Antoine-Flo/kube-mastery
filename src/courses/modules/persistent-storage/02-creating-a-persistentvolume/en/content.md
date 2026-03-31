@@ -1,3 +1,8 @@
+---
+seoTitle: Create a Kubernetes PersistentVolume: Fields and Lifecycle
+seoDescription: Learn how to write a Kubernetes PersistentVolume manifest, covering capacity, access modes, reclaim policy, and PV lifecycle phases from Available to Released.
+---
+
 # Creating a PersistentVolume
 
 Now that you understand the conceptual relationship between PersistentVolumes and PersistentVolumeClaims, it's time to look closely at what a PV manifest actually contains and what each field means. Creating PVs by hand is something you will do primarily in learning environments and on self-managed clusters, but understanding the structure is essential even when dynamic provisioning does the work for you, because troubleshooting storage problems always requires reading and interpreting PV objects.

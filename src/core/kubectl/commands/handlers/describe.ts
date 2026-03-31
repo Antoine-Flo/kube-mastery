@@ -19,6 +19,7 @@ import {
   describeSecret,
   describeService
 } from '../../formatters/describeFormatters'
+import { applyFilters, noResourcesMessage } from './internal/get/filters'
 import type { ParsedCommand } from '../types'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -39,12 +40,14 @@ interface DescribeConfig {
   ) => string
   type: string
   isClusterScoped?: boolean
+  allowsDescribeWithoutName?: boolean
 }
 
 interface DescribeableResource {
   metadata: {
     name: string
     namespace: string
+    labels?: Record<string, string>
   }
 }
 
@@ -59,19 +62,17 @@ interface DescribeDependencies {
   ) => readonly DeploymentLifecycleDescribeEvent[]
 }
 
-const findDescribeResource = (
-  collection: DescribeableResource[],
-  name: string,
-  namespace: string,
-  isClusterScoped: boolean
-): DescribeableResource | undefined => {
-  if (isClusterScoped) {
-    return collection.find((item) => {
-      return item.metadata.name === name
-    })
-  }
-  return collection.find((item) => {
-    return item.metadata.name === name && item.metadata.namespace === namespace
+const sortDescribeResources = (
+  resources: DescribeableResource[]
+): DescribeableResource[] => {
+  return [...resources].sort((left, right) => {
+    const namespaceDiff = left.metadata.namespace.localeCompare(
+      right.metadata.namespace
+    )
+    if (namespaceDiff !== 0) {
+      return namespaceDiff
+    }
+    return left.metadata.name.localeCompare(right.metadata.name)
   })
 }
 
@@ -153,7 +154,8 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
       return describeNode(item, state)
     },
     type: 'Node',
-    isClusterScoped: true
+    isClusterScoped: true,
+    allowsDescribeWithoutName: true
   },
   persistentvolumes: {
     items: 'persistentVolumes',
@@ -211,10 +213,6 @@ export const handleDescribe = (
     return error(`error: you must specify the resource type to describe`)
   }
 
-  if (!parsed.name) {
-    return error(`error: you must specify the name of the resource to describe`)
-  }
-
   const resourceType = parsed.resource
   const config = DESCRIBE_CONFIG[resourceType]
   if (!config) {
@@ -222,25 +220,47 @@ export const handleDescribe = (
       `error: the server doesn't have a resource type "${resourceType}"`
     )
   }
+  const canDescribeWithoutName = config.allowsDescribeWithoutName === true
+  if (!parsed.name && !parsed.selector && !canDescribeWithoutName) {
+    return error(`error: you must specify the name of the resource to describe`)
+  }
 
-  const namespace = parsed.namespace || 'default'
+  const allNamespacesFlag =
+    parsed.flags['all-namespaces'] === true || parsed.flags['A'] === true
+  const effectiveNamespace = parsed.namespace ?? 'default'
+  const filterNamespace = allNamespacesFlag ? undefined : effectiveNamespace
   const collection = state[config.items] as {
     items: DescribeableResource[]
   }
   const isClusterScoped = config.isClusterScoped === true
-  const resource = findDescribeResource(
+  const filteredResources = applyFilters(
     collection.items,
-    parsed.name,
-    namespace,
-    isClusterScoped
+    filterNamespace,
+    parsed.selector,
+    isClusterScoped,
+    parsed.name
   )
+  const resourcesToDescribe = sortDescribeResources(filteredResources)
 
-  if (!resource) {
+  if (parsed.name && resourcesToDescribe.length === 0) {
     const reference = getNotFoundResourceReference(resourceType)
     return error(
       `Error from server (NotFound): ${reference} "${parsed.name}" not found`
     )
   }
+  if (!parsed.name && resourcesToDescribe.length === 0) {
+    return success(
+      noResourcesMessage(
+        allNamespacesFlag ? undefined : effectiveNamespace,
+        isClusterScoped
+      )
+    )
+  }
 
-  return success(config.formatter(resource, state, resolvedDependencies))
+  const describeOutput = resourcesToDescribe
+    .map((resource) => {
+      return config.formatter(resource, state, resolvedDependencies)
+    })
+    .join('\n\n')
+  return success(describeOutput)
 }

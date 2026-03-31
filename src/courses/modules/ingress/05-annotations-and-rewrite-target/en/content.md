@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Ingress Annotations: Rewrite, Rate Limit, CORS"
+seoDescription: "Explore ingress-nginx annotations including rewrite-target with regex capture groups, rate limiting, CORS headers, and timeout settings for production use."
+---
+
 # Ingress Annotations and Rewrite-Target
 
 The Kubernetes Ingress API is intentionally minimal, it covers host-based rules, path-based rules, and TLS, but deliberately leaves out the dozens of advanced features that proxy servers offer. The solution to this extensibility problem is **annotations**: key-value pairs in the Ingress metadata that pass controller-specific configuration directly to the underlying proxy.

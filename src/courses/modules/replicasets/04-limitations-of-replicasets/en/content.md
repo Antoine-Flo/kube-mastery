@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes ReplicaSet Limitations and Why Deployments Exist"
+seoDescription: "Learn why updating a Kubernetes ReplicaSet does not restart Pods and how Deployments solve rolling updates, rollback, and zero-downtime deploys."
+---
+
 # Limitations of ReplicaSets, Why Deployments Exist
 
 ReplicaSets are powerful: they guarantee replica counts, self-heal, and scale with a single command through a clean, label-based mechanism. So what's the catch? Why does virtually every production Kubernetes guide tell you to "use Deployments, not ReplicaSets directly"?

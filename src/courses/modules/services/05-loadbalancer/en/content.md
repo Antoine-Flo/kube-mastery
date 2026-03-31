@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes LoadBalancer Service: Cloud Provisioning and Cost"
+seoDescription: "Explore how Kubernetes LoadBalancer Services provision cloud load balancers automatically, expose a stable external IP, and when to use them."
+---
+
 # LoadBalancer , Cloud-Native External Access
 
 NodePort gets traffic from outside the cluster to your Service, but it asks clients to use awkward port numbers and to know Node IPs , which can change. For production workloads in cloud environments, Kubernetes offers a more elegant solution: the `LoadBalancer` Service type. It automatically provisions a cloud load balancer in front of your cluster and assigns a single, stable, public-facing IP address or hostname that external clients use.

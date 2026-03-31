@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Logging: stdout, kubectl logs, CrashLoopBackOff
+seoDescription: Learn how Kubernetes container logging works, how to stream and filter logs with kubectl logs, and how to debug CrashLoopBackOff with --previous.
+---
+
 # Container Logging Basics
 
 When something goes wrong with an application running in Kubernetes, the first question is always: what did the application say? Logs are the primary window into what a container is doing, why it failed, and what it was working on before it crashed.

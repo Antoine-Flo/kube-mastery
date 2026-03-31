@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Annotations: Metadata, Tool Configuration
+seoDescription: Explore how Kubernetes annotations store rich metadata for tools, operators, and CI/CD pipelines, and learn how they differ from labels.
+---
+
 # Annotations
 
 Labels and annotations are often introduced together, and for good reason, they're siblings, not twins. Both live in the `metadata` section of a Kubernetes object, and both store key-value pairs. But they serve completely different purposes, and confusing the two leads to subtle bugs and a messier cluster.

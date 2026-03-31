@@ -1,3 +1,8 @@
+---
+seoTitle: "What Is Kubernetes: Orchestration, Scheduling, Self-Healing"
+seoDescription: "Understand what Kubernetes is, how it solves container management challenges, and the key capabilities it provides including scheduling and self-healing."
+---
+
 # What Is Kubernetes?
 
 Imagine you are the air traffic controller at a busy international airport. Dozens of planes are in the air at any given moment, each needing to land, refuel, and take off again. You decide which runway each plane uses, sequence arrivals, and respond when a plane declares an emergency.

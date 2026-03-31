@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Volumes: Persistence, Lifecycle, Mount Patterns"
+seoDescription: "Learn why Kubernetes Volumes are needed to persist data across container restarts, and how to declare and mount volumes in a Pod spec."
+---
+
 # Why Volumes?
 
 A container has its own private filesystem, built from the image layers. When the container process starts, it can read and write files anywhere in that filesystem. But this filesystem has a property that surprises many people the first time they encounter it: it is completely discarded when the container stops. If the container crashes and Kubernetes restarts it, the new container starts with a clean filesystem from the image. Everything the previous container wrote is gone.

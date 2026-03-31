@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Control Plane: kube-apiserver, etcd, Controllers"
+seoDescription: "Understand the four core Kubernetes control plane components, kube-apiserver, etcd, kube-scheduler, and kube-controller-manager, and how they work together."
+---
+
 # Control Plane Components in Depth
 
 In the previous lesson, we established that the control plane is the brain of a Kubernetes cluster, the layer responsible for decision-making, state management, and orchestration. But the control plane is not a monolith. It is composed of several distinct processes, each with a clearly defined responsibility.

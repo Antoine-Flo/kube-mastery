@@ -110,17 +110,143 @@ describe('kubectl describe handler - nodes', () => {
     }
   })
 
-  it('should return error when node name is missing', () => {
+  it('should describe all nodes when node name is missing', () => {
     const state = createState()
     const apiServer = createApiServerFacade()
     apiServer.etcd.restore(state)
     const parsed = createParsedCommand({ name: undefined })
     const result = handleDescribe(apiServer, parsed)
 
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Name:')
+    expect(result.value).toContain('sim-control-plane')
+  })
+
+  it('should describe all nodes when node name and selector are missing', () => {
+    const state = createState()
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+    const parsed = createParsedCommand({ name: undefined, selector: undefined })
+    const result = handleDescribe(apiServer, parsed)
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Name:')
+    expect(result.value).toContain('sim-control-plane')
+  })
+})
+
+describe('kubectl describe handler - selector support', () => {
+  it('should require a name or selector for non-node resources', () => {
+    const state = createClusterStateData({
+      pods: [
+        createPod({
+          name: 'pod-a',
+          namespace: 'default',
+          containers: [{ name: 'web', image: 'nginx:1.28' }]
+        })
+      ]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'pods',
+      namespace: 'default',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+
+    const result = handleDescribe(apiServer, parsed)
     expect(result.ok).toBe(false)
     if (!result.ok) {
       expect(result.error).toContain('must specify the name')
     }
+  })
+
+  it('should describe all pods matching selector with stable ordering', () => {
+    const state = createClusterStateData({
+      pods: [
+        createPod({
+          name: 'probed-b',
+          namespace: 'default',
+          labels: { app: 'probed' },
+          containers: [{ name: 'web', image: 'nginx:1.28' }]
+        }),
+        createPod({
+          name: 'probed-a',
+          namespace: 'default',
+          labels: { app: 'probed' },
+          containers: [{ name: 'web', image: 'nginx:1.28' }]
+        }),
+        createPod({
+          name: 'other',
+          namespace: 'default',
+          labels: { app: 'other' },
+          containers: [{ name: 'web', image: 'nginx:1.28' }]
+        })
+      ]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'pods',
+      namespace: 'default',
+      selector: {
+        requirements: [{ key: 'app', operator: 'Equals', values: ['probed'] }]
+      },
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+
+    const result = handleDescribe(apiServer, parsed)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toContain('Name:                 probed-a')
+    expect(result.value).toContain('Name:                 probed-b')
+    expect(result.value).toContain('\n\n')
+    expect(result.value.indexOf('probed-a')).toBeLessThan(
+      result.value.indexOf('probed-b')
+    )
+    expect(result.value).not.toContain('Name:                 other')
+  })
+
+  it('should return no resources found when selector has no matches', () => {
+    const state = createClusterStateData({
+      pods: [
+        createPod({
+          name: 'other',
+          namespace: 'default',
+          labels: { app: 'other' },
+          containers: [{ name: 'web', image: 'nginx:1.28' }]
+        })
+      ]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'pods',
+      namespace: 'default',
+      selector: {
+        requirements: [{ key: 'app', operator: 'Equals', values: ['probed'] }]
+      },
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+
+    const result = handleDescribe(apiServer, parsed)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toBe('No resources found in default namespace.')
   })
 })
 

@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Debugging: kubectl logs, exec, container shells"
+seoDescription: "Explore how to read container logs, stream live output, and open interactive shell sessions in Kubernetes pods using kubectl logs and exec."
+---
+
 # kubectl logs and kubectl exec, Looking Inside Containers
 
 So far you have learned to observe Kubernetes resources from the outside, listing pods, reading their status, examining their conditions and events. But sometimes the outside view is not enough. You need to look _inside_ the container itself: what is the application printing? Is a configuration file in the right place? Can it reach another service?

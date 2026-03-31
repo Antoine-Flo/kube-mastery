@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes ClusterIP Services: kube-proxy, DNS, Port Mapping"
+seoDescription: "Learn how Kubernetes ClusterIP Services work as the default type, how kube-proxy routes traffic via iptables, and how to access Services by DNS."
+---
+
 # ClusterIP , The Default Service Type
 
 When you create a Service without specifying a type, Kubernetes uses `ClusterIP`. It's the most fundamental Service type, and all the other types build on top of it. Understanding ClusterIP thoroughly means you understand the core of how Service networking works in Kubernetes.

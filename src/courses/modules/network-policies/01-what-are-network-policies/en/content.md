@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes NetworkPolicies: CNI, Pod Selection, Rules
+seoDescription: Learn how Kubernetes NetworkPolicies control Pod-level traffic using label selectors, CNI enforcement, and additive allow rules for cluster security.
+---
+
 # What Are NetworkPolicies?
 
 When you first spin up a Kubernetes cluster, every Pod can talk to every other Pod, frontend to database, database to logging service, logging sidecar to payment processor. There are no firewalls, no access controls, no barriers of any kind. It's a completely flat network, and every workload trusts every other workload by default.

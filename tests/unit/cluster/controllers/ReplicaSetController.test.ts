@@ -301,6 +301,66 @@ describe('ReplicaSetController', () => {
       })
     })
 
+    it('should propagate probe configuration from pod template', () => {
+      const rs = createReplicaSet({
+        name: 'probed-rs',
+        namespace: 'default',
+        replicas: 1,
+        selector: { matchLabels: { app: 'probed-rs' } },
+        template: {
+          metadata: { labels: { app: 'probed-rs' } },
+          spec: {
+            containers: [
+              {
+                name: 'web',
+                image: 'nginx:1.28',
+                livenessProbe: {
+                  httpGet: {
+                    path: '/',
+                    port: 80
+                  },
+                  initialDelaySeconds: 5,
+                  periodSeconds: 10,
+                  failureThreshold: 3
+                },
+                readinessProbe: {
+                  httpGet: {
+                    path: '/',
+                    port: 80
+                  },
+                  initialDelaySeconds: 3,
+                  periodSeconds: 5,
+                  failureThreshold: 2
+                }
+              }
+            ]
+          }
+        }
+      })
+      mockState.replicaSets = [rs]
+      mockState.pods = []
+
+      controller.reconcile('default/probed-rs')
+
+      expect(mockState.pods).toHaveLength(1)
+      expect(mockState.pods[0].spec.containers[0].livenessProbe).toEqual({
+        type: 'httpGet',
+        path: '/',
+        port: 80,
+        initialDelaySeconds: 5,
+        periodSeconds: 10,
+        failureThreshold: 3
+      })
+      expect(mockState.pods[0].spec.containers[0].readinessProbe).toEqual({
+        type: 'httpGet',
+        path: '/',
+        port: 80,
+        initialDelaySeconds: 3,
+        periodSeconds: 5,
+        failureThreshold: 2
+      })
+    })
+
     it('should delete pods when ReplicaSet has more pods than desired', () => {
       const rs = createTestReplicaSet('my-rs', 1)
       mockState.replicaSets = [rs]

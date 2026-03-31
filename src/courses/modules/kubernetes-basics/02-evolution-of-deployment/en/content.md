@@ -1,3 +1,8 @@
+---
+seoTitle: "Evolution of Deployment: Bare Metal, VMs, Containers, K8s"
+seoDescription: "Explore the evolution from bare metal servers through virtual machines to containers and Kubernetes orchestration, and why each era emerged."
+---
+
 # The Evolution of Deployment
 
 To truly appreciate Kubernetes, you need to understand the journey that led to it. The way we deploy software has changed dramatically over three decades. Each era solved the problems of the previous one, and introduced new ones, pushing the industry toward the next evolution.

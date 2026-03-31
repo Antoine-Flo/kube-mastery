@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes NetworkPolicy Structure: YAML, Selectors, Ports
+seoDescription: Understand the full NetworkPolicy manifest structure, including podSelector, policyTypes, ingress and egress rules, and AND vs OR selector logic.
+---
+
 # NetworkPolicy Structure
 
 Like all Kubernetes resources, a NetworkPolicy is a YAML manifest with a predictable structure. Once you internalize it, you can read and write policies confidently, and reason about what a policy does or doesn't allow just by reading it.

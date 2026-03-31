@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes PersistentVolumes and PVCs: Binding, Access Modes"
+seoDescription: "Understand how Kubernetes PersistentVolumes and PVCs decouple durable storage from Pods, covering binding, access modes, and reclaim policies."
+---
+
 # PersistentVolumes and PVCs
 
 All the volume types covered so far - `emptyDir`, ConfigMap and Secret volumes - are tied to the Pod's lifetime. When the Pod is deleted, those volumes disappear. That's fine for scratch space, shared buffers, and configuration files, because those don't need to outlive the workload. But for a database, a file storage system, or any application that accumulates state over time, you need storage that persists independently of any Pod.

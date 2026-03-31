@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Object Model: apiVersion, kind, spec, metadata"
+seoDescription: "Understand the Kubernetes object model, how every resource is a persistent declaration in etcd, and the role of apiVersion, kind, metadata, and spec fields."
+---
+
 # The Kubernetes Object Model
 
 When you start working with Kubernetes, one of the first things you need to internalize is a simple but powerful idea: **everything in Kubernetes is an object**. Pods, Services, Deployments, ConfigMaps, Namespaces , they are all objects. And every one of these objects is a persistent record stored in the cluster's database, a key-value store called **etcd**. Understanding this model is the foundation for everything else you will do in Kubernetes.

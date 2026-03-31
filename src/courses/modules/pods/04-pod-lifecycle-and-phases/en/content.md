@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Pod Phases, Container States, and Conditions"
+seoDescription: "Understand Kubernetes Pod phases from Pending to Succeeded, container states like CrashLoopBackOff, and readiness conditions that control traffic."
+---
+
 # Pod Lifecycle and Phases
 
 A Pod is not a static thing. From the moment it's created to the moment it's gone, it passes through a defined set of states that tell you exactly where it is in its journey. Understanding these states is essential for monitoring your applications, diagnosing problems, and writing automation that reacts correctly to the cluster's condition.

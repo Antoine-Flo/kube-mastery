@@ -126,6 +126,39 @@ describe('kubectl Executor', () => {
         }
       })
 
+      it('should route "kubectl describe pod -l app=probed" to selector describe flow', () => {
+        apiServer.createResource(
+          'Pod',
+          createPod({
+            name: 'probed-b',
+            namespace: 'default',
+            labels: { app: 'probed' },
+            containers: [{ name: 'web', image: 'nginx:1.28', ports: [] }]
+          })
+        )
+        apiServer.createResource(
+          'Pod',
+          createPod({
+            name: 'probed-a',
+            namespace: 'default',
+            labels: { app: 'probed' },
+            containers: [{ name: 'web', image: 'nginx:1.28', ports: [] }]
+          })
+        )
+
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const result = executor.execute('kubectl describe pod -l app=probed')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+
+        expect(result.value).toContain('Name:                 probed-a')
+        expect(result.value).toContain('Name:                 probed-b')
+        expect(result.value).toContain('\n\n')
+      })
+
       it('should route "kubectl describe deployment" to describe handler', () => {
         const executor = createKubectlExecutor(apiServer, fileSystem, logger)
         const created = executor.execute(

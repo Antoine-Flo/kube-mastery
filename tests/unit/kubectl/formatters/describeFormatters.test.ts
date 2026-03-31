@@ -38,6 +38,20 @@ describe('describeFormatters', () => {
       expect(result).toContain('Status:')
     })
 
+    it('should not show last state for a fresh running pod', () => {
+      const pod = createPod({
+        name: 'fresh-running-pod',
+        namespace: 'default',
+        nodeName: 'worker-a',
+        phase: 'Running',
+        containers: [{ name: 'nginx', image: 'nginx:latest' }]
+      })
+
+      const result = describePod(pod)
+
+      expect(result).not.toContain('Last State:')
+    })
+
     it('should format labels', () => {
       const pod = createPod({
         name: 'nginx-pod',
@@ -197,9 +211,11 @@ describe('describeFormatters', () => {
       const result = describePod(pod)
 
       expect(result).toContain('Liveness:')
-      expect(result).toContain('/health')
+      expect(result).toContain('http://:8080/health')
       expect(result).toContain('delay=10s')
+      expect(result).toContain('timeout=1s')
       expect(result).toContain('period=5s')
+      expect(result).toContain('#failure=3')
     })
 
     it('should format readiness probe', () => {
@@ -222,6 +238,45 @@ describe('describeFormatters', () => {
 
       expect(result).toContain('Readiness:')
       expect(result).toContain('tcp-socket :3306')
+    })
+
+    it('should include controlled by when pod has owner reference', () => {
+      const pod = createPod({
+        name: 'owned-pod',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'nginx:latest' }],
+        ownerReferences: [
+          {
+            apiVersion: 'apps/v1',
+            kind: 'ReplicaSet',
+            name: 'owned-rs',
+            uid: 'default-owned-rs',
+            controller: true
+          }
+        ]
+      })
+
+      const result = describePod(pod)
+
+      expect(result).toContain('Controlled By:  ReplicaSet/owned-rs')
+    })
+
+    it('should include toleration seconds for NoExecute tolerations', () => {
+      const pod = createPod({
+        name: 'tolerated-pod',
+        namespace: 'default',
+        nodeName: 'worker-a',
+        containers: [{ name: 'app', image: 'nginx:latest' }]
+      })
+
+      const result = describePod(pod)
+
+      expect(result).toContain(
+        'node.kubernetes.io/not-ready:NoExecute op=Exists for 300s'
+      )
+      expect(result).toContain(
+        'node.kubernetes.io/unreachable:NoExecute op=Exists for 300s'
+      )
     })
 
     it('should format exec probe', () => {

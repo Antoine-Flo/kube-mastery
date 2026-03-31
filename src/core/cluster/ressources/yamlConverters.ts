@@ -287,14 +287,7 @@ const convertHttpGetProbe = (probe: Record<string, unknown>): Probe | null => {
     path,
     port
   }
-  const initialDelay = getNumberField(probe, 'initialDelaySeconds')
-  const period = getNumberField(probe, 'periodSeconds')
-  if (initialDelay !== null) {
-    result.initialDelaySeconds = initialDelay
-  }
-  if (period !== null) {
-    result.periodSeconds = period
-  }
+  applyProbeTimingFields(probe, result)
   return result
 }
 
@@ -315,14 +308,7 @@ const convertExecProbe = (probe: Record<string, unknown>): Probe | null => {
     type: 'exec',
     command
   }
-  const initialDelay = getNumberField(probe, 'initialDelaySeconds')
-  const period = getNumberField(probe, 'periodSeconds')
-  if (initialDelay !== null) {
-    result.initialDelaySeconds = initialDelay
-  }
-  if (period !== null) {
-    result.periodSeconds = period
-  }
+  applyProbeTimingFields(probe, result)
   return result
 }
 
@@ -341,18 +327,37 @@ const convertTcpSocketProbe = (
     type: 'tcpSocket',
     port
   }
-  const initialDelay = getNumberField(probe, 'initialDelaySeconds')
-  const period = getNumberField(probe, 'periodSeconds')
-  if (initialDelay !== null) {
-    result.initialDelaySeconds = initialDelay
-  }
-  if (period !== null) {
-    result.periodSeconds = period
-  }
+  applyProbeTimingFields(probe, result)
   return result
 }
 
 type ProbeHandler = (probe: Record<string, unknown>) => Probe | null
+
+const applyProbeTimingFields = (
+  probe: Record<string, unknown>,
+  target: Probe
+): void => {
+  const initialDelay = getNumberField(probe, 'initialDelaySeconds')
+  const period = getNumberField(probe, 'periodSeconds')
+  const timeout = getNumberField(probe, 'timeoutSeconds')
+  const successThreshold = getNumberField(probe, 'successThreshold')
+  const failureThreshold = getNumberField(probe, 'failureThreshold')
+  if (initialDelay !== null) {
+    target.initialDelaySeconds = initialDelay
+  }
+  if (period !== null) {
+    target.periodSeconds = period
+  }
+  if (timeout !== null) {
+    target.timeoutSeconds = timeout
+  }
+  if (successThreshold !== null) {
+    target.successThreshold = successThreshold
+  }
+  if (failureThreshold !== null) {
+    target.failureThreshold = failureThreshold
+  }
+}
 
 const PROBE_HANDLERS: Record<string, ProbeHandler> = {
   httpGet: convertHttpGetProbe,

@@ -1028,7 +1028,11 @@ const formatPodTolerations = (tolerations?: PodToleration[]): string[] => {
     const value = toleration.value != null ? `=${toleration.value}` : ''
     const effect = toleration.effect ?? '<none>'
     const operator = toleration.operator ?? 'Equal'
-    const rendered = `${key}${value}:${effect} op=${operator}`
+    const tolerationSecondsSuffix =
+      toleration.tolerationSeconds != null
+        ? ` for ${toleration.tolerationSeconds}s`
+        : ''
+    const rendered = `${key}${value}:${effect} op=${operator}${tolerationSecondsSuffix}`
     if (index === 0) {
       lines.push(`Tolerations:       ${rendered}`)
       return
@@ -1239,17 +1243,39 @@ const formatStaticControlPlaneHeader = (
   }
 }
 
+const getPodControlledBy = (
+  pod: Pod,
+  staticPodControlledBy?: string
+): string | undefined => {
+  const ownerReferences = pod.metadata.ownerReferences ?? []
+  const controllerOwnerReference = ownerReferences.find((ownerReference) => {
+    return ownerReference.controller === true
+  })
+  if (controllerOwnerReference != null) {
+    return `${controllerOwnerReference.kind}/${controllerOwnerReference.name}`
+  }
+  const firstOwnerReference = ownerReferences[0]
+  if (firstOwnerReference != null) {
+    return `${firstOwnerReference.kind}/${firstOwnerReference.name}`
+  }
+  if (staticPodControlledBy != null) {
+    return staticPodControlledBy
+  }
+  return undefined
+}
+
 const formatProbeInline = (
   title: string,
-  probe: Probe,
-  podIP: string,
-  failure: number
+  probe: Probe
 ): string => {
   const titleLabel = `${title}:`.padEnd(14)
   if (probe.type === 'httpGet') {
     const delay = probe.initialDelaySeconds ?? 0
+    const timeout = probe.timeoutSeconds ?? 1
     const period = probe.periodSeconds ?? 10
-    return `    ${titleLabel}http-get https://${podIP}:probe-port${probe.path} delay=${delay}s timeout=15s period=${period}s #success=1 #failure=${failure}`
+    const success = probe.successThreshold ?? 1
+    const failure = probe.failureThreshold ?? 3
+    return `    ${titleLabel}http-get http://:${probe.port}${probe.path} delay=${delay}s timeout=${timeout}s period=${period}s #success=${success} #failure=${failure}`
   }
   if (probe.type === 'tcpSocket') {
     return `    ${titleLabel}tcp-socket :${probe.port}`
@@ -1306,8 +1332,9 @@ export const describePod = (
   lines.push(`IP:                   ${podIP}`)
   lines.push('IPs:')
   lines.push(`  IP:           ${podIP}`)
-  if (header.controlledBy != null) {
-    lines.push(`Controlled By:  ${header.controlledBy}`)
+  const controlledBy = getPodControlledBy(pod, header.controlledBy)
+  if (controlledBy != null) {
+    lines.push(`Controlled By:  ${controlledBy}`)
   }
 
   // Init Containers section (if any)
@@ -1376,15 +1403,6 @@ export const describePod = (
       `    Ready:          ${status?.ready === true ? 'True' : 'False'}`
     )
     lines.push(`    Restart Count:  ${status?.restartCount ?? 0}`)
-    if (container.resources?.requests != null) {
-      const entries = Object.entries(container.resources.requests)
-      if (entries.length > 0) {
-        lines.push('    Requests:')
-        entries.forEach(([key, value]) => {
-          lines.push(`      ${key}:        ${value}`)
-        })
-      }
-    }
     if (container.resources?.limits != null) {
       const entries = Object.entries(container.resources.limits)
       if (entries.length > 0) {
@@ -1394,20 +1412,23 @@ export const describePod = (
         })
       }
     }
+    if (container.resources?.requests != null) {
+      const entries = Object.entries(container.resources.requests)
+      if (entries.length > 0) {
+        lines.push('    Requests:')
+        entries.forEach(([key, value]) => {
+          lines.push(`      ${key}:        ${value}`)
+        })
+      }
+    }
     if (container.livenessProbe != null) {
-      lines.push(
-        formatProbeInline('Liveness', container.livenessProbe, podIP, 8)
-      )
+      lines.push(formatProbeInline('Liveness', container.livenessProbe))
     }
     if (container.readinessProbe != null) {
-      lines.push(
-        formatProbeInline('Readiness', container.readinessProbe, podIP, 3)
-      )
+      lines.push(formatProbeInline('Readiness', container.readinessProbe))
     }
     if (container.startupProbe != null) {
-      lines.push(
-        formatProbeInline('Startup', container.startupProbe, podIP, 24)
-      )
+      lines.push(formatProbeInline('Startup', container.startupProbe))
     }
     if (container.env != null && container.env.length > 0) {
       lines.push('    Environment:  ')

@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createEventBus } from '../../../../../src/core/cluster/events/EventBus'
+import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
+import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
+import {
+  createSecret,
+  encodeBase64
+} from '../../../../../src/core/cluster/ressources/Secret'
 import type { CommandContext } from '../../../../../src/core/terminal/core/CommandContext'
 import { createFileSystem } from '../../../../../src/core/filesystem/FileSystem'
 import { ShellCommandHandler } from '../../../../../src/core/terminal/core/handlers/ShellCommandHandler'
@@ -146,6 +152,82 @@ describe('ShellCommandHandler', () => {
       const result = handler.execute('env', context)
       expect(result.ok).toBe(true)
       expect(renderer.getOutput()).toContain('HOME=/home/kube')
+    })
+
+    it('should accept sleep command in terminal shell', () => {
+      const result = handler.execute('sleep 1', context)
+      expect(result.ok).toBe(true)
+    })
+
+    it('should resolve configmap and secret env values in container shell', () => {
+      const configMapCreateResult = context.apiServer.createResource(
+        'ConfigMap',
+        createConfigMap({
+          name: 'web-config',
+          namespace: 'default',
+          data: {
+            APP_ENV: 'crash-course'
+          }
+        })
+      )
+      expect(configMapCreateResult.ok).toBe(true)
+
+      const secretCreateResult = context.apiServer.createResource(
+        'Secret',
+        createSecret({
+          name: 'web-secret',
+          namespace: 'default',
+          secretType: { type: 'Opaque' },
+          data: {
+            API_TOKEN: encodeBase64('super-secret-token')
+          }
+        })
+      )
+      expect(secretCreateResult.ok).toBe(true)
+
+      const pod = createPod({
+        name: 'env-pod',
+        namespace: 'default',
+        containers: [
+          {
+            name: 'app',
+            image: 'busybox:1.36',
+            env: [
+              {
+                name: 'APP_ENV',
+                source: {
+                  type: 'configMapKeyRef',
+                  name: 'web-config',
+                  key: 'APP_ENV'
+                }
+              },
+              {
+                name: 'API_TOKEN',
+                source: {
+                  type: 'secretKeyRef',
+                  name: 'web-secret',
+                  key: 'API_TOKEN'
+                }
+              }
+            ]
+          }
+        ]
+      })
+      const podCreateResult = context.apiServer.createResource('Pod', pod)
+      expect(podCreateResult.ok).toBe(true)
+
+      const containerFileSystem = pod._simulator.containers.app.fileSystem
+      shellContextStack.pushContainerContext(
+        'env-pod',
+        'app',
+        'default',
+        containerFileSystem
+      )
+
+      const result = handler.execute('env', context)
+      expect(result.ok).toBe(true)
+      expect(renderer.getOutput()).toContain('APP_ENV=crash-course')
+      expect(renderer.getOutput()).toContain('API_TOKEN=super-secret-token')
     })
 
     it('should return network runtime error for curl when network is unavailable', () => {

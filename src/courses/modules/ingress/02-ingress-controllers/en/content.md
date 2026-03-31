@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Ingress Controllers: nginx, Traefik, IngressClass"
+seoDescription: "Explore how Kubernetes Ingress controllers work, compare popular options like ingress-nginx and Traefik, and learn to install a controller and use IngressClass."
+---
+
 # Ingress Controllers
 
 In the previous lesson you learned that an Ingress resource is just a declaration of routing rules, a piece of configuration stored in etcd. By itself it has no effect. The component that reads those rules and actually implements them is the **Ingress controller**, and understanding how it works is essential before you can use Ingress in practice.

@@ -1,3 +1,8 @@
+---
+seoTitle: "Manage Kubernetes Resources: apply, edit, patch, set image"
+seoDescription: "Learn how to create and update Kubernetes resources using kubectl apply, edit, patch, and set image for idempotent declarative workflows."
+---
+
 # Creating and Editing Resources
 
 Now that you know how to observe resources and look inside containers, it is time to talk about the full lifecycle of creating and modifying them. Kubernetes gives you several tools for this, and understanding when each one is appropriate will help you work confidently and avoid common mistakes.

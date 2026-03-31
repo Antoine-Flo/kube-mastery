@@ -136,6 +136,7 @@ Use "kubectl options" for a list of global command-line options (applies to all 
 
 Usage:
   kubectl describe TYPE NAME
+  kubectl describe TYPE -l key=value
 
 Use "kubectl options" for a list of global command-line options (applies to all commands).`,
   edit: `Edit a resource from the default editor.

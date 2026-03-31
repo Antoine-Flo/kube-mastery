@@ -1,3 +1,8 @@
+---
+seoTitle: "Why Use Kubernetes ReplicaSets: Self-Healing and Scaling"
+seoDescription: "Understand why bare Kubernetes Pods are fragile and how ReplicaSets provide self-healing, horizontal scaling, and reliable Pod management."
+---
+
 # Why ReplicaSets? The Problem with Bare Pods
 
 In earlier lessons you learned how to create Pods, the fundamental unit of work in Kubernetes. You can describe a container, apply the manifest, and within seconds your application is running. Simple and satisfying. But if you stop there and run Pods directly, you're leaving one of Kubernetes's most important capabilities on the table: self-healing. This lesson explains the fragility of bare Pods and introduces the ReplicaSet as the solution.

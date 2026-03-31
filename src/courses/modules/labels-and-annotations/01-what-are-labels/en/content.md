@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Labels: Key-Value Pairs, Syntax, Filtering
+seoDescription: Learn how to use Kubernetes labels to organize resources, connect Services to Pods, and filter workloads with kubectl selectors.
+---
+
 # What Are Labels?
 
 Kubernetes clusters grow fast. A modest production system can have dozens of Deployments, hundreds of Pods, and several Services all living in the same namespace. Without a way to organize and query those objects, you'd quickly be lost in a sea of resource names. Labels are Kubernetes's elegant answer to that problem.

@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Services: Stable IPs, DNS, and Load Balancing"
+seoDescription: "Understand why Kubernetes Services exist, how they provide a stable IP and DNS name for dynamic Pods, and how kube-proxy handles load balancing."
+---
+
 # Why Services? The Problem with Pod IPs
 
 You've learned how to create Pods and Deployments. Now imagine you have a frontend Pod that needs to talk to a backend API running in another Pod. The obvious first instinct is: find the backend Pod's IP address and have the frontend connect to it directly. It seems simple. It seems like it should work. And it will , right up until the moment the backend Pod is replaced, which in Kubernetes happens constantly.

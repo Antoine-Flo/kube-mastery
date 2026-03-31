@@ -274,7 +274,11 @@ const executeShellCommandDirective = (
         return success(curlResult.value)
       },
       getEnvironmentVariables: () => {
-        return buildContainerEnvironmentVariables(pod, directive.containerName)
+        return buildContainerEnvironmentVariables(
+          pod,
+          directive.containerName,
+          context.apiServer
+        )
       }
     }
   )

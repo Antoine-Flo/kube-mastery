@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes hostPath Volumes: DaemonSets, Types, Security"
+seoDescription: "Understand hostPath volumes in Kubernetes: when to use them for log collection and node monitoring, the type field options, and critical security warnings."
+---
+
 # hostPath Volumes
 
 Every Kubernetes Pod runs on a node, a machine running Linux with its own filesystem, its own `/var/log`, its own `/proc`, its own device files. Most of the time, containerized workloads are completely isolated from the node's filesystem by design. But sometimes you specifically need to reach down and touch the host's filesystem directly. That's what `hostPath` volumes are for.

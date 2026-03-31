@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Object Names, UIDs, and DNS Naming Rules"
+seoDescription: "Learn Kubernetes naming rules for objects, how UIDs provide immutable identity, and why Service names must follow DNS subdomain conventions to work in-cluster."
+---
+
 # Object Names, UIDs, and DNS Naming Rules
 
 Names might seem like a trivial detail, after all, you just have to call something _something_, right? But in Kubernetes, names are far more than labels of convenience. They participate directly in networking, access control, and the cluster's internal bookkeeping.

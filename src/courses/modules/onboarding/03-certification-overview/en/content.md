@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Certifications: KCNA, CKAD, and CKA Overview
+seoDescription: Understand the KCNA, CKAD, and CKA Kubernetes certifications, their format and focus, and how the Common Core course builds the foundation for all three.
+---
+
 # Overview of Kubernetes Certifications
 
 Certifications give employers and engineers a common benchmark. The Cloud Native Computing Foundation (CNCF) offers several Kubernetes-related certifications. This lesson introduces the three most relevant: KCNA, CKAD, and CKA, and how the content in this course fits into each path.

@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes ConfigMap and Secret Volumes: Files, Reload"
+seoDescription: "Learn how to mount ConfigMaps and Secrets as files in Kubernetes Pods, use selective key mapping, and enable live configuration reload without Pod restarts."
+---
+
 # Mounting ConfigMaps and Secrets as Volumes
 
 Injecting config as environment variables has real limitations. Some applications don't read environment variables at all, they expect a config file at a specific path. Others have configuration too complex for a flat list of key-value pairs:

@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Named Ports: Decouple Port Numbers in Manifests"
+seoDescription: "Learn how Kubernetes named ports decouple port numbers from manifests, allowing Services, probes, and policies to reference ports by name."
+---
+
 # Named Ports
 
 Throughout this module, all the Service manifests have referenced ports by number: `targetPort: 80`, `targetPort: 8080`, and so on. This works perfectly well for simple cases. But as your application grows , more containers, more ports, more teams managing different parts of the stack , hardcoded port numbers become a maintenance problem. Named ports solve this elegantly, and they're one of those small practices that make the difference between a brittle manifest and a robust one.

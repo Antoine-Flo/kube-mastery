@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes emptyDir Volumes: Sidecar, tmpfs, Restart"
+seoDescription: "Explore emptyDir volumes in Kubernetes for sharing data between sidecar containers, scratch space, and memory-backed tmpfs storage with size limits."
+---
+
 # emptyDir Volumes
 
 Of all the volume types Kubernetes offers, `emptyDir` is the simplest to understand and the easiest to use. When a Pod starts, Kubernetes creates an empty directory, mounts it into the container (or containers) you specify, and deletes it permanently when the Pod is removed. Within a Pod's lifetime, it survives any number of container restarts.

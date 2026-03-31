@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Cluster Architecture: Control Plane, Nodes"
+seoDescription: "Understand the Kubernetes cluster structure, including the API server, etcd, scheduler, controller manager, kubelet, and kube-proxy on worker nodes."
+---
+
 # Cluster Architecture
 
 A Kubernetes cluster is not a single machine - it's a coordinated group of machines, each with a specific role. Understanding that structure matters because it shapes how failures behave, where you look when something goes wrong, and why `kubectl` commands work the way they do. The cluster is split into two layers: the **control plane**, which manages state and makes decisions, and the **worker nodes**, which actually run your application containers.

@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Access Modes and PV Reclaim Policies Explained
+seoDescription: Explore the four Kubernetes PV access modes (RWO, ROX, RWX, RWOP) and three reclaim policies (Retain, Delete, Recycle) with full lifecycle details.
+---
+
 # Access Modes and Reclaim Policies
 
 Two of the most consequential settings on any PersistentVolume are its **access mode** and its **reclaim policy**. Getting these right means understanding both how your workload uses storage (does it need to be shared? does it need to be writable from multiple places?) and what should happen to your data when you're done with it.

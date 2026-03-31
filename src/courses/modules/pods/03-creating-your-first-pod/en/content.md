@@ -1,3 +1,8 @@
+---
+seoTitle: "Create Kubernetes Pods: Imperative vs Declarative, kubectl"
+seoDescription: "Learn how to create Kubernetes Pods imperatively with kubectl run and declaratively with kubectl apply, and trace the full scheduling flow."
+---
+
 # Creating Your First Pod
 
 There are two fundamental ways to create resources in Kubernetes: the **imperative** approach and the **declarative** approach. Understanding both, when to use each, and what happens under the hood, is a key skill for any Kubernetes practitioner.

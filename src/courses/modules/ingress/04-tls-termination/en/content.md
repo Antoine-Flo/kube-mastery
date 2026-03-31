@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Ingress TLS: Secrets, HTTPS Redirect, cert-manager"
+seoDescription: "Learn how to configure TLS termination on a Kubernetes Ingress using TLS Secrets, enable HTTP-to-HTTPS redirects, and automate renewals with cert-manager."
+---
+
 # TLS Termination with Ingress
 
 Virtually every production web application needs HTTPS. Browsers warn users about HTTP sites, search engines penalize them, and for anything handling user data or authentication, plain HTTP is simply not acceptable. Kubernetes Ingress makes configuring HTTPS straightforward through **TLS termination**: the controller handles the secure connection with the outside world, while your backend Services keep speaking plain HTTP internally.

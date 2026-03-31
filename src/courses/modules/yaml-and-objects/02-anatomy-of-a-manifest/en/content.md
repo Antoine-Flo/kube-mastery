@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Spec vs Status: Reconciliation, Self-Healing"
+seoDescription: "Explore how Kubernetes separates desired state in spec from current state in status, and how the reconciliation loop drives self-healing across controllers."
+---
+
 # Spec and Status: Desired State vs. Current State
 
 One of the most elegant ideas in Kubernetes is also one of the simplest to understand once you have the right analogy. Every Kubernetes object has two distinct sections that reflect two different perspectives on the world: **`spec`**, which is what _you_ want, and **`status`**, which is what _currently exists_. Mastering this distinction will transform how you think about debugging, troubleshooting, and managing applications in the cluster.

@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Internal DNS: CoreDNS, Service Names, Lookups"
+seoDescription: "Understand how Kubernetes CoreDNS gives every Service a predictable DNS name, enabling pods to reach services by name without hardcoding IP addresses."
+---
+
 # Internal DNS
 
 Even with a stable ClusterIP Service, connecting two applications still requires knowing the Service's IP address. Hardcoding an IP into an environment variable is fragile: if the Service is ever deleted and recreated, it gets a new ClusterIP, and every place that referenced the old one breaks. More fundamentally, it's the kind of coupling that makes systems hard to operate. Kubernetes solves this with a built-in DNS server that gives every Service a predictable, human-readable name that never changes.

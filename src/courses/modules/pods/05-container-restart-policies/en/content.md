@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Pod Restart Policies and CrashLoopBackOff"
+seoDescription: "Learn how Kubernetes restartPolicy controls container recovery, when to use Always, OnFailure, or Never, and how to debug CrashLoopBackOff."
+---
+
 # Container Restart Policies
 
 When a container inside a Pod stops running, whether because it completed its work, crashed with an error, or was killed for using too much memory, what happens next? The answer depends on a single field in your Pod spec: `restartPolicy`. Choosing the right policy for each workload type is one of the simplest yet most impactful decisions you make when writing Pod manifests.

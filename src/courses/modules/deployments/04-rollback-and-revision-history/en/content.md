@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Rollback: Revision History, Undo, Change-Cause"
+seoDescription: "Learn how to roll back a Kubernetes Deployment with kubectl rollout undo, inspect revision history, and annotate releases with human-readable change descriptions."
+---
+
 # Rollback and Revision History
 
 No update goes perfectly every time. A new container image might have a subtle bug that only surfaces under real production load, or a configuration change might cause startup failures. Whatever the reason, Kubernetes makes rollback straightforward.

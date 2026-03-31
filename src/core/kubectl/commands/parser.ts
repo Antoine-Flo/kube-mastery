@@ -718,7 +718,6 @@ const validateCommandSemantics = (
   }
 
   const requiresNameAction =
-    action === 'describe' ||
     action === 'edit' ||
     action === 'logs' ||
     action === 'exec' ||
@@ -733,6 +732,10 @@ const validateCommandSemantics = (
 
   if (requiresNameAction && !name) {
     return `${action} requires a resource name`
+  }
+  const canDescribeWithoutName = action === 'describe' && resource === 'nodes'
+  if (action === 'describe' && !name && !hasSelector && !canDescribeWithoutName) {
+    return 'describe requires a resource name'
   }
   if (action === 'run') {
     const runImage = flags['image']

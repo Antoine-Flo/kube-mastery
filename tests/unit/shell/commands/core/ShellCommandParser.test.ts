@@ -26,6 +26,15 @@ describe('ShellCommandParser', () => {
       }
     })
 
+    it('should parse sleep command with one arg', () => {
+      const result = parseShellCommand('sleep 2')
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.command).toBe('sleep')
+        expect(result.value.args).toEqual(['2'])
+      }
+    })
+
     it('should parse command with single arg', () => {
       const result = parseShellCommand('cd /home')
       expect(result.ok).toBe(true)

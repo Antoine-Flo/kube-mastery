@@ -1,3 +1,8 @@
+---
+seoTitle: "Delete Kubernetes Resources: graceful termination, cascade"
+seoDescription: "Understand how Kubernetes handles graceful pod termination, cascade deletion, and force delete to safely clean up cluster resources."
+---
+
 # Deleting and Cleaning Up Resources
 
 Creating resources is only half of the story. Eventually, you need to remove them, to clean up experiments, decommission old services, free resources, or reset a namespace to a clean state. Kubernetes provides a thoughtful deletion mechanism that prioritizes graceful application shutdown. Understanding how it works, and when to deviate from the defaults, will help you avoid both stuck resources and unexpected downtime.

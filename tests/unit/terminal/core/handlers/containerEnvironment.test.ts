@@ -1,4 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
+import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
+import {
+  createSecret,
+  encodeBase64
+} from '../../../../../src/core/cluster/ressources/Secret'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import {
   buildContainerEnvironmentVariables,
@@ -62,6 +68,72 @@ describe('containerEnvironment', () => {
     expect(result.value).toContain(
       'FROM_SECRET=<from secret db-secret:password>'
     )
+  })
+
+  it('resolves configmap and secret refs when api server is available', () => {
+    const apiServer = createApiServerFacade()
+    const configMapCreateResult = apiServer.createResource(
+      'ConfigMap',
+      createConfigMap({
+        name: 'app-config',
+        namespace: 'default',
+        data: {
+          LOG_LEVEL: 'debug'
+        }
+      })
+    )
+    expect(configMapCreateResult.ok).toBe(true)
+
+    const secretCreateResult = apiServer.createResource(
+      'Secret',
+      createSecret({
+        name: 'db-secret',
+        namespace: 'default',
+        secretType: { type: 'Opaque' },
+        data: {
+          password: encodeBase64('super-secret-token')
+        }
+      })
+    )
+    expect(secretCreateResult.ok).toBe(true)
+
+    const pod = createPod({
+      name: 'web',
+      namespace: 'default',
+      containers: [
+        {
+          name: 'app',
+          image: 'nginx',
+          env: [
+            {
+              name: 'FROM_CM',
+              source: {
+                type: 'configMapKeyRef',
+                name: 'app-config',
+                key: 'LOG_LEVEL'
+              }
+            },
+            {
+              name: 'FROM_SECRET',
+              source: {
+                type: 'secretKeyRef',
+                name: 'db-secret',
+                key: 'password'
+              }
+            }
+          ]
+        }
+      ]
+    })
+
+    const result = buildContainerEnvironmentVariables(pod, 'app', apiServer)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toContain('FROM_CM=debug')
+    expect(result.value).toContain('FROM_SECRET=super-secret-token')
   })
 
   it('returns explicit error when container is missing', () => {

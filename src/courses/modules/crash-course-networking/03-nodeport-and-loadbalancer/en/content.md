@@ -1,3 +1,8 @@
+---
+seoTitle: "Expose Kubernetes Apps: NodePort, LoadBalancer, Ingress"
+seoDescription: "Explore how to expose Kubernetes applications externally using NodePort, LoadBalancer Services, and Ingress for HTTP routing and TLS termination."
+---
+
 # NodePort and LoadBalancer: Exposing Apps Externally
 
 ClusterIP Services are invisible from outside the cluster. A ClusterIP address is only reachable from within the cluster network - other Pods, other Services, nothing else. That's by design: most inter-service communication should stay internal, and exposing everything externally creates unnecessary attack surface. But at some point, at least one part of your system needs to be reachable from the outside world. That's where NodePort and LoadBalancer come in.

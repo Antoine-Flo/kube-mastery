@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Namespaces: Isolation, Resource Scoping, kubectl
+seoDescription: Understand how Kubernetes namespaces divide a cluster into isolated virtual spaces, the difference between namespaced and cluster-scoped resources.
+---
+
 # What Are Namespaces?
 
 Imagine you work in a large office building. The building has one lobby, one set of elevators, and a shared address , but inside, each floor belongs to a different department. The accounting team on floor three does not interfere with the engineering team on floor seven. Each floor has its own rooms, its own equipment, and its own set of people. They are all under the same roof, but they are effectively isolated from each other.

@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Pods: Containers, Sidecars, Ephemeral Units"
+seoDescription: "Learn how Kubernetes Pods work as the smallest deployable unit, when to use multi-container sidecars, and why Pods are ephemeral by design."
+---
+
 # What Is a Pod?
 
 If you ask a Kubernetes newcomer what the basic building block of the platform is, they will often say "a container." That's understandable, containers are what you're running, after all. But Kubernetes doesn't schedule or manage containers directly. It manages something called a **Pod**, and understanding the difference is one of the most important conceptual steps in your Kubernetes journey.

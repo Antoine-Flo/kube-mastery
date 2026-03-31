@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Update Strategies: RollingUpdate vs Recreate"
+seoDescription: "Explore the RollingUpdate and Recreate Deployment strategies, understand when each applies, and learn to tune maxUnavailable and maxSurge for your workload."
+---
+
 # Update Strategies, RollingUpdate vs Recreate
 
 A Deployment update does not pick how Pods are replaced for you: you choose the strategy. Kubernetes ships two built-ins, each for a different class of application. The wrong choice means either avoidable downtime or subtle, painful data consistency problems.

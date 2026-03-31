@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Namespace Navigation: -n Flag, Context, DNS
+seoDescription: Learn how to switch namespaces with -n, query all namespaces with -A, set a default namespace via kubectl config, and use cross-namespace DNS.
+---
+
 # Working Across Namespaces
 
 Now that you understand what namespaces are and why the built-in ones exist, it is time to get practical. Most real-world Kubernetes work involves switching between namespaces, targeting specific ones for commands, and sometimes querying across all of them at once. This lesson covers the mechanics of working with namespaces day to day , including how to change your default namespace so you stop having to type `-n my-namespace` on every command.

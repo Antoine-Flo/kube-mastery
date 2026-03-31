@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Cluster Architecture: Control Plane, Worker Nodes"
+seoDescription: "Learn how a Kubernetes cluster is structured, with control plane components managing state and worker nodes running application containers."
+---
+
 # Cluster Architecture Overview
 
 A Kubernetes cluster is made up of at least two kinds of machines, called nodes. In a minimal setup there is one of each, but production clusters typically have multiple of both for redundancy and capacity.

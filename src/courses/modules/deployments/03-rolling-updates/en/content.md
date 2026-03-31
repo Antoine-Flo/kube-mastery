@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Rolling Updates: maxUnavailable, maxSurge, Pause"
+seoDescription: "Understand how Kubernetes rolling updates replace Pods gradually using maxUnavailable and maxSurge, and how to pause, resume, or recover from a failed rollout."
+---
+
 # Rolling Updates
 
 Releasing a new version of software is inherently risky. No matter how thoroughly you test in staging, production environments have a way of surfacing surprises. The rolling update strategy is Kubernetes' answer to this challenge: it replaces your application's Pods gradually, a few at a time, ensuring that healthy Pods are always serving traffic throughout the transition. If something goes wrong, you can pause or roll back before the damage is widespread.

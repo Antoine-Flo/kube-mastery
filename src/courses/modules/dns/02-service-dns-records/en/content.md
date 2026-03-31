@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Service DNS Records: FQDN, Headless, ExternalName"
+seoDescription: "Learn how Kubernetes creates DNS A records for Services, resolve names across namespaces, and understand headless Services and ExternalName CNAME records."
+---
+
 # Service DNS Records
 
 In the previous lesson you learned how CoreDNS acts as the cluster's internal phone book, and how every Pod is automatically configured to use it. Now let's dig deeper into the actual DNS records that Kubernetes creates for Services, the full record format, the shortcuts that make your life easier, and the special cases for headless Services and external names.

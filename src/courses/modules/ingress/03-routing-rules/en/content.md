@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Ingress Routing: Host Rules, Path Types, Fallback"
+seoDescription: "Learn to configure Kubernetes Ingress routing rules with host-based routing, Prefix and Exact path types, and a default backend for unmatched requests."
+---
+
 # Routing Rules: Host-Based and Path-Based
 
 The true power of Ingress lies in its routing rules, the precise, declarative way you tell the controller how to direct incoming traffic to the right backend Service. Kubernetes Ingress supports two fundamental routing strategies: **host-based routing** (separating traffic by domain name) and **path-based routing** (separating traffic by URL path). In practice, you will often combine both strategies in a single Ingress resource.

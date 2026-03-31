@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Imperative vs Declarative: kubectl apply, dry-run"
+seoDescription: "Learn how to choose between imperative kubectl commands and declarative YAML manifests, and use dry-run to scaffold configurations faster."
+---
+
 # Imperative vs Declarative
 
 When you first start working with Kubernetes, one of the most fundamental concepts to grasp is not about pods or deployments, it is about _how you communicate with the cluster_. Kubernetes gives you two distinct mental models: the **imperative** approach and the **declarative** approach. Understanding the difference will shape how you work with Kubernetes for everything that follows.

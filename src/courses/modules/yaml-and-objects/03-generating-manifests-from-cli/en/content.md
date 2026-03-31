@@ -1,3 +1,8 @@
+---
+seoTitle: "Generate Kubernetes Manifests with --dry-run and kubectl"
+seoDescription: "Learn how to use kubectl --dry-run=client -o yaml to generate valid manifests for Pods, Deployments, and Services without creating cluster resources."
+---
+
 # Generating Manifests from the CLI
 
 Writing Kubernetes manifests by hand is a useful skill, but it can be slow and error-prone, especially when you're just getting started and don't yet have every field memorized. Fortunately, `kubectl` comes with a powerful trick that lets you generate valid, ready-to-use YAML in seconds , without ever actually creating anything in the cluster. Once you discover this technique, you'll wonder how you ever lived without it.

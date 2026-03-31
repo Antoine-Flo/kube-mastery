@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes DNS: CoreDNS, Search Domains, Resolution Flow"
+seoDescription: "Understand how Kubernetes DNS works with CoreDNS, how Pods are configured via /etc/resolv.conf, and how search domains enable short-name service resolution."
+---
+
 # DNS in Kubernetes
 
 Every application eventually needs to talk to another application. A web frontend needs to reach an API server. An API server needs to reach a database. In traditional infrastructure, you might hardcode IP addresses, write them into configuration files, or rely on an external DNS server managed by your operations team. In Kubernetes, there is a much more elegant solution built right into every cluster: an internal DNS system that lets your Pods find each other by name, regardless of where they are running or what IP address they happen to have at any given moment.

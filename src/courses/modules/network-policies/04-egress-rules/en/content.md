@@ -1,3 +1,8 @@
+---
+seoTitle: Kubernetes Egress Rules: DNS, ipBlock, Outbound Traffic
+seoDescription: Learn how to restrict outbound Pod traffic in Kubernetes using egress NetworkPolicy rules, including the critical DNS exception and ipBlock selectors.
+---
+
 # Egress Rules, Controlling Outbound Traffic
 
 Security isn't just about keeping unwanted visitors out, it's also about controlling what your Pods can reach when they initiate connections. An egress rule defines which outbound connections a selected Pod is permitted to make. Any attempt to reach a destination not covered by a rule is silently dropped.

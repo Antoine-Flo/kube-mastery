@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Pod IPs Are Ephemeral: Services, Endpoints"
+seoDescription: "Understand why Kubernetes Pod IP addresses change on every restart and how Services use Endpoints to provide stable load-balanced access."
+---
+
 # The Problem with Pod IPs
 
 You have a frontend Deployment and a backend Deployment. The frontend needs to call the backend API. The obvious first thought is to find the backend Pod's IP address and point the frontend at it. You can get the IP with `kubectl get pod -o wide`. It works. The first request goes through cleanly.

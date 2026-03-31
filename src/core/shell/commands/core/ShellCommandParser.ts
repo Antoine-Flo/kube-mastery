@@ -33,6 +33,7 @@ export const VALID_COMMANDS: ShellCommand[] = [
   'cd',
   'ls',
   'pwd',
+  'sleep',
   'mkdir',
   'touch',
   'cat',

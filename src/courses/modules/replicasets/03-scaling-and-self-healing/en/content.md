@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes ReplicaSets: Scaling, Self-Healing, Pod Adoption"
+seoDescription: "Explore how Kubernetes ReplicaSets scale replicas up and down, automatically self-heal from Pod failures, and handle unexpected Pod adoption."
+---
+
 # Scaling and Self-Healing with ReplicaSets
 
 A ReplicaSet is a living controller that continuously responds to cluster state. In this lesson you'll see two of its most powerful behaviors: scaling replicas up or down on demand, and automatically healing from Pod failures. You'll also encounter a surprising behavior called adoption, a direct consequence of how ReplicaSets find their Pods.

@@ -15,6 +15,7 @@ export const createHelpHandler = (): ShellCommandHandler => {
   ls [path]        List directory contents
   ls -l [path]     List with details
   pwd              Print working directory
+  sleep <seconds>  Pause execution in terminal
   mkdir <name>     Create directory
   touch <file>     Create empty file
   cat <file>       Display file contents

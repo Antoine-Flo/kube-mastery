@@ -1,3 +1,8 @@
+---
+seoTitle: "Debugging Kubernetes DNS: CoreDNS, nslookup, resolv.conf"
+seoDescription: "Learn how to systematically debug DNS failures in Kubernetes by checking CoreDNS health, verifying Service endpoints, and testing resolution from inside Pods."
+---
+
 # Debugging DNS Issues in Kubernetes
 
 DNS problems are some of the most common networking issues you will encounter in Kubernetes, and they can be frustrating because the symptoms, "cannot connect to service X", look exactly like the symptoms of many other problems. The good news is that DNS issues follow predictable patterns, and there is a systematic debugging process that will get you to the root cause quickly every time.

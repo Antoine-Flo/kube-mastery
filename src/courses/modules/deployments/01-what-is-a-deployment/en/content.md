@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Deployments: Hierarchy, Updates, Rollback"
+seoDescription: "Learn how Kubernetes Deployments manage ReplicaSets and Pods to enable declarative updates, rolling upgrades, and instant rollback for stateless workloads."
+---
+
 # What is a Deployment?
 
 In the previous module you learned about ReplicaSets, and you also saw their biggest limitation: they keep a fixed number of Pods alive but have no built-in way to update those Pods safely when you change your application. That gap is precisely where Deployments come in.

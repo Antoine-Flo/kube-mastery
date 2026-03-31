@@ -1,3 +1,8 @@
+---
+seoTitle: "Viewing Kubernetes Resources: get, describe, api-resources"
+seoDescription: "Learn how to inspect Kubernetes resources using kubectl get, kubectl describe, and api-resources to debug cluster issues effectively."
+---
+
 # Viewing Resources with kubectl
 
 Before you can fix anything in a Kubernetes cluster, you need to know how to _look_ at it. This lesson covers the two most essential observation tools in kubectl: `kubectl get` and `kubectl describe`. Think of `kubectl get` as the high-altitude dashboard, it shows you what is running, and `kubectl describe` as the magnifying glass you pull out when something looks off.

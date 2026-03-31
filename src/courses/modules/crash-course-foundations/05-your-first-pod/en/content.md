@@ -1,3 +1,8 @@
+---
+seoTitle: "Your First Kubernetes Pod: Manifests, Resources, Lifecycle"
+seoDescription: "Learn how to write a Kubernetes Pod manifest with containers, resource requests and limits, and understand the Pod lifecycle from creation to running."
+---
+
 # Your First Pod
 
 A Pod is the smallest deployable unit in Kubernetes. Not a container - a Pod. This distinction matters because a Pod can hold more than one container, and all containers in the same Pod share a network namespace and can share storage volumes. In practice, most Pods run a single container, but the abstraction exists so that Kubernetes has a consistent, atomic unit to schedule, start, stop, and monitor. You never tell Kubernetes "run this container on that node." You tell it "run this Pod," and it handles the rest.
@@ -78,7 +83,12 @@ kubectl logs my-pod --previous
 
 **1. Save the following manifest as `first-pod.yaml`:**
 
+```bash
+nano first-pod.yaml
+```
+
 ```yaml
+#first-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:

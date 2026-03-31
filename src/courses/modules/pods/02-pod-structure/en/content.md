@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Pod Structure: Manifest, Volumes, Init Containers"
+seoDescription: "Explore the anatomy of a Kubernetes Pod manifest, covering containers, env vars, resource limits, volumes, restartPolicy, and init containers."
+---
+
 # Pod Structure and Anatomy
 
 Now that you understand what a Pod is, it's time to open it up and look at the mechanics. A Pod manifest can look simple, just a container name and image, or it can be quite detailed, with volumes, init containers, environment variables, resource constraints, and scheduling hints. In this lesson, we'll walk through every major section of a Pod manifest so you know exactly what each field does and when to use it.

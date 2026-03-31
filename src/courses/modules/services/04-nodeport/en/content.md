@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes NodePort: External Access, Port Range, Node IPs"
+seoDescription: "Learn how Kubernetes NodePort Services expose your application outside the cluster, how to configure the port range, and when to use NodePort."
+---
+
 # NodePort , Exposing Services Outside the Cluster
 
 ClusterIP Services are perfect for internal communication, but sometimes you need something outside the cluster to talk to your application , a browser, a load balancer, a monitoring system, or your laptop during development. `NodePort` is the simplest way to make a Service reachable from outside the cluster. It works by opening a specific port on every Node in the cluster and routing incoming traffic through to your Service.

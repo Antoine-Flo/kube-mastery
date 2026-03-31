@@ -1,4 +1,5 @@
 import type { Container } from '../../cluster/ressources/Pod'
+import { convertYamlProbe } from '../../cluster/ressources/yamlConverters'
 
 type TemplateProbeLike = Container['livenessProbe'] | Record<string, unknown>
 
@@ -56,9 +57,29 @@ const isTemplateProbe = (
   return true
 }
 
+const resolveTemplateProbe = (
+  probe: TemplateProbeLike | undefined
+): Container['livenessProbe'] | undefined => {
+  if (probe == null) {
+    return undefined
+  }
+  if (isTemplateProbe(probe)) {
+    return probe
+  }
+  const convertedProbe = convertYamlProbe(probe)
+  if (convertedProbe == null) {
+    return undefined
+  }
+  return convertedProbe
+}
+
 const convertTemplateContainer = (
   container: TemplateContainerLike
 ): Container => {
+  const livenessProbe = resolveTemplateProbe(container.livenessProbe)
+  const readinessProbe = resolveTemplateProbe(container.readinessProbe)
+  const startupProbe = resolveTemplateProbe(container.startupProbe)
+
   return {
     name: container.name,
     image: container.image,
@@ -71,15 +92,9 @@ const convertTemplateContainer = (
     ...(container.resources && { resources: container.resources }),
     ...(container.env && { env: container.env }),
     ...(container.volumeMounts && { volumeMounts: container.volumeMounts }),
-    ...(isTemplateProbe(container.livenessProbe) && {
-      livenessProbe: container.livenessProbe
-    }),
-    ...(isTemplateProbe(container.readinessProbe) && {
-      readinessProbe: container.readinessProbe
-    }),
-    ...(isTemplateProbe(container.startupProbe) && {
-      startupProbe: container.startupProbe
-    }),
+    ...(livenessProbe != null && { livenessProbe }),
+    ...(readinessProbe != null && { readinessProbe }),
+    ...(startupProbe != null && { startupProbe }),
     ...(container.securityContext && {
       securityContext: container.securityContext
     }),

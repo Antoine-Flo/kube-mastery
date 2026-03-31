@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Volumes Explained: Lifecycle, Types, Mounts"
+seoDescription: "Learn how Kubernetes volumes outlive container restarts, covering the two-step mount declaration, volume lifecycle, and the difference from PersistentVolumes."
+---
+
 # Why Do We Need Volumes?
 
 Containers are designed to be disposable. When a container process exits, crashes, or is replaced, it takes everything it wrote to its own filesystem with it. That's not a bug, it's a feature: stateless containers are predictable, reproducible, and easy to scale.

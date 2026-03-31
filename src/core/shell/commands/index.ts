@@ -29,6 +29,7 @@ import { createDebugHandler } from './handlers/system/debug'
 import { createEnvHandler } from './handlers/system/env'
 import { createExitHandler } from './handlers/system/exit'
 import { createHelpHandler } from './handlers/system/help'
+import { createSleepHandler } from './handlers/system/sleep'
 
 // Types
 export { parseShellCommand }
@@ -85,6 +86,7 @@ const createHandlers = (
   handlers.set('clear', createClearHandler())
   handlers.set('help', createHelpHandler())
   handlers.set('debug', createDebugHandler())
+  handlers.set('sleep', createSleepHandler())
   handlers.set(
     'env',
     createEnvHandler({

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createClearHandler } from '../../../../../src/core/shell/commands/handlers/system/clear'
 import { createDebugHandler } from '../../../../../src/core/shell/commands/handlers/system/debug'
 import { createHelpHandler } from '../../../../../src/core/shell/commands/handlers/system/help'
+import { createSleepHandler } from '../../../../../src/core/shell/commands/handlers/system/sleep'
 
 describe('System Handlers', () => {
   describe('clear', () => {
@@ -71,6 +72,23 @@ describe('System Handlers', () => {
       expect(result.ok).toBe(false)
       if (!result.ok) {
         expect(result.error).toContain('Unknown debug subcommand')
+      }
+    })
+  })
+
+  describe('sleep', () => {
+    it('should accept a numeric duration', () => {
+      const handler = createSleepHandler()
+      const result = handler.execute(['2'], {})
+      expect(result.ok).toBe(true)
+    })
+
+    it('should reject missing operand', () => {
+      const handler = createSleepHandler()
+      const result = handler.execute([], {})
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('missing operand')
       }
     })
   })

@@ -1,3 +1,8 @@
+---
+seoTitle: "Kubernetes Namespaces and Labels: Isolation, Selectors"
+seoDescription: "Understand how Kubernetes namespaces partition cluster resources and how labels enable flexible filtering, querying, and resource connections."
+---
+
 # Namespaces and Labels
 
 As a cluster grows, it becomes home to many teams, many applications, and many environments. Without some way to organize all of that, everything lands in a single undifferentiated pile, and it becomes difficult to know which resources belong to which application, which are safe to delete, and which are critical. Kubernetes provides two complementary mechanisms for this: **namespaces** for hard boundaries between groups, and **labels** for flexible tagging within those groups.

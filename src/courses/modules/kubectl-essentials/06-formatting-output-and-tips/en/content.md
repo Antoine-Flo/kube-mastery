@@ -1,3 +1,8 @@
+---
+seoTitle: "kubectl Output Formatting: jsonpath, custom-columns, aliases"
+seoDescription: "Learn to extract Kubernetes resource data with jsonpath, build custom tables, and speed up your workflow with aliases and tab completion."
+---
+
 # Formatting kubectl Output and Productivity Tips
 
 Once you are comfortable with the core kubectl commands, the next step is learning to use them _efficiently_. The default table view only scratches the surface of what Kubernetes resources contain. kubectl offers powerful output formatting options, from extracting a single field to building a custom table, and a few shell tricks that can dramatically speed up your daily workflow.

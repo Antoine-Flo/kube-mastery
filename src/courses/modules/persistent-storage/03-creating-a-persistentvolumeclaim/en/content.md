@@ -1,3 +1,8 @@
+---
+seoTitle: Create a Kubernetes PersistentVolumeClaim: Binding Process
+seoDescription: Learn how to write a Kubernetes PersistentVolumeClaim, understand the binding algorithm, diagnose pending PVCs, and see how dynamic provisioning works.
+---
+
 # Creating a PersistentVolumeClaim
 
 With a PersistentVolume in place, the next step is to claim it. This is where the application developer enters the picture. The PersistentVolumeClaim is the object that bridges the gap between the abstract storage resource an administrator has provisioned and the concrete storage need an application has. Writing a PVC does not require knowing which specific volume you'll get, you simply describe what you need, and Kubernetes finds a match.

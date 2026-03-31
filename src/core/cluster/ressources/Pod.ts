@@ -33,18 +33,27 @@ export type Probe =
       port: number
       initialDelaySeconds?: number
       periodSeconds?: number
+      timeoutSeconds?: number
+      successThreshold?: number
+      failureThreshold?: number
     }
   | {
       type: 'exec'
       command: string[]
       initialDelaySeconds?: number
       periodSeconds?: number
+      timeoutSeconds?: number
+      successThreshold?: number
+      failureThreshold?: number
     }
   | {
       type: 'tcpSocket'
       port: number
       initialDelaySeconds?: number
       periodSeconds?: number
+      timeoutSeconds?: number
+      successThreshold?: number
+      failureThreshold?: number
     }
 
 // ─── Environment Variables ─────────────────────────────────────────
@@ -153,6 +162,7 @@ export interface PodToleration {
   operator?: 'Exists' | 'Equal'
   value?: string
   effect?: 'NoSchedule' | 'PreferNoSchedule' | 'NoExecute'
+  tolerationSeconds?: number
 }
 
 export interface PodNodeSelectorRequirement {
@@ -578,14 +588,6 @@ export const createPod = (config: PodConfig): Pod => {
         container.name
       ),
       imageID: computeContainerImageId(container.image),
-      ...(state !== 'Waiting'
-        ? {
-            lastStateDetails: {
-              state: 'Waiting' as const,
-              reason: 'ContainerCreating'
-            }
-          }
-        : {}),
       ...(override?.lastRestartAt != null && {
         lastRestartAt: override.lastRestartAt
       })
