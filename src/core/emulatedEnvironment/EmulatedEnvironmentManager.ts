@@ -208,6 +208,7 @@ export function destroyEmulatedEnvironment(
   emulatedEnvironment.controlPlaneRuntime?.stop()
   emulatedEnvironment.controlPlaneRuntime = undefined
   emulatedEnvironment.networkRuntime?.controller.stop()
+  emulatedEnvironment.volumeRuntime?.volumeProvisioningController.stop()
   emulatedEnvironment.volumeRuntime?.volumeBindingController.stop()
   emulatedEnvironment.volumeRuntime?.podVolumeController.stop()
   emulatedEnvironment.volumeRuntime = undefined

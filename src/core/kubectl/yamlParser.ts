@@ -27,6 +27,8 @@ import type { ReplicaSet } from '../cluster/ressources/ReplicaSet'
 import { parseReplicaSetManifest } from '../cluster/ressources/ReplicaSet'
 import type { Secret } from '../cluster/ressources/Secret'
 import { parseSecretManifest } from '../cluster/ressources/Secret'
+import type { StorageClass } from '../cluster/ressources/StorageClass'
+import { parseStorageClassManifest } from '../cluster/ressources/StorageClass'
 import type { Service } from '../cluster/ressources/Service'
 import { parseServiceManifest } from '../cluster/ressources/Service'
 import type { StatefulSet } from '../cluster/ressources/StatefulSet'
@@ -45,6 +47,7 @@ type ParsedResource =
   | Pod
   | ConfigMap
   | Secret
+  | StorageClass
   | Node
   | PersistentVolume
   | PersistentVolumeClaim
@@ -71,6 +74,7 @@ type YamlSupportedKind = Extract<
   | 'Service'
   | 'Ingress'
   | 'Lease'
+  | 'StorageClass'
 >
 
 const YAML_SUPPORTED_RESOURCE_KINDS: YamlSupportedKind[] =
@@ -145,7 +149,8 @@ const MANIFEST_PARSERS: Record<
   StatefulSet: parseStatefulSetManifest,
   Service: parseServiceManifest,
   Ingress: parseIngressManifest,
-  Lease: parseLeaseManifest
+  Lease: parseLeaseManifest,
+  StorageClass: parseStorageClassManifest
 }
 
 /**

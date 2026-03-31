@@ -21,6 +21,7 @@ export const KUBECTL_RESOURCES = {
     'persistentvolumeclaim',
     'pvc'
   ],
+  storageclasses: ['storageclasses', 'storageclass', 'sc'],
   leases: ['leases', 'lease']
 } as const
 

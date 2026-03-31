@@ -20,6 +20,7 @@ import type { Pod } from '../../../../../cluster/ressources/Pod'
 import type { ReplicaSet } from '../../../../../cluster/ressources/ReplicaSet'
 import { getReplicaSetDesiredReplicas } from '../../../../../cluster/ressources/ReplicaSet'
 import type { Secret } from '../../../../../cluster/ressources/Secret'
+import type { StorageClass } from '../../../../../cluster/ressources/StorageClass'
 import type { Service } from '../../../../../cluster/ressources/Service'
 import { getServiceType } from '../../../../../cluster/ressources/Service'
 import type { StatefulSet } from '../../../../../cluster/ressources/StatefulSet'
@@ -59,6 +60,7 @@ interface ResourceHandlerRegistry {
   namespaces: ResourceHandler<Namespace>
   persistentvolumes: ResourceHandler<PersistentVolume>
   persistentvolumeclaims: ResourceHandler<PersistentVolumeClaim>
+  storageclasses: ResourceHandler<StorageClass>
   leases: ResourceHandler<Lease>
 }
 
@@ -351,13 +353,40 @@ export const RESOURCE_HANDLERS: ResourceHandlerRegistry = {
     formatRow: (persistentVolumeClaim) => [
       persistentVolumeClaim.metadata.name,
       persistentVolumeClaim.status.phase,
-      persistentVolumeClaim.spec.volumeName ?? '<none>',
-      persistentVolumeClaim.spec.resources.requests.storage,
-      persistentVolumeClaim.spec.accessModes.join(','),
+      persistentVolumeClaim.status.phase === 'Bound'
+        ? (persistentVolumeClaim.spec.volumeName ?? '')
+        : '',
+      persistentVolumeClaim.status.phase === 'Bound'
+        ? persistentVolumeClaim.spec.resources.requests.storage
+        : '',
+      persistentVolumeClaim.status.phase === 'Bound'
+        ? persistentVolumeClaim.spec.accessModes.join(',')
+        : '',
       persistentVolumeClaim.spec.storageClassName ?? '<none>',
       formatAge(persistentVolumeClaim.metadata.creationTimestamp)
     ],
     supportsFiltering: true
+  },
+  storageclasses: {
+    getItems: (state) => state.storageClasses.items,
+    headers: [
+      'name',
+      'provisioner',
+      'reclaimpolicy',
+      'volumebindingmode',
+      'allowvolumeexpansion',
+      'age'
+    ],
+    formatRow: (storageClass) => [
+      storageClass.metadata.name,
+      storageClass.provisioner,
+      storageClass.reclaimPolicy,
+      storageClass.volumeBindingMode,
+      storageClass.allowVolumeExpansion === true ? 'true' : 'false',
+      formatAge(storageClass.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true,
+    isClusterScoped: true
   },
   leases: {
     getItems: (state) => state.leases.items,

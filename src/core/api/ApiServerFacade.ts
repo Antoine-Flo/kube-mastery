@@ -45,6 +45,9 @@ import {
   createSecretCreatedEvent,
   createSecretDeletedEvent,
   createSecretUpdatedEvent,
+  createStorageClassCreatedEvent,
+  createStorageClassDeletedEvent,
+  createStorageClassUpdatedEvent,
   createServiceCreatedEvent,
   createServiceDeletedEvent,
   createServiceUpdatedEvent,
@@ -66,9 +69,13 @@ import type { Node } from '../cluster/ressources/Node'
 import type { PersistentVolume } from '../cluster/ressources/PersistentVolume'
 import type { PersistentVolumeClaim } from '../cluster/ressources/PersistentVolumeClaim'
 import type { Pod } from '../cluster/ressources/Pod'
-import { computeContainerImageId } from '../cluster/ressources/Pod'
+import {
+  computeContainerImageId,
+  hydratePodVolumeRuntime
+} from '../cluster/ressources/Pod'
 import type { ReplicaSet } from '../cluster/ressources/ReplicaSet'
 import type { Secret } from '../cluster/ressources/Secret'
+import type { StorageClass } from '../cluster/ressources/StorageClass'
 import type { Service } from '../cluster/ressources/Service'
 import type { StatefulSet } from '../cluster/ressources/StatefulSet'
 import type {
@@ -358,6 +365,29 @@ const normalizePodUpdateResource = (previous: Pod, next: Pod): Pod => {
   return resetPodToContainerCreating(previous, withSimulator)
 }
 
+const hydratePodRuntimeForNamespace = (
+  pod: Pod,
+  resolveConfigMap: (name: string, namespace: string) => ConfigMap | undefined,
+  resolveSecret: (name: string, namespace: string) => Secret | undefined,
+  resolvePersistentVolumeClaim: (
+    name: string,
+    namespace: string
+  ) => PersistentVolumeClaim | undefined,
+  resolvePersistentVolume: (name: string) => PersistentVolume | undefined
+): Pod => {
+  const runtimeResult = hydratePodVolumeRuntime(pod, {
+    namespace: pod.metadata.namespace,
+    findConfigMap: resolveConfigMap,
+    findSecret: resolveSecret,
+    findPersistentVolumeClaim: resolvePersistentVolumeClaim,
+    findPersistentVolume: resolvePersistentVolume
+  })
+  if (!runtimeResult.ok) {
+    return pod
+  }
+  return runtimeResult.value
+}
+
 interface ResourceMutationEventFactory {
   create: (resource: KindToResource<ResourceKind>, source: string) => AppEvent
   update: (
@@ -528,13 +558,19 @@ const RESOURCE_MUTATION_EVENTS: Record<
     createLeaseCreatedEvent,
     createLeaseUpdatedEvent,
     createLeaseDeletedEvent
+  ),
+  StorageClass: createClusterScopedMutationEvents<StorageClass>(
+    createStorageClassCreatedEvent,
+    createStorageClassUpdatedEvent,
+    createStorageClassDeletedEvent
   )
 }
 
 const CLUSTER_SCOPED_KINDS = new Set<ResourceKind>([
   'Node',
   'Namespace',
-  'PersistentVolume'
+  'PersistentVolume',
+  'StorageClass'
 ])
 
 const isClusterScopedKind = (kind: ResourceKind): boolean => {
@@ -579,6 +615,49 @@ export const createApiServerFacade = (
     return clusterState.findByKind(kind, name, namespace) as Result<
       KindToResource<TKind>
     >
+  }
+  const resolveConfigMapForPodRuntime = (
+    name: string,
+    namespace: string
+  ): ConfigMap | undefined => {
+    const configMapResult = clusterState.findByKind('ConfigMap', name, namespace)
+    if (!configMapResult.ok) {
+      return undefined
+    }
+    return configMapResult.value as ConfigMap
+  }
+  const resolveSecretForPodRuntime = (
+    name: string,
+    namespace: string
+  ): Secret | undefined => {
+    const secretResult = clusterState.findByKind('Secret', name, namespace)
+    if (!secretResult.ok) {
+      return undefined
+    }
+    return secretResult.value as Secret
+  }
+  const resolvePersistentVolumeClaimForPodRuntime = (
+    name: string,
+    namespace: string
+  ): PersistentVolumeClaim | undefined => {
+    const claimResult = clusterState.findByKind(
+      'PersistentVolumeClaim',
+      name,
+      namespace
+    )
+    if (!claimResult.ok) {
+      return undefined
+    }
+    return claimResult.value as PersistentVolumeClaim
+  }
+  const resolvePersistentVolumeForPodRuntime = (
+    name: string
+  ): PersistentVolume | undefined => {
+    const volumeResult = clusterState.findByKind('PersistentVolume', name)
+    if (!volumeResult.ok) {
+      return undefined
+    }
+    return volumeResult.value as PersistentVolume
   }
 
   const emitResourceMutationEvent = <TKind extends ResourceKind>(
@@ -746,10 +825,20 @@ export const createApiServerFacade = (
       return findResult as Result<KindToResource<typeof kind>>
     },
     createResource: (kind, resource) => {
+      const normalizedResource =
+        kind === 'Pod'
+          ? (hydratePodRuntimeForNamespace(
+              resource as Pod,
+              resolveConfigMapForPodRuntime,
+              resolveSecretForPodRuntime,
+              resolvePersistentVolumeClaimForPodRuntime,
+              resolvePersistentVolumeForPodRuntime
+            ) as KindToResource<typeof kind>)
+          : (resource as KindToResource<typeof kind>)
       emitResourceMutationEvent(kind, 'create', {
-        resource: resource as KindToResource<typeof kind>
+        resource: normalizedResource
       })
-      return success(resource as KindToResource<typeof kind>)
+      return success(normalizedResource)
     },
     updateResource: (kind, name, resource, namespace) => {
       const effectiveNamespace = resolveResourceNamespace(
@@ -763,9 +852,15 @@ export const createApiServerFacade = (
       }
       const normalizedResource =
         kind === 'Pod'
-          ? (normalizePodUpdateResource(
-              previous.value as Pod,
-              resource as Pod
+          ? (hydratePodRuntimeForNamespace(
+              normalizePodUpdateResource(
+                previous.value as Pod,
+                resource as Pod
+              ),
+              resolveConfigMapForPodRuntime,
+              resolveSecretForPodRuntime,
+              resolvePersistentVolumeClaimForPodRuntime,
+              resolvePersistentVolumeForPodRuntime
             ) as KindToResource<typeof kind>)
           : (resource as KindToResource<typeof kind>)
       emitResourceMutationEvent(kind, 'update', {

@@ -15,6 +15,7 @@ export const SUPPORTED_RESOURCE_KINDS: ResourceKind[] = [
   'EndpointSlice',
   'PersistentVolume',
   'PersistentVolumeClaim',
+  'StorageClass',
   'Service',
   'Endpoints',
   'Lease'
@@ -57,7 +58,8 @@ export const RESOURCE_KIND_BY_RESOURCE: Record<
   ingressclasses: undefined,
   persistentvolumes: 'PersistentVolume',
   persistentvolumeclaims: 'PersistentVolumeClaim',
-  leases: 'Lease'
+  leases: 'Lease',
+  storageclasses: 'StorageClass'
 }
 
 const KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
@@ -68,6 +70,7 @@ const KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
   StatefulSet: 'statefulset.apps',
   ReplicaSet: 'replicaset.apps',
   Ingress: 'ingress.networking.k8s.io',
+  StorageClass: 'storageclass.storage.k8s.io',
   Lease: 'lease.coordination.k8s.io'
 }
 
@@ -82,6 +85,7 @@ const PLURAL_KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
   Namespace: 'namespaces',
   PersistentVolume: 'persistentvolumes',
   PersistentVolumeClaim: 'persistentvolumeclaims',
+  StorageClass: 'storageclasses.storage.k8s.io',
   Lease: 'leases.coordination.k8s.io'
 }
 
@@ -108,6 +112,7 @@ export const RESOURCE_OUTPUT_METADATA_BY_RESOURCE: Record<
   endpoints: { apiVersion: 'v1', kind: 'Endpoints' },
   persistentvolumes: { apiVersion: 'v1', kind: 'PersistentVolume' },
   persistentvolumeclaims: { apiVersion: 'v1', kind: 'PersistentVolumeClaim' },
+  storageclasses: { apiVersion: 'storage.k8s.io/v1', kind: 'StorageClass' },
   leases: { apiVersion: 'coordination.k8s.io/v1', kind: 'Lease' }
 }
 

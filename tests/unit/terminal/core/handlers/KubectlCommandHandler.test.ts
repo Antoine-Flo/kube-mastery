@@ -16,6 +16,10 @@ import { createLogger } from '../../../../../src/logger/Logger'
 import { initializeSimNetworkRuntime } from '../../../../../src/core/network/SimNetworkRuntime'
 import type { EditorModal } from '../../../../../src/core/shell/commands'
 import { ShellCommandHandler } from '../../../../../src/core/terminal/core/handlers/ShellCommandHandler'
+import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
+import { createPersistentVolume } from '../../../../../src/core/cluster/ressources/PersistentVolume'
+import { createPersistentVolumeClaim } from '../../../../../src/core/cluster/ressources/PersistentVolumeClaim'
+import { createSecret, encodeBase64 } from '../../../../../src/core/cluster/ressources/Secret'
 
 describe('KubectlCommandHandler', () => {
   let handler: KubectlCommandHandler
@@ -508,6 +512,293 @@ describe('KubectlCommandHandler', () => {
         { mutable: true }
       )
       expect(updatedFileSystem.readFile('/tmp/message.txt').ok).toBe(false)
+    })
+
+    it('should preserve emptyDir data across producer restart and share it between containers', () => {
+      const pod = createPod({
+        name: 'emptydir-demo',
+        namespace: 'default',
+        phase: 'Running',
+        restartPolicy: 'Always',
+        volumes: [
+          {
+            name: 'shared',
+            source: { type: 'emptyDir' }
+          }
+        ],
+        containers: [
+          {
+            name: 'producer',
+            image: 'busybox:1.36',
+            volumeMounts: [{ name: 'shared', mountPath: '/shared' }]
+          },
+          {
+            name: 'consumer',
+            image: 'busybox:1.36',
+            volumeMounts: [{ name: 'shared', mountPath: '/shared' }]
+          }
+        ]
+      })
+      context.apiServer.etcd.restore({
+        ...context.apiServer.snapshotState(),
+        pods: {
+          ...context.apiServer.snapshotState().pods,
+          items: [pod]
+        }
+      })
+
+      const writeSharedResult = handler.execute(
+        'kubectl exec emptydir-demo -c producer -- touch /shared/message.txt',
+        context
+      )
+      expect(writeSharedResult.ok).toBe(true)
+
+      const writeLocalResult = handler.execute(
+        'kubectl exec emptydir-demo -c producer -- touch /tmp/local.txt',
+        context
+      )
+      expect(writeLocalResult.ok).toBe(true)
+
+      const consumerReadBeforeRestartResult = handler.execute(
+        'kubectl exec emptydir-demo -c consumer -- cat /shared/message.txt',
+        context
+      )
+      expect(consumerReadBeforeRestartResult.ok).toBe(true)
+
+      const restartResult = handler.execute(
+        'kubectl exec emptydir-demo -c producer -- kill 1',
+        context
+      )
+      expect(restartResult.ok).toBe(true)
+
+      const updatedPodResult = context.apiServer.findResource(
+        'Pod',
+        'emptydir-demo',
+        'default'
+      )
+      expect(updatedPodResult.ok).toBe(true)
+      if (!updatedPodResult.ok) {
+        return
+      }
+
+      const producerContainerEntry =
+        updatedPodResult.value._simulator.containers['producer']
+      const producerFileSystem = createFileSystem(
+        producerContainerEntry.fileSystem,
+        undefined,
+        { mutable: true }
+      )
+      expect(producerFileSystem.readFile('/tmp/local.txt').ok).toBe(false)
+      expect(producerFileSystem.readFile('/shared/message.txt').ok).toBe(true)
+
+      const consumerContainerEntry =
+        updatedPodResult.value._simulator.containers['consumer']
+      const consumerFileSystem = createFileSystem(
+        consumerContainerEntry.fileSystem,
+        undefined,
+        { mutable: true }
+      )
+      expect(consumerFileSystem.readFile('/shared/message.txt').ok).toBe(true)
+
+      const consumerReadAfterRestartResult = handler.execute(
+        'kubectl exec emptydir-demo -c consumer -- cat /shared/message.txt',
+        context
+      )
+      expect(consumerReadAfterRestartResult.ok).toBe(true)
+    })
+
+    it('should mount ConfigMap keys as files in container volume path', () => {
+      context.apiServer.createResource(
+        'ConfigMap',
+        createConfigMap({
+          name: 'nginx-config',
+          namespace: 'default',
+          data: {
+            'default.conf': 'server { listen 80; }'
+          }
+        })
+      )
+      context.apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'nginx-config-demo',
+          namespace: 'default',
+          phase: 'Running',
+          volumes: [
+            {
+              name: 'nginx-conf',
+              source: { type: 'configMap', name: 'nginx-config' }
+            }
+          ],
+          containers: [
+            {
+              name: 'web',
+              image: 'nginx:1.28',
+              volumeMounts: [
+                {
+                  name: 'nginx-conf',
+                  mountPath: '/etc/nginx/conf.d'
+                }
+              ]
+            }
+          ]
+        })
+      )
+
+      const readResult = handler.execute(
+        'kubectl exec nginx-config-demo -- cat /etc/nginx/conf.d/default.conf',
+        context
+      )
+      expect(readResult.ok).toBe(true)
+    })
+
+    it('should mount Secret keys as decoded files in container volume path', () => {
+      context.apiServer.createResource(
+        'Secret',
+        createSecret({
+          name: 'app-creds',
+          namespace: 'default',
+          secretType: { type: 'Opaque' },
+          data: {
+            username: encodeBase64('admin'),
+            password: encodeBase64('s3cret')
+          }
+        })
+      )
+      context.apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'secret-volume-demo',
+          namespace: 'default',
+          phase: 'Running',
+          volumes: [
+            {
+              name: 'creds',
+              source: { type: 'secret', secretName: 'app-creds' }
+            }
+          ],
+          containers: [
+            {
+              name: 'app',
+              image: 'busybox:1.36',
+              volumeMounts: [
+                {
+                  name: 'creds',
+                  mountPath: '/credentials',
+                  readOnly: true
+                }
+              ]
+            }
+          ]
+        })
+      )
+
+      const readResult = handler.execute(
+        'kubectl exec secret-volume-demo -- cat /credentials/username',
+        context
+      )
+      expect(readResult.ok).toBe(true)
+      expect(renderer.getOutput()).toContain('admin')
+    })
+
+    it('should persist PVC data after writer pod deletion and reader pod recreation', () => {
+      context.apiServer.createResource(
+        'PersistentVolume',
+        createPersistentVolume({
+          name: 'pv-lab',
+          spec: {
+            capacity: { storage: '1Gi' },
+            accessModes: ['ReadWriteOnce'],
+            hostPath: { path: '/mnt/data/pv-lab' }
+          }
+        })
+      )
+      context.apiServer.createResource(
+        'PersistentVolumeClaim',
+        createPersistentVolumeClaim({
+          name: 'lab-claim',
+          namespace: 'default',
+          spec: {
+            accessModes: ['ReadWriteOnce'],
+            resources: { requests: { storage: '1Gi' } },
+            volumeName: 'pv-lab'
+          }
+        })
+      )
+      context.apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'pvc-writer',
+          namespace: 'default',
+          phase: 'Running',
+          volumes: [
+            {
+              name: 'data',
+              source: { type: 'persistentVolumeClaim', claimName: 'lab-claim' }
+            }
+          ],
+          containers: [
+            {
+              name: 'writer',
+              image: 'busybox:1.36',
+              volumeMounts: [{ name: 'data', mountPath: '/data' }]
+            }
+          ]
+        })
+      )
+      renderer.clearOutput()
+
+      const writeResult = handler.execute(
+        'kubectl exec pvc-writer -- touch /data/record.txt',
+        context
+      )
+      expect(writeResult.ok).toBe(true)
+
+      context.apiServer.requestPodDeletion('pvc-writer', 'default', {
+        source: 'unit-test'
+      })
+      context.apiServer.finalizePodDeletion('pvc-writer', 'default', {
+        source: 'unit-test'
+      })
+
+      context.apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'pvc-reader',
+          namespace: 'default',
+          phase: 'Running',
+          volumes: [
+            {
+              name: 'data',
+              source: { type: 'persistentVolumeClaim', claimName: 'lab-claim' }
+            }
+          ],
+          containers: [
+            {
+              name: 'reader',
+              image: 'busybox:1.36',
+              volumeMounts: [{ name: 'data', mountPath: '/data' }]
+            }
+          ]
+        })
+      )
+      const readerPodResult = context.apiServer.findResource(
+        'Pod',
+        'pvc-reader',
+        'default'
+      )
+      expect(readerPodResult.ok).toBe(true)
+      if (!readerPodResult.ok) {
+        return
+      }
+      const readerContainerEntry =
+        readerPodResult.value._simulator.containers['reader']
+      const readerFileSystem = createFileSystem(
+        readerContainerEntry.fileSystem,
+        undefined,
+        { mutable: true }
+      )
+      expect(readerFileSystem.readFile('/data/record.txt').ok).toBe(true)
     })
 
     it('should redirect kubectl output to a file', () => {

@@ -40,6 +40,7 @@ import type {
 } from '../../cluster/ressources/Pod'
 import { isPodTerminating } from '../../cluster/ressources/Pod'
 import type { Secret } from '../../cluster/ressources/Secret'
+import type { StorageClass } from '../../cluster/ressources/StorageClass'
 import type { Service } from '../../cluster/ressources/Service'
 import { formatAge } from '../../shared/formatter'
 import { blank, indent, kv, section } from './describeHelpers'
@@ -1995,8 +1996,69 @@ export const describePersistentVolume = (
 }
 
 export const describePersistentVolumeClaim = (
-  persistentVolumeClaim: PersistentVolumeClaim
+  persistentVolumeClaim: PersistentVolumeClaim,
+  state?: ClusterStateData
 ): string => {
+  const resolveUsedBy = (): string => {
+    if (state == null) {
+      return '<none>'
+    }
+    const namespace = persistentVolumeClaim.metadata.namespace
+    const claimName = persistentVolumeClaim.metadata.name
+    const consumerPods = state.pods.items
+      .filter((pod) => {
+        if (pod.metadata.namespace !== namespace) {
+          return false
+        }
+        const volumes = pod.spec.volumes ?? []
+        return volumes.some((volume) => {
+          return (
+            volume.source.type === 'persistentVolumeClaim' &&
+            volume.source.claimName === claimName
+          )
+        })
+      })
+      .map((pod) => pod.metadata.name)
+    if (consumerPods.length === 0) {
+      return '<none>'
+    }
+    return consumerPods.join(',')
+  }
+
+  const resolveVolumeMode = (): string => {
+    return 'Filesystem'
+  }
+
+  const resolveFinalizers = (): string => {
+    return '[kubernetes.io/pvc-protection]'
+  }
+
+  const resolveEvents = (): string => {
+    if (state == null) {
+      return 'Events:        <none>'
+    }
+    const storageClassName = persistentVolumeClaim.spec.storageClassName
+    if (
+      persistentVolumeClaim.status.phase !== 'Pending' ||
+      storageClassName == null ||
+      storageClassName.length === 0
+    ) {
+      return 'Events:        <none>'
+    }
+    const storageClass = state.storageClasses.items.find((candidate) => {
+      return candidate.metadata.name === storageClassName
+    })
+    if (storageClass?.volumeBindingMode !== 'WaitForFirstConsumer') {
+      return 'Events:        <none>'
+    }
+    return [
+      'Events:',
+      '  Type    Reason                Age               From                         Message',
+      '  ----    ------                ----              ----                         -------',
+      '  Normal  WaitForFirstConsumer  <unknown>         persistentvolume-controller  waiting for first consumer to be created before binding'
+    ].join('\n')
+  }
+
   const lines: string[] = []
   lines.push(`Name:          ${persistentVolumeClaim.metadata.name}`)
   lines.push(`Namespace:     ${persistentVolumeClaim.metadata.namespace}`)
@@ -2005,7 +2067,7 @@ export const describePersistentVolumeClaim = (
   )
   lines.push(`Status:        ${persistentVolumeClaim.status.phase}`)
   lines.push(
-    `Volume:        ${persistentVolumeClaim.spec.volumeName ?? '<none>'}`
+    `Volume:        ${persistentVolumeClaim.spec.volumeName ?? ''}`
   )
   lines.push(
     `Labels:        ${formatLabels(persistentVolumeClaim.metadata.labels)}`
@@ -2013,14 +2075,53 @@ export const describePersistentVolumeClaim = (
   lines.push(
     `Annotations:   ${formatLabels(persistentVolumeClaim.metadata.annotations)}`
   )
+  lines.push(`Finalizers:    ${resolveFinalizers()}`)
   lines.push(
-    `Capacity:      ${persistentVolumeClaim.spec.resources.requests.storage}`
+    `Capacity:      ${persistentVolumeClaim.status.phase === 'Bound' ? persistentVolumeClaim.spec.resources.requests.storage : ''}`
   )
   lines.push(
-    `Access Modes:  ${persistentVolumeClaim.spec.accessModes.join(',')}`
+    `Access Modes:  ${persistentVolumeClaim.status.phase === 'Bound' ? persistentVolumeClaim.spec.accessModes.join(',') : ''}`
   )
-  lines.push('')
-  lines.push('Events:        <none>')
+  lines.push(`VolumeMode:    ${resolveVolumeMode()}`)
+  lines.push(`Used By:       ${resolveUsedBy()}`)
+  lines.push(resolveEvents())
+  return lines.join('\n')
+}
+
+export const describeStorageClass = (storageClass: StorageClass): string => {
+  const formatStorageClassAnnotations = (): string => {
+    const annotations = storageClass.metadata.annotations
+    if (annotations == null || Object.keys(annotations).length === 0) {
+      return '<none>'
+    }
+    const entries = Object.entries(annotations)
+    const [firstKey, firstValue] = entries[0]
+    const firstEntry = `${firstKey}=${firstValue}`
+    const additionalEntries = entries
+      .slice(1)
+      .map(([key, value]) => `,${key}=${value}`)
+      .join('\n')
+    if (additionalEntries.length === 0) {
+      return firstEntry
+    }
+    return `${firstEntry}\n${additionalEntries}`
+  }
+
+  const lines: string[] = []
+  lines.push(`Name:            ${storageClass.metadata.name}`)
+  lines.push(
+    `IsDefaultClass:  ${storageClass.metadata.annotations?.['storageclass.kubernetes.io/is-default-class'] === 'true' ? 'Yes' : 'No'}`
+  )
+  lines.push(`Annotations:     ${formatStorageClassAnnotations()}`)
+  lines.push(`Provisioner:           ${storageClass.provisioner}`)
+  lines.push('Parameters:            <none>')
+  lines.push(
+    `AllowVolumeExpansion:  ${storageClass.allowVolumeExpansion == null ? '<unset>' : storageClass.allowVolumeExpansion ? 'True' : 'False'}`
+  )
+  lines.push('MountOptions:          <none>')
+  lines.push(`ReclaimPolicy:         ${storageClass.reclaimPolicy}`)
+  lines.push(`VolumeBindingMode:     ${storageClass.volumeBindingMode}`)
+  lines.push('Events:                <none>')
   return lines.join('\n')
 }
 

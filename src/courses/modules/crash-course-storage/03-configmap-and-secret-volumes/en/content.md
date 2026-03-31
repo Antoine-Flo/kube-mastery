@@ -133,9 +133,7 @@ The file content matches the value in the ConfigMap.
 **4. Create a Secret and mount it as files:**
 
 ```bash
-kubectl create secret generic app-creds \
-  --from-literal=username=admin \
-  --from-literal=password=s3cret
+kubectl create secret generic app-creds --from-literal=username=admin --from-literal=password=s3cret
 ```
 
 ```yaml
@@ -152,12 +150,7 @@ spec:
   containers:
     - name: app
       image: busybox:1.36
-      command:
-        [
-          'sh',
-          '-c',
-          'ls -la /credentials && echo "---" && cat /credentials/username && sleep 3600'
-        ]
+      args: ["sleep", "3600"]
       volumeMounts:
         - name: creds
           mountPath: /credentials
@@ -166,10 +159,12 @@ spec:
 
 ```bash
 kubectl apply -f secret-pod.yaml
-kubectl logs secret-volume-demo
+kubectl get pod secret-volume-demo
+kubectl exec secret-volume-demo -- ls /credentials
+kubectl exec secret-volume-demo -- cat /credentials/username
 ```
 
-You'll see the two files - `username` and `password` - with restricted permissions, and then the content of the `username` file.
+You'll see the two files, `username` and `password`, and the value of `username` from the mounted Secret.
 
 **5. Clean up:**
 

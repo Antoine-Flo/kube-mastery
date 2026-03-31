@@ -1,11 +1,16 @@
 import { startPeriodicResync } from '../control-plane/controller-runtime/helpers'
 import type { ApiServerFacade } from '../api/ApiServerFacade'
 import type { AppEventType } from '../events/AppEvent'
+import { releasePersistentVolumeBacking } from './runtime'
 import { type VolumeState } from './VolumeState'
 import {
   createVolumeBindingPolicy,
   type VolumeBindingPolicy
 } from './VolumeBindingPolicy'
+import {
+  hasPodConsumerForClaim,
+  hasWaitForFirstConsumerBindingMode
+} from './pvcBindingMode'
 
 interface VolumeBindingControllerOptions {
   resyncIntervalMs?: number
@@ -40,10 +45,8 @@ export const createVolumeBindingController = (
   let stopResync: (() => void) | undefined
 
   const reconcileVolumeClaims = (): void => {
-    const persistentVolumes = apiServer.listResources('PersistentVolume')
-    const persistentVolumeClaims = apiServer.listResources(
-      'PersistentVolumeClaim'
-    )
+    const persistentVolumes = [...apiServer.listResources('PersistentVolume')]
+    const persistentVolumeClaims = [...apiServer.listResources('PersistentVolumeClaim')]
     const assignedVolumeNames = new Set<string>()
     const claimByKey = new Map<
       string,
@@ -64,6 +67,11 @@ export const createVolumeBindingController = (
 
       const claimKey = `${claimRef.namespace}/${claimRef.name}`
       if (claimByKey.has(claimKey)) {
+        continue
+      }
+      if (persistentVolume.spec.persistentVolumeReclaimPolicy === 'Delete') {
+        apiServer.deleteResource('PersistentVolume', persistentVolume.metadata.name)
+        releasePersistentVolumeBacking(persistentVolume.metadata.name)
         continue
       }
       const releasedPersistentVolume = {
@@ -87,6 +95,40 @@ export const createVolumeBindingController = (
     for (const persistentVolumeClaim of persistentVolumeClaims) {
       const claimName = persistentVolumeClaim.metadata.name
       const claimNamespace = persistentVolumeClaim.metadata.namespace
+      const shouldWaitForFirstConsumer = hasWaitForFirstConsumerBindingMode(
+        apiServer,
+        persistentVolumeClaim.spec.storageClassName
+      )
+      if (shouldWaitForFirstConsumer) {
+        const hasConsumer = hasPodConsumerForClaim(
+          apiServer,
+          claimNamespace,
+          claimName
+        )
+        if (!hasConsumer) {
+          volumeState.unbindClaim(claimNamespace, claimName)
+          if (persistentVolumeClaim.status.phase !== 'Pending') {
+            const pendingPersistentVolumeClaim = {
+              ...persistentVolumeClaim,
+              spec: {
+                ...persistentVolumeClaim.spec,
+                volumeName: undefined
+              },
+              status: {
+                ...persistentVolumeClaim.status,
+                phase: 'Pending' as const
+              }
+            }
+            apiServer.updateResource(
+              'PersistentVolumeClaim',
+              claimName,
+              pendingPersistentVolumeClaim,
+              claimNamespace
+            )
+          }
+          continue
+        }
+      }
 
       const preBoundVolumeName = persistentVolumeClaim.spec.volumeName
       if (preBoundVolumeName != null && preBoundVolumeName.length > 0) {

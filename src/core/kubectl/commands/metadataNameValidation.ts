@@ -49,7 +49,8 @@ const NAME_RULE_BY_KIND: Record<SupportedKind, NameRule> = {
   Service: DNS1123_LABEL_RULE,
   EndpointSlice: DNS1123_SUBDOMAIN_RULE,
   Endpoints: DNS1123_SUBDOMAIN_RULE,
-  Lease: DNS1123_SUBDOMAIN_RULE
+  Lease: DNS1123_SUBDOMAIN_RULE,
+  StorageClass: DNS1123_SUBDOMAIN_RULE
 }
 
 const formatMetadataNameInvalidError = (

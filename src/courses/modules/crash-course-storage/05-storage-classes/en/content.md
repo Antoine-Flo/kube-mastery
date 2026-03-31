@@ -19,10 +19,10 @@ The difference from static provisioning is in who creates the PV and when. In st
 
 ```mermaid
 graph LR
-    SC["StorageClass\nfast-ssd"]
-    PVC["PersistentVolumeClaim\nstorageClassName: fast-ssd"]
+    SC["StorageClass<br>fast-ssd"]
+    PVC["PersistentVolumeClaim<br>storageClassName: fast-ssd"]
     PROV["Cloud Provisioner"]
-    PV["PersistentVolume\n(created automatically)"]
+    PV["PersistentVolume<br>(created automatically)"]
     Pod["Pod"]
 
     PVC -->|"triggers"| PROV
@@ -83,23 +83,16 @@ The `(default)` annotation means any PVC without an explicit `storageClassName` 
 
 ## Hands-On Practice
 
-**1. List the available StorageClasses:**
+**1. List the available StorageClasses and inspect the default one:**
 
 ```bash
 kubectl get storageclass
-```
-
-Note which one is marked `(default)`.
-
-**2. Describe it to see the provisioner and policies:**
-
-```bash
-kubectl describe storageclass <NAME>
+kubectl describe storageclass standard
 ```
 
 Look at the `Provisioner`, `ReclaimPolicy`, and `VolumeBindingMode` fields.
 
-**3. Create a PVC without specifying a StorageClass:**
+**2. Create a PVC without specifying a StorageClass:**
 
 ```yaml
 # dynamic-pvc.yaml
@@ -118,17 +111,19 @@ spec:
 ```bash
 kubectl apply -f dynamic-pvc.yaml
 kubectl get pvc dynamic-pvc
+kubectl describe pvc dynamic-pvc
 ```
 
-Check the `STORAGECLASS` column - the default StorageClass was applied automatically even though you didn't specify it. Check `STATUS` - it should show `Bound`. Then look at the automatically created PV:
+Check the `STORAGECLASS` column, the default StorageClass is applied automatically. Check `STATUS`, it should show `Bound`. Then look at the automatically created PV:
+Check the `STORAGECLASS` column, the default StorageClass is applied automatically. With a default class using `WaitForFirstConsumer`, `STATUS` usually stays `Pending` until a Pod consumes the claim.
 
 ```bash
 kubectl get pv
 ```
 
-A PV exists that you never created. The provisioner created it in response to your PVC.
+At this step, it is normal to see no bound PV yet. Provisioning and binding happen when the first consumer Pod is scheduled.
 
-**4. Mount the dynamically provisioned storage in a Pod:**
+**3. Mount the provisioned storage in a Pod:**
 
 ```yaml
 # dynamic-pod.yaml
@@ -144,13 +139,7 @@ spec:
   containers:
     - name: app
       image: busybox:1.36
-      command:
-        - sh
-        - -c
-        - |
-          echo "dynamic provisioning works" > /data/test.txt
-          cat /data/test.txt
-          sleep 3600
+      args: ["sleep", "3600"]
       volumeMounts:
         - name: storage
           mountPath: /data
@@ -158,14 +147,20 @@ spec:
 
 ```bash
 kubectl apply -f dynamic-pod.yaml
-kubectl logs dynamic-storage-demo
+kubectl get pod dynamic-storage-demo
+kubectl exec dynamic-storage-demo -- touch /data/test.txt
+kubectl exec dynamic-storage-demo -- ls /data/test.txt
+kubectl get pvc dynamic-pvc
+kubectl get pv
 ```
 
-**5. Clean up:**
+Once the Pod exists, the claim can transition to `Bound` and a matching PV appears. The Pod writes inside the PVC-backed mount, proving the claim is usable by workloads.
+
+**4. Clean up:**
 
 ```bash
 kubectl delete pod dynamic-storage-demo
 kubectl delete pvc dynamic-pvc
 ```
 
-Deleting the PVC triggers the reclaim policy. Since the default is usually `Delete`, the automatically provisioned PV is also deleted. Confirm with `kubectl get pv`.
+Deleting the PVC triggers the reclaim policy. Since the default class uses `Delete`, the dynamically provisioned PV is deleted as well. Confirm with `kubectl get pv`.

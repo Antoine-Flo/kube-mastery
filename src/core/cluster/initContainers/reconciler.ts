@@ -4,7 +4,7 @@
 // Orchestrates init container execution in sequential order
 // Pure function that processes all init containers and updates pod state
 
-import type { Pod } from '../ressources/Pod'
+import { buildPodContainerFileSystem, type Pod } from '../ressources/Pod'
 import { executeInitContainer } from './executor'
 import { createImageRegistry } from '../../containers/registry/ImageRegistry'
 
@@ -151,6 +151,14 @@ export const reconcileInitContainers = (pod: Pod): Pod => {
       return updatePodPhase(currentPod, 'Failed')
     }
 
+    const rebuildContainerFileSystemResult = buildPodContainerFileSystem(
+      currentPod,
+      initContainer.name
+    )
+    if (!rebuildContainerFileSystemResult.ok) {
+      return updatePodPhase(currentPod, 'Failed')
+    }
+
     // Get current filesystem for this init container from _simulator
     const containerSimulator =
       currentPod._simulator.containers[initContainer.name]
@@ -162,7 +170,7 @@ export const reconcileInitContainers = (pod: Pod): Pod => {
     // Execute init container
     const result = executeInitContainer(
       initContainer,
-      containerSimulator.fileSystem
+      rebuildContainerFileSystemResult.value.fileSystem
     )
 
     if (!result.ok) {
@@ -195,6 +203,7 @@ export const reconcileInitContainers = (pod: Pod): Pod => {
       }),
       _simulator: {
         ...currentPod._simulator,
+        volumeBackings: rebuildContainerFileSystemResult.value.volumeBackings,
         containers: {
           ...currentPod._simulator.containers,
           [initContainer.name]: {

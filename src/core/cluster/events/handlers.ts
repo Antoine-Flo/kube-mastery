@@ -17,6 +17,7 @@ import type { PersistentVolumeClaim } from '../ressources/PersistentVolumeClaim'
 import type { Pod } from '../ressources/Pod'
 import type { ReplicaSet } from '../ressources/ReplicaSet'
 import type { Secret } from '../ressources/Secret'
+import type { StorageClass } from '../ressources/StorageClass'
 import type { Service } from '../ressources/Service'
 import type { StatefulSet } from '../ressources/StatefulSet'
 import type {
@@ -72,6 +73,9 @@ import type {
   SecretDeletedEvent,
   SecretLabeledEvent,
   SecretUpdatedEvent,
+  StorageClassCreatedEvent,
+  StorageClassDeletedEvent,
+  StorageClassUpdatedEvent,
   ServiceAnnotatedEvent,
   ServiceCreatedEvent,
   ServiceDeletedEvent,
@@ -133,6 +137,7 @@ type RepoStateKey =
   | 'nodes'
   | 'persistentVolumes'
   | 'persistentVolumeClaims'
+  | 'storageClasses'
 
 type RepoResourceByStateKey = {
   configMaps: ConfigMap
@@ -151,6 +156,7 @@ type RepoResourceByStateKey = {
   nodes: Node
   persistentVolumes: PersistentVolume
   persistentVolumeClaims: PersistentVolumeClaim
+  storageClasses: StorageClass
 }
 
 type RepoCollectionByStateKey = {
@@ -256,6 +262,8 @@ const persistentVolumeClaimHandler = createRepoHandler(
   persistentVolumeClaimRepo,
   'persistentVolumeClaims'
 )
+const storageClassRepo = createResourceRepository<StorageClass>('StorageClass')
+const storageClassHandler = createRepoHandler(storageClassRepo, 'storageClasses')
 
 // ─── Pod Handlers ────────────────────────────────────────────────────────
 
@@ -735,6 +743,27 @@ export const handlePersistentVolumeClaimUpdated = (
     event.payload.persistentVolumeClaim
   )
 
+export const handleStorageClassCreated = (
+  state: ClusterStateData,
+  event: StorageClassCreatedEvent
+) => storageClassHandler.created(state, event.payload.storageClass)
+
+export const handleStorageClassDeleted = (
+  state: ClusterStateData,
+  event: StorageClassDeletedEvent
+) => storageClassHandler.deleted(state, event.payload.name, '')
+
+export const handleStorageClassUpdated = (
+  state: ClusterStateData,
+  event: StorageClassUpdatedEvent
+) =>
+  storageClassHandler.updated(
+    state,
+    event.payload.name,
+    '',
+    event.payload.storageClass
+  )
+
 type ClusterEventType = ClusterEvent['type']
 type ClusterEventByType = {
   [TType in ClusterEventType]: Extract<ClusterEvent, { type: TType }>
@@ -807,6 +836,9 @@ export const CLUSTER_EVENT_HANDLERS: {
   PersistentVolumeClaimCreated: handlePersistentVolumeClaimCreated,
   PersistentVolumeClaimDeleted: handlePersistentVolumeClaimDeleted,
   PersistentVolumeClaimUpdated: handlePersistentVolumeClaimUpdated,
+  StorageClassCreated: handleStorageClassCreated,
+  StorageClassDeleted: handleStorageClassDeleted,
+  StorageClassUpdated: handleStorageClassUpdated,
   LeaseCreated: handleLeaseCreated,
   LeaseDeleted: handleLeaseDeleted,
   LeaseUpdated: handleLeaseUpdated

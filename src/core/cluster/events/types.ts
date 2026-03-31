@@ -20,6 +20,7 @@ import type { PersistentVolumeClaim } from '../ressources/PersistentVolumeClaim'
 import type { Pod } from '../ressources/Pod'
 import type { ReplicaSet } from '../ressources/ReplicaSet'
 import type { Secret } from '../ressources/Secret'
+import type { StorageClass } from '../ressources/StorageClass'
 import type { Service } from '../ressources/Service'
 import type { StatefulSet } from '../ressources/StatefulSet'
 
@@ -399,6 +400,32 @@ export interface PersistentVolumeClaimUpdatedEvent extends BaseEvent {
   }
 }
 
+// ─── StorageClass Events ─────────────────────────────────────────────────────
+
+export interface StorageClassCreatedEvent extends BaseEvent {
+  type: 'StorageClassCreated'
+  payload: {
+    storageClass: StorageClass
+  }
+}
+
+export interface StorageClassDeletedEvent extends BaseEvent {
+  type: 'StorageClassDeleted'
+  payload: {
+    name: string
+    deletedStorageClass: StorageClass
+  }
+}
+
+export interface StorageClassUpdatedEvent extends BaseEvent {
+  type: 'StorageClassUpdated'
+  payload: {
+    name: string
+    storageClass: StorageClass
+    previousStorageClass: StorageClass
+  }
+}
+
 // ─── Label Events ────────────────────────────────────────────────────
 
 export interface PodLabeledEvent extends BaseEvent {
@@ -649,6 +676,9 @@ export type ClusterEvent =
   | PersistentVolumeClaimCreatedEvent
   | PersistentVolumeClaimDeletedEvent
   | PersistentVolumeClaimUpdatedEvent
+  | StorageClassCreatedEvent
+  | StorageClassDeletedEvent
+  | StorageClassUpdatedEvent
   | ServiceLabeledEvent
   | ServiceAnnotatedEvent
   | NodeCreatedEvent
@@ -1352,6 +1382,48 @@ export const createPersistentVolumeClaimUpdatedEvent = (
     persistentVolumeClaim,
     previousPersistentVolumeClaim
   }
+})
+
+/**
+ * Create StorageClassCreated event
+ */
+export const createStorageClassCreatedEvent = (
+  storageClass: StorageClass,
+  source?: string
+): StorageClassCreatedEvent => ({
+  type: 'StorageClassCreated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { storageClass }
+})
+
+/**
+ * Create StorageClassDeleted event
+ */
+export const createStorageClassDeletedEvent = (
+  name: string,
+  deletedStorageClass: StorageClass,
+  source?: string
+): StorageClassDeletedEvent => ({
+  type: 'StorageClassDeleted',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, deletedStorageClass }
+})
+
+/**
+ * Create StorageClassUpdated event
+ */
+export const createStorageClassUpdatedEvent = (
+  name: string,
+  storageClass: StorageClass,
+  previousStorageClass: StorageClass,
+  source?: string
+): StorageClassUpdatedEvent => ({
+  type: 'StorageClassUpdated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, storageClass, previousStorageClass }
 })
 
 /**

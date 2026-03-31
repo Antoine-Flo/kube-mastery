@@ -142,12 +142,7 @@ spec:
   containers:
     - name: writer
       image: busybox:1.36
-      command:
-        [
-          'sh',
-          '-c',
-          'echo "Persisted at $(date)" > /data/record.txt && cat /data/record.txt && sleep 3600'
-        ]
+      args: ["sleep", "3600"]
       volumeMounts:
         - name: data
           mountPath: /data
@@ -155,10 +150,11 @@ spec:
 
 ```bash
 kubectl apply -f pvc-writer.yaml
-kubectl logs pvc-writer
+kubectl exec pvc-writer -- touch /data/record.txt
+kubectl exec pvc-writer -- ls /data/record.txt
 ```
 
-The Pod wrote a timestamped message to the PVC.
+The writer Pod created `/data/record.txt` inside the PVC-backed mount.
 
 **3. Delete the Pod:**
 
@@ -184,7 +180,7 @@ spec:
   containers:
     - name: reader
       image: busybox:1.36
-      command: ['sh', '-c', 'cat /data/record.txt && sleep 3600']
+      args: ["sleep", "3600"]
       volumeMounts:
         - name: data
           mountPath: /data
@@ -192,10 +188,10 @@ spec:
 
 ```bash
 kubectl apply -f pvc-reader.yaml
-kubectl logs pvc-reader
+kubectl exec pvc-reader -- ls /data/record.txt
 ```
 
-The message written by the deleted Pod is still there. The data survived the Pod deletion because it was stored on the PV, not on the container's filesystem.
+The file created by the deleted Pod is still present. This proves persistence is tied to the bound PV/PVC storage, not to the Pod lifecycle.
 
 **5. Clean up:**
 

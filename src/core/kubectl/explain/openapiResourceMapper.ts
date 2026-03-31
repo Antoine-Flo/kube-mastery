@@ -47,6 +47,7 @@ const BASE_RESOURCE_TARGETS: Record<Resource, BaseTarget | undefined> = {
     version: 'v1',
     kind: 'PersistentVolumeClaim'
   },
+  storageclasses: undefined,
   leases: {
     group: 'coordination.k8s.io',
     version: 'v1',

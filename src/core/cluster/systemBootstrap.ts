@@ -18,6 +18,8 @@ import type { Deployment } from './ressources/Deployment'
 import type { Pod } from './ressources/Pod'
 import type { Service } from './ressources/Service'
 import { createService } from './ressources/Service'
+import type { StorageClass } from './ressources/StorageClass'
+import { createStorageClass } from './ressources/StorageClass'
 import { createSystemNamespaces, isSystemNamespace } from './systemNamespaces'
 
 export interface SystemBootstrapOptions {
@@ -45,6 +47,7 @@ export interface SystemBootstrapResources {
   deployments: Deployment[]
   daemonSets: DaemonSet[]
   leases: Lease[]
+  storageClasses: StorageClass[]
 }
 
 const DEFAULT_CLUSTER_NAME = 'conformance'
@@ -337,6 +340,36 @@ const createSystemServices = (creationTimestamp: string): Service[] => {
   ]
 }
 
+const createDefaultStorageClass = (creationTimestamp: string): StorageClass => {
+  const defaultStorageClassManifest = JSON.stringify({
+    apiVersion: 'storage.k8s.io/v1',
+    kind: 'StorageClass',
+    metadata: {
+      annotations: {
+        'storageclass.kubernetes.io/is-default-class': 'true'
+      },
+      name: 'standard'
+    },
+    provisioner: 'rancher.io/local-path',
+    reclaimPolicy: 'Delete',
+    volumeBindingMode: 'WaitForFirstConsumer'
+  })
+  return createStorageClass({
+    name: 'standard',
+    creationTimestamp,
+    annotations: {
+      'kubectl.kubernetes.io/last-applied-configuration':
+        defaultStorageClassManifest,
+      'storageclass.kubernetes.io/is-default-class': 'true'
+    },
+    spec: {
+      provisioner: 'rancher.io/local-path',
+      reclaimPolicy: 'Delete',
+      volumeBindingMode: 'WaitForFirstConsumer'
+    }
+  })
+}
+
 const createBootstrapLease = (node: Node, creationTimestamp: string): Lease => {
   return createLease({
     name: node.metadata.name,
@@ -394,7 +427,8 @@ export const createSystemBootstrapResources = (
     staticPods: workloads.staticPods,
     deployments: workloads.deployments,
     daemonSets: workloads.daemonSets,
-    leases: nodes.map((node) => createBootstrapLease(node, creationTimestamp))
+    leases: nodes.map((node) => createBootstrapLease(node, creationTimestamp)),
+    storageClasses: [createDefaultStorageClass(creationTimestamp)]
   }
 }
 
@@ -411,6 +445,7 @@ type BootstrapKind =
   | 'DaemonSet'
   | 'Pod'
   | 'Lease'
+  | 'StorageClass'
 
 interface BootstrapResource {
   metadata: {
@@ -523,6 +558,9 @@ const createBootstrapStoreFromClusterState = (
     if (kind === 'Lease') {
       return clusterState.createByKind('Lease', resource as Lease)
     }
+    if (kind === 'StorageClass') {
+      return clusterState.createByKind('StorageClass', resource as StorageClass)
+    }
     return clusterState.createByKind('Pod', resource as Pod)
   }
 
@@ -578,6 +616,13 @@ const createBootstrapStoreFromClusterState = (
         namespace
       )
     }
+    if (kind === 'StorageClass') {
+      return clusterState.updateByKind(
+        'StorageClass',
+        name,
+        resource as StorageClass
+      )
+    }
     return clusterState.updateByKind('Pod', name, resource as Pod, namespace)
   }
 
@@ -606,6 +651,9 @@ const createBootstrapStoreFromClusterState = (
     }
     if (kind === 'Lease') {
       return clusterState.deleteByKind('Lease', name, namespace)
+    }
+    if (kind === 'StorageClass') {
+      return clusterState.deleteByKind('StorageClass', name)
     }
     return clusterState.deleteByKind('Pod', name, namespace)
   }
@@ -770,6 +818,13 @@ const upsertLeases = (store: BootstrapStore, leases: Lease[]): void => {
   upsertResourcesByKind(store, 'Lease', leases)
 }
 
+const upsertStorageClasses = (
+  store: BootstrapStore,
+  storageClasses: StorageClass[]
+): void => {
+  upsertResourcesByKind(store, 'StorageClass', storageClasses)
+}
+
 const addMissingPods = (store: BootstrapStore, pods: readonly Pod[]): void => {
   for (const pod of pods) {
     const findPodResult = store.findByKind(
@@ -809,6 +864,7 @@ const applyKindLikeBootstrap = (
   upsertDeployments(store, resources.deployments)
   upsertDaemonSets(store, resources.daemonSets)
   upsertLeases(store, resources.leases)
+  upsertStorageClasses(store, resources.storageClasses)
 
   if (mode === 'always') {
     replaceSystemPods(store, resources.staticPods)

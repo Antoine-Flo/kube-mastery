@@ -51,6 +51,9 @@ import {
   createSecretCreatedEvent,
   createSecretDeletedEvent,
   createSecretUpdatedEvent,
+  createStorageClassCreatedEvent,
+  createStorageClassDeletedEvent,
+  createStorageClassUpdatedEvent,
   createServiceCreatedEvent,
   createServiceDeletedEvent,
   createServiceUpdatedEvent
@@ -75,6 +78,7 @@ import type { PersistentVolumeClaim } from './ressources/PersistentVolumeClaim'
 import type { Pod } from './ressources/Pod'
 import type { ReplicaSet } from './ressources/ReplicaSet'
 import type { Secret } from './ressources/Secret'
+import type { StorageClass } from './ressources/StorageClass'
 import type { Service } from './ressources/Service'
 import type { StatefulSet } from './ressources/StatefulSet'
 import type { ClusterBootstrapConfig } from './systemBootstrap'
@@ -106,6 +110,7 @@ export interface ClusterStateData {
   persistentVolumeClaims: ResourceCollection<PersistentVolumeClaim>
   namespaces: ResourceCollection<Namespace>
   leases: ResourceCollection<Lease>
+  storageClasses: ResourceCollection<StorageClass>
 }
 
 type ResourceByKind = {
@@ -126,6 +131,7 @@ type ResourceByKind = {
   PersistentVolumeClaim: PersistentVolumeClaim
   Namespace: Namespace
   Lease: Lease
+  StorageClass: StorageClass
 }
 
 export type ResourceKind = keyof ResourceByKind
@@ -154,6 +160,7 @@ export const createClusterStateData = (
     persistentVolumeClaims: PersistentVolumeClaim[]
     namespaces: Namespace[]
     leases: Lease[]
+    storageClasses: StorageClass[]
   }> = {}
 ): ClusterStateData => ({
   pods: { items: collections.pods ?? [] },
@@ -172,7 +179,8 @@ export const createClusterStateData = (
   persistentVolumes: { items: collections.persistentVolumes ?? [] },
   persistentVolumeClaims: { items: collections.persistentVolumeClaims ?? [] },
   namespaces: { items: collections.namespaces ?? [] },
-  leases: { items: collections.leases ?? [] }
+  leases: { items: collections.leases ?? [] },
+  storageClasses: { items: collections.storageClasses ?? [] }
 })
 
 // ─── Resource Repositories ───────────────────────────────────────────
@@ -199,6 +207,7 @@ const persistentVolumeClaimRepo =
   createResourceRepository<PersistentVolumeClaim>('PersistentVolumeClaim')
 const namespaceRepo = createResourceRepository<Namespace>('Namespace')
 const leaseRepo = createResourceRepository<Lease>('Lease')
+const storageClassRepo = createResourceRepository<StorageClass>('StorageClass')
 
 // ─── Generic Resource Operations Helper ─────────────────────────────
 
@@ -312,7 +321,8 @@ const createEmptyState = (): ClusterStateData => ({
   namespaces: {
     items: createSystemNamespaces()
   },
-  leases: leaseRepo.createEmpty()
+  leases: leaseRepo.createEmpty(),
+  storageClasses: storageClassRepo.createEmpty()
 })
 
 // ─── Resource Operations (Generated) ─────────────────────────────────
@@ -368,6 +378,10 @@ const namespaceOps = createResourceOperations<Namespace>(
   'namespaces'
 )
 const leaseOps = createResourceOperations<Lease>(leaseRepo, 'leases')
+const storageClassOps = createResourceOperations<StorageClass>(
+  storageClassRepo,
+  'storageClasses'
+)
 
 // Export Pod operations for test use only
 export const addPod = podOps.add
@@ -542,6 +556,14 @@ export interface ClusterState {
     namespace: string,
     updateFn: (lease: Lease) => Lease
   ) => Result<Lease>
+  getStorageClasses: () => StorageClass[]
+  addStorageClass: (storageClass: StorageClass) => void
+  findStorageClass: (name: string) => Result<StorageClass>
+  deleteStorageClass: (name: string) => Result<StorageClass>
+  updateStorageClass: (
+    name: string,
+    updateFn: (storageClass: StorageClass) => StorageClass
+  ) => Result<StorageClass>
   findByKind: <TKind extends ResourceKind>(
     kind: TKind,
     name: string,
@@ -661,6 +683,11 @@ const EVENT_FACTORIES = {
     created: createLeaseCreatedEvent,
     deleted: createLeaseDeletedEvent,
     updated: createLeaseUpdatedEvent
+  },
+  StorageClass: {
+    created: createStorageClassCreatedEvent,
+    deleted: createStorageClassDeletedEvent,
+    updated: createStorageClassUpdatedEvent
   }
 } as const
 
@@ -1000,6 +1027,13 @@ export function createClusterState(
     eventBus,
     'Lease'
   )
+  const storageClassMethods = createFacadeMethods(
+    storageClassOps,
+    getState,
+    setState,
+    eventBus,
+    'StorageClass'
+  )
 
   const findByKind = <TKind extends ResourceKind>(
     kind: TKind,
@@ -1092,7 +1126,9 @@ export function createClusterState(
         leaseMethods.find(
           resourceName,
           resourceNamespace
-        ) as Result<KubernetesResource>
+        ) as Result<KubernetesResource>,
+      StorageClass: (resourceName, _resourceNamespace) =>
+        storageClassMethods.find(resourceName, '') as Result<KubernetesResource>
     }
 
     const finder = finders[kind]
@@ -1148,7 +1184,9 @@ export function createClusterState(
       Namespace: (_resourceNamespace) =>
         namespaceMethods.getAll() as KubernetesResource[],
       Lease: (resourceNamespace) =>
-        leaseMethods.getAll(resourceNamespace) as KubernetesResource[]
+        leaseMethods.getAll(resourceNamespace) as KubernetesResource[],
+      StorageClass: (_resourceNamespace) =>
+        storageClassMethods.getAll(undefined) as KubernetesResource[]
     }
 
     const lister = listers[kind]
@@ -1229,6 +1267,10 @@ export function createClusterState(
     }
     if (kind === 'Lease') {
       leaseMethods.add(resource as Lease)
+      return { ok: true, value: resource as KindToResource<TKind> }
+    }
+    if (kind === 'StorageClass') {
+      storageClassMethods.add(resource as StorageClass)
       return { ok: true, value: resource as KindToResource<TKind> }
     }
     return { ok: false, error: `Unsupported resource kind: ${kind}` }
@@ -1358,6 +1400,13 @@ export function createClusterState(
         () => resource as Lease
       ) as Result<KindToResource<TKind>>
     }
+    if (kind === 'StorageClass') {
+      return storageClassMethods.update(
+        name,
+        '',
+        () => resource as StorageClass
+      ) as Result<KindToResource<TKind>>
+    }
     return { ok: false, error: `Unsupported resource kind: ${kind}` }
   }
 
@@ -1447,6 +1496,11 @@ export function createClusterState(
     }
     if (kind === 'Lease') {
       return leaseMethods.delete(name, effectiveNamespace) as Result<
+        KindToResource<TKind>
+      >
+    }
+    if (kind === 'StorageClass') {
+      return storageClassMethods.delete(name, '') as Result<
         KindToResource<TKind>
       >
     }
@@ -1551,6 +1605,12 @@ export function createClusterState(
     findLease: leaseMethods.find,
     deleteLease: leaseMethods.delete,
     updateLease: leaseMethods.update,
+    getStorageClasses: () => storageClassMethods.getAll(undefined),
+    addStorageClass: (storageClass) => storageClassMethods.add(storageClass),
+    findStorageClass: (name) => storageClassMethods.find(name, ''),
+    deleteStorageClass: (name) => storageClassMethods.delete(name, ''),
+    updateStorageClass: (name, updateFn) =>
+      storageClassMethods.update(name, '', updateFn),
 
     findByKind,
     listByKind,
@@ -1577,7 +1637,8 @@ export function createClusterState(
         items: [...state.persistentVolumeClaims.items]
       },
       namespaces: { items: [...state.namespaces.items] },
-      leases: { items: [...state.leases.items] }
+      leases: { items: [...state.leases.items] },
+      storageClasses: { items: [...state.storageClasses.items] }
     }),
 
     loadState: (newState: ClusterStateData) => {
@@ -1600,7 +1661,8 @@ export function createClusterState(
           items: []
         },
         namespaces: newState.namespaces || { items: [] },
-        leases: newState.leases || { items: [] }
+        leases: newState.leases || { items: [] },
+        storageClasses: newState.storageClasses || { items: [] }
       }
     }
   }

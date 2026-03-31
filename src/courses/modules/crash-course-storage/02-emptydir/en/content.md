@@ -68,24 +68,13 @@ spec:
   containers:
     - name: producer
       image: busybox:1.36
-      command:
-        - sh
-        - -c
-        - |
-          echo "Written by producer at $(date)" > /shared/message.txt
-          sleep 3600
+      args: ["sleep", "3600"]
       volumeMounts:
         - name: shared
           mountPath: /shared
     - name: consumer
       image: busybox:1.36
-      command:
-        - sh
-        - -c
-        - |
-          sleep 2
-          cat /shared/message.txt
-          sleep 3600
+      args: ["sleep", "3600"]
       volumeMounts:
         - name: shared
           mountPath: /shared
@@ -96,21 +85,21 @@ kubectl apply -f emptydir-pod.yaml
 kubectl get pod emptydir-demo
 ```
 
-**2. Read the producer's logs:**
+**2. Write a file from the producer container:**
 
 ```bash
-kubectl logs emptydir-demo -c producer
+kubectl exec emptydir-demo -c producer -- touch /shared/message.txt
 ```
 
-The producer wrote a message to the shared volume.
+The file is written into the mounted `emptyDir` path.
 
-**3. Read the consumer's logs:**
+**3. Read the same file from the consumer container:**
 
 ```bash
-kubectl logs emptydir-demo -c consumer
+kubectl exec emptydir-demo -c consumer -- cat /shared/message.txt
 ```
 
-The consumer successfully read the file written by a completely different container process. Both containers are accessing the same directory on the node, mounted at `/shared` in each of them.
+The command succeeds, even though a different container created the file. Both containers see the same shared directory mounted at `/shared`.
 
 **4. Prove the volume survives a container restart:**
 

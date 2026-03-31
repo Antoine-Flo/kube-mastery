@@ -4,6 +4,7 @@ import { createPersistentVolume } from '../../../src/core/cluster/ressources/Per
 import { createPersistentVolumeClaim } from '../../../src/core/cluster/ressources/PersistentVolumeClaim'
 import { createVolumeBindingController } from '../../../src/core/volumes/VolumeBindingController'
 import { createVolumeState } from '../../../src/core/volumes/VolumeState'
+import { getPersistentVolumeBackingStore } from '../../../src/core/volumes/runtime'
 
 describe('VolumeBindingController', () => {
   it('binds available persistent volume to claim', () => {
@@ -231,6 +232,56 @@ describe('VolumeBindingController', () => {
     expect(
       volumeState.getBoundVolumeForClaim('default', 'dangling')
     ).toBeUndefined()
+
+    controller.stop()
+  })
+
+  it('deletes bound persistent volume when reclaim policy is Delete and claim is removed', () => {
+    const apiServer = createApiServerFacade()
+    const volumeState = createVolumeState()
+    const controller = createVolumeBindingController(apiServer, volumeState)
+    const persistentVolume = createPersistentVolume({
+      name: 'pv-delete',
+      spec: {
+        capacity: { storage: '1Gi' },
+        accessModes: ['ReadWriteOnce'],
+        persistentVolumeReclaimPolicy: 'Delete',
+        storageClassName: 'standard',
+        claimRef: {
+          namespace: 'default',
+          name: 'pvc-delete'
+        }
+      },
+      status: {
+        phase: 'Bound'
+      }
+    })
+    apiServer.createResource('PersistentVolume', persistentVolume)
+    apiServer.createResource(
+      'PersistentVolumeClaim',
+      createPersistentVolumeClaim({
+        name: 'pvc-delete',
+        namespace: 'default',
+        spec: {
+          accessModes: ['ReadWriteOnce'],
+          resources: { requests: { storage: '1Gi' } },
+          storageClassName: 'standard',
+          volumeName: 'pv-delete'
+        },
+        status: {
+          phase: 'Bound'
+        }
+      })
+    )
+    const backingStore = getPersistentVolumeBackingStore()
+    backingStore.getOrCreate(persistentVolume)
+
+    controller.start()
+    apiServer.deleteResource('PersistentVolumeClaim', 'pvc-delete', 'default')
+
+    const pvResult = apiServer.findResource('PersistentVolume', 'pv-delete')
+    expect(pvResult.ok).toBe(false)
+    expect(backingStore.get('pv-delete')).toBeUndefined()
 
     controller.stop()
   })

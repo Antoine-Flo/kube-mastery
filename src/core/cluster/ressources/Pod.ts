@@ -10,6 +10,17 @@ import { createDebianFileSystem } from '../../filesystem/debianFileSystem'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
+import {
+  applyVolumeMountBindingsToFileSystem,
+  createConfigMapProvider,
+  createEmptyDirProvider,
+  createPersistentVolumeClaimProvider,
+  createPodVolumeRuntimeManager,
+  createSecretProvider,
+  getPersistentVolumeBackingStore,
+  type PodVolumeBackingMap,
+  type VolumeRuntimeContext
+} from '../../volumes/runtime'
 import type { KubernetesResource } from '../repositories/types'
 import {
   convertYamlEnvVar,
@@ -271,6 +282,7 @@ export interface Pod extends KubernetesResource {
     logEntries?: PodLogEntry[]
     previousLogEntries?: PodLogEntry[]
     logStreamState?: PodLogStreamState
+    volumeBackings: PodVolumeBackingMap
     containers: {
       [containerName: string]: {
         fileSystem: FileSystemState
@@ -523,12 +535,47 @@ const buildPodConditions = (
   ]
 }
 
-const buildPodResolvConf = (namespace: string): string => {
+const persistentVolumeBackingStore = getPersistentVolumeBackingStore()
+
+const podVolumeRuntimeManager = createPodVolumeRuntimeManager([
+  createEmptyDirProvider(),
+  createConfigMapProvider(),
+  createPersistentVolumeClaimProvider(persistentVolumeBackingStore),
+  createSecretProvider()
+])
+
+export const buildPodResolvConf = (namespace: string): string => {
   return [
     `search ${namespace}.svc.cluster.local svc.cluster.local cluster.local`,
     'nameserver 10.96.0.10',
     'options ndots:5'
   ].join('\n')
+}
+
+const buildContainerRootFileSystem = (
+  podName: string,
+  namespace: string
+): FileSystemState => {
+  return createDebianFileSystem({
+    hostname: podName,
+    resolvConf: buildPodResolvConf(namespace)
+  })
+}
+
+const buildContainerFileSystemWithVolumes = (
+  podName: string,
+  namespace: string,
+  container: Container,
+  volumes: readonly Volume[] | undefined,
+  volumeBackings: PodVolumeBackingMap
+): FileSystemState => {
+  const rootFileSystem = buildContainerRootFileSystem(podName, namespace)
+  const mountBindings = podVolumeRuntimeManager.buildContainerMountBindings(
+    container,
+    volumes,
+    volumeBackings
+  )
+  return applyVolumeMountBindingsToFileSystem(rootFileSystem, mountBindings)
 }
 
 export const createPod = (config: PodConfig): Pod => {
@@ -635,17 +682,28 @@ export const createPod = (config: PodConfig): Pod => {
       (config.initContainers ?? []).length
     )
 
+  const volumeBackings = podVolumeRuntimeManager.ensurePodVolumeBackings(
+    config.volumes,
+    {}
+  )
+  const cleanedVolumeBackings = podVolumeRuntimeManager.cleanupPodVolumeBackings(
+    config.volumes,
+    volumeBackings
+  )
+
   // Create _simulator.containers with fileSystem and containerType
   const simulatorContainers: Pod['_simulator']['containers'] = {}
-  const podResolvConf = buildPodResolvConf(config.namespace)
 
   // Add init containers
   for (const container of config.initContainers || []) {
     simulatorContainers[container.name] = {
-      fileSystem: createDebianFileSystem({
-        hostname: config.name,
-        resolvConf: podResolvConf
-      }),
+      fileSystem: buildContainerFileSystemWithVolumes(
+        config.name,
+        config.namespace,
+        container,
+        config.volumes,
+        cleanedVolumeBackings
+      ),
       containerType: 'init'
     }
   }
@@ -653,10 +711,13 @@ export const createPod = (config: PodConfig): Pod => {
   // Add regular containers
   for (const container of config.containers) {
     simulatorContainers[container.name] = {
-      fileSystem: createDebianFileSystem({
-        hostname: config.name,
-        resolvConf: podResolvConf
-      }),
+      fileSystem: buildContainerFileSystemWithVolumes(
+        config.name,
+        config.namespace,
+        container,
+        config.volumes,
+        cleanedVolumeBackings
+      ),
       containerType: 'regular'
     }
   }
@@ -712,11 +773,112 @@ export const createPod = (config: PodConfig): Pod => {
         previousLogEntries: config.previousLogEntries
       }),
       ...(config.logStreamState && { logStreamState: config.logStreamState }),
+      volumeBackings: cleanedVolumeBackings,
       containers: simulatorContainers
     }
   }
 
   return deepFreeze(pod)
+}
+
+const findPodContainerByName = (
+  pod: Pod,
+  containerName: string
+): Container | undefined => {
+  const initContainer = (pod.spec.initContainers ?? []).find((container) => {
+    return container.name === containerName
+  })
+  if (initContainer != null) {
+    return initContainer
+  }
+  return pod.spec.containers.find((container) => {
+    return container.name === containerName
+  })
+}
+
+export const normalizePodVolumeBackings = (
+  pod: Pod,
+  context?: VolumeRuntimeContext
+): PodVolumeBackingMap => {
+  const ensuredBackings = podVolumeRuntimeManager.ensurePodVolumeBackings(
+    pod.spec.volumes,
+    pod._simulator.volumeBackings,
+    context
+  )
+  return podVolumeRuntimeManager.cleanupPodVolumeBackings(
+    pod.spec.volumes,
+    ensuredBackings
+  )
+}
+
+export const buildPodContainerFileSystem = (
+  pod: Pod,
+  containerName: string,
+  context?: VolumeRuntimeContext
+): Result<{
+  fileSystem: FileSystemState
+  volumeBackings: PodVolumeBackingMap
+}> => {
+  const container = findPodContainerByName(pod, containerName)
+  if (container == null) {
+    return error(
+      `Error: container ${containerName} not found in pod ${pod.metadata.name}`
+    )
+  }
+  const volumeBackings = normalizePodVolumeBackings(pod, context)
+  const fileSystem = buildContainerFileSystemWithVolumes(
+    pod.metadata.name,
+    pod.metadata.namespace,
+    container,
+    pod.spec.volumes,
+    volumeBackings
+  )
+  return success({
+    fileSystem,
+    volumeBackings
+  })
+}
+
+export const hydratePodVolumeRuntime = (
+  pod: Pod,
+  context?: VolumeRuntimeContext
+): Result<Pod> => {
+  let workingPod = pod
+  let volumeBackings = normalizePodVolumeBackings(workingPod, context)
+  const updatedContainers: Pod['_simulator']['containers'] = {
+    ...workingPod._simulator.containers
+  }
+  for (const [containerName, entry] of Object.entries(
+    workingPod._simulator.containers
+  )) {
+    const fileSystemResult = buildPodContainerFileSystem(
+      {
+        ...workingPod,
+        _simulator: {
+          ...workingPod._simulator,
+          volumeBackings: volumeBackings
+        }
+      },
+      containerName,
+      context
+    )
+    if (!fileSystemResult.ok) {
+      return error(fileSystemResult.error)
+    }
+    volumeBackings = fileSystemResult.value.volumeBackings
+    updatedContainers[containerName] = {
+      ...entry,
+      fileSystem: fileSystemResult.value.fileSystem
+    }
+  }
+  return success({
+    ...workingPod,
+    _simulator: {
+      ...workingPod._simulator,
+      volumeBackings: volumeBackings,
+      containers: updatedContainers
+    }
+  })
 }
 
 // ─── Zod Schemas for YAML Validation (internal use only) ────────────────

@@ -17,6 +17,7 @@ import {
   describePod,
   describeReplicaSet,
   describeSecret,
+  describeStorageClass,
   describeService
 } from '../../formatters/describeFormatters'
 import { applyFilters, noResourcesMessage } from './internal/get/filters'
@@ -167,10 +168,18 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
   },
   persistentvolumeclaims: {
     items: 'persistentVolumeClaims',
-    formatter: (item) => {
-      return describePersistentVolumeClaim(item)
+    formatter: (item, state) => {
+      return describePersistentVolumeClaim(item, state)
     },
     type: 'PersistentVolumeClaim'
+  },
+  storageclasses: {
+    items: 'storageClasses',
+    formatter: (item) => {
+      return describeStorageClass(item)
+    },
+    type: 'StorageClass',
+    isClusterScoped: true
   },
   leases: {
     items: 'leases',

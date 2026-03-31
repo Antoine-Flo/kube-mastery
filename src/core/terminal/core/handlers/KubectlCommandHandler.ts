@@ -12,9 +12,11 @@ import {
 } from '../../../kubectl/commands/output/statefulTabWriter'
 import { parseCommand } from '../../../kubectl/commands/parser'
 import type { ParsedCommand, Resource } from '../../../kubectl/commands/types'
-import type { Pod } from '../../../cluster/ressources/Pod'
+import {
+  buildPodContainerFileSystem,
+  type Pod
+} from '../../../cluster/ressources/Pod'
 import { createFileSystem } from '../../../filesystem/FileSystem'
-import { createDebianFileSystem } from '../../../filesystem/debianFileSystem'
 import { createShellExecutor } from '../../../shell/commands'
 import type { ClusterEvent } from '../../../cluster/events/types'
 import { matchesLabelSelector } from '../../../shared/labelSelector'
@@ -61,14 +63,6 @@ const SHELL_COMMAND_PREFIX = 'SHELL_COMMAND:'
 const PROCESS_COMMAND_PREFIX = 'PROCESS_COMMAND:'
 const KUBECTL_EDIT_TMP_DIR = '/tmp'
 const LOGS_FOLLOW_POLL_INTERVAL_MS = 1000
-
-const buildPodResolvConf = (namespace: string): string => {
-  return [
-    `search ${namespace}.svc.cluster.local svc.cluster.local cluster.local`,
-    'nameserver 10.96.0.10',
-    'options ndots:5'
-  ].join('\n')
-}
 
 const parseEnterContainerDirective = (
   output: string
@@ -333,10 +327,15 @@ const executeProcessCommandDirective = (
       `Error: container ${directive.containerName} not found in pod ${directive.podName}`
     )
   }
-  const resetFileSystem = createDebianFileSystem({
-    hostname: pod.metadata.name,
-    resolvConf: buildPodResolvConf(directive.namespace)
-  })
+  const rebuildContainerFileSystemResult = buildPodContainerFileSystem(
+    pod,
+    directive.containerName
+  )
+  if (!rebuildContainerFileSystemResult.ok) {
+    return error(rebuildContainerFileSystemResult.error)
+  }
+  const resetFileSystem = rebuildContainerFileSystemResult.value.fileSystem
+  const volumeBackings = rebuildContainerFileSystemResult.value.volumeBackings
   const transitionTime = new Date().toISOString()
   const currentStatuses = pod.status.containerStatuses ?? []
   const updatedStatuses = currentStatuses.map((status) => {
@@ -371,6 +370,7 @@ const executeProcessCommandDirective = (
       logEntries: [],
       logStreamState: undefined,
       logs: [],
+      volumeBackings,
       containers: {
         ...pod._simulator.containers,
         [directive.containerName]: {
@@ -443,6 +443,9 @@ const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
     'PersistentVolumeClaimCreated',
     'PersistentVolumeClaimUpdated',
     'PersistentVolumeClaimDeleted',
+    'StorageClassCreated',
+    'StorageClassUpdated',
+    'StorageClassDeleted',
     'LeaseCreated',
     'LeaseUpdated',
     'LeaseDeleted'
@@ -478,6 +481,11 @@ const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
     'PersistentVolumeClaimCreated',
     'PersistentVolumeClaimUpdated',
     'PersistentVolumeClaimDeleted'
+  ],
+  storageclasses: [
+    'StorageClassCreated',
+    'StorageClassUpdated',
+    'StorageClassDeleted'
   ],
   leases: ['LeaseCreated', 'LeaseUpdated', 'LeaseDeleted']
 }
