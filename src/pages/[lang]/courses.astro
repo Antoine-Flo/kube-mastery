@@ -311,14 +311,13 @@ const ckad = courseById.get('ckad')
     }
 
     .roadmap__down-link {
-      display: block;
-      height: 1rem;
+      display: none;
     }
 
     .roadmap__branches {
       grid-template-columns: 1fr;
       gap: 1rem;
-      padding-top: 0.8rem;
+      padding-top: 0;
       width: 100%;
     }
 
@@ -327,9 +326,7 @@ const ckad = courseById.get('ckad')
     }
 
     .roadmap__branch::before {
-      top: -0.8rem;
-      height: 0.8rem;
-      display: block;
+      display: none;
     }
   }
 </style>

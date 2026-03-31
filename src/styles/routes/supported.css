@@ -22,7 +22,7 @@
   background: radial-gradient(
       ellipse 50% 60% at 50% 0%,
       var(--color-cyan-3) 0%,
-      transparent 70%
+      var(--color-gray-1) 70%
     )
     no-repeat;
 }
@@ -30,8 +30,8 @@
 :global([data-theme='dark']) .supported-hero {
   background: radial-gradient(
       ellipse 50% 60% at 50% 0%,
-      rgba(0, 162, 199, 0.2) 0%,
-      transparent 70%
+      hsl(192, 74%, 10%) 0%,
+      var(--color-gray-1) 70%
     )
     no-repeat;
 }

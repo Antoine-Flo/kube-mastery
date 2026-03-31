@@ -1,4 +1,46 @@
 /* Pricing Page */
+.pricing-page-halo .page-halo__bg {
+  background: radial-gradient(
+      ellipse 46% 38% at 74% 0%,
+      hsl(194, 55%, 87%) 0%,
+      hsl(194, 55%, 87%) 24%,
+      var(--color-gray-1) 100%
+    )
+    50% 0% / 100% 34% no-repeat;
+}
+
+[data-theme='dark'] .pricing-page-halo .page-halo__bg {
+  background: radial-gradient(
+      ellipse 46% 38% at 74% 0%,
+      hsl(192, 74%, 10%) 0%,
+      hsl(192, 74%, 10%) 24%,
+      var(--color-gray-1) 100%
+    )
+    50% 0% / 100% 34% no-repeat;
+}
+
+@media (max-width: 768px) {
+  .pricing-page-halo .page-halo__bg {
+    background: radial-gradient(
+        ellipse 95% 86% at 72% 0%,
+        hsl(194, 55%, 87%) 0%,
+        hsl(194, 55%, 87%) 34%,
+        var(--color-gray-1) 100%
+      )
+      50% 0% / 100% 42% no-repeat;
+  }
+
+  [data-theme='dark'] .pricing-page-halo .page-halo__bg {
+    background: radial-gradient(
+        ellipse 95% 86% at 72% 0%,
+        hsl(192, 74%, 10%) 0%,
+        hsl(192, 74%, 10%) 34%,
+        var(--color-gray-1) 100%
+      )
+      50% 0% / 100% 42% no-repeat;
+  }
+}
+
 .pricing {
   width: 100%;
 }
