@@ -435,6 +435,81 @@ describe('KubectlCommandHandler', () => {
       expect(targetStatus?.stateDetails?.reason).toBe('ContainerCreating')
     })
 
+    it('should restart container and reset local filesystem on kill 1', () => {
+      const pod = createPod({
+        name: 'ephemeral-demo',
+        namespace: 'default',
+        phase: 'Running',
+        restartPolicy: 'Always',
+        containers: [{ name: 'ephemeral-demo', image: 'nginx:1.28' }]
+      })
+      context.apiServer.etcd.restore({
+        ...context.apiServer.snapshotState(),
+        pods: {
+          ...context.apiServer.snapshotState().pods,
+          items: [pod]
+        }
+      })
+
+      const writeResult = handler.execute(
+        'kubectl exec ephemeral-demo -- touch /tmp/message.txt',
+        context
+      )
+      expect(writeResult.ok).toBe(true)
+
+      const beforeRestartResult = context.apiServer.findResource(
+        'Pod',
+        'ephemeral-demo',
+        'default'
+      )
+      expect(beforeRestartResult.ok).toBe(true)
+      if (!beforeRestartResult.ok) {
+        return
+      }
+      const beforeContainerEntry =
+        beforeRestartResult.value._simulator.containers['ephemeral-demo']
+      const beforeFileSystem = createFileSystem(
+        beforeContainerEntry.fileSystem,
+        undefined,
+        { mutable: true }
+      )
+      expect(beforeFileSystem.readFile('/tmp/message.txt').ok).toBe(true)
+
+      const restartResult = handler.execute(
+        'kubectl exec ephemeral-demo -- kill 1',
+        context
+      )
+      expect(restartResult.ok).toBe(true)
+
+      const updatedPodResult = context.apiServer.findResource(
+        'Pod',
+        'ephemeral-demo',
+        'default'
+      )
+      expect(updatedPodResult.ok).toBe(true)
+      if (!updatedPodResult.ok) {
+        return
+      }
+      expect(updatedPodResult.value.status.phase).toBe('Pending')
+      expect(updatedPodResult.value.status.restartCount).toBe(1)
+      const targetStatus =
+        updatedPodResult.value.status.containerStatuses?.find(
+          (status) => status.name === 'ephemeral-demo'
+        )
+      expect(targetStatus?.restartCount).toBe(1)
+      expect(targetStatus?.stateDetails?.state).toBe('Waiting')
+      expect(targetStatus?.stateDetails?.reason).toBe('ContainerCreating')
+
+      const updatedContainerEntry =
+        updatedPodResult.value._simulator.containers['ephemeral-demo']
+      const updatedFileSystem = createFileSystem(
+        updatedContainerEntry.fileSystem,
+        undefined,
+        { mutable: true }
+      )
+      expect(updatedFileSystem.readFile('/tmp/message.txt').ok).toBe(false)
+    })
+
     it('should redirect kubectl output to a file', () => {
       const result = handler.execute(
         'kubectl run mypod --image=nginx --dry-run=client -o yaml > pod.yaml',

@@ -139,6 +139,15 @@ export const handleExec = (
       )
     }
   }
+  if (command === 'kill' && parsed.execCommand[1] === '1') {
+    return buildProcessCommandDirective(
+      'pid1',
+      'kill',
+      podName,
+      containerName,
+      namespace
+    )
+  }
 
   // For all other commands, let the shell executor handle them
   // This will be processed by the main dispatcher

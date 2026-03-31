@@ -72,19 +72,18 @@ Let's prove the ephemeral nature of the container filesystem before we introduce
 **1. Start a Pod and write a file to its container filesystem:**
 
 ```bash
-kubectl run ephemeral-demo \
-  --image=busybox:1.36 \
-  -- sh -c "echo 'I will not survive' > /tmp/message.txt && sleep 3600"
+kubectl run ephemeral-demo --image=nginx:1.28 --restart=Always
+kubectl exec ephemeral-demo -- touch /tmp/message.txt
 ```
 
 **2. Wait for the Pod to be running, then read the file:**
 
 ```bash
 kubectl get pod ephemeral-demo
-kubectl exec ephemeral-demo -- cat /tmp/message.txt
+kubectl exec ephemeral-demo -- ls /tmp
 ```
 
-The file is there - `I will not survive`.
+The file is there, you should see `message.txt`.
 
 **3. Force a container restart by killing the process:**
 
@@ -103,7 +102,7 @@ Press Ctrl+C once the `RESTARTS` column increments to 1. The Pod is still runnin
 **5. Try to read the file again:**
 
 ```bash
-kubectl exec ephemeral-demo -- cat /tmp/message.txt
+kubectl exec ephemeral-demo -- ls /tmp
 ```
 
 The file is gone. The container restarted with a clean filesystem from the image. The `/tmp/message.txt` file never existed in the image, so the new container has no trace of it.

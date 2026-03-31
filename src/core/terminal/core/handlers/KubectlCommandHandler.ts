@@ -14,6 +14,7 @@ import { parseCommand } from '../../../kubectl/commands/parser'
 import type { ParsedCommand, Resource } from '../../../kubectl/commands/types'
 import type { Pod } from '../../../cluster/ressources/Pod'
 import { createFileSystem } from '../../../filesystem/FileSystem'
+import { createDebianFileSystem } from '../../../filesystem/debianFileSystem'
 import { createShellExecutor } from '../../../shell/commands'
 import type { ClusterEvent } from '../../../cluster/events/types'
 import { matchesLabelSelector } from '../../../shared/labelSelector'
@@ -60,6 +61,14 @@ const SHELL_COMMAND_PREFIX = 'SHELL_COMMAND:'
 const PROCESS_COMMAND_PREFIX = 'PROCESS_COMMAND:'
 const KUBECTL_EDIT_TMP_DIR = '/tmp'
 const LOGS_FOLLOW_POLL_INTERVAL_MS = 1000
+
+const buildPodResolvConf = (namespace: string): string => {
+  return [
+    `search ${namespace}.svc.cluster.local svc.cluster.local cluster.local`,
+    'nameserver 10.96.0.10',
+    'options ndots:5'
+  ].join('\n')
+}
 
 const parseEnterContainerDirective = (
   output: string
@@ -289,7 +298,11 @@ const executeProcessCommandDirective = (
   context: CommandContext,
   directive: ProcessCommandDirective
 ): ExecutionResult => {
-  if (directive.processName !== 'nginx' || directive.processAction !== 'stop') {
+  const isNginxStop =
+    directive.processName === 'nginx' && directive.processAction === 'stop'
+  const isPidOneKill =
+    directive.processName === 'pid1' && directive.processAction === 'kill'
+  if (!isNginxStop && !isPidOneKill) {
     return error(
       `unsupported process command: ${directive.processName} ${directive.processAction}`
     )
@@ -311,9 +324,19 @@ const executeProcessCommandDirective = (
       `Error: container ${directive.containerName} not found in pod ${directive.podName}`
     )
   }
-  if (!containerSpec.image.includes('nginx')) {
+  if (isNginxStop && !containerSpec.image.includes('nginx')) {
     return error('nginx: command not found')
   }
+  const currentContainerEntry = pod._simulator.containers[directive.containerName]
+  if (currentContainerEntry == null) {
+    return error(
+      `Error: container ${directive.containerName} not found in pod ${directive.podName}`
+    )
+  }
+  const resetFileSystem = createDebianFileSystem({
+    hostname: pod.metadata.name,
+    resolvConf: buildPodResolvConf(directive.namespace)
+  })
   const transitionTime = new Date().toISOString()
   const currentStatuses = pod.status.containerStatuses ?? []
   const updatedStatuses = currentStatuses.map((status) => {
@@ -347,7 +370,14 @@ const executeProcessCommandDirective = (
       previousLogEntries: pod._simulator.logEntries ?? [],
       logEntries: [],
       logStreamState: undefined,
-      logs: []
+      logs: [],
+      containers: {
+        ...pod._simulator.containers,
+        [directive.containerName]: {
+          ...currentContainerEntry,
+          fileSystem: resetFileSystem
+        }
+      }
     }
   }
   const updateResult = context.apiServer.updateResource(

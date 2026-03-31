@@ -469,6 +469,26 @@ describe('kubectl exec handler', () => {
   })
 
   describe('other commands', () => {
+    it('should return PROCESS_COMMAND for kill 1', () => {
+      const pod = createPod({
+        name: 'busybox-pod',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'busybox:1.36' }],
+        phase: 'Running'
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'busybox-pod',
+        execCommand: ['kill', '1']
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
+
+      expect(result).toBe('PROCESS_COMMAND:pid1:kill:default:busybox-pod:main')
+    })
+
     it('should return PROCESS_COMMAND for nginx -s stop', () => {
       const pod = createPod({
         name: 'nginx-pod',
