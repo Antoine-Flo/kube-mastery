@@ -162,10 +162,27 @@ const lessonSeoDescription =
   overview.shortDescription ??
   overview.description ??
   fallbackDescription
+const canonicalCourseIdForModule =
+  type === 'modules'
+    ? getCourses(lang).find((course) => {
+        const structure = getCourseStructure(course.id)
+        if (!structure) {
+          return false
+        }
+        return structure.sections.some((section) => {
+          return section.moduleIds.includes(id)
+        })
+      })?.id
+    : null
+const canonicalLessonPath =
+  type === 'modules' && canonicalCourseIdForModule
+    ? localePath(`/courses/${canonicalCourseIdForModule}/${lessonId}`)
+    : localePath(`/${type}/${id}/${lessonId}`)
+const canonicalLessonUrl = new URL(canonicalLessonPath, Astro.url.origin).href
 const lessonSeo = {
   title: lessonSeoTitle,
   description: lessonSeoDescription,
-  canonical: Astro.url.href,
+  canonical: canonicalLessonUrl,
   openGraphType: 'article',
   openGraphImage: frontmatterOpenGraphImage,
   twitterImage: frontmatterTwitterImage

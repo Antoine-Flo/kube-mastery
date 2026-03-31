@@ -97,6 +97,8 @@ kubectl create namespace crash-lab
 
 **2. Deploy a Pod into that namespace:**
 
+Paste the command in the terminal and open the visualizer before running it to see the Pod being created. It's the telescope icon in the bottom right corner.
+
 ```bash
 kubectl run web --image=nginx:1.28 -n crash-lab
 ```
