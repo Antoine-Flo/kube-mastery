@@ -55,7 +55,6 @@ const toGetExecutionResult = (output: string): ExecutionResult => {
 }
 
 const applyImplicitNamespaceFromKubeconfig = (
-  apiServer: ApiServerFacade,
   fileSystem: FileSystem,
   parsed: ParsedCommand
 ): ParsedCommand => {
@@ -228,7 +227,6 @@ export const createKubectlExecutor = (
       options
     )
     const parsedWithNamespace = applyImplicitNamespaceFromKubeconfig(
-      apiServer,
       fs,
       parseResult.value
     )

@@ -328,7 +328,7 @@ describe('DeploymentController', () => {
       expect(scalingEvent?.payload.replicaSetName).toContain('my-deploy-')
       expect(scalingEvent?.payload.fromReplicas).toBe(0)
       expect(scalingEvent?.payload.toReplicas).toBe(3)
-      expect(scalingEvent?.metadata.source).toBe('deployment-controller')
+      expect(scalingEvent?.metadata?.source).toBe('deployment-controller')
     })
 
     it('should update ReplicaSet replicas when Deployment replicas change', () => {
@@ -425,9 +425,11 @@ describe('DeploymentController', () => {
       eventBus.subscribe(
         'ReplicaSetUpdated',
         (event: ReplicaSetUpdatedEvent) => {
+          const replicaSetReplicas = event.payload.replicaSet.spec.replicas
           if (
             event.payload.replicaSet.metadata.name === 'my-deploy-oldhashttt' &&
-            event.payload.replicaSet.spec.replicas < 3
+            typeof replicaSetReplicas === 'number' &&
+            replicaSetReplicas < 3
           ) {
             scaleDownUpdate = event.payload.replicaSet
           }

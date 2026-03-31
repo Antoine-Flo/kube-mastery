@@ -235,7 +235,7 @@ export class StatefulSetController implements ReconcilerController {
       ownerReference.name,
       pod.metadata.namespace
     )
-    if (!statefulSetResult.ok) {
+    if (!statefulSetResult.ok || statefulSetResult.value == null) {
       return
     }
     this.enqueueStatefulSet(statefulSetResult.value, eventType, 'OwnerReference')

@@ -28,6 +28,8 @@ const BASE_RESOURCE_TARGETS: Record<Resource, BaseTarget | undefined> = {
   daemonsets: { group: 'apps', version: 'v1', kind: 'DaemonSet' },
   statefulsets: { group: 'apps', version: 'v1', kind: 'StatefulSet' },
   services: { group: '', version: 'v1', kind: 'Service' },
+  endpoints: { group: '', version: 'v1', kind: 'Endpoints' },
+  endpointslices: undefined,
   namespaces: { group: '', version: 'v1', kind: 'Namespace' },
   configmaps: { group: '', version: 'v1', kind: 'ConfigMap' },
   secrets: { group: '', version: 'v1', kind: 'Secret' },

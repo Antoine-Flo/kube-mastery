@@ -56,13 +56,27 @@ type ParsedResource =
   | Ingress
   | Lease
 
-type YamlSupportedKind = Exclude<ResourceKind, 'Namespace'>
+type YamlSupportedKind = Extract<
+  ResourceKind,
+  | 'Pod'
+  | 'ConfigMap'
+  | 'Secret'
+  | 'Node'
+  | 'PersistentVolume'
+  | 'PersistentVolumeClaim'
+  | 'ReplicaSet'
+  | 'Deployment'
+  | 'DaemonSet'
+  | 'StatefulSet'
+  | 'Service'
+  | 'Ingress'
+  | 'Lease'
+>
 
-const YAML_SUPPORTED_RESOURCE_KINDS = SUPPORTED_RESOURCE_KINDS.filter(
-  (kind) => {
-    return kind !== 'Namespace'
-  }
-) as YamlSupportedKind[]
+const YAML_SUPPORTED_RESOURCE_KINDS: YamlSupportedKind[] =
+  SUPPORTED_RESOURCE_KINDS.filter((kind) => {
+    return kind !== 'Namespace' && kind !== 'ControllerRevision' && kind !== 'EndpointSlice' && kind !== 'Endpoints'
+  }) as YamlSupportedKind[]
 
 // ─── YAML Parsing ────────────────────────────────────────────────────────
 

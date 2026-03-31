@@ -35,6 +35,7 @@ type SupportedKind = ResourceKind
 const NAME_RULE_BY_KIND: Record<SupportedKind, NameRule> = {
   Pod: DNS1123_SUBDOMAIN_RULE,
   ConfigMap: DNS1123_SUBDOMAIN_RULE,
+  ControllerRevision: DNS1123_SUBDOMAIN_RULE,
   Secret: DNS1123_SUBDOMAIN_RULE,
   Node: DNS1123_SUBDOMAIN_RULE,
   Namespace: DNS1123_LABEL_RULE,
@@ -46,6 +47,8 @@ const NAME_RULE_BY_KIND: Record<SupportedKind, NameRule> = {
   PersistentVolume: DNS1123_SUBDOMAIN_RULE,
   PersistentVolumeClaim: DNS1123_SUBDOMAIN_RULE,
   Service: DNS1123_LABEL_RULE,
+  EndpointSlice: DNS1123_SUBDOMAIN_RULE,
+  Endpoints: DNS1123_SUBDOMAIN_RULE,
   Lease: DNS1123_SUBDOMAIN_RULE
 }
 

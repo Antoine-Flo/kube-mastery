@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   createLease,
   parseLeaseManifest,
-  type Lease,
   type OwnerReference
 } from '../../../../src/core/cluster/ressources/Lease'
 
