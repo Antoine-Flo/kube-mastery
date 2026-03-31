@@ -158,7 +158,10 @@ export const writeKubeconfigToFileSystem = (
   kubeconfig: SimKubeconfig
 ): Result<void> => {
   const serializedKubeconfig = yamlStringify(kubeconfig).trimEnd()
-  const writeResult = fileSystem.writeFile(KUBECONFIG_PATH, serializedKubeconfig)
+  const writeResult = fileSystem.writeFile(
+    KUBECONFIG_PATH,
+    serializedKubeconfig
+  )
   if (!writeResult.ok) {
     return error(writeResult.error)
   }

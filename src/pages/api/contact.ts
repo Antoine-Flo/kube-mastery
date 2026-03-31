@@ -219,9 +219,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       : null
   const userIdForEmail = user != null ? user.id : 'anonymous'
   const userEmailForBody =
-    user != null &&
-    typeof user.email === 'string' &&
-    user.email.trim() !== ''
+    user != null && typeof user.email === 'string' && user.email.trim() !== ''
       ? user.email.trim()
       : 'n/a'
   const sweegoSubject = `${type} : ${normalizedLessonId ?? 'no-lesson'}`

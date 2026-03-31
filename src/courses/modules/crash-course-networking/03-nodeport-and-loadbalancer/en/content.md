@@ -20,9 +20,9 @@ spec:
     app: web
   type: NodePort
   ports:
-    - port: 80          # internal ClusterIP port
-      targetPort: 80    # port on the Pod
-      nodePort: 30080   # port on every node (30000-32767)
+    - port: 80 # internal ClusterIP port
+      targetPort: 80 # port on the Pod
+      nodePort: 30080 # port on every node (30000-32767)
 ```
 
 If you leave out the `nodePort` field, Kubernetes picks an available port from the range 30000-32767 automatically. The range limitation means you can't use standard HTTP (80) or HTTPS (443) ports directly, which is a real constraint. You also need to know the IP of one of your nodes, which is fine in development but becomes fragile in production as nodes are added or replaced.

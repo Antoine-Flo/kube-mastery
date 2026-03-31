@@ -25,8 +25,8 @@ export default defineConfig({
       themes: ['one-dark-pro', 'one-light']
     }),
     indexnow({
-      key: '07487d75a5674a3fa5000bfe5ba20486',
-    }),
+      key: '07487d75a5674a3fa5000bfe5ba20486'
+    })
   ],
 
   vite: {

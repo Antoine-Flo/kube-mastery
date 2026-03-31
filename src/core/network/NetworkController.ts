@@ -125,10 +125,7 @@ const getServiceEndpoints = (
   return endpoints
 }
 
-const endpointsChanged = (
-  previous: Endpoints,
-  next: Endpoints
-): boolean => {
+const endpointsChanged = (previous: Endpoints, next: Endpoints): boolean => {
   const previousSubsets = previous.subsets ?? []
   const nextSubsets = next.subsets ?? []
   return JSON.stringify(previousSubsets) !== JSON.stringify(nextSubsets)
@@ -154,7 +151,8 @@ const isSliceForService = (
   serviceName: string
 ): boolean => {
   return (
-    endpointSlice.metadata.labels?.['kubernetes.io/service-name'] === serviceName
+    endpointSlice.metadata.labels?.['kubernetes.io/service-name'] ===
+    serviceName
   )
 }
 

@@ -562,7 +562,9 @@ describe('DeploymentController', () => {
         template: {
           metadata: { labels: { app: 'my-deploy' } },
           spec: {
-            containers: [{ name: 'nginx', image: 'nginx:this-tag-does-not-exist' }]
+            containers: [
+              { name: 'nginx', image: 'nginx:this-tag-does-not-exist' }
+            ]
           }
         },
         ownerReferences: [

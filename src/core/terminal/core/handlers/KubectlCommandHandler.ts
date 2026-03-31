@@ -804,7 +804,9 @@ const isLogsFollowEnabled = (parsedCommand: ParsedCommand): boolean => {
   return parsedCommand.flags.f !== undefined
 }
 
-const isRolloutStatusFollowEnabled = (parsedCommand: ParsedCommand): boolean => {
+const isRolloutStatusFollowEnabled = (
+  parsedCommand: ParsedCommand
+): boolean => {
   if (parsedCommand.action !== 'rollout') {
     return false
   }
@@ -897,7 +899,12 @@ const expandRolloutStatusOutput = (
     const expanded: string[] = []
     for (let value = previous.current + 1; value <= next.current; value++) {
       expanded.push(
-        buildRolloutProgressLine(next.deploymentName, value, next.desired, next.mode)
+        buildRolloutProgressLine(
+          next.deploymentName,
+          value,
+          next.desired,
+          next.mode
+        )
       )
     }
     return expanded
@@ -1069,8 +1076,9 @@ export class KubectlCommandHandler implements CommandHandler {
 
   execute(command: string, context: CommandContext): ExecutionResult {
     const commandWithoutComment = stripInlineShellComment(command)
-    const parseRedirectionResult =
-      parseKubectlOutputRedirection(commandWithoutComment)
+    const parseRedirectionResult = parseKubectlOutputRedirection(
+      commandWithoutComment
+    )
     if (!parseRedirectionResult.ok || parseRedirectionResult.parsed == null) {
       const redirectionError = parseRedirectionResult.ok
         ? 'invalid output redirection'
@@ -1399,7 +1407,10 @@ export class KubectlCommandHandler implements CommandHandler {
         if (nextOutput === lastOutput) {
           return
         }
-        const expandedOutputs = expandRolloutStatusOutput(lastOutput, nextOutput)
+        const expandedOutputs = expandRolloutStatusOutput(
+          lastOutput,
+          nextOutput
+        )
         lastOutput = nextOutput
         if (expandedOutputs.length > 0) {
           context.output.writeOutput(expandedOutputs.join('\n'))

@@ -21,4 +21,3 @@ Your essential starting point for Kubernetes. This learning path walks you throu
 ## Why start here?
 
 Every Kubernetes journey , whether you're preparing for the KCNA, CKAD, or CKA , begins with the same foundation. This Common Core gives you the shared vocabulary, hands-on comfort with `kubectl`, and real cluster experience that all three certifications build on. Rather than repeating the same basics three times, this path covers them once, deeply and practically.
-

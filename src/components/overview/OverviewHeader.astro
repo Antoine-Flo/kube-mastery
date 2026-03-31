@@ -12,14 +12,8 @@ interface Props {
   breadcrumbRootLabel: string
 }
 
-const {
-  overview,
-  t,
-  ctaHref,
-  ctaLabel,
-  breadcrumbHref,
-  breadcrumbRootLabel
-} = Astro.props
+const { overview, t, ctaHref, ctaLabel, breadcrumbHref, breadcrumbRootLabel } =
+  Astro.props
 const DescriptionContent = overview.descriptionContent?.Content
 
 const totalLessons = overview.content.sections.reduce(
@@ -65,8 +59,7 @@ const modulesLabel =
           </>
         </div>
       )
-   
-}
+    }
   </div>
   {
     (DescriptionContent || overview.description) && (
@@ -130,8 +123,7 @@ const modulesLabel =
   @media (min-width: 768px) {
     .overview-header h1 {
       font-size: 2.25rem;
-   
- }
+    }
   }
   .meta-row {
     margin: 1.5rem 0;

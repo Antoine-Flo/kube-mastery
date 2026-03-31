@@ -564,7 +564,8 @@ export const createApiServerFacade = (
   }
   const watchHub = createWatchHub(eventBus)
   const podLifecycleEventStore = createPodLifecycleEventStore(etcd)
-  const deploymentLifecycleEventStore = createDeploymentLifecycleEventStore(etcd)
+  const deploymentLifecycleEventStore =
+    createDeploymentLifecycleEventStore(etcd)
   const findResourceForMutation = <TKind extends ResourceKind>(
     kind: TKind,
     name: string,

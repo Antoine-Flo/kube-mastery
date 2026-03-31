@@ -1788,8 +1788,7 @@ export const describeReplicaSet = (
     const firstOperator = firstToleration.operator ?? 'Equal'
     const firstValue = firstToleration.value ?? '<none>'
     const firstEffect = firstToleration.effect ?? '<none>'
-    const firstRendered =
-      `${firstKey}:${firstOperator}:${firstValue}:${firstEffect}`
+    const firstRendered = `${firstKey}:${firstOperator}:${firstValue}:${firstEffect}`
     return `  Tolerations:     ${firstRendered}`
   }
   const lines: string[] = []
@@ -1802,14 +1801,16 @@ export const describeReplicaSet = (
   lines.push(`Namespace:    ${replicaSet.metadata.namespace}`)
   lines.push(`Selector:     ${formatSelector(replicaSet.spec.selector)}`)
   lines.push(`Labels:       ${formatLabels(replicaSet.metadata.labels)}`)
+  lines.push(`Annotations:  ${formatLabels(replicaSet.metadata.annotations)}`)
   lines.push(
-    `Annotations:  ${formatLabels(replicaSet.metadata.annotations)}`
+    `Replicas:     ${currentReplicas} current / ${desiredReplicas} desired`
   )
-  lines.push(`Replicas:     ${currentReplicas} current / ${desiredReplicas} desired`)
   lines.push(`Pods Status:  ${getPodsStatusLine()}`)
 
   lines.push('Pod Template:')
-  lines.push(`  Labels:  ${formatLabels(replicaSet.spec.template.metadata?.labels)}`)
+  lines.push(
+    `  Labels:  ${formatLabels(replicaSet.spec.template.metadata?.labels)}`
+  )
   lines.push(
     `  Annotations:  ${formatLabels(replicaSet.spec.template.metadata?.annotations)}`
   )
@@ -2075,7 +2076,9 @@ export const describeEndpoints = (endpoints: Endpoints): string => {
 const renderEndpointSliceEndpointAddresses = (
   endpointSlice: EndpointSlice
 ): string => {
-  const values = endpointSlice.endpoints.flatMap((endpoint) => endpoint.addresses)
+  const values = endpointSlice.endpoints.flatMap(
+    (endpoint) => endpoint.addresses
+  )
   if (values.length === 0) {
     return '<none>'
   }
@@ -2100,10 +2103,14 @@ export const describeEndpointSlice = (endpointSlice: EndpointSlice): string => {
   lines.push(`Name:         ${endpointSlice.metadata.name}`)
   lines.push(`Namespace:    ${endpointSlice.metadata.namespace}`)
   lines.push(`Labels:       ${formatLabels(endpointSlice.metadata.labels)}`)
-  lines.push(`Annotations:  ${formatLabels(endpointSlice.metadata.annotations)}`)
+  lines.push(
+    `Annotations:  ${formatLabels(endpointSlice.metadata.annotations)}`
+  )
   lines.push(`AddressType:  ${endpointSlice.addressType}`)
   lines.push(`Ports:        ${renderEndpointSlicePorts(endpointSlice)}`)
-  lines.push(`Endpoints:    ${renderEndpointSliceEndpointAddresses(endpointSlice)}`)
+  lines.push(
+    `Endpoints:    ${renderEndpointSliceEndpointAddresses(endpointSlice)}`
+  )
   lines.push('Events:       <none>')
   return lines.join('\n')
 }

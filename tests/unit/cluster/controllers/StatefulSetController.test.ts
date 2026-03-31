@@ -29,9 +29,16 @@ describe('StatefulSetController', () => {
 
     const pods = apiServer.listResources('Pod', 'default')
     expect(pods).toHaveLength(2)
-    expect(pods.map((pod) => pod.metadata.name).sort()).toEqual(['db-0', 'db-1'])
+    expect(pods.map((pod) => pod.metadata.name).sort()).toEqual([
+      'db-0',
+      'db-1'
+    ])
 
-    const updatedStatefulSet = apiServer.findResource('StatefulSet', 'db', 'default')
+    const updatedStatefulSet = apiServer.findResource(
+      'StatefulSet',
+      'db',
+      'default'
+    )
     expect(updatedStatefulSet.ok).toBe(true)
     if (!updatedStatefulSet.ok) {
       return

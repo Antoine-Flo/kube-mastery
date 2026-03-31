@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createApiServerFacade } from '../../../../src/core/api/ApiServerFacade'
-import { createNode, type NodeStatus } from '../../../../src/core/cluster/ressources/Node'
+import {
+  createNode,
+  type NodeStatus
+} from '../../../../src/core/cluster/ressources/Node'
 import { createPod } from '../../../../src/core/cluster/ressources/Pod'
 import { createSchedulerController } from '../../../../src/core/control-plane/controllers/SchedulerController'
 

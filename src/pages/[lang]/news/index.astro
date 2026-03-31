@@ -36,12 +36,20 @@ function formatDate(dateValue: string): string {
             <div class="news-list-meta">
               <span>{formatDate(item.publishedAt)}</span>
               <span>·</span>
-              <a href={item.sourceUrl} rel="noopener noreferrer" target="_blank">
+              <a
+                href={item.sourceUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
                 {item.sourceName}
               </a>
             </div>
             <h2>
-              <a href={item.sourceUrl} rel="noopener noreferrer" target="_blank">
+              <a
+                href={item.sourceUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
                 {item.headline}
               </a>
             </h2>

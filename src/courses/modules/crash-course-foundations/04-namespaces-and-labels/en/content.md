@@ -78,8 +78,8 @@ Annotations are a related concept: they're also key-value pairs attached to reso
 ```yaml
 metadata:
   annotations:
-    owner: "platform-team"
-    last-reviewed: "2025-01-15"
+    owner: 'platform-team'
+    last-reviewed: '2025-01-15'
 ```
 
 ## Hands-On Practice

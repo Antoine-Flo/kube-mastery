@@ -421,7 +421,9 @@ describe('kubectl describe handler - endpointslices', () => {
     if (!result.ok) {
       return
     }
-    expect(result.value).toContain(`Name:         ${endpointSlice.metadata.name}`)
+    expect(result.value).toContain(
+      `Name:         ${endpointSlice.metadata.name}`
+    )
     expect(result.value).toContain('AddressType:  IPv4')
     expect(result.value).toContain('Ports:        8080/TCP')
     expect(result.value).toContain('Endpoints:    10.244.0.10')

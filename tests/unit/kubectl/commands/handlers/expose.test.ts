@@ -56,7 +56,10 @@ describe('kubectl expose handler', () => {
       return
     }
     expect(serviceResult.value.spec.selector).toEqual({ app: 'web' })
-    expect(serviceResult.value.metadata.labels).toEqual({ app: 'web', env: 'prod' })
+    expect(serviceResult.value.metadata.labels).toEqual({
+      app: 'web',
+      env: 'prod'
+    })
     expect(serviceResult.value.spec.ports[0].port).toBe(80)
     expect(serviceResult.value.spec.ports[0].targetPort).toBe(8080)
   })
@@ -161,7 +164,11 @@ describe('kubectl expose handler', () => {
     }
 
     expect(result.value).toContain('service/web-svc created')
-    const serviceResult = apiServer.findResource('Service', 'web-svc', 'default')
+    const serviceResult = apiServer.findResource(
+      'Service',
+      'web-svc',
+      'default'
+    )
     expect(serviceResult.ok).toBe(true)
     if (!serviceResult.ok) {
       return
@@ -188,7 +195,9 @@ describe('kubectl expose handler', () => {
         name: 'web-prod',
         namespace: 'default',
         labels: { app: 'web', env: 'prod' },
-        containers: [{ name: 'web', image: 'nginx', ports: [{ containerPort: 8080 }] }]
+        containers: [
+          { name: 'web', image: 'nginx', ports: [{ containerPort: 8080 }] }
+        ]
       })
     )
 
@@ -205,13 +214,23 @@ describe('kubectl expose handler', () => {
     if (!result.ok) {
       return
     }
-    const serviceResult = apiServer.findResource('Service', 'web-svc', 'default')
+    const serviceResult = apiServer.findResource(
+      'Service',
+      'web-svc',
+      'default'
+    )
     expect(serviceResult.ok).toBe(true)
     if (!serviceResult.ok) {
       return
     }
-    expect(serviceResult.value.spec.selector).toEqual({ app: 'web', env: 'prod' })
-    expect(serviceResult.value.metadata.labels).toEqual({ app: 'web', env: 'prod' })
+    expect(serviceResult.value.spec.selector).toEqual({
+      app: 'web',
+      env: 'prod'
+    })
+    expect(serviceResult.value.metadata.labels).toEqual({
+      app: 'web',
+      env: 'prod'
+    })
   })
 
   it('should return not found when pod does not exist and selector is omitted', () => {

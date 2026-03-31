@@ -96,7 +96,8 @@ const controllerRevisionRepo =
 const secretRepo = createResourceRepository<Secret>('Secret')
 const replicaSetRepo = createResourceRepository<ReplicaSet>('ReplicaSet')
 const deploymentRepo = createResourceRepository<Deployment>('Deployment')
-const endpointSliceRepo = createResourceRepository<EndpointSlice>('EndpointSlice')
+const endpointSliceRepo =
+  createResourceRepository<EndpointSlice>('EndpointSlice')
 const endpointsRepo = createResourceRepository<Endpoints>('Endpoints')
 const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
 const statefulSetRepo = createResourceRepository<StatefulSet>('StatefulSet')
@@ -352,8 +353,7 @@ export const handleConfigMapAnnotated = (
 export const handleControllerRevisionCreated = (
   state: ClusterStateData,
   event: ControllerRevisionCreatedEvent
-) =>
-  controllerRevisionHandler.created(state, event.payload.controllerRevision)
+) => controllerRevisionHandler.created(state, event.payload.controllerRevision)
 
 export const handleControllerRevisionDeleted = (
   state: ClusterStateData,
@@ -566,7 +566,8 @@ export const handleEndpointsCreated = (
 export const handleEndpointsDeleted = (
   state: ClusterStateData,
   event: EndpointsDeletedEvent
-) => endpointsHandler.deleted(state, event.payload.name, event.payload.namespace)
+) =>
+  endpointsHandler.deleted(state, event.payload.name, event.payload.namespace)
 
 export const handleEndpointsUpdated = (
   state: ClusterStateData,
@@ -588,7 +589,11 @@ export const handleEndpointSliceDeleted = (
   state: ClusterStateData,
   event: EndpointSliceDeletedEvent
 ) =>
-  endpointSliceHandler.deleted(state, event.payload.name, event.payload.namespace)
+  endpointSliceHandler.deleted(
+    state,
+    event.payload.name,
+    event.payload.namespace
+  )
 
 export const handleEndpointSliceUpdated = (
   state: ClusterStateData,

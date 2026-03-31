@@ -464,7 +464,9 @@ data:
             name: 'web-prod',
             namespace: 'default',
             labels: { app: 'web', env: 'prod', track: 'stable' },
-            containers: [{ name: 'web', image: 'nginx', ports: [{ containerPort: 8080 }] }]
+            containers: [
+              { name: 'web', image: 'nginx', ports: [{ containerPort: 8080 }] }
+            ]
           })
         )
         const executor = createKubectlExecutor(apiServer, fileSystem, logger)
@@ -534,13 +536,17 @@ data:
           return
         }
 
-        const describeService = executor.execute('kubectl describe service web-svc')
+        const describeService = executor.execute(
+          'kubectl describe service web-svc'
+        )
         expect(describeService.ok).toBe(true)
         if (!describeService.ok) {
           networkRuntime.controller.stop()
           return
         }
-        expect(describeService.value).toContain('Endpoints:                10.244.0.10:8080')
+        expect(describeService.value).toContain(
+          'Endpoints:                10.244.0.10:8080'
+        )
         expect(describeService.value).not.toContain('10.244.0.11:8080')
 
         const getEndpoints = executor.execute('kubectl get endpoints web-svc')
@@ -570,7 +576,9 @@ data:
           'kubectl expose pod web-prod --name=web-svc --port=80 --selector="app=doesnotexist"'
         )
         expect(exposeBrokenSelector.ok).toBe(true)
-        const getBrokenEndpoints = executor.execute('kubectl get endpoints web-svc')
+        const getBrokenEndpoints = executor.execute(
+          'kubectl get endpoints web-svc'
+        )
         expect(getBrokenEndpoints.ok).toBe(true)
         if (!getBrokenEndpoints.ok) {
           networkRuntime.controller.stop()
@@ -1622,7 +1630,10 @@ spec:
           '    username: admin',
           '    password: secret'
         ].join('\n')
-        const writeResult = fileSystem.writeFile('/home/kube/.kube/config', kubeconfig)
+        const writeResult = fileSystem.writeFile(
+          '/home/kube/.kube/config',
+          kubeconfig
+        )
         expect(writeResult.ok).toBe(true)
       }
 
@@ -1959,7 +1970,9 @@ spec:
         expect(setContextResult.value).toContain(
           'Context "kind-conformance" modified.'
         )
-        const kubeconfigReadResult = fileSystem.readFile('/home/kube/.kube/config')
+        const kubeconfigReadResult = fileSystem.readFile(
+          '/home/kube/.kube/config'
+        )
         expect(kubeconfigReadResult.ok).toBe(true)
         if (kubeconfigReadResult.ok) {
           expect(kubeconfigReadResult.value).toContain('namespace: kube-system')
@@ -2332,7 +2345,9 @@ spec:
           return
         }
         expect(result.value).toContain('Name:\tweb.default.svc.cluster.local')
-        expect(result.value).toContain('pod "dns-test" deleted from default namespace')
+        expect(result.value).toContain(
+          'pod "dns-test" deleted from default namespace'
+        )
         const podResult = apiServer.findResource('Pod', 'dns-test', 'default')
         expect(podResult.ok).toBe(false)
         networkRuntime.controller.stop()
@@ -2363,7 +2378,11 @@ spec:
         expect(result.value).toContain(
           'pod "dns-test-args" deleted from default namespace'
         )
-        const podResult = apiServer.findResource('Pod', 'dns-test-args', 'default')
+        const podResult = apiServer.findResource(
+          'Pod',
+          'dns-test-args',
+          'default'
+        )
         expect(podResult.ok).toBe(false)
         networkRuntime.controller.stop()
       })

@@ -118,7 +118,10 @@ const computeStatefulSetStatus = (
 ): StatefulSetStatus => {
   const readyReplicas = ownedPods.filter((pod) => isPodReady(pod)).length
   const updatedReplicas = ownedPods.filter((pod) => {
-    return pod.metadata.annotations?.[CONTROLLER_REVISION_HASH_ANNOTATION] === templateHash
+    return (
+      pod.metadata.annotations?.[CONTROLLER_REVISION_HASH_ANNOTATION] ===
+      templateHash
+    )
   }).length
 
   return {
@@ -209,7 +212,10 @@ export class StatefulSetController implements ReconcilerController {
     eventType?: ClusterEventType,
     reason?: string
   ): void {
-    const key = makeKey(statefulSet.metadata.namespace, statefulSet.metadata.name)
+    const key = makeKey(
+      statefulSet.metadata.namespace,
+      statefulSet.metadata.name
+    )
     this.workQueue.add(key)
     this.observe({
       action: 'enqueue',
@@ -238,7 +244,11 @@ export class StatefulSetController implements ReconcilerController {
     if (!statefulSetResult.ok || statefulSetResult.value == null) {
       return
     }
-    this.enqueueStatefulSet(statefulSetResult.value, eventType, 'OwnerReference')
+    this.enqueueStatefulSet(
+      statefulSetResult.value,
+      eventType,
+      'OwnerReference'
+    )
   }
 
   reconcile(key: string): void {
@@ -262,22 +272,37 @@ export class StatefulSetController implements ReconcilerController {
 
     const statefulSet = statefulSetResult.value
     const desiredReplicas = statefulSet.spec.replicas ?? 1
-    const templateHash = generateTemplateHash(statefulSet.spec.template).slice(0, 10)
+    const templateHash = generateTemplateHash(statefulSet.spec.template).slice(
+      0,
+      10
+    )
 
     const namespacePods = state.getPods(namespace)
-    const ownedPods = getOwnedResources(statefulSet, namespacePods).filter((pod) => {
-      return selectorMatchesLabels(statefulSet.spec.selector, pod.metadata.labels)
-    })
+    const ownedPods = getOwnedResources(statefulSet, namespacePods).filter(
+      (pod) => {
+        return selectorMatchesLabels(
+          statefulSet.spec.selector,
+          pod.metadata.labels
+        )
+      }
+    )
     const podByOrdinal = new Map<number, Pod>()
     for (const pod of ownedPods) {
-      const ordinal = getPodOrdinal(statefulSet.metadata.name, pod.metadata.name)
+      const ordinal = getPodOrdinal(
+        statefulSet.metadata.name,
+        pod.metadata.name
+      )
       if (ordinal < 0) {
         continue
       }
       if (!podByOrdinal.has(ordinal)) {
         podByOrdinal.set(ordinal, pod)
       } else {
-        this.apiServer.deleteResource('Pod', pod.metadata.name, pod.metadata.namespace)
+        this.apiServer.deleteResource(
+          'Pod',
+          pod.metadata.name,
+          pod.metadata.namespace
+        )
       }
     }
 
@@ -297,7 +322,11 @@ export class StatefulSetController implements ReconcilerController {
           existingPod.metadata.name,
           existingPod.metadata.namespace
         )
-        const replacementPod = createPodForOrdinal(statefulSet, ordinal, templateHash)
+        const replacementPod = createPodForOrdinal(
+          statefulSet,
+          ordinal,
+          templateHash
+        )
         this.apiServer.createResource(
           'Pod',
           replacementPod,
@@ -307,9 +336,16 @@ export class StatefulSetController implements ReconcilerController {
     }
 
     for (const pod of ownedPods) {
-      const ordinal = getPodOrdinal(statefulSet.metadata.name, pod.metadata.name)
+      const ordinal = getPodOrdinal(
+        statefulSet.metadata.name,
+        pod.metadata.name
+      )
       if (ordinal >= desiredReplicas) {
-        this.apiServer.deleteResource('Pod', pod.metadata.name, pod.metadata.namespace)
+        this.apiServer.deleteResource(
+          'Pod',
+          pod.metadata.name,
+          pod.metadata.namespace
+        )
       }
     }
 

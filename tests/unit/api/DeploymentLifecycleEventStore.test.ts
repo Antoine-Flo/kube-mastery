@@ -35,8 +35,12 @@ describe('DeploymentLifecycleEventStore', () => {
     expect(events).toHaveLength(2)
     expect(events[0]?.reason).toBe('ScalingReplicaSet')
     expect(events[0]?.source).toBe('deployment-controller')
-    expect(events[0]?.message).toContain('Scaled up replica set web-app-5c8584f7ff from 0 to 3')
-    expect(events[1]?.message).toContain('Scaled up replica set web-app-5c8584f7ff from 3 to 5')
+    expect(events[0]?.message).toContain(
+      'Scaled up replica set web-app-5c8584f7ff from 0 to 3'
+    )
+    expect(events[1]?.message).toContain(
+      'Scaled up replica set web-app-5c8584f7ff from 3 to 5'
+    )
     etcd.dispose()
   })
 

@@ -17,7 +17,10 @@ import {
   createBootstrapKubeconfig,
   createSimulatorBootstrapConfig
 } from '../cluster/systemBootstrap'
-import { createFileSystem, type FileSystemState } from '../filesystem/FileSystem'
+import {
+  createFileSystem,
+  type FileSystemState
+} from '../filesystem/FileSystem'
 import { createHostFileSystem } from '../filesystem/debianFileSystem'
 import { initializeSimNetworkRuntime } from '../network/SimNetworkRuntime'
 import { initializeSimVolumeRuntime } from '../volumes/SimVolumeRuntime'

@@ -209,7 +209,11 @@ export const handleRun = (
       networkRuntime
     )
     if (runtimeResult != null) {
-      const createResult = apiServer.createResource('Pod', pod, runtimeNamespace)
+      const createResult = apiServer.createResource(
+        'Pod',
+        pod,
+        runtimeNamespace
+      )
       if (!createResult.ok) {
         return createResult
       }

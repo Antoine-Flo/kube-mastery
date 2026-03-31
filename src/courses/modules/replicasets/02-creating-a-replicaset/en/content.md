@@ -205,6 +205,7 @@ spec:
 
 **2. Apply the manifest**
 Watch the ReplicaSet and the Pods being created in the visualizer:
+
 ```bash
 kubectl apply -f web-rs.yaml
 ```
@@ -263,6 +264,7 @@ spec:
 ```bash
 kubectl apply -f broken-rs.yaml
 ```
+
 Observe the validation error from the API server
 
 **8. Clean up**

@@ -833,7 +833,9 @@ describe('describeFormatters', () => {
 
       const result = describeDeployment(deployment, state)
 
-      expect(result).toContain('OldReplicaSets:    web-app-old123456 (0/0 replicas created)')
+      expect(result).toContain(
+        'OldReplicaSets:    web-app-old123456 (0/0 replicas created)'
+      )
       expect(result).toContain(
         `NewReplicaSet:     ${newReplicaSetName} (3/3 replicas created)`
       )
@@ -865,7 +867,9 @@ describe('describeFormatters', () => {
       expect(result).toContain('Events:')
       expect(result).toContain('ScalingReplicaSet')
       expect(result).toContain('deployment-controller')
-      expect(result).toContain('Scaled up replica set web-app-5c8584f7ff from 0 to 3')
+      expect(result).toContain(
+        'Scaled up replica set web-app-5c8584f7ff from 0 to 3'
+      )
     })
 
     it('should format template environment variables and conditions', () => {

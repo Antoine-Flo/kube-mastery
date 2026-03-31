@@ -183,18 +183,20 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
 
     if (action === 'rollout') {
       if (tokens.length === 2) {
-        return filterMatches([...KUBECTL_ROLLOUT_SUBCOMMANDS], currentToken).map(
-          (subcommand) => ({ text: subcommand, suffix: ' ' })
-        )
+        return filterMatches(
+          [...KUBECTL_ROLLOUT_SUBCOMMANDS],
+          currentToken
+        ).map((subcommand) => ({ text: subcommand, suffix: ' ' }))
       }
       if (
         tokens.length === 3 &&
         currentToken !== '' &&
         tokens[2] === currentToken
       ) {
-        return filterMatches([...KUBECTL_ROLLOUT_SUBCOMMANDS], currentToken).map(
-          (subcommand) => ({ text: subcommand, suffix: ' ' })
-        )
+        return filterMatches(
+          [...KUBECTL_ROLLOUT_SUBCOMMANDS],
+          currentToken
+        ).map((subcommand) => ({ text: subcommand, suffix: ' ' }))
       }
 
       const rolloutSubcommand = tokens[2]

@@ -17,7 +17,9 @@ import type { ParsedCommand, Resource } from '../types'
 const RESTART_ANNOTATION = 'kubectl.kubernetes.io/restartedAt'
 const CHANGE_CAUSE_ANNOTATION = 'kubernetes.io/change-cause'
 
-const ROLLOUT_RESOURCE_KIND_BY_RESOURCE: Partial<Record<Resource, ResourceKind>> = {
+const ROLLOUT_RESOURCE_KIND_BY_RESOURCE: Partial<
+  Record<Resource, ResourceKind>
+> = {
   deployments: 'Deployment',
   daemonsets: 'DaemonSet',
   statefulsets: 'StatefulSet'
@@ -35,7 +37,9 @@ const parseRolloutTarget = (
   }
   const kind = ROLLOUT_RESOURCE_KIND_BY_RESOURCE[parsed.resource]
   if (kind == null) {
-    return error('error: rollout supports only deployments, daemonsets, and statefulsets')
+    return error(
+      'error: rollout supports only deployments, daemonsets, and statefulsets'
+    )
   }
   if (parsed.name == null || parsed.name.length === 0) {
     return error('error: rollout requires a resource name')
@@ -46,7 +50,9 @@ const parseRolloutTarget = (
   }
 }
 
-const getWorkloadTemplate = (resource: KindToResource<ResourceKind>): unknown => {
+const getWorkloadTemplate = (
+  resource: KindToResource<ResourceKind>
+): unknown => {
   if (resource.kind === 'Deployment') {
     return (resource as Deployment).spec.template
   }
@@ -113,9 +119,12 @@ const withRestartAnnotation = (
   return templateObject
 }
 
-const getDeploymentRevisionFromReplicaSet = (replicaSet: ReplicaSet): number => {
+const getDeploymentRevisionFromReplicaSet = (
+  replicaSet: ReplicaSet
+): number => {
   const value =
-    replicaSet.metadata.annotations?.['deployment.kubernetes.io/revision'] ?? '0'
+    replicaSet.metadata.annotations?.['deployment.kubernetes.io/revision'] ??
+    '0'
   const parsed = Number.parseInt(value, 10)
   if (Number.isNaN(parsed) || parsed < 0) {
     return 0
@@ -222,7 +231,11 @@ const ensureControllerRevisionHistory = (
       }
     ]
   })
-  apiServer.createResource('ControllerRevision', newRevision, workload.metadata.namespace)
+  apiServer.createResource(
+    'ControllerRevision',
+    newRevision,
+    workload.metadata.namespace
+  )
   return [...existing, newRevision]
 }
 
@@ -344,9 +357,7 @@ const formatHistoryDetails = (
   const metadataMap = renderTemplateMap(templateMap.metadata)
   const specMap = renderTemplateMap(templateMap.spec)
   const labelsMap = renderTemplateMap(metadataMap.labels)
-  const containers = Array.isArray(specMap.containers)
-    ? specMap.containers
-    : []
+  const containers = Array.isArray(specMap.containers) ? specMap.containers : []
   const nodeSelectorsMap = renderTemplateMap(specMap.nodeSelector)
   const tolerations = Array.isArray(specMap.tolerations)
     ? specMap.tolerations
@@ -447,14 +458,19 @@ const handleRolloutStatus = (
     if (!watch) {
       return success(formatRolloutWaitingMessage(resourceResult.value, name))
     }
-    const waitingMessage = formatRolloutWaitingMessage(resourceResult.value, name)
+    const waitingMessage = formatRolloutWaitingMessage(
+      resourceResult.value,
+      name
+    )
     if (waitingMessage !== previousWaitingMessage) {
       progressLines.push(waitingMessage)
       previousWaitingMessage = waitingMessage
     }
   }
 
-  return error(`error: timed out waiting for the condition on ${toKindReference(kind)}/${name}`)
+  return error(
+    `error: timed out waiting for the condition on ${toKindReference(kind)}/${name}`
+  )
 }
 
 const handleRolloutHistory = (
@@ -465,15 +481,25 @@ const handleRolloutHistory = (
   parsed: ParsedCommand
 ): ExecutionResult => {
   if (kind === 'Deployment') {
-    const deploymentResult = apiServer.findResource('Deployment', name, namespace)
+    const deploymentResult = apiServer.findResource(
+      'Deployment',
+      name,
+      namespace
+    )
     if (!deploymentResult.ok) {
       return error(
         `Error from server (NotFound): ${toPluralKindReference(kind)} "${name}" not found`
       )
     }
-    const ownedReplicaSets = getOwnedReplicaSets(apiServer, deploymentResult.value)
+    const ownedReplicaSets = getOwnedReplicaSets(
+      apiServer,
+      deploymentResult.value
+    )
     const sorted = [...ownedReplicaSets].sort((a, b) => {
-      return getDeploymentRevisionFromReplicaSet(a) - getDeploymentRevisionFromReplicaSet(b)
+      return (
+        getDeploymentRevisionFromReplicaSet(a) -
+        getDeploymentRevisionFromReplicaSet(b)
+      )
     })
     const revisionRows: HistorySummaryRow[] = sorted.map((replicaSet) => ({
       revision: getDeploymentRevisionFromReplicaSet(replicaSet),
@@ -481,10 +507,15 @@ const handleRolloutHistory = (
     }))
     if (parsed.rolloutRevision != null) {
       const targetReplicaSet = sorted.find((replicaSet) => {
-        return getDeploymentRevisionFromReplicaSet(replicaSet) === parsed.rolloutRevision
+        return (
+          getDeploymentRevisionFromReplicaSet(replicaSet) ===
+          parsed.rolloutRevision
+        )
       })
       if (targetReplicaSet == null) {
-        return error(`error: unable to find the specified revision ${parsed.rolloutRevision}`)
+        return error(
+          `error: unable to find the specified revision ${parsed.rolloutRevision}`
+        )
       }
       return success(
         formatHistoryDetails(
@@ -508,16 +539,26 @@ const handleRolloutHistory = (
     )
   }
 
-  const revisions = ensureControllerRevisionHistory(apiServer, workloadResult.value)
+  const revisions = ensureControllerRevisionHistory(
+    apiServer,
+    workloadResult.value
+  )
   if (parsed.rolloutRevision != null) {
     const targetRevision = revisions.find((revision) => {
       return revision.revision === parsed.rolloutRevision
     })
     if (targetRevision == null) {
-      return error(`error: unable to find the specified revision ${parsed.rolloutRevision}`)
+      return error(
+        `error: unable to find the specified revision ${parsed.rolloutRevision}`
+      )
     }
     return success(
-      formatHistoryDetails(kind, name, targetRevision.revision, targetRevision.data.template)
+      formatHistoryDetails(
+        kind,
+        name,
+        targetRevision.revision,
+        targetRevision.data.template
+      )
     )
   }
 
@@ -547,19 +588,36 @@ const handleRolloutRestart = (
   }
 
   if (kind === 'DaemonSet' || kind === 'StatefulSet') {
-    ensureControllerRevisionHistory(apiServer, resourceResult.value as DaemonSet | StatefulSet)
+    ensureControllerRevisionHistory(
+      apiServer,
+      resourceResult.value as DaemonSet | StatefulSet
+    )
   }
 
   const currentTemplate = getWorkloadTemplate(resourceResult.value)
-  const nextTemplate = withRestartAnnotation(currentTemplate, new Date().toISOString())
-  const updatedResource = withUpdatedWorkloadTemplate(resourceResult.value, nextTemplate)
-  const updateResult = apiServer.updateResource(kind, name, updatedResource, namespace)
+  const nextTemplate = withRestartAnnotation(
+    currentTemplate,
+    new Date().toISOString()
+  )
+  const updatedResource = withUpdatedWorkloadTemplate(
+    resourceResult.value,
+    nextTemplate
+  )
+  const updateResult = apiServer.updateResource(
+    kind,
+    name,
+    updatedResource,
+    namespace
+  )
   if (!updateResult.ok) {
     return error(updateResult.error)
   }
 
   if (kind === 'DaemonSet' || kind === 'StatefulSet') {
-    ensureControllerRevisionHistory(apiServer, updateResult.value as DaemonSet | StatefulSet)
+    ensureControllerRevisionHistory(
+      apiServer,
+      updateResult.value as DaemonSet | StatefulSet
+    )
   }
 
   return success(`${toKindReference(kind)}/${name} restarted`)
@@ -582,23 +640,33 @@ const handleRolloutUndo = (
   let targetTemplate: unknown | undefined
   if (kind === 'Deployment') {
     const deployment = resourceResult.value as Deployment
-    const sortedReplicaSets = getOwnedReplicaSets(apiServer, deployment).sort((a, b) => {
-      return getDeploymentRevisionFromReplicaSet(a) - getDeploymentRevisionFromReplicaSet(b)
-    })
+    const sortedReplicaSets = getOwnedReplicaSets(apiServer, deployment).sort(
+      (a, b) => {
+        return (
+          getDeploymentRevisionFromReplicaSet(a) -
+          getDeploymentRevisionFromReplicaSet(b)
+        )
+      }
+    )
     const desiredRevision = parsed.rolloutRevision
     if (desiredRevision != null) {
       const targetReplicaSet = sortedReplicaSets.find((replicaSet) => {
-        return getDeploymentRevisionFromReplicaSet(replicaSet) === desiredRevision
+        return (
+          getDeploymentRevisionFromReplicaSet(replicaSet) === desiredRevision
+        )
       })
       if (targetReplicaSet == null) {
-        return error(`error: unable to find the specified revision ${desiredRevision}`)
+        return error(
+          `error: unable to find the specified revision ${desiredRevision}`
+        )
       }
       targetTemplate = targetReplicaSet.spec.template
     } else {
       if (sortedReplicaSets.length < 2) {
         return error('error: no revision found to roll back to')
       }
-      targetTemplate = sortedReplicaSets[sortedReplicaSets.length - 2].spec.template
+      targetTemplate =
+        sortedReplicaSets[sortedReplicaSets.length - 2].spec.template
     }
   } else {
     const revisions = ensureControllerRevisionHistory(
@@ -611,7 +679,9 @@ const handleRolloutUndo = (
         return revision.revision === desiredRevision
       })
       if (targetRevision == null) {
-        return error(`error: unable to find the specified revision ${desiredRevision}`)
+        return error(
+          `error: unable to find the specified revision ${desiredRevision}`
+        )
       }
       targetTemplate = targetRevision.data.template
     } else {
@@ -630,12 +700,20 @@ const handleRolloutUndo = (
     resourceResult.value,
     deepClone(targetTemplate)
   )
-  const updateResult = apiServer.updateResource(kind, name, updatedResource, namespace)
+  const updateResult = apiServer.updateResource(
+    kind,
+    name,
+    updatedResource,
+    namespace
+  )
   if (!updateResult.ok) {
     return error(updateResult.error)
   }
   if (kind === 'DaemonSet' || kind === 'StatefulSet') {
-    ensureControllerRevisionHistory(apiServer, updateResult.value as DaemonSet | StatefulSet)
+    ensureControllerRevisionHistory(
+      apiServer,
+      updateResult.value as DaemonSet | StatefulSet
+    )
   }
   return success(`${toKindReference(kind)}/${name} rolled back`)
 }
@@ -667,13 +745,25 @@ export const handleRollout = (
     )
   }
   if (subcommand === 'history') {
-    return handleRolloutHistory(apiServer, target.kind, target.name, namespace, parsed)
+    return handleRolloutHistory(
+      apiServer,
+      target.kind,
+      target.name,
+      namespace,
+      parsed
+    )
   }
   if (subcommand === 'restart') {
     return handleRolloutRestart(apiServer, target.kind, target.name, namespace)
   }
   if (subcommand === 'undo') {
-    return handleRolloutUndo(apiServer, target.kind, target.name, namespace, parsed)
+    return handleRolloutUndo(
+      apiServer,
+      target.kind,
+      target.name,
+      namespace,
+      parsed
+    )
   }
   return error(`error: unsupported rollout subcommand "${subcommand}"`)
 }

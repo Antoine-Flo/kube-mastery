@@ -825,12 +825,12 @@ spec:
 
       expect(result.value).toContain('stable-app')
       expect(result.value).not.toContain('canary-app')
-      expect(apiServer.findResource('Deployment', 'stable-app', 'default').ok).toBe(
-        false
-      )
-      expect(apiServer.findResource('Deployment', 'canary-app', 'default').ok).toBe(
-        true
-      )
+      expect(
+        apiServer.findResource('Deployment', 'stable-app', 'default').ok
+      ).toBe(false)
+      expect(
+        apiServer.findResource('Deployment', 'canary-app', 'default').ok
+      ).toBe(true)
     })
   })
 

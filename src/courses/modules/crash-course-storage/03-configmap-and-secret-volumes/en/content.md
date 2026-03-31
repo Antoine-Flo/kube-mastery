@@ -36,8 +36,8 @@ volumes:
     configMap:
       name: app-config
       items:
-        - key: production.yaml   # key in the ConfigMap
-          path: config.yaml      # filename inside the container
+        - key: production.yaml # key in the ConfigMap
+          path: config.yaml # filename inside the container
 ```
 
 ## Mounting a Secret as Files
@@ -147,7 +147,12 @@ spec:
   containers:
     - name: app
       image: busybox:1.36
-      command: ['sh', '-c', 'ls -la /credentials && echo "---" && cat /credentials/username && sleep 3600']
+      command:
+        [
+          'sh',
+          '-c',
+          'ls -la /credentials && echo "---" && cat /credentials/username && sleep 3600'
+        ]
       volumeMounts:
         - name: creds
           mountPath: /credentials

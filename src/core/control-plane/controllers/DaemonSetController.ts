@@ -283,7 +283,10 @@ export class DaemonSetController implements ReconcilerController {
     const daemonSet = daemonSetResult.value
     const allNodes = state.getNodes()
     const allPods = state.getPods(namespace)
-    const templateHash = generateTemplateHash(daemonSet.spec.template).slice(0, 10)
+    const templateHash = generateTemplateHash(daemonSet.spec.template).slice(
+      0,
+      10
+    )
 
     const ownedPods = getOwnedResources(daemonSet, allPods).filter((pod) => {
       return selectorMatchesLabels(daemonSet.spec.selector, pod.metadata.labels)
@@ -327,7 +330,11 @@ export class DaemonSetController implements ReconcilerController {
         const podHash =
           pod.metadata.annotations?.[CONTROLLER_REVISION_HASH_ANNOTATION]
         if (podHash !== templateHash) {
-          this.apiServer.deleteResource('Pod', pod.metadata.name, pod.metadata.namespace)
+          this.apiServer.deleteResource(
+            'Pod',
+            pod.metadata.name,
+            pod.metadata.namespace
+          )
           const replacementPod = createPodFromTemplate(
             daemonSet,
             node,

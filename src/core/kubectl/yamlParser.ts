@@ -75,7 +75,12 @@ type YamlSupportedKind = Extract<
 
 const YAML_SUPPORTED_RESOURCE_KINDS: YamlSupportedKind[] =
   SUPPORTED_RESOURCE_KINDS.filter((kind) => {
-    return kind !== 'Namespace' && kind !== 'ControllerRevision' && kind !== 'EndpointSlice' && kind !== 'Endpoints'
+    return (
+      kind !== 'Namespace' &&
+      kind !== 'ControllerRevision' &&
+      kind !== 'EndpointSlice' &&
+      kind !== 'Endpoints'
+    )
   }) as YamlSupportedKind[]
 
 // ─── YAML Parsing ────────────────────────────────────────────────────────

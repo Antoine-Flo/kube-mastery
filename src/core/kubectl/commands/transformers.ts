@@ -514,8 +514,7 @@ const labelTransformer: ActionTransformer = (ctx) => {
     return parsedTarget
   }
 
-  const name =
-    parsedTarget.value.name ?? findNameSkippingFlags(ctx.tokens, 3)
+  const name = parsedTarget.value.name ?? findNameSkippingFlags(ctx.tokens, 3)
 
   // Parse label changes from tokens after name
   // type/name uses index 2 as target, resource name syntax uses index 3
@@ -544,8 +543,7 @@ const annotateTransformer: ActionTransformer = (ctx) => {
     return parsedTarget
   }
 
-  const name =
-    parsedTarget.value.name ?? findNameSkippingFlags(ctx.tokens, 3)
+  const name = parsedTarget.value.name ?? findNameSkippingFlags(ctx.tokens, 3)
 
   // Parse annotation changes from tokens after name
   // type/name uses index 2 as target, resource name syntax uses index 3
@@ -1141,7 +1139,9 @@ const parseDurationSeconds = (value: string): number => {
   return parseInt(trimmed, 10) || 60
 }
 
-const parseBooleanFlagValue = (value: string | boolean): boolean | undefined => {
+const parseBooleanFlagValue = (
+  value: string | boolean
+): boolean | undefined => {
   if (typeof value === 'boolean') {
     return value
   }

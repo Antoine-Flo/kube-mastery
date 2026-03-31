@@ -63,14 +63,18 @@ const generateEndpointSliceSuffix = (): string => {
   return value
 }
 
-export const generateServiceEndpointSliceName = (serviceName: string): string => {
+export const generateServiceEndpointSliceName = (
+  serviceName: string
+): string => {
   return `${serviceName}-${generateEndpointSliceSuffix()}`
 }
 
 const normalizePortsFromBackends = (
   backends: ServiceEndpointBackend[]
 ): EndpointSlicePort[] => {
-  const uniquePorts = [...new Set(backends.map((backend) => backend.targetPort))]
+  const uniquePorts = [
+    ...new Set(backends.map((backend) => backend.targetPort))
+  ]
   return uniquePorts
     .sort((left, right) => {
       return left - right
@@ -119,7 +123,9 @@ const normalizeEndpointsFromBackends = (
   })
 }
 
-export const createEndpointSlice = (config: EndpointSliceConfig): EndpointSlice => {
+export const createEndpointSlice = (
+  config: EndpointSliceConfig
+): EndpointSlice => {
   const endpointSlice: EndpointSlice = {
     apiVersion: 'discovery.k8s.io/v1',
     kind: 'EndpointSlice',
@@ -131,7 +137,8 @@ export const createEndpointSlice = (config: EndpointSliceConfig): EndpointSlice 
       ...(config.annotations != null && { annotations: config.annotations })
     },
     addressType: config.addressType ?? 'IPv4',
-    ...(config.ports != null && config.ports.length > 0 && { ports: config.ports }),
+    ...(config.ports != null &&
+      config.ports.length > 0 && { ports: config.ports }),
     endpoints: config.endpoints
   }
   return deepFreeze(endpointSlice)

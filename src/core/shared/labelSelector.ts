@@ -244,7 +244,9 @@ const parseRequirement = (term: string): Result<LabelSelectorRequirement> => {
   })
 }
 
-const isAstSelector = (selector: LabelSelectorLike): selector is LabelSelector => {
+const isAstSelector = (
+  selector: LabelSelectorLike
+): selector is LabelSelector => {
   return 'requirements' in selector
 }
 
@@ -271,7 +273,8 @@ const matchesRequirement = (
   labels: Record<string, string> | undefined
 ): boolean => {
   const hasKey = hasOwnLabel(labels, requirement.key)
-  const labelValue = hasKey && labels != null ? labels[requirement.key] : undefined
+  const labelValue =
+    hasKey && labels != null ? labels[requirement.key] : undefined
 
   if (requirement.operator === 'Equals') {
     return hasKey && labelValue === requirement.values[0]
@@ -376,4 +379,3 @@ export const toEqualitySelectorMap = (
   }
   return success(equalitySelector)
 }
-

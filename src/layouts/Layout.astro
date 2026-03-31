@@ -69,11 +69,7 @@ const auth = await getLayoutAuthContext(
     <main class="layout-main">
       <slot />
     </main>
-    {
-      showFooter && (
-        <Footer />
-      )
-    }
+    {showFooter && <Footer />}
     <Toaster />
   </body>
 </html>

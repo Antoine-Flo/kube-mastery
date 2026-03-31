@@ -213,7 +213,11 @@ const resolveDefaultTargetPortFromResource = (
   namespace: string
 ): number | undefined => {
   if (resource === 'deployments') {
-    return resolveDefaultTargetPortFromDeployment(apiServer, resourceName, namespace)
+    return resolveDefaultTargetPortFromDeployment(
+      apiServer,
+      resourceName,
+      namespace
+    )
   }
   return resolveDefaultTargetPortFromPod(apiServer, resourceName, namespace)
 }

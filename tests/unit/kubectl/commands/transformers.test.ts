@@ -538,7 +538,13 @@ describe('kubectl transformers', () => {
       const transformer = getTransformerForAction('annotate')
       const ctx = createContext({
         input: 'kubectl annotate pods my-pod description="My app"',
-        tokens: ['kubectl', 'annotate', 'pods', 'my-pod', 'description="My app"']
+        tokens: [
+          'kubectl',
+          'annotate',
+          'pods',
+          'my-pod',
+          'description="My app"'
+        ]
       })
 
       const result = transformer(ctx)

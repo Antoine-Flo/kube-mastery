@@ -138,7 +138,9 @@ const sumReplicaSetAvailableReplicas = (replicaSets: ReplicaSet[]): number => {
   return total
 }
 
-const sumReplicaSetUnavailableReplicas = (replicaSets: ReplicaSet[]): number => {
+const sumReplicaSetUnavailableReplicas = (
+  replicaSets: ReplicaSet[]
+): number => {
   let total = 0
   for (const replicaSet of replicaSets) {
     const statusReplicas = replicaSet.status.replicas ?? 0
@@ -549,7 +551,10 @@ export class DeploymentController implements ReconcilerController {
     const rollingLimits = resolveRollingUpdateLimits(deploy)
     const oldReplicasTotal = sumReplicaSetReplicas(oldReplicaSets)
     const maxTotalReplicas = desiredReplicas + rollingLimits.maxSurge
-    const initialRollingReplicas = Math.max(0, maxTotalReplicas - oldReplicasTotal)
+    const initialRollingReplicas = Math.max(
+      0,
+      maxTotalReplicas - oldReplicasTotal
+    )
     const initialReplicas = isInitialDeployment
       ? desiredReplicas
       : Math.min(desiredReplicas, initialRollingReplicas)
@@ -656,9 +661,9 @@ export class DeploymentController implements ReconcilerController {
       })
     }
     const replicaSetNeedsUpdate =
-      (targetRevision != null &&
-        currentRs.metadata.annotations?.[DEPLOYMENT_REVISION_ANNOTATION] !==
-          targetRevision)
+      targetRevision != null &&
+      currentRs.metadata.annotations?.[DEPLOYMENT_REVISION_ANNOTATION] !==
+        targetRevision
     if (replicaSetNeedsUpdate) {
       const updatedCurrentReplicaSet: ReplicaSet = {
         ...currentRs,

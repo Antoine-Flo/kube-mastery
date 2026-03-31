@@ -77,7 +77,9 @@ describe('kubectl rollout handler', () => {
       })
     )
 
-    const parsed = parseCommand('kubectl rollout status deployment/web-app --watch=false')
+    const parsed = parseCommand(
+      'kubectl rollout status deployment/web-app --watch=false'
+    )
     expect(parsed.ok).toBe(true)
     if (!parsed.ok) {
       return
@@ -125,7 +127,11 @@ describe('kubectl rollout handler', () => {
         return
       }
       currentAvailable += 1
-      const currentResult = apiServer.findResource('Deployment', 'web-app', 'default')
+      const currentResult = apiServer.findResource(
+        'Deployment',
+        'web-app',
+        'default'
+      )
       if (!currentResult.ok) {
         return
       }
@@ -137,7 +143,12 @@ describe('kubectl rollout handler', () => {
           readyReplicas: currentAvailable
         }
       }
-      apiServer.updateResource('Deployment', 'web-app', updatedDeployment, 'default')
+      apiServer.updateResource(
+        'Deployment',
+        'web-app',
+        updatedDeployment,
+        'default'
+      )
     })
 
     expect(result.ok).toBe(true)
@@ -146,7 +157,9 @@ describe('kubectl rollout handler', () => {
     }
     expect(result.value).toContain('1 of 3 updated replicas are available')
     expect(result.value).toContain('2 of 3 updated replicas are available')
-    expect(result.value).toContain('deployment.apps "web-app" successfully rolled out')
+    expect(result.value).toContain(
+      'deployment.apps "web-app" successfully rolled out'
+    )
   })
 
   it('creates rollout history for daemonset using controller revisions', () => {
@@ -478,8 +491,8 @@ describe('kubectl rollout handler', () => {
     if (!deploymentResult.ok) {
       return
     }
-    expect(
-      deploymentResult.value.spec.template.spec.containers[0]?.image
-    ).toBe('nginx:1.26')
+    expect(deploymentResult.value.spec.template.spec.containers[0]?.image).toBe(
+      'nginx:1.26'
+    )
   })
 })

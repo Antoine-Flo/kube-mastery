@@ -189,7 +189,8 @@ const deploymentRepo = createResourceRepository<Deployment>('Deployment')
 const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
 const statefulSetRepo = createResourceRepository<StatefulSet>('StatefulSet')
 const serviceRepo = createResourceRepository<Service>('Service')
-const endpointSliceRepo = createResourceRepository<EndpointSlice>('EndpointSlice')
+const endpointSliceRepo =
+  createResourceRepository<EndpointSlice>('EndpointSlice')
 const endpointsRepo = createResourceRepository<Endpoints>('Endpoints')
 const ingressRepo = createResourceRepository<Ingress>('Ingress')
 const persistentVolumeRepo =
@@ -348,7 +349,10 @@ const endpointSliceOps = createResourceOperations<EndpointSlice>(
   endpointSliceRepo,
   'endpointSlices'
 )
-const endpointsOps = createResourceOperations<Endpoints>(endpointsRepo, 'endpoints')
+const endpointsOps = createResourceOperations<Endpoints>(
+  endpointsRepo,
+  'endpoints'
+)
 const ingressOps = createResourceOperations<Ingress>(ingressRepo, 'ingresses')
 const persistentVolumeOps = createResourceOperations<PersistentVolume>(
   persistentVolumeRepo,
@@ -466,10 +470,7 @@ export interface ClusterState {
   ) => Result<Service>
   getEndpointSlices: (namespace?: string) => EndpointSlice[]
   addEndpointSlice: (endpointSlice: EndpointSlice) => void
-  findEndpointSlice: (
-    name: string,
-    namespace: string
-  ) => Result<EndpointSlice>
+  findEndpointSlice: (name: string, namespace: string) => Result<EndpointSlice>
   deleteEndpointSlice: (
     name: string,
     namespace: string
@@ -1115,7 +1116,9 @@ export function createClusterState(
       ConfigMap: (resourceNamespace) =>
         configMapMethods.getAll(resourceNamespace) as KubernetesResource[],
       ControllerRevision: (resourceNamespace) =>
-        controllerRevisionMethods.getAll(resourceNamespace) as KubernetesResource[],
+        controllerRevisionMethods.getAll(
+          resourceNamespace
+        ) as KubernetesResource[],
       Secret: (resourceNamespace) =>
         secretMethods.getAll(resourceNamespace) as KubernetesResource[],
       Node: (_resourceNamespace) =>
@@ -1391,9 +1394,10 @@ export function createClusterState(
       >
     }
     if (kind === 'ControllerRevision') {
-      return controllerRevisionMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
+      return controllerRevisionMethods.delete(
+        name,
+        effectiveNamespace
+      ) as Result<KindToResource<TKind>>
     }
     if (kind === 'Secret') {
       return secretMethods.delete(name, effectiveNamespace) as Result<

@@ -27,13 +27,13 @@ The second step is mounting the volume inside a specific container, in `spec.con
 ```yaml
 spec:
   volumes:
-    - name: my-data       # step 1: declare the volume
+    - name: my-data # step 1: declare the volume
       emptyDir: {}
   containers:
     - name: app
       image: my-app:1.0
       volumeMounts:
-        - name: my-data   # step 2: mount it (name must match exactly)
+        - name: my-data # step 2: mount it (name must match exactly)
           mountPath: /var/data
 ```
 

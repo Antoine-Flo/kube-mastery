@@ -17,7 +17,6 @@ Default scope: `src/courses/**/content.md` (EN or FR).
    From the first hands-on heading through end of file, **make no edits** (no wording, no formatting, no reordering).
 
    Treat as practice start when you see any of these as an `##` heading (case-insensitive, trim whitespace):
-
    - `Hands-On Practice`
    - `Hands-on Practice`
    - A heading whose title contains both **Practice** and **Hands** (e.g. lab titles)

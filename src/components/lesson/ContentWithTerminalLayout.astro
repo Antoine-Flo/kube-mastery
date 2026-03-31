@@ -142,10 +142,7 @@ const showTerminalActions = terminalInteractive
                 <LessonTerminal seedName={seedName} lang={lang} />
               ) : (
                 <div class="lesson-terminal-lock">
-                  <div
-                    class="lesson-terminal-lock__blur"
-                    aria-hidden="true"
-                  >
+                  <div class="lesson-terminal-lock__blur" aria-hidden="true">
                     <div class="lesson-terminal-lock__fake-chrome" />
                     <div class="lesson-terminal-lock__fake-body">
                       <span class="lesson-terminal-lock__fake-line" />
@@ -372,7 +369,9 @@ const showTerminalActions = terminalInteractive
   }
 
   function closeMermaidZoomModal() {
-    const modal = document.querySelector('.mermaid-zoom-modal') as HTMLElement | null
+    const modal = document.querySelector(
+      '.mermaid-zoom-modal'
+    ) as HTMLElement | null
     if (!modal) {
       return
     }

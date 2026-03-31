@@ -43,7 +43,7 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /data/my-pv   # uses a path on the node; fine for single-node learning clusters
+    path: /data/my-pv # uses a path on the node; fine for single-node learning clusters
 ```
 
 The PVC then requests storage without specifying which PV it should bind to:
@@ -137,7 +137,12 @@ spec:
   containers:
     - name: writer
       image: busybox:1.36
-      command: ['sh', '-c', 'echo "Persisted at $(date)" > /data/record.txt && cat /data/record.txt && sleep 3600']
+      command:
+        [
+          'sh',
+          '-c',
+          'echo "Persisted at $(date)" > /data/record.txt && cat /data/record.txt && sleep 3600'
+        ]
       volumeMounts:
         - name: data
           mountPath: /data

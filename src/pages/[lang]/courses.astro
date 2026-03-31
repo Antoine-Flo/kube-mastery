@@ -11,11 +11,7 @@ const localePath = useLocalePath(locale)
 
 const courses = getCourses(locale)
 
-type CourseVisualVariant =
-  | 'fundamentals'
-  | 'developer'
-  | 'operator'
-  | 'crash'
+type CourseVisualVariant = 'fundamentals' | 'developer' | 'operator' | 'crash'
 
 const visualVariantByCourseId: Partial<Record<string, CourseVisualVariant>> = {
   'common-core': 'fundamentals',
@@ -45,7 +41,9 @@ const ckad = courseById.get('ckad')
               crashCourse && (
                 <CourseCard
                   title={crashCourse.title}
-                  description={crashCourse.shortDescription ?? crashCourse.description}
+                  description={
+                    crashCourse.shortDescription ?? crashCourse.description
+                  }
                   totalLessons={crashCourse.totalLessons}
                   href={localePath(`/courses/${crashCourse.id}`)}
                   comingSoon={crashCourse.comingSoon}
@@ -69,7 +67,9 @@ const ckad = courseById.get('ckad')
               commonCore && (
                 <CourseCard
                   title={commonCore.title}
-                  description={commonCore.shortDescription ?? commonCore.description}
+                  description={
+                    commonCore.shortDescription ?? commonCore.description
+                  }
                   totalLessons={commonCore.totalLessons}
                   href={localePath(`/courses/${commonCore.id}`)}
                   comingSoon={commonCore.comingSoon}

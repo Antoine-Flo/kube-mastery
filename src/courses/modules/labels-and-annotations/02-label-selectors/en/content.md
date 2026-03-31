@@ -202,7 +202,7 @@ kubectl get endpointslices -l kubernetes.io/service-name=web-svc
 ```bash
 kubectl delete service web-svc
 kubectl expose pod web-prod --name=web-svc --port=80 --selector="app=doesnotexist"
-kubectl get endpoints web-svc 
+kubectl get endpoints web-svc
 kubectl get endpointslices -l kubernetes.io/service-name=web-svc
 # Endpoints should show <none>
 ```

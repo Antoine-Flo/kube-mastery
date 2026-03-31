@@ -56,11 +56,17 @@ const descriptionText = description ?? ''
           visualVariant && `course-card__icon--${visualVariant}`
         ]}
       >
-        {visualVariant === 'fundamentals' && (
-          <Compass size={16} aria-hidden="true" />
-        )}
+        {
+          visualVariant === 'fundamentals' && (
+            <Compass size={16} aria-hidden="true" />
+          )
+        }
         {visualVariant === 'developer' && <Code size={16} aria-hidden="true" />}
-        {visualVariant === 'operator' && <Shield size={16} aria-hidden="true" />}
+        {
+          visualVariant === 'operator' && (
+            <Shield size={16} aria-hidden="true" />
+          )
+        }
         {visualVariant === 'crash' && <Gem size={16} aria-hidden="true" />}
       </div>
       <h3 class="course-card__title">{title}</h3>
@@ -68,20 +74,30 @@ const descriptionText = description ?? ''
 
     <div class="course-card__badges">
       {startHere && <span class="badge badge--start">{startHereLabel}</span>}
-      {inProgress && <span class="badge badge--progress">{inProgressLabel}</span>}
+      {
+        inProgress && (
+          <span class="badge badge--progress">{inProgressLabel}</span>
+        )
+      }
       {comingSoon && <span class="badge badge--soon">{comingSoonLabel}</span>}
       {isFree && <span class="badge badge--free">{freeLabel}</span>}
     </div>
 
-    {descriptionText && <p class="course-card__description">{descriptionText}</p>}
+    {
+      descriptionText && (
+        <p class="course-card__description">{descriptionText}</p>
+      )
+    }
 
     <footer class="course-card__meta">
-      {totalLessons > 0 && (
-        <span class="course-card__lessons">
-          <BookOpen size={14} aria-hidden="true" />
-          {lessonsLabel}
-        </span>
-      )}
+      {
+        totalLessons > 0 && (
+          <span class="course-card__lessons">
+            <BookOpen size={14} aria-hidden="true" />
+            {lessonsLabel}
+          </span>
+        )
+      }
       {level && <span class="course-card__level">{level}</span>}
     </footer>
   </a>
