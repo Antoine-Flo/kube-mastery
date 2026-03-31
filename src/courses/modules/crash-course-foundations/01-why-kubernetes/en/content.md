@@ -2,18 +2,6 @@
 
 Running one containerized application is manageable, write a Dockerfile, build an image, run a container. Real systems are usually multiple services that must run together, stay available under load, recover from failure, and roll out updates without downtime. At that point, the challenge is no longer containers themselves, it is orchestration, and that is what Kubernetes is built for.
 
-:::info
-**Kubernetes** is an open-source container orchestration platform. It automates the deployment, scaling, self-healing, and management of containerized applications across a cluster of machines.
-:::
-
-## The Problem at Scale
-
-Imagine a small e-commerce platform with five microservices, frontend, product catalog, cart service, order processor, and database. Each runs as a container. On one machine this can work, but as traffic grows you add servers and run multiple copies of each service.
-
-Then operational questions multiply. Which copies are running right now? If one crashes at 2 AM, who restarts it? How do you roll out a new frontend version gradually without downtime? How does the cart service find the order processor when Pod addresses keep changing? How do you stop one runaway service from consuming all CPU and starving others?
-
-Each problem is solvable in isolation. Solving all of them together, reliably and continuously across many machines, without waking your team every night, is the real scale problem. Kubernetes is the industry standard answer.
-
 ## What Kubernetes Actually Does
 
 At its core, Kubernetes continuously compares what you want with what is actually running, then closes the gap. You declare a desired state, "I want three copies of this service, using this image, with these environment variables", and Kubernetes is responsible for making and keeping that state true.

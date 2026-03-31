@@ -18,9 +18,6 @@ function shouldAddNoindexHeader(pathname: string): boolean {
   if (/^\/(en|fr)\/checkout\/success(?:\/|$)/.test(pathname)) {
     return true
   }
-  if (/^\/(en|fr)\/(courses|modules)\/[^/]+\/[^/]+(?:\/|$)/.test(pathname)) {
-    return true
-  }
   return false
 }
 
