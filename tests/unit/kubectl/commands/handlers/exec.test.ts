@@ -389,7 +389,8 @@ describe('kubectl exec handler', () => {
             podName: 'web-1',
             namespace: 'default',
             podIP: '10.244.2.2',
-            targetPort: 8080
+            targetPort: 8080,
+            responseProfile: 'nginx'
           }
         ]
       })
@@ -414,7 +415,56 @@ describe('kubectl exec handler', () => {
           getState: () => networkState
         }
       })
-      expect(result).toContain('200 OK')
+      expect(result).toContain('<title>Welcome to nginx!</title>')
+    })
+
+    it('should execute curl -s with network runtime', () => {
+      const pod = createPod({
+        name: 'my-pod',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'busybox' }],
+        phase: 'Running'
+      })
+      const state = createState([pod])
+      const networkState = createNetworkState()
+      networkState.upsertServiceRuntime({
+        namespace: 'default',
+        serviceName: 'web',
+        serviceType: 'ClusterIP',
+        clusterIP: '10.96.99.11',
+        ports: [{ protocol: 'TCP', port: 80, targetPort: 8080 }],
+        endpoints: [
+          {
+            podName: 'web-1',
+            namespace: 'default',
+            podIP: '10.244.2.2',
+            targetPort: 8080,
+            responseProfile: 'nginx'
+          }
+        ]
+      })
+      const dnsResolver = createDnsResolver(networkState)
+      const trafficEngine = createTrafficEngine(networkState, dnsResolver)
+      const parsed = createParsedCommand({
+        name: 'my-pod',
+        execCommand: ['curl', '-s', 'http://web.default.svc.cluster.local']
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed, {
+        state: networkState,
+        dnsResolver,
+        trafficEngine,
+        controller: {
+          start: () => {},
+          stop: () => {},
+          initialSync: () => {},
+          resyncAll: () => {},
+          getState: () => networkState
+        }
+      })
+      expect(result).toContain('<h1>Welcome to nginx!</h1>')
     })
   })
 

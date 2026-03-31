@@ -85,8 +85,7 @@ kubectl rollout status deployment/backend
 **2. Resolve the Service by its short name:**
 
 ```bash
-kubectl run dns-test --image=busybox:1.36 --rm -it --restart=Never -- \
-  nslookup backend-service
+kubectl run dns-test --image=busybox:1.36 --rm -it --restart=Never -- nslookup backend-service
 ```
 
 You'll see the short name resolve to the Service's ClusterIP, and the full qualified name listed in the answer. Notice the resolved address matches what `kubectl get service backend-service` shows.
@@ -94,8 +93,7 @@ You'll see the short name resolve to the Service's ClusterIP, and the full quali
 **3. Resolve it using the full qualified domain name:**
 
 ```bash
-kubectl run dns-test2 --image=busybox:1.36 --rm -it --restart=Never -- \
-  nslookup backend-service.default.svc.cluster.local
+kubectl run dns-test2 --image=busybox:1.36 --rm -it --restart=Never -- nslookup backend-service.default.svc.cluster.local
 ```
 
 Same result - both names resolve to the same ClusterIP. The short name just relies on the search domains configured in `/etc/resolv.conf`.
@@ -103,8 +101,7 @@ Same result - both names resolve to the same ClusterIP. The short name just reli
 **4. Make an HTTP request using only the DNS name:**
 
 ```bash
-kubectl run curl-test --image=curlimages/curl:8.6.0 --rm -it --restart=Never -- \
-  curl -s http://backend-service
+kubectl run curl-test --image=curlimages/curl:8.6.0 --rm -it --restart=Never -- curl -s http://backend-service
 ```
 
 The request succeeds - the Pod resolved `backend-service` to the ClusterIP, the ClusterIP forwarded the request to one of the backend Pods, and you received the nginx default page. No IP address anywhere in that interaction.

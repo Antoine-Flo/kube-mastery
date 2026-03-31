@@ -6,6 +6,7 @@ export interface SimServiceEndpoint {
   podIP: string
   nodeName?: string
   targetPort: number
+  responseProfile: 'nginx' | 'generic'
 }
 
 export interface SimServicePortRuntime {

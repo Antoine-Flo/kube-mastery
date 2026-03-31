@@ -48,6 +48,7 @@ When a Pod is replaced and gets a new IP, Kubernetes updates the Endpoints objec
 ## Hands-On Practice
 
 **1. Create the backend Deployment:**
+Watch the visualizer to see the Pods being created and spread across the nodes.
 
 ```yaml
 # backend.yaml
@@ -121,14 +122,15 @@ kubectl get endpoints backend-service
 
 The old Pod's IP has been removed and the replacement Pod's new IP has been added. The Service's `CLUSTER-IP` is unchanged.
 
-**5. Send a request through the Service from inside the cluster:**
+**5. Test that nginx is reachable through the Service:**
 
 ```bash
-kubectl run curl-test --image=curlimages/curl:8.6.0 --rm -it --restart=Never -- \
-  curl -s http://backend-service
+kubectl get pods -l app=backend
+# Copy one pod NAME, then:
+kubectl exec <POD-NAME> -- curl http://backend-service
 ```
 
-The request goes to the Service's virtual IP, kube-proxy forwards it to one of the backend Pods, and you see the nginx default page. The client - the curl Pod - never needed to know which Pod it was actually talking to.
+This test shows that clients use the Service DNS name, not Pod IPs, to reach the app. The Service receives the request and forwards it to one matching backend Pod selected by its label selector, which is exactly how stable in-cluster access is provided.
 
 **6. Clean up:**
 

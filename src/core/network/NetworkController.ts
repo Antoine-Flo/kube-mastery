@@ -79,6 +79,34 @@ const resolveTargetPortForPod = (
   return servicePort
 }
 
+const resolveResponseProfileFromImage = (
+  imageName: string | undefined
+): 'nginx' | 'generic' => {
+  if (imageName == null) {
+    return 'generic'
+  }
+  if (imageName.toLowerCase().includes('nginx')) {
+    return 'nginx'
+  }
+  return 'generic'
+}
+
+const resolveEndpointResponseProfile = (
+  pod: Pod,
+  targetPort: number
+): 'nginx' | 'generic' => {
+  for (const container of pod.spec.containers) {
+    const hasMatchingPort = (container.ports ?? []).some((port) => {
+      return port.containerPort === targetPort
+    })
+    if (hasMatchingPort) {
+      return resolveResponseProfileFromImage(container.image)
+    }
+  }
+  const firstContainer = pod.spec.containers[0]
+  return resolveResponseProfileFromImage(firstContainer?.image)
+}
+
 const serviceSelectsPod = (service: Service, pod: Pod): boolean => {
   const selector = service.spec.selector
   if (selector == null) {
@@ -118,7 +146,8 @@ const getServiceEndpoints = (
         namespace: pod.metadata.namespace,
         podIP: pod.status.podIP,
         ...(pod.spec.nodeName != null && { nodeName: pod.spec.nodeName }),
-        targetPort
+        targetPort,
+        responseProfile: resolveEndpointResponseProfile(pod, targetPort)
       })
     }
   }

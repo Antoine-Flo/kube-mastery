@@ -53,7 +53,8 @@ describe('Network DNS and Traffic', () => {
           podName: 'web-abc',
           namespace: 'dev',
           podIP: '10.244.1.12',
-          targetPort: 8080
+          targetPort: 8080,
+          responseProfile: 'nginx'
         }
       ]
     })
@@ -66,7 +67,7 @@ describe('Network DNS and Traffic', () => {
     })
     expect(clusterIpResult.ok).toBe(true)
     if (clusterIpResult.ok) {
-      expect(clusterIpResult.value).toContain('CLUSTERIP 200 OK')
+      expect(clusterIpResult.value).toContain('<title>Welcome to nginx!</title>')
     }
 
     const nodePortResult = traffic.simulateHttpGet('http://172.18.0.2:30080', {
@@ -74,7 +75,7 @@ describe('Network DNS and Traffic', () => {
     })
     expect(nodePortResult.ok).toBe(true)
     if (nodePortResult.ok) {
-      expect(nodePortResult.value).toContain('NODEPORT 200 OK')
+      expect(nodePortResult.value).toContain('<h1>Welcome to nginx!</h1>')
     }
   })
 

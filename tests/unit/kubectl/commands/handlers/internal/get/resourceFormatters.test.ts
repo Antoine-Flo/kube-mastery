@@ -58,6 +58,16 @@ describe('resourceFormatters', () => {
     expect(getServiceExternalIP(service)).toBe('<pending>')
   })
 
+  it('returns pending for loadbalancer service without ingress yet', () => {
+    const service = createService({
+      name: 'web-lb',
+      namespace: 'default',
+      type: 'LoadBalancer',
+      ports: [{ port: 80 }]
+    })
+    expect(getServiceExternalIP(service)).toBe('<pending>')
+  })
+
   it('falls back to externalIPs then none', () => {
     const withExternalIps = createService({
       name: 'web',

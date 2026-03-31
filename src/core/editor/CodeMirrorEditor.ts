@@ -105,7 +105,7 @@ export const createCodeMirrorEditor = (
         '&': {
           height: '100%',
           minHeight: '0',
-          fontSize: '1rem',
+          // fontSize: '1rem',
           lineHeight: '1.6'
         },
         '.cm-scroller': {

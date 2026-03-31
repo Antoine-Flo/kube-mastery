@@ -18,6 +18,32 @@ export interface TrafficEngine {
   ) => Result<string>
 }
 
+const NGINX_DEFAULT_HTML_BODY = `<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>`
+
+const GENERIC_HTTP_OK_BODY = 'ok'
+
 const isIpv4 = (value: string): boolean => {
   const octets = value.split('.')
   if (octets.length !== 4) {
@@ -57,6 +83,13 @@ const findServiceByServicePort = (
   port: number
 ): boolean => {
   return serviceRuntime.ports.some((servicePort) => servicePort.port === port)
+}
+
+const buildHttpBodyFromEndpoint = (endpoint: SimServiceEndpoint): string => {
+  if (endpoint.responseProfile === 'nginx') {
+    return NGINX_DEFAULT_HTML_BODY
+  }
+  return GENERIC_HTTP_OK_BODY
 }
 
 export const createTrafficEngine = (
@@ -150,11 +183,7 @@ export const createTrafficEngine = (
       `${serviceRuntime.namespace}/${serviceRuntime.serviceName}`,
       counters
     )
-    const routePrefix =
-      runtimeResult.value.routeType === 'node-port' ? 'NODEPORT' : 'CLUSTERIP'
-    return success(
-      `${routePrefix} 200 OK via ${serviceRuntime.serviceName}.${serviceRuntime.namespace} -> ${endpoint.podName} (${endpoint.podIP}:${endpoint.targetPort})`
-    )
+    return success(buildHttpBodyFromEndpoint(endpoint))
   }
 
   return {

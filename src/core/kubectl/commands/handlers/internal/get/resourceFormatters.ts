@@ -7,6 +7,7 @@ export const getSecretType = (secretType: SecretType): string => {
 }
 
 export const getServiceExternalIP = (service: Service): string => {
+  const serviceType = service.spec.type ?? 'ClusterIP'
   if (
     service.status?.loadBalancer?.ingress &&
     service.status.loadBalancer.ingress.length > 0
@@ -16,6 +17,9 @@ export const getServiceExternalIP = (service: Service): string => {
   }
   if (service.spec.externalIPs && service.spec.externalIPs.length > 0) {
     return service.spec.externalIPs.join(',')
+  }
+  if (serviceType === 'LoadBalancer') {
+    return '<pending>'
   }
   return '<none>'
 }
