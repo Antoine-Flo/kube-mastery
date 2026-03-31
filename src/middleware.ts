@@ -6,9 +6,6 @@ function shouldAddNoindexHeader(pathname: string): boolean {
   if (/^\/api(?:\/|$)/.test(pathname)) {
     return true
   }
-  if (/^\/(en|fr)\/auth(?:\/|$)/.test(pathname)) {
-    return true
-  }
   if (/^\/(en|fr)\/profile(?:\/|$)/.test(pathname)) {
     return true
   }
