@@ -42,9 +42,17 @@ try {
 } catch {
   // Missing Supabase env or other error → show login page
 }
+
+// Strip query string so ?redirect=... variants share one canonical; keep crawlers off login.
+const authCanonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href
 ---
 
-<Layout>
+<Layout
+  seo={{
+    canonical: authCanonicalUrl,
+    noindex: true
+  }}
+>
   <div class="page-halo">
     <div class="page-halo__bg" aria-hidden="true"></div>
     <div
