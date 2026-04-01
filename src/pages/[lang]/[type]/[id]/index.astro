@@ -55,9 +55,31 @@ const ctaLabel = progress.hasStarted
 const lessonBaseUrl = localePath(`/${type}/${id}`)
 const breadcrumbHref = localePath(`/${type}`)
 const breadcrumbRootLabel = `${type.charAt(0).toUpperCase()}${type.slice(1)}`
+
+const overviewCanonicalPath = localePath(`/${type}/${id}`)
+const overviewCanonicalUrl = new URL(
+  overviewCanonicalPath,
+  Astro.site ?? Astro.url
+).href
+
+const rawOverviewDescription = overview.shortDescription ?? overview.description
+const overviewDescription =
+  typeof rawOverviewDescription === 'string'
+    ? rawOverviewDescription.trim()
+    : ''
+if (overviewDescription.length === 0) {
+  return Astro.redirect(localePath('/courses'))
+}
+
+const overviewSeo = {
+  title: `${overview.title} | KubeMastery`,
+  description: overviewDescription,
+  canonical: overviewCanonicalUrl,
+  openGraphType: 'website' as const
+}
 ---
 
-<Layout>
+<Layout seo={overviewSeo}>
   <OverviewLayout>
     <div class="ol">
       <OverviewHeader

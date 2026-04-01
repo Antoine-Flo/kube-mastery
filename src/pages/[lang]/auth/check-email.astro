@@ -23,9 +23,21 @@ try {
 } catch {
   // Missing Supabase env or other error → show page
 }
+
+const checkEmailCanonicalUrl = new URL(
+  Astro.url.pathname,
+  Astro.site ?? Astro.url
+).href
 ---
 
-<Layout>
+<Layout
+  seo={{
+    title: `${t('auth_checkEmailTitle')} | KubeMastery`,
+    description: t('auth_checkEmail'),
+    canonical: checkEmailCanonicalUrl,
+    noindex: true
+  }}
+>
   <div class="check-email">
     <div class="check-email__card">
       <div class="check-email__icon" aria-hidden="true">

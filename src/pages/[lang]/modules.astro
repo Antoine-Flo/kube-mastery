@@ -9,9 +9,16 @@ const t = useTranslations(locale)
 const localePath = useLocalePath(locale)
 
 const modules = getModules(locale)
+
+const modulesListSeo = {
+  title: `${t('modules_title')} | KubeMastery`,
+  description: t('modules_subtitle'),
+  canonical: new URL(localePath('/modules'), Astro.site ?? Astro.url).href,
+  openGraphType: 'website' as const
+}
 ---
 
-<Layout>
+<Layout seo={modulesListSeo}>
   <main>
     <h1>{t('modules_title')}</h1>
     <p>{t('modules_subtitle')}</p>

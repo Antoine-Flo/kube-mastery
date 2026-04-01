@@ -25,9 +25,16 @@ const crashCourse = courseById.get('crash-course')
 const commonCore = courseById.get('common-core')
 const cka = courseById.get('cka')
 const ckad = courseById.get('ckad')
+
+const coursesListSeo = {
+  title: `${t('courses_title')} | KubeMastery`,
+  description: t('courses_subtitle'),
+  canonical: new URL(localePath('/courses'), Astro.site ?? Astro.url).href,
+  openGraphType: 'website' as const
+}
 ---
 
-<Layout>
+<Layout seo={coursesListSeo}>
   <div class="page-halo">
     <div class="page-halo__bg" aria-hidden="true"></div>
     <main>
