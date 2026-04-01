@@ -1,6 +1,7 @@
 import type { ClusterStateData } from '../../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { DeploymentLifecycleDescribeEvent } from '../../../api/DeploymentLifecycleEventStore'
+import type { PersistentVolumeClaimLifecycleDescribeEvent } from '../../../api/PersistentVolumeClaimLifecycleEventStore'
 import type { PodLifecycleDescribeEvent } from '../../../api/PodLifecycleEventStore'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
@@ -61,6 +62,10 @@ interface DescribeDependencies {
     namespace: string,
     deploymentName: string
   ) => readonly DeploymentLifecycleDescribeEvent[]
+  listPersistentVolumeClaimEvents?: (
+    namespace: string,
+    persistentVolumeClaimName: string
+  ) => readonly PersistentVolumeClaimLifecycleDescribeEvent[]
 }
 
 const sortDescribeResources = (
@@ -168,8 +173,12 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
   },
   persistentvolumeclaims: {
     items: 'persistentVolumeClaims',
-    formatter: (item, state) => {
-      return describePersistentVolumeClaim(item, state)
+    formatter: (item, state, dependencies) => {
+      const events = dependencies.listPersistentVolumeClaimEvents?.(
+        item.metadata.namespace,
+        item.metadata.name
+      )
+      return describePersistentVolumeClaim(item, state, events)
     },
     type: 'PersistentVolumeClaim'
   },
@@ -216,7 +225,11 @@ export const handleDescribe = (
       apiServer.podLifecycleEventStore.listPodEvents,
     listDeploymentEvents:
       dependencies.listDeploymentEvents ??
-      apiServer.deploymentLifecycleEventStore.listDeploymentEvents
+      apiServer.deploymentLifecycleEventStore.listDeploymentEvents,
+    listPersistentVolumeClaimEvents:
+      dependencies.listPersistentVolumeClaimEvents ??
+      apiServer.persistentVolumeClaimLifecycleEventStore
+        .listPersistentVolumeClaimEvents
   }
   if (!parsed.resource) {
     return error(`error: you must specify the resource type to describe`)

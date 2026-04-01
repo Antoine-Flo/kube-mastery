@@ -94,7 +94,7 @@ describe('resourceFormatters', () => {
         { port: 53, protocol: 'UDP' }
       ]
     })
-    expect(formatServicePorts(service)).toBe('30080:80/TCP,53/UDP')
+    expect(formatServicePorts(service)).toBe('80:30080/TCP,53/UDP')
   })
 
   it('returns <none> when service has no ports', () => {

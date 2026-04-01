@@ -29,6 +29,9 @@ const DEFAULT_STORAGE_CLASS_ANNOTATION =
   'storageclass.kubernetes.io/is-default-class'
 
 const PROVISIONING_EVENTS: AppEventType[] = [
+  'PodCreated',
+  'PodUpdated',
+  'PodDeleted',
   'PersistentVolumeCreated',
   'PersistentVolumeUpdated',
   'PersistentVolumeDeleted',

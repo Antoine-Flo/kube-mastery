@@ -50,6 +50,10 @@ When a Pod is replaced and gets a new IP, Kubernetes updates the Endpoints objec
 **1. Create the backend Deployment:**
 Watch the visualizer to see the Pods being created and spread across the nodes.
 
+```bash
+nano backend.yaml
+```
+
 ```yaml
 # backend.yaml
 apiVersion: apps/v1
@@ -79,6 +83,10 @@ kubectl rollout status deployment/backend
 ```
 
 **2. Create the Service:**
+
+```bash
+nano backend-service.yaml
+```
 
 ```yaml
 # backend-service.yaml

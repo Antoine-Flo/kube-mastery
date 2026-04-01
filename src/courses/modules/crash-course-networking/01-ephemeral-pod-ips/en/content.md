@@ -45,6 +45,10 @@ This exercise makes the problem concrete before you introduce the solution.
 
 **1. Create a backend Deployment:**
 
+```bash
+nano backend.yaml
+```
+
 ```yaml
 # backend.yaml
 apiVersion: apps/v1

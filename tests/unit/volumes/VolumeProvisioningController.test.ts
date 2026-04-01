@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createApiServerFacade } from '../../../src/core/api/ApiServerFacade'
 import { createPersistentVolumeClaim } from '../../../src/core/cluster/ressources/PersistentVolumeClaim'
+import { createPod } from '../../../src/core/cluster/ressources/Pod'
 import { createStorageClass } from '../../../src/core/cluster/ressources/StorageClass'
 import { createVolumeProvisioningController } from '../../../src/core/volumes/VolumeProvisioningController'
 
@@ -60,6 +61,70 @@ describe('VolumeProvisioningController', () => {
     expect(pvResult.value.spec.hostPath?.path).toBe(
       '/sim/dynamic-pv/pvc-default-dynamic-pvc'
     )
+
+    controller.stop()
+  })
+
+  it('waits for first consumer before provisioning dynamic volume', () => {
+    const apiServer = createApiServerFacade()
+    const controller = createVolumeProvisioningController(apiServer)
+    apiServer.createResource(
+      'StorageClass',
+      createStorageClass({
+        name: 'standard',
+        spec: {
+          provisioner: 'rancher.io/local-path',
+          reclaimPolicy: 'Delete',
+          volumeBindingMode: 'WaitForFirstConsumer'
+        },
+        annotations: {
+          'storageclass.kubernetes.io/is-default-class': 'true'
+        }
+      })
+    )
+    apiServer.createResource(
+      'PersistentVolumeClaim',
+      createPersistentVolumeClaim({
+        name: 'dynamic-pvc',
+        namespace: 'default',
+        spec: {
+          accessModes: ['ReadWriteOnce'],
+          resources: { requests: { storage: '100Mi' } }
+        }
+      })
+    )
+
+    controller.start()
+
+    const preConsumerPv = apiServer.findResource(
+      'PersistentVolume',
+      'pvc-default-dynamic-pvc'
+    )
+    expect(preConsumerPv.ok).toBe(false)
+
+    apiServer.createResource(
+      'Pod',
+      createPod({
+        name: 'dynamic-storage-demo',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'busybox:1.36' }],
+        volumes: [
+          {
+            name: 'storage',
+            source: {
+              type: 'persistentVolumeClaim',
+              claimName: 'dynamic-pvc'
+            }
+          }
+        ]
+      })
+    )
+
+    const postConsumerPv = apiServer.findResource(
+      'PersistentVolume',
+      'pvc-default-dynamic-pvc'
+    )
+    expect(postConsumerPv.ok).toBe(true)
 
     controller.stop()
   })

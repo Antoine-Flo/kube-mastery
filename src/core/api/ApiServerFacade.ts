@@ -95,6 +95,10 @@ import {
   createPodLifecycleEventStore,
   type PodLifecycleEventStore
 } from './PodLifecycleEventStore'
+import {
+  createPersistentVolumeClaimLifecycleEventStore,
+  type PersistentVolumeClaimLifecycleEventStore
+} from './PersistentVolumeClaimLifecycleEventStore'
 import { createWatchHub, type WatchHub } from './WatchHub'
 
 export interface ApiServerFacade {
@@ -102,6 +106,7 @@ export interface ApiServerFacade {
   readonly etcd: EtcdLikeStore
   readonly watchHub: WatchHub
   readonly podLifecycleEventStore: PodLifecycleEventStore
+  readonly persistentVolumeClaimLifecycleEventStore: PersistentVolumeClaimLifecycleEventStore
   readonly deploymentLifecycleEventStore: DeploymentLifecycleEventStore
   getEventBus: () => EventBus
   snapshotState: () => ReturnType<EtcdLikeStore['snapshot']>
@@ -600,6 +605,8 @@ export const createApiServerFacade = (
   }
   const watchHub = createWatchHub(eventBus)
   const podLifecycleEventStore = createPodLifecycleEventStore(etcd)
+  const persistentVolumeClaimLifecycleEventStore =
+    createPersistentVolumeClaimLifecycleEventStore(etcd)
   const deploymentLifecycleEventStore =
     createDeploymentLifecycleEventStore(etcd)
   const findResourceForMutation = <TKind extends ResourceKind>(
@@ -713,6 +720,7 @@ export const createApiServerFacade = (
     etcd,
     watchHub,
     podLifecycleEventStore,
+    persistentVolumeClaimLifecycleEventStore,
     deploymentLifecycleEventStore,
     getEventBus: () => eventBus,
     snapshotState: () => clusterState.toJSON(),
@@ -877,6 +885,7 @@ export const createApiServerFacade = (
     getResourceVersion: () => etcd.getResourceVersion(),
     stop: () => {
       podLifecycleEventStore.stop()
+      persistentVolumeClaimLifecycleEventStore.stop()
       deploymentLifecycleEventStore.stop()
       etcd.dispose()
     }

@@ -31,7 +31,7 @@ export const formatServicePorts = (service: Service): string => {
   return service.spec.ports
     .map((port) => {
       const portStr = port.nodePort
-        ? `${port.nodePort}:${port.port}`
+        ? `${port.port}:${port.nodePort}`
         : String(port.port)
       const protocol = port.protocol || 'TCP'
       return `${portStr}/${protocol}`

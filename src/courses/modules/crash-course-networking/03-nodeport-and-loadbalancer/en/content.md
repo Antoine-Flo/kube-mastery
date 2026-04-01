@@ -94,6 +94,10 @@ For any communication that stays inside the cluster - your frontend calling your
 
 **1. Create a Deployment:**
 
+```bash
+nano web.yaml
+```
+
 ```yaml
 # web.yaml
 apiVersion: apps/v1
@@ -118,11 +122,16 @@ spec:
 ```
 
 ```bash
+# Open the visualizer with the telescope icon to see the Pods being created.
 kubectl apply -f web.yaml
 kubectl rollout status deployment/web
 ```
 
 **2. Create a NodePort Service:**
+
+```bash
+nano web-nodeport.yaml
+```
 
 ```yaml
 # web-nodeport.yaml
@@ -148,6 +157,10 @@ kubectl get service web-nodeport
 Notice the `PORT(S)` column shows `80:30080/TCP`. The internal ClusterIP port is 80; the NodePort open on every node is 30080.
 
 **3. Create a LoadBalancer Service for comparison:**
+
+```bash
+nano web-lb.yaml
+```
 
 ```yaml
 # web-lb.yaml
