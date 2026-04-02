@@ -56,6 +56,7 @@ const showTerminalActions = terminalInteractive
     data-lang={lang}
     data-terminal-open="true"
     data-terminal-interactive={terminalInteractive ? 'true' : 'false'}
+    data-lesson-tour="layout-root"
   >
     <div class="lesson-layout">
       {
@@ -64,6 +65,7 @@ const showTerminalActions = terminalInteractive
             id="lesson-sidebar"
             class="lesson-layout__sidebar"
             aria-label="Plan du cours"
+            data-lesson-tour="sidebar"
           >
             <div class="lesson-layout__sidebar-content">
               <ScrollArea>
@@ -77,6 +79,7 @@ const showTerminalActions = terminalInteractive
                 class="lesson-layout__sidebar-toggle"
                 aria-label="Réduire le plan du cours"
                 aria-expanded="true"
+                data-lesson-tour="sidebar-toggle"
               >
                 <span
                   class="lesson-layout__sidebar-icon lesson-layout__sidebar-icon--expand"
@@ -125,12 +128,17 @@ const showTerminalActions = terminalInteractive
         <div
           class="lesson-layout__resizer"
           data-lesson-resizer
+          data-lesson-tour="resizer"
           role="separator"
           aria-label="Redimensionner le contenu et le terminal"
           aria-orientation="vertical"
         >
         </div>
-        <div class="lesson-layout__terminal-wrap" data-lesson-term-wrap>
+        <div
+          class="lesson-layout__terminal-wrap"
+          data-lesson-term-wrap
+          data-lesson-tour="terminal"
+        >
           <div
             class:list={[
               'lesson-layout__terminal',

@@ -212,7 +212,7 @@ const lessonSeo = {
         completedLessonIds={completed}
       />
     </div>
-    <article class="lesson-content">
+    <article class="lesson-content" data-lesson-tour="lesson-main">
       <Content />
     </article>
     <LessonQuizNav
@@ -225,4 +225,18 @@ const lessonSeo = {
       lessonId={lessonId}
     />
   </ContentWithTerminalLayout>
+  <script>
+    import {
+      bootLessonLayoutTour,
+      destroyLessonLayoutTourIfActive
+    } from '../../../../../lib/lesson/lessonLayoutTour'
+
+    document.addEventListener('astro:page-load', () => {
+      bootLessonLayoutTour()
+    })
+    bootLessonLayoutTour()
+    document.addEventListener('astro:before-swap', () => {
+      destroyLessonLayoutTourIfActive()
+    })
+  </script>
 </Layout>
