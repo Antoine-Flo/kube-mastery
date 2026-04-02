@@ -234,6 +234,9 @@ export function startLessonLayoutTour(lang?: LessonTourLang): void {
   if (hasTourBeenSeen()) {
     return
   }
+  if (window.matchMedia('(max-width: 1024px)').matches) {
+    return
+  }
   destroyLessonLayoutTourIfActive()
   const uiLang = lang ?? resolveUiLang()
   const m = pickTourMessages(uiLang)
