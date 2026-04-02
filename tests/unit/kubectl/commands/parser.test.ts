@@ -1548,3 +1548,55 @@ describe('kubectl parser - patch', () => {
     }
   })
 })
+
+describe('kubectl parser - unknown flags', () => {
+  it('should return kubectl-like shorthand error for unknown flag', () => {
+    const result = parseCommand('kubectl get -toto')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toBe(
+        "error: unknown shorthand flag: 't' in -toto\nSee 'kubectl get --help' for usage."
+      )
+    }
+  })
+
+  it('should return kubectl-like long flag error for unknown flag', () => {
+    const result = parseCommand('kubectl describe pod nginx-pod --totally-unknown')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toBe(
+        "error: unknown flag: --totally-unknown\nSee 'kubectl describe --help' for usage."
+      )
+    }
+  })
+
+  it('should return kubectl-like unknown command at root level', () => {
+    const result = parseCommand('kubectl coocococo')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toBe('error: unknown command "coocococo" for "kubectl"')
+    }
+  })
+
+  it('should parse kubectl options as action without resource', () => {
+    const result = parseCommand('kubectl options')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value.action).toBe('options')
+  })
+
+  it('should keep rollout subcommand errors handled by semantics', () => {
+    const result = parseCommand('kubectl rollout magic')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('error: invalid subcommand for rollout')
+    }
+  })
+})

@@ -1109,6 +1109,24 @@ const stripInlineShellComment = (command: string): string => {
   return command
 }
 
+const HELP_FLAGS = new Set(['-h', '--help'])
+
+const isKubectlHelpRequest = (command: string): boolean => {
+  const tokens = command
+    .trim()
+    .split(/\s+/)
+    .filter((token) => token.length > 0)
+  if (tokens.length === 0 || tokens[0] !== 'kubectl') {
+    return false
+  }
+  for (const token of tokens) {
+    if (HELP_FLAGS.has(token)) {
+      return true
+    }
+  }
+  return false
+}
+
 export class KubectlCommandHandler implements CommandHandler {
   canHandle(command: string): boolean {
     // Vérifie si la commande commence par "kubectl" suivi d'un espace ou fin de ligne
@@ -1175,6 +1193,18 @@ export class KubectlCommandHandler implements CommandHandler {
         }
       }
     )
+
+    if (isKubectlHelpRequest(parsedRedirection.command)) {
+      const helpResult = executor.execute(parsedRedirection.command)
+      if (helpResult.ok) {
+        if (helpResult.value.length > 0) {
+          context.output.writeOutput(helpResult.value)
+        }
+      } else {
+        context.output.writeOutput(helpResult.error)
+      }
+      return helpResult
+    }
 
     const parsedCommandResult = parseCommand(parsedRedirection.command)
     if (!parsedCommandResult.ok) {

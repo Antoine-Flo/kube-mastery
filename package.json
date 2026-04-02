@@ -29,7 +29,8 @@
     "i18n:unused": "tsx bin/clean-unused-translations.ts",
     "i18n:clean": "tsx bin/clean-unused-translations.ts --apply",
     "css:unused": "tsx bin/clean-unused-css.ts",
-    "css:clean": "tsx bin/clean-unused-css.ts --apply"
+    "css:clean": "tsx bin/clean-unused-css.ts --apply",
+    "kubectl:help:generate": "tsx bin/generate-kubectl-help-catalog.ts"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",

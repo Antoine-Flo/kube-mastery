@@ -27,6 +27,7 @@ export type Action =
   | 'expose'
   | 'wait'
   | 'rollout'
+  | 'options'
   | 'config'
   | 'config-get-contexts'
   | 'config-current-context'

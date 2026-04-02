@@ -15,6 +15,9 @@ import { error, success } from '../../shared/result'
 import { parseResourceTargetToken } from './resourceTarget'
 import { getTransformerForAction, type ParseContext } from './transformers'
 import type { Action, ParsedCommand, Resource } from './types'
+import { assertParsedCommandSupportedBySpec } from '../cli/runtime/parse'
+import { validateUnknownFlagsBySpec } from '../cli/runtime/flagErrors'
+import { validateUnknownCommandBySpec } from '../cli/runtime/commandErrors'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL COMMAND PARSER
@@ -52,6 +55,7 @@ const VALID_ACTIONS: Action[] = [
   'expose',
   'wait',
   'rollout',
+  'options',
   'config'
 ]
 
@@ -65,6 +69,7 @@ const FLAG_ALIASES: Record<string, string> = {
   A: 'all-namespaces',
   c: 'container', // Container name for logs/exec
   R: 'recursive',
+  k: 'kustomize',
   i: 'stdin',
   t: 'tty'
 }
@@ -84,6 +89,12 @@ const FLAGS_REQUIRING_VALUES = [
   'container',
   'namespaces',
   'output-directory',
+  'k',
+  'kustomize',
+  'field-selector',
+  'chunk-size',
+  'sort-by',
+  'subresource',
   'replicas',
   'image',
   'port',
@@ -125,6 +136,7 @@ const ACTIONS_WITHOUT_RESOURCE: Action[] = [
   'cluster-info',
   'api-versions',
   'api-resources',
+  'options',
   'diff',
   'replace',
   'set',
@@ -143,6 +155,16 @@ const ACTIONS_WITHOUT_RESOURCE: Action[] = [
  *           apply action-specific transform → parse flags → extract resource/name → validate
  */
 export const parseCommand = (input: string): Result<ParsedCommand> => {
+  const unknownCommandResult = validateUnknownCommandBySpec(input)
+  if (!unknownCommandResult.ok) {
+    return error(unknownCommandResult.error)
+  }
+
+  const unknownFlagsResult = validateUnknownFlagsBySpec(input)
+  if (!unknownFlagsResult.ok) {
+    return error(unknownFlagsResult.error)
+  }
+
   // Generic parsing pipeline (works for all commands)
   const genericPipeline = pipeResult<ParseContext>(
     trim,
@@ -198,7 +220,7 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     return error(parsedSelector.error)
   }
 
-  return success({
+  const parsedCommand: ParsedCommand = {
     action: ctx.action,
     configSubcommand: ctx.configSubcommand,
     resource: ctx.resource, // May be undefined for commands like 'version'
@@ -250,7 +272,14 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     deleteGracePeriodSeconds:
       getDeleteGracePeriodSecondsFromFlags(normalizedFlags),
     deleteForce: getDeleteForceFromFlags(normalizedFlags)
-  })
+  }
+
+  const supportResult = assertParsedCommandSupportedBySpec(input, parsedCommand)
+  if (!supportResult.ok) {
+    return error(supportResult.error)
+  }
+
+  return success(parsedCommand)
 }
 
 // ─── Pipeline Steps ──────────────────────────────────────────────────────

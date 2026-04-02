@@ -139,6 +139,57 @@ describe('KubectlCommandHandler', () => {
       expect(result.ok).toBe(true)
     })
 
+    it('should short-circuit help before parser validation', () => {
+      const result = handler.execute('kubectl get --help', context)
+      expect(result.ok).toBe(true)
+      const output = renderer.getOutput()
+      expect(output).toContain('Display one or many resources.')
+      expect(output).not.toContain('Invalid or missing resource type')
+    })
+
+    it('should render kubectl-like unknown shorthand error for get', () => {
+      const result = handler.execute('kubectl get -toto', context)
+      expect(result.ok).toBe(false)
+      const output = renderer.getOutput()
+      expect(output).toContain("error: unknown shorthand flag: 't' in -toto")
+      expect(output).toContain("See 'kubectl get --help' for usage.")
+    })
+
+    it('should render kubectl-like unknown shorthand error for describe', () => {
+      const result = handler.execute('kubectl describe -toto', context)
+      expect(result.ok).toBe(false)
+      const output = renderer.getOutput()
+      expect(output).toContain("error: unknown shorthand flag: 't' in -toto")
+      expect(output).toContain("See 'kubectl describe --help' for usage.")
+    })
+
+    it('should render kubectl-like unknown shorthand error for describe pod -ok', () => {
+      const result = handler.execute('kubectl describe pod -ok', context)
+      expect(result.ok).toBe(false)
+      const output = renderer.getOutput()
+      expect(output).toContain("error: unknown shorthand flag: 'o' in -ok")
+      expect(output).toContain("See 'kubectl describe --help' for usage.")
+    })
+
+    it('should render kubectl-like unknown command error', () => {
+      const result = handler.execute('kubectl coocococo', context)
+      expect(result.ok).toBe(false)
+      const output = renderer.getOutput()
+      expect(output).toContain('error: unknown command "coocococo" for "kubectl"')
+    })
+
+    it('should support kubectl options command', () => {
+      const result = handler.execute('kubectl options', context)
+      expect(result.ok).toBe(true)
+      const output = renderer.getOutput()
+      expect(output).toContain(
+        'The following options can be passed to any command:'
+      )
+      expect(output).toContain("-n, --namespace='':")
+      expect(output).toContain("-s, --server='':")
+      expect(output).toContain('--warnings-as-errors=false:')
+    })
+
     it('should open editor for kubectl edit and persist saved changes', () => {
       context.apiServer.createResource(
         'Pod',

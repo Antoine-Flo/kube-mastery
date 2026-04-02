@@ -6,53 +6,18 @@
 
 import { AutocompleteProvider } from '../../terminal/autocomplete/AutocompleteProvider'
 import { RESOURCE_ALIAS_MAP } from '../commands/resources'
+import { completeKubectlFromSpec } from '../cli/runtime/completion'
+import { KUBECTL_ROOT_COMMAND_SPEC } from '../cli/registry/root'
 import type {
   AutocompleteClusterState,
   AutocompleteContext,
   CompletionResult
 } from '../../terminal/autocomplete/types'
 
-// Actions kubectl
-const KUBECTL_ACTIONS = [
-  'get',
-  'diff',
-  'explain',
-  'describe',
-  'edit',
-  'set',
-  'delete',
-  'apply',
-  'replace',
-  'create',
-  'logs',
-  'exec',
-  'label',
-  'annotate',
-  'version',
-  'cluster-info',
-  'api-versions',
-  'api-resources',
-  'scale',
-  'patch',
-  'run',
-  'expose',
-  'rollout',
-  'config'
-] as const
-
-const KUBECTL_CONFIG_SUBCOMMANDS = [
-  'get-contexts',
-  'current-context',
-  'view',
-  'set-context'
-] as const
-
-const KUBECTL_ROLLOUT_SUBCOMMANDS = [
-  'status',
-  'history',
-  'restart',
-  'undo'
-] as const
+const KUBECTL_ROLLOUT_SUBCOMMANDS = ['status', 'history', 'restart', 'undo'] as const
+const KUBECTL_ACTIONS = KUBECTL_ROOT_COMMAND_SPEC.subcommands.map((command) => {
+  return command.path[command.path.length - 1]
+})
 
 const RESOURCE_GETTERS: Record<
   string,
@@ -180,6 +145,32 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
     }
 
     const action = tokens[1]
+    if ((action === 'logs' || action === 'exec') && tokens.length === 2) {
+      return getResourceNames('pods', currentToken, context)
+    }
+
+    const canUseStaticRegistryCompletion =
+      tokens.length > 2 || currentToken.startsWith('-')
+    if (canUseStaticRegistryCompletion) {
+      const staticLine = tokens.join(' ')
+      const staticSuggestions = completeKubectlFromSpec(staticLine).map(
+        (suggestion) => ({
+          text: suggestion.text,
+          suffix: suggestion.suffix
+        })
+      )
+      if (staticSuggestions.length > 0) {
+        const isResourceResolutionStep =
+          tokens.length >= 3 &&
+          tokens[0] === 'kubectl' &&
+          action !== 'logs' &&
+          action !== 'exec' &&
+          action !== 'run'
+        if (!isResourceResolutionStep) {
+          return staticSuggestions
+        }
+      }
+    }
 
     if (action === 'rollout') {
       if (tokens.length === 2) {
@@ -223,11 +214,6 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
     }
 
     if (action === 'config') {
-      if (tokens.length === 2) {
-        return filterMatches([...KUBECTL_CONFIG_SUBCOMMANDS], currentToken).map(
-          (subcommand) => ({ text: subcommand, suffix: ' ' })
-        )
-      }
       if (tokens[2] === 'set-context') {
         const setContextFlags = ['--current', '--namespace=']
         return filterMatches(setContextFlags, currentToken).map((flag) => ({

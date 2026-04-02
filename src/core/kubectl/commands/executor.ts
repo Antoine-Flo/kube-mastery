@@ -34,9 +34,11 @@ import { handleRun } from './handlers/run'
 import { handleRollout } from './handlers/rollout'
 import { handleVersion } from './handlers/version'
 import { handleWait } from './handlers/wait'
+import { handleOptions } from './handlers/options'
 import { resolveKubectlHelp } from './help'
 import { parseCommand } from './parser'
 import type { ParsedCommand } from './types'
+import { runKubectlCommandHooks } from '../cli/runtime/execute'
 
 // Action handler signature (dependencies captured in closure)
 type ActionHandler = (parsed: ParsedCommand) => ExecutionResult
@@ -150,6 +152,7 @@ const createHandlers = (
   handlers.set('rollout', (parsed) =>
     handleRollout(apiServer, parsed, reconcileForWait)
   )
+  handlers.set('options', (parsed) => success(handleOptions(parsed)))
   handlers.set('config-get-contexts', (parsed) =>
     handleConfig(fileSystem, parsed)
   )
@@ -230,6 +233,10 @@ export const createKubectlExecutor = (
       fs,
       parseResult.value
     )
+    const hookResult = runKubectlCommandHooks(input, parsedWithNamespace)
+    if (!hookResult.ok) {
+      return error(hookResult.error)
+    }
 
     return routeCommand(handlers, parsedWithNamespace, logger)
   }
