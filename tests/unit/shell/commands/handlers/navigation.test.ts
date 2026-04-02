@@ -192,6 +192,42 @@ describe('Navigation Handlers', () => {
       }
     })
 
+    it('should hide dot-prefixed entries by default', () => {
+      const fileSystem = createMockFileSystem({
+        listDirectory: () =>
+          success([
+            createDirectory('.kube', '/home/kube/.kube'),
+            createFileNode('visible.txt', '/home/kube/visible.txt')
+          ])
+      })
+      const handler = createLsHandler(fileSystem)
+      const result = handler.execute([], {})
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toContain('visible.txt')
+        expect(result.value).not.toContain('.kube')
+      }
+    })
+
+    it('should show dot-prefixed entries with -a flag', () => {
+      const fileSystem = createMockFileSystem({
+        listDirectory: () =>
+          success([
+            createDirectory('.kube', '/home/kube/.kube'),
+            createFileNode('visible.txt', '/home/kube/visible.txt')
+          ])
+      })
+      const handler = createLsHandler(fileSystem)
+      const result = handler.execute([], { a: true })
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toContain('visible.txt')
+        expect(result.value).toContain('.kube')
+      }
+    })
+
     it('should list specific directory', () => {
       const fileSystem = createMockFileSystem({
         listDirectory: (path?: string) => {

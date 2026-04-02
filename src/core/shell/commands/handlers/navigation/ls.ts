@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // LS COMMAND HANDLER
 // ═══════════════════════════════════════════════════════════════════════════
-// Lists directory contents with optional detailed view (-l flag).
+// Lists directory contents with optional detailed view (-l flag),
+// and hidden files support (-a / --all).
 
 import type { FileSystem } from '../../../../filesystem/FileSystem'
 import {
@@ -35,6 +36,8 @@ export const createLsHandler = (
         targetPaths.push(undefined)
       }
 
+      const includeHiddenEntries = flags.a === true || flags.all === true
+
       // List all specified paths (realistic shell behavior)
       const allEntries: FileEntry[] = []
       const allNames: string[] = []
@@ -47,10 +50,13 @@ export const createLsHandler = (
         }
 
         const nodes = result.value
+        const visibleNodes = includeHiddenEntries
+          ? nodes
+          : nodes.filter((node) => !node.name.startsWith('.'))
 
         if (flags.l) {
           // Detailed listing (-l flag)
-          const entries: FileEntry[] = nodes.map((node) => ({
+          const entries: FileEntry[] = visibleNodes.map((node) => ({
             type: node.type,
             name: node.name,
             size: node.type === 'file' ? node.content?.length || 0 : 512,
@@ -59,7 +65,7 @@ export const createLsHandler = (
           allEntries.push(...entries)
         } else {
           // Simple listing (just names)
-          const names = nodes.map((node) => node.name)
+          const names = visibleNodes.map((node) => node.name)
           allNames.push(...names)
         }
       }

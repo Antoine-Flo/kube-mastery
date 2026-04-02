@@ -29,18 +29,19 @@ Resetting (reload icon or page reload) discards any files you created in the ter
 
 ## Limitations
 
-Not every Kubernetes feature is available here. You can find the available features in the [supported features page](https://kubemastery.com/en/supported). When a lesson touches something unavailable, we'll say so explicitly. In some lessons you will run advanced commands that behave like on a real cluster; that does not mean the whole system behind them is implemented. If you use a slightly different command or flag, the output may differ from what you would see on a real Kubernetes cluster.
+Not every Kubernetes feature is available here. You can find the available features in the [supported features page](https://kubemastery.com/en/supported). When a lesson touches something unavailable, we'll say so explicitly. In some lessons you will run advanced commands that behave like on a real cluster; that does not mean the whole system behind them is implemented. If you use a different command or flag than the one in the lesson, the output may differ from what you would see on a real Kubernetes cluster.
 
 The goal here is to understand the concepts and practice the main commands. To explore commands further on your own machine, we recommend [kind](https://kind.sigs.k8s.io/) (Kubernetes in Docker). You can follow the course entirely with kind: the simulator outputs are aligned with kind, so what you see in the lessons will match what you get locally.
 
 ## Hands-On
 
-Let's try the filesystem. Run these commands one by one:
+Let's try the filesystem:
 
 ```bash
-touch test.txt
-ls
-nano test.txt
+touch test.txt  # create a file
+ls              # list the files
+ls -a           # list the hidden files
+nano test.txt   # edit the file
 ```
 
 Write anything in the editor, then save and exit with `Ctrl + S`. Finally, display the content:
