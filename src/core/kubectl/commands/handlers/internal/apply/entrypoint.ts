@@ -49,7 +49,10 @@ export const handleApply = (
       return error(`error: ${parseResult.error}`)
     }
     for (let j = 0; j < parseResult.value.length; j++) {
-      const applyResult = applyResourceWithEvents(parseResult.value[j], apiServer)
+      const applyResult = applyResourceWithEvents(
+        parseResult.value[j],
+        apiServer
+      )
       if (!applyResult.ok) {
         return applyResult
       }

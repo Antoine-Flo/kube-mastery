@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes ClusterIP, Stable Internal Access, Selectors"
-seoDescription: "Learn how Kubernetes ClusterIP Services provide a stable virtual IP and DNS name for internal service-to-service communication using label selectors."
+seoTitle: 'Kubernetes ClusterIP, Stable Internal Access, Selectors'
+seoDescription: 'Learn how Kubernetes ClusterIP Services provide a stable virtual IP and DNS name for internal service-to-service communication using label selectors.'
 ---
 
 # ClusterIP: Stable Internal Access

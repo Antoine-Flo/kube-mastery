@@ -763,7 +763,12 @@ const validateCommandSemantics = (
     return `${action} requires a resource name`
   }
   const canDescribeWithoutName = action === 'describe' && resource === 'nodes'
-  if (action === 'describe' && !name && !hasSelector && !canDescribeWithoutName) {
+  if (
+    action === 'describe' &&
+    !name &&
+    !hasSelector &&
+    !canDescribeWithoutName
+  ) {
     return 'describe requires a resource name'
   }
   if (action === 'run') {

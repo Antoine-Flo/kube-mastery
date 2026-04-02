@@ -2,7 +2,9 @@ import type { ExecutionResult } from '../../../../shared/result'
 import { error, success } from '../../../../shared/result'
 import type { ShellCommandHandler } from '../../core/ShellCommandHandler'
 
-const parseSleepSeconds = (rawValue: string): ExecutionResult & { seconds?: number } => {
+const parseSleepSeconds = (
+  rawValue: string
+): ExecutionResult & { seconds?: number } => {
   const normalized = rawValue.trim()
   if (normalized.length === 0) {
     return error('sleep: missing operand')

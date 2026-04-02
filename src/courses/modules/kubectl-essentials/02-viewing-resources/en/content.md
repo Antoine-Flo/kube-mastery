@@ -1,6 +1,6 @@
 ---
-seoTitle: "Viewing Kubernetes Resources, get, describe, api-resources"
-seoDescription: "Learn how to inspect Kubernetes resources using kubectl get, kubectl describe, and api-resources to debug cluster issues effectively."
+seoTitle: 'Viewing Kubernetes Resources, get, describe, api-resources'
+seoDescription: 'Learn how to inspect Kubernetes resources using kubectl get, kubectl describe, and api-resources to debug cluster issues effectively.'
 ---
 
 # Viewing Resources with kubectl

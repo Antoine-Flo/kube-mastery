@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Storage Classes and Dynamic Provisioning"
-seoDescription: "Explore how Kubernetes StorageClasses enable dynamic PersistentVolume provisioning on demand, eliminating the need for manual PV creation by admins."
+seoTitle: 'Kubernetes Storage Classes and Dynamic Provisioning'
+seoDescription: 'Explore how Kubernetes StorageClasses enable dynamic PersistentVolume provisioning on demand, eliminating the need for manual PV creation by admins.'
 ---
 
 # Storage Classes and Dynamic Provisioning
@@ -139,7 +139,7 @@ spec:
   containers:
     - name: app
       image: busybox:1.36
-      args: ["sleep", "3600"]
+      args: ['sleep', '3600']
       volumeMounts:
         - name: storage
           mountPath: /data

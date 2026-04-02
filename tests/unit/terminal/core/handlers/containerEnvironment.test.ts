@@ -64,7 +64,9 @@ describe('containerEnvironment', () => {
     expect(result.value).toContain('HOME=/root')
     expect(result.value).toContain('HOSTNAME=web')
     expect(result.value).toContain('PLAIN=hello')
-    expect(result.value).toContain('FROM_CM=<from configMap app-config:LOG_LEVEL>')
+    expect(result.value).toContain(
+      'FROM_CM=<from configMap app-config:LOG_LEVEL>'
+    )
     expect(result.value).toContain(
       'FROM_SECRET=<from secret db-secret:password>'
     )

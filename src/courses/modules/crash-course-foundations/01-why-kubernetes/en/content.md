@@ -1,6 +1,6 @@
 ---
-seoTitle: "Why Kubernetes? Self-Healing, Scheduling, Reconciliation"
-seoDescription: "Learn how Kubernetes solves container orchestration at scale through reconciliation, self-healing, and automated scheduling across a cluster."
+seoTitle: 'Why Kubernetes? Self-Healing, Scheduling, Reconciliation'
+seoDescription: 'Learn how Kubernetes solves container orchestration at scale through reconciliation, self-healing, and automated scheduling across a cluster.'
 ---
 
 # Why Kubernetes?

@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes ConfigMap and Secret Volumes, File Injection"
-seoDescription: "Learn how to mount ConfigMaps and Secrets as files in Kubernetes Pods, enabling file-based configuration and automatic live updates when values change."
+seoTitle: 'Kubernetes ConfigMap and Secret Volumes, File Injection'
+seoDescription: 'Learn how to mount ConfigMaps and Secrets as files in Kubernetes Pods, enabling file-based configuration and automatic live updates when values change.'
 ---
 
 # ConfigMap and Secret Volumes
@@ -150,7 +150,7 @@ spec:
   containers:
     - name: app
       image: busybox:1.36
-      args: ["sleep", "3600"]
+      args: ['sleep', '3600']
       volumeMounts:
         - name: creds
           mountPath: /credentials

@@ -66,6 +66,7 @@
   "auth_email": "Email",
   "auth_continueWithGitHub": "Continuer avec GitHub",
   "auth_continueWithGitLab": "Continuer avec GitLab",
+  "auth_continueWithGoogle": "Continuer avec Google",
   "auth_continueWithMail": "Continuer avec l'email",
   "auth_or": "ou",
   "auth_back": "Retour",

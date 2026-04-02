@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Probes and Resource Limits, Liveness, Readiness"
-seoDescription: "Explore Kubernetes liveness, readiness, and startup probes alongside resource requests and limits to keep containers healthy and prevent noisy neighbors."
+seoTitle: 'Kubernetes Probes and Resource Limits, Liveness, Readiness'
+seoDescription: 'Explore Kubernetes liveness, readiness, and startup probes alongside resource requests and limits to keep containers healthy and prevent noisy neighbors.'
 ---
 
 # Probes and Resource Limits

@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { createDebianFileSystem } from '../../../../src/core/filesystem/debianFileSystem'
 import { createFileSystem } from '../../../../src/core/filesystem/FileSystem'
-import type { Container, Volume } from '../../../../src/core/cluster/ressources/Pod'
+import type {
+  Container,
+  Volume
+} from '../../../../src/core/cluster/ressources/Pod'
 import {
   applyVolumeMountBindingsToFileSystem,
   createEmptyDirProvider,
@@ -72,7 +75,10 @@ describe('PodVolumeRuntimeManager', () => {
     const consumerFileSystem = createFileSystem(consumerRoot, undefined, {
       mutable: true
     })
-    const createFileResult = producerFileSystem.createFile('/shared/message.txt', '')
+    const createFileResult = producerFileSystem.createFile(
+      '/shared/message.txt',
+      ''
+    )
     expect(createFileResult.ok).toBe(true)
     expect(consumerFileSystem.readFile('/shared/message.txt').ok).toBe(true)
   })

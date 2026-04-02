@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Ingress TLS, Secrets, HTTPS Redirect, cert-manager"
-seoDescription: "Learn how to configure TLS termination on a Kubernetes Ingress using TLS Secrets, enable HTTP-to-HTTPS redirects, and automate renewals with cert-manager."
+seoTitle: 'Kubernetes Ingress TLS, Secrets, HTTPS Redirect, cert-manager'
+seoDescription: 'Learn how to configure TLS termination on a Kubernetes Ingress using TLS Secrets, enable HTTP-to-HTTPS redirects, and automate renewals with cert-manager.'
 ---
 
 # TLS Termination with Ingress

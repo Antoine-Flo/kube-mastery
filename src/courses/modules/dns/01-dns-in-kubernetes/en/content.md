@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes DNS, CoreDNS, Search Domains, Resolution Flow"
-seoDescription: "Understand how Kubernetes DNS works with CoreDNS, how Pods are configured via /etc/resolv.conf, and how search domains enable short-name service resolution."
+seoTitle: 'Kubernetes DNS, CoreDNS, Search Domains, Resolution Flow'
+seoDescription: 'Understand how Kubernetes DNS works with CoreDNS, how Pods are configured via /etc/resolv.conf, and how search domains enable short-name service resolution.'
 ---
 
 # DNS in Kubernetes

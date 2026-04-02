@@ -1,11 +1,15 @@
 import { expect } from 'vitest'
 
-type ResultLike<T, E = string> = { ok: true; value: T } | { ok: false; error: E }
+type ResultLike<T, E = string> =
+  | { ok: true; value: T }
+  | { ok: false; error: E }
 
 export const expectOk = <T, E = string>(result: ResultLike<T, E>): T => {
   expect(result.ok).toBe(true)
   if (!result.ok) {
-    throw new Error(`Expected ok result, received error: ${String(result.error)}`)
+    throw new Error(
+      `Expected ok result, received error: ${String(result.error)}`
+    )
   }
   return result.value
 }

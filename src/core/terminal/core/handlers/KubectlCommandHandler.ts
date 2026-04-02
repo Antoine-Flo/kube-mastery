@@ -321,7 +321,8 @@ const executeProcessCommandDirective = (
   if (isNginxStop && !containerSpec.image.includes('nginx')) {
     return error('nginx: command not found')
   }
-  const currentContainerEntry = pod._simulator.containers[directive.containerName]
+  const currentContainerEntry =
+    pod._simulator.containers[directive.containerName]
   if (currentContainerEntry == null) {
     return error(
       `Error: container ${directive.containerName} not found in pod ${directive.podName}`

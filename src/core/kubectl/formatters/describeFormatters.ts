@@ -1266,10 +1266,7 @@ const getPodControlledBy = (
   return undefined
 }
 
-const formatProbeInline = (
-  title: string,
-  probe: Probe
-): string => {
+const formatProbeInline = (title: string, probe: Probe): string => {
   const titleLabel = `${title}:`.padEnd(14)
   if (probe.type === 'httpGet') {
     const delay = probe.initialDelaySeconds ?? 0
@@ -2126,7 +2123,10 @@ export const describePersistentVolumeClaim = (
       6,
       ...summarizedEvents.map((event) => event.reason.length)
     )
-    const ageWidth = Math.max(4, ...summarizedEvents.map((event) => event.age.length))
+    const ageWidth = Math.max(
+      4,
+      ...summarizedEvents.map((event) => event.age.length)
+    )
     const sourceWidth = Math.max(
       4,
       ...summarizedEvents.map((event) => event.source.length)
@@ -2139,12 +2139,7 @@ export const describePersistentVolumeClaim = (
     const header = `  ${'Type'.padEnd(typeWidth)}  ${'Reason'.padEnd(reasonWidth)}  ${'Age'.padEnd(ageWidth)}  ${'From'.padEnd(sourceWidth)}  Message`
     const separator = `  ${'-'.repeat(typeWidth)}  ${'-'.repeat(reasonWidth)}  ${'-'.repeat(ageWidth)}  ${'-'.repeat(sourceWidth)}  -------`
 
-    return [
-      'Events:',
-      header,
-      separator,
-      ...rows
-    ].join('\n')
+    return ['Events:', header, separator, ...rows].join('\n')
   }
 
   const lines: string[] = []
@@ -2154,9 +2149,7 @@ export const describePersistentVolumeClaim = (
     `StorageClass:  ${persistentVolumeClaim.spec.storageClassName ?? '<none>'}`
   )
   lines.push(`Status:        ${persistentVolumeClaim.status.phase}`)
-  lines.push(
-    `Volume:        ${persistentVolumeClaim.spec.volumeName ?? ''}`
-  )
+  lines.push(`Volume:        ${persistentVolumeClaim.spec.volumeName ?? ''}`)
   lines.push(
     `Labels:        ${formatLabels(persistentVolumeClaim.metadata.labels)}`
   )

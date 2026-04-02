@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Spec vs Status, Reconciliation, Self-Healing"
-seoDescription: "Explore how Kubernetes separates desired state in spec from current state in status, and how the reconciliation loop drives self-healing across controllers."
+seoTitle: 'Kubernetes Spec vs Status, Reconciliation, Self-Healing'
+seoDescription: 'Explore how Kubernetes separates desired state in spec from current state in status, and how the reconciliation loop drives self-healing across controllers.'
 ---
 
 # Spec and Status: Desired State vs. Current State

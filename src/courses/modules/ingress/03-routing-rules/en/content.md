@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Ingress Routing, Host Rules, Path Types, Fallback"
-seoDescription: "Learn to configure Kubernetes Ingress routing rules with host-based routing, Prefix and Exact path types, and a default backend for unmatched requests."
+seoTitle: 'Kubernetes Ingress Routing, Host Rules, Path Types, Fallback'
+seoDescription: 'Learn to configure Kubernetes Ingress routing rules with host-based routing, Prefix and Exact path types, and a default backend for unmatched requests.'
 ---
 
 # Routing Rules: Host-Based and Path-Based

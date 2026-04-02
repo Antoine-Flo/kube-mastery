@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes emptyDir Volumes, Sidecar, tmpfs, Restart"
-seoDescription: "Explore emptyDir volumes in Kubernetes for sharing data between sidecar containers, scratch space, and memory-backed tmpfs storage with size limits."
+seoTitle: 'Kubernetes emptyDir Volumes, Sidecar, tmpfs, Restart'
+seoDescription: 'Explore emptyDir volumes in Kubernetes for sharing data between sidecar containers, scratch space, and memory-backed tmpfs storage with size limits.'
 ---
 
 # emptyDir Volumes

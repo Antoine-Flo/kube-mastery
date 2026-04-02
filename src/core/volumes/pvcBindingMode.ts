@@ -5,7 +5,10 @@ const findStorageClassByName = (
   apiServer: ApiServerFacade,
   storageClassName: string
 ): StorageClass | undefined => {
-  const storageClassResult = apiServer.findResource('StorageClass', storageClassName)
+  const storageClassResult = apiServer.findResource(
+    'StorageClass',
+    storageClassName
+  )
   if (!storageClassResult.ok) {
     return undefined
   }

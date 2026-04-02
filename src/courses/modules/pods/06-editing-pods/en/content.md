@@ -1,6 +1,6 @@
 ---
-seoTitle: "Editing Kubernetes Pods, Immutability, replace, set image"
-seoDescription: "Understand Kubernetes Pod spec immutability, when kubectl edit fails, and how to update Pods using replace --force or kubectl set image."
+seoTitle: 'Editing Kubernetes Pods, Immutability, replace, set image'
+seoDescription: 'Understand Kubernetes Pod spec immutability, when kubectl edit fails, and how to update Pods using replace --force or kubectl set image.'
 ---
 
 # Editing and Modifying Pods

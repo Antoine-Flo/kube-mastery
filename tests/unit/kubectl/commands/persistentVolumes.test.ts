@@ -143,7 +143,9 @@ describe('kubectl PV/PVC support', () => {
     )
     expect(applyStorageClass.ok).toBe(true)
 
-    const applyPvc = executor.execute('kubectl apply -f /home/kube/dynamic-pvc.yaml')
+    const applyPvc = executor.execute(
+      'kubectl apply -f /home/kube/dynamic-pvc.yaml'
+    )
     expect(applyPvc.ok).toBe(true)
 
     const describePending = executor.execute('kubectl describe pvc dynamic-pvc')
@@ -152,7 +154,9 @@ describe('kubectl PV/PVC support', () => {
       expect(describePending.value).toContain('WaitForFirstConsumer')
     }
 
-    const applyPod = executor.execute('kubectl apply -f /home/kube/dynamic-pod.yaml')
+    const applyPod = executor.execute(
+      'kubectl apply -f /home/kube/dynamic-pod.yaml'
+    )
     expect(applyPod.ok).toBe(true)
 
     const describeBound = executor.execute('kubectl describe pvc dynamic-pvc')

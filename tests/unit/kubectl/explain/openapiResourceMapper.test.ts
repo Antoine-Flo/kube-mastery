@@ -28,14 +28,19 @@ describe('openapiResourceMapper', () => {
   })
 
   it('maps coordination apiVersion override to coordination schema', () => {
-    const result = mapResourceToOpenAPITarget('leases', 'coordination.k8s.io/v1')
+    const result = mapResourceToOpenAPITarget(
+      'leases',
+      'coordination.k8s.io/v1'
+    )
     expect(result.ok).toBe(true)
     if (!result.ok) {
       return
     }
     expect(result.value.group).toBe('coordination.k8s.io')
     expect(result.value.schemaName).toBe('io.k8s.api.coordination.v1.Lease')
-    expect(result.value.specFile).toBe('apis__coordination.k8s.io__v1_openapi.json')
+    expect(result.value.specFile).toBe(
+      'apis__coordination.k8s.io__v1_openapi.json'
+    )
   })
 
   it('returns unsupported resource error', () => {

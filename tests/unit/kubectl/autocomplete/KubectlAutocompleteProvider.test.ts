@@ -492,9 +492,9 @@ describe('KubectlAutocompleteProvider', () => {
   describe('edge cases / error scenarios', () => {
     describe('match() edge cases', () => {
       it('should not match when tokens[0] is undefined', () => {
-        expect(
-          provider.match([undefined as unknown as string], '', '')
-        ).toBe(false)
+        expect(provider.match([undefined as unknown as string], '', '')).toBe(
+          false
+        )
       })
 
       it('should not match when tokens is empty array', () => {

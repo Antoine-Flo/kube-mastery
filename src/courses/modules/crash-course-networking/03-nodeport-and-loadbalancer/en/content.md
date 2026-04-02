@@ -1,6 +1,6 @@
 ---
-seoTitle: "Expose Kubernetes Apps, NodePort, LoadBalancer, Ingress"
-seoDescription: "Explore how to expose Kubernetes applications externally using NodePort, LoadBalancer Services, and Ingress for HTTP routing and TLS termination."
+seoTitle: 'Expose Kubernetes Apps, NodePort, LoadBalancer, Ingress'
+seoDescription: 'Explore how to expose Kubernetes applications externally using NodePort, LoadBalancer Services, and Ingress for HTTP routing and TLS termination.'
 ---
 
 # NodePort and LoadBalancer: Exposing Apps Externally
@@ -84,7 +84,7 @@ graph TB
     LB --> NP
     NP --> CIP
     CIP --> PODS
-``` 
+```
 
 Every Service starts as a ClusterIP internally, whether or not you asked for it. Understanding which type to use comes down to who needs to reach the Service and what infrastructure is available.
 

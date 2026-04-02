@@ -6,7 +6,9 @@ describe('kubectl help resolver', () => {
     const output = resolveKubectlHelp('kubectl explain --help')
 
     expect(output).toBeDefined()
-    expect(output).toContain('Describe fields and structure of various resources.')
+    expect(output).toContain(
+      'Describe fields and structure of various resources.'
+    )
     expect(output).toContain('kubectl explain TYPE')
   })
 

@@ -1,6 +1,6 @@
 ---
-seoTitle: "Generate Kubernetes Manifests with --dry-run and kubectl"
-seoDescription: "Learn how to use kubectl --dry-run=client -o yaml to generate valid manifests for Pods, Deployments, and Services without creating cluster resources."
+seoTitle: 'Generate Kubernetes Manifests with --dry-run and kubectl'
+seoDescription: 'Learn how to use kubectl --dry-run=client -o yaml to generate valid manifests for Pods, Deployments, and Services without creating cluster resources.'
 ---
 
 # Generating Manifests from the CLI

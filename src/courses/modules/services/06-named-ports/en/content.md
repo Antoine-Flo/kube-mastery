@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Named Ports, Decouple Port Numbers in Manifests"
-seoDescription: "Learn how Kubernetes named ports decouple port numbers from manifests, allowing Services, probes, and policies to reference ports by name."
+seoTitle: 'Kubernetes Named Ports, Decouple Port Numbers in Manifests'
+seoDescription: 'Learn how Kubernetes named ports decouple port numbers from manifests, allowing Services, probes, and policies to reference ports by name.'
 ---
 
 # Named Ports

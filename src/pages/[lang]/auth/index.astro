@@ -1,6 +1,6 @@
 ---
 import Layout from '../../../layouts/Layout.astro'
-import { Github, Gitlab } from '@lucide/astro'
+import { Chrome, Github, Gitlab } from '@lucide/astro'
 
 import Button from '../../../components/ui/Button.astro'
 import { useTranslations, useLocalePath } from '../../../i18n/utils'
@@ -44,7 +44,8 @@ try {
 }
 
 // Strip query string so ?redirect=... variants share one canonical; keep crawlers off login.
-const authCanonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href
+const authCanonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url)
+  .href
 ---
 
 <Layout
@@ -76,6 +77,29 @@ const authCanonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).hr
           }
 
           <div id="auth-providers" class="auth__buttons">
+            <form
+              action="/api/auth/signin"
+              method="post"
+              class="auth__provider-form"
+              data-auth-action
+              data-astro-reload
+            >
+              <input type="hidden" name="provider" value="google" />
+              <input type="hidden" name="lang" value={lang} />
+              <input type="hidden" name="redirect" value={redirect} />
+              <Button
+                type="submit"
+                variant="outline"
+                size="lg"
+                class="auth__provider-button auth__provider-button--google"
+              >
+                <span class="auth__provider-btn-inner">
+                  <Chrome size={20} aria-hidden="true" />
+                  {t('auth_continueWithGoogle')}
+                </span>
+              </Button>
+            </form>
+
             <form
               action="/api/auth/signin"
               method="post"
@@ -365,6 +389,24 @@ const authCanonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).hr
       background-color: color-mix(
         in srgb,
         #fc6d26 18%,
+        var(--color-palette-gray-surface-bg)
+      );
+    }
+
+    .auth__provider-button--google {
+      border-color: color-mix(in srgb, #4285f4 35%, var(--color-border));
+      background-color: color-mix(
+        in srgb,
+        #4285f4 8%,
+        var(--color-palette-gray-surface-bg)
+      );
+    }
+
+    .auth__provider-button--google:hover {
+      border-color: color-mix(in srgb, #4285f4 60%, var(--color-border));
+      background-color: color-mix(
+        in srgb,
+        #4285f4 14%,
         var(--color-palette-gray-surface-bg)
       );
     }

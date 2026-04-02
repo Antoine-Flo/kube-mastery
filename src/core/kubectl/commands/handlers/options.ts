@@ -4,4 +4,3 @@ import { getOfficialHelpForCommandPath } from '../../cli/descriptions/officialHe
 export const handleOptions = (_parsed: ParsedCommand): string => {
   return getOfficialHelpForCommandPath(['options']) ?? ''
 }
-

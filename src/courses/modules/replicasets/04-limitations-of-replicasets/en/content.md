@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes ReplicaSet Limitations and Why Deployments Exist"
-seoDescription: "Learn why updating a Kubernetes ReplicaSet does not restart Pods and how Deployments solve rolling updates, rollback, and zero-downtime deploys."
+seoTitle: 'Kubernetes ReplicaSet Limitations and Why Deployments Exist'
+seoDescription: 'Learn why updating a Kubernetes ReplicaSet does not restart Pods and how Deployments solve rolling updates, rollback, and zero-downtime deploys.'
 ---
 
 # Limitations of ReplicaSets, Why Deployments Exist

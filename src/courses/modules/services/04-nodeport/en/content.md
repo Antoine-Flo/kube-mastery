@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes NodePort, External Access, Port Range, Node IPs"
-seoDescription: "Learn how Kubernetes NodePort Services expose your application outside the cluster, how to configure the port range, and when to use NodePort."
+seoTitle: 'Kubernetes NodePort, External Access, Port Range, Node IPs'
+seoDescription: 'Learn how Kubernetes NodePort Services expose your application outside the cluster, how to configure the port range, and when to use NodePort.'
 ---
 
 # NodePort , Exposing Services Outside the Cluster

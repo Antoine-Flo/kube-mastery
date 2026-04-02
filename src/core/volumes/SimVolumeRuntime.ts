@@ -24,9 +24,8 @@ export const initializeSimVolumeRuntime = (
   apiServer: ApiServerFacade
 ): SimVolumeRuntime => {
   const state = createVolumeState()
-  const volumeProvisioningController = createVolumeProvisioningController(
-    apiServer
-  )
+  const volumeProvisioningController =
+    createVolumeProvisioningController(apiServer)
   const volumeBindingController = createVolumeBindingController(
     apiServer,
     state

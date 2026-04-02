@@ -65,7 +65,9 @@ export class ShellCommandHandler implements CommandHandler {
     if (parseResult.value.command === 'sleep') {
       const parsedSleep = parseSleepDurationMs(parseResult.value.args)
       if (!parsedSleep.ok || parsedSleep.durationMs == null) {
-        const sleepError = parsedSleep.ok ? 'sleep: invalid duration' : parsedSleep.error
+        const sleepError = parsedSleep.ok
+          ? 'sleep: invalid duration'
+          : parsedSleep.error
         context.output.writeError(sleepError)
         return error(sleepError)
       }

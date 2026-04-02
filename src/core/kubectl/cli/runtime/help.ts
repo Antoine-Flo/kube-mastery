@@ -27,7 +27,9 @@ const extractCommandPathBeforeFlags = (tokens: readonly string[]): string[] => {
   return commandPath
 }
 
-export const resolveKubectlHelpFromSpec = (input: string): string | undefined => {
+export const resolveKubectlHelpFromSpec = (
+  input: string
+): string | undefined => {
   const tokens = tokenizeInput(input)
   if (tokens.length === 0 || tokens[0] !== 'kubectl') {
     return undefined

@@ -12,8 +12,12 @@ export const createPersistentVolumeBackingStore =
   (): PersistentVolumeBackingStore => {
     const byPersistentVolumeName = new Map<string, FileSystemState>()
 
-    const getOrCreate = (persistentVolume: PersistentVolume): FileSystemState => {
-      const existing = byPersistentVolumeName.get(persistentVolume.metadata.name)
+    const getOrCreate = (
+      persistentVolume: PersistentVolume
+    ): FileSystemState => {
+      const existing = byPersistentVolumeName.get(
+        persistentVolume.metadata.name
+      )
       if (existing != null) {
         return existing
       }

@@ -235,7 +235,10 @@ describe('ShellCommandHandler', () => {
         ...context,
         networkRuntime: undefined as unknown as CommandContext['networkRuntime']
       }
-      const result = handler.execute('curl svc.default.svc.cluster.local', contextWithoutNetwork)
+      const result = handler.execute(
+        'curl svc.default.svc.cluster.local',
+        contextWithoutNetwork
+      )
       expect(result.ok).toBe(false)
       if (result.ok) {
         return

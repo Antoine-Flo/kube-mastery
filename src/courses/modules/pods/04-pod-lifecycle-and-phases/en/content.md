@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Pod Phases, Container States, and Conditions"
-seoDescription: "Understand Kubernetes Pod phases from Pending to Succeeded, container states like CrashLoopBackOff, and readiness conditions that control traffic."
+seoTitle: 'Kubernetes Pod Phases, Container States, and Conditions'
+seoDescription: 'Understand Kubernetes Pod phases from Pending to Succeeded, container states like CrashLoopBackOff, and readiness conditions that control traffic.'
 ---
 
 # Pod Lifecycle and Phases

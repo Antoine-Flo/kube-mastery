@@ -1,6 +1,6 @@
 ---
-seoTitle: "Your First Kubernetes Pod, Manifests, Resources, Lifecycle"
-seoDescription: "Learn how to write a Kubernetes Pod manifest with containers, resource requests and limits, and understand the Pod lifecycle from creation to running."
+seoTitle: 'Your First Kubernetes Pod, Manifests, Resources, Lifecycle'
+seoDescription: 'Learn how to write a Kubernetes Pod manifest with containers, resource requests and limits, and understand the Pod lifecycle from creation to running.'
 ---
 
 # Your First Pod

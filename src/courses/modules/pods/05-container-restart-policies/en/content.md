@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Pod Restart Policies and CrashLoopBackOff"
-seoDescription: "Learn how Kubernetes restartPolicy controls container recovery, when to use Always, OnFailure, or Never, and how to debug CrashLoopBackOff."
+seoTitle: 'Kubernetes Pod Restart Policies and CrashLoopBackOff'
+seoDescription: 'Learn how Kubernetes restartPolicy controls container recovery, when to use Always, OnFailure, or Never, and how to debug CrashLoopBackOff.'
 ---
 
 # Container Restart Policies

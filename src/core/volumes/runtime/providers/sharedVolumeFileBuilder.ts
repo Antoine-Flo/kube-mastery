@@ -1,14 +1,15 @@
 import type { FileSystemState } from '../../../filesystem/FileSystem'
-import { createDirectory, createFile, type DirectoryNode } from '../../../filesystem/models'
+import {
+  createDirectory,
+  createFile,
+  type DirectoryNode
+} from '../../../filesystem/models'
 
 const splitPath = (path: string): string[] => {
   return path.split('/').filter((segment) => segment.length > 0)
 }
 
-const ensureDirectory = (
-  root: DirectoryNode,
-  path: string
-): DirectoryNode => {
+const ensureDirectory = (root: DirectoryNode, path: string): DirectoryNode => {
   const parts = splitPath(path)
   let current = root
   let currentPath = ''

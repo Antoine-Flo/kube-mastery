@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Pods, Containers, Sidecars, Ephemeral Units"
-seoDescription: "Learn how Kubernetes Pods work as the smallest deployable unit, when to use multi-container sidecars, and why Pods are ephemeral by design."
+seoTitle: 'Kubernetes Pods, Containers, Sidecars, Ephemeral Units'
+seoDescription: 'Learn how Kubernetes Pods work as the smallest deployable unit, when to use multi-container sidecars, and why Pods are ephemeral by design.'
 ---
 
 # What Is a Pod?

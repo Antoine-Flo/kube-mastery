@@ -1,10 +1,7 @@
 import type { FileSystemState } from '../../../filesystem/FileSystem'
 import type { PersistentVolume } from '../../../cluster/ressources/PersistentVolume'
 import type { Volume } from '../../../cluster/ressources/Pod'
-import type {
-  VolumeRuntimeContext,
-  VolumeRuntimeProvider
-} from '../types'
+import type { VolumeRuntimeContext, VolumeRuntimeProvider } from '../types'
 import type { PersistentVolumeBackingStore } from '../PersistentVolumeBackingStore'
 import { createEmptyVolumeBacking } from './sharedVolumeFileBuilder'
 

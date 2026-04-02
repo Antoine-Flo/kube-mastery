@@ -74,7 +74,7 @@ const resolveProvisionerSource = (
     return `${storageClassName}-provisioner`
   }
   const provisionerNameSegment = provisioner.includes('/')
-    ? provisioner.split('/').at(-1) ?? provisioner
+    ? (provisioner.split('/').at(-1) ?? provisioner)
     : provisioner
   return `${provisioner}_${provisionerNameSegment}-provisioner`
 }
@@ -94,7 +94,10 @@ export const createPersistentVolumeClaimLifecycleEventStore = (
     persistentVolumeClaimName: string,
     event: PersistentVolumeClaimLifecycleDescribeEvent
   ): void => {
-    const key = buildPersistentVolumeClaimKey(namespace, persistentVolumeClaimName)
+    const key = buildPersistentVolumeClaimKey(
+      namespace,
+      persistentVolumeClaimName
+    )
     const previousEvents = persistentVolumeClaimEventHistory.get(key) ?? []
     persistentVolumeClaimEventHistory.set(
       key,
@@ -112,14 +115,17 @@ export const createPersistentVolumeClaimLifecycleEventStore = (
     if (!hasWaitForFirstConsumerMode(etcd, claim.spec.storageClassName)) {
       return
     }
-    appendPersistentVolumeClaimEvent(claim.metadata.namespace, claim.metadata.name, {
-      type: 'Normal',
-      reason: WAIT_FOR_FIRST_CONSUMER_REASON,
-      source: 'persistentvolume-controller',
-      message:
-        'waiting for first consumer to be created before binding',
-      timestamp: event.timestamp
-    })
+    appendPersistentVolumeClaimEvent(
+      claim.metadata.namespace,
+      claim.metadata.name,
+      {
+        type: 'Normal',
+        reason: WAIT_FOR_FIRST_CONSUMER_REASON,
+        source: 'persistentvolume-controller',
+        message: 'waiting for first consumer to be created before binding',
+        timestamp: event.timestamp
+      }
+    )
   }
 
   const appendProvisioningEventsIfNeeded = (
@@ -135,7 +141,10 @@ export const createPersistentVolumeClaimLifecycleEventStore = (
     ) {
       return
     }
-    const source = resolveProvisionerSource(etcd, currentClaim.spec.storageClassName)
+    const source = resolveProvisionerSource(
+      etcd,
+      currentClaim.spec.storageClassName
+    )
     appendPersistentVolumeClaimEvent(
       currentClaim.metadata.namespace,
       currentClaim.metadata.name,
@@ -217,7 +226,10 @@ export const createPersistentVolumeClaimLifecycleEventStore = (
         return []
       }
       refreshCacheIfNeeded()
-      const key = buildPersistentVolumeClaimKey(namespace, persistentVolumeClaimName)
+      const key = buildPersistentVolumeClaimKey(
+        namespace,
+        persistentVolumeClaimName
+      )
       return persistentVolumeClaimEventHistory.get(key) ?? []
     },
     stop: () => {

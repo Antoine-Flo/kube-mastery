@@ -34,18 +34,26 @@ describe('ConfigMap and Secret volume providers', () => {
       }
     }
 
-    const backings = manager.ensurePodVolumeBackings(volumes, {}, {
-      namespace: 'default',
-      findConfigMap: (name, namespace) => {
-        if (name === configMap.metadata.name && namespace === 'default') {
-          return configMap
+    const backings = manager.ensurePodVolumeBackings(
+      volumes,
+      {},
+      {
+        namespace: 'default',
+        findConfigMap: (name, namespace) => {
+          if (name === configMap.metadata.name && namespace === 'default') {
+            return configMap
+          }
+          return undefined
         }
-        return undefined
       }
-    })
-    const backingFileSystem = createFileSystem(backings['nginx-conf'], undefined, {
-      mutable: true
-    })
+    )
+    const backingFileSystem = createFileSystem(
+      backings['nginx-conf'],
+      undefined,
+      {
+        mutable: true
+      }
+    )
     expect(backingFileSystem.readFile('/default.conf').ok).toBe(true)
   })
 
@@ -76,15 +84,19 @@ describe('ConfigMap and Secret volume providers', () => {
       }
     }
 
-    const backings = manager.ensurePodVolumeBackings(volumes, {}, {
-      namespace: 'default',
-      findSecret: (name, namespace) => {
-        if (name === secret.metadata.name && namespace === 'default') {
-          return secret
+    const backings = manager.ensurePodVolumeBackings(
+      volumes,
+      {},
+      {
+        namespace: 'default',
+        findSecret: (name, namespace) => {
+          if (name === secret.metadata.name && namespace === 'default') {
+            return secret
+          }
+          return undefined
         }
-        return undefined
       }
-    })
+    )
     const backingFileSystem = createFileSystem(backings.creds, undefined, {
       mutable: true
     })

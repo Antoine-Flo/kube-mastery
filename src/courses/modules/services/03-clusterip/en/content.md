@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes ClusterIP Services, kube-proxy, DNS, Port Mapping"
-seoDescription: "Learn how Kubernetes ClusterIP Services work as the default type, how kube-proxy routes traffic via iptables, and how to access Services by DNS."
+seoTitle: 'Kubernetes ClusterIP Services, kube-proxy, DNS, Port Mapping'
+seoDescription: 'Learn how Kubernetes ClusterIP Services work as the default type, how kube-proxy routes traffic via iptables, and how to access Services by DNS.'
 ---
 
 # ClusterIP , The Default Service Type

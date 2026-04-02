@@ -686,10 +686,11 @@ export const createPod = (config: PodConfig): Pod => {
     config.volumes,
     {}
   )
-  const cleanedVolumeBackings = podVolumeRuntimeManager.cleanupPodVolumeBackings(
-    config.volumes,
-    volumeBackings
-  )
+  const cleanedVolumeBackings =
+    podVolumeRuntimeManager.cleanupPodVolumeBackings(
+      config.volumes,
+      volumeBackings
+    )
 
   // Create _simulator.containers with fileSystem and containerType
   const simulatorContainers: Pod['_simulator']['containers'] = {}

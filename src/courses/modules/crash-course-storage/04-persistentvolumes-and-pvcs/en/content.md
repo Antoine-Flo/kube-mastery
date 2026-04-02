@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes PersistentVolumes and PVCs, Binding, Access Modes"
-seoDescription: "Understand how Kubernetes PersistentVolumes and PVCs decouple durable storage from Pods, covering binding, access modes, and reclaim policies."
+seoTitle: 'Kubernetes PersistentVolumes and PVCs, Binding, Access Modes'
+seoDescription: 'Understand how Kubernetes PersistentVolumes and PVCs decouple durable storage from Pods, covering binding, access modes, and reclaim policies.'
 ---
 
 # PersistentVolumes and PVCs
@@ -142,7 +142,7 @@ spec:
   containers:
     - name: writer
       image: busybox:1.36
-      args: ["sleep", "3600"]
+      args: ['sleep', '3600']
       volumeMounts:
         - name: data
           mountPath: /data
@@ -180,7 +180,7 @@ spec:
   containers:
     - name: reader
       image: busybox:1.36
-      args: ["sleep", "3600"]
+      args: ['sleep', '3600']
       volumeMounts:
         - name: data
           mountPath: /data

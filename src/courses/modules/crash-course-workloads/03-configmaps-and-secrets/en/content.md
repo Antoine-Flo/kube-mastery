@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes ConfigMaps and Secrets, Injection, Best Practices"
-seoDescription: "Learn how to use Kubernetes ConfigMaps for non-sensitive configuration and Secrets for sensitive data, injecting values as environment variables or files."
+seoTitle: 'Kubernetes ConfigMaps and Secrets, Injection, Best Practices'
+seoDescription: 'Learn how to use Kubernetes ConfigMaps for non-sensitive configuration and Secrets for sensitive data, injecting values as environment variables or files.'
 ---
 
 # ConfigMaps and Secrets

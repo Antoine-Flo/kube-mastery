@@ -468,7 +468,9 @@ const showTerminalActions = terminalInteractive
   }
 
   function enhanceMermaidBlocks() {
-    const mermaidSvgs = document.querySelectorAll('.lesson-content .mermaid svg')
+    const mermaidSvgs = document.querySelectorAll(
+      '.lesson-content .mermaid svg'
+    )
     mermaidSvgs.forEach((mermaidSvg) => {
       if (!(mermaidSvg instanceof SVGElement)) {
         return

@@ -22,13 +22,16 @@ export const validateUnknownCommandBySpec = (input: string): Result<void> => {
   if (firstCommandToken == null || firstCommandToken.startsWith('-')) {
     return success(undefined)
   }
-  const topLevelMatch = KUBECTL_ROOT_COMMAND_SPEC.subcommands.find((subcommand) => {
-    return matchesCommandToken(subcommand, firstCommandToken)
-  })
+  const topLevelMatch = KUBECTL_ROOT_COMMAND_SPEC.subcommands.find(
+    (subcommand) => {
+      return matchesCommandToken(subcommand, firstCommandToken)
+    }
+  )
   if (topLevelMatch == null) {
     const parentCommandLabel = getParentCommandLabel(KUBECTL_ROOT_COMMAND_SPEC)
-    return error(`error: unknown command "${firstCommandToken}" for "${parentCommandLabel}"`)
+    return error(
+      `error: unknown command "${firstCommandToken}" for "${parentCommandLabel}"`
+    )
   }
   return success(undefined)
 }
-

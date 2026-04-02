@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Pod IPs Are Ephemeral, Services, Endpoints"
-seoDescription: "Understand why Kubernetes Pod IP addresses change on every restart and how Services use Endpoints to provide stable load-balanced access."
+seoTitle: 'Kubernetes Pod IPs Are Ephemeral, Services, Endpoints'
+seoDescription: 'Understand why Kubernetes Pod IP addresses change on every restart and how Services use Endpoints to provide stable load-balanced access.'
 ---
 
 # The Problem with Pod IPs

@@ -19,7 +19,10 @@ import { ShellCommandHandler } from '../../../../../src/core/terminal/core/handl
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createPersistentVolume } from '../../../../../src/core/cluster/ressources/PersistentVolume'
 import { createPersistentVolumeClaim } from '../../../../../src/core/cluster/ressources/PersistentVolumeClaim'
-import { createSecret, encodeBase64 } from '../../../../../src/core/cluster/ressources/Secret'
+import {
+  createSecret,
+  encodeBase64
+} from '../../../../../src/core/cluster/ressources/Secret'
 
 describe('KubectlCommandHandler', () => {
   let handler: KubectlCommandHandler
@@ -175,7 +178,9 @@ describe('KubectlCommandHandler', () => {
       const result = handler.execute('kubectl coocococo', context)
       expect(result.ok).toBe(false)
       const output = renderer.getOutput()
-      expect(output).toContain('error: unknown command "coocococo" for "kubectl"')
+      expect(output).toContain(
+        'error: unknown command "coocococo" for "kubectl"'
+      )
     })
 
     it('should support kubectl options command', () => {
@@ -1306,7 +1311,10 @@ describe('KubectlCommandHandler', () => {
     })
 
     it('should reject kubectl logs with previous and follow together', () => {
-      const result = handler.execute('kubectl logs --previous -f log-demo', context)
+      const result = handler.execute(
+        'kubectl logs --previous -f log-demo',
+        context
+      )
       expect(result.ok).toBe(false)
       expect(renderer.getOutput()).toContain(
         'error: only one of follow (-f) or previous (-p) is allowed'

@@ -73,7 +73,9 @@ describe('handleWait', () => {
         namespace: 'default',
         phase: 'Running',
         containers: [{ name: 'app', image: 'nginx' }],
-        containerStatusOverrides: [{ name: 'app', ready: true, restartCount: 0 }]
+        containerStatusOverrides: [
+          { name: 'app', ready: true, restartCount: 0 }
+        ]
       })
     )
     const result = handleWait(apiServer, createParsedCommand())
@@ -139,7 +141,9 @@ describe('handleWait', () => {
           namespace: 'default',
           phase: 'Running',
           containers: [{ name: 'app', image: 'nginx' }],
-          containerStatusOverrides: [{ name: 'app', ready: true, restartCount: 0 }]
+          containerStatusOverrides: [
+            { name: 'app', ready: true, restartCount: 0 }
+          ]
         }),
         'default'
       )

@@ -14,7 +14,12 @@ import type {
   CompletionResult
 } from '../../terminal/autocomplete/types'
 
-const KUBECTL_ROLLOUT_SUBCOMMANDS = ['status', 'history', 'restart', 'undo'] as const
+const KUBECTL_ROLLOUT_SUBCOMMANDS = [
+  'status',
+  'history',
+  'restart',
+  'undo'
+] as const
 const KUBECTL_ACTIONS = KUBECTL_ROOT_COMMAND_SPEC.subcommands.map((command) => {
   return command.path[command.path.length - 1]
 })

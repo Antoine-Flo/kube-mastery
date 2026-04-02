@@ -4,8 +4,7 @@ import { createLeafCommand } from './shared'
 
 const getCommand = createLeafCommand({
   path: ['get'],
-  use:
-    'get\n[(-o|--output=)json|yaml|kyaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-as-json|jsonpath-file|custom-columns|custom-columns-file|wide]\n(TYPE[.VERSION][.GROUP] [NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags] [options]',
+  use: 'get\n[(-o|--output=)json|yaml|kyaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-as-json|jsonpath-file|custom-columns|custom-columns-file|wide]\n(TYPE[.VERSION][.GROUP] [NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags] [options]',
   short: 'Display one or many resources',
   handlerId: 'get',
   flags: [
@@ -16,18 +15,32 @@ const getCommand = createLeafCommand({
       short: 'k',
       description: 'Process kustomization directory'
     },
-    { kind: 'bool', name: 'recursive', short: 'R', description: 'Recursive files' },
+    {
+      kind: 'bool',
+      name: 'recursive',
+      short: 'R',
+      description: 'Recursive files'
+    },
     { kind: 'string', name: 'selector', short: 'l', description: 'Selector' },
     {
       kind: 'string',
       name: 'field-selector',
       description: 'Field selector query'
     },
-    { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
     { kind: 'bool', name: 'no-headers', description: 'Hide headers' },
     { kind: 'bool', name: 'show-labels', description: 'Show labels column' },
     { kind: 'string', name: 'sort-by', description: 'Sort by field' },
-    { kind: 'string', name: 'subresource', description: 'Subresource to fetch' },
+    {
+      kind: 'string',
+      name: 'subresource',
+      description: 'Subresource to fetch'
+    },
     {
       kind: 'bool',
       name: 'allow-missing-template-keys',
@@ -35,7 +48,12 @@ const getCommand = createLeafCommand({
       defaultValue: 'true'
     },
     { kind: 'string', name: 'chunk-size', description: 'Chunk size for lists' },
-    { kind: 'bool', name: 'watch', short: 'w', description: 'Watch for changes' },
+    {
+      kind: 'bool',
+      name: 'watch',
+      short: 'w',
+      description: 'Watch for changes'
+    },
     { kind: 'bool', name: 'watch-only', description: 'Watch events only' },
     {
       kind: 'bool',
@@ -56,7 +74,9 @@ const describeCommand = createLeafCommand({
   use: 'describe TYPE NAME',
   short: 'Show details of a specific resource or group of resources',
   handlerId: 'describe',
-  flags: [{ kind: 'string', name: 'selector', short: 'l', description: 'Selector' }]
+  flags: [
+    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
+  ]
 })
 
 const deleteCommand = createLeafCommand({
@@ -95,7 +115,12 @@ const createDeploymentCommand = createLeafCommand({
     { kind: 'stringArray', name: 'image', description: 'Image name' },
     { kind: 'string', name: 'replicas', description: 'Replica count' },
     { kind: 'string', name: 'port', description: 'Port number' },
-    { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
     {
       kind: 'enum',
       name: 'dry-run',
@@ -117,6 +142,7 @@ const createCommand = command({
   .flags.stringArray('image', 'Image name')
   .flags.string('replicas', 'Replica count')
   .flags.string('port', 'Port number')
+  .flags.string('output', 'Output format', { short: 'o' })
   .flags.enum('dry-run', 'Must be none, server or client', [
     'none',
     'server',
@@ -131,7 +157,12 @@ const logsCommand = createLeafCommand({
   short: 'Print the logs for a container in a pod',
   handlerId: 'logs',
   flags: [
-    { kind: 'string', name: 'container', short: 'c', description: 'Container name' },
+    {
+      kind: 'string',
+      name: 'container',
+      short: 'c',
+      description: 'Container name'
+    },
     { kind: 'string', name: 'tail', description: 'Lines to show' },
     { kind: 'string', name: 'since', description: 'Relative duration' },
     { kind: 'bool', name: 'follow', short: 'f', description: 'Stream logs' },
@@ -145,8 +176,18 @@ const execCommand = createLeafCommand({
   short: 'Execute a command in a container',
   handlerId: 'exec',
   flags: [
-    { kind: 'string', name: 'container', short: 'c', description: 'Container name' },
-    { kind: 'bool', name: 'stdin', short: 'i', description: 'Pass stdin to container' },
+    {
+      kind: 'string',
+      name: 'container',
+      short: 'c',
+      description: 'Container name'
+    },
+    {
+      kind: 'bool',
+      name: 'stdin',
+      short: 'i',
+      description: 'Pass stdin to container'
+    },
     { kind: 'bool', name: 'tty', short: 't', description: 'Stdin is a TTY' }
   ]
 })
@@ -156,7 +197,9 @@ const labelCommand = createLeafCommand({
   use: 'label TYPE NAME KEY=VALUE [--overwrite]',
   short: 'Update the labels on a resource',
   handlerId: 'label',
-  flags: [{ kind: 'bool', name: 'overwrite', description: 'Overwrite existing value' }]
+  flags: [
+    { kind: 'bool', name: 'overwrite', description: 'Overwrite existing value' }
+  ]
 })
 
 const annotateCommand = createLeafCommand({
@@ -164,14 +207,20 @@ const annotateCommand = createLeafCommand({
   use: 'annotate TYPE NAME KEY=VALUE [--overwrite]',
   short: 'Update the annotations on a resource',
   handlerId: 'annotate',
-  flags: [{ kind: 'bool', name: 'overwrite', description: 'Overwrite existing value' }]
+  flags: [
+    { kind: 'bool', name: 'overwrite', description: 'Overwrite existing value' }
+  ]
 })
 
 const versionCommand = createLeafCommand({
   path: ['version'],
   use: 'version',
   short: 'Print the client and server version information',
-  handlerId: 'version'
+  handlerId: 'version',
+  flags: [
+    { kind: 'bool', name: 'client', description: 'Client version only' },
+    { kind: 'string', name: 'output', short: 'o', description: 'Output format' }
+  ]
 })
 
 const clusterInfoDumpCommand = createLeafCommand({
@@ -250,7 +299,12 @@ const explainCommand = createLeafCommand({
   short: 'Get documentation for a resource',
   handlerId: 'explain',
   flags: [
-    { kind: 'bool', name: 'recursive', short: 'R', description: 'Show all fields' },
+    {
+      kind: 'bool',
+      name: 'recursive',
+      short: 'R',
+      description: 'Show all fields'
+    },
     { kind: 'string', name: 'api-version', description: 'Version to use' }
   ]
 })
@@ -281,11 +335,10 @@ const patchCommand = createLeafCommand({
 const scaleCommand = createLeafCommand({
   path: ['scale'],
   use: 'scale (TYPE NAME | TYPE/NAME) --replicas=COUNT',
-  short: 'Set a new size for a deployment, replica set, or replication controller',
+  short:
+    'Set a new size for a deployment, replica set, or replication controller',
   handlerId: 'scale',
-  flags: [
-    { kind: 'string', name: 'replicas', description: 'Replica count' }
-  ]
+  flags: [{ kind: 'string', name: 'replicas', description: 'Replica count' }]
 })
 
 const exposeCommand = createLeafCommand({
@@ -297,7 +350,8 @@ const exposeCommand = createLeafCommand({
     { kind: 'string', name: 'port', description: 'Service port' },
     { kind: 'string', name: 'target-port', description: 'Target port' },
     { kind: 'string', name: 'type', description: 'Service type' },
-    { kind: 'string', name: 'name', description: 'Service name override' }
+    { kind: 'string', name: 'name', description: 'Service name override' },
+    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
   ]
 })
 
@@ -322,7 +376,12 @@ const runCommand = createLeafCommand({
     { kind: 'bool', name: 'command', description: 'Use command mode' },
     { kind: 'stringArray', name: 'env', description: 'Environment variables' },
     { kind: 'string', name: 'labels', description: 'Labels' },
-    { kind: 'string', name: 'output', short: 'o', description: 'Output format' },
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
     {
       kind: 'enum',
       name: 'dry-run',

@@ -36,7 +36,9 @@ const uniqueCompletion = (
   prefix: string,
   suffix: string
 ): KubectlCompletionSuggestion[] => {
-  const matches = candidates.filter((candidate) => matchesPrefix(candidate, prefix))
+  const matches = candidates.filter((candidate) =>
+    matchesPrefix(candidate, prefix)
+  )
   if (matches.length !== 1) {
     return []
   }
@@ -95,7 +97,10 @@ export const completeKubectlFromSpec = (
     return suggestSubcommands(KUBECTL_ROOT_COMMAND_SPEC, context.currentToken)
   }
 
-  const resolved = resolveKubectlCommand(KUBECTL_ROOT_COMMAND_SPEC, context.tokens)
+  const resolved = resolveKubectlCommand(
+    KUBECTL_ROOT_COMMAND_SPEC,
+    context.tokens
+  )
   if (resolved == null) {
     return []
   }

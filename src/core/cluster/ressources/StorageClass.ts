@@ -39,7 +39,9 @@ interface StorageClassConfig {
   creationTimestamp?: string
 }
 
-export const createStorageClass = (config: StorageClassConfig): StorageClass => {
+export const createStorageClass = (
+  config: StorageClassConfig
+): StorageClass => {
   const storageClass: StorageClass = {
     apiVersion: 'storage.k8s.io/v1',
     kind: 'StorageClass',
@@ -56,7 +58,9 @@ export const createStorageClass = (config: StorageClassConfig): StorageClass => 
     ...(config.spec.allowVolumeExpansion != null
       ? { allowVolumeExpansion: config.spec.allowVolumeExpansion }
       : {}),
-    ...(config.spec.parameters != null ? { parameters: config.spec.parameters } : {})
+    ...(config.spec.parameters != null
+      ? { parameters: config.spec.parameters }
+      : {})
   }
   return deepFreeze(storageClass)
 }
@@ -77,7 +81,9 @@ const StorageClassManifestSchema = z.object({
   parameters: z.record(z.string(), z.string()).optional()
 })
 
-export const parseStorageClassManifest = (data: unknown): Result<StorageClass> => {
+export const parseStorageClassManifest = (
+  data: unknown
+): Result<StorageClass> => {
   const result = StorageClassManifestSchema.safeParse(data)
   if (!result.success) {
     const firstError = result.error.issues[0]
@@ -97,7 +103,9 @@ export const parseStorageClassManifest = (data: unknown): Result<StorageClass> =
         allowVolumeExpansion: manifest.allowVolumeExpansion,
         parameters: manifest.parameters
       },
-      ...(manifest.metadata.labels != null ? { labels: manifest.metadata.labels } : {}),
+      ...(manifest.metadata.labels != null
+        ? { labels: manifest.metadata.labels }
+        : {}),
       ...(manifest.metadata.annotations != null
         ? { annotations: manifest.metadata.annotations }
         : {}),

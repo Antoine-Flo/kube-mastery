@@ -40,7 +40,11 @@ const isTrackedFile = (path) => {
   if (path.endsWith('.json')) {
     return false
   }
-  return path.includes('/src/') || path.includes('/bin/') || path.includes('/conformance/')
+  return (
+    path.includes('/src/') ||
+    path.includes('/bin/') ||
+    path.includes('/conformance/')
+  )
 }
 
 const toRelativePath = (absolutePath) => {

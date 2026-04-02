@@ -17,4 +17,3 @@ export const getOfficialHelpForCommandPath = (
   const key = normalizeSpaces(commandPathToKey(commandPath))
   return GENERATED_OFFICIAL_KUBECTL_HELP_CATALOG[key]
 }
-

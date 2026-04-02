@@ -11,6 +11,7 @@ export const KUBECTL_GLOBAL_FLAGS: readonly KubectlFlagSpec[] = [
     name: 'all-namespaces',
     short: 'A',
     kind: 'boolean',
-    description: 'If present, list the requested object(s) across all namespaces'
+    description:
+      'If present, list the requested object(s) across all namespaces'
   }
 ]

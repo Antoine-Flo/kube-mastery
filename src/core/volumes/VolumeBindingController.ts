@@ -46,7 +46,9 @@ export const createVolumeBindingController = (
 
   const reconcileVolumeClaims = (): void => {
     const persistentVolumes = [...apiServer.listResources('PersistentVolume')]
-    const persistentVolumeClaims = [...apiServer.listResources('PersistentVolumeClaim')]
+    const persistentVolumeClaims = [
+      ...apiServer.listResources('PersistentVolumeClaim')
+    ]
     const assignedVolumeNames = new Set<string>()
     const claimByKey = new Map<
       string,
@@ -70,7 +72,10 @@ export const createVolumeBindingController = (
         continue
       }
       if (persistentVolume.spec.persistentVolumeReclaimPolicy === 'Delete') {
-        apiServer.deleteResource('PersistentVolume', persistentVolume.metadata.name)
+        apiServer.deleteResource(
+          'PersistentVolume',
+          persistentVolume.metadata.name
+        )
         releasePersistentVolumeBacking(persistentVolume.metadata.name)
         continue
       }

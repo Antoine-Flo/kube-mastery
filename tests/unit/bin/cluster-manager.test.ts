@@ -116,28 +116,31 @@ describe('cluster-manager', () => {
 
   it('resetConformanceClusterState skips protected namespaces', () => {
     vi.mocked(execSync).mockImplementation((command) => {
-        const commandString = String(command)
-        if (commandString === 'kubectl get namespaces -o json') {
-          return JSON.stringify({
-            items: [
-              { metadata: { name: 'default' } },
-              { metadata: { name: 'kube-system' } },
-              { metadata: { name: 'feature-a' } }
-            ]
-          })
-        }
-        if (commandString.startsWith('kubectl get ') && commandString.includes('-o json')) {
-          return JSON.stringify({ items: [] })
-        }
-        return ''
-      })
+      const commandString = String(command)
+      if (commandString === 'kubectl get namespaces -o json') {
+        return JSON.stringify({
+          items: [
+            { metadata: { name: 'default' } },
+            { metadata: { name: 'kube-system' } },
+            { metadata: { name: 'feature-a' } }
+          ]
+        })
+      }
+      if (
+        commandString.startsWith('kubectl get ') &&
+        commandString.includes('-o json')
+      ) {
+        return JSON.stringify({ items: [] })
+      }
+      return ''
+    })
 
     const result = resetConformanceClusterState()
     expect(result.ok).toBe(true)
 
-    const calls = vi.mocked(execSync).mock.calls.map(([command]) =>
-      String(command)
-    )
+    const calls = vi
+      .mocked(execSync)
+      .mock.calls.map(([command]) => String(command))
     expect(
       calls.some((command) =>
         command.includes('kubectl delete namespace feature-a')

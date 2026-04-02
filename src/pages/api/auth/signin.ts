@@ -240,7 +240,7 @@ export const POST: APIRoute = async ({
   }
 
   const oauthProvider =
-    provider === 'github' || provider === 'gitlab'
+    provider === 'github' || provider === 'gitlab' || provider === 'google'
       ? (provider as Provider)
       : null
 

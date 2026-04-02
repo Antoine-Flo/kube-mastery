@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Imperative vs Declarative, kubectl apply, dry-run"
-seoDescription: "Learn how to choose between imperative kubectl commands and declarative YAML manifests, and use dry-run to scaffold configurations faster."
+seoTitle: 'Kubernetes Imperative vs Declarative, kubectl apply, dry-run'
+seoDescription: 'Learn how to choose between imperative kubectl commands and declarative YAML manifests, and use dry-run to scaffold configurations faster.'
 ---
 
 # Imperative vs Declarative

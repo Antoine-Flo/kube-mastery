@@ -704,9 +704,17 @@ spec:
       'service/backend-service created'
     ])
 
-    const deployment = apiServer.findResource('Deployment', 'backend', 'default')
+    const deployment = apiServer.findResource(
+      'Deployment',
+      'backend',
+      'default'
+    )
     expect(deployment.ok).toBe(true)
-    const service = apiServer.findResource('Service', 'backend-service', 'default')
+    const service = apiServer.findResource(
+      'Service',
+      'backend-service',
+      'default'
+    )
     expect(service.ok).toBe(true)
   })
 

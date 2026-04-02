@@ -20,7 +20,9 @@ const readJsonFile = (path) => {
 
 const listMatchingSummaryEntries = (summary, keyPrefix) => {
   return Object.entries(summary).filter(([entryKey]) => {
-    return entryKey.includes(`/${keyPrefix}/`) || entryKey.endsWith(`/${keyPrefix}`)
+    return (
+      entryKey.includes(`/${keyPrefix}/`) || entryKey.endsWith(`/${keyPrefix}`)
+    )
   })
 }
 

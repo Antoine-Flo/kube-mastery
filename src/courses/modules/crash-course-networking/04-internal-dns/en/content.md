@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Internal DNS, CoreDNS, Service Names, Lookups"
-seoDescription: "Understand how Kubernetes CoreDNS gives every Service a predictable DNS name, enabling pods to reach services by name without hardcoding IP addresses."
+seoTitle: 'Kubernetes Internal DNS, CoreDNS, Service Names, Lookups'
+seoDescription: 'Understand how Kubernetes CoreDNS gives every Service a predictable DNS name, enabling pods to reach services by name without hardcoding IP addresses.'
 ---
 
 # Internal DNS

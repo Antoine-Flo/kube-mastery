@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes emptyDir, Sidecar Pattern, Shared Scratch Space"
-seoDescription: "Explore emptyDir volumes for sharing temporary data between containers in the same Pod, covering the sidecar pattern and memory-backed storage."
+seoTitle: 'Kubernetes emptyDir, Sidecar Pattern, Shared Scratch Space'
+seoDescription: 'Explore emptyDir volumes for sharing temporary data between containers in the same Pod, covering the sidecar pattern and memory-backed storage.'
 ---
 
 # emptyDir: Shared Scratch Space
@@ -68,13 +68,13 @@ spec:
   containers:
     - name: producer
       image: busybox:1.36
-      args: ["sleep", "3600"]
+      args: ['sleep', '3600']
       volumeMounts:
         - name: shared
           mountPath: /shared
     - name: consumer
       image: busybox:1.36
-      args: ["sleep", "3600"]
+      args: ['sleep', '3600']
       volumeMounts:
         - name: shared
           mountPath: /shared

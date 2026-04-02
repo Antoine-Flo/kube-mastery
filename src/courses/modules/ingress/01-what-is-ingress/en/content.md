@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Ingress, Host Routing, Path Routing, TLS"
-seoDescription: "Learn what Kubernetes Ingress is, how it enables host-based and path-based routing with TLS termination, and why it replaces multiple LoadBalancer Services."
+seoTitle: 'Kubernetes Ingress, Host Routing, Path Routing, TLS'
+seoDescription: 'Learn what Kubernetes Ingress is, how it enables host-based and path-based routing with TLS termination, and why it replaces multiple LoadBalancer Services.'
 ---
 
 # What Is Ingress?

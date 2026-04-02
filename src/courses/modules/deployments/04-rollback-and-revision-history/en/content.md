@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Rollback, Revision History, Undo, Change-Cause"
-seoDescription: "Learn how to roll back a Kubernetes Deployment with kubectl rollout undo, inspect revision history, and annotate releases with human-readable change descriptions."
+seoTitle: 'Kubernetes Rollback, Revision History, Undo, Change-Cause'
+seoDescription: 'Learn how to roll back a Kubernetes Deployment with kubectl rollout undo, inspect revision history, and annotate releases with human-readable change descriptions.'
 ---
 
 # Rollback and Revision History

@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { createPersistentVolume } from '../../../../src/core/cluster/ressources/PersistentVolume'
 import { createPersistentVolumeClaim } from '../../../../src/core/cluster/ressources/PersistentVolumeClaim'
-import type { Container, Volume } from '../../../../src/core/cluster/ressources/Pod'
+import type {
+  Container,
+  Volume
+} from '../../../../src/core/cluster/ressources/Pod'
 import { createDebianFileSystem } from '../../../../src/core/filesystem/debianFileSystem'
 import { createFileSystem } from '../../../../src/core/filesystem/FileSystem'
 import {
@@ -41,21 +44,28 @@ describe('PersistentVolumeClaim volume provider', () => {
       }
     ]
 
-    const backings = manager.ensurePodVolumeBackings(volumes, {}, {
-      namespace: 'default',
-      findPersistentVolumeClaim: (name, namespace) => {
-        if (name === claim.metadata.name && namespace === claim.metadata.namespace) {
-          return claim
+    const backings = manager.ensurePodVolumeBackings(
+      volumes,
+      {},
+      {
+        namespace: 'default',
+        findPersistentVolumeClaim: (name, namespace) => {
+          if (
+            name === claim.metadata.name &&
+            namespace === claim.metadata.namespace
+          ) {
+            return claim
+          }
+          return undefined
+        },
+        findPersistentVolume: (name) => {
+          if (name === persistentVolume.metadata.name) {
+            return persistentVolume
+          }
+          return undefined
         }
-        return undefined
-      },
-      findPersistentVolume: (name) => {
-        if (name === persistentVolume.metadata.name) {
-          return persistentVolume
-        }
-        return undefined
       }
-    })
+    )
     const pvBacking = backingStore.get('pv-lab')
     expect(pvBacking).toBeDefined()
     expect(backings.data).toBe(pvBacking)
@@ -102,7 +112,10 @@ describe('PersistentVolumeClaim volume provider', () => {
     const context = {
       namespace: 'default',
       findPersistentVolumeClaim: (name: string, namespace: string) => {
-        if (name === claim.metadata.name && namespace === claim.metadata.namespace) {
+        if (
+          name === claim.metadata.name &&
+          namespace === claim.metadata.namespace
+        ) {
           return claim
         }
         return undefined
@@ -139,9 +152,16 @@ describe('PersistentVolumeClaim volume provider', () => {
     applyVolumeMountBindingsToFileSystem(writerRoot, writerBindings)
     applyVolumeMountBindingsToFileSystem(readerRoot, readerBindings)
 
-    const writerFileSystem = createFileSystem(writerRoot, undefined, { mutable: true })
-    const readerFileSystem = createFileSystem(readerRoot, undefined, { mutable: true })
-    const createResult = writerFileSystem.createFile('/data/record.txt', 'saved')
+    const writerFileSystem = createFileSystem(writerRoot, undefined, {
+      mutable: true
+    })
+    const readerFileSystem = createFileSystem(readerRoot, undefined, {
+      mutable: true
+    })
+    const createResult = writerFileSystem.createFile(
+      '/data/record.txt',
+      'saved'
+    )
     expect(createResult.ok).toBe(true)
     const readResult = readerFileSystem.readFile('/data/record.txt')
     expect(readResult.ok).toBe(true)

@@ -67,7 +67,9 @@ describe('Network DNS and Traffic', () => {
     })
     expect(clusterIpResult.ok).toBe(true)
     if (clusterIpResult.ok) {
-      expect(clusterIpResult.value).toContain('<title>Welcome to nginx!</title>')
+      expect(clusterIpResult.value).toContain(
+        '<title>Welcome to nginx!</title>'
+      )
     }
 
     const nodePortResult = traffic.simulateHttpGet('http://172.18.0.2:30080', {

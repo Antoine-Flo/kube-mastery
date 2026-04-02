@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Deployments, Hierarchy, Updates, Rollback"
-seoDescription: "Learn how Kubernetes Deployments manage ReplicaSets and Pods to enable declarative updates, rolling upgrades, and instant rollback for stateless workloads."
+seoTitle: 'Kubernetes Deployments, Hierarchy, Updates, Rollback'
+seoDescription: 'Learn how Kubernetes Deployments manage ReplicaSets and Pods to enable declarative updates, rolling upgrades, and instant rollback for stateless workloads.'
 ---
 
 # What is a Deployment?

@@ -46,7 +46,8 @@ const formatUnknownLongFlagError = (
   commandPath: readonly string[],
   flagToken: string
 ): string => {
-  const helpCommand = commandPath.length > 0 ? `kubectl ${commandPath.join(' ')}` : 'kubectl'
+  const helpCommand =
+    commandPath.length > 0 ? `kubectl ${commandPath.join(' ')}` : 'kubectl'
   return `error: unknown flag: ${flagToken}\nSee '${helpCommand} --help' for usage.`
 }
 
@@ -55,7 +56,8 @@ const formatUnknownShortFlagError = (
   shorthand: string,
   sourceToken: string
 ): string => {
-  const helpCommand = commandPath.length > 0 ? `kubectl ${commandPath.join(' ')}` : 'kubectl'
+  const helpCommand =
+    commandPath.length > 0 ? `kubectl ${commandPath.join(' ')}` : 'kubectl'
   return `error: unknown shorthand flag: '${shorthand}' in ${sourceToken}\nSee '${helpCommand} --help' for usage.`
 }
 
@@ -94,7 +96,9 @@ const detectUnknownFlags = (
       const shorthand = shorthandSequence[index]
       const matchedFlag = byShort.get(shorthand)
       if (matchedFlag == null) {
-        return error(formatUnknownShortFlagError(command.path, shorthand, token))
+        return error(
+          formatUnknownShortFlagError(command.path, shorthand, token)
+        )
       }
       const consumesValue = matchedFlag.kind !== 'boolean'
       if (consumesValue) {
@@ -113,15 +117,18 @@ export const validateUnknownFlagsBySpec = (input: string): Result<void> => {
   }
 
   const commandTokens = getCommandTokensBeforeFlags(tokens)
-  const resolved = resolveKubectlCommand(KUBECTL_ROOT_COMMAND_SPEC, commandTokens)
+  const resolved = resolveKubectlCommand(
+    KUBECTL_ROOT_COMMAND_SPEC,
+    commandTokens
+  )
   if (resolved == null || resolved.command.path.length === 0) {
     return success(undefined)
   }
-  const hasUnresolvedCommandTokens = resolved.consumedTokens < commandTokens.length
+  const hasUnresolvedCommandTokens =
+    resolved.consumedTokens < commandTokens.length
   if (hasUnresolvedCommandTokens && resolved.command.subcommands.length > 0) {
     return success(undefined)
   }
 
   return detectUnknownFlags(tokens.slice(1), resolved.command)
 }
-

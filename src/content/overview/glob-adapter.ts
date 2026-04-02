@@ -27,10 +27,9 @@ const contentRawGlob = import.meta.glob<string>(
     import: 'default'
   }
 )
-const contentAsMarkdownGlob = import.meta.glob<MarkdownInstance<LessonFrontmatter>>(
-  '../../courses/modules/**/content.md',
-  { eager: true }
-)
+const contentAsMarkdownGlob = import.meta.glob<
+  MarkdownInstance<LessonFrontmatter>
+>('../../courses/modules/**/content.md', { eager: true })
 const quizGlob = import.meta.glob<{ quiz?: Quiz }>(
   '../../courses/modules/**/quiz.ts',
   { eager: true }

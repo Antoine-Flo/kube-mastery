@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Volumes, Persistence, Lifecycle, Mount Patterns"
-seoDescription: "Learn why Kubernetes Volumes are needed to persist data across container restarts, and how to declare and mount volumes in a Pod spec."
+seoTitle: 'Kubernetes Volumes, Persistence, Lifecycle, Mount Patterns'
+seoDescription: 'Learn why Kubernetes Volumes are needed to persist data across container restarts, and how to declare and mount volumes in a Pod spec.'
 ---
 
 # Why Volumes?

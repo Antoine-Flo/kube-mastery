@@ -627,7 +627,11 @@ export const createApiServerFacade = (
     name: string,
     namespace: string
   ): ConfigMap | undefined => {
-    const configMapResult = clusterState.findByKind('ConfigMap', name, namespace)
+    const configMapResult = clusterState.findByKind(
+      'ConfigMap',
+      name,
+      namespace
+    )
     if (!configMapResult.ok) {
       return undefined
     }

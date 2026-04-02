@@ -1,6 +1,6 @@
 ---
-seoTitle: "Delete Kubernetes Resources, graceful termination, cascade"
-seoDescription: "Understand how Kubernetes handles graceful pod termination, cascade deletion, and force delete to safely clean up cluster resources."
+seoTitle: 'Delete Kubernetes Resources, graceful termination, cascade'
+seoDescription: 'Understand how Kubernetes handles graceful pod termination, cascade deletion, and force delete to safely clean up cluster resources.'
 ---
 
 # Deleting and Cleaning Up Resources

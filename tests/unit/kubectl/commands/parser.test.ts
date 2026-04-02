@@ -1562,7 +1562,9 @@ describe('kubectl parser - unknown flags', () => {
   })
 
   it('should return kubectl-like long flag error for unknown flag', () => {
-    const result = parseCommand('kubectl describe pod nginx-pod --totally-unknown')
+    const result = parseCommand(
+      'kubectl describe pod nginx-pod --totally-unknown'
+    )
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
@@ -1577,7 +1579,9 @@ describe('kubectl parser - unknown flags', () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toBe('error: unknown command "coocococo" for "kubectl"')
+      expect(result.error).toBe(
+        'error: unknown command "coocococo" for "kubectl"'
+      )
     }
   })
 

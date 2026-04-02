@@ -242,7 +242,9 @@ describe('InputHandler', () => {
       state.addToHistory('from-history')
       inputHandler.simulateInput('\x1b[A') // Arrow up
 
-      expect(context.replaceLineWithCommand).toHaveBeenCalledWith('from-history')
+      expect(context.replaceLineWithCommand).toHaveBeenCalledWith(
+        'from-history'
+      )
     })
 
     it('should handle empty string', () => {

@@ -98,7 +98,9 @@ const renderCatalogFile = (catalog: Record<string, string>): string => {
     return left.localeCompare(right)
   })
   const lines: string[] = []
-  lines.push('export const GENERATED_OFFICIAL_KUBECTL_HELP_CATALOG: Record<string, string> = {')
+  lines.push(
+    'export const GENERATED_OFFICIAL_KUBECTL_HELP_CATALOG: Record<string, string> = {'
+  )
   for (const [key, value] of sortedEntries) {
     lines.push(`  ${JSON.stringify(key)}: ${JSON.stringify(value)},`)
   }
@@ -123,12 +125,14 @@ const crawlHelpCatalog = (): Record<string, string> => {
     let helpText = ''
     try {
       helpText = getHelpOutput(commandTokens)
-      const isOptionsCommand = commandTokens.length === 1 && commandTokens[0] === 'options'
+      const isOptionsCommand =
+        commandTokens.length === 1 && commandTokens[0] === 'options'
       if (isOptionsCommand && helpText.trim().length === 0) {
         helpText = getCommandOutput(commandTokens)
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error)
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
       console.warn(`Skipping ${key}: ${errorMessage}`)
       continue
     }
@@ -147,11 +151,12 @@ const run = async (): Promise<void> => {
   const catalog = crawlHelpCatalog()
   const renderedCatalog = renderCatalogFile(catalog)
   await fs.writeFile(OUTPUT_PATH, renderedCatalog, 'utf-8')
-  console.log(`Generated kubectl help catalog with ${Object.keys(catalog).length} commands`)
+  console.log(
+    `Generated kubectl help catalog with ${Object.keys(catalog).length} commands`
+  )
 }
 
 run().catch((error: unknown) => {
   console.error(error)
   process.exit(1)
 })
-

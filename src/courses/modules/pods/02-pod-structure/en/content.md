@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Pod Structure, Manifest, Volumes, Init Containers"
-seoDescription: "Explore the anatomy of a Kubernetes Pod manifest, covering containers, env vars, resource limits, volumes, restartPolicy, and init containers."
+seoTitle: 'Kubernetes Pod Structure, Manifest, Volumes, Init Containers'
+seoDescription: 'Explore the anatomy of a Kubernetes Pod manifest, covering containers, env vars, resource limits, volumes, restartPolicy, and init containers.'
 ---
 
 # Pod Structure and Anatomy

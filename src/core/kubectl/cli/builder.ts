@@ -95,7 +95,9 @@ const appendFlag = (
   mutableSpec.flags.push(flag)
 }
 
-const buildCommandSpec = (mutableSpec: MutableCommandSpec): KubectlCommandSpec => {
+const buildCommandSpec = (
+  mutableSpec: MutableCommandSpec
+): KubectlCommandSpec => {
   return {
     path: Object.freeze([...mutableSpec.path]),
     use: mutableSpec.use,

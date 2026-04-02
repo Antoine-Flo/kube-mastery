@@ -150,13 +150,16 @@ const frontmatterSeoDescription = getOptionalString(
   lessonFrontmatter.seoDescription
 )
 const frontmatterOpenGraphImage = getOptionalString(lessonFrontmatter.ogImage)
-const frontmatterTwitterImage = getOptionalString(lessonFrontmatter.twitterImage)
+const frontmatterTwitterImage = getOptionalString(
+  lessonFrontmatter.twitterImage
+)
 const fallbackDescription =
   lang === 'fr'
     ? `Lecon ${currentLessonTitle} dans ${overview.title} sur KubeMastery, avec explications et pratique kubectl.`
     : `Learn ${currentLessonTitle} in ${overview.title} on KubeMastery with practical kubectl-focused guidance.`
 const lessonSeoTitle =
-  frontmatterSeoTitle ?? `${currentLessonTitle} | ${overview.title} | KubeMastery`
+  frontmatterSeoTitle ??
+  `${currentLessonTitle} | ${overview.title} | KubeMastery`
 const lessonSeoDescription =
   frontmatterSeoDescription ??
   overview.shortDescription ??

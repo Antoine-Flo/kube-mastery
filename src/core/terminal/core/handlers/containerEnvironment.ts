@@ -20,13 +20,18 @@ const decodeBase64Value = (encodedValue: string): string | undefined => {
       'Buffer' in globalThis &&
       typeof (globalThis as { Buffer?: unknown }).Buffer === 'function'
     ) {
-      const bufferCtor = (globalThis as {
-        Buffer?: {
-          from: (value: string, encoding: string) => {
-            toString: (encoding: string) => string
+      const bufferCtor = (
+        globalThis as {
+          Buffer?: {
+            from: (
+              value: string,
+              encoding: string
+            ) => {
+              toString: (encoding: string) => string
+            }
           }
         }
-      }).Buffer
+      ).Buffer
       if (bufferCtor != null) {
         return bufferCtor.from(encodedValue, 'base64').toString('utf-8')
       }

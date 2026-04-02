@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Deployments, ReplicaSets, Updates, Rollbacks"
-seoDescription: "Learn how Kubernetes Deployments manage Pod lifecycle using ReplicaSets, enabling zero-downtime rolling updates and instant rollbacks to previous versions."
+seoTitle: 'Kubernetes Deployments, ReplicaSets, Updates, Rollbacks'
+seoDescription: 'Learn how Kubernetes Deployments manage Pod lifecycle using ReplicaSets, enabling zero-downtime rolling updates and instant rollbacks to previous versions.'
 ---
 
 # Deployments

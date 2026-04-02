@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Rolling Updates, maxUnavailable, maxSurge, Pause"
-seoDescription: "Understand how Kubernetes rolling updates replace Pods gradually using maxUnavailable and maxSurge, and how to pause, resume, or recover from a failed rollout."
+seoTitle: 'Kubernetes Rolling Updates, maxUnavailable, maxSurge, Pause'
+seoDescription: 'Understand how Kubernetes rolling updates replace Pods gradually using maxUnavailable and maxSurge, and how to pause, resume, or recover from a failed rollout.'
 ---
 
 # Rolling Updates

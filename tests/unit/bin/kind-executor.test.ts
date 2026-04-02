@@ -10,7 +10,9 @@ describe('kind-executor', () => {
   })
 
   it('fails setup when ensureCluster fails', () => {
-    vi.spyOn(clusterManager, 'ensureCluster').mockReturnValue(error('cluster failed'))
+    vi.spyOn(clusterManager, 'ensureCluster').mockReturnValue(
+      error('cluster failed')
+    )
     const executor = createKindExecutor('demo')
     const result = executor.setup()
     expect(result.ok).toBe(false)
@@ -21,7 +23,9 @@ describe('kind-executor', () => {
   })
 
   it('fails setup when namespace switch fails', () => {
-    vi.spyOn(clusterManager, 'ensureCluster').mockReturnValue(success(undefined))
+    vi.spyOn(clusterManager, 'ensureCluster').mockReturnValue(
+      success(undefined)
+    )
     vi.spyOn(clusterManager, 'ensureCurrentContextNamespace').mockReturnValue(
       error('namespace failed')
     )
@@ -35,7 +39,9 @@ describe('kind-executor', () => {
   })
 
   it('fails setup when reset fails', () => {
-    vi.spyOn(clusterManager, 'ensureCluster').mockReturnValue(success(undefined))
+    vi.spyOn(clusterManager, 'ensureCluster').mockReturnValue(
+      success(undefined)
+    )
     vi.spyOn(clusterManager, 'ensureCurrentContextNamespace').mockReturnValue(
       success(undefined)
     )
@@ -53,8 +59,12 @@ describe('kind-executor', () => {
   })
 
   it('maps apply and delete errors to command execution results', () => {
-    vi.spyOn(clusterManager, 'applyYamlTarget').mockReturnValue(error('apply failed'))
-    vi.spyOn(clusterManager, 'deleteYamlTarget').mockReturnValue(error('delete failed'))
+    vi.spyOn(clusterManager, 'applyYamlTarget').mockReturnValue(
+      error('apply failed')
+    )
+    vi.spyOn(clusterManager, 'deleteYamlTarget').mockReturnValue(
+      error('delete failed')
+    )
     const executor = createKindExecutor('demo')
 
     const applyResult = executor.applyYaml({

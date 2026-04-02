@@ -138,7 +138,9 @@ export const createVolumeProvisioningController = (
     const persistentVolumes = [...apiServer.listResources('PersistentVolume')]
     const storageClasses = apiServer.listResources('StorageClass')
     const defaultStorageClass = resolveDefaultStorageClass(storageClasses)
-    const persistentVolumeClaims = apiServer.listResources('PersistentVolumeClaim')
+    const persistentVolumeClaims = apiServer.listResources(
+      'PersistentVolumeClaim'
+    )
     for (const unresolvedPersistentVolumeClaim of persistentVolumeClaims) {
       const persistentVolumeClaim = ensureClaimStorageClassName(
         apiServer,
@@ -185,10 +187,11 @@ export const createVolumeProvisioningController = (
       if (candidatePersistentVolume != null) {
         continue
       }
-      const dynamicPersistentVolume = createDynamicallyProvisionedPersistentVolume(
-        persistentVolumeClaim,
-        targetStorageClass
-      )
+      const dynamicPersistentVolume =
+        createDynamicallyProvisionedPersistentVolume(
+          persistentVolumeClaim,
+          targetStorageClass
+        )
       const existingDynamicVolume = apiServer.findResource(
         'PersistentVolume',
         dynamicPersistentVolume.metadata.name

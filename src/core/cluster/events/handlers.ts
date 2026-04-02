@@ -263,7 +263,10 @@ const persistentVolumeClaimHandler = createRepoHandler(
   'persistentVolumeClaims'
 )
 const storageClassRepo = createResourceRepository<StorageClass>('StorageClass')
-const storageClassHandler = createRepoHandler(storageClassRepo, 'storageClasses')
+const storageClassHandler = createRepoHandler(
+  storageClassRepo,
+  'storageClasses'
+)
 
 // ─── Pod Handlers ────────────────────────────────────────────────────────
 

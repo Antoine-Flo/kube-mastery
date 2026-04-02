@@ -16,7 +16,9 @@ const validateHandlerBinding = (
     return success(resolved)
   }
   if (resolved.command.handlerId == null) {
-    return error(`No handler bound for command path: ${resolved.command.path.join(' ')}`)
+    return error(
+      `No handler bound for command path: ${resolved.command.path.join(' ')}`
+    )
   }
   return success(resolved)
 }

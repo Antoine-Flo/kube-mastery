@@ -363,7 +363,9 @@ describe('CommandDispatcher', () => {
           containers: [{ name: 'app', image: 'nginx' }]
         })
       )
-      const streamResult = streamingDispatcher.execute('kubectl logs -f log-stream')
+      const streamResult = streamingDispatcher.execute(
+        'kubectl logs -f log-stream'
+      )
       expect(streamResult.ok).toBe(true)
       expect(streamingDispatcher.hasActiveStream()).toBe(true)
 

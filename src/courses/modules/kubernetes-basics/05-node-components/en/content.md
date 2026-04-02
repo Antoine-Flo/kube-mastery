@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Worker Node Components, kubelet, kube-proxy, CRI"
-seoDescription: "Explore the three components on every Kubernetes worker node, kubelet for pod management, kube-proxy for networking, and the container runtime."
+seoTitle: 'Kubernetes Worker Node Components, kubelet, kube-proxy, CRI'
+seoDescription: 'Explore the three components on every Kubernetes worker node, kubelet for pod management, kube-proxy for networking, and the container runtime.'
 ---
 
 # Worker Node Components

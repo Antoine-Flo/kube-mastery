@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Service DNS Records, FQDN, Headless, ExternalName"
-seoDescription: "Learn how Kubernetes creates DNS A records for Services, resolve names across namespaces, and understand headless Services and ExternalName CNAME records."
+seoTitle: 'Kubernetes Service DNS Records, FQDN, Headless, ExternalName'
+seoDescription: 'Learn how Kubernetes creates DNS A records for Services, resolve names across namespaces, and understand headless Services and ExternalName CNAME records.'
 ---
 
 # Service DNS Records

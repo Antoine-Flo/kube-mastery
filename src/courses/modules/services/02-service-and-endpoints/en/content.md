@@ -1,6 +1,6 @@
 ---
-seoTitle: "Kubernetes Endpoints, Headless Services, and EndpointSlices"
-seoDescription: "Explore how Kubernetes Endpoints track ready Pod IPs behind a Service, how readiness probes gate traffic, and when to use headless Services."
+seoTitle: 'Kubernetes Endpoints, Headless Services, and EndpointSlices'
+seoDescription: 'Explore how Kubernetes Endpoints track ready Pod IPs behind a Service, how readiness probes gate traffic, and when to use headless Services.'
 ---
 
 # Services and Endpoints
