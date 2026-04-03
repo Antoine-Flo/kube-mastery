@@ -4,7 +4,7 @@ import { createApiServerFacade } from '../../../src/core/api/ApiServerFacade'
 import { initializeControlPlane } from '../../../src/core/control-plane/initializers'
 import { CONFIG } from '../../../src/config'
 import { type ClusterNodeRole } from '../../../src/core/cluster/clusterConfig'
-import { parseKubernetesYaml } from '../../../src/core/kubectl/yamlParser'
+import { parseKubernetesYamlDocuments } from '../../../src/core/kubectl/yamlParser'
 import { createKubectlExecutor } from '../../../src/core/kubectl/commands/executor'
 import type { Pod } from '../../../src/core/cluster/ressources/Pod'
 import { createFileSystem } from '../../../src/core/filesystem/FileSystem'
@@ -35,11 +35,6 @@ export interface RunnerExecutor {
   deleteYaml: (action: DeleteYamlAction) => CommandExecutionResult
 }
 
-const splitYamlDocuments = (yamlContent: string): string[] => {
-  const documents = yamlContent.split(/^---\s*$/m)
-  return documents.filter((doc) => doc.trim().length > 0)
-}
-
 const resolveYamlFiles = (targetPath: string): string[] => {
   const stat = statSync(targetPath)
   if (stat.isDirectory()) {
@@ -55,15 +50,14 @@ const parseResourcesFromPath = (
   const resources: ParsedManifestResource[] = []
   for (const filePath of files) {
     const content = readFileSync(filePath, 'utf-8')
-    const documents = splitYamlDocuments(content)
-    for (const document of documents) {
-      const parsed = parseKubernetesYaml(document.trim())
-      if (!parsed.ok) {
-        continue
-      }
+    const parsed = parseKubernetesYamlDocuments(content)
+    if (!parsed.ok) {
+      continue
+    }
+    for (const resource of parsed.value) {
       resources.push({
-        kind: parsed.value.kind,
-        metadata: parsed.value.metadata
+        kind: resource.kind,
+        metadata: resource.metadata
       })
     }
   }
