@@ -393,9 +393,5 @@
   "src/courses/seeds/intro.ts": "2026-02-19",
   "src/courses/seeds/minimal.ts": "2026-02-19",
   "src/courses/seeds/README.md": "2026-02-19",
-  "src/courses/SEO_AUTHORING.md": "2026-03-31",
-  "src/blog/domain.ts": "2026-03-17",
-  "src/blog/facade.ts": "2026-03-17",
-  "src/blog/glob-adapter.ts": "2026-03-17",
-  "src/blog/types.ts": "2026-03-17"
+  "src/courses/SEO_AUTHORING.md": "2026-03-31"
 }

@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
-const SOURCE_ROOTS = ['src/pages', 'src/courses', 'src/blog']
+const SOURCE_ROOTS = ['src/pages', 'src/courses']
 const ALLOWED_EXTENSIONS = new Set(['.astro', '.md', '.ts'])
 const OUTPUT_FILE = 'src/generated/sitemap-lastmod.json'
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/

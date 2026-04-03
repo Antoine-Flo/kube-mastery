@@ -50,7 +50,7 @@ function toSourcePath(globPath: string): string {
 function collectStaticPublicPages(
   lang: string
 ): Array<{ pathname: string; sourcePaths: string[] }> {
-  return [
+  const pages: Array<{ pathname: string; sourcePaths: string[] }> = [
     { pathname: `/${lang}`, sourcePaths: ['src/pages/[lang]/index.astro'] },
     {
       pathname: `/${lang}/courses`,
@@ -59,10 +59,6 @@ function collectStaticPublicPages(
     {
       pathname: `/${lang}/modules`,
       sourcePaths: ['src/pages/[lang]/modules.astro']
-    },
-    {
-      pathname: `/${lang}/news`,
-      sourcePaths: ['src/pages/[lang]/news/index.astro', 'src/blog/news-feed.ts']
     },
     {
       pathname: `/${lang}/pricing`,
@@ -85,6 +81,7 @@ function collectStaticPublicPages(
       sourcePaths: ['src/pages/[lang]/privacy-policy.astro']
     }
   ]
+  return pages
 }
 
 function buildCourseMarkdownByLang(): Map<string, Map<string, string>> {
