@@ -28,17 +28,21 @@ const ensurePodIpIfRunning = (
     return
   }
   if (pod.status.podIP != null) {
-    allocator.reserve(pod)
+    const reservedPodIp = allocator.reserve(pod)
+    if (reservedPodIp == null) {
+      return
+    }
     if (
       pod.status.podIPs == null ||
       pod.status.podIPs.length === 0 ||
-      pod.status.podIPs[0]?.ip !== pod.status.podIP
+      pod.status.podIPs[0]?.ip !== reservedPodIp ||
+      pod.status.podIP !== reservedPodIp
     ) {
       emitEvent(
         createPodUpdatedEvent(
           pod.metadata.name,
           pod.metadata.namespace,
-          withAssignedPodIP(pod, pod.status.podIP),
+          withAssignedPodIP(pod, reservedPodIp),
           pod,
           source
         )

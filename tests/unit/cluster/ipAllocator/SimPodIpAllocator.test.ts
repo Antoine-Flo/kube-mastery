@@ -62,4 +62,31 @@ describe('SimPodIpAllocator', () => {
 
     expect(second).toBe(first)
   })
+
+  it('reassigns a unique IP when reserve conflicts with another pod', () => {
+    const allocator = createSimPodIpAllocator()
+    const podA = createPod({
+      name: 'pod-a',
+      namespace: 'default',
+      containers: [{ name: 'nginx', image: 'nginx:1.28' }],
+      phase: 'Running',
+      podIP: '10.244.50.50'
+    })
+    const podB = createPod({
+      name: 'pod-b',
+      namespace: 'default',
+      containers: [{ name: 'nginx', image: 'nginx:1.28' }],
+      phase: 'Running',
+      podIP: '10.244.50.50'
+    })
+
+    const reservedIpA = allocator.reserve(podA)
+    const reservedIpB = allocator.reserve(podB)
+
+    expect(reservedIpA).toBe('10.244.50.50')
+    expect(reservedIpB).toBeDefined()
+    expect(reservedIpB).not.toBe('10.244.50.50')
+    expect(allocator.assign(podA)).toBe('10.244.50.50')
+    expect(allocator.assign(podB)).toBe(reservedIpB)
+  })
 })

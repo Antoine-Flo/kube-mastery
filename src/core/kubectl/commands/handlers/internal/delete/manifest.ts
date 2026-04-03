@@ -3,7 +3,7 @@ import type { ApiServerFacade } from '../../../../../api/ApiServerFacade'
 import type { FileSystem } from '../../../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error, success } from '../../../../../shared/result'
-import { parseKubernetesYaml } from '../../../../yamlParser'
+import { parseKubernetesYamlDocuments } from '../../../../yamlParser'
 import { formatKubectlFileSystemError } from '../../../filesystemErrorPresenter'
 import {
   NO_OBJECTS_PASSED_TO_DELETE,
@@ -87,19 +87,21 @@ export const handleDeleteFromManifestFiles = (
   }
   const lines: string[] = []
   for (let i = 0; i < filesResult.value.length; i++) {
-    const parseResult = parseKubernetesYaml(filesResult.value[i])
+    const parseResult = parseKubernetesYamlDocuments(filesResult.value[i])
     if (!parseResult.ok) {
       return error(`error: ${parseResult.error}`)
     }
-    const deleteResult = deleteFromManifest(
-      apiServer,
-      parsed,
-      parseResult.value
-    )
-    if (!deleteResult.ok) {
-      return deleteResult
+    for (let j = 0; j < parseResult.value.length; j++) {
+      const deleteResult = deleteFromManifest(
+        apiServer,
+        parsed,
+        parseResult.value[j]
+      )
+      if (!deleteResult.ok) {
+        return deleteResult
+      }
+      lines.push(deleteResult.value)
     }
-    lines.push(deleteResult.value)
   }
   return success(lines.join('\n'))
 }

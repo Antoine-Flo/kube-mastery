@@ -27,12 +27,39 @@ const formatIp = (thirdOctet: number, fourthOctet: number): string => {
 export interface SimPodIpAllocator {
   assign: (pod: Pod) => string
   release: (pod: Pod) => void
-  reserve: (pod: Pod) => void
+  reserve: (pod: Pod) => string | undefined
 }
 
 export const createSimPodIpAllocator = (): SimPodIpAllocator => {
   const assignedByPodKey = new Map<string, string>()
-  const usedIps = new Set<string>()
+  const assignedPodKeyByIp = new Map<string, string>()
+
+  const findAvailableIpForPodKey = (key: string): string => {
+    const base = baseCandidateFromKey(key)
+    let thirdOctet = base.thirdOctet
+    let fourthOctet = base.fourthOctet
+    let candidate = formatIp(thirdOctet, fourthOctet)
+    let attempt = 0
+    while (assignedPodKeyByIp.has(candidate)) {
+      attempt = attempt + 1
+      thirdOctet = ((base.thirdOctet + attempt) % 240) + 10
+      fourthOctet = ((base.fourthOctet + attempt * 7) % 240) + 10
+      candidate = formatIp(thirdOctet, fourthOctet)
+    }
+    return candidate
+  }
+
+  const assignIpToKey = (key: string, ip: string): void => {
+    const previousIp = assignedByPodKey.get(key)
+    if (previousIp != null && previousIp !== ip) {
+      const previousOwner = assignedPodKeyByIp.get(previousIp)
+      if (previousOwner === key) {
+        assignedPodKeyByIp.delete(previousIp)
+      }
+    }
+    assignedByPodKey.set(key, ip)
+    assignedPodKeyByIp.set(ip, key)
+  }
 
   const assign = (pod: Pod): string => {
     const key = podKey(pod)
@@ -41,20 +68,8 @@ export const createSimPodIpAllocator = (): SimPodIpAllocator => {
       return existing
     }
 
-    const base = baseCandidateFromKey(key)
-    let thirdOctet = base.thirdOctet
-    let fourthOctet = base.fourthOctet
-    let candidate = formatIp(thirdOctet, fourthOctet)
-    let attempt = 0
-    while (usedIps.has(candidate)) {
-      attempt = attempt + 1
-      thirdOctet = ((base.thirdOctet + attempt) % 240) + 10
-      fourthOctet = ((base.fourthOctet + attempt * 7) % 240) + 10
-      candidate = formatIp(thirdOctet, fourthOctet)
-    }
-
-    usedIps.add(candidate)
-    assignedByPodKey.set(key, candidate)
+    const candidate = findAvailableIpForPodKey(key)
+    assignIpToKey(key, candidate)
     return candidate
   }
 
@@ -65,17 +80,26 @@ export const createSimPodIpAllocator = (): SimPodIpAllocator => {
       return
     }
     assignedByPodKey.delete(key)
-    usedIps.delete(ip)
+    const owner = assignedPodKeyByIp.get(ip)
+    if (owner === key) {
+      assignedPodKeyByIp.delete(ip)
+    }
   }
 
-  const reserve = (pod: Pod): void => {
+  const reserve = (pod: Pod): string | undefined => {
     const existingPodIp = pod.status.podIP
     if (existingPodIp == null) {
-      return
+      return undefined
     }
     const key = podKey(pod)
-    assignedByPodKey.set(key, existingPodIp)
-    usedIps.add(existingPodIp)
+    const owner = assignedPodKeyByIp.get(existingPodIp)
+    if (owner != null && owner !== key) {
+      const reassignedIp = findAvailableIpForPodKey(key)
+      assignIpToKey(key, reassignedIp)
+      return reassignedIp
+    }
+    assignIpToKey(key, existingPodIp)
+    return existingPodIp
   }
 
   return {

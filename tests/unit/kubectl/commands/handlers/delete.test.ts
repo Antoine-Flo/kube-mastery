@@ -161,6 +161,70 @@ spec:
       }
     })
 
+    it('should delete all resources from a multi document manifest file', () => {
+      apiServer.createResource(
+        'Pod',
+        createPod({
+          name: 'multi-del-pod',
+          namespace: 'default',
+          containers: [{ name: 'main', image: 'nginx:latest' }]
+        })
+      )
+      apiServer.createResource(
+        'Service',
+        createService({
+          name: 'multi-del-service',
+          namespace: 'default',
+          selector: { app: 'multi-del-pod' },
+          ports: [{ port: 80, targetPort: 80 }]
+        })
+      )
+
+      fileSystem.createFile('multi-delete.yaml')
+      fileSystem.writeFile(
+        'multi-delete.yaml',
+        `apiVersion: v1
+kind: Pod
+metadata:
+  name: multi-del-pod
+  namespace: default
+spec:
+  containers:
+    - name: main
+      image: nginx:latest
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: multi-del-service
+  namespace: default
+spec:
+  selector:
+    app: multi-del-pod
+  ports:
+    - port: 80
+      targetPort: 80
+`
+      )
+
+      const parsed = createParsedCommand({
+        flags: { f: 'multi-delete.yaml' }
+      })
+
+      const result = handleDelete(apiServer, parsed, fileSystem)
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+
+      expect(result.value.split('\n')).toEqual([
+        'pod "multi-del-pod" deleted from default namespace',
+        'service "multi-del-service" deleted from default namespace'
+      ])
+      expectPodMarkedTerminating('multi-del-pod')
+      expect(apiServer.findResource('Service', 'multi-del-service', 'default').ok).toBe(false)
+    })
+
     it('should delete resources from sorted manifests in a directory', () => {
       apiServer.createResource(
         'Pod',

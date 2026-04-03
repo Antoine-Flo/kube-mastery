@@ -117,6 +117,35 @@ describe('createReplicaSet', () => {
 })
 
 describe('parseReplicaSetManifest', () => {
+  const buildManifestWithExpression = (expression: {
+    key: string
+    operator: 'In' | 'NotIn' | 'Exists' | 'DoesNotExist'
+    values?: string[]
+  }) => {
+    return {
+      apiVersion: 'apps/v1',
+      kind: 'ReplicaSet',
+      metadata: {
+        name: 'test-rs'
+      },
+      spec: {
+        selector: {
+          matchExpressions: [expression]
+        },
+        template: {
+          metadata: {
+            labels: {
+              app: 'nginx'
+            }
+          },
+          spec: {
+            containers: [{ name: 'nginx', image: 'nginx' }]
+          }
+        }
+      }
+    }
+  }
+
   it('should parse valid minimal ReplicaSet manifest', () => {
     const manifest = {
       apiVersion: 'apps/v1',
@@ -234,6 +263,70 @@ describe('parseReplicaSetManifest', () => {
         '`selector` does not match template `labels`'
       )
     }
+  })
+
+  it('rejects In operator with missing values', () => {
+    const manifest = buildManifestWithExpression({
+      key: 'app',
+      operator: 'In'
+    })
+
+    const result = parseReplicaSetManifest(manifest)
+    expect(result.ok).toBe(false)
+  })
+
+  it('rejects In operator with empty values', () => {
+    const manifest = buildManifestWithExpression({
+      key: 'app',
+      operator: 'In',
+      values: []
+    })
+
+    const result = parseReplicaSetManifest(manifest)
+    expect(result.ok).toBe(false)
+  })
+
+  it('rejects NotIn operator with missing values', () => {
+    const manifest = buildManifestWithExpression({
+      key: 'app',
+      operator: 'NotIn'
+    })
+
+    const result = parseReplicaSetManifest(manifest)
+    expect(result.ok).toBe(false)
+  })
+
+  it('rejects Exists operator with non-empty values', () => {
+    const manifest = buildManifestWithExpression({
+      key: 'app',
+      operator: 'Exists',
+      values: ['nginx']
+    })
+
+    const result = parseReplicaSetManifest(manifest)
+    expect(result.ok).toBe(false)
+  })
+
+  it('rejects DoesNotExist operator with non-empty values', () => {
+    const manifest = buildManifestWithExpression({
+      key: 'app',
+      operator: 'DoesNotExist',
+      values: ['nginx']
+    })
+
+    const result = parseReplicaSetManifest(manifest)
+    expect(result.ok).toBe(false)
+  })
+
+  it('accepts Exists operator with empty values', () => {
+    const manifest = buildManifestWithExpression({
+      key: 'app',
+      operator: 'Exists',
+      values: []
+    })
+
+    const result = parseReplicaSetManifest(manifest)
+    expect(result.ok).toBe(true)
   })
 })
 
