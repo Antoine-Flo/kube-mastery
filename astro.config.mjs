@@ -7,8 +7,6 @@ import cloudflare from '@astrojs/cloudflare'
 
 import astroExpressiveCode from 'astro-expressive-code'
 
-import indexnow from 'astro-indexnow'
-
 export default defineConfig({
   site: 'https://kubemastery.com',
 
@@ -23,9 +21,6 @@ export default defineConfig({
     }),
     astroExpressiveCode({
       themes: ['one-dark-pro', 'one-light']
-    }),
-    indexnow({
-      key: '07487d75a5674a3fa5000bfe5ba20486'
     })
   ],
 

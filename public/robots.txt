@@ -8,3 +8,5 @@ Disallow: /en/tasks
 Disallow: /fr/tasks
 Disallow: /en/checkout/success
 Disallow: /fr/checkout/success
+
+Sitemap: https://kubemastery.com/sitemap.xml
