@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { createApiServerFacade } from '../../../src/core/api/ApiServerFacade'
+import { createPod } from '../../../src/core/cluster/ressources/Pod'
 import { createPersistentVolume } from '../../../src/core/cluster/ressources/PersistentVolume'
 import { createPersistentVolumeClaim } from '../../../src/core/cluster/ressources/PersistentVolumeClaim'
+import { createStorageClass } from '../../../src/core/cluster/ressources/StorageClass'
 import { createVolumeBindingController } from '../../../src/core/volumes/VolumeBindingController'
 import { createVolumeState } from '../../../src/core/volumes/VolumeState'
 import { getPersistentVolumeBackingStore } from '../../../src/core/volumes/runtime'
@@ -282,6 +284,183 @@ describe('VolumeBindingController', () => {
     const pvResult = apiServer.findResource('PersistentVolume', 'pv-delete')
     expect(pvResult.ok).toBe(false)
     expect(backingStore.get('pv-delete')).toBeUndefined()
+
+    controller.stop()
+  })
+
+  it('keeps a wait-for-first-consumer claim bound after consumer is gone', () => {
+    const apiServer = createApiServerFacade()
+    const volumeState = createVolumeState()
+    const controller = createVolumeBindingController(apiServer, volumeState)
+
+    apiServer.createResource(
+      'StorageClass',
+      createStorageClass({
+        name: 'wffc',
+        spec: {
+          provisioner: 'sim.kubemastery.io/hostpath',
+          reclaimPolicy: 'Delete',
+          volumeBindingMode: 'WaitForFirstConsumer'
+        }
+      })
+    )
+    apiServer.createResource(
+      'PersistentVolume',
+      createPersistentVolume({
+        name: 'pv-wffc',
+        spec: {
+          capacity: { storage: '1Gi' },
+          accessModes: ['ReadWriteOnce'],
+          storageClassName: 'wffc',
+          claimRef: {
+            namespace: 'default',
+            name: 'wffc-data'
+          }
+        },
+        status: {
+          phase: 'Bound'
+        }
+      })
+    )
+    apiServer.createResource(
+      'PersistentVolumeClaim',
+      createPersistentVolumeClaim({
+        name: 'wffc-data',
+        namespace: 'default',
+        spec: {
+          accessModes: ['ReadWriteOnce'],
+          resources: { requests: { storage: '1Gi' } },
+          storageClassName: 'wffc',
+          volumeName: 'pv-wffc'
+        },
+        status: {
+          phase: 'Bound'
+        }
+      })
+    )
+
+    controller.start()
+
+    const pvcResult = apiServer.findResource(
+      'PersistentVolumeClaim',
+      'wffc-data',
+      'default'
+    )
+    expect(pvcResult.ok).toBe(true)
+    if (!pvcResult.ok || pvcResult.value == null) {
+      controller.stop()
+      return
+    }
+    expect(pvcResult.value.status.phase).toBe('Bound')
+    expect(pvcResult.value.spec.volumeName).toBe('pv-wffc')
+
+    const pvResult = apiServer.findResource('PersistentVolume', 'pv-wffc')
+    expect(pvResult.ok).toBe(true)
+    if (!pvResult.ok || pvResult.value == null) {
+      controller.stop()
+      return
+    }
+    expect(pvResult.value.status.phase).toBe('Bound')
+    expect(pvResult.value.spec.claimRef).toEqual({
+      namespace: 'default',
+      name: 'wffc-data'
+    })
+    expect(volumeState.getBoundVolumeForClaim('default', 'wffc-data')).toBe(
+      'pv-wffc'
+    )
+
+    controller.stop()
+  })
+
+  it('binds wait-for-first-consumer claim only after consumer exists', () => {
+    const apiServer = createApiServerFacade()
+    const volumeState = createVolumeState()
+    const controller = createVolumeBindingController(apiServer, volumeState)
+
+    apiServer.createResource(
+      'StorageClass',
+      createStorageClass({
+        name: 'wffc',
+        spec: {
+          provisioner: 'sim.kubemastery.io/hostpath',
+          reclaimPolicy: 'Delete',
+          volumeBindingMode: 'WaitForFirstConsumer'
+        }
+      })
+    )
+    apiServer.createResource(
+      'PersistentVolume',
+      createPersistentVolume({
+        name: 'pv-wffc',
+        spec: {
+          capacity: { storage: '1Gi' },
+          accessModes: ['ReadWriteOnce'],
+          storageClassName: 'wffc'
+        }
+      })
+    )
+    apiServer.createResource(
+      'PersistentVolumeClaim',
+      createPersistentVolumeClaim({
+        name: 'wffc-data',
+        namespace: 'default',
+        spec: {
+          accessModes: ['ReadWriteOnce'],
+          resources: { requests: { storage: '1Gi' } },
+          storageClassName: 'wffc'
+        }
+      })
+    )
+
+    controller.start()
+
+    const pendingResult = apiServer.findResource(
+      'PersistentVolumeClaim',
+      'wffc-data',
+      'default'
+    )
+    expect(pendingResult.ok).toBe(true)
+    if (!pendingResult.ok || pendingResult.value == null) {
+      controller.stop()
+      return
+    }
+    expect(pendingResult.value.status.phase).toBe('Pending')
+    expect(pendingResult.value.spec.volumeName).toBeUndefined()
+
+    apiServer.createResource(
+      'Pod',
+      createPod({
+        name: 'consumer',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'busybox:1.36' }],
+        volumes: [
+          {
+            name: 'storage',
+            source: {
+              type: 'persistentVolumeClaim',
+              claimName: 'wffc-data'
+            }
+          }
+        ]
+      })
+    )
+    controller.resyncAll()
+
+    const boundResult = apiServer.findResource(
+      'PersistentVolumeClaim',
+      'wffc-data',
+      'default'
+    )
+    expect(boundResult.ok).toBe(true)
+    if (!boundResult.ok || boundResult.value == null) {
+      controller.stop()
+      return
+    }
+    expect(boundResult.value.status.phase).toBe('Bound')
+    expect(boundResult.value.spec.volumeName).toBe('pv-wffc')
+    expect(volumeState.getBoundVolumeForClaim('default', 'wffc-data')).toBe(
+      'pv-wffc'
+    )
 
     controller.stop()
   })

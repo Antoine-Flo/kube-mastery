@@ -8,7 +8,11 @@ import {
 
 const decodeBase64 = (value: string): string => {
   try {
-    return atob(value)
+    const binaryString = atob(value)
+    const bytes = Uint8Array.from(binaryString, (char) => {
+      return char.charCodeAt(0)
+    })
+    return new TextDecoder().decode(bytes)
   } catch {
     return value
   }

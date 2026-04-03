@@ -16,11 +16,82 @@ import type {
   LayoutAuthContext,
   LayoutAuthUser
 } from './types'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 const EMPTY_CONTEXT: LayoutAuthContext = {
   isLoggedIn: false,
   user: null,
   hasPaidSubscription: false
+}
+
+type PreservableSubscriptionRow = {
+  plan_tier: string
+  status: string
+  paddle_subscription_id: string | null
+  paddle_customer_id: string | null
+  current_period_start: string | null
+  current_period_end: string | null
+  canceled_at: string | null
+  metadata: Record<string, unknown> | null
+}
+
+async function preserveBillingTraceBeforeAccountDelete(args: {
+  admin: SupabaseClient
+  userId: string
+  userEmail: string
+}): Promise<{ ok: true } | { ok: false; message: string }> {
+  const normalizedEmail = args.userEmail.trim().toLowerCase()
+  if (normalizedEmail === '') {
+    return { ok: false, message: 'User email is required for billing trace' }
+  }
+
+  const { data: subscriptionRows, error: subscriptionsError } = await args.admin
+    .from('subscriptions')
+    .select(
+      'plan_tier, status, paddle_subscription_id, paddle_customer_id, current_period_start, current_period_end, canceled_at, metadata'
+    )
+    .eq('user_id', args.userId)
+
+  if (subscriptionsError != null) {
+    return { ok: false, message: subscriptionsError.message }
+  }
+
+  const rows = (subscriptionRows as PreservableSubscriptionRow[] | null) ?? []
+  const nowIso = new Date().toISOString()
+  const rowsToPreserve = rows.map((row) => ({
+      email: normalizedEmail,
+      plan_tier: row.plan_tier,
+      status: row.status,
+      paddle_subscription_id: row.paddle_subscription_id,
+      paddle_customer_id: row.paddle_customer_id,
+      current_period_start: row.current_period_start,
+      current_period_end: row.current_period_end,
+      canceled_at: row.canceled_at,
+      linked_user_id: null,
+      linked_at: null,
+      updated_at: nowIso,
+      // Keep a minimal trace to allow safe relink if the same user returns later.
+      raw_data: {
+        ...(row.metadata ?? {}),
+        source: 'account_delete_preservation',
+        previous_user_id: args.userId,
+        preserved_at: nowIso
+      }
+    }))
+
+  if (rowsToPreserve.length === 0) {
+    return { ok: true }
+  }
+
+  const { error: pendingUpsertError } = await args.admin
+    .from('pending_subscriptions')
+    .upsert(rowsToPreserve, { onConflict: 'paddle_subscription_id' })
+
+  if (pendingUpsertError != null) {
+    return { ok: false, message: pendingUpsertError.message }
+  }
+
+  return { ok: true }
 }
 
 function mapAuthUser(raw: {
@@ -97,22 +168,22 @@ export function createSupabaseDeleteAccountAdapter(): DeleteAccountPort {
         return { ok: false, reason: 'not_authenticated' }
       }
 
-      const { error: deleteSubsError } = await supabase
-        .from('subscriptions')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('plan_tier', 'early_access')
-      if (deleteSubsError) {
-        return {
-          ok: false,
-          reason: 'delete_failed',
-          message: deleteSubsError.message
-        }
-      }
-
       const admin = getSupabaseAdmin(locals)
       if (!admin) {
         return { ok: false, reason: 'admin_missing' }
+      }
+
+      const preserved = await preserveBillingTraceBeforeAccountDelete({
+        admin,
+        userId: user.id,
+        userEmail: user.email ?? ''
+      })
+      if (!preserved.ok) {
+        return {
+          ok: false,
+          reason: 'delete_failed',
+          message: preserved.message
+        }
       }
 
       const { error: deleteError } = await admin.auth.admin.deleteUser(user.id)

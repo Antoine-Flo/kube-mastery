@@ -7,61 +7,8 @@ import type {
 } from '../cluster/ClusterState'
 import { createClusterState } from '../cluster/ClusterState'
 import type { EventBus } from '../cluster/events/EventBus'
+import { CLUSTER_MUTATION_EVENT_TYPES } from '../cluster/events/handlers'
 import type { AppEvent } from '../events/AppEvent'
-
-const CLUSTER_MUTATION_EVENT_TYPES = new Set<string>([
-  'PodCreated',
-  'PodUpdated',
-  'PodDeleted',
-  'PodBound',
-  'ConfigMapCreated',
-  'ConfigMapUpdated',
-  'ConfigMapDeleted',
-  'SecretCreated',
-  'SecretUpdated',
-  'SecretDeleted',
-  'ReplicaSetCreated',
-  'ReplicaSetUpdated',
-  'ReplicaSetDeleted',
-  'DeploymentCreated',
-  'DeploymentUpdated',
-  'DeploymentDeleted',
-  'DaemonSetCreated',
-  'DaemonSetUpdated',
-  'DaemonSetDeleted',
-  'ServiceCreated',
-  'ServiceUpdated',
-  'ServiceDeleted',
-  'PersistentVolumeCreated',
-  'PersistentVolumeUpdated',
-  'PersistentVolumeDeleted',
-  'PersistentVolumeClaimCreated',
-  'PersistentVolumeClaimUpdated',
-  'PersistentVolumeClaimDeleted',
-  'StorageClassCreated',
-  'StorageClassUpdated',
-  'StorageClassDeleted',
-  'PodLabeled',
-  'PodAnnotated',
-  'ConfigMapLabeled',
-  'ConfigMapAnnotated',
-  'SecretLabeled',
-  'SecretAnnotated',
-  'ServiceLabeled',
-  'ServiceAnnotated',
-  'NodeCreated',
-  'NodeUpdated',
-  'NodeDeleted',
-  'NamespaceCreated',
-  'NamespaceUpdated',
-  'NamespaceDeleted',
-  'IngressCreated',
-  'IngressUpdated',
-  'IngressDeleted',
-  'LeaseCreated',
-  'LeaseUpdated',
-  'LeaseDeleted'
-])
 
 const isClusterMutationEvent = (event: AppEvent): boolean => {
   return CLUSTER_MUTATION_EVENT_TYPES.has(event.type)

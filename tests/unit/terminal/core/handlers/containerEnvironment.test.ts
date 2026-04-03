@@ -138,6 +138,51 @@ describe('containerEnvironment', () => {
     expect(result.value).toContain('FROM_SECRET=super-secret-token')
   })
 
+  it('decodes UTF-8 secret values without mojibake', () => {
+    const apiServer = createApiServerFacade()
+    const secretCreateResult = apiServer.createResource(
+      'Secret',
+      createSecret({
+        name: 'db-secret',
+        namespace: 'default',
+        secretType: { type: 'Opaque' },
+        data: {
+          password: encodeBase64('pässwörd')
+        }
+      })
+    )
+    expect(secretCreateResult.ok).toBe(true)
+
+    const pod = createPod({
+      name: 'web',
+      namespace: 'default',
+      containers: [
+        {
+          name: 'app',
+          image: 'nginx',
+          env: [
+            {
+              name: 'FROM_SECRET',
+              source: {
+                type: 'secretKeyRef',
+                name: 'db-secret',
+                key: 'password'
+              }
+            }
+          ]
+        }
+      ]
+    })
+
+    const result = buildContainerEnvironmentVariables(pod, 'app', apiServer)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value).toContain('FROM_SECRET=pässwörd')
+  })
+
   it('returns explicit error when container is missing', () => {
     const pod = createPod({
       name: 'web',

@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro'
 import { getSupabaseServer } from '../../lib/supabase'
 import { readAppEnv } from '../../lib/env'
 import { CONFIG } from '../../config'
+import { getTrustedClientIp } from '../../lib/client-ip'
 import {
   createApiLogContext,
   emitApiLog,
@@ -16,22 +17,6 @@ const contactRateLimitStore = new Map<
   string,
   { count: number; windowStartedAt: number }
 >()
-
-function getClientIp(request: Request): string | null {
-  const forwardedFor = request.headers.get('x-forwarded-for')
-  if (forwardedFor != null && forwardedFor.trim() !== '') {
-    const firstIp = forwardedFor.split(',')[0]
-    const normalizedIp = firstIp.trim()
-    if (normalizedIp !== '') {
-      return normalizedIp
-    }
-  }
-  const realIp = request.headers.get('x-real-ip')
-  if (realIp != null && realIp.trim() !== '') {
-    return realIp.trim()
-  }
-  return null
-}
 
 function getRateLimitKey(args: {
   userId: string
@@ -84,7 +69,12 @@ function isRateLimited(args: {
  * Body: { type: "support" | "suggestion" | "other", message: string, lessonId?: string }
  * Authenticated and unauthenticated: allowed (rate limit by user+IP or anonymous IP).
  */
-export const POST: APIRoute = async ({ request, cookies, locals }) => {
+export const POST: APIRoute = async ({
+  request,
+  cookies,
+  locals,
+  clientAddress
+}) => {
   const startedAt = startTimer()
   const baseContext = createApiLogContext({
     request,
@@ -159,7 +149,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
   const sweegoApiKey = readAppEnv('SWEEGO_API_KEY', locals)
   const rateLimitNow = Date.now()
-  const clientIp = getClientIp(request)
+  const clientIp = getTrustedClientIp({ request, clientAddress })
   const rateLimitKey =
     user != null
       ? getRateLimitKey({ userId: user.id, clientIp })

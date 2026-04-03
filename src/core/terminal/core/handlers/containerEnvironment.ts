@@ -9,7 +9,11 @@ const CONTAINER_PATH =
 const decodeBase64Value = (encodedValue: string): string | undefined => {
   try {
     if (typeof atob === 'function') {
-      return atob(encodedValue)
+      const binaryString = atob(encodedValue)
+      const bytes = Uint8Array.from(binaryString, (char) => {
+        return char.charCodeAt(0)
+      })
+      return new TextDecoder().decode(bytes)
     }
   } catch {
     // Ignore and try Node.js fallback.

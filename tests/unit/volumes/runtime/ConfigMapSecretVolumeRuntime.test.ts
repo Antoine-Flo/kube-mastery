@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ConfigMap } from '../../../../src/core/cluster/ressources/ConfigMap'
 import type { Secret } from '../../../../src/core/cluster/ressources/Secret'
+import { encodeBase64 } from '../../../../src/core/cluster/ressources/Secret'
 import type { Volume } from '../../../../src/core/cluster/ressources/Pod'
 import {
   createConfigMapProvider,
@@ -106,5 +107,56 @@ describe('ConfigMap and Secret volume providers', () => {
       return
     }
     expect(readResult.value).toBe('admin')
+  })
+
+  it('should decode UTF-8 Secret data into mounted files', () => {
+    const manager = createPodVolumeRuntimeManager([createSecretProvider()])
+    const volumes: Volume[] = [
+      {
+        name: 'creds',
+        source: {
+          type: 'secret',
+          secretName: 'app-creds'
+        }
+      }
+    ]
+    const secret: Secret = {
+      apiVersion: 'v1',
+      kind: 'Secret',
+      metadata: {
+        name: 'app-creds',
+        namespace: 'default',
+        creationTimestamp: new Date().toISOString()
+      },
+      type: {
+        type: 'Opaque'
+      },
+      data: {
+        password: encodeBase64('pässwörd')
+      }
+    }
+
+    const backings = manager.ensurePodVolumeBackings(
+      volumes,
+      {},
+      {
+        namespace: 'default',
+        findSecret: (name, namespace) => {
+          if (name === secret.metadata.name && namespace === 'default') {
+            return secret
+          }
+          return undefined
+        }
+      }
+    )
+    const backingFileSystem = createFileSystem(backings.creds, undefined, {
+      mutable: true
+    })
+    const readResult = backingFileSystem.readFile('/password')
+    expect(readResult.ok).toBe(true)
+    if (!readResult.ok) {
+      return
+    }
+    expect(readResult.value).toBe('pässwörd')
   })
 })

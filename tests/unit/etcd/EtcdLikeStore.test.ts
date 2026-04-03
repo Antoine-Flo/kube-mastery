@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { createEtcdLikeStore } from '../../../src/core/etcd/EtcdLikeStore'
 import { createEventBus } from '../../../src/core/cluster/events/EventBus'
 import { createPod } from '../../../src/core/cluster/ressources/Pod'
+import { createStatefulSet } from '../../../src/core/cluster/ressources/StatefulSet'
+import { CLUSTER_MUTATION_EVENT_TYPES } from '../../../src/core/cluster/events/handlers'
 import {
   createPodCreatedEvent,
-  createPodDeletedEvent
+  createPodDeletedEvent,
+  createStatefulSetCreatedEvent
 } from '../../../src/core/cluster/events/types'
 
 describe('EtcdLikeStore', () => {
@@ -61,5 +64,47 @@ describe('EtcdLikeStore', () => {
     expect(store.getEventLog().at(-1)?.resourceVersion).toBe('2')
 
     store.dispose()
+  })
+
+  it('increments revision for StatefulSetCreated events', () => {
+    const store = createEtcdLikeStore(createEventBus())
+    const statefulSet = createStatefulSet({
+      name: 'web',
+      namespace: 'default',
+      selector: { matchLabels: { app: 'web' } },
+      template: {
+        metadata: { labels: { app: 'web' } },
+        spec: {
+          containers: [{ name: 'web', image: 'nginx:latest' }]
+        }
+      }
+    })
+
+    expect(store.getRevision()).toBe(1)
+    store.appendEvent(createStatefulSetCreatedEvent(statefulSet, 'test'))
+    expect(store.getRevision()).toBe(2)
+
+    store.dispose()
+  })
+
+  it('includes all previously missing mutation event types', () => {
+    const expectedMutationEvents = [
+      'StatefulSetCreated',
+      'StatefulSetUpdated',
+      'StatefulSetDeleted',
+      'ControllerRevisionCreated',
+      'ControllerRevisionUpdated',
+      'ControllerRevisionDeleted',
+      'EndpointsCreated',
+      'EndpointsUpdated',
+      'EndpointsDeleted',
+      'EndpointSliceCreated',
+      'EndpointSliceUpdated',
+      'EndpointSliceDeleted'
+    ]
+
+    for (const eventType of expectedMutationEvents) {
+      expect(CLUSTER_MUTATION_EVENT_TYPES.has(eventType)).toBe(true)
+    }
   })
 })

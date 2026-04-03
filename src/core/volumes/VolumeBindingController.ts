@@ -100,11 +100,16 @@ export const createVolumeBindingController = (
     for (const persistentVolumeClaim of persistentVolumeClaims) {
       const claimName = persistentVolumeClaim.metadata.name
       const claimNamespace = persistentVolumeClaim.metadata.namespace
+      const preBoundVolumeName = persistentVolumeClaim.spec.volumeName
+      const hasPreBoundVolumeName =
+        preBoundVolumeName != null && preBoundVolumeName.length > 0
+      const isAlreadyBound =
+        persistentVolumeClaim.status.phase === 'Bound' || hasPreBoundVolumeName
       const shouldWaitForFirstConsumer = hasWaitForFirstConsumerBindingMode(
         apiServer,
         persistentVolumeClaim.spec.storageClassName
       )
-      if (shouldWaitForFirstConsumer) {
+      if (shouldWaitForFirstConsumer && !isAlreadyBound) {
         const hasConsumer = hasPodConsumerForClaim(
           apiServer,
           claimNamespace,
@@ -135,8 +140,7 @@ export const createVolumeBindingController = (
         }
       }
 
-      const preBoundVolumeName = persistentVolumeClaim.spec.volumeName
-      if (preBoundVolumeName != null && preBoundVolumeName.length > 0) {
+      if (hasPreBoundVolumeName) {
         const matchingPersistentVolume = apiServer.findResource(
           'PersistentVolume',
           preBoundVolumeName

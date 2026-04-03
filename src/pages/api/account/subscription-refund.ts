@@ -18,27 +18,12 @@ import {
 } from '../../../lib/observability/otel'
 import { getSupabaseServer } from '../../../lib/supabase'
 import { CONFIG } from '../../../config'
+import { getTrustedClientIp } from '../../../lib/client-ip'
 
 const refundRateLimitStore = new Map<
   string,
   { count: number; windowStartedAt: number }
 >()
-
-function getClientIp(request: Request): string | null {
-  const forwardedFor = request.headers.get('x-forwarded-for')
-  if (forwardedFor != null && forwardedFor.trim() !== '') {
-    const firstIp = forwardedFor.split(',')[0]
-    const normalizedIp = firstIp.trim()
-    if (normalizedIp !== '') {
-      return normalizedIp
-    }
-  }
-  const realIp = request.headers.get('x-real-ip')
-  if (realIp != null && realIp.trim() !== '') {
-    return realIp.trim()
-  }
-  return null
-}
 
 function getRateLimitKey(args: {
   userId: string
@@ -84,7 +69,8 @@ export const POST: APIRoute = async ({
   cookies,
   locals,
   url,
-  redirect
+  redirect,
+  clientAddress
 }) => {
   const startedAt = startTimer()
   const baseContext = createApiLogContext({
@@ -136,7 +122,7 @@ export const POST: APIRoute = async ({
     userId: user.id
   })
   const rateLimitNow = Date.now()
-  const clientIp = getClientIp(request)
+  const clientIp = getTrustedClientIp({ request, clientAddress })
   const rateLimitKey = getRateLimitKey({ userId: user.id, clientIp })
   const isLimited = isRateLimited({
     key: rateLimitKey,

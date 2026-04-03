@@ -6,6 +6,11 @@ const splitPath = (absolutePath: string): string[] => {
   return absolutePath.split('/').filter((segment) => segment.length > 0)
 }
 
+const normalizePath = (path: string): string => {
+  const parts = path.split('/').filter((segment) => segment.length > 0)
+  return `/${parts.join('/')}`
+}
+
 const ensureDirectoryForPath = (
   root: DirectoryNode,
   absolutePath: string
@@ -52,12 +57,19 @@ export const applyVolumeMountBindingsToFileSystem = (
   rootFileSystem: FileSystemState,
   bindings: readonly VolumeMountBinding[]
 ): FileSystemState => {
+  if (rootFileSystem.readOnlyMountPaths == null) {
+    rootFileSystem.readOnlyMountPaths = new Set<string>()
+  }
+
   for (const binding of bindings) {
     mountBackingDirectory(
       rootFileSystem.tree,
       binding.mountPath,
       binding.backing.tree
     )
+    if (binding.readOnly) {
+      rootFileSystem.readOnlyMountPaths.add(normalizePath(binding.mountPath))
+    }
   }
   return rootFileSystem
 }

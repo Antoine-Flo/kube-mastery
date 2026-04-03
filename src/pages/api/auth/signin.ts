@@ -16,6 +16,7 @@ import {
 } from '../../../lib/observability/otel'
 import { getSafeLocalRedirectTarget } from '../../../lib/redirects'
 import { coerceUiLang } from '../../../i18n/utils'
+import { getTrustedClientIp } from '../../../lib/client-ip'
 
 function buildAuthErrorRedirect(args: {
   lang: string
@@ -39,24 +40,6 @@ const magicLinkRateLimitStore = new Map<
   string,
   { count: number; windowStartedAt: number }
 >()
-
-function getClientIp(request: Request): string | null {
-  const forwardedFor = request.headers.get('x-forwarded-for')
-  if (forwardedFor != null && forwardedFor.trim() !== '') {
-    const firstIp = forwardedFor.split(',')[0]
-    const normalizedIp = firstIp.trim()
-    if (normalizedIp !== '') {
-      return normalizedIp
-    }
-  }
-
-  const realIp = request.headers.get('x-real-ip')
-  if (realIp != null && realIp.trim() !== '') {
-    return realIp.trim()
-  }
-
-  return null
-}
 
 function getMagicLinkRateLimitKey(clientIp: string | null): string {
   if (clientIp != null && clientIp !== '') {
@@ -102,7 +85,8 @@ export const POST: APIRoute = async ({
   request,
   cookies,
   redirect,
-  locals
+  locals,
+  clientAddress
 }) => {
   const startedAt = startTimer()
   const baseContext = createApiLogContext({
@@ -147,7 +131,7 @@ export const POST: APIRoute = async ({
 
   if (magic && email) {
     const rateLimitNow = Date.now()
-    const clientIp = getClientIp(request)
+    const clientIp = getTrustedClientIp({ request, clientAddress })
     const rateLimitKey = getMagicLinkRateLimitKey(clientIp)
     const isLimited = isMagicLinkRateLimited({
       key: rateLimitKey,

@@ -85,6 +85,7 @@ import type {
   StatefulSetDeletedEvent,
   StatefulSetUpdatedEvent
 } from './types'
+import { releasePersistentVolumeBacking } from '../../volumes/runtime'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // EVENT HANDLERS
@@ -703,7 +704,10 @@ export const handlePersistentVolumeCreated = (
 export const handlePersistentVolumeDeleted = (
   state: ClusterStateData,
   event: PersistentVolumeDeletedEvent
-) => persistentVolumeHandler.deleted(state, event.payload.name, '')
+) => {
+  releasePersistentVolumeBacking(event.payload.name)
+  return persistentVolumeHandler.deleted(state, event.payload.name, '')
+}
 
 export const handlePersistentVolumeUpdated = (
   state: ClusterStateData,
@@ -767,7 +771,7 @@ export const handleStorageClassUpdated = (
     event.payload.storageClass
   )
 
-type ClusterEventType = ClusterEvent['type']
+export type ClusterEventType = ClusterEvent['type']
 type ClusterEventByType = {
   [TType in ClusterEventType]: Extract<ClusterEvent, { type: TType }>
 }
@@ -776,76 +780,125 @@ type ClusterEventHandler<TType extends ClusterEventType> = (
   event: ClusterEventByType[TType]
 ) => ClusterStateData
 
+type ClusterEventDefinition<TType extends ClusterEventType> = {
+  handler: ClusterEventHandler<TType>
+  mutatesState: boolean
+}
+
+const defineClusterEvent = <TType extends ClusterEventType>(
+  handler: ClusterEventHandler<TType>,
+  mutatesState = true
+): ClusterEventDefinition<TType> => {
+  return { handler, mutatesState }
+}
+
 /**
- * Event handler map for dispatching events to handlers
- * Using object lookup pattern instead of switch
+ * Event definitions are the single source of truth for:
+ * - state transition handlers
+ * - etcd revision mutation tracking
+ */
+export const CLUSTER_EVENT_DEFINITIONS: {
+  [TType in ClusterEventType]?: ClusterEventDefinition<TType>
+} = {
+  PodCreated: defineClusterEvent(handlePodCreated),
+  PodDeleted: defineClusterEvent(handlePodDeleted),
+  PodUpdated: defineClusterEvent(handlePodUpdated),
+  ConfigMapCreated: defineClusterEvent(handleConfigMapCreated),
+  ConfigMapDeleted: defineClusterEvent(handleConfigMapDeleted),
+  ConfigMapUpdated: defineClusterEvent(handleConfigMapUpdated),
+  ControllerRevisionCreated: defineClusterEvent(handleControllerRevisionCreated),
+  ControllerRevisionDeleted: defineClusterEvent(handleControllerRevisionDeleted),
+  ControllerRevisionUpdated: defineClusterEvent(handleControllerRevisionUpdated),
+  SecretCreated: defineClusterEvent(handleSecretCreated),
+  SecretDeleted: defineClusterEvent(handleSecretDeleted),
+  SecretUpdated: defineClusterEvent(handleSecretUpdated),
+  ReplicaSetCreated: defineClusterEvent(handleReplicaSetCreated),
+  ReplicaSetDeleted: defineClusterEvent(handleReplicaSetDeleted),
+  ReplicaSetUpdated: defineClusterEvent(handleReplicaSetUpdated),
+  DeploymentCreated: defineClusterEvent(handleDeploymentCreated),
+  DeploymentDeleted: defineClusterEvent(handleDeploymentDeleted),
+  DeploymentUpdated: defineClusterEvent(handleDeploymentUpdated),
+  DaemonSetCreated: defineClusterEvent(handleDaemonSetCreated),
+  DaemonSetDeleted: defineClusterEvent(handleDaemonSetDeleted),
+  DaemonSetUpdated: defineClusterEvent(handleDaemonSetUpdated),
+  StatefulSetCreated: defineClusterEvent(handleStatefulSetCreated),
+  StatefulSetDeleted: defineClusterEvent(handleStatefulSetDeleted),
+  StatefulSetUpdated: defineClusterEvent(handleStatefulSetUpdated),
+  PodLabeled: defineClusterEvent(handlePodLabeled),
+  ConfigMapLabeled: defineClusterEvent(handleConfigMapLabeled),
+  SecretLabeled: defineClusterEvent(handleSecretLabeled),
+  PodAnnotated: defineClusterEvent(handlePodAnnotated),
+  ConfigMapAnnotated: defineClusterEvent(handleConfigMapAnnotated),
+  SecretAnnotated: defineClusterEvent(handleSecretAnnotated),
+  ServiceCreated: defineClusterEvent(handleServiceCreated),
+  ServiceDeleted: defineClusterEvent(handleServiceDeleted),
+  ServiceUpdated: defineClusterEvent(handleServiceUpdated),
+  EndpointsCreated: defineClusterEvent(handleEndpointsCreated),
+  EndpointsDeleted: defineClusterEvent(handleEndpointsDeleted),
+  EndpointsUpdated: defineClusterEvent(handleEndpointsUpdated),
+  EndpointSliceCreated: defineClusterEvent(handleEndpointSliceCreated),
+  EndpointSliceDeleted: defineClusterEvent(handleEndpointSliceDeleted),
+  EndpointSliceUpdated: defineClusterEvent(handleEndpointSliceUpdated),
+  ServiceLabeled: defineClusterEvent(handleServiceLabeled),
+  ServiceAnnotated: defineClusterEvent(handleServiceAnnotated),
+  IngressCreated: defineClusterEvent(handleIngressCreated),
+  IngressDeleted: defineClusterEvent(handleIngressDeleted),
+  IngressUpdated: defineClusterEvent(handleIngressUpdated),
+  NamespaceCreated: defineClusterEvent(handleNamespaceCreated),
+  NamespaceDeleted: defineClusterEvent(handleNamespaceDeleted),
+  NamespaceUpdated: defineClusterEvent(handleNamespaceUpdated),
+  NodeCreated: defineClusterEvent(handleNodeCreated),
+  NodeDeleted: defineClusterEvent(handleNodeDeleted),
+  NodeUpdated: defineClusterEvent(handleNodeUpdated),
+  PersistentVolumeCreated: defineClusterEvent(handlePersistentVolumeCreated),
+  PersistentVolumeDeleted: defineClusterEvent(handlePersistentVolumeDeleted),
+  PersistentVolumeUpdated: defineClusterEvent(handlePersistentVolumeUpdated),
+  PersistentVolumeClaimCreated: defineClusterEvent(
+    handlePersistentVolumeClaimCreated
+  ),
+  PersistentVolumeClaimDeleted: defineClusterEvent(
+    handlePersistentVolumeClaimDeleted
+  ),
+  PersistentVolumeClaimUpdated: defineClusterEvent(
+    handlePersistentVolumeClaimUpdated
+  ),
+  StorageClassCreated: defineClusterEvent(handleStorageClassCreated),
+  StorageClassDeleted: defineClusterEvent(handleStorageClassDeleted),
+  StorageClassUpdated: defineClusterEvent(handleStorageClassUpdated),
+  LeaseCreated: defineClusterEvent(handleLeaseCreated),
+  LeaseDeleted: defineClusterEvent(handleLeaseDeleted),
+  LeaseUpdated: defineClusterEvent(handleLeaseUpdated)
+}
+
+/**
+ * Event handler map for state application.
+ * Derived from CLUSTER_EVENT_DEFINITIONS to avoid dual maintenance.
  */
 export const CLUSTER_EVENT_HANDLERS: {
   [TType in ClusterEventType]?: ClusterEventHandler<TType>
-} = {
-  PodCreated: handlePodCreated,
-  PodDeleted: handlePodDeleted,
-  PodUpdated: handlePodUpdated,
-  ConfigMapCreated: handleConfigMapCreated,
-  ConfigMapDeleted: handleConfigMapDeleted,
-  ConfigMapUpdated: handleConfigMapUpdated,
-  ControllerRevisionCreated: handleControllerRevisionCreated,
-  ControllerRevisionDeleted: handleControllerRevisionDeleted,
-  ControllerRevisionUpdated: handleControllerRevisionUpdated,
-  SecretCreated: handleSecretCreated,
-  SecretDeleted: handleSecretDeleted,
-  SecretUpdated: handleSecretUpdated,
-  ReplicaSetCreated: handleReplicaSetCreated,
-  ReplicaSetDeleted: handleReplicaSetDeleted,
-  ReplicaSetUpdated: handleReplicaSetUpdated,
-  DeploymentCreated: handleDeploymentCreated,
-  DeploymentDeleted: handleDeploymentDeleted,
-  DeploymentUpdated: handleDeploymentUpdated,
-  DaemonSetCreated: handleDaemonSetCreated,
-  DaemonSetDeleted: handleDaemonSetDeleted,
-  DaemonSetUpdated: handleDaemonSetUpdated,
-  StatefulSetCreated: handleStatefulSetCreated,
-  StatefulSetDeleted: handleStatefulSetDeleted,
-  StatefulSetUpdated: handleStatefulSetUpdated,
-  PodLabeled: handlePodLabeled,
-  ConfigMapLabeled: handleConfigMapLabeled,
-  SecretLabeled: handleSecretLabeled,
-  PodAnnotated: handlePodAnnotated,
-  ConfigMapAnnotated: handleConfigMapAnnotated,
-  SecretAnnotated: handleSecretAnnotated,
-  ServiceCreated: handleServiceCreated,
-  ServiceDeleted: handleServiceDeleted,
-  ServiceUpdated: handleServiceUpdated,
-  EndpointsCreated: handleEndpointsCreated,
-  EndpointsDeleted: handleEndpointsDeleted,
-  EndpointsUpdated: handleEndpointsUpdated,
-  EndpointSliceCreated: handleEndpointSliceCreated,
-  EndpointSliceDeleted: handleEndpointSliceDeleted,
-  EndpointSliceUpdated: handleEndpointSliceUpdated,
-  ServiceLabeled: handleServiceLabeled,
-  ServiceAnnotated: handleServiceAnnotated,
-  IngressCreated: handleIngressCreated,
-  IngressDeleted: handleIngressDeleted,
-  IngressUpdated: handleIngressUpdated,
-  NamespaceCreated: handleNamespaceCreated,
-  NamespaceDeleted: handleNamespaceDeleted,
-  NamespaceUpdated: handleNamespaceUpdated,
-  NodeCreated: handleNodeCreated,
-  NodeDeleted: handleNodeDeleted,
-  NodeUpdated: handleNodeUpdated,
-  PersistentVolumeCreated: handlePersistentVolumeCreated,
-  PersistentVolumeDeleted: handlePersistentVolumeDeleted,
-  PersistentVolumeUpdated: handlePersistentVolumeUpdated,
-  PersistentVolumeClaimCreated: handlePersistentVolumeClaimCreated,
-  PersistentVolumeClaimDeleted: handlePersistentVolumeClaimDeleted,
-  PersistentVolumeClaimUpdated: handlePersistentVolumeClaimUpdated,
-  StorageClassCreated: handleStorageClassCreated,
-  StorageClassDeleted: handleStorageClassDeleted,
-  StorageClassUpdated: handleStorageClassUpdated,
-  LeaseCreated: handleLeaseCreated,
-  LeaseDeleted: handleLeaseDeleted,
-  LeaseUpdated: handleLeaseUpdated
+} = Object.fromEntries(
+  Object.entries(CLUSTER_EVENT_DEFINITIONS).flatMap(([eventType, definition]) => {
+    if (!definition) {
+      return []
+    }
+    return [[eventType, definition.handler]]
+  })
+) as {
+  [TType in ClusterEventType]?: ClusterEventHandler<TType>
 }
+
+/**
+ * Cluster mutation event types used by EtcdLikeStore revision tracking.
+ * Derived from CLUSTER_EVENT_DEFINITIONS to keep one source of truth.
+ */
+export const CLUSTER_MUTATION_EVENT_TYPES = new Set<string>(
+  Object.entries(CLUSTER_EVENT_DEFINITIONS).flatMap(([eventType, definition]) => {
+    if (!definition || !definition.mutatesState) {
+      return []
+    }
+    return [eventType]
+  })
+)
 
 /**
  * Apply event to cluster state

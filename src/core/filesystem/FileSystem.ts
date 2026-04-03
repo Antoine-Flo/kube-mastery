@@ -26,6 +26,7 @@ import {
 export interface FileSystemState {
   currentPath: string
   tree: DirectoryNode
+  readOnlyMountPaths?: Set<string>
 }
 
 // ─── Path Operations ─────────────────────────────────────────────────────
@@ -94,6 +95,42 @@ const resolvePath = (currentPath: string, targetPath: string): string => {
 const normalizePath = (path: string): string => {
   const parts = path.split('/').filter((p) => p.length > 0)
   return '/' + parts.join('/')
+}
+
+const isPathInsideMount = (path: string, mountPath: string): boolean => {
+  if (mountPath === '/') {
+    return true
+  }
+  if (path === mountPath) {
+    return true
+  }
+  return path.startsWith(`${mountPath}/`)
+}
+
+const isWriteBlockedByReadOnlyMount = (
+  state: FileSystemState,
+  absolutePath: string
+): boolean => {
+  if (state.readOnlyMountPaths == null || state.readOnlyMountPaths.size === 0) {
+    return false
+  }
+  const normalizedPath = normalizePath(absolutePath)
+  for (const mountPath of state.readOnlyMountPaths) {
+    if (isPathInsideMount(normalizedPath, mountPath)) {
+      return true
+    }
+  }
+  return false
+}
+
+const createReadOnlyError = (
+  command: string,
+  absolutePath: string,
+  action: string
+): Result<never> => {
+  return error(
+    `${command}: cannot ${action} '${absolutePath}': Read-only file system`
+  )
 }
 
 /**
@@ -380,6 +417,9 @@ const createDirectoryOps = (
   createDirectory: (name: string, recursive = false): Result<string> => {
     const state = getState()
     const absolutePath = resolvePath(state.currentPath, name)
+    if (isWriteBlockedByReadOnlyMount(state, absolutePath)) {
+      return createReadOnlyError('mkdir', absolutePath, 'create directory')
+    }
 
     const validation = validateDirectoryCreation(name, absolutePath, state.tree)
     if (!validation.ok) {
@@ -411,6 +451,9 @@ const createDirectoryOps = (
   deleteDirectory: (path: string, recursive = false): Result<void> => {
     const state = getState()
     const absolutePath = resolvePath(state.currentPath, path)
+    if (isWriteBlockedByReadOnlyMount(state, absolutePath)) {
+      return createReadOnlyError('rm', absolutePath, 'remove')
+    }
 
     if (absolutePath === '/') {
       return error(`rm: cannot remove '/': Invalid argument`)
@@ -467,6 +510,9 @@ const createFileOps = (
     createFile: (name: string, content = ''): Result<FileNode> => {
       const state = getState()
       const absolutePath = resolvePath(state.currentPath, name)
+      if (isWriteBlockedByReadOnlyMount(state, absolutePath)) {
+        return createReadOnlyError('touch', absolutePath, 'touch')
+      }
 
       const validation = validateFileCreation(name, absolutePath, state.tree)
       if (!validation.ok) {
@@ -510,6 +556,9 @@ const createFileOps = (
     writeFile: (path: string, content: string): Result<void> => {
       const state = getState()
       const absolutePath = resolvePath(state.currentPath, path)
+      if (isWriteBlockedByReadOnlyMount(state, absolutePath)) {
+        return createReadOnlyError('nano', absolutePath, 'write')
+      }
       const node = findNode(state.tree, absolutePath)
 
       // Si le fichier n'existe pas, le créer
@@ -574,6 +623,9 @@ const createFileOps = (
     deleteFile: (path: string): Result<void> => {
       const state = getState()
       const absolutePath = resolvePath(state.currentPath, path)
+      if (isWriteBlockedByReadOnlyMount(state, absolutePath)) {
+        return createReadOnlyError('rm', absolutePath, 'remove')
+      }
       const node = findNode(state.tree, absolutePath)
 
       const validation = validateIsFile(node, absolutePath, 'rm')
@@ -624,7 +676,11 @@ const createStateOps = (
 
     return {
       currentPath: state.currentPath,
-      tree: cloneNode(state.tree) as DirectoryNode
+      tree: cloneNode(state.tree) as DirectoryNode,
+      readOnlyMountPaths:
+        state.readOnlyMountPaths == null
+          ? undefined
+          : new Set(state.readOnlyMountPaths)
     }
   },
 
@@ -633,6 +689,7 @@ const createStateOps = (
       // Mode mutable : modifier directement
       mutableState.currentPath = newState.currentPath
       mutableState.tree = newState.tree
+      mutableState.readOnlyMountPaths = newState.readOnlyMountPaths
     } else {
       // Mode normal : remplacer
       setState(newState)
@@ -665,6 +722,7 @@ export const createFileSystem = (
       // Mode mutable : modifier directement le state original
       originalState.currentPath = newState.currentPath
       originalState.tree = newState.tree
+      originalState.readOnlyMountPaths = newState.readOnlyMountPaths
       // Mettre à jour la référence locale aussi
       state = originalState
     } else {
