@@ -339,6 +339,173 @@ describe('generateTemplateHash', () => {
 
     expect(hash).toMatch(/^[0-9a-f]{10}$/)
   })
+
+  it('should generate different hash for different env vars', () => {
+    const template1 = {
+      spec: {
+        containers: [
+          {
+            name: 'nginx',
+            image: 'nginx:latest',
+            env: [{ name: 'MODE', value: 'prod' }]
+          }
+        ]
+      }
+    }
+    const template2 = {
+      spec: {
+        containers: [
+          {
+            name: 'nginx',
+            image: 'nginx:latest',
+            env: [{ name: 'MODE', value: 'debug' }]
+          }
+        ]
+      }
+    }
+
+    const hash1 = generateTemplateHash(template1)
+    const hash2 = generateTemplateHash(template2)
+
+    expect(hash1).not.toBe(hash2)
+  })
+
+  it('should generate different hash for different resources', () => {
+    const template1 = {
+      spec: {
+        containers: [
+          {
+            name: 'nginx',
+            image: 'nginx:latest',
+            resources: { limits: { cpu: '200m', memory: '256Mi' } }
+          }
+        ]
+      }
+    }
+    const template2 = {
+      spec: {
+        containers: [
+          {
+            name: 'nginx',
+            image: 'nginx:latest',
+            resources: { limits: { cpu: '500m', memory: '256Mi' } }
+          }
+        ]
+      }
+    }
+
+    const hash1 = generateTemplateHash(template1)
+    const hash2 = generateTemplateHash(template2)
+
+    expect(hash1).not.toBe(hash2)
+  })
+
+  it('should generate different hash for different command and args', () => {
+    const template1 = {
+      spec: {
+        containers: [
+          {
+            name: 'nginx',
+            image: 'nginx:latest',
+            command: ['sh', '-c'],
+            args: ['echo first']
+          }
+        ]
+      }
+    }
+    const template2 = {
+      spec: {
+        containers: [
+          {
+            name: 'nginx',
+            image: 'nginx:latest',
+            command: ['sh', '-c'],
+            args: ['echo second']
+          }
+        ]
+      }
+    }
+
+    const hash1 = generateTemplateHash(template1)
+    const hash2 = generateTemplateHash(template2)
+
+    expect(hash1).not.toBe(hash2)
+  })
+
+  it('should generate different hash for different volumes', () => {
+    const template1 = {
+      spec: {
+        volumes: [{ name: 'config', configMap: { name: 'cm-a' } }],
+        containers: [{ name: 'nginx', image: 'nginx:latest' }]
+      }
+    }
+    const template2 = {
+      spec: {
+        volumes: [{ name: 'config', configMap: { name: 'cm-b' } }],
+        containers: [{ name: 'nginx', image: 'nginx:latest' }]
+      }
+    }
+
+    const hash1 = generateTemplateHash(template1)
+    const hash2 = generateTemplateHash(template2)
+
+    expect(hash1).not.toBe(hash2)
+  })
+
+  it('should generate different hash for different ports', () => {
+    const template1 = {
+      spec: {
+        containers: [
+          {
+            name: 'nginx',
+            image: 'nginx:latest',
+            ports: [{ containerPort: 80 }]
+          }
+        ]
+      }
+    }
+    const template2 = {
+      spec: {
+        containers: [
+          {
+            name: 'nginx',
+            image: 'nginx:latest',
+            ports: [{ containerPort: 8080 }]
+          }
+        ]
+      }
+    }
+
+    const hash1 = generateTemplateHash(template1)
+    const hash2 = generateTemplateHash(template2)
+
+    expect(hash1).not.toBe(hash2)
+  })
+
+  it('should ignore pod-template-hash label in template metadata', () => {
+    const template1 = {
+      metadata: {
+        labels: {
+          app: 'nginx'
+        }
+      },
+      spec: { containers: [{ name: 'nginx', image: 'nginx:latest' }] }
+    }
+    const template2 = {
+      metadata: {
+        labels: {
+          app: 'nginx',
+          'pod-template-hash': '1234567890'
+        }
+      },
+      spec: { containers: [{ name: 'nginx', image: 'nginx:latest' }] }
+    }
+
+    const hash1 = generateTemplateHash(template1)
+    const hash2 = generateTemplateHash(template2)
+
+    expect(hash1).toBe(hash2)
+  })
 })
 
 describe('generateReplicaSetName', () => {

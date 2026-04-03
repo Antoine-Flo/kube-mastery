@@ -148,4 +148,16 @@ data:
     expect(result.value).not.toContain('old-value')
     expect(result.value).not.toContain('new-value')
   })
+
+  it('should return kubectl-like path error when diff file is missing', () => {
+    const result = executeDiff('kubectl diff -f missing-file.yaml')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toBe(
+        'error: the path "missing-file.yaml" does not exist'
+      )
+      expect(result.error).not.toContain('cat:')
+    }
+  })
 })

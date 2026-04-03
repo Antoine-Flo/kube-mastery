@@ -8,6 +8,10 @@ const isValidMountPath = (path: string): boolean => {
   if (!path.startsWith('/')) {
     return false
   }
+  const segments = path.split('/').filter((segment) => segment.length > 0)
+  if (segments.includes('..')) {
+    return false
+  }
   return true
 }
 

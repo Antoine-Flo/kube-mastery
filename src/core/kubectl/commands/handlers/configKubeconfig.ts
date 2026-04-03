@@ -1,5 +1,6 @@
 import { parse as yamlParse, stringify as yamlStringify } from 'yaml'
 import type { FileSystem } from '../../../filesystem/FileSystem'
+import { formatKubectlFileSystemError } from '../filesystemErrorPresenter'
 import type { Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 
@@ -134,7 +135,7 @@ const toSimKubeconfig = (value: unknown): Result<SimKubeconfig> => {
 export const readKubeconfigFromFileSystem = (
   fileSystem: FileSystem
 ): Result<SimKubeconfig> => {
-  const kubeconfigReadResult = fileSystem.readFile(KUBECONFIG_PATH)
+  const kubeconfigReadResult = fileSystem.readFileDetailed(KUBECONFIG_PATH)
   if (!kubeconfigReadResult.ok) {
     return error(`kubeconfig file is missing: ${KUBECONFIG_PATH}`)
   }
@@ -158,12 +159,14 @@ export const writeKubeconfigToFileSystem = (
   kubeconfig: SimKubeconfig
 ): Result<void> => {
   const serializedKubeconfig = yamlStringify(kubeconfig).trimEnd()
-  const writeResult = fileSystem.writeFile(
+  const writeResult = fileSystem.writeFileDetailed(
     KUBECONFIG_PATH,
     serializedKubeconfig
   )
   if (!writeResult.ok) {
-    return error(writeResult.error)
+    return error(
+      formatKubectlFileSystemError(writeResult.error, KUBECONFIG_PATH)
+    )
   }
   return success(undefined)
 }

@@ -545,8 +545,9 @@ const podVolumeRuntimeManager = createPodVolumeRuntimeManager([
 ])
 
 export const buildPodResolvConf = (namespace: string): string => {
+  const safeNamespace = namespace.trim() || 'default'
   return [
-    `search ${namespace}.svc.cluster.local svc.cluster.local cluster.local`,
+    `search ${safeNamespace}.svc.cluster.local svc.cluster.local cluster.local`,
     'nameserver 10.96.0.10',
     'options ndots:5'
   ].join('\n')
@@ -1022,6 +1023,13 @@ const PodManifestSchema = z.object({
  * Parse and validate Pod manifest from YAML
  */
 export const parsePodManifest = (data: unknown): Result<Pod> => {
+  const mountPathHasParentDirectorySegments = (mountPath: string): boolean => {
+    const segments = mountPath
+      .split('/')
+      .filter((segment: string) => segment.length > 0)
+    return segments.includes('..')
+  }
+
   const result = PodManifestSchema.safeParse(data)
 
   if (!result.success) {
@@ -1032,6 +1040,34 @@ export const parsePodManifest = (data: unknown): Result<Pod> => {
   }
 
   const manifest = result.data
+  const containerGroups = [
+    {
+      key: 'spec.initContainers',
+      containers: manifest.spec.initContainers ?? []
+    },
+    {
+      key: 'spec.containers',
+      containers: manifest.spec.containers
+    }
+  ]
+  for (const group of containerGroups) {
+    for (const [containerIndex, container] of group.containers.entries()) {
+      if (!Array.isArray(container.volumeMounts)) {
+        continue
+      }
+      for (const [mountIndex, mount] of container.volumeMounts.entries()) {
+        if (mount == null || typeof mount.mountPath !== 'string') {
+          continue
+        }
+        if (!mountPathHasParentDirectorySegments(mount.mountPath)) {
+          continue
+        }
+        return error(
+          `Invalid Pod manifest: ${group.key}[${containerIndex}].volumeMounts[${mountIndex}].mountPath: mountPath must not contain ".." segments`
+        )
+      }
+    }
+  }
 
   // Convert volumes from YAML format to TypeScript format
   const volumes = manifest.spec.volumes

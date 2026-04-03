@@ -3,6 +3,7 @@
 import type { FileSystem } from '../../filesystem/FileSystem'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
+import { formatKubectlFileSystemError } from './filesystemErrorPresenter'
 
 const MANIFEST_FILENAME_EXTENSIONS = [
   '.yaml',
@@ -44,7 +45,7 @@ export const resolveManifestFilePathsFromFilenameFlag = (
   filename: string,
   noManifestFilesMessage: string
 ): Result<string[]> => {
-  const listResult = fileSystem.listDirectory(filename)
+  const listResult = fileSystem.listDirectoryDetailed(filename)
   if (listResult.ok) {
     const paths: string[] = []
     for (const child of listResult.value) {
@@ -63,8 +64,8 @@ export const resolveManifestFilePathsFromFilenameFlag = (
     }
     return success(paths)
   }
-  if (listResult.error.includes('Not a directory')) {
+  if (listResult.error.code === 'NOT_A_DIRECTORY') {
     return success([filename])
   }
-  return error(`error: ${listResult.error}`)
+  return error(formatKubectlFileSystemError(listResult.error, filename))
 }

@@ -567,6 +567,37 @@ spec:
     }
   })
 
+  it('should return kubectl-like path error when apply file is missing', () => {
+    const parsed = parseCommand('kubectl apply -f servr.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleApply(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toBe('error: the path "servr.yaml" does not exist')
+      expect(result.error).not.toContain('ls:')
+      expect(result.error).not.toContain('cat:')
+    }
+  })
+
+  it('should return kubectl-like path error when create file is missing', () => {
+    const parsed = parseCommand('kubectl create -f servr.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toBe('error: the path "servr.yaml" does not exist')
+      expect(result.error).not.toContain('cat:')
+    }
+  })
+
   it('should return configured when applying changed deployment manifest', () => {
     const initialYaml = `apiVersion: apps/v1
 kind: Deployment
@@ -1056,5 +1087,22 @@ spec:
     expect(secret.value.data.username).toBe('YWRtaW4=')
     expect(secret.value.data.LOG_LEVEL).toBe('ZGVidWc=')
     expect(secret.value.data.FEATURE_X).toBe('dHJ1ZQ==')
+  })
+
+  it('should return kubectl-like path error for missing --from-file source', () => {
+    const parsed = parseCommand(
+      'kubectl create secret generic app-secret --from-file=username=missing.txt'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toBe('error: the path "missing.txt" does not exist')
+      expect(result.error).not.toContain('cat:')
+    }
   })
 })

@@ -78,17 +78,42 @@ export const createStatefulSet = (config: StatefulSetConfig): StatefulSet => {
   return deepFreeze(statefulSet)
 }
 
+const LabelSelectorRequirementSchema = z
+  .object({
+    key: z.string(),
+    operator: z.enum(['In', 'NotIn', 'Exists', 'DoesNotExist']),
+    values: z.array(z.string()).optional()
+  })
+  .superRefine((selectorRequirement, context) => {
+    const valuesCount = selectorRequirement.values?.length ?? 0
+    const operatorRequiresValues =
+      selectorRequirement.operator === 'In' ||
+      selectorRequirement.operator === 'NotIn'
+
+    if (operatorRequiresValues && valuesCount === 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['values'],
+        message: "must be specified when `operator` is 'In' or 'NotIn'"
+      })
+    }
+
+    const operatorForbidsValues =
+      selectorRequirement.operator === 'Exists' ||
+      selectorRequirement.operator === 'DoesNotExist'
+    if (operatorForbidsValues && valuesCount > 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['values'],
+        message:
+          "may not be specified when `operator` is 'Exists' or 'DoesNotExist'"
+      })
+    }
+  })
+
 const LabelSelectorSchema = z.object({
   matchLabels: z.record(z.string(), z.string()).optional(),
-  matchExpressions: z
-    .array(
-      z.object({
-        key: z.string(),
-        operator: z.enum(['In', 'NotIn', 'Exists', 'DoesNotExist']),
-        values: z.array(z.string()).optional()
-      })
-    )
-    .optional()
+  matchExpressions: z.array(LabelSelectorRequirementSchema).optional()
 })
 
 const ContainerSchema = z.object({

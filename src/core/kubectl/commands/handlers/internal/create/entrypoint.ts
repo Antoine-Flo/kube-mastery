@@ -3,6 +3,7 @@ import type { FileSystem } from '../../../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
 import { parseKubernetesYaml } from '../../../../yamlParser'
+import { formatKubectlFileSystemError } from '../../../filesystemErrorPresenter'
 import { createResourceWithEvents } from '../../../resourceHelpers'
 import type { ParsedCommand } from '../../../types'
 import {
@@ -56,9 +57,9 @@ const loadAndParseYaml = (
     return error('error: must specify one of -f or --filename')
   }
 
-  const fileResult = fileSystem.readFile(filename as string)
+  const fileResult = fileSystem.readFileDetailed(filename as string)
   if (!fileResult.ok) {
-    return error(`error: ${fileResult.error}`)
+    return error(formatKubectlFileSystemError(fileResult.error, filename))
   }
 
   const parseResult = parseKubernetesYaml(fileResult.value)

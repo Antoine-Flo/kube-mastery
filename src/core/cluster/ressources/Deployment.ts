@@ -357,17 +357,52 @@ export const generateReplicaSetName = (
  * Generate simple template hash (simplified version)
  */
 export const generateTemplateHash = (template: PodTemplateSpec): string => {
-  // Simple hash based on container images
-  const images = template.spec.containers
-    .map((c) => c.image)
-    .sort()
-    .join(',')
+  const canonicalTemplate = canonicalizeTemplateForHash(template)
+  const serializedTemplate = JSON.stringify(canonicalTemplate)
   let hash = 0
-  for (let i = 0; i < images.length; i++) {
-    const char = images.charCodeAt(i)
+  for (let i = 0; i < serializedTemplate.length; i++) {
+    const char = serializedTemplate.charCodeAt(i)
     hash = (hash << 5) - hash + char
     hash = hash & hash // Convert to 32bit integer
   }
   // Convert to hex and take last 10 chars
   return Math.abs(hash).toString(16).slice(-10).padStart(10, '0')
+}
+
+const canonicalizeTemplateForHash = (template: PodTemplateSpec): unknown => {
+  const metadata = template.metadata ?? {}
+  const labels = metadata.labels ?? {}
+  const filteredLabels = Object.fromEntries(
+    Object.entries(labels).filter(([key]) => key !== 'pod-template-hash')
+  )
+
+  const normalizedTemplate: PodTemplateSpec = {
+    ...template,
+    ...(template.metadata && {
+      metadata: {
+        ...metadata,
+        ...(metadata.labels && {
+          labels: filteredLabels
+        })
+      }
+    })
+  }
+
+  return canonicalizeHashValue(normalizedTemplate)
+}
+
+const canonicalizeHashValue = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map((item) => canonicalizeHashValue(item))
+  }
+  if (value !== null && typeof value === 'object') {
+    const objectValue = value as Record<string, unknown>
+    const sortedEntries = Object.entries(objectValue)
+      .filter(([, entryValue]) => entryValue !== undefined)
+      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+      .map(([key, entryValue]) => [key, canonicalizeHashValue(entryValue)] as const)
+    return Object.fromEntries(sortedEntries)
+  }
+
+  return value
 }

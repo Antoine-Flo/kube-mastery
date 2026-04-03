@@ -82,4 +82,32 @@ describe('PodVolumeRuntimeManager', () => {
     expect(createFileResult.ok).toBe(true)
     expect(consumerFileSystem.readFile('/shared/message.txt').ok).toBe(true)
   })
+
+  it('should reject mount paths containing parent directory segments', () => {
+    const manager = createPodVolumeRuntimeManager([createEmptyDirProvider()])
+    const volumes: Volume[] = [
+      {
+        name: 'shared',
+        source: { type: 'emptyDir' }
+      }
+    ]
+    const container: Container = {
+      name: 'app',
+      image: 'busybox:1.36',
+      volumeMounts: [
+        { name: 'shared', mountPath: '/shared' },
+        { name: 'shared', mountPath: '/foo/../bar' }
+      ]
+    }
+
+    const backings = manager.ensurePodVolumeBackings(volumes, {})
+    const bindings = manager.buildContainerMountBindings(
+      container,
+      volumes,
+      backings
+    )
+
+    expect(bindings).toHaveLength(1)
+    expect(bindings[0]?.mountPath).toBe('/shared')
+  })
 })

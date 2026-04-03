@@ -4,7 +4,26 @@
 // Integration tests for parsePodManifest with YAML parsing
 
 import { describe, expect, it } from 'vitest'
-import { parsePodManifest } from '../../../../src/core/cluster/ressources/Pod'
+import {
+  buildPodResolvConf,
+  parsePodManifest
+} from '../../../../src/core/cluster/ressources/Pod'
+
+describe('buildPodResolvConf', () => {
+  it('should fallback to default namespace when namespace is empty', () => {
+    const resolvConf = buildPodResolvConf('')
+    expect(resolvConf).toContain(
+      'search default.svc.cluster.local svc.cluster.local cluster.local'
+    )
+  })
+
+  it('should fallback to default namespace when namespace has only whitespace', () => {
+    const resolvConf = buildPodResolvConf('   ')
+    expect(resolvConf).toContain(
+      'search default.svc.cluster.local svc.cluster.local cluster.local'
+    )
+  })
+})
 
 describe('parsePodManifest integration', () => {
   it('should parse pod with volumes from YAML', () => {
@@ -252,6 +271,88 @@ describe('parsePodManifest integration', () => {
       const container = pod.spec.containers[0]
       expect(container.livenessProbe?.type).toBe('httpGet')
       expect(container.readinessProbe?.type).toBe('httpGet')
+    }
+  })
+
+  it('should reject volume mounts containing parent directory segments', () => {
+    const yamlPod = {
+      apiVersion: 'v1',
+      kind: 'Pod',
+      metadata: {
+        name: 'invalid-mount',
+        namespace: 'default'
+      },
+      spec: {
+        containers: [
+          {
+            name: 'app',
+            image: 'nginx:latest',
+            volumeMounts: [
+              {
+                name: 'shared',
+                mountPath: '/data/../secrets'
+              }
+            ]
+          }
+        ],
+        volumes: [
+          {
+            name: 'shared',
+            emptyDir: {}
+          }
+        ]
+      }
+    }
+
+    const result = parsePodManifest(yamlPod)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('mountPath must not contain ".." segments')
+    }
+  })
+
+  it('should reject initContainer volume mounts containing parent directory segments', () => {
+    const yamlPod = {
+      apiVersion: 'v1',
+      kind: 'Pod',
+      metadata: {
+        name: 'invalid-init-mount',
+        namespace: 'default'
+      },
+      spec: {
+        initContainers: [
+          {
+            name: 'init-app',
+            image: 'busybox:1.36',
+            volumeMounts: [
+              {
+                name: 'shared',
+                mountPath: '/cache/../bootstrap'
+              }
+            ]
+          }
+        ],
+        containers: [
+          {
+            name: 'app',
+            image: 'nginx:latest'
+          }
+        ],
+        volumes: [
+          {
+            name: 'shared',
+            emptyDir: {}
+          }
+        ]
+      }
+    }
+
+    const result = parsePodManifest(yamlPod)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('mountPath must not contain ".." segments')
     }
   })
 })

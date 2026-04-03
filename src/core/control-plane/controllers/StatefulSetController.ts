@@ -317,21 +317,17 @@ export class StatefulSetController implements ReconcilerController {
       const existingHash =
         existingPod.metadata.annotations?.[CONTROLLER_REVISION_HASH_ANNOTATION]
       if (existingHash !== templateHash) {
-        this.apiServer.deleteResource(
-          'Pod',
-          existingPod.metadata.name,
-          existingPod.metadata.namespace
-        )
-        const replacementPod = createPodForOrdinal(
-          statefulSet,
-          ordinal,
-          templateHash
-        )
-        this.apiServer.createResource(
-          'Pod',
-          replacementPod,
-          replacementPod.metadata.namespace
-        )
+        const isTerminating = existingPod.metadata.deletionTimestamp != null
+        if (!isTerminating) {
+          this.apiServer.deleteResource(
+            'Pod',
+            existingPod.metadata.name,
+            existingPod.metadata.namespace
+          )
+        }
+        // StatefulSet replacement is ordered: create the new Pod only
+        // after the previous Pod for this ordinal has fully disappeared.
+        continue
       }
     }
 

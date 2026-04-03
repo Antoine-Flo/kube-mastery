@@ -12,6 +12,7 @@ import type { FileSystem } from '../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import { parseKubernetesYaml } from '../../yamlParser'
+import { formatKubectlFileSystemError } from '../filesystemErrorPresenter'
 import type { ParsedCommand } from '../types'
 import {
   applyResourceWithEvents,
@@ -439,9 +440,9 @@ export const handleDiff = (
     return error('error: must specify one of -f or --filename')
   }
 
-  const fileResult = fileSystem.readFile(filename)
+  const fileResult = fileSystem.readFileDetailed(filename)
   if (!fileResult.ok) {
-    return error(`error: ${fileResult.error}`)
+    return error(formatKubectlFileSystemError(fileResult.error, filename))
   }
 
   const parseResult = parseKubernetesYaml(fileResult.value)

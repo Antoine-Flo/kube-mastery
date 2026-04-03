@@ -5,6 +5,7 @@ import {
 } from '../../../../../cluster/ressources/Secret'
 import type { FileSystem } from '../../../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../../../shared/result'
+import { formatKubectlFileSystemError } from '../../../filesystemErrorPresenter'
 import { createResourceWithEvents } from '../../../resourceHelpers'
 import type { ParsedCommand } from '../../../types'
 import { isExecutionErrorResult } from './configMap'
@@ -171,17 +172,26 @@ const prepareGenericSecretData = (
     if (isExecutionErrorResult(parsedFromFile)) {
       return parsedFromFile
     }
-    const fileReadResult = fileSystem.readFile(parsedFromFile.sourcePath)
+    const fileReadResult = fileSystem.readFileDetailed(parsedFromFile.sourcePath)
     if (!fileReadResult.ok) {
-      return { ok: false, error: `error: ${fileReadResult.error}` }
+      return {
+        ok: false,
+        error: formatKubectlFileSystemError(
+          fileReadResult.error,
+          parsedFromFile.sourcePath
+        )
+      }
     }
     data[parsedFromFile.key] = encodeBase64(fileReadResult.value)
   }
 
   for (const envFilePath of fromEnvFiles) {
-    const envFileReadResult = fileSystem.readFile(envFilePath)
+    const envFileReadResult = fileSystem.readFileDetailed(envFilePath)
     if (!envFileReadResult.ok) {
-      return { ok: false, error: `error: ${envFileReadResult.error}` }
+      return {
+        ok: false,
+        error: formatKubectlFileSystemError(envFileReadResult.error, envFilePath)
+      }
     }
     const parsedEnvFile = parseEnvFileContent(
       envFileReadResult.value,
@@ -214,13 +224,19 @@ const prepareTlsSecretData = (
   if (typeof keyPath !== 'string' || keyPath.trim().length === 0) {
     return { ok: false, error: 'error: create secret tls requires flag --key' }
   }
-  const certReadResult = fileSystem.readFile(certPath)
+  const certReadResult = fileSystem.readFileDetailed(certPath)
   if (!certReadResult.ok) {
-    return { ok: false, error: `error: ${certReadResult.error}` }
+    return {
+      ok: false,
+      error: formatKubectlFileSystemError(certReadResult.error, certPath)
+    }
   }
-  const keyReadResult = fileSystem.readFile(keyPath)
+  const keyReadResult = fileSystem.readFileDetailed(keyPath)
   if (!keyReadResult.ok) {
-    return { ok: false, error: `error: ${keyReadResult.error}` }
+    return {
+      ok: false,
+      error: formatKubectlFileSystemError(keyReadResult.error, keyPath)
+    }
   }
   return {
     secretType: { type: 'kubernetes.io/tls' },

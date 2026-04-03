@@ -213,4 +213,21 @@ spec:
       expect(result.error).toContain('pods "not-there" not found')
     }
   })
+
+  it('should return kubectl-like path error when replace file is missing', () => {
+    const parsed = parseCommand('kubectl replace -f missing-file.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleReplace(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toBe(
+        'error: the path "missing-file.yaml" does not exist'
+      )
+      expect(result.error).not.toContain('cat:')
+    }
+  })
 })

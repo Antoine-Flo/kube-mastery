@@ -3,6 +3,7 @@ import type { FileSystem } from '../../../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error, success } from '../../../../../shared/result'
 import { parseKubernetesYamlDocuments } from '../../../../yamlParser'
+import { formatKubectlFileSystemError } from '../../../filesystemErrorPresenter'
 import {
   NO_OBJECTS_PASSED_TO_APPLY,
   resolveManifestFilePathsFromFilenameFlag
@@ -37,9 +38,9 @@ export const handleApply = (
     return pathsResult
   }
 
-  const filesResult = fileSystem.readFiles(pathsResult.value)
+  const filesResult = fileSystem.readFilesDetailed(pathsResult.value)
   if (!filesResult.ok) {
-    return error(`error: ${filesResult.error}`)
+    return error(formatKubectlFileSystemError(filesResult.error))
   }
 
   const lines: string[] = []

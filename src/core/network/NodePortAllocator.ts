@@ -48,6 +48,7 @@ export const createNodePortAllocator = (
   const size = max - min + 1
 
   const assignedByKey = new Map<string, number>()
+  const keyByNodePort = new Map<number, string>()
   const usedNodePorts = new Set<number>()
 
   const assign = (
@@ -73,6 +74,7 @@ export const createNodePortAllocator = (
     }
 
     usedNodePorts.add(candidate)
+    keyByNodePort.set(candidate, key)
     assignedByKey.set(key, candidate)
     return candidate
   }
@@ -84,6 +86,21 @@ export const createNodePortAllocator = (
     protocol: string
   ): void => {
     const key = servicePortKey(service, servicePort, protocol)
+    const existingKey = keyByNodePort.get(nodePort)
+    if (existingKey != null && existingKey !== key) {
+      throw new Error(`NodePort ${nodePort} is already reserved`)
+    }
+
+    const previousNodePort = assignedByKey.get(key)
+    if (previousNodePort != null && previousNodePort !== nodePort) {
+      const previousOwner = keyByNodePort.get(previousNodePort)
+      if (previousOwner === key) {
+        keyByNodePort.delete(previousNodePort)
+        usedNodePorts.delete(previousNodePort)
+      }
+    }
+
+    keyByNodePort.set(nodePort, key)
     assignedByKey.set(key, nodePort)
     usedNodePorts.add(nodePort)
   }
@@ -100,7 +117,11 @@ export const createNodePortAllocator = (
     for (const key of matchingKeys) {
       const nodePort = assignedByKey.get(key)
       if (nodePort != null) {
-        usedNodePorts.delete(nodePort)
+        const owner = keyByNodePort.get(nodePort)
+        if (owner === key) {
+          keyByNodePort.delete(nodePort)
+          usedNodePorts.delete(nodePort)
+        }
       }
       assignedByKey.delete(key)
     }

@@ -106,8 +106,21 @@ describe('StatefulSetController', () => {
     const pods = apiServer.listResources('Pod', 'default')
     expect(pods).toHaveLength(1)
     expect(pods[0].metadata.name).toBe('db-0')
-    expect(pods[0].metadata.annotations?.['controller-revision-hash']).toBe(
+    expect(pods[0].metadata.deletionTimestamp).toBeDefined()
+    expect(pods[0].metadata.annotations?.['controller-revision-hash']).not.toBe(
       nextTemplateHash
     )
+
+    apiServer.finalizePodDeletion('db-0', 'default', {
+      source: 'test'
+    })
+    controller.reconcile('default/db')
+
+    const recreatedPods = apiServer.listResources('Pod', 'default')
+    expect(recreatedPods).toHaveLength(1)
+    expect(recreatedPods[0].metadata.name).toBe('db-0')
+    expect(
+      recreatedPods[0].metadata.annotations?.['controller-revision-hash']
+    ).toBe(nextTemplateHash)
   })
 })

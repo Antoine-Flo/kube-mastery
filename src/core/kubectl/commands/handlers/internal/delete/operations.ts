@@ -6,7 +6,11 @@ import {
   type LabelSelectorLike
 } from '../../../../../shared/labelSelector'
 import type { Resource } from '../../../types'
-import { DELETE_ALL_RESOURCE_ORDER, DELETE_TARGET_BY_RESOURCE } from './config'
+import {
+  DELETE_ALL_RESOURCE_ORDER,
+  DELETE_TARGET_BY_RESOURCE,
+  getDeleteTargetConfig
+} from './config'
 import { formatDeletedMessage, formatNotFoundMessage } from './messages'
 import type { DeleteManifestTargetConfig, PodDeleteOptions } from './types'
 
@@ -515,8 +519,23 @@ export const deleteNamedResources = (
     return success(messages.join('\n'))
   }
 
-  const messages = names.map((name) => {
-    return formatDeletedMessage(resource, name, namespace, false)
-  })
-  return success(messages.join('\n'))
+  const fallbackConfig = getDeleteTargetConfig(resource)
+  if (!fallbackConfig) {
+    return error(`Resource type "${resource}" is not supported`)
+  }
+  const fallbackMessages: string[] = []
+  for (const name of names) {
+    const fallbackResult = deleteSingleResource(
+      apiServer,
+      fallbackConfig,
+      name,
+      namespace,
+      podDeleteOptions
+    )
+    if (!fallbackResult.ok) {
+      return fallbackResult
+    }
+    fallbackMessages.push(fallbackResult.value)
+  }
+  return success(fallbackMessages.join('\n'))
 }

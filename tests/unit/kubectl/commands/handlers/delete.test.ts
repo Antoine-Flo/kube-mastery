@@ -15,6 +15,8 @@ import { createDeployment } from '../../../../../src/core/cluster/ressources/Dep
 import { createIngress } from '../../../../../src/core/cluster/ressources/Ingress'
 import { createService } from '../../../../../src/core/cluster/ressources/Service'
 import { createNamespace } from '../../../../../src/core/cluster/ressources/Namespace'
+import { createNode } from '../../../../../src/core/cluster/ressources/Node'
+import { createReplicaSet } from '../../../../../src/core/cluster/ressources/ReplicaSet'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 import { expectErr, expectOk } from '../../../helpers/resultAssertions'
 
@@ -136,7 +138,11 @@ spec:
       const result = handleDelete(apiServer, parsed, fileSystem)
       expect(result.ok).toBe(false)
       if (!result.ok) {
-        expect(result.error).toContain('No such file or directory')
+        expect(result.error).toBe(
+          'error: the path "does-not-exist.yaml" does not exist'
+        )
+        expect(result.error).not.toContain('ls:')
+        expect(result.error).not.toContain('cat:')
       }
     })
 
@@ -514,6 +520,74 @@ spec:
   })
 
   describe('deleting other resources', () => {
+    it('should delete node by name through generic delete target config', () => {
+      apiServer.createResource(
+        'Node',
+        createNode({
+          name: 'worker-1',
+          status: {
+            nodeInfo: {
+              architecture: 'amd64',
+              containerRuntimeVersion: 'containerd://1.7.0',
+              kernelVersion: '6.8.0',
+              kubeletVersion: 'v1.30.0',
+              operatingSystem: 'linux',
+              osImage: 'Fedora Linux'
+            }
+          }
+        })
+      )
+
+      const parsed = createParsedCommand({
+        name: 'worker-1',
+        resource: 'nodes'
+      })
+
+      const result = handleDelete(apiServer, parsed)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+      expect(result.value).toContain('node "worker-1" deleted')
+      expect(apiServer.findResource('Node', 'worker-1').ok).toBe(false)
+    })
+
+    it('should delete replicaset by name through generic delete target config', () => {
+      apiServer.createResource(
+        'ReplicaSet',
+        createReplicaSet({
+          name: 'my-rs',
+          namespace: 'default',
+          selector: { matchLabels: { app: 'my-rs' } },
+          template: {
+            metadata: { labels: { app: 'my-rs' } },
+            spec: {
+              containers: [{ name: 'main', image: 'nginx:latest' }]
+            }
+          }
+        })
+      )
+
+      const parsed = createParsedCommand({
+        name: 'my-rs',
+        resource: 'replicasets'
+      })
+
+      const result = handleDelete(apiServer, parsed)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) {
+        return
+      }
+      expect(result.value).toContain(
+        'replicaset.apps "my-rs" deleted from default namespace'
+      )
+      expect(apiServer.findResource('ReplicaSet', 'my-rs', 'default').ok).toBe(
+        false
+      )
+    })
+
     it('should delete deployment with kind-like message', () => {
       apiServer.createResource(
         'Deployment',
@@ -701,8 +775,8 @@ spec:
       })
 
       const result = handleDelete(apiServer, parsed)
-      const output = expectOk(result)
-      expect(output).toContain('deleted')
+      const output = expectErr(result)
+      expect(output).toContain('Resource type "unknown" is not supported')
     })
   })
 
