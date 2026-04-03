@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro'
 import CourseCard from '../../components/CourseCard.astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import { getCourses } from '../../content/courses/facade'
+import { getLayoutAuthContext } from '../../lib/auth/server'
 import '../../styles/components/page-halo.css'
 
 const locale = Astro.params.lang as 'en' | 'fr'
@@ -10,6 +11,13 @@ const t = useTranslations(locale)
 const localePath = useLocalePath(locale)
 
 const courses = getCourses(locale)
+
+const auth = await getLayoutAuthContext(
+  Astro.locals,
+  Astro.request,
+  Astro.cookies
+)
+const emphasizePaidLearningPath = auth.hasPaidSubscription
 
 type CourseVisualVariant = 'fundamentals' | 'developer' | 'operator' | 'crash'
 
@@ -55,7 +63,7 @@ const coursesListSeo = {
                   href={localePath(`/courses/${crashCourse.id}`)}
                   comingSoon={crashCourse.comingSoon}
                   inProgress={crashCourse.inProgress}
-                  startHere={crashCourse.startHere}
+                  startHere={!emphasizePaidLearningPath}
                   level={crashCourse.level}
                   lessonsLabel={`${crashCourse.totalLessons} ${t('courses_lessons')}`}
                   freeLabel={t('pricing_free')}
@@ -81,7 +89,7 @@ const coursesListSeo = {
                   href={localePath(`/courses/${commonCore.id}`)}
                   comingSoon={commonCore.comingSoon}
                   inProgress={commonCore.inProgress}
-                  startHere={commonCore.startHere}
+                  startHere={emphasizePaidLearningPath && commonCore.startHere}
                   level={commonCore.level}
                   lessonsLabel={`${commonCore.totalLessons} ${t('courses_lessons')}`}
                   freeLabel={t('pricing_free')}

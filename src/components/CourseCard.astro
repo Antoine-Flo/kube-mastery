@@ -38,6 +38,9 @@ const {
 } = Astro.props
 
 const descriptionText = description ?? ''
+
+const hasBadgeRow =
+  startHere || inProgress || comingSoon || isFree
 ---
 
 <article
@@ -72,22 +75,28 @@ const descriptionText = description ?? ''
       <h3 class="course-card__title">{title}</h3>
     </header>
 
-    <div class="course-card__badges">
-      {startHere && <span class="badge badge--start">{startHereLabel}</span>}
-      {
-        inProgress && (
-          <span class="badge badge--progress">{inProgressLabel}</span>
-        )
-      }
-      {comingSoon && <span class="badge badge--soon">{comingSoonLabel}</span>}
-      {isFree && <span class="badge badge--free">{freeLabel}</span>}
-    </div>
-
     {
-      descriptionText && (
-        <p class="course-card__description">{descriptionText}</p>
+      hasBadgeRow && (
+        <div class="course-card__badges">
+          {startHere && <span class="badge badge--start">{startHereLabel}</span>}
+          {inProgress && (
+            <span class="badge badge--progress">{inProgressLabel}</span>
+          )}
+          {comingSoon && (
+            <span class="badge badge--soon">{comingSoonLabel}</span>
+          )}
+          {isFree && <span class="badge badge--free">{freeLabel}</span>}
+        </div>
       )
     }
+
+    <div class="course-card__desc-wrap">
+      {
+        descriptionText && (
+          <p class="course-card__description">{descriptionText}</p>
+        )
+      }
+    </div>
 
     <footer class="course-card__meta">
       {
@@ -105,10 +114,14 @@ const descriptionText = description ?? ''
 
 <style>
   .course-card {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 12.5rem;
+    flex-shrink: 0;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-l3);
     background-color: var(--color-palette-gray-surface-bg);
-    min-height: 172px;
     overflow: hidden;
   }
 
@@ -133,19 +146,23 @@ const descriptionText = description ?? ''
   }
 
   .course-card__link {
+    box-sizing: border-box;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
+    min-height: 0;
+    height: 100%;
     gap: 0.7rem;
     padding: 0.9rem;
     text-decoration: none;
     color: inherit;
-    height: 100%;
   }
 
   .course-card__header {
     display: flex;
     align-items: center;
     gap: 0.55rem;
+    flex-shrink: 0;
   }
 
   .course-card__icon {
@@ -190,9 +207,17 @@ const descriptionText = description ?? ''
 
   .course-card__badges {
     display: flex;
+    align-items: center;
     gap: 0.4rem;
     flex-wrap: wrap;
-    min-height: 1.6rem;
+    flex-shrink: 0;
+  }
+
+  .course-card__desc-wrap {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   .badge {
@@ -235,11 +260,11 @@ const descriptionText = description ?? ''
   }
 
   .course-card__meta {
-    margin-top: auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 0.6rem;
+    flex-shrink: 0;
   }
 
   .course-card__lessons {
