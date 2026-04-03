@@ -216,19 +216,15 @@ function addUrl(
   }
 }
 
-function buildSupportedLanguageList(): string[] {
-  return Object.keys(CONFIG.i18n.languageLabels)
-}
-
 function parseLocalizedPath(
   pathname: string,
-  supportedLanguages: string[]
+  enabledLanguages: string[]
 ): { lang: string; suffix: string } | null {
   const normalizedPath = pathname.startsWith('/') ? pathname : `/${pathname}`
   const segments = normalizedPath.split('/').filter((segment) => segment !== '')
   const firstSegment = segments[0]
 
-  if (!firstSegment || !supportedLanguages.includes(firstSegment)) {
+  if (!firstSegment || !enabledLanguages.includes(firstSegment)) {
     return null
   }
 
@@ -240,15 +236,19 @@ function parseLocalizedPath(
 function buildAlternateLinks(
   site: string,
   pathname: string,
-  supportedLanguages: string[]
+  enabledLanguages: string[]
 ): Array<{ hreflang: string; href: string }> {
-  const localizedPath = parseLocalizedPath(pathname, supportedLanguages)
+  if (enabledLanguages.length <= 1) {
+    return []
+  }
+
+  const localizedPath = parseLocalizedPath(pathname, enabledLanguages)
   if (!localizedPath) {
     return []
   }
 
   const alternates: Array<{ hreflang: string; href: string }> = []
-  for (const lang of supportedLanguages) {
+  for (const lang of enabledLanguages) {
     alternates.push({
       hreflang: lang,
       href: toAbsoluteUrl(site, `/${lang}${localizedPath.suffix}`)
@@ -266,7 +266,6 @@ function buildAlternateLinks(
 
 function buildSitemapEntries(site: string): SitemapEntry[] {
   const enabledLanguages = [...CONFIG.i18n.enabledLanguages]
-  const supportedLanguages = buildSupportedLanguageList()
   const urlSources = new Map<string, Set<string>>()
   const entries: SitemapEntry[] = []
   const seenCourseLessonKeys = new Set<string>()
@@ -348,7 +347,7 @@ function buildSitemapEntries(site: string): SitemapEntry[] {
       loc,
       changefreq: 'weekly',
       lastmod: resolveLastmod(Array.from(sourceSet)),
-      alternates: buildAlternateLinks(site, pathname, supportedLanguages)
+      alternates: buildAlternateLinks(site, pathname, enabledLanguages)
     })
   }
 
@@ -359,9 +358,16 @@ function buildSitemapEntries(site: string): SitemapEntry[] {
 function renderSitemapXml(entries: SitemapEntry[]): string {
   const lines: string[] = []
   lines.push('<?xml version="1.0" encoding="UTF-8"?>')
-  lines.push(
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">'
+  const includeXhtmlNamespace = entries.some(
+    (entry) => entry.alternates && entry.alternates.length > 0
   )
+  if (includeXhtmlNamespace) {
+    lines.push(
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">'
+    )
+  } else {
+    lines.push('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+  }
 
   for (const entry of entries) {
     lines.push('  <url>')
@@ -372,7 +378,7 @@ function renderSitemapXml(entries: SitemapEntry[]): string {
     if (entry.lastmod) {
       lines.push(`    <lastmod>${entry.lastmod}</lastmod>`)
     }
-    if (entry.alternates) {
+    if (entry.alternates && entry.alternates.length > 0) {
       for (const alternate of entry.alternates) {
         lines.push(
           `    <xhtml:link rel="alternate" hreflang="${escapeXml(alternate.hreflang)}" href="${escapeXml(alternate.href)}" />`
