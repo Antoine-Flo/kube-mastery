@@ -54,10 +54,7 @@ export default defineConfig({
     '/': '/en',
     '/terms-of-service': '/en/terms-of-service',
     '/privacy-policy': '/en/privacy-policy',
-    '/courses': '/en/courses',
-    '/blog': '/en/news',
-    '/en/blog': '/en/news',
-    '/fr/blog': '/fr/news'
+    '/courses': '/en/courses'
   },
 
   adapter: cloudflare()

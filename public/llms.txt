@@ -7,8 +7,6 @@ https://kubemastery.com/en
 https://kubemastery.com/en/pricing
 https://kubemastery.com/en/courses
 https://kubemastery.com/en/modules
-https://kubemastery.com/en/news
-https://kubemastery.com/en/news/*
 https://kubemastery.com/en/supported
 https://kubemastery.com/en/contact
 https://kubemastery.com/en/privacy-policy

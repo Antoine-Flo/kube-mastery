@@ -10,12 +10,6 @@
 - https://kubemastery.com/en/courses
 - https://kubemastery.com/en/modules
 
-## News
-- https://kubemastery.com/en/news
-- https://kubemastery.com/en/news/*
-- https://kubemastery.com/fr/news
-- https://kubemastery.com/fr/news/*
-
 ## Legal
 - https://kubemastery.com/en/privacy-policy
 - https://kubemastery.com/en/terms-of-service

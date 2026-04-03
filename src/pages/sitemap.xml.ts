@@ -9,6 +9,7 @@ type SitemapEntry = {
   loc: string
   changefreq?: string
   lastmod?: string
+  alternates?: Array<{ hreflang: string; href: string }>
 }
 
 type LessonSource = {
@@ -93,7 +94,7 @@ function buildCourseMarkdownByLang(): Map<string, Map<string, string>> {
   for (const relativePath of Object.keys(courseMarkdownGlob)) {
     const sourcePath = toSourcePath(relativePath)
     const parts = sourcePath.split('/')
-    if (parts.length < 6) {
+    if (parts.length < 5) {
       continue
     }
 
@@ -120,7 +121,7 @@ function buildCourseStructurePathsByCourseId(): Map<string, string> {
   for (const relativePath of Object.keys(structureGlob)) {
     const sourcePath = toSourcePath(relativePath)
     const parts = sourcePath.split('/')
-    if (parts.length < 6) {
+    if (parts.length < 5) {
       continue
     }
     const courseId = parts[3]
@@ -218,8 +219,57 @@ function addUrl(
   }
 }
 
+function buildSupportedLanguageList(): string[] {
+  return Object.keys(CONFIG.i18n.languageLabels)
+}
+
+function parseLocalizedPath(
+  pathname: string,
+  supportedLanguages: string[]
+): { lang: string; suffix: string } | null {
+  const normalizedPath = pathname.startsWith('/') ? pathname : `/${pathname}`
+  const segments = normalizedPath.split('/').filter((segment) => segment !== '')
+  const firstSegment = segments[0]
+
+  if (!firstSegment || !supportedLanguages.includes(firstSegment)) {
+    return null
+  }
+
+  const suffixSegments = segments.slice(1)
+  const suffix = suffixSegments.length > 0 ? `/${suffixSegments.join('/')}` : ''
+  return { lang: firstSegment, suffix }
+}
+
+function buildAlternateLinks(
+  site: string,
+  pathname: string,
+  supportedLanguages: string[]
+): Array<{ hreflang: string; href: string }> {
+  const localizedPath = parseLocalizedPath(pathname, supportedLanguages)
+  if (!localizedPath) {
+    return []
+  }
+
+  const alternates: Array<{ hreflang: string; href: string }> = []
+  for (const lang of supportedLanguages) {
+    alternates.push({
+      hreflang: lang,
+      href: toAbsoluteUrl(site, `/${lang}${localizedPath.suffix}`)
+    })
+  }
+
+  const defaultLang = CONFIG.i18n.defaultLang
+  alternates.push({
+    hreflang: 'x-default',
+    href: toAbsoluteUrl(site, `/${defaultLang}${localizedPath.suffix}`)
+  })
+
+  return alternates
+}
+
 function buildSitemapEntries(site: string): SitemapEntry[] {
   const enabledLanguages = [...CONFIG.i18n.enabledLanguages]
+  const supportedLanguages = buildSupportedLanguageList()
   const urlSources = new Map<string, Set<string>>()
   const entries: SitemapEntry[] = []
   const seenCourseLessonKeys = new Set<string>()
@@ -296,10 +346,12 @@ function buildSitemapEntries(site: string): SitemapEntry[] {
   }
 
   for (const [loc, sourceSet] of urlSources.entries()) {
+    const pathname = new URL(loc).pathname
     entries.push({
       loc,
       changefreq: 'weekly',
-      lastmod: resolveLastmod(Array.from(sourceSet))
+      lastmod: resolveLastmod(Array.from(sourceSet)),
+      alternates: buildAlternateLinks(site, pathname, supportedLanguages)
     })
   }
 
@@ -310,7 +362,9 @@ function buildSitemapEntries(site: string): SitemapEntry[] {
 function renderSitemapXml(entries: SitemapEntry[]): string {
   const lines: string[] = []
   lines.push('<?xml version="1.0" encoding="UTF-8"?>')
-  lines.push('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+  lines.push(
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">'
+  )
 
   for (const entry of entries) {
     lines.push('  <url>')
@@ -320,6 +374,13 @@ function renderSitemapXml(entries: SitemapEntry[]): string {
     }
     if (entry.lastmod) {
       lines.push(`    <lastmod>${entry.lastmod}</lastmod>`)
+    }
+    if (entry.alternates) {
+      for (const alternate of entry.alternates) {
+        lines.push(
+          `    <xhtml:link rel="alternate" hreflang="${escapeXml(alternate.hreflang)}" href="${escapeXml(alternate.href)}" />`
+        )
+      }
     }
     lines.push('  </url>')
   }

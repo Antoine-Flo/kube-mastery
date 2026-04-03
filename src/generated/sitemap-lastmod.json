@@ -10,7 +10,6 @@
   "src/pages/[lang]/courses.astro": "2026-04-03",
   "src/pages/[lang]/index.astro": "2026-03-31",
   "src/pages/[lang]/modules.astro": "2026-04-01",
-  "src/pages/[lang]/news/index.astro": "2026-03-31",
   "src/pages/[lang]/pricing.astro": "2026-04-02",
   "src/pages/[lang]/privacy-policy.astro": "2026-02-06",
   "src/pages/[lang]/profile/index.astro": "2026-03-20",
@@ -34,6 +33,7 @@
   "src/pages/api/progress/complete.ts": "2026-03-31",
   "src/pages/api/stats/early-access-count.ts": "2026-03-20",
   "src/pages/api/survey.ts": "2026-03-05",
+  "src/pages/sitemap.xml.ts": "2026-04-03",
   "src/courses/cheat-sheets/kubectl-quick-ref.md": "2026-03-26",
   "src/courses/learningPaths/cka/course-structure.ts": "2026-02-19",
   "src/courses/learningPaths/cka/en.md": "2026-03-30",
@@ -397,6 +397,5 @@
   "src/blog/domain.ts": "2026-03-17",
   "src/blog/facade.ts": "2026-03-17",
   "src/blog/glob-adapter.ts": "2026-03-17",
-  "src/blog/news-feed.ts": "2026-03-31",
   "src/blog/types.ts": "2026-03-17"
 }
