@@ -37,7 +37,9 @@ function collectSourceFiles(rootDir: string): string[] {
         continue
       }
 
-      const relativePath = toPosixPath(path.relative(process.cwd(), absolutePath))
+      const relativePath = toPosixPath(
+        path.relative(process.cwd(), absolutePath)
+      )
       files.push(relativePath)
     }
   }
@@ -92,7 +94,9 @@ function writeOutput(index: Record<string, string>): void {
 function main(): void {
   const index = buildLastmodIndex()
   writeOutput(index)
-  console.log(`Generated ${OUTPUT_FILE} with ${Object.keys(index).length} entries.`)
+  console.log(
+    `Generated ${OUTPUT_FILE} with ${Object.keys(index).length} entries.`
+  )
 }
 
 main()

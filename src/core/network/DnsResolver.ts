@@ -1,5 +1,6 @@
 import type { Result } from '../shared/result'
 import { error, success } from '../shared/result'
+import type { ApiServerFacade } from '../api/ApiServerFacade'
 import type { NetworkState, SimServiceRuntime } from './NetworkState'
 
 export interface DnsLookupResult {
@@ -78,7 +79,146 @@ export interface DnsResolver {
   ) => Result<DnsLookupResult>
 }
 
-export const createDnsResolver = (networkState: NetworkState): DnsResolver => {
+const parsePodIpDnsQuery = (
+  normalizedQuery: string
+): { namespace: string; ipAddress: string } | undefined => {
+  const podIpQueryMatch = normalizedQuery.match(
+    /^(\d+)-(\d+)-(\d+)-(\d+)\.([a-z0-9-]+)\.pod\.cluster\.local$/
+  )
+  if (podIpQueryMatch == null) {
+    return undefined
+  }
+  return {
+    ipAddress: `${podIpQueryMatch[1]}.${podIpQueryMatch[2]}.${podIpQueryMatch[3]}.${podIpQueryMatch[4]}`,
+    namespace: podIpQueryMatch[5]
+  }
+}
+
+const parseHeadlessPodDnsQuery = (
+  normalizedQuery: string
+):
+  | {
+      podName: string
+      serviceName: string
+      namespace: string
+      fqdn: string
+    }
+  | undefined => {
+  const segments = normalizedQuery.split('.')
+  const hasExpectedSegments =
+    segments.length === 6 &&
+    segments[3] === 'svc' &&
+    segments[4] === 'cluster' &&
+    segments[5] === 'local'
+  if (!hasExpectedSegments) {
+    return undefined
+  }
+  return {
+    podName: segments[0],
+    serviceName: segments[1],
+    namespace: segments[2],
+    fqdn: normalizedQuery
+  }
+}
+
+const hasAllSelectorLabels = (
+  labels: Record<string, string> | undefined,
+  selector: Record<string, string> | undefined
+): boolean => {
+  if (selector == null || Object.keys(selector).length === 0) {
+    return false
+  }
+  if (labels == null) {
+    return false
+  }
+  for (const [key, value] of Object.entries(selector)) {
+    if (labels[key] !== value) {
+      return false
+    }
+  }
+  return true
+}
+
+const resolvePodIpARecord = (
+  query: string,
+  normalizedQuery: string,
+  apiServer?: ApiServerFacade
+): Result<DnsLookupResult> | undefined => {
+  if (apiServer == null) {
+    return undefined
+  }
+  const podIpQuery = parsePodIpDnsQuery(normalizedQuery)
+  if (podIpQuery == null) {
+    return undefined
+  }
+  const pods = apiServer.listResources('Pod', podIpQuery.namespace)
+  const matchingPod = pods.find((pod) => {
+    return pod.status.podIP === podIpQuery.ipAddress
+  })
+  if (matchingPod == null) {
+    return undefined
+  }
+  return success({
+    query,
+    fqdn: normalizedQuery,
+    addresses: [podIpQuery.ipAddress]
+  })
+}
+
+const resolveHeadlessPodARecord = (
+  query: string,
+  normalizedQuery: string,
+  apiServer?: ApiServerFacade
+): Result<DnsLookupResult> | undefined => {
+  if (apiServer == null) {
+    return undefined
+  }
+  const parsedHeadlessPodQuery = parseHeadlessPodDnsQuery(normalizedQuery)
+  if (parsedHeadlessPodQuery == null) {
+    return undefined
+  }
+  const serviceResult = apiServer.findResource(
+    'Service',
+    parsedHeadlessPodQuery.serviceName,
+    parsedHeadlessPodQuery.namespace
+  )
+  if (!serviceResult.ok) {
+    return undefined
+  }
+  if (serviceResult.value.spec.clusterIP !== 'None') {
+    return undefined
+  }
+  const podResult = apiServer.findResource(
+    'Pod',
+    parsedHeadlessPodQuery.podName,
+    parsedHeadlessPodQuery.namespace
+  )
+  if (!podResult.ok) {
+    return undefined
+  }
+  if (
+    !hasAllSelectorLabels(
+      podResult.value.metadata.labels,
+      serviceResult.value.spec.selector
+    )
+  ) {
+    return undefined
+  }
+  const podIpAddress = podResult.value.status.podIP
+  if (podIpAddress == null || podIpAddress.length === 0) {
+    return undefined
+  }
+  return success({
+    query,
+    fqdn: parsedHeadlessPodQuery.fqdn,
+    addresses: [podIpAddress]
+  })
+}
+
+export const createDnsResolver = (
+  networkState: NetworkState,
+  apiServer?: ApiServerFacade
+): DnsResolver => {
   const resolveARecord = (
     query: string,
     defaultNamespace: string
@@ -86,6 +226,23 @@ export const createDnsResolver = (networkState: NetworkState): DnsResolver => {
     const normalizedQuery = normalizeQuery(query)
     if (normalizedQuery.length === 0) {
       return error('** server can not find : NXDOMAIN')
+    }
+
+    const podIpResolution = resolvePodIpARecord(
+      query,
+      normalizedQuery,
+      apiServer
+    )
+    if (podIpResolution != null) {
+      return podIpResolution
+    }
+    const headlessPodResolution = resolveHeadlessPodARecord(
+      query,
+      normalizedQuery,
+      apiServer
+    )
+    if (headlessPodResolution != null) {
+      return headlessPodResolution
     }
 
     const candidates = buildCandidateServiceLookups(

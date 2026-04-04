@@ -222,7 +222,9 @@ spec:
         'service "multi-del-service" deleted from default namespace'
       ])
       expectPodMarkedTerminating('multi-del-pod')
-      expect(apiServer.findResource('Service', 'multi-del-service', 'default').ok).toBe(false)
+      expect(
+        apiServer.findResource('Service', 'multi-del-service', 'default').ok
+      ).toBe(false)
     })
 
     it('should delete resources from sorted manifests in a directory', () => {

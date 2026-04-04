@@ -16,6 +16,12 @@ cluster-list:
 cluster-down NAME:
     kind delete cluster --name {{NAME}}
 
+# Reset local kind cluster for conformance tests
+clean:
+    kind delete cluster --name conformance || true
+    kind create cluster --name conformance --config src/courses/seeds/clusterConfig/multi-node.yaml
+    kubectl config set-context --current --namespace=default
+
 compare:
     delta conformance/results/kind.log conformance/results/runner.log --side-by-side
 

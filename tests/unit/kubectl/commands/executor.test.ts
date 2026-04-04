@@ -487,7 +487,7 @@ data:
         if (!exposeResult.ok) {
           return
         }
-        expect(exposeResult.value).toContain('service/web created')
+        expect(exposeResult.value).toContain('service/web exposed')
       })
 
       it('should route "kubectl expose pod" to expose handler', () => {
@@ -511,7 +511,7 @@ data:
         if (!exposeResult.ok) {
           return
         }
-        expect(exposeResult.value).toContain('service/web-svc created')
+        expect(exposeResult.value).toContain('service/web-svc exposed')
 
         const service = apiServer.findResource('Service', 'web-svc', 'default')
         expect(service.ok).toBe(true)
@@ -2206,6 +2206,39 @@ spec:
 
         expect(getResult.value).toContain('name: LOG_LEVEL')
         expect(getResult.value).toContain('value: info')
+      })
+
+      it('should render configmap yaml with metadata after data', () => {
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const createResult = executor.execute(
+          'kubectl create configmap demo-cm --from-literal=key=value'
+        )
+        expect(createResult.ok).toBe(true)
+
+        const getResult = executor.execute(
+          'kubectl get configmap demo-cm -o yaml'
+        )
+        expect(getResult.ok).toBe(true)
+        if (!getResult.ok) {
+          return
+        }
+
+        const output = getResult.value
+        const apiVersionIndex = output.indexOf('apiVersion: v1')
+        const dataIndex = output.indexOf('\ndata:\n')
+        const kindIndex = output.indexOf('\nkind: ConfigMap\n')
+        const metadataIndex = output.indexOf('\nmetadata:\n')
+        const creationTimestampIndex = output.indexOf('creationTimestamp:')
+        const nameIndex = output.indexOf('name: demo-cm')
+        const namespaceIndex = output.indexOf('namespace: default')
+
+        expect(apiVersionIndex).toBeGreaterThanOrEqual(0)
+        expect(dataIndex).toBeGreaterThan(apiVersionIndex)
+        expect(kindIndex).toBeGreaterThan(dataIndex)
+        expect(metadataIndex).toBeGreaterThan(kindIndex)
+        expect(creationTimestampIndex).toBeGreaterThan(metadataIndex)
+        expect(nameIndex).toBeGreaterThan(creationTimestampIndex)
+        expect(namespaceIndex).toBeGreaterThan(nameIndex)
       })
 
       it('should parse quoted --env value for kubectl run', () => {

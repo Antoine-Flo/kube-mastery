@@ -119,49 +119,40 @@ For the vast majority of workloads, `ClusterFirst` (the actual default) is the r
 
 Let's explore Pod DNS records and custom hostnames hands-on.
 
-**Step 1: Check a Pod's own hostname and DNS**
-
-```bash
-kubectl run mypod --image=busybox --rm -it --restart=Never -- sh -c "hostname && cat /etc/hosts"
-```
-
-Expected output:
-
-```
-mypod
-# Kubernetes-managed hosts file.
-127.0.0.1       localhost
-::1             localhost
-10.244.x.x      mypod
-```
-
-**Step 2: Resolve the default Pod DNS record**
-
-First, get the Pod's IP:
+**Step 1: Create a Pod and inspect its network identity**
 
 ```bash
 kubectl run mypod --image=busybox --restart=Never -- sleep 3600
 kubectl get pod mypod -o wide
 ```
 
-Example output:
+If the Pod is still starting, wait until it becomes `Running`, you can also watch it in the workload visualizer.
+
+Expected output:
 
 ```
-NAME    READY   STATUS    RESTARTS   AGE   IP            NODE
-mypod   1/1     Running   0          5s    10.244.1.23   node1
+NAME    READY   STATUS    RESTARTS   AGE   IP            NODE                 NOMINATED NODE   READINESS GATES
+mypod   1/1     Running   0          5s    10.244.x.x    <node-name>          <none>           <none>
 ```
 
-Now resolve the IP-based Pod DNS name from another Pod:
+**Step 2: Resolve the default Pod DNS record**
+
+Resolve the Pod DNS name from another Pod, replace `<pod-ip-with-dashes>` with the IP from step 1 where dots are replaced by dashes:
 
 ```bash
-kubectl run resolver --image=busybox --rm -it --restart=Never -- nslookup 10-244-1-23.default.pod.cluster.local
+kubectl run resolver --image=busybox --rm -it --restart=Never -- nslookup <pod-ip-with-dashes>.default.pod.cluster.local
 ```
 
 Expected output:
 
 ```
-Name:      10-244-1-23.default.pod.cluster.local
-Address 1: 10.244.1.23 10-244-1-23.default.pod.cluster.local
+Server:         10.96.0.10
+Address:        10.96.0.10:53
+
+Name:   <pod-ip-with-dashes>.default.pod.cluster.local
+Address: <pod-ip>
+
+pod "resolver" deleted from default namespace
 ```
 
 **Step 3: Deploy a StatefulSet and observe stable DNS**
@@ -186,7 +177,7 @@ metadata:
   name: db
 spec:
   serviceName: "db"
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: db
@@ -206,20 +197,15 @@ spec:
 kubectl apply -f db-service.yaml
 ```
 
-Wait for the Pods to be ready:
-
-```bash
-kubectl get pods -l app=db -w
-```
+Wait until Pod `db-0` is `Running`, you can check this in the workload visualizer or with `kubectl get pods -l app=db`.
 
 **Step 4: Resolve each StatefulSet Pod by its stable DNS name**
 
 ```bash
 kubectl run resolver --image=busybox --rm -it --restart=Never -- nslookup db-0.db.default.svc.cluster.local
-kubectl run resolver --image=busybox --rm -it --restart=Never -- nslookup db-1.db.default.svc.cluster.local
 ```
 
-Each should return the IP of the corresponding StatefulSet Pod. Delete Pod `db-0` and watch it come back, the DNS name `db-0.db.default.svc.cluster.local` will resolve to the new Pod's IP automatically.
+The command should return the IP of the StatefulSet Pod. Delete Pod `db-0` and watch it come back, the DNS name `db-0.db.default.svc.cluster.local` will resolve to the new Pod's IP automatically.
 
 ```bash
 kubectl delete pod db-0

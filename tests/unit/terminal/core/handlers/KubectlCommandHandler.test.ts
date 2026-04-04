@@ -388,6 +388,31 @@ describe('KubectlCommandHandler', () => {
       expect(renderer.getOutput()).toContain('options ndots:5')
     })
 
+    it('should render stdout and stderr for failing kubectl run attach command', () => {
+      const deploymentResult = handler.execute(
+        'kubectl create deployment backend --image=nginx',
+        context
+      )
+      expect(deploymentResult.ok).toBe(true)
+      const exposeResult = handler.execute(
+        'kubectl expose deployment backend --port=80',
+        context
+      )
+      expect(exposeResult.ok).toBe(true)
+      renderer.clearOutput()
+
+      const runResult = handler.execute(
+        'kubectl run dns-test --image=busybox --rm -it --restart=Never -- nslookup backend',
+        context
+      )
+      expect(runResult.ok).toBe(false)
+      const output = renderer.getOutput()
+      expect(output).toContain('Server:')
+      expect(output).toContain('Name:\tbackend.default.svc.cluster.local')
+      expect(output).toContain('pod "dns-test" deleted from default namespace')
+      expect(output).toContain('pod default/dns-test terminated (Error)')
+    })
+
     it('should keep container file changes isolated from host after exit', () => {
       const pod = createPod({
         name: 'log-demo',

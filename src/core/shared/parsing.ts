@@ -93,7 +93,8 @@ export const tokenize = <Ctx extends { input: string }>(
 export const parseFlags =
   <Ctx extends { tokens?: string[]; flags?: ParsedFlags }>(
     startIndex = 1,
-    aliases?: Record<string, string>
+    aliases?: Record<string, string>,
+    flagsRequiringValues: string[] = []
   ) =>
   (
     ctx: Ctx
@@ -102,7 +103,7 @@ export const parseFlags =
       return error('No tokens available')
     }
 
-    const rawFlags = parseFlagsRaw(ctx.tokens, startIndex)
+    const rawFlags = parseFlagsRaw(ctx.tokens, startIndex, flagsRequiringValues)
     // Merge with existing flags (e.g., from transformers)
     const mergedFlags = { ...ctx.flags, ...rawFlags }
 
@@ -134,7 +135,11 @@ export const parseFlags =
  * parseFlagsRaw(["-n", "default", "--output", "yaml", "-A", "--namespaced=true"])
  * // => { n: "default", output: "yaml", A: true, namespaced: "true" }
  */
-const parseFlagsRaw = (tokens: string[], startIndex = 0): ParsedFlags => {
+const parseFlagsRaw = (
+  tokens: string[],
+  startIndex = 0,
+  flagsRequiringValues: string[] = []
+): ParsedFlags => {
   const flags: ParsedFlags = {}
   let i = startIndex
 
@@ -160,7 +165,11 @@ const parseFlagsRaw = (tokens: string[], startIndex = 0): ParsedFlags => {
     // Regular flag (with or without separate value)
     const flagName = token.replace(/^-+/, '')
     const nextToken = tokens[i + 1]
-    const nextIsValue = nextToken && !nextToken.startsWith('-')
+    const flagRequiresValue = flagsRequiringValues.includes(flagName)
+    const nextIsValue =
+      nextToken !== undefined &&
+      nextToken !== '--' &&
+      (flagRequiresValue || !nextToken.startsWith('-'))
 
     if (nextIsValue) {
       flags[flagName] = nextToken

@@ -187,7 +187,7 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
 
   // Continue with common parsing
   const commandPipeline = pipeResult<ParseContext>(
-    parseFlags(1, FLAG_ALIASES),
+    parseFlags(1, FLAG_ALIASES, FLAGS_REQUIRING_VALUES),
     checkFlags(FLAGS_REQUIRING_VALUES),
     extractResource,
     extractName,

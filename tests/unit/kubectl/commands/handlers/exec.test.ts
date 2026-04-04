@@ -366,7 +366,7 @@ describe('kubectl exec handler', () => {
         }
       })
       expect(result).toContain('Name:\tweb.default.svc.cluster.local')
-      expect(result).toContain('Address:\t10.96.99.10')
+      expect(result).toContain('Address: 10.96.99.10')
     })
 
     it('should execute curl with network runtime', () => {

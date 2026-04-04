@@ -172,7 +172,9 @@ const prepareGenericSecretData = (
     if (isExecutionErrorResult(parsedFromFile)) {
       return parsedFromFile
     }
-    const fileReadResult = fileSystem.readFileDetailed(parsedFromFile.sourcePath)
+    const fileReadResult = fileSystem.readFileDetailed(
+      parsedFromFile.sourcePath
+    )
     if (!fileReadResult.ok) {
       return {
         ok: false,
@@ -190,7 +192,10 @@ const prepareGenericSecretData = (
     if (!envFileReadResult.ok) {
       return {
         ok: false,
-        error: formatKubectlFileSystemError(envFileReadResult.error, envFilePath)
+        error: formatKubectlFileSystemError(
+          envFileReadResult.error,
+          envFilePath
+        )
       }
     }
     const parsedEnvFile = parseEnvFileContent(

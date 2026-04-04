@@ -1110,6 +1110,32 @@ const stripInlineShellComment = (command: string): string => {
   return command
 }
 
+const writeExecutionResultOutput = (
+  context: CommandContext,
+  result: ExecutionResult
+): void => {
+  const stdout = result.io?.stdout
+  if (stdout != null && stdout.length > 0) {
+    context.output.writeOutput(stdout)
+  }
+  if (result.ok) {
+    const value = result.value
+    if (value.length === 0) {
+      return
+    }
+    if (stdout != null && value === stdout) {
+      return
+    }
+    context.output.writeOutput(value)
+    return
+  }
+
+  const stderr = result.io?.stderr ?? result.error
+  if (stderr.length > 0) {
+    context.output.writeOutput(stderr)
+  }
+}
+
 const HELP_FLAGS = new Set(['-h', '--help'])
 
 const isKubectlHelpRequest = (command: string): boolean => {
@@ -1514,13 +1540,7 @@ export class KubectlCommandHandler implements CommandHandler {
     }
 
     // Afficher le résultat dans le terminal
-    if (result.ok) {
-      if (result.value) {
-        context.output.writeOutput(result.value)
-      }
-    } else {
-      context.output.writeOutput(result.error)
-    }
+    writeExecutionResultOutput(context, result)
 
     return result
   }

@@ -79,12 +79,10 @@ The most reliable way to test DNS is from inside the cluster, in a Pod that is i
 kubectl run dns-test --image=busybox --rm -it --restart=Never -- nslookup <service-name>
 ```
 
-If you need richer DNS tools like `dig` and `host`, use the `dnsutils` image maintained by the Kubernetes project:
+To get inside the Pod, run:
 
 ```bash
-kubectl run dnsutils \
-  --image=registry.k8s.io/e2e-test-images/jessie-dnsutils:1.3 \
-  --rm -it --restart=Never -- bash
+kubectl run dns-test --image=busybox --rm -it --restart=Never -- sh
 ```
 
 Once inside, you can run:
@@ -96,8 +94,8 @@ nslookup api-service
 # Full FQDN lookup
 nslookup api-service.production.svc.cluster.local
 
-# Verbose dig query showing the full DNS chain
-dig api-service.production.svc.cluster.local
+# Explicit FQDN lookup
+nslookup api-service.production.svc.cluster.local
 
 # Check which DNS server is being used
 dig +short api-service.production.svc.cluster.local @10.96.0.10
@@ -200,17 +198,19 @@ kubectl expose deployment backend --port=80
 **Step 3: Test successful DNS resolution**
 
 ```bash
-kubectl run dns-test --image=busybox --rm -it --restart=Never -- nslookup backend
+kubectl run dns-test --image=busybox --rm -it --restart=Never -- nslookup backend.default.svc.cluster.local
 ```
 
 Expected output:
 
 ```
-Server:    10.96.0.10
-Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
+Server:         10.96.0.10
+Address:        10.96.0.10:53
 
-Name:      backend
-Address 1: 10.96.xxx.xxx backend.default.svc.cluster.local
+Name:   backend.default.svc.cluster.local
+Address: 10.96.xxx.xxx
+
+pod "dns-test" deleted from default namespace
 ```
 
 **Step 4: Simulate a cross-namespace failure**
@@ -223,16 +223,21 @@ kubectl run dns-test --image=busybox --rm -it --restart=Never -n other -- nslook
 Expected output (failure):
 
 ```
-Server:    10.96.0.10
-Address 1: 10.96.0.10
+Server:         10.96.0.10
+Address:        10.96.0.10:53
 
-nslookup: can't resolve 'backend'
+** server can't find backend.other.svc.cluster.local: NXDOMAIN
+...
+pod "dns-test" deleted from other namespace
+pod other/dns-test terminated (Error)
 ```
+
+You can see multiple `NXDOMAIN` lines, this is expected because BusyBox tries several DNS search domains before failing.
 
 The Service `backend` is in `default`, but we are querying from `other`. Fix it:
 
 ```bash
-kubectl run dns-test --image=busybox --rm -it --restart=Never -n other -- nslookup backend.default
+kubectl run dns-test --image=busybox --rm -it --restart=Never -n other -- nslookup backend.default.svc.cluster.local
 ```
 
 This should succeed, demonstrating the cross-namespace resolution requirement.
@@ -251,15 +256,13 @@ Read through the Corefile section and identify the `kubernetes cluster.local` bl
 kubectl run dns-test --image=busybox --rm -it --restart=Never -- cat /etc/resolv.conf
 ```
 
-**Step 7: Use dnsutils for a full dig query**
+**Step 7: Run an explicit FQDN DNS query**
 
 ```bash
-kubectl run dnsutils \
-  --image=registry.k8s.io/e2e-test-images/jessie-dnsutils:1.3 \
-  --rm -it --restart=Never -- dig backend.default.svc.cluster.local
+kubectl run dns-test --image=busybox --rm -it --restart=Never -- nslookup backend.default.svc.cluster.local
 ```
 
-Look for the `ANSWER SECTION` in the output, it should contain the A record for your Service.
+Look for `Name:` and `Address:` in the output, it should resolve to your Service ClusterIP.
 
 **Step 8: Clean up**
 

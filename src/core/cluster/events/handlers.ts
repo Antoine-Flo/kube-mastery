@@ -806,9 +806,15 @@ export const CLUSTER_EVENT_DEFINITIONS: {
   ConfigMapCreated: defineClusterEvent(handleConfigMapCreated),
   ConfigMapDeleted: defineClusterEvent(handleConfigMapDeleted),
   ConfigMapUpdated: defineClusterEvent(handleConfigMapUpdated),
-  ControllerRevisionCreated: defineClusterEvent(handleControllerRevisionCreated),
-  ControllerRevisionDeleted: defineClusterEvent(handleControllerRevisionDeleted),
-  ControllerRevisionUpdated: defineClusterEvent(handleControllerRevisionUpdated),
+  ControllerRevisionCreated: defineClusterEvent(
+    handleControllerRevisionCreated
+  ),
+  ControllerRevisionDeleted: defineClusterEvent(
+    handleControllerRevisionDeleted
+  ),
+  ControllerRevisionUpdated: defineClusterEvent(
+    handleControllerRevisionUpdated
+  ),
   SecretCreated: defineClusterEvent(handleSecretCreated),
   SecretDeleted: defineClusterEvent(handleSecretDeleted),
   SecretUpdated: defineClusterEvent(handleSecretUpdated),
@@ -877,12 +883,14 @@ export const CLUSTER_EVENT_DEFINITIONS: {
 export const CLUSTER_EVENT_HANDLERS: {
   [TType in ClusterEventType]?: ClusterEventHandler<TType>
 } = Object.fromEntries(
-  Object.entries(CLUSTER_EVENT_DEFINITIONS).flatMap(([eventType, definition]) => {
-    if (!definition) {
-      return []
+  Object.entries(CLUSTER_EVENT_DEFINITIONS).flatMap(
+    ([eventType, definition]) => {
+      if (!definition) {
+        return []
+      }
+      return [[eventType, definition.handler]]
     }
-    return [[eventType, definition.handler]]
-  })
+  )
 ) as {
   [TType in ClusterEventType]?: ClusterEventHandler<TType>
 }
@@ -892,12 +900,14 @@ export const CLUSTER_EVENT_HANDLERS: {
  * Derived from CLUSTER_EVENT_DEFINITIONS to keep one source of truth.
  */
 export const CLUSTER_MUTATION_EVENT_TYPES = new Set<string>(
-  Object.entries(CLUSTER_EVENT_DEFINITIONS).flatMap(([eventType, definition]) => {
-    if (!definition || !definition.mutatesState) {
-      return []
+  Object.entries(CLUSTER_EVENT_DEFINITIONS).flatMap(
+    ([eventType, definition]) => {
+      if (!definition || !definition.mutatesState) {
+        return []
+      }
+      return [eventType]
     }
-    return [eventType]
-  })
+  )
 )
 
 /**

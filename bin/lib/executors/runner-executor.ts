@@ -13,6 +13,8 @@ import { createFile } from '../../../src/core/filesystem/models/File'
 import { createLogger } from '../../../src/logger/Logger'
 import { createConformanceBootstrapConfig } from '../../../src/core/cluster/systemBootstrap'
 import { parseCommand } from '../../../src/core/kubectl/commands/parser'
+import { initializeSimNetworkRuntime } from '../../../src/core/network/SimNetworkRuntime'
+import { initializeSimPodIpAllocation } from '../../../src/core/cluster/ipAllocator/SimPodIpAllocationService'
 import { listYamlFiles } from '../cluster-manager'
 import { loadClusterNodeRoles } from '../cluster-manager'
 import type {
@@ -175,7 +177,7 @@ const rewriteDiffCommandForMountedFile = (
 }
 
 export const createRunnerExecutor = (
-  clusterName = CONFIG.cluster.conformanceClusterName
+  clusterName: string = CONFIG.cluster.conformanceClusterName
 ): RunnerExecutor => {
   const logger = createLogger({ mirrorToConsole: false })
   const nodeRolesResult = loadClusterNodeRoles()
@@ -183,9 +185,14 @@ export const createRunnerExecutor = (
     ? nodeRolesResult.value
     : undefined
   const apiServer = createApiServerFacade({
-    bootstrap: createConformanceBootstrapConfig(clusterName, nodeRoles)
+    bootstrap: createConformanceBootstrapConfig(
+      clusterName as 'conformance',
+      nodeRoles
+    )
   })
   const controllers = initializeControlPlane(apiServer)
+  const networkRuntime = initializeSimNetworkRuntime(apiServer)
+  initializeSimPodIpAllocation(apiServer)
   const fileSystem = createFileSystem()
 
   const listScopedPods = (namespace?: string): Pod[] => {
@@ -216,6 +223,13 @@ export const createRunnerExecutor = (
         `${daemonSet.metadata.namespace}/${daemonSet.metadata.name}`
       )
     }
+
+    const statefulSets = apiServer.listResources('StatefulSet', namespace)
+    for (const statefulSet of statefulSets) {
+      controllers.statefulSetController.reconcile(
+        `${statefulSet.metadata.namespace}/${statefulSet.metadata.name}`
+      )
+    }
   }
 
   const reconcileSchedulingControllersOnce = (namespace?: string): void => {
@@ -230,19 +244,20 @@ export const createRunnerExecutor = (
   const reconcileForWait = (namespace?: string): void => {
     reconcileWorkloadControllersOnce(namespace)
     reconcileSchedulingControllersOnce(namespace)
+    networkRuntime.controller.resyncAll()
   }
 
   const executor = createKubectlExecutor(
     apiServer,
     fileSystem,
     logger,
-    undefined,
+    networkRuntime,
     reconcileForWait
   )
 
   return {
     executeCommand(command: string): CommandExecutionResult {
-      reconcileWorkloadControllersOnce()
+      reconcileForWait()
       const manifestTarget = getManifestFilenameFromCommand(command)
       let result
       if (manifestTarget != null) {
@@ -262,12 +277,28 @@ export const createRunnerExecutor = (
       }
 
       if (result.ok) {
+        if (result.io != null) {
+          return executionFromOutput(
+            command,
+            result.io.exitCode,
+            result.io.stdout,
+            result.io.stderr
+          )
+        }
         const value = result.value ?? ''
         if (manifestTarget?.action === 'diff') {
           const exitCode = value.trim().length === 0 ? 0 : 1
           return executionFromOutput(command, exitCode, value, '')
         }
         return executionFromOutput(command, 0, value, '')
+      }
+      if (result.io != null) {
+        return executionFromOutput(
+          command,
+          result.io.exitCode,
+          result.io.stdout,
+          result.io.stderr
+        )
       }
       return executionFromOutput(command, 1, '', result.error)
     },

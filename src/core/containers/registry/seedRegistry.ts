@@ -193,6 +193,18 @@ export const SEED_IMAGES: ImageManifest[] = [
     }
   },
   {
+    name: 'curl',
+    registry: 'curlimages',
+    tags: ['latest', '8.8.0', '8.12.1'],
+    description: 'Lightweight curl image used for HTTP checks',
+    defaultPorts: [],
+    logProfile: 'generic',
+    behavior: {
+      startupTime: 400,
+      defaultStatus: 'Running'
+    }
+  },
+  {
     name: 'broken-app',
     registry: 'myregistry.io',
     tags: ['v1.0', 'latest'],

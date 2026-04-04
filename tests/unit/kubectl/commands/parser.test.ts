@@ -659,6 +659,19 @@ describe('kubectl parser - describe', () => {
 })
 
 describe('kubectl parser - get and delete flag positions', () => {
+  it('should parse namespace shorthand value that starts with a dash', () => {
+    const result = parseCommand('kubectl get pods -n -kube-system')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.namespace).toBe('-kube-system')
+    expect(result.value.name).toBeUndefined()
+  })
+
   it('should parse get when namespace flag is before resource', () => {
     const result = parseCommand('kubectl get -n kube-system pods')
 

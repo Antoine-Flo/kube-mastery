@@ -173,6 +173,7 @@ spec:
               port: 80
             initialDelaySeconds: 2
             periodSeconds: 5
+---
 apiVersion: v1
 kind: Service
 metadata:

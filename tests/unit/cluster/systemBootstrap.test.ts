@@ -56,13 +56,13 @@ describe('systemBootstrap', () => {
         return readyCondition?.status === 'True'
       })
     ).toBe(true)
-    expect(resources.configMaps).toHaveLength(2)
+    expect(resources.configMaps).toHaveLength(3)
     expect(
       resources.configMaps.map((configMap) => configMap.metadata.name)
-    ).toEqual(['kube-root-ca.crt', 'cluster-info'])
+    ).toEqual(['kube-root-ca.crt', 'cluster-info', 'coredns'])
     expect(
       resources.configMaps.map((configMap) => configMap.metadata.namespace)
-    ).toEqual(['default', 'kube-public'])
+    ).toEqual(['default', 'kube-public', 'kube-system'])
     expect(resources.services.map((service) => service.metadata.name)).toEqual([
       'kubernetes',
       'kube-dns'

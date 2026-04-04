@@ -17,11 +17,19 @@ export type Result<T, E = string> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
+export interface ExecutionIO {
+  stdout: string
+  stderr: string
+  exitCode: number
+}
+
 /**
  * Result type for command execution (stdout/stderr)
  * Success = stdout, Error = stderr
  */
-export type ExecutionResult = Result<string>
+export type ExecutionResult =
+  | { ok: true; value: string; io?: ExecutionIO }
+  | { ok: false; error: string; io?: ExecutionIO }
 
 // ─── Factory Functions ───────────────────────────────────────────────────
 
@@ -33,10 +41,28 @@ export const success = <T>(value: T): Result<T> => ({
   value
 })
 
+export const successWithIO = (
+  value: string,
+  io: ExecutionIO
+): ExecutionResult => ({
+  ok: true,
+  value,
+  io
+})
+
 /**
  * Create an error result
  */
 export const error = (message: string): Result<never> => ({
   ok: false,
   error: message
+})
+
+export const errorWithIO = (
+  message: string,
+  io: ExecutionIO
+): ExecutionResult => ({
+  ok: false,
+  error: message,
+  io
 })

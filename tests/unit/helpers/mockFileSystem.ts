@@ -5,6 +5,7 @@
 
 import { success } from '../../../src/core/shared/result'
 import type { FileSystem } from '../../../src/core/filesystem/FileSystem'
+import { toFileSystemResult } from '../../../src/core/filesystem/errors'
 import {
   createFile as createFileNode,
   createDirectory
@@ -22,24 +23,52 @@ import type {
  */
 export const createMockFileSystem = (
   overrides: Partial<FileSystem> = {}
-): FileSystem => ({
-  getCurrentPath: () => '/home/kube',
-  changeDirectory: () => success(''),
-  listDirectory: () => success([]),
-  createDirectory: () => success(''),
-  deleteDirectory: () => success(undefined),
-  createFile: () => success(createFileNode('test', '/home/kube/test')),
-  readFile: () => success(''),
-  readFiles: (paths: string[]) => success(paths.map(() => '')),
-  writeFile: () => success(undefined),
-  deleteFile: () => success(undefined),
-  toJSON: (): FileSystemState => ({
-    currentPath: '/home/kube',
-    tree: createDirectory('root', '/')
-  }),
-  loadState: () => {},
-  ...overrides
-})
+): FileSystem => {
+  const listDirectory = overrides.listDirectory ?? (() => success([]))
+  const createDirectoryFn = overrides.createDirectory ?? (() => success(''))
+  const deleteDirectoryFn =
+    overrides.deleteDirectory ?? (() => success(undefined))
+  const createFileFn =
+    overrides.createFile ??
+    (() => success(createFileNode('test', '/home/kube/test')))
+  const readFile = overrides.readFile ?? (() => success(''))
+  const readFiles =
+    overrides.readFiles ?? ((paths: string[]) => success(paths.map(() => '')))
+  const writeFile = overrides.writeFile ?? (() => success(undefined))
+  const deleteFile = overrides.deleteFile ?? (() => success(undefined))
+
+  return {
+    getCurrentPath: overrides.getCurrentPath ?? (() => '/home/kube'),
+    changeDirectory: overrides.changeDirectory ?? (() => success('')),
+    listDirectory,
+    listDirectoryDetailed: (path?: string) => {
+      return toFileSystemResult(listDirectory(path), 'listDirectory', path)
+    },
+    createDirectory: createDirectoryFn,
+    deleteDirectory: deleteDirectoryFn,
+    createFile: createFileFn,
+    readFile,
+    readFileDetailed: (path: string) => {
+      return toFileSystemResult(readFile(path), 'readFile', path)
+    },
+    readFiles,
+    readFilesDetailed: (paths: string[]) => {
+      return toFileSystemResult(readFiles(paths), 'readFiles')
+    },
+    writeFile,
+    writeFileDetailed: (path: string, content: string) => {
+      return toFileSystemResult(writeFile(path, content), 'writeFile', path)
+    },
+    deleteFile,
+    toJSON:
+      overrides.toJSON ??
+      (() => ({
+        currentPath: '/home/kube',
+        tree: createDirectory('root', '/')
+      })),
+    loadState: overrides.loadState ?? (() => {})
+  }
+}
 
 /**
  * Default AutocompleteContext for unit tests: empty cluster snapshot and a

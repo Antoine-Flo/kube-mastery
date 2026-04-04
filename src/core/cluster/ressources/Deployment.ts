@@ -400,7 +400,9 @@ const canonicalizeHashValue = (value: unknown): unknown => {
     const sortedEntries = Object.entries(objectValue)
       .filter(([, entryValue]) => entryValue !== undefined)
       .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
-      .map(([key, entryValue]) => [key, canonicalizeHashValue(entryValue)] as const)
+      .map(
+        ([key, entryValue]) => [key, canonicalizeHashValue(entryValue)] as const
+      )
     return Object.fromEntries(sortedEntries)
   }
 

@@ -86,7 +86,9 @@ function collectStaticPublicPages(
 
 function buildCourseMarkdownByLang(): Map<string, Map<string, string>> {
   const index = new Map<string, Map<string, string>>()
-  const courseMarkdownGlob = import.meta.glob('../courses/learningPaths/*/{en,fr}.md')
+  const courseMarkdownGlob = import.meta.glob(
+    '../courses/learningPaths/*/{en,fr}.md'
+  )
 
   for (const relativePath of Object.keys(courseMarkdownGlob)) {
     const sourcePath = toSourcePath(relativePath)
@@ -113,7 +115,9 @@ function buildCourseMarkdownByLang(): Map<string, Map<string, string>> {
 
 function buildCourseStructurePathsByCourseId(): Map<string, string> {
   const index = new Map<string, string>()
-  const structureGlob = import.meta.glob('../courses/learningPaths/*/course-structure.ts')
+  const structureGlob = import.meta.glob(
+    '../courses/learningPaths/*/course-structure.ts'
+  )
 
   for (const relativePath of Object.keys(structureGlob)) {
     const sourcePath = toSourcePath(relativePath)
@@ -276,11 +280,7 @@ function buildSitemapEntries(site: string): SitemapEntry[] {
   for (const lang of enabledLanguages) {
     const staticPublicPages = collectStaticPublicPages(lang)
     for (const page of staticPublicPages) {
-      addUrl(
-        urlSources,
-        toAbsoluteUrl(site, page.pathname),
-        page.sourcePaths
-      )
+      addUrl(urlSources, toAbsoluteUrl(site, page.pathname), page.sourcePaths)
     }
 
     const courses = getCourses(lang)
@@ -320,11 +320,14 @@ function buildSitemapEntries(site: string): SitemapEntry[] {
               site,
               `/${lang}/courses/${course.id}/${lesson.id}`
             )
-            const lessonSource = lessonSources.get(`${module.moduleId}:${lesson.id}`)
+            const lessonSource = lessonSources.get(
+              `${module.moduleId}:${lesson.id}`
+            )
             const lessonSourcePaths: string[] = []
             if (lessonSource) {
               const contentPath =
-                lessonSource.contentByLang[lang] ?? lessonSource.contentByLang.en
+                lessonSource.contentByLang[lang] ??
+                lessonSource.contentByLang.en
               if (contentPath) {
                 lessonSourcePaths.push(contentPath)
               }

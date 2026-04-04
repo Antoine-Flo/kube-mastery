@@ -48,7 +48,7 @@ describe('kubectl expose handler', () => {
     if (!result.ok) {
       return
     }
-    expect(result.value).toContain('service/web created')
+    expect(result.value).toContain('service/web exposed')
 
     const serviceResult = apiServer.findResource('Service', 'web', 'default')
     expect(serviceResult.ok).toBe(true)
@@ -163,7 +163,7 @@ describe('kubectl expose handler', () => {
       return
     }
 
-    expect(result.value).toContain('service/web-svc created')
+    expect(result.value).toContain('service/web-svc exposed')
     const serviceResult = apiServer.findResource(
       'Service',
       'web-svc',

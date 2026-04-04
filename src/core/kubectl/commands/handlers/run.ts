@@ -3,12 +3,17 @@ import type { EnvVar } from '../../../cluster/ressources/Pod'
 import { createPod } from '../../../cluster/ressources/Pod'
 import type { SimNetworkRuntime } from '../../../network/SimNetworkRuntime'
 import type { ExecutionResult } from '../../../shared/result'
-import { error, success } from '../../../shared/result'
+import {
+  error,
+  errorWithIO,
+  success,
+  successWithIO
+} from '../../../shared/result'
 import { validateMetadataNameByKind } from '../metadataNameValidation'
 import type { ParsedCommand } from '../types'
 import { buildDryRunResponse } from './create'
 import { createResourceWithEvents } from '../resourceHelpers'
-import { executeRuntimeNetworkCommand } from './internal/runtimeCommand'
+import { executeRuntimeAttachedCommand } from './internal/runtimeCommand'
 
 const stripMatchingQuotes = (raw: string): string => {
   const trimmed = raw.trim()
@@ -203,7 +208,7 @@ export const handleRun = (
   const hasInlineCommand =
     commandToExecute != null && commandToExecute.length > 0 && isAttachLike
   if (hasInlineCommand) {
-    const runtimeResult = executeRuntimeNetworkCommand(
+    const runtimeResult = executeRuntimeAttachedCommand(
       commandToExecute,
       runtimeNamespace,
       networkRuntime
@@ -218,7 +223,6 @@ export const handleRun = (
         return createResult
       }
 
-      let commandResult = runtimeResult
       if (parsed.runRemove === true) {
         const deleteResult = apiServer.deleteResource(
           'Pod',
@@ -237,20 +241,41 @@ export const handleRun = (
         if (!finalizeResult.ok) {
           return finalizeResult
         }
-        if (!commandResult.ok) {
-          return commandResult
-        }
         const deleteMessage = `pod "${podName}" deleted from ${runtimeNamespace} namespace`
-        if (commandResult.value.length === 0) {
-          return success(deleteMessage)
+        const outputSegments: string[] = []
+        if (runtimeResult.stdout.length > 0) {
+          outputSegments.push(runtimeResult.stdout)
         }
-        return success(`${commandResult.value}\n\n${deleteMessage}`)
+        outputSegments.push(deleteMessage)
+        const stdout = outputSegments.join('\n\n')
+        const stderr =
+          runtimeResult.exitCode === 0
+            ? ''
+            : `pod ${runtimeNamespace}/${podName} terminated (Error)`
+        const io = {
+          stdout,
+          stderr,
+          exitCode: runtimeResult.exitCode
+        }
+        if (runtimeResult.exitCode === 0) {
+          return successWithIO(stdout, io)
+        }
+        return errorWithIO(stderr, io)
       }
 
-      if (!commandResult.ok) {
-        return commandResult
+      const io = {
+        stdout: runtimeResult.stdout,
+        stderr: runtimeResult.stderr,
+        exitCode: runtimeResult.exitCode
       }
-      return success(commandResult.value)
+      if (runtimeResult.exitCode === 0) {
+        return successWithIO(runtimeResult.stdout, io)
+      }
+      const message =
+        runtimeResult.stderr.length > 0
+          ? runtimeResult.stderr
+          : runtimeResult.stdout
+      return errorWithIO(message, io)
     }
   }
 

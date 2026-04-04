@@ -317,6 +317,42 @@ const createClusterInfoConfigMap = (
   })
 }
 
+const createCoreDnsConfigMap = (creationTimestamp: string): ConfigMap => {
+  const corefile = [
+    '.:53 {',
+    '    errors',
+    '    health {',
+    '       lameduck 5s',
+    '    }',
+    '    ready',
+    '    kubernetes cluster.local in-addr.arpa ip6.arpa {',
+    '       pods insecure',
+    '       fallthrough in-addr.arpa ip6.arpa',
+    '       ttl 30',
+    '    }',
+    '    prometheus :9153',
+    '    forward . /etc/resolv.conf {',
+    '       max_concurrent 1000',
+    '    }',
+    '    cache 30 {',
+    '       disable success cluster.local',
+    '       disable denial cluster.local',
+    '    }',
+    '    loop',
+    '    reload',
+    '    loadbalance',
+    '}'
+  ].join('\n')
+  return createConfigMap({
+    name: 'coredns',
+    namespace: 'kube-system',
+    creationTimestamp,
+    data: {
+      Corefile: corefile
+    }
+  })
+}
+
 const createSystemServices = (creationTimestamp: string): Service[] => {
   return [
     createService({
@@ -420,7 +456,8 @@ export const createSystemBootstrapResources = (
     nodes,
     configMaps: [
       createKubeRootCAConfigMap(creationTimestamp),
-      createClusterInfoConfigMap(creationTimestamp, clusterName)
+      createClusterInfoConfigMap(creationTimestamp, clusterName),
+      createCoreDnsConfigMap(creationTimestamp)
     ],
     services: createSystemServices(creationTimestamp),
     pods: workloads.staticPods,

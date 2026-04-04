@@ -328,5 +328,9 @@ export const handleExpose = (
     ]
   })
 
-  return createResourceWithEvents(service, apiServer)
+  const createResult = createResourceWithEvents(service, apiServer)
+  if (!createResult.ok) {
+    return createResult
+  }
+  return success(`service/${serviceName} exposed`)
 }

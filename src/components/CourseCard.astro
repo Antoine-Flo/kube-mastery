@@ -39,8 +39,7 @@ const {
 
 const descriptionText = description ?? ''
 
-const hasBadgeRow =
-  startHere || inProgress || comingSoon || isFree
+const hasBadgeRow = startHere || inProgress || comingSoon || isFree
 ---
 
 <article
@@ -78,7 +77,9 @@ const hasBadgeRow =
     {
       hasBadgeRow && (
         <div class="course-card__badges">
-          {startHere && <span class="badge badge--start">{startHereLabel}</span>}
+          {startHere && (
+            <span class="badge badge--start">{startHereLabel}</span>
+          )}
           {inProgress && (
             <span class="badge badge--progress">{inProgressLabel}</span>
           )}

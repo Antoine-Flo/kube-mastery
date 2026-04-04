@@ -59,25 +59,25 @@ async function preserveBillingTraceBeforeAccountDelete(args: {
   const rows = (subscriptionRows as PreservableSubscriptionRow[] | null) ?? []
   const nowIso = new Date().toISOString()
   const rowsToPreserve = rows.map((row) => ({
-      email: normalizedEmail,
-      plan_tier: row.plan_tier,
-      status: row.status,
-      paddle_subscription_id: row.paddle_subscription_id,
-      paddle_customer_id: row.paddle_customer_id,
-      current_period_start: row.current_period_start,
-      current_period_end: row.current_period_end,
-      canceled_at: row.canceled_at,
-      linked_user_id: null,
-      linked_at: null,
-      updated_at: nowIso,
-      // Keep a minimal trace to allow safe relink if the same user returns later.
-      raw_data: {
-        ...(row.metadata ?? {}),
-        source: 'account_delete_preservation',
-        previous_user_id: args.userId,
-        preserved_at: nowIso
-      }
-    }))
+    email: normalizedEmail,
+    plan_tier: row.plan_tier,
+    status: row.status,
+    paddle_subscription_id: row.paddle_subscription_id,
+    paddle_customer_id: row.paddle_customer_id,
+    current_period_start: row.current_period_start,
+    current_period_end: row.current_period_end,
+    canceled_at: row.canceled_at,
+    linked_user_id: null,
+    linked_at: null,
+    updated_at: nowIso,
+    // Keep a minimal trace to allow safe relink if the same user returns later.
+    raw_data: {
+      ...(row.metadata ?? {}),
+      source: 'account_delete_preservation',
+      previous_user_id: args.userId,
+      preserved_at: nowIso
+    }
+  }))
 
   if (rowsToPreserve.length === 0) {
     return { ok: true }

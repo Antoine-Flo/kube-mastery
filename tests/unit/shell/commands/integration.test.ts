@@ -247,7 +247,7 @@ describe('Shell Commands Integration', () => {
       const files: Record<string, string> = {}
       const dirs = new Set<string>(['/home/kube'])
 
-      const realisticFileSystem: FileSystem = {
+      const realisticFileSystem: FileSystem = createMockFileSystem({
         getCurrentPath: () => currentPath,
         changeDirectory: (path: string) => {
           if (path === 'test' && dirs.has('/home/kube/test')) {
@@ -315,7 +315,7 @@ describe('Shell Commands Integration', () => {
           tree: createDirectory('root', '/')
         }),
         loadState: () => {}
-      }
+      })
 
       const executor = createShellExecutor(realisticFileSystem)
 
@@ -348,7 +348,7 @@ describe('Shell Commands Integration', () => {
 
     it('should handle sequence: cd .. && ls', () => {
       let currentPath = '/home/kube/subdir'
-      const realisticFileSystem: FileSystem = {
+      const realisticFileSystem: FileSystem = createMockFileSystem({
         getCurrentPath: () => currentPath,
         changeDirectory: (path: string) => {
           if (path === '..') {
@@ -379,7 +379,7 @@ describe('Shell Commands Integration', () => {
           tree: createDirectory('root', '/')
         }),
         loadState: () => {}
-      }
+      })
 
       const executor = createShellExecutor(realisticFileSystem)
 
@@ -398,7 +398,7 @@ describe('Shell Commands Integration', () => {
 
     it('should handle sequence: touch a b c && ls a b c', () => {
       const files = new Set<string>()
-      const realisticFileSystem: FileSystem = {
+      const realisticFileSystem: FileSystem = createMockFileSystem({
         getCurrentPath: () => '/home/kube',
         changeDirectory: () => success(''),
         listDirectory: (path?: string) => {
@@ -425,7 +425,7 @@ describe('Shell Commands Integration', () => {
           tree: createDirectory('root', '/')
         }),
         loadState: () => {}
-      }
+      })
 
       const executor = createShellExecutor(realisticFileSystem)
 
@@ -445,7 +445,7 @@ describe('Shell Commands Integration', () => {
 
     it('should handle sequence: rm file1 file2 and verify deletion', () => {
       const files = new Set<string>(['file1', 'file2', 'file3'])
-      const realisticFileSystem: FileSystem = {
+      const realisticFileSystem: FileSystem = createMockFileSystem({
         getCurrentPath: () => '/home/kube',
         changeDirectory: () => success(''),
         listDirectory: () => {
@@ -472,7 +472,7 @@ describe('Shell Commands Integration', () => {
           tree: createDirectory('root', '/')
         }),
         loadState: () => {}
-      }
+      })
 
       const executor = createShellExecutor(realisticFileSystem)
 
@@ -507,7 +507,7 @@ describe('Shell Commands Integration', () => {
 
     it('should handle relative paths in realistic workflow', () => {
       let currentPath = '/home/kube'
-      const realisticFileSystem: FileSystem = {
+      const realisticFileSystem: FileSystem = createMockFileSystem({
         getCurrentPath: () => currentPath,
         changeDirectory: (path: string) => {
           if (path === 'subdir') {
@@ -541,7 +541,7 @@ describe('Shell Commands Integration', () => {
           tree: createDirectory('root', '/')
         }),
         loadState: () => {}
-      }
+      })
 
       const executor = createShellExecutor(realisticFileSystem)
 

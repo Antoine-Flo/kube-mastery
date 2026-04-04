@@ -33,7 +33,11 @@ const createMountedFileSystem = (readOnly: boolean) => {
   expect(seedResult.ok).toBe(true)
 
   const rootFileSystem = createDebianFileSystem()
-  const bindings = manager.buildContainerMountBindings(container, volumes, backings)
+  const bindings = manager.buildContainerMountBindings(
+    container,
+    volumes,
+    backings
+  )
   applyVolumeMountBindingsToFileSystem(rootFileSystem, bindings)
 
   return createFileSystem(rootFileSystem, undefined, { mutable: true })

@@ -1,10 +1,7 @@
 import type { EventBus } from '../cluster/events/EventBus'
 import type { Result } from '../shared/result'
 import { error, success } from '../shared/result'
-import {
-  toFileSystemResult,
-  type FileSystemResult
-} from './errors'
+import { toFileSystemResult, type FileSystemResult } from './errors'
 import {
   createDirectory,
   createFile,
@@ -386,37 +383,39 @@ const createNavigationOps = (
   }
 
   return {
-  getCurrentPath: (): string => {
-    return getState().currentPath
-  },
+    getCurrentPath: (): string => {
+      return getState().currentPath
+    },
 
-  changeDirectory: (path: string): Result<string> => {
-    const state = getState()
-    const absolutePath = resolvePath(state.currentPath, path)
-    const node = findNode(state.tree, absolutePath)
+    changeDirectory: (path: string): Result<string> => {
+      const state = getState()
+      const absolutePath = resolvePath(state.currentPath, path)
+      const node = findNode(state.tree, absolutePath)
 
-    const validation = validateIsDirectory(node, absolutePath)
-    if (!validation.ok) {
-      return validation
+      const validation = validateIsDirectory(node, absolutePath)
+      if (!validation.ok) {
+        return validation
+      }
+
+      const previousPath = state.currentPath
+      setState({ ...state, currentPath: absolutePath })
+
+      if (eventBus && previousPath !== absolutePath) {
+        eventBus.emit(
+          createDirectoryChangedEvent(previousPath, absolutePath, 'filesystem')
+        )
+      }
+
+      return success(absolutePath)
+    },
+
+    listDirectory,
+
+    listDirectoryDetailed: (
+      path?: string
+    ): FileSystemResult<FileSystemNode[]> => {
+      return toFileSystemResult(listDirectory(path), 'listDirectory', path)
     }
-
-    const previousPath = state.currentPath
-    setState({ ...state, currentPath: absolutePath })
-
-    if (eventBus && previousPath !== absolutePath) {
-      eventBus.emit(
-        createDirectoryChangedEvent(previousPath, absolutePath, 'filesystem')
-      )
-    }
-
-    return success(absolutePath)
-  },
-
-  listDirectory,
-
-  listDirectoryDetailed: (path?: string): FileSystemResult<FileSystemNode[]> => {
-    return toFileSystemResult(listDirectory(path), 'listDirectory', path)
-  }
   }
 }
 
@@ -544,7 +543,9 @@ const createFileOps = (
       const parent = findNode(state.tree, parentPath)
 
       if (!parent || parent.type !== 'directory') {
-        return error(`nano: cannot create file '${path}': No such file or directory`)
+        return error(
+          `nano: cannot create file '${path}': No such file or directory`
+        )
       }
 
       const fileName = absolutePath.split('/').pop() || path
@@ -573,7 +574,11 @@ const createFileOps = (
     const previousFile = validation.value
 
     // Side effect: Update file with new content and modifiedAt timestamp
-    const updatedFile = createFile(previousFile.name, previousFile.path, content)
+    const updatedFile = createFile(
+      previousFile.name,
+      previousFile.path,
+      content
+    )
     removeNode(state.tree, absolutePath)
     insertNode(state.tree, absolutePath, updatedFile)
 
@@ -637,7 +642,11 @@ const createFileOps = (
     readFilesDetailed: (paths: string[]): FileSystemResult<string[]> => {
       const contents: string[] = []
       for (const path of paths) {
-        const fileResult = toFileSystemResult(readFileAtPath(path), 'readFile', path)
+        const fileResult = toFileSystemResult(
+          readFileAtPath(path),
+          'readFile',
+          path
+        )
         if (!fileResult.ok) {
           return {
             ok: false,
@@ -664,7 +673,11 @@ const createFileOps = (
       path: string,
       content: string
     ): FileSystemResult<void> => {
-      return toFileSystemResult(writeFileAtPath(path, content), 'writeFile', path)
+      return toFileSystemResult(
+        writeFileAtPath(path, content),
+        'writeFile',
+        path
+      )
     },
 
     deleteFile: (path: string): Result<void> => {

@@ -32,6 +32,72 @@ export interface KubectlTableRenderOptions {
   minColumnWidthsByHeader?: Record<string, number>
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value != null && !Array.isArray(value)
+}
+
+const reorderMetadataForKubectlYaml = (
+  metadata: Record<string, unknown>
+): Record<string, unknown> => {
+  const orderedMetadata: Record<string, unknown> = {}
+  if (metadata.creationTimestamp != null) {
+    orderedMetadata.creationTimestamp = metadata.creationTimestamp
+  }
+  if (metadata.name != null) {
+    orderedMetadata.name = metadata.name
+  }
+  if (metadata.namespace != null) {
+    orderedMetadata.namespace = metadata.namespace
+  }
+  if (metadata.resourceVersion != null) {
+    orderedMetadata.resourceVersion = metadata.resourceVersion
+  }
+  if (metadata.uid != null) {
+    orderedMetadata.uid = metadata.uid
+  }
+  for (const [key, value] of Object.entries(metadata)) {
+    if (orderedMetadata[key] != null) {
+      continue
+    }
+    orderedMetadata[key] = value
+  }
+  return orderedMetadata
+}
+
+const reorderConfigMapForKubectlYaml = (payload: unknown): unknown => {
+  if (!isRecord(payload)) {
+    return payload
+  }
+  const isConfigMap =
+    payload.apiVersion === 'v1' &&
+    payload.kind === 'ConfigMap' &&
+    payload.metadata != null
+  if (!isConfigMap) {
+    return payload
+  }
+  const orderedPayload: Record<string, unknown> = {}
+  orderedPayload.apiVersion = payload.apiVersion
+  if (payload.data != null) {
+    orderedPayload.data = payload.data
+  }
+  if (payload.binaryData != null) {
+    orderedPayload.binaryData = payload.binaryData
+  }
+  orderedPayload.kind = payload.kind
+  if (isRecord(payload.metadata)) {
+    orderedPayload.metadata = reorderMetadataForKubectlYaml(payload.metadata)
+  } else {
+    orderedPayload.metadata = payload.metadata
+  }
+  for (const [key, value] of Object.entries(payload)) {
+    if (orderedPayload[key] != null) {
+      continue
+    }
+    orderedPayload[key] = value
+  }
+  return orderedPayload
+}
+
 const stripMatchingQuotes = (raw: string): string => {
   const trimmed = raw.trim()
   if (trimmed.length < 2) {
@@ -198,8 +264,9 @@ export const renderStructuredPayload = (
     return success(JSON.stringify(payload, null, KUBECTL_JSON_INDENT))
   }
   if (directive.kind === 'yaml') {
+    const normalizedYamlPayload = reorderConfigMapForKubectlYaml(payload)
     return success(
-      yamlStringify(payload, {
+      yamlStringify(normalizedYamlPayload, {
         indentSeq: false,
         aliasDuplicateObjects: false
       }).trimEnd()

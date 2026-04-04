@@ -1,0 +1,53 @@
+{
+  "sessionId": "sim_60f19eb2-cc41-4d5e-93ad-644b53172ca2",
+  "contextName": "kind-conformance",
+  "totalCommands": 4,
+  "matchedCommands": 3,
+  "mismatchedCommands": 1,
+  "rows": [
+    {
+      "command": "kubectl run mypod --image=busybox --restart=Never -- sleep 3600",
+      "simulationExitCode": 0,
+      "kindExitCode": 0,
+      "outputMatches": true,
+      "note": "match",
+      "simulationStdout": "pod/mypod created",
+      "simulationStderr": "",
+      "kindStdout": "pod/mypod created",
+      "kindStderr": ""
+    },
+    {
+      "command": "kubectl wait --for=condition=Ready pod/mypod --timeout=120s",
+      "simulationExitCode": 0,
+      "kindExitCode": 0,
+      "outputMatches": true,
+      "note": "match",
+      "simulationStdout": "pod/mypod condition met",
+      "simulationStderr": "",
+      "kindStdout": "pod/mypod condition met",
+      "kindStderr": ""
+    },
+    {
+      "command": "kubectl get pod mypod -o wide",
+      "simulationExitCode": 0,
+      "kindExitCode": 0,
+      "outputMatches": false,
+      "note": "diff(exit:ok,stdout:ko,stderr:ok)",
+      "simulationStdout": "NAME    READY   STATUS    RESTARTS   AGE   IP               NODE                 NOMINATED NODE   READINESS GATES\nmypod   1/1     Running   0          2s    10.244.207.158   conformance-worker   <none>           <none>",
+      "simulationStderr": "",
+      "kindStdout": "NAME    READY   STATUS    RESTARTS   AGE   IP            NODE                 NOMINATED NODE   READINESS GATES\nmypod   1/1     Running   0          2s    10.244.2.23   conformance-worker   <none>           <none>",
+      "kindStderr": ""
+    },
+    {
+      "command": "kubectl delete pod mypod",
+      "simulationExitCode": 0,
+      "kindExitCode": 0,
+      "outputMatches": true,
+      "note": "match",
+      "simulationStdout": "pod \"mypod\" deleted from default namespace",
+      "simulationStderr": "",
+      "kindStdout": "pod \"mypod\" deleted from default namespace",
+      "kindStderr": ""
+    }
+  ]
+}

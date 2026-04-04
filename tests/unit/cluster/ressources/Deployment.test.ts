@@ -347,7 +347,12 @@ describe('generateTemplateHash', () => {
           {
             name: 'nginx',
             image: 'nginx:latest',
-            env: [{ name: 'MODE', value: 'prod' }]
+            env: [
+              {
+                name: 'MODE',
+                source: { type: 'value' as const, value: 'prod' }
+              }
+            ]
           }
         ]
       }
@@ -358,7 +363,12 @@ describe('generateTemplateHash', () => {
           {
             name: 'nginx',
             image: 'nginx:latest',
-            env: [{ name: 'MODE', value: 'debug' }]
+            env: [
+              {
+                name: 'MODE',
+                source: { type: 'value' as const, value: 'debug' }
+              }
+            ]
           }
         ]
       }
@@ -435,13 +445,23 @@ describe('generateTemplateHash', () => {
   it('should generate different hash for different volumes', () => {
     const template1 = {
       spec: {
-        volumes: [{ name: 'config', configMap: { name: 'cm-a' } }],
+        volumes: [
+          {
+            name: 'config',
+            source: { type: 'configMap' as const, name: 'cm-a' }
+          }
+        ],
         containers: [{ name: 'nginx', image: 'nginx:latest' }]
       }
     }
     const template2 = {
       spec: {
-        volumes: [{ name: 'config', configMap: { name: 'cm-b' } }],
+        volumes: [
+          {
+            name: 'config',
+            source: { type: 'configMap' as const, name: 'cm-b' }
+          }
+        ],
         containers: [{ name: 'nginx', image: 'nginx:latest' }]
       }
     }
