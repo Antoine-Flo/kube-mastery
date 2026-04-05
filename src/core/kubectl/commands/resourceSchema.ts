@@ -56,6 +56,9 @@ export const RESOURCE_KIND_BY_RESOURCE: Record<
   replicasets: 'ReplicaSet',
   ingresses: 'Ingress',
   ingressclasses: undefined,
+  gateways: undefined,
+  gatewayclasses: undefined,
+  httproutes: undefined,
   persistentvolumes: 'PersistentVolume',
   persistentvolumeclaims: 'PersistentVolumeClaim',
   leases: 'Lease',
@@ -108,6 +111,12 @@ export const RESOURCE_OUTPUT_METADATA_BY_RESOURCE: Record<
   endpointslices: { apiVersion: 'discovery.k8s.io/v1', kind: 'EndpointSlice' },
   ingresses: { apiVersion: 'networking.k8s.io/v1', kind: 'Ingress' },
   ingressclasses: { apiVersion: 'networking.k8s.io/v1', kind: 'IngressClass' },
+  gateways: { apiVersion: 'gateway.networking.k8s.io/v1', kind: 'Gateway' },
+  gatewayclasses: {
+    apiVersion: 'gateway.networking.k8s.io/v1',
+    kind: 'GatewayClass'
+  },
+  httproutes: { apiVersion: 'gateway.networking.k8s.io/v1', kind: 'HTTPRoute' },
   namespaces: { apiVersion: 'v1', kind: 'Namespace' },
   endpoints: { apiVersion: 'v1', kind: 'Endpoints' },
   persistentvolumes: { apiVersion: 'v1', kind: 'PersistentVolume' },
@@ -149,6 +158,15 @@ export const toResourceKindReference = (resource: Resource): string => {
   if (resource === 'ingressclasses') {
     return 'ingressclass.networking.k8s.io'
   }
+  if (resource === 'gatewayclasses') {
+    return 'gatewayclass.gateway.networking.k8s.io'
+  }
+  if (resource === 'gateways') {
+    return 'gateway.gateway.networking.k8s.io'
+  }
+  if (resource === 'httproutes') {
+    return 'httproute.gateway.networking.k8s.io'
+  }
   const resourceKind = RESOURCE_KIND_BY_RESOURCE[resource]
   if (resourceKind == null) {
     return resource
@@ -162,6 +180,15 @@ export const toPluralResourceKindReference = (resource: Resource): string => {
   }
   if (resource === 'ingressclasses') {
     return 'ingressclasses.networking.k8s.io'
+  }
+  if (resource === 'gatewayclasses') {
+    return 'gatewayclasses.gateway.networking.k8s.io'
+  }
+  if (resource === 'gateways') {
+    return 'gateways.gateway.networking.k8s.io'
+  }
+  if (resource === 'httproutes') {
+    return 'httproutes.gateway.networking.k8s.io'
   }
   const resourceKind = RESOURCE_KIND_BY_RESOURCE[resource]
   if (resourceKind == null) {

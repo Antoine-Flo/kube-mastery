@@ -594,4 +594,29 @@ describe('kubectl exec handler', () => {
       expect(result).toBe('ENTER_CONTAINER:production:my-pod:main')
     })
   })
+
+  describe('resource target resolution', () => {
+    it('should resolve deployment/name target to a pod in namespace', () => {
+      const pod = createPod({
+        name: 'frontend-7f6d9c4b5d-abcde',
+        namespace: 'default',
+        labels: { app: 'frontend' },
+        containers: [{ name: 'main', image: 'nginx:latest' }],
+        phase: 'Running'
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'deploy/frontend',
+        execCommand: ['ls', '-la']
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
+
+      expect(result).toBe(
+        'SHELL_COMMAND:default:frontend-7f6d9c4b5d-abcde:main:ls%20-la'
+      )
+    })
+  })
 })

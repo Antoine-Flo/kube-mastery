@@ -135,6 +135,29 @@ const createDeploymentCommand = createLeafCommand({
   ]
 })
 
+const createIngressCommand = createLeafCommand({
+  path: ['create', 'ingress'],
+  use: 'create ingress NAME --rule=host/path=service:port [--class=ingressClassName]',
+  short: 'Create an ingress from imperative flags',
+  handlerId: 'create',
+  flags: [
+    { kind: 'stringArray', name: 'rule', description: 'Host/path backend rule' },
+    { kind: 'string', name: 'class', description: 'Ingress class name' },
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
+  ]
+})
+
 const createCommand = command({
   path: ['create'],
   use: 'create -f FILENAME | create deployment NAME --image=image',
@@ -147,13 +170,15 @@ const createCommand = command({
   .flags.stringArray('image', 'Image name')
   .flags.string('replicas', 'Replica count')
   .flags.string('port', 'Port number')
+  .flags.string('class', 'Ingress class name')
+  .flags.stringArray('rule', 'Host/path backend rule')
   .flags.string('output', 'Output format', { short: 'o' })
   .flags.enum('dry-run', 'Must be none, server or client', [
     'none',
     'server',
     'client'
   ])
-  .addCommand(createDeploymentCommand)
+  .addCommand(createDeploymentCommand, createIngressCommand)
   .build()
 
 const logsCommand = createLeafCommand({
@@ -168,6 +193,7 @@ const logsCommand = createLeafCommand({
       short: 'c',
       description: 'Container name'
     },
+    { kind: 'string', name: 'selector', short: 'l', description: 'Selector' },
     { kind: 'string', name: 'tail', description: 'Lines to show' },
     { kind: 'string', name: 'since', description: 'Relative duration' },
     { kind: 'bool', name: 'follow', short: 'f', description: 'Stream logs' },

@@ -523,6 +523,10 @@ const formatSecretType = (secretType: Secret['type']): string => {
     return 'kubernetes.io/dockerconfigjson'
   }
 
+  if (secretType.type === 'kubernetes.io/tls') {
+    return 'kubernetes.io/tls'
+  }
+
   return 'Unknown'
 }
 
@@ -2395,30 +2399,53 @@ export const describeService = (
 }
 
 export const describeIngress = (ingress: Ingress): string => {
+  const resolveDefaultBackend = (): string => {
+    const defaultBackend = ingress.spec.defaultBackend
+    if (defaultBackend == null) {
+      return '<default>'
+    }
+    const serviceBackend = defaultBackend.service
+    if (serviceBackend == null) {
+      return '<default>'
+    }
+    const port = serviceBackend.port.number ?? serviceBackend.port.name
+    if (port == null) {
+      return `${serviceBackend.name} ()`
+    }
+    return `${serviceBackend.name}:${String(port)} ()`
+  }
+  const hostColumnWidth = Math.max(
+    'Host'.length,
+    ...ingress.spec.rules.map((rule) => {
+      return (rule.host ?? '*').length
+    })
+  ) + 2
   const lines: string[] = []
   lines.push(`Name:             ${ingress.metadata.name}`)
+  lines.push(`Labels:           ${formatLabels(ingress.metadata.labels)}`)
   lines.push(`Namespace:        ${ingress.metadata.namespace}`)
-  lines.push(`Address:          <none>`)
+  lines.push(`Address:          `)
   lines.push(`Ingress Class:    ${ingress.spec.ingressClassName ?? '<none>'}`)
+  lines.push(`Default backend:  ${resolveDefaultBackend()}`)
   lines.push(`Rules:`)
-  lines.push(`  Host              Path  Backends`)
-  lines.push(`  ----              ----  --------`)
+  lines.push(`  ${'Host'.padEnd(hostColumnWidth)}Path  Backends`)
+  lines.push(`  ${'----'.padEnd(hostColumnWidth)}----  --------`)
 
   for (const rule of ingress.spec.rules) {
     const host = rule.host ?? '*'
-    lines.push(`  ${host}`)
+    lines.push(`  ${host.padEnd(hostColumnWidth)}`)
     for (const pathRule of rule.http.paths) {
       const backendPort =
         pathRule.backend.service.port.number ??
         pathRule.backend.service.port.name
       lines.push(
-        `                    ${pathRule.path}   ${pathRule.backend.service.name}:${String(backendPort)}`
+        `  ${''.padEnd(hostColumnWidth)}${pathRule.path.padEnd(6)} ${pathRule.backend.service.name}:${String(backendPort)} ()`
       )
     }
   }
 
-  lines.push('')
-  lines.push('Events:           <none>')
+  lines.push(`Annotations:        ${formatLabels(ingress.metadata.annotations)}`)
+  lines.push(`Events:             <none>`)
   return lines.join('\n')
 }
 

@@ -2,12 +2,11 @@ import type { LocalModule } from '../types'
 
 export const module: LocalModule = {
   title: {
-    en: 'Ingress',
-    fr: 'Ingress'
+    en: 'Gateway API and Envoy Gateway',
+    fr: 'Gateway API et Envoy Gateway'
   },
   description: {
-    en: 'Router le trafic HTTP/HTTPS externe vers les Services.'
+    en: 'Route external HTTP and HTTPS traffic with Gateway API and Envoy Gateway.'
   },
   tags: ['ckad', 'cka', 'intermediate'],
-  draft: true
 }

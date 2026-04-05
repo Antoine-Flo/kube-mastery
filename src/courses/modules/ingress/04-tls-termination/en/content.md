@@ -1,266 +1,171 @@
 ---
-seoTitle: 'Kubernetes Ingress TLS, Secrets, HTTPS Redirect, cert-manager'
-seoDescription: 'Learn how to configure TLS termination on a Kubernetes Ingress using TLS Secrets, enable HTTP-to-HTTPS redirects, and automate renewals with cert-manager.'
+seoTitle: 'TLS Termination with Gateway API and Envoy Gateway in Kubernetes'
+seoDescription: 'Learn how to configure HTTPS with Kubernetes Gateway API, how TLS termination works at the Envoy data plane, and how TLS Secrets are referenced by Gateway listeners.'
 ---
 
-# TLS Termination with Ingress
+# TLS Termination with Gateway API
 
-Virtually every production web application needs HTTPS. Browsers warn users about HTTP sites, search engines penalize them, and for anything handling user data or authentication, plain HTTP is simply not acceptable. Kubernetes Ingress makes configuring HTTPS straightforward through **TLS termination**: the controller handles the secure connection with the outside world, while your backend Services keep speaking plain HTTP internally.
+Every application that serves real users needs HTTPS. Not having it is a dealbreaker: browsers flag non-HTTPS sites as insecure, modern HTTP clients often refuse to follow HTTP redirects to sensitive endpoints, and anything transmitted over plain HTTP is visible to anyone on the network path between the client and your server. For production workloads, configuring TLS is not optional, it is table stakes.
 
-## What TLS Termination Means
+In a Gateway API setup, TLS is configured at the Gateway level. The edge proxy handles the HTTPS handshake with the client, decrypts the traffic, and forwards plain HTTP to your backend services inside the cluster. This model is called **TLS termination**.
 
-TLS termination is the act of decrypting an incoming HTTPS connection at a specific point in your infrastructure and forwarding the decrypted traffic to the backend. In the Ingress model, the controller Pod is where TLS terminates.
+## What TLS Termination Means in Practice
+
+Imagine the journey of an HTTPS request from a browser to your application. The browser connects to the Envoy proxy on port 443. Envoy performs the TLS handshake, which involves exchanging certificates and negotiating a cipher suite. The browser verifies that the certificate is valid and trusted. Once the handshake is complete, the browser sends the HTTP request over the encrypted channel.
+
+At this point, Envoy decrypts the request and forwards it as a plain HTTP request to the Kubernetes Service backing your application. The communication inside the cluster, between Envoy and your Pod, is unencrypted by default. Your application never sees the TLS layer, it just receives a normal HTTP request.
 
 ```mermaid
 sequenceDiagram
     participant Browser
-    participant IC as Ingress Controller
-    participant SVC as Backend Service
-    participant Pod
+    participant Envoy as Envoy Proxy (port 443)
+    participant SVC as Kubernetes Service
+    participant Pod as Application Pod
 
-    Browser->>IC: HTTPS (TLS encrypted)
-    Note over IC: TLS terminates here<br/>Certificate validated
-    IC->>SVC: HTTP (plain, internal)
-    SVC->>Pod: HTTP (plain, internal)
+    Browser->>Envoy: TLS ClientHello
+    Envoy-->>Browser: Certificate + TLS handshake
+    Browser->>Envoy: Encrypted HTTPS request
+    Note over Envoy: Decrypt TLS
+    Envoy->>SVC: Plain HTTP request (inside cluster)
+    SVC->>Pod: Plain HTTP request
     Pod-->>SVC: HTTP response
-    SVC-->>IC: HTTP response
-    IC-->>Browser: HTTPS (TLS encrypted)
+    SVC-->>Envoy: HTTP response
+    Note over Envoy: Re-encrypt TLS
+    Envoy-->>Browser: Encrypted HTTPS response
 ```
 
-This approach has significant advantages: your application code never has to deal with TLS, all certificate management is centralized at the Ingress layer, and since cluster-internal traffic is already within a trusted network boundary, plain HTTP inside the cluster is a widely accepted trade-off (though service meshes like Istio can encrypt internal traffic too if you need it).
-
-## The TLS Secret
-
-Before you can configure TLS in an Ingress, you need a Kubernetes Secret of type `kubernetes.io/tls`. This Secret holds exactly two pieces of data: the certificate (public) and the private key (private), named `tls.crt` and `tls.key`.
-
-To create a TLS Secret from existing certificate files:
-
-```bash
-kubectl create secret tls my-tls-secret \
-  --cert=cert.pem \
-  --key=key.pem
-```
-
-If you want to create a self-signed certificate for testing purposes:
-
-```bash
-# Generate a self-signed certificate and key
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout tls.key \
-  -out tls.crt \
-  -subj "/CN=app.example.com/O=my-org"
-
-# Create the Secret
-kubectl create secret tls my-tls-secret --cert=tls.crt --key=tls.key
-```
-
-You can verify the Secret was created correctly:
-
-```bash
-kubectl get secret my-tls-secret
-kubectl describe secret my-tls-secret
-```
-
-The `describe` output will show two data keys (`tls.crt` and `tls.key`) but will not reveal their values, Kubernetes keeps Secret data protected from casual inspection.
-
-:::warning
-The TLS Secret **must be in the same namespace as the Ingress resource** that references it. An Ingress in the `production` namespace cannot reference a Secret in the `default` namespace. If you need the same certificate in multiple namespaces, you must copy the Secret into each one, or use a tool like cert-manager's Certificate resource to manage this automatically.
-:::
-
-## Configuring TLS in the Ingress Manifest
-
-Once your Secret exists, referencing it in an Ingress is a single `spec.tls` block:
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: my-ingress
-spec:
-  ingressClassName: nginx
-  tls:
-    - hosts:
-        - app.example.com
-      secretName: my-tls-secret
-  rules:
-    - host: app.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: frontend-service
-                port:
-                  number: 80
-```
-
-The `spec.tls` block is a list, meaning you can specify multiple TLS entries, useful when your Ingress serves multiple hostnames with different certificates. Each entry has a list of `hosts` and a `secretName` pointing to the Secret containing the certificate and key. The controller automatically watches the Secret and reloads when the certificate is renewed.
-
-## Automatic HTTP to HTTPS Redirect
-
-Most of the time you want to ensure that any HTTP request is redirected to HTTPS. With ingress-nginx, you can enable this with an annotation:
-
-```yaml
-metadata:
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
-```
-
-When this annotation is set, the controller will respond to any HTTP request on port 80 with a `301 Moved Permanently` redirect to the equivalent HTTPS URL.
+This pattern has a clear advantage: your application code does not need to handle TLS at all. You write a simple HTTP server, and the proxy takes care of the cryptography. Certificate rotation, cipher suite configuration, and protocol version management all happen at the Gateway, not in every individual application.
 
 :::info
-With ingress-nginx, when you configure TLS in the Ingress spec, `ssl-redirect` defaults to `true`. You only need to explicitly set the annotation if you want to disable the redirect (e.g., for internal tooling that uses HTTP). For most production workloads, the default is exactly what you want.
+If you need end-to-end encryption where the traffic between Envoy and your Pods is also encrypted, that is called **TLS passthrough** or **mTLS** (mutual TLS). This is a more advanced topic typically handled by service meshes like Istio. For most use cases, terminating TLS at the edge is sufficient.
 :::
 
-## cert-manager: Automatic Certificate Management
+## TLS Certificates as Kubernetes Secrets
 
-Managing TLS certificates manually, generating them, tracking expiry dates, renewing before they expire, and updating Secrets, is tedious and error-prone. A missed renewal means users see scary certificate error pages.
+Kubernetes does not have a dedicated Certificate resource type. Instead, TLS certificates are stored as **Secrets** with a specific type: `kubernetes.io/tls`. This secret type has exactly two data fields:
 
-**cert-manager** is a Kubernetes add-on that automates the entire certificate lifecycle. It integrates with Let's Encrypt (free, publicly trusted certificates) and internal PKI systems. You add annotations to your Ingress resource; cert-manager handles the rest:
+- `tls.crt`: the certificate (and optionally the full certificate chain, PEM-encoded).
+- `tls.key`: the private key corresponding to the certificate (PEM-encoded).
 
-- Requests the certificate from the configured issuer (e.g., Let's Encrypt).
-- Proves domain ownership via ACME challenge (HTTP-01 or DNS-01).
-- Stores the resulting certificate in a Secret.
-- Automatically renews it before expiry and updates the Secret.
+You create a TLS Secret like this:
 
-The typical annotation for cert-manager with Let's Encrypt looks like this:
-
-```yaml
-metadata:
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+```bash
+kubectl create secret tls my-tls-secret --cert=path/to/cert.crt --key=path/to/key.key
 ```
 
-And you add a `tls` block to your Ingress as normal, pointing to a Secret name that cert-manager will create:
+Or from a YAML manifest:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-tls-secret
+  namespace: default
+type: kubernetes.io/tls
+data:
+  tls.crt: <base64-encoded certificate>
+  tls.key: <base64-encoded private key>
+```
+
+The secret must be in the same namespace as the Gateway that references it. This is a security boundary: a Gateway in the `platform` namespace cannot reference a Secret in the `app` namespace, which prevents applications from accidentally exposing certificates they should not have access to.
+
+## Configuring a TLS Listener on a Gateway
+
+To enable HTTPS, you add a listener with `protocol: HTTPS` to your Gateway and reference the TLS secret:
 
 ```yaml
 spec:
-  tls:
-    - hosts:
-        - app.example.com
-      secretName: app-example-com-tls
+  gatewayClassName: eg
+  listeners:
+    - name: https
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: my-tls-secret
 ```
 
-The Ingress controller picks up the Secret once cert-manager has populated it and starts serving HTTPS. Zero manual intervention required.
+The `mode: Terminate` field tells Envoy to handle the TLS handshake itself and forward decrypted traffic to backends. This is the standard TLS termination model. The alternative, `mode: Passthrough`, would send encrypted traffic directly to the backend without decrypting it, which requires the backend itself to handle TLS.
+
+:::warning
+Forgetting to specify `tls.mode` when using `protocol: HTTPS` will cause the controller to reject the listener configuration. Always include the `tls` block when using HTTPS.
+:::
+
+## Self-Signed Certificates vs CA-Signed Certificates
+
+In development and testing environments, self-signed certificates are the easiest option. You generate a certificate and a key together, without involving a certificate authority. Browsers will warn that the certificate is not trusted, but the connection is still encrypted.
+
+In production, your certificate must be signed by a trusted Certificate Authority (CA). The two main approaches are:
+
+- **Public CA (e.g. Let's Encrypt)**: free, automated, trusted by all browsers. You need to prove domain ownership via HTTP or DNS challenge. The `cert-manager` project automates this entirely within Kubernetes.
+- **Private CA**: your organization runs its own CA and issues certificates internally. Common in enterprises. Clients must trust your organization's root CA.
+
+For the CKA and CKAD exams, you will mostly work with self-signed or pre-generated certificates, focusing on the mechanics of secret creation and Gateway configuration rather than certificate issuance.
 
 ## Hands-On Practice
 
-Let's create a TLS-terminated Ingress using a self-signed certificate.
-
-**Step 1: Generate a self-signed TLS certificate**
+**Step 1: Create a TLS Secret manifest file**
 
 ```bash
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout tls.key \
-  -out tls.crt \
-  -subj "/CN=app.example.com/O=kube-mastery"
+nano demo-tls-secret.yaml
 ```
 
-**Step 2: Create the TLS Secret**
-
-```bash
-kubectl create secret tls demo-tls-secret --cert=tls.crt --key=tls.key
-```
-
-Verify it:
-
-```bash
-kubectl get secret demo-tls-secret
-```
-
-Expected output:
-
-```
-NAME              TYPE                DATA   AGE
-demo-tls-secret   kubernetes.io/tls   2      5s
-```
-
-**Step 3: Deploy a backend Service**
-
-```bash
-kubectl create deployment web --image=nginx
-kubectl expose deployment web --port=80 --name=web-service
-```
-
-**Step 4: Create a TLS-enabled Ingress**
+Paste this content, save, and exit:
 
 ```yaml
-# tls-demo-ingress.yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: v1
+kind: Secret
 metadata:
-  name: tls-demo
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
-spec:
-  ingressClassName: nginx
-  tls:
-    - hosts:
-        - app.example.com
-      secretName: demo-tls-secret
-  rules:
-    - host: app.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: web-service
-                port:
-                  number: 80
+  name: demo-tls-secret
+  namespace: default
+type: kubernetes.io/tls
+data:
+  tls.crt: ZHVtbXktY2VydA==
+  tls.key: ZHVtbXkta2V5
 ```
 
-```bash
-kubectl apply -f tls-demo-ingress.yaml
-```
-
-**Step 5: Get the Ingress controller IP and test HTTPS**
+**Step 2: Create the TLS Secret in Kubernetes**
 
 ```bash
-INGRESS_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-echo "Ingress IP: $INGRESS_IP"
-
-# Test HTTPS (--insecure because it's a self-signed cert)
-curl -k -H "Host: app.example.com" https://$INGRESS_IP/
+kubectl apply -f demo-tls-secret.yaml
 ```
 
 Expected output:
 
-```html
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Welcome to nginx!</title>
-    ...
-  </head>
-</html>
-```
+`secret/demo-tls-secret created` or `secret/demo-tls-secret configured`
 
-**Step 6: Verify the redirect from HTTP to HTTPS**
+**Step 3: Verify the secret was created correctly**
 
 ```bash
-# Should return 308 redirect to https://
-curl -v -H "Host: app.example.com" http://$INGRESS_IP/
+kubectl describe secret demo-tls-secret
 ```
 
-Look for `Location: https://app.example.com/` in the response headers, confirming the HTTP-to-HTTPS redirect is working.
+Expected output:
 
-**Step 7: Inspect the certificate the controller is serving**
+```
+Name:         demo-tls-secret
+Namespace:    default
+Type:         kubernetes.io/tls
 
-```bash
-openssl s_client -connect $INGRESS_IP:443 -servername app.example.com -showcerts </dev/null 2>/dev/null | openssl x509 -noout -text | grep -E "Subject:|Not After"
+Data
+====
+tls.crt:  <N> bytes
+tls.key:  <N> bytes
 ```
 
-This should show your certificate's subject (`CN=app.example.com`) and expiry date.
+The `Data` section confirms both fields are present. The values are not shown in plain text for security reasons.
 
-**Step 8: Clean up**
+**Step 4: Inspect the current Gateway configuration**
 
 ```bash
-kubectl delete ingress tls-demo
-kubectl delete secret demo-tls-secret
-kubectl delete service web-service
-kubectl delete deployment web
-rm tls.crt tls.key
+kubectl describe gateway eg
+```
+
+Look at the `Listeners` section. You will see the active listeners and their protocols. In this environment, the pre-configured Gateway may only have an HTTP listener. In a real cluster you would add an HTTPS listener referencing `demo-tls-secret`.
+
+**Step 5: Clean up**
+
+```bash
+kubectl delete -f demo-tls-secret.yaml
 ```

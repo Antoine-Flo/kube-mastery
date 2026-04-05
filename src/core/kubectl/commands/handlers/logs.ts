@@ -4,6 +4,7 @@ import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand } from '../types'
 import { getSimulatedCommandExitCode } from '../../../cluster/containerCommand'
+import { matchesLabelSelector } from '../../../shared/labelSelector'
 import {
   appendLogEntriesUntil,
   generateCrashLogLines,
@@ -206,14 +207,32 @@ export const handleLogs = (
   parsed: ParsedCommand
 ): ExecutionResult => {
   const state = apiServer.snapshotState()
-  // Validate pod name is provided
-  if (!parsed.name) {
-    return error('error: pod name is required')
+  const namespace = parsed.namespace || 'default'
+
+  const selector = parsed.selector
+  const getPodsForSelector = (): Pod[] => {
+    if (selector == null) {
+      return []
+    }
+    return state.pods.items.filter((podItem) => {
+      if (podItem.metadata.namespace !== namespace) {
+        return false
+      }
+      return matchesLabelSelector(selector, podItem.metadata.labels)
+    })
   }
 
-  const namespace = parsed.namespace || 'default'
-  const podName = parsed.name
-
+  let podName = parsed.name
+  if (podName == null || podName.length === 0) {
+    if (selector == null) {
+      return error('error: pod name is required')
+    }
+    const selectedPods = getPodsForSelector()
+    if (selectedPods.length === 0) {
+      return success(`No resources found in ${namespace} namespace.`)
+    }
+    podName = selectedPods[0].metadata.name
+  }
   const hasNamespaces = state.namespaces.items.length > 0
   if (hasNamespaces) {
     const namespaceExists = state.namespaces.items.some((item) => {

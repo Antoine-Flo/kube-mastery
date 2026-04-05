@@ -30,7 +30,8 @@ describe('systemBootstrap', () => {
       'kube-system',
       'kube-public',
       'kube-node-lease',
-      'local-path-storage'
+      'local-path-storage',
+      'envoy-gateway-system'
     ])
     expect(resources.nodes.map((node) => node.metadata.name)).toEqual([
       'conformance-control-plane',
@@ -65,11 +66,18 @@ describe('systemBootstrap', () => {
     ).toEqual(['default', 'kube-public', 'kube-system'])
     expect(resources.services.map((service) => service.metadata.name)).toEqual([
       'kubernetes',
-      'kube-dns'
+      'kube-dns',
+      'envoy-gateway',
+      'envoy-default-eg'
     ])
     expect(
       resources.services.map((service) => service.metadata.namespace)
-    ).toEqual(['default', 'kube-system'])
+    ).toEqual([
+      'default',
+      'kube-system',
+      'envoy-gateway-system',
+      'envoy-gateway-system'
+    ])
     expect(resources.pods).toHaveLength(4)
     expect(resources.staticPods).toHaveLength(4)
     const staticControlPlanePods = [

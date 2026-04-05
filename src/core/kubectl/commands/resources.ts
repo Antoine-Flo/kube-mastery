@@ -15,6 +15,9 @@ export const KUBECTL_RESOURCES = {
   replicasets: ['replicasets', 'replicaset', 'rs'],
   ingresses: ['ingresses', 'ingress', 'ing'],
   ingressclasses: ['ingressclasses', 'ingressclass'],
+  gateways: ['gateways', 'gateway', 'gw'],
+  gatewayclasses: ['gatewayclasses', 'gatewayclass', 'gc'],
+  httproutes: ['httproutes', 'httproute', 'hr'],
   persistentvolumes: ['persistentvolumes', 'persistentvolume', 'pv'],
   persistentvolumeclaims: [
     'persistentvolumeclaims',

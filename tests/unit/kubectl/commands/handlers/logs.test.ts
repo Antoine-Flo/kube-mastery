@@ -92,6 +92,35 @@ describe('kubectl logs handler', () => {
         expect(result.value.length).toBeGreaterThan(0)
       }
     })
+
+    it('should return no resources message for selector with no matching pod', () => {
+      const state = createState([])
+      const parsed = createParsedCommand({
+        namespace: 'ingress-nginx',
+        selector: {
+          requirements: [
+            {
+              key: 'app.kubernetes.io/component',
+              operator: 'Equals',
+              values: ['controller']
+            }
+          ]
+        },
+        flags: {
+          l: 'app.kubernetes.io/component=controller',
+          tail: '30'
+        }
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleLogsApi(apiServer, parsed)
+
+      expect(result).toEqual({
+        ok: true,
+        value: 'No resources found in ingress-nginx namespace.'
+      })
+    })
   })
 
   describe('multi-container pods', () => {

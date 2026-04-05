@@ -41,6 +41,9 @@ const BASE_RESOURCE_TARGETS: Record<Resource, BaseTarget | undefined> = {
     version: 'v1',
     kind: 'IngressClass'
   },
+  gateways: undefined,
+  gatewayclasses: undefined,
+  httproutes: undefined,
   persistentvolumes: { group: '', version: 'v1', kind: 'PersistentVolume' },
   persistentvolumeclaims: {
     group: '',

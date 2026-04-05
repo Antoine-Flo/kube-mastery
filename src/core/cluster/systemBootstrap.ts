@@ -22,6 +22,7 @@ import type { Service } from './ressources/Service'
 import { createService } from './ressources/Service'
 import type { StorageClass } from './ressources/StorageClass'
 import { createStorageClass } from './ressources/StorageClass'
+import { createEnvoyGatewaySystemServices } from '../gateway-api/envoy/bootstrap'
 import { createSystemNamespaces, isSystemNamespace } from './systemNamespaces'
 
 export interface SystemBootstrapOptions {
@@ -379,7 +380,8 @@ const createSystemServices = (creationTimestamp: string): Service[] => {
         { name: 'dns-tcp', port: 53, protocol: 'TCP', targetPort: 53 },
         { name: 'metrics', port: 9153, protocol: 'TCP', targetPort: 9153 }
       ]
-    })
+    }),
+    ...createEnvoyGatewaySystemServices(creationTimestamp)
   ]
 }
 

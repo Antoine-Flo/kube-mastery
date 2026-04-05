@@ -137,6 +137,36 @@ describe('kubectl parser - create deployment', () => {
     }
   })
 
+  it('should parse imperative create ingress with class and repeated rules', () => {
+    const result = parseCommand(
+      'kubectl create ingress demo-ingress --class=nginx --rule=demo.example.com/api=api-service:5678 --rule=demo.example.com/=frontend-service:80'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('ingresses')
+    expect(result.value.name).toBe('demo-ingress')
+    expect(result.value.createIngressClassName).toBe('nginx')
+    expect(result.value.createIngressRules).toEqual([
+      'demo.example.com/api=api-service:5678',
+      'demo.example.com/=frontend-service:80'
+    ])
+  })
+
+  it('should reject create ingress when --rule is missing', () => {
+    const result = parseCommand(
+      'kubectl create ingress demo-ingress --class=nginx'
+    )
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('create ingress requires at least one --rule')
+    }
+  })
+
   it('should parse create configmap from literals', () => {
     const result = parseCommand(
       'kubectl create configmap app-config --from-literal=LOG_LEVEL=info --from-literal=MODE=prod --dry-run=client -o yaml'
@@ -1580,6 +1610,25 @@ describe('kubectl parser - patch', () => {
     if (!result.ok) {
       expect(result.error).toContain('--type must be "merge"')
     }
+  })
+})
+
+describe('kubectl parser - logs', () => {
+  it('should parse logs with label selector and without pod name', () => {
+    const result = parseCommand(
+      'kubectl logs -n ingress-nginx -l app.kubernetes.io/component=controller --tail=30'
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('logs')
+    expect(result.value.name).toBeUndefined()
+    expect(result.value.namespace).toBe('ingress-nginx')
+    expect(result.value.flags.l).toBe('app.kubernetes.io/component=controller')
+    expect(result.value.flags.tail).toBe('30')
   })
 })
 

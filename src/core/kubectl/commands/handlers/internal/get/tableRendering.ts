@@ -42,6 +42,13 @@ const sortDeploymentsByName = (
   return left.metadata.name.localeCompare(right.metadata.name)
 }
 
+const sortResourcesByName = (
+  left: ResourceWithMetadata,
+  right: ResourceWithMetadata
+): number => {
+  return left.metadata.name.localeCompare(right.metadata.name)
+}
+
 const renderPodsAllNamespacesTable = (
   filtered: ResourceWithMetadata[],
   isWide: boolean,
@@ -144,15 +151,16 @@ const renderWideTable = (
   showLabels: boolean
 ): string => {
   const headers = [...(handler.headersWide ?? [])]
+  const ordered = [...filtered].sort(sortResourcesByName)
   const rows = (
     (handler.formatRowWide != null
-      ? filtered.map(handler.formatRowWide)
+      ? ordered.map(handler.formatRowWide)
       : []) as string[][]
   ).map((row, index) => {
     if (!showLabels) {
       return row
     }
-    const resource = filtered[index]
+    const resource = ordered[index]
     return [...row, formatLabelsForDisplay(resource.metadata.labels)]
   })
   if (showLabels) {
@@ -174,7 +182,7 @@ const renderDefaultTable = (
   const rowsSource =
     resourceType === ('deployments' as Resource)
       ? [...filtered].sort(sortDeploymentsByName)
-      : filtered
+      : [...filtered].sort(sortResourcesByName)
   const rows = (rowsSource.map(handler.formatRow) as string[][]).map(
     (row, index) => {
       if (!showLabels) {

@@ -1,5 +1,10 @@
 import type { ClusterStateData } from '../../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
+import {
+  getGatewayClassDescribeOutput,
+  getGatewayDescribeOutput,
+  getHttpRouteDescribeOutput
+} from '../../../gateway-api/envoy/api'
 import type { DeploymentLifecycleDescribeEvent } from '../../../api/DeploymentLifecycleEventStore'
 import type { PersistentVolumeClaimLifecycleDescribeEvent } from '../../../api/PersistentVolumeClaimLifecycleEventStore'
 import type { PodLifecycleDescribeEvent } from '../../../api/PodLifecycleEventStore'
@@ -236,6 +241,73 @@ export const handleDescribe = (
   }
 
   const resourceType = parsed.resource
+  if (resourceType === 'ingressclasses') {
+    if (!parsed.name) {
+      return error(`error: you must specify the name of the resource to describe`)
+    }
+    const ingressControllerInstalled = state.deployments.items.some(
+      (deployment) => {
+        return (
+          deployment.metadata.namespace === 'ingress-nginx' &&
+          deployment.metadata.name === 'ingress-nginx-controller'
+        )
+      }
+    )
+    if (ingressControllerInstalled && parsed.name === 'nginx') {
+      return success(
+        [
+          'Name:         nginx',
+          'Labels:       app.kubernetes.io/component=controller',
+          '              app.kubernetes.io/instance=ingress-nginx',
+          '              app.kubernetes.io/name=ingress-nginx',
+          '              app.kubernetes.io/part-of=ingress-nginx',
+          '              app.kubernetes.io/version=1.15.1',
+          'Annotations:  <none>',
+          'Controller:   k8s.io/ingress-nginx',
+          'Events:       <none>'
+        ].join('\n')
+      )
+    }
+    return error(
+      `Error from server (NotFound): ingressclasses.networking.k8s.io "${parsed.name}" not found`
+    )
+  }
+  if (resourceType === 'gatewayclasses') {
+    if (!parsed.name) {
+      return error(`error: you must specify the name of the resource to describe`)
+    }
+    const describeOutput = getGatewayClassDescribeOutput(state, parsed.name)
+    if (describeOutput != null) {
+      return success(describeOutput)
+    }
+    return error(
+      `Error from server (NotFound): gatewayclasses.gateway.networking.k8s.io "${parsed.name}" not found`
+    )
+  }
+  if (resourceType === 'gateways') {
+    if (!parsed.name) {
+      return error(`error: you must specify the name of the resource to describe`)
+    }
+    const describeOutput = getGatewayDescribeOutput(state, parsed.name)
+    if (describeOutput != null) {
+      return success(describeOutput)
+    }
+    return error(
+      `Error from server (NotFound): gateways.gateway.networking.k8s.io "${parsed.name}" not found`
+    )
+  }
+  if (resourceType === 'httproutes') {
+    if (!parsed.name) {
+      return error(`error: you must specify the name of the resource to describe`)
+    }
+    const describeOutput = getHttpRouteDescribeOutput(state, parsed.name)
+    if (describeOutput != null) {
+      return success(describeOutput)
+    }
+    return error(
+      `Error from server (NotFound): httproutes.gateway.networking.k8s.io "${parsed.name}" not found`
+    )
+  }
   const config = DESCRIBE_CONFIG[resourceType]
   if (!config) {
     return error(

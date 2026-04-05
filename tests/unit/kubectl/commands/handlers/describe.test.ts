@@ -6,6 +6,7 @@ import { createEndpoints } from '../../../../../src/core/cluster/ressources/Endp
 import { createNode } from '../../../../../src/core/cluster/ressources/Node'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createReplicaSet } from '../../../../../src/core/cluster/ressources/ReplicaSet'
+import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
 import { createService } from '../../../../../src/core/cluster/ressources/Service'
 import { handleDescribe } from '../../../../../src/core/kubectl/commands/handlers/describe'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
@@ -638,5 +639,232 @@ describe('kubectl describe handler - pods with event store', () => {
       return
     }
     expect(result.value).toContain('Status:               Terminating')
+  })
+})
+
+describe('kubectl describe handler - gateway api envoy', () => {
+  it('should describe gatewayclass eg with kind like sections', () => {
+    const envoyGatewayDeployment = createDeployment({
+      name: 'envoy-gateway',
+      namespace: 'envoy-gateway-system',
+      selector: {
+        matchLabels: {
+          'app.kubernetes.io/name': 'envoy-gateway'
+        }
+      },
+      template: {
+        metadata: {
+          labels: {
+            'app.kubernetes.io/name': 'envoy-gateway'
+          }
+        },
+        spec: {
+          containers: [{ name: 'envoy-gateway', image: 'envoyproxy/gateway:v1.7.1' }]
+        }
+      },
+      replicas: 1
+    })
+    const state = createClusterStateData({
+      deployments: [envoyGatewayDeployment]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'gatewayclasses',
+      name: 'eg',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+
+    const result = handleDescribe(apiServer, parsed)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Name:         eg')
+    expect(result.value).toContain('API Version:  gateway.networking.k8s.io/v1')
+    expect(result.value).toContain('Kind:         GatewayClass')
+    expect(result.value).toContain(
+      'Controller Name:  gateway.envoyproxy.io/gatewayclass-controller'
+    )
+    expect(result.value).toMatch(/Resource Version:\s+\d{5}/)
+    expect(result.value).toMatch(
+      /UID:\s+[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
+    )
+    expect(result.value).toContain('Type:                  Accepted')
+    expect(result.value).toContain('Status:                True')
+  })
+
+  it('should return not found when gatewayclass does not exist', () => {
+    const state = createClusterStateData()
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'gatewayclasses',
+      name: 'eg',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+
+    const result = handleDescribe(apiServer, parsed)
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'gatewayclasses.gateway.networking.k8s.io "eg" not found'
+      )
+    }
+  })
+
+  it('should describe httproute backend with status conditions', () => {
+    const envoyGatewayDeployment = createDeployment({
+      name: 'envoy-gateway',
+      namespace: 'envoy-gateway-system',
+      selector: {
+        matchLabels: {
+          'app.kubernetes.io/name': 'envoy-gateway'
+        }
+      },
+      template: {
+        metadata: {
+          labels: {
+            'app.kubernetes.io/name': 'envoy-gateway'
+          }
+        },
+        spec: {
+          containers: [{ name: 'envoy-gateway', image: 'envoyproxy/gateway:v1.7.1' }]
+        }
+      },
+      replicas: 1
+    })
+    const state = createClusterStateData({
+      deployments: [envoyGatewayDeployment]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'httproutes',
+      name: 'backend',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+
+    const result = handleDescribe(apiServer, parsed)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Name:         backend')
+    expect(result.value).toContain('API Version:  gateway.networking.k8s.io/v1')
+    expect(result.value).toContain('Kind:         HTTPRoute')
+    expect(result.value).toContain('Group:  gateway.networking.k8s.io')
+    expect(result.value).toContain('Kind:    Service')
+    expect(result.value).toContain('Name:    backend')
+    expect(result.value).toContain('Port:    3000')
+    expect(result.value).toContain('Type:                  Accepted')
+    expect(result.value).toContain('Status:                True')
+    expect(result.value).toContain('Type:                  ResolvedRefs')
+    expect(result.value).toContain('Reason:                BackendNotFound')
+    expect(result.value).toContain('Status:                False')
+  })
+
+  it('should mark httproute backend refs as resolved when service exists', () => {
+    const envoyGatewayDeployment = createDeployment({
+      name: 'envoy-gateway',
+      namespace: 'envoy-gateway-system',
+      selector: {
+        matchLabels: {
+          'app.kubernetes.io/name': 'envoy-gateway'
+        }
+      },
+      template: {
+        metadata: {
+          labels: {
+            'app.kubernetes.io/name': 'envoy-gateway'
+          }
+        },
+        spec: {
+          containers: [{ name: 'envoy-gateway', image: 'envoyproxy/gateway:v1.7.1' }]
+        }
+      },
+      replicas: 1
+    })
+    const backendService = createService({
+      name: 'backend',
+      namespace: 'default',
+      clusterIP: '10.96.0.20',
+      ports: [{ port: 3000, protocol: 'TCP', targetPort: 3000 }]
+    })
+    const state = createClusterStateData({
+      deployments: [envoyGatewayDeployment],
+      services: [backendService]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'httproutes',
+      name: 'backend',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+
+    const result = handleDescribe(apiServer, parsed)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Type:                  ResolvedRefs')
+    expect(result.value).toContain('Reason:                ResolvedRefs')
+    expect(result.value).toContain('Status:                True')
+    expect(result.value).toContain('All backend references are resolved')
+  })
+
+  it('should describe gateway eg with status and listener sections', () => {
+    const envoyGatewayDeployment = createDeployment({
+      name: 'envoy-gateway',
+      namespace: 'envoy-gateway-system',
+      selector: {
+        matchLabels: {
+          'app.kubernetes.io/name': 'envoy-gateway'
+        }
+      },
+      template: {
+        metadata: {
+          labels: {
+            'app.kubernetes.io/name': 'envoy-gateway'
+          }
+        },
+        spec: {
+          containers: [{ name: 'envoy-gateway', image: 'envoyproxy/gateway:v1.7.1' }]
+        }
+      },
+      replicas: 1
+    })
+    const state = createClusterStateData({
+      deployments: [envoyGatewayDeployment]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'gateways',
+      name: 'eg',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+
+    const result = handleDescribe(apiServer, parsed)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Name:         eg')
+    expect(result.value).toContain('API Version:  gateway.networking.k8s.io/v1')
+    expect(result.value).toContain('Kind:         Gateway')
+    expect(result.value).toContain('Gateway Class Name:  eg')
+    expect(result.value).toContain('Reason:                AddressNotAssigned')
+    expect(result.value).toContain('Type:                  Programmed')
+    expect(result.value).toContain('Attached Routes:  1')
+    expect(result.value).toContain('Supported Kinds:')
+    expect(result.value).toContain('Kind:   HTTPRoute')
+    expect(result.value).toContain('Kind:   GRPCRoute')
   })
 })

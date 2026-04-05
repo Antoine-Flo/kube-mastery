@@ -807,6 +807,70 @@ spec:
     expect(ingress.ok).toBe(true)
   })
 
+  it('should create ingress imperatively from --rule flags', () => {
+    const parsed = parseCommand(
+      'kubectl create ingress demo-ingress --class=nginx --rule=demo.example.com/api=api-service:5678 --rule=demo.example.com/=frontend-service:80'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('ingress.networking.k8s.io/demo-ingress created')
+    const ingress = apiServer.findResource('Ingress', 'demo-ingress', 'default')
+    expect(ingress.ok).toBe(true)
+    if (!ingress.ok) {
+      return
+    }
+    expect(ingress.value.spec.ingressClassName).toBe('nginx')
+    expect(ingress.value.spec.rules).toHaveLength(1)
+    expect(ingress.value.spec.rules[0].host).toBe('demo.example.com')
+    expect(ingress.value.spec.rules[0].http.paths).toHaveLength(2)
+  })
+
+  it('should return error for invalid ingress --rule backend format', () => {
+    const parsed = parseCommand(
+      'kubectl create ingress demo-ingress --rule=demo.example.com/api=api-service'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('invalid ingress backend')
+    }
+  })
+
+  it('should return ingress manifest in dry-run client mode', () => {
+    const parsed = parseCommand(
+      'kubectl create ingress demo-ingress --class=nginx --rule=demo.example.com/=frontend-service:80 --dry-run=client -o yaml'
+    )
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('kind: Ingress')
+    expect(result.value).toContain('name: demo-ingress')
+    expect(result.value).toContain('ingressClassName: nginx')
+
+    const ingress = apiServer.findResource('Ingress', 'demo-ingress', 'default')
+    expect(ingress.ok).toBe(false)
+  })
+
   it('should return AlreadyExists error when namespace already exists', () => {
     const first = parseCommand('kubectl create namespace my-team')
     expect(first.ok).toBe(true)

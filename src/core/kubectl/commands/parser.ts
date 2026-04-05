@@ -120,6 +120,8 @@ const FLAGS_REQUIRING_VALUES = [
   'docker-username',
   'docker-password',
   'docker-email',
+  'class',
+  'rule',
   'p',
   'patch',
   'revision',
@@ -238,6 +240,8 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     createImages: ctx.createImages,
     createCommand: ctx.createCommand,
     createServiceType: ctx.createServiceType,
+    createIngressClassName: ctx.createIngressClassName,
+    createIngressRules: ctx.createIngressRules,
     createSecretType: ctx.createSecretType,
     createFromLiterals: ctx.createFromLiterals,
     createFromFiles: ctx.createFromFiles,
@@ -751,7 +755,7 @@ const validateCommandSemantics = (
 
   const requiresNameAction =
     action === 'edit' ||
-    action === 'logs' ||
+    (action === 'logs' && !hasSelector) ||
     action === 'exec' ||
     action === 'label' ||
     action === 'annotate' ||
@@ -852,6 +856,15 @@ const validateCommandSemantics = (
         fromLiteralFlag.trim().length === 0
       ) {
         return 'create configmap requires at least one --from-literal=key=value'
+      }
+    }
+    if (resource === 'ingresses') {
+      if (name == null || name.length === 0) {
+        return 'create ingress requires an ingress name'
+      }
+      const createRuleFlag = flags.rule
+      if (typeof createRuleFlag !== 'string' || createRuleFlag.length === 0) {
+        return 'create ingress requires at least one --rule'
       }
     }
     if (resource === 'secrets') {

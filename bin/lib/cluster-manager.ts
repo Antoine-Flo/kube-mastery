@@ -5,6 +5,14 @@ import {
   DEFAULT_CLUSTER_CONFIG_PATH,
   type ClusterNodeRole
 } from '../../src/core/cluster/clusterConfig'
+import { ENVOY_GATEWAY_SYSTEM_NAMESPACES } from '../../src/core/gateway-api/envoy/bootstrap'
+import {
+  ENVOY_GATEWAY_DEPLOYMENT_NAME,
+  ENVOY_GATEWAY_GATEWAY_CLASS_NAME,
+  ENVOY_GATEWAY_INSTALL_MANIFEST_URL,
+  ENVOY_GATEWAY_NAMESPACE,
+  ENVOY_GATEWAY_QUICKSTART_MANIFEST_URL
+} from '../../src/core/gateway-api/envoy/constants'
 import { parseClusterNodeRolesFromKindConfig } from '../../src/core/cluster/clusterConfig'
 import type { Result } from './types'
 import { error, success } from './types'
@@ -15,6 +23,52 @@ export const ensureCluster = (
   name: string,
   kindConfigPath?: string
 ): Result<void, string> => {
+  const ensureEnvoyGatewayInstalled = (): void => {
+    const hasEnvoyGateway = (() => {
+      try {
+        const output = execSync(
+          `kubectl get deployment ${ENVOY_GATEWAY_DEPLOYMENT_NAME} -n ${ENVOY_GATEWAY_NAMESPACE} -o name`,
+          {
+            stdio: 'pipe',
+            encoding: 'utf-8'
+          }
+        ).trim()
+        return output.length > 0
+      } catch {
+        return false
+      }
+    })()
+    if (!hasEnvoyGateway) {
+      execSync(
+        `kubectl apply --server-side -f ${ENVOY_GATEWAY_INSTALL_MANIFEST_URL}`,
+        { stdio: 'pipe', encoding: 'utf-8' }
+      )
+      execSync(
+        `kubectl wait --timeout=180s -n ${ENVOY_GATEWAY_NAMESPACE} deployment/${ENVOY_GATEWAY_DEPLOYMENT_NAME} --for=condition=Available`,
+        { stdio: 'pipe', encoding: 'utf-8' }
+      )
+    }
+    const hasGatewayClass = (() => {
+      try {
+        const output = execSync(
+          `kubectl get gatewayclass ${ENVOY_GATEWAY_GATEWAY_CLASS_NAME} -o name`,
+          {
+            stdio: 'pipe',
+            encoding: 'utf-8'
+          }
+        ).trim()
+        return output.length > 0
+      } catch {
+        return false
+      }
+    })()
+    if (!hasGatewayClass) {
+      execSync(
+        `kubectl apply -f ${ENVOY_GATEWAY_QUICKSTART_MANIFEST_URL} -n default`,
+        { stdio: 'pipe', encoding: 'utf-8' }
+      )
+    }
+  }
   try {
     const existingClustersOutput = execSync('kind get clusters', {
       stdio: 'pipe',
@@ -25,6 +79,7 @@ export const ensureCluster = (
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
     if (existingClusters.includes(name)) {
+      ensureEnvoyGatewayInstalled()
       return success(undefined)
     }
 
@@ -37,6 +92,7 @@ export const ensureCluster = (
     execSync(`kind create cluster --name ${name}${configArg}`, {
       stdio: 'inherit'
     })
+    ensureEnvoyGatewayInstalled()
 
     return success(undefined)
   } catch (err) {
@@ -61,7 +117,9 @@ const PROTECTED_NAMESPACES = new Set([
   'kube-system',
   'kube-public',
   'kube-node-lease',
-  'local-path-storage'
+  'local-path-storage',
+  'ingress-nginx',
+  ...ENVOY_GATEWAY_SYSTEM_NAMESPACES
 ])
 
 const DEFAULT_NAMESPACE_CLEANUP_RESOURCES = [

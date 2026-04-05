@@ -61,6 +61,38 @@ describe('Network Handlers', () => {
         expect(result.error).toContain('curl <url>')
       }
     })
+
+    it('should parse target when flags are present', () => {
+      const handler = createCurlHandler({
+        resolveNamespace: () => 'dev',
+        runCurl: (target, namespace) => {
+          return success(`target=${target} namespace=${namespace}`)
+        }
+      })
+
+      const result = handler.execute(['-s', 'http://web:80'], {})
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toBe('target=http://web:80 namespace=dev')
+      }
+    })
+
+    it('should parse target from --url syntax', () => {
+      const handler = createCurlHandler({
+        resolveNamespace: () => 'dev',
+        runCurl: (target, namespace) => {
+          return success(`target=${target} namespace=${namespace}`)
+        }
+      })
+
+      const result = handler.execute(['--url=http://web:80'], {})
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toBe('target=http://web:80 namespace=dev')
+      }
+    })
   })
 
   describe('exit', () => {

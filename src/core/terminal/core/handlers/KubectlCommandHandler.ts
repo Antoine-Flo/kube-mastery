@@ -472,6 +472,9 @@ const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
   ],
   ingresses: [],
   ingressclasses: [],
+  gateways: [],
+  gatewayclasses: [],
+  httproutes: [],
   namespaces: [],
   persistentvolumes: [
     'PersistentVolumeCreated',

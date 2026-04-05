@@ -21,6 +21,32 @@ const extractCurlTarget = (command: string[]): string | undefined => {
   return undefined
 }
 
+const shouldHandleCurlInRuntime = (target: string): boolean => {
+  const trimmedTarget = target.trim().toLowerCase()
+  if (trimmedTarget.length === 0) {
+    return true
+  }
+  const localhostTargets = new Set(['localhost', '127.0.0.1', '::1'])
+  if (localhostTargets.has(trimmedTarget)) {
+    return false
+  }
+  if (trimmedTarget.startsWith('localhost:')) {
+    return false
+  }
+  if (trimmedTarget.startsWith('127.0.0.1:')) {
+    return false
+  }
+  try {
+    const parsedUrl = new URL(trimmedTarget)
+    if (localhostTargets.has(parsedUrl.hostname)) {
+      return false
+    }
+    return true
+  } catch {
+    return true
+  }
+}
+
 export interface RuntimeCommandResult {
   stdout: string
   stderr: string
@@ -260,6 +286,9 @@ export const executeRuntimeAttachedCommand = (
   const curlTarget = extractCurlTarget(command)
   if (curlTarget == null) {
     return errorResult('curl: try "curl <url>"')
+  }
+  if (!shouldHandleCurlInRuntime(curlTarget)) {
+    return undefined
   }
   const curlResult = networkRuntime.trafficEngine.simulateHttpGet(curlTarget, {
     sourceNamespace: namespace

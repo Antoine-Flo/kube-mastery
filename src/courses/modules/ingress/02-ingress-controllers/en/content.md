@@ -1,179 +1,159 @@
 ---
-seoTitle: 'Kubernetes Ingress Controllers, nginx, Traefik, IngressClass'
-seoDescription: 'Explore how Kubernetes Ingress controllers work, compare popular options like ingress-nginx and Traefik, and learn to install a controller and use IngressClass.'
+seoTitle: 'Envoy Gateway Controller: How Gateway API Is Implemented in Kubernetes'
+seoDescription: 'Understand how Envoy Gateway implements Gateway API resources, what the control plane and data plane do, and how reconciliation turns your YAML into live proxy config.'
 ---
 
-# Ingress Controllers
+# Envoy Gateway Controller
 
-In the previous lesson you learned that an Ingress resource is just a declaration of routing rules, a piece of configuration stored in etcd. By itself it has no effect. The component that reads those rules and actually implements them is the **Ingress controller**, and understanding how it works is essential before you can use Ingress in practice.
+In the previous lesson you learned about the three building blocks of Gateway API: GatewayClass, Gateway, and HTTPRoute. But those are just Kubernetes objects, YAML stored in etcd. On their own, they do nothing. Something has to watch them, understand them, and translate them into actual proxy behavior that can route real network traffic. That something is the **controller**.
 
-:::info
-Kubernetes does not ship with a built-in Ingress controller. This is an intentional design choice: different organizations have different needs, and there is a rich ecosystem of controllers to choose from. You are responsible for installing one before Ingress resources have any effect.
-:::
+Every Gateway API implementation ships a controller, and the one used in this module is **Envoy Gateway**. Understanding what this controller does, and how it does it, will help you reason about what happens when things break, when routes don't appear to work, or when configuration changes don't seem to take effect.
 
-## Popular Ingress Controllers
+## The Two Sides of a Proxy System
 
-The ecosystem is large, but a handful stand out as the most commonly used:
+Proxy systems like Envoy Gateway are typically divided into two distinct layers:
 
-- **ingress-nginx** The most widely deployed open-source controller, maintained by the Kubernetes community. Uses nginx as the underlying proxy and supports a rich set of features via annotations. Solid default choice if you are not sure what to use.
-- **Traefik** A cloud-native proxy built with Kubernetes in mind from the start. Clean configuration model, excellent web dashboard, and tight integration with Let's Encrypt for automatic TLS.
-- **HAProxy Ingress** Uses HAProxy under the hood, known for extreme performance and fine-grained connection control. Often chosen for high-throughput production workloads.
-- **Contour** Uses Envoy as the proxy, developed by the VMware/Broadcom team. Strong support for advanced HTTP features and the reference implementation for the Gateway API (the successor to Ingress).
-- **Cloud-managed controllers**, The AWS Load Balancer Controller (ALBs/NLBs), GKE Ingress controller (Google Cloud Load Balancers), and Azure Application Gateway Ingress Controller all integrate deeply with their respective clouds, automatically provisioning cloud-native load balancers from Ingress resources.
+The **control plane** is the brain. It watches for configuration changes, validates them, and computes the desired state of the data plane. It never touches actual user traffic. In Envoy Gateway, the control plane is a Kubernetes controller running as a Deployment in the `envoy-gateway-system` namespace.
 
-On managed Kubernetes platforms (GKE, EKS, AKS), the cloud provider typically offers a managed controller that is either pre-installed or easily enabled. On self-managed clusters, you install one yourself.
+The **data plane** is the muscle. It is the actual proxy that receives incoming connections, applies routing rules, and forwards requests to backend services. In Envoy Gateway, the data plane is an Envoy Proxy instance, also running in the cluster, managed by the control plane.
 
-## How an Ingress Controller Works
-
-The controller runs as one or more Pods inside your cluster, typically in a dedicated namespace like `ingress-nginx`. When it starts up, it registers a watch on the Kubernetes API for Ingress resources (and Secrets, for TLS). Every time an Ingress is created, updated, or deleted, the API server notifies the controller.
-
-The controller reads the Ingress rules and translates them into its underlying proxy's configuration. For ingress-nginx, this means generating an nginx configuration file and reloading nginx. For Traefik, it updates Traefik's routing table in memory. For cloud controllers, it calls the cloud provider's API to configure load balancer rules.
+This separation is intentional. The control plane can be restarted without dropping any active connections. The data plane handles traffic independently. You can update routing rules without causing a blip in traffic, because the control plane pushes incremental config updates to the data plane using a protocol called xDS.
 
 ```mermaid
-graph LR
-    IR[Ingress Resource<br/>in etcd] -->|watches| IC[Ingress Controller Pod<br/>ingress-nginx]
-    IC -->|generates| NC[nginx.conf]
-    NC -->|reloads| NX[nginx process<br/>inside controller Pod]
+flowchart TD
+    K8s[Kubernetes API Server]
+    CP[Envoy Gateway\nControl Plane]
+    DP[Envoy Proxy\nData Plane]
+    Client[External Client]
+    SVC[Kubernetes Service]
 
-    EXT([External Traffic]) --> LB[LoadBalancer Service<br/>ingress-nginx]
-    LB --> NX
-    NX -->|routes to| SVC1[api-service]
-    NX -->|routes to| SVC2[frontend-service]
+    K8s -- watches GatewayClass\nGateway, HTTPRoute --> CP
+    CP -- xDS config push --> DP
+    Client -- HTTP/HTTPS --> DP
+    DP -- proxied request --> SVC
 ```
 
-The controller Pod is exposed via a Service of type `LoadBalancer` (or `NodePort` in local environments). This is the single entry point through which all external traffic flows. The cloud provider assigns a single external IP to this Service, and that IP is what you point your DNS records at.
+## What the Control Plane Watches
 
-## Installing ingress-nginx
+The Envoy Gateway controller runs a reconciliation loop, similar to every other Kubernetes controller. It watches several resource types:
 
-The ingress-nginx controller can be installed with a single `kubectl apply` command using the official manifest. The exact manifest URL depends on your environment:
+- **GatewayClass**: is this class mine? If yes, manage all Gateways that reference it.
+- **Gateway**: what ports and protocols should I listen on? What TLS certificates apply?
+- **HTTPRoute, TLSRoute, GRPCRoute**: what are the routing rules? Which Service should receive which traffic?
+- **Secrets**: for TLS Gateways, what certificate and key should I load?
 
-For cloud environments (where LoadBalancer Services work):
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
-```
-
-For local development environments like `kind` or `minikube`:
-
-```bash
-# For kind
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-
-# For minikube, enable the add-on instead
-minikube addons enable ingress
-```
-
-Alternatively, if you use Helm:
-
-```bash
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm repo update
-helm install ingress-nginx ingress-nginx/ingress-nginx \
-  --namespace ingress-nginx \
-  --create-namespace
-```
-
-After installation, wait for the controller Pod to be ready:
-
-```bash
-kubectl wait --namespace ingress-nginx \
-  --for=condition=ready pod \
-  --selector=app.kubernetes.io/component=controller \
-  --timeout=120s
-```
+When any of these resources change, the controller recomputes the full desired configuration and pushes an update to the Envoy data plane. The data plane applies the new configuration without restarting, which means routing updates are effectively live within seconds.
 
 :::info
-The ingress-nginx controller maintained by the Kubernetes community lives at `kubernetes/ingress-nginx` on GitHub. There is a separate, commercial nginx controller at `nginxinc/kubernetes-ingress`. They are different projects with different installation steps and annotation namespaces. The community version is what most tutorials refer to when they say "nginx Ingress controller."
+This is the Kubernetes controller pattern you may have already seen with Deployments and ReplicaSets. Envoy Gateway follows the exact same model: watch resources, compute desired state, reconcile actual state toward desired state, repeat.
 :::
 
-## The `ingressClassName` Field
+## Validation and Status Reporting
 
-When your cluster has multiple Ingress controllers installed, for example, ingress-nginx for public traffic and a cloud-native controller for internal traffic, you need a way to tell each Ingress resource which controller should handle it. That is what `ingressClassName` is for.
+One of the responsibilities of the control plane is validation. Not every combination of Gateway API resources is valid. For example, an HTTPRoute can reference a Gateway by name, but if that Gateway does not exist, or if the Gateway does not allow routes from the HTTPRoute's namespace, the route will not be accepted.
 
-Each Ingress controller creates an **IngressClass** object when it is installed. An IngressClass is a simple Kubernetes object that represents a class of Ingress that a particular controller can handle. When you create an Ingress resource, you set `spec.ingressClassName` to the name of the IngressClass you want to use:
-
-```yaml
-spec:
-  ingressClassName: nginx
-  rules:
-    - ...
-```
-
-If you omit `ingressClassName`, some controllers will claim all Ingresses without a class (depending on their configuration), while others will ignore them. To avoid ambiguity, especially in clusters with multiple controllers, always specify `ingressClassName` explicitly.
-
-You can mark one IngressClass as the cluster default using the annotation `ingressclass.kubernetes.io/is-default-class: "true"`. With a default class set, Ingress resources that omit `ingressClassName` will automatically be assigned to that class.
+When the controller validates resources, it writes back **status conditions** to them. These conditions are visible on the resources themselves and are extremely useful for debugging. If an HTTPRoute is not working, `kubectl describe httproute <name>` will show you the conditions set by the controller, including any reason why the route was rejected.
 
 :::warning
-The `kubernetes.io/ingress.class` annotation (note: an annotation, not a field) was the old way to specify the controller before `spec.ingressClassName` was introduced in Kubernetes 1.18. You will still see it in older manifests and tutorials. The field approach is preferred for all modern clusters.
+A common mistake is to apply an HTTPRoute that references a Gateway in a different namespace without proper `allowedRoutes` configuration on the Gateway. The HTTPRoute will be created successfully, but the controller will reject it and set a `NotAllowed` condition. Always check the status conditions if traffic is not flowing.
 :::
+
+## How Envoy Proxy Receives Its Configuration
+
+Envoy Proxy does not read Kubernetes objects directly. It speaks a protocol called **xDS** (short for "x Discovery Service"), a gRPC-based API for pushing configuration to Envoy instances. The control plane acts as an xDS server: when routing config changes, it streams the update to all connected Envoy instances.
+
+This is what makes Envoy Gateway so efficient at handling configuration changes. You do not restart anything, you do not reload config files. The control plane translates your Kubernetes objects into xDS messages and streams them to Envoy in real time.
+
+## The Envoy Gateway Services
+
+When you inspect the `envoy-gateway-system` namespace, you will find several services:
+
+- The Envoy Gateway control plane service handles internal communication.
+- The Envoy proxy data plane is exposed as a `LoadBalancer` service, which is how external traffic enters the cluster and reaches Envoy.
+
+The `LoadBalancer` service gets an external IP (or remains in `<pending>` in local environments without a cloud load balancer). This is the IP address that your DNS records should point to, so that hostnames like `app.example.com` reach the Envoy proxy.
 
 ## Hands-On Practice
 
-**Step 1: Check if an Ingress controller is installed**
+**Step 1: Verify the control plane pods are running**
 
 ```bash
-kubectl get pods -n ingress-nginx
-```
-
-If no pods are returned, no controller is installed. If you see something like:
-
-```
-NAME                                        READY   STATUS    RESTARTS   AGE
-ingress-nginx-controller-7d5fb757db-4wrtk   1/1     Running   0          2m
-```
-
-You are ready to go.
-
-**Step 2: List available IngressClasses**
-
-```bash
-kubectl get ingressclass
+kubectl get pods -n envoy-gateway-system -l control-plane=envoy-gateway
 ```
 
 Expected output:
 
 ```
-NAME    CONTROLLER             PARAMETERS   AGE
-nginx   k8s.io/ingress-nginx   <none>       2m
+NAME                             READY   STATUS    RESTARTS   AGE
+envoy-gateway-<hash>             1/1     Running   0          <age>
 ```
 
-**Step 3: Look at the IngressClass details**
+**Step 2: Inspect the Envoy Gateway services**
 
 ```bash
-kubectl describe ingressclass nginx
+kubectl get svc -n envoy-gateway-system
 ```
 
 Expected output:
 
 ```
-Name:         nginx
-Labels:       ...
-Annotations:  ingressclass.kubernetes.io/is-default-class: true
-Controller:   k8s.io/ingress-nginx
+NAME                         TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)
+envoy-gateway                ClusterIP      10.96.xxx.xxx   <none>        18000/TCP,...
+envoy-default-eg-<hash>      LoadBalancer   10.96.yyy.yyy   <pending>     80:30xxx/TCP
 ```
 
-The annotation confirms this is the default class, meaning Ingress resources without an explicit `ingressClassName` will be handled by this controller.
+The `LoadBalancer` service is your data plane entry point. In a real cloud environment, `EXTERNAL-IP` would be a public IP address.
 
-**Step 4: Find the external IP of the Ingress controller**
+**Step 3: Inspect the GatewayClass status**
 
 ```bash
-kubectl get svc -n ingress-nginx
+kubectl describe gatewayclass eg
 ```
 
-Expected output:
+Expected output excerpt:
 
 ```
-NAME                                 TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)
-ingress-nginx-controller             LoadBalancer   10.96.xxx.xxx   203.0.113.50    80:31xxx/TCP,443:32xxx/TCP
-ingress-nginx-controller-admission   ClusterIP      10.96.yyy.yyy   <none>          443/TCP
+Name:         eg
+API Version:  gateway.networking.k8s.io/v1
+Kind:         GatewayClass
+...
+Spec:
+  Controller Name:  gateway.envoyproxy.io/gatewayclass-controller
+Status:
+  Conditions:
+    Type:                  Accepted
+    Status:                True
 ```
 
-The `EXTERNAL-IP` of the `ingress-nginx-controller` Service is the address you point your DNS records at. All HTTP/HTTPS traffic for your Ingress-managed hostnames flows through this single IP.
+An `Accepted: True` condition confirms the controller has adopted this GatewayClass.
 
-**Step 5: View the controller logs**
+**Step 4: Inspect the Gateway status**
 
 ```bash
-kubectl logs -n ingress-nginx -l app.kubernetes.io/component=controller --tail=30
+kubectl describe gateway eg
 ```
 
-As you create Ingress resources in the next lessons, you can watch these logs to see the controller responding to changes and reloading its nginx configuration.
+Expected output excerpt:
+
+```
+Name:         eg
+Namespace:    default
+Class:        eg
+Address:      127.0.0.1
+Listeners:
+  Name: http
+  Port: 80
+  Protocol: HTTP
+Allowed Routes:
+  Namespaces: from: Same
+```
+
+Look at listener and route attachment fields, they are set by the controller after it processes the Gateway resource.
+
+**Step 5: View recent controller logs**
+
+```bash
+kubectl logs -n envoy-gateway-system -l control-plane=envoy-gateway --tail=30
+```
+
+You will see reconciliation activity logged here. When you create or update a Gateway API resource, new log lines appear within seconds as the controller picks up the change.

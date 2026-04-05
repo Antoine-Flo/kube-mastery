@@ -1,165 +1,197 @@
 ---
-seoTitle: 'Kubernetes Ingress, Host Routing, Path Routing, TLS'
-seoDescription: 'Learn what Kubernetes Ingress is, how it enables host-based and path-based routing with TLS termination, and why it replaces multiple LoadBalancer Services.'
+seoTitle: 'What Is Gateway API in Kubernetes? GatewayClass, Gateway, HTTPRoute'
+seoDescription: 'Understand what Kubernetes Gateway API is, how it replaces Ingress, and how GatewayClass, Gateway, and HTTPRoute work together to route external traffic.'
 ---
 
-# What Is Ingress?
+# What Is Gateway API?
 
-As soon as a Kubernetes application needs to be accessed from the outside world, you need a strategy for getting external traffic into your cluster. For simple cases, a Service of type `LoadBalancer` does the job. But once your application grows beyond a single component, the LoadBalancer-per-Service approach starts to show its cracks, and that is exactly the problem Ingress was designed to solve.
+When you deploy an application to Kubernetes, your Pods get IP addresses, but those addresses are private to the cluster. Nobody outside the cluster, no browser, no mobile app, no external API, can reach them directly. At some point you need a way to bridge the gap between the external world and the workloads running inside your cluster.
 
-## The Problem: One LoadBalancer per Service
-
-Imagine a typical web application composed of three separate Services: a `frontend` that serves the React app, an `api` that handles business logic, and an `auth` service that manages login and tokens. If you expose each with a `LoadBalancer` Service, you get three separate external IP addresses and three separate cloud load balancers.
-
-This approach gets expensive fast, and cost is only part of the problem:
-
-- Cloud providers charge by the hour for load balancers; at scale this adds up quickly.
-- You now manage three different hostnames or IP addresses, three TLS certificates, and three sets of routing rules.
-- DNS configuration grows complex, and clients need to know which endpoint to use for which purpose.
-
-What you really want is a single entry point, one external IP, one load balancer, smart enough to route traffic to the right backend Service based on what the client is asking for. That is exactly what Ingress provides.
-
-## What Ingress Is
-
-Ingress is a Kubernetes API object that defines a set of HTTP and HTTPS routing rules. Think of it as a traffic director that sits in front of your Services. You declare the rules, "requests for `app.example.com/api` go to the `api-service`; requests for `app.example.com/` go to the `frontend-service`", and the Ingress resource captures those rules in a structured, version-controlled Kubernetes object.
-
-A helpful analogy: an Ingress is like the receptionist at a large hotel. When guests arrive at the front entrance, they do not each get their own door, there is one entrance for everyone. The receptionist looks at who the guest is and what they need, then directs them: "You are here for the conference? Room 201. You want the restaurant? Down the hall on the left." One entrance, one receptionist, many destinations. The hotel lobby is the Ingress, the receptionist is the Ingress controller (more on that in the next lesson), and the conference rooms and restaurant are your backend Services.
-
-## What Ingress Can Do
-
-Ingress enables several powerful routing capabilities that plain Services do not offer:
-
-- **Host-based routing**, Different domain names reach different Services through a single entry point. Requests to `api.example.com` go to your API service; requests to `app.example.com` go to your frontend, both sharing the same external IP and load balancer.
-- **Path-based routing**, Traffic is split by URL path. `example.com/api` goes to the API service, `example.com/` goes to the frontend, all on the same hostname.
-- **TLS termination**, The Ingress controller handles HTTPS on behalf of your backend Services. Your backend Pods serve plain HTTP internally; the controller manages certificates and the secure connection with clients.
-
-Together, these three capabilities let you run a complex multi-service application with a single external load balancer, a single external IP, and a single TLS certificate.
-
-```mermaid
-graph TD
-    Client([Internet Client]) --> LB[Cloud Load Balancer<br/>single external IP]
-    LB --> IC[Ingress Controller<br/>Pod in cluster]
-
-    IC -->|app.example.com/api| API[api-service<br/>ClusterIP]
-    IC -->|app.example.com/| FE[frontend-service<br/>ClusterIP]
-    IC -->|admin.example.com/| ADMIN[admin-service<br/>ClusterIP]
-
-    API --> AP1[api Pod]
-    API --> AP2[api Pod]
-    FE --> FP1[frontend Pod]
-    ADMIN --> ADM1[admin Pod]
-```
-
-## What Ingress Does Not Do on Its Own
-
-Here is a critical point that trips up many beginners: **an Ingress resource is just a set of rules stored in etcd**. By itself it does nothing. Creating an Ingress object without an Ingress controller is like writing a recipe without having a kitchen, the instructions exist, but nothing gets cooked.
-
-You need an **Ingress controller** to actually process and implement those rules. The controller is a separate software component, typically a Pod running nginx, Traefik, or another proxy, that watches your Ingress resources and configures the underlying proxy to enforce them. We will cover Ingress controllers in the very next lesson.
+This is what we call **north-south traffic**: traffic flowing from outside the cluster into the cluster (as opposed to east-west traffic, which flows between services already inside the cluster). Managing this external entry point is one of the most important operational concerns in any Kubernetes deployment.
 
 :::info
-Kubernetes intentionally separates the Ingress resource (the what) from the Ingress controller (the how). This design lets you swap out the controller implementation without changing your application's Ingress manifests. You could migrate from nginx to Traefik, and your Ingress YAML files stay the same.
+If you just finished the DNS module, you now understand how services find each other inside the cluster. Gateway API is the other side of that coin: how traffic from the outside world finds its way in.
 :::
 
-## The Economics: One Load Balancer for Everything
+## The Evolution: From NodePort to Gateway API
 
-With the Ingress pattern, you deploy one `LoadBalancer` Service in front of the Ingress controller. All external traffic flows through that single load balancer; the controller then routes internally to the right Service using cluster-internal networking, which costs nothing extra.
+Kubernetes has always offered multiple ways to expose workloads externally, and the ecosystem has matured significantly over the years.
 
-Without Ingress, 10 Services means 10 cloud load balancers. With Ingress, 10 Services (or 100) still means one.
+The earliest approach was **NodePort**: exposing a service on a port of every node in the cluster. It works, but it requires clients to know a node's IP address and a specific high-numbered port, which is clunky and hard to manage at scale. Then came **LoadBalancer** services, which provision a cloud load balancer automatically, but give you one load balancer per service, which becomes expensive fast when you have dozens of applications.
 
-:::warning
-Ingress only handles HTTP and HTTPS traffic (Layer 7). If you need to expose non-HTTP services, such as a raw TCP database connection, a UDP service, or a gRPC service that requires more advanced configuration, you will need other approaches: a plain `LoadBalancer` Service, or controller-specific annotations/extensions.
+**Ingress** was the first unified answer. It introduced a dedicated resource that could route HTTP and HTTPS traffic to multiple services based on hostnames and paths, using a single external IP. This was a significant improvement, but Ingress has a well-known limitation: the API itself is minimal, and controllers rely heavily on annotations to configure advanced behavior. Annotations are not portable, what works on NGINX Ingress does not work on Traefik, which does not work on HAProxy Ingress. Every team working across multiple clusters or multiple controllers had to relearn the annotation vocabulary each time.
+
+**Gateway API** is the modern answer, designed by the Kubernetes community to address exactly these shortcomings. It is an official Kubernetes API (not an annotation workaround), with richer semantics, clear ownership boundaries, and explicit separation between infrastructure concerns and application routing concerns.
+
+:::info
+Ingress is not deprecated and is still widely used. For the CKA and CKAD exams, you should understand both. This module focuses on Gateway API, which is the direction the ecosystem is heading.
 :::
+
+## The Three Core Resources
+
+Gateway API introduces three main resource types, each with a distinct purpose. Think of it like building an office block:
+
+- **GatewayClass** is the blueprint, it defines the implementation. It answers the question: who is responsible for making this gateway work? The GatewayClass points to a specific controller, like Envoy Gateway.
+- **Gateway** is the front door of the building. It defines where external traffic arrives: which ports to listen on, which protocols to accept, and which TLS certificates to use. The platform team typically owns this resource.
+- **HTTPRoute** is the internal directory. It says "traffic arriving at this hostname, with this path, goes to this service." Application teams own their own HTTPRoutes in their own namespaces.
+
+```mermaid
+flowchart LR
+    GC[GatewayClass\nenvoy-gateway-controller]
+    GW[Gateway\nport 80 / 443]
+    R[HTTPRoute\nhostname + path rules]
+    SVC[Service]
+    PODS[Pods]
+
+    GC --> GW
+    GW --> R
+    R --> SVC
+    SVC --> PODS
+```
+
+This three-tier model is not just organizational tidiness. It solves a real problem. In the old Ingress world, a single Ingress resource mixed infrastructure configuration with application routing, which meant either the platform team had to approve every route change, or the application team had too much access to infrastructure settings. With Gateway API, the boundary is explicit in the API itself.
+
+## Ownership and Separation of Concerns
+
+One of the design goals of Gateway API is to support multiple teams with different responsibilities working safely on the same cluster.
+
+The **platform team** creates and owns the GatewayClass and Gateway resources. They decide how traffic enters the cluster, what ports are open, and what TLS policy applies. This is infrastructure work that affects the entire cluster.
+
+The **application teams** create and own their HTTPRoutes in their own namespaces. They define routing rules for their applications without touching the Gateway configuration. They cannot accidentally break traffic for another team's application.
+
+This model scales naturally. A single Gateway can serve hundreds of HTTPRoutes across dozens of namespaces, each managed by a different team, without any single team having visibility into or control over the others.
+
+:::info
+In this simulation, Envoy Gateway is pre-installed and a default Gateway is already configured. You can focus on understanding the resources without needing to install anything.
+:::
+
+## Why Envoy Gateway?
+
+The controller that actually implements the Gateway API in this module is **Envoy Gateway**. Envoy is a high-performance proxy originally built at Lyft, now a graduated CNCF project. It is the proxy engine behind Istio, AWS App Mesh, and many other projects. Envoy Gateway wraps Envoy with a Kubernetes-native control plane that reconciles Gateway API resources and translates them into Envoy proxy configuration automatically.
+
+You do not interact with Envoy directly. You create Gateway API resources in Kubernetes, and Envoy Gateway takes care of configuring the proxy. The result is a fully functional edge proxy with TLS termination, host-based routing, path-based routing, and more, all driven by standard Kubernetes objects.
+
+```mermaid
+sequenceDiagram
+    participant You as You (kubectl)
+    participant K8s as Kubernetes API
+    participant EGC as Envoy Gateway Controller
+    participant EP as Envoy Proxy (Data Plane)
+    participant Client as External Client
+
+    You->>K8s: apply HTTPRoute
+    K8s-->>EGC: watch event (HTTPRoute created)
+    EGC->>EP: push updated routing config (xDS)
+    Client->>EP: HTTP request to app.example.com
+    EP->>K8s: forward to matching Service
+```
 
 ## Hands-On Practice
 
-Let's deploy a simple application and inspect what an Ingress resource looks like before and after the controller processes it.
+Let's get familiar with the Gateway API resources already running in your cluster.
 
-**Step 1: Deploy two simple services to use as backends**
-
-```bash
-kubectl create deployment frontend --image=nginx
-kubectl expose deployment frontend --port=80 --name=frontend-service
-
-kubectl create deployment api --image=hashicorp/http-echo --port=5678 -- /http-echo -text="Hello from the API"
-kubectl expose deployment api --port=5678 --name=api-service
-```
-
-**Step 2: Verify both Services are running**
+**Step 1: List available GatewayClasses**
 
 ```bash
-kubectl get svc
+kubectl get gatewayclass
 ```
 
 Expected output:
 
 ```
-NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
-frontend-service   ClusterIP   10.96.xxx.xxx   <none>        80/TCP     5s
-api-service        ClusterIP   10.96.yyy.yyy   <none>        5678/TCP   3s
+NAME   CONTROLLER                                      ACCEPTED   AGE
+eg     gateway.envoyproxy.io/gatewayclass-controller   True       <age>
 ```
 
-**Step 3: Create an Ingress resource**
+The `ACCEPTED: True` column confirms that the Envoy Gateway controller is running and has adopted this GatewayClass.
 
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: demo-ingress
-spec:
-  rules:
-    - host: demo.example.com
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: api-service
-                port:
-                  number: 5678
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: frontend-service
-                port:
-                  number: 80
-```
-
-**Step 4: Inspect the Ingress resource**
+**Step 2: Inspect the GatewayClass**
 
 ```bash
-kubectl get ingress demo-ingress
-kubectl describe ingress demo-ingress
+kubectl describe gatewayclass eg
 ```
 
-Expected output from `describe`:
+Expected output excerpt:
 
 ```
-Name:             demo-ingress
-Namespace:        default
-Rules:
-  Host              Path  Backends
-  ----              ----  --------
-  demo.example.com
-                    /api   api-service:5678
-                    /      frontend-service:80
+Name:         eg
+API Version:  gateway.networking.k8s.io/v1
+Kind:         GatewayClass
+...
+Spec:
+  Controller Name:  gateway.envoyproxy.io/gatewayclass-controller
+Status:
+  Conditions:
+    Type:                  Accepted
+    Status:                True
 ```
 
-Notice the `ADDRESS` field is likely empty, because without an Ingress controller, no one is assigning an external IP to this Ingress. The rules are stored and visible, but not yet enforced. This demonstrates the separation between the Ingress resource and the controller.
+The `Controller Name` and `Accepted=True` fields confirm that Envoy Gateway owns and accepts this class.
 
-**Step 5: Check Ingress classes available**
+**Step 3: List Gateways**
 
 ```bash
-kubectl get ingressclass
+kubectl get gateways -A
 ```
 
-If nothing is returned, no Ingress controller is installed. If you see an entry like `nginx`, an Ingress controller is ready to process your rules.
+Expected output:
 
-**Step 6: Clean up**
+```
+NAMESPACE   NAME   CLASS   ADDRESS   PROGRAMMED   AGE
+default     eg     eg                False        <age>
+```
+
+**Step 4: List HTTPRoutes**
 
 ```bash
-kubectl delete ingress demo-ingress
-kubectl delete service frontend-service api-service
-kubectl delete deployment frontend api
+kubectl get httproute -A
 ```
+
+Expected output:
+
+```
+NAMESPACE   NAME      HOSTNAMES             AGE
+default     backend   ["www.example.com"]   <age>
+```
+
+**Step 5: Describe the HTTPRoute to see the routing rules**
+
+```bash
+kubectl describe httproute backend
+```
+
+Expected output excerpt:
+
+```
+Name:         backend
+Namespace:    default
+API Version:  gateway.networking.k8s.io/v1
+Kind:         HTTPRoute
+...
+Spec:
+  Hostnames:
+    www.example.com
+  Parent Refs:
+    Group:  gateway.networking.k8s.io
+    Kind:   Gateway
+    Name:   eg
+  Rules:
+    Backend Refs:
+      Kind:    Service
+      Name:    backend
+      Port:    3000
+    Matches:
+      Path:
+        Type:   PathPrefix
+        Value:  /
+...
+Status:
+  Parents:
+    Conditions:
+      Type:                  Accepted
+      Status:                True
+      Type:                  ResolvedRefs
+      Status:                <True|False>
+```
+
+Look at the `Spec` and `Status` sections together. `Spec` describes your routing intent, and `Status` confirms whether the controller accepted and resolved backend references.

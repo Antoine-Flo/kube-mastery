@@ -29,6 +29,11 @@ import {
   isCreateNamespaceImperative
 } from './namespace'
 import {
+  buildCreateIngressDryRunManifest,
+  createIngressFromFlags,
+  isCreateIngressImperative
+} from './ingress'
+import {
   buildCreateSecretDryRunManifest,
   createSecretFromFlags,
   isCreateSecretImperative
@@ -114,6 +119,17 @@ export const handleCreate = (
       return buildDryRunResponse(serviceConfig, parsed)
     }
     return createServiceFromFlags(parsed, apiServer)
+  }
+
+  if (isCreateIngressImperative(parsed)) {
+    if (isDryRunClient(parsed)) {
+      const dryRunManifest = buildCreateIngressDryRunManifest(parsed)
+      if (isExecutionErrorResult(dryRunManifest)) {
+        return dryRunManifest
+      }
+      return buildDryRunResponse(dryRunManifest, parsed)
+    }
+    return createIngressFromFlags(parsed, apiServer)
   }
 
   if (isCreateConfigMapImperative(parsed)) {

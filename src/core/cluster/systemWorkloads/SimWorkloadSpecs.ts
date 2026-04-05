@@ -1,4 +1,5 @@
 import { buildNodeRoleSlotNames, type ClusterNodeRole } from '../clusterConfig'
+import { createEnvoyGatewayDeploymentSpecs } from '../../gateway-api/envoy/bootstrap'
 import type { DeploymentStrategy } from '../ressources/Deployment'
 import type { PodAffinity } from '../ressources/Pod'
 import type { Container, PodToleration, Volume } from '../ressources/Pod'
@@ -585,7 +586,8 @@ const createDeploymentSpecs = (
       annotations: {
         'sim.kubernetes.io/preferred-node': controlPlaneNodeName
       }
-    }
+    },
+    ...createEnvoyGatewayDeploymentSpecs(controlPlaneNodeName)
   ]
 }
 

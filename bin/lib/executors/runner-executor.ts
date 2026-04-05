@@ -41,6 +41,52 @@ const SHELL_COMMAND_PREFIX = 'SHELL_COMMAND:'
 const ENTER_CONTAINER_PREFIX = 'ENTER_CONTAINER:'
 const PROCESS_COMMAND_PREFIX = 'PROCESS_COMMAND:'
 
+const parseFlagValue = (command: string, flagName: string): string | undefined => {
+  const regex = new RegExp(`(?:^|\\s)-{1,2}${flagName}(?:=|\\s+)([^\\s]+)`)
+  const match = command.match(regex)
+  if (match == null) {
+    return undefined
+  }
+  return match[1]
+}
+
+const applySupportShellSideEffects = (
+  command: string,
+  fileSystem: ReturnType<typeof createFileSystem>
+): void => {
+  const trimmed = command.trim()
+  if (trimmed.startsWith('openssl req ')) {
+    const certPath = parseFlagValue(trimmed, 'out')
+    const keyPath = parseFlagValue(trimmed, 'keyout')
+    if (certPath != null && certPath.length > 0) {
+      const createResult = fileSystem.createFile(certPath)
+      if (!createResult.ok && !createResult.error.includes('File exists')) {
+        return
+      }
+      fileSystem.writeFile(certPath, 'SIMULATED_TLS_CERT')
+    }
+    if (keyPath != null && keyPath.length > 0) {
+      const createResult = fileSystem.createFile(keyPath)
+      if (!createResult.ok && !createResult.error.includes('File exists')) {
+        return
+      }
+      fileSystem.writeFile(keyPath, 'SIMULATED_TLS_KEY')
+    }
+    return
+  }
+  if (trimmed.startsWith('rm ')) {
+    const pathTokens = trimmed
+      .replace(/^rm\s+/, '')
+      .split(/\s+/)
+      .filter((token) => {
+        return token.length > 0 && token.startsWith('-') === false
+      })
+    for (const pathToken of pathTokens) {
+      fileSystem.deleteFile(pathToken)
+    }
+  }
+}
+
 export interface RunnerExecutor {
   executeCommand: (command: string) => CommandExecutionResult
   applyYaml: (action: ApplyYamlAction) => CommandExecutionResult
@@ -436,6 +482,7 @@ export const createRunnerExecutor = (
 
   return {
     executeCommand(command: string): CommandExecutionResult {
+      applySupportShellSideEffects(command, fileSystem)
       reconcileForWait()
       const manifestTarget = getManifestFilenameFromCommand(command)
       let result

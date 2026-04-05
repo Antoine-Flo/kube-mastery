@@ -22,6 +22,10 @@ export interface IngressBackendService {
   port: IngressBackendServicePort
 }
 
+export interface IngressDefaultBackend {
+  service: IngressBackendService
+}
+
 export interface IngressPath {
   path: string
   pathType: 'Exact' | 'Prefix' | 'ImplementationSpecific'
@@ -39,6 +43,7 @@ export interface IngressRule {
 
 export interface IngressSpec {
   ingressClassName?: string
+  defaultBackend?: IngressDefaultBackend
   rules: IngressRule[]
 }
 
@@ -96,6 +101,14 @@ const IngressManifestSchema = z.object({
   }),
   spec: z.object({
     ingressClassName: z.string().min(1).optional(),
+    defaultBackend: z
+      .object({
+        service: z.object({
+          name: z.string().min(1, 'default backend service name is required'),
+          port: IngressServicePortSchema
+        })
+      })
+      .optional(),
     rules: z
       .array(
         z.object({

@@ -417,10 +417,15 @@ const convertDockerConfigJsonType: SecretTypeHandler = (_, data) => {
   }
 }
 
+const convertTlsSecretType: SecretTypeHandler = () => {
+  return { type: 'kubernetes.io/tls' }
+}
+
 const SECRET_TYPE_HANDLERS: Record<string, SecretTypeHandler> = {
   Opaque: convertOpaqueSecretType,
   'kubernetes.io/service-account-token': convertServiceAccountTokenType,
-  'kubernetes.io/dockerconfigjson': convertDockerConfigJsonType
+  'kubernetes.io/dockerconfigjson': convertDockerConfigJsonType,
+  'kubernetes.io/tls': convertTlsSecretType
 }
 
 /**

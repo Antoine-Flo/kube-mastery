@@ -1,293 +1,217 @@
 ---
-seoTitle: 'Kubernetes Ingress Annotations, Rewrite, Rate Limit, CORS'
-seoDescription: 'Explore ingress-nginx annotations including rewrite-target with regex capture groups, rate limiting, CORS headers, and timeout settings for production use.'
+seoTitle: 'Gateway API HTTPRoute Filters, URL Rewrite, Redirect, and Policies'
+seoDescription: 'Learn how Gateway API replaces Ingress annotations with HTTPRoute filters and policy resources for URL rewrites, redirects, header manipulation, and advanced traffic behavior.'
 ---
 
-# Ingress Annotations and Rewrite-Target
+# HTTPRoute Filters and Gateway API Policies
 
-The Kubernetes Ingress API is intentionally minimal, it covers host-based rules, path-based rules, and TLS, but deliberately leaves out the dozens of advanced features that proxy servers offer. The solution to this extensibility problem is **annotations**: key-value pairs in the Ingress metadata that pass controller-specific configuration directly to the underlying proxy.
+If you have worked with classic Ingress resources before, you have probably encountered annotations. Things like `nginx.ingress.kubernetes.io/rewrite-target: /` or `nginx.ingress.kubernetes.io/ssl-redirect: "true"`. These annotations are the escape hatch that Ingress controllers use to expose features that the Ingress API itself does not support. They work, but they come with real costs.
+
+Annotations are strings. There is no schema validation. A typo in an annotation name or value silently does nothing, and you only find out when traffic does not behave as expected. Worse, every Ingress controller uses a different annotation namespace and syntax. Configuration written for NGINX Ingress does not work on Traefik, and neither works on Kong. This makes platform migrations painful and cross-team documentation confusing.
+
+Gateway API was designed to eliminate this problem. Instead of annotations, it exposes advanced routing behavior through **first-class API fields**, with proper validation, clear semantics, and portability across implementations.
+
+## HTTPRoute Filters: Inline Behavior on Rules
+
+The primary mechanism for modifying request and response behavior in Gateway API is the **filter**. Filters are applied to individual rules in an HTTPRoute and can transform requests before they reach the backend, or transform responses before they return to the client.
+
+Each rule in an HTTPRoute can have a `filters` list. The most commonly used filters are:
+
+**URL rewrite**: changes the path or hostname before forwarding the request to the backend. This is the direct equivalent of the `rewrite-target` annotation from NGINX Ingress.
+
+```yaml
+rules:
+  - matches:
+      - path:
+          type: PathPrefix
+          value: /api
+    filters:
+      - type: URLRewrite
+        urlRewrite:
+          path:
+            type: ReplacePrefixMatch
+            replacePrefixMatch: /
+    backendRefs:
+      - name: api-service
+        port: 8080
+```
+
+With this configuration, a request to `/api/users` is forwarded to the backend as `/users`. The `/api` prefix is stripped. This is a very common pattern when you want to route traffic to a microservice that does not know it is mounted under a path prefix.
+
+**Request redirect**: returns an HTTP redirect response to the client instead of forwarding to a backend. Useful for enforcing HTTPS or for URL canonicalization.
+
+```yaml
+rules:
+  - matches:
+      - path:
+          type: PathPrefix
+          value: /old-path
+    filters:
+      - type: RequestRedirect
+        requestRedirect:
+          path:
+            type: ReplacePrefixMatch
+            replacePrefixMatch: /new-path
+          statusCode: 301
+```
+
+**Request header modification**: add, remove, or overwrite headers on the request before it reaches the backend.
+
+```yaml
+filters:
+  - type: RequestHeaderModifier
+    requestHeaderModifier:
+      set:
+        - name: X-Forwarded-Host
+          value: app.example.com
+      remove:
+        - X-Internal-Debug
+```
+
+**Response header modification**: same as above but applied to the response coming back from the backend.
 
 :::info
-Think of the Ingress spec as a universal language that all controllers understand, and annotations as dialects specific to each controller. All ingress-nginx annotations share the prefix `nginx.ingress.kubernetes.io/`. Traefik uses `traefik.io/`, HAProxy uses `haproxy.org/`. A configuration option one controller reads will be silently ignored by another.
+All of these filters are part of the standard Gateway API specification. They work identically regardless of which implementation you use (Envoy Gateway, Cilium, Traefik, etc.). This is exactly the portability problem that annotations could not solve.
 :::
 
-## Common ingress-nginx Annotations
+## The Difference Between Filters and Policies
 
-Here are the most useful ingress-nginx annotations you will encounter regularly.
+Filters are inline in the HTTPRoute rule. They apply to that specific rule and are owned by the team managing that route. Policies are separate resources that apply cross-cutting behavior at a broader scope.
 
-**`ssl-redirect`** forces all HTTP traffic to redirect to HTTPS. When TLS is configured in the Ingress, this defaults to `"true"`:
+Envoy Gateway supports several policy resources that extend the base Gateway API with implementation-specific capabilities. For example:
 
-```yaml
-annotations:
-  nginx.ingress.kubernetes.io/ssl-redirect: 'true'
-```
+- **BackendTrafficPolicy**: controls load balancing, circuit breaking, and retry behavior for traffic going to backends.
+- **ClientTrafficPolicy**: controls how Envoy handles incoming connections, including keepalive settings, buffer sizes, and client TLS requirements.
+- **SecurityPolicy**: adds authentication and authorization checks, such as requiring a valid JWT token before routing a request.
 
-**`proxy-body-size`** controls the maximum size of the request body that nginx will accept. The default is typically 1MB, which is too small for file uploads. Setting it to `"0"` disables the limit:
-
-```yaml
-annotations:
-  nginx.ingress.kubernetes.io/proxy-body-size: '50m'
-```
-
-**`proxy-read-timeout`** and **`proxy-send-timeout`** control how long nginx waits for the backend to respond. Useful for slow API endpoints or long-running operations:
-
-```yaml
-annotations:
-  nginx.ingress.kubernetes.io/proxy-read-timeout: '120'
-  nginx.ingress.kubernetes.io/proxy-send-timeout: '120'
-```
-
-**`limit-rps`** enables basic rate limiting on requests per second, implemented via the nginx `limit_req` module:
-
-```yaml
-annotations:
-  nginx.ingress.kubernetes.io/limit-rps: '10'
-```
-
-**`enable-cors`** adds CORS headers automatically, so you do not have to implement CORS in your application:
-
-```yaml
-annotations:
-  nginx.ingress.kubernetes.io/enable-cors: 'true'
-  nginx.ingress.kubernetes.io/cors-allow-origin: 'https://app.example.com'
-```
-
-## The Rewrite-Target Annotation
-
-The `rewrite-target` annotation is one of the most commonly needed, and most commonly misunderstood, annotations in ingress-nginx.
-
-**The problem it solves:** your Ingress exposes `/api/v1` to the public, routing requests to your backend API service. But your API only knows about paths like `/v1/users`, it has no idea it's being served under `/api`. When a request for `/api/v1/users` arrives and gets forwarded to the backend, the backend receives the full path `/api/v1/users`, fails to find a route, and returns a 404. What you need is for the controller to strip the `/api` prefix before forwarding. That is exactly what `rewrite-target` does.
-
-A simple rewrite looks like this:
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: api-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: app.example.com
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: api-service
-                port:
-                  number: 80
-```
-
-With `rewrite-target: /`, any request to `/api` or `/api/anything` gets rewritten so the backend receives `/`. But this is too aggressive, you lose everything after `/api`.
-
-## Regex Capture Groups for Precise Rewrites
-
-For a more surgical rewrite that preserves the rest of the path, use a regex in the path and a capture group in the rewrite target:
-
-```yaml
-metadata:
-  annotations:
-    nginx.ingress.kubernetes.io/use-regex: 'true'
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-spec:
-  rules:
-    - host: app.example.com
-      http:
-        paths:
-          - path: /api(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: api-service
-                port:
-                  number: 80
-```
-
-The path regex `/api(/|$)(.*)` captures everything after `/api/` in capture group `$2`. The `rewrite-target: /$2` tells nginx to rewrite the path to just `/$2`. So a request for `/api/v1/users` gets rewritten to `/v1/users` before reaching the backend.
+These policies are attached to a Gateway or an HTTPRoute using a `targetRef` field, similar to how an HTTPRoute references a Gateway with `parentRefs`.
 
 ```mermaid
-graph LR
-    A["Client request:<br/>/api/v1/users"] --> IC[Ingress Controller]
-    IC -->|path matches /api/...| RW["Rewrite:<br/>/$2 = /v1/users"]
-    RW --> B["Backend receives:<br/>/v1/users"]
-    B --> POD[api Pod]
+flowchart TD
+    GW[Gateway]
+    CTP[ClientTrafficPolicy\ntargetRef: Gateway]
+    ROUTE[HTTPRoute]
+    BTP[BackendTrafficPolicy\ntargetRef: HTTPRoute]
+    SVC[Service]
+
+    CTP -.->|applies to| GW
+    GW --> ROUTE
+    BTP -.->|applies to| ROUTE
+    ROUTE --> SVC
 ```
+
+This hierarchy keeps concerns separated. The platform team manages policies at the Gateway level. Application teams manage policies at the HTTPRoute level. Neither has to touch the other's resources.
 
 :::warning
-The annotation `nginx.ingress.kubernetes.io/use-regex: "true"` enables regex matching for **all paths** on that Ingress resource. Mixing regex and non-regex paths on the same Ingress can cause unexpected matching behavior. If you need regex, use a dedicated Ingress resource for those paths.
+Policy resources like `BackendTrafficPolicy` and `ClientTrafficPolicy` are Envoy Gateway-specific and are not part of the core Gateway API specification. If you migrate to a different implementation, you will need to rewrite these policies. The routing itself (HTTPRoute filters) will be portable, but the policy attachments will not.
 :::
 
-## Putting It All Together: A Production-Style Ingress
+## HTTPS Redirect: A Complete Example
 
-Here is a realistic example that combines several annotations:
+One of the most common use cases combining routing rules and filters is redirecting all HTTP traffic to HTTPS. The pattern uses two listeners on the Gateway (one on port 80, one on port 443) and an HTTPRoute on the HTTP listener that returns a 301 redirect.
+
+The redirect HTTPRoute looks like this:
 
 ```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  name: production-api
-  namespace: production
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
-    nginx.ingress.kubernetes.io/use-regex: 'true'
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
-    nginx.ingress.kubernetes.io/proxy-read-timeout: '60'
-    nginx.ingress.kubernetes.io/limit-rps: '20'
+  name: http-to-https-redirect
 spec:
-  ingressClassName: nginx
-  tls:
-    - hosts:
-        - api.example.com
-      secretName: api-tls-secret
+  parentRefs:
+    - name: main-gateway
+      sectionName: http
   rules:
-    - host: api.example.com
-      http:
-        paths:
-          - path: /v1(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: api-service
-                port:
-                  number: 8080
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
 ```
 
-This Ingress forces HTTPS, accepts request bodies up to 10MB, allows 60 seconds for the backend to respond, rate-limits to 20 requests per second per IP, and rewrites `/v1/anything` to `/anything` before sending to the backend.
-
-:::info
-The Gateway API, the successor to Ingress, addresses the annotation portability problem by providing standardized resources (HTTPRoute, GRPCRoute, etc.) with controller-specific extensions moved to separate `Policy` objects. If you're building greenfield infrastructure, it's worth investigating Gateway API as a more future-proof alternative.
-:::
+Any request arriving on port 80 is immediately redirected to the same URL on port 443. The browser follows the redirect and re-sends the request over HTTPS. No backend service is involved in serving the redirect, Envoy handles the entire thing.
 
 ## Hands-On Practice
 
-**Step 1: Deploy a backend that reveals the path it received**
+In this lab, you will validate a critical controller behavior: route status should change when backend references become resolvable.
+
+**Step 1: Inspect the active HTTPRoute status**
 
 ```bash
-kubectl create deployment echo --image=ealen/echo-server --port=80
-kubectl expose deployment echo --port=80 --name=echo-service
+kubectl get httproute
+kubectl describe httproute backend
 ```
 
-The `ealen/echo-server` image responds with a JSON body showing the request details, including the path the server received.
+Expected output excerpt:
 
-**Step 2: Create an Ingress without rewrite to observe the problem**
-
-```yaml
-# no-rewrite-ingress.yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: no-rewrite
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: app.example.com
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: echo-service
-                port:
-                  number: 80
 ```
+Name:         backend
+Namespace:    default
+API Version:  gateway.networking.k8s.io/v1
+Kind:         HTTPRoute
+...
+Rules:
+  Backend Refs:
+    Name:    backend
+    Port:    3000
+  Matches:
+    Path:
+      Type:   PathPrefix
+      Value:  /
+Status:
+  Parents:
+    Conditions:
+      Type:                  Accepted
+      Status:                True
+      Type:                  ResolvedRefs
+      Status:                <True|False>
+```
+
+Look at the `Rules` section and the `Status` conditions. There are no filters in the default configuration.
+
+**Step 2: Create the missing backend reference**
 
 ```bash
-kubectl apply -f no-rewrite-ingress.yaml
+kubectl create deployment backend --image=nginx
+kubectl expose deployment backend --port=3000
 ```
 
-Test it:
+**Step 3: Re-check HTTPRoute status**
 
 ```bash
-INGRESS_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-curl -s -H "Host: app.example.com" http://$INGRESS_IP/api/users | python3 -m json.tool | grep path
+kubectl describe httproute backend
 ```
 
-Notice the backend receives `/api/users`, the full path including the prefix.
+Expected output excerpt:
 
-**Step 3: Add rewrite-target to strip the prefix**
-
-```yaml
-# with-rewrite-ingress.yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: with-rewrite
-  annotations:
-    nginx.ingress.kubernetes.io/use-regex: 'true'
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: app.example.com
-      http:
-        paths:
-          - path: /api(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: echo-service
-                port:
-                  number: 80
 ```
+Status:
+  Parents:
+    Conditions:
+      Type:                  Accepted
+      Status:                True
+      Type:                  ResolvedRefs
+      Reason:                ResolvedRefs
+      Status:                True
+```
+
+You should now see `ResolvedRefs=True`, meaning the backend reference is resolvable by the controller.
+
+**Step 4: Inspect the Gateway attachment point**
 
 ```bash
-kubectl apply -f with-rewrite-ingress.yaml
+kubectl get gateways
+kubectl describe gateway eg
 ```
 
-Test again:
-
-```bash
-curl -s -H "Host: app.example.com" http://$INGRESS_IP/api/users | python3 -m json.tool | grep path
-```
-
-Now the backend receives `/users`, the prefix has been stripped. The rewrite worked.
-
-**Step 4: Test rate limiting**
-
-```yaml
-# rate-limited-ingress.yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: rate-limited
-  annotations:
-    nginx.ingress.kubernetes.io/limit-rps: '2'
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: app.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: echo-service
-                port:
-                  number: 80
-```
-
-```bash
-kubectl apply -f rate-limited-ingress.yaml
-
-# Fire 10 rapid requests and watch for 503 responses
-for i in $(seq 1 10); do
-  curl -s -o /dev/null -w "%{http_code}<br/>" -H "Host: app.example.com" http://$INGRESS_IP/
-done
-```
-
-You should see some `200` responses followed by `503` (Service Unavailable) responses when the rate limit kicks in.
+You can see the Gateway status and active listeners. This is the attachment point where HTTPRoutes are bound and enforced.
 
 **Step 5: Clean up**
 
 ```bash
-kubectl delete ingress no-rewrite with-rewrite rate-limited
-kubectl delete service echo-service
-kubectl delete deployment echo
+kubectl delete deployment backend
+kubectl delete service backend
+kubectl describe httproute backend
 ```
+
+After cleanup, `ResolvedRefs` should go back to `False`, which confirms status is driven by live backend resolution.

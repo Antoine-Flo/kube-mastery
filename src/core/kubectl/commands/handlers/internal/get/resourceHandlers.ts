@@ -24,6 +24,14 @@ import type { StorageClass } from '../../../../../cluster/ressources/StorageClas
 import type { Service } from '../../../../../cluster/ressources/Service'
 import { getServiceType } from '../../../../../cluster/ressources/Service'
 import type { StatefulSet } from '../../../../../cluster/ressources/StatefulSet'
+import {
+  listGatewayClassesForGet,
+  listGatewaysForGet,
+  listHttpRoutesForGet,
+  type GatewayClassSyntheticResource,
+  type GatewaySyntheticResource,
+  type HTTPRouteSyntheticResource
+} from '../../../../../gateway-api/envoy/api'
 import { formatAge } from '../../../../../shared/formatter'
 import {
   getPodDisplayStatus,
@@ -43,6 +51,41 @@ import {
 } from './resourceFormatters'
 import type { ResourceHandler } from './types'
 
+interface IngressClassSyntheticResource {
+  metadata: {
+    name: string
+    namespace: string
+    creationTimestamp: string
+  }
+  spec: {
+    controller: string
+  }
+}
+
+const hasIngressNginxController = (
+  state: {
+    deployments: { items: Deployment[] }
+    pods: { items: Pod[] }
+  }
+): boolean => {
+  const deploymentExists = state.deployments.items.some((deployment) => {
+    return (
+      deployment.metadata.namespace === 'ingress-nginx' &&
+      deployment.metadata.name === 'ingress-nginx-controller'
+    )
+  })
+  if (deploymentExists) {
+    return true
+  }
+  return state.pods.items.some((pod) => {
+    return (
+      pod.metadata.namespace === 'ingress-nginx' &&
+      (pod.metadata.labels?.['app.kubernetes.io/component'] === 'controller' ||
+        pod.metadata.name.startsWith('ingress-nginx-controller'))
+    )
+  })
+}
+
 interface ResourceHandlerRegistry {
   pods: ResourceHandler<Pod>
   configmaps: ResourceHandler<ConfigMap>
@@ -56,7 +99,10 @@ interface ResourceHandlerRegistry {
   endpointslices: ResourceHandler<EndpointSlice>
   endpoints: ResourceHandler<Endpoints>
   ingresses: ResourceHandler<Ingress>
-  ingressclasses: ResourceHandler<Namespace>
+  ingressclasses: ResourceHandler<IngressClassSyntheticResource>
+  gateways: ResourceHandler<GatewaySyntheticResource>
+  gatewayclasses: ResourceHandler<GatewayClassSyntheticResource>
+  httproutes: ResourceHandler<HTTPRouteSyntheticResource>
   namespaces: ResourceHandler<Namespace>
   persistentvolumes: ResourceHandler<PersistentVolume>
   persistentvolumeclaims: ResourceHandler<PersistentVolumeClaim>
@@ -292,18 +338,81 @@ export const RESOURCE_HANDLERS: ResourceHandlerRegistry = {
       ingress.metadata.name,
       formatIngressClass(ingress),
       formatIngressHosts(ingress),
-      '<none>',
+      '',
       formatIngressPorts(),
       formatAge(ingress.metadata.creationTimestamp)
     ],
     supportsFiltering: true
   },
   ingressclasses: {
-    getItems: () => [],
+    getItems: (state) => {
+      if (!hasIngressNginxController(state)) {
+        return []
+      }
+      const controllerDeployment = state.deployments.items.find((deployment) => {
+        return (
+          deployment.metadata.namespace === 'ingress-nginx' &&
+          deployment.metadata.name === 'ingress-nginx-controller'
+        )
+      })
+      return [
+        {
+          metadata: {
+            name: 'nginx',
+            namespace: '',
+            creationTimestamp:
+              controllerDeployment?.metadata.creationTimestamp ??
+              new Date().toISOString()
+          },
+          spec: {
+            controller: 'k8s.io/ingress-nginx'
+          }
+        }
+      ]
+    },
     headers: ['name', 'controller', 'parameters', 'age'],
-    formatRow: () => ['<none>', '<none>', '<none>', '<none>'],
+    formatRow: (ingressClass) => [
+      ingressClass.metadata.name,
+      ingressClass.spec.controller,
+      '<none>',
+      formatAge(ingressClass.metadata.creationTimestamp)
+    ],
     supportsFiltering: true,
     isClusterScoped: true
+  },
+  gateways: {
+    getItems: (state) => listGatewaysForGet(state),
+    headers: ['name', 'class', 'address', 'programmed', 'age'],
+    formatRow: (gateway) => [
+      gateway.metadata.name,
+      gateway.spec.gatewayClassName,
+      gateway.status.address,
+      gateway.status.programmed,
+      formatAge(gateway.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true
+  },
+  gatewayclasses: {
+    getItems: (state) => listGatewayClassesForGet(state),
+    headers: ['name', 'controller', 'accepted', 'age'],
+    formatRow: (gatewayClass) => [
+      gatewayClass.metadata.name,
+      gatewayClass.spec.controllerName,
+      'True',
+      formatAge(gatewayClass.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true,
+    isClusterScoped: true
+  },
+  httproutes: {
+    getItems: (state) => listHttpRoutesForGet(state),
+    headers: ['name', 'hostnames', 'age'],
+    formatRow: (httpRoute) => [
+      httpRoute.metadata.name,
+      httpRoute.spec.hostnames.join(','),
+      formatAge(httpRoute.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true
   },
   namespaces: {
     getItems: (state) => state.namespaces.items,

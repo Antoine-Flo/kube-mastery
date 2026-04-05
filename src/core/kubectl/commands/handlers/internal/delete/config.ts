@@ -144,7 +144,13 @@ export const DELETE_ALL_RESOURCE_ORDER: DeletableResource[] = [
 export const getDeleteTargetConfig = (
   resource: Resource
 ): DeleteManifestTargetConfig | undefined => {
-  if (resource === 'all' || resource === 'ingressclasses') {
+  if (
+    resource === 'all' ||
+    resource === 'ingressclasses' ||
+    resource === 'gatewayclasses' ||
+    resource === 'gateways' ||
+    resource === 'httproutes'
+  ) {
     return undefined
   }
   return DELETE_TARGET_BY_RESOURCE[resource]

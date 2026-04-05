@@ -429,6 +429,33 @@ export const API_DISCOVERY_CATALOG: APIResourceDiscovery[] = [
     verbs: DEFAULT_RESOURCE_VERBS
   },
   {
+    name: 'gatewayclasses',
+    singularName: 'gatewayclass',
+    shortNames: ['gc'],
+    namespaced: false,
+    kind: 'GatewayClass',
+    groupVersion: 'gateway.networking.k8s.io/v1',
+    verbs: DEFAULT_RESOURCE_VERBS
+  },
+  {
+    name: 'gateways',
+    singularName: 'gateway',
+    shortNames: ['gw'],
+    namespaced: true,
+    kind: 'Gateway',
+    groupVersion: 'gateway.networking.k8s.io/v1',
+    verbs: DEFAULT_RESOURCE_VERBS
+  },
+  {
+    name: 'httproutes',
+    singularName: 'httproute',
+    shortNames: ['hr'],
+    namespaced: true,
+    kind: 'HTTPRoute',
+    groupVersion: 'gateway.networking.k8s.io/v1',
+    verbs: DEFAULT_RESOURCE_VERBS
+  },
+  {
     name: 'ipaddresses',
     singularName: 'ipaddress',
     shortNames: ['ip'],

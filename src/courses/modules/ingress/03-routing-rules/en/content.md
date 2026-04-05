@@ -1,257 +1,212 @@
 ---
-seoTitle: 'Kubernetes Ingress Routing, Host Rules, Path Types, Fallback'
-seoDescription: 'Learn to configure Kubernetes Ingress routing rules with host-based routing, Prefix and Exact path types, and a default backend for unmatched requests.'
+seoTitle: 'Gateway API Routing Rules: Gateway, HTTPRoute, Host and Path Matching'
+seoDescription: 'Learn how to define routing rules in Kubernetes Gateway API using Gateway listeners and HTTPRoute resources with hostname, path prefix, and exact path matching.'
 ---
 
-# Routing Rules: Host-Based and Path-Based
+# Routing Rules with Gateway API
 
-The true power of Ingress lies in its routing rules, the precise, declarative way you tell the controller how to direct incoming traffic to the right backend Service. Kubernetes Ingress supports two fundamental routing strategies: **host-based routing** (separating traffic by domain name) and **path-based routing** (separating traffic by URL path). In practice, you will often combine both strategies in a single Ingress resource.
+Now that you understand the overall architecture of Gateway API and how the Envoy Gateway controller works, it is time to dig into the part you will interact with most day to day: defining how traffic flows.
 
-```mermaid
-graph TD
-    Client([HTTP Request]) --> IC[Ingress Controller]
+Routing in Gateway API is split across two resources, each with a clear purpose. The **Gateway** defines where traffic enters, and the **HTTPRoute** defines where it goes. This separation might feel like extra work at first, but it pays dividends when you have multiple teams and multiple applications sharing the same cluster entry point.
 
-    IC -->|Host: app.example.com<br/>Path: /api/*| API[api-service:80]
-    IC -->|Host: app.example.com<br/>Path: /<br/>all other paths| FE[frontend-service:80]
-    IC -->|Host: admin.example.com<br/>Path: /| ADMIN[admin-service:80]
+## The Gateway: Where Traffic Enters
 
-    API --> AP[api Pods]
-    FE --> FP[frontend Pods]
-    ADMIN --> ADM[admin Pods]
+Think of the Gateway as the front door of a building. It does not care who is visiting or where they are going inside. It just opens when traffic arrives on the right port and protocol. A Gateway listener is defined by three things: a **port**, a **protocol**, and optionally a **hostname**.
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: main-gateway
+  namespace: default
+spec:
+  gatewayClassName: eg
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
 ```
+
+A single Gateway can have multiple listeners, for example one on port 80 for HTTP and one on port 443 for HTTPS. Each listener can optionally restrict which hostnames it accepts, which allows you to use separate Gateways for different domains if needed.
+
+The Envoy Gateway controller reads this and configures the Envoy proxy to bind on the specified ports. Once the Gateway is accepted and programmed by the controller, external traffic can start arriving.
+
+## The HTTPRoute: Where Traffic Goes
+
+The HTTPRoute is the routing table. It tells the proxy: for traffic arriving through this Gateway, on this hostname, with this path, send it to this Service.
+
+Here is a basic example:
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: backend
+  namespace: default
+spec:
+  parentRefs:
+    - name: main-gateway
+  hostnames:
+    - "www.example.com"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: backend
+          port: 3000
+```
+
+The `parentRefs` field is how an HTTPRoute attaches to a Gateway. It says "I am routing traffic from this specific Gateway." Without a `parentRefs`, the route is orphaned and no traffic will reach it.
 
 ## Host-Based Routing
 
-Host-based routing works by inspecting the `Host` HTTP header that every web browser and HTTP client sends with each request. When you visit `api.example.com`, your browser sends `Host: api.example.com`. When you visit `app.example.com`, it sends `Host: app.example.com`. The Ingress controller reads this header and matches it against the `host` field in each Ingress rule.
+One of the most common uses of Gateway API is routing traffic based on the hostname. If you have two applications, one at `api.example.com` and one at `www.example.com`, you can use two HTTPRoutes, both attached to the same Gateway, but each matching on a different hostname.
 
-This allows you to serve completely different applications from the same external IP address and Ingress controller, distinguished purely by hostname. Your API team can deploy independently behind `api.example.com`, your frontend team can deploy behind `app.example.com`, and your internal admin panel can sit at `admin.example.com`, all sharing the same entry point, with the Ingress controller handling the routing transparently.
+This is far more elegant than the old approach of running a separate LoadBalancer Service per application. A single Envoy proxy listens on port 80 and port 443, and the hostnames in your HTTPRoutes determine which backend receives which request.
+
+:::info
+Hostname matching in HTTPRoute supports wildcards. A hostname like `*.example.com` will match any subdomain, which is useful for multi-tenant setups where each tenant gets their own subdomain.
+:::
 
 ## Path-Based Routing
 
-Path-based routing inspects the URL path after the hostname. When a request arrives for `app.example.com/api/users`, the controller matches it against rules based on the `/api` path prefix. A different request for `app.example.com/` matches the root path rule and goes to a different Service.
+Beyond hostnames, you can also route based on the URL path. This lets you host multiple services behind a single hostname by splitting on path prefixes. For example, all requests to `/api/` go to the API service, while requests to `/static/` go to a CDN-backed static asset service.
 
-This is particularly useful for monolithic applications being broken apart into microservices, where you want to maintain a single public hostname but route different URL paths to different backend teams or services.
+Gateway API supports three types of path matching:
 
-## A Complete Ingress Manifest
+- **PathPrefix**: the request path must start with this value. This is the most common type. A prefix of `/api` matches `/api`, `/api/users`, `/api/orders`, and so on.
+- **Exact**: the request path must match exactly. A rule with exact path `/healthz` only matches that specific path, not `/healthz/ready`.
+- **RegularExpression**: matches using a regular expression. Powerful but use with care, complex regex can be hard to read and reason about.
 
-Let's look at a real Ingress manifest that combines both routing strategies:
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: my-ingress
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: app.example.com
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: api-service
-                port:
-                  number: 80
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: frontend-service
-                port:
-                  number: 80
-    - host: admin.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: admin-service
-                port:
-                  number: 80
+```mermaid
+flowchart LR
+    Client([Incoming Request]) --> GW[Gateway Listener\nport 80]
+    GW -->|host: api.example.com| R1[HTTPRoute A\nbackend: api-svc:8080]
+    GW -->|host: www.example.com\npath: /static| R2[HTTPRoute B\nbackend: static-svc:80]
+    GW -->|host: www.example.com\npath: /| R3[HTTPRoute B\nbackend: web-svc:3000]
+    R1 --> API[api Pods]
+    R2 --> STATIC[static Pods]
+    R3 --> WEB[web Pods]
 ```
 
-Reading through this manifest: there are two host rules. For requests to `app.example.com`, paths starting with `/api` go to `api-service`, and everything else goes to `frontend-service`. For requests to `admin.example.com`, everything goes to `admin-service`. The `ingressClassName: nginx` field tells the controller which IngressClass should handle this resource.
+## Multiple Rules in One HTTPRoute
 
-## `pathType`: Prefix vs Exact
-
-The `pathType` field controls how strictly the path is matched:
-
-- **`Prefix`**, Matches the path and anything that starts with it. A rule with `path: /api` and `pathType: Prefix` matches `/api`, `/api/`, `/api/users`, `/api/v1/products`, and so on. This is the most commonly used path type and is what you want for routing to an API or any sub-path tree.
-- **`Exact`**, Matches only the exact path string. A rule with `path: /healthz` and `pathType: Exact` matches `/healthz` and nothing else, not `/healthz/`, not `/healthz/live`. Use `Exact` when you need to expose a very specific endpoint without accidentally routing other paths to the same backend.
-
-There is an important subtlety with `Prefix` and trailing slashes: the path `/api` with `Prefix` matches `/api` and `/api/anything`, but different Ingress controllers handle the trailing slash case slightly differently. When in doubt, use a path like `/api/` with a trailing slash, or test explicitly.
-
-:::info
-When multiple path rules could match the same request, Ingress controllers generally apply a longest-match-wins rule: the most specific path wins. So if you have rules for `/` and `/api`, a request for `/api/users` will match `/api` and not `/`, because `/api` is the longer and more specific prefix.
-:::
-
-## The Default Backend
-
-What happens when an incoming request does not match any rule in your Ingress? The answer is the **default backend**. You can specify a global fallback service at the top level of the Ingress spec:
-
-```yaml
-spec:
-  defaultBackend:
-    service:
-      name: catch-all-service
-      port:
-        number: 80
-  rules:
-    - ...
-```
-
-If no rule matches, wrong hostname, unknown path, the request is routed to `catch-all-service`. This is typically a simple service that returns a 404 page with a user-friendly message. If you do not specify a default backend in your Ingress, the Ingress controller's own default backend handles unmatched requests (for ingress-nginx, this is a built-in 404 page served by the controller itself).
+An HTTPRoute can have multiple rules, which are evaluated in order. The first matching rule wins. This lets you handle special cases before falling through to a general rule. For example, you might send `/api/v1/health` to a dedicated health endpoint, while all other `/api/v1/` traffic goes to the main API service.
 
 :::warning
-Do not confuse the Ingress `defaultBackend` (for unmatched requests) with the `default` IngressClass. They are completely different concepts. The `defaultBackend` is a fallback routing target; the default IngressClass is the class assigned to Ingress resources that do not specify `spec.ingressClassName`.
+Rule ordering matters. If you put a broad `PathPrefix: /` rule before a more specific `PathPrefix: /api` rule, all traffic will match the first rule and the second will never be reached. Put more specific rules first.
 :::
+
+## Traffic Splitting Between Backends
+
+HTTPRoute also supports splitting traffic between multiple backends by weight. This is useful for canary deployments, where you want to send a small percentage of traffic to a new version of your application while the majority still goes to the stable version.
+
+```yaml
+rules:
+  - matches:
+      - path:
+          type: PathPrefix
+          value: /
+    backendRefs:
+      - name: app-stable
+        port: 80
+        weight: 90
+      - name: app-canary
+        port: 80
+        weight: 10
+```
+
+With this configuration, Envoy will distribute traffic roughly 90/10 between the two services. This is a powerful tool for progressive delivery, and it requires no changes to your application code or your DNS records.
 
 ## Hands-On Practice
 
-Let's build a working multi-service Ingress and test both host-based and path-based routing.
+The environment already contains a Gateway and an HTTPRoute. In this lab, the goal is to read routing intent precisely, not to create new resources.
 
-**Step 1: Deploy three backend applications**
-
-```bash
-kubectl create deployment frontend --image=nginx --port=80
-kubectl expose deployment frontend --port=80 --name=frontend-service
-
-kubectl create deployment api --image=nginx --port=80
-kubectl expose deployment api --port=80 --name=api-service
-
-kubectl create deployment admin --image=nginx --port=80
-kubectl expose deployment admin --port=80 --name=admin-service
-```
-
-To make the responses distinguishable, patch each deployment to return a different body:
+**Step 1: Inspect the GatewayClass contract**
 
 ```bash
-kubectl exec -it deploy/frontend -- sh -c 'echo "FRONTEND" > /usr/share/nginx/html/index.html'
-kubectl exec -it deploy/api -- sh -c 'echo "API" > /usr/share/nginx/html/index.html'
-kubectl exec -it deploy/admin -- sh -c 'echo "ADMIN" > /usr/share/nginx/html/index.html'
+kubectl describe gatewayclass eg
 ```
 
-**Step 2: Create the Ingress**
+Focus on `Spec > Controller Name` and `Status > Conditions`. This tells you which controller owns Gateway resources and whether the class is accepted.
 
-```yaml
-# demo-routing-ingress.yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: demo-routing
-spec:
-  ingressClassName: nginx
-  defaultBackend:
-    service:
-      name: frontend-service
-      port:
-        number: 80
-  rules:
-    - host: app.example.com
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: api-service
-                port:
-                  number: 80
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: frontend-service
-                port:
-                  number: 80
-    - host: admin.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: admin-service
-                port:
-                  number: 80
-```
+**Step 2: Inspect the Gateway listener and attachment policy**
 
 ```bash
-kubectl apply -f demo-routing-ingress.yaml
+kubectl describe gateway eg
 ```
 
-**Step 3: Get the Ingress controller's external IP**
+Expected output excerpt:
+
+```
+Spec:
+  Gateway Class Name:  eg
+  Listeners:
+    Allowed Routes:
+      Namespaces:
+        From:  Same
+    Name:      http
+    Port:      80
+    Protocol:  HTTP
+...
+Status:
+  Conditions:
+    Type:                  Accepted
+    Status:                True
+    Type:                  Programmed
+    Status:                False
+```
+
+The key point is the separation between intent (`Spec`) and reconciliation result (`Status`).
+
+**Step 3: Inspect the HTTPRoute routing rule**
 
 ```bash
-kubectl get svc -n ingress-nginx ingress-nginx-controller
+kubectl describe httproute backend
 ```
 
-Note the `EXTERNAL-IP` (or use `localhost`/`127.0.0.1` for local clusters like `kind`).
+Expected output excerpt:
 
-**Step 4: Test host-based routing using curl with the Host header**
+```
+Name:         backend
+Namespace:    default
+API Version:  gateway.networking.k8s.io/v1
+Kind:         HTTPRoute
+...
+Spec:
+  Hostnames:
+    www.example.com
+  Parent Refs:
+    Group:  gateway.networking.k8s.io
+    Kind:   Gateway
+    Name:   eg
+  Rules:
+    Backend Refs:
+      Name:    backend
+      Port:    3000
+    Matches:
+      Path:
+        Type:   PathPrefix
+        Value:  /
+...
+Status:
+  Parents:
+    Conditions:
+      Type:                  Accepted
+      Status:                True
+      Type:                  ResolvedRefs
+      Status:                <True|False>
+```
+
+Look at `Parent Refs`, `Matches`, and `Backend Refs`. This is the exact rule Envoy Gateway is reconciling.
+
+**Step 4: Cross-check list views**
 
 ```bash
-# Should return "FRONTEND"
-curl -H "Host: app.example.com" http://<INGRESS-IP>/
-
-# Should return "API"
-curl -H "Host: app.example.com" http://<INGRESS-IP>/api
-
-# Should return "ADMIN"
-curl -H "Host: admin.example.com" http://<INGRESS-IP>/
-
-# Unmatched host, hits default backend, returns "FRONTEND"
-curl -H "Host: unknown.example.com" http://<INGRESS-IP>/
+kubectl get gateways -A
+kubectl get httproute -A
 ```
 
-**Step 5: Inspect the Ingress status**
-
-```bash
-kubectl describe ingress demo-routing
-```
-
-Look at the `Rules` section to confirm path and backend mappings are correct. Also check the `Address` field, it should now show the Ingress controller's external IP, which means the controller has acknowledged and configured this Ingress.
-
-**Step 6: Test Exact pathType**
-
-```yaml
-# exact-test-ingress.yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: exact-test
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: app.example.com
-      http:
-        paths:
-          - path: /healthz
-            pathType: Exact
-            backend:
-              service:
-                name: api-service
-                port:
-                  number: 80
-```
-
-```bash
-kubectl apply -f exact-test-ingress.yaml
-
-# Should route to api-service
-curl -H "Host: app.example.com" http://<INGRESS-IP>/healthz
-
-# Should NOT match the exact rule (returns 404 or default backend)
-curl -H "Host: app.example.com" http://<INGRESS-IP>/healthz/extra
-```
-
-**Step 7: Clean up**
-
-```bash
-kubectl delete ingress demo-routing exact-test
-kubectl delete service frontend-service api-service admin-service
-kubectl delete deployment frontend api admin
-```
+This verifies that list output and describe output tell the same routing story at different levels of detail.

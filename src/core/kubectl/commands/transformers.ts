@@ -29,6 +29,8 @@ export type ParseContext = {
   createImages?: string[]
   createCommand?: string[]
   createServiceType?: 'clusterip' | 'nodeport' | 'loadbalancer' | 'externalname'
+  createIngressClassName?: string
+  createIngressRules?: string[]
   createSecretType?: 'generic' | 'tls' | 'docker-registry'
   createFromLiterals?: string[]
   createFromFiles?: string[]
@@ -96,6 +98,8 @@ const FLAGS_REQUIRING_VALUES = new Set([
   'docker-username',
   'docker-password',
   'docker-email',
+  'class',
+  'rule',
   'for',
   'timeout',
   'revision',
@@ -449,6 +453,25 @@ const createTransformer: ActionTransformer = (ctx) => {
       name: serviceName,
       tokens: beforeSeparator,
       createServiceType,
+      createCommand
+    })
+  }
+
+  if (resource === 'ingresses') {
+    const createIngressClassValues = extractFlagValues(beforeSeparator, 'class')
+    const createIngressRules = extractFlagValues(beforeSeparator, 'rule')
+    const createIngressClassName =
+      createIngressClassValues.length > 0
+        ? createIngressClassValues[0]
+        : undefined
+    return success({
+      ...ctx,
+      resource,
+      name,
+      tokens: beforeSeparator,
+      createIngressClassName,
+      createIngressRules:
+        createIngressRules.length > 0 ? createIngressRules : undefined,
       createCommand
     })
   }

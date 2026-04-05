@@ -61,6 +61,8 @@ export interface ParsedCommand {
   createImages?: string[] // For create deployment: repeated --image flags
   createCommand?: string[] // For create deployment: command after --
   createServiceType?: 'clusterip' | 'nodeport' | 'loadbalancer' | 'externalname' // For create service: subtype token after "service"
+  createIngressClassName?: string // For create ingress: --class value
+  createIngressRules?: string[] // For create ingress: repeated --rule values
   createSecretType?: 'generic' | 'tls' | 'docker-registry' // For create secret: subtype token after "secret"
   createFromLiterals?: string[] // For create configmap: repeated --from-literal values
   createFromFiles?: string[] // For create secret generic: repeated --from-file values

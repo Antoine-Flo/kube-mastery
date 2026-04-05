@@ -102,6 +102,15 @@ const resolveHandler = (
   }
 }
 
+const namespaceExistsInState = (
+  namespace: string,
+  state: ReturnType<ApiServerFacade['snapshotState']>
+): boolean => {
+  return state.namespaces.items.some((item) => {
+    return item.metadata.name === namespace
+  })
+}
+
 export const handleGet = (
   apiServer: ApiServerFacade,
   parsed: ParsedCommand,
@@ -153,6 +162,18 @@ export const handleGet = (
   const items = resolved.handler.getItems(state)
   const isClusterScoped = resolved.handler.isClusterScoped || false
   const queryNames = resolveQueryNames(parsed)
+  const queriesSpecificNames =
+    parsed.name != null || (queryNames != null && queryNames.length > 0)
+  const hasKnownNamespaces = state.namespaces.items.length > 0
+  if (
+    !isClusterScoped &&
+    filterNamespace != null &&
+    queriesSpecificNames &&
+    hasKnownNamespaces &&
+    namespaceExistsInState(filterNamespace, state) === false
+  ) {
+    return `Error from server (NotFound): namespaces "${filterNamespace}" not found`
+  }
   const baseFiltered = applyFilters(
     items,
     filterNamespace,
