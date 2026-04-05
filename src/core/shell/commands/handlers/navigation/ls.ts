@@ -46,7 +46,24 @@ export const createLsHandler = (
       for (const targetPath of targetPaths) {
         const result = fileSystem.listDirectory(targetPath)
         if (!result.ok) {
-          return error(result.error)
+          if (targetPath == null) {
+            return error(result.error)
+          }
+          const fileResult = fileSystem.readFile(targetPath)
+          if (!fileResult.ok) {
+            return error(result.error)
+          }
+          if (flags.l) {
+            allEntries.push({
+              type: 'file',
+              name: targetPath,
+              size: fileResult.value.length,
+              modified: now
+            })
+          } else {
+            allNames.push(targetPath)
+          }
+          continue
         }
 
         const nodes = result.value

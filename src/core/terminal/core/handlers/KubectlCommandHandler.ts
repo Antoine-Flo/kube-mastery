@@ -360,7 +360,7 @@ const executeProcessCommandDirective = (
     ...pod,
     status: {
       ...pod.status,
-      phase: 'Pending',
+      phase: pod.status.phase === 'Running' ? 'Running' : 'Pending',
       restartCount: pod.status.restartCount + 1,
       containerStatuses: updatedStatuses
     },

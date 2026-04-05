@@ -9,6 +9,8 @@ import { getSystemWorkloads } from './systemPods'
 import type { ConfigMap } from './ressources/ConfigMap'
 import { createConfigMap } from './ressources/ConfigMap'
 import type { DaemonSet } from './ressources/DaemonSet'
+import type { Endpoints } from './ressources/Endpoints'
+import { createEndpoints } from './ressources/Endpoints'
 import type { Lease } from './ressources/Lease'
 import { createLease } from './ressources/Lease'
 import type { Node, NodeCondition } from './ressources/Node'
@@ -42,6 +44,7 @@ export interface SystemBootstrapResources {
   nodes: Node[]
   configMaps: ConfigMap[]
   services: Service[]
+  endpoints: Endpoints[]
   pods: Pod[]
   staticPods: Pod[]
   deployments: Deployment[]
@@ -359,8 +362,12 @@ const createSystemServices = (creationTimestamp: string): Service[] => {
       name: 'kubernetes',
       namespace: 'default',
       creationTimestamp,
+      labels: {
+        component: 'apiserver',
+        provider: 'kubernetes'
+      },
       clusterIP: '10.96.0.1',
-      ports: [{ port: 443, protocol: 'TCP' }]
+      ports: [{ name: 'https', port: 443, protocol: 'TCP', targetPort: 6443 }]
     }),
     createService({
       name: 'kube-dns',
@@ -371,6 +378,22 @@ const createSystemServices = (creationTimestamp: string): Service[] => {
         { name: 'dns', port: 53, protocol: 'UDP', targetPort: 53 },
         { name: 'dns-tcp', port: 53, protocol: 'TCP', targetPort: 53 },
         { name: 'metrics', port: 9153, protocol: 'TCP', targetPort: 9153 }
+      ]
+    })
+  ]
+}
+
+const createSystemEndpoints = (creationTimestamp: string): Endpoints[] => {
+  return [
+    createEndpoints({
+      name: 'kubernetes',
+      namespace: 'default',
+      creationTimestamp,
+      subsets: [
+        {
+          addresses: [{ ip: createNodeInternalIP(0) }],
+          ports: [{ name: 'https', port: 6443, protocol: 'TCP' }]
+        }
       ]
     })
   ]
@@ -460,6 +483,7 @@ export const createSystemBootstrapResources = (
       createCoreDnsConfigMap(creationTimestamp)
     ],
     services: createSystemServices(creationTimestamp),
+    endpoints: createSystemEndpoints(creationTimestamp),
     pods: workloads.staticPods,
     staticPods: workloads.staticPods,
     deployments: workloads.deployments,
@@ -478,6 +502,7 @@ type BootstrapKind =
   | 'Node'
   | 'ConfigMap'
   | 'Service'
+  | 'Endpoints'
   | 'Deployment'
   | 'DaemonSet'
   | 'Pod'
@@ -586,6 +611,9 @@ const createBootstrapStoreFromClusterState = (
     if (kind === 'Service') {
       return clusterState.createByKind('Service', resource as Service)
     }
+    if (kind === 'Endpoints') {
+      return clusterState.createByKind('Endpoints', resource as Endpoints)
+    }
     if (kind === 'Deployment') {
       return clusterState.createByKind('Deployment', resource as Deployment)
     }
@@ -626,6 +654,14 @@ const createBootstrapStoreFromClusterState = (
         'Service',
         name,
         resource as Service,
+        namespace
+      )
+    }
+    if (kind === 'Endpoints') {
+      return clusterState.updateByKind(
+        'Endpoints',
+        name,
+        resource as Endpoints,
         namespace
       )
     }
@@ -679,6 +715,9 @@ const createBootstrapStoreFromClusterState = (
     }
     if (kind === 'Service') {
       return clusterState.deleteByKind('Service', name, namespace)
+    }
+    if (kind === 'Endpoints') {
+      return clusterState.deleteByKind('Endpoints', name, namespace)
     }
     if (kind === 'Deployment') {
       return clusterState.deleteByKind('Deployment', name, namespace)
@@ -837,6 +876,13 @@ const upsertServices = (store: BootstrapStore, services: Service[]): void => {
   upsertResourcesByKind(store, 'Service', services)
 }
 
+const upsertEndpoints = (
+  store: BootstrapStore,
+  endpoints: Endpoints[]
+): void => {
+  upsertResourcesByKind(store, 'Endpoints', endpoints)
+}
+
 const upsertDeployments = (
   store: BootstrapStore,
   deployments: Deployment[]
@@ -898,6 +944,7 @@ const applyKindLikeBootstrap = (
   upsertNodes(store, resources.nodes)
   upsertConfigMaps(store, resources.configMaps)
   upsertServices(store, resources.services)
+  upsertEndpoints(store, resources.endpoints)
   upsertDeployments(store, resources.deployments)
   upsertDaemonSets(store, resources.daemonSets)
   upsertLeases(store, resources.leases)

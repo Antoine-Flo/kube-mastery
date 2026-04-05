@@ -113,10 +113,36 @@ export const buildContainerEnvironmentVariables = (
   const customEnvVars = (container.env ?? []).map((envVar) => {
     return resolveEnvVarValue(envVar, pod, apiServer)
   })
+  const kubernetesServiceEnvVars: string[] = []
+  if (apiServer != null) {
+    const kubernetesServiceResult = apiServer.findResource(
+      'Service',
+      'kubernetes',
+      'default'
+    )
+    if (kubernetesServiceResult.ok) {
+      const kubernetesServiceHost = kubernetesServiceResult.value.spec.clusterIP
+      const kubernetesServicePort =
+        kubernetesServiceResult.value.spec.ports[0]?.port ?? 443
+      const kubernetesServicePortValue = String(kubernetesServicePort)
+      const kubernetesServiceUrl = `tcp://${kubernetesServiceHost}:${kubernetesServicePortValue}`
+      kubernetesServiceEnvVars.push(
+        `KUBERNETES_SERVICE_PORT=${kubernetesServicePortValue}`,
+        `KUBERNETES_SERVICE_PORT_HTTPS=${kubernetesServicePortValue}`,
+        `KUBERNETES_PORT=${kubernetesServiceUrl}`,
+        `KUBERNETES_PORT_${kubernetesServicePortValue}_TCP=${kubernetesServiceUrl}`,
+        'KUBERNETES_PORT_443_TCP_PROTO=tcp',
+        `KUBERNETES_PORT_443_TCP_PORT=${kubernetesServicePortValue}`,
+        `KUBERNETES_PORT_443_TCP_ADDR=${kubernetesServiceHost}`,
+        `KUBERNETES_SERVICE_HOST=${kubernetesServiceHost}`
+      )
+    }
+  }
   return success([
     CONTAINER_PATH,
-    'HOME=/root',
     `HOSTNAME=${pod.metadata.name}`,
-    ...customEnvVars
+    ...customEnvVars,
+    ...kubernetesServiceEnvVars,
+    'HOME=/root'
   ])
 }

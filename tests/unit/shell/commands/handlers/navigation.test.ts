@@ -243,7 +243,8 @@ describe('Navigation Handlers', () => {
 
     it('should return error on filesystem error', () => {
       const fileSystem = createMockFileSystem({
-        listDirectory: () => error('Directory not found')
+        listDirectory: () => error('Directory not found'),
+        readFile: () => error('Directory not found')
       })
       const handler = createLsHandler(fileSystem)
       const result = handler.execute(['/invalid'], {})
@@ -373,6 +374,25 @@ describe('Navigation Handlers', () => {
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value).toContain('file.txt')
+      }
+    })
+
+    it('should support ls on absolute file path', () => {
+      const fileSystem = createMockFileSystem({
+        listDirectory: () => error('ls: /data/record.txt: Not a directory'),
+        readFile: (path: string) => {
+          if (path === '/data/record.txt') {
+            return success('hello')
+          }
+          return error(`cat: ${path}: No such file or directory`)
+        }
+      })
+      const handler = createLsHandler(fileSystem)
+      const result = handler.execute(['/data/record.txt'], {})
+
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toContain('/data/record.txt')
       }
     })
   })

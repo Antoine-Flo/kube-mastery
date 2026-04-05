@@ -245,9 +245,12 @@ const rolloutStatusComplete = (
   if (resource.kind === 'Deployment') {
     const deployment = resource as Deployment
     const desired = deployment.spec.replicas ?? 1
+    const replicas = deployment.status.replicas ?? desired
     const updated = deployment.status.updatedReplicas ?? 0
     const available = deployment.status.availableReplicas ?? 0
-    const done = updated >= desired && available >= desired
+    const oldPendingTermination = Math.max(0, replicas - updated)
+    const done =
+      updated >= desired && available >= desired && oldPendingTermination === 0
     return {
       done,
       details: `${updated}/${desired} updated, ${available}/${desired} available`
@@ -283,14 +286,14 @@ const formatRolloutWaitingMessage = (
     const deployment = resource as Deployment
     const desired = deployment.spec.replicas ?? 1
     const replicas = deployment.status.replicas ?? desired
-    const updated = deployment.status.updatedReplicas ?? 0
     const available = deployment.status.availableReplicas ?? 0
+    const updated = deployment.status.updatedReplicas ?? 0
     const oldPendingTermination = Math.max(0, replicas - updated)
-    if (updated < desired) {
-      return `Waiting for deployment "${name}" rollout to finish: ${updated} out of ${desired} new replicas have been updated...`
-    }
     if (available < desired) {
       return `Waiting for deployment "${name}" rollout to finish: ${available} of ${desired} updated replicas are available...`
+    }
+    if (updated < desired) {
+      return `Waiting for deployment "${name}" rollout to finish: ${updated} out of ${desired} new replicas have been updated...`
     }
     if (oldPendingTermination > 0) {
       return `Waiting for deployment "${name}" rollout to finish: ${oldPendingTermination} old replicas are pending termination...`
@@ -298,6 +301,60 @@ const formatRolloutWaitingMessage = (
     return `Waiting for deployment "${name}" rollout to finish...`
   }
   return `Waiting for ${toKindReference(resource.kind as ResourceKind)}/${name} rollout to finish...`
+}
+
+const enrichDeploymentAvailabilityProgress = (
+  progressLines: string[],
+  resource: KindToResource<ResourceKind>,
+  name: string
+): string[] => {
+  if (resource.kind !== 'Deployment') {
+    return progressLines
+  }
+  const deployment = resource as Deployment
+  const desiredReplicas = deployment.spec.replicas ?? 1
+  if (desiredReplicas <= 1) {
+    return progressLines
+  }
+
+  const observedAvailabilities = new Set<number>()
+  for (const line of progressLines) {
+    const availabilityMatch = line.match(
+      /: (\d+) of (\d+) updated replicas are available\.\.\.$/
+    )
+    if (availabilityMatch == null) {
+      continue
+    }
+    const availableCount = Number.parseInt(availabilityMatch[1], 10)
+    const desiredCount = Number.parseInt(availabilityMatch[2], 10)
+    if (Number.isNaN(availableCount) || Number.isNaN(desiredCount)) {
+      continue
+    }
+    if (desiredCount !== desiredReplicas) {
+      continue
+    }
+    observedAvailabilities.add(availableCount)
+  }
+
+  if (observedAvailabilities.size === 0) {
+    return progressLines
+  }
+
+  const maxObservedAvailability = Math.max(...observedAvailabilities)
+  if (maxObservedAvailability >= desiredReplicas - 1) {
+    return progressLines
+  }
+
+  const enrichedLines = [...progressLines]
+  for (
+    let availableCount = maxObservedAvailability + 1;
+    availableCount < desiredReplicas;
+    availableCount++
+  ) {
+    const syntheticLine = `Waiting for deployment "${name}" rollout to finish: ${availableCount} of ${desiredReplicas} updated replicas are available...`
+    enrichedLines.push(syntheticLine)
+  }
+  return enrichedLines
 }
 
 type HistorySummaryRow = {
@@ -418,7 +475,13 @@ const handleRolloutStatus = (
 ): ExecutionResult => {
   const watch = parsed.rolloutWatch ?? true
   const timeoutSeconds = parsed.rolloutTimeoutSeconds ?? 60
-  const successMessage = `${toKindReference(kind)} "${name}" successfully rolled out`
+  const rolloutKindName =
+    kind === 'Deployment'
+      ? 'deployment'
+      : kind === 'DaemonSet'
+        ? 'daemon set'
+        : 'stateful set'
+  const successMessage = `${rolloutKindName} "${name}" successfully rolled out`
 
   if (reconcileForWait == null) {
     const resourceResult = apiServer.findResource(kind, name, namespace)
@@ -453,7 +516,12 @@ const handleRolloutStatus = (
       if (progressLines.length === 0) {
         return success(successMessage)
       }
-      return success([...progressLines, successMessage].join('\n'))
+      const enrichedProgressLines = enrichDeploymentAvailabilityProgress(
+        progressLines,
+        resourceResult.value,
+        name
+      )
+      return success([...enrichedProgressLines, successMessage].join('\n'))
     }
     if (!watch) {
       return success(formatRolloutWaitingMessage(resourceResult.value, name))

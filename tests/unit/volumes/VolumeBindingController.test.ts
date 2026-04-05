@@ -432,6 +432,7 @@ describe('VolumeBindingController', () => {
       createPod({
         name: 'consumer',
         namespace: 'default',
+        nodeName: 'worker-1',
         containers: [{ name: 'main', image: 'busybox:1.36' }],
         volumes: [
           {

@@ -36,6 +36,13 @@ export const hasPodConsumerForClaim = (
 ): boolean => {
   const pods = apiServer.listResources('Pod', namespace)
   for (const pod of pods) {
+    const scheduledNodeName = pod.spec.nodeName
+    if (scheduledNodeName == null || scheduledNodeName.length === 0) {
+      continue
+    }
+    if (pod.metadata.deletionTimestamp != null) {
+      continue
+    }
     const volumes = pod.spec.volumes ?? []
     for (const volume of volumes) {
       if (volume.source.type !== 'persistentVolumeClaim') {

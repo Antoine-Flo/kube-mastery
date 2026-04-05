@@ -10,7 +10,6 @@ import {
   createFile as createFileNode,
   createDirectory
 } from '../../../src/core/filesystem/models'
-import type { FileSystemState } from '../../../src/core/filesystem/FileSystem'
 import type {
   AutocompleteClusterState,
   AutocompleteContext

@@ -18,7 +18,7 @@ import { createNamespace } from '../../../../../src/core/cluster/ressources/Name
 import { createNode } from '../../../../../src/core/cluster/ressources/Node'
 import { createReplicaSet } from '../../../../../src/core/cluster/ressources/ReplicaSet'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
-import { expectErr, expectOk } from '../../../helpers/resultAssertions'
+import { expectErr } from '../../../helpers/resultAssertions'
 
 describe('kubectl delete handler', () => {
   let apiServer: ApiServerFacade

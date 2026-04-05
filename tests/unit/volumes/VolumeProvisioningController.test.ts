@@ -120,6 +120,35 @@ describe('VolumeProvisioningController', () => {
       })
     )
 
+    const preScheduledConsumerPv = apiServer.findResource(
+      'PersistentVolume',
+      'pvc-default-dynamic-pvc'
+    )
+    expect(preScheduledConsumerPv.ok).toBe(false)
+
+    const podResult = apiServer.findResource(
+      'Pod',
+      'dynamic-storage-demo',
+      'default'
+    )
+    expect(podResult.ok).toBe(true)
+    if (!podResult.ok) {
+      controller.stop()
+      return
+    }
+    apiServer.updateResource(
+      'Pod',
+      'dynamic-storage-demo',
+      {
+        ...podResult.value,
+        spec: {
+          ...podResult.value.spec,
+          nodeName: 'worker-1'
+        }
+      },
+      'default'
+    )
+
     const postConsumerPv = apiServer.findResource(
       'PersistentVolume',
       'pvc-default-dynamic-pvc'

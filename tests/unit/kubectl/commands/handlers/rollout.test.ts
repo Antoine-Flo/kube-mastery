@@ -158,7 +158,7 @@ describe('kubectl rollout handler', () => {
     expect(result.value).toContain('1 of 3 updated replicas are available')
     expect(result.value).toContain('2 of 3 updated replicas are available')
     expect(result.value).toContain(
-      'deployment.apps "web-app" successfully rolled out'
+      'deployment "web-app" successfully rolled out'
     )
   })
 

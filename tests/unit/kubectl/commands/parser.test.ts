@@ -1054,6 +1054,27 @@ describe('kubectl parser - get and delete flag positions', () => {
     expect(result.value.deleteForce).toBe(true)
   })
 
+  it('should parse delete wait flag', () => {
+    const result = parseCommand('kubectl delete pods -l app=demo --wait=false')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.selector).toEqual({
+      requirements: [
+        {
+          key: 'app',
+          operator: 'Equals',
+          values: ['demo']
+        }
+      ]
+    })
+    expect(result.value.flags.wait).toBe('false')
+  })
+
   it('should reject delete with invalid grace period value', () => {
     const result = parseCommand('kubectl delete pod demo --grace-period=oops')
 

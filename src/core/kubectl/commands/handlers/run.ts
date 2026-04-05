@@ -6,7 +6,6 @@ import type { ExecutionResult } from '../../../shared/result'
 import {
   error,
   errorWithIO,
-  success,
   successWithIO
 } from '../../../shared/result'
 import { validateMetadataNameByKind } from '../metadataNameValidation'

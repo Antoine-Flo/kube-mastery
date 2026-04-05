@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createApiServerFacade } from '../../../src/core/api/ApiServerFacade'
 import { createPodCreatedEvent } from '../../../src/core/cluster/events/types'
 import { createNode } from '../../../src/core/cluster/ressources/Node'
+import { createPersistentVolumeClaim } from '../../../src/core/cluster/ressources/PersistentVolumeClaim'
 import { createPod } from '../../../src/core/cluster/ressources/Pod'
 
 describe('ApiServerFacade', () => {
@@ -162,5 +163,41 @@ describe('ApiServerFacade', () => {
     expect(updateResult.value.status.containerStatuses?.[0]?.imageID).toContain(
       'invalid-registry.local/web@sha256:'
     )
+  })
+
+  it('assigns default storage class when creating pvc', () => {
+    const apiServer = createApiServerFacade({
+      bootstrap: {
+        profile: 'kind-like',
+        mode: 'missing-only',
+        clusterName: 'conformance',
+        clock: () => '2026-03-13T12:00:00.000Z'
+      }
+    })
+    const persistentVolumeClaim = createPersistentVolumeClaim({
+      name: 'dynamic-pvc',
+      namespace: 'default',
+      spec: {
+        accessModes: ['ReadWriteOnce'],
+        resources: {
+          requests: {
+            storage: '100Mi'
+          }
+        }
+      }
+    })
+
+    const createResult = apiServer.createResource(
+      'PersistentVolumeClaim',
+      persistentVolumeClaim,
+      'default'
+    )
+
+    expect(createResult.ok).toBe(true)
+    if (!createResult.ok) {
+      return
+    }
+    expect(createResult.value.spec.storageClassName).toBe('standard')
+    apiServer.stop()
   })
 })

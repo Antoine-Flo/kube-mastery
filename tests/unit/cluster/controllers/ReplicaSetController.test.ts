@@ -415,6 +415,40 @@ describe('ReplicaSetController', () => {
       expect(createdPods[0].metadata.ownerReferences?.[0].name).toBe('my-rs')
     })
 
+    it('should ignore Terminating pods and create replacements', () => {
+      const rs = createTestReplicaSet('my-rs', 1)
+      mockState.replicaSets = [rs]
+      mockState.pods = [
+        createPod({
+          name: 'my-rs-terminating',
+          namespace: 'default',
+          containers: [{ name: 'nginx', image: 'nginx:latest' }],
+          labels: { app: 'my-rs' },
+          ownerReferences: [
+            {
+              apiVersion: 'apps/v1',
+              kind: 'ReplicaSet',
+              name: 'my-rs',
+              uid: 'default-my-rs',
+              controller: true
+            }
+          ],
+          phase: 'Running',
+          deletionTimestamp: '2026-04-04T19:00:00.000Z'
+        })
+      ]
+
+      const createdPods: Pod[] = []
+      eventBus.subscribe('PodCreated', (event: PodCreatedEvent) => {
+        createdPods.push(event.payload.pod)
+      })
+
+      controller.reconcile('default/my-rs')
+
+      expect(createdPods).toHaveLength(1)
+      expect(createdPods[0].metadata.ownerReferences?.[0].name).toBe('my-rs')
+    })
+
     it('should handle non-existent ReplicaSet gracefully', () => {
       mockState.replicaSets = []
 

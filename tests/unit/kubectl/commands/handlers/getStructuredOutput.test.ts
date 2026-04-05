@@ -4,6 +4,8 @@ import { createDeployment } from '../../../../../src/core/cluster/ressources/Dep
 import { createServiceEndpointSlice } from '../../../../../src/core/cluster/ressources/EndpointSlice'
 import { createEndpoints } from '../../../../../src/core/cluster/ressources/Endpoints'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
+import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
+import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
 import { handleGet } from '../../../../../src/core/kubectl/commands/handlers/get'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 import { createClusterStateData } from '../../../helpers/utils'
@@ -163,6 +165,61 @@ describe('kubectl get handler - structured output parity', () => {
     expect(result).toContain('deployment.kubernetes.io/revision: "1"')
     expect(result).not.toContain('sim.kubernetes.io/preferred-node')
     expect(result).not.toContain('&a1')
+  })
+
+  it('returns ConfigMap object YAML with metadata parity fields', () => {
+    const configMap = createConfigMap({
+      name: 'web-config',
+      namespace: 'default',
+      creationTimestamp: '2026-04-04T17:41:29.771Z',
+      data: {
+        APP_ENV: 'crash-course',
+        LOG_LEVEL: 'debug'
+      }
+    })
+    const state = createClusterStateData({ configMaps: [configMap] })
+    const parsed = createParsedGetCommand({
+      resource: 'configmaps',
+      name: 'web-config',
+      flags: { output: 'yaml' }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    expect(result).toContain('kind: ConfigMap')
+    expect(result).toContain('name: web-config')
+    expect(result).toContain('resourceVersion:')
+    expect(result).toContain('uid:')
+    expect(result).toContain('creationTimestamp: "2026-04-04T17:41:29Z"')
+  })
+
+  it('returns Secret object YAML with metadata parity fields', () => {
+    const secret = createSecret({
+      name: 'web-secret',
+      namespace: 'default',
+      creationTimestamp: '2026-04-04T17:41:37.122Z',
+      secretType: { type: 'Opaque' },
+      data: {
+        API_TOKEN: 'c3VwZXItc2VjcmV0LXRva2Vu'
+      }
+    })
+    const state = createClusterStateData({ secrets: [secret] })
+    const parsed = createParsedGetCommand({
+      resource: 'secrets',
+      name: 'web-secret',
+      flags: { output: 'yaml' }
+    })
+
+    apiServer.etcd.restore(state)
+    const result = handleGet(apiServer, parsed)
+
+    expect(result).toContain('kind: Secret')
+    expect(result).toContain('name: web-secret')
+    expect(result).toContain('type: Opaque')
+    expect(result).toContain('resourceVersion:')
+    expect(result).toContain('uid:')
+    expect(result).toContain('creationTimestamp: "2026-04-04T17:41:37Z"')
   })
 
   it('returns scalar value with jsonpath output', () => {

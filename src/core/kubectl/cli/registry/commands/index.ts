@@ -92,6 +92,11 @@ const deleteCommand = createLeafCommand({
       description: 'Period of time in seconds'
     },
     { kind: 'bool', name: 'force', description: 'Immediate delete' },
+    {
+      kind: 'bool',
+      name: 'wait',
+      description: 'Wait for resources to terminate'
+    },
     { kind: 'string', name: 'selector', short: 'l', description: 'Selector' }
   ]
 })

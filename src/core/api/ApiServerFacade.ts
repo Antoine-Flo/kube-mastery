@@ -393,6 +393,34 @@ const hydratePodRuntimeForNamespace = (
   return runtimeResult.value
 }
 
+const DEFAULT_STORAGE_CLASS_ANNOTATION =
+  'storageclass.kubernetes.io/is-default-class'
+
+const hydratePersistentVolumeClaimStorageClass = (
+  persistentVolumeClaim: PersistentVolumeClaim,
+  listStorageClasses: () => StorageClass[]
+): PersistentVolumeClaim => {
+  if (persistentVolumeClaim.spec.storageClassName != null) {
+    return persistentVolumeClaim
+  }
+  const defaultStorageClass = listStorageClasses().find((storageClass) => {
+    return (
+      storageClass.metadata.annotations?.[DEFAULT_STORAGE_CLASS_ANNOTATION] ===
+      'true'
+    )
+  })
+  if (defaultStorageClass == null) {
+    return persistentVolumeClaim
+  }
+  return {
+    ...persistentVolumeClaim,
+    spec: {
+      ...persistentVolumeClaim.spec,
+      storageClassName: defaultStorageClass.metadata.name
+    }
+  }
+}
+
 interface ResourceMutationEventFactory {
   create: (resource: KindToResource<ResourceKind>, source: string) => AppEvent
   update: (
@@ -837,16 +865,25 @@ export const createApiServerFacade = (
       return findResult as Result<KindToResource<typeof kind>>
     },
     createResource: (kind, resource) => {
+      const withDefaultStorageClass =
+        kind === 'PersistentVolumeClaim'
+          ? (hydratePersistentVolumeClaimStorageClass(
+              resource as PersistentVolumeClaim,
+              () => {
+                return apiServer.listResources('StorageClass')
+              }
+            ) as KindToResource<typeof kind>)
+          : (resource as KindToResource<typeof kind>)
       const normalizedResource =
         kind === 'Pod'
           ? (hydratePodRuntimeForNamespace(
-              resource as Pod,
+              withDefaultStorageClass as Pod,
               resolveConfigMapForPodRuntime,
               resolveSecretForPodRuntime,
               resolvePersistentVolumeClaimForPodRuntime,
               resolvePersistentVolumeForPodRuntime
             ) as KindToResource<typeof kind>)
-          : (resource as KindToResource<typeof kind>)
+          : withDefaultStorageClass
       emitResourceMutationEvent(kind, 'create', {
         resource: normalizedResource
       })

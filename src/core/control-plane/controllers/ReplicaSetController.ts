@@ -9,7 +9,7 @@ import type { ApiServerFacade } from '../../api/ApiServerFacade'
 import type { EventBus } from '../../cluster/events/EventBus'
 import type { ClusterEvent } from '../../cluster/events/types'
 import type { Pod } from '../../cluster/ressources/Pod'
-import { createPod } from '../../cluster/ressources/Pod'
+import { createPod, isPodTerminating } from '../../cluster/ressources/Pod'
 import type {
   ReplicaSet,
   ReplicaSetStatus
@@ -390,7 +390,12 @@ export class ReplicaSetController implements ReconcilerController {
     const matchingPods = allPods.filter((pod) =>
       selectorMatchesLabels(rs.spec.selector, pod.metadata.labels)
     )
-    const activeMatchingPods = matchingPods.filter((pod) => !isTerminalPod(pod))
+    const activeMatchingPods = matchingPods.filter((pod) => {
+      if (isTerminalPod(pod)) {
+        return false
+      }
+      return isPodTerminating(pod) === false
+    })
     const ownedPods = getOwnedResources(rs, activeMatchingPods)
     const ownedPodNames = new Set(
       ownedPods.map((pod) => `${pod.metadata.namespace}/${pod.metadata.name}`)

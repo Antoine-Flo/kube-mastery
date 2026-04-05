@@ -509,7 +509,7 @@ describe('KubectlCommandHandler', () => {
       if (!updatedPodResult.ok) {
         return
       }
-      expect(updatedPodResult.value.status.phase).toBe('Pending')
+      expect(updatedPodResult.value.status.phase).toBe('Running')
       expect(updatedPodResult.value.status.restartCount).toBe(1)
       const targetStatus =
         updatedPodResult.value.status.containerStatuses?.find(
@@ -575,7 +575,7 @@ describe('KubectlCommandHandler', () => {
       if (!updatedPodResult.ok) {
         return
       }
-      expect(updatedPodResult.value.status.phase).toBe('Pending')
+      expect(updatedPodResult.value.status.phase).toBe('Running')
       expect(updatedPodResult.value.status.restartCount).toBe(1)
       const targetStatus =
         updatedPodResult.value.status.containerStatuses?.find(

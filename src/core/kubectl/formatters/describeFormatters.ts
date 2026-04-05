@@ -135,6 +135,8 @@ const formatDescribeDate = (isoDate: string): string => {
   return parsed.toUTCString()
 }
 
+const POD_DESCRIBE_METADATA_COLUMN_WIDTH = 18
+
 const getDescribePodStatus = (pod: Pod): string => {
   if (isPodTerminating(pod)) {
     return 'Terminating'
@@ -1316,12 +1318,20 @@ export const describePod = (
   lines.push(
     `Start Time:           ${formatDescribeDate(pod.metadata.creationTimestamp)}`
   )
-  lines.push(...formatMapMultiLine('Labels', pod.metadata.labels))
+  lines.push(
+    ...formatMapMultiLine(
+      'Labels',
+      pod.metadata.labels,
+      'equals',
+      POD_DESCRIBE_METADATA_COLUMN_WIDTH
+    )
+  )
   lines.push(
     ...formatMapMultiLine(
       'Annotations',
       sanitizeDescribeAnnotations(pod.metadata.annotations),
-      'colon'
+      'colon',
+      POD_DESCRIBE_METADATA_COLUMN_WIDTH
     )
   )
   lines.push(`Status:               ${getDescribePodStatus(pod)}`)
@@ -1452,6 +1462,7 @@ export const describePod = (
     }
   }
 
+  lines.push(...formatPodConditionLines(pod))
   // Volumes section
   if (pod.spec.volumes && pod.spec.volumes.length > 0) {
     lines.push('Volumes:')
@@ -1472,7 +1483,6 @@ export const describePod = (
   } else {
     lines.push('Volumes:  <none>')
   }
-  lines.push(...formatPodConditionLines(pod))
   lines.push(`QoS Class:         ${pod.status.qosClass ?? 'BestEffort'}`)
   lines.push(`Node-Selectors:    ${formatLabels(pod.spec.nodeSelector)}`)
   const effectiveTolerations =
@@ -2231,6 +2241,28 @@ const renderServiceEndpoints = (
   service: Service,
   state: ClusterStateData
 ): string => {
+  const renderKubernetesServiceFallback = (): string | undefined => {
+    if (
+      service.metadata.name !== 'kubernetes' ||
+      service.metadata.namespace !== 'default'
+    ) {
+      return undefined
+    }
+    const controlPlaneNode = state.nodes.items.find((node) => {
+      return (
+        node.metadata.labels?.['node-role.kubernetes.io/control-plane'] != null
+      )
+    })
+    const controlPlaneIp = controlPlaneNode?.status.addresses?.find(
+      (address) => {
+        return address.type === 'InternalIP'
+      }
+    )?.address
+    if (controlPlaneIp == null) {
+      return undefined
+    }
+    return `${controlPlaneIp}:6443`
+  }
   const endpointsResource = state.endpoints.items.find((endpoints) => {
     return (
       endpoints.metadata.name === service.metadata.name &&
@@ -2238,9 +2270,21 @@ const renderServiceEndpoints = (
     )
   })
   if (endpointsResource == null) {
+    const fallback = renderKubernetesServiceFallback()
+    if (fallback != null) {
+      return fallback
+    }
     return '<none>'
   }
-  return renderEndpointsInline(endpointsResource)
+  const renderedEndpoints = renderEndpointsInline(endpointsResource)
+  if (renderedEndpoints !== '<none>') {
+    return renderedEndpoints
+  }
+  const fallback = renderKubernetesServiceFallback()
+  if (fallback != null) {
+    return fallback
+  }
+  return renderedEndpoints
 }
 
 const renderEndpointsInline = (endpoints: Endpoints): string => {

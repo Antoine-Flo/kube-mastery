@@ -98,6 +98,40 @@ const reorderConfigMapForKubectlYaml = (payload: unknown): unknown => {
   return orderedPayload
 }
 
+const reorderSecretForKubectlYaml = (payload: unknown): unknown => {
+  if (!isRecord(payload)) {
+    return payload
+  }
+  const isSecret =
+    payload.apiVersion === 'v1' &&
+    payload.kind === 'Secret' &&
+    payload.metadata != null
+  if (!isSecret) {
+    return payload
+  }
+  const orderedPayload: Record<string, unknown> = {}
+  orderedPayload.apiVersion = payload.apiVersion
+  if (payload.data != null) {
+    orderedPayload.data = payload.data
+  }
+  orderedPayload.kind = payload.kind
+  if (isRecord(payload.metadata)) {
+    orderedPayload.metadata = reorderMetadataForKubectlYaml(payload.metadata)
+  } else {
+    orderedPayload.metadata = payload.metadata
+  }
+  if (payload.type != null) {
+    orderedPayload.type = payload.type
+  }
+  for (const [key, value] of Object.entries(payload)) {
+    if (orderedPayload[key] != null) {
+      continue
+    }
+    orderedPayload[key] = value
+  }
+  return orderedPayload
+}
+
 const stripMatchingQuotes = (raw: string): string => {
   const trimmed = raw.trim()
   if (trimmed.length < 2) {
@@ -121,6 +155,13 @@ const stripMatchingQuotes = (raw: string): string => {
 
 const normalizeOutputValue = (rawValue: string): string => {
   return stripMatchingQuotes(rawValue).trim().toLowerCase()
+}
+
+const quoteCreationTimestampScalars = (yamlPayload: string): string => {
+  return yamlPayload.replace(
+    /^(\s*creationTimestamp:\s*)([0-9T:.-]+Z)$/gm,
+    '$1"$2"'
+  )
 }
 
 const parseOutputFromRawValue = (rawValue: string): OutputDirective => {
@@ -264,13 +305,14 @@ export const renderStructuredPayload = (
     return success(JSON.stringify(payload, null, KUBECTL_JSON_INDENT))
   }
   if (directive.kind === 'yaml') {
-    const normalizedYamlPayload = reorderConfigMapForKubectlYaml(payload)
-    return success(
-      yamlStringify(normalizedYamlPayload, {
-        indentSeq: false,
-        aliasDuplicateObjects: false
-      }).trimEnd()
+    const normalizedYamlPayload = reorderSecretForKubectlYaml(
+      reorderConfigMapForKubectlYaml(payload)
     )
+    const yamlOutput = yamlStringify(normalizedYamlPayload, {
+      indentSeq: false,
+      aliasDuplicateObjects: false
+    }).trimEnd()
+    return success(quoteCreationTimestampScalars(yamlOutput))
   }
   if (directive.kind === 'jsonpath') {
     return renderKubectlJsonPath(payload, directive.jsonPathExpression ?? '')

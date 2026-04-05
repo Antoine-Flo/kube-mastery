@@ -1,9 +1,13 @@
 import type { Deployment } from '../../../../../cluster/ressources/Deployment'
 import type { Pod } from '../../../../../cluster/ressources/Pod'
+import type { Secret } from '../../../../../cluster/ressources/Secret'
+import type { ConfigMap } from '../../../../../cluster/ressources/ConfigMap'
 import type { Resource } from '../../../types'
 import { RESOURCE_OUTPUT_METADATA_BY_RESOURCE } from '../../../resourceHelpers'
 import { shapeDeploymentForStructuredOutput } from '../../../output/deploymentOutputShaper'
 import { shapePodForStructuredOutput } from '../../../output/podOutputShaper'
+import { shapeConfigMapForStructuredOutput } from '../../../output/configMapOutputShaper'
+import { shapeSecretForStructuredOutput } from '../../../output/secretOutputShaper'
 import type {
   ResourceListOutput,
   ResourceOutputMetadata,
@@ -66,6 +70,16 @@ export const shapeStructuredItemsForOutput = (
   if (resourceType === 'deployments') {
     return items.map((item) => {
       return shapeDeploymentForStructuredOutput(item as Deployment)
+    })
+  }
+  if (resourceType === 'secrets') {
+    return items.map((item) => {
+      return shapeSecretForStructuredOutput(item as Secret)
+    })
+  }
+  if (resourceType === 'configmaps') {
+    return items.map((item) => {
+      return shapeConfigMapForStructuredOutput(item as ConfigMap)
     })
   }
   return items

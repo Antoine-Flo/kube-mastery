@@ -1,6 +1,7 @@
 import { readFileSync, statSync } from 'fs'
 import { basename, join } from 'path'
 import { createApiServerFacade } from '../../../src/core/api/ApiServerFacade'
+import type { ApiServerFacade } from '../../../src/core/api/ApiServerFacade'
 import { initializeControlPlane } from '../../../src/core/control-plane/initializers'
 import { CONFIG } from '../../../src/config'
 import { type ClusterNodeRole } from '../../../src/core/cluster/clusterConfig'
@@ -14,7 +15,11 @@ import { createLogger } from '../../../src/logger/Logger'
 import { createConformanceBootstrapConfig } from '../../../src/core/cluster/systemBootstrap'
 import { parseCommand } from '../../../src/core/kubectl/commands/parser'
 import { initializeSimNetworkRuntime } from '../../../src/core/network/SimNetworkRuntime'
+import type { SimNetworkRuntime } from '../../../src/core/network/SimNetworkRuntime'
 import { initializeSimPodIpAllocation } from '../../../src/core/cluster/ipAllocator/SimPodIpAllocationService'
+import { initializeSimVolumeRuntime } from '../../../src/core/volumes/SimVolumeRuntime'
+import { createShellExecutor } from '../../../src/core/shell/commands'
+import { buildContainerEnvironmentVariables } from '../../../src/core/terminal/core/handlers/containerEnvironment'
 import { listYamlFiles } from '../cluster-manager'
 import { loadClusterNodeRoles } from '../cluster-manager'
 import type {
@@ -22,6 +27,7 @@ import type {
   CommandExecutionResult,
   DeleteYamlAction
 } from '../conformance-types'
+import { error, success } from '../../../src/core/shared/result'
 
 interface ParsedManifestResource {
   kind: string
@@ -30,6 +36,10 @@ interface ParsedManifestResource {
     namespace?: string
   }
 }
+
+const SHELL_COMMAND_PREFIX = 'SHELL_COMMAND:'
+const ENTER_CONTAINER_PREFIX = 'ENTER_CONTAINER:'
+const PROCESS_COMMAND_PREFIX = 'PROCESS_COMMAND:'
 
 export interface RunnerExecutor {
   executeCommand: (command: string) => CommandExecutionResult
@@ -122,6 +132,141 @@ const executionFromOutput = (
   }
 }
 
+const parseShellCommandDirective = (
+  value: string
+):
+  | {
+      namespace: string
+      podName: string
+      containerName: string
+      command: string
+    }
+  | undefined => {
+  if (!value.startsWith(SHELL_COMMAND_PREFIX)) {
+    return undefined
+  }
+  const payload = value.slice(SHELL_COMMAND_PREFIX.length)
+  const firstSeparatorIndex = payload.indexOf(':')
+  if (firstSeparatorIndex === -1) {
+    return undefined
+  }
+  const namespace = payload.slice(0, firstSeparatorIndex)
+  const afterNamespace = payload.slice(firstSeparatorIndex + 1)
+  const secondSeparatorIndex = afterNamespace.indexOf(':')
+  if (secondSeparatorIndex === -1) {
+    return undefined
+  }
+  const podName = afterNamespace.slice(0, secondSeparatorIndex)
+  const afterPod = afterNamespace.slice(secondSeparatorIndex + 1)
+  const thirdSeparatorIndex = afterPod.indexOf(':')
+  if (thirdSeparatorIndex === -1) {
+    return undefined
+  }
+  const containerName = afterPod.slice(0, thirdSeparatorIndex)
+  const encodedCommand = afterPod.slice(thirdSeparatorIndex + 1)
+  if (
+    namespace.length === 0 ||
+    podName.length === 0 ||
+    containerName.length === 0 ||
+    encodedCommand.length === 0
+  ) {
+    return undefined
+  }
+  try {
+    return {
+      namespace,
+      podName,
+      containerName,
+      command: decodeURIComponent(encodedCommand)
+    }
+  } catch {
+    return undefined
+  }
+}
+
+const executeShellDirective = (
+  command: string,
+  directive: {
+    namespace: string
+    podName: string
+    containerName: string
+    command: string
+  },
+  apiServer: ApiServerFacade,
+  networkRuntime: SimNetworkRuntime
+): CommandExecutionResult => {
+  const podResult = apiServer.findResource(
+    'Pod',
+    directive.podName,
+    directive.namespace
+  )
+  if (!podResult.ok) {
+    return executionFromOutput(command, 1, '', podResult.error)
+  }
+  const pod = podResult.value
+  const containerEntry = pod._simulator.containers[directive.containerName]
+  if (containerEntry == null) {
+    return executionFromOutput(
+      command,
+      1,
+      '',
+      `Error: container ${directive.containerName} not found in pod ${directive.podName}`
+    )
+  }
+  const containerFileSystem = createFileSystem(
+    containerEntry.fileSystem,
+    undefined,
+    {
+      mutable: true
+    }
+  )
+  const shellExecutor = createShellExecutor(containerFileSystem, undefined, {
+    resolveNamespace: () => {
+      return directive.namespace
+    },
+    runDnsLookup: (query, namespace) => {
+      const dnsResult = networkRuntime.dnsResolver.resolveARecord(
+        query,
+        namespace
+      )
+      if (!dnsResult.ok) {
+        return error(dnsResult.error)
+      }
+      const address = dnsResult.value.addresses[0]
+      return success(
+        [
+          'Server:\t10.96.0.10',
+          'Address:\t10.96.0.10:53',
+          '',
+          `Name:\t${dnsResult.value.fqdn}`,
+          `Address:\t${address}`
+        ].join('\n')
+      )
+    },
+    runCurl: (target, namespace) => {
+      const curlResult = networkRuntime.trafficEngine.simulateHttpGet(target, {
+        sourceNamespace: namespace
+      })
+      if (!curlResult.ok) {
+        return error(curlResult.error)
+      }
+      return success(curlResult.value)
+    },
+    getEnvironmentVariables: () => {
+      return buildContainerEnvironmentVariables(
+        pod,
+        directive.containerName,
+        apiServer
+      )
+    }
+  })
+  const shellResult = shellExecutor.execute(directive.command)
+  if (!shellResult.ok) {
+    return executionFromOutput(command, 1, '', shellResult.error)
+  }
+  return executionFromOutput(command, 0, shellResult.value, '')
+}
+
 const getManifestFilenameFromCommand = (
   command: string
 ): { action: string; filename: string } | undefined => {
@@ -190,7 +335,21 @@ export const createRunnerExecutor = (
       nodeRoles
     )
   })
-  const controllers = initializeControlPlane(apiServer)
+  const volumeRuntime = initializeSimVolumeRuntime(apiServer)
+  const controllers = initializeControlPlane(apiServer, {
+    podLifecycle: {
+      volumeReadinessProbe: (pod) => {
+        const readiness = volumeRuntime.state.getPodReadiness(
+          pod.metadata.namespace,
+          pod.metadata.name
+        )
+        if (readiness != null) {
+          return readiness
+        }
+        return { ready: true }
+      }
+    }
+  })
   const networkRuntime = initializeSimNetworkRuntime(apiServer)
   initializeSimPodIpAllocation(apiServer)
   const fileSystem = createFileSystem()
@@ -237,13 +396,33 @@ export const createRunnerExecutor = (
     for (const pod of pods) {
       const podKey = `${pod.metadata.namespace}/${pod.metadata.name}`
       controllers.schedulerController.reconcile(podKey)
+    }
+  }
+
+  const reconcilePodLifecycleControllersOnce = (namespace?: string): void => {
+    const pods = listScopedPods(namespace)
+    for (const pod of pods) {
+      const podKey = `${pod.metadata.namespace}/${pod.metadata.name}`
       controllers.podLifecycleController.reconcile(podKey)
+    }
+  }
+
+  const reconcilePodTerminationControllersOnce = (namespace?: string): void => {
+    const pods = listScopedPods(namespace)
+    for (const pod of pods) {
+      const podKey = `${pod.metadata.namespace}/${pod.metadata.name}`
+      controllers.podTerminationController.reconcile(podKey)
     }
   }
 
   const reconcileForWait = (namespace?: string): void => {
     reconcileWorkloadControllersOnce(namespace)
     reconcileSchedulingControllersOnce(namespace)
+    volumeRuntime.volumeProvisioningController.resyncAll()
+    volumeRuntime.volumeBindingController.resyncAll()
+    volumeRuntime.podVolumeController.resyncAll()
+    reconcilePodLifecycleControllersOnce(namespace)
+    reconcilePodTerminationControllersOnce(namespace)
     networkRuntime.controller.resyncAll()
   }
 
@@ -286,6 +465,21 @@ export const createRunnerExecutor = (
           )
         }
         const value = result.value ?? ''
+        if (value.startsWith(ENTER_CONTAINER_PREFIX)) {
+          return executionFromOutput(command, 0, '', '')
+        }
+        if (value.startsWith(PROCESS_COMMAND_PREFIX)) {
+          return executionFromOutput(command, 0, '', '')
+        }
+        const shellDirective = parseShellCommandDirective(value)
+        if (shellDirective != null) {
+          return executeShellDirective(
+            command,
+            shellDirective,
+            apiServer,
+            networkRuntime
+          )
+        }
         if (manifestTarget?.action === 'diff') {
           const exitCode = value.trim().length === 0 ? 0 : 1
           return executionFromOutput(command, exitCode, value, '')

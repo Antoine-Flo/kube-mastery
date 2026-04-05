@@ -71,6 +71,7 @@ const DYNAMIC_POD_YAML = [
   '  name: dynamic-storage-demo',
   '  namespace: default',
   'spec:',
+  '  nodeName: worker-1',
   '  containers:',
   '    - name: app',
   '      image: busybox',

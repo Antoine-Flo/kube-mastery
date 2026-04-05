@@ -50,7 +50,11 @@ type KubectlExecutorOptions = {
 }
 
 const toGetExecutionResult = (output: string): ExecutionResult => {
-  if (output.startsWith('Error from server') || output.startsWith('error:')) {
+  if (
+    output.startsWith('Error from server') ||
+    output.startsWith('error:') ||
+    output.startsWith('Error:')
+  ) {
     return error(output)
   }
   return success(output)
@@ -134,7 +138,7 @@ const createHandlers = (
   )
   handlers.set('logs', (parsed) => handleLogs(apiServer, parsed))
   handlers.set('exec', (parsed) =>
-    success(handleExec(apiServer, parsed, networkRuntime))
+    toGetExecutionResult(handleExec(apiServer, parsed, networkRuntime))
   )
   handlers.set('label', (parsed) => handleLabel(apiServer, parsed))
   handlers.set('annotate', (parsed) => handleAnnotate(apiServer, parsed))
