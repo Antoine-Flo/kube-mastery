@@ -108,6 +108,7 @@ export function mountTerminal(
             shellContextStack: env.shellContextStack,
             apiServer: env.apiServer,
             networkRuntime: env.networkRuntime,
+            metricsProvider: env.metricsProvider,
             logger,
             commandLimit,
             commandLimitMessage,

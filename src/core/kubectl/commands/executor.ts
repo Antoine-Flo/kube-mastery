@@ -2,6 +2,10 @@ import type { ApiServerFacade } from '../../api/ApiServerFacade'
 import type { PodLifecycleDescribeEvent } from '../../api/PodLifecycleEventStore'
 import type { FileSystem } from '../../filesystem/FileSystem'
 import type { SimNetworkRuntime } from '../../network/SimNetworkRuntime'
+import {
+  createMetricsProvider,
+  type MetricsProvider
+} from '../../metrics/metricsProvider'
 import type { Logger } from '../../../logger/Logger'
 import type { EditorModal } from '../../shell/commands'
 import type { ExecutionResult } from '../../shared/result'
@@ -32,6 +36,7 @@ import { handleSetImage } from './handlers/setImage'
 import { handleReplace } from './handlers/replace'
 import { handleRun } from './handlers/run'
 import { handleRollout } from './handlers/rollout'
+import { handleTop } from './handlers/top'
 import { handleVersion } from './handlers/version'
 import { handleWait } from './handlers/wait'
 import { handleOptions } from './handlers/options'
@@ -44,6 +49,7 @@ import { runKubectlCommandHooks } from '../cli/runtime/execute'
 type ActionHandler = (parsed: ParsedCommand) => ExecutionResult
 
 type KubectlExecutorOptions = {
+  metricsProvider?: MetricsProvider
   editorModal?: EditorModal
   onAsyncOutput?: (message: string) => void
   preserveFailedEditCopy?: (content: string) => string | undefined
@@ -106,6 +112,7 @@ const createHandlers = (
   options: KubectlExecutorOptions = {}
 ): Map<string, ActionHandler> => {
   const handlers = new Map<string, ActionHandler>()
+  const metricsProvider = options.metricsProvider ?? createMetricsProvider(apiServer)
 
   // Direct handler mapping - logging is handled centrally by event system
   handlers.set('get', (parsed) =>
@@ -152,6 +159,10 @@ const createHandlers = (
   handlers.set('expose', (parsed) => handleExpose(apiServer, parsed))
   handlers.set('wait', (parsed) =>
     handleWait(apiServer, parsed, reconcileForWait)
+  )
+  handlers.set('top-pods', (parsed) => handleTop(apiServer, metricsProvider, parsed))
+  handlers.set('top-nodes', (parsed) =>
+    handleTop(apiServer, metricsProvider, parsed)
   )
   handlers.set('rollout', (parsed) =>
     handleRollout(apiServer, parsed, reconcileForWait)
@@ -207,6 +218,8 @@ export const createKubectlExecutor = (
   reconcileForWait?: (namespace?: string) => void,
   options: KubectlExecutorOptions = {}
 ) => {
+  const metricsProvider = options.metricsProvider ?? createMetricsProvider(apiServer)
+
   const execute = (input: string, fileSystem?: FileSystem): ExecutionResult => {
     logger.info('COMMAND', `Kubectl: ${input}`)
 
@@ -231,7 +244,10 @@ export const createKubectlExecutor = (
       apiServer.podLifecycleEventStore.listPodEvents,
       networkRuntime,
       reconcileForWait,
-      options
+      {
+        ...options,
+        metricsProvider
+      }
     )
     const parsedWithNamespace = applyImplicitNamespaceFromKubeconfig(
       fs,

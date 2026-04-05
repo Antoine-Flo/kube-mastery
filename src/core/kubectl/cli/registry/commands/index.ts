@@ -470,6 +470,48 @@ const rolloutCommand = command({
   )
   .build()
 
+const topPodsCommand = createLeafCommand({
+  path: ['top', 'pods'],
+  use: 'top pods [NAME]',
+  short: 'Display resource (CPU/memory) usage of pods',
+  handlerId: 'top-pods',
+  flags: [{ kind: 'string', name: 'selector', short: 'l', description: 'Selector' }]
+})
+
+const topPodCommand = createLeafCommand({
+  path: ['top', 'pod'],
+  use: 'top pod [NAME]',
+  short: 'Display resource (CPU/memory) usage of pods',
+  handlerId: 'top-pods',
+  flags: [{ kind: 'string', name: 'selector', short: 'l', description: 'Selector' }]
+})
+
+const topNodesCommand = createLeafCommand({
+  path: ['top', 'nodes'],
+  use: 'top nodes [NAME]',
+  short: 'Display resource (CPU/memory) usage of nodes',
+  handlerId: 'top-nodes',
+  flags: [{ kind: 'string', name: 'selector', short: 'l', description: 'Selector' }]
+})
+
+const topNodeCommand = createLeafCommand({
+  path: ['top', 'node'],
+  use: 'top node [NAME]',
+  short: 'Display resource (CPU/memory) usage of nodes',
+  handlerId: 'top-nodes',
+  flags: [{ kind: 'string', name: 'selector', short: 'l', description: 'Selector' }]
+})
+
+const topCommand = command({
+  path: ['top'],
+  use: 'top',
+  description: {
+    short: 'Display resource (CPU/memory) usage'
+  }
+})
+  .addCommand(topPodsCommand, topPodCommand, topNodesCommand, topNodeCommand)
+  .build()
+
 const configGetContextsCommand = createLeafCommand({
   path: ['config', 'get-contexts'],
   use: 'config get-contexts',
@@ -547,5 +589,6 @@ export const KUBECTL_COMMAND_SPECS: readonly KubectlCommandSpec[] = [
   runCommand,
   setCommand,
   rolloutCommand,
+  topCommand,
   configCommand
 ]

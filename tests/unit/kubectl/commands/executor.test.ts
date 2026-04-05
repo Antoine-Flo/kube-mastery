@@ -126,6 +126,30 @@ describe('kubectl Executor', () => {
         }
       })
 
+      it('should route "kubectl top pods" to top handler', () => {
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const result = executor.execute('kubectl top pods -A')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+        expect(result.value).toContain('NAMESPACE')
+        expect(result.value).toContain('nginx-pod')
+      })
+
+      it('should route "kubectl top nodes" to top handler', () => {
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const result = executor.execute('kubectl top nodes')
+
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+        expect(result.value).toContain('sim-worker')
+        expect(result.value).toContain('CPU')
+      })
+
       it('should route "kubectl describe pod -l app=probed" to selector describe flow', () => {
         apiServer.createResource(
           'Pod',

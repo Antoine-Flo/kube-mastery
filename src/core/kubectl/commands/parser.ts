@@ -54,6 +54,7 @@ const VALID_ACTIONS: Action[] = [
   'run',
   'expose',
   'wait',
+  'top',
   'rollout',
   'options',
   'config'
@@ -140,6 +141,8 @@ const ACTIONS_WITHOUT_RESOURCE: Action[] = [
   'diff',
   'replace',
   'set',
+  'top-pods',
+  'top-nodes',
   'config-get-contexts',
   'config-current-context',
   'config-view',
@@ -1044,6 +1047,13 @@ const validateCommandSemantics = (
       if (normalizedWatch !== 'true' && normalizedWatch !== 'false') {
         return 'error: --watch must be either true or false'
       }
+    }
+  }
+
+  if (action === 'top-pods' || action === 'top-nodes') {
+    const outputValue = flags['output']
+    if (outputValue !== undefined) {
+      return 'error: --output is not supported by top'
     }
   }
 

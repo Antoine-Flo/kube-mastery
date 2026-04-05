@@ -1184,6 +1184,7 @@ export class KubectlCommandHandler implements CommandHandler {
       context.networkRuntime,
       undefined,
       {
+        metricsProvider: context.metricsProvider,
         editorModal: context.editorModal,
         onAsyncOutput: (message: string) => {
           if (message.length === 0) {

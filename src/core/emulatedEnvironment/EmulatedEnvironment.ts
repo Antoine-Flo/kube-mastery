@@ -8,6 +8,7 @@ import type { ApiServerFacade } from '../api/ApiServerFacade'
 import type { ControlPlaneRuntime } from '../control-plane/ControllerManager'
 import type { FileSystemState } from '../filesystem/FileSystem'
 import type { SimNetworkRuntime } from '../network/SimNetworkRuntime'
+import type { MetricsProvider } from '../metrics/metricsProvider'
 import type { SimVolumeRuntime } from '../volumes/SimVolumeRuntime'
 import { ShellContextStack } from '../terminal/core/ShellContext'
 
@@ -40,6 +41,9 @@ export interface EmulatedEnvironment {
 
   /** Simulated network runtime */
   networkRuntime: SimNetworkRuntime
+
+  /** Simulated metrics provider used by kubectl top */
+  metricsProvider: MetricsProvider
 
   /** Simulated volumes runtime */
   volumeRuntime?: SimVolumeRuntime

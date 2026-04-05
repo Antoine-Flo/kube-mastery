@@ -1637,4 +1637,54 @@ describe('kubectl parser - unknown flags', () => {
       expect(result.error).toContain('error: invalid subcommand for rollout')
     }
   })
+
+  it('should parse top pods with namespace and selector', () => {
+    const result = parseCommand('kubectl top pods -n kube-system -l k8s-app=kube-dns')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value.action).toBe('top-pods')
+    expect(result.value.namespace).toBe('kube-system')
+    expect(result.value.selector).toEqual({
+      requirements: [
+        {
+          key: 'k8s-app',
+          operator: 'Equals',
+          values: ['kube-dns']
+        }
+      ]
+    })
+  })
+
+  it('should parse top pod alias with explicit name', () => {
+    const result = parseCommand('kubectl top pod dns-abc')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value.action).toBe('top-pods')
+    expect(result.value.name).toBe('dns-abc')
+  })
+
+  it('should parse top nodes command', () => {
+    const result = parseCommand('kubectl top nodes')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value.action).toBe('top-nodes')
+  })
+
+  it('should reject invalid top subcommand', () => {
+    const result = parseCommand('kubectl top services')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('error: invalid subcommand for top')
+    }
+  })
 })

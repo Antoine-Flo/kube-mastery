@@ -23,6 +23,7 @@ import {
 } from '../filesystem/FileSystem'
 import { createHostFileSystem } from '../filesystem/debianFileSystem'
 import { initializeSimNetworkRuntime } from '../network/SimNetworkRuntime'
+import { createMetricsProvider } from '../metrics/metricsProvider'
 import { initializeSimVolumeRuntime } from '../volumes/SimVolumeRuntime'
 import { saveSandboxEnvironment } from '../storage/indexedDBAdapter'
 import { ShellContextStack } from '../terminal/core/ShellContext'
@@ -116,6 +117,7 @@ export function createEmulatedEnvironment(
   const shellContextStack = new ShellContextStack(fileSystemState)
   const volumeRuntime = initializeSimVolumeRuntime(apiServer)
   const networkRuntime = initializeSimNetworkRuntime(apiServer)
+  const metricsProvider = createMetricsProvider(apiServer)
 
   const resyncConfig = CONFIG.runtime.simRuntimeResyncIntervalMs
   controlPlaneRuntime = startControlPlaneRuntime(apiServer, {
@@ -183,6 +185,7 @@ export function createEmulatedEnvironment(
     unsubscribePodIpAllocation,
     controlPlaneRuntime,
     networkRuntime,
+    metricsProvider,
     volumeRuntime
   }
 }

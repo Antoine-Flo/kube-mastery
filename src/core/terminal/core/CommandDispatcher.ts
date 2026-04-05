@@ -7,6 +7,8 @@
 import type { ApiServerFacade } from '../../api/ApiServerFacade'
 import type { FileSystem } from '../../../core/filesystem/FileSystem'
 import type { SimNetworkRuntime } from '../../../core/network/SimNetworkRuntime'
+import type { MetricsProvider } from '../../../core/metrics/metricsProvider'
+import { createMetricsProvider } from '../../../core/metrics/metricsProvider'
 import type { Logger } from '../../../logger/Logger'
 import type { ExecutionResult } from '../../shared/result'
 import { error } from '../../shared/result'
@@ -26,6 +28,7 @@ interface CommandDispatcherOptions {
   shellContextStack: ShellContextStack
   apiServer: ApiServerFacade
   networkRuntime: SimNetworkRuntime
+  metricsProvider?: MetricsProvider
   logger: Logger
   commandLimit?: number
   commandLimitMessage?: string
@@ -54,6 +57,8 @@ export class CommandDispatcher {
       shellContextStack: options.shellContextStack,
       apiServer: options.apiServer,
       networkRuntime: options.networkRuntime,
+      metricsProvider:
+        options.metricsProvider ?? createMetricsProvider(options.apiServer),
       logger: options.logger,
       lockInput: options.lockInput,
       unlockInput: options.unlockInput,

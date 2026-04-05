@@ -170,6 +170,86 @@ const normalizeCoreDnsPodsTableForParity = (value: string): string => {
   return normalizedRows.sort().join('\n')
 }
 
+const normalizeTopPodNameForParity = (value: string): string | null => {
+  if (value.startsWith('metrics-server-')) {
+    return null
+  }
+  const statefulPrefixes = [
+    'coredns-',
+    'kindnet-',
+    'kube-proxy-',
+    'local-path-provisioner-'
+  ]
+  for (const prefix of statefulPrefixes) {
+    if (value.startsWith(prefix)) {
+      return `${prefix}<pod>`
+    }
+  }
+  return value
+}
+
+const normalizeTopTableForParity = (command: string, value: string): string => {
+  const lines = value.split('\n').filter((line) => line.trim().length > 0)
+  if (lines.length === 0) {
+    return value
+  }
+  const isNodesTop = command.trim() === 'kubectl top nodes'
+  const isPodsTop = command.trim().startsWith('kubectl top pods')
+  if (!isNodesTop && !isPodsTop) {
+    return value
+  }
+
+  const normalizedRows: string[] = []
+  for (const line of lines.slice(1)) {
+    const columns = line.split(/\s{2,}/).filter((column) => column.length > 0)
+    if (isNodesTop) {
+      if (columns.length < 5) {
+        continue
+      }
+      const name = columns[0]
+      normalizedRows.push([name, '<cpu>', '<cpuPercent>', '<mem>', '<memPercent>'].join('|'))
+      continue
+    }
+
+    if (columns.length < 3) {
+      continue
+    }
+    if (columns.length >= 4) {
+      const namespace = columns[0]
+      const podName = normalizeTopPodNameForParity(columns[1])
+      if (podName == null) {
+        continue
+      }
+      normalizedRows.push([namespace, podName, '<cpu>', '<mem>'].join('|'))
+      continue
+    }
+    const podName = normalizeTopPodNameForParity(columns[0])
+    if (podName == null) {
+      continue
+    }
+    normalizedRows.push([podName, '<cpu>', '<mem>'].join('|'))
+  }
+
+  return normalizedRows.sort().join('\n')
+}
+
+const normalizeTopNoResourcesMessageForParity = (
+  command: string,
+  value: string
+): string => {
+  if (!command.trim().startsWith('kubectl top ')) {
+    return value
+  }
+  const trimmed = value.trim()
+  if (
+    trimmed === 'No resources found' ||
+    /^No resources found in .+ namespace\.$/.test(trimmed)
+  ) {
+    return ''
+  }
+  return value
+}
+
 const normalizeCommandStdoutForParity = (
   command: string,
   stdout: string
@@ -189,6 +269,12 @@ const normalizeCommandStdoutForParity = (
   ) {
     return normalizeCoreDnsConfigMapForParity(normalizeConfigMapYaml(stdout))
   }
+  if (command.trim().startsWith('kubectl top ')) {
+    return normalizeTopNoResourcesMessageForParity(
+      command,
+      normalizeTopTableForParity(command, stdout)
+    )
+  }
   return stdout
 }
 
@@ -196,6 +282,9 @@ const normalizeCommandStderrForParity = (
   command: string,
   stderr: string
 ): string => {
+  if (command.trim().startsWith('kubectl top ')) {
+    return normalizeTopNoResourcesMessageForParity(command, stderr)
+  }
   const isAttachedRunCommand =
     command.includes('kubectl run ') &&
     command.includes('--rm') &&

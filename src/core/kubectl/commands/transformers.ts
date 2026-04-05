@@ -49,6 +49,7 @@ export type ParseContext = {
   setImageAssignments?: Record<string, string>
   configSubcommand?: 'get-contexts' | 'current-context' | 'view' | 'set-context'
   rolloutSubcommand?: 'status' | 'history' | 'restart' | 'undo'
+  topSubcommand?: 'pods' | 'nodes'
   rolloutRevision?: number
   rolloutTimeoutSeconds?: number
   rolloutWatch?: boolean
@@ -1242,6 +1243,34 @@ const rolloutTransformer: ActionTransformer = (ctx) => {
   })
 }
 
+const topTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens) {
+    return success(ctx)
+  }
+
+  const subcommandToken = ctx.tokens[2]
+  if (subcommandToken == null) {
+    return error('error: top requires one of: pods, pod, nodes, node')
+  }
+
+  const isPodsSubcommand = subcommandToken === 'pods' || subcommandToken === 'pod'
+  const isNodesSubcommand =
+    subcommandToken === 'nodes' || subcommandToken === 'node'
+  if (!isPodsSubcommand && !isNodesSubcommand) {
+    return error(`error: invalid subcommand for top: ${subcommandToken}`)
+  }
+
+  const positionalTokens = extractPositionalTokensFromIndex(ctx.tokens, 3)
+  const name = positionalTokens[0]
+
+  return success({
+    ...ctx,
+    action: isPodsSubcommand ? 'top-pods' : 'top-nodes',
+    topSubcommand: isPodsSubcommand ? 'pods' : 'nodes',
+    name
+  })
+}
+
 /**
  * Default transformer: no-op, returns context as-is
  */
@@ -1273,6 +1302,7 @@ const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
   patch: patchTransformer,
   wait: waitTransformer,
   rollout: rolloutTransformer,
+  top: topTransformer,
   config: configTransformer
 }
 

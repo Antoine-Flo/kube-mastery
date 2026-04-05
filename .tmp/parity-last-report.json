@@ -1,119 +1,42 @@
 {
-  "sessionId": "sim_8f53726c-fd64-4a6c-a1eb-8fb6aaf20cf4",
+  "sessionId": "sim_de602f7c-e472-475e-8ab6-c0375dbd2d58",
   "contextName": "kind-conformance",
-  "totalCommands": 10,
-  "matchedCommands": 8,
-  "mismatchedCommands": 2,
+  "totalCommands": 3,
+  "matchedCommands": 3,
+  "mismatchedCommands": 0,
   "rows": [
     {
-      "command": "kubectl apply -f web-deployment.yaml",
+      "command": "kubectl top nodes",
       "simulationExitCode": 0,
       "kindExitCode": 0,
       "outputMatches": true,
       "note": "match",
-      "simulationStdout": "deployment.apps/web-app created",
+      "simulationStdout": "NAME                        CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)\nconformance-control-plane   112m         0%       1020Mi          2%\nconformance-worker          32m          0%       244Mi           0%\nconformance-worker2         35m          0%       250Mi           0%",
       "simulationStderr": "",
-      "kindStdout": "deployment.apps/web-app created",
+      "kindStdout": "NAME                        CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   \nconformance-control-plane   87m          0%       1081Mi          2%          \nconformance-worker          28m          0%       288Mi           0%          \nconformance-worker2         19m          0%       250Mi           0%",
       "kindStderr": ""
     },
     {
-      "command": "kubectl rollout status deployment/web-app",
+      "command": "kubectl top pods -A",
       "simulationExitCode": 0,
       "kindExitCode": 0,
       "outputMatches": true,
       "note": "match",
-      "simulationStdout": "Waiting for deployment \"web-app\" rollout to finish: 0 of 2 updated replicas are available...\nWaiting for deployment \"web-app\" rollout to finish: 1 of 2 updated replicas are available...\ndeployment \"web-app\" successfully rolled out",
+      "simulationStdout": "NAMESPACE            NAME                                                CPU(cores)   MEMORY(bytes)\nkube-system          coredns-006512c628-7pnw9                            2m           28Mi\nkube-system          coredns-006512c628-lsufe                            2m           43Mi\nkube-system          etcd-conformance-control-plane                      14m          84Mi\nkube-system          kindnet-kf54p                                       5m           28Mi\nkube-system          kindnet-ywyaf                                       7m           30Mi\nkube-system          kindnet-z14lj                                       10m          26Mi\nkube-system          kube-apiserver-conformance-control-plane            26m          340Mi\nkube-system          kube-controller-manager-conformance-control-plane   14m          140Mi\nkube-system          kube-proxy-33oni                                    2m           66Mi\nkube-system          kube-proxy-clqr1                                    3m           70Mi\nkube-system          kube-proxy-p86pa                                    2m           63Mi\nkube-system          kube-scheduler-conformance-control-plane            9m           68Mi\nlocal-path-storage   local-path-provisioner-005c794ab2-xr68i             3m           8Mi",
       "simulationStderr": "",
-      "kindStdout": "Waiting for deployment \"web-app\" rollout to finish: 0 of 2 updated replicas are available...\nWaiting for deployment \"web-app\" rollout to finish: 1 of 2 updated replicas are available...\ndeployment \"web-app\" successfully rolled out",
+      "kindStdout": "NAMESPACE            NAME                                                CPU(cores)   MEMORY(bytes)   \nkube-system          coredns-7d764666f9-8b9zm                            2m           67Mi            \nkube-system          coredns-7d764666f9-c2dz6                            2m           30Mi            \nkube-system          etcd-conformance-control-plane                      16m          86Mi            \nkube-system          kindnet-bnr5w                                       8m           28Mi            \nkube-system          kindnet-j9n9n                                       2m           32Mi            \nkube-system          kindnet-r2jvn                                       7m           22Mi            \nkube-system          kube-apiserver-conformance-control-plane            22m          304Mi           \nkube-system          kube-controller-manager-conformance-control-plane   9m           121Mi           \nkube-system          kube-proxy-692kl                                    1m           59Mi            \nkube-system          kube-proxy-8xj98                                    1m           59Mi            \nkube-system          kube-proxy-kl9s9                                    1m           60Mi            \nkube-system          kube-scheduler-conformance-control-plane            5m           70Mi            \nkube-system          metrics-server-5f54fb74d9-r9kwh                     2m           22Mi            \nlocal-path-storage   local-path-provisioner-67b8995b4b-wpgm6             1m           9Mi",
       "kindStderr": ""
     },
     {
-      "command": "kubectl scale deployment web-app --replicas=4",
+      "command": "kubectl top pods -n default",
       "simulationExitCode": 0,
       "kindExitCode": 0,
       "outputMatches": true,
       "note": "match",
-      "simulationStdout": "deployment.apps/web-app scaled",
+      "simulationStdout": "No resources found in default namespace.",
       "simulationStderr": "",
-      "kindStdout": "deployment.apps/web-app scaled",
-      "kindStderr": ""
-    },
-    {
-      "command": "kubectl set image deployment/web-app web=nginx:1.26",
-      "simulationExitCode": 0,
-      "kindExitCode": 0,
-      "outputMatches": true,
-      "note": "match",
-      "simulationStdout": "deployment.apps/web-app image updated",
-      "simulationStderr": "",
-      "kindStdout": "deployment.apps/web-app image updated",
-      "kindStderr": ""
-    },
-    {
-      "command": "kubectl rollout status deployment/web-app",
-      "simulationExitCode": 0,
-      "kindExitCode": 0,
-      "outputMatches": false,
-      "note": "diff(exit:ok,stdout:ko,stderr:ok)",
-      "simulationStdout": "Waiting for deployment \"web-app\" rollout to finish: 0 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 1 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 of 4 updated replicas are available...\nWaiting for deployment \"web-app\" rollout to finish: 3 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 of 4 updated replicas are available...\ndeployment \"web-app\" successfully rolled out",
-      "simulationStderr": "",
-      "kindStdout": "Waiting for deployment \"web-app\" rollout to finish: 2 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 2 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 2 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 2 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 1 old replicas are pending termination...\nWaiting for deployment \"web-app\" rollout to finish: 1 old replicas are pending termination...\nWaiting for deployment \"web-app\" rollout to finish: 1 old replicas are pending termination...\nWaiting for deployment \"web-app\" rollout to finish: 1 old replicas are pending termination...\nWaiting for deployment \"web-app\" rollout to finish: 1 old replicas are pending termination...\nWaiting for deployment \"web-app\" rollout to finish: 3 of 4 updated replicas are available...\nWaiting for deployment \"web-app\" rollout to finish: 3 of 4 updated replicas are available...\ndeployment \"web-app\" successfully rolled out",
-      "kindStderr": ""
-    },
-    {
-      "command": "kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.spec.containers[0].image}{\" \"}{end}'",
-      "simulationExitCode": 0,
-      "kindExitCode": 0,
-      "outputMatches": true,
-      "note": "match",
-      "simulationStdout": "nginx:1.26 nginx:1.26 nginx:1.26 nginx:1.26 ",
-      "simulationStderr": "",
-      "kindStdout": "nginx:1.26 nginx:1.26 nginx:1.26 nginx:1.26",
-      "kindStderr": ""
-    },
-    {
-      "command": "kubectl rollout undo deployment/web-app",
-      "simulationExitCode": 0,
-      "kindExitCode": 0,
-      "outputMatches": true,
-      "note": "match",
-      "simulationStdout": "deployment.apps/web-app rolled back",
-      "simulationStderr": "",
-      "kindStdout": "deployment.apps/web-app rolled back",
-      "kindStderr": ""
-    },
-    {
-      "command": "kubectl rollout status deployment/web-app",
-      "simulationExitCode": 0,
-      "kindExitCode": 0,
-      "outputMatches": false,
-      "note": "diff(exit:ok,stdout:ko,stderr:ok)",
-      "simulationStdout": "Waiting for deployment \"web-app\" rollout to finish: 0 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 1 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 of 4 updated replicas are available...\nWaiting for deployment \"web-app\" rollout to finish: 3 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 of 4 updated replicas are available...\ndeployment \"web-app\" successfully rolled out",
-      "simulationStderr": "",
-      "kindStdout": "Waiting for deployment \"web-app\" rollout to finish: 2 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 2 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 2 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 2 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 3 out of 4 new replicas have been updated...\nWaiting for deployment \"web-app\" rollout to finish: 1 old replicas are pending termination...\nWaiting for deployment \"web-app\" rollout to finish: 1 old replicas are pending termination...\nWaiting for deployment \"web-app\" rollout to finish: 1 old replicas are pending termination...\nWaiting for deployment \"web-app\" rollout to finish: 1 old replicas are pending termination...\nWaiting for deployment \"web-app\" rollout to finish: 3 of 4 updated replicas are available...\nWaiting for deployment \"web-app\" rollout to finish: 3 of 4 updated replicas are available...\ndeployment \"web-app\" successfully rolled out",
-      "kindStderr": ""
-    },
-    {
-      "command": "kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.spec.containers[0].image}{\" \"}{end}'",
-      "simulationExitCode": 0,
-      "kindExitCode": 0,
-      "outputMatches": true,
-      "note": "match",
-      "simulationStdout": "nginx:1.28 nginx:1.28 nginx:1.28 nginx:1.28 ",
-      "simulationStderr": "",
-      "kindStdout": "nginx:1.28 nginx:1.28 nginx:1.28 nginx:1.28",
-      "kindStderr": ""
-    },
-    {
-      "command": "kubectl delete deployment web-app",
-      "simulationExitCode": 0,
-      "kindExitCode": 0,
-      "outputMatches": true,
-      "note": "match",
-      "simulationStdout": "deployment.apps \"web-app\" deleted from default namespace",
-      "simulationStderr": "",
-      "kindStdout": "deployment.apps \"web-app\" deleted from default namespace",
-      "kindStderr": ""
+      "kindStdout": "",
+      "kindStderr": "No resources found in default namespace."
     }
   ]
 }

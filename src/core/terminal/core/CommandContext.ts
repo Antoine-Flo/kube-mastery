@@ -7,6 +7,7 @@
 import type { ApiServerFacade } from '~/core/api/ApiServerFacade'
 import type { FileSystem } from '../../../core/filesystem/FileSystem'
 import type { SimNetworkRuntime } from '../../../core/network/SimNetworkRuntime'
+import type { MetricsProvider } from '../../../core/metrics/metricsProvider'
 import type { Logger } from '../../../logger/Logger'
 import type { EditorModal } from '../../shell/commands'
 import type { TerminalRenderer } from '../renderer/TerminalRenderer'
@@ -38,6 +39,9 @@ export interface CommandContext {
 
   /** Simulated network runtime (DNS, service routing, traffic) */
   networkRuntime: SimNetworkRuntime
+
+  /** Simulated metrics provider for kubectl top */
+  metricsProvider?: MetricsProvider
 
   /** Logger pour le suivi des commandes */
   logger: Logger
