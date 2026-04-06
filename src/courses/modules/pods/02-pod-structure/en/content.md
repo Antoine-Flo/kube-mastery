@@ -84,7 +84,10 @@ containers:
   - name: debug
     image: busybox:1.36
     command: ['sh', '-c']
-    args: ['echo started && sleep 3600']
+    args:
+      - |
+        echo started
+        sleep 3600
 ```
 
 `command` replaces the entrypoint, `args` replaces the default command. This is especially useful for debug pods or utility containers where you need a specific behavior from a generic image without rebuilding it.
@@ -181,7 +184,13 @@ spec:
   initContainers:
     - name: wait-for-db
       image: busybox:1.36
-      command: ['sh', '-c', 'until nc -z db-service 5432; do sleep 2; done']
+      command: ['sh', '-c']
+      args:
+        - |
+          until nc -z db-service 5432
+          do
+            sleep 2
+          done
   containers:
     - name: app
       image: myapp:1.0

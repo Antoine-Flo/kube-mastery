@@ -4,6 +4,7 @@ export const KUBECTL_RESOURCES = {
   pods: ['pods', 'pod', 'po'],
   deployments: ['deployments', 'deployment', 'deploy'],
   services: ['services', 'service', 'svc'],
+  events: ['events', 'event', 'ev'],
   endpoints: ['endpoints', 'endpoint', 'ep'],
   endpointslices: ['endpointslices', 'endpointslice'],
   namespaces: ['namespaces', 'namespace', 'ns'],

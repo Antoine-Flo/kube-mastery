@@ -79,15 +79,11 @@ To see the UID of any object:
 kubectl get pod mypod -o jsonpath='{.metadata.uid}'
 ```
 
-Or in the full YAML output:
+You can also open the full YAML and locate `uid` under `metadata` if you prefer to browse the object:
 
 ```bash
-kubectl get pod mypod -o yaml | grep uid
+kubectl get pod mypod -o yaml
 ```
-
-:::warning
-The pipe and grep are not yet supported in the terminal.
-:::
 
 ## How Names Feed Into DNS
 

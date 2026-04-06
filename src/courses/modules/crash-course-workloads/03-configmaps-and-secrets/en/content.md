@@ -31,9 +31,7 @@ data:
 You can also create ConfigMaps imperatively when the values are simple:
 
 ```bash
-kubectl create configmap app-config \
-  --from-literal=LOG_LEVEL=info \
-  --from-literal=MAX_CONNECTIONS=100
+kubectl create configmap app-config --from-literal=LOG_LEVEL=info --from-literal=MAX_CONNECTIONS=100
 ```
 
 ## Secrets
@@ -57,9 +55,7 @@ The encoding is just encoding, not encryption. Anyone who can read the Secret ob
 Creating Secrets imperatively is usually easier, since it handles the encoding automatically:
 
 ```bash
-kubectl create secret generic app-secret \
-  --from-literal=DB_PASSWORD=password123 \
-  --from-literal=API_KEY=my-api-key
+kubectl create secret generic app-secret --from-literal=DB_PASSWORD=password123 --from-literal=API_KEY=my-api-key
 ```
 
 :::warning

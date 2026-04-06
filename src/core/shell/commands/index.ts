@@ -11,7 +11,9 @@ import type { ShellCommandHandler } from './core/ShellCommandHandler'
 import { parseShellCommand } from './core/ShellCommandParser'
 import type { ExecutionResult } from '../../shared/result'
 import type { Result } from '../../shared/result'
-import type { ParsedShellCommand, ShellCommand } from './core/types'
+import type { ParsedShellCommand } from './core/types'
+import { createFileSystem } from '../../filesystem/FileSystem'
+import { createHostFileSystem } from '../../filesystem/debianFileSystem'
 
 // Handlers
 import { createNanoHandler } from './handlers/editor/nano'
@@ -33,7 +35,8 @@ import { createSleepHandler } from './handlers/system/sleep'
 
 // Types
 export { parseShellCommand }
-export type { ParsedShellCommand, ShellCommand, ShellCommandHandler }
+export { executeSequentialShellScript } from './shellScriptRunner'
+export type { ParsedShellCommand, ShellCommandHandler }
 
 // Re-export FileSystem from canonical source
 import type { FileSystem } from '../../filesystem/FileSystem'
@@ -56,10 +59,28 @@ export interface ShellRuntimeOptions {
   onExit?: () => ExecutionResult
 }
 
+let cachedRegistryCommandNames: readonly string[] | undefined
+
 /**
- * Create all shell command handlers
+ * Sorted command names registered by `buildShellHandlersMap` (for parser / routing).
  */
-const createHandlers = (
+export const getShellRegistryCommandNames = (): readonly string[] => {
+  if (cachedRegistryCommandNames == null) {
+    const fileSystem = createFileSystem(createHostFileSystem())
+    const handlers = buildShellHandlersMap(fileSystem)
+    cachedRegistryCommandNames = Object.freeze(
+      [...handlers.keys()].sort((a, b) => {
+        return a.localeCompare(b)
+      })
+    )
+  }
+  return cachedRegistryCommandNames
+}
+
+/**
+ * Create all shell command handlers (single registry for host and container).
+ */
+export const buildShellHandlersMap = (
   fileSystem: FileSystem,
   editorModal?: EditorModal,
   runtimeOptions: ShellRuntimeOptions = {}
@@ -123,6 +144,6 @@ export const createShellExecutor = (
   editorModal?: EditorModal,
   runtimeOptions: ShellRuntimeOptions = {}
 ): ShellCommandExecutor => {
-  const handlers = createHandlers(fileSystem, editorModal, runtimeOptions)
+  const handlers = buildShellHandlersMap(fileSystem, editorModal, runtimeOptions)
   return createShellCommandExecutor(handlers)
 }

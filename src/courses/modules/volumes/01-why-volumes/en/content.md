@@ -108,10 +108,14 @@ Each of the next three lessons covers one of these types in detail with complete
 
 Before diving into specific volume types, let's confirm that data is indeed lost on container restart. Use the terminal on the right panel.
 
-**1. Create a Pod and write a file to its container's local filesystem:**
+**1. Create a Pod that stays running, then write a file inside it:**
 
 ```bash
-kubectl run ephemeral-test --image=busybox:1.36 -- sh -c "echo 'I will not survive' > /tmp/message.txt && sleep 3600"
+kubectl run ephemeral-test --image=busybox:1.36 -- sleep 3600
+```
+
+```bash
+kubectl exec ephemeral-test -- sh -c "echo 'I will not survive' > /tmp/message.txt"
 ```
 
 **2. Wait for the Pod to be running, then read the file:**
@@ -148,7 +152,7 @@ The file is gone. The container restarted with a completely fresh filesystem, th
 **6. Check the Pod description to confirm it restarted:**
 
 ```bash
-kubectl describe pod ephemeral-test | grep -A 5 "Containers:"
+kubectl describe pod ephemeral-test
 ```
 
 Look for the `Restart Count` field, it should show 1.

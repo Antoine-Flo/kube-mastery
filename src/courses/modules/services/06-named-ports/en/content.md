@@ -243,8 +243,7 @@ kubectl apply -f web-named-svc-service.yaml
 **3. Verify the Service works**
 
 ```bash
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- \
-  curl -s http://web-named-svc
+kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- curl -s http://web-named-svc
 ```
 
 **4. Inspect the resolved port in the Endpoints**
@@ -285,8 +284,7 @@ kubectl patch deployment web-named --type='json' -p='[
 ]'
 kubectl rollout status deployment/web-named
 
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- \
-  curl -s http://web-named-svc
+kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- curl -s http://web-named-svc
 # Back to working
 ```
 

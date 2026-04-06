@@ -135,12 +135,10 @@ spec:
         - /bin/sh
         - -c
         - |
-          i=1
-          while true; do
-            echo "Log line $i at $(date)"
-            i=$((i+1))
-            sleep 2
-          done
+          echo "Log line 1"
+          echo "Log line 2"
+          echo "Log line 3"
+          sleep 3600
 ```
 
 ```bash
@@ -159,12 +157,12 @@ kubectl wait --for=condition=Ready pod/logger-pod --timeout=30s
 kubectl logs logger-pod
 ```
 
-Expected output (will vary):
+Expected output:
 
 ```
-Log line 1 at Mon Jan 15 14:00:00 UTC 2024
-Log line 2 at Mon Jan 15 14:00:02 UTC 2024
-Log line 3 at Mon Jan 15 14:00:04 UTC 2024
+Log line 1
+Log line 2
+Log line 3
 ```
 
 **Step 3: Follow logs in real time**
@@ -173,7 +171,7 @@ Log line 3 at Mon Jan 15 14:00:04 UTC 2024
 kubectl logs -f logger-pod
 ```
 
-You'll see new lines appearing every 2 seconds. Press `Ctrl+C` to stop.
+This Pod only wrote those three lines at startup, so you may not see new output until you stop. Press `Ctrl+C` to exit. On a workload that keeps printing to stdout, new lines would appear here as they are produced.
 
 **Step 4: Show only the last 3 lines**
 
@@ -201,7 +199,11 @@ spec:
   containers:
     - name: crasher
       image: busybox
-      command: ['/bin/sh', '-c', "echo 'About to crash'; exit 1"]
+      command: ['/bin/sh', '-c']
+      args:
+        - |
+          echo 'About to crash'
+          exit 1
 ```
 
 ```bash

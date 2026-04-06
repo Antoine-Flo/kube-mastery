@@ -657,6 +657,18 @@ describe('kubectl parser - describe', () => {
     expect(result.value.name).toBe('web-app')
   })
 
+  it('should parse describe events without name', () => {
+    const result = parseCommand('kubectl describe events')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('events')
+    expect(result.value.name).toBeUndefined()
+  })
+
   it('should parse describe command with label selector and no name', () => {
     const result = parseCommand('kubectl describe pod -l app=probed')
 
@@ -1231,6 +1243,32 @@ describe('kubectl parser - get all', () => {
 
     expect(result.value.action).toBe('get')
     expect(result.value.resource).toBe('all')
+  })
+})
+
+describe('kubectl parser - get events', () => {
+  it('should parse get events command', () => {
+    const result = parseCommand('kubectl get events')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.action).toBe('get')
+    expect(result.value.resource).toBe('events')
+  })
+
+  it('should parse get event alias and all namespaces', () => {
+    const result = parseCommand('kubectl get ev -A')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('events')
+    expect(result.value.flags.A).toBe(true)
   })
 })
 

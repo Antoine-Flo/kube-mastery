@@ -45,7 +45,11 @@ spec:
   containers:
     - name: log-reader
       image: busybox:1.36
-      command: ['sh', '-c', 'ls /host-logs && sleep 3600']
+      command: ['sh', '-c']
+      args:
+        - |
+          ls /host-logs
+          sleep 3600
       volumeMounts:
         - name: node-logs
           mountPath: /host-logs
@@ -154,7 +158,11 @@ spec:
   containers:
     - name: log-browser
       image: busybox:1.36
-      command: ['sh', '-c', 'ls /node-logs && sleep 3600']
+      command: ['sh', '-c']
+      args:
+        - |
+          ls /node-logs
+          sleep 3600
       volumeMounts:
         - name: host-logs
           mountPath: /node-logs
@@ -177,7 +185,7 @@ You should see the real contents of the node's `/var/log` directory.
 **3. Read a system log file directly from the container:**
 
 ```bash
-kubectl exec hostpath-demo -- ls /node-logs/pods/ 2>/dev/null
+kubectl exec hostpath-demo -- ls /node-logs/pods/
 ```
 
 These are the actual log directories that kubelet writes for each Pod running on this node, real host data, visible inside your container.
@@ -207,8 +215,11 @@ spec:
   containers:
     - name: writer
       image: busybox:1.36
-      command:
-        ['sh', '-c', "echo 'Node-level data' > /custom/data.txt && sleep 3600"]
+      command: ['sh', '-c']
+      args:
+        - |
+          echo 'Node-level data' > /custom/data.txt
+          sleep 3600
       volumeMounts:
         - name: custom-dir
           mountPath: /custom
@@ -227,9 +238,11 @@ kubectl exec hostpath-writer -- cat /custom/data.txt
 **7. Inspect the volume details in the Pod spec:**
 
 ```bash
-kubectl describe pod hostpath-demo | grep -A 10 "Volumes:"
-kubectl describe pod hostpath-writer | grep -A 10 "Volumes:"
+kubectl describe pod hostpath-demo
+kubectl describe pod hostpath-writer
 ```
+
+In each output, find the **Volumes** section (and the following **Mounts** lines) to see how `hostPath` is wired into the container.
 
 **8. Clean up:**
 

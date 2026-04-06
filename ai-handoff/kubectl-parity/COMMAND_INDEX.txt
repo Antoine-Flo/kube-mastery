@@ -25,12 +25,18 @@ kubectl create service loadbalancer | flags:all-namespaces(-A):boolean, dry-run:
 kubectl create service nodeport | flags:all-namespaces(-A):boolean, dry-run:enum{none,server,client}, external-name:string, namespace(-n):string, node-port:string, output(-o):string, tcp:string
 kubectl delete | flags:all-namespaces(-A):boolean, filename(-f):string, force:boolean, grace-period:string, namespace(-n):string, selector(-l):string, wait:boolean
 kubectl describe | flags:all-namespaces(-A):boolean, namespace(-n):string, selector(-l):string
+kubectl describe events | flags:all-namespaces(-A):boolean, namespace(-n):string
 kubectl diff | flags:all-namespaces(-A):boolean, filename(-f):string, namespace(-n):string
 kubectl edit | flags:all-namespaces(-A):boolean, namespace(-n):string
 kubectl exec | flags:all-namespaces(-A):boolean, container(-c):string, namespace(-n):string, stdin(-i):boolean, tty(-t):boolean
 kubectl explain | flags:all-namespaces(-A):boolean, api-version:string, namespace(-n):string, recursive(-R):boolean
 kubectl expose | flags:all-namespaces(-A):boolean, name:string, namespace(-n):string, port:string, selector(-l):string, target-port:string, type:string
 kubectl get | flags:all-namespaces(-A):boolean, allow-missing-template-keys:boolean, chunk-size:string, field-selector:string, filename(-f):string, ignore-not-found:boolean, kustomize(-k):string, namespace(-n):string, no-headers:boolean, output(-o):string, output-watch-events:boolean, raw:string, recursive(-R):boolean, selector(-l):string, show-labels:boolean, sort-by:string, subresource:string, watch(-w):boolean, watch-only:boolean
+kubectl get events | flags:all-namespaces(-A):boolean, namespace(-n):string
+kubectl get events -A | flags:all-namespaces(-A):boolean
+kubectl get events --field-selector=involvedObject.name=<pod> | flags:all-namespaces(-A):boolean, field-selector:string, namespace(-n):string
+kubectl get pods --field-selector=spec.nodeName=<node> | flags:all-namespaces(-A):boolean, field-selector:string, namespace(-n):string
+kubectl get pods --field-selector=status.phase=Running | flags:all-namespaces(-A):boolean, field-selector:string, namespace(-n):string
 kubectl label | flags:all-namespaces(-A):boolean, namespace(-n):string, overwrite:boolean
 kubectl logs | flags:all-namespaces(-A):boolean, container(-c):string, follow(-f):boolean, namespace(-n):string, previous(-p):boolean, selector(-l):string, since:string, tail:string
 kubectl options | flags:all-namespaces(-A):boolean, namespace(-n):string

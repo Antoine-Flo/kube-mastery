@@ -221,8 +221,10 @@ kubectl get events --field-selector type=Warning
 **Step 5: Check kube-system events**
 
 ```bash
-kubectl get events -n kube-system --sort-by=.lastTimestamp | tail -10
+kubectl get events -n kube-system --sort-by=.lastTimestamp
 ```
+
+Scroll to the end of the list to see the most recent kube-system events.
 
 **Step 6: Clean up**
 

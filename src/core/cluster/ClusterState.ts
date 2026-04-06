@@ -21,6 +21,9 @@ import {
   createEndpointsCreatedEvent,
   createEndpointsDeletedEvent,
   createEndpointsUpdatedEvent,
+  createEventCreatedEvent,
+  createEventDeletedEvent,
+  createEventUpdatedEvent,
   createIngressCreatedEvent,
   createIngressDeletedEvent,
   createIngressUpdatedEvent,
@@ -69,6 +72,7 @@ import type { DaemonSet } from './ressources/DaemonSet'
 import type { Deployment } from './ressources/Deployment'
 import type { EndpointSlice } from './ressources/EndpointSlice'
 import type { Endpoints } from './ressources/Endpoints'
+import type { Event } from './ressources/Event'
 import type { Ingress } from './ressources/Ingress'
 import type { Lease } from './ressources/Lease'
 import { type Namespace } from './ressources/Namespace'
@@ -105,6 +109,7 @@ export interface ClusterStateData {
   services: ResourceCollection<Service>
   endpointSlices: ResourceCollection<EndpointSlice>
   endpoints: ResourceCollection<Endpoints>
+  events: ResourceCollection<Event>
   ingresses: ResourceCollection<Ingress>
   persistentVolumes: ResourceCollection<PersistentVolume>
   persistentVolumeClaims: ResourceCollection<PersistentVolumeClaim>
@@ -126,6 +131,7 @@ type ResourceByKind = {
   Service: Service
   EndpointSlice: EndpointSlice
   Endpoints: Endpoints
+  Event: Event
   Ingress: Ingress
   PersistentVolume: PersistentVolume
   PersistentVolumeClaim: PersistentVolumeClaim
@@ -155,6 +161,7 @@ export const createClusterStateData = (
     services: Service[]
     endpointSlices: EndpointSlice[]
     endpoints: Endpoints[]
+    events: Event[]
     ingresses: Ingress[]
     persistentVolumes: PersistentVolume[]
     persistentVolumeClaims: PersistentVolumeClaim[]
@@ -175,6 +182,7 @@ export const createClusterStateData = (
   services: { items: collections.services ?? [] },
   endpointSlices: { items: collections.endpointSlices ?? [] },
   endpoints: { items: collections.endpoints ?? [] },
+  events: { items: collections.events ?? [] },
   ingresses: { items: collections.ingresses ?? [] },
   persistentVolumes: { items: collections.persistentVolumes ?? [] },
   persistentVolumeClaims: { items: collections.persistentVolumeClaims ?? [] },
@@ -200,6 +208,7 @@ const serviceRepo = createResourceRepository<Service>('Service')
 const endpointSliceRepo =
   createResourceRepository<EndpointSlice>('EndpointSlice')
 const endpointsRepo = createResourceRepository<Endpoints>('Endpoints')
+const eventRepo = createResourceRepository<Event>('Event')
 const ingressRepo = createResourceRepository<Ingress>('Ingress')
 const persistentVolumeRepo =
   createResourceRepository<PersistentVolume>('PersistentVolume')
@@ -315,6 +324,7 @@ const createEmptyState = (): ClusterStateData => ({
   services: serviceRepo.createEmpty(),
   endpointSlices: endpointSliceRepo.createEmpty(),
   endpoints: endpointsRepo.createEmpty(),
+  events: eventRepo.createEmpty(),
   ingresses: ingressRepo.createEmpty(),
   persistentVolumes: persistentVolumeRepo.createEmpty(),
   persistentVolumeClaims: persistentVolumeClaimRepo.createEmpty(),
@@ -363,6 +373,7 @@ const endpointsOps = createResourceOperations<Endpoints>(
   endpointsRepo,
   'endpoints'
 )
+const eventOps = createResourceOperations<Event>(eventRepo, 'events')
 const ingressOps = createResourceOperations<Ingress>(ingressRepo, 'ingresses')
 const persistentVolumeOps = createResourceOperations<PersistentVolume>(
   persistentVolumeRepo,
@@ -503,6 +514,15 @@ export interface ClusterState {
     namespace: string,
     updateFn: (endpoints: Endpoints) => Endpoints
   ) => Result<Endpoints>
+  getEvents: (namespace?: string) => Event[]
+  addEvent: (event: Event) => void
+  findEvent: (name: string, namespace: string) => Result<Event>
+  deleteEvent: (name: string, namespace: string) => Result<Event>
+  updateEvent: (
+    name: string,
+    namespace: string,
+    updateFn: (event: Event) => Event
+  ) => Result<Event>
   getIngresses: (namespace?: string) => Ingress[]
   addIngress: (ingress: Ingress) => void
   findIngress: (name: string, namespace: string) => Result<Ingress>
@@ -658,6 +678,11 @@ const EVENT_FACTORIES = {
     created: createEndpointsCreatedEvent,
     deleted: createEndpointsDeletedEvent,
     updated: createEndpointsUpdatedEvent
+  },
+  Event: {
+    created: createEventCreatedEvent,
+    deleted: createEventDeletedEvent,
+    updated: createEventUpdatedEvent
   },
   Ingress: {
     created: createIngressCreatedEvent,
@@ -886,6 +911,7 @@ export function createClusterState(
     eventBus,
     'Endpoints'
   )
+  const eventMethods = createFacadeMethods(eventOps, getState, setState, eventBus, 'Event')
   const ingressMethods = {
     getAll: (namespace?: string) => ingressOps.getAll(getState(), namespace),
     add: (ingress: Ingress) => {
@@ -1105,6 +1131,11 @@ export function createClusterState(
           resourceName,
           resourceNamespace
         ) as Result<KubernetesResource>,
+      Event: (resourceName, resourceNamespace) =>
+        eventMethods.find(
+          resourceName,
+          resourceNamespace
+        ) as Result<KubernetesResource>,
       Ingress: (resourceName, resourceNamespace) =>
         ingressMethods.find(
           resourceName,
@@ -1173,6 +1204,8 @@ export function createClusterState(
         endpointSliceMethods.getAll(resourceNamespace) as KubernetesResource[],
       Endpoints: (resourceNamespace) =>
         endpointsMethods.getAll(resourceNamespace) as KubernetesResource[],
+      Event: (resourceNamespace) =>
+        eventMethods.getAll(resourceNamespace) as KubernetesResource[],
       Ingress: (resourceNamespace) =>
         ingressMethods.getAll(resourceNamespace) as KubernetesResource[],
       PersistentVolume: (_resourceNamespace) =>
@@ -1259,6 +1292,10 @@ export function createClusterState(
     }
     if (kind === 'Endpoints') {
       endpointsMethods.add(resource as Endpoints)
+      return { ok: true, value: resource as KindToResource<TKind> }
+    }
+    if (kind === 'Event') {
+      eventMethods.add(resource as Event)
       return { ok: true, value: resource as KindToResource<TKind> }
     }
     if (kind === 'PersistentVolumeClaim') {
@@ -1386,6 +1423,13 @@ export function createClusterState(
         () => resource as Endpoints
       ) as Result<KindToResource<TKind>>
     }
+    if (kind === 'Event') {
+      return eventMethods.update(
+        name,
+        effectiveNamespace,
+        () => resource as Event
+      ) as Result<KindToResource<TKind>>
+    }
     if (kind === 'PersistentVolumeClaim') {
       return persistentVolumeClaimMethods.update(
         name,
@@ -1488,6 +1532,11 @@ export function createClusterState(
         KindToResource<TKind>
       >
     }
+    if (kind === 'Event') {
+      return eventMethods.delete(name, effectiveNamespace) as Result<
+        KindToResource<TKind>
+      >
+    }
     if (kind === 'PersistentVolumeClaim') {
       return persistentVolumeClaimMethods.delete(
         name,
@@ -1575,6 +1624,11 @@ export function createClusterState(
     findEndpoints: endpointsMethods.find,
     deleteEndpoints: endpointsMethods.delete,
     updateEndpoints: endpointsMethods.update,
+    getEvents: eventMethods.getAll,
+    addEvent: eventMethods.add,
+    findEvent: eventMethods.find,
+    deleteEvent: eventMethods.delete,
+    updateEvent: eventMethods.update,
     getIngresses: ingressMethods.getAll,
     addIngress: ingressMethods.add,
     findIngress: ingressMethods.find,
@@ -1631,6 +1685,7 @@ export function createClusterState(
       services: { items: [...state.services.items] },
       endpointSlices: { items: [...state.endpointSlices.items] },
       endpoints: { items: [...state.endpoints.items] },
+      events: { items: [...state.events.items] },
       ingresses: { items: [...state.ingresses.items] },
       persistentVolumes: { items: [...state.persistentVolumes.items] },
       persistentVolumeClaims: {
@@ -1655,6 +1710,7 @@ export function createClusterState(
         services: newState.services || { items: [] },
         endpointSlices: newState.endpointSlices || { items: [] },
         endpoints: newState.endpoints || { items: [] },
+        events: newState.events || { items: [] },
         ingresses: newState.ingresses || { items: [] },
         persistentVolumes: newState.persistentVolumes || { items: [] },
         persistentVolumeClaims: newState.persistentVolumeClaims || {

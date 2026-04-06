@@ -4,28 +4,11 @@
 // Type definitions for shell command parsing and execution.
 // Supports basic Unix commands (cd, ls, mkdir, touch, cat, rm, etc).
 
-export type ShellCommand =
-  | 'cd'
-  | 'ls'
-  | 'pwd'
-  | 'sleep'
-  | 'mkdir'
-  | 'touch'
-  | 'cat'
-  | 'rm'
-  | 'clear'
-  | 'help'
-  | 'debug'
-  | 'env'
-  | 'nano'
-  | 'vi'
-  | 'vim'
-  | 'nslookup'
-  | 'curl'
-  | 'exit'
+/** @deprecated Use string; command names come from the handler registry. */
+export type ShellCommand = string
 
 export interface ParsedShellCommand {
-  command: ShellCommand
+  command: string
   args: string[]
   flags: Record<string, boolean | string>
 }

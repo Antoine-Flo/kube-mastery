@@ -18,7 +18,10 @@ import { initializeSimNetworkRuntime } from '../../../src/core/network/SimNetwor
 import type { SimNetworkRuntime } from '../../../src/core/network/SimNetworkRuntime'
 import { initializeSimPodIpAllocation } from '../../../src/core/cluster/ipAllocator/SimPodIpAllocationService'
 import { initializeSimVolumeRuntime } from '../../../src/core/volumes/SimVolumeRuntime'
-import { createShellExecutor } from '../../../src/core/shell/commands'
+import {
+  createShellExecutor,
+  executeSequentialShellScript
+} from '../../../src/core/shell/commands'
 import { buildContainerEnvironmentVariables } from '../../../src/core/terminal/core/handlers/containerEnvironment'
 import { listYamlFiles } from '../cluster-manager'
 import { loadClusterNodeRoles } from '../cluster-manager'
@@ -306,7 +309,10 @@ const executeShellDirective = (
       )
     }
   })
-  const shellResult = shellExecutor.execute(directive.command)
+  const shellResult = executeSequentialShellScript(
+    shellExecutor,
+    directive.command
+  )
   if (!shellResult.ok) {
     return executionFromOutput(command, 1, '', shellResult.error)
   }

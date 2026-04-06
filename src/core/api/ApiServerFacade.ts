@@ -18,6 +18,9 @@ import {
   createEndpointsCreatedEvent,
   createEndpointsDeletedEvent,
   createEndpointsUpdatedEvent,
+  createEventCreatedEvent,
+  createEventDeletedEvent,
+  createEventUpdatedEvent,
   createIngressCreatedEvent,
   createIngressDeletedEvent,
   createIngressUpdatedEvent,
@@ -62,6 +65,7 @@ import type { DaemonSet } from '../cluster/ressources/DaemonSet'
 import type { Deployment } from '../cluster/ressources/Deployment'
 import type { EndpointSlice } from '../cluster/ressources/EndpointSlice'
 import type { Endpoints } from '../cluster/ressources/Endpoints'
+import type { Event } from '../cluster/ressources/Event'
 import type { Ingress } from '../cluster/ressources/Ingress'
 import type { Lease } from '../cluster/ressources/Lease'
 import type { Namespace } from '../cluster/ressources/Namespace'
@@ -99,6 +103,7 @@ import {
   createPersistentVolumeClaimLifecycleEventStore,
   type PersistentVolumeClaimLifecycleEventStore
 } from './PersistentVolumeClaimLifecycleEventStore'
+import { createEventRecorder } from './EventRecorder'
 import { createWatchHub, type WatchHub } from './WatchHub'
 
 export interface ApiServerFacade {
@@ -161,6 +166,11 @@ export interface ApiServerFacade {
 export interface CreateApiServerFacadeOptions {
   eventBus?: EventBus
   bootstrap?: ClusterBootstrapConfig
+  eventRecorder?: {
+    enabled?: boolean
+    eventTtlMs?: number
+    now?: () => Date
+  }
 }
 
 const DEFAULT_POD_DELETION_GRACE_PERIOD_SECONDS = 30
@@ -562,6 +572,11 @@ const RESOURCE_MUTATION_EVENTS: Record<
     createEndpointsUpdatedEvent,
     createEndpointsDeletedEvent
   ),
+  Event: createNamespacedMutationEvents<Event>(
+    createEventCreatedEvent,
+    createEventUpdatedEvent,
+    createEventDeletedEvent
+  ),
   EndpointSlice: createNamespacedMutationEvents<EndpointSlice>(
     createEndpointSliceCreatedEvent,
     createEndpointSliceUpdatedEvent,
@@ -925,11 +940,19 @@ export const createApiServerFacade = (
     },
     getResourceVersion: () => etcd.getResourceVersion(),
     stop: () => {
+      recorder.stop()
       podLifecycleEventStore.stop()
       persistentVolumeClaimLifecycleEventStore.stop()
       deploymentLifecycleEventStore.stop()
       etcd.dispose()
     }
+  }
+  const recorder = createEventRecorder(apiServer, eventBus, {
+    eventTtlMs: options.eventRecorder?.eventTtlMs,
+    now: options.eventRecorder?.now
+  })
+  if (options.eventRecorder?.enabled !== false) {
+    recorder.start()
   }
   if (options.bootstrap != null) {
     const bootstrapApi: BootstrapApiLike = {

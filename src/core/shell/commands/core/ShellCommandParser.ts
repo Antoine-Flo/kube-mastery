@@ -10,7 +10,7 @@
 import { extract, pipeResult, tokenize, trim } from '../../../shared/parsing'
 import type { Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
-import type { ParsedShellCommand, ShellCommand } from './types'
+import type { ParsedShellCommand } from './types'
 
 type ParsedFlags = Record<string, string | boolean>
 
@@ -22,33 +22,10 @@ type ParsedFlags = Record<string, string | boolean>
 type ParseContext = {
   input: string
   tokens?: string[]
-  command?: ShellCommand
+  command?: string
   args?: string[]
   flags?: Record<string, string | boolean>
 }
-
-// ─── Constants ───────────────────────────────────────────────────────────
-
-export const VALID_COMMANDS: ShellCommand[] = [
-  'cd',
-  'ls',
-  'pwd',
-  'sleep',
-  'mkdir',
-  'touch',
-  'cat',
-  'rm',
-  'clear',
-  'help',
-  'debug',
-  'env',
-  'nano',
-  'vi',
-  'vim',
-  'nslookup',
-  'curl',
-  'exit'
-]
 
 /**
  * Parse flags for shell commands
@@ -139,16 +116,18 @@ const extractShellArgs = (
  *           parse flags → extract args → build result
  *
  * @param input - Raw command string (e.g., "ls -l", "cd /manifests")
+ * @param registeredCommands - Command names from the same handler Map as the executor (single source of truth)
  * @returns Parsed command or error
  */
 export const parseShellCommand = (
-  input: string
+  input: string,
+  registeredCommands: readonly string[]
 ): Result<ParsedShellCommand> => {
   // Create the parsing pipeline
   const pipeline = pipeResult<ParseContext>(
     trim,
     tokenize,
-    extract(0, VALID_COMMANDS, 'command', 'Unknown command'),
+    extract(0, registeredCommands, 'command', 'command not found'),
     parseShellFlags,
     extractShellArgs
   )

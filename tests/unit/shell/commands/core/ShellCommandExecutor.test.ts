@@ -63,16 +63,15 @@ describe('ShellCommandExecutor', () => {
     const result = executor.execute('unknown-command')
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain('Unknown command')
+      expect(result.error).toContain('command not found')
     }
   })
 
-  it('should return error for missing handler', () => {
-    // Parse valid command but no handler registered
+  it('should return error when command is not in handler registry', () => {
     const result = executor.execute('pwd')
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain('Handler not found')
+      expect(result.error).toContain('command not found')
     }
   })
 

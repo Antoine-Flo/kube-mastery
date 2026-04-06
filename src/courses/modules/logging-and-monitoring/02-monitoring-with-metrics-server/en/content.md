@@ -143,10 +143,10 @@ If you're planning to use HPA, make sure Metrics Server is installed and healthy
 **Step 1: Verify Metrics Server is running**
 
 ```bash
-kubectl get pods -n kube-system | grep metrics-server
+kubectl get pods -n kube-system
 ```
 
-Expected output:
+Locate a Pod whose name contains `metrics-server`. Expected shape:
 
 ```
 metrics-server-6d94bc8694-xkl9v   1/1     Running   0          5m

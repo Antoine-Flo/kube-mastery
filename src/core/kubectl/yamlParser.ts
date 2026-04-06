@@ -11,6 +11,8 @@ import type { DaemonSet } from '../cluster/ressources/DaemonSet'
 import { parseDaemonSetManifest } from '../cluster/ressources/DaemonSet'
 import type { Deployment } from '../cluster/ressources/Deployment'
 import { parseDeploymentManifest } from '../cluster/ressources/Deployment'
+import type { Event } from '../cluster/ressources/Event'
+import { parseEventManifest } from '../cluster/ressources/Event'
 import type { Ingress } from '../cluster/ressources/Ingress'
 import { parseIngressManifest } from '../cluster/ressources/Ingress'
 import type { Lease } from '../cluster/ressources/Lease'
@@ -56,6 +58,7 @@ type ParsedResource =
   | DaemonSet
   | StatefulSet
   | Service
+  | Event
   | Ingress
   | Lease
 
@@ -72,6 +75,7 @@ type YamlSupportedKind = Extract<
   | 'DaemonSet'
   | 'StatefulSet'
   | 'Service'
+  | 'Event'
   | 'Ingress'
   | 'Lease'
   | 'StorageClass'
@@ -148,6 +152,7 @@ const MANIFEST_PARSERS: Record<
   DaemonSet: parseDaemonSetManifest,
   StatefulSet: parseStatefulSetManifest,
   Service: parseServiceManifest,
+  Event: parseEventManifest,
   Ingress: parseIngressManifest,
   Lease: parseLeaseManifest,
   StorageClass: parseStorageClassManifest

@@ -8,6 +8,7 @@ import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
 import type { EndpointSlice } from '../ressources/EndpointSlice'
 import type { Endpoints } from '../ressources/Endpoints'
+import type { Event } from '../ressources/Event'
 import type { Ingress } from '../ressources/Ingress'
 import type { Lease } from '../ressources/Lease'
 import type { Namespace } from '../ressources/Namespace'
@@ -42,6 +43,9 @@ import type {
   EndpointsCreatedEvent,
   EndpointsDeletedEvent,
   EndpointsUpdatedEvent,
+  EventCreatedEvent,
+  EventDeletedEvent,
+  EventUpdatedEvent,
   IngressCreatedEvent,
   IngressDeletedEvent,
   IngressUpdatedEvent,
@@ -104,6 +108,7 @@ const deploymentRepo = createResourceRepository<Deployment>('Deployment')
 const endpointSliceRepo =
   createResourceRepository<EndpointSlice>('EndpointSlice')
 const endpointsRepo = createResourceRepository<Endpoints>('Endpoints')
+const eventRepo = createResourceRepository<Event>('Event')
 const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
 const statefulSetRepo = createResourceRepository<StatefulSet>('StatefulSet')
 const serviceRepo = createResourceRepository<Service>('Service')
@@ -132,6 +137,7 @@ type RepoStateKey =
   | 'services'
   | 'endpointSlices'
   | 'endpoints'
+  | 'events'
   | 'ingresses'
   | 'leases'
   | 'namespaces'
@@ -151,6 +157,7 @@ type RepoResourceByStateKey = {
   services: Service
   endpointSlices: EndpointSlice
   endpoints: Endpoints
+  events: Event
   ingresses: Ingress
   leases: Lease
   namespaces: Namespace
@@ -251,6 +258,7 @@ const endpointSliceHandler = createRepoHandler(
   'endpointSlices'
 )
 const endpointsHandler = createRepoHandler(endpointsRepo, 'endpoints')
+const eventHandler = createRepoHandler(eventRepo, 'events')
 const ingressHandler = createRepoHandler(ingressRepo, 'ingresses')
 const leaseHandler = createRepoHandler(leaseRepo, 'leases')
 const namespaceHandler = createRepoHandler(namespaceRepo, 'namespaces')
@@ -618,6 +626,27 @@ export const handleEndpointSliceUpdated = (
     event.payload.endpointSlice
   )
 
+export const handleEventCreated = (
+  state: ClusterStateData,
+  event: EventCreatedEvent
+) => eventHandler.created(state, event.payload.event)
+
+export const handleEventDeleted = (
+  state: ClusterStateData,
+  event: EventDeletedEvent
+) => eventHandler.deleted(state, event.payload.name, event.payload.namespace)
+
+export const handleEventUpdated = (
+  state: ClusterStateData,
+  event: EventUpdatedEvent
+) =>
+  eventHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.event
+  )
+
 export const handleIngressCreated = (
   state: ClusterStateData,
   event: IngressCreatedEvent
@@ -845,6 +874,9 @@ export const CLUSTER_EVENT_DEFINITIONS: {
   EndpointSliceCreated: defineClusterEvent(handleEndpointSliceCreated),
   EndpointSliceDeleted: defineClusterEvent(handleEndpointSliceDeleted),
   EndpointSliceUpdated: defineClusterEvent(handleEndpointSliceUpdated),
+  EventCreated: defineClusterEvent(handleEventCreated, false),
+  EventDeleted: defineClusterEvent(handleEventDeleted, false),
+  EventUpdated: defineClusterEvent(handleEventUpdated, false),
   ServiceLabeled: defineClusterEvent(handleServiceLabeled),
   ServiceAnnotated: defineClusterEvent(handleServiceAnnotated),
   IngressCreated: defineClusterEvent(handleIngressCreated),

@@ -73,6 +73,83 @@ interface DescribeDependencies {
   ) => readonly PersistentVolumeClaimLifecycleDescribeEvent[]
 }
 
+const formatEventTimestampForDescribe = (timestamp: string): string => {
+  if (timestamp.includes('.')) {
+    return timestamp.replace(/\.\d{3}Z$/, 'Z')
+  }
+  return timestamp
+}
+
+const describeCoreEvent = (
+  eventItem: {
+    metadata: {
+      name: string
+      namespace: string
+      labels?: Record<string, string>
+      creationTimestamp: string
+      resourceVersion?: string
+      uid?: string
+    }
+    involvedObject: {
+      apiVersion: string
+      kind: string
+      name: string
+      namespace?: string
+    }
+    reason: string
+    message: string
+    type: string
+    count: number
+    firstTimestamp: string
+    lastTimestamp: string
+  }
+): string => {
+  const involvedNamespace =
+    eventItem.involvedObject.namespace ?? eventItem.metadata.namespace
+  const labels = eventItem.metadata.labels
+  const labelsText =
+    labels == null || Object.keys(labels).length === 0
+      ? '<none>'
+      : Object.entries(labels)
+          .map(([key, value]) => `${key}=${value}`)
+          .join(',')
+  const resourceVersion = eventItem.metadata.resourceVersion ?? '<unknown>'
+  const uid = eventItem.metadata.uid ?? '<unknown>'
+  const firstTimestamp = formatEventTimestampForDescribe(eventItem.firstTimestamp)
+  const lastTimestamp = formatEventTimestampForDescribe(eventItem.lastTimestamp)
+  const creationTimestamp = formatEventTimestampForDescribe(
+    eventItem.metadata.creationTimestamp
+  )
+  return [
+    `Name:             ${eventItem.metadata.name}`,
+    `Namespace:        ${eventItem.metadata.namespace}`,
+    `Labels:           ${labelsText}`,
+    'Annotations:      <none>',
+    'API Version:      v1',
+    `Count:            ${eventItem.count}`,
+    'Event Time:       <nil>',
+    `First Timestamp:  ${firstTimestamp}`,
+    'Involved Object:',
+    `  API Version:   ${eventItem.involvedObject.apiVersion}`,
+    `  Kind:          ${eventItem.involvedObject.kind}`,
+    `  Name:          ${eventItem.involvedObject.name}`,
+    `  Namespace:     ${involvedNamespace}`,
+    'Kind:            Event',
+    `Last Timestamp:  ${lastTimestamp}`,
+    `Message:         ${eventItem.message}`,
+    'Metadata:',
+    `  Creation Timestamp:  ${creationTimestamp}`,
+    `  Resource Version:    ${resourceVersion}`,
+    `  UID:                 ${uid}`,
+    `Reason:                ${eventItem.reason}`,
+    'Reporting Component:   ',
+    'Reporting Instance:    ',
+    'Source:',
+    `Type:    ${eventItem.type}`,
+    'Events:  <none>'
+  ].join('\n')
+}
+
 const sortDescribeResources = (
   resources: DescribeableResource[]
 ): DescribeableResource[] => {
@@ -133,6 +210,14 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
       return describeEndpointSlice(item)
     },
     type: 'EndpointSlice'
+  },
+  events: {
+    items: 'events',
+    formatter: (item) => {
+      return describeCoreEvent(item)
+    },
+    type: 'Event',
+    allowsDescribeWithoutName: true
   },
   deployments: {
     items: 'deployments',

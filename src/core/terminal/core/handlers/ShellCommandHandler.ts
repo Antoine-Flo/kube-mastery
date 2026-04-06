@@ -6,7 +6,11 @@
 
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
-import { createShellExecutor, parseShellCommand } from '../../../shell/commands'
+import {
+  createShellExecutor,
+  getShellRegistryCommandNames,
+  parseShellCommand
+} from '../../../shell/commands'
 import {
   buildContainerEnvironmentVariables,
   buildHostEnvironmentVariables
@@ -50,14 +54,18 @@ const restorePromptAfterSleep = (context: CommandContext): void => {
 
 export class ShellCommandHandler implements CommandHandler {
   canHandle(command: string): boolean {
-    // Vérifie si la commande est une commande shell valide
-    const parseResult = parseShellCommand(command)
+    const parseResult = parseShellCommand(
+      command,
+      getShellRegistryCommandNames()
+    )
     return parseResult.ok
   }
 
   execute(command: string, context: CommandContext): ExecutionResult {
-    // Parser la commande pour vérifier qu'elle est valide
-    const parseResult = parseShellCommand(command)
+    const parseResult = parseShellCommand(
+      command,
+      getShellRegistryCommandNames()
+    )
     if (!parseResult.ok) {
       context.output.writeError(parseResult.error)
       return error(parseResult.error)

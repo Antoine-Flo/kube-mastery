@@ -164,7 +164,9 @@ const listMatchingResourceNames = (
     : apiServer.listResources(config.kind)
   return resources
     .filter((resource) => {
-      return matchesSelector(resource.metadata.labels, selector)
+      const labels =
+        'labels' in resource.metadata ? resource.metadata.labels : undefined
+      return matchesSelector(labels, selector)
     })
     .map((resource) => {
       return resource.metadata.name

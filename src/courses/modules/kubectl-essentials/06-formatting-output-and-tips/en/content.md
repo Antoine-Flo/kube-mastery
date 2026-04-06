@@ -26,10 +26,10 @@ kubectl get deployment my-app -o yaml
 
 ### -o json: Machine-Friendly Output
 
-`-o json` is the same information as `-o yaml`, but in JSON format. Most programmatic tools and scripts prefer JSON because JSON parsers are ubiquitous. If you are piping kubectl output into `jq` for processing, this is your starting point.
+`-o json` is the same information as `-o yaml`, but in JSON format. Most programmatic tools and scripts prefer JSON because JSON parsers are ubiquitous. For a single field, prefer `-o jsonpath` in the simulator, on a full shell you can also pipe JSON into `jq`.
 
 ```bash
-kubectl get pod my-pod -o json | jq '.spec.containers[0].image'
+kubectl get pod my-pod -o jsonpath='{.spec.containers[0].image}'
 ```
 
 ### -o jsonpath: Extract Specific Fields

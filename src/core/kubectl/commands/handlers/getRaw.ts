@@ -1,4 +1,5 @@
 import type { ClusterStateData } from '../../../cluster/ClusterState'
+import { convertCoreEventToEventsV1 } from '../../../cluster/ressources/Event'
 import { collectDiscoveredNamespaces } from './namespaceDiscovery'
 
 type RawGetHandler = (state: ClusterStateData) => unknown
@@ -264,6 +265,50 @@ const createNetworkingAPIResourceList = () => {
   }
 }
 
+const createEventsAPIResourceList = () => {
+  return {
+    kind: 'APIResourceList',
+    apiVersion: 'v1',
+    groupVersion: 'events.k8s.io/v1',
+    resources: [
+      {
+        name: 'events',
+        singularName: 'event',
+        namespaced: true,
+        kind: 'Event',
+        verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch']
+      }
+    ]
+  }
+}
+
+const createEventsV1List = (
+  state: ClusterStateData,
+  namespace?: string
+): {
+  kind: 'EventList'
+  apiVersion: 'events.k8s.io/v1'
+  metadata: { resourceVersion: string }
+  items: ReturnType<typeof convertCoreEventToEventsV1>[]
+} => {
+  const filteredEvents = state.events.items.filter((event) => {
+    if (namespace == null) {
+      return true
+    }
+    return event.metadata.namespace === namespace
+  })
+  return {
+    kind: 'EventList',
+    apiVersion: 'events.k8s.io/v1',
+    metadata: {
+      resourceVersion: String(filteredEvents.length + 1)
+    },
+    items: filteredEvents.map((event) => {
+      return convertCoreEventToEventsV1(event)
+    })
+  }
+}
+
 const RAW_GET_HANDLERS: Record<string, RawGetHandler> = {
   '/': () => {
     return createDiscoveryRoot()
@@ -282,6 +327,12 @@ const RAW_GET_HANDLERS: Record<string, RawGetHandler> = {
   },
   '/apis/networking.k8s.io/v1': () => {
     return createNetworkingAPIResourceList()
+  },
+  '/apis/events.k8s.io/v1': () => {
+    return createEventsAPIResourceList()
+  },
+  '/apis/events.k8s.io/v1/events': (state) => {
+    return createEventsV1List(state)
   }
 }
 
@@ -289,6 +340,13 @@ export const handleGetRaw = (
   state: ClusterStateData,
   rawPath: string
 ): string => {
+  const eventsByNamespaceMatch = rawPath.match(
+    /^\/apis\/events\.k8s\.io\/v1\/namespaces\/([^/]+)\/events$/
+  )
+  if (eventsByNamespaceMatch != null) {
+    const namespace = decodeURIComponent(eventsByNamespaceMatch[1])
+    return JSON.stringify(createEventsV1List(state, namespace))
+  }
   const handler = RAW_GET_HANDLERS[rawPath]
   if (!handler) {
     return `Error from server (NotFound): the server could not find the requested resource`

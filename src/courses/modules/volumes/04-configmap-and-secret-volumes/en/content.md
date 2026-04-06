@@ -209,9 +209,7 @@ Let's mount a ConfigMap as files and then update the ConfigMap to see the live r
 **1. Create a ConfigMap with some configuration data:**
 
 ```bash
-kubectl create configmap demo-config \
-  --from-literal=greeting.txt="Hello from ConfigMap!" \
-  --from-literal=settings.conf="color=blue<br/>size=large"
+kubectl create configmap demo-config --from-literal=greeting.txt="Hello from ConfigMap!" --from-literal=settings.conf="color=blue<br/>size=large"
 ```
 
 **2. Verify the ConfigMap was created:**
@@ -236,12 +234,13 @@ spec:
   containers:
     - name: reader
       image: busybox:1.36
-      command:
-        [
-          'sh',
-          '-c',
-          "while true; do echo '---'; ls /config; cat /config/greeting.txt; sleep 10; done"
-        ]
+      command: ['sh', '-c']
+      args:
+        - |
+          echo '---'
+          ls /config
+          cat /config/greeting.txt
+          sleep 3600
       volumeMounts:
         - name: config-vol
           mountPath: /config
@@ -272,11 +271,11 @@ kubectl exec config-reader -- cat /config/settings.conf
 **6. Update the ConfigMap and watch for the live update:**
 
 ```bash
-kubectl create configmap demo-config \
-  --from-literal=greeting.txt="Updated greeting, no restart needed!" \
-  --from-literal=settings.conf="color=green<br/>size=small" \
-  --dry-run=client -o yaml | kubectl apply -f -
+kubectl delete configmap demo-config
+kubectl create configmap demo-config --from-literal=greeting.txt="Updated greeting, no restart needed!" --from-literal=settings.conf="color=green<br/>size=small"
 ```
+
+This replaces the ConfigMap in two steps so you stay within a single command per line. In production you often keep a YAML manifest and use `kubectl apply`.
 
 **7. Wait about 60 seconds, then check the file contents inside the container:**
 
@@ -297,9 +296,7 @@ The restart count should still be 0. The configuration updated live.
 **9. Now create a Secret and mount it the same way:**
 
 ```bash
-kubectl create secret generic demo-secret \
-  --from-literal=api-key="super-secret-value-12345" \
-  --from-literal=token="eyJhbGciOiJIUzI1NiJ9..."
+kubectl create secret generic demo-secret --from-literal=api-key="super-secret-value-12345" --from-literal=token="eyJhbGciOiJIUzI1NiJ9..."
 ```
 
 ```yaml
@@ -316,7 +313,12 @@ spec:
   containers:
     - name: reader
       image: busybox:1.36
-      command: ['sh', '-c', 'ls /secrets && cat /secrets/api-key && sleep 3600']
+      command: ['sh', '-c']
+      args:
+        - |
+          ls /secrets
+          cat /secrets/api-key
+          sleep 3600
       volumeMounts:
         - name: secret-vol
           mountPath: /secrets

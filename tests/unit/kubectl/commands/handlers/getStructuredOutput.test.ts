@@ -3,6 +3,7 @@ import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFaca
 import { createDeployment } from '../../../../../src/core/cluster/ressources/Deployment'
 import { createServiceEndpointSlice } from '../../../../../src/core/cluster/ressources/EndpointSlice'
 import { createEndpoints } from '../../../../../src/core/cluster/ressources/Endpoints'
+import { createEvent } from '../../../../../src/core/cluster/ressources/Event'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
@@ -336,6 +337,35 @@ describe('kubectl get handler - structured output parity', () => {
     expect(parsedJson.kind).toBe('List')
     expect(parsedJson.items).toHaveLength(1)
     expect(parsedJson.items[0].kind).toBe('EndpointSlice')
+  })
+
+  it('returns EventList metadata for events json output', () => {
+    const eventItem = createEvent({
+      name: 'demo.1',
+      namespace: 'default',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'demo',
+        namespace: 'default'
+      },
+      reason: 'Scheduled',
+      message: 'Successfully assigned default/demo'
+    })
+    const state = createClusterStateData({ events: [eventItem] })
+    const parsed = createParsedGetCommand({
+      resource: 'events',
+      flags: { output: 'json' }
+    })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(apiServer, parsed)
+    const parsedJson = JSON.parse(result)
+
+    expect(parsedJson.apiVersion).toBe('v1')
+    expect(parsedJson.kind).toBe('List')
+    expect(parsedJson.items).toHaveLength(1)
+    expect(parsedJson.items[0].kind).toBe('Event')
   })
 })
 

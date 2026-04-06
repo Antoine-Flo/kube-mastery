@@ -18,6 +18,7 @@ export const SUPPORTED_RESOURCE_KINDS: ResourceKind[] = [
   'StorageClass',
   'Service',
   'Endpoints',
+  'Event',
   'Lease'
 ]
 
@@ -33,6 +34,7 @@ export const NAMESPACED_RESOURCE_KINDS: ResourceKind[] = [
   'Service',
   'EndpointSlice',
   'Endpoints',
+  'Event',
   'Ingress',
   'Lease'
 ]
@@ -45,6 +47,7 @@ export const RESOURCE_KIND_BY_RESOURCE: Record<
   pods: 'Pod',
   deployments: 'Deployment',
   services: 'Service',
+  events: 'Event',
   endpointslices: 'EndpointSlice',
   endpoints: 'Endpoints',
   namespaces: 'Namespace',
@@ -108,6 +111,7 @@ export const RESOURCE_OUTPUT_METADATA_BY_RESOURCE: Record<
   daemonsets: { apiVersion: 'apps/v1', kind: 'DaemonSet' },
   statefulsets: { apiVersion: 'apps/v1', kind: 'StatefulSet' },
   services: { apiVersion: 'v1', kind: 'Service' },
+  events: { apiVersion: 'v1', kind: 'Event' },
   endpointslices: { apiVersion: 'discovery.k8s.io/v1', kind: 'EndpointSlice' },
   ingresses: { apiVersion: 'networking.k8s.io/v1', kind: 'Ingress' },
   ingressclasses: { apiVersion: 'networking.k8s.io/v1', kind: 'IngressClass' },

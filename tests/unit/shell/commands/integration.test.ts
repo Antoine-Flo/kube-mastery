@@ -235,7 +235,7 @@ describe('Shell Commands Integration', () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      expect(result.error).toContain('Unknown command')
+      expect(result.error).toContain('command not found')
     }
   })
 

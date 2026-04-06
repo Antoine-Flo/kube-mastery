@@ -10,7 +10,7 @@ import {
   validateOutputDirective
 } from '../../../output/outputHelpers'
 import { handleGetRaw } from '../../getRaw'
-import { applyFilters, noResourcesMessage } from './filters'
+import { applyFieldSelector, applyFilters, noResourcesMessage } from './filters'
 import { handleGetAll } from './getAll'
 import {
   hasResourceHandler,
@@ -181,10 +181,18 @@ export const handleGet = (
     isClusterScoped,
     queryNames == null ? parsed.name : undefined
   )
+  const fieldSelectorResult = applyFieldSelector(
+    baseFiltered,
+    resolved.resourceType,
+    parsed.flags['field-selector']
+  )
+  if (!fieldSelectorResult.ok) {
+    return fieldSelectorResult.error
+  }
   const byName = resolveMissingNameErrors(
     resolved.resourceType,
     queryNames,
-    baseFiltered
+    fieldSelectorResult.value
   )
   const filtered = byName.filtered
   const missingNameErrors = byName.missingNameErrors

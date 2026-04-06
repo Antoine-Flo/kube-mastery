@@ -254,5 +254,5 @@ With `maxSurge: 2`, Kubernetes will spin up two new Pods first, wait for both to
 **5. Clean up**
 
 ```bash
-kubectl delete deployment legacy-app rolling-app 2>/dev/null; true
+kubectl delete deployment legacy-app rolling-app
 ```

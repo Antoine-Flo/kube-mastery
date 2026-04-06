@@ -33,6 +33,7 @@ const BASE_RESOURCE_TARGETS: Record<Resource, BaseTarget | undefined> = {
   namespaces: { group: '', version: 'v1', kind: 'Namespace' },
   configmaps: { group: '', version: 'v1', kind: 'ConfigMap' },
   secrets: { group: '', version: 'v1', kind: 'Secret' },
+  events: { group: '', version: 'v1', kind: 'Event' },
   nodes: { group: '', version: 'v1', kind: 'Node' },
   replicasets: { group: 'apps', version: 'v1', kind: 'ReplicaSet' },
   ingresses: { group: 'networking.k8s.io', version: 'v1', kind: 'Ingress' },

@@ -4,6 +4,7 @@ import type { Deployment } from '../../../../../cluster/ressources/Deployment'
 import { getDeploymentDesiredReplicas } from '../../../../../cluster/ressources/Deployment'
 import type { EndpointSlice } from '../../../../../cluster/ressources/EndpointSlice'
 import type { Endpoints } from '../../../../../cluster/ressources/Endpoints'
+import type { Event } from '../../../../../cluster/ressources/Event'
 import type { Ingress } from '../../../../../cluster/ressources/Ingress'
 import type { Lease } from '../../../../../cluster/ressources/Lease'
 import type { Namespace } from '../../../../../cluster/ressources/Namespace'
@@ -98,6 +99,7 @@ interface ResourceHandlerRegistry {
   services: ResourceHandler<Service>
   endpointslices: ResourceHandler<EndpointSlice>
   endpoints: ResourceHandler<Endpoints>
+  events: ResourceHandler<Event>
   ingresses: ResourceHandler<Ingress>
   ingressclasses: ResourceHandler<IngressClassSyntheticResource>
   gateways: ResourceHandler<GatewaySyntheticResource>
@@ -329,6 +331,28 @@ export const RESOURCE_HANDLERS: ResourceHandlerRegistry = {
         formatAge(endpoints.metadata.creationTimestamp)
       ]
     },
+    supportsFiltering: true
+  },
+  events: {
+    getItems: (state) => {
+      return [...state.events.items].sort((left, right) => {
+        if (left.lastTimestamp === right.lastTimestamp) {
+          return left.metadata.name.localeCompare(right.metadata.name)
+        }
+        return (
+          new Date(right.lastTimestamp).getTime() -
+          new Date(left.lastTimestamp).getTime()
+        )
+      })
+    },
+    headers: ['last seen', 'type', 'reason', 'object', 'message'],
+    formatRow: (event) => [
+      formatAge(event.lastTimestamp),
+      event.type,
+      event.reason,
+      `${event.involvedObject.kind.toLowerCase()}/${event.involvedObject.name}`,
+      event.message
+    ],
     supportsFiltering: true
   },
   ingresses: {

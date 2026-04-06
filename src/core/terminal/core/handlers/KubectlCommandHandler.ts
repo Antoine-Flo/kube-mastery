@@ -17,7 +17,10 @@ import {
   type Pod
 } from '../../../cluster/ressources/Pod'
 import { createFileSystem } from '../../../filesystem/FileSystem'
-import { createShellExecutor } from '../../../shell/commands'
+import {
+  createShellExecutor,
+  executeSequentialShellScript
+} from '../../../shell/commands'
 import type { ClusterEvent } from '../../../cluster/events/types'
 import { matchesLabelSelector } from '../../../shared/labelSelector'
 import type { ExecutionResult } from '../../../shared/result'
@@ -285,7 +288,7 @@ const executeShellCommandDirective = (
       }
     }
   )
-  return shellExecutor.execute(directive.command)
+  return executeSequentialShellScript(shellExecutor, directive.command)
 }
 
 const executeProcessCommandDirective = (
@@ -449,11 +452,15 @@ const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
     'StorageClassDeleted',
     'LeaseCreated',
     'LeaseUpdated',
-    'LeaseDeleted'
+    'LeaseDeleted',
+    'EventCreated',
+    'EventUpdated',
+    'EventDeleted'
   ],
   pods: ['PodCreated', 'PodUpdated', 'PodDeleted', 'PodBound'],
   configmaps: ['ConfigMapCreated', 'ConfigMapUpdated', 'ConfigMapDeleted'],
   secrets: ['SecretCreated', 'SecretUpdated', 'SecretDeleted'],
+  events: ['EventCreated', 'EventUpdated', 'EventDeleted'],
   nodes: [],
   replicasets: ['ReplicaSetCreated', 'ReplicaSetUpdated', 'ReplicaSetDeleted'],
   daemonsets: ['DaemonSetCreated', 'DaemonSetUpdated', 'DaemonSetDeleted'],

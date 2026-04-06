@@ -3,6 +3,7 @@ import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFaca
 import { createClusterStateData } from '../../../helpers/utils'
 import { createServiceEndpointSlice } from '../../../../../src/core/cluster/ressources/EndpointSlice'
 import { createEndpoints } from '../../../../../src/core/cluster/ressources/Endpoints'
+import { createEvent } from '../../../../../src/core/cluster/ressources/Event'
 import { createNode } from '../../../../../src/core/cluster/ressources/Node'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { createReplicaSet } from '../../../../../src/core/cluster/ressources/ReplicaSet'
@@ -139,6 +140,76 @@ describe('kubectl describe handler - nodes', () => {
     }
     expect(result.value).toContain('Name:')
     expect(result.value).toContain('sim-control-plane')
+  })
+})
+
+describe('kubectl describe handler - events', () => {
+  it('should return no resources found when no event exists', () => {
+    const state = createClusterStateData()
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'events',
+      namespace: 'default',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+
+    const result = handleDescribe(apiServer, parsed)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toBe('No resources found in default namespace.')
+  })
+
+  it('should describe an existing event by name', () => {
+    const state = createClusterStateData({
+      events: [
+        createEvent({
+          name: 'pod-started.12345',
+          namespace: 'default',
+          involvedObject: {
+            apiVersion: 'v1',
+            kind: 'Pod',
+            name: 'nginx-pod',
+            namespace: 'default'
+          },
+          reason: 'Started',
+          message: 'Started container nginx',
+          type: 'Normal',
+          count: 1,
+          firstTimestamp: '2026-04-06T09:00:00.000Z',
+          lastTimestamp: '2026-04-06T09:00:00.000Z'
+        })
+      ]
+    })
+    const parsed: ParsedCommand = {
+      action: 'describe',
+      resource: 'events',
+      name: 'pod-started.12345',
+      namespace: 'default',
+      flags: {}
+    }
+    const apiServer = createApiServerFacade()
+    apiServer.etcd.restore(state)
+
+    const result = handleDescribe(apiServer, parsed)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('Name:             pod-started.12345')
+    expect(result.value).toContain('API Version:      v1')
+    expect(result.value).toContain('Kind:            Event')
+    expect(result.value).toContain('Reason:                Started')
+    expect(result.value).toContain('Message:         Started container nginx')
+    expect(result.value).toContain('Involved Object:')
+    expect(result.value).toContain('  Kind:          Pod')
+    expect(result.value).toContain('  Name:          nginx-pod')
+    expect(result.value).toContain('First Timestamp:  2026-04-06T09:00:00Z')
+    expect(result.value).toContain('Last Timestamp:  2026-04-06T09:00:00Z')
+    expect(result.value).toContain('Events:  <none>')
   })
 })
 

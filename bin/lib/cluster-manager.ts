@@ -133,6 +133,7 @@ const DEFAULT_NAMESPACE_CLEANUP_RESOURCES = [
   'services',
   'configmaps',
   'secrets',
+  'events',
   'ingresses',
   'persistentvolumeclaims'
 ]

@@ -11,6 +11,7 @@ import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
 import type { EndpointSlice } from '../ressources/EndpointSlice'
 import type { Endpoints } from '../ressources/Endpoints'
+import type { Event } from '../ressources/Event'
 import type { Ingress } from '../ressources/Ingress'
 import type { Lease } from '../ressources/Lease'
 import type { Namespace } from '../ressources/Namespace'
@@ -346,6 +347,32 @@ export interface EndpointSliceUpdatedEvent extends BaseEvent {
   }
 }
 
+export interface EventCreatedEvent extends BaseEvent {
+  type: 'EventCreated'
+  payload: {
+    event: Event
+  }
+}
+
+export interface EventDeletedEvent extends BaseEvent {
+  type: 'EventDeleted'
+  payload: {
+    name: string
+    namespace: string
+    deletedEvent: Event
+  }
+}
+
+export interface EventUpdatedEvent extends BaseEvent {
+  type: 'EventUpdated'
+  payload: {
+    name: string
+    namespace: string
+    event: Event
+    previousEvent: Event
+  }
+}
+
 // ─── PersistentVolume Events ───────────────────────────────────────────────
 
 export interface PersistentVolumeCreatedEvent extends BaseEvent {
@@ -670,6 +697,9 @@ export type ClusterEvent =
   | EndpointSliceCreatedEvent
   | EndpointSliceDeletedEvent
   | EndpointSliceUpdatedEvent
+  | EventCreatedEvent
+  | EventDeletedEvent
+  | EventUpdatedEvent
   | PersistentVolumeCreatedEvent
   | PersistentVolumeDeletedEvent
   | PersistentVolumeUpdatedEvent
@@ -1291,6 +1321,41 @@ export const createEndpointSliceUpdatedEvent = (
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
   payload: { name, namespace, endpointSlice, previousEndpointSlice }
+})
+
+export const createEventCreatedEvent = (
+  event: Event,
+  source?: string
+): EventCreatedEvent => ({
+  type: 'EventCreated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { event }
+})
+
+export const createEventDeletedEvent = (
+  name: string,
+  namespace: string,
+  deletedEvent: Event,
+  source?: string
+): EventDeletedEvent => ({
+  type: 'EventDeleted',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, deletedEvent }
+})
+
+export const createEventUpdatedEvent = (
+  name: string,
+  namespace: string,
+  event: Event,
+  previousEvent: Event,
+  source?: string
+): EventUpdatedEvent => ({
+  type: 'EventUpdated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, event, previousEvent }
 })
 
 /**

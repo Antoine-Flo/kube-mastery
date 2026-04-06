@@ -255,7 +255,8 @@ const handleMetadataChangeWithEvents = (
     typeof accessor.kind
   >
   const metadataKey = config.metadataType
-  const metadataValue = updatedResource.metadata[metadataKey] || {}
+  const metadataForEvents = updatedResource.metadata as ResourceWithMetadata['metadata']
+  const metadataValue = metadataForEvents[metadataKey] || {}
 
   // Emit appropriate event based on resource type and metadata type
   if (accessor.kind === 'Pod') {

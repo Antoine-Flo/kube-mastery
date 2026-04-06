@@ -11,15 +11,11 @@ import type { ShellCommandHandler } from './ShellCommandHandler'
 import { parseShellCommand } from './ShellCommandParser'
 import type { ParsedShellCommand } from './types'
 
-interface ShellCommandExecutorOptions {
-  handlers: Map<string, ShellCommandHandler>
-}
-
 export class ShellCommandExecutor {
   private handlers: Map<string, ShellCommandHandler>
 
-  constructor(options: ShellCommandExecutorOptions) {
-    this.handlers = options.handlers
+  constructor(handlers: Map<string, ShellCommandHandler>) {
+    this.handlers = handlers
   }
 
   /**
@@ -28,14 +24,11 @@ export class ShellCommandExecutor {
    * @returns ExecutionResult with output or error
    */
   execute(input: string): ExecutionResult {
-    const parseResult = parseShellCommand(input)
+    const registeredCommands = [...this.handlers.keys()]
+    const parseResult = parseShellCommand(input, registeredCommands)
 
     if (!parseResult.ok) {
-      // Enrich error message with full input for "Unknown command" errors
-      const errorMessage = parseResult.error.startsWith('Unknown command')
-        ? `Unknown command: ${input}`
-        : parseResult.error
-      return error(errorMessage)
+      return error(parseResult.error)
     }
 
     return this.routeCommand(parseResult.value)
@@ -61,5 +54,5 @@ export class ShellCommandExecutor {
 export const createShellCommandExecutor = (
   handlers: Map<string, ShellCommandHandler>
 ): ShellCommandExecutor => {
-  return new ShellCommandExecutor({ handlers })
+  return new ShellCommandExecutor(handlers)
 }

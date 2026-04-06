@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createApiServerFacade } from '../../../../../src/core/api/ApiServerFacade'
 import { createServiceEndpointSlice } from '../../../../../src/core/cluster/ressources/EndpointSlice'
 import { createEndpoints } from '../../../../../src/core/cluster/ressources/Endpoints'
+import { createEvent } from '../../../../../src/core/cluster/ressources/Event'
 import { createNode } from '../../../../../src/core/cluster/ressources/Node'
+import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
 import { handleGet } from '../../../../../src/core/kubectl/commands/handlers/get'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 import { createClusterStateData } from '../../../helpers/utils'
@@ -444,5 +446,415 @@ describe('kubectl get handler - endpointslices', () => {
     expect(payload.items).toHaveLength(1)
     expect(payload.items[0].metadata.name).toMatch(/^web-svc-[a-z0-9]{5}$/)
     expect(payload.items[0].kind).toBe('EndpointSlice')
+  })
+})
+
+describe('kubectl get handler - events', () => {
+  let apiServer: ReturnType<typeof createApiServerFacade>
+
+  beforeEach(() => {
+    apiServer = createApiServerFacade()
+  })
+
+  const createParsedCommand = (
+    overrides: Partial<ParsedCommand> = {}
+  ): ParsedCommand => {
+    return {
+      action: 'get',
+      resource: 'events',
+      flags: {},
+      ...overrides
+    }
+  }
+
+  it('should list events in table format', () => {
+    const normalEvent = createEvent({
+      name: 'api-created.1',
+      namespace: 'default',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'api-created',
+        namespace: 'default'
+      },
+      reason: 'PodCreated',
+      message: 'PodCreated pod/api-created',
+      lastTimestamp: '2026-04-06T10:00:00Z'
+    })
+    const warningEvent = createEvent({
+      name: 'worker-failed.1',
+      namespace: 'default',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'worker-failed',
+        namespace: 'default'
+      },
+      reason: 'BackOff',
+      message: 'Back-off restarting failed container',
+      type: 'Warning',
+      lastTimestamp: '2026-04-06T09:59:00Z'
+    })
+    const state = createClusterStateData({ events: [warningEvent, normalEvent] })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(apiServer, createParsedCommand())
+
+    expect(result).toContain('LAST SEEN')
+    expect(result).toContain('TYPE')
+    expect(result).toContain('REASON')
+    expect(result).toContain('OBJECT')
+    expect(result).toContain('MESSAGE')
+    expect(result).toContain('Normal')
+    expect(result).toContain('Warning')
+    expect(result).toContain('pod/api-created')
+    expect(result).toContain('PodCreated pod/api-created')
+    expect(result.indexOf('pod/api-created')).toBeLessThan(
+      result.indexOf('pod/worker-failed')
+    )
+  })
+
+  it('should include namespace column with all namespaces flag', () => {
+    const defaultEvent = createEvent({
+      name: 'default-e.1',
+      namespace: 'default',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'default-e',
+        namespace: 'default'
+      },
+      reason: 'Scheduled',
+      message: 'Successfully assigned default/default-e'
+    })
+    const kubeSystemEvent = createEvent({
+      name: 'kube-system-e.1',
+      namespace: 'kube-system',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'kube-system-e',
+        namespace: 'kube-system'
+      },
+      reason: 'Pulled',
+      message: 'Container image already present'
+    })
+    const state = createClusterStateData({
+      events: [defaultEvent, kubeSystemEvent]
+    })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(
+      apiServer,
+      createParsedCommand({ flags: { 'all-namespaces': true, A: true } })
+    )
+
+    expect(result).toContain('NAMESPACE')
+    expect(result).toContain('default')
+    expect(result).toContain('kube-system')
+  })
+
+  it('should filter events by involvedObject.name field selector', () => {
+    const matchingEvent = createEvent({
+      name: 'api-created.1',
+      namespace: 'default',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'api-created',
+        namespace: 'default'
+      },
+      reason: 'Started',
+      message: 'Started container api'
+    })
+    const otherEvent = createEvent({
+      name: 'worker-failed.1',
+      namespace: 'default',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'worker-failed',
+        namespace: 'default'
+      },
+      reason: 'BackOff',
+      message: 'Back-off restarting failed container',
+      type: 'Warning'
+    })
+    const state = createClusterStateData({ events: [matchingEvent, otherEvent] })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(
+      apiServer,
+      createParsedCommand({
+        flags: { 'field-selector': 'involvedObject.name=api-created' }
+      })
+    )
+
+    expect(result).toContain('pod/api-created')
+    expect(result).not.toContain('pod/worker-failed')
+  })
+
+  it('should filter events across namespaces with -A and involvedObject.name', () => {
+    const defaultEvent = createEvent({
+      name: 'api-created.default.1',
+      namespace: 'default',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'api-created',
+        namespace: 'default'
+      },
+      reason: 'Started',
+      message: 'Started container api'
+    })
+    const kubeSystemEvent = createEvent({
+      name: 'api-created.kube-system.1',
+      namespace: 'kube-system',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'api-created',
+        namespace: 'kube-system'
+      },
+      reason: 'Started',
+      message: 'Started container api in kube-system'
+    })
+    const otherEvent = createEvent({
+      name: 'other-event.1',
+      namespace: 'kube-system',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'other-pod',
+        namespace: 'kube-system'
+      },
+      reason: 'BackOff',
+      message: 'Back-off restarting failed container',
+      type: 'Warning'
+    })
+    const state = createClusterStateData({
+      events: [defaultEvent, kubeSystemEvent, otherEvent]
+    })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(
+      apiServer,
+      createParsedCommand({
+        flags: {
+          'all-namespaces': true,
+          A: true,
+          'field-selector': 'involvedObject.name=api-created'
+        }
+      })
+    )
+
+    expect(result).toContain('NAMESPACE')
+    expect(result).toContain('default')
+    expect(result).toContain('kube-system')
+    expect(result).toContain('pod/api-created')
+    expect(result).not.toContain('pod/other-pod')
+  })
+
+  it('should allow metadata.namespace selector with -A for events', () => {
+    const defaultEvent = createEvent({
+      name: 'default-event.1',
+      namespace: 'default',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'default-pod',
+        namespace: 'default'
+      },
+      reason: 'Started',
+      message: 'Started default pod'
+    })
+    const kubeSystemEvent = createEvent({
+      name: 'kube-system-event.1',
+      namespace: 'kube-system',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'kube-system-pod',
+        namespace: 'kube-system'
+      },
+      reason: 'Pulled',
+      message: 'Successfully pulled image'
+    })
+    const state = createClusterStateData({ events: [defaultEvent, kubeSystemEvent] })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(
+      apiServer,
+      createParsedCommand({
+        flags: {
+          'all-namespaces': true,
+          A: true,
+          'field-selector': 'metadata.namespace=kube-system'
+        }
+      })
+    )
+
+    expect(result).toContain('kube-system')
+    expect(result).toContain('pod/kube-system-pod')
+    expect(result).not.toContain('pod/default-pod')
+  })
+
+  it('should filter events by reason field selector', () => {
+    const startedEvent = createEvent({
+      name: 'api-started.1',
+      namespace: 'default',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'api-started',
+        namespace: 'default'
+      },
+      reason: 'Started',
+      message: 'Started container api'
+    })
+    const backoffEvent = createEvent({
+      name: 'api-backoff.1',
+      namespace: 'default',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'api-backoff',
+        namespace: 'default'
+      },
+      reason: 'BackOff',
+      message: 'Back-off restarting failed container',
+      type: 'Warning'
+    })
+    const state = createClusterStateData({ events: [startedEvent, backoffEvent] })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(
+      apiServer,
+      createParsedCommand({ flags: { 'field-selector': 'reason=Started' } })
+    )
+
+    expect(result).toContain('pod/api-started')
+    expect(result).not.toContain('pod/api-backoff')
+  })
+})
+
+describe('kubectl get handler - pods field selectors', () => {
+  let apiServer: ReturnType<typeof createApiServerFacade>
+
+  beforeEach(() => {
+    apiServer = createApiServerFacade()
+  })
+
+  const createParsedCommand = (
+    overrides: Partial<ParsedCommand> = {}
+  ): ParsedCommand => {
+    return {
+      action: 'get',
+      resource: 'pods',
+      flags: {},
+      ...overrides
+    }
+  }
+
+  it('should filter pods by status.phase field selector', () => {
+    const runningPod = createPod({
+      name: 'api-running',
+      namespace: 'default',
+      phase: 'Running',
+      containers: [{ name: 'api', image: 'nginx:1.28' }]
+    })
+    const pendingPod = createPod({
+      name: 'api-pending',
+      namespace: 'default',
+      phase: 'Pending',
+      containers: [{ name: 'api', image: 'nginx:1.28' }]
+    })
+    const state = createClusterStateData({ pods: [runningPod, pendingPod] })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(
+      apiServer,
+      createParsedCommand({ flags: { 'field-selector': 'status.phase=Running' } })
+    )
+
+    expect(result).toContain('api-running')
+    expect(result).not.toContain('api-pending')
+  })
+
+  it('should filter pods by spec.nodeName field selector', () => {
+    const controlPlanePod = createPod({
+      name: 'api-on-control-plane',
+      namespace: 'default',
+      phase: 'Running',
+      nodeName: 'sim-control-plane',
+      containers: [{ name: 'api', image: 'nginx:1.28' }]
+    })
+    const workerPod = createPod({
+      name: 'api-on-worker',
+      namespace: 'default',
+      phase: 'Running',
+      nodeName: 'sim-worker',
+      containers: [{ name: 'api', image: 'nginx:1.28' }]
+    })
+    const state = createClusterStateData({ pods: [controlPlanePod, workerPod] })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(
+      apiServer,
+      createParsedCommand({
+        flags: { 'field-selector': 'spec.nodeName=sim-worker' }
+      })
+    )
+
+    expect(result).toContain('api-on-worker')
+    expect(result).not.toContain('api-on-control-plane')
+  })
+
+  it('should filter pods by metadata.name field selector', () => {
+    const targetPod = createPod({
+      name: 'target-pod',
+      namespace: 'default',
+      phase: 'Running',
+      containers: [{ name: 'api', image: 'nginx:1.28' }]
+    })
+    const otherPod = createPod({
+      name: 'other-pod',
+      namespace: 'default',
+      phase: 'Running',
+      containers: [{ name: 'api', image: 'nginx:1.28' }]
+    })
+    const state = createClusterStateData({ pods: [targetPod, otherPod] })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(
+      apiServer,
+      createParsedCommand({ flags: { 'field-selector': 'metadata.name=target-pod' } })
+    )
+
+    expect(result).toContain('target-pod')
+    expect(result).not.toContain('other-pod')
+  })
+
+  it('should return kubectl-like bad request for unsupported field selector key', () => {
+    const state = createClusterStateData({
+      pods: [
+        createPod({
+          name: 'api-pod',
+          namespace: 'default',
+          phase: 'Running',
+          containers: [{ name: 'api', image: 'nginx:1.28' }]
+        })
+      ]
+    })
+    apiServer.etcd.restore(state)
+
+    const result = handleGet(
+      apiServer,
+      createParsedCommand({ flags: { 'field-selector': 'foo=bar' } })
+    )
+
+    expect(result).toContain('Error from server (BadRequest)')
+    expect(result).toContain('field selector "foo=bar"')
+    expect(result).toContain('field label not supported: foo')
   })
 })

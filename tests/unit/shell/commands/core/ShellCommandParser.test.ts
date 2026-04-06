@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import {
-  parseShellCommand,
-  VALID_COMMANDS
-} from '../../../../../src/core/shell/commands/core/ShellCommandParser'
+import { parseShellCommand } from '../../../../../src/core/shell/commands/core/ShellCommandParser'
+import { getShellRegistryCommandNames } from '../../../../../src/core/shell/commands'
 
 describe('ShellCommandParser', () => {
   describe('parseShellCommand', () => {
+    const registry = getShellRegistryCommandNames()
     it('should parse simple command without args', () => {
-      const result = parseShellCommand('pwd')
+      const result = parseShellCommand('pwd', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('pwd')
@@ -17,7 +16,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse env command without args', () => {
-      const result = parseShellCommand('env')
+      const result = parseShellCommand('env', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('env')
@@ -27,7 +26,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse sleep command with one arg', () => {
-      const result = parseShellCommand('sleep 2')
+      const result = parseShellCommand('sleep 2', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('sleep')
@@ -36,7 +35,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse command with single arg', () => {
-      const result = parseShellCommand('cd /home')
+      const result = parseShellCommand('cd /home', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('cd')
@@ -46,7 +45,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse command with multiple args', () => {
-      const result = parseShellCommand('touch file1 file2')
+      const result = parseShellCommand('touch file1 file2', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('touch')
@@ -55,7 +54,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse command with boolean flag', () => {
-      const result = parseShellCommand('ls -l')
+      const result = parseShellCommand('ls -l', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('ls')
@@ -65,7 +64,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse command with flag and args', () => {
-      const result = parseShellCommand('ls -l /home')
+      const result = parseShellCommand('ls -l /home', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('ls')
@@ -75,7 +74,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse command with multiple flags', () => {
-      const result = parseShellCommand('rm -r -f dir')
+      const result = parseShellCommand('rm -r -f dir', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('rm')
@@ -85,13 +84,13 @@ describe('ShellCommandParser', () => {
     })
 
     it('should handle aliases (vi, vim)', () => {
-      const viResult = parseShellCommand('vi file.yaml')
+      const viResult = parseShellCommand('vi file.yaml', registry)
       expect(viResult.ok).toBe(true)
       if (viResult.ok) {
         expect(viResult.value.command).toBe('vi')
       }
 
-      const vimResult = parseShellCommand('vim file.yaml')
+      const vimResult = parseShellCommand('vim file.yaml', registry)
       expect(vimResult.ok).toBe(true)
       if (vimResult.ok) {
         expect(vimResult.value.command).toBe('vim')
@@ -99,15 +98,15 @@ describe('ShellCommandParser', () => {
     })
 
     it('should reject unknown command', () => {
-      const result = parseShellCommand('unknown-command')
+      const result = parseShellCommand('unknown-command', registry)
       expect(result.ok).toBe(false)
       if (!result.ok) {
-        expect(result.error).toContain('Unknown command')
+        expect(result.error).toContain('command not found')
       }
     })
 
     it('should reject empty command', () => {
-      const result = parseShellCommand('   ')
+      const result = parseShellCommand('   ', registry)
       expect(result.ok).toBe(false)
       if (!result.ok) {
         expect(result.error).toContain('empty')
@@ -115,16 +114,16 @@ describe('ShellCommandParser', () => {
     })
 
     it('should trim whitespace', () => {
-      const result = parseShellCommand('  pwd  ')
+      const result = parseShellCommand('  pwd  ', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('pwd')
       }
     })
 
-    it('should validate all commands in VALID_COMMANDS', () => {
-      for (const cmd of VALID_COMMANDS) {
-        const result = parseShellCommand(cmd)
+    it('should validate all commands in registry', () => {
+      for (const cmd of registry) {
+        const result = parseShellCommand(cmd, registry)
         expect(result.ok).toBe(true)
         if (result.ok) {
           expect(result.value.command).toBe(cmd)
@@ -135,7 +134,7 @@ describe('ShellCommandParser', () => {
     // ─── Flags Combinés ────────────────────────────────────────────────────
 
     it('should parse combined flags like ls -la (realistic shell behavior)', () => {
-      const result = parseShellCommand('ls -la')
+      const result = parseShellCommand('ls -la', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('ls')
@@ -146,7 +145,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse combined flags like rm -rf (realistic shell behavior)', () => {
-      const result = parseShellCommand('rm -rf dir')
+      const result = parseShellCommand('rm -rf dir', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('rm')
@@ -157,7 +156,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse combined flags with arguments (realistic shell behavior)', () => {
-      const result = parseShellCommand('ls -la /home')
+      const result = parseShellCommand('ls -la /home', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('ls')
@@ -168,7 +167,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse multiple combined flags (realistic shell behavior)', () => {
-      const result = parseShellCommand('ls -la -R /home')
+      const result = parseShellCommand('ls -la -R /home', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('ls')
@@ -181,7 +180,7 @@ describe('ShellCommandParser', () => {
     // ─── Cas Limites Parsing ───────────────────────────────────────────────
 
     it('should handle multiple spaces between tokens', () => {
-      const result = parseShellCommand('ls    -l    /home')
+      const result = parseShellCommand('ls    -l    /home', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('ls')
@@ -191,7 +190,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should handle command with only flags', () => {
-      const result = parseShellCommand('ls -l -a')
+      const result = parseShellCommand('ls -l -a', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('ls')
@@ -201,7 +200,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should handle double dash flag', () => {
-      const result = parseShellCommand('ls --')
+      const result = parseShellCommand('ls --', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('ls')
@@ -212,7 +211,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should handle triple dash', () => {
-      const result = parseShellCommand('ls ---')
+      const result = parseShellCommand('ls ---', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('ls')
@@ -223,7 +222,7 @@ describe('ShellCommandParser', () => {
     // ─── Chemins avec Caractères Spéciaux ─────────────────────────────────
 
     it('should parse paths with dashes', () => {
-      const result = parseShellCommand('cd my-dir')
+      const result = parseShellCommand('cd my-dir', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('cd')
@@ -232,7 +231,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse paths with underscores', () => {
-      const result = parseShellCommand('cd my_dir')
+      const result = parseShellCommand('cd my_dir', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('cd')
@@ -241,7 +240,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse paths with dots', () => {
-      const result = parseShellCommand('cat file.name.txt')
+      const result = parseShellCommand('cat file.name.txt', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('cat')
@@ -250,7 +249,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse relative paths', () => {
-      const result = parseShellCommand('cd ../dir')
+      const result = parseShellCommand('cd ../dir', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('cd')
@@ -259,7 +258,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse current directory path', () => {
-      const result = parseShellCommand('cd .')
+      const result = parseShellCommand('cd .', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('cd')
@@ -268,7 +267,7 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse parent directory path', () => {
-      const result = parseShellCommand('cd ..')
+      const result = parseShellCommand('cd ..', registry)
       expect(result.ok).toBe(true)
       if (result.ok) {
         expect(result.value.command).toBe('cd')
@@ -277,13 +276,13 @@ describe('ShellCommandParser', () => {
     })
 
     it('should parse absolute vs relative paths', () => {
-      const absolute = parseShellCommand('cd /home/kube')
+      const absolute = parseShellCommand('cd /home/kube', registry)
       expect(absolute.ok).toBe(true)
       if (absolute.ok) {
         expect(absolute.value.args).toEqual(['/home/kube'])
       }
 
-      const relative = parseShellCommand('cd ../dir')
+      const relative = parseShellCommand('cd ../dir', registry)
       expect(relative.ok).toBe(true)
       if (relative.ok) {
         expect(relative.value.args).toEqual(['../dir'])

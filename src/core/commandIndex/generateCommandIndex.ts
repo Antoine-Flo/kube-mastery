@@ -1,5 +1,5 @@
 import { KUBECTL_ROOT_COMMAND_SPEC } from '../kubectl/cli/registry/root'
-import { VALID_COMMANDS } from '../shell/commands/core/ShellCommandParser'
+import { getShellRegistryCommandNames } from '../shell/commands'
 import type { KubectlCommandSpec, KubectlFlagSpec } from '../kubectl/cli/model'
 import { KUBECTL_RESOURCES } from '../kubectl/commands/resources'
 
@@ -124,7 +124,8 @@ const findCommandByPath = (path: readonly string[]): KubectlCommandSpec | undefi
 }
 
 const collectShellLines = (): string[] => {
-  const lines = VALID_COMMANDS.map((commandName) => {
+  const commandNames = [...getShellRegistryCommandNames()]
+  const lines = commandNames.map((commandName) => {
     const flags = SHELL_FLAGS[commandName] ?? []
     const flagsText = flags.length > 0 ? flags.join(', ') : 'none'
     return `bash ${commandName} | flags:${flagsText}`

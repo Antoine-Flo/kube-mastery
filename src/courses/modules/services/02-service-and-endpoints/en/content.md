@@ -256,9 +256,9 @@ spec:
 ```bash
 kubectl apply -f web-headless-service.yaml
 
-# Query DNS from inside the cluster
-kubectl run dns-test --image=busybox --rm -it --restart=Never -- sh -c \
-  'nslookup web-service && echo "---" && nslookup web-headless'
+# Query DNS from inside the cluster (run twice, compare the answers)
+kubectl run dns-svc --image=busybox --rm -it --restart=Never -- nslookup web-service
+kubectl run dns-headless --image=busybox --rm -it --restart=Never -- nslookup web-headless
 ```
 
 For `web-service` you'll see a single IP (the ClusterIP). For `web-headless` you'll see multiple A records , one per Pod IP.

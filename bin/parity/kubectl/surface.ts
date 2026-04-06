@@ -61,6 +61,11 @@ const normalizeDynamicTokensForParity = (value: string): string => {
       /\bresourceVersion:\s*["']?[^"'\n]+["']?/g,
       'resourceVersion: <resource-version>'
     )
+    .replace(
+      /Resource Version:\s+<unknown>/gi,
+      'resource version: <resource-version>'
+    )
+    .replace(/UID:\s+<unknown>/gi, 'UID:                 <uid>')
 }
 
 export const normalizeKubectlCommandStdoutForParity = (
@@ -74,5 +79,17 @@ export const normalizeKubectlCommandStderrForParity = (
   _command: string,
   stderr: string
 ): string => {
-  return normalizeDynamicTokensForParity(stderr)
+  const filtered = stderr
+    .split('\n')
+    .filter((line) => {
+      const isShortNamePriorityWarning =
+        line.startsWith('Warning: short name "') &&
+        line.includes('could also match lower priority resource')
+      if (isShortNamePriorityWarning) {
+        return false
+      }
+      return true
+    })
+    .join('\n')
+  return normalizeDynamicTokensForParity(filtered)
 }

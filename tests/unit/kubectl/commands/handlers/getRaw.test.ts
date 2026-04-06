@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { createEvent } from '../../../../../src/core/cluster/ressources/Event'
 import { createNamespace } from '../../../../../src/core/cluster/ressources/Namespace'
 import { handleGetRaw } from '../../../../../src/core/kubectl/commands/handlers/getRaw'
 import { createClusterStateData } from '../../../helpers/utils'
@@ -94,6 +95,46 @@ describe('kubectl get raw handler', () => {
     expect(payload.resources.map((resource) => resource.name)).toContain(
       'ingressclasses'
     )
+  })
+
+  it('returns events API resources for "/apis/events.k8s.io/v1"', () => {
+    const state = createClusterStateData()
+    const output = handleGetRaw(state, '/apis/events.k8s.io/v1')
+    const payload = JSON.parse(output) as {
+      kind: string
+      resources: Array<{ name: string }>
+    }
+
+    expect(payload.kind).toBe('APIResourceList')
+    expect(payload.resources.map((resource) => resource.name)).toContain('events')
+  })
+
+  it('returns namespaced events.k8s.io/v1 EventList', () => {
+    const event = createEvent({
+      name: 'web-started.1',
+      namespace: 'default',
+      involvedObject: {
+        apiVersion: 'v1',
+        kind: 'Pod',
+        name: 'web',
+        namespace: 'default'
+      },
+      reason: 'Started',
+      message: 'Started pod default/web'
+    })
+    const state = createClusterStateData({ events: [event] })
+    const output = handleGetRaw(state, '/apis/events.k8s.io/v1/namespaces/default/events')
+    const payload = JSON.parse(output) as {
+      apiVersion: string
+      kind: string
+      items: Array<{ regarding: { name: string }; note: string }>
+    }
+
+    expect(payload.apiVersion).toBe('events.k8s.io/v1')
+    expect(payload.kind).toBe('EventList')
+    expect(payload.items).toHaveLength(1)
+    expect(payload.items[0].regarding.name).toBe('web')
+    expect(payload.items[0].note).toBe('Started pod default/web')
   })
 
   it('returns not found message for unknown raw endpoint', () => {

@@ -139,6 +139,58 @@ describe('ContainerProcessRuntime', () => {
     expect(process.reason).toBe('Error')
   })
 
+  it('merges sh -c with separate args into one script argv', () => {
+    const runtime = createContainerProcessRuntime()
+    const process = runtime.ensureMainProcess({
+      nodeName: 'worker-1',
+      namespace: 'default',
+      podName: 'sh-c-args-pod',
+      containerName: 'main',
+      command: ['sh', '-c'],
+      args: ['ls', '/tmp']
+    })
+    expect(process.argv).toEqual(['sh', '-c', 'ls /tmp'])
+    expect(process.state).toBe('Running')
+  })
+
+  it('parses exit from last line of multiline sh -c script in args', () => {
+    const runtime = createContainerProcessRuntime()
+    const process = runtime.ensureMainProcess({
+      nodeName: 'worker-1',
+      namespace: 'default',
+      podName: 'multiline-exit-pod',
+      containerName: 'main',
+      command: ['/bin/sh', '-c'],
+      args: ['pwd\nexit 4']
+    })
+    expect(process.argv).toEqual(['/bin/sh', '-c', 'pwd\nexit 4'])
+    expect(process.state).toBe('Exited')
+    expect(process.exitCode).toBe(4)
+  })
+
+  it('detects sleep duration from last line of multiline sh -c script', () => {
+    vi.useFakeTimers()
+    const runtime = createContainerProcessRuntime()
+    runtime.ensureMainProcess({
+      nodeName: 'worker-1',
+      namespace: 'default',
+      podName: 'multiline-sleep-pod',
+      containerName: 'main',
+      command: ['sh', '-c'],
+      args: ['echo ok\nsleep 2']
+    })
+    vi.advanceTimersByTime(2500)
+    const completed = runtime.getMainProcess({
+      nodeName: 'worker-1',
+      namespace: 'default',
+      podName: 'multiline-sleep-pod',
+      containerName: 'main'
+    })
+    expect(completed?.state).toBe('Exited')
+    expect(completed?.exitCode).toBe(0)
+    vi.useRealTimers()
+  })
+
   it('keeps sleep infinity running', () => {
     vi.useFakeTimers()
     const runtime = createContainerProcessRuntime()

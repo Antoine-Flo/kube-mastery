@@ -337,6 +337,50 @@ data:
     expect(result.value).toContain('created')
   })
 
+  it('should create event from yaml and make it queryable', () => {
+    const yaml = `apiVersion: v1
+kind: Event
+metadata:
+  name: pod-started.12345
+  namespace: default
+involvedObject:
+  apiVersion: v1
+  kind: Pod
+  name: nginx-pod
+  namespace: default
+reason: Started
+message: Started container nginx
+type: Normal
+count: 1
+firstTimestamp: "2026-04-06T09:00:00.000Z"
+lastTimestamp: "2026-04-06T09:00:00.000Z"
+`
+
+    fileSystem.createFile('event.yaml')
+    fileSystem.writeFile('event.yaml', yaml)
+
+    const parsed = parseCommand('kubectl apply -f event.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleApply(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('event/pod-started.12345 created')
+
+    const createdEvent = apiServer.findResource('Event', 'pod-started.12345', 'default')
+    expect(createdEvent.ok).toBe(true)
+    if (!createdEvent.ok) {
+      return
+    }
+    expect(createdEvent.value.reason).toBe('Started')
+    expect(createdEvent.value.message).toBe('Started container nginx')
+  })
+
   it('should return unchanged when applying same deployment manifest twice', () => {
     const yaml = `apiVersion: apps/v1
 kind: Deployment

@@ -53,11 +53,6 @@ Helm
 - helm pull <chart>
 - helm dependency update <chart-dir>
 
-Events
-- kubectl get events
-- kubectl get events -A
-- kubectl describe events
-
 Port-forward
 - kubectl port-forward pod/<name> 8080:80
 - kubectl port-forward service/<name> 8080:80
@@ -133,11 +128,6 @@ kubectl set family
 Patch type variants
 - kubectl patch <resource>/<name> --type=json -p '[{"op":"replace","path":"/spec/replicas","value":3}]'
 - kubectl patch <resource>/<name> --type=strategic -p '<json>'
-
-Field selector
-- kubectl get pods --field-selector=status.phase=Running
-- kubectl get pods --field-selector=spec.nodeName=<node>
-- kubectl get events --field-selector=involvedObject.name=<pod>
 
 Other common kubectl commands currently missing
 - kubectl completion bash

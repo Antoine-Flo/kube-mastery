@@ -48,7 +48,7 @@ export const CONFIG = {
     defaultNodeRoles: ['control-plane', 'worker', 'worker'],
     simulatorClusterName: 'sim',
     conformanceClusterName: 'conformance',
-    kubeconfigServerUrl: 'https://127.0.0.1:34719'
+    kubeconfigServerUrl: 'https://127.0.0.1:41666'
   },
   runtime: {
     simPodPendingDelayRangeMs: {

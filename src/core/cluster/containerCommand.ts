@@ -36,18 +36,34 @@ export function getSimulatedCommandExitCode(
   const args = container.args ?? []
   const parseExitCode = (script: string): number | undefined => {
     const normalizedScript = stripMatchingQuotes(script).trim()
-    const exitMatch = normalizedScript.match(/^exit\s+(-?\d+)\s*$/)
-    if (exitMatch == null) {
-      return undefined
+    const lines = normalizedScript
+      .split('\n')
+      .map((line) => {
+        return line.trim()
+      })
+      .filter((line) => {
+        return line.length > 0
+      })
+    for (let index = lines.length - 1; index >= 0; index -= 1) {
+      const exitMatch = lines[index].match(/^exit\s+(-?\d+)\s*$/)
+      if (exitMatch == null) {
+        continue
+      }
+      const parsed = Number.parseInt(exitMatch[1], 10)
+      if (Number.isNaN(parsed)) {
+        return undefined
+      }
+      return parsed
     }
-    const parsed = Number.parseInt(exitMatch[1], 10)
-    if (Number.isNaN(parsed)) {
-      return undefined
-    }
-    return parsed
+    return undefined
   }
   const isShellCommand = (value: string): boolean => {
-    return value === 'sh' || value === '/bin/sh'
+    return (
+      value === 'sh' ||
+      value === '/bin/sh' ||
+      value === 'bash' ||
+      value === '/bin/bash'
+    )
   }
 
   if (

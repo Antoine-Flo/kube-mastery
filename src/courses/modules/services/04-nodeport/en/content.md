@@ -217,8 +217,7 @@ minikube service web-nodeport --url
 **5. Confirm internal access still works**
 
 ```bash
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- \
-  curl -s http://web-nodeport:80
+kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- curl -s http://web-nodeport:80
 # Still works via ClusterIP internally
 ```
 

@@ -71,7 +71,11 @@ export const parseCliArgs = (
 }
 
 export const getParityUsageText = (): string => {
-  return 'Usage: npm run parity:manual -- --cmd "kubectl get pods" [--cmd "..."] [--context kind-kind]'
+  return [
+    'Usage: npm run parity:manual -- --cmd "kubectl get pods" [--cmd "..."] [--context kind-kind] [--no-reset-kind]',
+    'Exec one-shot example: --cmd "kubectl run parity-tmp --image=busybox:1.36 --restart=Never -- sleep 3600" --cmd "kubectl exec parity-tmp -- sh -c pwd".',
+    'Note: simulation stdout for exec may differ from kind when virtual container paths or shell registry differ.'
+  ].join('\n')
 }
 
 export const printParityHeader = (

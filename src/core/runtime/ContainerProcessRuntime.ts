@@ -39,12 +39,30 @@ const buildProcessKey = (identity: ContainerProcessIdentity): string => {
   return `${identity.nodeName}|${identity.namespace}|${identity.podName}|${identity.containerName}`
 }
 
+const isShellBinary = (value: string): boolean => {
+  return (
+    value === 'sh' ||
+    value === '/bin/sh' ||
+    value === 'bash' ||
+    value === '/bin/bash'
+  )
+}
+
 const normalizeArgv = (
   command: string[] | undefined,
   args: string[] | undefined
 ): string[] => {
   if (command != null && command.length > 0) {
-    return [...command]
+    if (
+      isShellBinary(command[0]) &&
+      command.length === 2 &&
+      command[1] === '-c' &&
+      args != null &&
+      args.length > 0
+    ) {
+      return [command[0], '-c', args.join(' ')]
+    }
+    return [...command, ...(args ?? [])]
   }
   if (args != null && args.length > 0) {
     return [...args]
@@ -52,27 +70,73 @@ const normalizeArgv = (
   return []
 }
 
-const parseShellExitCode = (argv: string[]): number | undefined => {
+const getShCScriptBody = (argv: string[]): string | undefined => {
   if (argv.length < 3) {
     return undefined
   }
-  const executable = argv[0]
-  if (executable !== 'sh' && executable !== '/bin/sh') {
+  if (!isShellBinary(argv[0]) || argv[1] !== '-c') {
     return undefined
   }
-  if (argv[1] !== '-c') {
+  return argv.slice(2).join(' ')
+}
+
+const parseExitCodeFromScriptLines = (script: string): number | undefined => {
+  const lines = script
+    .split('\n')
+    .map((line) => {
+      return line.trim()
+    })
+    .filter((line) => {
+      return line.length > 0
+    })
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const match = lines[index].match(/^exit\s+(-?\d+)\s*$/)
+    if (match == null) {
+      continue
+    }
+    const parsed = Number.parseInt(match[1], 10)
+    if (Number.isNaN(parsed)) {
+      return undefined
+    }
+    return parsed
+  }
+  return undefined
+}
+
+const parseShellExitCode = (argv: string[]): number | undefined => {
+  const script = getShCScriptBody(argv)
+  if (script == null) {
     return undefined
   }
-  const script = argv.slice(2).join(' ').trim()
-  const match = script.match(/^exit\s+(-?\d+)\s*$/)
-  if (match == null) {
-    return undefined
+  return parseExitCodeFromScriptLines(script)
+}
+
+const parseSleepSecondsFromShScript = (script: string): number | undefined => {
+  const lines = script
+    .split('\n')
+    .map((line) => {
+      return line.trim()
+    })
+    .filter((line) => {
+      return line.length > 0
+    })
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const line = lines[index]
+    const infinityMatch = line.match(/^sleep\s+(infinity|inf)\s*$/i)
+    if (infinityMatch != null) {
+      return Number.POSITIVE_INFINITY
+    }
+    const match = line.match(/^sleep\s+(\d+)\s*$/)
+    if (match == null) {
+      continue
+    }
+    const parsed = Number.parseInt(match[1], 10)
+    if (Number.isNaN(parsed) || parsed < 0) {
+      return undefined
+    }
+    return parsed
   }
-  const parsed = Number.parseInt(match[1], 10)
-  if (Number.isNaN(parsed)) {
-    return undefined
-  }
-  return parsed
+  return undefined
 }
 
 const parseSleepSeconds = (argv: string[]): number | undefined => {
@@ -124,7 +188,13 @@ const buildProcessRecord = (
       reason: shellExitCode === 0 ? 'Completed' : 'Error'
     }
   }
-  const sleepSeconds = parseSleepSeconds(argv)
+  let sleepSeconds = parseSleepSeconds(argv)
+  if (sleepSeconds == null) {
+    const scriptBody = getShCScriptBody(argv)
+    if (scriptBody != null) {
+      sleepSeconds = parseSleepSecondsFromShScript(scriptBody)
+    }
+  }
   if (sleepSeconds != null) {
     if (!Number.isFinite(sleepSeconds)) {
       return {

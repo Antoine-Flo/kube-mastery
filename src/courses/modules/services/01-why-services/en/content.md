@@ -168,8 +168,7 @@ The `CLUSTER-IP` here (`10.96.45.12`) is your stable address. It will not change
 
 ```bash
 # Run a temporary Pod and use nslookup to resolve the Service name
-kubectl run dns-test --image=busybox --rm -it --restart=Never -- \
-  nslookup backend-service
+kubectl run dns-test --image=busybox --rm -it --restart=Never -- nslookup backend-service
 # Server:    10.96.0.10
 # Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
 #

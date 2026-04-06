@@ -186,16 +186,14 @@ kubectl get endpoints web-service
 **4. Test connectivity from inside the cluster using DNS**
 
 ```bash
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- \
-  curl -s http://web-service
+kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- curl -s http://web-service
 # Should return nginx's HTML , the request was load-balanced to one of the three Pods
 ```
 
 **5. Test the fully-qualified DNS name from a different namespace**
 
 ```bash
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never \
-  -n kube-system -- curl -s http://web-service.default.svc.cluster.local
+kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -n kube-system -- curl -s http://web-service.default.svc.cluster.local
 # Should also return nginx's HTML , crossing namespace boundary via FQDN
 ```
 
@@ -203,22 +201,17 @@ kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never \
 
 ```bash
 # Run kubectl get pods -l app=web, pick one pod NAME, then:
-kubectl exec <POD-NAME> -- env | grep WEB_SERVICE
-# WEB_SERVICE_SERVICE_HOST=10.96.45.12
-# WEB_SERVICE_SERVICE_PORT=80
-# WEB_SERVICE_PORT=tcp://10.96.45.12:80
-# WEB_SERVICE_PORT_80_TCP=tcp://10.96.45.12:80
-# WEB_SERVICE_PORT_80_TCP_PROTO=tcp
-# WEB_SERVICE_PORT_80_TCP_PORT=80
-# WEB_SERVICE_PORT_80_TCP_ADDR=10.96.45.12
+kubectl exec <POD-NAME> -- printenv WEB_SERVICE_SERVICE_HOST
+kubectl exec <POD-NAME> -- printenv WEB_SERVICE_SERVICE_PORT
 ```
+
+You can also run `kubectl exec <POD-NAME> -- printenv` and scan the list for variables starting with `WEB_SERVICE_`.
 
 **7. Show what happens when a port mismatch would cause issues**
 
 ```bash
-# Try to reach the Service on a port it's not listening on
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- \
-  curl -s --connect-timeout 3 http://web-service:9999 || echo "Connection failed as expected"
+# Try to reach the Service on a port it's not listening on (expect timeout or empty output)
+kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- curl -s --connect-timeout 3 http://web-service:9999
 ```
 
 **8. Clean up**

@@ -203,14 +203,23 @@ export const handleExec = (
   const command = parsed.execCommand[0]
   const args = parsed.execCommand
 
-  // Shell commands - enter interactive mode
-  if (
-    command === 'sh' ||
-    command === 'bash' ||
-    command === '/bin/sh' ||
-    command === '/bin/bash'
-  ) {
-    // This will be handled by the main dispatcher to enter container mode
+  const interactiveShells = new Set(['sh', 'bash', '/bin/sh', '/bin/bash'])
+  if (interactiveShells.has(command)) {
+    if (args[1] === '-c') {
+      if (args.length < 3) {
+        return 'Error: flag needs an argument: c'
+      }
+      const script = args.slice(2).join(' ')
+      if (script.trim().length === 0) {
+        return 'Error: flag needs an argument: c'
+      }
+      return buildShellCommandDirective(
+        podName,
+        containerName,
+        namespace,
+        script
+      )
+    }
     return buildEnterContainerDirective(podName, containerName, namespace)
   }
 

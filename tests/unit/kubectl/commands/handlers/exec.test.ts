@@ -302,6 +302,71 @@ describe('kubectl exec handler', () => {
 
       expect(result).toBe('ENTER_CONTAINER:default:my-pod:sidecar')
     })
+
+    it('should return SHELL_COMMAND for sh -c one-shot script', () => {
+      const pod = createPod({
+        name: 'my-pod',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'nginx:latest' }],
+        phase: 'Running'
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'my-pod',
+        execCommand: ['sh', '-c', 'ls', '/tmp']
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
+
+      expect(result).toBe(
+        `SHELL_COMMAND:default:my-pod:main:${encodeURIComponent('ls /tmp')}`
+      )
+    })
+
+    it('should return SHELL_COMMAND for /bin/sh -c multiline script', () => {
+      const pod = createPod({
+        name: 'my-pod',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'nginx:latest' }],
+        phase: 'Running'
+      })
+      const state = createState([pod])
+      const script = "pwd\ncat /etc/hosts"
+      const parsed = createParsedCommand({
+        name: 'my-pod',
+        execCommand: ['/bin/sh', '-c', script]
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
+
+      expect(result).toBe(
+        `SHELL_COMMAND:default:my-pod:main:${encodeURIComponent(script)}`
+      )
+    })
+
+    it('should return error when sh -c has no script', () => {
+      const pod = createPod({
+        name: 'my-pod',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'nginx:latest' }],
+        phase: 'Running'
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'my-pod',
+        execCommand: ['sh', '-c']
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
+
+      expect(result).toContain('flag needs an argument')
+    })
   })
 
   describe('env command', () => {
