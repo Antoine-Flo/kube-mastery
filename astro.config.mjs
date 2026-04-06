@@ -1,6 +1,6 @@
 import { defineConfig } from 'astro/config'
 import { fileURLToPath } from 'node:url'
-import mermaid from './src/integrations/astro-mermaid-stable.js'
+import mermaid from 'astro-mermaid'
 import remarkCalloutColons from './src/plugins/remark-callout-colons.js'
 
 import cloudflare from '@astrojs/cloudflare'
