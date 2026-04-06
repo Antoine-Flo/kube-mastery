@@ -9,8 +9,6 @@ interface Props {
   labelHideTerminal: string
   labelContactSupport: string
   labelReloadTerminal: string
-  /** "show" = barre dans lp__show-term (bouton affiche le terminal), "hide" = barre dans lp__term-wrap (bouton masque le terminal) */
-  terminalAction: 'show' | 'hide'
   /** When false, hide cluster and reload (no emulated environment). */
   showTerminalActions?: boolean
   /** Show course outline action (mobile drawer trigger). */
@@ -23,12 +21,10 @@ const {
   labelHideTerminal,
   labelContactSupport,
   labelReloadTerminal,
-  terminalAction,
   showTerminalActions = true,
   showOutlineAction = false
 } = Astro.props
-const labelTerminal =
-  terminalAction === 'show' ? labelShowTerminal : labelHideTerminal
+const labelTerminal = labelShowTerminal
 ---
 
 <div class="lp__content-bar">
@@ -59,7 +55,10 @@ const labelTerminal =
         color="gray"
         class="lp__content-bar-btn lp__content-bar-btn--term-toggle"
         data-lesson-term-toggle
+        data-label-show-terminal={labelShowTerminal}
+        data-label-hide-terminal={labelHideTerminal}
         aria-label={labelTerminal}
+        title={labelTerminal}
       >
         <Terminal size={18} />
       </Button>
@@ -131,11 +130,30 @@ const labelTerminal =
     }
   }
 
+  function setTerminalToggleState(btn: Element) {
+    if (!(btn instanceof HTMLElement)) {
+      return
+    }
+    const root = document.querySelector('.lesson-layout-root')
+    const isOpen = root?.getAttribute('data-terminal-open') === 'true'
+    const showLabel = btn.getAttribute('data-label-show-terminal') ?? ''
+    const hideLabel = btn.getAttribute('data-label-hide-terminal') ?? ''
+    const label = isOpen ? hideLabel : showLabel
+    btn.setAttribute('aria-label', label)
+    btn.setAttribute('title', label)
+  }
+
   document.addEventListener('cluster-panel-close', () => {
     const btn = document.querySelector('[data-cluster-trigger]')
     if (btn) {
       setVizState(btn, false)
     }
+  })
+
+  document.addEventListener('lesson-terminal-state-changed', () => {
+    document.querySelectorAll('[data-lesson-term-toggle]').forEach((btn) => {
+      setTerminalToggleState(btn)
+    })
   })
 
   document.addEventListener('click', (e) => {
@@ -185,6 +203,13 @@ const labelTerminal =
     if (btn) {
       setVizState(btn, false)
     }
+    document.querySelectorAll('[data-lesson-term-toggle]').forEach((termBtn) => {
+      setTerminalToggleState(termBtn)
+    })
+  })
+
+  document.querySelectorAll('[data-lesson-term-toggle]').forEach((termBtn) => {
+    setTerminalToggleState(termBtn)
   })
 </script>
 

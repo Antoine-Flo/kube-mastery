@@ -244,6 +244,12 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
 
       const isLesson =
         el.dataset.lessonTerminal === 'true' || el.closest('.lp-root') != null
+      const lessonLayoutRoot = el.closest('.lesson-layout-root')
+      const isMobileTerminalClosedAtBoot =
+        isLesson &&
+        lessonLayoutRoot instanceof HTMLElement &&
+        window.matchMedia('(max-width: 1024px)').matches &&
+        lessonLayoutRoot.getAttribute('data-terminal-open') !== 'true'
       // Déjà monté (évite double xterm après astro:page-load / view transitions)
       if (box.querySelector('.xterm')) {
         loader.style.display = 'none'
@@ -306,6 +312,9 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
         })
         return
       }
+      if (isMobileTerminalClosedAtBoot) {
+        return
+      }
       if (lessonPending.has(root)) {
         return
       }
@@ -366,6 +375,10 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
     setTimeout(() => {
       init()
     }, 0)
+  })
+
+  document.addEventListener('lesson-terminal-open', () => {
+    init()
   })
 
   document.addEventListener('astro:before-swap', (ev: Event) => {
