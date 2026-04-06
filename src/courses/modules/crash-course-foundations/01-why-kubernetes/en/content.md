@@ -15,18 +15,18 @@ If a container crashes, Kubernetes restarts it. If a node goes offline, it resch
 
 This loop of observation and correction is called **reconciliation**, and it is the key mental model for Kubernetes. The system never "finishes", it keeps reconciling actual state with desired state for the lifetime of the cluster.
 
-```mermaid
-graph LR
+@@@
+graph TD
     DS["Desired State<br/>(your manifest)"]
     CTL["Kubernetes<br/>Controller"]
     AS["Actual State<br/>(running cluster)"]
     ACT["Take Action<br/>(create / delete / update)"]
 
     DS --> CTL
-    AS --> CTL
     CTL -->|"gap detected"| ACT
     ACT --> AS
-```
+    AS -. "drift detected" .-> CTL
+@@@
 
 ## Beyond Self-Healing
 

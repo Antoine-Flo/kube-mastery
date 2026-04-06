@@ -17,7 +17,7 @@ A **PersistentVolume (PV)** represents real durable storage in the cluster. A **
 
 When you create a PVC, Kubernetes searches for an available PV that satisfies the request. It looks for a PV with at least the requested capacity and with compatible access modes. If a match exists, the PVC is **bound** to it - the two objects are linked, and no other PVC can use that PV until it's released. If no matching PV exists, the PVC stays in a `Pending` state until one becomes available.
 
-```mermaid
+@@@
 graph LR
     PV["PersistentVolume\n1Gi, ReadWriteOnce"]
     PVC["PersistentVolumeClaim\nrequests: 1Gi, RWO"]
@@ -25,7 +25,7 @@ graph LR
 
     PVC -->|"bound to"| PV
     Pod -->|"uses"| PVC
-```
+@@@
 
 ## Access Modes
 

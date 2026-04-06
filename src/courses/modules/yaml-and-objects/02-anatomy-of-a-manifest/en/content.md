@@ -72,14 +72,14 @@ The engine that bridges `spec` and `status` is called the **reconciliation loop*
 
 This loop runs in the background at all times. It's why Kubernetes is described as **self-healing**. If you have a Deployment with `replicas: 3` and a node fails, taking one Pod with it, the ReplicaSet controller will notice that only two Pods are running (observed state) versus the three you requested (desired state), and it will immediately schedule a new Pod somewhere else. You didn't have to do anything.
 
-```mermaid
+@@@
 flowchart TB
     You["You (kubectl apply)"] -->|"writes spec"| APIServer["API Server + etcd"]
     APIServer -->|"stores object"| Controller["Controller"]
     Controller -->|"acts on cluster"| Cluster["Cluster (Nodes, Pods)"]
     Cluster -->|"reports current state"| Controller
     Controller -->|"updates status"| APIServer
-```
+@@@
 
 ## Why This Design Matters
 

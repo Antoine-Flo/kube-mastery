@@ -50,7 +50,7 @@ spec:
 
 With this configuration and three replicas, the update proceeds like this: one new Pod starts and Kubernetes waits for it to become Ready. Once it is, one old Pod is terminated. This repeats until all three Pods are running the new version. At no point are fewer than two Pods available.
 
-```mermaid
+@@@
 sequenceDiagram
     participant RS1 as ReplicaSet v1<br/>(nginx:1.28)
     participant RS2 as ReplicaSet v2<br/>(nginx:1.26)
@@ -70,7 +70,7 @@ sequenceDiagram
     RS1->>RS1: -1 Pod
     Note over RS1: replicas: 0 (kept for rollback)
     Note over RS2: replicas: 3
-```
+@@@
 
 ## Monitoring and Rolling Back
 

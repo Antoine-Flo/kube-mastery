@@ -49,7 +49,7 @@ This is the component that actually interfaces with the operating system to crea
 
 ## How a Request Flows Through the Cluster
 
-```mermaid
+@@@
 sequenceDiagram
     participant You as kubectl (your laptop)
     participant API as API Server
@@ -68,7 +68,7 @@ sequenceDiagram
     KL->>API: watch: Pod assigned to my node
     KL->>KL: pull image, start container
     KL->>API: report status: Running
-```
+@@@
 
 Every step in this chain is independent and event-driven. The API server stores state. The controllers and the scheduler react to changes in that state. The kubelet reacts to assignments. If any component is temporarily unavailable, the others continue working and catch up when it returns.
 

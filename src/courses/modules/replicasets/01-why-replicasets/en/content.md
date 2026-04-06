@@ -35,7 +35,7 @@ The self-healing behavior is what makes ReplicaSets, and the controllers built o
 
 When a Pod managed by a ReplicaSet disappears (due to a node failure, an accidental `kubectl delete pod`, or any other reason), the ReplicaSet detects the discrepancy within seconds. Its desired state says three Pods; the actual state now has two. The ReplicaSet immediately creates a new Pod on a healthy node. This happens without any human intervention, no pager alert at 2 AM, no runbook entry that says "if a Pod disappears, run this command."
 
-```mermaid
+@@@
 sequenceDiagram
     participant RS as ReplicaSet
     participant API as API Server
@@ -51,7 +51,7 @@ sequenceDiagram
     API->>N2: Schedule Pod A' on Node 2
     N2-->>API: Pod A' Running
     Note over RS,N2: Restored: 3 Pods running on Node 2 & existing nodes
-```
+@@@
 
 ## Horizontal Scaling
 

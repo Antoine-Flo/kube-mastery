@@ -50,7 +50,7 @@ A key benefit of `kubectl apply` over `kubectl create` is that `apply` will **up
 
 The journey from `kubectl apply -f pod.yaml` to a running container involves several components working in sequence. Understanding this flow will help you debug issues when things go wrong.
 
-```mermaid
+@@@
 sequenceDiagram
     participant You as You (kubectl)
     participant API as API Server
@@ -72,7 +72,7 @@ sequenceDiagram
     Kubelet->>CRI: Pull image, create container
     CRI-->>Kubelet: Container running
     Kubelet->>API: Update Pod status: Running
-```
+@@@
 
 Each step in sequence:
 

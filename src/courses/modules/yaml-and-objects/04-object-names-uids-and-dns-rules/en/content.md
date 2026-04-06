@@ -107,7 +107,7 @@ Since DNS hostnames must follow DNS rules, the Service's name must also be DNS-c
 
 Pods also get DNS records based on their IP address and namespace, though this is less commonly used for direct addressing. What matters more is that **Services** are the primary way applications find each other by name, so getting Service names right is essential for your app's internal networking.
 
-```mermaid
+@@@
 flowchart LR
     SVC["Service<br/>name: web-app<br/>namespace: production"]
     DNS["DNS Record<br/>web-app.production<br/>.svc.cluster.local"]
@@ -117,7 +117,7 @@ flowchart LR
     SVC -->|"Kubernetes<br/>creates"| DNS
     APP -->|"resolves"| DNS
     APP --> CONNECT
-```
+@@@
 
 Within the same namespace, applications can use a short name , just `web-app` , and DNS resolution will automatically expand it to the full form. Across namespaces, you need to use `web-app.production` or the fully qualified form.
 

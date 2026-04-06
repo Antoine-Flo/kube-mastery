@@ -163,7 +163,7 @@ The distinction between one list item with multiple fields (AND) versus multiple
 
 ## The Structure as a Diagram
 
-```mermaid
+@@@
 graph TD
     NP["NetworkPolicy"]
 
@@ -183,7 +183,7 @@ graph TD
     EG --> EGR["Rule (item in list)"]
     EGR --> TO["to[]<br/>Allowed destinations"]
     EGR --> PORTS2["ports[]"]
-```
+@@@
 
 ## Ports: Restricting Further
 

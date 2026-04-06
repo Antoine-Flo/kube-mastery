@@ -129,7 +129,7 @@ The typical workflow for using this technique looks like this:
 3. **Edit** the file to add or tune fields
 4. **Apply** the finalized manifest to the cluster
 
-```mermaid
+@@@
 flowchart TB
     CMD["kubectl create/run<br/>--dry-run=client -o yaml"]
     YAML["YAML file"]
@@ -141,7 +141,7 @@ flowchart TB
     YAML --> EDIT
     EDIT --> APPLY
     APPLY --> CLUSTER
-```
+@@@
 
 ## Why This Is So Useful
 

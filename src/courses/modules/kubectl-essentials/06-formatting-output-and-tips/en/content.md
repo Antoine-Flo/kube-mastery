@@ -77,7 +77,7 @@ You can combine output format flags freely. For example, `kubectl get pods -A -o
 
 ## Visualizing Output Formats
 
-```mermaid
+@@@
 flowchart LR
     Resource["Single Resource<br/>(e.g. a Pod)"]
 
@@ -86,7 +86,7 @@ flowchart LR
     Resource --> JP["-o jsonpath='...'<br/>Extract one field"]
     Resource --> CC["-o custom-columns<br/>Your own table"]
     Resource --> Table["Default table<br/>Compact, human-readable"]
-```
+@@@
 
 Each format serves a different audience: the default table for quick human scanning, YAML and JSON for deep inspection and scripting, JSONPath and custom-columns for extracting exactly what you need.
 

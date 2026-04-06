@@ -15,7 +15,7 @@ The reason Pods exist is **co-location**: sometimes you need two or more process
 
 Think of it like an apartment building. Each **apartment** is a Pod; the **roommates** inside are containers. They share the same street address (the Pod's IP) and the same mailbox. When the building manager (the scheduler) assigns an apartment, all roommates move in together, always on the same floor, always on the same node.
 
-```mermaid
+@@@
 flowchart TB
     subgraph Pod["Pod"]
         direction TB
@@ -33,7 +33,7 @@ flowchart TB
     Sidecar --> Net
     App -. can read/write .-> Vol
     Sidecar -. can read/write .-> Vol
-```
+@@@
 
 ## Single vs. Multi-Container Pods
 

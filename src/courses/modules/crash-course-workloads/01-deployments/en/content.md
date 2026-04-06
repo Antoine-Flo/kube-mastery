@@ -17,7 +17,7 @@ A **Deployment** manages a set of identical Pods. You declare how many you want,
 
 Deployments don't create Pods directly. They manage **ReplicaSets**, and ReplicaSets manage Pods. This extra layer is what enables zero-downtime updates: when you change the Pod template in a Deployment, a new ReplicaSet is created for the new version, and the old ReplicaSet is scaled down gradually. The old ReplicaSet is kept around at zero replicas so that rolling back is trivial - it's just a matter of scaling the old ReplicaSet back up.
 
-```mermaid
+@@@
 graph TB
     DEP["Deployment<br>web-app"]
     RS1["ReplicaSet v1<br>(replicas: 0, kept for rollback)"]
@@ -31,7 +31,7 @@ graph TB
     RS2 --> P1
     RS2 --> P2
     RS2 --> P3
-```
+@@@
 
 In day-to-day work, you almost never interact with ReplicaSets directly. You work with the Deployment, and the controller chain beneath it handles everything else. But knowing the hierarchy exists is important because it explains the naming pattern you'll see: Pod names end in two hashes, the first identifying which ReplicaSet owns the Pod, the second unique to the Pod itself.
 

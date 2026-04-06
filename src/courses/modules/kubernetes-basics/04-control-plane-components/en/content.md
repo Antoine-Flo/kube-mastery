@@ -73,7 +73,7 @@ This design allows Kubernetes to be cloud-agnostic at its core. The core compone
 
 ## How They Work Together
 
-```mermaid
+@@@
 sequenceDiagram
     participant U as kubectl (you)
     participant A as kube-apiserver
@@ -94,7 +94,7 @@ sequenceDiagram
     A->>E: Update Pods with nodeName
 
     Note over A,E: kubelets on nodes pick up assignments (next lesson)
-```
+@@@
 
 Every step of this flow goes through the API server. `etcd` is written to at each stage. The scheduler and controller manager are passive watchers, they use a watch mechanism that notifies them when relevant objects change, rather than polling constantly. This event-driven design keeps the control plane efficient even in large clusters.
 

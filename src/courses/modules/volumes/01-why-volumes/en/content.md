@@ -77,7 +77,7 @@ If you're building a database or any workload that cannot lose data when a Pod i
 
 Let's visualize what happens to volumes across different events:
 
-```mermaid
+@@@
 graph TD
     subgraph "Pod Lifecycle"
         A["Pod Created"] --> B["Volume Created<br/>(empty at start)"]
@@ -92,7 +92,7 @@ graph TD
         H["Container restart<br/>✅ Volume survives"]
         I["Pod deletion<br/>❌ emptyDir gone<br/>✅ PersistentVolume survives"]
     end
-```
+@@@
 
 ## Types of Volumes You'll Encounter
 

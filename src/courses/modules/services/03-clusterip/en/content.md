@@ -64,7 +64,7 @@ In the most common configuration, kube-proxy programs **iptables rules** on ever
 
 In clusters configured to use IPVS mode, kube-proxy uses the kernel's IPVS (IP Virtual Server) subsystem instead of iptables. IPVS is faster at scale (handles thousands of Services more efficiently than chains of iptables rules) and supports more sophisticated load balancing algorithms. The observable behaviour is the same.
 
-```mermaid
+@@@
 graph LR
     PA["Pod A<br/>(client)"]
     VIP["ClusterIP<br/>10.96.45.12:80<br/>(virtual, in iptables)"]
@@ -76,7 +76,7 @@ graph LR
     VIP -->|"iptables DNAT<br/>(random selection)"| PB1
     VIP -.->|"or"| PB2
     VIP -.->|"or"| PB3
-```
+@@@
 
 ## Reaching a ClusterIP Service from Inside the Cluster
 

@@ -52,7 +52,7 @@ Here is what happens step by step when a pod is deleted:
 5. If the process is still running when the grace period expires, Kubernetes sends **SIGKILL**, an immediate, forceful termination.
 6. The pod is removed from the cluster.
 
-```mermaid
+@@@
 sequenceDiagram
     participant kubectl
     participant API as API Server
@@ -71,7 +71,7 @@ sequenceDiagram
         Container-->>API: Killed
         API->>Pod: Remove pod
     end
-```
+@@@
 
 Your application should handle SIGTERM by stopping new work and finishing current work. If it does this well, graceful termination means zero dropped requests, which is why well-designed containerized applications always implement a SIGTERM handler.
 

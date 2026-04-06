@@ -70,7 +70,7 @@ The writer writes `hello` to `/data/file.txt`. The reader waits two seconds, the
 
 ## How Containers Communicate Through a Volume
 
-```mermaid
+@@@
 graph LR
     subgraph "Pod: writer-reader"
         W["Writer Container<br/>/data/file.txt ← writes"]
@@ -81,7 +81,7 @@ graph LR
         W -->|"writes to"| V
         V -->|"read by"| R
     end
-```
+@@@
 
 The volume is the single source of truth. There's no network call, no serialization overhead, no API to agree on, just a shared filesystem path.
 

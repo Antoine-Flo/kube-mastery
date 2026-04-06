@@ -38,7 +38,7 @@ The logic follows two key rules:
 - **No policy selected → wide open.** All ingress and egress traffic is allowed. This is the default for every Pod in a fresh namespace.
 - **Any policy selected → default deny.** Only traffic explicitly allowed by some policy is permitted. The Pod shifts from "allow everything" to "deny everything except...". Creating a policy doesn't just add rules, it changes the Pod's entire default posture for the traffic types the policy covers.
 
-```mermaid
+@@@
 graph LR
     subgraph "No Policy Applied"
         A1["Frontend Pod"] -->|"✅ allowed"| B1["Backend Pod"]
@@ -51,7 +51,7 @@ graph LR
         C2["Other Pod"] -->|"❌ blocked"| B2
         D2["Any other source"] -->|"❌ blocked"| B2
     end
-```
+@@@
 
 ## Policies Are Additive
 

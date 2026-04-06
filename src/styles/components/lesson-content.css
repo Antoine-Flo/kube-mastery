@@ -79,6 +79,26 @@
   position: relative;
 }
 
+.lesson-content .mermaid-theme-stack {
+  margin-bottom: 1rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--color-gray-6);
+  background: var(--color-gray-1);
+  overflow-x: auto;
+}
+
+.lesson-content .mermaid-theme-stack .mermaid--dark {
+  display: none;
+}
+
+[data-theme='dark'] .lesson-content .mermaid-theme-stack .mermaid--light {
+  display: none;
+}
+
+[data-theme='dark'] .lesson-content .mermaid-theme-stack .mermaid--dark {
+  display: block;
+}
+
 .lesson-content .mermaid-zoom-anchor {
   position: relative;
 }
@@ -86,8 +106,8 @@
 .lesson-content pre.mermaid {
   position: relative;
   padding: 0;
-  background-color: transparent !important;
-  margin-bottom: 1rem;
+  background-color: transparent;
+  margin-bottom: 0;
 }
 
 .lesson-content pre.mermaid .nodeLabel p {
@@ -97,6 +117,9 @@
 .lesson-content .mermaid svg {
   margin: 0 auto;
   display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
 }
 
 .lesson-content .mermaid-zoom-btn {
@@ -201,10 +224,6 @@
 
 body.mermaid-zoom-open {
   overflow: hidden;
-}
-
-[data-theme='dark'] .lesson-content .mermaid .mindmap-node .nodeLabel {
-  color: #000 !important;
 }
 
 .lesson-content .expressive-code {

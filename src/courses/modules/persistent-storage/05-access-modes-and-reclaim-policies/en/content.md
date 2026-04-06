@@ -45,7 +45,7 @@ This is particularly useful for workloads that must have exclusive, singleton ac
 
 ## Access Mode Summary
 
-```mermaid
+@@@
 flowchart TD
     A[Volume Access Mode] --> B[ReadWriteOnce<br/>RWO]
     A --> C[ReadOnlyMany<br/>ROX]
@@ -56,7 +56,7 @@ flowchart TD
     C --> C1["✓ Multiple nodes, read-only<br/>✓ For shared config / static data<br/>✗ No writes from any node"]
     D --> D1["✓ Multiple nodes, read-write<br/>✓ Requires NFS, CephFS, EFS<br/>✗ Not supported by block storage"]
     E --> E1["✓ Single Pod, read-write<br/>✓ Strongest exclusivity guarantee<br/>✓ Requires CSI driver support"]
-```
+@@@
 
 ## Reclaim Policies
 
@@ -97,7 +97,7 @@ The `Recycle` policy used to perform a basic scrub of the volume, running the eq
 
 Understanding the full lifecycle of a PV is important for troubleshooting. When you delete a PVC that was bound to a PV with a `Retain` policy, the PV moves to `Released`. If you then try to create a new PVC that matches this PV's characteristics, the new PVC will stay in `Pending`, because the PV is `Released`, not `Available`. This is a surprisingly common source of confusion.
 
-```mermaid
+@@@
 stateDiagram-v2
     [*] --> Available : PV created
     Available --> Bound : PVC bound
@@ -105,7 +105,7 @@ stateDiagram-v2
     Released --> Available : Admin clears claimRef<br/>(Retain policy)
     Released --> [*] : PV and storage deleted<br/>(Delete policy)
     Bound --> [*] : PV deleted<br/>while bound<br/>(rare / forced)
-```
+@@@
 
 ## Hands-On Practice
 

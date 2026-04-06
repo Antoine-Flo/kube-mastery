@@ -79,14 +79,14 @@ spec:
 
 Reading this from top to bottom, you can trace the four required fields clearly: the API group and version (`apps/v1`), the object type (`Deployment`), its identity (`name: web-app` in `namespace: default` with a label), and finally the desired state in `spec` , three replicas of a Pod running the `nginx:1.28` container image.
 
-```mermaid
+@@@
 graph TD
     Manifest["Kubernetes Manifest"]
     Manifest --> apiVersion["apiVersion: API group + version"]
     Manifest --> kind["kind: Resource type"]
     Manifest --> metadata["metadata: name, namespace, labels"]
     Manifest --> spec["spec: Desired state"]
-```
+@@@
 
 ## How Kubernetes Processes an Object
 

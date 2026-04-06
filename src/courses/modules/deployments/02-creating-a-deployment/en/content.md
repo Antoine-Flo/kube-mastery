@@ -85,7 +85,7 @@ At the ReplicaSet level, you list ReplicaSets with the same labels as your Deplo
 
 At the Pod level, you list Pods with the same label selector. Each Pod name includes the ReplicaSet hash and a unique suffix. Seeing all three levels—Deployment → ReplicaSet → Pods—confirms that the controller chain is working.
 
-```mermaid
+@@@
 graph TB
     DEP["Deployment<br/>web-app<br/>replicas: 3"]
     RS["ReplicaSet<br/>web-app-6d4b9c7f8<br/>replicas: 3"]
@@ -97,7 +97,7 @@ graph TB
     RS --> P1
     RS --> P2
     RS --> P3
-```
+@@@
 
 ## Describing the Deployment
 

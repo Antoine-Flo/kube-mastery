@@ -197,7 +197,7 @@ If an init container fails (exits with a non-zero code), Kubernetes will restart
 
 The diagrams below show the same structure in three compact layouts, pick the one that feels clearest to you:
 
-```mermaid
+@@@
 stateDiagram-v2
     state "spec (Pod)" as Spec3
     state "initContainers[]" as IC3
@@ -215,7 +215,7 @@ stateDiagram-v2
     Spec3 --> S3
     C3 --> CFields3
     V3 --> VTypes3
-```
+@@@
 
 ## Hands-On Practice
 

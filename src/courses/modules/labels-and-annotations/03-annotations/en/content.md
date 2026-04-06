@@ -14,7 +14,7 @@ The fundamental rule is simple:
 - **Labels** are for selection and identification. They must conform to strict size and character rules. Kubernetes uses them internally to wire objects together.
 - **Annotations** are for information. They have looser rules (values can be up to 256 KB), and Kubernetes itself mostly ignores their contents, but tools, controllers, and humans read them.
 
-```mermaid
+@@@
 graph TB
     OBJ["Kubernetes Object"]
     OBJ --> LBL["Labels<br/>(metadata.labels)<br/>• Short key-value pairs<br/>• 63 char limit<br/>• Used by selectors<br/>• Services, RS, Deployments read them"]
@@ -22,7 +22,7 @@ graph TB
 
     LBL --> SEL["Label Selectors<br/>(Services, Deployments, kubectl -l)"]
     ANN --> TOOLS["External Tools<br/>(Ingress controllers, monitoring,<br/>CI/CD, documentation)"]
-```
+@@@
 
 ## What Annotations Are Used For
 

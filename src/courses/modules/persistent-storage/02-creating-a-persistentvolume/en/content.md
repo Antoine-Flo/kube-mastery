@@ -85,7 +85,7 @@ In production you would see fields like `nfs` (for an NFS share), `awsElasticBlo
 
 A PersistentVolume moves through a defined set of phases during its lifetime. Understanding these phases is critical for diagnosing storage problems.
 
-```mermaid
+@@@
 stateDiagram-v2
     [*] --> Available : PV created
     Available --> Bound : PVC binds to PV
@@ -94,7 +94,7 @@ stateDiagram-v2
     Released --> [*] : Admin deletes PV<br/>or policy=Delete
     Available --> Failed : Error during<br/>reclaim
     Released --> Failed : Error during<br/>reclaim
-```
+@@@
 
 - **Available**: The PV has been created and is not yet bound to any PVC. It is ready to be claimed.
 - **Bound**: A PVC has been bound to this PV. The PV is exclusively reserved for that PVC and will not be given to another.

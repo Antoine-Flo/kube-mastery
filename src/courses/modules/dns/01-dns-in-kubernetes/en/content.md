@@ -27,7 +27,7 @@ Kubernetes solves this with a built-in DNS server called **CoreDNS**. Think of C
 
 CoreDNS runs as a regular Kubernetes Deployment inside the `kube-system` namespace. It is exposed via its own Service, also named `kube-dns` (for historical reasons), which has a stable ClusterIP that the cluster assigns at creation time. That IP is what every Pod is configured to use as its DNS resolver.
 
-```mermaid
+@@@
 sequenceDiagram
     participant P as Pod (your app)
     participant R as /etc/resolv.conf
@@ -40,7 +40,7 @@ sequenceDiagram
     C-->>P: It is 10.96.47.203
     P->>S: Connect to 10.96.47.203
     S-->>P: Response from backend
-```
+@@@
 
 ## How Every Pod Gets DNS Configured
 

@@ -51,7 +51,7 @@ The most important property of PVC-backed storage is this: when the Pod is delet
 
 Without persistent storage, every time a database Pod crashes or gets rescheduled, you start with an empty database. With a PVC, the data is stored outside the container on the persistent volume, a new instance of the same container, pointing at the same volume, picks up exactly where the previous one left off.
 
-```mermaid
+@@@
 sequenceDiagram
     participant K as Kubernetes
     participant PVC as PVC / PV
@@ -67,7 +67,7 @@ sequenceDiagram
     P2->>PVC: Mount same PVC
     PVC->>P2: All previous data available
     Note over P2: Database resumes normally
-```
+@@@
 
 This is the fundamental promise of persistent storage in Kubernetes. The Pod is ephemeral; the data is not.
 

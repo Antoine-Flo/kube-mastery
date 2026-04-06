@@ -15,7 +15,7 @@ Imagine the journey of an HTTPS request from a browser to your application. The 
 
 At this point, Envoy decrypts the request and forwards it as a plain HTTP request to the Kubernetes Service backing your application. The communication inside the cluster, between Envoy and your Pod, is unencrypted by default. Your application never sees the TLS layer, it just receives a normal HTTP request.
 
-```mermaid
+@@@
 sequenceDiagram
     participant Browser
     participant Envoy as Envoy Proxy (port 443)
@@ -32,7 +32,7 @@ sequenceDiagram
     SVC-->>Envoy: HTTP response
     Note over Envoy: Re-encrypt TLS
     Envoy-->>Browser: Encrypted HTTPS response
-```
+@@@
 
 This pattern has a clear advantage: your application code does not need to handle TLS at all. You write a simple HTTP server, and the proxy takes care of the cryptography. Certificate rotation, cipher suite configuration, and protocol version management all happen at the Gateway, not in every individual application.
 

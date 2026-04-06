@@ -55,7 +55,7 @@ When a new Pod is scheduled to a node, here is the precise sequence of events:
 5. The `kubelet` begins monitoring the container and reporting its status back to the API server.
 6. Meanwhile, `kube-proxy` detects that a new Pod is ready and updates the network rules so that Service traffic can reach it.
 
-```mermaid
+@@@
 graph TD
     API["kube-apiserver"] -->|"Pod assigned to node"| KL["kubelet"]
     KL -->|"CRI call: run container"| CR["container runtime<br/>(containerd / CRI-O)"]
@@ -63,7 +63,7 @@ graph TD
     KL -->|"report status"| API
     API -->|"Pod ready, update endpoints"| KP["kube-proxy"]
     KP -->|"update iptables/IPVS rules"| NET["Network rules<br/>(traffic can reach Pod)"]
-```
+@@@
 
 ## Hands-On Practice
 

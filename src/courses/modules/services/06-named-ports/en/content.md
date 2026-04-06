@@ -74,7 +74,7 @@ spec:
 
 When Kubernetes processes this Service, it looks up the name `http` in the matching Pods' port definitions and resolves it to the actual port number (`80`). If you later change the container's `containerPort` from `80` to `8080`, you only update the Pod template , the Service manifest is untouched, because it refers to the port by name, not by number.
 
-```mermaid
+@@@
 graph LR
     SVC["Service<br/>targetPort: http"]
     RESOLVE["Kubernetes resolves<br/>'http' → containerPort 80"]
@@ -82,7 +82,7 @@ graph LR
 
     SVC -->|"looks up name"| RESOLVE
     RESOLVE -->|"forwards to"| POD
-```
+@@@
 
 ## Named Ports Beyond Services
 

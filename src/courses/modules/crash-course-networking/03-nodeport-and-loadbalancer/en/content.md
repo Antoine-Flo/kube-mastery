@@ -72,7 +72,7 @@ For production HTTP and HTTPS traffic, most teams combine a LoadBalancer Service
 
 ClusterIP, NodePort, and LoadBalancer form a hierarchy - each type is a superset of the previous.
 
-```mermaid
+@@@
 graph TB
     INTERNET["Internet<br/>(external clients)"]
     LB["LoadBalancer<br/>External IP: 34.120.45.10<br/>cloud provisioned"]
@@ -84,7 +84,7 @@ graph TB
     LB --> NP
     NP --> CIP
     CIP --> PODS
-```
+@@@
 
 Every Service starts as a ClusterIP internally, whether or not you asked for it. Understanding which type to use comes down to who needs to reach the Service and what infrastructure is available.
 

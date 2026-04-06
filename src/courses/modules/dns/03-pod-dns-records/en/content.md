@@ -52,7 +52,7 @@ StatefulSets automatically set `spec.hostname` and `spec.subdomain` for each Pod
 - `hostname` is set to the Pod name (e.g., `mysql-0`, `mysql-1`, `mysql-2`).
 - `subdomain` is set to the name of the headless Service defined in the StatefulSet's `spec.serviceName` field.
 
-```mermaid
+@@@
 graph TD
     subgraph "Headless Service: mysql"
         HS[mysql.production.svc.cluster.local]
@@ -67,7 +67,7 @@ graph TD
     HS -->|returns all Pod IPs| P0
     HS -->|returns all Pod IPs| P1
     HS -->|returns all Pod IPs| P2
-```
+@@@
 
 With this setup, a client that always needs to write to the primary database node can hardcode `mysql-0.mysql.production.svc.cluster.local` and be confident it will always reach Pod 0 of the `mysql` StatefulSet, regardless of how many times it has been restarted or rescheduled.
 

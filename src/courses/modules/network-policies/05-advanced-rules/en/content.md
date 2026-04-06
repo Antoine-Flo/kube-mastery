@@ -104,7 +104,7 @@ A Pod can be selected by multiple NetworkPolicies simultaneously. The effective 
 
 This architectural property lets you compose your security posture from many small, focused policies rather than one massive, hard-to-read policy. Each team or service can own its own policy, and the overall behavior is the sum of all of them.
 
-```mermaid
+@@@
 graph TD
     subgraph "Policies selecting the Backend Pod"
         P1["Policy A<br/>Allow ingress from frontend:8080"]
@@ -119,7 +119,7 @@ graph TD
     P3 -->|contributes to| B
 
     B --> ALLOW["Effective allowed traffic:<br/>• Ingress from frontend on :8080<br/>• Ingress from monitoring on :9090<br/>• Egress to database on :5432<br/>• Egress to DNS on :53<br/>• All other traffic blocked"]
-```
+@@@
 
 There's no way to use one policy to "block" what another policy has allowed. Once traffic is permitted by any policy, it goes through.
 

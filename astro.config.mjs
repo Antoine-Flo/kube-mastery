@@ -1,7 +1,7 @@
 import { defineConfig } from 'astro/config'
 import { fileURLToPath } from 'node:url'
-import mermaid from 'astro-mermaid'
 import remarkCalloutColons from './src/plugins/remark-callout-colons.js'
+import remarkBeautifulMermaidBlocks from './src/plugins/remark-beautiful-mermaid-blocks.js'
 
 import cloudflare from '@astrojs/cloudflare'
 
@@ -11,14 +11,10 @@ export default defineConfig({
   site: 'https://kubemastery.com',
 
   markdown: {
-    remarkPlugins: [remarkCalloutColons]
+    remarkPlugins: [remarkCalloutColons, remarkBeautifulMermaidBlocks]
   },
 
   integrations: [
-    mermaid({
-      theme: 'dark',
-      autoTheme: true
-    }),
     astroExpressiveCode({
       themes: ['one-dark-pro', 'one-light']
     })

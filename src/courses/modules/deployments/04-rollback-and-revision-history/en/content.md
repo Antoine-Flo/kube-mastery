@@ -76,7 +76,7 @@ kubectl rollout undo deployment/web-app --to-revision=1
 
 This is particularly useful in multi-step debugging scenarios: you've tried several updates looking for the right fix, and now you want to return to a known-good state from several revisions ago.
 
-```mermaid
+@@@
 graph LR
     R1["Revision 1<br/>nginx:1.28<br/>RS-abc (replicas:3)"]
     R2["Revision 2<br/>nginx:1.26<br/>RS-def (replicas:3)"]
@@ -86,7 +86,7 @@ graph LR
     R1 -->|"set image 1.26"| R2
     R2 -->|"set image 1.27"| R3
     R3 -->|"rollout undo"| R4
-```
+@@@
 
 Notice in the diagram above that "undo" doesn't rewind the revision counter, it creates a forward revision that reuses an old ReplicaSet. This is important to understand when you're reading `rollout history` after a rollback.
 

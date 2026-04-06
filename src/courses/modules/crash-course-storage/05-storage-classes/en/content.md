@@ -17,7 +17,7 @@ A **StorageClass** defines a type of storage and a provisioner that knows how to
 
 The difference from static provisioning is in who creates the PV and when. In static provisioning, an administrator creates PVs before any application needs them. In dynamic provisioning, the provisioner creates the PV at the moment a PVC requests it. The developer never writes a PV manifest and never needs to know what physical storage backs the claim.
 
-```mermaid
+@@@
 graph LR
     SC["StorageClass<br>fast-ssd"]
     PVC["PersistentVolumeClaim<br>storageClassName: fast-ssd"]
@@ -29,7 +29,7 @@ graph LR
     PROV -->|"creates"| PV
     PVC -->|"bound to"| PV
     Pod -->|"uses"| PVC
-```
+@@@
 
 ## A StorageClass Manifest
 

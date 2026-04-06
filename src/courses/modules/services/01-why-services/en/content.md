@@ -39,7 +39,7 @@ Services don't maintain a manual list of Pod IPs. Instead, they use the same lab
 
 This means the relationship between a Service and its Pods is completely dynamic. You never tell the Service "here are your Pods" , you tell the Service "find any Pod with these labels." Kubernetes watches for Pods matching that description and keeps the routing up to date automatically.
 
-```mermaid
+@@@
 graph TB
     Client["Client<br/>(another Pod or external user)"]
     SVC["Service<br/>web-service<br/>Stable IP: 10.96.45.12<br/>DNS: web-service.default.svc.cluster.local"]
@@ -51,7 +51,7 @@ graph TB
     SVC -->|"load balanced"| P1
     SVC -->|"load balanced"| P2
     SVC -->|"load balanced"| P3
-```
+@@@
 
 When one of those Pods is replaced , say Pod `10.244.1.5` becomes `10.244.1.9` after a restart , the Service automatically updates its internal routing. The client doesn't notice. It still sends requests to `web-service`, and the Service figures out which Pods are healthy and available behind the scenes.
 

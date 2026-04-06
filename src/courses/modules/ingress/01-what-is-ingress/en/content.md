@@ -35,7 +35,7 @@ Gateway API introduces three main resource types, each with a distinct purpose. 
 - **Gateway** is the front door of the building. It defines where external traffic arrives: which ports to listen on, which protocols to accept, and which TLS certificates to use. The platform team typically owns this resource.
 - **HTTPRoute** is the internal directory. It says "traffic arriving at this hostname, with this path, goes to this service." Application teams own their own HTTPRoutes in their own namespaces.
 
-```mermaid
+@@@
 flowchart LR
     GC[GatewayClass\nenvoy-gateway-controller]
     GW[Gateway\nport 80 / 443]
@@ -47,7 +47,7 @@ flowchart LR
     GW --> R
     R --> SVC
     SVC --> PODS
-```
+@@@
 
 This three-tier model is not just organizational tidiness. It solves a real problem. In the old Ingress world, a single Ingress resource mixed infrastructure configuration with application routing, which meant either the platform team had to approve every route change, or the application team had too much access to infrastructure settings. With Gateway API, the boundary is explicit in the API itself.
 
@@ -71,7 +71,7 @@ The controller that actually implements the Gateway API in this module is **Envo
 
 You do not interact with Envoy directly. You create Gateway API resources in Kubernetes, and Envoy Gateway takes care of configuring the proxy. The result is a fully functional edge proxy with TLS termination, host-based routing, path-based routing, and more, all driven by standard Kubernetes objects.
 
-```mermaid
+@@@
 sequenceDiagram
     participant You as You (kubectl)
     participant K8s as Kubernetes API
@@ -84,7 +84,7 @@ sequenceDiagram
     EGC->>EP: push updated routing config (xDS)
     Client->>EP: HTTP request to app.example.com
     EP->>K8s: forward to matching Service
-```
+@@@
 
 ## Hands-On Practice
 

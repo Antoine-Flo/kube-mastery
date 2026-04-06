@@ -9,7 +9,7 @@ Every Kubernetes cluster starts its life with four namespaces already created. T
 
 ## A Map of the Four Namespaces
 
-```mermaid
+@@@
 flowchart TD
     Cluster["Kubernetes Cluster"]
 
@@ -24,7 +24,7 @@ flowchart TD
 
     Cluster --> NS4["kube-node-lease"]
     NS4 --> DESC4["Node heartbeat Lease objects, Used by control plane only"]
-```
+@@@
 
 Let us walk through each one in detail.
 

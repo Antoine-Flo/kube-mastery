@@ -46,7 +46,7 @@ Here is a map of the key components at each level:
 - **kube-proxy:** manages network rules so that Pods and Services can communicate
 - **Container runtime:** the software that actually starts and stops containers (commonly containerd)
 
-```mermaid
+@@@
 graph TB
     subgraph ControlPlane["Control Plane (the brain)"]
         API["kube-apiserver"]
@@ -80,7 +80,7 @@ graph TB
     SCH -->|assigns pods to| KL1
     SCH -->|assigns pods to| KL2
     CM -->|watches & reconciles| API
-```
+@@@
 
 ## The Kitchen Analogy in Full
 

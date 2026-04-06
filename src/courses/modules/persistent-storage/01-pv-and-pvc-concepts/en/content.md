@@ -48,7 +48,7 @@ When you create a PVC, Kubernetes immediately starts looking for a compatible PV
 
 When a matching PV is found, Kubernetes binds the PVC to it. The PV's status changes from `Available` to `Bound`, and from that point on, that PV is exclusively reserved for this PVC, no other PVC can claim it.
 
-```mermaid
+@@@
 flowchart TD
     A[Cluster Admin] -->|"kubectl apply -f pv.yaml"| B[PersistentVolume<br/>Available]
     C[Developer] -->|"kubectl apply -f pvc.yaml"| D[PersistentVolumeClaim<br/>Pending]
@@ -57,7 +57,7 @@ flowchart TD
     E -->|"Match found:<br/>size ✓ accessMode ✓ storageClass ✓"| F[PVC Bound<br/>PV Bound]
     F --> G[Pod]
     G -->|"volumes.persistentVolumeClaim<br/>.claimName: my-pvc"| F
-```
+@@@
 
 ## Dynamic Provisioning: The Modern Approach
 

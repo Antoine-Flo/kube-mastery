@@ -47,7 +47,7 @@ readinessProbe:
 
 Both probe types support three checking mechanisms: `httpGet` for HTTP endpoints, `tcpSocket` for checking whether a port accepts connections, and `exec` for running a command inside the container and checking its exit code. Use whichever best matches how your application exposes its health.
 
-```mermaid
+@@@
 graph TD
     RUN["Container Running"]
     LP["Liveness probe<br/>fails failureThreshold times"]
@@ -63,7 +63,7 @@ graph TD
     RP --> REMOVE
     REMOVE --> PASS
     PASS --> BACK
-```
+@@@
 
 ## Resource Requests and Limits
 

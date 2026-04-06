@@ -69,7 +69,7 @@ These four namespaces are covered in depth in the next lesson.
 
 ## How Namespaces Organize a Cluster
 
-```mermaid
+@@@
 flowchart TD
     Cluster["Kubernetes Cluster"]
 
@@ -90,7 +90,7 @@ flowchart TD
 
     Cluster --> namespaces
     namespaces --> clusterScoped
-```
+@@@
 
 Each namespace is its own isolated environment within the same cluster. Pods in the `dev` namespace cannot directly reference services in the `production` namespace by their short name , they need to use the full DNS name. Nodes and PersistentVolumes, being cluster-scoped, are shared across all namespaces.
 

@@ -86,7 +86,7 @@ Envoy Gateway supports several policy resources that extend the base Gateway API
 
 These policies are attached to a Gateway or an HTTPRoute using a `targetRef` field, similar to how an HTTPRoute references a Gateway with `parentRefs`.
 
-```mermaid
+@@@
 flowchart TD
     GW[Gateway]
     CTP[ClientTrafficPolicy\ntargetRef: Gateway]
@@ -98,7 +98,7 @@ flowchart TD
     GW --> ROUTE
     BTP -.->|applies to| ROUTE
     ROUTE --> SVC
-```
+@@@
 
 This hierarchy keeps concerns separated. The platform team manages policies at the Gateway level. Application teams manage policies at the HTTPRoute level. Neither has to touch the other's resources.
 

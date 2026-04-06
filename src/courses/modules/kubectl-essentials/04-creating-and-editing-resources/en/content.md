@@ -106,7 +106,7 @@ The format is `kubectl set image <resource>/<name> <container-name>=<image>:<tag
 
 It helps to understand what actually happens when you run `kubectl apply`. The command makes a series of well-defined API calls to the Kubernetes API server.
 
-```mermaid
+@@@
 flowchart TB
     Dev([You run kubectl apply])
     API["API Server (validates + stores)"]
@@ -123,7 +123,7 @@ flowchart TB
     Scheduler -->|"Assigns pod to node"| API
     API --> Kubelet
     Kubelet -->|"Pulls image, starts container"| Kubelet
-```
+@@@
 
 Your manifest travels through the API server (where it is validated and persisted), then the relevant controllers and schedulers act on it to bring actual resources into the desired state. This chain is the Kubernetes control loop in action.
 

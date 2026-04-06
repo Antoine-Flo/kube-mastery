@@ -47,12 +47,12 @@ CKAD and CKA are open-book: you can use the official Kubernetes documentation du
 
 All three certifications share a foundation: what Kubernetes is, how its architecture works, and what problems it solves. That foundation is what this Common Core course covers.
 
-```mermaid
+@@@
 graph TD
     CC["Common Core Course<br/>(this course)"]
     CC --> KCNA["KCNA<br/>Multiple choice · Theory · Entry level"]
     CC --> CKAD["CKAD<br/>Hands-on · 2h · App-focused"]
     CC --> CKA["CKA<br/>Hands-on · 2h · Cluster-focused"]
-```
+@@@
 
 Whatever certification you are aiming for, you are in the right place. Next, we get into the substance: what Kubernetes is and the problem it was built to solve.

@@ -95,7 +95,7 @@ kubectl get rs -l app=web -w
 # (live-updating table showing old RS scaling down and new RS scaling up)
 ```
 
-```mermaid
+@@@
 sequenceDiagram
     participant DC as Deployment Controller
     participant RS1 as ReplicaSet v1 (old)
@@ -124,7 +124,7 @@ sequenceDiagram
     Note over RS1: replicas: 0 (kept for rollback)
     Note over RS2: replicas: 3 (all healthy)
     User->>RS2: All traffic (3 new pods)
-```
+@@@
 
 ## Pausing and Resuming a Rollout
 

@@ -27,7 +27,7 @@ Those three IP:port pairs are the current backend Pods. The Endpoints controller
 
 `kube-proxy` on every node watches the Endpoints object. Whenever it changes, kube-proxy updates the node's iptables or IPVS rules to reflect the new backend set. This is how the Service's virtual IP ends up routing to the right Pods, even as those Pods come and go.
 
-```mermaid
+@@@
 graph TB
     SVC["Service<br/>web-service<br/>Selector: app=web"]
     EP["Endpoints<br/>web-service<br/>10.244.1.5:80<br/>10.244.2.11:80<br/>10.244.3.8:80"]
@@ -43,7 +43,7 @@ graph TB
     KP -->|"programs iptables/IPVS"| P1
     KP -->|"programs iptables/IPVS"| P2
     KP -->|"programs iptables/IPVS"| P3
-```
+@@@
 
 ## Readiness Probes and Endpoints: Only Ready Pods Get Traffic
 

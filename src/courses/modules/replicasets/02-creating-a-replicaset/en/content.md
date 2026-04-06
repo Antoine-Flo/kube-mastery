@@ -71,7 +71,7 @@ The ReplicaSet "web-rs" is invalid: spec.template.metadata.labels:
 
 This validation happens at the server level before anything gets scheduled, a helpful guardrail that catches a very common mistake early.
 
-```mermaid
+@@@
 graph TB
     RS["ReplicaSet<br/>web-rs"]
     SEL["spec.selector<br/>matchLabels:<br/>  app: web"]
@@ -88,7 +88,7 @@ graph TB
     SEL -.->|"selects"| P1
     SEL -.->|"selects"| P2
     SEL -.->|"selects"| P3
-```
+@@@
 
 ## The Pod Template Is a Full Pod Spec
 

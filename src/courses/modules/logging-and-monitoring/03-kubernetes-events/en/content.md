@@ -94,14 +94,14 @@ Each Event contains several fields that help you understand what happened and wh
 
 **`Count`** and the related `FirstTime`/`LastTime` fields tell you how many times an Event has been observed and over what time span. When a container is in a crash loop, the `BackOff` Event count will grow rapidly. Seeing "Count: 47" on a `BackOff` event tells you the container has been restarting frequently.
 
-```mermaid
+@@@
 flowchart TD
     A["Controller /<br/>Kubelet<br/>(source)"] -->|"creates or updates"| B[Event Object<br/>in etcd]
     B -->|"stored for ~1 hour"| C{Retention<br/>window}
     C -->|"within 1 hour"| D["kubectl get events<br/>kubectl describe pod"]
     C -->|"after 1 hour"| E[Garbage collected<br/>Event lost]
     D --> F[Your terminal]
-```
+@@@
 
 ## Filtering Events with Field Selectors
 

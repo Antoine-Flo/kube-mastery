@@ -89,7 +89,7 @@ Setting `readOnly: true` on the volumeMount is a best practice for both ConfigMa
 
 ## The Keys-to-Files Mapping
 
-```mermaid
+@@@
 graph LR
     subgraph "ConfigMap: app-config"
         K1["Key: database.conf<br/>Value: host=postgres..."]
@@ -103,7 +103,7 @@ graph LR
 
     K1 -->|"becomes"| F1
     K2 -->|"becomes"| F2
-```
+@@@
 
 ## Mounting Only Specific Keys
 

@@ -87,7 +87,7 @@ For critical production services, starting with `maxUnavailable: 0` (zero-downti
 
 Timeline for a 3-replica Deployment:
 
-```mermaid
+@@@
 ---
 config:
   theme: base
@@ -137,7 +137,7 @@ gantt
     New pod 1 starting :active, rcn1, 00:00:24, 00:00:44
     New pod 2 starting :active, rcn2, 00:00:24, 00:00:44
     New pod 3 starting :active, rcn3, 00:00:24, 00:00:44
-```
+@@@
 
 Under `RollingUpdate`, old and new Pods overlap; healthy count never hits zero. Under `Recreate`, old Pods finish terminating before any new Pods start, so you see a gap.
 

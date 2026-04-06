@@ -80,7 +80,7 @@ Gateway API supports three types of path matching:
 - **Exact**: the request path must match exactly. A rule with exact path `/healthz` only matches that specific path, not `/healthz/ready`.
 - **RegularExpression**: matches using a regular expression. Powerful but use with care, complex regex can be hard to read and reason about.
 
-```mermaid
+@@@
 flowchart LR
     Client([Incoming Request]) --> GW[Gateway Listener\nport 80]
     GW -->|host: api.example.com| R1[HTTPRoute A\nbackend: api-svc:8080]
@@ -89,7 +89,7 @@ flowchart LR
     R1 --> API[api Pods]
     R2 --> STATIC[static Pods]
     R3 --> WEB[web Pods]
-```
+@@@
 
 ## Multiple Rules in One HTTPRoute
 

@@ -77,7 +77,7 @@ This kind of policy ensures that a compromised pod in the `dev` namespace cannot
 
 ## The Multi-Namespace Cluster Pattern
 
-```mermaid
+@@@
 flowchart TD
     Cluster["Production Cluster"]
 
@@ -91,7 +91,7 @@ flowchart TD
 
     NS_fe <-->|"NetworkPolicy<br/>allows only specific traffic"| NS_be
     NS_be <-->|"NetworkPolicy<br/>allows only specific traffic"| NS_data
-```
+@@@
 
 ## When NOT to Use Multiple Namespaces
 

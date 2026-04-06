@@ -46,7 +46,7 @@ A Deployment doesn't manage Pods directly, it manages ReplicaSets. When you upda
 
 This is a **rolling update**: zero-downtime upgrades with built-in rollback, out of the box.
 
-```mermaid
+@@@
 graph TB
     DEP["Deployment<br/>web-deployment"]
 
@@ -76,7 +76,7 @@ graph TB
     DEP -.->|"image update"| RS2_mid
     DEP -.->|"complete"| RS1_after
     DEP -.->|"complete"| RS2_after
-```
+@@@
 
 You interact with the Deployment; you never need to touch the individual ReplicaSets it creates.
 

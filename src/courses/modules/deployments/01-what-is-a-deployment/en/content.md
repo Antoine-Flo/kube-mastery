@@ -17,7 +17,7 @@ You interact with the Deployment; the controller chain handles ReplicaSets and P
 
 Deployment → ReplicaSet(s) → Pods. You declare intent on the Deployment; the controller creates one ReplicaSet per distinct Pod template (you'll see how the naming works in the next lesson). ReplicaSets create and own the Pods.
 
-```mermaid
+@@@
 graph TB
     DEP["Deployment<br/>web-app"]
     RS1["ReplicaSet v1<br/>(replicas: 0, kept)"]
@@ -31,7 +31,7 @@ graph TB
     RS2 --> P1
     RS2 --> P2
     RS2 --> P3
-```
+@@@
 
 ## What a Deployment Adds
 

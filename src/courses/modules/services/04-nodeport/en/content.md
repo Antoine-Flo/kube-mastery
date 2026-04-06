@@ -48,7 +48,7 @@ Three port-related fields work together here:
 
 If you omit `nodePort`, Kubernetes picks an available port from the 30000–32767 range automatically. You can find the assigned port with `kubectl get service`.
 
-```mermaid
+@@@
 graph TB
     EXT["External Client<br/>(browser, curl, etc.)"]
     N1["Node 1<br/><node-1-ip>:30080"]
@@ -68,7 +68,7 @@ graph TB
     SVC --> P1
     SVC --> P2
     SVC --> P3
-```
+@@@
 
 ## Accessing the Service
 

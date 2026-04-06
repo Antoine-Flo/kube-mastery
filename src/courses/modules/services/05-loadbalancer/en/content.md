@@ -53,7 +53,7 @@ The `EXTERNAL-IP` column shows the public IP assigned by the cloud provider. Ext
 
 ## The Traffic Flow
 
-```mermaid
+@@@
 graph TB
     Internet["Internet<br/>(external clients)"]
     LB["Cloud Load Balancer<br/>34.102.136.180:80<br/>(AWS ELB / GCP LB / Azure LB)"]
@@ -75,7 +75,7 @@ graph TB
     SVC --> P1
     SVC --> P2
     SVC --> P3
-```
+@@@
 
 The cloud load balancer health-checks the nodes at the NodePort level. If a Node becomes unhealthy, the load balancer stops sending traffic to it , providing resilience that bare NodePort doesn't offer. This is one of the key advantages over using NodePort directly.
 

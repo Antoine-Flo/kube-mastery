@@ -56,7 +56,7 @@ In most production clusters, you won't use `storageClassName: manual`. Instead, 
 
 Once a PVC is submitted, the Kubernetes control plane's **PersistentVolume controller** (which runs inside the controller-manager) continuously scans for unbound PVCs and tries to find a matching PV for each one.
 
-```mermaid
+@@@
 flowchart LR
     A[PVC Submitted<br/>Pending] --> B{Find matching PV}
     B --> C{Check accessMode<br/>compatibility}
@@ -67,7 +67,7 @@ flowchart LR
     F -->|Mismatch| D
     F -->|Match| G[Bind PVC to PV<br/>Both become Bound]
     G --> H[Pod can now<br/>mount the PVC]
-```
+@@@
 
 All three criteria must match: access mode, capacity (PV storage ≥ PVC request), and storage class. The first PV that satisfies all requirements wins, Kubernetes does not try to find the _smallest_ PV that fits, just the first qualifying one.
 

@@ -75,7 +75,7 @@ Notice that the Pod template carries all the same labels as the Deployment itsel
 
 The diagram below shows a single resource set labeled following the convention, and the tools that automatically consume those labels without additional configuration:
 
-```mermaid
+@@@
 graph LR
     RS["Resource Set<br/>app.kubernetes.io/name: payments-api<br/>app.kubernetes.io/instance: payments-api-prod<br/>app.kubernetes.io/version: 3.2.1<br/>app.kubernetes.io/component: backend<br/>app.kubernetes.io/part-of: checkout-platform<br/>app.kubernetes.io/managed-by: helm"]
 
@@ -84,7 +84,7 @@ graph LR
     RS --> GRAF["Grafana<br/>Dimensions dashboards by name,<br/>instance, version, component"]
     RS --> PROM["Prometheus<br/>Label cardinality:<br/>version for SLO tracking"]
     RS --> COST["Cost Tools<br/>Allocates spend by part-of<br/>and component"]
-```
+@@@
 
 Each tool benefits in a specific way:
 

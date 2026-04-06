@@ -19,7 +19,7 @@ The **data plane** is the muscle. It is the actual proxy that receives incoming 
 
 This separation is intentional. The control plane can be restarted without dropping any active connections. The data plane handles traffic independently. You can update routing rules without causing a blip in traffic, because the control plane pushes incremental config updates to the data plane using a protocol called xDS.
 
-```mermaid
+@@@
 flowchart TD
     K8s[Kubernetes API Server]
     CP[Envoy Gateway\nControl Plane]
@@ -31,7 +31,7 @@ flowchart TD
     CP -- xDS config push --> DP
     Client -- HTTP/HTTPS --> DP
     DP -- proxied request --> SVC
-```
+@@@
 
 ## What the Control Plane Watches
 

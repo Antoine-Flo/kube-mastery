@@ -70,7 +70,7 @@ Static Pod manifests are stored on the control plane node at `/etc/kubernetes/ma
 
 One of the most valuable things you can learn is the mapping between a cluster symptom and the component most likely responsible. This knowledge makes debugging dramatically faster.
 
-```mermaid
+@@@
 flowchart TD
     A[Observed Symptom] --> B{Which component?}
     B --> C["Pod stuck in Pending<br/>No node available"]
@@ -86,7 +86,7 @@ flowchart TD
     F --> F1["kubelet on that node<br/>(node heartbeat, health)"]
     G --> G1["kube-controller-manager logs<br/>(reconciliation loops)"]
     H --> H1["coredns Pod logs<br/>(DNS queries, upstream errors)"]
-```
+@@@
 
 When a Pod is stuck in `Pending`, the scheduler is the first place to look, it logs the exact reason it couldn't place the Pod. When the API server is throwing 503 errors, the apiserver logs will contain details about overload, authentication failures, or webhook timeouts. When a Deployment isn't reconciling properly, the controller-manager logs contain the reconciliation loop output.
 

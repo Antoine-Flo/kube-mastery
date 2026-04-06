@@ -46,7 +46,7 @@ The ReplicaSet now sees that actual (5) exceeds desired (2), so it needs to dele
 
 The deleted Pods are terminated gracefully: Kubernetes sends a SIGTERM to the containers and waits for the `terminationGracePeriodSeconds` (default 30 seconds) before force-killing them. During this window, the Pod is removed from any Service's Endpoints list, so it stops receiving new traffic before it's shut down.
 
-```mermaid
+@@@
 graph LR
     CMD1["kubectl scale --replicas=5"] --> RS
     CMD2["kubectl scale --replicas=2"] --> RS
@@ -58,7 +58,7 @@ graph LR
 
     CREATE --> P1["Pod 1"] & P2["Pod 2"] & P3["Pod 3"] & P4["Pod 4"] & P5["Pod 5"]
     DELETE --> GONE["Pods terminated"]
-```
+@@@
 
 ## Self-Healing
 

@@ -52,7 +52,7 @@ The fourth era answers the question containers raised: who manages hundreds of c
 
 Kubernetes brought together the best ideas from a decade of Google's internal experience with Borg and Omega, adding cluster-level networking, standardized APIs, a rich extension model, and a vibrant ecosystem of tooling.
 
-```mermaid
+@@@
 timeline
     title Evolution of Deployment
     1990s : Bare Metal
@@ -67,7 +67,7 @@ timeline
     2014+ : Orchestration
           : Kubernetes manages containers across a cluster
           : Scheduling, self-healing, scaling, service discovery
-```
+@@@
 
 ## Hands-On Practice
 

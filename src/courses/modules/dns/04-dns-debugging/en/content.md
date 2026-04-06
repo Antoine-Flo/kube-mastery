@@ -17,7 +17,7 @@ Before reaching for debugging tools, it helps to know the most frequent culprits
 - **CoreDNS is unhealthy** If the CoreDNS Pods are crashing or not ready, every DNS query in the cluster fails simultaneously, which is immediately obvious because everything stops working at once.
 - **Label selector mismatch** The Service exists and resolves via DNS, but connections time out because there are no Pods backing it.
 
-```mermaid
+@@@
 flowchart TD
     A[DNS resolution fails] --> B{Is CoreDNS running?}
     B -->|No| C[Fix CoreDNS Pods in kube-system]
@@ -29,7 +29,7 @@ flowchart TD
     H -->|No| I[Fix label selectors on Deployment/Service]
     H -->|Yes| J[Check /etc/resolv.conf and ndots config]
     J --> K[Test with nslookup or dig from inside Pod]
-```
+@@@
 
 ## Step 1: Verify CoreDNS Is Running
 

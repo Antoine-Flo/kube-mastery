@@ -46,7 +46,7 @@ If you see Pods stuck in `Unknown`, investigate the health of the node they're r
 
 The diagram below shows how a Pod transitions between phases over its lifetime:
 
-```mermaid
+@@@
 stateDiagram-v2
     [*] --> Pending: kubectl apply / create
     Pending --> Running: Scheduled + at least one container starts
@@ -58,7 +58,7 @@ stateDiagram-v2
     Unknown --> Failed: Node confirmed lost, Pod evicted
     Succeeded --> [*]
     Failed --> [*]
-```
+@@@
 
 ## Container States: The Next Level of Detail
 

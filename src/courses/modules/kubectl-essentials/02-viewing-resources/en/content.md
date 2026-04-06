@@ -131,7 +131,7 @@ When using `-A` (all namespaces), be mindful that in large clusters this can ret
 
 In practice, these commands form a natural progression when something is wrong. You start broad and zoom in as you gather information.
 
-```mermaid
+@@@
 flowchart TD
     A["kubectl get pods (spot the problem)"] --> B{Status OK?}
     B -- Yes --> Z["All good"]
@@ -141,7 +141,7 @@ flowchart TD
     E -- Yes --> F["Fix the root cause"]
     E -- No --> G["kubectl logs pod-name (check container output)"]
     G --> F
-```
+@@@
 
 This flow, get, then get wide, then describe, then logs, covers the vast majority of Kubernetes debugging scenarios. Memorize it, and you will be able to diagnose most issues methodically rather than guessing.
 

@@ -81,7 +81,7 @@ Note that DNS allows both UDP and TCP on port 53. Standard DNS uses UDP but fall
 
 ## Visualizing Restricted Egress
 
-```mermaid
+@@@
 graph TD
     B["Backend Pod<br/>(app=backend)<br/>Egress Policy Applied"]
 
@@ -89,7 +89,7 @@ graph TD
     B -->|"✅ UDP/TCP:53"| DNS["CoreDNS<br/>(kube-system namespace)"]
     B -->|"❌ blocked"| EXT["External Internet<br/>api.example.com"]
     B -->|"❌ blocked"| OTHER["Other Cluster Services<br/>(payment, auth, etc.)"]
-```
+@@@
 
 ## The Deny-All Egress Pattern
 

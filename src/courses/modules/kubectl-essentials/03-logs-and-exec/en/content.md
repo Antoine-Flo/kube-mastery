@@ -126,7 +126,7 @@ Not all container images include a shell. Minimal images built on distroless bas
 
 These tools slot into a natural diagnostic sequence. You start with the broad cluster view and progressively zoom in.
 
-```mermaid
+@@@
 flowchart TD
     A["kubectl get pods (identify the troubled pod)"] --> B["kubectl describe pod (read events, conditions)"]
     B --> C{Container running?}
@@ -137,7 +137,7 @@ flowchart TD
     F -- No --> G["kubectl exec -it my-pod -- /bin/sh (explore the container directly)"]
     F -- Yes --> H["Fix the root cause in the manifest"]
     G --> H
-```
+@@@
 
 Most production issues are diagnosed with events from `kubectl describe` and output from `kubectl logs`. The ability to drop into a shell is the last resort, but when you need it, it is invaluable.
 

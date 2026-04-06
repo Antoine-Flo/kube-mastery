@@ -27,14 +27,14 @@ By writing to stdout and stderr instead, containers delegate log management to t
 
 Once a container writes to stdout or stderr, the **kubelet** running on that node intercepts those streams via the container runtime (containerd, CRI-O, etc.). The kubelet writes the output to log files on the node's filesystem, typically under `/var/log/pods/<namespace>_<pod-name>_<uid>/<container-name>/`. Each running container gets its own log file, and these files are what `kubectl logs` reads when you ask to see a container's logs.
 
-```mermaid
+@@@
 flowchart LR
     A[Container<br/>Process] -->|"writes to<br/>stdout / stderr"| B[Container<br/>Runtime]
     B -->|"captures stream"| C[kubelet<br/>on Node]
     C -->|"writes to"| D["/var/log/pods/...<br/>Node filesystem"]
     D -->|"reads"| E["kubectl logs"]
     E -->|"streams to"| F[Your Terminal]
-```
+@@@
 
 This architecture means that logs are local to the node where the Pod ran. They are not centralized, not replicated, and not permanent. If the node itself is decommissioned or the log files are rotated away, the logs are gone.
 

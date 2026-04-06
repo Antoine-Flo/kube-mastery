@@ -59,7 +59,7 @@ The name comes from the Greek for "helmsman" or "pilot." The logo is a ship's he
 
 A simplified picture of how you interact with Kubernetes:
 
-```mermaid
+@@@
 graph LR
     User -->|kubectl commands| API["API Server"]
     API --> Scheduler
@@ -69,7 +69,7 @@ graph LR
     Scheduler -->|assigns pods to| Node2["Worker Node 2<br/>(Pods)"]
     Controllers -->|reconciles state| Node1
     Controllers -->|reconciles state| Node2
-```
+@@@
 
 You interact through `kubectl`, which talks to the API server. The API server is the front door: every command and query goes through it. Behind it, the scheduler places new workloads, the controller manager keeps the cluster in the desired state, and etcd stores the source of truth.
 

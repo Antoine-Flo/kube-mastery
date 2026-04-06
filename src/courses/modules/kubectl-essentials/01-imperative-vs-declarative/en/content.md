@@ -103,7 +103,7 @@ This is the best of both worlds: the speed of imperative commands to scaffold th
 
 ## The Two Paths to the Same Destination
 
-```mermaid
+@@@
 flowchart LR
     Dev([Developer])
 
@@ -122,7 +122,7 @@ flowchart LR
 
     Dev --> I1 --> I2 --> ClusterState
     Dev --> D1 --> D2 --> D3 --> ClusterState
-```
+@@@
 
 Both paths ultimately change the same cluster state. The difference is in _how_ you express your intent and what trail you leave behind.
 

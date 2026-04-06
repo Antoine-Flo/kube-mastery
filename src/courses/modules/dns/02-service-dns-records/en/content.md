@@ -32,7 +32,7 @@ If your Pod is in the same namespace as the Service, the shortest possible name 
 
 If your Pod is in a different namespace, the short name alone is not enough. A Pod in the `staging` namespace trying to connect to `web` would resolve to `web.staging.svc.cluster.local`, a different Service, or a non-existent one. To cross namespace boundaries, include at least the namespace: `web.production`. The resolver expands this to `web.production.svc.cluster.local` and finds the right Service.
 
-```mermaid
+@@@
 graph TD
     A[Pod in 'staging' namespace] -->|same namespace: 'web'| B["Resolves to web.staging.svc.cluster.local"]
     A -->|cross-namespace: 'web.production'| C["Resolves to web.production.svc.cluster.local"]
@@ -40,7 +40,7 @@ graph TD
     B --> E[Staging web Service]
     C --> F[Production web Service]
     D --> F
-```
+@@@
 
 :::info
 A best practice in production environments is to always use the full `<service>.<namespace>` form when calling Services in other namespaces, even if you could get away with a shorter name. This makes the namespace boundary explicit in your code and configuration, which improves readability and prevents bugs when Services move between namespaces.
@@ -79,7 +79,7 @@ This is fundamentally different from a normal Service. With a normal Service, DN
 - **Client-side load balancing** where the application manages its own connection pool.
 - **Service discovery** systems that need to know about all backing instances, not just a single virtual endpoint.
 
-```mermaid
+@@@
 graph LR
     subgraph "Normal Service"
     A1[Pod A] -->|query 'web'| B1[DNS: single ClusterIP]
@@ -92,7 +92,7 @@ graph LR
     B2 --> D2[10.244.1.8]
     B2 --> E2[10.244.2.3]
     end
-```
+@@@
 
 ## SRV Records for Named Ports
 

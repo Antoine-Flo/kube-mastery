@@ -104,14 +104,14 @@ Changing your default namespace persists until you change it again. If you switc
 
 ## How Namespace Context Works
 
-```mermaid
+@@@
 flowchart LR
     Context["kubectl context<br/>(cluster + user + namespace)"]
 
     Context -->|"Default namespace<br/>(no -n flag)"| NS_dev["dev namespace"]
     Context -->|"-n production<br/>(explicit override)"| NS_prod["production namespace"]
     Context -->|"-A flag"| ALL["All namespaces"]
-```
+@@@
 
 The context sets your "home base." The `-n` flag is an explicit override. The `-A` flag ignores the context namespace entirely and queries everything.
 

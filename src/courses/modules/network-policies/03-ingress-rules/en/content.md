@@ -92,7 +92,7 @@ In short: each list item (`-`) is an independent OR path; fields within one item
 
 ## Traffic Flow Diagram
 
-```mermaid
+@@@
 graph LR
     subgraph "Allowed Sources"
         F["Frontend Pod<br/>app=frontend"]
@@ -112,7 +112,7 @@ graph LR
     M -->|"✅ port 8080"| B
     O -->|"❌ blocked"| B
     EXT -->|"❌ blocked"| B
-```
+@@@
 
 ## The Deny-All Ingress Pattern
 
