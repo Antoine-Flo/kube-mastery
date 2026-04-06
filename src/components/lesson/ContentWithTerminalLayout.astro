@@ -1224,6 +1224,9 @@ const showTerminalActions = terminalInteractive
   }
 
   @media (max-width: 1024px) {
+    .lesson-layout-root {
+      --mobile-terminal-height: clamp(170px, 28svh, 240px);
+    }
     .lesson-layout__sidebar {
       position: fixed;
       top: 0;
@@ -1275,7 +1278,7 @@ const showTerminalActions = terminalInteractive
     }
     .lesson-layout-root[data-terminal-open='true'] .lesson-layout__terminal {
       display: flex;
-      height: 40vh;
+      height: var(--mobile-terminal-height);
     }
     .lesson-layout__mobile-overlay {
       display: block;
@@ -1297,7 +1300,9 @@ const showTerminalActions = terminalInteractive
     }
     .lesson-layout-root[data-terminal-open='true']
       .lesson-layout__content-body :global(.sa-vp) {
-      padding-bottom: calc(56px + 40vh + env(safe-area-inset-bottom));
+      padding-bottom: calc(
+        56px + var(--mobile-terminal-height) + env(safe-area-inset-bottom)
+      );
     }
     .lesson-layout__terminal-wrap :global(.lp__content-bar) {
       padding-bottom: calc(var(--spacing-2) + env(safe-area-inset-bottom));

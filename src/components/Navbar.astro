@@ -237,7 +237,7 @@ const userEmail = user?.email ?? ''
 </style>
 
 <script>
-  import { initTheme, toggleTheme } from '../lib/theme-client'
+  import { toggleTheme } from '../lib/theme-client'
 
   function handleDocumentClick(e: Event) {
     const target = (e.target as HTMLElement).closest?.('[data-theme-toggle]')
@@ -249,7 +249,6 @@ const userEmail = user?.email ?? ''
   }
 
   function setupThemeToggle() {
-    initTheme()
     document.removeEventListener('click', handleDocumentClick, true)
     document.addEventListener('click', handleDocumentClick, true)
   }
