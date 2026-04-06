@@ -1,6 +1,6 @@
 ---
 import Button from '../ui/Button.astro'
-import { MessageCircle, RefreshCw, Telescope, Terminal } from '@lucide/astro'
+import { ListTree, MessageCircle, RefreshCw, Telescope, Terminal } from '@lucide/astro'
 
 interface Props {
   labelVisualizer: string
@@ -13,6 +13,8 @@ interface Props {
   terminalAction: 'show' | 'hide'
   /** When false, hide cluster and reload (no emulated environment). */
   showTerminalActions?: boolean
+  /** Show course outline action (mobile drawer trigger). */
+  showOutlineAction?: boolean
 }
 const {
   labelVisualizer,
@@ -22,73 +24,99 @@ const {
   labelContactSupport,
   labelReloadTerminal,
   terminalAction,
-  showTerminalActions = true
+  showTerminalActions = true,
+  showOutlineAction = false
 } = Astro.props
 const labelTerminal =
   terminalAction === 'show' ? labelShowTerminal : labelHideTerminal
 ---
 
 <div class="lp__content-bar">
-  {
-    showTerminalActions && (
+  <div class="lp__content-bar-group lp__content-bar-group--left">
+    {
+      showTerminalActions && (
+        <Button
+          type="button"
+          variant="plain"
+          size="sm"
+          color="gray"
+          class="lp__content-bar-btn lp__content-bar-btn--viz"
+          data-cluster-trigger
+          data-label-visualizer={labelVisualizer}
+          data-label-course={labelCourse}
+          aria-expanded="false"
+          aria-label={labelVisualizer}
+        >
+          <Telescope size={18} />
+        </Button>
+      )
+    }
+    <span class="lp__term-toggle-wrap">
       <Button
         type="button"
         variant="plain"
         size="sm"
         color="gray"
-        class="lp__content-bar-btn lp__content-bar-btn--viz"
-        data-cluster-trigger
-        data-label-visualizer={labelVisualizer}
-        data-label-course={labelCourse}
-        aria-expanded="false"
-        aria-label={labelVisualizer}
+        class="lp__content-bar-btn lp__content-bar-btn--term-toggle"
+        data-lesson-term-toggle
+        aria-label={labelTerminal}
       >
-        <Telescope size={18} />
+        <Terminal size={18} />
       </Button>
-    )
-  }
-  {
-    showTerminalActions && (
-      <Button
-        type="button"
-        variant="plain"
-        size="sm"
-        color="gray"
-        class="lp__content-bar-btn lp__content-bar-btn--reload"
-        data-lesson-terminal-reload
-        aria-label={labelReloadTerminal}
-        title={labelReloadTerminal}
-      >
-        <RefreshCw size={18} />
-      </Button>
-    )
-  }
-  <Button
-    type="button"
-    variant="plain"
-    size="sm"
-    color="gray"
-    class="lp__content-bar-btn lp__content-bar-btn--contact"
-    data-contact-support-trigger
-    data-lesson-tour="feedback"
-    aria-label={labelContactSupport}
-    title={labelContactSupport}
-  >
-    <MessageCircle size={18} />
-  </Button>
-  <span class="lp__term-toggle-wrap">
+    </span>
+    {
+      showTerminalActions && (
+        <Button
+          type="button"
+          variant="plain"
+          size="sm"
+          color="gray"
+          class="lp__content-bar-btn lp__content-bar-btn--reload"
+          data-lesson-terminal-reload
+          aria-label={labelReloadTerminal}
+          title={labelReloadTerminal}
+        >
+          <RefreshCw size={18} />
+        </Button>
+      )
+    }
+  </div>
+  <div class="lp__content-bar-group lp__content-bar-group--right">
     <Button
       type="button"
       variant="plain"
       size="sm"
       color="gray"
-      class="lp__content-bar-btn lp__content-bar-btn--term-toggle"
-      data-lesson-term-toggle
-      aria-label={labelTerminal}
+      class="lp__content-bar-btn lp__content-bar-btn--contact"
+      data-contact-support-trigger
+      data-lesson-tour="feedback"
+      aria-label={labelContactSupport}
+      title={labelContactSupport}
     >
-      <Terminal size={18} />
+      <MessageCircle size={18} />
     </Button>
-  </span>
+    {
+      showOutlineAction && (
+        <span class="lp__outline-wrap">
+          <Button
+            type="button"
+            variant="plain"
+            size="sm"
+            color="gray"
+            class="lp__content-bar-btn lp__content-bar-btn--outline"
+            data-lesson-outline-toggle
+            data-lesson-tour="outline"
+            aria-label={labelCourse}
+            title={labelCourse}
+            aria-controls="lesson-sidebar"
+            aria-expanded="false"
+          >
+            <ListTree size={18} />
+          </Button>
+        </span>
+      )
+    }
+  </div>
 </div>
 
 <script>
@@ -127,6 +155,14 @@ const labelTerminal =
       document.dispatchEvent(new CustomEvent('lesson-terminal-toggle'))
       return
     }
+    const outlineBtn = (e.target as Element).closest(
+      '[data-lesson-outline-toggle]'
+    )
+    if (outlineBtn) {
+      e.preventDefault()
+      document.dispatchEvent(new CustomEvent('lesson-outline-toggle'))
+      return
+    }
     const contactBtn = (e.target as Element).closest(
       '[data-contact-support-trigger]'
     )
@@ -157,14 +193,28 @@ const labelTerminal =
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: var(--spacing-2);
+    width: 100%;
+    box-sizing: border-box;
     padding: var(--spacing-2) var(--spacing-3);
     border-top: 1px solid var(--color-gray-6);
     background: var(--color-gray-1);
   }
 
+  .lp__content-bar-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    min-width: 0;
+  }
+
+  .lp__content-bar-group--right {
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
   .lp__content-bar-btn--viz,
   .lp__content-bar-btn--term-toggle,
+  .lp__content-bar-btn--outline,
   .lp__content-bar-btn--contact,
   .lp__content-bar-btn--reload {
     background: transparent;
@@ -176,8 +226,20 @@ const labelTerminal =
     display: none;
   }
 
+  .lp__outline-wrap {
+    display: none;
+  }
+
   @media (max-width: 1024px) {
+    .lp__content-bar {
+      padding-left: var(--spacing-2);
+      padding-right: max(var(--spacing-2), env(safe-area-inset-right));
+      border-top: none;
+    }
     .lp__term-toggle-wrap {
+      display: inline-flex;
+    }
+    .lp__outline-wrap {
       display: inline-flex;
     }
   }

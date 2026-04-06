@@ -122,6 +122,7 @@ const showTerminalActions = terminalInteractive
               labelReloadTerminal={labels.labelReloadTerminal}
               terminalAction="show"
               showTerminalActions={showTerminalActions}
+              showOutlineAction={showSidebar}
             />
           </div>
         </div>
@@ -195,10 +196,20 @@ const showTerminalActions = terminalInteractive
             labelReloadTerminal={labels.labelReloadTerminal}
             terminalAction="hide"
             showTerminalActions={showTerminalActions}
+            showOutlineAction={showSidebar}
           />
         </div>
       </div>
     </div>
+    {
+      showSidebar && (
+        <div
+          class="lesson-layout__mobile-overlay"
+          data-lesson-outline-backdrop
+          aria-hidden="true"
+        />
+      )
+    }
   </div>
   {
     supportContextId && (
@@ -344,6 +355,7 @@ const showTerminalActions = terminalInteractive
   }
 
   let terminalToggleBound = false
+  let outlineToggleBound = false
   let mermaidZoomBound = false
   let mermaidObserver: MutationObserver | null = null
   let mermaidZoomHostCounter = 0
@@ -668,6 +680,64 @@ const showTerminalActions = terminalInteractive
     })
   }
 
+  function updateMobileOutlineUi(isOpen: boolean) {
+    const root = document.querySelector('.lesson-layout-root')
+    if (!(root instanceof HTMLElement)) {
+      return
+    }
+    root.setAttribute('data-outline-open', isOpen ? 'true' : 'false')
+    const backdrop = document.querySelector(
+      '[data-lesson-outline-backdrop]'
+    ) as HTMLElement | null
+    if (backdrop) {
+      backdrop.setAttribute('aria-hidden', isOpen ? 'false' : 'true')
+    }
+    const outlineToggles = document.querySelectorAll('[data-lesson-outline-toggle]')
+    outlineToggles.forEach((toggleEl) => {
+      if (toggleEl instanceof HTMLElement) {
+        toggleEl.setAttribute('aria-expanded', isOpen ? 'true' : 'false')
+      }
+    })
+  }
+
+  function setupOutlineToggle() {
+    updateMobileOutlineUi(false)
+    if (outlineToggleBound) {
+      return
+    }
+    outlineToggleBound = true
+
+    document.addEventListener('lesson-outline-toggle', () => {
+      if (!window.matchMedia('(max-width: 1024px)').matches) {
+        return
+      }
+      const root = document.querySelector('.lesson-layout-root')
+      const sidebar = document.getElementById('lesson-sidebar')
+      if (!(root instanceof HTMLElement) || !(sidebar instanceof HTMLElement)) {
+        return
+      }
+      const isOpen = root.getAttribute('data-outline-open') === 'true'
+      updateMobileOutlineUi(!isOpen)
+    })
+
+    document.addEventListener('click', (event) => {
+      const target = event.target
+      if (!(target instanceof Element)) {
+        return
+      }
+      if (!target.closest('[data-lesson-outline-backdrop]')) {
+        return
+      }
+      updateMobileOutlineUi(false)
+    })
+
+    window.addEventListener('resize', () => {
+      if (window.matchMedia('(min-width: 1025px)').matches) {
+        updateMobileOutlineUi(false)
+      }
+    })
+  }
+
   function getPanelElements() {
     const body = document.querySelector('.lesson-layout__body')
     const content = document.querySelector('.lesson-layout__content')
@@ -839,12 +909,14 @@ const showTerminalActions = terminalInteractive
 
   setupSidebarToggle()
   setupTerminalToggle()
+  setupOutlineToggle()
   setupPanelResize()
   setupMermaidZoom()
   requestAnimationFrame(initLessonEmulation)
   document.addEventListener('astro:page-load', () => {
     setupSidebarToggle()
     setupTerminalToggle()
+    setupOutlineToggle()
     setupPanelResize()
     setupMermaidZoom()
     requestAnimationFrame(initLessonEmulation)
@@ -1186,6 +1258,11 @@ const showTerminalActions = terminalInteractive
     flex-shrink: 0;
     border-top: 1px solid var(--color-gray-6);
     background-color: var(--color-gray-1);
+    width: 100%;
+  }
+
+  .lesson-layout__mobile-overlay {
+    display: none;
   }
 
   @media (max-width: 640px) {
@@ -1196,7 +1273,30 @@ const showTerminalActions = terminalInteractive
 
   @media (max-width: 1024px) {
     .lesson-layout__sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: min(86vw, 22rem);
+      background-color: var(--color-gray-1);
+      z-index: 120;
+      transform: translateX(-105%);
+      transition: transform var(--duration-normal) ease-out;
+      box-shadow: 0 12px 32px rgb(0 0 0 / 0.38);
+      border-right: 1px solid var(--color-gray-6);
+    }
+    .lesson-layout__sidebar-content {
+      width: auto;
+      min-width: 0;
+    }
+    .lesson-layout__sidebar--collapsed {
+      width: min(86vw, 22rem);
+    }
+    .lesson-layout__sidebar-footer {
       display: none;
+    }
+    .lesson-layout-root[data-outline-open='true'] .lesson-layout__sidebar {
+      transform: translateX(0);
     }
     .lesson-layout__body {
       flex-direction: column;
@@ -1216,9 +1316,23 @@ const showTerminalActions = terminalInteractive
     .lesson-layout__terminal-wrap.lesson-layout__terminal-wrap--hidden {
       display: none;
     }
+    .lesson-layout__mobile-overlay {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: rgb(0 0 0 / 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-normal) ease-out;
+      z-index: 110;
+    }
+    .lesson-layout-root[data-outline-open='true'] .lesson-layout__mobile-overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
     .lesson-layout-root[data-terminal-open='false']
       .lesson-layout__show-terminal {
-      display: flex;
+      display: block;
       position: fixed;
       bottom: 0;
       left: 0;

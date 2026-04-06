@@ -17,6 +17,7 @@ type TourMessages = {
   lesson_tour_sidebar_toggle_desc: string
   lesson_tour_terminal_title: string
   lesson_tour_terminal_desc: string
+  lesson_tour_terminal_mobile_note: string
   lesson_tour_visualizer_title: string
   lesson_tour_visualizer_desc: string
   lesson_tour_reload_title: string
@@ -102,7 +103,7 @@ function queryTourTarget(selector: string): Element | null {
   return document.querySelector(selector)
 }
 
-function buildTourSteps(m: TourMessages): DriveStep[] {
+function buildDesktopTourSteps(m: TourMessages): DriveStep[] {
   const steps: DriveStep[] = []
 
   steps.push({
@@ -217,6 +218,102 @@ function buildTourSteps(m: TourMessages): DriveStep[] {
   return steps
 }
 
+function buildMobileTourSteps(m: TourMessages): DriveStep[] {
+  const steps: DriveStep[] = []
+
+  steps.push({
+    popover: {
+      title: m.lesson_tour_welcome_title,
+      description: m.lesson_tour_welcome_desc,
+      popoverClass:
+        'lesson-layout-tour-popover lesson-layout-tour-popover--welcome'
+    }
+  })
+
+  const vizBtn = firstVisibleMatch('[data-cluster-trigger]')
+  if (vizBtn) {
+    steps.push({
+      element: vizBtn,
+      popover: {
+        title: m.lesson_tour_visualizer_title,
+        description: m.lesson_tour_visualizer_desc,
+        side: 'top',
+        align: 'center'
+      }
+    })
+  }
+
+  const terminalToggleBtn = firstVisibleMatch('[data-lesson-term-toggle]')
+  if (terminalToggleBtn) {
+    steps.push({
+      element: terminalToggleBtn,
+      popover: {
+        title: m.lesson_tour_terminal_title,
+        description: `${m.lesson_tour_terminal_desc} ${m.lesson_tour_terminal_mobile_note}`,
+        side: 'top',
+        align: 'center'
+      }
+    })
+  }
+
+  const reloadBtn = firstVisibleMatch('[data-lesson-terminal-reload]')
+  if (reloadBtn) {
+    steps.push({
+      element: reloadBtn,
+      popover: {
+        title: m.lesson_tour_reload_title,
+        description: m.lesson_tour_reload_desc,
+        side: 'top',
+        align: 'center'
+      }
+    })
+  }
+
+  const feedbackBtn = firstVisibleMatch('[data-lesson-tour="feedback"]')
+  if (feedbackBtn) {
+    steps.push({
+      element: feedbackBtn,
+      popover: {
+        title: m.lesson_tour_feedback_title,
+        description: m.lesson_tour_feedback_desc,
+        side: 'top',
+        align: 'center'
+      }
+    })
+  }
+
+  const outlineBtn = firstVisibleMatch('[data-lesson-outline-toggle]')
+  if (outlineBtn) {
+    steps.push({
+      element: outlineBtn,
+      popover: {
+        title: m.lesson_tour_sidebar_title,
+        description: m.lesson_tour_sidebar_desc,
+        side: 'top',
+        align: 'center'
+      }
+    })
+  }
+
+  steps.push({
+    popover: {
+      title: m.lesson_tour_closing_title,
+      description: m.lesson_tour_closing_desc,
+      popoverClass:
+        'lesson-layout-tour-popover lesson-layout-tour-popover--welcome'
+    }
+  })
+
+  return steps
+}
+
+function buildTourSteps(m: TourMessages, isMobileLayout: boolean): DriveStep[] {
+  if (isMobileLayout) {
+    return buildMobileTourSteps(m)
+  }
+  return buildDesktopTourSteps(m)
+}
+
 function resolveUiLang(): LessonTourLang {
   const tag = document.documentElement.lang || 'en'
   if (tag.toLowerCase().startsWith('fr')) {
@@ -227,20 +324,18 @@ function resolveUiLang(): LessonTourLang {
 
 /**
  * Starts the lesson layout onboarding tour (Driver.js).
- * Steps are skipped when targets are missing or not visible (e.g. mobile sidebar).
+ * Steps are skipped when targets are missing or not visible.
  * Skipped entirely if the user has already completed or dismissed the tour.
  */
 export function startLessonLayoutTour(lang?: LessonTourLang): void {
   if (hasTourBeenSeen()) {
     return
   }
-  if (window.matchMedia('(max-width: 1024px)').matches) {
-    return
-  }
   destroyLessonLayoutTourIfActive()
+  const isMobileLayout = window.matchMedia('(max-width: 1024px)').matches
   const uiLang = lang ?? resolveUiLang()
   const m = pickTourMessages(uiLang)
-  const steps = buildTourSteps(m)
+  const steps = buildTourSteps(m, isMobileLayout)
   if (steps.length === 0) {
     return
   }
