@@ -89,3 +89,5 @@ Feel free to check [our documentation](https://docs.astro.build) or jump into ou
 0187651955
 
 octogone
+
+Show HN: Kubernetes cluster simulation that runs in the browser to prepare CKA

@@ -18,7 +18,7 @@ const isEarlyStage =
 const homeCtaLabel = isEarlyStage
   ? t('home_cta_join_early')
   : t('home_cta_join')
-const homeCtaHref = localePath('/courses')
+const homeCtaHref = localePath('/courses/crash-course')
 
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
@@ -51,9 +51,15 @@ try {
             <p class="sub">{t('home_subtitle')}</p>
           </div>
           <div class="cta">
-            <Button href={homeCtaHref} variant="solid" color="cyan" size="xl">
-              {homeCtaLabel}
-            </Button>
+            <div class="cta-buttons">
+              <Button href={homeCtaHref} variant="solid" color="cyan" size="xl">
+                {homeCtaLabel}
+              </Button>
+              <Button href={localePath('/courses')} variant="outline" color="gray" size="xl">
+                {t('home_cta_explore')}
+              </Button>
+            </div>
+            <span class="cta-hint">{t('home_cta_no_account')}</span>
           </div>
         </div>
         <div class="hero-terminal">
@@ -219,7 +225,7 @@ try {
                 </span>
               </li>
             </ul>
-            <div class="cta">
+            <div class="cta cta--centered">
               <Button href={homeCtaHref} variant="solid" color="cyan" size="xl">
                 {homeCtaLabel}
               </Button>
@@ -274,6 +280,7 @@ try {
               <Button href={homeCtaHref} variant="solid" color="cyan" size="xl">
                 {homeCtaLabel}
               </Button>
+              <span class="cta-hint">{t('home_cta_no_account')}</span>
             </div>
           </div>
         </div>
@@ -558,14 +565,29 @@ try {
   .cta {
     margin-top: 1rem;
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
     position: relative;
     z-index: 1;
     animation: fadeInUp 0.8s ease-out 0.4s both;
+  }
+
+  .cta-buttons {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .cta--centered {
+    align-items: center;
+  }
+
+  .cta-hint {
+    font-size: var(--text-sm);
+    color: var(--color-gray-10);
   }
 
   .cta :global(.btn[data-color='cyan'][data-variant='solid']) {
@@ -935,17 +957,6 @@ try {
   .media video {
     height: auto;
     object-fit: unset;
-    cursor: zoom-in;
-    position: relative;
-    z-index: 1;
-    transition:
-      transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-      box-shadow 0.45s ease;
-  }
-
-  .media video.zoomed {
-    z-index: 100;
-    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6);
   }
 
   .media-conformance img {
@@ -1251,34 +1262,9 @@ try {
       }
     })
   }
-  function setupVideoZoom() {
-    const SCALE = 1.5
-    document.querySelectorAll('.media video').forEach((el) => {
-      const video = el as HTMLVideoElement
-
-      video.addEventListener('mouseenter', () => {
-        const rect = video.getBoundingClientRect()
-        const videoCenterX = rect.left + rect.width / 2
-        const videoCenterY = rect.top + rect.height / 2
-        const viewportCenterX = window.innerWidth / 2
-        const viewportCenterY = window.innerHeight / 2
-        const tx = (viewportCenterX - videoCenterX) * 0.6
-        const ty = (viewportCenterY - videoCenterY) * 0.4
-        video.classList.add('zoomed')
-        video.style.transform = `scale(${SCALE}) translate(${tx / SCALE}px, ${ty / SCALE}px)`
-      })
-
-      video.addEventListener('mouseleave', () => {
-        video.classList.remove('zoomed')
-        video.style.transform = ''
-      })
-    })
-  }
 
   setupScrollAnim()
   setupMediaPlayback()
-  setupVideoZoom()
   document.addEventListener('astro:page-load', setupScrollAnim)
   document.addEventListener('astro:page-load', setupMediaPlayback)
-  document.addEventListener('astro:page-load', setupVideoZoom)
 </script>

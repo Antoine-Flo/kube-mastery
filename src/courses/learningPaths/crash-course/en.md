@@ -8,7 +8,7 @@ order: 0
 level: Beginner
 ---
 
-The fastest way to go from zero to a working understanding of Kubernetes. No prerequisites, no fluff. Each lesson is short, focused, and backed by a live terminal where you apply what you just read. By the end, you will have deployed a real application, connected its services, persisted its data, and understood why each piece of the system works the way it does.
+The fastest way to go from zero to a working understanding of Kubernetes. Each lesson is short, focused, and backed by a live terminal where you apply what you just read. By the end, you will have deployed a real application, connected its services, persisted its data, and understood why each piece of the system works the way it does.
 
 ## What you'll learn
 
