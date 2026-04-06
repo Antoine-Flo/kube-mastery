@@ -33,8 +33,11 @@
     "css:clean": "tsx bin/clean-unused-css.ts --apply",
     "sitemap:lastmod:generate": "tsx bin/generate-sitemap-lastmod.ts",
     "kubectl:help:generate": "tsx bin/generate-kubectl-help-catalog.ts",
+    "command-index:generate": "tsx bin/generate-command-index.ts",
     "mcp:simulation": "tsx mcp/simulation-server/index.ts",
-    "parity:manual": "tsx bin/parity/manual-compare.ts"
+    "parity:manual": "tsx bin/parity/manual-compare.ts",
+    "parity:scenario": "tsx bin/parity/run-scenario.ts",
+    "hands-on:sync": "tsx bin/course/sync-hands-on-from-scenario.ts"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",

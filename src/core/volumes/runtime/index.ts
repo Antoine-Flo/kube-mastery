@@ -8,6 +8,7 @@ export {
 export { resolveContainerVolumeMountPlans } from './VolumeMountResolver'
 export { createEmptyDirProvider } from './providers/emptyDirProvider'
 export { createConfigMapProvider } from './providers/configMapProvider'
+export { createHostPathProvider } from './providers/hostPathProvider'
 export { createPersistentVolumeClaimProvider } from './providers/persistentVolumeClaimProvider'
 export { createSecretProvider } from './providers/secretProvider'
 export type {

@@ -14,6 +14,7 @@ import {
   applyVolumeMountBindingsToFileSystem,
   createConfigMapProvider,
   createEmptyDirProvider,
+  createHostPathProvider,
   createPersistentVolumeClaimProvider,
   createPodVolumeRuntimeManager,
   createSecretProvider,
@@ -540,6 +541,7 @@ const persistentVolumeBackingStore = getPersistentVolumeBackingStore()
 const podVolumeRuntimeManager = createPodVolumeRuntimeManager([
   createEmptyDirProvider(),
   createConfigMapProvider(),
+  createHostPathProvider(),
   createPersistentVolumeClaimProvider(persistentVolumeBackingStore),
   createSecretProvider()
 ])

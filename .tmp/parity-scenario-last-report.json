@@ -1,0 +1,201 @@
+{
+  "scenario": {
+    "id": "volumes-emptydir-hands-on",
+    "title": "emptyDir writer-reader and memory-backed flow",
+    "version": 1
+  },
+  "reports": [
+    {
+      "id": "step-01-apply-writer-reader",
+      "command": "kubectl apply -f src/courses/modules/volumes/02-emptydir/en/manifests/writer-reader-pod.yaml",
+      "matched": true,
+      "expectedMatched": true,
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "pod/writer-reader created",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "pod/writer-reader created",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "step-02-wait-writer-reader-ready",
+      "command": "kubectl wait --for=condition=Ready pod/writer-reader --timeout=90s",
+      "matched": true,
+      "expectedMatched": true,
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "pod/writer-reader condition met",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "pod/writer-reader condition met",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "step-03-create-shared-file",
+      "command": "kubectl exec writer-reader -c writer -- touch /data/message.txt",
+      "matched": true,
+      "expectedMatched": true,
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "step-04-read-shared-file",
+      "command": "kubectl exec writer-reader -c reader -- ls /data/message.txt",
+      "matched": true,
+      "expectedMatched": true,
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "/data/message.txt",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "/data/message.txt",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "step-05-restart-writer",
+      "command": "kubectl exec writer-reader -c writer -- kill 1",
+      "matched": true,
+      "expectedMatched": true,
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "step-06-wait-after-restart",
+      "command": "kubectl wait --for=condition=Ready pod/writer-reader --timeout=90s",
+      "matched": true,
+      "expectedMatched": true,
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "pod/writer-reader condition met",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "pod/writer-reader condition met",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "step-07-verify-shared-file-after-restart",
+      "command": "kubectl exec writer-reader -c reader -- ls /data/message.txt",
+      "matched": true,
+      "expectedMatched": true,
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "/data/message.txt",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "/data/message.txt",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "step-08-apply-memory-backed",
+      "command": "kubectl apply -f src/courses/modules/volumes/02-emptydir/en/manifests/memory-scratch-pod.yaml",
+      "matched": true,
+      "expectedMatched": true,
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "pod/memory-scratch created",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "pod/memory-scratch created",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "step-09-create-file-in-memory-volume",
+      "command": "kubectl wait --for=condition=Ready pod/memory-scratch --timeout=90s",
+      "matched": true,
+      "expectedMatched": true,
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "pod/memory-scratch condition met",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "pod/memory-scratch condition met",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "step-10-touch-memory-file",
+      "command": "kubectl exec memory-scratch -- touch /scratch/ram-note.txt",
+      "matched": true,
+      "expectedMatched": true,
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "step-11-read-memory-file",
+      "command": "kubectl exec memory-scratch -- ls /scratch/ram-note.txt",
+      "matched": true,
+      "expectedMatched": true,
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "/scratch/ram-note.txt",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "/scratch/ram-note.txt",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "cleanup-delete-pods",
+      "command": "kubectl delete pod writer-reader memory-scratch",
+      "matched": true,
+      "expectedMatched": true,
+      "simulation": {
+        "exitCode": 0,
+        "stdout": "pod \"writer-reader\" deleted from default namespace\npod \"memory-scratch\" deleted from default namespace",
+        "stderr": ""
+      },
+      "kind": {
+        "exitCode": 0,
+        "stdout": "pod \"writer-reader\" deleted from default namespace\npod \"memory-scratch\" deleted from default namespace",
+        "stderr": ""
+      }
+    }
+  ]
+}

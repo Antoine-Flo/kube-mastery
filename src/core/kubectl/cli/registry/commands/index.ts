@@ -158,6 +158,276 @@ const createIngressCommand = createLeafCommand({
   ]
 })
 
+const createNamespaceCommand = createLeafCommand({
+  path: ['create', 'namespace'],
+  aliases: ['ns'],
+  use: 'create namespace NAME [--dry-run=none|server|client] [-o output]',
+  short: 'Create a namespace',
+  handlerId: 'create',
+  flags: [
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
+  ]
+})
+
+const createServiceClusterIpCommand = createLeafCommand({
+  path: ['create', 'service', 'clusterip'],
+  use: 'create service clusterip NAME --tcp=port:targetPort [--dry-run=none|server|client] [-o output]',
+  short: 'Create a ClusterIP service',
+  handlerId: 'create',
+  flags: [
+    { kind: 'string', name: 'tcp', description: 'Port mapping list' },
+    { kind: 'string', name: 'node-port', description: 'NodePort value' },
+    { kind: 'string', name: 'external-name', description: 'External DNS name' },
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
+  ]
+})
+
+const createServiceNodePortCommand = createLeafCommand({
+  path: ['create', 'service', 'nodeport'],
+  use: 'create service nodeport NAME --tcp=port:targetPort [--node-port=port] [--dry-run=none|server|client] [-o output]',
+  short: 'Create a NodePort service',
+  handlerId: 'create',
+  flags: [
+    { kind: 'string', name: 'tcp', description: 'Port mapping list' },
+    { kind: 'string', name: 'node-port', description: 'NodePort value' },
+    { kind: 'string', name: 'external-name', description: 'External DNS name' },
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
+  ]
+})
+
+const createServiceLoadBalancerCommand = createLeafCommand({
+  path: ['create', 'service', 'loadbalancer'],
+  use: 'create service loadbalancer NAME --tcp=port:targetPort [--dry-run=none|server|client] [-o output]',
+  short: 'Create a LoadBalancer service',
+  handlerId: 'create',
+  flags: [
+    { kind: 'string', name: 'tcp', description: 'Port mapping list' },
+    { kind: 'string', name: 'node-port', description: 'NodePort value' },
+    { kind: 'string', name: 'external-name', description: 'External DNS name' },
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
+  ]
+})
+
+const createServiceExternalNameCommand = createLeafCommand({
+  path: ['create', 'service', 'externalname'],
+  use: 'create service externalname NAME --external-name=dns.name [--dry-run=none|server|client] [-o output]',
+  short: 'Create an ExternalName service',
+  handlerId: 'create',
+  flags: [
+    { kind: 'string', name: 'tcp', description: 'Port mapping list' },
+    { kind: 'string', name: 'node-port', description: 'NodePort value' },
+    { kind: 'string', name: 'external-name', description: 'External DNS name' },
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
+  ]
+})
+
+const createServiceCommand = command({
+  path: ['create', 'service'],
+  use: 'create service <clusterip|nodeport|loadbalancer|externalname> NAME [flags]',
+  description: {
+    short: 'Create a service using an imperative subcommand'
+  }
+})
+  .addCommand(
+    createServiceClusterIpCommand,
+    createServiceNodePortCommand,
+    createServiceLoadBalancerCommand,
+    createServiceExternalNameCommand
+  )
+  .build()
+
+const createConfigMapCommand = createLeafCommand({
+  path: ['create', 'configmap'],
+  aliases: ['cm'],
+  use: 'create configmap NAME --from-literal=key=value [--dry-run=none|server|client] [-o output]',
+  short: 'Create a configmap from literal values',
+  handlerId: 'create',
+  flags: [
+    {
+      kind: 'stringArray',
+      name: 'from-literal',
+      description: 'Literal key=value entries'
+    },
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
+  ]
+})
+
+const createSecretGenericCommand = createLeafCommand({
+  path: ['create', 'secret', 'generic'],
+  use: 'create secret generic NAME [--from-literal=key=value] [--from-file=[key=]path] [--from-env-file=path]',
+  short: 'Create an opaque secret',
+  handlerId: 'create',
+  flags: [
+    {
+      kind: 'stringArray',
+      name: 'from-literal',
+      description: 'Literal key=value entries'
+    },
+    {
+      kind: 'stringArray',
+      name: 'from-file',
+      description: 'File source entries'
+    },
+    {
+      kind: 'stringArray',
+      name: 'from-env-file',
+      description: 'Env file entries'
+    },
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
+  ]
+})
+
+const createSecretTlsCommand = createLeafCommand({
+  path: ['create', 'secret', 'tls'],
+  use: 'create secret tls NAME --cert=path --key=path [--dry-run=none|server|client] [-o output]',
+  short: 'Create a TLS secret',
+  handlerId: 'create',
+  flags: [
+    { kind: 'string', name: 'cert', description: 'Certificate path' },
+    { kind: 'string', name: 'key', description: 'Private key path' },
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
+  ]
+})
+
+const createSecretDockerRegistryCommand = createLeafCommand({
+  path: ['create', 'secret', 'docker-registry'],
+  use: 'create secret docker-registry NAME --docker-server=server --docker-username=user --docker-password=pass [--docker-email=email]',
+  short: 'Create a docker-registry secret',
+  handlerId: 'create',
+  flags: [
+    {
+      kind: 'string',
+      name: 'docker-server',
+      description: 'Docker server'
+    },
+    {
+      kind: 'string',
+      name: 'docker-username',
+      description: 'Docker username'
+    },
+    {
+      kind: 'string',
+      name: 'docker-password',
+      description: 'Docker password'
+    },
+    { kind: 'string', name: 'docker-email', description: 'Docker email' },
+    {
+      kind: 'string',
+      name: 'output',
+      short: 'o',
+      description: 'Output format'
+    },
+    {
+      kind: 'enum',
+      name: 'dry-run',
+      description: 'Must be none, server or client',
+      enumValues: ['none', 'server', 'client']
+    }
+  ]
+})
+
+const createSecretCommand = command({
+  path: ['create', 'secret'],
+  use: 'create secret <generic|tls|docker-registry> NAME [flags]',
+  description: {
+    short: 'Create a secret using an imperative subcommand'
+  }
+})
+  .addCommand(
+    createSecretGenericCommand,
+    createSecretTlsCommand,
+    createSecretDockerRegistryCommand
+  )
+  .build()
+
 const createCommand = command({
   path: ['create'],
   use: 'create -f FILENAME | create deployment NAME --image=image',
@@ -172,13 +442,32 @@ const createCommand = command({
   .flags.string('port', 'Port number')
   .flags.string('class', 'Ingress class name')
   .flags.stringArray('rule', 'Host/path backend rule')
+  .flags.string('tcp', 'Port mapping list')
+  .flags.string('node-port', 'NodePort value')
+  .flags.string('external-name', 'External DNS name')
+  .flags.stringArray('from-literal', 'Literal key=value entries')
+  .flags.stringArray('from-file', 'File source entries')
+  .flags.stringArray('from-env-file', 'Env file entries')
+  .flags.string('cert', 'Certificate path')
+  .flags.string('key', 'Private key path')
+  .flags.string('docker-server', 'Docker server')
+  .flags.string('docker-username', 'Docker username')
+  .flags.string('docker-password', 'Docker password')
+  .flags.string('docker-email', 'Docker email')
   .flags.string('output', 'Output format', { short: 'o' })
   .flags.enum('dry-run', 'Must be none, server or client', [
     'none',
     'server',
     'client'
   ])
-  .addCommand(createDeploymentCommand, createIngressCommand)
+  .addCommand(
+    createDeploymentCommand,
+    createIngressCommand,
+    createNamespaceCommand,
+    createServiceCommand,
+    createConfigMapCommand,
+    createSecretCommand
+  )
   .build()
 
 const logsCommand = createLeafCommand({

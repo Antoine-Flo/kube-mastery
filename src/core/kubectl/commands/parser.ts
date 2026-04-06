@@ -18,6 +18,8 @@ import type { Action, ParsedCommand, Resource } from './types'
 import { assertParsedCommandSupportedBySpec } from '../cli/runtime/parse'
 import { validateUnknownFlagsBySpec } from '../cli/runtime/flagErrors'
 import { validateUnknownCommandBySpec } from '../cli/runtime/commandErrors'
+import { KUBECTL_ROOT_COMMAND_SPEC } from '../cli/registry/root'
+import type { KubectlCommandSpec } from '../cli/model'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KUBECTL COMMAND PARSER
@@ -30,105 +32,89 @@ import { validateUnknownCommandBySpec } from '../cli/runtime/commandErrors'
 
 // ─── Constants ───────────────────────────────────────────────────────────
 
-const VALID_ACTIONS: Action[] = [
-  'get',
-  'diff',
-  'explain',
-  'describe',
-  'edit',
-  'set',
-  'delete',
-  'apply',
-  'replace',
-  'create',
-  'logs',
-  'exec',
-  'label',
-  'annotate',
-  'version',
-  'cluster-info',
-  'api-versions',
-  'api-resources',
-  'scale',
-  'patch',
-  'run',
-  'expose',
-  'wait',
-  'top',
-  'rollout',
-  'options',
-  'config'
-]
-
-// Flag aliases: short form → long form
-const FLAG_ALIASES: Record<string, string> = {
-  n: 'namespace',
-  o: 'output',
-  l: 'selector',
-  f: 'filename', // Note: -f is also used for --follow in logs, but filename takes precedence
-  p: 'patch',
-  A: 'all-namespaces',
-  c: 'container', // Container name for logs/exec
-  R: 'recursive',
-  k: 'kustomize',
-  i: 'stdin',
-  t: 'tty'
+const walkCommandSpecs = (
+  commandSpec: KubectlCommandSpec,
+  visit: (command: KubectlCommandSpec) => void
+): void => {
+  visit(commandSpec)
+  for (const child of commandSpec.subcommands) {
+    walkCommandSpecs(child, visit)
+  }
 }
 
-// Flags that require a value (cannot be boolean)
-const FLAGS_REQUIRING_VALUES = [
-  'n',
-  'namespace',
-  'o',
-  'output',
-  'l',
-  'selector',
-  'filename',
-  'tail',
-  'since',
-  'c',
-  'container',
-  'namespaces',
-  'output-directory',
-  'k',
-  'kustomize',
-  'field-selector',
-  'chunk-size',
-  'sort-by',
-  'subresource',
-  'replicas',
-  'image',
-  'port',
-  'env',
-  'labels',
-  'dry-run',
-  'restart',
-  'raw',
-  'api-version',
-  'target-port',
-  'type',
-  'name',
-  'node-port',
-  'tcp',
-  'external-name',
-  'from-literal',
-  'from-file',
-  'from-env-file',
-  'cert',
-  'key',
-  'docker-server',
-  'docker-username',
-  'docker-password',
-  'docker-email',
-  'class',
-  'rule',
-  'p',
-  'patch',
-  'revision',
-  'timeout',
-  'grace-period'
-]
-// Note: 'filename' is required for apply/create, but 'f' and 'follow' are boolean for logs
+const getTopLevelActionsFromSpec = (): Action[] => {
+  const actions = KUBECTL_ROOT_COMMAND_SPEC.subcommands.map((commandSpec) => {
+    return commandSpec.path[commandSpec.path.length - 1]
+  })
+  return actions as Action[]
+}
+
+const buildFlagParsingSpec = (): {
+  aliases: Record<string, string>
+  requiringValues: string[]
+  requiringValuesSet: Set<string>
+} => {
+  const flagsWithOptionalValues = new Set(['watch'])
+  const forcedShortValueFlags = new Set(['p'])
+  const preferredShortAliases: Record<string, string> = {
+    p: 'patch'
+  }
+  const aliases: Record<string, string> = {}
+  const longFlagsRequiringValues = new Set<string>()
+  const shortBooleanFlags = new Set<string>()
+  const shortNonBooleanFlags = new Set<string>()
+
+  walkCommandSpecs(KUBECTL_ROOT_COMMAND_SPEC, (commandSpec) => {
+    for (const flagSpec of commandSpec.flags) {
+      const isBooleanFlag = flagSpec.kind === 'boolean'
+      if (!isBooleanFlag && !flagsWithOptionalValues.has(flagSpec.name)) {
+        longFlagsRequiringValues.add(flagSpec.name)
+      }
+
+      if (flagSpec.short == null) {
+        continue
+      }
+
+      if (aliases[flagSpec.short] == null) {
+        aliases[flagSpec.short] = flagSpec.name
+      }
+
+      if (isBooleanFlag) {
+        shortBooleanFlags.add(flagSpec.short)
+      } else {
+        shortNonBooleanFlags.add(flagSpec.short)
+      }
+    }
+  })
+
+  const shortFlagsRequiringValues = [...shortNonBooleanFlags].filter((shortFlag) => {
+    return !shortBooleanFlags.has(shortFlag)
+  })
+  for (const forcedShortFlag of forcedShortValueFlags) {
+    shortFlagsRequiringValues.push(forcedShortFlag)
+  }
+
+  for (const [shortAlias, longAlias] of Object.entries(preferredShortAliases)) {
+    aliases[shortAlias] = longAlias
+  }
+
+  const requiringValues = [
+    ...longFlagsRequiringValues,
+    ...shortFlagsRequiringValues
+  ]
+
+  return {
+    aliases,
+    requiringValues,
+    requiringValuesSet: new Set(requiringValues)
+  }
+}
+
+const VALID_ACTIONS: Action[] = getTopLevelActionsFromSpec()
+const FLAG_PARSING_SPEC = buildFlagParsingSpec()
+const FLAG_ALIASES: Record<string, string> = FLAG_PARSING_SPEC.aliases
+const FLAGS_REQUIRING_VALUES: string[] = FLAG_PARSING_SPEC.requiringValues
+const FLAGS_REQUIRING_VALUES_SET = FLAG_PARSING_SPEC.requiringValuesSet
 
 // Output formats for kubectl commands
 type OutputFormat = 'table' | 'yaml' | 'json'
@@ -366,7 +352,7 @@ const findTokenSkippingFlags = (
     if (token.startsWith('-')) {
       // Skip flag and its value if needed
       const flagName = getFlagName(token)
-      if (FLAGS_REQUIRING_VALUES.includes(flagName) && !token.includes('=')) {
+      if (FLAGS_REQUIRING_VALUES_SET.has(flagName) && !token.includes('=')) {
         i++
       }
       continue
@@ -626,7 +612,7 @@ const getNamesFromTokens = (
     }
     if (token.startsWith('-')) {
       const flagName = getFlagName(token)
-      if (FLAGS_REQUIRING_VALUES.includes(flagName) && !token.includes('=')) {
+      if (FLAGS_REQUIRING_VALUES_SET.has(flagName) && !token.includes('=')) {
         index = index + 1
       }
       continue
@@ -1137,7 +1123,7 @@ const hasPositionalArgsAfterGet = (tokens: string[]): boolean => {
     }
     if (token.startsWith('-')) {
       const flagName = getFlagName(token)
-      if (FLAGS_REQUIRING_VALUES.includes(flagName) && !token.includes('=')) {
+      if (FLAGS_REQUIRING_VALUES_SET.has(flagName) && !token.includes('=')) {
         index = index + 1
       }
       continue
@@ -1171,7 +1157,7 @@ const getPositionalTokensAfterIndex = (
     }
     if (token.startsWith('-')) {
       const flagName = getFlagName(token)
-      if (FLAGS_REQUIRING_VALUES.includes(flagName) && !token.includes('=')) {
+      if (FLAGS_REQUIRING_VALUES_SET.has(flagName) && !token.includes('=')) {
         index += 1
       }
       continue
