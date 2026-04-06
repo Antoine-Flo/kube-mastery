@@ -30,6 +30,11 @@ export function applyTheme(value: Theme) {
   applyEffectiveTheme(value)
 }
 
+export function initTheme() {
+  const stored = getStoredTheme()
+  applyEffectiveTheme(stored)
+}
+
 export function toggleTheme(): Theme {
   const current = getEffectiveTheme()
   const next: Theme = current === 'dark' ? 'light' : 'dark'
