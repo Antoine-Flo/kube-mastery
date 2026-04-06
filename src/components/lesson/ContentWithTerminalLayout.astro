@@ -962,7 +962,8 @@ const showTerminalActions = terminalInteractive
 
   @media (max-width: 1024px) {
     .lesson-layout-root {
-      --mobile-terminal-height: clamp(170px, 28svh, 240px);
+      --mobile-terminal-bar-height: 53px;
+      --mobile-terminal-height: clamp(150px, 26dvh, 220px);
     }
     .lesson-layout__sidebar {
       position: fixed;
@@ -1006,16 +1007,23 @@ const showTerminalActions = terminalInteractive
       border-left: none;
       border-top: none;
       background-color: var(--color-gray-1);
+      overflow: hidden;
     }
     .lesson-layout__resizer {
       display: none;
     }
     .lesson-layout__terminal {
       display: none;
+      border-top: 1px solid var(--color-gray-6);
     }
     .lesson-layout-root[data-terminal-open='true'] .lesson-layout__terminal {
       display: flex;
-      height: var(--mobile-terminal-height);
+      height: min(
+        var(--mobile-terminal-height),
+        calc(
+          100dvh - var(--mobile-terminal-bar-height) - env(safe-area-inset-bottom)
+        )
+      );
     }
     .lesson-layout__mobile-overlay {
       display: block;
@@ -1038,7 +1046,9 @@ const showTerminalActions = terminalInteractive
     .lesson-layout-root[data-terminal-open='true']
       .lesson-layout__content-body :global(.sa-vp) {
       padding-bottom: calc(
-        56px + var(--mobile-terminal-height) + env(safe-area-inset-bottom)
+        var(--mobile-terminal-bar-height) +
+          var(--mobile-terminal-height) +
+          env(safe-area-inset-bottom)
       );
     }
     .lesson-layout__terminal-wrap :global(.lp__content-bar) {
