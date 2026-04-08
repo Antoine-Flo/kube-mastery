@@ -19,6 +19,7 @@ import { createHostFileSystem } from '../../filesystem/debianFileSystem'
 // Handlers
 import { createNanoHandler } from './handlers/editor/nano'
 import { createCatHandler } from './handlers/fileops/cat'
+import { createEchoHandler } from './handlers/fileops/echo'
 import { createMkdirHandler } from './handlers/fileops/mkdir'
 import { createRmHandler } from './handlers/fileops/rm'
 import { createTouchHandler } from './handlers/fileops/touch'
@@ -37,6 +38,7 @@ import { createSleepHandler } from './handlers/system/sleep'
 // Types
 export { parseShellCommand }
 export { executeSequentialShellScript } from './shellScriptRunner'
+export { parseSequentialShellScript } from './shellScriptRunner'
 export type { ParsedShellCommand, ShellCommandHandler }
 
 // Re-export FileSystem from canonical source
@@ -101,6 +103,7 @@ export const buildShellHandlersMap = (
   // File operations
   handlers.set('touch', createTouchHandler(fileSystem))
   handlers.set('cat', createCatHandler(fileSystem))
+  handlers.set('echo', createEchoHandler(fileSystem))
   handlers.set('rm', createRmHandler(fileSystem))
   handlers.set('mkdir', createMkdirHandler(fileSystem))
 

@@ -17,10 +17,7 @@ import {
   type Pod
 } from '../../../cluster/ressources/Pod'
 import { createFileSystem } from '../../../filesystem/FileSystem'
-import {
-  createShellExecutor,
-  executeSequentialShellScript
-} from '../../../shell/commands'
+import { executeShellScriptFromContext } from '../../../shell/commands/executionContext'
 import type { ClusterEvent } from '../../../cluster/events/types'
 import { matchesLabelSelector } from '../../../shared/labelSelector'
 import type { ExecutionResult } from '../../../shared/result'
@@ -65,8 +62,41 @@ type ProcessCommandDirective = {
 const ENTER_CONTAINER_PREFIX = 'ENTER_CONTAINER:'
 const SHELL_COMMAND_PREFIX = 'SHELL_COMMAND:'
 const PROCESS_COMMAND_PREFIX = 'PROCESS_COMMAND:'
+const KUBECTL_STDERR_PREFIX = 'KUBECTL_STDERR:'
 const KUBECTL_EDIT_TMP_DIR = '/tmp'
 const LOGS_FOLLOW_POLL_INTERVAL_MS = 1000
+
+type KubectlOutputEnvelope = {
+  stderrNotice?: string
+  payload: string
+}
+
+const parseKubectlOutputEnvelope = (output: string): KubectlOutputEnvelope => {
+  if (!output.startsWith(KUBECTL_STDERR_PREFIX)) {
+    return { payload: output }
+  }
+  const firstLineBreakIndex = output.indexOf('\n')
+  if (firstLineBreakIndex === -1) {
+    return { payload: output }
+  }
+  const encodedNotice = output.slice(
+    KUBECTL_STDERR_PREFIX.length,
+    firstLineBreakIndex
+  )
+  if (encodedNotice.length === 0) {
+    return { payload: output }
+  }
+  let stderrNotice = ''
+  try {
+    stderrNotice = decodeURIComponent(encodedNotice)
+  } catch {
+    return { payload: output }
+  }
+  return {
+    stderrNotice,
+    payload: output.slice(firstLineBreakIndex + 1)
+  }
+}
 
 const parseEnterContainerDirective = (
   output: string
@@ -236,10 +266,11 @@ const executeShellCommandDirective = (
       mutable: true
     }
   )
-  const shellExecutor = createShellExecutor(
-    containerFileSystem,
-    context.editorModal,
+  return executeShellScriptFromContext(
     {
+      fileSystem: containerFileSystem,
+      editorModal: context.editorModal,
+      runtimeOptions: {
       resolveNamespace: () => {
         return directive.namespace
       },
@@ -295,9 +326,10 @@ const executeShellCommandDirective = (
           context.apiServer
         )
       }
-    }
+      }
+    },
+    directive.command
   )
-  return executeSequentialShellScript(shellExecutor, directive.command)
 }
 
 const executeProcessCommandDirective = (
@@ -1271,7 +1303,17 @@ export class KubectlCommandHandler implements CommandHandler {
     const result = executor.execute(parsedRedirection.command)
 
     if (result.ok && typeof result.value === 'string') {
-      const directiveResult = executeKubectlDirective(context, result.value)
+      const kubectlOutputEnvelope = parseKubectlOutputEnvelope(result.value)
+      if (
+        kubectlOutputEnvelope.stderrNotice != null &&
+        kubectlOutputEnvelope.stderrNotice.length > 0
+      ) {
+        context.output.writeOutput(kubectlOutputEnvelope.stderrNotice)
+      }
+      const directiveResult = executeKubectlDirective(
+        context,
+        kubectlOutputEnvelope.payload
+      )
       if (directiveResult != null) {
         if (!directiveResult.ok) {
           context.output.writeOutput(directiveResult.error)

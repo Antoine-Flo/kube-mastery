@@ -7,10 +7,11 @@
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import {
-  createShellExecutor,
   getShellRegistryCommandNames,
+  parseSequentialShellScript,
   parseShellCommand
 } from '../../../shell/commands'
+import { createShellExecutorFromContext } from '../../../shell/commands/executionContext'
 import {
   buildContainerEnvironmentVariables,
   buildHostEnvironmentVariables
@@ -62,6 +63,33 @@ export class ShellCommandHandler implements CommandHandler {
   }
 
   execute(command: string, context: CommandContext): ExecutionResult {
+    const scriptParseResult = parseSequentialShellScript(command)
+    if (!scriptParseResult.ok) {
+      context.output.writeError(scriptParseResult.error)
+      return error(scriptParseResult.error)
+    }
+    const commands = scriptParseResult.commands ?? []
+    if (commands.length === 0) {
+      return success('')
+    }
+
+    const outputs: string[] = []
+    for (const singleCommand of commands) {
+      const singleResult = this.executeSingleCommand(singleCommand, context)
+      if (!singleResult.ok) {
+        return singleResult
+      }
+      if (singleResult.value.length > 0) {
+        outputs.push(singleResult.value)
+      }
+    }
+    return success(outputs.join('\n'))
+  }
+
+  private executeSingleCommand(
+    command: string,
+    context: CommandContext
+  ): ExecutionResult {
     const parseResult = parseShellCommand(
       command,
       getShellRegistryCommandNames()
@@ -98,10 +126,10 @@ export class ShellCommandHandler implements CommandHandler {
 
     // Créer l'executor avec le filesystem et l'editor modal
     const activeFileSystem = context.shellContextStack.getCurrentFileSystem()
-    const executor = createShellExecutor(
-      activeFileSystem,
-      context.editorModal,
-      {
+    const executor = createShellExecutorFromContext({
+      fileSystem: activeFileSystem,
+      editorModal: context.editorModal,
+      runtimeOptions: {
         resolveNamespace: () => {
           const containerInfo =
             context.shellContextStack.getCurrentContainerInfo()
@@ -197,7 +225,7 @@ export class ShellCommandHandler implements CommandHandler {
           return success('')
         }
       }
-    )
+    })
 
     // Exécuter la commande
     const result = executor.execute(command)

@@ -190,4 +190,155 @@ describe('runner executor parity', () => {
       rmSync(tempDir, { recursive: true, force: true })
     }
   })
+
+  it('keeps static pv and pvc exercise stable with explicit readiness wait', () => {
+    const executor = createRunnerExecutor()
+    const tempDir = mkdtempSync(join(tmpdir(), 'runner-static-storage-'))
+    const pvManifestPath = join(tempDir, 'my-pv.yaml')
+    const pvcManifestPath = join(tempDir, 'my-pvc.yaml')
+    const podManifestPath = join(tempDir, 'pvc-pod.yaml')
+    writeFileSync(
+      pvManifestPath,
+      [
+        'apiVersion: v1',
+        'kind: PersistentVolume',
+        'metadata:',
+        '  name: my-pv',
+        'spec:',
+        '  capacity:',
+        '    storage: 1Gi',
+        '  accessModes:',
+        '    - ReadWriteOnce',
+        '  storageClassName: ""',
+        '  hostPath:',
+        '    path: /tmp/my-pv-data'
+      ].join('\n')
+    )
+    writeFileSync(
+      pvcManifestPath,
+      [
+        'apiVersion: v1',
+        'kind: PersistentVolumeClaim',
+        'metadata:',
+        '  name: my-pvc',
+        'spec:',
+        '  storageClassName: ""',
+        '  accessModes:',
+        '    - ReadWriteOnce',
+        '  resources:',
+        '    requests:',
+        '      storage: 500Mi'
+      ].join('\n')
+    )
+    writeFileSync(
+      podManifestPath,
+      [
+        'apiVersion: v1',
+        'kind: Pod',
+        'metadata:',
+        '  name: pvc-pod',
+        'spec:',
+        '  volumes:',
+        '    - name: storage',
+        '      persistentVolumeClaim:',
+        '        claimName: my-pvc',
+        '  initContainers:',
+        '    - name: write-data',
+        '      image: busybox:1.36',
+        '      command: ["sh"]',
+        '      args: ["-c", "echo data persisted > /data/hello.txt"]',
+        '      volumeMounts:',
+        '        - name: storage',
+        '          mountPath: /data',
+        '  containers:',
+        '    - name: app',
+        '      image: nginx:1.28',
+        '      volumeMounts:',
+        '        - name: storage',
+        '          mountPath: /data'
+      ].join('\n')
+    )
+
+    try {
+      executor.executeCommand('kubectl delete pod pvc-pod')
+      executor.executeCommand('kubectl delete pvc my-pvc')
+      executor.executeCommand('kubectl delete pv my-pv')
+
+      const applyPvResult = executor.applyYaml({
+        id: 'apply-static-pv',
+        type: 'applyYaml',
+        targetPath: pvManifestPath
+      })
+      expect(applyPvResult.exitCode).toBe(0)
+
+      const applyPvcResult = executor.applyYaml({
+        id: 'apply-static-pvc',
+        type: 'applyYaml',
+        targetPath: pvcManifestPath
+      })
+      expect(applyPvcResult.exitCode).toBe(0)
+
+      const pvcStatusResult = executor.executeCommand('kubectl get pvc my-pvc')
+      expect(pvcStatusResult.exitCode).toBe(0)
+      expect(pvcStatusResult.stdout).toContain('Bound')
+
+      const applyPodResult = executor.applyYaml({
+        id: 'apply-static-pod',
+        type: 'applyYaml',
+        targetPath: podManifestPath
+      })
+      expect(applyPodResult.exitCode).toBe(0)
+
+      const waitReadyResult = executor.executeCommand(
+        'kubectl wait --for=condition=Ready pod/pvc-pod --timeout=60s'
+      )
+      expect(waitReadyResult.exitCode).toBe(0)
+
+      const firstExecResult = executor.executeCommand(
+        'kubectl exec pvc-pod -- cat /data/hello.txt'
+      )
+      expect(firstExecResult.exitCode).toBe(0)
+      expect(firstExecResult.stdout).toContain('data persisted')
+      expect(firstExecResult.stderr).toContain(
+        'Defaulted container "app" out of: app, write-data (init)'
+      )
+
+      const deletePodResult = executor.executeCommand('kubectl delete pod pvc-pod')
+      expect(deletePodResult.exitCode).toBe(0)
+
+      const recreatePodResult = executor.applyYaml({
+        id: 'recreate-static-pod',
+        type: 'applyYaml',
+        targetPath: podManifestPath
+      })
+      expect(recreatePodResult.exitCode).toBe(0)
+
+      const secondWaitReadyResult = executor.executeCommand(
+        'kubectl wait --for=condition=Ready pod/pvc-pod --timeout=60s'
+      )
+      expect(secondWaitReadyResult.exitCode).toBe(0)
+
+      const secondExecResult = executor.executeCommand(
+        'kubectl exec pvc-pod -- cat /data/hello.txt'
+      )
+      expect(secondExecResult.exitCode).toBe(0)
+      expect(secondExecResult.stdout).toContain('data persisted')
+      expect(secondExecResult.stderr).toContain(
+        'Defaulted container "app" out of: app, write-data (init)'
+      )
+
+      const pvStatusResult = executor.executeCommand('kubectl get pv my-pv')
+      expect(pvStatusResult.exitCode).toBe(0)
+      expect(pvStatusResult.stdout).toContain('Bound')
+
+      const finalPvcStatusResult = executor.executeCommand('kubectl get pvc my-pvc')
+      expect(finalPvcStatusResult.exitCode).toBe(0)
+      expect(finalPvcStatusResult.stdout).toContain('Bound')
+    } finally {
+      executor.executeCommand('kubectl delete pod pvc-pod')
+      executor.executeCommand('kubectl delete pvc my-pvc')
+      executor.executeCommand('kubectl delete pv my-pv')
+      rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
 })

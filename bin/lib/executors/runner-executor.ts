@@ -43,6 +43,35 @@ interface ParsedManifestResource {
 const SHELL_COMMAND_PREFIX = 'SHELL_COMMAND:'
 const ENTER_CONTAINER_PREFIX = 'ENTER_CONTAINER:'
 const PROCESS_COMMAND_PREFIX = 'PROCESS_COMMAND:'
+const KUBECTL_STDERR_PREFIX = 'KUBECTL_STDERR:'
+
+const parseKubectlExecutorEnvelope = (
+  output: string
+): { stderrNotice: string; payload: string } => {
+  if (!output.startsWith(KUBECTL_STDERR_PREFIX)) {
+    return { stderrNotice: '', payload: output }
+  }
+  const firstNewline = output.indexOf('\n')
+  if (firstNewline === -1) {
+    return { stderrNotice: '', payload: output }
+  }
+  const encoded = output.slice(
+    KUBECTL_STDERR_PREFIX.length,
+    firstNewline
+  )
+  if (encoded.length === 0) {
+    return { stderrNotice: '', payload: output }
+  }
+  try {
+    const stderrNotice = decodeURIComponent(encoded)
+    return {
+      stderrNotice,
+      payload: output.slice(firstNewline + 1)
+    }
+  } catch {
+    return { stderrNotice: '', payload: output }
+  }
+}
 
 const parseFlagValue = (command: string, flagName: string): string | undefined => {
   const regex = new RegExp(`(?:^|\\s)-{1,2}${flagName}(?:=|\\s+)([^\\s]+)`)
@@ -524,27 +553,40 @@ export const createRunnerExecutor = (
             result.io.stderr
           )
         }
-        const value = result.value ?? ''
-        if (value.startsWith(ENTER_CONTAINER_PREFIX)) {
-          return executionFromOutput(command, 0, '', '')
+        const rawValue = result.value ?? ''
+        const { stderrNotice, payload } = parseKubectlExecutorEnvelope(rawValue)
+        if (payload.startsWith(ENTER_CONTAINER_PREFIX)) {
+          return executionFromOutput(command, 0, '', stderrNotice)
         }
-        if (value.startsWith(PROCESS_COMMAND_PREFIX)) {
-          return executionFromOutput(command, 0, '', '')
+        if (payload.startsWith(PROCESS_COMMAND_PREFIX)) {
+          return executionFromOutput(command, 0, '', stderrNotice)
         }
-        const shellDirective = parseShellCommandDirective(value)
+        const shellDirective = parseShellCommandDirective(payload)
         if (shellDirective != null) {
-          return executeShellDirective(
+          const execResult = executeShellDirective(
             command,
             shellDirective,
             apiServer,
             networkRuntime
           )
+          const mergedStderr =
+            stderrNotice.length > 0 && execResult.stderr.length > 0
+              ? `${stderrNotice}\n${execResult.stderr}`
+              : stderrNotice.length > 0
+                ? stderrNotice
+                : execResult.stderr
+          return executionFromOutput(
+            command,
+            execResult.exitCode,
+            execResult.stdout,
+            mergedStderr
+          )
         }
         if (manifestTarget?.action === 'diff') {
-          const exitCode = value.trim().length === 0 ? 0 : 1
-          return executionFromOutput(command, exitCode, value, '')
+          const exitCode = payload.trim().length === 0 ? 0 : 1
+          return executionFromOutput(command, exitCode, payload, stderrNotice)
         }
-        return executionFromOutput(command, 0, value, '')
+        return executionFromOutput(command, 0, payload, stderrNotice)
       }
       if (result.io != null) {
         return executionFromOutput(

@@ -37,6 +37,25 @@ const buildProcessCommandDirective = (
   return `PROCESS_COMMAND:${processName}:${processAction}:${namespace}:${podName}:${containerName}`
 }
 
+const KUBECTL_STDERR_PREFIX = 'KUBECTL_STDERR:'
+
+const buildOutputWithStderrNotice = (
+  stderrNotice: string,
+  payload: string
+): string => {
+  return `${KUBECTL_STDERR_PREFIX}${encodeURIComponent(stderrNotice)}\n${payload}`
+}
+
+const appendStderrNoticeIfNeeded = (
+  payload: string,
+  stderrNotice: string | undefined
+): string => {
+  if (stderrNotice == null || stderrNotice.length === 0) {
+    return payload
+  }
+  return buildOutputWithStderrNotice(stderrNotice, payload)
+}
+
 const pickPreferredPodName = (
   candidates: Array<{
     metadata: { name: string }
@@ -173,9 +192,11 @@ export const handleExec = (
 
   // Multi-container support: determine which container to use
   const regularContainers = pod.spec.containers
+  const initContainers = pod.spec.initContainers ?? []
   const containerFlagValue = parsed.flags.c || parsed.flags.container
 
   let containerName: string
+  let defaultedContainerNotice: string | undefined
 
   if (containerFlagValue) {
     // Container specified via -c flag - validate it exists
@@ -196,6 +217,13 @@ export const handleExec = (
   } else if (regularContainers.length === 1) {
     // Single container - use it automatically
     containerName = regularContainers[0].name
+    if (initContainers.length > 0) {
+      const renderedContainerNames = [
+        ...regularContainers.map((container) => container.name),
+        ...initContainers.map((container) => `${container.name} (init)`)
+      ].join(', ')
+      defaultedContainerNotice = `Defaulted container "${containerName}" out of: ${renderedContainerNames}`
+    }
   } else {
     return `Error: pod ${podName} has no containers`
   }
@@ -214,14 +242,20 @@ export const handleExec = (
       if (script.trim().length === 0) {
         return 'Error: flag needs an argument: c'
       }
-      return buildShellCommandDirective(
-        podName,
-        containerName,
-        namespace,
-        script
+      return appendStderrNoticeIfNeeded(
+        buildShellCommandDirective(
+          podName,
+          containerName,
+          namespace,
+          script
+        ),
+        defaultedContainerNotice
       )
     }
-    return buildEnterContainerDirective(podName, containerName, namespace)
+    return appendStderrNoticeIfNeeded(
+      buildEnterContainerDirective(podName, containerName, namespace),
+      defaultedContainerNotice
+    )
   }
 
   const sourcePod: SimTrafficPodIdentity = {
@@ -244,32 +278,41 @@ export const handleExec = (
 
   if (command === 'nginx') {
     if (parsed.execCommand[1] === '-s' && parsed.execCommand[2] === 'stop') {
-      return buildProcessCommandDirective(
-        'nginx',
-        'stop',
-        podName,
-        containerName,
-        namespace
+      return appendStderrNoticeIfNeeded(
+        buildProcessCommandDirective(
+          'nginx',
+          'stop',
+          podName,
+          containerName,
+          namespace
+        ),
+        defaultedContainerNotice
       )
     }
   }
   if (command === 'kill' && parsed.execCommand[1] === '1') {
-    return buildProcessCommandDirective(
-      'pid1',
-      'kill',
-      podName,
-      containerName,
-      namespace
+    return appendStderrNoticeIfNeeded(
+      buildProcessCommandDirective(
+        'pid1',
+        'kill',
+        podName,
+        containerName,
+        namespace
+      ),
+      defaultedContainerNotice
     )
   }
 
   // For all other commands, let the shell executor handle them
   // This will be processed by the main dispatcher
   const fullCommand = args.join(' ')
-  return buildShellCommandDirective(
-    podName,
-    containerName,
-    namespace,
-    fullCommand
+  return appendStderrNoticeIfNeeded(
+    buildShellCommandDirective(
+      podName,
+      containerName,
+      namespace,
+      fullCommand
+    ),
+    defaultedContainerNotice
   )
 }

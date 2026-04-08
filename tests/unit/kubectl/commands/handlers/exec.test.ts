@@ -102,6 +102,33 @@ describe('kubectl exec handler', () => {
   })
 
   describe('multi-container pods', () => {
+    it('should add defaulted container notice when init container exists', () => {
+      const pod = createPod({
+        name: 'init-demo',
+        namespace: 'default',
+        containers: [{ name: 'app', image: 'nginx:latest' }],
+        initContainers: [{ name: 'write-data', image: 'busybox:1.36' }],
+        phase: 'Running'
+      })
+      const state = createState([pod])
+      const parsed = createParsedCommand({
+        name: 'init-demo',
+        execCommand: ['cat', '/etc/hostname']
+      })
+
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const result = handleExecApi(apiServer, parsed)
+
+      expect(result).toContain('KUBECTL_STDERR:')
+      expect(result).toContain(
+        encodeURIComponent(
+          'Defaulted container "app" out of: app, write-data (init)'
+        )
+      )
+      expect(result).toContain('SHELL_COMMAND:default:init-demo:app:')
+    })
+
     it('should require container name for multi-container pod', () => {
       const pod = createPod({
         name: 'multi-pod',

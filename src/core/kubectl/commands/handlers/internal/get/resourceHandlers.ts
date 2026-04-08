@@ -65,6 +65,25 @@ const formatNetworkPolicyPodSelector = (
   return parts.join(',')
 }
 
+const formatPersistentVolumeAccessModes = (
+  accessModes: readonly string[] | undefined
+): string => {
+  if (accessModes == null || accessModes.length === 0) {
+    return ''
+  }
+  const shortCodeByAccessMode: Record<string, string> = {
+    ReadWriteOnce: 'RWO',
+    ReadOnlyMany: 'ROX',
+    ReadWriteMany: 'RWX',
+    ReadWriteOncePod: 'RWOP'
+  }
+  return accessModes
+    .map((accessMode) => {
+      return shortCodeByAccessMode[accessMode] ?? accessMode
+    })
+    .join(',')
+}
+
 export type GetSupportedResource = keyof GeneratedResourceHandlerRegistry
 
 export const RESOURCE_HANDLERS: GeneratedResourceHandlerRegistry = {
@@ -404,17 +423,25 @@ export const RESOURCE_HANDLERS: GeneratedResourceHandlerRegistry = {
       'access modes',
       'reclaim policy',
       'status',
-      'claim'
+      'claim',
+      'storageclass',
+      'volumeattributesclass',
+      'reason',
+      'age'
     ],
     formatRow: (persistentVolume) => [
       persistentVolume.metadata.name,
       persistentVolume.spec.capacity.storage,
-      persistentVolume.spec.accessModes.join(','),
+      formatPersistentVolumeAccessModes(persistentVolume.spec.accessModes),
       persistentVolume.spec.persistentVolumeReclaimPolicy ?? 'Retain',
       persistentVolume.status.phase,
       persistentVolume.spec.claimRef != null
         ? `${persistentVolume.spec.claimRef.namespace}/${persistentVolume.spec.claimRef.name}`
-        : '<none>'
+        : '',
+      persistentVolume.spec.storageClassName ?? '',
+      '<unset>',
+      '',
+      formatAge(persistentVolume.metadata.creationTimestamp)
     ],
     supportsFiltering: true,
     isClusterScoped: true
@@ -428,6 +455,7 @@ export const RESOURCE_HANDLERS: GeneratedResourceHandlerRegistry = {
       'capacity',
       'access modes',
       'storageclass',
+      'volumeattributesclass',
       'age'
     ],
     formatRow: (persistentVolumeClaim) => [
@@ -437,12 +465,17 @@ export const RESOURCE_HANDLERS: GeneratedResourceHandlerRegistry = {
         ? (persistentVolumeClaim.spec.volumeName ?? '')
         : '',
       persistentVolumeClaim.status.phase === 'Bound'
-        ? persistentVolumeClaim.spec.resources.requests.storage
+        ? (persistentVolumeClaim.status.capacity?.storage ??
+          persistentVolumeClaim.spec.resources.requests.storage)
         : '',
       persistentVolumeClaim.status.phase === 'Bound'
-        ? persistentVolumeClaim.spec.accessModes.join(',')
+        ? formatPersistentVolumeAccessModes(
+          persistentVolumeClaim.status.accessModes ??
+            persistentVolumeClaim.spec.accessModes
+        )
         : '',
-      persistentVolumeClaim.spec.storageClassName ?? '<none>',
+      persistentVolumeClaim.spec.storageClassName ?? '',
+      '<unset>',
       formatAge(persistentVolumeClaim.metadata.creationTimestamp)
     ],
     supportsFiltering: true

@@ -31,9 +31,15 @@ export interface PersistentVolumeClaimSpec
 
 export type PersistentVolumeClaimStatus = Pick<
   K8sPersistentVolumeClaimStatus,
-  'phase'
+  'phase' | 'accessModes' | 'capacity'
 > & {
   phase: PersistentVolumeClaimPhase
+  accessModes?: Array<
+    'ReadWriteOnce' | 'ReadOnlyMany' | 'ReadWriteMany' | 'ReadWriteOncePod'
+  >
+  capacity?: {
+    storage: string
+  }
 }
 
 type PersistentVolumeClaimMetadata = Pick<

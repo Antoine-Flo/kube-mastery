@@ -126,7 +126,9 @@ export const createVolumeBindingController = (
               },
               status: {
                 ...persistentVolumeClaim.status,
-                phase: 'Pending' as const
+                phase: 'Pending' as const,
+                accessModes: undefined,
+                capacity: undefined
               }
             }
             apiServer.updateResource(
@@ -158,7 +160,9 @@ export const createVolumeBindingController = (
             },
             status: {
               ...persistentVolumeClaim.status,
-              phase: 'Pending' as const
+              phase: 'Pending' as const,
+              accessModes: undefined,
+              capacity: undefined
             }
           }
           apiServer.updateResource(
@@ -200,7 +204,11 @@ export const createVolumeBindingController = (
             ...persistentVolumeClaim,
             status: {
               ...persistentVolumeClaim.status,
-              phase: 'Bound' as const
+              phase: 'Bound' as const,
+              accessModes: [...persistentVolume.spec.accessModes],
+              capacity: {
+                storage: persistentVolume.spec.capacity.storage
+              }
             }
           }
           apiServer.updateResource(
@@ -237,7 +245,9 @@ export const createVolumeBindingController = (
             },
             status: {
               ...persistentVolumeClaim.status,
-              phase: 'Pending' as const
+              phase: 'Pending' as const,
+              accessModes: undefined,
+              capacity: undefined
             }
           }
           apiServer.updateResource(
@@ -280,7 +290,11 @@ export const createVolumeBindingController = (
         },
         status: {
           ...persistentVolumeClaim.status,
-          phase: 'Bound' as const
+          phase: 'Bound' as const,
+          accessModes: [...candidatePersistentVolume.spec.accessModes],
+          capacity: {
+            storage: candidatePersistentVolume.spec.capacity.storage
+          }
         }
       }
       apiServer.updateResource(

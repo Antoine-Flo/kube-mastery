@@ -350,6 +350,34 @@ describe('KubectlCommandHandler', () => {
       expect(output.length).toBeGreaterThan(0)
     })
 
+    it('should print defaulted container notice for init container pods', () => {
+      const pod = createPod({
+        name: 'init-exec-pod',
+        namespace: 'default',
+        phase: 'Running',
+        initContainers: [{ name: 'write-data', image: 'busybox:1.36' }],
+        containers: [{ name: 'app', image: 'nginx:latest' }]
+      })
+      context.apiServer.etcd.restore({
+        ...context.apiServer.snapshotState(),
+        pods: {
+          ...context.apiServer.snapshotState().pods,
+          items: [pod]
+        }
+      })
+      renderer.clearOutput()
+
+      const result = handler.execute(
+        'kubectl exec init-exec-pod -- cat /etc/hostname',
+        context
+      )
+      expect(result.ok).toBe(true)
+      const output = renderer.getOutput()
+      expect(output).toContain(
+        'Defaulted container "app" out of: app, write-data (init)'
+      )
+    })
+
     it('should expose pod name in /etc/hostname inside container', () => {
       const pod = createPod({
         name: 'realistic-hostname',

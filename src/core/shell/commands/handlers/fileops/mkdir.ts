@@ -16,24 +16,16 @@ export const createMkdirHandler = (
       args: string[],
       flags: Record<string, boolean | string>
     ): ExecutionResult => {
-      // Determine directories to create
-      const dirsToCreate: string[] = []
-
+      const dirsToCreate: string[] = [...args]
       if (typeof flags.p === 'string') {
-        // -p flag with value
-        dirsToCreate.push(flags.p)
-      } else {
-        // Use all args (realistic shell behavior)
-        dirsToCreate.push(...args)
+        dirsToCreate.unshift(flags.p)
       }
-
       if (dirsToCreate.length === 0) {
         return error('mkdir: missing operand')
       }
-
-      // Create all specified directories (realistic shell behavior)
+      const recursive = flags.p === true || typeof flags.p === 'string'
       for (const dirName of dirsToCreate) {
-        const result = fileSystem.createDirectory(dirName)
+        const result = fileSystem.createDirectory(dirName, recursive)
         if (!result.ok) {
           return error(result.error)
         }

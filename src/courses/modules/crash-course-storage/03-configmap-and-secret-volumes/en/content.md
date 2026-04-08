@@ -119,9 +119,7 @@ Secrets work identically to ConfigMaps from a volume mount perspective. The diff
 Create a Secret with a database password:
 
 ```bash
-kubectl create secret generic db-credentials \
-  --from-literal=password=s3cr3tpassword \
-  --from-literal=username=admin
+kubectl create secret generic db-credentials --from-literal=password=s3cr3tpassword --from-literal=username=admin
 ```
 
 Mount it as a volume:
@@ -162,14 +160,6 @@ Each key in the Secret becomes a file. The value is the decoded content. The `re
 
 :::warning
 Mounting a Secret as a volume does not make it invisible inside the container. Any process running as root can read `/etc/credentials/password`. The `readOnly` flag prevents the container from writing to the mount, not from reading it. Proper security requires also restricting which containers have access to the Secret and running containers as non-root users.
-:::
-
-:::quiz
-A container needs a TLS certificate and its private key to serve HTTPS. Both are stored as keys in a Secret. After mounting the Secret as a volume at `/etc/tls`, what does the container see at that path?
-
-**Try it:** `kubectl exec <pod> -- ls /etc/tls`
-
-**Answer:** Two files, one per key in the Secret. If the Secret has keys `tls.crt` and `tls.key`, the container sees `/etc/tls/tls.crt` and `/etc/tls/tls.key`. The application reads them as regular files with no knowledge of Kubernetes.
 :::
 
 Clean up:

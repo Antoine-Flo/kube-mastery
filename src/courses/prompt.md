@@ -82,9 +82,9 @@ Put it before the command not after.
 
 The in-lesson terminal is **not** a real shell. Do **not** put unsupported patterns in Pod manifests (`command` / `args`), Job or initContainer examples, `kubectl exec` snippets, or `:::quiz` **Try it** lines.
 
-**Avoid:** pipes (`|`), `&&` / `||`, semicolons chaining commands (`;`), loops, line continuation with `\`, here-documents, and command substitution (backticks or `$(...)`). The runtime runs a small fixed command set, one simple invocation at a time.
+**Avoid:** pipes (`|`), `||`, semicolons chaining commands (`;`), loops, line continuation with `\`, here-documents, and command substitution (backticks or `$(...)`). The runtime supports a fixed command set and a constrained script model.
 
-**Prefer:** `kubectl` plus the built-ins that exist in the product (file ops: `pwd`, `cd`, `ls`, `cat`, `nano`, `touch`, `mkdir`, `rm`, …), `help`, `env`, `clear`, `sleep`, `nslookup`, and **simplified** `curl` (in-cluster HTTP GET style simulation, not full curl flags or scripting).
+**Prefer:** `kubectl` plus the built-ins that exist in the product (file ops: `pwd`, `cd`, `ls`, `cat`, `nano`, `touch`, `mkdir`, `rm`, `echo` with `>` or `>>`), `&&` for simple chaining, `help`, `env`, `clear`, `sleep`, `nslookup`, and **simplified** `curl` (in-cluster HTTP GET style simulation, not full curl flags or scripting).
 
 Authoritative reference (keep examples aligned with this page): [Supported, English](/en/supported) · [Supported, French](/fr/supported).
 

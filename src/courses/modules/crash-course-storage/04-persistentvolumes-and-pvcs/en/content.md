@@ -65,6 +65,7 @@ spec:
     storage: 1Gi
   accessModes:
     - ReadWriteOnce
+  storageClassName: ""
   hostPath:
     path: /tmp/my-pv-data
 ```
@@ -86,6 +87,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: my-pvc
 spec:
+  storageClassName: ""
   accessModes:
     - ReadWriteOnce
   resources:
@@ -99,7 +101,9 @@ kubectl get pvc
 kubectl get pv
 ```
 
-The PVC status becomes `Bound` and the PV status also becomes `Bound`. Kubernetes matched the PVC's request (500Mi, RWO) to the PV's capacity (1Gi, RWO). A PVC can bind to a PV with more capacity than requested, but not less.
+The PVC status becomes `Bound` and the PV status also becomes `Bound` (this can take a short moment). Kubernetes matched the PVC's request (500Mi, RWO) to the PV's capacity (1Gi, RWO). A PVC can bind to a PV with more capacity than requested, but not less.
+
+`storageClassName: ""` is intentional on both resources. It disables default StorageClass injection, so this static PVC can bind to this static PV reliably across clusters.
 
 :::warning
 Once a PV is bound to a PVC, it cannot be bound to any other PVC. The binding is exclusive. When the PVC is deleted, the PV's `Reclaim Policy` determines what happens: `Retain` keeps the data but marks the PV as `Released` (not automatically re-bindable). `Delete` destroys the underlying storage. The default for dynamically provisioned PVs is usually `Delete`.
@@ -107,7 +111,7 @@ Once a PV is bound to a PVC, it cannot be bound to any other PVC. The binding is
 
 ## Using the PVC in a Pod
 
-Reference the PVC by name in the Pod's volume declaration:
+Reference the PVC by name in the Pod's volume declaration. Use an **init container** to write a marker file to the mounted volume before the main container starts. The script uses the same constrained shell model as terminal commands and `kubectl exec`.
 
 ```bash
 nano pvc-pod.yaml
@@ -123,10 +127,17 @@ spec:
     - name: storage
       persistentVolumeClaim:
         claimName: my-pvc
+  initContainers:
+    - name: write-data
+      image: busybox:1.36
+      command: ["sh"]
+      args: ["-c", "echo data persisted > /data/hello.txt"]
+      volumeMounts:
+        - name: storage
+          mountPath: /data
   containers:
     - name: app
-      image: busybox:1.36
-      command: ["/bin/sh", "-c", "echo 'data persisted' > /data/hello.txt && sleep 3600"]
+      image: nginx:1.28
       volumeMounts:
         - name: storage
           mountPath: /data
@@ -134,9 +145,12 @@ spec:
 
 ```bash
 kubectl apply -f pvc-pod.yaml
+kubectl get pod pvc-pod
 ```
 
-Once running, verify the file was written:
+Wait until `STATUS` is `Running`, then verify the file was written:
+
+If you briefly see `Init:0/1`, wait a few seconds and check again.
 
 ```bash
 kubectl exec pvc-pod -- cat /data/hello.txt
@@ -160,7 +174,7 @@ Both are still `Bound`. The storage survived the Pod deletion. Create a new Pod 
 :::quiz
 You delete a Pod that was using a PVC. A colleague asks if the data stored in that PVC is lost. What do you tell them?
 
-**Try it:** Delete and recreate the pod above, then `kubectl exec` into the new pod and check `/data/hello.txt`
+**Try it:** Delete and recreate the pod above, then `kubectl exec pvc-pod -- cat /data/hello.txt`
 
 **Answer:** The data is not lost. The PVC outlives the Pod. The PV remains Bound to the PVC. A new Pod that mounts the same PVC will find the same data intact, as long as the new Pod runs on the same node (for hostPath) or the storage backend supports multi-node access.
 :::

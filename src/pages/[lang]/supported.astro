@@ -345,6 +345,15 @@ const shellCommands: Array<{
     desc: { en: 'Print file contents', fr: "Afficher le contenu d'un fichier" }
   },
   {
+    cmd: 'echo',
+    arg: '[text]',
+    flags: '-n, >, >>',
+    desc: {
+      en: 'Print text or write/append to a file',
+      fr: 'Afficher du texte ou ecrire/ajouter dans un fichier'
+    }
+  },
+  {
     cmd: 'rm',
     arg: '<target>',
     flags: '-r',
