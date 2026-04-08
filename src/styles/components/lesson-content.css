@@ -329,11 +329,10 @@ body.mermaid-zoom-open {
 .lesson-content .quiz-block {
   margin: 1.75rem 0;
   border-radius: var(--radius-md);
-  border: 1px solid var(--color-green-6);
+  border: 1px solid var(--color-gray-6);
   border-left: 4px solid var(--color-green-8);
-  background-color: var(--color-green-2);
+  background-color: transparent;
   overflow: hidden;
-  box-shadow: var(--shadow-xs);
 }
 
 .lesson-content .quiz-header {
@@ -341,8 +340,8 @@ body.mermaid-zoom-open {
   align-items: center;
   gap: 0.45rem;
   padding: 0.5rem 1rem;
-  background-color: var(--color-green-3);
-  border-bottom: 1px solid var(--color-green-5);
+  background-color: transparent;
+  border-bottom: 1px solid var(--color-gray-6);
 }
 
 .lesson-content .quiz-icon {
@@ -357,12 +356,12 @@ body.mermaid-zoom-open {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: var(--color-green-11);
+  color: var(--color-gray-11);
 }
 
 .lesson-content .quiz-question {
   padding: 1rem 1rem 0.85rem;
-  color: var(--color-green-12);
+  color: var(--color-gray-12);
 }
 
 .lesson-content .quiz-question p:first-child {
@@ -383,7 +382,7 @@ body.mermaid-zoom-open {
 }
 
 .lesson-content .quiz-reveal {
-  border-top: 1px solid var(--color-green-5);
+  border-top: 1px solid var(--color-gray-6);
 }
 
 .lesson-content .quiz-reveal summary {
@@ -393,7 +392,7 @@ body.mermaid-zoom-open {
   padding: 0.6rem 1rem;
   font-size: var(--text-sm);
   font-weight: 500;
-  color: var(--color-green-11);
+  color: var(--color-gray-11);
   cursor: pointer;
   user-select: none;
   list-style: none;
@@ -401,7 +400,7 @@ body.mermaid-zoom-open {
 }
 
 .lesson-content .quiz-reveal summary:hover {
-  background-color: var(--color-green-3);
+  background-color: var(--color-gray-3);
 }
 
 .lesson-content .quiz-reveal summary::-webkit-details-marker {
@@ -418,13 +417,13 @@ body.mermaid-zoom-open {
 }
 
 .lesson-content .quiz-reveal[open] summary {
-  border-bottom: 1px solid var(--color-green-5);
+  border-bottom: 1px solid var(--color-gray-6);
 }
 
 .lesson-content .quiz-answer {
   padding: 1rem;
-  color: var(--color-green-12);
-  background-color: var(--color-green-3);
+  color: var(--color-gray-12);
+  background-color: transparent;
 }
 
 .lesson-content .quiz-answer p:first-child {

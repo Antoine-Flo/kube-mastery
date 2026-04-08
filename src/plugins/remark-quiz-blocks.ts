@@ -58,7 +58,7 @@ function buildQuizHtml(
   return `<div class="quiz-block">
   <div class="quiz-header">
     <span class="quiz-icon">${QUIZ_ICON}</span>
-    <span class="quiz-label">Quick check</span>
+    <span class="quiz-label">Quiz</span>
   </div>
   <div class="quiz-question">${questionHtml}</div>
   <details class="quiz-reveal">
