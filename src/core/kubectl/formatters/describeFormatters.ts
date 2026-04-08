@@ -2762,14 +2762,6 @@ export const describeNetworkPolicy = (networkPolicy: NetworkPolicy): string => {
   return lines.join('\n')
 }
 
-const printLabelsMultilineDescribe = (
-  lines: string[],
-  title: string,
-  labels?: Record<string, string>
-): void => {
-  lines.push(`${title}:       ${formatLabels(labels)}`)
-}
-
 /**
  * Format detailed lease description
  */
