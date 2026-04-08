@@ -9,6 +9,43 @@ It is 3am. Your web server container crashed on one of your six machines. Anothe
 
 Managing containers manually at this scale is not a career, it is a series of incidents. Kubernetes exists to make this problem disappear.
 
+> **In one line:** you declare the desired state, the cluster keeps reconciling reality until it matches.
+
+| Without an orchestrator | With Kubernetes |
+| --- | --- |
+| You restart failed containers yourself | Controllers recreate Pods to match the desired replica count |
+| You decide which machine runs each workload | The scheduler places Pods using capacity and policy |
+| IPs and wiring break whenever things move | Services expose stable DNS names and cluster IPs |
+| Rolling upgrades are a manual checklist | Deployments roll out with surge and availability rules |
+
+Day to day, Kubernetes focuses on **placement** (enough CPU and memory on healthy nodes), **recovery** (replace unhealthy instances without a runbook step), and **rollouts** (ship new versions without taking the app down).
+
+## Where Kubernetes came from
+
+Kubernetes did not appear in a vacuum. It grew out of large-scale scheduling experience at Google, at a moment when containers were becoming the default packaging format.
+
+@@@
+flowchart TB
+    Y1["2003: Borg at Google<br/>Internal cluster scheduler, ideas that shaped Kubernetes"]
+    Y2["2013: Containers go mainstream<br/>Portable images, ops must work cluster-wide"]
+    Y3["2014: Kubernetes open sourced<br/>Public project, vendors and community contribute"]
+    Y4["2015: Kubernetes 1.0 and CNCF<br/>Stable API baseline, neutral Linux Foundation home"]
+    Y5["2018: CNCF graduation<br/>Mature governance, broad ecosystem adoption"]
+    Y1 --> Y2 --> Y3 --> Y4 --> Y5
+@@@
+
+:::info
+**Borg is not Kubernetes.** Borg is an internal Google system. Kubernetes reused concepts (desired state, controllers, scheduling at scale), not Borg’s source code. You learn Kubernetes as it exists in the open source project.
+:::
+
+:::info
+**2014 and 2015 together** mark the shift from experiment to platform: the code became public in 2014, then 1.0 and the Cloud Native Computing Foundation (CNCF) gave the project a stable API promise and a vendor-neutral foundation.
+:::
+
+:::info
+**CNCF graduation** (2018) means the project met CNCF criteria for adoption, contributors, and governance. It is a milestone for the ecosystem, not a feature release. Releases still ship on a regular cadence today.
+:::
+
 ## The Orchestration Problem
 
 Containers are excellent at packaging and isolating applications. A single container on a single machine is easy to run. The challenge appears as soon as you have more than a handful of them.
@@ -16,16 +53,6 @@ Containers are excellent at packaging and isolating applications. A single conta
 Consider a typical web application: frontend, backend API, database, cache, background workers. Each service needs multiple copies for redundancy. Those copies need to land on machines with enough CPU and memory. They need to find each other on the network. When one crashes, something must restart it. When traffic spikes, something must spin up more instances. When you ship a new version, the old ones must come down in a controlled sequence that avoids downtime.
 
 Doing all of that by hand requires constant attention, deep knowledge of which machine has what capacity, and near-perfect timing. It does not scale.
-
-@@@
-graph LR
-    Problem["Manual ops:<br/>15 services, 6 nodes,<br/>crashes, deploys, scaling"]
-    K8s["Kubernetes:<br/>schedules, heals,<br/>scales, routes"]
-    You["You:<br/>declare desired state"]
-
-    You -->|"kubectl apply -f app.yaml"| K8s
-    K8s -->|"handles the rest"| Problem
-@@@
 
 Kubernetes replaces manual container management with a control loop: you describe what you want, and the cluster continuously works to make reality match your description.
 

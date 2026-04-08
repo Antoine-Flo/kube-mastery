@@ -119,6 +119,8 @@ const labelTerminal = labelShowTerminal
 </div>
 
 <script>
+  import { CLUSTER_PANEL_OPEN_SESSION_KEY } from '../../lib/lesson/clusterPanelSessionKey'
+
   function setVizState(btn: Element, expanded: boolean) {
     const labelV = btn.getAttribute('data-label-visualizer')
     const labelC = btn.getAttribute('data-label-course')
@@ -208,7 +210,9 @@ const labelTerminal = labelShowTerminal
   document.addEventListener('astro:page-load', () => {
     const btn = document.querySelector('[data-cluster-trigger]')
     if (btn) {
-      setVizState(btn, false)
+      const panelOpen =
+        sessionStorage.getItem(CLUSTER_PANEL_OPEN_SESSION_KEY) === 'true'
+      setVizState(btn, panelOpen)
     }
     document.querySelectorAll('[data-lesson-term-toggle]').forEach((termBtn) => {
       setTerminalToggleState(termBtn)

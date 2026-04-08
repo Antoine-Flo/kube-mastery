@@ -58,7 +58,7 @@ kubectl get pods -o wide -l app=backend
 Note the IPs. Now trigger a rollout by changing the image:
 
 ```bash
-kubectl set image deployment/backend nginx=nginx:1.27
+kubectl set image deployment/backend nginx=nginx:1.25
 kubectl get pods -o wide -l app=backend --watch
 ```
 

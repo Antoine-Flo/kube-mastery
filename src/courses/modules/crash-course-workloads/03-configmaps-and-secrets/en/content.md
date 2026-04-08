@@ -78,7 +78,7 @@ Now inspect it:
 kubectl get secret web-secret -o yaml
 ```
 
-You will see the value base64-encoded in the `data` field. Run `echo "c3VwZXItc2VjcmV0LXRva2Vu" | base64 -d` in your terminal and you get the original value back immediately.
+You will see the value base64-encoded in the `data` field.
 
 :::warning
 Base64 is encoding, not encryption. Anyone who can read the Secret object can decode the value in seconds. What Secrets provide is **access control separation**: you can grant a team read access to ConfigMaps without granting them access to Secrets, and the established convention for tooling integration. In most default cluster configurations, Secrets are stored unencrypted in etcd. For sensitive production data, configure encryption at rest and apply strict RBAC policies.

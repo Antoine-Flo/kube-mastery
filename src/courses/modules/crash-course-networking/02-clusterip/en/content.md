@@ -1,5 +1,5 @@
 ---
-seoTitle: 'Kubernetes ClusterIP Service, Stable VIP, Load Balancing, Endpoints'
+seoTitle: 'Kubernetes ClusterIP Service, Stable VIP, Load Balancing, EndpointSlices'
 seoDescription: 'Learn how a ClusterIP Service gives a group of Pods a stable virtual IP and DNS name inside the cluster, enabling reliable inter-service communication.'
 ---
 
@@ -27,13 +27,19 @@ graph LR
     SVC -->|"load balanced"| P3
 @@@
 
-The set of Pods a Service routes to is called its **endpoints**. You can inspect them directly:
+The set of Pods a Service routes to is tracked by Kubernetes using **EndpointSlices**. An EndpointSlice is an API object that holds a list of `Pod-IP:port` pairs for a given Service. You can inspect them directly:
 
 ```bash
-kubectl get endpoints <SERVICE-NAME>
+kubectl get endpointslices -l kubernetes.io/service-name=<SERVICE-NAME>
 ```
 
-Each endpoint is a `Pod-IP:port` pair. When a Pod is deleted, its endpoint disappears from this list within seconds. When a new Pod starts and becomes ready, its endpoint is added. The Service's ClusterIP never moves.
+Kubernetes labels each EndpointSlice with `kubernetes.io/service-name` so you can filter by Service name. A single Service may have multiple slices when it has many Pods, but for typical workloads you will see just one.
+
+Each entry in a slice is called an **endpoint**: a `Pod-IP:port` pair. When a Pod is deleted, its entry disappears from the slice within seconds. When a new Pod starts and becomes ready, its entry is added. The Service's ClusterIP never moves.
+
+:::info
+The older `Endpoints` API (singular, `kubectl get endpoints`) is deprecated as of Kubernetes 1.33. EndpointSlices have been the standard since Kubernetes 1.21 and scale better for large Services. Prefer `kubectl get endpointslices` in all new workflows.
+:::
 
 ## Writing the Manifest
 
@@ -137,26 +143,26 @@ List Services to find the assigned ClusterIP:
 kubectl get service backend
 ```
 
-The `CLUSTER-IP` column shows the virtual IP. The `PORT(S)` column shows `80/TCP`. Now inspect the endpoints:
+The `CLUSTER-IP` column shows the virtual IP. The `PORT(S)` column shows `80/TCP`. Now inspect the EndpointSlice for this Service:
 
 ```bash
-kubectl get endpoints backend
+kubectl get endpointslices -l kubernetes.io/service-name=backend
 ```
 
-You should see three `IP:80` entries, one per Pod. Cross-reference them with:
+You should see three `IP:80` entries, one per Pod, in the `ENDPOINTS` column. Cross-reference them with:
 
 ```bash
 kubectl get pods -o wide -l app=backend
 ```
 
-The IPs in the endpoints list match the Pod IPs. Kubernetes built this list automatically from the label selector.
+The IPs in the EndpointSlice match the Pod IPs exactly. Kubernetes built this slice automatically from the label selector.
 
 :::quiz
 You add a fourth Pod manually with the label `app: backend`. Does the Service start routing traffic to it?
 
-**Try it:** `kubectl run extra --image=nginx:1.28 --labels=app=backend` then `kubectl get endpoints backend`
+**Try it:** `kubectl run extra --image=nginx:1.28 --labels=app=backend` then `kubectl get endpointslices -l kubernetes.io/service-name=backend`
 
-**Answer:** Yes. The Service's endpoints are rebuilt dynamically from the label selector. Any Pod that gains the `app: backend` label and becomes Ready is automatically added to the endpoint list and starts receiving traffic.
+**Answer:** Yes. The EndpointSlice for this Service is rebuilt dynamically from the label selector. Any Pod that gains the `app: backend` label and becomes Ready is automatically added to the slice and starts receiving traffic.
 :::
 
 ## The targetPort and port Distinction
@@ -181,7 +187,7 @@ A frontend Pod sends a request to `http://backend:80`. The backend container lis
 :::
 
 :::warning
-If a Pod is running but not receiving traffic from its Service, the first thing to check is the endpoint list with `kubectl get endpoints <name>`. An empty `ENDPOINTS` column means the selector matches no ready Pods. Common causes: the label on the Pod does not match the selector exactly (check for typos), or the Pod is not yet `Ready` (its readiness probe is failing).
+If a Pod is running but not receiving traffic from its Service, the first thing to check is the EndpointSlice with `kubectl get endpointslices -l kubernetes.io/service-name=<name>`. An empty `ENDPOINTS` column means the selector matches no ready Pods. Common causes: the label on the Pod does not match the selector exactly (check for typos), or the Pod is not yet `Ready` (its readiness probe is failing).
 :::
 
 Now clean up:

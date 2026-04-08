@@ -14,10 +14,9 @@ import ScrollArea from '../ui/ScrollArea.astro'
 
 <script>
   import { mountClusterViewer } from '../cluster-viewer-mount'
+  import { CLUSTER_PANEL_OPEN_SESSION_KEY } from '../../lib/lesson/clusterPanelSessionKey'
 
   let cleanup: (() => void) | null = null
-
-  const STORAGE_KEY = 'kube-mastery:cluster-panel-open'
 
   function setup() {
     const panelEl = document.querySelector<HTMLElement>('[data-cluster-panel]')
@@ -27,18 +26,18 @@ import ScrollArea from '../ui/ScrollArea.astro'
     }
     const panel = panelEl as HTMLElement
 
-    const savedState = sessionStorage.getItem(STORAGE_KEY)
+    const savedState = sessionStorage.getItem(CLUSTER_PANEL_OPEN_SESSION_KEY)
 
     function openPanel() {
       panel.classList.add('lp__cluster-panel--open')
       panel.setAttribute('aria-hidden', 'false')
-      sessionStorage.setItem(STORAGE_KEY, 'true')
+      sessionStorage.setItem(CLUSTER_PANEL_OPEN_SESSION_KEY, 'true')
     }
 
     function closePanel() {
       panel.classList.remove('lp__cluster-panel--open')
       panel.setAttribute('aria-hidden', 'true')
-      sessionStorage.setItem(STORAGE_KEY, 'false')
+      sessionStorage.setItem(CLUSTER_PANEL_OPEN_SESSION_KEY, 'false')
     }
 
     document.addEventListener('cluster-panel-open', openPanel)
