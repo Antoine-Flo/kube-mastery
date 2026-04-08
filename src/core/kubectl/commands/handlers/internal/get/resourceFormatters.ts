@@ -44,7 +44,8 @@ export const formatIngressClass = (ingress: Ingress): string => {
 }
 
 export const formatIngressHosts = (ingress: Ingress): string => {
-  const hosts = ingress.spec.rules
+  const rules = ingress.spec.rules ?? []
+  const hosts = rules
     .map((rule) => rule.host)
     .filter((host): host is string => host != null && host.length > 0)
   if (hosts.length === 0) {

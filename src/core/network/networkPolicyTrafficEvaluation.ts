@@ -3,7 +3,10 @@
  * Not modeled yet: DNS egress, namespaceSelector, ipBlock, matchExpressions,
  * named service ports, SCTP/UDP rules, and curl to a pod IP without service routing.
  */
-import type { NetworkPolicy } from '../cluster/ressources/NetworkPolicy'
+import type {
+  NetworkPolicy,
+  NetworkPolicySpec
+} from '../cluster/ressources/NetworkPolicy'
 import type { Result } from '../shared/result'
 import { error, success } from '../shared/result'
 
@@ -85,11 +88,16 @@ const policySelectsPod = (
   )
 }
 
+type NetworkPolicySpecPolicyTypesSlice = Pick<
+  NetworkPolicySpec,
+  'policyTypes' | 'ingress' | 'egress'
+>
+
 /**
  * Effective policyTypes when omitted: infer from ingress/egress keys; if none, default [Ingress].
  */
 export const getEffectiveNetworkPolicyTypes = (
-  spec: NetworkPolicy['spec']
+  spec: NetworkPolicySpecPolicyTypesSlice
 ): Set<string> => {
   const explicit = spec.policyTypes
   if (explicit != null && explicit.length > 0) {

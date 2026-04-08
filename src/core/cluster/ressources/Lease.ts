@@ -5,63 +5,63 @@
 // Leases are namespaced resources (typically in kube-node-lease namespace)
 
 import { z } from 'zod'
+import type { components } from '../../openapi/generated/openapi-types.generated'
+import type {
+  K8sLease,
+  K8sLeaseMetadata,
+  K8sLeaseSpec
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import type { KubernetesResource } from '../repositories/types'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 
 // ─── Owner Reference ────────────────────────────────────────────────────────
 
-export interface OwnerReference {
-  apiVersion: string
-  kind: string
-  name: string
-  uid: string
-  controller?: boolean
-  blockOwnerDeletion?: boolean
-}
+export type OwnerReference =
+  components['schemas']['io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference']
 
 // ─── Lease Spec ────────────────────────────────────────────────────────────
 
-export interface LeaseSpec {
-  holderIdentity?: string
-  leaseDurationSeconds?: number
-  acquireTime?: string
-  renewTime?: string
-  leaseTransitions?: number
-}
+export type LeaseSpec = Pick<
+  K8sLeaseSpec,
+  | 'holderIdentity'
+  | 'leaseDurationSeconds'
+  | 'acquireTime'
+  | 'renewTime'
+  | 'leaseTransitions'
+>
 
 // ─── Lease Metadata ─────────────────────────────────────────────────────────
 
-interface LeaseMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-  resourceVersion?: string
-  uid?: string
+type LeaseMetadata = Omit<
+  Pick<
+    K8sLeaseMetadata,
+    | 'name'
+    | 'namespace'
+    | 'labels'
+    | 'annotations'
+    | 'creationTimestamp'
+    | 'resourceVersion'
+    | 'uid'
+    | 'ownerReferences'
+  >,
+  'ownerReferences'
+> & {
   ownerReferences?: OwnerReference[]
 }
 
 // ─── Lease Structure ────────────────────────────────────────────────────────
 
-export interface Lease extends KubernetesResource {
-  apiVersion: 'coordination.k8s.io/v1'
-  kind: 'Lease'
+export type Lease = Omit<K8sLease, 'metadata' | 'spec'> & {
   metadata: LeaseMetadata
   spec: LeaseSpec
 }
 
 // ─── Lease Config ──────────────────────────────────────────────────────────
 
-export interface LeaseConfig {
-  name: string
-  namespace: string
+export interface LeaseConfig extends NamespacedFactoryConfigBase {
   spec: LeaseSpec
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
   resourceVersion?: string
   uid?: string
   ownerReferences?: OwnerReference[]

@@ -5,10 +5,16 @@
 // Based on apps/v1 API spec
 
 import { z } from 'zod'
+import type {
+  K8sDeployment,
+  K8sDeploymentMetadata,
+  K8sDeploymentSpec,
+  K8sDeploymentStatus
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import type { KubernetesResource } from '../repositories/types'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 import type { LabelSelector, PodTemplateSpec } from './ReplicaSet'
 
 // ─── Deployment Strategy ──────────────────────────────────────────────────
@@ -27,15 +33,23 @@ export interface DeploymentStrategy {
 
 // ─── Deployment Spec ──────────────────────────────────────────────────────
 
-export interface DeploymentSpec {
-  replicas?: number
+export type DeploymentSpec = Omit<
+  Pick<
+    K8sDeploymentSpec,
+    | 'replicas'
+    | 'selector'
+    | 'template'
+    | 'strategy'
+    | 'minReadySeconds'
+    | 'revisionHistoryLimit'
+    | 'paused'
+    | 'progressDeadlineSeconds'
+  >,
+  'selector' | 'template' | 'strategy'
+> & {
   selector: LabelSelector
   template: PodTemplateSpec
   strategy?: DeploymentStrategy
-  minReadySeconds?: number
-  revisionHistoryLimit?: number
-  paused?: boolean
-  progressDeadlineSeconds?: number
 }
 
 // ─── Deployment Condition ─────────────────────────────────────────────────
@@ -56,33 +70,38 @@ export interface DeploymentCondition {
 
 // ─── Deployment Status ────────────────────────────────────────────────────
 
-export interface DeploymentStatus {
-  observedGeneration?: number
-  replicas?: number
-  updatedReplicas?: number
-  readyReplicas?: number
-  availableReplicas?: number
-  unavailableReplicas?: number
+export type DeploymentStatus = Omit<
+  Pick<
+    K8sDeploymentStatus,
+    | 'observedGeneration'
+    | 'replicas'
+    | 'updatedReplicas'
+    | 'readyReplicas'
+    | 'availableReplicas'
+    | 'unavailableReplicas'
+    | 'conditions'
+    | 'collisionCount'
+  >,
+  'conditions'
+> & {
   conditions?: DeploymentCondition[]
-  collisionCount?: number
 }
 
 // ─── Deployment Metadata ──────────────────────────────────────────────────
 
-interface DeploymentMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-  generation?: number
-}
+type DeploymentMetadata = Pick<
+  K8sDeploymentMetadata,
+  | 'name'
+  | 'namespace'
+  | 'labels'
+  | 'annotations'
+  | 'creationTimestamp'
+  | 'generation'
+>
 
 // ─── Deployment Resource ──────────────────────────────────────────────────
 
-export interface Deployment extends KubernetesResource {
-  apiVersion: 'apps/v1'
-  kind: 'Deployment'
+export type Deployment = Omit<K8sDeployment, 'metadata' | 'spec' | 'status'> & {
   metadata: DeploymentMetadata
   spec: DeploymentSpec
   status: DeploymentStatus
@@ -90,9 +109,7 @@ export interface Deployment extends KubernetesResource {
 
 // ─── Factory ──────────────────────────────────────────────────────────────
 
-interface DeploymentConfig {
-  name: string
-  namespace: string
+interface DeploymentConfig extends NamespacedFactoryConfigBase {
   replicas?: number
   selector: LabelSelector
   template: PodTemplateSpec
@@ -101,9 +118,6 @@ interface DeploymentConfig {
   revisionHistoryLimit?: number
   paused?: boolean
   progressDeadlineSeconds?: number
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
   generation?: number
   status?: DeploymentStatus
 }

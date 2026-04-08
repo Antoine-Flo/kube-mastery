@@ -3,6 +3,10 @@ import {
   createIngress,
   type IngressRule
 } from '../../../../../cluster/ressources/Ingress'
+
+type IngressRuleWithHttp = IngressRule & {
+  http: NonNullable<IngressRule['http']>
+}
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
 import { createResourceWithEvents } from '../../../resourceCatalog'
@@ -69,8 +73,8 @@ const parseIngressRule = (value: string): ParsedIngressRule | ExecutionResult =>
 
 const buildIngressRules = (
   ruleFlags: string[]
-): IngressRule[] | ExecutionResult => {
-  const groupedRules = new Map<string, IngressRule>()
+): IngressRuleWithHttp[] | ExecutionResult => {
+  const groupedRules = new Map<string, IngressRuleWithHttp>()
   for (const ruleFlag of ruleFlags) {
     const parsedRule = parseIngressRule(ruleFlag)
     if (!('path' in parsedRule)) {

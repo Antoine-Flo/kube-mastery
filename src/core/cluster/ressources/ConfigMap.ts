@@ -1,33 +1,25 @@
 import { z } from 'zod'
+import type {
+  K8sConfigMap,
+  K8sConfigMapMetadata
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import type { KubernetesResource } from '../repositories/types'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 
-interface ConfigMapMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-}
+type ConfigMapMetadata = Pick<
+  K8sConfigMapMetadata,
+  'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
+>
 
-export interface ConfigMap extends KubernetesResource {
-  apiVersion: 'v1'
-  kind: 'ConfigMap'
+export type ConfigMap = Omit<K8sConfigMap, 'metadata'> & {
   metadata: ConfigMapMetadata
-  data?: Record<string, string>
-  binaryData?: Record<string, string>
 }
 
-interface ConfigMapConfig {
-  name: string
-  namespace: string
+interface ConfigMapConfig extends NamespacedFactoryConfigBase {
   data?: Record<string, string>
   binaryData?: Record<string, string>
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
 }
 
 export const createConfigMap = (config: ConfigMapConfig): ConfigMap => {

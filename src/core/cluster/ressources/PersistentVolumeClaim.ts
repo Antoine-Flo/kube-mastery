@@ -1,12 +1,22 @@
 import { z } from 'zod'
+import type {
+  K8sPersistentVolumeClaim,
+  K8sPersistentVolumeClaimMetadata,
+  K8sPersistentVolumeClaimSpec,
+  K8sPersistentVolumeClaimStatus
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import type { KubernetesResource } from '../repositories/types'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 
 export type PersistentVolumeClaimPhase = 'Pending' | 'Bound' | 'Lost'
 
-export interface PersistentVolumeClaimSpec {
+export interface PersistentVolumeClaimSpec
+  extends Pick<
+    K8sPersistentVolumeClaimSpec,
+    'accessModes' | 'resources' | 'storageClassName' | 'volumeName'
+  > {
   accessModes: Array<
     'ReadWriteOnce' | 'ReadOnlyMany' | 'ReadWriteMany' | 'ReadWriteOncePod'
   >
@@ -19,33 +29,29 @@ export interface PersistentVolumeClaimSpec {
   volumeName?: string
 }
 
-export interface PersistentVolumeClaimStatus {
+export type PersistentVolumeClaimStatus = Pick<
+  K8sPersistentVolumeClaimStatus,
+  'phase'
+> & {
   phase: PersistentVolumeClaimPhase
 }
 
-interface PersistentVolumeClaimMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-}
+type PersistentVolumeClaimMetadata = Pick<
+  K8sPersistentVolumeClaimMetadata,
+  'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
+>
 
-export interface PersistentVolumeClaim extends KubernetesResource {
-  apiVersion: 'v1'
-  kind: 'PersistentVolumeClaim'
+export type PersistentVolumeClaim = Omit<
+  K8sPersistentVolumeClaim,
+  'metadata' | 'spec' | 'status'
+> & {
   metadata: PersistentVolumeClaimMetadata
   spec: PersistentVolumeClaimSpec
   status: PersistentVolumeClaimStatus
 }
 
-interface PersistentVolumeClaimConfig {
-  name: string
-  namespace: string
+interface PersistentVolumeClaimConfig extends NamespacedFactoryConfigBase {
   spec: PersistentVolumeClaimSpec
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
   status?: PersistentVolumeClaimStatus
 }
 

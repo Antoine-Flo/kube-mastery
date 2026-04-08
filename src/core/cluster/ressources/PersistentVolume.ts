@@ -1,8 +1,14 @@
 import { z } from 'zod'
+import type {
+  K8sPersistentVolume,
+  K8sPersistentVolumeMetadata,
+  K8sPersistentVolumeSpec,
+  K8sPersistentVolumeStatus
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import type { KubernetesResource } from '../repositories/types'
+import type { ClusterScopedNameFactoryConfigBase } from './resourceFactoryConfig'
 
 export type PersistentVolumePhase =
   | 'Available'
@@ -10,7 +16,11 @@ export type PersistentVolumePhase =
   | 'Released'
   | 'Failed'
 
-export interface PersistentVolumeSpec {
+export interface PersistentVolumeSpec
+  extends Pick<
+    K8sPersistentVolumeSpec,
+    'capacity' | 'accessModes' | 'storageClassName' | 'claimRef'
+  > {
   capacity: {
     storage: string
   }
@@ -29,32 +39,26 @@ export interface PersistentVolumeSpec {
   }
 }
 
-export interface PersistentVolumeStatus {
+export type PersistentVolumeStatus = Pick<K8sPersistentVolumeStatus, 'phase'> & {
   phase: PersistentVolumePhase
 }
 
-interface PersistentVolumeMetadata {
-  name: string
-  namespace: ''
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-}
+type PersistentVolumeMetadata = Pick<
+  K8sPersistentVolumeMetadata,
+  'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
+> & { namespace: '' }
 
-export interface PersistentVolume extends KubernetesResource {
-  apiVersion: 'v1'
-  kind: 'PersistentVolume'
+export type PersistentVolume = Omit<
+  K8sPersistentVolume,
+  'metadata' | 'spec' | 'status'
+> & {
   metadata: PersistentVolumeMetadata
   spec: PersistentVolumeSpec
   status: PersistentVolumeStatus
 }
 
-interface PersistentVolumeConfig {
-  name: string
+interface PersistentVolumeConfig extends ClusterScopedNameFactoryConfigBase {
   spec: PersistentVolumeSpec
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
   status?: PersistentVolumeStatus
 }
 

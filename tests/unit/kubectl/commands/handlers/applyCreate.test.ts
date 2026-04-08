@@ -872,9 +872,14 @@ spec:
       return
     }
     expect(ingress.value.spec.ingressClassName).toBe('nginx')
-    expect(ingress.value.spec.rules).toHaveLength(1)
-    expect(ingress.value.spec.rules[0].host).toBe('demo.example.com')
-    expect(ingress.value.spec.rules[0].http.paths).toHaveLength(2)
+    const ingressRules = ingress.value.spec.rules
+    expect(ingressRules).toBeDefined()
+    if (ingressRules == null) {
+      return
+    }
+    expect(ingressRules).toHaveLength(1)
+    expect(ingressRules[0].host).toBe('demo.example.com')
+    expect(ingressRules[0].http?.paths).toHaveLength(2)
   })
 
   it('should return error for invalid ingress --rule backend format', () => {
@@ -1211,6 +1216,123 @@ spec:
     if (!result.ok) {
       expect(result.error).toBe('error: the path "missing.txt" does not exist')
       expect(result.error).not.toContain('cat:')
+    }
+  })
+
+  it('should create gateway when gatewayclass reference is missing', () => {
+    fileSystem.createFile('gateway.yaml')
+    fileSystem.writeFile(
+      'gateway.yaml',
+      [
+        'apiVersion: gateway.networking.k8s.io/v1',
+        'kind: Gateway',
+        'metadata:',
+        '  name: demo-gw',
+        '  namespace: default',
+        'spec:',
+        '  gatewayClassName: missing-class'
+      ].join('\n')
+    )
+    const parsed = parseCommand('kubectl create -f gateway.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    const gateway = apiServer.findResource('Gateway', 'demo-gw', 'default')
+    expect(gateway.ok).toBe(true)
+    if (gateway.ok) {
+      expect(gateway.value.status?.conditions?.[0]?.status).toBe('False')
+    }
+  })
+
+  it('should create gateway when gatewayclass exists and set programmed condition', () => {
+    fileSystem.createFile('gateway-class.yaml')
+    fileSystem.writeFile(
+      'gateway-class.yaml',
+      [
+        'apiVersion: gateway.networking.k8s.io/v1',
+        'kind: GatewayClass',
+        'metadata:',
+        '  name: demo-class',
+        'spec:',
+        '  controllerName: gateway.envoyproxy.io/gatewayclass-controller'
+      ].join('\n')
+    )
+    fileSystem.createFile('gateway.yaml')
+    fileSystem.writeFile(
+      'gateway.yaml',
+      [
+        'apiVersion: gateway.networking.k8s.io/v1',
+        'kind: Gateway',
+        'metadata:',
+        '  name: demo-gw',
+        '  namespace: default',
+        'spec:',
+        '  gatewayClassName: demo-class'
+      ].join('\n')
+    )
+    const parsedGatewayClass = parseCommand('kubectl create -f gateway-class.yaml')
+    expect(parsedGatewayClass.ok).toBe(true)
+    if (!parsedGatewayClass.ok) {
+      return
+    }
+    const createGatewayClassResult = handleCreate(
+      fileSystem,
+      apiServer,
+      parsedGatewayClass.value
+    )
+    expect(createGatewayClassResult.ok).toBe(true)
+
+    const parsedGateway = parseCommand('kubectl create -f gateway.yaml')
+    expect(parsedGateway.ok).toBe(true)
+    if (!parsedGateway.ok) {
+      return
+    }
+    const createGatewayResult = handleCreate(fileSystem, apiServer, parsedGateway.value)
+    expect(createGatewayResult.ok).toBe(true)
+    const gateway = apiServer.findResource('Gateway', 'demo-gw', 'default')
+    expect(gateway.ok).toBe(true)
+    if (!gateway.ok) {
+      return
+    }
+    expect(gateway.value.status?.conditions?.[0]?.type).toBe('Programmed')
+    expect(gateway.value.status?.conditions?.[0]?.status).toBe('False')
+  })
+
+  it('should create httproute when parent gateway is missing', () => {
+    fileSystem.createFile('httproute.yaml')
+    fileSystem.writeFile(
+      'httproute.yaml',
+      [
+        'apiVersion: gateway.networking.k8s.io/v1',
+        'kind: HTTPRoute',
+        'metadata:',
+        '  name: demo-route',
+        '  namespace: default',
+        'spec:',
+        '  parentRefs:',
+        '    - name: missing-gw'
+      ].join('\n')
+    )
+    const parsed = parseCommand('kubectl create -f httproute.yaml')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+    const result = handleCreate(fileSystem, apiServer, parsed.value)
+    expect(result.ok).toBe(true)
+    const httpRoute = apiServer.findResource('HTTPRoute', 'demo-route', 'default')
+    expect(httpRoute.ok).toBe(true)
+    if (httpRoute.ok) {
+      const parentCondition = httpRoute.value.status?.parents?.[0]?.conditions?.find(
+        (condition) => {
+          return condition.type === 'Accepted'
+        }
+      )
+      expect(parentCondition?.status).toBe('False')
     }
   })
 })

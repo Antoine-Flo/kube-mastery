@@ -5,11 +5,15 @@
 // Includes Zod schemas for YAML manifest validation
 
 import { z } from 'zod'
+import type {
+  K8sSecret,
+  K8sSecretMetadata
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import type { KubernetesResource } from '../repositories/types'
 import { convertYamlSecretType } from './yamlConverters'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 
 // ADT for Secret types - discriminated union prevents invalid states
 export type SecretType =
@@ -18,30 +22,20 @@ export type SecretType =
   | { type: 'kubernetes.io/service-account-token'; serviceAccountName: string }
   | { type: 'kubernetes.io/dockerconfigjson'; dockerConfigJson: string }
 
-interface SecretMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-}
+type SecretMetadata = Pick<
+  K8sSecretMetadata,
+  'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
+>
 
-export interface Secret extends KubernetesResource {
-  apiVersion: 'v1'
-  kind: 'Secret'
+export type Secret = Omit<K8sSecret, 'metadata' | 'type' | 'data'> & {
   metadata: SecretMetadata
   type: SecretType
   data: Record<string, string>
 }
 
-interface SecretConfig {
-  name: string
-  namespace: string
+interface SecretConfig extends NamespacedFactoryConfigBase {
   secretType: SecretType
   data: Record<string, string>
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
 }
 
 export const encodeBase64 = (str: string): string => {

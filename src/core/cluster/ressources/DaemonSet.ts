@@ -4,47 +4,45 @@
 // Kubernetes DaemonSet resource for node-scoped Pod management (apps/v1)
 
 import { z } from 'zod'
+import type {
+  K8sDaemonSet,
+  K8sDaemonSetMetadata,
+  K8sDaemonSetSpec,
+  K8sDaemonSetStatus
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import type { KubernetesResource } from '../repositories/types'
 import type { LabelSelector, PodTemplateSpec } from './ReplicaSet'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 
-export interface DaemonSetSpec {
+export type DaemonSetSpec = Omit<
+  Pick<K8sDaemonSetSpec, 'selector' | 'template'>,
+  'selector' | 'template'
+> & {
   selector: LabelSelector
   template: PodTemplateSpec
 }
 
-export interface DaemonSetStatus {
-  currentNumberScheduled: number
-  desiredNumberScheduled: number
-  numberReady: number
-}
+export type DaemonSetStatus = Pick<
+  K8sDaemonSetStatus,
+  'currentNumberScheduled' | 'desiredNumberScheduled' | 'numberReady'
+>
 
-interface DaemonSetMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-}
+type DaemonSetMetadata = Pick<
+  K8sDaemonSetMetadata,
+  'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
+>
 
-export interface DaemonSet extends KubernetesResource {
-  apiVersion: 'apps/v1'
-  kind: 'DaemonSet'
+export type DaemonSet = Omit<K8sDaemonSet, 'metadata' | 'spec' | 'status'> & {
   metadata: DaemonSetMetadata
   spec: DaemonSetSpec
   status: DaemonSetStatus
 }
 
-interface DaemonSetConfig {
-  name: string
-  namespace: string
+interface DaemonSetConfig extends NamespacedFactoryConfigBase {
   selector: LabelSelector
   template: PodTemplateSpec
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
 }
 
 export const createDaemonSet = (config: DaemonSetConfig): DaemonSet => {

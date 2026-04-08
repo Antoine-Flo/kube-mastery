@@ -1,66 +1,36 @@
 import { z } from 'zod'
+import type { components } from '../../openapi/generated/openapi-types.generated'
+import type {
+  K8sIngress,
+  K8sIngressMetadata,
+  K8sIngressSpec
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import type { KubernetesResource } from '../repositories/types'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 
-interface IngressMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-}
+type IoSchemas = components['schemas']
 
-export interface IngressBackendServicePort {
-  number?: number
-  name?: string
-}
+export type IngressSpec = K8sIngressSpec
 
-export interface IngressBackendService {
-  name: string
-  port: IngressBackendServicePort
-}
+export type IngressRule = IoSchemas['io.k8s.api.networking.v1.IngressRule']
+export type IngressTLS = IoSchemas['io.k8s.api.networking.v1.IngressTLS']
+export type IngressBackend = IoSchemas['io.k8s.api.networking.v1.IngressBackend']
+export type HTTPIngressPath = IoSchemas['io.k8s.api.networking.v1.HTTPIngressPath']
 
-export interface IngressDefaultBackend {
-  service: IngressBackendService
-}
+type IngressMetadata = Pick<
+  K8sIngressMetadata,
+  'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
+>
 
-export interface IngressPath {
-  path: string
-  pathType: 'Exact' | 'Prefix' | 'ImplementationSpecific'
-  backend: {
-    service: IngressBackendService
-  }
-}
-
-export interface IngressRule {
-  host?: string
-  http: {
-    paths: IngressPath[]
-  }
-}
-
-export interface IngressSpec {
-  ingressClassName?: string
-  defaultBackend?: IngressDefaultBackend
-  rules: IngressRule[]
-}
-
-export interface Ingress extends KubernetesResource {
-  apiVersion: 'networking.k8s.io/v1'
-  kind: 'Ingress'
+export type Ingress = Omit<K8sIngress, 'metadata' | 'spec' | 'status'> & {
   metadata: IngressMetadata
   spec: IngressSpec
 }
 
-interface IngressConfig {
-  name: string
-  namespace: string
+interface IngressConfig extends NamespacedFactoryConfigBase {
   spec: IngressSpec
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
 }
 
 export const createIngress = (config: IngressConfig): Ingress => {
@@ -89,6 +59,28 @@ const IngressServicePortSchema = z
     message: 'service.port requires either number or name'
   })
 
+const IngressBackendServiceSchema = z.object({
+  name: z.string().min(1, 'backend service name is required'),
+  port: IngressServicePortSchema
+})
+
+const IngressPathSchema = z.object({
+  path: z.string().min(1, 'path is required'),
+  pathType: z.enum(['Exact', 'Prefix', 'ImplementationSpecific']),
+  backend: z.object({
+    service: IngressBackendServiceSchema
+  })
+})
+
+const IngressRuleSchema = z.object({
+  host: z.string().optional(),
+  http: z
+    .object({
+      paths: z.array(IngressPathSchema).min(1, 'at least one path is required')
+    })
+    .optional()
+})
+
 const IngressManifestSchema = z.object({
   apiVersion: z.literal('networking.k8s.io/v1'),
   kind: z.literal('Ingress'),
@@ -99,46 +91,53 @@ const IngressManifestSchema = z.object({
     annotations: z.record(z.string(), z.string()).optional(),
     creationTimestamp: z.string().optional()
   }),
-  spec: z.object({
-    ingressClassName: z.string().min(1).optional(),
-    defaultBackend: z
-      .object({
-        service: z.object({
-          name: z.string().min(1, 'default backend service name is required'),
-          port: IngressServicePortSchema
+  spec: z
+    .object({
+      ingressClassName: z.string().min(1).optional(),
+      defaultBackend: z
+        .object({
+          service: IngressBackendServiceSchema
         })
-      })
-      .optional(),
-    rules: z
-      .array(
-        z.object({
-          host: z.string().optional(),
-          http: z.object({
-            paths: z
-              .array(
-                z.object({
-                  path: z.string().min(1, 'path is required'),
-                  pathType: z.enum([
-                    'Exact',
-                    'Prefix',
-                    'ImplementationSpecific'
-                  ]),
-                  backend: z.object({
-                    service: z.object({
-                      name: z
-                        .string()
-                        .min(1, 'backend service name is required'),
-                      port: IngressServicePortSchema
-                    })
-                  })
-                })
-              )
-              .min(1, 'at least one path is required')
+        .optional(),
+      rules: z.array(IngressRuleSchema).optional(),
+      tls: z
+        .array(
+          z.object({
+            hosts: z.array(z.string().min(1)).optional(),
+            secretName: z.string().min(1).optional()
           })
+        )
+        .optional()
+    })
+    .superRefine((spec, ctx) => {
+      const hasRules = spec.rules != null && spec.rules.length > 0
+      const hasDefault = spec.defaultBackend != null
+      if (!hasRules && !hasDefault) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'spec must include at least one rule or defaultBackend when rules are omitted',
+          path: ['rules']
         })
-      )
-      .min(1, 'at least one rule is required')
-  })
+        return
+      }
+      if (hasRules) {
+        const ruleList = spec.rules
+        if (ruleList == null) {
+          return
+        }
+        for (let index = 0; index < ruleList.length; index += 1) {
+          const rule = ruleList[index]
+          if (rule.http == null) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'each rule must include http when rules are set',
+              path: ['rules', index, 'http']
+            })
+          }
+        }
+      }
+    })
 })
 
 export const parseIngressManifest = (data: unknown): Result<Ingress> => {

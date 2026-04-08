@@ -5,95 +5,14 @@
 // Uses Zod schemas defined in resource models for validation.
 
 import { parseAllDocuments } from 'yaml'
-import type { ConfigMap } from '../cluster/ressources/ConfigMap'
-import { parseConfigMapManifest } from '../cluster/ressources/ConfigMap'
-import type { DaemonSet } from '../cluster/ressources/DaemonSet'
-import { parseDaemonSetManifest } from '../cluster/ressources/DaemonSet'
-import type { Deployment } from '../cluster/ressources/Deployment'
-import { parseDeploymentManifest } from '../cluster/ressources/Deployment'
-import type { Event } from '../cluster/ressources/Event'
-import { parseEventManifest } from '../cluster/ressources/Event'
-import type { Ingress } from '../cluster/ressources/Ingress'
-import { parseIngressManifest } from '../cluster/ressources/Ingress'
-import type { NetworkPolicy } from '../cluster/ressources/NetworkPolicy'
-import { parseNetworkPolicyManifest } from '../cluster/ressources/NetworkPolicy'
-import type { Lease } from '../cluster/ressources/Lease'
-import { parseLeaseManifest } from '../cluster/ressources/Lease'
-import type { Node } from '../cluster/ressources/Node'
-import { parseNodeManifest } from '../cluster/ressources/Node'
-import type { PersistentVolume } from '../cluster/ressources/PersistentVolume'
-import { parsePersistentVolumeManifest } from '../cluster/ressources/PersistentVolume'
-import type { PersistentVolumeClaim } from '../cluster/ressources/PersistentVolumeClaim'
-import { parsePersistentVolumeClaimManifest } from '../cluster/ressources/PersistentVolumeClaim'
-import type { Pod } from '../cluster/ressources/Pod'
-import { parsePodManifest } from '../cluster/ressources/Pod'
-import type { ReplicaSet } from '../cluster/ressources/ReplicaSet'
-import { parseReplicaSetManifest } from '../cluster/ressources/ReplicaSet'
-import type { Secret } from '../cluster/ressources/Secret'
-import { parseSecretManifest } from '../cluster/ressources/Secret'
-import type { StorageClass } from '../cluster/ressources/StorageClass'
-import { parseStorageClassManifest } from '../cluster/ressources/StorageClass'
-import type { Service } from '../cluster/ressources/Service'
-import { parseServiceManifest } from '../cluster/ressources/Service'
-import type { StatefulSet } from '../cluster/ressources/StatefulSet'
-import { parseStatefulSetManifest } from '../cluster/ressources/StatefulSet'
-import type { ResourceKind } from '../cluster/ClusterState'
 import type { Result } from '../shared/result'
 import { error, success } from '../shared/result'
 import {
-  isSupportedResourceKind,
-  SUPPORTED_RESOURCE_KINDS
-} from './commands/resourceCatalog'
-
-// ─── Types ───────────────────────────────────────────────────────────────
-
-type ParsedResource =
-  | Pod
-  | ConfigMap
-  | Secret
-  | StorageClass
-  | Node
-  | PersistentVolume
-  | PersistentVolumeClaim
-  | ReplicaSet
-  | Deployment
-  | DaemonSet
-  | StatefulSet
-  | Service
-  | Event
-  | Ingress
-  | NetworkPolicy
-  | Lease
-
-type YamlSupportedKind = Extract<
-  ResourceKind,
-  | 'Pod'
-  | 'ConfigMap'
-  | 'Secret'
-  | 'Node'
-  | 'PersistentVolume'
-  | 'PersistentVolumeClaim'
-  | 'ReplicaSet'
-  | 'Deployment'
-  | 'DaemonSet'
-  | 'StatefulSet'
-  | 'Service'
-  | 'Event'
-  | 'Ingress'
-  | 'NetworkPolicy'
-  | 'Lease'
-  | 'StorageClass'
->
-
-const YAML_SUPPORTED_RESOURCE_KINDS: YamlSupportedKind[] =
-  SUPPORTED_RESOURCE_KINDS.filter((kind) => {
-    return (
-      kind !== 'Namespace' &&
-      kind !== 'ControllerRevision' &&
-      kind !== 'EndpointSlice' &&
-      kind !== 'Endpoints'
-    )
-  }) as YamlSupportedKind[]
+  MANIFEST_PARSERS,
+  type ParsedYamlResource,
+  YAML_SUPPORTED_RESOURCE_KINDS,
+  type YamlSupportedKind
+} from './generated/yamlManifestParsers.generated'
 
 // ─── YAML Parsing ────────────────────────────────────────────────────────
 
@@ -132,41 +51,13 @@ const parseYamlDocuments = (yamlContent: string): Result<unknown[]> => {
  * Check if kind is supported
  */
 const isSupportedKind = (kind: string): kind is YamlSupportedKind => {
-  if (!isSupportedResourceKind(kind)) {
-    return false
-  }
   return YAML_SUPPORTED_RESOURCE_KINDS.includes(kind as YamlSupportedKind)
-}
-
-/**
- * Manifest parser lookup table (object lookup pattern)
- */
-const MANIFEST_PARSERS: Record<
-  YamlSupportedKind,
-  (obj: any) => Result<ParsedResource>
-> = {
-  Pod: parsePodManifest,
-  ConfigMap: parseConfigMapManifest,
-  Secret: parseSecretManifest,
-  Node: parseNodeManifest,
-  PersistentVolume: parsePersistentVolumeManifest,
-  PersistentVolumeClaim: parsePersistentVolumeClaimManifest,
-  ReplicaSet: parseReplicaSetManifest,
-  Deployment: parseDeploymentManifest,
-  DaemonSet: parseDaemonSetManifest,
-  StatefulSet: parseStatefulSetManifest,
-  Service: parseServiceManifest,
-  Event: parseEventManifest,
-  Ingress: parseIngressManifest,
-  NetworkPolicy: parseNetworkPolicyManifest,
-  Lease: parseLeaseManifest,
-  StorageClass: parseStorageClassManifest
 }
 
 /**
  * Route validation to resource-specific parser
  */
-const validateResource = (obj: any): Result<ParsedResource> => {
+const validateResource = (obj: any): Result<ParsedYamlResource> => {
   // Basic structure validation
   if (!obj.kind || typeof obj.kind !== 'string') {
     return error('Missing or invalid kind')
@@ -193,7 +84,7 @@ const validateResource = (obj: any): Result<ParsedResource> => {
  */
 export const parseKubernetesYaml = (
   yamlContent: string
-): Result<ParsedResource> => {
+): Result<ParsedYamlResource> => {
   const parseResult = parseYamlDocuments(yamlContent)
   if (!parseResult.ok) {
     return parseResult
@@ -216,13 +107,13 @@ export const parseKubernetesYaml = (
  */
 export const parseKubernetesYamlDocuments = (
   yamlContent: string
-): Result<ParsedResource[]> => {
+): Result<ParsedYamlResource[]> => {
   const parseResult = parseYamlDocuments(yamlContent)
   if (!parseResult.ok) {
     return parseResult
   }
 
-  const resources: ParsedResource[] = []
+  const resources: ParsedYamlResource[] = []
   for (let index = 0; index < parseResult.value.length; index++) {
     const validationResult = validateResource(parseResult.value[index])
     if (!validationResult.ok) {

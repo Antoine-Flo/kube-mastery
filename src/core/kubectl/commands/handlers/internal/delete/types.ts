@@ -20,7 +20,4 @@ export type PodDeleteOptions = {
   force?: boolean
 }
 
-export type DeletableResource = Exclude<
-  Resource,
-  'all' | 'ingressclasses' | 'gatewayclasses' | 'gateways' | 'httproutes'
->
+export type DeletableResource = Exclude<Resource, 'all'>

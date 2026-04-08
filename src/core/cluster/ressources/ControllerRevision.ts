@@ -1,43 +1,38 @@
 import { deepFreeze } from '../../shared/deepFreeze'
-import type { KubernetesResource } from '../repositories/types'
+import type { components } from '../../openapi/generated/openapi-types.generated'
+import type {
+  K8sControllerRevision,
+  K8sControllerRevisionMetadata
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 
-export interface ControllerRevisionOwnerReference {
-  apiVersion: string
-  kind: string
-  name: string
-  uid: string
-  controller?: boolean
-  blockOwnerDeletion?: boolean
-}
+export type ControllerRevisionOwnerReference =
+  components['schemas']['io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference']
 
-interface ControllerRevisionMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-  ownerReferences?: ControllerRevisionOwnerReference[]
-}
+type ControllerRevisionMetadata = Pick<
+  K8sControllerRevisionMetadata,
+  | 'name'
+  | 'namespace'
+  | 'labels'
+  | 'annotations'
+  | 'creationTimestamp'
+  | 'ownerReferences'
+>
 
-export interface ControllerRevision extends KubernetesResource {
-  apiVersion: 'apps/v1'
-  kind: 'ControllerRevision'
+export type ControllerRevision = Omit<
+  K8sControllerRevision,
+  'metadata' | 'data'
+> & {
   metadata: ControllerRevisionMetadata
-  revision: number
   data: {
     template: unknown
   }
 }
 
-interface CreateControllerRevisionConfig {
-  name: string
-  namespace: string
+interface CreateControllerRevisionConfig extends NamespacedFactoryConfigBase {
   revision: number
   template: unknown
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
   ownerReferences?: ControllerRevisionOwnerReference[]
-  creationTimestamp?: string
 }
 
 export const createControllerRevision = (

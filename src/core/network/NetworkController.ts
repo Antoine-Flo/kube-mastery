@@ -282,7 +282,7 @@ export const createNetworkController = (
         }),
         ports: effectiveService.spec.ports.map((port) => ({
           name: port.name,
-          protocol: port.protocol ?? 'TCP',
+          protocol: (port.protocol ?? 'TCP') as 'TCP' | 'UDP' | 'SCTP',
           port: port.port,
           targetPort: port.targetPort ?? port.port,
           ...(port.nodePort != null && { nodePort: port.nodePort })

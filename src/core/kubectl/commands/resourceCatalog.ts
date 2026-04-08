@@ -1,5 +1,7 @@
 import type { KindToResource, ResourceKind } from '../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../api/ApiServerFacade'
+import type { Gateway } from '../../cluster/ressources/Gateway'
+import type { HTTPRoute } from '../../cluster/ressources/HTTPRoute'
 import type { ExecutionResult, Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import type { Resource } from './types'
@@ -204,6 +206,10 @@ const NAME_RULE_BY_KIND: Record<SupportedKind, NameRule> = {
   Node: DNS1123_SUBDOMAIN_RULE,
   Namespace: DNS1123_LABEL_RULE,
   Ingress: DNS1123_SUBDOMAIN_RULE,
+  IngressClass: DNS1123_SUBDOMAIN_RULE,
+  GatewayClass: DNS1123_SUBDOMAIN_RULE,
+  Gateway: DNS1123_SUBDOMAIN_RULE,
+  HTTPRoute: DNS1123_SUBDOMAIN_RULE,
   NetworkPolicy: DNS1123_SUBDOMAIN_RULE,
   ReplicaSet: DNS1123_SUBDOMAIN_RULE,
   Deployment: DNS1123_SUBDOMAIN_RULE,
@@ -380,12 +386,170 @@ const areResourcesEquivalentForApply = (
   )
 }
 
+const withGatewayRuntimeStatus = (
+  gateway: Gateway,
+  gatewayClassExists: boolean
+): Gateway => {
+  const programmedStatus = gatewayClassExists ? 'False' : 'False'
+  const reason = gatewayClassExists
+    ? 'AddressNotAssigned'
+    : 'GatewayClassNotFound'
+  const message = gatewayClassExists
+    ? 'No addresses have been assigned to the Gateway'
+    : `GatewayClass "${gateway.spec.gatewayClassName}" not found`
+  const next: Gateway = {
+    ...gateway,
+    status: {
+      ...(gateway.status ?? {}),
+      conditions: [
+        {
+          type: 'Programmed',
+          status: programmedStatus as 'True' | 'False',
+          reason,
+          message,
+          observedGeneration: 1,
+          lastTransitionTime: new Date().toISOString()
+        }
+      ]
+    }
+  }
+  return next
+}
+
+const withHTTPRouteRuntimeStatus = (
+  httpRoute: HTTPRoute,
+  parentRefsWithResolution: Array<{
+    name: string
+    namespace: string
+    exists: boolean
+  }>
+): HTTPRoute => {
+  const parents = parentRefsWithResolution.map((parentRef) => {
+    const acceptedStatus = (parentRef.exists ? 'True' : 'False') as
+      | 'True'
+      | 'False'
+    const resolvedStatus = (parentRef.exists ? 'True' : 'False') as
+      | 'True'
+      | 'False'
+    return {
+      parentRef: {
+        name: parentRef.name,
+        namespace: parentRef.namespace
+      },
+      conditions: [
+        {
+          type: 'Accepted',
+          status: acceptedStatus,
+          reason: parentRef.exists ? 'Accepted' : 'NoMatchingParent',
+          message: parentRef.exists
+            ? 'Route is accepted'
+            : `Gateway "${parentRef.name}" not found`,
+          observedGeneration: 1,
+          lastTransitionTime: new Date().toISOString()
+        },
+        {
+          type: 'ResolvedRefs',
+          status: resolvedStatus,
+          reason: parentRef.exists ? 'ResolvedRefs' : 'RefNotPermitted',
+          message: parentRef.exists
+            ? 'Resolved all the Object references for the Route'
+            : `Gateway "${parentRef.name}" not found`,
+          observedGeneration: 1,
+          lastTransitionTime: new Date().toISOString()
+        }
+      ]
+    }
+  })
+  const next: HTTPRoute = {
+    ...httpRoute,
+    status: {
+      ...(httpRoute.status ?? {}),
+      parents
+    }
+  }
+  return next
+}
+
+const validateGatewayApiReferences = (
+  resource: KubernetesResource,
+  apiServer: ApiServerFacade
+): Result<KubernetesResource> => {
+  if (resource.kind === 'Gateway') {
+    const gateway = resource as unknown as Gateway
+    const gatewayClassName = gateway.spec.gatewayClassName
+    const gatewayClassResult = apiServer.findResource(
+      'GatewayClass',
+      gatewayClassName
+    )
+    return success(withGatewayRuntimeStatus(gateway, gatewayClassResult.ok))
+  }
+
+  if (resource.kind === 'GatewayClass') {
+    const gatewayClass = resource as KubernetesResource & {
+      status?: {
+        conditions?: Array<{
+          type: string
+          status: 'True' | 'False' | 'Unknown'
+          reason?: string
+          message?: string
+        }>
+      }
+    }
+    const nextGatewayClass = {
+      ...gatewayClass,
+      status: {
+        ...(gatewayClass.status ?? {}),
+        conditions: [
+          {
+            type: 'Accepted',
+            status: 'True' as const,
+            reason: 'Accepted',
+            message: 'Valid GatewayClass'
+          }
+        ]
+      }
+    }
+    return success(nextGatewayClass)
+  }
+
+  if (resource.kind === 'HTTPRoute') {
+    const httpRoute = resource as unknown as HTTPRoute
+    const parentRefs = httpRoute.spec.parentRefs ?? []
+    const parentRefsWithResolution: Array<{
+      name: string
+      namespace: string
+      exists: boolean
+    }> = []
+    for (const parentRef of parentRefs) {
+      const parentNamespace = parentRef.namespace ?? httpRoute.metadata.namespace
+      const gatewayResult = apiServer.findResource(
+        'Gateway',
+        parentRef.name,
+        parentNamespace
+      )
+      parentRefsWithResolution.push({
+        name: parentRef.name,
+        namespace: parentNamespace,
+        exists: gatewayResult.ok
+      })
+    }
+    return success(withHTTPRouteRuntimeStatus(httpRoute, parentRefsWithResolution))
+  }
+
+  return success(resource)
+}
+
 export const applyResourceWithEvents = (
   resource: KubernetesResource,
   apiServer: ApiServerFacade
 ): ExecutionResult => {
-  const { name, namespace } = resource.metadata
   const kindRaw = resource.kind
+  const referenceValidation = validateGatewayApiReferences(resource, apiServer)
+  if (!referenceValidation.ok) {
+    return referenceValidation
+  }
+  const validatedResource = referenceValidation.value
+  const { name, namespace } = validatedResource.metadata
 
   if (!isSupportedResourceKind(kindRaw)) {
     return error(
@@ -411,13 +575,13 @@ export const applyResourceWithEvents = (
   const existing = apiServer.findResource(kind, name, namespace)
 
   if (existing.ok) {
-    if (areResourcesEquivalentForApply(existing.value, resource)) {
+    if (areResourcesEquivalentForApply(existing.value, validatedResource)) {
       return success(`${toKindReference(kind)}/${name} unchanged`)
     }
     const updateResult = apiServer.updateResource(
       kind,
       name,
-      resource as unknown as KindToResource<typeof kind>,
+      validatedResource as unknown as KindToResource<typeof kind>,
       namespace
     )
     if (!updateResult.ok) {
@@ -427,7 +591,7 @@ export const applyResourceWithEvents = (
   }
   const createResult = apiServer.createResource(
     kind,
-    resource as unknown as KindToResource<typeof kind>,
+    validatedResource as unknown as KindToResource<typeof kind>,
     namespace
   )
   if (!createResult.ok) {
@@ -440,8 +604,13 @@ export const createResourceWithEvents = (
   resource: KubernetesResource,
   apiServer: ApiServerFacade
 ): ExecutionResult => {
-  const { name, namespace } = resource.metadata
   const kindRaw = resource.kind
+  const referenceValidation = validateGatewayApiReferences(resource, apiServer)
+  if (!referenceValidation.ok) {
+    return referenceValidation
+  }
+  const validatedResource = referenceValidation.value
+  const { name, namespace } = validatedResource.metadata
 
   if (!isSupportedResourceKind(kindRaw)) {
     return error(
@@ -473,7 +642,7 @@ export const createResourceWithEvents = (
 
   const createResult = apiServer.createResource(
     kind,
-    resource as unknown as KindToResource<typeof kind>,
+    validatedResource as unknown as KindToResource<typeof kind>,
     namespace
   )
   if (!createResult.ok) {

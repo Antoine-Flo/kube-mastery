@@ -1,4 +1,11 @@
 import type { ResourceKind } from '../../../../../cluster/ClusterState'
+import {
+  DELETABLE_KUBECTL_RESOURCES,
+  KIND_REFERENCE_BY_KIND,
+  NAMESPACED_RESOURCE_KINDS,
+  PLURAL_KIND_REFERENCE_BY_KIND,
+  RESOURCE_KIND_BY_RESOURCE
+} from '../../../resourceCatalog.generated'
 import type { Resource } from '../../../types'
 import type {
   DeleteManifestTargetConfig,
@@ -7,138 +14,60 @@ import type {
   NamespacedEventDeleteResource
 } from './types'
 
+const NAMESPACED_RESOURCE_KIND_SET = new Set<ResourceKind>(
+  NAMESPACED_RESOURCE_KINDS
+)
+
+const DELETABLE_RESOURCES: DeletableResource[] = [
+  ...DELETABLE_KUBECTL_RESOURCES
+] as DeletableResource[]
+
+const buildDeleteTargetConfigForKind = (
+  kind: ResourceKind
+): DeleteManifestTargetConfig => {
+  return {
+    kind,
+    kindRef: KIND_REFERENCE_BY_KIND[kind],
+    kindRefPlural: PLURAL_KIND_REFERENCE_BY_KIND[kind],
+    namespaced: NAMESPACED_RESOURCE_KIND_SET.has(kind)
+  }
+}
+
 export const NAMESPACED_EVENT_DELETE_CONFIG: Record<
   NamespacedEventDeleteResource,
   NamespacedDeleteConfig
-> = {
-  pods: {
-    kind: 'Pod',
-    kindRef: 'pod'
-  },
-  configmaps: {
-    kind: 'ConfigMap',
-    kindRef: 'configmap'
-  },
-  secrets: {
-    kind: 'Secret',
-    kindRef: 'secret'
-  }
-}
+> = Object.fromEntries(
+  (['pods', 'configmaps', 'secrets'] as NamespacedEventDeleteResource[]).map(
+    (resource) => {
+      const kind = RESOURCE_KIND_BY_RESOURCE[resource] as ResourceKind
+      return [
+        resource,
+        {
+          kind,
+          kindRef: KIND_REFERENCE_BY_KIND[kind]
+        }
+      ]
+    }
+  )
+) as Record<NamespacedEventDeleteResource, NamespacedDeleteConfig>
 
 export const DELETE_TARGET_BY_KIND: Partial<
   Record<ResourceKind, DeleteManifestTargetConfig>
-> = {
-  Pod: {
-    kind: 'Pod',
-    kindRef: 'pod',
-    kindRefPlural: 'pods',
-    namespaced: true
-  },
-  ConfigMap: {
-    kind: 'ConfigMap',
-    kindRef: 'configmap',
-    kindRefPlural: 'configmaps',
-    namespaced: true
-  },
-  Secret: {
-    kind: 'Secret',
-    kindRef: 'secret',
-    kindRefPlural: 'secrets',
-    namespaced: true
-  },
-  Deployment: {
-    kind: 'Deployment',
-    kindRef: 'deployment.apps',
-    kindRefPlural: 'deployments.apps',
-    namespaced: true
-  },
-  DaemonSet: {
-    kind: 'DaemonSet',
-    kindRef: 'daemonset.apps',
-    kindRefPlural: 'daemonsets.apps',
-    namespaced: true
-  },
-  StatefulSet: {
-    kind: 'StatefulSet',
-    kindRef: 'statefulset.apps',
-    kindRefPlural: 'statefulsets.apps',
-    namespaced: true
-  },
-  ReplicaSet: {
-    kind: 'ReplicaSet',
-    kindRef: 'replicaset.apps',
-    kindRefPlural: 'replicasets.apps',
-    namespaced: true
-  },
-  Ingress: {
-    kind: 'Ingress',
-    kindRef: 'ingress.networking.k8s.io',
-    kindRefPlural: 'ingresses.networking.k8s.io',
-    namespaced: true
-  },
-  NetworkPolicy: {
-    kind: 'NetworkPolicy',
-    kindRef: 'networkpolicy.networking.k8s.io',
-    kindRefPlural: 'networkpolicies.networking.k8s.io',
-    namespaced: true
-  },
-  Service: {
-    kind: 'Service',
-    kindRef: 'service',
-    kindRefPlural: 'services',
-    namespaced: true
-  },
-  PersistentVolumeClaim: {
-    kind: 'PersistentVolumeClaim',
-    kindRef: 'persistentvolumeclaim',
-    kindRefPlural: 'persistentvolumeclaims',
-    namespaced: true
-  },
-  PersistentVolume: {
-    kind: 'PersistentVolume',
-    kindRef: 'persistentvolume',
-    kindRefPlural: 'persistentvolumes',
-    namespaced: false
-  },
-  Namespace: {
-    kind: 'Namespace',
-    kindRef: 'namespace',
-    kindRefPlural: 'namespaces',
-    namespaced: false
-  },
-  Node: {
-    kind: 'Node',
-    kindRef: 'node',
-    kindRefPlural: 'nodes',
-    namespaced: false
-  },
-  Lease: {
-    kind: 'Lease',
-    kindRef: 'lease',
-    kindRefPlural: 'leases',
-    namespaced: true
-  }
-}
+> = Object.fromEntries(
+  DELETABLE_RESOURCES.map((resource) => {
+    const kind = RESOURCE_KIND_BY_RESOURCE[resource] as ResourceKind
+    return [kind, buildDeleteTargetConfigForKind(kind)]
+  })
+) as Partial<Record<ResourceKind, DeleteManifestTargetConfig>>
 
 export const DELETE_TARGET_BY_RESOURCE: Partial<
   Record<DeletableResource, DeleteManifestTargetConfig>
-> = {
-  pods: DELETE_TARGET_BY_KIND.Pod,
-  configmaps: DELETE_TARGET_BY_KIND.ConfigMap,
-  secrets: DELETE_TARGET_BY_KIND.Secret,
-  deployments: DELETE_TARGET_BY_KIND.Deployment,
-  daemonsets: DELETE_TARGET_BY_KIND.DaemonSet,
-  statefulsets: DELETE_TARGET_BY_KIND.StatefulSet,
-  replicasets: DELETE_TARGET_BY_KIND.ReplicaSet,
-  services: DELETE_TARGET_BY_KIND.Service,
-  ingresses: DELETE_TARGET_BY_KIND.Ingress,
-  networkpolicies: DELETE_TARGET_BY_KIND.NetworkPolicy,
-  persistentvolumes: DELETE_TARGET_BY_KIND.PersistentVolume,
-  persistentvolumeclaims: DELETE_TARGET_BY_KIND.PersistentVolumeClaim,
-  namespaces: DELETE_TARGET_BY_KIND.Namespace,
-  nodes: DELETE_TARGET_BY_KIND.Node,
-  leases: DELETE_TARGET_BY_KIND.Lease
-}
+> = Object.fromEntries(
+  DELETABLE_RESOURCES.map((resource) => {
+    const kind = RESOURCE_KIND_BY_RESOURCE[resource] as ResourceKind
+    return [resource, DELETE_TARGET_BY_KIND[kind]]
+  })
+) as Partial<Record<DeletableResource, DeleteManifestTargetConfig>>
 
 export const DELETE_ALL_RESOURCE_ORDER: DeletableResource[] = [
   'pods',
@@ -151,13 +80,7 @@ export const DELETE_ALL_RESOURCE_ORDER: DeletableResource[] = [
 export const getDeleteTargetConfig = (
   resource: Resource
 ): DeleteManifestTargetConfig | undefined => {
-  if (
-    resource === 'all' ||
-    resource === 'ingressclasses' ||
-    resource === 'gatewayclasses' ||
-    resource === 'gateways' ||
-    resource === 'httproutes'
-  ) {
+  if (resource === 'all') {
     return undefined
   }
   return DELETE_TARGET_BY_RESOURCE[resource]

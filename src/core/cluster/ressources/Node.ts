@@ -5,10 +5,14 @@
 // Nodes are cluster-scoped resources (no namespace)
 
 import { z } from 'zod'
+import type {
+  K8sNode,
+  K8sNodeMetadata
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
+import type { ClusterScopedNameFactoryConfigBase } from './resourceFactoryConfig'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import type { KubernetesResource } from '../repositories/types'
 
 // ─── Node Address ──────────────────────────────────────────────────────────
 
@@ -91,24 +95,53 @@ export interface NodeStatus {
   }>
 }
 
+/**
+ * Factory input: only the core nodeInfo fields are required; optional OpenAPI-like
+ * fields are filled by createNode (empty strings, default kubelet port).
+ */
+export type NodeSystemInfoInput = Pick<
+  NodeSystemInfo,
+  | 'architecture'
+  | 'containerRuntimeVersion'
+  | 'kernelVersion'
+  | 'kubeletVersion'
+  | 'operatingSystem'
+  | 'osImage'
+> &
+  Partial<
+    Pick<
+      NodeSystemInfo,
+      'bootID' | 'kubeProxyVersion' | 'machineID' | 'systemUUID' | 'swap'
+    >
+  >
+
+export interface NodeStatusInput {
+  addresses?: NodeAddress[]
+  conditions?: NodeCondition[]
+  nodeInfo: NodeSystemInfoInput
+  allocatable?: Record<string, string>
+  capacity?: Record<string, string>
+  daemonEndpoints?: NodeStatus['daemonEndpoints']
+  images?: NodeStatus['images']
+  phase?: string
+  runtimeHandlers?: NodeStatus['runtimeHandlers']
+}
+
 // ─── Node Metadata ──────────────────────────────────────────────────────────
 // Nodes are cluster-scoped, so namespace is always empty string
 
-interface NodeMetadata {
-  name: string
-  namespace: '' // Cluster-scoped resources have empty namespace
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
+type NodeMetadata = Pick<
+  K8sNodeMetadata,
+  'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
+> & {
+  namespace: ''
   resourceVersion?: string
   uid?: string
 }
 
 // ─── Node Structure ────────────────────────────────────────────────────────
 
-export interface Node extends KubernetesResource {
-  apiVersion: 'v1'
-  kind: 'Node'
+export type Node = Omit<K8sNode, 'metadata' | 'spec' | 'status'> & {
   metadata: NodeMetadata
   spec: NodeSpec
   status: NodeStatus
@@ -116,13 +149,38 @@ export interface Node extends KubernetesResource {
 
 // ─── Node Config ───────────────────────────────────────────────────────────
 
-export interface NodeConfig {
-  name: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
+export interface NodeConfig extends ClusterScopedNameFactoryConfigBase {
   spec?: NodeSpec
-  status: NodeStatus
+  status: NodeStatusInput
+}
+
+const DEFAULT_NODE_INFO_STRING = ''
+
+const normalizeNodeSystemInfo = (input: NodeSystemInfoInput): NodeSystemInfo => {
+  return {
+    architecture: input.architecture,
+    containerRuntimeVersion: input.containerRuntimeVersion,
+    kernelVersion: input.kernelVersion,
+    kubeletVersion: input.kubeletVersion,
+    operatingSystem: input.operatingSystem,
+    osImage: input.osImage,
+    bootID: input.bootID ?? DEFAULT_NODE_INFO_STRING,
+    kubeProxyVersion: input.kubeProxyVersion ?? DEFAULT_NODE_INFO_STRING,
+    machineID: input.machineID ?? DEFAULT_NODE_INFO_STRING,
+    systemUUID: input.systemUUID ?? DEFAULT_NODE_INFO_STRING,
+    ...(input.swap != null ? { swap: input.swap } : {})
+  }
+}
+
+const normalizeNodeStatus = (input: NodeStatusInput): NodeStatus => {
+  return {
+    ...input,
+    nodeInfo: normalizeNodeSystemInfo(input.nodeInfo),
+    daemonEndpoints:
+      input.daemonEndpoints ?? {
+        kubeletEndpoint: { Port: 0 }
+      }
+  }
 }
 
 // ─── Factory Function ──────────────────────────────────────────────────────
@@ -139,7 +197,7 @@ export const createNode = (config: NodeConfig): Node => {
       ...(config.annotations && { annotations: config.annotations })
     },
     spec: config.spec || {},
-    status: config.status
+    status: normalizeNodeStatus(config.status)
   }
 
   return deepFreeze(node)

@@ -1,10 +1,9 @@
 import type { ClusterStateData } from '../../../cluster/ClusterState'
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
-import {
-  getGatewayClassDescribeOutput,
-  getGatewayDescribeOutput,
-  getHttpRouteDescribeOutput
-} from '../../../gateway-api/envoy/api'
+import type { Gateway } from '../../../cluster/ressources/Gateway'
+import type { GatewayClass } from '../../../cluster/ressources/GatewayClass'
+import type { HTTPRoute } from '../../../cluster/ressources/HTTPRoute'
+import type { IngressClass } from '../../../cluster/ressources/IngressClass'
 import type { DeploymentLifecycleDescribeEvent } from '../../../api/DeploymentLifecycleEventStore'
 import type { PersistentVolumeClaimLifecycleDescribeEvent } from '../../../api/PersistentVolumeClaimLifecycleEventStore'
 import type { PodLifecycleDescribeEvent } from '../../../api/PodLifecycleEventStore'
@@ -151,6 +150,71 @@ const describeCoreEvent = (
   ].join('\n')
 }
 
+const describeIngressClass = (resource: IngressClass): string => {
+  return [
+    `Name:         ${resource.metadata.name}`,
+    'Labels:       <none>',
+    'Annotations:  <none>',
+    `Controller:   ${resource.spec.controller}`,
+    'Events:       <none>'
+  ].join('\n')
+}
+
+const describeGatewayClass = (resource: GatewayClass): string => {
+  const accepted =
+    resource.status?.conditions?.find((condition) => {
+      return condition.type === 'Accepted'
+    })?.status ?? 'Unknown'
+  return [
+    `Name:         ${resource.metadata.name}`,
+    'Namespace:    ',
+    `API Version:  ${resource.apiVersion}`,
+    `Kind:         ${resource.kind}`,
+    `Controller:   ${resource.spec.controllerName}`,
+    `Accepted:     ${accepted}`,
+    'Events:       <none>'
+  ].join('\n')
+}
+
+const describeGateway = (resource: Gateway): string => {
+  const addresses = (resource.status?.addresses ?? [])
+    .map((address) => address.value)
+    .join(', ')
+  const programmed =
+    resource.status?.conditions?.some((condition) => {
+      return condition.type === 'Programmed' && condition.status === 'True'
+    }) ?? false
+  return [
+    `Name:         ${resource.metadata.name}`,
+    `Namespace:    ${resource.metadata.namespace}`,
+    `API Version:  ${resource.apiVersion}`,
+    `Kind:         ${resource.kind}`,
+    `Gateway Class: ${resource.spec.gatewayClassName}`,
+    `Addresses:    ${addresses || '<none>'}`,
+    `Programmed:   ${programmed ? 'True' : 'False'}`,
+    'Events:       <none>'
+  ].join('\n')
+}
+
+const describeHTTPRoute = (resource: HTTPRoute): string => {
+  const hostnames = (resource.spec.hostnames ?? []).join(', ')
+  const parentRefs = (resource.spec.parentRefs ?? [])
+    .map((ref) => {
+      const ns = ref.namespace ?? resource.metadata.namespace
+      return `${ns}/${ref.name}`
+    })
+    .join(', ')
+  return [
+    `Name:         ${resource.metadata.name}`,
+    `Namespace:    ${resource.metadata.namespace}`,
+    `API Version:  ${resource.apiVersion}`,
+    `Kind:         ${resource.kind}`,
+    `Hostnames:    ${hostnames || '<none>'}`,
+    `Parent Refs:  ${parentRefs || '<none>'}`,
+    'Events:       <none>'
+  ].join('\n')
+}
+
 const sortDescribeResources = (
   resources: DescribeableResource[]
 ): DescribeableResource[] => {
@@ -245,6 +309,36 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
     },
     type: 'Ingress'
   },
+  ingressclasses: {
+    items: 'ingressClasses',
+    formatter: (item) => {
+      return describeIngressClass(item)
+    },
+    type: 'IngressClass',
+    isClusterScoped: true
+  },
+  gatewayclasses: {
+    items: 'gatewayClasses',
+    formatter: (item) => {
+      return describeGatewayClass(item)
+    },
+    type: 'GatewayClass',
+    isClusterScoped: true
+  },
+  gateways: {
+    items: 'gateways',
+    formatter: (item) => {
+      return describeGateway(item)
+    },
+    type: 'Gateway'
+  },
+  httproutes: {
+    items: 'httpRoutes',
+    formatter: (item) => {
+      return describeHTTPRoute(item)
+    },
+    type: 'HTTPRoute'
+  },
   networkpolicies: {
     items: 'networkPolicies',
     formatter: (item) => {
@@ -307,6 +401,18 @@ const getNotFoundResourceReference = (resourceType: string): string => {
   if (resourceType === 'networkpolicies') {
     return 'networkpolicies.networking.k8s.io'
   }
+  if (resourceType === 'ingressclasses') {
+    return 'ingressclasses.networking.k8s.io'
+  }
+  if (resourceType === 'gatewayclasses') {
+    return 'gatewayclasses.gateway.networking.k8s.io'
+  }
+  if (resourceType === 'gateways') {
+    return 'gateways.gateway.networking.k8s.io'
+  }
+  if (resourceType === 'httproutes') {
+    return 'httproutes.gateway.networking.k8s.io'
+  }
   return resourceType
 }
 
@@ -337,73 +443,6 @@ export const handleDescribe = (
   }
 
   const resourceType = parsed.resource
-  if (resourceType === 'ingressclasses') {
-    if (!parsed.name) {
-      return error(`error: you must specify the name of the resource to describe`)
-    }
-    const ingressControllerInstalled = state.deployments.items.some(
-      (deployment) => {
-        return (
-          deployment.metadata.namespace === 'ingress-nginx' &&
-          deployment.metadata.name === 'ingress-nginx-controller'
-        )
-      }
-    )
-    if (ingressControllerInstalled && parsed.name === 'nginx') {
-      return success(
-        [
-          'Name:         nginx',
-          'Labels:       app.kubernetes.io/component=controller',
-          '              app.kubernetes.io/instance=ingress-nginx',
-          '              app.kubernetes.io/name=ingress-nginx',
-          '              app.kubernetes.io/part-of=ingress-nginx',
-          '              app.kubernetes.io/version=1.15.1',
-          'Annotations:  <none>',
-          'Controller:   k8s.io/ingress-nginx',
-          'Events:       <none>'
-        ].join('\n')
-      )
-    }
-    return error(
-      `Error from server (NotFound): ingressclasses.networking.k8s.io "${parsed.name}" not found`
-    )
-  }
-  if (resourceType === 'gatewayclasses') {
-    if (!parsed.name) {
-      return error(`error: you must specify the name of the resource to describe`)
-    }
-    const describeOutput = getGatewayClassDescribeOutput(state, parsed.name)
-    if (describeOutput != null) {
-      return success(describeOutput)
-    }
-    return error(
-      `Error from server (NotFound): gatewayclasses.gateway.networking.k8s.io "${parsed.name}" not found`
-    )
-  }
-  if (resourceType === 'gateways') {
-    if (!parsed.name) {
-      return error(`error: you must specify the name of the resource to describe`)
-    }
-    const describeOutput = getGatewayDescribeOutput(state, parsed.name)
-    if (describeOutput != null) {
-      return success(describeOutput)
-    }
-    return error(
-      `Error from server (NotFound): gateways.gateway.networking.k8s.io "${parsed.name}" not found`
-    )
-  }
-  if (resourceType === 'httproutes') {
-    if (!parsed.name) {
-      return error(`error: you must specify the name of the resource to describe`)
-    }
-    const describeOutput = getHttpRouteDescribeOutput(state, parsed.name)
-    if (describeOutput != null) {
-      return success(describeOutput)
-    }
-    return error(
-      `Error from server (NotFound): httproutes.gateway.networking.k8s.io "${parsed.name}" not found`
-    )
-  }
   const config = DESCRIBE_CONFIG[resourceType]
   if (!config) {
     return error(

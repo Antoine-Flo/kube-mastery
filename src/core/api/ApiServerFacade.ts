@@ -1,79 +1,10 @@
 import { createEventBus, type EventBus } from '../cluster/events/EventBus'
 import {
-  createConfigMapCreatedEvent,
-  createConfigMapDeletedEvent,
-  createConfigMapUpdatedEvent,
-  createControllerRevisionCreatedEvent,
-  createControllerRevisionDeletedEvent,
-  createControllerRevisionUpdatedEvent,
-  createDaemonSetCreatedEvent,
-  createDaemonSetDeletedEvent,
-  createDaemonSetUpdatedEvent,
-  createDeploymentCreatedEvent,
-  createDeploymentDeletedEvent,
-  createDeploymentUpdatedEvent,
-  createEndpointSliceCreatedEvent,
-  createEndpointSliceDeletedEvent,
-  createEndpointSliceUpdatedEvent,
-  createEndpointsCreatedEvent,
-  createEndpointsDeletedEvent,
-  createEndpointsUpdatedEvent,
-  createEventCreatedEvent,
-  createEventDeletedEvent,
-  createEventUpdatedEvent,
-  createIngressCreatedEvent,
-  createIngressDeletedEvent,
-  createIngressUpdatedEvent,
-  createNetworkPolicyCreatedEvent,
-  createNetworkPolicyDeletedEvent,
-  createNetworkPolicyUpdatedEvent,
-  createLeaseCreatedEvent,
-  createLeaseDeletedEvent,
-  createLeaseUpdatedEvent,
-  createNamespaceCreatedEvent,
-  createNamespaceDeletedEvent,
-  createNamespaceUpdatedEvent,
-  createNodeCreatedEvent,
-  createNodeDeletedEvent,
-  createNodeUpdatedEvent,
-  createPersistentVolumeClaimCreatedEvent,
-  createPersistentVolumeClaimUpdatedEvent,
-  createPersistentVolumeClaimDeletedEvent,
-  createPersistentVolumeCreatedEvent,
-  createPersistentVolumeUpdatedEvent,
-  createPersistentVolumeDeletedEvent,
-  createPodCreatedEvent,
-  createPodUpdatedEvent,
   createPodDeletedEvent,
-  createReplicaSetCreatedEvent,
-  createReplicaSetDeletedEvent,
-  createReplicaSetUpdatedEvent,
-  createSecretCreatedEvent,
-  createSecretDeletedEvent,
-  createSecretUpdatedEvent,
-  createStorageClassCreatedEvent,
-  createStorageClassDeletedEvent,
-  createStorageClassUpdatedEvent,
-  createServiceCreatedEvent,
-  createServiceDeletedEvent,
-  createServiceUpdatedEvent,
-  createStatefulSetCreatedEvent,
-  createStatefulSetDeletedEvent,
-  createStatefulSetUpdatedEvent
+  createPodUpdatedEvent
 } from '../cluster/events/types'
 import type { KindToResource, ResourceKind } from '../cluster/ClusterState'
 import type { ConfigMap } from '../cluster/ressources/ConfigMap'
-import type { ControllerRevision } from '../cluster/ressources/ControllerRevision'
-import type { DaemonSet } from '../cluster/ressources/DaemonSet'
-import type { Deployment } from '../cluster/ressources/Deployment'
-import type { EndpointSlice } from '../cluster/ressources/EndpointSlice'
-import type { Endpoints } from '../cluster/ressources/Endpoints'
-import type { Event } from '../cluster/ressources/Event'
-import type { Ingress } from '../cluster/ressources/Ingress'
-import type { NetworkPolicy } from '../cluster/ressources/NetworkPolicy'
-import type { Lease } from '../cluster/ressources/Lease'
-import type { Namespace } from '../cluster/ressources/Namespace'
-import type { Node } from '../cluster/ressources/Node'
 import type { PersistentVolume } from '../cluster/ressources/PersistentVolume'
 import type { PersistentVolumeClaim } from '../cluster/ressources/PersistentVolumeClaim'
 import type { Pod } from '../cluster/ressources/Pod'
@@ -81,16 +12,17 @@ import {
   computeContainerImageId,
   hydratePodVolumeRuntime
 } from '../cluster/ressources/Pod'
-import type { ReplicaSet } from '../cluster/ressources/ReplicaSet'
 import type { Secret } from '../cluster/ressources/Secret'
 import type { StorageClass } from '../cluster/ressources/StorageClass'
-import type { Service } from '../cluster/ressources/Service'
-import type { StatefulSet } from '../cluster/ressources/StatefulSet'
 import type {
   BootstrapApiLike,
   ClusterBootstrapConfig
 } from '../cluster/systemBootstrap'
 import { applyClusterBootstrapViaApi } from '../cluster/systemBootstrap'
+import {
+  CLUSTER_SCOPED_RESOURCE_KINDS,
+  EVENT_FACTORIES
+} from '../cluster/generated/clusterRegistry.generated'
 import { createEtcdLikeStore, type EtcdLikeStore } from '../etcd/EtcdLikeStore'
 import type { AppEvent } from '../events/AppEvent'
 import type { Result } from '../shared/result'
@@ -517,122 +449,63 @@ const createClusterScopedMutationEvents = <TResource>(
   }
 }
 
-const RESOURCE_MUTATION_EVENTS: Record<
-  ResourceKind,
-  ResourceMutationEventFactory
-> = {
-  Pod: createNamespacedMutationEvents<Pod>(
-    createPodCreatedEvent,
-    createPodUpdatedEvent,
-    createPodDeletedEvent
-  ),
-  ConfigMap: createNamespacedMutationEvents<ConfigMap>(
-    createConfigMapCreatedEvent,
-    createConfigMapUpdatedEvent,
-    createConfigMapDeletedEvent
-  ),
-  ControllerRevision: createNamespacedMutationEvents<ControllerRevision>(
-    createControllerRevisionCreatedEvent,
-    createControllerRevisionUpdatedEvent,
-    createControllerRevisionDeletedEvent
-  ),
-  Secret: createNamespacedMutationEvents<Secret>(
-    createSecretCreatedEvent,
-    createSecretUpdatedEvent,
-    createSecretDeletedEvent
-  ),
-  Node: createClusterScopedMutationEvents<Node>(
-    createNodeCreatedEvent,
-    createNodeUpdatedEvent,
-    createNodeDeletedEvent
-  ),
-  ReplicaSet: createNamespacedMutationEvents<ReplicaSet>(
-    createReplicaSetCreatedEvent,
-    createReplicaSetUpdatedEvent,
-    createReplicaSetDeletedEvent
-  ),
-  Deployment: createNamespacedMutationEvents<Deployment>(
-    createDeploymentCreatedEvent,
-    createDeploymentUpdatedEvent,
-    createDeploymentDeletedEvent
-  ),
-  DaemonSet: createNamespacedMutationEvents<DaemonSet>(
-    createDaemonSetCreatedEvent,
-    createDaemonSetUpdatedEvent,
-    createDaemonSetDeletedEvent
-  ),
-  StatefulSet: createNamespacedMutationEvents<StatefulSet>(
-    createStatefulSetCreatedEvent,
-    createStatefulSetUpdatedEvent,
-    createStatefulSetDeletedEvent
-  ),
-  Service: createNamespacedMutationEvents<Service>(
-    createServiceCreatedEvent,
-    createServiceUpdatedEvent,
-    createServiceDeletedEvent
-  ),
-  Endpoints: createNamespacedMutationEvents<Endpoints>(
-    createEndpointsCreatedEvent,
-    createEndpointsUpdatedEvent,
-    createEndpointsDeletedEvent
-  ),
-  Event: createNamespacedMutationEvents<Event>(
-    createEventCreatedEvent,
-    createEventUpdatedEvent,
-    createEventDeletedEvent
-  ),
-  EndpointSlice: createNamespacedMutationEvents<EndpointSlice>(
-    createEndpointSliceCreatedEvent,
-    createEndpointSliceUpdatedEvent,
-    createEndpointSliceDeletedEvent
-  ),
-  Ingress: createNamespacedMutationEvents<Ingress>(
-    createIngressCreatedEvent,
-    createIngressUpdatedEvent,
-    createIngressDeletedEvent
-  ),
-  NetworkPolicy: createNamespacedMutationEvents<NetworkPolicy>(
-    createNetworkPolicyCreatedEvent,
-    createNetworkPolicyUpdatedEvent,
-    createNetworkPolicyDeletedEvent
-  ),
-  PersistentVolume: createClusterScopedMutationEvents<PersistentVolume>(
-    createPersistentVolumeCreatedEvent,
-    createPersistentVolumeUpdatedEvent,
-    createPersistentVolumeDeletedEvent
-  ),
-  PersistentVolumeClaim: createNamespacedMutationEvents<PersistentVolumeClaim>(
-    createPersistentVolumeClaimCreatedEvent,
-    createPersistentVolumeClaimUpdatedEvent,
-    createPersistentVolumeClaimDeletedEvent
-  ),
-  Namespace: createClusterScopedMutationEvents<Namespace>(
-    createNamespaceCreatedEvent,
-    createNamespaceUpdatedEvent,
-    createNamespaceDeletedEvent
-  ),
-  Lease: createNamespacedMutationEvents<Lease>(
-    createLeaseCreatedEvent,
-    createLeaseUpdatedEvent,
-    createLeaseDeletedEvent
-  ),
-  StorageClass: createClusterScopedMutationEvents<StorageClass>(
-    createStorageClassCreatedEvent,
-    createStorageClassUpdatedEvent,
-    createStorageClassDeletedEvent
-  )
-}
-
-const CLUSTER_SCOPED_KINDS = new Set<ResourceKind>([
-  'Node',
+const CLUSTER_SCOPED_RESOURCE_KIND_SET = new Set<ResourceKind>([
+  ...CLUSTER_SCOPED_RESOURCE_KINDS,
   'Namespace',
-  'PersistentVolume',
-  'StorageClass'
+  'Node'
 ])
 
 const isClusterScopedKind = (kind: ResourceKind): boolean => {
-  return CLUSTER_SCOPED_KINDS.has(kind)
+  return CLUSTER_SCOPED_RESOURCE_KIND_SET.has(kind)
 }
+
+const createResourceMutationEventsForKind = (
+  kind: ResourceKind
+): ResourceMutationEventFactory => {
+  const factory = EVENT_FACTORIES[kind]
+  if (isClusterScopedKind(kind)) {
+    return createClusterScopedMutationEvents(
+      factory.created as (resource: KindToResource<ResourceKind>, source: string) => AppEvent,
+      factory.updated as (
+        name: string,
+        resource: KindToResource<ResourceKind>,
+        previous: KindToResource<ResourceKind>,
+        source: string
+      ) => AppEvent,
+      factory.deleted as (
+        name: string,
+        resource: KindToResource<ResourceKind>,
+        source: string
+      ) => AppEvent
+    )
+  }
+
+  return createNamespacedMutationEvents(
+    factory.created as (resource: KindToResource<ResourceKind>, source: string) => AppEvent,
+    factory.updated as (
+      name: string,
+      namespace: string,
+      resource: KindToResource<ResourceKind>,
+      previous: KindToResource<ResourceKind>,
+      source: string
+    ) => AppEvent,
+    factory.deleted as (
+      name: string,
+      namespace: string,
+      resource: KindToResource<ResourceKind>,
+      source: string
+    ) => AppEvent
+  )
+}
+
+const RESOURCE_MUTATION_EVENTS: Record<
+  ResourceKind,
+  ResourceMutationEventFactory
+> = Object.fromEntries(
+  (Object.keys(EVENT_FACTORIES) as ResourceKind[]).map((kind) => {
+    return [kind, createResourceMutationEventsForKind(kind)]
+  })
+) as Record<ResourceKind, ResourceMutationEventFactory>
 
 const resolveResourceNamespace = (
   kind: ResourceKind,

@@ -1,98 +1,13 @@
-import type { ClusterStateData } from '../ClusterState'
+import type { ClusterStateData, ResourceKind } from '../ClusterState'
 import { addPod, deletePod, updatePod } from '../ClusterState'
-import { createResourceRepository } from '../repositories/resourceRepository'
+import {
+  CLUSTER_SCOPED_RESOURCE_KINDS,
+  COLLECTION_KEY_BY_RESOURCE_KIND,
+  repos
+} from '../generated/clusterRegistry.generated'
 import type { ResourceCollection } from '../repositories/types'
-import type { ConfigMap } from '../ressources/ConfigMap'
-import type { ControllerRevision } from '../ressources/ControllerRevision'
-import type { DaemonSet } from '../ressources/DaemonSet'
-import type { Deployment } from '../ressources/Deployment'
-import type { EndpointSlice } from '../ressources/EndpointSlice'
-import type { Endpoints } from '../ressources/Endpoints'
-import type { Event } from '../ressources/Event'
-import type { Ingress } from '../ressources/Ingress'
-import type { NetworkPolicy } from '../ressources/NetworkPolicy'
-import type { Lease } from '../ressources/Lease'
-import type { Namespace } from '../ressources/Namespace'
-import type { Node } from '../ressources/Node'
-import type { PersistentVolume } from '../ressources/PersistentVolume'
-import type { PersistentVolumeClaim } from '../ressources/PersistentVolumeClaim'
 import type { Pod } from '../ressources/Pod'
-import type { ReplicaSet } from '../ressources/ReplicaSet'
-import type { Secret } from '../ressources/Secret'
-import type { StorageClass } from '../ressources/StorageClass'
-import type { Service } from '../ressources/Service'
-import type { StatefulSet } from '../ressources/StatefulSet'
-import type {
-  ClusterEvent,
-  ConfigMapAnnotatedEvent,
-  ConfigMapCreatedEvent,
-  ConfigMapDeletedEvent,
-  ConfigMapLabeledEvent,
-  ConfigMapUpdatedEvent,
-  ControllerRevisionCreatedEvent,
-  ControllerRevisionDeletedEvent,
-  ControllerRevisionUpdatedEvent,
-  DaemonSetCreatedEvent,
-  DaemonSetDeletedEvent,
-  DaemonSetUpdatedEvent,
-  DeploymentCreatedEvent,
-  DeploymentDeletedEvent,
-  DeploymentUpdatedEvent,
-  EndpointSliceCreatedEvent,
-  EndpointSliceDeletedEvent,
-  EndpointSliceUpdatedEvent,
-  EndpointsCreatedEvent,
-  EndpointsDeletedEvent,
-  EndpointsUpdatedEvent,
-  EventCreatedEvent,
-  EventDeletedEvent,
-  EventUpdatedEvent,
-  IngressCreatedEvent,
-  IngressDeletedEvent,
-  IngressUpdatedEvent,
-  NetworkPolicyCreatedEvent,
-  NetworkPolicyDeletedEvent,
-  NetworkPolicyUpdatedEvent,
-  LeaseCreatedEvent,
-  LeaseDeletedEvent,
-  LeaseUpdatedEvent,
-  NamespaceCreatedEvent,
-  NamespaceDeletedEvent,
-  NamespaceUpdatedEvent,
-  NodeCreatedEvent,
-  NodeDeletedEvent,
-  NodeUpdatedEvent,
-  PodAnnotatedEvent,
-  PodCreatedEvent,
-  PodDeletedEvent,
-  PodLabeledEvent,
-  PodUpdatedEvent,
-  PersistentVolumeClaimCreatedEvent,
-  PersistentVolumeClaimDeletedEvent,
-  PersistentVolumeClaimUpdatedEvent,
-  PersistentVolumeCreatedEvent,
-  PersistentVolumeDeletedEvent,
-  PersistentVolumeUpdatedEvent,
-  ReplicaSetCreatedEvent,
-  ReplicaSetDeletedEvent,
-  ReplicaSetUpdatedEvent,
-  SecretAnnotatedEvent,
-  SecretCreatedEvent,
-  SecretDeletedEvent,
-  SecretLabeledEvent,
-  SecretUpdatedEvent,
-  StorageClassCreatedEvent,
-  StorageClassDeletedEvent,
-  StorageClassUpdatedEvent,
-  ServiceAnnotatedEvent,
-  ServiceCreatedEvent,
-  ServiceDeletedEvent,
-  ServiceLabeledEvent,
-  ServiceUpdatedEvent,
-  StatefulSetCreatedEvent,
-  StatefulSetDeletedEvent,
-  StatefulSetUpdatedEvent
-} from './types'
+import type { ClusterEvent } from './types'
 import { releasePersistentVolumeBacking } from '../../volumes/runtime'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -101,94 +16,53 @@ import { releasePersistentVolumeBacking } from '../../volumes/runtime'
 // Pure functions that apply events to cluster state.
 // Each handler takes current state + event and returns new state.
 
-// ─── Repositories ────────────────────────────────────────────────────────
-
-const configMapRepo = createResourceRepository<ConfigMap>('ConfigMap')
-const controllerRevisionRepo =
-  createResourceRepository<ControllerRevision>('ControllerRevision')
-const secretRepo = createResourceRepository<Secret>('Secret')
-const replicaSetRepo = createResourceRepository<ReplicaSet>('ReplicaSet')
-const deploymentRepo = createResourceRepository<Deployment>('Deployment')
-const endpointSliceRepo =
-  createResourceRepository<EndpointSlice>('EndpointSlice')
-const endpointsRepo = createResourceRepository<Endpoints>('Endpoints')
-const eventRepo = createResourceRepository<Event>('Event')
-const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
-const statefulSetRepo = createResourceRepository<StatefulSet>('StatefulSet')
-const serviceRepo = createResourceRepository<Service>('Service')
-const ingressRepo = createResourceRepository<Ingress>('Ingress')
-const networkPolicyRepo =
-  createResourceRepository<NetworkPolicy>('NetworkPolicy')
-const leaseRepo = createResourceRepository<Lease>('Lease')
-const namespaceRepo = createResourceRepository<Namespace>('Namespace')
-const nodeRepo = createResourceRepository<Node>('Node')
-const persistentVolumeRepo =
-  createResourceRepository<PersistentVolume>('PersistentVolume')
-const persistentVolumeClaimRepo =
-  createResourceRepository<PersistentVolumeClaim>('PersistentVolumeClaim')
-
 // ─── Generic Handler Factories ───────────────────────────────────────────
 
 /**
  * Factory: Create handler for repository-based resources (ConfigMap, Secret)
  */
-type RepoStateKey =
-  | 'configMaps'
-  | 'controllerRevisions'
-  | 'secrets'
-  | 'replicaSets'
-  | 'deployments'
-  | 'daemonSets'
-  | 'statefulSets'
-  | 'services'
-  | 'endpointSlices'
-  | 'endpoints'
-  | 'events'
-  | 'ingresses'
-  | 'networkPolicies'
-  | 'leases'
-  | 'namespaces'
-  | 'nodes'
-  | 'persistentVolumes'
-  | 'persistentVolumeClaims'
-  | 'storageClasses'
-
-type RepoResourceByStateKey = {
-  configMaps: ConfigMap
-  controllerRevisions: ControllerRevision
-  secrets: Secret
-  replicaSets: ReplicaSet
-  deployments: Deployment
-  daemonSets: DaemonSet
-  statefulSets: StatefulSet
-  services: Service
-  endpointSlices: EndpointSlice
-  endpoints: Endpoints
-  events: Event
-  ingresses: Ingress
-  networkPolicies: NetworkPolicy
-  leases: Lease
-  namespaces: Namespace
-  nodes: Node
-  persistentVolumes: PersistentVolume
-  persistentVolumeClaims: PersistentVolumeClaim
-  storageClasses: StorageClass
-}
+type RepoStateKey = Exclude<keyof typeof repos, 'pods'>
+type RepoResourceByStateKey<TKey extends RepoStateKey> =
+  ClusterStateData[TKey] extends ResourceCollection<infer TResource>
+    ? TResource
+    : never
 
 type RepoCollectionByStateKey = {
-  [TKey in RepoStateKey]: ResourceCollection<RepoResourceByStateKey[TKey]>
+  [TKey in RepoStateKey]: ResourceCollection<RepoResourceByStateKey<TKey>>
+}
+
+type RepoAdapter<TKey extends RepoStateKey> = {
+  add: (
+    collection: RepoCollectionByStateKey[TKey],
+    resource: RepoResourceByStateKey<TKey>
+  ) => RepoCollectionByStateKey[TKey]
+  remove: (
+    collection: RepoCollectionByStateKey[TKey],
+    name: string,
+    namespace: string
+  ) => {
+    ok: boolean
+    collection?: RepoCollectionByStateKey[TKey]
+  }
+  update: (
+    collection: RepoCollectionByStateKey[TKey],
+    name: string,
+    namespace: string,
+    updateFn: (resource: RepoResourceByStateKey<TKey>) => RepoResourceByStateKey<TKey>
+  ) => {
+    ok: boolean
+    collection?: RepoCollectionByStateKey[TKey]
+  }
 }
 
 const createRepoHandler = <TKey extends RepoStateKey>(
-  repo: ReturnType<
-    typeof createResourceRepository<RepoResourceByStateKey[TKey]>
-  >,
   stateKey: TKey
 ) => ({
   created: (
     state: ClusterStateData,
-    resource: RepoResourceByStateKey[TKey]
+    resource: RepoResourceByStateKey<TKey>
   ) => {
+    const repo = repos[stateKey] as unknown as RepoAdapter<TKey>
     const collection = repo.add(
       state[stateKey] as RepoCollectionByStateKey[TKey],
       resource
@@ -197,6 +71,7 @@ const createRepoHandler = <TKey extends RepoStateKey>(
   },
 
   deleted: (state: ClusterStateData, name: string, namespace: string) => {
+    const repo = repos[stateKey] as unknown as RepoAdapter<TKey>
     const result = repo.remove(
       state[stateKey] as RepoCollectionByStateKey[TKey],
       name,
@@ -211,8 +86,9 @@ const createRepoHandler = <TKey extends RepoStateKey>(
     state: ClusterStateData,
     name: string,
     namespace: string,
-    resource: RepoResourceByStateKey[TKey]
+    resource: RepoResourceByStateKey<TKey>
   ) => {
+    const repo = repos[stateKey] as unknown as RepoAdapter<TKey>
     const result = repo.update(
       state[stateKey] as RepoCollectionByStateKey[TKey],
       name,
@@ -250,62 +126,33 @@ const createPodHandler = () => ({
 // ─── Handler Instances ───────────────────────────────────────────────────
 
 const podHandler = createPodHandler()
-const configMapHandler = createRepoHandler(configMapRepo, 'configMaps')
-const controllerRevisionHandler = createRepoHandler(
-  controllerRevisionRepo,
-  'controllerRevisions'
-)
-const secretHandler = createRepoHandler(secretRepo, 'secrets')
-const replicaSetHandler = createRepoHandler(replicaSetRepo, 'replicaSets')
-const deploymentHandler = createRepoHandler(deploymentRepo, 'deployments')
-const daemonSetHandler = createRepoHandler(daemonSetRepo, 'daemonSets')
-const statefulSetHandler = createRepoHandler(statefulSetRepo, 'statefulSets')
-const serviceHandler = createRepoHandler(serviceRepo, 'services')
-const endpointSliceHandler = createRepoHandler(
-  endpointSliceRepo,
-  'endpointSlices'
-)
-const endpointsHandler = createRepoHandler(endpointsRepo, 'endpoints')
-const eventHandler = createRepoHandler(eventRepo, 'events')
-const ingressHandler = createRepoHandler(ingressRepo, 'ingresses')
-const networkPolicyHandler = createRepoHandler(
-  networkPolicyRepo,
-  'networkPolicies'
-)
-const leaseHandler = createRepoHandler(leaseRepo, 'leases')
-const namespaceHandler = createRepoHandler(namespaceRepo, 'namespaces')
-const nodeHandler = createRepoHandler(nodeRepo, 'nodes')
-const persistentVolumeHandler = createRepoHandler(
-  persistentVolumeRepo,
-  'persistentVolumes'
-)
-const persistentVolumeClaimHandler = createRepoHandler(
-  persistentVolumeClaimRepo,
-  'persistentVolumeClaims'
-)
-const storageClassRepo = createResourceRepository<StorageClass>('StorageClass')
-const storageClassHandler = createRepoHandler(
-  storageClassRepo,
-  'storageClasses'
-)
+const repoHandlers = Object.fromEntries(
+  (Object.keys(repos) as (keyof typeof repos)[])
+    .filter((key) => {
+      return key !== 'pods'
+    })
+    .map((key) => {
+      return [key, createRepoHandler(key as RepoStateKey)]
+    })
+) as Record<RepoStateKey, ReturnType<typeof createRepoHandler<RepoStateKey>>>
 
 // ─── Pod Handlers ────────────────────────────────────────────────────────
 
 export const handlePodCreated = (
   state: ClusterStateData,
-  event: PodCreatedEvent
+  event: Extract<ClusterEvent, { type: 'PodCreated' }>
 ) => {
   return podHandler.created(state, event.payload.pod)
 }
 
 export const handlePodDeleted = (
   state: ClusterStateData,
-  event: PodDeletedEvent
+  event: Extract<ClusterEvent, { type: 'PodDeleted' }>
 ) => podHandler.deleted(state, event.payload.name, event.payload.namespace)
 
 export const handlePodUpdated = (
   state: ClusterStateData,
-  event: PodUpdatedEvent
+  event: Extract<ClusterEvent, { type: 'PodUpdated' }>
 ) =>
   podHandler.updated(
     state,
@@ -316,7 +163,7 @@ export const handlePodUpdated = (
 
 export const handlePodLabeled = (
   state: ClusterStateData,
-  event: PodLabeledEvent
+  event: Extract<ClusterEvent, { type: 'PodLabeled' }>
 ) =>
   podHandler.updated(
     state,
@@ -327,7 +174,7 @@ export const handlePodLabeled = (
 
 export const handlePodAnnotated = (
   state: ClusterStateData,
-  event: PodAnnotatedEvent
+  event: Extract<ClusterEvent, { type: 'PodAnnotated' }>
 ) =>
   podHandler.updated(
     state,
@@ -336,35 +183,11 @@ export const handlePodAnnotated = (
     event.payload.pod
   )
 
-// ─── ConfigMap Handlers ──────────────────────────────────────────────────
-
-export const handleConfigMapCreated = (
-  state: ClusterStateData,
-  event: ConfigMapCreatedEvent
-) => configMapHandler.created(state, event.payload.configMap)
-
-export const handleConfigMapDeleted = (
-  state: ClusterStateData,
-  event: ConfigMapDeletedEvent
-) =>
-  configMapHandler.deleted(state, event.payload.name, event.payload.namespace)
-
-export const handleConfigMapUpdated = (
-  state: ClusterStateData,
-  event: ConfigMapUpdatedEvent
-) =>
-  configMapHandler.updated(
-    state,
-    event.payload.name,
-    event.payload.namespace,
-    event.payload.configMap
-  )
-
 export const handleConfigMapLabeled = (
   state: ClusterStateData,
-  event: ConfigMapLabeledEvent
+  event: Extract<ClusterEvent, { type: 'ConfigMapLabeled' }>
 ) =>
-  configMapHandler.updated(
+  repoHandlers.configMaps.updated(
     state,
     event.payload.name,
     event.payload.namespace,
@@ -373,69 +196,20 @@ export const handleConfigMapLabeled = (
 
 export const handleConfigMapAnnotated = (
   state: ClusterStateData,
-  event: ConfigMapAnnotatedEvent
+  event: Extract<ClusterEvent, { type: 'ConfigMapAnnotated' }>
 ) =>
-  configMapHandler.updated(
+  repoHandlers.configMaps.updated(
     state,
     event.payload.name,
     event.payload.namespace,
     event.payload.configMap
   )
 
-export const handleControllerRevisionCreated = (
-  state: ClusterStateData,
-  event: ControllerRevisionCreatedEvent
-) => controllerRevisionHandler.created(state, event.payload.controllerRevision)
-
-export const handleControllerRevisionDeleted = (
-  state: ClusterStateData,
-  event: ControllerRevisionDeletedEvent
-) =>
-  controllerRevisionHandler.deleted(
-    state,
-    event.payload.name,
-    event.payload.namespace
-  )
-
-export const handleControllerRevisionUpdated = (
-  state: ClusterStateData,
-  event: ControllerRevisionUpdatedEvent
-) =>
-  controllerRevisionHandler.updated(
-    state,
-    event.payload.name,
-    event.payload.namespace,
-    event.payload.controllerRevision
-  )
-
-// ─── Secret Handlers ─────────────────────────────────────────────────────
-
-export const handleSecretCreated = (
-  state: ClusterStateData,
-  event: SecretCreatedEvent
-) => secretHandler.created(state, event.payload.secret)
-
-export const handleSecretDeleted = (
-  state: ClusterStateData,
-  event: SecretDeletedEvent
-) => secretHandler.deleted(state, event.payload.name, event.payload.namespace)
-
-export const handleSecretUpdated = (
-  state: ClusterStateData,
-  event: SecretUpdatedEvent
-) =>
-  secretHandler.updated(
-    state,
-    event.payload.name,
-    event.payload.namespace,
-    event.payload.secret
-  )
-
 export const handleSecretLabeled = (
   state: ClusterStateData,
-  event: SecretLabeledEvent
+  event: Extract<ClusterEvent, { type: 'SecretLabeled' }>
 ) =>
-  secretHandler.updated(
+  repoHandlers.secrets.updated(
     state,
     event.payload.name,
     event.payload.namespace,
@@ -444,135 +218,20 @@ export const handleSecretLabeled = (
 
 export const handleSecretAnnotated = (
   state: ClusterStateData,
-  event: SecretAnnotatedEvent
+  event: Extract<ClusterEvent, { type: 'SecretAnnotated' }>
 ) =>
-  secretHandler.updated(
+  repoHandlers.secrets.updated(
     state,
     event.payload.name,
     event.payload.namespace,
     event.payload.secret
   )
 
-// ─── ReplicaSet Handlers ──────────────────────────────────────────────────
-
-export const handleReplicaSetCreated = (
-  state: ClusterStateData,
-  event: ReplicaSetCreatedEvent
-) => replicaSetHandler.created(state, event.payload.replicaSet)
-
-export const handleReplicaSetDeleted = (
-  state: ClusterStateData,
-  event: ReplicaSetDeletedEvent
-) =>
-  replicaSetHandler.deleted(state, event.payload.name, event.payload.namespace)
-
-export const handleReplicaSetUpdated = (
-  state: ClusterStateData,
-  event: ReplicaSetUpdatedEvent
-) =>
-  replicaSetHandler.updated(
-    state,
-    event.payload.name,
-    event.payload.namespace,
-    event.payload.replicaSet
-  )
-
-// ─── Deployment Handlers ──────────────────────────────────────────────────
-
-export const handleDeploymentCreated = (
-  state: ClusterStateData,
-  event: DeploymentCreatedEvent
-) => deploymentHandler.created(state, event.payload.deployment)
-
-export const handleDeploymentDeleted = (
-  state: ClusterStateData,
-  event: DeploymentDeletedEvent
-) =>
-  deploymentHandler.deleted(state, event.payload.name, event.payload.namespace)
-
-export const handleDeploymentUpdated = (
-  state: ClusterStateData,
-  event: DeploymentUpdatedEvent
-) =>
-  deploymentHandler.updated(
-    state,
-    event.payload.name,
-    event.payload.namespace,
-    event.payload.deployment
-  )
-
-export const handleDaemonSetCreated = (
-  state: ClusterStateData,
-  event: DaemonSetCreatedEvent
-) => daemonSetHandler.created(state, event.payload.daemonSet)
-
-export const handleDaemonSetDeleted = (
-  state: ClusterStateData,
-  event: DaemonSetDeletedEvent
-) =>
-  daemonSetHandler.deleted(state, event.payload.name, event.payload.namespace)
-
-export const handleDaemonSetUpdated = (
-  state: ClusterStateData,
-  event: DaemonSetUpdatedEvent
-) =>
-  daemonSetHandler.updated(
-    state,
-    event.payload.name,
-    event.payload.namespace,
-    event.payload.daemonSet
-  )
-
-export const handleStatefulSetCreated = (
-  state: ClusterStateData,
-  event: StatefulSetCreatedEvent
-) => statefulSetHandler.created(state, event.payload.statefulSet)
-
-export const handleStatefulSetDeleted = (
-  state: ClusterStateData,
-  event: StatefulSetDeletedEvent
-) =>
-  statefulSetHandler.deleted(state, event.payload.name, event.payload.namespace)
-
-export const handleStatefulSetUpdated = (
-  state: ClusterStateData,
-  event: StatefulSetUpdatedEvent
-) =>
-  statefulSetHandler.updated(
-    state,
-    event.payload.name,
-    event.payload.namespace,
-    event.payload.statefulSet
-  )
-
-// ─── Service Handlers ──────────────────────────────────────────────────────
-
-export const handleServiceCreated = (
-  state: ClusterStateData,
-  event: ServiceCreatedEvent
-) => serviceHandler.created(state, event.payload.service)
-
-export const handleServiceDeleted = (
-  state: ClusterStateData,
-  event: ServiceDeletedEvent
-) => serviceHandler.deleted(state, event.payload.name, event.payload.namespace)
-
-export const handleServiceUpdated = (
-  state: ClusterStateData,
-  event: ServiceUpdatedEvent
-) =>
-  serviceHandler.updated(
-    state,
-    event.payload.name,
-    event.payload.namespace,
-    event.payload.service
-  )
-
 export const handleServiceLabeled = (
   state: ClusterStateData,
-  event: ServiceLabeledEvent
+  event: Extract<ClusterEvent, { type: 'ServiceLabeled' }>
 ) =>
-  serviceHandler.updated(
+  repoHandlers.services.updated(
     state,
     event.payload.name,
     event.payload.namespace,
@@ -581,258 +240,43 @@ export const handleServiceLabeled = (
 
 export const handleServiceAnnotated = (
   state: ClusterStateData,
-  event: ServiceAnnotatedEvent
+  event: Extract<ClusterEvent, { type: 'ServiceAnnotated' }>
 ) =>
-  serviceHandler.updated(
+  repoHandlers.services.updated(
     state,
     event.payload.name,
     event.payload.namespace,
     event.payload.service
   )
 
-export const handleEndpointsCreated = (
-  state: ClusterStateData,
-  event: EndpointsCreatedEvent
-) => endpointsHandler.created(state, event.payload.endpoints)
-
-export const handleEndpointsDeleted = (
-  state: ClusterStateData,
-  event: EndpointsDeletedEvent
-) =>
-  endpointsHandler.deleted(state, event.payload.name, event.payload.namespace)
-
-export const handleEndpointsUpdated = (
-  state: ClusterStateData,
-  event: EndpointsUpdatedEvent
-) =>
-  endpointsHandler.updated(
-    state,
-    event.payload.name,
-    event.payload.namespace,
-    event.payload.endpoints
-  )
-
-export const handleEndpointSliceCreated = (
-  state: ClusterStateData,
-  event: EndpointSliceCreatedEvent
-) => endpointSliceHandler.created(state, event.payload.endpointSlice)
-
-export const handleEndpointSliceDeleted = (
-  state: ClusterStateData,
-  event: EndpointSliceDeletedEvent
-) =>
-  endpointSliceHandler.deleted(
-    state,
-    event.payload.name,
-    event.payload.namespace
-  )
-
-export const handleEndpointSliceUpdated = (
-  state: ClusterStateData,
-  event: EndpointSliceUpdatedEvent
-) =>
-  endpointSliceHandler.updated(
-    state,
-    event.payload.name,
-    event.payload.namespace,
-    event.payload.endpointSlice
-  )
-
 export const handleEventCreated = (
   state: ClusterStateData,
-  event: EventCreatedEvent
-) => eventHandler.created(state, event.payload.event)
+  event: Extract<ClusterEvent, { type: 'EventCreated' }>
+) => repoHandlers.events.created(state, event.payload.event)
 
 export const handleEventDeleted = (
   state: ClusterStateData,
-  event: EventDeletedEvent
-) => eventHandler.deleted(state, event.payload.name, event.payload.namespace)
+  event: Extract<ClusterEvent, { type: 'EventDeleted' }>
+) => repoHandlers.events.deleted(state, event.payload.name, event.payload.namespace)
 
 export const handleEventUpdated = (
   state: ClusterStateData,
-  event: EventUpdatedEvent
+  event: Extract<ClusterEvent, { type: 'EventUpdated' }>
 ) =>
-  eventHandler.updated(
+  repoHandlers.events.updated(
     state,
     event.payload.name,
     event.payload.namespace,
     event.payload.event
   )
 
-export const handleIngressCreated = (
-  state: ClusterStateData,
-  event: IngressCreatedEvent
-) => ingressHandler.created(state, event.payload.ingress)
-
-export const handleIngressDeleted = (
-  state: ClusterStateData,
-  event: IngressDeletedEvent
-) => ingressHandler.deleted(state, event.payload.name, event.payload.namespace)
-
-export const handleIngressUpdated = (
-  state: ClusterStateData,
-  event: IngressUpdatedEvent
-) =>
-  ingressHandler.updated(
-    state,
-    event.payload.name,
-    event.payload.namespace,
-    event.payload.ingress
-  )
-
-export const handleNetworkPolicyCreated = (
-  state: ClusterStateData,
-  event: NetworkPolicyCreatedEvent
-) => networkPolicyHandler.created(state, event.payload.networkPolicy)
-
-export const handleNetworkPolicyDeleted = (
-  state: ClusterStateData,
-  event: NetworkPolicyDeletedEvent
-) =>
-  networkPolicyHandler.deleted(state, event.payload.name, event.payload.namespace)
-
-export const handleNetworkPolicyUpdated = (
-  state: ClusterStateData,
-  event: NetworkPolicyUpdatedEvent
-) =>
-  networkPolicyHandler.updated(
-    state,
-    event.payload.name,
-    event.payload.namespace,
-    event.payload.networkPolicy
-  )
-
-export const handleLeaseCreated = (
-  state: ClusterStateData,
-  event: LeaseCreatedEvent
-) => leaseHandler.created(state, event.payload.lease)
-
-export const handleLeaseDeleted = (
-  state: ClusterStateData,
-  event: LeaseDeletedEvent
-) => leaseHandler.deleted(state, event.payload.name, event.payload.namespace)
-
-export const handleLeaseUpdated = (
-  state: ClusterStateData,
-  event: LeaseUpdatedEvent
-) =>
-  leaseHandler.updated(
-    state,
-    event.payload.name,
-    event.payload.namespace,
-    event.payload.lease
-  )
-
-export const handleNamespaceCreated = (
-  state: ClusterStateData,
-  event: NamespaceCreatedEvent
-) => namespaceHandler.created(state, event.payload.namespace)
-
-export const handleNamespaceDeleted = (
-  state: ClusterStateData,
-  event: NamespaceDeletedEvent
-) => namespaceHandler.deleted(state, event.payload.name, '')
-
-export const handleNamespaceUpdated = (
-  state: ClusterStateData,
-  event: NamespaceUpdatedEvent
-) =>
-  namespaceHandler.updated(
-    state,
-    event.payload.name,
-    '',
-    event.payload.namespace
-  )
-
-export const handleNodeCreated = (
-  state: ClusterStateData,
-  event: NodeCreatedEvent
-) => nodeHandler.created(state, event.payload.node)
-
-export const handleNodeDeleted = (
-  state: ClusterStateData,
-  event: NodeDeletedEvent
-) => nodeHandler.deleted(state, event.payload.name, '')
-
-export const handleNodeUpdated = (
-  state: ClusterStateData,
-  event: NodeUpdatedEvent
-) => nodeHandler.updated(state, event.payload.name, '', event.payload.node)
-
-export const handlePersistentVolumeCreated = (
-  state: ClusterStateData,
-  event: PersistentVolumeCreatedEvent
-) => persistentVolumeHandler.created(state, event.payload.persistentVolume)
-
 export const handlePersistentVolumeDeleted = (
   state: ClusterStateData,
-  event: PersistentVolumeDeletedEvent
+  event: Extract<ClusterEvent, { type: 'PersistentVolumeDeleted' }>
 ) => {
   releasePersistentVolumeBacking(event.payload.name)
-  return persistentVolumeHandler.deleted(state, event.payload.name, '')
+  return repoHandlers.persistentVolumes.deleted(state, event.payload.name, '')
 }
-
-export const handlePersistentVolumeUpdated = (
-  state: ClusterStateData,
-  event: PersistentVolumeUpdatedEvent
-) =>
-  persistentVolumeHandler.updated(
-    state,
-    event.payload.name,
-    '',
-    event.payload.persistentVolume
-  )
-
-export const handlePersistentVolumeClaimCreated = (
-  state: ClusterStateData,
-  event: PersistentVolumeClaimCreatedEvent
-) =>
-  persistentVolumeClaimHandler.created(
-    state,
-    event.payload.persistentVolumeClaim
-  )
-
-export const handlePersistentVolumeClaimDeleted = (
-  state: ClusterStateData,
-  event: PersistentVolumeClaimDeletedEvent
-) =>
-  persistentVolumeClaimHandler.deleted(
-    state,
-    event.payload.name,
-    event.payload.namespace
-  )
-
-export const handlePersistentVolumeClaimUpdated = (
-  state: ClusterStateData,
-  event: PersistentVolumeClaimUpdatedEvent
-) =>
-  persistentVolumeClaimHandler.updated(
-    state,
-    event.payload.name,
-    event.payload.namespace,
-    event.payload.persistentVolumeClaim
-  )
-
-export const handleStorageClassCreated = (
-  state: ClusterStateData,
-  event: StorageClassCreatedEvent
-) => storageClassHandler.created(state, event.payload.storageClass)
-
-export const handleStorageClassDeleted = (
-  state: ClusterStateData,
-  event: StorageClassDeletedEvent
-) => storageClassHandler.deleted(state, event.payload.name, '')
-
-export const handleStorageClassUpdated = (
-  state: ClusterStateData,
-  event: StorageClassUpdatedEvent
-) =>
-  storageClassHandler.updated(
-    state,
-    event.payload.name,
-    '',
-    event.payload.storageClass
-  )
 
 export type ClusterEventType = ClusterEvent['type']
 type ClusterEventByType = {
@@ -855,6 +299,82 @@ const defineClusterEvent = <TType extends ClusterEventType>(
   return { handler, mutatesState }
 }
 
+const toPayloadKeyFromKind = (kind: string): string => {
+  if (kind === 'HTTPRoute') {
+    return 'httpRoute'
+  }
+  return `${kind.slice(0, 1).toLowerCase()}${kind.slice(1)}`
+}
+
+const GENERATED_REPO_EVENT_DEFINITIONS: {
+  [TType in ClusterEventType]?: ClusterEventDefinition<TType>
+} = Object.fromEntries(
+  (Object.keys(COLLECTION_KEY_BY_RESOURCE_KIND) as ResourceKind[]).flatMap(
+    (kind) => {
+      if (kind === 'Pod') {
+        return []
+      }
+      const stateKey = COLLECTION_KEY_BY_RESOURCE_KIND[kind] as RepoStateKey
+      const payloadKey = toPayloadKeyFromKind(kind)
+      const isClusterScoped =
+        (CLUSTER_SCOPED_RESOURCE_KINDS as readonly ResourceKind[]).includes(
+          kind
+        ) ||
+        kind === 'Node' ||
+        kind === 'Namespace'
+      const createdType = `${kind}Created`
+      const deletedType = `${kind}Deleted`
+      const updatedType = `${kind}Updated`
+      return [
+        [
+          createdType,
+          defineClusterEvent(
+            ((state, event) => {
+              return repoHandlers[stateKey].created(
+                state,
+                (event as any).payload[payloadKey]
+              )
+            }) as ClusterEventHandler<ClusterEventType>
+          )
+        ],
+        [
+          deletedType,
+          defineClusterEvent(
+            ((state, event) => {
+              const namespace = isClusterScoped
+                ? ''
+                : ((event as any).payload.namespace as string)
+              return repoHandlers[stateKey].deleted(
+                state,
+                (event as any).payload.name,
+                namespace
+              )
+            }) as ClusterEventHandler<ClusterEventType>
+          )
+        ],
+        [
+          updatedType,
+          defineClusterEvent(
+            ((state, event) => {
+              const namespace = isClusterScoped
+                ? ''
+                : ((event as any).payload.namespace as string)
+              return repoHandlers[stateKey].updated(
+                state,
+                (event as any).payload.name,
+                namespace,
+                (event as any).payload[payloadKey]
+              )
+            }) as ClusterEventHandler<ClusterEventType>
+          )
+        ]
+      ]
+    }
+  )
+) as {
+  [TType in ClusterEventType]?: ClusterEventDefinition<TType>
+}
+
 /**
  * Event definitions are the single source of truth for:
  * - state transition handlers
@@ -863,86 +383,23 @@ const defineClusterEvent = <TType extends ClusterEventType>(
 export const CLUSTER_EVENT_DEFINITIONS: {
   [TType in ClusterEventType]?: ClusterEventDefinition<TType>
 } = {
+  ...GENERATED_REPO_EVENT_DEFINITIONS,
   PodCreated: defineClusterEvent(handlePodCreated),
   PodDeleted: defineClusterEvent(handlePodDeleted),
   PodUpdated: defineClusterEvent(handlePodUpdated),
-  ConfigMapCreated: defineClusterEvent(handleConfigMapCreated),
-  ConfigMapDeleted: defineClusterEvent(handleConfigMapDeleted),
-  ConfigMapUpdated: defineClusterEvent(handleConfigMapUpdated),
-  ControllerRevisionCreated: defineClusterEvent(
-    handleControllerRevisionCreated
-  ),
-  ControllerRevisionDeleted: defineClusterEvent(
-    handleControllerRevisionDeleted
-  ),
-  ControllerRevisionUpdated: defineClusterEvent(
-    handleControllerRevisionUpdated
-  ),
-  SecretCreated: defineClusterEvent(handleSecretCreated),
-  SecretDeleted: defineClusterEvent(handleSecretDeleted),
-  SecretUpdated: defineClusterEvent(handleSecretUpdated),
-  ReplicaSetCreated: defineClusterEvent(handleReplicaSetCreated),
-  ReplicaSetDeleted: defineClusterEvent(handleReplicaSetDeleted),
-  ReplicaSetUpdated: defineClusterEvent(handleReplicaSetUpdated),
-  DeploymentCreated: defineClusterEvent(handleDeploymentCreated),
-  DeploymentDeleted: defineClusterEvent(handleDeploymentDeleted),
-  DeploymentUpdated: defineClusterEvent(handleDeploymentUpdated),
-  DaemonSetCreated: defineClusterEvent(handleDaemonSetCreated),
-  DaemonSetDeleted: defineClusterEvent(handleDaemonSetDeleted),
-  DaemonSetUpdated: defineClusterEvent(handleDaemonSetUpdated),
-  StatefulSetCreated: defineClusterEvent(handleStatefulSetCreated),
-  StatefulSetDeleted: defineClusterEvent(handleStatefulSetDeleted),
-  StatefulSetUpdated: defineClusterEvent(handleStatefulSetUpdated),
   PodLabeled: defineClusterEvent(handlePodLabeled),
   ConfigMapLabeled: defineClusterEvent(handleConfigMapLabeled),
   SecretLabeled: defineClusterEvent(handleSecretLabeled),
   PodAnnotated: defineClusterEvent(handlePodAnnotated),
   ConfigMapAnnotated: defineClusterEvent(handleConfigMapAnnotated),
   SecretAnnotated: defineClusterEvent(handleSecretAnnotated),
-  ServiceCreated: defineClusterEvent(handleServiceCreated),
-  ServiceDeleted: defineClusterEvent(handleServiceDeleted),
-  ServiceUpdated: defineClusterEvent(handleServiceUpdated),
-  EndpointsCreated: defineClusterEvent(handleEndpointsCreated),
-  EndpointsDeleted: defineClusterEvent(handleEndpointsDeleted),
-  EndpointsUpdated: defineClusterEvent(handleEndpointsUpdated),
-  EndpointSliceCreated: defineClusterEvent(handleEndpointSliceCreated),
-  EndpointSliceDeleted: defineClusterEvent(handleEndpointSliceDeleted),
-  EndpointSliceUpdated: defineClusterEvent(handleEndpointSliceUpdated),
-  EventCreated: defineClusterEvent(handleEventCreated, false),
-  EventDeleted: defineClusterEvent(handleEventDeleted, false),
-  EventUpdated: defineClusterEvent(handleEventUpdated, false),
   ServiceLabeled: defineClusterEvent(handleServiceLabeled),
   ServiceAnnotated: defineClusterEvent(handleServiceAnnotated),
-  IngressCreated: defineClusterEvent(handleIngressCreated),
-  IngressDeleted: defineClusterEvent(handleIngressDeleted),
-  IngressUpdated: defineClusterEvent(handleIngressUpdated),
-  NetworkPolicyCreated: defineClusterEvent(handleNetworkPolicyCreated),
-  NetworkPolicyDeleted: defineClusterEvent(handleNetworkPolicyDeleted),
-  NetworkPolicyUpdated: defineClusterEvent(handleNetworkPolicyUpdated),
-  NamespaceCreated: defineClusterEvent(handleNamespaceCreated),
-  NamespaceDeleted: defineClusterEvent(handleNamespaceDeleted),
-  NamespaceUpdated: defineClusterEvent(handleNamespaceUpdated),
-  NodeCreated: defineClusterEvent(handleNodeCreated),
-  NodeDeleted: defineClusterEvent(handleNodeDeleted),
-  NodeUpdated: defineClusterEvent(handleNodeUpdated),
-  PersistentVolumeCreated: defineClusterEvent(handlePersistentVolumeCreated),
   PersistentVolumeDeleted: defineClusterEvent(handlePersistentVolumeDeleted),
-  PersistentVolumeUpdated: defineClusterEvent(handlePersistentVolumeUpdated),
-  PersistentVolumeClaimCreated: defineClusterEvent(
-    handlePersistentVolumeClaimCreated
-  ),
-  PersistentVolumeClaimDeleted: defineClusterEvent(
-    handlePersistentVolumeClaimDeleted
-  ),
-  PersistentVolumeClaimUpdated: defineClusterEvent(
-    handlePersistentVolumeClaimUpdated
-  ),
-  StorageClassCreated: defineClusterEvent(handleStorageClassCreated),
-  StorageClassDeleted: defineClusterEvent(handleStorageClassDeleted),
-  StorageClassUpdated: defineClusterEvent(handleStorageClassUpdated),
-  LeaseCreated: defineClusterEvent(handleLeaseCreated),
-  LeaseDeleted: defineClusterEvent(handleLeaseDeleted),
-  LeaseUpdated: defineClusterEvent(handleLeaseUpdated)
+  // Keep these overrides explicit due to non-default semantics.
+  EventCreated: defineClusterEvent(handleEventCreated, false),
+  EventDeleted: defineClusterEvent(handleEventDeleted, false),
+  EventUpdated: defineClusterEvent(handleEventUpdated, false)
 }
 
 /**

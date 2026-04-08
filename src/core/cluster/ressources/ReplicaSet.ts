@@ -5,25 +5,29 @@
 // Based on apps/v1 API spec
 
 import { z } from 'zod'
+import type { components } from '../../openapi/generated/openapi-types.generated'
+import type {
+  K8sReplicaSet,
+  K8sReplicaSetMetadata,
+  K8sReplicaSetSpec,
+  K8sReplicaSetStatus
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import type { KubernetesResource } from '../repositories/types'
 import type { OwnerReference, PodAffinity, PodToleration } from './Pod'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 import type { EnvVar, Probe, Volume, VolumeMount } from './Pod'
 
-// ─── Label Selector ───────────────────────────────────────────────────────
+type IoSchemas = components['schemas']
 
-export interface LabelSelector {
-  matchLabels?: Record<string, string>
-  matchExpressions?: LabelSelectorRequirement[]
-}
+// ─── Label Selector (OpenAPI meta v1) ─────────────────────────────────────
 
-export interface LabelSelectorRequirement {
-  key: string
-  operator: 'In' | 'NotIn' | 'Exists' | 'DoesNotExist'
-  values?: string[]
-}
+export type LabelSelector =
+  IoSchemas['io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector']
+
+export type LabelSelectorRequirement =
+  IoSchemas['io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelectorRequirement']
 
 // ─── Pod Template Spec ────────────────────────────────────────────────────
 // Simplified version - we reuse the container types from Pod
@@ -102,48 +106,43 @@ export interface PodTemplateSpec {
 
 // ─── ReplicaSet Spec ──────────────────────────────────────────────────────
 
-export interface ReplicaSetSpec {
-  replicas?: number
-  minReadySeconds?: number
-  selector: LabelSelector
+export type ReplicaSetSpec = Omit<
+  Pick<K8sReplicaSetSpec, 'replicas' | 'minReadySeconds' | 'selector' | 'template'>,
+  'template'
+> & {
   template: PodTemplateSpec
 }
 
 // ─── ReplicaSet Status ────────────────────────────────────────────────────
 
-export interface ReplicaSetCondition {
-  type: 'ReplicaFailure'
-  status: 'True' | 'False' | 'Unknown'
-  lastTransitionTime?: string
-  reason?: string
-  message?: string
-}
+export type ReplicaSetCondition =
+  IoSchemas['io.k8s.api.apps.v1.ReplicaSetCondition']
 
-export interface ReplicaSetStatus {
-  replicas: number
-  fullyLabeledReplicas?: number
-  readyReplicas?: number
-  availableReplicas?: number
-  observedGeneration?: number
-  conditions?: ReplicaSetCondition[]
-}
+export type ReplicaSetStatus = Pick<
+  K8sReplicaSetStatus,
+  | 'replicas'
+  | 'fullyLabeledReplicas'
+  | 'readyReplicas'
+  | 'availableReplicas'
+  | 'observedGeneration'
+  | 'conditions'
+>
 
 // ─── ReplicaSet Metadata ──────────────────────────────────────────────────
 
-interface ReplicaSetMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-  ownerReferences?: OwnerReference[]
-}
+type ReplicaSetMetadata = Pick<
+  K8sReplicaSetMetadata,
+  | 'name'
+  | 'namespace'
+  | 'labels'
+  | 'annotations'
+  | 'creationTimestamp'
+  | 'ownerReferences'
+>
 
 // ─── ReplicaSet Resource ──────────────────────────────────────────────────
 
-export interface ReplicaSet extends KubernetesResource {
-  apiVersion: 'apps/v1'
-  kind: 'ReplicaSet'
+export type ReplicaSet = Omit<K8sReplicaSet, 'metadata' | 'spec' | 'status'> & {
   metadata: ReplicaSetMetadata
   spec: ReplicaSetSpec
   status: ReplicaSetStatus
@@ -151,15 +150,10 @@ export interface ReplicaSet extends KubernetesResource {
 
 // ─── Factory ──────────────────────────────────────────────────────────────
 
-interface ReplicaSetConfig {
-  name: string
-  namespace: string
+interface ReplicaSetConfig extends NamespacedFactoryConfigBase {
   replicas?: number
   selector: LabelSelector
   template: PodTemplateSpec
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
   ownerReferences?: OwnerReference[]
 }
 
@@ -388,7 +382,7 @@ export const getReplicaSetReadyDisplay = (rs: ReplicaSet): string => {
 }
 
 const matchExprByOperator: Record<
-  LabelSelectorRequirement['operator'],
+  string,
   (expr: LabelSelectorRequirement, lbl: Record<string, string>) => boolean
 > = {
   In: (expr, lbl) => expr.values?.includes(lbl[expr.key]) ?? false,
@@ -420,7 +414,8 @@ export const selectorMatchesLabels = (
   // Check matchExpressions (simplified)
   if (selector.matchExpressions) {
     for (const expr of selector.matchExpressions) {
-      if (!matchExprByOperator[expr.operator](expr, labels)) {
+      const matchExpression = matchExprByOperator[expr.operator]
+      if (matchExpression == null || !matchExpression(expr, labels)) {
         return false
       }
     }

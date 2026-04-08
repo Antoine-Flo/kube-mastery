@@ -4,6 +4,10 @@
 # Bundled OpenAPI v3 specs are aligned with Kubernetes v1.35.3 (see src/core/openapi/specs/).
 #
 # Optional kubectl* fields drive kubectlResources.generated.ts and resourceSchema.generated.ts.
+# kubectlDeleteSupported controls inclusion in generated delete config.
+# kubectlYamlSupported controls inclusion in generated YAML manifest parser registry.
+# kubectlGetSupported controls inclusion in generated kubectl get handler registry.
+# kubectlKindRef/kubectlKindRefPlural override generated api-group refs when needed.
 
 resources:
   - kind: Pod
@@ -17,6 +21,9 @@ resources:
     facadeSingular: Pod
     facadePlural: Pods
     kubectlShortAliases: [po]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
   - kind: ConfigMap
     apiVersion: v1
@@ -29,6 +36,9 @@ resources:
     facadeSingular: ConfigMap
     facadePlural: ConfigMaps
     kubectlShortAliases: [cm]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
   - kind: ControllerRevision
     apiVersion: apps/v1
@@ -52,6 +62,9 @@ resources:
     bootstrapEmpty: default
     facadeSingular: Secret
     facadePlural: Secrets
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
   - kind: Node
     apiVersion: v1
@@ -64,6 +77,9 @@ resources:
     facadeSingular: Node
     facadePlural: Nodes
     kubectlShortAliases: [no]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
   - kind: ReplicaSet
     apiVersion: apps/v1
@@ -76,6 +92,9 @@ resources:
     facadeSingular: ReplicaSet
     facadePlural: ReplicaSets
     kubectlShortAliases: [rs]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
   - kind: Deployment
     apiVersion: apps/v1
@@ -88,6 +107,9 @@ resources:
     facadeSingular: Deployment
     facadePlural: Deployments
     kubectlShortAliases: [deploy]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
   - kind: DaemonSet
     apiVersion: apps/v1
@@ -100,6 +122,9 @@ resources:
     facadeSingular: DaemonSet
     facadePlural: DaemonSets
     kubectlShortAliases: [ds]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
   - kind: StatefulSet
     apiVersion: apps/v1
@@ -112,6 +137,9 @@ resources:
     facadeSingular: StatefulSet
     facadePlural: StatefulSets
     kubectlShortAliases: [sts]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
   - kind: Service
     apiVersion: v1
@@ -124,6 +152,9 @@ resources:
     facadeSingular: Service
     facadePlural: Services
     kubectlShortAliases: [svc]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
   - kind: EndpointSlice
     apiVersion: discovery.k8s.io/v1
@@ -135,6 +166,7 @@ resources:
     bootstrapEmpty: default
     facadeSingular: EndpointSlice
     facadePlural: EndpointSlices
+    kubectlGetSupported: true
 
   - kind: Endpoints
     apiVersion: v1
@@ -148,6 +180,7 @@ resources:
     facadePlural: Endpoints
     kubectlSingularAlias: endpoint
     kubectlShortAliases: [ep]
+    kubectlGetSupported: true
 
   - kind: Event
     apiVersion: v1
@@ -160,6 +193,8 @@ resources:
     facadeSingular: Event
     facadePlural: Events
     kubectlShortAliases: [ev]
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
   - kind: Ingress
     apiVersion: networking.k8s.io/v1
@@ -172,6 +207,23 @@ resources:
     facadeSingular: Ingress
     facadePlural: Ingresses
     kubectlShortAliases: [ing]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
+
+  - kind: IngressClass
+    apiVersion: networking.k8s.io/v1
+    collectionKey: ingressClasses
+    typeName: IngressClass
+    importPath: ./ressources/IngressClass
+    repoKindArg: IngressClass
+    facade: clusterScopedEmptyNs
+    bootstrapEmpty: default
+    facadeSingular: IngressClass
+    facadePlural: IngressClasses
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
   - kind: NetworkPolicy
     apiVersion: networking.k8s.io/v1
@@ -184,6 +236,57 @@ resources:
     facadeSingular: NetworkPolicy
     facadePlural: NetworkPolicies
     kubectlShortAliases: [netpol]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
+
+  - kind: GatewayClass
+    apiVersion: gateway.networking.k8s.io/v1
+    collectionKey: gatewayClasses
+    typeName: GatewayClass
+    importPath: ./ressources/GatewayClass
+    repoKindArg: GatewayClass
+    facade: clusterScopedEmptyNs
+    bootstrapEmpty: default
+    facadeSingular: GatewayClass
+    facadePlural: GatewayClasses
+    openapiSource: external-crd
+    kubectlShortAliases: [gc]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
+
+  - kind: Gateway
+    apiVersion: gateway.networking.k8s.io/v1
+    collectionKey: gateways
+    typeName: Gateway
+    importPath: ./ressources/Gateway
+    repoKindArg: Gateway
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: Gateway
+    facadePlural: Gateways
+    openapiSource: external-crd
+    kubectlShortAliases: [gw]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
+
+  - kind: HTTPRoute
+    apiVersion: gateway.networking.k8s.io/v1
+    collectionKey: httpRoutes
+    typeName: HTTPRoute
+    importPath: ./ressources/HTTPRoute
+    repoKindArg: HTTPRoute
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: HTTPRoute
+    facadePlural: HTTPRoutes
+    openapiSource: external-crd
+    kubectlShortAliases: [hr]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
   - kind: PersistentVolume
     apiVersion: v1
@@ -196,6 +299,9 @@ resources:
     facadeSingular: PersistentVolume
     facadePlural: PersistentVolumes
     kubectlShortAliases: [pv]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
   - kind: PersistentVolumeClaim
     apiVersion: v1
@@ -208,6 +314,9 @@ resources:
     facadeSingular: PersistentVolumeClaim
     facadePlural: PersistentVolumeClaims
     kubectlShortAliases: [pvc]
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
   - kind: Namespace
     apiVersion: v1
@@ -220,6 +329,8 @@ resources:
     facadeSingular: Namespace
     facadePlural: Namespaces
     kubectlShortAliases: [ns]
+    kubectlDeleteSupported: true
+    kubectlGetSupported: true
 
   - kind: Lease
     apiVersion: coordination.k8s.io/v1
@@ -231,6 +342,11 @@ resources:
     bootstrapEmpty: default
     facadeSingular: Lease
     facadePlural: Leases
+    kubectlDeleteSupported: true
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
+    kubectlKindRef: lease
+    kubectlKindRefPlural: leases
 
   - kind: StorageClass
     apiVersion: storage.k8s.io/v1
@@ -243,23 +359,9 @@ resources:
     facadeSingular: StorageClass
     facadePlural: StorageClasses
     kubectlShortAliases: [sc]
+    kubectlYamlSupported: true
+    kubectlGetSupported: true
 
 kubectlExtraResources:
   - canonical: all
     aliases: [all]
-  - canonical: ingressclasses
-    aliases: [ingressclasses, ingressclass]
-    outputApiVersion: networking.k8s.io/v1
-    outputKind: IngressClass
-  - canonical: gateways
-    aliases: [gateways, gateway, gw]
-    outputApiVersion: gateway.networking.k8s.io/v1
-    outputKind: Gateway
-  - canonical: gatewayclasses
-    aliases: [gatewayclasses, gatewayclass, gc]
-    outputApiVersion: gateway.networking.k8s.io/v1
-    outputKind: GatewayClass
-  - canonical: httproutes
-    aliases: [httproutes, httproute, hr]
-    outputApiVersion: gateway.networking.k8s.io/v1
-    outputKind: HTTPRoute

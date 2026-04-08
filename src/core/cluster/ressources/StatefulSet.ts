@@ -1,51 +1,54 @@
 import { z } from 'zod'
+import type {
+  K8sStatefulSet,
+  K8sStatefulSetMetadata,
+  K8sStatefulSetSpec,
+  K8sStatefulSetStatus
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import type { KubernetesResource } from '../repositories/types'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 import type { LabelSelector, PodTemplateSpec } from './ReplicaSet'
 
-export interface StatefulSetSpec {
-  replicas?: number
+export type StatefulSetSpec = Omit<
+  Pick<K8sStatefulSetSpec, 'replicas' | 'selector' | 'serviceName' | 'template'>,
+  'selector' | 'template' | 'serviceName'
+> & {
   selector: LabelSelector
   serviceName?: string
   template: PodTemplateSpec
 }
 
-export interface StatefulSetStatus {
-  replicas: number
-  readyReplicas?: number
-  currentReplicas?: number
-  updatedReplicas?: number
-}
+export type StatefulSetStatus = Pick<
+  K8sStatefulSetStatus,
+  'replicas' | 'readyReplicas' | 'currentReplicas' | 'updatedReplicas'
+>
 
-interface StatefulSetMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-  generation?: number
-}
+type StatefulSetMetadata = Pick<
+  K8sStatefulSetMetadata,
+  | 'name'
+  | 'namespace'
+  | 'labels'
+  | 'annotations'
+  | 'creationTimestamp'
+  | 'generation'
+>
 
-export interface StatefulSet extends KubernetesResource {
-  apiVersion: 'apps/v1'
-  kind: 'StatefulSet'
+export type StatefulSet = Omit<
+  K8sStatefulSet,
+  'metadata' | 'spec' | 'status'
+> & {
   metadata: StatefulSetMetadata
   spec: StatefulSetSpec
   status: StatefulSetStatus
 }
 
-interface StatefulSetConfig {
-  name: string
-  namespace: string
+interface StatefulSetConfig extends NamespacedFactoryConfigBase {
   replicas?: number
   selector: LabelSelector
   serviceName?: string
   template: PodTemplateSpec
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
   generation?: number
 }
 

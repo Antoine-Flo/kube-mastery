@@ -2,42 +2,45 @@ import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import { z } from 'zod'
+import type {
+  K8sEvent,
+  K8sEventMetadata
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import type { KubernetesResource } from '../repositories/types'
+import type {
+  NamespacedIdentityConfig,
+  ResourceFactoryMetaFields
+} from './resourceFactoryConfig'
 
-export interface EventInvolvedObject {
-  apiVersion: string
-  kind: string
-  name: string
-  namespace?: string
-  uid?: string
-  resourceVersion?: string
-  fieldPath?: string
-}
+type EventMetadata = Pick<
+  K8sEventMetadata,
+  'name' | 'namespace' | 'creationTimestamp' | 'resourceVersion' | 'uid'
+>
 
-interface EventMetadata {
-  name: string
-  namespace: string
-  creationTimestamp: string
-  resourceVersion?: string
-  uid?: string
-}
+export type EventInvolvedObject = NonNullable<K8sEvent['involvedObject']>
 
-export interface Event extends KubernetesResource {
-  apiVersion: 'v1'
-  kind: 'Event'
+/**
+ * Core v1 Event persisted in the simulation. Aligns with OpenAPI
+ * `io.k8s.api.core.v1.Event` (JSON field `reportingComponent`, not events.k8s.io).
+ */
+export type Event = Omit<
+  K8sEvent,
+  | 'metadata'
+  | 'type'
+  | 'reason'
+  | 'message'
+  | 'count'
+  | 'firstTimestamp'
+  | 'lastTimestamp'
+> & {
   metadata: EventMetadata
-  involvedObject: EventInvolvedObject
+  type: 'Normal' | 'Warning'
   reason: string
   message: string
-  type: 'Normal' | 'Warning'
   count: number
   firstTimestamp: string
   lastTimestamp: string
-  eventTime?: string | null
-  reportingController?: string
-  reportingInstance?: string
-  action?: string
-}
+} & KubernetesResource
 
 export interface EventsV1Event {
   apiVersion: 'events.k8s.io/v1'
@@ -57,9 +60,12 @@ export interface EventsV1Event {
   }
 }
 
-interface EventConfig {
-  name: string
-  namespace: string
+const DEFAULT_SOURCE: K8sEvent['source'] = {}
+const EMPTY_REPORTING = ''
+
+interface EventConfig
+  extends NamespacedIdentityConfig,
+    Pick<ResourceFactoryMetaFields, 'creationTimestamp'> {
   involvedObject: EventInvolvedObject
   reason: string
   message: string
@@ -67,12 +73,12 @@ interface EventConfig {
   count?: number
   firstTimestamp?: string
   lastTimestamp?: string
-  creationTimestamp?: string
   resourceVersion?: string
   uid?: string
   eventTime?: string | null
-  reportingController?: string
+  reportingComponent?: string
   reportingInstance?: string
+  source?: K8sEvent['source']
   action?: string
 }
 
@@ -100,12 +106,14 @@ export const createEvent = (config: EventConfig): Event => {
     count: config.count ?? 1,
     firstTimestamp,
     lastTimestamp,
-    ...(config.eventTime !== undefined ? { eventTime: config.eventTime } : {}),
-    ...(config.reportingController != null
-      ? { reportingController: config.reportingController }
-      : {}),
-    ...(config.reportingInstance != null
-      ? { reportingInstance: config.reportingInstance }
+    reportingComponent: config.reportingComponent ?? EMPTY_REPORTING,
+    reportingInstance: config.reportingInstance ?? EMPTY_REPORTING,
+    source: config.source ?? DEFAULT_SOURCE,
+    ...(config.eventTime !== undefined
+      ? {
+          eventTime:
+            config.eventTime === null ? undefined : config.eventTime
+        }
       : {}),
     ...(config.action != null ? { action: config.action } : {})
   }
@@ -135,10 +143,10 @@ export const convertCoreEventToEventsV1 = (event: Event): EventsV1Event => {
     type: event.type,
     ...(event.action != null ? { action: event.action } : {}),
     eventTime,
-    ...(event.reportingController != null
-      ? { reportingController: event.reportingController }
+    ...(event.reportingComponent !== ''
+      ? { reportingController: event.reportingComponent }
       : {}),
-    ...(event.reportingInstance != null
+    ...(event.reportingInstance !== ''
       ? { reportingInstance: event.reportingInstance }
       : {}),
     ...(hasSeries
@@ -176,8 +184,8 @@ export const convertEventsV1ToCoreEvent = (event: EventsV1Event): Event => {
     resourceVersion: event.metadata.resourceVersion,
     uid: event.metadata.uid,
     eventTime: event.eventTime,
-    reportingController: event.reportingController,
-    reportingInstance: event.reportingInstance,
+    reportingComponent: event.reportingController ?? EMPTY_REPORTING,
+    reportingInstance: event.reportingInstance ?? EMPTY_REPORTING,
     action: event.action
   })
 }
@@ -207,7 +215,7 @@ const EventManifestSchema = z.object({
   firstTimestamp: z.string().optional(),
   lastTimestamp: z.string().optional(),
   eventTime: z.string().nullable().optional(),
-  reportingController: z.string().optional(),
+  reportingComponent: z.string().optional(),
   reportingInstance: z.string().optional(),
   action: z.string().optional()
 })
@@ -236,7 +244,7 @@ export const parseEventManifest = (data: unknown): Result<Event> => {
       resourceVersion: manifest.metadata.resourceVersion,
       uid: manifest.metadata.uid,
       eventTime: manifest.eventTime,
-      reportingController: manifest.reportingController,
+      reportingComponent: manifest.reportingComponent,
       reportingInstance: manifest.reportingInstance,
       action: manifest.action
     })

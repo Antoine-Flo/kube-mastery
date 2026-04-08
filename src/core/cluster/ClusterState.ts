@@ -13,7 +13,13 @@ import {
   type KindToResource,
   type ResourceKind
 } from './generated/clusterResourceTypes.generated'
-import { repos, resourceOps } from './generated/clusterRegistry.generated'
+import {
+  CLUSTER_SCOPED_RESOURCE_KINDS,
+  COLLECTION_KEY_BY_RESOURCE_KIND,
+  RESOURCE_FACADE_NAMES_BY_KIND,
+  repos,
+  resourceOps
+} from './generated/clusterRegistry.generated'
 import type {
   KubernetesResource,
   ResourceCollection
@@ -574,33 +580,22 @@ export function createClusterState(
     kind: EventFactoryKind
   ) => createFacadeMethods(ops, getState, setState, eventBus, kind)
 
-  const podMethods = mk(resourceOps.pods, 'Pod')
-  const configMapMethods = mk(resourceOps.configMaps, 'ConfigMap')
-  const controllerRevisionMethods = mk(
-    resourceOps.controllerRevisions,
-    'ControllerRevision'
-  )
-  const secretMethods = mk(resourceOps.secrets, 'Secret')
-  const replicaSetMethods = mk(resourceOps.replicaSets, 'ReplicaSet')
-  const deploymentMethods = mk(resourceOps.deployments, 'Deployment')
-  const daemonSetMethods = mk(resourceOps.daemonSets, 'DaemonSet')
-  const statefulSetMethods = mk(resourceOps.statefulSets, 'StatefulSet')
-  const serviceMethods = mk(resourceOps.services, 'Service')
-  const endpointSliceMethods = mk(resourceOps.endpointSlices, 'EndpointSlice')
-  const endpointsMethods = mk(resourceOps.endpoints, 'Endpoints')
-  const eventMethods = mk(resourceOps.events, 'Event')
-  const ingressMethods = mk(resourceOps.ingresses, 'Ingress')
-  const networkPolicyMethods = mk(resourceOps.networkPolicies, 'NetworkPolicy')
-  const persistentVolumeMethods = mk(
-    resourceOps.persistentVolumes,
-    'PersistentVolume'
-  )
-  const persistentVolumeClaimMethods = mk(
-    resourceOps.persistentVolumeClaims,
-    'PersistentVolumeClaim'
-  )
-  const leaseMethods = mk(resourceOps.leases, 'Lease')
-  const storageClassMethods = mk(resourceOps.storageClasses, 'StorageClass')
+  const generatedFacadeMethodsByKind = Object.fromEntries(
+    (Object.keys(COLLECTION_KEY_BY_RESOURCE_KIND) as ResourceKind[])
+      .filter((kind) => {
+        return kind !== 'Node' && kind !== 'Namespace'
+      })
+      .map((kind) => {
+        const collectionKey = COLLECTION_KEY_BY_RESOURCE_KIND[kind]
+        return [
+          kind,
+          mk(
+            resourceOps[collectionKey] as unknown as ResourceOperations<KubernetesResource>,
+            kind
+          )
+        ]
+      })
+  ) as Record<ResourceKind, NamespacedFacade<KubernetesResource>>
 
   const namespaceOps = resourceOps.namespaces
   const nodeOps = resourceOps.nodes
@@ -680,30 +675,27 @@ export function createClusterState(
     }
   }
 
+  const generatedKindHandlers = Object.fromEntries(
+    (Object.keys(COLLECTION_KEY_BY_RESOURCE_KIND) as ResourceKind[])
+      .filter((kind) => {
+        return kind !== 'Node' && kind !== 'Namespace'
+      })
+      .map((kind) => {
+        const methods = generatedFacadeMethodsByKind[kind]
+        const handler = (CLUSTER_SCOPED_RESOURCE_KINDS as readonly ResourceKind[]).includes(
+          kind
+        )
+          ? buildClusterScopedKindHandlers(methods)
+          : buildNamespacedKindHandlers(methods)
+        return [kind, handler]
+      })
+  ) as Partial<Record<ResourceKind, KindHandlers>>
+
   const KIND_HANDLERS: Record<ResourceKind, KindHandlers> = {
-    Pod: buildNamespacedKindHandlers(podMethods),
-    ConfigMap: buildNamespacedKindHandlers(configMapMethods),
-    ControllerRevision: buildNamespacedKindHandlers(controllerRevisionMethods),
-    Secret: buildNamespacedKindHandlers(secretMethods),
+    ...generatedKindHandlers,
     Node: buildNodeKindHandlers(nodeMethods),
-    ReplicaSet: buildNamespacedKindHandlers(replicaSetMethods),
-    Deployment: buildNamespacedKindHandlers(deploymentMethods),
-    DaemonSet: buildNamespacedKindHandlers(daemonSetMethods),
-    StatefulSet: buildNamespacedKindHandlers(statefulSetMethods),
-    Service: buildNamespacedKindHandlers(serviceMethods),
-    EndpointSlice: buildNamespacedKindHandlers(endpointSliceMethods),
-    Endpoints: buildNamespacedKindHandlers(endpointsMethods),
-    Event: buildNamespacedKindHandlers(eventMethods),
-    Ingress: buildNamespacedKindHandlers(ingressMethods),
-    NetworkPolicy: buildNamespacedKindHandlers(networkPolicyMethods),
-    PersistentVolume: buildClusterScopedKindHandlers(persistentVolumeMethods),
-    PersistentVolumeClaim: buildNamespacedKindHandlers(
-      persistentVolumeClaimMethods
-    ),
-    Namespace: buildNamespaceKindHandlers(namespaceMethods),
-    Lease: buildNamespacedKindHandlers(leaseMethods),
-    StorageClass: buildClusterScopedKindHandlers(storageClassMethods)
-  }
+    Namespace: buildNamespaceKindHandlers(namespaceMethods)
+  } as Record<ResourceKind, KindHandlers>
 
   const findByKind = <TKind extends ResourceKind>(
     kind: TKind,
@@ -779,56 +771,28 @@ export function createClusterState(
     ) as Result<KindToResource<TKind>>
   }
 
+  const generatedFacadeBindings: Record<string, unknown> = {}
+  for (const kind of Object.keys(COLLECTION_KEY_BY_RESOURCE_KIND) as ResourceKind[]) {
+    if (kind === 'Node' || kind === 'Namespace') {
+      continue
+    }
+    const methods = generatedFacadeMethodsByKind[kind]
+    const singular = RESOURCE_FACADE_NAMES_BY_KIND[kind].singular
+    const plural = RESOURCE_FACADE_NAMES_BY_KIND[kind].plural
+    const isClusterScoped = (CLUSTER_SCOPED_RESOURCE_KINDS as readonly ResourceKind[]).includes(
+      kind
+    )
+    const bound = isClusterScoped
+      ? bindClusterScopedEntityMethods(singular, plural, methods)
+      : bindStandardEntityMethods(singular, plural, methods)
+    Object.assign(generatedFacadeBindings, bound)
+  }
+
   const clusterStateFacade = Object.assign(
     {},
-    bindStandardEntityMethods('Pod', 'Pods', podMethods),
-    bindStandardEntityMethods('ConfigMap', 'ConfigMaps', configMapMethods),
-    bindStandardEntityMethods(
-      'ControllerRevision',
-      'ControllerRevisions',
-      controllerRevisionMethods
-    ),
-    bindStandardEntityMethods('Secret', 'Secrets', secretMethods),
+    generatedFacadeBindings,
     bindNodeEntityMethods(nodeMethods),
-    bindStandardEntityMethods('ReplicaSet', 'ReplicaSets', replicaSetMethods),
-    bindStandardEntityMethods('Deployment', 'Deployments', deploymentMethods),
-    bindStandardEntityMethods('DaemonSet', 'DaemonSets', daemonSetMethods),
-    bindStandardEntityMethods(
-      'StatefulSet',
-      'StatefulSets',
-      statefulSetMethods
-    ),
-    bindStandardEntityMethods('Service', 'Services', serviceMethods),
-    bindStandardEntityMethods(
-      'EndpointSlice',
-      'EndpointSlices',
-      endpointSliceMethods
-    ),
-    bindStandardEntityMethods('Endpoints', 'Endpoints', endpointsMethods),
-    bindStandardEntityMethods('Event', 'Events', eventMethods),
-    bindStandardEntityMethods('Ingress', 'Ingresses', ingressMethods),
-    bindStandardEntityMethods(
-      'NetworkPolicy',
-      'NetworkPolicies',
-      networkPolicyMethods
-    ),
-    bindClusterScopedEntityMethods(
-      'PersistentVolume',
-      'PersistentVolumes',
-      persistentVolumeMethods
-    ),
-    bindStandardEntityMethods(
-      'PersistentVolumeClaim',
-      'PersistentVolumeClaims',
-      persistentVolumeClaimMethods
-    ),
     bindNamespaceEntityMethods(namespaceMethods),
-    bindStandardEntityMethods('Lease', 'Leases', leaseMethods),
-    bindClusterScopedEntityMethods(
-      'StorageClass',
-      'StorageClasses',
-      storageClassMethods
-    ),
     {
       findByKind,
       listByKind,

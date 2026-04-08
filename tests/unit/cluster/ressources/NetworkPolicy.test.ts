@@ -50,6 +50,24 @@ describe('NetworkPolicy', () => {
     expect(result.ok).toBe(true)
   })
 
+  it('parseNetworkPolicyManifest defaults omitted podSelector to {}', () => {
+    const manifest = {
+      apiVersion: 'networking.k8s.io/v1',
+      kind: 'NetworkPolicy',
+      metadata: { name: 'no-selector', namespace: 'default' },
+      spec: {
+        policyTypes: ['Ingress'],
+        ingress: []
+      }
+    }
+    const result = parseNetworkPolicyManifest(manifest)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value.spec.podSelector).toEqual({})
+  })
+
   it('createNetworkPolicy freezes object', () => {
     const policy = createNetworkPolicy({
       name: 'p',

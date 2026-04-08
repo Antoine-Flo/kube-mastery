@@ -31,6 +31,9 @@ describe('clusterResources.manifest.yaml', () => {
     const raw = fs.readFileSync(manifestPath, 'utf8')
     const manifest = YAML.parse(raw) as ClusterResourcesManifest
     for (const entry of manifest.resources) {
+      if (entry.openapiSource === 'external-crd') {
+        continue
+      }
       const one = validateManifestEntryAgainstSpecs(entry, BUNDLED_OPENAPI_SPECS)
       expect(one.ok).toBe(true)
     }

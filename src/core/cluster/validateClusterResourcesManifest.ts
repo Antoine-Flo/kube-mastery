@@ -24,8 +24,15 @@ export interface ClusterResourceManifestEntry {
   bootstrapEmpty: ClusterResourceBootstrapEmpty
   facadeSingular: string
   facadePlural: string
+  /** Default bundled validation, or external CRD schemas not in Kubernetes core bundle. */
+  openapiSource?: 'bundled' | 'external-crd'
   kubectlShortAliases?: string[]
   kubectlSingularAlias?: string
+  kubectlDeleteSupported?: boolean
+  kubectlYamlSupported?: boolean
+  kubectlGetSupported?: boolean
+  kubectlKindRef?: string
+  kubectlKindRefPlural?: string
 }
 
 export interface KubectlExtraResourceManifestEntry {
@@ -176,6 +183,11 @@ export const validateClusterResourcesManifest = (
     if (!r.facadeSingular || !r.facadePlural) {
       errors.push(`${prefix}: missing facadeSingular or facadePlural`)
     }
+    if (r.openapiSource !== undefined) {
+      if (r.openapiSource !== 'bundled' && r.openapiSource !== 'external-crd') {
+        errors.push(`${prefix}: invalid openapiSource "${r.openapiSource}"`)
+      }
+    }
     if (r.kind && kinds.has(r.kind)) {
       errors.push(`duplicate kind: ${r.kind}`)
     }
@@ -214,8 +226,41 @@ export const validateClusterResourcesManifest = (
         errors.push(`${prefix}: kubectlSingularAlias must be a non-empty string`)
       }
     }
+    if (r.kubectlDeleteSupported !== undefined) {
+      if (typeof r.kubectlDeleteSupported !== 'boolean') {
+        errors.push(`${prefix}: kubectlDeleteSupported must be a boolean`)
+      }
+    }
+    if (r.kubectlYamlSupported !== undefined) {
+      if (typeof r.kubectlYamlSupported !== 'boolean') {
+        errors.push(`${prefix}: kubectlYamlSupported must be a boolean`)
+      }
+    }
+    if (r.kubectlGetSupported !== undefined) {
+      if (typeof r.kubectlGetSupported !== 'boolean') {
+        errors.push(`${prefix}: kubectlGetSupported must be a boolean`)
+      }
+    }
+    if (r.kubectlKindRef !== undefined) {
+      if (typeof r.kubectlKindRef !== 'string' || r.kubectlKindRef.length === 0) {
+        errors.push(`${prefix}: kubectlKindRef must be a non-empty string`)
+      }
+    }
+    if (r.kubectlKindRefPlural !== undefined) {
+      if (
+        typeof r.kubectlKindRefPlural !== 'string' ||
+        r.kubectlKindRefPlural.length === 0
+      ) {
+        errors.push(`${prefix}: kubectlKindRefPlural must be a non-empty string`)
+      }
+    }
 
     if (!r.apiVersion || !r.kind) {
+      continue
+    }
+    const shouldValidateBundledOpenAPI =
+      r.openapiSource === undefined || r.openapiSource === 'bundled'
+    if (!shouldValidateBundledOpenAPI) {
       continue
     }
     const schemaName = getOpenAPISchemaName(r.apiVersion, r.kind)

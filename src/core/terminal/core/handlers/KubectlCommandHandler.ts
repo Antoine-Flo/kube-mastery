@@ -25,6 +25,7 @@ import type { ClusterEvent } from '../../../cluster/events/types'
 import { matchesLabelSelector } from '../../../shared/labelSelector'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
+import { RESOURCE_KIND_BY_RESOURCE } from '../../../kubectl/commands/resourceCatalog.generated'
 import { buildContainerEnvironmentVariables } from './containerEnvironment'
 import type { CommandContext } from '../CommandContext'
 import type { CommandHandler } from '../CommandHandler'
@@ -423,107 +424,35 @@ const executeKubectlDirective = (
   return undefined
 }
 
-const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
-  all: [
-    'PodCreated',
-    'PodUpdated',
-    'PodDeleted',
-    'ConfigMapCreated',
-    'ConfigMapUpdated',
-    'ConfigMapDeleted',
-    'ControllerRevisionCreated',
-    'ControllerRevisionUpdated',
-    'ControllerRevisionDeleted',
-    'SecretCreated',
-    'SecretUpdated',
-    'SecretDeleted',
-    'ReplicaSetCreated',
-    'ReplicaSetUpdated',
-    'ReplicaSetDeleted',
-    'DaemonSetCreated',
-    'DaemonSetUpdated',
-    'DaemonSetDeleted',
-    'DeploymentCreated',
-    'DeploymentUpdated',
-    'DeploymentDeleted',
-    'StatefulSetCreated',
-    'StatefulSetUpdated',
-    'StatefulSetDeleted',
-    'ServiceCreated',
-    'ServiceUpdated',
-    'ServiceDeleted',
-    'PersistentVolumeCreated',
-    'PersistentVolumeUpdated',
-    'PersistentVolumeDeleted',
-    'PersistentVolumeClaimCreated',
-    'PersistentVolumeClaimUpdated',
-    'PersistentVolumeClaimDeleted',
-    'StorageClassCreated',
-    'StorageClassUpdated',
-    'StorageClassDeleted',
-    'LeaseCreated',
-    'LeaseUpdated',
-    'LeaseDeleted',
-    'NetworkPolicyCreated',
-    'NetworkPolicyUpdated',
-    'NetworkPolicyDeleted',
-    'EventCreated',
-    'EventUpdated',
-    'EventDeleted'
-  ],
-  pods: ['PodCreated', 'PodUpdated', 'PodDeleted', 'PodBound'],
-  configmaps: ['ConfigMapCreated', 'ConfigMapUpdated', 'ConfigMapDeleted'],
-  controllerrevisions: [
-    'ControllerRevisionCreated',
-    'ControllerRevisionUpdated',
-    'ControllerRevisionDeleted'
-  ],
-  secrets: ['SecretCreated', 'SecretUpdated', 'SecretDeleted'],
-  events: ['EventCreated', 'EventUpdated', 'EventDeleted'],
-  nodes: [],
-  replicasets: ['ReplicaSetCreated', 'ReplicaSetUpdated', 'ReplicaSetDeleted'],
-  daemonsets: ['DaemonSetCreated', 'DaemonSetUpdated', 'DaemonSetDeleted'],
-  deployments: ['DeploymentCreated', 'DeploymentUpdated', 'DeploymentDeleted'],
-  statefulsets: [
-    'StatefulSetCreated',
-    'StatefulSetUpdated',
-    'StatefulSetDeleted'
-  ],
-  services: ['ServiceCreated', 'ServiceUpdated', 'ServiceDeleted'],
-  endpoints: ['EndpointsCreated', 'EndpointsUpdated', 'EndpointsDeleted'],
-  endpointslices: [
-    'EndpointSliceCreated',
-    'EndpointSliceUpdated',
-    'EndpointSliceDeleted'
-  ],
-  ingresses: [],
-  networkpolicies: [
-    'NetworkPolicyCreated',
-    'NetworkPolicyUpdated',
-    'NetworkPolicyDeleted'
-  ],
-  ingressclasses: [],
-  gateways: [],
-  gatewayclasses: [],
-  httproutes: [],
-  namespaces: [],
-  persistentvolumes: [
-    'PersistentVolumeCreated',
-    'PersistentVolumeUpdated',
-    'PersistentVolumeDeleted'
-  ],
-  persistentvolumeclaims: [
-    'PersistentVolumeClaimCreated',
-    'PersistentVolumeClaimUpdated',
-    'PersistentVolumeClaimDeleted'
-  ],
-  storageclasses: [
-    'StorageClassCreated',
-    'StorageClassUpdated',
-    'StorageClassDeleted'
-  ],
-  leases: ['LeaseCreated', 'LeaseUpdated', 'LeaseDeleted']
+const buildMutationEventTypesForKind = (kind: string): string[] => {
+  return [`${kind}Created`, `${kind}Updated`, `${kind}Deleted`]
 }
+
+const WATCH_EVENT_OVERRIDES: Partial<Record<Resource, string[]>> = {
+  pods: ['PodCreated', 'PodUpdated', 'PodDeleted', 'PodBound'],
+  nodes: [],
+  namespaces: [],
+  ingresses: []
+}
+
+const buildWatchEventTypesByResource = (): Record<Resource, string[]> => {
+  const result = {} as Record<Resource, string[]>
+  for (const resource of Object.keys(RESOURCE_KIND_BY_RESOURCE) as Resource[]) {
+    if (resource === 'all') {
+      continue
+    }
+    const kind = RESOURCE_KIND_BY_RESOURCE[resource]
+    const defaults =
+      kind != null ? buildMutationEventTypesForKind(kind) : ([] as string[])
+    result[resource] = WATCH_EVENT_OVERRIDES[resource] ?? defaults
+  }
+  const allEventTypes = Object.entries(result).flatMap(([, eventTypes]) => eventTypes)
+  result.all = [...new Set(allEventTypes)]
+  return result
+}
+
+const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> =
+  buildWatchEventTypesByResource()
 
 const isWatchEnabled = (parsed: ParsedCommand): boolean => {
   return (

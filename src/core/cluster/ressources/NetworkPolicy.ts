@@ -1,42 +1,45 @@
 import { z } from 'zod'
+import type {
+  K8sNetworkPolicy,
+  K8sNetworkPolicyMetadata,
+  K8sNetworkPolicySpec
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import type { KubernetesResource } from '../repositories/types'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 
-interface NetworkPolicyMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-}
+type NetworkPolicyMetadata = Pick<
+  K8sNetworkPolicyMetadata,
+  'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
+>
+
+/** Persisted spec matches networking.k8s.io v1 OpenAPI. */
+export type NetworkPolicySpec = K8sNetworkPolicySpec
 
 /**
- * NetworkPolicy spec (flexible nested shapes from real manifests).
- * Ingress/egress rules keep structured JSON-compatible objects.
+ * Factory / YAML parse input: podSelector defaults to {} when omitted (Kubernetes behavior).
  */
-export interface NetworkPolicySpec {
-  podSelector?: Record<string, unknown>
-  policyTypes?: string[]
-  ingress?: Record<string, unknown>[]
-  egress?: Record<string, unknown>[]
+export type NetworkPolicySpecInput = Omit<K8sNetworkPolicySpec, 'podSelector'> & {
+  podSelector?: K8sNetworkPolicySpec['podSelector']
 }
 
-export interface NetworkPolicy extends KubernetesResource {
-  apiVersion: 'networking.k8s.io/v1'
-  kind: 'NetworkPolicy'
+export const normalizeNetworkPolicySpec = (
+  spec: NetworkPolicySpecInput
+): NetworkPolicySpec => {
+  return {
+    ...spec,
+    podSelector: spec.podSelector ?? {}
+  }
+}
+
+export type NetworkPolicy = Omit<K8sNetworkPolicy, 'metadata' | 'spec'> & {
   metadata: NetworkPolicyMetadata
   spec: NetworkPolicySpec
 }
 
-interface NetworkPolicyConfig {
-  name: string
-  namespace: string
-  spec: NetworkPolicySpec
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
+interface NetworkPolicyConfig extends NamespacedFactoryConfigBase {
+  spec: NetworkPolicySpecInput
 }
 
 export const createNetworkPolicy = (
@@ -52,7 +55,7 @@ export const createNetworkPolicy = (
       ...(config.labels && { labels: config.labels }),
       ...(config.annotations && { annotations: config.annotations })
     },
-    spec: config.spec
+    spec: normalizeNetworkPolicySpec(config.spec)
   }
 
   return deepFreeze(policy)
@@ -94,12 +97,11 @@ export const parseNetworkPolicyManifest = (
   }
 
   const manifest = result.data
-  const spec: NetworkPolicySpec = { ...manifest.spec }
   return success(
     createNetworkPolicy({
       name: manifest.metadata.name,
       namespace: manifest.metadata.namespace,
-      spec,
+      spec: manifest.spec as NetworkPolicySpecInput,
       ...(manifest.metadata.labels && { labels: manifest.metadata.labels }),
       ...(manifest.metadata.annotations && {
         annotations: manifest.metadata.annotations

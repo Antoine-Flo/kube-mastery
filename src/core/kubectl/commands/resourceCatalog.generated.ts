@@ -19,16 +19,16 @@ export const KUBECTL_RESOURCES = {
   endpoints: ["endpoints","endpoint","ep"],
   events: ["events","event","ev"],
   ingresses: ["ingresses","ingress","ing"],
+  ingressclasses: ["ingressclasses","ingressclass"],
   networkpolicies: ["networkpolicies","networkpolicy","netpol"],
+  gatewayclasses: ["gatewayclasses","gatewayclass","gc"],
+  gateways: ["gateways","gateway","gw"],
+  httproutes: ["httproutes","httproute","hr"],
   persistentvolumes: ["persistentvolumes","persistentvolume","pv"],
   persistentvolumeclaims: ["persistentvolumeclaims","persistentvolumeclaim","pvc"],
   namespaces: ["namespaces","namespace","ns"],
   leases: ["leases","lease"],
   storageclasses: ["storageclasses","storageclass","sc"],
-  ingressclasses: ["ingressclasses","ingressclass"],
-  gateways: ["gateways","gateway","gw"],
-  gatewayclasses: ["gatewayclasses","gatewayclass","gc"],
-  httproutes: ["httproutes","httproute","hr"],
 } as const
 
 export type KubectlResource = keyof typeof KUBECTL_RESOURCES
@@ -48,7 +48,11 @@ export const SUPPORTED_RESOURCE_KINDS: ResourceKind[] = [
   "Endpoints",
   "Event",
   "Ingress",
+  "IngressClass",
   "NetworkPolicy",
+  "GatewayClass",
+  "Gateway",
+  "HTTPRoute",
   "PersistentVolume",
   "PersistentVolumeClaim",
   "Namespace",
@@ -71,6 +75,8 @@ export const NAMESPACED_RESOURCE_KINDS: ResourceKind[] = [
   "Event",
   "Ingress",
   "NetworkPolicy",
+  "Gateway",
+  "HTTPRoute",
   "PersistentVolumeClaim",
   "Lease"
 ]
@@ -94,16 +100,16 @@ export const RESOURCE_KIND_BY_RESOURCE: Record<
   endpoints: "Endpoints",
   events: "Event",
   ingresses: "Ingress",
+  ingressclasses: "IngressClass",
   networkpolicies: "NetworkPolicy",
+  gatewayclasses: "GatewayClass",
+  gateways: "Gateway",
+  httproutes: "HTTPRoute",
   persistentvolumes: "PersistentVolume",
   persistentvolumeclaims: "PersistentVolumeClaim",
   namespaces: "Namespace",
   leases: "Lease",
   storageclasses: "StorageClass",
-  ingressclasses: undefined,
-  gateways: undefined,
-  gatewayclasses: undefined,
-  httproutes: undefined,
 }
 
 export const KIND_REFERENCE_BY_KIND: Record<ResourceKind, string> = {
@@ -121,11 +127,15 @@ export const KIND_REFERENCE_BY_KIND: Record<ResourceKind, string> = {
   Endpoints: "endpoints",
   Event: "event",
   Ingress: "ingress.networking.k8s.io",
+  IngressClass: "ingressclass.networking.k8s.io",
   NetworkPolicy: "networkpolicy.networking.k8s.io",
+  GatewayClass: "gatewayclass.gateway.networking.k8s.io",
+  Gateway: "gateway.gateway.networking.k8s.io",
+  HTTPRoute: "httproute.gateway.networking.k8s.io",
   PersistentVolume: "persistentvolume",
   PersistentVolumeClaim: "persistentvolumeclaim",
   Namespace: "namespace",
-  Lease: "lease.coordination.k8s.io",
+  Lease: "lease",
   StorageClass: "storageclass.storage.k8s.io"
 }
 
@@ -144,11 +154,15 @@ export const PLURAL_KIND_REFERENCE_BY_KIND: Record<ResourceKind, string> = {
   Endpoints: "endpoints",
   Event: "events",
   Ingress: "ingresses.networking.k8s.io",
+  IngressClass: "ingressclasses.networking.k8s.io",
   NetworkPolicy: "networkpolicies.networking.k8s.io",
+  GatewayClass: "gatewayclasses.gateway.networking.k8s.io",
+  Gateway: "gateways.gateway.networking.k8s.io",
+  HTTPRoute: "httproutes.gateway.networking.k8s.io",
   PersistentVolume: "persistentvolumes",
   PersistentVolumeClaim: "persistentvolumeclaims",
   Namespace: "namespaces",
-  Lease: "leases.coordination.k8s.io",
+  Lease: "leases",
   StorageClass: "storageclasses.storage.k8s.io"
 }
 
@@ -170,23 +184,42 @@ export const RESOURCE_OUTPUT_METADATA_BY_RESOURCE: Record<
   endpoints: { apiVersion: "v1", kind: "Endpoints" },
   events: { apiVersion: "v1", kind: "Event" },
   ingresses: { apiVersion: "networking.k8s.io/v1", kind: "Ingress" },
+  ingressclasses: { apiVersion: "networking.k8s.io/v1", kind: "IngressClass" },
   networkpolicies: { apiVersion: "networking.k8s.io/v1", kind: "NetworkPolicy" },
+  gatewayclasses: { apiVersion: "gateway.networking.k8s.io/v1", kind: "GatewayClass" },
+  gateways: { apiVersion: "gateway.networking.k8s.io/v1", kind: "Gateway" },
+  httproutes: { apiVersion: "gateway.networking.k8s.io/v1", kind: "HTTPRoute" },
   persistentvolumes: { apiVersion: "v1", kind: "PersistentVolume" },
   persistentvolumeclaims: { apiVersion: "v1", kind: "PersistentVolumeClaim" },
   namespaces: { apiVersion: "v1", kind: "Namespace" },
   leases: { apiVersion: "coordination.k8s.io/v1", kind: "Lease" },
   storageclasses: { apiVersion: "storage.k8s.io/v1", kind: "StorageClass" },
-  ingressclasses: { apiVersion: "networking.k8s.io/v1", kind: "IngressClass" },
-  gateways: { apiVersion: "gateway.networking.k8s.io/v1", kind: "Gateway" },
-  gatewayclasses: { apiVersion: "gateway.networking.k8s.io/v1", kind: "GatewayClass" },
-  httproutes: { apiVersion: "gateway.networking.k8s.io/v1", kind: "HTTPRoute" },
 }
 
 export const RESOURCE_DISCOVERY_REF_BY_RESOURCE: Partial<
   Record<KubectlResource, { singular: string; plural: string }>
 > = {
-  ingressclasses: { singular: "ingressclass.networking.k8s.io", plural: "ingressclasses.networking.k8s.io" },
-  gateways: { singular: "gateway.gateway.networking.k8s.io", plural: "gateways.gateway.networking.k8s.io" },
-  gatewayclasses: { singular: "gatewayclass.gateway.networking.k8s.io", plural: "gatewayclasses.gateway.networking.k8s.io" },
-  httproutes: { singular: "httproute.gateway.networking.k8s.io", plural: "httproutes.gateway.networking.k8s.io" },
+
 }
+
+export const DELETABLE_KUBECTL_RESOURCES = [
+  "pods",
+  "configmaps",
+  "secrets",
+  "nodes",
+  "replicasets",
+  "deployments",
+  "daemonsets",
+  "statefulsets",
+  "services",
+  "ingresses",
+  "ingressclasses",
+  "networkpolicies",
+  "gatewayclasses",
+  "gateways",
+  "httproutes",
+  "persistentvolumes",
+  "persistentvolumeclaims",
+  "namespaces",
+  "leases"
+] as const

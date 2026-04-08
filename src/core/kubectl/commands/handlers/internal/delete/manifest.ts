@@ -9,6 +9,10 @@ import {
   NO_OBJECTS_PASSED_TO_DELETE,
   resolveManifestFilePathsFromFilenameFlag
 } from '../../../manifestFilePathsFromFlag'
+import {
+  isSupportedResourceKind,
+  toPluralKindReference
+} from '../../../resourceCatalog'
 import type { ParsedCommand } from '../../../types'
 import { DELETE_TARGET_BY_KIND } from './config'
 import { getPodDeleteOptions } from './messages'
@@ -37,6 +41,11 @@ const deleteFromManifest = (
   const kind = kindRaw as ResourceKind
   const targetConfig = DELETE_TARGET_BY_KIND[kind]
   if (!targetConfig) {
+    if (isSupportedResourceKind(kindRaw)) {
+      return error(
+        `error: the server doesn't have a resource type "${toPluralKindReference(kindRaw)}"`
+      )
+    }
     return error(
       `error: the server doesn't have a resource type "${kind.toLowerCase()}s"`
     )

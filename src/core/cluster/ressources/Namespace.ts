@@ -1,26 +1,20 @@
 import { deepFreeze } from '../../shared/deepFreeze'
-import type { KubernetesResource } from '../repositories/types'
+import type {
+  K8sNamespace,
+  K8sNamespaceMetadata
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
+import type { ClusterScopedNameFactoryConfigBase } from './resourceFactoryConfig'
 
-interface NamespaceMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-}
+type NamespaceMetadata = Pick<
+  K8sNamespaceMetadata,
+  'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
+>
 
-export interface Namespace extends KubernetesResource {
-  apiVersion: 'v1'
-  kind: 'Namespace'
+export type Namespace = Omit<K8sNamespace, 'metadata' | 'spec' | 'status'> & {
   metadata: NamespaceMetadata
 }
 
-interface NamespaceConfig {
-  name: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
-}
+interface NamespaceConfig extends ClusterScopedNameFactoryConfigBase {}
 
 export const createNamespace = (config: NamespaceConfig): Namespace => {
   const namespace: Namespace = {

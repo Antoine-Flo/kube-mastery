@@ -11,7 +11,7 @@ interface EventRecordCandidate {
   reason: string
   message: string
   type: 'Normal' | 'Warning'
-  reportingController?: string
+  reportingComponent?: string
   reportingInstance?: string
   action?: string
 }
@@ -40,7 +40,7 @@ const makeAggregationKey = (candidate: EventRecordCandidate): string => {
     candidate.reason,
     candidate.message,
     candidate.type,
-    candidate.reportingController ?? '',
+    candidate.reportingComponent ?? '',
     candidate.reportingInstance ?? '',
     candidate.action ?? ''
   ].join('|')
@@ -71,19 +71,19 @@ const toDnsLabel = (value: string): string => {
 const buildEventName = (candidate: EventRecordCandidate): string => {
   const key = makeAggregationKey(candidate)
   const hash = hashString(key).slice(0, 10)
-  const involvedName = toDnsLabel(candidate.involvedObject.name)
+  const involvedName = toDnsLabel(candidate.involvedObject.name ?? '')
   const reason = toDnsLabel(candidate.reason)
   return `${involvedName}.${reason}.${hash}`.slice(0, 63)
 }
 
 const resolveSourceMetadata = (
   source: string | undefined
-): { reportingController?: string; reportingInstance?: string } => {
+): { reportingComponent?: string; reportingInstance?: string } => {
   if (source == null || source.length === 0) {
     return {}
   }
   return {
-    reportingController: source,
+    reportingComponent: source,
     reportingInstance: source
   }
 }
@@ -490,8 +490,8 @@ export const createEventRecorder = (
         resourceVersion: existing.metadata.resourceVersion,
         uid: existing.metadata.uid,
         eventTime: observedAt,
-        reportingController:
-          candidate.reportingController ?? existing.reportingController,
+        reportingComponent:
+          candidate.reportingComponent ?? existing.reportingComponent,
         reportingInstance:
           candidate.reportingInstance ?? existing.reportingInstance,
         action: candidate.action ?? existing.action
@@ -516,7 +516,7 @@ export const createEventRecorder = (
       lastTimestamp: observedAt,
       creationTimestamp: observedAt,
       eventTime: observedAt,
-      reportingController: candidate.reportingController,
+      reportingComponent: candidate.reportingComponent,
       reportingInstance: candidate.reportingInstance,
       action: candidate.action
     })

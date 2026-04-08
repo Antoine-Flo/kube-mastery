@@ -7,6 +7,13 @@
 import { z } from 'zod'
 import type { FileSystemState } from '../../filesystem/FileSystem'
 import { createDebianFileSystem } from '../../filesystem/debianFileSystem'
+import type { components } from '../../openapi/generated/openapi-types.generated'
+import type {
+  K8sPod,
+  K8sPodMetadata,
+  K8sPodSpec,
+  K8sPodStatus
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
@@ -22,12 +29,12 @@ import {
   type PodVolumeBackingMap,
   type VolumeRuntimeContext
 } from '../../volumes/runtime'
-import type { KubernetesResource } from '../repositories/types'
 import {
   convertYamlEnvVar,
   convertYamlProbe,
   convertYamlVolume
 } from './yamlConverters'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 
 export type PodPhase =
   | 'Pending'
@@ -38,35 +45,35 @@ export type PodPhase =
 
 // ─── Probes ────────────────────────────────────────────────────────
 
+type K8sProbeOpenAPI = components['schemas']['io.k8s.api.core.v1.Probe']
+type K8sHTTPGetActionOpenAPI =
+  components['schemas']['io.k8s.api.core.v1.HTTPGetAction']
+type K8sExecActionOpenAPI = components['schemas']['io.k8s.api.core.v1.ExecAction']
+type K8sIntOrStringOpenAPI =
+  components['schemas']['io.k8s.apimachinery.pkg.util.intstr.IntOrString']
+type K8sProbeCommon = Pick<
+  K8sProbeOpenAPI,
+  | 'initialDelaySeconds'
+  | 'periodSeconds'
+  | 'timeoutSeconds'
+  | 'successThreshold'
+  | 'failureThreshold'
+>
+
 export type Probe =
-  | {
+  | (K8sProbeCommon & {
       type: 'httpGet'
-      path: string
-      port: number
-      initialDelaySeconds?: number
-      periodSeconds?: number
-      timeoutSeconds?: number
-      successThreshold?: number
-      failureThreshold?: number
-    }
-  | {
+      path: NonNullable<K8sHTTPGetActionOpenAPI['path']>
+      port: K8sIntOrStringOpenAPI
+    })
+  | (K8sProbeCommon & {
       type: 'exec'
-      command: string[]
-      initialDelaySeconds?: number
-      periodSeconds?: number
-      timeoutSeconds?: number
-      successThreshold?: number
-      failureThreshold?: number
-    }
-  | {
+      command: NonNullable<K8sExecActionOpenAPI['command']>
+    })
+  | (K8sProbeCommon & {
       type: 'tcpSocket'
-      port: number
-      initialDelaySeconds?: number
-      periodSeconds?: number
-      timeoutSeconds?: number
-      successThreshold?: number
-      failureThreshold?: number
-    }
+      port: K8sIntOrStringOpenAPI
+    })
 
 // ─── Environment Variables ─────────────────────────────────────────
 
@@ -157,17 +164,18 @@ export interface OwnerReference {
   controller?: boolean
 }
 
-interface PodMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-  deletionTimestamp?: string
-  deletionGracePeriodSeconds?: number
-  generation?: number
-  ownerReferences?: OwnerReference[]
-}
+type PodMetadata = Pick<
+  K8sPodMetadata,
+  | 'name'
+  | 'namespace'
+  | 'labels'
+  | 'annotations'
+  | 'creationTimestamp'
+  | 'deletionTimestamp'
+  | 'deletionGracePeriodSeconds'
+  | 'generation'
+  | 'ownerReferences'
+>
 
 export interface PodToleration {
   key?: string
@@ -197,12 +205,22 @@ export interface PodAffinity {
   }
 }
 
-interface PodSpec {
-  nodeName?: string
-  nodeSelector?: Record<string, string>
+type PodSpec = Omit<
+  Pick<
+    K8sPodSpec,
+    | 'nodeName'
+    | 'nodeSelector'
+    | 'tolerations'
+    | 'affinity'
+    | 'restartPolicy'
+    | 'initContainers'
+    | 'containers'
+    | 'volumes'
+  >,
+  'tolerations' | 'affinity' | 'initContainers' | 'containers' | 'volumes'
+> & {
   tolerations?: PodToleration[]
   affinity?: PodAffinity
-  restartPolicy?: 'Always' | 'OnFailure' | 'Never'
   initContainers?: readonly Container[]
   containers: readonly Container[]
   volumes?: Volume[]
@@ -245,15 +263,24 @@ export interface PodCondition {
   observedGeneration?: number
 }
 
-interface PodStatus {
+type PodStatus = Omit<
+  Pick<
+    K8sPodStatus,
+    | 'phase'
+    | 'podIP'
+    | 'podIPs'
+    | 'hostIP'
+    | 'hostIPs'
+    | 'startTime'
+    | 'qosClass'
+    | 'observedGeneration'
+    | 'conditions'
+    | 'containerStatuses'
+  >,
+  'phase' | 'qosClass' | 'conditions' | 'containerStatuses'
+> & {
   phase: PodPhase
-  podIP?: string
-  podIPs?: Array<{ ip: string }>
-  hostIP?: string
-  hostIPs?: Array<{ ip: string }>
-  startTime?: string
   qosClass?: PodQosClass
-  observedGeneration?: number
   conditions?: PodCondition[]
   restartCount: number
   containerStatuses?: ContainerStatus[]
@@ -270,9 +297,7 @@ export interface PodLogStreamState {
   nextSequence: number
 }
 
-export interface Pod extends KubernetesResource {
-  apiVersion: 'v1'
-  kind: 'Pod'
+export type Pod = Omit<K8sPod, 'metadata' | 'spec' | 'status'> & {
   metadata: PodMetadata
   spec: PodSpec
   status: PodStatus
@@ -302,9 +327,7 @@ interface ContainerStatusOverride {
   stateDetails?: ContainerRuntimeStateDetails
 }
 
-interface PodConfig {
-  name: string
-  namespace: string
+interface PodConfig extends NamespacedFactoryConfigBase {
   nodeName?: string
   nodeSelector?: Record<string, string>
   tolerations?: PodToleration[]
@@ -313,9 +336,6 @@ interface PodConfig {
   initContainers?: Container[]
   containers: Container[]
   volumes?: Volume[]
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
   deletionTimestamp?: string
   deletionGracePeriodSeconds?: number
   phase?: PodPhase

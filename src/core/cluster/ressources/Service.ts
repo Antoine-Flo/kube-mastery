@@ -1,46 +1,37 @@
 import { z } from 'zod'
+import type { components } from '../../openapi/generated/openapi-types.generated'
+import type {
+  K8sService,
+  K8sServiceMetadata,
+  K8sServiceSpec,
+  K8sServiceStatus
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import type { KubernetesResource } from '../repositories/types'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
-interface ServiceMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
+type ServiceMetadata = Pick<
+  K8sServiceMetadata,
+  'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
+>
+
+type IoSchemas = components['schemas']
+
+export type ServicePort = IoSchemas['io.k8s.api.core.v1.ServicePort'] & {
+  protocol?: 'TCP' | 'UDP' | 'SCTP'
 }
 
-export interface ServicePort {
-  name?: string
-  protocol: 'TCP' | 'UDP' | 'SCTP'
-  port: number
-  targetPort?: number | string
-  nodePort?: number
+/** Simulator keeps at least one port; OpenAPI leaves ports optional. */
+export type ServiceSpec = K8sServiceSpec & {
+  ports: NonNullable<K8sServiceSpec['ports']>
 }
 
-export interface ServiceSpec {
-  type?: 'ClusterIP' | 'NodePort' | 'LoadBalancer' | 'ExternalName'
-  selector?: Record<string, string>
-  ports: ServicePort[]
-  clusterIP?: string
-  externalIPs?: string[]
-  externalName?: string
-  sessionAffinity?: 'ClientIP' | 'None'
-}
+export type ServiceStatus = K8sServiceStatus
 
-export interface ServiceStatus {
-  loadBalancer?: {
-    ingress?: Array<{ ip?: string; hostname?: string }>
-  }
-}
-
-export interface Service extends KubernetesResource {
-  apiVersion: 'v1'
-  kind: 'Service'
+export type Service = Omit<K8sService, 'metadata' | 'spec' | 'status'> & {
   metadata: ServiceMetadata
   spec: ServiceSpec
   status?: ServiceStatus
@@ -48,9 +39,7 @@ export interface Service extends KubernetesResource {
 
 // ─── Factory ─────────────────────────────────────────────────────────────
 
-interface ServiceConfig {
-  name: string
-  namespace: string
+interface ServiceConfig extends NamespacedFactoryConfigBase {
   ports: Array<{
     name?: string
     protocol?: 'TCP' | 'UDP' | 'SCTP'
@@ -58,15 +47,12 @@ interface ServiceConfig {
     targetPort?: number | string
     nodePort?: number
   }>
-  type?: 'ClusterIP' | 'NodePort' | 'LoadBalancer' | 'ExternalName'
+  type?: K8sServiceSpec['type']
   selector?: Record<string, string>
   clusterIP?: string
   externalIPs?: string[]
   externalName?: string
-  sessionAffinity?: 'ClientIP' | 'None'
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
+  sessionAffinity?: K8sServiceSpec['sessionAffinity']
   status?: ServiceStatus
 }
 
@@ -96,7 +82,14 @@ export const createService = (config: ServiceConfig): Service => {
       ...(config.externalName && { externalName: config.externalName }),
       ...(config.sessionAffinity && { sessionAffinity: config.sessionAffinity })
     },
-    ...(config.status && { status: config.status })
+    ...(config.status != null && {
+      status: {
+        loadBalancer: config.status.loadBalancer ?? {},
+        ...(config.status.conditions != null && {
+          conditions: config.status.conditions
+        })
+      }
+    })
   }
 
   return deepFreeze(service)
@@ -204,7 +197,11 @@ export const parseServiceManifest = (data: unknown): Result<Service> => {
         sessionAffinity: manifest.spec.sessionAffinity
       })
     },
-    ...(manifest.status && { status: manifest.status })
+    ...(manifest.status != null && {
+      status: {
+        loadBalancer: manifest.status.loadBalancer ?? {}
+      }
+    })
   }
 
   return success(deepFreeze(service))

@@ -1,50 +1,34 @@
 import { deepFreeze } from '../../shared/deepFreeze'
-import type { KubernetesResource } from '../repositories/types'
+import type { components } from '../../openapi/generated/openapi-types.generated'
+import type {
+  K8sEndpoints,
+  K8sEndpointsMetadata
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 
-interface EndpointsMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
+type IoSchemas = components['schemas']
+
+type EndpointsMetadata = Pick<
+  K8sEndpointsMetadata,
+  'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
+>
+
+export type EndpointsAddress =
+  IoSchemas['io.k8s.api.core.v1.EndpointAddress']
+
+export type EndpointsPort = IoSchemas['io.k8s.api.core.v1.EndpointPort'] & {
+  protocol?: 'TCP' | 'UDP' | 'SCTP'
 }
 
-export interface EndpointsAddress {
-  ip: string
-  nodeName?: string
-  targetRef?: {
-    kind: 'Pod'
-    name: string
-    namespace: string
-  }
-}
+export type EndpointsSubset = IoSchemas['io.k8s.api.core.v1.EndpointSubset']
 
-export interface EndpointsPort {
-  name?: string
-  port: number
-  protocol: 'TCP' | 'UDP' | 'SCTP'
-}
-
-export interface EndpointsSubset {
-  addresses?: EndpointsAddress[]
-  notReadyAddresses?: EndpointsAddress[]
-  ports?: EndpointsPort[]
-}
-
-export interface Endpoints extends KubernetesResource {
-  apiVersion: 'v1'
-  kind: 'Endpoints'
+export type Endpoints = Omit<K8sEndpoints, 'metadata' | 'subsets'> & {
   metadata: EndpointsMetadata
   subsets?: EndpointsSubset[]
 }
 
-interface EndpointsConfig {
-  name: string
-  namespace: string
+interface EndpointsConfig extends NamespacedFactoryConfigBase {
   subsets?: EndpointsSubset[]
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
 }
 
 export interface ServiceEndpointBackend {

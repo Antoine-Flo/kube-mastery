@@ -17,7 +17,7 @@ import type {
 import { generateTemplateHash } from '../../cluster/ressources/Deployment'
 import type { EndpointSlice } from '../../cluster/ressources/EndpointSlice'
 import type { Endpoints } from '../../cluster/ressources/Endpoints'
-import type { Ingress } from '../../cluster/ressources/Ingress'
+import type { Ingress, IngressBackend } from '../../cluster/ressources/Ingress'
 import type { NetworkPolicy } from '../../cluster/ressources/NetworkPolicy'
 import type { Lease } from '../../cluster/ressources/Lease'
 import type {
@@ -2399,28 +2399,43 @@ export const describeService = (
   return lines.join('\n')
 }
 
-export const describeIngress = (ingress: Ingress): string => {
-  const resolveDefaultBackend = (): string => {
-    const defaultBackend = ingress.spec.defaultBackend
-    if (defaultBackend == null) {
-      return '<default>'
-    }
-    const serviceBackend = defaultBackend.service
-    if (serviceBackend == null) {
-      return '<default>'
-    }
+const formatIngressBackendDescribe = (backend: IngressBackend): string => {
+  const serviceBackend = backend.service
+  if (serviceBackend != null) {
     const port = serviceBackend.port.number ?? serviceBackend.port.name
     if (port == null) {
       return `${serviceBackend.name} ()`
     }
     return `${serviceBackend.name}:${String(port)} ()`
   }
-  const hostColumnWidth = Math.max(
-    'Host'.length,
-    ...ingress.spec.rules.map((rule) => {
-      return (rule.host ?? '*').length
-    })
-  ) + 2
+  const resourceRef = backend.resource
+  if (resourceRef != null) {
+    const groupPrefix =
+      resourceRef.apiGroup != null && resourceRef.apiGroup.length > 0
+        ? `${resourceRef.apiGroup}/`
+        : ''
+    const kind = resourceRef.kind ?? 'Resource'
+    return `${groupPrefix}${kind}/${resourceRef.name}`
+  }
+  return '<unknown>'
+}
+
+export const describeIngress = (ingress: Ingress): string => {
+  const resolveDefaultBackend = (): string => {
+    const defaultBackend = ingress.spec.defaultBackend
+    if (defaultBackend == null) {
+      return '<default>'
+    }
+    return formatIngressBackendDescribe(defaultBackend)
+  }
+  const rules = ingress.spec.rules ?? []
+  const hostColumnWidth =
+    Math.max(
+      'Host'.length,
+      ...rules.map((rule) => {
+        return (rule.host ?? '*').length
+      })
+    ) + 2
   const lines: string[] = []
   lines.push(`Name:             ${ingress.metadata.name}`)
   lines.push(`Labels:           ${formatLabels(ingress.metadata.labels)}`)
@@ -2432,16 +2447,29 @@ export const describeIngress = (ingress: Ingress): string => {
   lines.push(`  ${'Host'.padEnd(hostColumnWidth)}Path  Backends`)
   lines.push(`  ${'----'.padEnd(hostColumnWidth)}----  --------`)
 
-  for (const rule of ingress.spec.rules) {
+  for (const rule of rules) {
     const host = rule.host ?? '*'
     lines.push(`  ${host.padEnd(hostColumnWidth)}`)
-    for (const pathRule of rule.http.paths) {
-      const backendPort =
-        pathRule.backend.service.port.number ??
-        pathRule.backend.service.port.name
+    const paths = rule.http?.paths ?? []
+    for (const pathRule of paths) {
+      const pathText = pathRule.path ?? ''
       lines.push(
-        `  ${''.padEnd(hostColumnWidth)}${pathRule.path.padEnd(6)} ${pathRule.backend.service.name}:${String(backendPort)} ()`
+        `  ${''.padEnd(hostColumnWidth)}${pathText.padEnd(6)} ${formatIngressBackendDescribe(pathRule.backend)}`
       )
+    }
+  }
+
+  const tlsEntries = ingress.spec.tls
+  if (tlsEntries != null && tlsEntries.length > 0) {
+    lines.push('TLS:')
+    for (const tls of tlsEntries) {
+      const hostsJoined =
+        tls.hosts != null && tls.hosts.length > 0
+          ? tls.hosts.join(', ')
+          : '*'
+      const secret = tls.secretName ?? ''
+      const secretLabel = secret.length > 0 ? secret : '<no secret>'
+      lines.push(`  ${secretLabel} terminates ${hostsJoined}`)
     }
   }
 

@@ -1,54 +1,39 @@
 import { deepFreeze } from '../../shared/deepFreeze'
-import type { KubernetesResource } from '../repositories/types'
+import type { components } from '../../openapi/generated/openapi-types.generated'
+import type {
+  K8sEndpointSlice,
+  K8sEndpointSliceMetadata
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import type { ServiceEndpointBackend } from './Endpoints'
+import type { NamespacedFactoryConfigBase } from './resourceFactoryConfig'
 
-interface EndpointSliceMetadata {
-  name: string
-  namespace: string
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-}
+type IoSchemas = components['schemas']
 
-export interface EndpointSlicePort {
-  name?: string
+type EndpointSliceMetadata = Pick<
+  K8sEndpointSliceMetadata,
+  'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
+>
+
+export type EndpointSlicePort = IoSchemas['io.k8s.api.discovery.v1.EndpointPort'] & {
   protocol?: 'TCP' | 'UDP' | 'SCTP'
-  port?: number
 }
 
-export interface EndpointSliceEndpoint {
-  addresses: string[]
-  conditions?: {
-    ready?: boolean
-    serving?: boolean
-    terminating?: boolean
-  }
-  nodeName?: string
-  targetRef?: {
-    kind: 'Pod'
-    name: string
-    namespace: string
-  }
-}
+export type EndpointSliceEndpoint = IoSchemas['io.k8s.api.discovery.v1.Endpoint']
 
-export interface EndpointSlice extends KubernetesResource {
-  apiVersion: 'discovery.k8s.io/v1'
-  kind: 'EndpointSlice'
+export type EndpointSlice = Omit<
+  K8sEndpointSlice,
+  'metadata' | 'addressType' | 'ports' | 'endpoints'
+> & {
   metadata: EndpointSliceMetadata
   addressType: 'IPv4' | 'IPv6' | 'FQDN'
   ports?: EndpointSlicePort[]
   endpoints: EndpointSliceEndpoint[]
 }
 
-interface EndpointSliceConfig {
-  name: string
-  namespace: string
+interface EndpointSliceConfig extends NamespacedFactoryConfigBase {
   addressType?: 'IPv4' | 'IPv6' | 'FQDN'
   ports?: EndpointSlicePort[]
   endpoints: EndpointSliceEndpoint[]
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
 }
 
 const ENDPOINT_SLICE_SUFFIX_LENGTH = 5

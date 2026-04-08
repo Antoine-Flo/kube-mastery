@@ -1,42 +1,42 @@
 import { z } from 'zod'
+import type { components } from '../../openapi/generated/openapi-types.generated'
+import type {
+  K8sStorageClass,
+  K8sStorageClassMetadata
+} from '../../openapi/generated/k8sOpenapiAliases.generated'
 import { deepFreeze } from '../../shared/deepFreeze'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import type { KubernetesResource } from '../repositories/types'
+import type { ClusterScopedNameFactoryConfigBase } from './resourceFactoryConfig'
 
-export interface StorageClassSpec {
-  provisioner: string
-  reclaimPolicy?: 'Delete' | 'Retain'
-  volumeBindingMode?: 'Immediate' | 'WaitForFirstConsumer'
-  allowVolumeExpansion?: boolean
-  parameters?: Record<string, string>
-}
+type IoSchemas = components['schemas']
 
-interface StorageClassMetadata {
-  name: string
-  namespace: ''
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp: string
-}
+/** Factory input aligned with OpenAPI StorageClass fields the simulator persists. */
+export type StorageClassSpec = Pick<
+  IoSchemas['io.k8s.api.storage.v1.StorageClass'],
+  | 'provisioner'
+  | 'reclaimPolicy'
+  | 'volumeBindingMode'
+  | 'allowVolumeExpansion'
+  | 'parameters'
+>
 
-export interface StorageClass extends KubernetesResource {
-  apiVersion: 'storage.k8s.io/v1'
-  kind: 'StorageClass'
+type StorageClassMetadata = Pick<
+  K8sStorageClassMetadata,
+  'name' | 'namespace' | 'labels' | 'annotations' | 'creationTimestamp'
+> & { namespace: '' }
+
+export type StorageClass = Omit<
+  K8sStorageClass,
+  'metadata' | 'reclaimPolicy' | 'volumeBindingMode'
+> & {
   metadata: StorageClassMetadata
-  provisioner: string
   reclaimPolicy: 'Delete' | 'Retain'
   volumeBindingMode: 'Immediate' | 'WaitForFirstConsumer'
-  allowVolumeExpansion?: boolean
-  parameters?: Record<string, string>
 }
 
-interface StorageClassConfig {
-  name: string
+interface StorageClassConfig extends ClusterScopedNameFactoryConfigBase {
   spec: StorageClassSpec
-  labels?: Record<string, string>
-  annotations?: Record<string, string>
-  creationTimestamp?: string
 }
 
 export const createStorageClass = (
@@ -53,8 +53,9 @@ export const createStorageClass = (
       ...(config.annotations != null ? { annotations: config.annotations } : {})
     },
     provisioner: config.spec.provisioner,
-    reclaimPolicy: config.spec.reclaimPolicy ?? 'Delete',
-    volumeBindingMode: config.spec.volumeBindingMode ?? 'Immediate',
+    reclaimPolicy: (config.spec.reclaimPolicy ?? 'Delete') as 'Delete' | 'Retain',
+    volumeBindingMode: (config.spec.volumeBindingMode ??
+      'Immediate') as 'Immediate' | 'WaitForFirstConsumer',
     ...(config.spec.allowVolumeExpansion != null
       ? { allowVolumeExpansion: config.spec.allowVolumeExpansion }
       : {}),
