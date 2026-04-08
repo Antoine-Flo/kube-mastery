@@ -15,7 +15,6 @@
 import type { Root, Paragraph, Text } from 'mdast'
 import { visit } from 'unist-util-visit'
 import { unified } from 'unified'
-import remarkParse from 'remark-parse'
 import remarkRehype from 'remark-rehype'
 import rehypeRaw from 'rehype-raw'
 import rehypeStringify from 'rehype-stringify'

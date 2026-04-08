@@ -1,4 +1,4 @@
-import type { KubectlResource } from './resources'
+import type { KubectlResource } from './resourceCatalog.generated'
 import type { LabelSelectorLike } from '../../shared/labelSelector'
 
 // Action types supported by kubectl parser

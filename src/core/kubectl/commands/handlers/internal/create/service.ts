@@ -2,7 +2,7 @@ import type { ApiServerFacade } from '../../../../../api/ApiServerFacade'
 import { createService } from '../../../../../cluster/ressources/Service'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
-import { createResourceWithEvents } from '../../../resourceHelpers'
+import { createResourceWithEvents } from '../../../resourceCatalog'
 import type { ParsedCommand } from '../../../types'
 import type { CreateServiceType, ImperativeCreateServiceConfig } from './types'
 

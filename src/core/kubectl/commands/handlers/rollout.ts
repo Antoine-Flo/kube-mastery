@@ -11,7 +11,7 @@ import type { ReplicaSet } from '../../../cluster/ressources/ReplicaSet'
 import type { StatefulSet } from '../../../cluster/ressources/StatefulSet'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
-import { toKindReference, toPluralKindReference } from '../resourceHelpers'
+import { toKindReference, toPluralKindReference } from '../resourceCatalog'
 import type { ParsedCommand, Resource } from '../types'
 
 const RESTART_ANNOTATION = 'kubectl.kubernetes.io/restartedAt'

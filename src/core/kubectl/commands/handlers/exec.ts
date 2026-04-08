@@ -1,7 +1,7 @@
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { SimNetworkRuntime } from '../../../network/SimNetworkRuntime'
 import type { SimTrafficPodIdentity } from '../../../network/TrafficEngine'
-import { RESOURCE_ALIAS_MAP } from '../resources'
+import { RESOURCE_ALIAS_MAP } from '../resourceCatalog'
 import type { ParsedCommand } from '../types'
 import { executeRuntimeNetworkCommand } from './internal/runtimeCommand'
 

@@ -1,151 +1,150 @@
 ---
-seoTitle: 'Kubernetes kubectl in Practice, get, describe, apply'
-seoDescription: 'Learn how to use kubectl to inspect resources, stream logs, apply manifests, and manage your Kubernetes cluster from the command line.'
+seoTitle: 'kubectl in Practice, Get, Describe, Explain, Output Formats'
+seoDescription: 'Master the core kubectl commands for daily Kubernetes work: listing resources, inspecting objects, reading documentation, and formatting output.'
 ---
 
 # kubectl in Practice
 
-`kubectl` is the command-line tool you use to interact with a Kubernetes cluster. Everything you do - creating a Deployment, inspecting a crashed Pod, streaming logs, deleting a Service - goes through this single binary. It translates your commands into HTTP calls to the API server, and formats the responses back into readable output. Knowing how to use it well is probably the most transferable skill in the entire Kubernetes ecosystem.
+Every interaction with a Kubernetes cluster goes through one tool: `kubectl`. It is your primary interface for inspecting state, creating resources, and diagnosing problems. Learning to read its output fluently is more useful than memorizing any manifest field. This lesson covers the commands you will use in every session.
 
-:::info
-Every `kubectl` command is ultimately an HTTP request to the API server. The tool handles authentication, formatting, and the mechanics of the call - but the operation always goes through the same central entry point.
+## The Basic Shape of a kubectl Command
+
+Almost every `kubectl` command follows the same structure:
+
+```
+kubectl <verb> <resource-type> [name] [flags]
+```
+
+The verb is what you want to do: `get`, `describe`, `apply`, `delete`, `logs`, `exec`. The resource type is the kind of object: `pod`, `node`, `deployment`, `service`. The name filters to a specific object. Flags modify the output or scope.
+
+Start by listing the nodes in your cluster:
+
+```bash
+kubectl get nodes
+```
+
+
+Now list all Pods across all namespaces:
+
+```bash
+kubectl get pods -A
+```
+:::visualizer
+You can also watch the resources in real time in the cluster visualizer. It's the telescope icon below the terminal.
 :::
 
-## Getting Information
+The `-A` flag means "all namespaces." Without it, `kubectl get pods` only shows Pods in the `default` namespace. In a fresh cluster you may see Pods in `kube-system` that belong to the control plane components.
 
-`kubectl get` is the command you'll run more than any other. It lists resources of a given type, with a concise tabular output that gives you the current state at a glance. You can ask for a single resource type, several at once, or everything in a namespace.
+:::quiz
+You run `kubectl get pods` and see no output. You know some Pods exist. What is the most likely cause?
 
-```bash
-kubectl get pods
-kubectl get deployments
-kubectl get services
-kubectl get nodes
-kubectl get all
-```
+- The cluster is empty
+- The Pods are in a different namespace
+- kubectl is not connected to the cluster
 
-The output columns vary by resource type. For Pods, you see `READY`, `STATUS`, `RESTARTS`, and `AGE`. `READY` shows how many containers inside the Pod are passing their readiness check, in the form `running/total`. A Pod showing `1/1 Running` with 0 restarts is healthy. A Pod showing `0/1 CrashLoopBackOff` with a rising restart count is failing repeatedly and Kubernetes is backing off before retrying. These two columns tell you the health of a Pod at a glance before you need to dig deeper.
+**Answer:** The Pods are in a different namespace. By default, `kubectl get` scopes to the `default` namespace. Use `-n <namespace>` to target a specific namespace, or `-A` to see all namespaces at once.
+:::
 
-When you need more than the summary, `kubectl describe` gives you the full picture of a single resource. It includes all the fields, the current status, and most importantly the `Events` section at the bottom, which is a chronological log of what Kubernetes has done to this resource. When a Pod fails to start, the events are where you find out whether the image couldn't be pulled, the container crashed immediately on startup, or the scheduler couldn't find a suitable node.
+## Describing Resources
 
-```bash
-kubectl describe pod <pod-name>
-kubectl describe deployment <deployment-name>
-kubectl describe node <node-name>
-```
-
-## Applying and Deleting Resources
-
-`kubectl apply` is how you create or update resources from a manifest file. If the resource doesn't exist yet, Kubernetes creates it. If it already exists, Kubernetes computes the difference between what's in the file and what's currently stored, and applies only the changes. This idempotency is what makes `apply` safe to run repeatedly - you can run it in a CI pipeline without worrying about whether the resource already exists.
+`kubectl get` gives you a compact summary. `kubectl describe` gives you the full picture: status conditions, resource requests, events, and the recent history of what happened to the object.
 
 ```bash
-kubectl apply -f deployment.yaml
-kubectl apply -f ./manifests/   # applies every YAML file in a directory
+kubectl describe node <NODE-NAME>
 ```
 
-`kubectl delete` removes resources. You can target a resource by its name, or pass a file to delete exactly what that file describes.
+The `Events` section at the bottom of a `describe` output is often the first place to look when something is wrong. Events record what the cluster did or tried to do: scheduling decisions, image pulls, container starts, and failures.
+
+Start a Pod so you have something to inspect:
 
 ```bash
-kubectl delete pod <pod-name>
-kubectl delete deployment my-app
-kubectl delete -f deployment.yaml
+kubectl run my-pod --image=nginx:1.28
 ```
 
-Be careful with `delete`: it's immediate and there's no confirmation prompt. Deleting a Deployment removes the Deployment, its ReplicaSets, and all the Pods it owns in a single operation.
-
-## Controlling the Output Format
-
-The default tabular output is useful for a quick overview. The `-o` flag changes the format to something more detailed or machine-readable.
-
-`-o wide` adds extra columns that don't fit in the default view, like which node a Pod is running on, or what its IP address is. `-o yaml` outputs the full resource object as YAML - this is invaluable when you want to see what Kubernetes has set on an object, including all the fields that were defaulted or populated by controllers. `-o json` gives you the same thing in JSON, useful for piping into tools like `jq`. `-o name` gives you just the resource names, which is useful in scripts.
+Now describe it:
 
 ```bash
-kubectl get pods -o wide
-kubectl get pod my-pod -o yaml
-kubectl get pods -o name
+kubectl describe pod my-pod
 ```
 
-The `--watch` flag (shortened to `-w`) keeps the command running and prints new lines whenever something changes. It's useful when you're waiting for a Pod to start or a rolling update to finish.
+:::quiz
+Look at the output of `kubectl describe pod my-pod`. Which section tells you what the cluster actually did to start this Pod, step by step?
+
+**Try it:** Scroll to the bottom of the describe output.
+
+**Answer:** The `Events` section. It lists every action the cluster took: scheduling the Pod to a node, pulling the image, creating the container, and starting it. When something goes wrong, this section shows exactly where the process stopped and why.
+:::
+
+## Reading the Built-in Documentation
+
+Every Kubernetes resource field has built-in documentation accessible from the terminal. You do not need a browser to look up what a field means.
+
+```bash
+kubectl explain pod
+```
+
+This prints a description of the Pod resource and its top-level fields. Drill deeper with dot notation:
+
+```bash
+kubectl explain pod.spec
+kubectl explain pod.spec.containers
+kubectl explain pod.spec.containers.resources
+```
+
+
+
+`kubectl explain` is one of the most important tools for the CKA exam. You can write an entire manifest referencing only the built-in docs, without leaving the terminal.
+
+:::quiz
+You need to find the correct field name for setting a container's environment variables in a Pod spec. Is it "env", "environment", or "envVars"?
+
+**Try it:** `kubectl explain pod.spec.containers`
+
+**Answer:** The field is `env`. The explain output shows it as `env <[]EnvVar>` with a description that confirms it sets environment variables for the container. Reading explain output systematically is faster than guessing field names.
+:::
+
+## Output Formats
+
+The default `kubectl get` output is a human-readable table. For scripting or deeper inspection, you can change the output format with `-o`.
+
+Get raw JSON for a node:
+
+```bash
+kubectl get node <NODE-NAME> -o json
+```
+
+Get YAML, which is more readable and closer to what you would write in a manifest:
+
+```bash
+kubectl get node <NODE-NAME> -o yaml
+```
+
+Extract a specific field with jsonpath:
+
+```bash
+kubectl get node <NODE-NAME> -o jsonpath='{.status.nodeInfo.kubeletVersion}'
+```
+
+The jsonpath format follows the same structure as the YAML output. Use `kubectl get -o yaml` first to explore the structure, then write the jsonpath expression to extract exactly what you need.
+
+:::warning
+`kubectl get -o yaml` on a live resource includes many fields that Kubernetes added at runtime: `resourceVersion`, `uid`, `creationTimestamp`, `managedFields`. If you copy this output into a new manifest file and try to apply it, some of these fields will cause conflicts. Always strip them out or generate a clean manifest with `kubectl create --dry-run=client -o yaml` instead.
+:::
+
+## Watching Resources
+
+Add `--watch` to any `get` command to stream live updates as objects change:
 
 ```bash
 kubectl get pods --watch
 ```
 
-## Filtering with Namespaces and Labels
-
-Without a `-n` flag, `kubectl` operates in the `default` namespace. Almost every command accepts `-n <namespace>` to target a different one, and `--all-namespaces` (or `-A`) to query across all of them at once.
+Press Ctrl+C to stop. Watching is useful when you apply a manifest and want to see Pods transition from `Pending` to `ContainerCreating` to `Running` in real time.
 
 ```bash
-kubectl get pods -n kube-system
-kubectl get pods -A
+kubectl get pods -A --watch
 ```
 
-Labels are key-value pairs attached to resources, and the `-l` flag lets you filter by them. If your Pods all have a label `app=backend`, you can limit every command to just those Pods without knowing their exact names.
+Now use what you know. Without looking back at the commands above, list all Deployments in the `kube-system` namespace. You have what you need.
 
-```bash
-kubectl get pods -l app=backend
-kubectl describe pods -l app=backend
-kubectl delete pods -l app=backend
-```
-
-## Generating Manifests Without Applying Them
-
-The combination `--dry-run=client -o yaml` is one of the most useful patterns in `kubectl`. It generates a valid YAML manifest without creating anything in the cluster. When you're starting a new manifest from scratch, this is far faster than writing it by hand and looking up every field name.
-
-```bash
-kubectl run my-pod --image=nginx:1.28 --dry-run=client -o yaml
-kubectl create deployment web --image=nginx:1.28 --replicas=3 --dry-run=client -o yaml
-```
-
-## Hands-On Practice
-
-**1. Get all resources in the default namespace:**
-
-```bash
-kubectl get all
-```
-
-Notice that there's already a Service named `kubernetes`. This is the Service that Pods use to reach the API server from inside the cluster.
-
-**2. Describe that Service:**
-
-```bash
-kubectl describe service kubernetes
-```
-
-Read through the output carefully. Notice the `Endpoints` field - it points to the API server's address. The `Events` section at the bottom is empty because this Service is managed by the cluster itself and never changes.
-
-**3. Create a Pod without writing a manifest:**
-
-```bash
-kubectl run explore-me --image=nginx:1.28
-```
-
-**4. Inspect it using each output format:**
-
-```bash
-kubectl get pod explore-me
-kubectl get pod explore-me -o wide
-kubectl get pod explore-me -o yaml
-```
-
-The YAML output contains far more than what you wrote. Kubernetes has filled in dozens of default values and added status fields. This is the live state of the object as stored in etcd.
-
-**5. Read the startup events:**
-
-```bash
-kubectl describe pod explore-me
-```
-
-Scroll to the bottom and find the `Events` section. You should see the sequence `Scheduled`, `Pulling`, `Pulled`, `Created`, `Started`. If the image pull failed, the reason would appear here.
-
-**6. Check the logs:**
-
-```bash
-kubectl logs explore-me
-```
-
-**7. Clean up:**
-
-```bash
-kubectl delete pod explore-me
-```
+`kubectl` is a read-evaluate-act loop that mirrors how Kubernetes itself works. You inspect current state, decide what action to take, apply it, and inspect again. The commands in this lesson are the ones you will use dozens of times per session. In the next lesson, you will learn to organize and select resources using namespaces and labels.

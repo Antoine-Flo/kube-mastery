@@ -1,8 +1,8 @@
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import { parseSelector, stripMatchingQuotes } from '../../shared/parsing'
-import { RESOURCE_ALIAS_MAP } from './resources'
-import { parseResourceTargetToken } from './resourceTarget'
+import { RESOURCE_ALIAS_MAP } from './resourceCatalog'
+import { parseResourceTargetToken } from './resourceCatalog'
 import type { Action, Resource } from './types'
 
 // ═══════════════════════════════════════════════════════════════════════════

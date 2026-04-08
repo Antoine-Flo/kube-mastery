@@ -10,7 +10,7 @@ import {
   RESOURCE_KIND_BY_RESOURCE,
   toKindReference,
   toPluralKindReference
-} from '../resourceHelpers'
+} from '../resourceCatalog'
 import { validateImmutableFieldsForEdit } from '../immutableFieldValidation'
 
 const PATCHABLE_RESOURCES: Resource[] = [

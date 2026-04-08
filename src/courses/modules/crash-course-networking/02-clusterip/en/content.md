@@ -1,61 +1,49 @@
 ---
-seoTitle: 'Kubernetes ClusterIP, Stable Internal Access, Selectors'
-seoDescription: 'Learn how Kubernetes ClusterIP Services provide a stable virtual IP and DNS name for internal service-to-service communication using label selectors.'
+seoTitle: 'Kubernetes ClusterIP Service, Stable VIP, Load Balancing, Endpoints'
+seoDescription: 'Learn how a ClusterIP Service gives a group of Pods a stable virtual IP and DNS name inside the cluster, enabling reliable inter-service communication.'
 ---
 
-# ClusterIP: Stable Internal Access
+# ClusterIP
 
-ClusterIP is the default Service type, and the foundation for all other types. It solves the problem you saw in the previous lesson: it provides a stable virtual IP address and DNS name in front of a dynamic group of Pods, so that clients inside the cluster always have a reliable way to reach them, regardless of how many times the Pods are replaced.
+The previous lesson showed that Pod IPs change whenever a Pod is replaced. A ClusterIP Service solves this by placing a stable virtual IP address in front of a group of Pods. The virtual IP never changes, even as the Pods behind it come and go. Every other service in the cluster talks to the virtual IP, not to any individual Pod.
 
-The address assigned to a ClusterIP Service is virtual - it doesn't belong to any real network interface on any machine. Instead, every node in the cluster runs `kube-proxy`, which programs the node's kernel networking rules so that traffic sent to the Service's virtual IP is forwarded to one of the healthy backend Pods. This happens transparently, below the level of your application.
+This is the most common Service type and the default when you create one without specifying a type. It is internal only: the ClusterIP is routable within the cluster network, but not from outside.
 
-:::info
-A ClusterIP Service gives your workload a stable internal address. It's not reachable from outside the cluster - it's designed purely for service-to-service communication within the cluster.
-:::
+## How a Service Finds Its Pods
 
-## Writing a Service Manifest
+A Service does not maintain a static list of Pod IPs. Instead, it uses a **label selector** to dynamically discover which Pods should receive traffic. kube-proxy on each node watches the API server and continuously updates routing rules to reflect the current set of Pods that match the selector.
 
-The Service manifest is straightforward, but the `selector` field is the piece that does the work:
+@@@
+graph LR
+    CLIENT["Pod: frontend"]
+    SVC["Service: backend<br/>ClusterIP: 10.96.10.5<br/>Port: 80"]
+    P1["Pod: backend-abc<br/>10.0.1.3:8080"]
+    P2["Pod: backend-def<br/>10.0.2.7:8080"]
+    P3["Pod: backend-ghi<br/>10.0.1.9:8080"]
 
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: backend-service
-spec:
-  selector:
-    app: backend
-  ports:
-    - port: 80
-      targetPort: 80
-  type: ClusterIP
-```
+    CLIENT -->|"TCP :80"| SVC
+    SVC -->|"load balanced"| P1
+    SVC -->|"load balanced"| P2
+    SVC -->|"load balanced"| P3
+@@@
 
-The `selector` tells the Service which Pods to route traffic to. Any Pod in the same namespace that has `app: backend` in its labels is automatically included as a backend. When a Pod with that label is created, it immediately starts receiving traffic through the Service. When it's deleted or fails its readiness probe, it's immediately removed from the rotation. You never configure the Service to know about specific Pods - you just tell it which label to match, and Kubernetes handles the rest.
-
-The `port` field is the port the Service listens on. The `targetPort` is the port on the Pod that traffic is forwarded to. These don't have to be the same number, which lets you expose a Service on port 80 even if your container listens on port 3000.
-
-## The Endpoints Object
-
-Behind every Service is an **Endpoints** object that Kubernetes maintains automatically. It contains the current list of Pod IPs and ports that match the Service's selector. You can inspect it to see exactly which Pods are receiving traffic at any moment:
+The set of Pods a Service routes to is called its **endpoints**. You can inspect them directly:
 
 ```bash
-kubectl get endpoints backend-service
+kubectl get endpoints <SERVICE-NAME>
 ```
 
-When a Pod is replaced and gets a new IP, Kubernetes updates the Endpoints object within seconds. The Service's virtual IP never changes - only the Endpoints behind it do.
+Each endpoint is a `Pod-IP:port` pair. When a Pod is deleted, its endpoint disappears from this list within seconds. When a new Pod starts and becomes ready, its endpoint is added. The Service's ClusterIP never moves.
 
-## Hands-On Practice
+## Writing the Manifest
 
-**1. Create the backend Deployment:**
-Watch the visualizer to see the Pods being created and spread across the nodes.
+Create the Deployment first:
 
 ```bash
-nano backend.yaml
+nano backend-deployment.yaml
 ```
 
 ```yaml
-# backend.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -71,29 +59,60 @@ spec:
         app: backend
     spec:
       containers:
-        - name: backend
+        - name: api
           image: nginx:1.28
           ports:
             - containerPort: 80
 ```
 
 ```bash
-kubectl apply -f backend.yaml
-kubectl rollout status deployment/backend
+kubectl apply -f backend-deployment.yaml
 ```
 
-**2. Create the Service:**
+Now create the Service. Build the manifest field by field.
+
+Start with kind and metadata:
+
+```yaml
+# illustrative only
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+```
+
+Add `spec.selector` to match the Pods:
+
+```yaml
+# illustrative only
+spec:
+  selector:
+    app: backend
+```
+
+Add `spec.ports` to define what traffic to accept and where to forward it:
+
+```yaml
+# illustrative only
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 80
+      targetPort: 80
+```
+
+`port` is what clients connect to on the Service. `targetPort` is the port on the container that receives the traffic. Here they are both 80, but they can differ. The full manifest:
 
 ```bash
 nano backend-service.yaml
 ```
 
 ```yaml
-# backend-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend-service
+  name: backend
 spec:
   selector:
     app: backend
@@ -104,45 +123,72 @@ spec:
 
 ```bash
 kubectl apply -f backend-service.yaml
-kubectl get service backend-service
 ```
 
-The `CLUSTER-IP` column shows the stable virtual IP assigned to this Service. Note it down - it will remain the same for the lifetime of this Service, regardless of what happens to the Pods.
+:::visualizer
+Watch the cluster visualizer: the Service appears in the network layer with its ClusterIP and a link to the three backend Pods.
+:::
 
-**3. Inspect the Endpoints:**
+## Inspecting the Service
+
+List Services to find the assigned ClusterIP:
 
 ```bash
-kubectl get endpoints backend-service
+kubectl get service backend
 ```
 
-You should see three IP:port pairs, one for each backend Pod.
-
-**4. Replace a Pod and watch the Endpoints update:**
+The `CLUSTER-IP` column shows the virtual IP. The `PORT(S)` column shows `80/TCP`. Now inspect the endpoints:
 
 ```bash
-kubectl get pods -l app=backend
-# Copy one pod NAME, then:
-kubectl delete pod <POD-NAME>
-
-sleep 5
-kubectl get endpoints backend-service
+kubectl get endpoints backend
 ```
 
-The old Pod's IP has been removed and the replacement Pod's new IP has been added. The Service's `CLUSTER-IP` is unchanged.
-
-**5. Test that nginx is reachable through the Service:**
+You should see three `IP:80` entries, one per Pod. Cross-reference them with:
 
 ```bash
-kubectl get pods -l app=backend
-# Copy one pod NAME, then:
-kubectl exec <POD-NAME> -- curl http://backend-service
+kubectl get pods -o wide -l app=backend
 ```
 
-This test shows that clients use the Service DNS name, not Pod IPs, to reach the app. The Service receives the request and forwards it to one matching backend Pod selected by its label selector, which is exactly how stable in-cluster access is provided.
+The IPs in the endpoints list match the Pod IPs. Kubernetes built this list automatically from the label selector.
 
-**6. Clean up:**
+:::quiz
+You add a fourth Pod manually with the label `app: backend`. Does the Service start routing traffic to it?
+
+**Try it:** `kubectl run extra --image=nginx:1.28 --labels=app=backend` then `kubectl get endpoints backend`
+
+**Answer:** Yes. The Service's endpoints are rebuilt dynamically from the label selector. Any Pod that gains the `app: backend` label and becomes Ready is automatically added to the endpoint list and starts receiving traffic.
+:::
+
+## The targetPort and port Distinction
+
+Why does the Service have both `port` and `targetPort`? Because they can be different.
+
+The `port` is what clients use to address the Service. The `targetPort` is what the container actually listens on. A common pattern is to expose a Service on port 80 while the container listens on port 3000:
+
+```yaml
+# illustrative only
+ports:
+  - port: 80
+    targetPort: 3000
+```
+
+This lets you keep a clean external interface (`port: 80`) without forcing your application to run as root or bind to a privileged port.
+
+:::quiz
+A frontend Pod sends a request to `http://backend:80`. The backend container listens on port 3000. The Service has `port: 80` and `targetPort: 3000`. Does the request reach the container?
+
+**Answer:** Yes. The Service accepts traffic on port 80 and forwards it to port 3000 on each backend Pod. The frontend never needs to know what port the container uses internally.
+:::
+
+:::warning
+If a Pod is running but not receiving traffic from its Service, the first thing to check is the endpoint list with `kubectl get endpoints <name>`. An empty `ENDPOINTS` column means the selector matches no ready Pods. Common causes: the label on the Pod does not match the selector exactly (check for typos), or the Pod is not yet `Ready` (its readiness probe is failing).
+:::
+
+Now clean up:
 
 ```bash
 kubectl delete deployment backend
-kubectl delete service backend-service
+kubectl delete service backend
 ```
+
+A ClusterIP Service gives a group of Pods a single stable address and load balances traffic across all healthy instances automatically. It is the backbone of service-to-service communication inside a cluster. In the next lesson, you will expose a Service outside the cluster using NodePort and LoadBalancer.

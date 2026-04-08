@@ -3,7 +3,7 @@ import { createDeployment } from '../../../../../cluster/ressources/Deployment'
 import type { PodTemplateSpec } from '../../../../../cluster/ressources/ReplicaSet'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
-import { createResourceWithEvents } from '../../../resourceHelpers'
+import { createResourceWithEvents } from '../../../resourceCatalog'
 import type { ParsedCommand } from '../../../types'
 
 export const getCreateImages = (parsed: ParsedCommand): string[] => {

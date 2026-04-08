@@ -43,7 +43,7 @@ import { error, success } from '../shared/result'
 import {
   isSupportedResourceKind,
   SUPPORTED_RESOURCE_KINDS
-} from './commands/resourceSchema'
+} from './commands/resourceCatalog'
 
 // ─── Types ───────────────────────────────────────────────────────────────
 

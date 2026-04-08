@@ -1,109 +1,154 @@
 ---
-seoTitle: 'Kubernetes Cluster Architecture, Control Plane, Nodes'
-seoDescription: 'Understand the Kubernetes cluster structure, including the API server, etcd, scheduler, controller manager, kubelet, and kube-proxy on worker nodes.'
+seoTitle: 'Kubernetes Cluster Architecture, Control Plane, Worker Nodes, Components'
+seoDescription: 'Learn how a Kubernetes cluster is structured: the control plane components that make decisions and the worker nodes that run your workloads.'
 ---
 
 # Cluster Architecture
 
-A Kubernetes cluster is not a single machine - it's a coordinated group of machines, each with a specific role. Understanding that structure matters because it shapes how failures behave, where you look when something goes wrong, and why `kubectl` commands work the way they do. The cluster is split into two layers: the **control plane**, which manages state and makes decisions, and the **worker nodes**, which actually run your application containers.
+You tell Kubernetes "I want three copies of this web server running." Seconds later, three containers are up across your machines. But between your instruction and that result, a chain of components had to read it, validate it, pick which machines to use, and actually start the containers. Understanding that chain means you can reason about failures, delays, and unexpected behavior instead of treating the cluster as a black box.
 
-:::info
-The control plane is the brain of the cluster. Worker nodes are the hands. You interact with both through a single entry point: the API server.
+@@@
+graph TB
+    subgraph CP["Control Plane"]
+        API["API Server"]
+        ETCD["etcd"]
+        SCH["Scheduler"]
+        CCM["Controller Manager"]
+    end
+
+    subgraph N1["Worker Node 1"]
+        KL1["kubelet"]
+        KP1["kube-proxy"]
+        C1["Pods"]
+    end
+
+    subgraph N2["Worker Node 2"]
+        KL2["kubelet"]
+        KP2["kube-proxy"]
+        C2["Pods"]
+    end
+
+    API <--> ETCD
+    API --> SCH
+    API --> CCM
+    KL1 --> API
+    KL2 --> API
+    KP1 --> API
+    KP2 --> API
+@@@
+
+A Kubernetes cluster is a group of machines working together. Each machine in the cluster is called a **node**. A node can be a physical server in a data center, a virtual machine in a cloud provider, or even a container on your laptop. From Kubernetes' perspective, a node is just a machine with CPU, memory, and a network connection.
+
+Kubernetes does not run containers on a node directly. Instead, it groups one or more containers into a **Pod**, the smallest unit it can schedule. Every container inside it shares the same network and the same lifecycle. It's the wrapper Kubernetes puts around your containers before placing them on a node.
+
+:::quiz
+Two containers need to share a file on disk without any network call. What is the minimum Kubernetes structure that makes this possible?
+
+- Two Pods on the same node, since they share the node's filesystem
+- One Pod containing both containers, since containers in the same Pod share volumes
+- Two Pods connected by a Service, since Services route traffic between workloads
+
+**Answer:** One Pod containing both containers. Containers in the same Pod share the same network namespace and can mount the same volumes, so a shared file is possible with a single volume declaration. Two separate Pods, even on the same node, have completely isolated filesystems and cannot share files directly.
 :::
+
+A cluster has two distinct roles: the **worker nodes** that host your Pods, and the **control plane**, a dedicated set of nodes that make all the decisions about the cluster.
 
 ## The Control Plane
 
-The control plane is a set of processes that run together, usually on dedicated machines separate from your workloads. You never deploy your applications here. Its job is to store the desired state of the cluster, watch the actual state, and drive the two toward each other.
+The control plane is the brain of the cluster. In a production setup it runs on dedicated machines, separate from your workloads.
 
-### The API Server
+@@@
+graph TB
+    ETCD["etcd<br/>source of truth"]
+    API["API Server"]
+    SCH["Scheduler"]
+    CCM["Controller Manager"]
 
-The API server is the only component that anything talks to directly. When you run `kubectl apply`, you're sending an HTTP request to the API server. When a controller needs to update the status of a Pod, it talks to the API server. When the kubelet on a worker node reports that a container crashed, it reports to the API server. Every piece of cluster information flows through it, and it validates every request before storing or acting on it.
+    API -->|"write state"| ETCD
+    ETCD -->|"read state"| API
+    SCH -->|"watch & assign"| API
+    CCM -->|"watch & reconcile"| API
+@@@
 
-### etcd
+**The API Server** (`kube-apiserver`) is the single entry point for everything. Every `kubectl` command, every controller update, every kubelet heartbeat goes through the API server. It validates requests, applies authorization, and persists accepted objects to etcd. Nothing in the cluster talks to anything else directly, every component talks to the API server.
 
-etcd is the cluster's persistent storage. It's a distributed key-value store that holds the entire state of the cluster: every object you've created, every status update, every configuration change. The API server reads from and writes to etcd. If etcd is lost without a backup, the cluster's state is gone. You can rebuild the control plane processes, but you cannot reconstruct what was in etcd without a backup. This is why etcd backup is one of the most critical operational concerns in any real cluster.
+**etcd** is the cluster's source of truth. It is a distributed key-value store that holds the entire cluster state: every object you have ever created, every status update, every label. If etcd is unavailable, the API server cannot persist state, and the cluster stops accepting changes. etcd does not run your workloads, it is a database.
 
-### The Scheduler
+**The Scheduler** watches for newly created Pods that have no assigned node. When it finds one, it evaluates every available node against the Pod's requirements: CPU requests, memory requests, node selectors, taints, and affinity rules. It picks the best fit and writes the node name into the Pod object. The scheduler does not start containers, it only makes the placement decision.
 
-When a new Pod is created, it initially exists without a node assignment. The scheduler's job is to find a suitable node and record that assignment. It looks at each node's available CPU and memory, compares them against the Pod's resource requests, checks for any constraints you've declared (like requiring a specific label on the node, or avoiding nodes with a certain taint), and picks the best fit. The scheduler does not start the Pod - it only decides where it goes. The actual start happens on the node.
+**The Controller Manager** runs a collection of control loops, one for each resource type that needs reconciliation. The Deployment controller watches Deployments and creates or scales ReplicaSets. The ReplicaSet controller watches ReplicaSets and creates or deletes Pods. Each controller continuously compares the desired state stored in etcd to the actual state it observes, and acts to close any gap.
 
-### The Controller Manager
+:::quiz
+Why does every cluster component talk to the API server instead of talking to each other directly?
 
-This component bundles together many small control loops, each responsible for a specific type of resource. The Deployment controller watches Deployment objects and creates ReplicaSets. The ReplicaSet controller watches ReplicaSets and creates or deletes Pods to keep the actual count matching the desired count. The Node controller monitors nodes and reacts when they go offline. Each of these loops runs the same basic cycle: read current state from the API server, compare it to desired state, and take the smallest action needed to close the gap.
+**Answer:** The API server is the single source of truth. All reads and writes go through it, so every component sees the same consistent view of the cluster. Direct component-to-component communication would create inconsistency and make authorization impossible to enforce centrally.
+:::
 
 ## Worker Nodes
 
-Worker nodes are the machines that run your Pods. Each node needs three things to participate in the cluster.
-
-### kubelet
-
-The kubelet is an agent that runs on every worker node and is the only component that can actually start or stop containers. It watches the API server for Pods that have been scheduled to its node, and takes responsibility for making those Pods run. It pulls the container image if needed, starts the container via the container runtime, and continuously checks whether the container is still alive. If the container crashes, the kubelet restarts it according to the Pod's restart policy. It also reports the current status of every Pod back to the API server, which is why `kubectl get pods` is able to show you whether a container is `Running`, `Pending`, or `CrashLoopBackOff`.
-
-### kube-proxy
-
-kube-proxy maintains the networking rules on each node that make Services work. When you create a Service, kube-proxy programs the node's kernel so that traffic sent to the Service's virtual IP address gets forwarded to one of the backing Pods. This happens entirely at the network level, transparently to your application.
-
-### The Container Runtime
-
-This is the component that actually interfaces with the operating system to create and destroy containers. Kubernetes supports any runtime that implements the Container Runtime Interface. `containerd` is the most common choice today.
-
-## How a Request Flows Through the Cluster
+Worker nodes are the machines that run your containers. Each node runs a small set of components that report to the control plane and execute its instructions.
 
 @@@
-sequenceDiagram
-    participant You as kubectl (your laptop)
-    participant API as API Server
-    participant ETCD as etcd
-    participant CM as Controller Manager
-    participant SCHED as Scheduler
-    participant KL as kubelet (node)
+graph LR
+    API["API Server"]
 
-    You->>API: kubectl apply -f deployment.yaml
-    API->>ETCD: store Deployment object
-    CM->>API: watch: new Deployment detected
-    CM->>API: create ReplicaSet + Pods (unscheduled)
-    API->>ETCD: store Pods
-    SCHED->>API: watch: unscheduled Pods detected
-    SCHED->>API: assign each Pod to a node
-    KL->>API: watch: Pod assigned to my node
-    KL->>KL: pull image, start container
-    KL->>API: report status: Running
+    subgraph N1["Worker Node 1"]
+        KL1["kubelet"] --> P1["Pod"] & P2["Pod"]
+        KP1["kube-proxy"]
+    end
+
+    subgraph N2["Worker Node 2"]
+        KL2["kubelet"] --> P3["Pod"]
+        KP2["kube-proxy"]
+    end
+
+    KL1 <-->|"status / instructions"| API
+    KL2 <-->|"status / instructions"| API
+    KP1 & KP2 -->|"watch services"| API
 @@@
 
-Every step in this chain is independent and event-driven. The API server stores state. The controllers and the scheduler react to changes in that state. The kubelet reacts to assignments. If any component is temporarily unavailable, the others continue working and catch up when it returns.
+**The kubelet** is the agent running on every worker node. It watches the API server for Pods that have been scheduled to its node, and it ensures those Pods are running. If a container inside a Pod crashes, the kubelet restarts it. It also reports node health and container status back to the API server, which is how the control plane knows whether workloads are healthy.
 
-## Hands-On Practice
+**kube-proxy** maintains network rules on the node. It enables Services to work by setting up the routing rules that forward traffic destined for a Service IP to one of its backing Pods. You never interact with kube-proxy directly, but every time you hit a Service, kube-proxy is what delivers your request.
 
-**1. List the nodes and their details:**
+**The container runtime** is the software that actually pulls images and starts containers. Kubernetes supports any runtime that implements the Container Runtime Interface (CRI). The most common is `containerd`. The kubelet tells the runtime what to run; the runtime handles the low-level details.
+
+:::quiz
+A Pod is scheduled but its containers never start. Which component is most likely failing?
+
+- The API server, which cannot accept the Pod
+- The scheduler, which cannot find a node
+- The kubelet on the assigned node, which is not starting the containers
+
+**Answer:** The kubelet. Once the scheduler has assigned a node, starting the containers is the kubelet's job. If the kubelet is crashing, disconnected, or the container runtime is broken, the Pod will be stuck in a pending or unknown state despite having a node assignment.
+:::
+
+## Seeing the Cluster
+
+List your nodes:
+
+```bash
+kubectl get nodes
+```
+
+You should see one or more nodes with a `Ready` status. The `ROLES` column shows which nodes are part of the control plane and which are workers.
+
+Now inspect a node in detail:
+
+```bash
+kubectl describe node <NODE-NAME>
+```
+
+The output has several sections worth knowing. `Conditions` shows whether the node is under memory pressure or disk pressure and whether it is ready to accept Pods. `Capacity` and `Allocatable` show total and available CPU and memory. `Non-terminated Pods` lists every Pod currently running on that node.
+
+:::warning
+If a node's condition shows `Ready: False` or `Ready: Unknown`, Pods on that node stop reporting status to the control plane. Kubernetes will eventually evict those Pods and reschedule them on healthy nodes, but this takes time. The cluster does not assume a node has failed until a timeout passes, to avoid unnecessary rescheduling during brief network hiccups.
+:::
 
 ```bash
 kubectl get nodes -o wide
 ```
 
-The `-o wide` flag adds columns for internal IP, OS image, kernel version, and container runtime. You can see exactly which runtime is in use on each node.
+The `-o wide` flag adds the node's internal IP address and the container runtime version. Both are useful when debugging scheduling or connectivity issues.
 
-**2. Describe a node to see its full status:**
-
-```bash
-kubectl get nodes
-# copy a NAME from the output, then:
-kubectl describe node <NODE-NAME>
-```
-
-Scroll through the output. The `Capacity` and `Allocatable` sections show the total and schedulable CPU and memory. The `Conditions` section lists things like `MemoryPressure` and `DiskPressure`. The `Allocated resources` table at the bottom shows how much CPU and memory is currently claimed by the Pods running on this node - this is exactly what the scheduler looks at before placing a new Pod here.
-
-**3. Explore the control plane Pods:**
-
-```bash
-kubectl get pods -n kube-system -o wide
-```
-
-These are the components you just read about, running as ordinary Pods. Notice which node they're scheduled on - in most configurations, the control plane components run on a dedicated node that doesn't accept user workloads.
-
-**4. Check the API server and client versions:**
-
-```bash
-kubectl version
-```
-
-`Server Version` is the Kubernetes version running on the API server. `Client Version` is the version of the `kubectl` binary on your machine. These don't need to match exactly, but should be within one minor version of each other.
+The control plane decides, the worker nodes execute. Every component communicates through the API server, which keeps etcd as the authoritative record of everything happening in the cluster. In the next lesson, you will use `kubectl` to navigate this state and inspect resources at every level.

@@ -35,7 +35,8 @@
     "kubectl:help:generate": "tsx bin/generate-kubectl-help-catalog.ts",
     "command-index:generate": "tsx bin/generate-command-index.ts",
     "mcp:simulation": "tsx mcp/simulation-server/index.ts",
-    "parity:manual": "tsx bin/parity/manual-compare.ts"
+    "parity:manual": "tsx bin/parity/manual-compare.ts",
+    "cluster:resources:generate": "tsx bin/generate-cluster-resources.ts"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",

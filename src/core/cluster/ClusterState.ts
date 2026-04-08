@@ -3,72 +3,22 @@ import type { EventBus } from './events/EventBus'
 import { applyClusterEventToState } from './events/handlers'
 import type { ClusterEvent } from './events/types'
 import {
-  createConfigMapCreatedEvent,
-  createConfigMapDeletedEvent,
-  createConfigMapUpdatedEvent,
-  createControllerRevisionCreatedEvent,
-  createControllerRevisionDeletedEvent,
-  createControllerRevisionUpdatedEvent,
-  createDaemonSetCreatedEvent,
-  createDaemonSetDeletedEvent,
-  createDaemonSetUpdatedEvent,
-  createDeploymentCreatedEvent,
-  createDeploymentDeletedEvent,
-  createDeploymentUpdatedEvent,
-  createEndpointSliceCreatedEvent,
-  createEndpointSliceDeletedEvent,
-  createEndpointSliceUpdatedEvent,
-  createEndpointsCreatedEvent,
-  createEndpointsDeletedEvent,
-  createEndpointsUpdatedEvent,
-  createEventCreatedEvent,
-  createEventDeletedEvent,
-  createEventUpdatedEvent,
-  createIngressCreatedEvent,
-  createIngressDeletedEvent,
-  createIngressUpdatedEvent,
-  createNetworkPolicyCreatedEvent,
-  createNetworkPolicyDeletedEvent,
-  createNetworkPolicyUpdatedEvent,
-  createLeaseCreatedEvent,
-  createLeaseDeletedEvent,
-  createLeaseUpdatedEvent,
-  createNamespaceCreatedEvent,
-  createNamespaceDeletedEvent,
-  createNamespaceUpdatedEvent,
-  createNodeCreatedEvent,
-  createNodeDeletedEvent,
-  createNodeUpdatedEvent,
-  createPodCreatedEvent,
-  createPodDeletedEvent,
-  createPodUpdatedEvent,
-  createPersistentVolumeClaimCreatedEvent,
-  createPersistentVolumeClaimDeletedEvent,
-  createPersistentVolumeClaimUpdatedEvent,
-  createPersistentVolumeCreatedEvent,
-  createPersistentVolumeDeletedEvent,
-  createPersistentVolumeUpdatedEvent,
-  createReplicaSetCreatedEvent,
-  createReplicaSetDeletedEvent,
-  createReplicaSetUpdatedEvent,
-  createStatefulSetCreatedEvent,
-  createStatefulSetDeletedEvent,
-  createStatefulSetUpdatedEvent,
-  createSecretCreatedEvent,
-  createSecretDeletedEvent,
-  createSecretUpdatedEvent,
-  createStorageClassCreatedEvent,
-  createStorageClassDeletedEvent,
-  createStorageClassUpdatedEvent,
-  createServiceCreatedEvent,
-  createServiceDeletedEvent,
-  createServiceUpdatedEvent
-} from './events/types'
-import { createResourceRepository } from './repositories/resourceRepository'
+  EVENT_FACTORIES,
+  type EventFactoryKind
+} from './resourceEventFactories'
+import {
+  CLUSTER_DATA_KEYS,
+  type ClusterStateCollectionsInput,
+  type ClusterStateData,
+  type KindToResource,
+  type ResourceKind
+} from './generated/clusterResourceTypes.generated'
+import { repos, resourceOps } from './generated/clusterRegistry.generated'
 import type {
   KubernetesResource,
   ResourceCollection
 } from './repositories/types'
+import type { ResourceOperations } from './resourceStateOps'
 import type { ConfigMap } from './ressources/ConfigMap'
 import type { ControllerRevision } from './ressources/ControllerRevision'
 import type { DaemonSet } from './ressources/DaemonSet'
@@ -93,328 +43,46 @@ import type { ClusterBootstrapConfig } from './systemBootstrap'
 import { applyClusterBootstrap } from './systemBootstrap'
 import { createSystemNamespaces } from './systemNamespaces'
 
-// ╔═══════════════════════════════════════════════════════════════════════╗
-// ║                    KUBERNETES CLUSTER STATE                           ║
-// ╚═══════════════════════════════════════════════════════════════════════╝
-// Manages virtual K8s cluster with pods, configmaps, secrets, and more.
-// Uses Generic Repository Pattern for DRY CRUD operations.
-// Now supports event-driven architecture via EventBus subscription.
+export type {
+  ClusterStateCollectionsInput,
+  ClusterStateData,
+  KindToResource,
+  ResourceKind
+} from './generated/clusterResourceTypes.generated'
 
-export interface ClusterStateData {
-  pods: ResourceCollection<Pod>
-  configMaps: ResourceCollection<ConfigMap>
-  controllerRevisions: ResourceCollection<ControllerRevision>
-  secrets: ResourceCollection<Secret>
-  nodes: ResourceCollection<Node>
-  replicaSets: ResourceCollection<ReplicaSet>
-  deployments: ResourceCollection<Deployment>
-  daemonSets: ResourceCollection<DaemonSet>
-  statefulSets: ResourceCollection<StatefulSet>
-  services: ResourceCollection<Service>
-  endpointSlices: ResourceCollection<EndpointSlice>
-  endpoints: ResourceCollection<Endpoints>
-  events: ResourceCollection<Event>
-  ingresses: ResourceCollection<Ingress>
-  networkPolicies: ResourceCollection<NetworkPolicy>
-  persistentVolumes: ResourceCollection<PersistentVolume>
-  persistentVolumeClaims: ResourceCollection<PersistentVolumeClaim>
-  namespaces: ResourceCollection<Namespace>
-  leases: ResourceCollection<Lease>
-  storageClasses: ResourceCollection<StorageClass>
-}
-
-type ResourceByKind = {
-  Pod: Pod
-  ConfigMap: ConfigMap
-  ControllerRevision: ControllerRevision
-  Secret: Secret
-  Node: Node
-  ReplicaSet: ReplicaSet
-  Deployment: Deployment
-  DaemonSet: DaemonSet
-  StatefulSet: StatefulSet
-  Service: Service
-  EndpointSlice: EndpointSlice
-  Endpoints: Endpoints
-  Event: Event
-  Ingress: Ingress
-  NetworkPolicy: NetworkPolicy
-  PersistentVolume: PersistentVolume
-  PersistentVolumeClaim: PersistentVolumeClaim
-  Namespace: Namespace
-  Lease: Lease
-  StorageClass: StorageClass
-}
-
-export type ResourceKind = keyof ResourceByKind
-
-export type KindToResource<TKind extends ResourceKind> = ResourceByKind[TKind]
-
-/**
- * Create a ClusterStateData with optional partial collections
- */
 export const createClusterStateData = (
-  collections: Partial<{
-    pods: Pod[]
-    configMaps: ConfigMap[]
-    controllerRevisions: ControllerRevision[]
-    secrets: Secret[]
-    nodes: Node[]
-    replicaSets: ReplicaSet[]
-    deployments: Deployment[]
-    daemonSets: DaemonSet[]
-    statefulSets: StatefulSet[]
-    services: Service[]
-    endpointSlices: EndpointSlice[]
-    endpoints: Endpoints[]
-    events: Event[]
-    ingresses: Ingress[]
-    networkPolicies: NetworkPolicy[]
-    persistentVolumes: PersistentVolume[]
-    persistentVolumeClaims: PersistentVolumeClaim[]
-    namespaces: Namespace[]
-    leases: Lease[]
-    storageClasses: StorageClass[]
-  }> = {}
-): ClusterStateData => ({
-  pods: { items: collections.pods ?? [] },
-  configMaps: { items: collections.configMaps ?? [] },
-  controllerRevisions: { items: collections.controllerRevisions ?? [] },
-  secrets: { items: collections.secrets ?? [] },
-  nodes: { items: collections.nodes ?? [] },
-  replicaSets: { items: collections.replicaSets ?? [] },
-  deployments: { items: collections.deployments ?? [] },
-  daemonSets: { items: collections.daemonSets ?? [] },
-  statefulSets: { items: collections.statefulSets ?? [] },
-  services: { items: collections.services ?? [] },
-  endpointSlices: { items: collections.endpointSlices ?? [] },
-  endpoints: { items: collections.endpoints ?? [] },
-  events: { items: collections.events ?? [] },
-  ingresses: { items: collections.ingresses ?? [] },
-  networkPolicies: { items: collections.networkPolicies ?? [] },
-  persistentVolumes: { items: collections.persistentVolumes ?? [] },
-  persistentVolumeClaims: { items: collections.persistentVolumeClaims ?? [] },
-  namespaces: { items: collections.namespaces ?? [] },
-  leases: { items: collections.leases ?? [] },
-  storageClasses: { items: collections.storageClasses ?? [] }
-})
-
-// ─── Resource Repositories ───────────────────────────────────────────
-
-// Create resource-specific repositories (singletons)
-const podRepo = createResourceRepository<Pod>('Pod')
-const configMapRepo = createResourceRepository<ConfigMap>('ConfigMap')
-const controllerRevisionRepo =
-  createResourceRepository<ControllerRevision>('ControllerRevision')
-const secretRepo = createResourceRepository<Secret>('Secret')
-const nodeRepo = createResourceRepository<Node>('Node')
-const replicaSetRepo = createResourceRepository<ReplicaSet>('ReplicaSet')
-const deploymentRepo = createResourceRepository<Deployment>('Deployment')
-const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
-const statefulSetRepo = createResourceRepository<StatefulSet>('StatefulSet')
-const serviceRepo = createResourceRepository<Service>('Service')
-const endpointSliceRepo =
-  createResourceRepository<EndpointSlice>('EndpointSlice')
-const endpointsRepo = createResourceRepository<Endpoints>('Endpoints')
-const eventRepo = createResourceRepository<Event>('Event')
-const ingressRepo = createResourceRepository<Ingress>('Ingress')
-const networkPolicyRepo =
-  createResourceRepository<NetworkPolicy>('NetworkPolicy')
-const persistentVolumeRepo =
-  createResourceRepository<PersistentVolume>('PersistentVolume')
-const persistentVolumeClaimRepo =
-  createResourceRepository<PersistentVolumeClaim>('PersistentVolumeClaim')
-const namespaceRepo = createResourceRepository<Namespace>('Namespace')
-const leaseRepo = createResourceRepository<Lease>('Lease')
-const storageClassRepo = createResourceRepository<StorageClass>('StorageClass')
-
-// ─── Generic Resource Operations Helper ─────────────────────────────
-
-type ResourceRepository<T extends KubernetesResource> = ReturnType<
-  typeof createResourceRepository<T>
->
-
-interface ResourceOperations<T extends KubernetesResource> {
-  add: (state: ClusterStateData, resource: T) => ClusterStateData
-  getAll: (state: ClusterStateData, namespace?: string) => T[]
-  find: (state: ClusterStateData, name: string, namespace: string) => Result<T>
-  delete: (
-    state: ClusterStateData,
-    name: string,
-    namespace: string
-  ) => Result<T> & { state?: ClusterStateData }
-  update: (
-    state: ClusterStateData,
-    name: string,
-    namespace: string,
-    updateFn: (resource: T) => T
-  ) => Result<T> & { state?: ClusterStateData }
+  collections: ClusterStateCollectionsInput = {}
+): ClusterStateData => {
+  const out = {} as Record<keyof ClusterStateData, { items: KubernetesResource[] }>
+  for (const key of CLUSTER_DATA_KEYS) {
+    const raw = collections[key]
+    const items = (Array.isArray(raw) ? raw : []) as KubernetesResource[]
+    out[key] = { items }
+  }
+  return out as ClusterStateData
 }
 
-const createResourceOperations = <T extends KubernetesResource>(
-  repo: ResourceRepository<T>,
-  collectionKey: keyof ClusterStateData
-): ResourceOperations<T> => ({
-  add: (state: ClusterStateData, resource: T): ClusterStateData => ({
-    ...state,
-    [collectionKey]: repo.add(
-      state[collectionKey] as unknown as ResourceCollection<T>,
-      resource
-    )
-  }),
-
-  getAll: (state: ClusterStateData, namespace?: string): T[] =>
-    repo.getAll(
-      state[collectionKey] as unknown as ResourceCollection<T>,
-      namespace
-    ),
-
-  find: (state: ClusterStateData, name: string, namespace: string): Result<T> =>
-    repo.find(
-      state[collectionKey] as unknown as ResourceCollection<T>,
-      name,
-      namespace
-    ),
-
-  delete: (
-    state: ClusterStateData,
-    name: string,
-    namespace: string
-  ): Result<T> & { state?: ClusterStateData } => {
-    const result = repo.remove(
-      state[collectionKey] as unknown as ResourceCollection<T>,
-      name,
-      namespace
-    )
-    if (result.ok && result.collection) {
-      return {
-        ok: true,
-        value: result.value,
-        state: { ...state, [collectionKey]: result.collection }
-      }
+const createEmptyState = (): ClusterStateData => {
+  const next = {} as Record<
+    keyof ClusterStateData,
+    ResourceCollection<KubernetesResource>
+  >
+  for (const key of CLUSTER_DATA_KEYS) {
+    if (key === 'namespaces') {
+      next.namespaces = {
+        items: createSystemNamespaces()
+      } as ResourceCollection<KubernetesResource>
+    } else {
+      next[key] = repos[key].createEmpty() as ResourceCollection<KubernetesResource>
     }
-    return result
-  },
-
-  update: (
-    state: ClusterStateData,
-    name: string,
-    namespace: string,
-    updateFn: (resource: T) => T
-  ): Result<T> & { state?: ClusterStateData } => {
-    const result = repo.update(
-      state[collectionKey] as unknown as ResourceCollection<T>,
-      name,
-      namespace,
-      updateFn
-    )
-    if (result.ok && result.collection) {
-      return {
-        ok: true,
-        value: result.value,
-        state: { ...state, [collectionKey]: result.collection }
-      }
-    }
-    return result
   }
-})
+  return next as ClusterStateData
+}
 
-// ─── State Operations ────────────────────────────────────────────────
+export const addPod = resourceOps.pods.add
+export const deletePod = resourceOps.pods.delete
+export const updatePod = resourceOps.pods.update
 
-const createEmptyState = (): ClusterStateData => ({
-  pods: podRepo.createEmpty(),
-  configMaps: configMapRepo.createEmpty(),
-  controllerRevisions: controllerRevisionRepo.createEmpty(),
-  secrets: secretRepo.createEmpty(),
-  nodes: nodeRepo.createEmpty(),
-  replicaSets: replicaSetRepo.createEmpty(),
-  deployments: deploymentRepo.createEmpty(),
-  daemonSets: daemonSetRepo.createEmpty(),
-  statefulSets: statefulSetRepo.createEmpty(),
-  services: serviceRepo.createEmpty(),
-  endpointSlices: endpointSliceRepo.createEmpty(),
-  endpoints: endpointsRepo.createEmpty(),
-  events: eventRepo.createEmpty(),
-  ingresses: ingressRepo.createEmpty(),
-  networkPolicies: networkPolicyRepo.createEmpty(),
-  persistentVolumes: persistentVolumeRepo.createEmpty(),
-  persistentVolumeClaims: persistentVolumeClaimRepo.createEmpty(),
-  namespaces: {
-    items: createSystemNamespaces()
-  },
-  leases: leaseRepo.createEmpty(),
-  storageClasses: storageClassRepo.createEmpty()
-})
-
-// ─── Resource Operations (Generated) ─────────────────────────────────
-
-const podOps = createResourceOperations<Pod>(podRepo, 'pods')
-const configMapOps = createResourceOperations<ConfigMap>(
-  configMapRepo,
-  'configMaps'
-)
-const controllerRevisionOps = createResourceOperations<ControllerRevision>(
-  controllerRevisionRepo,
-  'controllerRevisions'
-)
-const secretOps = createResourceOperations<Secret>(secretRepo, 'secrets')
-const nodeOps = createResourceOperations<Node>(nodeRepo, 'nodes')
-const replicaSetOps = createResourceOperations<ReplicaSet>(
-  replicaSetRepo,
-  'replicaSets'
-)
-const deploymentOps = createResourceOperations<Deployment>(
-  deploymentRepo,
-  'deployments'
-)
-const daemonSetOps = createResourceOperations<DaemonSet>(
-  daemonSetRepo,
-  'daemonSets'
-)
-const statefulSetOps = createResourceOperations<StatefulSet>(
-  statefulSetRepo,
-  'statefulSets'
-)
-const serviceOps = createResourceOperations<Service>(serviceRepo, 'services')
-const endpointSliceOps = createResourceOperations<EndpointSlice>(
-  endpointSliceRepo,
-  'endpointSlices'
-)
-const endpointsOps = createResourceOperations<Endpoints>(
-  endpointsRepo,
-  'endpoints'
-)
-const eventOps = createResourceOperations<Event>(eventRepo, 'events')
-const ingressOps = createResourceOperations<Ingress>(ingressRepo, 'ingresses')
-const networkPolicyOps = createResourceOperations<NetworkPolicy>(
-  networkPolicyRepo,
-  'networkPolicies'
-)
-const persistentVolumeOps = createResourceOperations<PersistentVolume>(
-  persistentVolumeRepo,
-  'persistentVolumes'
-)
-const persistentVolumeClaimOps =
-  createResourceOperations<PersistentVolumeClaim>(
-    persistentVolumeClaimRepo,
-    'persistentVolumeClaims'
-  )
-const namespaceOps = createResourceOperations<Namespace>(
-  namespaceRepo,
-  'namespaces'
-)
-const leaseOps = createResourceOperations<Lease>(leaseRepo, 'leases')
-const storageClassOps = createResourceOperations<StorageClass>(
-  storageClassRepo,
-  'storageClasses'
-)
-
-// Export Pod operations for test use only
-export const addPod = podOps.add
-export const deletePod = podOps.delete
-export const updatePod = podOps.update
-
-// Facade interface
 export interface ClusterState {
   getPods: (namespace?: string) => Pod[]
   addPod: (pod: Pod) => void
@@ -640,119 +308,12 @@ export interface CreateClusterStateOptions {
   bootstrap?: ClusterBootstrapConfig
 }
 
-// ─── Event Factory Map ────────────────────────────────────────────────
-
-const EVENT_FACTORIES = {
-  Pod: {
-    created: createPodCreatedEvent,
-    deleted: createPodDeletedEvent,
-    updated: createPodUpdatedEvent
-  },
-  ConfigMap: {
-    created: createConfigMapCreatedEvent,
-    deleted: createConfigMapDeletedEvent,
-    updated: createConfigMapUpdatedEvent
-  },
-  ControllerRevision: {
-    created: createControllerRevisionCreatedEvent,
-    deleted: createControllerRevisionDeletedEvent,
-    updated: createControllerRevisionUpdatedEvent
-  },
-  Secret: {
-    created: createSecretCreatedEvent,
-    deleted: createSecretDeletedEvent,
-    updated: createSecretUpdatedEvent
-  },
-  Node: {
-    created: createNodeCreatedEvent,
-    deleted: createNodeDeletedEvent,
-    updated: createNodeUpdatedEvent
-  },
-  ReplicaSet: {
-    created: createReplicaSetCreatedEvent,
-    deleted: createReplicaSetDeletedEvent,
-    updated: createReplicaSetUpdatedEvent
-  },
-  Deployment: {
-    created: createDeploymentCreatedEvent,
-    deleted: createDeploymentDeletedEvent,
-    updated: createDeploymentUpdatedEvent
-  },
-  DaemonSet: {
-    created: createDaemonSetCreatedEvent,
-    deleted: createDaemonSetDeletedEvent,
-    updated: createDaemonSetUpdatedEvent
-  },
-  StatefulSet: {
-    created: createStatefulSetCreatedEvent,
-    deleted: createStatefulSetDeletedEvent,
-    updated: createStatefulSetUpdatedEvent
-  },
-  Service: {
-    created: createServiceCreatedEvent,
-    deleted: createServiceDeletedEvent,
-    updated: createServiceUpdatedEvent
-  },
-  EndpointSlice: {
-    created: createEndpointSliceCreatedEvent,
-    deleted: createEndpointSliceDeletedEvent,
-    updated: createEndpointSliceUpdatedEvent
-  },
-  Endpoints: {
-    created: createEndpointsCreatedEvent,
-    deleted: createEndpointsDeletedEvent,
-    updated: createEndpointsUpdatedEvent
-  },
-  Event: {
-    created: createEventCreatedEvent,
-    deleted: createEventDeletedEvent,
-    updated: createEventUpdatedEvent
-  },
-  Ingress: {
-    created: createIngressCreatedEvent,
-    deleted: createIngressDeletedEvent,
-    updated: createIngressUpdatedEvent
-  },
-  NetworkPolicy: {
-    created: createNetworkPolicyCreatedEvent,
-    deleted: createNetworkPolicyDeletedEvent,
-    updated: createNetworkPolicyUpdatedEvent
-  },
-  Namespace: {
-    created: createNamespaceCreatedEvent,
-    deleted: createNamespaceDeletedEvent,
-    updated: createNamespaceUpdatedEvent
-  },
-  PersistentVolume: {
-    created: createPersistentVolumeCreatedEvent,
-    deleted: createPersistentVolumeDeletedEvent,
-    updated: createPersistentVolumeUpdatedEvent
-  },
-  PersistentVolumeClaim: {
-    created: createPersistentVolumeClaimCreatedEvent,
-    deleted: createPersistentVolumeClaimDeletedEvent,
-    updated: createPersistentVolumeClaimUpdatedEvent
-  },
-  Lease: {
-    created: createLeaseCreatedEvent,
-    deleted: createLeaseDeletedEvent,
-    updated: createLeaseUpdatedEvent
-  },
-  StorageClass: {
-    created: createStorageClassCreatedEvent,
-    deleted: createStorageClassDeletedEvent,
-    updated: createStorageClassUpdatedEvent
-  }
-} as const
-
-// ─── Facade Helper ───────────────────────────────────────────────────
-
 const createFacadeMethods = <T extends KubernetesResource>(
   ops: ResourceOperations<T>,
   getState: () => ClusterStateData,
   _setState: (newState: ClusterStateData) => void,
   eventBus: EventBus,
-  resourceKind: keyof typeof EVENT_FACTORIES
+  resourceKind: EventFactoryKind
 ) => {
   const eventFactory = EVENT_FACTORIES[resourceKind]
   const emitCreated = eventFactory.created as (
@@ -779,7 +340,7 @@ const createFacadeMethods = <T extends KubernetesResource>(
     if (namespace.length === 0) {
       return
     }
-    const namespaceResult = namespaceRepo.find(
+    const namespaceResult = repos.namespaces.find(
       currentState.namespaces,
       namespace,
       ''
@@ -845,7 +406,154 @@ const createFacadeMethods = <T extends KubernetesResource>(
   }
 }
 
-// Facade factory function
+type NamespacedFacade<T extends KubernetesResource> = {
+  getAll: (namespace?: string) => T[]
+  add: (resource: T) => void
+  find: (name: string, namespace: string) => Result<T>
+  delete: (name: string, namespace: string) => Result<T>
+  update: (
+    name: string,
+    namespace: string,
+    updateFn: (resource: T) => T
+  ) => Result<T>
+}
+
+type NodeFacadeMethods = {
+  getAll: () => Node[]
+  add: (node: Node) => void
+  find: (name: string) => Result<Node>
+  delete: (name: string) => Result<Node>
+  update: (name: string, updateFn: (node: Node) => Node) => Result<Node>
+}
+
+type NamespaceFacadeMethods = {
+  getAll: () => Namespace[]
+  add: (namespace: Namespace) => void
+  find: (name: string) => Result<Namespace>
+  delete: (name: string) => Result<Namespace>
+  update: (
+    name: string,
+    updateFn: (namespace: Namespace) => Namespace
+  ) => Result<Namespace>
+}
+
+type KindHandlers = {
+  find: (name: string, effectiveNs: string) => Result<KubernetesResource>
+  list: (ns?: string) => KubernetesResource[]
+  create: (resource: KubernetesResource) => void
+  update: (
+    name: string,
+    resource: KubernetesResource,
+    effectiveNs: string
+  ) => Result<KubernetesResource>
+  delete: (name: string, effectiveNs: string) => Result<KubernetesResource>
+}
+
+const buildNamespacedKindHandlers = <T extends KubernetesResource>(
+  m: NamespacedFacade<T>
+): KindHandlers => ({
+  find: (name, ns) => m.find(name, ns) as Result<KubernetesResource>,
+  list: (ns) => m.getAll(ns) as KubernetesResource[],
+  create: (r) => {
+    m.add(r as T)
+  },
+  update: (name, r, ns) =>
+    m.update(name, ns, () => r as T) as Result<KubernetesResource>,
+  delete: (name, ns) => m.delete(name, ns) as Result<KubernetesResource>
+})
+
+const buildClusterScopedKindHandlers = <T extends KubernetesResource>(
+  m: NamespacedFacade<T>
+): KindHandlers => ({
+  find: (name) => m.find(name, '') as Result<KubernetesResource>,
+  list: () => m.getAll(undefined) as KubernetesResource[],
+  create: (r) => {
+    m.add(r as T)
+  },
+  update: (name, r) =>
+    m.update(name, '', () => r as T) as Result<KubernetesResource>,
+  delete: (name) => m.delete(name, '') as Result<KubernetesResource>
+})
+
+const buildNodeKindHandlers = (m: NodeFacadeMethods): KindHandlers => ({
+  find: (name) => m.find(name) as Result<KubernetesResource>,
+  list: () => m.getAll() as KubernetesResource[],
+  create: (r) => {
+    m.add(r as Node)
+  },
+  update: (name, r) =>
+    m.update(name, () => r as Node) as Result<KubernetesResource>,
+  delete: (name, _effectiveNs) =>
+    m.delete(name) as Result<KubernetesResource>
+})
+
+const buildNamespaceKindHandlers = (
+  m: NamespaceFacadeMethods
+): KindHandlers => ({
+  find: (name) => m.find(name) as Result<KubernetesResource>,
+  list: () => m.getAll() as KubernetesResource[],
+  create: (r) => {
+    m.add(r as Namespace)
+  },
+  update: (name, r) =>
+    m.update(name, () => r as Namespace) as Result<KubernetesResource>,
+  delete: (name, _effectiveNs) =>
+    m.delete(name) as Result<KubernetesResource>
+})
+
+function bindStandardEntityMethods<T extends KubernetesResource>(
+  singular: string,
+  plural: string,
+  m: NamespacedFacade<T>
+): Record<string, unknown> {
+  return {
+    [`get${plural}`]: m.getAll,
+    [`add${singular}`]: m.add,
+    [`find${singular}`]: m.find,
+    [`delete${singular}`]: m.delete,
+    [`update${singular}`]: m.update
+  }
+}
+
+function bindClusterScopedEntityMethods<T extends KubernetesResource>(
+  singular: string,
+  plural: string,
+  m: NamespacedFacade<T>
+): Record<string, unknown> {
+  return {
+    [`get${plural}`]: () => m.getAll(undefined),
+    [`add${singular}`]: m.add,
+    [`find${singular}`]: (name: string) => m.find(name, ''),
+    [`delete${singular}`]: (name: string) => m.delete(name, ''),
+    [`update${singular}`]: (
+      name: string,
+      updateFn: (resource: T) => T
+    ) => m.update(name, '', updateFn)
+  }
+}
+
+function bindNodeEntityMethods(m: NodeFacadeMethods): Record<string, unknown> {
+  return {
+    getNodes: m.getAll,
+    addNode: m.add,
+    findNode: m.find,
+    deleteNode: m.delete,
+    updateNode: m.update
+  }
+}
+
+function bindNamespaceEntityMethods(
+  m: NamespaceFacadeMethods
+): Record<string, unknown> {
+  return {
+    getNamespaces: m.getAll,
+    addNamespace: m.add,
+    findNamespace: m.find,
+    deleteNamespace: m.delete,
+    updateNamespace: m.update
+  }
+}
+
 export function createClusterState(
   eventBus: EventBus,
   options?: CreateClusterStateOptions
@@ -857,166 +565,50 @@ export function createClusterState(
     state = newState
   }
 
-  // Subscribe to all events for state updates
-  // Cast is safe: applyClusterEventToState ignores unknown event types
   eventBus.subscribeAll((event) => {
     state = applyClusterEventToState(state, event as ClusterEvent)
   })
 
-  const podMethods = createFacadeMethods(
-    podOps,
-    getState,
-    setState,
-    eventBus,
-    'Pod'
-  )
-  const configMapMethods = createFacadeMethods(
-    configMapOps,
-    getState,
-    setState,
-    eventBus,
-    'ConfigMap'
-  )
-  const controllerRevisionMethods = createFacadeMethods(
-    controllerRevisionOps,
-    getState,
-    setState,
-    eventBus,
+  const mk = <T extends KubernetesResource>(
+    ops: ResourceOperations<T>,
+    kind: EventFactoryKind
+  ) => createFacadeMethods(ops, getState, setState, eventBus, kind)
+
+  const podMethods = mk(resourceOps.pods, 'Pod')
+  const configMapMethods = mk(resourceOps.configMaps, 'ConfigMap')
+  const controllerRevisionMethods = mk(
+    resourceOps.controllerRevisions,
     'ControllerRevision'
   )
-  const secretMethods = createFacadeMethods(
-    secretOps,
-    getState,
-    setState,
-    eventBus,
-    'Secret'
-  )
-  const replicaSetMethods = createFacadeMethods(
-    replicaSetOps,
-    getState,
-    setState,
-    eventBus,
-    'ReplicaSet'
-  )
-  const deploymentMethods = createFacadeMethods(
-    deploymentOps,
-    getState,
-    setState,
-    eventBus,
-    'Deployment'
-  )
-  const daemonSetMethods = createFacadeMethods(
-    daemonSetOps,
-    getState,
-    setState,
-    eventBus,
-    'DaemonSet'
-  )
-  const statefulSetMethods = createFacadeMethods(
-    statefulSetOps,
-    getState,
-    setState,
-    eventBus,
-    'StatefulSet'
-  )
-  const serviceMethods = createFacadeMethods(
-    serviceOps,
-    getState,
-    setState,
-    eventBus,
-    'Service'
-  )
-  const endpointSliceMethods = createFacadeMethods(
-    endpointSliceOps,
-    getState,
-    setState,
-    eventBus,
-    'EndpointSlice'
-  )
-  const endpointsMethods = createFacadeMethods(
-    endpointsOps,
-    getState,
-    setState,
-    eventBus,
-    'Endpoints'
-  )
-  const eventMethods = createFacadeMethods(eventOps, getState, setState, eventBus, 'Event')
-  const ingressMethods = {
-    getAll: (namespace?: string) => ingressOps.getAll(getState(), namespace),
-    add: (ingress: Ingress) => {
-      const currentState = getState()
-      const namespaceResult = namespaceRepo.find(
-        currentState.namespaces,
-        ingress.metadata.namespace,
-        ''
-      )
-      if (!namespaceResult.ok) {
-        throw new Error(
-          `Namespace invariant violation: "${ingress.metadata.namespace}" does not exist`
-        )
-      }
-      eventBus.emit(createIngressCreatedEvent(ingress, 'direct'))
-    },
-    find: (name: string, namespace: string): Result<Ingress> => {
-      return ingressOps.find(getState(), name, namespace)
-    },
-    delete: (name: string, namespace: string): Result<Ingress> => {
-      const findResult = ingressOps.find(getState(), name, namespace)
-      if (!findResult.ok) {
-        return findResult
-      }
-      eventBus.emit(
-        createIngressDeletedEvent(name, namespace, findResult.value, 'direct')
-      )
-      return { ok: true, value: findResult.value }
-    },
-    update: (
-      name: string,
-      namespace: string,
-      updateFn: (ingress: Ingress) => Ingress
-    ): Result<Ingress> => {
-      const findResult = ingressOps.find(getState(), name, namespace)
-      if (!findResult.ok) {
-        return findResult
-      }
-      const updatedIngress = updateFn(findResult.value)
-      eventBus.emit(
-        createIngressUpdatedEvent(
-          name,
-          namespace,
-          updatedIngress,
-          findResult.value,
-          'direct'
-        )
-      )
-      return { ok: true, value: updatedIngress }
-    }
-  }
-  const networkPolicyMethods = createFacadeMethods(
-    networkPolicyOps,
-    getState,
-    setState,
-    eventBus,
-    'NetworkPolicy'
-  )
-  const persistentVolumeMethods = createFacadeMethods(
-    persistentVolumeOps,
-    getState,
-    setState,
-    eventBus,
+  const secretMethods = mk(resourceOps.secrets, 'Secret')
+  const replicaSetMethods = mk(resourceOps.replicaSets, 'ReplicaSet')
+  const deploymentMethods = mk(resourceOps.deployments, 'Deployment')
+  const daemonSetMethods = mk(resourceOps.daemonSets, 'DaemonSet')
+  const statefulSetMethods = mk(resourceOps.statefulSets, 'StatefulSet')
+  const serviceMethods = mk(resourceOps.services, 'Service')
+  const endpointSliceMethods = mk(resourceOps.endpointSlices, 'EndpointSlice')
+  const endpointsMethods = mk(resourceOps.endpoints, 'Endpoints')
+  const eventMethods = mk(resourceOps.events, 'Event')
+  const ingressMethods = mk(resourceOps.ingresses, 'Ingress')
+  const networkPolicyMethods = mk(resourceOps.networkPolicies, 'NetworkPolicy')
+  const persistentVolumeMethods = mk(
+    resourceOps.persistentVolumes,
     'PersistentVolume'
   )
-  const persistentVolumeClaimMethods = createFacadeMethods(
-    persistentVolumeClaimOps,
-    getState,
-    setState,
-    eventBus,
+  const persistentVolumeClaimMethods = mk(
+    resourceOps.persistentVolumeClaims,
     'PersistentVolumeClaim'
   )
-  const namespaceMethods = {
+  const leaseMethods = mk(resourceOps.leases, 'Lease')
+  const storageClassMethods = mk(resourceOps.storageClasses, 'StorageClass')
+
+  const namespaceOps = resourceOps.namespaces
+  const nodeOps = resourceOps.nodes
+
+  const namespaceMethods: NamespaceFacadeMethods = {
     getAll: () => namespaceOps.getAll(getState(), undefined),
     add: (namespace: Namespace) => {
-      eventBus.emit(createNamespaceCreatedEvent(namespace, 'direct'))
+      eventBus.emit(EVENT_FACTORIES.Namespace.created(namespace, 'direct'))
     },
     find: (name: string): Result<Namespace> => {
       return namespaceOps.find(getState(), name, '')
@@ -1027,7 +619,7 @@ export function createClusterState(
         return findResult
       }
       eventBus.emit(
-        createNamespaceDeletedEvent(name, findResult.value, 'direct')
+        EVENT_FACTORIES.Namespace.deleted(name, findResult.value, 'direct')
       )
       return { ok: true, value: findResult.value }
     },
@@ -1041,7 +633,7 @@ export function createClusterState(
       }
       const updatedNamespace = updateFn(findResult.value)
       eventBus.emit(
-        createNamespaceUpdatedEvent(
+        EVENT_FACTORIES.Namespace.updated(
           name,
           updatedNamespace,
           findResult.value,
@@ -1052,13 +644,12 @@ export function createClusterState(
     }
   }
 
-  const nodeMethods = {
-    getAll: () => nodeOps.getAll(getState(), undefined), // Ignore namespace for nodes
+  const nodeMethods: NodeFacadeMethods = {
+    getAll: () => nodeOps.getAll(getState(), undefined),
     add: (node: Node) => {
-      eventBus.emit(createNodeCreatedEvent(node, 'direct'))
+      eventBus.emit(EVENT_FACTORIES.Node.created(node, 'direct'))
     },
     find: (name: string): Result<Node> => {
-      // Nodes are cluster-scoped, use empty namespace
       return nodeOps.find(getState(), name, '')
     },
     delete: (name: string): Result<Node> => {
@@ -1066,7 +657,9 @@ export function createClusterState(
       if (!findResult.ok) {
         return findResult
       }
-      eventBus.emit(createNodeDeletedEvent(name, findResult.value, 'direct'))
+      eventBus.emit(
+        EVENT_FACTORIES.Node.deleted(name, findResult.value, 'direct')
+      )
       return { ok: true, value: findResult.value }
     },
     update: (name: string, updateFn: (node: Node) => Node): Result<Node> => {
@@ -1076,26 +669,41 @@ export function createClusterState(
       }
       const updatedNode = updateFn(findResult.value)
       eventBus.emit(
-        createNodeUpdatedEvent(name, updatedNode, findResult.value, 'direct')
+        EVENT_FACTORIES.Node.updated(
+          name,
+          updatedNode,
+          findResult.value,
+          'direct'
+        )
       )
       return { ok: true, value: updatedNode }
     }
   }
 
-  const leaseMethods = createFacadeMethods(
-    leaseOps,
-    getState,
-    setState,
-    eventBus,
-    'Lease'
-  )
-  const storageClassMethods = createFacadeMethods(
-    storageClassOps,
-    getState,
-    setState,
-    eventBus,
-    'StorageClass'
-  )
+  const KIND_HANDLERS: Record<ResourceKind, KindHandlers> = {
+    Pod: buildNamespacedKindHandlers(podMethods),
+    ConfigMap: buildNamespacedKindHandlers(configMapMethods),
+    ControllerRevision: buildNamespacedKindHandlers(controllerRevisionMethods),
+    Secret: buildNamespacedKindHandlers(secretMethods),
+    Node: buildNodeKindHandlers(nodeMethods),
+    ReplicaSet: buildNamespacedKindHandlers(replicaSetMethods),
+    Deployment: buildNamespacedKindHandlers(deploymentMethods),
+    DaemonSet: buildNamespacedKindHandlers(daemonSetMethods),
+    StatefulSet: buildNamespacedKindHandlers(statefulSetMethods),
+    Service: buildNamespacedKindHandlers(serviceMethods),
+    EndpointSlice: buildNamespacedKindHandlers(endpointSliceMethods),
+    Endpoints: buildNamespacedKindHandlers(endpointsMethods),
+    Event: buildNamespacedKindHandlers(eventMethods),
+    Ingress: buildNamespacedKindHandlers(ingressMethods),
+    NetworkPolicy: buildNamespacedKindHandlers(networkPolicyMethods),
+    PersistentVolume: buildClusterScopedKindHandlers(persistentVolumeMethods),
+    PersistentVolumeClaim: buildNamespacedKindHandlers(
+      persistentVolumeClaimMethods
+    ),
+    Namespace: buildNamespaceKindHandlers(namespaceMethods),
+    Lease: buildNamespacedKindHandlers(leaseMethods),
+    StorageClass: buildClusterScopedKindHandlers(storageClassMethods)
+  }
 
   const findByKind = <TKind extends ResourceKind>(
     kind: TKind,
@@ -1103,261 +711,37 @@ export function createClusterState(
     namespace?: string
   ): Result<KindToResource<TKind>> => {
     const effectiveNamespace = namespace ?? 'default'
-    const finders: Record<
-      ResourceKind,
-      (
-        resourceName: string,
-        resourceNamespace: string
-      ) => Result<KubernetesResource>
-    > = {
-      Pod: (resourceName, resourceNamespace) =>
-        podMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      ConfigMap: (resourceName, resourceNamespace) =>
-        configMapMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      ControllerRevision: (resourceName, resourceNamespace) =>
-        controllerRevisionMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      Secret: (resourceName, resourceNamespace) =>
-        secretMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      Node: (resourceName, _resourceNamespace) =>
-        nodeMethods.find(resourceName) as Result<KubernetesResource>,
-      ReplicaSet: (resourceName, resourceNamespace) =>
-        replicaSetMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      Deployment: (resourceName, resourceNamespace) =>
-        deploymentMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      DaemonSet: (resourceName, resourceNamespace) =>
-        daemonSetMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      StatefulSet: (resourceName, resourceNamespace) =>
-        statefulSetMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      Service: (resourceName, resourceNamespace) =>
-        serviceMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      EndpointSlice: (resourceName, resourceNamespace) =>
-        endpointSliceMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      Endpoints: (resourceName, resourceNamespace) =>
-        endpointsMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      Event: (resourceName, resourceNamespace) =>
-        eventMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      Ingress: (resourceName, resourceNamespace) =>
-        ingressMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      NetworkPolicy: (resourceName, resourceNamespace) =>
-        networkPolicyMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      PersistentVolume: (resourceName, _resourceNamespace) =>
-        persistentVolumeMethods.find(
-          resourceName,
-          ''
-        ) as Result<KubernetesResource>,
-      PersistentVolumeClaim: (resourceName, resourceNamespace) =>
-        persistentVolumeClaimMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      Namespace: (resourceName, _resourceNamespace) =>
-        namespaceMethods.find(resourceName) as Result<KubernetesResource>,
-      Lease: (resourceName, resourceNamespace) =>
-        leaseMethods.find(
-          resourceName,
-          resourceNamespace
-        ) as Result<KubernetesResource>,
-      StorageClass: (resourceName, _resourceNamespace) =>
-        storageClassMethods.find(resourceName, '') as Result<KubernetesResource>
-    }
-
-    const finder = finders[kind]
-    if (!finder) {
+    const handler = KIND_HANDLERS[kind]
+    if (!handler) {
       return { ok: false, error: `Unsupported resource kind: ${kind}` }
     }
-
-    return finder(name, effectiveNamespace) as Result<KindToResource<TKind>>
+    return handler.find(
+      name,
+      effectiveNamespace
+    ) as Result<KindToResource<TKind>>
   }
 
   const listByKind = <TKind extends ResourceKind>(
     kind: TKind,
     namespace?: string
   ): KindToResource<TKind>[] => {
-    const listers: Record<
-      ResourceKind,
-      (resourceNamespace?: string) => KubernetesResource[]
-    > = {
-      Pod: (resourceNamespace) =>
-        podMethods.getAll(resourceNamespace) as KubernetesResource[],
-      ConfigMap: (resourceNamespace) =>
-        configMapMethods.getAll(resourceNamespace) as KubernetesResource[],
-      ControllerRevision: (resourceNamespace) =>
-        controllerRevisionMethods.getAll(
-          resourceNamespace
-        ) as KubernetesResource[],
-      Secret: (resourceNamespace) =>
-        secretMethods.getAll(resourceNamespace) as KubernetesResource[],
-      Node: (_resourceNamespace) =>
-        nodeMethods.getAll() as KubernetesResource[],
-      ReplicaSet: (resourceNamespace) =>
-        replicaSetMethods.getAll(resourceNamespace) as KubernetesResource[],
-      Deployment: (resourceNamespace) =>
-        deploymentMethods.getAll(resourceNamespace) as KubernetesResource[],
-      DaemonSet: (resourceNamespace) =>
-        daemonSetMethods.getAll(resourceNamespace) as KubernetesResource[],
-      StatefulSet: (resourceNamespace) =>
-        statefulSetMethods.getAll(resourceNamespace) as KubernetesResource[],
-      Service: (resourceNamespace) =>
-        serviceMethods.getAll(resourceNamespace) as KubernetesResource[],
-      EndpointSlice: (resourceNamespace) =>
-        endpointSliceMethods.getAll(resourceNamespace) as KubernetesResource[],
-      Endpoints: (resourceNamespace) =>
-        endpointsMethods.getAll(resourceNamespace) as KubernetesResource[],
-      Event: (resourceNamespace) =>
-        eventMethods.getAll(resourceNamespace) as KubernetesResource[],
-      Ingress: (resourceNamespace) =>
-        ingressMethods.getAll(resourceNamespace) as KubernetesResource[],
-      NetworkPolicy: (resourceNamespace) =>
-        networkPolicyMethods.getAll(resourceNamespace) as KubernetesResource[],
-      PersistentVolume: (_resourceNamespace) =>
-        persistentVolumeMethods.getAll(undefined) as KubernetesResource[],
-      PersistentVolumeClaim: (resourceNamespace) =>
-        persistentVolumeClaimMethods.getAll(
-          resourceNamespace
-        ) as KubernetesResource[],
-      Namespace: (_resourceNamespace) =>
-        namespaceMethods.getAll() as KubernetesResource[],
-      Lease: (resourceNamespace) =>
-        leaseMethods.getAll(resourceNamespace) as KubernetesResource[],
-      StorageClass: (_resourceNamespace) =>
-        storageClassMethods.getAll(undefined) as KubernetesResource[]
-    }
-
-    const lister = listers[kind]
-    if (!lister) {
+    const handler = KIND_HANDLERS[kind]
+    if (!handler) {
       return []
     }
-
-    return lister(namespace) as KindToResource<TKind>[]
+    return handler.list(namespace) as KindToResource<TKind>[]
   }
 
   const createByKind = <TKind extends ResourceKind>(
     kind: TKind,
     resource: KindToResource<TKind>
   ): Result<KindToResource<TKind>> => {
-    if (kind === 'Node') {
-      nodeMethods.add(resource as Node)
-      return { ok: true, value: resource as KindToResource<TKind> }
+    const handler = KIND_HANDLERS[kind]
+    if (!handler) {
+      return { ok: false, error: `Unsupported resource kind: ${kind}` }
     }
-    if (kind === 'Namespace') {
-      namespaceMethods.add(resource as Namespace)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'PersistentVolume') {
-      persistentVolumeMethods.add(resource as PersistentVolume)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'Ingress') {
-      ingressMethods.add(resource as Ingress)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'NetworkPolicy') {
-      networkPolicyMethods.add(resource as NetworkPolicy)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'Pod') {
-      podMethods.add(resource as Pod)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'ConfigMap') {
-      configMapMethods.add(resource as ConfigMap)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'ControllerRevision') {
-      controllerRevisionMethods.add(resource as ControllerRevision)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'Secret') {
-      secretMethods.add(resource as Secret)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'ReplicaSet') {
-      replicaSetMethods.add(resource as ReplicaSet)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'Deployment') {
-      deploymentMethods.add(resource as Deployment)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'DaemonSet') {
-      daemonSetMethods.add(resource as DaemonSet)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'StatefulSet') {
-      statefulSetMethods.add(resource as StatefulSet)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'Service') {
-      serviceMethods.add(resource as Service)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'EndpointSlice') {
-      endpointSliceMethods.add(resource as EndpointSlice)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'Endpoints') {
-      endpointsMethods.add(resource as Endpoints)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'Event') {
-      eventMethods.add(resource as Event)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'PersistentVolumeClaim') {
-      persistentVolumeClaimMethods.add(resource as PersistentVolumeClaim)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'Lease') {
-      leaseMethods.add(resource as Lease)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    if (kind === 'StorageClass') {
-      storageClassMethods.add(resource as StorageClass)
-      return { ok: true, value: resource as KindToResource<TKind> }
-    }
-    return { ok: false, error: `Unsupported resource kind: ${kind}` }
+    handler.create(resource as KubernetesResource)
+    return { ok: true, value: resource }
   }
 
   const updateByKind = <TKind extends ResourceKind>(
@@ -1366,146 +750,17 @@ export function createClusterState(
     resource: KindToResource<TKind>,
     namespace?: string
   ): Result<KindToResource<TKind>> => {
+    const handler = KIND_HANDLERS[kind]
+    if (!handler) {
+      return { ok: false, error: `Unsupported resource kind: ${kind}` }
+    }
     const effectiveNamespace =
       namespace ?? resource.metadata.namespace ?? 'default'
-    if (kind === 'Node') {
-      return nodeMethods.update(name, () => resource as Node) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'Namespace') {
-      return namespaceMethods.update(
-        name,
-        () => resource as Namespace
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'PersistentVolume') {
-      return persistentVolumeMethods.update(
-        name,
-        '',
-        () => resource as PersistentVolume
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'Ingress') {
-      return ingressMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as Ingress
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'NetworkPolicy') {
-      return networkPolicyMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as NetworkPolicy
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'Pod') {
-      return podMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as Pod
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'ConfigMap') {
-      return configMapMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as ConfigMap
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'ControllerRevision') {
-      return controllerRevisionMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as ControllerRevision
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'Secret') {
-      return secretMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as Secret
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'ReplicaSet') {
-      return replicaSetMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as ReplicaSet
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'Deployment') {
-      return deploymentMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as Deployment
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'DaemonSet') {
-      return daemonSetMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as DaemonSet
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'StatefulSet') {
-      return statefulSetMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as StatefulSet
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'Service') {
-      return serviceMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as Service
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'EndpointSlice') {
-      return endpointSliceMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as EndpointSlice
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'Endpoints') {
-      return endpointsMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as Endpoints
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'Event') {
-      return eventMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as Event
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'PersistentVolumeClaim') {
-      return persistentVolumeClaimMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as PersistentVolumeClaim
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'Lease') {
-      return leaseMethods.update(
-        name,
-        effectiveNamespace,
-        () => resource as Lease
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'StorageClass') {
-      return storageClassMethods.update(
-        name,
-        '',
-        () => resource as StorageClass
-      ) as Result<KindToResource<TKind>>
-    }
-    return { ok: false, error: `Unsupported resource kind: ${kind}` }
+    return handler.update(
+      name,
+      resource as KubernetesResource,
+      effectiveNamespace
+    ) as Result<KindToResource<TKind>>
   }
 
   const deleteByKind = <TKind extends ResourceKind>(
@@ -1513,282 +768,100 @@ export function createClusterState(
     name: string,
     namespace?: string
   ): Result<KindToResource<TKind>> => {
+    const handler = KIND_HANDLERS[kind]
+    if (!handler) {
+      return { ok: false, error: `Unsupported resource kind: ${kind}` }
+    }
     const effectiveNamespace = namespace ?? 'default'
-    if (kind === 'Node') {
-      return nodeMethods.delete(name) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'Namespace') {
-      return namespaceMethods.delete(name) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'PersistentVolume') {
-      return persistentVolumeMethods.delete(name, '') as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'Ingress') {
-      return ingressMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'NetworkPolicy') {
-      return networkPolicyMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'Pod') {
-      return podMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'ConfigMap') {
-      return configMapMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'ControllerRevision') {
-      return controllerRevisionMethods.delete(
-        name,
-        effectiveNamespace
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'Secret') {
-      return secretMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'ReplicaSet') {
-      return replicaSetMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'Deployment') {
-      return deploymentMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'DaemonSet') {
-      return daemonSetMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'StatefulSet') {
-      return statefulSetMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'Service') {
-      return serviceMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'EndpointSlice') {
-      return endpointSliceMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'Endpoints') {
-      return endpointsMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'Event') {
-      return eventMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'PersistentVolumeClaim') {
-      return persistentVolumeClaimMethods.delete(
-        name,
-        effectiveNamespace
-      ) as Result<KindToResource<TKind>>
-    }
-    if (kind === 'Lease') {
-      return leaseMethods.delete(name, effectiveNamespace) as Result<
-        KindToResource<TKind>
-      >
-    }
-    if (kind === 'StorageClass') {
-      return storageClassMethods.delete(name, '') as Result<
-        KindToResource<TKind>
-      >
-    }
-    return { ok: false, error: `Unsupported resource kind: ${kind}` }
+    return handler.delete(
+      name,
+      effectiveNamespace
+    ) as Result<KindToResource<TKind>>
   }
 
-  const clusterStateFacade: ClusterState = {
-    getPods: podMethods.getAll,
-    addPod: podMethods.add,
-    findPod: podMethods.find,
-    deletePod: podMethods.delete,
-    updatePod: podMethods.update,
-
-    getConfigMaps: configMapMethods.getAll,
-    addConfigMap: configMapMethods.add,
-    findConfigMap: configMapMethods.find,
-    deleteConfigMap: configMapMethods.delete,
-    updateConfigMap: configMapMethods.update,
-    getControllerRevisions: controllerRevisionMethods.getAll,
-    addControllerRevision: controllerRevisionMethods.add,
-    findControllerRevision: controllerRevisionMethods.find,
-    deleteControllerRevision: controllerRevisionMethods.delete,
-    updateControllerRevision: controllerRevisionMethods.update,
-
-    getSecrets: secretMethods.getAll,
-    addSecret: secretMethods.add,
-    findSecret: secretMethods.find,
-    deleteSecret: secretMethods.delete,
-    updateSecret: secretMethods.update,
-
-    getNodes: nodeMethods.getAll,
-    addNode: nodeMethods.add,
-    findNode: nodeMethods.find,
-    deleteNode: nodeMethods.delete,
-    updateNode: nodeMethods.update,
-
-    getReplicaSets: replicaSetMethods.getAll,
-    addReplicaSet: replicaSetMethods.add,
-    findReplicaSet: replicaSetMethods.find,
-    deleteReplicaSet: replicaSetMethods.delete,
-    updateReplicaSet: replicaSetMethods.update,
-
-    getDeployments: deploymentMethods.getAll,
-    addDeployment: deploymentMethods.add,
-    findDeployment: deploymentMethods.find,
-    deleteDeployment: deploymentMethods.delete,
-    updateDeployment: deploymentMethods.update,
-
-    getDaemonSets: daemonSetMethods.getAll,
-    addDaemonSet: daemonSetMethods.add,
-    findDaemonSet: daemonSetMethods.find,
-    deleteDaemonSet: daemonSetMethods.delete,
-    updateDaemonSet: daemonSetMethods.update,
-    getStatefulSets: statefulSetMethods.getAll,
-    addStatefulSet: statefulSetMethods.add,
-    findStatefulSet: statefulSetMethods.find,
-    deleteStatefulSet: statefulSetMethods.delete,
-    updateStatefulSet: statefulSetMethods.update,
-
-    getServices: serviceMethods.getAll,
-    addService: serviceMethods.add,
-    findService: serviceMethods.find,
-    deleteService: serviceMethods.delete,
-    updateService: serviceMethods.update,
-    getEndpointSlices: endpointSliceMethods.getAll,
-    addEndpointSlice: endpointSliceMethods.add,
-    findEndpointSlice: endpointSliceMethods.find,
-    deleteEndpointSlice: endpointSliceMethods.delete,
-    updateEndpointSlice: endpointSliceMethods.update,
-    getEndpoints: endpointsMethods.getAll,
-    addEndpoints: endpointsMethods.add,
-    findEndpoints: endpointsMethods.find,
-    deleteEndpoints: endpointsMethods.delete,
-    updateEndpoints: endpointsMethods.update,
-    getEvents: eventMethods.getAll,
-    addEvent: eventMethods.add,
-    findEvent: eventMethods.find,
-    deleteEvent: eventMethods.delete,
-    updateEvent: eventMethods.update,
-    getIngresses: ingressMethods.getAll,
-    addIngress: ingressMethods.add,
-    findIngress: ingressMethods.find,
-    deleteIngress: ingressMethods.delete,
-    updateIngress: ingressMethods.update,
-
-    getNetworkPolicies: networkPolicyMethods.getAll,
-    addNetworkPolicy: networkPolicyMethods.add,
-    findNetworkPolicy: networkPolicyMethods.find,
-    deleteNetworkPolicy: networkPolicyMethods.delete,
-    updateNetworkPolicy: networkPolicyMethods.update,
-
-    getPersistentVolumes: () => persistentVolumeMethods.getAll(undefined),
-    addPersistentVolume: persistentVolumeMethods.add,
-    findPersistentVolume: (name) => persistentVolumeMethods.find(name, ''),
-    deletePersistentVolume: (name) => persistentVolumeMethods.delete(name, ''),
-    updatePersistentVolume: (name, updateFn) =>
-      persistentVolumeMethods.update(name, '', updateFn),
-
-    getPersistentVolumeClaims: persistentVolumeClaimMethods.getAll,
-    addPersistentVolumeClaim: persistentVolumeClaimMethods.add,
-    findPersistentVolumeClaim: persistentVolumeClaimMethods.find,
-    deletePersistentVolumeClaim: persistentVolumeClaimMethods.delete,
-    updatePersistentVolumeClaim: persistentVolumeClaimMethods.update,
-
-    getNamespaces: namespaceMethods.getAll,
-    addNamespace: namespaceMethods.add,
-    findNamespace: namespaceMethods.find,
-    deleteNamespace: namespaceMethods.delete,
-    updateNamespace: namespaceMethods.update,
-
-    getLeases: leaseMethods.getAll,
-    addLease: leaseMethods.add,
-    findLease: leaseMethods.find,
-    deleteLease: leaseMethods.delete,
-    updateLease: leaseMethods.update,
-    getStorageClasses: () => storageClassMethods.getAll(undefined),
-    addStorageClass: (storageClass) => storageClassMethods.add(storageClass),
-    findStorageClass: (name) => storageClassMethods.find(name, ''),
-    deleteStorageClass: (name) => storageClassMethods.delete(name, ''),
-    updateStorageClass: (name, updateFn) =>
-      storageClassMethods.update(name, '', updateFn),
-
-    findByKind,
-    listByKind,
-    createByKind,
-    updateByKind,
-    deleteByKind,
-
-    toJSON: () => ({
-      pods: { items: [...state.pods.items] },
-      configMaps: { items: [...state.configMaps.items] },
-      controllerRevisions: { items: [...state.controllerRevisions.items] },
-      secrets: { items: [...state.secrets.items] },
-      nodes: { items: [...state.nodes.items] },
-      replicaSets: { items: [...state.replicaSets.items] },
-      deployments: { items: [...state.deployments.items] },
-      daemonSets: { items: [...state.daemonSets.items] },
-      statefulSets: { items: [...state.statefulSets.items] },
-      services: { items: [...state.services.items] },
-      endpointSlices: { items: [...state.endpointSlices.items] },
-      endpoints: { items: [...state.endpoints.items] },
-      events: { items: [...state.events.items] },
-      ingresses: { items: [...state.ingresses.items] },
-      networkPolicies: { items: [...state.networkPolicies.items] },
-      persistentVolumes: { items: [...state.persistentVolumes.items] },
-      persistentVolumeClaims: {
-        items: [...state.persistentVolumeClaims.items]
+  const clusterStateFacade = Object.assign(
+    {},
+    bindStandardEntityMethods('Pod', 'Pods', podMethods),
+    bindStandardEntityMethods('ConfigMap', 'ConfigMaps', configMapMethods),
+    bindStandardEntityMethods(
+      'ControllerRevision',
+      'ControllerRevisions',
+      controllerRevisionMethods
+    ),
+    bindStandardEntityMethods('Secret', 'Secrets', secretMethods),
+    bindNodeEntityMethods(nodeMethods),
+    bindStandardEntityMethods('ReplicaSet', 'ReplicaSets', replicaSetMethods),
+    bindStandardEntityMethods('Deployment', 'Deployments', deploymentMethods),
+    bindStandardEntityMethods('DaemonSet', 'DaemonSets', daemonSetMethods),
+    bindStandardEntityMethods(
+      'StatefulSet',
+      'StatefulSets',
+      statefulSetMethods
+    ),
+    bindStandardEntityMethods('Service', 'Services', serviceMethods),
+    bindStandardEntityMethods(
+      'EndpointSlice',
+      'EndpointSlices',
+      endpointSliceMethods
+    ),
+    bindStandardEntityMethods('Endpoints', 'Endpoints', endpointsMethods),
+    bindStandardEntityMethods('Event', 'Events', eventMethods),
+    bindStandardEntityMethods('Ingress', 'Ingresses', ingressMethods),
+    bindStandardEntityMethods(
+      'NetworkPolicy',
+      'NetworkPolicies',
+      networkPolicyMethods
+    ),
+    bindClusterScopedEntityMethods(
+      'PersistentVolume',
+      'PersistentVolumes',
+      persistentVolumeMethods
+    ),
+    bindStandardEntityMethods(
+      'PersistentVolumeClaim',
+      'PersistentVolumeClaims',
+      persistentVolumeClaimMethods
+    ),
+    bindNamespaceEntityMethods(namespaceMethods),
+    bindStandardEntityMethods('Lease', 'Leases', leaseMethods),
+    bindClusterScopedEntityMethods(
+      'StorageClass',
+      'StorageClasses',
+      storageClassMethods
+    ),
+    {
+      findByKind,
+      listByKind,
+      createByKind,
+      updateByKind,
+      deleteByKind,
+      toJSON: (): ClusterStateData => {
+        const snapshot = {} as Record<
+          keyof ClusterStateData,
+          ResourceCollection<KubernetesResource>
+        >
+        for (const key of CLUSTER_DATA_KEYS) {
+          const col = state[key]
+          snapshot[key] = {
+            items: [...col.items]
+          } as ResourceCollection<KubernetesResource>
+        }
+        return snapshot as ClusterStateData
       },
-      namespaces: { items: [...state.namespaces.items] },
-      leases: { items: [...state.leases.items] },
-      storageClasses: { items: [...state.storageClasses.items] }
-    }),
-
-    loadState: (newState: ClusterStateData) => {
-      state = {
-        pods: newState.pods || { items: [] },
-        configMaps: newState.configMaps || { items: [] },
-        controllerRevisions: newState.controllerRevisions || { items: [] },
-        secrets: newState.secrets || { items: [] },
-        nodes: newState.nodes || { items: [] },
-        replicaSets: newState.replicaSets || { items: [] },
-        deployments: newState.deployments || { items: [] },
-        daemonSets: newState.daemonSets || { items: [] },
-        statefulSets: newState.statefulSets || { items: [] },
-        services: newState.services || { items: [] },
-        endpointSlices: newState.endpointSlices || { items: [] },
-        endpoints: newState.endpoints || { items: [] },
-        events: newState.events || { items: [] },
-        ingresses: newState.ingresses || { items: [] },
-        networkPolicies: newState.networkPolicies || { items: [] },
-        persistentVolumes: newState.persistentVolumes || { items: [] },
-        persistentVolumeClaims: newState.persistentVolumeClaims || {
-          items: []
-        },
-        namespaces: newState.namespaces || { items: [] },
-        leases: newState.leases || { items: [] },
-        storageClasses: newState.storageClasses || { items: [] }
+      loadState: (newState: ClusterStateData) => {
+        const next = {} as Record<
+          keyof ClusterStateData,
+          ResourceCollection<KubernetesResource>
+        >
+        for (const key of CLUSTER_DATA_KEYS) {
+          next[key] = (newState[key] ?? {
+            items: []
+          }) as ResourceCollection<KubernetesResource>
+        }
+        state = next as ClusterStateData
       }
     }
-  }
+  ) as ClusterState
 
   if (options?.bootstrap) {
     applyClusterBootstrap(clusterStateFacade, options.bootstrap)

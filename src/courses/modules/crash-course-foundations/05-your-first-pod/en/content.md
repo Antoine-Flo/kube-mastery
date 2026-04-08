@@ -1,23 +1,40 @@
 ---
-seoTitle: 'Your First Kubernetes Pod, Manifests, Resources, Lifecycle'
-seoDescription: 'Learn how to write a Kubernetes Pod manifest with containers, resource requests and limits, and understand the Pod lifecycle from creation to running.'
+seoTitle: 'Your First Kubernetes Pod, Create, Inspect, Exec, Lifecycle Phases'
+seoDescription: 'Create your first Kubernetes Pod from a manifest, understand its lifecycle phases, exec into it, and learn why bare Pods are the foundation of all workloads.'
 ---
 
 # Your First Pod
 
-A Pod is the smallest deployable unit in Kubernetes. Not a container - a Pod. This distinction matters because a Pod can hold more than one container, and all containers in the same Pod share a network namespace and can share storage volumes. In practice, most Pods run a single container, but the abstraction exists so that Kubernetes has a consistent, atomic unit to schedule, start, stop, and monitor. You never tell Kubernetes "run this container on that node." You tell it "run this Pod," and it handles the rest.
+A Pod is the smallest deployable unit in Kubernetes. Not a container, a Pod. You do not tell Kubernetes to run a container directly. You tell it to run a Pod, and the Pod runs one or more containers together on the same node, sharing the same network and the same lifecycle.
 
-:::info
-A Pod wraps one or more containers and gives them a shared identity: a single IP address, a hostname, and access to shared volumes. All containers in a Pod always run on the same node and are started and stopped together.
-:::
+Think of a Pod as a logical host. Just as a process on a Linux machine can communicate with other processes on the same machine through localhost, containers in the same Pod share a network namespace and can reach each other on `127.0.0.1`. They also share mounted volumes. From the containers' perspective, they are co-located, even though they are processes in a shared kernel.
 
-## Writing a Pod Manifest
+## Writing the Manifest
 
-Every Kubernetes resource is described as a YAML document with four required top-level fields. `apiVersion` tells Kubernetes which API version handles this resource. `kind` says what type of resource it is. `metadata` carries identification information like the name, namespace, and labels. `spec` describes the desired state - what you actually want to run.
-
-For a Pod, the minimum you need to write is a name and a container image:
+Pod manifests are built from four required top-level fields. Start with the most basic structure:
 
 ```yaml
+# illustrative only
+apiVersion: v1
+kind: Pod
+```
+
+`apiVersion: v1` means this resource type exists in the core Kubernetes API. `kind: Pod` is the resource type.
+
+Add `metadata` with a name:
+
+```yaml
+# illustrative only
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+```
+
+Add `spec.containers` with one container:
+
+```yaml
+# illustrative only
 apiVersion: v1
 kind: Pod
 metadata:
@@ -28,9 +45,13 @@ spec:
       image: nginx:1.28
 ```
 
-That's a complete, valid Pod manifest. Kubernetes will schedule it, pull the image, start the container, and watch it. If the container crashes, Kubernetes restarts it. You've expressed the outcome - a running nginx container - and the cluster takes care of making it real.
+Every container needs a `name` (used for logging and exec targeting) and an `image`. Here the image is `nginx:1.28`, a stable web server you can always rely on for practice.
 
-In practice you'll always add a few more fields. Labels help you identify and filter the Pod later. Resource `requests` and `limits` tell the scheduler how much CPU and memory this container needs, and cap what it's allowed to consume. Without requests, the scheduler has no information to make good placement decisions. Without limits, a misbehaving container can consume all available resources on a node and starve the other workloads running there.
+Here is the complete manifest. Create the file:
+
+```bash
+nano my-pod.yaml
+```
 
 ```yaml
 apiVersion: v1
@@ -45,116 +66,130 @@ spec:
       image: nginx:1.28
       ports:
         - containerPort: 80
-      resources:
-        requests:
-          cpu: '100m'
-          memory: '64Mi'
-        limits:
-          cpu: '200m'
-          memory: '128Mi'
 ```
 
-The `ports` field is mostly documentation - it doesn't open or expose any network ports. The real networking is configured at the Service level. But declaring it makes the manifest easier to read and some tools use this information automatically.
-
-## The Pod Lifecycle
-
-When you apply this manifest, the Pod moves through a predictable sequence of phases. It starts as `Pending`: the API server has accepted the object and stored it in etcd, but it hasn't been scheduled to a node yet. Once the scheduler assigns it to a node, the kubelet on that node takes over: it pulls the container image, creates the container, and starts it. At that point the Pod transitions to `Running`. If the container exits cleanly with code 0, the Pod becomes `Succeeded`. If it exits with an error, it becomes `Failed`. If the kubelet on the node stops reporting to the API server, the Pod may enter `Unknown`.
-
-The phase you'll see most often in a healthy cluster is `Running`. The one you'll need to debug most often is `CrashLoopBackOff`, which isn't actually a phase but a status message indicating that the container keeps crashing and Kubernetes is restarting it with an exponentially increasing delay between attempts.
-
-## Inspecting a Running Pod
-
-Once a Pod exists, three commands cover the vast majority of what you need to know. `kubectl get pod` gives you the quick overview: name, ready count, status, restart count, and age. `kubectl describe pod` gives you the full picture - all fields, all status conditions, and most importantly the `Events` section at the bottom, which is a timestamped log of every action Kubernetes has taken on this resource. When a Pod fails to start, the events are where you find the actual reason.
+Apply it:
 
 ```bash
-kubectl get pod my-pod
+kubectl apply -f my-pod.yaml
+```
+
+:::visualizer
+Watch the cluster visualizer: a new Pod should appear on the worker node and transition to Running within a few seconds.
+:::
+
+## Observing the Lifecycle
+
+Pods move through a sequence of phases as they start up. List your Pod and watch the phase change:
+
+```bash
+kubectl get pod my-pod --watch
+```
+
+Press Ctrl+C once it reaches `Running`. The phases you might see are:
+
+`Pending` means the Pod has been accepted by the API server but its containers have not started yet. The scheduler is assigning a node and the kubelet is pulling the image.
+
+`Running` means at least one container is running. The container processes are alive.
+
+`Succeeded` and `Failed` appear when all containers have exited, with zero or non-zero exit codes respectively.
+
+`Unknown` means the node the Pod was on stopped reporting to the control plane.
+
+@@@
+graph LR
+    P["Pending"] --> R["Running"]
+    R --> S["Succeeded"]
+    R --> F["Failed"]
+    P --> F
+@@@
+
+:::quiz
+A Pod is in `Pending` state for 3 minutes. Its image is `nginx:1.28`. What are the two most likely causes?
+
+**Try it:** `kubectl describe pod my-pod`
+
+**Answer:** Look at the Events section. The most common causes are: no node has enough CPU or memory to schedule the Pod (you will see a scheduler message), or the image cannot be pulled (you will see an `ErrImagePull` or `ImagePullBackOff` event). Both are readable from `describe`.
+:::
+
+## Inspecting the Running Pod
+
+Get a summary of the Pod's current state:
+
+```bash
+kubectl get pod my-pod -o wide
+```
+
+The `-o wide` flag adds the node name and Pod IP. Note the IP address, it is unique within the cluster network and routable from other Pods.
+
+Get the full Pod object as YAML, including all the fields Kubernetes populated at runtime:
+
+```bash
+kubectl get pod my-pod -o yaml
+```
+
+Notice the `status` field in the output. Kubernetes fills this in as the Pod progresses. It contains the phase, conditions, container states, and the Pod IP.
+
+Describe the Pod to see its event history:
+
+```bash
 kubectl describe pod my-pod
 ```
 
-`kubectl logs` streams the stdout and stderr of a container. This is equivalent to `docker logs` for a local container. You can follow logs live with `-f`, or retrieve the logs from the previous container instance (useful after a crash) with `--previous`.
+## Executing Commands Inside a Pod
+
+Once the Pod is running, you can open a shell inside the container:
+
+```bash
+kubectl exec -it my-pod -- /bin/sh
+```
+
+The `-it` flags allocate an interactive terminal. The `--` separates kubectl flags from the command you are running inside the container. From inside, you can explore the filesystem, check the network, or run diagnostics.
+
+Exit the shell:
+
+```bash
+exit
+```
+
+If a Pod has multiple containers, specify which one with `-c`:
+
+```bash
+kubectl exec -it my-pod -c web -- /bin/sh
+```
+
+:::warning
+`kubectl exec` is a diagnostic tool, not a way to make changes to a running application. Any file you write inside a container's filesystem is lost when the container restarts. Configuration changes made via exec are invisible to Kubernetes and will be overwritten on the next deploy. Use exec to look, not to change.
+:::
+
+## Reading Logs
+
+Fetch the container's stdout and stderr:
 
 ```bash
 kubectl logs my-pod
+```
+
+Follow logs in real time with `-f`:
+
+```bash
 kubectl logs my-pod -f
-kubectl logs my-pod --previous
 ```
 
-## Hands-On Practice
-
-**1. Save the following manifest as `first-pod.yaml`:**
+Press Ctrl+C to stop following. For Pods with multiple containers, use `-c` to specify which container's logs you want:
 
 ```bash
-nano first-pod.yaml
+kubectl logs my-pod -c web
 ```
 
-```yaml
-#first-pod.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: first-pod
-  labels:
-    app: web
-    lesson: foundations
-spec:
-  containers:
-    - name: web
-      image: nginx:1.28
-      ports:
-        - containerPort: 80
-      resources:
-        requests:
-          cpu: '100m'
-          memory: '64Mi'
-        limits:
-          cpu: '200m'
-          memory: '128Mi'
-```
-
-**2. Apply it and watch it start:**
+## Deleting the Pod
 
 ```bash
-kubectl apply -f first-pod.yaml
-kubectl get pod first-pod --watch
+kubectl delete pod my-pod
 ```
 
-Press Ctrl+C once the status shows `Running`. Notice that the Pod spends a moment in `Pending` while it's being scheduled and the image is being pulled.
+The Pod is gone. There is no controller watching it, so nothing recreates it. This is the fundamental limitation of bare Pods: they are not self-healing. If the node fails or the Pod is accidentally deleted, it stays deleted.
 
-**3. Describe the Pod:**
+In production, you almost never create bare Pods. You create Deployments, which manage Pods for you. But every Deployment's Pod follows the exact same lifecycle you just observed: the same manifest fields, the same phases, the same exec and logs commands. Understanding a bare Pod means understanding every workload on top of it.
 
-```bash
-kubectl describe pod first-pod
-```
-
-Look through the output for these specific pieces of information: the `Node` field shows which machine it was scheduled on; the `IP` field shows the Pod's internal cluster IP address; the `Containers` section shows the image and the resource requests and limits you declared; and the `Events` section at the bottom shows the full startup sequence from scheduling through to the container being started.
-
-**4. Read the container logs:**
-
-```bash
-kubectl logs first-pod
-```
-
-You should see nginx's startup messages. This is the process's stdout, just as it would appear if you ran the container locally.
-
-**5. Run a command inside the running container:**
-
-```bash
-kubectl exec first-pod -- env
-```
-
-`kubectl exec` runs a single command in a running container, without needing a shell. For an interactive session, pass `-it` and specify `bash` or `sh`:
-
-```bash
-kubectl exec -it first-pod -- bash
-```
-
-Type `exit` to leave the shell.
-
-**6. Delete the Pod:**
-
-```bash
-kubectl delete pod first-pod
-kubectl get pods
-```
-
-The Pod is gone. It will not come back - bare Pods are not replaced when deleted. That single limitation is why, in almost every real deployment, you don't create Pods directly. You use a Deployment, which wraps the Pod in a controller that keeps the desired count running at all times. That's exactly what the next module covers.
+You have now created, inspected, exec'd into, read logs from, and deleted a Pod. These five operations cover the majority of day-to-day diagnostic work on a running cluster. The Foundations module ends here. In the Workloads module, you will build on this base and create Deployments that manage Pods automatically.

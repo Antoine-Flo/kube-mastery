@@ -32,6 +32,11 @@ const BASE_RESOURCE_TARGETS: Record<Resource, BaseTarget | undefined> = {
   endpointslices: undefined,
   namespaces: { group: '', version: 'v1', kind: 'Namespace' },
   configmaps: { group: '', version: 'v1', kind: 'ConfigMap' },
+  controllerrevisions: {
+    group: 'apps',
+    version: 'v1',
+    kind: 'ControllerRevision'
+  },
   secrets: { group: '', version: 'v1', kind: 'Secret' },
   events: { group: '', version: 'v1', kind: 'Event' },
   nodes: { group: '', version: 'v1', kind: 'Node' },

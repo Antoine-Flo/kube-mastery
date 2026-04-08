@@ -7,6 +7,7 @@ import Ajv, { type ErrorObject } from 'ajv'
 import addFormats from 'ajv-formats'
 import type { Result } from '../../../src/core/shared/result'
 import { error, success } from '../../../src/core/shared/result'
+import { getOpenAPISchemaName } from '../../../src/core/openapi/schemaName'
 import type { OpenAPISpec, JSONSchema } from './loader'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -32,26 +33,6 @@ export interface OpenAPIValidator {
   getSchema(apiVersion: string, kind: string): Result<JSONSchema>
 }
 
-// ─── Schema Name Mapping ────────────────────────────────────────────────────
-
-/**
- * Map Kubernetes resource (apiVersion, kind) to OpenAPI schema name
- */
-const getSchemaName = (apiVersion: string, kind: string): string => {
-  if (apiVersion === 'v1') {
-    return `io.k8s.api.core.v1.${kind}`
-  }
-  if (apiVersion.startsWith('apps/v1')) {
-    return `io.k8s.api.apps.v1.${kind}`
-  }
-  if (apiVersion === 'coordination.k8s.io/v1') {
-    return `io.k8s.api.coordination.v1.${kind}`
-  }
-  // For other API groups, replace / with . but handle .k8s.io specially
-  const normalized = apiVersion.replace('k8s.io/', 'k8s.io.').replace('/', '.')
-  return `io.k8s.api.${normalized}.${kind}`
-}
-
 // ─── Schema Extraction ──────────────────────────────────────────────────────
 
 /**
@@ -63,7 +44,7 @@ const getSchemaForResource = (
   apiVersion: string,
   kind: string
 ): Result<JSONSchema> => {
-  const schemaName = getSchemaName(apiVersion, kind)
+  const schemaName = getOpenAPISchemaName(apiVersion, kind)
   const schema = spec.components.schemas[schemaName]
 
   if (!schema) {
@@ -155,7 +136,7 @@ export const createOpenAPIValidator = (spec: OpenAPISpec): OpenAPIValidator => {
 
     validateResource: (resource: unknown, apiVersion: string, kind: string) => {
       // Get schema name
-      const schemaName = getSchemaName(apiVersion, kind)
+      const schemaName = getOpenAPISchemaName(apiVersion, kind)
       const schema = spec.components.schemas[schemaName]
 
       if (!schema) {

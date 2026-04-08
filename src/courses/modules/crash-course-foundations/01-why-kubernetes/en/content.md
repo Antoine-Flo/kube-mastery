@@ -1,73 +1,92 @@
 ---
-seoTitle: 'Why Kubernetes? Self-Healing, Scheduling, Reconciliation'
-seoDescription: 'Learn how Kubernetes solves container orchestration at scale through reconciliation, self-healing, and automated scheduling across a cluster.'
+seoTitle: 'Why Kubernetes, Container Orchestration, Scheduling, Self-Healing'
+seoDescription: 'Understand why Kubernetes exists, what problems it solves, and the core capabilities it provides for running containerized workloads at scale.'
 ---
 
 # Why Kubernetes?
 
-Running one containerized application is manageable, write a Dockerfile, build an image, run a container. Real systems are usually multiple services that must run together, stay available under load, recover from failure, and roll out updates without downtime. At that point, the challenge is no longer containers themselves, it is orchestration, and that is what Kubernetes is built for.
+It is 3am. Your web server container crashed on one of your six machines. Another machine is out of memory. A new version of your API is waiting to deploy, but you cannot afford downtime. You have 15 services spread across those machines, and the on-call engineer is you.
+
+Managing containers manually at this scale is not a career, it is a series of incidents. Kubernetes exists to make this problem disappear.
+
+## The Orchestration Problem
+
+Containers are excellent at packaging and isolating applications. A single container on a single machine is easy to run. The challenge appears as soon as you have more than a handful of them.
+
+Consider a typical web application: frontend, backend API, database, cache, background workers. Each service needs multiple copies for redundancy. Those copies need to land on machines with enough CPU and memory. They need to find each other on the network. When one crashes, something must restart it. When traffic spikes, something must spin up more instances. When you ship a new version, the old ones must come down in a controlled sequence that avoids downtime.
+
+Doing all of that by hand requires constant attention, deep knowledge of which machine has what capacity, and near-perfect timing. It does not scale.
+
+@@@
+graph LR
+    Problem["Manual ops:<br/>15 services, 6 nodes,<br/>crashes, deploys, scaling"]
+    K8s["Kubernetes:<br/>schedules, heals,<br/>scales, routes"]
+    You["You:<br/>declare desired state"]
+
+    You -->|"kubectl apply -f app.yaml"| K8s
+    K8s -->|"handles the rest"| Problem
+@@@
+
+Kubernetes replaces manual container management with a control loop: you describe what you want, and the cluster continuously works to make reality match your description.
+
+:::quiz
+You have three replicas of a web server running. One container crashes. What does Kubernetes do without any human intervention?
+
+**Answer:** The controller detects that the actual count (2) no longer matches the desired count (3) and creates a replacement container automatically. You never need to notice the crash.
+:::
 
 ## What Kubernetes Actually Does
 
-At its core, Kubernetes continuously compares what you want with what is actually running, then closes the gap. You declare a desired state, "I want three copies of this service, using this image, with these environment variables", and Kubernetes is responsible for making and keeping that state true.
+Kubernetes is a **container orchestrator**. Given a fleet of machines and a set of container workloads, it handles the operational work that would otherwise fall on you.
 
-If a container crashes, Kubernetes restarts it. If a node goes offline, it reschedules Pods on healthy nodes. If you push a new image, it replaces old containers gradually and waits for readiness before continuing. You declare the outcome, Kubernetes keeps working toward it.
+**Scheduling** places each container on a node that has enough CPU and memory for it. You do not pick the machine, Kubernetes picks it based on resource requests and node capacity.
 
-This loop of observation and correction is called **reconciliation**, and it is the key mental model for Kubernetes. The system never "finishes", it keeps reconciling actual state with desired state for the lifetime of the cluster.
+**Self-healing** watches your workloads continuously. If a container exits unexpectedly, it is restarted. If a node fails, its workloads are rescheduled elsewhere. You declare the desired count; the cluster maintains it.
 
-@@@
-graph TD
-    DS["Desired State<br/>(your manifest)"]
-    CTL["Kubernetes<br/>Controller"]
-    AS["Actual State<br/>(running cluster)"]
-    ACT["Take Action<br/>(create / delete / update)"]
+**Scaling** adjusts the number of running containers up or down, either manually with a single command or automatically based on metrics like CPU utilization.
 
-    DS --> CTL
-    CTL -->|"gap detected"| ACT
-    ACT --> AS
-    AS -. "drift detected" .-> CTL
-@@@
+**Rolling updates** let you ship a new container image version without downtime. Kubernetes replaces old instances gradually, keeping a minimum number of healthy replicas available throughout the transition.
 
-## Beyond Self-Healing
+**Service discovery** gives every group of Pods a stable DNS name and a virtual IP. Containers find each other by name, not by IP address, so the network stays coherent even as Pods come and go.
 
-Self-healing is the most visible benefit, but growth depends on more. The scheduler uses CPU and memory requests to place containers on nodes with enough capacity, automatically across the cluster. Services provide stable DNS names and IP addresses, so components can reach each other by name even when Pods are replaced. Storage can be provisioned and attached on demand. Configuration and secrets can be injected at runtime without rebuilding images.
+:::quiz
+A container crashes. Which outcome does Kubernetes guarantee?
 
-Together, these features let today's infrastructure absorb tomorrow's load without rewriting your operational model.
+- You get paged and restart it manually
+- A replacement container starts within seconds, automatically
+- You receive an alert and decide whether to restart it
 
-## Hands-On Practice
+**Answer:** The second option. Kubernetes detects the failure and acts on it immediately, without waiting for human input. The other two still require a person to make a decision.
+:::
 
-Let's explore what a running cluster looks like before writing a single manifest.
+## What Kubernetes Does Not Do
 
-**1. Confirm that `kubectl` can reach the cluster:**
+Kubernetes is sometimes described as a Platform-as-a-Service. It is not. It is a lower-level foundation on which platforms are built.
+
+Kubernetes does not build your container images. That is the job of Docker, Buildah, or a CI pipeline. You bring images; Kubernetes runs them.
+
+It does not handle application-level observability by default. Logs are accessible per container, but a full pipeline with storage, search, and dashboards requires additional tools.
+
+It does not make your application cloud-native. If your app crashes when its database is unavailable, Kubernetes will keep restarting it until the database comes back, but it will not fix the application's error handling.
+
+:::warning
+A common mistake is expecting Kubernetes to solve problems that belong to the application layer: retry logic, graceful shutdown, secret rotation, or multi-region failover. These require changes to the application itself or dedicated tooling. Kubernetes is the foundation, not the entire building.
+:::
+
+## Your First Contact
+
+Check that your cluster is reachable and see what the control plane exposes:
 
 ```bash
 kubectl cluster-info
 ```
 
-This command queries the API server and prints its address alongside the address of CoreDNS, the cluster's internal DNS service. If you see output instead of an error, your connection is working.
-
-**2. List the nodes that make up the cluster:**
+You should see the API server address. Now list every resource type Kubernetes knows about:
 
 ```bash
-kubectl get nodes
+kubectl api-resources
 ```
 
-Every row is a machine - real or virtual - that can run your workloads. The `STATUS` column should show `Ready` for each node. A node that shows `NotReady` cannot schedule new Pods, and its existing Pods will eventually be evicted and rescheduled elsewhere.
+Each row is a kind of object you can create, inspect, or delete. Pods, Deployments, Services, ConfigMaps, each corresponds to a concept you will meet in the lessons ahead. You do not need to memorize this list. Run it whenever you want to discover what is available.
 
-**3. Explore the system namespace:**
-
-```bash
-kubectl get pods -n kube-system
-```
-
-This is where Kubernetes runs its own internal components as Pods. You'll see CoreDNS, kube-proxy, and potentially others depending on the cluster. Everything you'll learn about Pods in this course applies equally to these system Pods.
-
-**4. See all namespaces in the cluster:**
-
-```bash
-kubectl get namespaces
-```
-
-Namespaces are a way to logically divide the cluster. You're currently working in the `default` namespace. The next lessons will explain exactly what that means.
-
-You've confirmed your cluster is alive and seen its basic shape. In the next lesson, you'll understand the architecture behind what you just observed.
+Kubernetes automates the hardest parts of running containers at scale: scheduling, self-healing, rolling updates, and service discovery. In the next lesson, you will look inside the cluster to understand the components that make all of this work.

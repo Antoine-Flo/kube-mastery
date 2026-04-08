@@ -15,7 +15,7 @@ import { deepFreeze } from '../../shared/deepFreeze'
 import type { ExecutionResult, Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
 import type { ParsedCommand } from './types'
-import { RESOURCE_KIND_BY_RESOURCE } from './resourceHelpers'
+import { RESOURCE_KIND_BY_RESOURCE } from './resourceCatalog'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // METADATA HELPERS (LABELS & ANNOTATIONS)

@@ -5,7 +5,7 @@ import {
 } from '../../../../../cluster/ressources/Ingress'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
-import { createResourceWithEvents } from '../../../resourceHelpers'
+import { createResourceWithEvents } from '../../../resourceCatalog'
 import type { ParsedCommand } from '../../../types'
 
 type ParsedIngressRule = {

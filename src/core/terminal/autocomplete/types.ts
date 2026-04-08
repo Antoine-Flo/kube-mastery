@@ -22,6 +22,7 @@ export interface AutocompleteClusterState {
   getDeployments?: (namespace?: string) => AutocompleteResource[]
   getLeases?: (namespace?: string) => AutocompleteResource[]
   getNetworkPolicies?: (namespace?: string) => AutocompleteResource[]
+  getNamespaces?: () => AutocompleteResource[]
 }
 
 export interface AutocompleteContext {

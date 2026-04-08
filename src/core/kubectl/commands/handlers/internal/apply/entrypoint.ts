@@ -8,7 +8,7 @@ import {
   NO_OBJECTS_PASSED_TO_APPLY,
   resolveManifestFilePathsFromFilenameFlag
 } from '../../../manifestFilePathsFromFlag'
-import { applyResourceWithEvents } from '../../../resourceHelpers'
+import { applyResourceWithEvents } from '../../../resourceCatalog'
 import type { ParsedCommand } from '../../../types'
 
 const getFilenameFromFlags = (parsed: ParsedCommand): string | undefined => {

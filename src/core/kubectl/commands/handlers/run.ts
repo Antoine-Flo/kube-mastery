@@ -9,10 +9,10 @@ import {
   errorWithIO,
   successWithIO
 } from '../../../shared/result'
-import { validateMetadataNameByKind } from '../metadataNameValidation'
+import { validateMetadataNameByKind } from '../resourceCatalog'
 import type { ParsedCommand } from '../types'
 import { buildDryRunResponse } from './create'
-import { createResourceWithEvents } from '../resourceHelpers'
+import { createResourceWithEvents } from '../resourceCatalog'
 import { executeRuntimeAttachedCommand } from './internal/runtimeCommand'
 
 const stripMatchingQuotes = (raw: string): string => {

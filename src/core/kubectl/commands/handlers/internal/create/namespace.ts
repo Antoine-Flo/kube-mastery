@@ -1,7 +1,7 @@
 import type { ApiServerFacade } from '../../../../../api/ApiServerFacade'
 import { createNamespace } from '../../../../../cluster/ressources/Namespace'
 import type { ExecutionResult } from '../../../../../shared/result'
-import { createResourceWithEvents } from '../../../resourceHelpers'
+import { createResourceWithEvents } from '../../../resourceCatalog'
 import type { ParsedCommand } from '../../../types'
 
 export const buildCreateNamespaceDryRunManifest = (

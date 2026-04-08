@@ -5,7 +5,12 @@
 // Gère les actions, types de ressources et noms de ressources
 
 import { AutocompleteProvider } from '../../terminal/autocomplete/AutocompleteProvider'
-import { RESOURCE_ALIAS_MAP } from '../commands/resources'
+import {
+  RESOURCE_ALIAS_MAP,
+  resolveUniqueKubectlResourceKind,
+  resolveUniqueKubectlResourceKindAllowlist,
+  type KubectlResource
+} from '../commands/resourceCatalog'
 import { completeKubectlFromSpec } from '../cli/runtime/completion'
 import { KUBECTL_ROOT_COMMAND_SPEC } from '../cli/registry/root'
 import type {
@@ -24,9 +29,12 @@ const KUBECTL_ACTIONS = KUBECTL_ROOT_COMMAND_SPEC.subcommands.map((command) => {
   return command.path[command.path.length - 1]
 })
 
-const RESOURCE_GETTERS: Record<
-  string,
-  (state: AutocompleteClusterState) => unknown[]
+/**
+ * Cluster-backed name completion: only kinds where the terminal exposes a list API.
+ * Resource *type* completion uses all keys from KUBECTL_RESOURCES (resourceCatalog).
+ */
+const RESOURCE_GETTERS: Partial<
+  Record<KubectlResource, (state: AutocompleteClusterState) => unknown[]>
 > = {
   pods: (state) => (state.getPods ? state.getPods() : []),
   configmaps: (state) => (state.getConfigMaps ? state.getConfigMaps() : []),
@@ -39,10 +47,9 @@ const RESOURCE_GETTERS: Record<
   deployments: (state) => (state.getDeployments ? state.getDeployments() : []),
   leases: (state) => (state.getLeases ? state.getLeases() : []),
   networkpolicies: (state) =>
-    state.getNetworkPolicies ? state.getNetworkPolicies() : []
+    state.getNetworkPolicies ? state.getNetworkPolicies() : [],
+  namespaces: (state) => (state.getNamespaces ? state.getNamespaces() : [])
 }
-
-const CANONICAL_RESOURCE_TYPES = Object.keys(RESOURCE_GETTERS)
 
 /**
  * Filter array to items that start with prefix (case-sensitive)
@@ -82,7 +89,7 @@ const getResourceNames = (
     return []
   }
 
-  const getter = RESOURCE_GETTERS[resourceType]
+  const getter = RESOURCE_GETTERS[resourceType as KubectlResource]
   if (!getter) {
     return []
   }
@@ -202,14 +209,25 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
         return []
       }
 
-      const rolloutResourceTypes = ['deployments', 'daemonsets', 'statefulsets']
+      const rolloutResourceKinds: KubectlResource[] = [
+        'deployments',
+        'daemonsets',
+        'statefulsets'
+      ]
       const isResourceTypePosition =
         tokens.length === 3 ||
         (tokens.length === 4 &&
           currentToken !== '' &&
           tokens[3] === currentToken)
       if (isResourceTypePosition) {
-        return completeOnlyWhenUnique(rolloutResourceTypes, currentToken, ' ')
+        const kind = resolveUniqueKubectlResourceKindAllowlist(
+          currentToken,
+          rolloutResourceKinds
+        )
+        if (kind == null) {
+          return []
+        }
+        return [{ text: kind, suffix: ' ' }]
       }
 
       if (tokens.length < 4) {
@@ -245,11 +263,11 @@ export class KubectlAutocompleteProvider extends AutocompleteProvider {
           currentToken !== '' &&
           tokens[2] === currentToken)
       if (isResourceTypePosition) {
-        return completeOnlyWhenUnique(
-          [...CANONICAL_RESOURCE_TYPES],
-          currentToken,
-          ' '
-        )
+        const kind = resolveUniqueKubectlResourceKind(currentToken)
+        if (kind == null) {
+          return []
+        }
+        return [{ text: kind, suffix: ' ' }]
       }
     }
 

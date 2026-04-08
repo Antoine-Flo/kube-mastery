@@ -12,7 +12,7 @@ import {
 } from '../../shared/labelSelector'
 import type { Result } from '../../shared/result'
 import { error, success } from '../../shared/result'
-import { parseResourceTargetToken } from './resourceTarget'
+import { parseResourceTargetToken } from './resourceCatalog'
 import { getTransformerForAction, type ParseContext } from './transformers'
 import type { Action, ParsedCommand, Resource } from './types'
 import { assertParsedCommandSupportedBySpec } from '../cli/runtime/parse'

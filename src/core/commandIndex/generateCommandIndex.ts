@@ -1,7 +1,7 @@
 import { KUBECTL_ROOT_COMMAND_SPEC } from '../kubectl/cli/registry/root'
 import { getShellRegistryCommandNames } from '../shell/commands'
 import type { KubectlCommandSpec, KubectlFlagSpec } from '../kubectl/cli/model'
-import { KUBECTL_RESOURCES } from '../kubectl/commands/resources'
+import { KUBECTL_RESOURCES } from '../kubectl/commands/resourceCatalog'
 
 type ShellFlags = Record<string, string[]>
 

@@ -1,124 +1,133 @@
 ---
-seoTitle: 'Kubernetes Internal DNS, CoreDNS, Service Names, Lookups'
-seoDescription: 'Understand how Kubernetes CoreDNS gives every Service a predictable DNS name, enabling pods to reach services by name without hardcoding IP addresses.'
+seoTitle: 'Kubernetes Internal DNS, CoreDNS, Service Discovery by Name'
+seoDescription: 'Learn how CoreDNS enables Pods to discover Services by name instead of IP, and understand the DNS record patterns Kubernetes creates for Services and Pods.'
 ---
 
 # Internal DNS
 
-Even with a stable ClusterIP Service, connecting two applications still requires knowing the Service's IP address. Hardcoding an IP into an environment variable is fragile: if the Service is ever deleted and recreated, it gets a new ClusterIP, and every place that referenced the old one breaks. More fundamentally, it's the kind of coupling that makes systems hard to operate. Kubernetes solves this with a built-in DNS server that gives every Service a predictable, human-readable name that never changes.
+In the previous lessons you connected to Services using their ClusterIP. But hardcoding an IP address, even a stable virtual one, is something you should never do. IPs can change when a Service is recreated or when the cluster is rebuilt. There is a better way, and Kubernetes provides it out of the box.
 
-:::info
-Every Service in Kubernetes automatically receives a DNS name. Pods can reach any Service by name, without knowing its IP address or caring whether it has changed.
-:::
-
-## CoreDNS
-
-The DNS service in a Kubernetes cluster is called **CoreDNS**. It runs as a Deployment in the `kube-system` namespace and is itself exposed through a Service - the one you see listed as `kube-dns` when you run `kubectl get services -n kube-system`. Every Pod in the cluster is automatically configured to use CoreDNS as its DNS resolver. When a Pod looks up a hostname, the query goes to CoreDNS, which knows about every Service in the cluster and responds with the corresponding ClusterIP.
+Every cluster runs **CoreDNS**, a DNS server that assigns a stable hostname to every Service. A Pod that wants to reach a Service never needs to look up its IP manually. It just uses the Service name as a hostname and DNS resolves it automatically.
 
 ## The DNS Name Format
 
-Every Service gets a fully qualified domain name following a predictable pattern:
+When you create a Service named `backend` in the `default` namespace, CoreDNS immediately creates a DNS record for it:
+
+```
+backend.default.svc.cluster.local
+```
+
+This follows a fixed pattern:
 
 ```
 <service-name>.<namespace>.svc.cluster.local
 ```
 
-For a Service named `backend-service` in the `default` namespace, the full DNS name is `backend-service.default.svc.cluster.local`. That's a mouthful, but in practice you rarely need to type it. Kubernetes configures the DNS resolver inside each Pod with a set of search domains, so that within the same namespace, you can reach the Service with just its name: `backend-service`. From a different namespace, you need at minimum `backend-service.default`.
+`svc` is a fixed segment that identifies this as a Service record. `cluster.local` is the cluster domain, configurable but almost always left at the default.
 
-This is how microservices communicate in Kubernetes. Your application configuration contains names like `http://auth-service`, `postgres://database:5432`, or `redis://cache`. Those names are stable across deployments, across environments (as long as the Service names are consistent), and across Pod replacements. You write them once and they keep working.
+@@@
+graph LR
+    POD["Pod: frontend"]
+    DNS["CoreDNS"]
+    SVC["Service: backend<br/>ClusterIP: 10.96.4.2"]
 
-## How Pods Know Where to Look
+    POD -->|"DNS query: backend.default.svc.cluster.local"| DNS
+    DNS -->|"A record: 10.96.4.2"| POD
+    POD -->|"TCP :80 to 10.96.4.2"| SVC
+@@@
 
-When Kubernetes creates a Pod, it writes a `/etc/resolv.conf` file inside each container that points at CoreDNS:
+The important thing is that you almost never need to write the full name. Kubernetes configures every Pod's `/etc/resolv.conf` with search domains that allow short names to work. A Pod in the `default` namespace can reach `backend.default.svc.cluster.local` by simply writing `backend`. A Pod in a different namespace can use `backend.default`.
 
-```
-nameserver 10.96.0.10
-search default.svc.cluster.local svc.cluster.local cluster.local
-options ndots:5
-```
+## Seeing It in Action
 
-The `search` field is what makes short names work. When your application calls `http://backend-service`, the DNS resolver tries `backend-service.default.svc.cluster.local` before trying `backend-service` as a bare hostname, because `default.svc.cluster.local` is listed in the search path. The resolution succeeds, and your application gets the ClusterIP without ever needing to know the full qualified name.
-
-The `ndots:5` option means that any name with fewer than 5 dots is searched against the search domains before being treated as an absolute hostname. This is why short names work seamlessly inside the cluster.
-
-## Hands-On Practice
-
-**1. Create a backend Service:**
-
-```yaml
-# backend.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: backend
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: backend
-  template:
-    metadata:
-      labels:
-        app: backend
-    spec:
-      containers:
-        - name: backend
-          image: nginx:1.28
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: backend-service
-spec:
-  selector:
-    app: backend
-  ports:
-    - port: 80
-      targetPort: 80
-```
+Deploy a backend Service:
 
 ```bash
-kubectl apply -f backend.yaml
-kubectl rollout status deployment/backend
+kubectl create deployment backend --image=nginx:1.28
+kubectl expose deployment backend --port=80
 ```
 
-**2. Resolve the Service by its short name:**
+Now run a temporary Pod with a shell to test DNS from inside the cluster:
 
 ```bash
-kubectl run dns-test --image=busybox:1.36 --rm -it --restart=Never -- nslookup backend-service
+kubectl run dns-test --image=busybox:1.36 --restart=Never -it --rm -- /bin/sh
 ```
 
-You'll see the short name resolve to the Service's ClusterIP, and the full qualified name listed in the answer. Notice the resolved address matches what `kubectl get service backend-service` shows.
+This creates a one-shot Pod, drops you into its shell, and deletes it automatically when you exit. From inside, resolve the Service name:
 
-**3. Resolve it using the full qualified domain name:**
-
-```bash
-kubectl run dns-test2 --image=busybox:1.36 --rm -it --restart=Never -- nslookup backend-service.default.svc.cluster.local
+```sh
+nslookup backend
 ```
 
-Same result - both names resolve to the same ClusterIP. The short name just relies on the search domains configured in `/etc/resolv.conf`.
+You should see the ClusterIP returned as the answer. Try the full name:
 
-**4. Make an HTTP request using only the DNS name:**
-
-```bash
-kubectl run curl-test --image=curlimages/curl:8.6.0 --rm -it --restart=Never -- curl -s http://backend-service
+```sh
+nslookup backend.default.svc.cluster.local
 ```
 
-The request succeeds - the Pod resolved `backend-service` to the ClusterIP, the ClusterIP forwarded the request to one of the backend Pods, and you received the nginx default page. No IP address anywhere in that interaction.
+Same result. Now try reaching it over HTTP:
 
-**5. Read the DNS configuration from inside a Pod:**
+```sh
+wget -qO- http://backend
+```
+
+You should see the nginx welcome page. The name `backend` resolved to the ClusterIP, which forwarded the request to one of the backend Pods.
+
+Exit the shell:
+
+```sh
+exit
+```
+
+:::quiz
+A Pod in the `payments` namespace wants to reach a Service named `auth` in the `platform` namespace. Which hostname should it use?
+
+**Try it:** Open a shell in a Pod in a non-default namespace and run `nslookup auth.platform`
+
+**Answer:** `auth.platform` (short form) or the full `auth.platform.svc.cluster.local`. The short name `auth` alone would not work because DNS search domains only auto-expand within the same namespace. Cross-namespace access always requires at least `<service>.<namespace>`.
+:::
+
+## Why DNS Over IP
+
+Hostname-based addressing has a concrete operational advantage. When you write `http://backend` in your application code, that name is resolved fresh at runtime, not baked in at build time. If you delete and recreate the backend Service, it gets a new ClusterIP, but DNS still resolves `backend` to whatever the current ClusterIP is. Your frontend code never changes.
+
+Why does Kubernetes use DNS records that point to ClusterIPs rather than directly to Pod IPs? Because the Service layer provides load balancing and health filtering. A DNS record pointing directly to a Pod IP would bypass all of that and return an IP that might be gone in the next minute.
+
+:::quiz
+You delete and recreate a Service named `backend`. The new Service gets a different ClusterIP. Your frontend application uses `http://backend` as the URL. Does it break?
+
+**Answer:** No. DNS resolves `backend` to whatever ClusterIP currently exists for a Service with that name in the same namespace. As long as the Service name stays the same, the application does not need to change. This is why hostname-based addressing is so much more resilient than IP-based addressing.
+:::
+
+## Debugging DNS Failures
+
+If a Pod cannot resolve a Service name, the problem is almost always one of three things.
+
+First, the Service may not exist or may be in a different namespace than expected. Check with `kubectl get service -A`.
+
+Second, the Pod's DNS configuration may be broken. Inspect `/etc/resolv.conf` from inside the Pod:
 
 ```bash
-kubectl get pods -l app=backend
-# Copy one pod NAME, then:
 kubectl exec <POD-NAME> -- cat /etc/resolv.conf
 ```
 
-You'll see the `nameserver` pointing at the CoreDNS Service, and the `search` domains that make short names work.
+You should see a `search` line listing `default.svc.cluster.local svc.cluster.local cluster.local` (or the equivalent for the Pod's namespace). If this file is missing or empty, the Pod was started with a broken DNS configuration.
 
-**6. Clean up:**
+Third, CoreDNS itself may be unhealthy. Check its Pods:
+
+```bash
+kubectl get pods -n kube-system -l k8s-app=kube-dns
+```
+
+:::warning
+A common mistake is trying to reach a Service from a Pod using `localhost` or a bare hostname that matches a container name. Neither works. `localhost` inside a container refers to the container itself. Container names are not DNS entries. Only Service names are registered in CoreDNS. If you want inter-container communication, the correct address is always the Service name.
+:::
+
+Clean up:
 
 ```bash
 kubectl delete deployment backend
-kubectl delete service backend-service
+kubectl delete service backend
 ```
+
+CoreDNS turns every Service name into a stable, resolvable hostname. You write `http://backend`, DNS does the rest. This is the final piece of the networking model: ephemeral Pod IPs are hidden behind Services, Services are reachable by stable name through DNS, and the entire system adapts automatically as Pods come and go beneath the surface.

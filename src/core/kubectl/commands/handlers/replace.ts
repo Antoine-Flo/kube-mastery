@@ -11,13 +11,13 @@ import { error, success } from '../../../shared/result'
 import { parseKubernetesYaml } from '../../yamlParser'
 import { formatKubectlFileSystemError } from '../filesystemErrorPresenter'
 import type { ParsedCommand } from '../types'
-import { validateMetadataNameByKind } from '../metadataNameValidation'
+import { validateMetadataNameByKind } from '../resourceCatalog'
 import {
   isNamespacedResourceKind,
   isSupportedResourceKind,
   toKindReference,
   toPluralKindReference
-} from '../resourceHelpers'
+} from '../resourceCatalog'
 
 type KubernetesResource = {
   kind: string

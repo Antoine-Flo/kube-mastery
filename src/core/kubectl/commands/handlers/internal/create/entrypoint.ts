@@ -4,7 +4,7 @@ import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
 import { parseKubernetesYaml } from '../../../../yamlParser'
 import { formatKubectlFileSystemError } from '../../../filesystemErrorPresenter'
-import { createResourceWithEvents } from '../../../resourceHelpers'
+import { createResourceWithEvents } from '../../../resourceCatalog'
 import type { ParsedCommand } from '../../../types'
 import {
   buildCreateConfigMapDryRunManifest,

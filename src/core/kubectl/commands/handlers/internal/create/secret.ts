@@ -6,7 +6,7 @@ import {
 import type { FileSystem } from '../../../../../filesystem/FileSystem'
 import type { ExecutionResult } from '../../../../../shared/result'
 import { formatKubectlFileSystemError } from '../../../filesystemErrorPresenter'
-import { createResourceWithEvents } from '../../../resourceHelpers'
+import { createResourceWithEvents } from '../../../resourceCatalog'
 import type { ParsedCommand } from '../../../types'
 import { isExecutionErrorResult } from './configMap'
 import type {

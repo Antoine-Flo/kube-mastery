@@ -9,7 +9,7 @@ description: Refactors a KubeMastery course lesson to apply all pedagogical prin
 
 1. Read `src/courses/prompt.md` — this is the source of truth for all pedagogical rules.
 2. Read the target `content.md` file.
-3. Rewrite the lesson fully applying every rule in the prompt. Do not paraphrase the rules — apply them structurally.
+3. Rewrite the lesson fully applying every rule in the prompt. Do not paraphrase the rules, apply them structurally. The result should not be longer than the original. It should be slightly shorter.
 4. Output the rewritten lesson directly into the file.
 
 ## Invariants (never break these)
@@ -41,3 +41,4 @@ After writing, verify:
 - At least one `:::warning` with a failure case.
 - Diagrams appear before the text that references their nodes.
 - The frontmatter and `#` title are unchanged.
+- The length of the lesson is slightly shorter than the original.

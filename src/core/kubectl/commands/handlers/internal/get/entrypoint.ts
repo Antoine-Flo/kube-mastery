@@ -3,7 +3,7 @@ import type { ParsedCommand, Resource } from '../../../types'
 import {
   toPluralResourceKindReference,
   toResourceKindReference
-} from '../../../resourceHelpers'
+} from '../../../resourceCatalog'
 import {
   renderStructuredPayload,
   resolveOutputDirective,

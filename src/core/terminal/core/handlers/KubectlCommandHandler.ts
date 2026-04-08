@@ -431,6 +431,9 @@ const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
     'ConfigMapCreated',
     'ConfigMapUpdated',
     'ConfigMapDeleted',
+    'ControllerRevisionCreated',
+    'ControllerRevisionUpdated',
+    'ControllerRevisionDeleted',
     'SecretCreated',
     'SecretUpdated',
     'SecretDeleted',
@@ -470,6 +473,11 @@ const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
   ],
   pods: ['PodCreated', 'PodUpdated', 'PodDeleted', 'PodBound'],
   configmaps: ['ConfigMapCreated', 'ConfigMapUpdated', 'ConfigMapDeleted'],
+  controllerrevisions: [
+    'ControllerRevisionCreated',
+    'ControllerRevisionUpdated',
+    'ControllerRevisionDeleted'
+  ],
   secrets: ['SecretCreated', 'SecretUpdated', 'SecretDeleted'],
   events: ['EventCreated', 'EventUpdated', 'EventDeleted'],
   nodes: [],

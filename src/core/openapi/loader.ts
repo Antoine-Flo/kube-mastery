@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // OPENAPI SPEC LOADER (SHARED)
 // ═══════════════════════════════════════════════════════════════════════════
-// Shared loader for Kubernetes OpenAPI specs used by runtime and tests.
+// Shared loader for Kubernetes OpenAPI v3 specs used by runtime and tests.
+// Specs under ./specs/ are sourced from Kubernetes v1.35.3 (api/openapi-spec/v3).
 
 import type { Result } from '../shared/result'
 import { error, success } from '../shared/result'
@@ -9,6 +10,9 @@ import { error, success } from '../shared/result'
 import apiV1Spec from './specs/api__v1_openapi.json'
 import appsV1Spec from './specs/apis__apps__v1_openapi.json'
 import coordinationV1Spec from './specs/apis__coordination.k8s.io__v1_openapi.json'
+import discoveryV1Spec from './specs/apis__discovery.k8s.io__v1_openapi.json'
+import networkingV1Spec from './specs/apis__networking.k8s.io__v1_openapi.json'
+import storageV1Spec from './specs/apis__storage.k8s.io__v1_openapi.json'
 
 export interface OpenAPISpec {
   openapi?: string
@@ -41,7 +45,10 @@ export type JSONSchema = {
 const RAW_SPECS: Record<string, unknown> = {
   'api__v1_openapi.json': apiV1Spec,
   'apis__apps__v1_openapi.json': appsV1Spec,
-  'apis__coordination.k8s.io__v1_openapi.json': coordinationV1Spec
+  'apis__coordination.k8s.io__v1_openapi.json': coordinationV1Spec,
+  'apis__discovery.k8s.io__v1_openapi.json': discoveryV1Spec,
+  'apis__networking.k8s.io__v1_openapi.json': networkingV1Spec,
+  'apis__storage.k8s.io__v1_openapi.json': storageV1Spec
 }
 
 const cache = new Map<string, OpenAPISpec>()

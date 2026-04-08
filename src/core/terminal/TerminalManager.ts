@@ -121,6 +121,9 @@ const createAutocompleteClusterState = (
     },
     getNetworkPolicies: (namespace?: string) => {
       return apiServer.listResources('NetworkPolicy', namespace)
+    },
+    getNamespaces: () => {
+      return apiServer.listResources('Namespace')
     }
   }
 }

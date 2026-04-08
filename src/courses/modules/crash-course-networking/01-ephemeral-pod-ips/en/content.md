@@ -1,107 +1,87 @@
 ---
-seoTitle: 'Kubernetes Pod IPs Are Ephemeral, Services, Endpoints'
-seoDescription: 'Understand why Kubernetes Pod IP addresses change on every restart and how Services use Endpoints to provide stable load-balanced access.'
+seoTitle: 'Kubernetes Pod IPs, Ephemeral Networking, Why Services Exist'
+seoDescription: 'Understand why Pod IP addresses are temporary, what happens to them when Pods restart or reschedule, and why that makes direct Pod-to-Pod communication unreliable.'
 ---
 
-# The Problem with Pod IPs
+# Ephemeral Pod IPs
 
-You have a frontend Deployment and a backend Deployment. The frontend needs to call the backend API. The obvious first thought is to find the backend Pod's IP address and point the frontend at it. You can get the IP with `kubectl get pod -o wide`. It works. The first request goes through cleanly.
+Every Pod that reaches `Running` state gets its own IP address. You can see it with `kubectl get pods -o wide`, and you can reach it from any other Pod in the cluster without any special configuration. The cluster network is flat: every Pod can talk to every other Pod directly by IP.
 
-Then the backend Pod gets replaced - because of a rolling update, a node restart, a failed liveness probe, anything - and the new Pod gets a completely different IP address. Your frontend is still configured with the old one. The old address doesn't exist anymore. Requests fail silently, or worse, reach a completely unrelated workload that happened to reuse the IP.
+This sounds like a solid foundation for inter-service communication. It is not, and understanding why is the starting point for everything that follows in this module.
 
-This is the fundamental problem that Services solve, and it's worth understanding before we look at the solution.
+## Why Pod IPs Cannot Be Trusted
 
-:::info
-Every Pod in Kubernetes gets a unique IP address, but that IP is ephemeral. It changes every time the Pod is replaced. Building any part of your system around a specific Pod IP is inherently fragile.
-:::
+When a Deployment updates its Pods, old Pods are deleted and new ones are created. The new Pods get new IP addresses. The old IPs are gone. If another service was talking to the old IP, it is now talking to nothing.
 
-## Why Pod IPs Are Ephemeral
-
-Pod IPs come from a pool of addresses managed by the cluster's network plugin. When a Pod is deleted - for any reason - its IP is released back to the pool. When a replacement Pod starts, it draws a new IP from wherever in the pool happens to be available. There is no reservation, no forwarding from the old address, no grace period. The old IP is just gone.
-
-In a Deployment with three replicas, this problem compounds. You have three IPs, all of which can change independently at any time, and your clients need to reach all three for load balancing. Even if you somehow tracked the current IPs and kept a configuration file up to date, the window between a Pod being replaced and your configuration being updated would be a window of failures.
+The same happens whenever a Pod crashes and restarts through a controller: the replacement Pod gets a fresh IP. Or when a node runs out of memory and the scheduler evicts a Pod and places it elsewhere: new node, new IP.
 
 @@@
 sequenceDiagram
-    participant FE as Frontend Pod
-    participant B1 as Backend Pod<br/>IP: 10.244.1.5
-    participant B2 as New Backend Pod<br/>IP: 10.244.1.9
+    participant A as Pod A (client)
+    participant B1 as Pod B v1<br/>IP: 10.0.0.5
+    participant B2 as Pod B v2<br/>IP: 10.0.0.9
 
-    FE->>B1: request (works)
-    Note over B1: Pod deleted<br/>(update / crash / eviction)
-    B1-->>B2: replaced with new IP
+    A->>B1: HTTP GET /api (10.0.0.5)
+    B1-->>A: 200 OK
 
-    FE->>B1: request to 10.244.1.5
-    Note over FE: connection refused<br/>IP no longer exists
+    Note over B1,B2: Deployment rolls out new version
+
+    B1->>B1: deleted
+    B2->>B2: created, new IP
+
+    A->>B1: HTTP GET /api (10.0.0.5)
+    Note over A: connection refused
 @@@
 
-This isn't an accident or an oversight - it's a consequence of how Kubernetes works. Pods are meant to be ephemeral. They can be created, destroyed, and replaced at any time, and they're supposed to be. The system is designed around this assumption, and the right answer isn't to fight it by trying to track IPs manually. The right answer is a Service.
+Pod IPs are ephemeral by design. Kubernetes never guarantees that a Pod keeps the same IP across restarts, rescheduling events, or rolling updates. Hardcoding a Pod IP into any configuration is always wrong.
 
-A Service gives you a stable address that never changes, regardless of how many times the Pods behind it are replaced. It does this by maintaining a continuously updated list of healthy Pod IPs - the **Endpoints** object - and routing traffic to whichever ones are currently ready. The Service's own address remains constant for its entire lifetime.
+:::quiz
+Your frontend Pod connects to a backend Pod by its IP address `10.0.0.5`. The backend Deployment rolls out a new version. What happens to the frontend?
 
-## Hands-On Practice
+**Answer:** The frontend loses its connection. The old backend Pod is deleted and its IP `10.0.0.5` disappears. The new backend Pod gets a different IP. The frontend has no way to discover it unless something else provides a stable address in front of the Pods.
+:::
 
-This exercise makes the problem concrete before you introduce the solution.
+## Proving It
 
-**1. Create a backend Deployment:**
-
-```bash
-nano backend.yaml
-```
-
-```yaml
-# backend.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: backend
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: backend
-  template:
-    metadata:
-      labels:
-        app: backend
-    spec:
-      containers:
-        - name: backend
-          image: nginx:1.28
-```
+Start a Deployment with two replicas:
 
 ```bash
-kubectl apply -f backend.yaml
-kubectl rollout status deployment/backend
+kubectl create deployment backend --image=nginx:1.28 --replicas=2
 ```
 
-**2. Record the current Pod IPs:**
+Wait for it to be ready, then check the Pod IPs:
 
 ```bash
-kubectl get pods -l app=backend -o wide
+kubectl get pods -o wide -l app=backend
 ```
 
-Note the IP addresses in the `IP` column. These are the addresses any client would need to use to reach these Pods directly.
-
-**3. Delete one of the Pods:**
+Note the IPs. Now trigger a rollout by changing the image:
 
 ```bash
-# Copy one pod NAME from the previous command, then:
-kubectl delete pod <POD-NAME>
+kubectl set image deployment/backend nginx=nginx:1.27
+kubectl get pods -o wide -l app=backend --watch
 ```
 
-**4. Wait for the replacement and compare IPs:**
+Press Ctrl+C once the rollout is done. Run `kubectl get pods -o wide -l app=backend` again. The IPs have changed. The old ones are gone and unreachable.
 
-```bash
-kubectl get pods -l app=backend -o wide
-```
+:::visualizer
+Watch the cluster visualizer: old Pods disappear and new Pods appear on the node with different IPs as the rollout progresses.
+:::
 
-The replacement Pod has appeared, but its IP address is different from the one you deleted. If anything in your system had been sending requests to the old address, those requests would now be failing.
+:::warning
+Some people attempt to work around ephemeral IPs by targeting the node IP directly or using `hostNetwork: true` on a Pod. Both approaches break the cluster network model, create implicit coupling to specific nodes, and cause failures when Pods reschedule. The correct solution is always a Service.
+:::
 
-**5. Clean up:**
+## What the Cluster Network Guarantees
+
+Before leaving ephemeral IPs behind, it is worth understanding what the cluster network does guarantee.
+
+Every Pod can reach every other Pod in the cluster by IP without NAT. There is no firewall between Pods by default. A Pod on node 1 can open a TCP connection to a Pod on node 2 using the Pod's IP directly, and the packet arrives with the source IP intact. This is the Container Network Interface (CNI) contract that every Kubernetes networking plugin must fulfill.
+
+What the cluster network does not provide is any form of stable addressing, load balancing, or service discovery. Those are the job of the Service resource, which is what the next lesson covers.
 
 ```bash
 kubectl delete deployment backend
 ```
 
-In the next lesson, you'll create a Service in front of this Deployment and see how it provides a stable address that survives exactly this kind of Pod replacement.
+Pod IPs are real and routable within the cluster, but they are not reliable. Every time a Pod is replaced, its IP changes. Building inter-service communication on direct Pod IPs means building on sand. The solution Kubernetes provides is the Service: a stable virtual IP that sits in front of a group of Pods and stays constant regardless of what happens to the Pods behind it.

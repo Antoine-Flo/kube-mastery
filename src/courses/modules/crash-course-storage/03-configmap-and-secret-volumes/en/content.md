@@ -1,175 +1,183 @@
 ---
-seoTitle: 'Kubernetes ConfigMap and Secret Volumes, File Injection'
-seoDescription: 'Learn how to mount ConfigMaps and Secrets as files in Kubernetes Pods, enabling file-based configuration and automatic live updates when values change.'
+seoTitle: 'Kubernetes ConfigMap and Secret Volumes, Injecting Configuration as Files'
+seoDescription: 'Learn how to mount ConfigMaps and Secrets as files inside a container, giving applications access to configuration and credentials without rebuilding images.'
 ---
 
 # ConfigMap and Secret Volumes
 
-In the workloads module you learned to inject ConfigMap and Secret values as environment variables. That works well for simple scalar values - a log level, a port number, a feature flag. But some applications need their configuration as files. An nginx server expects a `.conf` file in a specific directory. A TLS-enabled application needs certificate and key files on disk. A complex app might have a multi-section configuration file with dozens of settings that are cumbersome to express as individual environment variables.
+Your application needs a configuration file at startup. The naive approach is to bake the file into the image. But then every environment change requires a new image build, a new push, and a new deployment. Configuration and code are now coupled in the worst possible way.
 
-Kubernetes supports mounting ConfigMaps and Secrets as volumes, where each key in the object becomes a file and the corresponding value becomes the file's content. The application reads its configuration from disk, exactly as it would from a locally managed config file, without knowing or caring that the content comes from the Kubernetes API.
+Kubernetes separates them. A ConfigMap stores arbitrary key-value pairs or file contents as a cluster object. A Secret stores the same but for sensitive data. Both can be mounted into a container as files, appearing at a path of your choice. The application reads its config file normally, with no awareness that Kubernetes put it there.
 
-:::info
-When a ConfigMap or Secret is mounted as a volume, each key becomes a filename and its value becomes the file content. The application sees regular files, not environment variables.
-:::
+## ConfigMap as a Volume
 
-## Mounting a ConfigMap as Files
+Start by creating a ConfigMap that holds a configuration file:
 
-The volume declaration references the ConfigMap by name, and the mount path is where the files will appear inside the container's filesystem:
+```bash
+nano app-config.yaml
+```
 
 ```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  config.yaml: |
+    log_level: info
+    max_connections: 100
+    timeout_seconds: 30
+```
+
+```bash
+kubectl apply -f app-config.yaml
+```
+
+The key `config.yaml` becomes the filename. The value is the file content.
+
+Now mount it into a Pod. Build the spec step by step.
+
+First, declare the volume in `spec.volumes`, referencing the ConfigMap by name:
+
+```yaml
+# illustrative only
 spec:
   volumes:
     - name: config
       configMap:
-        name: nginx-config
+        name: app-config
+```
+
+Then mount it in the container:
+
+```yaml
+# illustrative only
   containers:
-    - name: web
+    - name: app
       image: nginx:1.28
       volumeMounts:
         - name: config
-          mountPath: /etc/nginx/conf.d
+          mountPath: /etc/app
 ```
 
-If the ConfigMap named `nginx-config` has a key called `default.conf`, the container will see a file at `/etc/nginx/conf.d/default.conf` containing the value from that key. If the ConfigMap has ten keys, the container sees ten files in that directory. The directory is entirely managed by Kubernetes - you can't mix ConfigMap files with other files in the same mount path.
+The full manifest:
 
-If you only want to mount specific keys, or you want to control the filename that appears inside the container, use the `items` field:
-
-```yaml
-volumes:
-  - name: config
-    configMap:
-      name: app-config
-      items:
-        - key: production.yaml # key in the ConfigMap
-          path: config.yaml # filename inside the container
+```bash
+nano config-pod.yaml
 ```
 
-## Mounting a Secret as Files
-
-Secrets mount the same way, with `secret` instead of `configMap` in the volume declaration. Files created from Secret keys are given restrictive permissions by default, and marking the mount `readOnly` is a good practice for credentials that your application only needs to read:
-
 ```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: config-pod
 spec:
   volumes:
-    - name: tls-certs
-      secret:
-        secretName: my-tls-secret
+    - name: config
+      configMap:
+        name: app-config
   containers:
     - name: app
-      image: my-app:1.0
-      volumeMounts:
-        - name: tls-certs
-          mountPath: /etc/ssl/certs
-          readOnly: true
-```
-
-## When Files Are Better Than Environment Variables
-
-Environment variables are set once at container startup and don't change until the container restarts. ConfigMap and Secret volumes, on the other hand, are updated automatically when the underlying object changes - with a short delay, typically under a minute. This means that for applications capable of reloading their configuration from disk without restarting (nginx with `nginx -s reload`, for example), you can update a ConfigMap and have the change propagate to running containers without any redeployment.
-
-This is also why TLS certificates are almost always mounted as files rather than injected as environment variables. Certificate rotation tools update the Secret object, the files inside the container are updated, and the application is signaled to reload its TLS configuration - all without a container restart.
-
-## Hands-On Practice
-
-**1. Create a ConfigMap with a multi-line configuration value:**
-
-```yaml
-# nginx-configmap.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nginx-config
-data:
-  default.conf: |
-    server {
-      listen 80;
-      location /health {
-        return 200 'OK';
-        add_header Content-Type text/plain;
-      }
-    }
-```
-
-```bash
-kubectl apply -f nginx-configmap.yaml
-```
-
-**2. Mount it into an nginx Pod:**
-
-```yaml
-# nginx-pod.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: nginx-config-demo
-spec:
-  volumes:
-    - name: nginx-conf
-      configMap:
-        name: nginx-config
-  containers:
-    - name: web
       image: nginx:1.28
       volumeMounts:
-        - name: nginx-conf
-          mountPath: /etc/nginx/conf.d
+        - name: config
+          mountPath: /etc/app
 ```
 
 ```bash
-kubectl apply -f nginx-pod.yaml
-kubectl get pod nginx-config-demo
+kubectl apply -f config-pod.yaml
 ```
 
-**3. Verify the file exists inside the container:**
+Once the Pod is running, verify the file is there:
 
 ```bash
-kubectl exec nginx-config-demo -- ls /etc/nginx/conf.d/
-kubectl exec nginx-config-demo -- cat /etc/nginx/conf.d/default.conf
+kubectl exec config-pod -- ls /etc/app
+kubectl exec config-pod -- cat /etc/app/config.yaml
 ```
 
-The file content matches the value in the ConfigMap.
+You should see `config.yaml` with the content from the ConfigMap. The container has no special code to read it, it is just a file on the filesystem.
 
-**4. Create a Secret and mount it as files:**
+:::quiz
+You update the ConfigMap with a new `log_level: debug`. Does the running Pod see the change immediately?
+
+**Answer:** Eventually yes, with a short delay. Kubernetes syncs ConfigMap-backed volume mounts periodically (default: around 60 seconds). The file on disk is updated automatically without restarting the container. However, whether the application picks up the change depends on how it reads config: applications that re-read config files on a signal or interval will see it; applications that only read config at startup will not until the Pod restarts.
+:::
+
+@@@
+graph LR
+    CM["ConfigMap<br/>app-config<br/>key: config.yaml"]
+    VOL["Volume: config<br/>configMap: app-config"]
+    FS["/etc/app/config.yaml<br/>inside container"]
+
+    CM --> VOL --> FS
+@@@
+
+## Secret as a Volume
+
+Secrets work identically to ConfigMaps from a volume mount perspective. The difference is that Secret values are base64-encoded at rest and Kubernetes handles their distribution more carefully than plain ConfigMaps.
+
+Create a Secret with a database password:
 
 ```bash
-kubectl create secret generic app-creds --from-literal=username=admin --from-literal=password=s3cret
+kubectl create secret generic db-credentials \
+  --from-literal=password=s3cr3tpassword \
+  --from-literal=username=admin
+```
+
+Mount it as a volume:
+
+```bash
+nano secret-pod.yaml
 ```
 
 ```yaml
-# secret-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: secret-volume-demo
+  name: secret-pod
 spec:
   volumes:
     - name: creds
       secret:
-        secretName: app-creds
+        secretName: db-credentials
   containers:
     - name: app
-      image: busybox:1.36
-      args: ['sleep', '3600']
+      image: nginx:1.28
       volumeMounts:
         - name: creds
-          mountPath: /credentials
+          mountPath: /etc/credentials
           readOnly: true
 ```
 
 ```bash
 kubectl apply -f secret-pod.yaml
-kubectl get pod secret-volume-demo
-kubectl exec secret-volume-demo -- ls /credentials
-kubectl exec secret-volume-demo -- cat /credentials/username
 ```
-
-You'll see the two files, `username` and `password`, and the value of `username` from the mounted Secret.
-
-**5. Clean up:**
 
 ```bash
-kubectl delete pod nginx-config-demo secret-volume-demo
-kubectl delete configmap nginx-config
-kubectl delete secret app-creds
+kubectl exec secret-pod -- ls /etc/credentials
+kubectl exec secret-pod -- cat /etc/credentials/password
 ```
+
+Each key in the Secret becomes a file. The value is the decoded content. The `readOnly: true` field prevents the container from modifying the mounted Secret, which is a good default for credentials.
+
+:::warning
+Mounting a Secret as a volume does not make it invisible inside the container. Any process running as root can read `/etc/credentials/password`. The `readOnly` flag prevents the container from writing to the mount, not from reading it. Proper security requires also restricting which containers have access to the Secret and running containers as non-root users.
+:::
+
+:::quiz
+A container needs a TLS certificate and its private key to serve HTTPS. Both are stored as keys in a Secret. After mounting the Secret as a volume at `/etc/tls`, what does the container see at that path?
+
+**Try it:** `kubectl exec <pod> -- ls /etc/tls`
+
+**Answer:** Two files, one per key in the Secret. If the Secret has keys `tls.crt` and `tls.key`, the container sees `/etc/tls/tls.crt` and `/etc/tls/tls.key`. The application reads them as regular files with no knowledge of Kubernetes.
+:::
+
+Clean up:
+
+```bash
+kubectl delete pod config-pod secret-pod
+kubectl delete configmap app-config
+kubectl delete secret db-credentials
+```
+
+ConfigMap and Secret volumes decouple configuration from images. You update the cluster object, and the mounted files update in running Pods without a rebuild. The next lesson steps up to a different class of storage problem: data that must outlive the Pod entirely, across deletions, restarts, and rescheduling events.

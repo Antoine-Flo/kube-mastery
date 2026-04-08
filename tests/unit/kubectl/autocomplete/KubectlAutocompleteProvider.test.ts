@@ -179,12 +179,26 @@ describe('KubectlAutocompleteProvider', () => {
       })
 
       it('should complete canonical resource type when prefix is unique', () => {
-        const results = provider.complete(['kubectl', 'get'], 'p', mockContext)
+        const results = provider.complete(['kubectl', 'get'], 'po', mockContext)
         expect(results).toEqual([{ text: 'pods', suffix: ' ' }])
       })
 
-      it('should return empty array when no canonical resource matches prefix', () => {
+      it('should complete resource type from kubectl alias (cm)', () => {
         const results = provider.complete(['kubectl', 'get'], 'cm', mockContext)
+        expect(results).toEqual([{ text: 'configmaps', suffix: ' ' }])
+      })
+
+      it('should complete namespaces from alias ns', () => {
+        const results = provider.complete(['kubectl', 'get'], 'ns', mockContext)
+        expect(results).toEqual([{ text: 'namespaces', suffix: ' ' }])
+      })
+
+      it('should return empty array when no resource kind matches prefix', () => {
+        const results = provider.complete(
+          ['kubectl', 'get'],
+          'zzz',
+          mockContext
+        )
         expect(results).toEqual([])
       })
 
@@ -389,6 +403,26 @@ describe('KubectlAutocompleteProvider', () => {
           contextWithNodes
         )
         expect(results).toContainEqual({ text: 'worker-node-1', suffix: ' ' })
+      })
+
+      it('should return namespace names for namespaces resource type', () => {
+        const contextWithNs = {
+          ...mockContext,
+          clusterState: {
+            ...mockContext.clusterState,
+            getNamespaces: () => [
+              { metadata: { name: 'default' } },
+              { metadata: { name: 'kube-system' } }
+            ]
+          }
+        }
+        const results = provider.complete(
+          ['kubectl', 'get', 'namespaces'],
+          '',
+          contextWithNs
+        )
+        expect(results).toContainEqual({ text: 'default', suffix: ' ' })
+        expect(results).toContainEqual({ text: 'kube-system', suffix: ' ' })
       })
 
       it('should filter node names by prefix', () => {

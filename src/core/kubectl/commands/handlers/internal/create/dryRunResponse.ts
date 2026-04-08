@@ -1,6 +1,6 @@
 import type { ExecutionResult } from '../../../../../shared/result'
 import { error } from '../../../../../shared/result'
-import { validateMetadataNameForResource } from '../../../metadataNameValidation'
+import { validateMetadataNameForResource } from '../../../resourceCatalog'
 import {
   renderStructuredPayload,
   resolveOutputDirective,

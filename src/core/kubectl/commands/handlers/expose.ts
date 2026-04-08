@@ -7,7 +7,7 @@ import type { ExecutionResult, Result } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import { toEqualitySelectorMap } from '../../../shared/labelSelector'
 import type { ParsedCommand } from '../types'
-import { createResourceWithEvents } from '../resourceHelpers'
+import { createResourceWithEvents } from '../resourceCatalog'
 
 type ExposeServiceType = NonNullable<ServiceSpec['type']>
 type ExposeTargetResource = 'deployments' | 'pods'

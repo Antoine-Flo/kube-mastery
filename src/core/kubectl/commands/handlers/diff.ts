@@ -18,7 +18,7 @@ import {
   applyResourceWithEvents,
   isSupportedResourceKind,
   type KubernetesResource
-} from '../resourceHelpers'
+} from '../resourceCatalog'
 
 type GenericObject = Record<string, unknown>
 

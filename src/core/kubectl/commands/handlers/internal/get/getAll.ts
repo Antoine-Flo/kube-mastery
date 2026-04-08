@@ -1,6 +1,6 @@
 import type { ClusterStateData } from '../../../../../cluster/ClusterState'
 import type { ParsedCommand } from '../../../types'
-import { toResourceKindReference } from '../../../resourceHelpers'
+import { toResourceKindReference } from '../../../resourceCatalog'
 import {
   formatKubectlTable,
   type OutputDirective,

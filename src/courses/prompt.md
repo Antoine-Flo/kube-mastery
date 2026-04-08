@@ -1,6 +1,6 @@
 ## Structure
 
-- 500 words minimum.
+- 500 words minimum. 1000 words maximum.
 - Tone: friendly, professional, no jokes. No  — signs, use analogies for complex concepts.
 - Use prose over bullet points. Short paragraphs.
 - End with a 2-3 sentence wrap-up only. No summary list.

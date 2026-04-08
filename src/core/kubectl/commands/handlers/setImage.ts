@@ -10,7 +10,7 @@ import type { ReplicaSet } from '../../../cluster/ressources/ReplicaSet'
 import type { ExecutionResult } from '../../../shared/result'
 import { error, success } from '../../../shared/result'
 import type { ParsedCommand, Resource } from '../types'
-import { toKindReference, toPluralKindReference } from '../resourceHelpers'
+import { toKindReference, toPluralKindReference } from '../resourceCatalog'
 
 type ContainerLike = {
   name: string

@@ -1,0 +1,265 @@
+# Single source of truth for simulated cluster resource wiring.
+# After editing: npm run cluster:resources:generate
+#
+# Bundled OpenAPI v3 specs are aligned with Kubernetes v1.35.3 (see src/core/openapi/specs/).
+#
+# Optional kubectl* fields drive kubectlResources.generated.ts and resourceSchema.generated.ts.
+
+resources:
+  - kind: Pod
+    apiVersion: v1
+    collectionKey: pods
+    typeName: Pod
+    importPath: ./ressources/Pod
+    repoKindArg: Pod
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: Pod
+    facadePlural: Pods
+    kubectlShortAliases: [po]
+
+  - kind: ConfigMap
+    apiVersion: v1
+    collectionKey: configMaps
+    typeName: ConfigMap
+    importPath: ./ressources/ConfigMap
+    repoKindArg: ConfigMap
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: ConfigMap
+    facadePlural: ConfigMaps
+    kubectlShortAliases: [cm]
+
+  - kind: ControllerRevision
+    apiVersion: apps/v1
+    collectionKey: controllerRevisions
+    typeName: ControllerRevision
+    importPath: ./ressources/ControllerRevision
+    repoKindArg: ControllerRevision
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: ControllerRevision
+    facadePlural: ControllerRevisions
+    kubectlShortAliases: [rev]
+
+  - kind: Secret
+    apiVersion: v1
+    collectionKey: secrets
+    typeName: Secret
+    importPath: ./ressources/Secret
+    repoKindArg: Secret
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: Secret
+    facadePlural: Secrets
+
+  - kind: Node
+    apiVersion: v1
+    collectionKey: nodes
+    typeName: Node
+    importPath: ./ressources/Node
+    repoKindArg: Node
+    facade: node
+    bootstrapEmpty: default
+    facadeSingular: Node
+    facadePlural: Nodes
+    kubectlShortAliases: [no]
+
+  - kind: ReplicaSet
+    apiVersion: apps/v1
+    collectionKey: replicaSets
+    typeName: ReplicaSet
+    importPath: ./ressources/ReplicaSet
+    repoKindArg: ReplicaSet
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: ReplicaSet
+    facadePlural: ReplicaSets
+    kubectlShortAliases: [rs]
+
+  - kind: Deployment
+    apiVersion: apps/v1
+    collectionKey: deployments
+    typeName: Deployment
+    importPath: ./ressources/Deployment
+    repoKindArg: Deployment
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: Deployment
+    facadePlural: Deployments
+    kubectlShortAliases: [deploy]
+
+  - kind: DaemonSet
+    apiVersion: apps/v1
+    collectionKey: daemonSets
+    typeName: DaemonSet
+    importPath: ./ressources/DaemonSet
+    repoKindArg: DaemonSet
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: DaemonSet
+    facadePlural: DaemonSets
+    kubectlShortAliases: [ds]
+
+  - kind: StatefulSet
+    apiVersion: apps/v1
+    collectionKey: statefulSets
+    typeName: StatefulSet
+    importPath: ./ressources/StatefulSet
+    repoKindArg: StatefulSet
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: StatefulSet
+    facadePlural: StatefulSets
+    kubectlShortAliases: [sts]
+
+  - kind: Service
+    apiVersion: v1
+    collectionKey: services
+    typeName: Service
+    importPath: ./ressources/Service
+    repoKindArg: Service
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: Service
+    facadePlural: Services
+    kubectlShortAliases: [svc]
+
+  - kind: EndpointSlice
+    apiVersion: discovery.k8s.io/v1
+    collectionKey: endpointSlices
+    typeName: EndpointSlice
+    importPath: ./ressources/EndpointSlice
+    repoKindArg: EndpointSlice
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: EndpointSlice
+    facadePlural: EndpointSlices
+
+  - kind: Endpoints
+    apiVersion: v1
+    collectionKey: endpoints
+    typeName: Endpoints
+    importPath: ./ressources/Endpoints
+    repoKindArg: Endpoints
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: Endpoints
+    facadePlural: Endpoints
+    kubectlSingularAlias: endpoint
+    kubectlShortAliases: [ep]
+
+  - kind: Event
+    apiVersion: v1
+    collectionKey: events
+    typeName: Event
+    importPath: ./ressources/Event
+    repoKindArg: Event
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: Event
+    facadePlural: Events
+    kubectlShortAliases: [ev]
+
+  - kind: Ingress
+    apiVersion: networking.k8s.io/v1
+    collectionKey: ingresses
+    typeName: Ingress
+    importPath: ./ressources/Ingress
+    repoKindArg: Ingress
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: Ingress
+    facadePlural: Ingresses
+    kubectlShortAliases: [ing]
+
+  - kind: NetworkPolicy
+    apiVersion: networking.k8s.io/v1
+    collectionKey: networkPolicies
+    typeName: NetworkPolicy
+    importPath: ./ressources/NetworkPolicy
+    repoKindArg: NetworkPolicy
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: NetworkPolicy
+    facadePlural: NetworkPolicies
+    kubectlShortAliases: [netpol]
+
+  - kind: PersistentVolume
+    apiVersion: v1
+    collectionKey: persistentVolumes
+    typeName: PersistentVolume
+    importPath: ./ressources/PersistentVolume
+    repoKindArg: PersistentVolume
+    facade: clusterScopedEmptyNs
+    bootstrapEmpty: default
+    facadeSingular: PersistentVolume
+    facadePlural: PersistentVolumes
+    kubectlShortAliases: [pv]
+
+  - kind: PersistentVolumeClaim
+    apiVersion: v1
+    collectionKey: persistentVolumeClaims
+    typeName: PersistentVolumeClaim
+    importPath: ./ressources/PersistentVolumeClaim
+    repoKindArg: PersistentVolumeClaim
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: PersistentVolumeClaim
+    facadePlural: PersistentVolumeClaims
+    kubectlShortAliases: [pvc]
+
+  - kind: Namespace
+    apiVersion: v1
+    collectionKey: namespaces
+    typeName: Namespace
+    importPath: ./ressources/Namespace
+    repoKindArg: Namespace
+    facade: namespaceResource
+    bootstrapEmpty: systemNamespaces
+    facadeSingular: Namespace
+    facadePlural: Namespaces
+    kubectlShortAliases: [ns]
+
+  - kind: Lease
+    apiVersion: coordination.k8s.io/v1
+    collectionKey: leases
+    typeName: Lease
+    importPath: ./ressources/Lease
+    repoKindArg: Lease
+    facade: standardNamespaced
+    bootstrapEmpty: default
+    facadeSingular: Lease
+    facadePlural: Leases
+
+  - kind: StorageClass
+    apiVersion: storage.k8s.io/v1
+    collectionKey: storageClasses
+    typeName: StorageClass
+    importPath: ./ressources/StorageClass
+    repoKindArg: StorageClass
+    facade: clusterScopedEmptyNs
+    bootstrapEmpty: default
+    facadeSingular: StorageClass
+    facadePlural: StorageClasses
+    kubectlShortAliases: [sc]
+
+kubectlExtraResources:
+  - canonical: all
+    aliases: [all]
+  - canonical: ingressclasses
+    aliases: [ingressclasses, ingressclass]
+    outputApiVersion: networking.k8s.io/v1
+    outputKind: IngressClass
+  - canonical: gateways
+    aliases: [gateways, gateway, gw]
+    outputApiVersion: gateway.networking.k8s.io/v1
+    outputKind: Gateway
+  - canonical: gatewayclasses
+    aliases: [gatewayclasses, gatewayclass, gc]
+    outputApiVersion: gateway.networking.k8s.io/v1
+    outputKind: GatewayClass
+  - canonical: httproutes
+    aliases: [httproutes, httproute, hr]
+    outputApiVersion: gateway.networking.k8s.io/v1
+    outputKind: HTTPRoute

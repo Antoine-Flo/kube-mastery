@@ -1,41 +1,59 @@
 ---
-seoTitle: 'Kubernetes PersistentVolumes and PVCs, Binding, Access Modes'
-seoDescription: 'Understand how Kubernetes PersistentVolumes and PVCs decouple durable storage from Pods, covering binding, access modes, and reclaim policies.'
+seoTitle: 'Kubernetes PersistentVolumes and PVCs, Durable Storage, Binding'
+seoDescription: 'Learn how PersistentVolumes and PersistentVolumeClaims decouple storage provisioning from Pod lifecycle, enabling data to survive Pod deletion and rescheduling.'
 ---
 
 # PersistentVolumes and PVCs
 
-All the volume types covered so far - `emptyDir`, ConfigMap and Secret volumes - are tied to the Pod's lifetime. When the Pod is deleted, those volumes disappear. That's fine for scratch space, shared buffers, and configuration files, because those don't need to outlive the workload. But for a database, a file storage system, or any application that accumulates state over time, you need storage that persists independently of any Pod.
+A database Pod is deleted during a rolling update. Its emptyDir volume is destroyed with it. When the replacement Pod starts on a different node, it finds an empty database. Three days of orders are gone.
 
-Kubernetes handles this with two separate objects: the **PersistentVolume** represents a piece of durable storage - a cloud disk, an NFS share, a storage appliance. The **PersistentVolumeClaim** is a request for some of that storage. The separation of the two exists deliberately: the cluster administrator provisions and manages PersistentVolumes, while application developers create PersistentVolumeClaims to consume storage without needing to know where it comes from.
+This is why emptyDir is not enough for stateful workloads. For data that must survive Pod deletion, node failure, or rescheduling, Kubernetes introduces two separate resources: the **PersistentVolume** (PV) and the **PersistentVolumeClaim** (PVC).
 
-:::info
-A **PersistentVolume (PV)** represents real durable storage in the cluster. A **PersistentVolumeClaim (PVC)** is a request for that storage. Pods use PVCs, not PVs directly - this separation keeps infrastructure concerns out of application manifests.
-:::
+## The Separation of Concerns
 
-## How Binding Works
+The PV and PVC model splits storage into two roles.
 
-When you create a PVC, Kubernetes searches for an available PV that satisfies the request. It looks for a PV with at least the requested capacity and with compatible access modes. If a match exists, the PVC is **bound** to it - the two objects are linked, and no other PVC can use that PV until it's released. If no matching PV exists, the PVC stays in a `Pending` state until one becomes available.
+A **PersistentVolume** represents a piece of actual storage infrastructure: a network disk in a cloud provider, an NFS share, a local SSD on a node. It is a cluster-scoped resource, created by an administrator or provisioned automatically. It exists independently of any Pod.
+
+A **PersistentVolumeClaim** is a request for storage by a workload. It says "I need 5Gi with ReadWriteOnce access." Kubernetes finds a PV that satisfies the claim and binds them together. The Pod then references the PVC, not the PV directly.
 
 @@@
 graph LR
-    PV["PersistentVolume\n1Gi, ReadWriteOnce"]
-    PVC["PersistentVolumeClaim\nrequests: 1Gi, RWO"]
-    Pod["Pod"]
+    ADMIN["Admin / StorageClass"]
+    PV["PersistentVolume<br/>10Gi, ReadWriteOnce<br/>Status: Bound"]
+    PVC["PersistentVolumeClaim<br/>Request: 5Gi, RWO<br/>Status: Bound"]
+    POD["Pod"]
 
-    PVC -->|"bound to"| PV
-    Pod -->|"uses"| PVC
+    ADMIN -->|provisions| PV
+    PVC -->|binds to| PV
+    POD -->|mounts| PVC
 @@@
+
+Why the indirection? Because it decouples what storage is from what storage is needed. The developer writing the PVC does not need to know whether the cluster uses AWS EBS, GCP Persistent Disk, or an NFS server. They just request capacity and an access mode. The cluster handles the rest.
+
+:::quiz
+Why does a Pod reference a PVC instead of a PV directly?
+
+**Answer:** Because the PVC is a portable request that abstracts the underlying storage. A Pod manifest that references a PVC can be applied to any cluster as long as a matching PV exists or dynamic provisioning is enabled. A Pod that referenced a PV directly would be coupled to a specific piece of infrastructure.
+:::
 
 ## Access Modes
 
-Access modes describe how the volume can be mounted across nodes. `ReadWriteOnce` (RWO) means the volume can be mounted read-write by a single node at a time. This is the most common mode and matches what most cloud block storage (AWS EBS, GCP Persistent Disk, Azure Disk) supports. `ReadOnlyMany` (ROX) allows the volume to be mounted read-only by many nodes simultaneously. `ReadWriteMany` (RWX) allows read-write access from multiple nodes at once, which requires a network file system like NFS or a cloud-native file storage service.
+Every PV and PVC declares an access mode that describes how the volume can be mounted.
 
-The PVC must request an access mode that the PV supports. If you request `ReadWriteMany` from a PV that only supports `ReadWriteOnce`, the binding will fail.
+`ReadWriteOnce` (RWO) means the volume can be mounted by a single node at a time in read-write mode. This is the most common mode. Most block storage types (cloud disks) only support this.
+
+`ReadOnlyMany` (ROX) means many nodes can mount the volume simultaneously, but only for reading.
+
+`ReadWriteMany` (RWX) means many nodes can mount and write simultaneously. Only certain storage backends support this (NFS, for example).
 
 ## Creating a PV and PVC
 
-In a static provisioning setup - where an administrator creates PVs manually - the manifest for a PV describes what the backing storage actually is:
+In this cluster, create a PersistentVolume backed by local node storage:
+
+```bash
+nano my-pv.yaml
+```
 
 ```yaml
 apiVersion: v1
@@ -48,10 +66,19 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /data/my-pv # uses a path on the node; fine for single-node learning clusters
+    path: /tmp/my-pv-data
 ```
 
-The PVC then requests storage without specifying which PV it should bind to:
+```bash
+kubectl apply -f my-pv.yaml
+kubectl get pv
+```
+
+The STATUS column shows `Available`. Now create a PVC that requests storage:
+
+```bash
+nano my-pvc.yaml
+```
 
 ```yaml
 apiVersion: v1
@@ -63,140 +90,87 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
-```
-
-Kubernetes matches the PVC to the PV based on capacity and access modes and sets the status of both to `Bound`. From that point, the PVC is the handle your Pod uses to access the storage.
-
-## Using a PVC in a Pod
-
-A Pod mounts a PVC exactly like any other volume type - it references the PVC by name in `spec.volumes`, then mounts it into a container with `volumeMounts`:
-
-```yaml
-spec:
-  volumes:
-    - name: data
-      persistentVolumeClaim:
-        claimName: my-pvc
-  containers:
-    - name: db
-      image: my-db:1.0
-      volumeMounts:
-        - name: data
-          mountPath: /var/lib/data
-```
-
-The application writes to `/var/lib/data`. That data is stored on the PV. If the Pod is deleted and a new Pod is created - a new deployment, a rollout, a reschedule after a node failure - the new Pod can mount the same PVC and find all the data that was written before.
-
-## Hands-On Practice
-
-**1. Create a PV and PVC:**
-
-```yaml
-# storage.yaml
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: crash-pv
-spec:
-  capacity:
-    storage: 256Mi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: /data/crash-pv
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: crash-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 256Mi
+      storage: 500Mi
 ```
 
 ```bash
-kubectl apply -f storage.yaml
+kubectl apply -f my-pvc.yaml
+kubectl get pvc
+kubectl get pv
+```
+
+The PVC status becomes `Bound` and the PV status also becomes `Bound`. Kubernetes matched the PVC's request (500Mi, RWO) to the PV's capacity (1Gi, RWO). A PVC can bind to a PV with more capacity than requested, but not less.
+
+:::warning
+Once a PV is bound to a PVC, it cannot be bound to any other PVC. The binding is exclusive. When the PVC is deleted, the PV's `Reclaim Policy` determines what happens: `Retain` keeps the data but marks the PV as `Released` (not automatically re-bindable). `Delete` destroys the underlying storage. The default for dynamically provisioned PVs is usually `Delete`.
+:::
+
+## Using the PVC in a Pod
+
+Reference the PVC by name in the Pod's volume declaration:
+
+```bash
+nano pvc-pod.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvc-pod
+spec:
+  volumes:
+    - name: storage
+      persistentVolumeClaim:
+        claimName: my-pvc
+  containers:
+    - name: app
+      image: busybox:1.36
+      command: ["/bin/sh", "-c", "echo 'data persisted' > /data/hello.txt && sleep 3600"]
+      volumeMounts:
+        - name: storage
+          mountPath: /data
+```
+
+```bash
+kubectl apply -f pvc-pod.yaml
+```
+
+Once running, verify the file was written:
+
+```bash
+kubectl exec pvc-pod -- cat /data/hello.txt
+```
+
+Now delete the Pod:
+
+```bash
+kubectl delete pod pvc-pod
+```
+
+Check the PV and PVC:
+
+```bash
 kubectl get pv
 kubectl get pvc
 ```
 
-Wait for the PVC `STATUS` to show `Bound`. The PV status should also show `Bound`, and the `CLAIM` column should reference `crash-pvc`.
+Both are still `Bound`. The storage survived the Pod deletion. Create a new Pod that mounts the same PVC, and the data is still there.
 
-**2. Create a Pod that writes data to the PVC:**
+:::quiz
+You delete a Pod that was using a PVC. A colleague asks if the data stored in that PVC is lost. What do you tell them?
 
-```yaml
-# pvc-writer.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: pvc-writer
-spec:
-  volumes:
-    - name: data
-      persistentVolumeClaim:
-        claimName: crash-pvc
-  containers:
-    - name: writer
-      image: busybox:1.36
-      args: ['sleep', '3600']
-      volumeMounts:
-        - name: data
-          mountPath: /data
-```
+**Try it:** Delete and recreate the pod above, then `kubectl exec` into the new pod and check `/data/hello.txt`
+
+**Answer:** The data is not lost. The PVC outlives the Pod. The PV remains Bound to the PVC. A new Pod that mounts the same PVC will find the same data intact, as long as the new Pod runs on the same node (for hostPath) or the storage backend supports multi-node access.
+:::
+
+Clean up:
 
 ```bash
-kubectl apply -f pvc-writer.yaml
-kubectl exec pvc-writer -- touch /data/record.txt
-kubectl exec pvc-writer -- ls /data/record.txt
+kubectl delete pod pvc-pod
+kubectl delete pvc my-pvc
+kubectl delete pv my-pv
 ```
 
-The writer Pod created `/data/record.txt` inside the PVC-backed mount.
-
-**3. Delete the Pod:**
-
-```bash
-kubectl delete pod pvc-writer
-```
-
-The Pod is gone, but the PVC and PV still exist - and still hold the data.
-
-**4. Create a new Pod that reads the same data:**
-
-```yaml
-# pvc-reader.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: pvc-reader
-spec:
-  volumes:
-    - name: data
-      persistentVolumeClaim:
-        claimName: crash-pvc
-  containers:
-    - name: reader
-      image: busybox:1.36
-      args: ['sleep', '3600']
-      volumeMounts:
-        - name: data
-          mountPath: /data
-```
-
-```bash
-kubectl apply -f pvc-reader.yaml
-kubectl exec pvc-reader -- ls /data/record.txt
-```
-
-The file created by the deleted Pod is still present. This proves persistence is tied to the bound PV/PVC storage, not to the Pod lifecycle.
-
-**5. Clean up:**
-
-```bash
-kubectl delete pod pvc-reader
-kubectl delete pvc crash-pvc
-kubectl delete pv crash-pv
-```
+PersistentVolumes and PVCs are the foundation of stateful workloads in Kubernetes. The PV is the actual disk, the PVC is the reservation, and the Pod plugs into the PVC. The next and final lesson of this module covers StorageClasses, which eliminate the need to pre-provision PVs manually.
