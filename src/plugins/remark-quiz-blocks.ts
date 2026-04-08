@@ -68,12 +68,66 @@ function buildQuizHtml(
 </div>`
 }
 
-function parseQuizOpen(text: string): { firstLine: string } | null {
+function parseQuizOpen(text: string): boolean {
   const match = text.match(QUIZ_OPEN_REGEX)
   if (!match) {
+    return false
+  }
+  return true
+}
+
+function stripQuizOpenPrefix(paragraph: Paragraph): Paragraph | null {
+  if (paragraph.children.length === 0) {
     return null
   }
-  return { firstLine: match[1]?.trim() ?? '' }
+
+  let markerRemoved = false
+  const children = paragraph.children.map((child, index) => {
+    if (index === 0 && child.type === 'text') {
+      const value = (child as Text).value
+      const updated = value.replace(/^:::quiz(?:\s*\n)?/, '')
+      if (updated !== value) {
+        markerRemoved = true
+      }
+      return { ...child, value: updated }
+    }
+    return child
+  })
+
+  if (!markerRemoved) {
+    return null
+  }
+
+  const withoutEmpty = children.filter((child) => {
+    if (child.type !== 'text') {
+      return true
+    }
+    return (child as Text).value.length > 0
+  })
+
+  if (withoutEmpty.length === 0) {
+    return null
+  }
+
+  const trimmed = withoutEmpty.map((child, index) => {
+    if (index === 0 && child.type === 'text') {
+      return { ...child, value: (child as Text).value.replace(/^\s*/, '') }
+    }
+    return child
+  })
+
+  const nonEmpty = trimmed.filter((child) => {
+    if (child.type !== 'text') {
+      return true
+    }
+    return (child as Text).value.trim() !== ''
+  })
+
+  if (nonEmpty.length === 0) {
+    return null
+  }
+
+  return { ...paragraph, children: nonEmpty }
 }
 
 function paragraphEndsWithClose(text: string): boolean {
@@ -115,15 +169,12 @@ function stripTrailingClose(
 function collectQuizNodes(
   children: Root['children'],
   startIndex: number,
-  firstLineContent: string
+  openingContentNode: Paragraph | null
 ): { allNodes: Root['children']; endIndex: number } | null {
   const allNodes: Root['children'] = []
 
-  if (firstLineContent) {
-    allNodes.push({
-      type: 'paragraph',
-      children: [{ type: 'text', value: firstLineContent }]
-    } as Paragraph)
+  if (openingContentNode) {
+    allNodes.push(openingContentNode)
   }
 
   for (let j = startIndex; j < children.length; j++) {
@@ -249,7 +300,12 @@ export default function remarkQuizBlocks() {
         continue
       }
 
-      const collected = collectQuizNodes(tree.children, i + 1, open.firstLine)
+      const openingContentNode = stripQuizOpenPrefix(node as Paragraph)
+      const collected = collectQuizNodes(
+        tree.children,
+        i + 1,
+        openingContentNode
+      )
       if (!collected) {
         newChildren.push(node)
         continue
