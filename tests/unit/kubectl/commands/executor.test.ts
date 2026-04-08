@@ -2413,6 +2413,20 @@ spec:
         expect(podResult.value.spec.restartPolicy).toBe('Never')
       })
 
+      it('should return enter-container directive for interactive kubectl run shell', () => {
+        const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+        const result = executor.execute(
+          'kubectl run dns-test --image=busybox:1.36 --restart=Never -it --rm -- /bin/sh'
+        )
+        expect(result.ok).toBe(true)
+        if (!result.ok) {
+          return
+        }
+        expect(result.value).toBe('ENTER_CONTAINER:default:dns-test:dns-test')
+        const podResult = apiServer.findResource('Pod', 'dns-test', 'default')
+        expect(podResult.ok).toBe(true)
+      })
+
       it('should execute nslookup in kubectl run --rm -it flow', () => {
         const networkRuntime = initializeSimNetworkRuntime(apiServer)
         const executor = createKubectlExecutor(

@@ -311,6 +311,22 @@ describe('KubectlCommandHandler', () => {
       })
     })
 
+    it('should enter container context for interactive kubectl run shell', () => {
+      const result = handler.execute(
+        'kubectl run dns-test --image=busybox:1.36 --restart=Never -it --rm -- /bin/sh',
+        context
+      )
+      expect(result.ok).toBe(true)
+      expect(context.shellContextStack.isInContainer()).toBe(true)
+      expect(context.shellContextStack.getCurrentContainerInfo()).toEqual({
+        podName: 'dns-test',
+        containerName: 'dns-test',
+        namespace: 'default'
+      })
+      const podResult = context.apiServer.findResource('Pod', 'dns-test', 'default')
+      expect(podResult.ok).toBe(true)
+    })
+
     it('should execute one-off shell command in target container', () => {
       const pod = createPod({
         name: 'exec-pod',

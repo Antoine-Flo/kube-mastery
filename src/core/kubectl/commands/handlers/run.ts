@@ -7,6 +7,7 @@ import type { ExecutionResult } from '../../../shared/result'
 import {
   error,
   errorWithIO,
+  success,
   successWithIO
 } from '../../../shared/result'
 import { validateMetadataNameByKind } from '../resourceCatalog'
@@ -14,6 +15,24 @@ import type { ParsedCommand } from '../types'
 import { buildDryRunResponse } from './create'
 import { createResourceWithEvents } from '../resourceCatalog'
 import { executeRuntimeAttachedCommand } from './internal/runtimeCommand'
+
+const INTERACTIVE_SHELLS = new Set(['sh', 'bash', '/bin/sh', '/bin/bash'])
+
+const buildEnterContainerDirective = (
+  podName: string,
+  containerName: string,
+  namespace: string
+): string => {
+  return `ENTER_CONTAINER:${namespace}:${podName}:${containerName}`
+}
+
+const isInteractiveShellCommand = (command: string[]): boolean => {
+  const commandHead = command[0]
+  if (commandHead == null || !INTERACTIVE_SHELLS.has(commandHead)) {
+    return false
+  }
+  return command[1] !== '-c'
+}
 
 const stripMatchingQuotes = (raw: string): string => {
   const trimmed = raw.trim()
@@ -208,6 +227,16 @@ export const handleRun = (
   const hasInlineCommand =
     commandToExecute != null && commandToExecute.length > 0 && isAttachLike
   if (hasInlineCommand) {
+    if (isInteractiveShellCommand(commandToExecute)) {
+      const createResult = apiServer.createResource('Pod', pod, runtimeNamespace)
+      if (!createResult.ok) {
+        return createResult
+      }
+      return success(
+        buildEnterContainerDirective(podName, podName, runtimeNamespace)
+      )
+    }
+
     const sourcePodForTraffic: SimTrafficPodIdentity = {
       name: podName,
       namespace: runtimeNamespace,

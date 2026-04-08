@@ -68,7 +68,7 @@ nslookup backend.default.svc.cluster.local
 Same result. Now try reaching it over HTTP:
 
 ```sh
-wget -qO- http://backend
+curl http://backend
 ```
 
 You should see the nginx welcome page. The name `backend` resolved to the ClusterIP, which forwarded the request to one of the backend Pods.
