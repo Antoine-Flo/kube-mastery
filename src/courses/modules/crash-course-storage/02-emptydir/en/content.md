@@ -16,9 +16,9 @@ The volume starts empty and is backed by the node's local disk by default. Both 
 @@@
 graph LR
     subgraph POD["Pod"]
-        A["Container: app<br/>mountPath: /output"]
-        B["Container: shipper<br/>mountPath: /input"]
-        V["emptyDir: shared-logs"]
+        A["Container: writer<br/>mountPath: /output"]
+        B["Container: reader<br/>mountPath: /input"]
+        V["emptyDir: shared-data"]
     end
 
     A -->|write| V
@@ -29,7 +29,7 @@ The lifecycle rule is strict: the volume survives container crashes and restarts
 
 ## A Working Example
 
-Here is a Pod with two containers sharing an emptyDir volume. The first container writes a message to a file every few seconds. The second container reads from that file. Create it:
+Here is a Pod with two containers sharing an emptyDir volume. Both containers are long-running nginx processes. The `writer` container mounts the shared volume at `/output`, and the `reader` container mounts the same volume at `/input`. Create it:
 
 ```bash
 nano shared-pod.yaml
@@ -42,24 +42,18 @@ metadata:
   name: shared-pod
 spec:
   volumes:
-    - name: shared-logs
+    - name: shared-data
       emptyDir: {}
   containers:
     - name: writer
-      image: busybox:1.36
-      command: ["/bin/sh", "-c"]
-      args:
-        - while true; do echo "$(date) - alive" >> /output/log.txt; sleep 3; done
+      image: nginx:1.28
       volumeMounts:
-        - name: shared-logs
+        - name: shared-data
           mountPath: /output
     - name: reader
-      image: busybox:1.36
-      command: ["/bin/sh", "-c"]
-      args:
-        - tail -f /input/log.txt
+      image: nginx:1.28
       volumeMounts:
-        - name: shared-logs
+        - name: shared-data
           mountPath: /input
 ```
 
@@ -70,23 +64,29 @@ kubectl apply -f shared-pod.yaml
 Wait for the Pod to be running:
 
 ```bash
-kubectl get pod shared-pod --watch
+kubectl get pod shared-pod
 ```
 
-Press Ctrl+C once it shows `Running`. Now read the reader container's logs to see what the writer is producing:
+Once it shows `Running`, create a file from inside the `writer` container:
 
 ```bash
-kubectl logs shared-pod -c reader
+kubectl exec shared-pod -c writer -- touch /output/data.txt
 ```
 
-You should see timestamped lines being printed. The writer container writes to `/output/log.txt`, and the reader container reads from `/input/log.txt`. Both paths point to the same `emptyDir` volume. The names `/output` and `/input` are just the mount paths inside each container. The actual data is in the shared volume.
+Now read the same path from the `reader` container:
+
+```bash
+kubectl exec shared-pod -c reader -- ls /input
+```
+
+You should see `data.txt` listed. The `writer` container wrote to `/output/data.txt`, and the `reader` container sees it at `/input/data.txt`. Both paths point to the same `emptyDir` volume. The names `/output` and `/input` are just the mount paths inside each container. The actual data lives in the shared volume.
 
 :::quiz
-The writer container in the Pod above crashes and is restarted by the kubelet. After it restarts, does `log.txt` still exist?
+The `writer` container in the Pod above crashes and is restarted by the kubelet. After it restarts, does `data.txt` still exist?
 
 **Try it:** `kubectl exec shared-pod -c writer -- ls /output`
 
-**Answer:** Yes. The emptyDir volume is attached to the Pod, not to the container. The container restarted, but the Pod is still the same Pod, so the volume and its contents are untouched. The writer will append new lines to the existing file rather than starting fresh.
+**Answer:** Yes. The emptyDir volume is attached to the Pod, not to the container. The container restarted, but the Pod is still the same Pod, so the volume and its contents are untouched.
 :::
 
 ## Proving Pod Deletion Destroys the Volume
@@ -101,16 +101,16 @@ Recreate it:
 
 ```bash
 kubectl apply -f shared-pod.yaml
-kubectl get pod shared-pod --watch
+kubectl get pod shared-pod
 ```
 
-Once it is running, check the reader logs again:
+Once it is running, check whether `data.txt` is still there:
 
 ```bash
-kubectl logs shared-pod -c reader
+kubectl exec shared-pod -c reader -- ls /input
 ```
 
-The log starts from a fresh timestamp. The previous contents are gone. A new Pod means a new emptyDir, even if the Pod has the same name and runs on the same node.
+The directory is empty. A new Pod means a new emptyDir, even if the Pod has the same name and runs on the same node.
 
 :::warning
 Do not use emptyDir for data you care about keeping. It has no persistence guarantee beyond the Pod's lifetime. A rolling update, a node eviction, or a manual `kubectl delete pod` all destroy the volume and everything in it. If the data matters, use a PersistentVolumeClaim.

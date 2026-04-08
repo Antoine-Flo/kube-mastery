@@ -28,7 +28,8 @@ const kubectlCommands: Array<{
   {
     cmd: 'get',
     arg: '<resource>',
-    flags: '-n, -A, -o table/yaml/json, -l / --selector, --raw',
+    flags:
+      '-n, -A, -o table/yaml/json/jsonpath, -l, --field-selector, --show-labels, --sort-by, --watch, --no-headers',
     desc: {
       en: 'List one or more resources',
       fr: 'Lister une ou plusieurs ressources'
@@ -37,7 +38,7 @@ const kubectlCommands: Array<{
   {
     cmd: 'describe',
     arg: '<resource>',
-    flags: '-n, -A',
+    flags: '-n, -A, -l',
     desc: {
       en: 'Show detailed state of a resource',
       fr: "Afficher l'état détaillé d'une ressource"
@@ -46,13 +47,13 @@ const kubectlCommands: Array<{
   {
     cmd: 'delete',
     arg: '<resource>',
-    flags: '-n, -A, -l, -f',
+    flags: '-n, -A, -l, -f, --force, --grace-period, --wait',
     desc: { en: 'Delete a resource', fr: 'Supprimer une ressource' }
   },
   {
     cmd: 'apply',
     arg: '',
-    flags: '-f (required), -R',
+    flags: '-f (required)',
     desc: {
       en: 'Create or update resources from a file',
       fr: 'Créer ou mettre à jour des ressources depuis un fichier'
@@ -61,17 +62,27 @@ const kubectlCommands: Array<{
   {
     cmd: 'create',
     arg: '',
-    flags: '-f (required)',
+    flags:
+      '-f, -n, --dry-run, -o  |  subcommands: configmap, deployment, ingress, namespace, secret, service',
     desc: {
-      en: 'Create a resource from a file',
-      fr: 'Créer une ressource depuis un fichier'
+      en: 'Create a resource imperatively or from a file',
+      fr: 'Créer une ressource impérativement ou depuis un fichier'
+    }
+  },
+  {
+    cmd: 'replace',
+    arg: '',
+    flags: '-f (required), -n, --force',
+    desc: {
+      en: 'Replace a resource from a file',
+      fr: 'Remplacer une ressource depuis un fichier'
     }
   },
   {
     cmd: 'run',
     arg: '<name>',
     flags:
-      '--image (required), -n, --dry-run, --restart, --env, --labels, --port, -i, -t',
+      '--image (required), -n, --dry-run, --restart, --env, --labels, --port, -i, -t, --rm',
     desc: { en: 'Create and run a pod', fr: 'Créer et exécuter un pod' }
   },
   {
@@ -86,22 +97,16 @@ const kubectlCommands: Array<{
   {
     cmd: 'logs',
     arg: '<pod>',
-    flags: '-n, -c, -f, --tail, --since, --previous',
+    flags: '-n, -c, -f, --tail, --since, -p, -l',
     desc: { en: 'Print the logs of a pod', fr: "Afficher les logs d'un pod" }
   },
   {
-    cmd: 'label',
-    arg: '<resource>',
-    flags: '-n',
-    desc: { en: 'Add or update labels', fr: 'Ajouter ou modifier des labels' }
-  },
-  {
-    cmd: 'annotate',
-    arg: '<resource>',
-    flags: '-n',
+    cmd: 'rollout',
+    arg: '',
+    flags: '-n, -A  |  subcommands: status, history, restart, undo',
     desc: {
-      en: 'Add or update annotations',
-      fr: 'Ajouter ou modifier des annotations'
+      en: 'Manage rollouts for a deployment',
+      fr: "Gérer les rollouts d'un deployment"
     }
   },
   {
@@ -111,6 +116,75 @@ const kubectlCommands: Array<{
     desc: {
       en: 'Set the number of replicas',
       fr: 'Définir le nombre de replicas'
+    }
+  },
+  {
+    cmd: 'top',
+    arg: 'node|pod',
+    flags: '-n, -A, -l',
+    desc: {
+      en: 'Display resource usage (CPU / memory)',
+      fr: "Afficher l'utilisation des ressources (CPU / mémoire)"
+    }
+  },
+  {
+    cmd: 'expose',
+    arg: '<resource>',
+    flags: '-n, --name, --port, --target-port, --type, -l',
+    desc: {
+      en: 'Expose a resource as a new Service',
+      fr: 'Exposer une ressource en tant que Service'
+    }
+  },
+  {
+    cmd: 'patch',
+    arg: '<resource>',
+    flags: '-n, -A, -p, --type merge',
+    desc: {
+      en: 'Update fields of a resource',
+      fr: "Mettre à jour des champs d'une ressource"
+    }
+  },
+  {
+    cmd: 'edit',
+    arg: '<resource>',
+    flags: '-n, -A',
+    desc: {
+      en: 'Edit a resource in the terminal',
+      fr: 'Éditer une ressource dans le terminal'
+    }
+  },
+  {
+    cmd: 'wait',
+    arg: '<resource>',
+    flags: '-n, -A, --for, --timeout',
+    desc: {
+      en: 'Wait for a condition on a resource',
+      fr: 'Attendre une condition sur une ressource'
+    }
+  },
+  {
+    cmd: 'label',
+    arg: '<resource>',
+    flags: '-n, --overwrite',
+    desc: { en: 'Add or update labels', fr: 'Ajouter ou modifier des labels' }
+  },
+  {
+    cmd: 'annotate',
+    arg: '<resource>',
+    flags: '-n, --overwrite',
+    desc: {
+      en: 'Add or update annotations',
+      fr: 'Ajouter ou modifier des annotations'
+    }
+  },
+  {
+    cmd: 'set image',
+    arg: '<resource>',
+    flags: '-n, -A',
+    desc: {
+      en: 'Update the image of a container',
+      fr: "Mettre à jour l'image d'un conteneur"
     }
   },
   {
@@ -124,17 +198,26 @@ const kubectlCommands: Array<{
   },
   {
     cmd: 'explain',
-    arg: '',
-    flags: 'field path  (e.g. pod.spec.containers)',
+    arg: '<field>',
+    flags: '--api-version, -R',
     desc: {
       en: 'Show API field documentation',
       fr: "Afficher la doc d'un champ API"
     }
   },
   {
+    cmd: 'config',
+    arg: '',
+    flags: 'subcommands: current-context, get-contexts, set-context, view',
+    desc: {
+      en: 'Manage kubeconfig settings',
+      fr: 'Gérer les paramètres kubeconfig'
+    }
+  },
+  {
     cmd: 'version',
     arg: '',
-    flags: '',
+    flags: '--client, -o',
     desc: {
       en: 'Print client and server version',
       fr: 'Afficher les versions client et serveur'
@@ -166,19 +249,41 @@ const kubectlCommands: Array<{
       en: 'List available API versions',
       fr: "Lister les versions d'API disponibles"
     }
+  },
+  {
+    cmd: 'options',
+    arg: '',
+    flags: '',
+    desc: {
+      en: 'List global command-line options',
+      fr: 'Lister les options globales de la ligne de commande'
+    }
   }
 ]
 
 const resources = [
   { name: 'pods', alias: 'po' },
   { name: 'deployments', alias: 'deploy' },
+  { name: 'replicasets', alias: 'rs' },
+  { name: 'statefulsets', alias: 'sts' },
+  { name: 'daemonsets', alias: 'ds' },
   { name: 'services', alias: 'svc' },
+  { name: 'endpoints', alias: 'ep' },
+  { name: 'endpointslices', alias: '' },
+  { name: 'ingresses', alias: 'ing' },
+  { name: 'ingressclasses', alias: '' },
+  { name: 'networkpolicies', alias: 'netpol' },
   { name: 'namespaces', alias: 'ns' },
+  { name: 'nodes', alias: 'no' },
   { name: 'configmaps', alias: 'cm' },
   { name: 'secrets', alias: '' },
-  { name: 'nodes', alias: 'no' },
-  { name: 'daemonsets', alias: 'ds' },
-  { name: 'replicasets', alias: 'rs' },
+  { name: 'persistentvolumes', alias: 'pv' },
+  { name: 'persistentvolumeclaims', alias: 'pvc' },
+  { name: 'storageclasses', alias: 'sc' },
+  { name: 'leases', alias: '' },
+  { name: 'gateways', alias: 'gw' },
+  { name: 'gatewayclasses', alias: 'gc' },
+  { name: 'httproutes', alias: 'hr' },
   { name: 'all', alias: '' }
 ]
 
@@ -255,10 +360,46 @@ const shellCommands: Array<{
     desc: { en: 'Terminal text editor', fr: 'Éditeur de texte terminal' }
   },
   {
+    cmd: 'curl',
+    arg: '<url>',
+    flags: '',
+    desc: { en: 'Make HTTP requests', fr: 'Effectuer des requêtes HTTP' }
+  },
+  {
+    cmd: 'nslookup',
+    arg: '<host>',
+    flags: '',
+    desc: { en: 'Query DNS records', fr: 'Interroger les enregistrements DNS' }
+  },
+  {
+    cmd: 'env',
+    arg: '',
+    flags: '',
+    desc: {
+      en: 'Print environment variables',
+      fr: "Afficher les variables d'environnement"
+    }
+  },
+  {
+    cmd: 'sleep',
+    arg: '<seconds>',
+    flags: '',
+    desc: {
+      en: 'Pause execution for a duration',
+      fr: "Mettre en pause l'exécution"
+    }
+  },
+  {
     cmd: 'clear',
     arg: '',
     flags: '',
     desc: { en: 'Clear the terminal screen', fr: "Vider l'écran du terminal" }
+  },
+  {
+    cmd: 'exit',
+    arg: '',
+    flags: '',
+    desc: { en: 'Exit the shell session', fr: 'Quitter la session shell' }
   },
   {
     cmd: 'help',
@@ -272,16 +413,11 @@ const shellCommands: Array<{
 ]
 
 const plannedCommands = [
-  { cmd: 'kubectl rollout', notes: 'status, history, undo, pause, resume' },
   { cmd: 'kubectl port-forward', notes: '' },
-  { cmd: 'kubectl top', notes: 'pods, nodes' },
   { cmd: 'kubectl auth can-i', notes: 'RBAC' },
-  { cmd: 'kubectl get events', notes: '' },
-  { cmd: 'kubectl cordon/uncordon', notes: 'node management' },
+  { cmd: 'kubectl cordon / uncordon', notes: 'node management' },
   { cmd: 'kubectl drain', notes: 'node management' },
-  { cmd: 'kubectl cp', notes: '' },
-  { cmd: 'kubectl patch', notes: '' },
-  { cmd: 'kubectl edit', notes: '' }
+  { cmd: 'kubectl cp', notes: '' }
 ]
 
 const ecosystemNotes: Record<string, Record<string, string>> = {

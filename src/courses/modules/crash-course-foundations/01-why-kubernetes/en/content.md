@@ -24,26 +24,15 @@ Day to day, Kubernetes focuses on **placement** (enough CPU and memory on health
 
 Kubernetes did not appear in a vacuum. It grew out of large-scale scheduling experience at Google, at a moment when containers were becoming the default packaging format.
 
-@@@
-flowchart TB
-    Y1["2003: Borg at Google<br/>Internal cluster scheduler, ideas that shaped Kubernetes"]
-    Y2["2013: Containers go mainstream<br/>Portable images, ops must work cluster-wide"]
-    Y3["2014: Kubernetes open sourced<br/>Public project, vendors and community contribute"]
-    Y4["2015: Kubernetes 1.0 and CNCF<br/>Stable API baseline, neutral Linux Foundation home"]
-    Y5["2018: CNCF graduation<br/>Mature governance, broad ecosystem adoption"]
-    Y1 --> Y2 --> Y3 --> Y4 --> Y5
-@@@
+- **2003** - Borg at Google: internal cluster scheduler, the concepts that shaped Kubernetes
+- **2013** - Containers go mainstream: portable images, ops must work cluster-wide
+- **2014** - Kubernetes open sourced: public project, vendors and community contribute
+- **2015** - Kubernetes 1.0 and CNCF: stable API baseline, vendor-neutral foundation
+- **2018** - CNCF graduation: mature governance, broad ecosystem adoption
+- **2025** - 93% of organizations use, evaluate, or test Kubernetes; 68% run most of their applications on it
 
 :::info
-**Borg is not Kubernetes.** Borg is an internal Google system. Kubernetes reused concepts (desired state, controllers, scheduling at scale), not Borg’s source code. You learn Kubernetes as it exists in the open source project.
-:::
-
-:::info
-**2014 and 2015 together** mark the shift from experiment to platform: the code became public in 2014, then 1.0 and the Cloud Native Computing Foundation (CNCF) gave the project a stable API promise and a vendor-neutral foundation.
-:::
-
-:::info
-**CNCF graduation** (2018) means the project met CNCF criteria for adoption, contributors, and governance. It is a milestone for the ecosystem, not a feature release. Releases still ship on a regular cadence today.
+The **[CNCF](https://www.cncf.io/)** (Cloud Native Computing Foundation) is a vendor-neutral Linux Foundation project that hosts Kubernetes and many related tools. Graduation means the project met adoption and governance criteria, not that development stopped. Releases still ship on a regular cadence today.
 :::
 
 ## The Orchestration Problem
