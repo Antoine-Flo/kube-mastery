@@ -37,7 +37,9 @@ const RESOURCE_GETTERS: Record<
   statefulsets: (state) =>
     state.getStatefulSets ? state.getStatefulSets() : [],
   deployments: (state) => (state.getDeployments ? state.getDeployments() : []),
-  leases: (state) => (state.getLeases ? state.getLeases() : [])
+  leases: (state) => (state.getLeases ? state.getLeases() : []),
+  networkpolicies: (state) =>
+    state.getNetworkPolicies ? state.getNetworkPolicies() : []
 }
 
 const CANONICAL_RESOURCE_TYPES = Object.keys(RESOURCE_GETTERS)

@@ -34,18 +34,29 @@
   padding: var(--spacing-1);
 }
 
-/* ─── Namespace Filter ─────────────────────────────────────────────────── */
+/* ─── Top bar (layer toggle + namespace filter) ────────────────────────── */
 
-.cluster-viz__filter {
+.cluster-viz__topbar {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  flex-wrap: wrap;
-  padding: var(--spacing-2);
   margin-bottom: var(--spacing-3);
+}
+
+.cluster-viz__filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-left: auto;
+  padding: var(--spacing-1) var(--spacing-2);
+  background: var(--color-gray-3);
   border: 1px solid var(--color-gray-6);
   border-radius: var(--radius-sm);
-  background-color: var(--color-gray-2);
+  cursor: pointer;
+}
+
+.cluster-viz__filter-toggle:hover {
+  background-color: var(--color-gray-4);
 }
 
 .cluster-viz__filter-label {
@@ -54,11 +65,26 @@
   color: var(--color-gray-11);
 }
 
+.cluster-viz__filter-chevron {
+  color: var(--color-gray-9);
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+
+.cluster-viz__filter-toggle--open .cluster-viz__filter-chevron {
+  transform: rotate(90deg);
+}
+
 .cluster-viz__filter-options {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: var(--spacing-2);
   flex-wrap: wrap;
+  padding: var(--spacing-2);
+  margin-bottom: var(--spacing-3);
+  border: 1px solid var(--color-gray-6);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-gray-3);
 }
 
 .cluster-viz__filter-option {
@@ -204,15 +230,62 @@
 .cluster-viz__pod-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-2);
-  margin-bottom: var(--spacing-1);
+  gap: 0.375rem;
+  margin-bottom: 2px;
 }
 
 .cluster-viz__pod-name {
   font-size: var(--text-xs);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-gray-12);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.cluster-viz__pod-workload {
+  font-size: 9px;
+  font-weight: var(--font-weight-semibold);
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+  border: 1px solid;
+}
+
+.cluster-viz__pod-workload--deployment {
+  background-color: var(--color-blue-2);
+  border-color: var(--color-blue-6);
+  color: var(--color-blue-11);
+}
+
+.cluster-viz__pod-workload--daemonset {
+  background-color: var(--color-purple-2);
+  border-color: var(--color-purple-6);
+  color: var(--color-purple-11);
+}
+
+.cluster-viz__pod-workload--replicaset {
+  background-color: var(--color-gray-3);
+  border-color: var(--color-gray-6);
+  color: var(--color-gray-10);
+}
+
+.cluster-viz__pod-subheader {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: var(--spacing-1);
+}
+
+.cluster-viz__pod-id {
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+  color: var(--color-gray-9);
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -222,6 +295,24 @@
   font-size: 10px;
   color: var(--color-gray-10);
   flex-shrink: 0;
+}
+
+.cluster-viz__pod-ready {
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  flex-shrink: 0;
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
+.cluster-viz__pod-ready--ok {
+  color: var(--color-green-10);
+  background-color: var(--color-green-2);
+}
+
+.cluster-viz__pod-ready--notok {
+  color: var(--color-amber-11);
+  background-color: var(--color-amber-2);
 }
 
 /* ─── Containers ───────────────────────────────────────────────────────── */
@@ -409,6 +500,22 @@
   color: var(--color-gray-9);
   white-space: pre-line;
   font-size: 0.6875rem;
+}
+
+@keyframes cluster-viz-state-flash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(6, 182, 212, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(6, 182, 212, 0);
+  }
+}
+
+.cluster-viz__pod--state-flash {
+  animation: cluster-viz-state-flash 0.65s ease-out forwards;
 }
 
 @keyframes cluster-viz-pending-pulse {

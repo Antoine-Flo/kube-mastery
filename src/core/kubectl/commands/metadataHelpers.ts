@@ -152,6 +152,10 @@ const RESOURCE_ACCESSORS: Partial<Record<string, ResourceCollectionAccessor>> =
       kind: RESOURCE_KIND_BY_RESOURCE.ingresses ?? 'Ingress',
       singularName: 'ingress'
     },
+    networkpolicies: {
+      kind: RESOURCE_KIND_BY_RESOURCE.networkpolicies ?? 'NetworkPolicy',
+      singularName: 'networkpolicy'
+    },
     persistentvolumes: {
       kind: RESOURCE_KIND_BY_RESOURCE.persistentvolumes ?? 'PersistentVolume',
       singularName: 'persistentvolume'

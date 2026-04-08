@@ -260,6 +260,13 @@ const createNetworkingAPIResourceList = () => {
         namespaced: true,
         kind: 'Ingress',
         verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch']
+      },
+      {
+        name: 'networkpolicies',
+        singularName: 'networkpolicy',
+        namespaced: true,
+        kind: 'NetworkPolicy',
+        verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch']
       }
     ]
   }

@@ -16,6 +16,7 @@ import {
   describeEndpointSlice,
   describeEndpoints,
   describeIngress,
+  describeNetworkPolicy,
   describeLease,
   describeNode,
   describePersistentVolume,
@@ -244,6 +245,13 @@ const DESCRIBE_CONFIG: Record<string, DescribeConfig> = {
     },
     type: 'Ingress'
   },
+  networkpolicies: {
+    items: 'networkPolicies',
+    formatter: (item) => {
+      return describeNetworkPolicy(item)
+    },
+    type: 'NetworkPolicy'
+  },
   nodes: {
     items: 'nodes',
     formatter: (item, state) => {
@@ -295,6 +303,9 @@ const getNotFoundResourceReference = (resourceType: string): string => {
   }
   if (resourceType === 'replicasets') {
     return 'replicasets.apps'
+  }
+  if (resourceType === 'networkpolicies') {
+    return 'networkpolicies.networking.k8s.io'
   }
   return resourceType
 }

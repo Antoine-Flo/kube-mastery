@@ -1,4 +1,5 @@
 import type { SimNetworkRuntime } from '../../../../network/SimNetworkRuntime'
+import type { SimTrafficPodIdentity } from '../../../../network/TrafficEngine'
 import type { ExecutionIO, ExecutionResult } from '../../../../shared/result'
 import { error, success } from '../../../../shared/result'
 
@@ -77,6 +78,9 @@ const toExecutionIo = (result: RuntimeCommandResult): ExecutionIO => {
   }
 }
 
+/** Fixed dig(1) WHEN line so simulated output is deterministic (tests, parity, lesson replays). */
+const SIMULATED_DIG_WHEN_UTC = 'Wed, 01 Jan 2020 00:00:00 GMT'
+
 const buildResolvConfContent = (namespace: string): string => {
   return [
     `search ${namespace}.svc.cluster.local svc.cluster.local cluster.local`,
@@ -118,7 +122,7 @@ const buildDigAnswer = (query: string, ipAddress: string): string => {
     '',
     ';; Query time: 0 msec',
     ';; SERVER: 10.96.0.10#53(10.96.0.10)',
-    `;; WHEN: ${new Date().toUTCString()}`,
+    `;; WHEN: ${SIMULATED_DIG_WHEN_UTC}`,
     ';; MSG SIZE  rcvd: 111'
   ].join('\n')
 }
@@ -262,7 +266,8 @@ const handleNslookupCommand = (
 export const executeRuntimeAttachedCommand = (
   command: string[],
   namespace: string,
-  networkRuntime?: SimNetworkRuntime
+  networkRuntime?: SimNetworkRuntime,
+  sourcePod?: SimTrafficPodIdentity
 ): RuntimeCommandResult | undefined => {
   const commandHead = command[0]
   const catResult = handleCatCommand(command, namespace)
@@ -291,7 +296,8 @@ export const executeRuntimeAttachedCommand = (
     return undefined
   }
   const curlResult = networkRuntime.trafficEngine.simulateHttpGet(curlTarget, {
-    sourceNamespace: namespace
+    sourceNamespace: namespace,
+    ...(sourcePod != null && { sourcePod })
   })
   if (!curlResult.ok) {
     return errorResult(curlResult.error)
@@ -302,12 +308,14 @@ export const executeRuntimeAttachedCommand = (
 export const executeRuntimeNetworkCommand = (
   command: string[],
   namespace: string,
-  networkRuntime?: SimNetworkRuntime
+  networkRuntime?: SimNetworkRuntime,
+  sourcePod?: SimTrafficPodIdentity
 ): ExecutionResult | undefined => {
   const runtimeResult = executeRuntimeAttachedCommand(
     command,
     namespace,
-    networkRuntime
+    networkRuntime,
+    sourcePod
   )
   if (runtimeResult == null) {
     return undefined

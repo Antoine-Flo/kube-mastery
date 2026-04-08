@@ -37,6 +37,11 @@ const BASE_RESOURCE_TARGETS: Record<Resource, BaseTarget | undefined> = {
   nodes: { group: '', version: 'v1', kind: 'Node' },
   replicasets: { group: 'apps', version: 'v1', kind: 'ReplicaSet' },
   ingresses: { group: 'networking.k8s.io', version: 'v1', kind: 'Ingress' },
+  networkpolicies: {
+    group: 'networking.k8s.io',
+    version: 'v1',
+    kind: 'NetworkPolicy'
+  },
   ingressclasses: {
     group: 'networking.k8s.io',
     version: 'v1',

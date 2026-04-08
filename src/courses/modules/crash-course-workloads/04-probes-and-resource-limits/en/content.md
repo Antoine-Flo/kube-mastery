@@ -5,19 +5,28 @@ seoDescription: 'Explore Kubernetes liveness, readiness, and startup probes alon
 
 # Probes and Resource Limits
 
-A running container is not necessarily a healthy container. A web server might have started successfully but now be in a deadlock, unable to process any requests. A new container might be starting up and not yet ready to receive traffic. Without any way for Kubernetes to detect these states, it would blindly route traffic to broken containers and keep them running indefinitely. Probes are how you give Kubernetes the ability to actively check the health of your containers, and resource limits are how you prevent one misbehaving container from affecting everything else on the same node.
+Your web server starts successfully. The process is running, the container is in `Running` state, and Kubernetes routes traffic to it. But internally, it hit a deadlock five minutes ago and is not responding to any requests. Users are getting timeouts. Kubernetes has no idea anything is wrong, because a running process is not the same as a healthy process.
 
-:::info
-Probes tell Kubernetes whether a container is alive and whether it's ready for traffic. Resource requests and limits tell the scheduler how much capacity this container needs and cap what it's allowed to consume.
-:::
+Probes are how you give Kubernetes the ability to actively check the health of your containers, rather than just watching whether the process is alive. Resource requests and limits are how you tell the cluster what a container needs and cap what it is allowed to take, preventing one misbehaving container from starving everything else on the same node.
 
 ## Liveness Probes
 
-A liveness probe answers the question: "Is this container still functional?" If the probe fails enough times consecutively, Kubernetes kills the container and restarts it. This is useful for catching deadlocks, infinite loops, or any situation where a process is running but no longer doing useful work. Without a liveness probe, a stuck container would sit there forever, and Kubernetes would have no idea anything was wrong.
+A liveness probe answers one question: "Is this container still functional?" If the probe fails too many times in a row, Kubernetes kills the container and restarts it. This is the right tool for deadlocks, infinite loops, or any state where the process is running but no longer doing useful work.
 
-The most common probe type for HTTP services sends a GET request to a specified path and port. A response in the 200-399 range is a success. Any other response, or a connection timeout, is a failure.
+Build the liveness probe configuration incrementally. The check itself is an HTTP GET:
 
 ```yaml
+# illustrative only
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+```
+
+Add the timing parameters:
+
+```yaml
+# illustrative only
 livenessProbe:
   httpGet:
     path: /healthz
@@ -27,25 +36,17 @@ livenessProbe:
   failureThreshold: 3
 ```
 
-`initialDelaySeconds` is the wait time before the first probe attempt - this prevents the probe from running before the application has had a chance to start. `periodSeconds` is how often the probe runs. `failureThreshold` is how many consecutive failures are needed before the container is restarted.
+`initialDelaySeconds` is how long Kubernetes waits before running the first probe. This prevents the probe from killing the container before the application has had time to start. `periodSeconds` is how often the probe runs. `failureThreshold` is how many consecutive failures trigger a restart.
+
+:::warning
+If `initialDelaySeconds` is set too low, the liveness probe will fire before the application is ready to respond. The probe fails, the container gets killed, the container restarts, the probe fires again before the application is ready, and so on. You get a crash loop that looks like an application bug but is actually a misconfigured probe. When you see `CrashLoopBackOff` on a container that should be healthy, check the probe timing first.
+:::
+
+Two other probe mechanisms exist alongside `httpGet`: `tcpSocket` checks whether a port accepts connections, and `exec` runs a command inside the container and checks the exit code. Use whichever matches how your application exposes health.
 
 ## Readiness Probes
 
-A readiness probe answers a different question: "Is this container ready to receive traffic?" A container that fails its readiness probe is removed from the Service's backend pool - traffic stops going to it - but it is not restarted. This is the right behavior when a container needs time to warm up, is temporarily overloaded, or is waiting on a dependency to become available.
-
-The distinction from liveness matters a lot during rolling updates. When a new Pod starts, Kubernetes waits for its readiness probe to pass before routing any traffic to it and before terminating old Pods. Without a readiness probe, Kubernetes sends traffic to a Pod the moment its container process starts, which might be long before the application is actually ready to respond.
-
-```yaml
-readinessProbe:
-  httpGet:
-    path: /ready
-    port: 8080
-  initialDelaySeconds: 5
-  periodSeconds: 5
-  failureThreshold: 2
-```
-
-Both probe types support three checking mechanisms: `httpGet` for HTTP endpoints, `tcpSocket` for checking whether a port accepts connections, and `exec` for running a command inside the container and checking its exit code. Use whichever best matches how your application exposes its health.
+A readiness probe answers a different question: "Is this container ready to receive traffic?" When the readiness probe fails, the Pod is removed from the Service's backend pool and stops receiving requests. The container is **not** restarted. When the probe passes again, the Pod is added back.
 
 @@@
 graph TD
@@ -65,29 +66,36 @@ graph TD
     PASS --> BACK
 @@@
 
-## Resource Requests and Limits
+The diagram shows the two independent branches: liveness failure leads to a container restart, readiness failure leads to traffic removal. A container can fail its readiness probe while passing its liveness probe: it is alive but temporarily unable to serve requests, perhaps because it is waiting on a dependency or warming up a cache.
 
-Every container in a Pod should declare its resource requirements. The `resources` field has two sub-fields that serve very different purposes.
-
-`requests` is the amount of CPU and memory the container is guaranteed. The scheduler uses requests - and only requests - to decide which node can accept a new Pod. If a node has 1000m of allocatable CPU and two Pods already requesting 400m each, only 200m of CPU is considered available for scheduling, even if the actual usage is lower. A Pod requesting 300m would not be scheduled on that node.
-
-`limits` is the maximum a container is allowed to use. Exceeding the memory limit causes the container to be killed immediately with an OOMKill - the operating system terminates the process, and Kubernetes restarts it according to the restart policy. Exceeding the CPU limit causes throttling: the container is slowed down, but not killed. CPU is measured in millicores (`250m` equals a quarter of a CPU core). Memory uses binary units (`128Mi` equals 128 mebibytes).
+Readiness probes matter most during rolling updates. When a new Pod starts, Kubernetes waits for its readiness probe to pass before routing any traffic to it and before terminating old Pods. Without a readiness probe, traffic reaches the Pod the moment the container process starts, which might be seconds before the application is actually ready.
 
 ```yaml
-resources:
-  requests:
-    cpu: '250m'
-    memory: '128Mi'
-  limits:
-    cpu: '500m'
-    memory: '256Mi'
+# illustrative only
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  failureThreshold: 2
 ```
 
-Setting both requests and limits for every container in production is not optional. Without requests, the scheduler places Pods on nodes without knowing if they'll fit, which leads to nodes being overloaded. Without limits, a single runaway container - due to a memory leak, an infinite loop, or a traffic spike - can consume all resources on the node and starve every other workload sharing that machine.
+:::quiz
+A container's liveness probe is passing but its readiness probe is failing. What does Kubernetes do?
 
-## Hands-On Practice
+- It kills the container and restarts it
+- It removes the Pod from Service traffic but does not restart the container
+- It does nothing: both probes must fail for any action to occur
 
-**1. Create a Deployment with probes and resource limits:**
+**Answer:** It removes the Pod from Service traffic but does not restart the container. Liveness and readiness are completely independent. The container is considered alive (liveness passes) but temporarily unavailable (readiness fails). Traffic stops, the container keeps running.
+:::
+
+Now apply a Deployment with both probes configured:
+
+```bash
+nano probed-deployment.yaml
+```
 
 ```yaml
 # probed-deployment.yaml
@@ -110,13 +118,6 @@ spec:
           image: nginx:1.28
           ports:
             - containerPort: 80
-          resources:
-            requests:
-              cpu: '100m'
-              memory: '64Mi'
-            limits:
-              cpu: '200m'
-              memory: '128Mi'
           livenessProbe:
             httpGet:
               path: /
@@ -138,32 +139,81 @@ kubectl apply -f probed-deployment.yaml
 kubectl rollout status deployment/probed-app
 ```
 
-**2. Inspect the probe configuration on a running Pod:**
+:::visualizer
+Watch the cluster visualizer: the two Pods appear with their readiness status. A Pod shows as not ready until its readiness probe passes.
+:::
+
+Inspect the probe configuration on a running Pod:
 
 ```bash
 kubectl describe pod -l app=probed
 ```
 
-Scroll to the `Containers` section. You'll find `Liveness` and `Readiness` fields showing the probe configuration, the current success and failure counts, and the timing parameters.
+Scroll to the `Containers` section. You will find `Liveness` and `Readiness` fields showing the probe configuration along with current success and failure counts.
 
-**3. Observe the READY column:**
+:::quiz
+In the `kubectl describe pod` output, what does the `READY` column in `kubectl get pods` represent?
 
-```bash
-kubectl get pods -l app=probed
+**Try it:** `kubectl get pods -l app=probed`
+
+**Answer:** The `1/1` in the READY column means one container is ready out of one total. A Pod with a failing readiness probe would show `0/1`. The Pod is still running, but it is just not receiving Service traffic. This is how you distinguish a temporarily unavailable Pod from a crashed one.
+:::
+
+## Resource Requests and Limits
+
+Your containerized application shares a physical node with dozens of other workloads. Without any constraints, one container with a memory leak can consume all available memory on the node and cause every other container on that node to be killed.
+
+The `resources` field on a container has two sub-fields:
+
+```yaml
+# illustrative only
+resources:
+  requests:
+    cpu: '250m'
+    memory: '128Mi'
 ```
 
-The `1/1` in the READY column means the readiness probe is passing. If you ran this immediately after applying the manifest, you might briefly see `0/1` while the container is starting and before the readiness probe first succeeds.
+`requests` is the amount of CPU and memory the container is guaranteed. The scheduler uses **only** requests, not actual usage, to decide which node can accept a new Pod. This is intentional. If the scheduler used actual usage, it would overcommit nodes during low-traffic periods and then have no headroom when load spikes. By using declared requests, the scheduler makes decisions based on what the application claims it needs, not what it happens to be using right now.
 
-**4. Check how resource requests affect the node:**
+Add `limits` to cap what the container is allowed to consume:
+
+```yaml
+# illustrative only
+resources:
+  requests:
+    cpu: '250m'
+    memory: '128Mi'
+  limits:
+    cpu: '500m'
+    memory: '256Mi'
+```
+
+What happens when a container exceeds a limit? The behavior is different for CPU and memory. Exceeding the CPU limit causes throttling: the container is slowed down but keeps running. Exceeding the memory limit causes an immediate `OOMKill`: the operating system terminates the process and Kubernetes restarts the container. CPU is compressible: you can take it away gradually. Memory is not: once a process has allocated memory, you cannot reclaim it without killing the process.
+
+CPU is measured in millicores: `250m` is a quarter of a CPU core. Memory uses binary units: `128Mi` is 128 mebibytes.
+
+:::quiz
+A container's memory usage spikes beyond its memory limit. What happens?
+
+- The container is throttled (slowed down) like CPU
+- The container is killed immediately with OOMKill and then restarted
+- The Pod is evicted to a node with more available memory
+
+**Answer:** The container is killed immediately with OOMKill and then restarted. Memory is not compressible. The OS terminates the process the moment it exceeds the limit. CPU throttling and memory OOMKill are two fundamentally different mechanisms.
+:::
+
+See how resource requests affect the node's allocation view:
 
 ```bash
 kubectl describe node
 ```
 
-Scroll to the `Allocated resources` section. You should see the CPU and memory requests from your Pods accounting for some of the node's available capacity. This is what the scheduler reads when deciding whether a new Pod fits on this node.
+Look for the `Allocated resources` section. It shows how much CPU and memory is reserved by current Pod requests on this node. This is the number the scheduler reads when deciding whether a new Pod fits.
 
-**5. Clean up:**
+Clean up when done:
 
 ```bash
 kubectl delete deployment probed-app
 ```
+
+Probes and resource limits are not optional configuration for production workloads: they are how you give Kubernetes the information it needs to manage your containers intelligently. Probes close the gap between "process is running" and "application is healthy." Resource declarations close the gap between "node has capacity" and "node has capacity for this specific workload."

@@ -172,7 +172,7 @@ graph TD
     NP --> IG["ingress[]<br/>List of inbound rules"]
     NP --> EG["egress[]<br/>List of outbound rules"]
 
-    IG --> IGR["Rule (item in list)<br/>— OR with other rules"]
+    IG --> IGR["Rule (item in list)<br/>OR with other rules (disjunction)"]
     IGR --> FROM["from[]<br/>Allowed sources<br/>(OR between items)"]
     IGR --> PORTS["ports[]<br/>Allowed ports/protocols"]
 

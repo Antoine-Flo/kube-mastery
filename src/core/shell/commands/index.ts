@@ -9,6 +9,7 @@ import {
 } from './core/ShellCommandExecutor'
 import type { ShellCommandHandler } from './core/ShellCommandHandler'
 import { parseShellCommand } from './core/ShellCommandParser'
+import type { SimTrafficPodIdentity } from '../../network/TrafficEngine'
 import type { ExecutionResult } from '../../shared/result'
 import type { Result } from '../../shared/result'
 import type { ParsedShellCommand } from './core/types'
@@ -54,7 +55,12 @@ export type EditorModal = {
 export interface ShellRuntimeOptions {
   resolveNamespace?: () => string
   runDnsLookup?: (query: string, namespace: string) => ExecutionResult
-  runCurl?: (target: string, namespace: string) => ExecutionResult
+  runCurl?: (
+    target: string,
+    namespace: string,
+    sourcePod?: SimTrafficPodIdentity
+  ) => ExecutionResult
+  getSimTrafficSourcePod?: () => SimTrafficPodIdentity | undefined
   getEnvironmentVariables?: () => Result<string[]>
   onExit?: () => ExecutionResult
 }
@@ -126,7 +132,8 @@ export const buildShellHandlersMap = (
     'curl',
     createCurlHandler({
       resolveNamespace: runtimeOptions.resolveNamespace,
-      runCurl: runtimeOptions.runCurl
+      runCurl: runtimeOptions.runCurl,
+      getSimTrafficSourcePod: runtimeOptions.getSimTrafficSourcePod
     })
   )
 

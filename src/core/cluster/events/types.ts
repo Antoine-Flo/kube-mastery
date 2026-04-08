@@ -13,6 +13,7 @@ import type { EndpointSlice } from '../ressources/EndpointSlice'
 import type { Endpoints } from '../ressources/Endpoints'
 import type { Event } from '../ressources/Event'
 import type { Ingress } from '../ressources/Ingress'
+import type { NetworkPolicy } from '../ressources/NetworkPolicy'
 import type { Lease } from '../ressources/Lease'
 import type { Namespace } from '../ressources/Namespace'
 import type { Node } from '../ressources/Node'
@@ -625,6 +626,34 @@ export interface IngressUpdatedEvent extends BaseEvent {
   }
 }
 
+// ─── NetworkPolicy Events ────────────────────────────────────────────────
+
+export interface NetworkPolicyCreatedEvent extends BaseEvent {
+  type: 'NetworkPolicyCreated'
+  payload: {
+    networkPolicy: NetworkPolicy
+  }
+}
+
+export interface NetworkPolicyDeletedEvent extends BaseEvent {
+  type: 'NetworkPolicyDeleted'
+  payload: {
+    name: string
+    namespace: string
+    deletedNetworkPolicy: NetworkPolicy
+  }
+}
+
+export interface NetworkPolicyUpdatedEvent extends BaseEvent {
+  type: 'NetworkPolicyUpdated'
+  payload: {
+    name: string
+    namespace: string
+    networkPolicy: NetworkPolicy
+    previousNetworkPolicy: NetworkPolicy
+  }
+}
+
 // ─── Lease Events ────────────────────────────────────────────────────────
 
 export interface LeaseCreatedEvent extends BaseEvent {
@@ -720,6 +749,9 @@ export type ClusterEvent =
   | IngressCreatedEvent
   | IngressDeletedEvent
   | IngressUpdatedEvent
+  | NetworkPolicyCreatedEvent
+  | NetworkPolicyDeletedEvent
+  | NetworkPolicyUpdatedEvent
   | LeaseCreatedEvent
   | LeaseDeletedEvent
   | LeaseUpdatedEvent
@@ -1617,6 +1649,50 @@ export const createIngressUpdatedEvent = (
   timestamp: createEventTimestamp(),
   metadata: createEventMetadata(source),
   payload: { name, namespace, ingress, previousIngress }
+})
+
+/**
+ * Create NetworkPolicyCreated event
+ */
+export const createNetworkPolicyCreatedEvent = (
+  networkPolicy: NetworkPolicy,
+  source?: string
+): NetworkPolicyCreatedEvent => ({
+  type: 'NetworkPolicyCreated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { networkPolicy }
+})
+
+/**
+ * Create NetworkPolicyDeleted event
+ */
+export const createNetworkPolicyDeletedEvent = (
+  name: string,
+  namespace: string,
+  deletedNetworkPolicy: NetworkPolicy,
+  source?: string
+): NetworkPolicyDeletedEvent => ({
+  type: 'NetworkPolicyDeleted',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, deletedNetworkPolicy }
+})
+
+/**
+ * Create NetworkPolicyUpdated event
+ */
+export const createNetworkPolicyUpdatedEvent = (
+  name: string,
+  namespace: string,
+  networkPolicy: NetworkPolicy,
+  previousNetworkPolicy: NetworkPolicy,
+  source?: string
+): NetworkPolicyUpdatedEvent => ({
+  type: 'NetworkPolicyUpdated',
+  timestamp: createEventTimestamp(),
+  metadata: createEventMetadata(source),
+  payload: { name, namespace, networkPolicy, previousNetworkPolicy }
 })
 
 /**

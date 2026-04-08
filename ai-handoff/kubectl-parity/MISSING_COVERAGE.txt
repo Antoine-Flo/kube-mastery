@@ -57,10 +57,6 @@ Port-forward
 - kubectl port-forward pod/<name> 8080:80
 - kubectl port-forward service/<name> 8080:80
 
-Networking and DNS
-- kubectl get networkpolicies
-- kubectl describe networkpolicy <name>
-
 Node operations
 - kubectl cordon <node>
 - kubectl uncordon <node>

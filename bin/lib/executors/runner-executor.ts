@@ -292,9 +292,16 @@ const executeShellDirective = (
         ].join('\n')
       )
     },
-    runCurl: (target, namespace) => {
+    runCurl: (target, namespace, sourcePod) => {
+      const resolvedSource =
+        sourcePod ?? {
+          name: pod.metadata.name,
+          namespace: directive.namespace,
+          labels: pod.metadata.labels ?? {}
+        }
       const curlResult = networkRuntime.trafficEngine.simulateHttpGet(target, {
-        sourceNamespace: namespace
+        sourceNamespace: namespace,
+        sourcePod: resolvedSource
       })
       if (!curlResult.ok) {
         return error(curlResult.error)

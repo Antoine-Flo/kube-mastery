@@ -1,5 +1,6 @@
 import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { SimNetworkRuntime } from '../../../network/SimNetworkRuntime'
+import type { SimTrafficPodIdentity } from '../../../network/TrafficEngine'
 import { RESOURCE_ALIAS_MAP } from '../resources'
 import type { ParsedCommand } from '../types'
 import { executeRuntimeNetworkCommand } from './internal/runtimeCommand'
@@ -223,10 +224,16 @@ export const handleExec = (
     return buildEnterContainerDirective(podName, containerName, namespace)
   }
 
+  const sourcePod: SimTrafficPodIdentity = {
+    name: pod.metadata.name,
+    namespace,
+    labels: pod.metadata.labels ?? {}
+  }
   const runtimeNetworkResult = executeRuntimeNetworkCommand(
     parsed.execCommand,
     namespace,
-    networkRuntime
+    networkRuntime,
+    sourcePod
   )
   if (runtimeNetworkResult != null) {
     if (!runtimeNetworkResult.ok) {

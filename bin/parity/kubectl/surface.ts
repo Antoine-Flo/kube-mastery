@@ -35,8 +35,19 @@ export const stripDynamicAgeValuesForParity = (value: string): string => {
   return value.replace(/\b\d+[smhdwy](?:\d+[smhdwy])*\b/g, '<age>')
 }
 
-const normalizeDynamicTokensForParity = (value: string): string => {
+const stripKubectlLastAppliedYamlNoise = (value: string): string => {
   return value
+    .replace(
+      /\n  annotations:\n    kubectl\.kubernetes\.io\/last-applied-configuration: \|[\s\S]*?(?=\n  [a-z])/g,
+      ''
+    )
+    .replace(/\n  generation: \d+\n/g, '\n')
+}
+
+const normalizeDynamicTokensForParity = (value: string): string => {
+  const withoutApplyNoise = stripKubectlLastAppliedYamlNoise(value)
+  return withoutApplyNoise
+    .replace(/^Created on:\s+.*$/gm, 'Created on:   <timestamp>')
     .replace(
       /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z/g,
       '<timestamp>'
@@ -61,6 +72,8 @@ const normalizeDynamicTokensForParity = (value: string): string => {
       /\bresourceVersion:\s*["']?[^"'\n]+["']?/g,
       'resourceVersion: <resource-version>'
     )
+    .replace(/^  resourceVersion:\s*.+$/gm, '')
+    .replace(/^  uid:\s*.+$/gm, '')
     .replace(
       /Resource Version:\s+<unknown>/gi,
       'resource version: <resource-version>'

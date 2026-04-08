@@ -1,5 +1,15 @@
-<div class="lp__cluster-panel" data-cluster-panel aria-hidden="true">
-  <div class="lp__cluster-panel-bd" data-cluster-panel-content></div>
+---
+import ScrollArea from '../ui/ScrollArea.astro'
+---
+
+<div
+  class="lp__cluster-panel"
+  data-cluster-panel
+  aria-hidden="true"
+>
+  <ScrollArea>
+    <div class="lp__cluster-panel-bd" data-cluster-panel-content></div>
+  </ScrollArea>
 </div>
 
 <script>
@@ -7,25 +17,46 @@
 
   let cleanup: (() => void) | null = null
 
+  const STORAGE_KEY = 'kube-mastery:cluster-panel-open'
+
   function setup() {
-    const panel = document.querySelector('[data-cluster-panel]')
+    const panelEl = document.querySelector<HTMLElement>('[data-cluster-panel]')
     const content = document.querySelector('[data-cluster-panel-content]')
-    if (!panel || !content) {
+    if (panelEl == null || content == null) {
       return
     }
+    const panel = panelEl as HTMLElement
 
-    document.addEventListener('cluster-panel-open', () => {
+    const savedState = sessionStorage.getItem(STORAGE_KEY)
+
+    function openPanel() {
       panel.classList.add('lp__cluster-panel--open')
       panel.setAttribute('aria-hidden', 'false')
-    })
+      sessionStorage.setItem(STORAGE_KEY, 'true')
+    }
 
-    document.addEventListener('cluster-panel-close', () => {
+    function closePanel() {
       panel.classList.remove('lp__cluster-panel--open')
       panel.setAttribute('aria-hidden', 'true')
-    })
+      sessionStorage.setItem(STORAGE_KEY, 'false')
+    }
+
+    document.addEventListener('cluster-panel-open', openPanel)
+    document.addEventListener('cluster-panel-close', closePanel)
+
+    // Restore the panel state instantly (no animation) on lesson navigation
+    if (savedState === 'true') {
+      panel.style.transition = 'none'
+      openPanel()
+      requestAnimationFrame(() => {
+        panel.style.transition = ''
+      })
+    }
 
     document.addEventListener('cluster-env-ready', ((e: CustomEvent) => {
-      if (cleanup) cleanup()
+      if (cleanup) {
+        cleanup()
+      }
       const env = e.detail?.env
       if (env && content instanceof HTMLElement) {
         cleanup = mountClusterViewer(content, { env })
@@ -46,21 +77,26 @@
 
 <style>
   .lp__cluster-panel {
-    z-index: 2;
-    display: none;
-    position: absolute;
-    inset: 0;
-    flex-direction: column;
-    background: var(--color-gray-1);
-    overflow: hidden;
-  }
-  .lp__cluster-panel.lp__cluster-panel--open {
+    flex-shrink: 0;
     display: flex;
+    flex-direction: column;
+    height: 0;
+    overflow: hidden;
+    background: transparent;
+    border-top: 1px solid transparent;
+    border-bottom: 1px solid transparent;
+    transition:
+      height 0.2s ease,
+      border-color 0.15s ease;
   }
+
+  .lp__cluster-panel.lp__cluster-panel--open {
+    height: 280px;
+    border-top-color: var(--color-gray-6);
+    border-bottom-color: var(--color-gray-6);
+  }
+
   .lp__cluster-panel-bd {
-    flex: 1;
-    min-height: 0;
-    overflow: auto;
     padding: var(--spacing-4);
   }
 </style>

@@ -6,6 +6,7 @@ import type { EndpointSlice } from '../../../../../cluster/ressources/EndpointSl
 import type { Endpoints } from '../../../../../cluster/ressources/Endpoints'
 import type { Event } from '../../../../../cluster/ressources/Event'
 import type { Ingress } from '../../../../../cluster/ressources/Ingress'
+import type { NetworkPolicy } from '../../../../../cluster/ressources/NetworkPolicy'
 import type { Lease } from '../../../../../cluster/ressources/Lease'
 import type { Namespace } from '../../../../../cluster/ressources/Namespace'
 import type { Node } from '../../../../../cluster/ressources/Node'
@@ -63,6 +64,45 @@ interface IngressClassSyntheticResource {
   }
 }
 
+const formatNetworkPolicyPodSelector = (
+  podSelector: Record<string, unknown> | undefined
+): string => {
+  if (podSelector == null || typeof podSelector !== 'object') {
+    return ''
+  }
+  const parts: string[] = []
+  const matchLabels = podSelector.matchLabels
+  if (matchLabels != null && typeof matchLabels === 'object') {
+    const entries = Object.entries(matchLabels as Record<string, string>).sort(
+      ([leftKey], [rightKey]) => leftKey.localeCompare(rightKey)
+    )
+    for (const [key, value] of entries) {
+      parts.push(`${key}=${value}`)
+    }
+  }
+  const matchExpressions = podSelector.matchExpressions
+  if (Array.isArray(matchExpressions)) {
+    for (const expr of matchExpressions) {
+      if (expr == null || typeof expr !== 'object') {
+        continue
+      }
+      const requirement = expr as {
+        key?: string
+        operator?: string
+        values?: string[]
+      }
+      const key = requirement.key ?? ''
+      const operator = requirement.operator ?? ''
+      const valuesJoined =
+        requirement.values != null && requirement.values.length > 0
+          ? requirement.values.join(',')
+          : ''
+      parts.push(`${key} ${operator} (${valuesJoined})`)
+    }
+  }
+  return parts.join(',')
+}
+
 const hasIngressNginxController = (
   state: {
     deployments: { items: Deployment[] }
@@ -101,6 +141,7 @@ interface ResourceHandlerRegistry {
   endpoints: ResourceHandler<Endpoints>
   events: ResourceHandler<Event>
   ingresses: ResourceHandler<Ingress>
+  networkpolicies: ResourceHandler<NetworkPolicy>
   ingressclasses: ResourceHandler<IngressClassSyntheticResource>
   gateways: ResourceHandler<GatewaySyntheticResource>
   gatewayclasses: ResourceHandler<GatewayClassSyntheticResource>
@@ -365,6 +406,16 @@ export const RESOURCE_HANDLERS: ResourceHandlerRegistry = {
       '',
       formatIngressPorts(),
       formatAge(ingress.metadata.creationTimestamp)
+    ],
+    supportsFiltering: true
+  },
+  networkpolicies: {
+    getItems: (state) => state.networkPolicies.items,
+    headers: ['name', 'pod-selector', 'age'],
+    formatRow: (networkPolicy) => [
+      networkPolicy.metadata.name,
+      formatNetworkPolicyPodSelector(networkPolicy.spec.podSelector),
+      formatAge(networkPolicy.metadata.creationTimestamp)
     ],
     supportsFiltering: true
   },

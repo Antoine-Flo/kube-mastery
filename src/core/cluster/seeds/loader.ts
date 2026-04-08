@@ -13,6 +13,7 @@ import type { ConfigMap } from '../ressources/ConfigMap'
 import type { DaemonSet } from '../ressources/DaemonSet'
 import type { Deployment } from '../ressources/Deployment'
 import type { Ingress } from '../ressources/Ingress'
+import type { NetworkPolicy } from '../ressources/NetworkPolicy'
 import type { Node } from '../ressources/Node'
 import type { PersistentVolume } from '../ressources/PersistentVolume'
 import type { PersistentVolumeClaim } from '../ressources/PersistentVolumeClaim'
@@ -53,6 +54,7 @@ type ParsedResource =
   | DaemonSet
   | Service
   | Ingress
+  | NetworkPolicy
 
 /**
  * Parse multi-document YAML, skipping unsupported kinds (e.g. Namespace).

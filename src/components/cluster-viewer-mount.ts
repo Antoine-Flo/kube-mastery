@@ -23,6 +23,7 @@ const TOOLTIP_SELECTOR =
 const NAMESPACE_FILTER_INPUT_SELECTOR =
   'input[data-cluster-viz-namespace-toggle]'
 const LAYER_TOGGLE_SELECTOR = 'button[data-cluster-viz-layer]'
+const FILTER_TOGGLE_SELECTOR = 'button[data-cluster-viz-filter-toggle]'
 const FOCUS_TARGET_SELECTOR = '[data-focus-kind][data-focus-id]'
 const HIDDEN_NAMESPACES_BY_DEFAULT = new Set<string>([
   'kube-system',
@@ -43,6 +44,69 @@ const isClusterVizLayer = (value: string): value is ClusterVizLayer => {
   return false
 }
 
+// ─── Pod helpers ─────────────────────────────────────────────────────────────
+
+interface PodOwnerInfo {
+  ownerName: string | null
+  workloadType: string
+}
+
+function getPodOwnerInfo(pod: Pod, env: EmulatedEnvironment): PodOwnerInfo {
+  const ownerRefs = pod.metadata.ownerReferences ?? []
+
+  const daemonSetRef = ownerRefs.find((ref) => ref.kind === 'DaemonSet')
+  if (daemonSetRef != null) {
+    return { ownerName: daemonSetRef.name, workloadType: 'DaemonSet' }
+  }
+
+  const replicaSetRef = ownerRefs.find((ref) => ref.kind === 'ReplicaSet')
+  if (replicaSetRef != null) {
+    const replicaSet = env.apiServer
+      .listResources('ReplicaSet', pod.metadata.namespace)
+      .find((item) => item.metadata.name === replicaSetRef.name)
+    if (replicaSet != null) {
+      const deploymentRef = (replicaSet.metadata.ownerReferences ?? []).find(
+        (ref) => ref.kind === 'Deployment'
+      )
+      if (deploymentRef != null) {
+        return { ownerName: deploymentRef.name, workloadType: 'Deployment' }
+      }
+    }
+    return { ownerName: replicaSetRef.name, workloadType: 'ReplicaSet' }
+  }
+
+  const fallback = pod.metadata.annotations?.['sim.kubernetes.io/workload-type']
+  if (fallback != null && fallback.length > 0) {
+    return { ownerName: null, workloadType: fallback }
+  }
+
+  return { ownerName: null, workloadType: 'Pod' }
+}
+
+function getPodShortId(podName: string, ownerName: string): string {
+  if (!podName.startsWith(ownerName + '-')) {
+    return podName
+  }
+  const suffix = podName.slice(ownerName.length + 1)
+  const lastDash = suffix.lastIndexOf('-')
+  return lastDash >= 0 ? suffix.slice(lastDash + 1) : suffix
+}
+
+function getPodReadiness(pod: Pod): { ready: number; total: number } {
+  const total = pod.spec.containers?.length ?? 0
+  const ready = (pod.status.containerStatuses ?? []).filter((s) => s.ready)
+    .length
+  return { ready, total }
+}
+
+function getPodStateKey(pod: Pod): string {
+  const { ready, total } = getPodReadiness(pod)
+  const terminating = isPodTerminating(pod) ? 'T' : ''
+  return `${pod.status.phase}/${terminating}/${ready}/${total}`
+}
+
+// ─── Tooltip formatters ───────────────────────────────────────────────────────
+
 function formatNodeTooltip(node: Node): string {
   const status = getNodeStatus(node)
   const lines = ['Node', node.metadata.name, `Status: ${status}`]
@@ -57,46 +121,13 @@ function formatNodeTooltip(node: Node): string {
   return lines.join('\n')
 }
 
-function getPodWorkloadType(pod: Pod, env: EmulatedEnvironment): string {
-  const ownerRefs = pod.metadata.ownerReferences ?? []
-
-  const daemonSetOwnerRef = ownerRefs.find((ref) => ref.kind === 'DaemonSet')
-  if (daemonSetOwnerRef != null) {
-    return 'DaemonSet'
-  }
-
-  const replicaSetOwnerRef = ownerRefs.find((ref) => ref.kind === 'ReplicaSet')
-  if (replicaSetOwnerRef != null) {
-    const replicaSet = env.apiServer
-      .listResources('ReplicaSet', pod.metadata.namespace)
-      .find((item) => item.metadata.name === replicaSetOwnerRef.name)
-    if (replicaSet != null) {
-      const replicaSetOwnerRefs = replicaSet.metadata.ownerReferences ?? []
-      const deploymentOwnerRef = replicaSetOwnerRefs.find(
-        (ref) => ref.kind === 'Deployment'
-      )
-      if (deploymentOwnerRef != null) {
-        return 'Deployment'
-      }
-    }
-    return 'ReplicaSet'
-  }
-
-  const fallbackWorkloadType =
-    pod.metadata.annotations?.['sim.kubernetes.io/workload-type']
-  if (fallbackWorkloadType != null && fallbackWorkloadType.length > 0) {
-    return fallbackWorkloadType
-  }
-
-  return 'Pod'
-}
-
 function formatPodTooltip(pod: Pod, env: EmulatedEnvironment): string {
   const name = `${pod.metadata.namespace}/${pod.metadata.name}`
   const displayStatus = getPodDisplayStatus(pod)
   const containers = (pod.spec.containers ?? []).map((c) => c.name).join(', ')
-  const workloadType = getPodWorkloadType(pod, env)
-  return `Pod\n${name}\nStatus: ${displayStatus}\nWorkload: ${workloadType}\nContainers: ${containers || '(none)'}`
+  const { workloadType } = getPodOwnerInfo(pod, env)
+  const { ready, total } = getPodReadiness(pod)
+  return `Pod\n${name}\nStatus: ${displayStatus}\nReady: ${ready}/${total}\nWorkload: ${workloadType}\nContainers: ${containers || '(none)'}`
 }
 
 function formatContainerTooltip(
@@ -168,6 +199,8 @@ export interface MountClusterViewerOptions {
   env: EmulatedEnvironment
 }
 
+// ─── Namespace filter helpers ─────────────────────────────────────────────────
+
 function getSortedNamespaces(env: EmulatedEnvironment): string[] {
   const namespaces = env.apiServer
     .listResources('Namespace')
@@ -201,78 +234,88 @@ function syncNamespaceSelection(
   }
 }
 
-function createNamespaceFilterEl(
+const CHEVRON_SVG = `<svg class="cluster-viz__filter-chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>`
+
+function createTopBarEl(
+  selectedLayer: ClusterVizLayer,
   namespaces: string[],
-  selectedNamespaces: Set<string>
-): HTMLElement {
-  const filterEl = document.createElement('div')
-  filterEl.className = 'cluster-viz__filter'
+  selectedNamespaces: Set<string>,
+  isOpen: boolean
+): DocumentFragment {
+  const fragment = document.createDocumentFragment()
 
-  const labelEl = document.createElement('span')
-  labelEl.className = 'cluster-viz__filter-label'
-  labelEl.textContent = 'Namespaces:'
-  filterEl.appendChild(labelEl)
+  const topBar = document.createElement('div')
+  topBar.className = 'cluster-viz__topbar'
 
-  const optionsEl = document.createElement('div')
-  optionsEl.className = 'cluster-viz__filter-options'
+  const layerToggle = document.createElement('div')
+  layerToggle.className = 'cluster-viz__layer-toggle'
 
-  for (const namespace of namespaces) {
-    const optionEl = document.createElement('label')
-    optionEl.className = 'cluster-viz__filter-option'
-
-    const inputEl = document.createElement('input')
-    inputEl.type = 'checkbox'
-    inputEl.checked = selectedNamespaces.has(namespace)
-    inputEl.setAttribute('data-cluster-viz-namespace-toggle', 'true')
-    inputEl.setAttribute('data-namespace', namespace)
-
-    const nameEl = document.createElement('span')
-    nameEl.textContent = namespace
-
-    optionEl.appendChild(inputEl)
-    optionEl.appendChild(nameEl)
-    optionsEl.appendChild(optionEl)
-  }
-
-  filterEl.appendChild(optionsEl)
-  return filterEl
-}
-
-function createLayerToggleEl(selectedLayer: ClusterVizLayer): HTMLElement {
-  const wrapper = document.createElement('div')
-  wrapper.className = 'cluster-viz__layer-toggle'
-
-  const computeButton = document.createElement('button')
-  computeButton.type = 'button'
-  computeButton.className = 'cluster-viz__layer-button'
-  computeButton.setAttribute('data-cluster-viz-layer', 'compute')
-  computeButton.setAttribute(
+  const computeBtn = document.createElement('button')
+  computeBtn.type = 'button'
+  computeBtn.className =
+    'cluster-viz__layer-button' +
+    (selectedLayer === 'compute' ? ' cluster-viz__layer-button--active' : '')
+  computeBtn.setAttribute('data-cluster-viz-layer', 'compute')
+  computeBtn.setAttribute(
     'aria-pressed',
     selectedLayer === 'compute' ? 'true' : 'false'
   )
-  computeButton.textContent = 'Compute'
-  if (selectedLayer === 'compute') {
-    computeButton.classList.add('cluster-viz__layer-button--active')
-  }
+  computeBtn.textContent = 'Compute'
 
-  const networkButton = document.createElement('button')
-  networkButton.type = 'button'
-  networkButton.className = 'cluster-viz__layer-button'
-  networkButton.setAttribute('data-cluster-viz-layer', 'network')
-  networkButton.setAttribute(
+  const networkBtn = document.createElement('button')
+  networkBtn.type = 'button'
+  networkBtn.className =
+    'cluster-viz__layer-button' +
+    (selectedLayer === 'network' ? ' cluster-viz__layer-button--active' : '')
+  networkBtn.setAttribute('data-cluster-viz-layer', 'network')
+  networkBtn.setAttribute(
     'aria-pressed',
     selectedLayer === 'network' ? 'true' : 'false'
   )
-  networkButton.textContent = 'Network'
-  if (selectedLayer === 'network') {
-    networkButton.classList.add('cluster-viz__layer-button--active')
+  networkBtn.textContent = 'Network'
+
+  layerToggle.appendChild(computeBtn)
+  layerToggle.appendChild(networkBtn)
+  topBar.appendChild(layerToggle)
+
+  if (namespaces.length > 0) {
+    const nsBtn = document.createElement('button')
+    nsBtn.type = 'button'
+    nsBtn.className =
+      'cluster-viz__filter-toggle' +
+      (isOpen ? ' cluster-viz__filter-toggle--open' : '')
+    nsBtn.setAttribute('data-cluster-viz-filter-toggle', 'true')
+    nsBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false')
+    nsBtn.innerHTML = `<span class="cluster-viz__filter-label">Namespaces</span>${CHEVRON_SVG}`
+    topBar.appendChild(nsBtn)
   }
 
-  wrapper.appendChild(computeButton)
-  wrapper.appendChild(networkButton)
+  fragment.appendChild(topBar)
 
-  return wrapper
+  if (namespaces.length > 0 && isOpen) {
+    const optionsEl = document.createElement('div')
+    optionsEl.className = 'cluster-viz__filter-options'
+    for (const namespace of namespaces) {
+      const label = document.createElement('label')
+      label.className = 'cluster-viz__filter-option'
+      const input = document.createElement('input')
+      input.type = 'checkbox'
+      input.checked = selectedNamespaces.has(namespace)
+      input.setAttribute('data-cluster-viz-namespace-toggle', 'true')
+      input.setAttribute('data-namespace', namespace)
+      const nameEl = document.createElement('span')
+      nameEl.textContent = namespace
+      label.appendChild(input)
+      label.appendChild(nameEl)
+      optionsEl.appendChild(label)
+    }
+    fragment.appendChild(optionsEl)
+  }
+
+  return fragment
 }
+
+// ─── Service helpers ──────────────────────────────────────────────────────────
 
 function getServiceFocusId(service: SimServiceRuntime): string {
   return `${service.namespace}/${service.serviceName}`
@@ -392,6 +435,87 @@ function createServiceEl(
   return serviceEl
 }
 
+// ─── Pod card ─────────────────────────────────────────────────────────────────
+
+function buildPodInnerHtml(pod: Pod, env: EmulatedEnvironment): string {
+  const { ownerName, workloadType } = getPodOwnerInfo(pod, env)
+  const { ready, total } = getPodReadiness(pod)
+  const displayName = ownerName ?? pod.metadata.name
+  const shortId =
+    ownerName != null ? getPodShortId(pod.metadata.name, ownerName) : null
+  const displayStatus = getPodDisplayStatus(pod)
+  const fullId = `${pod.metadata.namespace}/${pod.metadata.name}`
+  const isReady = ready === total && total > 0
+
+  const workloadBadge =
+    workloadType !== 'Pod'
+      ? `<span class="cluster-viz__pod-workload cluster-viz__pod-workload--${workloadType.toLowerCase()}">${escapeHtml(workloadType)}</span>`
+      : ''
+
+  const shortIdEl =
+    shortId != null
+      ? `<span class="cluster-viz__pod-id">${escapeHtml(shortId)}</span>`
+      : ''
+
+  const readyClass = isReady
+    ? 'cluster-viz__pod-ready--ok'
+    : 'cluster-viz__pod-ready--notok'
+
+  return `
+    <div class="cluster-viz__pod-header">
+      <span class="cluster-viz__pod-name" title="${escapeAttr(fullId)}">${escapeHtml(displayName)}</span>
+      ${workloadBadge}
+    </div>
+    <div class="cluster-viz__pod-subheader">
+      ${shortIdEl}
+      <span class="cluster-viz__pod-phase">${escapeHtml(displayStatus)}</span>
+      <span class="cluster-viz__pod-ready ${readyClass}">${ready}/${total}</span>
+    </div>
+  `
+}
+
+function createPodEl(
+  pod: Pod,
+  env: EmulatedEnvironment,
+  focus: ClusterVizFocus | null
+): HTMLElement {
+  const phase = pod.status.phase
+  const phaseClass = POD_PHASE_CLASS[phase]
+  const terminatingClass = isPodTerminating(pod)
+    ? 'cluster-viz__pod--terminating'
+    : ''
+  const fullId = `${pod.metadata.namespace}/${pod.metadata.name}`
+  const containers = pod.spec.containers ?? []
+  const statusesByName = new Map(
+    (pod.status.containerStatuses ?? []).map((s) => [s.name, s])
+  )
+
+  const div = document.createElement('div')
+  div.className = `cluster-viz__pod ${phaseClass} ${terminatingClass}`.trim()
+  div.setAttribute('data-focus-kind', 'pod')
+  div.setAttribute('data-focus-id', fullId)
+  if (isFocused(focus, 'pod', fullId)) {
+    div.classList.add('cluster-viz__pod--focused')
+  }
+  div.dataset.tooltip = formatPodTooltip(pod, env)
+  div.innerHTML =
+    buildPodInnerHtml(pod, env) + '<div class="cluster-viz__containers"></div>'
+
+  const containersEl = div.querySelector('.cluster-viz__containers')!
+  for (const c of containers) {
+    const containerStatus = statusesByName.get(c.name)
+    const cEl = document.createElement('span')
+    cEl.className = `cluster-viz__container ${getContainerStateClass(containerStatus)}`
+    cEl.textContent = c.name
+    cEl.dataset.tooltip = formatContainerTooltip(c, containerStatus)
+    containersEl.appendChild(cEl)
+  }
+
+  return div
+}
+
+// ─── Compute layer ────────────────────────────────────────────────────────────
+
 function renderComputeLayer(
   overlayContent: HTMLElement,
   env: EmulatedEnvironment,
@@ -413,13 +537,9 @@ function renderComputeLayer(
     return a.metadata.name.localeCompare(b.metadata.name)
   })
   const unscheduledPods = podsByNode.get('') ?? []
-  if (unscheduledPods.length > 0) {
-    podsByNode.set('', unscheduledPods)
-  }
 
   const fragment = document.createDocumentFragment()
 
-  // Nodes with pods
   for (const node of sortedNodes) {
     const name = node.metadata.name
     const nodePods = podsByNode.get(name) ?? []
@@ -465,7 +585,6 @@ function renderComputeLayer(
     fragment.appendChild(nodeEl)
   }
 
-  // Unscheduled pods (no node) - rendered last to keep it at the bottom.
   if (unscheduledPods.length > 0) {
     const nodeEl = document.createElement('div')
     nodeEl.className =
@@ -505,6 +624,8 @@ function renderComputeLayer(
   }
   overlayContent.appendChild(nodesWrap)
 }
+
+// ─── Network layer ────────────────────────────────────────────────────────────
 
 function renderNetworkLayer(
   overlayContent: HTMLElement,
@@ -549,13 +670,16 @@ function renderNetworkLayer(
   overlayContent.appendChild(servicesWrap)
 }
 
+// ─── Root render ──────────────────────────────────────────────────────────────
+
 function renderCluster(
   overlayContent: HTMLElement,
   env: EmulatedEnvironment,
   selectedNamespaces: Set<string>,
   knownNamespaces: Set<string>,
   selectedLayer: ClusterVizLayer,
-  focus: ClusterVizFocus | null
+  focus: ClusterVizFocus | null,
+  isNamespaceFilterOpen: boolean
 ): void {
   const nodes = env.apiServer.listResources('Node')
   const allPods = [...env.apiServer.listResources('Pod')].sort((a, b) => {
@@ -574,12 +698,9 @@ function renderCluster(
   })
 
   overlayContent.innerHTML = ''
-  overlayContent.appendChild(createLayerToggleEl(selectedLayer))
-  if (namespaces.length > 0) {
-    overlayContent.appendChild(
-      createNamespaceFilterEl(namespaces, selectedNamespaces)
-    )
-  }
+  overlayContent.appendChild(
+    createTopBarEl(selectedLayer, namespaces, selectedNamespaces, isNamespaceFilterOpen)
+  )
   if (selectedLayer === 'network') {
     renderNetworkLayer(overlayContent, env, selectedNamespaces, focus)
     return
@@ -587,60 +708,19 @@ function renderCluster(
   renderComputeLayer(overlayContent, env, pods, allPods, nodes, focus)
 }
 
-function createPodEl(
-  pod: Pod,
-  env: EmulatedEnvironment,
-  focus: ClusterVizFocus | null
-): HTMLElement {
-  const phase = pod.status.phase
-  const displayStatus = getPodDisplayStatus(pod)
-  const phaseClass = POD_PHASE_CLASS[phase]
-  const terminatingClass = isPodTerminating(pod)
-    ? 'cluster-viz__pod--terminating'
-    : ''
-  const name = `${pod.metadata.namespace}/${pod.metadata.name}`
-  const containers = pod.spec.containers ?? []
-  const statusesByName = new Map(
-    (pod.status.containerStatuses ?? []).map((status) => {
-      return [status.name, status]
-    })
-  )
-  const div = document.createElement('div')
-  div.className = `cluster-viz__pod ${phaseClass} ${terminatingClass}`.trim()
-  div.setAttribute('data-focus-kind', 'pod')
-  div.setAttribute('data-focus-id', name)
-  if (isFocused(focus, 'pod', name)) {
-    div.classList.add('cluster-viz__pod--focused')
-  }
-  div.dataset.tooltip = formatPodTooltip(pod, env)
-  div.innerHTML = `
-		<div class="cluster-viz__pod-header">
-			<span class="cluster-viz__pod-name" title="${escapeAttr(name)}">${escapeHtml(pod.metadata.name)}</span>
-			<span class="cluster-viz__pod-phase">${escapeHtml(displayStatus)}</span>
-		</div>
-		<div class="cluster-viz__containers"></div>
-	`
-  const containersEl = div.querySelector('.cluster-viz__containers')!
-  for (const c of containers) {
-    const containerStatus = statusesByName.get(c.name)
-    const containerStateClass = getContainerStateClass(containerStatus)
-    const cEl = document.createElement('span')
-    cEl.className = `cluster-viz__container ${containerStateClass}`
-    cEl.textContent = c.name
-    cEl.dataset.tooltip = formatContainerTooltip(c, containerStatus)
-    containersEl.appendChild(cEl)
-  }
-  return div
-}
+// ─── Utils ────────────────────────────────────────────────────────────────────
 
 function escapeHtml(s: string): string {
   const div = document.createElement('div')
   div.textContent = s
   return div.innerHTML
 }
+
 function escapeAttr(s: string): string {
   return escapeHtml(s).replace(/"/g, '&quot;')
 }
+
+// ─── Mount ────────────────────────────────────────────────────────────────────
 
 /** Mounts cluster viz into a content container; returns cleanup. */
 export function mountClusterViewer(
@@ -650,17 +730,54 @@ export function mountClusterViewer(
   const { env } = options
   const selectedNamespaces = new Set<string>()
   const knownNamespaces = new Set<string>()
+  const previousPodStates = new Map<string, string>()
   let selectedLayer: ClusterVizLayer = 'compute'
   let focus: ClusterVizFocus | null = null
-  const render = () =>
+  let isNamespaceFilterOpen = false
+
+  function applyStateFlash(allPods: Pod[]): void {
+    const currentIds = new Set<string>()
+    for (const pod of allPods) {
+      const podId = `${pod.metadata.namespace}/${pod.metadata.name}`
+      const currentState = getPodStateKey(pod)
+      currentIds.add(podId)
+      const prevState = previousPodStates.get(podId)
+      previousPodStates.set(podId, currentState)
+      if (prevState == null || prevState === currentState) {
+        continue
+      }
+      const podEl = contentElement.querySelector(
+        `[data-focus-kind="pod"][data-focus-id="${CSS.escape(podId)}"]`
+      )
+      if (podEl == null) {
+        continue
+      }
+      podEl.classList.add('cluster-viz__pod--state-flash')
+      setTimeout(() => {
+        podEl.classList.remove('cluster-viz__pod--state-flash')
+      }, 700)
+    }
+    for (const id of previousPodStates.keys()) {
+      if (!currentIds.has(id)) {
+        previousPodStates.delete(id)
+      }
+    }
+  }
+
+  const render = () => {
+    const allPods = env.apiServer.listResources('Pod')
     renderCluster(
       contentElement,
       env,
       selectedNamespaces,
       knownNamespaces,
       selectedLayer,
-      focus
+      focus,
+      isNamespaceFilterOpen
     )
+    applyStateFlash(allPods)
+  }
+
   render()
 
   const tooltipEl = document.createElement('div')
@@ -735,12 +852,10 @@ export function mountClusterViewer(
     if (!target || !target.matches(NAMESPACE_FILTER_INPUT_SELECTOR)) {
       return
     }
-
     const namespace = target.getAttribute('data-namespace')
     if (!namespace) {
       return
     }
-
     if (target.checked) {
       selectedNamespaces.add(namespace)
     } else {
@@ -765,6 +880,15 @@ export function mountClusterViewer(
     render()
   }
 
+  function onFilterToggle(e: Event): void {
+    const target = (e.target as Element | null)?.closest(FILTER_TOGGLE_SELECTOR)
+    if (target == null) {
+      return
+    }
+    isNamespaceFilterOpen = !isNamespaceFilterOpen
+    render()
+  }
+
   function onFocusClick(e: Event): void {
     const focusTarget = (e.target as Element | null)?.closest(
       FOCUS_TARGET_SELECTOR
@@ -785,10 +909,7 @@ export function mountClusterViewer(
       render()
       return
     }
-    focus = {
-      kind,
-      id
-    }
+    focus = { kind, id }
     render()
   }
 
@@ -796,6 +917,7 @@ export function mountClusterViewer(
   contentElement.addEventListener('mouseout', onOut)
   contentElement.addEventListener('change', onNamespaceFilterChange)
   contentElement.addEventListener('click', onLayerChange)
+  contentElement.addEventListener('click', onFilterToggle)
   contentElement.addEventListener('click', onFocusClick)
 
   const unsub = env.apiServer.watchHub.watchAllClusterEvents((event) => {
@@ -818,6 +940,7 @@ export function mountClusterViewer(
     contentElement.removeEventListener('mouseout', onOut)
     contentElement.removeEventListener('change', onNamespaceFilterChange)
     contentElement.removeEventListener('click', onLayerChange)
+    contentElement.removeEventListener('click', onFilterToggle)
     contentElement.removeEventListener('click', onFocusClick)
     if (hideTimeout !== null) {
       clearTimeout(hideTimeout)

@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config'
 import { fileURLToPath } from 'node:url'
 import remarkCalloutColons from './src/plugins/remark-callout-colons.js'
 import remarkBeautifulMermaidBlocks from './src/plugins/remark-beautiful-mermaid-blocks.js'
+import remarkQuizBlocks from './src/plugins/remark-quiz-blocks.js'
 
 import cloudflare from '@astrojs/cloudflare'
 
@@ -11,7 +12,7 @@ export default defineConfig({
   site: 'https://kubemastery.com',
 
   markdown: {
-    remarkPlugins: [remarkCalloutColons, remarkBeautifulMermaidBlocks]
+    remarkPlugins: [remarkCalloutColons, remarkQuizBlocks, remarkBeautifulMermaidBlocks]
   },
 
   integrations: [

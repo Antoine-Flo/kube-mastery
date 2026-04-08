@@ -24,6 +24,9 @@ import {
   createIngressCreatedEvent,
   createIngressDeletedEvent,
   createIngressUpdatedEvent,
+  createNetworkPolicyCreatedEvent,
+  createNetworkPolicyDeletedEvent,
+  createNetworkPolicyUpdatedEvent,
   createLeaseCreatedEvent,
   createLeaseDeletedEvent,
   createLeaseUpdatedEvent,
@@ -67,6 +70,7 @@ import type { EndpointSlice } from '../cluster/ressources/EndpointSlice'
 import type { Endpoints } from '../cluster/ressources/Endpoints'
 import type { Event } from '../cluster/ressources/Event'
 import type { Ingress } from '../cluster/ressources/Ingress'
+import type { NetworkPolicy } from '../cluster/ressources/NetworkPolicy'
 import type { Lease } from '../cluster/ressources/Lease'
 import type { Namespace } from '../cluster/ressources/Namespace'
 import type { Node } from '../cluster/ressources/Node'
@@ -586,6 +590,11 @@ const RESOURCE_MUTATION_EVENTS: Record<
     createIngressCreatedEvent,
     createIngressUpdatedEvent,
     createIngressDeletedEvent
+  ),
+  NetworkPolicy: createNamespacedMutationEvents<NetworkPolicy>(
+    createNetworkPolicyCreatedEvent,
+    createNetworkPolicyUpdatedEvent,
+    createNetworkPolicyDeletedEvent
   ),
   PersistentVolume: createClusterScopedMutationEvents<PersistentVolume>(
     createPersistentVolumeCreatedEvent,

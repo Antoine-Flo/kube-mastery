@@ -76,6 +76,12 @@ export const DELETE_TARGET_BY_KIND: Partial<
     kindRefPlural: 'ingresses.networking.k8s.io',
     namespaced: true
   },
+  NetworkPolicy: {
+    kind: 'NetworkPolicy',
+    kindRef: 'networkpolicy.networking.k8s.io',
+    kindRefPlural: 'networkpolicies.networking.k8s.io',
+    namespaced: true
+  },
   Service: {
     kind: 'Service',
     kindRef: 'service',
@@ -126,6 +132,7 @@ export const DELETE_TARGET_BY_RESOURCE: Partial<
   replicasets: DELETE_TARGET_BY_KIND.ReplicaSet,
   services: DELETE_TARGET_BY_KIND.Service,
   ingresses: DELETE_TARGET_BY_KIND.Ingress,
+  networkpolicies: DELETE_TARGET_BY_KIND.NetworkPolicy,
   persistentvolumes: DELETE_TARGET_BY_KIND.PersistentVolume,
   persistentvolumeclaims: DELETE_TARGET_BY_KIND.PersistentVolumeClaim,
   namespaces: DELETE_TARGET_BY_KIND.Namespace,

@@ -3,6 +3,7 @@ import {
   describeConfigMap,
   describeDeployment,
   describeLease,
+  describeNetworkPolicy,
   describeNode,
   describePod,
   describeSecret
@@ -18,6 +19,7 @@ import { createReplicaSet } from '../../../../src/core/cluster/ressources/Replic
 import { createConfigMap } from '../../../../src/core/cluster/ressources/ConfigMap'
 import { createSecret } from '../../../../src/core/cluster/ressources/Secret'
 import { createLease } from '../../../../src/core/cluster/ressources/Lease'
+import { createNetworkPolicy } from '../../../../src/core/cluster/ressources/NetworkPolicy'
 import { createClusterStateData } from '../../helpers/utils'
 
 describe('describeFormatters', () => {
@@ -1530,6 +1532,31 @@ describe('describeFormatters', () => {
 
       expect(result).toContain('Events:')
       expect(result).toContain('<none>')
+    })
+  })
+
+  describe('describeNetworkPolicy', () => {
+    it('should include pod selector and ingress isolation line', () => {
+      const policy = createNetworkPolicy({
+        name: 'deny-all',
+        namespace: 'default',
+        creationTimestamp: '2024-01-15T10:00:00.000Z',
+        spec: {
+          podSelector: { matchLabels: { app: 'backend' } },
+          policyTypes: ['Ingress'],
+          ingress: []
+        }
+      })
+      const result = describeNetworkPolicy(policy)
+      expect(result).toContain('Name:         deny-all')
+      expect(result).toContain('Namespace:    default')
+      expect(result).toContain('PodSelector:     app=backend')
+      expect(result).toContain('Allowing ingress traffic:')
+      expect(result).toContain(
+        '(Selected pods are isolated for ingress connectivity)'
+      )
+      expect(result).toContain('Policy Types: Ingress')
+      expect(result).not.toContain('Events:')
     })
   })
 })

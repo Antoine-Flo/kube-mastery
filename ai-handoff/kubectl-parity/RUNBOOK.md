@@ -37,3 +37,8 @@ Commandes utiles:
 
 Règle d'arrêt:
 - si un gap architectural majeur est détecté (famille ressource absente, sous-système manquant), noter le gap dans la liste des manques avant de continuer.
+
+NetworkPolicy (trafic simulé):
+- CRUD kubectl reste aligné sur l'API.
+- Le trafic HTTP simulé via `curl` passe par `TrafficEngine.simulateHttpGet`, qui applique une union de règles ingress/egress (MVP: `matchLabels`, pairs `podSelector` dans le namespace de la policy, ports TCP numériques sur le `targetPort` du endpoint, identité source depuis `kubectl exec`, shell conteneur, ou `kubectl run --attach`).
+- Hors périmètre actuel: enforcement sur `dig` / `nslookup`, `namespaceSelector`, `ipBlock`, `matchExpressions`, ports nommés, curl direct vers IP de pod sans routage service (voir commentaire en tête de `src/core/network/networkPolicyTrafficEvaluation.ts`).

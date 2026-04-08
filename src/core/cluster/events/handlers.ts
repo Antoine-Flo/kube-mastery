@@ -10,6 +10,7 @@ import type { EndpointSlice } from '../ressources/EndpointSlice'
 import type { Endpoints } from '../ressources/Endpoints'
 import type { Event } from '../ressources/Event'
 import type { Ingress } from '../ressources/Ingress'
+import type { NetworkPolicy } from '../ressources/NetworkPolicy'
 import type { Lease } from '../ressources/Lease'
 import type { Namespace } from '../ressources/Namespace'
 import type { Node } from '../ressources/Node'
@@ -49,6 +50,9 @@ import type {
   IngressCreatedEvent,
   IngressDeletedEvent,
   IngressUpdatedEvent,
+  NetworkPolicyCreatedEvent,
+  NetworkPolicyDeletedEvent,
+  NetworkPolicyUpdatedEvent,
   LeaseCreatedEvent,
   LeaseDeletedEvent,
   LeaseUpdatedEvent,
@@ -113,6 +117,8 @@ const daemonSetRepo = createResourceRepository<DaemonSet>('DaemonSet')
 const statefulSetRepo = createResourceRepository<StatefulSet>('StatefulSet')
 const serviceRepo = createResourceRepository<Service>('Service')
 const ingressRepo = createResourceRepository<Ingress>('Ingress')
+const networkPolicyRepo =
+  createResourceRepository<NetworkPolicy>('NetworkPolicy')
 const leaseRepo = createResourceRepository<Lease>('Lease')
 const namespaceRepo = createResourceRepository<Namespace>('Namespace')
 const nodeRepo = createResourceRepository<Node>('Node')
@@ -139,6 +145,7 @@ type RepoStateKey =
   | 'endpoints'
   | 'events'
   | 'ingresses'
+  | 'networkPolicies'
   | 'leases'
   | 'namespaces'
   | 'nodes'
@@ -159,6 +166,7 @@ type RepoResourceByStateKey = {
   endpoints: Endpoints
   events: Event
   ingresses: Ingress
+  networkPolicies: NetworkPolicy
   leases: Lease
   namespaces: Namespace
   nodes: Node
@@ -260,6 +268,10 @@ const endpointSliceHandler = createRepoHandler(
 const endpointsHandler = createRepoHandler(endpointsRepo, 'endpoints')
 const eventHandler = createRepoHandler(eventRepo, 'events')
 const ingressHandler = createRepoHandler(ingressRepo, 'ingresses')
+const networkPolicyHandler = createRepoHandler(
+  networkPolicyRepo,
+  'networkPolicies'
+)
 const leaseHandler = createRepoHandler(leaseRepo, 'leases')
 const namespaceHandler = createRepoHandler(namespaceRepo, 'namespaces')
 const nodeHandler = createRepoHandler(nodeRepo, 'nodes')
@@ -668,6 +680,28 @@ export const handleIngressUpdated = (
     event.payload.ingress
   )
 
+export const handleNetworkPolicyCreated = (
+  state: ClusterStateData,
+  event: NetworkPolicyCreatedEvent
+) => networkPolicyHandler.created(state, event.payload.networkPolicy)
+
+export const handleNetworkPolicyDeleted = (
+  state: ClusterStateData,
+  event: NetworkPolicyDeletedEvent
+) =>
+  networkPolicyHandler.deleted(state, event.payload.name, event.payload.namespace)
+
+export const handleNetworkPolicyUpdated = (
+  state: ClusterStateData,
+  event: NetworkPolicyUpdatedEvent
+) =>
+  networkPolicyHandler.updated(
+    state,
+    event.payload.name,
+    event.payload.namespace,
+    event.payload.networkPolicy
+  )
+
 export const handleLeaseCreated = (
   state: ClusterStateData,
   event: LeaseCreatedEvent
@@ -882,6 +916,9 @@ export const CLUSTER_EVENT_DEFINITIONS: {
   IngressCreated: defineClusterEvent(handleIngressCreated),
   IngressDeleted: defineClusterEvent(handleIngressDeleted),
   IngressUpdated: defineClusterEvent(handleIngressUpdated),
+  NetworkPolicyCreated: defineClusterEvent(handleNetworkPolicyCreated),
+  NetworkPolicyDeleted: defineClusterEvent(handleNetworkPolicyDeleted),
+  NetworkPolicyUpdated: defineClusterEvent(handleNetworkPolicyUpdated),
   NamespaceCreated: defineClusterEvent(handleNamespaceCreated),
   NamespaceDeleted: defineClusterEvent(handleNamespaceDeleted),
   NamespaceUpdated: defineClusterEvent(handleNamespaceUpdated),

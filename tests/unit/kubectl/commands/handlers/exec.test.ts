@@ -410,14 +410,18 @@ describe('kubectl exec handler', () => {
         endpoints: []
       })
       const dnsResolver = createDnsResolver(networkState)
-      const trafficEngine = createTrafficEngine(networkState, dnsResolver)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const trafficEngine = createTrafficEngine(
+        networkState,
+        dnsResolver,
+        apiServer
+      )
       const parsed = createParsedCommand({
         name: 'my-pod',
         execCommand: ['nslookup', 'web.default.svc.cluster.local']
       })
 
-      const apiServer = createApiServerFacade()
-      apiServer.etcd.restore(state)
       const result = handleExecApi(apiServer, parsed, {
         state: networkState,
         dnsResolver,
@@ -432,6 +436,52 @@ describe('kubectl exec handler', () => {
       })
       expect(result).toContain('Name:\tweb.default.svc.cluster.local')
       expect(result).toContain('Address: 10.96.99.10')
+    })
+
+    it('should execute dig with deterministic WHEN line', () => {
+      const pod = createPod({
+        name: 'my-pod',
+        namespace: 'default',
+        containers: [{ name: 'main', image: 'busybox' }],
+        phase: 'Running'
+      })
+      const state = createState([pod])
+      const networkState = createNetworkState()
+      networkState.upsertServiceRuntime({
+        namespace: 'default',
+        serviceName: 'web',
+        serviceType: 'ClusterIP',
+        clusterIP: '10.96.99.10',
+        ports: [{ protocol: 'TCP', port: 80, targetPort: 8080 }],
+        endpoints: []
+      })
+      const dnsResolver = createDnsResolver(networkState)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const trafficEngine = createTrafficEngine(
+        networkState,
+        dnsResolver,
+        apiServer
+      )
+      const parsed = createParsedCommand({
+        name: 'my-pod',
+        execCommand: ['dig', 'web.default.svc.cluster.local']
+      })
+
+      const result = handleExecApi(apiServer, parsed, {
+        state: networkState,
+        dnsResolver,
+        trafficEngine,
+        controller: {
+          start: () => {},
+          stop: () => {},
+          initialSync: () => {},
+          resyncAll: () => {},
+          getState: () => networkState
+        }
+      })
+      expect(result).toContain(';; WHEN: Wed, 01 Jan 2020 00:00:00 GMT')
+      expect(result).toContain('10.96.99.10')
     })
 
     it('should execute curl with network runtime', () => {
@@ -460,14 +510,18 @@ describe('kubectl exec handler', () => {
         ]
       })
       const dnsResolver = createDnsResolver(networkState)
-      const trafficEngine = createTrafficEngine(networkState, dnsResolver)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const trafficEngine = createTrafficEngine(
+        networkState,
+        dnsResolver,
+        apiServer
+      )
       const parsed = createParsedCommand({
         name: 'my-pod',
         execCommand: ['curl', 'http://web.default.svc.cluster.local']
       })
 
-      const apiServer = createApiServerFacade()
-      apiServer.etcd.restore(state)
       const result = handleExecApi(apiServer, parsed, {
         state: networkState,
         dnsResolver,
@@ -509,14 +563,18 @@ describe('kubectl exec handler', () => {
         ]
       })
       const dnsResolver = createDnsResolver(networkState)
-      const trafficEngine = createTrafficEngine(networkState, dnsResolver)
+      const apiServer = createApiServerFacade()
+      apiServer.etcd.restore(state)
+      const trafficEngine = createTrafficEngine(
+        networkState,
+        dnsResolver,
+        apiServer
+      )
       const parsed = createParsedCommand({
         name: 'my-pod',
         execCommand: ['curl', '-s', 'http://web.default.svc.cluster.local']
       })
 
-      const apiServer = createApiServerFacade()
-      apiServer.etcd.restore(state)
       const result = handleExecApi(apiServer, parsed, {
         state: networkState,
         dnsResolver,

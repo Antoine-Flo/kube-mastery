@@ -1,10 +1,16 @@
+import type { SimTrafficPodIdentity } from '../../../../network/TrafficEngine'
 import type { ExecutionResult } from '../../../../shared/result'
 import { error } from '../../../../shared/result'
 import type { ShellCommandHandler } from '../../core/ShellCommandHandler'
 
 export interface CurlHandlerOptions {
   resolveNamespace?: () => string
-  runCurl?: (target: string, namespace: string) => ExecutionResult
+  runCurl?: (
+    target: string,
+    namespace: string,
+    sourcePod?: SimTrafficPodIdentity
+  ) => ExecutionResult
+  getSimTrafficSourcePod?: () => SimTrafficPodIdentity | undefined
 }
 
 const resolveCurlTarget = (args: string[]): string | undefined => {
@@ -45,7 +51,8 @@ export const createCurlHandler = (
         return error('network runtime is not available')
       }
       const namespace = options.resolveNamespace?.() ?? 'default'
-      return options.runCurl(target, namespace)
+      const sourcePod = options.getSimTrafficSourcePod?.()
+      return options.runCurl(target, namespace, sourcePod)
     }
   }
 }

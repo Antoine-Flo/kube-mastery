@@ -118,6 +118,9 @@ const createAutocompleteClusterState = (
     },
     getLeases: (namespace?: string) => {
       return apiServer.listResources('Lease', namespace)
+    },
+    getNetworkPolicies: (namespace?: string) => {
+      return apiServer.listResources('NetworkPolicy', namespace)
     }
   }
 }

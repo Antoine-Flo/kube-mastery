@@ -62,8 +62,18 @@ describe('Network DNS and Traffic', () => {
       ]
     })
 
+    const apiServer = createApiServerFacade()
+    apiServer.createResource(
+      'Pod',
+      createPod({
+        name: 'web-abc',
+        namespace: 'dev',
+        phase: 'Running',
+        containers: [{ name: 'web', image: 'nginx:latest' }]
+      })
+    )
     const resolver = createDnsResolver(networkState)
-    const traffic = createTrafficEngine(networkState, resolver)
+    const traffic = createTrafficEngine(networkState, resolver, apiServer)
 
     const clusterIpResult = traffic.simulateHttpGet('http://10.96.11.21:80', {
       sourceNamespace: 'dev'
@@ -101,8 +111,9 @@ describe('Network DNS and Traffic', () => {
       endpoints: []
     })
 
+    const apiServer = createApiServerFacade()
     const resolver = createDnsResolver(networkState)
-    const traffic = createTrafficEngine(networkState, resolver)
+    const traffic = createTrafficEngine(networkState, resolver, apiServer)
     const result = traffic.simulateHttpGet('http://web.dev.svc.cluster.local', {
       sourceNamespace: 'dev'
     })

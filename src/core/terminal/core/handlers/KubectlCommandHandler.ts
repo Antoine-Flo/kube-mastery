@@ -264,14 +264,22 @@ const executeShellCommandDirective = (
           ].join('\n')
         )
       },
-      runCurl: (target, namespace) => {
+      getSimTrafficSourcePod: () => {
+        return {
+          name: pod.metadata.name,
+          namespace: directive.namespace,
+          labels: pod.metadata.labels ?? {}
+        }
+      },
+      runCurl: (target, namespace, sourcePod) => {
         if (context.networkRuntime == null) {
           return error('network runtime is not available')
         }
         const curlResult = context.networkRuntime.trafficEngine.simulateHttpGet(
           target,
           {
-            sourceNamespace: namespace
+            sourceNamespace: namespace,
+            ...(sourcePod != null && { sourcePod })
           }
         )
         if (!curlResult.ok) {
@@ -453,6 +461,9 @@ const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
     'LeaseCreated',
     'LeaseUpdated',
     'LeaseDeleted',
+    'NetworkPolicyCreated',
+    'NetworkPolicyUpdated',
+    'NetworkPolicyDeleted',
     'EventCreated',
     'EventUpdated',
     'EventDeleted'
@@ -478,6 +489,11 @@ const WATCH_EVENT_TYPES_BY_RESOURCE: Record<Resource, string[]> = {
     'EndpointSliceDeleted'
   ],
   ingresses: [],
+  networkpolicies: [
+    'NetworkPolicyCreated',
+    'NetworkPolicyUpdated',
+    'NetworkPolicyDeleted'
+  ],
   ingressclasses: [],
   gateways: [],
   gatewayclasses: [],
@@ -745,6 +761,29 @@ const extractMetaFromClusterEvent = (
         name: event.payload.name,
         namespace: '',
         labels: event.payload.deletedPersistentVolume.metadata.labels
+      }
+    }
+  }
+  if (parsedResource === 'networkpolicies') {
+    if (event.type === 'NetworkPolicyCreated') {
+      return {
+        name: event.payload.networkPolicy.metadata.name,
+        namespace: event.payload.networkPolicy.metadata.namespace,
+        labels: event.payload.networkPolicy.metadata.labels
+      }
+    }
+    if (event.type === 'NetworkPolicyUpdated') {
+      return {
+        name: event.payload.name,
+        namespace: event.payload.namespace,
+        labels: event.payload.networkPolicy.metadata.labels
+      }
+    }
+    if (event.type === 'NetworkPolicyDeleted') {
+      return {
+        name: event.payload.name,
+        namespace: event.payload.namespace,
+        labels: event.payload.deletedNetworkPolicy.metadata.labels
       }
     }
   }

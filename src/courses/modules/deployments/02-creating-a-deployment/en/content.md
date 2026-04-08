@@ -83,7 +83,7 @@ At the Deployment level, `kubectl get deployment <name>` shows you **READY** (e.
 
 At the ReplicaSet level, you list ReplicaSets with the same labels as your Deployment (e.g. `app=web`). You'll see one active ReplicaSet whose name is the Deployment name plus a hash. That hash is derived from the Pod template: change the image or the container spec, and a new ReplicaSet appears with a new hash. Kubernetes uses this to distinguish "old" from "new" during rollouts.
 
-At the Pod level, you list Pods with the same label selector. Each Pod name includes the ReplicaSet hash and a unique suffix. Seeing all three levels—Deployment → ReplicaSet → Pods—confirms that the controller chain is working.
+At the Pod level, you list Pods with the same label selector. Each Pod name includes the ReplicaSet hash and a unique suffix. Seeing all three levels (Deployment → ReplicaSet → Pods) confirms that the controller chain is working.
 
 @@@
 graph TB
@@ -115,7 +115,7 @@ For a deeper view than `kubectl get`, use `kubectl describe deployment <name>`. 
 
 ## The Imperative Alternative: When and Why
 
-Sometimes you need a Deployment in seconds—during the CKA exam, in a demo, or when prototyping. Kubernetes lets you create a Deployment **imperatively** with `kubectl create deployment <name> --image=<image> --replicas=<n>`.
+Sometimes you need a Deployment in seconds, during the CKA exam, in a demo, or when prototyping. Kubernetes lets you create a Deployment **imperatively** with `kubectl create deployment <name> --image=<image> --replicas=<n>`.
 
 A very useful **hybrid** is to let kubectl generate the YAML for you, then edit it. Using `--dry-run=client -o yaml` with `kubectl create deployment` tells kubectl to build the object in memory and print the YAML without sending anything to the API server. You get a valid, ready-to-edit manifest in one command. You can then add ports, env, resources, and apply the file. This pattern is especially valuable when time is limited (e.g. CKA) or when you want a correct skeleton.
 

@@ -216,6 +216,9 @@ const hydrateApiServerFromSnapshot = (
   for (const pod of snapshot.pods.items) {
     apiServer.createResource('Pod', pod)
   }
+  for (const networkPolicy of snapshot.networkPolicies.items) {
+    apiServer.createResource('NetworkPolicy', networkPolicy)
+  }
 }
 
 const getNestedDataMap = (

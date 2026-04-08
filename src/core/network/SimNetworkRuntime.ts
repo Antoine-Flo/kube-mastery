@@ -20,7 +20,7 @@ export const initializeSimNetworkRuntime = (
   const controller = createNetworkController(apiServer)
   const state = controller.getState()
   const dnsResolver = createDnsResolver(state, apiServer)
-  const trafficEngine = createTrafficEngine(state, dnsResolver)
+  const trafficEngine = createTrafficEngine(state, dnsResolver, apiServer)
   controller.start()
   return {
     controller,

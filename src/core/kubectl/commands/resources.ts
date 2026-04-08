@@ -15,6 +15,7 @@ export const KUBECTL_RESOURCES = {
   statefulsets: ['statefulsets', 'statefulset', 'sts'],
   replicasets: ['replicasets', 'replicaset', 'rs'],
   ingresses: ['ingresses', 'ingress', 'ing'],
+  networkpolicies: ['networkpolicies', 'networkpolicy', 'netpol'],
   ingressclasses: ['ingressclasses', 'ingressclass'],
   gateways: ['gateways', 'gateway', 'gw'],
   gatewayclasses: ['gatewayclasses', 'gatewayclass', 'gc'],

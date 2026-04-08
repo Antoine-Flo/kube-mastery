@@ -15,6 +15,8 @@ import type { Event } from '../cluster/ressources/Event'
 import { parseEventManifest } from '../cluster/ressources/Event'
 import type { Ingress } from '../cluster/ressources/Ingress'
 import { parseIngressManifest } from '../cluster/ressources/Ingress'
+import type { NetworkPolicy } from '../cluster/ressources/NetworkPolicy'
+import { parseNetworkPolicyManifest } from '../cluster/ressources/NetworkPolicy'
 import type { Lease } from '../cluster/ressources/Lease'
 import { parseLeaseManifest } from '../cluster/ressources/Lease'
 import type { Node } from '../cluster/ressources/Node'
@@ -60,6 +62,7 @@ type ParsedResource =
   | Service
   | Event
   | Ingress
+  | NetworkPolicy
   | Lease
 
 type YamlSupportedKind = Extract<
@@ -77,6 +80,7 @@ type YamlSupportedKind = Extract<
   | 'Service'
   | 'Event'
   | 'Ingress'
+  | 'NetworkPolicy'
   | 'Lease'
   | 'StorageClass'
 >
@@ -154,6 +158,7 @@ const MANIFEST_PARSERS: Record<
   Service: parseServiceManifest,
   Event: parseEventManifest,
   Ingress: parseIngressManifest,
+  NetworkPolicy: parseNetworkPolicyManifest,
   Lease: parseLeaseManifest,
   StorageClass: parseStorageClassManifest
 }

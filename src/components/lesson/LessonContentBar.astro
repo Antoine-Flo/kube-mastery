@@ -143,6 +143,13 @@ const labelTerminal = labelShowTerminal
     btn.setAttribute('title', label)
   }
 
+  document.addEventListener('cluster-panel-open', () => {
+    const btn = document.querySelector('[data-cluster-trigger]')
+    if (btn) {
+      setVizState(btn, true)
+    }
+  })
+
   document.addEventListener('cluster-panel-close', () => {
     const btn = document.querySelector('[data-cluster-trigger]')
     if (btn) {
@@ -244,6 +251,11 @@ const labelTerminal = labelShowTerminal
   .lp__content-bar-btn--reload {
     background: transparent;
     border: none;
+  }
+
+  :global([data-cluster-trigger][aria-expanded='true']) {
+    background-color: var(--color-gray-4) !important;
+    color: var(--color-gray-12) !important;
   }
 
   /* Wrapper masqué en grand écran (le bouton Button ne reçoit pas le scope Astro). */

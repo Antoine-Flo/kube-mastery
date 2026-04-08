@@ -1,14 +1,22 @@
+import type { ApiServerFacade } from '../api/ApiServerFacade'
 import type { Result } from '../shared/result'
 import { error, success } from '../shared/result'
 import type { DnsResolver } from './DnsResolver'
+import {
+  evaluateSimulatedPodTraffic,
+  type SimTrafficPodIdentity
+} from './networkPolicyTrafficEvaluation'
 import type {
   NetworkState,
   SimServiceEndpoint,
   SimServiceRuntime
 } from './NetworkState'
 
+export type { SimTrafficPodIdentity }
+
 export interface SimHttpRequestContext {
   sourceNamespace: string
+  sourcePod?: SimTrafficPodIdentity
 }
 
 export interface TrafficEngine {
@@ -98,7 +106,8 @@ const buildHttpBodyFromEndpoint = (endpoint: SimServiceEndpoint): string => {
 
 export const createTrafficEngine = (
   networkState: NetworkState,
-  dnsResolver: DnsResolver
+  dnsResolver: DnsResolver,
+  apiServer: ApiServerFacade
 ): TrafficEngine => {
   const counters = new Map<string, number>()
 
@@ -166,9 +175,13 @@ export const createTrafficEngine = (
     if (!parsedUrlResult.ok) {
       return parsedUrlResult
     }
+    const parsedUrl = parsedUrlResult.value
+    const urlPortForError =
+      parsedUrl.port.length > 0 ? Number.parseInt(parsedUrl.port, 10) : 80
+    const curlErrorHost = parsedUrl.hostname
 
     const runtimeResult = resolveRuntimeFromUrl(
-      parsedUrlResult.value,
+      parsedUrl,
       context.sourceNamespace
     )
     if (!runtimeResult.ok) {
@@ -187,6 +200,44 @@ export const createTrafficEngine = (
       `${serviceRuntime.namespace}/${serviceRuntime.serviceName}`,
       counters
     )
+
+    const targetPodResult = apiServer.findResource(
+      'Pod',
+      endpoint.podName,
+      endpoint.namespace
+    )
+    const targetLabels = targetPodResult.ok
+      ? (targetPodResult.value.metadata.labels ?? {})
+      : {}
+    const targetPod: SimTrafficPodIdentity = {
+      name: endpoint.podName,
+      namespace: endpoint.namespace,
+      labels: targetLabels
+    }
+
+    const policiesInTargetNamespace = apiServer.listResources(
+      'NetworkPolicy',
+      endpoint.namespace
+    )
+    const policiesInSourceNamespace = apiServer.listResources(
+      'NetworkPolicy',
+      context.sourceNamespace
+    )
+
+    const policyResult = evaluateSimulatedPodTraffic({
+      policiesInTargetNamespace,
+      policiesInSourceNamespace,
+      sourcePod: context.sourcePod,
+      targetPod,
+      protocol: 'TCP',
+      targetContainerPort: endpoint.targetPort,
+      curlErrorHost,
+      urlPort: Number.isNaN(urlPortForError) ? 80 : urlPortForError
+    })
+    if (!policyResult.ok) {
+      return error(policyResult.error)
+    }
+
     return success(buildHttpBodyFromEndpoint(endpoint))
   }
 

@@ -21,6 +21,7 @@ export interface AutocompleteClusterState {
   getStatefulSets?: (namespace?: string) => AutocompleteResource[]
   getDeployments?: (namespace?: string) => AutocompleteResource[]
   getLeases?: (namespace?: string) => AutocompleteResource[]
+  getNetworkPolicies?: (namespace?: string) => AutocompleteResource[]
 }
 
 export interface AutocompleteContext {

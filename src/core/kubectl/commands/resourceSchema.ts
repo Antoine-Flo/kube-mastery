@@ -8,6 +8,7 @@ export const SUPPORTED_RESOURCE_KINDS: ResourceKind[] = [
   'Node',
   'Namespace',
   'Ingress',
+  'NetworkPolicy',
   'ReplicaSet',
   'Deployment',
   'DaemonSet',
@@ -36,6 +37,7 @@ export const NAMESPACED_RESOURCE_KINDS: ResourceKind[] = [
   'Endpoints',
   'Event',
   'Ingress',
+  'NetworkPolicy',
   'Lease'
 ]
 
@@ -58,6 +60,7 @@ export const RESOURCE_KIND_BY_RESOURCE: Record<
   statefulsets: 'StatefulSet',
   replicasets: 'ReplicaSet',
   ingresses: 'Ingress',
+  networkpolicies: 'NetworkPolicy',
   ingressclasses: undefined,
   gateways: undefined,
   gatewayclasses: undefined,
@@ -76,6 +79,7 @@ const KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
   StatefulSet: 'statefulset.apps',
   ReplicaSet: 'replicaset.apps',
   Ingress: 'ingress.networking.k8s.io',
+  NetworkPolicy: 'networkpolicy.networking.k8s.io',
   StorageClass: 'storageclass.storage.k8s.io',
   Lease: 'lease.coordination.k8s.io'
 }
@@ -88,6 +92,7 @@ const PLURAL_KIND_REFERENCE_BY_KIND: Partial<Record<ResourceKind, string>> = {
   StatefulSet: 'statefulsets.apps',
   ReplicaSet: 'replicasets.apps',
   Ingress: 'ingresses.networking.k8s.io',
+  NetworkPolicy: 'networkpolicies.networking.k8s.io',
   Namespace: 'namespaces',
   PersistentVolume: 'persistentvolumes',
   PersistentVolumeClaim: 'persistentvolumeclaims',
@@ -114,6 +119,10 @@ export const RESOURCE_OUTPUT_METADATA_BY_RESOURCE: Record<
   events: { apiVersion: 'v1', kind: 'Event' },
   endpointslices: { apiVersion: 'discovery.k8s.io/v1', kind: 'EndpointSlice' },
   ingresses: { apiVersion: 'networking.k8s.io/v1', kind: 'Ingress' },
+  networkpolicies: {
+    apiVersion: 'networking.k8s.io/v1',
+    kind: 'NetworkPolicy'
+  },
   ingressclasses: { apiVersion: 'networking.k8s.io/v1', kind: 'IngressClass' },
   gateways: { apiVersion: 'gateway.networking.k8s.io/v1', kind: 'Gateway' },
   gatewayclasses: {

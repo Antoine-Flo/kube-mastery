@@ -2,6 +2,7 @@ import type { ApiServerFacade } from '../../../api/ApiServerFacade'
 import type { EnvVar } from '../../../cluster/ressources/Pod'
 import { createPod } from '../../../cluster/ressources/Pod'
 import type { SimNetworkRuntime } from '../../../network/SimNetworkRuntime'
+import type { SimTrafficPodIdentity } from '../../../network/TrafficEngine'
 import type { ExecutionResult } from '../../../shared/result'
 import {
   error,
@@ -207,10 +208,16 @@ export const handleRun = (
   const hasInlineCommand =
     commandToExecute != null && commandToExecute.length > 0 && isAttachLike
   if (hasInlineCommand) {
+    const sourcePodForTraffic: SimTrafficPodIdentity = {
+      name: podName,
+      namespace: runtimeNamespace,
+      labels: { run: podName, ...(parsed.runLabels ?? {}) }
+    }
     const runtimeResult = executeRuntimeAttachedCommand(
       commandToExecute,
       runtimeNamespace,
-      networkRuntime
+      networkRuntime,
+      sourcePodForTraffic
     )
     if (runtimeResult != null) {
       const createResult = apiServer.createResource(

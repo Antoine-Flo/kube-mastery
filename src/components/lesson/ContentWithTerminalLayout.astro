@@ -107,7 +107,6 @@ const showTerminalActions = terminalInteractive
                 <slot />
               </main>
             </ScrollArea>
-            <LessonClusterPanel />
           </div>
         </div>
         <div
@@ -171,6 +170,7 @@ const showTerminalActions = terminalInteractive
               )
             }
           </div>
+          <LessonClusterPanel />
           <LessonContentBar
             labelVisualizer={labels.labelVisualizer}
             labelCourse={labels.labelCourse}
@@ -750,7 +750,6 @@ const showTerminalActions = terminalInteractive
   }
 
   .lesson-layout__content-body {
-    position: relative;
     flex: 1;
     min-height: 0;
     overflow: hidden;

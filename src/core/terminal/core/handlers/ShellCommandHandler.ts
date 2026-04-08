@@ -129,13 +129,34 @@ export class ShellCommandHandler implements CommandHandler {
             ].join('\n')
           )
         },
-        runCurl: (target, namespace) => {
+        getSimTrafficSourcePod: () => {
+          const containerInfo =
+            context.shellContextStack.getCurrentContainerInfo()
+          if (containerInfo == null) {
+            return undefined
+          }
+          const podLookup = context.apiServer.findResource(
+            'Pod',
+            containerInfo.podName,
+            containerInfo.namespace
+          )
+          if (!podLookup.ok) {
+            return undefined
+          }
+          return {
+            name: containerInfo.podName,
+            namespace: containerInfo.namespace,
+            labels: podLookup.value.metadata.labels ?? {}
+          }
+        },
+        runCurl: (target, namespace, sourcePod) => {
           if (context.networkRuntime == null) {
             return error('network runtime is not available')
           }
           const curlResult =
             context.networkRuntime.trafficEngine.simulateHttpGet(target, {
-              sourceNamespace: namespace
+              sourceNamespace: namespace,
+              ...(sourcePod != null && { sourcePod })
             })
           if (!curlResult.ok) {
             return error(curlResult.error)

@@ -132,6 +132,112 @@ const reorderSecretForKubectlYaml = (payload: unknown): unknown => {
   return orderedPayload
 }
 
+/**
+ * Aligns NetworkPolicy YAML key order with kubectl get -o yaml (spec keys and port entries).
+ */
+const reorderNetworkPolicyPortEntry = (portEntry: unknown): unknown => {
+  if (!isRecord(portEntry)) {
+    return portEntry
+  }
+  const ordered: Record<string, unknown> = {}
+  if (portEntry.port !== undefined) {
+    ordered.port = portEntry.port
+  }
+  if (portEntry.protocol !== undefined) {
+    ordered.protocol = portEntry.protocol
+  }
+  if (portEntry.endPort !== undefined) {
+    ordered.endPort = portEntry.endPort
+  }
+  for (const [key, value] of Object.entries(portEntry)) {
+    if (ordered[key] !== undefined) {
+      continue
+    }
+    ordered[key] = value
+  }
+  return ordered
+}
+
+const reorderNetworkPolicyRulePorts = (
+  rule: Record<string, unknown>
+): Record<string, unknown> => {
+  const next: Record<string, unknown> = { ...rule }
+  if (Array.isArray(next.ports)) {
+    next.ports = next.ports.map(reorderNetworkPolicyPortEntry)
+  }
+  return next
+}
+
+const reorderNetworkPolicyForKubectlYaml = (payload: unknown): unknown => {
+  if (!isRecord(payload)) {
+    return payload
+  }
+  const isNetworkPolicy =
+    payload.apiVersion === 'networking.k8s.io/v1' &&
+    payload.kind === 'NetworkPolicy' &&
+    payload.metadata != null
+  if (!isNetworkPolicy) {
+    return payload
+  }
+  const spec = payload.spec
+  if (!isRecord(spec)) {
+    return payload
+  }
+  const specKeyOrder = [
+    'egress',
+    'ingress',
+    'podSelector',
+    'policyTypes'
+  ] as const
+  const orderedSpec: Record<string, unknown> = {}
+  for (const key of specKeyOrder) {
+    if (spec[key] === undefined) {
+      continue
+    }
+    let value: unknown = spec[key]
+    if (key === 'ingress' && Array.isArray(value)) {
+      value = value.map((rule) => {
+        if (!isRecord(rule)) {
+          return rule
+        }
+        return reorderNetworkPolicyRulePorts(rule)
+      })
+    }
+    if (key === 'egress' && Array.isArray(value)) {
+      value = value.map((rule) => {
+        if (!isRecord(rule)) {
+          return rule
+        }
+        return reorderNetworkPolicyRulePorts(rule)
+      })
+    }
+    orderedSpec[key] = value
+  }
+  for (const [key, value] of Object.entries(spec)) {
+    if (orderedSpec[key] !== undefined) {
+      continue
+    }
+    orderedSpec[key] = value
+  }
+
+  const orderedPayload: Record<string, unknown> = {}
+  orderedPayload.apiVersion = payload.apiVersion
+  orderedPayload.kind = payload.kind
+  if (isRecord(payload.metadata)) {
+    orderedPayload.metadata = reorderMetadataForKubectlYaml(payload.metadata)
+  } else {
+    orderedPayload.metadata = payload.metadata
+  }
+  orderedPayload.spec = orderedSpec
+  for (const [key, value] of Object.entries(payload)) {
+    if (orderedPayload[key] !== undefined) {
+      continue
+    }
+    orderedPayload[key] = value
+  }
+  return orderedPayload
+}
+
 const stripMatchingQuotes = (raw: string): string => {
   const trimmed = raw.trim()
   if (trimmed.length < 2) {
@@ -306,7 +412,7 @@ export const renderStructuredPayload = (
   }
   if (directive.kind === 'yaml') {
     const normalizedYamlPayload = reorderSecretForKubectlYaml(
-      reorderConfigMapForKubectlYaml(payload)
+      reorderConfigMapForKubectlYaml(reorderNetworkPolicyForKubectlYaml(payload))
     )
     const yamlOutput = yamlStringify(normalizedYamlPayload, {
       indentSeq: false,

@@ -135,6 +135,7 @@ const DEFAULT_NAMESPACE_CLEANUP_RESOURCES = [
   'secrets',
   'events',
   'ingresses',
+  'networkpolicies',
   'persistentvolumeclaims'
 ]
 

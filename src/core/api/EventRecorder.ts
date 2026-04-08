@@ -105,7 +105,7 @@ const mapPodBoundEvent = (event: ClusterEvent): EventRecordCandidate | undefined
   if (event.type !== 'PodBound') {
     return undefined
   }
-  const source = event.metadata.source
+  const source = event.metadata?.source
   if (isIgnoredSource(source)) {
     return undefined
   }
@@ -133,7 +133,7 @@ const mapPodUpdatedEvent = (
   if (event.type !== 'PodUpdated') {
     return undefined
   }
-  const source = event.metadata.source
+  const source = event.metadata?.source
   if (isIgnoredSource(source)) {
     return undefined
   }
@@ -224,7 +224,7 @@ const mapDeploymentScaledEvent = (
   if (event.type !== 'DeploymentScaled') {
     return undefined
   }
-  const source = event.metadata.source
+  const source = event.metadata?.source
   if (isIgnoredSource(source)) {
     return undefined
   }
@@ -251,7 +251,7 @@ const mapReplicaSetCreatedEvent = (
   if (event.type !== 'ReplicaSetCreated') {
     return undefined
   }
-  const source = event.metadata.source
+  const source = event.metadata?.source
   if (isIgnoredSource(source)) {
     return undefined
   }
@@ -280,7 +280,7 @@ const mapEndpointsUpdatedEvent = (
   if (event.type !== 'EndpointsUpdated') {
     return undefined
   }
-  const source = event.metadata.source
+  const source = event.metadata?.source
   if (isIgnoredSource(source)) {
     return undefined
   }
@@ -309,7 +309,7 @@ const mapPersistentVolumeClaimUpdatedEvent = (
   if (event.type !== 'PersistentVolumeClaimUpdated') {
     return undefined
   }
-  const source = event.metadata.source
+  const source = event.metadata?.source
   if (isIgnoredSource(source)) {
     return undefined
   }
@@ -359,7 +359,7 @@ const mapPersistentVolumeUpdatedEvent = (
   if (event.type !== 'PersistentVolumeUpdated') {
     return undefined
   }
-  const source = event.metadata.source
+  const source = event.metadata?.source
   if (isIgnoredSource(source)) {
     return undefined
   }
