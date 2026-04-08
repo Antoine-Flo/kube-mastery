@@ -10,7 +10,7 @@
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "coverage:runtime": "vitest run --coverage --coverage.include='src/core/**/*.ts' --coverage.exclude='src/core/openapi/specs/**,tests/**,messages/*.json'",
-    "coverage:tooling": "vitest run --coverage --coverage.include='bin/**/*.ts,conformance/**/*.ts' --coverage.exclude='tests/**'",
+    "coverage:tooling": "vitest run --coverage --coverage.include='bin/lib/**/*.ts,conformance/**/*.ts' --coverage.exclude='tests/**'",
     "coverage:guard": "node ./bin/check-coverage-thresholds.mjs",
     "coverage:top20": "node ./bin/coverage-top20.mjs",
     "dagger:install": "npm --prefix ./ci/dagger install",

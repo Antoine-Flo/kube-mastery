@@ -48,7 +48,7 @@ import { runKubectlCommandHooks } from '../cli/runtime/execute'
 // Action handler signature (dependencies captured in closure)
 type ActionHandler = (parsed: ParsedCommand) => ExecutionResult
 
-type KubectlExecutorOptions = {
+export type KubectlExecutorOptions = {
   metricsProvider?: MetricsProvider
   editorModal?: EditorModal
   onAsyncOutput?: (message: string) => void

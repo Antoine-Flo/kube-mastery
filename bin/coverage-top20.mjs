@@ -40,9 +40,18 @@ const isTrackedFile = (path) => {
   if (path.endsWith('.json')) {
     return false
   }
+  if (path.includes('/src/core/openapi/generated/')) {
+    return false
+  }
+  if (path.includes('/src/core/cluster/generated/')) {
+    return false
+  }
+  if (path.includes('/src/core/kubectl/generated/')) {
+    return false
+  }
   return (
-    path.includes('/src/') ||
-    path.includes('/bin/') ||
+    path.includes('/src/core/') ||
+    path.includes('/bin/lib/') ||
     path.includes('/conformance/')
   )
 }

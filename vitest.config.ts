@@ -14,13 +14,16 @@ export default defineConfig({
       provider: 'v8',
       reportsDirectory: './coverage',
       reporter: ['text', 'html', 'json-summary', 'json'],
-      include: ['src/core/**/*.ts', 'bin/**/*.ts', 'conformance/**/*.ts'],
+      include: ['src/core/**/*.ts', 'bin/lib/**/*.ts', 'conformance/**/*.ts'],
       exclude: [
         '**/*.d.ts',
         'coverage/**',
         'tests/**',
         'messages/*.json',
-        'src/core/openapi/specs/**'
+        'src/core/openapi/specs/**',
+        'src/core/openapi/generated/**',
+        'src/core/cluster/generated/**',
+        'src/core/kubectl/generated/**'
       ],
       thresholds: {
         lines: 74,

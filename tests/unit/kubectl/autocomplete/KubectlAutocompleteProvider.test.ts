@@ -559,6 +559,72 @@ describe('KubectlAutocompleteProvider', () => {
     })
 
     describe('complete() edge cases', () => {
+      it('should suggest config flags for set-context and view', () => {
+        const setContextSuggestions = provider.complete(
+          ['kubectl', 'config', 'set-context'],
+          '--',
+          mockContext
+        )
+        expect(setContextSuggestions).toContainEqual({
+          text: '--current',
+          suffix: ' '
+        })
+        expect(setContextSuggestions).toContainEqual({
+          text: '--namespace=',
+          suffix: ''
+        })
+
+        const viewSuggestions = provider.complete(
+          ['kubectl', 'config', 'view'],
+          '--m',
+          mockContext
+        )
+        expect(viewSuggestions).toEqual([{ text: '--minify', suffix: ' ' }])
+      })
+
+      it('should complete rollout subcommands and rollout resource kinds', () => {
+        const subcommands = provider.complete(
+          ['kubectl', 'rollout'],
+          '',
+          mockContext
+        )
+        expect(subcommands).toContainEqual({ text: 'status', suffix: ' ' })
+
+        const resourceKinds = provider.complete(
+          ['kubectl', 'rollout', 'status'],
+          'de',
+          mockContext
+        )
+        expect(resourceKinds).toEqual([{ text: 'deployments', suffix: ' ' }])
+      })
+
+      it('should resolve rollout resource kind for short unique alias', () => {
+        const suggestions = provider.complete(
+          ['kubectl', 'rollout', 'status'],
+          's',
+          mockContext
+        )
+        expect(suggestions).toEqual([{ text: 'statefulsets', suffix: ' ' }])
+      })
+
+      it('should tolerate flag-token completion without throwing', () => {
+        const suggestions = provider.complete(
+          ['kubectl', 'get', 'pods', '-'],
+          '-',
+          mockContext
+        )
+        expect(Array.isArray(suggestions)).toBe(true)
+      })
+
+      it('should return empty rollout names when subcommand is unknown', () => {
+        const suggestions = provider.complete(
+          ['kubectl', 'rollout', 'invalid', 'deployments'],
+          '',
+          mockContext
+        )
+        expect(suggestions).toEqual([])
+      })
+
       it('should handle all pod aliases (po, pod, pods)', () => {
         const results1 = provider.complete(
           ['kubectl', 'get', 'po'],

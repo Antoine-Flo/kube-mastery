@@ -201,4 +201,92 @@ describe('kubectl top handler', () => {
     expect(result.value).toContain('MEMORY(%)')
     expect(result.value).toContain('%')
   })
+
+  it('returns no resources found message when top pods has no matches', () => {
+    const apiServer = createApiServerFacade()
+    const result = handleTop(
+      apiServer,
+      createMetricsProvider(apiServer),
+      createTopParsedCommand('top-pods', {
+        namespace: 'default'
+      })
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('No resources found in default namespace.')
+  })
+
+  it('returns no resources found for top pods all-namespaces without matches', () => {
+    const apiServer = createApiServerFacade()
+    const result = handleTop(
+      apiServer,
+      createMetricsProvider(apiServer),
+      createTopParsedCommand('top-pods', {
+        flags: { A: true }
+      })
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toBe('No resources found')
+  })
+
+  it('renders zero allocatable percentages as 0%', () => {
+    const apiServer = createApiServerFacade()
+    apiServer.createResource(
+      'Node',
+      createNode({
+        name: 'zero-node',
+        status: {
+          nodeInfo: {
+            architecture: 'amd64',
+            containerRuntimeVersion: 'containerd://2.2.0',
+            kernelVersion: '6.6.87.2',
+            kubeletVersion: 'v1.35.0',
+            operatingSystem: 'linux',
+            osImage: 'Debian GNU/Linux 12'
+          },
+          allocatable: {
+            cpu: 'invalid',
+            memory: 'invalid'
+          }
+        }
+      })
+    )
+
+    const result = handleTop(
+      apiServer,
+      createMetricsProvider(apiServer),
+      createTopParsedCommand('top-nodes')
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+    expect(result.value).toContain('0%')
+  })
+
+  it('returns invalid top action error for unsupported action', () => {
+    const apiServer = createApiServerFacade()
+    const result = handleTop(
+      apiServer,
+      createMetricsProvider(apiServer),
+      {
+        action: 'get' as ParsedCommand['action'],
+        flags: {}
+      } as ParsedCommand
+    )
+
+    expect(result.ok).toBe(false)
+    if (result.ok) {
+      return
+    }
+    expect(result.error).toContain('invalid top action')
+  })
 })
