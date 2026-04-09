@@ -9,6 +9,18 @@ A Pod is the smallest deployable unit in Kubernetes. Not a container, a Pod. You
 
 Think of a Pod as a logical host. Just as a process on a Linux machine can communicate with other processes on the same machine through localhost, containers in the same Pod share a network namespace and can reach each other on `127.0.0.1`. They also share mounted volumes. From the containers' perspective, they are co-located, even though they are processes in a shared kernel.
 
+@@@
+flowchart TB
+    subgraph Pod["Pod (one schedulable unit)"]
+        direction TB
+        C["Container(s)<br/>each has name + image"]
+        N["Shared network namespace<br/>one Pod IP, localhost between containers"]
+        V["Shared volumes<br/>optional"]
+    end
+    C --> N
+    C -.-> V
+@@@
+
 ## Writing the Manifest
 
 Pod manifests are built from four required top-level fields. Start with the most basic structure:
@@ -20,6 +32,15 @@ kind: Pod
 ```
 
 `apiVersion: v1` means this resource type exists in the core Kubernetes API. `kind: Pod` is the resource type.
+
+@@@
+flowchart TB
+    Root["Pod manifest (YAML)"]
+    Root --> AV["apiVersion"]
+    Root --> K["kind"]
+    Root --> MD["metadata<br/>(name, labels, ...)"]
+    Root --> SP["spec<br/>(containers, ports, volumes, ...)"]
+@@@
 
 Add `metadata` with a name:
 
@@ -97,11 +118,16 @@ Press Ctrl+C once it reaches `Running`. The phases you might see are:
 `Unknown` means the node the Pod was on stopped reporting to the control plane.
 
 @@@
-graph LR
-    P["Pending"] --> R["Running"]
-    R --> S["Succeeded"]
-    R --> F["Failed"]
-    P --> F
+stateDiagram-v2
+    [*] --> Pending: accepted by API server
+    Pending --> Running: scheduled, at least one container starts
+    Pending --> Failed: cannot be scheduled (terminal)
+    Running --> Succeeded: all containers exit with code 0
+    Running --> Failed: fatal container exit (no more restarts)
+    Running --> Unknown: node stops reporting
+    Unknown --> Running: node visible again (sometimes)
+    Succeeded --> [*]
+    Failed --> [*]
 @@@
 
 :::quiz
@@ -113,6 +139,17 @@ A Pod is in `Pending` state for 3 minutes. Its image is `nginx:1.28`. What are t
 :::
 
 ## Inspecting the Running Pod
+
+The same Pod object in the API can be viewed at different levels of detail:
+
+@@@
+flowchart LR
+    Obj["Pod in API / etcd"]
+    Obj --> G["kubectl get pod"]
+    Obj --> W["kubectl get pod -o wide<br/>adds node + Pod IP"]
+    Obj --> Y["kubectl get pod -o yaml<br/>full object + status"]
+    Obj --> D["kubectl describe pod<br/>events + readable summary"]
+@@@
 
 Get a summary of the Pod's current state:
 
@@ -145,6 +182,14 @@ kubectl exec -it my-pod -- /bin/sh
 ```
 
 The `-it` flags allocate an interactive terminal. The `--` separates kubectl flags from the command you are running inside the container. From inside, you can explore the filesystem, check the network, or run diagnostics.
+
+@@@
+flowchart LR
+    You["Your terminal"] --> K["kubectl exec"]
+    K --> API["API Server"]
+    API --> KL["Kubelet on the node"]
+    KL --> CTR["Container process<br/>(e.g. /bin/sh)"]
+@@@
 
 Exit the shell:
 
@@ -189,6 +234,16 @@ kubectl delete pod my-pod
 ```
 
 The Pod is gone. There is no controller watching it, so nothing recreates it. This is the fundamental limitation of bare Pods: they are not self-healing. If the node fails or the Pod is accidentally deleted, it stays deleted.
+
+@@@
+flowchart LR
+    Del["kubectl delete pod"] --> Gone["Pod removed"]
+    Gone -->|no controller| Stay["Stays deleted"]
+    subgraph Later["Later: Workloads module"]
+        Dep["Deployment"] --> RS["ReplicaSet"]
+        RS --> Pods["Pods replaced if deleted"]
+    end
+@@@
 
 In production, you almost never create bare Pods. You create Deployments, which manage Pods for you. But every Deployment's Pod follows the exact same lifecycle you just observed: the same manifest fields, the same phases, the same exec and logs commands. Understanding a bare Pod means understanding every workload on top of it.
 

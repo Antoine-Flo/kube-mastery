@@ -4,6 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
+    "postinstall": "patch-package",
     "prebuild": "npm run sitemap:lastmod:generate",
     "build": "astro build",
     "preview": "astro preview",
@@ -86,6 +87,7 @@
     "knip": "^5.82.1",
     "lightningcss": "^1.31.1",
     "openapi-typescript": "^7.13.0",
+    "patch-package": "^8.0.1",
     "prettier": "3.8.1",
     "prettier-plugin-astro": "0.14.1",
     "typescript": "^5.9.3",

@@ -85,59 +85,19 @@ For critical production services, starting with `maxUnavailable: 0` (zero-downti
 
 ## Visual Comparison: The Two Timelines
 
-Timeline for a 3-replica Deployment:
+For a **3-replica** Deployment, picture the sequence like this:
 
-@@@
----
-config:
-  theme: base
-  themeVariables:
-    textColor: "#f1f5f9"
-    titleColor: "#ffffff"
-    gridColor: "#475569"
-    sectionBkgColor: "#020617"
-    sectionBkgColor2: "#0b1220"
-    altSectionBkgColor: "#111827"
-    taskBkgColor: "#475569"
-    taskBorderColor: "#cbd5e1"
-    taskTextColor: "#ffffff"
-    taskTextDarkColor: "#ffffff"
-    taskTextOutsideColor: "#e2e8f0"
-    activeTaskBkgColor: "#2563eb"
-    activeTaskBorderColor: "#93c5fd"
-    doneTaskBkgColor: "#334155"
-    doneTaskBorderColor: "#cbd5e1"
-    critBkgColor: "#dc2626"
-    critBorderColor: "#fca5a5"
-    todayLineColor: "#f59e0b"
-  gantt:
-    fontSize: 15
-    sectionFontSize: 15
-    barHeight: 24
-    barGap: 8
----
-gantt
-    title RollingUpdate vs Recreate, 3 replicas
-    dateFormat HH:mm:ss
-    axisFormat %M:%S
+**RollingUpdate**
 
-    section RollingUpdate
-    Old pod 1 running  :done,   ro1, 00:00:00, 00:00:20
-    Old pod 2 running  :done,   ro2, 00:00:00, 00:00:30
-    Old pod 3 running  :done,   ro3, 00:00:00, 00:00:40
-    New pod 1 starting :active, rn1, 00:00:10, 00:00:35
-    New pod 2 starting :active, rn2, 00:00:20, 00:00:45
-    New pod 3 starting :active, rn3, 00:00:30, 00:00:55
+- All three old Pods are running.
+- New Pods are created while some old Pods still run, so old and new overlap in time.
+- With typical `maxUnavailable` / `maxSurge` settings, you keep enough ready Pods to serve traffic throughout the rollout.
 
-    section Recreate
-    Old pod 1 running  :done,   rc1, 00:00:00, 00:00:12
-    Old pod 2 running  :done,   rc2, 00:00:00, 00:00:12
-    Old pod 3 running  :done,   rc3, 00:00:00, 00:00:12
-    Downtime           :crit,   rcd, 00:00:12, 00:00:24
-    New pod 1 starting :active, rcn1, 00:00:24, 00:00:44
-    New pod 2 starting :active, rcn2, 00:00:24, 00:00:44
-    New pod 3 starting :active, rcn3, 00:00:24, 00:00:44
-@@@
+**Recreate**
+
+- All three old Pods are running.
+- Kubernetes terminates every old Pod before it starts any new Pod.
+- There is a window where you have fewer than three ready Pods, often none, until the new Pods become ready.
 
 Under `RollingUpdate`, old and new Pods overlap; healthy count never hits zero. Under `Recreate`, old Pods finish terminating before any new Pods start, so you see a gap.
 

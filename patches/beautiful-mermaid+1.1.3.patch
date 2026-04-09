@@ -1,0 +1,13 @@
+diff --git a/node_modules/beautiful-mermaid/dist/index.js b/node_modules/beautiful-mermaid/dist/index.js
+index e7e087b..961df11 100644
+--- a/node_modules/beautiful-mermaid/dist/index.js
++++ b/node_modules/beautiful-mermaid/dist/index.js
+@@ -6913,7 +6913,7 @@ function layoutGraphSync(graph, options = {}) {
+   const opts = { ...DEFAULTS2, ...options };
+   const elkGraph = mermaidToElk(graph, opts);
+   const result = elkLayoutSync(elkGraph);
+-  return elkToPositioned(result, graph, DEFAULTS2.mergeEdges);
++  return elkToPositioned(result, graph, opts.mergeEdges);
+ }
+ 
+ // src/renderer.ts

@@ -13,7 +13,7 @@
   "src/pages/[lang]/pricing.astro": "2026-04-02",
   "src/pages/[lang]/privacy-policy.astro": "2026-02-06",
   "src/pages/[lang]/profile/index.astro": "2026-03-20",
-  "src/pages/[lang]/supported.astro": "2026-03-17",
+  "src/pages/[lang]/supported.astro": "2026-04-08",
   "src/pages/[lang]/tasks/[groupId]/[taskId]/complete.astro": "2026-03-19",
   "src/pages/[lang]/tasks/[groupId]/[taskId]/index.astro": "2026-03-31",
   "src/pages/[lang]/tasks/[groupId]/index.astro": "2026-03-17",

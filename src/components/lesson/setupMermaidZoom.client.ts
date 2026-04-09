@@ -112,7 +112,9 @@ function openMermaidZoomModal(sourceContainer: Element) {
 }
 
 function enhanceMermaidBlocks() {
-  const mermaidHosts = document.querySelectorAll('.lesson-content pre.mermaid')
+  const mermaidHosts = document.querySelectorAll(
+    '.lesson-content .mermaid-theme-stack > .mermaid'
+  )
   mermaidHosts.forEach((hostNode) => {
     if (!(hostNode instanceof HTMLElement)) {
       return

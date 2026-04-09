@@ -1,7 +1,9 @@
 import { renderMermaidSVG } from 'beautiful-mermaid'
 
+// @@@ blocks: build-time SVG via beautiful-mermaid (light + dark, namespaced ids).
+
 const MERMAID_BLOCK_MARKER = '@@@'
-const INLINE_MERMAID_PATTERN = /^@@@\s*([\s\S]*?)\s*@@@$/
+
 const SITE_LIGHT_MERMAID_THEME = {
   bg: '#fcfcfd',
   fg: '#1c2024',
@@ -14,6 +16,7 @@ const SITE_DARK_MERMAID_THEME = {
   accent: '#00a2c7',
   muted: '#b0b4ba'
 }
+
 let mermaidRenderCounter = 0
 
 function mdastNodeToText(node) {
@@ -42,11 +45,18 @@ function mdastNodeToText(node) {
 
 function extractMermaidSource(paragraphValue) {
   const trimmed = paragraphValue.trim()
-  const match = trimmed.match(INLINE_MERMAID_PATTERN)
-  if (!match) {
+  if (!trimmed.startsWith(MERMAID_BLOCK_MARKER)) {
     return null
   }
-  const source = (match[1] ?? '').trim()
+  const closeIndex = trimmed.lastIndexOf(MERMAID_BLOCK_MARKER)
+  if (closeIndex < MERMAID_BLOCK_MARKER.length) {
+    return null
+  }
+  const inner = trimmed.slice(
+    MERMAID_BLOCK_MARKER.length,
+    closeIndex
+  )
+  const source = inner.trim()
   if (source.length === 0) {
     return null
   }
@@ -55,12 +65,18 @@ function extractMermaidSource(paragraphValue) {
 
 function normalizeMermaidSource(source) {
   return source
+    .replace(/\u2192/g, '-->')
+    .replace(/\u27f6/g, '-->')
+    .replace(/\u2794/g, '-->')
+    .replace(/\u21d2/g, '==>')
+    .replace(/\u2013>/g, '-->')
+    .replace(/\u2014>/g, '-->')
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
     .trim()
 }
 
-function normalizeSvgMarkup(svgMarkup) {
+export function kubemasteryNormalizeSvgMarkupForTests(svgMarkup) {
   return svgMarkup.replace(/<svg\b([^>]*)>/i, (_match, rawAttributes) => {
     const withoutSizeAttributes = rawAttributes
       .replace(/\swidth="[^"]*"/gi, '')
@@ -84,11 +100,13 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-function namespaceSvgIds(svgMarkup, namespace) {
+export function kubemasteryNamespaceSvgIdsForTests(svgMarkup, namespace) {
   const rawIds = [...svgMarkup.matchAll(/\sid="([^"]+)"/g)].map((match) => {
     return match[1]
   })
-  const ids = [...new Set(rawIds)]
+  const ids = [...new Set(rawIds)].sort((a, b) => {
+    return b.length - a.length
+  })
   if (ids.length === 0) {
     return svgMarkup
   }
@@ -107,8 +125,9 @@ function namespaceSvgIds(svgMarkup, namespace) {
 }
 
 function renderThemedSvg(source, theme, namespace) {
-  const svgMarkup = normalizeSvgMarkup(renderMermaidSVG(source, theme))
-  return namespaceSvgIds(svgMarkup, namespace)
+  const rawSvg = renderMermaidSVG(source, theme)
+  const normalized = kubemasteryNormalizeSvgMarkupForTests(rawSvg)
+  return kubemasteryNamespaceSvgIdsForTests(normalized, namespace)
 }
 
 function renderMermaidCustomThemeMarkup(source) {
@@ -123,7 +142,7 @@ function renderMermaidCustomThemeMarkup(source) {
     SITE_DARK_MERMAID_THEME,
     `mermaid-${renderId}-dark`
   )
-  return `<div class="mermaid-theme-stack" data-mermaid-rendered="true"><pre class="mermaid mermaid--light" data-mermaid-rendered="true">${lightSvg}</pre><pre class="mermaid mermaid--dark" data-mermaid-rendered="true">${darkSvg}</pre></div>`
+  return `<div class="mermaid-theme-stack" data-mermaid-rendered="true"><div class="mermaid mermaid--light" data-mermaid-rendered="true">${lightSvg}</div><div class="mermaid mermaid--dark" data-mermaid-rendered="true">${darkSvg}</div></div>`
 }
 
 function renderMermaidNode(source) {
@@ -137,7 +156,12 @@ function renderMermaidNode(source) {
   }
 }
 
-function replaceWithRenderedMermaidNode(parentNode, startIndex, endIndex, source) {
+function replaceWithRenderedMermaidNode(
+  parentNode,
+  startIndex,
+  endIndex,
+  source
+) {
   const renderedNode = renderMermaidNode(source)
   if (!renderedNode) {
     return false
@@ -231,15 +255,12 @@ function transformChildren(parentNode) {
     const inlineSource = extractMermaidSource(paragraphValue)
     if (inlineSource) {
       const normalizedInlineSource = normalizeMermaidSource(inlineSource)
-      const replacedInlineNode = replaceWithRenderedMermaidNode(
+      replaceWithRenderedMermaidNode(
         parentNode,
         index,
         index,
         normalizedInlineSource
       )
-      if (!replacedInlineNode) {
-        continue
-      }
       continue
     }
 
@@ -248,15 +269,12 @@ function transformChildren(parentNode) {
       continue
     }
 
-    const replacedBlockNode = replaceWithRenderedMermaidNode(
+    replaceWithRenderedMermaidNode(
       parentNode,
       index,
       blockSource.endIndex,
       blockSource.source
     )
-    if (!replacedBlockNode) {
-      continue
-    }
   }
 }
 
