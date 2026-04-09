@@ -1,0 +1,136 @@
+---
+import Button from '../ui/Button.astro'
+import { ArrowRight } from '@lucide/astro'
+
+interface Props {
+  prevHref: string
+  nextHref: string
+  isFirst: boolean
+  isLast: boolean
+  labels: {
+    previous: string
+    nextLesson: string
+    courseComplete: string
+  }
+  /** Current lesson id: sent via sendBeacon when navigating to the next lesson. */
+  lessonId?: string
+}
+
+const { prevHref, nextHref, isFirst, isLast, labels, lessonId } = Astro.props
+---
+
+<div class="lesson-nav-root" data-lesson-id={lessonId}>
+  <nav class="lesson-nav">
+    {
+      isFirst ? (
+        <span class="lesson-nav__placeholder">{labels.previous}</span>
+      ) : (
+        <Button href={prevHref} variant="outline" size="sm">
+          {labels.previous}
+        </Button>
+      )
+    }
+
+    <div class="lesson-nav__next" data-nav-next>
+      {
+        !isLast && (
+          <Button
+            href={nextHref}
+            variant="solid"
+            color="cyan"
+            size="sm"
+            data-nav-next-lesson
+          >
+            {labels.nextLesson}
+            <ArrowRight size={18} aria-hidden="true" class="lesson-nav__next-icon" />
+          </Button>
+        )
+      }
+      {
+        isLast && (
+          <span class="lesson-nav__complete">{labels.courseComplete}</span>
+        )
+      }
+    </div>
+  </nav>
+</div>
+
+<script>
+  import { sendProgressCompleteBeacon } from '../../lib/progress/sendProgressBeacon'
+
+  function initLessonProgressBeacon(container: HTMLElement) {
+    const lessonId = container.dataset.lessonId
+    if (!lessonId || container.dataset.progressBeaconBound === 'true') {
+      return
+    }
+    container.dataset.progressBeaconBound = 'true'
+
+    container.addEventListener(
+      'click',
+      (e) => {
+        const el = (e.target as HTMLElement).closest<HTMLElement>(
+          '[data-nav-next-lesson]'
+        )
+        if (!el || el.getAttribute('data-disabled') === 'true') {
+          return
+        }
+        sendProgressCompleteBeacon({ lessonId })
+      },
+      true
+    )
+  }
+
+  function init() {
+    const container = document.querySelector<HTMLElement>('.lesson-nav-root')
+    if (container) {
+      initLessonProgressBeacon(container)
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init)
+  } else {
+    init()
+  }
+
+  document.addEventListener('astro:page-load', init)
+</script>
+
+<style>
+  .lesson-nav-root {
+    padding: var(--spacing-4);
+  }
+
+  .lesson-nav__next-icon {
+    flex-shrink: 0;
+    opacity: 0.95;
+  }
+
+  .lesson-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-4);
+    padding-bottom: var(--spacing-6);
+  }
+
+  .lesson-nav__placeholder {
+    display: inline-flex;
+    align-items: center;
+    height: 2.25rem;
+    padding-inline: var(--spacing-3);
+    font-size: var(--text-sm);
+    color: var(--color-palette-gray-fg-muted);
+    opacity: 0.5;
+  }
+
+  .lesson-nav__complete {
+    display: inline-flex;
+    align-items: center;
+    height: 2.25rem;
+    padding-inline: var(--spacing-3);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-palette-cyan-fg);
+  }
+</style>

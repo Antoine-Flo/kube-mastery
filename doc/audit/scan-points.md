@@ -18,5 +18,5 @@ Définition des zones à parcourir et des types d’analyse, sans exécuter l’
 - **API routes** : `src/pages/api/auth/callback.ts`, `register.ts`, `signin.ts`, `signout.ts`, `src/pages/api/progress/complete.ts`.
 - **Auth** : `src/lib/supabase.ts`, `src/pages/[lang]/auth/index.astro`, `src/pages/api/auth/*`.
 - **DB / serveur** : À migrer (Drizzle) — `src/db/index.ts`, `src/db/schema.ts`, `drizzle.config.ts`, `supabase/migrations/*.sql`.
-- **Front / XSS** : `src/components/lesson/` (LessonQuizNav, contenu leçon), pages `[lang]/[type]/[id]/[lessonId]/index.astro`, rendu markdown.
+- **Front / XSS** : `src/components/lesson/` (LessonNav, contenu leçon), pages `[lang]/[type]/[id]/[lessonId]/index.astro`, rendu markdown.
 - **Conventions** : `.cursor/rules/kubemastery-conventions.mdc` pour les règles (max indentation, Result types, pas d’exceptions, etc.).

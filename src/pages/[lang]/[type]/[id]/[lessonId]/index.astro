@@ -2,13 +2,12 @@
 import Layout from '../../../../../layouts/Layout.astro'
 import CourseOutline from '../../../../../components/CourseOutline.astro'
 import ContentWithTerminalLayout from '../../../../../components/lesson/ContentWithTerminalLayout.astro'
-import LessonQuizNav from '../../../../../components/lesson/LessonQuizNav.astro'
+import LessonNav from '../../../../../components/lesson/LessonNav.astro'
 import { useLocalePath, useTranslations } from '../../../../../i18n/utils'
 import {
   getCourseOverview,
   getModuleOverview,
   getLessonContent,
-  getLessonQuiz,
   type LessonFrontmatter,
   type OverviewType
 } from '../../../../../content/overview/facade'
@@ -104,7 +103,6 @@ const lessonBaseUrl = localePath(`/${type}/${id}`)
 const { Content } = lessonEntry
 
 const seedName = 'minimal'
-const quiz = getLessonQuiz(type, id, lessonId, lang)
 const prevLessonHref = prevLesson
   ? localePath(`/${type}/${id}/${prevLesson.id}`)
   : ''
@@ -114,14 +112,10 @@ const nextLessonHref = nextLesson
 const isFirstLesson = currentIndex === 0
 const isLastLesson = currentIndex >= allLessons.length - 1
 
-const quizNavLabels = {
-  quizTitle: t('quiz_title'),
-  questionInfo: t('quiz_questionInfo'),
-  hint: t('quiz_hint'),
+const lessonNavLabels = {
   previous: t('courseLesson_previousLesson'),
   nextLesson: t('courseLesson_nextLesson'),
-  courseComplete: t('courseLesson_courseComplete'),
-  nextQuestion: t('courseLesson_nextQuestion')
+  courseComplete: t('courseLesson_courseComplete')
 }
 
 const contentBarLabels = {
@@ -218,13 +212,12 @@ const lessonSeo = {
     <article class="lesson-content" data-lesson-tour="lesson-main">
       <Content />
     </article>
-    <LessonQuizNav
-      quiz={quiz}
+    <LessonNav
       prevHref={prevLessonHref}
       nextHref={nextLessonHref}
       isFirst={isFirstLesson}
       isLast={isLastLesson}
-      labels={quizNavLabels}
+      labels={lessonNavLabels}
       lessonId={lessonId}
     />
   </ContentWithTerminalLayout>
