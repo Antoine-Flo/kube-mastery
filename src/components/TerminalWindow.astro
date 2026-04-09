@@ -109,7 +109,6 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
 </div>
 
 <script>
-  import { createCodeMirrorEditor } from '../core/editor/CodeMirrorEditor'
   import type { CodeMirrorEditor } from '../core/editor/CodeMirrorEditor'
   import type { EditorModal } from '../core/shell/commands'
   import { focusTerminal } from '../core/terminal/TerminalManager'
@@ -125,6 +124,22 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
   const editorModalByRoot = new Map<Element, EditorModalWithLifecycle>()
   /** Évite d'enregistrer deux listeners "lesson-env-ready" pour le même root (init + astro:page-load). */
   const lessonPending = new WeakSet<Element>()
+
+  const CODE_MIRROR_LOAD_DELAY_MS = 750
+  let codeMirrorEditorModulePromise: Promise<
+    typeof import('../core/editor/CodeMirrorEditor')
+  > | null = null
+
+  function scheduleCodeMirrorEditorPrefetch() {
+    if (codeMirrorEditorModulePromise) {
+      return
+    }
+    codeMirrorEditorModulePromise = new Promise((resolve, reject) => {
+      setTimeout(() => {
+        import('../core/editor/CodeMirrorEditor').then(resolve, reject)
+      }, CODE_MIRROR_LOAD_DELAY_MS)
+    })
+  }
 
   const themeObserver = new MutationObserver(() => {
     editorModalByRoot.forEach((modal) => modal.updateThemeIfOpen?.())
@@ -192,25 +207,39 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
       overlayEl.hidden = false
       overlayEl.addEventListener('keydown', handleKeydown, true)
 
-      const theme = getTheme()
-      const editor = createCodeMirrorEditor({
-        theme,
-        filename,
-        onSave: () => {
-          if (currentEditor) {
-            const value = currentEditor.getValue()
-            const shouldClose = onSave(value)
-            if (shouldClose === false) {
-              return
-            }
+      scheduleCodeMirrorEditorPrefetch()
+
+      void (async () => {
+        try {
+          const { createCodeMirrorEditor } =
+            await codeMirrorEditorModulePromise!
+          if (overlayEl.hidden || !currentOnSave) {
+            return
           }
-          close('save')
+          const theme = getTheme()
+          const editor = createCodeMirrorEditor({
+            theme,
+            filename,
+            onSave: () => {
+              if (currentEditor) {
+                const value = currentEditor.getValue()
+                const shouldClose = onSave(value)
+                if (shouldClose === false) {
+                  return
+                }
+              }
+              close('save')
+            }
+          })
+          currentEditor = editor
+          editor.mount(editorBoxEl)
+          editor.setValue(content)
+          editor.focus()
+        } catch (err) {
+          console.error('[TerminalWindow] CodeMirror load failed:', err)
+          close()
         }
-      })
-      currentEditor = editor
-      editor.mount(editorBoxEl)
-      editor.setValue(content)
-      editor.focus()
+      })()
     }
 
     closeBtn?.addEventListener('click', () => {
@@ -231,6 +260,7 @@ const rootClass = ['t-win', fullHeight && 't-win--full', className]
   }
 
   function init() {
+    scheduleCodeMirrorEditorPrefetch()
     document.querySelectorAll('[data-terminal-window]').forEach((root) => {
       const el = root as HTMLElement
       const box = el.querySelector('.t-box') as HTMLElement
