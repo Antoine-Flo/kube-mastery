@@ -103,14 +103,14 @@
   position: relative;
 }
 
-.lesson-content .mermaid-theme-stack > .mermaid {
+.lesson-content .mermaid-theme-stack .mermaid {
   position: relative;
   padding: 0;
   background-color: transparent;
   margin-bottom: 0;
 }
 
-.lesson-content .mermaid-theme-stack > .mermaid .nodeLabel p {
+.lesson-content .mermaid-theme-stack .mermaid .nodeLabel p {
   font-size: 15px;
 }
 

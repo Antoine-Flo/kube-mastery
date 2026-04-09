@@ -111,10 +111,14 @@ function openMermaidZoomModal(sourceContainer: Element) {
   document.body.classList.add('mermaid-zoom-open')
 }
 
+const MERMAID_ZOOM_HOST_SELECTOR =
+  '.lesson-content .mermaid-theme-stack .mermaid.mermaid--light, .lesson-content .mermaid-theme-stack .mermaid.mermaid--dark'
+
 function enhanceMermaidBlocks() {
-  const mermaidHosts = document.querySelectorAll(
-    '.lesson-content .mermaid-theme-stack > .mermaid'
-  )
+  // Do not use `> .mermaid`: after the first run each diagram lives inside
+  // `.mermaid-zoom-anchor`, so a direct-child selector would miss hosts and
+  // theme toggles would never refresh zoom button visibility (overlapping UI).
+  const mermaidHosts = document.querySelectorAll(MERMAID_ZOOM_HOST_SELECTOR)
   mermaidHosts.forEach((hostNode) => {
     if (!(hostNode instanceof HTMLElement)) {
       return
