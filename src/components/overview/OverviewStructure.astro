@@ -288,7 +288,9 @@ const {
     text-decoration: none;
     color: var(--color-gray-11);
     font-size: var(--text-sm);
-    transition: background-color 0.15s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.12s ease, color 0.12s ease;
   }
 
   .overview-structure
@@ -308,6 +310,32 @@ const {
     a.overview-structure__lesson:hover {
     background: var(--color-gray-2);
     color: var(--color-gray-12);
+  }
+
+  .overview-structure
+    .overview-structure__lesson-list
+    a.overview-structure__lesson:active {
+    background: var(--color-gray-1);
+  }
+
+  :global([data-theme='dark'])
+    .overview-structure
+    .overview-structure__lesson-list
+    a.overview-structure__lesson:active:not(.progress-current) {
+    background: var(--color-gray-3);
+  }
+
+  .overview-structure
+    .overview-structure__lesson-list
+    a.overview-structure__lesson.progress-current:active {
+    background: var(--color-cyan-1);
+  }
+
+  :global([data-theme='dark'])
+    .overview-structure
+    .overview-structure__lesson-list
+    a.overview-structure__lesson.progress-current:active {
+    background: var(--color-cyan-3);
   }
 
   .overview-structure

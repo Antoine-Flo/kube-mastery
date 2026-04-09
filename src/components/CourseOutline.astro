@@ -27,9 +27,9 @@ const currentModuleIndex = allModules.findIndex((m) =>
 let moduleFlatIndex = 0
 ---
 
-<div class="out">
-  <h2 class="out__ttl">{overview.title}</h2>
-  <div class="out__list">
+<div class="course-outline">
+  <h2 class="course-outline__title">{overview.title}</h2>
+  <div class="course-outline__module-list">
     {
       overview.content.sections.flatMap((section) =>
         section.modules.map((module: OverviewModule) => {
@@ -38,61 +38,67 @@ let moduleFlatIndex = 0
           return (
             <details
               class:list={{
-                out__ch: true,
-                'out__ch--locked': module.isLocked
+                'course-outline__module': true,
+                'course-outline__module--locked': module.isLocked
               }}
               open={!module.isLocked && isCurrentModule}
             >
               <summary
-                class="out__ch-hd"
+                class="course-outline__module-summary"
                 aria-disabled={module.isLocked ? 'true' : 'false'}
                 tabindex={module.isLocked ? -1 : undefined}
               >
-                <span class="out__ch-ttl">{module.title}</span>
-                <span class="out__ch-ico" aria-hidden="true">
+                <span class="course-outline__module-title">{module.title}</span>
+                <span class="course-outline__module-chevron" aria-hidden="true">
                   <ChevronDown size={16} aria-hidden="true" />
                 </span>
               </summary>
-              <div class="out__ch-bd">
+              <div class="course-outline__module-lessons">
                 {module.lessons.map((lesson: OverviewLesson) =>
                   module.isLocked ? (
-                    <span class="out__it out__it--locked">
+                    <span
+                      class="course-outline__lesson course-outline__lesson--locked"
+                    >
                       <span
-                        class="out__it-ico out__it-ico--pending"
+                        class="course-outline__lesson-icon course-outline__lesson-icon--pending"
                         aria-hidden="true"
                       >
                         <Circle size={16} />
                       </span>
-                      <span class="out__it-ttl">{lesson.title}</span>
+                      <span class="course-outline__lesson-title">
+                        {lesson.title}
+                      </span>
                     </span>
                   ) : (
                     <a
                       href={`${lessonBaseUrl}/${lesson.id}`}
                       class:list={{
-                        out__it: true,
+                        'course-outline__lesson': true,
                         'progress-completed': completedLessonIds.has(lesson.id),
                         'progress-current': lesson.id === currentLessonId
                       }}
                     >
                       <span
-                        class="out__it-ico out__it-ico--pending"
+                        class="course-outline__lesson-icon course-outline__lesson-icon--pending"
                         aria-hidden="true"
                       >
                         <Circle size={16} />
                       </span>
                       <span
-                        class="out__it-ico out__it-ico--current"
+                        class="course-outline__lesson-icon course-outline__lesson-icon--current"
                         aria-hidden="true"
                       >
                         <CirclePlay size={16} />
                       </span>
                       <span
-                        class="out__it-ico out__it-ico--completed"
+                        class="course-outline__lesson-icon course-outline__lesson-icon--completed"
                         aria-hidden="true"
                       >
                         <CircleCheck size={16} />
                       </span>
-                      <span class="out__it-ttl">{lesson.title}</span>
+                      <span class="course-outline__lesson-title">
+                        {lesson.title}
+                      </span>
                     </a>
                   )
                 )}
@@ -106,38 +112,15 @@ let moduleFlatIndex = 0
 </div>
 
 <style>
-  .out {
-    height: 100%;
-    overflow-y: auto;
+  .course-outline {
     background-color: var(--color-gray-1);
-    padding: var(--spacing-2);
     padding-top: var(--spacing-4);
-    scrollbar-gutter: stable;
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-gray-a6) transparent;
+    padding-right: var(--spacing-1);
+    padding-bottom: var(--spacing-2);
+    padding-left: var(--spacing-2);
   }
 
-  .out::-webkit-scrollbar {
-    width: 0.5rem;
-  }
-
-  .out::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .out::-webkit-scrollbar-thumb {
-    background-color: var(--color-gray-a6);
-    border-radius: 9999px;
-    border: 2px solid transparent;
-    background-clip: padding-box;
-    transition: background-color var(--duration-normal);
-  }
-
-  .out::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-gray-a8);
-  }
-
-  .out__ttl {
+  .course-outline__title {
     font-size: var(--text-xl);
     font-weight: var(--font-weight-semibold);
     color: var(--color-gray-12);
@@ -145,20 +128,36 @@ let moduleFlatIndex = 0
     border-bottom: 1px solid var(--color-gray-6);
   }
 
-  .out__list {
+  .course-outline__module-list {
     width: 100%;
-    --out-pad: var(--spacing-3);
+    --course-outline-module-padding: var(--spacing-3);
   }
 
-  .out__ch--locked {
+  .course-outline__module--locked {
     opacity: 0.6;
   }
 
-  .out__ch-hd {
+  .course-outline__module {
+    interpolate-size: allow-keywords;
+  }
+
+  .course-outline__module::details-content {
+    height: 0;
+    overflow: clip;
+    transition:
+      height var(--duration-slow) ease-out,
+      content-visibility var(--duration-slow) allow-discrete;
+  }
+
+  .course-outline__module[open]::details-content {
+    height: auto;
+  }
+
+  .course-outline__module-summary {
     display: flex;
     align-items: center;
     gap: var(--spacing-2);
-    padding: var(--out-pad) 0;
+    padding: var(--course-outline-module-padding) 0;
     cursor: pointer;
     list-style: none;
     font-weight: var(--font-weight-semibold);
@@ -171,45 +170,45 @@ let moduleFlatIndex = 0
     font-family: inherit;
   }
 
-  .out__ch--locked .out__ch-hd {
+  .course-outline__module--locked .course-outline__module-summary {
     cursor: not-allowed;
     pointer-events: none;
   }
 
-  .out__ch--locked .out__ch-ico {
+  .course-outline__module--locked .course-outline__module-chevron {
     display: none;
   }
 
-  .out__ch-hd::-webkit-details-marker,
-  .out__ch-hd::marker {
+  .course-outline__module-summary::-webkit-details-marker,
+  .course-outline__module-summary::marker {
     display: none;
   }
 
-  .out__ch-hd:focus-visible {
+  .course-outline__module-summary:focus-visible {
     outline: 2px solid var(--color-cyan-9);
     outline-offset: 2px;
   }
 
-  .out__ch-ttl {
+  .course-outline__module-title {
     flex: 1;
   }
 
-  .out__ch-ico {
+  .course-outline__module-chevron {
     flex-shrink: 0;
     color: var(--color-gray-9);
-    transition: transform var(--duration-normal);
+    transition: transform var(--duration-slow) ease-out;
   }
 
-  .out__ch[open] .out__ch-ico {
+  .course-outline__module[open] .course-outline__module-chevron {
     transform: rotate(180deg);
   }
 
-  .out__ch-bd {
+  .course-outline__module-lessons {
     padding: 0;
-    padding-bottom: var(--out-pad);
+    padding-bottom: var(--course-outline-module-padding);
   }
 
-  .out__it {
+  .course-outline__lesson {
     display: flex;
     align-items: center;
     gap: var(--spacing-2);
@@ -229,20 +228,41 @@ let moduleFlatIndex = 0
     font-size: inherit;
   }
 
-  .out__it:hover {
+  a.course-outline__lesson {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .course-outline__lesson:hover {
     background-color: var(--color-gray-3);
   }
 
-  .out__it--locked {
+  a.course-outline__lesson:active {
+    background-color: var(--color-gray-2);
+  }
+
+  :global([data-theme='dark']) a.course-outline__lesson:active:not(.progress-current) {
+    background-color: var(--color-gray-4);
+  }
+
+  a.course-outline__lesson.progress-current:active {
+    background-color: var(--color-cyan-2);
+  }
+
+  :global([data-theme='dark']) a.course-outline__lesson.progress-current:active {
+    background-color: var(--color-cyan-5);
+  }
+
+  .course-outline__lesson--locked {
     cursor: not-allowed;
     color: var(--color-gray-9);
   }
 
-  .out__it--locked:hover {
+  .course-outline__lesson--locked:hover {
     background-color: transparent;
   }
 
-  .out__it-ico {
+  .course-outline__lesson-icon {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
@@ -250,45 +270,61 @@ let moduleFlatIndex = 0
     color: var(--color-gray-9);
     transition: color var(--duration-normal) ease-out;
   }
-  .out__it .out__it-ico--current,
-  .out__it .out__it-ico--completed {
+  .course-outline__lesson .course-outline__lesson-icon--current,
+  .course-outline__lesson .course-outline__lesson-icon--completed {
     display: none;
   }
 
-  .out__it.progress-completed {
+  .course-outline__lesson.progress-completed {
     opacity: 0.85;
   }
-  .out__it.progress-completed .out__it-ico--pending,
-  .out__it.progress-completed .out__it-ico--current {
+  .course-outline__lesson.progress-completed
+    .course-outline__lesson-icon--pending,
+  .course-outline__lesson.progress-completed
+    .course-outline__lesson-icon--current {
     display: none;
   }
-  .out__it.progress-completed .out__it-ico--completed {
+  .course-outline__lesson.progress-completed
+    .course-outline__lesson-icon--completed {
     display: inline-flex;
     color: var(--color-green-9);
   }
 
-  .out__it.progress-current .out__it-ico--pending,
-  .out__it.progress-current .out__it-ico--completed {
+  .course-outline__lesson.progress-current
+    .course-outline__lesson-icon--pending,
+  .course-outline__lesson.progress-current
+    .course-outline__lesson-icon--completed {
     display: none;
   }
-  .out__it.progress-current .out__it-ico--current {
+  .course-outline__lesson.progress-current
+    .course-outline__lesson-icon--current {
     display: inline-flex;
     color: var(--color-cyan-11);
   }
-  .out__it.progress-current {
+  .course-outline__lesson.progress-current {
     background-color: var(--color-cyan-3);
     color: var(--color-gray-12);
     font-weight: var(--font-weight-semibold);
   }
-  .out__it.progress-current:hover {
+  .course-outline__lesson.progress-current:hover {
     background-color: var(--color-cyan-4);
   }
 
-  .out__it-ttl {
+  .course-outline__lesson-title {
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: var(--text-xs);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .course-outline__module::details-content {
+      transition: none;
+    }
+
+    .course-outline__module-chevron {
+      transition: none;
+    }
   }
 </style>

@@ -101,16 +101,32 @@ const completedTaskIds = await getCompletedTaskIds(
     background: var(--color-gray-1);
     color: inherit;
     text-decoration: none;
-    transition:
-      border-color 0.15s,
-      background 0.15s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.15s, background 0.15s;
     width: 100%;
     box-sizing: border-box;
   }
 
   .task-link:hover {
-    border-color: var(--color-primary-6);
-    background: var(--color-primary-1);
+    border-color: var(--color-cyan-7);
+    background: var(--color-cyan-2);
+  }
+
+  .task-link:active {
+    background: var(--color-gray-2);
+  }
+
+  :global([data-theme='dark']) .task-link:active {
+    background: var(--color-gray-3);
+  }
+
+  .task-link:hover:active {
+    background: var(--color-cyan-1);
+  }
+
+  :global([data-theme='dark']) .task-link:hover:active {
+    background: var(--color-cyan-4);
   }
 
   .task-link :global(svg) {

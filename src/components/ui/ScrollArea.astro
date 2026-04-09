@@ -6,44 +6,47 @@ interface Props {
 const { class: className = '' } = Astro.props
 ---
 
-<div class={`sa ${className}`.trim()}>
-  <div class="sa-vp">
+<div class={`scroll-area ${className}`.trim()}>
+  <div class="scroll-area__viewport">
     <slot />
   </div>
 </div>
 
 <style>
-  .sa {
+  .scroll-area {
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    --sa-m: 0px;
-    --sa-t: 0.5rem;
-    --sa-s: calc(var(--sa-t) + calc(var(--sa-m) * 2));
+    --scroll-area-margin: 0px;
+    --scroll-area-scrollbar-padding: 0.5rem;
+    --scroll-area-scrollbar-size: calc(
+      var(--scroll-area-scrollbar-padding) + calc(var(--scroll-area-margin) * 2)
+    );
   }
 
-  .sa-vp {
+  .scroll-area__viewport {
     flex: 1;
     min-height: 0;
     width: 100%;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
     scrollbar-width: thin;
     scrollbar-color: var(--color-gray-a6) transparent;
   }
 
-  .sa-vp::-webkit-scrollbar {
-    width: var(--sa-s);
-    height: var(--sa-s);
+  .scroll-area__viewport::-webkit-scrollbar {
+    width: var(--scroll-area-scrollbar-size);
+    height: var(--scroll-area-scrollbar-size);
   }
 
-  .sa-vp::-webkit-scrollbar-track {
+  .scroll-area__viewport::-webkit-scrollbar-track {
     background: transparent;
   }
 
-  .sa-vp::-webkit-scrollbar-thumb {
+  .scroll-area__viewport::-webkit-scrollbar-thumb {
     background-color: var(--color-gray-a6);
     border-radius: 9999px;
     border: 2px solid transparent;
@@ -51,7 +54,7 @@ const { class: className = '' } = Astro.props
     transition: background-color var(--duration-normal);
   }
 
-  .sa-vp::-webkit-scrollbar-thumb:hover {
+  .scroll-area__viewport::-webkit-scrollbar-thumb:hover {
     background-color: var(--color-gray-a8);
   }
 </style>

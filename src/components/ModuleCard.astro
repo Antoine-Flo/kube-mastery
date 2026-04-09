@@ -253,14 +253,13 @@ const hasVisual = !!visualVariant
 
   .link {
     cursor: pointer;
-    transition:
-      transform 0.1s ease,
-      box-shadow 0.15s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.18s ease;
   }
 
   .card.link:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: var(--color-palette-gray-surface-bg-hover);
   }
 
   .banner {
