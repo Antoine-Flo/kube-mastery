@@ -11,6 +11,11 @@ import astroExpressiveCode from 'astro-expressive-code'
 export default defineConfig({
   site: 'https://kubemastery.com',
 
+  // Inline Astro-scoped CSS into HTML (fewer blocking stylesheet requests; larger HTML per response).
+  build: {
+    inlineStylesheets: 'always'
+  },
+
   markdown: {
     remarkPlugins: [remarkCalloutColons, remarkQuizBlocks, remarkBeautifulMermaidBlocks]
   },
@@ -29,6 +34,8 @@ export default defineConfig({
       transformer: 'lightningcss'
     },
     build: {
+      // Merge Vite CSS chunks into one file when a separate asset is still emitted (e.g. integrations).
+      cssCodeSplit: false,
       cssMinify: 'lightningcss'
     },
     optimizeDeps: {

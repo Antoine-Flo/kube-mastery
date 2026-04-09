@@ -1,5 +1,5 @@
 {
-  "src/pages/[lang]/[type]/[id]/[lessonId]/index.astro": "2026-04-02",
+  "src/pages/[lang]/[type]/[id]/[lessonId]/index.astro": "2026-04-09",
   "src/pages/[lang]/[type]/[id]/complete.astro": "2026-03-30",
   "src/pages/[lang]/[type]/[id]/index.astro": "2026-04-01",
   "src/pages/[lang]/auth/check-email.astro": "2026-04-01",
@@ -16,7 +16,7 @@
   "src/pages/[lang]/supported.astro": "2026-04-08",
   "src/pages/[lang]/tasks/[groupId]/[taskId]/complete.astro": "2026-03-19",
   "src/pages/[lang]/tasks/[groupId]/[taskId]/index.astro": "2026-03-31",
-  "src/pages/[lang]/tasks/[groupId]/index.astro": "2026-03-17",
+  "src/pages/[lang]/tasks/[groupId]/index.astro": "2026-04-09",
   "src/pages/[lang]/terms-of-service.astro": "2026-02-26",
   "src/pages/404.astro": "2026-02-06",
   "src/pages/api/account/delete.ts": "2026-03-12",
