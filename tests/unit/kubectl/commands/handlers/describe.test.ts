@@ -283,13 +283,13 @@ describe('kubectl describe handler - selector support', () => {
       return
     }
 
-    expect(result.value).toContain('Name:                 probed-a')
-    expect(result.value).toContain('Name:                 probed-b')
+    expect(result.value).toMatch(/Name:\s+probed-a/)
+    expect(result.value).toMatch(/Name:\s+probed-b/)
     expect(result.value).toContain('\n\n')
     expect(result.value.indexOf('probed-a')).toBeLessThan(
       result.value.indexOf('probed-b')
     )
-    expect(result.value).not.toContain('Name:                 other')
+    expect(result.value).not.toMatch(/Name:\s+other/)
   })
 
   it('should return no resources found when selector has no matches', () => {
@@ -711,7 +711,7 @@ describe('kubectl describe handler - pods with event store', () => {
     if (!result.ok) {
       return
     }
-    expect(result.value).toContain('Status:               Terminating')
+    expect(result.value).toMatch(/Status:\s+Terminating/)
   })
 })
 

@@ -7,12 +7,12 @@ import {
   renderStructuredPayload
 } from '../../../output/outputHelpers'
 import { renderCustomColumnsTable } from '../../../output/customColumns'
+import { isStructuredGetPrintSink, resolveGetPrintSink } from './getPrintFlags'
 import { applyFilters, noResourcesMessage } from './filters'
 import { formatLabelsForDisplay } from './podPresentation'
 import { RESOURCE_HANDLERS } from './resourceHandlers'
 import {
   buildGenericListOutput,
-  isStructuredOutputDirective,
   sanitizeForOutput,
   shapeStructuredItemsForOutput
 } from './structuredOutput'
@@ -214,7 +214,8 @@ export const handleGetAll = (
 ): string => {
   const context = buildGetAllContext(parsed)
   const collected = collectGetAllItems(state, parsed, context)
-  const isStructuredOutput = isStructuredOutputDirective(outputDirective.kind)
+  const printSink = resolveGetPrintSink(outputDirective)
+  const isStructuredOutput = isStructuredGetPrintSink(printSink)
 
   if (isStructuredOutput) {
     const mixedItems = collected.flatMap((entry) => {
@@ -242,7 +243,31 @@ export const handleGetAll = (
     return renderResult.value
   }
 
-  if (outputDirective.kind === 'custom-columns') {
+  // Human-readable sections before custom-columns (PrintFlags.ToPrinter order).
+  const buildHumanReadableSections = (): string => {
+    const sections = collected
+      .map((entry) => {
+        return buildGetAllSection(state, parsed, context, entry.resourceType)
+      })
+      .filter((section): section is string => {
+        return section != null
+      })
+
+    if (sections.length === 0) {
+      return noResourcesMessage(
+        context.allNamespacesFlag ? undefined : context.effectiveNamespace,
+        false
+      )
+    }
+
+    return sections.join('\n\n')
+  }
+
+  if (printSink === 'table') {
+    return buildHumanReadableSections()
+  }
+
+  if (printSink === 'custom-columns') {
     const spec = outputDirective.customColumnsSpec ?? ''
     const sections: string[] = []
     for (const entry of collected) {
@@ -267,20 +292,5 @@ export const handleGetAll = (
     return sections.join('\n\n')
   }
 
-  const sections = collected
-    .map((entry) => {
-      return buildGetAllSection(state, parsed, context, entry.resourceType)
-    })
-    .filter((section): section is string => {
-      return section != null
-    })
-
-  if (sections.length === 0) {
-    return noResourcesMessage(
-      context.allNamespacesFlag ? undefined : context.effectiveNamespace,
-      false
-    )
-  }
-
-  return sections.join('\n\n')
+  return buildHumanReadableSections()
 }

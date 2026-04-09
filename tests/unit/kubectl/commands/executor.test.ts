@@ -178,8 +178,8 @@ describe('kubectl Executor', () => {
           return
         }
 
-        expect(result.value).toContain('Name:                 probed-a')
-        expect(result.value).toContain('Name:                 probed-b')
+        expect(result.value).toMatch(/Name:\s+probed-a/)
+        expect(result.value).toMatch(/Name:\s+probed-b/)
         expect(result.value).toContain('\n\n')
       })
 

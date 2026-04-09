@@ -1,3 +1,8 @@
+/**
+ * Tabular output for `kubectl get` (wide / default table).
+ * Upstream: refs/k8s/kubectl/pkg/cmd/get/table_printer.go and cli-runtime table printers.
+ * Describe-style blocks with tab columns use src/core/kubectl/printers/describeTabWriter.ts.
+ */
 export type TabColumnAlign = 'left' | 'right'
 
 export interface StatefulTabWriterOptions {

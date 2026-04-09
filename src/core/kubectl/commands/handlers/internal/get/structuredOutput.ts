@@ -1,3 +1,8 @@
+/**
+ * JSON/YAML list and object shaping for `kubectl get -o json|yaml`.
+ * Upstream: refs/k8s/kubectl/pkg/cmd/get/get_flags.go (PrintFlags, ToPrinter) and
+ * k8s.io/cli-runtime/pkg/printers (read via kubectl imports). Related: commands/output/jsonpath/.
+ */
 import type { Deployment } from '../../../../../cluster/ressources/Deployment'
 import type { Pod } from '../../../../../cluster/ressources/Pod'
 import type { Secret } from '../../../../../cluster/ressources/Secret'

@@ -27,6 +27,9 @@ import type { KubectlCommandSpec } from '../cli/model'
 // Parses kubectl command strings with resource aliases and namespace flags.
 // Supports all kubectl actions (get, describe, delete, apply, create).
 //
+// Flag vocabulary is driven by KUBECTL_ROOT_COMMAND_SPEC (src/core/kubectl/cli/registry/root.ts).
+// For parity work, map spec entries to upstream *Flags types under refs/k8s/kubectl/pkg/cmd/<cmd>/.
+//
 // Uses Railway-oriented programming (pipeResult) for clean pipeline composition.
 // Each step transforms a ParseContext and can fail, stopping the pipeline.
 

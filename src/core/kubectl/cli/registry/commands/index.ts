@@ -2,6 +2,14 @@ import { command } from '../../builder'
 import type { KubectlCommandSpec } from '../../model'
 import { createLeafCommand } from './shared'
 
+/**
+ * Declarative command specs mirror upstream kubectl flag sets semantically (not Cobra).
+ * Reference when aligning output or validation:
+ * - get: refs/k8s/kubectl/pkg/cmd/get/get_flags.go (PrintFlags, AllowedFormats, ToPrinter)
+ * - describe: refs/k8s/kubectl/pkg/cmd/describe/describe.go (DescribeFlags, AddFlags)
+ */
+
+/** get subcommand flags: compare with GetFlags / PrintFlags in refs/k8s/kubectl/pkg/cmd/get/get_flags.go */
 const getCommand = createLeafCommand({
   path: ['get'],
   use: 'get\n[(-o|--output=)json|yaml|kyaml|name|go-template|go-template-file|template|templatefile|jsonpath|jsonpath-as-json|jsonpath-file|custom-columns|custom-columns-file|wide]\n(TYPE[.VERSION][.GROUP] [NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags] [options]',
@@ -69,6 +77,7 @@ const getCommand = createLeafCommand({
   ]
 })
 
+/** describe subcommand flags: compare with DescribeFlags in refs/k8s/kubectl/pkg/cmd/describe/describe.go */
 const describeCommand = createLeafCommand({
   path: ['describe'],
   use: 'describe TYPE NAME',

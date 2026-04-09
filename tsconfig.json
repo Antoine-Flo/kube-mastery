@@ -7,5 +7,5 @@
     }
   },
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "ci/dagger/**/*"]
+  "exclude": ["dist", "coverage", "ci/dagger/**/*"]
 }

@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import {
-  describeConfigMap,
-  describeDeployment,
-  describeLease,
-  describeNetworkPolicy,
-  describeNode,
-  describePod,
-  describeSecret
-} from '../../../../src/core/kubectl/formatters/describeFormatters'
+import { describeConfigMap } from '../../../../src/core/kubectl/describe/describers/describeConfigMap'
+import { describeDeployment } from '../../../../src/core/kubectl/describe/describers/describeDeployment'
+import { describeLease } from '../../../../src/core/kubectl/describe/describers/describeLease'
+import { describeNetworkPolicy } from '../../../../src/core/kubectl/describe/describers/describeNetworkPolicy'
+import { describeNode } from '../../../../src/core/kubectl/describe/describers/describeNode'
+import { describePod } from '../../../../src/core/kubectl/describe/describers/describePod'
+import { describeSecret } from '../../../../src/core/kubectl/describe/describers/describeSecret'
 import {
   createDeployment,
   generateTemplateHash,
@@ -1226,6 +1224,63 @@ describe('describeFormatters', () => {
       expect(result).toContain('Capacity:')
       expect(result).toContain('Allocatable:')
       expect(result).toContain('System Info:')
+    })
+
+    it('should format node lease subsection with HolderIdentity unset when no kube-node-lease', () => {
+      const node = createNode({
+        name: 'sim-worker',
+        creationTimestamp: '2024-01-16T18:03:00Z',
+        status: {
+          nodeInfo: {
+            architecture: 'amd64',
+            containerRuntimeVersion: 'containerd://2.2.0',
+            kernelVersion: '6.6.0',
+            kubeletVersion: 'v1.35.0',
+            operatingSystem: 'linux',
+            osImage: 'linux'
+          }
+        }
+      })
+
+      const result = describeNode(node)
+
+      expect(result).toContain('Lease:')
+      expect(result).toContain('HolderIdentity:')
+      expect(result).toMatch(/AcquireTime:\s+<unset>/)
+      expect(result).toMatch(/RenewTime:\s+<unset>/)
+      expect(result).toMatch(/HolderIdentity:\s+<unset>/)
+      expect(result).not.toContain('HolderIdentity:               sim-worker')
+    })
+
+    it('should fill node lease from kube-node-lease when present in state', () => {
+      const node = createNode({
+        name: 'sim-worker',
+        status: {
+          nodeInfo: {
+            architecture: 'amd64',
+            containerRuntimeVersion: 'containerd://2.2.0',
+            kernelVersion: '6.6.0',
+            kubeletVersion: 'v1.35.0',
+            operatingSystem: 'linux',
+            osImage: 'linux'
+          }
+        }
+      })
+      const lease = createLease({
+        name: 'sim-worker',
+        namespace: 'kube-node-lease',
+        spec: {
+          holderIdentity: 'sim-worker-heartbeat',
+          acquireTime: '2024-01-10T12:00:00Z',
+          renewTime: '2024-01-10T12:05:00Z'
+        }
+      })
+      const state = createClusterStateData({ leases: [lease] })
+
+      const result = describeNode(node, state)
+
+      expect(result).toContain('sim-worker-heartbeat')
+      expect(result).not.toMatch(/HolderIdentity:\s+<unset>/)
     })
 
     it('should format taints and unschedulable when present', () => {

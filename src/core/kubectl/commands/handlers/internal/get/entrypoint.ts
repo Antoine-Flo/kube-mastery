@@ -18,11 +18,16 @@ import {
   type GetSupportedResource
 } from './resourceHandlers'
 import {
+  GET_ALLOWED_OUTPUT_KINDS,
+  GET_OUTPUT_VALIDATION_ERROR_MESSAGE,
+  isStructuredGetPrintSink,
+  resolveGetPrintSink
+} from './getPrintFlags'
+import {
   appendTrailingErrors,
   buildListOutput,
   buildNameOutput,
   buildNotFoundErrorMessage,
-  isStructuredOutputDirective,
   sanitizeForOutput,
   shapeStructuredItemsForOutput
 } from './structuredOutput'
@@ -128,8 +133,8 @@ export const handleGet = (
 
   const outputDirectiveResult = validateOutputDirective(
     resolveOutputDirective(parsed.flags, parsed.output),
-    ['table', 'json', 'yaml', 'wide', 'name', 'jsonpath', 'custom-columns'],
-    '--output must be one of: json|yaml|wide|name|jsonpath|custom-columns'
+    [...GET_ALLOWED_OUTPUT_KINDS],
+    GET_OUTPUT_VALIDATION_ERROR_MESSAGE
   )
   if (!outputDirectiveResult.ok) {
     return `error: ${outputDirectiveResult.error}`
@@ -158,7 +163,8 @@ export const handleGet = (
     parsed.flags['all-namespaces'] === true || parsed.flags['A'] === true
   const effectiveNamespace = parsed.namespace ?? 'default'
   const filterNamespace = allNamespacesFlag ? undefined : effectiveNamespace
-  const isStructuredOutput = isStructuredOutputDirective(outputDirective.kind)
+  const printSink = resolveGetPrintSink(outputDirective)
+  const isStructuredOutput = isStructuredGetPrintSink(printSink)
   const items = resolved.handler.getItems(state)
   const isClusterScoped = resolved.handler.isClusterScoped || false
   const queryNames = resolveQueryNames(parsed)
@@ -252,16 +258,22 @@ export const handleGet = (
     return appendTrailingErrors(renderResult.value, missingNameErrors)
   }
 
-  if (outputDirective.kind === 'name') {
-    const nameOutput = buildNameOutput(
-      resolved.resourceType,
+  // Human-readable table (default / wide) before custom-columns and name,
+  // matching PrintFlags.ToPrinter order in refs/k8s/kubectl/pkg/cmd/get/get_flags.go.
+  if (printSink === 'table') {
+    return renderTableOutput({
+      resourceType: resolved.resourceType,
+      outputDirective,
+      parsedWideFlag: parsed.flags.wide === true,
+      allNamespacesFlag,
       filtered,
-      toResourceKindReference
-    )
-    return appendTrailingErrors(nameOutput, missingNameErrors)
+      handler: resolved.handler,
+      missingNameErrors,
+      showLabels: parsed.flags['show-labels'] === true
+    })
   }
 
-  if (outputDirective.kind === 'custom-columns') {
+  if (printSink === 'custom-columns') {
     return renderCustomColumnsOutput(
       resolved.resourceType,
       outputDirective,
@@ -271,14 +283,14 @@ export const handleGet = (
     )
   }
 
-  return renderTableOutput({
-    resourceType: resolved.resourceType,
-    outputDirective,
-    parsedWideFlag: parsed.flags.wide === true,
-    allNamespacesFlag,
-    filtered,
-    handler: resolved.handler,
-    missingNameErrors,
-    showLabels: parsed.flags['show-labels'] === true
-  })
+  if (printSink === 'name') {
+    const nameOutput = buildNameOutput(
+      resolved.resourceType,
+      filtered,
+      toResourceKindReference
+    )
+    return appendTrailingErrors(nameOutput, missingNameErrors)
+  }
+
+  return `error: unsupported get print sink: ${String(printSink)}`
 }
