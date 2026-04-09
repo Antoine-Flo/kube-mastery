@@ -5,8 +5,53 @@ const MERMAID_ZOOM_SOURCE_ATTRIBUTE = 'data-mermaid-zoom-source'
 const MERMAID_ZOOM_ID_ATTRIBUTE = 'data-mermaid-zoom-id'
 const MERMAID_ZOOM_HOST_ATTRIBUTE = 'data-mermaid-zoom-host'
 
-const MERMAID_ZOOM_ICON_PATH =
-  'M10 4a6 6 0 1 0 3.87 10.59l4.77 4.77 1.41-1.41-4.77-4.77A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm-1 1v2H7v2h2v2h2v-2h2V9h-2V7H9Z'
+const SVG_NS = 'http://www.w3.org/2000/svg'
+
+/**
+ * Lucide "zoom-in" icon (same geometry as @lucide/astro ZoomIn).
+ * @see https://lucide.dev/icons/zoom-in
+ */
+function createLucideZoomInSvg(): SVGSVGElement {
+  const svg = document.createElementNS(SVG_NS, 'svg')
+  svg.setAttribute('xmlns', SVG_NS)
+  svg.setAttribute('viewBox', '0 0 24 24')
+  svg.setAttribute('fill', 'none')
+  svg.setAttribute('stroke', 'currentColor')
+  svg.setAttribute('stroke-width', '2')
+  svg.setAttribute('stroke-linecap', 'round')
+  svg.setAttribute('stroke-linejoin', 'round')
+  svg.setAttribute('aria-hidden', 'true')
+  svg.setAttribute('class', 'lucide lucide-zoom-in')
+
+  const circle = document.createElementNS(SVG_NS, 'circle')
+  circle.setAttribute('cx', '11')
+  circle.setAttribute('cy', '11')
+  circle.setAttribute('r', '8')
+
+  const handle = document.createElementNS(SVG_NS, 'line')
+  handle.setAttribute('x1', '21')
+  handle.setAttribute('x2', '16.65')
+  handle.setAttribute('y1', '21')
+  handle.setAttribute('y2', '16.65')
+
+  const vBar = document.createElementNS(SVG_NS, 'line')
+  vBar.setAttribute('x1', '11')
+  vBar.setAttribute('x2', '11')
+  vBar.setAttribute('y1', '8')
+  vBar.setAttribute('y2', '14')
+
+  const hBar = document.createElementNS(SVG_NS, 'line')
+  hBar.setAttribute('x1', '8')
+  hBar.setAttribute('x2', '14')
+  hBar.setAttribute('y1', '11')
+  hBar.setAttribute('y2', '11')
+
+  svg.appendChild(circle)
+  svg.appendChild(handle)
+  svg.appendChild(vBar)
+  svg.appendChild(hBar)
+  return svg
+}
 
 function isMermaidHostActiveForTheme(host: HTMLElement) {
   const isLightVariant = host.classList.contains('mermaid--light')
@@ -53,17 +98,12 @@ function getOrCreateMermaidZoomButton(anchor: HTMLElement) {
   const button = document.createElement('button')
   button.type = 'button'
   button.className = 'mermaid-zoom-btn'
-  button.setAttribute('aria-label', 'Zoom diagram')
+  const zoomLabel = 'Zoom diagram'
+  button.setAttribute('aria-label', zoomLabel)
+  button.setAttribute('title', zoomLabel)
   button.setAttribute('data-mermaid-zoom-btn', 'true')
 
-  const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  icon.setAttribute('viewBox', '0 0 24 24')
-  icon.setAttribute('aria-hidden', 'true')
-
-  const iconPath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-  iconPath.setAttribute('d', MERMAID_ZOOM_ICON_PATH)
-  icon.appendChild(iconPath)
-  button.appendChild(icon)
+  button.appendChild(createLucideZoomInSvg())
   anchor.appendChild(button)
   return button
 }

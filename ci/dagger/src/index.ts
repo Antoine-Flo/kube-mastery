@@ -11,7 +11,7 @@ export class KubeMasteryCi {
         .withDirectory('/src', source)
         .withWorkdir('/src')
         .withExec(['npm', 'ci'])
-        // .withExec(["npm", "run", "check"])
+        .withExec(["npm", "run", "check"])
         .withExec(['npm', 'run', 'test'])
         .withExec(['npm', 'run', 'build'])
     )

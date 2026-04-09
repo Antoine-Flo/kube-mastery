@@ -108,6 +108,20 @@ describe('remarkBeautifulMermaidBlocks', () => {
     expect(namespaced).toContain('mermaid-test-light-')
   })
 
+  it('throws when mermaid source is invalid so builds fail instead of shipping broken lessons', () => {
+    const md = `Diagram
+
+@@@
+this is not valid mermaid syntax
+@@@
+
+End.
+`
+    expect(() => {
+      processLessonMarkdown(md)
+    }).toThrow(/remark-beautiful-mermaid-blocks/)
+  })
+
   it('parses inline @@@ block when label text contains @@@ (not a real closing marker)', () => {
     const md = `Test
 

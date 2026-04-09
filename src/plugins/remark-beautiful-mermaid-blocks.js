@@ -1,6 +1,7 @@
 import { renderMermaidSVG } from 'beautiful-mermaid'
 
 // @@@ blocks: build-time SVG via beautiful-mermaid (light + dark, namespaced ids).
+// Invalid diagrams throw: Astro build / tests fail instead of publishing broken HTML.
 
 const MERMAID_BLOCK_MARKER = '@@@'
 
@@ -18,6 +19,25 @@ const SITE_DARK_MERMAID_THEME = {
 }
 
 let mermaidRenderCounter = 0
+
+function throwMermaidPluginError(source, cause) {
+  const firstLine = source.trim().split(/\n/)[0] ?? ''
+  const causeMessage =
+    cause instanceof Error ? cause.message : String(cause)
+  const err = new Error(
+    `[remark-beautiful-mermaid-blocks] Mermaid render failed: ${causeMessage}. First line: ${firstLine}`
+  )
+  err.cause = cause
+  throw err
+}
+
+function assertMermaidSvgMarkup(svgMarkup, variantLabel) {
+  if (typeof svgMarkup !== 'string' || !/<svg\b/i.test(svgMarkup)) {
+    throw new Error(
+      `[remark-beautiful-mermaid-blocks] beautiful-mermaid returned no SVG for ${variantLabel}`
+    )
+  }
+}
 
 function mdastNodeToText(node) {
   if (!node || typeof node !== 'object') {
@@ -124,8 +144,14 @@ export function kubemasteryNamespaceSvgIdsForTests(svgMarkup, namespace) {
   return namespacedSvg
 }
 
-function renderThemedSvg(source, theme, namespace) {
-  const rawSvg = renderMermaidSVG(source, theme)
+function renderThemedSvg(source, theme, namespace, variantLabel) {
+  let rawSvg
+  try {
+    rawSvg = renderMermaidSVG(source, theme)
+  } catch (cause) {
+    throwMermaidPluginError(source, cause)
+  }
+  assertMermaidSvgMarkup(rawSvg, variantLabel)
   const normalized = kubemasteryNormalizeSvgMarkupForTests(rawSvg)
   return kubemasteryNamespaceSvgIdsForTests(normalized, namespace)
 }
@@ -135,24 +161,22 @@ function renderMermaidCustomThemeMarkup(source) {
   const lightSvg = renderThemedSvg(
     source,
     SITE_LIGHT_MERMAID_THEME,
-    `mermaid-${renderId}-light`
+    `mermaid-${renderId}-light`,
+    'light theme'
   )
   const darkSvg = renderThemedSvg(
     source,
     SITE_DARK_MERMAID_THEME,
-    `mermaid-${renderId}-dark`
+    `mermaid-${renderId}-dark`,
+    'dark theme'
   )
   return `<div class="mermaid-theme-stack" data-mermaid-rendered="true"><div class="mermaid mermaid--light" data-mermaid-rendered="true">${lightSvg}</div><div class="mermaid mermaid--dark" data-mermaid-rendered="true">${darkSvg}</div></div>`
 }
 
 function renderMermaidNode(source) {
-  try {
-    return {
-      type: 'html',
-      value: renderMermaidCustomThemeMarkup(source)
-    }
-  } catch {
-    return null
+  return {
+    type: 'html',
+    value: renderMermaidCustomThemeMarkup(source)
   }
 }
 
@@ -163,12 +187,7 @@ function replaceWithRenderedMermaidNode(
   source
 ) {
   const renderedNode = renderMermaidNode(source)
-  if (!renderedNode) {
-    return false
-  }
-
   parentNode.children.splice(startIndex, endIndex - startIndex + 1, renderedNode)
-  return true
 }
 
 function collectBlockSource(parentNode, startIndex) {
