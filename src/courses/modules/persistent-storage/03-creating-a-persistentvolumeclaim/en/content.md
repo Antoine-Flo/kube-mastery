@@ -60,11 +60,11 @@ spec:
       storage: 500Mi
 ```
 
-```
+```bash
 kubectl apply -f pvc.yaml
 ```
 
-```
+```bash
 kubectl get pvc
 ```
 
@@ -105,7 +105,7 @@ Why does Kubernetes refuse to match a PVC to a PV with a different access mode, 
 
 When no PV matches, the PVC stays in `Pending`. The fix starts with a description:
 
-```
+```bash
 kubectl describe pvc postgres-pvc
 ```
 

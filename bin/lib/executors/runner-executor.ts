@@ -426,7 +426,12 @@ export const createRunnerExecutor = (
   const volumeRuntime = initializeSimVolumeRuntime(apiServer)
   const controllers = initializeControlPlane(apiServer, {
     podLifecycle: {
-      pendingDelayRangeMs: CONFIG.runtime.simPodPendingDelayRangeMs,
+      // Keep parity executor deterministic so kubectl wait can converge
+      // within synchronous reconcile loops.
+      pendingDelayRangeMs: {
+        minMs: 0,
+        maxMs: 0
+      },
       volumeReadinessProbe: (pod) => {
         const readiness = volumeRuntime.state.getPodReadiness(
           pod.metadata.namespace,
