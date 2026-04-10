@@ -5,11 +5,6 @@ seoDescription: 'Understand the Kubernetes object model, how every resource is a
 
 # The Kubernetes Object Model
 
-Imagine you want to deploy a web application. On a classic server, you would run a command: start the process, open the port, done. If the process crashes, it stays down until someone restarts it. Kubernetes works differently. Instead of issuing a one-time order, you write a declaration, and Kubernetes stores it permanently and keeps checking that reality matches what you wrote.
-
-Think of it like a recipe in a cookbook that the cluster reads continuously, not a single instruction you shout at a chef. The chef executes and forgets. The cookbook is always there.
-
-## Everything Is an Object
 
 In Kubernetes, every resource you interact with, a Pod, a Deployment, a Service, is an **object**. An object is a structured declaration stored persistently in etcd, the cluster's database. It is not a command that fires and disappears. It is a record of intent that Kubernetes monitors and reconciles at all times.
 
@@ -79,6 +74,28 @@ If you forget `kind` or `apiVersion` in a manifest, the API server will reject i
 Why does Kubernetes split desired state (`spec`) and current state (`status`) into two distinct fields rather than keeping everything in one place?
 
 **Answer:** Because `spec` is written by the user and `status` is written by Kubernetes controllers. Merging them would create ownership conflicts where controller writes could overwrite user intent. The separation lets each party write exactly what belongs to them without interference.
+:::
+
+The best way to see this structure on a real object is to look at one running in your cluster right now. CoreDNS is already running, so use it. First, get its Pod name:
+
+```bash
+kubectl get pods -n kube-system
+```
+
+Copy the name of one of the `coredns-*` Pods, then fetch its full object:
+
+```bash
+kubectl get pod <coredns-pod-name> -n kube-system -o yaml
+```
+
+You will see the complete object: `metadata`, `spec`, and `status` all in one document.
+
+:::quiz
+In the YAML output, find the `status` section. Which field tells you the current IP address assigned to this Pod, and which section would you look in to find the image name the container is running?
+
+**Try it:** `kubectl get pod <coredns-pod-name> -n kube-system -o yaml`
+
+**Answer:** The Pod IP is under `status.podIP`. The image name is under `spec.containers[0].image`. This split reflects ownership: `podIP` is assigned by the CNI plugin and reported by Kubernetes, so it belongs in `status`. The image is what you declared you want to run, so it belongs in `spec`.
 :::
 
 Once you understand that every resource is an object with these five fields, the rest of Kubernetes becomes much more readable. In the next lesson, you will look at a live manifest in full detail and trace how the reconciliation loop moves `status` toward `spec`.
