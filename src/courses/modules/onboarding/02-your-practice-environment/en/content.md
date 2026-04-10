@@ -3,13 +3,20 @@ seoTitle: KubeMastery Practice Environment, Terminal and Filesystem
 seoDescription: Explore your simulated Kubernetes practice environment, available kubectl commands, virtual filesystem, reset behavior, and supported feature scope.
 ---
 
-# Your Practice Environment
+# What Runs Here
 
-## What You Have Access To
+@@@
+graph TD
+    Terminal["Terminal<br/>kubectl, ls, cd, nano, cat, ..."]
+    FS["Virtual Filesystem<br/>YAML files, directories"]
+    Cluster["Simulated Cluster<br/>Pods, Deployments, Services, ..."]
+    Terminal --> FS
+    Terminal --> Cluster
+@@@
 
-The terminal gives you two things: an emulated Kubernetes cluster and a virtual Linux filesystem. You can create files, write YAML manifests, and apply them to the cluster with `kubectl`, just like you would on a real machine.
+The terminal gives you access to two separate things at once. On the filesystem side, you can navigate directories, create files, and write YAML manifests just as you would on a real Linux machine. On the cluster side, `kubectl` connects to an in-memory Kubernetes cluster where those manifests take effect immediately.
 
-Here are the commands available:
+Some supported commands:
 
 | Category        | Commands                          |
 | --------------- | --------------------------------- |
@@ -17,37 +24,40 @@ Here are the commands available:
 | File operations | `cat`, `touch`, `rm`, `nano`      |
 | Kubernetes      | `kubectl` and all its subcommands |
 
-`kubectl` is your main tool throughout this course. Think of it as the remote control for your cluster.
-
-## Mistakes Are Free
-
-If you break something or want to start fresh, use the **reload icon** below the terminal (or reload the page). The cluster and terminal reset to their initial state. Use that freedom deliberately: change values, apply broken manifests, delete things and watch what happens. Every failure is feedback, and nothing here has consequences.
-
-:::warning
-Resetting (reload icon or page reload) discards any files you created in the terminal. If you wrote a manifest you want to keep, copy it somewhere first.
-:::
-
-## Limitations
-
-Not every Kubernetes feature is available here. You can find the available features in the [supported features page](https://kubemastery.com/en/supported). When a lesson touches something unavailable, we'll say so explicitly. In some lessons you will run advanced commands that behave like on a real cluster; that does not mean the whole system behind them is implemented. If you use a different command or flag than the one in the lesson, the output may differ from what you would see on a real Kubernetes cluster.
-
-The goal here is to understand the concepts and practice the main commands. To explore commands further on your own machine, we recommend [kind](https://kind.sigs.k8s.io/) (Kubernetes in Docker). You can follow the course entirely with kind: the simulator outputs are aligned with kind, so what you see in the lessons will match what you get locally.
-
-## Hands-On
-
-Let's try the filesystem:
+Try the filesystem now. Run the following command to open a new file in the editor:
 
 ```bash
-touch test.txt  # create a file
-ls              # list the files
-ls -a           # list the hidden files
-nano test.txt   # edit the file
+nano test.txt
 ```
 
-Write anything in the editor, then save and exit with `Ctrl + S`. Finally, display the content:
+Type anything, then save with **Ctrl+S**. Now display what you wrote:
 
 ```bash
 cat test.txt
 ```
 
-Note that `nano` can create and edit a file in one step, no need for `touch` first. Ready to go! In the next lesson, we'll look at the Kubernetes certifications so you understand where this Common Core fits into the bigger picture.
+Note that `nano` creates the file if it does not exist, so you never need `touch` first when editing. `touch` is useful only when you want an empty placeholder without opening an editor.
+
+:::quiz
+You created `test.txt` with `nano` and confirmed its content with `cat`. If you now click the reload icon below the terminal, will `test.txt` still be there?
+
+**Try it:** Click the reload icon, then run `ls`.
+
+**Answer:** No. Resetting wipes both the cluster state and the virtual filesystem. Only your course progress tracked by the platform is preserved, not local files.
+:::
+
+## Mistakes Are Free
+
+Breaking things here has no consequences. The **reload icon** below the terminal (or a page reload) resets both the cluster and the filesystem to their initial state. Use that deliberately: apply a broken manifest, delete a resource and observe what happens, change a value and check whether the behavior matches your expectation. Every failed attempt teaches more than reading about it.
+
+:::warning
+Resetting discards any files you created in the terminal session. If you wrote a manifest you want to keep, copy its content somewhere before resetting.
+:::
+
+## Scope and Limitations
+
+Not every Kubernetes feature is available in the simulator. The full list of supported commands and behaviors is on the [supported features page](https://kubemastery.com/en/supported). When a lesson uses something outside that scope, it says so explicitly. If you try a command or flag not covered in a lesson, the output may not match what a real cluster would produce.
+
+For deeper exploration on your own machine, [kind](https://kind.sigs.k8s.io/) (Kubernetes in Docker) is the closest equivalent. The simulator outputs are aligned with kind, so what you observe here matches what you would get locally.
+
+In the next lesson, you will see how this course maps to the three main Kubernetes certifications and where the Common Core fits in each path.

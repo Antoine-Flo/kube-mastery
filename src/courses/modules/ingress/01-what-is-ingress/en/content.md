@@ -3,195 +3,94 @@ seoTitle: 'What Is Gateway API in Kubernetes? GatewayClass, Gateway, HTTPRoute'
 seoDescription: 'Understand what Kubernetes Gateway API is, how it replaces Ingress, and how GatewayClass, Gateway, and HTTPRoute work together to route external traffic.'
 ---
 
-# What Is Gateway API?
+# What Is Kubernetes Gateway API?
 
-When you deploy an application to Kubernetes, your Pods get IP addresses, but those addresses are private to the cluster. Nobody outside the cluster, no browser, no mobile app, no external API, can reach them directly. At some point you need a way to bridge the gap between the external world and the workloads running inside your cluster.
+Imagine you are deploying three services for your application: an `api` backend, a `frontend`, and an `admin` panel. Each one needs to be reachable from the internet. The straightforward approach is to give each Service a `LoadBalancer` type, but that means three cloud load balancers, three separate public IP addresses, and three DNS entries to maintain. Every new service multiplies the cost and the operational overhead. What you actually need is a single entry point that receives all inbound traffic and dispatches each request to the correct service based on the hostname or URL path.
 
-This is what we call **north-south traffic**: traffic flowing from outside the cluster into the cluster (as opposed to east-west traffic, which flows between services already inside the cluster). Managing this external entry point is one of the most important operational concerns in any Kubernetes deployment.
-
-:::info
-If you just finished the DNS module, you now understand how services find each other inside the cluster. Gateway API is the other side of that coin: how traffic from the outside world finds its way in.
-:::
-
-## The Evolution: From NodePort to Gateway API
-
-Kubernetes has always offered multiple ways to expose workloads externally, and the ecosystem has matured significantly over the years.
-
-The earliest approach was **NodePort**: exposing a service on a port of every node in the cluster. It works, but it requires clients to know a node's IP address and a specific high-numbered port, which is clunky and hard to manage at scale. Then came **LoadBalancer** services, which provision a cloud load balancer automatically, but give you one load balancer per service, which becomes expensive fast when you have dozens of applications.
-
-**Ingress** was the first unified answer. It introduced a dedicated resource that could route HTTP and HTTPS traffic to multiple services based on hostnames and paths, using a single external IP. This was a significant improvement, but Ingress has a well-known limitation: the API itself is minimal, and controllers rely heavily on annotations to configure advanced behavior. Annotations are not portable, what works on NGINX Ingress does not work on Traefik, which does not work on HAProxy Ingress. Every team working across multiple clusters or multiple controllers had to relearn the annotation vocabulary each time.
-
-**Gateway API** is the modern answer, designed by the Kubernetes community to address exactly these shortcomings. It is an official Kubernetes API (not an annotation workaround), with richer semantics, clear ownership boundaries, and explicit separation between infrastructure concerns and application routing concerns.
-
-:::info
-Ingress is not deprecated and is still widely used. For the CKA and CKAD exams, you should understand both. This module focuses on Gateway API, which is the direction the ecosystem is heading.
-:::
-
-## The Three Core Resources
-
-Gateway API introduces three main resource types, each with a distinct purpose. Think of it like building an office block:
-
-- **GatewayClass** is the blueprint, it defines the implementation. It answers the question: who is responsible for making this gateway work? The GatewayClass points to a specific controller, like Envoy Gateway.
-- **Gateway** is the front door of the building. It defines where external traffic arrives: which ports to listen on, which protocols to accept, and which TLS certificates to use. The platform team typically owns this resource.
-- **HTTPRoute** is the internal directory. It says "traffic arriving at this hostname, with this path, goes to this service." Application teams own their own HTTPRoutes in their own namespaces.
+That is exactly what the Kubernetes Gateway API provides.
 
 @@@
-flowchart LR
-    GC[GatewayClass\nenvoy-gateway-controller]
-    GW[Gateway\nport 80 / 443]
-    R[HTTPRoute\nhostname + path rules]
-    SVC[Service]
-    PODS[Pods]
+graph LR
+    Internet["Internet"]
+    GW["Gateway\nport 80"]
+    R1["HTTPRoute\napi.myapp.com"]
+    R2["HTTPRoute\napp.myapp.com"]
+    R3["HTTPRoute\nadmin.myapp.com"]
+    API["Service: api-svc"]
+    FE["Service: frontend-svc"]
+    ADMIN["Service: admin-svc"]
 
-    GC --> GW
-    GW --> R
-    R --> SVC
-    SVC --> PODS
+    Internet --> GW
+    GW --> R1
+    GW --> R2
+    GW --> R3
+    R1 --> API
+    R2 --> FE
+    R3 --> ADMIN
 @@@
 
-This three-tier model is not just organizational tidiness. It solves a real problem. In the old Ingress world, a single Ingress resource mixed infrastructure configuration with application routing, which meant either the platform team had to approve every route change, or the application team had too much access to infrastructure settings. With Gateway API, the boundary is explicit in the API itself.
+A single Gateway listens on one port and receives every inbound connection. Behind it, multiple HTTPRoute resources each decide which hostname or path maps to which backend Service. Each team can own their own HTTPRoute without touching the shared Gateway. This clean separation between infrastructure configuration and routing logic is the core structural advantage of Gateway API.
 
-## Ownership and Separation of Concerns
+Run the following command to see which Gateway API resource types are available in the simulated cluster:
 
-One of the design goals of Gateway API is to support multiple teams with different responsibilities working safely on the same cluster.
+```bash
+kubectl api-resources --api-group=gateway.networking.k8s.io
+```
 
-The **platform team** creates and owns the GatewayClass and Gateway resources. They decide how traffic enters the cluster, what ports are open, and what TLS policy applies. This is infrastructure work that affects the entire cluster.
+You should see `GatewayClass`, `Gateway`, and `HTTPRoute` in the output. These three resource types form the complete chain, and each has a distinct role.
 
-The **application teams** create and own their HTTPRoutes in their own namespaces. They define routing rules for their applications without touching the Gateway configuration. They cannot accidentally break traffic for another team's application.
+## GatewayClass: The Type of Gateway
 
-This model scales naturally. A single Gateway can serve hundreds of HTTPRoutes across dozens of namespaces, each managed by a different team, without any single team having visibility into or control over the others.
+A GatewayClass describes what implementation backs a set of Gateways, much like a car model in a manufacturer's catalog. The catalog entry tells you what engine type is used, what features are supported, and what safety ratings apply. You do not drive the catalog entry directly. You choose a model and purchase a specific car built on it.
 
-:::info
-In this simulation, Envoy Gateway is pre-installed and a default Gateway is already configured. You can focus on understanding the resources without needing to install anything.
-:::
-
-## Why Envoy Gateway?
-
-The controller that actually implements the Gateway API in this module is **Envoy Gateway**. Envoy is a high-performance proxy originally built at Lyft, now a graduated CNCF project. It is the proxy engine behind Istio, AWS App Mesh, and many other projects. Envoy Gateway wraps Envoy with a Kubernetes-native control plane that reconciles Gateway API resources and translates them into Envoy proxy configuration automatically.
-
-You do not interact with Envoy directly. You create Gateway API resources in Kubernetes, and Envoy Gateway takes care of configuring the proxy. The result is a fully functional edge proxy with TLS termination, host-based routing, path-based routing, and more, all driven by standard Kubernetes objects.
-
-@@@
-sequenceDiagram
-    participant You as You (kubectl)
-    participant K8s as Kubernetes API
-    participant EGC as Envoy Gateway Controller
-    participant EP as Envoy Proxy (Data Plane)
-    participant Client as External Client
-
-    You->>K8s: apply HTTPRoute
-    K8s-->>EGC: watch event (HTTPRoute created)
-    EGC->>EP: push updated routing config (xDS)
-    Client->>EP: HTTP request to app.example.com
-    EP->>K8s: forward to matching Service
-@@@
-
-## Hands-On Practice
-
-Let's get familiar with the Gateway API resources already running in your cluster.
-
-**Step 1: List available GatewayClasses**
+In Kubernetes, the GatewayClass holds a `spec.controllerName` that identifies which controller software manages all Gateways that reference this class. For Envoy Gateway, that value is `gateway.envoyproxy.io/gatewayclass-controller`. When that controller is running, it watches for Gateway resources that reference this class and provisions them.
 
 ```bash
 kubectl get gatewayclass
 ```
 
-Expected output:
+The `ACCEPTED` column tells you whether the controller has acknowledged this class. If it reads `True`, the controller is active and ready to provision Gateways that reference it.
 
-```
-NAME   CONTROLLER                                      ACCEPTED   AGE
-eg     gateway.envoyproxy.io/gatewayclass-controller   True       <age>
-```
+:::quiz
+You create a Gateway that references a GatewayClass with `ACCEPTED: False`. What happens?
 
-The `ACCEPTED: True` column confirms that the Envoy Gateway controller is running and has adopted this GatewayClass.
+- The Gateway is rejected and deleted automatically
+- The Gateway is created in the cluster but the controller does not act on it
+- The Gateway falls back to another available GatewayClass
 
-**Step 2: Inspect the GatewayClass**
+**Answer:** The Gateway is stored but ignored. A `False` acceptance means the controller did not acknowledge the class, so it will not provision anything from it.
+:::
 
-```bash
-kubectl describe gatewayclass eg
-```
+## Gateway: The Listener Instance
 
-Expected output excerpt:
-
-```
-Name:         eg
-API Version:  gateway.networking.k8s.io/v1
-Kind:         GatewayClass
-...
-Spec:
-  Controller Name:  gateway.envoyproxy.io/gatewayclass-controller
-Status:
-  Conditions:
-    Type:                  Accepted
-    Status:                True
-```
-
-The `Controller Name` and `Accepted=True` fields confirm that Envoy Gateway owns and accepts this class.
-
-**Step 3: List Gateways**
+A Gateway is the actual car you purchased, parked and ready to use. It references a GatewayClass and declares one or more listeners: which port to open, which protocol to use (HTTP, HTTPS, TCP), and optionally which hostnames to filter. A listener on port 80 matching `*.myapp.com` only accepts HTTPRoutes for hostnames under that wildcard.
 
 ```bash
-kubectl get gateways -A
+kubectl get gateway
 ```
 
-Expected output:
+A freshly created Gateway may show `PROGRAMMED: False` while the controller is still configuring the underlying proxy. Once it reads `True`, the listener is active and ready to receive connections.
 
-```
-NAMESPACE   NAME   CLASS   ADDRESS   PROGRAMMED   AGE
-default     eg     eg                False        <age>
-```
+:::info
+Gateway API is the modern replacement for the older `Ingress` resource (`networking.k8s.io/v1`). Where Ingress mixed infrastructure configuration and routing rules into a single object, Gateway API separates them cleanly: the `Gateway` owns listener configuration, the `HTTPRoute` owns routing rules. Platform teams and application teams can manage their respective resources independently.
+:::
 
-**Step 4: List HTTPRoutes**
+:::quiz
+Which field in a Gateway resource defines what port and protocol to accept traffic on?
 
-```bash
-kubectl get httproute -A
-```
+**Answer:** The `spec.listeners` field. Each listener entry declares a `port`, a `protocol`, and optionally a `hostname`. A single Gateway can have multiple listeners running concurrently.
+:::
 
-Expected output:
+## HTTPRoute: The Routing Instructions
 
-```
-NAMESPACE   NAME      HOSTNAMES             AGE
-default     backend   ["www.example.com"]   <age>
-```
+The HTTPRoute is the GPS itinerary loaded into the car before the trip. It defines where traffic goes after the Gateway has accepted the connection. A `parentRefs` field links the HTTPRoute to a specific Gateway, and then `rules` describe the matching conditions and the backend Services to route to.
 
-**Step 5: Describe the HTTPRoute to see the routing rules**
+Why does Kubernetes keep routing rules separate from listener configuration? Because routing is application-specific and changes frequently, while the Gateway configuration is infrastructure-level and changes rarely. Letting a development team update their HTTPRoute without any gateway admin approval is a meaningful operational benefit.
 
-```bash
-kubectl describe httproute backend
-```
+Together, the three resources form a complete chain: GatewayClass names the implementation, Gateway opens the listener, and HTTPRoute handles each individual request based on hostname and path.
 
-Expected output excerpt:
+:::warning
+Without a controller actively watching these resources, any Gateway and HTTPRoute you create are stored in the cluster but have no effect on traffic. The resources express declarative intent. The controller is what turns that intent into live proxy configuration.
+:::
 
-```
-Name:         backend
-Namespace:    default
-API Version:  gateway.networking.k8s.io/v1
-Kind:         HTTPRoute
-...
-Spec:
-  Hostnames:
-    www.example.com
-  Parent Refs:
-    Group:  gateway.networking.k8s.io
-    Kind:   Gateway
-    Name:   eg
-  Rules:
-    Backend Refs:
-      Kind:    Service
-      Name:    backend
-      Port:    3000
-    Matches:
-      Path:
-        Type:   PathPrefix
-        Value:  /
-...
-Status:
-  Parents:
-    Conditions:
-      Type:                  Accepted
-      Status:                True
-      Type:                  ResolvedRefs
-      Status:                <True|False>
-```
-
-Look at the `Spec` and `Status` sections together. `Spec` describes your routing intent, and `Status` confirms whether the controller accepted and resolved backend references.
+Gateway API provides a portable, team-friendly model for routing external traffic into a Kubernetes cluster. By separating the infrastructure layer from the routing layer, it scales with your organization without creating coordination bottlenecks between teams.

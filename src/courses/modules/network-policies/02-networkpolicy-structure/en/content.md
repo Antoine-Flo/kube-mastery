@@ -5,272 +5,216 @@ seoDescription: Understand the full NetworkPolicy manifest structure, including 
 
 # NetworkPolicy Structure
 
-Like all Kubernetes resources, a NetworkPolicy is a YAML manifest with a predictable structure. Once you internalize it, you can read and write policies confidently, and reason about what a policy does or doesn't allow just by reading it.
+You know a NetworkPolicy controls which Pods can communicate. Now the question is: how do you actually write one? The YAML structure is not long, but every field has a specific meaning, and one misread field can produce a policy that silently does nothing, or silently does the opposite of what you intended.
 
-## The Top-Level Shape
+This lesson builds the manifest field by field so each piece has a clear purpose before the next one is added.
 
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: my-policy
-  namespace: default
-spec:
-  podSelector: ...
-  policyTypes: [...]
-  ingress: [...]
-  egress: [...]
-```
+## The podSelector: Who This Policy Protects
 
-The `apiVersion` is always `networking.k8s.io/v1`. Everything meaningful lives under `spec`, which has four key fields: `podSelector`, `policyTypes`, `ingress`, and `egress`.
-
-## podSelector: Which Pods This Policy Governs
-
-The `podSelector` field determines which Pods in the namespace this policy applies to, using the same label-matching syntax you've seen throughout Kubernetes.
-
-```yaml
-podSelector:
-  matchLabels:
-    app: backend
-```
-
-This selects all Pods labeled `app=backend`. Any Pod without that label is completely unaffected.
-
-There's a special case worth knowing: an **empty podSelector** (`podSelector: {}`) selects all Pods in the namespace. This is frequently used for "default deny" policies that lock down an entire namespace.
-
-## policyTypes: Declaring Your Intent
-
-The `policyTypes` field lists which traffic directions this policy addresses: `Ingress`, `Egress`, or both.
-
-```yaml
-policyTypes:
-  - Ingress
-  - Egress
-```
-
-This field matters more than it might seem:
-
-- Including `Ingress` activates ingress filtering using your `ingress` rules. If `ingress` is empty or absent, the result is **deny-all ingress**.
-- Including `Egress` activates egress filtering. If `egress` is empty or absent, the result is **deny-all egress**.
-
-:::warning
-Omitting `policyTypes` entirely means Kubernetes infers it from the presence or absence of `ingress` and `egress` sections. To avoid surprises, always declare `policyTypes` explicitly.
-:::
-
-## ingress: Rules for Inbound Traffic
-
-The `ingress` field is a list of rules. Each rule defines allowed sources (`from`) and optionally restricts ports and protocols. Traffic is allowed if it matches **at least one** rule.
-
-```yaml
-ingress:
-  - from:
-      - podSelector:
-          matchLabels:
-            app: frontend
-    ports:
-      - protocol: TCP
-        port: 8080
-```
-
-This rule allows inbound TCP on port 8080 from Pods labeled `app=frontend`. Anything else, different port, different source, is blocked.
-
-## egress: Rules for Outbound Traffic
-
-The `egress` field mirrors `ingress`, but for outbound traffic. Instead of `from`, you use `to`.
-
-```yaml
-egress:
-  - to:
-      - podSelector:
-          matchLabels:
-            app: database
-    ports:
-      - protocol: TCP
-        port: 5432
-```
-
-This allows outbound TCP connections on port 5432 to Pods labeled `app=database`. All other outbound traffic is blocked.
-
-## A Complete Example
-
-A backend service that should only accept HTTP traffic from the frontend, on a specific port:
+The first and most important field is `podSelector`. This field answers the question: which Pods does this policy apply to? It does not mean "who is allowed to send traffic." It identifies the Pods being protected by this policy.
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-frontend-to-backend
+  name: protect-db
   namespace: default
 spec:
   podSelector:
     matchLabels:
-      app: backend
+      app: db # illustrative only
+```
+
+:::warning
+An empty `podSelector` written as `podSelector: {}` selects every Pod in the namespace, not zero Pods. This is a frequent source of mistakes. If you intend to protect only `db`, you must provide an explicit label.
+:::
+
+:::quiz
+You write a NetworkPolicy with `podSelector: {}`. Which Pods does it protect?
+
+- No Pods, because the selector is empty
+- All Pods in the namespace
+- All Pods in the cluster
+
+**Answer:** All Pods in the namespace - an empty selector matches everything in scope, which is the current namespace.
+:::
+
+## policyTypes: Ingress, Egress, or Both
+
+Once you define which Pods the policy covers, you tell Kubernetes what kind of traffic it governs with `policyTypes`.
+
+```yaml
+spec:
+  podSelector:
+    matchLabels:
+      app: db
+  policyTypes:
+    - Ingress # illustrative only
+```
+
+`Ingress` controls traffic entering the protected Pod. `Egress` controls traffic leaving it. You can list one or both. If you list `Ingress` but define no ingress rules, you get a deny-all for incoming traffic on those Pods. If you list `Egress` but define no egress rules, all outbound traffic from those Pods is denied.
+
+## ingress.from: Who Can Enter
+
+@@@
+graph LR
+    source["Allowed source"] -- "Ingress" --> pod["Protected Pod"]
+    blocked["Other Pods"] -. "denied" .-> pod
+@@@
+
+The `ingress` section lists which sources may send traffic to the protected Pods. Each entry in the `from` array describes an allowed source using one or more of three selectors: `podSelector`, `namespaceSelector`, or `ipBlock`.
+
+```yaml
+spec:
+  podSelector:
+    matchLabels:
+      app: db
   policyTypes:
     - Ingress
   ingress:
     - from:
         - podSelector:
             matchLabels:
-              app: frontend
+              app: api # illustrative only
+```
+
+This rule allows traffic from any Pod with `app: api` in the same namespace.
+
+## egress.to: Where the Pod Can Go
+
+The `egress` section works symmetrically. It lists where the protected Pods are allowed to send traffic.
+
+```yaml
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: db # illustrative only
+```
+
+## ports: Restricting by Port
+
+Both `ingress` and `egress` rules accept a `ports` field that limits the rule to specific ports and protocols.
+
+```yaml
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api
       ports:
         - protocol: TCP
-          port: 8080
+          port: 5432 # illustrative only
 ```
 
-Reading this aloud: "In the `default` namespace, Pods labeled `app=backend` will only accept inbound TCP connections on port 8080 from Pods labeled `app=frontend`. All other inbound traffic is denied."
+Without a `ports` field, the rule allows all ports. With it, only the listed ports are permitted.
 
-Notice that `policyTypes` only contains `Ingress`, egress from the backend is **not restricted** by this policy. The backend Pods can still make outbound connections anywhere. That's intentional here: we're only locking down who can reach the backend.
+:::quiz
+You define an ingress rule with no `ports` field. Which ports are allowed?
 
-## The from and to Arrays: OR vs AND Logic
+**Try it:** `kubectl describe networkpolicy protect-db`
 
-The `from` (and `to`) array supports three types of selectors:
-
-- **podSelector**: matches Pods by their labels within the same namespace as the policy
-- **namespaceSelector**: matches all Pods in namespaces whose labels match
-- **ipBlock**: matches traffic from (or to) a CIDR IP range
-
-**Multiple items in the array = OR logic.** Traffic is allowed if it matches any one of them.
-
-```yaml
-from:
-  - podSelector:
-      matchLabels:
-        app: frontend
-  - podSelector:
-      matchLabels:
-        app: monitoring
-```
-
-This allows traffic from frontend Pods **OR** monitoring Pods.
-
-**Multiple fields inside a single item = AND logic.** Both conditions must be true simultaneously.
-
-```yaml
-from:
-  - podSelector:
-      matchLabels:
-        app: frontend
-    namespaceSelector:
-      matchLabels:
-        env: production
-```
-
-This allows traffic only from Pods labeled `app=frontend` that are _also_ in a namespace labeled `env=production`. A frontend Pod in a different namespace would be blocked.
-
-:::info
-The distinction between one list item with multiple fields (AND) versus multiple list items (OR) is one of the trickiest aspects of NetworkPolicy syntax. Each list item (`-`) is an independent path. Fields within one item all have to match at once.
+**Answer:** All ports are allowed when no `ports` field is specified. Look for "Allowing ingress traffic" in the describe output and check whether ports are listed or shown as any.
 :::
 
-## The Structure as a Diagram
+## AND vs OR: The Critical Selector Logic
 
 @@@
 graph TD
-    NP["NetworkPolicy"]
-
-    NP --> PS["podSelector<br/>Which Pods this governs"]
-    NP --> PT["policyTypes<br/>[Ingress, Egress]"]
-    NP --> IG["ingress[]<br/>List of inbound rules"]
-    NP --> EG["egress[]<br/>List of outbound rules"]
-
-    IG --> IGR["Rule (item in list)<br/>OR with other rules (disjunction)"]
-    IGR --> FROM["from[]<br/>Allowed sources<br/>(OR between items)"]
-    IGR --> PORTS["ports[]<br/>Allowed ports/protocols"]
-
-    FROM --> PS2["podSelector"]
-    FROM --> NS2["namespaceSelector"]
-    FROM --> IP2["ipBlock (CIDR)"]
-
-    EG --> EGR["Rule (item in list)"]
-    EGR --> TO["to[]<br/>Allowed destinations"]
-    EGR --> PORTS2["ports[]"]
+    subgraph AND["Single from element (AND)"]
+        A["Pod must match label AND be in namespace"]
+    end
+    subgraph OR["Two from elements (OR)"]
+        B["Pod matches label"]
+        C["OR Pod is in namespace"]
+    end
 @@@
 
-## Ports: Restricting Further
-
-The `ports` array within each ingress or egress rule narrows down which ports and protocols are matched. If you omit `ports` from a rule, the rule matches all ports, be intentional about this.
-
-Each port entry can specify:
-
-- `protocol`: `TCP`, `UDP`, or `SCTP`. Defaults to `TCP` if omitted.
-- `port`: a port number (e.g., `8080`) or a named port (e.g., `"http"`)
-- `endPort`: optionally specify a range when combined with `port` (covered in the advanced lesson)
-
-If you want to allow both TCP and UDP on the same port, you need two separate entries in the `ports` list, one for each protocol.
-
-## Hands-On Practice
-
-Let's apply the `allow-frontend-to-backend` policy and verify it works. Use the terminal on the right panel.
-
-**1. Create test Pods with the correct labels:**
-
-```bash
-kubectl run frontend --image=nginx:1.28 --labels="app=frontend"
-kubectl run backend --image=nginx:1.28 --labels="app=backend"
-kubectl run other --image=nginx:1.28 --labels="app=other"
-```
-
-**2. Get the backend Pod's IP:**
-
-```bash
-kubectl get pods -o wide
-```
-
-**3. Apply the NetworkPolicy:**
+This is the most misunderstood part of NetworkPolicy. When you write multiple fields inside a single `from` element, they are combined with AND. The source must satisfy all conditions.
 
 ```yaml
-# allow-frontend-to-backend-networkpolicy.yaml
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api
+          namespaceSelector:
+            matchLabels:
+              env: production # illustrative only
+```
+
+Here, both conditions are inside the same list item (same `-`). The source Pod must have `app: api` AND be in a namespace labeled `env: production`.
+
+When you write multiple elements in the `from` array (multiple `-` entries), they are combined with OR. Either condition is sufficient.
+
+```yaml
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api
+        - namespaceSelector:
+            matchLabels:
+              env: production # illustrative only
+```
+
+Now any Pod with `app: api` in any namespace is allowed, OR any Pod in a namespace labeled `env: production` regardless of its own label.
+
+Why does this distinction exist? Because network rules often need both fine-grained Pod control and namespace-scoped access. The YAML list structure naturally expresses the difference, but only if you pay close attention to the indentation and where each `-` appears.
+
+:::quiz
+You want to allow only a Pod labeled `app: api` that is also in a namespace labeled `team: backend`. Which structure is correct?
+
+- Two separate `-` entries in the `from` array, one for each selector
+- Both selectors inside the same `-` entry in the `from` array
+
+**Answer:** Both selectors inside the same `-` entry - this produces AND logic. Two separate entries would produce OR logic, allowing any `app: api` Pod from any namespace.
+:::
+
+## Applying and Verifying the Full Policy
+
+Now build the complete manifest for a policy that protects `db`, allows ingress from `api` on port 5432, and governs only incoming traffic.
+
+```
+nano db-network-policy.yaml
+```
+
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-frontend-to-backend
+  name: protect-db
   namespace: default
 spec:
   podSelector:
     matchLabels:
-      app: backend
+      app: db
   policyTypes:
     - Ingress
   ingress:
     - from:
         - podSelector:
             matchLabels:
-              app: frontend
+              app: api
       ports:
         - protocol: TCP
-          port: 80
+          port: 5432
 ```
 
-```bash
-kubectl apply -f allow-frontend-to-backend-networkpolicy.yaml
+```
+kubectl apply -f db-network-policy.yaml
 ```
 
-**4. Test from the frontend (should succeed):**
-
-```bash
-kubectl exec frontend -- curl -s --connect-timeout 3 <BACKEND-IP>
+```
+kubectl describe networkpolicy protect-db
 ```
 
-**5. Test from the other Pod (should be blocked):**
+The `describe` output shows the selector, the policy types, and each ingress rule with its sources and ports. Read it carefully: it is your confirmation that the policy matches what you intended.
 
-```bash
-kubectl exec other -- curl -s --connect-timeout 3 <BACKEND-IP>
-```
-
-The `other` Pod doesn't have the `app=frontend` label, so the policy blocks it.
-
-**6. Inspect the policy:**
-
-```bash
-kubectl describe networkpolicy allow-frontend-to-backend
-```
-
-Look at the `PodSelector` and `Allowing ingress traffic` sections, they summarize the policy in human-readable form.
-
-**7. Clean up:**
-
-```bash
-kubectl delete pod frontend backend other
-kubectl delete networkpolicy allow-frontend-to-backend
-```
-
-You now understand the complete structure of a NetworkPolicy manifest. In the next two lessons, we'll go deep on ingress rules and egress rules separately, covering all the edge cases and patterns you'll encounter in real clusters.
+A NetworkPolicy is compact, but each field carries precise meaning. Getting the AND vs OR distinction right in `from` and `to` arrays is what separates a policy that works from one that silently allows too much or too little.

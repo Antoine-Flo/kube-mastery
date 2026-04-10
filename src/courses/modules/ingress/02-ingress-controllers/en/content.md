@@ -3,157 +3,82 @@ seoTitle: 'Envoy Gateway Controller: How Gateway API Is Implemented in Kubernete
 seoDescription: 'Understand how Envoy Gateway implements Gateway API resources, what the control plane and data plane do, and how reconciliation turns your YAML into live proxy config.'
 ---
 
-# Envoy Gateway Controller
+# The Controller Behind the Gateway
 
-In the previous lesson you learned about the three building blocks of Gateway API: GatewayClass, Gateway, and HTTPRoute. But those are just Kubernetes objects, YAML stored in etcd. On their own, they do nothing. Something has to watch them, understand them, and translate them into actual proxy behavior that can route real network traffic. That something is the **controller**.
-
-Every Gateway API implementation ships a controller, and the one used in this module is **Envoy Gateway**. Understanding what this controller does, and how it does it, will help you reason about what happens when things break, when routes don't appear to work, or when configuration changes don't seem to take effect.
-
-## The Two Sides of a Proxy System
-
-Proxy systems like Envoy Gateway are typically divided into two distinct layers:
-
-The **control plane** is the brain. It watches for configuration changes, validates them, and computes the desired state of the data plane. It never touches actual user traffic. In Envoy Gateway, the control plane is a Kubernetes controller running as a Deployment in the `envoy-gateway-system` namespace.
-
-The **data plane** is the muscle. It is the actual proxy that receives incoming connections, applies routing rules, and forwards requests to backend services. In Envoy Gateway, the data plane is an Envoy Proxy instance, also running in the cluster, managed by the control plane.
-
-This separation is intentional. The control plane can be restarted without dropping any active connections. The data plane handles traffic independently. You can update routing rules without causing a blip in traffic, because the control plane pushes incremental config updates to the data plane using a protocol called xDS.
+You have applied a Gateway manifest and an HTTPRoute. Both resources appear when you run `kubectl get gateway` and `kubectl get httproute`. But when you try to reach your service through the expected hostname, the connection times out. The resources are there, but nothing is routing traffic. This is a common confusion: Kubernetes resources are declarations of intent. Something must read those declarations and act on them. For Gateway API, that something is the controller.
 
 @@@
-flowchart TD
-    K8s[Kubernetes API Server]
-    CP[Envoy Gateway\nControl Plane]
-    DP[Envoy Proxy\nData Plane]
-    Client[External Client]
-    SVC[Kubernetes Service]
+graph LR
+    GW["Gateway resource"]
+    HR["HTTPRoute resource"]
+    GC["Envoy Gateway\nController"]
+    EP["Envoy Proxy Pod"]
+    SVC["Your Service"]
 
-    K8s -- watches GatewayClass\nGateway, HTTPRoute --> CP
-    CP -- xDS config push --> DP
-    Client -- HTTP/HTTPS --> DP
-    DP -- proxied request --> SVC
+    GW --> GC
+    HR --> GC
+    GC --> EP
+    EP --> SVC
 @@@
 
-## What the Control Plane Watches
+The controller watches Gateway and HTTPRoute resources in the cluster, translates them into proxy configuration, and applies that configuration to the Envoy data plane. The Envoy Proxy pods are what actually accept network connections and forward traffic to your Services. Without the controller, the proxy never gets configured, and traffic goes nowhere.
 
-The Envoy Gateway controller runs a reconciliation loop, similar to every other Kubernetes controller. It watches several resource types:
-
-- **GatewayClass**: is this class mine? If yes, manage all Gateways that reference it.
-- **Gateway**: what ports and protocols should I listen on? What TLS certificates apply?
-- **HTTPRoute, TLSRoute, GRPCRoute**: what are the routing rules? Which Service should receive which traffic?
-- **Secrets**: for TLS Gateways, what certificate and key should I load?
-
-When any of these resources change, the controller recomputes the full desired configuration and pushes an update to the Envoy data plane. The data plane applies the new configuration without restarting, which means routing updates are effectively live within seconds.
-
-:::info
-This is the Kubernetes controller pattern you may have already seen with Deployments and ReplicaSets. Envoy Gateway follows the exact same model: watch resources, compute desired state, reconcile actual state toward desired state, repeat.
-:::
-
-## Validation and Status Reporting
-
-One of the responsibilities of the control plane is validation. Not every combination of Gateway API resources is valid. For example, an HTTPRoute can reference a Gateway by name, but if that Gateway does not exist, or if the Gateway does not allow routes from the HTTPRoute's namespace, the route will not be accepted.
-
-When the controller validates resources, it writes back **status conditions** to them. These conditions are visible on the resources themselves and are extremely useful for debugging. If an HTTPRoute is not working, `kubectl describe httproute <name>` will show you the conditions set by the controller, including any reason why the route was rejected.
-
-:::warning
-A common mistake is to apply an HTTPRoute that references a Gateway in a different namespace without proper `allowedRoutes` configuration on the Gateway. The HTTPRoute will be created successfully, but the controller will reject it and set a `NotAllowed` condition. Always check the status conditions if traffic is not flowing.
-:::
-
-## How Envoy Proxy Receives Its Configuration
-
-Envoy Proxy does not read Kubernetes objects directly. It speaks a protocol called **xDS** (short for "x Discovery Service"), a gRPC-based API for pushing configuration to Envoy instances. The control plane acts as an xDS server: when routing config changes, it streams the update to all connected Envoy instances.
-
-This is what makes Envoy Gateway so efficient at handling configuration changes. You do not restart anything, you do not reload config files. The control plane translates your Kubernetes objects into xDS messages and streams them to Envoy in real time.
-
-## The Envoy Gateway Services
-
-When you inspect the `envoy-gateway-system` namespace, you will find several services:
-
-- The Envoy Gateway control plane service handles internal communication.
-- The Envoy proxy data plane is exposed as a `LoadBalancer` service, which is how external traffic enters the cluster and reaches Envoy.
-
-The `LoadBalancer` service gets an external IP (or remains in `<pending>` in local environments without a cloud load balancer). This is the IP address that your DNS records should point to, so that hostnames like `app.example.com` reach the Envoy proxy.
-
-## Hands-On Practice
-
-**Step 1: Verify the control plane pods are running**
+Check which GatewayClass is available and whether a controller is active:
 
 ```bash
-kubectl get pods -n envoy-gateway-system -l control-plane=envoy-gateway
+kubectl get gatewayclass
 ```
 
-Expected output:
+The `CONTROLLER` column shows the controller name, and the `ACCEPTED` column confirms that the controller is running and has claimed this class.
 
-```
-NAME                             READY   STATUS    RESTARTS   AGE
-envoy-gateway-<hash>             1/1     Running   0          <age>
-```
+## GatewayClass and `controllerName`
 
-**Step 2: Inspect the Envoy Gateway services**
+The GatewayClass is the link between your resources and the controller. Its `spec.controllerName` is a string the controller recognizes as its own name. When Envoy Gateway starts, it scans for GatewayClass resources where `controllerName` matches `gateway.envoyproxy.io/gatewayclass-controller`. It takes ownership of all Gateway resources that reference those classes.
 
-```bash
-kubectl get svc -n envoy-gateway-system
-```
-
-Expected output:
-
-```
-NAME                         TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)
-envoy-gateway                ClusterIP      10.96.xxx.xxx   <none>        18000/TCP,...
-envoy-default-eg-<hash>      LoadBalancer   10.96.yyy.yyy   <pending>     80:30xxx/TCP
-```
-
-The `LoadBalancer` service is your data plane entry point. In a real cloud environment, `EXTERNAL-IP` would be a public IP address.
-
-**Step 3: Inspect the GatewayClass status**
+Why does Kubernetes use this indirection instead of naming a controller directly in the Gateway manifest? Because it allows multiple controllers to run in the same cluster without conflict. An nginx-based controller and an Envoy-based controller can coexist peacefully, each owning a different GatewayClass and ignoring the other's resources entirely.
 
 ```bash
 kubectl describe gatewayclass eg
 ```
 
-Expected output excerpt:
+Look at the `Status.Conditions` section. A condition of type `Accepted` with status `True` means the controller is live and has taken ownership of this class.
 
-```
-Name:         eg
-API Version:  gateway.networking.k8s.io/v1
-Kind:         GatewayClass
-...
-Spec:
-  Controller Name:  gateway.envoyproxy.io/gatewayclass-controller
-Status:
-  Conditions:
-    Type:                  Accepted
-    Status:                True
-```
+:::quiz
+You deploy two controllers in the same cluster, each with a different `controllerName`. You create a GatewayClass with `controllerName: gateway.envoyproxy.io/gatewayclass-controller`. Which controller manages Gateways that reference this class?
 
-An `Accepted: True` condition confirms the controller has adopted this GatewayClass.
+**Answer:** Only the Envoy Gateway controller, because it matches its own controller name exactly. The other controller ignores any GatewayClass whose `controllerName` it does not recognize.
+:::
 
-**Step 4: Inspect the Gateway status**
+## The Reconciliation Loop
+
+The controller does not configure Envoy just once at startup. It runs a continuous reconciliation loop: it watches for any changes to Gateway and HTTPRoute resources, and every time something changes, it recomputes the full proxy configuration and pushes it to Envoy. This means your updates take effect within seconds without any manual restart of the proxy.
 
 ```bash
-kubectl describe gateway eg
+kubectl get gateway
 ```
 
-Expected output excerpt:
-
-```
-Name:         eg
-Namespace:    default
-Class:        eg
-Address:      127.0.0.1
-Listeners:
-  Name: http
-  Port: 80
-  Protocol: HTTP
-Allowed Routes:
-  Namespaces: from: Same
-```
-
-Look at listener and route attachment fields, they are set by the controller after it processes the Gateway resource.
-
-**Step 5: View recent controller logs**
+The `PROGRAMMED` column tells you whether the controller has successfully applied the current state to the data plane. If it reads `True`, Envoy is configured and ready. If it reads `False`, inspect the Gateway conditions:
 
 ```bash
-kubectl logs -n envoy-gateway-system -l control-plane=envoy-gateway --tail=30
+kubectl describe gateway my-gateway
 ```
 
-You will see reconciliation activity logged here. When you create or update a Gateway API resource, new log lines appear within seconds as the controller picks up the change.
+The `Status.Conditions` section explains why the Gateway is not yet programmed: a missing listener definition, an unresolved certificate reference, or no HTTPRoutes attached. Each condition includes a human-readable `Message` field.
+
+:::quiz
+A Gateway shows `PROGRAMMED: False`. What is the first command you would run to understand why?
+
+**Try it:** `kubectl describe gateway my-gateway`
+
+**Answer:** Look at the `Status.Conditions` section in the output. Each condition has a `Reason` and a `Message` field that explain what is blocking the controller from programming the proxy.
+:::
+
+:::info
+In the simulated cluster, Envoy Gateway is pre-configured. A GatewayClass named `eg` is available by default with `ACCEPTED: True`. You can create Gateway and HTTPRoute resources referencing it immediately, without installing any additional components.
+:::
+
+:::warning
+If you change the `controllerName` of an existing GatewayClass, all Gateways already referencing that class become orphaned. The original controller stops reconciling them because the name no longer matches, and unless another controller claims the new name, those Gateways stop being programmed and traffic stops flowing.
+:::
+
+The controller is the invisible engine of Gateway API. Without it, GatewayClass and Gateway resources sit inert in the cluster. With it running, every change you make to a Gateway or HTTPRoute triggers a reconciliation cycle that updates the live proxy configuration within seconds. Understanding where to look when that cycle stalls, starting with `kubectl describe gateway`, is the most practical debugging skill in this setup.

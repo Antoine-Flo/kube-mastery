@@ -9,5 +9,4 @@ export const module: LocalModule = {
     en: 'Logs, métriques et événements pour surveiller les applications.'
   },
   tags: ['ckad', 'cka', 'beginner'],
-  draft: true
 }

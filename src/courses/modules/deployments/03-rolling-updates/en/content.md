@@ -1,258 +1,115 @@
 ---
-seoTitle: 'Kubernetes Rolling Updates, maxUnavailable, maxSurge, Pause'
-seoDescription: 'Understand how Kubernetes rolling updates replace Pods gradually using maxUnavailable and maxSurge, and how to pause, resume, or recover from a failed rollout.'
+seoTitle: 'Kubernetes Rolling Updates, set image, maxSurge, maxUnavailable'
+seoDescription: 'Learn how Kubernetes Deployments perform zero-downtime rolling updates by creating a new ReplicaSet, and how maxSurge and maxUnavailable control the rollout pace.'
 ---
 
 # Rolling Updates
 
-Releasing a new version of software is inherently risky. No matter how thoroughly you test in staging, production environments have a way of surfacing surprises. The rolling update strategy is Kubernetes' answer to this challenge: it replaces your application's Pods gradually, a few at a time, ensuring that healthy Pods are always serving traffic throughout the transition. If something goes wrong, you can pause or roll back before the damage is widespread.
+Your `web-app` Deployment has three Pods running `nginx:1.28`. You want to release `nginx:1.26`. With a ReplicaSet, you would delete all Pods and accept the downtime. With a Deployment, you change one line and Kubernetes handles the rest: new Pods replace old ones one at a time, always keeping the application running.
 
-:::info
-A rolling update is triggered automatically whenever you change the Deployment's Pod template, for example by updating the container image. The Deployment controller handles the rest.
-:::
+## Triggering an update
 
-## What a Rolling Update Actually Does
-
-Imagine you have three Pods running `nginx:1.28` and you want to upgrade to `nginx:1.26`. A naive approach would be to terminate all three Pods and then start three new ones, but during that gap, your service is completely down. A rolling update avoids this entirely.
-
-Instead, Kubernetes follows a carefully coordinated sequence:
-
-1. Create a brand-new ReplicaSet for the new version (`nginx:1.26`), initially at zero replicas.
-2. Scale the new ReplicaSet up by one (or a small batch). A new Pod starts, gets its image pulled, and goes through the normal startup sequence.
-3. Wait until the new Pod passes its readiness probe, confirming it can actually serve traffic.
-4. Scale the old ReplicaSet down by one. One old Pod is terminated gracefully.
-5. Repeat until the new ReplicaSet has the full desired count and the old ReplicaSet is at zero.
-
-At no point during this process does the total number of healthy, ready Pods drop to zero. Your users keep getting served the whole time, some from old Pods, some from new ones, depending on where they land during the transition.
-
-## How to Trigger a Rolling Update
-
-There are two common ways to initiate an update.
-
-**Option 1: `kubectl set image`:** The fastest approach when you just want to change the container image:
+If `web-app` is not running from the previous lesson, recreate it first:
 
 ```bash
-kubectl set image deployment/web-app web=nginx:1.26
+kubectl apply -f web-deployment.yaml
 ```
 
-The format is `deployment/<name> <container-name>=<new-image>`. The container name matches what's in `spec.template.spec.containers[].name` in your manifest.
 
-**Option 2: Edit the manifest and re-apply:** The better approach for production, because it keeps your manifest file in sync with reality:
-
-```bash
-# Edit deployment.yaml, change nginx:1.28 to nginx:1.26
-kubectl apply -f deployment.yaml
-```
-
-Either method causes the Deployment controller to detect a change in the Pod template and kick off a new rollout.
-
-## The Two Key Parameters
-
-The rolling update strategy has two configurable parameters that control the pace of the update. You set them under `spec.strategy.rollingUpdate`:
-
-```yaml
-spec:
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-```
-
-**`maxUnavailable`** defines the maximum number of Pods that can be unavailable (not Ready) during the update. It can be an absolute number (`1`) or a percentage of the desired replica count (`25%`). The default is `25%`.
-
-**`maxSurge`** defines the maximum number of Pods that can exist _above_ the desired replica count during the update. If you have 3 replicas and `maxSurge: 1`, Kubernetes can temporarily run 4 Pods while swapping old for new. This is what enables the "create before destroy" behaviour. The default is also `25%`.
-
-These two values interact to determine the rhythm of the rollout. Consider a 4-replica Deployment with `maxUnavailable: 1, maxSurge: 1`:
-
-- The cluster can temporarily have 5 Pods (4 desired + 1 surge).
-- At most 1 Pod can be unavailable at any time.
-- So in each cycle: spin up 1 new Pod → wait for it to be Ready → terminate 1 old Pod → repeat.
-
-If you increase `maxSurge` and `maxUnavailable`, the rollout goes faster but uses more resources and accepts more risk. If you set both to very small values, the rollout is cautious but slow.
-
-:::info
-Setting `maxUnavailable: 0` and `maxSurge: 1` (or higher) gives you the safest possible rolling update: new Pods must be Ready before any old Pods are removed. This costs extra capacity during the rollout but guarantees that your replica count never drops below the desired value.
-:::
-
-## Watching the Update in Real Time
-
-The best way to understand rolling updates is to watch one happen. The `kubectl rollout status` command gives you a live progress stream:
+Then change the image:
 
 ```bash
 kubectl set image deployment/web-app web=nginx:1.26
 kubectl rollout status deployment/web-app
-# Waiting for deployment "web-app" rollout to finish: 1 out of 3 new replicas have been updated...
-# Waiting for deployment "web-app" rollout to finish: 2 out of 3 new replicas have been updated...
-# Waiting for deployment "web-app" rollout to finish: 1 old replicas are pending termination...
-# deployment "web-app" successfully rolled out
 ```
 
-You can also watch the ReplicaSets and Pods simultaneously:
+Watch `rollout status` report each step as new Pods become ready and old ones terminate. When it exits cleanly, the update is complete.
 
-```bash
-kubectl get rs -l app=web -w
-# (live-updating table showing old RS scaling down and new RS scaling up)
-```
+## What happens internally
+
+The Deployment controller does not modify the existing ReplicaSet. It creates a new one for `nginx:1.26`, then scales the two ReplicaSets in alternating steps until the old one reaches zero.
 
 @@@
 sequenceDiagram
-    participant DC as Deployment Controller
-    participant RS1 as ReplicaSet v1 (old)
-    participant RS2 as ReplicaSet v2 (new)
-    participant User as Traffic / Users
-
-    Note over RS1: replicas: 3 (all healthy)
-    Note over RS2: replicas: 0
-
-    DC->>RS2: Scale up to 1
-    RS2-->>DC: Pod ready
-    DC->>RS1: Scale down to 2
-    User->>RS1: Traffic (2 old pods)
-    User->>RS2: Traffic (1 new pod)
-
-    DC->>RS2: Scale up to 2
-    RS2-->>DC: Pod ready
-    DC->>RS1: Scale down to 1
-    User->>RS1: Traffic (1 old pod)
-    User->>RS2: Traffic (2 new pods)
-
-    DC->>RS2: Scale up to 3
-    RS2-->>DC: Pod ready
-    DC->>RS1: Scale down to 0
-
+    participant DEP as Deployment controller
+    participant RS1 as ReplicaSet v1 (nginx:1.28)
+    participant RS2 as ReplicaSet v2 (nginx:1.26)
+    DEP->>RS2: create new ReplicaSet
+    RS2->>RS2: +1 Pod, wait Ready
+    RS1->>RS1: -1 Pod
+    RS2->>RS2: +1 Pod, wait Ready
+    RS1->>RS1: -1 Pod
+    RS2->>RS2: +1 Pod, wait Ready
+    RS1->>RS1: -1 Pod
     Note over RS1: replicas: 0 (kept for rollback)
-    Note over RS2: replicas: 3 (all healthy)
-    User->>RS2: All traffic (3 new pods)
+    Note over RS2: replicas: 3 (active)
 @@@
 
-## Pausing and Resuming a Rollout
+At each step, a new Pod becomes Ready before an old one is terminated. Traffic is always served by healthy Pods. This is what "zero-downtime" means in practice: the application never fully stops.
 
-Sometimes you want to roll out an update gradually, update a subset of Pods, verify the new version is healthy, then continue. Kubernetes supports this with pause and resume:
+After the rollout, check the ReplicaSets:
 
 ```bash
-# Trigger the update and immediately pause it
-kubectl set image deployment/web-app web=nginx:1.26
-kubectl rollout pause deployment/web-app
+kubectl get replicaset -l app=web
 ```
 
-While paused, the Deployment controller stops making further changes. New Pods that were already started will remain running, old Pods will remain running. This lets you inspect the new version in production with limited blast radius, you've updated maybe one Pod out of three, and only a fraction of traffic is hitting the new version.
+Two ReplicaSets: one at 3 replicas (active), one at 0 (preserved for rollback). Their hashes differ because they represent different Pod templates.
 
-When you're satisfied:
+:::quiz
+Why does Kubernetes create a new ReplicaSet instead of modifying Pods in place?
+
+**Answer:** Because modifying a running Pod in place is not possible for most spec fields, they are immutable after creation. And even if it were possible, it would not give you rollback capability. A separate ReplicaSet for each version means you can always scale an old version back up without rebuilding anything.
+:::
+
+## Updating via the manifest
+
+`kubectl set image` is quick but it changes the cluster without touching your file. A better approach is to edit the manifest and re-apply:
 
 ```bash
-kubectl rollout resume deployment/web-app
+nano web-deployment.yaml
+```
+
+Change the image to `nginx:1.25`, then:
+
+```bash
+kubectl apply -f web-deployment.yaml
 kubectl rollout status deployment/web-app
 ```
 
+The file now reflects what is running. In a team setting, the manifest is the source of truth, not the cluster state.
+
 :::warning
-Don't leave a Deployment in a paused state for long periods unintentionally. A paused rollout means your Deployment is in a partially-updated state. Document your canary procedures carefully, and always remember to resume or abort.
+`kubectl set image` is imperative and does not update your YAML file. After running it, `web-deployment.yaml` is out of sync with the cluster. In a team setting this leads to confusion and accidental overwrites. Prefer editing the file and re-applying.
 :::
 
-## What Happens If the Update Fails?
+## Controlling the pace with `maxSurge` and `maxUnavailable`
 
-If new Pods fail to become Ready (due to a bad image, a crashing container, or failed health checks), the Deployment controller stops the rollout, it won't continue scaling up the broken new ReplicaSet. The old Pods remain running, so your service stays up at reduced capacity.
-
-By default, Kubernetes retries starting failed Pods with exponential backoff. If you want to stop immediately, roll back (covered in the next lesson) or fix the underlying issue and re-apply the manifest.
-
-You can configure how long Kubernetes waits before declaring a rollout "stuck" using `spec.progressDeadlineSeconds` (default: 600 seconds):
+These two fields in the rolling update strategy control how fast and how safely the update proceeds.
 
 ```yaml
+# illustrative only
 spec:
-  progressDeadlineSeconds: 120
-```
-
-After this deadline, the Deployment's `Progressing` condition is set to `False` with reason `ProgressDeadlineExceeded`, which is a clear signal for monitoring systems to alert.
-
-## Hands-On Practice
-
-**1. Create the Deployment**
-
-```yaml
-# web-app-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web-app
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: web
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1
       maxSurge: 1
-  template:
-    metadata:
-      labels:
-        app: web
-    spec:
-      containers:
-        - name: web
-          image: nginx:1.28
-          ports:
-            - containerPort: 80
 ```
 
-```bash
-kubectl apply -f web-app-deployment.yaml
-kubectl rollout status deployment/web-app
-```
+`maxUnavailable` sets how many Pods can be unavailable at once during the update. A lower value means slower but safer: fewer Pods are out of rotation at any given moment.
 
-**2. Trigger the update**
+`maxSurge` sets how many extra Pods (above `replicas`) can exist during the update. A lower value means less capacity used, which is useful on resource-constrained clusters.
 
-```bash
-kubectl set image deployment/web-app web=nginx:1.26
-```
+Both default to 25% of `replicas`, rounded down for `maxUnavailable` and up for `maxSurge`.
 
-Watch the cluster visualizer: you will see the two ReplicaSets appear side by side as the rollout progresses, with the `DESIRED` / `CURRENT` / `READY` counts shifting in real time.
+:::quiz
+During a rolling update with `replicas: 4`, `maxUnavailable: 1`, `maxSurge: 1`, what is the maximum number of Pods that can exist simultaneously?
 
-**3. Confirm all Pods are now on the new image**
+- 4: the desired count is never exceeded during a rolling update
+- 5: maxSurge allows one extra Pod above the desired count
+- 6: both maxSurge and maxUnavailable add to the total Pod count
 
-```bash
-kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
-# web-app-7e5c0d9a1-xxxxx: nginx:1.26
-# web-app-7e5c0d9a1-yyyyy: nginx:1.26
-# web-app-7e5c0d9a1-zzzzz: nginx:1.26
-```
+**Answer:** 5. `maxSurge` adds one extra above the desired count (4 + 1 = 5). `maxUnavailable` controls the availability floor (at least 3 must be Ready), not the total Pod count.
+:::
 
-**4. Try a fast (but risky) update by increasing surge and unavailability**
-
-```bash
-kubectl patch deployment web-app -p '{"spec":{"strategy":{"rollingUpdate":{"maxSurge":3,"maxUnavailable":3}}}}'
-
-kubectl set image deployment/web-app web=nginx:1.27
-
-# This update will be much faster, nearly instantaneous for 3 replicas
-kubectl rollout status deployment/web-app
-```
-
-**5. Practice pausing a rollout**
-
-```bash
-# First reset back to 1.25 to have something to update
-kubectl set image deployment/web-app web=nginx:1.28
-kubectl rollout status deployment/web-app
-
-# Now update to 1.26 and immediately pause
-kubectl set image deployment/web-app web=nginx:1.26
-kubectl rollout pause deployment/web-app
-
-# Check the mixed state
-kubectl get rs -l app=web
-kubectl get pods -l app=web -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[0].image}{"\n"}{end}'
-
-# Resume
-kubectl rollout resume deployment/web-app
-kubectl rollout status deployment/web-app
-```
-
-**7. Clean up**
-
-```bash
-kubectl delete deployment web-app
-```
-
-Throughout this exercise, watch the cluster visualizer (telescope icon). During the rolling update you'll see old and new ReplicaSets coexisting under the Deployment node, with Pod counts shifting between them in real time.
+Leave `web-app` running. The next lesson uses it to demonstrate rollback.

@@ -5,161 +5,75 @@ seoDescription: 'Learn how Kubernetes restartPolicy controls container recovery,
 
 # Container Restart Policies
 
-When a container inside a Pod stops running, whether because it completed its work, crashed with an error, or was killed for using too much memory, what happens next? The answer depends on a single field in your Pod spec: `restartPolicy`. Choosing the right policy for each workload type is one of the simplest yet most impactful decisions you make when writing Pod manifests.
+Imagine two programs. The first is a web server: it should run indefinitely, and if it crashes, you want Kubernetes to bring it back automatically. The second is a data processing script: it reads a file, writes results, exits with code 0, and its job is done. You do not want Kubernetes to restart it after a successful run. These two programs need very different behavior, and `restartPolicy` is how you express that difference.
 
-## Where `restartPolicy` Lives
+## What restartPolicy controls
 
-`restartPolicy` is a **Pod-level** field, not a per-container field. You can't say "restart container A but not container B." The policy applies to all containers in the Pod equally:
+The `restartPolicy` field lives in the Pod spec, not inside a container spec. It applies to every container in the Pod, and it has exactly three possible values: `Always`, `OnFailure`, and `Never`.
+
+@@@
+graph TD
+    EXIT["Container exits"]
+    EXIT --> CODE{Exit code?}
+    CODE --> ZERO["0 (success)"]
+    CODE --> NONZERO["non-zero (failure)"]
+    ZERO --> ALW_R["Always: restart"]
+    ZERO --> ONFE["OnFailure: no restart"]
+    ZERO --> NEV_OK["Never: Pod = Succeeded"]
+    NONZERO --> ALW_R2["Always: restart"]
+    NONZERO --> ONFE_R["OnFailure: restart"]
+    NONZERO --> NEV_FAIL["Never: Pod = Failed"]
+@@@
+
+**Always** restarts the container every time it stops, regardless of the exit code. A clean exit with code 0? Restart. A crash with code 1? Restart. This is the default value, and it is the right choice for any long-running service.
+
+**OnFailure** restarts the container only when it exits with a non-zero code. A successful exit is respected and the Pod moves to `Succeeded`. This is the right choice for batch jobs and scripts that may occasionally fail and need a retry, but should not be re-run after success.
+
+**Never** means exactly that. Whatever the exit code, Kubernetes will not restart the container. The Pod moves to `Succeeded` if all containers exited 0, or `Failed` if any exited non-zero. Use this for true one-shot tasks where even retrying on failure is not desired.
+
+## Why Always is the default
+
+Why would Kubernetes assume you always want restarts? Because the vast majority of workloads on Kubernetes are services: web servers, APIs, workers listening to queues. For these, a crash is an anomaly, not an expected outcome. `Always` keeps your service running without human intervention, which is the whole point of running on Kubernetes. If you are building a one-shot task, you opt out of this default explicitly.
+
+## Setting restartPolicy in a manifest
 
 ```yaml
-spec:
-  restartPolicy: Always
-  containers:
-    - name: web
-      image: nginx:1.28
-```
-
-There are exactly three valid values: `Always`, `OnFailure`, and `Never`.
-
-## `Always`: The Default for Long-Running Services
-
-`Always` is the default value, if you omit the field entirely, Kubernetes behaves as if you wrote `restartPolicy: Always`. With this policy, Kubernetes restarts a container **no matter how it exits**: whether it exits cleanly with code 0 or crashes with a non-zero code.
-
-This is the right policy for web servers, background workers, proxies, databases, and any other process that is supposed to run continuously. If your nginx container crashes unexpectedly, Kubernetes picks it back up and restarts it, typically within a few seconds.
-
-:::info
-When Pods are managed by a Deployment, the Deployment controller ensures that the right number of Pods are always running. But `restartPolicy: Always` within each Pod provides a second line of defense, if a container inside a running Pod crashes, it will be restarted on the same node without needing the Deployment controller to intervene.
-:::
-
-## `OnFailure`: For Batch Jobs That Should Retry
-
-`OnFailure` instructs Kubernetes to restart a container only if it **exits with a non-zero exit code**, that is, only if it failed. If the container exits cleanly with code 0, Kubernetes leaves it alone and the Pod moves to `Succeeded`.
-
-This policy is designed for batch workloads and one-time tasks. Consider a data processing job that downloads files, processes them, and exits. If it exits with code 0, it succeeded, no restart needed. If it exits with code 1 due to a transient network error, you do want it to retry.
-
-```yaml
+# illustrative only
 spec:
   restartPolicy: OnFailure
   containers:
-    - name: data-processor
-      image: my-batch-job:1.0
+    - name: processor
+      image: busybox:1.36
 ```
 
-`OnFailure` is well-suited for Kubernetes Jobs, which we'll cover in a later module.
+Notice that `restartPolicy` sits at the same level as `containers`, not inside a container definition. This is intentional: one policy governs all containers in the Pod.
 
-## `Never`: For Tasks That Should Not Retry
+:::quiz
+You have a worker that processes a task, succeeds, and exits. You want Kubernetes to treat it as successfully completed. Which restart policy should you use?
 
-`Never` tells Kubernetes to never restart the container under any circumstances. If the container exits, whether successfully or with an error, it stays stopped. The Pod transitions to `Succeeded` (exit code 0) or `Failed` (non-zero).
+- `Always`: the container is restarted after every exit, including successful ones
+- `OnFailure`: the container is not restarted if the exit code is 0
+- `Never`: the container is never restarted, Pod moves to Succeeded or Failed
 
-This policy is appropriate for one-shot tasks where retrying would be harmful, a migration script where running it twice would corrupt data, or a diagnostic tool you run once and inspect the output of.
-
-```yaml
-spec:
-  restartPolicy: Never
-  containers:
-    - name: db-migration
-      image: my-migrator:1.0
-```
-
-## The Exponential Backoff: CrashLoopBackOff
-
-When Kubernetes restarts a container under `Always` or `OnFailure`, it doesn't retry immediately every time. If a container keeps crashing, Kubernetes uses an **exponential backoff** delay between restart attempts to avoid wasting resources and flooding logs:
-
-- **1st restart**: 10 seconds
-- **2nd restart**: 20 seconds
-- **3rd restart**: 40 seconds
-- **4th restart**: 80 seconds
-- **5th restart**: 160 seconds
-- ...up to a maximum of **300 seconds (5 minutes)**, then retries indefinitely at that interval
-
-This is what you see as **`CrashLoopBackOff`** in `kubectl get pods`. It's not a phase or container state, it's a reason code inside the container's `Waiting` state, meaning: "This container has been crashing repeatedly; Kubernetes is waiting before trying again."
-
-The underlying problem could be anything: a missing environment variable, a misconfigured connection string, a bug in application code, or a missing secret. The most useful first step is checking logs from the last crash:
-
-```bash
-kubectl logs <pod-name> --previous
-```
-
-The `--previous` flag is critical, it shows logs from the _last_ (crashed) container instance, not the current waiting one. Without it, you might get no output at all.
-
-:::warning
-`CrashLoopBackOff` is often a sign that the exponential backoff is actively protecting your cluster. If a container crashes and immediately restarts hundreds of times, it could eat up CPU and memory on the node. The backoff gives you time to notice and act without the cluster being overwhelmed.
+**Answer:** `OnFailure` or `Never` depending on whether retries on failure are acceptable. `OnFailure` is usually the best fit for jobs: it retries on error but respects a clean exit. `Always` is wrong here because it would restart the container even after a successful run, looping forever.
 :::
 
-## Checking Restart Counts
+## The backoff mechanism
 
-The `RESTARTS` column in `kubectl get pods` shows the cumulative number of times containers in a Pod have been restarted. A healthy long-running Pod should have 0 or very few restarts. A high restart count is a signal that something is wrong.
+Kubernetes does not restart a crashing container instantly every time. It applies exponential backoff: 10 seconds, then 20, 40, 80, up to 5 minutes between attempts. This prevents a broken container from consuming CPU and generating noise at full speed. The `RESTARTS` counter in `kubectl get pods` shows how many times Kubernetes has retried, and the `STATUS` column will show `CrashLoopBackOff` when the backoff is in effect.
 
-```
-NAME          READY   STATUS             RESTARTS   AGE
-healthy-pod   1/1     Running            0          2d
-crashy-pod    0/1     CrashLoopBackOff   47         1h
-```
+:::warning
+`CrashLoopBackOff` is not a Kubernetes failure. It means Kubernetes is working correctly: it is restarting the container as instructed, but the container keeps exiting. The problem is inside the container itself. Check `kubectl describe pod <name>` for the exit code, and `kubectl logs <name>` for the container output before it died. The restart policy does not fix bugs; it only controls what Kubernetes does after a bug causes a crash.
+:::
 
-`crashy-pod` has restarted 47 times in an hour. Use `kubectl describe` and `kubectl logs --previous` to investigate. The `Last State` section in `kubectl describe pod` shows the exit code from the most recent crash:
+:::info
+Kubernetes Jobs, which run batch workloads at scale, use `OnFailure` or `Never` by default. Never set `restartPolicy: Always` on a Pod intended to run a finite task. After it succeeds, Kubernetes would restart it immediately, running it again and again indefinitely.
+:::
 
-```
-Last State:  Terminated
-  Reason:    Error
-  Exit Code: 1
-Restart Count: 47
-```
+:::quiz
+Why does restartPolicy apply to the entire Pod rather than to individual containers?
 
-## Hands-On Practice
+**Answer:** Containers in a Pod share the same network namespace, the same IP address, and often the same volumes. They are designed to run together as a single unit. Applying different restart strategies to individual containers in the same Pod would create difficult-to-reason-about intermediate states where some containers are running and others are not, against the intent of the shared spec. The Pod is the atom of scheduling, and the restart policy reflects that.
+:::
 
-Let's explore all three restart policies with real examples.
-
-**1. `Always` in action, observe self-healing in the visualizer:**
-
-```bash
-kubectl run always-pod --image=nginx:1.28 --restart=Always
-kubectl get pod always-pod
-```
-
-Now trigger a restart by killing the nginx process inside the container:
-
-```bash
-kubectl exec always-pod -- nginx -s stop
-```
-
-You'll see the container immediately restart and go back to `Running`.
-
-**2. `Never` with success, Pod becomes Completed:**
-
-```bash
-kubectl run success-never --image=busybox:1.36 --restart=Never
-```
-
-Watch it complete and reach `Completed` status.
-
-**3. `Never` with failure, Pod becomes Failed:**
-
-```bash
-kubectl run fail-never --image=busybox:1.36 --restart=Never -- sh -c "exit 1"
-```
-
-Watch it reach `Error` status (which represents the `Failed` phase)
-
-**4. `OnFailure` cycling, observe backoff:**
-
-```bash
-kubectl run crashy --image=busybox:1.36 --restart=OnFailure -- sh -c "exit 1"
-```
-
-Watch the status cycle between `Error` and `CrashLoopBackOff`.
-
-**5. Describe the crashy pod to see exit code and restart count:**
-
-```bash
-kubectl describe pod crashy
-```
-
-Find `Last State`, `Exit Code`, and `Restart Count` in the output.
-
-**6. Clean up:**
-
-```bash
-kubectl delete pod always-pod success-never fail-never crashy
-```
-
-Restart policies are a simple concept with significant practical impact. Choosing the right one for each workload is part of designing reliable Kubernetes applications, and recognizing `CrashLoopBackOff` as a signal to investigate (rather than just a status to ignore) is one of the most valuable debugging instincts you can develop.
+Understanding restart policies makes `CrashLoopBackOff` much less mysterious. You know why Kubernetes keeps retrying, and you know where to look when the retry loop does not resolve itself. The next lesson covers a different kind of constraint: what happens when you need to change a Pod that is already running.

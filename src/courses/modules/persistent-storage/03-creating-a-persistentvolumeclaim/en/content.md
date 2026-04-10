@@ -5,223 +5,133 @@ seoDescription: Learn how to write a Kubernetes PersistentVolumeClaim, understan
 
 # Creating a PersistentVolumeClaim
 
-With a PersistentVolume in place, the next step is to claim it. This is where the application developer enters the picture. The PersistentVolumeClaim is the object that bridges the gap between the abstract storage resource an administrator has provisioned and the concrete storage need an application has. Writing a PVC does not require knowing which specific volume you'll get, you simply describe what you need, and Kubernetes finds a match.
+The cluster administrator has pre-provisioned a PersistentVolume with 1 Gi of storage. Now the development team needs to use it. Nobody on the team knows which node the disk is on, what path it uses, or how it was configured. All they know is what their application needs: a certain amount of writable storage. They express that need as a PersistentVolumeClaim.
 
-## PVCs Are Namespaced
+## Building the PVC Manifest Step by Step
 
-Unlike PersistentVolumes, which live at the cluster level, a PersistentVolumeClaim is a **namespaced** resource. It belongs to a specific namespace, and Pods can only reference PVCs in their own namespace. This aligns with the principle that different teams or environments (development, staging, production) operate in separate namespaces and should manage their own storage requests independently.
-
-When you run `kubectl get pvc`, you see only the PVCs in your current namespace context. To see PVCs across all namespaces, use `kubectl get pvc -A` or `kubectl get pvc --all-namespaces`.
-
-## Anatomy of a PersistentVolumeClaim Manifest
-
-Here is a complete, minimal PVC manifest:
+Unlike a PV, a PVC is namespace-scoped. It belongs to a specific namespace and can only be used by Pods in the same namespace. Start with the resource structure:
 
 ```yaml
+# illustrative only
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: my-pvc
-  namespace: default
+  name: postgres-pvc
+```
+
+Add `spec.resources.requests.storage` to declare how much storage the application needs. The PV only needs to offer at least this amount, not the exact same value:
+
+```yaml
+# illustrative only
+spec:
+  resources:
+    requests:
+      storage: 500Mi
+```
+
+Add `accessModes` to declare how the application will access the volume. This must be compatible with the modes the target PV advertises:
+
+```yaml
+# illustrative only
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi
-  storageClassName: manual
+      storage: 500Mi
 ```
 
-This manifest is intentionally simple. A PVC describes _requirements_, not _implementation details_. Let's examine what each field does.
-
-### `accessModes`
-
-Just like a PV, the PVC declares which access mode it requires. The binding algorithm will only consider PVs that support the requested mode. In this case, `ReadWriteOnce` means the volume should be mountable read-write from a single node. If no PV with a compatible access mode is available, the PVC remains in `Pending` state.
-
-### `resources.requests.storage`
-
-This is the minimum amount of storage the PVC needs. Kubernetes will bind this PVC to a PV that has at least this much capacity. In the example above, any PV with 5Gi or more (and matching access mode and storage class) would be eligible. If a 10Gi PV is the only available one, the PVC will bind to it and effectively "use" 10Gi of reservation, even though only 5Gi was requested.
-
-This is an important nuance: **a PVC can bind to a PV that is larger than the requested size**. The PVC does not get a dedicated slice of the PV, it gets the entire PV. The `storage` field in the request is a _minimum threshold_, not an exact allocation.
-
-### `storageClassName`
-
-This field controls which StorageClass the PVC belongs to. When set to `manual`, only PVs also labeled `storageClassName: manual` are considered. If you omit this field entirely, the behavior depends on cluster configuration, the default StorageClass (if one is annotated as default) may be applied automatically. To explicitly request a PV with no storage class (for manual, pre-bound scenarios), set `storageClassName: ""` (empty string).
-
-:::info
-In most production clusters, you won't use `storageClassName: manual`. Instead, you'll reference a real StorageClass like `standard`, `gp2`, `premium-rwo`, or whatever your cloud provider offers. The StorageClass determines both which PVs are eligible for binding and, with dynamic provisioning, how the PV is automatically created.
-:::
-
-## The Binding Process in Detail
-
-Once a PVC is submitted, the Kubernetes control plane's **PersistentVolume controller** (which runs inside the controller-manager) continuously scans for unbound PVCs and tries to find a matching PV for each one.
-
-@@@
-flowchart LR
-    A[PVC Submitted<br/>Pending] --> B{Find matching PV}
-    B --> C{Check accessMode<br/>compatibility}
-    C -->|No match| D[PVC stays Pending<br/>check describe]
-    C -->|Match| E{Check storage<br/>size ≥ request}
-    E -->|Too small| D
-    E -->|Large enough| F{Check storageClass<br/>match}
-    F -->|Mismatch| D
-    F -->|Match| G[Bind PVC to PV<br/>Both become Bound]
-    G --> H[Pod can now<br/>mount the PVC]
-@@@
-
-All three criteria must match: access mode, capacity (PV storage ≥ PVC request), and storage class. The first PV that satisfies all requirements wins, Kubernetes does not try to find the _smallest_ PV that fits, just the first qualifying one.
-
-## What Happens When No Match Is Found
-
-If no compatible PV exists when the PVC is submitted, the PVC enters `Pending` state and waits. The controller periodically retries, the moment a compatible PV becomes available (whether created manually by an admin or via dynamic provisioning), the PVC is automatically bound without any further action on your part. You can submit a PVC and a PV in any order, and Kubernetes will figure it out.
-
-When a PVC is stuck in `Pending`, the most useful diagnostic command is:
+That is everything needed for a basic claim against a statically provisioned PV. Assemble the full manifest and apply it:
 
 ```bash
-kubectl describe pvc my-pvc
+nano pvc.yaml
 ```
 
-The `Events` section at the bottom will typically tell you exactly why binding failed, "no persistent volumes available for this claim" means no PV exists or none satisfies the requirements.
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+```
 
-## Dynamic Provisioning: PVs on Demand
+```
+kubectl apply -f pvc.yaml
+```
 
-With a StorageClass that has a provisioner configured, you don't need to create PVs at all. When the PVC is submitted, the StorageClass provisioner is invoked immediately. It calls the appropriate API (cloud provider, storage system, CSI driver) to create a new storage volume, then creates a PV representing that volume, and then binds the PVC to it. The whole process typically completes in seconds.
+```
+kubectl get pvc
+```
 
-Dynamic provisioning is the default in most cloud-hosted Kubernetes clusters. The only difference in your PVC manifest is that `storageClassName` references a real provisioner-backed StorageClass instead of `manual`.
+If a compatible PV exists, the STATUS column shows `Bound` almost immediately. Both the PVC and the PV now display `Bound`, and the PV's `CLAIM` column shows the namespace-qualified PVC name.
+
+:::quiz
+You apply a PVC requesting 500Mi with `ReadWriteOnce`. A PV with 1Gi and `ReadWriteOnce` is available. What STATUS does the PVC show after a few seconds?
+
+- Pending, because the PVC requests less than the PV offers
+- Bound, because the PV satisfies all requirements
+- Available, because the PVC has not been mounted yet
+
+**Answer:** Bound, because the PV satisfies all requirements - PV capacity only needs to be greater than or equal to the request, and the access modes are compatible.
+:::
+
+## How the Binding Algorithm Works
+
+When a PVC is applied, the control plane runs a matching algorithm to find the best available PV. Picture it as a checklist:
+
+@@@
+graph TD
+    PVC["PVC created"] --> C1["PV capacity >= request?"]
+    C1 --> C2["accessModes compatible?"]
+    C2 --> C3["storageClassName matches?"]
+    C3 --> C4["PV status is Available?"]
+    C4 --> Bound["PVC binds to PV"]
+    C1 --> Pending["PVC stays Pending"]
+    C2 --> Pending
+    C3 --> Pending
+    C4 --> Pending
+@@@
+
+Every condition must pass. If multiple PVs satisfy all conditions, Kubernetes prefers the one closest in size to the request to avoid wasting large volumes on small claims.
+
+Why does Kubernetes refuse to match a PVC to a PV with a different access mode, even if the size is right? Because mounting a `ReadWriteOnce` volume from multiple nodes would violate the storage backend's guarantees and risk data corruption. The access mode check is a safety contract, not just a label.
+
+## Diagnosing a Pending PVC
+
+When no PV matches, the PVC stays in `Pending`. The fix starts with a description:
+
+```
+kubectl describe pvc postgres-pvc
+```
+
+Look at the `Events` section at the bottom. A typical message is `no persistent volumes available for this claim and no storage class is set`. This tells you either no PV exists with matching criteria, or the storageClassName in the PVC does not match any available PV.
 
 :::warning
-When dynamic provisioning is used, the default reclaim policy on the auto-created PV is usually `Delete`. This means **deleting the PVC will also delete the underlying cloud disk and all its data**. Always check the reclaim policy of your StorageClass before working with production data.
+A `Pending` PVC waits indefinitely. Kubernetes will not bind a PVC to a PV that is too small, has an incompatible access mode, or carries a different `storageClassName`, even if the mismatch is minor. A PV in `Released` state also does not qualify. Check every field: capacity, access modes, storageClassName, and PV status before assuming the cluster is broken.
 :::
 
-## Hands-On Practice
+Common mismatches to check:
 
-In this exercise you'll create a PV and a PVC, watch the binding happen, and investigate what a pending PVC looks like.
+- The PVC requests `ReadWriteMany` but the only available PV is `ReadWriteOnce`
+- The PVC requests 2Gi but the only available PV has 1Gi
+- The PVC has `storageClassName: fast` but no PV carries that class
+- The only candidate PV is in `Released` state, not `Available`
 
-**Step 1: Create a PersistentVolume**
+:::info
+When a cluster uses dynamic provisioning, a StorageClass with a provisioner creates the matching PV automatically the moment the PVC is applied. The PVC does not wait for a human admin, and `kubectl get pv` shows a new PV appearing within seconds. This module covers static provisioning first so the matching algorithm is fully visible before dynamic provisioning adds automation on top.
+:::
 
-```yaml
-# my-pv-persistentvolume.yaml
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: my-pv
-spec:
-  capacity:
-    storage: 5Gi
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: manual
-  hostPath:
-    path: /mnt/data
-```
+:::quiz
+Your PVC stays `Pending` after 30 seconds. What is the first command to run to diagnose the problem?
 
-```bash
-kubectl apply -f my-pv-persistentvolume.yaml
-```
+**Try it:** `kubectl describe pvc postgres-pvc`
 
-**Step 2: Create a PersistentVolumeClaim**
+**Answer:** Look at the Events section. The message there explains why no PV was found: mismatched capacity, incompatible access mode, storageClassName difference, or no Available PV at all.
+:::
 
-```yaml
-# my-pvc-persistentvolumeclaim.yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: my-pvc
-  namespace: default
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 5Gi
-  storageClassName: manual
-```
-
-```bash
-kubectl apply -f my-pvc-persistentvolumeclaim.yaml
-```
-
-**Step 3: Check binding status**
-
-```bash
-kubectl get pvc my-pvc
-```
-
-Expected output:
-
-```
-NAME     STATUS   VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-my-pvc   Bound    my-pv    5Gi        RWO            manual         6s
-```
-
-The STATUS column shows `Bound` and the VOLUME column shows which PV was selected. Now check the PV:
-
-```bash
-kubectl get pv my-pv
-```
-
-Expected output:
-
-```
-NAME    CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM            STORAGECLASS   AGE
-my-pv   5Gi        RWO            Retain           Bound    default/my-pvc   manual         45s
-```
-
-The CLAIM column shows `default/my-pvc`, the namespace and name of the bound PVC.
-
-**Step 4: Simulate a pending PVC**
-
-Create a PVC that requests more storage than any available PV can provide:
-
-```yaml
-# my-pvc-pending-persistentvolumeclaim.yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: my-pvc-pending
-  namespace: default
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 100Gi
-  storageClassName: manual
-```
-
-```bash
-kubectl apply -f my-pvc-pending-persistentvolumeclaim.yaml
-```
-
-```bash
-kubectl get pvc my-pvc-pending
-```
-
-Expected output:
-
-```
-NAME             STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-my-pvc-pending   Pending                                      manual         5s
-```
-
-**Step 5: Describe the pending PVC**
-
-```bash
-kubectl describe pvc my-pvc-pending
-```
-
-Look at the Events section at the bottom:
-
-```
-Events:
-  Type     Reason              Age   From                         Message
-  ----     ------              ----  ----                         -------
-  Warning  ProvisioningFailed  5s    persistentvolume-controller  no persistent volumes available for this claim and no storage class is set
-```
-
-This is the exact output you'll see in real debugging scenarios. Clean up the pending PVC when you're done:
-
-```bash
-kubectl delete pvc my-pvc-pending
-```
+Once the PVC is `Bound`, the development team has secured storage without ever touching a PV definition. The next step is connecting that PVC to a running Pod so the application can actually read and write data.

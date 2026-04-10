@@ -3,30 +3,38 @@ seoTitle: KubeMastery, Navigate the Terminal and Cluster Interface
 seoDescription: Learn how to use the KubeMastery platform, including the terminal panel, cluster visualizer, reset button, and how to navigate course lessons.
 ---
 
-# Welcome 👋
+# Welcome
 
-<!-- <img class="meme" src="https://i.imgflip.com/amuq3d.jpg" title="made at imgflip.com"/> -->
-
-Welcome and thank you for using KubeMastery. If anything doesn't work as expected, please let us know.
+Welcome to KubeMastery. This first lesson takes two minutes. By the end of it you will have deployed a workload to a simulated cluster and watched it come alive in real time.
 
 :::info
 On mobile, not every keyboard works well with the terminal. <a href="https://play.google.com/store/apps/details?id=com.google.android.inputmethod.latin&hl=en" target="_blank">**Gboard**</a> works reliably if you need to practice on the go.
 :::
 
-## Hands-On Practice
+## How the Platform Works
 
-Every lesson on KubeMastery follows the same structure: theory first, then a hands-on practice section where you apply what you just learned in the terminal. Before diving into the theory, here's a quick demo of what that looks like in practice. You'll write a Deployment manifest, apply it, and watch the Pods appear live in the cluster visualizer.
+The terminal is connected to a simulated Kubernetes cluster running entirely in your browser. It is not a real cluster, but the commands, the outputs, and the cluster behavior are designed to match what you would see on a real one. Every `kubectl` command you type reaches that simulation, and changes persist within the session. Pods move through phases like `Pending`, `ContainerCreating`, and `Running` just as they would on a live cluster.
 
-**1. Copy and paste the command below into the terminal:**
+Alongside the terminal, a cluster visualizer shows those transitions live. Open it by clicking the telescope icon below the terminal.
+
+@@@
+graph LR
+    T["Terminal<br/>kubectl, ls, nano, ..."]
+    V["Cluster Visualizer<br/>Pods, Deployments, Events"]
+    T -- "apply / get / delete" --> V
+@@@
+
+## Your First Deployment
+
+Let's see both in action. Open the visualizer now, then run this command in the terminal:
 
 ```bash
 nano deployment.yaml
 ```
 
-**2. Copy and paste the following manifest into the editor:**
+Paste the following manifest into the editor:
 
 ```yaml
-#deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -46,20 +54,27 @@ spec:
           image: nginx:1.28
 ```
 
-Press **Ctrl+S** to save and close the editor.
+Save and close with **Ctrl+S**. Now apply it:
 
-**3. Type the apply command, then open the visualizer before pressing Enter:**
 
 ```bash
 kubectl apply -f deployment.yaml
 ```
 
-Click the telescope icon below the terminal to open the visualizer, then come back to the terminal and press **Enter**. Watch the three nginx Pods appear and transition to `Running` in real time. Hover any Pod to inspect its details.
+The terminal prints `deployment.apps/nginx created`. In the visualizer, three Pods appear and move from `Pending` to `Running`. Hover any Pod to inspect its labels and status.
 
-You should see in the terminal: `deployment.apps/nginx created`.
+:::quiz
+You applied a Deployment with `replicas: 3`, but the terminal shows only one confirmation line, not three. Why does `kubectl apply` not print one line per Pod?
 
-**4. Reset the cluster:**
+**Answer:** Kubernetes creates the Deployment object first. The ReplicaSet and Pods are created asynchronously by controllers running in the background. The `apply` command confirms the Deployment was accepted by the API, not that all Pods are ready.
+:::
 
-Click the reload icon below the terminal to wipe everything and start fresh.
+## Resetting the Cluster
 
-You're ready to begin the course.
+When you want to start over, click the reload icon below the terminal. This resets both the cluster and the filesystem to their initial state. Use it freely: nothing here has real consequences.
+
+:::warning
+Resetting discards every file you created in the terminal session. If you wrote a manifest you want to keep, copy its content somewhere before clicking reset.
+:::
+
+That is the full loop: write a manifest, apply it, observe the result, reset when done. Every lesson on KubeMastery follows this same pattern. You are ready to begin.

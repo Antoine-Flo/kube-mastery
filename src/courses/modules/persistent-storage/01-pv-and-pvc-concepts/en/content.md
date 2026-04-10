@@ -5,157 +5,91 @@ seoDescription: Understand how Kubernetes PersistentVolumes and PersistentVolume
 
 # PersistentVolumes and PersistentVolumeClaims
 
-One of the most fundamental rules of running applications in Kubernetes is that Pods are ephemeral. They get created, they run for a while, and then they disappear, whether because of a crash, a rolling update, or a rescheduling event. When a Pod disappears, everything inside its container filesystem disappears with it. For a stateless web server, that is perfectly fine. But for a database, a message broker, or any application that needs to preserve state between restarts, this is a serious problem.
+Imagine you are running a PostgreSQL database in a Kubernetes Pod. The database writes all its data to `/var/lib/postgresql/data` inside the container. One day, the Pod crashes and Kubernetes restarts it. When the new container comes up, that directory is empty: every row, every table, every migration is gone. This happens because containers use ephemeral storage by default, and a standard `emptyDir` volume lives and dies with the Pod.
 
-Kubernetes provides several ways to attach storage to a Pod. The simplest approaches, `emptyDir` and `hostPath`, are quick to set up but come with significant limitations that make them unsuitable for most real-world stateful workloads.
+Kubernetes solves this with PersistentVolumes and PersistentVolumeClaims. Together, they give your Pods access to storage that outlives any individual container restart or Pod deletion.
 
-## The Problem with Inline Volumes
+## The Two Sides of Persistent Storage
 
-An `emptyDir` volume is created fresh every time a Pod is scheduled onto a node. It shares the Pod's lifetime: when the Pod is deleted, the `emptyDir` is deleted too. This makes it useful for temporary scratch space or sharing files between containers in the same Pod, but completely useless for durable storage.
+Before looking at any commands, picture how the two sides relate to each other:
 
-A `hostPath` volume mounts a directory from the node's own filesystem into the container. The data survives a Pod restart, but only if the Pod comes back to the _same node_. Kubernetes makes no such guarantee:
+@@@
+graph LR
+    Admin["Cluster Admin"] --> PV["PersistentVolume\ndisk or NFS share"]
+    PV --> Binding["Kubernetes Binding"]
+    PVC["PersistentVolumeClaim\ndev request"] --> Binding
+    Binding --> Pod["Pod"]
+@@@
 
-- If the Pod is rescheduled to a different node (during maintenance, a node failure, or autoscaling), it starts with an empty `hostPath` directory on the new node.
-- `hostPath` tightly couples your application to the infrastructure of a specific machine, making it fragile and difficult to manage at scale.
+A **PersistentVolume** (PV) is a piece of storage that exists in the cluster independently of any Pod. It could be a directory on a node, a cloud disk, or an NFS share. The cluster administrator creates it and declares how much space it offers and how it can be accessed.
 
-Both of these approaches share a deeper design flaw: the storage configuration lives _inside the Pod spec_. This means the developer writing the Pod manifest needs to know details about the underlying infrastructure, which node has the data, what the path is, whether NFS is available. This violates the principle of separation of concerns that makes Kubernetes so powerful.
+A **PersistentVolumeClaim** (PVC) is a request for storage made by a developer or a workload. The PVC says "I need 500 Mi of storage, accessible from one node at a time." Kubernetes matches that request against available PVs and binds them together.
 
-## Enter PersistentVolumes and PersistentVolumeClaims
+A helpful analogy: the PV is an apartment available for rent, with a known size and a list of features. The PVC is a rental search listing with specific requirements. The binding is the moment the tenant and landlord sign the lease. Neither side needs to know the other's internal details.
 
-Kubernetes solves these problems with a two-object model: the **PersistentVolume (PV)** and the **PersistentVolumeClaim (PVC)**. These two objects work together to decouple storage infrastructure from application code.
+This separation is intentional. Cluster admins control the physical or cloud resources. Developers simply declare what they need. Changing the underlying storage backend does not require touching the application manifests.
 
-A **PersistentVolume** is a piece of storage that has been provisioned in the cluster. It could be an NFS share on a file server, a cloud block storage disk (like an AWS EBS volume or a GCP Persistent Disk), a local SSD on a node, or any other storage backend that Kubernetes supports. The PV is a cluster-level resource: it exists independently of any namespace or Pod. Typically, a cluster administrator creates and manages PVs, handling all the low-level infrastructure details.
+:::quiz
+What is the role of a PersistentVolumeClaim in Kubernetes?
 
-A **PersistentVolumeClaim** is a _request_ for storage made by a user or developer. When you write a PVC, you're not saying "give me this specific NFS share at this IP address." You're saying "I need 10 gigabytes of storage that I can mount as read-write from a single node." Kubernetes then goes looking for a PV that satisfies your requirements and binds the two together.
+- It creates a disk on the underlying cloud provider
+- It is a request for storage that Kubernetes matches to an available PV
+- It mounts a volume directly into the node filesystem
 
-## The Parking Lot Analogy
+**Answer:** It is a request for storage that Kubernetes matches to an available PV - a PVC describes requirements, and the control plane finds a compatible PV and binds them together.
+:::
 
-A helpful way to think about this is to imagine a large parking structure. The parking lot itself, with all its numbered spaces, is like the pool of PersistentVolumes. The parking lot manager (the cluster administrator) maintains the structure, paints the lines, and decides how many spaces there are.
+## Checking PV and PVC State
 
-When you arrive, you don't pick a specific space yourself. Instead, you present your parking permit, that's the PersistentVolumeClaim. Your permit says "I need a space large enough for an SUV." The parking attendant (Kubernetes) finds a suitable space that matches your requirements and reserves it for you. You, the driver, or in our analogy, the Pod, don't need to know which specific space you're in. You just need to know you have one. When you leave, your permit becomes available again (or is retired, depending on the policy); the space might be re-assigned to another driver, or held in reserve.
+To see the PersistentVolumes in the simulated cluster, run:
+
+```
+kubectl get pv
+```
+
+To see PersistentVolumeClaims in the current namespace:
+
+```
+kubectl get pvc
+```
+
+Both commands show a `STATUS` column that tells you where things stand. To inspect the full details of a PV including its current claim reference and events:
+
+```
+kubectl describe pv
+```
+
+The four possible statuses for a PV are:
+
+@@@
+graph LR
+    Available["Available\nno claim"] --> Bound["Bound\nPVC attached"]
+    Bound --> Released["Released\nPVC deleted"]
+    Released --> Failed["Failed\nerror state"]
+@@@
+
+A PV starts as `Available`, meaning no PVC has claimed it yet. Once a matching PVC appears and binding completes, both the PV and PVC show `Bound`. If the PVC is later deleted, the PV transitions to `Released`. If Kubernetes encounters an error during the binding or reclaim process, the PV shows `Failed`.
+
+Why does a `Released` PV not immediately return to `Available`? Because Kubernetes preserves the reference to the previous claim. This protects against accidental data exposure: another PVC should not automatically get access to data left behind by a previous workload. An administrator must review the situation and manually clear that reference before the PV can be used again.
+
+:::quiz
+A PV shows STATUS `Released`. Can a new PVC immediately bind to it?
+
+**Answer:** No. A `Released` PV retains a reference to its previous claim. The control plane will not bind a new PVC to it until an admin removes that reference manually.
+:::
 
 :::info
-This separation of roles is one of the most important design decisions in Kubernetes storage. Cluster administrators manage the infrastructure (PVs); application developers consume it (PVCs). Neither needs to know the details of the other's world.
+In production clusters, **dynamic provisioning** removes the need to pre-create PVs manually. When a PVC is created, a StorageClass with a provisioner automatically creates a matching PV on demand. This module focuses on static provisioning first so the binding mechanics are fully visible before adding that layer.
 :::
-
-## How Binding Works
-
-When you create a PVC, Kubernetes immediately starts looking for a compatible PV. The matching algorithm checks three criteria:
-
-- **Access mode**: the PV must support the mode requested by the PVC (e.g. `ReadWriteOnce`).
-- **Storage size**: the PV must have at least as much capacity as the PVC requests. A PV with 10Gi can satisfy a PVC requesting 5Gi, but not the other way around.
-- **StorageClass**: both the PV and PVC must reference the same StorageClass, or both must have none.
-
-When a matching PV is found, Kubernetes binds the PVC to it. The PV's status changes from `Available` to `Bound`, and from that point on, that PV is exclusively reserved for this PVC, no other PVC can claim it.
-
-@@@
-flowchart TD
-    A[Cluster Admin] -->|"kubectl apply -f pv.yaml"| B[PersistentVolume<br/>Available]
-    C[Developer] -->|"kubectl apply -f pvc.yaml"| D[PersistentVolumeClaim<br/>Pending]
-    D --> E{Kubernetes Binding<br/>Controller}
-    B --> E
-    E -->|"Match found:<br/>size ✓ accessMode ✓ storageClass ✓"| F[PVC Bound<br/>PV Bound]
-    F --> G[Pod]
-    G -->|"volumes.persistentVolumeClaim<br/>.claimName: my-pvc"| F
-@@@
-
-## Dynamic Provisioning: The Modern Approach
-
-Manually creating PVs ahead of time works well in small clusters, but it doesn't scale. If you have dozens of teams submitting PVCs, someone has to provision the right storage in advance and keep up with demand. This is tedious and error-prone.
-
-**Dynamic provisioning** solves this by automating PV creation entirely. When a PVC references a **StorageClass** that has a provisioner configured (for example, the AWS EBS provisioner or the GCP Persistent Disk provisioner), Kubernetes automatically creates a matching PV the moment the PVC is submitted. The PVC goes straight from `Pending` to `Bound` without any manual admin intervention. Most modern Kubernetes environments, managed clusters on AWS, GCP, Azure, or platforms like GKE and EKS, come with StorageClasses pre-configured.
 
 :::warning
-Even with dynamic provisioning, understanding PVs and PVCs is essential. You still need to know how to troubleshoot binding failures, understand reclaim policies (what happens to your data when the PVC is deleted), and choose the right StorageClass for your workload's performance and durability requirements.
+A PVC in `Bound` state is exclusive to its PV. When the access mode is `ReadWriteOnce`, only one node at a time can mount the volume. Two Pods scheduled on different nodes cannot share the same `ReadWriteOnce` PVC simultaneously.
 :::
 
-## Summary of the Model
+## Why This Decoupling Matters
 
-The PV/PVC model gives you three important properties:
+Without PVs and PVCs, every team would need to know exactly where their data lives: which disk, which path, which cloud volume ID. With this model, developers write a PVC that describes their needs, and infrastructure details stay in the PV definition managed by admins.
 
-- **Durability**: the storage lifecycle is independent from the Pod lifecycle, data survives Pod restarts and rescheduling.
-- **Portability**: application manifests reference PVCs by name, not by infrastructure-specific details, making them portable across environments.
-- **Separation of concerns**: administrators handle infrastructure; developers handle application configuration.
+Run `kubectl get pv` in the simulator now. If the lesson has pre-provisioned PVs, you see them listed with their capacity, access modes, and current status. This is what an admin sees before any workload has claimed the storage.
 
-## Hands-On Practice
-
-In this exercise you will create a simple PersistentVolume backed by a `hostPath` (suitable for a single-node lab cluster), then inspect its state.
-
-**Step 1: Create the PersistentVolume**
-
-```yaml
-# demo-pv-persistentvolume.yaml
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: demo-pv
-spec:
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: manual
-  hostPath:
-    path: /tmp/demo-pv-data
-```
-
-```bash
-kubectl apply -f demo-pv-persistentvolume.yaml
-```
-
-**Step 2: Check the PV status**
-
-```bash
-kubectl get pv demo-pv
-```
-
-Expected output:
-
-```
-NAME      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   AGE
-demo-pv   1Gi        RWO            Retain           Available           manual         5s
-```
-
-The status is `Available`, the PV exists and is waiting to be claimed.
-
-**Step 3: Create a PersistentVolumeClaim**
-
-```yaml
-# demo-pvc-persistentvolumeclaim.yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: demo-pvc
-  namespace: default
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: manual
-```
-
-```bash
-kubectl apply -f demo-pvc-persistentvolumeclaim.yaml
-```
-
-**Step 4: Observe the binding**
-
-```bash
-kubectl get pv demo-pv
-kubectl get pvc demo-pvc
-```
-
-Expected output:
-
-```
-NAME      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM              STORAGECLASS   AGE
-demo-pv   1Gi        RWO            Retain           Bound    default/demo-pvc   manual         30s
-
-NAME       STATUS   VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-demo-pvc   Bound    demo-pv   1Gi        RWO            manual         10s
-```
-
-Both the PV and the PVC now show `Bound`. The PVC column on the PV shows which claim it is bound to, and the PVC shows which volume it has been assigned. Kubernetes matched them automatically based on the access mode, size, and storage class. Open the cluster visualizer (telescope icon) to see these objects represented graphically.
+PersistentVolumes and PersistentVolumeClaims are the foundation of stateful workloads in Kubernetes. The next lessons walk through creating each one step by step, then mounting the result inside a real Pod.

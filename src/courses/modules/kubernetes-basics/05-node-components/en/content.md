@@ -3,145 +3,116 @@ seoTitle: 'Kubernetes Worker Node Components, kubelet, kube-proxy, CRI'
 seoDescription: 'Explore the three components on every Kubernetes worker node, kubelet for pod management, kube-proxy for networking, and the container runtime.'
 ---
 
-# Worker Node Components
+# Node Components
 
-If the control plane is the brain that plans and decides, the worker nodes are the hands that actually do the work. Every container your application runs in lives on a worker node, but a worker node is not just a machine with containers on it. It has a specific set of software components that allow it to participate in the cluster, receive instructions from the control plane, run workloads correctly, and handle network traffic.
+The scheduler has made its decision. Your Pod's `nodeName` field is now set to `node-1`. The control plane moves on. But no one from the control plane connects to `node-1` to start the container. Something on the node has to go looking for that assignment. That something is the kubelet.
 
-## kubelet: The Node Agent
+@@@
+graph TB
+    subgraph node [Worker Node]
+        KL["kubelet"]
+        KP["kube-proxy"]
+        CRI["Container Runtime<br/>(containerd)"]
+        P1["Pod A<br/>containers"]
+        P2["Pod B<br/>containers"]
+    end
+    API["kube-apiserver<br/>(control plane)"]
 
-The `kubelet` is the most important component on a worker node. It is a long-running agent that acts as the liaison between the node and the control plane.
+    API -->|"Pod spec assigned to node"| KL
+    KL -->|"start containers"| CRI
+    CRI --> P1
+    CRI --> P2
+    KL -->|"report status"| API
+    KP -->|"iptables rules"| P1
+    KP -->|"iptables rules"| P2
+@@@
 
-Its primary responsibility is to ensure that the containers described in a Pod specification are actually running. When the scheduler assigns a Pod to a node, it writes the node's name into the Pod object via the API server. The kubelet on that node is watching for exactly this kind of event, the moment it sees a new Pod assigned to its node, it reads the Pod specification and instructs the container runtime to pull the image and start the container.
+Three components run on every worker node. Each has a distinct role: managing Pods, managing network routing, and actually running containers.
 
-After the container starts, the kubelet continuously monitors it: restarting it if it crashes (according to the Pod's restart policy), running liveness and readiness probes, and reporting results back to the API server so the cluster knows whether the container is healthy. The kubelet's world is defined entirely by Pod specifications received from the API server, if you manually start a container on a node using the container runtime directly, the kubelet will not know about it and will not manage it.
+## kubelet
 
-:::info
-The kubelet also runs on the control plane node in most cluster setups, that is how the control plane components themselves (the API server, scheduler, etc.) are managed as pods. You can verify this by checking which node the `kube-apiserver` pod runs on: it will be the control plane node, managed by the kubelet on that node.
-:::
+The kubelet is the primary agent on every node. It runs as a process on the host itself, not as a Pod inside the cluster. Its job is to watch the API server for Pods assigned to its node, and to make sure those Pods are running and healthy.
 
-## kube-proxy: The Network Enabler
+When the kubelet detects a new Pod with its node's name, it reads the Pod spec and calls the container runtime to pull images and start containers. Once the containers are up, the kubelet monitors them and reports their status back to the API server: `Running`, `Succeeded`, or `Failed`. That reported status is exactly what you see when you run `kubectl get pods`.
 
-Every Pod in a Kubernetes cluster gets its own IP address. But Pod IPs are ephemeral: when a Pod is deleted and replaced, the new Pod gets a new IP. If other services were talking to the old IP, they would break.
+To check which nodes are in your cluster and whether each kubelet is healthy:
 
-This is where Kubernetes Services come in. A Service provides a stable endpoint, a single IP address and DNS name, that remains constant even as the underlying Pods come and go. But how does traffic sent to a Service IP actually reach one of the Pods behind it? That is the job of `kube-proxy`.
+```
+kubectl get nodes
+```
 
-`kube-proxy` runs on every node and maintains a set of network rules (using the Linux kernel's `iptables` or IPVS subsystems) that redirect traffic destined for a Service IP to one of the actual Pod IPs backing that Service. When a new Pod is added or removed from a Service, `kube-proxy` updates the rules to reflect the change. Think of it as a traffic director standing at every intersection: when a packet arrives addressed to "City Hall" (the Service IP), the director knows the current location of City Hall's staff (the Pod IPs) and redirects it accordingly.
+The `STATUS` column shows `Ready` when the kubelet is running and the node can accept new Pods. `NotReady` means the kubelet has stopped reporting in, usually indicating a problem on the node itself.
 
 :::warning
-Despite its name, `kube-proxy` does not proxy traffic in the traditional sense. In modern clusters, it programs kernel-level rules that redirect packets efficiently without involving a proxy process for each connection. The name is a historical artifact.
+When a node shows `NotReady`, the scheduler immediately stops placing new Pods there. If the node stays `NotReady` long enough (the default eviction timeout is five minutes), Kubernetes begins evicting the Pods on that node and rescheduling them elsewhere. This is one of the first failure patterns to recognize on a real cluster.
 :::
 
-## Container Runtime: The Execution Engine
+To inspect a node in more detail:
 
-The container runtime is the software that actually starts, stops, and manages containers on a node. Kubernetes does not include a container runtime itself, it delegates all container operations to an external runtime via a standardized interface called the **Container Runtime Interface** (CRI).
+```
+kubectl describe node kind-worker
+```
 
-The CRI is a plugin API that allows Kubernetes to work with any runtime that implements it. The two most common runtimes in modern Kubernetes clusters are:
+Look at the `Conditions` section: `Ready`, `MemoryPressure`, `DiskPressure`, and `PIDPressure` tell you the health of the node at the resource level. The `Allocated resources` section shows how much CPU and memory the currently running Pods are requesting in total.
 
-- **containerd**: the most widely used runtime today, extracted from Docker and focused on high-performance, reliable container execution. The default with most cluster tools.
-- **CRI-O**: an alternative designed specifically for Kubernetes, following a minimal-footprint philosophy, just enough to satisfy the CRI specification, no more.
+:::quiz
+What does it mean when a node shows `Ready` status?
+
+**Answer:** The kubelet is running, has reported to the API server recently, and the node is eligible to receive new Pods. It does not mean the node is idle or that all Pods on it are healthy. It only reflects the kubelet's own health and the node's current availability.
+:::
+
+## kube-proxy
+
+While the kubelet manages containers, kube-proxy manages network routing. It runs on every node and implements the Service abstraction at the Linux networking level.
+
+When you create a Service, kube-proxy watches the API server for the new Service and its associated Endpoints. It then programs the local iptables rules (or IPVS rules, depending on cluster configuration) to redirect traffic destined for the Service's ClusterIP toward one of the backing Pods.
+
+Why does kube-proxy run on every node instead of just one? Because the Pod sending a request and the Pod receiving it may be on different nodes. The routing decision happens locally, on the node where the traffic originates. If kube-proxy only ran on one central node, traffic from other nodes would have no local rules to redirect it.
+
+:::quiz
+A Service with ClusterIP `10.96.0.10` is created. Which component programs the network rules that make traffic to that IP reach the right Pods?
+
+- kube-scheduler (handles routing decisions between nodes)
+- kubelet (manages all networking on the node)
+- kube-proxy (programs iptables rules for Service traffic)
+
+**Answer:** kube-proxy. The kubelet manages container lifecycle. The scheduler makes placement decisions. Only kube-proxy touches the node's network rules to implement Services.
+:::
+
+## Container Runtime
+
+The kubelet decides what needs to run. But it does not pull images or create container processes itself. That is the container runtime's job.
+
+Kubernetes does not talk to containerd or any runtime directly. It uses a standardized interface called the Container Runtime Interface, or CRI. The kubelet calls the CRI, and the runtime handles the rest: pulling the image from a registry, creating the container process, and managing its lifecycle.
+
+The most common runtime today is containerd. Docker was used as a direct runtime in earlier Kubernetes versions but was removed in Kubernetes 1.24 because it added unnecessary indirection. Docker itself uses containerd internally, so the actual container execution did not change, only the interface Kubernetes used to reach it.
+
+Why define a standard interface at all? Because the Kubernetes team did not want to be permanently dependent on one runtime vendor. Any runtime that implements the CRI spec can plug in without changes to the kubelet. The scheduler, controller manager, and kubelet all stay exactly the same regardless of which runtime is used.
+
+:::quiz
+The kubelet needs to start a container. Which sequence is correct?
+
+- The kubelet starts the container directly, then reports to the API server
+- The kubelet calls the CRI, the runtime starts the container, the kubelet reports status to the API server
+- kube-proxy calls the CRI on behalf of the kubelet
+
+**Answer:** The kubelet calls the CRI, the runtime starts the container, then the kubelet reports status. The kubelet never manipulates containers directly. kube-proxy plays no role in starting containers, it only manages network routing.
+:::
+
+## Interleaving: What Happens If the API Server Goes Down
+
+You now know that the kubelet continuously watches the API server for Pod assignments. So what happens to running Pods if the API server becomes temporarily unavailable?
+
+The kubelet can continue monitoring and restarting containers that were already running on its node. It caches the last known Pod spec locally. If a container crashes, the kubelet restarts it based on that local cache. What it cannot do is receive new Pod assignments, update status back to the API server, or pick up changes to existing Pods. The node keeps working, but it is isolated from the cluster's decision-making until the API server recovers.
+
+:::quiz
+The API server is down for two minutes. A container on node-1 crashes during that window. What does the kubelet do?
+
+**Answer:** The kubelet restarts the container using its locally cached Pod spec. It does not wait for the API server. It cannot report the restart event or receive new assignments while the API server is down, but existing container management continues independently on the node.
+:::
 
 :::info
-You may have heard of Docker as a container runtime. Docker was used as the Kubernetes runtime for many years, but support for it (via "dockershim") was removed in Kubernetes 1.24. Today, Docker is still commonly used for building and pushing container images, but the runtime in clusters is containerd or CRI-O, both of which run the same OCI-compliant images that Docker produces.
+In the simulator, you interact with a single-node setup and see its Pods, but without access to the underlying host. On a real cluster, node-level debugging involves `systemctl status kubelet` and `journalctl -u kubelet` on the host machine to inspect what the kubelet is doing and why containers are failing to start.
 :::
 
-## How the Three Components Work Together
-
-When a new Pod is scheduled to a node, here is the precise sequence of events:
-
-1. The `kube-scheduler` writes the assigned node name to the Pod object in the API server.
-2. The `kubelet` on that node detects the new assignment via its API server watch.
-3. The `kubelet` reads the Pod specification and calls the container runtime (via CRI) to pull the required image and start the container.
-4. The container runtime pulls the image (if not cached), creates the container, and starts it.
-5. The `kubelet` begins monitoring the container and reporting its status back to the API server.
-6. Meanwhile, `kube-proxy` detects that a new Pod is ready and updates the network rules so that Service traffic can reach it.
-
-@@@
-graph TD
-    API["kube-apiserver"] -->|"Pod assigned to node"| KL["kubelet"]
-    KL -->|"CRI call: run container"| CR["container runtime<br/>(containerd / CRI-O)"]
-    CR -->|"pull image, start container"| C["Container running"]
-    KL -->|"report status"| API
-    API -->|"Pod ready, update endpoints"| KP["kube-proxy"]
-    KP -->|"update iptables/IPVS rules"| NET["Network rules<br/>(traffic can reach Pod)"]
-@@@
-
-## Hands-On Practice
-
-Let's inspect the node components running in your cluster.
-
-Check which node components are running as pods:
-
-```bash
-kubectl get pods -n kube-system -o wide
-```
-
-Look at the output and find the `kube-proxy` pod. In a multi-node cluster, there will be one `kube-proxy` pod per node, it is deployed as a DaemonSet, a special workload type that guarantees exactly one pod per node.
-
-Confirm that `kube-proxy` is indeed a DaemonSet:
-
-```bash
-kubectl get daemonset -n kube-system
-```
-
-Expected output:
-
-```bash
-NAME         DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
-kindnet      3         3         3       3            3           kubernetes.io/os=linux   35s
-kube-proxy   3         3         3       3            3           kubernetes.io/os=linux   35s
-```
-
-The numbers under DESIRED and CURRENT match the number of nodes in your cluster.
-
-Now verify the container runtime on each node:
-
-```bash
-kubectl get nodes -o wide
-```
-
-Expected output (partial):
-
-```bash
-NAME                STATUS   ...   CONTAINER-RUNTIME
-sim-control-plane   Ready    ...   containerd://2.2.0
-sim-worker          Ready    ...   containerd://2.2.0
-sim-worker2         Ready    ...   containerd://2.2.0
-```
-
-Let's deploy a simple pod and watch the kubelet bring it to life in the visualizer (telescope icon):
-
-```bash
-kubectl run test-pod --image=nginx
-```
-
-Expected progression: Pending -> ContainerCreating -> Running
-
-`Pending` means the scheduler has assigned the pod but the kubelet has not yet pulled the image. `ContainerCreating` means the kubelet has instructed the runtime to pull and start the container. `Running` means the container is live.
-
-Describe the pod to see the full event trace:
-
-```bash
-kubectl describe pod test-pod
-```
-
-Scroll to the `Events` section at the bottom:
-
-```bash
-Events:
-  Type    Reason     Age   From               Message
-  ----    ------     ----  ----               -------
-  Normal  Scheduled  6s    default-scheduler  Successfully assigned default/test-pod to sim-worker
-  Normal  Pulled     6s    kubelet            spec.containers{test-pod}: Container image "nginx" already present onmachine and can be accessed by the pod
-  Normal  Created    6s    kubelet            spec.containers{test-pod}: Container created
-  Normal  Started    6s    kubelet            spec.containers{test-pod}: Container started
-```
-
-This event log is a perfect trace of the lifecycle: the scheduler assigned it, the kubelet pulled the image, created the container, and started it. Clean up when done:
-
-```bash
-kubectl delete pod test-pod
-```
-
-## Wrapping Up
-
-Every worker node runs three critical components: the `kubelet` acts as the node's agent, receiving Pod assignments and ensuring containers run; `kube-proxy` maintains network rules so that Service traffic reaches the right Pods; and the container runtime (typically `containerd`) is the engine that creates and manages containers via the CRI. Together, these three components turn a raw machine into a fully productive member of a Kubernetes cluster. With the architecture of both the control plane and worker nodes now clear, you are ready to start working with the core Kubernetes objects, starting with the smallest deployable unit of all: the Pod.
+The full picture is now complete: `kubectl apply` reaches the API server, etcd stores the object, the controller manager creates Pods, the scheduler assigns a node, and the kubelet on that node calls the container runtime to start the containers. Every component has exactly one job, and they communicate exclusively through the API server. The next module covers YAML manifests and the Kubernetes object model, which is the language you use to express desired state to this entire system.

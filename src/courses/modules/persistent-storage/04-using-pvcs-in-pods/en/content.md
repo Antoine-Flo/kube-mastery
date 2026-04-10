@@ -3,244 +3,131 @@ seoTitle: Mount PersistentVolumeClaims in Kubernetes Pods, Storage
 seoDescription: Learn how to reference a PVC in a Kubernetes Pod spec, confirm data survives Pod deletion, and understand access mode constraints for multi-replica workloads.
 ---
 
-# Using PersistentVolumeClaims in Pods
+# Using PVCs in Pods
 
-Creating a PersistentVolume and binding a PVC to it is only half the story. The real goal is to make that storage available inside a running container. This lesson covers exactly how to wire a PVC into a Pod, and more importantly, what that gives you in terms of data durability and workload design.
+The PVC is `Bound`. The PV is `Bound`. The storage is provisioned and waiting. The final step is telling the Pod how to find it and where to expose it inside the container. This requires two coordinated sections in the Pod spec: one that introduces the volume by name, and one that places it at a path inside the container.
 
-## Referencing a PVC in a Pod
+## Wiring the PVC into a Pod
 
-Mounting a PVC in a Pod requires two declarations in the Pod spec, working together:
+Think of it as a two-step connection. The Pod-level `volumes` list introduces the volume and gives it a local name. The container-level `volumeMounts` list says "take that named volume and put it at this path inside me."
 
-1. A **volume** entry that references the PVC by name.
-2. A **volumeMount** entry inside the container that specifies where in the container's filesystem the volume should appear.
+Start with the `volumes` entry. It names the volume and points to the PVC:
 
-Here is a complete example that runs a PostgreSQL database using a PVC for its data directory:
+```yaml
+# illustrative only
+volumes:
+  - name: postgres-storage
+    persistentVolumeClaim:
+      claimName: postgres-pvc
+```
+
+The `name` here is an internal label used only to connect this entry to a `volumeMount`. The `claimName` is the name of the PVC that is already `Bound`.
+
+Now add `volumeMounts` inside the container definition. The `name` must match the one declared in `volumes`:
+
+```yaml
+# illustrative only
+containers:
+  - name: postgres
+    image: postgres:15
+    volumeMounts:
+      - name: postgres-storage
+        mountPath: /var/lib/postgresql/data
+```
+
+The `mountPath` is the directory inside the container where the PV data appears. Whatever was previously at that path in the container image is replaced by the contents of the persistent volume.
+
+Assemble the full Pod manifest:
+
+```bash
+nano db-pod.yaml
+```
 
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: db-pod
+  name: postgres-pod
 spec:
   volumes:
-    - name: storage
+    - name: postgres-storage
       persistentVolumeClaim:
-        claimName: my-pvc
+        claimName: postgres-pvc
   containers:
-    - name: database
+    - name: postgres
       image: postgres:15
-      volumeMounts:
-        - name: storage
-          mountPath: /var/lib/postgresql/data
       env:
         - name: POSTGRES_PASSWORD
-          value: 'password'
+          value: mysecretpassword
+      volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
 ```
 
-The `volumes` section defines a volume named `storage` and points it at the PVC named `my-pvc`. The `volumeMounts` section tells Kubernetes to mount that volume at `/var/lib/postgresql/data`, the path PostgreSQL uses to store its database files. The two are linked by the `name` field: `storage` in the volume list matches `storage` in the volumeMount list.
+```
+kubectl apply -f db-pod.yaml
+```
 
-This pattern of declaring volumes at the Pod level and mounts at the container level allows a single Pod to have multiple volumes and lets multiple containers in the same Pod potentially share the same volume.
+```
+kubectl describe pod postgres-pod
+```
 
-:::info
-The PVC must exist in the **same namespace** as the Pod. If the Pod is in the `production` namespace, the PVC must also be in the `production` namespace. There is no way to reference a PVC across namespaces.
+In the `Volumes` section of the describe output, you see `postgres-pvc` listed with type `PersistentVolumeClaim`. In `Mounts`, you see `/var/lib/postgresql/data from postgres-storage`. The storage is live.
+
+:::quiz
+In a Pod spec, what is the purpose of the `volumes` list compared to `volumeMounts`?
+
+- `volumes` declares storage sources at the Pod level; `volumeMounts` tells each container where to access a named volume
+- `volumes` and `volumeMounts` are interchangeable and either can go in the container spec
+- `volumeMounts` declares storage sources; `volumes` selects which containers use them
+
+**Answer:** `volumes` declares storage sources at the Pod level (including the PVC reference); `volumeMounts` tells each container which named volume to mount and at what path inside the container filesystem.
 :::
 
-## Data Survives Pod Deletion
-
-The most important property of PVC-backed storage is this: when the Pod is deleted and a new Pod is created referencing the same PVC, it gets exactly the same data back. The storage lifecycle is completely independent from the Pod lifecycle.
-
-Without persistent storage, every time a database Pod crashes or gets rescheduled, you start with an empty database. With a PVC, the data is stored outside the container on the persistent volume, a new instance of the same container, pointing at the same volume, picks up exactly where the previous one left off.
+## Data Surviving Pod Deletion
 
 @@@
-sequenceDiagram
-    participant K as Kubernetes
-    participant PVC as PVC / PV
-    participant P1 as Pod (v1)
-    participant P2 as Pod (v2)
-
-    K->>P1: Schedule Pod
-    P1->>PVC: Mount volume at /var/lib/postgresql/data
-    P1->>PVC: Write database files
-    K->>P1: Delete Pod (crash / update)
-    Note over PVC: Data remains intact
-    K->>P2: Schedule new Pod
-    P2->>PVC: Mount same PVC
-    PVC->>P2: All previous data available
-    Note over P2: Database resumes normally
+graph LR
+    Pod1["postgres-pod\ndeleted"] --> PVC["postgres-pvc\nstill Bound"]
+    PVC --> PV["postgres-pv\ndata preserved"]
+    PV --> PVC2["postgres-pvc\nstill Bound"]
+    PVC2 --> Pod2["postgres-pod\nrecreated, sees data"]
 @@@
 
-This is the fundamental promise of persistent storage in Kubernetes. The Pod is ephemeral; the data is not.
+This is the core guarantee of PersistentVolumes. Delete the Pod:
 
-## The Namespace Constraint in Practice
+```
+kubectl delete pod postgres-pod
+```
 
-Because PVCs are namespaced, the cluster administrator typically provisions PVs (cluster-scoped) while the developer or platform team creates PVCs within the appropriate namespace. If you're deploying a database in the `payments` namespace, your PVC must be there too, even if the underlying PV was created without any namespace association. In practice this just means including the `namespace` field in your PVC manifest and ensuring `kubectl` is pointed at the right namespace.
+Now check the PVC:
 
-## Access Modes and Multi-Pod Usage
+```
+kubectl get pvc
+```
 
-A common question is: can multiple Pods use the same PVC at the same time? The answer depends entirely on the **access mode** of the underlying PV.
+The PVC is still `Bound`. The PV still exists with its data intact. Recreate the Pod using the same manifest, and the database finds its data exactly where it left it.
 
-With **ReadWriteOnce (RWO)**, the most common access mode for cloud block storage, only one node can mount the volume in read-write mode at a time. In practice, this usually means only one Pod can actively use the volume. If you create a second Pod that references the same RWO PVC but it gets scheduled to a different node, that second Pod will fail to start because the volume is already exclusively mounted.
+Why does the PVC not get deleted along with the Pod? Because PVCs are independent Kubernetes objects. A Pod does not own its PVC. Deleting a Pod only removes the Pod resource. The PVC lifecycle is controlled separately, which is what allows new Pods to reuse the same storage over time.
 
-With **ReadWriteMany (RWX)**, available with NFS, CephFS, and other networked storage backends, multiple Pods across multiple nodes can all mount the same PVC simultaneously in read-write mode. This is the right choice for workloads that need to share a filesystem, like a CMS where multiple web servers all need to read and write the same uploaded files directory.
+Why does Kubernetes design it this way? Because tightly coupling PVC deletion to Pod deletion would make it too easy to accidentally destroy data. By separating the two lifecycles, a developer must explicitly delete the PVC to release the storage, making data loss a deliberate action rather than a side effect.
+
+:::quiz
+You delete a Pod that was using a PVC. What happens to the PVC and its data?
+
+**Try it:** `kubectl get pvc`
+
+**Answer:** The PVC remains `Bound` and the PV data is untouched. Deleting a Pod does not affect its PVCs. Only explicitly deleting the PVC resource changes its state.
+:::
+
+## The ReadWriteOnce Constraint with Multiple Replicas
 
 :::warning
-Using RWO storage with a Deployment that has more than one replica is a common mistake. If the Deployment scales to two replicas and they land on different nodes, the second replica's Pod will get stuck in `ContainerCreating` because the volume cannot be attached to two nodes at once. Use RWX storage or a StatefulSet with per-Pod PVCs for multi-replica stateful workloads.
+If your PV uses `ReadWriteOnce`, it can only be mounted on one node at a time. This becomes a problem with Deployments that have more than one replica scheduled on different nodes. The second Pod that tries to mount the PVC on a different node enters `Pending` with an error along the lines of "Multi-Attach error for volume: volume is already exclusively attached to one node and can't be attached to another."
+
+The first Pod holds the mount, and the second waits indefinitely. This is not a bug. It is the access mode contract being enforced by the kubelet and the storage backend. If your workload genuinely needs multiple replicas that all write to the same volume from different nodes, you need a `ReadWriteMany`-capable storage backend such as NFS or CephFS.
 :::
 
-## Deployments vs StatefulSets
+For stateful workloads with a single writer (most SQL databases, most message queues), `ReadWriteOnce` is the correct and safe choice. The one-node restriction aligns naturally with the single-writer requirement of those systems.
 
-When you think about stateful workloads, it's important to choose the right higher-level workload object.
-
-**Deployments** work fine with PVCs if you're running a single replica (or using RWX storage). You create the PVC separately and reference it by name in the Deployment's Pod template. All replicas of that Deployment will try to mount the same PVC. For stateless applications that happen to need some shared storage, this can work well.
-
-**StatefulSets** are the designed-for-stateful workload type in Kubernetes. Instead of referencing a single shared PVC, StatefulSets have a `volumeClaimTemplates` field that automatically creates a _separate_ PVC for each replica. So a StatefulSet with three replicas creates three PVCs, `data-mydb-0`, `data-mydb-1`, `data-mydb-2`, each bound to its own PV. This is ideal for clustered databases (Cassandra, MySQL replicas, Elasticsearch) where each instance needs independent storage.
-
-For this lesson, we focus on the straightforward case: a single Pod referencing a single PVC. StatefulSets and their volume claim templates are covered in a dedicated lesson.
-
-## Hands-On Practice
-
-In this exercise you will create a PV, a PVC, and a Pod that uses the PVC. You'll then delete the Pod, create a new one, and confirm that the data persisted.
-
-**Step 1: Set up the PV and PVC**
-
-```yaml
-# demo-pv-persistentvolume.yaml
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: demo-pv
-spec:
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: manual
-  hostPath:
-    path: /tmp/demo-storage
-```
-
-```bash
-kubectl apply -f demo-pv-persistentvolume.yaml
-```
-
-```yaml
-# demo-pvc-persistentvolumeclaim.yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: demo-pvc
-  namespace: default
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: manual
-```
-
-```bash
-kubectl apply -f demo-pvc-persistentvolumeclaim.yaml
-```
-
-**Step 2: Create a Pod that writes to the volume**
-
-```yaml
-# writer-pod.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: writer-pod
-spec:
-  volumes:
-    - name: storage
-      persistentVolumeClaim:
-        claimName: demo-pvc
-  containers:
-    - name: writer
-      image: busybox
-      command: ['/bin/sh', '-c']
-      args:
-        - |
-          echo 'Hello from the first pod' > /data/message.txt
-          sleep 3600
-      volumeMounts:
-        - name: storage
-          mountPath: /data
-```
-
-```bash
-kubectl apply -f writer-pod.yaml
-```
-
-Wait for the Pod to start:
-
-```bash
-kubectl wait --for=condition=Ready pod/writer-pod --timeout=60s
-```
-
-**Step 3: Verify the file was written**
-
-```bash
-kubectl exec writer-pod -- cat /data/message.txt
-```
-
-Expected output:
-
-```
-Hello from the first pod
-```
-
-**Step 4: Delete the Pod**
-
-```bash
-kubectl delete pod writer-pod
-```
-
-The Pod is gone. The PVC and PV still exist, you can verify with `kubectl get pvc demo-pvc`.
-
-**Step 5: Create a new Pod and read the same data**
-
-```yaml
-# reader-pod.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: reader-pod
-spec:
-  volumes:
-    - name: storage
-      persistentVolumeClaim:
-        claimName: demo-pvc
-  containers:
-    - name: reader
-      image: busybox
-      command: ['/bin/sh', '-c', 'sleep 3600']
-      volumeMounts:
-        - name: storage
-          mountPath: /data
-```
-
-```bash
-kubectl apply -f reader-pod.yaml
-
-kubectl wait --for=condition=Ready pod/reader-pod --timeout=60s
-kubectl exec reader-pod -- cat /data/message.txt
-```
-
-Expected output:
-
-```
-Hello from the first pod
-```
-
-The data written by `writer-pod` is still there, accessible to `reader-pod`. This is persistence in action. The cluster visualizer (telescope icon) will now show the relationship between `reader-pod`, `demo-pvc`, and `demo-pv` as a connected graph.
-
-**Step 6: Clean up**
-
-```bash
-kubectl delete pod reader-pod
-kubectl delete pvc demo-pvc
-kubectl delete pv demo-pv
-```
+Mounting a PVC in a Pod completes the static provisioning flow. From here, the remaining variables are which access mode fits your workload and what happens to the data when the PVC is eventually deleted: topics covered in the next lesson.

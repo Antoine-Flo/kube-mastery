@@ -3,155 +3,42 @@ seoTitle: 'Kubernetes ClusterIP Services, kube-proxy, DNS, Port Mapping'
 seoDescription: 'Learn how Kubernetes ClusterIP Services work as the default type, how kube-proxy routes traffic via iptables, and how to access Services by DNS.'
 ---
 
-# ClusterIP , The Default Service Type
+# ClusterIP
 
-When you create a Service without specifying a type, Kubernetes uses `ClusterIP`. It's the most fundamental Service type, and all the other types build on top of it. Understanding ClusterIP thoroughly means you understand the core of how Service networking works in Kubernetes.
+You have a frontend Pod that needs to call a backend API. The frontend doesn't know any backend Pod IPs because they keep changing. You created a Service in the previous lesson. But how does the frontend Pod actually call it? Does it need to know the ClusterIP address? Or is there a stable name it can use instead?
 
-## What ClusterIP Means
+The answer is both, and DNS is what connects them.
 
-A ClusterIP Service receives a virtual IP address , the "cluster IP" , from a reserved range in the cluster's network configuration (typically something like `10.96.0.0/12`). This IP is special: it doesn't belong to any Node, and no network interface anywhere actually holds it. It exists only in the routing rules programmed by `kube-proxy` on every node. Despite being virtual, it is completely stable , it's assigned when the Service is created and stays the same for the life of the Service.
+## The Default Service Type
 
-:::info
-`ClusterIP` is the **default** Service type. Omitting `type:` in a Service manifest gives you a ClusterIP Service.
-:::
+ClusterIP is the default Service type in Kubernetes. When you create a Service and omit the `type` field, Kubernetes creates a ClusterIP Service. It assigns the Service a virtual IP address from a reserved internal range, typically something like `10.96.x.x`. This address is only reachable from inside the cluster. Pods on any node can reach it. Nothing outside the cluster can.
 
-"ClusterIP" in the name refers to scope: the Service is reachable only from within the cluster. External clients, your laptop, users on the internet, cannot reach it directly.
-
-This is a deliberate security boundary. Databases, caches, and internal APIs should only be accessible to other cluster components, not the outside world. ClusterIP enforces that by default.
-
-## Creating a ClusterIP Service
-
-Here's a complete Service manifest:
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: web-service
-spec:
-  selector:
-    app: web
-  ports:
-    - port: 80
-      targetPort: 80
-```
-
-Since `type` is omitted, this is a ClusterIP Service. The `ports` section has two fields that are often confused:
-
-**`port`** is the port that the Service itself listens on , the port you connect to when you use the Service's IP or DNS name. In this case, `port: 80` means clients connect to `web-service:80`.
-
-**`targetPort`** is the port on the Pod where your container is actually listening. Traffic arriving at the Service on port 80 will be forwarded to port 80 on the backend Pods. These two values don't have to match , for example, if your container listens on port 8080 but you want to expose it as port 80, you'd write `port: 80, targetPort: 8080`.
-
-You can also expose multiple ports on a single Service by adding more entries to the `ports` list:
-
-```yaml
-ports:
-  - name: http
-    port: 80
-    targetPort: 8080
-  - name: metrics
-    port: 9090
-    targetPort: 9090
-```
-
-When exposing multiple ports, the `name` field becomes required , Kubernetes needs a way to distinguish between them.
-
-## How kube-proxy Makes It Work
-
-The magic behind ClusterIP is `kube-proxy`, a DaemonSet that runs on every node in the cluster. Its job is to watch the Kubernetes API for Service and Endpoint changes and translate them into local networking rules.
-
-In the most common configuration, kube-proxy programs **iptables rules** on every node. When a packet is destined for a ClusterIP (say, `10.96.45.12:80`), the kernel intercepts it before it even leaves the node's network stack and rewrites the destination IP to one of the actual backend Pod IPs, chosen randomly from the current Endpoints list. The original source IP is preserved, so the Pod can see where the request came from.
-
-In clusters configured to use IPVS mode, kube-proxy uses the kernel's IPVS (IP Virtual Server) subsystem instead of iptables. IPVS is faster at scale (handles thousands of Services more efficiently than chains of iptables rules) and supports more sophisticated load balancing algorithms. The observable behaviour is the same.
+ClusterIP is the right choice for internal communication: a frontend calling a backend, an application calling a cache, a worker calling an internal API. It is not meant for exposing applications to external users.
 
 @@@
 graph LR
-    PA["Pod A<br/>(client)"]
-    VIP["ClusterIP<br/>10.96.45.12:80<br/>(virtual, in iptables)"]
-    PB1["Pod B-1<br/>10.244.1.5:80"]
-    PB2["Pod B-2<br/>10.244.2.11:80"]
-    PB3["Pod B-3<br/>10.244.3.8:80"]
-
-    PA -->|"connect to 10.96.45.12:80"| VIP
-    VIP -->|"iptables DNAT<br/>(random selection)"| PB1
-    VIP -.->|"or"| PB2
-    VIP -.->|"or"| PB3
+    FE["Frontend Pod\nnamespace: default"]
+    SVC["Service: api-svc\nClusterIP: 10.96.0.10\nDNS: api-svc.default.svc.cluster.local"]
+    BE1["Backend Pod 1"]
+    BE2["Backend Pod 2"]
+    FE -->|"curl api-svc"| SVC
+    SVC --> BE1
+    SVC --> BE2
 @@@
 
-## Reaching a ClusterIP Service from Inside the Cluster
-
-Once a Service exists, any Pod in the cluster can reach it in multiple ways.
-
-**By DNS name (recommended):** Kubernetes' built-in DNS (CoreDNS) automatically creates DNS records for every Service. Within the same namespace, you can use just the Service name:
+Create a ClusterIP Service explicitly so you can see the `type` field in action:
 
 ```bash
-curl http://web-service
-curl http://web-service:80
+nano clusterip-svc.yaml
 ```
-
-From a different namespace, use the fully qualified name:
-
-```bash
-curl http://web-service.default.svc.cluster.local
-```
-
-**By ClusterIP directly:** You can also connect using the virtual IP address, though this is less flexible (if you recreate the Service with a different IP for some reason, your clients break):
-
-```bash
-curl http://10.96.45.12
-```
-
-**Via environment variables (legacy):** Kubernetes automatically injects environment variables for every Service that exists when a Pod starts. For a Service named `web-service`, Pods get variables like `WEB_SERVICE_SERVICE_HOST` and `WEB_SERVICE_SERVICE_PORT`. This mechanism predates in-cluster DNS and is considered legacy , prefer DNS.
-
-:::warning
-Environment variable injection only captures Services that existed _before_ the Pod was created. If you create a Pod first and a Service later, the Pod won't have the new Service's variables. DNS works regardless of creation order, which is another reason to prefer it.
-:::
-
-## A Note on Specifying the ClusterIP Explicitly
-
-Kubernetes assigns the ClusterIP automatically from a configured range. In most cases, you should let Kubernetes choose. However, you can request a specific IP if needed (for example, to match a legacy configuration):
 
 ```yaml
-spec:
-  clusterIP: 10.96.10.10
-```
-
-The requested IP must be within the cluster's service CIDR range and must not already be in use. If it is, the API server will reject the manifest.
-
-:::info
-You can find your cluster's service IP range by looking at the kube-apiserver flags: `--service-cluster-ip-range`. On most clusters created with kubeadm this defaults to `10.96.0.0/12`.
-:::
-
-## Hands-On Practice
-
-**1. Create a Deployment and a ClusterIP Service**
-
-```yaml
-# web-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: web
-  template:
-    metadata:
-      labels:
-        app: web
-    spec:
-      containers:
-        - name: web
-          image: nginx:1.28
-          ports:
-            - containerPort: 80
 apiVersion: v1
 kind: Service
 metadata:
-  name: web-service
+  name: api-svc
 spec:
+  type: ClusterIP
   selector:
     app: web
   ports:
@@ -159,64 +46,81 @@ spec:
       targetPort: 80
 ```
 
-```bash
-kubectl apply -f web-deployment.yaml
-kubectl rollout status deployment/web
-```
-
-**2. Inspect the Service**
 
 ```bash
-kubectl get service web-service
-# NAME          TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
-# web-service   ClusterIP   10.96.45.12    <none>        80/TCP    10s
-
-kubectl describe service web-service
-# Look at: Selector, IP, Port, TargetPort, Endpoints
+kubectl apply -f clusterip-svc.yaml
+kubectl get service api-svc
 ```
 
-**3. Verify the Endpoints are populated**
+Look at the `TYPE` column, which shows `ClusterIP`, and the `CLUSTER-IP` column, which shows the virtual IP Kubernetes assigned. Note that IP. It is stable for the entire lifetime of this Service object.
+
+## DNS Makes It Discoverable
+
+Using a raw ClusterIP address in application code is workable, but fragile: if you ever delete and recreate the Service, the IP could change. The right approach is to use the DNS name instead.
+
+CoreDNS runs inside every Kubernetes cluster and automatically creates an A record for every Service. The full DNS name follows this pattern:
+
+```
+<service-name>.<namespace>.svc.cluster.local
+```
+
+For `api-svc` in the `default` namespace, the full name is `api-svc.default.svc.cluster.local`. From inside the same namespace, the short name `api-svc` also resolves correctly. This is similar to how you can reach a coworker by first name inside the same office, but need their full name to reach them from a different location.
+
+Verify the DNS resolution using the simulator (which runs lookups as if from inside the cluster):
 
 ```bash
-kubectl get endpoints web-service
-# NAME          ENDPOINTS                                      AGE
-# web-service   10.244.1.5:80,10.244.2.11:80,10.244.3.8:80   10s
+nslookup api-svc
+nslookup api-svc.default.svc.cluster.local
 ```
 
-**4. Test connectivity from inside the cluster using DNS**
+Both commands should return the same ClusterIP address. The short name works because the simulator, like real in-cluster Pods, uses the cluster's search domain list, which includes `default.svc.cluster.local`.
+
+:::quiz
+What ClusterIP was assigned to `api-svc`?
+
+**Try it:** `kubectl get service api-svc`
+
+**Answer:** The `CLUSTER-IP` column shows the virtual IP Kubernetes assigned to the Service. The `TYPE` column confirms it is a ClusterIP Service. This IP is stable for the lifetime of the Service object and is reachable from any Pod inside the cluster.
+:::
+
+## Inspecting ClusterIP Details
+
+For a more complete view:
 
 ```bash
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- curl -s http://web-service
-# Should return nginx's HTML , the request was load-balanced to one of the three Pods
+kubectl describe service api-svc
 ```
 
-**5. Test the fully-qualified DNS name from a different namespace**
+The output includes the assigned `IP:`, the `Port:` and `TargetPort:`, the `Selector:`, and the `Endpoints:` field showing which Pod IPs are currently behind the Service. This single command gives you the full picture of a Service's configuration and current routing state.
+
+:::info
+The ClusterIP is not routable from outside the cluster. It only exists within the cluster network. If you attempt to reach it from your laptop or from outside the cluster, the request will not arrive. External access requires a different Service type, such as NodePort or LoadBalancer, or an Ingress resource. Those are covered in the following lessons.
+:::
+
+## Why a Virtual IP and Not Direct Pod IPs?
+
+Why does kube-proxy use a virtual IP at all? Why not just load-balance DNS round-robin across Pod IPs directly?
+
+The virtual IP provides a stable reference point for iptables rules. kube-proxy programs every node with a rule: "traffic to `10.96.0.10:80` should be forwarded to one of these Pod IPs." When Pods change, only the iptables rules need updating. The ClusterIP never changes, which means clients maintain existing TCP connections without any interruption.
+
+DNS round-robin, by contrast, requires clients to re-resolve the name for every connection and handle Pod IP changes themselves. The ClusterIP abstraction moves that responsibility entirely out of application code and into the Kubernetes network layer.
+
+:::warning
+ClusterIP addresses are assigned from a reserved range (typically `10.96.0.0/12`). You cannot choose a specific IP. Kubernetes assigns it at Service creation time. If you need a predictable, human-readable reference, use the DNS name. The DNS name never changes as long as the Service exists. The ClusterIP technically could change if the Service is deleted and recreated.
+:::
+
+:::quiz
+Why does Kubernetes assign a virtual IP (ClusterIP) to a Service instead of exposing Pod IPs directly to clients?
+
+**Answer:** A virtual IP provides a stable, unchanging reference point. Clients connect to the ClusterIP; kube-proxy intercepts that traffic and forwards it to a currently healthy Pod. When Pods are replaced and their IPs change, only the iptables rules on the nodes are updated. The ClusterIP itself never changes, so no client reconfiguration is needed. This moves the complexity of Pod IP churn entirely out of application code.
+:::
+
+## Cleanup and What Comes Next
+
+You no longer need the extra Service from this lesson:
 
 ```bash
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -n kube-system -- curl -s http://web-service.default.svc.cluster.local
-# Should also return nginx's HTML , crossing namespace boundary via FQDN
+kubectl delete service api-svc
 ```
 
-**6. Confirm the environment variables injected into a Pod**
-
-```bash
-# Run kubectl get pods -l app=web, pick one pod NAME, then:
-kubectl exec <POD-NAME> -- printenv WEB_SERVICE_SERVICE_HOST
-kubectl exec <POD-NAME> -- printenv WEB_SERVICE_SERVICE_PORT
-```
-
-You can also run `kubectl exec <POD-NAME> -- printenv` and scan the list for variables starting with `WEB_SERVICE_`.
-
-**7. Show what happens when a port mismatch would cause issues**
-
-```bash
-# Try to reach the Service on a port it's not listening on (expect timeout or empty output)
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- curl -s --connect-timeout 3 http://web-service:9999
-```
-
-**8. Clean up**
-
-```bash
-kubectl delete deployment web
-kubectl delete service web-service
-```
+Keep `web-svc` and the `web` Deployment running. The next lesson introduces NodePort, which extends the ClusterIP type to make a Service reachable from outside the cluster on a port on each node's IP address.

@@ -16,6 +16,7 @@
 
 - Place the Mermaid diagram (@@@ block) BEFORE or DURING the textual explanation, never after.
 - The user reads the diagram first, then the text anchors each node. Both channels encode simultaneously.
+- **Subgraphs:** do not use a subgraph id as an edge target (`IP --> containers` / `containers --> VOL`). `beautiful-mermaid` duplicates the group box. Keep the subgraph for layout only; connect **leaf nodes** (`IP --> C1`, `C1 --> VOL`, etc.).
 - 1-2 diagrams per lesson minimum.
 - Use :::info and :::warning for non-obvious asides only, not to repeat the main text.
 
@@ -28,10 +29,15 @@
 - Follow the manifest immediately with the kubectl apply command.
 - Avoid showing a full complex manifest upfront without prior field-by-field buildup.
 
+## Terminal Engagement (practice-first)
+
+This platform's core value is hands-on experimentation. Prioritize terminal interaction over prose. Every lesson must include at least 3 commands distributed throughout (not just at the end). No purely theoretical section: after any concept, give a command that makes it visible. Read-only commands count. Break things, observe failures, reset and retry, that is the learning model.
+
 ## Interleaving and Testing Effect
 
 - No separate Hands-On section. Distribute terminal commands inline, immediately after the concept they illustrate.
 - After each major concept, add one :::quiz block to trigger active retrieval before moving on.
+- **Never group all quizzes at the end of the lesson.** Each :::quiz must appear immediately after the section it tests, while that concept is still active in the reader's working memory. A quiz placed 500 words after its concept is useless for retrieval practice.
 - Revisit the lesson's hardest concept a second time later in a different form (interleaving). Do not explain it identically, use a new angle or a new command that reveals the same truth.
 - Choose the quiz type based on the context (see :::quiz formats below).
 
@@ -54,29 +60,11 @@
 - This links the new concept to prior knowledge and builds a causal mental model, not just a procedural one.
 - One elaborative "why" per major section is enough.
 
-## Visualizer
+## What the simulator is
 
-The lesson has an embedded cluster visualizer (telescope icon) visible below the terminal.
+KubeMastery is NOT a real Kubernetes cluster. It is an in-browser simulation: an `ApiServerFacade` fronts an in-memory store (`EtcdLikeStore`) holding typed cluster state (Pods, Deployments, Services, etc.), with reconciliation controllers (control-plane, kubelet, network, volumes) running over an event bus. The terminal (xterm) dispatches input through `ShellCommandHandler` then `KubectlCommandHandler`, which routes to per-verb handlers under `src/core/kubectl/commands/handlers/`. The virtual filesystem is separate from the cluster state.
 
-What the visualizer renders:
-  - Compute layer: Nodes, Pods (grouped by node), containers (status badges)
-  - Network layer: Services, ClusterIPs, ports, endpoint Pods
-  - Workload tooltip on Pods: Deployment / DaemonSet / ReplicaSet ownership
-
-What it does NOT render (do not reference these visually):
-  - PersistentVolumes, PersistentVolumeClaims
-  - NetworkPolicies
-  - ConfigMaps, Secrets
-  - Deployment / ReplicaSet as standalone nodes
-
-Use :::visualizer callout at the exact moment a meaningful state change is visible
-(Pod going Running, Service appearing, rolling update in progress). One per major step, not one per command.
-
-:::visualizer
-Watch the cluster visualizer — [what to look for].
-:::
-
-Put it before the command not after.
+When describing the environment in lessons, always use the words "simulated", "simulator", "emulated", or "in-memory cluster". Never say "real cluster", "live cluster", or imply the terminal connects to actual Kubernetes infrastructure.
 
 ## Simulator shell (not POSIX Bash)
 
@@ -86,7 +74,7 @@ The in-lesson terminal is **not** a real shell. Do **not** put unsupported patte
 
 **Prefer:** `kubectl` plus the built-ins that exist in the product (file ops: `pwd`, `cd`, `ls`, `cat`, `nano`, `touch`, `mkdir`, `rm`, `echo` with `>` or `>>`), `&&` for simple chaining, `help`, `env`, `clear`, `sleep`, `nslookup`, and **simplified** `curl` (in-cluster HTTP GET style simulation, not full curl flags or scripting).
 
-Authoritative reference (keep examples aligned with this page): [Supported, English](/en/supported) · [Supported, French](/fr/supported).
+Authoritative reference (keep examples aligned with this page): [Supported, English](/en/supported).
 
 ## :::quiz formats
 

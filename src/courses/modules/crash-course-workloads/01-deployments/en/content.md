@@ -133,9 +133,6 @@ kubectl rollout status deployment/web-app
 
 The `rollout status` command blocks and prints progress as each replica becomes available. Once it exits, you have three Pods running.
 
-:::visualizer
-Watch the cluster visualizer: three Pods should appear on the worker node as the rollout completes.
-:::
 
 Now observe the naming hierarchy in action:
 
@@ -167,9 +164,6 @@ Now prove it. Copy one Pod name from the previous command, delete it, and immedi
 kubectl delete pod <POD-NAME>
 kubectl get pods -l app=web --watch
 ```
-:::visualizer
-Watch the cluster visualizer: the deleted Pod disappears and a replacement appears within seconds.
-:::
 
 You will see the deleted Pod terminate and a new one appear within seconds. Press Ctrl+C once the count is back at three.
 

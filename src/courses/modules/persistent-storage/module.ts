@@ -9,5 +9,4 @@ export const module: LocalModule = {
     en: 'Persistent Volumes et Claims : stockage découplé du Pod.'
   },
   tags: ['ckad', 'cka', 'intermediate'],
-  draft: true
 }

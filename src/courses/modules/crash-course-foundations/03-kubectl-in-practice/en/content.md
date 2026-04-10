@@ -29,9 +29,6 @@ Now list all Pods across all namespaces:
 ```bash
 kubectl get pods -A
 ```
-:::visualizer
-You can also watch the resources in real time in the cluster visualizer. It's the telescope icon below the terminal.
-:::
 
 The `-A` flag means "all namespaces." Without it, `kubectl get pods` only shows Pods in the `default` namespace. In a fresh cluster you may see Pods in `kube-system` that belong to the control plane components.
 

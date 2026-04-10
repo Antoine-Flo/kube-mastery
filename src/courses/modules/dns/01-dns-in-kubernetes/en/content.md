@@ -5,189 +5,103 @@ seoDescription: 'Understand how Kubernetes DNS works with CoreDNS, how Pods are 
 
 # DNS in Kubernetes
 
-Every application eventually needs to talk to another application. A web frontend needs to reach an API server. An API server needs to reach a database. In traditional infrastructure, you might hardcode IP addresses, write them into configuration files, or rely on an external DNS server managed by your operations team. In Kubernetes, there is a much more elegant solution built right into every cluster: an internal DNS system that lets your Pods find each other by name, regardless of where they are running or what IP address they happen to have at any given moment.
+You deploy a Service called `web` in the `default` namespace. From another Pod, you run `curl http://web` and it works. Nobody configured a `/etc/hosts` entry, nobody passed an IP address. How did the Pod know where `web` lives?
 
-:::info
-Kubernetes DNS means you never hardcode IPs between services. Your application connects to `api-service`, the cluster resolves the rest automatically.
+The answer is CoreDNS, and understanding it changes how you think about every inter-service call in the simulated cluster.
+
+## CoreDNS: the cluster's name server
+
+CoreDNS is a DNS server that runs as a Deployment inside the `kube-system` namespace. When the cluster starts, it registers itself as the DNS resolver for every Pod. Every Pod is configured at creation time to point its DNS queries to the CoreDNS service IP.
+
+Start by confirming CoreDNS is running in the simulated cluster:
+
+```
+kubectl get pods -n kube-system
+```
+
+You should see one or more Pods with `coredns` in their name in the `Running` state. These are the Pods answering every DNS query your workloads make.
+
+:::quiz
+Why is CoreDNS placed in `kube-system` rather than `default`?
+
+**Answer:** `kube-system` is reserved for cluster-level infrastructure. Placing CoreDNS there separates it from user workloads, makes it easy to identify system components, and prevents accidental deletion by users working in `default`.
 :::
 
-## The Problem with Hardcoded IPs
+## /etc/resolv.conf and the search domains
 
-Imagine you have a Pod running your frontend application, and it needs to talk to your backend API. The backend is exposed via a Kubernetes Service, which has a ClusterIP, a stable virtual IP assigned by the cluster. You could technically hardcode that IP into your frontend configuration. But this creates serious problems:
-
-- **Environment drift** The IP is specific to one cluster. Staging and production will have different IPs.
-- **Instability** While Service IPs are relatively stable within a cluster, deleting and recreating a Service gives it a new IP.
-- **Opacity** A number like `10.96.47.203` tells readers nothing. A name like `api-service` is immediately understandable.
-
-The solution is DNS: a system that maps human-readable names to IP addresses, so your application can use a name like `api-service` and let the infrastructure figure out which IP that corresponds to right now.
-
-## CoreDNS: The Cluster Phone Book
-
-Kubernetes solves this with a built-in DNS server called **CoreDNS**. Think of CoreDNS as the phone book of your cluster. Just as a phone book maps people's names to their phone numbers, CoreDNS maps Service names to their ClusterIP addresses. When your Pod wants to talk to `api-service`, it asks CoreDNS "what is the IP for api-service?" and CoreDNS looks it up and replies instantly.
-
-CoreDNS runs as a regular Kubernetes Deployment inside the `kube-system` namespace. It is exposed via its own Service, also named `kube-dns` (for historical reasons), which has a stable ClusterIP that the cluster assigns at creation time. That IP is what every Pod is configured to use as its DNS resolver.
+When Kubernetes creates a Pod, it writes a `/etc/resolv.conf` file inside the container. That file tells the operating system where to send DNS queries and which domain suffixes to try automatically when a short name is used.
 
 @@@
-sequenceDiagram
-    participant P as Pod (your app)
-    participant R as /etc/resolv.conf
-    participant C as CoreDNS (kube-system)
-    participant S as Service ClusterIP
-
-    P->>R: Who is my DNS server?
-    R-->>P: 10.96.0.10 (CoreDNS ClusterIP)
-    P->>C: What is the IP for "api-service"?
-    C-->>P: It is 10.96.47.203
-    P->>S: Connect to 10.96.47.203
-    S-->>P: Response from backend
+graph LR
+    Pod["Pod\n(runs nslookup web)"] --> Resolv["/etc/resolv.conf\nnameserver CoreDNS-IP\nsearch default.svc.cluster.local\n svc.cluster.local cluster.local"]
+    Resolv --> CoreDNS["CoreDNS\n(kube-system)"]
+    CoreDNS --> ClusterIP["ClusterIP\n10.96.x.x"]
 @@@
 
-## How Every Pod Gets DNS Configured
+The `nameserver` line points to the ClusterIP of the `kube-dns` Service, which routes to the CoreDNS Pods. The `search` line lists domain suffixes to try in order when a short name is resolved. When your Pod runs `curl web`, the OS first tries `web.default.svc.cluster.local`. CoreDNS recognizes that as a known Service and returns its ClusterIP.
 
-When Kubernetes creates a new Pod, it automatically configures DNS by writing a `/etc/resolv.conf` file inside the container. You do not have to do anything, this happens transparently, every time, for every Pod:
+Why does Kubernetes inject this file automatically rather than letting applications configure DNS themselves? Because the CoreDNS ClusterIP is assigned at cluster creation time and differs between clusters. Injecting the file at Pod creation means every workload finds DNS without any application-level configuration.
 
-```
-nameserver 10.96.0.10
-search default.svc.cluster.local svc.cluster.local cluster.local
-options ndots:5
-```
+:::quiz
+A Pod in namespace `default` resolves the short name `api`. In what order does the OS try the search domains?
 
-- The `nameserver` line points to the CoreDNS Service IP, the DNS server your Pod will query.
-- The `search` line is where the magic of short names happens (covered next).
-- `ndots:5` means any name with fewer than five dots is first tried with search domains appended before being tried as a global name.
+- `api.cluster.local`, then `api.svc.cluster.local`, then `api.default.svc.cluster.local`
+- `api.default.svc.cluster.local`, then `api.svc.cluster.local`, then `api.cluster.local`
+- It only tries `api.default.svc.cluster.local`
 
-## Search Domains and Why Short Names Work
-
-The `search` line in `/etc/resolv.conf` contains a list of DNS search domains. When your application resolves a name, the resolver does not just look it up as-is, it appends each search domain in turn until it finds a match.
-
-Suppose your Pod is in the `default` namespace and you try to connect to `api-service`. Here is what happens behind the scenes:
-
-1. Try `api-service.default.svc.cluster.local` → found! Return this IP.
-2. (If not found) Try `api-service.svc.cluster.local`
-3. (If not found) Try `api-service.cluster.local`
-4. (If not found) Try `api-service` as a global DNS lookup
-
-Because the search domains include `<namespace>.svc.cluster.local`, a simple name like `api-service` automatically resolves to the full DNS name for Services in the same namespace. This is why you can write `http://api-service` in your code and it just works, the DNS resolver silently expands it to `api-service.default.svc.cluster.local` for you.
-
-When you want to reach a Service in a different namespace, you need to be more explicit. A name like `api-service.production` will be expanded to `api-service.production.svc.cluster.local`, which is the full record for the `api-service` Service in the `production` namespace. You will learn more about this in the next lesson on Service DNS records.
-
-## The Cluster Domain
-
-The suffix `cluster.local` you keep seeing is called the **cluster domain**. It is the root domain for all DNS records inside your Kubernetes cluster, every Service, every Pod DNS record lives under this domain.
-
-The cluster domain is configurable. Some organizations use a custom domain like `my-company.internal` or `k8s.corp.local`. However, `cluster.local` is the overwhelming default, and you will see it in virtually every cluster you encounter. It is set at cluster creation time in both the CoreDNS configuration and the kubelet configuration.
-
-:::info
-You can verify the cluster domain by inspecting the `search` line in any Pod's `/etc/resolv.conf`. The third entry (after `<namespace>.svc.cluster.local` and `svc.cluster.local`) is the cluster domain itself.
+**Answer:** `api.default.svc.cluster.local` first, then `api.svc.cluster.local`, then `api.cluster.local` - the search list is tried in the order it appears in `/etc/resolv.conf`, and the most specific suffix (with namespace) comes first.
 :::
 
-## The Full DNS Resolution Flow
+## The Full Qualified Domain Name
 
-Here is what happens when your application calls `http://backend-service/users`:
+Every Kubernetes Service has a full name that follows this pattern:
 
-1. The HTTP library resolves `backend-service` by calling the system resolver, which reads `/etc/resolv.conf`.
-2. The resolver sends a UDP query to CoreDNS at `10.96.0.10:53`, asking for the A record of `backend-service.default.svc.cluster.local` (after applying the first search domain).
-3. CoreDNS looks in its internal records, kept in sync by watching the Kubernetes API, and finds that `backend-service` has a ClusterIP of `10.96.100.50`. It replies with that IP and a short TTL (~30 seconds).
-4. Your application opens a TCP connection to `10.96.100.50`. That ClusterIP is a virtual address handled by `kube-proxy`, which load-balances the connection to one of the healthy Pods backing the Service.
+```
+<service-name>.<namespace>.svc.cluster.local
+```
 
-Your application works perfectly, all without ever knowing any Pod IP address.
+The `web` Service in the `default` namespace has the FQDN `web.default.svc.cluster.local`. You can use the short name `web` from the same namespace because `default.svc.cluster.local` is appended automatically by the search domain mechanism.
 
-:::info
-CoreDNS is not just a passive phone book. It actively watches the Kubernetes API server and updates its records in real time as Services are created, updated, and deleted. Your applications will automatically start resolving to new IPs within seconds of a Service change.
+Test the resolution right now using the DNS tool available in the simulator:
+
+```
+nslookup kubernetes
+```
+
+The `kubernetes` Service is the API server Service that always exists in the `default` namespace. CoreDNS always knows it. The response shows the ClusterIP that `kubernetes.default.svc.cluster.local` resolves to.
+
+Now try the FQDN directly to confirm both forms are equivalent:
+
+```
+nslookup kubernetes.default.svc.cluster.local
+```
+
+The returned IP is identical. The short name works as a convenience; the FQDN is always the canonical form.
+
+:::quiz
+What is the FQDN of a Service named `payments` in a namespace called `finance`?
+
+- `payments.svc.cluster.local`
+- `payments.finance.svc.cluster.local`
+- `finance.payments.cluster.local`
+
+**Answer:** `payments.finance.svc.cluster.local` - the pattern is always `<service>.<namespace>.svc.cluster.local`. The first option is missing the namespace segment; the third reverses the order of service and namespace.
 :::
 
-## Hands-On Practice
+## Short names and cross-namespace pitfalls
 
-Let's explore DNS in your cluster directly.
+The search domain list only includes the current namespace. If your Pod is in the `frontend` namespace and tries to reach a Service named `api` in the `backend` namespace, the short name `api` will fail. The OS expands it to `api.frontend.svc.cluster.local`, which does not exist.
 
-**Step 1: Verify that CoreDNS is running**
+:::warning
+Short names only resolve within the same namespace. From a different namespace, always use the namespace-qualified name `api.backend` or the full FQDN `api.backend.svc.cluster.local`. This is one of the most frequent DNS mistakes in multi-namespace setups.
+:::
 
-```bash
-kubectl get pods -n kube-system -l k8s-app=kube-dns
-```
-
-Expected output:
+Can you figure out what qualified name you would use to reach a Service called `db` from a namespace called `staging`, if `db` lives in `production`? Try resolving it:
 
 ```
-NAME                       READY   STATUS    RESTARTS   AGE
-coredns-7db6d8ff4d-4vk9p   1/1     Running   0          2d
-coredns-7db6d8ff4d-9xrmf   1/1     Running   0          2d
+nslookup db.production
 ```
 
-**Step 2: Look at the CoreDNS Service**
+CoreDNS expands `db.production` to `db.production.svc.cluster.local`, finds the Service, and returns its ClusterIP.
 
-```bash
-kubectl get svc kube-dns -n kube-system
-```
-
-Expected output:
-
-```
-NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
-kube-dns   ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   2d
-```
-
-Note the ClusterIP, this is the address that appears in every Pod's `/etc/resolv.conf`.
-
-**Step 3: Inspect the resolv.conf inside a running Pod**
-
-```bash
-kubectl run dns-demo --image=busybox --rm -it --restart=Never -- cat /etc/resolv.conf
-```
-
-Expected output:
-
-```
-nameserver 10.96.0.10
-search default.svc.cluster.local svc.cluster.local cluster.local
-options ndots:5
-```
-
-**Step 4: Do a live DNS lookup from inside a Pod**
-
-```bash
-kubectl run dns-demo --image=busybox --rm -it --restart=Never -- nslookup kubernetes
-```
-
-Expected output:
-
-```
-Server:    10.96.0.10
-Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
-
-Name:      kubernetes
-Address 1: 10.96.0.1 kubernetes.default.svc.cluster.local
-```
-
-This lookup resolves the built-in `kubernetes` Service in the `default` namespace, the Service that represents the Kubernetes API server itself. Notice how the short name `kubernetes` was automatically expanded to `kubernetes.default.svc.cluster.local`. This is the search domain mechanism in action.
-
-**Step 5: Create a Service and verify its DNS record**
-
-```bash
-kubectl create deployment hello --image=nginx
-kubectl expose deployment hello --port=80
-kubectl run dns-demo --image=busybox --rm -it --restart=Never -- nslookup hello
-```
-
-Expected output:
-
-```
-Server:    10.96.0.10
-Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
-
-Name:      hello
-Address 1: 10.96.xxx.xxx hello.default.svc.cluster.local
-```
-
-You can also look up the full FQDN explicitly:
-
-```bash
-kubectl run dns-demo --image=busybox --rm -it --restart=Never -- nslookup hello.default.svc.cluster.local
-```
-
-Both should return the same ClusterIP assigned to your `hello` Service. Clean up when done:
-
-```bash
-kubectl delete deployment hello
-kubectl delete service hello
-```
+CoreDNS is what makes Kubernetes networking feel like a stable, named world rather than a sea of floating IPs. It runs as a system component, is configured automatically for every Pod through `/etc/resolv.conf`, and uses search domains to make short names feel natural within a namespace. The FQDN is always the safe fallback when a name must cross namespace boundaries.

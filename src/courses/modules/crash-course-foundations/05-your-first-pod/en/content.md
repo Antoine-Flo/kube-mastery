@@ -95,9 +95,6 @@ Apply it:
 kubectl apply -f my-pod.yaml
 ```
 
-:::visualizer
-Watch the cluster visualizer: a new Pod should appear on the worker node and transition to Running within a few seconds.
-:::
 
 ## Observing the Lifecycle
 

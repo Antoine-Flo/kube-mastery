@@ -131,9 +131,6 @@ spec:
 kubectl apply -f backend-service.yaml
 ```
 
-:::visualizer
-Watch the cluster visualizer: the Service appears in the network layer with its ClusterIP and a link to the three backend Pods.
-:::
 
 ## Inspecting the Service
 

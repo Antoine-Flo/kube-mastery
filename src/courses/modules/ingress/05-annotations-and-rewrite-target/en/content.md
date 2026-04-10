@@ -3,124 +3,101 @@ seoTitle: 'Gateway API HTTPRoute Filters, URL Rewrite, Redirect, and Policies'
 seoDescription: 'Learn how Gateway API replaces Ingress annotations with HTTPRoute filters and policy resources for URL rewrites, redirects, header manipulation, and advanced traffic behavior.'
 ---
 
-# HTTPRoute Filters and Gateway API Policies
+# Portable Traffic Manipulation with HTTPRoute Filters
 
-If you have worked with classic Ingress resources before, you have probably encountered annotations. Things like `nginx.ingress.kubernetes.io/rewrite-target: /` or `nginx.ingress.kubernetes.io/ssl-redirect: "true"`. These annotations are the escape hatch that Ingress controllers use to expose features that the Ingress API itself does not support. They work, but they come with real costs.
+When routing traffic, you often need to do more than match a path and forward the request unchanged. You might want to strip a path prefix before the request reaches the backend, redirect HTTP requests to HTTPS, or inject a header the backend expects. With the old `Ingress` resource, these behaviors were configured through controller-specific annotations like `nginx.ingress.kubernetes.io/rewrite-target`. Those annotations were not portable: a manifest written for nginx did not work on a different controller without rewriting every annotation.
 
-Annotations are strings. There is no schema validation. A typo in an annotation name or value silently does nothing, and you only find out when traffic does not behave as expected. Worse, every Ingress controller uses a different annotation namespace and syntax. Configuration written for NGINX Ingress does not work on Traefik, and neither works on Kong. This makes platform migrations painful and cross-team documentation confusing.
-
-Gateway API was designed to eliminate this problem. Instead of annotations, it exposes advanced routing behavior through **first-class API fields**, with proper validation, clear semantics, and portability across implementations.
-
-## HTTPRoute Filters: Inline Behavior on Rules
-
-The primary mechanism for modifying request and response behavior in Gateway API is the **filter**. Filters are applied to individual rules in an HTTPRoute and can transform requests before they reach the backend, or transform responses before they return to the client.
-
-Each rule in an HTTPRoute can have a `filters` list. The most commonly used filters are:
-
-**URL rewrite**: changes the path or hostname before forwarding the request to the backend. This is the direct equivalent of the `rewrite-target` annotation from NGINX Ingress.
-
-```yaml
-rules:
-  - matches:
-      - path:
-          type: PathPrefix
-          value: /api
-    filters:
-      - type: URLRewrite
-        urlRewrite:
-          path:
-            type: ReplacePrefixMatch
-            replacePrefixMatch: /
-    backendRefs:
-      - name: api-service
-        port: 8080
-```
-
-With this configuration, a request to `/api/users` is forwarded to the backend as `/users`. The `/api` prefix is stripped. This is a very common pattern when you want to route traffic to a microservice that does not know it is mounted under a path prefix.
-
-**Request redirect**: returns an HTTP redirect response to the client instead of forwarding to a backend. Useful for enforcing HTTPS or for URL canonicalization.
-
-```yaml
-rules:
-  - matches:
-      - path:
-          type: PathPrefix
-          value: /old-path
-    filters:
-      - type: RequestRedirect
-        requestRedirect:
-          path:
-            type: ReplacePrefixMatch
-            replacePrefixMatch: /new-path
-          statusCode: 301
-```
-
-**Request header modification**: add, remove, or overwrite headers on the request before it reaches the backend.
-
-```yaml
-filters:
-  - type: RequestHeaderModifier
-    requestHeaderModifier:
-      set:
-        - name: X-Forwarded-Host
-          value: app.example.com
-      remove:
-        - X-Internal-Debug
-```
-
-**Response header modification**: same as above but applied to the response coming back from the backend.
-
-:::info
-All of these filters are part of the standard Gateway API specification. They work identically regardless of which implementation you use (Envoy Gateway, Cilium, Traefik, etc.). This is exactly the portability problem that annotations could not solve.
-:::
-
-## The Difference Between Filters and Policies
-
-Filters are inline in the HTTPRoute rule. They apply to that specific rule and are owned by the team managing that route. Policies are separate resources that apply cross-cutting behavior at a broader scope.
-
-Envoy Gateway supports several policy resources that extend the base Gateway API with implementation-specific capabilities. For example:
-
-- **BackendTrafficPolicy**: controls load balancing, circuit breaking, and retry behavior for traffic going to backends.
-- **ClientTrafficPolicy**: controls how Envoy handles incoming connections, including keepalive settings, buffer sizes, and client TLS requirements.
-- **SecurityPolicy**: adds authentication and authorization checks, such as requiring a valid JWT token before routing a request.
-
-These policies are attached to a Gateway or an HTTPRoute using a `targetRef` field, similar to how an HTTPRoute references a Gateway with `parentRefs`.
+Gateway API solves this by moving these behaviors into the HTTPRoute spec itself, as `filters`. Filters are part of the standard Kubernetes Gateway API, which means they work the same way regardless of which controller implements the Gateway underneath.
 
 @@@
-flowchart TD
-    GW[Gateway]
-    CTP[ClientTrafficPolicy\ntargetRef: Gateway]
-    ROUTE[HTTPRoute]
-    BTP[BackendTrafficPolicy\ntargetRef: HTTPRoute]
-    SVC[Service]
+graph LR
+    Client["Client\nGET /api/users"]
+    HR["HTTPRoute\nfilter: URLRewrite\n/api -> /"]
+    SVC["api-svc\nreceives GET /users"]
 
-    CTP -.->|applies to| GW
-    GW --> ROUTE
-    BTP -.->|applies to| ROUTE
-    ROUTE --> SVC
+    Client --> HR
+    HR --> SVC
 @@@
 
-This hierarchy keeps concerns separated. The platform team manages policies at the Gateway level. Application teams manage policies at the HTTPRoute level. Neither has to touch the other's resources.
+## URL Rewrite: Strip a Path Prefix
 
-:::warning
-Policy resources like `BackendTrafficPolicy` and `ClientTrafficPolicy` are Envoy Gateway-specific and are not part of the core Gateway API specification. If you migrate to a different implementation, you will need to rewrite these policies. The routing itself (HTTPRoute filters) will be portable, but the policy attachments will not.
-:::
+A common pattern is to host a service at a sub-path of your domain, like `/api`, while the service itself expects requests at the root `/`. A client requesting `/api/users` should arrive at the backend as `/users`. The `URLRewrite` filter with a `ReplacePrefixMatch` handles this precisely.
 
-## HTTPS Redirect: A Complete Example
+Start with a basic HTTPRoute:
 
-One of the most common use cases combining routing rules and filters is redirecting all HTTP traffic to HTTPS. The pattern uses two listeners on the Gateway (one on port 80, one on port 443) and an HTTPRoute on the HTTP listener that returns a 301 redirect.
-
-The redirect HTTPRoute looks like this:
+```bash
+nano api-route.yaml
+```
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: http-to-https-redirect
+  name: api-route
+  namespace: default
 spec:
   parentRefs:
-    - name: main-gateway
+    - name: my-gateway
+  hostnames:
+    - "api.myapp.com"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api
+      backendRefs:
+        - name: api-svc
+          port: 80
+```
+
+Now add the `URLRewrite` filter to the rule to strip the `/api` prefix before forwarding:
+
+```yaml
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+```
+
+The `ReplacePrefixMatch` replaces the matched prefix (`/api`) with the given value (`/`), so `/api/users` becomes `/users` at the backend, and `/api/products/42` becomes `/products/42`.
+
+```bash
+kubectl apply -f api-route.yaml
+kubectl describe httproute api-route
+```
+
+The `Spec.Rules` section in the describe output lists all active filters, confirming the rewrite is registered.
+
+:::quiz
+A client sends `GET /api/products/42`. The HTTPRoute matches `/api` with a `URLRewrite` filter that replaces the prefix with `/`. What path does `api-svc` receive?
+
+**Answer:** `/products/42`. The prefix `/api` is replaced by `/`, and the remainder of the path is preserved as-is. The backend sees `/products/42`, not `/api/products/42`.
+:::
+
+## Request Redirect: Send the Client Elsewhere
+
+The `RequestRedirect` filter does not forward the request to a backend. Instead, it sends an HTTP redirect response back to the client, telling it to re-request at a different URL. This is useful for redirecting plain HTTP traffic to HTTPS, or moving an old path permanently to a new location.
+
+Add a redirect rule that sends HTTP clients to HTTPS:
+
+```bash
+nano redirect-route.yaml
+```
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: redirect-route
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-gateway
       sectionName: http
+  hostnames:
+    - "api.myapp.com"
   rules:
     - filters:
         - type: RequestRedirect
@@ -129,89 +106,58 @@ spec:
             statusCode: 301
 ```
 
-Any request arriving on port 80 is immediately redirected to the same URL on port 443. The browser follows the redirect and re-sends the request over HTTPS. No backend service is involved in serving the redirect, Envoy handles the entire thing.
-
-## Hands-On Practice
-
-In this lab, you will validate a critical controller behavior: route status should change when backend references become resolvable.
-
-**Step 1: Inspect the active HTTPRoute status**
+This rule has no `matches` block, so it matches all requests arriving at the HTTP listener for `api.myapp.com`. It returns a `301 Moved Permanently` response, instructing the client to resend the request over HTTPS.
 
 ```bash
-kubectl get httproute
-kubectl describe httproute backend
+kubectl apply -f redirect-route.yaml
 ```
 
-Expected output excerpt:
+:::warning
+`URLRewrite` and `RequestRedirect` are mutually exclusive within the same rule. A rule that includes both filters will be rejected by the controller. If you need to rewrite and redirect in different scenarios, place each behavior in a separate rule with its own `matches` condition.
+:::
 
+:::quiz
+You want to redirect all HTTP requests to HTTPS. Should you use `URLRewrite` or `RequestRedirect`?
+
+- `URLRewrite`, because it modifies the request scheme
+- `RequestRedirect`, because it sends the client a redirect response to a different scheme
+- Either one, they are equivalent for scheme changes
+
+**Answer:** `RequestRedirect` with `scheme: https`. `URLRewrite` modifies how the request is forwarded to the backend but it does not send a redirect to the client. Only `RequestRedirect` sends a 3xx status code back, causing the browser or client to follow the new URL.
+:::
+
+## Request Header Modifier: Add or Remove Headers
+
+The `RequestHeaderModifier` filter lets you add, set, or remove HTTP headers before the request reaches the backend. This is useful for injecting metadata headers, removing sensitive forwarded headers, or setting values that backend services depend on.
+
+Add a filter to the existing api-route:
+
+```yaml
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            add:
+              - name: X-Gateway-Version
+                value: "v1"
+            remove:
+              - X-Internal-Token
 ```
-Name:         backend
-Namespace:    default
-API Version:  gateway.networking.k8s.io/v1
-Kind:         HTTPRoute
-...
-Rules:
-  Backend Refs:
-    Name:    backend
-    Port:    3000
-  Matches:
-    Path:
-      Type:   PathPrefix
-      Value:  /
-Status:
-  Parents:
-    Conditions:
-      Type:                  Accepted
-      Status:                True
-      Type:                  ResolvedRefs
-      Status:                <True|False>
-```
 
-Look at the `Rules` section and the `Status` conditions. There are no filters in the default configuration.
-
-**Step 2: Create the missing backend reference**
+The `add` list appends a header if it does not already exist, or adds a new value alongside existing ones. The `remove` list strips the named headers entirely before the request reaches the backend. Apply the updated manifest and inspect the result:
 
 ```bash
-kubectl create deployment backend --image=nginx
-kubectl expose deployment backend --port=3000
+kubectl apply -f api-route.yaml
+kubectl describe httproute api-route
 ```
 
-**Step 3: Re-check HTTPRoute status**
+:::info
+Filters are defined inside the HTTPRoute spec, not in external annotations. This makes them readable, diffable in version control, and portable across every Gateway API conformant controller. Any controller that implements the Gateway API specification supports the same set of filter types without custom annotations.
+:::
 
-```bash
-kubectl describe httproute backend
-```
+:::quiz
+You want to inject an `X-Request-Source: gateway` header on every forwarded request. Which filter type do you use, and which field inside it?
 
-Expected output excerpt:
+**Answer:** `RequestHeaderModifier` with an `add` entry. Set `name: X-Request-Source` and `value: gateway` inside `requestHeaderModifier.add`. The filter runs before the request is forwarded to the backend.
+:::
 
-```
-Status:
-  Parents:
-    Conditions:
-      Type:                  Accepted
-      Status:                True
-      Type:                  ResolvedRefs
-      Reason:                ResolvedRefs
-      Status:                True
-```
-
-You should now see `ResolvedRefs=True`, meaning the backend reference is resolvable by the controller.
-
-**Step 4: Inspect the Gateway attachment point**
-
-```bash
-kubectl get gateways
-kubectl describe gateway eg
-```
-
-You can see the Gateway status and active listeners. This is the attachment point where HTTPRoutes are bound and enforced.
-
-**Step 5: Clean up**
-
-```bash
-kubectl delete deployment backend
-kubectl delete service backend
-kubectl describe httproute backend
-```
-
-After cleanup, `ResolvedRefs` should go back to `False`, which confirms status is driven by live backend resolution.
+HTTPRoute filters replace the annotation-driven customization of the old Ingress resource with a portable, spec-driven model. URL rewrites, redirects, and header manipulation are all declared within the HTTPRoute itself, which means the same manifest works on any conformant Gateway API controller and can be reviewed, tested, and versioned like any other Kubernetes resource.

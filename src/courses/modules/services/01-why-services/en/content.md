@@ -3,197 +3,107 @@ seoTitle: 'Kubernetes Services, Stable IPs, DNS, and Load Balancing'
 seoDescription: 'Understand why Kubernetes Services exist, how they provide a stable IP and DNS name for dynamic Pods, and how kube-proxy handles load balancing.'
 ---
 
-# Why Services? The Problem with Pod IPs
+# Why Services
 
-You've learned how to create Pods and Deployments. Now imagine you have a frontend Pod that needs to talk to a backend API running in another Pod. The obvious first instinct is: find the backend Pod's IP address and have the frontend connect to it directly. It seems simple. It seems like it should work. And it will , right up until the moment the backend Pod is replaced, which in Kubernetes happens constantly.
+You have 3 Pods running your web application. Another Pod inside the cluster needs to call them. Which IP does it use?
 
-This is the fundamental problem that Services solve.
+Pod A has IP `10.244.0.5`. Pod B has `10.244.0.6`. Pod C has `10.244.0.7`. You pick Pod A and hardcode `10.244.0.5` into your client configuration. Everything works. Then Pod A crashes. The ReplicaSet creates a replacement with IP `10.244.0.8`. Your client still points to `10.244.0.5`, which no longer exists. The connection fails silently.
 
-:::info
-A Kubernetes **Service** gives a stable IP and DNS name to a dynamic group of Pods, abstracting away their ephemeral individual IPs.
-:::
+This is not a bug in your code. It is a structural problem: Pod IPs are ephemeral.
 
-## Pod IPs Are Ephemeral
+## Pod IPs Are Not Stable
 
-Every Pod in Kubernetes gets its own IP address from the cluster's internal network. But this address has a critical property: it is temporary. When a Pod is deleted and recreated , whether because of a rolling update, a node failure, a liveness probe failure, or a simple `kubectl delete pod` , the replacement Pod gets a completely different IP address. There is no reservation, no DNS record automatically updated, no forwarding from the old address. The old IP is gone; the new IP is unknown until the Pod starts.
+Every time a Pod is created, Kubernetes assigns it a new IP address from the cluster network range. There is no guarantee this IP will be the same as the previous Pod's. A Pod that crashes, gets evicted from a node, or is replaced during a rolling update receives a brand new IP. Any client that holds the old IP has no automatic way to discover the replacement.
 
-In a Deployment with three replicas, you face a compounded version of this problem: there are three IP addresses, all of which can change independently at any time, and clients need to distribute traffic across all three , not just find one.
+This affects every communication pattern inside a cluster. A frontend Pod calling a backend, a worker calling a queue, a sidecar calling the main application. All of them break the moment a Pod is replaced, unless something provides a stable address.
 
-Think of it like trying to call a friend whose phone number changes every time they restart their phone. Even if you save their number in your contacts this morning, by tonight it might belong to someone else entirely. You'd need some kind of intermediary , a switchboard, a directory service , that always knows the current number and connects you regardless of what it is.
+Start by creating the Deployment you will expose through a Service. Run this in the simulator:
 
-That intermediary is a Kubernetes **Service**.
-
-## What a Service Provides
-
-A Service is a Kubernetes object that gives a stable identity , a fixed IP address and a DNS name , to a dynamic group of Pods. Once you create a Service, that identity never changes. You can reboot Pods, roll out updates, scale up and down , the Service's IP and DNS name stay constant. Any client inside the cluster (or outside it, depending on the Service type) can reliably reach those Pods through the Service without ever needing to know the current Pod IPs.
-
-Beyond stability, a Service provides automatic load balancing, traffic is distributed across all matching Pods with no manual configuration:
-
-- Add a Pod with the right label → it immediately starts receiving traffic.
-- Remove or replace a Pod → traffic stops going to it instantly.
-- The Service never needs to be reconfigured.
-
-## How Services Find Their Pods: Label Selectors
-
-Services don't maintain a manual list of Pod IPs. Instead, they use the same label-selector mechanism you already know from ReplicaSets. A Service has a `selector` field that specifies a set of labels. Any Pod in the same namespace whose labels match the selector is automatically included in the Service's backend pool.
-
-This means the relationship between a Service and its Pods is completely dynamic. You never tell the Service "here are your Pods" , you tell the Service "find any Pod with these labels." Kubernetes watches for Pods matching that description and keeps the routing up to date automatically.
-
-@@@
-graph TB
-    Client["Client<br/>(another Pod or external user)"]
-    SVC["Service<br/>web-service<br/>Stable IP: 10.96.45.12<br/>DNS: web-service.default.svc.cluster.local"]
-    P1["Pod<br/>app=web<br/>IP: 10.244.1.5"]
-    P2["Pod<br/>app=web<br/>IP: 10.244.2.11"]
-    P3["Pod<br/>app=web<br/>IP: 10.244.3.8"]
-
-    Client -->|"always the same address"| SVC
-    SVC -->|"load balanced"| P1
-    SVC -->|"load balanced"| P2
-    SVC -->|"load balanced"| P3
-@@@
-
-When one of those Pods is replaced , say Pod `10.244.1.5` becomes `10.244.1.9` after a restart , the Service automatically updates its internal routing. The client doesn't notice. It still sends requests to `web-service`, and the Service figures out which Pods are healthy and available behind the scenes.
-
-## Services and DNS
-
-One of Kubernetes' most convenient features is its built-in DNS service (typically CoreDNS). Every Service gets a DNS name automatically, in the format:
-
+```bash
+nano web-deployment.yaml
 ```
-<service-name>.<namespace>.svc.cluster.local
-```
-
-For a Service named `web-service` in the `default` namespace, the full DNS name is `web-service.default.svc.cluster.local`. Within the same namespace, you can shorten this to just `web-service`. Pods can reach each other using these human-readable names instead of ever dealing with IP addresses.
-
-This is how microservices communicate in Kubernetes: `http://auth-service/api/login`, `http://database-service:5432`, and so on. The names are stable configuration , they go into your application's environment variables or config files once and never need to change.
-
-:::info
-The `svc.cluster.local` suffix is the cluster's domain. It can be customized when the cluster is created, but the vast majority of clusters use the default. You'll rarely need to type the full qualified name , within the same namespace, the short name works fine.
-:::
-
-## Services Also Handle Load Balancing
-
-Behind the scenes, each Kubernetes node runs a component called `kube-proxy`. Its job is to program the node's kernel networking (via iptables or IPVS rules) so that traffic sent to a Service's virtual IP gets forwarded to one of the backend Pods. This happens entirely at the network level, before it ever reaches your application code.
-
-The load balancing provided by kube-proxy's default mode is simple round-robin (or random selection in IPVS mode). It's not sophisticated , there's no connection draining, no request weighting, no health-based routing. But for the vast majority of stateless workloads, it's perfectly adequate. For more advanced load balancing behaviour, you'd layer an Ingress controller or a service mesh on top.
-
-:::warning
-kube-proxy's load balancing is connection-level for TCP, not request-level. This means that with a long-lived connection (such as HTTP/2 multiplexing or a database connection pool), all requests on that connection go to the same backend Pod. If your clients use persistent connections, you may see uneven load distribution across Pods.
-:::
-
-## Hands-On Practice
-
-Let's create a Deployment and see the problem directly , and then solve it with a Service.
-
-**1. Create a backend Deployment**
 
 ```yaml
-# backend-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend
+  name: web
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: backend
+      app: web
   template:
     metadata:
       labels:
-        app: backend
+        app: web
     spec:
       containers:
-        - name: backend
+        - name: web
           image: nginx:1.28
+          ports:
+            - containerPort: 80
 ```
 
 ```bash
-kubectl apply -f backend-deployment.yaml
-kubectl rollout status deployment/backend
+kubectl apply -f web-deployment.yaml
+kubectl get pods -l app=web -o wide
 ```
 
-**2. Find the Pod IPs and demonstrate they change**
+Look at the `IP` column in the output. Note those addresses. They are real inside the simulated cluster, but they will change the next time those Pods are replaced.
+
+:::warning
+Never hardcode a Pod IP in application configuration or environment variables. Pod IPs are assigned at scheduling time and change on every restart, eviction, or rolling update. Any system that relies on Pod IPs directly is fragile by design. A single Pod crash is enough to break the entire communication path.
+:::
+
+## The Service Abstraction
+
+A Service gives a group of Pods a single stable virtual IP, called the ClusterIP, and a DNS name that never changes. Clients call the Service. The Service finds the right Pods using a label selector. When a Pod is replaced, the Service updates its routing automatically. The ClusterIP stays the same.
+
+Think of it like a company phone directory. Employees move desks constantly, but their extension number is always listed under their name. You call the directory number, not the desk. The phone system routes the call to whoever is sitting there now. Pods are the employees; the Service is the directory entry.
+
+@@@
+graph LR
+    CLIENT["Client Pod"]
+    SVC["Service\nClusterIP: 10.96.0.10\nDNS: web-svc"]
+    P1["Pod A\n10.244.0.5"]
+    P2["Pod B\n10.244.0.6"]
+    P3["Pod C (new)\n10.244.0.8"]
+    CLIENT --> SVC
+    SVC --> P1
+    SVC --> P2
+    SVC --> P3
+@@@
+
+The label selector is the bridge between the Service and the Pods. The Service says: "route traffic to any Pod that has the label `app: web`." Kubernetes keeps that list up to date automatically. When Pod A dies and Pod C appears with the same label, Pod C enters the routing pool. The client never changes its target.
+
+:::quiz
+Why is a fixed Pod IP not enough for stable service communication?
+
+**Answer:** Pods are ephemeral. A Pod that crashes is replaced by the ReplicaSet with a completely new Pod object, a new UID, and a new IP address. The client that stored the old IP has no way to discover the replacement automatically. A Service solves this by maintaining a stable virtual IP that always routes to currently healthy Pods, regardless of how many times the underlying Pods have been replaced.
+:::
+
+## Confirming Ephemeral IPs
+
+You can observe the problem directly. Trigger a rollout to replace the existing Pods:
 
 ```bash
-# Record the current Pod IPs
-kubectl get pods -l app=backend -o wide
-# NAME                        READY   STATUS    NODE      IP
-# backend-6d4b9c7f8-abc12    1/1     Running   node-1    10.244.1.5
-# backend-6d4b9c7f8-def34    1/1     Running   node-2    10.244.2.11
+kubectl rollout restart deployment/web
+kubectl get pods -l app=web -o wide
 ```
 
-Now delete one Pod and watch it get replaced with a new IP:
+Compare the IPs in the output to the ones you noted earlier. They are different. Any client that cached the old IPs is now broken. This is exactly the problem a Service prevents.
 
-```bash
-# Run kubectl get pods -l app=backend, pick one pod NAME from the output, then:
-kubectl delete pod <POD-NAME>
+:::quiz
+A Service has ClusterIP `10.96.0.10`. The three Pods behind it crash simultaneously and the Deployment creates 3 replacements. What is the Service ClusterIP after the replacement?
 
-sleep 5
-kubectl get pods -l app=backend -o wide
-# The replacement Pod has a different IP address!
-```
+- It changes to a new IP to match the new Pods
+- It stays the same: 10.96.0.10
+- It becomes unavailable until a new Service is created
 
-**3. Create a Service to give the backend a stable address**
+**Answer:** It stays the same: 10.96.0.10. The ClusterIP is assigned to the Service object, not to any Pod. Service objects are not deleted when Pods change. Clients can always reach the same IP, regardless of how many times the Pods behind it have been replaced.
+:::
 
-```yaml
-# backend-service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: backend-service
-spec:
-  selector:
-    app: backend
-  ports:
-    - port: 80
-      targetPort: 80
-```
+## What Comes Next
 
-```bash
-kubectl apply -f backend-service.yaml
-```
-
-**4. See the stable Service IP**
-
-```bash
-kubectl get service backend-service
-# NAME              TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
-# backend-service   ClusterIP   10.96.45.12    <none>        80/TCP    10s
-```
-
-The `CLUSTER-IP` here (`10.96.45.12`) is your stable address. It will not change regardless of how many times the backend Pods are replaced.
-
-**5. Look up the DNS name from inside the cluster**
-
-```bash
-# Run a temporary Pod and use nslookup to resolve the Service name
-kubectl run dns-test --image=busybox --rm -it --restart=Never -- nslookup backend-service
-# Server:    10.96.0.10
-# Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
-#
-# Name:      backend-service
-# Address 1: 10.96.45.12 backend-service.default.svc.cluster.local
-```
-
-**6. Delete all backend Pods and watch the Service remain stable**
-
-```bash
-kubectl delete pods -l app=backend
-
-sleep 5
-kubectl get pods -l app=backend -o wide
-# New Pods with new IPs
-
-kubectl get service backend-service
-# Same CLUSTER-IP as before , the Service never changed
-```
-
-**7. Clean up**
-
-```bash
-kubectl delete deployment backend
-kubectl delete service backend-service
-```
-
-Try the cluster visualizer (telescope icon) after step 3. You'll see the Service object connected to the backend Pods. After step 6 and the Pods' replacement, refresh the view , the Service connection arrows will point to the new Pods automatically.
+You have a Deployment with 2 Pods ready to serve traffic. The next step is creating a Service that exposes them and understanding exactly how the Service tracks which Pods to route to. That tracking mechanism is the Endpoints object, and it is the topic of the next lesson.

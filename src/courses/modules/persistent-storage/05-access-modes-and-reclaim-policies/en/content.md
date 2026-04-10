@@ -5,243 +5,96 @@ seoDescription: Explore the four Kubernetes PV access modes (RWO, ROX, RWX, RWOP
 
 # Access Modes and Reclaim Policies
 
-Two of the most consequential settings on any PersistentVolume are its **access mode** and its **reclaim policy**. Getting these right means understanding both how your workload uses storage (does it need to be shared? does it need to be writable from multiple places?) and what should happen to your data when you're done with it.
+Before provisioning storage for a real workload, you face two decisions that shape how the storage behaves under load and what happens at cleanup time. The first decision is the access mode: who can mount this volume and how many nodes can do so simultaneously. The second is the reclaim policy: what happens to the data when the PVC that owns the volume is deleted.
+
+Getting these choices wrong is one of the most common causes of `Pending` Pods and accidental data loss in production clusters.
+
+## The Four Access Modes
+
+@@@
+graph TD
+    RWO["ReadWriteOnce\nRWO\none node, read-write"]
+    ROX["ReadOnlyMany\nROX\nmany nodes, read-only"]
+    RWX["ReadWriteMany\nRWX\nmany nodes, read-write"]
+    RWOP["ReadWriteOncePod\nRWOP\none Pod only, read-write"]
+@@@
+
+`ReadWriteOnce` is the most common mode. A single node can mount the volume for both reading and writing. Multiple Pods running on the same node can share it, but Pods on different nodes cannot. This is the right choice for databases, queues, and any workload that runs as a single writer on one node.
+
+`ReadOnlyMany` allows many nodes to mount the volume simultaneously, but only for reading. This is useful when you want to distribute static assets, configuration files, or datasets across a fleet of Pods without risking conflicting writes.
+
+`ReadWriteMany` allows many nodes to mount the volume for both reading and writing at the same time. This requires a backend specifically designed for concurrent access, such as NFS or CephFS. Standard cloud block devices like AWS EBS and GCP Persistent Disk do not support this mode.
+
+`ReadWriteOncePod` is the strictest option. Introduced in Kubernetes 1.22, it restricts access to a single Pod, not just a single node. Even if two Pods share the same node, only one can hold this mount. Use it when your application requires absolute write exclusivity and you want the cluster to enforce it, not just rely on application-level locking.
 
 :::warning
-Making the wrong choice here can lead to application failures that are surprisingly hard to diagnose, or, far worse, accidental data loss.
+Access modes are enforced by Kubernetes but ultimately constrained by the storage backend. A `hostPath` volume in the simulator supports `ReadWriteOnce`. Real cloud disks have hard limits at the hardware and driver level: AWS EBS only supports `ReadWriteOnce`, while NFS natively supports `ReadWriteMany`. Declaring `ReadWriteMany` on a backend that does not support it results in a binding error or a Pod stuck in `Pending` with a mount failure.
 :::
 
-## Access Modes
+To check access modes on existing PVs in the simulated cluster:
 
-An access mode describes how many nodes can attach the volume, and whether they can write to it. There are currently four defined access modes in Kubernetes.
+```
+kubectl get pv
+```
 
-### ReadWriteOnce (RWO)
+The `ACCESS MODES` column uses abbreviations: `RWO` for ReadWriteOnce, `ROX` for ReadOnlyMany, `RWX` for ReadWriteMany, and `RWOP` for ReadWriteOncePod.
 
-`ReadWriteOnce` is by far the most common access mode. It means the volume can be mounted in **read-write mode by a single node at a time**. It does not mean only one Pod can use it, if multiple Pods are scheduled on the same node and they all reference the same PVC, they can all write to it simultaneously (though you would almost never do this intentionally). The restriction is at the _node_ level, not the Pod level.
+:::quiz
+You have a Deployment with 3 replicas spread across 3 different nodes. Each replica needs to write to the same shared directory. Which access mode must the PV support?
 
-RWO is supported by virtually every storage backend: AWS Elastic Block Store, GCP Persistent Disk, Azure Disk, and most CSI drivers for local SSDs. It is the right choice for single-replica databases, stateful applications managed by StatefulSets (where each Pod gets its own PVC), and any workload where only one instance runs at a time.
+- ReadWriteOnce, because only one node writes at a time
+- ReadWriteMany, because multiple nodes need simultaneous write access
+- ReadOnlyMany, because reads are more frequent than writes
 
-The limitation appears at scale: if a Deployment with RWO storage scales to two replicas and those replicas land on different nodes, the second replica stays stuck in `ContainerCreating` indefinitely. The volume cannot be attached to two nodes at once, check `kubectl describe pod` for a `FailedAttachVolume` event.
-
-### ReadOnlyMany (ROX)
-
-`ReadOnlyMany` allows the volume to be mounted **read-only by multiple nodes simultaneously**. This is useful for distributing configuration files, static assets, or reference data that many Pods need to read but none need to modify, for example, a shared directory of SSL certificates or ML model files. Some storage backends that don't support simultaneous writes can still handle simultaneous reads, making ROX a reasonable option for those cases.
-
-### ReadWriteMany (RWX)
-
-`ReadWriteMany` is the mode that allows **multiple nodes to mount the volume in read-write mode at the same time**. This is what you need when multiple Pods across multiple nodes all need to read and write to the same shared filesystem, for example, a CMS where multiple web server pods write uploaded files to a shared directory, or a batch processing system where workers consume from a shared input queue stored on disk.
-
-The critical thing to understand about RWX is that **most cloud block storage providers do not support it**. AWS EBS, GCP Persistent Disk, and Azure Disk are all block storage, they can only be attached to one node at a time at the hardware level. To get RWX, you need networked filesystem storage: NFS, CephFS, GlusterFS, Azure Files, AWS EFS, or similar solutions.
-
-:::warning
-Attempting to use an RWX access mode with a storage backend that only supports RWO will fail at the PVC binding stage. The PVC will remain in `Pending` because no eligible PV (or dynamically provisioned volume) can satisfy the `ReadWriteMany` requirement. Always confirm your StorageClass supports the access mode you need.
+**Answer:** ReadWriteMany, because all three replicas on different nodes need simultaneous write access. ReadWriteOnce would let the first Pod mount successfully and leave the other two in Pending.
 :::
 
-### ReadWriteOncePod (RWOP)
+## The Three Reclaim Policies
 
-Added in Kubernetes 1.22 and graduated to stable in 1.29, `ReadWriteOncePod` is a stricter version of RWO. Where RWO restricts the volume to a single _node_, RWOP restricts it to a single _Pod_ across the entire cluster. Only one Pod anywhere in the cluster can mount the volume read-write at a time.
-
-This is particularly useful for workloads that must have exclusive, singleton access to storage, for example, a leader election pattern where you want to guarantee that even if two Pods somehow end up on the same node, only one can mount the volume. RWOP requires CSI driver support.
-
-## Access Mode Summary
+When a PVC is deleted, Kubernetes looks at the bound PV's `persistentVolumeReclaimPolicy` to decide what to do with the volume.
 
 @@@
-flowchart TD
-    A[Volume Access Mode] --> B[ReadWriteOnce<br/>RWO]
-    A --> C[ReadOnlyMany<br/>ROX]
-    A --> D[ReadWriteMany<br/>RWX]
-    A --> E[ReadWriteOncePod<br/>RWOP]
-
-    B --> B1["✓ Single node, read-write<br/>✓ AWS EBS, GCP PD, Azure Disk<br/>✗ Cannot span multiple nodes"]
-    C --> C1["✓ Multiple nodes, read-only<br/>✓ For shared config / static data<br/>✗ No writes from any node"]
-    D --> D1["✓ Multiple nodes, read-write<br/>✓ Requires NFS, CephFS, EFS<br/>✗ Not supported by block storage"]
-    E --> E1["✓ Single Pod, read-write<br/>✓ Strongest exclusivity guarantee<br/>✓ Requires CSI driver support"]
+graph LR
+    Bound["PV Bound"] --> PVCDeleted["PVC deleted"]
+    PVCDeleted --> Retain["Retain\nPV stays Released\ndata preserved\nadmin must act"]
+    PVCDeleted --> Delete["Delete\nPV object removed\nunderlying storage destroyed"]
+    PVCDeleted --> Recycle["Recycle\ndeprecated\ndo not use"]
 @@@
 
-## Reclaim Policies
+`Retain` is the safest option. When the PVC is deleted, the PV moves to `Released` and stays there. The data on disk is completely untouched. An administrator must review the data, clean it up if needed, and manually remove the `claimRef` from the PV before it can accept a new claim. Use `Retain` for production databases and any data you cannot afford to lose.
 
-The reclaim policy answers a simple but critical question: **what happens to the PV and its data when the PVC is deleted?**
+`Delete` is the most convenient option for ephemeral or easily reproduced workloads. When the PVC is deleted, Kubernetes also deletes the PV object and sends a delete request to the underlying storage backend. The volume, the data, everything is gone. This is the default policy for most dynamically provisioned PVs.
 
-This is one of the most operationally important settings in Kubernetes storage. Getting it wrong in a production cluster can mean either losing data you needed to keep, or accumulating orphaned volumes that quietly inflate your cloud storage bill.
+`Recycle` was designed to wipe the volume content and return the PV to `Available`. It has been deprecated since Kubernetes 1.11 and should not be used in new configurations. Prefer `Retain` when you need reuse with safety, or `Delete` when you need automatic cleanup.
 
-### Retain
+Why did Kubernetes deprecate `Recycle` rather than keeping it? Because the wipe operation was a simple `rm -rf`, which is not safe or sufficient for all storage backends. Dynamic provisioning with `Delete` is a cleaner and more general solution that delegates the cleanup to the storage backend itself.
 
-With the `Retain` policy, when a PVC is deleted the PV moves to `Released` state, the PV object still exists, and the data on the underlying storage is completely untouched. Nothing is automatically deleted.
+:::quiz
+A production database PVC is deleted by mistake. The PV reclaim policy is `Retain`. What is the state of the data?
 
-However, a `Released` PV **cannot be automatically claimed by a new PVC**. Even though the data is there and the PV object exists, the PV carries a `claimRef` field pointing to the old (now deleted) PVC. Kubernetes will not bind it to a new PVC until an administrator explicitly clears that reference.
-
-To manually reclaim a `Retain` PV and make it available for a new PVC, you would:
-
-1. Inspect the PV data to make sure you don't need it: `kubectl describe pv <name>`
-2. Delete the underlying storage data if appropriate (this depends on your storage backend)
-3. Edit the PV to remove the `claimRef`: `kubectl patch pv <name> -p '{"spec":{"claimRef": null}}'`
-4. The PV's status will revert to `Available` and it can be bound again
-
-`Retain` is the safest option for databases, user data, financial records, or anything where accidental deletion would be catastrophic.
-
-### Delete
-
-With the `Delete` policy, when a PVC is deleted, Kubernetes automatically deletes the PV _and_ calls the underlying storage provider's API to delete the actual storage resource, the cloud disk, the NFS export, the Ceph volume, whatever it is.
-
-`Delete` is the default reclaim policy for dynamically provisioned PVs in most cloud environments. It makes sense there because the cloud disk was created specifically for this PVC, there is no pre-existing data to worry about, and cleaning up automatically prevents orphaned resources from accumulating. The danger is obvious: if a developer accidentally runs `kubectl delete pvc my-database-pvc`, the storage is gone permanently. There is no recycle bin.
-
-:::warning
-In production environments with critical data, consider changing the default StorageClass's reclaim policy from `Delete` to `Retain`. This gives you a safety net even with dynamic provisioning. You can override the policy by patching an existing PV after it's created: `kubectl patch pv <name> -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'`
+**Answer:** The data is safe. The PV is in `Released` state and the underlying storage is untouched. An admin must remove the `claimRef` to make the PV available again, and the data can be recovered by rebinding a new PVC to the same PV.
 :::
 
-### Recycle (Deprecated)
+## Choosing the Right Combination
 
-The `Recycle` policy used to perform a basic scrub of the volume, running the equivalent of `rm -rf /volume/*`, and then reset the PV to `Available` so it could be bound to a new PVC. This approach was deprecated in Kubernetes 1.11 and is no longer recommended. It is too blunt an instrument (you can't customize the scrubbing behavior) and dynamic provisioning handles the use case much better.
+For a production database, `ReadWriteOnce` plus `Retain` is the standard choice. The single-writer access mode matches the database's own requirements, and the retain policy ensures that an accidental PVC deletion does not destroy months of data.
 
-## The Released-to-Available Journey
+For a cache or a feature flag store that can be rebuilt from scratch, `ReadWriteOnce` plus `Delete` is simpler to operate. When the workload is gone, the storage is cleaned up automatically with no admin intervention.
 
-Understanding the full lifecycle of a PV is important for troubleshooting. When you delete a PVC that was bound to a PV with a `Retain` policy, the PV moves to `Released`. If you then try to create a new PVC that matches this PV's characteristics, the new PVC will stay in `Pending`, because the PV is `Released`, not `Available`. This is a surprisingly common source of confusion.
-
-@@@
-stateDiagram-v2
-    [*] --> Available : PV created
-    Available --> Bound : PVC bound
-    Bound --> Released : PVC deleted
-    Released --> Available : Admin clears claimRef<br/>(Retain policy)
-    Released --> [*] : PV and storage deleted<br/>(Delete policy)
-    Bound --> [*] : PV deleted<br/>while bound<br/>(rare / forced)
-@@@
-
-## Hands-On Practice
-
-In this exercise you'll observe the reclaim policy in action by creating a PV with `Retain`, binding it, deleting the PVC, and then watching the PV move to `Released` state.
-
-**Step 1: Create a PV with Retain policy**
-
-```yaml
-# retain-pv-persistentvolume.yaml
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: retain-pv
-spec:
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: manual
-  hostPath:
-    path: /tmp/retain-test
-```
-
-```bash
-kubectl apply -f retain-pv-persistentvolume.yaml
-```
-
-**Step 2: Create and bind a PVC**
-
-```yaml
-# retain-pvc-persistentvolumeclaim.yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: retain-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: manual
-```
-
-```bash
-kubectl apply -f retain-pvc-persistentvolumeclaim.yaml
-
-kubectl get pv retain-pv
-```
-
-Expected output:
+To change the reclaim policy on an existing PV:
 
 ```
-NAME        CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM              STORAGECLASS   AGE
-retain-pv   1Gi        RWO            Retain           Bound    default/retain-pvc manual         10s
+kubectl patch pv postgres-pv -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'
 ```
 
-**Step 3: Delete the PVC and observe the PV**
-
-```bash
-kubectl delete pvc retain-pvc
-kubectl get pv retain-pv
-```
-
-Expected output:
+Verify the change took effect:
 
 ```
-NAME        CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS     CLAIM              STORAGECLASS   AGE
-retain-pv   1Gi        RWO            Retain           Released   default/retain-pvc manual         30s
+kubectl get pv postgres-pv
 ```
 
-The PV is now `Released`. The CLAIM column still shows the old PVC's name (the `claimRef` is still set). The data on `/tmp/retain-test` on the node is intact.
+:::info
+The access mode declared in the PVC must be a subset of the modes listed by the PV. If the PV lists `ReadWriteOnce` and the PVC requests `ReadWriteMany`, the control plane rejects the binding and the PVC stays `Pending`. This check happens at bind time, not at Pod creation time.
+:::
 
-**Step 4: Try to create a new PVC that would match**
-
-```yaml
-# new-pvc-persistentvolumeclaim.yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: new-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: manual
-```
-
-```bash
-kubectl apply -f new-pvc-persistentvolumeclaim.yaml
-
-kubectl get pvc new-pvc
-```
-
-Expected output:
-
-```
-NAME      STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-new-pvc   Pending                                      manual         5s
-```
-
-The new PVC is stuck in `Pending` because `retain-pv` is `Released`, not `Available`.
-
-**Step 5: Manually reclaim the PV**
-
-```bash
-kubectl patch pv retain-pv -p '{"spec":{"claimRef": null}}'
-kubectl get pv retain-pv
-```
-
-Expected output:
-
-```
-NAME        CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   AGE
-retain-pv   1Gi        RWO            Retain           Available           manual         2m
-```
-
-The PV is `Available` again. Wait a few seconds and check the new PVC:
-
-```bash
-kubectl get pvc new-pvc
-```
-
-Expected output:
-
-```
-NAME      STATUS   VOLUME      CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-new-pvc   Bound    retain-pv   1Gi        RWO            manual         30s
-```
-
-The new PVC is now bound. Clean up:
-
-```bash
-kubectl delete pvc new-pvc
-kubectl delete pv retain-pv
-```
+Access modes and reclaim policies are the two settings that determine how safe and how convenient your storage is to operate. Choosing them thoughtfully before provisioning avoids the most common categories of storage-related incidents in Kubernetes clusters.

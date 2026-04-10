@@ -5,200 +5,66 @@ seoDescription: 'Learn how Kubernetes named ports decouple port numbers from man
 
 # Named Ports
 
-Throughout this module, all the Service manifests have referenced ports by number: `targetPort: 80`, `targetPort: 8080`, and so on. This works perfectly well for simple cases. But as your application grows , more containers, more ports, more teams managing different parts of the stack , hardcoded port numbers become a maintenance problem. Named ports solve this elegantly, and they're one of those small practices that make the difference between a brittle manifest and a robust one.
+Suppose your web container listens on port 8080. You decide to change it to port 8443. You update the Deployment, then realize your `web-svc` Service has `targetPort: 8080` and needs updating too. Then you remember a second Service also points to that container. And a readiness probe. By the time you are done, three or four files have changed, and any one of them could have a typo. Named ports eliminate that problem.
 
-:::info
-With named ports, a container's port number is defined in exactly one place, the Pod spec, and everything else (Services, probes, policies) references it by name.
-:::
+Instead of referencing a port by its number, you give the port a name in the container spec and reference that name everywhere else. If the number changes, you update only the container spec. Everything else stays correct automatically.
 
-## The Problem with Port Numbers
+Build the idea in two steps.
 
-Imagine you have a container that listens on port 8080, and you have a Service that forwards traffic to it:
+Step 1: naming the port in the container spec. Add a `name` field to the `ports` list in your Pod template:
 
 ```yaml
-# Service
-ports:
-  - port: 80
-    targetPort: 8080
-```
-
-This works fine, until the port number needs to change. A single update ripples through every resource that hardcodes `8080`:
-
-- The Service manifest
-- Readiness and liveness probes
-- NetworkPolicies
-
-Named ports break this coupling. You give the port a name in the Pod spec, and everything else references that name. The port number is now defined in exactly one place.
-
-## Naming a Port in the Pod Spec
-
-Ports are named in the `containers[].ports` field of the Pod template:
-
-```yaml
-containers:
-  - name: web
-    image: nginx
-    ports:
-      - name: http
-        containerPort: 80
-      - name: metrics
-        containerPort: 9090
-```
-
-The `name` field is just a string , any valid DNS label works. Common conventions are `http`, `https`, `grpc`, `metrics`, `admin`, or domain-specific names like `api` or `health`.
-
-:::info
-Port names must be lowercase and can contain hyphens, but must start and end with a letter or digit. They follow DNS label syntax. Avoid underscores , `http_api` is invalid; `http-api` is fine.
-:::
-
-## Referencing the Named Port in the Service
-
-Once ports are named in the Pod template, a Service can reference them by name in `targetPort`:
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: web-service
+# illustrative only
 spec:
-  selector:
-    app: web
-  ports:
-    - name: http
-      port: 80
-      targetPort: http # ← name, not a number
-    - name: metrics
-      port: 9090
-      targetPort: metrics # ← name, not a number
+  containers:
+    - name: web
+      image: nginx:1.28
+      ports:
+        - name: http
+          containerPort: 80
 ```
 
-When Kubernetes processes this Service, it looks up the name `http` in the matching Pods' port definitions and resolves it to the actual port number (`80`). If you later change the container's `containerPort` from `80` to `8080`, you only update the Pod template , the Service manifest is untouched, because it refers to the port by name, not by number.
+The `name: http` field assigns a stable label to that port. The name `http` is now a valid reference anywhere that accepts a port value.
+
+Step 2: using the name in the Service instead of the number:
+
+```yaml
+# illustrative only
+spec:
+  ports:
+    - port: 80
+      targetPort: http   # resolves to whatever port is named "http" in the container
+```
 
 @@@
 graph LR
-    SVC["Service<br/>targetPort: http"]
-    RESOLVE["Kubernetes resolves<br/>'http' → containerPort 80"]
-    POD["Pod<br/>ports:<br/>  - name: http<br/>    containerPort: 80"]
-
-    SVC -->|"looks up name"| RESOLVE
-    RESOLVE -->|"forwards to"| POD
+    SVC["Service\ntargetPort: http"]
+    CONT["Container\nports:\n  - name: http\n    containerPort: 80"]
+    SVC -->|"resolves 'http' to 80"| CONT
 @@@
 
-## Named Ports Beyond Services
+The Service no longer stores the number 80. It stores the name `http`. The resolution from name to number happens at runtime, based on whatever `containerPort` the container currently declares under that name.
 
-The usefulness of named ports extends beyond Services. The same names can be referenced in several other contexts:
+Now build the full applicable example. Start with the Deployment:
 
-**Readiness and liveness probes** can reference port names instead of numbers:
-
-```yaml
-readinessProbe:
-  httpGet:
-    path: /health
-    port: http # resolves to containerPort 80
+```bash
+nano named-deployment.yaml
 ```
-
-**NetworkPolicy** rules can reference named ports when targeting specific traffic. This is especially useful in policies that need to allow traffic on a semantic port (like "the metrics port") without being tied to a specific number.
-
-**Ingress rules** reference Service ports, which in turn reference named Pod ports , the chain of names carries all the way through.
-
-The result is that changing a port number in a mature application becomes a surgical change in one place , the Pod template , rather than a scavenger hunt across Services, probes, and policies.
-
-## A Complete Example
-
-Here's a real-world-style manifest showing a web application with an HTTP port and a metrics port, all wired up by name:
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web-app
+  name: named-web
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: web
+      app: named-web
   template:
     metadata:
       labels:
-        app: web
-    spec:
-      containers:
-        - name: web
-          image: myapp:1.0
-          ports:
-            - name: http
-              containerPort: 8080
-            - name: metrics
-              containerPort: 9090
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: http        # ← using the name
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: http        # ← using the name
-            initialDelaySeconds: 10
-            periodSeconds: 30
-apiVersion: v1
-kind: Service
-metadata:
-  name: web-service
-spec:
-  selector:
-    app: web
-  ports:
-    - name: http
-      port: 80
-      targetPort: http      # ← resolves to 8080
-    - name: metrics
-      port: 9090
-      targetPort: metrics   # ← resolves to 9090
-```
-
-If the team later decides the application should listen on 8443 instead of 8080, the only change needed is `containerPort: 8080` → `containerPort: 8443` in the Pod template. The Service, the readiness probe, and the liveness probe all continue to work unchanged, because they reference `http` , not `8080`.
-
-## Named Ports and Port Discovery
-
-In a headless Service (covered in the Endpoints lesson), named ports also influence DNS-SD (Service Discovery). The SRV DNS records that a headless Service generates include the port name, which allows sophisticated clients to discover not just Pod IPs but also which named port to connect to on each Pod.
-
-This is especially relevant for gRPC services and other protocols that use DNS-SRV records for load balancing and service discovery.
-
-:::info
-Named ports are particularly important in multi-container Pods (sidecars), where each container may expose multiple ports. Giving each port a meaningful name avoids confusion when a Service or probe needs to target a specific container's specific port.
-:::
-
-## Best Practices
-
-- **Always name ports in production manifests**, it pays dividends when you're debugging at midnight and need to understand what `targetPort: 8080` means without cross-referencing four other files.
-- **Use semantic names** that reflect protocol or purpose: `http`, `https`, `grpc`, `metrics`, `admin`, `debug`. Avoid `port1` or `p80`, they add nothing over the number itself.
-- **Keep names consistent across your organization.** If every team uses `http` for HTTP, dashboards, alerting rules, and NetworkPolicies can be written generically and applied uniformly.
-
-:::warning
-If you use the same Service to route to containers with different port names that resolve to different numbers , for example, a canary Pod where `http` maps to 8080 and a stable Pod where `http` maps to 9090 , the traffic routing will appear correct from the Service's perspective but the actual destination ports will differ. This is rarely intentional; ensure your port names resolve consistently across all Pods in a Service's selector.
-:::
-
-## Hands-On Practice
-
-**1. Create a Deployment with named ports**
-
-```yaml
-# web-named-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web-named
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: web-named
-  template:
-    metadata:
-      labels:
-        app: web-named
+        app: named-web
     spec:
       containers:
         - name: web
@@ -206,91 +72,76 @@ spec:
           ports:
             - name: http
               containerPort: 80
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-            initialDelaySeconds: 2
-            periodSeconds: 5
 ```
 
 ```bash
-kubectl apply -f web-named-deployment.yaml
-kubectl rollout status deployment/web-named
+kubectl apply -f named-deployment.yaml
 ```
 
-**2. Create a Service using the named port**
+
+Now create the Service that references the port by name:
+
+```bash
+nano named-svc.yaml
+```
 
 ```yaml
-# web-named-svc-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: web-named-svc
+  name: named-svc
 spec:
   selector:
-    app: web-named
+    app: named-web
   ports:
-    - name: http
-      port: 80
+    - port: 80
       targetPort: http
 ```
 
 ```bash
-kubectl apply -f web-named-svc-service.yaml
+kubectl apply -f named-svc.yaml
+kubectl describe service named-svc
 ```
 
-**3. Verify the Service works**
+In the `describe` output, look at the `Endpoints:` field. If it is populated, the Service resolved `targetPort: http` successfully and matched the Pods. The port number 80 appears in the Endpoints, even though the Service manifest never mentioned 80 directly.
+
+:::quiz
+Where do you see confirmation that `targetPort: http` was resolved to a real port number?
+
+**Try it:** `kubectl describe service named-svc`
+
+**Answer:** Look at the `Endpoints:` field. It shows `<pod-ip>:80`, meaning the name `http` was resolved to containerPort 80. The `TargetPort:` line also shows `http/TCP`, confirming the name reference is intact rather than replaced by a number.
+:::
+
+Now consider what happens when the port number changes. Suppose you update `containerPort: 80` to `containerPort: 8080` in the Deployment and keep the `name: http`. The Service manifest stays exactly as written. After the rollout completes, running `kubectl describe service named-svc` again will show Endpoints at port 8080, because the name `http` now resolves to 8080. One file changed; the Service stayed correct automatically.
+
+:::info
+Named ports also work in readiness and liveness probes. Instead of `port: 80` in a probe spec, you write `port: http`. The probe port follows the container port number automatically whenever the name is preserved.
+:::
+
+:::warning
+Port names must be lowercase alphanumeric and may contain hyphens, but not underscores or uppercase letters. `http` is valid. `http-port` is valid. `http_port` is not valid. Names must also be unique within a container's port list. Kubernetes rejects the Pod spec at admission time if two ports share a name or if the name contains invalid characters.
+:::
+
+:::quiz
+You change a container's `containerPort` from 80 to 8080 but keep `name: http`. The Service uses `targetPort: http`. What happens?
+
+- The Service breaks because it still resolves `http` to 80
+- The Service continues to work: `targetPort: http` resolves to the current port named `http`
+- You need to delete and recreate the Service for it to pick up the new port
+
+**Answer:** The Service continues to work - `targetPort: http` is resolved dynamically at runtime to whatever `containerPort` is currently named `http` in the container spec. The Service manifest does not store the number, so it does not need to change.
+:::
+
+When does using named ports actually matter in practice? It matters most in larger codebases where a container is targeted by multiple Services, Ingress rules, and health probes. When the port number needs to change due to a security policy, a protocol upgrade, or a conflict, updating one field in one file is far less error-prone than hunting down every reference across the repository. Manifests also become more readable: `targetPort: http` is immediately clear; `targetPort: 8080` requires checking the container spec to understand what that number represents.
+
+Clean up all the resources created in this module:
 
 ```bash
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- curl -s http://web-named-svc
+kubectl delete deployment named-web
+kubectl delete service named-svc
+kubectl delete deployment web
+kubectl delete service web-svc
 ```
 
-**4. Inspect the resolved port in the Endpoints**
-
-```bash
-kubectl describe endpoints web-named-svc
-# The endpoints will list the actual port number (80), resolved from the name "http"
-```
-
-**5. Simulate changing the port number**
-
-Now change the container port to 8080 (using a container that actually listens there) and observe that only the Pod template changes:
-
-```bash
-# Patch the deployment to use a different port number, keeping the name "http"
-kubectl patch deployment web-named --type='json' -p='[
-  {"op": "replace", "path": "/spec/template/spec/containers/0/ports/0/containerPort", "value": 8080},
-  {"op": "replace", "path": "/spec/template/spec/containers/0/image", "value": "nginx:1.26"}
-]'
-```
-
-The Service manifest hasn't changed at all , it still says `targetPort: http`. But after the rollout, the Endpoints will show port 8080 instead of 80, because Kubernetes re-resolved the name `http` from the updated Pod template.
-
-```bash
-kubectl rollout status deployment/web-named
-kubectl describe endpoints web-named-svc
-# Endpoints now show :8080 instead of :80
-```
-
-Note: nginx listens on port 80 by default, so if you test connectivity after this patch it will actually fail , this step is purely to demonstrate the port name resolution mechanism. In a real application, the new image would actually listen on 8080.
-
-**6. Restore and verify**
-
-```bash
-kubectl set image deployment/web-named web=nginx:1.28
-kubectl patch deployment web-named --type='json' -p='[
-  {"op": "replace", "path": "/spec/template/spec/containers/0/ports/0/containerPort", "value": 80}
-]'
-kubectl rollout status deployment/web-named
-
-kubectl run curl-test --image=curlimages/curl --rm -it --restart=Never -- curl -s http://web-named-svc
-# Back to working
-```
-
-**7. Clean up**
-
-```bash
-kubectl delete deployment web-named
-kubectl delete service web-named-svc
-```
+Services are the networking foundation of Kubernetes: ClusterIP for internal communication, NodePort for direct node-level access, LoadBalancer for cloud-managed external exposure. Named ports make that foundation more resilient by binding Service configuration to a stable name rather than a number that can change. The next module covers DNS, which gives Services discoverable names throughout the cluster without hardcoding any IP address.

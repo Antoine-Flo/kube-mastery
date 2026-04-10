@@ -64,9 +64,6 @@ kubectl get pods -o wide -l app=backend --watch
 
 Press Ctrl+C once the rollout is done. Run `kubectl get pods -o wide -l app=backend` again. The IPs have changed. The old ones are gone and unreachable.
 
-:::visualizer
-Watch the cluster visualizer: old Pods disappear and new Pods appear on the node with different IPs as the rollout progresses.
-:::
 
 :::warning
 Some people attempt to work around ephemeral IPs by targeting the node IP directly or using `hostNetwork: true` on a Pod. Both approaches break the cluster network model, create implicit coupling to specific nodes, and cause failures when Pods reschedule. The correct solution is always a Service.

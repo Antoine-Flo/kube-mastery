@@ -1,180 +1,113 @@
 ---
-seoTitle: 'Create Kubernetes Pods, Imperative vs Declarative, kubectl'
-seoDescription: 'Learn how to create Kubernetes Pods imperatively with kubectl run and declaratively with kubectl apply, and trace the full scheduling flow.'
+seoTitle: 'Create a Kubernetes Pod, kubectl apply, get, describe'
+seoDescription: 'Learn how to create your first Kubernetes Pod using kubectl apply, monitor its status with kubectl get and describe, and understand what each field means.'
 ---
 
 # Creating Your First Pod
 
-There are two fundamental ways to create resources in Kubernetes: the **imperative** approach and the **declarative** approach. Understanding both, when to use each, and what happens under the hood, is a key skill for any Kubernetes practitioner.
+You have seen the structure of a Pod manifest, field by field. Now it is time to write one, apply it to the simulated cluster, and watch what actually happens. The simulator behaves like a real cluster: the Pod gets scheduled, the image gets pulled, and the container starts. Each of those steps is visible if you know where to look.
 
-## The Imperative Approach: `kubectl run`
+## Writing the manifest
 
-The imperative approach means issuing a direct command to Kubernetes: "Create this thing, now." It's fast, requires no files, and is ideal for quick experiments or debugging sessions.
-
-```bash
-kubectl run nginx-pod --image=nginx:1.28
-```
-
-That's it. One command, one Pod. The `kubectl run` command has a few commonly used flags worth knowing:
+Open a new file in the virtual filesystem:
 
 ```bash
-# Run with a specific port documented on the container
-kubectl run nginx-pod --image=nginx:1.28 --port=80
-
-# Add labels to the Pod
-kubectl run nginx-pod --image=nginx:1.28 --labels="app=web,tier=frontend"
-
-# Override the command the container runs (not supported in the simulator)
-kubectl run debug-pod --image=busybox:1.36 --command -- sh -c "sleep 3600"
+nano first-pod.yaml
 ```
 
-:::warning
-The imperative approach leaves no record. There is no file you can commit to version control, no history of exactly what was applied. It's perfect for throwaway experimentation but not for production workflows.
-:::
-
-## The Declarative Approach: `kubectl apply -f`
-
-The declarative approach is the recommended way to manage Kubernetes resources in any serious environment. You write a YAML manifest describing what you want, save it to a file, and apply it:
-
-```bash
-kubectl apply -f pod.yaml
-```
-
-The manifest is the record of your intent. It can be stored in a Git repository, reviewed in pull requests, shared with teammates, and applied identically to multiple environments. When you run `kubectl apply`, Kubernetes compares what's in the file with what's currently in the cluster, and applies only the necessary changes.
-
-:::info
-A key benefit of `kubectl apply` over `kubectl create` is that `apply` will **update** an existing resource if you change the manifest and re-run the command. `kubectl create` will fail if the object already exists. For this reason, `kubectl apply` is the standard command for both initial creation and subsequent updates.
-:::
-
-## What Happens When You Create a Pod
-
-The journey from `kubectl apply -f pod.yaml` to a running container involves several components working in sequence. Understanding this flow will help you debug issues when things go wrong.
-
-@@@
-sequenceDiagram
-    participant You as You (kubectl)
-    participant API as API Server
-    participant etcd as etcd
-    participant Sched as Scheduler
-    participant Kubelet as Kubelet (on node)
-    participant CRI as Container Runtime
-
-    You->>API: kubectl apply -f pod.yaml
-    API->>API: Validate manifest (schema, auth)
-    API->>etcd: Store Pod object (status: Pending)
-    API-->>You: "pod/my-first-pod created"
-    Sched->>API: Watch for unscheduled Pods
-    API->>Sched: New Pod with no nodeName
-    Sched->>Sched: Score nodes, pick best fit
-    Sched->>API: Update Pod: nodeName = node-2
-    API->>etcd: Store updated Pod
-    Kubelet->>API: Watch for Pods assigned to node-2
-    Kubelet->>CRI: Pull image, create container
-    CRI-->>Kubelet: Container running
-    Kubelet->>API: Update Pod status: Running
-@@@
-
-Each step in sequence:
-
-1. **Validation** The API server checks your permissions and validates the manifest against the Pod schema. Any issue is rejected immediately with a descriptive error.
-2. **Storage** The valid Pod object is written to etcd. The Pod is now `Pending`: it exists, but no node is assigned and no container is running.
-3. **Scheduling** The scheduler watches for Pods without a `nodeName`. It evaluates nodes (resources, selectors, taints), scores them, and writes the chosen node back to the Pod object.
-4. **Kubelet** The kubelet on the selected node picks up the Pod, pulls the image if not cached, and starts the container via the container runtime.
-5. **Status update** Once running, the kubelet updates the Pod's `status` in etcd to `Running` and continues monitoring container health.
-
-## Checking Your Pod
-
-Once you've created a Pod, there are several commands for inspecting it.
-
-`kubectl get pod my-first-pod` gives you a quick summary with columns `READY`, `STATUS`, `RESTARTS`, and `AGE`. Add `-o wide` to also see the node name and Pod IP.
-
-For a full human-readable breakdown, use `kubectl describe`. The `Events:` section at the bottom is invaluable for debugging: it shows the exact sequence of what happened to the Pod from scheduling to container start.
-
-For the raw object (spec + status combined in YAML):
-
-```bash
-kubectl get pod my-first-pod -o yaml
-```
-
-This gives you everything Kubernetes knows about the Pod, including the `status` section populated by the kubelet.
-
-:::info
-You can use `kubectl get pods --watch` in the terminal to stream live updates as a Pod's status changes. This is useful when you're waiting for a Pod to become ready and want to see each state transition in real time.
-:::
-
-## Hands-On Practice
-
-**1. Create a Pod imperatively:**
-
-```bash
-kubectl run imperative-pod --image=nginx:1.28 --port=80
-kubectl get pod imperative-pod
-```
-
-**2. Create a Pod declaratively:**
-
-Save the following file:
+Write the following manifest:
 
 ```yaml
-# declarative-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: declarative-pod
-  labels:
-    app: web
-    method: declarative
+  name: first-pod
 spec:
   containers:
     - name: web
       image: nginx:1.28
       ports:
         - containerPort: 80
+      resources:
+        requests:
+          cpu: '100m'
+          memory: '64Mi'
+        limits:
+          cpu: '200m'
+          memory: '128Mi'
 ```
 
-Apply it:
+This is a complete, valid Pod manifest. Every field here is something you already know: `name` identifies the Pod in the cluster, `image` picks the container image, `containerPort` documents the port, and `resources` tells the scheduler what to reserve. Save the file and exit nano.
+
+## Applying the manifest
+
 
 ```bash
-kubectl apply -f declarative-pod.yaml
-kubectl get pod declarative-pod
+kubectl apply -f first-pod.yaml
 ```
 
-**3. Watch a Pod being created in real time:**
+The simulator will respond with:
 
-Open the visualizer (telescope icon) and create a new Pod.
+```
+pod/first-pod created
+```
+
+That single line confirms that the API server accepted the manifest, stored it, and handed it off to the scheduler. The Pod does not necessarily run at this exact moment. The scheduler still has to pick a node, and the node still has to pull the image.
+
+## Checking Pod status
 
 ```bash
-kubectl run watch-pod --image=nginx:1.28
+kubectl get pod first-pod
 ```
 
-Observe the status transitions: `Pending` → `ContainerCreating` → `Running`.
+You will see output with five columns: `NAME`, `READY`, `STATUS`, `RESTARTS`, and `AGE`. The `READY` column shows `running containers / total containers`. For a single-container Pod, it will show `0/1` briefly while the container starts, then `1/1` when it is up. The `STATUS` column moves through `Pending`, then `ContainerCreating`, and finally `Running`. If you run the command fast enough, you might catch one of the intermediate states.
 
-**4. Check the full raw YAML of a running Pod:**
+To see more detail, add the `-o wide` flag:
 
 ```bash
-kubectl get pod declarative-pod -o yaml
+kubectl get pod first-pod -o wide
 ```
 
-Find the `status` section at the bottom. Note the `phase: Running`, `podIP`, `hostIP`, and `containerStatuses` fields.
+This adds two useful columns: `NODE`, which tells you which worker node in the simulated cluster accepted the Pod, and `IP`, which is the internal IP address assigned to the Pod within the cluster network. That IP is reachable from inside the cluster but not from outside.
 
-**5. Get just the Pod IP:**
+:::quiz
+What node is `first-pod` running on, and what is its cluster IP?
+
+**Try it:** `kubectl get pod first-pod -o wide`
+
+**Answer:** The `NODE` column shows the worker node the scheduler chose. In the simulator there is a single worker node, so the answer is always that node. The `IP` column shows the Pod's internal address, assigned from the cluster's Pod CIDR range. This IP is only reachable from within the cluster network.
+:::
+
+## Reading the full picture with describe
+
+`kubectl get` gives you a summary. `kubectl describe` gives you the full story:
 
 ```bash
-kubectl get pod declarative-pod -o jsonpath='{.status.podIP}'
+kubectl describe pod first-pod
 ```
 
-**6. Check the Events section via describe:**
+The output is long, but three sections matter most. The `Containers` section lists each container with its image, state, ports, and resource reservations. The `Conditions` section shows boolean flags like `PodScheduled`, `Initialized`, and `Ready`, each reflecting a phase the Pod passed through. The `Events` section at the bottom is the most useful for understanding what happened and in what order: you will see `Scheduled`, then `Pulling image`, then `Pulled`, then `Created`, then `Started`. That trace is also the first place to look when something goes wrong.
+
+## When things go wrong
+
+:::warning
+If the image name has a typo or the tag does not exist, the Pod will get stuck in `ErrImagePull` and then switch to `ImagePullBackOff`. Kubernetes tries to pull the image, fails, waits, and retries with an exponentially increasing delay. The `kubectl describe` Events section will show a line like "Failed to pull image: ... not found". The fix is to delete the Pod and recreate it with the correct image name. You cannot change the image of a running Pod in place, that limitation is covered in lesson 06.
+:::
+
+To see this in action, you can try creating a Pod with a made-up image name and observe how the simulator reports the failure in `kubectl describe`.
+
+:::quiz
+If you delete `first-pod` and recreate it from the exact same manifest, is the new Pod the same as the old one?
+
+**Answer:** No. The name is the same, the spec is the same, but Kubernetes creates a brand-new object with a new UID. The old Pod and the new Pod have no relationship. This is the ephemeral nature of Pods you saw in lesson 01: controllers work by replacing dead Pods with new ones, not by reviving old objects.
+:::
+
+## Cleaning up
 
 ```bash
-kubectl describe pod declarative-pod
+kubectl delete pod first-pod
 ```
 
-Look at the `Events:` section at the bottom. You should see events like `Scheduled`, `Pulling`, `Pulled`, `Created`, and `Started`.
+The Pod is removed from the simulated cluster. Because you created it directly (without a controller), nothing will bring it back.
 
-**7. Clean up:**
-
-```bash
-kubectl delete pod imperative-pod declarative-pod watch-pod
-```
-
-You've now created Pods both ways, traced the full lifecycle from manifest to running container, and learned the core commands for inspecting Pod state. In the next lesson, we'll go deeper into what happens after a Pod is created, specifically, the phases a Pod passes through during its lifetime.
+You can now create, inspect, and delete a Pod with confidence. The next lesson digs into what happens after a Pod starts: the lifecycle phases it moves through, and what each phase means for your application.

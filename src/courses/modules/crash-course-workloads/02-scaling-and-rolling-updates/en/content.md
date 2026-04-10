@@ -49,9 +49,6 @@ kubectl get pods -l app=web
 
 You should now see four Pods, all running. The Deployment controller detected that the desired count changed from 2 to 4 and immediately told the ReplicaSet to create two more.
 
-:::visualizer
-Watch the cluster visualizer: two new Pods appear on the node as the ReplicaSet scales up.
-:::
 
 Scaling down works identically. Setting replicas to one terminates three Pods. The survivor is chosen without preference: there is no concept of a "primary" Pod in a Deployment.
 
@@ -142,9 +139,6 @@ kubectl rollout status deployment/web-app
 
 `rollout status` blocks and prints a message for each replica as it transitions.
 
-:::visualizer
-Watch the cluster visualizer: old Pods terminate one by one while new Pods start alongside them. The count never drops below three.
-:::
 
 After the rollout completes, inspect the ReplicaSets:
 

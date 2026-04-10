@@ -1,218 +1,127 @@
 ---
 seoTitle: 'Kubernetes Update Strategies, RollingUpdate vs Recreate'
-seoDescription: 'Explore the RollingUpdate and Recreate Deployment strategies, understand when each applies, and learn to tune maxUnavailable and maxSurge for your workload.'
+seoDescription: 'Compare the Kubernetes Deployment update strategies RollingUpdate and Recreate, understand when to use each, and configure maxSurge and maxUnavailable for controlled rollouts.'
 ---
 
-# Update Strategies, RollingUpdate vs Recreate
+# Update Strategies
 
-A Deployment update does not pick how Pods are replaced for you: you choose the strategy. Kubernetes ships two built-ins, each for a different class of application. The wrong choice means either avoidable downtime or subtle, painful data consistency problems.
+Rolling updates are the default, but they are not always the right choice. Some applications cannot run two versions at the same time: the new version changes a database schema in a way the old version cannot read. When old and new Pods run side by side, even briefly, the application breaks. Kubernetes gives you a second strategy for exactly this case.
 
-:::info
-For most stateless applications, `RollingUpdate` is the right default. `Recreate` is reserved for applications that cannot safely run two versions simultaneously.
-:::
+## Two strategies
 
-## The Two Strategies
+A Deployment can use one of two `strategy.type` values: `RollingUpdate` and `Recreate`.
 
-### RollingUpdate (Default)
+@@@
+graph LR
+    subgraph rolling [RollingUpdate]
+        R1["Old Pods: 3"]
+        R2["Transition:\n2 old + 1 new"]
+        R3["Transition:\n1 old + 2 new"]
+        R4["New Pods: 3"]
+        R1 --> R2 --> R3 --> R4
+    end
+    subgraph recreate [Recreate]
+        RC1["Old Pods: 3"]
+        RC2["All terminated\n(downtime window)"]
+        RC3["New Pods: 3"]
+        RC1 --> RC2 --> RC3
+    end
+@@@
 
-This is the default you have been using in this module. Pods are replaced in waves: new Pods come up, old Pods go down, repeat until every Pod runs the new revision. The number of healthy Pods never drops to zero.
+`RollingUpdate` keeps the application running throughout. Old and new Pods coexist during the transition. Zero downtime, as long as both versions can operate in parallel.
 
-Use it for stateless apps where two versions may run at once. Example: a web server where one HTTP request hits a Pod on 1.25 and the next hits 1.26. For a solid stateless API that is acceptable: requests are independent, and both versions stay compatible enough during the short overlap.
+`Recreate` terminates all old Pods first, then starts new ones. There is a gap where no Pods are running. Use it when old and new versions are incompatible: different database schemas, incompatible in-memory state, or any situation where running both simultaneously breaks things.
 
-### Recreate
+## Using Recreate
 
-`Recreate` matches its name: it terminates _all_ running Pods first, waits until they are gone, then creates the new Pods. You get a deliberate downtime gap between those phases.
-
-For most apps this is worse than `RollingUpdate`, but a real set of workloads need `Recreate`, not merely tolerate it.
-
-## When Recreate Is the Right Choice
-
-Some workloads cannot safely run two versions at the same time:
-
-- An app that holds an **exclusive lock** on a resource, for example a database engine that memory-maps a data file.
-- A **single-instance service** (e.g. a legacy message queue) that does not support concurrent instances.
-- An app with **backward-incompatible database migrations** the old version cannot read.
-
-`RollingUpdate` would overlap versions and invite lock fights, schema clashes, or corruption. `Recreate` forces a clean cut: the old version is gone before the new one starts. You accept downtime, but it is bounded and predictable instead of a race.
-
-:::warning
-If your application uses a database schema migration that is not backward-compatible with the previous application version, use `Recreate`. Using `RollingUpdate` in this scenario means your old Pods will be trying to read data written in a schema they don't understand. This can cause cascading failures that are difficult to diagnose.
-:::
-
-## Setting the Strategy in Your Manifest
-
-Configure the strategy under `spec.strategy`:
-
-```yaml
-# Recreate, no additional parameters needed
-spec:
-  strategy:
-    type: Recreate
+```bash
+nano recreate-deployment.yaml
 ```
 
 ```yaml
-# RollingUpdate, with explicit tuning
-spec:
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
-```
-
-`rollingUpdate` fields (`maxUnavailable`, `maxSurge`) apply only when `type: RollingUpdate`. Pairing them with `type: Recreate` makes the API server reject the manifest.
-
-## Tuning RollingUpdate: Percentages vs Absolute Numbers
-
-`maxUnavailable` and `maxSurge` each accept an absolute count or a percentage of desired replicas.
-
-**Absolute numbers** stay easy to read: `maxUnavailable: 1` always allows at most one unavailable Pod, whatever the replica total. Handy for smaller Deployments (roughly 3 to 10 replicas) when you want tight control.
-
-**Percentages** track fleet size: `maxUnavailable: 25%` lets one quarter of Pods be unavailable and scales as replicas grow from 10 to 100 to 1000. Kubernetes rounds **down** for `maxUnavailable` (to avoid dipping below capacity) and **up** for `maxSurge` (so the rollout can always move forward).
-
-Reference combinations:
-
-| Configuration                        | Effect                                                       |
-| ------------------------------------ | ------------------------------------------------------------ |
-| `maxUnavailable: 0, maxSurge: 1`     | Zero-downtime; always at or above desired capacity. Slowest. |
-| `maxUnavailable: 1, maxSurge: 1`     | Balanced: one new, one old at a time. The default feel.      |
-| `maxUnavailable: 50%, maxSurge: 50%` | Fast; half the fleet updates simultaneously.                 |
-| `maxUnavailable: 100%, maxSurge: 0`  | Essentially Recreate-like behaviour via RollingUpdate.       |
-
-:::info
-For critical production services, starting with `maxUnavailable: 0` (zero-downtime mode) and gradually increasing `maxSurge` is the safest approach. It costs extra temporary capacity but guarantees your service never operates below its desired replica count during an update.
-:::
-
-## Visual Comparison: The Two Timelines
-
-For a **3-replica** Deployment, picture the sequence like this:
-
-**RollingUpdate**
-
-- All three old Pods are running.
-- New Pods are created while some old Pods still run, so old and new overlap in time.
-- With typical `maxUnavailable` / `maxSurge` settings, you keep enough ready Pods to serve traffic throughout the rollout.
-
-**Recreate**
-
-- All three old Pods are running.
-- Kubernetes terminates every old Pod before it starts any new Pod.
-- There is a window where you have fewer than three ready Pods, often none, until the new Pods become ready.
-
-Under `RollingUpdate`, old and new Pods overlap; healthy count never hits zero. Under `Recreate`, old Pods finish terminating before any new Pods start, so you see a gap.
-
-## Thinking Through Your Application's Needs
-
-Before you commit, sanity-check the workload:
-
-**Can two versions run at once?** If yes, default to `RollingUpdate`. If no, because of exclusive resource locking, incompatible schema versions, or licensing constraints, pick `Recreate`.
-
-**Can the app handle connections dropped mid-request?** `Recreate` terminates Pods abruptly (within the configurable grace period). Long-running connections (WebSockets, streaming APIs) are dropped. `RollingUpdate` can drain traffic gradually when tuned.
-
-**Is a short outage allowed?** If the SLA targets 99.9%+ uptime and the app serves more than a handful of requests per second, `Recreate` is often a bad fit. Prefer `RollingUpdate` with `maxUnavailable: 0`.
-
-**How fast must the rollout finish?** Conservative `RollingUpdate` settings feel slow on big fleets. `Recreate` is always "all at once" and can finish sooner when the cluster has spare capacity.
-
-## Hands-On Practice
-
-**1. Create a Deployment with the Recreate strategy**
-
-```yaml
-# legacy-app-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: legacy-app
+  name: recreate-app
 spec:
-  replicas: 3
+  replicas: 2
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: legacy
+      app: recreate
   template:
     metadata:
       labels:
-        app: legacy
+        app: recreate
     spec:
       containers:
-        - name: app
+        - name: web
           image: nginx:1.28
 ```
 
 ```bash
-kubectl apply -f legacy-app-deployment.yaml
-kubectl rollout status deployment/legacy-app
+kubectl apply -f recreate-deployment.yaml
 ```
 
-**2. Watch the Recreate behaviour during an update**
-
-Trigger the update:
+Now trigger an update and watch the Pods:
 
 ```bash
-kubectl set image deployment/legacy-app app=nginx:1.26
+kubectl set image deployment/recreate-app web=nginx:1.26
+kubectl get pods -l app=recreate --watch
 ```
 
-Watch the cluster visualizer: all three Pods will terminate first (status `Terminating`), then a brief gap with zero Pods, then three new Pods start up (`ContainerCreating` -> `Running`).
+Watch the STATUS column. All old Pods terminate simultaneously. There is a moment when no Pods are listed. Then the new Pods start. That gap is the downtime window.
 
-**3. Compare with RollingUpdate**
+:::warning
+`Recreate` always causes a downtime window. Do not use it for services where availability matters. Only choose it when the application explicitly requires it: schema migrations, single-instance systems, or state incompatibility between versions.
+:::
 
-```bash
-kubectl delete deployment legacy-app
-```
+:::quiz
+You have a stateful application that stores session data in local memory. Both old and new versions cannot share those sessions. Which strategy should you use?
+
+- RollingUpdate with maxUnavailable: 0 to keep all sessions intact
+- Recreate, to terminate all old Pods before the new version starts
+- RollingUpdate with maxSurge: 0 to avoid running two versions simultaneously
+
+**Answer:** Recreate. RollingUpdate, even with `maxSurge: 0`, still runs old and new Pods simultaneously during the transition. Only Recreate guarantees zero overlap between versions, at the cost of a downtime window.
+:::
+
+## Tuning RollingUpdate for your situation
+
+Two settings control how aggressively a rolling update proceeds. Think of them as two dials: one for safety, one for speed.
+
+With `maxUnavailable: 0` and `maxSurge: 1`, the rollout is as safe as possible. No old Pod is terminated until a new one is fully Ready. The trade-off is one extra Pod running at the peak, which uses additional resources.
 
 ```yaml
-# rolling-app-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: rolling-app
+# illustrative only
 spec:
-  replicas: 3
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 0
       maxSurge: 1
-  selector:
-    matchLabels:
-      app: rolling
-  template:
-    metadata:
-      labels:
-        app: rolling
-    spec:
-      containers:
-        - name: app
-          image: nginx:1.28
 ```
+
+With `maxUnavailable: 2` and `maxSurge: 0`, no extra capacity is used. Each new Pod can only start after an old one is terminated. Useful on resource-constrained clusters. The trade-off is that two Pods are unavailable at once during the update.
+
+```yaml
+# illustrative only
+    rollingUpdate:
+      maxUnavailable: 2
+      maxSurge: 0
+```
+
+The right values depend on your application's traffic sensitivity and the cluster's available capacity.
+
+:::quiz
+With `maxUnavailable: 0` and `maxSurge: 1`, how many Pods run during the update of a 4-replica Deployment?
+
+**Answer:** 5 at the peak. `maxSurge: 1` allows one extra Pod above the desired 4. `maxUnavailable: 0` means none of the 4 running Pods can be terminated until the new one is Ready. At each step: 4 old + 1 new = 5 total Pods.
+:::
 
 ```bash
-kubectl apply -f rolling-app-deployment.yaml
-kubectl rollout status deployment/rolling-app
+kubectl delete deployment recreate-app
 ```
 
-Trigger the update:
-
-```bash
-kubectl set image deployment/rolling-app app=nginx:1.26
-```
-
-This time you'll see a fourth Pod appear before any old one terminates, that's `maxSurge: 1` at work. The old Pods terminate one-by-one only after new ones are Ready. The total count never drops below 3.
-
-**4. Try the zero-downtime configuration explicitly**
-
-```bash
-kubectl patch deployment rolling-app -p '{"spec":{"strategy":{"rollingUpdate":{"maxUnavailable":0,"maxSurge":2}}}}'
-
-kubectl set image deployment/rolling-app app=nginx:1.27
-kubectl get pods -l app=rolling -w
-```
-
-With `maxSurge: 2`, Kubernetes will spin up two new Pods first, wait for both to be Ready, then terminate two old Pods, completing the rollout in roughly two cycles instead of three.
-
-**5. Clean up**
-
-```bash
-kubectl delete deployment legacy-app rolling-app
-```
+Deployments give you three things ReplicaSets cannot: rolling updates that keep your application running, rollback that is instant because old ReplicaSets are preserved, and a choice of strategy for edge cases where rolling updates are not safe. The next module covers Services, which is how you make those Pods reachable from outside the cluster or from other Pods.

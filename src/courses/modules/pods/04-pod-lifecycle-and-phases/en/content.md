@@ -5,182 +5,111 @@ seoDescription: 'Understand Kubernetes Pod phases from Pending to Succeeded, con
 
 # Pod Lifecycle and Phases
 
-A Pod is not a static thing. From the moment it's created to the moment it's gone, it passes through a defined set of states that tell you exactly where it is in its journey. Understanding these states is essential for monitoring your applications, diagnosing problems, and writing automation that reacts correctly to the cluster's condition.
-
-:::info
-Kubernetes tracks Pod health at three levels: the **phase** (high-level summary), **container states** (what each container is doing), and **conditions** (boolean checkpoints like `Ready` and `Initialized`).
-:::
-
-## Pod Phases
-
-The **phase** is a high-level summary of where the Pod is in its lifecycle. There are exactly five possible phases, and a Pod is in exactly one of them at any given moment.
-
-### `Pending`
-
-A Pod enters `Pending` when it has been accepted by the API server and stored in etcd, but isn't running yet. Common reasons:
-
-- The scheduler hasn't yet assigned the Pod to a node (waiting for resources, or constrained by node selectors/affinity rules)
-- The container image is being pulled from the registry
-
-### `Running`
-
-A Pod enters `Running` when it has been bound to a node and at least one container is running. Note the nuance: _at least one_ container. A Pod with three containers is `Running` even if only one has started, or if a container has crashed and is being restarted. This is the normal, healthy state for long-lived workloads.
-
-### `Succeeded`
-
-A Pod reaches `Succeeded` when **all** containers have exited with a zero exit code and will not be restarted. This is the expected terminal state for Jobs and batch workloads, tasks that are meant to run once, complete their work, and exit cleanly.
-
-### `Failed`
-
-A Pod reaches `Failed` when **at least one** container has exited with a non-zero exit code and the restart policy does not allow further retries. A Pod with `restartPolicy: Never` will enter `Failed` immediately if any container exits with an error.
-
-### `Unknown`
-
-`Unknown` is an error state: the API server cannot determine what state the Pod is in because it lost communication with the node. This typically happens when a node fails catastrophically or is partitioned from the network.
-
-:::warning
-If you see Pods stuck in `Unknown`, investigate the health of the node they're running on. Check `kubectl get nodes` for a `NotReady` status. `Unknown` Pods are not necessarily dead, the node might just be temporarily unreachable, but they need attention.
-:::
-
-## The Phase State Machine
-
-The diagram below shows how a Pod transitions between phases over its lifetime:
+You run `kubectl get pods` and notice a Pod sitting in `Pending` for two full minutes. Is that normal? Is something broken? You need more information before you can answer, and that information lives in the Pod's lifecycle. Kubernetes moves every Pod through a series of well-defined phases, and knowing what each phase means turns a confusing status column into a clear diagnostic signal.
 
 @@@
-stateDiagram-v2
-    [*] --> Pending: kubectl apply / create
-    Pending --> Running: Scheduled + at least one container starts
-    Pending --> Failed: Scheduling fails (permanently)
-    Running --> Succeeded: All containers exit 0
-    Running --> Failed: Container exits non-zero<br/>(no more restarts)
-    Running --> Unknown: Node communication lost
-    Unknown --> Running: Node reconnects
-    Unknown --> Failed: Node confirmed lost, Pod evicted
-    Succeeded --> [*]
-    Failed --> [*]
+graph LR
+    PEND["Pending\nScheduled, pulling image"]
+    RUN["Running\nAt least one container running"]
+    SUCC["Succeeded\nAll containers exited 0"]
+    FAIL["Failed\nAt least one container exited non-zero"]
+    UNK["Unknown\nNode unreachable"]
+    PEND --> RUN
+    RUN --> SUCC
+    RUN --> FAIL
+    PEND --> FAIL
+    RUN --> UNK
 @@@
 
-## Container States: The Next Level of Detail
+## The Five Phases
 
-While Pod phases give you the broad picture, **container states** tell you what's happening inside each individual container. You can see container states in `kubectl describe pod`. Each container can be in one of three states:
+A Pod phase is the high-level summary of where the Pod is in its lifecycle. It is stored in `status.phase` and shown in the `STATUS` column of `kubectl get pods`.
 
-### `Waiting`
+**Pending** is the starting point. The cluster has accepted the Pod, but at least one container is not yet running. This happens when the scheduler is still assigning the Pod to a node, when the container image is being pulled from a registry, or when a required volume has not been bound yet. Pending is normal for a few seconds. Two minutes of Pending is a signal to investigate.
 
-A container is `Waiting` when it's not yet running but is getting ready. The `reason` field tells you why. Common reasons:
+**Running** means the Pod has been assigned to a node and at least one container is actively executing, starting up, or restarting. Running does not mean the container is healthy, it only means the process exists. A container can be running but serving errors.
 
-- `ContainerCreating`: The container is being set up (volumes being mounted, etc.)
-- `PodInitializing`: Waiting for init containers to complete
-- `ImagePullBackOff`: The image pull failed; Kubernetes is backing off before retrying
-- `CrashLoopBackOff`: The container keeps crashing; Kubernetes is delaying the next restart attempt
+**Succeeded** is a terminal phase: every container in the Pod exited with code 0. The Pod will not restart. This is the expected end state for batch jobs and one-shot tasks.
 
-`CrashLoopBackOff` is one of the most common error states you'll encounter. It means the container started, ran briefly, crashed, and Kubernetes tried to restart it, only for it to crash again. The "BackOff" part means Kubernetes is using an **exponential backoff** delay between restart attempts. We'll cover this in the restart policies lesson.
+**Failed** is also terminal: at least one container exited with a non-zero code, and the Pod will not restart again. If you see Failed, something inside the container went wrong.
 
-### `Running`
+**Unknown** means the control plane lost contact with the node where the Pod was running. The kubelet stopped reporting. This usually means the node itself is unreachable or crashed.
 
-The container process is actively executing. A running container has a `startedAt` timestamp you can inspect.
+## Conditions: a finer view
 
-### `Terminated`
+Phase is the summary, but conditions tell the full story. Each Pod carries a set of boolean conditions that describe sub-states within a phase.
 
-The container has finished, either successfully or with an error. The `Terminated` state includes an `exitCode` and a `reason`. Common reasons:
+`PodScheduled` becomes `True` once the scheduler has assigned the Pod to a node. If it stays `False`, the cluster may be out of resources or the node selectors do not match any available node.
 
-- `Completed`: Exited normally with code 0
-- `OOMKilled`: Killed by the kernel's out-of-memory killer for exceeding its memory limit
-- `Error`: Exited with a non-zero code
+`Initialized` turns `True` when all init containers have completed successfully. Most basic Pods have no init containers, so this condition is immediately `True`.
 
-`OOMKilled` deserves special mention. When a container exceeds its memory `limit`, the Linux kernel kills the process immediately, Kubernetes doesn't wait for it to crash on its own. If you see this frequently, your memory limit is too low.
+`ContainersReady` becomes `True` when every container passes its readiness check. A container can be running without being ready.
 
-:::info
-You can view container states directly with:
+`Ready` is the condition that Services use to decide whether to send traffic to this Pod. A Pod must have both `ContainersReady` and `Ready` as `True` before it receives any requests. This is the condition you care about most in production.
+
+## Observing the lifecycle in the simulator
+
+Create a Pod to watch these phases unfold:
 
 ```bash
-kubectl describe pod <name>
+nano lifecycle-pod.yaml
 ```
 
-Look for the `State:` and `Last State:` fields under each container.
-:::
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lifecycle-pod
+spec:
+  containers:
+    - name: web
+      image: nginx:1.28
+```
 
-## Pod Conditions
-
-In addition to phases and container states, Pods have a set of **conditions**, boolean flags that indicate specific checkpoints in the Pod's readiness. You can see them in `kubectl describe pod` under the `Conditions:` heading.
-
-The four standard conditions are:
-
-- **`PodScheduled`**: Has the Pod been assigned to a node? Stays `False` if no node has enough resources.
-- **`Initialized`**: Have all init containers completed successfully?
-- **`ContainersReady`**: Are all containers running and passing their readiness probes?
-- **`Ready`**: Is the Pod ready to serve traffic? This aggregates the others. Only when `Ready` is `True` will a Service route traffic to this Pod.
-
-The `Ready` condition is what Kubernetes uses to determine whether a Pod should receive traffic. If a container's readiness probe starts failing, `Ready` becomes `False` and the Service stops routing to that Pod, even though the container is still running. This lets Kubernetes gracefully handle a slow or partially broken container without killing it outright.
-
-## Hands-On Practice
-
-Let's observe phases, container states, and conditions live in the cluster.
-
-**1. Create a normal Pod and watch its phase transitions in the visualizer:**
 
 ```bash
-kubectl run lifecycle-pod --image=nginx:1.28
+kubectl apply -f lifecycle-pod.yaml
+kubectl get pod lifecycle-pod
 ```
 
-You should see the phase go from `Pending` to `ContainerCreating` to `Running`.
-
-**2. Inspect the full status including conditions:**
+The `STATUS` column shows the current phase. To see conditions and the full event history, use `describe`:
 
 ```bash
 kubectl describe pod lifecycle-pod
 ```
 
-Look for the `Conditions:` section and the `State:` field under `Containers:`.
+:::quiz
+Where do you find the Pod conditions, and what events appear in the `Events` section?
 
-**3. View conditions in raw form:**
+**Try it:** `kubectl describe pod lifecycle-pod`
 
-```bash
-kubectl get pod lifecycle-pod -o jsonpath='{.status.conditions}'
-```
+**Answer:** The `Conditions` section lists `PodScheduled`, `Initialized`, `ContainersReady`, and `Ready`, all `True` when the Pod is healthy. The `Events` section shows the sequence: Scheduled, then Pulling, Pulled, Created, and Started. Each step is timestamped so you can measure how long image pull took.
+:::
 
-**4. Simulate a failing container to observe CrashLoopBackOff:**
+## When things go wrong: ImagePullBackOff
 
-```bash
-kubectl run crash-pod --image=busybox:1.36 --restart=Always -- sh -c "exit 1"
-```
+:::warning
+If a Pod stays `Pending` then transitions through `ErrImagePull` into `ImagePullBackOff`, Kubernetes cannot pull the container image. This is often a typo in the image name, a missing tag, or a private registry with no credentials. Kubernetes retries with exponential backoff, so the wait between attempts doubles each time, up to five minutes. Always check `kubectl describe pod <name>` and read the `Events` section to find the exact error message from the container runtime.
+:::
 
-Then watch it:
+## When things go wrong: CrashLoopBackOff
 
-```bash
-kubectl get pod crash-pod --watch
-```
+A second failure pattern is `CrashLoopBackOff`. The container starts, but exits almost immediately with a non-zero code. Because the restart policy is `Always` by default, Kubernetes restarts it, but again it crashes. Kubernetes increases the delay between restarts to avoid hammering a broken container. You will see the `RESTARTS` counter climbing and the `STATUS` showing `CrashLoopBackOff`. The fix is almost always inside the container, not in Kubernetes itself.
 
-You'll see it cycle through `Error` → `CrashLoopBackOff` repeatedly, with increasing backoff delays.
+:::quiz
+A Pod is in phase `Running`, but its `Ready` condition is `False`. What can you conclude?
 
-**5. Describe the crash Pod for details:**
+- The Pod crashed and is about to be restarted
+- At least one container is running, but the Pod cannot receive traffic yet
+- The Pod has not been scheduled to a node
 
-```bash
-kubectl describe pod crash-pod
-```
+**Answer:** At least one container is running, but the Pod cannot receive traffic yet. `Running` and `Ready` are independent. A Pod can be `Running` with a failing readiness probe, which removes it from Service endpoints without restarting it. The first option describes `CrashLoopBackOff`, and the third would show up as `Pending`, not `Running`.
+:::
 
-Look at the `Last State:` field under the container, it will show `Terminated` with `Reason: Error` and `Exit Code: 1`. Also note `Restart Count:` increasing with each cycle.
-
-**6. Create a short-lived Pod that succeeds:**
+## Cleanup
 
 ```bash
-kubectl run success-pod --image=busybox:1.36 --restart=Never -- sh -c "exit 1"
-kubectl get pod success-pod --watch
+kubectl delete pod lifecycle-pod
 ```
 
-Watch it go from `Pending` to `Running` to `Completed`. The `Completed` status corresponds to the `Succeeded` phase.
-
-**7. Check the exit code of the completed Pod:**
-
-```bash
-kubectl get pod success-pod -o jsonpath='{.status.containerStatuses[0].state.terminated.exitCode}'
-```
-
-The exit code should be `0`.
-
-**8. Clean up:**
-
-```bash
-kubectl delete pod lifecycle-pod crash-pod success-pod
-```
-
-With a firm grasp of Pod phases, container states, and conditions, you now have the vocabulary to read and interpret the cluster's signals, whether things are running smoothly or something has gone sideways. These signals are your first line of defense when debugging production issues.
+Pod phases give you the map, and conditions give you the compass. Together they let you locate exactly where in the lifecycle a Pod is stuck and why. The next lesson introduces restart policies, which control what Kubernetes does once a container reaches the end of its lifecycle.

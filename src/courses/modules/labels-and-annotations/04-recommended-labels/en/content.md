@@ -3,222 +3,119 @@ seoTitle: Kubernetes Recommended Labels, app.kubernetes.io Convention
 seoDescription: Learn the app.kubernetes.io standard label convention to make dashboards, cost tools, and deployment systems work out of the box.
 ---
 
-# Recommended Labels, The `app.kubernetes.io/*` Convention
+# Recommended Labels
 
-Labels are flexible by design. Kubernetes doesn't force any particular naming scheme, you're free to call your labels whatever you like. That freedom is powerful, but it creates a common problem: every team invents its own conventions, and the result is a cluster where no two applications look the same to the tools that need to understand them.
+Three teams each label their Pods differently. One uses `app=frontend`, another uses `service=frontend`, a third uses `component=frontend`. When a monitoring tool tries to group workloads by application name, it cannot work across all three without special-casing each team's convention. Multiply that across dozens of services and the metadata layer becomes noise rather than signal.
 
-:::info
-The Kubernetes project recommends a standard set of labels under the `app.kubernetes.io/` prefix. Following this convention means dashboards, cost tools, and deployment systems work out of the box, without per-team configuration.
-:::
+Standard labels exist to solve exactly this problem. The Kubernetes project defines a set of recommended labels under the `app.kubernetes.io/` prefix. Kubernetes itself does not enforce them, but tools in the ecosystem, including dashboards, cost analyzers, service meshes, and deployment systems, know to read them.
 
-## The Problem with Ad-Hoc Labels
+## The Recommended Label Set
 
-Imagine three teams deploying to a shared cluster: the platform team labels Pods with `service=payments-api` and `release=v2.1.0`; the backend team uses `name=orders-service` and `tag=latest`; the frontend team uses `component=dashboard` with no version label at all. Each convention makes sense within its own context, but to a monitoring dashboard or cost analysis tool, the cluster looks like chaos.
+@@@
+graph TD
+    APP["app.kubernetes.io/name: wordpress"]
+    INST["app.kubernetes.io/instance: wordpress-prod"]
+    COMP1["app.kubernetes.io/component: frontend"]
+    COMP2["app.kubernetes.io/component: database"]
+    APP --> INST
+    INST --> COMP1
+    INST --> COMP2
+@@@
 
-The inconsistency also makes on-call debugging harder. When an alert fires, a responder needs to quickly identify what application is affected, who owns it, what version is running, and what larger system it belongs to. With ad-hoc labels, that information might exist, but in completely different keys for every service.
+The main labels and their purpose:
 
-## The Standard: `app.kubernetes.io/`
+`app.kubernetes.io/name` is the name of the application, such as `mysql` or `wordpress`. It identifies what the software is, independent of how many instances are running.
 
-The prefix `app.kubernetes.io` clearly signals that these are standardized Kubernetes application labels, distinct from vendor-specific or team-specific labels. They are documented in the official Kubernetes documentation and adopted by Helm, Kustomize, Argo CD, Lens, Grafana, and dozens of other tools. When you follow this convention, the ecosystem "just works", dashboards populate automatically, cost attribution becomes straightforward, and any engineer can look at any resource and immediately understand its context.
+`app.kubernetes.io/instance` is a unique identifier for a specific deployment of the application. If you run `mysql` twice in the same cluster (once for staging, once for production), each instance gets a different value here: `mysql-staging`, `mysql-prod`.
 
-## The Recommended Labels
+`app.kubernetes.io/version` is the current version of the application, such as `8.0.32` or `6.4`. This is particularly useful in dashboards and for tracking rollouts.
 
-| Label                          | Purpose                                                   | Example                                     |
-| ------------------------------ | --------------------------------------------------------- | ------------------------------------------- |
-| `app.kubernetes.io/name`       | The canonical name of the application                     | `mysql`, `my-web-app`                       |
-| `app.kubernetes.io/instance`   | A unique name for this specific instance                  | `mysql-prod`, `my-web-app-eu-west`          |
-| `app.kubernetes.io/version`    | The version of the application (not the resource version) | `5.7.21`, `1.4.2`, `2024-11-01-gitsha`      |
-| `app.kubernetes.io/component`  | The role this resource plays in the architecture          | `frontend`, `backend`, `database`, `worker` |
-| `app.kubernetes.io/part-of`    | The larger application or system this belongs to          | `checkout-platform`, `data-pipeline`        |
-| `app.kubernetes.io/managed-by` | The tool managing the lifecycle of this resource          | `helm`, `kustomize`, `argo-cd`, `kubectl`   |
+`app.kubernetes.io/component` describes the role of this resource within the application: `frontend`, `backend`, `database`, `cache`.
 
-## Putting It All Together
+`app.kubernetes.io/part-of` names the higher-level application this resource belongs to. A `mysql` Deployment that is part of a `wordpress` installation carries `part-of: wordpress`.
 
-Here's what a well-labeled Deployment manifest looks like following the recommended convention:
+`app.kubernetes.io/managed-by` identifies the tool managing the resource: `helm`, `kustomize`, or `kubectl`.
+
+## Creating a Deployment with Recommended Labels
+
+```bash
+nano wordpress-dep.yaml
+```
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: payments-api
+  name: wordpress
   labels:
-    app.kubernetes.io/name: payments-api
-    app.kubernetes.io/instance: payments-api-prod
-    app.kubernetes.io/version: '3.2.1'
-    app.kubernetes.io/component: backend
-    app.kubernetes.io/part-of: checkout-platform
-    app.kubernetes.io/managed-by: helm
+    app.kubernetes.io/name: wordpress
+    app.kubernetes.io/instance: wordpress-prod
+    app.kubernetes.io/version: '6.4'
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/managed-by: kubectl
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: payments-api
-      app.kubernetes.io/instance: payments-api-prod
+      app.kubernetes.io/name: wordpress
+      app.kubernetes.io/instance: wordpress-prod
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: payments-api
-        app.kubernetes.io/instance: payments-api-prod
-        app.kubernetes.io/version: '3.2.1'
-        app.kubernetes.io/component: backend
-        app.kubernetes.io/part-of: checkout-platform
-        app.kubernetes.io/managed-by: helm
+        app.kubernetes.io/name: wordpress
+        app.kubernetes.io/instance: wordpress-prod
+        app.kubernetes.io/component: frontend
     spec:
       containers:
-        - name: payments-api
-          image: myregistry/payments-api:3.2.1
+        - name: wordpress
+          image: nginx:1.28
 ```
 
-Notice that the Pod template carries all the same labels as the Deployment itself. Tools that inspect individual Pods (like Grafana or Prometheus) need to read these labels directly from the Pod, not just from the parent Deployment.
+```bash
+kubectl apply -f wordpress-dep.yaml
+kubectl get pods --show-labels
+```
 
-## How Tools Use These Labels
 
-The diagram below shows a single resource set labeled following the convention, and the tools that automatically consume those labels without additional configuration:
+Now filter using the recommended labels:
 
-@@@
-graph LR
-    RS["Resource Set<br/>app.kubernetes.io/name: payments-api<br/>app.kubernetes.io/instance: payments-api-prod<br/>app.kubernetes.io/version: 3.2.1<br/>app.kubernetes.io/component: backend<br/>app.kubernetes.io/part-of: checkout-platform<br/>app.kubernetes.io/managed-by: helm"]
+```bash
+kubectl get pods -l app.kubernetes.io/component=frontend
+kubectl get all -l app.kubernetes.io/instance=wordpress-prod
+```
 
-    RS --> LENS["Lens / Headlamp<br/>Groups resources by part-of<br/>Shows component roles"]
-    RS --> ARGO["Argo CD<br/>Tracks managed-by=helm apps<br/>Displays app hierarchy"]
-    RS --> GRAF["Grafana<br/>Dimensions dashboards by name,<br/>instance, version, component"]
-    RS --> PROM["Prometheus<br/>Label cardinality:<br/>version for SLO tracking"]
-    RS --> COST["Cost Tools<br/>Allocates spend by part-of<br/>and component"]
-@@@
-
-Each tool benefits in a specific way:
-
-- **Grafana** uses `name` and `version` as dashboard dimensions, making it trivial to compare latency or error rates across versions, without custom dashboard configuration.
-- **Lens and Headlamp** use `part-of` to build a visual hierarchy, grouping the frontend, backend, database, and worker of `checkout-platform` under a single application node.
-- **Argo CD** uses `managed-by` to distinguish Helm-managed apps from directly applied resources, and `instance` to track state across environments.
-- **Cost analysis tools** like Kubecost use `part-of` and `component` to allocate infrastructure spend by application and component.
-
-## Helm Uses These Labels by Default
-
-If you use Helm, you get most of these labels for free. Helm's standard chart templates include the recommended labels automatically, populated from `Chart.yaml` and `values.yaml`. When you run `helm install my-release my-chart`, Helm stamps every created resource with `app.kubernetes.io/name: my-chart`, `app.kubernetes.io/instance: my-release`, and `app.kubernetes.io/managed-by: Helm`. This is why Helm charts are immediately legible in cluster dashboards, they speak the common label language out of the box.
+The second command returns all resource types that carry the instance label, giving you a full picture of everything that belongs to this deployment.
 
 :::info
-You don't have to use all six recommended labels on every resource. Start with `name`, `instance`, and `component`, those three alone make your cluster dramatically more organized and tool-friendly. Add the rest as your workflow and tooling evolves.
+Labels with a `/` in the key use a **prefix** to prevent collisions between teams and tools. The part before `/` is the prefix (written in domain-style), and the part after is the name. Using `app.kubernetes.io/name` and `mycompany.com/name` simultaneously on the same object is perfectly valid: the prefixes namespace them independently. Any team can define their own prefix without colliding with the Kubernetes project or with other teams.
+:::
+
+:::quiz
+You want to update the `app.kubernetes.io/version` label on a running Deployment's Pod template. Is this safe?
+
+- No, version is in the selector, changing it would orphan running Pods
+- Yes, if `version` is in `template.metadata.labels` only and not in `selector.matchLabels`, changing it triggers a rolling update without breaking the selector
+- Labels in the Pod template cannot be changed once the Deployment is created
+
+**Answer:** Yes, as long as `version` is only in `template.metadata.labels` and not in `selector.matchLabels`. Labels outside the selector are free to change. Kubernetes will roll out new Pods with the updated label and terminate the old ones. This is exactly why the manifest above puts `version` on the Deployment metadata and the Pod template, but keeps only `name` and `instance` in the selector.
 :::
 
 :::warning
-Don't use the `app.kubernetes.io/` prefix for your own team-specific labels. That prefix is reserved for the standard labels. For custom labels, use your own domain as a prefix (e.g., `mycompany.io/cost-center`) to avoid future conflicts with new Kubernetes-standard labels that might be introduced under the same prefix.
+Any labels you put in `selector.matchLabels` become immutable after creation. Choose your selector labels carefully. The convention is to use only `app.kubernetes.io/name` and `app.kubernetes.io/instance` in the selector. Labels like `version`, `component`, and `managed-by` belong in the template labels only, where they can be updated freely with each new rollout.
 :::
 
-## Hands-On Practice
+Now try this on your own: filter all resources in the simulated cluster that belong to the `wordpress-prod` instance. You have already seen the flag and the label key earlier in this lesson.
 
-Let's deploy a small application using the recommended label convention and see how filtering becomes effortless.
+:::quiz
+Why does the Kubernetes project recommend a prefix like `app.kubernetes.io/` instead of short keys like `app`, `name`, or `version`?
 
-**1. Deploy a frontend component**
+**Answer:** Short keys collide immediately. Two teams both using `app=frontend` means the same key with potentially different semantics. Prefixed keys create an ownership namespace: `app.kubernetes.io/name` is clearly defined by the Kubernetes project, while `mycompany.com/name` is clearly your team's. Tools know which prefix to read, which removes ambiguity and makes the label scheme reliable across the entire ecosystem.
+:::
 
-```yaml
-# frontend-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: frontend
-  labels:
-    app.kubernetes.io/name: my-web-app
-    app.kubernetes.io/instance: my-web-app-prod
-    app.kubernetes.io/version: '2.0.0'
-    app.kubernetes.io/component: frontend
-    app.kubernetes.io/part-of: checkout-platform
-    app.kubernetes.io/managed-by: kubectl
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: my-web-app
-      app.kubernetes.io/component: frontend
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: my-web-app
-        app.kubernetes.io/instance: my-web-app-prod
-        app.kubernetes.io/version: '2.0.0'
-        app.kubernetes.io/component: frontend
-        app.kubernetes.io/part-of: checkout-platform
-        app.kubernetes.io/managed-by: kubectl
-    spec:
-      containers:
-        - name: nginx
-          image: nginx:1.28
-```
+## Cleanup
 
 ```bash
-kubectl apply -f frontend-deployment.yaml
+kubectl delete deployment wordpress
 ```
 
-**2. Deploy a backend component**
-
-```yaml
-# backend-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: backend
-  labels:
-    app.kubernetes.io/name: payments-api
-    app.kubernetes.io/instance: payments-api-prod
-    app.kubernetes.io/version: '3.1.0'
-    app.kubernetes.io/component: backend
-    app.kubernetes.io/part-of: checkout-platform
-    app.kubernetes.io/managed-by: kubectl
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: payments-api
-      app.kubernetes.io/component: backend
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: payments-api
-        app.kubernetes.io/instance: payments-api-prod
-        app.kubernetes.io/version: '3.1.0'
-        app.kubernetes.io/component: backend
-        app.kubernetes.io/part-of: checkout-platform
-        app.kubernetes.io/managed-by: kubectl
-    spec:
-      containers:
-        - name: nginx
-          image: nginx:1.28
-```
-
-```bash
-kubectl apply -f backend-deployment.yaml
-```
-
-**3. Query by platform and by component**
-
-```bash
-# All resources in the checkout-platform
-kubectl get all -l app.kubernetes.io/part-of=checkout-platform
-
-# Only the frontend Pods
-kubectl get pods -l app.kubernetes.io/component=frontend
-
-# Only the backend Pods
-kubectl get pods -l app.kubernetes.io/component=backend
-
-# All Pods managed by kubectl
-kubectl get pods -l app.kubernetes.io/managed-by=kubectl
-```
-
-**4. Show labels in the output**
-
-```bash
-kubectl get pods -l app.kubernetes.io/part-of=checkout-platform --show-labels
-```
-
-**5. Clean up**
-
-```bash
-kubectl delete deployment frontend backend
-```
-
-Open the cluster visualizer after deploying both components, notice how resources organized with the recommended labels display richer, more structured metadata in the visualization.
-
-## Wrapping Up
-
-The `app.kubernetes.io/*` labels are a community-standard naming convention that the entire Kubernetes ecosystem understands. Using them consistently enables dashboards, cost tools, and deployment systems to work out of the box. Start with `name`, `instance`, and `component`, then add the rest as your workflow evolves.
+Labels and annotations together form the metadata layer that makes Kubernetes resources discoverable, manageable, and composable. Labels drive selection and grouping; annotations carry rich metadata for tools. The next module builds directly on this foundation: ReplicaSets use label selectors to claim and manage their Pods, and understanding selectors is what makes the rest of the workload layer readable.

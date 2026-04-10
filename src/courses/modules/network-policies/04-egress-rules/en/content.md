@@ -3,67 +3,106 @@ seoTitle: Kubernetes Egress Rules, DNS, ipBlock, Outbound Traffic
 seoDescription: Learn how to restrict outbound Pod traffic in Kubernetes using egress NetworkPolicy rules, including the critical DNS exception and ipBlock selectors.
 ---
 
-# Egress Rules, Controlling Outbound Traffic
+# Egress Rules
 
-Security isn't just about keeping unwanted visitors out, it's also about controlling what your Pods can reach when they initiate connections. An egress rule defines which outbound connections a selected Pod is permitted to make. Any attempt to reach a destination not covered by a rule is silently dropped.
+Your `api` Pod handles business logic. It needs to talk to `db` inside the cluster. It should not be able to call external APIs on the internet, exfiltrate data, or reach internal infrastructure it has no business accessing. The ingress policy you wrote protects `db`. But nothing yet controls what `api` itself is allowed to reach.
 
-A compromised Pod with no egress restrictions can freely call external APIs, exfiltrate data, establish reverse shells, or probe other services across the cluster. Egress policies prevent that by limiting exactly what a Pod is allowed to reach.
+That is the job of egress rules.
 
-:::important
-Egress rules are just as important as ingress rules in a production security posture. A well-secured workload controls both directions.
-:::
+## Egress = Outbound from the Protected Pod
 
-## Egress Mirrors Ingress
+An egress policy restricts traffic that leaves the Pod selected by `podSelector`. Where ingress says "who can send to me," egress says "where am I allowed to send."
 
-The structure of egress rules is almost identical to ingress rules, with one key difference: you use `to` instead of `from` to describe destinations rather than sources.
+@@@
+graph LR
+    api["Pod: api"] -- "allowed" --> db["Pod: db"]
+    api -. "blocked" .-> internet["External internet"]
+    api -. "blocked" .-> other["Other internal services"]
+@@@
+
+Start with the basic structure: select the Pod and declare that this policy governs egress.
 
 ```yaml
-egress:
-  - to:
-      - podSelector:
-          matchLabels:
-            app: database
-    ports:
-      - protocol: TCP
-        port: 5432
+spec:
+  podSelector:
+    matchLabels:
+      app: api # illustrative only
+  policyTypes:
+    - Egress
 ```
 
-This allows the selected Pods to make outbound TCP connections on port 5432 to Pods labeled `app=database`. All other outbound connections are denied. The same three selector types apply: `podSelector`, `namespaceSelector`, and `ipBlock`. The same AND-vs-OR logic applies. Everything you learned about ingress applies here, just mirrored for the outbound direction.
+With `policyTypes: [Egress]` and no `egress` rules, all outbound traffic from `api` is blocked. That includes traffic to `db`, to DNS, to everything.
 
-## A Critical Warning: Never Forget DNS
+:::quiz
+You apply a policy with `policyTypes: [Egress]` and no `egress` field to the `api` Pod. Can `api` still talk to `db`?
 
-Here's a trap that catches nearly everyone writing their first egress policy: **blocking all egress will also block DNS**.
+- Yes, because `db` has an ingress policy that allows `api`
+- No, because the egress policy on `api` blocks all outbound traffic
+- Only if they are in the same namespace
 
-Your applications almost certainly resolve hostnames, connecting to services by name like `postgres-service.default.svc.cluster.local`. DNS resolution happens by sending a UDP (or TCP) query to CoreDNS in the `kube-system` namespace on port 53. If your egress policy doesn't explicitly allow this, DNS lookups will time out silently and your application will crash or behave erratically. The error message is often misleading, "no such host" rather than "DNS blocked".
-
-:::warning
-**Always include a DNS egress rule** whenever you restrict egress. Without it, your application will fail to resolve any hostname, breaking virtually all service-to-service communication. This is one of the most common NetworkPolicy mistakes.
+**Answer:** No - egress policies control what the source Pod can send, regardless of what the destination allows. Both sides must permit the traffic.
 :::
 
-## A Complete Egress Policy With DNS
+## The DNS Exception You Cannot Forget
 
-A backend Pod that should only talk to its database and resolve DNS, nothing else:
+:::warning
+If you add `Egress` to `policyTypes` and provide any egress rules, you must also add an explicit rule allowing outbound traffic to port 53 (UDP and TCP) toward `kube-system`. Without it, your Pod cannot resolve any hostname. It will see connection errors that look like network failures, but the real cause is DNS being silently blocked. This is one of the most common mistakes when writing egress policies.
+:::
+
+Always include the DNS rule first, before adding any other egress rules:
+
+```yaml
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53 # illustrative only
+```
+
+Now add the rule that allows `api` to reach `db`:
+
+```yaml
+    - to:
+        - podSelector:
+            matchLabels:
+              app: db
+      ports:
+        - protocol: TCP
+          port: 5432 # illustrative only
+```
+
+:::quiz
+You forget the DNS egress rule. Your `api` Pod tries to connect to `db` using its Service name. What happens?
+
+**Answer:** The connection fails with a name resolution error. Even if port 5432 to `db` is allowed, `api` cannot resolve the name `db` (or `db.default.svc.cluster.local`) because DNS traffic to CoreDNS on port 53 is blocked by the egress policy.
+:::
+
+## Applying the Full Egress Policy
+
+Build the complete manifest:
+
+```
+nano api-egress-policy.yaml
+```
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: backend-egress
+  name: api-egress-only-db
   namespace: default
 spec:
   podSelector:
     matchLabels:
-      app: backend
+      app: api
   policyTypes:
     - Egress
   egress:
-    - to:
-        - podSelector:
-            matchLabels:
-              app: database
-      ports:
-        - protocol: TCP
-          port: 5432
     - to:
         - namespaceSelector:
             matchLabels:
@@ -73,173 +112,77 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
+    - to:
+        - podSelector:
+            matchLabels:
+              app: db
+      ports:
+        - protocol: TCP
+          port: 5432
 ```
 
-Reading this: "Pods labeled `app=backend` may only connect to `app=database` on port 5432/TCP, or to the `kube-system` namespace on port 53 (UDP or TCP) for DNS. All other outbound traffic is blocked."
+```
+kubectl apply -f api-egress-policy.yaml
+```
 
-Note that DNS allows both UDP and TCP on port 53. Standard DNS uses UDP but falls back to TCP for large responses, allow both to be safe.
+```
+kubectl get networkpolicy
+```
 
-## Visualizing Restricted Egress
+You should now see `api-egress-only-db` listed. Verify the details:
 
-@@@
-graph TD
-    B["Backend Pod<br/>(app=backend)<br/>Egress Policy Applied"]
+```
+kubectl describe networkpolicy api-egress-only-db
+```
 
-    B -->|"✅ TCP:5432"| DB["Database Pod<br/>(app=database)"]
-    B -->|"✅ UDP/TCP:53"| DNS["CoreDNS<br/>(kube-system namespace)"]
-    B -->|"❌ blocked"| EXT["External Internet<br/>api.example.com"]
-    B -->|"❌ blocked"| OTHER["Other Cluster Services<br/>(payment, auth, etc.)"]
-@@@
+The output lists both egress rules: the DNS rule and the `db` rule. Confirm both appear before proceeding.
 
-## The Deny-All Egress Pattern
+## ipBlock with except: Allowing a Range but Excluding IPs
 
-Just as with ingress, you can create a blanket "deny all outbound traffic" policy for an entire namespace:
+Sometimes you need to allow traffic to an external CIDR but exclude specific addresses inside it. The `ipBlock` field supports an `except` list for this:
 
 ```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: default-deny-egress
-  namespace: default
-spec:
-  podSelector: {}
-  policyTypes:
-    - Egress
-  egress: []
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/8
+            except:
+              - 10.0.0.5/32
+              - 10.0.0.10/32 # illustrative only
 ```
 
-An empty `podSelector: {}` selects all Pods. The empty `egress: []` means no outbound connections of any kind are permitted, not even DNS. This is typically the first step in a full namespace lockdown, after which you add targeted allow policies for each service's legitimate traffic.
+This allows outbound traffic to the entire `10.0.0.0/8` range except those two specific IPs. Think of it as a CIDR allow with carved-out exceptions. The `except` list must be sub-ranges of the `cidr` value.
 
-## Allowing Access to External Services
+:::quiz
+You allow egress to CIDR `10.0.0.0/8` with `except: [10.0.0.100/32]`. Can the Pod reach `10.0.0.100`?
 
-Sometimes a Pod needs to connect to something outside the cluster, a third-party API, an on-premise database, or an object storage service. For those cases, use `ipBlock`:
+- Yes, the except field is ignored for single-IP ranges
+- No, the except list removes those addresses from the allowed range
+- Only if a separate ipBlock rule explicitly allows it
 
-```yaml
-egress:
-  - to:
-      - ipBlock:
-          cidr: 203.0.113.0/24
-    ports:
-      - protocol: TCP
-        port: 443
-```
-
-This allows HTTPS connections to the IP range `203.0.113.0/24`. If you need to allow broad internet access (using `0.0.0.0/0`), think carefully: that effectively removes the benefit of egress restriction and is rarely recommended.
+**Answer:** No - `except` removes those addresses from the allowed range. To reach `10.0.0.100` you would need a separate rule targeting it explicitly.
+:::
 
 ## Combining Ingress and Egress in One Policy
 
-A single NetworkPolicy can declare both ingress and egress rules for the same set of Pods. When you list both in `policyTypes`, both directions are managed.
+A single NetworkPolicy can govern both ingress and egress for the same Pod. List both in `policyTypes` and provide both sections:
 
 ```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: frontend-policy
-  namespace: default
 spec:
   podSelector:
     matchLabels:
-      app: frontend
+      app: api
   policyTypes:
     - Ingress
     - Egress
   ingress:
     - from:
-        - ipBlock:
-            cidr: 0.0.0.0/0
-      ports:
-        - protocol: TCP
-          port: 80
-        - protocol: TCP
-          port: 443
-  egress:
-    - to:
         - podSelector:
             matchLabels:
-              app: backend
+              app: frontend
       ports:
         - protocol: TCP
           port: 8080
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
-      ports:
-        - protocol: UDP
-          port: 53
-```
-
-This frontend policy: accept inbound HTTP/HTTPS from anywhere; send outbound traffic only to the backend on port 8080, plus DNS.
-
-:::info
-It's perfectly valid, and often cleaner, to split ingress and egress rules into separate NetworkPolicy objects. Multiple policies applying to the same Pod are additive, so you can manage each direction independently without any conflict.
-:::
-
-## Hands-On Practice
-
-Let's observe how egress restrictions work and practice including the critical DNS rule. Use the terminal on the right panel.
-
-**1. Create a test Pod that will have its egress restricted:**
-
-```bash
-kubectl run restricted-pod --image=busybox:1.36 --labels="app=restricted" -- sleep 3600
-```
-
-**2. Before any policy, verify the Pod can reach the internet and resolve DNS:**
-
-```bash
-kubectl exec restricted-pod -- nslookup kubernetes.default
-kubectl exec restricted-pod -- wget -qO- --timeout=5 http://1.1.1.1
-```
-
-Both should work in a default cluster.
-
-**3. Apply a deny-all egress policy:**
-
-```yaml
-# deny-all-egress-networkpolicy.yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: deny-all-egress
-  namespace: default
-spec:
-  podSelector:
-    matchLabels:
-      app: restricted
-  policyTypes:
-    - Egress
-  egress: []
-```
-
-```bash
-kubectl apply -f deny-all-egress-networkpolicy.yaml
-```
-
-**4. Try DNS resolution and external access now:**
-
-```bash
-kubectl exec restricted-pod -- nslookup kubernetes.default
-kubectl exec restricted-pod -- wget -qO- --timeout=5 http://1.1.1.1
-```
-
-Both should fail, DNS is broken too, as visible from the `nslookup` timeout.
-
-**5. Update the policy to re-allow DNS only:**
-
-```yaml
-# deny-all-egress-networkpolicy.yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: deny-all-egress
-  namespace: default
-spec:
-  podSelector:
-    matchLabels:
-      app: restricted
-  policyTypes:
-    - Egress
   egress:
     - to:
         - namespaceSelector:
@@ -250,33 +193,15 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
+    - to:
+        - podSelector:
+            matchLabels:
+              app: db
+      ports:
+        - protocol: TCP
+          port: 5432 # illustrative only
 ```
 
-```bash
-kubectl apply -f deny-all-egress-networkpolicy.yaml
-```
+This policy controls both directions for `api`: only `frontend` can reach it on port 8080, and it can only reach `db` on port 5432 plus DNS. Everything else is blocked in both directions.
 
-**6. Test again:**
-
-```bash
-kubectl exec restricted-pod -- nslookup kubernetes.default
-kubectl exec restricted-pod -- wget -qO- --timeout=5 http://1.1.1.1
-```
-
-DNS should work again, but the external HTTP request should still be blocked.
-
-**7. Inspect the applied policy:**
-
-```bash
-kubectl get networkpolicies
-kubectl describe networkpolicy deny-all-egress
-```
-
-**8. Clean up:**
-
-```bash
-kubectl delete pod restricted-pod
-kubectl delete networkpolicy deny-all-egress
-```
-
-You've now experienced firsthand why the DNS exception is non-negotiable. In the next lesson, we'll cover advanced patterns including combining policies, `ipBlock` with exceptions, port ranges, and defense-in-depth strategies for real production namespaces.
+Egress policies complete the picture. Ingress protects what enters a Pod; egress controls what leaves it. Together they let you enforce least-privilege networking at the Pod level, ensuring every connection in your cluster was explicitly permitted.

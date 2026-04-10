@@ -9,5 +9,4 @@ export const module: LocalModule = {
     en: 'Partager et persister des données dans un Pod.'
   },
   tags: ['ckad', 'cka', 'beginner'],
-  draft: true
 }

@@ -3,271 +3,133 @@ seoTitle: 'Kubernetes emptyDir Volumes, Sidecar, tmpfs, Restart'
 seoDescription: 'Explore emptyDir volumes in Kubernetes for sharing data between sidecar containers, scratch space, and memory-backed tmpfs storage with size limits.'
 ---
 
-# emptyDir Volumes
+# emptyDir
 
-Of all the volume types Kubernetes offers, `emptyDir` is the simplest to understand and the easiest to use. When a Pod starts, Kubernetes creates an empty directory, mounts it into the container (or containers) you specify, and deletes it permanently when the Pod is removed. Within a Pod's lifetime, it survives any number of container restarts.
+Your application generates processed files and drops them in `/tmp/cache`. A second container in the same Pod, a log shipper, needs to read those files and forward them to a remote service. Both containers need access to the same directory. But a container's filesystem is private: container A cannot see the filesystem of container B. How do you bridge them?
 
-:::info
-Think of `emptyDir` as a temporary shared notepad for the entire Pod. Individual containers might come and go, but the notepad stays on the table, until the meeting ends and the Pod is deleted.
-:::
+This is one of the most common needs in multi-container Pods, and `emptyDir` is the simplest answer.
 
-## When to Use emptyDir
+## What emptyDir does
 
-**Sharing data between containers in the same Pod** is the classic use case. This is the sidecar pattern: one container produces files and another processes or forwards them. Because both containers are in the same Pod, they share the same volumes, `emptyDir` is the natural choice for this in-Pod coordination.
-
-A concrete example: an application writes processed events to a directory as JSON files, and a sidecar ships them to a centralized logging system. Neither container needs to know the other's internals, they just read and write to a shared directory.
-
-**Scratch space for a single container** is the second use case. Some workloads need significant temporary storage:
-
-- A video transcoder working with large intermediate files
-- An AI inference service unpacking a large model into memory-mapped files
-- A build tool compiling source code into a temporary output directory
-
-In these cases, `emptyDir` gives the container a place to work without polluting the container image or consuming the container's layered filesystem.
-
-## The Manifest
-
-Here's the minimum declaration:
-
-```yaml
-spec:
-  volumes:
-    - name: shared-data
-      emptyDir: {}
-```
-
-The `{}` is not a placeholder, it's valid YAML for an empty object, meaning "use all defaults." The name is the only required field.
-
-## A Multi-Container Example
-
-Let's look at a full example with two containers sharing a single `emptyDir` volume:
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: writer-reader
-spec:
-  volumes:
-    - name: shared-data
-      emptyDir: {}
-  containers:
-    - name: writer
-      image: busybox
-      command: ['sh', '-c']
-      args:
-        - |
-          echo hello > /data/file.txt
-          sleep 3600
-      volumeMounts:
-        - name: shared-data
-          mountPath: /data
-    - name: reader
-      image: busybox
-      command: ['sh', '-c']
-      args:
-        - |
-          sleep 2
-          cat /data/file.txt
-          sleep 3600
-      volumeMounts:
-        - name: shared-data
-          mountPath: /data
-```
-
-The writer writes `hello` to `/data/file.txt`. The reader waits two seconds, then reads from the same path. Notice that both containers use the same `mountPath` here, but that's not required, you could mount the same volume at `/output` in the writer and `/input` in the reader.
-
-## How Containers Communicate Through a Volume
+An `emptyDir` volume is a temporary directory that Kubernetes creates fresh when the Pod starts. It starts empty (hence the name) and is mounted into every container that declares a `volumeMount` pointing to it. Because all containers in a Pod run on the same node and share the same volume directory, they can read and write to the same files.
 
 @@@
 graph LR
-    subgraph "Pod: writer-reader"
-        W["Writer Container<br/>/data/file.txt ← writes"]
-        R["Reader Container<br/>/data/file.txt → reads"]
-
-        V["emptyDir Volume<br/>shared-data<br/>/data/file.txt"]
-
-        W -->|"writes to"| V
-        V -->|"read by"| R
+    subgraph Pod
+        A[app container\n/tmp/cache]
+        S[sidecar container\n/data/cache]
+        E[(emptyDir\nvolume)]
     end
+    A -- writes --> E
+    E -- reads --> S
 @@@
 
-The volume is the single source of truth. There's no network call, no serialization overhead, no API to agree on, just a shared filesystem path.
+The analogy: think of the `emptyDir` volume as a shared whiteboard in a room where both containers work. They both see it, they can both write on it, and it disappears when they leave the room (when the Pod is deleted).
 
-## Surviving Container Restarts
-
-The key benefit of `emptyDir` over writing to the container's own filesystem is that it survives container restarts. If the writer crashes after writing half its files and Kubernetes restarts it, the new instance finds those partially-written files still in the volume.
-
-This makes `emptyDir` useful as a crash-recovery buffer: a container can checkpoint its progress to the volume, and after any restart, it picks up from the last checkpoint rather than starting from scratch.
-
-:::warning
-`emptyDir` does NOT survive Pod deletion or Pod rescheduling. If the Pod is evicted from a node, deleted manually, or replaced during a Deployment rollout, the emptyDir is gone. Do not use `emptyDir` for anything that needs to outlive the Pod itself. For durable persistence, use PersistentVolumes.
-:::
-
-## Memory-Backed emptyDir
-
-By default, Kubernetes stores `emptyDir` data on the node's disk. You can opt for a **tmpfs** (in-memory) backing by setting `medium: Memory`:
-
-```yaml
-volumes:
-  - name: fast-scratch
-    emptyDir:
-      medium: Memory
-      sizeLimit: 512Mi
-```
-
-A memory-backed `emptyDir` operates at memory speed, useful for high-throughput workloads where disk I/O would be a bottleneck. The downside is that memory-backed volumes count against the container's memory limit, if a container writes 200Mi to a `medium: Memory` volume, that 200Mi comes out of its memory budget and can trigger an OOM kill.
+`emptyDir` survives container restarts. If the `app` container crashes and restarts, the files it wrote to the shared directory are still there when it comes back. This is the same guarantee from the previous lesson, applied to the shared-access case.
 
 :::info
-You can set `sizeLimit` on any `emptyDir` (disk or memory). Kubernetes will evict the Pod if the volume exceeds this limit, a safety valve to prevent a runaway container from filling up a node's disk or exhausting its memory.
+`emptyDir` is the most common volume type for intra-Pod data sharing. It requires no external infrastructure, no storage class, and no claims. It is available in any Kubernetes cluster.
 :::
 
-## readOnly Mounts
+## Building the Pod manifest
 
-When multiple containers share the same volume, you might want to prevent one of them from accidentally modifying files that another container wrote. Mount the volume as read-only in a specific container using the `readOnly` field:
+Start with the volume declaration:
 
 ```yaml
-volumeMounts:
-  - name: shared-data
-    mountPath: /data
-    readOnly: true
+# illustrative only
+spec:
+  volumes:
+    - name: shared-cache
+      emptyDir: {}
 ```
 
-With this setting, any attempt to write returns a permission error. This is useful for enforcing clear ownership: only the writer container has a read-write mount, while all consumer containers have read-only mounts.
+Now add both containers and give each of them a `volumeMount` pointing to `shared-cache` at different paths:
 
-## Hands-On Practice
-
-Let's recreate the writer-reader pattern and confirm that data survives a container restart. Use the terminal on the right panel.
-
-**1. Apply the multi-container Pod manifest:**
+`nano shared-pod.yaml`
 
 ```yaml
-# writer-reader-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: writer-reader
+  name: cache-pair
 spec:
   volumes:
-    - name: shared-data
+    - name: shared-cache
       emptyDir: {}
   containers:
-    - name: writer
-      image: busybox:1.36
-      command: ['sh', '-c']
-      args:
-        - |
-          echo 'Written by writer container' > /data/message.txt
-          sleep 3600
+    - name: app
+      image: busybox
+      command: ["sh", "-c", "while true; do echo hello > /tmp/cache/data.txt; sleep 10; done"]
       volumeMounts:
-        - name: shared-data
-          mountPath: /data
-    - name: reader
-      image: busybox:1.36
-      command: ['sh', '-c']
-      args:
-        - |
-          sleep 2
-          cat /data/message.txt
-          sleep 3600
+        - name: shared-cache
+          mountPath: /tmp/cache
+    - name: sidecar
+      image: busybox
+      command: ["sh", "-c", "while true; do cat /data/cache/data.txt; sleep 10; done"]
       volumeMounts:
-        - name: shared-data
-          mountPath: /data
+        - name: shared-cache
+          mountPath: /data/cache
 ```
 
-```bash
-kubectl apply -f writer-reader-pod.yaml
+Apply and inspect:
+
+```
+kubectl apply -f shared-pod.yaml
 ```
 
-**2. Wait for the Pod to be running:**
-
-```bash
-kubectl get pod writer-reader
+```
+kubectl describe pod cache-pair
 ```
 
-**3. Check the reader's logs to confirm it read the file written by the writer:**
+In the output, look for the `Volumes:` section. You will see `shared-cache` with type `EmptyDir`. Under each container, the `Mounts:` line confirms which path the shared volume appears at.
 
-```bash
-kubectl logs writer-reader -c reader
-```
+:::quiz
+Two containers in the same Pod both declare a `volumeMount` with `name: shared-cache`. Container A writes a file to its mount path. What does Container B see at its own mount path?
 
-You should see: `Written by writer container`
+- Nothing. Each container gets its own private copy of the volume.
+- The same file. Both containers access the same underlying directory.
+- An error. Two containers cannot mount the same volume.
 
-**4. Confirm both containers share the same volume contents:**
+**Answer:** The same file. An `emptyDir` volume is a single directory on the node. All containers mounting it by the same `name` access that same directory. Paths inside the container can differ, but the underlying storage is shared.
+:::
 
-```bash
-kubectl exec writer-reader -c writer -- ls /data
-kubectl exec writer-reader -c reader -- ls /data
-```
+## Memory-backed emptyDir with tmpfs
 
-Both should show `message.txt`.
-
-**5. Prove the volume survives a container restart, kill the writer and check:**
-
-```bash
-kubectl exec writer-reader -c writer -- kill 1
-```
-
-Wait a moment for it to restart:
-
-```bash
-kubectl get pod writer-reader
-```
-
-The restart count on the writer should increment to 1.
-
-**6. Read the file from the reader, it should still be there:**
-
-```bash
-kubectl exec writer-reader -c reader -- cat /data/message.txt
-```
-
-The file is still there. The volume was not affected by the writer container's restart.
-
-**7. Now try the memory-backed version:**
+By default, `emptyDir` uses the node's disk. For workloads that need very fast scratch space, like an in-memory cache or a build step producing many small files, you can ask Kubernetes to back the volume with RAM using `medium: Memory`.
 
 ```yaml
-# memory-scratch-pod.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: memory-scratch
+# illustrative only
 spec:
   volumes:
-    - name: ramdisk
+    - name: fast-scratch
       emptyDir:
         medium: Memory
         sizeLimit: 64Mi
-  containers:
-    - name: app
-      image: busybox:1.36
-      command: ['sh', '-c']
-      args:
-        - |
-          dd if=/dev/zero of=/scratch/bigfile bs=1M count=10
-          ls -lh /scratch/
-          sleep 3600
-      volumeMounts:
-        - name: ramdisk
-          mountPath: /scratch
 ```
 
-```bash
-kubectl apply -f memory-scratch-pod.yaml
-```
+This creates a `tmpfs` mount. Reads and writes happen at memory speed, which is orders of magnitude faster than disk. The tradeoff: the data counts against the container's memory limit, and it is lost if the Pod is deleted or even if the node restarts.
 
-**8. Check the output, it wrote 10MB to memory:**
+The `sizeLimit` field protects the node. Without it, a container could write enough data to exhaust the node's RAM. Kubernetes enforces this limit and will evict the Pod if the volume exceeds it.
 
-```bash
-kubectl logs memory-scratch -c app
-```
+:::warning
+`emptyDir`, whether disk-backed or memory-backed, is not persistent. If the Pod is deleted, rescheduled on another node, or the node reboots (for `medium: Memory`), all data in the volume is gone. Never use `emptyDir` to store data you cannot afford to lose.
+:::
 
-You should see the `bigfile` listed at 10MB, written entirely to RAM.
+:::quiz
+You set `medium: Memory` on an `emptyDir` volume. The Pod gets deleted and rescheduled on a new node. What happens to the data?
 
-**9. Clean up:**
+- It is preserved in node memory across rescheduling.
+- It is lost because memory-backed volumes are tied to the node and the Pod.
+- It is saved to disk automatically before the Pod is evicted.
 
-```bash
-kubectl delete pod writer-reader memory-scratch
-```
+**Answer:** It is lost. `tmpfs` is RAM-local. When the Pod is deleted, the memory is freed. A new Pod on a new node starts with a fresh, empty volume.
+:::
 
-You've now seen `emptyDir` in action for both of its primary use cases. In the next lesson, we'll look at `hostPath` volumes, which mount directories from the underlying node's filesystem directly into Pods.
+## When to use emptyDir
+
+The log shipper sidecar pattern is the canonical use case: one container produces data, another consumes it. Beyond that, `emptyDir` is useful as scratch space during multi-step processing (download a file, decompress it, transform it), as a shared socket directory between two containers, or as a fast in-memory buffer for high-throughput workloads.
+
+Why does Kubernetes not make inter-container sharing automatic, without requiring a volume? Because it keeps the container model clean: each container has its own private root filesystem. Sharing must be explicit. This prevents accidental coupling and makes the Pod's data flow visible in the YAML manifest.
+
+`emptyDir` is deliberately simple. It asks nothing from the cluster infrastructure, it is always available, and it does exactly one thing: give containers in the same Pod a shared directory for the duration of the Pod's life.

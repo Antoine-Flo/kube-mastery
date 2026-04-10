@@ -5,227 +5,95 @@ seoDescription: Explore how Kubernetes annotations store rich metadata for tools
 
 # Annotations
 
-Labels and annotations are often introduced together, and for good reason, they're siblings, not twins. Both live in the `metadata` section of a Kubernetes object, and both store key-value pairs. But they serve completely different purposes, and confusing the two leads to subtle bugs and a messier cluster.
-
-## Labels vs. Annotations at a Glance
-
-The fundamental rule is simple:
-
-- **Labels** are for selection and identification. They must conform to strict size and character rules. Kubernetes uses them internally to wire objects together.
-- **Annotations** are for information. They have looser rules (values can be up to 256 KB), and Kubernetes itself mostly ignores their contents, but tools, controllers, and humans read them.
+Suppose you want to attach some metadata to a Deployment: the name of the team that owns it, the Jira ticket that triggered the last change, a link to the runbook. You could put all of that in labels. But labels are for selection, and none of this information needs to be selectable. Packing labels with operational metadata also pollutes the selector namespace, making it harder to reason about which labels matter for controllers. Annotations exist to carry exactly this kind of data.
 
 @@@
-graph TB
-    OBJ["Kubernetes Object"]
-    OBJ --> LBL["Labels<br/>(metadata.labels)<br/>• Short key-value pairs<br/>• 63 char limit<br/>• Used by selectors<br/>• Services, RS, Deployments read them"]
-    OBJ --> ANN["Annotations<br/>(metadata.annotations)<br/>• Arbitrary key-value pairs<br/>• Values up to 256 KB<br/>• NOT used by selectors<br/>• Tools, controllers, humans read them"]
-
-    LBL --> SEL["Label Selectors<br/>(Services, Deployments, kubectl -l)"]
-    ANN --> TOOLS["External Tools<br/>(Ingress controllers, monitoring,<br/>CI/CD, documentation)"]
+graph LR
+    LABELS["Labels\nkey=value\nUsed for selection\n63-char value limit\nKubernetes reads them"]
+    ANN["Annotations\nkey=value\nNot used for selection\nLarger values OK\nTools and operators read them"]
 @@@
 
-## What Annotations Are Used For
+Annotations are key-value pairs like labels, but with two important differences. First, Kubernetes itself never uses annotations for selection: no controller reads an annotation to decide which Pods to manage or which endpoints to route traffic to. Second, annotations can hold much larger values, including multi-line strings and JSON blobs. Labels cap at 63 characters per value. Annotations can hold up to 256 KB total per object.
 
-Annotations serve as a communication channel between the people who deploy software and the tools that operate it. Common use cases:
-
-**Ownership and contact information**, who owns a resource and where to find the runbook:
+Here is what annotations look like in a manifest:
 
 ```yaml
-annotations:
-  contact: 'platform-team@example.com'
-  runbook: 'https://wiki.example.com/runbooks/web-service'
-```
-
-**Build and deploy metadata**, a direct audit trail from CI/CD:
-
-```yaml
-annotations:
-  git-commit: 'a3f2c1d'
-  build-number: '1042'
-  deploy-pipeline: 'https://ci.example.com/pipelines/1042'
-```
-
-**Tool configuration**, many ecosystem tools use annotations as their configuration interface, since they can't add new fields to the core Kubernetes API:
-
-```yaml
-annotations:
-  nginx.ingress.kubernetes.io/rewrite-target: /
-  nginx.ingress.kubernetes.io/ssl-redirect: 'true'
-  nginx.ingress.kubernetes.io/proxy-body-size: '10m'
-```
-
-```yaml
-annotations:
-  prometheus.io/scrape: 'true'
-  prometheus.io/port: '9090'
-  prometheus.io/path: '/metrics'
-```
-
-This pattern is everywhere in the Kubernetes ecosystem:
-
-- **cert-manager** reads Ingress annotations to know which TLS certificates to issue and renew automatically.
-- **Velero** uses them to control backup behavior per resource.
-- **Karpenter** uses them to influence node provisioning decisions.
-
-:::info
-Annotations are not validated or interpreted by the Kubernetes API server itself (with a few rare exceptions). External tools give them meaning. This makes annotations an extensible configuration layer that works without modifying the Kubernetes source code.
-:::
-
-## Annotation Key Syntax
-
-Annotation keys follow the same format as label keys: an optional DNS subdomain prefix, a slash, and a name (63 characters or fewer). The key difference is in values: while label values are limited to 63 characters and a restricted character set, annotation values can be arbitrary strings up to 256 KB, including JSON, YAML snippets, long descriptions, or small data blobs.
-
-```yaml
-annotations:
-  # Short string
-  team: platform
-
-  # Long description
-  description: 'This service handles payment processing for the checkout flow.'
-
-  # JSON config consumed by a sidecar
-  sidecar.config/options: '{"timeout": 30, "retries": 3, "circuit_breaker": true}'
-```
-
-## Viewing Annotations
-
-The easiest way to see annotations on a resource is `kubectl describe`. After the basic metadata, there's a dedicated `Annotations:` section:
-
-```bash
-kubectl describe pod my-pod
-```
-
-```
-Name:         my-pod
-Namespace:    default
-Annotations:  contact: platform-team@example.com
-              git-commit: a3f2c1d
-              runbook: https://wiki.example.com/runbooks/web-service
-...
-```
-
-To extract a specific annotation value programmatically, use `kubectl get` with a `jsonpath` expression:
-
-```bash
-kubectl get pod my-pod -o jsonpath='{.metadata.annotations.contact}'
-```
-
-For prefixed keys containing dots, escape the dots in the jsonpath key path:
-
-```bash
-kubectl get pod my-pod -o jsonpath='{.metadata.annotations.nginx\.ingress\.kubernetes\.io/rewrite-target}'
-```
-
-## Adding and Updating Annotations
-
-Add an annotation to any existing resource with `kubectl annotate`. Update it with `--overwrite`, or remove it with a trailing minus sign:
-
-```bash
-kubectl annotate pod my-pod contact="platform-team@example.com"
-kubectl annotate pod my-pod contact="new-team@example.com" --overwrite
-kubectl annotate pod my-pod contact-
-```
-
-Defining annotations directly in YAML manifests is the preferred approach for anything that should be version-controlled:
-
-In this simulator, annotations declared in `metadata.annotations` are interpreted during `kubectl apply -f ...` and persisted on the created or updated resource.
-
-```yaml
-apiVersion: v1
-kind: Pod
+# illustrative only
 metadata:
-  name: my-pod
-  labels:
-    app: web
   annotations:
-    contact: 'platform-team@example.com'
-    git-commit: 'a3f2c1d'
-    runbook: 'https://wiki.example.com/runbooks/web-service'
-spec:
-  containers:
-    - name: nginx
-      image: nginx:1.28
+    owner: platform-team
+    ticket: INFRA-1234
+    docs: https://wiki.internal/services/web
 ```
+
+## Adding and Reading Annotations
+
+Create a Deployment and attach an annotation to it:
+
+```bash
+kubectl create deployment web --image=nginx:1.28
+kubectl annotate deployment web owner=platform-team
+kubectl describe deployment web
+```
+
+Look at the `Annotations:` field in the `describe` output. It appears near the top of the resource description, just below `Labels`. The value is exactly the string you passed.
+
+Now look at the raw object to see what else is there:
+
+```bash
+kubectl get deployment web -o yaml
+```
+
+Scroll to the `metadata.annotations` section. You will see a second annotation that you did not add: `kubectl.kubernetes.io/last-applied-configuration`. This one was written by `kubectl apply` automatically. It stores the full manifest you applied, as a JSON string, so that the next `apply` can compute a three-way diff between what was applied last time, what is in the cluster now, and what you want to apply next.
 
 :::warning
-Annotations cannot be used in label selectors. If you annotate a Pod with `env: production` instead of labeling it, a Service with `selector: env: production` will not find that Pod. If you store something in an annotation thinking you'll filter on it later, `kubectl get pods -l` cannot see it.
+The `kubectl.kubernetes.io/last-applied-configuration` annotation stores the complete applied manifest in plain text. If your manifest contains sensitive values, such as image pull secrets or API tokens, those values are readable by anyone with `get deployment` access. Be mindful of what you embed in manifests you apply with `kubectl apply`.
 :::
 
-## Hands-On Practice
+## How the Ecosystem Uses Annotations
 
-Follow along in the terminal to practice viewing and managing annotations.
+Annotations are the primary way external tools configure their behavior without modifying the Kubernetes API schema. A few common examples:
 
-**1. Create a Pod with annotations in a manifest**
+Prometheus uses `prometheus.io/scrape: "true"` and `prometheus.io/port` on Pods to know which ones to scrape for metrics. NGINX Ingress reads `nginx.ingress.kubernetes.io/rewrite-target` to configure URL rewriting. Helm writes `meta.helm.sh/release-name` to track which release owns a resource. None of these annotations mean anything to Kubernetes itself. The cluster stores them and ignores them. The tools that understand them do the reading.
 
-```yaml
-# annotated-pod.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: annotated-pod
-  labels:
-    app: web
-  annotations:
-    contact: 'platform-team@example.com'
-    runbook: 'https://wiki.example.com/runbooks/web'
-    git-commit: 'a3f2c1d'
-spec:
-  containers:
-    - name: nginx
-      image: nginx:1.28
-```
+:::quiz
+A tool needs to know if a Pod should be scraped for metrics. Should this be stored as a label or an annotation?
+
+- A label, because tools use label selectors to find resources
+- An annotation, because this is configuration consumed by an external tool, not used for Kubernetes-native selection
+- Either works, it is a matter of convention
+
+**Answer:** An annotation. Kubernetes-native controllers use labels for selection and lifecycle management. External tools like Prometheus use annotations for their own configuration signals. Storing it as a label would work mechanically, but it pollutes the label space and creates confusion about what is selectable versus what is tool configuration.
+:::
+
+## Modifying and Removing Annotations
+
+Overwriting an existing annotation follows the same `--overwrite` pattern as labels:
 
 ```bash
-kubectl apply -f annotated-pod.yaml
+kubectl annotate deployment web owner=infra-team --overwrite
+kubectl describe deployment web
 ```
 
-**2. View annotations with `kubectl describe`**
+Removing an annotation uses the same trailing `-` syntax:
 
 ```bash
-kubectl describe pod annotated-pod
-# Scroll up to find the Annotations: section
+kubectl annotate deployment web owner-
+kubectl describe deployment web
 ```
 
-**3. Extract a specific annotation with jsonpath**
+The `owner` annotation is gone. The `kubectl.kubernetes.io/last-applied-configuration` annotation remains because it is managed by kubectl, not by you.
+
+:::quiz
+Why does `kubectl apply` store the last-applied manifest in an annotation instead of keeping that information locally on the client?
+
+**Answer:** Kubernetes objects have no dedicated "last applied" field in their schema. kubectl apply needed a way to compute a three-way diff without requiring any local state on the machine running the command. By writing the last-applied manifest onto the object itself as an annotation, that data travels with the object. Any machine running `kubectl apply` against the same cluster picks up the annotation and can compute the diff correctly, even if it has never seen the object before.
+:::
+
+## Cleanup
 
 ```bash
-kubectl get pod annotated-pod -o jsonpath='{.metadata.annotations.contact}'
-kubectl get pod annotated-pod -o jsonpath='{.metadata.annotations.runbook}'
+kubectl delete deployment web
 ```
 
-**4. Add a new annotation to the running Pod**
-
-```bash
-kubectl annotate pod annotated-pod build-number="1042"
-kubectl describe pod annotated-pod
-```
-
-**5. Update an existing annotation**
-
-```bash
-kubectl annotate pod annotated-pod contact="new-team@example.com" --overwrite
-kubectl get pod annotated-pod -o jsonpath='{.metadata.annotations.contact}'
-```
-
-**6. Remove an annotation**
-
-```bash
-kubectl annotate pod annotated-pod build-number-
-kubectl describe pod annotated-pod
-```
-
-**7. View all annotations**
-
-```bash
-kubectl get pod annotated-pod -o jsonpath='{.metadata.annotations}'
-```
-
-**8. Clean up**
-
-```bash
-kubectl delete pod annotated-pod
-```
-
-## Wrapping Up
-
-Annotations and labels are complementary: labels wire objects together and enable selection; annotations carry richer metadata for tools, operators, and humans. Annotation values can be up to 256 KB, making them the right home for URLs, JSON configs, CI metadata, and contact info. Just remember: you cannot filter on annotations with `kubectl -l`.
+Labels and annotations together form the metadata layer of Kubernetes objects. Labels drive selection and grouping by controllers; annotations carry rich, non-selectable metadata for human operators and ecosystem tools. The next lesson covers a standard set of labels the Kubernetes project recommends so that tooling across teams works out of the box.

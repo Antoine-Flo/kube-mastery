@@ -139,9 +139,6 @@ kubectl apply -f probed-deployment.yaml
 kubectl rollout status deployment/probed-app
 ```
 
-:::visualizer
-Watch the cluster visualizer: the two Pods appear with their readiness status. A Pod shows as not ready until its readiness probe passes.
-:::
 
 Inspect the probe configuration on a running Pod:
 

@@ -3,210 +3,142 @@ seoTitle: 'Gateway API Routing Rules: Gateway, HTTPRoute, Host and Path Matching
 seoDescription: 'Learn how to define routing rules in Kubernetes Gateway API using Gateway listeners and HTTPRoute resources with hostname, path prefix, and exact path matching.'
 ---
 
-# Routing Rules with Gateway API
+# Routing Traffic with Gateway and HTTPRoute
 
-Now that you understand the overall architecture of Gateway API and how the Envoy Gateway controller works, it is time to dig into the part you will interact with most day to day: defining how traffic flows.
+Your application has two backend services: `api-svc` handles all API requests under `/v1`, and `admin-svc` hosts the admin dashboard under `/admin`. Both are served at the same hostname `api.myapp.com`. Rather than exposing each through a separate load balancer, you want a single Gateway to accept all traffic for that hostname and dispatch requests to the right service based on the path. Here is how to build that configuration step by step.
 
-Routing in Gateway API is split across two resources, each with a clear purpose. The **Gateway** defines where traffic enters, and the **HTTPRoute** defines where it goes. This separation might feel like extra work at first, but it pays dividends when you have multiple teams and multiple applications sharing the same cluster entry point.
+## Defining the Gateway
 
-## The Gateway: Where Traffic Enters
+The Gateway declares the listener: which port to open, which protocol to use, and which hostnames to accept. Start with this manifest:
 
-Think of the Gateway as the front door of a building. It does not care who is visiting or where they are going inside. It just opens when traffic arrives on the right port and protocol. A Gateway listener is defined by three things: a **port**, a **protocol**, and optionally a **hostname**.
+```bash
+nano my-gateway.yaml
+```
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: main-gateway
+  name: my-gateway
   namespace: default
 spec:
   gatewayClassName: eg
   listeners:
     - name: http
-      port: 80
       protocol: HTTP
+      port: 80
+      hostname: "*.myapp.com"
 ```
 
-A single Gateway can have multiple listeners, for example one on port 80 for HTTP and one on port 443 for HTTPS. Each listener can optionally restrict which hostnames it accepts, which allows you to use separate Gateways for different domains if needed.
+The `gatewayClassName: eg` connects this Gateway to the Envoy Gateway controller. The listener accepts HTTP connections on port 80 for any subdomain of `myapp.com`. A request arriving for a hostname outside that wildcard, such as `other-domain.io`, is not accepted by this listener.
 
-The Envoy Gateway controller reads this and configures the Envoy proxy to bind on the specified ports. Once the Gateway is accepted and programmed by the controller, external traffic can start arriving.
+```bash
+kubectl apply -f my-gateway.yaml
+kubectl get gateway my-gateway
+```
 
-## The HTTPRoute: Where Traffic Goes
+Wait until the `PROGRAMMED` column reads `True` before proceeding. The controller is configuring the Envoy proxy in the background, and it may take a few seconds.
 
-The HTTPRoute is the routing table. It tells the proxy: for traffic arriving through this Gateway, on this hostname, with this path, send it to this Service.
+:::quiz
+The Gateway has `hostname: "*.myapp.com"`. You create an HTTPRoute for the hostname `other-domain.io`. Will the HTTPRoute attach to this Gateway?
 
-Here is a basic example:
+- Yes, the HTTPRoute hostname overrides the Gateway listener filter
+- No, the HTTPRoute hostname must match the Gateway listener's wildcard
+- Yes, as long as the HTTPRoute has a `parentRef` pointing to the Gateway
+
+**Answer:** No. The Gateway listener acts as a filter. Only HTTPRoutes whose hostnames fall within `*.myapp.com` are accepted. The `parentRef` is necessary but not sufficient on its own.
+:::
+
+## Building the HTTPRoute Incrementally
+
+An HTTPRoute connects to a Gateway through `parentRefs` and defines routing behavior through `rules`. Build it in layers, starting with the structural skeleton:
+
+```bash
+nano api-route.yaml
+```
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: backend
+  name: api-route
   namespace: default
 spec:
   parentRefs:
-    - name: main-gateway
+    - name: my-gateway
+```
+
+Next, add the `hostnames` field to declare which hostname this route responds to:
+
+```yaml
   hostnames:
-    - "www.example.com"
+    - "api.myapp.com"
+```
+
+Now add the `rules`. Each rule has a `matches` block (what to look for in the request) and a `backendRefs` block (where to send the traffic):
+
+```yaml
   rules:
     - matches:
         - path:
             type: PathPrefix
-            value: /
+            value: /v1
       backendRefs:
-        - name: backend
-          port: 3000
+        - name: api-svc
+          port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /admin
+      backendRefs:
+        - name: admin-svc
+          port: 80
 ```
 
-The `parentRefs` field is how an HTTPRoute attaches to a Gateway. It says "I am routing traffic from this specific Gateway." Without a `parentRefs`, the route is orphaned and no traffic will reach it.
+The complete HTTPRoute now routes `/v1` and everything beneath it to `api-svc`, and `/admin` and everything beneath it to `admin-svc`, both at the `api.myapp.com` hostname.
 
-## Host-Based Routing
+```bash
+kubectl apply -f api-route.yaml
+```
 
-One of the most common uses of Gateway API is routing traffic based on the hostname. If you have two applications, one at `api.example.com` and one at `www.example.com`, you can use two HTTPRoutes, both attached to the same Gateway, but each matching on a different hostname.
+@@@
+graph LR
+    GW["Gateway listener\nport 80, *.myapp.com"]
+    M1["match: PathPrefix /v1"]
+    M2["match: PathPrefix /admin"]
+    API["api-svc:80"]
+    ADMIN["admin-svc:80"]
 
-This is far more elegant than the old approach of running a separate LoadBalancer Service per application. A single Envoy proxy listens on port 80 and port 443, and the hostnames in your HTTPRoutes determine which backend receives which request.
+    GW --> M1
+    GW --> M2
+    M1 --> API
+    M2 --> ADMIN
+@@@
 
-:::info
-Hostname matching in HTTPRoute supports wildcards. A hostname like `*.example.com` will match any subdomain, which is useful for multi-tenant setups where each tenant gets their own subdomain.
+## Path Matching Types
+
+The `path.type` field controls how the value is interpreted. `PathPrefix` matches any request whose path starts with the given value: `/v1`, `/v1/users`, and `/v1/products/42` all match a prefix of `/v1`. `Exact` matches only the precise path you specify, with no trailing segments allowed.
+
+Why does the distinction matter? Consider a health check endpoint at `/health`. If you use `PathPrefix` with `/health`, a request to `/health/internal/deep-check` also matches, which may not be what you want. Use `Exact` when you need to target a single endpoint, not an entire subtree.
+
+:::quiz
+You define a rule with `type: Exact` and `value: /health`. A request arrives for `/health/check`. Does this rule match?
+
+**Answer:** No. `Exact` requires the full path to be `/health` with nothing after it. `/health/check` does not match. You would need `PathPrefix` to route the entire `/health` subtree.
 :::
 
-## Path-Based Routing
+## Checking Route Attachment
 
-Beyond hostnames, you can also route based on the URL path. This lets you host multiple services behind a single hostname by splitting on path prefixes. For example, all requests to `/api/` go to the API service, while requests to `/static/` go to a CDN-backed static asset service.
+After applying the HTTPRoute, verify that it has successfully attached to the Gateway:
 
-Gateway API supports three types of path matching:
+```bash
+kubectl describe httproute api-route
+```
 
-- **PathPrefix**: the request path must start with this value. This is the most common type. A prefix of `/api` matches `/api`, `/api/users`, `/api/orders`, and so on.
-- **Exact**: the request path must match exactly. A rule with exact path `/healthz` only matches that specific path, not `/healthz/ready`.
-- **RegularExpression**: matches using a regular expression. Powerful but use with care, complex regex can be hard to read and reason about.
-
-@@@
-flowchart LR
-    Client([Incoming Request]) --> GW[Gateway Listener\nport 80]
-    GW -->|host: api.example.com| R1[HTTPRoute A\nbackend: api-svc:8080]
-    GW -->|host: www.example.com\npath: /static| R2[HTTPRoute B\nbackend: static-svc:80]
-    GW -->|host: www.example.com\npath: /| R3[HTTPRoute B\nbackend: web-svc:3000]
-    R1 --> API[api Pods]
-    R2 --> STATIC[static Pods]
-    R3 --> WEB[web Pods]
-@@@
-
-## Multiple Rules in One HTTPRoute
-
-An HTTPRoute can have multiple rules, which are evaluated in order. The first matching rule wins. This lets you handle special cases before falling through to a general rule. For example, you might send `/api/v1/health` to a dedicated health endpoint, while all other `/api/v1/` traffic goes to the main API service.
+Look for the `Status.Parents` section. It lists each Gateway the route attempted to attach to, along with a condition of type `Accepted`. A value of `True` means the route is active. A value of `False` comes with a `Reason` and a `Message` explaining the problem.
 
 :::warning
-Rule ordering matters. If you put a broad `PathPrefix: /` rule before a more specific `PathPrefix: /api` rule, all traffic will match the first rule and the second will never be reached. Put more specific rules first.
+The `parentRef` must match the Gateway name and namespace exactly. If the HTTPRoute is in a different namespace than the Gateway, you must specify both `name` and `namespace` in the `parentRef`. Additionally, the Gateway must have an `allowedRoutes` policy that permits cross-namespace references. By default, a Gateway only accepts routes from its own namespace, so a cross-namespace HTTPRoute silently fails to attach without this policy.
 :::
 
-## Traffic Splitting Between Backends
-
-HTTPRoute also supports splitting traffic between multiple backends by weight. This is useful for canary deployments, where you want to send a small percentage of traffic to a new version of your application while the majority still goes to the stable version.
-
-```yaml
-rules:
-  - matches:
-      - path:
-          type: PathPrefix
-          value: /
-    backendRefs:
-      - name: app-stable
-        port: 80
-        weight: 90
-      - name: app-canary
-        port: 80
-        weight: 10
-```
-
-With this configuration, Envoy will distribute traffic roughly 90/10 between the two services. This is a powerful tool for progressive delivery, and it requires no changes to your application code or your DNS records.
-
-## Hands-On Practice
-
-The environment already contains a Gateway and an HTTPRoute. In this lab, the goal is to read routing intent precisely, not to create new resources.
-
-**Step 1: Inspect the GatewayClass contract**
-
-```bash
-kubectl describe gatewayclass eg
-```
-
-Focus on `Spec > Controller Name` and `Status > Conditions`. This tells you which controller owns Gateway resources and whether the class is accepted.
-
-**Step 2: Inspect the Gateway listener and attachment policy**
-
-```bash
-kubectl describe gateway eg
-```
-
-Expected output excerpt:
-
-```
-Spec:
-  Gateway Class Name:  eg
-  Listeners:
-    Allowed Routes:
-      Namespaces:
-        From:  Same
-    Name:      http
-    Port:      80
-    Protocol:  HTTP
-...
-Status:
-  Conditions:
-    Type:                  Accepted
-    Status:                True
-    Type:                  Programmed
-    Status:                False
-```
-
-The key point is the separation between intent (`Spec`) and reconciliation result (`Status`).
-
-**Step 3: Inspect the HTTPRoute routing rule**
-
-```bash
-kubectl describe httproute backend
-```
-
-Expected output excerpt:
-
-```
-Name:         backend
-Namespace:    default
-API Version:  gateway.networking.k8s.io/v1
-Kind:         HTTPRoute
-...
-Spec:
-  Hostnames:
-    www.example.com
-  Parent Refs:
-    Group:  gateway.networking.k8s.io
-    Kind:   Gateway
-    Name:   eg
-  Rules:
-    Backend Refs:
-      Name:    backend
-      Port:    3000
-    Matches:
-      Path:
-        Type:   PathPrefix
-        Value:  /
-...
-Status:
-  Parents:
-    Conditions:
-      Type:                  Accepted
-      Status:                True
-      Type:                  ResolvedRefs
-      Status:                <True|False>
-```
-
-Look at `Parent Refs`, `Matches`, and `Backend Refs`. This is the exact rule Envoy Gateway is reconciling.
-
-**Step 4: Cross-check list views**
-
-```bash
-kubectl get gateways -A
-kubectl get httproute -A
-```
-
-This verifies that list output and describe output tell the same routing story at different levels of detail.
+Routing in Gateway API is built from two cooperating resources: the Gateway sets the boundaries of what traffic it accepts, and the HTTPRoute defines the exact matching conditions and destinations within those boundaries. Building each part incrementally, listener first, then hostnames, then individual rules, keeps the configuration readable and makes it straightforward to debug when attachment fails.
