@@ -23,13 +23,6 @@ const lessonPath = fileURLToPath(
   )
 )
 
-const onboardingLessonPath = fileURLToPath(
-  new URL(
-    '../../../src/courses/modules/onboarding/01-how-to-use-this-platform/en/content.md',
-    import.meta.url
-  )
-)
-
 function stripYamlFrontmatter(raw: string): string {
   const normalized = raw.replace(/\r\n/g, '\n').trim()
   if (!normalized.startsWith('---\n')) {
@@ -134,9 +127,18 @@ End.
     }).toThrow(/remark-beautiful-mermaid-blocks/)
   })
 
-  it('renders LR flowchart edge for onboarding platform diagram (polyline present)', () => {
-    const markdown = stripYamlFrontmatter(readFileSync(onboardingLessonPath, 'utf8'))
-    const html = processLessonMarkdown(markdown)
+  it('renders LR flowchart edges with mermaid theme stack (polyline present)', () => {
+    const md = `Diagram
+
+@@@
+graph LR
+  A["Left"]
+  B["Right"]
+  A --> B
+@@@
+
+`
+    const html = processLessonMarkdown(md)
     expect(html).toContain('mermaid-theme-stack')
     const polylineCount = (html.match(/<polyline/g) || []).length
     expect(polylineCount).toBeGreaterThanOrEqual(2)
