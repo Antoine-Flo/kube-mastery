@@ -6,6 +6,7 @@ import { Zap, Shield, Euro, CircleCheck, CircleX } from '@lucide/astro'
 import { useTranslations, useLocalePath } from '../../i18n/utils'
 import { getSupabaseServer } from '../../lib/supabase'
 import { readAppEnv } from '../../lib/env'
+import { getCourseOverview } from '../../content/overview/facade'
 import demoVideo from '../../assets/demo.mp4'
 import conformanceImage from '../../assets/conformance.png'
 import openapiLogo from '../../assets/openapi_logo.svg'
@@ -18,7 +19,14 @@ const isEarlyStage =
 const homeCtaLabel = isEarlyStage
   ? t('home_cta_join_early')
   : t('home_cta_join')
-const homeCtaHref = localePath('/courses/crash-course')
+
+const crashCourseOverview = getCourseOverview('crash-course', locale)
+const firstCrashCourseLesson = crashCourseOverview?.content.sections
+  .flatMap((s) => s.modules.flatMap((m) => m.lessons.filter((l) => !l.isPlaceholder).map((l) => l.id)))
+  .at(0) ?? null
+const homeCtaHref = firstCrashCourseLesson
+  ? localePath(`/courses/crash-course/${firstCrashCourseLesson}`)
+  : localePath('/courses/crash-course')
 
 try {
   const supabase = getSupabaseServer(Astro.locals, Astro.request, Astro.cookies)
@@ -52,14 +60,16 @@ try {
           </div>
           <div class="cta">
             <div class="cta-buttons">
-              <Button href={homeCtaHref} variant="solid" color="cyan" size="xl">
-                {homeCtaLabel}
-              </Button>
-              <Button href={localePath('/courses')} variant="outline" color="gray" size="xl">
+              <div class="cta-primary-column">
+                <Button href={homeCtaHref} variant="solid" color="cyan" size="xl">
+                  {homeCtaLabel}
+                </Button>
+                <span class="cta-hint">{t('home_cta_no_account')}</span>
+              </div>
+              <Button href={localePath('/pricing')} variant="outline" color="gray" size="xl">
                 {t('home_cta_explore')}
               </Button>
             </div>
-            <span class="cta-hint">{t('home_cta_no_account')}</span>
           </div>
         </div>
         <div class="hero-terminal">
@@ -275,12 +285,13 @@ try {
       <div class="reliability-cta-wrap">
         <div class="content">
           <div class="reliability-cta anim">
-            <p>{t('home_reliability_cta_intro')}</p>
-            <div class="cta">
-              <Button href={homeCtaHref} variant="solid" color="cyan" size="xl">
-                {homeCtaLabel}
-              </Button>
-              <span class="cta-hint">{t('home_cta_no_account')}</span>
+            <div class="cta reliability-cta-actions">
+              <div class="cta-stack">
+                <p class="reliability-cta-intro">{t('home_reliability_cta_intro')}</p>
+                <Button href={localePath('/pricing')} variant="solid" color="cyan" size="xl">
+                  {t('home_cta_explore')}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -434,9 +445,10 @@ try {
     align-items: center;
     gap: 1.5rem;
     justify-content: center;
-    min-height: 70vh;
+    min-height: 830px;
     position: relative;
-    padding: 1rem 1rem;
+    padding-block: 3rem;
+    padding-inline: 2rem;
   }
 
   .early-access-badge {
@@ -577,8 +589,22 @@ try {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.75rem;
+  }
+
+  .cta-primary-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .cta-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   .cta--centered {
@@ -588,6 +614,7 @@ try {
   .cta-hint {
     font-size: var(--text-sm);
     color: var(--color-gray-10);
+    text-align: center;
   }
 
   .cta :global(.btn[data-color='cyan'][data-variant='solid']) {
@@ -1176,18 +1203,23 @@ try {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.75rem;
     text-align: center;
   }
-  .reliability-cta p {
-    margin: 0;
+
+  .reliability-cta-actions {
+    margin-top: 0;
+  }
+
+  .reliability-cta-intro {
+    margin-bottom: 1rem;
     font-size: var(--text-base);
     color: var(--color-gray-11);
     line-height: 1.6;
     max-width: 720px;
+    text-align: center;
   }
   @media (min-width: 768px) {
-    .reliability-cta p {
+    .reliability-cta-intro {
       font-size: var(--text-lg);
     }
   }

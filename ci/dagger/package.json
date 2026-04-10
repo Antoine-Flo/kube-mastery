@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@dagger.io/dagger": "^0.12.6"
+    "@dagger.io/dagger": "^0.20.5"
   }
 }

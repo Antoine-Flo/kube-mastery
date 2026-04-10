@@ -1,5 +1,9 @@
 set dotenv-load := true
 
+# Local kind cluster (conformance / parity with clean)
+kind-cluster := "conformance"
+kind-config := "src/courses/seeds/clusterConfig/multi-node.yaml"
+
 # Conformance (real vs simulator)
 conformance:
     npx tsx conformance/run.ts
@@ -16,10 +20,19 @@ cluster-list:
 cluster-down NAME:
     kind delete cluster --name {{NAME}}
 
+# Delete local kind cluster (same as clean teardown)
+stop:
+    kind delete cluster --name {{kind-cluster}} || true
+
+# Create local kind cluster (same topology as clean)
+start:
+    kind create cluster --name {{kind-cluster}} --config {{kind-config}}
+    kubectl config set-context --current --namespace=default
+
 # Reset local kind cluster for conformance tests
 clean:
-    kind delete cluster --name conformance || true
-    kind create cluster --name conformance --config src/courses/seeds/clusterConfig/multi-node.yaml
+    kind delete cluster --name {{kind-cluster}} || true
+    kind create cluster --name {{kind-cluster}} --config {{kind-config}}
     kubectl config set-context --current --namespace=default
 
 compare:

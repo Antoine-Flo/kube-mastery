@@ -238,6 +238,109 @@ describe('VolumeBindingController', () => {
     controller.stop()
   })
 
+  it('keeps pre-bound claim pending when volume is already bound to another claim', () => {
+    const apiServer = createApiServerFacade()
+    const volumeState = createVolumeState()
+    const controller = createVolumeBindingController(apiServer, volumeState)
+
+    apiServer.createResource(
+      'PersistentVolume',
+      createPersistentVolume({
+        name: 'pv-shared',
+        spec: {
+          capacity: { storage: '1Gi' },
+          accessModes: ['ReadWriteOnce'],
+          storageClassName: 'standard',
+          claimRef: {
+            namespace: 'default',
+            name: 'pvc-owner'
+          }
+        },
+        status: {
+          phase: 'Bound'
+        }
+      })
+    )
+    apiServer.createResource(
+      'PersistentVolumeClaim',
+      createPersistentVolumeClaim({
+        name: 'pvc-owner',
+        namespace: 'default',
+        spec: {
+          accessModes: ['ReadWriteOnce'],
+          resources: { requests: { storage: '1Gi' } },
+          storageClassName: 'standard',
+          volumeName: 'pv-shared'
+        },
+        status: {
+          phase: 'Bound'
+        }
+      })
+    )
+    apiServer.createResource(
+      'PersistentVolumeClaim',
+      createPersistentVolumeClaim({
+        name: 'pvc-thief',
+        namespace: 'default',
+        spec: {
+          accessModes: ['ReadWriteOnce'],
+          resources: { requests: { storage: '1Gi' } },
+          storageClassName: 'standard',
+          volumeName: 'pv-shared'
+        },
+        status: {
+          phase: 'Pending'
+        }
+      })
+    )
+
+    controller.start()
+
+    const ownerResult = apiServer.findResource(
+      'PersistentVolumeClaim',
+      'pvc-owner',
+      'default'
+    )
+    const thiefResult = apiServer.findResource(
+      'PersistentVolumeClaim',
+      'pvc-thief',
+      'default'
+    )
+    const pvResult = apiServer.findResource('PersistentVolume', 'pv-shared')
+
+    expect(ownerResult.ok).toBe(true)
+    expect(thiefResult.ok).toBe(true)
+    expect(pvResult.ok).toBe(true)
+    if (
+      !ownerResult.ok ||
+      ownerResult.value == null ||
+      !thiefResult.ok ||
+      thiefResult.value == null ||
+      !pvResult.ok ||
+      pvResult.value == null
+    ) {
+      controller.stop()
+      return
+    }
+
+    expect(ownerResult.value.status.phase).toBe('Bound')
+    expect(ownerResult.value.spec.volumeName).toBe('pv-shared')
+    expect(thiefResult.value.status.phase).toBe('Pending')
+    expect(thiefResult.value.spec.volumeName).toBeUndefined()
+    expect(pvResult.value.spec.claimRef).toEqual({
+      namespace: 'default',
+      name: 'pvc-owner'
+    })
+    expect(volumeState.getBoundVolumeForClaim('default', 'pvc-owner')).toBe(
+      'pv-shared'
+    )
+    expect(
+      volumeState.getBoundVolumeForClaim('default', 'pvc-thief')
+    ).toBeUndefined()
+
+    controller.stop()
+  })
+
   it('deletes bound persistent volume when reclaim policy is Delete and claim is removed', () => {
     const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()

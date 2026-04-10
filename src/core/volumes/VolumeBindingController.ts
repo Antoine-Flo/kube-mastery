@@ -178,6 +178,32 @@ export const createVolumeBindingController = (
         const sameClaim =
           persistentVolume.spec.claimRef?.name === claimName &&
           persistentVolume.spec.claimRef?.namespace === claimNamespace
+        const existingClaimRef = persistentVolume.spec.claimRef
+        const volumeAlreadyClaimedElsewhere =
+          existingClaimRef != null && !sameClaim
+        if (volumeAlreadyClaimedElsewhere) {
+          volumeState.unbindClaim(claimNamespace, claimName)
+          const pendingPersistentVolumeClaim = {
+            ...persistentVolumeClaim,
+            spec: {
+              ...persistentVolumeClaim.spec,
+              volumeName: undefined
+            },
+            status: {
+              ...persistentVolumeClaim.status,
+              phase: 'Pending' as const,
+              accessModes: undefined,
+              capacity: undefined
+            }
+          }
+          apiServer.updateResource(
+            'PersistentVolumeClaim',
+            claimName,
+            pendingPersistentVolumeClaim,
+            claimNamespace
+          )
+          continue
+        }
         if (!sameClaim) {
           const updatedPersistentVolume = {
             ...persistentVolume,
