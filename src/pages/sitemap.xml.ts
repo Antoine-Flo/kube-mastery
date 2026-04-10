@@ -2,7 +2,7 @@ import type { APIContext } from 'astro'
 import { CONFIG } from '../config'
 import { getCourses } from '../content/courses/facade'
 import { getCourseOverview } from '../content/overview/facade'
-import { stripNumericPrefix } from '../content/utils'
+import { stripNumericPrefix, isHiddenTopicDir } from '../content/utils'
 import lastmodBySourcePath from '../generated/sitemap-lastmod.json'
 
 type SitemapEntry = {
@@ -150,6 +150,9 @@ function buildLessonSources(): Map<string, LessonSource> {
     const moduleId = parts[3]
     const topicDir = parts[4]
     const lang = parts[5]
+    if (isHiddenTopicDir(topicDir)) {
+      continue
+    }
     const topicId = stripNumericPrefix(topicDir)
     const key = `${moduleId}:${topicId}`
 
@@ -170,6 +173,9 @@ function buildLessonSources(): Map<string, LessonSource> {
     const moduleId = parts[3]
     const topicDir = parts[4]
     const lang = parts[5]
+    if (isHiddenTopicDir(topicDir)) {
+      continue
+    }
     const topicId = stripNumericPrefix(topicDir)
     const key = `${moduleId}:${topicId}`
 

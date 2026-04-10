@@ -3,7 +3,7 @@ import type { LocalModule } from '../../courses/modules/types'
 import type { CourseStructure } from './types'
 import type { CourseDataPort } from './port'
 import type { CourseFrontmatter, UiLang } from './types'
-import { stripNumericPrefix } from '../utils'
+import { stripNumericPrefix, isHiddenTopicDir } from '../utils'
 
 /** Path shape: modules/{moduleId}/{topicDir}/{lang}/content.md. One lesson per topic. */
 function buildLessonIndex(): Map<string, Map<string, Set<string>>> {
@@ -20,6 +20,9 @@ function buildLessonIndex(): Map<string, Map<string, Set<string>>> {
 
     const moduleId = parts[modulesIdx + 1]
     const topicDir = parts[modulesIdx + 2]
+    if (isHiddenTopicDir(topicDir)) {
+      continue
+    }
     const topicId = stripNumericPrefix(topicDir)
 
     if (!index.has(moduleId)) {

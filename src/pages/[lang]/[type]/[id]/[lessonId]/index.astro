@@ -79,16 +79,13 @@ const crashOverview = getCourseOverview('crash-course', lang)
 const crashFirstLessonId = crashOverview
   ? getFirstNonPlaceholderLessonIdFromSections(crashOverview.content.sections)
   : null
-const terminalLockTryFreeHref = crashFirstLessonId
+const terminalLockCrashCourseHref = crashFirstLessonId
   ? localePath(`/courses/crash-course/${crashFirstLessonId}`)
   : localePath('/courses')
-const hasSession = userId != null && userId !== ''
-const terminalLockSecondaryHref = hasSession
-  ? localePath('/pricing')
-  : `${localePath('/auth')}?redirect=${encodeURIComponent(Astro.url.pathname)}`
-const terminalLockSecondaryLabel = hasSession
-  ? t('lesson_terminalLock_ctaPricing')
-  : t('lesson_terminalLock_ctaSignIn')
+const terminalLockPrimaryHref = localePath('/pricing')
+const terminalLockPrimaryLabel = t('lesson_terminalLock_ctaUpgrade')
+const terminalLockSecondaryHref = terminalLockCrashCourseHref
+const terminalLockSecondaryLabel = t('lesson_terminalLock_tryFreeCrashCourse')
 
 const allLessons = overview.content.sections.flatMap((s) =>
   s.modules.flatMap((m) => m.lessons)
@@ -196,8 +193,8 @@ const lessonSeo = {
     terminalInteractive={terminalInteractive}
     terminalLockTitle={t('lesson_terminalLock_title')}
     terminalLockBody={t('lesson_terminalLock_body')}
-    terminalLockTryFreeLabel={t('lesson_terminalLock_tryFree')}
-    terminalLockTryFreeHref={terminalLockTryFreeHref}
+    terminalLockPrimaryLabel={terminalLockPrimaryLabel}
+    terminalLockPrimaryHref={terminalLockPrimaryHref}
     terminalLockSecondaryLabel={terminalLockSecondaryLabel}
     terminalLockSecondaryHref={terminalLockSecondaryHref}
   >

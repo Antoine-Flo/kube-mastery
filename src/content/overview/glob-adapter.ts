@@ -3,7 +3,7 @@ import type { Quiz } from '../../types/quiz'
 import type { UiLang } from '../courses/types'
 import type { OverviewIndexPort, LessonContentPort } from './port'
 import type { LessonFrontmatter, LessonLocation } from './types'
-import { stripNumericPrefix, parseH1 } from '../utils'
+import { stripNumericPrefix, parseH1, isHiddenTopicDir } from '../utils'
 
 const lessonTitleGlob = import.meta.glob<string>(
   '../../courses/modules/**/content.md',
@@ -53,6 +53,9 @@ function buildLessonTitleIndex(): Map<string, string> {
     if (lang !== 'en' && lang !== 'fr') {
       continue
     }
+    if (isHiddenTopicDir(topicDir)) {
+      continue
+    }
 
     const topicId = stripNumericPrefix(topicDir)
     const title = parseH1(text) || topicId
@@ -76,6 +79,9 @@ function buildTopicDirsByModule(): Map<
 
     const moduleId = parts[modulesIdx + 1]
     const topicDir = parts[modulesIdx + 2]
+    if (isHiddenTopicDir(topicDir)) {
+      continue
+    }
     const topicId = stripNumericPrefix(topicDir)
     if (!seen.has(moduleId)) {
       seen.set(moduleId, new Set())
@@ -110,6 +116,9 @@ function buildLessonDirsByTopic(): Map<string, string[]> {
 
     const moduleId = parts[modulesIdx + 1]
     const topicDir = parts[modulesIdx + 2]
+    if (isHiddenTopicDir(topicDir)) {
+      continue
+    }
     const topicId = stripNumericPrefix(topicDir)
     const key = `${moduleId}:${topicId}`
     if (!seen.has(key)) {
@@ -171,6 +180,9 @@ function buildPlaceholderLessonIdsByModule(): Map<string, Set<string>> {
     const topicDir = parts[modulesIdx + 2]
     const lang = parts[modulesIdx + 3]
     if (lang !== 'en') {
+      continue
+    }
+    if (isHiddenTopicDir(topicDir)) {
       continue
     }
     if (!isPlaceholderLesson(raw ?? '')) {

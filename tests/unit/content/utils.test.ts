@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { stripNumericPrefix, parseH1 } from '../../../src/content/utils'
+import {
+  stripNumericPrefix,
+  parseH1,
+  isHiddenTopicDir
+} from '../../../src/content/utils'
 
 describe('stripNumericPrefix', () => {
   it('strips numeric prefix with leading zero and dash', () => {
@@ -17,6 +21,18 @@ describe('stripNumericPrefix', () => {
 
   it('returns empty string for empty input', () => {
     expect(stripNumericPrefix('')).toBe('')
+  })
+})
+
+describe('isHiddenTopicDir', () => {
+  it('returns true when topic folder starts with underscore', () => {
+    expect(isHiddenTopicDir('_02-draft-lesson')).toBe(true)
+    expect(isHiddenTopicDir('_draft')).toBe(true)
+  })
+
+  it('returns false for normal topic folders', () => {
+    expect(isHiddenTopicDir('02-published-lesson')).toBe(false)
+    expect(isHiddenTopicDir('lesson')).toBe(false)
   })
 })
 

@@ -14,7 +14,7 @@ graph TD
     Terminal --> Cluster
 @@@
 
-The terminal gives you access to two separate things at once. On the filesystem side, you can navigate directories, create files, and write YAML manifests just as you would on a real Linux machine. On the cluster side, `kubectl` connects to an in-memory Kubernetes cluster where those manifests take effect immediately.
+The terminal gives you access to two separate things at once. On the filesystem side, you can navigate directories, create files, and write YAML manifests just as you would on a real Linux machine. On the cluster side, `kubectl` connects to an in-memory Kubernetes cluster where those manifests take effect.
 
 Some supported commands:
 
@@ -50,14 +50,10 @@ You created `test.txt` with `nano` and confirmed its content with `cat`. If you 
 
 Breaking things here has no consequences. The **reload icon** below the terminal (or a page reload) resets both the cluster and the filesystem to their initial state. Use that deliberately: apply a broken manifest, delete a resource and observe what happens, change a value and check whether the behavior matches your expectation. Every failed attempt teaches more than reading about it.
 
-:::warning
-Resetting discards any files you created in the terminal session. If you wrote a manifest you want to keep, copy its content somewhere before resetting.
-:::
-
 ## Scope and Limitations
 
-Not every Kubernetes feature is available in the simulator. The full list of supported commands and behaviors is on the [supported features page](https://kubemastery.com/en/supported). When a lesson uses something outside that scope, it says so explicitly. If you try a command or flag not covered in a lesson, the output may not match what a real cluster would produce.
+Not every Kubernetes feature is available in the simulator. The full list of supported commands and behaviors is on the <a href="/en/supported" target="_blank">supported features page</a>. When a lesson uses something outside that scope, it says so explicitly. If you try a command or flag not covered in a lesson, the output may not match what a real cluster would produce.
 
-For deeper exploration on your own machine, [kind](https://kind.sigs.k8s.io/) (Kubernetes in Docker) is the closest equivalent. The simulator outputs are aligned with kind, so what you observe here matches what you would get locally.
+For deeper exploration on your own machine, <a href="https://kind.sigs.k8s.io/" target="_blank">kind</a> (Kubernetes in Docker) is the closest equivalent. The simulator outputs are aligned with kind, so what you observe here matches what you would get locally.
 
 In the next lesson, you will see how this course maps to the three main Kubernetes certifications and where the Common Core fits in each path.

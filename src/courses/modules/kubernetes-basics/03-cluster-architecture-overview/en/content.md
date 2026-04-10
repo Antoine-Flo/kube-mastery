@@ -11,18 +11,20 @@ Before understanding how a Kubernetes cluster is organized, you need to know wha
 
 A **Node** is a machine where Pods run. That machine can be a physical server in a data center, a virtual machine in the cloud, or even a container on your laptop (which is exactly how tools like `kind` work internally). Kubernetes does not care about the physical form. It treats every node the same way: a place with CPU, memory, and a container runtime.
 
-`kubectl get nodes`
+```bash
+kubectl get nodes
+```
 
 Each entry shows a name, a status, and the Kubernetes version running on it. A node in `Ready` status means its local agent is healthy and the control plane can reach it.
 
 :::quiz
-What physical form can a Kubernetes Node take?
+Looking at the `ROLES` column in `kubectl get nodes`, which statement is correct?
 
-- Only physical servers in a data center
-- A physical server, a virtual machine, or even a container on a laptop
-- Only virtual machines in a cloud provider
+- Every node must show `control-plane` in `ROLES`
+- Exactly one node is labeled `control-plane`, the others show `<none>`, which is normal for worker nodes in this view
+- `<none>` means the node is broken
 
-**Answer:** A physical server, a virtual machine, or even a container. Kubernetes abstracts the underlying hardware and treats every node identically as long as it provides CPU, memory, and a container runtime.
+**Answer:** One node carries the `control-plane` role. The worker nodes show `<none>` here, which is a common default presentation for nodes without that control plane role label in this column.
 :::
 
 ## Pods: The Real Unit of Deployment
@@ -54,9 +56,13 @@ Why does Kubernetes use Pods instead of raw containers? Because many real-world 
 
 
 :::quiz
-Why does Kubernetes schedule Pods instead of containers directly?
+You delete a Pod that runs two containers. What happens to those containers?
 
-**Answer:** Pods allow Kubernetes to group tightly coupled containers as a single schedulable unit. Containers inside a Pod share a network namespace and volumes, so they communicate over localhost without any extra configuration. Scheduling them together guarantees they always land on the same node.
+- Kubernetes stops only the container you named
+- Both containers stop because they share the Pod lifecycle
+- They keep running until the Deployment scale is changed
+
+**Answer:** Both containers stop together. A Pod is one schedulable unit with one shared lifecycle. Deleting the Pod tears down its sandboxes, including every container in it.
 :::
 
 ## The Two Cluster Roles
@@ -90,7 +96,9 @@ graph TB
 
 The control plane is the decision-making side of the cluster. It stores the desired state of everything, decides where each Pod runs, and continuously watches whether reality matches what you declared. It does not run your application containers. Its job is management, not execution.
 
-`kubectl cluster-info`
+```bash
+kubectl cluster-info
+```
 
 This shows the address of the Kubernetes API server, the single entry point all cluster communication flows through. The next lesson opens the control plane and examines each of its four components individually.
 
@@ -98,26 +106,10 @@ This shows the address of the Kubernetes API server, the single entry point all 
 
 Worker nodes are where your Pods actually run. The control plane makes the decisions; the worker nodes carry them out. Each node runs a local agent that receives Pod assignments from the control plane and starts the corresponding containers.
 
-`kubectl get nodes`
-
-:::quiz
-How many nodes does this cluster have?
-
-**Try it:** `kubectl get nodes`
-
-**Answer:** Two nodes. One shows the role `control-plane`, the other has no role label by default, which is normal for worker nodes. The `STATUS` column should show `Ready` for both, meaning the local agent on each node is healthy and connected to the control plane.
-:::
-
 ## Production Differences
 
-The simulated cluster has one control plane node and one worker node. Real production clusters look different in both directions.
+The simulated cluster has one control plane node and two worker nodes. Real production clusters look different in both directions.
 
-:::info
 In production, the control plane is typically replicated across three nodes to survive hardware failures. A cluster of any meaningful size also has many more worker nodes, sometimes dozens or hundreds, depending on workload demands.
-:::
-
-:::warning
-Do not schedule application workloads on the control plane node in production. Kubernetes applies a **taint** to control plane nodes that prevents normal Pods from being scheduled there. Running application containers on the control plane risks destabilizing the components that manage the entire cluster. In this simulator, the taint is in place and matches production behavior.
-:::
 
 Nodes and Pods form the physical and logical foundation of every cluster. The control plane and worker node separation determines how decisions and execution stay cleanly apart. The next lesson goes one level deeper, examining the individual components inside the control plane and what each one is specifically responsible for.

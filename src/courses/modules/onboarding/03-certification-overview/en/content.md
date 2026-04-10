@@ -15,12 +15,6 @@ The KCNA is the entry point. Unlike the other two certifications, it is a multip
 
 It is a good first step if you are new to Kubernetes and want a confidence anchor before tackling the hands-on exams.
 
-:::quiz
-A colleague says the KCNA is easier than CKAD because you can look things up during the exam. Is that accurate?
-
-**Answer:** No. The KCNA is a closed-book multiple-choice exam. CKAD and CKA are the open-book ones, though time pressure makes that advantage smaller than it sounds.
-:::
-
 ## CKAD: Certified Kubernetes Application Developer
 
 The CKAD shifts from theory to practice. You spend two hours on a real cluster completing tasks from an application developer's perspective: writing Pod specs, configuring Deployments, exposing applications with Services, wiring environment variables from ConfigMaps and Secrets, and running batch Jobs. There are no multiple-choice questions, only tasks with a pass or fail outcome.
@@ -35,16 +29,6 @@ The CKA is widely considered one of the more demanding certifications in the clo
 
 :::warning
 CKAD and CKA are open-book: you can access the official Kubernetes documentation during the exam. That helps, but finding the right page under time pressure requires practice. Knowing the documentation layout matters as much as knowing the content.
-:::
-
-:::quiz
-You are a backend developer who wants to validate Kubernetes skills for deploying containerized applications. Which certification fits best?
-
-- KCNA, because it covers container fundamentals and Kubernetes architecture
-- CKA, because it is the most recognized certification in the ecosystem
-- CKAD, because it tests hands-on application deployment tasks directly
-
-**Answer:** CKAD. Its tasks map directly to application developer work: Pods, Deployments, Services, ConfigMaps. KCNA tests conceptual knowledge only. CKA focuses on cluster administration, not application deployment.
 :::
 
 ## How This Common Core Fits In

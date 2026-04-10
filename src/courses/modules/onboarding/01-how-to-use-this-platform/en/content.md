@@ -17,13 +17,6 @@ The terminal is connected to a simulated Kubernetes cluster running entirely in 
 
 Alongside the terminal, a cluster visualizer shows those transitions live. Open it by clicking the telescope icon below the terminal.
 
-@@@
-graph LR
-    T["Terminal<br/>kubectl, ls, nano, ..."]
-    V["Cluster Visualizer<br/>Pods, Deployments, Events"]
-    T -- "apply / get / delete" --> V
-@@@
-
 ## Your First Deployment
 
 Let's see both in action. Open the visualizer now, then run this command in the terminal:

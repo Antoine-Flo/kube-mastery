@@ -16,18 +16,16 @@ Kubernetes is a container orchestration platform. It takes over the operational 
 This shift is called **desired state**. Instead of saying "go to server 3 and start this container", you say "I want 3 copies of this container running at all times." Kubernetes holds that intention, observes the actual state of the cluster continuously, and acts whenever reality drifts from what you declared.
 
 @@@
-graph LR
-    A["You declare\ndesired state\n(3 replicas)"] --> B["Kubernetes\nobserves\nactual state"]
-    B --> C{Match?}
-    C -- No --> D["Kubernetes\nreconciles"]
+flowchart TD
+    A["Declare"] --> B["Observe"]
+    B --> C{Drift?}
+    C -->|Yes| D["Act"]
+    C -->|No| E["Wait"]
     D --> B
-    C -- Yes --> E["Keep watching"]
     E --> B
 @@@
 
 This reconciliation loop runs constantly. If a Pod crashes, Kubernetes starts a replacement. If a node goes offline, Kubernetes reschedules the affected Pods onto healthy nodes. You declared the goal once, and Kubernetes keeps chasing it.
-
-Why does Kubernetes use desired state rather than direct commands? Because direct commands are one-time actions. They do not survive failures. Desired state gives Kubernetes something to reconcile against continuously, with no human watching.
 
 :::quiz
 Why does Kubernetes use "desired state" instead of letting you issue direct commands like "start this container on server 2"?
