@@ -785,6 +785,24 @@ describe('kubectl parser - get and delete flag positions', () => {
     expect(result.value.flags['show-labels']).toBe(true)
   })
 
+  it('should parse get with comma-separated resources', () => {
+    const result = parseCommand('kubectl get pod,svc,configmap,secret -n parity-e2e')
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.value.resource).toBe('pods')
+    expect(result.value.resourceList).toEqual([
+      'pods',
+      'services',
+      'configmaps',
+      'secrets'
+    ])
+    expect(result.value.namespace).toBe('parity-e2e')
+  })
+
   it('should parse get jsonpath output flag', () => {
     const result = parseCommand(
       "kubectl get pod mypod -o jsonpath='{.metadata.uid}'"

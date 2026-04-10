@@ -47,6 +47,59 @@ const resolveQueryNames = (parsed: ParsedCommand): string[] | undefined => {
   return undefined
 }
 
+const prefixFirstTableColumnWithResourceKind = (
+  tableOutput: string,
+  resourceType: Resource
+): string => {
+  const lines = tableOutput.split('\n')
+  if (lines.length <= 1) {
+    return tableOutput
+  }
+  const header = lines[0]?.trimStart()
+  if (header == null || !header.startsWith('NAME')) {
+    return tableOutput
+  }
+  const resourceReference = toResourceKindReference(resourceType)
+  const parseColumns = (line: string): string[] => {
+    return line.trim().split(/\s{2,}/)
+  }
+  const rows = lines.map((line, index) => {
+    if (line.trim().length === 0) {
+      return []
+    }
+    const columns = parseColumns(line)
+    if (index > 0 && columns.length > 0) {
+      const nameValue = columns[0]
+      columns[0] = `${resourceReference}/${nameValue}`
+    }
+    return columns
+  })
+  const columnCount = rows[0]?.length ?? 0
+  if (columnCount === 0) {
+    return tableOutput
+  }
+  const columnWidths = Array.from({ length: columnCount }, (_, columnIndex) => {
+    return rows.reduce((maxWidth, row) => {
+      const value = row[columnIndex] ?? ''
+      return Math.max(maxWidth, value.length)
+    }, 0)
+  })
+  const renderedLines = rows.map((row) => {
+    if (row.length === 0) {
+      return ''
+    }
+    return row
+      .map((value, columnIndex) => {
+        if (columnIndex === row.length - 1) {
+          return value
+        }
+        return value.padEnd(columnWidths[columnIndex], ' ')
+      })
+      .join('   ')
+  })
+  return renderedLines.join('\n')
+}
+
 const resolveMissingNameErrors = (
   resourceType: Resource,
   queryNames: string[] | undefined,
@@ -129,6 +182,24 @@ export const handleGet = (
   const resourceVersion = getResourceVersion?.() ?? ''
   if (typeof parsed.rawPath === 'string') {
     return handleGetRaw(state, parsed.rawPath)
+  }
+
+  if (parsed.resourceList != null && parsed.resourceList.length > 0) {
+    const renderedOutputs = parsed.resourceList.map((resource) => {
+      const output = handleGet(
+        apiServer,
+        {
+          ...parsed,
+          resource,
+          resourceList: undefined,
+          name: undefined,
+          names: undefined
+        },
+        dependencies
+      )
+      return prefixFirstTableColumnWithResourceKind(output, resource)
+    })
+    return renderedOutputs.join('\n\n')
   }
 
   const outputDirectiveResult = validateOutputDirective(

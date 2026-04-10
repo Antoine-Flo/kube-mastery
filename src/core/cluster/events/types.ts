@@ -125,6 +125,30 @@ export interface ServiceAnnotatedEvent extends BaseEvent {
   }
 }
 
+export interface PersistentVolumeClaimLifecycleEvent extends BaseEvent {
+  type: 'PersistentVolumeClaimLifecycle'
+  payload: {
+    namespace: string
+    name: string
+    reason: string
+    message: string
+    eventType: 'Normal' | 'Warning'
+    source: string
+  }
+}
+
+export interface PodVolumeLifecycleEvent extends BaseEvent {
+  type: 'PodVolumeLifecycle'
+  payload: {
+    namespace: string
+    name: string
+    reason: string
+    message: string
+    eventType: 'Normal' | 'Warning'
+    source: string
+  }
+}
+
 export type ClusterEvent =
   | GeneratedClusterCrudEvent
   | PodBoundEvent
@@ -137,6 +161,8 @@ export type ClusterEvent =
   | SecretAnnotatedEvent
   | ServiceLabeledEvent
   | ServiceAnnotatedEvent
+  | PersistentVolumeClaimLifecycleEvent
+  | PodVolumeLifecycleEvent
 
 export const createPodBoundEvent = (
   name: string,
@@ -259,4 +285,46 @@ export const createSecretAnnotatedEvent = (
   timestamp: createClusterEventTimestamp(),
   metadata: createClusterEventMetadata(source),
   payload: { name, namespace, annotations, secret, previousSecret }
+})
+
+export const createPersistentVolumeClaimLifecycleEvent = (
+  namespace: string,
+  name: string,
+  reason: string,
+  message: string,
+  eventType: 'Normal' | 'Warning',
+  source: string
+): PersistentVolumeClaimLifecycleEvent => ({
+  type: 'PersistentVolumeClaimLifecycle',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: {
+    namespace,
+    name,
+    reason,
+    message,
+    eventType,
+    source
+  }
+})
+
+export const createPodVolumeLifecycleEvent = (
+  namespace: string,
+  name: string,
+  reason: string,
+  message: string,
+  eventType: 'Normal' | 'Warning',
+  source: string
+): PodVolumeLifecycleEvent => ({
+  type: 'PodVolumeLifecycle',
+  timestamp: createClusterEventTimestamp(),
+  metadata: createClusterEventMetadata(source),
+  payload: {
+    namespace,
+    name,
+    reason,
+    message,
+    eventType,
+    source
+  }
 })

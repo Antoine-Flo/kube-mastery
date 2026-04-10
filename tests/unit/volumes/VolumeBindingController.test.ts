@@ -8,8 +8,16 @@ import { createVolumeBindingController } from '../../../src/core/volumes/VolumeB
 import { createVolumeState } from '../../../src/core/volumes/VolumeState'
 import { getPersistentVolumeBackingStore } from '../../../src/core/volumes/runtime'
 
+const settleReconciliation = async (): Promise<void> => {
+  for (let index = 0; index < 6; index++) {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0)
+    })
+  }
+}
+
 describe('VolumeBindingController', () => {
-  it('binds available persistent volume to claim', () => {
+  it('binds available persistent volume to claim', async () => {
     const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()
     const controller = createVolumeBindingController(apiServer, volumeState)
@@ -40,6 +48,7 @@ describe('VolumeBindingController', () => {
     )
 
     controller.start()
+    await settleReconciliation()
 
     const pvcResult = apiServer.findResource(
       'PersistentVolumeClaim',
@@ -72,7 +81,7 @@ describe('VolumeBindingController', () => {
     controller.stop()
   })
 
-  it('keeps claim pending when no matching volume is available', () => {
+  it('keeps claim pending when no matching volume is available', async () => {
     const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()
     const controller = createVolumeBindingController(apiServer, volumeState)
@@ -91,6 +100,7 @@ describe('VolumeBindingController', () => {
     )
 
     controller.start()
+    await settleReconciliation()
 
     const pvcResult = apiServer.findResource(
       'PersistentVolumeClaim',
@@ -110,7 +120,7 @@ describe('VolumeBindingController', () => {
     controller.stop()
   })
 
-  it('does not bind multiple claims to the same volume in one reconcile', () => {
+  it('does not bind multiple claims to the same volume in one reconcile', async () => {
     const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()
     const controller = createVolumeBindingController(apiServer, volumeState)
@@ -154,6 +164,7 @@ describe('VolumeBindingController', () => {
     )
 
     controller.start()
+    await settleReconciliation()
 
     const pvc1Result = apiServer.findResource(
       'PersistentVolumeClaim',
@@ -194,7 +205,7 @@ describe('VolumeBindingController', () => {
     controller.stop()
   })
 
-  it('resets pre-bound claim when referenced volume is missing', () => {
+  it('resets pre-bound claim when referenced volume is missing', async () => {
     const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()
     const controller = createVolumeBindingController(apiServer, volumeState)
@@ -217,6 +228,7 @@ describe('VolumeBindingController', () => {
     )
 
     controller.start()
+    await settleReconciliation()
 
     const pvcResult = apiServer.findResource(
       'PersistentVolumeClaim',
@@ -238,7 +250,9 @@ describe('VolumeBindingController', () => {
     controller.stop()
   })
 
-  it('keeps pre-bound claim pending when volume is already bound to another claim', () => {
+  it(
+    'keeps pre-bound claim pending when volume is already bound to another claim',
+    async () => {
     const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()
     const controller = createVolumeBindingController(apiServer, volumeState)
@@ -294,7 +308,8 @@ describe('VolumeBindingController', () => {
       })
     )
 
-    controller.start()
+      controller.start()
+      await settleReconciliation()
 
     const ownerResult = apiServer.findResource(
       'PersistentVolumeClaim',
@@ -339,9 +354,12 @@ describe('VolumeBindingController', () => {
     ).toBeUndefined()
 
     controller.stop()
-  })
+    }
+  )
 
-  it('deletes bound persistent volume when reclaim policy is Delete and claim is removed', () => {
+  it(
+    'deletes bound persistent volume when reclaim policy is Delete and claim is removed',
+    async () => {
     const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()
     const controller = createVolumeBindingController(apiServer, volumeState)
@@ -381,17 +399,20 @@ describe('VolumeBindingController', () => {
     const backingStore = getPersistentVolumeBackingStore()
     backingStore.getOrCreate(persistentVolume)
 
-    controller.start()
-    apiServer.deleteResource('PersistentVolumeClaim', 'pvc-delete', 'default')
+      controller.start()
+      await settleReconciliation()
+      apiServer.deleteResource('PersistentVolumeClaim', 'pvc-delete', 'default')
+      await settleReconciliation()
 
     const pvResult = apiServer.findResource('PersistentVolume', 'pv-delete')
     expect(pvResult.ok).toBe(false)
     expect(backingStore.get('pv-delete')).toBeUndefined()
 
     controller.stop()
-  })
+    }
+  )
 
-  it('keeps a wait-for-first-consumer claim bound after consumer is gone', () => {
+  it('keeps a wait-for-first-consumer claim bound after consumer is gone', async () => {
     const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()
     const controller = createVolumeBindingController(apiServer, volumeState)
@@ -443,6 +464,7 @@ describe('VolumeBindingController', () => {
     )
 
     controller.start()
+    await settleReconciliation()
 
     const pvcResult = apiServer.findResource(
       'PersistentVolumeClaim',
@@ -475,7 +497,7 @@ describe('VolumeBindingController', () => {
     controller.stop()
   })
 
-  it('binds wait-for-first-consumer claim only after consumer exists', () => {
+  it('binds wait-for-first-consumer claim only after consumer exists', async () => {
     const apiServer = createApiServerFacade()
     const volumeState = createVolumeState()
     const controller = createVolumeBindingController(apiServer, volumeState)
@@ -516,6 +538,7 @@ describe('VolumeBindingController', () => {
     )
 
     controller.start()
+    await settleReconciliation()
 
     const pendingResult = apiServer.findResource(
       'PersistentVolumeClaim',
@@ -549,6 +572,7 @@ describe('VolumeBindingController', () => {
       })
     )
     controller.resyncAll()
+    await settleReconciliation()
 
     const boundResult = apiServer.findResource(
       'PersistentVolumeClaim',
@@ -565,6 +589,131 @@ describe('VolumeBindingController', () => {
     expect(volumeState.getBoundVolumeForClaim('default', 'wffc-data')).toBe(
       'pv-wffc'
     )
+
+    controller.stop()
+  })
+
+  it('keeps reconciliation idempotent across repeated resync', async () => {
+    const apiServer = createApiServerFacade()
+    const volumeState = createVolumeState()
+    const controller = createVolumeBindingController(apiServer, volumeState)
+
+    apiServer.createResource(
+      'PersistentVolume',
+      createPersistentVolume({
+        name: 'pv-idempotent',
+        spec: {
+          capacity: { storage: '5Gi' },
+          accessModes: ['ReadWriteOnce'],
+          storageClassName: 'standard'
+        }
+      })
+    )
+    apiServer.createResource(
+      'PersistentVolumeClaim',
+      createPersistentVolumeClaim({
+        name: 'claim-idempotent',
+        namespace: 'default',
+        spec: {
+          accessModes: ['ReadWriteOnce'],
+          resources: { requests: { storage: '1Gi' } },
+          storageClassName: 'standard'
+        }
+      })
+    )
+
+    controller.start()
+    await settleReconciliation()
+    controller.resyncAll()
+    await settleReconciliation()
+    controller.resyncAll()
+    await settleReconciliation()
+
+    const pvcResult = apiServer.findResource(
+      'PersistentVolumeClaim',
+      'claim-idempotent',
+      'default'
+    )
+    const pvResult = apiServer.findResource('PersistentVolume', 'pv-idempotent')
+    expect(pvcResult.ok).toBe(true)
+    expect(pvResult.ok).toBe(true)
+    if (
+      !pvcResult.ok ||
+      pvcResult.value == null ||
+      !pvResult.ok ||
+      pvResult.value == null
+    ) {
+      controller.stop()
+      return
+    }
+    expect(pvcResult.value.status.phase).toBe('Bound')
+    expect(pvcResult.value.spec.volumeName).toBe('pv-idempotent')
+    expect(pvResult.value.spec.claimRef).toEqual({
+      namespace: 'default',
+      name: 'claim-idempotent'
+    })
+
+    controller.stop()
+  })
+
+  it('binds claim when matching volume is created later', async () => {
+    const apiServer = createApiServerFacade()
+    const volumeState = createVolumeState()
+    const controller = createVolumeBindingController(apiServer, volumeState)
+
+    apiServer.createResource(
+      'PersistentVolumeClaim',
+      createPersistentVolumeClaim({
+        name: 'late-bind',
+        namespace: 'default',
+        spec: {
+          accessModes: ['ReadWriteOnce'],
+          resources: { requests: { storage: '1Gi' } },
+          storageClassName: 'fast'
+        }
+      })
+    )
+
+    controller.start()
+    await settleReconciliation()
+
+    const pendingResult = apiServer.findResource(
+      'PersistentVolumeClaim',
+      'late-bind',
+      'default'
+    )
+    expect(pendingResult.ok).toBe(true)
+    if (!pendingResult.ok || pendingResult.value == null) {
+      controller.stop()
+      return
+    }
+    expect(pendingResult.value.status.phase).toBe('Pending')
+
+    apiServer.createResource(
+      'PersistentVolume',
+      createPersistentVolume({
+        name: 'pv-late',
+        spec: {
+          capacity: { storage: '2Gi' },
+          accessModes: ['ReadWriteOnce'],
+          storageClassName: 'fast'
+        }
+      })
+    )
+    await settleReconciliation()
+
+    const boundResult = apiServer.findResource(
+      'PersistentVolumeClaim',
+      'late-bind',
+      'default'
+    )
+    expect(boundResult.ok).toBe(true)
+    if (!boundResult.ok || boundResult.value == null) {
+      controller.stop()
+      return
+    }
+    expect(boundResult.value.status.phase).toBe('Bound')
+    expect(boundResult.value.spec.volumeName).toBe('pv-late')
 
     controller.stop()
   })

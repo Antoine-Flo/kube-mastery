@@ -1,16 +1,23 @@
-import { startPeriodicResync } from '../control-plane/controller-runtime/helpers'
 import type { ApiServerFacade } from '../api/ApiServerFacade'
+import type { Pod } from '../cluster/ressources/Pod'
+import {
+  createWorkQueue,
+  type WorkQueue
+} from '../control-plane/controller-runtime/WorkQueue'
+import { startPeriodicResync } from '../control-plane/controller-runtime/helpers'
 import type { AppEventType } from '../events/AppEvent'
-import { releasePersistentVolumeBacking } from './runtime'
-import { type VolumeState } from './VolumeState'
 import {
   createVolumeBindingPolicy,
   type VolumeBindingPolicy
 } from './VolumeBindingPolicy'
+import { type VolumeState } from './VolumeState'
+import { hasWaitForFirstConsumerBindingMode } from './pvcBindingMode'
 import {
-  hasPodConsumerForClaim,
-  hasWaitForFirstConsumerBindingMode
-} from './pvcBindingMode'
+  enqueuePendingClaimsMatchingVolume,
+  makeClaimKey,
+  reconcileClaimByKey,
+  reconcileVolumeByKey
+} from './reconcile/volumeBindingReconciler'
 
 interface VolumeBindingControllerOptions {
   resyncIntervalMs?: number
@@ -25,6 +32,9 @@ export interface VolumeBindingController {
 }
 
 const VOLUME_BINDING_EVENTS: AppEventType[] = [
+  'PodCreated',
+  'PodUpdated',
+  'PodDeleted',
   'PersistentVolumeCreated',
   'PersistentVolumeUpdated',
   'PersistentVolumeDeleted',
@@ -43,314 +53,179 @@ export const createVolumeBindingController = (
   let started = false
   let unsubscribeEvents: (() => void) | undefined
   let stopResync: (() => void) | undefined
+  const claimQueue: WorkQueue = createWorkQueue({ processDelay: 0 })
+  const volumeQueue: WorkQueue = createWorkQueue({ processDelay: 0 })
 
-  const reconcileVolumeClaims = (): void => {
-    const persistentVolumes = [...apiServer.listResources('PersistentVolume')]
-    const persistentVolumeClaims = [
-      ...apiServer.listResources('PersistentVolumeClaim')
-    ]
-    const assignedVolumeNames = new Set<string>()
-    const claimByKey = new Map<
-      string,
-      (typeof persistentVolumeClaims)[number]
-    >()
-    for (const persistentVolumeClaim of persistentVolumeClaims) {
-      const key = `${persistentVolumeClaim.metadata.namespace}/${persistentVolumeClaim.metadata.name}`
-      claimByKey.set(key, persistentVolumeClaim)
-    }
+  const enqueueClaimByKey = (claimKey: string): void => {
+    claimQueue.add(claimKey)
+  }
 
-    for (const persistentVolume of persistentVolumes) {
-      const claimRef = persistentVolume.spec.claimRef
-      if (claimRef == null) {
-        continue
-      }
+  const enqueueClaim = (namespace: string, name: string): void => {
+    enqueueClaimByKey(makeClaimKey(namespace, name))
+  }
 
-      assignedVolumeNames.add(persistentVolume.metadata.name)
+  const enqueueVolume = (name: string): void => {
+    volumeQueue.add(name)
+  }
 
-      const claimKey = `${claimRef.namespace}/${claimRef.name}`
-      if (claimByKey.has(claimKey)) {
-        continue
-      }
-      if (persistentVolume.spec.persistentVolumeReclaimPolicy === 'Delete') {
-        apiServer.deleteResource(
-          'PersistentVolume',
-          persistentVolume.metadata.name
-        )
-        releasePersistentVolumeBacking(persistentVolume.metadata.name)
-        continue
-      }
-      const releasedPersistentVolume = {
-        ...persistentVolume,
-        spec: {
-          ...persistentVolume.spec,
-          claimRef: undefined
-        },
-        status: {
-          ...persistentVolume.status,
-          phase: 'Available' as const
-        }
-      }
-      apiServer.updateResource(
-        'PersistentVolume',
-        persistentVolume.metadata.name,
-        releasedPersistentVolume
+  const reconcileAll = (): void => {
+    for (const persistentVolumeClaim of apiServer.listResources(
+      'PersistentVolumeClaim'
+    )) {
+      enqueueClaim(
+        persistentVolumeClaim.metadata.namespace,
+        persistentVolumeClaim.metadata.name
       )
     }
-
-    for (const persistentVolumeClaim of persistentVolumeClaims) {
-      const claimName = persistentVolumeClaim.metadata.name
-      const claimNamespace = persistentVolumeClaim.metadata.namespace
-      const preBoundVolumeName = persistentVolumeClaim.spec.volumeName
-      const hasPreBoundVolumeName =
-        preBoundVolumeName != null && preBoundVolumeName.length > 0
-      const isAlreadyBound =
-        persistentVolumeClaim.status.phase === 'Bound' || hasPreBoundVolumeName
-      const shouldWaitForFirstConsumer = hasWaitForFirstConsumerBindingMode(
-        apiServer,
-        persistentVolumeClaim.spec.storageClassName
-      )
-      if (shouldWaitForFirstConsumer && !isAlreadyBound) {
-        const hasConsumer = hasPodConsumerForClaim(
-          apiServer,
-          claimNamespace,
-          claimName
-        )
-        if (!hasConsumer) {
-          volumeState.unbindClaim(claimNamespace, claimName)
-          if (persistentVolumeClaim.status.phase !== 'Pending') {
-            const pendingPersistentVolumeClaim = {
-              ...persistentVolumeClaim,
-              spec: {
-                ...persistentVolumeClaim.spec,
-                volumeName: undefined
-              },
-              status: {
-                ...persistentVolumeClaim.status,
-                phase: 'Pending' as const,
-                accessModes: undefined,
-                capacity: undefined
-              }
-            }
-            apiServer.updateResource(
-              'PersistentVolumeClaim',
-              claimName,
-              pendingPersistentVolumeClaim,
-              claimNamespace
-            )
-          }
-          continue
-        }
-      }
-
-      if (hasPreBoundVolumeName) {
-        const matchingPersistentVolume = apiServer.findResource(
-          'PersistentVolume',
-          preBoundVolumeName
-        )
-        if (
-          !matchingPersistentVolume.ok ||
-          matchingPersistentVolume.value == null
-        ) {
-          volumeState.unbindClaim(claimNamespace, claimName)
-          const pendingPersistentVolumeClaim = {
-            ...persistentVolumeClaim,
-            spec: {
-              ...persistentVolumeClaim.spec,
-              volumeName: undefined
-            },
-            status: {
-              ...persistentVolumeClaim.status,
-              phase: 'Pending' as const,
-              accessModes: undefined,
-              capacity: undefined
-            }
-          }
-          apiServer.updateResource(
-            'PersistentVolumeClaim',
-            claimName,
-            pendingPersistentVolumeClaim,
-            claimNamespace
-          )
-          continue
-        }
-        const persistentVolume = matchingPersistentVolume.value
-        assignedVolumeNames.add(persistentVolume.metadata.name)
-        const sameClaim =
-          persistentVolume.spec.claimRef?.name === claimName &&
-          persistentVolume.spec.claimRef?.namespace === claimNamespace
-        const existingClaimRef = persistentVolume.spec.claimRef
-        const volumeAlreadyClaimedElsewhere =
-          existingClaimRef != null && !sameClaim
-        if (volumeAlreadyClaimedElsewhere) {
-          volumeState.unbindClaim(claimNamespace, claimName)
-          const pendingPersistentVolumeClaim = {
-            ...persistentVolumeClaim,
-            spec: {
-              ...persistentVolumeClaim.spec,
-              volumeName: undefined
-            },
-            status: {
-              ...persistentVolumeClaim.status,
-              phase: 'Pending' as const,
-              accessModes: undefined,
-              capacity: undefined
-            }
-          }
-          apiServer.updateResource(
-            'PersistentVolumeClaim',
-            claimName,
-            pendingPersistentVolumeClaim,
-            claimNamespace
-          )
-          continue
-        }
-        if (!sameClaim) {
-          const updatedPersistentVolume = {
-            ...persistentVolume,
-            spec: {
-              ...persistentVolume.spec,
-              claimRef: {
-                namespace: claimNamespace,
-                name: claimName
-              }
-            },
-            status: {
-              ...persistentVolume.status,
-              phase: 'Bound' as const
-            }
-          }
-          apiServer.updateResource(
-            'PersistentVolume',
-            persistentVolume.metadata.name,
-            updatedPersistentVolume
-          )
-        }
-        if (persistentVolumeClaim.status.phase !== 'Bound') {
-          const updatedPersistentVolumeClaim = {
-            ...persistentVolumeClaim,
-            status: {
-              ...persistentVolumeClaim.status,
-              phase: 'Bound' as const,
-              accessModes: [...persistentVolume.spec.accessModes],
-              capacity: {
-                storage: persistentVolume.spec.capacity.storage
-              }
-            }
-          }
-          apiServer.updateResource(
-            'PersistentVolumeClaim',
-            claimName,
-            updatedPersistentVolumeClaim,
-            claimNamespace
-          )
-        }
-        volumeState.bindClaimToVolume(
-          claimNamespace,
-          claimName,
-          preBoundVolumeName
-        )
-        continue
-      }
-
-      const candidatePersistentVolume = bindingPolicy.findCandidateVolume(
-        persistentVolumes.filter(
-          (persistentVolume) =>
-            !assignedVolumeNames.has(persistentVolume.metadata.name)
-        ),
-        persistentVolumeClaim
-      )
-
-      if (candidatePersistentVolume == null) {
-        volumeState.unbindClaim(claimNamespace, claimName)
-        if (persistentVolumeClaim.status.phase !== 'Pending') {
-          const pendingPersistentVolumeClaim = {
-            ...persistentVolumeClaim,
-            spec: {
-              ...persistentVolumeClaim.spec,
-              volumeName: undefined
-            },
-            status: {
-              ...persistentVolumeClaim.status,
-              phase: 'Pending' as const,
-              accessModes: undefined,
-              capacity: undefined
-            }
-          }
-          apiServer.updateResource(
-            'PersistentVolumeClaim',
-            claimName,
-            pendingPersistentVolumeClaim,
-            claimNamespace
-          )
-        }
-        continue
-      }
-
-      assignedVolumeNames.add(candidatePersistentVolume.metadata.name)
-
-      const boundPersistentVolume = {
-        ...candidatePersistentVolume,
-        spec: {
-          ...candidatePersistentVolume.spec,
-          claimRef: {
-            namespace: claimNamespace,
-            name: claimName
-          }
-        },
-        status: {
-          ...candidatePersistentVolume.status,
-          phase: 'Bound' as const
-        }
-      }
-      apiServer.updateResource(
-        'PersistentVolume',
-        candidatePersistentVolume.metadata.name,
-        boundPersistentVolume
-      )
-
-      const boundPersistentVolumeClaim = {
-        ...persistentVolumeClaim,
-        spec: {
-          ...persistentVolumeClaim.spec,
-          volumeName: candidatePersistentVolume.metadata.name
-        },
-        status: {
-          ...persistentVolumeClaim.status,
-          phase: 'Bound' as const,
-          accessModes: [...candidatePersistentVolume.spec.accessModes],
-          capacity: {
-            storage: candidatePersistentVolume.spec.capacity.storage
-          }
-        }
-      }
-      apiServer.updateResource(
-        'PersistentVolumeClaim',
-        claimName,
-        boundPersistentVolumeClaim,
-        claimNamespace
-      )
-
-      volumeState.bindClaimToVolume(
-        claimNamespace,
-        claimName,
-        candidatePersistentVolume.metadata.name
-      )
+    for (const persistentVolume of apiServer.listResources('PersistentVolume')) {
+      enqueueVolume(persistentVolume.metadata.name)
     }
   }
 
-  const onEvent = (event: { type: AppEventType }): void => {
+  const onEvent = (event: { type: AppEventType; payload?: unknown }): void => {
     if (!VOLUME_BINDING_EVENTS.includes(event.type)) {
       return
     }
-    reconcileVolumeClaims()
+
+    if (event.type === 'PersistentVolumeCreated') {
+      const payload = event.payload as { persistentVolume?: { metadata: { name: string } } }
+      if (payload.persistentVolume != null) {
+        enqueueVolume(payload.persistentVolume.metadata.name)
+        const persistentVolumeResult = apiServer.findResource(
+          'PersistentVolume',
+          payload.persistentVolume.metadata.name
+        )
+        if (persistentVolumeResult.ok && persistentVolumeResult.value != null) {
+          enqueuePendingClaimsMatchingVolume(persistentVolumeResult.value, {
+            apiServer,
+            enqueueClaim
+          })
+        }
+      }
+      return
+    }
+    if (event.type === 'PersistentVolumeUpdated') {
+      const payload = event.payload as { persistentVolume?: { metadata: { name: string } } }
+      if (payload.persistentVolume != null) {
+        enqueueVolume(payload.persistentVolume.metadata.name)
+        const persistentVolumeResult = apiServer.findResource(
+          'PersistentVolume',
+          payload.persistentVolume.metadata.name
+        )
+        if (persistentVolumeResult.ok && persistentVolumeResult.value != null) {
+          enqueuePendingClaimsMatchingVolume(persistentVolumeResult.value, {
+            apiServer,
+            enqueueClaim
+          })
+        }
+      }
+      return
+    }
+    if (event.type === 'PersistentVolumeDeleted') {
+      const payload = event.payload as {
+        deletedPersistentVolume?: { spec?: { claimRef?: { namespace: string; name: string } } }
+      }
+      const claimRef = payload.deletedPersistentVolume?.spec?.claimRef
+      if (claimRef != null) {
+        enqueueClaim(claimRef.namespace, claimRef.name)
+      }
+      return
+    }
+    if (event.type === 'PersistentVolumeClaimCreated') {
+      const payload = event.payload as {
+        persistentVolumeClaim?: { metadata: { namespace: string; name: string } }
+      }
+      if (payload.persistentVolumeClaim != null) {
+        enqueueClaim(
+          payload.persistentVolumeClaim.metadata.namespace,
+          payload.persistentVolumeClaim.metadata.name
+        )
+      }
+      return
+    }
+    if (event.type === 'PersistentVolumeClaimUpdated') {
+      const payload = event.payload as {
+        persistentVolumeClaim?: { metadata: { namespace: string; name: string } }
+      }
+      if (payload.persistentVolumeClaim != null) {
+        enqueueClaim(
+          payload.persistentVolumeClaim.metadata.namespace,
+          payload.persistentVolumeClaim.metadata.name
+        )
+      }
+      return
+    }
+    if (event.type === 'PersistentVolumeClaimDeleted') {
+      const payload = event.payload as {
+        deletedPersistentVolumeClaim?: { metadata: { namespace: string; name: string }; spec: { volumeName?: string } }
+      }
+      if (payload.deletedPersistentVolumeClaim != null) {
+        const claimNamespace = payload.deletedPersistentVolumeClaim.metadata.namespace
+        const claimName = payload.deletedPersistentVolumeClaim.metadata.name
+        volumeState.unbindClaim(claimNamespace, claimName)
+        const volumeName = payload.deletedPersistentVolumeClaim.spec.volumeName
+        if (volumeName != null && volumeName.length > 0) {
+          enqueueVolume(volumeName)
+        }
+      }
+      return
+    }
+    if (
+      event.type === 'PodCreated' ||
+      event.type === 'PodUpdated' ||
+      event.type === 'PodDeleted'
+    ) {
+      const payload = event.payload as {
+        pod?: Pod
+        deletedPod?: Pod
+      }
+      const pod = payload.pod ?? payload.deletedPod
+      if (pod == null) {
+        for (const claim of apiServer.listResources('PersistentVolumeClaim')) {
+          const waitForFirstConsumer = hasWaitForFirstConsumerBindingMode(
+            apiServer,
+            claim.spec.storageClassName
+          )
+          if (!waitForFirstConsumer) {
+            continue
+          }
+          enqueueClaim(claim.metadata.namespace, claim.metadata.name)
+        }
+        return
+      }
+      const podVolumes = pod.spec.volumes ?? []
+      for (const volume of podVolumes) {
+        if (volume.source.type !== 'persistentVolumeClaim') {
+          continue
+        }
+        const claimName = volume.source.claimName
+        const claimResult = apiServer.findResource(
+          'PersistentVolumeClaim',
+          claimName,
+          pod.metadata.namespace
+        )
+        if (!claimResult.ok || claimResult.value == null) {
+          continue
+        }
+        const waitForFirstConsumer = hasWaitForFirstConsumerBindingMode(
+          apiServer,
+          claimResult.value.spec.storageClassName
+        )
+        if (!waitForFirstConsumer) {
+          continue
+        }
+        enqueueClaim(pod.metadata.namespace, claimName)
+      }
+      return
+    }
   }
 
   const initialSync = (): void => {
-    reconcileVolumeClaims()
+    reconcileAll()
   }
 
   const resyncAll = (): void => {
-    reconcileVolumeClaims()
+    reconcileAll()
   }
 
   const start = (): void => {
@@ -358,6 +233,24 @@ export const createVolumeBindingController = (
       return
     }
     started = true
+    claimQueue.start((claimKey) => {
+      reconcileClaimByKey(claimKey, {
+        apiServer,
+        volumeState,
+        bindingPolicy,
+        enqueueClaim,
+        enqueueVolume
+      })
+    })
+    volumeQueue.start((volumeName) => {
+      reconcileVolumeByKey(volumeName, {
+        apiServer,
+        volumeState,
+        bindingPolicy,
+        enqueueClaim,
+        enqueueVolume
+      })
+    })
     initialSync()
     const unsubscribers: Array<() => void> = []
     for (const eventType of VOLUME_BINDING_EVENTS) {
@@ -388,6 +281,8 @@ export const createVolumeBindingController = (
       stopResync()
       stopResync = undefined
     }
+    claimQueue.stop()
+    volumeQueue.stop()
   }
 
   return {

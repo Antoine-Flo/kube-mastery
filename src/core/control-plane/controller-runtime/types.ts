@@ -112,6 +112,27 @@ export interface Controller {
   reconcile(key: string): void
 }
 
+/**
+ * Structured reconcile outcome used by queue-enabled controllers.
+ * Controllers can keep returning void while progressively adopting this contract.
+ */
+export interface ReconcileResult {
+  /**
+   * Requeue the same key after a delay.
+   * Useful for eventually-consistent flows or delayed readiness checks.
+   */
+  requeueAfterMs?: number
+  /**
+   * Signal a retry with exponential backoff.
+   * Typically used for transient errors.
+   */
+  retry?: boolean
+  /**
+   * Optional reason for debugging and observation output.
+   */
+  reason?: string
+}
+
 export interface ReconcilerController extends Controller {
   /**
    * Queue all existing resources handled by this controller.

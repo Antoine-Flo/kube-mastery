@@ -1,17 +1,20 @@
 import { startPeriodicResync } from '../control-plane/controller-runtime/helpers'
+import {
+  createWorkQueue,
+  type WorkQueue
+} from '../control-plane/controller-runtime/WorkQueue'
 import type { ApiServerFacade } from '../api/ApiServerFacade'
-import { createPersistentVolume } from '../cluster/ressources/PersistentVolume'
-import type { PersistentVolumeClaim } from '../cluster/ressources/PersistentVolumeClaim'
-import type { StorageClass } from '../cluster/ressources/StorageClass'
+import { createPersistentVolumeClaimLifecycleEvent } from '../cluster/events/types'
+import type { Pod } from '../cluster/ressources/Pod'
 import type { AppEventType } from '../events/AppEvent'
 import {
   createVolumeBindingPolicy,
   type VolumeBindingPolicy
 } from './VolumeBindingPolicy'
 import {
-  hasPodConsumerForClaim,
-  hasWaitForFirstConsumerBindingMode
-} from './pvcBindingMode'
+  makeProvisioningClaimKey,
+  reconcileProvisioningClaimByKey
+} from './reconcile/volumeProvisioningReconciler'
 
 interface VolumeProvisioningControllerOptions {
   resyncIntervalMs?: number
@@ -24,9 +27,6 @@ export interface VolumeProvisioningController {
   initialSync: () => void
   resyncAll: () => void
 }
-
-const DEFAULT_STORAGE_CLASS_ANNOTATION =
-  'storageclass.kubernetes.io/is-default-class'
 
 const PROVISIONING_EVENTS: AppEventType[] = [
   'PodCreated',
@@ -43,87 +43,6 @@ const PROVISIONING_EVENTS: AppEventType[] = [
   'StorageClassDeleted'
 ]
 
-const resolveDefaultStorageClass = (
-  storageClasses: readonly StorageClass[]
-): StorageClass | undefined => {
-  return storageClasses.find((storageClass) => {
-    return (
-      storageClass.metadata.annotations?.[DEFAULT_STORAGE_CLASS_ANNOTATION] ===
-      'true'
-    )
-  })
-}
-
-const sanitizeNameSegment = (value: string): string => {
-  const lowered = value.toLowerCase()
-  const sanitized = lowered.replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-')
-  const trimmed = sanitized.replace(/^-+/, '').replace(/-+$/, '')
-  if (trimmed.length > 0) {
-    return trimmed
-  }
-  return 'claim'
-}
-
-const createDynamicPersistentVolumeName = (
-  claimNamespace: string,
-  claimName: string
-): string => {
-  const namespaceSegment = sanitizeNameSegment(claimNamespace)
-  const claimSegment = sanitizeNameSegment(claimName)
-  return `pvc-${namespaceSegment}-${claimSegment}`
-}
-
-const ensureClaimStorageClassName = (
-  apiServer: ApiServerFacade,
-  persistentVolumeClaim: PersistentVolumeClaim,
-  defaultStorageClass: StorageClass | undefined
-): PersistentVolumeClaim => {
-  if (persistentVolumeClaim.spec.storageClassName != null) {
-    return persistentVolumeClaim
-  }
-  if (defaultStorageClass == null) {
-    return persistentVolumeClaim
-  }
-  const updatedPersistentVolumeClaim: PersistentVolumeClaim = {
-    ...persistentVolumeClaim,
-    spec: {
-      ...persistentVolumeClaim.spec,
-      storageClassName: defaultStorageClass.metadata.name
-    }
-  }
-  apiServer.updateResource(
-    'PersistentVolumeClaim',
-    persistentVolumeClaim.metadata.name,
-    updatedPersistentVolumeClaim,
-    persistentVolumeClaim.metadata.namespace
-  )
-  return updatedPersistentVolumeClaim
-}
-
-const createDynamicallyProvisionedPersistentVolume = (
-  persistentVolumeClaim: PersistentVolumeClaim,
-  storageClass: StorageClass
-) => {
-  const volumeName = createDynamicPersistentVolumeName(
-    persistentVolumeClaim.metadata.namespace,
-    persistentVolumeClaim.metadata.name
-  )
-  return createPersistentVolume({
-    name: volumeName,
-    spec: {
-      capacity: {
-        storage: persistentVolumeClaim.spec.resources.requests.storage
-      },
-      accessModes: persistentVolumeClaim.spec.accessModes,
-      storageClassName: storageClass.metadata.name,
-      persistentVolumeReclaimPolicy: storageClass.reclaimPolicy,
-      hostPath: {
-        path: `/sim/dynamic-pv/${volumeName}`
-      }
-    }
-  })
-}
-
 export const createVolumeProvisioningController = (
   apiServer: ApiServerFacade,
   options: VolumeProvisioningControllerOptions = {}
@@ -133,90 +52,90 @@ export const createVolumeProvisioningController = (
   let started = false
   let unsubscribeEvents: (() => void) | undefined
   let stopResync: (() => void) | undefined
+  const claimQueue: WorkQueue = createWorkQueue({ processDelay: 0 })
 
-  const reconcileProvisioning = (): void => {
-    const persistentVolumes = [...apiServer.listResources('PersistentVolume')]
-    const storageClasses = apiServer.listResources('StorageClass')
-    const defaultStorageClass = resolveDefaultStorageClass(storageClasses)
-    const persistentVolumeClaims = apiServer.listResources(
-      'PersistentVolumeClaim'
-    )
-    for (const unresolvedPersistentVolumeClaim of persistentVolumeClaims) {
-      const persistentVolumeClaim = ensureClaimStorageClassName(
-        apiServer,
-        unresolvedPersistentVolumeClaim,
-        defaultStorageClass
-      )
-      if (persistentVolumeClaim.status.phase !== 'Pending') {
+  const enqueueClaim = (namespace: string, name: string): void => {
+    claimQueue.add(makeProvisioningClaimKey(namespace, name))
+  }
+
+  const enqueuePendingClaims = (): void => {
+    for (const claim of apiServer.listResources('PersistentVolumeClaim')) {
+      if (claim.status.phase !== 'Pending') {
         continue
       }
-      if (
-        persistentVolumeClaim.spec.volumeName != null &&
-        persistentVolumeClaim.spec.volumeName.length > 0
-      ) {
-        continue
-      }
-      const claimStorageClassName = persistentVolumeClaim.spec.storageClassName
-      if (claimStorageClassName == null || claimStorageClassName.length === 0) {
-        continue
-      }
-      const targetStorageClass = storageClasses.find((storageClass) => {
-        return storageClass.metadata.name === claimStorageClassName
-      })
-      if (targetStorageClass == null) {
-        continue
-      }
-      const shouldWaitForFirstConsumer = hasWaitForFirstConsumerBindingMode(
-        apiServer,
-        claimStorageClassName
-      )
-      if (shouldWaitForFirstConsumer) {
-        const hasConsumer = hasPodConsumerForClaim(
-          apiServer,
-          persistentVolumeClaim.metadata.namespace,
-          persistentVolumeClaim.metadata.name
-        )
-        if (!hasConsumer) {
-          continue
-        }
-      }
-      const candidatePersistentVolume = bindingPolicy.findCandidateVolume(
-        persistentVolumes,
-        persistentVolumeClaim
-      )
-      if (candidatePersistentVolume != null) {
-        continue
-      }
-      const dynamicPersistentVolume =
-        createDynamicallyProvisionedPersistentVolume(
-          persistentVolumeClaim,
-          targetStorageClass
-        )
-      const existingDynamicVolume = apiServer.findResource(
-        'PersistentVolume',
-        dynamicPersistentVolume.metadata.name
-      )
-      if (existingDynamicVolume.ok) {
-        continue
-      }
-      apiServer.createResource('PersistentVolume', dynamicPersistentVolume)
-      persistentVolumes.push(dynamicPersistentVolume)
+      enqueueClaim(claim.metadata.namespace, claim.metadata.name)
     }
   }
 
-  const onEvent = (event: { type: AppEventType }): void => {
+  const reconcileAll = (): void => {
+    for (const claim of apiServer.listResources('PersistentVolumeClaim')) {
+      enqueueClaim(claim.metadata.namespace, claim.metadata.name)
+    }
+  }
+
+  const onEvent = (event: { type: AppEventType; payload?: unknown }): void => {
     if (!PROVISIONING_EVENTS.includes(event.type)) {
       return
     }
-    reconcileProvisioning()
+    if (
+      event.type === 'PersistentVolumeClaimCreated' ||
+      event.type === 'PersistentVolumeClaimUpdated'
+    ) {
+      const payload = event.payload as {
+        persistentVolumeClaim?: { metadata: { namespace: string; name: string } }
+      }
+      if (payload.persistentVolumeClaim != null) {
+        enqueueClaim(
+          payload.persistentVolumeClaim.metadata.namespace,
+          payload.persistentVolumeClaim.metadata.name
+        )
+      }
+      return
+    }
+
+    if (
+      event.type === 'PodCreated' ||
+      event.type === 'PodUpdated' ||
+      event.type === 'PodDeleted'
+    ) {
+      const payload = event.payload as {
+        pod?: Pod
+        deletedPod?: Pod
+      }
+      const pod = payload.pod ?? payload.deletedPod
+      if (pod == null) {
+        enqueuePendingClaims()
+        return
+      }
+      const podVolumes = pod.spec.volumes ?? []
+      for (const volume of podVolumes) {
+        if (volume.source.type !== 'persistentVolumeClaim') {
+          continue
+        }
+        enqueueClaim(pod.metadata.namespace, volume.source.claimName)
+      }
+      return
+    }
+
+    if (
+      event.type === 'StorageClassCreated' ||
+      event.type === 'StorageClassUpdated' ||
+      event.type === 'StorageClassDeleted' ||
+      event.type === 'PersistentVolumeCreated' ||
+      event.type === 'PersistentVolumeUpdated' ||
+      event.type === 'PersistentVolumeDeleted'
+    ) {
+      enqueuePendingClaims()
+      return
+    }
   }
 
   const initialSync = (): void => {
-    reconcileProvisioning()
+    reconcileAll()
   }
 
   const resyncAll = (): void => {
-    reconcileProvisioning()
+    reconcileAll()
   }
 
   const start = (): void => {
@@ -224,6 +143,25 @@ export const createVolumeProvisioningController = (
       return
     }
     started = true
+    claimQueue.start((claimKey) => {
+      const reconcileResult = reconcileProvisioningClaimByKey(claimKey, {
+        apiServer,
+        bindingPolicy
+      })
+      if (reconcileResult.lifecycleEvent == null) {
+        return
+      }
+      apiServer.emitEvent(
+        createPersistentVolumeClaimLifecycleEvent(
+          reconcileResult.lifecycleEvent.namespace,
+          reconcileResult.lifecycleEvent.name,
+          reconcileResult.lifecycleEvent.reason,
+          reconcileResult.lifecycleEvent.message,
+          reconcileResult.lifecycleEvent.eventType,
+          reconcileResult.lifecycleEvent.source
+        )
+      )
+    })
     initialSync()
     const unsubscribers: Array<() => void> = []
     for (const eventType of PROVISIONING_EVENTS) {
@@ -254,6 +192,7 @@ export const createVolumeProvisioningController = (
       stopResync()
       stopResync = undefined
     }
+    claimQueue.stop()
   }
 
   return {

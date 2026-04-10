@@ -75,6 +75,17 @@ const renderServiceEndpoints = (
   return renderedEndpoints
 }
 
+const renderServiceDescribeEndpoints = (
+  service: Service,
+  state: ClusterStateData
+): string => {
+  const rendered = renderServiceEndpoints(service, state)
+  if (rendered === '<none>') {
+    return ''
+  }
+  return rendered
+}
+
 const renderEndpointsInline = (endpoints: Endpoints): string => {
   const subsets = endpoints.subsets ?? []
   const values: string[] = []
@@ -172,7 +183,7 @@ export const describeService = (
   lines.push(`Port:                     ${renderServicePort(service, 0)}`)
   lines.push(`TargetPort:               ${renderServiceTargetPort(service, 0)}`)
   lines.push(
-    `Endpoints:                ${renderServiceEndpoints(service, state)}`
+    `Endpoints:                ${renderServiceDescribeEndpoints(service, state)}`
   )
   lines.push(
     `Session Affinity:         ${service.spec.sessionAffinity ?? 'None'}`

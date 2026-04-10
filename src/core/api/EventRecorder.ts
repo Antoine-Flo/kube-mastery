@@ -385,6 +385,50 @@ const mapPersistentVolumeUpdatedEvent = (
   }
 }
 
+const mapPersistentVolumeClaimLifecycleEvent = (
+  event: ClusterEvent
+): EventRecordCandidate | undefined => {
+  if (event.type !== 'PersistentVolumeClaimLifecycle') {
+    return undefined
+  }
+  const sourceMetadata = resolveSourceMetadata(event.payload.source)
+  return {
+    namespace: event.payload.namespace,
+    involvedObject: {
+      apiVersion: 'v1',
+      kind: 'PersistentVolumeClaim',
+      name: event.payload.name,
+      namespace: event.payload.namespace
+    },
+    reason: event.payload.reason,
+    message: event.payload.message,
+    type: event.payload.eventType,
+    ...sourceMetadata
+  }
+}
+
+const mapPodVolumeLifecycleEvent = (
+  event: ClusterEvent
+): EventRecordCandidate | undefined => {
+  if (event.type !== 'PodVolumeLifecycle') {
+    return undefined
+  }
+  const sourceMetadata = resolveSourceMetadata(event.payload.source)
+  return {
+    namespace: event.payload.namespace,
+    involvedObject: {
+      apiVersion: 'v1',
+      kind: 'Pod',
+      name: event.payload.name,
+      namespace: event.payload.namespace
+    },
+    reason: event.payload.reason,
+    message: event.payload.message,
+    type: event.payload.eventType,
+    ...sourceMetadata
+  }
+}
+
 const mapClusterEventToCandidate = (
   event: ClusterEvent
 ): EventRecordCandidate | undefined => {
@@ -419,7 +463,16 @@ const mapClusterEventToCandidate = (
   if (persistentVolumeClaimUpdatedCandidate != null) {
     return persistentVolumeClaimUpdatedCandidate
   }
-  return mapPersistentVolumeUpdatedEvent(event)
+  const persistentVolumeUpdatedCandidate = mapPersistentVolumeUpdatedEvent(event)
+  if (persistentVolumeUpdatedCandidate != null) {
+    return persistentVolumeUpdatedCandidate
+  }
+  const persistentVolumeClaimLifecycleCandidate =
+    mapPersistentVolumeClaimLifecycleEvent(event)
+  if (persistentVolumeClaimLifecycleCandidate != null) {
+    return persistentVolumeClaimLifecycleCandidate
+  }
+  return mapPodVolumeLifecycleEvent(event)
 }
 
 const isClusterEvent = (event: AppEvent): event is ClusterEvent => {

@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { createApiServerFacade } from '../../../src/core/api/ApiServerFacade'
 import { createEventRecorder } from '../../../src/core/api/EventRecorder'
 import { createEventBus } from '../../../src/core/cluster/events/EventBus'
-import { createPodBoundEvent } from '../../../src/core/cluster/events/types'
+import {
+  createPersistentVolumeClaimLifecycleEvent,
+  createPodBoundEvent,
+  createPodVolumeLifecycleEvent
+} from '../../../src/core/cluster/events/types'
 import { createEvent } from '../../../src/core/cluster/ressources/Event'
 import { createPod } from '../../../src/core/cluster/ressources/Pod'
 
@@ -125,6 +129,66 @@ describe('EventRecorder', () => {
 
     const events = apiServer.listResources('Event')
     expect(events).toHaveLength(0)
+    apiServer.stop()
+  })
+
+  it('records Warning FailedBinding from pvc lifecycle event', () => {
+    const eventBus = createEventBus()
+    const apiServer = createApiServerFacade({
+      eventBus,
+      eventRecorder: { enabled: false }
+    })
+    const recorder = createEventRecorder(apiServer, eventBus)
+    recorder.start()
+
+    apiServer.emitEvent(
+      createPersistentVolumeClaimLifecycleEvent(
+        'default',
+        'data',
+        'FailedBinding',
+        'no persistent volumes available for this claim and no storage class is set',
+        'Warning',
+        'persistentvolume-controller'
+      )
+    )
+
+    const events = apiServer.listResources('Event')
+    expect(events).toHaveLength(1)
+    expect(events[0].involvedObject.kind).toBe('PersistentVolumeClaim')
+    expect(events[0].reason).toBe('FailedBinding')
+    expect(events[0].type).toBe('Warning')
+
+    recorder.stop()
+    apiServer.stop()
+  })
+
+  it('records Warning FailedMount from pod lifecycle event', () => {
+    const eventBus = createEventBus()
+    const apiServer = createApiServerFacade({
+      eventBus,
+      eventRecorder: { enabled: false }
+    })
+    const recorder = createEventRecorder(apiServer, eventBus)
+    recorder.start()
+
+    apiServer.emitEvent(
+      createPodVolumeLifecycleEvent(
+        'default',
+        'app',
+        'FailedMount',
+        'Unable to attach or mount volumes: timed out waiting for condition',
+        'Warning',
+        'kubelet'
+      )
+    )
+
+    const events = apiServer.listResources('Event')
+    expect(events).toHaveLength(1)
+    expect(events[0].involvedObject.kind).toBe('Pod')
+    expect(events[0].reason).toBe('FailedMount')
+    expect(events[0].type).toBe('Warning')
+
+    recorder.stop()
     apiServer.stop()
   })
 })

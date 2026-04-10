@@ -47,7 +47,7 @@ Phase is the summary, but conditions tell the full story. Each Pod carries a set
 
 `Ready` is the condition that Services use to decide whether to send traffic to this Pod. A Pod must have both `ContainersReady` and `Ready` as `True` before it receives any requests. This is the condition you care about most in production.
 
-## Observing the lifecycle in the simulator
+## Observing the lifecycle
 
 Create a Pod to watch these phases unfold:
 
@@ -88,9 +88,19 @@ Where do you find the Pod conditions, and what events appear in the `Events` sec
 
 ## When things go wrong: ImagePullBackOff
 
-:::warning
 If a Pod stays `Pending` then transitions through `ErrImagePull` into `ImagePullBackOff`, Kubernetes cannot pull the container image. This is often a typo in the image name, a missing tag, or a private registry with no credentials. Kubernetes retries with exponential backoff, so the wait between attempts doubles each time, up to five minutes. Always check `kubectl describe pod <name>` and read the `Events` section to find the exact error message from the container runtime.
-:::
+
+You can try this by creating a Pod with a deliberately broken image name:
+
+```bash
+kubectl run broken --image=nginx:does-not-exist
+```
+
+Then watch the events in the visualizer. Delete the Pod when you are done.
+
+```bash
+kubectl delete pod broken
+```
 
 ## When things go wrong: CrashLoopBackOff
 

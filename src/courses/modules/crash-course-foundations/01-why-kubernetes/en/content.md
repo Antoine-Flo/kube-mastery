@@ -5,9 +5,28 @@ seoDescription: 'Understand why Kubernetes exists, what problems it solves, and 
 
 # Why Kubernetes?
 
-It is 3am. Your web server container crashed on one of your six machines. Another machine is out of memory. A new version of your API is waiting to deploy, but you cannot afford downtime. You have 15 services spread across those machines, and the on-call engineer is you.
+## Before We Begin
 
-Managing containers manually at this scale is not a career, it is a series of incidents. Kubernetes exists to make this problem disappear.
+Welcome. Your cluster is ready and waiting. Let's make sure you can talk to it before anything else:
+
+In the terminal, run:
+```bash
+kubectl get nodes
+```
+
+You should see one control plane node and two worker nodes, all in `Ready` status. The control plane is the brain of the cluster, it makes decisions. The worker nodes are where your application containers will actually run. If you see `Ready` on all three, everything is working.
+
+```bash
+kubectl cluster-info
+```
+
+This shows the address of the API server, the single entry point through which all cluster communication flows. Every command you run goes through it.
+
+Now that you can see your cluster, let's talk about why it exists in the first place.
+
+## The Problem Kubernetes Solves
+
+Managing containers manually at scale is a series of incidents: crashed containers nobody noticed, machines running out of memory at 3am, deploys that required careful timing to avoid downtime. Kubernetes exists to make that operational work disappear.
 
 > **In one line:** you declare the desired state, the cluster keeps reconciling reality until it matches.
 
@@ -17,23 +36,6 @@ Managing containers manually at this scale is not a career, it is a series of in
 | You decide which machine runs each workload | The scheduler places Pods using capacity and policy |
 | IPs and wiring break whenever things move | Services expose stable DNS names and cluster IPs |
 | Rolling upgrades are a manual checklist | Deployments roll out with surge and availability rules |
-
-Day to day, Kubernetes focuses on **placement** (enough CPU and memory on healthy nodes), **recovery** (replace unhealthy instances without a runbook step), and **rollouts** (ship new versions without taking the app down).
-
-## Where Kubernetes came from
-
-Kubernetes did not appear in a vacuum. It grew out of large-scale scheduling experience at Google, at a moment when containers were becoming the default packaging format.
-
-- **2003** - Borg at Google: internal cluster scheduler, the concepts that shaped Kubernetes
-- **2013** - Containers go mainstream: portable images, ops must work cluster-wide
-- **2014** - Kubernetes open sourced: public project, vendors and community contribute
-- **2015** - Kubernetes 1.0 and CNCF: stable API baseline, vendor-neutral foundation
-- **2018** - CNCF graduation: mature governance, broad ecosystem adoption
-- **2025** - 93% of organizations use, evaluate, or test Kubernetes; 68% run most of their applications on it
-
-:::info
-The **[CNCF](https://www.cncf.io/)** (Cloud Native Computing Foundation) is a vendor-neutral Linux Foundation project that hosts Kubernetes and many related tools. Graduation means the project met adoption and governance criteria, not that development stopped. Releases still ship on a regular cadence today.
-:::
 
 ## The Orchestration Problem
 

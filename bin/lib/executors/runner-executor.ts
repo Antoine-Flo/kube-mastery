@@ -426,6 +426,7 @@ export const createRunnerExecutor = (
   const volumeRuntime = initializeSimVolumeRuntime(apiServer)
   const controllers = initializeControlPlane(apiServer, {
     podLifecycle: {
+      pendingDelayRangeMs: CONFIG.runtime.simPodPendingDelayRangeMs,
       volumeReadinessProbe: (pod) => {
         const readiness = volumeRuntime.state.getPodReadiness(
           pod.metadata.namespace,

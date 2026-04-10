@@ -21,6 +21,7 @@ export type ParseContext = {
   tokens?: string[]
   action?: Action
   resource?: Resource
+  resourceList?: Resource[]
   resourceTokenIndex?: number
   name?: string
   flags?: Record<string, string | boolean>
@@ -1299,11 +1300,50 @@ const topTransformer: ActionTransformer = (ctx) => {
  */
 const identityTransformer: ActionTransformer = (ctx) => success(ctx)
 
+const getTransformer: ActionTransformer = (ctx) => {
+  if (!ctx.tokens) {
+    return success(ctx)
+  }
+
+  const positionalTokens = extractPositionalTokensAfterAction(ctx.tokens)
+  const firstPositional = positionalTokens[0]
+  if (firstPositional == null) {
+    return success(ctx)
+  }
+  if (!firstPositional.includes(',')) {
+    return success(ctx)
+  }
+
+  const resourceTokens = firstPositional
+    .split(',')
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0)
+  if (resourceTokens.length === 0) {
+    return success(ctx)
+  }
+
+  const resources: Resource[] = []
+  for (const resourceToken of resourceTokens) {
+    const resource = RESOURCE_ALIAS_MAP[resourceToken] as Resource | undefined
+    if (resource == null) {
+      return error('Invalid or missing resource type')
+    }
+    resources.push(resource)
+  }
+
+  return success({
+    ...ctx,
+    resource: resources[0],
+    resourceList: resources
+  })
+}
+
 /**
  * Map of action-specific transformers
  * Add new actions here without modifying the pipeline
  */
 const ACTIONS_WITH_CUSTOM_PARSING: Record<string, ActionTransformer> = {
+  get: getTransformer,
   exec: execTransformer,
   logs: logsTransformer,
   delete: deleteTransformer,

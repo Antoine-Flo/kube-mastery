@@ -9,6 +9,14 @@ import { createKubectlExecutor } from '../../../../src/core/kubectl/commands/exe
 import { initializeSimVolumeRuntime } from '../../../../src/core/volumes/SimVolumeRuntime'
 import { createLogger } from '../../../../src/logger/Logger'
 
+const settleReconciliation = async (): Promise<void> => {
+  for (let index = 0; index < 6; index++) {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0)
+    })
+  }
+}
+
 const PV_YAML = [
   'apiVersion: v1',
   'kind: PersistentVolume',
@@ -54,6 +62,20 @@ const DYNAMIC_PVC_YAML = [
   '  storageClassName: standard'
 ].join('\n')
 
+const PENDING_PVC_WITHOUT_STORAGE_CLASS_YAML = [
+  'apiVersion: v1',
+  'kind: PersistentVolumeClaim',
+  'metadata:',
+  '  name: pending-no-sc',
+  '  namespace: default',
+  'spec:',
+  '  accessModes:',
+  '    - ReadWriteOnce',
+  '  resources:',
+  '    requests:',
+  '      storage: 100Mi'
+].join('\n')
+
 const STORAGE_CLASS_YAML = [
   'apiVersion: storage.k8s.io/v1',
   'kind: StorageClass',
@@ -86,7 +108,7 @@ const DYNAMIC_POD_YAML = [
 ].join('\n')
 
 describe('kubectl PV/PVC support', () => {
-  it('supports apply/get/describe/delete for pv and pvc', () => {
+  it('supports apply/get/describe/delete for pv and pvc', async () => {
     const apiServer = createApiServerFacade()
     const logger = createLogger()
     const fileSystem: FileSystem = createFileSystem(createHostFileSystem())
@@ -100,6 +122,7 @@ describe('kubectl PV/PVC support', () => {
     expect(applyPv.ok).toBe(true)
     const applyPvc = executor.execute('kubectl apply -f /home/kube/pvc.yaml')
     expect(applyPvc.ok).toBe(true)
+    await settleReconciliation()
 
     const getPv = executor.execute('kubectl get pv')
     expect(getPv.ok).toBe(true)
@@ -122,6 +145,7 @@ describe('kubectl PV/PVC support', () => {
 
     const deletePvc = executor.execute('kubectl delete pvc data')
     expect(deletePvc.ok).toBe(true)
+    await settleReconciliation()
     const deletePv = executor.execute('kubectl delete pv pv-fast')
     expect(deletePv.ok).toBe(true)
 
@@ -129,7 +153,7 @@ describe('kubectl PV/PVC support', () => {
     volumeRuntime.podVolumeController.stop()
   })
 
-  it('keeps WaitForFirstConsumer and provisioning events in describe pvc', () => {
+  it('keeps WaitForFirstConsumer and provisioning events in describe pvc', async () => {
     const apiServer = createApiServerFacade()
     const logger = createLogger()
     const fileSystem: FileSystem = createFileSystem(createHostFileSystem())
@@ -148,6 +172,7 @@ describe('kubectl PV/PVC support', () => {
       'kubectl apply -f /home/kube/dynamic-pvc.yaml'
     )
     expect(applyPvc.ok).toBe(true)
+    await settleReconciliation()
 
     const describePending = executor.execute('kubectl describe pvc dynamic-pvc')
     expect(describePending.ok).toBe(true)
@@ -159,6 +184,7 @@ describe('kubectl PV/PVC support', () => {
       'kubectl apply -f /home/kube/dynamic-pod.yaml'
     )
     expect(applyPod.ok).toBe(true)
+    await settleReconciliation()
 
     const describeBound = executor.execute('kubectl describe pvc dynamic-pvc')
     expect(describeBound.ok).toBe(true)
@@ -168,6 +194,36 @@ describe('kubectl PV/PVC support', () => {
       expect(describeBound.value).toContain('Provisioning')
       expect(describeBound.value).toContain('ProvisioningSucceeded')
       expect(describeBound.value).toContain('rancher.io/local-path')
+    }
+
+    volumeRuntime.volumeProvisioningController.stop()
+    volumeRuntime.volumeBindingController.stop()
+    volumeRuntime.podVolumeController.stop()
+  })
+
+  it('shows FailedBinding event when pvc has no storage class', async () => {
+    const apiServer = createApiServerFacade()
+    const logger = createLogger()
+    const fileSystem: FileSystem = createFileSystem(createHostFileSystem())
+    const volumeRuntime = initializeSimVolumeRuntime(apiServer)
+    fileSystem.writeFile(
+      '/home/kube/pending-no-sc.yaml',
+      PENDING_PVC_WITHOUT_STORAGE_CLASS_YAML
+    )
+
+    const executor = createKubectlExecutor(apiServer, fileSystem, logger)
+    const applyPvc = executor.execute('kubectl apply -f /home/kube/pending-no-sc.yaml')
+    expect(applyPvc.ok).toBe(true)
+    await settleReconciliation()
+
+    const describePending = executor.execute('kubectl describe pvc pending-no-sc')
+    expect(describePending.ok).toBe(true)
+    if (describePending.ok) {
+      expect(describePending.value).toContain('Status:        Pending')
+      expect(describePending.value).toContain('FailedBinding')
+      expect(describePending.value).toContain(
+        'no persistent volumes available for this claim and no storage class is set'
+      )
     }
 
     volumeRuntime.volumeProvisioningController.stop()

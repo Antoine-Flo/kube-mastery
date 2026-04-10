@@ -60,7 +60,6 @@ const buildRunDryRunManifest = (
 ): Record<string, unknown> => {
   const restartPolicy = parsed.runRestart ?? 'Always'
   const metadataLabels = {
-    run: podName,
     ...(parsed.runLabels ?? {})
   }
   const env = envVars
@@ -195,7 +194,7 @@ export const handleRun = (
     name: podName,
     namespace: runtimeNamespace,
     restartPolicy: parsed.runRestart ?? 'Always',
-    labels: { run: podName, ...(parsed.runLabels ?? {}) },
+    labels: { ...(parsed.runLabels ?? {}) },
     containers: [
       {
         name: podName,
@@ -240,7 +239,7 @@ export const handleRun = (
     const sourcePodForTraffic: SimTrafficPodIdentity = {
       name: podName,
       namespace: runtimeNamespace,
-      labels: { run: podName, ...(parsed.runLabels ?? {}) }
+      labels: { ...(parsed.runLabels ?? {}) }
     }
     const runtimeResult = executeRuntimeAttachedCommand(
       commandToExecute,

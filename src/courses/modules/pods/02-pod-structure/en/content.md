@@ -5,7 +5,7 @@ seoDescription: 'Understand the structure of a Kubernetes Pod manifest, covering
 
 # Pod Structure
 
-You know what a Pod is. Now you need to write one. Before you create your first Pod in the next lesson, it is worth understanding the key fields in its manifest, one at a time. The `spec` of a Pod is simpler than it might look, but a few fields trip up almost everyone at the beginning. This lesson builds the spec incrementally so each piece makes sense before you add the next.
+You know what a Pod is. Now you need to write one. Before you create your first Pod in the next lesson, it is worth understanding the key fields in its manifest, one at a time. The `spec` of a Pod is simpler than it might look, but a few fields trip up almost everyone at the beginning.
 
 ## The `containers` field
 

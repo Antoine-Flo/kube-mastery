@@ -218,6 +218,7 @@ export const parseCommand = (input: string): Result<ParsedCommand> => {
     action: ctx.action,
     configSubcommand: ctx.configSubcommand,
     resource: ctx.resource, // May be undefined for commands like 'version'
+    resourceList: ctx.resourceList,
     rawPath: getRawPathFromFlags(normalizedFlags),
     name: ctx.name,
     names: parsedNames,

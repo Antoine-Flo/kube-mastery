@@ -4,8 +4,16 @@ import { createPod } from '../../../src/core/cluster/ressources/Pod'
 import { createService } from '../../../src/core/cluster/ressources/Service'
 import { createNetworkController } from '../../../src/core/network/NetworkController'
 
+const settleReconciliation = async (): Promise<void> => {
+  for (let index = 0; index < 6; index++) {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0)
+    })
+  }
+}
+
 describe('NetworkController', () => {
-  it('should allocate clusterIP and nodePort and build endpoints', () => {
+  it('should allocate clusterIP and nodePort and build endpoints', async () => {
     const apiServer = createApiServerFacade()
     const controller = createNetworkController(apiServer)
 
@@ -38,6 +46,7 @@ describe('NetworkController', () => {
     )
 
     controller.start()
+    await settleReconciliation()
 
     const serviceResult = apiServer.findResource('Service', 'web', 'default')
     expect(serviceResult.ok).toBe(true)
@@ -59,7 +68,7 @@ describe('NetworkController', () => {
     controller.stop()
   })
 
-  it('should remove endpoints when selected pod is deleted', () => {
+  it('should remove endpoints when selected pod is deleted', async () => {
     const apiServer = createApiServerFacade()
     const controller = createNetworkController(apiServer)
 
@@ -85,7 +94,9 @@ describe('NetworkController', () => {
     )
 
     controller.start()
+    await settleReconciliation()
     apiServer.deleteResource('Pod', 'web-1', 'default')
+    await settleReconciliation()
 
     const runtime = controller.getState().getServiceRuntime('default', 'web')
     expect(runtime).toBeDefined()

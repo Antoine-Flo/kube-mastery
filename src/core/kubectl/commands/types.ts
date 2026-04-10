@@ -46,6 +46,7 @@ export interface ParsedCommand {
   configSubcommand?: 'get-contexts' | 'current-context' | 'view' | 'set-context'
   rolloutSubcommand?: 'status' | 'history' | 'restart' | 'undo'
   resource?: Resource // Optional for commands like 'version' that don't require a resource
+  resourceList?: Resource[] // For kubectl get with comma-separated resources (e.g. pod,svc)
   rawPath?: string // For kubectl get --raw: direct API path (e.g. /api/v1/namespaces)
   name?: string
   names?: string[] // Positional names after resource (e.g. get/delete pods a b c)

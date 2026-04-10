@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createApiServerFacade } from '../../../src/core/api/ApiServerFacade'
 import { createPodCreatedEvent } from '../../../src/core/cluster/events/types'
 import { createNode } from '../../../src/core/cluster/ressources/Node'
+import { createNamespace } from '../../../src/core/cluster/ressources/Namespace'
 import { createPersistentVolumeClaim } from '../../../src/core/cluster/ressources/PersistentVolumeClaim'
 import { createPod } from '../../../src/core/cluster/ressources/Pod'
 
@@ -198,6 +199,29 @@ describe('ApiServerFacade', () => {
       return
     }
     expect(createResult.value.spec.storageClassName).toBe('standard')
+    apiServer.stop()
+  })
+
+  it('publishes kube-root-ca configmap for newly created namespace', () => {
+    const apiServer = createApiServerFacade()
+    const createNamespaceResult = apiServer.createResource(
+      'Namespace',
+      createNamespace({ name: 'parity-e2e' })
+    )
+    expect(createNamespaceResult.ok).toBe(true)
+    const rootCaConfigMapResult = apiServer.findResource(
+      'ConfigMap',
+      'kube-root-ca.crt',
+      'parity-e2e'
+    )
+    expect(rootCaConfigMapResult.ok).toBe(true)
+    if (!rootCaConfigMapResult.ok) {
+      apiServer.stop()
+      return
+    }
+    expect(rootCaConfigMapResult.value.data?.['ca.crt']).toContain(
+      'BEGIN CERTIFICATE'
+    )
     apiServer.stop()
   })
 })

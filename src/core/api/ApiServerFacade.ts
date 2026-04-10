@@ -4,7 +4,11 @@ import {
   createPodUpdatedEvent
 } from '../cluster/events/types'
 import type { KindToResource, ResourceKind } from '../cluster/ClusterState'
-import type { ConfigMap } from '../cluster/ressources/ConfigMap'
+import {
+  createConfigMap,
+  type ConfigMap
+} from '../cluster/ressources/ConfigMap'
+import type { Namespace } from '../cluster/ressources/Namespace'
 import type { PersistentVolume } from '../cluster/ressources/PersistentVolume'
 import type { PersistentVolumeClaim } from '../cluster/ressources/PersistentVolumeClaim'
 import type { Pod } from '../cluster/ressources/Pod'
@@ -341,6 +345,9 @@ const hydratePodRuntimeForNamespace = (
 
 const DEFAULT_STORAGE_CLASS_ANNOTATION =
   'storageclass.kubernetes.io/is-default-class'
+const KUBE_ROOT_CA_CONFIGMAP_NAME = 'kube-root-ca.crt'
+const KUBE_ROOT_CA_CERT_PEM =
+  '-----BEGIN CERTIFICATE-----\nSIMULATED-CA\n-----END CERTIFICATE-----'
 
 const hydratePersistentVolumeClaimStorageClass = (
   persistentVolumeClaim: PersistentVolumeClaim,
@@ -644,6 +651,29 @@ export const createApiServerFacade = (
     )
   }
 
+  const ensureKubeRootCAConfigMapInNamespace = (
+    namespaceName: string
+  ): void => {
+    const existingRootCaConfigMapResult = clusterState.findByKind(
+      'ConfigMap',
+      KUBE_ROOT_CA_CONFIGMAP_NAME,
+      namespaceName
+    )
+    if (existingRootCaConfigMapResult.ok) {
+      return
+    }
+    const rootCaConfigMap = createConfigMap({
+      name: KUBE_ROOT_CA_CONFIGMAP_NAME,
+      namespace: namespaceName,
+      data: {
+        'ca.crt': KUBE_ROOT_CA_CERT_PEM
+      }
+    })
+    emitResourceMutationEvent('ConfigMap', 'create', {
+      resource: rootCaConfigMap as KindToResource<'ConfigMap'>
+    })
+  }
+
   const apiServer: ApiServerFacade = {
     eventBus,
     etcd,
@@ -784,6 +814,10 @@ export const createApiServerFacade = (
       emitResourceMutationEvent(kind, 'create', {
         resource: normalizedResource
       })
+      if (kind === 'Namespace') {
+        const namespaceName = (normalizedResource as Namespace).metadata.name
+        ensureKubeRootCAConfigMapInNamespace(namespaceName)
+      }
       return success(normalizedResource)
     },
     updateResource: (kind, name, resource, namespace) => {

@@ -1,8 +1,17 @@
 import { startPeriodicResync } from '../control-plane/controller-runtime/helpers'
+import {
+  createWorkQueue,
+  type WorkQueue
+} from '../control-plane/controller-runtime/WorkQueue'
 import type { ApiServerFacade } from '../api/ApiServerFacade'
+import { createPodVolumeLifecycleEvent } from '../cluster/events/types'
 import type { AppEventType } from '../events/AppEvent'
 import type { Pod } from '../cluster/ressources/Pod'
-import { type PodVolumeReadiness, type VolumeState } from './VolumeState'
+import { type VolumeState } from './VolumeState'
+import {
+  makePodVolumeKey,
+  reconcilePodVolumeByKey
+} from './reconcile/podVolumeReconciler'
 
 interface PodVolumeControllerOptions {
   resyncIntervalMs?: number
@@ -27,86 +36,6 @@ const POD_VOLUME_EVENTS: AppEventType[] = [
   'PersistentVolumeClaimDeleted'
 ]
 
-const evaluatePodVolumeReadiness = (
-  pod: Pod,
-  apiServer: ApiServerFacade,
-  volumeState: VolumeState
-): PodVolumeReadiness => {
-  const volumes = pod.spec.volumes ?? []
-  for (const volume of volumes) {
-    if (volume.source.type === 'emptyDir') {
-      continue
-    }
-    if (volume.source.type === 'configMap') {
-      continue
-    }
-    if (volume.source.type === 'secret') {
-      continue
-    }
-    if (volume.source.type === 'hostPath') {
-      if (pod.spec.nodeName == null || pod.spec.nodeName.length === 0) {
-        return {
-          ready: false,
-          reason: 'VolumeHostPathNodeUnavailable'
-        }
-      }
-      volumeState.reserveHostPath(pod.spec.nodeName, volume.source.path)
-      continue
-    }
-    if (volume.source.type === 'persistentVolumeClaim') {
-      const persistentVolumeClaimResult = apiServer.findResource(
-        'PersistentVolumeClaim',
-        volume.source.claimName,
-        pod.metadata.namespace
-      )
-      if (
-        !persistentVolumeClaimResult.ok ||
-        persistentVolumeClaimResult.value == null
-      ) {
-        return {
-          ready: false,
-          reason: 'PersistentVolumeClaimNotFound'
-        }
-      }
-      const persistentVolumeClaim = persistentVolumeClaimResult.value
-      const boundVolumeName =
-        persistentVolumeClaim.spec.volumeName ??
-        volumeState.getBoundVolumeForClaim(
-          pod.metadata.namespace,
-          volume.source.claimName
-        )
-      if (
-        persistentVolumeClaim.status.phase !== 'Bound' ||
-        boundVolumeName == null ||
-        boundVolumeName.length === 0
-      ) {
-        return {
-          ready: false,
-          reason: 'PersistentVolumeClaimPending'
-        }
-      }
-      const persistentVolumeResult = apiServer.findResource(
-        'PersistentVolume',
-        boundVolumeName
-      )
-      if (!persistentVolumeResult.ok || persistentVolumeResult.value == null) {
-        return {
-          ready: false,
-          reason: 'PersistentVolumeNotFound'
-        }
-      }
-      if (persistentVolumeResult.value.status.phase !== 'Bound') {
-        return {
-          ready: false,
-          reason: 'PersistentVolumeNotBound'
-        }
-      }
-    }
-  }
-
-  return { ready: true }
-}
-
 export const createPodVolumeController = (
   apiServer: ApiServerFacade,
   volumeState: VolumeState,
@@ -116,16 +45,15 @@ export const createPodVolumeController = (
   let started = false
   let unsubscribeEvents: (() => void) | undefined
   let stopResync: (() => void) | undefined
+  const podQueue: WorkQueue = createWorkQueue({ processDelay: 0 })
 
-  const reconcilePods = (): void => {
-    const pods = apiServer.listResources('Pod')
-    for (const pod of pods) {
-      const readiness = evaluatePodVolumeReadiness(pod, apiServer, volumeState)
-      volumeState.setPodReadiness(
-        pod.metadata.namespace,
-        pod.metadata.name,
-        readiness
-      )
+  const enqueuePod = (namespace: string, name: string): void => {
+    podQueue.add(makePodVolumeKey(namespace, name))
+  }
+
+  const enqueueAllPods = (): void => {
+    for (const pod of apiServer.listResources('Pod')) {
+      enqueuePod(pod.metadata.namespace, pod.metadata.name)
     }
   }
 
@@ -134,25 +62,46 @@ export const createPodVolumeController = (
       const deletedPodEvent = event as {
         payload: { deletedPod: Pod }
       }
+      const deletedPod = deletedPodEvent.payload.deletedPod
       volumeState.removePodReadiness(
-        deletedPodEvent.payload.deletedPod.metadata.namespace,
-        deletedPodEvent.payload.deletedPod.metadata.name
+        deletedPod.metadata.namespace,
+        deletedPod.metadata.name
       )
-      reconcilePods()
+      return
+    }
+    if (
+      event.type === 'PodCreated' ||
+      event.type === 'PodUpdated'
+    ) {
+      const createdOrUpdatedPodEvent = event as {
+        payload: { pod: Pod }
+      }
+      const pod = createdOrUpdatedPodEvent.payload.pod
+      enqueuePod(pod.metadata.namespace, pod.metadata.name)
+      return
+    }
+    if (
+      event.type === 'PersistentVolumeCreated' ||
+      event.type === 'PersistentVolumeUpdated' ||
+      event.type === 'PersistentVolumeDeleted' ||
+      event.type === 'PersistentVolumeClaimCreated' ||
+      event.type === 'PersistentVolumeClaimUpdated' ||
+      event.type === 'PersistentVolumeClaimDeleted'
+    ) {
+      enqueueAllPods()
       return
     }
     if (!POD_VOLUME_EVENTS.includes(event.type)) {
       return
     }
-    reconcilePods()
   }
 
   const initialSync = (): void => {
-    reconcilePods()
+    enqueueAllPods()
   }
 
   const resyncAll = (): void => {
-    reconcilePods()
+    enqueueAllPods()
   }
 
   const start = (): void => {
@@ -160,6 +109,25 @@ export const createPodVolumeController = (
       return
     }
     started = true
+    podQueue.start((podKey) => {
+      const reconcileResult = reconcilePodVolumeByKey(podKey, {
+        apiServer,
+        volumeState
+      })
+      if (reconcileResult.lifecycleEvent == null) {
+        return
+      }
+      apiServer.emitEvent(
+        createPodVolumeLifecycleEvent(
+          reconcileResult.lifecycleEvent.namespace,
+          reconcileResult.lifecycleEvent.name,
+          reconcileResult.lifecycleEvent.reason,
+          reconcileResult.lifecycleEvent.message,
+          reconcileResult.lifecycleEvent.eventType,
+          reconcileResult.lifecycleEvent.source
+        )
+      )
+    })
     initialSync()
     const unsubscribers: Array<() => void> = []
     for (const eventType of POD_VOLUME_EVENTS) {
@@ -190,6 +158,7 @@ export const createPodVolumeController = (
       stopResync()
       stopResync = undefined
     }
+    podQueue.stop()
   }
 
   return {

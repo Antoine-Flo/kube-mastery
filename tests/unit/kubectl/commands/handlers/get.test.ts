@@ -5,9 +5,56 @@ import { createEndpoints } from '../../../../../src/core/cluster/ressources/Endp
 import { createEvent } from '../../../../../src/core/cluster/ressources/Event'
 import { createNode } from '../../../../../src/core/cluster/ressources/Node'
 import { createPod } from '../../../../../src/core/cluster/ressources/Pod'
+import { createConfigMap } from '../../../../../src/core/cluster/ressources/ConfigMap'
+import { createSecret } from '../../../../../src/core/cluster/ressources/Secret'
 import { handleGet } from '../../../../../src/core/kubectl/commands/handlers/get'
 import type { ParsedCommand } from '../../../../../src/core/kubectl/commands/types'
 import { createClusterStateData } from '../../../helpers/utils'
+
+describe('kubectl get handler - multi resource list', () => {
+  it('renders comma-separated resources in sequence', () => {
+    const apiServer = createApiServerFacade()
+    apiServer.createResource(
+      'Pod',
+      createPod({
+        name: 'web',
+        namespace: 'default',
+        containers: [{ name: 'web', image: 'nginx:1.28' }]
+      })
+    )
+    apiServer.createResource(
+      'ConfigMap',
+      createConfigMap({
+        name: 'app-config',
+        namespace: 'default',
+        data: { MODE: 'dev' }
+      })
+    )
+    apiServer.createResource(
+      'Secret',
+      createSecret({
+        name: 'app-secret',
+        namespace: 'default',
+        secretType: { type: 'Opaque' },
+        data: { TOKEN: 'YWJjMTIz' }
+      })
+    )
+
+    const parsed: ParsedCommand = {
+      action: 'get',
+      resource: 'pods',
+      resourceList: ['pods', 'configmaps', 'secrets'],
+      flags: {},
+      namespace: 'default'
+    }
+    const output = handleGet(apiServer, parsed)
+
+    expect(output).toContain('NAME')
+    expect(output).toContain('web')
+    expect(output).toContain('app-config')
+    expect(output).toContain('app-secret')
+  })
+})
 
 describe('kubectl get handler - nodes', () => {
   let apiServer: ReturnType<typeof createApiServerFacade>

@@ -197,4 +197,50 @@ describe('WorkQueue', () => {
       }
     })
   })
+
+  describe('retry and requeue result', () => {
+    it('should requeue with retry when handler returns retry true', async () => {
+      const retryQueue = createWorkQueue({
+        processDelay: 0,
+        retryBaseDelayMs: 1,
+        retryMaxDelayMs: 2
+      })
+      const handler = vi.fn((key: string) => {
+        if (key === 'default/retry' && handler.mock.calls.length === 1) {
+          return { retry: true }
+        }
+        return undefined
+      })
+
+      retryQueue.add('default/retry')
+      retryQueue.start(handler)
+
+      await new Promise((resolve) => setTimeout(resolve, 20))
+
+      expect(handler.mock.calls.length).toBeGreaterThanOrEqual(2)
+      expect(retryQueue.attempts('default/retry')).toBe(0)
+      retryQueue.stop()
+    })
+
+    it('should requeue after delay when handler returns requeueAfterMs', async () => {
+      const delayedQueue = createWorkQueue({
+        processDelay: 0
+      })
+      let first = true
+      const handler = vi.fn(() => {
+        if (first) {
+          first = false
+          return { requeueAfterMs: 5 }
+        }
+        return undefined
+      })
+      delayedQueue.add('default/requeue')
+      delayedQueue.start(handler)
+
+      await new Promise((resolve) => setTimeout(resolve, 30))
+
+      expect(handler.mock.calls.length).toBeGreaterThanOrEqual(2)
+      delayedQueue.stop()
+    })
+  })
 })
