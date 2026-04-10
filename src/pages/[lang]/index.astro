@@ -60,14 +60,16 @@ try {
           </div>
           <div class="cta">
             <div class="cta-buttons">
-              <Button href={homeCtaHref} variant="solid" color="cyan" size="xl">
-                {homeCtaLabel}
-              </Button>
+              <div class="cta-primary-column">
+                <Button href={homeCtaHref} variant="solid" color="cyan" size="xl">
+                  {homeCtaLabel}
+                </Button>
+                <span class="cta-hint">{t('home_cta_no_account')}</span>
+              </div>
               <Button href={localePath('/pricing')} variant="outline" color="gray" size="xl">
                 {t('home_cta_explore')}
               </Button>
             </div>
-            <span class="cta-hint">{t('home_cta_no_account')}</span>
           </div>
         </div>
         <div class="hero-terminal">
@@ -283,12 +285,13 @@ try {
       <div class="reliability-cta-wrap">
         <div class="content">
           <div class="reliability-cta anim">
-            <p>{t('home_reliability_cta_intro')}</p>
-            <div class="cta">
-              <Button href={homeCtaHref} variant="solid" color="cyan" size="xl">
-                {homeCtaLabel}
-              </Button>
-              <span class="cta-hint">{t('home_cta_no_account')}</span>
+            <div class="cta reliability-cta-actions">
+              <div class="cta-stack">
+                <p class="reliability-cta-intro">{t('home_reliability_cta_intro')}</p>
+                <Button href={localePath('/pricing')} variant="solid" color="cyan" size="xl">
+                  {t('home_cta_explore')}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -442,9 +445,10 @@ try {
     align-items: center;
     gap: 1.5rem;
     justify-content: center;
-    min-height: 85vh;
+    min-height: 830px;
     position: relative;
-    padding: 1rem 1rem;
+    padding-block: 3rem;
+    padding-inline: 2rem;
   }
 
   .early-access-badge {
@@ -585,8 +589,22 @@ try {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.75rem;
+  }
+
+  .cta-primary-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .cta-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   .cta--centered {
@@ -596,6 +614,7 @@ try {
   .cta-hint {
     font-size: var(--text-sm);
     color: var(--color-gray-10);
+    text-align: center;
   }
 
   .cta :global(.btn[data-color='cyan'][data-variant='solid']) {
@@ -1184,18 +1203,23 @@ try {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.75rem;
     text-align: center;
   }
-  .reliability-cta p {
-    margin: 0;
+
+  .reliability-cta-actions {
+    margin-top: 0;
+  }
+
+  .reliability-cta-intro {
+    margin-bottom: 1rem;
     font-size: var(--text-base);
     color: var(--color-gray-11);
     line-height: 1.6;
     max-width: 720px;
+    text-align: center;
   }
   @media (min-width: 768px) {
-    .reliability-cta p {
+    .reliability-cta-intro {
       font-size: var(--text-lg);
     }
   }
