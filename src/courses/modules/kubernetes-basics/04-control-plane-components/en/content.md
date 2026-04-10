@@ -5,7 +5,7 @@ seoDescription: 'Understand the four core Kubernetes control plane components, k
 
 # Control Plane Components
 
-You run `kubectl apply -f deployment.yaml`. A few seconds later, three Pods are running on your cluster. It feels instant. But something had to validate your request, store it, decide where each Pod would run, and coordinate starting the containers. This lesson opens the black box and traces exactly what happened.
+You tell the cluster you want three copies of your application running. A few seconds later, they are. It feels instant. But something had to receive that intention, validate it, persist it, decide which nodes would host each copy, and coordinate actually starting the containers. This lesson opens that black box and traces exactly what happened.
 
 @@@
 sequenceDiagram
@@ -35,16 +35,18 @@ Nothing in your cluster talks to anything else directly. Every component, kubect
 
 When you run `kubectl apply`, you are sending an HTTP request to the API server. It validates the request (are all required fields present? does this user have permission?), then writes the result to storage. It is the single gateway through which all cluster state flows, in both directions.
 
-```
+```bash
 kubectl get pods -n kube-system
 ```
 
 You will see Pods for each control plane component running in the `kube-system` namespace. Look for `kube-apiserver`, `etcd`, `kube-scheduler`, and `kube-controller-manager`. On most clusters, these run as static Pods on the control plane node.
 
 :::quiz
-Your application controller needs to watch for new ConfigMaps. What does it connect to?
+In the output of `kubectl get pods -n kube-system`, some Pod names end with `sim-control-plane` and others do not. Which category do `kube-proxy` and `coredns` fall into, and what does that tell you about where they run?
 
-**Answer:** The kube-apiserver. No component reads from etcd directly. No component talks to another component directly. Every read and write goes through the API server, which is what makes centralized auth, validation, and auditing possible.
+**Try it:** `kubectl get pods -n kube-system`
+
+**Answer:** `kube-proxy` and `coredns` do not have `sim-control-plane` in their name. They appear three times, once per node. They are not control plane components, they run on every node in the cluster. The Pods ending in `sim-control-plane` (kube-apiserver, etcd, kube-scheduler, kube-controller-manager) are the actual control plane components and run only on the control plane node.
 :::
 
 ## etcd

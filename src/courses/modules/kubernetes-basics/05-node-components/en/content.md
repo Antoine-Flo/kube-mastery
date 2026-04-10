@@ -9,25 +9,35 @@ The scheduler has made its decision. Your Pod's `nodeName` field is now set to `
 
 @@@
 graph TB
+    subgraph cp [Control Plane]
+        API["kube-apiserver"]
+    end
     subgraph node [Worker Node]
         KL["kubelet"]
         KP["kube-proxy"]
-        CRI["Container Runtime<br/>(containerd)"]
-        P1["Pod A<br/>containers"]
-        P2["Pod B<br/>containers"]
+        CNI["CNI plugin (kindnet)"]
+        CRI["Container Runtime (containerd)"]
+        P1["Pod A"]
+        P2["Pod B"]
+        DNS["CoreDNS Pod"]
     end
-    API["kube-apiserver<br/>(control plane)"]
 
-    API -->|"Pod spec assigned to node"| KL
-    KL -->|"start containers"| CRI
+    API -->|"Pod spec"| KL
+    KL -->|"start"| CRI
     CRI --> P1
     CRI --> P2
-    KL -->|"report status"| API
-    KP -->|"iptables rules"| P1
-    KP -->|"iptables rules"| P2
+    CRI --> DNS
+    KL -->|"status"| API
+    KP -->|"routing rules"| P1
+    KP -->|"routing rules"| P2
+    CNI -->|"assign IP"| P1
+    CNI -->|"assign IP"| P2
+    CNI -->|"assign IP"| DNS
+    DNS -->|"name resolution"| P1
+    DNS -->|"name resolution"| P2
 @@@
 
-Three components run on every worker node. Each has a distinct role: managing Pods, managing network routing, and actually running containers.
+Four components run on every worker node. One additional component runs as a cluster-wide addon. Each has a distinct role: managing Pods, assigning network identities, routing Service traffic, running containers, and resolving names inside the cluster.
 
 ## kubelet
 
@@ -37,7 +47,7 @@ When the kubelet detects a new Pod with its node's name, it reads the Pod spec a
 
 To check which nodes are in your cluster and whether each kubelet is healthy:
 
-```
+```bash
 kubectl get nodes
 ```
 
@@ -49,8 +59,8 @@ When a node shows `NotReady`, the scheduler immediately stops placing new Pods t
 
 To inspect a node in more detail:
 
-```
-kubectl describe node kind-worker
+```bash
+kubectl describe node sim-worker
 ```
 
 Look at the `Conditions` section: `Ready`, `MemoryPressure`, `DiskPressure`, and `PIDPressure` tell you the health of the node at the resource level. The `Allocated resources` section shows how much CPU and memory the currently running Pods are requesting in total.
@@ -79,6 +89,26 @@ A Service with ClusterIP `10.96.0.10` is created. Which component programs the n
 **Answer:** kube-proxy. The kubelet manages container lifecycle. The scheduler makes placement decisions. Only kube-proxy touches the node's network rules to implement Services.
 :::
 
+## CNI Plugin
+
+kube-proxy routes traffic to Services, but a more fundamental question comes first: how does each Pod get its own IP address in the first place?
+
+That is the CNI plugin's responsibility. CNI stands for Container Network Interface. When the kubelet starts a new Pod, it calls the CNI plugin to set up the Pod's network: assign an IP address, configure a virtual network interface, and establish the routes that let the Pod communicate with other Pods across node boundaries.
+
+In this simulated cluster, the CNI plugin is kindnet. On real clusters you will encounter Calico, Cilium, or Flannel. The plugin choice affects how Pod-to-Pod traffic is routed internally, but from your perspective as a user the result is always the same: every Pod gets a unique IP that is reachable from any other Pod in the cluster, regardless of which node each one is on.
+
+```bash
+kubectl get pods -n kube-system
+```
+
+The `kindnet-*` Pods in the output run as a DaemonSet, one instance per node. Each instance manages the network setup on its own node. This is the same pattern as kube-proxy: anything that must configure local node networking runs everywhere.
+
+:::quiz
+Why does the CNI plugin run on every node instead of just one?
+
+**Answer:** Because Pod network setup is a local operation. When the kubelet starts a Pod, the CNI plugin has to configure virtual interfaces and IP routes on that specific node's network stack. A centralized CNI plugin would have no access to the local kernel networking on remote nodes.
+:::
+
 ## Container Runtime
 
 The kubelet decides what needs to run. But it does not pull images or create container processes itself. That is the container runtime's job.
@@ -99,6 +129,24 @@ The kubelet needs to start a container. Which sequence is correct?
 **Answer:** The kubelet calls the CRI, the runtime starts the container, then the kubelet reports status. The kubelet never manipulates containers directly. kube-proxy plays no role in starting containers, it only manages network routing.
 :::
 
+## CoreDNS
+
+Pod IPs change every time a Pod is restarted or moved to another node. To avoid hardcoding IPs, Kubernetes runs a DNS server inside the cluster: CoreDNS. When a Pod wants to reach another component by name, it queries CoreDNS, which returns the right IP.
+
+CoreDNS runs as a Deployment in `kube-system`. You will learn what a Deployment is in a later lesson. For now, think of it as a way to run several copies of a Pod for redundancy.
+
+```bash
+kubectl get deployments -n kube-system
+```
+
+You will see a `coredns` Deployment with 2 replicas. Two copies means that if one restarts, name resolution keeps working through the other.
+
+:::quiz
+Why does CoreDNS run two replicas instead of one?
+
+**Answer:** If a single CoreDNS Pod restarted, every Pod in the cluster would temporarily lose the ability to resolve names. Two replicas guarantee that at least one is always available to answer DNS queries during restarts or failures.
+:::
+
 ## Interleaving: What Happens If the API Server Goes Down
 
 You now know that the kubelet continuously watches the API server for Pod assignments. So what happens to running Pods if the API server becomes temporarily unavailable?
@@ -115,4 +163,4 @@ The API server is down for two minutes. A container on node-1 crashes during tha
 In the simulator, you interact with a single-node setup and see its Pods, but without access to the underlying host. On a real cluster, node-level debugging involves `systemctl status kubelet` and `journalctl -u kubelet` on the host machine to inspect what the kubelet is doing and why containers are failing to start.
 :::
 
-The full picture is now complete: `kubectl apply` reaches the API server, etcd stores the object, the controller manager creates Pods, the scheduler assigns a node, and the kubelet on that node calls the container runtime to start the containers. Every component has exactly one job, and they communicate exclusively through the API server. The next module covers YAML manifests and the Kubernetes object model, which is the language you use to express desired state to this entire system.
+The full picture is now complete. When you declare desired state to the cluster, the API server receives and stores it, the controller manager creates Pods, the scheduler assigns a node, the CNI plugin gives each Pod an IP, the kubelet calls the container runtime to start the containers, kube-proxy programs the routing rules for Services, and CoreDNS makes those Services reachable by name. Every component has exactly one job, and they all communicate through the API server. The next module covers the Kubernetes object model, which is the language you use to express desired state to this entire system.
