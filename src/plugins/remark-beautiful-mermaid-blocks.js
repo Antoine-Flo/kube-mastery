@@ -89,10 +89,27 @@ function normalizeMermaidSource(source) {
     .replace(/\u27f6/g, '-->')
     .replace(/\u2794/g, '-->')
     .replace(/\u21d2/g, '==>')
-    .replace(/\u2013>/g, '-->')
-    .replace(/\u2014>/g, '-->')
+    // Astro runs remark-smartypants before user remark plugins. Its second pass turns
+    // T -- "label" --> V into T — "label" —> V (em dash + curly quotes), which breaks
+    // beautiful-mermaid arrow parsing. Normalize quotes first so dash rules match.
+    .replace(/\u201c/g, '"')
+    .replace(/\u201d/g, '"')
+    .replace(/\u2018/g, "'")
+    .replace(/\u2019/g, "'")
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
+    // Typographic dashes (en/em) where Mermaid expects ASCII --.
+    // Use [\w-]+ so ids like cp, n1, node-a match (not only a single letter).
+    .replace(/([\w-]+)\s+\u2014\s+"/g, '$1 -- "')
+    .replace(/([\w-]+)\s+\u2013\s+"/g, '$1 -- "')
+    .replace(/([\w-]+)\u2014"/g, '$1 -- "')
+    .replace(/([\w-]+)\u2013"/g, '$1 -- "')
+    .replace(/\u2013>/g, '-->')
+    .replace(/\u2014>/g, '-->')
+    // Labeled edges: C -- No --> D becomes C — No —> D after smartypants (second pass).
+    // Run after \u2014> fix so the closing operator is already ASCII -->.
+    .replace(/([\w-]+)\s+\u2014\s+(.+?)\s+(-->)/g, '$1 -- $2 $3')
+    .replace(/([\w-]+)\s+\u2013\s+(.+?)\s+(-->)/g, '$1 -- $2 $3')
     .trim()
 }
 

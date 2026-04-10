@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
+import remarkGfm from 'remark-gfm'
+import remarkSmartypants from 'remark-smartypants'
 import remarkRehype from 'remark-rehype'
 import rehypeStringify from 'rehype-stringify'
 import { VFile } from 'vfile'
@@ -21,6 +23,13 @@ const lessonPath = fileURLToPath(
   )
 )
 
+const onboardingLessonPath = fileURLToPath(
+  new URL(
+    '../../../src/courses/modules/onboarding/01-how-to-use-this-platform/en/content.md',
+    import.meta.url
+  )
+)
+
 function stripYamlFrontmatter(raw: string): string {
   const normalized = raw.replace(/\r\n/g, '\n').trim()
   if (!normalized.startsWith('---\n')) {
@@ -31,8 +40,11 @@ function stripYamlFrontmatter(raw: string): string {
 
 function processLessonMarkdown(markdown: string): string {
   const file = new VFile({ path: 'virtual.md', value: markdown })
+  // Match @astrojs/markdown-remark order: GFM + smartypants run before user remarkPlugins.
   const processor = unified()
     .use(remarkParse)
+    .use(remarkGfm)
+    .use(remarkSmartypants)
     .use(remarkCalloutColons)
     .use(remarkQuizBlocks)
     .use(remarkBeautifulMermaidBlocks)
@@ -120,6 +132,48 @@ End.
     expect(() => {
       processLessonMarkdown(md)
     }).toThrow(/remark-beautiful-mermaid-blocks/)
+  })
+
+  it('renders LR flowchart edge for onboarding platform diagram (polyline present)', () => {
+    const markdown = stripYamlFrontmatter(readFileSync(onboardingLessonPath, 'utf8'))
+    const html = processLessonMarkdown(markdown)
+    expect(html).toContain('mermaid-theme-stack')
+    const polylineCount = (html.match(/<polyline/g) || []).length
+    expect(polylineCount).toBeGreaterThanOrEqual(2)
+  })
+
+  it('normalizes Unicode dash text arrows so flowchart edges still parse', () => {
+    const enDash = '\u2013'
+    const md = `D
+
+@@@
+graph LR
+  A["x"]
+  B["y"]
+  A ${enDash} "e" ${enDash}> B
+@@@
+
+`
+    const html = processLessonMarkdown(md)
+    expect((html.match(/<polyline/g) || []).length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('restores smartypants em-dash labeled edges and multi-char node ids (No/Yes branches)', () => {
+    const em = '\u2014'
+    const md = `L
+
+@@@
+graph LR
+  A["a"] ${em}> B["b"]
+  C ${em} No ${em}> D["reconcile text"]
+  cp ${em} schedules here ${em}> n1["z"]
+@@@
+
+`
+    const html = processLessonMarkdown(md)
+    expect(html).toContain('reconcile text')
+    expect(html).toContain('schedules here')
+    expect(html).not.toMatch(/data-label="D"[^>]*data-shape="rectangle"/)
   })
 
   it('parses inline @@@ block when label text contains @@@ (not a real closing marker)', () => {
