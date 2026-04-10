@@ -9,7 +9,7 @@ You run `kubectl get namespaces` on a freshly created cluster and you see four n
 
 Start by running the command now:
 
-```
+```bash
 kubectl get namespaces
 ```
 
@@ -27,7 +27,7 @@ graph TD
 
 Try creating a Pod in the current namespace without specifying one, and observe where it ends up:
 
-```
+```bash
 kubectl run test-pod --image=nginx:1.28
 kubectl get pods
 ```
@@ -45,7 +45,7 @@ The Pod appears in `default` because no `-n` flag was given.
 
 This is where the cluster's own components run. Inspect those Pods now:
 
-```
+```bash
 kubectl get pods -n kube-system
 ```
 
@@ -59,7 +59,7 @@ Never delete or modify resources in `kube-system`. These Pods are critical clust
 
 `kube-public` is readable by all users, even unauthenticated ones. It typically contains a ConfigMap called `cluster-info` that exposes basic cluster metadata. Some bootstrap tools use this ConfigMap to discover how to connect to the cluster.
 
-```
+```bash
 kubectl get configmaps -n kube-public
 ```
 
@@ -73,7 +73,7 @@ In most clusters, `kube-public` is nearly empty. It exists to provide a standard
 
 This namespace contains `Lease` objects, one per node. Why does that matter? The kubelet on each node updates its Lease object regularly to signal that the node is still alive. The controller manager watches these Leases to detect failing nodes.
 
-```
+```bash
 kubectl get leases -n kube-node-lease
 ```
 
@@ -87,7 +87,7 @@ Why was `kube-node-lease` created as a separate namespace instead of putting Lea
 
 Remove the test Pod you created earlier:
 
-```
+```bash
 kubectl delete pod test-pod
 ```
 

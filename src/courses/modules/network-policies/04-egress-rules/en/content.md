@@ -121,17 +121,17 @@ spec:
           port: 5432
 ```
 
-```
+```bash
 kubectl apply -f api-egress-policy.yaml
 ```
 
-```
+```bash
 kubectl get networkpolicy
 ```
 
 You should now see `api-egress-only-db` listed. Verify the details:
 
-```
+```bash
 kubectl describe networkpolicy api-egress-only-db
 ```
 

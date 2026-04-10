@@ -17,13 +17,13 @@ Events are the cluster's internal activity log. They do not replace container lo
 
 To see all Events in your current namespace, run:
 
-```
+```bash
 kubectl get events
 ```
 
 The output shows the age, type, reason, object name, and a human-readable message for each event. By default they are ordered by creation time, oldest first. To see the most recent activity at the bottom:
 
-```
+```bash
 kubectl get events --sort-by=.lastTimestamp
 ```
 
@@ -41,7 +41,7 @@ You deployed a Pod and it has been `Pending` for two minutes. What command shows
 
 The most common way to check Events in practice is through `kubectl describe`. The Events section always appears at the bottom of the describe output and is automatically scoped to the resource you are describing.
 
-```
+```bash
 kubectl describe pod my-pod
 ```
 
@@ -68,13 +68,13 @@ The `reason` field is a short machine-readable label. The most important ones to
 
 Now try creating a Pod with a deliberately broken image name to see what Events look like in failure:
 
-```
+```bash
 kubectl run broken --image=nginx:does-not-exist
 ```
 
 Then watch the events for that Pod:
 
-```
+```bash
 kubectl get events --sort-by=.lastTimestamp
 ```
 
@@ -96,19 +96,19 @@ When your namespace has many resources and many events, the full list gets noisy
 
 To see only Warning events:
 
-```
+```bash
 kubectl get events --field-selector type=Warning
 ```
 
 To see events related to a specific object:
 
-```
+```bash
 kubectl get events --field-selector involvedObject.name=my-pod
 ```
 
 To see events with a specific reason:
 
-```
+```bash
 kubectl get events --field-selector reason=BackOff
 ```
 

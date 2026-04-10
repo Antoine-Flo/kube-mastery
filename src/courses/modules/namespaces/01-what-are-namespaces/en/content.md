@@ -21,7 +21,7 @@ A cluster without namespaces is like an office with one shared desk. Everyone dr
 
 Start by listing the namespaces the simulated cluster already has:
 
-```
+```bash
 kubectl get namespaces
 ```
 
@@ -34,7 +34,7 @@ kubectl get namespaces
 
 The fastest way to create a namespace is with `kubectl create namespace`:
 
-```
+```bash
 kubectl create namespace staging
 ```
 

@@ -24,12 +24,12 @@ Each team gets its own namespace. The frontend team cannot accidentally delete a
 
 Create the namespaces:
 
-```
+```bash
 kubectl create namespace frontend
 kubectl create namespace backend
 ```
 
-```
+```bash
 kubectl create deployment web --image=nginx:1.28 -n frontend
 kubectl create deployment api --image=nginx:1.28 -n backend
 kubectl get pods -A
@@ -51,7 +51,7 @@ For real production workloads, separating environments into different clusters i
 
 If you do use the per-environment pattern in the simulator, the setup looks like this:
 
-```
+```bash
 kubectl create namespace dev
 kubectl create namespace staging
 kubectl get namespaces

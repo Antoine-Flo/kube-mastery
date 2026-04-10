@@ -15,7 +15,7 @@ CoreDNS is a DNS server that runs as a Deployment inside the `kube-system` names
 
 Start by confirming CoreDNS is running in the simulated cluster:
 
-```
+```bash
 kubectl get pods -n kube-system
 ```
 

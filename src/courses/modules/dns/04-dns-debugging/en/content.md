@@ -30,7 +30,7 @@ Each node corresponds to a concrete command you can run right now. Work through 
 
 CoreDNS is the foundation. If it is not running, no name in the cluster resolves. Check it first:
 
-```
+```bash
 kubectl get pods -n kube-system
 ```
 
@@ -52,13 +52,13 @@ A Service can exist in DNS without any working backend. This happens when the la
 
 First confirm the Service exists and note its ClusterIP:
 
-```
+```bash
 kubectl get service web-svc
 ```
 
 Then inspect its Endpoints:
 
-```
+```bash
 kubectl describe service web-svc
 ```
 
@@ -106,13 +106,13 @@ Moving from short name to FQDN isolates namespace confusion. If the FQDN resolve
 
 The best way to understand the difference between a DNS failure and a connectivity failure is to create one intentionally. Create a Service whose selector will not match any Pod:
 
-```
+```bash
 kubectl create service clusterip broken-svc --tcp=80:80
 ```
 
 This Service gets the selector `app: broken-svc` by default. Unless you have a Pod with exactly that label, the Endpoints list is empty. Verify:
 
-```
+```bash
 kubectl describe service broken-svc
 ```
 
@@ -130,7 +130,7 @@ In the simulated cluster, `nslookup` queries the simulated DNS layer. If the Ser
 
 Now fix the broken Service by deleting it and creating one with a selector that actually matches a running Pod. First check what Pods and labels are available:
 
-```
+```bash
 kubectl get pods --show-labels
 ```
 

@@ -207,11 +207,11 @@ spec:
           port: 5432
 ```
 
-```
+```bash
 kubectl apply -f db-network-policy.yaml
 ```
 
-```
+```bash
 kubectl describe networkpolicy protect-db
 ```
 

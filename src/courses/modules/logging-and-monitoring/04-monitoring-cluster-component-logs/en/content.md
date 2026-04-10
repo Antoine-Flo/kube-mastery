@@ -13,7 +13,7 @@ Kubernetes control plane components are not black boxes. Most of them run as Pod
 
 Start by listing what is running in `kube-system`:
 
-```
+```bash
 kubectl get pods -n kube-system
 ```
 
@@ -34,13 +34,13 @@ Each of these components writes structured logs to stdout, and kubelet captures 
 
 To see CoreDNS logs, which is often the first place to look for DNS resolution problems:
 
-```
+```bash
 kubectl logs -n kube-system -l k8s-app=kube-dns
 ```
 
 To follow the scheduler logs in real time:
 
-```
+```bash
 kubectl logs -n kube-system -l component=kube-scheduler -f
 ```
 
@@ -48,7 +48,7 @@ The `-l` flag lets you target Pods by label rather than by exact name, which is 
 
 To inspect a specific component Pod in detail first:
 
-```
+```bash
 kubectl describe pod -n kube-system kube-scheduler-controlplane
 ```
 

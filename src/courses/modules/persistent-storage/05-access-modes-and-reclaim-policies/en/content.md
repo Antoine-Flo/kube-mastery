@@ -33,7 +33,7 @@ Access modes are enforced by Kubernetes but ultimately constrained by the storag
 
 To check access modes on existing PVs in the simulated cluster:
 
-```
+```bash
 kubectl get pv
 ```
 
@@ -83,13 +83,13 @@ For a cache or a feature flag store that can be rebuilt from scratch, `ReadWrite
 
 To change the reclaim policy on an existing PV:
 
-```
+```bash
 kubectl patch pv postgres-pv -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'
 ```
 
 Verify the change took effect:
 
-```
+```bash
 kubectl get pv postgres-pv
 ```
 

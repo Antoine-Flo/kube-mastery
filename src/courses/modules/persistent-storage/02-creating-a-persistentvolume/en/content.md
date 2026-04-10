@@ -78,11 +78,11 @@ spec:
     path: /data/postgres
 ```
 
-```
+```bash
 kubectl apply -f pv.yaml
 ```
 
-```
+```bash
 kubectl get pv
 ```
 
@@ -121,7 +121,7 @@ A `Released` PV with the `Retain` policy is not automatically reusable. It still
 
 To inspect all fields of the PV, including `claimRef` when it is populated after a binding:
 
-```
+```bash
 kubectl describe pv postgres-pv
 ```
 

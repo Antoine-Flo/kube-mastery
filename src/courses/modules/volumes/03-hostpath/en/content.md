@@ -64,11 +64,11 @@ spec:
 
 Apply and inspect the mount:
 
-```
+```bash
 kubectl apply -f log-collector.yaml
 ```
 
-```
+```bash
 kubectl describe pod log-collector
 ```
 

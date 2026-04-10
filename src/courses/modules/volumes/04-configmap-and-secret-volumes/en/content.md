@@ -30,13 +30,13 @@ Think of it like a shared network folder that Kubernetes populates from a dictio
 
 Create a ConfigMap with a key named `config.yaml`:
 
-```
+```bash
 kubectl create configmap app-config --from-literal=config.yaml="log_level: debug"
 ```
 
 Confirm it was created:
 
-```
+```bash
 kubectl describe configmap app-config
 ```
 

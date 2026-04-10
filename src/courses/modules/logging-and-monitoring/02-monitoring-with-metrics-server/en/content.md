@@ -31,7 +31,7 @@ In the simulator, Metrics Server is pre-installed. `kubectl top` returns realist
 
 To see CPU and memory usage per node, run:
 
-```
+```bash
 kubectl top nodes
 ```
 
@@ -39,13 +39,13 @@ The output shows the node name, current CPU usage in millicores, CPU percentage 
 
 To see usage per Pod in the current namespace:
 
-```
+```bash
 kubectl top pods
 ```
 
 To look at Pods in a specific namespace:
 
-```
+```bash
 kubectl top pods -n kube-system
 ```
 

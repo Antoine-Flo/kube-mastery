@@ -21,7 +21,7 @@ A Pod with IP `10.244.1.15` in the `default` namespace has the record `10-244-1-
 
 Start by looking at current Pod IPs in the simulated cluster:
 
-```
+```bash
 kubectl get pods -o wide
 ```
 

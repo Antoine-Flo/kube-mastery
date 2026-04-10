@@ -74,11 +74,11 @@ spec:
 
 Apply and inspect:
 
-```
+```bash
 kubectl apply -f shared-pod.yaml
 ```
 
-```
+```bash
 kubectl describe pod cache-pair
 ```
 

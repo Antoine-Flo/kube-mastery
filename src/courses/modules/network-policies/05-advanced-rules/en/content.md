@@ -178,11 +178,11 @@ spec:
 
 Both `podSelector` and `namespaceSelector` are inside the same `-` list item. The source must satisfy both. A Pod labeled `app: api` in a namespace not labeled `team: backend` is blocked. A Pod in a `team: backend` namespace without the `app: api` label is also blocked.
 
-```
+```bash
 kubectl apply -f cross-ns-policy.yaml
 ```
 
-```
+```bash
 kubectl describe networkpolicy allow-api-from-backend-ns
 ```
 

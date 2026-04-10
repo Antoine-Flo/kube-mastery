@@ -24,7 +24,7 @@ In the diagram above, all four Pods communicate freely. Kubernetes sets up an in
 
 Run this command in the simulator to see the Pods currently running:
 
-```
+```bash
 kubectl get pods -o wide
 ```
 
@@ -55,7 +55,7 @@ graph LR
 
 With a NetworkPolicy applied, only `api` can reach `db`. The `frontend` and any rogue Pod are blocked. The cluster topology did not change, the Pod IPs are the same, but traffic is now filtered.
 
-```
+```bash
 kubectl get networkpolicy
 ```
 
@@ -91,11 +91,11 @@ You apply two NetworkPolicies to the same Pod. Policy A allows ingress from labe
 
 Once you start writing policies, you need to verify they are targeting the right Pods. Two commands help here:
 
-```
+```bash
 kubectl get networkpolicy
 ```
 
-```
+```bash
 kubectl describe networkpolicy <policy-name>
 ```
 

@@ -64,11 +64,11 @@ spec:
           mountPath: /var/lib/postgresql/data
 ```
 
-```
+```bash
 kubectl apply -f db-pod.yaml
 ```
 
-```
+```bash
 kubectl describe pod postgres-pod
 ```
 
@@ -96,13 +96,13 @@ graph LR
 
 This is the core guarantee of PersistentVolumes. Delete the Pod:
 
-```
+```bash
 kubectl delete pod postgres-pod
 ```
 
 Now check the PVC:
 
-```
+```bash
 kubectl get pvc
 ```
 

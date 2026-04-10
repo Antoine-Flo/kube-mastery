@@ -22,7 +22,7 @@ When your container prints a line to stdout, kubelet captures it through the con
 
 Run this now to see logs from a Pod:
 
-```
+```bash
 kubectl logs <pod-name>
 ```
 
@@ -44,19 +44,19 @@ Reading the full log history is not always useful. A busy Pod may produce thousa
 
 To see only the last 50 lines, pass `--tail`:
 
-```
+```bash
 kubectl logs my-app --tail=50
 ```
 
 To see only logs from the last five minutes, pass `--since`:
 
-```
+```bash
 kubectl logs my-app --since=5m
 ```
 
 To follow logs in real time as the container writes them, pass `-f`:
 
-```
+```bash
 kubectl logs my-app -f
 ```
 
@@ -64,7 +64,7 @@ This works like `tail -f` on a local file. New lines appear as they arrive. Pres
 
 When a Pod runs more than one container, you must specify which one you want. Without `-c`, kubectl logs returns an error asking you to choose:
 
-```
+```bash
 kubectl logs my-app -c sidecar-container
 ```
 
@@ -84,7 +84,7 @@ Here is where beginners get stuck: if you run `kubectl logs` while the Pod is in
 
 The crash happened in the previous run. Use `--previous` (or `-p`) to read the logs from the container that just exited:
 
-```
+```bash
 kubectl logs my-app --previous
 ```
 

@@ -11,7 +11,7 @@ You manage two teams on the same cluster. The backend team has a Service named `
 
 Every kubectl command that reads or writes resources accepts a `-n` flag. It applies to `get`, `describe`, `create`, `apply`, `delete`, and `logs`, among others:
 
-```
+```bash
 kubectl get pods -n kube-system
 kubectl get services -n kube-system
 kubectl describe pod kube-apiserver-minikube -n kube-system
@@ -23,7 +23,7 @@ The flag scopes the command to that namespace only. Resources in other namespace
 
 When you want a full picture of what is running across the entire cluster, use `--all-namespaces` or its shorthand `-A`:
 
-```
+```bash
 kubectl get pods -A
 kubectl get pods --all-namespaces
 ```
@@ -42,7 +42,7 @@ List all Pods across all namespaces. Which namespace has the most Pods?
 
 Create two namespaces and deploy a workload into each so you can practice cross-namespace operations:
 
-```
+```bash
 kubectl create namespace team-a
 kubectl create namespace team-b
 kubectl create deployment app-a --image=nginx:1.28 -n team-a
@@ -106,7 +106,7 @@ Why does the FQDN format include `.svc.cluster.local` and not just `.<namespace>
 
 Remove both namespaces when you are done. Deleting a namespace deletes all resources inside it:
 
-```
+```bash
 kubectl delete namespace team-a
 kubectl delete namespace team-b
 ```

@@ -28,13 +28,13 @@ The A record is created automatically. You do not write DNS zone files. You do n
 
 Create a simple Service in the simulated cluster:
 
-```
+```bash
 kubectl create service clusterip web-svc --tcp=80:80
 ```
 
 Verify it was created and note its ClusterIP:
 
-```
+```bash
 kubectl get service web-svc
 ```
 

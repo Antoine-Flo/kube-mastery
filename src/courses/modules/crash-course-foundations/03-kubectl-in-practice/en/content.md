@@ -11,7 +11,7 @@ Every interaction with a Kubernetes cluster goes through one tool: `kubectl`. It
 
 Almost every `kubectl` command follows the same structure:
 
-```
+```bash
 kubectl <verb> <resource-type> [name] [flags]
 ```
 

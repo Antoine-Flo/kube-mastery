@@ -43,19 +43,19 @@ What is the role of a PersistentVolumeClaim in Kubernetes?
 
 To see the PersistentVolumes in the simulated cluster, run:
 
-```
+```bash
 kubectl get pv
 ```
 
 To see PersistentVolumeClaims in the current namespace:
 
-```
+```bash
 kubectl get pvc
 ```
 
 Both commands show a `STATUS` column that tells you where things stand. To inspect the full details of a PV including its current claim reference and events:
 
-```
+```bash
 kubectl describe pv
 ```
 
